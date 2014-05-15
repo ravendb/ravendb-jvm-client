@@ -63,7 +63,7 @@ public class MultiGetMultiTenantTest extends RemoteClientTest {
 
       try (IDocumentSession session = store.openSession()) {
         session.query(User.class).customize(new DocumentQueryCustomizationFactory().waitForNonStaleResults())
-        .where(x.name.eq("Test")).toList();
+        .where(x.name.eq("test")).toList();
       }
 
       try (IDocumentSession session = store.openSession()) {

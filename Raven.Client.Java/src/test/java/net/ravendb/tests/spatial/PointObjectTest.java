@@ -66,6 +66,15 @@ public class PointObjectTest extends RemoteClientTest {
     try (IDocumentStore store = new DocumentStore(getDefaultUrl(), getDefaultDb()).initialize()) {
       store.executeIndex(new PointIndex());
 
+      try (IDocumentSession session = store.openSession()) { //TODO: delete me
+        QPointObjectTest_SpatialDoc x = QPointObjectTest_SpatialDoc.spatialDoc;
+
+        int matches = session.query(SpatialDoc.class, PointIndex.class)
+          .spatial(x.point, new SpatialCriteriaFactory().withinRadiusOf(700, 40, 40))
+          .count();
+        assertEquals(0, matches);
+      }
+
       try (IDocumentSession session = store.openSession()) {
         SpatialDoc doc1 = new SpatialDoc();
         doc1.setPoint(null);
