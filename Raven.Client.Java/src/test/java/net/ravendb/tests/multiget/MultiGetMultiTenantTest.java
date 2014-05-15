@@ -75,7 +75,9 @@ public class MultiGetMultiTenantTest extends RemoteClientTest {
         assertEquals(1, session.advanced().getNumberOfRequests());
         assertTrue(result1.getValue().size() > 0);
         assertEquals(1, session.advanced().getNumberOfRequests());
-        assertEquals(0, store.getJsonRequestFactory().getNumOfCachedRequests());
+
+        //TODO: delete me
+        assertEquals("Cache size = " + store.getJsonRequestFactory().getCurrentCacheSize(), 0, store.getJsonRequestFactory().getNumOfCachedRequests());
       }
 
       try (IDocumentSession session = store.openSession()) {

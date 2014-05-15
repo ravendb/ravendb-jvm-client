@@ -3,7 +3,6 @@ package net.ravendb.client;
 import static org.junit.Assert.assertEquals;
 
 import net.ravendb.abstractions.data.AdminStatistics;
-import net.ravendb.abstractions.json.linq.RavenJToken;
 
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
