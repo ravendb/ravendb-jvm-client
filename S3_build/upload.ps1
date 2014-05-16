@@ -4,13 +4,9 @@ $uploader = "..\Uploader\S3Uploader.exe"
 
 Write-Host "Starting upload"
 if (Test-Path $uploader) {
-	Write-Host "in if"
 	$log = "RavenDB Java Client v3.0"
-	Write-Host "iafter log"
 	$file = "target\ravendb-build-$version-dist.zip"
-	Write-Host "after file"
 	$currentUploadCategory = "RavenDB-Unstable"
-	
 	
 	Write-Host "Executing: $uploader ""$currentUploadCategory"" ""$version"" $file ""$log"""
 	
@@ -35,5 +31,3 @@ if (Test-Path $uploader) {
 else {
 	Write-Host "could not find upload script $uploadScript, skipping upload"
 }
-
-Write-Host "end"
