@@ -3,7 +3,7 @@ jvm-client
 
 RavenDB JVM Client
 
-RavenDB Client is released as snapshot to sonatype central repository. 
+RavenDB Client is available as snapshot in sonatype central repository. 
 
 Sample pom:
 
