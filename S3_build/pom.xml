@@ -1,0 +1,90 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+  <groupId>net.ravendb</groupId>
+  <artifactId>ravendb-build</artifactId>
+  <version>3.0.0-SNAPSHOT</version>
+
+  <licenses>
+    <license>
+      <name>BSD 3-clause &quot;New&quot; or &quot;Revised&quot; License</name>
+      <url>http://www.spdx.org/licenses/BSD-3-Clause</url>
+    </license>
+  </licenses>
+
+  <developers>
+    <developer>
+      <email>marcin@ais.pl</email>
+      <id>marcin@ais.pl</id>
+      <name>Marcin Lewandowski</name>
+      <organizationUrl>http://ais.pl</organizationUrl>
+      <roles>
+        <role>developer</role>
+      </roles>
+    </developer>
+    <developer>
+      <email>pikus@ais.pl</email>
+      <id>pikus@ais.pl</id>
+      <name>Tomasz Pik</name>
+      <organizationUrl>http://ais.pl</organizationUrl>
+      <roles>
+        <role>release manager</role>
+      </roles>
+    </developer>
+  </developers>
+
+  <contributors>
+    <contributor>
+      <email>blazej@ais.pl</email>
+      <name>Blazej Majewski</name>
+      <organizationUrl>http://ais.pl</organizationUrl>
+      <organization>ais.pl</organization>
+    </contributor>
+  </contributors>
+
+  <properties>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+  </properties>
+
+  <dependencies>
+    <dependency>
+      <groupId>net.ravendb</groupId>
+      <artifactId>ravendb-client</artifactId>
+      <version>${raven.version}</version>
+    </dependency>
+  </dependencies>
+
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-compiler-plugin</artifactId>
+        <version>2.5</version>
+        <configuration>
+          <source>1.7</source>
+          <target>1.7</target>
+          <encoding>UTF-8</encoding>
+        </configuration>
+      </plugin>
+	  <plugin>
+		<artifactId>maven-assembly-plugin</artifactId>
+		<version>2.4</version>
+		<configuration>
+		  <descriptors>
+			<descriptor>src/main/assembly/dist.xml</descriptor>
+		  </descriptors>
+		</configuration>
+		<executions>
+		  <execution>
+			<id>make-assembly</id>
+			<phase>package</phase>
+			<goals>
+			  <goal>single</goal>
+			</goals>
+		  </execution>
+		</executions>
+	  </plugin>
+    </plugins>
+  </build>
+</project>
