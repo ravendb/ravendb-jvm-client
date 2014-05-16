@@ -5,6 +5,8 @@ RavenDB JVM Client
 
 RavenDB Client is available as snapshot in sonatype central repository. 
 
+Note: Embedding repositories in pom is not good practise, however allows quick start. Please consider moving repositories into ~/.m2/settings.xml. More information can be found here: http://maven.apache.org/guides/mini/guide-multiple-repositories.html 
+
 Sample pom:
 
 ```
