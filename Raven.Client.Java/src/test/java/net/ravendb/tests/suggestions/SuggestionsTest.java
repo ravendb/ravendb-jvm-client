@@ -15,6 +15,7 @@ import net.ravendb.client.document.DocumentStore;
 import net.ravendb.tests.bugs.QUser;
 import net.ravendb.tests.bugs.User;
 
+import org.junit.Ignore;
 import org.junit.Test;
 
 
@@ -26,7 +27,7 @@ public class SuggestionsTest extends RemoteClientTest {
     indexDefinition.setMap("from doc in docs select new { doc.Name }");
     indexDefinition.getSuggestions().put("Name", new SuggestionOptions());
 
-    store.getDatabaseCommands().putIndex("Test", indexDefinition, true);
+    store.getDatabaseCommands().putIndex("Test", indexDefinition);
 
     try (IDocumentSession session = store.openSession()) {
       User user1 = new User();

@@ -3,7 +3,6 @@ package net.ravendb.tests.spatial;
 import static org.junit.Assert.assertEquals;
 
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 import net.ravendb.abstractions.indexing.SpatialOptionsFactory;
@@ -15,6 +14,7 @@ import net.ravendb.client.indexes.AbstractIndexCreationTask;
 import net.ravendb.client.spatial.SpatialCriteriaFactory;
 import net.ravendb.tests.spatial.QPointObjectTest_SpatialDoc;
 
+import org.junit.Ignore;
 import org.junit.Test;
 
 import com.mysema.query.annotations.QueryEntity;
@@ -43,13 +43,6 @@ public class PointObjectTest extends RemoteClientTest {
     public void setPoint(Object point) {
       this.point = point;
     }
-
-    @Override
-    public String toString() {
-      return "SpatialDoc [id=" + id + ", point=" + point + "]";
-    }
-
-
 
   }
 
@@ -118,6 +111,7 @@ public class PointObjectTest extends RemoteClientTest {
         doc9.setPoint("geo:45.0,45.0,-78.4;u=0.2");
         session.store(doc9);
 
+
         session.saveChanges();
       }
 
@@ -130,10 +124,7 @@ public class PointObjectTest extends RemoteClientTest {
           .spatial(x.point, new SpatialCriteriaFactory().withinRadiusOf(700, 40, 40))
           .count();
 
-        //TODO: deete me
-        List<SpatialDoc> list = session.query(SpatialDoc.class, PointIndex.class).toList();
-
-        assertEquals(list.toString(), 8, matches);
+        assertEquals(8, matches);
       }
     }
   }
