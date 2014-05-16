@@ -27,6 +27,11 @@ public class ReplicationTest extends AbstractReplicationTest {
 
       List<String> result = serverClient.getDatabaseNames(2);
 
+      //TODO: delete me:
+      StringBuilder info = new StringBuilder();
+      info.append("Current dbs: " + result);
+
+      assertEquals(info.toString(), 1, result.size());
       assertTrue(result.contains(SOURCE));
 
       IDatabaseCommands source = serverClient.forDatabase(SOURCE);
