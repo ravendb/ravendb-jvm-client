@@ -6,22 +6,19 @@ Write-Host "Starting upload"
 if (Test-Path $uploader) {
 	$log = "RavenDB Java Client v3.0"
 	$file = "target\ravendb-build-$version-dist.zip"
-	$currentUploadCategory = "RavenDB-Unstable"
+	$currentUploadCategory = "RavenDB Java Client"
 	
 	Write-Host "Executing: $uploader ""$currentUploadCategory"" ""$version"" $file ""$log"""
 	
-	$uploadTryCount = 0
-	while ($uploadTryCount -lt 5) {
-		$uploadTryCount += 1
-		# Uncomment !Exec { &$uploader "$currentUploadCategory" "$version" $file "$log" }
-		
-		if ($lastExitCode -ne 0) {
-			Write-Host "Failed to upload to S3: $lastExitCode. UploadTryCount: $uploadTryCount"
-		} else {
-			break
-		}
-	}
 	
+	!Exec { &$uploader "$currentUploadCategory" "$version" $file "$log" }
+	
+	if ($lastExitCode -ne 0) {
+		Write-Host "Failed to upload to S3: $lastExitCode. UploadTryCount: $uploadTryCount"
+	} else {
+		break
+	}
+
 	if ($lastExitCode -ne 0) {
 		Write-Host "Failed to upload to S3: $lastExitCode. UploadTryCount: $uploadTryCount. Build will fail."
 		throw "Error: Failed to publish build"
