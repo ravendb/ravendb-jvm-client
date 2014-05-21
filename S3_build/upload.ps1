@@ -10,7 +10,7 @@ if (Test-Path $uploader) {
 	
 	Write-Host "Executing: $uploader ""$currentUploadCategory"" ""$version"" $file ""$log"""
 	
-	Exec { &$uploader "$currentUploadCategory" "$version" $file "$log" }
+	exec { &$uploader "$currentUploadCategory" "$version" $file "$log" }
 	
 	if ($lastExitCode -ne 0) {
 		Write-Host "Failed to upload to S3: $lastExitCode. UploadTryCount: $uploadTryCount"
