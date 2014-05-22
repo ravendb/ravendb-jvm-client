@@ -12,7 +12,7 @@ import-module (Get-ChildItem "$scriptDir\packages\psake.*\tools\psake.psm1" | Se
 Write-Host "Starting upload"
 if (Test-Path $uploader) {
 	$log = "RavenDB Java Client v3.0"
-	$file = "$base_dir\target\ravendb-build-$version-dist.zip"
+	$file = "$base_dir\S3_build\target\ravendb-build-$version-dist.zip"
 	$currentUploadCategory = "RavenDB Java Client"
 	
 	Write-Host "Executing: $uploader ""$currentUploadCategory"" ""$version"" $file ""$log"""
