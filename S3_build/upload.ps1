@@ -12,7 +12,7 @@ import-module (Get-ChildItem "$scriptDir\packages\psake.*\tools\psake.psm1" | Se
 Write-Host "Starting upload"
 if (Test-Path $uploader) {
 	$log = "RavenDB Java Client v3.0"
-	$file = "target\ravendb-build-$version-dist.zip"
+	$file = "$base_dir\target\ravendb-build-$version-dist.zip"
 	$currentUploadCategory = "RavenDB Java Client"
 	
 	Write-Host "Executing: $uploader ""$currentUploadCategory"" ""$version"" $file ""$log"""
@@ -20,7 +20,7 @@ if (Test-Path $uploader) {
 	Exec { &$uploader "$currentUploadCategory" "$version" $file "$log" }
 	
 	if ($lastExitCode -ne 0) {
-		Write-Host "Failed to upload to S3: $lastExitCode. UploadTryCount: $uploadTryCount"
+		Write-Host "Failed to upload to S3: $lastExitCode."
 	} else {
 		break
 	}
