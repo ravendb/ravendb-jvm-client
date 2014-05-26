@@ -87,7 +87,7 @@
     <snapshotRepository>
       <id>aws</id>
       <name>AWS Snapshot Repository</name>
-      <url>s3://bucket/path</url>
+      <url>s3://daily-builds/maven/</url>
     </snapshotRepository>
   </distributionManagement>
 
