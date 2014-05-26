@@ -1,0 +1,95 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+  <parent>
+    <groupId>org.sonatype.oss</groupId>
+    <artifactId>oss-parent</artifactId>
+    <version>9</version>
+  </parent>
+
+  <groupId>net.ravendb</groupId>
+  <artifactId>ravendb-parent</artifactId>
+  <version>3.0.0-SNAPSHOT</version>
+  <packaging>pom</packaging>
+  <name>RavenDB</name>
+
+  <scm>
+    <connection>scm:git:https://github.com/ravendb/jvm-client.git</connection>
+    <url>https://github.com/ravendb/jvm-client</url>
+  </scm>
+
+  <licenses>
+    <license>
+      <name>BSD 3-clause &quot;New&quot; or &quot;Revised&quot; License</name>
+      <url>http://www.spdx.org/licenses/BSD-3-Clause</url>
+    </license>
+  </licenses>
+
+  <developers>
+    <developer>
+      <email>marcin@ais.pl</email>
+      <id>marcin@ais.pl</id>
+      <name>Marcin Lewandowski</name>
+      <organizationUrl>http://ais.pl</organizationUrl>
+      <roles>
+        <role>developer</role>
+      </roles>
+    </developer>
+    <developer>
+      <email>pikus@ais.pl</email>
+      <id>pikus@ais.pl</id>
+      <name>Tomasz Pik</name>
+      <organizationUrl>http://ais.pl</organizationUrl>
+      <roles>
+        <role>release manager</role>
+      </roles>
+    </developer>
+  </developers>
+
+  <contributors>
+    <contributor>
+      <email>blazej@ais.pl</email>
+      <name>Blazej Majewski</name>
+      <organizationUrl>http://ais.pl</organizationUrl>
+      <organization>ais.pl</organization>
+    </contributor>
+  </contributors>
+
+  <properties>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+  </properties>
+
+  <modules>
+    <module>Raven.Client.Java</module>
+  </modules>
+
+  <build>
+    <extensions>
+       <extension>
+        <groupId>org.springframework.build</groupId>
+        <artifactId>aws-maven</artifactId>
+        <version>5.0.0.RELEASE</version>
+      </extension>
+    </extensions>
+    <pluginManagement>
+      <plugins>
+        <plugin>
+          <groupId>org.codehaus.mojo</groupId>
+          <artifactId>versions-maven-plugin</artifactId>
+          <version>2.1</version>
+        </plugin>
+      </plugins>
+    </pluginManagement>
+  </build>
+
+  <distributionManagement>
+    <snapshotRepository>
+      <id>aws</id>
+      <name>AWS Snapshot Repository</name>
+      <url>s3://bucket/path</url>
+    </snapshotRepository>
+  </distributionManagement>
+
+</project>
+
