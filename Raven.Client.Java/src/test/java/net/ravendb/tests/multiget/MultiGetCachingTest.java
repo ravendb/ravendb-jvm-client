@@ -80,7 +80,7 @@ public class MultiGetCachingTest extends RemoteClientTest {
 
       try (IDocumentSession session = store.openSession()) {
         try (AutoCloseable context = session.advanced().getDocumentStore().aggressivelyCacheFor(5 * 60 * 1000)) {
-          session.advanced().lazily().load(User.class, new String[] { "users/1" });
+          session.advanced().lazily().load(User.class, "users/1");
           session.advanced().lazily().load(User.class, "users/2");
           session.advanced().eagerly().executeAllPendingLazyOperations();
         }
@@ -149,14 +149,14 @@ public class MultiGetCachingTest extends RemoteClientTest {
 
       try (IDocumentSession session = store.openSession()) {
         try (AutoCloseable context = session.advanced().getDocumentStore().aggressivelyCacheFor(5 * 60 * 1000)) {
-          session.advanced().lazily().load(User.class, new String[] { "users/1" });
+          session.advanced().lazily().load(User.class,  "users/1" );
           session.advanced().eagerly().executeAllPendingLazyOperations();
         }
       }
 
       try (IDocumentSession session = store.openSession()) {
         try (AutoCloseable context = session.advanced().getDocumentStore().aggressivelyCacheFor(5 * 60 * 1000)) {
-          session.load(User.class, new String[] { "users/1" });
+          session.load(User.class, "users/1" );
         }
       }
 
@@ -246,7 +246,7 @@ public class MultiGetCachingTest extends RemoteClientTest {
       }
 
       try (IDocumentSession session = store.openSession()) {
-        Lazy<User[]> items = session.advanced().lazily().load(User.class, "users/2", "users/4");
+        Lazy<User[]> items = session.advanced().lazily().load(User.class, new String[] { "users/2", "users/4" });
         Lazy<List<User>> result1 = session.query(User.class).where(u.name.eq("oren")).lazily();
         Lazy<List<User>> result2 = session.query(User.class).where(u.name.eq("ayende")).lazily();
         assertNotNull(result2.getValue());
@@ -258,7 +258,7 @@ public class MultiGetCachingTest extends RemoteClientTest {
       }
 
       try (IDocumentSession session = store.openSession()) {
-        Lazy<User[]> items = session.advanced().lazily().load(User.class, "users/2", "users/4");
+        Lazy<User[]> items = session.advanced().lazily().load(User.class, new String[] {  "users/2", "users/4" } );
         Lazy<List<User>> result1 = session.query(User.class).where(u.name.eq("oren")).lazily();
         Lazy<List<User>> result2 = session.query(User.class).where(u.name.eq("ayende")).lazily();
         assertNotNull(result2.getValue());

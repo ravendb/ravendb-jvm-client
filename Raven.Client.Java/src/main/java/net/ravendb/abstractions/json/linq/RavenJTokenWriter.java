@@ -293,4 +293,13 @@ public class RavenJTokenWriter extends JsonGenerator {
     throw new UnsupportedOperationException("Operation not supported");
   }
 
+  public void associateCurrentOBjectWith(Object o) {
+    RavenJToken currentToken = getCurrentToken();
+    if (currentToken instanceof RavenJObject == false) {
+      return;
+    }
+    RavenJObject ravenJObject = (RavenJObject) currentToken;
+    ravenJObject.setTag(o);
+  }
+
 }

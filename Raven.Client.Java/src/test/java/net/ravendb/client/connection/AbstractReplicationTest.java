@@ -8,7 +8,6 @@ import net.ravendb.abstractions.replication.ReplicationDestination;
 import net.ravendb.abstractions.replication.ReplicationDocument;
 import net.ravendb.abstractions.replication.ReplicationDestination.TransitiveReplicationOptions;
 import net.ravendb.client.RavenDBAwareTests;
-import net.ravendb.client.connection.ReplicationInformer;
 import net.ravendb.client.connection.ServerClient;
 import net.ravendb.client.listeners.IDocumentConflictListener;
 

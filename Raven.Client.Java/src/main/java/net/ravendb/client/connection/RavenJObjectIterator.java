@@ -1,7 +1,6 @@
 package net.ravendb.client.connection;
 
 import java.io.IOException;
-import java.util.Iterator;
 
 import net.ravendb.abstractions.basic.CloseableIterator;
 import net.ravendb.abstractions.json.linq.RavenJObject;

@@ -3,16 +3,13 @@ package net.ravendb.tests.issues;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
-
-import org.junit.Assert;
-import org.junit.Test;
-
 import net.ravendb.client.IDocumentSession;
 import net.ravendb.client.IDocumentStore;
 import net.ravendb.client.RemoteClientTest;
 import net.ravendb.client.document.DocumentSession;
 import net.ravendb.client.document.DocumentStore;
-import net.ravendb.tests.indexes.DynamicFieldIndexingTest.WithDynamicIndex;
+
+import org.junit.Test;
 
 
 public class RavenDB_1533 extends RemoteClientTest {

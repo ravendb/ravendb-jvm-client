@@ -100,7 +100,7 @@ public abstract class RavenDBAwareTests {
     convention.setFailoverBehavior(new FailoverBehaviorSet(FailoverBehavior.FAIL_IMMEDIATELY));
     factory = new HttpJsonRequestFactory(10);
 
-    replicationInformer = new ReplicationInformer(convention);
+    replicationInformer = new ReplicationInformer(convention, factory);
 
     serverClient = new ServerClient(DEFAULT_SERVER_URL_1, convention, new OperationCredentials(),
       new Functions.StaticFunction1<String, IDocumentStoreReplicationInformer>((IDocumentStoreReplicationInformer)replicationInformer), null, factory,
@@ -239,7 +239,7 @@ public abstract class RavenDBAwareTests {
     try {
       delete = new HttpDelete(DEFAULT_SERVER_RUNNER_URL + "?port=" + port);
       HttpResponse httpResponse = client.execute(delete);
-      if (httpResponse.getStatusLine().getStatusCode() != HttpStatus.SC_OK) {
+      if (httpResponse.getStatusLine().getStatusCode() != HttpStatus.SC_NO_CONTENT) {
         throw new IllegalStateException("Invalid response on put:" + httpResponse.getStatusLine().getStatusCode());
       }
     } finally {

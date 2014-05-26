@@ -33,11 +33,19 @@ public interface ILazySessionOperations {
 
   /**
    * Loads the specified ids.
-   * @param clazz
    * @param ids
    * @return
    */
-  public <TResult> Lazy<TResult[]> load(Class<TResult> clazz, String... ids);
+  public <TResult> Lazy<TResult[]> load(Class<TResult> clazz, String[] ids);
+
+  /**
+   * Loads the specified ids and a function to call when it is evaluated
+   * @param clazz
+   * @param ids
+   * @param onEval
+   * @return
+   */
+  public <TResult> Lazy<TResult[]> load(Class<TResult> clazz, String[] ids, Action1<TResult[]> onEval);
 
   /**
    * Loads the specified ids.
@@ -252,7 +260,7 @@ public interface ILazySessionOperations {
     Class<TResult> clazz, String id);
 
   public <TResult, TTransformer extends AbstractTransformerCreationTask> Lazy<TResult[]> load(Class<TTransformer> tranformerClass,
-    Class<TResult> clazz, String... ids);
+    Class<TResult> clazz, String[] ids);
 
 
 }

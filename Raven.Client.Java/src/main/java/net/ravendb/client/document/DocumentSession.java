@@ -21,6 +21,7 @@ import net.ravendb.abstractions.basic.CloseableIterator;
 import net.ravendb.abstractions.basic.Lazy;
 import net.ravendb.abstractions.basic.Reference;
 import net.ravendb.abstractions.basic.Tuple;
+import net.ravendb.abstractions.closure.Action0;
 import net.ravendb.abstractions.closure.Action1;
 import net.ravendb.abstractions.closure.Function0;
 import net.ravendb.abstractions.data.BatchResult;
@@ -188,18 +189,14 @@ public class DocumentSession extends InMemoryDocumentSessionOperations implement
    * Loads the specified entities with the specified ids.
    */
   @Override
-  public <T> T[] load(Class<T> clazz, String... ids) {
-    return loadInternal(clazz, ids);
-  }
-
-  /**
-   * Loads the specified entities with the specified ids.
-   */
-  @Override
   public <T> T[] load(Class<T> clazz, Collection<String> ids) {
     return ((IDocumentSessionImpl) this).loadInternal(clazz, ids.toArray(new String[0]));
   }
 
+  @Override
+  public <T> T[] load(Class<T> clazz, String... ids) {
+    return ((IDocumentSessionImpl) this).loadInternal(clazz, ids);
+  }
 
   @Override
   public <T> T load(Class<T> clazz, Number id) {
@@ -254,6 +251,14 @@ public class DocumentSession extends InMemoryDocumentSessionOperations implement
   public <T> T[] loadInternal(Class<T> clazz, String[] ids, Tuple<String, Class<?>>[] includes) {
     if (ids.length == 0) {
       return (T[]) Array.newInstance(clazz, 0);
+    }
+
+    if (checkIfIdAlreadyIncluded(ids, includes)) {
+      T[] result = (T[]) Array.newInstance(clazz, ids.length);
+      for (int i = 0; i < ids.length; i++) {
+        result[i] = load(clazz, ids[i]);
+      }
+      return result;
     }
 
     List<String> includePaths = null;
@@ -442,18 +447,9 @@ public class DocumentSession extends InMemoryDocumentSessionOperations implement
   }
 
   @Override
-  public <TResult, TTransformer extends AbstractTransformerCreationTask> TResult load(Class<TTransformer> tranformerClass,
-      Class<TResult> clazz, String id) {
-    try {
-      String transformer = tranformerClass.newInstance().getTransformerName();
-      TResult[] loadResult = loadInternal(clazz, new String[] { id} , transformer);
-      if (loadResult != null && loadResult.length > 0 ) {
-        return loadResult[0];
-      }
-      return null;
-    } catch (IllegalAccessException | InstantiationException e) {
-      throw new RuntimeException(e);
-    }
+  public <TResult, TTransformer extends AbstractTransformerCreationTask> TResult load(
+    Class<TTransformer> tranformerClass, Class<TResult> clazz, String id) {
+    return load(tranformerClass, clazz, id, null);
   }
 
   @Override
@@ -462,7 +458,9 @@ public class DocumentSession extends InMemoryDocumentSessionOperations implement
     try {
       String transformer = tranformerClass.newInstance().getTransformerName();
       RavenLoadConfiguration configuration = new RavenLoadConfiguration();
-      configureFactory.configure(configuration);
+      if (configureFactory != null) {
+        configureFactory.configure(configuration);
+      }
       TResult[] loadResult = loadInternal(clazz, new String[] { id} , transformer, configuration.getQueryInputs());
       if (loadResult != null && loadResult.length > 0 ) {
         return loadResult[0];
@@ -495,6 +493,41 @@ public class DocumentSession extends InMemoryDocumentSessionOperations implement
     } catch (Exception e) {
       throw new RuntimeException(e);
     }
+  }
+
+  @Override
+  public <TResult> TResult load(Class<TResult> clazz, String transformer, String id) {
+    return load(clazz, transformer, id, null);
+  }
+
+  @Override
+  public <TResult> TResult load(Class<TResult> clazz, String transformer, String id, LoadConfigurationFactory configure) {
+    RavenLoadConfiguration configuration = new RavenLoadConfiguration();
+    if (configure != null){
+      configure.configure(configuration);
+    }
+
+    TResult[] loadResult = loadInternal(clazz, new String[] { id }, transformer, configuration.getQueryInputs());
+    if (loadResult != null && loadResult.length > 0 ) {
+      return loadResult[0];
+    }
+    return null;
+  }
+
+  @Override
+  public <TResult> TResult[] load(Class<TResult> clazz, String transformer, Collection<String> ids) {
+    return load(clazz, transformer, ids, null);
+  }
+
+  @Override
+  public <TResult> TResult[] load(Class<TResult> clazz, String transformer, Collection<String> ids,
+    LoadConfigurationFactory configure) {
+    RavenLoadConfiguration configuration = new RavenLoadConfiguration();
+    if (configure != null){
+      configure.configure(configuration);
+    }
+
+    return loadInternal(clazz, ids.toArray(new String[0]), transformer, configuration.getQueryInputs());
   }
 
   /**
@@ -804,7 +837,19 @@ public class DocumentSession extends InMemoryDocumentSessionOperations implement
    * Register to lazily load documents and include
    */
   @Override
-  public <T> Lazy<T[]> lazyLoadInternal(Class<T> clazz, String[] ids, Tuple<String, Class<?>>[] includes, Action1<T[]> onEval) {
+  public <T> Lazy<T[]> lazyLoadInternal(final Class<T> clazz, final String[] ids, Tuple<String, Class<?>>[] includes, Action1<T[]> onEval) {
+    if (checkIfIdAlreadyIncluded(ids, includes)) {
+      return new Lazy<>(new Function0<T[]>() {
+        @Override
+        public T[] apply() {
+          T[] result = (T[]) Array.newInstance(clazz, ids.length);
+          for (int i = 0; i < ids.length; i++) {
+            result[i] = load(clazz, ids[i]);
+          }
+          return result;
+        }
+      });
+    }
     MultiLoadOperation multiLoadOperation = new MultiLoadOperation(this, new DisableAllCachingCallback(), ids, includes);
     LazyMultiLoadOperation<T> lazyOp = new LazyMultiLoadOperation<>(clazz, multiLoadOperation, ids, includes, null);
     return addLazyOperation(lazyOp, onEval);
@@ -949,6 +994,7 @@ public class DocumentSession extends InMemoryDocumentSessionOperations implement
     }
 
   }
+
 
   //TODO : more like this
 

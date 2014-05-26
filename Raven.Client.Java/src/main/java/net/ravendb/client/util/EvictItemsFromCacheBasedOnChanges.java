@@ -15,11 +15,11 @@ import net.ravendb.client.changes.RemoteDatabaseChanges;
 
 public class EvictItemsFromCacheBasedOnChanges implements AutoCloseable {
 
-  private final String databaseName;
-  private final IDatabaseChanges changes;
-  private final Action1<String> evictCacheOldItems;
-  private final Closeable documentsSubscription;
-  private final Closeable indexesSubscriptions;
+  protected final String databaseName;
+  protected final IDatabaseChanges changes;
+  protected final Action1<String> evictCacheOldItems;
+  protected final Closeable documentsSubscription;
+  protected final Closeable indexesSubscriptions;
 
 
   private abstract class ObserverAdapter<T> implements IObserver<T> {
@@ -33,7 +33,7 @@ public class EvictItemsFromCacheBasedOnChanges implements AutoCloseable {
       //empty by design
     }
   }
-  private class DocumentChangeObserver extends ObserverAdapter<DocumentChangeNotification> {
+  protected class DocumentChangeObserver extends ObserverAdapter<DocumentChangeNotification> {
     @Override
     public void onNext(DocumentChangeNotification value) {
       if (value.getType().equals(DocumentChangeTypes.PUT) || value.getType().equals(DocumentChangeTypes.DELETE)) {
@@ -41,7 +41,7 @@ public class EvictItemsFromCacheBasedOnChanges implements AutoCloseable {
       }
     }
   }
-  private class IndexChangeObserver extends ObserverAdapter<IndexChangeNotification> {
+  protected class IndexChangeObserver extends ObserverAdapter<IndexChangeNotification> {
     @Override
     public void onNext(IndexChangeNotification value) {
       if (value.getType().equals(IndexChangeTypes.MAP_COMPLETED)

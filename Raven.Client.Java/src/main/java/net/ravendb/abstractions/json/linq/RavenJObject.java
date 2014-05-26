@@ -27,6 +27,7 @@ import com.google.common.base.Defaults;
 public class RavenJObject extends RavenJToken implements Iterable<Entry<String, RavenJToken>> {
 
   private final Comparator<String> comparer;
+  private Object tag;
   /**
    * Creates a {@link RavenJObject} from an object.
    * @param o The object that will be used to create {@link RavenJObject}
@@ -231,6 +232,15 @@ public class RavenJObject extends RavenJToken implements Iterable<Entry<String, 
   @Override
   public boolean isSnapshot() {
     return properties.isSnapshot();
+  }
+
+
+  public Object getTag() {
+    return tag;
+  }
+
+  public void setTag(Object tag) {
+    this.tag = tag;
   }
 
   public RavenJObject withCaseInsensitivePropertyNames() {

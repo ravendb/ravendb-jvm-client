@@ -1,7 +1,5 @@
 package net.ravendb.client;
 
-import java.util.Iterator;
-
 import net.ravendb.abstractions.basic.CloseableIterator;
 import net.ravendb.abstractions.basic.Reference;
 import net.ravendb.abstractions.closure.Action1;

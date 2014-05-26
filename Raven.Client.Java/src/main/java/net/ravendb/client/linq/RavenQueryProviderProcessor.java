@@ -919,6 +919,7 @@ public class RavenQueryProviderProcessor<T> {
         documentQuery.andAlso();
       }
       if (options.contains(SearchOptions.NOT)) {
+        documentQuery.openSubclause();
         documentQuery.negateNext();
       }
       if (LinqPathProvider.getValueFromExpressionWithoutConversion(expression.getArg(5), valueRef) == false) {
@@ -926,6 +927,13 @@ public class RavenQueryProviderProcessor<T> {
       }
       EscapeQueryOptions queryOptions = (EscapeQueryOptions) valueRef.value;
       documentQuery.search(expressionInfo.getPath(), searchTerms, queryOptions);
+      if (options.contains(SearchOptions.NOT))
+      {
+          documentQuery.andAlso();
+          documentQuery.search(expressionInfo.getPath(), "*");
+          documentQuery.closeSubclause();
+      }
+
       documentQuery.boost(boost);
 
       if (options.contains(SearchOptions.AND)) {

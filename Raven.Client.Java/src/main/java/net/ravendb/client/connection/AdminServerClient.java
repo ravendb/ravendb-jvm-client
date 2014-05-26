@@ -22,7 +22,7 @@ import net.ravendb.client.indexes.RavenDocumentsByEntityName;
 
 public class AdminServerClient implements IAdminDatabaseCommands, IGlobalAdminDatabaseCommands {
 
-  private final ServerClient innerServerClient;
+  protected final ServerClient innerServerClient;
   protected final AdminRequestCreator adminRequest;
 
   public AdminServerClient(ServerClient serverClient) {

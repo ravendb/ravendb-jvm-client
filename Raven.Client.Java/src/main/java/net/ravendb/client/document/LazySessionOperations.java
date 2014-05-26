@@ -29,7 +29,7 @@ import com.mysema.query.types.Path;
 
 public class LazySessionOperations implements ILazySessionOperations {
 
-  private DocumentSession delegate;
+  protected DocumentSession delegate;
 
   public LazySessionOperations(DocumentSession delegate) {
     super();
@@ -48,8 +48,13 @@ public class LazySessionOperations implements ILazySessionOperations {
    * Loads the specified ids.
    */
   @Override
-  public <T> Lazy<T[]> load(Class<T> clazz, String... ids) {
+  public <T> Lazy<T[]> load(Class<T> clazz, String[] ids) {
     return load(clazz, Arrays.asList(ids), null);
+  }
+
+  @Override
+  public <TResult> Lazy<TResult[]> load(Class<TResult> clazz, String[] ids, Action1<TResult[]> onEval) {
+    return load(clazz, Arrays.asList(ids), onEval);
   }
 
   /**
@@ -232,5 +237,7 @@ public class LazySessionOperations implements ILazySessionOperations {
     LazyMoreLikeThisOperation<TResult> lazyOp = new LazyMoreLikeThisOperation<>(clazz, multiLoadOperation, query);
     return delegate.addLazyOperation(lazyOp, null);
   }
+
+
 
 }

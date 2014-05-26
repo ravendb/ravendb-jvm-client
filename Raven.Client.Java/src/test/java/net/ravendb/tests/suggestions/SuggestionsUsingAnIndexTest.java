@@ -15,7 +15,6 @@ import net.ravendb.client.indexes.AbstractIndexCreationTask;
 import net.ravendb.tests.bugs.QUser;
 import net.ravendb.tests.bugs.User;
 
-import org.junit.Ignore;
 import org.junit.Test;
 
 

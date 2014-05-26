@@ -22,8 +22,8 @@ public class MultiGetMultiGetTest extends RemoteClientTest {
 
     try (IDocumentStore store = new DocumentStore(getDefaultUrl(), getDefaultDb()).initialize()) {
       try (IDocumentSession session = store.openSession()) {
-        User[] result1 = session.load(User.class, "users/1", "users/2");
-        Lazy<User[]> result2 = session.advanced().lazily().load(User.class, "users/3", "users/4");
+        User[] result1 = session.load(User.class, new String[] { "users/1", "users/2" });
+        Lazy<User[]> result2 = session.advanced().lazily().load(User.class, new String[] {  "users/3", "users/4" } );
         assertArrayEquals(new User[2], result1);
         assertArrayEquals(new User[2], result2.getValue());
       }
@@ -34,8 +34,8 @@ public class MultiGetMultiGetTest extends RemoteClientTest {
   public void unlessAccessedLazyOperationsAreNoOp() throws Exception {
     try (IDocumentStore store = new DocumentStore(getDefaultUrl(), getDefaultDb()).initialize()) {
       try (IDocumentSession session = store.openSession()) {
-        session.advanced().lazily().load(User.class, "users/1", "users/2");
-        session.advanced().lazily().load(User.class, "users/3", "users/4");
+        session.advanced().lazily().load(User.class, new String[] { "users/1", "users/2" });
+        session.advanced().lazily().load(User.class, new String[] { "users/3", "users/4" });
 
         assertEquals(0, session.advanced().getNumberOfRequests());
       }
@@ -47,8 +47,8 @@ public class MultiGetMultiGetTest extends RemoteClientTest {
 
     try (IDocumentStore store = new DocumentStore(getDefaultUrl(), getDefaultDb()).initialize()) {
       try (IDocumentSession session = store.openSession()) {
-        Lazy<User[]> result1 = session.advanced().lazily().load(User.class, "users/1", "users/2");
-        Lazy<User[]> result2 = session.advanced().lazily().load(User.class, "users/3", "users/4");
+        Lazy<User[]> result1 = session.advanced().lazily().load(User.class, new String[] { "users/1", "users/2" });
+        Lazy<User[]> result2 = session.advanced().lazily().load(User.class, new String[] { "users/3", "users/4" });
 
         assertArrayEquals(new User[2], result2.getValue());
         assertEquals(1, session.advanced().getNumberOfRequests());
@@ -71,8 +71,8 @@ public class MultiGetMultiGetTest extends RemoteClientTest {
       }
 
       try (IDocumentSession session = store.openSession()) {
-        Lazy<User[]> result1 = session.advanced().lazily().load(User.class, "users/1", "users/2");
-        Lazy<User[]> result2 = session.advanced().lazily().load(User.class, "users/3", "users/4");
+        Lazy<User[]> result1 = session.advanced().lazily().load(User.class, new String[] {  "users/1", "users/2"} );
+        Lazy<User[]> result2 = session.advanced().lazily().load(User.class, new String[] { "users/3", "users/4" } );
 
         User[] a = result2.getValue();
         assertEquals(1, session.advanced().getNumberOfRequests());

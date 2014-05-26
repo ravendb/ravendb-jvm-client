@@ -84,6 +84,7 @@ public class EntityToJson {
     }
 
     RavenJObject jObject = RavenJObject.fromObject(entity, documentStore.getConventions().createSerializer());
+    jObject.setTag(entity);
     if (missingDictionary.containsKey(entity)) {
       Map<String, RavenJToken> value = missingDictionary.get(entity);
       for (Map.Entry<String, RavenJToken> item: value.entrySet()) {

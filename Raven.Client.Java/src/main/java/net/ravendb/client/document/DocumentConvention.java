@@ -7,7 +7,6 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.atomic.AtomicInteger;
 
 import net.ravendb.abstractions.basic.Reference;
 import net.ravendb.abstractions.basic.Tuple;
@@ -18,6 +17,7 @@ import net.ravendb.abstractions.json.linq.RavenJObject;
 import net.ravendb.client.connection.IDatabaseCommands;
 import net.ravendb.client.connection.IDocumentStoreReplicationInformer;
 import net.ravendb.client.connection.ReplicationInformer;
+import net.ravendb.client.connection.implementation.HttpJsonRequestFactory;
 import net.ravendb.client.converters.ITypeConverter;
 import net.ravendb.client.converters.Int32Converter;
 import net.ravendb.client.converters.Int64Converter;
@@ -112,7 +112,6 @@ public class DocumentConvention extends Convention implements Serializable {
   public DocumentConvention() {
 
     setIdentityTypeConvertors(Arrays.<ITypeConverter> asList(new UUIDConverter(), new Int32Converter(), new Int64Converter()));
-    setMaxFailoverCheckPeriod(5 * 60 * 1000); // 5 minutes
     setDisableProfiling(true);
     setUseParallelMultiGet(true);
     setDefaultQueryingConsistency(ConsistencyOptions.NONE);
@@ -191,8 +190,8 @@ public class DocumentConvention extends Convention implements Serializable {
     setMaxNumberOfRequestsPerSession(30);
     setReplicationInformerFactory(new ReplicationInformerFactory() {
       @Override
-      public IDocumentStoreReplicationInformer create(String url) {
-        return new ReplicationInformer(DocumentConvention.this);
+      public IDocumentStoreReplicationInformer create(String url, HttpJsonRequestFactory jsonRequestFactory) {
+        return new ReplicationInformer(DocumentConvention.this, jsonRequestFactory);
       }
     });
     setFindIdValuePartForValueTypeConversion(new IdValuePartFinder() {

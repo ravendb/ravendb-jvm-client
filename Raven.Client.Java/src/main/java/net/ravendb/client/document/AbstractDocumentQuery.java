@@ -239,6 +239,8 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
   protected Etag cutoffEtag;
   protected QueryOperator defaultOperator = QueryOperator.OR;
 
+  protected boolean allowMultipleIndexEntriesForSameDocumentToResultTransformer;
+
   private static final Pattern ESPACE_POSTFIX_WILDCARD = Pattern.compile("\\\\\\*($|\\s)");
 
   /**
@@ -324,6 +326,7 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
     theDatabaseCommands = other.theDatabaseCommands;
     indexName = other.indexName;
     linqPathProvider = other.linqPathProvider;
+    allowMultipleIndexEntriesForSameDocumentToResultTransformer = other.allowMultipleIndexEntriesForSameDocumentToResultTransformer;
     projectionFields = other.projectionFields;
     theSession = other.theSession;
     conventions = other.conventions;
@@ -706,6 +709,12 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
     highlightedFields.add(new HighlightedField(fieldName, fragmentLength, fragmentCount, null));
     fieldHighlightings.value = highlightings.addField(fieldName);
     return ((IDocumentQuery<T>) this);
+  }
+
+  @SuppressWarnings("unchecked")
+  public IDocumentQuery<T> setAllowMultipleIndexEntriesForSameDocumentToResultTransformer(boolean value) {
+    allowMultipleIndexEntriesForSameDocumentToResultTransformer = value;
+    return (IDocumentQuery<T>) this;
   }
 
   @Override
@@ -1463,6 +1472,7 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
       spatialIndexQuery.setStart(start);
       spatialIndexQuery.setCutoff(cutoff);
       spatialIndexQuery.setCutoffEtag(cutoffEtag);
+      spatialIndexQuery.setAllowMultipleIndexEntriesForSameDocumentToResultTransformer(allowMultipleIndexEntriesForSameDocumentToResultTransformer);
       spatialIndexQuery.setWaitForNonStaleResultsAsOfNow(theWaitForNonStaleResultsAsOfNow);
       spatialIndexQuery.setWaitForNonStaleResults(theWaitForNonStaleResults);
       List<SortedField> sortedFields =new ArrayList<>();
@@ -1517,6 +1527,7 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
     indexQuery.setHighlighterPreTags(highlighterPreTags);
     indexQuery.setHighlighterPostTags(highlighterPostTags);
     indexQuery.setResultsTransformer(resultsTransformer);
+    indexQuery.setAllowMultipleIndexEntriesForSameDocumentToResultTransformer(allowMultipleIndexEntriesForSameDocumentToResultTransformer);
     indexQuery.setQueryInputs(queryInputs);
     indexQuery.setDisableCaching(disableCaching);
     indexQuery.setExplainScores(shouldExplainScores);

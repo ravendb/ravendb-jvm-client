@@ -9,6 +9,7 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.AtomicReference;
 
 import net.ravendb.abstractions.basic.EventHandler;
 import net.ravendb.abstractions.basic.EventHelper;
@@ -20,38 +21,53 @@ import net.ravendb.abstractions.data.JsonDocument;
 import net.ravendb.abstractions.exceptions.HttpOperationException;
 import net.ravendb.abstractions.exceptions.ServerClientException;
 import net.ravendb.abstractions.json.linq.JTokenType;
+import net.ravendb.abstractions.json.linq.RavenJObject;
 import net.ravendb.abstractions.logging.ILog;
 import net.ravendb.abstractions.logging.LogManager;
 import net.ravendb.client.connection.ReplicationInformer.FailoverStatusChangedEventArgs;
+import net.ravendb.client.connection.implementation.HttpJsonRequestFactory;
 import net.ravendb.client.document.Convention;
 import net.ravendb.client.document.FailoverBehavior;
 
 import org.apache.commons.lang.ArrayUtils;
 import org.apache.commons.lang.exception.ExceptionUtils;
-import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
 
+import com.google.common.base.Throwables;
 
 public abstract class ReplicationInformerBase<T> implements IReplicationInformerBase<T> {
   protected static ILog log = LogManager.getCurrentClassLogger();
 
   protected boolean firstTime = true;
-
   protected Convention conventions;
-
+  private final HttpJsonRequestFactory requestFactory;
   protected Date lastReplicationUpdate = new Date(0);
   protected final Object replicationLock = new Object();
+  private static List<OperationMetadata> EMPTY = new ArrayList<>();
+  protected static AtomicInteger readStripingBase = new AtomicInteger(0);
+  private int delayTimeInMiliSec;
+
+
   protected List<OperationMetadata> replicationDestinations = new ArrayList<>();
 
-  protected static AtomicInteger readStripingBase = new AtomicInteger(0);
 
-  private static List<OperationMetadata> EMPTY = new ArrayList<>();
   protected final Map<String, FailureCounter> failureCounts = new ConcurrentHashMap<>();
 
   protected Thread refreshReplicationInformationTask;
 
 
   protected List<EventHandler<FailoverStatusChangedEventArgs>> failoverStatusChanged = new ArrayList<>();
+
+
+  @Override
+  public int getDelayTimeInMiliSec() {
+    return delayTimeInMiliSec;
+  }
+
+  @Override
+  public void setDelayTimeInMiliSec(int delayTimeInMiliSec) {
+    this.delayTimeInMiliSec = delayTimeInMiliSec;
+  }
 
   @Override
   public void addFailoverStatusChanged(EventHandler<FailoverStatusChangedEventArgs> event) {
@@ -80,8 +96,11 @@ public abstract class ReplicationInformerBase<T> implements IReplicationInformer
     return result;
   }
 
-  protected ReplicationInformerBase(Convention conventions) {
+  protected ReplicationInformerBase(Convention conventions, HttpJsonRequestFactory requestFactory, int delayTime) {
     this.conventions = conventions;
+    this.requestFactory = requestFactory;
+    this.replicationDestinations = new ArrayList<>();
+    this.delayTimeInMiliSec = delayTime;
   }
 
   public static class FailureCounter {
@@ -89,6 +108,17 @@ public abstract class ReplicationInformerBase<T> implements IReplicationInformer
     private AtomicLong value = new AtomicLong();
     private Date lastCheck;
     private boolean forceCheck;
+
+    private AtomicReference<Thread> checkDestination = new AtomicReference<>();
+
+
+    public AtomicReference<Thread> getCheckDestination() {
+      return checkDestination;
+    }
+
+    public void setCheckDestination(AtomicReference<Thread> checkDestination) {
+      this.checkDestination = checkDestination;
+    }
 
     public AtomicLong getValue() {
       return value;
@@ -117,6 +147,21 @@ public abstract class ReplicationInformerBase<T> implements IReplicationInformer
     public FailureCounter() {
       this.lastCheck = new Date();
     }
+
+    public long increment() {
+      this.forceCheck = false;
+      this.lastCheck = new Date();
+      return value.incrementAndGet();
+    }
+
+    public long reset() {
+      long oldVal = this.value.get();
+      value.compareAndSet(oldVal, 0);
+      lastCheck = new Date();
+      forceCheck = false;
+      return oldVal;
+    }
+
   }
 
   @Override
@@ -129,40 +174,56 @@ public abstract class ReplicationInformerBase<T> implements IReplicationInformer
     return getHolder(operationUrl).getLastCheck();
   }
 
-  public boolean shouldExecuteUsing(String operationUrl, int currentRequest, HttpMethods method, boolean primary) {
+  public boolean shouldExecuteUsing(final OperationMetadata operationMetadata, final OperationMetadata primaryOperation, int currentRequest, HttpMethods method, boolean primary) {
     if (primary == false) {
       assertValidOperation(method);
     }
 
-    FailureCounter failureCounter = getHolder(operationUrl);
-    if (failureCounter.getValue().longValue() == 0 || failureCounter.isForceCheck()) {
-      failureCounter.setLastCheck(new Date());
+    FailureCounter failureCounter = getHolder(operationMetadata.getUrl());
+    if (failureCounter.getValue().longValue() == 0) {
       return true;
     }
 
-    if (currentRequest % getCheckRepetitionRate(failureCounter.getValue().longValue()) == 0) {
-      failureCounter.setLastCheck(new Date());
+    if (failureCounter.isForceCheck()) {
       return true;
     }
 
-    if ((System.currentTimeMillis() - failureCounter.getLastCheck().getTime()) > conventions
-      .getMaxFailoverCheckPeriod()) {
-      failureCounter.setLastCheck(new Date());
-      return true;
+    Thread currentTask = failureCounter.getCheckDestination().get();
+    if ((currentTask == null  || !currentTask.isAlive()) && delayTimeInMiliSec > 0) {
+      Thread checkDestination = new Thread(new Runnable() {
+        @Override
+        public void run() {
+          for (int i = 0; i < 3; i++) {
+              OperationResult<Object> r = tryOperation(new Function1<OperationMetadata, Object>() {
+                @Override
+                public OperationResult<Object> apply(OperationMetadata metadata) {
+                    CreateHttpJsonRequestParams requestParams = new CreateHttpJsonRequestParams(null, getServerCheckUrl(metadata.getUrl()), HttpMethods.GET, new RavenJObject(), metadata.getCredentials(),  conventions);
+                    requestFactory.createHttpJsonRequest(requestParams).readResponseJson();
+                    return null;
+                }
+              }, operationMetadata, primaryOperation, true);
+              if (r.isSuccess()) {
+                return;
+              }
+
+              try {
+                Thread.sleep(delayTimeInMiliSec);
+              } catch (InterruptedException e) {
+                e.printStackTrace();
+              }
+          }
+        };
+      });
+
+      if (failureCounter.getCheckDestination().compareAndSet(currentTask, checkDestination)) {
+        checkDestination.start();
+      }
     }
 
     return false;
   }
 
-  protected int getCheckRepetitionRate(long value) {
-    if (value < 2) return (int) value;
-    if (value < 10) return 2;
-    if (value < 100) return 10;
-    if (value < 1000) return 100;
-    if (value < 10000) return 1000;
-    if (value < 100000) return 10000;
-    return 100000;
-  }
+  protected abstract String getServerCheckUrl(String baseUrl);
 
   protected void assertValidOperation(HttpMethods method) {
     if (conventions.getFailoverBehaviorWithoutFlags().contains(FailoverBehavior.ALLOW_READS_FROM_SECONDARIES)) {
@@ -234,72 +295,80 @@ public abstract class ReplicationInformerBase<T> implements IReplicationInformer
   public <S> S executeWithReplication(HttpMethods method, String primaryUrl, OperationCredentials primaryCredentials, int currentRequest,
     int currentReadStripingBase, Function1<OperationMetadata, S> operation) throws ServerClientException {
 
-    Reference<S> resultHolder = new Reference<>();
-    Reference<Boolean> timeoutThrown = new Reference<>();
-    timeoutThrown.value = Boolean.FALSE;
-
     List<OperationMetadata> localReplicationDestinations = getReplicationDestinationsUrls(); // thread safe copy
     OperationMetadata primaryOperation = new OperationMetadata(primaryUrl, primaryCredentials);
 
     boolean shouldReadFromAllServers = conventions.getFailoverBehavior().contains(
       FailoverBehavior.READ_FROM_ALL_SERVERS);
+
+    OperationResult<S> operationResult = new OperationResult<>();
+
     if (shouldReadFromAllServers && HttpMethods.GET.equals(method)) {
       int replicationIndex = currentReadStripingBase % (localReplicationDestinations.size() + 1);
       // if replicationIndex == destinations count, then we want to use the master
       // if replicationIndex < 0, then we were explicitly instructed to use the master
       if (replicationIndex < localReplicationDestinations.size() && replicationIndex >= 0) {
         // if it is failing, ignore that, and move to the master or any of the replicas
-        if (shouldExecuteUsing(localReplicationDestinations.get(replicationIndex).getUrl(), currentRequest, method, false)) {
-          if (tryOperation(operation, localReplicationDestinations.get(replicationIndex), primaryOperation, true, resultHolder,
-            timeoutThrown)) return resultHolder.value;
+        if (shouldExecuteUsing(localReplicationDestinations.get(replicationIndex), primaryOperation, currentRequest, method, false)) {
+
+           operationResult = tryOperation(operation, localReplicationDestinations.get(replicationIndex), primaryOperation, true);
+           if (operationResult.success) {
+             return operationResult.result;
+           }
         }
       }
     }
 
-    if (shouldExecuteUsing(primaryOperation.getUrl(), currentRequest, method, true)) {
-
-      if (tryOperation(operation, primaryOperation, null, !timeoutThrown.value && localReplicationDestinations.size() > 0, resultHolder,
-        timeoutThrown)) {
-        return resultHolder.value;
-      }
-      if (!timeoutThrown.value && isFirstFailure(primaryOperation.getUrl())
-        && tryOperation(operation, primaryOperation, null, localReplicationDestinations.size() > 0, resultHolder, timeoutThrown)) {
-        return resultHolder.value;
+    if (shouldExecuteUsing(primaryOperation, primaryOperation, currentRequest, method, true)) {
+      operationResult = tryOperation(operation, primaryOperation, null, !operationResult.wasTimeout && localReplicationDestinations.size() > 0);
+      if (operationResult.isSuccess()) {
+        return operationResult.result;
       }
       incrementFailureCount(primaryOperation.getUrl());
+      if (!operationResult.wasTimeout && isFirstFailure(primaryOperation.getUrl())) {
+
+        operationResult = tryOperation(operation, primaryOperation, null, localReplicationDestinations.size() > 0);
+        if (operationResult.isSuccess()) {
+          return operationResult.result;
+        }
+        incrementFailureCount(primaryOperation.getUrl());
+      }
+
     }
 
     for (int i = 0; i < localReplicationDestinations.size(); i++) {
       OperationMetadata replicationDestination = localReplicationDestinations.get(i);
-      if (!shouldExecuteUsing(replicationDestination.getUrl(), currentRequest, method, false)) {
+      if (!shouldExecuteUsing(replicationDestination, primaryOperation, currentRequest, method, false)) {
         continue;
       }
-      if (tryOperation(operation, replicationDestination, primaryOperation, !timeoutThrown.value, resultHolder, timeoutThrown)) {
-        return resultHolder.value;
-      }
-      if (!timeoutThrown.value
-        && isFirstFailure(replicationDestination.getUrl())
-        && tryOperation(operation, replicationDestination, primaryOperation, localReplicationDestinations.size() > i + 1, resultHolder,
-          timeoutThrown)) {
-        return resultHolder.value;
+      boolean hasMoreReplicationDestinations = localReplicationDestinations.size() > i + 1;
+
+      operationResult = tryOperation(operation, replicationDestination, primaryOperation, !operationResult.wasTimeout && hasMoreReplicationDestinations);
+      if (operationResult.isSuccess()) {
+        return operationResult.result;
       }
       incrementFailureCount(replicationDestination.getUrl());
-
+      if (!operationResult.wasTimeout && isFirstFailure(replicationDestination.getUrl())) {
+        operationResult =  tryOperation(operation, replicationDestination, primaryOperation, hasMoreReplicationDestinations);
+        if (operationResult.success) {
+          return operationResult.result;
+        }
+        incrementFailureCount(replicationDestination.getUrl());
+      }
     }
     // this should not be thrown, but since I know the value of should...
     throw new IllegalStateException("Attempted to connect to master and all replicas have failed, giving up. There is a high probability of a network problem preventing access to all the replicas. Failed to get in touch with any of the " + (1 + localReplicationDestinations.size()) + " Raven instances.");
   }
 
 
-  protected <S> boolean tryOperation(Function1<OperationMetadata, S> operation, OperationMetadata operationMetadata, OperationMetadata primaryOperationMetadata, boolean avoidThrowing,
-    Reference<S> result, Reference<Boolean> wasTimeout) {
+  protected <S> OperationResult<S> tryOperation(Function1<OperationMetadata, S> operation, OperationMetadata operationMetadata, OperationMetadata primaryOperationMetadata, boolean avoidThrowing) {
     boolean tryWithPrimaryCredentials = isFirstFailure(operationMetadata.getUrl()) && primaryOperationMetadata != null;
+    boolean shouldTryAgain = false;
     try {
 
-      result.value = operation.apply(tryWithPrimaryCredentials ? new OperationMetadata(operationMetadata.getUrl(), primaryOperationMetadata.getCredentials()) : operationMetadata);
+      S result = operation.apply(tryWithPrimaryCredentials ? new OperationMetadata(operationMetadata.getUrl(), primaryOperationMetadata.getCredentials()) : operationMetadata);
       resetFailureCount(operationMetadata.getUrl());
-      wasTimeout.value = Boolean.FALSE;
-      return true;
+      return new OperationResult<>(result, true);
     } catch (Exception e) {
       if (tryWithPrimaryCredentials && operationMetadata.getCredentials().getApiKey() != null) {
         incrementFailureCount(operationMetadata.getUrl());
@@ -308,20 +377,25 @@ public abstract class ReplicationInformerBase<T> implements IReplicationInformer
         if (rootCause instanceof HttpOperationException) {
           HttpOperationException webException = (HttpOperationException) rootCause;
           if (webException.getStatusCode() == HttpStatus.SC_UNAUTHORIZED) {
-            return tryOperation(operation, operationMetadata, primaryOperationMetadata, avoidThrowing, result, wasTimeout);
+            shouldTryAgain = true;
           }
         }
       }
-      if (avoidThrowing == false) {
+
+      if (shouldTryAgain == false) {
+        if (avoidThrowing == false) {
+          throw e;
+        }
+
+        Reference<Boolean> wasTimeout = new Reference<>();
+        if (isServerDown(e, wasTimeout)) {
+          return new OperationResult<>(null, wasTimeout.value, false);
+        }
         throw e;
       }
-      result.value = null;
-
-      if (isServerDown(e, wasTimeout)) {
-        return false;
-      }
-      throw e;
     }
+
+    return tryOperation(operation, operationMetadata, primaryOperationMetadata, avoidThrowing);
   }
 
   @Override
@@ -338,11 +412,12 @@ public abstract class ReplicationInformerBase<T> implements IReplicationInformer
   @Override
   public boolean isServerDown(Exception e, Reference<Boolean> timeout) {
     timeout.value = Boolean.FALSE;
-    if (e instanceof SocketTimeoutException) {
+    Throwable rootCause = Throwables.getRootCause(e);
+    if (rootCause instanceof SocketTimeoutException) {
       timeout.value = Boolean.TRUE;
       return true;
     }
-    if (e instanceof SocketException) {
+    if (rootCause instanceof SocketException) {
       return true;
     }
     return false;
@@ -360,6 +435,54 @@ public abstract class ReplicationInformerBase<T> implements IReplicationInformer
   public void forceCheck(String primaryUrl, boolean shouldForceCheck) {
     FailureCounter failureCounter = getHolder(primaryUrl);
     failureCounter.setForceCheck(shouldForceCheck);
+  }
+
+  public static class OperationResult<T> {
+    private T result;
+    private boolean wasTimeout;
+    private boolean success;
+
+    public T getResult() {
+      return result;
+    }
+
+    public void setResult(T result) {
+      this.result = result;
+    }
+
+    public boolean isWasTimeout() {
+      return wasTimeout;
+    }
+
+    public void setWasTimeout(boolean wasTimeout) {
+      this.wasTimeout = wasTimeout;
+    }
+
+    public boolean isSuccess() {
+      return success;
+    }
+
+    public void setSuccess(boolean success) {
+      this.success = success;
+    }
+
+    public OperationResult(T result, boolean wasTimeout, boolean success) {
+      super();
+      this.result = result;
+      this.wasTimeout = wasTimeout;
+      this.success = success;
+    }
+
+    public OperationResult(T result, boolean success) {
+      super();
+      this.result = result;
+      this.success = success;
+    }
+
+    public OperationResult() {
+      super();
+    }
+
   }
 
 }

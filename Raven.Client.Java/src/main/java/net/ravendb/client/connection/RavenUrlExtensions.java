@@ -1,7 +1,6 @@
 package net.ravendb.client.connection;
 
 import java.util.Map;
-import java.util.UUID;
 
 import org.apache.commons.lang.StringUtils;
 
@@ -62,16 +61,16 @@ public class RavenUrlExtensions {
     return url + "/terms/" + index + "?field=" + field + "&fromValue=" + fromValue + "&pageSize=" + pageSize;
   }
 
+  public static String doc(String url, String key) {
+    return url + "/docs/" + key;
+  }
+
   public static String docs(String url, int start, int pageSize) {
     return url + "/docs/?start=" + start + "&pageSize=" + pageSize;
   }
 
   public static String queries(String url) {
     return url + "/queries/";
-  }
-
-  public static String noCache(String url) {
-    return url;
   }
 
   public static HttpJsonRequest toJsonRequest(String url, ServerClient requestor, OperationCredentials credentials, DocumentConvention convention) {

@@ -3,7 +3,6 @@ package net.ravendb.client.connection;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Date;
-import java.util.List;
 
 import net.ravendb.abstractions.basic.EventArgs;
 import net.ravendb.abstractions.connection.OperationCredentials;
@@ -11,6 +10,7 @@ import net.ravendb.abstractions.data.JsonDocument;
 import net.ravendb.abstractions.extensions.JsonExtensions;
 import net.ravendb.abstractions.replication.ReplicationDestination;
 import net.ravendb.abstractions.replication.ReplicationDocument;
+import net.ravendb.client.connection.implementation.HttpJsonRequestFactory;
 import net.ravendb.client.document.Convention;
 import net.ravendb.client.document.FailoverBehavior;
 import net.ravendb.client.extensions.MultiDatabase;
@@ -18,23 +18,24 @@ import net.ravendb.client.extensions.MultiDatabase;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.time.DateUtils;
 
-//TODO: sync with .net
 public class ReplicationInformer extends ReplicationInformerBase<ServerClient> implements IDocumentStoreReplicationInformer {
 
   private static String RAVEN_REPLICATION_DESTINATIONS = "Raven/Replication/Destinations";
 
   private ReplicationDestination[] failoverServers;
 
+  @Override
   public void setFailoverServers(ReplicationDestination[] failoverServers) {
     this.failoverServers = failoverServers;
   }
 
+  @Override
   public ReplicationDestination[] getFailoverServers() {
     return failoverServers;
   }
 
-  public ReplicationInformer(Convention conventions) {
-    super(conventions);
+  public ReplicationInformer(Convention conventions, HttpJsonRequestFactory jsonRequestFactory) {
+    super(conventions, jsonRequestFactory, 1000);
   }
 
   @Override
@@ -84,7 +85,10 @@ public class ReplicationInformer extends ReplicationInformerBase<ServerClient> i
 
       refreshReplicationInformationTask.start();
     }
+  }
 
+  protected String getServerCheckUrl(String baseUrl) {
+      return RavenUrlExtensions.doc( baseUrl, RAVEN_REPLICATION_DESTINATIONS) + "?check-server-reachable";
   }
 
   @Override
@@ -120,7 +124,7 @@ public class ReplicationInformer extends ReplicationInformerBase<ServerClient> i
       log.error("Mapping Exception", e);
       return;
     }
-    List<OperationMetadata> replicationDestinations = new ArrayList<>();
+    replicationDestinations = new ArrayList<>();
     for (ReplicationDestination x : replicationDocument.getDestinations()) {
       String url = StringUtils.isEmpty(x.getClientVisibleUrl()) ? x.getUrl() : x.getClientVisibleUrl();
       if (StringUtils.isEmpty(url) || Boolean.TRUE.equals(x.getDisabled()) || Boolean.TRUE.equals(x.getIgnoredClient())) {
@@ -133,6 +137,7 @@ public class ReplicationInformer extends ReplicationInformerBase<ServerClient> i
       replicationDestinations.add(new OperationMetadata(MultiDatabase.getRootDatabaseUrl(url) + "/databases/"
         + x.getDatabase(), new OperationCredentials(x.getApiKey())));
     }
+
     for (OperationMetadata replicationDestination : replicationDestinations) {
       if (!failureCounts.containsKey(replicationDestination.getUrl())) {
         failureCounts.put(replicationDestination.getUrl(), new FailureCounter());

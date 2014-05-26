@@ -19,6 +19,10 @@ public interface IReplicationInformerBase<T> extends Closeable {
 
   public void removeFailoverStatusChanged(EventHandler<FailoverStatusChangedEventArgs> event);
 
+  public int getDelayTimeInMiliSec();
+
+  public void setDelayTimeInMiliSec(int value);
+
   public List<OperationMetadata> getReplicationDestinations();
 
   public List<OperationMetadata> getReplicationDestinationsUrls();

@@ -14,7 +14,6 @@ import net.ravendb.client.indexes.AbstractIndexCreationTask;
 import net.ravendb.client.spatial.SpatialCriteriaFactory;
 import net.ravendb.tests.spatial.QPointObjectTest_SpatialDoc;
 
-import org.junit.Ignore;
 import org.junit.Test;
 
 import com.mysema.query.annotations.QueryEntity;

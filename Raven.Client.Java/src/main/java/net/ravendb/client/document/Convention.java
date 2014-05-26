@@ -26,11 +26,6 @@ public class Convention {
 
   private FailoverBehaviorSet failoverBehavior = new FailoverBehaviorSet();
 
-  /* The maximum amount of time that we will wait before checking
-   * that a failed node is still up or not.
-   * Default: 5 minutes */
-  private long maxFailoverCheckPeriod = 300000;
-
   private IdentityPropertyFinder findIdentityProperty;
 
   public String identityPartsSeparator;
@@ -63,26 +58,6 @@ public class Convention {
     FailoverBehaviorSet result = this.failoverBehavior.clone();
     result.remove(FailoverBehavior.READ_FROM_ALL_SERVERS);
     return result;
-  }
-
-  /**
-   * The maximum amount of time that we will wait before checking
-   * that a failed node is still up or not.
-   * Default: 5 minutes
-   * @return
-   */
-  public long getMaxFailoverCheckPeriod() {
-    return maxFailoverCheckPeriod;
-  }
-
-  /**
-   * The maximum amount of time that we will wait before checking
-   * that a failed node is still up or not.
-   * Default: 5 minutes
-   * @param maxFailoverCheckPeriod
-   */
-  public void setMaxFailoverCheckPeriod(long maxFailoverCheckPeriod) {
-    this.maxFailoverCheckPeriod = maxFailoverCheckPeriod;
   }
 
   /**

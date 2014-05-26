@@ -2,7 +2,6 @@ package net.ravendb.imports.json;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 
 import net.ravendb.abstractions.extensions.JsonExtensions;

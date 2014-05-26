@@ -5,9 +5,6 @@ import net.ravendb.client.IDocumentStore;
 import net.ravendb.client.RemoteClientTest;
 
 public class ComplexValuesFromTransformResults extends RemoteClientTest {
-//FIXME: finish me
-
-
 
   public static String createEntities(IDocumentStore documentStore) throws Exception {
     final String questionId = "question/259";

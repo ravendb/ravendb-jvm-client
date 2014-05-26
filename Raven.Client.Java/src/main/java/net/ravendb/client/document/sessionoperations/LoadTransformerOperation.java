@@ -12,7 +12,6 @@ import net.ravendb.abstractions.json.linq.RavenJArray;
 import net.ravendb.abstractions.json.linq.RavenJObject;
 import net.ravendb.abstractions.json.linq.RavenJToken;
 import net.ravendb.client.connection.SerializationHelper;
-import net.ravendb.client.document.DocumentSession;
 import net.ravendb.client.document.InMemoryDocumentSessionOperations;
 
 

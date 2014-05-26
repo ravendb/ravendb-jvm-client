@@ -50,6 +50,7 @@ public class IndexQuery {
   private String defaultField;
   private QueryOperator defaultOperator = QueryOperator.OR;
   private boolean skipTransformResults;
+  private boolean allowMultipleIndexEntriesForSameDocumentToResultTransformer;
   private Reference<Integer> skippedResults;
   private boolean debugOptionGetIndexEntires;
   private HighlightedField[] highlightedFields;
@@ -159,6 +160,20 @@ public class IndexQuery {
   }
 
 
+  public boolean isAllowMultipleIndexEntriesForSameDocumentToResultTransformer() {
+    return allowMultipleIndexEntriesForSameDocumentToResultTransformer;
+  }
+
+  /**
+   * If set to true, this property will send multiple index entries from the same document (assuming the index project them)
+   * to the result transformer function. Otherwise, those entries will be consolidate an the transformer will be
+   * called just once for each document in the result set
+   * @param allowMultipleIndexEntriesForSameDocumentToResultTransformer
+   */
+  public void setAllowMultipleIndexEntriesForSameDocumentToResultTransformer(
+    boolean allowMultipleIndexEntriesForSameDocumentToResultTransformer) {
+    this.allowMultipleIndexEntriesForSameDocumentToResultTransformer = allowMultipleIndexEntriesForSameDocumentToResultTransformer;
+  }
 
   public Reference<Integer> getSkippedResults() {
     return skippedResults;

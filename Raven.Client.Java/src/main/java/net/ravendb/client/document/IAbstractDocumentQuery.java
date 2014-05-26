@@ -406,4 +406,6 @@ public interface IAbstractDocumentQuery<T> {
    */
   public IDocumentQuery<T> containsAll(String fieldName, Collection<Object> values);
 
+  public IDocumentQuery<T> setAllowMultipleIndexEntriesForSameDocumentToResultTransformer(boolean value);
+
 }

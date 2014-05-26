@@ -1,8 +1,6 @@
 package net.ravendb.abstractions.data;
 
 import java.util.Date;
-import java.util.List;
-
 
 public class LoadedDatabaseStatistics {
   private String name;

@@ -39,14 +39,10 @@ import net.ravendb.abstractions.json.linq.RavenJArray;
 import net.ravendb.abstractions.json.linq.RavenJObject;
 import net.ravendb.abstractions.json.linq.RavenJToken;
 import net.ravendb.abstractions.json.linq.RavenJValue;
-import net.ravendb.client.IDocumentStore;
 import net.ravendb.client.RavenDBAwareTests;
-import net.ravendb.client.connection.IDatabaseCommands;
-import net.ravendb.client.document.DocumentStore;
 import net.ravendb.samples.Developer;
 
 import org.apache.commons.lang.StringUtils;
-import org.junit.Ignore;
 import org.junit.Test;
 
 

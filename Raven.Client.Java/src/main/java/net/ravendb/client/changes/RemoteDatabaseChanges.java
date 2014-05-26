@@ -42,8 +42,6 @@ import net.ravendb.abstractions.util.Base62Util;
 import net.ravendb.client.connection.CreateHttpJsonRequestParams;
 import net.ravendb.client.connection.IDocumentStoreReplicationInformer;
 import net.ravendb.client.connection.OperationMetadata;
-import net.ravendb.client.connection.RavenUrlExtensions;
-import net.ravendb.client.connection.ReplicationInformer;
 import net.ravendb.client.connection.implementation.HttpJsonRequest;
 import net.ravendb.client.connection.implementation.HttpJsonRequestFactory;
 import net.ravendb.client.document.DocumentConvention;
@@ -238,7 +236,7 @@ public class RemoteDatabaseChanges implements IDatabaseChanges, AutoCloseable, I
     onError(new TimeoutException("Over 45 seconds have passed since we got a server heartbeat, even though we should get one every 10 seconds or so.\r\n This connection is now presumed dead, and will attempt reconnection"));
   }
 
-  private void logOnConnectionStatusChanged(Object sender, EventArgs eventArgs) {
+  protected void logOnConnectionStatusChanged(Object sender, EventArgs eventArgs) {
     logger.info("Connection (%s) status changed, new status: %s", url, connected);
   }
 
@@ -293,8 +291,6 @@ public class RemoteDatabaseChanges implements IDatabaseChanges, AutoCloseable, I
         if (StringUtils.isNotEmpty(value)) {
           sendUrl += "&value=" + UrlUtils.escapeUriString(value);
         }
-
-        sendUrl = RavenUrlExtensions.noCache(sendUrl);
 
         CreateHttpJsonRequestParams requestParams = new CreateHttpJsonRequestParams(null, sendUrl, HttpMethods.GET, null, credentials, conventions);
         requestParams.setAvoidCachingRequest(true);

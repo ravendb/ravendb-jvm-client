@@ -31,7 +31,6 @@ import net.ravendb.client.connection.CachedRequest;
 import net.ravendb.client.connection.CreateHttpJsonRequestParams;
 import net.ravendb.client.connection.IDocumentStoreReplicationInformer;
 import net.ravendb.client.connection.ObservableLineStream;
-import net.ravendb.client.connection.ReplicationInformer;
 import net.ravendb.client.connection.ServerClient.HandleReplicationStatusChangesCallback;
 import net.ravendb.client.connection.profiling.IHoldProfilingInformation;
 import net.ravendb.client.connection.profiling.RequestResultArgs;

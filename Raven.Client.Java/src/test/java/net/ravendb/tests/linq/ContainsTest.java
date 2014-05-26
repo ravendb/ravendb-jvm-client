@@ -22,8 +22,8 @@ public class ContainsTest extends RemoteClientTest {
 
   @QueryEntity
   public static class TestDoc {
-    private String someProperty;
-    private List<String> stringArray;
+    protected String someProperty;
+    protected List<String> stringArray;
 
     public String getSomeProperty() {
       return someProperty;

@@ -13,9 +13,8 @@ import java.util.TreeSet;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;
 
-
 import net.ravendb.abstractions.basic.Reference;
-import net.ravendb.abstractions.closure.Action0;
+import net.ravendb.abstractions.basic.Tuple;
 import net.ravendb.abstractions.closure.Action1;
 import net.ravendb.abstractions.closure.Action3;
 import net.ravendb.abstractions.closure.Function1;
@@ -1102,7 +1101,7 @@ public abstract class InMemoryDocumentSessionOperations implements AutoCloseable
     }
   }
 
-  //TODO: ProjectionToInstance is missing
+  //TODO: ProjectionToInstance and JsonObjectToClrInstancesWithoutTracking is missing
 
   @Override
   public int hashCode() {
@@ -1121,4 +1120,34 @@ public abstract class InMemoryDocumentSessionOperations implements AutoCloseable
     return indexName;
   }
 
+  public boolean checkIfIdAlreadyIncluded(String[] ids, Tuple<String, Class<?>>[] includes) {
+    for (String id : ids) {
+      if (knownMissingIds.contains(id)) {
+        continue;
+      }
+
+      if (!entitiesByKey.containsKey(id)) {
+        return false;
+      }
+      Object data = entitiesByKey.get(id);
+      if (!entitiesAndMetadata.containsKey(data)) {
+        return false;
+      }
+      DocumentMetadata value = entitiesAndMetadata.get(data);
+      for (Tuple<String, Class<?>> include : includes) {
+        final Reference<Boolean> hasAll = new Reference<>(true);
+        IncludesUtil.include(value.getOriginalValue(), include.getItem1(), new Action1<String>() {
+          @Override
+          public void apply(String s) {
+           hasAll.value &= isLoaded(s);
+          }
+        });
+        if (!hasAll.value) {
+          return false;
+        }
+      }
+    }
+
+    return true;
+  }
 }

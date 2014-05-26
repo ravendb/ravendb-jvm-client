@@ -60,7 +60,7 @@ public class HttpJsonRequestTest extends RavenDBAwareTests {
     convention.setFailoverBehavior(new FailoverBehaviorSet(FailoverBehavior.FAIL_IMMEDIATELY));
     factory = new HttpJsonRequestFactory(10);
 
-    replicationInformer = new ReplicationInformer(convention);
+    replicationInformer = new ReplicationInformer(convention, factory);
 
     serverClient = new ServerClient(DEFAULT_SERVER_URL_1, convention, new OperationCredentials(),
       new Functions.StaticFunction1<String, IDocumentStoreReplicationInformer>(replicationInformer), null, factory,

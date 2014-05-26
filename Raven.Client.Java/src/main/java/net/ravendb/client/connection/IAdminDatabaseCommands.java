@@ -1,7 +1,5 @@
 package net.ravendb.client.connection;
 
-import net.ravendb.abstractions.data.DatabaseDocument;
-
 public interface IAdminDatabaseCommands {
   /**
    *  Disables all indexing

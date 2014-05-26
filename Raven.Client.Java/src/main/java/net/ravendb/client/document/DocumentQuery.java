@@ -181,6 +181,7 @@ public class DocumentQuery<T> extends AbstractDocumentQuery<T, DocumentQuery<T>>
     documentQuery.sortByHints = sortByHints;
     documentQuery.orderByFields = orderByFields;
     documentQuery.distinct = distinct;
+    documentQuery.allowMultipleIndexEntriesForSameDocumentToResultTransformer = allowMultipleIndexEntriesForSameDocumentToResultTransformer;
     documentQuery.negate = negate;
     documentQuery.includes = new HashSet<>(includes);
     documentQuery.isSpatialQuery = isSpatialQuery;

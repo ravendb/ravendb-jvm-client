@@ -11,7 +11,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
@@ -43,7 +42,6 @@ import net.ravendb.samples.Developer;
 import net.ravendb.samples.entities.Company;
 import net.ravendb.samples.entities.Employee;
 
-import org.junit.Ignore;
 import org.junit.Test;
 import org.mockito.cglib.core.CollectionUtils;
 import org.mockito.cglib.core.Transformer;

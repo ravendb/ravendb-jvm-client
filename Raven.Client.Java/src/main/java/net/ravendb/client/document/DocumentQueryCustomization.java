@@ -174,6 +174,12 @@ public class DocumentQueryCustomization implements IDocumentQueryCustomization {
   }
 
   @Override
+  public IDocumentQueryCustomization setAllowMultipleIndexEntriesForSameDocumentToResultTransformer(boolean value) {
+    delegate.setAllowMultipleIndexEntriesForSameDocumentToResultTransformer(value);
+    return this;
+  }
+
+  @Override
   public IDocumentQueryCustomization setHighlighterTags(String preTag, String postTag) {
     delegate.setHighlighterTags(preTag, postTag);
     return this;

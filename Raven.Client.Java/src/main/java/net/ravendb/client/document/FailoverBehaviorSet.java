@@ -12,10 +12,12 @@ public class FailoverBehaviorSet extends EnumSet<FailoverBehavior, FailoverBehav
 
   public FailoverBehaviorSet(FailoverBehavior...values) {
     super(FailoverBehavior.class, Arrays.asList(values));
+    this.innerSetClass = FailoverBehaviorSet.class;
   }
 
   public FailoverBehaviorSet() {
     super(FailoverBehavior.class);
+    this.innerSetClass = FailoverBehaviorSet.class;
   }
 
   public static FailoverBehaviorSet of(FailoverBehavior... values) {

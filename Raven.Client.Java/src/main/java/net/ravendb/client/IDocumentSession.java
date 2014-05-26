@@ -238,6 +238,46 @@ public interface IDocumentSession extends AutoCloseable {
       Class<TResult> clazz, List<String> ids, LoadConfigurationFactory configure);
 
   /**
+   * Performs a load that will use the specified results transformer against the specified id
+   * @param tranformerClass The transformer to use in this load operation
+   * @param clazz The results shape to return after the load operation
+   * @param ids
+   * @param configure
+   * @return
+   */
+  public <TResult> TResult load(Class<TResult> clazz, String transformer, String id);
+
+  /**
+   * Performs a load that will use the specified results transformer against the specified id
+   * @param tranformerClass The transformer to use in this load operation
+   * @param clazz The results shape to return after the load operation
+   * @param ids
+   * @param configure
+   * @return
+   */
+  public <TResult> TResult load(Class<TResult> clazz, String transformer, String id, LoadConfigurationFactory configure);
+
+  /**
+   * Performs a load that will use the specified results transformer against the specified id
+   * @param tranformerClass The transformer to use in this load operation
+   * @param clazz The results shape to return after the load operation
+   * @param ids
+   * @param configure
+   * @return
+   */
+  public <TResult> TResult[] load(Class<TResult> clazz, String transformer, Collection<String> ids);
+
+  /**
+   * Performs a load that will use the specified results transformer against the specified id
+   * @param tranformerClass The transformer to use in this load operation
+   * @param clazz The results shape to return after the load operation
+   * @param ids
+   * @param configure
+   * @return
+   */
+  public <TResult> TResult[] load(Class<TResult> clazz, String transformer, Collection<String> ids, LoadConfigurationFactory configure);
+
+  /**
    * Saves all the changes to the Raven server.
    */
   public void saveChanges();

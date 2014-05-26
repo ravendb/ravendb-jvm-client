@@ -221,6 +221,15 @@ public interface IDocumentQueryCustomization {
   public IDocumentQueryCustomization highlight(String fieldName, int fragmentLength, int fragmentCount, Reference<FieldHighlightings> highlightings);
 
   /**
+   * If set to true, this property will send multiple index entries from the same document (assuming the index project them)
+   * to the result transformer function. Otherwise, those entries will be consolidate an the transformer will be
+   * called just once for each document in the result set
+   * @param val
+   * @return
+   */
+  public IDocumentQueryCustomization setAllowMultipleIndexEntriesForSameDocumentToResultTransformer(boolean val);
+
+  /**
    * Sets the tags to highlight matches with.
    * @param preTag Prefix tag.
    * @param postTag Postfix tag.

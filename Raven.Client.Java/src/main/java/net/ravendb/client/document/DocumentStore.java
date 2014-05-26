@@ -35,9 +35,7 @@ import net.ravendb.client.changes.IDatabaseChanges;
 import net.ravendb.client.changes.RemoteDatabaseChanges;
 import net.ravendb.client.connection.IDatabaseCommands;
 import net.ravendb.client.connection.IDocumentStoreReplicationInformer;
-import net.ravendb.client.connection.IReplicationInformerBase;
 import net.ravendb.client.connection.OperationMetadata;
-import net.ravendb.client.connection.ReplicationInformer;
 import net.ravendb.client.connection.ServerClient;
 import net.ravendb.client.connection.implementation.HttpJsonRequestFactory;
 import net.ravendb.client.connection.profiling.RequestResultArgs;
@@ -450,7 +448,7 @@ public class DocumentStore extends DocumentStoreBase {
     if (StringUtils.isNotEmpty(dbName)) {
       key = MultiDatabase.getRootDatabaseUrl(url) + "/databases/" + dbName;
     }
-    replicationInformers.putIfAbsent(key, conventions.getReplicationInformerFactory().create(key));
+    replicationInformers.putIfAbsent(key, conventions.getReplicationInformerFactory().create(key, jsonRequestFactory));
     IDocumentStoreReplicationInformer informer = replicationInformers.get(key);
 
     if (failoverServers == null) {

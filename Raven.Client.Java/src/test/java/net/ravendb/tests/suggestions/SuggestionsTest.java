@@ -15,7 +15,6 @@ import net.ravendb.client.document.DocumentStore;
 import net.ravendb.tests.bugs.QUser;
 import net.ravendb.tests.bugs.User;
 
-import org.junit.Ignore;
 import org.junit.Test;
 
 

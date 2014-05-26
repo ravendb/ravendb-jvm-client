@@ -733,6 +733,15 @@ public interface IDocumentQueryBase<T, TSelf extends IDocumentQueryBase<T, TSelf
   public TSelf noCaching();
 
   /**
+   * If set to true, this property will send multiple index entries from the same document (assuming the index project them)
+   * to the result transformer function. Otherwise, those entries will be consolidate an the transformer will be
+   * called just once for each document in the result set
+   * @param val
+   * @return
+   */
+  public TSelf setAllowMultipleIndexEntriesForSameDocumentToResultTransformer(boolean val);
+
+  /**
    * Apply distinct operation to this query
    * @return
    */

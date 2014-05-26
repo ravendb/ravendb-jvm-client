@@ -20,7 +20,7 @@ public class Predicates {
     private Predicate<T> left;
     private Predicate<T> right;
 
-    private AndPredicate(Predicate<T> left, Predicate<T> right) {
+    protected AndPredicate(Predicate<T> left, Predicate<T> right) {
       super();
       this.left = left;
       this.right = right;

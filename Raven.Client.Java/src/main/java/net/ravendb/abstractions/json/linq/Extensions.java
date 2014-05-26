@@ -10,8 +10,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
-import javax.print.Doc;
-
 import net.ravendb.abstractions.basic.CollectionUtils;
 import net.ravendb.abstractions.data.DocumentsChanges;
 import net.ravendb.abstractions.data.DocumentsChanges.ChangeType;
@@ -311,18 +309,6 @@ public class Extensions {
     documentsChanges.setChange(change);
 
     docChanges.add(documentsChanges);
-  }
-
-  public static void addChanges(List<DocumentsChanges> docChanges, String key, RavenJToken value, RavenJToken token) {
-    DocumentsChanges docChange = new DocumentsChanges();
-    docChange.setFieldNewType(value.getType().toString());
-    docChange.setFieldOldType(token.getType().toString());
-    docChange.setFieldNewValue(value.toString());
-    docChange.setFieldOldValue(token.toString());
-    docChange.setChange(ChangeType.FIELD_CHANGED);
-    docChange.setFieldName(key);
-
-    docChanges.add(docChange);
   }
 
   public static void addChanges(List<DocumentsChanges> docChanges, String key, RavenJToken value, RavenJToken token, String fieldName) {

@@ -33,7 +33,9 @@ public class Parallel {
       try {
         f.get();
       } catch (InterruptedException e) {
+        // ok
       } catch (ExecutionException e) {
+        // ok
       }
     }
 
@@ -59,7 +61,9 @@ public class Parallel {
       try {
         f.get();
       } catch (InterruptedException e) {
+        // empty
       } catch (ExecutionException e) {
+        // empty
       }
     }
 

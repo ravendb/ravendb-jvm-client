@@ -603,7 +603,7 @@ public class DocumentStoreServerTest extends RemoteClientTest {
       }
 
       try (IDocumentSession session = store.openSession()) {
-        Company[] companies = session.load(Company.class, "1", "2");
+        Company[] companies = session.load(Company.class, new String[] {  "1", "2" } );
         assertEquals(2, companies.length);
         assertEquals("Company A", companies[0].getName());
         assertEquals("Company B", companies[1].getName());
