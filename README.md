@@ -27,7 +27,7 @@ Sample pom:
   <repositories>
     <repository>
         <id>snapshots-repo</id>
-        <url>https://daily-builds.s3.amazonaws.com/maven/</url>
+        <url>http://ravendb-maven.s3.amazonaws.com/snapshots/</url>
         <releases>
            <enabled>false</enabled>
         </releases>
