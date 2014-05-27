@@ -26,6 +26,7 @@ import net.ravendb.client.document.FailoverBehaviorSet;
 import net.ravendb.client.listeners.IDocumentConflictListener;
 import net.ravendb.client.utils.UrlUtils;
 
+import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.CharUtils;
 import org.apache.commons.lang.time.DateUtils;
 import org.apache.http.HttpHost;
@@ -225,7 +226,7 @@ public abstract class RavenDBAwareTests {
       put.setEntity(new StringEntity(getCreateServerDocument(port), ContentType.APPLICATION_JSON));
       HttpResponse httpResponse = client.execute(put);
       if (httpResponse.getStatusLine().getStatusCode() != HttpStatus.SC_OK) {
-        throw new IllegalStateException("Invalid response on put:" + httpResponse.getStatusLine().getStatusCode());
+        throw new IllegalStateException("Invalid response on put:" + httpResponse.getStatusLine().getStatusCode() + IOUtils.toString(httpResponse.getEntity().getContent()));
       }
     } finally {
       if (put != null) {
