@@ -11,6 +11,7 @@ import net.ravendb.client.document.DocumentStore;
 import net.ravendb.tests.bugs.User;
 
 import org.apache.http.HttpStatus;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import com.google.common.base.Throwables;
@@ -19,6 +20,7 @@ import com.google.common.base.Throwables;
 
 public class OAuthTest extends RemoteClientTest  {
   @Test
+  @Ignore
   public void throws_unauthorized_when_api_key_is_missing() throws Exception {
     stopServerAfter();
     startServerWithOAuth(DEFAULT_SERVER_PORT_1);
@@ -41,6 +43,7 @@ public class OAuthTest extends RemoteClientTest  {
   }
 
   @Test
+  @Ignore
   public void throws_unauthorized_when_api_key_is_invalid() throws Exception {
     stopServerAfter();
     startServerWithOAuth(DEFAULT_SERVER_PORT_1);
@@ -66,6 +69,7 @@ public class OAuthTest extends RemoteClientTest  {
   }
 
   @Test
+  @Ignore
   public void throws_unauthorized_when_api_key_is_invalid2() throws Exception {
     stopServerAfter();
     startServerWithOAuth(DEFAULT_SERVER_PORT_1);
@@ -91,6 +95,7 @@ public class OAuthTest extends RemoteClientTest  {
   }
 
   @Test
+  @Ignore
   public void can_use_oauth() throws Exception {
     stopServerAfter();
     startServerWithOAuth(DEFAULT_SERVER_PORT_1);

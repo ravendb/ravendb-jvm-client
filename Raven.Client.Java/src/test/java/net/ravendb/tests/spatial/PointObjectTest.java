@@ -53,6 +53,11 @@ public class PointObjectTest extends RemoteClientTest {
     }
   }
 
+  public static void main(String[] args) throws Exception {
+    PointObjectTest pointObjectTest = new PointObjectTest();
+    pointObjectTest.pointTest();
+  }
+
   @Test
   public void pointTest() throws Exception {
     try (IDocumentStore store = new DocumentStore(getDefaultUrl(), getDefaultDb()).initialize()) {
