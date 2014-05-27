@@ -3,9 +3,9 @@ jvm-client
 
 RavenDB JVM Client
 
-RavenDB Client is available as snapshot in sonatype central repository. 
+RavenDB Client is available as snapshot in daily-builds S3 maven repository.
 
-Note: Embedding repositories in pom is not good practise, however allows quick start. Please consider moving repositories into ~/.m2/settings.xml. More information can be found here: http://maven.apache.org/guides/mini/guide-multiple-repositories.html 
+Note: Embedding repositories in pom is not good practise, however allows quick start. Please consider moving repositories into ~/.m2/settings.xml. More information can be found here: http://maven.apache.org/guides/mini/guide-multiple-repositories.html
 
 Sample pom:
 
@@ -27,7 +27,7 @@ Sample pom:
   <repositories>
     <repository>
         <id>snapshots-repo</id>
-        <url>https://oss.sonatype.org/content/repositories/snapshots</url>
+        <url>https://daily-builds.s3.amazonaws.com/maven/</url>
         <releases>
            <enabled>false</enabled>
         </releases>
