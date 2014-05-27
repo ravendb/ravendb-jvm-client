@@ -15,6 +15,7 @@ import net.ravendb.client.spatial.SpatialCriteriaFactory;
 import net.ravendb.tests.spatial.QPointObjectTest_SpatialDoc;
 
 import org.junit.Test;
+import org.junit.rules.TestName;
 
 import com.mysema.query.annotations.QueryEntity;
 
@@ -51,11 +52,6 @@ public class PointObjectTest extends RemoteClientTest {
       QPointObjectTest_SpatialDoc x = QPointObjectTest_SpatialDoc.spatialDoc;
       spatial(x.point, new SpatialOptionsFactory().getGeography().defaultOptions());
     }
-  }
-
-  public static void main(String[] args) throws Exception {
-    PointObjectTest pointObjectTest = new PointObjectTest();
-    pointObjectTest.pointTest();
   }
 
   @Test
