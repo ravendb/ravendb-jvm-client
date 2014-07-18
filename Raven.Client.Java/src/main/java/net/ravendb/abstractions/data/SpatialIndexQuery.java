@@ -72,7 +72,7 @@ public class SpatialIndexQuery extends IndexQuery {
     setHighlighterPreTags(query.getHighlighterPreTags());
     setHighlighterPostTags(query.getHighlighterPostTags());
     setHighlightedFields(query.getHighlightedFields());
-    setQueryInputs(query.getQueryInputs());
+    setTransformerParameters(query.getTransformerParameters());
     setResultsTransformer(query.getResultsTransformer());
   }
 

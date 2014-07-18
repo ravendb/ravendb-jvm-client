@@ -15,7 +15,6 @@ import net.ravendb.client.spatial.SpatialCriteriaFactory;
 import net.ravendb.tests.spatial.QPointObjectTest_SpatialDoc;
 
 import org.junit.Test;
-import org.junit.rules.TestName;
 
 import com.mysema.query.annotations.QueryEntity;
 

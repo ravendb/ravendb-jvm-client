@@ -10,11 +10,11 @@ import net.ravendb.client.connection.profiling.ConcurrentSet;
 
 
 public class TaskedObservable<T> implements IObservable<T> {
-  private final LocalConnectionState localConnectionState;
+  private final DatabaseConnectionState localConnectionState;
   private Predicate<T> filter;
   private ConcurrentSet<IObserver<T>> subscribers = new ConcurrentSet<>();
 
-  public TaskedObservable(LocalConnectionState localConnectionState, Predicate<T> filter) {
+  public TaskedObservable(DatabaseConnectionState localConnectionState, Predicate<T> filter) {
     this.localConnectionState = localConnectionState;
     this.filter = filter;
   }

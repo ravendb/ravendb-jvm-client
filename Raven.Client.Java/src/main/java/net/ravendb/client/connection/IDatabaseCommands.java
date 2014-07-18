@@ -97,20 +97,20 @@ public interface IDatabaseCommands extends IHoldProfilingInformation {
    * @param ids
    * @param includes
    * @param transformer
-   * @param queryInputs
+   * @param transformerParameters
    * @return
    */
-  public MultiLoadResult get(final String[] ids, final String[] includes, final String transformer, final Map<String, RavenJToken> queryInputs);
+  public MultiLoadResult get(final String[] ids, final String[] includes, final String transformer, final Map<String, RavenJToken> transformerParameters);
 
   /**
    * @param ids
    * @param includes
    * @param transformer
-   * @param queryInputs
+   * @param transformerParameters
    * @param metadataOnly
    * @return
    */
-  public MultiLoadResult get(final String[] ids, final String[] includes, final String transformer, final Map<String, RavenJToken> queryInputs, final boolean metadataOnly);
+  public MultiLoadResult get(final String[] ids, final String[] includes, final String transformer, final Map<String, RavenJToken> transformerParameters, final boolean metadataOnly);
 
   /**
    * Get documents from server
@@ -128,6 +128,15 @@ public interface IDatabaseCommands extends IHoldProfilingInformation {
    * @return
    */
   public List<JsonDocument> getDocuments(int start, int pageSize, boolean metadataOnly);
+
+  /**
+   * Performs index query
+   * @param index
+   * @param query
+   * @param includes
+   * @return
+   */
+  public QueryResult query(String index, IndexQuery query);
 
   /**
    * Performs index query
@@ -258,6 +267,15 @@ public interface IDatabaseCommands extends IHoldProfilingInformation {
   public String putIndex(String name, IndexDefinitionBuilder indexDef, boolean overwrite);
 
   /**
+   * Checks if passed index definition matches version stored on server.
+   * If index does not exist this method returns true.
+   * @param name
+   * @param indexDef
+   * @return
+   */
+  public boolean indexHasChanged(String name, IndexDefinition indexDef);
+
+  /**
    * Delete index
    * @param name
    */
@@ -386,21 +404,6 @@ public interface IDatabaseCommands extends IHoldProfilingInformation {
    * @return
    */
   public DatabaseStatistics getStatistics();
-
-  /**
-   * Returns list of database names
-   * @param pageSize
-   * @return
-   */
-  List<String> getDatabaseNames(int pageSize);
-
-  /**
-   * Returns list of database names
-   * @param pageSize
-   * @param start
-   * @return
-   */
-  public List<String> getDatabaseNames(int pageSize, int start);
 
   /**
    * Gets the attachment by the specified key
@@ -579,7 +582,7 @@ public interface IDatabaseCommands extends IHoldProfilingInformation {
   public List<JsonDocument> startsWith(String keyPrefix, String matches, int start, int pageSize, boolean metadataOnly, String exclude, RavenPagingInformation pagingInformation);
 
   public List<JsonDocument> startsWith(String keyPrefix, String matches, int start, int pageSize, boolean metadataOnly,
-    String exclude, RavenPagingInformation pagingInformation, String transformer, Map<String, RavenJToken> queryInputs);
+    String exclude, RavenPagingInformation pagingInformation, String transformer, Map<String, RavenJToken> transformerParameters);
 
   /**
    * Seeds the next identity value on the server

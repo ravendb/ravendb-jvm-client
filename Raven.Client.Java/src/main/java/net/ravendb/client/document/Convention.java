@@ -11,6 +11,8 @@ import org.apache.commons.lang.reflect.FieldUtils;
 import org.apache.http.HttpRequest;
 import org.apache.http.HttpResponse;
 
+import com.mysema.query.types.Expression;
+
 import net.ravendb.abstractions.closure.Action1;
 import net.ravendb.abstractions.connection.OperationCredentials;
 import net.ravendb.client.delegates.HttpResponseHandler;
@@ -18,6 +20,7 @@ import net.ravendb.client.delegates.HttpResponseWithMetaHandler;
 import net.ravendb.client.delegates.IdentityPropertyFinder;
 import net.ravendb.client.delegates.RequestCachePolicy;
 import net.ravendb.client.indexes.AbstractIndexCreationTask;
+import net.ravendb.client.linq.LinqPathProvider;
 
 
 public class Convention {
@@ -35,6 +38,8 @@ public class Convention {
   private HttpResponseHandler handleForbiddenResponse;
 
   private HttpResponseWithMetaHandler handleUnauthorizedResponse;
+
+  private boolean saveEnumsAsIntegers;
 
   /**
    * How should we behave in a replicated environment when we can't
@@ -189,4 +194,35 @@ public class Convention {
     return handleUnauthorizedResponse.handle(unauthorizedResponse, credentials);
   }
 
+  private List<CustomQueryExpressionTranslator> customQueryTranslators = new ArrayList<>();
+
+  public void registerCustomQueryTranslator(CustomQueryExpressionTranslator translator) {
+    customQueryTranslators.add(translator);
+  }
+
+  public LinqPathProvider.Result translateCustomQueryExpression(LinqPathProvider provider, Expression<?> expression) {
+    for (CustomQueryExpressionTranslator translator: customQueryTranslators) {
+      if (translator.canTransform(expression)) {
+        return translator.translate(expression);
+      }
+    }
+    return null;
+  }
+
+
+  /**
+   * Saves Enums as integers and instruct the Linq provider to query enums as integer values.
+   * @return
+   */
+  public boolean isSaveEnumsAsIntegers() {
+    return saveEnumsAsIntegers;
+  }
+
+  /**
+   * Saves Enums as integers and instruct the Linq provider to query enums as integer values.
+   * @param saveEnumsAsIntegers
+   */
+  public void setSaveEnumsAsIntegers(boolean saveEnumsAsIntegers) {
+    this.saveEnumsAsIntegers = saveEnumsAsIntegers;
+  }
 }

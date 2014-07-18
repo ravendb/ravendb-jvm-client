@@ -6,6 +6,22 @@ import net.ravendb.abstractions.data.RestoreRequest;
 
 
 public interface IGlobalAdminDatabaseCommands {
+
+  /**
+   * Returns the names of all tenant databases on the RavenDB server
+   * @param pageSize
+   * @return
+   */
+  public String[] getDatabaseNames(int pageSize);
+
+  /**
+   * Returns the names of all tenant databases on the RavenDB server
+   * @param pageSize
+   * @param start
+   * @return
+   */
+  public String[] getDatabaseNames(int pageSize, int start);
+
   /**
    * Get admin statistics
    * @return

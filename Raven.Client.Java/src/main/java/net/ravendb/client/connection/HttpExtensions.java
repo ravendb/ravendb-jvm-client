@@ -1,6 +1,7 @@
 package net.ravendb.client.connection;
 
 
+import net.ravendb.abstractions.data.Constants;
 import net.ravendb.abstractions.data.Etag;
 import net.ravendb.abstractions.data.GetResponse;
 import net.ravendb.client.connection.implementation.HttpJsonRequest;
@@ -11,7 +12,7 @@ import org.apache.http.HttpResponse;
 
 public class HttpExtensions {
   public static Etag getEtagHeader(HttpJsonRequest request) {
-    return etagHeaderToEtag(request.getResponseHeaders().get("ETag"));
+    return etagHeaderToEtag(request.getResponseHeaders().get(Constants.METADATA_ETAG_FIELD));
   }
 
   public static Etag etagHeaderToEtag(String responseHeader) {
@@ -25,10 +26,10 @@ public class HttpExtensions {
   }
 
   public static Etag getEtagHeader(HttpResponse httpResponse) {
-    return etagHeaderToEtag(httpResponse.getFirstHeader("ETag").getValue());
+    return etagHeaderToEtag(httpResponse.getFirstHeader(Constants.METADATA_ETAG_FIELD).getValue());
   }
 
   public static Etag getEtagHeader(GetResponse response) {
-    return etagHeaderToEtag(response.getHeaders().get("ETag"));
+    return etagHeaderToEtag(response.getHeaders().get(Constants.METADATA_ETAG_FIELD));
   }
 }

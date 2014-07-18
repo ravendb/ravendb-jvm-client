@@ -15,7 +15,7 @@ import net.ravendb.abstractions.data.TransformerChangeNotification;
 
 
 
-public class LocalConnectionState {
+public class DatabaseConnectionState implements IChangesConnectionState {
   private final Action0 onZero;
   private int value;
 
@@ -76,7 +76,7 @@ public class LocalConnectionState {
     EventHelper.invoke(onError, new ExceptionEventArgs(e));
   }
 
-  public LocalConnectionState(Action0 onZero) {
+  public DatabaseConnectionState(Action0 onZero) {
     value =0;
     this.onZero = onZero;
   }

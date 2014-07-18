@@ -76,7 +76,7 @@ public class RemoteDatabaseChanges implements IDatabaseChanges, AutoCloseable, I
   private final IDocumentStoreReplicationInformer replicationInformer;
   private final Action0 onDispose;
   private final Function4<String, Etag, String[] , OperationMetadata, Boolean> tryResolveConflictByUsingRegisteredConflictListeners;
-  protected final AtomicDictionary<LocalConnectionState> counters = new AtomicDictionary<>(String.CASE_INSENSITIVE_ORDER);
+  protected final AtomicDictionary<DatabaseConnectionState> counters = new AtomicDictionary<>(String.CASE_INSENSITIVE_ORDER);
   private Closeable connection;
   private Date lastHeartbeat = new Date();
 
@@ -242,14 +242,14 @@ public class RemoteDatabaseChanges implements IDatabaseChanges, AutoCloseable, I
 
   @Override
   public IObservable<IndexChangeNotification> forIndex(final String indexName) {
-    LocalConnectionState counter = counters.getOrAdd("indexes/" + indexName, new Function1<String, LocalConnectionState>() {
+    DatabaseConnectionState counter = counters.getOrAdd("indexes/" + indexName, new Function1<String, DatabaseConnectionState>() {
 
       @Override
-      public LocalConnectionState apply(String s) {
+      public DatabaseConnectionState apply(String s) {
         watchedIndexes.add(indexName);
         send("watch-index", indexName);
 
-        return new LocalConnectionState(new Action0() {
+        return new DatabaseConnectionState(new Action0() {
           @Override
           public void apply() {
             watchedIndexes.remove(indexName);
@@ -304,13 +304,13 @@ public class RemoteDatabaseChanges implements IDatabaseChanges, AutoCloseable, I
 
   @Override
   public IObservable<DocumentChangeNotification> forDocument(final String docId) {
-    LocalConnectionState counter = counters.getOrAdd("docs/" + docId, new Function1<String, LocalConnectionState>() {
+    DatabaseConnectionState counter = counters.getOrAdd("docs/" + docId, new Function1<String, DatabaseConnectionState>() {
       @Override
-      public LocalConnectionState apply(String s) {
+      public DatabaseConnectionState apply(String s) {
         watchedDocs.add(docId);
         send("watch-doc", docId);
 
-        return new LocalConnectionState(new Action0() {
+        return new DatabaseConnectionState(new Action0() {
           @Override
           public void apply() {
             watchedDocs.remove(docId);
@@ -345,13 +345,13 @@ public class RemoteDatabaseChanges implements IDatabaseChanges, AutoCloseable, I
 
   @Override
   public IObservable<DocumentChangeNotification> forAllDocuments() {
-    LocalConnectionState counter = counters.getOrAdd("all-docs", new Function1<String, LocalConnectionState>() {
+    DatabaseConnectionState counter = counters.getOrAdd("all-docs", new Function1<String, DatabaseConnectionState>() {
       @Override
-      public LocalConnectionState apply(String s) {
+      public DatabaseConnectionState apply(String s) {
         watchAllDocs = true;
         send("watch-docs", null);
 
-        return new LocalConnectionState(new Action0() {
+        return new DatabaseConnectionState(new Action0() {
           @Override
           public void apply() {
             watchAllDocs = false;
@@ -384,13 +384,13 @@ public class RemoteDatabaseChanges implements IDatabaseChanges, AutoCloseable, I
 
     final String id = operationId.toString();
 
-    LocalConnectionState counter = counters.getOrAdd("bulk-operations/" + id, new Function1<String, LocalConnectionState>() {
+    DatabaseConnectionState counter = counters.getOrAdd("bulk-operations/" + id, new Function1<String, DatabaseConnectionState>() {
       @Override
-      public LocalConnectionState apply(String s) {
+      public DatabaseConnectionState apply(String s) {
         watchedBulkInserts.add(id);
         send("watch-bulk-operation", id);
 
-        return new LocalConnectionState(new Action0() {
+        return new DatabaseConnectionState(new Action0() {
           @Override
           public void apply() {
             watchedBulkInserts.remove(id);
@@ -425,14 +425,14 @@ public class RemoteDatabaseChanges implements IDatabaseChanges, AutoCloseable, I
 
   @Override
   public IObservable<IndexChangeNotification> forAllIndexes() {
-    LocalConnectionState counter = counters.getOrAdd("all-indexes", new Function1<String, LocalConnectionState>() {
+    DatabaseConnectionState counter = counters.getOrAdd("all-indexes", new Function1<String, DatabaseConnectionState>() {
 
       @Override
-      public LocalConnectionState apply(String s) {
+      public DatabaseConnectionState apply(String s) {
         watchAllIndexes = true;
         send("watch-indexes", null);
 
-        return new LocalConnectionState(new Action0() {
+        return new DatabaseConnectionState(new Action0() {
           @Override
           public void apply() {
             watchAllIndexes = false;
@@ -462,14 +462,14 @@ public class RemoteDatabaseChanges implements IDatabaseChanges, AutoCloseable, I
 
   @Override
   public IObservable<TransformerChangeNotification> forAllTransformers() {
-    LocalConnectionState counter = counters.getOrAdd("all-transformers", new Function1<String, LocalConnectionState>() {
+    DatabaseConnectionState counter = counters.getOrAdd("all-transformers", new Function1<String, DatabaseConnectionState>() {
 
       @Override
-      public LocalConnectionState apply(String s) {
+      public DatabaseConnectionState apply(String s) {
         watchAllTransformers = true;
         send("watch-transformers", null);
 
-        return new LocalConnectionState(new Action0() {
+        return new DatabaseConnectionState(new Action0() {
           @Override
           public void apply() {
             watchAllTransformers = false;
@@ -499,13 +499,13 @@ public class RemoteDatabaseChanges implements IDatabaseChanges, AutoCloseable, I
 
   @Override
   public IObservable<DocumentChangeNotification> forDocumentsStartingWith(final String docIdPrefix) {
-    LocalConnectionState counter = counters.getOrAdd("prefixes" + docIdPrefix, new Function1<String, LocalConnectionState>() {
+    DatabaseConnectionState counter = counters.getOrAdd("prefixes" + docIdPrefix, new Function1<String, DatabaseConnectionState>() {
       @Override
-      public LocalConnectionState apply(String s) {
+      public DatabaseConnectionState apply(String s) {
         watchedPrefixes.add(docIdPrefix);
         send("watch-prefix", docIdPrefix);
 
-        return new LocalConnectionState(new Action0() {
+        return new DatabaseConnectionState(new Action0() {
           @Override
           public void apply() {
             watchedPrefixes.remove(docIdPrefix);
@@ -543,13 +543,13 @@ public class RemoteDatabaseChanges implements IDatabaseChanges, AutoCloseable, I
     if (collectionName == null) {
       throw new IllegalArgumentException("Collection name is null");
     }
-    LocalConnectionState counter = counters.getOrAdd("collections/" + collectionName, new Function1<String, LocalConnectionState>() {
+    DatabaseConnectionState counter = counters.getOrAdd("collections/" + collectionName, new Function1<String, DatabaseConnectionState>() {
       @Override
-      public LocalConnectionState apply(String s) {
+      public DatabaseConnectionState apply(String s) {
         watchedCollections.add(collectionName);
         send("watch-collection", collectionName);
 
-        return new LocalConnectionState(new Action0() {
+        return new DatabaseConnectionState(new Action0() {
           @Override
           public void apply() {
             watchedCollections.remove(collectionName);
@@ -595,13 +595,13 @@ public class RemoteDatabaseChanges implements IDatabaseChanges, AutoCloseable, I
     }
     final String encodedTypeName = UrlUtils.escapeDataString(typeName);
 
-    LocalConnectionState counter = counters.getOrAdd("types/" + typeName, new Function1<String, LocalConnectionState>() {
+    DatabaseConnectionState counter = counters.getOrAdd("types/" + typeName, new Function1<String, DatabaseConnectionState>() {
       @Override
-      public LocalConnectionState apply(String s) {
+      public DatabaseConnectionState apply(String s) {
         watchedTypes.add(typeName);
         send("watch-type", encodedTypeName);
 
-        return new LocalConnectionState(new Action0() {
+        return new DatabaseConnectionState(new Action0() {
           @Override
           public void apply() {
             watchedTypes.remove(typeName);
@@ -643,13 +643,13 @@ public class RemoteDatabaseChanges implements IDatabaseChanges, AutoCloseable, I
 
   @Override
   public IObservable<ReplicationConflictNotification> forAllReplicationConflicts() {
-    LocalConnectionState counter = counters.getOrAdd("all-replication-conflicts", new Function1<String, LocalConnectionState>() {
+    DatabaseConnectionState counter = counters.getOrAdd("all-replication-conflicts", new Function1<String, DatabaseConnectionState>() {
       @Override
-      public LocalConnectionState apply(String s) {
+      public DatabaseConnectionState apply(String s) {
         watchAllIndexes = true;
         send("watch-replication-conflicts", null);
 
-        return new LocalConnectionState(new Action0() {
+        return new DatabaseConnectionState(new Action0() {
           @Override
           public void apply() {
             watchAllIndexes = false;
@@ -721,33 +721,33 @@ public class RemoteDatabaseChanges implements IDatabaseChanges, AutoCloseable, I
       switch (type) {
         case "DocumentChangeNotification":
           DocumentChangeNotification documentChangeNotification = mapper.readValue(value.toString(), DocumentChangeNotification.class);
-          for (LocalConnectionState counter : counters.values()) {
+          for (DatabaseConnectionState counter : counters.values()) {
             counter.send(documentChangeNotification);
           }
           break;
 
         case "BulkInsertChangeNotification":
           BulkInsertChangeNotification bulkInsertChangeNotification = mapper.readValue(value.toString(), BulkInsertChangeNotification.class);
-          for (LocalConnectionState counter : counters.values()) {
+          for (DatabaseConnectionState counter : counters.values()) {
             counter.send(bulkInsertChangeNotification);
           }
           break;
 
         case "IndexChangeNotification":
           IndexChangeNotification indexChangeNotification = mapper.readValue(value.toString(), IndexChangeNotification.class);
-          for (LocalConnectionState counter : counters.values()) {
+          for (DatabaseConnectionState counter : counters.values()) {
             counter.send(indexChangeNotification);
           }
           break;
         case "TransformerChangeNotification":
           TransformerChangeNotification transformerChangeNotification = mapper.readValue(value.toString(), TransformerChangeNotification.class);
-          for (LocalConnectionState counter : counters.values()) {
+          for (DatabaseConnectionState counter : counters.values()) {
             counter.send(transformerChangeNotification);
           }
           break;
         case "ReplicationConflictNotification":
           ReplicationConflictNotification replicationConflictNotification = mapper.readValue(value.toString(), ReplicationConflictNotification.class);
-          for (LocalConnectionState counter: counters.values()) {
+          for (DatabaseConnectionState counter: counters.values()) {
             counter.send(replicationConflictNotification);
           }
           if (replicationConflictNotification.getItemType().equals(ReplicationConflictTypes.DOCUMENT_REPLICATION_CONFLICT)) {
@@ -791,7 +791,7 @@ public class RemoteDatabaseChanges implements IDatabaseChanges, AutoCloseable, I
     try {
       establishConnection();
     } catch (Exception e) {
-      for (Map.Entry<String, LocalConnectionState> keyValuePair : counters) {
+      for (Map.Entry<String, DatabaseConnectionState> keyValuePair : counters) {
         keyValuePair.getValue().error(e);
       }
       counters.clear();

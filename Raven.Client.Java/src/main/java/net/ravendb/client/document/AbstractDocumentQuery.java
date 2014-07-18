@@ -111,7 +111,7 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
 
   protected Tuple<String, String> lastEquality;
 
-  protected Map<String, RavenJToken> queryInputs = new HashMap<>();
+  protected Map<String, RavenJToken> transformerParameters = new HashMap<>();
 
   /**
    * The list of fields to project directly from the results
@@ -231,6 +231,11 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
   protected boolean disableCaching;
 
   /**
+   * Indicates if detailed timings should be calculated for various query parts (Lucene search, loading documents, transforming results). Default: false
+   */
+  protected boolean showQueryTimings;
+
+  /**
    * Determine if scores of query results should be explained
    */
   protected boolean shouldExplainScores;
@@ -347,9 +352,10 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
     highlightedFields = other.highlightedFields;
     highlighterPreTags = other.highlighterPreTags;
     highlighterPostTags = other.highlighterPostTags;
-    queryInputs = other.queryInputs;
+    transformerParameters = other.transformerParameters;
     disableEntitiesTracking = other.disableEntitiesTracking;
     disableCaching = other.disableCaching;
+    showQueryTimings = other.showQueryTimings;
     shouldExplainScores = other.shouldExplainScores;
     isMapReduce = false;
     fieldsToFetch = null;
@@ -741,6 +747,12 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
   @SuppressWarnings("unchecked")
   public IDocumentQuery<T> noCaching() {
     disableCaching = true;
+    return (IDocumentQuery<T>) this;
+  }
+
+  @SuppressWarnings("unchecked")
+  public IDocumentQuery<T> showTimings() {
+    showQueryTimings = true;
     return (IDocumentQuery<T>) this;
   }
 
@@ -1496,8 +1508,9 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
       spatialIndexQuery.setHighlighterPreTags(highlighterPreTags);
       spatialIndexQuery.setHighlighterPostTags(highlighterPostTags);
       spatialIndexQuery.setResultsTransformer(resultsTransformer);
-      spatialIndexQuery.setQueryInputs(queryInputs);
+      spatialIndexQuery.setTransformerParameters(transformerParameters);
       spatialIndexQuery.setDisableCaching(disableCaching);
+      spatialIndexQuery.setShowTimings(showQueryTimings);
       spatialIndexQuery.setExplainScores(shouldExplainScores);
 
       return spatialIndexQuery;
@@ -1528,8 +1541,9 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
     indexQuery.setHighlighterPostTags(highlighterPostTags);
     indexQuery.setResultsTransformer(resultsTransformer);
     indexQuery.setAllowMultipleIndexEntriesForSameDocumentToResultTransformer(allowMultipleIndexEntriesForSameDocumentToResultTransformer);
-    indexQuery.setQueryInputs(queryInputs);
+    indexQuery.setTransformerParameters(transformerParameters);
     indexQuery.setDisableCaching(disableCaching);
+    indexQuery.setShowTimings(showQueryTimings);
     indexQuery.setExplainScores(shouldExplainScores);
 
     if (pageSize != null) {

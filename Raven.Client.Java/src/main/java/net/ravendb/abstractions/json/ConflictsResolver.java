@@ -1,8 +1,6 @@
 package net.ravendb.abstractions.json;
 
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.StringReader;
 import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -12,14 +10,16 @@ import java.util.Map.Entry;
 import java.util.Set;
 import java.util.TreeSet;
 
-import org.codehaus.jackson.JsonFactory;
-import org.codehaus.jackson.JsonGenerator;
-
 import net.ravendb.abstractions.json.linq.JTokenType;
 import net.ravendb.abstractions.json.linq.RavenJArray;
 import net.ravendb.abstractions.json.linq.RavenJObject;
 import net.ravendb.abstractions.json.linq.RavenJToken;
 import net.ravendb.abstractions.json.linq.RavenJTokenComparator;
+
+import org.apache.commons.lang.StringUtils;
+import org.codehaus.jackson.JsonFactory;
+import org.codehaus.jackson.JsonGenerationException;
+import org.codehaus.jackson.JsonGenerator;
 
 
 public class ConflictsResolver {
@@ -27,15 +27,22 @@ public class ConflictsResolver {
   private RavenJObject[] docs;
   private RavenJTokenComparator ravenJTokenComparator = new RavenJTokenComparator();
 
-  public ConflictsResolver(RavenJObject... docs) {
-    this.docs = docs;
+  private final boolean isMetadataResolver;
+
+  public ConflictsResolver(RavenJObject... result) {
+    this(result, false);
   }
 
-  public String resolve() {
+  public ConflictsResolver(RavenJObject[] docs, boolean isMetadataResolver) {
+    this.docs = docs;
+    this.isMetadataResolver = isMetadataResolver;
+  }
+
+  public MergeResult resolve() throws JsonGenerationException, IOException {
     return resolve(1);
   }
 
-  public String resolve(int indent) {
+  public MergeResult resolve(int indent) throws JsonGenerationException, IOException {
     Map<String, Object> result = new HashMap<>();
     for (int index = 0; index < docs.length; index++) {
       RavenJObject doc = docs[index];
@@ -74,6 +81,9 @@ public class ConflictsResolver {
         token = docs[i].get(prop.getKey());
         if (token.getType() != JTokenType.ARRAY) {
           return false;
+        }
+        if (token.isSnapshot()) {
+          token = token.createSnapshot();
         }
         arrays.add((RavenJArray) token);
       }
@@ -125,7 +135,7 @@ public class ConflictsResolver {
         others.add((RavenJObject)token);
       }
     }
-    result.put(prop.getKey(), new ConflictsResolver(others.toArray(new RavenJObject[0])));
+    result.put(prop.getKey(), new ConflictsResolver(others.toArray(new RavenJObject[0]), prop.getKey().equals("@metadata") || isMetadataResolver));
     return true;
   }
 
@@ -156,74 +166,100 @@ public class ConflictsResolver {
     }
   }
 
-  private static String generateOutput(Map<String, Object> result, int indent) {
-    try {
-      JsonFactory factory = new JsonFactory();
-      StringWriter stringWriter = new StringWriter();
-      JsonGenerator writer = factory.createJsonGenerator(stringWriter);
-
-      writer.writeStartObject();
-      for (Map.Entry<String, Object> o : result.entrySet()) {
-        writer.writeFieldName(o.getKey());
-        if (o.getValue() instanceof RavenJToken) {
-          RavenJToken ravenJToken = (RavenJToken) o.getValue();
-          ravenJToken.writeTo(writer);
-          continue;
-        }
-        if (o.getValue() instanceof Conflicted) {
-          Conflicted conflicted = (Conflicted) o.getValue();
-          writer.writeRaw("/* >>>> conflict start */");
-          writer.writeStartArray();
-          for (RavenJToken token : conflicted.getValues()) {
-            token.writeTo(writer);
-          }
-          writer.writeEndArray();
-          writer.writeRaw("/* <<<< conflict end */");
-          continue;
-        }
-
-        if (o.getValue() instanceof ArrayWithWarning) {
-          ArrayWithWarning arrayWithWarning = (ArrayWithWarning) o.getValue();
-          writer.writeRaw("/* >>>> auto merged array start */");
-          arrayWithWarning.getMergedArray().writeTo(writer);
-          writer.writeRaw("/* <<<< auto merged array end */");
-          continue;
-        }
-
-        if (o.getValue() instanceof ConflictsResolver) {
-          ConflictsResolver resolver = (ConflictsResolver) o.getValue();
-
-          BufferedReader stringReader = new BufferedReader(new StringReader(resolver.resolve(indent + 1)));
-          boolean first = true;
-          String line = null;
-          while ((line = stringReader.readLine()) != null) {
-            if (!first) {
-              writer.writeRaw(System.lineSeparator());
-              for (int i = 0; i < indent; i++) {
-                writer.writeRaw(" ");
-              }
-            }
-            if (first) {
-              writer.writeRawValue(line);
-            } else {
-              writer.writeRaw(line);
-            }
-
-            first = false;
-          }
-
-          continue;
-        }
-
-        throw new IllegalStateException("Could not understand how to deal with: " + o.getValue());
-
-      }
-      writer.writeEndObject();
-      writer.close();
-      return stringWriter.getBuffer().toString();
-    } catch (IOException e) {
-      throw new RuntimeException(e);
+  private void writeToken(JsonGenerator writer, String propertyName, Object propertyValue) throws JsonGenerationException, IOException {
+    if (isMetadataResolver &&
+      (propertyName.startsWith("Raven-Replication-")
+        || propertyName.startsWith("@")
+        || "Last-Modified".equals(propertyName)
+        || "Raven-Last-Modified".equals(propertyName))) {
+      return;
     }
+
+    writer.writeFieldName(propertyName);
+    if (propertyValue instanceof RavenJToken) {
+      RavenJToken ravenJToken = (RavenJToken) propertyValue;
+      ravenJToken.writeTo(writer);
+      return;
+    }
+    if (propertyValue instanceof Conflicted) {
+      Conflicted conflicted = (Conflicted) propertyValue;
+      writer.writeRaw("/* >>>> conflict start */");
+      writer.writeStartArray();
+      for (RavenJToken token: conflicted.getValues()) {
+        token.writeTo(writer);
+      }
+      writer.writeEndArray();
+      writer.writeRaw("/* <<<< conflict end */");
+      return;
+    }
+
+    if (propertyValue instanceof ArrayWithWarning) {
+      ArrayWithWarning arrayWithWarning = (ArrayWithWarning) propertyValue;
+      writer.writeRaw("/* >>>> auto merged array start */");
+      arrayWithWarning.getMergedArray().writeTo(writer);
+      writer.writeRaw("/* <<<< auto merged array end */");
+      return;
+    }
+
+    throw new IllegalStateException("Could not understand how to deal with: " + propertyValue);
+  }
+
+  private void writeRawData(JsonGenerator writer, String data, int indent) throws JsonGenerationException, IOException {
+    StringBuffer sb = new StringBuffer();
+    String[] lines = data.split("\n");
+    boolean first = true;
+    for (String line: lines) {
+      if (!first) {
+        sb.append('\n');
+        sb.append(StringUtils.repeat(" ", 2 * indent));
+      }
+
+      sb.append(line);
+      first = false;
+    }
+
+    writer.writeRawValue(sb.toString());
+  }
+
+  private void writeConflictResolver(String name, JsonGenerator documentWriter, JsonGenerator metadataWriter, ConflictsResolver resolver, int indent) throws JsonGenerationException, IOException {
+    MergeResult result = resolver.resolve(indent);
+
+    if (resolver.isMetadataResolver) {
+      metadataWriter.writeFieldName(name);
+      writeRawData(metadataWriter, result.getDocument(), indent);
+    } else {
+      documentWriter.writeFieldName(name);
+      writeRawData(documentWriter, result.getDocument(), indent);
+    }
+  }
+
+  private MergeResult generateOutput(Map<String, Object> result, int indent) throws JsonGenerationException, IOException {
+
+    JsonFactory factory = new JsonFactory();
+    StringWriter documentStringWriter = new StringWriter();
+    JsonGenerator documentWriter = factory.createJsonGenerator(documentStringWriter);
+
+    StringWriter metadataStringWriter = new StringWriter();
+    JsonGenerator metadataWriter = factory.createJsonGenerator(metadataStringWriter);
+
+    documentWriter.writeStartObject();
+    for (Map.Entry<String, Object> o: result.entrySet()) {
+      if (o.getValue() instanceof ConflictsResolver) {
+        writeConflictResolver(o.getKey(), documentWriter, metadataWriter, (ConflictsResolver) o.getValue(), indent + 1);
+      } else {
+        writeToken("@metadata".equals(o.getKey()) ? metadataWriter : documentWriter, o.getKey(), o.getValue());
+      }
+    }
+    documentWriter.writeEndObject();
+
+    documentWriter.close();
+    metadataWriter.close();
+
+    MergeResult mergeResult = new MergeResult();
+    mergeResult.setDocument(documentStringWriter.getBuffer().toString());
+    mergeResult.setMetadata(metadataStringWriter.getBuffer().toString());
+    return mergeResult;
+
   }
 
 
@@ -249,4 +285,49 @@ public class ConflictsResolver {
       this.mergedArray = mergedArray;
     }
   }
+
+  public static class MergeChunk {
+    private boolean isMetadata;
+    private String data;
+
+    public boolean isMetadata() {
+      return isMetadata;
+    }
+
+    public void setMetadata(boolean isMetadata) {
+      this.isMetadata = isMetadata;
+    }
+
+    public String getData() {
+      return data;
+    }
+
+    public void setData(String data) {
+      this.data = data;
+    }
+
+  }
+
+  public static class MergeResult {
+    private String document;
+    private String metadata;
+
+    public String getDocument() {
+      return document;
+    }
+
+    public void setDocument(String document) {
+      this.document = document;
+    }
+
+    public String getMetadata() {
+      return metadata;
+    }
+
+    public void setMetadata(String metadata) {
+      this.metadata = metadata;
+    }
+
+  }
+
 }

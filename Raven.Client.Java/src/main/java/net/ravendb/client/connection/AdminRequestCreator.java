@@ -6,7 +6,9 @@ import net.ravendb.abstractions.closure.Function3;
 import net.ravendb.abstractions.data.Constants;
 import net.ravendb.abstractions.data.DatabaseDocument;
 import net.ravendb.abstractions.data.HttpMethods;
+import net.ravendb.abstractions.json.linq.RavenJArray;
 import net.ravendb.abstractions.json.linq.RavenJObject;
+import net.ravendb.abstractions.json.linq.RavenJToken;
 import net.ravendb.client.connection.implementation.HttpJsonRequest;
 import net.ravendb.client.extensions.MultiDatabase;
 import net.ravendb.client.utils.UrlUtils;
@@ -56,8 +58,13 @@ public class AdminRequestCreator {
     return createReplicationAwareRequest.apply(serverUrl, "/admin/StopIndexing", HttpMethods.POST);
   }
 
-  public HttpJsonRequest startIndexing(String serverUrl) {
-    return createReplicationAwareRequest.apply(serverUrl, "/admin/StartIndexing", HttpMethods.POST);
+  public HttpJsonRequest startIndexing(String serverUrl, Integer maxNumberOfParallelIndexTasks) {
+    String url = "/admin/StartIndexing";
+    if (maxNumberOfParallelIndexTasks != null)
+    {
+        url += "?concurrency=" + maxNumberOfParallelIndexTasks;
+    }
+    return createReplicationAwareRequest.apply(serverUrl, url, HttpMethods.POST);
   }
 
   public HttpJsonRequest adminStats() {
@@ -82,4 +89,22 @@ public class AdminRequestCreator {
   public HttpJsonRequest compactDatabase(String databaseName) {
     return createRequestForSystemDatabase.apply("/admin/compact?database=" + databaseName, HttpMethods.POST);
   }
+
+  public String[] getDatabaseNames(int pageSize) {
+    return getDatabaseNames(pageSize, 0);
+  }
+
+  /**
+   * Gets the list of databases from the server
+   * @param pageSize
+   * @param start
+   * @return
+   */
+  public String[] getDatabaseNames(int pageSize, int start) {
+    HttpJsonRequest requestForSystemDatabase = createRequestForSystemDatabase.apply(String.format("/databases?pageSize=%d&start=%d", pageSize, start), HttpMethods.GET);
+    RavenJToken result = requestForSystemDatabase.readResponseJson();
+    RavenJArray json = (RavenJArray) result;
+    return json.values(String.class).toArray(new String[0]);
+  }
+
 }

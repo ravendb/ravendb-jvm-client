@@ -84,7 +84,7 @@ public class HttpJsonRequestFactory implements AutoCloseable {
   }
 
   public void cacheResponse(String url, RavenJToken data, Map<String, String> headers) {
-    if (StringUtils.isEmpty(headers.get("ETag"))) {
+    if (StringUtils.isEmpty(headers.get(Constants.METADATA_ETAG_FIELD))) {
       return;
     }
 
@@ -92,7 +92,6 @@ public class HttpJsonRequestFactory implements AutoCloseable {
     clone.ensureCannotBeChangeAndEnableShapshotting();
 
     cache.set(url, new CachedRequest(clone, new Date(), new HashMap<>(headers), MultiDatabase.getDatabaseName(url), false));
-
   }
 
   @Override
@@ -123,7 +122,7 @@ public class HttpJsonRequestFactory implements AutoCloseable {
       }
       cachedRequest.setForceServerCheck(false);
     }
-    setHeader.apply("If-None-Match", cachedRequest.getHeaders().get("ETag"));
+    setHeader.apply("If-None-Match", cachedRequest.getHeaders().get(Constants.METADATA_ETAG_FIELD));
     return new CachedRequestOp(cachedRequest, skipServerCheck);
   }
 

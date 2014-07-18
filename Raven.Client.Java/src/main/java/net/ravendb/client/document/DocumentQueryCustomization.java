@@ -138,6 +138,12 @@ public class DocumentQueryCustomization implements IDocumentQueryCustomization {
   }
 
   @Override
+  public IDocumentQueryCustomization showTimings() {
+    delegate.showTimings();
+    return this;
+  }
+
+  @Override
   public IDocumentQueryCustomization sortByDistance() {
     delegate.sortByDistance();
     return this;

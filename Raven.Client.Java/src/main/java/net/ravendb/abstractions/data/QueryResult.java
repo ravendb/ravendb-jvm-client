@@ -25,6 +25,17 @@ public class QueryResult {
   private Date lastQueryTime;
   private long durationMiliseconds;
   private Map<String, String> scoreExplanations;
+  private Map<String, Double> timingsInMilliseconds;
+
+
+  public Map<String, Double> getTimingsInMilliseconds() {
+    return timingsInMilliseconds;
+  }
+
+
+  public void setTimingsInMilliseconds(Map<String, Double> timingsInMilliseconds) {
+    this.timingsInMilliseconds = timingsInMilliseconds;
+  }
 
   /**
    * Initializes a new instance of the {@link QueryResult} class.
@@ -34,6 +45,7 @@ public class QueryResult {
     includes = new ArrayList<>();
     highlightings = new HashMap<>();
     scoreExplanations = new HashMap<>();
+    timingsInMilliseconds = new HashMap<>();
   }
 
   public Map<String, String> getScoreExplanations() {
@@ -52,7 +64,11 @@ public class QueryResult {
   public QueryResult createSnapshot() {
     QueryResult snapshot = new QueryResult();
     for (RavenJObject obj: results) {
-      snapshot.getResults().add(obj.createSnapshot());
+      if (obj != null) {
+        snapshot.getResults().add(obj.createSnapshot());
+      } else {
+        snapshot.getResults().add(null);
+      }
     }
     for (RavenJObject obj: includes) {
       snapshot.getIncludes().add(obj.createSnapshot());
@@ -71,6 +87,14 @@ public class QueryResult {
     for (Map.Entry<String, String> entry: scoreExplanations.entrySet()) {
       snapshot.getScoreExplanations().put(entry.getKey(), entry.getValue());
     }
+
+    for(Map.Entry<String, Double> entry: timingsInMilliseconds.entrySet()) {
+      snapshot.getTimingsInMilliseconds().put(entry.getKey(), entry.getValue());
+    }
+    snapshot.setLastQueryTime(getLastQueryTime());
+    snapshot.setDurationMiliseconds(getDurationMiliseconds());
+    snapshot.setNonAuthoritativeInformation(isNonAuthoritativeInformation());
+    snapshot.setResultEtag(getResultEtag());
     return snapshot;
   }
 
@@ -79,7 +103,9 @@ public class QueryResult {
    */
   public void ensureSnapshot() {
     for(RavenJObject result: results) {
-      result.ensureCannotBeChangeAndEnableShapshotting();
+      if (result != null) {
+        result.ensureCannotBeChangeAndEnableShapshotting();
+      }
     }
     for(RavenJObject include: includes) {
       include.ensureCannotBeChangeAndEnableShapshotting();

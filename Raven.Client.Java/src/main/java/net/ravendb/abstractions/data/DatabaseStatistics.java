@@ -1,95 +1,10 @@
 package net.ravendb.abstractions.data;
 
 import java.util.Collection;
-import java.util.Date;
 import java.util.UUID;
 
 public class DatabaseStatistics {
-  public static class ActualIndexingBatchSize {
-    private int size;
-    private Date timestamp;
 
-    public int getSize() {
-      return size;
-    }
-    public Date getTimestamp() {
-      return timestamp;
-    }
-    public void setSize(int size) {
-      this.size = size;
-    }
-    public void setTimestamp(Date timestamp) {
-      this.timestamp = timestamp;
-    }
-  }
-  public static class ExtensionsLog {
-    private String name;
-    private ExtensionsLogDetail[] installed;
-
-    public ExtensionsLogDetail[] getInstalled() {
-      return installed;
-    }
-    public String getName() {
-      return name;
-    }
-    public void setInstalled(ExtensionsLogDetail[] installed) {
-      this.installed = installed;
-    }
-    public void setName(String name) {
-      this.name = name;
-    }
-
-  }
-  public static class ExtensionsLogDetail {
-    private String name;
-    private String assembly;
-
-    public String getAssembly() {
-      return assembly;
-    }
-    public String getName() {
-      return name;
-    }
-    public void setAssembly(String assembly) {
-      this.assembly = assembly;
-    }
-    public void setName(String name) {
-      this.name = name;
-    }
-
-  }
-  public static class FutureBatchStats {
-    private Date timestamp;
-    private String duration;
-    private Integer size;
-    private int retries;
-
-    public String getDuration() {
-      return duration;
-    }
-    public int getRetries() {
-      return retries;
-    }
-    public Integer getSize() {
-      return size;
-    }
-    public Date getTimestamp() {
-      return timestamp;
-    }
-    public void setDuration(String duration) {
-      this.duration = duration;
-    }
-    public void setRetries(int retries) {
-      this.retries = retries;
-    }
-    public void setSize(Integer size) {
-      this.size = size;
-    }
-    public void setTimestamp(Date timestamp) {
-      this.timestamp = timestamp;
-    }
-
-  }
   public static class TriggerInfo {
     private String type;
     private String name;
@@ -107,6 +22,7 @@ public class DatabaseStatistics {
       this.type = type;
     }
   }
+
   private Etag lastDocEtag;
   private Etag lastAttachmentEtag;
   private int countOfIndexes;
@@ -122,10 +38,19 @@ public class DatabaseStatistics {
   private ServerError[] errors;
   private TriggerInfo[] triggers;
   private Collection<ExtensionsLog> extensions;
-  private ActualIndexingBatchSize[] actualIndexingBatchSize;
+  private IndexingBatchInfo[] indexingBatchInfo;
   private FutureBatchStats[] prefetches;
   private UUID databaseId;
   private boolean supportsDtc;
+
+
+  public IndexingBatchInfo[] getIndexingBatchInfo() {
+    return indexingBatchInfo;
+  }
+
+  public void setIndexingBatchInfo(IndexingBatchInfo[] indexingBatchInfo) {
+    this.indexingBatchInfo = indexingBatchInfo;
+  }
 
   public boolean isSupportsDtc() {
     return supportsDtc;
@@ -133,9 +58,6 @@ public class DatabaseStatistics {
 
   public void setSupportsDtc(boolean supportsDtc) {
     this.supportsDtc = supportsDtc;
-  }
-  public ActualIndexingBatchSize[] getActualIndexingBatchSize() {
-    return actualIndexingBatchSize;
   }
   public long getApproximateTaskCount() {
     return approximateTaskCount;
@@ -157,6 +79,7 @@ public class DatabaseStatistics {
   public int getCurrentNumberOfItemsToIndexInSingleBatch() {
     return currentNumberOfItemsToIndexInSingleBatch;
   }
+
   public int getCurrentNumberOfItemsToReduceInSingleBatch() {
     return currentNumberOfItemsToReduceInSingleBatch;
   }
@@ -192,9 +115,6 @@ public class DatabaseStatistics {
   }
   public TriggerInfo[] getTriggers() {
     return triggers;
-  }
-  public void setActualIndexingBatchSize(ActualIndexingBatchSize[] actualIndexingBatchSize) {
-    this.actualIndexingBatchSize = actualIndexingBatchSize;
   }
   public void setApproximateTaskCount(long approximateTaskCount) {
     this.approximateTaskCount = approximateTaskCount;

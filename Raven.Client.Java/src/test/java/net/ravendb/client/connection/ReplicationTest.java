@@ -4,6 +4,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
+import java.util.Arrays;
 import java.util.List;
 
 import net.ravendb.abstractions.data.Etag;
@@ -25,7 +26,7 @@ public class ReplicationTest extends AbstractReplicationTest {
       createDb(SOURCE, 1);
       createDb(TARGET, 2);
 
-      List<String> result = serverClient.getDatabaseNames(2);
+      List<String> result = Arrays.asList(serverClient.getGlobalAdmin().getDatabaseNames(2));
 
       assertEquals(1, result.size());
       assertTrue(result.contains(SOURCE));

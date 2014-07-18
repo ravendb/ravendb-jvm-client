@@ -741,6 +741,13 @@ public interface IDocumentQueryBase<T, TSelf extends IDocumentQueryBase<T, TSelf
    */
   public TSelf setAllowMultipleIndexEntriesForSameDocumentToResultTransformer(boolean val);
 
+
+  /**
+   * Enables calculation of timings for various parts of a query (Lucene search, loading documents, transforming results). Default: false
+   * @return
+   */
+  public TSelf showTimings();
+
   /**
    * Apply distinct operation to this query
    * @return

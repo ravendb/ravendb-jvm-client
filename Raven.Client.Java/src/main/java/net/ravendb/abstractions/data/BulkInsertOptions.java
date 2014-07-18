@@ -4,9 +4,11 @@ public class BulkInsertOptions {
   private boolean overwriteExisting;
   private boolean checkReferencesInIndexes;
   private int batchSize;
+  private int writeTimeoutMiliseconds;
 
   public BulkInsertOptions() {
     batchSize = 512;
+    writeTimeoutMiliseconds = 15 * 1000;
   }
 
   public boolean isOverwriteExisting() {
@@ -31,5 +33,12 @@ public class BulkInsertOptions {
     this.batchSize = batchSize;
   }
 
+  public int getWriteTimeoutMiliseconds() {
+    return writeTimeoutMiliseconds;
+  }
+
+  public void setWriteTimeoutMiliseconds(int writeTimeoutMiliseconds) {
+    this.writeTimeoutMiliseconds = writeTimeoutMiliseconds;
+  }
 
 }

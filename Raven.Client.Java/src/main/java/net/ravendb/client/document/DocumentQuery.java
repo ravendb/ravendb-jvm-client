@@ -137,8 +137,8 @@ public class DocumentQuery<T> extends AbstractDocumentQuery<T, DocumentQuery<T>>
   }
 
   @Override
-  public void setQueryInputs(Map<String, RavenJToken> queryInputs) {
-    this.queryInputs = queryInputs;
+  public void setTransformerParameters(Map<String, RavenJToken> transformerParameters) {
+    this.transformerParameters = transformerParameters;
   }
 
   /**
@@ -198,9 +198,10 @@ public class DocumentQuery<T> extends AbstractDocumentQuery<T, DocumentQuery<T>>
     documentQuery.highlighterPreTags = highlighterPreTags;
     documentQuery.highlighterPostTags = highlighterPostTags;
     documentQuery.resultsTransformer = resultsTransformer;
-    documentQuery.queryInputs = queryInputs;
+    documentQuery.transformerParameters = transformerParameters;
     documentQuery.disableEntitiesTracking = disableEntitiesTracking;
     documentQuery.disableCaching = disableCaching;
+    documentQuery.showQueryTimings = showQueryTimings;
     documentQuery.lastEquality = lastEquality;
     documentQuery.shouldExplainScores = shouldExplainScores;
     return documentQuery;

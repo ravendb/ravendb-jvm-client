@@ -39,7 +39,7 @@ public class IndexQuery {
   private boolean distinct;
   private String query;
   private Reference<Integer> totalSize;
-  private Map<String, RavenJToken> queryInputs;
+  private Map<String, RavenJToken> transformerParameters;
   private int start;
   private String[] fieldsToFetch;
   private SortedField[] sortedFields;
@@ -49,7 +49,6 @@ public class IndexQuery {
   private boolean waitForNonStaleResults;
   private String defaultField;
   private QueryOperator defaultOperator = QueryOperator.OR;
-  private boolean skipTransformResults;
   private boolean allowMultipleIndexEntriesForSameDocumentToResultTransformer;
   private Reference<Integer> skippedResults;
   private boolean debugOptionGetIndexEntires;
@@ -59,7 +58,24 @@ public class IndexQuery {
   private String resultsTransformer;
   private boolean disableCaching;
   private boolean explainScores;
+  private boolean showTimings;
 
+  /**
+   * Indicates if detailed timings should be calculated for various query parts (Lucene search, loading documents, transforming results). Default: false
+   * @return
+   */
+  public boolean isShowTimings() {
+    return showTimings;
+  }
+
+
+  /**
+   * Indicates if detailed timings should be calculated for various query parts (Lucene search, loading documents, transforming results). Default: false
+   * @param showTimings
+   */
+  public void setShowTimings(boolean showTimings) {
+    this.showTimings = showTimings;
+  }
 
   public boolean isWaitForNonStaleResultsAsOfNow() {
     return waitForNonStaleResultsAsOfNow;
@@ -185,20 +201,6 @@ public class IndexQuery {
     this.skippedResults = skippedResults;
   }
 
-
-
-  public boolean isSkipTransformResults() {
-    return skipTransformResults;
-  }
-
-
-
-  public void setSkipTransformResults(boolean skipTransformResults) {
-    this.skipTransformResults = skipTransformResults;
-  }
-
-
-
   public QueryOperator getDefaultOperator() {
     return defaultOperator;
   }
@@ -271,12 +273,12 @@ public class IndexQuery {
     this.start = start;
   }
 
-  public Map<String, RavenJToken> getQueryInputs() {
-    return queryInputs;
+  public Map<String, RavenJToken> getTransformerParameters() {
+    return transformerParameters;
   }
 
-  public void setQueryInputs(Map<String, RavenJToken> queryInputs) {
-    this.queryInputs = queryInputs;
+  public void setTransformerParameters(Map<String, RavenJToken> transformerParameters) {
+    this.transformerParameters = transformerParameters;
   }
 
   public Reference<Integer> getTotalSize() {
@@ -378,6 +380,18 @@ public class IndexQuery {
       path.append("&pageSize=").append(pageSize);
     }
 
+    if (isAllowMultipleIndexEntriesForSameDocumentToResultTransformer()) {
+      path.append("&allowMultipleIndexEntriesForSameDocumentToResultTransformer=true");
+    }
+
+    if (isDistinct()) {
+      path.append("&distinct=true");
+    }
+
+    if (showTimings) {
+      path.append("&showTimings=true");
+    }
+
     if (fieldsToFetch != null) {
       for (String field: fieldsToFetch) {
         if (StringUtils.isNotEmpty(field)) {
@@ -394,17 +408,13 @@ public class IndexQuery {
       }
     }
 
-    if (skipTransformResults) {
-      path.append("&skipTransformResults=true");
-    }
-
     if (StringUtils.isNotEmpty(resultsTransformer)) {
       path.append("&resultsTransformer=").append(UrlUtils.escapeDataString(resultsTransformer));
     }
 
-    if (queryInputs != null) {
-      for (Map.Entry<String, RavenJToken> input: queryInputs.entrySet()) {
-        path.append("&qp-").append(input.getKey()).append("=").append(input.getValue().toString());
+    if (transformerParameters != null) {
+      for (Map.Entry<String, RavenJToken> input: transformerParameters.entrySet()) {
+        path.append("&tp-").append(input.getKey()).append("=").append(input.getValue().toString());
       }
     }
 
@@ -471,9 +481,9 @@ public class IndexQuery {
       clone.pageSizeSet = pageSizeSet;
       clone.query = query;
       clone.totalSize = totalSize;
-      clone.queryInputs = new HashMap<>();
-      for (String key: queryInputs.keySet()) {
-        clone.queryInputs.put(key, queryInputs.get(key).cloneToken());
+      clone.transformerParameters = new HashMap<>();
+      for (String key: transformerParameters.keySet()) {
+        clone.transformerParameters.put(key, transformerParameters.get(key).cloneToken());
       }
       clone.start = start;
       clone.fieldsToFetch = fieldsToFetch.clone();
@@ -485,7 +495,6 @@ public class IndexQuery {
       clone.cutoffEtag = cutoffEtag.clone();
       clone.defaultField = defaultField;
       clone.defaultOperator = defaultOperator;
-      clone.skipTransformResults = skipTransformResults;
       clone.skippedResults = new Reference<>(skippedResults.value);
       clone.debugOptionGetIndexEntires = debugOptionGetIndexEntires;
       clone.highlightedFields = new HighlightedField[highlightedFields.length];

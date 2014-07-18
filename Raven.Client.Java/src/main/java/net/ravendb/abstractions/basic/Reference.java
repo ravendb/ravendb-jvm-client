@@ -1,7 +1,7 @@
 package net.ravendb.abstractions.basic;
 
 /**
- * Models out paramaters
+ * Models out parameters
  *
  * @param <T>
  */

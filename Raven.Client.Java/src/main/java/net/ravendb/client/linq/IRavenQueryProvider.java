@@ -95,12 +95,12 @@ public interface IRavenQueryProvider extends IQueryProvider {
    * Gets the query inputs being supplied to
    * @return
    */
-  public Map<String, RavenJToken> getQueryInputs();
+  public Map<String, RavenJToken> getTransformerParameters();
 
   /**
    * Adds input to this query via a key/value pair
    * @param input
    * @param foo
    */
-  public void addQueryInput(String input, RavenJToken foo);
+  public void addTransformerParameter(String input, RavenJToken foo);
 }

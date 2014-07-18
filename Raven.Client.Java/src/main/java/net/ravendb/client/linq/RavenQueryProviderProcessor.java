@@ -66,7 +66,7 @@ public class RavenQueryProviderProcessor<T> {
   private String currentPath = "";
   private int subClauseDepth;
   private String resultsTransformer;
-  private final Map<String, RavenJToken> queryInputs;
+  private final Map<String, RavenJToken> transformerParameters;
 
   private LinqPathProvider linqPathProvider;
 
@@ -89,7 +89,7 @@ public class RavenQueryProviderProcessor<T> {
 
   public RavenQueryProviderProcessor(Class<T> clazz, IDocumentQueryGenerator queryGenerator, DocumentQueryCustomizationFactory customizeQuery,
     Action1<QueryResult> afterQueryExecuted, String indexName, Set<String> fieldsToFetch, List<RenamedField> fieldsToRename, boolean isMapReduce,
-    String resultsTransformer, Map<String, RavenJToken> queryInputs) {
+    String resultsTransformer, Map<String, RavenJToken> transformerParameters) {
     this.clazz = clazz;
     this.fieldsToFetch = fieldsToFetch;
     this.fieldsToRename = fieldsToRename;
@@ -100,7 +100,7 @@ public class RavenQueryProviderProcessor<T> {
     this.afterQueryExecuted = afterQueryExecuted;
     this.customizeQuery = customizeQuery;
     this.resultsTransformer = resultsTransformer;
-    this.queryInputs = queryInputs;
+    this.transformerParameters = transformerParameters;
     linqPathProvider = new LinqPathProvider(queryGenerator.getConventions());
   }
 
@@ -1054,6 +1054,7 @@ public class RavenQueryProviderProcessor<T> {
   @SuppressWarnings("unchecked")
   public IDocumentQuery<T> getLuceneQueryFor(Expression<?> expression) {
     IDocumentQuery<T> q = queryGenerator.documentQuery(clazz, indexName, isMapReduce);
+    q.setTransformerParameters(transformerParameters);
     documentQuery = (IAbstractDocumentQuery<T>) q;
 
     q.setResultTransformer(resultsTransformer);
@@ -1095,7 +1096,7 @@ public class RavenQueryProviderProcessor<T> {
     if (org.apache.commons.lang.StringUtils.isNotEmpty(resultsTransformer)) {
       finalQuery.setResultTransformer(this.resultsTransformer);
     }
-    finalQuery.setQueryInputs(this.queryInputs);
+    finalQuery.setTransformerParameters(this.transformerParameters);
 
 
     if (!fieldsToRename.isEmpty()) {

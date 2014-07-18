@@ -23,7 +23,6 @@ public class IndexDefinitionBuilder {
 
   private String map;
   private String reduce;
-  private String transformResults;
   private Map<Path<?>, FieldStorage> stores;
   private Map<String, FieldStorage> storesStrings;
 
@@ -133,10 +132,6 @@ public class IndexDefinitionBuilder {
     this.maxIndexOutputsPerDocument = maxIndexOutputsPerDocument;
   }
 
-  public String getTransformResults() {
-    return transformResults;
-  }
-
   public void setAnalyzers(Map<Path< ? >, String> analyzers) {
     this.analyzers = analyzers;
   }
@@ -182,10 +177,6 @@ public class IndexDefinitionBuilder {
     this.termVectorsStrings = termVectorsStrings;
   }
 
-  public void setTransformResults(String transformResults) {
-    this.transformResults = transformResults;
-  }
-
   public IndexDefinition toIndexDefinition(DocumentConvention convention) {
     return toIndexDefinition(convention, true);
   }
@@ -199,9 +190,6 @@ public class IndexDefinitionBuilder {
     IndexDefinition indexDefinition = new IndexDefinition();
     if (reduce != null) {
       indexDefinition.setReduce(reduce);
-    }
-    if (transformResults != null) {
-      indexDefinition.setTransformResults(transformResults);
     }
     indexDefinition.setIndexes(convertToStringDictionary(indexes));
     indexDefinition.setStores(convertToStringDictionary(stores));

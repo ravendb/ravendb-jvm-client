@@ -2,10 +2,10 @@ package net.ravendb.abstractions.data;
 
 import java.util.Map;
 
+import net.ravendb.abstractions.json.linq.RavenJToken;
 import net.ravendb.client.utils.UrlUtils;
 
 import org.apache.commons.lang.StringUtils;
-
 
 public class MoreLikeThisQuery {
   public final static int DEFAULT_MAXIMUM_NUMBER_OF_TOKENS_PARSED = 5000;
@@ -17,7 +17,6 @@ public class MoreLikeThisQuery {
   public final static int DEFAULT_MINIMUM_WORD_LENGTH = 0;
   public final static int DEFAULT_MAXIMUM_WORD_LENGTH = 0;
   public final static int DEFAULT_MAXIMUM_QUERY_TERMS = 25;
-
 
   private Integer minimumTermFrequency;
   private Integer minimumDocumentFrequency;
@@ -34,7 +33,35 @@ public class MoreLikeThisQuery {
   private String documentId;
   private String indexName;
   private Map<String, String> mapGroupFields;
+  private String resultsTransformer;
+  private String[] includes;
+  private Map<String, RavenJToken> transformerParameters;
 
+  public String[] getIncludes() {
+    return includes;
+  }
+
+
+  public void setIncludes(String[] includes) {
+    this.includes = includes;
+  }
+
+  public Map<String, RavenJToken> getTransformerParameters() {
+    return transformerParameters;
+  }
+
+  public void setTransformerParameters(Map<String, RavenJToken> transformerParameters) {
+    this.transformerParameters = transformerParameters;
+  }
+
+  public String getResultsTransformer() {
+    return resultsTransformer;
+  }
+
+
+  public void setResultsTransformer(String resultsTransformer) {
+    this.resultsTransformer = resultsTransformer;
+  }
 
   /**
    * Boost terms in query based on score. Default is false.
@@ -262,6 +289,22 @@ public class MoreLikeThisQuery {
     if (stopWordsDocumentId != null) {
       uri.append("stopWords=").append(stopWordsDocumentId).append("&");
     }
+    if (StringUtils.isNotEmpty(resultsTransformer)) {
+      uri.append("&resultsTransformer=").append(UrlUtils.escapeDataString(resultsTransformer));
+    }
+
+    if (transformerParameters != null) {
+      for (Map.Entry<String, RavenJToken> input: transformerParameters.entrySet()) {
+        uri.append("&tp-").append(input.getKey()).append("=").append(input.getValue());
+      }
+    }
+
+    if (includes != null && includes.length > 0) {
+      for (String include : includes) {
+        uri.append("&include=").append(include);
+      }
+    }
+
     return uri.toString();
   }
 

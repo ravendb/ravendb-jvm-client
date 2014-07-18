@@ -162,7 +162,7 @@ public class QueryInputsToResultTransformerTest extends RemoteClientTest {
       }
       try (IDocumentSession session = store.openSession()) {
         Result result = session.load(ProductWithQueryInput.class, ProductWithQueryInput.Result.class, "products/1",
-          new LoadConfigurationFactory().addQueryParam("input", "Foo"));
+          new LoadConfigurationFactory().addTransformerParameter("input", "Foo"));
         assertEquals("Foo", result.getInput());
       }
     }
@@ -183,7 +183,7 @@ public class QueryInputsToResultTransformerTest extends RemoteClientTest {
         Result result = session.query(Product.class)
           .customize(new DocumentQueryCustomizationFactory().waitForNonStaleResults())
           .transformWith(ProductWithQueryInput.class, ProductWithQueryInput.Result.class)
-          .addQueryInput("input", "Foo")
+          .addTransformerParameter("input", "Foo")
           .single();
 
         assertEquals("Foo", result.getInput());
@@ -206,7 +206,7 @@ public class QueryInputsToResultTransformerTest extends RemoteClientTest {
         Result result = session.query(Product.class)
           .customize(new DocumentQueryCustomizationFactory().waitForNonStaleResults())
           .transformWith(ProductWithQueryInput.class, ProductWithQueryInput.Result.class)
-          .addQueryInput("input", "Foo")
+          .addTransformerParameter("input", "Foo")
           .single();
 
         assertEquals("Irrelevant", result.getProductName());

@@ -269,6 +269,33 @@ public class ServerClient implements IDatabaseCommands {
   }
 
   @Override
+  public boolean indexHasChanged(final String name, final IndexDefinition definition) {
+    return executeWithReplication(HttpMethods.POST, new Function1<OperationMetadata, Boolean>() {
+      @Override
+      public Boolean apply(OperationMetadata input) {
+        return directIndexHasChanged(name, definition, input);
+      }
+    });
+  }
+
+  protected Boolean directIndexHasChanged(String name, IndexDefinition definition, OperationMetadata operationMetadata) {
+    String requestUri = RavenUrlExtensions.indexes(operationMetadata.getUrl(), name) + "?op=hasChanged";
+    HttpJsonRequest webRequest = jsonRequestFactory.createHttpJsonRequest(
+      new CreateHttpJsonRequestParams(this, requestUri, HttpMethods.POST, new RavenJObject(), operationMetadata.getCredentials(), convention)
+      .addOperationHeaders(operationsHeaders))
+      .addReplicationStatusHeaders(url, operationMetadata.getUrl(), replicationInformer, convention.getFailoverBehavior(), new HandleReplicationStatusChangesCallback());
+
+    try {
+      webRequest.write(JsonConvert.serializeObject(definition)); //we don't use default converters
+        RavenJToken responseJson = webRequest.readResponseJson();
+        return responseJson.value(Boolean.class, "Changed");
+    } catch (Exception e) {
+      throw new ServerClientException(e);
+    }
+
+  }
+
+  @Override
   public String putIndex(final String name, final IndexDefinition definition) {
     return putIndex(name, definition, false);
   }
@@ -410,17 +437,15 @@ public class ServerClient implements IDatabaseCommands {
   }
 
   @Override
-  public List<JsonDocument> startsWith(final String keyPrefix, final String matches, final int start, final int pageSize, final boolean metadataOnly, final String exclude, final RavenPagingInformation pagingInformation, final String transformer, final Map<String, RavenJToken> queryInputs) throws ServerClientException {
+  public List<JsonDocument> startsWith(final String keyPrefix, final String matches, final int start, final int pageSize, final boolean metadataOnly, final String exclude, final RavenPagingInformation pagingInformation, final String transformer, final Map<String, RavenJToken> transformerParameters) throws ServerClientException {
     ensureIsNotNullOrEmpty(keyPrefix, "keyPrefix");
     return executeWithReplication(HttpMethods.GET, new Function1<OperationMetadata, List<JsonDocument>>() {
       @Override
       public List<JsonDocument> apply(OperationMetadata operationMetadata) {
-        return directStartsWith(operationMetadata, keyPrefix, matches, start, pageSize, metadataOnly, exclude, pagingInformation, transformer, queryInputs);
+        return directStartsWith(operationMetadata, keyPrefix, matches, start, pageSize, metadataOnly, exclude, pagingInformation, transformer, transformerParameters);
       }
     });
   }
-
-
 
 
   public RavenJToken executeGetRequest(final String requestUrl) {
@@ -659,7 +684,7 @@ public class ServerClient implements IDatabaseCommands {
   }
 
   @SuppressWarnings("null")
-  protected List<JsonDocument> directStartsWith(OperationMetadata operationMetadata, String keyPrefix, String matches, int start, int pageSize, boolean metadataOnly, String exclude, RavenPagingInformation pagingInformation, String transformer, Map<String, RavenJToken> queryInputs) throws ServerClientException {
+  protected List<JsonDocument> directStartsWith(OperationMetadata operationMetadata, String keyPrefix, String matches, int start, int pageSize, boolean metadataOnly, String exclude, RavenPagingInformation pagingInformation, String transformer, Map<String, RavenJToken> transformerParameters) throws ServerClientException {
     RavenJObject metadata = new RavenJObject();
 
     int actualStart = start;
@@ -678,9 +703,9 @@ public class ServerClient implements IDatabaseCommands {
 
     if (StringUtils.isNotEmpty(transformer)) {
       actualUrl += "&transformer=" + transformer;
-      if (queryInputs != null) {
-        for (Map.Entry<String, RavenJToken> entry : queryInputs.entrySet()) {
-          actualUrl += String.format("&qp-%s=%s", entry.getKey(), entry.getValue());
+      if (transformerParameters != null) {
+        for (Map.Entry<String, RavenJToken> entry : transformerParameters.entrySet()) {
+          actualUrl += String.format("&tp-%s=%s", entry.getKey(), entry.getValue());
         }
       }
     }
@@ -717,7 +742,7 @@ public class ServerClient implements IDatabaseCommands {
     }
     HttpMethods method = StringUtils.isNotEmpty(key) ? HttpMethods.PUT : HttpMethods.POST;
     if (etag != null) {
-      metadata.set("ETag", new RavenJValue(etag.toString()));
+      metadata.set(Constants.METADATA_ETAG_FIELD, new RavenJValue(etag.toString()));
     }
     if (key != null) {
       key = UrlUtils.escapeUriString(key);
@@ -786,7 +811,7 @@ public class ServerClient implements IDatabaseCommands {
 
   protected void directUpdateAttachmentMetadata(String key, RavenJObject metadata, Etag etag, OperationMetadata operationMetadata) {
     if (etag != null) {
-      metadata.set("ETag", new RavenJValue(etag.toString()));
+      metadata.set(Constants.METADATA_ETAG_FIELD, new RavenJValue(etag.toString()));
     }
 
     HttpJsonRequest jsonRequest = jsonRequestFactory.createHttpJsonRequest(
@@ -820,7 +845,7 @@ public class ServerClient implements IDatabaseCommands {
 
   protected void directPutAttachment(String key, RavenJObject metadata, Etag etag, InputStream data, OperationMetadata operationMetadata) {
     if (etag != null) {
-      metadata.set("Etag", new RavenJValue(etag.toString()));
+      metadata.set(Constants.METADATA_ETAG_FIELD, new RavenJValue(etag.toString()));
     }
 
     HttpJsonRequest jsonRequest = jsonRequestFactory.createHttpJsonRequest(
@@ -965,22 +990,6 @@ public class ServerClient implements IDatabaseCommands {
   }
 
   @Override
-  public List<String> getDatabaseNames(int pageSize) {
-    return getDatabaseNames(pageSize, 0);
-  }
-
-  @Override
-  public List<String> getDatabaseNames(int pageSize, int start) {
-    String url = RavenUrlExtensions.databases("", pageSize, start);
-    RavenJArray json = (RavenJArray) executeGetRequest(url);
-    List<String> result = new ArrayList<>();
-    for (RavenJToken token : json) {
-      result.add(token.value(String.class));
-    }
-    return result;
-  }
-
-  @Override
   public AttachmentInformation[] getAttachments(final Etag startEtag, final int pageSize) {
     return executeWithReplication(HttpMethods.GET, new Function1<OperationMetadata, AttachmentInformation[]>() {
       @Override
@@ -1008,7 +1017,7 @@ public class ServerClient implements IDatabaseCommands {
   protected void directDeleteAttachment(String key, Etag etag, OperationMetadata operationMetadata) {
     RavenJObject metadata = new RavenJObject();
     if (etag != null) {
-      metadata.add("ETag", RavenJToken.fromObject(etag.toString()));
+      metadata.add(Constants.METADATA_ETAG_FIELD, RavenJToken.fromObject(etag.toString()));
     }
     HttpJsonRequest jsonRequest = jsonRequestFactory.createHttpJsonRequest(
       new CreateHttpJsonRequestParams(this, operationMetadata.getUrl() + "/static/" + key, HttpMethods.DELETE, metadata, operationMetadata.getCredentials(), convention))
@@ -1256,9 +1265,10 @@ public class ServerClient implements IDatabaseCommands {
 
   }
 
-
-
-
+  @Override
+  public QueryResult query(String index, IndexQuery query) {
+    return query(index, query, null, false, false);
+  }
 
   @Override
   public QueryResult query(String index, IndexQuery query, String[] includes) {
@@ -1561,23 +1571,23 @@ public class ServerClient implements IDatabaseCommands {
   }
 
   @Override
-  public MultiLoadResult get(final String[] ids, final String[] includes, final String transformer, final Map<String, RavenJToken> queryInputs) {
-    return get(ids, includes, transformer, queryInputs, false);
+  public MultiLoadResult get(final String[] ids, final String[] includes, final String transformer, final Map<String, RavenJToken> transformerParameters) {
+    return get(ids, includes, transformer, transformerParameters, false);
   }
 
   @Override
-  public MultiLoadResult get(final String[] ids, final String[] includes, final String transformer, final Map<String, RavenJToken> queryInputs, final boolean metadataOnly) {
+  public MultiLoadResult get(final String[] ids, final String[] includes, final String transformer, final Map<String, RavenJToken> transformerParameters, final boolean metadataOnly) {
     return executeWithReplication(HttpMethods.GET, new Function1<OperationMetadata, MultiLoadResult>() {
 
       @Override
       public MultiLoadResult apply(OperationMetadata operationMetadata) {
-        return directGet(ids, operationMetadata, includes, transformer, queryInputs != null ? queryInputs : new HashMap<String, RavenJToken>(), metadataOnly);
+        return directGet(ids, operationMetadata, includes, transformer, transformerParameters != null ? transformerParameters : new HashMap<String, RavenJToken>(), metadataOnly);
       }
     });
   }
 
 
-  protected MultiLoadResult directGet(final String[] ids, final OperationMetadata operationMetadata, final String[] includes, final String transformer, final Map<String, RavenJToken> queryInputs, final boolean metadataOnly) {
+  protected MultiLoadResult directGet(final String[] ids, final OperationMetadata operationMetadata, final String[] includes, final String transformer, final Map<String, RavenJToken> transformerParameters, final boolean metadataOnly) {
 
     String path = operationMetadata.getUrl() + "/queries/?";
 
@@ -1594,9 +1604,9 @@ public class ServerClient implements IDatabaseCommands {
       path += "&transformer=" + transformer;
     }
 
-    if (queryInputs != null) {
-      for (Entry<String, RavenJToken> queryInput: queryInputs.entrySet()) {
-        path += String.format("&qp-%s=%s", queryInput.getKey(), queryInput.getValue());
+    if (transformerParameters != null) {
+      for (Entry<String, RavenJToken> transformerParameter: transformerParameters.entrySet()) {
+        path += String.format("&tp-%s=%s", transformerParameter.getKey(), transformerParameter.getValue());
       }
     }
 

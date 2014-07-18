@@ -31,7 +31,6 @@ public class AbstractIndexCreationTask extends AbstractCommonApiForIndexesAndTra
   protected DocumentConvention conventions;
   protected String map;
   protected String reduce;
-  protected String transformResults;
 
   protected Long maxIndexOutputsPerDocument;
 
@@ -133,7 +132,6 @@ public class AbstractIndexCreationTask extends AbstractCommonApiForIndexesAndTra
     builder.setAnalyzersStrings(analyzersStrings);
     builder.setMap(map);
     builder.setReduce(reduce);
-    builder.setTransformResults(transformResults);
     builder.setStores(stores);
     builder.setStoresStrings(storesStrings);
     builder.setSuggestions(indexSuggestions);

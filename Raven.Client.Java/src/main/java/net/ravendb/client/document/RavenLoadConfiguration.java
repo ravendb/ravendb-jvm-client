@@ -8,19 +8,19 @@ import net.ravendb.client.ILoadConfiguration;
 
 
 public class RavenLoadConfiguration implements ILoadConfiguration {
-  private Map<String, RavenJToken> queryInputs = new HashMap<>();
+  private Map<String, RavenJToken> transformerParameters = new HashMap<>();
 
-  public Map<String, RavenJToken> getQueryInputs() {
-    return queryInputs;
+  public Map<String, RavenJToken> getTransformerParameters() {
+    return transformerParameters;
   }
 
-  public void setQueryInputs(Map<String, RavenJToken> queryInputs) {
-    this.queryInputs = queryInputs;
+  public void setTransformerParameters(Map<String, RavenJToken> transformerParameters) {
+    this.transformerParameters = transformerParameters;
   }
 
   @Override
-  public void addQueryParam(String name, RavenJToken value) {
-    queryInputs.put(name, value);
+  public void addTransformerParameter(String name, RavenJToken value) {
+    transformerParameters.put(name, value);
   }
 
 

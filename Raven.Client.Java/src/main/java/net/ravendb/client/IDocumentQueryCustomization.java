@@ -257,4 +257,10 @@ public interface IDocumentQueryCustomization {
    * @return
    */
   public IDocumentQueryCustomization noCaching();
+
+  /**
+   * Enables calculation of timings for various parts of a query (Lucene search, loading documents, transforming results). Default: false
+   * @return
+   */
+  public IDocumentQueryCustomization showTimings();
 }

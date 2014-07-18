@@ -35,15 +35,18 @@ public class GeoJsonWktConverter {
   @SuppressWarnings("null")
   private boolean tryParseTypeString(RavenJObject obj, Reference<String> result) {
     Reference<RavenJToken> typeRef = new Reference<>();
+    typeRef.value = null;
     if (obj != null) {
       if (!obj.tryGetValue("type", typeRef)) {
         return false;
       }
     }
     RavenJValue value = (RavenJValue) typeRef.value;
-    result.value = value.value(String.class);
+    if (typeRef.value != null) {
+      result.value = value.value(String.class);
+    }
 
-    return typeRef != null;
+    return typeRef.value != null;
   }
 
 

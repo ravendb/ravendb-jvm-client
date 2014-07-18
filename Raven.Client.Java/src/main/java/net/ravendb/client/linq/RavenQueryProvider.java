@@ -31,7 +31,7 @@ public class RavenQueryProvider<T> implements IRavenQueryProvider {
   private final RavenQueryHighlightings highlightings;
   private final IDatabaseCommands databaseCommands;
   private final boolean isMapReduce;
-  private final Map<String, RavenJToken> queryInputs = new HashMap<>();
+  private final Map<String, RavenJToken> transformerParameters = new HashMap<>();
   private final Class<T> clazz;
 
   private Set<String> fieldsToFetch = new HashSet<>();
@@ -97,13 +97,13 @@ public class RavenQueryProvider<T> implements IRavenQueryProvider {
   }
 
   @Override
-  public Map<String, RavenJToken> getQueryInputs() {
-    return queryInputs;
+  public Map<String, RavenJToken> getTransformerParameters() {
+    return transformerParameters;
   }
 
   @Override
-  public void addQueryInput(String name, RavenJToken value) {
-    queryInputs.put(name, value);
+  public void addTransformerParameter(String name, RavenJToken value) {
+    transformerParameters.put(name, value);
   }
 
   public List<RenamedField> getFieldsToRename() {
@@ -118,8 +118,8 @@ public class RavenQueryProvider<T> implements IRavenQueryProvider {
     RavenQueryProvider<S> ravenQueryProvider = new RavenQueryProvider<>(clazz, queryGenerator, indexName, ravenQueryStatistics, highlightings, databaseCommands, isMapReduce);
     ravenQueryProvider.resultTranformer = resultTranformer;
     ravenQueryProvider.customize(customizeQuery);
-    for (Map.Entry<String, RavenJToken> queryInput: queryInputs.entrySet()) {
-      ravenQueryProvider.addQueryInput(queryInput.getKey(), queryInput.getValue());
+    for (Map.Entry<String, RavenJToken> transformerParameter: transformerParameters.entrySet()) {
+      ravenQueryProvider.addTransformerParameter(transformerParameter.getKey(), transformerParameter.getValue());
     }
     return ravenQueryProvider;
   }
@@ -160,7 +160,7 @@ public class RavenQueryProvider<T> implements IRavenQueryProvider {
 
   protected <S> RavenQueryProviderProcessor<S> getQueryProviderProcessor(Class<S> clazz) {
     return new RavenQueryProviderProcessor<>(clazz, queryGenerator, customizeQuery, afterQueryExecuted, indexName,
-        fieldsToFetch, fieldsToRename, isMapReduce, resultTranformer, queryInputs);
+        fieldsToFetch, fieldsToRename, isMapReduce, resultTranformer, transformerParameters);
   }
 
   /**

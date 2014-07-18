@@ -55,7 +55,7 @@ public class MetadataExtensions {
     HEADERS_TO_IGNORE_CLIENT.add("Content-Type");
     HEADERS_TO_IGNORE_CLIENT.add("Expires");
     // ignoring this header, we handle this internally
-    HEADERS_TO_IGNORE_CLIENT.add("Last-Modified");
+    HEADERS_TO_IGNORE_CLIENT.add(Constants.LAST_MODIFIED);
     // Ignoring this header, since it may
     // very well change due to things like encoding,
     // adding metadata, etc
@@ -89,7 +89,7 @@ public class MetadataExtensions {
     HEADERS_TO_IGNORE_CLIENT.add("Accept-Ranges");
     HEADERS_TO_IGNORE_CLIENT.add("Age");
     HEADERS_TO_IGNORE_CLIENT.add("Allow");
-    HEADERS_TO_IGNORE_CLIENT.add("ETag");
+    HEADERS_TO_IGNORE_CLIENT.add(Constants.METADATA_ETAG_FIELD);
     HEADERS_TO_IGNORE_CLIENT.add("Location");
     HEADERS_TO_IGNORE_CLIENT.add("Retry-After");
     HEADERS_TO_IGNORE_CLIENT.add("Server");
@@ -113,6 +113,11 @@ public class MetadataExtensions {
     HEADERS_TO_IGNORE_CLIENT.add("X-ARR-SSL");
     HEADERS_TO_IGNORE_CLIENT.add("X-Forwarded-For");
     HEADERS_TO_IGNORE_CLIENT.add("X-Original-URL");
+
+    // Azure specific
+    HEADERS_TO_IGNORE_CLIENT.add("X-LiveUpgrade");
+    HEADERS_TO_IGNORE_CLIENT.add("DISGUISED-HOST");
+    HEADERS_TO_IGNORE_CLIENT.add("X-SITE-DEPLOYMENT-ID");
 
     PREFIXES_IN_HEADERS_TO_IGNORE_CLIENT.add("Temp");
     PREFIXES_IN_HEADERS_TO_IGNORE_CLIENT.add("X-NewRelic");

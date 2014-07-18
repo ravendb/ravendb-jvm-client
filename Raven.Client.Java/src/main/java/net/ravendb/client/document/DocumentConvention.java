@@ -33,7 +33,6 @@ import net.ravendb.client.delegates.PropertyNameFinder;
 import net.ravendb.client.delegates.ReplicationInformerFactory;
 import net.ravendb.client.delegates.RequestCachePolicy;
 import net.ravendb.client.delegates.TypeTagNameToDocumentKeyPrefixTransformer;
-import net.ravendb.client.linq.LinqPathProvider;
 import net.ravendb.client.util.Inflector;
 
 import org.apache.commons.lang.SerializationUtils;
@@ -41,8 +40,6 @@ import org.apache.commons.lang.StringUtils;
 import org.codehaus.jackson.map.DeserializationProblemHandler;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.codehaus.jackson.map.SerializationConfig.Feature;
-
-import com.mysema.query.types.Expression;
 
 
 /**
@@ -91,11 +88,7 @@ public class DocumentConvention extends Convention implements Serializable {
 
   private boolean shouldSaveChangesForceAggressiveCacheCheck;
 
-
-
   private IdValuePartFinder findIdValuePartForValueTypeConversion;
-
-  private boolean saveEnumsAsIntegers;
 
   private TypeTagNameToDocumentKeyPrefixTransformer transformTypeTagNameToDocumentKeyPrefix;
 
@@ -684,22 +677,6 @@ public class DocumentConvention extends Convention implements Serializable {
   }
 
   /**
-   * Saves Enums as integers and instruct the Linq provider to query enums as integer values.
-   * @return
-   */
-  public boolean isSaveEnumsAsIntegers() {
-    return saveEnumsAsIntegers;
-  }
-
-  /**
-   * Saves Enums as integers and instruct the Linq provider to query enums as integer values.
-   * @param saveEnumsAsIntegers
-   */
-  public void setSaveEnumsAsIntegers(boolean saveEnumsAsIntegers) {
-    this.saveEnumsAsIntegers = saveEnumsAsIntegers;
-  }
-
-  /**
    * Translate the type tag name to the document key prefix
    * @return
    */
@@ -836,21 +813,6 @@ public class DocumentConvention extends Convention implements Serializable {
   }
 
 
-  private List<CustomQueryExpressionTranslator> customQueryTranslators = new ArrayList<>();
-
-  public void registerCustomQueryTranslator(CustomQueryExpressionTranslator translator) {
-    customQueryTranslators.add(translator);
-  }
-
-  public LinqPathProvider.Result translateCustomQueryExpression(LinqPathProvider provider, Expression<?> expression) {
-    for (CustomQueryExpressionTranslator translator: customQueryTranslators) {
-      if (translator.canTransform(expression)) {
-        return translator.translate(expression);
-      }
-    }
-    return null;
-  }
-
   public ObjectMapper createSerializer() {
     if (objectMapper == null) {
       synchronized (this) {
@@ -859,7 +821,7 @@ public class DocumentConvention extends Convention implements Serializable {
         }
       }
     }
-    if (saveEnumsAsIntegers) {
+    if (isSaveEnumsAsIntegers()) {
       objectMapper.enable(Feature.WRITE_ENUMS_USING_INDEX);
     } else {
       objectMapper.disable(Feature.WRITE_ENUMS_USING_INDEX);

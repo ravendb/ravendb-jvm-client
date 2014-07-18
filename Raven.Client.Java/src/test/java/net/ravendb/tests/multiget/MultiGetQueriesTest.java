@@ -15,11 +15,6 @@ import net.ravendb.client.RavenQueryStatistics;
 import net.ravendb.client.RemoteClientTest;
 import net.ravendb.client.document.DocumentQueryCustomizationFactory;
 import net.ravendb.client.document.DocumentStore;
-import net.ravendb.tests.bugs.transformresults.Answer;
-import net.ravendb.tests.bugs.transformresults.AnswerEntity;
-import net.ravendb.tests.bugs.transformresults.Answers_ByAnswerEntity;
-import net.ravendb.tests.bugs.transformresults.ComplexValuesFromTransformResults;
-import net.ravendb.tests.bugs.transformresults.QAnswer;
 import net.ravendb.tests.linq.QUser;
 import net.ravendb.tests.linq.User;
 
@@ -154,23 +149,6 @@ public class MultiGetQueriesTest extends RemoteClientTest {
     }
   }
 
-  @Test
-  public void write_then_read_from_complex_entity_types_lazily() throws Exception {
-    try (IDocumentStore store = new DocumentStore(getDefaultUrl(), getDefaultDb()).initialize()) {
-      new Answers_ByAnswerEntity().execute(store);
-
-      String answerId = ComplexValuesFromTransformResults.createEntities(store);
-      QAnswer x = QAnswer.answer;
-
-      try (IDocumentSession session = store.openSession()) {
-        Lazy<List<AnswerEntity>> answerInfo = session.query(Answer.class, Answers_ByAnswerEntity.class).customize(new DocumentQueryCustomizationFactory().waitForNonStaleResults())
-            .where(x.id.eq(answerId))
-            .as(AnswerEntity.class).lazily();
-        assertEquals(1, answerInfo.getValue().size());
-      }
-
-    }
-  }
 
   @Test
   public void lazyOperationsAreBatched() throws Exception {

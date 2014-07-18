@@ -47,9 +47,9 @@ public interface IDocumentQuery<T> extends IDocumentQueryBase<T, IDocumentQuery<
 
   /**
    * Sets user defined inputs to the query
-   * @param queryInputs
+   * @param transformerParameter
    */
-  public void setQueryInputs(Map<String, RavenJToken> queryInputs);
+  public void setTransformerParameters(Map<String, RavenJToken> transformerParameter);
 
   /**
    * Gets the query result

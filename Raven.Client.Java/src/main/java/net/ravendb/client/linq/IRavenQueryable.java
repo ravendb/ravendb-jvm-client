@@ -53,7 +53,7 @@ public interface IRavenQueryable<T> extends IOrderedQueryable<T>, LinqExtensions
    * @param value
    * @return
    */
-  IRavenQueryable<T> addQueryInput(String name, RavenJToken value);
+  IRavenQueryable<T> addTransformerParameter(String name, RavenJToken value);
 
   /**
    * Inputs a key and value to the query (accessible by the transformer)
@@ -61,7 +61,7 @@ public interface IRavenQueryable<T> extends IOrderedQueryable<T>, LinqExtensions
    * @param value
    * @return
    */
-  IRavenQueryable<T> addQueryInput(String name, Object value);
+  IRavenQueryable<T> addTransformerParameter(String name, Object value);
 
   IRavenQueryable<T> spatial(Path<?> path, SpatialCriteria criteria);
 

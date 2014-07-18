@@ -45,7 +45,6 @@ public class IndexDefinition {
   private IndexLockMode lockMode = IndexLockMode.UNLOCK;
   private Set<String> maps;
   private String reduce;
-  private String transformResults;
   private boolean isCompiled;
   private Map<String, FieldStorage> stores;
   private Map<String, FieldIndexing> indexes;
@@ -279,24 +278,6 @@ public class IndexDefinition {
   }
 
   /**
-   * Use Result Transformers instead.
-   * @return the transformResults
-   */
-  @Deprecated
-  public String getTransformResults() {
-    return transformResults;
-  }
-
-  /**
-   * Use Result Transformers instead.
-   * @param transformResults the transformResults to set
-   */
-  @Deprecated
-  public void setTransformResults(String transformResults) {
-    this.transformResults = transformResults;
-  }
-
-  /**
    * @param reduce the reduce to set
    */
   public void setReduce(String reduce) {
@@ -358,7 +339,6 @@ public class IndexDefinition {
     result = prime * result + ((stores == null) ? 0 : stores.hashCode());
     result = prime * result + ((suggestions == null) ? 0 : suggestions.hashCode());
     result = prime * result + ((termVectors == null) ? 0 : termVectors.hashCode());
-    result = prime * result + ((transformResults == null) ? 0 : transformResults.hashCode());
     return result;
   }
 
@@ -429,11 +409,6 @@ public class IndexDefinition {
       if (other.termVectors != null)
         return false;
     } else if (!termVectors.equals(other.termVectors))
-      return false;
-    if (transformResults == null) {
-      if (other.transformResults != null)
-        return false;
-    } else if (!transformResults.equals(other.transformResults))
       return false;
     return true;
   }
@@ -521,7 +496,6 @@ public class IndexDefinition {
     indexDefinition.setIndexId(indexId);
     indexDefinition.setName(name);
     indexDefinition.setReduce(reduce);
-    indexDefinition.setTransformResults(transformResults);
     indexDefinition.cachedHashCode = cachedHashCode;
 
     indexDefinition.setMaxIndexOutputsPerDocument(maxIndexOutputsPerDocument);

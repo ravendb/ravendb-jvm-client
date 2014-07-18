@@ -1,7 +1,7 @@
 package net.ravendb.client;
 
-import java.util.HashMap;
 import java.util.Map;
+import java.util.TreeMap;
 
 import net.ravendb.abstractions.data.QueryResult;
 
@@ -15,7 +15,7 @@ public class FieldHighlightings {
 
   public FieldHighlightings(String fieldName) {
     this.fieldName = fieldName;
-    this.highlightings = new HashMap<>();
+    this.highlightings = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
   }
 
   public String getFieldName() {

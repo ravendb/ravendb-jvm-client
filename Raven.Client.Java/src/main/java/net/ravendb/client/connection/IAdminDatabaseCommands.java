@@ -12,6 +12,11 @@ public interface IAdminDatabaseCommands {
   public void startIndexing();
 
   /**
+   * Enables indexing
+   */
+  public void startIndexing(Integer maxNumberOfParallelIndexTasks);
+
+  /**
    *  Get the indexing status
    * @return
    */

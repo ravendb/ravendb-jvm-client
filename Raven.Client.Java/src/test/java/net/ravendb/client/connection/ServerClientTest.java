@@ -115,7 +115,7 @@ public class ServerClientTest extends RavenDBAwareTests {
       createDb("db1");
       createDb("db2");
 
-      List<String> result = serverClient.getDatabaseNames(2);
+     List<String> result = Arrays.asList(serverClient.getGlobalAdmin().getDatabaseNames(2));
 
       assertEquals(2, result.size());
       assertTrue(result.contains("db1"));

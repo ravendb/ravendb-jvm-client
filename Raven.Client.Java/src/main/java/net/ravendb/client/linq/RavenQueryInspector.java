@@ -140,14 +140,14 @@ public class RavenQueryInspector<T> implements IRavenQueryable<T>, IRavenQueryIn
   }
 
   @Override
-  public IRavenQueryable<T> addQueryInput(String name, RavenJToken value) {
-    provider.addQueryInput(name, value);
+  public IRavenQueryable<T> addTransformerParameter(String name, RavenJToken value) {
+    provider.addTransformerParameter(name, value);
     return this;
   }
 
   @Override
-  public IRavenQueryable<T> addQueryInput(String name, Object value) {
-    provider.addQueryInput(name, new RavenJValue(value));
+  public IRavenQueryable<T> addTransformerParameter(String name, Object value) {
+    provider.addTransformerParameter(name, new RavenJValue(value));
     return this;
   }
 
@@ -186,13 +186,13 @@ public class RavenQueryInspector<T> implements IRavenQueryable<T>, IRavenQueryIn
 
   private RavenQueryProviderProcessor<T> getRavenQueryProvider() {
     return new RavenQueryProviderProcessor<>(clazz, provider.getQueryGenerator(), provider.getCustomizeQuery(), null, indexName,
-        new HashSet<String>(), new ArrayList<RenamedField>(), isMapReduce, provider.getResultTranformer(), provider.getQueryInputs());
+        new HashSet<String>(), new ArrayList<RenamedField>(), isMapReduce, provider.getResultTranformer(), provider.getTransformerParameters());
   }
 
   @Override
   public String getIndexQueried() {
     RavenQueryProviderProcessor<T> ravenQueryProvider = new RavenQueryProviderProcessor<>(clazz, provider.getQueryGenerator(), null, null, indexName, new HashSet<String>(),
-        new ArrayList<RenamedField>(), isMapReduce, provider.getResultTranformer(), provider.getQueryInputs());
+        new ArrayList<RenamedField>(), isMapReduce, provider.getResultTranformer(), provider.getTransformerParameters());
     IDocumentQuery<T> documentQuery = ravenQueryProvider.getLuceneQueryFor(expression);
     return ((IRavenQueryInspector)documentQuery).getIndexQueried();
   }
@@ -213,7 +213,7 @@ public class RavenQueryInspector<T> implements IRavenQueryable<T>, IRavenQueryIn
   @Override
   public Tuple<String, String> getLastEqualityTerm() {
     RavenQueryProviderProcessor<T> ravenQueryProvider = new RavenQueryProviderProcessor<>(clazz, provider.getQueryGenerator(), null, null, indexName, new HashSet<String>(),
-        new ArrayList<RenamedField>(), isMapReduce, provider.getResultTranformer(), provider.getQueryInputs());
+        new ArrayList<RenamedField>(), isMapReduce, provider.getResultTranformer(), provider.getTransformerParameters());
     IDocumentQuery<T> documentQuery = ravenQueryProvider.getLuceneQueryFor(expression);
     return ((IRavenQueryInspector) documentQuery).getLastEqualityTerm();
   }

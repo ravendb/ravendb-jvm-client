@@ -2,8 +2,6 @@ package net.ravendb.client.changes;
 
 import java.util.UUID;
 
-import net.ravendb.abstractions.basic.EventHandler;
-import net.ravendb.abstractions.basic.VoidArgs;
 import net.ravendb.abstractions.data.BulkInsertChangeNotification;
 import net.ravendb.abstractions.data.DocumentChangeNotification;
 import net.ravendb.abstractions.data.IndexChangeNotification;
@@ -11,13 +9,7 @@ import net.ravendb.abstractions.data.ReplicationConflictNotification;
 import net.ravendb.abstractions.data.TransformerChangeNotification;
 
 
-public interface IDatabaseChanges {
-
-  public boolean isConnected();
-
-  public void addConnectionStatusChanged(EventHandler<VoidArgs> handler);
-
-  public void removeConnectionStatusChanges(EventHandler<VoidArgs> handler);
+public interface IDatabaseChanges extends IConnectableChanges {
 
   public IObservable<IndexChangeNotification> forIndex(String indexName);
 
@@ -43,5 +35,4 @@ public interface IDatabaseChanges {
 
   public IObservable<BulkInsertChangeNotification> forBulkInsert(UUID operationId);
 
-  void waitForAllPendingSubscriptions();
 }

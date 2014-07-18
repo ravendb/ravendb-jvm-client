@@ -22,20 +22,20 @@ public class LoadConfigurationFactory {
     this.actions.add(newAction);
   }
 
-  public LoadConfigurationFactory addQueryParam(final String name, final RavenJToken value) {
+  public LoadConfigurationFactory addTransformerParameter(final String name, final RavenJToken value) {
     return new LoadConfigurationFactory(actions, new Action1<ILoadConfiguration>() {
       @Override
       public void apply(ILoadConfiguration loadConfiguration) {
-        loadConfiguration.addQueryParam(name, value);
+        loadConfiguration.addTransformerParameter(name, value);
       }
     });
   }
 
-  public LoadConfigurationFactory addQueryParam(final String name, final Object value) {
+  public LoadConfigurationFactory addTransformerParameter(final String name, final Object value) {
     return new LoadConfigurationFactory(actions, new Action1<ILoadConfiguration>() {
       @Override
       public void apply(ILoadConfiguration loadConfiguration) {
-        loadConfiguration.addQueryParam(name, new RavenJValue(value));
+        loadConfiguration.addTransformerParameter(name, new RavenJValue(value));
       }
     });
   }

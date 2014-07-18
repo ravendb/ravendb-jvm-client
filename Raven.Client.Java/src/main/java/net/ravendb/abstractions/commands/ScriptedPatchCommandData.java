@@ -97,6 +97,7 @@ public class ScriptedPatchCommandData implements ICommandData {
     ret.add("Patch", patch);
     ret.add("DebugMode", new RavenJValue(debugMode));
     ret.add("AdditionalData", additionalData);
+    ret.add("Metadata", metadata);
 
     if (etag != null) {
       ret.add("Etag", new RavenJValue(etag.toString()));

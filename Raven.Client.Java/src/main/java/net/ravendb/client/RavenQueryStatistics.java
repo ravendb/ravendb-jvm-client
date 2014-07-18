@@ -1,6 +1,8 @@
 package net.ravendb.client;
 
 import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
 
 import net.ravendb.abstractions.data.Etag;
 import net.ravendb.abstractions.data.QueryResult;
@@ -22,6 +24,22 @@ public class RavenQueryStatistics {
   private Etag indexEtag;
   private boolean nonAuthoritativeInformation;
   private Date lastQueryTime;
+  private Map<String, Double> timingsInMilliseconds;
+
+
+  public RavenQueryStatistics() {
+    timingsInMilliseconds = new HashMap<>();
+  }
+
+
+  public Map<String, Double> getTimingsInMilliseconds() {
+    return timingsInMilliseconds;
+  }
+
+
+  public void setTimingsInMilliseconds(Map<String, Double> timingsInMilliseconds) {
+    this.timingsInMilliseconds = timingsInMilliseconds;
+  }
 
   /**
    * Whatever the query returned potentially stale results
@@ -197,6 +215,8 @@ public class RavenQueryStatistics {
     timestamp = qr.getIndexTimestamp();
     indexName = qr.getIndexName();
     indexTimestamp = qr.getIndexTimestamp();
+    lastQueryTime = qr.getLastQueryTime();
+    timingsInMilliseconds = qr.getTimingsInMilliseconds();
     indexEtag = qr.getIndexEtag();
   }
 

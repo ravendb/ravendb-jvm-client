@@ -91,11 +91,16 @@ public class AdminServerClient implements IAdminDatabaseCommands, IGlobalAdminDa
 
   @Override
   public void startIndexing() {
+    startIndexing(null);
+  }
+
+  @Override
+  public void startIndexing(final Integer maxNumberOfParallelIndexTasks) {
     innerServerClient.executeWithReplication(HttpMethods.POST, new Function1<OperationMetadata, Void>() {
 
       @Override
       public Void apply(OperationMetadata operationMetadata) {
-        adminRequest.startIndexing(operationMetadata.getUrl()).executeRequest();
+        adminRequest.startIndexing(operationMetadata.getUrl(), maxNumberOfParallelIndexTasks).executeRequest();
         return null;
       }
     });
@@ -131,6 +136,14 @@ public class AdminServerClient implements IAdminDatabaseCommands, IGlobalAdminDa
         return result.value(String.class, "IndexingStatus");
       }
     });
+  }
+
+  public String[] getDatabaseNames(int pagesize) {
+    return getDatabaseNames(pagesize, 0);
+  }
+
+  public String[] getDatabaseNames(int pageSize, int start) {
+    return adminRequest.getDatabaseNames(pageSize, start);
   }
 
   @Override

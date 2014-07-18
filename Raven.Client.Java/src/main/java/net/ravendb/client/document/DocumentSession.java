@@ -9,8 +9,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Date;
-import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -21,7 +19,6 @@ import net.ravendb.abstractions.basic.CloseableIterator;
 import net.ravendb.abstractions.basic.Lazy;
 import net.ravendb.abstractions.basic.Reference;
 import net.ravendb.abstractions.basic.Tuple;
-import net.ravendb.abstractions.closure.Action0;
 import net.ravendb.abstractions.closure.Action1;
 import net.ravendb.abstractions.closure.Function0;
 import net.ravendb.abstractions.data.BatchResult;
@@ -67,9 +64,7 @@ import net.ravendb.client.linq.IRavenQueryProvider;
 import net.ravendb.client.linq.IRavenQueryable;
 import net.ravendb.client.linq.RavenQueryInspector;
 import net.ravendb.client.linq.RavenQueryProvider;
-import net.ravendb.client.util.Types;
 import net.ravendb.client.utils.Closer;
-
 
 import com.google.common.base.Defaults;
 import com.mysema.query.types.Path;
@@ -233,14 +228,14 @@ public class DocumentSession extends InMemoryDocumentSessionOperations implement
     return loadInternal(clazz, ids, transformer, null);
   }
 
-  private <T> T[] loadInternal(Class<T> clazz, String[] ids, String transformer, Map<String, RavenJToken> queryInputs) {
+  private <T> T[] loadInternal(Class<T> clazz, String[] ids, String transformer, Map<String, RavenJToken> transformerParameters) {
     if (ids.length == 0) {
       return (T[]) Array.newInstance(clazz, 0);
     }
 
     incrementRequestCount();
 
-    MultiLoadResult multiLoadResult = getDatabaseCommands().get(ids, new String[] { }, transformer, queryInputs);
+    MultiLoadResult multiLoadResult = getDatabaseCommands().get(ids, new String[] { }, transformer, transformerParameters);
     return new LoadTransformerOperation(this, transformer, ids).complete(clazz, multiLoadResult);
   }
 
@@ -461,7 +456,7 @@ public class DocumentSession extends InMemoryDocumentSessionOperations implement
       if (configureFactory != null) {
         configureFactory.configure(configuration);
       }
-      TResult[] loadResult = loadInternal(clazz, new String[] { id} , transformer, configuration.getQueryInputs());
+      TResult[] loadResult = loadInternal(clazz, new String[] { id} , transformer, configuration.getTransformerParameters());
       if (loadResult != null && loadResult.length > 0 ) {
         return loadResult[0];
       }
@@ -489,7 +484,7 @@ public class DocumentSession extends InMemoryDocumentSessionOperations implement
       String transformer = tranformerClass.newInstance().getTransformerName();
       RavenLoadConfiguration configuration = new RavenLoadConfiguration();
       configureFactory.configure(configuration);
-      return loadInternal(clazz, ids.toArray(new String[0]) , transformer, configuration.getQueryInputs());
+      return loadInternal(clazz, ids.toArray(new String[0]) , transformer, configuration.getTransformerParameters());
     } catch (Exception e) {
       throw new RuntimeException(e);
     }
@@ -507,7 +502,7 @@ public class DocumentSession extends InMemoryDocumentSessionOperations implement
       configure.configure(configuration);
     }
 
-    TResult[] loadResult = loadInternal(clazz, new String[] { id }, transformer, configuration.getQueryInputs());
+    TResult[] loadResult = loadInternal(clazz, new String[] { id }, transformer, configuration.getTransformerParameters());
     if (loadResult != null && loadResult.length > 0 ) {
       return loadResult[0];
     }
@@ -527,7 +522,7 @@ public class DocumentSession extends InMemoryDocumentSessionOperations implement
       configure.configure(configuration);
     }
 
-    return loadInternal(clazz, ids.toArray(new String[0]), transformer, configuration.getQueryInputs());
+    return loadInternal(clazz, ids.toArray(new String[0]), transformer, configuration.getTransformerParameters());
   }
 
   /**
@@ -982,7 +977,7 @@ public class DocumentSession extends InMemoryDocumentSessionOperations implement
         configure.apply(configuration);
       }
 
-      List<JsonDocument> documents = getDatabaseCommands().startsWith(keyPrefix, matches, start, pageSize, false, exclude, pagingInformation, transformer, configuration.getQueryInputs());
+      List<JsonDocument> documents = getDatabaseCommands().startsWith(keyPrefix, matches, start, pageSize, false, exclude, pagingInformation, transformer, configuration.getTransformerParameters());
       List<TResult> result = new ArrayList<>(documents.size());
       for (JsonDocument document : documents) {
         result.add((TResult)trackEntity(clazz, document));

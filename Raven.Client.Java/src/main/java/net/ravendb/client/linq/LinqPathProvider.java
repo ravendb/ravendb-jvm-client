@@ -5,11 +5,10 @@ import java.util.ArrayList;
 import java.util.List;
 
 import net.ravendb.abstractions.basic.Reference;
-import net.ravendb.client.document.DocumentConvention;
+import net.ravendb.client.document.Convention;
 
 import org.apache.commons.lang.StringUtils;
 import org.codehaus.jackson.annotate.JsonProperty;
-
 
 import com.mysema.query.types.Constant;
 import com.mysema.query.types.Expression;
@@ -54,9 +53,9 @@ public class LinqPathProvider {
 
   }
 
-  private final DocumentConvention conventions;
+  private final Convention conventions;
 
-  public LinqPathProvider(DocumentConvention documentConvention) {
+  public LinqPathProvider(Convention documentConvention) {
     this.conventions = documentConvention;
   }
 

@@ -11,6 +11,82 @@ public class DatabaseMetrics {
   private double requestsPerSecond;
   private MeterData requests;
   private HistogramData requestDuration;
+  private HistogramData staleIndexMaps;
+  private HistogramData staleIndexReduces;
+  private Map<String, Map<String, String>> gauges;
+  private Map<String, MeterData> replicationBatchSizeMeter;
+  private Map<String, MeterData> replicationDurationMeter;
+  private Map<String, HistogramData> replicationBatchSizeHistogram;
+  private Map<String, HistogramData> replicationDurationHistogram;
+
+  public HistogramData getStaleIndexMaps() {
+    return staleIndexMaps;
+  }
+
+
+  public void setStaleIndexMaps(HistogramData staleIndexMaps) {
+    this.staleIndexMaps = staleIndexMaps;
+  }
+
+
+  public HistogramData getStaleIndexReduces() {
+    return staleIndexReduces;
+  }
+
+
+  public void setStaleIndexReduces(HistogramData staleIndexReduces) {
+    this.staleIndexReduces = staleIndexReduces;
+  }
+
+
+  public Map<String, Map<String, String>> getGauges() {
+    return gauges;
+  }
+
+
+  public void setGauges(Map<String, Map<String, String>> gauges) {
+    this.gauges = gauges;
+  }
+
+
+  public Map<String, MeterData> getReplicationBatchSizeMeter() {
+    return replicationBatchSizeMeter;
+  }
+
+
+  public void setReplicationBatchSizeMeter(Map<String, MeterData> replicationBatchSizeMeter) {
+    this.replicationBatchSizeMeter = replicationBatchSizeMeter;
+  }
+
+
+  public Map<String, MeterData> getReplicationDurationMeter() {
+    return replicationDurationMeter;
+  }
+
+
+  public void setReplicationDurationMeter(Map<String, MeterData> replicationDurationMeter) {
+    this.replicationDurationMeter = replicationDurationMeter;
+  }
+
+
+  public Map<String, HistogramData> getReplicationBatchSizeHistogram() {
+    return replicationBatchSizeHistogram;
+  }
+
+
+  public void setReplicationBatchSizeHistogram(Map<String, HistogramData> replicationBatchSizeHistogram) {
+    this.replicationBatchSizeHistogram = replicationBatchSizeHistogram;
+  }
+
+
+  public Map<String, HistogramData> getReplicationDurationHistogram() {
+    return replicationDurationHistogram;
+  }
+
+
+  public void setReplicationDurationHistogram(Map<String, HistogramData> replicationDurationHistogram) {
+    this.replicationDurationHistogram = replicationDurationHistogram;
+  }
 
   public double getDocsWritesPerSecond() {
     return docsWritesPerSecond;
