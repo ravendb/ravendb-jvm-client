@@ -9,7 +9,11 @@ import net.ravendb.abstractions.json.linq.RavenJObject;
 public interface ILowLevelBulkInsertOperation extends AutoCloseable {
   public UUID getOperationId();
 
-  public void write(String id, RavenJObject metadata, RavenJObject data);
+  public boolean isAborted();
+
+  public void write(String id, RavenJObject metadata, RavenJObject data) throws InterruptedException;
+
+  public void write(String id, RavenJObject metadata, RavenJObject data, Integer dataSize) throws InterruptedException;
 
   public Action1<String> getReport();
 
@@ -18,4 +22,6 @@ public interface ILowLevelBulkInsertOperation extends AutoCloseable {
    * @param report
    */
   public void setReport(Action1<String> report);
+
+  public void abort();
 }

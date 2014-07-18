@@ -2,6 +2,7 @@ package net.ravendb.tests.issues;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.fail;
 
 import net.ravendb.abstractions.closure.Action1;
 import net.ravendb.client.IDocumentSession;
@@ -25,6 +26,7 @@ public class BulkInsertClientTest extends RemoteClientTest {
             System.out.println(msg);
           }
         });
+
         User user = new User();
         user.setName("Fitzchak");
         bulkInsert.store(user);
@@ -37,6 +39,34 @@ public class BulkInsertClientTest extends RemoteClientTest {
       }
     }
   }
+
+  @Test
+  public void canAbortAndDisposeUsingBulk() throws Exception {
+    try (IDocumentStore store = new DocumentStore(getDefaultUrl(), getDefaultDb()).initialize()) {
+      try (BulkInsertOperation bulkInsert = store.bulkInsert()) {
+        bulkInsert.setReport(new Action1<String>() {
+          @Override
+          public void apply(String msg) {
+            System.out.println(msg);
+          }
+        });
+
+        User user = new User();
+        user.setName("Fitzchak");
+        bulkInsert.store(user);
+        bulkInsert.abort();
+        try {
+          bulkInsert.store(user);
+          fail();
+        } catch (IllegalStateException e) {
+          //ok
+        }
+
+      }
+    }
+  }
+
+
 
   @SuppressWarnings("unused")
   public static class User {

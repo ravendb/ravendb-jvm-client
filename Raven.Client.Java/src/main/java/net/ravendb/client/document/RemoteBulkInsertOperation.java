@@ -13,6 +13,7 @@ import java.util.UUID;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.zip.GZIPOutputStream;
 
 import net.ravendb.abstractions.closure.Action1;
@@ -45,17 +46,25 @@ public class RemoteBulkInsertOperation implements ILowLevelBulkInsertOperation, 
 
   private final static RavenJObject END_OF_QUEUE_OBJECT = RavenJObject.parse("{ \"QueueFinished\" : true }");
 
+  private final BulkInsertOptions options;
+
   private CancellationTokenSource cancellationTokenSource;
   private final ServerClient operationClient;
 
   private final ByteArrayOutputStream bufferedStream = new ByteArrayOutputStream();
   private final BlockingQueue<RavenJObject> queue;
 
+  private static final RavenJObject ABORT_MARKER = new RavenJObject();
+  private static final RavenJObject SKIP_MARKER = new RavenJObject();
+
   private HttpJsonRequest operationRequest;
   private byte[] responseBytes;
   private final Thread operationTask;
   private Exception operationTaskException;
   private int total;
+  private boolean aborted;
+
+  private static final int BIG_DOCUMENT_SIZE = 64 * 1024;
 
   private Action1<String> report;
   private UUID operationId;
@@ -79,6 +88,7 @@ public class RemoteBulkInsertOperation implements ILowLevelBulkInsertOperation, 
 
 
   public RemoteBulkInsertOperation(BulkInsertOptions options, ServerClient client, IDatabaseChanges changes) {
+    this.options = options;
     operationId = UUID.randomUUID();
     operationClient = client;
     queue = new ArrayBlockingQueue<>(Math.max(128, (options.getBatchSize() * 3) / 2));
@@ -249,6 +259,12 @@ public class RemoteBulkInsertOperation implements ILowLevelBulkInsertOperation, 
             flushBatch(stream, batch);
             return;
           }
+          if (document == SKIP_MARKER) { // ignore this, just filling the queue
+            continue;
+          }
+          if (document == ABORT_MARKER) { // abort immediately
+            return;
+          }
           batch.add(document);
 
           if (batch.size() >= options.getBatchSize()) {
@@ -263,7 +279,12 @@ public class RemoteBulkInsertOperation implements ILowLevelBulkInsertOperation, 
   }
 
   @Override
-  public void write(String id, RavenJObject metadata, RavenJObject data) {
+  public void write(String id, RavenJObject metadata, RavenJObject data) throws InterruptedException {
+    write(id, metadata, data, null);
+  }
+
+  @Override
+  public void write(String id, RavenJObject metadata, RavenJObject data, Integer dataSize) throws InterruptedException {
     if (id == null) {
       throw new IllegalArgumentException("id");
     }
@@ -273,20 +294,37 @@ public class RemoteBulkInsertOperation implements ILowLevelBulkInsertOperation, 
     if (data == null) {
       throw new IllegalArgumentException("data");
     }
-
-    if (operationTaskException != null) {
-      throw new RuntimeException(operationTaskException); // error early if we have  any error
+    if (aborted) {
+      throw new IllegalStateException("Operation has been aborted");
     }
 
     metadata.add("@id", id);
     data.add(Constants.METADATA, metadata);
-    try {
-      while (!queue.offer(data)) {
-        Thread.sleep(250);
+    for (int i = 0; i < 2; i++) {
+      if (operationTask.isInterrupted() || !operationTask.isAlive()){
+        operationTask.join();
       }
-    } catch (InterruptedException e) {
-      throw new RuntimeException(e);
+
+      if (queue.offer(data, options.getWriteTimeoutMiliseconds() / 2, TimeUnit.MILLISECONDS)) {
+        if (dataSize != null && dataSize >= BIG_DOCUMENT_SIZE) {
+          //essentially for a BatchSize == 1024 and stream of 1MB documents - the actual batch size will be 128
+          // --> BatchSize = 1024 / (dataSize = 1024/BigDocumentSize = 250) * 2 == 128
+          for (int skipDocIndex = 0; skipDocIndex < (dataSize / BIG_DOCUMENT_SIZE) * 2; skipDocIndex++) {
+            if (!queue.offer(SKIP_MARKER)) {
+              break;
+            }
+          }
+        }
+        return;
+      }
     }
+
+    if (operationTask.isInterrupted() || !operationTask.isAlive()){
+      operationTask.join();
+    }
+
+    throw new IllegalStateException("Could not flush in the specified timeout, server probably not responding or responding too slowly.\r\nAre you writing very big documents?");
+
   }
 
 
@@ -337,6 +375,9 @@ public class RemoteBulkInsertOperation implements ILowLevelBulkInsertOperation, 
   private  void flushBatch(OutputStream requestStream, Collection<RavenJObject> localBatch) throws IOException {
     if (localBatch.isEmpty()) {
       return ;
+    }
+    if (aborted) {
+      throw new IllegalStateException("Operation was timed out or has been aborted");
     }
     bufferedStream.reset();
     writeToBuffer(localBatch);
@@ -395,5 +436,16 @@ public class RemoteBulkInsertOperation implements ILowLevelBulkInsertOperation, 
   @Override
   public void onCompleted() {
     //empty by design
+  }
+
+  @Override
+  public void abort() {
+    aborted = true;
+    queue.add(ABORT_MARKER);
+  }
+
+  @Override
+  public boolean isAborted() {
+    return aborted;
   }
 }

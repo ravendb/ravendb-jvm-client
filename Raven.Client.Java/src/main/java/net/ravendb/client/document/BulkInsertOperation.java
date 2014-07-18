@@ -32,6 +32,14 @@ public class BulkInsertOperation implements AutoCloseable {
 
   private Set<BeforeEntityInsert> onBeforeEntityInsert = new LinkedHashSet<>();
 
+  public boolean isAborted() {
+    return operation.isAborted();
+  }
+
+  public void abort() {
+    operation.abort();
+  }
+
   public Action1<String> getReport() {
     return operation.getReport();
   }
@@ -82,13 +90,18 @@ public class BulkInsertOperation implements AutoCloseable {
     operation.close();
   }
 
-  public String store(Object entity) {
+  public String store(Object entity) throws InterruptedException {
     String id = getId(entity);
     store(entity, id);
     return id;
   }
 
-  public void store(Object entity, String id) {
+  public void store(Object entity, String id) throws InterruptedException {
+
+    if (operation.isAborted()) {
+      throw new IllegalStateException("Bulk insert has been aborted or the operation was timed out");
+    }
+
     RavenJObject metadata = new RavenJObject();
 
     String tag = documentStore.getConventions().getDynamicTagName(entity);
@@ -108,10 +121,14 @@ public class BulkInsertOperation implements AutoCloseable {
     }
   }
 
-  public void store(RavenJObject document, RavenJObject metadata, String id) {
+  public void store(RavenJObject document, RavenJObject metadata, String id) throws InterruptedException {
+    store(document, metadata, id, null);
+  }
+
+  public void store(RavenJObject document, RavenJObject metadata, String id,Integer dataSize) throws InterruptedException {
     onBeforeEntityInsert(id, document, metadata);
 
-    operation.write(id, metadata, document);
+    operation.write(id, metadata, document, dataSize);
   }
 
   public String getId(Object entity) {
@@ -125,4 +142,6 @@ public class BulkInsertOperation implements AutoCloseable {
     }
     return idRef.value;
   }
+
+
 }

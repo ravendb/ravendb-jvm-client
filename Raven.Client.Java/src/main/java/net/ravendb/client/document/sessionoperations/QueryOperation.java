@@ -143,10 +143,16 @@ public class QueryOperation {
 
     List<T> list = new ArrayList<>();
     for (RavenJObject obj: queryResult.getResults()) {
-      list.add(deserialize(clazz, obj));
+      list.add(obj != null?deserialize(clazz, obj) : null);
     }
 
-    sessionOperations.registerMissingIncludes(queryResult.getResults(), includes);
+    List<RavenJObject> notNullResults = new ArrayList<>();
+    for (RavenJObject obj : queryResult.getResults()) {
+      if (obj != null) {
+        notNullResults.add(obj);
+      }
+    }
+    sessionOperations.registerMissingIncludes(notNullResults, includes);
 
     return list;
   }
