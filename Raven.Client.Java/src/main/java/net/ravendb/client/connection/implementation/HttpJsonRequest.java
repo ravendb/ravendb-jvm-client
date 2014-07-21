@@ -161,7 +161,7 @@ public class HttpJsonRequest {
       }
 
       String headerName = prop.getKey();
-      if ("ETag".equals(headerName)) {
+      if (Constants.METADATA_ETAG_FIELD.equals(headerName)) {
         headerName = "If-None-Match";
       }
 

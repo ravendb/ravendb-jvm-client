@@ -604,7 +604,14 @@ public class DocumentSession extends InMemoryDocumentSessionOperations implement
       String key = null;
       Etag etag = null;
       if (meta != null) {
-        key = meta.value(String.class, Constants.DOCUMENT_ID_FIELD_NAME);
+        key = meta.value(String.class, "@id");
+        if (key == null) {
+          key = meta.value(String.class, Constants.DOCUMENT_ID_FIELD_NAME);
+        }
+        if (key == null) {
+          key = nextValue.value(String.class, Constants.DOCUMENT_ID_FIELD_NAME);
+        }
+
         String value = meta.value(String.class, "@etag");
         if (value != null) {
           etag = Etag.parse(value);
@@ -729,6 +736,11 @@ public class DocumentSession extends InMemoryDocumentSessionOperations implement
       logBatch(data);
 
       BatchResult[] batchResults = getDatabaseCommands().batch(data.getCommands());
+
+      if (batchResults == null) {
+        throw new IllegalStateException("Cannot call Save Changes after the document store was disposed.");
+      }
+
       updateBatchResults(Arrays.asList(batchResults), data);
     } catch (ConcurrencyException e) {
       throw e;

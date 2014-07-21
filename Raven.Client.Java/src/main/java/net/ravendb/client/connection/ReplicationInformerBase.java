@@ -174,9 +174,9 @@ public abstract class ReplicationInformerBase<T> implements IReplicationInformer
     return getHolder(operationUrl).getLastCheck();
   }
 
-  public boolean shouldExecuteUsing(final OperationMetadata operationMetadata, final OperationMetadata primaryOperation, int currentRequest, HttpMethods method, boolean primary) {
+  public boolean shouldExecuteUsing(final OperationMetadata operationMetadata, final OperationMetadata primaryOperation, int currentRequest, HttpMethods method, boolean primary, Exception error) {
     if (primary == false) {
-      assertValidOperation(method);
+      assertValidOperation(method, error);
     }
 
     FailureCounter failureCounter = getHolder(operationMetadata.getUrl());
@@ -225,7 +225,7 @@ public abstract class ReplicationInformerBase<T> implements IReplicationInformer
 
   protected abstract String getServerCheckUrl(String baseUrl);
 
-  protected void assertValidOperation(HttpMethods method) {
+  protected void assertValidOperation(HttpMethods method, Exception error) {
     if (conventions.getFailoverBehaviorWithoutFlags().contains(FailoverBehavior.ALLOW_READS_FROM_SECONDARIES)) {
       if (HttpMethods.GET.equals(method)) {
         return;
@@ -243,7 +243,7 @@ public abstract class ReplicationInformerBase<T> implements IReplicationInformer
       }
     }
     throw new IllegalStateException("Could not replicate " + method
-      + " operation to secondary node, failover behavior is: " + conventions.getFailoverBehavior());
+      + " operation to secondary node, failover behavior is: " + conventions.getFailoverBehavior(), error);
   }
 
   protected FailureCounter getHolder(String operationUrl) {
@@ -309,7 +309,7 @@ public abstract class ReplicationInformerBase<T> implements IReplicationInformer
       // if replicationIndex < 0, then we were explicitly instructed to use the master
       if (replicationIndex < localReplicationDestinations.size() && replicationIndex >= 0) {
         // if it is failing, ignore that, and move to the master or any of the replicas
-        if (shouldExecuteUsing(localReplicationDestinations.get(replicationIndex), primaryOperation, currentRequest, method, false)) {
+        if (shouldExecuteUsing(localReplicationDestinations.get(replicationIndex), primaryOperation, currentRequest, method, false, null)) {
 
            operationResult = tryOperation(operation, localReplicationDestinations.get(replicationIndex), primaryOperation, true);
            if (operationResult.success) {
@@ -319,7 +319,7 @@ public abstract class ReplicationInformerBase<T> implements IReplicationInformer
       }
     }
 
-    if (shouldExecuteUsing(primaryOperation, primaryOperation, currentRequest, method, true)) {
+    if (shouldExecuteUsing(primaryOperation, primaryOperation, currentRequest, method, true, null)) {
       operationResult = tryOperation(operation, primaryOperation, null, !operationResult.wasTimeout && localReplicationDestinations.size() > 0);
       if (operationResult.isSuccess()) {
         return operationResult.result;
@@ -338,7 +338,7 @@ public abstract class ReplicationInformerBase<T> implements IReplicationInformer
 
     for (int i = 0; i < localReplicationDestinations.size(); i++) {
       OperationMetadata replicationDestination = localReplicationDestinations.get(i);
-      if (!shouldExecuteUsing(replicationDestination, primaryOperation, currentRequest, method, false)) {
+      if (!shouldExecuteUsing(replicationDestination, primaryOperation, currentRequest, method, false, operationResult.getError())) {
         continue;
       }
       boolean hasMoreReplicationDestinations = localReplicationDestinations.size() > i + 1;
@@ -389,7 +389,7 @@ public abstract class ReplicationInformerBase<T> implements IReplicationInformer
 
         Reference<Boolean> wasTimeout = new Reference<>();
         if (isServerDown(e, wasTimeout)) {
-          return new OperationResult<>(null, wasTimeout.value, false);
+          return new OperationResult<>(null, wasTimeout.value, false, e);
         }
         throw e;
       }
@@ -441,6 +441,17 @@ public abstract class ReplicationInformerBase<T> implements IReplicationInformer
     private T result;
     private boolean wasTimeout;
     private boolean success;
+    private Exception error;
+
+
+    public Exception getError() {
+      return error;
+    }
+
+
+    public void setError(Exception error) {
+      this.error = error;
+    }
 
     public T getResult() {
       return result;
@@ -466,11 +477,12 @@ public abstract class ReplicationInformerBase<T> implements IReplicationInformer
       this.success = success;
     }
 
-    public OperationResult(T result, boolean wasTimeout, boolean success) {
+    public OperationResult(T result, boolean wasTimeout, boolean success, Exception error) {
       super();
       this.result = result;
       this.wasTimeout = wasTimeout;
       this.success = success;
+      this.error = error;
     }
 
     public OperationResult(T result, boolean success) {

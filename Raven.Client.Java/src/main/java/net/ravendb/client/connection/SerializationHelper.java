@@ -142,7 +142,7 @@ public class SerializationHelper {
 
   public static JsonDocumentMetadata deserializeJsonDocumentMetadata(String docKey, Map<String, String> headers, int responseStatusCode) {
     RavenJObject meta = MetadataExtensions.filterHeadersToObject(headers);
-    Etag etag = HttpExtensions.etagHeaderToEtag(headers.get("ETag"));
+    Etag etag = HttpExtensions.etagHeaderToEtag(headers.get(Constants.METADATA_ETAG_FIELD));
     JsonDocumentMetadata result =  new JsonDocumentMetadata();
     result.setEtag(etag);
     result.setKey(docKey);
@@ -171,7 +171,7 @@ public class SerializationHelper {
     RavenJObject jsonData = (RavenJObject) responseJson;
 
     RavenJObject meta = MetadataExtensions.filterHeadersToObject(headers);
-    Etag etag = HttpExtensions.etagHeaderToEtag(headers.get("ETag"));
+    Etag etag = HttpExtensions.etagHeaderToEtag(headers.get(Constants.METADATA_ETAG_FIELD));
 
     return new JsonDocument(jsonData, meta, docKey, responseStatusCode == HttpStatus.SC_NON_AUTHORITATIVE_INFORMATION, etag, getLastModifiedDate(headers));
   }
@@ -185,20 +185,34 @@ public class SerializationHelper {
     result.setStale(json.value(Boolean.class, "IsStale"));
     result.setIndexTimestamp(json.value(Date.class, "IndexTimestamp"));
     result.setIndexEtag(Etag.parse(json.value(String.class, "IndexEtag")));
-    result.setResults(json.value(RavenJArray.class, "Results").values(RavenJObject.class));
     result.setIncludes(json.value(RavenJArray.class, "Includes").values(RavenJObject.class));
     result.setTotalResults(json.value(Integer.class, "TotalResults"));
     result.setIndexName(json.value(String.class, "IndexName"));
     result.setSkippedResults(json.value(Integer.class, "SkippedResults"));
-
-
-    RavenJObject highlighings = json.value(RavenJObject.class, "Highlightings");
-    if (highlighings == null) {
-      highlighings = new RavenJObject();
+    RavenJObject timings = json.value(RavenJObject.class, "TimingsInMilliseconds");
+    if (timings == null) {
+      timings = new RavenJObject();
     }
-    ObjectMapper defaultJsonSerializer = JsonExtensions.createDefaultJsonSerializer();
-    TypeFactory typeFactory = defaultJsonSerializer.getTypeFactory();
     try {
+      ObjectMapper defaultJsonSerializer = JsonExtensions.createDefaultJsonSerializer();
+      TypeFactory typeFactory = defaultJsonSerializer.getTypeFactory();
+      MapType mapStringDouble = typeFactory.constructMapType(Map.class, SimpleType.construct(String.class), SimpleType.construct(Double.class));
+      result.setTimingsInMilliseconds((Map<String, Double>) defaultJsonSerializer.readValue(timings.toString(), mapStringDouble));
+
+      RavenJObject highlighings = json.value(RavenJObject.class, "Highlightings");
+      if (highlighings == null) {
+        highlighings = new RavenJObject();
+      }
+
+      for (RavenJToken r: json.value(RavenJArray.class, "Results")) {
+        if (r.getType() == JTokenType.NULL) {
+          result.getResults().add(null);
+        } else {
+          result.getResults().add((RavenJObject) r);
+        }
+      }
+
+
       ArrayType arrayType = typeFactory.constructArrayType(String.class);
       MapType innerMapType = typeFactory.constructMapType(Map.class, SimpleType.construct(String.class), arrayType);
       MapType mapType = typeFactory.constructMapType(Map.class, SimpleType.construct(String.class), innerMapType);

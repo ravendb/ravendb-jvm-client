@@ -5,16 +5,14 @@ import net.ravendb.abstractions.exceptions.OperationCancelledException;
 
 public class CancellationTokenSource {
 
-  private boolean cancelled = false;
-
-
+  boolean cancelled = false;
 
   public CancellationToken getToken() {
     return new CancellationToken();
   }
 
   public class CancellationToken {
-    private CancellationToken() {
+    protected CancellationToken() {
 
     }
 
