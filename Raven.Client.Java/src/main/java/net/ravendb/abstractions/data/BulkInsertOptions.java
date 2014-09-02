@@ -5,10 +5,19 @@ public class BulkInsertOptions {
   private boolean checkReferencesInIndexes;
   private int batchSize;
   private int writeTimeoutMiliseconds;
+  private boolean skipOverwriteIfUnchanged;
 
   public BulkInsertOptions() {
     batchSize = 512;
     writeTimeoutMiliseconds = 15 * 1000;
+  }
+
+  public boolean isSkipOverwriteIfUnchanged() {
+    return skipOverwriteIfUnchanged;
+  }
+
+  public void setSkipOverwriteIfUnchanged(boolean skipOverwriteIfUnchanged) {
+    this.skipOverwriteIfUnchanged = skipOverwriteIfUnchanged;
   }
 
   public boolean isOverwriteExisting() {

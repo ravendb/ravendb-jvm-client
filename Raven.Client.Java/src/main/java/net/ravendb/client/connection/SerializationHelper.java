@@ -180,7 +180,7 @@ public class SerializationHelper {
     return ravenJObjectToJsonDocument(r);
   }
 
-  public static QueryResult toQueryResult(RavenJObject json, Etag etagHeader, String tempRequestTime) {
+  public static QueryResult toQueryResult(RavenJObject json, Etag etagHeader, String tempRequestTime, long numberOfCharactersRead) {
     QueryResult result = new QueryResult();
     result.setStale(json.value(Boolean.class, "IsStale"));
     result.setIndexTimestamp(json.value(Date.class, "IndexTimestamp"));
@@ -198,6 +198,8 @@ public class SerializationHelper {
       TypeFactory typeFactory = defaultJsonSerializer.getTypeFactory();
       MapType mapStringDouble = typeFactory.constructMapType(Map.class, SimpleType.construct(String.class), SimpleType.construct(Double.class));
       result.setTimingsInMilliseconds((Map<String, Double>) defaultJsonSerializer.readValue(timings.toString(), mapStringDouble));
+
+      result.setResultSize(numberOfCharactersRead);
 
       RavenJObject highlighings = json.value(RavenJObject.class, "Highlightings");
       if (highlighings == null) {

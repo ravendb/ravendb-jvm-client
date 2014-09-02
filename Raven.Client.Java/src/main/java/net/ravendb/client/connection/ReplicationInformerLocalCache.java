@@ -17,6 +17,18 @@ public class ReplicationInformerLocalCache {
 
   private static String tempDir = System.getProperty("java.io.tmpdir");
 
+  public static void clearReplicationInformationFromLocalCache(String serverHash) {
+    try {
+      String path = "RavenDB Replication Information For - " + serverHash;
+      File file = new File(tempDir, path);
+      if (file.exists()) {
+        file.delete();
+      }
+    } catch (Exception e) {
+      log.error("Could not clear the persisted replication information", e);
+    }
+  }
+
   public static JsonDocument tryLoadReplicationInformationFromLocalCache(String serverHash) {
     JsonDocument result = null;
     try {

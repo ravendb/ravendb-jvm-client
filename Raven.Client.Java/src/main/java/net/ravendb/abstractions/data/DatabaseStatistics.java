@@ -36,8 +36,6 @@ public class DatabaseStatistics {
   private float databaseTransactionVersionSizeInMB;
   private IndexStats[] indexes;
   private ServerError[] errors;
-  private TriggerInfo[] triggers;
-  private Collection<ExtensionsLog> extensions;
   private IndexingBatchInfo[] indexingBatchInfo;
   private FutureBatchStats[] prefetches;
   private UUID databaseId;
@@ -92,9 +90,6 @@ public class DatabaseStatistics {
   public ServerError[] getErrors() {
     return errors;
   }
-  public Collection<ExtensionsLog> getExtensions() {
-    return extensions;
-  }
   public IndexStats[] getIndexes() {
     return indexes;
   }
@@ -112,9 +107,6 @@ public class DatabaseStatistics {
   }
   public String[] getStaleIndexes() {
     return staleIndexes;
-  }
-  public TriggerInfo[] getTriggers() {
-    return triggers;
   }
   public void setApproximateTaskCount(long approximateTaskCount) {
     this.approximateTaskCount = approximateTaskCount;
@@ -140,9 +132,6 @@ public class DatabaseStatistics {
   public void setErrors(ServerError[] errors) {
     this.errors = errors;
   }
-  public void setExtensions(Collection<ExtensionsLog> extensions) {
-    this.extensions = extensions;
-  }
   public void setIndexes(IndexStats[] indexes) {
     this.indexes = indexes;
   }
@@ -165,11 +154,6 @@ public class DatabaseStatistics {
   public void setStaleIndexes(String[] staleIndexes) {
     this.staleIndexes = staleIndexes;
   }
-
-  public void setTriggers(TriggerInfo[] triggers) {
-    this.triggers = triggers;
-  }
-
 
 
 }

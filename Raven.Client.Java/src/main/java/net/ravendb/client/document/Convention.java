@@ -3,6 +3,7 @@ package net.ravendb.client.document;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.util.ArrayList;
+import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -15,6 +16,7 @@ import com.mysema.query.types.Expression;
 
 import net.ravendb.abstractions.closure.Action1;
 import net.ravendb.abstractions.connection.OperationCredentials;
+import net.ravendb.abstractions.replication.ReplicationClientConfiguration;
 import net.ravendb.client.delegates.HttpResponseHandler;
 import net.ravendb.client.delegates.HttpResponseWithMetaHandler;
 import net.ravendb.client.delegates.IdentityPropertyFinder;
@@ -40,6 +42,15 @@ public class Convention {
   private HttpResponseWithMetaHandler handleUnauthorizedResponse;
 
   private boolean saveEnumsAsIntegers;
+
+  public void updateFrom(ReplicationClientConfiguration configuration) {
+    if (configuration == null) {
+      return;
+    }
+    if (configuration.getFailoverBehavior() != null) {
+      this.failoverBehavior = FailoverBehaviorSet.of(configuration.getFailoverBehavior());
+    }
+  }
 
   /**
    * How should we behave in a replicated environment when we can't

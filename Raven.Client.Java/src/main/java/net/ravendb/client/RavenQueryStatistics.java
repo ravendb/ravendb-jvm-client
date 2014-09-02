@@ -25,7 +25,20 @@ public class RavenQueryStatistics {
   private boolean nonAuthoritativeInformation;
   private Date lastQueryTime;
   private Map<String, Double> timingsInMilliseconds;
+  private long resultSize;
 
+  /**
+   * The size of the request which were sent from the server.
+   * This value is the _uncompressed_ size.
+   * @return
+   */
+  public long getResultSize() {
+    return resultSize;
+  }
+
+  public void setResultSize(long resultSize) {
+    this.resultSize = resultSize;
+  }
 
   public RavenQueryStatistics() {
     timingsInMilliseconds = new HashMap<>();
@@ -218,6 +231,7 @@ public class RavenQueryStatistics {
     lastQueryTime = qr.getLastQueryTime();
     timingsInMilliseconds = qr.getTimingsInMilliseconds();
     indexEtag = qr.getIndexEtag();
+    resultSize = qr.getResultSize();
   }
 
 }

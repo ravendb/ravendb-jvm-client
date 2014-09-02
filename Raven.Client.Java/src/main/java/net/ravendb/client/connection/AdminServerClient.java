@@ -138,6 +138,16 @@ public class AdminServerClient implements IAdminDatabaseCommands, IGlobalAdminDa
     });
   }
 
+  public RavenJObject getDatabaseConfiguration() {
+    return innerServerClient.executeWithReplication(HttpMethods.GET, new Function1<OperationMetadata, RavenJObject>() {
+
+      @Override
+      public RavenJObject apply(OperationMetadata operationMetadata) {
+        return (RavenJObject) adminRequest.getDatabaseConfiguration(operationMetadata.getUrl()).readResponseJson();
+      }
+    });
+  }
+
   public String[] getDatabaseNames(int pagesize) {
     return getDatabaseNames(pagesize, 0);
   }

@@ -13,7 +13,6 @@ import java.util.UUID;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 import java.util.zip.GZIPOutputStream;
 
 import net.ravendb.abstractions.closure.Action1;
@@ -240,6 +239,9 @@ public class RemoteBulkInsertOperation implements ILowLevelBulkInsertOperation, 
     if (options.isCheckReferencesInIndexes()) {
       requestUrl += "&checkReferencesInIndexes=true";
     }
+    if (options.isSkipOverwriteIfUnchanged()) {
+      requestUrl += "&skipOverwriteIfUnchanged=true";
+    }
 
     requestUrl += "&operationId=" + operationId;
 
@@ -303,6 +305,9 @@ public class RemoteBulkInsertOperation implements ILowLevelBulkInsertOperation, 
     for (int i = 0; i < 2; i++) {
       if (operationTask.isInterrupted() || !operationTask.isAlive()){
         operationTask.join();
+        if (operationTaskException != null) {
+          throw new InterruptedException("Bulk insert timeouted or was aborted");
+        }
       }
 
       if (queue.offer(data, options.getWriteTimeoutMiliseconds() / 2, TimeUnit.MILLISECONDS)) {
@@ -321,6 +326,9 @@ public class RemoteBulkInsertOperation implements ILowLevelBulkInsertOperation, 
 
     if (operationTask.isInterrupted() || !operationTask.isAlive()){
       operationTask.join();
+      if (operationTaskException != null) {
+        throw new InterruptedException("Bulk insert was timeouted or aborted");
+      }
     }
 
     throw new IllegalStateException("Could not flush in the specified timeout, server probably not responding or responding too slowly.\r\nAre you writing very big documents?");

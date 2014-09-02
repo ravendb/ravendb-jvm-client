@@ -136,12 +136,16 @@ public class DatabaseMetrics {
     this.requestDuration = requestDuration;
   }
 
-  public static class HistogramData {
+  public static class HistogramData implements IMetricsData {
     private long counter;
     private double max;
     private double min;
     private double mean;
     private double stdev;
+
+    public MetricType getMetricType() {
+      return MetricType.HISTOGRAM;
+    }
 
     private Map<String, Double> percentiles = new HashMap<>();
 
@@ -194,12 +198,16 @@ public class DatabaseMetrics {
     }
   }
 
-  public static class MeterData {
+  public static class MeterData implements IMetricsData {
     private long count;
     private double meanRate;
     private double oneMinuteRate;
     private double fiveMinuteRate;
     private double fiftennMinuteRate;
+
+    public MetricType getMetricType() {
+      return MetricType.METER;
+    }
 
     public long getCount() {
       return count;

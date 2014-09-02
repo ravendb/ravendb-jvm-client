@@ -372,26 +372,7 @@ public class DocumentSession extends InMemoryDocumentSessionOperations implement
     value = entitiesAndMetadata.get(entity);
     incrementRequestCount();
     JsonDocument jsonDocument = databaseCommands.get(value.getKey());
-    if (jsonDocument == null) {
-      throw new IllegalStateException("Document '" + value.getKey() + "' no longer exists and was probably deleted");
-    }
-    value.setMetadata(jsonDocument.getMetadata());
-    value.setOriginalMetadata(jsonDocument.getMetadata().cloneToken());
-    value.setEtag(jsonDocument.getEtag());
-    value.setOriginalValue(jsonDocument.getDataAsJson());
-    Object newEntity = convertToEntity(entity.getClass(), value.getKey(), jsonDocument.getDataAsJson(), jsonDocument.getMetadata());
-
-    try {
-      for (PropertyDescriptor propertyDescriptor : Introspector.getBeanInfo(entity.getClass()).getPropertyDescriptors()) {
-        if (propertyDescriptor.getWriteMethod() == null || propertyDescriptor.getReadMethod() == null) {
-          continue;
-        }
-        Object propValue = propertyDescriptor.getReadMethod().invoke(newEntity, new Object[0]);
-        propertyDescriptor.getWriteMethod().invoke(entity, new Object[] { propValue });
-      }
-    } catch (IntrospectionException | IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
-      throw new RuntimeException(e);
-    }
+    refreshInternal(entity, jsonDocument, value);
   }
 
 
@@ -665,8 +646,13 @@ public class DocumentSession extends InMemoryDocumentSessionOperations implement
 
   @Override
   public <T> CloseableIterator<StreamResult<T>> stream(Class<T> entityClass, Etag fromEtag, String startsWith, String matches, int start, int pageSize, RavenPagingInformation pagingInformation) {
+    return stream(entityClass, fromEtag, startsWith, matches, start, pageSize, pagingInformation, null);
+  }
+
+  @Override
+  public <T> CloseableIterator<StreamResult<T>> stream(Class<T> entityClass, Etag fromEtag, String startsWith, String matches, int start, int pageSize, RavenPagingInformation pagingInformation, String skipAfter) {
     incrementRequestCount();
-    CloseableIterator<RavenJObject> iterator = databaseCommands.streamDocs(fromEtag, startsWith, matches, start, pageSize, null, pagingInformation);
+    CloseableIterator<RavenJObject> iterator = databaseCommands.streamDocs(fromEtag, startsWith, matches, start, pageSize, null, pagingInformation, skipAfter);
     return new SimpleSteamIterator<>(iterator, entityClass);
   }
 
@@ -967,8 +953,13 @@ public class DocumentSession extends InMemoryDocumentSessionOperations implement
 
   @Override
   public <T> T[] loadStartingWith(Class<T> clazz, String keyPrefix, String matches, int start, int pageSize, String exclude, RavenPagingInformation pagingInformation) {
+    return loadStartingWith(clazz, keyPrefix, matches, start, pageSize, exclude, pagingInformation, null);
+  }
+
+  @Override
+  public <T> T[] loadStartingWith(Class<T> clazz, String keyPrefix, String matches, int start, int pageSize, String exclude, RavenPagingInformation pagingInformation, String skipAfter) {
     incrementRequestCount();
-    List<JsonDocument> results = getDatabaseCommands().startsWith(keyPrefix, matches, start, pageSize, false, exclude, pagingInformation);
+    List<JsonDocument> results = getDatabaseCommands().startsWith(keyPrefix, matches, start, pageSize, false, exclude, pagingInformation, null, null, skipAfter);
     for (JsonDocument doc: results) {
       trackEntity(clazz, doc);
     }
@@ -978,7 +969,7 @@ public class DocumentSession extends InMemoryDocumentSessionOperations implement
   @Override
   public <TResult, TTransformer extends AbstractTransformerCreationTask> TResult[] loadStartingWith(Class<TResult> clazz, Class<TTransformer> transformerClass,
     String keyPrefix, String matches, int start, int pageSize, String exclude,
-    RavenPagingInformation pagingInformation, Action1<ILoadConfiguration> configure) {
+    RavenPagingInformation pagingInformation, Action1<ILoadConfiguration> configure, String skipAfter) {
 
     incrementRequestCount();
 
@@ -989,7 +980,7 @@ public class DocumentSession extends InMemoryDocumentSessionOperations implement
         configure.apply(configuration);
       }
 
-      List<JsonDocument> documents = getDatabaseCommands().startsWith(keyPrefix, matches, start, pageSize, false, exclude, pagingInformation, transformer, configuration.getTransformerParameters());
+      List<JsonDocument> documents = getDatabaseCommands().startsWith(keyPrefix, matches, start, pageSize, false, exclude, pagingInformation, transformer, configuration.getTransformerParameters(), skipAfter);
       List<TResult> result = new ArrayList<>(documents.size());
       for (JsonDocument document : documents) {
         result.add((TResult)trackEntity(clazz, document));

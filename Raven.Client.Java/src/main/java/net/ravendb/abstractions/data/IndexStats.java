@@ -12,11 +12,12 @@ import org.apache.commons.lang.builder.HashCodeBuilder;
 
 public class IndexStats {
   private String id;
-  private String publicName;
+  private String name;
   private int indexingAttempts;
   private int indexingSuccesses;
   private int indexingErrors;
   private Etag lastIndexedEtag;
+  private Integer indexingLag;
   private Date lastIndexedTimestamp;
   private Date lastQueryTimestamp;
   private int touchCount;
@@ -52,20 +53,25 @@ public class IndexStats {
     return docsCount;
   }
 
-
-
   public void setDocsCount(int docsCount) {
     this.docsCount = docsCount;
   }
 
 
-  public String getPublicName() {
-    return publicName;
+  public String getName() {
+    return name;
   }
 
+  public Integer getIndexingLag() {
+    return indexingLag;
+  }
 
-  public void setPublicName(String publicName) {
-    this.publicName = publicName;
+  public void setIndexingLag(Integer indexingLag) {
+    this.indexingLag = indexingLag;
+  }
+
+  public void setName(String name) {
+    this.name = name;
   }
 
   public String getId() {

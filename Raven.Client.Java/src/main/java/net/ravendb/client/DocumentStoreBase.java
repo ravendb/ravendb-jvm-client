@@ -24,7 +24,6 @@ import net.ravendb.client.listeners.IDocumentConversionListener;
 import net.ravendb.client.listeners.IDocumentDeleteListener;
 import net.ravendb.client.listeners.IDocumentQueryListener;
 import net.ravendb.client.listeners.IDocumentStoreListener;
-import net.ravendb.client.listeners.IExtendedDocumentConversionListener;
 import net.ravendb.client.util.GlobalLastEtagHolder;
 import net.ravendb.client.util.ILastEtagHolder;
 import net.ravendb.client.utils.encryptors.Encryptor;
@@ -164,16 +163,6 @@ public abstract class DocumentStoreBase implements IDocumentStore {
    */
   public DocumentStoreBase registerListener(IDocumentConversionListener conversionListener) {
     listeners.getConversionListeners().add(conversionListener);
-    return this;
-  }
-
-  /**
-   * Registers the extended conversion listener.
-   * @param conversionListener
-   * @return
-   */
-  public DocumentStoreBase registerListener(IExtendedDocumentConversionListener conversionListener) {
-    listeners.getExtendedConversionListeners().add(conversionListener);
     return this;
   }
 

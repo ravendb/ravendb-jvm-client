@@ -87,6 +87,16 @@ public interface ISyncAdvancedSessionOperation extends IAdvancedDocumentSessionO
    */
   public <T> T[] loadStartingWith(Class<T> clazz, String keyPrefix, String matches, int start, int pageSize, String exclude, RavenPagingInformation pagingInformation);
 
+  /**
+   * Load documents with the specified key prefix
+   * @param clazz
+   * @param keyPrefix
+   * @param matches
+   * @param start
+   * @param pageSize
+   * @return
+   */
+  public <T> T[] loadStartingWith(Class<T> clazz, String keyPrefix, String matches, int start, int pageSize, String exclude, RavenPagingInformation pagingInformation, String skipAfter);
 
   /**
    * Loads documents with the specified key prefix and applies the specified results transformer against the results
@@ -103,7 +113,7 @@ public interface ISyncAdvancedSessionOperation extends IAdvancedDocumentSessionO
    */
   public <TResult, TTransformer extends AbstractTransformerCreationTask> TResult[] loadStartingWith(Class<TResult> clazz, Class<TTransformer> transformerClass,
     String keyPrefix, String matches, int start, int pageSize, String exclude,
-    RavenPagingInformation pagingInformation, Action1<ILoadConfiguration> configure);
+    RavenPagingInformation pagingInformation, Action1<ILoadConfiguration> configure, String skipAfter);
 
 
   /**
@@ -272,6 +282,21 @@ public interface ISyncAdvancedSessionOperation extends IAdvancedDocumentSessionO
    * @return
    */
   public <T> CloseableIterator<StreamResult<T>> stream(Class<T> entityClass, Etag fromEtag, String startsWith, String matches, int start, int pageSize, RavenPagingInformation pagingInformation);
+
+
+  /**
+   * Stream the results on the query to the client, converting them to
+   * Java types along the way.
+   * Does NOT track the entities in the session, and will not includes changes there when saveChanges() is called
+   * @param fromEtag
+   * @param startsWith
+   * @param matches
+   * @param start
+   * @param pageSize
+   * @return
+   */
+  public <T> CloseableIterator<StreamResult<T>> stream(Class<T> entityClass, Etag fromEtag, String startsWith, String matches, int start, int pageSize, RavenPagingInformation pagingInformation, String skipAfter);
+
 
   /**
    *

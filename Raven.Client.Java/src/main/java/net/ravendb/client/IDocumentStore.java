@@ -84,6 +84,12 @@ public interface IDocumentStore extends IDisposalNotification {
   public HttpJsonRequestFactory getJsonRequestFactory();
 
   /**
+   * Whatever this instance has json request factory available
+   * @return
+   */
+  public boolean hasJsonRequestFactory();
+
+  /**
    * Sets the identifier
    * @param identifier
    */

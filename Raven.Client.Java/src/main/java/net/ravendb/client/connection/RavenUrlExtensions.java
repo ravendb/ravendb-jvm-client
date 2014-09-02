@@ -8,6 +8,7 @@ import net.ravendb.abstractions.connection.OperationCredentials;
 import net.ravendb.abstractions.data.HttpMethods;
 import net.ravendb.client.connection.implementation.HttpJsonRequest;
 import net.ravendb.client.document.DocumentConvention;
+import net.ravendb.client.extensions.MultiDatabase;
 import net.ravendb.client.utils.UrlUtils;
 
 
@@ -41,7 +42,7 @@ public class RavenUrlExtensions {
   }
 
   public static String adminStats(String url) {
-    return url + "/admin/stats";
+    return MultiDatabase.getRootDatabaseUrl(url) + "/admin/stats";
   }
 
   public static String replicationInfo(String url) {
@@ -53,7 +54,7 @@ public class RavenUrlExtensions {
   }
 
   public static String databases(String url, int pageSize, int start) {
-    String databases = url + "/databases?pageSize=" + pageSize;
+    String databases = MultiDatabase.getRootDatabaseUrl(url) + "/databases?pageSize=" + pageSize;
     return start > 0 ? databases + "&start=" + start : databases;
   }
 

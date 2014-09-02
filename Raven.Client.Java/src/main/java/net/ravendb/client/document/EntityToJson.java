@@ -10,8 +10,6 @@ import net.ravendb.abstractions.json.linq.RavenJToken;
 import net.ravendb.abstractions.json.linq.RavenJValue;
 import net.ravendb.client.IDocumentStore;
 import net.ravendb.client.listeners.IDocumentConversionListener;
-import net.ravendb.client.listeners.IExtendedDocumentConversionListener;
-
 
 public class EntityToJson {
   private final IDocumentStore documentStore;
@@ -47,7 +45,7 @@ public class EntityToJson {
 
 
   public RavenJObject convertEntityToJson(String key, Object entity, RavenJObject metadata) {
-    for (IExtendedDocumentConversionListener extendedDocumentConversionListener : listeners.getExtendedConversionListeners()) {
+    for (IDocumentConversionListener extendedDocumentConversionListener : listeners.getConversionListeners()) {
       extendedDocumentConversionListener.beforeConversionToDocument(key, entity, metadata);
     }
 
@@ -61,11 +59,7 @@ public class EntityToJson {
 
     setClrType(entityType, metadata);
 
-    for(IDocumentConversionListener documentConversionListener:  listeners.getConversionListeners()) {
-      documentConversionListener.entityToDocument(key, entity, objectAsJson, metadata);
-    }
-
-    for (IExtendedDocumentConversionListener extendedDocumentConversionListener: listeners.getExtendedConversionListeners()) {
+    for (IDocumentConversionListener extendedDocumentConversionListener: listeners.getConversionListeners()) {
       extendedDocumentConversionListener.afterConversionToDocument(key, entity, objectAsJson, metadata);
     }
 

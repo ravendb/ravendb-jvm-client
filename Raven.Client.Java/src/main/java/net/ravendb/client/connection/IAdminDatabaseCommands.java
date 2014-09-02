@@ -1,5 +1,7 @@
 package net.ravendb.client.connection;
 
+import net.ravendb.abstractions.json.linq.RavenJObject;
+
 public interface IAdminDatabaseCommands {
   /**
    *  Disables all indexing
@@ -22,4 +24,5 @@ public interface IAdminDatabaseCommands {
    */
   public String getIndexingStatus();
 
+  public RavenJObject getDatabaseConfiguration();
 }

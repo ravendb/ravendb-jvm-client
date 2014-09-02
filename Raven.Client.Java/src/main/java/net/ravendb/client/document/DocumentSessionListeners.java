@@ -8,7 +8,6 @@ import net.ravendb.client.listeners.IDocumentConversionListener;
 import net.ravendb.client.listeners.IDocumentDeleteListener;
 import net.ravendb.client.listeners.IDocumentQueryListener;
 import net.ravendb.client.listeners.IDocumentStoreListener;
-import net.ravendb.client.listeners.IExtendedDocumentConversionListener;
 
 
 /**
@@ -17,7 +16,6 @@ import net.ravendb.client.listeners.IExtendedDocumentConversionListener;
 public class DocumentSessionListeners {
 
   private List<IDocumentConversionListener> conversionListeners;
-  private List<IExtendedDocumentConversionListener> extendedConversionListeners;
   private List<IDocumentQueryListener> queryListeners;
   private List<IDocumentStoreListener> storeListeners;
   private List<IDocumentDeleteListener> deleteListeners;
@@ -25,7 +23,6 @@ public class DocumentSessionListeners {
 
   public DocumentSessionListeners() {
     conversionListeners = new ArrayList<>();
-    extendedConversionListeners = new ArrayList<>();
     queryListeners = new ArrayList<>();
     storeListeners = new ArrayList<>();
     deleteListeners = new ArrayList<>();
@@ -37,12 +34,6 @@ public class DocumentSessionListeners {
   }
   public void setConversionListeners(List<IDocumentConversionListener> conversionListeners) {
     this.conversionListeners = conversionListeners;
-  }
-  public List<IExtendedDocumentConversionListener> getExtendedConversionListeners() {
-    return extendedConversionListeners;
-  }
-  public void setExtendedConversionListeners(List<IExtendedDocumentConversionListener> extendedConversionListeners) {
-    this.extendedConversionListeners = extendedConversionListeners;
   }
   public List<IDocumentQueryListener> getQueryListeners() {
     return queryListeners;
@@ -71,10 +62,6 @@ public class DocumentSessionListeners {
 
   public void registerListener(IDocumentConversionListener conversionListener) {
     this.conversionListeners.add(conversionListener);
-  }
-
-  public void registerListener(IExtendedDocumentConversionListener conversionListener) {
-    this.extendedConversionListeners.add(conversionListener);
   }
 
   public void registerListener(IDocumentQueryListener conversionListener) {

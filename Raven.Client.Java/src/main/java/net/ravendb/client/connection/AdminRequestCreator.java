@@ -90,6 +90,10 @@ public class AdminRequestCreator {
     return createRequestForSystemDatabase.apply("/admin/compact?database=" + databaseName, HttpMethods.POST);
   }
 
+  public HttpJsonRequest getDatabaseConfiguration(String serverUrl) {
+    return createReplicationAwareRequest.apply(serverUrl, "/debug/config", HttpMethods.GET);
+  }
+
   public String[] getDatabaseNames(int pageSize) {
     return getDatabaseNames(pageSize, 0);
   }

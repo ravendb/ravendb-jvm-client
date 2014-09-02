@@ -6,6 +6,7 @@ import java.util.Date;
 
 import net.ravendb.abstractions.basic.EventArgs;
 import net.ravendb.abstractions.connection.OperationCredentials;
+import net.ravendb.abstractions.data.Constants;
 import net.ravendb.abstractions.data.JsonDocument;
 import net.ravendb.abstractions.extensions.JsonExtensions;
 import net.ravendb.abstractions.replication.ReplicationDestination;
@@ -20,13 +21,17 @@ import org.apache.commons.lang.time.DateUtils;
 
 public class ReplicationInformer extends ReplicationInformerBase<ServerClient> implements IDocumentStoreReplicationInformer {
 
-  private static String RAVEN_REPLICATION_DESTINATIONS = "Raven/Replication/Destinations";
-
   private ReplicationDestination[] failoverServers;
 
   @Override
   public void setFailoverServers(ReplicationDestination[] failoverServers) {
     this.failoverServers = failoverServers;
+  }
+
+  @Override
+  public void clearReplicationInformationLocalCache(ServerClient client) {
+    String serverHash = ServerHash.getServerHash(client.getUrl());
+    ReplicationInformerLocalCache.clearReplicationInformationFromLocalCache(serverHash);
   }
 
   @Override
@@ -88,7 +93,7 @@ public class ReplicationInformer extends ReplicationInformerBase<ServerClient> i
   }
 
   protected String getServerCheckUrl(String baseUrl) {
-      return RavenUrlExtensions.doc( baseUrl, RAVEN_REPLICATION_DESTINATIONS) + "?check-server-reachable";
+      return RavenUrlExtensions.doc( baseUrl, Constants.RAVEN_REPLICATION_DESTINATIONS) + "?check-server-reachable";
   }
 
   @Override
@@ -98,7 +103,7 @@ public class ReplicationInformer extends ReplicationInformerBase<ServerClient> i
 
       JsonDocument document;
       try {
-        document = commands.directGet(new OperationMetadata(commands.getUrl(), commands.getPrimaryCredentials()), RAVEN_REPLICATION_DESTINATIONS);
+        document = commands.directGet(new OperationMetadata(commands.getUrl(), commands.getPrimaryCredentials()), Constants.RAVEN_REPLICATION_DESTINATIONS);
         failureCounts.put(commands.getUrl(), new FailureCounter()); // we just hit the master, so we can reset its failure count
       } catch (Exception e) {
         log.error("Could not contact master for new replication information", e);
@@ -142,6 +147,10 @@ public class ReplicationInformer extends ReplicationInformerBase<ServerClient> i
       if (!failureCounts.containsKey(replicationDestination.getUrl())) {
         failureCounts.put(replicationDestination.getUrl(), new FailureCounter());
       }
+    }
+
+    if (replicationDocument.getClientConfiguration() != null) {
+      conventions.updateFrom(replicationDocument.getClientConfiguration());
     }
   }
 

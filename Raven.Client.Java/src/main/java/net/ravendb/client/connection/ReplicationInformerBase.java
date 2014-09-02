@@ -50,7 +50,6 @@ public abstract class ReplicationInformerBase<T> implements IReplicationInformer
 
   protected List<OperationMetadata> replicationDestinations = new ArrayList<>();
 
-
   protected final Map<String, FailureCounter> failureCounts = new ConcurrentHashMap<>();
 
   protected Thread refreshReplicationInformationTask;
@@ -58,6 +57,8 @@ public abstract class ReplicationInformerBase<T> implements IReplicationInformer
 
   protected List<EventHandler<FailoverStatusChangedEventArgs>> failoverStatusChanged = new ArrayList<>();
 
+  @Override
+  public abstract void clearReplicationInformationLocalCache(T client);
 
   @Override
   public int getDelayTimeInMiliSec() {

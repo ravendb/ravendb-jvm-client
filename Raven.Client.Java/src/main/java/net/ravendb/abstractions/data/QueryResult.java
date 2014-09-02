@@ -26,7 +26,15 @@ public class QueryResult {
   private long durationMiliseconds;
   private Map<String, String> scoreExplanations;
   private Map<String, Double> timingsInMilliseconds;
+  private long resultSize;
 
+  public long getResultSize() {
+    return resultSize;
+  }
+
+  public void setResultSize(long resultSize) {
+    this.resultSize = resultSize;
+  }
 
   public Map<String, Double> getTimingsInMilliseconds() {
     return timingsInMilliseconds;

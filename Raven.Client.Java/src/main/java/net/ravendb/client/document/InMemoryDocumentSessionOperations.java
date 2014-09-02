@@ -1,5 +1,9 @@
 package net.ravendb.client.document;
 
+import java.beans.IntrospectionException;
+import java.beans.Introspector;
+import java.beans.PropertyDescriptor;
+import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -45,7 +49,6 @@ import net.ravendb.client.exceptions.NonUniqueObjectException;
 import net.ravendb.client.listeners.IDocumentConversionListener;
 import net.ravendb.client.listeners.IDocumentDeleteListener;
 import net.ravendb.client.listeners.IDocumentStoreListener;
-import net.ravendb.client.listeners.IExtendedDocumentConversionListener;
 import net.ravendb.client.util.IdentityHashSet;
 import net.ravendb.client.util.Types;
 import net.ravendb.client.utils.Closer;
@@ -470,7 +473,7 @@ public abstract class InMemoryDocumentSessionOperations implements AutoCloseable
       if (RavenJObject.class.equals(entityType)) {
         return documentFound.cloneToken();
       }
-      for (IExtendedDocumentConversionListener extendedDocumentConversionListener: theListeners.getExtendedConversionListeners()) {
+      for (IDocumentConversionListener extendedDocumentConversionListener: theListeners.getConversionListeners()) {
         extendedDocumentConversionListener.beforeConversionToEntity(id, documentFound, metadata);
       }
 
@@ -503,11 +506,7 @@ public abstract class InMemoryDocumentSessionOperations implements AutoCloseable
         }
 
         generateEntityIdOnTheClient.trySetIdentity(entity, id);
-        for (IDocumentConversionListener documentConversionListener: theListeners.getConversionListeners()) {
-          documentConversionListener.documentToEntity(id, entity, documentFound, metadata);
-        }
-
-        for (IExtendedDocumentConversionListener extendedDocumentConversionListener: theListeners.getExtendedConversionListeners()) {
+        for (IDocumentConversionListener extendedDocumentConversionListener: theListeners.getConversionListeners()) {
           extendedDocumentConversionListener.afterConversionToEntity(id, documentFound, metadata, entity);
         }
 
@@ -1149,5 +1148,28 @@ public abstract class InMemoryDocumentSessionOperations implements AutoCloseable
     }
 
     return true;
+  }
+
+  public <T> void refreshInternal(T entity, JsonDocument jsonDocument, DocumentMetadata value) {
+    if (jsonDocument == null) {
+      throw new IllegalStateException("Document '" + value.getKey() + "' no longer exists and was probably deleted");
+    }
+    value.setMetadata(jsonDocument.getMetadata());
+    value.setOriginalMetadata(jsonDocument.getMetadata().cloneToken());
+    value.setEtag(jsonDocument.getEtag());
+    value.setOriginalValue(jsonDocument.getDataAsJson());
+    Object newEntity = convertToEntity(entity.getClass(), value.getKey(), jsonDocument.getDataAsJson(), jsonDocument.getMetadata());
+
+    try {
+      for (PropertyDescriptor propertyDescriptor : Introspector.getBeanInfo(entity.getClass()).getPropertyDescriptors()) {
+        if (propertyDescriptor.getWriteMethod() == null || propertyDescriptor.getReadMethod() == null) {
+          continue;
+        }
+        Object propValue = propertyDescriptor.getReadMethod().invoke(newEntity, new Object[0]);
+        propertyDescriptor.getWriteMethod().invoke(entity, new Object[] { propValue });
+      }
+    } catch (IntrospectionException | IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
+      throw new RuntimeException(e);
+    }
   }
 }

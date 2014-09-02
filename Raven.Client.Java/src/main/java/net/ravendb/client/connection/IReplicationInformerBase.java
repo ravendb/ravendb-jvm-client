@@ -39,6 +39,13 @@ public interface IReplicationInformerBase<T> extends Closeable {
   public void refreshReplicationInformation(T client);
 
   /**
+   * Clears the replication information local cache.
+   * Expert use only.
+   * @param client
+   */
+  public void clearReplicationInformationLocalCache(T client);
+
+  /**
    * Get the current failure count for the url
    * @param operationUrl
    * @return

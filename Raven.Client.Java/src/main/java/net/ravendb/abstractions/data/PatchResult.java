@@ -15,5 +15,9 @@ public enum PatchResult {
   /**
    * Document was properly tested
    */
-  TESTED;
+  TESTED,
+  /**
+   *  Neither document body not metadata was changed during patch operation
+   */
+  NOT_MODIFIED;
 }

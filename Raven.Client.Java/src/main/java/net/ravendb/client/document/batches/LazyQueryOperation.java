@@ -90,7 +90,7 @@ public class LazyQueryOperation<T> implements ILazyOperation {
       throw new IllegalStateException("There is no index named: " + queryOperation.getIndexName() + "\n" + response.getResult());
     }
     RavenJObject json = (RavenJObject)response.getResult();
-    QueryResult queryResult = SerializationHelper.toQueryResult(json, HttpExtensions.getEtagHeader(response), response.getHeaders().get("Temp-Request-Time"));
+    QueryResult queryResult = SerializationHelper.toQueryResult(json, HttpExtensions.getEtagHeader(response), response.getHeaders().get("Temp-Request-Time"), -1);
     handleResponse(queryResult);
   }
 

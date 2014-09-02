@@ -25,13 +25,14 @@ public class LazyStartsWithOperation<T> implements ILazyOperation {
   private final int pageSize;
   private final InMemoryDocumentSessionOperations sessionOperations;
   private final RavenPagingInformation pagingInformation;
+  private final String skipAfter;
   private final Class<T> clazz;
   private QueryResult queryResult;
 
   private Object result;
   private boolean requiresRetry;
 
-  public LazyStartsWithOperation(Class<T> clazz, String keyPrefix, String matches, String exclude, int start, int pageSize, InMemoryDocumentSessionOperations sessionOperations, RavenPagingInformation pagingInformation) {
+  public LazyStartsWithOperation(Class<T> clazz, String keyPrefix, String matches, String exclude, int start, int pageSize, InMemoryDocumentSessionOperations sessionOperations, RavenPagingInformation pagingInformation, String skipAfter) {
     this.clazz = clazz;
     this.keyPrefix = keyPrefix;
     this.matches = matches;
@@ -40,6 +41,7 @@ public class LazyStartsWithOperation<T> implements ILazyOperation {
     this.pageSize = pageSize;
     this.sessionOperations = sessionOperations;
     this.pagingInformation = pagingInformation;
+    this.skipAfter = skipAfter;
   }
 
   @Override
@@ -52,10 +54,10 @@ public class LazyStartsWithOperation<T> implements ILazyOperation {
 
     GetRequest getRequest = new GetRequest();
     getRequest.setUrl("/docs");
-    getRequest.setQuery(String.format("startsWith=%s&matches=%s&exclude=%s&start=%d&pageSize=%d&next-page=%s", UrlUtils.escapeDataString(keyPrefix),
+    getRequest.setQuery(String.format("startsWith=%s&matches=%s&exclude=%s&start=%d&pageSize=%d&next-page=%s&skipAfter=%s", UrlUtils.escapeDataString(keyPrefix),
         UrlUtils.escapeDataString(matches != null ? matches : ""),
         UrlUtils.escapeDataString(exclude != null ? exclude : ""),
-        actualStart, pageSize, nextPage ? "true" : "false"));
+        actualStart, pageSize, nextPage ? "true" : "false", skipAfter));
     return getRequest;
   }
 

@@ -134,11 +134,8 @@ public class BulkInsertOperation implements AutoCloseable {
   public String getId(Object entity) {
     Reference<String> idRef = new Reference<>();
 
-    if (generateEntityIdOnTheClient.tryGetIdFromInstance(entity, idRef)) {
+    if (generateEntityIdOnTheClient.tryGetIdFromInstance(entity, idRef) == false) {
       idRef.value = generateEntityIdOnTheClient.generateDocumentKeyForStorage(entity);
-    } else {
-      idRef.value = generateEntityIdOnTheClient.generateDocumentKeyForStorage(entity);
-      generateEntityIdOnTheClient.trySetIdentity(entity, idRef.value);
     }
     return idRef.value;
   }

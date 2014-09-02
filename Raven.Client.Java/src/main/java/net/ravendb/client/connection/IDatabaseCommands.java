@@ -412,7 +412,7 @@ public interface IDatabaseCommands extends IHoldProfilingInformation {
    */
   public Attachment getAttachment(String key);
 
-  public AttachmentInformation[] getAttachments(Etag startEtag, int batchSize);
+  public AttachmentInformation[] getAttachments(int start, Etag startEtag, int pageSize);
 
   /**
    * Retrieves the attachment metadata with the specified key, not the actual attachment
@@ -584,6 +584,9 @@ public interface IDatabaseCommands extends IHoldProfilingInformation {
   public List<JsonDocument> startsWith(String keyPrefix, String matches, int start, int pageSize, boolean metadataOnly,
     String exclude, RavenPagingInformation pagingInformation, String transformer, Map<String, RavenJToken> transformerParameters);
 
+  public List<JsonDocument> startsWith(String keyPrefix, String matches, int start, int pageSize, boolean metadataOnly,
+    String exclude, RavenPagingInformation pagingInformation, String transformer, Map<String, RavenJToken> transformerParameters, String skipAfter);
+
   /**
    * Seeds the next identity value on the server
    * @param name
@@ -717,6 +720,19 @@ public interface IDatabaseCommands extends IHoldProfilingInformation {
    */
   public RavenJObjectIterator streamDocs(Etag fromEtag, String startsWith, String matches, int start, int pageSize, String exclude, RavenPagingInformation pagingInformation);
 
+  /**
+   * Streams the documents by etag OR starts with the prefix and match the matches
+   * Will return *all* results, regardless of the number of items that might be returned.
+   * @param fromEtag
+   * @param startsWith
+   * @param matches
+   * @param start
+   * @param pageSize
+   * @param pagingInformation
+   * @param skipAfter
+   * @return
+   */
+  public RavenJObjectIterator streamDocs(Etag fromEtag, String startsWith, String matches, int start, int pageSize, String exclude, RavenPagingInformation pagingInformation, String skipAfter);
 
   /**
    * Return a list of documents that based on the MoreLikeThisQuery.

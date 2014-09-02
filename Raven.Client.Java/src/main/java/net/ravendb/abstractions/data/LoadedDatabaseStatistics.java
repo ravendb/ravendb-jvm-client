@@ -19,8 +19,16 @@ public class LoadedDatabaseStatistics {
   private long countOfAttachments;
   private double databaseTransactionVersionSizeInMB;
   private DatabaseMetrics metrics;
+  private StorageStats storageStats;
 
 
+  public StorageStats getStorageStats() {
+    return storageStats;
+  }
+
+  public void setStorageStats(StorageStats storageStats) {
+    this.storageStats = storageStats;
+  }
 
   public DatabaseMetrics getMetrics() {
     return metrics;

@@ -15,6 +15,7 @@ import java.util.Map.Entry;
 import net.ravendb.abstractions.closure.Action1;
 import net.ravendb.abstractions.closure.Action3;
 import net.ravendb.abstractions.closure.Delegates;
+import net.ravendb.abstractions.connection.CountingStream;
 import net.ravendb.abstractions.connection.HttpRequestHelper;
 import net.ravendb.abstractions.connection.OperationCredentials;
 import net.ravendb.abstractions.data.Constants;
@@ -95,6 +96,12 @@ public class HttpJsonRequest {
 
   private CloseableHttpClient httpClient;
   private int responseStatusCode;
+
+  private long size;
+
+  public long getSize() {
+    return size;
+  }
 
   public HttpMethods getMethod() {
     return method;
@@ -407,7 +414,9 @@ public class HttpJsonRequest {
       responseStatusCode = httpResponse.getStatusLine().getStatusCode();
 
       handleReplicationStatusChanges.apply(extractHeaders(httpResponse.getAllHeaders()), primaryUrl, operationUrl);
-      RavenJToken data = RavenJToken.tryLoad(responseStream);
+      CountingStream countingStream = new CountingStream(responseStream);
+      RavenJToken data = RavenJToken.tryLoad(countingStream);
+      size = countingStream.getNumberOfReadBytes();
 
       if (HttpMethods.GET == method && shouldCacheRequest) {
         factory.cacheResponse(url, data, responseHeaders);

@@ -227,7 +227,13 @@ public class LazySessionOperations implements ILazySessionOperations {
   @Override
   public <TResult> Lazy<TResult[]> loadStartingWith(Class<TResult> clazz, String keyPrefix, String matches, int start,
     int pageSize, String exclude, RavenPagingInformation pagingInformation) {
-    LazyStartsWithOperation<TResult> operation = new LazyStartsWithOperation<>(clazz, keyPrefix, matches, exclude, start, pageSize, delegate, pagingInformation);
+    return loadStartingWith(clazz, keyPrefix, matches, start, pageSize, exclude, pagingInformation, null);
+  }
+
+  @Override
+  public <TResult> Lazy<TResult[]> loadStartingWith(Class<TResult> clazz, String keyPrefix, String matches, int start,
+    int pageSize, String exclude, RavenPagingInformation pagingInformation, String skipAfter) {
+    LazyStartsWithOperation<TResult> operation = new LazyStartsWithOperation<>(clazz, keyPrefix, matches, exclude, start, pageSize, delegate, pagingInformation, skipAfter);
     return delegate.addLazyOperation(operation, null);
   }
 

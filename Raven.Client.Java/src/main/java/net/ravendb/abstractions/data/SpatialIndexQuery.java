@@ -74,6 +74,7 @@ public class SpatialIndexQuery extends IndexQuery {
     setHighlightedFields(query.getHighlightedFields());
     setTransformerParameters(query.getTransformerParameters());
     setResultsTransformer(query.getResultsTransformer());
+    setDefaultOperator(query.getDefaultOperator());
   }
 
   /**

@@ -1,5 +1,6 @@
 package net.ravendb.client.connection;
 
+import net.ravendb.abstractions.json.linq.RavenJObject;
 import net.ravendb.abstractions.json.linq.RavenJToken;
 
 public class Operation {
@@ -29,6 +30,13 @@ public class Operation {
         return null;
       }
       if (status.value(Boolean.class, "Completed")) {
+        boolean faulted = status.value(Boolean.TYPE, "Faulted");
+        if (faulted) {
+          RavenJObject error = status.value(RavenJObject.class, "State");
+          String errorMessage = error.value(String.class, "Error");
+          throw new IllegalStateException("Operation failed: " + errorMessage);
+        }
+
         return status.value(RavenJToken.class, "State");
       }
       try {

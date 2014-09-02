@@ -423,26 +423,31 @@ public class ServerClient implements IDatabaseCommands {
 
   @Override
   public List<JsonDocument> startsWith(final String keyPrefix, final String matches, final int start, final int pageSize, final boolean metadataOnly) throws ServerClientException {
-    return startsWith(keyPrefix, matches, start, pageSize, metadataOnly, null);
+    return startsWith(keyPrefix, matches, start, pageSize, metadataOnly, null, null, null, null, null);
   }
 
   @Override
   public List<JsonDocument> startsWith(final String keyPrefix, final String matches, final int start, final int pageSize, final boolean metadataOnly, final String exclude) throws ServerClientException {
-    return startsWith(keyPrefix, matches, start, pageSize, metadataOnly, exclude, null);
+    return startsWith(keyPrefix, matches, start, pageSize, metadataOnly, exclude, null, null, null, null);
   }
 
   @Override
   public List<JsonDocument> startsWith(final String keyPrefix, final String matches, final int start, final int pageSize, final boolean metadataOnly, final String exclude, final RavenPagingInformation pagingInformation) throws ServerClientException {
-    return startsWith(keyPrefix, matches, start, pageSize, metadataOnly, exclude, pagingInformation, null, null);
+    return startsWith(keyPrefix, matches, start, pageSize, metadataOnly, exclude, pagingInformation, null, null, null);
   }
 
   @Override
   public List<JsonDocument> startsWith(final String keyPrefix, final String matches, final int start, final int pageSize, final boolean metadataOnly, final String exclude, final RavenPagingInformation pagingInformation, final String transformer, final Map<String, RavenJToken> transformerParameters) throws ServerClientException {
+    return startsWith(keyPrefix, matches, start, pageSize, metadataOnly, exclude, pagingInformation, transformer, transformerParameters, null);
+  }
+
+  @Override
+  public List<JsonDocument> startsWith(final String keyPrefix, final String matches, final int start, final int pageSize, final boolean metadataOnly, final String exclude, final RavenPagingInformation pagingInformation, final String transformer, final Map<String, RavenJToken> transformerParameters, final String skipAfter) throws ServerClientException {
     ensureIsNotNullOrEmpty(keyPrefix, "keyPrefix");
     return executeWithReplication(HttpMethods.GET, new Function1<OperationMetadata, List<JsonDocument>>() {
       @Override
       public List<JsonDocument> apply(OperationMetadata operationMetadata) {
-        return directStartsWith(operationMetadata, keyPrefix, matches, start, pageSize, metadataOnly, exclude, pagingInformation, transformer, transformerParameters);
+        return directStartsWith(operationMetadata, keyPrefix, matches, start, pageSize, metadataOnly, exclude, pagingInformation, transformer, transformerParameters, skipAfter);
       }
     });
   }
@@ -684,7 +689,7 @@ public class ServerClient implements IDatabaseCommands {
   }
 
   @SuppressWarnings("null")
-  protected List<JsonDocument> directStartsWith(OperationMetadata operationMetadata, String keyPrefix, String matches, int start, int pageSize, boolean metadataOnly, String exclude, RavenPagingInformation pagingInformation, String transformer, Map<String, RavenJToken> transformerParameters) throws ServerClientException {
+  protected List<JsonDocument> directStartsWith(OperationMetadata operationMetadata, String keyPrefix, String matches, int start, int pageSize, boolean metadataOnly, String exclude, RavenPagingInformation pagingInformation, String transformer, Map<String, RavenJToken> transformerParameters, String skipAfter) throws ServerClientException {
     RavenJObject metadata = new RavenJObject();
 
     int actualStart = start;
@@ -699,6 +704,10 @@ public class ServerClient implements IDatabaseCommands {
       UrlUtils.escapeDataString(StringUtils.trimToEmpty(exclude)),actualStart, pageSize);
     if (metadataOnly) {
       actualUrl += "&metadata-only=true";
+    }
+
+    if (StringUtils.isNotEmpty(skipAfter)) {
+      actualUrl += "&skipAfter=" + UrlUtils.escapeDataString(skipAfter);
     }
 
     if (StringUtils.isNotEmpty(transformer)) {
@@ -758,6 +767,10 @@ public class ServerClient implements IDatabaseCommands {
     try {
       jsonRequest.write(document.toString());
       RavenJObject responseJson = (RavenJObject) jsonRequest.readResponseJson();
+
+      if (responseJson == null) {
+        throw new IllegalStateException("Got null response from the server after doing a put on " + key + ", something is very wrong. Probably a garbled response.");
+      }
 
       return new PutResult(responseJson.value(String.class, "Key"), responseJson.value(Etag.class, "ETag"));
     } catch (Exception e) {
@@ -990,20 +1003,20 @@ public class ServerClient implements IDatabaseCommands {
   }
 
   @Override
-  public AttachmentInformation[] getAttachments(final Etag startEtag, final int pageSize) {
+  public AttachmentInformation[] getAttachments(final int start, final Etag startEtag, final int pageSize) {
     return executeWithReplication(HttpMethods.GET, new Function1<OperationMetadata, AttachmentInformation[]>() {
       @Override
       public AttachmentInformation[] apply(OperationMetadata operationMetadata) {
-        return directGetAttachments(startEtag, pageSize, operationMetadata);
+        return directGetAttachments(start, startEtag, pageSize, operationMetadata);
       }
     });
   }
 
 
-  protected AttachmentInformation[] directGetAttachments(Etag startEtag, int pageSize,
+  protected AttachmentInformation[] directGetAttachments(int start, Etag startEtag, int pageSize,
     OperationMetadata operationMetadata) {
     HttpJsonRequest webRequest = jsonRequestFactory.createHttpJsonRequest(
-      new CreateHttpJsonRequestParams(this, operationMetadata.getUrl() + "/static/?pageSize=" + pageSize + "&etag=" + startEtag, HttpMethods.GET, new RavenJObject(), operationMetadata.getCredentials(), convention))
+      new CreateHttpJsonRequestParams(this, operationMetadata.getUrl() + "/static/?pageSize=" + pageSize + "&etag=" + startEtag + "&start=" + start, HttpMethods.GET, new RavenJObject(), operationMetadata.getCredentials(), convention))
       .addReplicationStatusHeaders(url, operationMetadata.getUrl(), replicationInformer, convention.getFailoverBehavior(), new HandleReplicationStatusChangesCallback());
 
     try {
@@ -1385,6 +1398,14 @@ public class ServerClient implements IDatabaseCommands {
   @SuppressWarnings("null")
   @Override
   public RavenJObjectIterator streamDocs(Etag fromEtag, String startsWith, String matches, int start, int pageSize, String exclude, RavenPagingInformation pagingInformation) {
+    return streamDocs(fromEtag, startsWith, matches, start, pageSize, exclude, pagingInformation, null);
+  }
+
+
+  @SuppressWarnings("null")
+  @Override
+  public RavenJObjectIterator streamDocs(Etag fromEtag, String startsWith, String matches, int start, int pageSize, String exclude, RavenPagingInformation pagingInformation, String skipAfter) {
+
     if (fromEtag != null && startsWith != null)
       throw new IllegalArgumentException("Either fromEtag or startsWith must be null, you can't specify both");
 
@@ -1403,6 +1424,9 @@ public class ServerClient implements IDatabaseCommands {
       }
       if (exclude != null) {
         sb.append("exclude=").append(UrlUtils.escapeDataString(exclude)).append("&");
+      }
+      if (skipAfter != null) {
+        sb.append("skipAfter=").append(UrlUtils.escapeDataString(skipAfter)).append("&");
       }
     }
 
@@ -1523,7 +1547,7 @@ public class ServerClient implements IDatabaseCommands {
       throw new ServerClientException(e);
     }
 
-    QueryResult directQuery = SerializationHelper.toQueryResult(json, HttpExtensions.getEtagHeader(request), request.getResponseHeaders().get("Temp-Request-Time"));
+    QueryResult directQuery = SerializationHelper.toQueryResult(json, HttpExtensions.getEtagHeader(request), request.getResponseHeaders().get("Temp-Request-Time"), request.getSize());
     List<RavenJObject> docsResults = new ArrayList<>();
     docsResults.addAll(directQuery.getResults());
     docsResults.addAll(directQuery.getIncludes());
@@ -1778,6 +1802,9 @@ public class ServerClient implements IDatabaseCommands {
       RavenJArray response;
       try {
         response = (RavenJArray)req.readResponseJson();
+        if (response == null) {
+          throw new IllegalStateException("Got null response from the server after doing a batch, something is very wrong. Probably a garbled response.");
+        }
       } catch (HttpOperationException e) {
         try {
           if (e.getStatusCode() != HttpStatus.SC_CONFLICT) {
