@@ -16,6 +16,8 @@ public class LoadedDatabaseStatistics {
   private long totalDatabaseSize;
   private String totalDatabaseHumaneSize;
   private long countOfDocuments;
+
+  @Deprecated
   private long countOfAttachments;
   private double databaseTransactionVersionSizeInMB;
   private DatabaseMetrics metrics;
@@ -55,10 +57,12 @@ public class LoadedDatabaseStatistics {
     this.lastActivity = lastActivity;
   }
 
+  @Deprecated
   public long getCountOfAttachments() {
     return countOfAttachments;
   }
 
+  @Deprecated
   public void setCountOfAttachments(long countOfAttachments) {
     this.countOfAttachments = countOfAttachments;
   }

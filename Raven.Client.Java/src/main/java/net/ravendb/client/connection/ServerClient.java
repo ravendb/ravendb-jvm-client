@@ -73,6 +73,7 @@ import net.ravendb.abstractions.json.linq.RavenJArray;
 import net.ravendb.abstractions.json.linq.RavenJObject;
 import net.ravendb.abstractions.json.linq.RavenJToken;
 import net.ravendb.abstractions.json.linq.RavenJValue;
+import net.ravendb.abstractions.replication.ReplicationDocument;
 import net.ravendb.abstractions.util.NetDateFormat;
 import net.ravendb.client.RavenPagingInformation;
 import net.ravendb.client.changes.IDatabaseChanges;
@@ -99,13 +100,14 @@ import org.apache.http.util.EntityUtils;
 import org.codehaus.jackson.JsonFactory;
 import org.codehaus.jackson.JsonParser;
 import org.codehaus.jackson.JsonToken;
+import org.codehaus.jackson.map.JsonDeserializer;
 
 
 public class ServerClient implements IDatabaseCommands {
 
   private final ProfilingInformation profilingInformation;
   private final IDocumentConflictListener[] conflictListeners;
-  private String url;
+  protected String url;
   private String rootUrl;
   private OperationCredentials credentialsThatShouldBeUsedOnlyInOperationsWithoutReplication;
   final DocumentConvention convention;
@@ -801,6 +803,7 @@ public class ServerClient implements IDatabaseCommands {
   }
 
   @Override
+  @Deprecated
   public void putAttachment(final String key, final Etag etag, final InputStream data, final RavenJObject metadata) {
     executeWithReplication(HttpMethods.PUT, new Function1<OperationMetadata, Void>() {
       @Override
@@ -812,6 +815,7 @@ public class ServerClient implements IDatabaseCommands {
   }
 
   @Override
+  @Deprecated
   public void updateAttachmentMetadata(final String key, final Etag etag, final RavenJObject metadata) {
     executeWithReplication(HttpMethods.POST,new Function1<OperationMetadata, Void>() {
       @Override
@@ -822,6 +826,7 @@ public class ServerClient implements IDatabaseCommands {
     });
   }
 
+  @Deprecated
   protected void directUpdateAttachmentMetadata(String key, RavenJObject metadata, Etag etag, OperationMetadata operationMetadata) {
     if (etag != null) {
       metadata.set(Constants.METADATA_ETAG_FIELD, new RavenJValue(etag.toString()));
@@ -856,6 +861,7 @@ public class ServerClient implements IDatabaseCommands {
     }
   }
 
+  @Deprecated
   protected void directPutAttachment(String key, RavenJObject metadata, Etag etag, InputStream data, OperationMetadata operationMetadata) {
     if (etag != null) {
       metadata.set(Constants.METADATA_ETAG_FIELD, new RavenJValue(etag.toString()));
@@ -889,6 +895,7 @@ public class ServerClient implements IDatabaseCommands {
   }
 
   @Override
+  @Deprecated
   public List<Attachment> getAttachmentHeadersStartingWith(final String idPrefix, final int start, final int pageSize) {
     return executeWithReplication(HttpMethods.GET, new Function1<OperationMetadata, List<Attachment>>() {
 
@@ -899,6 +906,7 @@ public class ServerClient implements IDatabaseCommands {
     });
   }
 
+  @Deprecated
   protected List<Attachment> directGetAttachmentHeadersStartingWith(HttpMethods method, String idPrefix, int start, int pageSize, OperationMetadata operationMetadata) {
     HttpJsonRequest jsonRequest = jsonRequestFactory.createHttpJsonRequest(
       new CreateHttpJsonRequestParams(this, operationMetadata.getUrl() + "/static/?startsWith=" + idPrefix + "&start=" + start + "&pageSize=" + pageSize, method, new RavenJObject(), operationMetadata.getCredentials(),
@@ -915,6 +923,7 @@ public class ServerClient implements IDatabaseCommands {
   }
 
   @Override
+  @Deprecated
   public Attachment getAttachment(final String key) {
     return executeWithReplication(HttpMethods.GET, new Function1<OperationMetadata, Attachment>() {
       @Override
@@ -925,6 +934,7 @@ public class ServerClient implements IDatabaseCommands {
   }
 
   @Override
+  @Deprecated
   public Attachment headAttachment(final String key) {
     return executeWithReplication(HttpMethods.HEAD, new Function1<OperationMetadata, Attachment>() {
       @Override
@@ -934,6 +944,7 @@ public class ServerClient implements IDatabaseCommands {
     });
   }
 
+  @Deprecated
   protected Attachment directGetAttachment(HttpMethods method, String key, OperationMetadata operationMetadata) {
     HttpJsonRequest webRequest = jsonRequestFactory.createHttpJsonRequest(
       new CreateHttpJsonRequestParams(this, operationMetadata.getUrl() + "/static/" + key, method, new RavenJObject(), operationMetadata.getCredentials(), convention))
@@ -992,6 +1003,7 @@ public class ServerClient implements IDatabaseCommands {
   }
 
   @Override
+  @Deprecated
   public void deleteAttachment(final String key, final Etag etag) {
     executeWithReplication(HttpMethods.DELETE, new Function1<OperationMetadata, Void>() {
       @Override
@@ -1003,6 +1015,7 @@ public class ServerClient implements IDatabaseCommands {
   }
 
   @Override
+  @Deprecated
   public AttachmentInformation[] getAttachments(final int start, final Etag startEtag, final int pageSize) {
     return executeWithReplication(HttpMethods.GET, new Function1<OperationMetadata, AttachmentInformation[]>() {
       @Override
@@ -1012,7 +1025,7 @@ public class ServerClient implements IDatabaseCommands {
     });
   }
 
-
+  @Deprecated
   protected AttachmentInformation[] directGetAttachments(int start, Etag startEtag, int pageSize,
     OperationMetadata operationMetadata) {
     HttpJsonRequest webRequest = jsonRequestFactory.createHttpJsonRequest(
@@ -1027,6 +1040,7 @@ public class ServerClient implements IDatabaseCommands {
     }
   }
 
+  @Deprecated
   protected void directDeleteAttachment(String key, Etag etag, OperationMetadata operationMetadata) {
     RavenJObject metadata = new RavenJObject();
     if (etag != null) {
@@ -1041,12 +1055,6 @@ public class ServerClient implements IDatabaseCommands {
       throw new ServerClientException(e);
     }
   }
-
-
-
-
-
-
 
   @Override
   public TransformerDefinition getTransformer(final String name) {
@@ -1395,7 +1403,6 @@ public class ServerClient implements IDatabaseCommands {
     return streamDocs(fromEtag, startsWith, matches, start, pageSize, exclude, null);
   }
 
-  @SuppressWarnings("null")
   @Override
   public RavenJObjectIterator streamDocs(Etag fromEtag, String startsWith, String matches, int start, int pageSize, String exclude, RavenPagingInformation pagingInformation) {
     return streamDocs(fromEtag, startsWith, matches, start, pageSize, exclude, pagingInformation, null);
@@ -2146,7 +2153,7 @@ public class ServerClient implements IDatabaseCommands {
     });
   }
 
-  private long directSeedIdentityFor(String url, String name, long value) {
+  long directSeedIdentityFor(String url, String name, long value) {
     HttpJsonRequest request = jsonRequestFactory.createHttpJsonRequest(
       new CreateHttpJsonRequestParams(this, url + "/identity/seed?name=" + UrlUtils.escapeDataString(name)+ "&value=" + value, HttpMethods.POST, new RavenJObject(), credentialsThatShouldBeUsedOnlyInOperationsWithoutReplication, convention)
       .addOperationHeaders(operationsHeaders));
@@ -2667,6 +2674,24 @@ public class ServerClient implements IDatabaseCommands {
     request.addOperationHeader("Single-Use-Auth-Token", token);
     RavenJToken result = request.readResponseJson();
     return result.value(String.class, "Token");
+  }
+
+  ReplicationDocument directGetReplicationDestionations(OperationMetadata operationMetadata) {
+    CreateHttpJsonRequestParams createHttpJsonRequestParams = new CreateHttpJsonRequestParams(this, operationMetadata.getUrl() + "/replication/topology", HttpMethods.GET, null, operationMetadata.getCredentials(), convention);
+    HttpJsonRequest request = jsonRequestFactory.createHttpJsonRequest(createHttpJsonRequestParams
+      .addOperationHeaders(getOperationsHeaders())).addReplicationStatusHeaders(url, operationMetadata.getUrl(), replicationInformer, convention.getFailoverBehavior(), new HandleReplicationStatusChangesCallback());
+
+    try {
+      RavenJToken requestJson = request.readResponseJson();
+      return JsonExtensions.createDefaultJsonSerializer().readValue(requestJson.toString(), ReplicationDocument.class);
+    } catch (HttpOperationException e) {
+      if (e.getStatusCode() == HttpStatus.SC_NOT_FOUND || e.getStatusCode() == HttpStatus.SC_BAD_REQUEST) {
+        return null;
+      }
+      throw e;
+    } catch (Exception e) {
+      throw new ServerClientException(e);
+    }
   }
 
 }

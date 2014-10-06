@@ -2,7 +2,7 @@ package net.ravendb.abstractions.data;
 
 import net.ravendb.abstractions.json.linq.RavenJObject;
 
-
+@Deprecated
 public class AttachmentInformation {
   private int size;
   private String key;

@@ -66,9 +66,11 @@ public abstract class RavenDBAwareTests {
 
   public final static int DEFAULT_RUNNER_PORT = 8585;
 
-  public final static boolean RUN_IN_MEMORY = false;
+  public final static boolean RUN_IN_MEMORY = true;
 
   public final static String DEFAULT_SERVER_RUNNER_URL = "http://" + DEFAULT_HOST + ":" + DEFAULT_RUNNER_PORT + "/servers";
+
+  private static final String DEFAULT_STORAGE_TYPE_NAME = "voron";
 
   protected static HttpClient client = HttpClients.createDefault();
 
@@ -257,6 +259,7 @@ public abstract class RavenDBAwareTests {
     doc.add("Settings", settings);
     settings.add("Raven/DataDir", RavenJValue.fromObject("~\\" +  port + "\\Databases\\" + dbName));
     settings.add("Raven/ActiveBundles", RavenJValue.fromObject("Replication"));
+    settings.add("Raven/StorageEngine", RavenJValue.fromObject("voron"));
     doc.add("SecuredSettings", new RavenJObject());
     doc.add("Disabled", new RavenJValue(false));
     return doc.toString();
@@ -267,6 +270,7 @@ public abstract class RavenDBAwareTests {
     doc.add("Port", new RavenJValue(port));
     doc.add("RunInMemory", new RavenJValue(RUN_IN_MEMORY));
     doc.add("ApiKeyName", new RavenJValue("java"));
+    doc.add("DefaultStorageTypeName", new RavenJValue(DEFAULT_STORAGE_TYPE_NAME));
     return doc.toString();
   }
 
@@ -275,6 +279,7 @@ public abstract class RavenDBAwareTests {
     doc.add("Port", port);
     doc.add("RunInMemory", RUN_IN_MEMORY);
     doc.add("ApiKeyName", "java");
+    doc.add("DefaultStorageTypeName", new RavenJValue(DEFAULT_STORAGE_TYPE_NAME));
     doc.add("ApiKeySecret", "6B4G51NrO0P");
     doc.add("UseCommercialLicense", true);
     return doc.toString();

@@ -12,6 +12,8 @@ public class ReplicationStatistics {
 
   private String self;
   private Etag mostRecentDocumentEtag;
+
+  @Deprecated
   private Etag mostRecentAttachmentEtag;
   private List<DestinationStats> stats;
 
@@ -35,10 +37,12 @@ public class ReplicationStatistics {
     this.mostRecentDocumentEtag = mostRecentDocumentEtag;
   }
 
+  @Deprecated
   public Etag getMostRecentAttachmentEtag() {
     return mostRecentAttachmentEtag;
   }
 
+  @Deprecated
   public void setMostRecentAttachmentEtag(Etag mostRecentAttachmentEtag) {
     this.mostRecentAttachmentEtag = mostRecentAttachmentEtag;
   }

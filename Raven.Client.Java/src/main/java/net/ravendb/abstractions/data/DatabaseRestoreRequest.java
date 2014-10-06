@@ -1,7 +1,7 @@
 package net.ravendb.abstractions.data;
 
 
-public class RestoreRequest {
+public class DatabaseRestoreRequest {
 
   private String backupLocation;
 
@@ -14,6 +14,16 @@ public class RestoreRequest {
   private String indexesLocation;
 
   private boolean defrag;
+
+  private Integer restoreStartTimeout;
+
+  public Integer getRestoreStartTimeout() {
+    return restoreStartTimeout;
+  }
+
+  public void setRestoreStartTimeout(Integer restoreStartTimeout) {
+    this.restoreStartTimeout = restoreStartTimeout;
+  }
 
   public String getBackupLocation() {
     return backupLocation;

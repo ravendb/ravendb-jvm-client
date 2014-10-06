@@ -22,6 +22,7 @@ import net.ravendb.abstractions.data.IndexQuery;
 import net.ravendb.abstractions.indexing.SpatialOptions.SpatialRelation;
 import net.ravendb.abstractions.indexing.SpatialOptions.SpatialUnits;
 import net.ravendb.abstractions.json.linq.RavenJToken;
+import net.ravendb.client.EscapeQueryOptions;
 import net.ravendb.client.FieldHighlightings;
 import net.ravendb.client.IDocumentQuery;
 import net.ravendb.client.connection.IDatabaseCommands;
@@ -30,6 +31,7 @@ import net.ravendb.client.listeners.IDocumentQueryListener;
 import net.ravendb.client.spatial.SpatialCriteria;
 
 import org.apache.commons.lang.StringUtils;
+
 
 
 import com.mysema.query.types.Path;
@@ -355,7 +357,12 @@ public class DocumentQuery<T> extends AbstractDocumentQuery<T, DocumentQuery<T>>
 
   @Override
   public <TValue> IDocumentQuery<T> search(Path< ? > propertySelector, String searchTerms) {
-    search(getMemberQueryPath(propertySelector), searchTerms);
+    return search(propertySelector, searchTerms, EscapeQueryOptions.RAW_QUERY);
+  }
+
+  @Override
+  public <TValue> IDocumentQuery<T> search(Path< ? > propertySelector, String searchTerms, EscapeQueryOptions escapeQueryOptions) {
+    search(getMemberQueryPath(propertySelector), searchTerms, escapeQueryOptions);
     return this;
   }
 

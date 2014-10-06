@@ -1421,9 +1421,12 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
    */
   @SuppressWarnings("unchecked")
   public IDocumentQuery<T> waitForNonStaleResultsAsOfLastWrite(long waitTimeout) {
-    theWaitForNonStaleResults = true;
-    timeout = waitTimeout;
-    cutoffEtag = theSession.getDocumentStore().getLastWrittenEtag();
+    Etag lastWrittenEtag = theSession.getDocumentStore().getLastWrittenEtag();
+    if (lastWrittenEtag != null) {
+      theWaitForNonStaleResults = true;
+      timeout = waitTimeout;
+      cutoffEtag = theSession.getDocumentStore().getLastWrittenEtag();
+    }
     return (IDocumentQuery<T>) this;
   }
 

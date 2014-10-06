@@ -12,13 +12,6 @@ public interface IDocumentStoreReplicationInformer extends IReplicationInformerB
   /**
    * Updates replication information if needed
    */
-  @Override
   public void updateReplicationInformationIfNeeded(ServerClient serverClient);
-
-  /**
-   * Updates replication information
-   */
-  @Override
-  public void refreshReplicationInformation(ServerClient serverClient);
 
 }

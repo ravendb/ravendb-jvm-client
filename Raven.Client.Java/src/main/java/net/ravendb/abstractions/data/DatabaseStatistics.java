@@ -24,23 +24,35 @@ public class DatabaseStatistics {
   }
 
   private Etag lastDocEtag;
+
+  @Deprecated
   private Etag lastAttachmentEtag;
   private int countOfIndexes;
+  private int countOfResultTransformers;
   private int inMemoryIndexingQueueSize;
   private long approximateTaskCount;
   private long countOfDocuments;
+
+  @Deprecated
   private long countOfAttachments;
   private String[] staleIndexes;
   private int currentNumberOfItemsToIndexInSingleBatch;
   private int currentNumberOfItemsToReduceInSingleBatch;
   private float databaseTransactionVersionSizeInMB;
   private IndexStats[] indexes;
-  private ServerError[] errors;
+  private IndexingError[] errors;
   private IndexingBatchInfo[] indexingBatchInfo;
   private FutureBatchStats[] prefetches;
   private UUID databaseId;
   private boolean supportsDtc;
 
+  public int getCountOfResultTransformers() {
+    return countOfResultTransformers;
+  }
+
+  public void setCountOfResultTransformers(int countOfResultTransformers) {
+    this.countOfResultTransformers = countOfResultTransformers;
+  }
 
   public IndexingBatchInfo[] getIndexingBatchInfo() {
     return indexingBatchInfo;
@@ -61,10 +73,12 @@ public class DatabaseStatistics {
     return approximateTaskCount;
   }
 
+  @Deprecated
   public long getCountOfAttachments() {
     return countOfAttachments;
   }
 
+  @Deprecated
   public void setCountOfAttachments(long countOfAttachments) {
     this.countOfAttachments = countOfAttachments;
   }
@@ -87,7 +101,7 @@ public class DatabaseStatistics {
   public float getDatabaseTransactionVersionSizeInMB() {
     return databaseTransactionVersionSizeInMB;
   }
-  public ServerError[] getErrors() {
+  public IndexingError[] getErrors() {
     return errors;
   }
   public IndexStats[] getIndexes() {
@@ -96,6 +110,8 @@ public class DatabaseStatistics {
   public int getInMemoryIndexingQueueSize() {
     return inMemoryIndexingQueueSize;
   }
+
+  @Deprecated
   public Etag getLastAttachmentEtag() {
     return lastAttachmentEtag;
   }
@@ -129,7 +145,7 @@ public class DatabaseStatistics {
   public void setDatabaseTransactionVersionSizeInMB(float databaseTransactionVersionSizeInMB) {
     this.databaseTransactionVersionSizeInMB = databaseTransactionVersionSizeInMB;
   }
-  public void setErrors(ServerError[] errors) {
+  public void setErrors(IndexingError[] errors) {
     this.errors = errors;
   }
   public void setIndexes(IndexStats[] indexes) {
@@ -139,6 +155,7 @@ public class DatabaseStatistics {
     this.inMemoryIndexingQueueSize = inMemoryIndexingQueueSize;
   }
 
+  @Deprecated
   public void setLastAttachmentEtag(Etag lastAttachmentEtag) {
     this.lastAttachmentEtag = lastAttachmentEtag;
   }

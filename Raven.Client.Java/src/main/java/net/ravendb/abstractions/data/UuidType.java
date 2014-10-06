@@ -6,6 +6,8 @@ import net.ravendb.abstractions.basic.UseSharpEnum;
 public enum UuidType {
 
   DOCUMENTS((byte)1),
+
+  @Deprecated
   ATTACHMENTS((byte)2),
   DOCUMENTTRANSACTIONS((byte)3),
   MAPPEDRESULTS((byte)4),

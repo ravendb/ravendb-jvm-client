@@ -653,11 +653,29 @@ public interface IDocumentQueryBase<T, TSelf extends IDocumentQueryBase<T, TSelf
   /**
    * Perform a search for documents which fields that match the searchTerms.
    * If there is more than a single term, each of them will be checked independently.
+   * @param fieldName
+   * @param searchTerms
+   * @return
+   */
+  public TSelf search(String fieldName, String searchTerms, EscapeQueryOptions escapeQueryOptions);
+
+  /**
+   * Perform a search for documents which fields that match the searchTerms.
+   * If there is more than a single term, each of them will be checked independently.
    * @param propertySelector
    * @param searchTerms
    * @return
    */
   public <TValue> TSelf search(Path<?> propertySelector, String searchTerms);
+
+  /**
+   * Perform a search for documents which fields that match the searchTerms.
+   * If there is more than a single term, each of them will be checked independently.
+   * @param propertySelector
+   * @param searchTerms
+   * @return
+   */
+  public <TValue> TSelf search(Path<?> propertySelector, String searchTerms, EscapeQueryOptions escapeQueryOptions);
 
   /**
    * Partition the query so we can intersect different parts of the query

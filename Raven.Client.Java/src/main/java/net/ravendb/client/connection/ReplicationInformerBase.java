@@ -47,7 +47,6 @@ public abstract class ReplicationInformerBase<T> implements IReplicationInformer
   protected static AtomicInteger readStripingBase = new AtomicInteger(0);
   private int delayTimeInMiliSec;
 
-
   protected List<OperationMetadata> replicationDestinations = new ArrayList<>();
 
   protected final Map<String, FailureCounter> failureCounts = new ConcurrentHashMap<>();

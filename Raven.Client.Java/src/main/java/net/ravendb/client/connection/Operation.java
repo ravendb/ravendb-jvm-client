@@ -1,17 +1,27 @@
 package net.ravendb.client.connection;
 
+import net.ravendb.abstractions.closure.Function1;
 import net.ravendb.abstractions.json.linq.RavenJObject;
 import net.ravendb.abstractions.json.linq.RavenJToken;
 
 public class Operation {
   private long id;
   private RavenJToken state;
-  private ServerClient client;
+  private Function1<Long, RavenJToken> statusFetcher;
 
-  public Operation(ServerClient client, long id) {
-    super();
+  public Operation(final ServerClient client, long id) {
+    this(new Function1<Long, RavenJToken>() {
+      @Override
+      public RavenJToken apply(Long input) {
+        return client.getOperationStatus(input);
+      }
+    }, id);
     this.id = id;
-    this.client = client;
+  }
+
+  public Operation(Function1<Long, RavenJToken> statusFetcher, long id) {
+    this.statusFetcher = statusFetcher;
+    this.id = id;
   }
 
   public Operation(long id, RavenJToken state) {
@@ -21,11 +31,11 @@ public class Operation {
   }
 
   public RavenJToken waitForCompletion() {
-    if (client == null)
+    if (statusFetcher == null)
       return state;
 
     while (true) {
-      RavenJToken status = client.getOperationStatus(id);
+      RavenJToken status = statusFetcher.apply(id);
       if (status == null) {
         return null;
       }

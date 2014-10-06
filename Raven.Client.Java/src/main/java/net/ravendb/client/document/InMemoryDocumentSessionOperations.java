@@ -101,8 +101,6 @@ public abstract class InMemoryDocumentSessionOperations implements AutoCloseable
   // all the listeners for this session
   protected final DocumentSessionListeners theListeners;
 
-
-
   private int numberOfRequests;
   private Long nonAuthoritativeInformationTimeout;
   private int maxNumberOfRequestsPerSession;
@@ -112,9 +110,6 @@ public abstract class InMemoryDocumentSessionOperations implements AutoCloseable
   private final List<ICommandData> deferedCommands = new ArrayList<>();
   private GenerateEntityIdOnTheClient generateEntityIdOnTheClient;
   public EntityToJson entityToJson;
-
-
-
 
   public DocumentSessionListeners getListeners() {
     return theListeners;
@@ -175,7 +170,7 @@ public abstract class InMemoryDocumentSessionOperations implements AutoCloseable
     this.dbName = dbName;
     this.documentStore = documentStore;
     this.theListeners = listeners;
-    this.useOptimisticConcurrency = false;
+    this.useOptimisticConcurrency = documentStore.getConventions().defaultUseOptimisticConcurrency;
     this.allowNonAuthoritativeInformation = true;
     this.nonAuthoritativeInformationTimeout = 15 * 1000L;
     this.maxNumberOfRequestsPerSession = documentStore.getConventions().getMaxNumberOfRequestsPerSession();
@@ -325,6 +320,9 @@ public abstract class InMemoryDocumentSessionOperations implements AutoCloseable
    * @return
    */
   public boolean isLoaded(String id) {
+    if (isDeleted(id)) {
+      return false;
+    }
     return entitiesByKey.containsKey(id) || includedDocumentsByKey.containsKey(id);
   }
 
@@ -605,17 +603,21 @@ public abstract class InMemoryDocumentSessionOperations implements AutoCloseable
    */
   public void delete(String id)
   {
-      knownMissingIds.add(id);
+      if (id == null) {
+        throw new IllegalArgumentException("id is null");
+      }
       Object entity;
       if (entitiesByKey.containsKey(id)) {
         entity = entitiesByKey.get(id);
           // find if entity was changed on session or just inserted
-          if (entityChanged(entity, entitiesAndMetadata.get(entity), null)) {
+          if (entityChanged(entity, entitiesAndMetadata.get(entity))) {
               throw new IllegalStateException("Can't delete changed entity using identifier. Use delete(T entity) instead.");
           }
-          entitiesByKey.remove(id);
-          entitiesAndMetadata.remove(entity);
+          delete(entity);
+          return;
       }
+      includedDocumentsByKey.remove(id);
+      knownMissingIds.add(id);
       defer(new DeleteCommandData(id, null));
   }
 
@@ -699,9 +701,13 @@ public abstract class InMemoryDocumentSessionOperations implements AutoCloseable
     }
 
     for (ICommandData command : deferedCommands) {
-      if (command instanceof DeleteCommandData && command.getKey().equals(id)) {
-        throw new IllegalStateException("Can't store object, which was deleted in this session.");
+      if (command.getKey().equals(id)) {
+        throw new IllegalStateException("Can't store document, there is a deferred command registered for this document in the session. Document id:" + id);
       }
+    }
+
+    if (deletedEntities.contains(entity)) {
+      throw new IllegalStateException("Can't store object, it was already deleted in this session.  Document id: " + id);
     }
 
     // we make the check here even if we just generated the key
@@ -728,6 +734,11 @@ public abstract class InMemoryDocumentSessionOperations implements AutoCloseable
   }
 
   protected void storeEntityInUnitOfWork(String id, Object entity, Etag etag, RavenJObject metadata, boolean forceConcurrencyCheck) {
+    deletedEntities.remove(entity);
+    if (id != null) {
+      knownMissingIds.remove(id);
+    }
+
     DocumentMetadata meta = new DocumentMetadata();
     meta.setKey(id);
     meta.setMetadata(metadata);

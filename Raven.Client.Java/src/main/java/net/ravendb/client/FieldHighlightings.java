@@ -43,6 +43,10 @@ public class FieldHighlightings {
   protected void update(QueryResult queryResult) {
     this.highlightings.clear();
 
+    if (queryResult.getHighlightings() == null) {
+      return;
+    }
+
     for (Map.Entry<String, Map<String, String[]>> entityFragments : queryResult.getHighlightings().entrySet()) {
       for(Map.Entry<String, String[]> fieldFragments : entityFragments.getValue().entrySet()) {
         if (fieldFragments.getKey().equals(this.fieldName)) {

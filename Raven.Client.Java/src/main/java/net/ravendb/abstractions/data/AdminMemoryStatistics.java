@@ -1,7 +1,7 @@
 package net.ravendb.abstractions.data;
 
-
 public class AdminMemoryStatistics {
+
   private double databaseCacheSizeInMB;
   private double managedMemorySizeInMB;
   private double totalProcessMemorySizeInMB;

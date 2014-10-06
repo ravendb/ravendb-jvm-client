@@ -2,6 +2,7 @@ package net.ravendb.abstractions.data;
 
 import net.ravendb.abstractions.json.linq.RavenJObject;
 
+@Deprecated
 public class Attachment {
   private byte[] data;
   private int size;

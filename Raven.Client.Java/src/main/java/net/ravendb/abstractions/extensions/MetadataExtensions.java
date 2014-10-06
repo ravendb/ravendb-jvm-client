@@ -156,7 +156,7 @@ public class MetadataExtensions {
     return filterHeadersToObject(self, HEADERS_TO_IGNORE_CLIENT, PREFIXES_IN_HEADERS_TO_IGNORE_CLIENT);
   }
 
-
+  @Deprecated
   public static RavenJObject filterHeadersAttachment(Map<String, String> self) {
     RavenJObject filteredHeaders = filterHeadersToObject(self);
     if (self.get("Content-Type") != null) {

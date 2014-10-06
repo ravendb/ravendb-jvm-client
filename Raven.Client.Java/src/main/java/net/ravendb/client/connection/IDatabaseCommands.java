@@ -410,8 +410,10 @@ public interface IDatabaseCommands extends IHoldProfilingInformation {
    * @param key
    * @return
    */
+  @Deprecated
   public Attachment getAttachment(String key);
 
+  @Deprecated
   public AttachmentInformation[] getAttachments(int start, Etag startEtag, int pageSize);
 
   /**
@@ -419,6 +421,7 @@ public interface IDatabaseCommands extends IHoldProfilingInformation {
    * @param key
    * @return
    */
+  @Deprecated
   public Attachment headAttachment(String key);
 
   /**
@@ -426,6 +429,7 @@ public interface IDatabaseCommands extends IHoldProfilingInformation {
    * @param key The key.
    * @param etag The etag.
    */
+  @Deprecated
   public void deleteAttachment(String key, Etag etag);
 
   /**
@@ -609,6 +613,7 @@ public interface IDatabaseCommands extends IHoldProfilingInformation {
    * @param data The data.
    * @param metadata The metadata.
    */
+  @Deprecated
   public void putAttachment(String key, Etag etag, InputStream data, RavenJObject metadata);
 
   /**
@@ -617,6 +622,7 @@ public interface IDatabaseCommands extends IHoldProfilingInformation {
    * @param etag The etag.
    * @param metadata The metadata.
    */
+  @Deprecated
   public void updateAttachmentMetadata(String key, Etag etag, RavenJObject metadata);
 
   /**
@@ -626,6 +632,7 @@ public interface IDatabaseCommands extends IHoldProfilingInformation {
    * @param pageSize
    * @return
    */
+  @Deprecated
   public List<Attachment> getAttachmentHeadersStartingWith(String idPrefix, int start, int pageSize);
 
   /**

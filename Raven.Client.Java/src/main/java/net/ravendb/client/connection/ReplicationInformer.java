@@ -9,6 +9,7 @@ import net.ravendb.abstractions.connection.OperationCredentials;
 import net.ravendb.abstractions.data.Constants;
 import net.ravendb.abstractions.data.JsonDocument;
 import net.ravendb.abstractions.extensions.JsonExtensions;
+import net.ravendb.abstractions.json.linq.RavenJObject;
 import net.ravendb.abstractions.replication.ReplicationDestination;
 import net.ravendb.abstractions.replication.ReplicationDocument;
 import net.ravendb.client.connection.implementation.HttpJsonRequestFactory;
@@ -93,7 +94,7 @@ public class ReplicationInformer extends ReplicationInformerBase<ServerClient> i
   }
 
   protected String getServerCheckUrl(String baseUrl) {
-      return RavenUrlExtensions.doc( baseUrl, Constants.RAVEN_REPLICATION_DESTINATIONS) + "?check-server-reachable";
+      return baseUrl + "/replication/topology?check-server-reachable";
   }
 
   @Override
@@ -103,7 +104,7 @@ public class ReplicationInformer extends ReplicationInformerBase<ServerClient> i
 
       JsonDocument document;
       try {
-        document = commands.directGet(new OperationMetadata(commands.getUrl(), commands.getPrimaryCredentials()), Constants.RAVEN_REPLICATION_DESTINATIONS);
+        document = SerializationHelper.toJsonDocument(RavenJObject.fromObject(commands.directGetReplicationDestionations(new OperationMetadata(commands.getUrl(), commands.getPrimaryCredentials()))));
         failureCounts.put(commands.getUrl(), new FailureCounter()); // we just hit the master, so we can reset its failure count
       } catch (Exception e) {
         log.error("Could not contact master for new replication information", e);

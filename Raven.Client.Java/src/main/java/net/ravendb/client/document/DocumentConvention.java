@@ -62,6 +62,11 @@ public class DocumentConvention extends Convention implements Serializable {
 
   public ConsistencyOptions defaultQueryingConsistency;
 
+  /**
+   * Whether UseOptimisticConcurrency is set to true by default for all opened sessions
+   */
+  public boolean defaultUseOptimisticConcurrency;
+
   private static Map<Class<?>, String> CACHED_DEFAULT_TYPE_TAG_NAMES = new HashMap<>();
 
   private ClrTypeFinder findClrType;

@@ -7,10 +7,10 @@ import net.ravendb.abstractions.closure.Function1;
 import net.ravendb.abstractions.closure.Function2;
 import net.ravendb.abstractions.closure.Function3;
 import net.ravendb.abstractions.data.AdminStatistics;
-import net.ravendb.abstractions.data.BackupRequest;
+import net.ravendb.abstractions.data.DatabaseBackupRequest;
 import net.ravendb.abstractions.data.DatabaseDocument;
 import net.ravendb.abstractions.data.HttpMethods;
-import net.ravendb.abstractions.data.RestoreRequest;
+import net.ravendb.abstractions.data.DatabaseRestoreRequest;
 import net.ravendb.abstractions.json.linq.RavenJObject;
 import net.ravendb.abstractions.json.linq.RavenJToken;
 import net.ravendb.client.connection.implementation.HttpJsonRequest;
@@ -110,7 +110,7 @@ public class AdminServerClient implements IAdminDatabaseCommands, IGlobalAdminDa
   public void startBackup(String backupLocation, DatabaseDocument databaseDocument, boolean incremental, String databaseName) {
     HttpJsonRequest request = adminRequest.startBackup(backupLocation, databaseDocument, databaseName, incremental);
 
-    BackupRequest backupRequest = new BackupRequest();
+    DatabaseBackupRequest backupRequest = new DatabaseBackupRequest();
     backupRequest.setBackupLocation(backupLocation);
     backupRequest.setDatabaseDocument(databaseDocument);
 
@@ -119,10 +119,11 @@ public class AdminServerClient implements IAdminDatabaseCommands, IGlobalAdminDa
   }
 
   @Override
-  public void startRestore(RestoreRequest restoreRequest) {
+  public Operation startRestore(DatabaseRestoreRequest restoreRequest) {
     HttpJsonRequest request = adminRequest.createRestoreRequest();
     request.write(RavenJObject.fromObject(restoreRequest).toString());
-    request.executeRequest();
+    RavenJToken jsonResponse = request.readResponseJson();
+    return new Operation(innerServerClient, jsonResponse.value(Long.class, "OperationId"));
   }
 
 
@@ -138,6 +139,7 @@ public class AdminServerClient implements IAdminDatabaseCommands, IGlobalAdminDa
     });
   }
 
+  @Override
   public RavenJObject getDatabaseConfiguration() {
     return innerServerClient.executeWithReplication(HttpMethods.GET, new Function1<OperationMetadata, RavenJObject>() {
 
@@ -148,10 +150,12 @@ public class AdminServerClient implements IAdminDatabaseCommands, IGlobalAdminDa
     });
   }
 
+  @Override
   public String[] getDatabaseNames(int pagesize) {
     return getDatabaseNames(pagesize, 0);
   }
 
+  @Override
   public String[] getDatabaseNames(int pageSize, int start) {
     return adminRequest.getDatabaseNames(pageSize, start);
   }

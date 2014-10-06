@@ -2,7 +2,7 @@ package net.ravendb.client.connection;
 
 import net.ravendb.abstractions.data.AdminStatistics;
 import net.ravendb.abstractions.data.DatabaseDocument;
-import net.ravendb.abstractions.data.RestoreRequest;
+import net.ravendb.abstractions.data.DatabaseRestoreRequest;
 
 
 public interface IGlobalAdminDatabaseCommands {
@@ -65,7 +65,7 @@ public interface IGlobalAdminDatabaseCommands {
    * @param restoreLocation
    * @param databaseLocation
    */
-  public void startRestore(RestoreRequest restoreRequest);
+  public Operation startRestore(DatabaseRestoreRequest restoreRequest);
 
 
   /**

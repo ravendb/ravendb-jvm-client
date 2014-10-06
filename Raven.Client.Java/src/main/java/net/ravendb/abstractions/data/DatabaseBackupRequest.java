@@ -1,7 +1,7 @@
 package net.ravendb.abstractions.data;
 
 
-public class BackupRequest {
+public class DatabaseBackupRequest {
   private String backupLocation;
 
   private DatabaseDocument databaseDocument;

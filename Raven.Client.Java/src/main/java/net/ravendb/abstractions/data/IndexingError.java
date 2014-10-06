@@ -2,13 +2,22 @@ package net.ravendb.abstractions.data;
 
 import java.util.Date;
 
-public class ServerError {
+public class IndexingError {
+  private long id;
   private int index;
   private String indexName;
   private String error;
   private Date timestamp;
   private String document;
   private String action;
+
+  public long getId() {
+    return id;
+  }
+
+  public void setId(long id) {
+    this.id = id;
+  }
 
   public int getIndex() {
     return index;
@@ -63,7 +72,7 @@ public class ServerError {
 
   @Override
   public String toString() {
-    return "ServerError [index=" + index + ", error=" + error + ", timestamp=" + timestamp + ", document=" + document + ", action=" + action + "]";
+    return "IndexingError [id = " + id + ", index=" + index + ", error=" + error + ", timestamp=" + timestamp + ", document=" + document + ", action=" + action + "]";
   }
 
 

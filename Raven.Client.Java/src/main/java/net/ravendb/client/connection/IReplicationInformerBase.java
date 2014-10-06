@@ -28,11 +28,6 @@ public interface IReplicationInformerBase<T> extends Closeable {
   public List<OperationMetadata> getReplicationDestinationsUrls();
 
   /**
-   * Updates the replication information if needed.
-   */
-  public void updateReplicationInformationIfNeeded(T client);
-
-  /**
    * Refreshes the replication information.
    * @param client
    */

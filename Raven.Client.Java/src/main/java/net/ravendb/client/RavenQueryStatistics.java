@@ -26,6 +26,7 @@ public class RavenQueryStatistics {
   private Date lastQueryTime;
   private Map<String, Double> timingsInMilliseconds;
   private long resultSize;
+  private Map<String, String> scoreExplanations;
 
   /**
    * The size of the request which were sent from the server.
@@ -232,6 +233,12 @@ public class RavenQueryStatistics {
     timingsInMilliseconds = qr.getTimingsInMilliseconds();
     indexEtag = qr.getIndexEtag();
     resultSize = qr.getResultSize();
+    scoreExplanations = qr.getScoreExplanations();
+  }
+
+
+  public Map<String, String> getScoreExplanations() {
+    return scoreExplanations;
   }
 
 }

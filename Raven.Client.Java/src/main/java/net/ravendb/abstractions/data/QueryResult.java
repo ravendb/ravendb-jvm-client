@@ -51,9 +51,6 @@ public class QueryResult {
   public QueryResult() {
     results = new ArrayList<>();
     includes = new ArrayList<>();
-    highlightings = new HashMap<>();
-    scoreExplanations = new HashMap<>();
-    timingsInMilliseconds = new HashMap<>();
   }
 
   public Map<String, String> getScoreExplanations() {
@@ -88,16 +85,31 @@ public class QueryResult {
     snapshot.setSkippedResults(skippedResults);
     snapshot.setTotalResults(getTotalResults());
 
-    for (Map.Entry<String, Map<String, String[]>> entry: highlightings.entrySet()) {
-      snapshot.getHighlightings().put(entry.getKey(), new HashMap<>(entry.getValue()));
+    if (highlightings != null) {
+      snapshot.setHighlightings(new HashMap<String, Map<String,String[]>>());
+      for (Map.Entry<String, Map<String, String[]>> entry: highlightings.entrySet()) {
+        snapshot.getHighlightings().put(entry.getKey(), new HashMap<>(entry.getValue()));
+      }
+    } else {
+      snapshot.setHighlightings(null);
     }
 
-    for (Map.Entry<String, String> entry: scoreExplanations.entrySet()) {
-      snapshot.getScoreExplanations().put(entry.getKey(), entry.getValue());
+    if (scoreExplanations != null) {
+      snapshot.setScoreExplanations(new HashMap<String, String>());
+      for (Map.Entry<String, String> entry: scoreExplanations.entrySet()) {
+        snapshot.getScoreExplanations().put(entry.getKey(), entry.getValue());
+      }
+    } else {
+      snapshot.setScoreExplanations(null);
     }
 
-    for(Map.Entry<String, Double> entry: timingsInMilliseconds.entrySet()) {
-      snapshot.getTimingsInMilliseconds().put(entry.getKey(), entry.getValue());
+    if (timingsInMilliseconds != null) {
+      snapshot.setTimingsInMilliseconds(new HashMap<String, Double>());
+      for(Map.Entry<String, Double> entry: timingsInMilliseconds.entrySet()) {
+        snapshot.getTimingsInMilliseconds().put(entry.getKey(), entry.getValue());
+      }
+    } else {
+      snapshot.setTimingsInMilliseconds(null);
     }
     snapshot.setLastQueryTime(getLastQueryTime());
     snapshot.setDurationMiliseconds(getDurationMiliseconds());
