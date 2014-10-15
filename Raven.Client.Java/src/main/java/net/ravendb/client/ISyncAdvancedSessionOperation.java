@@ -6,6 +6,7 @@ import net.ravendb.abstractions.closure.Action1;
 import net.ravendb.abstractions.data.Etag;
 import net.ravendb.abstractions.data.FacetQuery;
 import net.ravendb.abstractions.data.FacetResults;
+import net.ravendb.abstractions.data.MoreLikeThisQuery;
 import net.ravendb.abstractions.data.QueryHeaderInformation;
 import net.ravendb.abstractions.data.StreamResult;
 import net.ravendb.client.document.batches.IEagerSessionOperations;
@@ -397,5 +398,21 @@ public interface ISyncAdvancedSessionOperation extends IAdvancedDocumentSessionO
    * @return
    */
   public FacetResults[] multiFacetedSearch(FacetQuery... queries);
+
+  public <T> T[] moreLikeThis(Class<T> entityClass, Class<? extends AbstractIndexCreationTask> indexCreator, String documentId);
+
+  public <T> T[] moreLikeThis(Class<T> entityClass, Class<? extends AbstractIndexCreationTask> indexCreator, MoreLikeThisQuery parameters);
+
+  public <T> T[] moreLikeThis(Class<T> entityClass, String index, String documentId);
+
+  public <T> T[] moreLikeThis(Class<T> entityClass, Class<? extends AbstractIndexCreationTask> indexCreator, Class<? extends AbstractTransformerCreationTask> transformerClass, String documentId);
+
+  public <T> T[] moreLikeThis(Class<T> entityClass, Class<? extends AbstractIndexCreationTask> indexCreator, Class<? extends AbstractTransformerCreationTask> transformerClass, MoreLikeThisQuery parameters);
+
+  public <T> T[] moreLikeThis(Class<T> entityClass, String index, String transformer, String documentId);
+
+  public <T> T[] moreLikeThis(Class<T> entityClass, String index, String transformer, MoreLikeThisQuery parameters);
+
+
 
 }

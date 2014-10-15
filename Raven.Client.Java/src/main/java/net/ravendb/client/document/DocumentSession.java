@@ -15,6 +15,9 @@ import java.util.Set;
 import java.util.TreeSet;
 import java.util.UUID;
 
+import org.apache.commons.lang.StringUtils;
+import org.apache.commons.logging.impl.AvalonLogger;
+
 import net.ravendb.abstractions.basic.CloseableIterator;
 import net.ravendb.abstractions.basic.Lazy;
 import net.ravendb.abstractions.basic.Reference;
@@ -30,6 +33,7 @@ import net.ravendb.abstractions.data.GetRequest;
 import net.ravendb.abstractions.data.GetResponse;
 import net.ravendb.abstractions.data.IndexQuery;
 import net.ravendb.abstractions.data.JsonDocument;
+import net.ravendb.abstractions.data.MoreLikeThisQuery;
 import net.ravendb.abstractions.data.MultiLoadResult;
 import net.ravendb.abstractions.data.QueryHeaderInformation;
 import net.ravendb.abstractions.data.StreamResult;
@@ -1034,10 +1038,99 @@ public class DocumentSession extends InMemoryDocumentSessionOperations implement
     } catch (InstantiationException | IllegalAccessException e) {
       throw new ServerClientException(e);
     }
-
   }
 
+  @Override
+  public <T> T[] moreLikeThis(Class<T> entityClass, Class<? extends AbstractIndexCreationTask> indexCreator,
+    String documentId) {
+    try {
+      AbstractIndexCreationTask indexCreatorInstance = indexCreator.newInstance();
+      MoreLikeThisQuery query = new MoreLikeThisQuery();
+      query.setDocumentId(documentId);
+      return moreLikeThis(entityClass, indexCreatorInstance.getIndexName(), null, query);
+    } catch (InstantiationException | IllegalAccessException e) {
+      throw new RuntimeException("Unable to initialise index:" + indexCreator, e);
+    }
+  }
 
-  //TODO : more like this
+  @Override
+  public <T> T[] moreLikeThis(Class<T> entityClass, Class<? extends AbstractIndexCreationTask> indexCreator,
+    MoreLikeThisQuery parameters) {
+    try {
+      AbstractIndexCreationTask indexCreatorInstance = indexCreator.newInstance();
+      return moreLikeThis(entityClass, indexCreatorInstance.getIndexName(), null, parameters);
+    } catch (InstantiationException | IllegalAccessException e) {
+      throw new RuntimeException("Unable to initialise index:" + indexCreator, e);
+    }
+  }
 
+  @Override
+  public <T> T[] moreLikeThis(Class<T> entityClass, String index, String documentId) {
+    MoreLikeThisQuery query = new MoreLikeThisQuery();
+    query.setDocumentId(documentId);
+    return moreLikeThis(entityClass, index, null, query);
+  }
+
+  @Override
+  public <T> T[] moreLikeThis(Class<T> entityClass, Class<? extends AbstractIndexCreationTask> indexCreator,
+    Class<? extends AbstractTransformerCreationTask> transformerClass, String documentId) {
+    try {
+      AbstractIndexCreationTask indexCreatorInstance = indexCreator.newInstance();
+      AbstractTransformerCreationTask transformerInstance = transformerClass.newInstance();
+      MoreLikeThisQuery query = new MoreLikeThisQuery();
+      query.setDocumentId(documentId);
+      return moreLikeThis(entityClass, indexCreatorInstance.getIndexName(), transformerInstance.getTransformerName(), query);
+    } catch (InstantiationException | IllegalAccessException e) {
+      throw new RuntimeException("Unable to initialise index:" + indexCreator, e);
+    }
+  }
+
+  @Override
+  public <T> T[] moreLikeThis(Class<T> entityClass, Class<? extends AbstractIndexCreationTask> indexCreator,
+    Class<? extends AbstractTransformerCreationTask> transformerClass, MoreLikeThisQuery parameters) {
+    try {
+      AbstractIndexCreationTask indexCreatorInstance = indexCreator.newInstance();
+      AbstractTransformerCreationTask transformerInstance = transformerClass.newInstance();
+      return moreLikeThis(entityClass, indexCreatorInstance.getIndexName(), transformerInstance.getTransformerName(), parameters);
+    } catch (InstantiationException | IllegalAccessException e) {
+      throw new RuntimeException("Unable to initialise index:" + indexCreator, e);
+    }
+  }
+
+  @Override
+  public <T> T[] moreLikeThis(Class<T> entityClass, String index, String transformer, String documentId) {
+    MoreLikeThisQuery query = new MoreLikeThisQuery();
+    query.setDocumentId(documentId);
+    return moreLikeThis(entityClass, index, transformer, query);
+  }
+
+  @Override
+  public <T> T[] moreLikeThis(Class<T> entityClass, String index, String transformer, MoreLikeThisQuery parameters) {
+    if (StringUtils.isEmpty(index)) {
+      throw new IllegalArgumentException("Index name cannot be null or empty");
+    }
+
+    parameters.setIndexName(index);
+    parameters.setResultsTransformer(transformer);
+
+    // /morelikethis/(index-name)/(ravendb-document-id)?fields=(fields)
+    IDatabaseCommands cmd = getDatabaseCommands();
+
+    try{
+      incrementRequestCount();
+
+      MultiLoadOperation multiLoadOperation = new MultiLoadOperation(this, new DisableAllCachingCallback(), null, null);
+      MultiLoadResult multiLoadResult = null;
+      do {
+        multiLoadOperation.logOperation();
+        try (AutoCloseable multiLoadContext = multiLoadOperation.enterMultiLoadContext()) {
+          multiLoadResult = cmd.moreLikeThis(parameters);
+        }
+      } while (multiLoadOperation.setResult(multiLoadResult));
+
+      return multiLoadOperation.complete(entityClass);
+    } catch (Exception e) {
+      throw new ServerClientException(e);
+    }
+  }
 }
