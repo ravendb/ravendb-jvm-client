@@ -33,6 +33,7 @@ import net.ravendb.abstractions.connection.OperationCredentials;
 import net.ravendb.abstractions.data.Attachment;
 import net.ravendb.abstractions.data.AttachmentInformation;
 import net.ravendb.abstractions.data.BatchResult;
+import net.ravendb.abstractions.data.BuildNumber;
 import net.ravendb.abstractions.data.BulkInsertOptions;
 import net.ravendb.abstractions.data.Constants;
 import net.ravendb.abstractions.data.DatabaseStatistics;
@@ -147,6 +148,20 @@ public class ServerClient implements IDatabaseCommands {
     try {
       RavenJToken result = request.readResponseJson();
       return convention.createSerializer().readValue(result.toString(), IndexMergeResults.class);
+    } catch (IOException e) {
+      throw new ServerClientException("unable to get merge suggestions", e);
+    }
+  }
+
+  public BuildNumber getBuildNumber() {
+    String url2 = url + "/build/version";
+    HttpJsonRequest request = jsonRequestFactory.createHttpJsonRequest(new CreateHttpJsonRequestParams(this, url2,
+      HttpMethods.GET, new RavenJObject(), credentialsThatShouldBeUsedOnlyInOperationsWithoutReplication, convention));
+    request.addOperationHeaders(operationsHeaders);
+
+    try {
+      RavenJToken result = request.readResponseJson();
+      return convention.createSerializer().readValue(result.toString(), BuildNumber.class);
     } catch (IOException e) {
       throw new ServerClientException("unable to get merge suggestions", e);
     }
@@ -2362,6 +2377,31 @@ public class ServerClient implements IDatabaseCommands {
     } catch (Exception e) {
       throw new ServerClientException(e);
     }
+  }
+
+  /**
+   * Using the given Index, calculate the facets as per the specified doc with the given start and pageSize
+   * @param index
+   * @param query
+   * @param facets
+   * @return
+   */
+  @Override
+  public FacetResults getFacets(final String index, final IndexQuery query, final List<Facet> facets) {
+    return getFacets(index, query, facets, 0, null);
+  }
+
+  /**
+   * Using the given Index, calculate the facets as per the specified doc with the given start and pageSize
+   * @param index
+   * @param query
+   * @param facets
+   * @param start
+   * @return
+   */
+  @Override
+  public FacetResults getFacets(final String index, final IndexQuery query, final List<Facet> facets, final int start) {
+    return getFacets(index, query, facets, start, null);
   }
 
   /**

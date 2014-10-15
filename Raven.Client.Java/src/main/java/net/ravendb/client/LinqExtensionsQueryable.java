@@ -5,11 +5,13 @@ import java.util.List;
 import net.ravendb.abstractions.basic.Lazy;
 import net.ravendb.abstractions.closure.Action1;
 import net.ravendb.abstractions.data.Facet;
+import net.ravendb.abstractions.data.FacetQuery;
 import net.ravendb.abstractions.data.FacetResults;
 import net.ravendb.abstractions.data.SuggestionQuery;
 import net.ravendb.abstractions.data.SuggestionQueryResult;
 import net.ravendb.client.linq.DynamicAggregationQuery;
 import net.ravendb.client.linq.IRavenQueryable;
+
 
 
 import com.mysema.query.types.Path;
@@ -152,6 +154,55 @@ public interface LinqExtensionsQueryable<T> {
    * @return
    */
   public FacetResults toFacets(String facetSetupDoc, int start, Integer pageSize);
+
+  /**
+   * Transforms the query to the facet query that will allow you to execute multi faceted search
+   * @param facets List of facets
+   * @return
+   */
+  public FacetQuery toFacetQuery(List<Facet> facets);
+
+  /**
+    * Transforms the query to the facet query that will allow you to execute multi faceted search
+    * @param facets List of facets
+    * @param start Start index for paging
+    * @param pageSize Paging PageSize. If set, overrides Facet.MaxResults
+    * @return
+    */
+  public FacetQuery toFacetQuery(List<Facet> facets, int start);
+
+  /**
+   * Transforms the query to the facet query that will allow you to execute multi faceted search
+   * @param facets List of facets
+   * @param start Start index for paging
+   * @param pageSize Paging PageSize. If set, overrides Facet.MaxResults
+   * @return
+   */
+  public FacetQuery toFacetQuery(List<Facet> facets, int start, Integer pageSize);
+
+  /**
+   * Transforms the query to the facet query that will allow you to execute multi faceted search
+   * @param facetSetupDoc Name of the FacetSetup document
+   * @return
+   */
+  public FacetQuery toFacetQuery(String facetSetupDoc);
+
+  /**
+   * Transforms the query to the facet query that will allow you to execute multi faceted search
+   * @param facetSetupDoc Name of the FacetSetup document
+   * @param start Start index for paging
+   * @return
+   */
+  public FacetQuery toFacetQuery(String facetSetupDoc, int start);
+
+  /**
+   * Transforms the query to the facet query that will allow you to execute multi faceted search
+   * @param facetSetupDoc Name of the FacetSetup document
+   * @param start Start index for paging
+   * @param pageSize Paging PageSize. If set, overrides Facet.MaxResult
+   * @return
+   */
+  public FacetQuery toFacetQuery(String facetSetupDoc, int start, Integer pageSize);
 
   public IRavenQueryable<T> intersect();
 

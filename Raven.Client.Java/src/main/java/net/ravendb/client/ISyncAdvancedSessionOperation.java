@@ -103,6 +103,99 @@ public interface ISyncAdvancedSessionOperation extends IAdvancedDocumentSessionO
    * @param clazz
    * @param transformerClass
    * @param keyPrefix
+   * @return
+   */
+  public <TResult, TTransformer extends AbstractTransformerCreationTask> TResult[] loadStartingWith(Class<TResult> clazz, Class<TTransformer> transformerClass,
+    String keyPrefix);
+
+  /**
+   * Loads documents with the specified key prefix and applies the specified results transformer against the results
+   * @param clazz
+   * @param transformerClass
+   * @param keyPrefix
+   * @param matches
+   * @return
+   */
+  public <TResult, TTransformer extends AbstractTransformerCreationTask> TResult[] loadStartingWith(Class<TResult> clazz, Class<TTransformer> transformerClass,
+    String keyPrefix, String matches);
+
+  /**
+   * Loads documents with the specified key prefix and applies the specified results transformer against the results
+   * @param clazz
+   * @param transformerClass
+   * @param keyPrefix
+   * @param matches
+   * @param start
+   * @return
+   */
+  public <TResult, TTransformer extends AbstractTransformerCreationTask> TResult[] loadStartingWith(Class<TResult> clazz, Class<TTransformer> transformerClass,
+    String keyPrefix, String matches, int start);
+
+  /**
+   * Loads documents with the specified key prefix and applies the specified results transformer against the results
+   * @param clazz
+   * @param transformerClass
+   * @param keyPrefix
+   * @param matches
+   * @param start
+   * @param pageSize
+   * @return
+   */
+  public <TResult, TTransformer extends AbstractTransformerCreationTask> TResult[] loadStartingWith(Class<TResult> clazz, Class<TTransformer> transformerClass,
+    String keyPrefix, String matches, int start, int pageSize);
+
+
+  /**
+   * Loads documents with the specified key prefix and applies the specified results transformer against the results
+   * @param clazz
+   * @param transformerClass
+   * @param keyPrefix
+   * @param matches
+   * @param start
+   * @param pageSize
+   * @param exclude
+   * @return
+   */
+  public <TResult, TTransformer extends AbstractTransformerCreationTask> TResult[] loadStartingWith(Class<TResult> clazz, Class<TTransformer> transformerClass,
+    String keyPrefix, String matches, int start, int pageSize, String exclude);
+
+  /**
+   * Loads documents with the specified key prefix and applies the specified results transformer against the results
+   * @param clazz
+   * @param transformerClass
+   * @param keyPrefix
+   * @param matches
+   * @param start
+   * @param pageSize
+   * @param exclude
+   * @param pagingInformation
+   * @return
+   */
+  public <TResult, TTransformer extends AbstractTransformerCreationTask> TResult[] loadStartingWith(Class<TResult> clazz, Class<TTransformer> transformerClass,
+    String keyPrefix, String matches, int start, int pageSize, String exclude,
+    RavenPagingInformation pagingInformation);
+
+  /**
+   * Loads documents with the specified key prefix and applies the specified results transformer against the results
+   * @param clazz
+   * @param transformerClass
+   * @param keyPrefix
+   * @param matches
+   * @param start
+   * @param pageSize
+   * @param exclude
+   * @param pagingInformation
+   * @return
+   */
+  public <TResult, TTransformer extends AbstractTransformerCreationTask> TResult[] loadStartingWith(Class<TResult> clazz, Class<TTransformer> transformerClass,
+    String keyPrefix, String matches, int start, int pageSize, String exclude,
+    RavenPagingInformation pagingInformation, Action1<ILoadConfiguration> configure);
+
+  /**
+   * Loads documents with the specified key prefix and applies the specified results transformer against the results
+   * @param clazz
+   * @param transformerClass
+   * @param keyPrefix
    * @param matches
    * @param start
    * @param pageSize

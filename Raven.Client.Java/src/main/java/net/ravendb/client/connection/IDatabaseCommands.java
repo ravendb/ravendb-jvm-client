@@ -5,8 +5,10 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
+import net.ravendb.abstractions.basic.CloseableIterator;
 import net.ravendb.abstractions.basic.Reference;
 import net.ravendb.abstractions.commands.ICommandData;
+import net.ravendb.abstractions.connection.OperationCredentials;
 import net.ravendb.abstractions.data.Attachment;
 import net.ravendb.abstractions.data.AttachmentInformation;
 import net.ravendb.abstractions.data.BatchResult;
@@ -61,6 +63,8 @@ public interface IDatabaseCommands extends IHoldProfilingInformation {
    * Admin operations performed against system database, like create/delete database
    */
   public IGlobalAdminDatabaseCommands getGlobalAdmin();
+
+  public OperationCredentials getPrimaryCredentials();
 
   /**
    * Admin operations for current database
@@ -316,73 +320,73 @@ public interface IDatabaseCommands extends IHoldProfilingInformation {
   public PutResult put(String key, Etag guid, RavenJObject document, RavenJObject metadata);
 
   /**
-   *  Sends a patch request for a specific document, ignoring the document's Etag and if the document is missing
-   * @param key
-   * @param patches
+   * Sends a patch request for a specific document, ignoring document's Etag and if it is missing
+   * @param key Key of the document to patch
+   * @param patches Array of patch requests
    * @return
    */
   public RavenJObject patch(String key, PatchRequest[] patches);
 
   /**
    * Sends a patch request for a specific document, ignoring the document's Etag
-   * @param key
-   * @param patches
-   * @param ignoreMissing
+   * @param key Key of the document to patch
+   * @param patches Array of patch requests
+   * @param ignoreMissing true if the patch request should ignore a missing document, false to throw DocumentDoesNotExistException
    * @return
    */
   public RavenJObject patch(String key, PatchRequest[] patches, boolean ignoreMissing);
 
   /**
    * Sends a patch request for a specific document, ignoring the document's Etag and  if the document is missing
-   * @param key
-   * @param patch
+   * @param key Key of the document to patch
+   * @param patch The patch request to use (using JavaScript)
    * @return
    */
   public RavenJObject patch(String key, ScriptedPatchRequest patch);
 
   /**
    * Sends a patch request for a specific document, ignoring the document's Etag
-   * @param key
-   * @param patch
-   * @param ignoreMissing
+   * @param key Key of the document to patch
+   * @param patch The patch request to use (using JavaScript)
+   * @param ignoreMissing true if the patch request should ignore a missing document, false to throw DocumentDoesNotExistException
    * @return
    */
   public RavenJObject patch(String key, ScriptedPatchRequest patch, boolean ignoreMissing);
 
   /**
    * Sends a patch request for a specific document
-   * @param key
-   * @param patches
-   * @param etag
+   * @param key Key of the document to patch
+   * @param patches Array of patch requests
+   * @param etag Require specific Etag [null to ignore]
    * @return
    */
   public RavenJObject patch(String key, PatchRequest[] patches, Etag etag);
 
   /**
    * Sends a patch request for a specific document which may or may not currently exist
-   * @param key
-   * @param patchesToExisting
-   * @param patchesToDefault
-   * @param defaultMetadata
+   * @param key Id of the document to patch
+   * @param patchesToExisting Array of patch requests to apply to an existing document
+   * @param patchesToDefault Array of patch requests to apply to a default document when the document is missing
+   * @param defaultMetadata The metadata for the default document when the document is missing
    * @return
    */
   public RavenJObject patch(String key, PatchRequest[] patchesToExisting, PatchRequest[] patchesToDefault, RavenJObject defaultMetadata);
 
   /**
-   *  Sends a patch request for a specific document
-   * @param key
-   * @param patch
-   * @param etag
+   * Sends a patch request for a specific document
+   * @param key Key of the document to patch
+   * @param patch The patch request to use (using JavaScript)
+   * @param etag Require specific Etag [null to ignore]
    * @return
    */
   public RavenJObject patch(String key, ScriptedPatchRequest patch, Etag etag);
 
   /**
    * Sends a patch request for a specific document which may or may not currently exist
-   * @param key
-   * @param patchExisting
-   * @param patchDefault
-   * @param defaultMetadata
+   * @param key Id of the document to patch
+   * @param patchExisting The patch request to use (using JavaScript) to an existing document
+   * @param patchDefault The patch request to use (using JavaScript)  to a default document when the document is missing
+   * @param defaultMetadata The metadata for the default document when the document is missing
    * @return
    */
   public RavenJObject patch(String key, ScriptedPatchRequest patchExisting, ScriptedPatchRequest patchDefault, RavenJObject defaultMetadata);
@@ -539,6 +543,30 @@ public interface IDatabaseCommands extends IHoldProfilingInformation {
    * @param pageSize
    * @return
    */
+  public FacetResults getFacets(final String index, final IndexQuery query, final List<Facet> facets) ;
+
+
+  /**
+   * Using the given Index, calculate the facets as per the specified doc with the given start and pageSize
+   * @param index
+   * @param query
+   * @param facets
+   * @param start
+   * @param pageSize
+   * @return
+   */
+  public FacetResults getFacets(final String index, final IndexQuery query, final List<Facet> facets, final int start) ;
+
+
+  /**
+   * Using the given Index, calculate the facets as per the specified doc with the given start and pageSize
+   * @param index
+   * @param query
+   * @param facets
+   * @param start
+   * @param pageSize
+   * @return
+   */
   public FacetResults getFacets(final String index, final IndexQuery query, final List<Facet> facets, final int start, final Integer pageSize) ;
 
   /**
@@ -643,41 +671,31 @@ public interface IDatabaseCommands extends IHoldProfilingInformation {
    * @param queryHeaderInfo
    * @return
    */
-  public RavenJObjectIterator streamQuery(String index, IndexQuery query, Reference<QueryHeaderInformation> queryHeaderInfo) ;
+  public CloseableIterator<RavenJObject> streamQuery(String index, IndexQuery query, Reference<QueryHeaderInformation> queryHeaderInfo) ;
 
   /**
    * Streams the documents by etag OR starts with the prefix and match the matches
    * Will return *all* results, regardless of the number of items that might be returned.
    * @return
    */
-  public RavenJObjectIterator streamDocs();
-
-  /**
-   * Streams the documents by etag OR starts with the prefix and match the matches
-   * Will return *all* results, regardless of the number of items that might be returned.
-   * @param fromEtag
-   * @return
-   */
-  public RavenJObjectIterator streamDocs(Etag fromEtag);
+  public CloseableIterator<RavenJObject> streamDocs();
 
   /**
    * Streams the documents by etag OR starts with the prefix and match the matches
    * Will return *all* results, regardless of the number of items that might be returned.
    * @param fromEtag
-   * @param startsWith
    * @return
    */
-  public RavenJObjectIterator streamDocs(Etag fromEtag, String startsWith);
+  public CloseableIterator<RavenJObject> streamDocs(Etag fromEtag);
 
   /**
    * Streams the documents by etag OR starts with the prefix and match the matches
    * Will return *all* results, regardless of the number of items that might be returned.
    * @param fromEtag
    * @param startsWith
-   * @param matches
    * @return
    */
-  public RavenJObjectIterator streamDocs(Etag fromEtag, String startsWith, String matches);
+  public CloseableIterator<RavenJObject> streamDocs(Etag fromEtag, String startsWith);
 
   /**
    * Streams the documents by etag OR starts with the prefix and match the matches
@@ -685,10 +703,9 @@ public interface IDatabaseCommands extends IHoldProfilingInformation {
    * @param fromEtag
    * @param startsWith
    * @param matches
-   * @param start
    * @return
    */
-  public RavenJObjectIterator streamDocs(Etag fromEtag, String startsWith, String matches, int start);
+  public CloseableIterator<RavenJObject> streamDocs(Etag fromEtag, String startsWith, String matches);
 
   /**
    * Streams the documents by etag OR starts with the prefix and match the matches
@@ -697,10 +714,9 @@ public interface IDatabaseCommands extends IHoldProfilingInformation {
    * @param startsWith
    * @param matches
    * @param start
-   * @param pageSize
    * @return
    */
-  public RavenJObjectIterator streamDocs(Etag fromEtag, String startsWith, String matches, int start, int pageSize);
+  public CloseableIterator<RavenJObject> streamDocs(Etag fromEtag, String startsWith, String matches, int start);
 
   /**
    * Streams the documents by etag OR starts with the prefix and match the matches
@@ -712,7 +728,19 @@ public interface IDatabaseCommands extends IHoldProfilingInformation {
    * @param pageSize
    * @return
    */
-  public RavenJObjectIterator streamDocs(Etag fromEtag, String startsWith, String matches, int start, int pageSize, String exclude);
+  public CloseableIterator<RavenJObject> streamDocs(Etag fromEtag, String startsWith, String matches, int start, int pageSize);
+
+  /**
+   * Streams the documents by etag OR starts with the prefix and match the matches
+   * Will return *all* results, regardless of the number of items that might be returned.
+   * @param fromEtag
+   * @param startsWith
+   * @param matches
+   * @param start
+   * @param pageSize
+   * @return
+   */
+  public CloseableIterator<RavenJObject> streamDocs(Etag fromEtag, String startsWith, String matches, int start, int pageSize, String exclude);
 
   /**
    * Streams the documents by etag OR starts with the prefix and match the matches
@@ -725,7 +753,7 @@ public interface IDatabaseCommands extends IHoldProfilingInformation {
    * @param pagingInformation
    * @return
    */
-  public RavenJObjectIterator streamDocs(Etag fromEtag, String startsWith, String matches, int start, int pageSize, String exclude, RavenPagingInformation pagingInformation);
+  public CloseableIterator<RavenJObject> streamDocs(Etag fromEtag, String startsWith, String matches, int start, int pageSize, String exclude, RavenPagingInformation pagingInformation);
 
   /**
    * Streams the documents by etag OR starts with the prefix and match the matches
@@ -739,7 +767,7 @@ public interface IDatabaseCommands extends IHoldProfilingInformation {
    * @param skipAfter
    * @return
    */
-  public RavenJObjectIterator streamDocs(Etag fromEtag, String startsWith, String matches, int start, int pageSize, String exclude, RavenPagingInformation pagingInformation, String skipAfter);
+  public CloseableIterator<RavenJObject> streamDocs(Etag fromEtag, String startsWith, String matches, int start, int pageSize, String exclude, RavenPagingInformation pagingInformation, String skipAfter);
 
   /**
    * Return a list of documents that based on the MoreLikeThisQuery.

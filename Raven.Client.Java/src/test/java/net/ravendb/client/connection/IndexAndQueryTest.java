@@ -14,6 +14,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import net.ravendb.abstractions.basic.CloseableIterator;
 import net.ravendb.abstractions.basic.Reference;
 import net.ravendb.abstractions.data.Constants;
 import net.ravendb.abstractions.data.Etag;
@@ -137,7 +138,7 @@ public class IndexAndQueryTest extends RavenDBAwareTests {
       IndexQuery query = new IndexQuery();
       Reference<QueryHeaderInformation> queryHeaderInfo = new Reference<>();
       Set<String> companyNames = new HashSet<>();
-      try (RavenJObjectIterator iterator = dbCommands.streamQuery("companies/simple", query, queryHeaderInfo)) {
+      try (CloseableIterator<RavenJObject> iterator = dbCommands.streamQuery("companies/simple", query, queryHeaderInfo)) {
         while (iterator.hasNext()) {
           RavenJObject ravenJObject = iterator.next();
           companyNames.add(ravenJObject.value(String.class, "Name"));
@@ -169,7 +170,7 @@ public class IndexAndQueryTest extends RavenDBAwareTests {
         // ok
       }
 
-      RavenJObjectIterator streamDocs = dbCommands.streamDocs(null, "companies/", null, 0, Integer.MAX_VALUE);
+      CloseableIterator<RavenJObject> streamDocs = dbCommands.streamDocs(null, "companies/", null, 0, Integer.MAX_VALUE);
       Set<String> companyNames = new HashSet<>();
 
       while (streamDocs.hasNext()) {

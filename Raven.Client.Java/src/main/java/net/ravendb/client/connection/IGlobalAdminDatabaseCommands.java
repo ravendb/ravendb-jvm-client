@@ -1,12 +1,18 @@
 package net.ravendb.client.connection;
 
 import net.ravendb.abstractions.data.AdminStatistics;
+import net.ravendb.abstractions.data.BuildNumber;
 import net.ravendb.abstractions.data.DatabaseDocument;
 import net.ravendb.abstractions.data.DatabaseRestoreRequest;
 
 
 public interface IGlobalAdminDatabaseCommands {
 
+  /**
+   * Gets the build number
+   * @return
+   */
+  public BuildNumber getBuildNumber();
   /**
    * Returns the names of all tenant databases on the RavenDB server
    * @param pageSize

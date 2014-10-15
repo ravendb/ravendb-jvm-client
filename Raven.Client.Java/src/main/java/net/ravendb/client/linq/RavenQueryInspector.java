@@ -11,6 +11,7 @@ import net.ravendb.abstractions.basic.Reference;
 import net.ravendb.abstractions.basic.Tuple;
 import net.ravendb.abstractions.closure.Action1;
 import net.ravendb.abstractions.data.Facet;
+import net.ravendb.abstractions.data.FacetQuery;
 import net.ravendb.abstractions.data.FacetResults;
 import net.ravendb.abstractions.data.IndexQuery;
 import net.ravendb.abstractions.data.QueryResult;
@@ -325,6 +326,50 @@ public class RavenQueryInspector<T> implements IRavenQueryable<T>, IRavenQueryIn
       throw new IllegalArgumentException("Facets must contain at least one entry");
     }
     return databaseCommands.getFacets(indexName, getIndexQuery(), facets, start, pageSize);
+  }
+
+
+
+  @Override
+  public FacetQuery toFacetQuery(List<Facet> facets) {
+    return toFacetQuery(facets, 0, null);
+  }
+
+  @Override
+  public FacetQuery toFacetQuery(List<Facet> facets, int start) {
+    return toFacetQuery(facets, start, null);
+  }
+
+  @Override
+  public FacetQuery toFacetQuery(List<Facet> facets, int start, Integer pageSize) {
+    FacetQuery facetQuery = new FacetQuery();
+    facetQuery.setIndexName(getIndexQueried());
+    facetQuery.setQuery(getIndexQuery());
+    facetQuery.setFacets(facets);
+    facetQuery.setPageStart(start);
+    facetQuery.setPageSize(pageSize);
+    return facetQuery;
+  }
+
+  @Override
+  public FacetQuery toFacetQuery(String facetSetupDoc) {
+    return toFacetQuery(facetSetupDoc, 0, null);
+  }
+
+  @Override
+  public FacetQuery toFacetQuery(String facetSetupDoc, int start) {
+    return toFacetQuery(facetSetupDoc, start, null);
+  }
+
+  @Override
+  public FacetQuery toFacetQuery(String facetSetupDoc, int start, Integer pageSize) {
+    FacetQuery facetQuery = new FacetQuery();
+    facetQuery.setIndexName(getIndexQueried());
+    facetQuery.setQuery(getIndexQuery());
+    facetQuery.setFacetSetupDoc(facetSetupDoc);
+    facetQuery.setPageStart(start);
+    facetQuery.setPageSize(pageSize);
+    return facetQuery;
   }
 
   @Override

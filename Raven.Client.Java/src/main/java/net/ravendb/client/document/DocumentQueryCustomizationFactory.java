@@ -23,7 +23,7 @@ import com.mysema.query.types.Path;
  * Allows query customization
  */
 @Immutable
-public class DocumentQueryCustomizationFactory {
+public class DocumentQueryCustomizationFactory implements IDocumentQueryCustomization {
 
   private Set<Action1<IDocumentQueryCustomization>> actions = new LinkedHashSet<>();
 
@@ -43,6 +43,7 @@ public class DocumentQueryCustomizationFactory {
    * However, when used to query map/reduce indexes, it does NOT guarantee that the document that this etag belong to is actually considered for the results.
    * @return
    */
+  @Override
   public DocumentQueryCustomizationFactory waitForNonStaleResultsAsOfLastWrite() {
     return new DocumentQueryCustomizationFactory(actions, new Action1<IDocumentQueryCustomization>() {
       @Override
@@ -60,6 +61,7 @@ public class DocumentQueryCustomizationFactory {
    * @param waitTimeout
    * @return
    */
+  @Override
   public DocumentQueryCustomizationFactory waitForNonStaleResultsAsOfLastWrite(final long waitTimeout) {
     return new DocumentQueryCustomizationFactory(actions, new Action1<IDocumentQueryCustomization>() {
       @Override
@@ -73,6 +75,7 @@ public class DocumentQueryCustomizationFactory {
    * Instructs the query to wait for non stale results as of now.
    * @return
    */
+  @Override
   public DocumentQueryCustomizationFactory waitForNonStaleResultsAsOfNow() {
     return new DocumentQueryCustomizationFactory(actions, new Action1<IDocumentQueryCustomization>() {
       @Override
@@ -87,6 +90,7 @@ public class DocumentQueryCustomizationFactory {
    * @param waitTimeout timeout in milis
    * @return
    */
+  @Override
   public DocumentQueryCustomizationFactory waitForNonStaleResultsAsOfNow(final long waitTimeout) {
     return new DocumentQueryCustomizationFactory(actions, new Action1<IDocumentQueryCustomization>() {
       @Override
@@ -101,6 +105,7 @@ public class DocumentQueryCustomizationFactory {
    * @param cutOff
    * @return
    */
+  @Override
   public DocumentQueryCustomizationFactory waitForNonStaleResultsAsOf(final Date cutOff) {
     return new DocumentQueryCustomizationFactory(actions, new Action1<IDocumentQueryCustomization>() {
       @Override
@@ -116,6 +121,7 @@ public class DocumentQueryCustomizationFactory {
    * @param waitTimeout timeout in milis
    * @return
    */
+  @Override
   public DocumentQueryCustomizationFactory waitForNonStaleResultsAsOf(final Date cutOff, final long waitTimeout) {
     return new DocumentQueryCustomizationFactory(actions, new Action1<IDocumentQueryCustomization>() {
       @Override
@@ -130,6 +136,7 @@ public class DocumentQueryCustomizationFactory {
    * @param cutOffEtag
    * @return
    */
+  @Override
   public DocumentQueryCustomizationFactory waitForNonStaleResultsAsOf(final Etag cutOffEtag) {
     return new DocumentQueryCustomizationFactory(actions, new Action1<IDocumentQueryCustomization>() {
       @Override
@@ -145,6 +152,7 @@ public class DocumentQueryCustomizationFactory {
    * @param waitTimeout
    * @return
    */
+  @Override
   public DocumentQueryCustomizationFactory waitForNonStaleResultsAsOf(final Etag cutOffEtag, final long waitTimeout) {
     return new DocumentQueryCustomizationFactory(actions, new Action1<IDocumentQueryCustomization>() {
       @Override
@@ -159,6 +167,7 @@ public class DocumentQueryCustomizationFactory {
    * This shouldn't be used outside of unit tests unless you are well aware of the implications
    * @return
    */
+  @Override
   public DocumentQueryCustomizationFactory waitForNonStaleResults() {
     return new DocumentQueryCustomizationFactory(actions, new Action1<IDocumentQueryCustomization>() {
       @Override
@@ -173,6 +182,7 @@ public class DocumentQueryCustomizationFactory {
    * @param path
    * @return
    */
+  @Override
   public DocumentQueryCustomizationFactory include(final Path<?> path) {
     return new DocumentQueryCustomizationFactory(actions, new Action1<IDocumentQueryCustomization>() {
       @Override
@@ -187,6 +197,7 @@ public class DocumentQueryCustomizationFactory {
    * @param path
    * @return
    */
+  @Override
   public DocumentQueryCustomizationFactory include(final String path) {
     return new DocumentQueryCustomizationFactory(actions, new Action1<IDocumentQueryCustomization>() {
       @Override
@@ -202,6 +213,7 @@ public class DocumentQueryCustomizationFactory {
    * @param path
    * @return
    */
+  @Override
   public DocumentQueryCustomizationFactory include(final Class<?> targetEntityClass, final Path<?> path) {
     return new DocumentQueryCustomizationFactory(actions, new Action1<IDocumentQueryCustomization>() {
       @Override
@@ -217,6 +229,7 @@ public class DocumentQueryCustomizationFactory {
    * @param waitTimeout
    * @return
    */
+  @Override
   public DocumentQueryCustomizationFactory waitForNonStaleResults(final long waitTimeout) {
     return new DocumentQueryCustomizationFactory(actions, new Action1<IDocumentQueryCustomization>() {
       @Override
@@ -233,6 +246,7 @@ public class DocumentQueryCustomizationFactory {
    * @param longitude
    * @return
    */
+  @Override
   public DocumentQueryCustomizationFactory withinRadiusOf(final double radius, final double latitude, final double longitude) {
     return new DocumentQueryCustomizationFactory(actions, new Action1<IDocumentQueryCustomization>() {
       @Override
@@ -250,6 +264,7 @@ public class DocumentQueryCustomizationFactory {
    * @param longitude
    * @return
    */
+  @Override
   public DocumentQueryCustomizationFactory withinRadiusOf(final String fieldName, final double radius, final double latitude, final double longitude) {
     return new DocumentQueryCustomizationFactory(actions, new Action1<IDocumentQueryCustomization>() {
       @Override
@@ -267,6 +282,7 @@ public class DocumentQueryCustomizationFactory {
    * @param radiusUnits
    * @return
    */
+  @Override
   public DocumentQueryCustomizationFactory withinRadiusOf(final double radius, final double latitude, final double longitude, final SpatialUnits radiusUnits) {
     return new DocumentQueryCustomizationFactory(actions, new Action1<IDocumentQueryCustomization>() {
       @Override
@@ -285,6 +301,7 @@ public class DocumentQueryCustomizationFactory {
    * @param radiusUnits
    * @return
    */
+  @Override
   public DocumentQueryCustomizationFactory withinRadiusOf(final String fieldName, final double radius, final double latitude, final double longitude, final SpatialUnits radiusUnits) {
     return new DocumentQueryCustomizationFactory(actions, new Action1<IDocumentQueryCustomization>() {
       @Override
@@ -302,6 +319,7 @@ public class DocumentQueryCustomizationFactory {
    * @param rel Spatial relation to check
    * @return
    */
+  @Override
   public DocumentQueryCustomizationFactory relatesToShape(final String fieldName, final String shapeWKT, final SpatialRelation rel) {
     return new DocumentQueryCustomizationFactory(actions, new Action1<IDocumentQueryCustomization>() {
       @Override
@@ -311,6 +329,7 @@ public class DocumentQueryCustomizationFactory {
     });
   }
 
+  @Override
   public DocumentQueryCustomizationFactory spatial(final String fieldName, final SpatialCriteria criteria) {
     return new DocumentQueryCustomizationFactory(actions, new Action1<IDocumentQueryCustomization>() {
       @Override
@@ -324,6 +343,7 @@ public class DocumentQueryCustomizationFactory {
    * When using spatial queries, instruct the query to sort by the distance from the origin point
    * @return
    */
+  @Override
   public DocumentQueryCustomizationFactory sortByDistance() {
     return new DocumentQueryCustomizationFactory(actions, new Action1<IDocumentQueryCustomization>() {
       @Override
@@ -337,6 +357,7 @@ public class DocumentQueryCustomizationFactory {
    * Order the search results randomly
    * @return
    */
+  @Override
   public DocumentQueryCustomizationFactory randomOrdering() {
     return new DocumentQueryCustomizationFactory(actions, new Action1<IDocumentQueryCustomization>() {
       @Override
@@ -352,6 +373,7 @@ public class DocumentQueryCustomizationFactory {
    * @param seed
    * @return
    */
+  @Override
   public DocumentQueryCustomizationFactory randomOrdering(final String seed) {
     return new DocumentQueryCustomizationFactory(actions, new Action1<IDocumentQueryCustomization>() {
       @Override
@@ -366,6 +388,7 @@ public class DocumentQueryCustomizationFactory {
    * @param action
    * @return
    */
+  @Override
   public DocumentQueryCustomizationFactory beforeQueryExecution(final Action1<IndexQuery> action) {
     return new DocumentQueryCustomizationFactory(actions, new Action1<IDocumentQueryCustomization>() {
       @Override
@@ -386,6 +409,7 @@ public class DocumentQueryCustomizationFactory {
    * @param fragmentsField The field in query results item to put highlightings into.
    * @return
    */
+  @Override
   public DocumentQueryCustomizationFactory highlight(final String fieldName, final int fragmentLength, final int fragmentCount, final String fragmentsField) {
     return new DocumentQueryCustomizationFactory(actions, new Action1<IDocumentQueryCustomization>() {
       @Override
@@ -406,6 +430,7 @@ public class DocumentQueryCustomizationFactory {
    * @param highlightings Field highlightings for all results.
    * @return
    */
+  @Override
   public DocumentQueryCustomizationFactory highlight(final String fieldName, final int fragmentLength, final int fragmentCount, final Reference<FieldHighlightings> highlightings) {
     return new DocumentQueryCustomizationFactory(actions, new Action1<IDocumentQueryCustomization>() {
       @Override
@@ -421,6 +446,7 @@ public class DocumentQueryCustomizationFactory {
    * @param postTag Postfix tag.
    * @return
    */
+  @Override
   public DocumentQueryCustomizationFactory setHighlighterTags(final String preTag, final String postTag) {
     return new DocumentQueryCustomizationFactory(actions, new Action1<IDocumentQueryCustomization>() {
       @Override
@@ -436,6 +462,7 @@ public class DocumentQueryCustomizationFactory {
    * @param postTags Postfix tags.
    * @return
    */
+  @Override
   public DocumentQueryCustomizationFactory setHighlighterTags(final String[] preTags, final String[] postTags) {
     return new DocumentQueryCustomizationFactory(actions, new Action1<IDocumentQueryCustomization>() {
       @Override
@@ -450,6 +477,7 @@ public class DocumentQueryCustomizationFactory {
    * Usage of this option will prevent holding query results in memory.
    * @return
    */
+  @Override
   public DocumentQueryCustomizationFactory noTracking() {
     return new DocumentQueryCustomizationFactory(actions, new Action1<IDocumentQueryCustomization>() {
       @Override
@@ -463,6 +491,7 @@ public class DocumentQueryCustomizationFactory {
    * Disables caching for query results.
    * @return
    */
+  @Override
   public DocumentQueryCustomizationFactory noCaching() {
     return new DocumentQueryCustomizationFactory(actions, new Action1<IDocumentQueryCustomization>() {
       @Override
@@ -483,6 +512,26 @@ public class DocumentQueryCustomizationFactory {
     mergedFactory.actions.addAll(firstCustomize.actions);
     mergedFactory.actions.addAll(secondCustomize.actions);
     return mergedFactory;
+  }
+
+  @Override
+  public DocumentQueryCustomizationFactory setAllowMultipleIndexEntriesForSameDocumentToResultTransformer(final boolean val) {
+    return new DocumentQueryCustomizationFactory(actions, new Action1<IDocumentQueryCustomization>() {
+      @Override
+      public void apply(IDocumentQueryCustomization documentQuery) {
+        documentQuery.setAllowMultipleIndexEntriesForSameDocumentToResultTransformer(val);
+      }
+    });
+  }
+
+  @Override
+  public DocumentQueryCustomizationFactory showTimings() {
+    return new DocumentQueryCustomizationFactory(actions, new Action1<IDocumentQueryCustomization>() {
+      @Override
+      public void apply(IDocumentQueryCustomization documentQuery) {
+        documentQuery.showTimings();
+      }
+    });
   }
 
 

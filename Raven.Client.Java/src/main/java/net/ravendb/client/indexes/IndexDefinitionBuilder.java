@@ -246,6 +246,4 @@ public class IndexDefinitionBuilder {
     return indexDefinition;
   }
 
-
-
 }

@@ -968,6 +968,50 @@ public class DocumentSession extends InMemoryDocumentSessionOperations implement
 
   @Override
   public <TResult, TTransformer extends AbstractTransformerCreationTask> TResult[] loadStartingWith(Class<TResult> clazz, Class<TTransformer> transformerClass,
+    String keyPrefix) {
+    return loadStartingWith(clazz, transformerClass, keyPrefix, null, 0, 25, null, null, null, null);
+  }
+
+  @Override
+  public <TResult, TTransformer extends AbstractTransformerCreationTask> TResult[] loadStartingWith(Class<TResult> clazz, Class<TTransformer> transformerClass,
+    String keyPrefix, String matches) {
+    return loadStartingWith(clazz, transformerClass, keyPrefix, matches, 0, 25, null, null, null, null);
+  }
+
+  @Override
+  public <TResult, TTransformer extends AbstractTransformerCreationTask> TResult[] loadStartingWith(Class<TResult> clazz, Class<TTransformer> transformerClass,
+    String keyPrefix, String matches, int start) {
+    return loadStartingWith(clazz, transformerClass, keyPrefix, matches, start, 25, null, null, null, null);
+  }
+
+  @Override
+  public <TResult, TTransformer extends AbstractTransformerCreationTask> TResult[] loadStartingWith(Class<TResult> clazz, Class<TTransformer> transformerClass,
+    String keyPrefix, String matches, int start, int pageSize) {
+    return loadStartingWith(clazz, transformerClass, keyPrefix, matches, start, pageSize, null, null, null, null);
+  }
+
+  @Override
+  public <TResult, TTransformer extends AbstractTransformerCreationTask> TResult[] loadStartingWith(Class<TResult> clazz, Class<TTransformer> transformerClass,
+    String keyPrefix, String matches, int start, int pageSize, String exclude) {
+    return loadStartingWith(clazz, transformerClass, keyPrefix, matches, start, pageSize, exclude, null, null, null);
+  }
+
+  @Override
+  public <TResult, TTransformer extends AbstractTransformerCreationTask> TResult[] loadStartingWith(Class<TResult> clazz, Class<TTransformer> transformerClass,
+    String keyPrefix, String matches, int start, int pageSize, String exclude,
+    RavenPagingInformation pagingInformation) {
+    return loadStartingWith(clazz, transformerClass, keyPrefix, matches, start, pageSize, exclude, pagingInformation, null, null);
+  }
+
+  @Override
+  public <TResult, TTransformer extends AbstractTransformerCreationTask> TResult[] loadStartingWith(Class<TResult> clazz, Class<TTransformer> transformerClass,
+    String keyPrefix, String matches, int start, int pageSize, String exclude,
+    RavenPagingInformation pagingInformation, Action1<ILoadConfiguration> configure) {
+    return loadStartingWith(clazz, transformerClass, keyPrefix, matches, start, pageSize, exclude, pagingInformation, configure, null);
+  }
+
+  @Override
+  public <TResult, TTransformer extends AbstractTransformerCreationTask> TResult[] loadStartingWith(Class<TResult> clazz, Class<TTransformer> transformerClass,
     String keyPrefix, String matches, int start, int pageSize, String exclude,
     RavenPagingInformation pagingInformation, Action1<ILoadConfiguration> configure, String skipAfter) {
 

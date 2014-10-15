@@ -89,6 +89,7 @@ public abstract class DocumentStoreBase implements IDocumentStore {
     this.wasDisposed = wasDisposed;
   }
 
+  @Override
   public abstract boolean hasJsonRequestFactory();
 
   @Override
