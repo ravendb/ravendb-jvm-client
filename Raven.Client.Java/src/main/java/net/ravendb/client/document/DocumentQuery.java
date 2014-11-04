@@ -34,6 +34,8 @@ import org.apache.commons.lang.StringUtils;
 
 
 
+
+import com.mysema.query.types.Expression;
 import com.mysema.query.types.Path;
 import com.mysema.query.types.path.ListPath;
 
@@ -252,74 +254,74 @@ public class DocumentQuery<T> extends AbstractDocumentQuery<T, DocumentQuery<T>>
   }
 
   @Override
-  public <TValue> IDocumentQuery<T> whereEquals(Path< ? super TValue > propertySelector, TValue value) {
+  public <TValue> IDocumentQuery<T> whereEquals(Expression< ? super TValue > propertySelector, TValue value) {
     whereEquals(getMemberQueryPath(propertySelector), value);
     return this;
   }
 
   @Override
-  public <TValue> IDocumentQuery<T> whereEquals(Path< ? super TValue > propertySelector, TValue value, boolean isAnalyzed) {
+  public <TValue> IDocumentQuery<T> whereEquals(Expression< ? super TValue > propertySelector, TValue value, boolean isAnalyzed) {
     whereEquals(getMemberQueryPath(propertySelector), value, isAnalyzed);
     return this;
   }
 
   @Override
-  public <TValue> IDocumentQuery<T> whereIn(Path< ?  super TValue> propertySelector, Collection<TValue> values) {
+  public <TValue> IDocumentQuery<T> whereIn(Expression< ?  super TValue> propertySelector, Collection<TValue> values) {
     whereIn(getMemberQueryPath(propertySelector), new ArrayList<Object>(values));
     return this;
   }
 
   @Override
-  public <TValue> IDocumentQuery<T> whereStartsWith(Path< ? super TValue > propertySelector, TValue value) {
+  public <TValue> IDocumentQuery<T> whereStartsWith(Expression< ? super TValue > propertySelector, TValue value) {
     whereStartsWith(getMemberQueryPath(propertySelector), value);
     return this;
   }
 
   @Override
-  public <TValue> IDocumentQuery<T> whereEndsWith(Path< ? super TValue > propertySelector, TValue value) {
+  public <TValue> IDocumentQuery<T> whereEndsWith(Expression< ? super TValue > propertySelector, TValue value) {
     whereEndsWith(getMemberQueryPath(propertySelector), value);
     return this;
   }
 
   @Override
-  public <TValue> IDocumentQuery<T> whereBetween(Path< ?  super TValue> propertySelector, TValue start, TValue end) {
+  public <TValue> IDocumentQuery<T> whereBetween(Expression< ?  super TValue> propertySelector, TValue start, TValue end) {
     whereBetween(getMemberQueryPath(propertySelector), start, end);
     return this;
   }
 
   @Override
-  public <TValue> IDocumentQuery<T> whereBetweenOrEqual(Path< ? super TValue > propertySelector, TValue start, TValue end) {
+  public <TValue> IDocumentQuery<T> whereBetweenOrEqual(Expression< ? super TValue > propertySelector, TValue start, TValue end) {
     whereBetweenOrEqual(getMemberQueryPath(propertySelector), start, end);
     return this;
   }
 
   @Override
-  public <TValue> IDocumentQuery<T> whereGreaterThan(Path< ? super TValue > propertySelector, TValue value) {
+  public <TValue> IDocumentQuery<T> whereGreaterThan(Expression< ? super TValue > propertySelector, TValue value) {
     whereGreaterThan(getMemberQueryPath(propertySelector), value);
     return this;
   }
 
   @Override
-  public <TValue> IDocumentQuery<T> whereGreaterThanOrEqual(Path< ? super TValue > propertySelector, TValue value) {
+  public <TValue> IDocumentQuery<T> whereGreaterThanOrEqual(Expression< ? super TValue > propertySelector, TValue value) {
     whereGreaterThanOrEqual(getMemberQueryPath(propertySelector), value);
     return this;
   }
 
   @Override
-  public <TValue> IDocumentQuery<T> whereLessThan(Path< ?  super TValue> propertySelector, TValue value) {
+  public <TValue> IDocumentQuery<T> whereLessThan(Expression< ?  super TValue> propertySelector, TValue value) {
     whereLessThan(getMemberQueryPath(propertySelector), value);
     return this;
   }
 
   @Override
-  public <TValue> IDocumentQuery<T> whereLessThanOrEqual(Path< ? super TValue > propertySelector, TValue value) {
+  public <TValue> IDocumentQuery<T> whereLessThanOrEqual(Expression< ? super TValue > propertySelector, TValue value) {
     whereLessThanOrEqual(getMemberQueryPath(propertySelector), value);
     return this;
   }
 
 
   @Override
-  public <TValue> IDocumentQuery<T> orderBy(Path< ? >... propertySelectors) {
+  public <TValue> IDocumentQuery<T> orderBy(Expression< ? >... propertySelectors) {
     String[] orderByfields = getMemberQueryPathsForOrderBy(propertySelectors);
     orderBy(orderByfields);
     for (int index = 0; index < orderByfields.length; index++) {
@@ -330,13 +332,13 @@ public class DocumentQuery<T> extends AbstractDocumentQuery<T, DocumentQuery<T>>
   }
 
   @Override
-  public <TValue> IDocumentQuery<T> orderByDescending(Path< ? >... propertySelectors) {
+  public <TValue> IDocumentQuery<T> orderByDescending(Expression< ? >... propertySelectors) {
     orderByDescending(getMemberQueryPathsForOrderBy(propertySelectors));
     return this;
   }
 
   @Override
-  public <TValue> IDocumentQuery<T> highlight(Path< ? > propertySelector, int fragmentLength, int fragmentCount, ListPath< ? , ? > fragmentsPropertySelector) {
+  public <TValue> IDocumentQuery<T> highlight(Expression< ? > propertySelector, int fragmentLength, int fragmentCount, ListPath< ? , ? > fragmentsPropertySelector) {
     String fieldName = getMemberQueryPath(propertySelector);
     String fragmentsField = getMemberQueryPath(fragmentsPropertySelector);
     highlight(fieldName, fragmentLength, fragmentCount, fragmentsField);
@@ -344,24 +346,24 @@ public class DocumentQuery<T> extends AbstractDocumentQuery<T, DocumentQuery<T>>
   }
 
   @Override
-  public <TValue> IDocumentQuery<T> highlight(Path< ? > propertySelector, int fragmentLength, int fragmentCount, Reference<FieldHighlightings> highlightings) {
+  public <TValue> IDocumentQuery<T> highlight(Expression< ? > propertySelector, int fragmentLength, int fragmentCount, Reference<FieldHighlightings> highlightings) {
     highlight(getMemberQueryPath(propertySelector), fragmentLength, fragmentCount, highlightings);
     return this;
   }
 
   @Override
-  public <TValue> IDocumentQuery<T> addOrder(Path< ? > propertySelector, boolean descending) {
+  public <TValue> IDocumentQuery<T> addOrder(Expression< ? > propertySelector, boolean descending) {
     addOrder(getMemberQueryPath(propertySelector), descending);
     return this;
   }
 
   @Override
-  public <TValue> IDocumentQuery<T> search(Path< ? > propertySelector, String searchTerms) {
+  public <TValue> IDocumentQuery<T> search(Expression< ? > propertySelector, String searchTerms) {
     return search(propertySelector, searchTerms, EscapeQueryOptions.RAW_QUERY);
   }
 
   @Override
-  public <TValue> IDocumentQuery<T> search(Path< ? > propertySelector, String searchTerms, EscapeQueryOptions escapeQueryOptions) {
+  public <TValue> IDocumentQuery<T> search(Expression< ? > propertySelector, String searchTerms, EscapeQueryOptions escapeQueryOptions) {
     search(getMemberQueryPath(propertySelector), searchTerms, escapeQueryOptions);
     return this;
   }
@@ -370,7 +372,7 @@ public class DocumentQuery<T> extends AbstractDocumentQuery<T, DocumentQuery<T>>
    * Performs a query matching ANY of the provided values against the given field (OR)
    */
   @Override
-  public IDocumentQuery<T> containsAny(Path< ? > propertySelector, Collection<Object> values) {
+  public IDocumentQuery<T> containsAny(Expression< ? > propertySelector, Collection<Object> values) {
     containsAny(getMemberQueryPath(propertySelector), values);
     return this;
   }
@@ -379,7 +381,7 @@ public class DocumentQuery<T> extends AbstractDocumentQuery<T, DocumentQuery<T>>
    * Performs a query matching ALL of the provided values against the given field (AND)
    */
   @Override
-  public IDocumentQuery<T> containsAll(Path< ? > propertySelector, Collection<Object> values) {
+  public IDocumentQuery<T> containsAll(Expression< ? > propertySelector, Collection<Object> values) {
     containsAll(getMemberQueryPath(propertySelector), values);
     return this;
   }

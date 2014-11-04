@@ -23,14 +23,14 @@ import org.junit.Test;
 
 public class ArrayLengthQueryTest extends RemoteClientTest {
 
-  private User generateUser(String name, String... tags) {
+  private static User generateUser(String name, String... tags) {
     User user = new User();
     user.setName(name);
     user.setTags(tags);
     return user;
   }
 
-  private Post generatePost(String commentPrefix, int comments) {
+  private static Post generatePost(String commentPrefix, int comments) {
     Post post = new Post();
     List<Comment> commentsList = new ArrayList<>();
     for (int i = 0; i < comments; i++) {
@@ -77,6 +77,16 @@ public class ArrayLengthQueryTest extends RemoteClientTest {
           .customize(new DocumentQueryCustomizationFactory().waitForNonStaleResults());
         List<Post> comments = query.toList();
         assertEquals("Comments.Count:5", query.toString());
+        assertEquals(1, comments.size());
+      }
+
+      try (IDocumentSession session = store.openSession()) {
+        QPatchingTest_Post x = QPatchingTest_Post.post;
+
+        List<Post> comments = session.advanced().documentQuery(Post.class)
+          .whereEquals(x.comments.size(), 5)
+          .waitForNonStaleResults()
+          .toList();
         assertEquals(1, comments.size());
       }
     }

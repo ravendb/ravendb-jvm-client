@@ -62,6 +62,7 @@ import org.apache.commons.lang.time.DateUtils;
 import org.junit.Test;
 
 
+@SuppressWarnings("deprecation")
 public class DocumentStoreServerTest extends RemoteClientTest {
 
   @Test

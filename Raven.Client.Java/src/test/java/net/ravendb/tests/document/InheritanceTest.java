@@ -85,6 +85,7 @@ public class InheritanceTest extends RemoteClientTest {
 
     @Override
     public void start() {
+      // empty
     }
   }
 

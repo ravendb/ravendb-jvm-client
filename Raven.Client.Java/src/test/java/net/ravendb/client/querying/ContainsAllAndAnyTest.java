@@ -18,8 +18,43 @@ import org.junit.Test;
 
 
 public class ContainsAllAndAnyTest extends RemoteClientTest {
+
   @Test
-  public void shouldQueryWithContainsAny() throws Exception {
+  public void shouldQueryWithContainsAnyArray() throws Exception {
+
+    try (IDocumentStore store = new DocumentStore(getDefaultUrl(), getDefaultDb()).initialize()) {
+
+      Developer developer1 = new Developer();
+      developer1.setNick("ayende");
+      developer1.setArraySkills(new Skill[] {new Skill(".NET"), new Skill("PowerShell")});
+
+      Developer developer2 = new Developer();
+      developer2.setNick("marcin");
+      developer2.setArraySkills(new Skill[] { new Skill(".NET"), new Skill("Java") });
+
+      QDeveloper d = QDeveloper.developer;
+
+      try (IDocumentSession s = store.openSession()) {
+        s.store(developer1);
+        s.store(developer2);
+        s.saveChanges();
+        List<Developer> ret = s.query(Developer.class).where(d.arraySkills.containsAny(Arrays.asList(new Skill("Python"),new Skill(".NET"))))
+          .customize(new DocumentQueryCustomizationFactory().waitForNonStaleResults(5 * 60 * 1000))
+          .toList();
+
+        assertEquals(2, ret.size());
+
+        ret = s.query(Developer.class).where(d.arraySkills.containsAny(Arrays.asList(new Skill("Python"),new Skill("Java"))))
+          .customize(new DocumentQueryCustomizationFactory().waitForNonStaleResults(5 * 60 * 1000))
+          .toList();
+
+        assertEquals(1, ret.size());
+      }
+    }
+  }
+
+  @Test
+  public void shouldQueryWithContainsAnyList() throws Exception {
 
     try (IDocumentStore store = new DocumentStore(getDefaultUrl(), getDefaultDb()).initialize()) {
 
@@ -53,7 +88,41 @@ public class ContainsAllAndAnyTest extends RemoteClientTest {
   }
 
   @Test
-  public void shouldQueryWithContainsAll() throws Exception {
+  public void shouldQueryWithContainsAllArray() throws Exception {
+
+    try (IDocumentStore store = new DocumentStore(getDefaultUrl(), getDefaultDb()).initialize()) {
+
+      Developer developer1 = new Developer();
+      developer1.setNick("ayende");
+      developer1.setArraySkills(new Skill[] {new Skill(".NET"), new Skill("PowerShell"), new Skill("RavenDB")});
+
+      Developer developer2 = new Developer();
+      developer2.setNick("marcin");
+      developer2.setArraySkills(new Skill[] { new Skill(".NET"), new Skill("Java") });
+
+      QDeveloper d = QDeveloper.developer;
+
+      try (IDocumentSession s = store.openSession()) {
+        s.store(developer1);
+        s.store(developer2);
+        s.saveChanges();
+        List<Developer> ret = s.query(Developer.class).where(d.arraySkills.containsAll(Arrays.asList(new Skill(".NET"), new Skill("RavenDB"))))
+          .customize(new DocumentQueryCustomizationFactory().waitForNonStaleResults(5 * 60 * 1000))
+          .toList();
+
+        assertEquals(1, ret.size());
+
+        ret = s.query(Developer.class).where(d.arraySkills.containsAll(Arrays.asList(new Skill("Java"))))
+          .customize(new DocumentQueryCustomizationFactory().waitForNonStaleResults(5 * 60 * 1000))
+          .toList();
+
+        assertEquals(1, ret.size());
+      }
+    }
+  }
+
+  @Test
+  public void shouldQueryWithContainsAllList() throws Exception {
 
     try (IDocumentStore store = new DocumentStore(getDefaultUrl(), getDefaultDb()).initialize()) {
 

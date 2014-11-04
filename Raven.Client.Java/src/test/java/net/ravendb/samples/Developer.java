@@ -9,7 +9,15 @@ public class Developer {
   private String nick;
   private Skill mainSkill;
   private List<Skill> skills;
+  private Skill[] arraySkills;
 
+  public Skill[] getArraySkills() {
+    return arraySkills;
+  }
+
+  public void setArraySkills(Skill[] arraySkills) {
+    this.arraySkills = arraySkills;
+  }
   public Skill getMainSkill() {
     return mainSkill;
   }

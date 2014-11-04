@@ -13,6 +13,7 @@ import net.ravendb.abstractions.indexing.SpatialOptions.SpatialRelation;
 import net.ravendb.abstractions.indexing.SpatialOptions.SpatialUnits;
 import net.ravendb.client.document.DocumentConvention;
 
+import com.mysema.query.types.Expression;
 import com.mysema.query.types.Path;
 import com.mysema.query.types.path.ListPath;
 
@@ -113,7 +114,7 @@ public interface IDocumentQueryBase<T, TSelf extends IDocumentQueryBase<T, TSelf
    * @param value
    * @return
    */
-  public <TValue> TSelf whereEquals(Path<? super TValue> propertySelector, TValue value);
+  public <TValue> TSelf whereEquals(Expression<? super TValue> propertySelector, TValue value);
 
   /**
    * Matches exact value
@@ -135,7 +136,7 @@ public interface IDocumentQueryBase<T, TSelf extends IDocumentQueryBase<T, TSelf
    * @param isAnalyzed
    * @return
    */
-  public <TValue> TSelf whereEquals(Path<? super TValue> propertySelector, TValue value, boolean isAnalyzed);
+  public <TValue> TSelf whereEquals(Expression<? super TValue> propertySelector, TValue value, boolean isAnalyzed);
 
   /**
    * Matches exact value
@@ -158,7 +159,7 @@ public interface IDocumentQueryBase<T, TSelf extends IDocumentQueryBase<T, TSelf
    * @param values
    * @return
    */
-  public <TValue> TSelf whereIn(Path<? super TValue> propertySelector, Collection<TValue> values);
+  public <TValue> TSelf whereIn(Expression<? super TValue> propertySelector, Collection<TValue> values);
 
   /**
    * Matches fields which starts with the specified value.
@@ -174,7 +175,7 @@ public interface IDocumentQueryBase<T, TSelf extends IDocumentQueryBase<T, TSelf
    * @param value The value.
    * @return
    */
-  public <TValue> TSelf whereStartsWith(Path<? super TValue> propertySelector, TValue value);
+  public <TValue> TSelf whereStartsWith(Expression<? super TValue> propertySelector, TValue value);
 
   /**
    * Matches fields which ends with the specified value.
@@ -190,7 +191,7 @@ public interface IDocumentQueryBase<T, TSelf extends IDocumentQueryBase<T, TSelf
    * @param value The value.
    * @return
    */
-  public <TValue> TSelf whereEndsWith(Path<? super TValue> propertySelector, TValue value);
+  public <TValue> TSelf whereEndsWith(Expression<? super TValue> propertySelector, TValue value);
 
   /**
    * Matches fields where the value is between the specified start and end, exclusive
@@ -208,7 +209,7 @@ public interface IDocumentQueryBase<T, TSelf extends IDocumentQueryBase<T, TSelf
    * @param end The end.
    * @return
    */
-  public <TValue> TSelf whereBetween(Path<? super TValue> propertySelector, TValue start, TValue end);
+  public <TValue> TSelf whereBetween(Expression<? super TValue> propertySelector, TValue start, TValue end);
 
   /**
    * Matches fields where the value is between the specified start and end, inclusive
@@ -226,7 +227,7 @@ public interface IDocumentQueryBase<T, TSelf extends IDocumentQueryBase<T, TSelf
    * @param end The end.
    * @return
    */
-  public <TValue> TSelf whereBetweenOrEqual(Path<? super TValue> propertySelector, TValue start, TValue end);
+  public <TValue> TSelf whereBetweenOrEqual(Expression<? super TValue> propertySelector, TValue start, TValue end);
 
   /**
    * Matches fields where the value is greater than the specified value
@@ -242,7 +243,7 @@ public interface IDocumentQueryBase<T, TSelf extends IDocumentQueryBase<T, TSelf
    * @param value The value.
    * @return
    */
-  public <TValue> TSelf whereGreaterThan(Path<? super TValue> propertySelector, TValue value);
+  public <TValue> TSelf whereGreaterThan(Expression<? super TValue> propertySelector, TValue value);
 
   /**
    * Matches fields where the value is greater than or equal to the specified value
@@ -258,7 +259,7 @@ public interface IDocumentQueryBase<T, TSelf extends IDocumentQueryBase<T, TSelf
    * @param value The value.
    * @return
    */
-  public <TValue> TSelf whereGreaterThanOrEqual(Path<? super TValue> propertySelector, TValue value);
+  public <TValue> TSelf whereGreaterThanOrEqual(Expression<? super TValue> propertySelector, TValue value);
 
   /**
    * Matches fields where the value is less than the specified value
@@ -274,7 +275,7 @@ public interface IDocumentQueryBase<T, TSelf extends IDocumentQueryBase<T, TSelf
    * @param value The value.
    * @return
    */
-  public <TValue> TSelf whereLessThan(Path<? super TValue> propertySelector, TValue value);
+  public <TValue> TSelf whereLessThan(Expression<? super TValue> propertySelector, TValue value);
 
   /**
    * Matches fields where the value is less than or equal to the specified value
@@ -290,7 +291,7 @@ public interface IDocumentQueryBase<T, TSelf extends IDocumentQueryBase<T, TSelf
    * @param value The value.
    * @return
    */
-  public <TValue> TSelf whereLessThanOrEqual(Path<? super TValue> propertySelector, TValue value);
+  public <TValue> TSelf whereLessThanOrEqual(Expression<? super TValue> propertySelector, TValue value);
 
   /**
    * Add an AND to the query
@@ -416,7 +417,7 @@ public interface IDocumentQueryBase<T, TSelf extends IDocumentQueryBase<T, TSelf
    * @param propertySelectors Property selector for the fields.
    * @return
    */
-  public <TValue> TSelf orderBy(Path<?>... propertySelectors);
+  public <TValue> TSelf orderBy(Expression<?>... propertySelectors);
 
   /**
    * Order the results by the specified fields
@@ -434,7 +435,7 @@ public interface IDocumentQueryBase<T, TSelf extends IDocumentQueryBase<T, TSelf
    * @param propertySelectors Property selectors for the fields.
    * @return
    */
-  public <TValue> TSelf orderByDescending(Path<?>... propertySelectors);
+  public <TValue> TSelf orderByDescending(Expression<?>... propertySelectors);
 
   /**
    * Adds matches highlighting for the specified field.
@@ -473,7 +474,7 @@ public interface IDocumentQueryBase<T, TSelf extends IDocumentQueryBase<T, TSelf
    * @param fragmentsPropertySelector The property to put highlightings into.
    * @return
    */
-  public <TValue> TSelf highlight( Path<?> propertySelector, int fragmentLength, int fragmentCount, ListPath<?, ?> fragmentsPropertySelector);
+  public <TValue> TSelf highlight(Expression<?> propertySelector, int fragmentLength, int fragmentCount, ListPath<?, ?> fragmentsPropertySelector);
 
   /**
    * Adds matches highlighting for the specified field.
@@ -486,7 +487,7 @@ public interface IDocumentQueryBase<T, TSelf extends IDocumentQueryBase<T, TSelf
    * @param highlightings
    * @return
    */
-  public <TValue> TSelf highlight(Path<?> propertySelector, int fragmentLength, int fragmentCount, Reference<FieldHighlightings> highlightings);
+  public <TValue> TSelf highlight(Expression<?> propertySelector, int fragmentLength, int fragmentCount, Reference<FieldHighlightings> highlightings);
 
   /**
    * Sets the tags to highlight matches with.
@@ -618,7 +619,7 @@ public interface IDocumentQueryBase<T, TSelf extends IDocumentQueryBase<T, TSelf
    * @param descending If set to true [descending]
    * @return
    */
-  public <TValue> TSelf addOrder(Path<?> propertySelector, boolean descending);
+  public <TValue> TSelf addOrder(Expression<?> propertySelector, boolean descending);
 
   /**
    * Adds an ordering for a specific field to the query and specifies the type of field for sorting purposes
@@ -666,7 +667,7 @@ public interface IDocumentQueryBase<T, TSelf extends IDocumentQueryBase<T, TSelf
    * @param searchTerms
    * @return
    */
-  public <TValue> TSelf search(Path<?> propertySelector, String searchTerms);
+  public <TValue> TSelf search(Expression<?> propertySelector, String searchTerms);
 
   /**
    * Perform a search for documents which fields that match the searchTerms.
@@ -675,7 +676,7 @@ public interface IDocumentQueryBase<T, TSelf extends IDocumentQueryBase<T, TSelf
    * @param searchTerms
    * @return
    */
-  public <TValue> TSelf search(Path<?> propertySelector, String searchTerms, EscapeQueryOptions escapeQueryOptions);
+  public <TValue> TSelf search(Expression<?> propertySelector, String searchTerms, EscapeQueryOptions escapeQueryOptions);
 
   /**
    * Partition the query so we can intersect different parts of the query
@@ -692,7 +693,7 @@ public interface IDocumentQueryBase<T, TSelf extends IDocumentQueryBase<T, TSelf
   /**
    * Performs a query matching ANY of the provided values against the given field (OR)
    */
-  public TSelf containsAny(Path<?> propertySelector, Collection<Object> values);
+  public TSelf containsAny(Expression<?> propertySelector, Collection<Object> values);
 
   /**
    * Performs a query matching ALL of the provided values against the given field (AND)
@@ -702,7 +703,7 @@ public interface IDocumentQueryBase<T, TSelf extends IDocumentQueryBase<T, TSelf
   /**
    * Performs a query matching ALL of the provided values against the given field (AND)
    */
-  public TSelf containsAll(Path<?> propertySelector, Collection<Object> values);
+  public TSelf containsAll(Expression<?> propertySelector, Collection<Object> values);
 
   /**
    * Callback to get the results of the query
