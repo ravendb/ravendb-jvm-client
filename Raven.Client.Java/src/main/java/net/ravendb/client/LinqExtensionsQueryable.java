@@ -233,6 +233,10 @@ public interface LinqExtensionsQueryable<T> {
 
   public IRavenQueryable<T> search(Path<?> fieldSelector, String searchTerms, double boost, SearchOptionsSet searchOptions, EscapeQueryOptions escapeQueryOptions);
 
+  public IRavenQueryable<T> search(Path<?> fieldSelector, String searchTerms, EscapeQueryOptions escapeQueryOptions);
+
+  public IRavenQueryable<T> search(Path<?> fieldSelector, String searchTerms, SearchOptionsSet searchOptions);
+
   public IRavenQueryable<T> orderByScore();
 
   public Lazy<Integer> countLazily();

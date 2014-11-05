@@ -456,6 +456,16 @@ public class RavenQueryInspector<T> implements IRavenQueryable<T>, IRavenQueryIn
   }
 
   @Override
+  public IRavenQueryable<T> search(Path< ? > fieldSelector, String searchTerms, SearchOptionsSet searchOptions) {
+    return search(fieldSelector, searchTerms, 1.0, searchOptions, EscapeQueryOptions.ESCAPE_ALL);
+  }
+
+  @Override
+  public IRavenQueryable<T> search(Path< ? > fieldSelector, String searchTerms, EscapeQueryOptions escapeQueryOptions) {
+    return search(fieldSelector, searchTerms, 1.0, new SearchOptionsSet(SearchOptions.GUESS), escapeQueryOptions);
+  }
+
+  @Override
   public IRavenQueryable<T> search(Path< ? > fieldSelector, String searchTerms, double boost, SearchOptionsSet options, EscapeQueryOptions escapeQueryOptions) {
     // we use constant null to preserve arguments indexes
     return provider.createQuery(Expressions.operation(Object.class, LinqOps.Query.SEARCH, getExpression(), fieldSelector,
