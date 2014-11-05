@@ -10,6 +10,7 @@ import com.mysema.query.types.PathMetadata;
 import com.mysema.query.types.expr.BooleanExpression;
 import com.mysema.query.types.expr.BooleanOperation;
 import com.mysema.query.types.path.ArrayPath;
+import com.mysema.query.types.path.SimplePath;
 
 
 public class RavenArray<E> extends ArrayPath<E> {
@@ -36,6 +37,15 @@ public class RavenArray<E> extends ArrayPath<E> {
 
   public BooleanExpression any(BooleanExpression boolExpr) {
     return BooleanOperation.create(LinqOps.Query.ANY, mixin, boolExpr);
+  }
+
+  /**
+   * Use can't use select on arrays. Use List instead.
+   * @return
+   */
+  @Deprecated
+  public SimplePath<E> select() {
+    throw new IllegalStateException("Use can't use select on arrays. Use List instead.");
   }
 
 
