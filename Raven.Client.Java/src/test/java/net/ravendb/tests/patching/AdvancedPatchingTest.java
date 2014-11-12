@@ -95,7 +95,7 @@ public class AdvancedPatchingTest extends RemoteClientTest {
         session.saveChanges();
       }
       ScriptedPatchRequest patchRequest = new ScriptedPatchRequest();
-      patchRequest.setScript("this.Owner = this['@metadata']['Raven-Clr-Type']; this['@metadata']['Raven-Entity-Name'] = 'New-Entity'; ");
+      patchRequest.setScript("this.Owner = this['@metadata']['Raven-Java-Class']; this['@metadata']['Raven-Entity-Name'] = 'New-Entity'; ");
       store.getDatabaseCommands().patch("CustomTypes/1", patchRequest);
 
       JsonDocument resultDoc = store.getDatabaseCommands().get("CustomTypes/1");
@@ -103,7 +103,7 @@ public class AdvancedPatchingTest extends RemoteClientTest {
       CustomType result = JsonExtensions.createDefaultJsonSerializer().readValue(resultJson.toString(), CustomType.class);
       RavenJObject metadata = resultDoc.getMetadata();
 
-      assertEquals(metadata.get("Raven-Clr-Type").toString(), result.getOwner());
+      assertEquals(metadata.get("Raven-Java-Class").toString(), result.getOwner());
       assertEquals("New-Entity", metadata.get("Raven-Entity-Name").toString());
     }
   }

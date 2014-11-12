@@ -22,8 +22,8 @@ import net.ravendb.client.converters.ITypeConverter;
 import net.ravendb.client.converters.Int32Converter;
 import net.ravendb.client.converters.Int64Converter;
 import net.ravendb.client.converters.UUIDConverter;
-import net.ravendb.client.delegates.ClrTypeFinder;
-import net.ravendb.client.delegates.ClrTypeNameFinder;
+import net.ravendb.client.delegates.JavaClassFinder;
+import net.ravendb.client.delegates.JavaClassNameFinder;
 import net.ravendb.client.delegates.DocumentKeyFinder;
 import net.ravendb.client.delegates.IdConvention;
 import net.ravendb.client.delegates.IdValuePartFinder;
@@ -69,9 +69,9 @@ public class DocumentConvention extends Convention implements Serializable {
 
   private static Map<Class<?>, String> CACHED_DEFAULT_TYPE_TAG_NAMES = new HashMap<>();
 
-  private ClrTypeFinder findClrType;
+  private JavaClassFinder findJavaClass;
 
-  private ClrTypeNameFinder findClrTypeName;
+  private JavaClassNameFinder findJavaClassName;
 
   private DocumentKeyFinder findFullDocumentKeyFromNonStringIdentifier;
 
@@ -126,14 +126,14 @@ public class DocumentConvention extends Convention implements Serializable {
         return input.getName().equals("id");
       }
     });
-    setFindClrType(new ClrTypeFinder() {
+    setFindJavaClass(new JavaClassFinder() {
 
       @Override
       public String find(String id, RavenJObject doc, RavenJObject metadata) {
-        return metadata.value(String.class, Constants.RAVEN_CLR_TYPE);
+        return metadata.value(String.class, Constants.RAVEN_JAVA_CLASS);
       }
     });
-    setFindClrTypeName(new ClrTypeNameFinder() {
+    setFindJavaClassName(new JavaClassNameFinder() {
       @Override
       public String find(Class< ? > entityType) {
         return ReflectionUtil.getFullNameWithoutVersionInformation(entityType);
@@ -435,35 +435,35 @@ public class DocumentConvention extends Convention implements Serializable {
   }
 
   /**
-   *  Gets the function to find the clr type of a document.
+   *  Gets the function to find the java class of a document.
    * @return
    */
-  public ClrTypeFinder getFindClrType() {
-    return findClrType;
+  public JavaClassFinder getFindJavaClass() {
+    return findJavaClass;
   }
 
   /**
-   *  Sets the function to find the clr type of a document.
-   * @param findClrType
+   *  Sets the function to find the java class of a document.
+   * @param findJavaClass
    */
-  public void setFindClrType(ClrTypeFinder findClrType) {
-    this.findClrType = findClrType;
+  public void setFindJavaClass(JavaClassFinder findJavaClass) {
+    this.findJavaClass = findJavaClass;
   }
 
   /**
-   *  Gets the function to find the clr type name from a clr type
+   *  Gets the function to find the java class name from a java class
    * @return
    */
-  public ClrTypeNameFinder getFindClrTypeName() {
-    return findClrTypeName;
+  public JavaClassNameFinder getFindJavaClassName() {
+    return findJavaClassName;
   }
 
   /**
-   *  Sets the function to find the clr type name from a clr type
-   * @param findClrTypeName
+   *  Sets the function to find the java class name from a java class
+   * @param find JavaClassName
    */
-  public void setFindClrTypeName(ClrTypeNameFinder findClrTypeName) {
-    this.findClrTypeName = findClrTypeName;
+  public void setFindJavaClassName(JavaClassNameFinder findJavaClassName) {
+    this.findJavaClassName = findJavaClassName;
   }
 
   /**
@@ -653,14 +653,14 @@ public class DocumentConvention extends Convention implements Serializable {
   }
 
   /**
-   * Get the CLR type (if exists) from the document
+   * Get the java class (if exists) from the document
    * @param id
    * @param document
    * @param metadata
    * @return
    */
-  public String getClrType(String id, RavenJObject document, RavenJObject metadata) {
-    return findClrType.find(id, document, metadata);
+  public String getJavaClass(String id, RavenJObject document, RavenJObject metadata) {
+    return findJavaClass.find(id, document, metadata);
   }
 
   /**
@@ -702,10 +702,10 @@ public class DocumentConvention extends Convention implements Serializable {
   }
 
   /**
-   * Get the CLR type name to be stored in the entity metadata
+   * Get the java class name to be stored in the entity metadata
    */
-  public String getClrTypeName(Class<?> entityType) {
-    return findClrTypeName.find(entityType);
+  public String getJavaClassName(Class<?> entityType) {
+    return findJavaClassName.find(entityType);
   }
 
   /**

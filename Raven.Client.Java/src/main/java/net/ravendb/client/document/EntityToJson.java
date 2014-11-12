@@ -57,7 +57,7 @@ public class EntityToJson {
       objectAsJson.remove(identityProperty.getName());
     }
 
-    setClrType(entityType, metadata);
+    setJavaClass(entityType, metadata);
 
     for (IDocumentConversionListener extendedDocumentConversionListener: listeners.getConversionListeners()) {
       extendedDocumentConversionListener.afterConversionToDocument(key, entity, objectAsJson, metadata);
@@ -96,11 +96,11 @@ public class EntityToJson {
     return jObject;
   }
 
-  private void setClrType(Class<?> entityType, RavenJObject metadata) {
+  private void setJavaClass(Class<?> entityType, RavenJObject metadata) {
     if (RavenJObject.class.equals(entityType)) {
       return ; // do not overwrite the value
     }
-    metadata.add(Constants.RAVEN_CLR_TYPE, new RavenJValue(documentStore.getConventions().getClrTypeName(entityType)));
+    metadata.add(Constants.RAVEN_JAVA_CLASS, new RavenJValue(documentStore.getConventions().getJavaClassName(entityType)));
   }
 
 

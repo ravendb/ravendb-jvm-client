@@ -491,7 +491,7 @@ public abstract class InMemoryDocumentSessionOperations implements AutoCloseable
       }
 
       try {
-        String documentType = getConventions().getClrType(id, documentFound, metadata);
+        String documentType = getConventions().getJavaClass(id, documentFound, metadata);
         if (documentType != null) {
           Class< ? > type = Class.forName(documentType);
           if (type != null) {

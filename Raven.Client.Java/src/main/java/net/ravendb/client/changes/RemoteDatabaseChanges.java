@@ -523,7 +523,7 @@ public class RemoteDatabaseChanges extends RemoteChangesClientBase<IDatabaseChan
 
   @Override
   public IObservable<DocumentChangeNotification> forDocumentsOfType(Class<?> clazz) {
-    String typeName = conventions.getFindClrTypeName().find(clazz);
+    String typeName = conventions.getFindJavaClassName().find(clazz);
     return forDocumentsOfType(typeName);
   }
 

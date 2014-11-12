@@ -1,6 +1,6 @@
 package net.ravendb.client.delegates;
 
 
-public interface ClrTypeNameFinder {
+public interface JavaClassNameFinder {
   public String find(Class<?> clazz);
 }

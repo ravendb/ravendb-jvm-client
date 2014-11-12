@@ -26,7 +26,7 @@ public class Constants {
   public final static String EMPTY_STRING = "EMPTY_STRING";
   public final static String DOCUMENT_ID_FIELD_NAME = "__document_id";
   public final static String INTERSECT_SEPARATOR = " INTERSECT ";
-  public static final String RAVEN_CLR_TYPE = "Raven-Clr-Type";
+  public static final String RAVEN_JAVA_CLASS = "Raven-Java-Class";
   public final static String RAVEN_ENTITY_NAME = "Raven-Entity-Name";
   public static final String RAVEN_READ_ONLY = "Raven-Read-Only";
   public final static String ALL_FIELDS = "__all_fields";
