@@ -72,6 +72,7 @@ public class DocumentStore extends DocumentStoreBase {
   private final AtomicDictionary<IDatabaseChanges> databaseChanges = new AtomicDictionary<>(String.CASE_INSENSITIVE_ORDER);
   protected HttpJsonRequestFactory jsonRequestFactory = new HttpJsonRequestFactory(DEFAULT_NUMBER_OF_CACHED_REQUESTS);
 
+  private ReplicationBehavior replication;
 
   private ConcurrentMap<String, EvictItemsFromCacheBasedOnChanges> observeChangesAndEvictItemsFromCacheForDatabases = new ConcurrentHashMap<>();
 
@@ -83,6 +84,9 @@ public class DocumentStore extends DocumentStoreBase {
    */
   private List<EventHandler<VoidArgs>> afterDispose = new ArrayList<>();
 
+  public ReplicationBehavior getReplication() {
+    return replication;
+  }
 
   /**
    * Called after dispose is completed
@@ -138,6 +142,7 @@ public class DocumentStore extends DocumentStoreBase {
   public DocumentStore() {
     setSharedOperationsHeaders(new HashMap<String, String>());
     setConventions(new DocumentConvention());
+    replication = new ReplicationBehavior(this);
   }
 
   public DocumentStore(String url) {
@@ -232,6 +237,14 @@ public class DocumentStore extends DocumentStoreBase {
 
     if (jsonRequestFactory != null) {
       jsonRequestFactory.close();
+    }
+
+    try {
+      if (replication != null) {
+        replication.close();
+      }
+    } catch (Exception e) {
+      e.printStackTrace();
     }
 
     setWasDisposed(true);

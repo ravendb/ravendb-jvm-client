@@ -104,7 +104,7 @@ public class ReplicationInformer extends ReplicationInformerBase<ServerClient> i
 
       JsonDocument document;
       try {
-        document = SerializationHelper.toJsonDocument(RavenJObject.fromObject(commands.directGetReplicationDestionations(new OperationMetadata(commands.getUrl(), commands.getPrimaryCredentials()))));
+        document = SerializationHelper.toJsonDocument(RavenJObject.fromObject(commands.directGetReplicationDestinations(new OperationMetadata(commands.getUrl(), commands.getPrimaryCredentials()))));
         failureCounts.put(commands.getUrl(), new FailureCounter()); // we just hit the master, so we can reset its failure count
       } catch (Exception e) {
         log.error("Could not contact master for new replication information", e);

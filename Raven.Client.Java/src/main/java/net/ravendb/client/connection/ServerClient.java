@@ -515,7 +515,7 @@ public class ServerClient implements IDatabaseCommands {
   }
 
 
-  <S> S executeWithReplication(HttpMethods method, Function1<OperationMetadata, S> operation) throws ServerClientException {
+  public <S> S executeWithReplication(HttpMethods method, Function1<OperationMetadata, S> operation) throws ServerClientException {
     int currentRequest = ++requestCount;
     return replicationInformer.executeWithReplication(method, url, credentialsThatShouldBeUsedOnlyInOperationsWithoutReplication, currentRequest, readStripingBase, operation);
   }
@@ -2716,7 +2716,7 @@ public class ServerClient implements IDatabaseCommands {
     return result.value(String.class, "Token");
   }
 
-  ReplicationDocument directGetReplicationDestionations(OperationMetadata operationMetadata) {
+  public ReplicationDocument directGetReplicationDestinations(OperationMetadata operationMetadata) {
     CreateHttpJsonRequestParams createHttpJsonRequestParams = new CreateHttpJsonRequestParams(this, operationMetadata.getUrl() + "/replication/topology", HttpMethods.GET, null, operationMetadata.getCredentials(), convention);
     HttpJsonRequest request = jsonRequestFactory.createHttpJsonRequest(createHttpJsonRequestParams
       .addOperationHeaders(getOperationsHeaders())).addReplicationStatusHeaders(url, operationMetadata.getUrl(), replicationInformer, convention.getFailoverBehavior(), new HandleReplicationStatusChangesCallback());

@@ -1,6 +1,7 @@
 package net.ravendb.client;
 
 
+import java.net.InetAddress;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
@@ -58,21 +59,28 @@ public abstract class RavenDBAwareTests {
   protected ReplicationInformer replicationInformer;
   protected ServerClient serverClient;
 
-  public final static String DEFAULT_HOST = "localhost";
   public final static int DEFAULT_SERVER_PORT_1 = 8123;
   public final static int DEFAULT_SERVER_PORT_2 = 8124;
-  public final static String DEFAULT_SERVER_URL_1 = "http://" + DEFAULT_HOST + ":" + DEFAULT_SERVER_PORT_1;
-  public final static String DEFAULT_SERVER_URL_2 = "http://" + DEFAULT_HOST + ":" + DEFAULT_SERVER_PORT_2;
+  public final static String DEFAULT_SERVER_URL_1 = "http://" + getHostName() + ":" + DEFAULT_SERVER_PORT_1;
+  public final static String DEFAULT_SERVER_URL_2 = "http://" + getHostName() + ":" + DEFAULT_SERVER_PORT_2;
 
   public final static int DEFAULT_RUNNER_PORT = 8585;
 
   public final static boolean RUN_IN_MEMORY = true;
 
-  public final static String DEFAULT_SERVER_RUNNER_URL = "http://" + DEFAULT_HOST + ":" + DEFAULT_RUNNER_PORT + "/servers";
+  public final static String DEFAULT_SERVER_RUNNER_URL = "http://" + getHostName() + ":" + DEFAULT_RUNNER_PORT + "/servers";
 
   private static final String DEFAULT_STORAGE_TYPE_NAME = "voron";
 
   protected static HttpClient client = HttpClients.createDefault();
+
+  public static String getHostName() {
+    try {
+      return InetAddress.getLocalHost().getHostName();
+    } catch (Exception e) {
+      throw new RuntimeException(e);
+    }
+  }
 
 
   public String getServerUrl() {
@@ -180,7 +188,7 @@ public abstract class RavenDBAwareTests {
   protected void createDbAtPort(String dbName, int port) throws Exception {
     HttpPut put = null;
     try {
-      put = new HttpPut("http://" + DEFAULT_HOST + ":" + port + "/admin/databases/" + UrlUtils.escapeDataString(dbName));
+      put = new HttpPut("http://" + getHostName() + ":" + port + "/admin/databases/" + UrlUtils.escapeDataString(dbName));
       put.setEntity(new StringEntity(getCreateDbDocument(dbName, port), ContentType.APPLICATION_JSON));
       HttpResponse httpResponse = client.execute(put);
       if (httpResponse.getStatusLine().getStatusCode() != HttpStatus.SC_OK) {
