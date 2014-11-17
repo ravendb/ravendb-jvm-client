@@ -29,7 +29,7 @@ public class DatabaseStatistics {
   private Etag lastAttachmentEtag;
   private int countOfIndexes;
   private int countOfResultTransformers;
-  private int inMemoryIndexingQueueSize;
+  private int[] inMemoryIndexingQueueSize;
   private long approximateTaskCount;
   private long countOfDocuments;
 
@@ -107,7 +107,7 @@ public class DatabaseStatistics {
   public IndexStats[] getIndexes() {
     return indexes;
   }
-  public int getInMemoryIndexingQueueSize() {
+  public int[] getInMemoryIndexingQueueSize() {
     return inMemoryIndexingQueueSize;
   }
 
@@ -151,7 +151,7 @@ public class DatabaseStatistics {
   public void setIndexes(IndexStats[] indexes) {
     this.indexes = indexes;
   }
-  public void setInMemoryIndexingQueueSize(int inMemoryIndexingQueueSize) {
+  public void setInMemoryIndexingQueueSize(int[] inMemoryIndexingQueueSize) {
     this.inMemoryIndexingQueueSize = inMemoryIndexingQueueSize;
   }
 

@@ -9,6 +9,7 @@ import net.ravendb.abstractions.data.Constants;
 import net.ravendb.client.IDocumentStore;
 import net.ravendb.client.converters.ITypeConverter;
 
+import org.apache.commons.lang.NullArgumentException;
 import org.apache.commons.lang.reflect.FieldUtils;
 
 
@@ -32,6 +33,9 @@ public class GenerateEntityIdOnTheClient {
    * @return
    */
   public boolean tryGetIdFromInstance(Object entity, Reference<String> idHolder) {
+    if (entity == null) {
+      throw new NullArgumentException("entity");
+    }
     try {
       Field identityProperty = getIdentityProperty(entity.getClass());
       if (identityProperty != null) {

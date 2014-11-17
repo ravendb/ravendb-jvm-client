@@ -170,7 +170,7 @@ public abstract class InMemoryDocumentSessionOperations implements AutoCloseable
     this.dbName = dbName;
     this.documentStore = documentStore;
     this.theListeners = listeners;
-    this.useOptimisticConcurrency = documentStore.getConventions().defaultUseOptimisticConcurrency;
+    this.useOptimisticConcurrency = documentStore.getConventions().isDefaultUseOptimisticConcurrency();
     this.allowNonAuthoritativeInformation = true;
     this.nonAuthoritativeInformationTimeout = 15 * 1000L;
     this.maxNumberOfRequestsPerSession = documentStore.getConventions().getMaxNumberOfRequestsPerSession();

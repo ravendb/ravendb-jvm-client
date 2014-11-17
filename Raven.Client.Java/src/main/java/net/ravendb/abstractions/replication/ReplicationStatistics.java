@@ -65,11 +65,20 @@ public class ReplicationStatistics {
     private Date lastReplicatedLastModified;
     private Date lastSuccessTimestamp;
     private Date lastFailureTimestamp;
+    private Date firstFailureInCycleTimestamp;
     private RavenJArray lastStats;
 
     public DestinationStats() {
       super();
       lastStats = new RavenJArray();
+    }
+
+    public Date getFirstFailureInCycleTimestamp() {
+      return firstFailureInCycleTimestamp;
+    }
+
+    public void setFirstFailureInCycleTimestamp(Date firstFailureInCycleTimestamp) {
+      this.firstFailureInCycleTimestamp = firstFailureInCycleTimestamp;
     }
 
     public RavenJArray getLastStats() {

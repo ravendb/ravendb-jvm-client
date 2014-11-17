@@ -210,12 +210,12 @@ public class RemoteBulkInsertOperation implements ILowLevelBulkInsertOperation, 
   }
 
   private RavenJToken getAuthToken() {
-    HttpJsonRequest request = operationClient.createRequest(HttpMethods.GET, "/singleAuthToken", true);
+    HttpJsonRequest request = operationClient.createRequest(HttpMethods.GET, "/singleAuthToken", true, false, null);
     return request.readResponseJson();
   }
 
   private String validateThatWeCanUseAuthenticateTokens(String token) {
-    HttpJsonRequest request = operationClient.createRequest(HttpMethods.GET, "/singleAuthToken", true);
+    HttpJsonRequest request = operationClient.createRequest(HttpMethods.GET, "/singleAuthToken", true, true, null);
     request.removeAuthorizationHeader();
     request.addOperationHeader("Single-Use-Auth-Token", token);
     RavenJToken result = request.readResponseJson();
@@ -223,11 +223,8 @@ public class RemoteBulkInsertOperation implements ILowLevelBulkInsertOperation, 
   }
 
   private HttpJsonRequest createOperationRequest(String operationUrl, String token) {
-    HttpJsonRequest request = operationClient.createRequest(HttpMethods.POST, operationUrl, true);
-
-    request.prepareForLongRequest();
+    HttpJsonRequest request = operationClient.createRequest(HttpMethods.POST, operationUrl, true, true, 6 * 3600 * 1000L);
     request.addOperationHeader("Single-Use-Auth-Token", token);
-
     return request;
   }
 

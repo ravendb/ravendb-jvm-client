@@ -152,7 +152,10 @@ public class QueryOperation {
         notNullResults.add(obj);
       }
     }
-    sessionOperations.registerMissingIncludes(notNullResults, includes);
+
+    if (disableEntitiesTracking == false) {
+      sessionOperations.registerMissingIncludes(notNullResults, includes);
+    }
 
     return list;
   }

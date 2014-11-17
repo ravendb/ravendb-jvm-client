@@ -33,7 +33,7 @@ public class Convention {
 
   private IdentityPropertyFinder findIdentityProperty;
 
-  public String identityPartsSeparator;
+  protected String identityPartsSeparator;
 
   private RequestCachePolicy shouldCacheRequest;
 

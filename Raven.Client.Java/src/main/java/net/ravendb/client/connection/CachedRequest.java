@@ -12,7 +12,7 @@ public class CachedRequest {
   private Map<String, String> headers;
   private String database;
   private boolean forceServerCheck;
-
+  private long readTime;
 
   public CachedRequest() {
     super();
@@ -86,4 +86,11 @@ public class CachedRequest {
     this.forceServerCheck = forceServerCheck;
   }
 
+  public long getReadTime() {
+    return readTime;
+  }
+
+  public void setReadTime(long readTime) {
+    this.readTime = readTime;
+  }
 }

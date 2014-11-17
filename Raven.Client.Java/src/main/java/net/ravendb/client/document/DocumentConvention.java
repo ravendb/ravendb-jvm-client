@@ -4,6 +4,7 @@ import java.io.Serializable;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -52,20 +53,22 @@ public class DocumentConvention extends Convention implements Serializable {
   private final List<Tuple<Class<?>, IdConvention>> listOfRegisteredIdConventions =
       new ArrayList<>();
 
-  public boolean disableProfiling;
+  private boolean disableProfiling;
 
-  public List<ITypeConverter> identityTypeConvertors;
+  private List<ITypeConverter> identityTypeConvertors;
 
-  public int maxNumberOfRequestsPerSession;
+  private int maxNumberOfRequestsPerSession;
 
-  public boolean allowQueriesOnId;
+  private int maxLengthOfQueryUsingGetUrl;
 
-  public ConsistencyOptions defaultQueryingConsistency;
+  private boolean allowQueriesOnId;
+
+  private ConsistencyOptions defaultQueryingConsistency;
 
   /**
    * Whether UseOptimisticConcurrency is set to true by default for all opened sessions
    */
-  public boolean defaultUseOptimisticConcurrency;
+  private boolean defaultUseOptimisticConcurrency;
 
   private static Map<Class<?>, String> CACHED_DEFAULT_TYPE_TAG_NAMES = new HashMap<>();
 
@@ -106,6 +109,8 @@ public class DocumentConvention extends Convention implements Serializable {
   private final List<Tuple<Class<?>, TryConvertValueForQueryDelegate<?>>> listOfQueryValueConverters = new ArrayList<>();
 
   private ObjectMapper objectMapper;
+
+  private EnumSet<IndexAndTransformerReplicationMode> indexAndTransformerReplicationMode;
 
   public DocumentConvention() {
 
@@ -206,6 +211,11 @@ public class DocumentConvention extends Convention implements Serializable {
     });
     setShouldAggressiveCacheTrackChanges(true);
     setShouldSaveChangesForceAggressiveCacheCheck(true);
+    setMaxLengthOfQueryUsingGetUrl(1024+512);
+    setIndexAndTransformerReplicationMode(
+      EnumSet.of(
+        IndexAndTransformerReplicationMode.INDEXES,
+        IndexAndTransformerReplicationMode.TRANSFORMERS));
   }
 
   public static String defaultTransformTypeTagNameToDocumentKeyPrefix(String typeTagName) {
@@ -623,9 +633,6 @@ public class DocumentConvention extends Convention implements Serializable {
     this.useParallelMultiGet = useParallelMultiGet;
   }
 
-
-
-
   /**
    * Register an id convention for a single type (and all of its derived types.
    * Note that you can still fall back to the DocumentKeyGenerator if you want.
@@ -835,5 +842,31 @@ public class DocumentConvention extends Convention implements Serializable {
     return objectMapper;
   }
 
+  public int getMaxLengthOfQueryUsingGetUrl() {
+    return maxLengthOfQueryUsingGetUrl;
+  }
+
+  public boolean isDefaultUseOptimisticConcurrency() {
+    return defaultUseOptimisticConcurrency;
+  }
+
+  public void setDefaultUseOptimisticConcurrency(boolean defaultUseOptimisticConcurrency) {
+    this.defaultUseOptimisticConcurrency = defaultUseOptimisticConcurrency;
+  }
+
+  public void setMaxLengthOfQueryUsingGetUrl(int maxLengthOfQueryUsingGetUrl) {
+    this.maxLengthOfQueryUsingGetUrl = maxLengthOfQueryUsingGetUrl;
+  }
+
+
+  public EnumSet<IndexAndTransformerReplicationMode> getIndexAndTransformerReplicationMode() {
+    return indexAndTransformerReplicationMode;
+  }
+
+
+  public void setIndexAndTransformerReplicationMode(
+    EnumSet<IndexAndTransformerReplicationMode> indexAndTransformerReplicationMode) {
+    this.indexAndTransformerReplicationMode = indexAndTransformerReplicationMode;
+  }
 
 }

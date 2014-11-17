@@ -11,6 +11,7 @@ import net.ravendb.abstractions.basic.Tuple;
 import net.ravendb.abstractions.closure.Action1;
 import net.ravendb.abstractions.closure.Function0;
 import net.ravendb.abstractions.data.MoreLikeThisQuery;
+import net.ravendb.client.LoadConfigurationFactory;
 import net.ravendb.client.RavenPagingInformation;
 import net.ravendb.client.document.batches.ILazyLoaderWithInclude;
 import net.ravendb.client.document.batches.ILazySessionOperations;
@@ -23,7 +24,6 @@ import net.ravendb.client.document.sessionoperations.LoadOperation;
 import net.ravendb.client.document.sessionoperations.LoadTransformerOperation;
 import net.ravendb.client.document.sessionoperations.MultiLoadOperation;
 import net.ravendb.client.indexes.AbstractTransformerCreationTask;
-
 
 import com.mysema.query.types.Path;
 
@@ -154,12 +154,18 @@ public class LazySessionOperations implements ILazySessionOperations {
 
   @Override
   public <TResult, TTransformer extends AbstractTransformerCreationTask> Lazy<TResult> load(
-    Class<TTransformer> tranformerClass, Class<TResult> clazz, String id) {
+    Class<TTransformer> tranformerClass, Class<TResult> clazz, String id, LoadConfigurationFactory configure) {
+
+    RavenLoadConfiguration configuration = new RavenLoadConfiguration();
+    if (configure != null) {
+      configure.configure(configuration);
+    }
+
     try {
       String transformer = tranformerClass.newInstance().getTransformerName();
       String[] ids = new String[] { id };
       LoadTransformerOperation loadOperation = new LoadTransformerOperation(delegate, transformer, ids);
-      LazyTransformerLoadOperation<TResult> lazyLoadOperation = new LazyTransformerLoadOperation<>(clazz, ids, transformer, loadOperation, true);
+      LazyTransformerLoadOperation<TResult> lazyLoadOperation = new LazyTransformerLoadOperation<>(clazz, ids, transformer, configuration.getTransformerParameters(), loadOperation, true);
       return delegate.addLazyOperation(lazyLoadOperation, null);
     } catch (IllegalAccessException | InstantiationException e) {
       throw new RuntimeException(e);
@@ -168,12 +174,18 @@ public class LazySessionOperations implements ILazySessionOperations {
 
   @Override
   public <TResult, TTransformer extends AbstractTransformerCreationTask> Lazy<TResult[]> load(
-    Class<TTransformer> tranformerClass, Class<TResult> clazz, String... ids) {
+    Class<TTransformer> tranformerClass, Class<TResult> clazz, String[] ids,  LoadConfigurationFactory configure) {
+
+    RavenLoadConfiguration configuration = new RavenLoadConfiguration();
+    if (configure != null) {
+      configure.configure(configuration);
+    }
+
     try {
       String transformer = tranformerClass.newInstance().getTransformerName();
       LoadTransformerOperation transformerOperation = new LoadTransformerOperation(delegate, transformer, ids);
 
-      LazyTransformerLoadOperation<TResult> lazyLoadOperation = new LazyTransformerLoadOperation<>(clazz, ids, transformer, transformerOperation, false);
+      LazyTransformerLoadOperation<TResult> lazyLoadOperation = new LazyTransformerLoadOperation<>(clazz, ids, transformer, configuration.getTransformerParameters(), transformerOperation, false);
       return delegate.addLazyOperation(lazyLoadOperation, null);
     } catch (IllegalAccessException | InstantiationException e) {
       throw new RuntimeException(e);

@@ -57,7 +57,7 @@ public interface IGlobalAdminDatabaseCommands {
    * Sends an async command to compact a database. During the compaction the specified database will be offline.
    * @param databaseName
    */
-  public void compactDatabase(String databaseName);
+  public Operation compactDatabase(String databaseName);
 
   /**
    * Gets DatabaseCommands

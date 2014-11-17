@@ -19,7 +19,7 @@ public class EntityToJson {
 
   private IdentityHashMap<Object, Map<String, RavenJToken>> missingDictionary = new IdentityHashMap<>();
 
-  private IdentityHashMap<Object, RavenJObject> cachedJsonDocs;
+  protected IdentityHashMap<Object, RavenJObject> cachedJsonDocs;
 
 
   public IdentityHashMap<Object, RavenJObject> getCachedJsonDocs() {
@@ -118,7 +118,7 @@ public class EntityToJson {
     return new DisposeCachedJsonDocs();
   }
 
-  private class DisposeCachedJsonDocs implements AutoCloseable {
+  protected class DisposeCachedJsonDocs implements AutoCloseable {
     @Override
     public void close() throws Exception {
       cachedJsonDocs = null;

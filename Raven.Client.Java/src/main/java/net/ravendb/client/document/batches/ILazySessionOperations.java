@@ -6,9 +6,9 @@ import java.util.UUID;
 import net.ravendb.abstractions.basic.Lazy;
 import net.ravendb.abstractions.closure.Action1;
 import net.ravendb.abstractions.data.MoreLikeThisQuery;
+import net.ravendb.client.LoadConfigurationFactory;
 import net.ravendb.client.RavenPagingInformation;
 import net.ravendb.client.indexes.AbstractTransformerCreationTask;
-
 
 import com.mysema.query.types.Path;
 
@@ -259,10 +259,10 @@ public interface ILazySessionOperations {
   public <TResult> Lazy<TResult[]> moreLikeThis(Class<TResult> clazz, MoreLikeThisQuery query);
 
   public <TResult, TTransformer extends AbstractTransformerCreationTask> Lazy<TResult> load(Class<TTransformer> tranformerClass,
-    Class<TResult> clazz, String id);
+    Class<TResult> clazz, String id, LoadConfigurationFactory configure);
 
   public <TResult, TTransformer extends AbstractTransformerCreationTask> Lazy<TResult[]> load(Class<TTransformer> tranformerClass,
-    Class<TResult> clazz, String[] ids);
+    Class<TResult> clazz, String[] ids, LoadConfigurationFactory configure);
 
 
 }

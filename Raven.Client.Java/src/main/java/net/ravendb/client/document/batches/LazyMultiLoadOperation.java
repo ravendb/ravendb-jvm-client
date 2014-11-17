@@ -16,8 +16,8 @@ import net.ravendb.client.utils.UrlUtils;
 
 import org.apache.commons.lang.StringUtils;
 
-
 public class LazyMultiLoadOperation<T> implements ILazyOperation {
+
   private final MultiLoadOperation loadOperation;
   private final String[] ids;
   private final String transformer;
@@ -28,7 +28,8 @@ public class LazyMultiLoadOperation<T> implements ILazyOperation {
   private Object result;
   private boolean requiresRetry;
 
-  public LazyMultiLoadOperation(Class<T> clazz, MultiLoadOperation loadOperation, String[] ids, Tuple<String, Class<?>>[] includes, String transformer) {
+  public LazyMultiLoadOperation(Class<T> clazz, MultiLoadOperation loadOperation, String[] ids,
+    Tuple<String, Class<?>>[] includes, String transformer) {
     this.loadOperation = loadOperation;
     this.ids = ids;
     this.includes = includes;
@@ -50,13 +51,13 @@ public class LazyMultiLoadOperation<T> implements ILazyOperation {
     String query = "?";
     if (includes != null && includes.length > 0) {
       List<String> queryTokens = new ArrayList<>();
-      for (Tuple<String, Class<?>> include: includes) {
+      for (Tuple<String, Class<?>> include : includes) {
         queryTokens.add("include=" + include.getItem1());
       }
       query += StringUtils.join(queryTokens, "&");
     }
     List<String> idTokens = new ArrayList<>();
-    for (String id: ids) {
+    for (String id : ids) {
       idTokens.add("id=" + UrlUtils.escapeDataString(id));
     }
     query += "&" + StringUtils.join(idTokens, "&");
@@ -91,11 +92,17 @@ public class LazyMultiLoadOperation<T> implements ILazyOperation {
 
   @Override
   public void handleResponse(GetResponse response) {
+    if (response.isForceRetry()) {
+      result = null;
+      requiresRetry = true;
+      return;
+    }
+
     RavenJToken result = response.getResult();
     MultiLoadResult multiLoadResult = new MultiLoadResult();
     multiLoadResult.setIncludes(result.value(RavenJArray.class, "Includes").values(RavenJObject.class));
     List<RavenJObject> results = new ArrayList<>();
-    for (RavenJToken token: result.value(RavenJArray.class, "Results")) {
+    for (RavenJToken token : result.value(RavenJArray.class, "Results")) {
       if (token instanceof RavenJObject) {
         results.add((RavenJObject) token);
       } else {
@@ -118,6 +125,5 @@ public class LazyMultiLoadOperation<T> implements ILazyOperation {
   public AutoCloseable enterContext() {
     return loadOperation.enterMultiLoadContext();
   }
-
 
 }

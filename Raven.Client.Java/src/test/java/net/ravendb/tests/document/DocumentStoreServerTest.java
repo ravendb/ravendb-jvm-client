@@ -138,7 +138,7 @@ public class DocumentStoreServerTest extends RemoteClientTest {
 
       IndexQuery query = new IndexQuery();
       query.setQuery("Tag:[[Companies]]");
-      store.getDatabaseCommands().deleteByIndex("Raven/DocumentsByEntityName", query, false).waitForCompletion();
+      store.getDatabaseCommands().deleteByIndex("Raven/DocumentsByEntityName", query).waitForCompletion();
 
       try (IDocumentSession session = store.openSession()) {
         assertEquals(0, session.advanced().documentQuery(Company.class).waitForNonStaleResults().toList().size());
@@ -315,7 +315,7 @@ public class DocumentStoreServerTest extends RemoteClientTest {
       patchRequest.setName("Name");
       patchRequest.setValue(RavenJToken.fromObject("Another Company"));
 
-      store.getDatabaseCommands().updateByIndex("Raven/DocumentsByEntityName", query, new PatchRequest[] { patchRequest } , false ).waitForCompletion();
+      store.getDatabaseCommands().updateByIndex("Raven/DocumentsByEntityName", query, new PatchRequest[] { patchRequest }).waitForCompletion();
 
       try (IDocumentSession session = store.openSession()) {
         assertEquals("Another Company", session.load(Company.class, entity.getId()).getName());

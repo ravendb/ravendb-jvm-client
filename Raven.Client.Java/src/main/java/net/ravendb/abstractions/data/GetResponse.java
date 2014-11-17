@@ -8,11 +8,18 @@ import net.ravendb.abstractions.json.linq.RavenJToken;
 
 public class GetResponse {
   private RavenJToken result;
-
   private Map<String, String> headers;
   private int status;
+  private boolean forceRetry;
+
   public GetResponse() {
     headers = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
+  }
+  public boolean isForceRetry() {
+    return forceRetry;
+  }
+  public void setForceRetry(boolean forceRetry) {
+    this.forceRetry = forceRetry;
   }
   public Map<String, String> getHeaders() {
     return headers;

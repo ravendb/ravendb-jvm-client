@@ -36,7 +36,7 @@ public class MetadataPatchingTest extends RemoteClientTest {
 
       store.getDatabaseCommands().updateByIndex("Raven/DocumentsByEntityName", new IndexQuery(), new PatchRequest[] {
         patchRequest
-      }, false).waitForCompletion();
+      }).waitForCompletion();
       waitForNonStaleIndexes(store.getDatabaseCommands());
 
       JsonDocument jsonDocument = store.getDatabaseCommands().get("foos/1");

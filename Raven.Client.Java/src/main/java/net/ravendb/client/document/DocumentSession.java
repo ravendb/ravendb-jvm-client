@@ -1,10 +1,6 @@
 package net.ravendb.client.document;
 
-import java.beans.IntrospectionException;
-import java.beans.Introspector;
-import java.beans.PropertyDescriptor;
 import java.lang.reflect.Array;
-import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -14,9 +10,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.UUID;
-
-import org.apache.commons.lang.StringUtils;
-import org.apache.commons.logging.impl.AvalonLogger;
 
 import net.ravendb.abstractions.basic.CloseableIterator;
 import net.ravendb.abstractions.basic.Lazy;
@@ -43,7 +36,6 @@ import net.ravendb.abstractions.json.linq.RavenJObject;
 import net.ravendb.abstractions.json.linq.RavenJToken;
 import net.ravendb.client.IDocumentQuery;
 import net.ravendb.client.IDocumentSessionImpl;
-import net.ravendb.client.ILoadConfiguration;
 import net.ravendb.client.ISyncAdvancedSessionOperation;
 import net.ravendb.client.LoadConfigurationFactory;
 import net.ravendb.client.RavenPagingInformation;
@@ -69,6 +61,9 @@ import net.ravendb.client.linq.IRavenQueryable;
 import net.ravendb.client.linq.RavenQueryInspector;
 import net.ravendb.client.linq.RavenQueryProvider;
 import net.ravendb.client.utils.Closer;
+
+import org.apache.commons.lang.NullArgumentException;
+import org.apache.commons.lang.StringUtils;
 
 import com.google.common.base.Defaults;
 import com.mysema.query.types.Path;
@@ -228,11 +223,14 @@ public class DocumentSession extends InMemoryDocumentSessionOperations implement
   }
 
 
-  private <T> T[] loadInternal(Class<T> clazz, String[] ids, String transformer) {
-    return loadInternal(clazz, ids, transformer, null);
+  private <T> T[] loadUsingTransformerInternal(Class<T> clazz, String[] ids, String transformer) {
+    return loadUsingTransformerInternal(clazz, ids, transformer, null);
   }
 
-  private <T> T[] loadInternal(Class<T> clazz, String[] ids, String transformer, Map<String, RavenJToken> transformerParameters) {
+  private <T> T[] loadUsingTransformerInternal(Class<T> clazz, String[] ids, String transformer, Map<String, RavenJToken> transformerParameters) {
+    if (transformer == null) {
+      throw new NullArgumentException("transformer");
+    }
     if (ids.length == 0) {
       return (T[]) Array.newInstance(clazz, 0);
     }
@@ -441,7 +439,7 @@ public class DocumentSession extends InMemoryDocumentSessionOperations implement
       if (configureFactory != null) {
         configureFactory.configure(configuration);
       }
-      TResult[] loadResult = loadInternal(clazz, new String[] { id} , transformer, configuration.getTransformerParameters());
+      TResult[] loadResult = loadUsingTransformerInternal(clazz, new String[] { id} , transformer, configuration.getTransformerParameters());
       if (loadResult != null && loadResult.length > 0 ) {
         return loadResult[0];
       }
@@ -456,7 +454,7 @@ public class DocumentSession extends InMemoryDocumentSessionOperations implement
       Class<TResult> clazz, String... ids) {
     try {
       String transformer = tranformerClass.newInstance().getTransformerName();
-      return loadInternal(clazz, ids , transformer);
+      return loadUsingTransformerInternal(clazz, ids , transformer);
     } catch (Exception e) {
       throw new RuntimeException(e);
     }
@@ -468,8 +466,10 @@ public class DocumentSession extends InMemoryDocumentSessionOperations implement
     try {
       String transformer = tranformerClass.newInstance().getTransformerName();
       RavenLoadConfiguration configuration = new RavenLoadConfiguration();
-      configureFactory.configure(configuration);
-      return loadInternal(clazz, ids.toArray(new String[0]) , transformer, configuration.getTransformerParameters());
+      if (configureFactory != null) {
+        configureFactory.configure(configuration);
+      }
+      return loadUsingTransformerInternal(clazz, ids.toArray(new String[0]) , transformer, configuration.getTransformerParameters());
     } catch (Exception e) {
       throw new RuntimeException(e);
     }
@@ -487,7 +487,7 @@ public class DocumentSession extends InMemoryDocumentSessionOperations implement
       configure.configure(configuration);
     }
 
-    TResult[] loadResult = loadInternal(clazz, new String[] { id }, transformer, configuration.getTransformerParameters());
+    TResult[] loadResult = loadUsingTransformerInternal(clazz, new String[] { id }, transformer, configuration.getTransformerParameters());
     if (loadResult != null && loadResult.length > 0 ) {
       return loadResult[0];
     }
@@ -507,7 +507,7 @@ public class DocumentSession extends InMemoryDocumentSessionOperations implement
       configure.configure(configuration);
     }
 
-    return loadInternal(clazz, ids.toArray(new String[0]), transformer, configuration.getTransformerParameters());
+    return loadUsingTransformerInternal(clazz, ids.toArray(new String[0]), transformer, configuration.getTransformerParameters());
   }
 
   /**
@@ -1010,14 +1010,14 @@ public class DocumentSession extends InMemoryDocumentSessionOperations implement
   @Override
   public <TResult, TTransformer extends AbstractTransformerCreationTask> TResult[] loadStartingWith(Class<TResult> clazz, Class<TTransformer> transformerClass,
     String keyPrefix, String matches, int start, int pageSize, String exclude,
-    RavenPagingInformation pagingInformation, Action1<ILoadConfiguration> configure) {
+    RavenPagingInformation pagingInformation, LoadConfigurationFactory configure) {
     return loadStartingWith(clazz, transformerClass, keyPrefix, matches, start, pageSize, exclude, pagingInformation, configure, null);
   }
 
   @Override
   public <TResult, TTransformer extends AbstractTransformerCreationTask> TResult[] loadStartingWith(Class<TResult> clazz, Class<TTransformer> transformerClass,
     String keyPrefix, String matches, int start, int pageSize, String exclude,
-    RavenPagingInformation pagingInformation, Action1<ILoadConfiguration> configure, String skipAfter) {
+    RavenPagingInformation pagingInformation, LoadConfigurationFactory configure, String skipAfter) {
 
     incrementRequestCount();
 
@@ -1025,7 +1025,7 @@ public class DocumentSession extends InMemoryDocumentSessionOperations implement
       String transformer = transformerClass.newInstance().getTransformerName();
       RavenLoadConfiguration configuration = new RavenLoadConfiguration();
       if (configure != null) {
-        configure.apply(configuration);
+        configure.configure(configuration);
       }
 
       List<JsonDocument> documents = getDatabaseCommands().startsWith(keyPrefix, matches, start, pageSize, false, exclude, pagingInformation, transformer, configuration.getTransformerParameters(), skipAfter);

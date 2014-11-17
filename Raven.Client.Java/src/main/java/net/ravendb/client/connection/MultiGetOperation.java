@@ -6,14 +6,21 @@ import java.util.List;
 import java.util.Map;
 
 import net.ravendb.abstractions.closure.Action2;
+import net.ravendb.abstractions.closure.Function3;
+import net.ravendb.abstractions.data.Constants;
+import net.ravendb.abstractions.data.Etag;
 import net.ravendb.abstractions.data.GetRequest;
 import net.ravendb.abstractions.data.GetResponse;
+import net.ravendb.abstractions.json.linq.RavenJArray;
+import net.ravendb.abstractions.json.linq.RavenJObject;
+import net.ravendb.abstractions.json.linq.RavenJToken;
 import net.ravendb.client.connection.implementation.HttpJsonRequest;
 import net.ravendb.client.connection.implementation.HttpJsonRequestFactory;
 import net.ravendb.client.connection.profiling.IHoldProfilingInformation;
 import net.ravendb.client.connection.profiling.RequestResultArgs;
 import net.ravendb.client.connection.profiling.RequestStatus;
 import net.ravendb.client.document.DocumentConvention;
+import net.ravendb.client.exceptions.ConflictException;
 import net.ravendb.imports.json.JsonConvert;
 
 import org.apache.http.HttpStatus;
@@ -138,6 +145,80 @@ public class MultiGetOperation {
     lastRequest.setResult(JsonConvert.serializeObject(responses));
 
     return responses;
+  }
+
+  public void tryResolveConflictOrCreateConcurrencyException(GetResponse[] responses,
+    Function3<String, RavenJObject, Etag, ConflictException> tryResolveConflictOrCreateConcurrencyException) {
+
+    for (GetResponse response: responses) {
+      if (response == null) {
+        continue;
+      }
+      if (response.isRequestHasErrors() && response.getStatus() != HttpStatus.SC_CONFLICT) {
+        continue;
+      }
+
+      RavenJObject result = (RavenJObject) response.getResult();
+      if (result == null) {
+        continue;
+      }
+
+      if (result.containsKey("Results")) {
+        RavenJToken resultsAsToken = result.get("Results");
+        if (resultsAsToken == null || !(resultsAsToken instanceof RavenJArray)) {
+          continue;
+        }
+
+        RavenJArray results = (RavenJArray) resultsAsToken;
+
+        for (RavenJToken value : results) {
+          if (value == null || !(value instanceof RavenJObject)) {
+            return;
+          }
+          RavenJObject docResult = (RavenJObject) value;
+
+          RavenJToken metadata = docResult.get(Constants.METADATA);
+          if (metadata == null) {
+            return;
+          }
+
+          if (metadata.value(int.class, "@Http-Status-Code") != HttpStatus.SC_CONFLICT) {
+            return ;
+          }
+
+          String id = metadata.value(String.class, "@id");
+          Etag etag = HttpExtensions.etagHeaderToEtag(metadata.value(String.class, "@etag"));
+          tryResolveConflictOrCreateConcurrencyExceptionForSingleDocument(
+            tryResolveConflictOrCreateConcurrencyException,
+            id, etag, docResult, response);
+
+        }
+        continue;
+      }
+
+      if (result.containsKey("Conflicts")) {
+        String id = response.getHeaders().get(Constants.DOCUMENT_ID_FIELD_NAME);
+        Etag etag = HttpExtensions.getEtagHeader(response);
+
+        tryResolveConflictOrCreateConcurrencyExceptionForSingleDocument(
+          tryResolveConflictOrCreateConcurrencyException,
+          id, etag, result, response);
+      }
+    }
+  }
+
+  private void tryResolveConflictOrCreateConcurrencyExceptionForSingleDocument(
+    Function3<String, RavenJObject, Etag, ConflictException> tryResolveConflictOrCreateConcurrencyException, String id,
+    Etag etag, RavenJObject docResult, GetResponse response) {
+
+    ConflictException conflictException = tryResolveConflictOrCreateConcurrencyException.apply(id, docResult, etag);
+
+    if (conflictException != null) {
+      throw conflictException;
+    }
+
+    response.setStatus(HttpStatus.SC_OK);
+    response.setForceRetry(true);
   }
 
 }

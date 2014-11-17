@@ -190,7 +190,7 @@ public interface ISyncAdvancedSessionOperation extends IAdvancedDocumentSessionO
    */
   public <TResult, TTransformer extends AbstractTransformerCreationTask> TResult[] loadStartingWith(Class<TResult> clazz, Class<TTransformer> transformerClass,
     String keyPrefix, String matches, int start, int pageSize, String exclude,
-    RavenPagingInformation pagingInformation, Action1<ILoadConfiguration> configure);
+    RavenPagingInformation pagingInformation, LoadConfigurationFactory configure);
 
   /**
    * Loads documents with the specified key prefix and applies the specified results transformer against the results
@@ -207,7 +207,7 @@ public interface ISyncAdvancedSessionOperation extends IAdvancedDocumentSessionO
    */
   public <TResult, TTransformer extends AbstractTransformerCreationTask> TResult[] loadStartingWith(Class<TResult> clazz, Class<TTransformer> transformerClass,
     String keyPrefix, String matches, int start, int pageSize, String exclude,
-    RavenPagingInformation pagingInformation, Action1<ILoadConfiguration> configure, String skipAfter);
+    RavenPagingInformation pagingInformation, LoadConfigurationFactory configure, String skipAfter);
 
 
   /**

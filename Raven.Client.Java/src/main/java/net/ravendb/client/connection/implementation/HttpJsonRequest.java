@@ -128,7 +128,8 @@ public class HttpJsonRequest {
     this.factory = factory;
     this.owner = requestParams.getOwner();
     this.conventions = requestParams.getConvention();
-    this._credentials = requestParams.getCredentials();
+    this._credentials = requestParams.isDisableAuthentication()?null : requestParams.getCredentials();
+    this.disabledAuthRetries = requestParams.isDisableAuthentication();
     this.method = requestParams.getMethod();
     this.webRequest = createWebRequest(requestParams.getUrl(), requestParams.getMethod());
     if (factory.isDisableRequestCompression() == false && requestParams.isDisableRequestCompression() == false) {
@@ -581,10 +582,6 @@ public class HttpJsonRequest {
     HttpEntity entity = new GzipHttpEntity(innerEntity);
     innerEntity.setChunked(true);
     requestMethod.setEntity(entity);
-  }
-
-  public void prepareForLongRequest() {
-    setTimeout(6 * 3600 * 1000);
   }
 
   /**

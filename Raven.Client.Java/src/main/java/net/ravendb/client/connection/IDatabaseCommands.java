@@ -13,6 +13,7 @@ import net.ravendb.abstractions.data.Attachment;
 import net.ravendb.abstractions.data.AttachmentInformation;
 import net.ravendb.abstractions.data.BatchResult;
 import net.ravendb.abstractions.data.BulkInsertOptions;
+import net.ravendb.abstractions.data.BulkOperationOptions;
 import net.ravendb.abstractions.data.DatabaseStatistics;
 import net.ravendb.abstractions.data.Etag;
 import net.ravendb.abstractions.data.Facet;
@@ -292,7 +293,7 @@ public interface IDatabaseCommands extends IHoldProfilingInformation {
    * @param allowStale
    * @return
    */
-  public Operation deleteByIndex(final String indexName, final IndexQuery queryToDelete, final boolean allowStale);
+  public Operation deleteByIndex(final String indexName, final IndexQuery queryToDelete, final BulkOperationOptions options);
 
   /**
    * Perform a set based deletes using the specified index, not allowing the operation
@@ -490,7 +491,7 @@ public interface IDatabaseCommands extends IHoldProfilingInformation {
    * @param allowStale
    * @return
    */
-  public Operation updateByIndex(String indexName, IndexQuery queryToUpdate, PatchRequest[] patchRequests, boolean allowStale);
+  public Operation updateByIndex(String indexName, IndexQuery queryToUpdate, PatchRequest[] patchRequests, BulkOperationOptions options);
 
   /**
    * Perform a set based update using the specified index, not allowing the operation
@@ -501,7 +502,7 @@ public interface IDatabaseCommands extends IHoldProfilingInformation {
    * @param allowStale
    * @return
    */
-  public Operation updateByIndex(String indexName, IndexQuery queryToUpdate, ScriptedPatchRequest patch, boolean allowStale);
+  public Operation updateByIndex(String indexName, IndexQuery queryToUpdate, ScriptedPatchRequest patch, BulkOperationOptions options);
 
   /**
    *  Using the given Index, calculate the facets as per the specified doc with the given start and pageSize

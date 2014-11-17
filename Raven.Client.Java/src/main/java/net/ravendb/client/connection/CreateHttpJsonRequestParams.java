@@ -30,8 +30,14 @@ public class CreateHttpJsonRequestParams implements Serializable {
   private Convention convention;
   private OperationCredentials credentials;
   private boolean disableRequestCompression;
+  private Long timeout;
+  private boolean disableAuthentication;
 
   public CreateHttpJsonRequestParams(IHoldProfilingInformation owner, String url, HttpMethods method, RavenJObject metadata, OperationCredentials credentials, Convention convention) {
+    this(owner, url, method, metadata, credentials, convention, null);
+  }
+
+  public CreateHttpJsonRequestParams(IHoldProfilingInformation owner, String url, HttpMethods method, RavenJObject metadata, OperationCredentials credentials, Convention convention, Long timeout) {
     super();
 
     this.method = method;
@@ -40,6 +46,7 @@ public class CreateHttpJsonRequestParams implements Serializable {
     this.metadata = metadata;
     this.credentials = credentials;
     this.convention = convention;
+    this.timeout = timeout;
     this.operationsHeadersCollection = new HashMap<>();
   }
 
@@ -208,4 +215,19 @@ public class CreateHttpJsonRequestParams implements Serializable {
     }
   }
 
+  public Long getTimeout() {
+    return timeout;
+  }
+
+  public void setTimeout(Long timeout) {
+    this.timeout = timeout;
+  }
+
+  public boolean isDisableAuthentication() {
+    return disableAuthentication;
+  }
+
+  public void setDisableAuthentication(boolean disableAuthentication) {
+    this.disableAuthentication = disableAuthentication;
+  }
 }

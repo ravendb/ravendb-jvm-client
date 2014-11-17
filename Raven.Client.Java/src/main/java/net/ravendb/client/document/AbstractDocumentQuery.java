@@ -643,6 +643,7 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
       if (queryOperation == null)
       {
           executeBeforeQueryListeners();
+          take(0);
           initializeQueryOperation(new Action2<String, String>() {
 
             @Override

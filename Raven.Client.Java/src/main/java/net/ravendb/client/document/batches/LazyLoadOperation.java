@@ -70,6 +70,11 @@ public class LazyLoadOperation<T> implements ILazyOperation {
 
   @Override
   public void handleResponse(GetResponse response) {
+    if (response.isForceRetry()) {
+      result = null;
+      requiresRetry = true;
+      return;
+    }
     if(response.getStatus() == HttpStatus.SC_NOT_FOUND) {
       result = null;
       requiresRetry = false;

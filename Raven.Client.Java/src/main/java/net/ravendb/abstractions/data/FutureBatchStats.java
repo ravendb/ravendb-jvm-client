@@ -7,6 +7,15 @@ public class FutureBatchStats {
   private String duration;
   private int size;
   private int retries;
+  private PrefetchingUser prefetchingUser;
+
+  public PrefetchingUser getPrefetchingUser() {
+    return prefetchingUser;
+  }
+
+  public void setPrefetchingUser(PrefetchingUser prefetchingUser) {
+    this.prefetchingUser = prefetchingUser;
+  }
 
   public String getTimestamp() {
     return timestamp;

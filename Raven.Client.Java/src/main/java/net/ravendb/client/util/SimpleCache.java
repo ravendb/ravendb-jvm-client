@@ -13,7 +13,7 @@ public class SimpleCache implements AutoCloseable {
 
   private final ConcurrentLruSet<String> lruKeys;
   private final ConcurrentHashMap<String, CachedRequest> actualCache;
-  private final ConcurrentHashMap<String, Date> lastWritePerDb = new ConcurrentHashMap<>();
+  private final ConcurrentHashMap<String, Long> lastWritePerDb = new ConcurrentHashMap<>();
 
   private AtomicInteger memoryPressureCounterOnSet = new AtomicInteger();
   private AtomicInteger memoryPressureCounterOnGet = new AtomicInteger();
@@ -36,6 +36,11 @@ public class SimpleCache implements AutoCloseable {
     if (memoryPressureCounterOnSet.incrementAndGet() % 25 == 0) {
       tryClearMemory();
     }
+
+    if (lastWritePerDb.containsKey(val.getDatabase())) {
+      val.setReadTime(lastWritePerDb.get(val.getDatabase()));
+    }
+
     actualCache.put(key, val);
     lruKeys.push(key);
   }
@@ -57,10 +62,10 @@ public class SimpleCache implements AutoCloseable {
       }
     }
     if (value != null) {
-      Date lastWrite;
+      Long lastWrite;
       if (lastWritePerDb.containsKey(value.getDatabase())) {
         lastWrite = lastWritePerDb.get(value.getDatabase());
-        if (value.getTime().before(lastWrite) || value.getTime().equals(lastWrite)) {
+        if (value.getReadTime()  < lastWrite) {
           value.setForceServerCheck(true);
         }
       }
@@ -80,8 +85,15 @@ public class SimpleCache implements AutoCloseable {
   }
 
   public void forceServerCheckOfCachedItemsForDatabase(String databaseName) {
-    Date newTime = new Date();
-    lastWritePerDb.put(databaseName, newTime);
+    Long existingValue = lastWritePerDb.putIfAbsent(databaseName, 1L);
+    if (existingValue != null) {
+      while (true) {
+        if (lastWritePerDb.replace(databaseName, existingValue, existingValue + 1)) {
+          return;
+        }
+        existingValue = lastWritePerDb.get(databaseName);
+      }
+    }
   }
 
 }

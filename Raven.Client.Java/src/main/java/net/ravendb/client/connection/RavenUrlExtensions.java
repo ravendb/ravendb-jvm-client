@@ -73,15 +73,4 @@ public class RavenUrlExtensions {
   public static String queries(String url) {
     return url + "/queries/";
   }
-
-  public static HttpJsonRequest toJsonRequest(String url, ServerClient requestor, OperationCredentials credentials, DocumentConvention convention) {
-    return requestor.getJsonRequestFactory().createHttpJsonRequest(new CreateHttpJsonRequestParams(requestor, url, HttpMethods.GET, null, credentials, convention));
-  }
-
-  public static HttpJsonRequest toJsonRequest(String url, ServerClient requestor, OperationCredentials credentials, DocumentConvention convention, Map<String, String> operationsHeaders, HttpMethods method) {
-    return requestor.getJsonRequestFactory().createHttpJsonRequest(new CreateHttpJsonRequestParams(requestor, url, method, null, credentials, convention)).addOperationHeaders(operationsHeaders);
-  }
-
-
-
 }
