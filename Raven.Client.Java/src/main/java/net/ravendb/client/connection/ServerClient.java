@@ -98,6 +98,7 @@ import org.apache.commons.lang.StringUtils;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpStatus;
 import org.apache.http.client.methods.CloseableHttpResponse;
+import org.apache.http.client.methods.HttpGet;
 import org.apache.http.util.EntityUtils;
 import org.codehaus.jackson.JsonFactory;
 import org.codehaus.jackson.JsonParser;
@@ -1522,7 +1523,7 @@ public class ServerClient implements IDatabaseCommands {
   }
 
   protected QueryResult directQuery(final HttpMethods method, final String index, final IndexQuery query, final OperationMetadata operationMetadata, final String[] includes, final boolean metadataOnly, final boolean includeEntries) {
-    String path = query.getIndexQueryUrl(operationMetadata.getUrl(), index, "indexes");
+    String path = query.getIndexQueryUrl(operationMetadata.getUrl(), index, "indexes", true, HttpMethods.GET.equals(method));
     if (metadataOnly)
       path += "&metadata-only=true";
     if (includeEntries)
@@ -1538,7 +1539,7 @@ public class ServerClient implements IDatabaseCommands {
     }
 
     HttpJsonRequest request = jsonRequestFactory.createHttpJsonRequest(
-      new CreateHttpJsonRequestParams(this, path, HttpMethods.GET, new RavenJObject(), operationMetadata.getCredentials(), convention)
+      new CreateHttpJsonRequestParams(this, path, method, new RavenJObject(), operationMetadata.getCredentials(), convention)
       .setAvoidCachingRequest(query.isDisableCaching())
       .addOperationHeaders(operationsHeaders))
       .addReplicationStatusHeaders(url, operationMetadata.getUrl(), replicationInformer,
