@@ -225,7 +225,9 @@ public class ConflictsResolver {
     MergeResult result = resolver.resolve(indent);
 
     if (resolver.isMetadataResolver) {
-      metadataWriter.writeFieldName(name);
+      if (!name.equals("@metadata")) {
+        metadataWriter.writeFieldName(name);
+      }
       writeRawData(metadataWriter, result.getDocument(), indent);
     } else {
       documentWriter.writeFieldName(name);
@@ -245,7 +247,7 @@ public class ConflictsResolver {
     documentWriter.writeStartObject();
     for (Map.Entry<String, Object> o: result.entrySet()) {
       if (o.getValue() instanceof ConflictsResolver) {
-        writeConflictResolver(o.getKey(), documentWriter, metadataWriter, (ConflictsResolver) o.getValue(), indent + 1);
+        writeConflictResolver(o.getKey(), documentWriter, metadataWriter, (ConflictsResolver) o.getValue(), "@metadata".equals(o.getKey()) ? 0 : indent + 1);
       } else {
         writeToken("@metadata".equals(o.getKey()) ? metadataWriter : documentWriter, o.getKey(), o.getValue());
       }

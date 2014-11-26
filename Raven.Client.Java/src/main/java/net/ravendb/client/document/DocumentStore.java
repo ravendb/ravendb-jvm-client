@@ -337,6 +337,10 @@ public class DocumentStore extends DocumentStoreBase {
     return this;
   }
 
+  private HttpJsonRequestFactory initializeJsonRequestFactory() {
+      return new HttpJsonRequestFactory(maxNumberOfCachedRequests);
+  }
+
   public void initializeProfiling() {
     if (jsonRequestFactory == null) {
       throw new IllegalStateException("Cannot call InitializeProfiling() before Initialize() was called.");
@@ -603,7 +607,7 @@ public class DocumentStore extends DocumentStoreBase {
     if (jsonRequestFactory != null) {
       Closer.close(jsonRequestFactory);
     }
-    jsonRequestFactory = new HttpJsonRequestFactory(maxNumberOfCachedRequests);
+    jsonRequestFactory = initializeJsonRequestFactory();
   }
 
 

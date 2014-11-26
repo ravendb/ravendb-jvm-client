@@ -481,7 +481,7 @@ public abstract class InMemoryDocumentSessionOperations implements AutoCloseable
 
       AutoCloseable disposable = null;
       DefaultRavenContractResolver defaultRavenContractResolver = (DefaultRavenContractResolver) getConventions().getJsonContractResolver();
-      if (defaultRavenContractResolver != null) {
+      if (defaultRavenContractResolver != null && getConventions().isPreserveDocumentPropertiesNotFoundOnModel()) {
         disposable = defaultRavenContractResolver.registerForExtensionData(new Action3<Object, String, RavenJToken>() {
           @Override
           public void apply(Object o, String key, RavenJToken value) {

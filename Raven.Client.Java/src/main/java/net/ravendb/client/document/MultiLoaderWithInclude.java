@@ -10,6 +10,7 @@ import net.ravendb.abstractions.extensions.ExpressionExtensions;
 import net.ravendb.client.IDocumentSessionImpl;
 
 import com.google.common.base.Defaults;
+import com.mysema.query.types.Expression;
 import com.mysema.query.types.Path;
 
 
@@ -28,7 +29,7 @@ public class MultiLoaderWithInclude implements ILoaderWithInclude {
   }
 
   @Override
-  public ILoaderWithInclude include(Class<?> targetClass, Path<?> path) {
+  public ILoaderWithInclude include(Class<?> targetClass, Expression<?> path) {
     Class< ? > type = path.getType();
     String fullId = session.getConventions().getFindFullDocumentKeyFromNonStringIdentifier().find(-1, targetClass, false);
     String id = ExpressionExtensions.toPropertyPath(path);
@@ -56,7 +57,7 @@ public class MultiLoaderWithInclude implements ILoaderWithInclude {
    * Includes the specified path
    */
   @Override
-  public ILoaderWithInclude include(Path<?> path) {
+  public ILoaderWithInclude include(Expression<?> path) {
     return include(ExpressionExtensions.toPropertyPath(path));
   }
 

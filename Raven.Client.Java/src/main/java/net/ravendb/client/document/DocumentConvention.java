@@ -53,6 +53,8 @@ public class DocumentConvention extends Convention implements Serializable {
   private final List<Tuple<Class<?>, IdConvention>> listOfRegisteredIdConventions =
       new ArrayList<>();
 
+  private boolean preserveDocumentPropertiesNotFoundOnModel = true;
+
   private boolean disableProfiling;
 
   private List<ITypeConverter> identityTypeConvertors;
@@ -869,4 +871,18 @@ public class DocumentConvention extends Convention implements Serializable {
     this.indexAndTransformerReplicationMode = indexAndTransformerReplicationMode;
   }
 
+
+  public boolean isPreserveDocumentPropertiesNotFoundOnModel() {
+    return preserveDocumentPropertiesNotFoundOnModel;
+  }
+
+  /**
+   * Controls whatever properties on the object that weren't de-serialized to object properties
+   * will be preserved when saving the document again. If false, those properties will be removed
+   * when the document will be saved.
+   * @param preserveDocumentPropertiesNotFoundOnModel
+   */
+  public void setPreserveDocumentPropertiesNotFoundOnModel(boolean preserveDocumentPropertiesNotFoundOnModel) {
+    this.preserveDocumentPropertiesNotFoundOnModel = preserveDocumentPropertiesNotFoundOnModel;
+  }
 }

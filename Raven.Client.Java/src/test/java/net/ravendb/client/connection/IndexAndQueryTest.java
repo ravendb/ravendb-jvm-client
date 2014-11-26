@@ -16,6 +16,7 @@ import java.util.Set;
 
 import net.ravendb.abstractions.basic.CloseableIterator;
 import net.ravendb.abstractions.basic.Reference;
+import net.ravendb.abstractions.data.BulkOperationOptions;
 import net.ravendb.abstractions.data.Constants;
 import net.ravendb.abstractions.data.Etag;
 import net.ravendb.abstractions.data.IndexQuery;
@@ -114,7 +115,9 @@ public class IndexAndQueryTest extends RavenDBAwareTests {
       dbCommands.putIndex(indexName, indexDefinition);
       waitForNonStaleIndexes(dbCommands);
 
-      Operation operation = dbCommands.deleteByIndex(indexName, new IndexQuery());
+      BulkOperationOptions options = new BulkOperationOptions();
+      options.setRetrieveDetails(true);
+      Operation operation = dbCommands.deleteByIndex(indexName, new IndexQuery(), options);
       RavenJArray completion = (RavenJArray) operation.waitForCompletion();
       assertEquals(2, completion.size());
 

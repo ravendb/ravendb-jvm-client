@@ -66,6 +66,7 @@ import org.apache.commons.lang.NullArgumentException;
 import org.apache.commons.lang.StringUtils;
 
 import com.google.common.base.Defaults;
+import com.mysema.query.types.Expression;
 import com.mysema.query.types.Path;
 
 /**
@@ -410,7 +411,7 @@ public class DocumentSession extends InMemoryDocumentSessionOperations implement
    * @return
    */
   @Override
-  public ILoaderWithInclude include(Path<?> path) {
+  public ILoaderWithInclude include(Expression<?> path) {
     return new MultiLoaderWithInclude(this).include(path);
   }
 
@@ -420,7 +421,7 @@ public class DocumentSession extends InMemoryDocumentSessionOperations implement
    * @return
    */
   @Override
-  public ILoaderWithInclude include(Class<?> targetClass, Path<?> path) {
+  public ILoaderWithInclude include(Class<?> targetClass, Expression<?> path) {
     return new MultiLoaderWithInclude(this).include(targetClass, path);
   }
 

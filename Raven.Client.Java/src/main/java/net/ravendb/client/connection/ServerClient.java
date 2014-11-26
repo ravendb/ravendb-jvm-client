@@ -1838,7 +1838,7 @@ public class ServerClient implements IDatabaseCommands {
       try {
         response = (RavenJArray)req.readResponseJson();
         if (response == null) {
-          throw new IllegalStateException("Got null response from the server after doing a batch, something is very wrong. Probably a garbled response.");
+          throw new IllegalStateException("Got null response from the server after doing a batch, something is very wrong. Probably a garbled response. Posted: " + jArray);
         }
       } catch (HttpOperationException e) {
         try {
@@ -1931,7 +1931,8 @@ public class ServerClient implements IDatabaseCommands {
 
   protected Operation directDeleteByIndex(OperationMetadata operationMetadata, String indexName, IndexQuery queryToDelete, BulkOperationOptions options) {
     BulkOperationOptions notNullOptions = (options != null) ? options : new BulkOperationOptions();
-    String path = queryToDelete.getIndexQueryUrl(operationMetadata.getUrl(), indexName, "bulk_docs") + "&allowStale=" + notNullOptions.isAllowStale();
+    String path = queryToDelete.getIndexQueryUrl(operationMetadata.getUrl(), indexName, "bulk_docs") + "&allowStale=" + notNullOptions.isAllowStale()
+      + "&details=" + notNullOptions.isRetrieveDetails();
     if (notNullOptions.getMaxOpsPerSec() != null) {
       path += "&maxOpsPerSec=" + notNullOptions.getMaxOpsPerSec();
     }
@@ -2041,7 +2042,8 @@ public class ServerClient implements IDatabaseCommands {
   protected Operation directUpdateByIndexImpl(OperationMetadata operationMetadata, String indexName, IndexQuery queryToUpdate, BulkOperationOptions options, String requestData, HttpMethods method) {
     BulkOperationOptions notNullOptions = (options != null) ? options : new BulkOperationOptions();
     String path = queryToUpdate.getIndexQueryUrl(operationMetadata.getUrl(), indexName, "bulk_docs")
-       + "&allowStale=" + notNullOptions.isAllowStale() + "&maxOpsPerSec=" + notNullOptions.getMaxOpsPerSec();
+       + "&allowStale=" + notNullOptions.isAllowStale() + "&maxOpsPerSec=" + notNullOptions.getMaxOpsPerSec()
+       + "&details=" + notNullOptions.isRetrieveDetails();
     if (notNullOptions.getStaleTimeout() != null) {
       path += "&staleTimeout=" + notNullOptions.getStaleTimeout();
     }
@@ -2452,7 +2454,7 @@ public class ServerClient implements IDatabaseCommands {
   protected FacetResults directGetFacets(OperationMetadata operationMetadata, String index, IndexQuery query, String facetsJson, int start, Integer pageSize, HttpMethods method) {
     String requestUri = operationMetadata.getUrl() + String.format("/facets/%s?%s&facetStart=%d&facetPageSize=%s",
       UrlUtils.escapeUriString(index),
-      query.getMinimalQueryString(),
+      query.getQueryString(),
       start,
       (pageSize !=null ) ? pageSize.toString() : "");
 

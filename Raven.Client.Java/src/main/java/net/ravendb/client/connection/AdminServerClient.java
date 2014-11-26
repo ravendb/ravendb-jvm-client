@@ -84,7 +84,7 @@ public class AdminServerClient implements IAdminDatabaseCommands, IGlobalAdminDa
   @Override
   public Operation compactDatabase(String databaseName) {
     RavenJToken json = adminRequest.compactDatabase(databaseName).readResponseJson();
-    return new Operation(innerServerClient, json.value(Long.class, "OperationId"));
+    return new Operation((ServerClient)innerServerClient.forSystemDatabase(), json.value(Long.class, "OperationId"));
   }
 
   @Override
@@ -133,7 +133,7 @@ public class AdminServerClient implements IAdminDatabaseCommands, IGlobalAdminDa
     HttpJsonRequest request = adminRequest.createRestoreRequest();
     request.write(RavenJObject.fromObject(restoreRequest).toString());
     RavenJToken jsonResponse = request.readResponseJson();
-    return new Operation(innerServerClient, jsonResponse.value(Long.class, "OperationId"));
+    return new Operation((ServerClient)innerServerClient.forSystemDatabase(), jsonResponse.value(Long.class, "OperationId"));
   }
 
 

@@ -5,6 +5,7 @@ import java.util.Map;
 
 import net.ravendb.abstractions.indexing.FieldIndexing;
 import net.ravendb.abstractions.indexing.IndexDefinition;
+import net.ravendb.abstractions.indexing.IndexLockMode;
 import net.ravendb.abstractions.indexing.SortOptions;
 
 
@@ -42,6 +43,7 @@ public class RavenDocumentsByEntityName extends AbstractIndexCreationTask {
     def.setSortOptions(sortOptions);
 
     def.setDisableInMemoryIndexing(true);
+    def.setLockMode(IndexLockMode.LOCKED_IGNORE);
 
     return def;
   }

@@ -7,6 +7,23 @@ public class BulkOperationOptions {
   private boolean allowStale;
   private Long staleTimeout;
   private Integer maxOpsPerSec;
+  private boolean retrieveDetails;
+
+  /**
+   *  Determines whether operation details about each document should be returned by server.
+   * @return
+   */
+  public boolean isRetrieveDetails() {
+    return retrieveDetails;
+  }
+
+  /**
+   *  Determines whether operation details about each document should be returned by server.
+   * @param retrieveDetails
+   */
+  public void setRetrieveDetails(boolean retrieveDetails) {
+    this.retrieveDetails = retrieveDetails;
+  }
 
   /**
    * indicates whether operations are allowed on stale indexes.

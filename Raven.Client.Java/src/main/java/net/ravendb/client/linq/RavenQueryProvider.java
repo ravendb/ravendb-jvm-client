@@ -169,7 +169,7 @@ public class RavenQueryProvider<T> implements IRavenQueryProvider {
   @Override
   public <S> IDocumentQuery<S> toDocumentQuery(Class<S> clazz, Expression<?> expression) {
     RavenQueryProviderProcessor<T> processor = getQueryProviderProcessor(this.clazz);
-    IDocumentQuery<S> result = (IDocumentQuery<S>) processor.getLuceneQueryFor(expression);
+    IDocumentQuery<S> result = (IDocumentQuery<S>) processor.getDocumentQueryFor(expression);
     result.setResultTransformer(resultTranformer);
     return result;
   }
@@ -177,7 +177,7 @@ public class RavenQueryProvider<T> implements IRavenQueryProvider {
   @Override
   public <S> Lazy<List<S>> lazily(Class<S> clazz, Expression< ? > expression, Action1<List<S>> onEval) {
     final RavenQueryProviderProcessor<S> processor = getQueryProviderProcessor(clazz);
-    IDocumentQuery<S> query = processor.getLuceneQueryFor(expression);
+    IDocumentQuery<S> query = processor.getDocumentQueryFor(expression);
     if (afterQueryExecuted != null) {
       query.afterQueryExecuted(afterQueryExecuted);
     }
@@ -215,7 +215,7 @@ public class RavenQueryProvider<T> implements IRavenQueryProvider {
   @Override
   public <T> Lazy<Integer> countLazily(Class<T> clazz, Expression<?> expression) {
       RavenQueryProviderProcessor<T> processor = getQueryProviderProcessor(clazz);
-      IDocumentQuery<T> query = processor.getLuceneQueryFor(expression);
+      IDocumentQuery<T> query = processor.getDocumentQueryFor(expression);
       return query.countLazily();
   }
 

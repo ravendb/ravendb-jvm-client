@@ -3,6 +3,7 @@ package net.ravendb.client.document;
 import java.util.Collection;
 import java.util.UUID;
 
+import com.mysema.query.types.Expression;
 import com.mysema.query.types.Path;
 
 /**
@@ -25,14 +26,14 @@ public interface ILoaderWithInclude {
    * @param path
    * @return
    */
-  public ILoaderWithInclude include(Path<?> path);
+  public ILoaderWithInclude include(Expression<?> path);
 
   /**
    * Includes the specified path.
    * @param path
    * @return
    */
-  public ILoaderWithInclude include(Class<?> targetClass, Path<?> path);
+  public ILoaderWithInclude include(Class<?> targetClass, Expression<?> path);
 
   /**
    * Loads the specified ids.

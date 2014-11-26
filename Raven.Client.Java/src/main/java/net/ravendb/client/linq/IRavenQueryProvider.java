@@ -37,27 +37,24 @@ public interface IRavenQueryProvider extends IQueryProvider {
   void transformWith(String transformerName);
 
   /**
-   * Gets the name of the index.
-   * @return
+   * @return The name of the index.
    */
   public String getIndexName();
 
   /**
-   * Get the query generator
-   * @return
+   * @return The query generator
    */
   public IDocumentQueryGenerator getQueryGenerator();
 
   /**
-   * The action to execute on the customize query
-   * @return
+   * @return The action to execute on the customize query
    */
   public DocumentQueryCustomizationFactory getCustomizeQuery();
 
   /**
    * Change the result type for the query provider
    * @param clazz
-   * @return
+   * @return self
    */
   public <S> IRavenQueryProvider forClass(Class<S> clazz);
 
@@ -65,7 +62,7 @@ public interface IRavenQueryProvider extends IQueryProvider {
    * Convert the linq query to a Lucene query
    * @param clazz
    * @param expression
-   * @return
+   * @return DocumentQuery
    */
   public <T> IDocumentQuery<T> toDocumentQuery(Class<T> clazz, Expression<?> expression);
 
@@ -73,27 +70,24 @@ public interface IRavenQueryProvider extends IQueryProvider {
    * Convert the Linq query to a lazy Lucene query and provide a function to execute when it is being evaluate
    * @param expression
    * @param onEval
-   * @return
+   * @return lazy list with result
    */
   public <T> Lazy<List<T>> lazily(Class<T> clazz, Expression<?> expression, Action1<List<T>> onEval);
 
   public <T> Lazy<Integer> countLazily(Class<T> clazz, Expression<?> expression);
 
   /**
-   * Set the fields to fetch
-   * @return
+   * @return fields to fetch
    */
   public Set<String> getFieldsToFetch();
 
   /**
-   * The result transformer to use
-   * @return
+   * @return The result transformer to use
    */
   public String getResultTranformer();
 
   /**
-   * Gets the query inputs being supplied to
-   * @return
+   * @return The query inputs being supplied to transformer
    */
   public Map<String, RavenJToken> getTransformerParameters();
 

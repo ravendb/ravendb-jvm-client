@@ -23,6 +23,8 @@ public class DatabaseStatistics {
     }
   }
 
+  private String storageEngine;
+
   private Etag lastDocEtag;
 
   @Deprecated
@@ -60,6 +62,14 @@ public class DatabaseStatistics {
 
   public void setIndexingBatchInfo(IndexingBatchInfo[] indexingBatchInfo) {
     this.indexingBatchInfo = indexingBatchInfo;
+  }
+
+  public String getStorageEngine() {
+    return storageEngine;
+  }
+
+  public void setStorageEngine(String storageEngine) {
+    this.storageEngine = storageEngine;
   }
 
   public boolean isSupportsDtc() {

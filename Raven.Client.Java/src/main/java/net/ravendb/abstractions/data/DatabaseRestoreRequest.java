@@ -7,6 +7,8 @@ public class DatabaseRestoreRequest {
 
   private String databaseLocation;
 
+  private boolean disableReplicationDestinations;
+
   private String databaseName;
 
   private String journalsLocation;
@@ -16,6 +18,14 @@ public class DatabaseRestoreRequest {
   private boolean defrag;
 
   private Integer restoreStartTimeout;
+
+  public boolean isDisableReplicationDestinations() {
+    return disableReplicationDestinations;
+  }
+
+  public void setDisableReplicationDestinations(boolean disableReplicationDestinations) {
+    this.disableReplicationDestinations = disableReplicationDestinations;
+  }
 
   public Integer getRestoreStartTimeout() {
     return restoreStartTimeout;

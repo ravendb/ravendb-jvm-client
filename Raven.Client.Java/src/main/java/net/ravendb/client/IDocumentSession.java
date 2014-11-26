@@ -10,6 +10,7 @@ import net.ravendb.client.indexes.AbstractIndexCreationTask;
 import net.ravendb.client.indexes.AbstractTransformerCreationTask;
 import net.ravendb.client.linq.IRavenQueryable;
 
+import com.mysema.query.types.Expression;
 import com.mysema.query.types.Path;
 
 
@@ -185,7 +186,7 @@ public interface IDocumentSession extends AutoCloseable {
    * @param path
    * @return
    */
-  public ILoaderWithInclude include(Path<?> path);
+  public ILoaderWithInclude include(Expression<?> path);
 
   /**
    * Begin a load while include the specified path
@@ -193,7 +194,7 @@ public interface IDocumentSession extends AutoCloseable {
    * @param path
    * @return
    */
-  public ILoaderWithInclude include(Class<?> targetEntityClass, Path<?> path);
+  public ILoaderWithInclude include(Class<?> targetEntityClass, Expression<?> path);
 
   /**
    * Performs a load that will use the specified results transformer against the specified id

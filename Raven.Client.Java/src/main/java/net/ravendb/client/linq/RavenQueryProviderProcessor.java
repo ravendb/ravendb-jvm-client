@@ -1052,7 +1052,7 @@ public class RavenQueryProviderProcessor<T> {
   }
 
   @SuppressWarnings("unchecked")
-  public IDocumentQuery<T> getLuceneQueryFor(Expression<?> expression) {
+  public IDocumentQuery<T> getDocumentQueryFor(Expression<?> expression) {
     IDocumentQuery<T> q = queryGenerator.documentQuery(clazz, indexName, isMapReduce);
     q.setTransformerParameters(transformerParameters);
     documentQuery = (IAbstractDocumentQuery<T>) q;
@@ -1070,7 +1070,7 @@ public class RavenQueryProviderProcessor<T> {
 
     chanedWhere = false;
 
-    documentQuery = (IAbstractDocumentQuery<T>) getLuceneQueryFor(expression);
+    documentQuery = (IAbstractDocumentQuery<T>) getDocumentQueryFor(expression);
     if (newExpressionType.equals(clazz)) {
       return executeQuery(clazz);
     } else {

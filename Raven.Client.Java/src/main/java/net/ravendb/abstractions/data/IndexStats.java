@@ -257,6 +257,8 @@ public class IndexStats {
 
   public static class IndexingPerformanceStats {
     private String operation;
+    private int loadDocumentCount;
+    private long loadDocumentDurationMs;
     private int outputCount;
     private int inputCount;
     private int itemsCount;
@@ -277,6 +279,18 @@ public class IndexStats {
     }
     public int getInputCount() {
       return inputCount;
+    }
+    public int getLoadDocumentCount() {
+      return loadDocumentCount;
+    }
+    public void setLoadDocumentCount(int loadDocumentCount) {
+      this.loadDocumentCount = loadDocumentCount;
+    }
+    public long getLoadDocumentDurationMs() {
+      return loadDocumentDurationMs;
+    }
+    public void setLoadDocumentDurationMs(long loadDocumentDurationMs) {
+      this.loadDocumentDurationMs = loadDocumentDurationMs;
     }
     public void setInputCount(int inputCount) {
       this.inputCount = inputCount;

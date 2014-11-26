@@ -9,11 +9,11 @@ import net.ravendb.abstractions.indexing.FieldIndexing;
 import net.ravendb.abstractions.indexing.FieldStorage;
 import net.ravendb.abstractions.indexing.FieldTermVector;
 import net.ravendb.abstractions.indexing.IndexDefinition;
+import net.ravendb.abstractions.indexing.IndexLockMode;
 import net.ravendb.abstractions.indexing.SortOptions;
 import net.ravendb.abstractions.indexing.SpatialOptions;
 import net.ravendb.abstractions.indexing.SuggestionOptions;
 import net.ravendb.client.document.DocumentConvention;
-
 
 import com.mysema.query.types.Path;
 
@@ -28,6 +28,8 @@ public class IndexDefinitionBuilder {
 
   private Long maxIndexOutputsPerDocument;
   private boolean disableInMemoryIndexing;
+
+  private IndexLockMode lockMode;
 
   private Map<Path<?>, FieldIndexing> indexes;
   private Map<String, FieldIndexing> indexesStrings;
@@ -57,6 +59,7 @@ public class IndexDefinitionBuilder {
     this.termVectorsStrings = new HashMap<>();
     this.spatialIndexes = new HashMap<>();
     this.spatialIndexesStrings = new HashMap<>();
+    this.lockMode = IndexLockMode.UNLOCK;
   }
 
   private <S> Map<String, S> convertToStringDictionary(Map<Path< ? >, S> input) {
@@ -66,6 +69,12 @@ public class IndexDefinitionBuilder {
       result.put(propertyPath, value.getValue());
     }
     return result;
+  }
+  public IndexLockMode getLockMode() {
+    return lockMode;
+  }
+  public void setLockMode(IndexLockMode lockMode) {
+    this.lockMode = lockMode;
   }
   public Map<Path< ? >, String> getAnalyzers() {
     return analyzers;
@@ -238,6 +247,7 @@ public class IndexDefinitionBuilder {
 
     indexDefinition.setDisableInMemoryIndexing(disableInMemoryIndexing);
     indexDefinition.setMaxIndexOutputsPerDocument(maxIndexOutputsPerDocument);
+    indexDefinition.setLockMode(lockMode);
 
     if (map != null) {
       indexDefinition.setMap(map);

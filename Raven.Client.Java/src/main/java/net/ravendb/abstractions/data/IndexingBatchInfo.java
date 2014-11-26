@@ -1,10 +1,23 @@
 package net.ravendb.abstractions.data;
 
+import java.util.List;
+import java.util.Map;
+
+import net.ravendb.abstractions.data.IndexStats.IndexingPerformanceStats;
 
 public class IndexingBatchInfo {
+
+  private BatchType batchType;
+
+  private List<String> indexesToWorkOn;
+
   private int totalDocumentCount;
   private long totalDocumentSize;
-  private String timestamp;
+  private String startedAt;
+
+  private String totalDuration;
+
+  private Map<String, IndexingPerformanceStats> performanceStats;
 
   public int getTotalDocumentCount() {
     return totalDocumentCount;
@@ -22,32 +35,44 @@ public class IndexingBatchInfo {
     this.totalDocumentSize = totalDocumentSize;
   }
 
-  public String getTimestamp() {
-    return timestamp;
+  public BatchType getBatchType() {
+    return batchType;
   }
 
-  public void setTimestamp(String timestamp) {
-    this.timestamp = timestamp;
+  public void setBatchType(BatchType batchType) {
+    this.batchType = batchType;
   }
 
-  @Override
-  public int hashCode() {
-    final int prime = 31;
-    int result = 1;
-    result = prime * result + totalDocumentCount;
-    result = prime * result + (int) (totalDocumentSize ^ (totalDocumentSize >>> 32));
-    return result;
+  public List<String> getIndexesToWorkOn() {
+    return indexesToWorkOn;
   }
 
-  @Override
-  public boolean equals(Object obj) {
-    if (this == obj) return true;
-    if (obj == null) return false;
-    if (getClass() != obj.getClass()) return false;
-    IndexingBatchInfo other = (IndexingBatchInfo) obj;
-    if (totalDocumentCount != other.totalDocumentCount) return false;
-    if (totalDocumentSize != other.totalDocumentSize) return false;
-    return true;
+  public void setIndexesToWorkOn(List<String> indexesToWorkOn) {
+    this.indexesToWorkOn = indexesToWorkOn;
+  }
+
+  public String getStartedAt() {
+    return startedAt;
+  }
+
+  public void setStartedAt(String startedAt) {
+    this.startedAt = startedAt;
+  }
+
+  public String getTotalDuration() {
+    return totalDuration;
+  }
+
+  public void setTotalDuration(String totalDuration) {
+    this.totalDuration = totalDuration;
+  }
+
+  public Map<String, IndexingPerformanceStats> getPerformanceStats() {
+    return performanceStats;
+  }
+
+  public void setPerformanceStats(Map<String, IndexingPerformanceStats> performanceStats) {
+    this.performanceStats = performanceStats;
   }
 
 }

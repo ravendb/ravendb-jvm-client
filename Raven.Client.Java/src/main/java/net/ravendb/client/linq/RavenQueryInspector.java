@@ -160,7 +160,7 @@ public class RavenQueryInspector<T> implements IRavenQueryable<T>, IRavenQueryIn
   @Override
   public String toString() {
     RavenQueryProviderProcessor<T> ravenQueryProvider = getRavenQueryProvider();
-    IDocumentQuery<T> documentQuery = ravenQueryProvider.getLuceneQueryFor(expression);
+    IDocumentQuery<T> documentQuery = ravenQueryProvider.getDocumentQueryFor(expression);
     String fields = "";
     if (!ravenQueryProvider.getFieldsToFetch().isEmpty()) {
       fields = "<" + StringUtils.join(ravenQueryProvider.getFieldsToFetch(), ", ") + ">: ";
@@ -171,7 +171,7 @@ public class RavenQueryInspector<T> implements IRavenQueryable<T>, IRavenQueryIn
   @Override
   public IndexQuery getIndexQuery() {
     RavenQueryProviderProcessor<T> ravenQueryProvider = getRavenQueryProvider();
-    IDocumentQuery<T> documentQuery = ravenQueryProvider.getLuceneQueryFor(expression);
+    IDocumentQuery<T> documentQuery = ravenQueryProvider.getDocumentQueryFor(expression);
     return documentQuery.getIndexQuery();
   }
 
@@ -194,7 +194,7 @@ public class RavenQueryInspector<T> implements IRavenQueryable<T>, IRavenQueryIn
   public String getIndexQueried() {
     RavenQueryProviderProcessor<T> ravenQueryProvider = new RavenQueryProviderProcessor<>(clazz, provider.getQueryGenerator(), null, null, indexName, new HashSet<String>(),
         new ArrayList<RenamedField>(), isMapReduce, provider.getResultTranformer(), provider.getTransformerParameters());
-    IDocumentQuery<T> documentQuery = ravenQueryProvider.getLuceneQueryFor(expression);
+    IDocumentQuery<T> documentQuery = ravenQueryProvider.getDocumentQueryFor(expression);
     return ((IRavenQueryInspector)documentQuery).getIndexQueried();
   }
 
@@ -215,7 +215,7 @@ public class RavenQueryInspector<T> implements IRavenQueryable<T>, IRavenQueryIn
   public Tuple<String, String> getLastEqualityTerm() {
     RavenQueryProviderProcessor<T> ravenQueryProvider = new RavenQueryProviderProcessor<>(clazz, provider.getQueryGenerator(), null, null, indexName, new HashSet<String>(),
         new ArrayList<RenamedField>(), isMapReduce, provider.getResultTranformer(), provider.getTransformerParameters());
-    IDocumentQuery<T> documentQuery = ravenQueryProvider.getLuceneQueryFor(expression);
+    IDocumentQuery<T> documentQuery = ravenQueryProvider.getDocumentQueryFor(expression);
     return ((IRavenQueryInspector) documentQuery).getLastEqualityTerm();
   }
 
