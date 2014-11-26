@@ -18,14 +18,12 @@ public interface ITypeConverter {
    * @param tag
    * @param value
    * @param allowNull
-   * @return
    */
   public String convertFrom(String tag, Object value, boolean allowNull);
 
   /**
    * Converts the given value object to the specified type, using the specified context and culture information.
    * @param value
-   * @return
    */
   public Object convertTo(String value);
 }

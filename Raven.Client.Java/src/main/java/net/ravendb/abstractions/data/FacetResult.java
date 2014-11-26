@@ -15,24 +15,21 @@ public class FacetResult {
   }
 
   /**
-   * The number of remaining hits outside of those covered by the Values terms.
-   * @return
+   * @return The number of remaining hits outside of those covered by the Values terms.
    */
   public int getRemainingHits() {
     return remainingHits;
   }
 
   /**
-   * A list of remaining terms in term sort order for terms that are outside of the MaxResults count.
-   * @return
+   * @return A list of remaining terms in term sort order for terms that are outside of the MaxResults count.
    */
   public List<String> getRemainingTerms() {
     return remainingTerms;
   }
 
   /**
-   * The number of remaining terms outside of those covered by the Values terms.
-   * @return
+   * @return The number of remaining terms outside of those covered by the Values terms.
    */
   public int getRemainingTermsCount() {
     return remainingTermsCount;
@@ -41,7 +38,6 @@ public class FacetResult {
   /**
    * The facet terms and hits up to a limit of MaxResults items (as specified in the facet setup document), sorted
    * in TermSortMode order (as indicated in the facet setup document).
-   * @return
    */
   public List<FacetValue> getValues() {
     return values;

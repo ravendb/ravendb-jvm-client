@@ -49,8 +49,7 @@ import net.ravendb.client.indexes.IndexDefinitionBuilder;
 public interface IDatabaseCommands extends IHoldProfilingInformation {
 
   /**
-   * Gets the operations headers
-   * @return
+   * @return Gets the operations headers
    */
   public Map<String, String> getOperationsHeaders();
 
@@ -68,15 +67,13 @@ public interface IDatabaseCommands extends IHoldProfilingInformation {
   public OperationCredentials getPrimaryCredentials();
 
   /**
-   * Admin operations for current database
-   * @return
+   * @return Admin operations for current database
    */
   public IAdminDatabaseCommands getAdmin();
 
   /**
    * Retrieves the document for the specified key
    * @param key The key
-   * @return
    */
   public JsonDocument get(String key) throws ServerClientException;
 
@@ -84,7 +81,6 @@ public interface IDatabaseCommands extends IHoldProfilingInformation {
    * Gets the results for the specified ids.
    * @param ids
    * @param includes
-   * @return
    */
   public MultiLoadResult get(final String[] ids, final String[] includes);
 
@@ -93,7 +89,6 @@ public interface IDatabaseCommands extends IHoldProfilingInformation {
    * @param ids
    * @param includes
    * @param transformer
-   * @return
    */
   public MultiLoadResult get(final String[] ids, final String[] includes, final String transformer);
 
@@ -103,7 +98,6 @@ public interface IDatabaseCommands extends IHoldProfilingInformation {
    * @param includes
    * @param transformer
    * @param transformerParameters
-   * @return
    */
   public MultiLoadResult get(final String[] ids, final String[] includes, final String transformer, final Map<String, RavenJToken> transformerParameters);
 
@@ -113,7 +107,6 @@ public interface IDatabaseCommands extends IHoldProfilingInformation {
    * @param transformer
    * @param transformerParameters
    * @param metadataOnly
-   * @return
    */
   public MultiLoadResult get(final String[] ids, final String[] includes, final String transformer, final Map<String, RavenJToken> transformerParameters, final boolean metadataOnly);
 
@@ -121,7 +114,6 @@ public interface IDatabaseCommands extends IHoldProfilingInformation {
    * Get documents from server
    * @param start
    * @param pageSize
-   * @return
    */
   public List<JsonDocument> getDocuments(int start, int pageSize);
 
@@ -130,7 +122,6 @@ public interface IDatabaseCommands extends IHoldProfilingInformation {
    * @param start Paging start
    * @param pageSize Size of the page.
    * @param metadataOnly Load just the document metadata
-   * @return
    */
   public List<JsonDocument> getDocuments(int start, int pageSize, boolean metadataOnly);
 
@@ -138,8 +129,6 @@ public interface IDatabaseCommands extends IHoldProfilingInformation {
    * Performs index query
    * @param index
    * @param query
-   * @param includes
-   * @return
    */
   public QueryResult query(String index, IndexQuery query);
 
@@ -148,7 +137,6 @@ public interface IDatabaseCommands extends IHoldProfilingInformation {
    * @param index
    * @param query
    * @param includes
-   * @return
    */
   public QueryResult query(String index, IndexQuery query, String[] includes);
 
@@ -157,7 +145,7 @@ public interface IDatabaseCommands extends IHoldProfilingInformation {
    * @param index
    * @param query
    * @param includes
-   * @return
+   * @param metadataOnly
    */
   public QueryResult query(String index, IndexQuery query, String[] includes, boolean metadataOnly);
 
@@ -166,14 +154,14 @@ public interface IDatabaseCommands extends IHoldProfilingInformation {
    * @param index
    * @param query
    * @param includes
-   * @return
+   * @param metadataOnly
+   * @param indexEntriesOnly
    */
   public QueryResult query(String index, IndexQuery query, String[] includes, boolean metadataOnly, boolean indexEntriesOnly);
 
   /**
-   *  Executed the specified commands as a single batch
+   * Executed the specified commands as a single batch
    * @param commandDatas
-   * @return
    */
   public BatchResult[] batch(final List<ICommandData> commandDatas);
 
@@ -181,7 +169,6 @@ public interface IDatabaseCommands extends IHoldProfilingInformation {
    * Returns a list of suggestions based on the specified suggestion query
    * @param index
    * @param suggestionQuery
-   * @return
    */
   public SuggestionQueryResult suggest(final String index, final SuggestionQuery suggestionQuery);
 
@@ -189,7 +176,6 @@ public interface IDatabaseCommands extends IHoldProfilingInformation {
    * Gets the index names from the server
    * @param start
    * @param pageSize
-   * @return
    */
   public Collection<String> getIndexNames(final int start, final int pageSize);
 
@@ -197,7 +183,6 @@ public interface IDatabaseCommands extends IHoldProfilingInformation {
    * Returns {@link IndexDefinition}s
    * @param start
    * @param pageSize
-   * @return
    */
   public Collection<IndexDefinition> getIndexes(final int start, final int pageSize);
 
@@ -205,7 +190,6 @@ public interface IDatabaseCommands extends IHoldProfilingInformation {
    * Gets the transformers from the server
    * @param start
    * @param pageSize
-   * @return
    */
   public List<TransformerDefinition> getTransformers(int start, int pageSize);
 
@@ -218,14 +202,12 @@ public interface IDatabaseCommands extends IHoldProfilingInformation {
   /**
    * Gets the index definition for the specified name
    * @param name
-   * @return
    */
   public IndexDefinition getIndex(String name);
 
   /**
    *  Gets the transformer definition for the specified name
    * @param name
-   * @return
    */
   public TransformerDefinition getTransformer(String name);
 
@@ -233,15 +215,13 @@ public interface IDatabaseCommands extends IHoldProfilingInformation {
    * Puts index with given definition
    * @param name
    * @param definition
-   * @return
    */
   public String putIndex(String name, IndexDefinition definition);
 
   /**
    * Creates a transformer with the specified name, based on an transformer definition
    * @param name
-   * @param indexDef
-   * @return
+   * @param transformerDef
    */
   public String putTransformer(String name, TransformerDefinition transformerDef);
 
@@ -250,7 +230,6 @@ public interface IDatabaseCommands extends IHoldProfilingInformation {
    * @param name
    * @param definition
    * @param overwrite
-   * @return
    */
   public String putIndex(final String name, final IndexDefinition definition, final boolean overwrite);
 
@@ -258,7 +237,6 @@ public interface IDatabaseCommands extends IHoldProfilingInformation {
    * Creates an index with the specified name, based on an index definition
    * @param name
    * @param indexDef
-   * @return
    */
   public String putIndex(String name, IndexDefinitionBuilder indexDef);
 
@@ -267,7 +245,6 @@ public interface IDatabaseCommands extends IHoldProfilingInformation {
    * @param name
    * @param indexDef
    * @param overwrite
-   * @return
    */
   public String putIndex(String name, IndexDefinitionBuilder indexDef, boolean overwrite);
 
@@ -276,7 +253,6 @@ public interface IDatabaseCommands extends IHoldProfilingInformation {
    * If index does not exist this method returns true.
    * @param name
    * @param indexDef
-   * @return
    */
   public boolean indexHasChanged(String name, IndexDefinition indexDef);
 
@@ -290,8 +266,7 @@ public interface IDatabaseCommands extends IHoldProfilingInformation {
    * Perform a set based deletes using the specified index.
    * @param indexName
    * @param queryToDelete
-   * @param allowStale
-   * @return
+   * @param options
    */
   public Operation deleteByIndex(final String indexName, final IndexQuery queryToDelete, final BulkOperationOptions options);
 
@@ -300,7 +275,6 @@ public interface IDatabaseCommands extends IHoldProfilingInformation {
    *  if the index is stale
    * @param indexName
    * @param queryToDelete
-   * @return
    */
   public Operation deleteByIndex(String indexName, IndexQuery queryToDelete);
 
@@ -324,7 +298,6 @@ public interface IDatabaseCommands extends IHoldProfilingInformation {
    * Sends a patch request for a specific document, ignoring document's Etag and if it is missing
    * @param key Key of the document to patch
    * @param patches Array of patch requests
-   * @return
    */
   public RavenJObject patch(String key, PatchRequest[] patches);
 
@@ -333,7 +306,6 @@ public interface IDatabaseCommands extends IHoldProfilingInformation {
    * @param key Key of the document to patch
    * @param patches Array of patch requests
    * @param ignoreMissing true if the patch request should ignore a missing document, false to throw DocumentDoesNotExistException
-   * @return
    */
   public RavenJObject patch(String key, PatchRequest[] patches, boolean ignoreMissing);
 
@@ -341,7 +313,6 @@ public interface IDatabaseCommands extends IHoldProfilingInformation {
    * Sends a patch request for a specific document, ignoring the document's Etag and  if the document is missing
    * @param key Key of the document to patch
    * @param patch The patch request to use (using JavaScript)
-   * @return
    */
   public RavenJObject patch(String key, ScriptedPatchRequest patch);
 
@@ -350,7 +321,6 @@ public interface IDatabaseCommands extends IHoldProfilingInformation {
    * @param key Key of the document to patch
    * @param patch The patch request to use (using JavaScript)
    * @param ignoreMissing true if the patch request should ignore a missing document, false to throw DocumentDoesNotExistException
-   * @return
    */
   public RavenJObject patch(String key, ScriptedPatchRequest patch, boolean ignoreMissing);
 
@@ -359,7 +329,6 @@ public interface IDatabaseCommands extends IHoldProfilingInformation {
    * @param key Key of the document to patch
    * @param patches Array of patch requests
    * @param etag Require specific Etag [null to ignore]
-   * @return
    */
   public RavenJObject patch(String key, PatchRequest[] patches, Etag etag);
 
@@ -369,7 +338,6 @@ public interface IDatabaseCommands extends IHoldProfilingInformation {
    * @param patchesToExisting Array of patch requests to apply to an existing document
    * @param patchesToDefault Array of patch requests to apply to a default document when the document is missing
    * @param defaultMetadata The metadata for the default document when the document is missing
-   * @return
    */
   public RavenJObject patch(String key, PatchRequest[] patchesToExisting, PatchRequest[] patchesToDefault, RavenJObject defaultMetadata);
 
@@ -378,7 +346,6 @@ public interface IDatabaseCommands extends IHoldProfilingInformation {
    * @param key Key of the document to patch
    * @param patch The patch request to use (using JavaScript)
    * @param etag Require specific Etag [null to ignore]
-   * @return
    */
   public RavenJObject patch(String key, ScriptedPatchRequest patch, Etag etag);
 
@@ -388,14 +355,12 @@ public interface IDatabaseCommands extends IHoldProfilingInformation {
    * @param patchExisting The patch request to use (using JavaScript) to an existing document
    * @param patchDefault The patch request to use (using JavaScript)  to a default document when the document is missing
    * @param defaultMetadata The metadata for the default document when the document is missing
-   * @return
    */
   public RavenJObject patch(String key, ScriptedPatchRequest patchExisting, ScriptedPatchRequest patchDefault, RavenJObject defaultMetadata);
 
   /**
    * Create a new instance of {@link IDatabaseCommands} that will interacts with the specified database
    * @param database
-   * @return
    */
   public IDatabaseCommands forDatabase(String database);
 
@@ -406,14 +371,12 @@ public interface IDatabaseCommands extends IHoldProfilingInformation {
 
   /**
    * Returns server statistics
-   * @return
    */
   public DatabaseStatistics getStatistics();
 
   /**
    * Gets the attachment by the specified key
    * @param key
-   * @return
    */
   @Deprecated
   public Attachment getAttachment(String key);
@@ -424,7 +387,6 @@ public interface IDatabaseCommands extends IHoldProfilingInformation {
   /**
    * Retrieves the attachment metadata with the specified key, not the actual attachment
    * @param key
-   * @return
    */
   @Deprecated
   public Attachment headAttachment(String key);
@@ -445,20 +407,17 @@ public interface IDatabaseCommands extends IHoldProfilingInformation {
    * @param field
    * @param fromValue
    * @param pageSize
-   * @return
    */
   public List<String> getTerms(String index, String field, String fromValue, int pageSize);
 
   /**
    * Disable all caching within the given scope
-   * @return
    */
   public AutoCloseable disableAllCaching();
 
   /**
    * Perform a single POST request containing multiple nested GET requests
    * @param requests
-   * @return
    */
   public GetResponse[] multiGet(GetRequest[] requests);
 
@@ -468,7 +427,6 @@ public interface IDatabaseCommands extends IHoldProfilingInformation {
    * @param indexName
    * @param queryToUpdate
    * @param patchRequests
-   * @return
    */
   public Operation updateByIndex(String indexName, IndexQuery queryToUpdate, PatchRequest[] patchRequests);
 
@@ -478,7 +436,6 @@ public interface IDatabaseCommands extends IHoldProfilingInformation {
    * @param indexName
    * @param queryToUpdate
    * @param patch
-   * @return
    */
   public Operation updateByIndex(String indexName, IndexQuery queryToUpdate, ScriptedPatchRequest patch);
 
@@ -488,8 +445,7 @@ public interface IDatabaseCommands extends IHoldProfilingInformation {
    * @param indexName
    * @param queryToUpdate
    * @param patchRequests
-   * @param allowStale
-   * @return
+   * @param options
    */
   public Operation updateByIndex(String indexName, IndexQuery queryToUpdate, PatchRequest[] patchRequests, BulkOperationOptions options);
 
@@ -499,8 +455,7 @@ public interface IDatabaseCommands extends IHoldProfilingInformation {
    * @param indexName
    * @param queryToUpdate
    * @param patch
-   * @param allowStale
-   * @return
+   * @param options
    */
   public Operation updateByIndex(String indexName, IndexQuery queryToUpdate, ScriptedPatchRequest patch, BulkOperationOptions options);
 
@@ -509,8 +464,6 @@ public interface IDatabaseCommands extends IHoldProfilingInformation {
    * @param index
    * @param query
    * @param facetSetupDoc
-   * @param start
-   * @return
    */
   public FacetResults getFacets(String index, IndexQuery query, String facetSetupDoc);
 
@@ -520,7 +473,6 @@ public interface IDatabaseCommands extends IHoldProfilingInformation {
    * @param query
    * @param facetSetupDoc
    * @param start
-   * @return
    */
   public FacetResults getFacets(String index, IndexQuery query, String facetSetupDoc, int start);
 
@@ -531,7 +483,6 @@ public interface IDatabaseCommands extends IHoldProfilingInformation {
    * @param facetSetupDoc
    * @param start
    * @param pageSize
-   * @return
    */
   public FacetResults getFacets(String index, IndexQuery query, String facetSetupDoc, int start, Integer pageSize);
 
@@ -540,9 +491,6 @@ public interface IDatabaseCommands extends IHoldProfilingInformation {
    * @param index
    * @param query
    * @param facets
-   * @param start
-   * @param pageSize
-   * @return
    */
   public FacetResults getFacets(final String index, final IndexQuery query, final List<Facet> facets) ;
 
@@ -553,8 +501,6 @@ public interface IDatabaseCommands extends IHoldProfilingInformation {
    * @param query
    * @param facets
    * @param start
-   * @param pageSize
-   * @return
    */
   public FacetResults getFacets(final String index, final IndexQuery query, final List<Facet> facets, final int start) ;
 
@@ -566,7 +512,6 @@ public interface IDatabaseCommands extends IHoldProfilingInformation {
    * @param facets
    * @param start
    * @param pageSize
-   * @return
    */
   public FacetResults getFacets(final String index, final IndexQuery query, final List<Facet> facets, final int start, final Integer pageSize) ;
 
@@ -576,7 +521,6 @@ public interface IDatabaseCommands extends IHoldProfilingInformation {
    * @param matches
    * @param start
    * @param pageSize
-   * @return
    */
   public List<JsonDocument> startsWith(String keyPrefix, String matches, int start, int pageSize) throws ServerClientException;
 
@@ -588,7 +532,6 @@ public interface IDatabaseCommands extends IHoldProfilingInformation {
    * @param start
    * @param pageSize
    * @param metadataOnly
-   * @return
    */
   public List<JsonDocument> startsWith(String keyPrefix, String matches, int start, int pageSize, boolean metadataOnly);
 
@@ -599,7 +542,6 @@ public interface IDatabaseCommands extends IHoldProfilingInformation {
    * @param start
    * @param pageSize
    * @param metadataOnly
-   * @return
    */
   public List<JsonDocument> startsWith(String keyPrefix, String matches, int start, int pageSize, boolean metadataOnly, String exclude);
 
@@ -610,7 +552,6 @@ public interface IDatabaseCommands extends IHoldProfilingInformation {
    * @param start
    * @param pageSize
    * @param metadataOnly
-   * @return
    */
   public List<JsonDocument> startsWith(String keyPrefix, String matches, int start, int pageSize, boolean metadataOnly, String exclude, RavenPagingInformation pagingInformation);
 
@@ -624,7 +565,6 @@ public interface IDatabaseCommands extends IHoldProfilingInformation {
    * Seeds the next identity value on the server
    * @param name
    * @param value
-   * @return
    */
   public long seedIdentityFor(final String name, final long value) ;
 
@@ -659,7 +599,6 @@ public interface IDatabaseCommands extends IHoldProfilingInformation {
    * @param idPrefix
    * @param start
    * @param pageSize
-   * @return
    */
   @Deprecated
   public List<Attachment> getAttachmentHeadersStartingWith(String idPrefix, int start, int pageSize);
@@ -670,14 +609,12 @@ public interface IDatabaseCommands extends IHoldProfilingInformation {
    * @param index
    * @param query
    * @param queryHeaderInfo
-   * @return
    */
   public CloseableIterator<RavenJObject> streamQuery(String index, IndexQuery query, Reference<QueryHeaderInformation> queryHeaderInfo) ;
 
   /**
    * Streams the documents by etag OR starts with the prefix and match the matches
    * Will return *all* results, regardless of the number of items that might be returned.
-   * @return
    */
   public CloseableIterator<RavenJObject> streamDocs();
 
@@ -685,7 +622,6 @@ public interface IDatabaseCommands extends IHoldProfilingInformation {
    * Streams the documents by etag OR starts with the prefix and match the matches
    * Will return *all* results, regardless of the number of items that might be returned.
    * @param fromEtag
-   * @return
    */
   public CloseableIterator<RavenJObject> streamDocs(Etag fromEtag);
 
@@ -694,7 +630,6 @@ public interface IDatabaseCommands extends IHoldProfilingInformation {
    * Will return *all* results, regardless of the number of items that might be returned.
    * @param fromEtag
    * @param startsWith
-   * @return
    */
   public CloseableIterator<RavenJObject> streamDocs(Etag fromEtag, String startsWith);
 
@@ -704,7 +639,6 @@ public interface IDatabaseCommands extends IHoldProfilingInformation {
    * @param fromEtag
    * @param startsWith
    * @param matches
-   * @return
    */
   public CloseableIterator<RavenJObject> streamDocs(Etag fromEtag, String startsWith, String matches);
 
@@ -715,7 +649,6 @@ public interface IDatabaseCommands extends IHoldProfilingInformation {
    * @param startsWith
    * @param matches
    * @param start
-   * @return
    */
   public CloseableIterator<RavenJObject> streamDocs(Etag fromEtag, String startsWith, String matches, int start);
 
@@ -727,7 +660,6 @@ public interface IDatabaseCommands extends IHoldProfilingInformation {
    * @param matches
    * @param start
    * @param pageSize
-   * @return
    */
   public CloseableIterator<RavenJObject> streamDocs(Etag fromEtag, String startsWith, String matches, int start, int pageSize);
 
@@ -739,7 +671,6 @@ public interface IDatabaseCommands extends IHoldProfilingInformation {
    * @param matches
    * @param start
    * @param pageSize
-   * @return
    */
   public CloseableIterator<RavenJObject> streamDocs(Etag fromEtag, String startsWith, String matches, int start, int pageSize, String exclude);
 
@@ -752,7 +683,6 @@ public interface IDatabaseCommands extends IHoldProfilingInformation {
    * @param start
    * @param pageSize
    * @param pagingInformation
-   * @return
    */
   public CloseableIterator<RavenJObject> streamDocs(Etag fromEtag, String startsWith, String matches, int start, int pageSize, String exclude, RavenPagingInformation pagingInformation);
 
@@ -766,21 +696,18 @@ public interface IDatabaseCommands extends IHoldProfilingInformation {
    * @param pageSize
    * @param pagingInformation
    * @param skipAfter
-   * @return
    */
   public CloseableIterator<RavenJObject> streamDocs(Etag fromEtag, String startsWith, String matches, int start, int pageSize, String exclude, RavenPagingInformation pagingInformation, String skipAfter);
 
   /**
    * Return a list of documents that based on the MoreLikeThisQuery.
    * @param query
-   * @return
    */
   public MultiLoadResult moreLikeThis(MoreLikeThisQuery query);
 
   /**
    * Sends a multiple faceted queries in a single request and calculates the facet results for each of them
    * @param facetedQueries
-   * @return
    */
   public FacetResults[] getMultiFacets(FacetQuery[] facetedQueries);
 
@@ -788,21 +715,18 @@ public interface IDatabaseCommands extends IHoldProfilingInformation {
   /**
    * Checks if the document exists for the specified key
    * @param key The key.
-   * @return
    */
   public JsonDocumentMetadata head(String key);
 
   /**
    * Generate the next identity value from the server
    * @param name
-   * @return
    */
   public Long nextIdentityFor(String name);
 
   /**
    * Get the full URL for the given document key
    * @param documentKey
-   * @return
    */
   public String urlFor(String documentKey);
 
@@ -813,7 +737,6 @@ public interface IDatabaseCommands extends IHoldProfilingInformation {
 
   public ILowLevelBulkInsertOperation getBulkInsertOperation(BulkInsertOptions options, IDatabaseChanges changes);
 
-
   public IndexMergeResults getIndexMergeSuggestions();
 
   /**
@@ -822,7 +745,6 @@ public interface IDatabaseCommands extends IHoldProfilingInformation {
    * @param etag
    * @param conflictedIds
    * @param opUrl
-   * @return
    */
   public Boolean tryResolveConflictByUsingRegisteredListeners(String key, Etag etag, String[] conflictedIds,
     OperationMetadata opUrl);

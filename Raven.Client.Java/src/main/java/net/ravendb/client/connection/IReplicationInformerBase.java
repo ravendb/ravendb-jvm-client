@@ -43,14 +43,12 @@ public interface IReplicationInformerBase<T> extends Closeable {
   /**
    * Get the current failure count for the url
    * @param operationUrl
-   * @return
    */
   public AtomicLong getFailureCount(String operationUrl);
 
   /**
    * Get failure last check time for the url
    * @param operationUrl
-   * @return
    */
   public Date getFailureLastCheck(String operationUrl);
 

@@ -149,7 +149,6 @@ public class DocumentQuery<T> extends AbstractDocumentQuery<T, DocumentQuery<T>>
    * Selects the specified fields directly from the index
    * @param projectionClass The class of the projection
    * @param fields The fields.
-   * @return
    */
   @Override
   public <TProjection> IDocumentQuery<TProjection> selectFields(Class<TProjection> projectionClass, String... fields) {
@@ -161,7 +160,6 @@ public class DocumentQuery<T> extends AbstractDocumentQuery<T, DocumentQuery<T>>
    * @param projectionClass The class of the projection
    * @param fields
    * @param projections
-   * @return
    */
   @Override
   public <TProjection> IDocumentQuery<TProjection> selectFields(Class<TProjection> projectionClass, String[] fields, String[] projections) {

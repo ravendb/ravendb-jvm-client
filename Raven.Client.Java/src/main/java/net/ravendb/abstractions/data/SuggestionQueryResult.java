@@ -9,7 +9,7 @@ public class SuggestionQueryResult {
 
   /**
    * The suggestions based on the term and dictionary
-   * @return
+   * @return suggestions
    */
   public String[] getSuggestions() {
     return suggestions;

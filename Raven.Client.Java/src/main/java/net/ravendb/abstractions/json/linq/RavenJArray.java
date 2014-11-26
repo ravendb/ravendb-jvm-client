@@ -71,7 +71,7 @@ public class RavenJArray extends RavenJToken implements Iterable<RavenJToken> {
   /**
    * Gets the {@link RavenJToken} at the specified index.
    * @param index
-   * @return
+   * @return RavenJToken
    */
   public RavenJToken get(int index) {
     return items.get(index);

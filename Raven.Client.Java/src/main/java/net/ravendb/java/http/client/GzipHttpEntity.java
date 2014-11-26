@@ -17,7 +17,7 @@ public class GzipHttpEntity implements HttpEntity {
   }
 
   /**
-   * @return
+   * @return isRepeatable
    * @see org.apache.http.HttpEntity#isRepeatable()
    */
   @Override
@@ -26,7 +26,7 @@ public class GzipHttpEntity implements HttpEntity {
   }
 
   /**
-   * @return
+   * @return isChunked
    * @see org.apache.http.HttpEntity#isChunked()
    */
   @Override
@@ -35,7 +35,7 @@ public class GzipHttpEntity implements HttpEntity {
   }
 
   /**
-   * @return
+   * @return content length
    * @see org.apache.http.HttpEntity#getContentLength()
    */
   @Override
@@ -44,7 +44,7 @@ public class GzipHttpEntity implements HttpEntity {
   }
 
   /**
-   * @return
+   * @return content type
    * @see org.apache.http.HttpEntity#getContentType()
    */
   @Override
@@ -53,7 +53,7 @@ public class GzipHttpEntity implements HttpEntity {
   }
 
   /**
-   * @return
+   * @return content encoding
    * @see org.apache.http.HttpEntity#getContentEncoding()
    */
   @Override
@@ -62,7 +62,7 @@ public class GzipHttpEntity implements HttpEntity {
   }
 
   /**
-   * @return
+   * @return content as InputSteam
    * @throws IOException
    * @throws IllegalStateException
    * @see org.apache.http.HttpEntity#getContent()
@@ -85,7 +85,7 @@ public class GzipHttpEntity implements HttpEntity {
   }
 
   /**
-   * @return
+   * @return isStreaming
    * @see org.apache.http.HttpEntity#isStreaming()
    */
   @Override

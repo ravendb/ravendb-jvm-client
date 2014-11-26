@@ -10,8 +10,7 @@ import net.ravendb.abstractions.json.linq.RavenJObject;
  */
 public interface IJsonDocumentMetadata {
   /**
-   * Gets the metadata for the document
-   * @return
+   * @return metadata for the document
    */
   public RavenJObject getMetadata();
 
@@ -33,13 +32,13 @@ public interface IJsonDocumentMetadata {
 
   /**
    * Gets a value indicating whether this document is non authoritative (modified by uncommitted transaction).
-   * @return the monAuthoritativeInformation
+   * @return the nonAuthoritativeInformation
    */
   public Boolean getNonAuthoritativeInformation();
 
   /**
    * Sets a value indicating whether this document is non authoritative (modified by uncommitted transaction).
-   * @param monAuthoritativeInformation
+   * @param nonAuthoritativeInformation
    */
   public void setNonAuthoritativeInformation(Boolean nonAuthoritativeInformation);
 

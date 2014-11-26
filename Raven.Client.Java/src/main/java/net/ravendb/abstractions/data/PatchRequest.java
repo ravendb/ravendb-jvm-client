@@ -38,30 +38,28 @@ public class PatchRequest {
     this.value = value;
   }
   /**
-   * Get AllPositions. Set this property to true if you want to modify all items in an collection.
-   * @return
+   * @return Get AllPositions. Set this property to true if you want to modify all items in an collection.
    */
   public Boolean getAllPositions() {
     return allPositions;
   }
+
   /**
-   * Gets the name
-   * @return
+   * @return name
    */
   public String getName() {
     return name;
   }
 
   /**
-   * Gets the nested operations to perform. This is only valid when the {@link PatchCommandType.MODIFY}.
+   * Gets the nested operations to perform. This is only valid when the PatchCommandType.MODIFY.
    */
   public PatchRequest[] getNested() {
     return nested;
   }
 
   /**
-   * Gets the position
-   * @return
+   * @return the position
    */
   public Integer getPosition() {
     return position;
@@ -71,22 +69,19 @@ public class PatchRequest {
    * Gets or sets the previous value, which is compared against the current value to verify a
    * change isn't overwriting new values.
    * If the value is null, the operation is always successful
-   * @return
    */
   public RavenJToken getPrevVal() {
     return prevVal;
   }
   /**
-   * Gets the type of the operation
-   * @return
+   * @return Gets the type of the operation
    */
   public PatchCommandType getType() {
     return type;
   }
 
   /**
-   * Gets the value.
-   * @return
+   * @return the value
    */
   public RavenJToken getValue() {
     return value;
@@ -115,7 +110,7 @@ public class PatchRequest {
 
   /**
    * Translates this instance to json
-   * @return
+   * @return json instance
    */
   public RavenJObject toJson() {
     RavenJObject jObject = new RavenJObject();
@@ -144,7 +139,7 @@ public class PatchRequest {
   /**
    * Create an instance from a json object
    * @param patchRequestJson
-   * @return
+   * @return PatchRequest
    */
   public static PatchRequest fromJson(RavenJObject patchRequestJson)
   {

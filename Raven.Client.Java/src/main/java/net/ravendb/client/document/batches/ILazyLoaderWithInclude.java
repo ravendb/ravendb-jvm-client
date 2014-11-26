@@ -10,7 +10,6 @@ import com.mysema.query.types.Path;
 /**
  * Fluent interface for specifying include paths
  * for loading documents lazily
- * @param <T>
  * NOTE: Java version does not contain method load that skips class parameter - since we can't track type in method signature based on Path object
  */
 public interface ILazyLoaderWithInclude {
@@ -18,14 +17,12 @@ public interface ILazyLoaderWithInclude {
   /**
    * Includes the specified path.
    * @param path
-   * @return
    */
   public ILazyLoaderWithInclude include(String path);
 
   /**
    * Includes the specified path
    * @param path
-   * @return
    */
   public ILazyLoaderWithInclude include(Path<?> path);
 
@@ -33,14 +30,12 @@ public interface ILazyLoaderWithInclude {
    * Loads the specified ids.
    * @param clazz
    * @param ids
-   * @return
    */
   public <TResult> Lazy<TResult[]> load(Class<TResult> clazz, String... ids);
 
   /**
    * Loads the specified ids.
    * @param ids
-   * @return
    */
   public <TResult> Lazy<TResult[]> load(Class<TResult> clazz, Collection<String> ids);
 
@@ -48,7 +43,6 @@ public interface ILazyLoaderWithInclude {
    * Loads the specified id.
    * @param clazz
    * @param id
-   * @return
    */
   public <TResult> Lazy<TResult> load(Class<TResult> clazz, String id);
 
@@ -62,7 +56,6 @@ public interface ILazyLoaderWithInclude {
    * lazyLoad(Post.class, "posts/1")
    * @param clazz
    * @param id
-   * @return
    */
   public <TResult> Lazy<TResult> load(Class<TResult> clazz, Number id);
 
@@ -76,7 +69,6 @@ public interface ILazyLoaderWithInclude {
    * lazyLoad(Post.class, "posts/1")
    * @param clazz
    * @param id
-   * @return
    */
   public <TResult> Lazy<TResult> load(Class<TResult> clazz, UUID id);
 

@@ -12,38 +12,21 @@ public class WhereParams {
   private boolean allowWildcards;
   private boolean isNestedPath;
 
-  /**
-   * The field name
-   * @return
-   */
   public String getFieldName() {
     return fieldName;
   }
-  /**
-   * The field name
-   * @param fieldName
-   */
   public void setFieldName(String fieldName) {
     this.fieldName = fieldName;
   }
-  /**
-   * The field value
-   * @return
-   */
   public Object getValue() {
     return value;
   }
 
-  /**
-   * The field value
-   * @param value
-   */
   public void setValue(Object value) {
     this.value = value;
   }
   /**
-   * Should the field be analyzed
-   * @return
+   * @return Should the field be analyzed
    */
   public boolean isAnalyzed() {
     return isAnalyzed;
@@ -66,8 +49,7 @@ public class WhereParams {
   }
 
   /**
-   * Should the field allow wildcards
-   * @return
+   * @return Should the field allow wildcards
    */
   public boolean isAllowWildcards() {
     return allowWildcards;
@@ -82,8 +64,7 @@ public class WhereParams {
   }
 
   /**
-   * Is this a root property or not?
-   * @return
+   * @return Is this a root property or not?
    */
   public boolean isNestedPath() {
     return isNestedPath;

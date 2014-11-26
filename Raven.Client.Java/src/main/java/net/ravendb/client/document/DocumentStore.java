@@ -517,7 +517,6 @@ public class DocumentStore extends DocumentStoreBase {
   /**
    * Subscribe to change notifications from the server
    * @param database
-   * @return
    */
   @Override
   public IDatabaseChanges changes(String database) {

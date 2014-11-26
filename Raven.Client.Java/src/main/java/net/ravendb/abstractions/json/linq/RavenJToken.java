@@ -40,7 +40,7 @@ public abstract class RavenJToken {
   /**
    * Creates a {@link RavenJToken} from an object.
    * @param o object
-   * @return
+   * @return RavenJToken
    */
   public static RavenJToken fromObject(Object o) {
     return fromObjectInternal(o, JsonExtensions.createDefaultJsonSerializer());
@@ -75,7 +75,7 @@ public abstract class RavenJToken {
   /**
    * Load a {@link RavenJToken} from a string that contains JSON.
    * @param json
-   * @return
+   * @return parsed token
    */
   public static RavenJToken parse(String json) throws JsonReaderException {
     try {
@@ -89,7 +89,7 @@ public abstract class RavenJToken {
   /**
    * Load a {@link RavenJToken} from a string that contains JSON.
    * @param json
-   * @return
+   * @return parsed token
    */
   public static RavenJToken tryLoad(InputStream json) throws JsonReaderException {
     try {
@@ -450,7 +450,7 @@ public abstract class RavenJToken {
 
   /**
    * Gets the node type for this {@link RavenJToken}
-   * @return
+   * @return token type
    */
   public abstract JTokenType getType();
 

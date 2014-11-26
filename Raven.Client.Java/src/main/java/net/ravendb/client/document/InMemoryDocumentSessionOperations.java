@@ -119,13 +119,10 @@ public abstract class InMemoryDocumentSessionOperations implements AutoCloseable
 
   /**
    * Gets the number of entities held in memory to manage Unit of Work
-   * @return
    */
   public int getNumberOfEntitiesInUnitOfWork() {
     return entitiesAndMetadata.size();
   }
-
-
 
   public int getNumberOfRequests() {
     return numberOfRequests;
@@ -185,7 +182,6 @@ public abstract class InMemoryDocumentSessionOperations implements AutoCloseable
 
   /**
    * Gets the timeout to wait for authoritative information if encountered non authoritative document.
-   * @return
    */
   public Long getNonAuthoritativeInformationTimeout() {
     return nonAuthoritativeInformationTimeout;
@@ -202,7 +198,6 @@ public abstract class InMemoryDocumentSessionOperations implements AutoCloseable
   /**
    * Gets the store identifier for this session.
    * The store identifier is the identifier for the particular RavenDB instance.
-   * @return
    */
   public String getStoreIdentifier() {
     return documentStore.getIdentifier() + ";" + getDatabaseName();
@@ -213,7 +208,6 @@ public abstract class InMemoryDocumentSessionOperations implements AutoCloseable
    *
    * This instance is shared among all sessions, changes to the {@link DocumentConvention} should be done
    * via the {@link IDocumentStore} instance, not on a single session.
-   * @return
    */
   public DocumentConvention getConventions() {
     return documentStore.getConventions();
@@ -221,9 +215,7 @@ public abstract class InMemoryDocumentSessionOperations implements AutoCloseable
 
   /**
    * Gets the max number of requests per session.
-   * If the {@link #numberOfRequest} rise above {@link #maxNumberOfRequestsPerSession}>, an exception will be thrown.
-   *
-   * @return
+   * If the numberOfRequest rise above maxNumberOfRequestsPerSession, an exception will be thrown.
    */
   public int getMaxNumberOfRequestsPerSession() {
     return maxNumberOfRequestsPerSession;
@@ -231,7 +223,7 @@ public abstract class InMemoryDocumentSessionOperations implements AutoCloseable
 
   /**
    * Sets the max number of requests per session.
-   * If the {@link #numberOfRequest} rise above {@link #maxNumberOfRequestsPerSession}>, an exception will be thrown.
+   * If the numberOfRequest rise above maxNumberOfRequestsPerSession, an exception will be thrown.
    * @param maxNumberOfRequestsPerSession
    */
   public void setMaxNumberOfRequestsPerSession(int maxNumberOfRequestsPerSession) {
@@ -242,7 +234,6 @@ public abstract class InMemoryDocumentSessionOperations implements AutoCloseable
    * Gets a value indicating whether the session should use optimistic concurrency.
    * When set to <c>true</c>, a check is made so that a change made behind the session back would fail
    * and raise {@link ConcurrencyException}
-   * @return
    */
   public boolean isUseOptimisticConcurrency() {
     return useOptimisticConcurrency;
@@ -252,7 +243,6 @@ public abstract class InMemoryDocumentSessionOperations implements AutoCloseable
    * Sets a value indicating whether the session should use optimistic concurrency.
    * When set to <c>true</c>, a check is made so that a change made behind the session back would fail
    * and raise {@link ConcurrencyException}
-   * @return
    */
   public void setUseOptimisticConcurrency(boolean useOptimisticConcurrency) {
     this.useOptimisticConcurrency = useOptimisticConcurrency;
@@ -265,7 +255,6 @@ public abstract class InMemoryDocumentSessionOperations implements AutoCloseable
    * and associate the current state of the entity with the etag from the server.
    *
    * @param instance
-   * @return
    */
   public <T> Etag getEtagFor(T instance) {
     return getDocumentMetadata(instance).getEtag();
@@ -274,7 +263,6 @@ public abstract class InMemoryDocumentSessionOperations implements AutoCloseable
   /**
    * Gets the metadata for the specified entity.
    * @param instance
-   * @return
    */
   public <T> RavenJObject getMetadataFor(T instance) {
     return getDocumentMetadata(instance).getMetadata();
@@ -309,7 +297,6 @@ public abstract class InMemoryDocumentSessionOperations implements AutoCloseable
   /**
    * Get the json document by key from the store
    * @param documentKey
-   * @return
    */
   protected abstract JsonDocument getJsonDocument(String documentKey);
 
@@ -317,7 +304,6 @@ public abstract class InMemoryDocumentSessionOperations implements AutoCloseable
    * Returns whatever a document with the specified id is loaded in the
    * current session
    * @param id
-   * @return
    */
   public boolean isLoaded(String id) {
     if (isDeleted(id)) {
@@ -330,7 +316,6 @@ public abstract class InMemoryDocumentSessionOperations implements AutoCloseable
    * Returns whatever a document with the specified id is deleted
    * or known to be missing
    * @param id
-   * @return
    */
   public boolean isDeleted(String id) {
     return knownMissingIds.contains(id);
@@ -339,7 +324,6 @@ public abstract class InMemoryDocumentSessionOperations implements AutoCloseable
   /**
    * Gets the document id.
    * @param instance
-   * @return
    */
   public String getDocumentId(Object instance) {
     if (instance == null)
@@ -370,7 +354,6 @@ public abstract class InMemoryDocumentSessionOperations implements AutoCloseable
    * Determines whether the specified entity has changed.
    *
    * @param entity
-   * @return
    */
   public boolean hasChanged(Object entity) {
     DocumentMetadata value;
@@ -396,7 +379,6 @@ public abstract class InMemoryDocumentSessionOperations implements AutoCloseable
    * Tracks the entity inside the unit of work
    * @param entityType
    * @param documentFound
-   * @return
    */
   public Object trackEntity(Class<?> entityType, JsonDocument documentFound) {
     if (Boolean.TRUE.equals(documentFound.getNonAuthoritativeInformation()) && !allowNonAuthoritativeInformation) {
@@ -423,7 +405,6 @@ public abstract class InMemoryDocumentSessionOperations implements AutoCloseable
    * @param document
    * @param metadata
    * @param noTracking
-   * @return
    */
   public Object trackEntity(Class<?> entityType, String key, RavenJObject document, RavenJObject metadata, boolean noTracking) {
     document.remove("@metadata");
@@ -464,7 +445,6 @@ public abstract class InMemoryDocumentSessionOperations implements AutoCloseable
    * @param id
    * @param documentFound
    * @param metadata
-   * @return
    */
   public Object convertToEntity(Class<?> entityType, String id, RavenJObject documentFound, RavenJObject metadata) {
     try {
@@ -530,7 +510,6 @@ public abstract class InMemoryDocumentSessionOperations implements AutoCloseable
   /**
    * Gets the default value of the specified type.
    * @param type
-   * @return
    */
   static Object getDefaultValue(Class<?> type) {
     return Defaults.defaultValue(type);
@@ -766,7 +745,6 @@ public abstract class InMemoryDocumentSessionOperations implements AutoCloseable
    * Creates the put entity command.
    * @param entity
    * @param documentMetadata
-   * @return
    */
   protected ICommandData createPutEntityCommand(Object entity, DocumentMetadata documentMetadata) {
 
@@ -845,7 +823,6 @@ public abstract class InMemoryDocumentSessionOperations implements AutoCloseable
 
   /**
    * Prepares for save changes.
-   * @return
    */
   protected SaveChangesData prepareForSaveChanges() {
     getEntityToJson().getCachedJsonDocs().clear();
@@ -981,7 +958,6 @@ public abstract class InMemoryDocumentSessionOperations implements AutoCloseable
    * Determines if the entity have changed.
    * @param entity
    * @param documentMetadata
-   * @return
    */
   protected boolean entityChanged(Object entity, DocumentMetadata documentMetadata, Map<String, List<DocumentsChanges>> changes) {
     if (documentMetadata == null) {
@@ -1110,8 +1086,6 @@ public abstract class InMemoryDocumentSessionOperations implements AutoCloseable
       }
     }
   }
-
-  //TODO: ProjectionToInstance and JsonObjectToClrInstancesWithoutTracking is missing
 
   @Override
   public int hashCode() {

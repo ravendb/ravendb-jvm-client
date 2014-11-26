@@ -45,8 +45,7 @@ import org.codehaus.jackson.map.SerializationConfig.Feature;
 
 /**
  * Note: we removed logic related to applyReduceFunction because we don't support map/reduce on shards
- * we also don't support contractResolver - Jackson customization can be performed via {@link JsonExtensions#getDefaultObjectMapper()} instance
- *
+ * we also don't support contractResolver - Jackson customization can be performed via JsonExtensions#getDefaultObjectMapper() instance
  */
 public class DocumentConvention extends Convention implements Serializable {
 
@@ -242,7 +241,6 @@ public class DocumentConvention extends Convention implements Serializable {
    * @param id
    * @param type
    * @param allowNull
-   * @return
    */
   public String defaultFindFullDocumentKeyFromNonStringIdentifier(Object id, Class<?> type, boolean allowNull) {
     ITypeConverter converter = null;
@@ -267,7 +265,6 @@ public class DocumentConvention extends Convention implements Serializable {
 
   /**
    * Disable all profiling support
-   * @return
    */
   public boolean isDisableProfiling() {
     return disableProfiling;
@@ -284,7 +281,6 @@ public class DocumentConvention extends Convention implements Serializable {
   /**
    * A list of type converters that can be used to translate the document key (string)
    * to whatever type it is that is used on the entity, if the type isn't already a string
-   * @return
    */
   public List<ITypeConverter> getIdentityTypeConvertors() {
     return identityTypeConvertors;
@@ -309,7 +305,6 @@ public class DocumentConvention extends Convention implements Serializable {
 
   /**
    * Gets the identity parts separator used by the HiLo generators
-   * @return
    */
   public String getIdentityPartsSeparator() {
     return identityPartsSeparator;
@@ -325,7 +320,6 @@ public class DocumentConvention extends Convention implements Serializable {
 
   /**
    * Gets the default max number of requests per session.
-   * @return
    */
   public int getMaxNumberOfRequestsPerSession() {
     return maxNumberOfRequestsPerSession;
@@ -344,7 +338,6 @@ public class DocumentConvention extends Convention implements Serializable {
    *  By default, queries on id are disabled, because it is far more efficient
    *  to do a Load() than a Query() if you already know the id.
    *  This is NOT recommended and provided for backward compatibility purposes only.
-   * @return
    */
   public boolean isAllowQueriesOnId() {
     return allowQueriesOnId;
@@ -363,7 +356,6 @@ public class DocumentConvention extends Convention implements Serializable {
 
   /**
    * The consistency options used when querying the database by default
-   * @return
    */
   public ConsistencyOptions getDefaultQueryingConsistency() {
     return defaultQueryingConsistency;
@@ -381,7 +373,6 @@ public class DocumentConvention extends Convention implements Serializable {
    * Generates the document key using identity.
    * @param conventions
    * @param entity
-   * @return
    */
   public static String generateDocumentKeyUsingIdentity(DocumentConvention conventions, Object entity) {
     return conventions.getDynamicTagName(entity) + "/";
@@ -390,7 +381,6 @@ public class DocumentConvention extends Convention implements Serializable {
   /**
    * Get the default tag name for the specified type.
    * @param t
-   * @return
    */
   public static String defaultTypeTagName(Class<?> t) {
     String result;
@@ -408,7 +398,6 @@ public class DocumentConvention extends Convention implements Serializable {
   /**
    *  Gets the name of the type tag.
    * @param type
-   * @return
    */
   public String getTypeTagName(Class<?> type) {
     String value = findTypeTagName.find(type);
@@ -433,7 +422,6 @@ public class DocumentConvention extends Convention implements Serializable {
    * @param dbName
    * @param databaseCommands
    * @param entity
-   * @return
    */
   public String generateDocumentKey(String dbName, IDatabaseCommands databaseCommands, Object entity) {
     Class<?> type = entity.getClass();
@@ -448,7 +436,6 @@ public class DocumentConvention extends Convention implements Serializable {
 
   /**
    *  Gets the function to find the java class of a document.
-   * @return
    */
   public JavaClassFinder getFindJavaClass() {
     return findJavaClass;
@@ -464,7 +451,6 @@ public class DocumentConvention extends Convention implements Serializable {
 
   /**
    *  Gets the function to find the java class name from a java class
-   * @return
    */
   public JavaClassNameFinder getFindJavaClassName() {
     return findJavaClassName;
@@ -472,7 +458,7 @@ public class DocumentConvention extends Convention implements Serializable {
 
   /**
    *  Sets the function to find the java class name from a java class
-   * @param find JavaClassName
+   * @param findJavaClassName
    */
   public void setFindJavaClassName(JavaClassNameFinder findJavaClassName) {
     this.findJavaClassName = findJavaClassName;
@@ -481,7 +467,6 @@ public class DocumentConvention extends Convention implements Serializable {
   /**
    * Gets the function to find the full document key based on the type of a document
    * and the value type identifier (just the numeric part of the id).
-   * @return
    */
   public DocumentKeyFinder getFindFullDocumentKeyFromNonStringIdentifier() {
     return findFullDocumentKeyFromNonStringIdentifier;
@@ -498,7 +483,6 @@ public class DocumentConvention extends Convention implements Serializable {
 
   /**
    * Gets the function to find the type tag.
-   * @return
    */
   public TypeTagNameFinder getFindTypeTagName() {
     return findTypeTagName;
@@ -515,7 +499,6 @@ public class DocumentConvention extends Convention implements Serializable {
   /**
    * Gets the function to find the indexed property name
    * given the indexed document type, the index name, the current path and the property path.
-   * @return
    */
   public PropertyNameFinder getFindPropertyNameForIndex() {
     return findPropertyNameForIndex;
@@ -533,7 +516,6 @@ public class DocumentConvention extends Convention implements Serializable {
   /**
    *  Gets the function to find the indexed property name
    *  given the indexed document type, the index name, the current path and the property path.
-   * @return
    */
   public PropertyNameFinder getFindPropertyNameForDynamicIndex() {
     return findPropertyNameForDynamicIndex;
@@ -548,11 +530,8 @@ public class DocumentConvention extends Convention implements Serializable {
     this.findPropertyNameForDynamicIndex = findPropertyNameForDynamicIndex;
   }
 
-
-
   /**
    * Get the function to get the identity property name from the entity name
-   * @return
    */
   public IdentityPropertyNameFinder getFindIdentityPropertyNameFromEntityName() {
     return findIdentityPropertyNameFromEntityName;
@@ -568,7 +547,6 @@ public class DocumentConvention extends Convention implements Serializable {
 
   /**
    * Gets the document key generator.
-   * @return
    */
   public DocumentKeyGenerator getDocumentKeyGenerator() {
     return documentKeyGenerator;
@@ -587,7 +565,6 @@ public class DocumentConvention extends Convention implements Serializable {
    * changes and rebuild the cache. This will make that outdated data will be revalidated
    * to make the cache more updated, however it is still possible to get a state result because of the time
    * needed to receive the notification and forcing to check for cached data.
-   * @return
    */
   public boolean isShouldAggressiveCacheTrackChanges() {
     return shouldAggressiveCacheTrackChanges;
@@ -609,7 +586,6 @@ public class DocumentConvention extends Convention implements Serializable {
    * to check with the server after we called SaveChanges() on a non empty data set.
    * This will make any outdated data revalidated, and will work nicely as long as you have just a
    * single client. For multiple clients, {@link DocumentConvention#shouldAggressiveCacheTrackChanges}
-   * @return
    */
   public boolean isShouldSaveChangesForceAggressiveCacheCheck() {
     return shouldSaveChangesForceAggressiveCacheCheck;
@@ -666,7 +642,6 @@ public class DocumentConvention extends Convention implements Serializable {
    * @param id
    * @param document
    * @param metadata
-   * @return
    */
   public String getJavaClass(String id, RavenJObject document, RavenJObject metadata) {
     return findJavaClass.find(id, document, metadata);
@@ -675,7 +650,6 @@ public class DocumentConvention extends Convention implements Serializable {
   /**
    * When RavenDB needs to convert between a string id to a value type like int or uuid, it calls
    * this to perform the actual work
-   * @return
    */
   public IdValuePartFinder getFindIdValuePartForValueTypeConversion() {
     return findIdValuePartForValueTypeConversion;
@@ -692,7 +666,6 @@ public class DocumentConvention extends Convention implements Serializable {
 
   /**
    * Translate the type tag name to the document key prefix
-   * @return
    */
   public TypeTagNameToDocumentKeyPrefixTransformer getTransformTypeTagNameToDocumentKeyPrefix() {
     return transformTypeTagNameToDocumentKeyPrefix;
@@ -728,7 +701,6 @@ public class DocumentConvention extends Convention implements Serializable {
   /**
    * Instruct RavenDB to parallel Multi Get processing
    * when handling lazy requests
-   * @return
    */
   public boolean isUseParallelMultiGet() {
     return useParallelMultiGet;
@@ -737,7 +709,6 @@ public class DocumentConvention extends Convention implements Serializable {
   /**
    * This is called to provide replication behavior for the client. You can customize
    * this to inject your own replication / failover logic.
-   * @return
    */
   public ReplicationInformerFactory getReplicationInformerFactory() {
     return replicationInformerFactory;
@@ -774,7 +745,6 @@ public class DocumentConvention extends Convention implements Serializable {
     if (usesRangeField) {
       customRangeTypes.add(converter.getSupportedClass());
     }
-
   }
 
   public boolean tryConvertValueForQuery(String fieldName, Object value, QueryValueConvertionType convertionType, Reference<String> strValue) {
@@ -808,8 +778,6 @@ public class DocumentConvention extends Convention implements Serializable {
     }
   }
 
-
-
   public boolean usesRangeType(Object o) {
     if (o == null) {
       return false;
@@ -825,7 +793,6 @@ public class DocumentConvention extends Convention implements Serializable {
     }
     return customRangeTypes.contains(type);
   }
-
 
   public ObjectMapper createSerializer() {
     if (objectMapper == null) {
@@ -870,7 +837,6 @@ public class DocumentConvention extends Convention implements Serializable {
     EnumSet<IndexAndTransformerReplicationMode> indexAndTransformerReplicationMode) {
     this.indexAndTransformerReplicationMode = indexAndTransformerReplicationMode;
   }
-
 
   public boolean isPreserveDocumentPropertiesNotFoundOnModel() {
     return preserveDocumentPropertiesNotFoundOnModel;

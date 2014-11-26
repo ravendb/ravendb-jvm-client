@@ -86,7 +86,7 @@ public class JsonDocumentMetadata implements IJsonDocumentMetadata {
   }
 
   /**
-   * @param monAuthoritativeInformation the nonAuthoritativeInformation to set
+   * @param nonAuthoritativeInformation the nonAuthoritativeInformation to set
    */
   @Override
   public void setNonAuthoritativeInformation(Boolean nonAuthoritativeInformation) {

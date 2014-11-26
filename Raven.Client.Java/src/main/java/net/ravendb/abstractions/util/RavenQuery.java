@@ -13,7 +13,6 @@ public class RavenQuery {
   /**
    * Escapes Lucene operators and quotes phrases
    * @param term
-   * @return
    */
   public static String escape(String term) {
     return escape(term, false, true);
@@ -26,7 +25,6 @@ public class RavenQuery {
    * @param term
    * @param allowWildcards
    * @param makePhrase
-   * @return
    */
   public static String escape(String term, boolean allowWildcards, boolean makePhrase) {
     // method doesn't allocate a StringBuilder unless the string requires escaping
@@ -137,7 +135,6 @@ public class RavenQuery {
   /**
    * Escapes Lucene field
    * @param field
-   * @return
    */
   public static String escapeField(String field) {
     // method doesn't allocate a StringBuilder unless the string requires escaping

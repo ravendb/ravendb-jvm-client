@@ -12,7 +12,6 @@ public interface IHoldProfilingInformation {
 
   /**
    * Is expect 100 continue?
-   * @return
    */
   public boolean isExpect100Continue();
 

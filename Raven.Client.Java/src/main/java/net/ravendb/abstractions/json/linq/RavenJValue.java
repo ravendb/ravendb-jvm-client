@@ -30,7 +30,6 @@ public class RavenJValue extends RavenJToken {
 
   /**
    * Gets the underlying token value.
-   * @return
    */
   public Object getValue() {
     return value;

@@ -30,7 +30,6 @@ public class FieldHighlightings {
   /**
    * Returns the list of document's field highlighting fragments.
    * @param documentId
-   * @return
    */
   public String[] getFragments(String documentId) {
     if (this.highlightings.containsKey(documentId)) {

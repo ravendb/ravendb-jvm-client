@@ -11,7 +11,7 @@ public class BulkOperationOptions {
 
   /**
    *  Determines whether operation details about each document should be returned by server.
-   * @return
+   * @return retrieve details
    */
   public boolean isRetrieveDetails() {
     return retrieveDetails;
@@ -26,8 +26,7 @@ public class BulkOperationOptions {
   }
 
   /**
-   * indicates whether operations are allowed on stale indexes.
-   * @return
+   * @return indicates whether operations are allowed on stale indexes.
    */
   public boolean isAllowStale() {
     return allowStale;
@@ -51,7 +50,7 @@ public class BulkOperationOptions {
 
   /**
    * limits the amount of base operation per second allowed.
-   * @return
+   * @return max operations per second
    */
   public Integer getMaxOpsPerSec() {
     return maxOpsPerSec;

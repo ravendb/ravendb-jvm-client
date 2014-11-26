@@ -102,7 +102,6 @@ public class AdminRequestCreator {
    * Gets the list of databases from the server
    * @param pageSize
    * @param start
-   * @return
    */
   public String[] getDatabaseNames(int pageSize, int start) {
     HttpJsonRequest requestForSystemDatabase = createRequestForSystemDatabase.apply(String.format("/databases?pageSize=%d&start=%d", pageSize, start), HttpMethods.GET);

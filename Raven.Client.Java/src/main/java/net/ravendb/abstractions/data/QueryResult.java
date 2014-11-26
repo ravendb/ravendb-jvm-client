@@ -64,7 +64,7 @@ public class QueryResult {
 
   /**
    * Creates a snapshot of the query results
-   * @return
+   * @return QueryResult snapshot
    */
   public QueryResult createSnapshot() {
     QueryResult snapshot = new QueryResult();

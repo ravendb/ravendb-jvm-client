@@ -207,7 +207,6 @@ public class HttpJsonRequestFactory implements AutoCloseable {
 
   /**
    * The number of currently held requests in the cache
-   * @return
    */
   public int getCurrentCacheSize() {
     return cache.getCurrentSize();

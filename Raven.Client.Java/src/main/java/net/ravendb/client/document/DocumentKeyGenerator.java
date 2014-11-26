@@ -8,7 +8,6 @@ public interface DocumentKeyGenerator {
    * @param dbName
    * @param dbCommands
    * @param entity
-   * @return
    */
   public String generate(String dbName, IDatabaseCommands dbCommands, Object entity);
 }

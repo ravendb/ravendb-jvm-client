@@ -22,7 +22,6 @@ public interface IDocumentQueryCustomization {
    * current document store.
    * This ensures that you'll always get the most relevant results for your scenarios using simple indexes (map only or dynamic queries).
    * However, when used to query map/reduce indexes, it does NOT guarantee that the document that this etag belong to is actually considered for the results.
-   * @return
    */
   public IDocumentQueryCustomization waitForNonStaleResultsAsOfLastWrite();
 
@@ -32,27 +31,23 @@ public interface IDocumentQueryCustomization {
    * This ensures that you'll always get the most relevant results for your scenarios using simple indexes (map only or dynamic queries).
    * However, when used to query map/reduce indexes, it does NOT guarantee that the document that this etag belong to is actually considered for the results.
    * @param waitTimeout
-   * @return
    */
   public IDocumentQueryCustomization waitForNonStaleResultsAsOfLastWrite(long waitTimeout);
 
   /**
    * Instructs the query to wait for non stale results as of now.
-   * @return
    */
   public IDocumentQueryCustomization waitForNonStaleResultsAsOfNow();
 
   /**
    * Instructs the query to wait for non stale results as of now for the specified timeout.
    * @param waitTimeout timeout in milis
-   * @return
    */
   public IDocumentQueryCustomization waitForNonStaleResultsAsOfNow(long waitTimeout);
 
   /**
    * Instructs the query to wait for non stale results as of the cutoff date.
    * @param cutOff
-   * @return
    */
   public IDocumentQueryCustomization waitForNonStaleResultsAsOf(Date cutOff);
 
@@ -60,14 +55,12 @@ public interface IDocumentQueryCustomization {
    * Instructs the query to wait for non stale results as of the cutoff date for the specified timeout
    * @param cutOff
    * @param waitTimeout timeout in milis
-   * @return
    */
   public IDocumentQueryCustomization waitForNonStaleResultsAsOf(Date cutOff, long waitTimeout);
 
   /**
    * Instructs the query to wait for non stale results as of the cutoff etag.
    * @param cutOffEtag
-   * @return
    */
   public IDocumentQueryCustomization waitForNonStaleResultsAsOf(Etag cutOffEtag);
 
@@ -75,35 +68,30 @@ public interface IDocumentQueryCustomization {
    * Instructs the query to wait for non stale results as of the cutoff etag for the specified timeout.
    * @param cutOffEtag
    * @param waitTimeout
-   * @return
    */
   public IDocumentQueryCustomization waitForNonStaleResultsAsOf(Etag cutOffEtag, long waitTimeout);
 
   /**
    * EXPERT ONLY: Instructs the query to wait for non stale results.
    * This shouldn't be used outside of unit tests unless you are well aware of the implications
-   * @return
    */
   public IDocumentQueryCustomization waitForNonStaleResults();
 
   /**
    * Includes the specified path in the query, loading the document specified in that path
    * @param path
-   * @return
    */
   public IDocumentQueryCustomization include(Path<?> path);
 
   /**
    * Includes the specified path in the query, loading the document specified in that path
    * @param path
-   * @return
    */
   public IDocumentQueryCustomization include(String path);
 
   /**
    * Includes the specified path in the query, loading the document specified in that path
    * @param path
-   * @return
    */
   public IDocumentQueryCustomization include(Class<?> targetClass, Path<?> path);
 
@@ -111,7 +99,6 @@ public interface IDocumentQueryCustomization {
    * EXPERT ONLY: Instructs the query to wait for non stale results for the specified wait timeout.
    * This shouldn't be used outside of unit tests unless you are well aware of the implications
    * @param waitTimeout
-   * @return
    */
   public IDocumentQueryCustomization waitForNonStaleResults(long waitTimeout);
 
@@ -120,7 +107,6 @@ public interface IDocumentQueryCustomization {
    * @param radius
    * @param latitude
    * @param longitude
-   * @return
    */
   public IDocumentQueryCustomization withinRadiusOf(double radius, double latitude, double longitude);
 
@@ -130,7 +116,6 @@ public interface IDocumentQueryCustomization {
    * @param radius
    * @param latitude
    * @param longitude
-   * @return
    */
   public IDocumentQueryCustomization withinRadiusOf(String fieldName, double radius, double latitude, double longitude);
 
@@ -140,7 +125,6 @@ public interface IDocumentQueryCustomization {
    * @param latitude
    * @param longitude
    * @param radiusUnits
-   * @return
    */
   public IDocumentQueryCustomization withinRadiusOf(double radius, double latitude, double longitude, SpatialUnits radiusUnits);
 
@@ -151,7 +135,6 @@ public interface IDocumentQueryCustomization {
    * @param latitude
    * @param longitude
    * @param radiusUnits
-   * @return
    */
   public IDocumentQueryCustomization withinRadiusOf(String fieldName, double radius, double latitude, double longitude, SpatialUnits radiusUnits);
 
@@ -161,7 +144,6 @@ public interface IDocumentQueryCustomization {
    * @param fieldName The name of the field containing the shape to use for filtering
    * @param shapeWKT The query shape
    * @param rel Spatial relation to check
-   * @return
    */
   public IDocumentQueryCustomization relatesToShape(String fieldName, String shapeWKT, SpatialRelation rel);
 
@@ -169,13 +151,11 @@ public interface IDocumentQueryCustomization {
 
   /**
    * When using spatial queries, instruct the query to sort by the distance from the origin point
-   * @return
    */
   public IDocumentQueryCustomization sortByDistance();
 
   /**
    * Order the search results randomly
-   * @return
    */
   public IDocumentQueryCustomization randomOrdering();
 
@@ -183,14 +163,12 @@ public interface IDocumentQueryCustomization {
    * Order the search results randomly using the specified seed
    * this is useful if you want to have repeatable random queries
    * @param seed
-   * @return
    */
   public IDocumentQueryCustomization randomOrdering(String seed);
 
   /**
    * Allow you to modify the index query before it is executed
    * @param action
-   * @return
    */
   public IDocumentQueryCustomization beforeQueryExecution(Action1<IndexQuery> action);
 
@@ -203,7 +181,6 @@ public interface IDocumentQueryCustomization {
    * @param fragmentLength The fragment length.
    * @param fragmentCount The maximum number of fragments for the field.
    * @param fragmentsField The field in query results item to put highlightings into.
-   * @return
    */
   public IDocumentQueryCustomization highlight(String fieldName, int fragmentLength, int fragmentCount, String fragmentsField);
 
@@ -216,7 +193,6 @@ public interface IDocumentQueryCustomization {
    * @param fragmentLength The fragment length.
    * @param fragmentCount The maximum number of fragments for the field.
    * @param highlightings Field highlightings for all results.
-   * @return
    */
   public IDocumentQueryCustomization highlight(String fieldName, int fragmentLength, int fragmentCount, Reference<FieldHighlightings> highlightings);
 
@@ -225,7 +201,6 @@ public interface IDocumentQueryCustomization {
    * to the result transformer function. Otherwise, those entries will be consolidate an the transformer will be
    * called just once for each document in the result set
    * @param val
-   * @return
    */
   public IDocumentQueryCustomization setAllowMultipleIndexEntriesForSameDocumentToResultTransformer(boolean val);
 
@@ -233,7 +208,6 @@ public interface IDocumentQueryCustomization {
    * Sets the tags to highlight matches with.
    * @param preTag Prefix tag.
    * @param postTag Postfix tag.
-   * @return
    */
   public IDocumentQueryCustomization setHighlighterTags(String preTag, String postTag);
 
@@ -241,26 +215,22 @@ public interface IDocumentQueryCustomization {
    * Sets the tags to highlight matches with.
    * @param preTags Prefix tags.
    * @param postTags Postfix tags.
-   * @return
    */
   public IDocumentQueryCustomization setHighlighterTags(String[] preTags, String[] postTags);
 
   /**
    * Disables tracking for queried entities by Raven's Unit of Work.
    * Usage of this option will prevent holding query results in memory.
-   * @return
    */
   public IDocumentQueryCustomization noTracking();
 
   /**
    * Disables caching for query results.
-   * @return
    */
   public IDocumentQueryCustomization noCaching();
 
   /**
    * Enables calculation of timings for various parts of a query (Lucene search, loading documents, transforming results). Default: false
-   * @return
    */
   public IDocumentQueryCustomization showTimings();
 }

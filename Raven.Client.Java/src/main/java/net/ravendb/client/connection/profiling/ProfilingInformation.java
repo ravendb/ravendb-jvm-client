@@ -24,7 +24,6 @@ public class ProfilingInformation {
   /**
    * Create a new instance of profiling information and provide additional context information
    * @param currentSessionId
-   * @return
    */
   public static ProfilingInformation createProfilingInformation(UUID currentSessionId) {
     ProfilingInformation profilingInformation = new ProfilingInformation(currentSessionId);

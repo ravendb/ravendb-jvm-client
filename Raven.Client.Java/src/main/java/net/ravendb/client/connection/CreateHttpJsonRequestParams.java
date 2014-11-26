@@ -53,7 +53,6 @@ public class CreateHttpJsonRequestParams implements Serializable {
   /**
    * Adds the operation headers.
    * @param operationsHeaders
-   * @return
    */
   public CreateHttpJsonRequestParams addOperationHeaders(Map<String, String> operationsHeaders) {
     urlCached = null;
@@ -70,7 +69,6 @@ public class CreateHttpJsonRequestParams implements Serializable {
   /**
    * Adds the operation headers.
    * @param operationsHeaders
-   * @return
    */
   public CreateHttpJsonRequestParams addOperationHeadersMultiMap(Map<String, List<String>> operationsHeaders) {
     urlCached = null;

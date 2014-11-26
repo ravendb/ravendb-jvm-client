@@ -39,7 +39,6 @@ public class SerializationHelper {
   /**
    * Translate a collection of RavenJObject to JsonDocuments
    * @param responses
-   * @return
    */
   public static List<JsonDocument> ravenJObjectsToJsonDocuments(Collection<RavenJObject> responses) {
     List<JsonDocument> list = new ArrayList<>();
@@ -122,7 +121,6 @@ public class SerializationHelper {
   /**
    * Java only
    * @param responseJson
-   * @return
    */
   public static List<Attachment> deserializeAttachements(RavenJToken responseJson, boolean canReadData) {
     RavenJArray array = (RavenJArray) responseJson;

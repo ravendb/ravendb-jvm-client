@@ -19,22 +19,22 @@ public interface IRavenQueryable<T> extends IOrderedQueryable<T>, LinqExtensions
   /**
    * Provide statistics about the query, such as total count of matching records
    * @param stats
-   * @return
+   * @return IRavenQueryable
    */
   IRavenQueryable<T> statistics(Reference<RavenQueryStatistics> stats);
 
   /**
    * Customizes the query using the specified action
-   * @param action
-   * @return
+   * @param customizationFactory
+   * @return IRavenQueryable
    */
   IRavenQueryable<T> customize(DocumentQueryCustomizationFactory customizationFactory);
 
   /**
    * Specifies a result transformer to use on the results
-   * @param transformerClazz
+   * @param transformerName
    * @param resultClass
-   * @return
+   * @return IRavenQueryable
    */
   <S> IRavenQueryable<S> transformWith(String transformerName, Class<S> resultClass);
 
@@ -43,7 +43,7 @@ public interface IRavenQueryable<T> extends IOrderedQueryable<T>, LinqExtensions
    * Specifies a result transformer to use on the results
    * @param transformerClazz
    * @param resultClass
-   * @return
+   * @return IRavenQueryable
    */
   <S> IRavenQueryable<S> transformWith(Class<? extends AbstractTransformerCreationTask> transformerClazz, Class<S> resultClass);
 
@@ -51,7 +51,7 @@ public interface IRavenQueryable<T> extends IOrderedQueryable<T>, LinqExtensions
    * Inputs a key and value to the query (accessible by the transformer)
    * @param name
    * @param value
-   * @return
+   * @return IRavenQueryable
    */
   IRavenQueryable<T> addTransformerParameter(String name, RavenJToken value);
 
@@ -59,7 +59,7 @@ public interface IRavenQueryable<T> extends IOrderedQueryable<T>, LinqExtensions
    * Inputs a key and value to the query (accessible by the transformer)
    * @param name
    * @param value
-   * @return
+   * @return IRavenQueryable
    */
   IRavenQueryable<T> addTransformerParameter(String name, Object value);
 
@@ -67,7 +67,7 @@ public interface IRavenQueryable<T> extends IOrderedQueryable<T>, LinqExtensions
 
   /**
    * Returns distinct results
-   * @return
+   * @return IRavenQueryable
    */
   IRavenQueryable<T> distinct();
 

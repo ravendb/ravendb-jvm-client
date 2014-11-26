@@ -79,7 +79,6 @@ public class DocumentSession extends InMemoryDocumentSessionOperations implement
 
   /**
    * Gets the database commands.
-   * @return
    */
   public IDatabaseCommands getDatabaseCommands() {
     return databaseCommands;
@@ -87,7 +86,6 @@ public class DocumentSession extends InMemoryDocumentSessionOperations implement
 
   /**
    * Access the lazy operations
-   * @return
    */
   @Override
   public ILazySessionOperations lazily() {
@@ -128,8 +126,6 @@ public class DocumentSession extends InMemoryDocumentSessionOperations implement
   public ISyncAdvancedSessionOperation advanced() {
     return this;
   }
-
-
 
   protected class DisableAllCachingCallback implements Function0<AutoCloseable> {
     @Override
@@ -324,7 +320,6 @@ public class DocumentSession extends InMemoryDocumentSessionOperations implement
    * Queries the specified index.
    * @param clazz
    * @param indexName
-   * @return
    */
   @Override
   public <T> IRavenQueryable<T> query(Class<T> clazz, String indexName) {
@@ -336,7 +331,6 @@ public class DocumentSession extends InMemoryDocumentSessionOperations implement
    * @param clazz The result of the query
    * @param indexName Name of the index.
    * @param isMapReduce Whatever we are querying a map/reduce index (modify how we treat identifier properties)
-   * @return
    */
   @Override
   public <T> IRavenQueryable<T> query(Class<T> clazz, String indexName, boolean isMapReduce) {
@@ -350,7 +344,6 @@ public class DocumentSession extends InMemoryDocumentSessionOperations implement
    * Queries the index specified by tIndexCreator using Linq.
    * @param clazz The result of the query
    * @param tIndexCreator The type of the index creator
-   * @return
    */
   @Override
   public <T> IRavenQueryable<T> query(Class<T> clazz, Class<? extends AbstractIndexCreationTask> tIndexCreator) {
@@ -361,7 +354,6 @@ public class DocumentSession extends InMemoryDocumentSessionOperations implement
       throw new RuntimeException(tIndexCreator.getName() + " does not have argumentless constructor.");
     }
   }
-
 
   /**
    * Refreshes the specified entity from Raven server.
@@ -408,7 +400,6 @@ public class DocumentSession extends InMemoryDocumentSessionOperations implement
   /**
    * Begin a load while including the specified path
    * @param path
-   * @return
    */
   @Override
   public ILoaderWithInclude include(Expression<?> path) {
@@ -418,7 +409,6 @@ public class DocumentSession extends InMemoryDocumentSessionOperations implement
   /**
    * Begin a load while including the specified path
    * @param path
-   * @return
    */
   @Override
   public ILoaderWithInclude include(Class<?> targetClass, Expression<?> path) {
@@ -744,7 +734,6 @@ public class DocumentSession extends InMemoryDocumentSessionOperations implement
    * Queries the index specified by <typeparamref name="TIndexCreator"/> using lucene syntax.
    * @param clazz The result of the query
    * @param indexClazz The type of the index creator.
-   * @return
    */
   @Override
   public <T, TIndexCreator extends AbstractIndexCreationTask> IDocumentQuery<T> documentQuery(Class<T> clazz, Class<TIndexCreator> indexClazz) {
@@ -766,7 +755,6 @@ public class DocumentSession extends InMemoryDocumentSessionOperations implement
    * @param clazz
    * @param indexName Name of the index.
    * @param isMapReduce
-   * @return
    */
   @Override
   public <T> IDocumentQuery<T> documentQuery(Class<T> clazz, String indexName, boolean isMapReduce) {
@@ -776,7 +764,6 @@ public class DocumentSession extends InMemoryDocumentSessionOperations implement
   /**
    * Query RavenDB dynamically using
    * @param clazz
-   * @return
    */
   @Override
   public <T> IRavenQueryable<T> query(Class<T> clazz) {

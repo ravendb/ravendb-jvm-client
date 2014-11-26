@@ -68,7 +68,6 @@ public class AtomicDictionary<T> implements Iterable<Entry<String, T>> {
   /**
    * Usage: synchronized (withLockFor(key))
    * @param key
-   * @return
    */
   public Object withLockFor(String key) {
 

@@ -17,32 +17,27 @@ public interface IRavenQueryInspector {
 
   /**
    *  Get the name of the index being queried
-   * @return
    */
   public String getIndexQueried();
 
 
   /**
    * Grant access to the database commands
-   * @return
    */
   public IDatabaseCommands getDatabaseCommands();
 
   /**
    * The query session
-   * @return
    */
   public InMemoryDocumentSessionOperations getSession();
 
   /**
    * The last term that we asked the query to use equals on
-   * @return
    */
   public Tuple<String, String> getLastEqualityTerm();
 
   /**
    * Get the index query for this query
-   * @return
    */
   public IndexQuery getIndexQuery();
 
@@ -51,7 +46,6 @@ public interface IRavenQueryInspector {
    * @param facetSetupDoc
    * @param start
    * @param pageSize
-   * @return
    */
   public FacetResults getFacets(String facetSetupDoc, int start, Integer pageSize);
 
@@ -60,7 +54,6 @@ public interface IRavenQueryInspector {
    * @param facets
    * @param start
    * @param pageSize
-   * @return
    */
   public FacetResults getFacets(List<Facet> facets, int start, Integer pageSize);
 

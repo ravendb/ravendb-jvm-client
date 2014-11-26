@@ -266,7 +266,6 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
 
   /**
    * Gets the document convention from the query session
-   * @return
    */
   @Override
   public DocumentConvention getDocumentConvention() {
@@ -407,7 +406,6 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
    * @param latitude
    * @param longitude
    * @param distanceErrorPct
-   * @return
    */
   protected TSelf generateQueryWithinRadiusOf(String fieldName, double radius, double latitude, double longitude, double distanceErrorPct, SpatialUnits radiusUnits) {
     return generateSpatialQueryData(fieldName, SpatialIndexQuery.getQueryShapeFromLatLon(latitude, longitude, radius), SpatialRelation.WITHIN, distanceErrorPct, radiusUnits);
@@ -603,7 +601,6 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
   /**
    * Register the query as a lazy query in the session and return a lazy
    *  instance that will evaluate the query only when needed
-   * @return
    */
   public Lazy<List<T>> lazily() {
     return lazily(null);
@@ -613,7 +610,6 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
    * Register the query as a lazy query in the session and return a lazy
    * instance that will evaluate the query only when needed
    * @param onEval
-   * @return
    */
   public Lazy<List<T>> lazily(Action1<List<T>> onEval) {
     final Map<String, String> headers = new HashMap<>();
@@ -668,7 +664,6 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
 
   /**
    * Gets the fields for projection
-   * @return
    */
   @Override
   public Collection<String> getProjectionFields() {
@@ -875,7 +870,6 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
    * Matches exact value
    * @param fieldName
    * @param value
-   * @return
    */
   @Override
   @SuppressWarnings("unchecked")
@@ -1474,7 +1468,6 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
   /**
    * Generates the index query.
    * @param query The query.
-   * @return
    */
   protected IndexQuery generateIndexQuery(String query) {
     if(isSpatialQuery) {

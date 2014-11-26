@@ -21,7 +21,6 @@ public abstract class AbstractTransformerCreationTask extends AbstractCommonApiF
 
   /**
    * Gets the name of the index.
-   * @return
    */
   public String getTransformerName() {
     return getClass().getSimpleName().replace('_', '/');
@@ -37,7 +36,6 @@ public abstract class AbstractTransformerCreationTask extends AbstractCommonApiF
 
   /**
    * Creates the Transformer definition.
-   * @return
    */
   public TransformerDefinition createTransformerDefinition() {
     TransformerDefinition transformerDefinition = new TransformerDefinition();

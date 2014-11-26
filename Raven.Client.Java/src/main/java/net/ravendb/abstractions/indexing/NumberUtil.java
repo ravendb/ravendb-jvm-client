@@ -12,7 +12,7 @@ public class NumberUtil {
   /**
    * Translate a number to an indexable string
    * @param number
-   * @return
+   * @return string representation of number
    */
   public static String numberToString(int number) {
     return "Ix" + number;
@@ -22,7 +22,7 @@ public class NumberUtil {
   /**
    * Translate a number to an indexable string
    * @param number
-   * @return
+   * @return string representation of number
    */
   public static String numberToString(long number) {
     return "Lx" + number;
@@ -31,7 +31,7 @@ public class NumberUtil {
   /**
    * Translate a number to an indexable string
    * @param number
-   * @return
+   * @return string representation of number
    */
   public static String numberToString(float number) {
     return "Fx" + trimZeros(String.format(Constants.getDefaultLocale(), "%.11f", number));
@@ -40,7 +40,7 @@ public class NumberUtil {
   /**
    * Translate a number to an indexable string
    * @param number
-   * @return
+   * @return string representation of number
    */
   public static String numberToString(double number) {
     return "Dx" + trimZeros(String.format(Constants.getDefaultLocale(), "%.11f", number));
@@ -50,7 +50,7 @@ public class NumberUtil {
    * Removes zeros from the end of the string but only from fractional part
    * if string ends with dot after first operation, we remove dot as well.
    * @param input
-   * @return
+   * @return input with trimmed zeros
    */
   public static String trimZeros(String input) {
     if (!input.contains(".")) {
@@ -63,7 +63,7 @@ public class NumberUtil {
   /**
    * Translate an indexable string to a number
    * @param number
-   * @return
+   * @return number
    */
   public static Object stringToNumber(String number)
   {

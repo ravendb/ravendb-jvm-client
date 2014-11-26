@@ -126,7 +126,7 @@ public class MetadataExtensions {
   /**
    * Filters headers from unwanted headers
    * @param self
-   * @return
+   * @return filtered headers
    */
   public static RavenJObject filterHeadersToObject(RavenJObject self, Set<String> headersToIgnore, Set<String> prefixesInHeadersToIgnore) {
     if (self == null) {
@@ -168,7 +168,7 @@ public class MetadataExtensions {
   /**
    * Filters the headers from unwanted headers
    * @param headers
-   * @return
+   * @return filtered headers
    */
   public static RavenJObject filterHeadersToObject(Map<String, String> headers) {
     RavenJObject metadata = new RavenJObject(String.CASE_INSENSITIVE_ORDER);

@@ -8,7 +8,6 @@ public class FacetResults {
 
   /**
    * A list of results for the facet.  One entry for each term/range as specified in the facet setup document.
-   * @return
    */
   public Map<String, FacetResult> getResults() {
     return results;

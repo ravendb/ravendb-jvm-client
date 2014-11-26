@@ -55,8 +55,7 @@ public class RavenQueryProvider<T> implements IRavenQueryProvider {
   }
 
   /**
-   * Gets the actions for customizing the generated lucene query
-   * @return
+   * @return the actions for customizing the generated lucene query
    */
   public DocumentQueryCustomizationFactory getCustomizedQuery() {
     return customizeQuery;

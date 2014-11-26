@@ -29,14 +29,14 @@ public interface LinqExtensionsQueryable<T> {
    * Query the facets results for this query using aggregation with a specific display name
    * @param path
    * @param displayName
-   * @return
+   * @return DynamicAggregationQuery
    */
   public DynamicAggregationQuery<T> aggregateBy(String path, String displayName);
 
   /**
    * Query the facets results for this query using aggregation
    * @param path
-   * @return
+   * @return DynamicAggregationQuery
    */
   public DynamicAggregationQuery<T> aggregateBy(Path<?> path);
 
@@ -44,15 +44,13 @@ public interface LinqExtensionsQueryable<T> {
    * Query the facets results for this query using aggregation with a specific display name
    * @param path
    * @param displayName
-   * @return
+   * @return DynamicAggregationQuery
    */
   public DynamicAggregationQuery<T> aggregateBy(Path<?> path, String displayName);
   /**
    * Query the facets results for this query using the specified list of facets
    * @param facets
-   * @param start
-   * @param pageSize
-   * @return
+   * @return lazy facets
    */
   public Lazy<FacetResults> toFacetsLazy(List<Facet> facets);
 
@@ -60,8 +58,7 @@ public interface LinqExtensionsQueryable<T> {
    * Query the facets results for this query using the specified list of facets with the given start
    * @param facets
    * @param start
-   * @param pageSize
-   * @return
+   * @return lazy facets
    */
   public Lazy<FacetResults> toFacetsLazy(List<Facet> facets, int start);
 
@@ -70,16 +67,14 @@ public interface LinqExtensionsQueryable<T> {
    * @param facets
    * @param start
    * @param pageSize
-   * @return
+   * @return lazy facets
    */
   public Lazy<FacetResults> toFacetsLazy(List<Facet> facets, int start, Integer pageSize);
 
   /**
    * Query the facets results for this query using the specified facet document
    * @param facetSetupDoc
-   * @param start
-   * @param pageSize
-   * @return
+   * @return lazy facets
    */
   public Lazy<FacetResults> toFacetsLazy(String facetSetupDoc);
 
@@ -87,8 +82,7 @@ public interface LinqExtensionsQueryable<T> {
    * Query the facets results for this query using the specified facet document with the given start
    * @param facetSetupDoc
    * @param start
-   * @param pageSize
-   * @return
+   * @return lazy facets
    */
   public Lazy<FacetResults> toFacetsLazy(String facetSetupDoc, int start);
 
@@ -97,16 +91,14 @@ public interface LinqExtensionsQueryable<T> {
    * @param facetSetupDoc
    * @param start
    * @param pageSize
-   * @return
+   * @return lazy facets
    */
   public Lazy<FacetResults> toFacetsLazy(String facetSetupDoc, int start, Integer pageSize);
 
   /**
    * Query the facets results for this query using the specified list of facets
    * @param facets
-   * @param start
-   * @param pageSize
-   * @return
+   * @return facets
    */
   public FacetResults toFacets(List<Facet> facets);
 
@@ -114,8 +106,7 @@ public interface LinqExtensionsQueryable<T> {
    * Query the facets results for this query using the specified list of facets with the given start
    * @param facets
    * @param start
-   * @param pageSize
-   * @return
+   * @return facets
    */
   public FacetResults toFacets(List<Facet> facets, int start);
 
@@ -124,16 +115,14 @@ public interface LinqExtensionsQueryable<T> {
    * @param facets
    * @param start
    * @param pageSize
-   * @return
+   * @return facets
    */
   public FacetResults toFacets(List<Facet> facets, int start, Integer pageSize);
 
   /**
    * Query the facets results for this query using the specified facet document
    * @param facetSetupDoc
-   * @param start
-   * @param pageSize
-   * @return
+   * @return facets
    */
   public FacetResults toFacets(String facetSetupDoc);
 
@@ -141,8 +130,6 @@ public interface LinqExtensionsQueryable<T> {
    * Query the facets results for this query using the specified facet document with the given start
    * @param facetSetupDoc
    * @param start
-   * @param pageSize
-   * @return
    */
   public FacetResults toFacets(String facetSetupDoc, int start);
 
@@ -151,14 +138,13 @@ public interface LinqExtensionsQueryable<T> {
    * @param facetSetupDoc
    * @param start
    * @param pageSize
-   * @return
    */
   public FacetResults toFacets(String facetSetupDoc, int start, Integer pageSize);
 
   /**
    * Transforms the query to the facet query that will allow you to execute multi faceted search
    * @param facets List of facets
-   * @return
+   * @return facets query
    */
   public FacetQuery toFacetQuery(List<Facet> facets);
 
@@ -166,8 +152,6 @@ public interface LinqExtensionsQueryable<T> {
     * Transforms the query to the facet query that will allow you to execute multi faceted search
     * @param facets List of facets
     * @param start Start index for paging
-    * @param pageSize Paging PageSize. If set, overrides Facet.MaxResults
-    * @return
     */
   public FacetQuery toFacetQuery(List<Facet> facets, int start);
 
@@ -176,14 +160,14 @@ public interface LinqExtensionsQueryable<T> {
    * @param facets List of facets
    * @param start Start index for paging
    * @param pageSize Paging PageSize. If set, overrides Facet.MaxResults
-   * @return
+   * @return facets query
    */
   public FacetQuery toFacetQuery(List<Facet> facets, int start, Integer pageSize);
 
   /**
    * Transforms the query to the facet query that will allow you to execute multi faceted search
    * @param facetSetupDoc Name of the FacetSetup document
-   * @return
+   * @return facets query
    */
   public FacetQuery toFacetQuery(String facetSetupDoc);
 
@@ -191,7 +175,7 @@ public interface LinqExtensionsQueryable<T> {
    * Transforms the query to the facet query that will allow you to execute multi faceted search
    * @param facetSetupDoc Name of the FacetSetup document
    * @param start Start index for paging
-   * @return
+   * @return facets query
    */
   public FacetQuery toFacetQuery(String facetSetupDoc, int start);
 
@@ -200,7 +184,7 @@ public interface LinqExtensionsQueryable<T> {
    * @param facetSetupDoc Name of the FacetSetup document
    * @param start Start index for paging
    * @param pageSize Paging PageSize. If set, overrides Facet.MaxResult
-   * @return
+   * @return facets query
    */
   public FacetQuery toFacetQuery(String facetSetupDoc, int start, Integer pageSize);
 
@@ -223,7 +207,7 @@ public interface LinqExtensionsQueryable<T> {
    *  If there is more than a single term, each of them will be checked independently.
    * @param fieldSelector
    * @param searchTerms
-   * @return
+   * @return IRavenQueryable
    */
   public IRavenQueryable<T> search(Path<?> fieldSelector, String searchTerms);
 

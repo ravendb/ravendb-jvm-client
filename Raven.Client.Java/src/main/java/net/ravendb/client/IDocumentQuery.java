@@ -25,7 +25,6 @@ public interface IDocumentQuery<T> extends IDocumentQueryBase<T, IDocumentQuery<
    * Selects the specified fields directly from the index
    * @param projectionClass The class of the projection
    * @param fields The fields.
-   * @return
    */
   public <TProjection> IDocumentQuery<TProjection> selectFields(Class<TProjection> projectionClass, String... fields);
 
@@ -34,14 +33,12 @@ public interface IDocumentQuery<T> extends IDocumentQueryBase<T, IDocumentQuery<
    * @param projectionClass The class of the projection
    * @param fields
    * @param projections
-   * @return
    */
   public <TProjection> IDocumentQuery<TProjection> selectFields(Class<TProjection> projectionClass, String[] fields, String[] projections);
 
   /**
    * Selects the projection fields directly from the index
    * @param projectionClass The class of the projection
-   * @return
    */
   public <TProjection> IDocumentQuery<TProjection> selectFields(Class<TProjection> projectionClass);
 
@@ -61,14 +58,12 @@ public interface IDocumentQuery<T> extends IDocumentQueryBase<T, IDocumentQuery<
   /**
    * Register the query as a lazy query in the session and return a lazy
    * instance that will evaluate the query only when needed
-   * @return
    */
   public Lazy<List<T>> lazily();
 
   /**
    * Register the query as a lazy-count query in the session and return a lazy
    * instance that will evaluate the query only when needed.
-   * @return
    */
   public Lazy<Integer> countLazily();
 
@@ -77,13 +72,11 @@ public interface IDocumentQuery<T> extends IDocumentQueryBase<T, IDocumentQuery<
    * instance that will evaluate the query only when needed.
    * Also provide a function to execute when the value is evaluated
    * @param onEval
-   * @return
    */
   public Lazy<List<T>> lazily(Action1<List<T>> onEval);
 
   /**
    * Create the index query object for this query
-   * @return
    */
   public IndexQuery getIndexQuery();
 
@@ -98,7 +91,6 @@ public interface IDocumentQuery<T> extends IDocumentQueryBase<T, IDocumentQuery<
    * @param facetSetupDoc
    * @param facetStart
    * @param facetPageSize
-   * @return
    */
   public FacetResults getFacets(String facetSetupDoc, int facetStart, Integer facetPageSize);
 
@@ -107,16 +99,12 @@ public interface IDocumentQuery<T> extends IDocumentQueryBase<T, IDocumentQuery<
    * @param facets
    * @param facetStart
    * @param facetPageSize
-   * @return
    */
   public FacetResults getFacets(List<Facet> facets, int facetStart, Integer facetPageSize);
 
   /**
    * Query the facets results for this query using the specified facet document with the given start and pageSize
    * @param facetSetupDoc
-   * @param start
-   * @param pageSize
-   * @return
    */
   public Lazy<FacetResults> toFacetsLazy(String facetSetupDoc);
 
@@ -124,8 +112,6 @@ public interface IDocumentQuery<T> extends IDocumentQueryBase<T, IDocumentQuery<
    * Query the facets results for this query using the specified facet document with the given start and pageSize
    * @param facetSetupDoc
    * @param start
-   * @param pageSize
-   * @return
    */
   public Lazy<FacetResults> toFacetsLazy(String facetSetupDoc, int start);
 
@@ -134,16 +120,12 @@ public interface IDocumentQuery<T> extends IDocumentQueryBase<T, IDocumentQuery<
    * @param facetSetupDoc
    * @param start
    * @param pageSize
-   * @return
    */
   public Lazy<FacetResults> toFacetsLazy(String facetSetupDoc, int start, Integer pageSize);
 
   /**
    * Query the facets results for this query using the specified list of facets with the given start and pageSize
    * @param facets
-   * @param start
-   * @param pageSize
-   * @return
    */
   public Lazy<FacetResults> toFacetsLazy(List<Facet> facets);
 
@@ -151,8 +133,6 @@ public interface IDocumentQuery<T> extends IDocumentQueryBase<T, IDocumentQuery<
    * Query the facets results for this query using the specified list of facets with the given start and pageSize
    * @param facets
    * @param start
-   * @param pageSize
-   * @return
    */
   public Lazy<FacetResults> toFacetsLazy(List<Facet> facets, int start);
 
@@ -161,16 +141,12 @@ public interface IDocumentQuery<T> extends IDocumentQueryBase<T, IDocumentQuery<
    * @param facets
    * @param start
    * @param pageSize
-   * @return
    */
   public Lazy<FacetResults> toFacetsLazy(List<Facet> facets, int start, Integer pageSize);
 
   /**
    * Query the facets results for this query using the specified facet document with the given start and pageSize
    * @param facetSetupDoc
-   * @param start
-   * @param pageSize
-   * @return
    */
   public FacetResults toFacets(String facetSetupDoc);
 
@@ -178,8 +154,6 @@ public interface IDocumentQuery<T> extends IDocumentQueryBase<T, IDocumentQuery<
    * Query the facets results for this query using the specified facet document with the given start and pageSize
    * @param facetSetupDoc
    * @param start
-   * @param pageSize
-   * @return
    */
   public FacetResults toFacets(String facetSetupDoc, int start);
 
@@ -188,16 +162,12 @@ public interface IDocumentQuery<T> extends IDocumentQueryBase<T, IDocumentQuery<
    * @param facetSetupDoc
    * @param start
    * @param pageSize
-   * @return
    */
   public FacetResults toFacets(String facetSetupDoc, int start, Integer pageSize);
 
   /**
    * Query the facets results for this query using the specified list of facets with the given start and pageSize
    * @param facets
-   * @param start
-   * @param pageSize
-   * @return
    */
   public FacetResults toFacets(List<Facet> facets);
 
@@ -205,8 +175,6 @@ public interface IDocumentQuery<T> extends IDocumentQueryBase<T, IDocumentQuery<
    * Query the facets results for this query using the specified list of facets with the given start and pageSize
    * @param facets
    * @param start
-   * @param pageSize
-   * @return
    */
   public FacetResults toFacets(List<Facet> facets, int start);
 
@@ -215,43 +183,36 @@ public interface IDocumentQuery<T> extends IDocumentQueryBase<T, IDocumentQuery<
    * @param facets
    * @param start
    * @param pageSize
-   * @return
    */
   public FacetResults toFacets(List<Facet> facets, int start, Integer pageSize);
 
   /**
    * Returns first result
-   * @return
    */
   public T first();
 
   /**
    * Returns first result
-   * @return
    */
   public T firstOrDefault();
 
   /**
    * Materialize query, executes request and returns with results
-   * @return
    */
   public List<T> toList();
 
   /**
    * Returns single result
-   * @return
    */
   public T single();
 
   /**
    * Returns single result
-   * @return
    */
   public T singleOrDefault();
 
   /**
    * Returns if any entry matches query
-   * @return
    */
   public boolean any();
 

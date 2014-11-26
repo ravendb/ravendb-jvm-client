@@ -111,7 +111,6 @@ public class EntityToJson {
    *
    * Note: This assumes that no modifications can happen during the SaveChanges. This is naturally true
    * Note: for SaveChanges (and multi threaded access will cause undefined behavior anyway).
-   * @return
    */
   public AutoCloseable entitiesToJsonCachingScope() {
     cachedJsonDocs = new IdentityHashMap<>();

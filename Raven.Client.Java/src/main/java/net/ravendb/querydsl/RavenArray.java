@@ -41,7 +41,7 @@ public class RavenArray<E> extends ArrayPath<E> {
 
   /**
    * Use can't use select on arrays. Use List instead.
-   * @return
+   * @return selectPath
    */
   @Deprecated
   public SimplePath<E> select() {

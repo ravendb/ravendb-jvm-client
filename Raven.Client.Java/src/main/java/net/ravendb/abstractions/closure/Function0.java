@@ -7,7 +7,7 @@ package net.ravendb.abstractions.closure;
 public interface Function0<T> {
   /**
    * Applies function
-   * @return
+   * @return function result
    */
   T apply();
 }

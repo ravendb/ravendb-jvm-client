@@ -160,7 +160,6 @@ public abstract class DocumentStoreBase implements IDocumentStore {
   /**
    * Registers the conversion listener.
    * @param conversionListener
-   * @return
    */
   public DocumentStoreBase registerListener(IDocumentConversionListener conversionListener) {
     listeners.getConversionListeners().add(conversionListener);
@@ -170,7 +169,6 @@ public abstract class DocumentStoreBase implements IDocumentStore {
   /**
    * Registers the query listener.
    * @param queryListener
-   * @return
    */
   public DocumentStoreBase registerListener(IDocumentQueryListener queryListener) {
     listeners.getQueryListeners().add(queryListener);
@@ -180,7 +178,6 @@ public abstract class DocumentStoreBase implements IDocumentStore {
   /**
    * Registers the store listener.
    * @param documentStoreListener
-   * @return
    */
   public IDocumentStore registerListener(IDocumentStoreListener documentStoreListener) {
     listeners.getStoreListeners().add(documentStoreListener);
@@ -190,7 +187,6 @@ public abstract class DocumentStoreBase implements IDocumentStore {
   /**
    * Registers the delete listener.
    * @param deleteListener
-   * @return
    */
   public DocumentStoreBase registerListener(IDocumentDeleteListener deleteListener) {
     listeners.getDeleteListeners().add(deleteListener);
@@ -200,7 +196,6 @@ public abstract class DocumentStoreBase implements IDocumentStore {
   /**
    * Registers the conflict listener.
    * @param conflictListener
-   * @return
    */
   public DocumentStoreBase registerListener(IDocumentConflictListener conflictListener) {
     listeners.getConflictListeners().add(conflictListener);
@@ -265,7 +260,6 @@ public abstract class DocumentStoreBase implements IDocumentStore {
   /**
    * Get the profiling information for the given id
    * @param id
-   * @return
    */
   public ProfilingInformation getProfilingInformationFor(UUID id) {
     return profilingContext.tryGet(id);

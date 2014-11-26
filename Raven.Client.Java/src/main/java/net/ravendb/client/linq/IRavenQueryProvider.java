@@ -26,7 +26,7 @@ public interface IRavenQueryProvider extends IQueryProvider {
 
   /**
    * Customizes the query using the specified action
-   * @param action
+   * @param factory
    */
   void customize(DocumentQueryCustomizationFactory factory);
 

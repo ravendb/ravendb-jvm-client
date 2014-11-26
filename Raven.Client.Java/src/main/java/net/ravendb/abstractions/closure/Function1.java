@@ -4,7 +4,7 @@ public interface Function1<F, T> {
   /**
    * Applies function
    * @param input
-   * @return
+   * @return function result
    */
   T apply(F input);
 }

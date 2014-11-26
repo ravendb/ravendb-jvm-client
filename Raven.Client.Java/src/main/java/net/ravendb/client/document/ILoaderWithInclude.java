@@ -4,34 +4,29 @@ import java.util.Collection;
 import java.util.UUID;
 
 import com.mysema.query.types.Expression;
-import com.mysema.query.types.Path;
 
 /**
  * Fluent interface for specifying include paths
  * for loading documents
  *
- * @param <T>
  */
 public interface ILoaderWithInclude {
 
   /**
    * Includes the specified path.
    * @param path
-   * @return
    */
   public ILoaderWithInclude include(String path);
 
   /**
    * Includes the specified path.
    * @param path
-   * @return
    */
   public ILoaderWithInclude include(Expression<?> path);
 
   /**
    * Includes the specified path.
    * @param path
-   * @return
    */
   public ILoaderWithInclude include(Class<?> targetClass, Expression<?> path);
 
@@ -39,7 +34,6 @@ public interface ILoaderWithInclude {
    * Loads the specified ids.
    * @param clazz
    * @param ids
-   * @return
    */
   public <TResult> TResult[] load(Class<TResult> clazz, String... ids);
 
@@ -47,7 +41,6 @@ public interface ILoaderWithInclude {
    * Loads the specified ids.
    * @param clazz
    * @param ids
-   * @return
    */
   public <TResult> TResult[] load(Class<TResult> clazz, Collection<String> ids);
 
@@ -55,7 +48,6 @@ public interface ILoaderWithInclude {
    * Loads the specified id.
    * @param clazz
    * @param id
-   * @return
    */
   public <TResult> TResult load(Class<TResult> clazz, String id);
 
@@ -71,7 +63,6 @@ public interface ILoaderWithInclude {
    * Or whatever your conventions specify.
    * @param clazz
    * @param id
-   * @return
    */
   public <TResult> TResult load(Class<TResult> clazz, Number id);
 
@@ -87,7 +78,6 @@ public interface ILoaderWithInclude {
    * Or whatever your conventions specify.
    * @param clazz
    * @param id
-   * @return
    */
   public <TResult> TResult load(Class<TResult> clazz, UUID id);
 
@@ -102,8 +92,7 @@ public interface ILoaderWithInclude {
    *
    * Or whatever your conventions specify.
    * @param clazz
-   * @param id
-   * @return
+   * @param ids
    */
   public <TResult> TResult[] load(Class<TResult> clazz, UUID... ids);
 
@@ -118,8 +107,7 @@ public interface ILoaderWithInclude {
    *
    * Or whatever your conventions specify.
    * @param clazz
-   * @param id
-   * @return
+   * @param ids
    */
   public <TResult> TResult[] load(Class<TResult> clazz, Number... ids);
 

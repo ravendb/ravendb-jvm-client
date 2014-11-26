@@ -64,32 +64,28 @@ public class MoreLikeThisQuery {
   }
 
   /**
-   * Boost terms in query based on score. Default is false.
-   * @return
+   * @return Boost terms in query based on score. Default is false.
    */
   public Boolean getBoost() {
     return boost;
   }
 
   /**
-   * Boost factor when boosting based on score. Default is 1.
-   * @return
+   * @return Boost factor when boosting based on score. Default is 1.
    */
   public Float getBoostFactor() {
     return boostFactor;
   }
 
   /**
-   * The document id to use as the basis for comparison
-   * @return
+   * @return The document id to use as the basis for comparison
    */
   public String getDocumentId() {
     return documentId;
   }
 
   /**
-   * The fields to compare
-   * @return
+   * @return The fields to compare
    */
   public String[] getFields() {
     return fields;
@@ -103,8 +99,7 @@ public class MoreLikeThisQuery {
   }
 
   /**
-   * Values for the the mapping group fields to use as the basis for comparison
-   * @return
+   * @return Values for the the mapping group fields to use as the basis for comparison
    */
   public Map<String, String> getMapGroupFields() {
     return mapGroupFields;
@@ -112,7 +107,6 @@ public class MoreLikeThisQuery {
 
   /**
    * Ignore words which occur in more than this many documents. Default is {@link Integer#MAX_VALUE}
-   * @return
    */
   public Integer getMaximumDocumentFrequency() {
     return maximumDocumentFrequency;
@@ -120,23 +114,20 @@ public class MoreLikeThisQuery {
 
   /**
    * Ignore words which occur in more than this percentage of documents.
-   * @return
    */
   public Integer getMaximumDocumentFrequencyPercentage() {
     return maximumDocumentFrequencyPercentage;
   }
 
   /**
-   * The maximum number of tokens to parse in each example doc field that is not stored with TermVector support. Default is 5000.
-   * @return
+   * @return The maximum number of tokens to parse in each example doc field that is not stored with TermVector support. Default is 5000.
    */
   public Integer getMaximumNumberOfTokensParsed() {
     return maximumNumberOfTokensParsed;
   }
 
   /**
-   * Return a Query with no more than this many terms. Default is 25.
-   * @return
+   * @return  a Query with no more than this many terms. Default is 25.
    */
   public Integer getMaximumQueryTerms() {
     return maximumQueryTerms;
@@ -144,7 +135,6 @@ public class MoreLikeThisQuery {
 
   /**
    * Ignore words greater than this length or if 0 then this has no effect. Default is 0.
-   * @return
    */
   public Integer getMaximumWordLength() {
     return maximumWordLength;
@@ -152,7 +142,6 @@ public class MoreLikeThisQuery {
 
   /**
    * Ignore words which do not occur in at least this many documents. Default is 5.
-   * @return
    */
   public Integer getMinimumDocumentFrequency() {
     return minimumDocumentFrequency;
@@ -160,7 +149,6 @@ public class MoreLikeThisQuery {
 
   /**
    * Ignore terms with less than this frequency in the source doc. Default is 2.
-   * @return
    */
   public Integer getMinimumTermFrequency() {
     return minimumTermFrequency;
@@ -168,15 +156,13 @@ public class MoreLikeThisQuery {
 
   /**
    * Ignore words less than this length or if 0 then this has no effect. Default is 0.
-   * @return
    */
   public Integer getMinimumWordLength() {
     return minimumWordLength;
   }
 
   /**
-   * The document id containing the custom stop words
-   * @return
+   * @return The document id containing the custom stop words
    */
   public String getStopWordsDocumentId() {
     return stopWordsDocumentId;

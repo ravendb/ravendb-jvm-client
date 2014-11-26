@@ -23,7 +23,6 @@ public interface IDisposalNotification extends AutoCloseable {
 
   /**
    * Whatever the instance has been disposed
-   * @return
    */
   public boolean getWasDisposed();
 

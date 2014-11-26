@@ -26,8 +26,6 @@ public class ConnectionStringParser<T extends RavenConnectionStringOptions> {
 
   private T connectionStringOptions;
 
-
-
   public void setConnectionStringOptions(T connectionStringOptions) {
     this.connectionStringOptions = connectionStringOptions;
   }
@@ -47,7 +45,6 @@ public class ConnectionStringParser<T extends RavenConnectionStringOptions> {
 
   /**
    * Parse the connection string option
-   * @param networkCredentials
    * @param key
    * @param value
    */

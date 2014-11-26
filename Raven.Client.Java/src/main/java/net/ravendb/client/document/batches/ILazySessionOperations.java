@@ -20,21 +20,18 @@ public interface ILazySessionOperations {
   /**
    * Begin a load while including the specified path
    * @param path
-   * @return
    */
   public ILazyLoaderWithInclude include(String path);
 
   /**
    * Begin a load while including the specified path
    * @param path
-   * @return
    */
   public ILazyLoaderWithInclude include(Path<?> path);
 
   /**
    * Loads the specified ids.
    * @param ids
-   * @return
    */
   public <TResult> Lazy<TResult[]> load(Class<TResult> clazz, String[] ids);
 
@@ -43,14 +40,12 @@ public interface ILazySessionOperations {
    * @param clazz
    * @param ids
    * @param onEval
-   * @return
    */
   public <TResult> Lazy<TResult[]> load(Class<TResult> clazz, String[] ids, Action1<TResult[]> onEval);
 
   /**
    * Loads the specified ids.
    * @param ids
-   * @return
    */
   public <TResult> Lazy<TResult[]> load(Class<TResult> clazz, Collection<String> ids);
 
@@ -59,7 +54,6 @@ public interface ILazySessionOperations {
    * @param clazz
    * @param ids
    * @param onEval
-   * @return
    */
   public <TResult> Lazy<TResult[]> load(Class<TResult> clazz, Collection<String> ids, Action1<TResult[]> onEval);
 
@@ -67,7 +61,6 @@ public interface ILazySessionOperations {
    * Loads the specified id.
    * @param clazz
    * @param id
-   * @return
    */
   public <TResult> Lazy<TResult> load(Class<TResult> clazz, String id);
 
@@ -76,7 +69,6 @@ public interface ILazySessionOperations {
    * @param clazz
    * @param id
    * @param onEval
-   * @return
    */
   public <TResult> Lazy<TResult> load(Class<TResult> clazz, String id, Action1<TResult> onEval);
 
@@ -90,7 +82,6 @@ public interface ILazySessionOperations {
    * lazyLoad(Post.class, "posts/1")
    * @param clazz
    * @param id
-   * @return
    */
   public <TResult> Lazy<TResult> load(Class<TResult> clazz, Number id);
 
@@ -104,7 +95,6 @@ public interface ILazySessionOperations {
    * lazyLoad(Post.class, "posts/1")
    * @param clazz
    * @param id
-   * @return
    */
   public <TResult> Lazy<TResult> load(Class<TResult> clazz, UUID id);
 
@@ -121,7 +111,6 @@ public interface ILazySessionOperations {
    * Or whatever your conventions specify.
    * @param id
    * @param onEval
-   * @return
    */
   public <TResult> Lazy<TResult> load(Class<TResult> clazz, Number id, Action1<TResult> onEval);
 
@@ -138,7 +127,6 @@ public interface ILazySessionOperations {
    * Or whatever your conventions specify.
    * @param id
    * @param onEval
-   * @return
    */
   public <TResult> Lazy<TResult> load(Class<TResult> clazz, UUID id, Action1<TResult> onEval);
 
@@ -198,7 +186,6 @@ public interface ILazySessionOperations {
    * Load documents with the specified key prefix
    * @param clazz
    * @param keyPrefix
-   * @return
    */
   public <TResult> Lazy<TResult[]> loadStartingWith(Class<TResult> clazz, String keyPrefix);
 
@@ -207,7 +194,6 @@ public interface ILazySessionOperations {
    * @param clazz
    * @param keyPrefix
    * @param matches
-   * @return
    */
   public <TResult> Lazy<TResult[]> loadStartingWith(Class<TResult> clazz, String keyPrefix, String matches);
 
@@ -217,7 +203,6 @@ public interface ILazySessionOperations {
    * @param keyPrefix
    * @param matches
    * @param start
-   * @return
    */
   public <TResult> Lazy<TResult[]> loadStartingWith(Class<TResult> clazz, String keyPrefix, String matches, int start);
 
@@ -228,7 +213,6 @@ public interface ILazySessionOperations {
    * @param matches
    * @param start
    * @param pageSize
-   * @return
    */
   public <TResult> Lazy<TResult[]> loadStartingWith(Class<TResult> clazz, String keyPrefix, String matches, int start, int pageSize);
 
@@ -239,7 +223,6 @@ public interface ILazySessionOperations {
    * @param matches
    * @param start
    * @param pageSize
-   * @return
    */
   public <TResult> Lazy<TResult[]> loadStartingWith(Class<TResult> clazz, String keyPrefix, String matches, int start, int pageSize, String exclude);
 
@@ -250,7 +233,6 @@ public interface ILazySessionOperations {
    * @param matches
    * @param start
    * @param pageSize
-   * @return
    */
   public <TResult> Lazy<TResult[]> loadStartingWith(Class<TResult> clazz, String keyPrefix, String matches, int start, int pageSize, String exclude, RavenPagingInformation pagingInformation);
 

@@ -332,10 +332,6 @@ public class HttpJsonRequest {
     return sp.getTime();
   }
 
-  /**
-   * @return
-   * @see org.apache.commons.httpclient.HttpMethodBase#getResponseHeaders()
-   */
   public Map<String, String> getResponseHeaders() {
     return responseHeaders;
   }

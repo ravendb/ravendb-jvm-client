@@ -20,7 +20,6 @@ public interface IAdminDatabaseCommands {
 
   /**
    *  Get the indexing status
-   * @return
    */
   public String getIndexingStatus();
 

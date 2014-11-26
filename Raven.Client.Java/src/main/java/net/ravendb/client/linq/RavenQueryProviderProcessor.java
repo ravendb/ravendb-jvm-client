@@ -80,8 +80,7 @@ public class RavenQueryProviderProcessor<T> {
 
 
   /**
-   * Gets the current path in the case of expressions within collections
-   * @return
+   * @return the current path in the case of expressions within collections
    */
   public String getCurrentPath() {
     return currentPath;
@@ -113,8 +112,7 @@ public class RavenQueryProviderProcessor<T> {
   }
 
   /**
-   * Rename the fields from one name to another
-   * @return
+   * @return list of fields to rename from one name to another
    */
   public List<RenamedField> getFieldsToRename() {
     return fieldsToRename;
@@ -502,7 +500,6 @@ public class RavenQueryProviderProcessor<T> {
 
   }
 
-
   private boolean isMemberAccessForQuerySource(Expression< ? > arg) {
     if (!(arg instanceof Path<?>)) {
       return false;
@@ -544,7 +541,7 @@ public class RavenQueryProviderProcessor<T> {
   /**
    * Gets member info for the specified expression and the path to that expression
    * @param expression
-   * @return
+   * @return ExpressionInfo
    */
   protected ExpressionInfo getMember(Expression<?> expression) {
     Param< ? > parameterExpression = getParameterExpressionIncludingConvertions(expression);

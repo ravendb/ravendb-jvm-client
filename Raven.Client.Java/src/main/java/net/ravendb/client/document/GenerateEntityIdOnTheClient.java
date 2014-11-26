@@ -29,8 +29,7 @@ public class GenerateEntityIdOnTheClient {
   /**
    * Attempts to get the document key from an instance
    * @param entity
-   * @param string
-   * @return
+   * @param idHolder
    */
   public boolean tryGetIdFromInstance(Object entity, Reference<String> idHolder) {
     if (entity == null) {
@@ -67,7 +66,6 @@ public class GenerateEntityIdOnTheClient {
   /**
    * Tries to get the identity.
    * @param entity
-   * @return
    */
   public String getOrGenerateDocumentKey(Object entity) {
     Reference<String> idHolder = new Reference<>();

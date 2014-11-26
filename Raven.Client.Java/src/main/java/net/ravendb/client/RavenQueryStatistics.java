@@ -31,7 +31,7 @@ public class RavenQueryStatistics {
   /**
    * The size of the request which were sent from the server.
    * This value is the _uncompressed_ size.
-   * @return
+   * @return result size
    */
   public long getResultSize() {
     return resultSize;
@@ -56,8 +56,7 @@ public class RavenQueryStatistics {
   }
 
   /**
-   * Whatever the query returned potentially stale results
-   * @return
+   * @return Whatever the query returned potentially stale results
    */
   public boolean isStale() {
     return stale;
@@ -72,8 +71,7 @@ public class RavenQueryStatistics {
   }
 
   /**
-   * The duration of the query _server side_
-   * @return
+   * @return The duration of the query _server side_
    */
   public long getDurationMiliseconds() {
     return durationMiliseconds;
@@ -88,8 +86,8 @@ public class RavenQueryStatistics {
   }
 
   /**
-   * What was the total count of the results that matched the query
-   * @return
+   *
+   * @return What was the total count of the results that matched the query
    */
   public int getTotalResults() {
     return totalResults;
@@ -104,8 +102,7 @@ public class RavenQueryStatistics {
   }
 
   /**
-   * Gets the skipped results
-   * @return
+   * @return the skipped results
    */
   public int getSkippedResults() {
     return skippedResults;
@@ -121,8 +118,7 @@ public class RavenQueryStatistics {
 
 
   /**
-   * The time when the query results were unstale.
-   * @return
+   * @return The time when the query results were unstale.
    */
   public Date getTimestamp() {
     return timestamp;
@@ -137,8 +133,7 @@ public class RavenQueryStatistics {
   }
 
   /**
-   * The name of the index queried
-   * @return
+   * @return The name of the index queried
    */
   public String getIndexName() {
     return indexName;
@@ -153,8 +148,7 @@ public class RavenQueryStatistics {
   }
 
   /**
-   *  The timestamp of the queried index
-   * @return
+   * @return The timestamp of the queried index
    */
   public Date getIndexTimestamp() {
     return indexTimestamp;
@@ -169,8 +163,7 @@ public class RavenQueryStatistics {
   }
 
   /**
-   * The etag of the queried index
-   * @return
+   * @return The etag of the queried index
    */
   public Etag getIndexEtag() {
     return indexEtag;
@@ -187,7 +180,6 @@ public class RavenQueryStatistics {
   /**
    * Gets a value indicating whether any of the documents returned by this query
    * are non authoritative (modified by uncommitted transaction).
-   * @return
    */
   public boolean isNonAuthoritativeInformation() {
     return nonAuthoritativeInformation;
@@ -196,15 +188,13 @@ public class RavenQueryStatistics {
   /**
    * Sets a value indicating whether any of the documents returned by this query
    * are non authoritative (modified by uncommitted transaction).
-   * @return
    */
   public void setNonAuthoritativeInformation(boolean nonAuthoritativeInformation) {
     this.nonAuthoritativeInformation = nonAuthoritativeInformation;
   }
 
   /**
-   * The timestamp of the last time the index was queried
-   * @return
+   * @return The timestamp of the last time the index was queried
    */
   public Date getLastQueryTime() {
     return lastQueryTime;
@@ -217,8 +207,6 @@ public class RavenQueryStatistics {
   public void setLastQueryTime(Date lastQueryTime) {
     this.lastQueryTime = lastQueryTime;
   }
-
-
 
   public void updateQueryStats(QueryResult qr) {
     stale = qr.isStale();
@@ -235,7 +223,6 @@ public class RavenQueryStatistics {
     resultSize = qr.getResultSize();
     scoreExplanations = qr.getScoreExplanations();
   }
-
 
   public Map<String, String> getScoreExplanations() {
     return scoreExplanations;

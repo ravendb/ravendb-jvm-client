@@ -26,7 +26,6 @@ public interface IAbstractDocumentQuery<T> {
 
   /**
    * Gets the document convention from the query session
-   * @return
    */
   public DocumentConvention getDocumentConvention();
 
@@ -38,13 +37,11 @@ public interface IAbstractDocumentQuery<T> {
 
   /**
    * Gets the fields for projection
-   * @return
    */
   public Collection<String> getProjectionFields();
 
   /**
    *  Order the search results randomly
-   * @return
    */
   public IDocumentQuery<T> randomOrdering();
 
@@ -52,7 +49,6 @@ public interface IAbstractDocumentQuery<T> {
    * Order the search results randomly using the specified seed
    * this is useful if you want to have repeatable random queries
    * @param seed
-   * @return
    */
   public IDocumentQuery<T> randomOrdering(String seed);
 
@@ -74,42 +70,36 @@ public interface IAbstractDocumentQuery<T> {
   /**
    * Includes the specified path in the query, loading the document specified in that path
    * @param path
-   * @return
    */
   public IDocumentQuery<T> include(Path<?> path);
 
   /**
    * Includes the specified path in the query, loading the document specified in that path
    * @param path
-   * @return
    */
   public IDocumentQuery<T> include(String path);
 
   /**
    * Includes the specified path in the query, loading the document specified in that path
    * @param path
-   * @return
    */
   public IDocumentQuery<T> include(Class<?> targetClass, Path<?> path);
 
   /**
    * Takes the specified count.
    * @param count The count.
-   * @return
    */
   public IDocumentQuery<T> take(int count);
 
   /**
    * Skips the specified count.
    * @param count The count.
-   * @return
    */
   public IDocumentQuery<T> skip(int count);
 
   /**
    * Filter the results from the index using the specified where clause.
    * @param whereClause The where clause.
-   * @return
    */
   public IDocumentQuery<T> where(String whereClause);
 
@@ -118,7 +108,6 @@ public interface IAbstractDocumentQuery<T> {
    * Defaults to NotAnalyzed
    * @param fieldName
    * @param value
-   * @return
    */
   public IDocumentQuery<T> whereEquals(String fieldName, Object value);
 
@@ -130,19 +119,16 @@ public interface IAbstractDocumentQuery<T> {
    * @param fieldName
    * @param value
    * @param isAnalyzed
-   * @return
    */
   public IDocumentQuery<T> whereEquals(String fieldName, Object value, boolean isAnalyzed);
 
   /**
    * Simplified method for opening a new clause within the query
-   * @return
    */
   public IDocumentQuery<T> openSubclause();
 
   /**
    * Simplified method for closing a clause within the query
-   * @return
    */
   public IDocumentQuery<T> closeSubclause();
 
@@ -150,7 +136,6 @@ public interface IAbstractDocumentQuery<T> {
   /**
    * Matches exact value
    * @param whereParams
-   * @return
    */
   public IDocumentQuery<T> whereEquals (WhereParams whereParams);
 
@@ -163,7 +148,6 @@ public interface IAbstractDocumentQuery<T> {
    * Check that the field has one of the specified value
    * @param fieldName
    * @param values
-   * @return
    */
   public IDocumentQuery<T> whereIn(String fieldName, Collection<?> values);
 
@@ -171,7 +155,6 @@ public interface IAbstractDocumentQuery<T> {
    * Matches fields which starts with the specified value.
    * @param fieldName Name of the field.
    * @param value The value.
-   * @return
    */
   public IDocumentQuery<T> whereStartsWith(String fieldName, Object value);
 
@@ -179,7 +162,6 @@ public interface IAbstractDocumentQuery<T> {
    * Matches fields which ends with the specified value.
    * @param fieldName Name of the field.
    * @param value The value.
-   * @return
    */
   public IDocumentQuery<T> whereEndsWith (String fieldName, Object value);
 
@@ -188,7 +170,6 @@ public interface IAbstractDocumentQuery<T> {
    * @param fieldName Name of the field.
    * @param start The start.
    * @param end The end.
-   * @return
    */
   public IDocumentQuery<T> whereBetween (String fieldName, Object start, Object end);
 
@@ -197,7 +178,6 @@ public interface IAbstractDocumentQuery<T> {
    * @param fieldName Name of the field.
    * @param start The start.
    * @param end The end.
-   * @return
    */
   public IDocumentQuery<T> whereBetweenOrEqual (String fieldName, Object start, Object end);
 
@@ -205,7 +185,6 @@ public interface IAbstractDocumentQuery<T> {
    * Matches fields where the value is greater than the specified value
    * @param fieldName Name of the field.
    * @param value The value.
-   * @return
    */
   public IDocumentQuery<T> whereGreaterThan (String fieldName, Object value);
 
@@ -213,7 +192,6 @@ public interface IAbstractDocumentQuery<T> {
    * Matches fields where the value is greater than or equal to the specified value
    * @param fieldName Name of the field.
    * @param value The value.
-   * @return
    */
   public IDocumentQuery<T> whereGreaterThanOrEqual (String fieldName, Object value);
 
@@ -221,7 +199,6 @@ public interface IAbstractDocumentQuery<T> {
    * Matches fields where the value is less than the specified value
    * @param fieldName Name of the field.
    * @param value The value.
-   * @return
    */
   public IDocumentQuery<T> whereLessThan (String fieldName, Object value);
 
@@ -229,19 +206,16 @@ public interface IAbstractDocumentQuery<T> {
    * Matches fields where the value is less than or equal to the specified value
    * @param fieldName Name of the field.
    * @param value The value.
-   * @return
    */
   public IDocumentQuery<T> whereLessThanOrEqual (String fieldName, Object value);
 
   /**
    * Add an AND to the query
-   * @return
    */
   public IDocumentQuery<T> andAlso();
 
   /**
    * Add an OR to the query
-   * @return
    */
   public IDocumentQuery<T> orElse();
 
@@ -252,7 +226,6 @@ public interface IAbstractDocumentQuery<T> {
    * http://lucene.apache.org/java/2_4_0/queryparsersyntax.html#Boosting%20a%20Term
    * @param boost
    * boosting factor where 1.0 is default, less than 1.0 is lower weight, greater than 1.0 is higher weight
-   * @return
    */
   public IDocumentQuery<T> boost(Double boost);
 
@@ -261,7 +234,6 @@ public interface IAbstractDocumentQuery<T> {
    *
    * http://lucene.apache.org/java/2_4_0/queryparsersyntax.html#Fuzzy%20Searches
    * @param fuzzy 0.0 to 1.0 where 1.0 means closer match
-   * @return
    */
   public IDocumentQuery<T> fuzzy (Double fuzzy);
 
@@ -270,7 +242,6 @@ public interface IAbstractDocumentQuery<T> {
    *
    * http://lucene.apache.org/java/2_4_0/queryparsersyntax.html#Proximity%20Searches
    * @param proximity number of words within
-   * @return
    */
   public IDocumentQuery<T> proximity (int proximity);
 
@@ -279,7 +250,6 @@ public interface IAbstractDocumentQuery<T> {
    * The fields are the names of the fields to sort, defaulting to sorting by ascending.
    * You can prefix a field name with '-' to indicate sorting by descending or '+' to sort by ascending
    * @param fields The fields.
-   * @return
    */
   public IDocumentQuery<T> orderBy(String... fields);
 
@@ -292,7 +262,6 @@ public interface IAbstractDocumentQuery<T> {
    * @param fragmentLength The fragment length.
    * @param fragmentCount The maximum number of fragments for the field.
    * @param fragmentsField The field in query results item to put highlighing into.
-   * @return
    */
   public IDocumentQuery<T> highlight(String fieldName, int fragmentLength, int fragmentCount, String fragmentsField);
 
@@ -305,7 +274,6 @@ public interface IAbstractDocumentQuery<T> {
    * @param fragmentLength The fragment length.
    * @param fragmentCount The fragment count.
    * @param highlightings The maximum number of fragments for the field.
-   * @return
    */
   public IDocumentQuery<T> highlight(String fieldName, int fragmentLength, int fragmentCount, Reference<FieldHighlightings> highlightings);
 
@@ -313,7 +281,6 @@ public interface IAbstractDocumentQuery<T> {
    * Sets the tags to highlight matches with.
    * @param preTag Prefix tag.
    * @param postTag Postfix tag.
-   * @return
    */
   public IDocumentQuery<T> setHighlighterTags(String preTag, String postTag);
 
@@ -321,27 +288,23 @@ public interface IAbstractDocumentQuery<T> {
    * Sets the tags to highlight matches with.
    * @param preTags Prefix tags.
    * @param postTags Postfix tags.
-   * @return
    */
   public IDocumentQuery<T> setHighlighterTags(String[] preTags, String[] postTags);
 
   /**
    * Instructs the query to wait for non stale results as of now.
-   * @return
    */
   public IDocumentQuery<T> waitForNonStaleResultsAsOfNow();
 
   /**
    * Instructs the query to wait for non stale results as of now for the specified timeout.
    * @param waitTimeout The wait timeout.
-   * @return
    */
   public IDocumentQuery<T> waitForNonStaleResultsAsOfNow(long waitTimeout);
 
   /**
    * Instructs the query to wait for non stale results as of the cutoff date.
    * @param cutOff The cut off.
-   * @return
    */
   public IDocumentQuery<T> waitForNonStaleResultsAsOf(Date cutOff);
 
@@ -349,14 +312,12 @@ public interface IAbstractDocumentQuery<T> {
    * Instructs the query to wait for non stale results as of the cutoff date for the specified timeout
    * @param cutOff The cut off.
    * @param waitTimeout The wait timeout.
-   * @return
    */
   public IDocumentQuery<T> waitForNonStaleResultsAsOf(Date cutOff, long waitTimeout);
 
   /**
    * EXPERT ONLY: Instructs the query to wait for non stale results.
    * This shouldn't be used outside of unit tests unless you are well aware of the implications
-   * @return
    */
   public IDocumentQuery<T> waitForNonStaleResults();
 
@@ -365,7 +326,6 @@ public interface IAbstractDocumentQuery<T> {
    * If there is more than a single term, each of them will be checked independently.
    * @param fieldName
    * @param searchTerms
-   * @return
    */
   public IDocumentQuery<T> search(String fieldName, String searchTerms);
 
@@ -374,13 +334,11 @@ public interface IAbstractDocumentQuery<T> {
    * If there is more than a single term, each of them will be checked independently.
    * @param fieldName
    * @param searchTerms
-   * @return
    */
   public IDocumentQuery<T> search(String fieldName, String searchTerms, EscapeQueryOptions escapeQueryOptions);
 
   /**
    *  The last term that we asked the query to use equals on
-   * @return
    */
   public Tuple<String, String> getLastEqualityTerm();
 

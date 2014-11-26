@@ -11,42 +11,42 @@ public interface IOrderedQueryable<T> extends Iterable<T> {
   /**
    * Filters a sequence of values based on a predicate.
    * @param predicate
-   * @return
+   * @return IRavenQueryable
    */
   public IRavenQueryable<T> where(Predicate predicate);
 
   /**
    * Projects results
    * @param projectionClass
-   * @return
+   * @return projection
    */
   public <TProjection> IRavenQueryable<TProjection> select(Class<TProjection> projectionClass);
 
   /**
    * Projects results
    * @param projectionClass
-   * @return
+   * @return projection
    */
   public <TProjection> IRavenQueryable<TProjection> select(Class<TProjection> projectionClass, String... fields);
 
   /**
    * Projects results
    * @param projectionClass
-   * @return
+   * @return projection
    */
   public <TProjection> IRavenQueryable<TProjection> select(Class<TProjection> projectionClass, String[] fields, String[] projections);
 
   /**
    * Projects results
    * @param projectionClass
-   * @return
+   * @return projection
    */
   public <TProjection> IRavenQueryable<TProjection> select(Class<TProjection> projectionClass, Path<?>... fields);
 
   /**
    * Projects results
    * @param projectionClass
-   * @return
+   * @return projection
    */
   public <TProjection> IRavenQueryable<TProjection> select(Class<TProjection> projectionClass, Path<?>[] fields, Path<?>[] projections);
 
@@ -54,20 +54,20 @@ public interface IOrderedQueryable<T> extends Iterable<T> {
   /**
    * Projects results based on projection path
    * @param projectionPath
-   * @return
+   * @return projection
    */
   public <TProjection> IRavenQueryable<TProjection> select(Path<TProjection> projectionPath);
 
   /**
    * Changes order of result elements
    * @param asc
-   * @return
+   * @return IRavenQueryable
    */
   public IRavenQueryable<T> orderBy(OrderSpecifier<?>... asc);
 
   /**
    * Materialize query and returns results as list.
-   * @return
+   * @return results as list
    */
   public List<T> toList();
 
@@ -75,7 +75,7 @@ public interface IOrderedQueryable<T> extends Iterable<T> {
    * Skips specified number of records.
    * Method is used for paging.
    * @param itemsToSkip
-   * @return
+   * @return IRavenQueryable
    */
   public IRavenQueryable<T> skip(int itemsToSkip);
 
@@ -83,14 +83,14 @@ public interface IOrderedQueryable<T> extends Iterable<T> {
    * Takes specified number of records.
    * Method is used for paging.
    * @param amount
-   * @return
+   * @return IRavenQueryable
    */
   public IRavenQueryable<T> take(int amount);
 
   /**
    * Returns only first entry from result.
    * Throws if zero results was found.
-   * @return
+   * @return first result
    */
   public T first();
 
@@ -98,20 +98,20 @@ public interface IOrderedQueryable<T> extends Iterable<T> {
    * Returns only first entry from result which suffices specified predicate.
    * Throws if zero results was found.
    * @param predicate
-   * @return
+   * @return first result that matches predicate or throws exception
    */
   public T first(BooleanExpression predicate);
 
   /**
    * Returns first entry from result or default value if none found.
-   * @return
+   * @return first result that matches predicate or default type value.
    */
   public T firstOrDefault();
 
   /**
    * Returns first entry from result which suffices specified predicate or default value if none found.
    * @param predicate
-   * @return
+   * @return first result that matches predicate or default type value.
    */
   public T firstOrDefault(BooleanExpression predicate);
 
@@ -120,7 +120,7 @@ public interface IOrderedQueryable<T> extends Iterable<T> {
    * 2 entries and over: throws exception
    * 1 entry - return it
    * 0 - throws
-   * @return
+   * @return single result or throws exception when > 1 found
    */
   public T single();
 
@@ -130,7 +130,7 @@ public interface IOrderedQueryable<T> extends Iterable<T> {
    * 1 entry - return it
    * 0 - throws
    * @param predicate
-   * @return
+   * @return single result that matches predicate or exception when > 1 found
    */
   public T single(BooleanExpression predicate);
 
@@ -139,8 +139,7 @@ public interface IOrderedQueryable<T> extends Iterable<T> {
    * 2 entries and over: throws exception
    * 1 entry - return it
    * 0 - returns default value
-   * @param predicate
-   * @return
+   * @return single result or default
    */
   public T singleOrDefault();
 
@@ -150,65 +149,65 @@ public interface IOrderedQueryable<T> extends Iterable<T> {
    * 1 entry - return it
    * 0 - returns default value
    * @param predicate
-   * @return
+   * @return single result match matches predicate or default
    */
   public T singleOrDefault(BooleanExpression predicate);
 
   /**
    * Performs count query.
-   * @return
+   * @return count
    */
   public int count();
 
   /**
    * Performs any query.
    * Returns true is any entry would be returned in normal query.
-   * @return
+   * @return any query
    */
   public boolean any();
 
   /**
    * Performs count query - each result must match specified predicate.
    * @param predicate
-   * @return
+   * @return document count that matches predicate
    */
   public int count(BooleanExpression predicate);
 
   /**
    * Performs count query.
-   * @return
+   * @return document count as long
    */
   public long longCount();
 
   /**
    * Performs count query - each result must match specified predicate.
    * @param predicate
-   * @return
+   * @return document count as long which matches predicate
    */
   public long longCount(BooleanExpression predicate);
 
   /**
    * Returns element type
-   * @return
+   * @return element type
    */
   public Class<?> getElementType();
 
   /**
    * Expression created via DSL
-   * @return
+   * @return DSL expression
    */
   public Expression<?> getExpression();
 
   /**
    * Query provider.
-   * @return
+   * @return query provider.
    */
   public IQueryProvider getProvider();
 
   /**
    * Project using a different type
    * @param clazz
-   * @return
+   * @return projection
    */
   public <TResult> IRavenQueryable<TResult> as(Class<TResult> clazz);
 

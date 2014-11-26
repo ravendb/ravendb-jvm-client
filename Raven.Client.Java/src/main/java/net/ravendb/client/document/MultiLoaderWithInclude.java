@@ -18,7 +18,6 @@ import com.mysema.query.types.Path;
  * Fluent implementation for specifying include paths
  * for loading documents
  *
- * @param <T>
  */
 public class MultiLoaderWithInclude implements ILoaderWithInclude {
   private final IDocumentSessionImpl session;

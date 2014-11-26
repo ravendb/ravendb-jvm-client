@@ -26,7 +26,6 @@ public class ProfilingContext {
   /**
    * Try to get a session matching the specified id.
    * @param id
-   * @return
    */
   public ProfilingInformation tryGet(final UUID id) {
     return leastRecentlyUsedCache.firstOrDefault(new Function1<ProfilingInformation, Boolean>() {

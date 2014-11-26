@@ -537,9 +537,9 @@ public class ServerClient implements IDatabaseCommands {
 
   /**
    * Perform a direct get for a document with the specified key on the specified server URL.
-   * @param serverUrl
+   * @param operationMetadata
    * @param key
-   * @return
+   * @param transform
    */
   public JsonDocument directGet(OperationMetadata operationMetadata, String key, String transform) throws ServerClientException {
     if (key.length() > 127) {
@@ -1915,8 +1915,7 @@ public class ServerClient implements IDatabaseCommands {
    *  Perform a set based deletes using the specified index.
    * @param indexName
    * @param queryToDelete
-   * @param allowStale
-   * @return
+   * @param options
    */
   @Override
   public Operation deleteByIndex(final String indexName, final IndexQuery queryToDelete, final BulkOperationOptions options) {
@@ -1975,7 +1974,6 @@ public class ServerClient implements IDatabaseCommands {
    * @param indexName
    * @param queryToUpdate
    * @param patchRequests
-   * @return
    */
   @Override
   public Operation updateByIndex(String indexName, IndexQuery queryToUpdate, PatchRequest[] patchRequests) {
@@ -1988,7 +1986,6 @@ public class ServerClient implements IDatabaseCommands {
    * @param indexName
    * @param queryToUpdate
    * @param patch
-   * @return
    */
   @Override
   public Operation updateByIndex(String indexName, IndexQuery queryToUpdate, ScriptedPatchRequest patch) {
@@ -2000,8 +1997,7 @@ public class ServerClient implements IDatabaseCommands {
    * @param indexName
    * @param queryToUpdate
    * @param patchRequests
-   * @param allowStale
-   * @return
+   * @param options
    */
   @Override
   public Operation updateByIndex(String indexName, IndexQuery queryToUpdate, PatchRequest[] patchRequests, BulkOperationOptions options) {
@@ -2020,8 +2016,7 @@ public class ServerClient implements IDatabaseCommands {
    * @param indexName
    * @param queryToUpdate
    * @param patch
-   * @param allowStale
-   * @return
+   * @param options
    */
   @Override
   public Operation updateByIndex(String indexName, IndexQuery queryToUpdate, ScriptedPatchRequest patch, BulkOperationOptions options) {
@@ -2077,7 +2072,6 @@ public class ServerClient implements IDatabaseCommands {
    *  if the index is stale
    * @param indexName
    * @param queryToDelete
-   * @return
    */
   @Override
   public Operation deleteByIndex(String indexName, IndexQuery queryToDelete) {
@@ -2187,7 +2181,6 @@ public class ServerClient implements IDatabaseCommands {
    * Seeds the next identity value on the server
    * @param name
    * @param value
-   * @return
    */
   @Override
   public long seedIdentityFor(final String name, final long value) {
@@ -2261,7 +2254,6 @@ public class ServerClient implements IDatabaseCommands {
   /**
    * Perform a single POST request containing multiple nested GET requests
    * @param requests
-   * @return
    */
   @Override
   public GetResponse[] multiGet(final GetRequest[] requests) {
@@ -2342,7 +2334,6 @@ public class ServerClient implements IDatabaseCommands {
    * @param index
    * @param query
    * @param facetSetupDoc
-   * @return
    */
   @Override
   public FacetResults getFacets(final String index, final IndexQuery query, final String facetSetupDoc) {
@@ -2355,7 +2346,6 @@ public class ServerClient implements IDatabaseCommands {
    * @param query
    * @param facetSetupDoc
    * @param start
-   * @return
    */
   @Override
   public FacetResults getFacets(final String index, final IndexQuery query, final String facetSetupDoc, final int start) {
@@ -2370,7 +2360,6 @@ public class ServerClient implements IDatabaseCommands {
    * @param facetSetupDoc
    * @param start
    * @param pageSize
-   * @return
    */
   @Override
   public FacetResults getFacets(final String index, final IndexQuery query, final String facetSetupDoc, final int start, final Integer pageSize) {
@@ -2410,7 +2399,6 @@ public class ServerClient implements IDatabaseCommands {
    * @param index
    * @param query
    * @param facets
-   * @return
    */
   @Override
   public FacetResults getFacets(final String index, final IndexQuery query, final List<Facet> facets) {
@@ -2423,7 +2411,6 @@ public class ServerClient implements IDatabaseCommands {
    * @param query
    * @param facets
    * @param start
-   * @return
    */
   @Override
   public FacetResults getFacets(final String index, final IndexQuery query, final List<Facet> facets, final int start) {
@@ -2437,7 +2424,6 @@ public class ServerClient implements IDatabaseCommands {
    * @param facets
    * @param start
    * @param pageSize
-   * @return
    */
   @Override
   public FacetResults getFacets(final String index, final IndexQuery query, final List<Facet> facets, final int start, final Integer pageSize) {
@@ -2512,7 +2498,6 @@ public class ServerClient implements IDatabaseCommands {
    * Sends a patch request for a specific document, ignoring the document's Etag
    * @param key
    * @param patches
-   * @return
    */
   @Override
   public RavenJObject patch(String key, PatchRequest[] patches) {
@@ -2524,7 +2509,6 @@ public class ServerClient implements IDatabaseCommands {
    * @param key
    * @param patches
    * @param ignoreMissing
-   * @return
    */
   @Override
   public RavenJObject patch(String key, PatchRequest[] patches, boolean ignoreMissing) {
@@ -2543,7 +2527,6 @@ public class ServerClient implements IDatabaseCommands {
    * Sends a patch request for a specific document, ignoring the document's Etag
    * @param key
    * @param patch
-   * @return
    */
   @Override
   public RavenJObject patch(String key, ScriptedPatchRequest patch) {
@@ -2555,7 +2538,6 @@ public class ServerClient implements IDatabaseCommands {
    * @param key
    * @param patch
    * @param ignoreMissing
-   * @return
    */
   @Override
   public RavenJObject patch(String key, ScriptedPatchRequest patch, boolean ignoreMissing) {
@@ -2576,7 +2558,6 @@ public class ServerClient implements IDatabaseCommands {
    * @param key
    * @param patches
    * @param etag
-   * @return
    */
   @Override
   public RavenJObject patch(String key, PatchRequest[] patches, Etag etag) {
@@ -2595,7 +2576,6 @@ public class ServerClient implements IDatabaseCommands {
    * @param patchesToExisting
    * @param patchesToDefault
    * @param defaultMetadata
-   * @return
    */
   @Override
   public RavenJObject patch(String key, PatchRequest[] patchesToExisting, PatchRequest[] patchesToDefault, RavenJObject defaultMetadata) {
@@ -2614,7 +2594,6 @@ public class ServerClient implements IDatabaseCommands {
    * @param key
    * @param patch
    * @param etag
-   * @return
    */
   @Override
   public RavenJObject patch(String key, ScriptedPatchRequest patch, Etag etag) {
@@ -2633,7 +2612,6 @@ public class ServerClient implements IDatabaseCommands {
    * @param patchExisting
    * @param patchDefault
    * @param defaultMetadata
-   * @return
    */
   @Override
   public RavenJObject patch(String key, ScriptedPatchRequest patchExisting, ScriptedPatchRequest patchDefault, RavenJObject defaultMetadata) {

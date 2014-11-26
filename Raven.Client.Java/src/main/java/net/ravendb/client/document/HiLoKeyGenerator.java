@@ -30,7 +30,6 @@ public class HiLoKeyGenerator extends HiLoKeyGeneratorBase {
    * @param databaseCommands
    * @param convention
    * @param entity
-   * @return
    */
   public String generateDocumentKey(IDatabaseCommands databaseCommands, DocumentConvention convention, Object entity) {
     return getDocumentKeyFromId(convention, nextId(databaseCommands));
@@ -39,7 +38,6 @@ public class HiLoKeyGenerator extends HiLoKeyGeneratorBase {
   /**
    * Create the next id (numeric)
    * @param commands
-   * @return
    */
   public long nextId(IDatabaseCommands commands) {
     while (true) {

@@ -33,8 +33,6 @@ public class IndexQuery {
     this.query = query;
   }
 
-
-
   private boolean pageSizeSet;
   private boolean distinct;
   private String query;
@@ -61,13 +59,11 @@ public class IndexQuery {
   private boolean showTimings;
 
   /**
-   * Indicates if detailed timings should be calculated for various query parts (Lucene search, loading documents, transforming results). Default: false
-   * @return
+   * @return Indicates if detailed timings should be calculated for various query parts (Lucene search, loading documents, transforming results). Default: false
    */
   public boolean isShowTimings() {
     return showTimings;
   }
-
 
   /**
    * Indicates if detailed timings should be calculated for various query parts (Lucene search, loading documents, transforming results). Default: false
@@ -102,13 +98,11 @@ public class IndexQuery {
   }
 
   /**
-   * Whatever we should apply distinct operation to the query on the server side
-   * @return
+   * @return Whatever we should apply distinct operation to the query on the server side
    */
   public boolean isDistinct() {
     return distinct;
   }
-
 
   public void setDistinct(boolean distinct) {
     this.distinct = distinct;
@@ -126,42 +120,29 @@ public class IndexQuery {
     return highlighterPreTags;
   }
 
-
-
   public void setHighlighterPreTags(String[] highlighterPreTags) {
     this.highlighterPreTags = highlighterPreTags;
   }
-
-
 
   public String[] getHighlighterPostTags() {
     return highlighterPostTags;
   }
 
-
-
   public void setHighlighterPostTags(String[] highlighterPostTags) {
     this.highlighterPostTags = highlighterPostTags;
   }
-
-
 
   public boolean isDisableCaching() {
     return disableCaching;
   }
 
-
-
   public void setDisableCaching(boolean disableCaching) {
     this.disableCaching = disableCaching;
   }
 
-
-
   public boolean isDebugOptionGetIndexEntires() {
     return debugOptionGetIndexEntires;
   }
-
 
   public boolean isExplainScores() {
     return explainScores;
@@ -174,7 +155,6 @@ public class IndexQuery {
   public void setDebugOptionGetIndexEntires(boolean debugOptionGetIndexEntires) {
     this.debugOptionGetIndexEntires = debugOptionGetIndexEntires;
   }
-
 
   public boolean isAllowMultipleIndexEntriesForSameDocumentToResultTransformer() {
     return allowMultipleIndexEntriesForSameDocumentToResultTransformer;
@@ -195,8 +175,6 @@ public class IndexQuery {
     return skippedResults;
   }
 
-
-
   public void setSkippedResults(Reference<Integer> skippedResults) {
     this.skippedResults = skippedResults;
   }
@@ -205,13 +183,9 @@ public class IndexQuery {
     return defaultOperator;
   }
 
-
-
   public void setDefaultOperator(QueryOperator defaultOperator) {
     this.defaultOperator = defaultOperator;
   }
-
-
 
   /**
    * Cutoff etag is used to check if the index has already process a document with the given
@@ -225,25 +199,19 @@ public class IndexQuery {
    * considered to be an acceptable tradeoff.
    * If you need absolute no staleness with a map/reduce index, you will need to ensure synchronized clocks and
    * use the Cutoff date option, instead.
-   * @return
+   * @return etag
    */
   public Etag getCutoffEtag() {
     return cutoffEtag;
   }
 
-
-
   public String getDefaultField() {
     return defaultField;
   }
 
-
-
   public void setDefaultField(String defaultField) {
     this.defaultField = defaultField;
   }
-
-
 
   public void setCutoffEtag(Etag cutoffEtag) {
     this.cutoffEtag = cutoffEtag;
@@ -286,8 +254,7 @@ public class IndexQuery {
   }
 
   /**
-   * Whatever the page size was explicitly set or still at its default value
-   * @return
+   * @return Whatever the page size was explicitly set or still at its default value
    */
   public boolean isPageSizeSet() {
     return pageSizeSet;
@@ -318,7 +285,6 @@ public class IndexQuery {
     this.fieldsToFetch = fieldsToFetch;
   }
 
-
   public String getIndexQueryUrl(String operationUrl, String index, String operationName) {
     return getIndexQueryUrl(operationUrl, index, operationName, true, true);
   }
@@ -333,7 +299,7 @@ public class IndexQuery {
    * @param index
    * @param operationName
    * @param includePageSizeEvenIfNotExplicitlySet
-   * @return
+   * @return index query url
    */
   public String getIndexQueryUrl(String operationUrl, String index, String operationName, boolean includePageSizeEvenIfNotExplicitlySet, boolean includeQuery) {
     if (operationUrl.endsWith("/"))

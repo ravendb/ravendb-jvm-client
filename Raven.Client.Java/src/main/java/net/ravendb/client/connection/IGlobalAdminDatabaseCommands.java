@@ -10,13 +10,12 @@ public interface IGlobalAdminDatabaseCommands {
 
   /**
    * Gets the build number
-   * @return
    */
   public BuildNumber getBuildNumber();
+
   /**
    * Returns the names of all tenant databases on the RavenDB server
    * @param pageSize
-   * @return
    */
   public String[] getDatabaseNames(int pageSize);
 
@@ -24,13 +23,11 @@ public interface IGlobalAdminDatabaseCommands {
    * Returns the names of all tenant databases on the RavenDB server
    * @param pageSize
    * @param start
-   * @return
    */
   public String[] getDatabaseNames(int pageSize, int start);
 
   /**
    * Get admin statistics
-   * @return
    */
   public AdminStatistics getStatistics();
 
@@ -61,15 +58,13 @@ public interface IGlobalAdminDatabaseCommands {
 
   /**
    * Gets DatabaseCommands
-   * @return
    */
   public IDatabaseCommands getCommands();
 
 
   /**
    * Begins a restore operation
-   * @param restoreLocation
-   * @param databaseLocation
+   * @param restoreRequest
    */
   public Operation startRestore(DatabaseRestoreRequest restoreRequest);
 
@@ -84,7 +79,6 @@ public interface IGlobalAdminDatabaseCommands {
   /**
    * Ensures that the database exists, creating it if needed
    * @param name
-   * @param ignoreFailures
    */
   public void ensureDatabaseExists(String name);
 

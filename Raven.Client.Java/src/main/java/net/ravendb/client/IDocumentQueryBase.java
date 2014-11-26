@@ -25,13 +25,11 @@ public interface IDocumentQueryBase<T, TSelf extends IDocumentQueryBase<T, TSelf
 
   /**
    * Gets the document convention from the query session
-   * @return
    */
   public DocumentConvention getDocumentConvention();
 
   /**
    *  Negate the next operation
-   * @return
    */
   public TSelf not();
 
@@ -48,52 +46,44 @@ public interface IDocumentQueryBase<T, TSelf extends IDocumentQueryBase<T, TSelf
   /**
    * Includes the specified path in the query, loading the document specified in that path
    * @param path The path.
-   * @return
    */
   public TSelf include(Path<?> path);
 
   /**
    * Takes the specified count.
    * @param count The count.
-   * @return
    */
   public TSelf take (int count);
 
   /**
    * Skips the specified count.
    * @param count The count.
-   * @return
    */
   public TSelf skip(int count);
 
   /**
    * Returns first element or default value for type if sequence is empty.
-   * @return
    */
   public T firstOrDefault();
 
   /**
    * Returns first element or throws if sequence is empty.
-   * @return
    */
   public T first();
 
   /**
    * Returns first element or default value for given type if sequence is empty. Throws if sequence contains more than one element.
-   * @return
    */
   public T singleOrDefault();
 
   /**
    * Returns first element or throws if sequence is empty or contains more than one element.
-   * @return
    */
   public T single();
 
   /**
    * Filter the results from the index using the specified where clause.
    * @param whereClause The where clause.
-   * @return
    */
   public TSelf where(String whereClause);
 
@@ -102,7 +92,6 @@ public interface IDocumentQueryBase<T, TSelf extends IDocumentQueryBase<T, TSelf
    * Defaults to NotAnalyzed
    * @param fieldName
    * @param value
-   * @return
    */
   public TSelf whereEquals(String fieldName, Object value);
 
@@ -112,7 +101,6 @@ public interface IDocumentQueryBase<T, TSelf extends IDocumentQueryBase<T, TSelf
    * Defaults to NotAnalyzed
    * @param propertySelector
    * @param value
-   * @return
    */
   public <TValue> TSelf whereEquals(Expression<? super TValue> propertySelector, TValue value);
 
@@ -123,7 +111,6 @@ public interface IDocumentQueryBase<T, TSelf extends IDocumentQueryBase<T, TSelf
    * @param fieldName
    * @param value
    * @param isAnalyzed
-   * @return
    */
   public TSelf whereEquals(String fieldName, Object value, boolean isAnalyzed);
 
@@ -134,14 +121,12 @@ public interface IDocumentQueryBase<T, TSelf extends IDocumentQueryBase<T, TSelf
    * @param propertySelector
    * @param value
    * @param isAnalyzed
-   * @return
    */
   public <TValue> TSelf whereEquals(Expression<? super TValue> propertySelector, TValue value, boolean isAnalyzed);
 
   /**
    * Matches exact value
    * @param whereParams
-   * @return
    */
   public TSelf whereEquals (WhereParams whereParams);
 
@@ -149,7 +134,6 @@ public interface IDocumentQueryBase<T, TSelf extends IDocumentQueryBase<T, TSelf
    * Check that the field has one of the specified value
    * @param fieldName
    * @param values
-   * @return
    */
   public TSelf whereIn(String fieldName, Collection<?> values);
 
@@ -157,7 +141,6 @@ public interface IDocumentQueryBase<T, TSelf extends IDocumentQueryBase<T, TSelf
    * Check that the field has one of the specified value
    * @param propertySelector
    * @param values
-   * @return
    */
   public <TValue> TSelf whereIn(Expression<? super TValue> propertySelector, Collection<TValue> values);
 
@@ -165,7 +148,6 @@ public interface IDocumentQueryBase<T, TSelf extends IDocumentQueryBase<T, TSelf
    * Matches fields which starts with the specified value.
    * @param fieldName Name of the field.
    * @param value The value.
-   * @return
    */
   public TSelf whereStartsWith(String fieldName, Object value);
 
@@ -173,7 +155,6 @@ public interface IDocumentQueryBase<T, TSelf extends IDocumentQueryBase<T, TSelf
    * Matches fields which starts with the specified value.
    * @param propertySelector Property selector for the field.
    * @param value The value.
-   * @return
    */
   public <TValue> TSelf whereStartsWith(Expression<? super TValue> propertySelector, TValue value);
 
@@ -181,7 +162,6 @@ public interface IDocumentQueryBase<T, TSelf extends IDocumentQueryBase<T, TSelf
    * Matches fields which ends with the specified value.
    * @param fieldName Name of the field.
    * @param value The value.
-   * @return
    */
   public TSelf whereEndsWith (String fieldName, Object value);
 
@@ -189,7 +169,6 @@ public interface IDocumentQueryBase<T, TSelf extends IDocumentQueryBase<T, TSelf
    * Matches fields which ends with the specified value.
    * @param propertySelector Property selector for the field.
    * @param value The value.
-   * @return
    */
   public <TValue> TSelf whereEndsWith(Expression<? super TValue> propertySelector, TValue value);
 
@@ -198,7 +177,6 @@ public interface IDocumentQueryBase<T, TSelf extends IDocumentQueryBase<T, TSelf
    * @param fieldName Name of the field.
    * @param start The start.
    * @param end The end.
-   * @return
    */
   public TSelf whereBetween (String fieldName, Object start, Object end);
 
@@ -207,7 +185,6 @@ public interface IDocumentQueryBase<T, TSelf extends IDocumentQueryBase<T, TSelf
    * @param propertySelector Property selector for the field.
    * @param start The start.
    * @param end The end.
-   * @return
    */
   public <TValue> TSelf whereBetween(Expression<? super TValue> propertySelector, TValue start, TValue end);
 
@@ -216,7 +193,6 @@ public interface IDocumentQueryBase<T, TSelf extends IDocumentQueryBase<T, TSelf
    * @param fieldName Name of the field.
    * @param start The start.
    * @param end The end.
-   * @return
    */
   public TSelf whereBetweenOrEqual (String fieldName, Object start, Object end);
 
@@ -225,7 +201,6 @@ public interface IDocumentQueryBase<T, TSelf extends IDocumentQueryBase<T, TSelf
    * @param propertySelector Property selector for the field.
    * @param start The start.
    * @param end The end.
-   * @return
    */
   public <TValue> TSelf whereBetweenOrEqual(Expression<? super TValue> propertySelector, TValue start, TValue end);
 
@@ -233,7 +208,6 @@ public interface IDocumentQueryBase<T, TSelf extends IDocumentQueryBase<T, TSelf
    * Matches fields where the value is greater than the specified value
    * @param fieldName Name of the field.
    * @param value The value.
-   * @return
    */
   public TSelf whereGreaterThan (String fieldName, Object value);
 
@@ -241,7 +215,6 @@ public interface IDocumentQueryBase<T, TSelf extends IDocumentQueryBase<T, TSelf
    * Matches fields where the value is greater than the specified value
    * @param propertySelector Property selector for the field.
    * @param value The value.
-   * @return
    */
   public <TValue> TSelf whereGreaterThan(Expression<? super TValue> propertySelector, TValue value);
 
@@ -249,7 +222,6 @@ public interface IDocumentQueryBase<T, TSelf extends IDocumentQueryBase<T, TSelf
    * Matches fields where the value is greater than or equal to the specified value
    * @param fieldName Name of the field.
    * @param value The value.
-   * @return
    */
   public TSelf whereGreaterThanOrEqual (String fieldName, Object value);
 
@@ -257,7 +229,6 @@ public interface IDocumentQueryBase<T, TSelf extends IDocumentQueryBase<T, TSelf
    * Matches fields where the value is greater than or equal to the specified value
    * @param propertySelector Property selector for the field.
    * @param value The value.
-   * @return
    */
   public <TValue> TSelf whereGreaterThanOrEqual(Expression<? super TValue> propertySelector, TValue value);
 
@@ -265,7 +236,6 @@ public interface IDocumentQueryBase<T, TSelf extends IDocumentQueryBase<T, TSelf
    * Matches fields where the value is less than the specified value
    * @param fieldName Name of the field.
    * @param value The value.
-   * @return
    */
   public TSelf whereLessThan (String fieldName, Object value);
 
@@ -273,7 +243,6 @@ public interface IDocumentQueryBase<T, TSelf extends IDocumentQueryBase<T, TSelf
    * Matches fields where the value is less than the specified value
    * @param propertySelector Property selector for the field.
    * @param value The value.
-   * @return
    */
   public <TValue> TSelf whereLessThan(Expression<? super TValue> propertySelector, TValue value);
 
@@ -281,7 +250,6 @@ public interface IDocumentQueryBase<T, TSelf extends IDocumentQueryBase<T, TSelf
    * Matches fields where the value is less than or equal to the specified value
    * @param fieldName Name of the field.
    * @param value The value.
-   * @return
    */
   public TSelf whereLessThanOrEqual (String fieldName, Object value);
 
@@ -289,19 +257,16 @@ public interface IDocumentQueryBase<T, TSelf extends IDocumentQueryBase<T, TSelf
    * Matches fields where the value is less than or equal to the specified value
    * @param propertySelector Property selector for the field.
    * @param value The value.
-   * @return
    */
   public <TValue> TSelf whereLessThanOrEqual(Expression<? super TValue> propertySelector, TValue value);
 
   /**
    * Add an AND to the query
-   * @return
    */
   public TSelf andAlso();
 
   /**
    * Add an OR to the query
-   * @return
    */
   public TSelf orElse();
 
@@ -312,7 +277,6 @@ public interface IDocumentQueryBase<T, TSelf extends IDocumentQueryBase<T, TSelf
    * http://lucene.apache.org/java/2_4_0/queryparsersyntax.html#Boosting%20a%20Term
    * @param boost
    * boosting factor where 1.0 is default, less than 1.0 is lower weight, greater than 1.0 is higher weight
-   * @return
    */
   public TSelf boost(Double boost);
 
@@ -321,7 +285,6 @@ public interface IDocumentQueryBase<T, TSelf extends IDocumentQueryBase<T, TSelf
    *
    * http://lucene.apache.org/java/2_4_0/queryparsersyntax.html#Fuzzy%20Searches
    * @param fuzzy 0.0 to 1.0 where 1.0 means closer match
-   * @return
    */
   public TSelf fuzzy (Double fuzzy);
 
@@ -330,7 +293,6 @@ public interface IDocumentQueryBase<T, TSelf extends IDocumentQueryBase<T, TSelf
    *
    * http://lucene.apache.org/java/2_4_0/queryparsersyntax.html#Proximity%20Searches
    * @param proximity number of words within
-   * @return
    */
   public TSelf proximity (int proximity);
 
@@ -339,7 +301,6 @@ public interface IDocumentQueryBase<T, TSelf extends IDocumentQueryBase<T, TSelf
    * @param radius The radius.
    * @param latitude The latitude.
    * @param longitude The longitude.
-   * @return
    */
   public TSelf withinRadiusOf(double radius, double latitude, double longitude);
 
@@ -349,7 +310,6 @@ public interface IDocumentQueryBase<T, TSelf extends IDocumentQueryBase<T, TSelf
    * @param latitude The latitude.
    * @param longitude The longitude.
    * @param radiusUnits The unit of the radius.
-   * @return
    */
   public TSelf withinRadiusOf(double radius, double latitude, double longitude, SpatialUnits radiusUnits);
 
@@ -359,7 +319,6 @@ public interface IDocumentQueryBase<T, TSelf extends IDocumentQueryBase<T, TSelf
    * @param radius The radius.
    * @param latitude The latitude.
    * @param longitude The longitude.
-   * @return
    */
   public TSelf withinRadiusOf(String fieldName, double radius, double latitude, double longitude);
 
@@ -370,7 +329,6 @@ public interface IDocumentQueryBase<T, TSelf extends IDocumentQueryBase<T, TSelf
    * @param latitude The latitude.
    * @param longitude The longitude.
    * @param radiusUnits The unit of the radius.
-   * @return
    */
   public TSelf withinRadiusOf(String fieldName, double radius, double latitude, double longitude, SpatialUnits radiusUnits);
 
@@ -380,7 +338,6 @@ public interface IDocumentQueryBase<T, TSelf extends IDocumentQueryBase<T, TSelf
    * @param fieldName The name of the field containg the shape to use for filtering.
    * @param shapeWKT The query shape.
    * @param rel Spatial relation to check
-   * @return
    */
   public TSelf relatesToShape(String fieldName, String shapeWKT, SpatialRelation rel);
 
@@ -391,13 +348,11 @@ public interface IDocumentQueryBase<T, TSelf extends IDocumentQueryBase<T, TSelf
    * @param shapeWKT The query shape.
    * @param rel Spatial relation to check
    * @param distanceErrorPct The allowed error percentage.
-   * @return
    */
   public TSelf relatesToShape(String fieldName, String shapeWKT, SpatialRelation rel, double distanceErrorPct);
 
   /**
    * Sorts the query results by distance.
-   * @return
    */
   public TSelf sortByDistance();
 
@@ -406,7 +361,6 @@ public interface IDocumentQueryBase<T, TSelf extends IDocumentQueryBase<T, TSelf
    * The fields are the names of the fields to sort, defaulting to sorting by ascending.
    * You can prefix a field name with '-' to indicate sorting by descending or '+' to sort by ascending
    * @param fields The fields.
-   * @return
    */
   public TSelf orderBy(String... fields);
 
@@ -415,7 +369,6 @@ public interface IDocumentQueryBase<T, TSelf extends IDocumentQueryBase<T, TSelf
    * The fields are the names of the fields to sort, defaulting to sorting by ascending.
    * You can prefix a field name with '-' to indicate sorting by descending or '+' to sort by ascending
    * @param propertySelectors Property selector for the fields.
-   * @return
    */
   public <TValue> TSelf orderBy(Expression<?>... propertySelectors);
 
@@ -424,7 +377,6 @@ public interface IDocumentQueryBase<T, TSelf extends IDocumentQueryBase<T, TSelf
    * The fields are the names of the fields to sort, defaulting to sorting by descending.
    * You can prefix a field name with '-' to indicate sorting by descending or '+' to sort by ascending
    * @param fields The fields
-   * @return
    */
   public TSelf orderByDescending(String... fields);
 
@@ -433,7 +385,6 @@ public interface IDocumentQueryBase<T, TSelf extends IDocumentQueryBase<T, TSelf
    * The fields are the names of the fields to sort, defaulting to sorting by descending.
    * You can prefix a field name with '-' to indicate sorting by descending or '+' to sort by ascending
    * @param propertySelectors Property selectors for the fields.
-   * @return
    */
   public <TValue> TSelf orderByDescending(Expression<?>... propertySelectors);
 
@@ -446,7 +397,6 @@ public interface IDocumentQueryBase<T, TSelf extends IDocumentQueryBase<T, TSelf
    * @param fragmentLength The fragment length.
    * @param fragmentCount The maximum number of fragments for the field.
    * @param fragmentsField The field in query results item to put highlighing into.
-   * @return
    */
   public TSelf highlight(String fieldName, int fragmentLength, int fragmentCount, String fragmentsField);
 
@@ -459,7 +409,6 @@ public interface IDocumentQueryBase<T, TSelf extends IDocumentQueryBase<T, TSelf
    * @param fragmentLength The fragment length.
    * @param fragmentCount The fragment count.
    * @param highlightings The maximum number of fragments for the field.
-   * @return
    */
   public TSelf highlight(String fieldName, int fragmentLength, int fragmentCount, Reference<FieldHighlightings> highlightings);
 
@@ -472,7 +421,6 @@ public interface IDocumentQueryBase<T, TSelf extends IDocumentQueryBase<T, TSelf
    * @param fragmentLength The fragment length.
    * @param fragmentCount The maximum number of fragments for the field.
    * @param fragmentsPropertySelector The property to put highlightings into.
-   * @return
    */
   public <TValue> TSelf highlight(Expression<?> propertySelector, int fragmentLength, int fragmentCount, ListPath<?, ?> fragmentsPropertySelector);
 
@@ -485,7 +433,6 @@ public interface IDocumentQueryBase<T, TSelf extends IDocumentQueryBase<T, TSelf
    * @param fragmentLength The fragment length.
    * @param fragmentCount The maximum number of fragment for the field.
    * @param highlightings
-   * @return
    */
   public <TValue> TSelf highlight(Expression<?> propertySelector, int fragmentLength, int fragmentCount, Reference<FieldHighlightings> highlightings);
 
@@ -493,7 +440,6 @@ public interface IDocumentQueryBase<T, TSelf extends IDocumentQueryBase<T, TSelf
    * Sets the tags to highlight matches with.
    * @param preTag Prefix tag.
    * @param postTag Postfix tag.
-   * @return
    */
   public TSelf setHighlighterTags(String preTag, String postTag);
 
@@ -501,13 +447,11 @@ public interface IDocumentQueryBase<T, TSelf extends IDocumentQueryBase<T, TSelf
    * Sets the tags to highlight matches with.
    * @param preTags Prefix tags.
    * @param postTags Postfix tags.
-   * @return
    */
   public TSelf setHighlighterTags(String[] preTags, String[] postTags);
 
   /**
    * Instructs the query to wait for non stale results as of now.
-   * @return
    */
   public TSelf waitForNonStaleResultsAsOfNow();
 
@@ -517,7 +461,6 @@ public interface IDocumentQueryBase<T, TSelf extends IDocumentQueryBase<T, TSelf
    *
    * This ensures that you'll always get the most relevant results for your scenarios using simple indexes (map only or dynamic queries).
    * However, when used to query map/reduce indexes, it does NOT guarantee that the document that this etag belong to is actually considered for the results.
-   * @return
    */
   public TSelf waitForNonStaleResultsAsOfLastWrite();
 
@@ -528,21 +471,18 @@ public interface IDocumentQueryBase<T, TSelf extends IDocumentQueryBase<T, TSelf
    * This ensures that you'll always get the most relevant results for your scenarios using simple indexes (map only or dynamic queries).
    * However, when used to query map/reduce indexes, it does NOT guarantee that the document that this etag belong to is actually considered for the results.
    * @param waitTimeout
-   * @return
    */
   public TSelf waitForNonStaleResultsAsOfLastWrite(long waitTimeout);
 
   /**
    * Instructs the query to wait for non stale results as of now for the specified timeout.
    * @param waitTimeout The wait timeout.
-   * @return
    */
   public TSelf waitForNonStaleResultsAsOfNow(long waitTimeout);
 
   /**
    * Instructs the query to wait for non stale results as of the cutoff date.
    * @param cutOff The cut off.
-   * @return
    */
   public TSelf waitForNonStaleResultsAsOf(Date cutOff);
 
@@ -550,14 +490,12 @@ public interface IDocumentQueryBase<T, TSelf extends IDocumentQueryBase<T, TSelf
    * Instructs the query to wait for non stale results as of the cutoff date for the specified timeout
    * @param cutOff The cut off.
    * @param waitTimeout The wait timeout.
-   * @return
    */
   public TSelf waitForNonStaleResultsAsOf(Date cutOff, long waitTimeout);
 
   /**
    * Instructs the query to wait for non stale results as of the cutoff etag.
    * @param cutOffEtag The cut off etag.
-   * @return
    */
   public TSelf waitForNonStaleResultsAsOf(Etag cutOffEtag);
 
@@ -565,21 +503,18 @@ public interface IDocumentQueryBase<T, TSelf extends IDocumentQueryBase<T, TSelf
    * Instructs the query to wait for non stale results as of the cutoff etag for the specified timeout.
    * @param cutOffEtag the cut off etag.
    * @param waitTimeout The wait timeout.
-   * @return
    */
   public TSelf waitForNonStaleResultsAsOf(Etag cutOffEtag, long waitTimeout);
 
   /**
    * EXPERT ONLY: Instructs the query to wait for non stale results.
    * This shouldn't be used outside of unit tests unless you are well aware of the implications
-   * @return
    */
   public TSelf waitForNonStaleResults();
 
   /**
    * Allows you to modify the index query before it is sent to the server
    * @param beforeQueryExecution
-   * @return
    */
   public TSelf beforeQueryExecution(Action1<IndexQuery> beforeQueryExecution);
 
@@ -587,13 +522,11 @@ public interface IDocumentQueryBase<T, TSelf extends IDocumentQueryBase<T, TSelf
    * EXPERT ONLY: Instructs the query to wait for non stale results for the specified wait timeout.
    * This shouldn't be used outside of unit tests unless you are well aware of the implications
    * @param waitTimeout The wait timeout.
-   * @return
    */
   public TSelf waitForNonStaleResults(long waitTimeout);
 
   /**
    * Order the search results randomly
-   * @return
    */
   public TSelf randomOrdering();
 
@@ -601,7 +534,6 @@ public interface IDocumentQueryBase<T, TSelf extends IDocumentQueryBase<T, TSelf
    * Order the search results randomly using the specified seed
    * this is useful if you want to have repeatable random queries
    * @param seed
-   * @return
    */
   public TSelf randomOrdering(String seed);
 
@@ -609,7 +541,6 @@ public interface IDocumentQueryBase<T, TSelf extends IDocumentQueryBase<T, TSelf
    * Adds an ordering for a specific field to the query
    * @param fieldName Name of the field.
    * @param descending If set to true [descending]
-   * @return
    */
   public TSelf addOrder(String fieldName, boolean descending);
 
@@ -617,7 +548,6 @@ public interface IDocumentQueryBase<T, TSelf extends IDocumentQueryBase<T, TSelf
    * Adds an ordering for a specific field to the query
    * @param propertySelector Property selector for the field.
    * @param descending If set to true [descending]
-   * @return
    */
   public <TValue> TSelf addOrder(Expression<?> propertySelector, boolean descending);
 
@@ -626,19 +556,16 @@ public interface IDocumentQueryBase<T, TSelf extends IDocumentQueryBase<T, TSelf
    * @param fieldName Name of the field.
    * @param descending if set to true [descending]
    * @param fieldType The type of the field to be sorted.
-   * @return
    */
   public TSelf addOrder (String fieldName, boolean descending, Class<?> fieldType);
 
   /**
    * Simplified method for opening a new clause within the query
-   * @return
    */
   public TSelf openSubclause();
 
   /**
    * Simplified method for closing a clause within the query
-   * @return
    */
   public TSelf closeSubclause();
 
@@ -647,7 +574,6 @@ public interface IDocumentQueryBase<T, TSelf extends IDocumentQueryBase<T, TSelf
    * If there is more than a single term, each of them will be checked independently.
    * @param fieldName
    * @param searchTerms
-   * @return
    */
   public TSelf search(String fieldName, String searchTerms);
 
@@ -656,7 +582,6 @@ public interface IDocumentQueryBase<T, TSelf extends IDocumentQueryBase<T, TSelf
    * If there is more than a single term, each of them will be checked independently.
    * @param fieldName
    * @param searchTerms
-   * @return
    */
   public TSelf search(String fieldName, String searchTerms, EscapeQueryOptions escapeQueryOptions);
 
@@ -665,7 +590,6 @@ public interface IDocumentQueryBase<T, TSelf extends IDocumentQueryBase<T, TSelf
    * If there is more than a single term, each of them will be checked independently.
    * @param propertySelector
    * @param searchTerms
-   * @return
    */
   public <TValue> TSelf search(Expression<?> propertySelector, String searchTerms);
 
@@ -674,14 +598,12 @@ public interface IDocumentQueryBase<T, TSelf extends IDocumentQueryBase<T, TSelf
    * If there is more than a single term, each of them will be checked independently.
    * @param propertySelector
    * @param searchTerms
-   * @return
    */
   public <TValue> TSelf search(Expression<?> propertySelector, String searchTerms, EscapeQueryOptions escapeQueryOptions);
 
   /**
    * Partition the query so we can intersect different parts of the query
    * across different index entries.
-   * @return
    */
   public TSelf intersect();
 
@@ -720,34 +642,29 @@ public interface IDocumentQueryBase<T, TSelf extends IDocumentQueryBase<T, TSelf
   /**
    * Provide statistics about the query, such as total count of matching records
    * @param stats
-   * @return
    */
   public TSelf statistics(Reference<RavenQueryStatistics> stats);
 
   /**
    * Select the default field to use for this query
    * @param field
-   * @return
    */
   public TSelf usingDefaultField(String field);
 
   /**
    * Select the default operator to use for this query
    * @param queryOperator
-   * @return
    */
   public TSelf usingDefaultOperator(QueryOperator queryOperator);
 
   /**
    * Disables tracking for queried entities by Raven's Unit of Work.
    * Usage of this option will prevent holding query results in memory.
-   * @return
    */
   public TSelf noTracking();
 
   /**
    * Disables caching for query results.
-   * @return
    */
   public TSelf noCaching();
 
@@ -756,45 +673,38 @@ public interface IDocumentQueryBase<T, TSelf extends IDocumentQueryBase<T, TSelf
    * to the result transformer function. Otherwise, those entries will be consolidate an the transformer will be
    * called just once for each document in the result set
    * @param val
-   * @return
    */
   public TSelf setAllowMultipleIndexEntriesForSameDocumentToResultTransformer(boolean val);
 
 
   /**
    * Enables calculation of timings for various parts of a query (Lucene search, loading documents, transforming results). Default: false
-   * @return
    */
   public TSelf showTimings();
 
   /**
    * Apply distinct operation to this query
-   * @return
    */
   public TSelf distinct();
 
   /**
    * Sets a transformer to use after executing a query
    * @param resultsTransformer
-   * @return
    */
   public TSelf setResultTransformer(String resultsTransformer);
 
   /**
    * Adds an ordering by score for a specific field to the query
-   * @return
    */
   public TSelf orderByScore();
 
   /**
    * Adds an ordering by score for a specific field to the query
-   * @return
    */
   public TSelf orderByScoreDescending();
 
   /**
    * Adds explanations of scores calculated for queried documents to the query result
-   * @return
    */
   public TSelf explainScores();
 }

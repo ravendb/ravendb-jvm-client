@@ -42,8 +42,8 @@ public class JsonConvert {
    * This method gets RavenJArray, extracts propertyName from each object and maps to targetClass
    * @param array
    * @param targetClass
-   * @param nestedPath
-   * @return
+   * @param propertyName
+   * @return list of deserialized objects
    * @throws IOException
    * @throws JsonMappingException
    * @throws JsonParseException

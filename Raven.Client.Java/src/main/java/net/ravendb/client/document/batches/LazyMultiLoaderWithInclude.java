@@ -31,7 +31,6 @@ public class LazyMultiLoaderWithInclude implements ILazyLoaderWithInclude {
   /**
    * Includes the specified path.
    * @param path
-   * @return
    */
   @Override
   public ILazyLoaderWithInclude include(String path) {
@@ -42,7 +41,6 @@ public class LazyMultiLoaderWithInclude implements ILazyLoaderWithInclude {
   /**
    * Includes the specified path.
    * @param path
-   * @return
    */
   @Override
   public ILazyLoaderWithInclude include(Path<?> path) {

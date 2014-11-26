@@ -223,8 +223,7 @@ public class AbstractIndexCreationTask extends AbstractCommonApiForIndexesAndTra
   }
 
   /**
-   * Max number of allowed indexing outputs per one source document
-   * @return
+   * @return Max number of allowed indexing outputs per one source document
    */
   public Long getMaxIndexOutputsPerDocument() {
     return maxIndexOutputsPerDocument;
@@ -292,12 +291,9 @@ public class AbstractIndexCreationTask extends AbstractCommonApiForIndexesAndTra
     indexSuggestions.put(field, suggestion);
   }
 
-
-
   /**
    * Register a field to be sorted
    * @param field
-   * @param suggestion
    */
   protected void suggestion(Path<?> field) {
     SuggestionOptions options = new SuggestionOptions();

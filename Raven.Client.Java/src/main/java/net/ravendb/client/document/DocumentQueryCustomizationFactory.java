@@ -41,7 +41,6 @@ public class DocumentQueryCustomizationFactory implements IDocumentQueryCustomiz
    * current document store.
    * This ensures that you'll always get the most relevant results for your scenarios using simple indexes (map only or dynamic queries).
    * However, when used to query map/reduce indexes, it does NOT guarantee that the document that this etag belong to is actually considered for the results.
-   * @return
    */
   @Override
   public DocumentQueryCustomizationFactory waitForNonStaleResultsAsOfLastWrite() {
@@ -59,7 +58,6 @@ public class DocumentQueryCustomizationFactory implements IDocumentQueryCustomiz
    * This ensures that you'll always get the most relevant results for your scenarios using simple indexes (map only or dynamic queries).
    * However, when used to query map/reduce indexes, it does NOT guarantee that the document that this etag belong to is actually considered for the results.
    * @param waitTimeout
-   * @return
    */
   @Override
   public DocumentQueryCustomizationFactory waitForNonStaleResultsAsOfLastWrite(final long waitTimeout) {
@@ -73,7 +71,6 @@ public class DocumentQueryCustomizationFactory implements IDocumentQueryCustomiz
 
   /**
    * Instructs the query to wait for non stale results as of now.
-   * @return
    */
   @Override
   public DocumentQueryCustomizationFactory waitForNonStaleResultsAsOfNow() {
@@ -88,7 +85,6 @@ public class DocumentQueryCustomizationFactory implements IDocumentQueryCustomiz
   /**
    * Instructs the query to wait for non stale results as of now for the specified timeout.
    * @param waitTimeout timeout in milis
-   * @return
    */
   @Override
   public DocumentQueryCustomizationFactory waitForNonStaleResultsAsOfNow(final long waitTimeout) {
@@ -103,7 +99,6 @@ public class DocumentQueryCustomizationFactory implements IDocumentQueryCustomiz
   /**
    * Instructs the query to wait for non stale results as of the cutoff date.
    * @param cutOff
-   * @return
    */
   @Override
   public DocumentQueryCustomizationFactory waitForNonStaleResultsAsOf(final Date cutOff) {
@@ -119,7 +114,6 @@ public class DocumentQueryCustomizationFactory implements IDocumentQueryCustomiz
    * Instructs the query to wait for non stale results as of the cutoff date for the specified timeout
    * @param cutOff
    * @param waitTimeout timeout in milis
-   * @return
    */
   @Override
   public DocumentQueryCustomizationFactory waitForNonStaleResultsAsOf(final Date cutOff, final long waitTimeout) {
@@ -134,7 +128,6 @@ public class DocumentQueryCustomizationFactory implements IDocumentQueryCustomiz
   /**
    * Instructs the query to wait for non stale results as of the cutoff etag.
    * @param cutOffEtag
-   * @return
    */
   @Override
   public DocumentQueryCustomizationFactory waitForNonStaleResultsAsOf(final Etag cutOffEtag) {
@@ -150,7 +143,6 @@ public class DocumentQueryCustomizationFactory implements IDocumentQueryCustomiz
    * Instructs the query to wait for non stale results as of the cutoff etag for the specified timeout.
    * @param cutOffEtag
    * @param waitTimeout
-   * @return
    */
   @Override
   public DocumentQueryCustomizationFactory waitForNonStaleResultsAsOf(final Etag cutOffEtag, final long waitTimeout) {
@@ -165,7 +157,6 @@ public class DocumentQueryCustomizationFactory implements IDocumentQueryCustomiz
   /**
    * EXPERT ONLY: Instructs the query to wait for non stale results.
    * This shouldn't be used outside of unit tests unless you are well aware of the implications
-   * @return
    */
   @Override
   public DocumentQueryCustomizationFactory waitForNonStaleResults() {
@@ -180,7 +171,6 @@ public class DocumentQueryCustomizationFactory implements IDocumentQueryCustomiz
   /**
    * Includes the specified path in the query, loading the document specified in that path
    * @param path
-   * @return
    */
   @Override
   public DocumentQueryCustomizationFactory include(final Path<?> path) {
@@ -195,7 +185,6 @@ public class DocumentQueryCustomizationFactory implements IDocumentQueryCustomiz
   /**
    * Includes the specified path in the query, loading the document specified in that path
    * @param path
-   * @return
    */
   @Override
   public DocumentQueryCustomizationFactory include(final String path) {
@@ -211,7 +200,6 @@ public class DocumentQueryCustomizationFactory implements IDocumentQueryCustomiz
    * Includes the specified path in the query, loading the document specified in that path
    * @param targetEntityClass
    * @param path
-   * @return
    */
   @Override
   public DocumentQueryCustomizationFactory include(final Class<?> targetEntityClass, final Path<?> path) {
@@ -227,7 +215,6 @@ public class DocumentQueryCustomizationFactory implements IDocumentQueryCustomiz
    * EXPERT ONLY: Instructs the query to wait for non stale results for the specified wait timeout.
    * This shouldn't be used outside of unit tests unless you are well aware of the implications
    * @param waitTimeout
-   * @return
    */
   @Override
   public DocumentQueryCustomizationFactory waitForNonStaleResults(final long waitTimeout) {
@@ -244,7 +231,6 @@ public class DocumentQueryCustomizationFactory implements IDocumentQueryCustomiz
    * @param radius
    * @param latitude
    * @param longitude
-   * @return
    */
   @Override
   public DocumentQueryCustomizationFactory withinRadiusOf(final double radius, final double latitude, final double longitude) {
@@ -262,7 +248,6 @@ public class DocumentQueryCustomizationFactory implements IDocumentQueryCustomiz
    * @param radius
    * @param latitude
    * @param longitude
-   * @return
    */
   @Override
   public DocumentQueryCustomizationFactory withinRadiusOf(final String fieldName, final double radius, final double latitude, final double longitude) {
@@ -280,7 +265,6 @@ public class DocumentQueryCustomizationFactory implements IDocumentQueryCustomiz
    * @param latitude
    * @param longitude
    * @param radiusUnits
-   * @return
    */
   @Override
   public DocumentQueryCustomizationFactory withinRadiusOf(final double radius, final double latitude, final double longitude, final SpatialUnits radiusUnits) {
@@ -299,7 +283,6 @@ public class DocumentQueryCustomizationFactory implements IDocumentQueryCustomiz
    * @param latitude
    * @param longitude
    * @param radiusUnits
-   * @return
    */
   @Override
   public DocumentQueryCustomizationFactory withinRadiusOf(final String fieldName, final double radius, final double latitude, final double longitude, final SpatialUnits radiusUnits) {
@@ -317,7 +300,6 @@ public class DocumentQueryCustomizationFactory implements IDocumentQueryCustomiz
    * @param fieldName The name of the field containing the shape to use for filtering
    * @param shapeWKT The query shape
    * @param rel Spatial relation to check
-   * @return
    */
   @Override
   public DocumentQueryCustomizationFactory relatesToShape(final String fieldName, final String shapeWKT, final SpatialRelation rel) {
@@ -341,7 +323,6 @@ public class DocumentQueryCustomizationFactory implements IDocumentQueryCustomiz
 
   /**
    * When using spatial queries, instruct the query to sort by the distance from the origin point
-   * @return
    */
   @Override
   public DocumentQueryCustomizationFactory sortByDistance() {
@@ -355,7 +336,6 @@ public class DocumentQueryCustomizationFactory implements IDocumentQueryCustomiz
 
   /**
    * Order the search results randomly
-   * @return
    */
   @Override
   public DocumentQueryCustomizationFactory randomOrdering() {
@@ -371,7 +351,6 @@ public class DocumentQueryCustomizationFactory implements IDocumentQueryCustomiz
    * Order the search results randomly using the specified seed
    * this is useful if you want to have repeatable random queries
    * @param seed
-   * @return
    */
   @Override
   public DocumentQueryCustomizationFactory randomOrdering(final String seed) {
@@ -386,7 +365,6 @@ public class DocumentQueryCustomizationFactory implements IDocumentQueryCustomiz
   /**
    * Allow you to modify the index query before it is executed
    * @param action
-   * @return
    */
   @Override
   public DocumentQueryCustomizationFactory beforeQueryExecution(final Action1<IndexQuery> action) {
@@ -407,7 +385,6 @@ public class DocumentQueryCustomizationFactory implements IDocumentQueryCustomiz
    * @param fragmentLength The fragment length.
    * @param fragmentCount The maximum number of fragments for the field.
    * @param fragmentsField The field in query results item to put highlightings into.
-   * @return
    */
   @Override
   public DocumentQueryCustomizationFactory highlight(final String fieldName, final int fragmentLength, final int fragmentCount, final String fragmentsField) {
@@ -428,7 +405,6 @@ public class DocumentQueryCustomizationFactory implements IDocumentQueryCustomiz
    * @param fragmentLength The fragment length.
    * @param fragmentCount The maximum number of fragments for the field.
    * @param highlightings Field highlightings for all results.
-   * @return
    */
   @Override
   public DocumentQueryCustomizationFactory highlight(final String fieldName, final int fragmentLength, final int fragmentCount, final Reference<FieldHighlightings> highlightings) {
@@ -444,7 +420,6 @@ public class DocumentQueryCustomizationFactory implements IDocumentQueryCustomiz
    * Sets the tags to highlight matches with.
    * @param preTag Prefix tag.
    * @param postTag Postfix tag.
-   * @return
    */
   @Override
   public DocumentQueryCustomizationFactory setHighlighterTags(final String preTag, final String postTag) {
@@ -460,7 +435,6 @@ public class DocumentQueryCustomizationFactory implements IDocumentQueryCustomiz
    * Sets the tags to highlight matches with.
    * @param preTags Prefix tags.
    * @param postTags Postfix tags.
-   * @return
    */
   @Override
   public DocumentQueryCustomizationFactory setHighlighterTags(final String[] preTags, final String[] postTags) {
@@ -475,7 +449,6 @@ public class DocumentQueryCustomizationFactory implements IDocumentQueryCustomiz
   /**
    * Disables tracking for queried entities by Raven's Unit of Work.
    * Usage of this option will prevent holding query results in memory.
-   * @return
    */
   @Override
   public DocumentQueryCustomizationFactory noTracking() {
@@ -489,7 +462,6 @@ public class DocumentQueryCustomizationFactory implements IDocumentQueryCustomiz
 
   /**
    * Disables caching for query results.
-   * @return
    */
   @Override
   public DocumentQueryCustomizationFactory noCaching() {
@@ -533,6 +505,5 @@ public class DocumentQueryCustomizationFactory implements IDocumentQueryCustomiz
       }
     });
   }
-
 
 }

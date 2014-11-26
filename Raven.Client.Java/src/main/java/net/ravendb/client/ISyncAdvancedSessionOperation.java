@@ -32,7 +32,6 @@ public interface ISyncAdvancedSessionOperation extends IAdvancedDocumentSessionO
    * Load documents with the specified key prefix
    * @param clazz
    * @param keyPrefix
-   * @return
    */
   public <T> T[] loadStartingWith(Class<T> clazz, String keyPrefix);
 
@@ -41,7 +40,6 @@ public interface ISyncAdvancedSessionOperation extends IAdvancedDocumentSessionO
    * @param clazz
    * @param keyPrefix
    * @param matches
-   * @return
    */
   public <T> T[] loadStartingWith(Class<T> clazz, String keyPrefix, String matches);
 
@@ -51,7 +49,6 @@ public interface ISyncAdvancedSessionOperation extends IAdvancedDocumentSessionO
    * @param keyPrefix
    * @param matches
    * @param start
-   * @return
    */
   public <T> T[] loadStartingWith(Class<T> clazz, String keyPrefix, String matches, int start);
 
@@ -62,7 +59,6 @@ public interface ISyncAdvancedSessionOperation extends IAdvancedDocumentSessionO
    * @param matches
    * @param start
    * @param pageSize
-   * @return
    */
   public <T> T[] loadStartingWith(Class<T> clazz, String keyPrefix, String matches, int start, int pageSize);
 
@@ -73,7 +69,6 @@ public interface ISyncAdvancedSessionOperation extends IAdvancedDocumentSessionO
    * @param matches
    * @param start
    * @param pageSize
-   * @return
    */
   public <T> T[] loadStartingWith(Class<T> clazz, String keyPrefix, String matches, int start, int pageSize, String exclude);
 
@@ -84,7 +79,6 @@ public interface ISyncAdvancedSessionOperation extends IAdvancedDocumentSessionO
    * @param matches
    * @param start
    * @param pageSize
-   * @return
    */
   public <T> T[] loadStartingWith(Class<T> clazz, String keyPrefix, String matches, int start, int pageSize, String exclude, RavenPagingInformation pagingInformation);
 
@@ -95,7 +89,6 @@ public interface ISyncAdvancedSessionOperation extends IAdvancedDocumentSessionO
    * @param matches
    * @param start
    * @param pageSize
-   * @return
    */
   public <T> T[] loadStartingWith(Class<T> clazz, String keyPrefix, String matches, int start, int pageSize, String exclude, RavenPagingInformation pagingInformation, String skipAfter);
 
@@ -104,7 +97,6 @@ public interface ISyncAdvancedSessionOperation extends IAdvancedDocumentSessionO
    * @param clazz
    * @param transformerClass
    * @param keyPrefix
-   * @return
    */
   public <TResult, TTransformer extends AbstractTransformerCreationTask> TResult[] loadStartingWith(Class<TResult> clazz, Class<TTransformer> transformerClass,
     String keyPrefix);
@@ -115,7 +107,6 @@ public interface ISyncAdvancedSessionOperation extends IAdvancedDocumentSessionO
    * @param transformerClass
    * @param keyPrefix
    * @param matches
-   * @return
    */
   public <TResult, TTransformer extends AbstractTransformerCreationTask> TResult[] loadStartingWith(Class<TResult> clazz, Class<TTransformer> transformerClass,
     String keyPrefix, String matches);
@@ -127,7 +118,6 @@ public interface ISyncAdvancedSessionOperation extends IAdvancedDocumentSessionO
    * @param keyPrefix
    * @param matches
    * @param start
-   * @return
    */
   public <TResult, TTransformer extends AbstractTransformerCreationTask> TResult[] loadStartingWith(Class<TResult> clazz, Class<TTransformer> transformerClass,
     String keyPrefix, String matches, int start);
@@ -140,7 +130,6 @@ public interface ISyncAdvancedSessionOperation extends IAdvancedDocumentSessionO
    * @param matches
    * @param start
    * @param pageSize
-   * @return
    */
   public <TResult, TTransformer extends AbstractTransformerCreationTask> TResult[] loadStartingWith(Class<TResult> clazz, Class<TTransformer> transformerClass,
     String keyPrefix, String matches, int start, int pageSize);
@@ -155,7 +144,6 @@ public interface ISyncAdvancedSessionOperation extends IAdvancedDocumentSessionO
    * @param start
    * @param pageSize
    * @param exclude
-   * @return
    */
   public <TResult, TTransformer extends AbstractTransformerCreationTask> TResult[] loadStartingWith(Class<TResult> clazz, Class<TTransformer> transformerClass,
     String keyPrefix, String matches, int start, int pageSize, String exclude);
@@ -170,7 +158,6 @@ public interface ISyncAdvancedSessionOperation extends IAdvancedDocumentSessionO
    * @param pageSize
    * @param exclude
    * @param pagingInformation
-   * @return
    */
   public <TResult, TTransformer extends AbstractTransformerCreationTask> TResult[] loadStartingWith(Class<TResult> clazz, Class<TTransformer> transformerClass,
     String keyPrefix, String matches, int start, int pageSize, String exclude,
@@ -186,7 +173,6 @@ public interface ISyncAdvancedSessionOperation extends IAdvancedDocumentSessionO
    * @param pageSize
    * @param exclude
    * @param pagingInformation
-   * @return
    */
   public <TResult, TTransformer extends AbstractTransformerCreationTask> TResult[] loadStartingWith(Class<TResult> clazz, Class<TTransformer> transformerClass,
     String keyPrefix, String matches, int start, int pageSize, String exclude,
@@ -203,7 +189,6 @@ public interface ISyncAdvancedSessionOperation extends IAdvancedDocumentSessionO
    * @param exclude
    * @param pagingInformation
    * @param configure
-   * @return
    */
   public <TResult, TTransformer extends AbstractTransformerCreationTask> TResult[] loadStartingWith(Class<TResult> clazz, Class<TTransformer> transformerClass,
     String keyPrefix, String matches, int start, int pageSize, String exclude,
@@ -212,13 +197,11 @@ public interface ISyncAdvancedSessionOperation extends IAdvancedDocumentSessionO
 
   /**
    * Access the lazy operations
-   * @return
    */
   public ILazySessionOperations lazily();
 
   /**
    * Access the eager operations
-   * @return
    */
   public IEagerSessionOperations eagerly();
 
@@ -226,7 +209,6 @@ public interface ISyncAdvancedSessionOperation extends IAdvancedDocumentSessionO
    * Queries the index specified by <typeparamref name="TIndexCreator"/> using lucene syntax.
    * @param clazz The result class of the query.
    * @param indexClass The type of the index creator.
-   * @return
    */
   public <T, S extends AbstractIndexCreationTask> IDocumentQuery<T> documentQuery(Class<T> clazz, Class<S> indexClass);
 
@@ -234,30 +216,25 @@ public interface ISyncAdvancedSessionOperation extends IAdvancedDocumentSessionO
    * Query the specified index using Lucene syntax
    * @param indexName Name of the index.
    * @param isMapReduce Control how we treat identifier properties in map/reduce indexes
-   * @return
    */
   public <T> IDocumentQuery<T> documentQuery(Class<T> clazz, String indexName, boolean isMapReduce);
 
   /**
    * Query the specified index using Lucene syntax
+   * @param clazz
    * @param indexName Name of the index.
-   * @param isMapReduce Control how we treat identifier properties in map/reduce indexes
-   * @return
    */
   public <T> IDocumentQuery<T> documentQuery(Class<T> clazz, String indexName);
-
 
   /**
    * Dynamically query RavenDB using Lucene syntax
    * @param clazz
-   * @return
    */
   public <T> IDocumentQuery<T> documentQuery(Class<T> clazz);
 
   /**
    * Gets the document URL for the specified entity.
    * @param entity
-   * @return
    */
   public String getDocumentUrl(Object entity);
 
@@ -266,7 +243,6 @@ public interface ISyncAdvancedSessionOperation extends IAdvancedDocumentSessionO
    * Java types along the way.
    * Does NOT track the entities in the session, and will not includes changes there when saveChanges() is called
    * @param query
-   * @return
    */
   public <T> CloseableIterator<StreamResult<T>> stream(IRavenQueryable<T> query);
 
@@ -276,7 +252,6 @@ public interface ISyncAdvancedSessionOperation extends IAdvancedDocumentSessionO
    * Does NOT track the entities in the session, and will not includes changes there when saveChanges() is called
    * @param query
    * @param queryHeaderInformation
-   * @return
    */
   public <T> CloseableIterator<StreamResult<T>> stream(IRavenQueryable<T> query, Reference<QueryHeaderInformation> queryHeaderInformation);
 
@@ -286,7 +261,6 @@ public interface ISyncAdvancedSessionOperation extends IAdvancedDocumentSessionO
    * Java types along the way.
    * Does NOT track the entities in the session, and will not includes changes there when saveChanges() is called
    * @param query
-   * @return
    */
   public <T> CloseableIterator<StreamResult<T>> stream(IDocumentQuery<T> query);
 
@@ -295,7 +269,6 @@ public interface ISyncAdvancedSessionOperation extends IAdvancedDocumentSessionO
    * Java types along the way.
    * Does NOT track the entities in the session, and will not includes changes there when saveChanges() is called
    * @param query
-   * @return
    */
   public <T> CloseableIterator<StreamResult<T>> stream(IDocumentQuery<T> query, Reference<QueryHeaderInformation> queryHeaderInformation);
 
@@ -303,8 +276,7 @@ public interface ISyncAdvancedSessionOperation extends IAdvancedDocumentSessionO
    * Stream the results on the query to the client, converting them to
    * Java types along the way.
    * Does NOT track the entities in the session, and will not includes changes there when saveChanges() is called
-   * @param fromEtag
-   * @return
+   * @param entityClass
    */
   public <T> CloseableIterator<StreamResult<T>> stream(Class<T> entityClass);
 
@@ -314,7 +286,6 @@ public interface ISyncAdvancedSessionOperation extends IAdvancedDocumentSessionO
    * Java types along the way.
    * Does NOT track the entities in the session, and will not includes changes there when saveChanges() is called
    * @param fromEtag
-   * @return
    */
   public <T> CloseableIterator<StreamResult<T>> stream(Class<T> entityClass, Etag fromEtag);
 
@@ -324,7 +295,6 @@ public interface ISyncAdvancedSessionOperation extends IAdvancedDocumentSessionO
    * Does NOT track the entities in the session, and will not includes changes there when saveChanges() is called
    * @param fromEtag
    * @param startsWith
-   * @return
    */
   public <T> CloseableIterator<StreamResult<T>> stream(Class<T> entityClass, Etag fromEtag, String startsWith);
 
@@ -335,7 +305,6 @@ public interface ISyncAdvancedSessionOperation extends IAdvancedDocumentSessionO
    * @param fromEtag
    * @param startsWith
    * @param matches
-   * @return
    */
   public <T> CloseableIterator<StreamResult<T>> stream(Class<T> entityClass, Etag fromEtag, String startsWith, String matches);
 
@@ -347,7 +316,6 @@ public interface ISyncAdvancedSessionOperation extends IAdvancedDocumentSessionO
    * @param startsWith
    * @param matches
    * @param start
-   * @return
    */
   public <T> CloseableIterator<StreamResult<T>> stream(Class<T> entityClass, Etag fromEtag, String startsWith, String matches, int start);
 
@@ -360,7 +328,6 @@ public interface ISyncAdvancedSessionOperation extends IAdvancedDocumentSessionO
    * @param matches
    * @param start
    * @param pageSize
-   * @return
    */
   public <T> CloseableIterator<StreamResult<T>> stream(Class<T> entityClass, Etag fromEtag, String startsWith, String matches, int start, int pageSize);
 
@@ -373,10 +340,8 @@ public interface ISyncAdvancedSessionOperation extends IAdvancedDocumentSessionO
    * @param matches
    * @param start
    * @param pageSize
-   * @return
    */
   public <T> CloseableIterator<StreamResult<T>> stream(Class<T> entityClass, Etag fromEtag, String startsWith, String matches, int start, int pageSize, RavenPagingInformation pagingInformation);
-
 
   /**
    * Stream the results on the query to the client, converting them to
@@ -387,15 +352,11 @@ public interface ISyncAdvancedSessionOperation extends IAdvancedDocumentSessionO
    * @param matches
    * @param start
    * @param pageSize
-   * @return
    */
   public <T> CloseableIterator<StreamResult<T>> stream(Class<T> entityClass, Etag fromEtag, String startsWith, String matches, int start, int pageSize, RavenPagingInformation pagingInformation, String skipAfter);
 
-
   /**
-   *
-   * @param FacetQuery
-   * @return
+   * @param queries
    */
   public FacetResults[] multiFacetedSearch(FacetQuery... queries);
 
@@ -412,7 +373,4 @@ public interface ISyncAdvancedSessionOperation extends IAdvancedDocumentSessionO
   public <T> T[] moreLikeThis(Class<T> entityClass, String index, String transformer, String documentId);
 
   public <T> T[] moreLikeThis(Class<T> entityClass, String index, String transformer, MoreLikeThisQuery parameters);
-
-
-
 }

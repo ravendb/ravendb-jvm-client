@@ -79,7 +79,6 @@ public class Convention {
   /**
    * Gets the identity property.
    * @param type
-   * @return
    */
   public Field getIdentityProperty(Class<?> type) {
     if (idPropertyCache.containsKey(type)) {
@@ -135,7 +134,6 @@ public class Convention {
 
   /**
    * Gets the function to find the identity property.
-   * @return
    */
   public IdentityPropertyFinder getFindIdentityProperty() {
     return findIdentityProperty;
@@ -152,7 +150,6 @@ public class Convention {
   /**
    * Whatever or not RavenDB should cache the request to the specified url.
    * @param url
-   * @return
    */
   public Boolean shouldCacheRequest(String url) {
     return shouldCacheRequest.shouldCacheRequest(url);
@@ -223,7 +220,6 @@ public class Convention {
 
   /**
    * Saves Enums as integers and instruct the Linq provider to query enums as integer values.
-   * @return
    */
   public boolean isSaveEnumsAsIntegers() {
     return saveEnumsAsIntegers;
