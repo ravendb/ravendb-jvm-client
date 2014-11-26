@@ -15,6 +15,7 @@
 
   <scm>
     <connection>scm:git:https://github.com/ravendb/jvm-client.git</connection>
+    <developerConnection>scm:git:git@github.com:ravendb/jvm-client.git</developerConnection>
     <url>https://github.com/ravendb/jvm-client</url>
   </scm>
 
