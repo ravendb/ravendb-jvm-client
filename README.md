@@ -1,9 +1,20 @@
-jvm-client
-==========
+# RavenDB Java Client
 
-RavenDB JVM Client
+## Stable releases
 
-RavenDB Client is available as snapshot in daily-builds S3 maven repository.
+Simply put ravendb dependency to your pom:
+
+```
+<dependency>
+  <groupId>net.ravendb</groupId>
+  <artifactId>ravendb-client</artifactId>
+  <version>3.0.0</version>
+</dependency>
+```
+
+## Unstable releases
+
+RavenDB Client Unstable is available as snapshot in daily-builds S3 maven repository.
 
 Note: Embedding repositories in pom is not good practise, however allows quick start. Please consider moving repositories into ~/.m2/settings.xml. More information can be found here: http://maven.apache.org/guides/mini/guide-multiple-repositories.html
 
