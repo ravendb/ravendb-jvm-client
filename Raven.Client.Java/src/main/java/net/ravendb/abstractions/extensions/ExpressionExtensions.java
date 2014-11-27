@@ -74,7 +74,9 @@ public class ExpressionExtensions {
           context.push(collectionSeparator);
           parent.accept(this, context);
         } else {
-          context.push(propertySeparator);
+          if (!"$Values".equals(expr.getMetadata().getName())) {
+            context.push(propertySeparator);
+          }
           context.push(StringUtils.capitalize(expr.getMetadata().getName()));
           parent.accept(this, context);
         }

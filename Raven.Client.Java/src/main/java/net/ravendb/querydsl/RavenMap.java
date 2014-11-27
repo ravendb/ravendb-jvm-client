@@ -37,7 +37,7 @@ public class RavenMap<K, V, Q extends SimpleExpression<? super V>> extends MapPa
   }
 
   public RavenList<V, Q> values() {
-    return new RavenList<>(getValueType(), (Class)SimplePath.class, new PathMetadata<>((Path<?>)mixin, "$Values", PathType.PROPERTY));
+    return new RavenList<>(getValueType(), queryType, new PathMetadata<>((Path<?>)mixin, "$Values", PathType.PROPERTY));
   }
 
 }
