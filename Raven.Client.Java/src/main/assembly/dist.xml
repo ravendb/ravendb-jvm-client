@@ -25,7 +25,22 @@
   </fileSets>
   <dependencySets>
     <dependencySet>
+      <useProjectAttachments>true</useProjectAttachments>
+      <excludes>
+        <exclude>*:*:javadoc:*</exclude>
+      </excludes>
       <outputDirectory>lib</outputDirectory>
+    </dependencySet>
+    <dependencySet>
+      <includes>
+        <include>*:*:javadoc:*</include>
+      </includes>
+      <outputDirectory>docs</outputDirectory>
+      <unpack>true</unpack>
+      <useTransitiveDependencies>true</useTransitiveDependencies>
+      <useProjectArtifact>false</useProjectArtifact>
+      <useProjectAttachments>true</useProjectAttachments>
+      <useStrictFiltering>true</useStrictFiltering>
     </dependencySet>
   </dependencySets>
 

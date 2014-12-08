@@ -168,6 +168,7 @@
               <descriptors>
                 <descriptor>src/main/assembly/dist.xml</descriptor>
               </descriptors>
+              <attach>false</attach>
             </configuration>
             <executions>
               <execution>

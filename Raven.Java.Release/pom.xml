@@ -13,6 +13,18 @@
       <artifactId>ravendb-client</artifactId>
       <version>3.0.0</version>
     </dependency>
+    <dependency>
+      <groupId>net.ravendb</groupId>
+      <artifactId>ravendb-client</artifactId>
+      <version>3.0.0</version>
+      <classifier>sources</classifier>
+    </dependency>
+    <dependency>
+      <groupId>net.ravendb</groupId>
+      <artifactId>ravendb-client</artifactId>
+      <version>3.0.0</version>
+      <classifier>javadoc</classifier>
+    </dependency>
   </dependencies>
 
   <build>
