@@ -115,7 +115,7 @@ public abstract class RavenDBAwareTests {
 
     serverClient = new ServerClient(DEFAULT_SERVER_URL_1, convention, new OperationCredentials(),
       new Functions.StaticFunction1<String, IDocumentStoreReplicationInformer>((IDocumentStoreReplicationInformer)replicationInformer), null, factory,
-      UUID.randomUUID(), new IDocumentConflictListener[0]);
+      UUID.randomUUID(), new IDocumentConflictListener[0], false);
 
   }
 

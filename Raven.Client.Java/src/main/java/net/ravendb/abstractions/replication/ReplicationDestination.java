@@ -2,6 +2,7 @@ package net.ravendb.abstractions.replication;
 
 import net.ravendb.abstractions.basic.UseSharpEnum;
 
+import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.builder.HashCodeBuilder;
 
 public class ReplicationDestination {
@@ -13,9 +14,33 @@ public class ReplicationDestination {
   private String apiKey;
   private String database;
   private TransitiveReplicationOptions transitiveReplicationBehavior;
+  private boolean skipIndexReplication;
   private Boolean ignoredClient;
   private Boolean disabled;
   private String clientVisibleUrl;
+
+  public String getHumane() {
+    if (StringUtils.isEmpty(url)) {
+      return null;
+    }
+    return url + " " + database;
+  }
+
+  /**
+   * Gets flag that controls whether index is replicated to the node or not
+   * @return
+   */
+  public boolean isSkipIndexReplication() {
+    return skipIndexReplication;
+  }
+
+  /**
+   * Sets a flag that controls whether index is replicated to the node or not
+   * @param skipIndexReplication
+   */
+  public void setSkipIndexReplication(boolean skipIndexReplication) {
+    this.skipIndexReplication = skipIndexReplication;
+  }
 
   public String getApiKey() {
     return apiKey;

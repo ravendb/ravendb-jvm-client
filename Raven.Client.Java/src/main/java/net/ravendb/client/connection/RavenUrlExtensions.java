@@ -49,8 +49,8 @@ public class RavenUrlExtensions {
     return url + "/replication/info";
   }
 
-  public static String lastReplicatedEtagFor(String destinationUrl, String sourceUrl) {
-    return destinationUrl + "/replication/lastEtag?from=" + UrlUtils.escapeDataString(sourceUrl);
+  public static String lastReplicatedEtagFor(String destinationUrl, String sourceUrl, String sourceDbId) {
+    return destinationUrl + "/replication/lastEtag?from=" + UrlUtils.escapeDataString(sourceUrl)  + "&dbId=" + sourceDbId;
   }
 
   public static String databases(String url, int pageSize, int start) {

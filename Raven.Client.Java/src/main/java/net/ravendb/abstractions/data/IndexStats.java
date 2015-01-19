@@ -257,92 +257,103 @@ public class IndexStats {
 
   public static class IndexingPerformanceStats {
     private String operation;
+    private int itemsCount;
+    private int inputCount;
+    private int outputCount;
+    private Date started;
+    private Date completed;
+    private String duration;
+    private double durationMilliseconds;
     private int loadDocumentCount;
     private long loadDocumentDurationMs;
-    private int outputCount;
-    private int inputCount;
-    private int itemsCount;
-    private String duration;
-    private Date started;
-    private double durationMilliseconds;
+    private String waitingTimeSinceLastBatchCompleted;
+
     public String getOperation() {
       return operation;
     }
+
     public void setOperation(String operation) {
       this.operation = operation;
     }
-    public int getOutputCount() {
-      return outputCount;
-    }
-    public void setOutputCount(int outputCount) {
-      this.outputCount = outputCount;
-    }
-    public int getInputCount() {
-      return inputCount;
-    }
-    public int getLoadDocumentCount() {
-      return loadDocumentCount;
-    }
-    public void setLoadDocumentCount(int loadDocumentCount) {
-      this.loadDocumentCount = loadDocumentCount;
-    }
-    public long getLoadDocumentDurationMs() {
-      return loadDocumentDurationMs;
-    }
-    public void setLoadDocumentDurationMs(long loadDocumentDurationMs) {
-      this.loadDocumentDurationMs = loadDocumentDurationMs;
-    }
-    public void setInputCount(int inputCount) {
-      this.inputCount = inputCount;
-    }
+
     public int getItemsCount() {
       return itemsCount;
     }
+
     public void setItemsCount(int itemsCount) {
       this.itemsCount = itemsCount;
     }
-    public String getDuration() {
-      return duration;
+
+    public int getInputCount() {
+      return inputCount;
     }
-    public void setDuration(String duration) {
-      this.duration = duration;
+
+    public void setInputCount(int inputCount) {
+      this.inputCount = inputCount;
     }
+
+    public int getOutputCount() {
+      return outputCount;
+    }
+
+    public void setOutputCount(int outputCount) {
+      this.outputCount = outputCount;
+    }
+
     public Date getStarted() {
       return started;
     }
+
     public void setStarted(Date started) {
       this.started = started;
     }
+
+    public Date getCompleted() {
+      return completed;
+    }
+
+    public void setCompleted(Date completed) {
+      this.completed = completed;
+    }
+
+    public String getDuration() {
+      return duration;
+    }
+
+    public void setDuration(String duration) {
+      this.duration = duration;
+    }
+
     public double getDurationMilliseconds() {
       return durationMilliseconds;
     }
+
     public void setDurationMilliseconds(double durationMilliseconds) {
       this.durationMilliseconds = durationMilliseconds;
     }
-    @Override
-    public String toString() {
-      return "IndexingPerformanceStats [operation=" + operation + ", outputCount=" + outputCount + ", inputCount=" + inputCount + ", duration=" + duration + ", durationMilliseconds="
-          + durationMilliseconds + "]";
+
+    public int getLoadDocumentCount() {
+      return loadDocumentCount;
     }
-    @Override
-    public int hashCode() {
-      return new HashCodeBuilder().append(inputCount).append(itemsCount).append(operation).append(outputCount).append(started).hashCode();
+
+    public void setLoadDocumentCount(int loadDocumentCount) {
+      this.loadDocumentCount = loadDocumentCount;
     }
-    @Override
-    public boolean equals(Object obj) {
-      if (obj == null) { return false; }
-      if (obj == this) { return true; }
-      if (obj.getClass() != getClass()) {
-        return false;
-      }
-      IndexingPerformanceStats rhs = (IndexingPerformanceStats) obj;
-      return new EqualsBuilder().
-          append(inputCount, rhs.inputCount)
-          .append(itemsCount, rhs.itemsCount)
-          .append(operation, rhs.operation)
-          .append(outputCount, rhs.outputCount)
-          .append(started, rhs.started)
-          .isEquals();
+
+    public long getLoadDocumentDurationMs() {
+      return loadDocumentDurationMs;
+    }
+
+    public void setLoadDocumentDurationMs(long loadDocumentDurationMs) {
+      this.loadDocumentDurationMs = loadDocumentDurationMs;
+    }
+
+    public String getWaitingTimeSinceLastBatchCompleted() {
+      return waitingTimeSinceLastBatchCompleted;
+    }
+
+    public void setWaitingTimeSinceLastBatchCompleted(String waitingTimeSinceLastBatchCompleted) {
+      this.waitingTimeSinceLastBatchCompleted = waitingTimeSinceLastBatchCompleted;
     }
 
   }

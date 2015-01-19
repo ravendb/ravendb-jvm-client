@@ -7,6 +7,7 @@ import java.net.InetAddress;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.UnknownHostException;
+import java.text.ParseException;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
@@ -23,6 +24,7 @@ import net.ravendb.abstractions.data.HttpMethods;
 import net.ravendb.abstractions.exceptions.BadRequestException;
 import net.ravendb.abstractions.exceptions.HttpOperationException;
 import net.ravendb.abstractions.exceptions.IndexCompilationException;
+import net.ravendb.abstractions.exceptions.ServerVersionNotSuppportedException;
 import net.ravendb.abstractions.json.linq.JTokenType;
 import net.ravendb.abstractions.json.linq.RavenJObject;
 import net.ravendb.abstractions.json.linq.RavenJToken;
@@ -69,6 +71,9 @@ import org.apache.http.util.EntityUtils;
 
 
 public class HttpJsonRequest {
+
+  public static final int MINIMUM_SERVER_VERSION = 3000;
+  public static final int CUSTOM_BUILD_VERSION = 13;
 
   public static final String clientVersion = Constants.VERSION;
 
@@ -131,14 +136,18 @@ public class HttpJsonRequest {
     this._credentials = requestParams.isDisableAuthentication()?null : requestParams.getCredentials();
     this.disabledAuthRetries = requestParams.isDisableAuthentication();
     this.method = requestParams.getMethod();
+
     this.webRequest = createWebRequest(requestParams.getUrl(), requestParams.getMethod());
     if (factory.isDisableRequestCompression() == false && requestParams.isDisableRequestCompression() == false) {
       if (method == HttpMethods.POST || method == HttpMethods.PUT || method == HttpMethods.PATCH
         || method == HttpMethods.EVAL) {
-        webRequest.addHeader("Content-Encoding", "gzip");
+        webRequest.setHeader("Content-Encoding", "gzip");
+        webRequest.setHeader("Content-Type", "application/json; charset=utf-8");
       }
-      // Accept-Encoding Parameters are handled by HttpClient
-      webRequest.addHeader("Accept-Encoding", "gzip,deflate");
+      if (factory.isAcceptGzipContent()) {
+        // Accept-Encoding Parameters are handled by HttpClient
+        webRequest.addHeader("Accept-Encoding", "gzip,deflate");
+      }
       this.httpClient = factory.getHttpClient();
     } else {
       this.httpClient = factory.getHttpClient();
@@ -180,7 +189,7 @@ public class HttpJsonRequest {
           contentLength = prop.getValue().value(int.class);
           break;
         default:
-          webRequest.addHeader(headerName, value);
+          webRequest.setHeader(headerName, value);
 
       }
     }
@@ -410,6 +419,8 @@ public class HttpJsonRequest {
       responseHeaders = extractHeaders(httpResponse.getAllHeaders());
       responseStatusCode = httpResponse.getStatusLine().getStatusCode();
 
+      assertServerVersionSupported();
+
       handleReplicationStatusChanges.apply(extractHeaders(httpResponse.getAllHeaders()), primaryUrl, operationUrl);
       CountingStream countingStream = new CountingStream(responseStream);
       RavenJToken data = RavenJToken.tryLoad(countingStream);
@@ -436,6 +447,20 @@ public class HttpJsonRequest {
         EntityUtils.consumeQuietly(httpResponse.getEntity());
       }
     }
+  }
+
+  private void assertServerVersionSupported() {
+    String serverBuildString = responseHeaders.get(Constants.RAVEN_SERVER_BUILD);
+    try {
+      int serverBuild = Integer.parseInt(serverBuildString);
+      if (serverBuild >= MINIMUM_SERVER_VERSION || serverBuild == CUSTOM_BUILD_VERSION) {
+        return;
+      }
+    } catch (NumberFormatException e) {
+      // we throw every time when previous return isn't  met.
+    }
+    throw new ServerVersionNotSuppportedException(
+      String.format("Server version %s is not supported. User server with build >= %d", serverBuildString, MINIMUM_SERVER_VERSION));
   }
 
   private RavenJToken handleErrors(Exception e) {

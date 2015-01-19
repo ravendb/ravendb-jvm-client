@@ -9,6 +9,7 @@ import net.ravendb.abstractions.basic.Tuple;
 import net.ravendb.client.EscapeQueryOptions;
 import net.ravendb.client.FieldHighlightings;
 import net.ravendb.client.IDocumentQuery;
+import net.ravendb.client.IDocumentQueryCustomization;
 import net.ravendb.client.WhereParams;
 
 import com.mysema.query.types.Path;
@@ -51,6 +52,13 @@ public interface IAbstractDocumentQuery<T> {
    * @param seed
    */
   public IDocumentQuery<T> randomOrdering(String seed);
+
+  public IDocumentQuery<T> customSortUsing(String typeName);
+
+  /**
+   * Sort using custom sorter on the server
+   */
+  public IDocumentQuery<T> customSortUsing(String className, boolean descending);
 
   /**
    * Adds an ordering for a specific field to the query
@@ -276,6 +284,24 @@ public interface IAbstractDocumentQuery<T> {
    * @param highlightings The maximum number of fragments for the field.
    */
   public IDocumentQuery<T> highlight(String fieldName, int fragmentLength, int fragmentCount, Reference<FieldHighlightings> highlightings);
+
+  /**
+   * Adds matches highlighting for the specified field on a Map/Reduce Index.
+   *
+   * This is only valid for Map/Reduce Index querys.
+   * The specified field and key should be analysed and stored for highlighter to work.
+   * For each match it creates a fragment that contains matched text surrounded by highlighter tags.
+   *
+   * The specified field should be analysed and stored for highlighter to work.
+   * For each match it creates a fragment that contains matched text surrounded by highlighter tags.
+   * @param fieldName The field name to highlight.
+   * @param fieldKeyName The field key to associate highlights with.
+   * @param fragmentLength The fragment length.
+   * @param fragmentCount The fragment count.
+   * @param highlightings Field highlightings for all results.
+   */
+  public IDocumentQuery<T> highlight(String fieldName, String fieldKeyName, int fragmentLength, int fragmentCount, Reference<FieldHighlightings> highlightings);
+
 
   /**
    * Sets the tags to highlight matches with.

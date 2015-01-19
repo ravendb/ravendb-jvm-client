@@ -16,7 +16,6 @@ import net.ravendb.client.FieldHighlightings;
 import net.ravendb.client.IDocumentQueryCustomization;
 import net.ravendb.client.spatial.SpatialCriteria;
 
-
 import com.mysema.query.types.Path;
 
 /**
@@ -335,6 +334,32 @@ public class DocumentQueryCustomizationFactory implements IDocumentQueryCustomiz
   }
 
   /**
+   * When using spatial queries, instruct the query to sort by the distance from the origin point
+   */
+  @Override
+  public DocumentQueryCustomizationFactory sortByDistance(final double lat, final double lng) {
+    return new DocumentQueryCustomizationFactory(actions, new Action1<IDocumentQueryCustomization>() {
+      @Override
+      public void apply(IDocumentQueryCustomization documentQuery) {
+        documentQuery.sortByDistance(lat, lng);
+      }
+    });
+  }
+
+  /**
+   * When using spatial queries, instruct the query to sort by the distance from the origin point
+   */
+  @Override
+  public DocumentQueryCustomizationFactory sortByDistance(final double lat, final double lng, final String sortedFieldName) {
+    return new DocumentQueryCustomizationFactory(actions, new Action1<IDocumentQueryCustomization>() {
+      @Override
+      public void apply(IDocumentQueryCustomization documentQuery) {
+        documentQuery.sortByDistance(lat, lng, sortedFieldName);
+      }
+    });
+  }
+
+  /**
    * Order the search results randomly
    */
   @Override
@@ -358,6 +383,26 @@ public class DocumentQueryCustomizationFactory implements IDocumentQueryCustomiz
       @Override
       public void apply(IDocumentQueryCustomization documentQuery) {
         documentQuery.randomOrdering(seed);
+      }
+    });
+  }
+
+  @Override
+  public IDocumentQueryCustomization customSortUsing(final String typeName) {
+    return new DocumentQueryCustomizationFactory(actions, new Action1<IDocumentQueryCustomization>() {
+      @Override
+      public void apply(IDocumentQueryCustomization documentQuery) {
+        documentQuery.customSortUsing(typeName);
+      }
+    });
+  }
+
+  @Override
+  public IDocumentQueryCustomization customSortUsing(final String typeName, final boolean descending) {
+    return new DocumentQueryCustomizationFactory(actions, new Action1<IDocumentQueryCustomization>() {
+      @Override
+      public void apply(IDocumentQueryCustomization documentQuery) {
+        documentQuery.customSortUsing(typeName, descending);
       }
     });
   }
@@ -412,6 +457,26 @@ public class DocumentQueryCustomizationFactory implements IDocumentQueryCustomiz
       @Override
       public void apply(IDocumentQueryCustomization documentQuery) {
         documentQuery.highlight(fieldName, fragmentLength, fragmentCount, highlightings);
+      }
+    });
+  }
+
+  /**
+   * Adds matches highlighting for the specified field.
+   *
+   * The specified field should be analysed and stored for highlighter to work.
+   * For each match it creates a fragment that contains matched text surrounded by highlighter tags.
+   * @param fieldName The field name to highlight.
+   * @param fragmentLength The fragment length.
+   * @param fragmentCount The maximum number of fragments for the field.
+   * @param highlightings Field highlightings for all results.
+   */
+  @Override
+  public DocumentQueryCustomizationFactory highlight(final String fieldName, final String fieldKeyName, final int fragmentLength, final int fragmentCount, final Reference<FieldHighlightings> highlightings) {
+    return new DocumentQueryCustomizationFactory(actions, new Action1<IDocumentQueryCustomization>() {
+      @Override
+      public void apply(IDocumentQueryCustomization documentQuery) {
+        documentQuery.highlight(fieldName, fieldKeyName, fragmentLength, fragmentCount, highlightings);
       }
     });
   }

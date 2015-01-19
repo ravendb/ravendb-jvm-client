@@ -9,6 +9,8 @@ public class DatabaseRestoreRequest {
 
   private boolean disableReplicationDestinations;
 
+  private boolean generateNewDatabaseId;
+
   private String databaseName;
 
   private String journalsLocation;
@@ -18,6 +20,22 @@ public class DatabaseRestoreRequest {
   private boolean defrag;
 
   private Integer restoreStartTimeout;
+
+  /**
+   * Indicates if restored database should have new Id generated. By default it will be the same.
+   * @return
+   */
+  public boolean isGenerateNewDatabaseId() {
+    return generateNewDatabaseId;
+  }
+
+  /**
+   * Set if restored database should have new Id generated. By default it will be the same.
+   * @param generateNewDatabaseId
+   */
+  public void setGenerateNewDatabaseId(boolean generateNewDatabaseId) {
+    this.generateNewDatabaseId = generateNewDatabaseId;
+  }
 
   public boolean isDisableReplicationDestinations() {
     return disableReplicationDestinations;

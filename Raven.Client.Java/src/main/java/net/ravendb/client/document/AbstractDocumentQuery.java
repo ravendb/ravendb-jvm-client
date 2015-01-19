@@ -35,6 +35,7 @@ import net.ravendb.abstractions.data.SortedField;
 import net.ravendb.abstractions.data.SpatialIndexQuery;
 import net.ravendb.abstractions.extensions.ExpressionExtensions;
 import net.ravendb.abstractions.indexing.NumberUtil;
+import net.ravendb.abstractions.indexing.SortOptions;
 import net.ravendb.abstractions.indexing.SpatialOptions.SpatialRelation;
 import net.ravendb.abstractions.indexing.SpatialOptions.SpatialUnits;
 import net.ravendb.abstractions.json.linq.RavenJToken;
@@ -62,7 +63,6 @@ import net.ravendb.client.spatial.SpatialCriteria;
 import org.apache.commons.lang.ArrayUtils;
 import org.apache.commons.lang.StringUtils;
 import org.codehaus.jackson.map.ObjectMapper;
-
 
 import com.google.common.base.Defaults;
 import com.mysema.query.types.Expression;
@@ -160,9 +160,14 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
   protected String[] highlighterPostTags = new String[0];
 
   /**
+   * Highlighter key
+   */
+  protected String highlighterKeyName;
+
+  /**
    * The types to sort the fields by (NULL if not specified)
    */
-  protected Set<Tuple<String, Class< ? >>> sortByHints = new HashSet<>();
+  protected Set<Tuple<String, SortOptions>> sortByHints = new HashSet<>();
 
   /**
    * The page size to use when querying the index
@@ -505,7 +510,7 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
     return (IDocumentQuery<T>) this;
   }
 
-  protected QueryOperation initializeQueryOperation(Action2<String, String> setOperationHeaders) {
+  protected QueryOperation initializeQueryOperation() {
     IndexQuery indexQuery = getIndexQuery();
 
     if (beforeQueryExecutionAction != null) {
@@ -515,9 +520,7 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
       indexName,
       indexQuery,
       projectionFields,
-      sortByHints,
       theWaitForNonStaleResults,
-      setOperationHeaders,
       timeout,
       includes,
       disableEntitiesTracking);
@@ -558,13 +561,7 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
     }
     clearSortHints(getDatabaseCommands());
     executeBeforeQueryListeners();
-    queryOperation = initializeQueryOperation(new Action2<String, String>() {
-
-      @Override
-      public void apply(String first, String second) {
-        getDatabaseCommands().getOperationsHeaders().put(first, second);
-      }
-    });
+    queryOperation = initializeQueryOperation();
     executeActualQuery();
   }
 
@@ -612,21 +609,12 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
    * @param onEval
    */
   public Lazy<List<T>> lazily(Action1<List<T>> onEval) {
-    final Map<String, String> headers = new HashMap<>();
     if (queryOperation == null) {
       executeBeforeQueryListeners();
-      queryOperation = initializeQueryOperation(new Action2<String, String>() {
-
-        @Override
-        public void apply(String first, String second) {
-          headers.put(first, second);
-        }
-      });
+      queryOperation = initializeQueryOperation();
     }
 
     LazyQueryOperation<T> lazyQueryOperation = new LazyQueryOperation<>(clazz, queryOperation, afterQueryExecutedCallback, includes);
-    lazyQueryOperation.setHeaders(headers);
-
     return ((DocumentSession) theSession).addLazyOperation(lazyQueryOperation, onEval);
   }
 
@@ -635,22 +623,14 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
    * instance that will evaluate the query only when needed
    */
   public Lazy<Integer> countLazily() {
-    final Map<String, String> headers = new HashMap<>();
       if (queryOperation == null)
       {
           executeBeforeQueryListeners();
           take(0);
-          initializeQueryOperation(new Action2<String, String>() {
-
-            @Override
-            public void apply(String first, String second) {
-              headers.put(first, second);
-            }
-          });
+          initializeQueryOperation();
       }
 
       LazyQueryOperation<T> lazyQueryOperation = new LazyQueryOperation<>(clazz, queryOperation, afterQueryExecutedCallback, includes);
-      lazyQueryOperation.setHeaders(headers);
 
       return ((DocumentSession)theSession).addLazyCountOperation(lazyQueryOperation);
   }
@@ -691,6 +671,20 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
     return (IDocumentQuery<T>) this;
   }
 
+  @Override
+  @SuppressWarnings("unchecked")
+  public IDocumentQuery<T> customSortUsing(String typeName) {
+    customSortUsing(typeName, false);
+    return (IDocumentQuery<T>) this;
+  }
+
+  @Override
+  @SuppressWarnings("unchecked")
+  public IDocumentQuery<T> customSortUsing(String typeName, boolean descending) {
+    addOrder(Constants.CUSTOM_SORT_FIELD_NAME + (descending ? "-" : "") + ";" + typeName, false);
+    return (IDocumentQuery<T>) this;
+  }
+
   @SuppressWarnings("unchecked")
   public IDocumentQuery<T> beforeQueryExecution(Action1<IndexQuery> action) {
     beforeQueryExecutionAction = Delegates.combine(beforeQueryExecutionAction, action);
@@ -713,6 +707,16 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
     return ((IDocumentQuery<T>) this);
   }
 
+  @Override
+  @SuppressWarnings("unchecked")
+  public IDocumentQuery<T> highlight(String fieldName, String fieldKeyName, int fragmentLength, int fragmentCount, Reference<FieldHighlightings> fieldHightlightings) {
+    highlighterKeyName = fieldKeyName;
+    highlightedFields.add(new HighlightedField(fieldName, fragmentLength, fragmentCount, null));
+    fieldHightlightings.value = highlightings.addField(fieldName);
+    return ((IDocumentQuery<T>) this);
+  }
+
+  @Override
   @SuppressWarnings("unchecked")
   public IDocumentQuery<T> setAllowMultipleIndexEntriesForSameDocumentToResultTransformer(boolean value) {
     allowMultipleIndexEntriesForSameDocumentToResultTransformer = value;
@@ -778,7 +782,9 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
     fieldName = ensureValidFieldName(whereParamas);
     fieldName = descending ? "-" + fieldName : fieldName;
     orderByFields = (String[]) ArrayUtils.add(orderByFields, fieldName);
-    sortByHints.add(new Tuple<String, Class< ? >>(fieldName, fieldType));
+    if (theSession != null) {
+      sortByHints.add(new Tuple<String, SortOptions>(fieldName, theSession.getConventions().getDefaultSortOption(fieldType)));
+    }
     return (IDocumentQuery<T>) this;
   }
 
@@ -1066,8 +1072,9 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
   public IDocumentQuery<T> whereBetween(String fieldName, Object start, Object end) {
     appendSpaceIfNeeded(queryText.length() > 0);
 
-    if ((start != null ? start : end) != null) {
-      sortByHints.add(new Tuple<String, Class< ? >>(fieldName, (start != null ? start : end).getClass()));
+    if ((start != null ? start : end) != null && theSession != null) {
+      sortByHints.add(new Tuple<>(fieldName,
+        theSession.getConventions().getDefaultSortOption((start != null ? start : end).getClass())));
     }
 
     negateIfNeeded();
@@ -1099,8 +1106,9 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
   @SuppressWarnings("unchecked")
   public IDocumentQuery<T> whereBetweenOrEqual(String fieldName, Object start, Object end) {
     appendSpaceIfNeeded(queryText.length() > 0);
-    if ((start != null ? start : end) != null) {
-      sortByHints.add(new Tuple<String, Class< ? >>(fieldName, (start != null ? start : end).getClass()));
+    if ((start != null ? start : end) != null && theSession != null) {
+      sortByHints.add(new Tuple<>(fieldName,
+        theSession.getConventions().getDefaultSortOption((start != null ? start : end).getClass())));
     }
 
     negateIfNeeded();
@@ -1489,6 +1497,14 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
         sortedFields.add(new SortedField(orderByField));
       }
       spatialIndexQuery.setSortedFields(sortedFields.toArray(new SortedField[0]));
+      Map<String, SortOptions> targetHints = new HashMap<>();
+      for (Tuple<String, SortOptions> item : sortByHints) {
+        if (item.getItem1() != null) {
+          targetHints.put(item.getItem1(), item.getItem2());
+        }
+      }
+
+      spatialIndexQuery.setSortHints(targetHints);
       spatialIndexQuery.setFieldsToFetch(fieldsToFetch);
       spatialIndexQuery.setSpatialFieldName(spatialFieldName);
       spatialIndexQuery.setQueryShape(queryShape);
@@ -1504,6 +1520,7 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
       spatialIndexQuery.setHighlightedFields(highlightFldCopy.toArray(new HighlightedField[0]));
       spatialIndexQuery.setHighlighterPreTags(highlighterPreTags);
       spatialIndexQuery.setHighlighterPostTags(highlighterPostTags);
+      spatialIndexQuery.setHighlighterKeyName(highlighterKeyName);
       spatialIndexQuery.setResultsTransformer(resultsTransformer);
       spatialIndexQuery.setTransformerParameters(transformerParameters);
       spatialIndexQuery.setDisableCaching(disableCaching);
@@ -1526,6 +1543,13 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
       sortedFields.add(new SortedField(orderByField));
     }
     indexQuery.setSortedFields(sortedFields.toArray(new SortedField[0]));
+    Map<String, SortOptions> targetHints = new HashMap<>();
+    for (Tuple<String, SortOptions> item : sortByHints) {
+      if (item.getItem1() != null) {
+        targetHints.put(item.getItem1(), item.getItem2());
+      }
+    }
+    indexQuery.setSortHints(targetHints);
     indexQuery.setFieldsToFetch(fieldsToFetch);
     indexQuery.setDefaultField(defaultField);
     indexQuery.setDefaultOperator(defaultOperator);

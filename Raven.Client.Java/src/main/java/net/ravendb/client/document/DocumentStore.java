@@ -338,7 +338,7 @@ public class DocumentStore extends DocumentStoreBase {
   }
 
   private HttpJsonRequestFactory initializeJsonRequestFactory() {
-      return new HttpJsonRequestFactory(maxNumberOfCachedRequests);
+      return new HttpJsonRequestFactory(maxNumberOfCachedRequests, getConventions().isAcceptGzipContent());
   }
 
   public void initializeProfiling() {
@@ -438,7 +438,7 @@ public class DocumentStore extends DocumentStoreBase {
 
         return new ServerClient(databaseUrl, conventions, new OperationCredentials(apiKey),
           new ReplicationInformerGetter()
-        , null, jsonRequestFactory, currentSessionId.get(), getListeners().getConflictListeners().toArray(new IDocumentConflictListener[0]));
+        , null, jsonRequestFactory, currentSessionId.get(), getListeners().getConflictListeners().toArray(new IDocumentConflictListener[0]), true);
       }
     };
 

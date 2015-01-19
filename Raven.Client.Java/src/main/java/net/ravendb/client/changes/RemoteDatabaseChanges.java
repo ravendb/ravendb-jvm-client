@@ -266,10 +266,14 @@ public class RemoteDatabaseChanges extends RemoteChangesClientBase<IDatabaseChan
     return taskedObservable;
   }
 
+  public IObservable<BulkInsertChangeNotification> forBulkInsert() {
+    return forBulkInsert(null);
+  }
+
   @Override
   public IObservable<BulkInsertChangeNotification> forBulkInsert(final UUID operationId) {
 
-    final String id = operationId.toString();
+    final String id = operationId != null ? operationId.toString() : "";
 
     DatabaseConnectionState counter = counters.getOrAdd("bulk-operations/" + id, new Function1<String, DatabaseConnectionState>() {
       @Override
@@ -291,7 +295,7 @@ public class RemoteDatabaseChanges extends RemoteChangesClientBase<IDatabaseChan
     final TaskedObservable<BulkInsertChangeNotification, DatabaseConnectionState> taskedObservable = new TaskedObservable<>(counter, new Predicate<BulkInsertChangeNotification>() {
       @Override
       public Boolean apply(BulkInsertChangeNotification notification) {
-        return notification.getOperationId().equals(operationId);
+        return operationId == null || notification.getOperationId().equals(operationId);
       }
     });
 

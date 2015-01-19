@@ -22,6 +22,7 @@ import java.util.UUID;
 import net.ravendb.abstractions.basic.EventHandler;
 import net.ravendb.abstractions.basic.Reference;
 import net.ravendb.abstractions.basic.SharpEnum;
+import net.ravendb.abstractions.closure.Action2;
 import net.ravendb.abstractions.closure.Action3;
 import net.ravendb.abstractions.closure.Function0;
 import net.ravendb.abstractions.closure.Function1;
@@ -41,6 +42,7 @@ import net.ravendb.abstractions.data.DatabaseStatistics;
 import net.ravendb.abstractions.data.Etag;
 import net.ravendb.abstractions.data.Facet;
 import net.ravendb.abstractions.data.FacetQuery;
+import net.ravendb.abstractions.data.FacetResult;
 import net.ravendb.abstractions.data.FacetResults;
 import net.ravendb.abstractions.data.GetRequest;
 import net.ravendb.abstractions.data.GetResponse;
@@ -104,6 +106,7 @@ import org.codehaus.jackson.JsonFactory;
 import org.codehaus.jackson.JsonParser;
 import org.codehaus.jackson.JsonToken;
 import org.codehaus.jackson.map.JsonDeserializer;
+import org.codehaus.jackson.map.ObjectMapper;
 
 
 public class ServerClient implements IDatabaseCommands {
@@ -172,7 +175,8 @@ public class ServerClient implements IDatabaseCommands {
 
   public ServerClient(String url, DocumentConvention convention, OperationCredentials credentials,
     Function1<String, IDocumentStoreReplicationInformer> replicationInformerGetter,  String databaseName,
-    HttpJsonRequestFactory httpJsonRequestFactory, UUID sessionId, IDocumentConflictListener[] conflictListeners) {
+    HttpJsonRequestFactory httpJsonRequestFactory, UUID sessionId, IDocumentConflictListener[] conflictListeners,
+    boolean incrementReadStripe) {
     this.profilingInformation = ProfilingInformation.createProfilingInformation(sessionId);
     this.url = url;
     if (this.url.endsWith("/")) {
@@ -191,7 +195,7 @@ public class ServerClient implements IDatabaseCommands {
     this.conflictListeners = conflictListeners;
     this.replicationInformerGetter = replicationInformerGetter;
     this.replicationInformer = replicationInformerGetter.apply(databaseName);
-    this.readStripingBase = replicationInformer.getReadStripingBase();
+    this.readStripingBase = replicationInformer.getReadStripingBase(incrementReadStripe);
     replicationInformer.updateReplicationInformationIfNeeded(this);
   }
 
@@ -206,7 +210,6 @@ public class ServerClient implements IDatabaseCommands {
   }
 
   protected Collection<String> directGetIndexNames(int start, int pageSize, OperationMetadata operationMetadata) {
-
     String url = RavenUrlExtensions.indexNames(operationMetadata.getUrl(), start, pageSize);
 
     HttpJsonRequest request = jsonRequestFactory.createHttpJsonRequest(new CreateHttpJsonRequestParams(this, url, HttpMethods.GET, null,  operationMetadata.getCredentials(), convention));
@@ -535,12 +538,6 @@ public class ServerClient implements IDatabaseCommands {
     return directGet(operationMetadata, key, null);
   }
 
-  /**
-   * Perform a direct get for a document with the specified key on the specified server URL.
-   * @param operationMetadata
-   * @param key
-   * @param transform
-   */
   public JsonDocument directGet(OperationMetadata operationMetadata, String key, String transform) throws ServerClientException {
     if (key.length() > 127) {
       MultiLoadResult multiLoadResult = directGet(new String[] { key}, operationMetadata, new String[0], null, new HashMap<String, RavenJToken>(), false);
@@ -1326,13 +1323,21 @@ public class ServerClient implements IDatabaseCommands {
   @Override
   public QueryResult query(final String index, final IndexQuery query, final String[] includes, final boolean metadataOnly, final boolean indexEntriesOnly) {
     ensureIsNotNullOrEmpty(index, "index");
-
-    final HttpMethods method = (query.getQuery() == null || query.getQuery().length() < convention.getMaxLengthOfQueryUsingGetUrl())
+    final HttpMethods method = query.getQuery() == null || query.getQuery().length() <= convention.getMaxLengthOfQueryUsingGetUrl()
         ? HttpMethods.GET : HttpMethods.POST;
+
+    if (HttpMethods.POST.equals(method)) {
+      return executeWithReplication(method, new Function1<OperationMetadata, QueryResult>() {
+        @Override
+        public QueryResult apply(OperationMetadata operationMetadata) {
+          return directQueryAsPost(index, query, operationMetadata, includes);
+        }
+      });
+    }
     return executeWithReplication(method, new Function1<OperationMetadata, QueryResult>() {
       @Override
       public QueryResult apply(OperationMetadata operationMetadata) {
-        return directQuery(method, index, query, operationMetadata, includes, metadataOnly, indexEntriesOnly);
+        return directQueryAsGet(index, query, operationMetadata, includes, metadataOnly, indexEntriesOnly);
       }
     });
   }
@@ -1522,8 +1527,9 @@ public class ServerClient implements IDatabaseCommands {
 
   }
 
-  protected QueryResult directQuery(final HttpMethods method, final String index, final IndexQuery query, final OperationMetadata operationMetadata, final String[] includes, final boolean metadataOnly, final boolean includeEntries) {
-    String path = query.getIndexQueryUrl(operationMetadata.getUrl(), index, "indexes", true, HttpMethods.GET.equals(method));
+
+  protected QueryResult directQueryAsGet(final String index, final IndexQuery query, final OperationMetadata operationMetadata, final String[] includes, final boolean metadataOnly, final boolean includeEntries) {
+    String path = query.getIndexQueryUrl(operationMetadata.getUrl(), index, "indexes", true, true);
     if (metadataOnly)
       path += "&metadata-only=true";
     if (includeEntries)
@@ -1534,21 +1540,14 @@ public class ServerClient implements IDatabaseCommands {
       }
     }
 
-    if (HttpMethods.POST.equals(method)) {
-      path += "&postQuery=true";
-    }
-
     HttpJsonRequest request = jsonRequestFactory.createHttpJsonRequest(
-      new CreateHttpJsonRequestParams(this, path, method, new RavenJObject(), operationMetadata.getCredentials(), convention)
+      new CreateHttpJsonRequestParams(this, path, HttpMethods.GET, new RavenJObject(), operationMetadata.getCredentials(), convention)
       .setAvoidCachingRequest(query.isDisableCaching())
       .addOperationHeaders(operationsHeaders))
       .addReplicationStatusHeaders(url, operationMetadata.getUrl(), replicationInformer,
         convention.getFailoverBehavior(),
         new HandleReplicationStatusChangesCallback());
 
-    if (HttpMethods.POST.equals(method)) {
-      request.write(query.getQuery());
-    }
 
     RavenJObject json;
     try {
@@ -1584,9 +1583,53 @@ public class ServerClient implements IDatabaseCommands {
     return retryOperationBecauseOfConflict(docsResults, directQuery, new Function0<QueryResult>() {
       @Override
       public QueryResult apply() {
-        return directQuery(method, index, query, operationMetadata, includes, metadataOnly, includeEntries);
+        return directQueryAsGet(index, query, operationMetadata, includes, metadataOnly, includeEntries);
       }
     });
+  }
+
+  protected QueryResult directQueryAsPost(final String index, final IndexQuery query, final OperationMetadata operationMetadata, final String[] includes) {
+    StringBuilder stringBuilder = new StringBuilder();
+    query.appendQueryString(stringBuilder);
+
+    if (includes != null && includes.length > 0) {
+      for (String include: includes) {
+        stringBuilder.append("&include=").append(include);
+      }
+    }
+
+    GetRequest getRequest = new GetRequest();
+    getRequest.setQuery(stringBuilder.toString());
+    getRequest.setUrl("/indexes/" + index);
+
+    try {
+      GetResponse[] x = multiGet(new GetRequest[] { getRequest });
+      GetResponse getResponse = x[0];
+      RavenJObject json = (RavenJObject) getResponse.getResult();
+      return SerializationHelper.toQueryResult(json, HttpExtensions.getEtagHeader(getResponse), getResponse.getHeaders().get("Temp-Request-Time"), -1);
+    } catch (HttpOperationException e) {
+      try {
+        if (e.getStatusCode() == HttpStatus.SC_NOT_FOUND) {
+          ByteArrayOutputStream baos = new ByteArrayOutputStream();
+          if (e.getHttpResponse().getEntity() != null) {
+            IOUtils.copy(e.getHttpResponse().getEntity().getContent(), baos);
+          }
+          String text = new String(baos.toByteArray());
+          if (text.contains("maxQueryString")) {
+            throw new IllegalStateException(text, e);
+          }
+          throw new IllegalStateException("There is no index named: " + index);
+        }
+
+      } catch (IllegalStateException | IOException ee) {
+        throw new ServerClientException(ee);
+      } finally {
+        EntityUtils.consumeQuietly(e.getHttpResponse().getEntity());
+      }
+      throw e;
+    } catch (Exception e) {
+      throw new ServerClientException(e);
+    }
   }
 
   @Override
@@ -1887,7 +1930,7 @@ public class ServerClient implements IDatabaseCommands {
     if (databaseUrl.equals(url)) {
       return this;
     }
-    ServerClient client = new ServerClient(databaseUrl, convention, credentialsThatShouldBeUsedOnlyInOperationsWithoutReplication, replicationInformerGetter, database, jsonRequestFactory, sessionId, conflictListeners);
+    ServerClient client = new ServerClient(databaseUrl, convention, credentialsThatShouldBeUsedOnlyInOperationsWithoutReplication, replicationInformerGetter, database, jsonRequestFactory, sessionId, conflictListeners, false);
     client.setOperationsHeaders(operationsHeaders);
     return client;
   }
@@ -1898,7 +1941,7 @@ public class ServerClient implements IDatabaseCommands {
     if (databaseUrl.equals(url)) {
       return this;
     }
-    ServerClient client = new ServerClient(databaseUrl, convention, credentialsThatShouldBeUsedOnlyInOperationsWithoutReplication, replicationInformerGetter, null, jsonRequestFactory, sessionId, conflictListeners);
+    ServerClient client = new ServerClient(databaseUrl, convention, credentialsThatShouldBeUsedOnlyInOperationsWithoutReplication, replicationInformerGetter, null, jsonRequestFactory, sessionId, conflictListeners, false);
     client.setOperationsHeaders(operationsHeaders);
     return client;
   }
@@ -1968,37 +2011,16 @@ public class ServerClient implements IDatabaseCommands {
     return new Operation(this, opId.value(Long.TYPE));
   }
 
-  /**
-   *  Perform a set based update using the specified index, not allowing the operation
-   *  if the index is stale
-   * @param indexName
-   * @param queryToUpdate
-   * @param patchRequests
-   */
   @Override
   public Operation updateByIndex(String indexName, IndexQuery queryToUpdate, PatchRequest[] patchRequests) {
     return updateByIndex(indexName, queryToUpdate, patchRequests, null);
   }
 
-  /**
-   * Perform a set based update using the specified index, not allowing the operation
-   *  if the index is stale
-   * @param indexName
-   * @param queryToUpdate
-   * @param patch
-   */
   @Override
   public Operation updateByIndex(String indexName, IndexQuery queryToUpdate, ScriptedPatchRequest patch) {
     return updateByIndex(indexName, queryToUpdate, patch, null);
   }
 
-  /**
-   * Perform a set based update using the specified index.
-   * @param indexName
-   * @param queryToUpdate
-   * @param patchRequests
-   * @param options
-   */
   @Override
   public Operation updateByIndex(String indexName, IndexQuery queryToUpdate, PatchRequest[] patchRequests, BulkOperationOptions options) {
     RavenJArray array = new RavenJArray();
@@ -2011,13 +2033,6 @@ public class ServerClient implements IDatabaseCommands {
     return updateByIndexImpl(indexName, queryToUpdate, notNullOptions, requestData, HttpMethods.PATCH);
   }
 
-  /**
-   * Perform a set based update using the specified index.
-   * @param indexName
-   * @param queryToUpdate
-   * @param patch
-   * @param options
-   */
   @Override
   public Operation updateByIndex(String indexName, IndexQuery queryToUpdate, ScriptedPatchRequest patch, BulkOperationOptions options) {
     String requestData = RavenJObject.fromObject(patch).toString();
@@ -2067,12 +2082,6 @@ public class ServerClient implements IDatabaseCommands {
     return new Operation(this, jsonResponse.value(Long.TYPE, "OperationId"));
   }
 
-  /**
-   * Perform a set based deletes using the specified index, not allowing the operation
-   *  if the index is stale
-   * @param indexName
-   * @param queryToDelete
-   */
   @Override
   public Operation deleteByIndex(String indexName, IndexQuery queryToDelete) {
     return deleteByIndex(indexName, queryToDelete, null);
@@ -2177,11 +2186,6 @@ public class ServerClient implements IDatabaseCommands {
     }
   }
 
-  /**
-   * Seeds the next identity value on the server
-   * @param name
-   * @param value
-   */
   @Override
   public long seedIdentityFor(final String name, final long value) {
     return executeWithReplication(HttpMethods.POST, new Function1<OperationMetadata, Long>() {
@@ -2251,10 +2255,6 @@ public class ServerClient implements IDatabaseCommands {
     }
   }
 
-  /**
-   * Perform a single POST request containing multiple nested GET requests
-   * @param requests
-   */
   @Override
   public GetResponse[] multiGet(final GetRequest[] requests) {
     return executeWithReplication(HttpMethods.GET, new Function1<OperationMetadata, GetResponse[]>() {
@@ -2329,38 +2329,17 @@ public class ServerClient implements IDatabaseCommands {
     }
   }
 
-  /**
-   * Using the given Index, calculate the facets as per the specified doc
-   * @param index
-   * @param query
-   * @param facetSetupDoc
-   */
   @Override
   public FacetResults getFacets(final String index, final IndexQuery query, final String facetSetupDoc) {
     return getFacets(index, query, facetSetupDoc, 0, null);
   }
 
-  /**
-   * Using the given Index, calculate the facets as per the specified doc with the given start
-   * @param index
-   * @param query
-   * @param facetSetupDoc
-   * @param start
-   */
   @Override
   public FacetResults getFacets(final String index, final IndexQuery query, final String facetSetupDoc, final int start) {
     return getFacets(index, query, facetSetupDoc, start, null);
   }
 
 
-  /**
-   * Using the given Index, calculate the facets as per the specified doc with the given start and pageSize
-   * @param index
-   * @param query
-   * @param facetSetupDoc
-   * @param start
-   * @param pageSize
-   */
   @Override
   public FacetResults getFacets(final String index, final IndexQuery query, final String facetSetupDoc, final int start, final Integer pageSize) {
     return executeWithReplication(HttpMethods.GET, new Function1<OperationMetadata, FacetResults>() {
@@ -2380,10 +2359,20 @@ public class ServerClient implements IDatabaseCommands {
       start,
       pageSize != null ? pageSize : "");
 
-    HttpJsonRequest request = jsonRequestFactory.createHttpJsonRequest(
+    final HttpJsonRequest request = jsonRequestFactory.createHttpJsonRequest(
       new CreateHttpJsonRequestParams(this, requestUri, HttpMethods.GET, new RavenJObject(), operationMetadata.getCredentials(), convention)
       .addOperationHeaders(operationsHeaders))
       .addReplicationStatusHeaders(url, operationMetadata.getUrl(), replicationInformer, convention.getFailoverBehavior(), new HandleReplicationStatusChangesCallback());
+
+
+     CachedRequestOp cachedRequestDetails = jsonRequestFactory.configureCaching(requestUri, new Action2<String, String>() {
+      @Override
+      public void apply(String key, String val) {
+        request.addOperationHeader(key, val);
+      }
+    });
+    request.setCachedRequestDetails(cachedRequestDetails.getCachedRequest());
+    request.setSkipServerCheck(cachedRequestDetails.isSkipServerCheck());
 
 
     try {
@@ -2394,39 +2383,19 @@ public class ServerClient implements IDatabaseCommands {
     }
   }
 
-  /**
-   * Using the given Index, calculate the facets as per the specified doc with the given start and pageSize
-   * @param index
-   * @param query
-   * @param facets
-   */
   @Override
   public FacetResults getFacets(final String index, final IndexQuery query, final List<Facet> facets) {
     return getFacets(index, query, facets, 0, null);
   }
 
-  /**
-   * Using the given Index, calculate the facets as per the specified doc with the given start and pageSize
-   * @param index
-   * @param query
-   * @param facets
-   * @param start
-   */
   @Override
   public FacetResults getFacets(final String index, final IndexQuery query, final List<Facet> facets, final int start) {
     return getFacets(index, query, facets, start, null);
   }
 
-  /**
-   * Using the given Index, calculate the facets as per the specified doc with the given start and pageSize
-   * @param index
-   * @param query
-   * @param facets
-   * @param start
-   * @param pageSize
-   */
   @Override
   public FacetResults getFacets(final String index, final IndexQuery query, final List<Facet> facets, final int start, final Integer pageSize) {
+
     final String facetsJson = JsonConvert.serializeObject(facets);
     final HttpMethods method = facetsJson.length() > 1024 ? HttpMethods.POST : HttpMethods.GET;
     return executeWithReplication(method, new Function1<OperationMetadata, FacetResults>() {
@@ -2466,50 +2435,45 @@ public class ServerClient implements IDatabaseCommands {
 
   @Override
   public FacetResults[] getMultiFacets(final FacetQuery[] facetedQueries) {
-    return executeWithReplication(HttpMethods.POST, new Function1<OperationMetadata, FacetResults[]>() {
-      @Override
-      public FacetResults[] apply(OperationMetadata operationMetadata) {
-        return directGetMultiFacets(operationMetadata, facetedQueries);
-      }
-    });
-  }
+    GetRequest[] multiGetRequestItems = new GetRequest[facetedQueries.length];
+    for (int i = 0; i < facetedQueries.length; i++) {
+      FacetQuery x = facetedQueries[i];
+      String addition =
+        x.getFacetSetupDoc() != null ?
+          "facetDoc=" + x.getFacetSetupDoc() :
+           "facets=" + UrlUtils.escapeDataString(JsonConvert.serializeObject(x.getFacets()));
 
-  protected FacetResults[] directGetMultiFacets(OperationMetadata operationMetadata, FacetQuery[] facetedQueries) {
-    String requestUri = operationMetadata.getUrl() + "/facets/multisearch";
-    HttpJsonRequest request = jsonRequestFactory.createHttpJsonRequest(
-      new CreateHttpJsonRequestParams(this, requestUri, HttpMethods.POST, new RavenJObject(), operationMetadata.getCredentials(), convention)
-      .addOperationHeaders(operationsHeaders))
-      .addReplicationStatusHeaders(url, operationMetadata.getUrl(), replicationInformer, convention.getFailoverBehavior(), new HandleReplicationStatusChangesCallback());
-
-    final String data = JsonConvert.serializeObject(facetedQueries);
-
-    try {
-      request.write(data);
-
-      RavenJObject json = (RavenJObject)request.readResponseJson();
-      return JsonExtensions.createDefaultJsonSerializer().readValue(json.toString(), FacetResults[].class);
-    } catch (Exception e) {
-      throw new ServerClientException(e);
+      GetRequest request = new GetRequest();
+      request.setUrl("/facets/" + x.getIndexName());
+      request.setQuery(String.format("%s&facetSTart=%d&facetPageSize=%d&%d",
+        x.getQuery().getQueryString(),
+        x.getQuery().getStart(),
+        x.getQuery().getPageSize(),
+        addition));
+      multiGetRequestItems[i] = request;
     }
 
+    GetResponse[] results = multiGet(multiGetRequestItems);
+
+    ObjectMapper objectMapper = JsonExtensions.createDefaultJsonSerializer();
+
+    FacetResults[] facetResults = new FacetResults[results.length];
+    try {
+      for (int facetResultCounter = 0; facetResultCounter < facetResults.length; facetResultCounter++) {
+        GetResponse curFacetDoc = results[facetResultCounter];
+        facetResults[facetResultCounter] = objectMapper.readValue(curFacetDoc.getResult().toString(), FacetResults.class);
+      }
+    } catch (IOException e) {
+      throw new RuntimeException("Unable to deserialize facets object.", e);
+    }
+    return facetResults;
   }
 
-  /**
-   * Sends a patch request for a specific document, ignoring the document's Etag
-   * @param key
-   * @param patches
-   */
   @Override
   public RavenJObject patch(String key, PatchRequest[] patches) {
     return patch(key, patches, null);
   }
 
-  /**
-   * Sends a patch request for a specific document, ignoring the document's Etag
-   * @param key
-   * @param patches
-   * @param ignoreMissing
-   */
   @Override
   public RavenJObject patch(String key, PatchRequest[] patches, boolean ignoreMissing) {
     PatchCommandData command = new PatchCommandData();
@@ -2523,22 +2487,11 @@ public class ServerClient implements IDatabaseCommands {
     return batchResults[0].getAdditionalData();
   }
 
-  /**
-   * Sends a patch request for a specific document, ignoring the document's Etag
-   * @param key
-   * @param patch
-   */
   @Override
   public RavenJObject patch(String key, ScriptedPatchRequest patch) {
     return patch(key, patch, null);
   }
 
-  /**
-   * Sends a patch request for a specific document, ignoring the document's Etag
-   * @param key
-   * @param patch
-   * @param ignoreMissing
-   */
   @Override
   public RavenJObject patch(String key, ScriptedPatchRequest patch, boolean ignoreMissing) {
     ScriptedPatchCommandData command = new ScriptedPatchCommandData();
@@ -2553,12 +2506,6 @@ public class ServerClient implements IDatabaseCommands {
 
   }
 
-  /**
-   * Sends a patch request for a specific document
-   * @param key
-   * @param patches
-   * @param etag
-   */
   @Override
   public RavenJObject patch(String key, PatchRequest[] patches, Etag etag) {
     PatchCommandData command = new PatchCommandData();
@@ -2570,13 +2517,6 @@ public class ServerClient implements IDatabaseCommands {
     return batchResults[0].getAdditionalData();
   }
 
-  /**
-   * Sends a patch request for a specific document which may or may not currently exist
-   * @param key
-   * @param patchesToExisting
-   * @param patchesToDefault
-   * @param defaultMetadata
-   */
   @Override
   public RavenJObject patch(String key, PatchRequest[] patchesToExisting, PatchRequest[] patchesToDefault, RavenJObject defaultMetadata) {
     PatchCommandData command = new PatchCommandData();
@@ -2589,12 +2529,6 @@ public class ServerClient implements IDatabaseCommands {
     return batchResults[0].getAdditionalData();
   }
 
-  /**
-   * Sends a patch request for a specific document, ignoring the document's Etag
-   * @param key
-   * @param patch
-   * @param etag
-   */
   @Override
   public RavenJObject patch(String key, ScriptedPatchRequest patch, Etag etag) {
     ScriptedPatchCommandData command = new ScriptedPatchCommandData();
@@ -2606,13 +2540,6 @@ public class ServerClient implements IDatabaseCommands {
     return batchResults[0].getAdditionalData();
   }
 
-  /**
-   * Sends a patch request for a specific document which may or may not currently exist
-   * @param key
-   * @param patchExisting
-   * @param patchDefault
-   * @param defaultMetadata
-   */
   @Override
   public RavenJObject patch(String key, ScriptedPatchRequest patchExisting, ScriptedPatchRequest patchDefault, RavenJObject defaultMetadata) {
     ScriptedPatchCommandData command = new ScriptedPatchCommandData();

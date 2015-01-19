@@ -12,8 +12,6 @@ import net.ravendb.abstractions.data.DatabaseBackupRequest;
 import net.ravendb.abstractions.data.DatabaseDocument;
 import net.ravendb.abstractions.data.HttpMethods;
 import net.ravendb.abstractions.data.DatabaseRestoreRequest;
-import net.ravendb.abstractions.exceptions.ServerClientException;
-import net.ravendb.abstractions.indexing.IndexMergeResults;
 import net.ravendb.abstractions.json.linq.RavenJObject;
 import net.ravendb.abstractions.json.linq.RavenJToken;
 import net.ravendb.client.connection.implementation.HttpJsonRequest;
@@ -206,7 +204,9 @@ public class AdminServerClient implements IAdminDatabaseCommands, IGlobalAdminDa
       }
 
     } catch (Exception e) {
-        // we really don't care if this fails, and it might, if the user doesn't have permissions on the new db
+      if (ignoreFailures == false) {
+        throw new RuntimeException(e);
+      }
     }
   }
 

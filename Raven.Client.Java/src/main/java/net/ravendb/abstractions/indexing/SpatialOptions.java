@@ -173,4 +173,10 @@ public class SpatialOptions {
     KILOMETERS, MILES
   }
 
+
+  public static class SpatialSort {
+    public String fieldName;
+    public double longitude;
+    public double latitude;
+  }
 }

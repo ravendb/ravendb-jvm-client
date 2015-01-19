@@ -16,6 +16,12 @@ public enum PatchResult {
    * Document was properly tested
    */
   TESTED,
+
+  /**
+   * The document was not patched, because skipPatchIfEtagMismatch was set
+   * and the etag did not match
+   */
+  SKIPPED,
   /**
    *  Neither document body not metadata was changed during patch operation
    */

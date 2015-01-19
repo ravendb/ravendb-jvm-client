@@ -43,7 +43,6 @@ public class DatabaseStatistics {
   private float databaseTransactionVersionSizeInMB;
   private IndexStats[] indexes;
   private IndexingError[] errors;
-  private IndexingBatchInfo[] indexingBatchInfo;
   private FutureBatchStats[] prefetches;
   private UUID databaseId;
   private boolean supportsDtc;
@@ -54,14 +53,6 @@ public class DatabaseStatistics {
 
   public void setCountOfResultTransformers(int countOfResultTransformers) {
     this.countOfResultTransformers = countOfResultTransformers;
-  }
-
-  public IndexingBatchInfo[] getIndexingBatchInfo() {
-    return indexingBatchInfo;
-  }
-
-  public void setIndexingBatchInfo(IndexingBatchInfo[] indexingBatchInfo) {
-    this.indexingBatchInfo = indexingBatchInfo;
   }
 
   public String getStorageEngine() {

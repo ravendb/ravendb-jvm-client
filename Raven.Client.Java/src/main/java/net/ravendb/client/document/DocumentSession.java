@@ -337,7 +337,9 @@ public class DocumentSession extends InMemoryDocumentSessionOperations implement
     RavenQueryStatistics ravenQueryStatistics = new RavenQueryStatistics();
     RavenQueryHighlightings highlightings = new RavenQueryHighlightings();
     RavenQueryProvider<T> ravenQueryProvider = new RavenQueryProvider<>(clazz, this, indexName, ravenQueryStatistics, highlightings, getDatabaseCommands(), isMapReduce);
-    return new RavenQueryInspector<>(clazz, ravenQueryProvider, ravenQueryStatistics, highlightings, indexName, null, this, getDatabaseCommands(), isMapReduce);
+    RavenQueryInspector<T> inspector = new RavenQueryInspector<>();
+    inspector.init(clazz, ravenQueryProvider, ravenQueryStatistics, highlightings, indexName, null, this, getDatabaseCommands(), isMapReduce);
+    return inspector;
   }
 
   /**
@@ -558,7 +560,7 @@ public class DocumentSession extends InMemoryDocumentSessionOperations implement
       super();
       this.innerIterator = innerIterator;
       this.query = (DocumentQuery<T>) query;
-      queryOperation = ((DocumentQuery<T>)query).initializeQueryOperation(null);
+      queryOperation = ((DocumentQuery<T>)query).initializeQueryOperation();
       queryOperation.setDisableEntitiesTracking(true);
     }
 
@@ -779,6 +781,12 @@ public class DocumentSession extends InMemoryDocumentSessionOperations implement
   public <T> IDocumentQuery<T> documentQuery(Class<T> clazz) {
     String indexName = createDynamicIndexName(clazz);
     return advanced().documentQuery(clazz, indexName);
+  }
+
+  @Override
+  @SuppressWarnings("unused")
+  public <S> RavenQueryInspector<S> createRavenQueryInspector() {
+    return new RavenQueryInspector<S>();
   }
 
   @SuppressWarnings("unchecked")

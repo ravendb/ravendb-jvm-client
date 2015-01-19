@@ -3,8 +3,10 @@ package net.ravendb.abstractions.data;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Map.Entry;
 
 import net.ravendb.abstractions.basic.Reference;
+import net.ravendb.abstractions.indexing.SortOptions;
 import net.ravendb.abstractions.json.linq.RavenJToken;
 import net.ravendb.abstractions.util.EscapingHelper;
 import net.ravendb.abstractions.util.NetDateFormat;
@@ -37,6 +39,7 @@ public class IndexQuery {
   private boolean distinct;
   private String query;
   private Reference<Integer> totalSize;
+  private Map<String, SortOptions> sortHints;
   private Map<String, RavenJToken> transformerParameters;
   private int start;
   private String[] fieldsToFetch;
@@ -53,6 +56,7 @@ public class IndexQuery {
   private HighlightedField[] highlightedFields;
   private String[] highlighterPreTags;
   private String[] highlighterPostTags;
+  private String highlighterKeyName;
   private String resultsTransformer;
   private boolean disableCaching;
   private boolean explainScores;
@@ -63,6 +67,15 @@ public class IndexQuery {
    */
   public boolean isShowTimings() {
     return showTimings;
+  }
+
+  public Map<String, SortOptions> getSortHints() {
+    return sortHints;
+  }
+
+
+  public void setSortHints(Map<String, SortOptions> sortHints) {
+    this.sortHints = sortHints;
   }
 
   /**
@@ -130,6 +143,21 @@ public class IndexQuery {
 
   public void setHighlighterPostTags(String[] highlighterPostTags) {
     this.highlighterPostTags = highlighterPostTags;
+  }
+
+  /**
+   * Gets highligter key name.
+   */
+  public String getHighlighterKeyName() {
+    return highlighterKeyName;
+  }
+
+  /**
+   * Sets highligter key name.
+   * @param highlighterKeyName
+   */
+  public void setHighlighterKeyName(String highlighterKeyName) {
+    this.highlighterKeyName = highlighterKeyName;
   }
 
   public boolean isDisableCaching() {
@@ -374,6 +402,13 @@ public class IndexQuery {
       }
     }
 
+    if (sortHints != null) {
+      for(Entry<String, SortOptions> sortHint: sortHints.entrySet()) {
+        path.append(String.format("&SortHint%s%s=%s", sortHint.getKey().startsWith("-") ? "" : "-", UrlUtils.escapeDataString(sortHint.getKey()), sortHint.getValue()));
+      }
+    }
+
+
     if (StringUtils.isNotEmpty(resultsTransformer)) {
       path.append("&resultsTransformer=").append(UrlUtils.escapeDataString(resultsTransformer));
     }
@@ -410,6 +445,10 @@ public class IndexQuery {
       for (String postTag: highlighterPostTags) {
         path.append("&postTags=").append(UrlUtils.escapeUriString(postTag));
       }
+    }
+
+    if (StringUtils.isNotEmpty(highlighterKeyName)) {
+      path.append("&highlighterKeyName=").append(UrlUtils.escapeDataString(highlighterKeyName));
     }
 
     if (debugOptionGetIndexEntires) {

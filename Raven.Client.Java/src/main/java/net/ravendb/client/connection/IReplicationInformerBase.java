@@ -52,7 +52,7 @@ public interface IReplicationInformerBase<T> extends Closeable {
    */
   public Date getFailureLastCheck(String operationUrl);
 
-  public int getReadStripingBase();
+  public int getReadStripingBase(boolean increment);
 
   public <S> S executeWithReplication(HttpMethods method, String primaryUrl, OperationCredentials primaryCredentials, int currentRequest,
     int currentReadStripingBase, Function1<OperationMetadata, S> operation) throws ServerClientException;

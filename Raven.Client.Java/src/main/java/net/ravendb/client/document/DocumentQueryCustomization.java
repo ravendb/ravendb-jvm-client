@@ -16,8 +16,8 @@ import com.mysema.query.types.Path;
 
 
 public class DocumentQueryCustomization implements IDocumentQueryCustomization {
-  private DocumentQuery<?> delegate;
 
+  private DocumentQuery<?> delegate;
   public DocumentQueryCustomization(DocumentQuery< ? > delegate) {
     super();
     this.delegate = delegate;
@@ -150,6 +150,18 @@ public class DocumentQueryCustomization implements IDocumentQueryCustomization {
   }
 
   @Override
+  public IDocumentQueryCustomization sortByDistance(double lat, double lng) {
+    delegate.sortByDistance(lat, lng);
+    return this;
+  }
+
+  @Override
+  public IDocumentQueryCustomization sortByDistance(double lat, double lng, String sortedFieldName) {
+    delegate.sortByDistance(lat, lng, sortedFieldName);
+    return this;
+  }
+
+  @Override
   public IDocumentQueryCustomization randomOrdering() {
     delegate.randomOrdering();
     return this;
@@ -158,6 +170,18 @@ public class DocumentQueryCustomization implements IDocumentQueryCustomization {
   @Override
   public IDocumentQueryCustomization randomOrdering(String seed) {
     delegate.randomOrdering(seed);
+    return this;
+  }
+
+  @Override
+  public IDocumentQueryCustomization customSortUsing(String typeName) {
+    delegate.customSortUsing(typeName);
+    return this;
+  }
+
+  @Override
+  public IDocumentQueryCustomization customSortUsing(String typeName, boolean descending) {
+    delegate.customSortUsing(typeName, descending);
     return this;
   }
 
@@ -176,6 +200,12 @@ public class DocumentQueryCustomization implements IDocumentQueryCustomization {
   @Override
   public IDocumentQueryCustomization highlight(String fieldName, int fragmentLength, int fragmentCount, Reference<FieldHighlightings> highlightings) {
     delegate.highlight(fieldName, fragmentLength, fragmentCount, highlightings);
+    return this;
+  }
+
+  @Override
+  public IDocumentQueryCustomization highlight(String fieldName, String fieldKeyName, int fragmentLength, int fragmentCount, Reference<FieldHighlightings> highlightings) {
+    delegate.highlight(fieldName, fieldKeyName, fragmentLength, fragmentCount, highlightings);
     return this;
   }
 

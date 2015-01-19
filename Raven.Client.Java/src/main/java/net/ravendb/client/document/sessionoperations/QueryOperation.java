@@ -39,8 +39,6 @@ public class QueryOperation {
   private final InMemoryDocumentSessionOperations sessionOperations;
   private final String indexName;
   private final IndexQuery indexQuery;
-  private final Set<Tuple<String, Class<?>>> sortByHints;
-  private final Action2<String, String> setOperationHeaders;
   private final boolean waitForNonStaleResults;
   private boolean disableEntitiesTracking;
   private final long timeout;
@@ -67,13 +65,10 @@ public class QueryOperation {
   private long spStop;
 
   public QueryOperation(InMemoryDocumentSessionOperations sessionOperations, String indexName, IndexQuery indexQuery,
-      String[] projectionFields, Set<Tuple<String, Class<?>>> sortByHints,
-      boolean waitForNonStaleResults, Action2<String, String> setOperationHeaders, long timeout,
+      String[] projectionFields, boolean waitForNonStaleResults,long timeout,
       Set<String> includes, boolean disableEntitiesTracking) {
     this.indexQuery = indexQuery;
-    this.sortByHints = sortByHints;
     this.waitForNonStaleResults = waitForNonStaleResults;
-    this.setOperationHeaders = setOperationHeaders;
     this.timeout = timeout;
     this.includes = includes;
     this.projectionFields = projectionFields;
@@ -82,7 +77,6 @@ public class QueryOperation {
     this.disableEntitiesTracking = disableEntitiesTracking;
 
     assertNotQueryById();
-    addOperationHeaders();
   }
 
   private void assertNotQueryById() {
@@ -298,20 +292,6 @@ public class QueryOperation {
     log.debug("Query returned %d/%d %sresults", result.getResults().size(),
         result.getTotalResults(),(result.isStale() ? "stale " : ""));
     return true;
-  }
-
-  private void addOperationHeaders() {
-    if (setOperationHeaders == null)
-      return;
-
-    for (Tuple<String, Class<?>> sortByHint : sortByHints) {
-      if (sortByHint.getItem2() == null) {
-        continue;
-      }
-      setOperationHeaders.apply(String.format("SortHint-%s", UrlUtils.escapeDataString(StringUtils.strip(sortByHint.getItem1(), "-"))),
-          SharpEnum.value(sessionOperations.getConventions().getDefaultSortOption(sortByHint.getClass().getCanonicalName())));
-    }
-
   }
 
 }

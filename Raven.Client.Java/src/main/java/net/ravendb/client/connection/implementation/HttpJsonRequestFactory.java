@@ -46,6 +46,7 @@ public class HttpJsonRequestFactory implements AutoCloseable {
 
   private final int maxNumberOfCachedRequests;
   private SimpleCache cache;
+  private final boolean acceptGzipContent;
   protected AtomicInteger numOfCachedRequests = new AtomicInteger();
   protected int numOfCacheResets;
   private boolean disableRequestCompression;
@@ -55,8 +56,14 @@ public class HttpJsonRequestFactory implements AutoCloseable {
   private volatile boolean disposed;
   private ThreadLocal<Long> requestTimeout=  new ThreadLocal<>();// in milis
 
+
   public HttpJsonRequestFactory(int maxNumberOfCachedRequests) {
+    this(maxNumberOfCachedRequests, true);
+  }
+
+  public HttpJsonRequestFactory(int maxNumberOfCachedRequests, boolean acceptGzipContent) {
     super();
+    this.acceptGzipContent = acceptGzipContent;
 
     PoolingHttpClientConnectionManager cm = new PoolingHttpClientConnectionManager();
     cm.setDefaultMaxPerRoute(10);
@@ -66,6 +73,12 @@ public class HttpJsonRequestFactory implements AutoCloseable {
     this.maxNumberOfCachedRequests = maxNumberOfCachedRequests;
     resetCache();
   }
+
+  public boolean isAcceptGzipContent() {
+    return acceptGzipContent;
+  }
+
+
 
   public void addConfigureRequestEventHandler(EventHandler<WebRequestEventArgs> event) {
     configureRequest.add(event);
@@ -150,7 +163,7 @@ public class HttpJsonRequestFactory implements AutoCloseable {
     request.setShouldCacheRequest(createHttpJsonRequestParams.isAvoidCachingRequest() == false
         && createHttpJsonRequestParams.getConvention().shouldCacheRequest(createHttpJsonRequestParams.getUrl()));
 
-    if (request.getShouldCacheRequest() && createHttpJsonRequestParams.getMethod() == HttpMethods.GET && !getDisableHttpCaching()) {
+    if (request.getShouldCacheRequest() && !getDisableHttpCaching()) {
       CachedRequestOp cachedRequestDetails = configureCaching(createHttpJsonRequestParams.getUrl(), new SetHeader(request.getWebRequest()));
       request.setCachedRequestDetails(cachedRequestDetails.getCachedRequest());
       request.setSkipServerCheck(cachedRequestDetails.isSkipServerCheck());

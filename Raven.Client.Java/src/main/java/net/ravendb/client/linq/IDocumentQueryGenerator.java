@@ -17,5 +17,9 @@ public interface IDocumentQueryGenerator {
    */
   public <T> IDocumentQuery<T> documentQuery(Class<T> clazz, String indexName, boolean isMapReduce);
 
+  /**
+   * Generates a query inspector
+   */
+  public <T> RavenQueryInspector<T> createRavenQueryInspector();
 
 }

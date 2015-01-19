@@ -17,6 +17,7 @@ import org.apache.commons.lang.StringUtils;
 
 import net.ravendb.abstractions.closure.Function1;
 import net.ravendb.abstractions.connection.OperationCredentials;
+import net.ravendb.abstractions.data.DatabaseStatistics;
 import net.ravendb.abstractions.data.Etag;
 import net.ravendb.abstractions.data.HttpMethods;
 import net.ravendb.abstractions.json.linq.RavenJObject;
@@ -25,6 +26,7 @@ import net.ravendb.abstractions.replication.ReplicatedEtagInfo;
 import net.ravendb.abstractions.replication.ReplicationDestination;
 import net.ravendb.abstractions.replication.ReplicationDocument;
 import net.ravendb.client.connection.CreateHttpJsonRequestParams;
+import net.ravendb.client.connection.IDatabaseCommands;
 import net.ravendb.client.connection.OperationMetadata;
 import net.ravendb.client.connection.RavenUrlExtensions;
 import net.ravendb.client.connection.ServerClient;
@@ -110,12 +112,17 @@ public class ReplicationBehavior implements AutoCloseable {
 
     long started = new Date().getTime();
 
+    IDatabaseCommands sourceCommands = documentStore.getDatabaseCommands().forDatabase(database != null ? database : documentStore.getDefaultDatabase());
+    final String sourceUrl = RavenUrlExtensions.forDatabase(documentStore.getUrl(), database != null ? database : documentStore.getDefaultDatabase());
+    DatabaseStatistics sourceStatistics = sourceCommands.getStatistics();
+    final String sourceDbId = sourceStatistics.getDatabaseId().toString();
+
     Collection<Callable<Void>> tasks = new ArrayList<>();
     for (final String destination: destinationsToCheck) {
       tasks.add(new Callable<Void>() {
         @Override
         public Void call() throws Exception {
-          waitForReplicationFromServer(destination, database, etagToCheck, cts.getToken());
+          waitForReplicationFromServer(destination, sourceUrl, sourceDbId, etagToCheck, cts.getToken());
           return null;
         }
       });
@@ -154,13 +161,13 @@ public class ReplicationBehavior implements AutoCloseable {
     throw new TimeoutException(msg);
   }
 
-  protected void waitForReplicationFromServer(String url, String database, Etag etag,
+  protected void waitForReplicationFromServer(String url, String sourceUrl, String sourceDbId, Etag etag,
     CancellationToken cancellationToken) throws InterruptedException {
 
     while (true) {
       cancellationToken.throwIfCancellationRequested();
 
-      ReplicatedEtagInfo etags = getReplicatedEtagsFor(url, database);
+      ReplicatedEtagInfo etags = getReplicatedEtagsFor(url, sourceUrl, sourceDbId);
 
       boolean replicated = etag.compareTo(etags.getDocumentEtag()) <= 0 || etag.compareTo(etags.getAttachmentEtag()) <= 0;
       if (replicated) {
@@ -172,10 +179,9 @@ public class ReplicationBehavior implements AutoCloseable {
 
 
 
-  private ReplicatedEtagInfo getReplicatedEtagsFor(String destinationUrl, String database) {
-    String databaseUrl = RavenUrlExtensions.forDatabase(documentStore.getUrl(), database != null ? database : documentStore.getDefaultDatabase());
+  private ReplicatedEtagInfo getReplicatedEtagsFor(String destinationUrl, String sourceUrl, String sourceDbId) {
     CreateHttpJsonRequestParams createHttpJsonRequestParams = new CreateHttpJsonRequestParams(null,
-      RavenUrlExtensions.lastReplicatedEtagFor(destinationUrl, databaseUrl),
+      RavenUrlExtensions.lastReplicatedEtagFor(destinationUrl, sourceUrl, sourceDbId),
       HttpMethods.GET,
       new RavenJObject(), new OperationCredentials(documentStore.getApiKey()), documentStore.getConventions());
     HttpJsonRequest httpJsonRequest = documentStore.getJsonRequestFactory().createHttpJsonRequest(createHttpJsonRequestParams);

@@ -19,6 +19,7 @@ import net.ravendb.abstractions.data.Constants;
 import net.ravendb.abstractions.data.Facet;
 import net.ravendb.abstractions.data.FacetResults;
 import net.ravendb.abstractions.data.IndexQuery;
+import net.ravendb.abstractions.indexing.SortOptions;
 import net.ravendb.abstractions.indexing.SpatialOptions.SpatialRelation;
 import net.ravendb.abstractions.indexing.SpatialOptions.SpatialUnits;
 import net.ravendb.abstractions.json.linq.RavenJToken;
@@ -31,6 +32,8 @@ import net.ravendb.client.listeners.IDocumentQueryListener;
 import net.ravendb.client.spatial.SpatialCriteria;
 
 import org.apache.commons.lang.StringUtils;
+
+
 
 
 
@@ -141,6 +144,18 @@ public class DocumentQuery<T> extends AbstractDocumentQuery<T, DocumentQuery<T>>
   }
 
   @Override
+  public IDocumentQuery<T> sortByDistance(double lat, double lng) {
+    orderBy(String.format("%s;%f;%f", Constants.DISTANCE_FIELD_NAME, lat, lng));
+    return this;
+  }
+
+  @Override
+  public IDocumentQuery<T> sortByDistance(double lat, double lng, String sortedFieldName) {
+    orderBy(String.format("%s;%f;%f;%s", Constants.DISTANCE_FIELD_NAME, lat, lng, sortedFieldName));
+    return this;
+  }
+
+  @Override
   public void setTransformerParameters(Map<String, RavenJToken> transformerParameters) {
     this.transformerParameters = transformerParameters;
   }
@@ -195,7 +210,6 @@ public class DocumentQuery<T> extends AbstractDocumentQuery<T, DocumentQuery<T>>
     documentQuery.rootTypes.add(clazz);
     documentQuery.defaultField = defaultField;
     documentQuery.beforeQueryExecutionAction = beforeQueryExecutionAction;
-    documentQuery.afterQueryExecutedCallback = afterQueryExecutedCallback;
     documentQuery.highlightedFields = new ArrayList<>(highlightedFields);
     documentQuery.highlighterPreTags = highlighterPreTags;
     documentQuery.highlighterPostTags = highlighterPostTags;
@@ -206,6 +220,7 @@ public class DocumentQuery<T> extends AbstractDocumentQuery<T, DocumentQuery<T>>
     documentQuery.showQueryTimings = showQueryTimings;
     documentQuery.lastEquality = lastEquality;
     documentQuery.shouldExplainScores = shouldExplainScores;
+    documentQuery.afterQueryExecuted(afterQueryExecutedCallback);
     return documentQuery;
 
   }
@@ -324,14 +339,23 @@ public class DocumentQuery<T> extends AbstractDocumentQuery<T, DocumentQuery<T>>
     orderBy(orderByfields);
     for (int index = 0; index < orderByfields.length; index++) {
       String fld = orderByfields[index];
-      sortByHints.add(Tuple.<String, Class<?>> create(fld, propertySelectors[index].getType()));
+      if (theSession != null) {
+        sortByHints.add(Tuple.<String, SortOptions> create(fld, theSession.getConventions().getDefaultSortOption(propertySelectors[index].getType())));
+      }
     }
     return this;
   }
 
   @Override
   public <TValue> IDocumentQuery<T> orderByDescending(Expression< ? >... propertySelectors) {
-    orderByDescending(getMemberQueryPathsForOrderBy(propertySelectors));
+    String[] orderByfields = getMemberQueryPathsForOrderBy(propertySelectors);
+    orderByDescending(orderByfields);
+    for (int index = 0; index < orderByfields.length; index++) {
+      String fld = orderByfields[index];
+      if (theSession != null) {
+        sortByHints.add(Tuple.<String, SortOptions> create(fld, theSession.getConventions().getDefaultSortOption(propertySelectors[index].getType())));
+      }
+    }
     return this;
   }
 
@@ -346,6 +370,12 @@ public class DocumentQuery<T> extends AbstractDocumentQuery<T, DocumentQuery<T>>
   @Override
   public <TValue> IDocumentQuery<T> highlight(Expression< ? > propertySelector, int fragmentLength, int fragmentCount, Reference<FieldHighlightings> highlightings) {
     highlight(getMemberQueryPath(propertySelector), fragmentLength, fragmentCount, highlightings);
+    return this;
+  }
+
+  @Override
+  public <TValue> IDocumentQuery<T> highlight(Expression< ? > propertySelector, Expression<?> keyPropertySelector, int fragmentLength, int fragmentCount, Reference<FieldHighlightings> highlightings) {
+    highlight(getMemberQueryPath(propertySelector), getMemberQueryPath(propertySelector), fragmentLength, fragmentCount, highlightings);
     return this;
   }
 

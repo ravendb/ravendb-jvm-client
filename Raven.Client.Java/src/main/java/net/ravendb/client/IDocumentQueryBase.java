@@ -357,6 +357,16 @@ public interface IDocumentQueryBase<T, TSelf extends IDocumentQueryBase<T, TSelf
   public TSelf sortByDistance();
 
   /**
+   * Sorts the query results by distance.
+   */
+  public TSelf sortByDistance(double lat, double lng);
+
+  /**
+   * Sorts the query results by distance.
+   */
+  public TSelf sortByDistance(double lat, double lng, String sortedFieldName);
+
+  /**
    * Order the results by the specified fields
    * The fields are the names of the fields to sort, defaulting to sorting by ascending.
    * You can prefix a field name with '-' to indicate sorting by descending or '+' to sort by ascending
@@ -435,6 +445,18 @@ public interface IDocumentQueryBase<T, TSelf extends IDocumentQueryBase<T, TSelf
    * @param highlightings
    */
   public <TValue> TSelf highlight(Expression<?> propertySelector, int fragmentLength, int fragmentCount, Reference<FieldHighlightings> highlightings);
+
+  /**
+   * Adds matches highlighting for the specified field.
+   *
+   * The specified field should be analysed and stored for highlighter to work.
+   * For each match it creates a fragment that contains matched text surrounded by highlighter tags.
+   * @param propertySelector The property to highlight.
+   * @param fragmentLength The fragment length.
+   * @param fragmentCount The maximum number of fragment for the field.
+   * @param highlightings
+   */
+  public <TValue> TSelf highlight(Expression<?> propertySelector, Expression<?> keyPropertySelector, int fragmentLength, int fragmentCount, Reference<FieldHighlightings> highlightings);
 
   /**
    * Sets the tags to highlight matches with.

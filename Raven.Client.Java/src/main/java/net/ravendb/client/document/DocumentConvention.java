@@ -23,13 +23,13 @@ import net.ravendb.client.converters.ITypeConverter;
 import net.ravendb.client.converters.Int32Converter;
 import net.ravendb.client.converters.Int64Converter;
 import net.ravendb.client.converters.UUIDConverter;
-import net.ravendb.client.delegates.JavaClassFinder;
-import net.ravendb.client.delegates.JavaClassNameFinder;
 import net.ravendb.client.delegates.DocumentKeyFinder;
 import net.ravendb.client.delegates.IdConvention;
 import net.ravendb.client.delegates.IdValuePartFinder;
 import net.ravendb.client.delegates.IdentityPropertyFinder;
 import net.ravendb.client.delegates.IdentityPropertyNameFinder;
+import net.ravendb.client.delegates.JavaClassFinder;
+import net.ravendb.client.delegates.JavaClassNameFinder;
 import net.ravendb.client.delegates.PropertyNameFinder;
 import net.ravendb.client.delegates.ReplicationInformerFactory;
 import net.ravendb.client.delegates.RequestCachePolicy;
@@ -112,6 +112,8 @@ public class DocumentConvention extends Convention implements Serializable {
   private ObjectMapper objectMapper;
 
   private EnumSet<IndexAndTransformerReplicationMode> indexAndTransformerReplicationMode;
+
+  private boolean acceptGzipContent;
 
   public DocumentConvention() {
 
@@ -217,6 +219,7 @@ public class DocumentConvention extends Convention implements Serializable {
       EnumSet.of(
         IndexAndTransformerReplicationMode.INDEXES,
         IndexAndTransformerReplicationMode.TRANSFORMERS));
+    acceptGzipContent = true;
   }
 
   public static String defaultTransformTypeTagNameToDocumentKeyPrefix(String typeTagName) {
@@ -778,6 +781,13 @@ public class DocumentConvention extends Convention implements Serializable {
     }
   }
 
+  public SortOptions getDefaultSortOption(Class<?> clazz) {
+    if (clazz == null) {
+      return null;
+    }
+    return getDefaultSortOption(clazz.getName());
+  }
+
   public boolean usesRangeType(Object o) {
     if (o == null) {
       return false;
@@ -851,4 +861,14 @@ public class DocumentConvention extends Convention implements Serializable {
   public void setPreserveDocumentPropertiesNotFoundOnModel(boolean preserveDocumentPropertiesNotFoundOnModel) {
     this.preserveDocumentPropertiesNotFoundOnModel = preserveDocumentPropertiesNotFoundOnModel;
   }
+
+  public boolean isAcceptGzipContent() {
+    return acceptGzipContent;
+  }
+
+
+  public void setAcceptGzipContent(boolean acceptGzipContent) {
+    this.acceptGzipContent = acceptGzipContent;
+  }
+
 }

@@ -286,8 +286,8 @@ public abstract class ReplicationInformerBase<T> implements IReplicationInformer
   }
 
   @Override
-  public int getReadStripingBase() {
-    return readStripingBase.incrementAndGet();
+  public int getReadStripingBase(boolean increment) {
+    return increment ? readStripingBase.incrementAndGet() : readStripingBase.get();
   }
 
 

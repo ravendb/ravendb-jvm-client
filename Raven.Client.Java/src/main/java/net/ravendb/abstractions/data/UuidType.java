@@ -16,7 +16,8 @@ public enum UuidType {
   QUEUE((byte)7),
   TASKS((byte)8),
   INDEXING((byte)9),
-  DOCUMENT_REFERENCES((byte)11);
+  DOCUMENT_REFERENCES((byte)11),
+  SUBSCRIPTIONS((byte)12);
 
   private byte value;
 

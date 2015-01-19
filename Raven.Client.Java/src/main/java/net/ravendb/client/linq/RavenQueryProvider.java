@@ -221,8 +221,10 @@ public class RavenQueryProvider<T> implements IRavenQueryProvider {
   @SuppressWarnings("unchecked")
   @Override
   public <S> IRavenQueryable<S> createQuery(Expression< ? > expression) {
-    return new RavenQueryInspector<>((Class<S>) clazz, this,
+    RavenQueryInspector<S> inspector = new RavenQueryInspector<>();
+    inspector.init((Class<S>) clazz, this,
         ravenQueryStatistics, highlightings, indexName, expression, (InMemoryDocumentSessionOperations) queryGenerator, databaseCommands, isMapReduce);
+    return inspector;
 
   }
 

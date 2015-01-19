@@ -15,6 +15,15 @@ public class PatchCommandData implements ICommandData {
   private Etag etag;
   private RavenJObject metadata;
   private RavenJObject additionalData;
+  private boolean skipPatchIfEtagMismatch;
+
+  public boolean isSkipPatchIfEtagMismatch() {
+    return skipPatchIfEtagMismatch;
+  }
+
+  public void setSkipPatchIfEtagMismatch(boolean skipPatchIfEtagMismatch) {
+    this.skipPatchIfEtagMismatch = skipPatchIfEtagMismatch;
+  }
 
   @Override
   public RavenJObject getAdditionalData() {
@@ -87,6 +96,7 @@ public class PatchCommandData implements ICommandData {
     ret.add("Patches", patchesArray);
     ret.add("Metadata", metadata);
     ret.add("AdditionalData", additionalData);
+    ret.add("SkipPatchIfEtagMismatch", skipPatchIfEtagMismatch);
     if (etag != null) {
       ret.add("Etag", new RavenJValue(etag));
     }

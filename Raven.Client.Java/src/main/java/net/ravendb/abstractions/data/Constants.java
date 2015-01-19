@@ -59,6 +59,10 @@ public class Constants {
 
   public final static String RAVEN_CREATE_VERSION = "Raven-Create-Version";
 
+  public static final String RAVEN_SERVER_BUILD = "Raven-Server-Build";
+
+  public static final String CUSTOM_SORT_FIELD_NAME = "__customSort";
+
   public final static Locale getDefaultLocale() {
     return Locale.US;
   }

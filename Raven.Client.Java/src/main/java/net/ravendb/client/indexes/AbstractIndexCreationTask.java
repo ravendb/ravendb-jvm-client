@@ -5,6 +5,7 @@ import java.util.Map;
 
 import net.ravendb.abstractions.closure.Action2;
 import net.ravendb.abstractions.data.Constants;
+import net.ravendb.abstractions.data.HttpMethods;
 import net.ravendb.abstractions.data.StringDistanceTypes;
 import net.ravendb.abstractions.indexing.FieldIndexing;
 import net.ravendb.abstractions.indexing.FieldStorage;
@@ -18,8 +19,10 @@ import net.ravendb.client.IDocumentStore;
 import net.ravendb.client.connection.IDatabaseCommands;
 import net.ravendb.client.connection.OperationMetadata;
 import net.ravendb.client.connection.ServerClient;
+import net.ravendb.client.connection.implementation.HttpJsonRequest;
 import net.ravendb.client.document.DocumentConvention;
-
+import net.ravendb.client.document.IndexAndTransformerReplicationMode;
+import net.ravendb.client.utils.UrlUtils;
 
 import com.mysema.query.types.Path;
 
@@ -68,13 +71,26 @@ public class AbstractIndexCreationTask extends AbstractCommonApiForIndexesAndTra
 
   }
 
+  /**
+   * Gets the conventions that should be used when index definition is created.
+   * @return
+   */
   public DocumentConvention getConventions() {
     return conventions;
   }
+
+  /**
+   * Sets the conventions that should be used when index definition is created.
+   */
   public void setConventions(DocumentConvention conventions) {
     this.conventions = conventions;
   }
 
+  /**
+   * Generates index name from type name replacing all _ with /
+   * e.g.
+   * if our type is <code>'Orders_Totals'</code> then index name would be <code>'Orders/Totals'</code>
+   */
   public String getIndexName() {
     return getClass().getSimpleName().replace('_', '/');
   }
@@ -110,12 +126,21 @@ public class AbstractIndexCreationTask extends AbstractCommonApiForIndexesAndTra
     // the new definition.
     databaseCommands.putIndex(getIndexName(), indexDefinition, true);
 
-    updateIndexInReplication(databaseCommands, documentConvention, new Action2<ServerClient, OperationMetadata>() {
-      @Override
-      public void apply(ServerClient commands, OperationMetadata operationMetadata) {
-        commands.directPutIndex(getIndexName(), indexDefinition, true, operationMetadata);
-      }
-    });
+    if (conventions.getIndexAndTransformerReplicationMode().contains(IndexAndTransformerReplicationMode.INDEXES)) {
+      replicateIndexesIfNeeded(databaseCommands);
+    }
+  }
+
+  private void replicateIndexesIfNeeded(IDatabaseCommands databaseCommands) {
+    ServerClient serverClient = (ServerClient) databaseCommands;
+
+    String repliaceIndexUrl = String.format("/replication/replicate-indexes?indexName=%s", UrlUtils.escapeDataString(getIndexName()));
+    HttpJsonRequest replicateIndexRequest = serverClient.createRequest(HttpMethods.POST, repliaceIndexUrl);
+    try {
+      replicateIndexRequest.executeRequest();
+    } catch (Exception e) {
+      // ignore errors
+    }
   }
 
   public IndexDefinition createIndexDefinition() {
@@ -145,6 +170,10 @@ public class AbstractIndexCreationTask extends AbstractCommonApiForIndexesAndTra
 
   }
 
+  /**
+   * Gets a value indicating whether this instance is map reduce index definition
+   * @return <code>true</code> if this instance is map reduce; otherwise, <code>false</code>.
+   */
   public boolean isMapReduce() {
     return reduce != null;
   }
@@ -223,15 +252,20 @@ public class AbstractIndexCreationTask extends AbstractCommonApiForIndexesAndTra
   }
 
   /**
-   * @return Max number of allowed indexing outputs per one source document
+   * Index specific setting that limits the number of map outputs that an index is allowed to create for a one source document. If a map operation applied to
+   * the one document produces more outputs than this number then an index definition will be considered as a suspicious, the indexing of this document
+   * will be skipped and the appropriate error message will be added to the indexing errors.
+   * Default value: null means that the global value from Raven configuration will be taken to detect if number of outputs was exceeded.
    */
   public Long getMaxIndexOutputsPerDocument() {
     return maxIndexOutputsPerDocument;
   }
 
   /**
-   * Max number of allowed indexing outputs per one source document
-   * @param maxIndexOutputsPerDocument
+   * Index specific setting that limits the number of map outputs that an index is allowed to create for a one source document. If a map operation applied to
+   * the one document produces more outputs than this number then an index definition will be considered as a suspicious, the indexing of this document
+   * will be skipped and the appropriate error message will be added to the indexing errors.
+   * Default value: null means that the global value from Raven configuration will be taken to detect if number of outputs was exceeded.
    */
   public void setMaxIndexOutputsPerDocument(Long maxIndexOutputsPerDocument) {
     this.maxIndexOutputsPerDocument = maxIndexOutputsPerDocument;

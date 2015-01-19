@@ -155,6 +155,17 @@ public interface IDocumentQueryCustomization {
   public IDocumentQueryCustomization sortByDistance();
 
   /**
+   * When using spatial queries, instruct the query to sort by the distance from the origin point
+   */
+  public IDocumentQueryCustomization sortByDistance(double lat, double lng);
+
+  /**
+   * When using spatial queries, instruct the query to sort by the distance from the origin point
+   * @return
+   */
+  public IDocumentQueryCustomization sortByDistance(double lat, double lng, String sortedFieldName);
+
+  /**
    * Order the search results randomly
    */
   public IDocumentQueryCustomization randomOrdering();
@@ -165,6 +176,10 @@ public interface IDocumentQueryCustomization {
    * @param seed
    */
   public IDocumentQueryCustomization randomOrdering(String seed);
+
+  public IDocumentQueryCustomization customSortUsing(String typeName);
+
+  public IDocumentQueryCustomization customSortUsing(String typeName, boolean descending);
 
   /**
    * Allow you to modify the index query before it is executed
@@ -195,6 +210,20 @@ public interface IDocumentQueryCustomization {
    * @param highlightings Field highlightings for all results.
    */
   public IDocumentQueryCustomization highlight(String fieldName, int fragmentLength, int fragmentCount, Reference<FieldHighlightings> highlightings);
+
+  /**
+   * Adds matches highlighting for the specified field.
+   *
+   * The specified field should be analysed and stored for highlighter to work.
+   * For each match it creates a fragment that contains matched text surrounded by highlighter tags.
+   * @param fieldName The field name to highlight.
+   * @param fragmentLength The fragment length.
+   * @param fragmentCount The maximum number of fragments for the field.
+   * @param highlightings Field highlightings for all results.
+   */
+  public IDocumentQueryCustomization highlight(String fieldName, String fieldKeyName, int fragmentLength, int fragmentCount, Reference<FieldHighlightings> highlightings);
+
+
 
   /**
    * If set to true, this property will send multiple index entries from the same document (assuming the index project them)

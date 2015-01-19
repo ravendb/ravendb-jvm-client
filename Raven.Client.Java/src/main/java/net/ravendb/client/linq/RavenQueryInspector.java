@@ -18,6 +18,7 @@ import net.ravendb.abstractions.data.QueryResult;
 import net.ravendb.abstractions.data.SuggestionQuery;
 import net.ravendb.abstractions.data.SuggestionQueryResult;
 import net.ravendb.abstractions.extensions.ExpressionExtensions;
+import net.ravendb.abstractions.indexing.SpatialOptions.SpatialSort;
 import net.ravendb.abstractions.json.linq.RavenJToken;
 import net.ravendb.abstractions.json.linq.RavenJValue;
 import net.ravendb.client.EscapeQueryOptions;
@@ -49,16 +50,16 @@ import com.mysema.query.types.expr.BooleanExpression;
 public class RavenQueryInspector<T> implements IRavenQueryable<T>, IRavenQueryInspector {
 
   private Class<T> clazz;
-  private final Expression<?> expression;
+  private Expression<?> expression;
   private IRavenQueryProvider provider;
-  private final RavenQueryStatistics queryStats;
-  private final RavenQueryHighlightings highlightings;
-  private final String indexName;
-  private final IDatabaseCommands databaseCommands;
+  private RavenQueryStatistics queryStats;
+  private RavenQueryHighlightings highlightings;
+  private String indexName;
+  private IDatabaseCommands databaseCommands;
   private InMemoryDocumentSessionOperations session;
-  private final boolean isMapReduce;
+  private boolean isMapReduce;
 
-  public RavenQueryInspector(Class<T> clazz, IRavenQueryProvider provider, RavenQueryStatistics queryStats, RavenQueryHighlightings highlightings, String indexName, Expression<?> expression, InMemoryDocumentSessionOperations session, IDatabaseCommands databaseCommands, boolean isMapReduce) {
+  public void init(Class<T> clazz, IRavenQueryProvider provider, RavenQueryStatistics queryStats, RavenQueryHighlightings highlightings, String indexName, Expression<?> expression, InMemoryDocumentSessionOperations session, IDatabaseCommands databaseCommands, boolean isMapReduce) {
     this.clazz = clazz;
     if (provider == null) {
       throw new IllegalArgumentException("provider is null");
@@ -155,6 +156,13 @@ public class RavenQueryInspector<T> implements IRavenQueryable<T>, IRavenQueryIn
   @Override
   public IRavenQueryable<T> spatial(final Path< ? > path, final SpatialCriteria criteria) {
     return customize(new DocumentQueryCustomizationFactory().spatial(ExpressionExtensions.toPropertyPath(path), criteria));
+  }
+
+  public IRavenQueryable<T> orderByDistance(SpatialSort sortParamsClause) {
+    if (StringUtils.isEmpty(sortParamsClause.fieldName)) {
+      return customize(new DocumentQueryCustomizationFactory().sortByDistance(sortParamsClause.latitude, sortParamsClause.longitude));
+    }
+    return customize(new DocumentQueryCustomizationFactory().sortByDistance(sortParamsClause.latitude, sortParamsClause.longitude, sortParamsClause.fieldName));
   }
 
   @Override

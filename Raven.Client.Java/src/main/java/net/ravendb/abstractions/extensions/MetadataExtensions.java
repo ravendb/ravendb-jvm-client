@@ -27,7 +27,7 @@ public class MetadataExtensions {
   public final static Set<String> PREFIXES_IN_HEADERS_TO_IGNORE_CLIENT = new TreeSet<>(String.CASE_INSENSITIVE_ORDER);
   static {
     // Raven internal headers
-    HEADERS_TO_IGNORE_CLIENT.add("Raven-Server-Build");
+    HEADERS_TO_IGNORE_CLIENT.add(Constants.RAVEN_SERVER_BUILD);
     HEADERS_TO_IGNORE_CLIENT.add("Raven-Client-Version");
     HEADERS_TO_IGNORE_CLIENT.add("Non-Authoritative-Information");
     HEADERS_TO_IGNORE_CLIENT.add("Raven-Timer-Request");

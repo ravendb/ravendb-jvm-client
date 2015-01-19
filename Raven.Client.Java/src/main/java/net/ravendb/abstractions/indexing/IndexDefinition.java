@@ -57,6 +57,39 @@ public class IndexDefinition {
   private Integer cachedHashCode;
   private boolean disableInMemoryIndexing;
 
+  private boolean isTextIndex;
+
+  private boolean isSideBySideIndex;
+
+  /**
+   * @return Whatever this is a temporary test only index
+   */
+  public boolean isTextIndex() {
+    return isTextIndex;
+  }
+
+  /**
+   * @param isTextIndex whatever this is a temporary test only index
+   */
+  public void setTextIndex(boolean isTextIndex) {
+    this.isTextIndex = isTextIndex;
+  }
+
+  /**
+   * @return Whatever this is a side by side index
+   */
+  public boolean isSideBySideIndex() {
+    return isSideBySideIndex;
+  }
+
+  /**
+   * @param isSideBySideIndex whatever this is a side by side index
+   */
+  public void setSideBySideIndex(boolean isSideBySideIndex) {
+    this.isSideBySideIndex = isSideBySideIndex;
+  }
+
+
   /**
    * Index specific setting that limits the number of map outputs that an index is allowed to create for a one source document. If a map operation applied to
    * the one document produces more outputs than this number then an index definition will be considered as a suspicious and the index will be marked as errored.
