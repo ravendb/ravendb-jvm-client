@@ -89,7 +89,6 @@ public class IndexDefinition {
     this.isSideBySideIndex = isSideBySideIndex;
   }
 
-
   /**
    * Index specific setting that limits the number of map outputs that an index is allowed to create for a one source document. If a map operation applied to
    * the one document produces more outputs than this number then an index definition will be considered as a suspicious and the index will be marked as errored.
@@ -100,41 +99,56 @@ public class IndexDefinition {
     return maxIndexOutputsPerDocument;
   }
 
+  /**
+   * Index specific setting that limits the number of map outputs that an index is allowed to create for a one source document. If a map operation applied to
+   * the one document produces more outputs than this number then an index definition will be considered as a suspicious and the index will be marked as errored.
+   * Default value: null means that the global value from Raven configuration will be taken to detect if number of outputs was exceeded.
+   * @param maxIndexOutputsPerDocument
+   */
   public void setMaxIndexOutputsPerDocument(Long maxIndexOutputsPerDocument) {
     this.maxIndexOutputsPerDocument = maxIndexOutputsPerDocument;
   }
 
-
+  /**
+   * Prevent index from being kept in memory. Default: false
+   */
   public boolean isDisableInMemoryIndexing() {
     return disableInMemoryIndexing;
   }
 
-
-
+  /**
+   * Prevent index from being kept in memory. Default: false
+   * @param disableInMemoryIndexing
+   */
   public void setDisableInMemoryIndexing(boolean disableInMemoryIndexing) {
     this.disableInMemoryIndexing = disableInMemoryIndexing;
   }
 
-
+  /**
+   * Index identifier (internal).
+   */
   public int getIndexId() {
     return indexId;
   }
 
-
+  /**
+   * Index identifier (internal).
+   * @param indexId
+   */
   public void setIndexId(int indexId) {
     this.indexId = indexId;
   }
 
   /**
-   * @return the termVectors
+   * Index field term vector settings.
    */
   public Map<String, FieldTermVector> getTermVectors() {
     return termVectors;
   }
 
-
   /**
-   * @param termVectors the termVectors to set
+   * Index field term vector settings.
+   * @param termVectors
    */
   public void setTermVectors(Map<String, FieldTermVector> termVectors) {
     this.termVectors = termVectors;
@@ -142,7 +156,7 @@ public class IndexDefinition {
 
 
   /**
-   * @return the spatialIndexes
+   * Index field spatial settings.
    */
   public Map<String, SpatialOptions> getSpatialIndexes() {
     return spatialIndexes;
@@ -150,7 +164,8 @@ public class IndexDefinition {
 
 
   /**
-   * @param spatialIndexes the spatialIndexes to set
+   * Index field spatial settings.
+   * @param spatialIndexes
    */
   public void setSpatialIndexes(Map<String, SpatialOptions> spatialIndexes) {
     this.spatialIndexes = spatialIndexes;
@@ -158,7 +173,10 @@ public class IndexDefinition {
 
 
   /**
-   * @return the lockMode
+   * Index lock mode:
+   * - Unlock - all index definition changes acceptable
+   * - LockedIgnore - all index definition changes will be ignored, only log entry will be created
+   * - LockedError - all index definition changes will raise exception
    */
   public IndexLockMode getLockMode() {
     return lockMode;
@@ -166,7 +184,7 @@ public class IndexDefinition {
 
 
   /**
-   * @return the analyzers
+   * Index field analyzer settings.
    */
   public Map<String, String> getAnalyzers() {
     return analyzers;
@@ -174,7 +192,8 @@ public class IndexDefinition {
 
 
   /**
-   * @param analyzers the analyzers to set
+   * Index field analyzer settings.
+   * @param analyzers
    */
   public void setAnalyzers(Map<String, String> analyzers) {
     this.analyzers = analyzers;
@@ -182,7 +201,7 @@ public class IndexDefinition {
 
 
   /**
-   * @return the fields
+   * List of queryable fields in index.
    */
   public List<String> getFields() {
     return fields;
@@ -190,7 +209,8 @@ public class IndexDefinition {
 
 
   /**
-   * @param fields the fields to set
+   * List of queryable fields in index.
+   * @param fields
    */
   public void setFields(List<String> fields) {
     this.fields = fields;
@@ -198,7 +218,7 @@ public class IndexDefinition {
 
 
   /**
-   * @return the suggestions
+   * Index field suggestion settings.
    */
   public Map<String, SuggestionOptions> getSuggestions() {
     return suggestions;
@@ -206,7 +226,8 @@ public class IndexDefinition {
 
 
   /**
-   * @param suggestions the suggestions to set
+   * Index field suggestion settings.
+   * @param suggestions
    */
   public void setSuggestions(Map<String, SuggestionOptions> suggestions) {
     this.suggestions = suggestions;
@@ -214,7 +235,7 @@ public class IndexDefinition {
 
 
   /**
-   * @return the stores
+   * Index field storage settings.
    */
   public Map<String, FieldStorage> getStores() {
     return stores;
@@ -223,7 +244,8 @@ public class IndexDefinition {
 
 
   /**
-   * @param stores the stores to set
+   * Index field storage settings.
+   * @param stores
    */
   public void setStores(Map<String, FieldStorage> stores) {
     this.stores = stores;
@@ -232,7 +254,7 @@ public class IndexDefinition {
 
 
   /**
-   * @return the indexes
+   * Index field indexing settings.
    */
   public Map<String, FieldIndexing> getIndexes() {
     return indexes;
@@ -241,7 +263,8 @@ public class IndexDefinition {
 
 
   /**
-   * @param indexes the indexes to set
+   * Index field indexing settings.
+   * @param indexes
    */
   public void setIndexes(Map<String, FieldIndexing> indexes) {
     this.indexes = indexes;
@@ -250,7 +273,7 @@ public class IndexDefinition {
 
 
   /**
-   * @return the sortOptions
+   * Index field sorting settings.
    */
   public Map<String, SortOptions> getSortOptions() {
     return sortOptions;
@@ -259,7 +282,8 @@ public class IndexDefinition {
 
 
   /**
-   * @param sortOptions the sortOptions to set
+   * Index field sorting settings.
+   * @param sortOptions
    */
   public void setSortOptions(Map<String, SortOptions> sortOptions) {
     this.sortOptions = sortOptions;
@@ -268,21 +292,26 @@ public class IndexDefinition {
 
 
   /**
-   * @param lockMode the lockMode to set
+   * Index lock mode:
+   * - Unlock - all index definition changes acceptable
+   * - LockedIgnore - all index definition changes will be ignored, only log entry will be created
+   * - LockedError - all index definition changes will raise exception
+   * @param lockMode
    */
   public void setLockMode(IndexLockMode lockMode) {
     this.lockMode = lockMode;
   }
 
   /**
-   * @return the name
+   * This is the means by which the outside world refers to this index definition
    */
   public String getName() {
     return name;
   }
 
   /**
-   * @param name the name to set
+   * This is the means by which the outside world refers to this index definition
+   * @param name
    */
   public void setName(String name) {
     this.name = name;
@@ -290,6 +319,9 @@ public class IndexDefinition {
 
   /**
    * @return the maps
+   * <p>
+   * This property only exists for backward compatibility purposes
+   * </p>
    */
   public Set<String> getMaps() {
     return maps;
@@ -304,14 +336,15 @@ public class IndexDefinition {
 
 
   /**
-   * @return the reduce
+   * Index reduce function
    */
   public String getReduce() {
     return reduce;
   }
 
   /**
-   * @param reduce the reduce to set
+   * Index reduce function
+   * @param reduce
    */
   public void setReduce(String reduce) {
     this.reduce = reduce;
@@ -333,7 +366,7 @@ public class IndexDefinition {
   }
   /**
    * Gets a value indicating whether this instance is map reduce index definition
-   * @return <c>true</c> if this instance is map reduce; otherwise, <c>false</c>.
+   * @return true if this instance is map reduce; otherwise, false.
    */
   @JsonProperty("IsMapReduce")
   public boolean isMapReduce() {
@@ -341,7 +374,7 @@ public class IndexDefinition {
   }
 
   /**
-   * @return the isCompiled
+   * Internal use only.
    */
   @JsonProperty("IsCompiled")
   public boolean isCompiled() {
@@ -349,7 +382,8 @@ public class IndexDefinition {
   }
 
   /**
-   * @param isCompiled the isCompiled to set
+   * Internal use only.
+   * @param isCompiled
    */
   public void setCompiled(boolean isCompiled) {
     this.isCompiled = isCompiled;

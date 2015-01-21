@@ -11,14 +11,14 @@ public class PutResult {
   }
 
   /**
-   * @return the eTag
+   * Etag of the document after PUT operation.
    */
   public Etag getEtag() {
     return etag;
   }
 
   /**
-   * @return the key
+   * Key of the document that was PUT.
    */
   public String getKey() {
     return key;
@@ -26,14 +26,16 @@ public class PutResult {
 
 
   /**
-   * @param etag the etag to set
+   * Etag of the document after PUT operation.
+   * @param etag
    */
   public void setEtag(Etag etag) {
     this.etag = etag;
   }
 
   /**
-   * @param key the key to set
+   * Key of the document that was PUT.
+   * @param key
    */
   public void setKey(String key) {
     this.key = key;

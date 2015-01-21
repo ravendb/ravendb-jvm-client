@@ -28,56 +28,97 @@ public class PutCommandData implements ICommandData {
     this.metadata = metadata;
   }
 
+  /**
+   * Additional command data. For internal use only.
+   */
   @Override
   public RavenJObject getAdditionalData() {
     return additionalData;
   }
 
+  /**
+   * RavenJObject representing the document.
+   */
   public RavenJObject getDocument() {
     return document;
   }
 
+  /**
+   * Current document etag, used for concurrency checks (null to skip check).
+   */
   @Override
   public Etag getEtag() {
     return etag;
   }
 
+  /**
+   * Key of a document.
+   */
   @Override
   public String getKey() {
     return key;
   }
 
+  /**
+   * RavenJObject representing document's metadata.
+   */
   @Override
   public RavenJObject getMetadata() {
     return metadata;
   }
 
+  /**
+   * Returns operation method. In this case PUT.
+   */
   @Override
   public HttpMethods getMethod() {
     return HttpMethods.PUT;
   }
 
+  /**
+   * Additional command data. For internal use only.
+   */
   @Override
   public void setAdditionalData(RavenJObject additionalData) {
     this.additionalData = additionalData;
   }
 
+  /**
+   * RavenJObject representing the document.
+   * @param document
+   */
   public void setDocument(RavenJObject document) {
     this.document = document;
   }
 
+  /**
+   * Current document etag, used for concurrency checks (null to skip check).
+   * @param etag
+   */
   public void setEtag(Etag etag) {
     this.etag = etag;
   }
 
+  /**
+   * Key of a document.
+   * @param key
+   */
   public void setKey(String key) {
     this.key = key;
   }
 
+  /**
+   * RavenJObject representing document's metadata.
+   * @param metadata
+   */
   public void setMetadata(RavenJObject metadata) {
     this.metadata = metadata;
   }
 
+  /**
+   * Translates this instance to a Json object.
+   * @return RavenJObject representing the command.
+   */
   @Override
   public RavenJObject toJson() {
     RavenJObject value = new RavenJObject();

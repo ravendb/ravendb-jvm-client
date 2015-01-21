@@ -13,6 +13,10 @@ public class FacetResults {
     return results;
   }
 
+  /**
+   * A list of results for the facet.  One entry for each term/range as specified in the facet setup document.
+   * @param results
+   */
   public void setResults(Map<String, FacetResult> results) {
     this.results = results;
   }

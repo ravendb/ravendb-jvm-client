@@ -38,35 +38,35 @@ public class PatchRequest {
     this.value = value;
   }
   /**
-   * @return Get AllPositions. Set this property to true if you want to modify all items in an collection.
+   * Only valid for collections. Set this property to true if you want to modify all items in an collection.
    */
   public Boolean getAllPositions() {
     return allPositions;
   }
 
   /**
-   * @return name
+   * Property/field name to patch.
    */
   public String getName() {
     return name;
   }
 
   /**
-   * Gets the nested operations to perform. This is only valid when the PatchCommandType.MODIFY.
+   * Gets the nested operations to perform. This is only valid when the {@link #getType() Type} is {@link net.ravendb.abstractions.data.PatchCommandType#MODIFY PatchCommandType.MODIFY}
    */
   public PatchRequest[] getNested() {
     return nested;
   }
 
   /**
-   * @return the position
+   * Only valid for collection types. Position in collection to patch.
    */
   public Integer getPosition() {
     return position;
   }
 
   /**
-   * Gets or sets the previous value, which is compared against the current value to verify a
+   * Gets the previous value, which is compared against the current value to verify a
    * change isn't overwriting new values.
    * If the value is null, the operation is always successful
    */
@@ -74,36 +74,72 @@ public class PatchRequest {
     return prevVal;
   }
   /**
-   * @return Gets the type of the operation
+   * Type of patch operation.
    */
   public PatchCommandType getType() {
     return type;
   }
 
   /**
-   * @return the value
+   * New value.
    */
   public RavenJToken getValue() {
     return value;
   }
+
+  /**
+   * Only valid for collections. Set this property to true if you want to modify all items in an collection.
+   * @param allPositions
+   */
   public void setAllPositions(Boolean allPositions) {
     this.allPositions = allPositions;
   }
+
+  /**
+   * Property/field name to patch.
+   * @param name
+   */
   public void setName(String name) {
     this.name = name;
   }
+
+  /**
+   * Sets the nested operations to perform. This is only valid when the {@link #getType() Type} is {@link net.ravendb.abstractions.data.PatchCommandType#MODIFY PatchCommandType.MODIFY}
+   * @param nested
+   */
   public void setNested(PatchRequest[] nested) {
     this.nested = nested;
   }
+
+  /**
+   * Only valid for collection types. Position in collection to patch.
+   * @param position
+   */
   public void setPosition(Integer position) {
     this.position = position;
   }
+
+  /**
+   * Sets the previous value, which is compared against the current value to verify a
+   * change isn't overwriting new values.
+   * If the value is null, the operation is always successful
+   */
   public void setPrevVal(RavenJToken prevVal) {
     this.prevVal = prevVal;
   }
+
+  /**
+   * Type of patch operation.
+   * @param type
+   */
   public void setType(PatchCommandType type) {
     this.type = type;
   }
+
+  /**
+   * New value.
+   * @param value
+   */
   public void setValue(RavenJToken value) {
     this.value = value;
   }

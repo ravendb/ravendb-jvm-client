@@ -37,55 +37,74 @@ public class MoreLikeThisQuery {
   private String[] includes;
   private Map<String, RavenJToken> transformerParameters;
 
+  /**
+   * Array of paths under which document Ids can be found. All found documents will be returned with the query results.
+   */
   public String[] getIncludes() {
     return includes;
   }
 
-
+  /**
+   * Array of paths under which document Ids can be found. All found documents will be returned with the query results.
+   * @param includes
+   */
   public void setIncludes(String[] includes) {
     this.includes = includes;
   }
 
+  /**
+   * Parameters that will be passed to transformer.
+   */
   public Map<String, RavenJToken> getTransformerParameters() {
     return transformerParameters;
   }
 
+  /**
+   * Parameters that will be passed to transformer.
+   * @param transformerParameters
+   */
   public void setTransformerParameters(Map<String, RavenJToken> transformerParameters) {
     this.transformerParameters = transformerParameters;
   }
 
+  /**
+   * Transformer to use on the query results.
+   */
   public String getResultsTransformer() {
     return resultsTransformer;
   }
 
-
+  /**
+   * Transformer to use on the query results.
+   * @param resultsTransformer
+   */
   public void setResultsTransformer(String resultsTransformer) {
     this.resultsTransformer = resultsTransformer;
   }
 
   /**
-   * @return Boost terms in query based on score. Default is false.
+   * Boost terms in query based on score. Default is false.
    */
   public Boolean getBoost() {
     return boost;
   }
 
   /**
-   * @return Boost factor when boosting based on score. Default is 1.
+   * Boost factor when boosting based on score. Default is 1.
    */
   public Float getBoostFactor() {
     return boostFactor;
   }
 
   /**
-   * @return The document id to use as the basis for comparison
+   * The document id to use as the basis for comparison
    */
   public String getDocumentId() {
     return documentId;
   }
 
   /**
-   * @return The fields to compare
+   * The fields to compare
    */
   public String[] getFields() {
     return fields;
@@ -99,7 +118,7 @@ public class MoreLikeThisQuery {
   }
 
   /**
-   * @return Values for the the mapping group fields to use as the basis for comparison
+   * Values for the the mapping group fields to use as the basis for comparison
    */
   public Map<String, String> getMapGroupFields() {
     return mapGroupFields;
@@ -120,14 +139,14 @@ public class MoreLikeThisQuery {
   }
 
   /**
-   * @return The maximum number of tokens to parse in each example doc field that is not stored with TermVector support. Default is 5000.
+   * The maximum number of tokens to parse in each example doc field that is not stored with TermVector support. Default is 5000.
    */
   public Integer getMaximumNumberOfTokensParsed() {
     return maximumNumberOfTokensParsed;
   }
 
   /**
-   * @return  a Query with no more than this many terms. Default is 25.
+   * A Query with no more than this many terms. Default is 25.
    */
   public Integer getMaximumQueryTerms() {
     return maximumQueryTerms;
@@ -162,53 +181,128 @@ public class MoreLikeThisQuery {
   }
 
   /**
-   * @return The document id containing the custom stop words
+   * The document id containing the custom stop words
    */
   public String getStopWordsDocumentId() {
     return stopWordsDocumentId;
   }
+
+  /**
+   * Boost terms in query based on score. Default is false.
+   * @param boost
+   */
   public void setBoost(Boolean boost) {
     this.boost = boost;
   }
+
+  /**
+   * Boost factor when boosting based on score. Default is 1.
+   * @param boostFactor
+   */
   public void setBoostFactor(Float boostFactor) {
     this.boostFactor = boostFactor;
   }
+
+  /**
+   * The document id to use as the basis for comparison
+   * @param documentId
+   */
   public void setDocumentId(String documentId) {
     this.documentId = documentId;
   }
+
+  /**
+   * The fields to compare
+   * @param fields
+   */
   public void setFields(String[] fields) {
     this.fields = fields;
   }
+
+  /**
+   * The name of the index to use for this operation
+   * @param indexName
+   */
   public void setIndexName(String indexName) {
     this.indexName = indexName;
   }
+
+  /**
+   * Values for the the mapping group fields to use as the basis for comparison
+   * @param mapGroupFields
+   */
   public void setMapGroupFields(Map<String, String> mapGroupFields) {
     this.mapGroupFields = mapGroupFields;
   }
+
+  /**
+   * Ignore words which occur in more than this many documents. Default is {@link Integer#MAX_VALUE}
+   * @param maximumDocumentFrequency
+   */
   public void setMaximumDocumentFrequency(Integer maximumDocumentFrequency) {
     this.maximumDocumentFrequency = maximumDocumentFrequency;
   }
+
+  /**
+   * Ignore words which occur in more than this percentage of documents.
+   * @param maximumDocumentFrequencyPercentage
+   */
   public void setMaximumDocumentFrequencyPercentage(Integer maximumDocumentFrequencyPercentage) {
     this.maximumDocumentFrequencyPercentage = maximumDocumentFrequencyPercentage;
   }
+
+  /**
+   * The maximum number of tokens to parse in each example doc field that is not stored with TermVector support. Default is 5000.
+   * @param maximumNumberOfTokensParsed
+   */
   public void setMaximumNumberOfTokensParsed(Integer maximumNumberOfTokensParsed) {
     this.maximumNumberOfTokensParsed = maximumNumberOfTokensParsed;
   }
+
+  /**
+   * A Query with no more than this many terms. Default is 25.
+   * @param maximumQueryTerms
+   */
   public void setMaximumQueryTerms(Integer maximumQueryTerms) {
     this.maximumQueryTerms = maximumQueryTerms;
   }
+
+  /**
+   * Ignore words greater than this length or if 0 then this has no effect. Default is 0.
+   * @param maximumWordLength
+   */
   public void setMaximumWordLength(Integer maximumWordLength) {
     this.maximumWordLength = maximumWordLength;
   }
+
+  /**
+   * Ignore words which do not occur in at least this many documents. Default is 5.
+   * @param minimumDocumentFrequency
+   */
   public void setMinimumDocumentFrequency(Integer minimumDocumentFrequency) {
     this.minimumDocumentFrequency = minimumDocumentFrequency;
   }
+
+  /**
+   * Ignore terms with less than this frequency in the source doc. Default is 2.
+   * @param minimumTermFrequency
+   */
   public void setMinimumTermFrequency(Integer minimumTermFrequency) {
     this.minimumTermFrequency = minimumTermFrequency;
   }
+
+  /**
+   * Ignore words less than this length or if 0 then this has no effect. Default is 0.
+   * @param minimumWordLength
+   */
   public void setMinimumWordLength(Integer minimumWordLength) {
     this.minimumWordLength = minimumWordLength;
   }
+
+  /**
+   * The document id containing the custom stop words
+   * @param stopWordsDocumentId
+   */
   public void setStopWordsDocumentId(String stopWordsDocumentId) {
     this.stopWordsDocumentId = stopWordsDocumentId;
   }

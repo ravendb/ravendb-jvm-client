@@ -10,15 +10,14 @@ public class BulkOperationOptions {
   private boolean retrieveDetails;
 
   /**
-   *  Determines whether operation details about each document should be returned by server.
-   * @return retrieve details
+   * Determines whether operation details about each document should be returned by server.
    */
   public boolean isRetrieveDetails() {
     return retrieveDetails;
   }
 
   /**
-   *  Determines whether operation details about each document should be returned by server.
+   * Determines whether operation details about each document should be returned by server.
    * @param retrieveDetails
    */
   public void setRetrieveDetails(boolean retrieveDetails) {
@@ -26,38 +25,50 @@ public class BulkOperationOptions {
   }
 
   /**
-   * @return indicates whether operations are allowed on stale indexes.
+   * Indicates whether operations are allowed on stale indexes.
    */
   public boolean isAllowStale() {
     return allowStale;
   }
 
   /**
-   * indicates whether operations are allowed on stale indexes.
+   * Indicates whether operations are allowed on stale indexes.
    * @param allowStale
    */
   public void setAllowStale(boolean allowStale) {
     this.allowStale = allowStale;
   }
 
+  /**
+   * If AllowStale is set to false and index is stale, then this is the maximum timeout to wait for index to become non-stale. If timeout is exceeded then exception is thrown.
+   * Value:
+   * null by default - throw immediately if index is stale
+   * {@value null by default - throw immediately if index is stale}
+   */
   public Long getStaleTimeout() {
     return staleTimeout;
   }
 
+  /**
+   * If AllowStale is set to false and index is stale, then this is the maximum timeout to wait for index to become non-stale. If timeout is exceeded then exception is thrown.
+   * Value:
+   * null by default - throw immediately if index is stale
+   * {@value null by default - throw immediately if index is stale}
+   * @param staleTimeout
+   */
   public void setStaleTimeout(Long staleTimeout) {
     this.staleTimeout = staleTimeout;
   }
 
   /**
-   * limits the amount of base operation per second allowed.
-   * @return max operations per second
+   * Limits the amount of base operation per second allowed.
    */
   public Integer getMaxOpsPerSec() {
     return maxOpsPerSec;
   }
 
   /**
-   * limits the amount of base operation per second allowed.
+   * Limits the amount of base operation per second allowed.
    * @param maxOpsPerSec
    */
   public void setMaxOpsPerSec(Integer maxOpsPerSec) {

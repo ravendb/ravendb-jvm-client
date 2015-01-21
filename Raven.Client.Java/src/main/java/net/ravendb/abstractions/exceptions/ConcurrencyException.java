@@ -8,14 +8,14 @@ public class ConcurrencyException extends RuntimeException {
   private Etag actualEtag;
 
   /**
-   * @return the expectedEtag
+   * Expected Etag.
    */
   public Etag getExpectedEtag() {
     return expectedEtag;
   }
 
   /**
-   * @return the actualEtag
+   * Actual Etag.
    */
   public Etag getActualEtag() {
     return actualEtag;

@@ -14,7 +14,7 @@ public class JsonDocumentMetadata implements IJsonDocumentMetadata {
   private Date lastModified;
 
   /**
-   * @return the etag
+   * Current document etag.
    */
   @Override
   public Etag getEtag() {
@@ -22,7 +22,7 @@ public class JsonDocumentMetadata implements IJsonDocumentMetadata {
   }
 
   /**
-   * @return the key
+   * Key for the document
    */
   @Override
   public String getKey() {
@@ -30,7 +30,7 @@ public class JsonDocumentMetadata implements IJsonDocumentMetadata {
   }
 
   /**
-   * @return the lastModified
+   * Last modified date for the document
    */
   @Override
   public Date getLastModified() {
@@ -38,7 +38,7 @@ public class JsonDocumentMetadata implements IJsonDocumentMetadata {
   }
 
   /**
-   * @return the metadata
+   * Metadata for the document
    */
   @Override
   public RavenJObject getMetadata() {
@@ -46,7 +46,7 @@ public class JsonDocumentMetadata implements IJsonDocumentMetadata {
   }
 
   /**
-   * @return the monAuthoritativeInformation
+   * Indicates whether this document is non authoritative (modified by uncommitted transaction).
    */
   @Override
   public Boolean getNonAuthoritativeInformation() {
@@ -54,7 +54,8 @@ public class JsonDocumentMetadata implements IJsonDocumentMetadata {
   }
 
   /**
-   * @param etag the etag to set
+   * Current document etag.
+   * @param etag
    */
   @Override
   public void setEtag(Etag etag) {
@@ -62,7 +63,8 @@ public class JsonDocumentMetadata implements IJsonDocumentMetadata {
   }
 
   /**
-   * @param key the key to set
+   * Key for the document
+   * @param key
    */
   @Override
   public void setKey(String key) {
@@ -70,7 +72,8 @@ public class JsonDocumentMetadata implements IJsonDocumentMetadata {
   }
 
   /**
-   * @param lastModified the lastModified to set
+   * Last modified date for the document
+   * @param lastModified
    */
   @Override
   public void setLastModified(Date lastModified) {
@@ -78,7 +81,8 @@ public class JsonDocumentMetadata implements IJsonDocumentMetadata {
   }
 
   /**
-   * @param metadata the metadata to set
+   * Metadata for the document
+   * @param metadata
    */
   @Override
   public void setMetadata(RavenJObject metadata) {
@@ -86,7 +90,8 @@ public class JsonDocumentMetadata implements IJsonDocumentMetadata {
   }
 
   /**
-   * @param nonAuthoritativeInformation the nonAuthoritativeInformation to set
+   * Indicates whether this document is non authoritative (modified by uncommitted transaction).
+   * @param nonAuthoritativeInformation
    */
   @Override
   public void setNonAuthoritativeInformation(Boolean nonAuthoritativeInformation) {

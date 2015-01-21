@@ -9,56 +9,60 @@ import net.ravendb.abstractions.json.linq.RavenJObject;
  *  Interface that is used purely internally
  */
 public interface IJsonDocumentMetadata {
+
   /**
-   * @return metadata for the document
+   * RavenJObject representing document's metadata.
    */
   public RavenJObject getMetadata();
 
   /**
-   * Sets the metadata for the document
+   * RavenJObject representing document's metadata.
    * @param obj
    */
   public void setMetadata(RavenJObject obj);
 
   /**
-   * @return the key
+   *Key of a document.
    */
   public String getKey();
 
   /**
-   * @param key the key to set
+   * Key of a document.
+   * @param key
    */
   public void setKey(String key);
 
   /**
-   * Gets a value indicating whether this document is non authoritative (modified by uncommitted transaction).
+   * Indicates whether this document is non authoritative (modified by uncommitted transaction).
    * @return the nonAuthoritativeInformation
    */
   public Boolean getNonAuthoritativeInformation();
 
   /**
-   * Sets a value indicating whether this document is non authoritative (modified by uncommitted transaction).
+   * Indicates whether this document is non authoritative (modified by uncommitted transaction).
    * @param nonAuthoritativeInformation
    */
   public void setNonAuthoritativeInformation(Boolean nonAuthoritativeInformation);
 
   /**
-   * @return the etag
+   * Current document etag, used for concurrency checks (null to skip check)
    */
   public Etag getEtag();
 
   /**
-   * @param etag the etag to set
+   * Current document etag, used for concurrency checks (null to skip check)
+   * @param etag
    */
   public void setEtag(Etag etag);
 
   /**
-   * @return the lastModified
+   * Last modified date for the document
    */
   public Date getLastModified();
 
   /**
-   * @param lastModified the lastModified to set
+   * Last modified date for the document
+   * @param lastModified
    */
   public void setLastModified(Date lastModified);
 

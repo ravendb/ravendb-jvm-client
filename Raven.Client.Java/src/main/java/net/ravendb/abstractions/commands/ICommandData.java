@@ -11,26 +11,31 @@ import net.ravendb.abstractions.json.linq.RavenJObject;
 public interface ICommandData {
 
   /**
+   * Key of a document.
    * @return key
    */
   public String getKey();
 
   /**
+   * Returns operation method.
    * @return method
    */
   public HttpMethods getMethod();
 
   /**
+   * Current document etag, used for concurrency checks (null to skip check).
    * @return etag
    */
   public Etag getEtag();
 
   /**
+   * RavenJObject representing document's metadata.
    * @return metadata
    */
   public RavenJObject getMetadata();
 
   /**
+   * Additional command data. For internal use only.
    * @return additional data
    */
   public RavenJObject getAdditionalData();
@@ -42,8 +47,8 @@ public interface ICommandData {
   public void setAdditionalData(RavenJObject additionalMeta);
 
   /**
-   * Translate the instance to a Json object.
-   * @return RavenJObject
+   * Translates this instance to a Json object.
+   * @return RavenJObject representing the command.
    */
   public RavenJObject toJson();
 

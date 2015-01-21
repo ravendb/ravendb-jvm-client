@@ -33,14 +33,14 @@ public class JsonDocument implements IJsonDocumentMetadata {
   }
 
   /**
-   * @return the dataAsJson
+   * Document data or projection as json.
    */
   public RavenJObject getDataAsJson() {
     return dataAsJson != null ? dataAsJson : new RavenJObject();
   }
 
   /**
-   * @return the etag
+   * Current document etag.
    */
   @Override
   public Etag getEtag() {
@@ -50,7 +50,7 @@ public class JsonDocument implements IJsonDocumentMetadata {
 
 
   /**
-   * @return the key
+   * Key for the document
    */
   @Override
   public String getKey() {
@@ -58,7 +58,7 @@ public class JsonDocument implements IJsonDocumentMetadata {
   }
 
   /**
-   * @return the lastModified
+   * Last modified date for the document
    */
   @Override
   public Date getLastModified() {
@@ -66,7 +66,7 @@ public class JsonDocument implements IJsonDocumentMetadata {
   }
 
   /**
-   * @return the metadata
+   * Metadata for the document
    */
   @Override
   public RavenJObject getMetadata() {
@@ -76,12 +76,15 @@ public class JsonDocument implements IJsonDocumentMetadata {
     return metadata;
   }
 
+  /**
+   * The ranking of this result in the current query
+   */
   public Float getTempIndexScore() {
     return tempIndexScore;
   }
 
   /**
-   * @return the nonAuthoritativeInformation
+   * Indicates whether this document is non authoritative (modified by uncommitted transaction).
    */
   @Override
   public Boolean getNonAuthoritativeInformation() {
@@ -89,14 +92,16 @@ public class JsonDocument implements IJsonDocumentMetadata {
   }
 
   /**
-   * @param dataAsJson the dataAsJson to set
+   * Document data or projection as json.
+   * @param dataAsJson
    */
   public void setDataAsJson(RavenJObject dataAsJson) {
     this.dataAsJson = dataAsJson;
   }
 
   /**
-   * @param etag the etag to set
+   * Current document etag.
+   * @param etag
    */
   @Override
   public void setEtag(Etag etag) {
@@ -104,7 +109,8 @@ public class JsonDocument implements IJsonDocumentMetadata {
   }
 
   /**
-   * @param key the key to set
+   * Key for the document
+   * @param key
    */
   @Override
   public void setKey(String key) {
@@ -112,7 +118,8 @@ public class JsonDocument implements IJsonDocumentMetadata {
   }
 
   /**
-   * @param lastModified the lastModified to set
+   * Last modified date for the document
+   * @param lastModified
    */
   @Override
   public void setLastModified(Date lastModified) {
@@ -120,7 +127,8 @@ public class JsonDocument implements IJsonDocumentMetadata {
   }
 
   /**
-   * @param metadata the metadata to set
+   * Metadata for the document
+   * @param metadata
    */
   @Override
   public void setMetadata(RavenJObject metadata) {
@@ -128,17 +136,25 @@ public class JsonDocument implements IJsonDocumentMetadata {
   }
 
   /**
-   * @param nonAuthoritativeInformation the nonAuthoritativeInformation to set
+   * Indicates whether this document is non authoritative (modified by uncommitted transaction).
+   * @param nonAuthoritativeInformation
    */
   @Override
   public void setNonAuthoritativeInformation(Boolean nonAuthoritativeInformation) {
     this.nonAuthoritativeInformation = nonAuthoritativeInformation;
   }
 
+  /**
+   * The ranking of this result in the current query
+   * @param tempIndexScore
+   */
   public void setTempIndexScore(Float tempIndexScore) {
     this.tempIndexScore = tempIndexScore;
   }
 
+  /**
+   * Translate the json document to a {@link RavenJObject}
+   */
   public RavenJObject toJson() {
     dataAsJson.ensureCannotBeChangeAndEnableShapshotting();
     metadata.ensureCannotBeChangeAndEnableShapshotting();

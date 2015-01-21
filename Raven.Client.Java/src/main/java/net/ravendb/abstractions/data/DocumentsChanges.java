@@ -10,50 +10,92 @@ public class DocumentsChanges {
   private ChangeType change;
   private String fieldName;
 
+  /**
+   * Previous field value.
+   */
   public String getFieldOldValue() {
     return fieldOldValue;
   }
 
+  /**
+   * Previous field value.
+   * @param fieldOldValue
+   */
   public void setFieldOldValue(String fieldOldValue) {
     this.fieldOldValue = fieldOldValue;
   }
 
+  /**
+   * Current field value.
+   */
   public String getFieldNewValue() {
     return fieldNewValue;
   }
 
+  /**
+   * Current field value.
+   * @param fieldNewValue
+   */
   public void setFieldNewValue(String fieldNewValue) {
     this.fieldNewValue = fieldNewValue;
   }
 
+  /**
+   * Previous field type.
+   */
   public String getFieldOldType() {
     return fieldOldType;
   }
 
+  /**
+   * Previous field type.
+   * @param fieldOldType
+   */
   public void setFieldOldType(String fieldOldType) {
     this.fieldOldType = fieldOldType;
   }
 
+  /**
+   * Current field type.
+   */
   public String getFieldNewType() {
     return fieldNewType;
   }
 
+  /**
+   * Current field type.
+   * @param fieldNewType
+   */
   public void setFieldNewType(String fieldNewType) {
     this.fieldNewType = fieldNewType;
   }
 
+  /**
+   * Type of change that occured.
+   */
   public ChangeType getChange() {
     return change;
   }
 
+  /**
+   * Type of change that occured.
+   * @param change
+   */
   public void setChange(ChangeType change) {
     this.change = change;
   }
 
+  /**
+   * Name of field on which the change occured.
+   */
   public String getFieldName() {
     return fieldName;
   }
 
+  /**
+   * Name of field on which the change occured.
+   * @param fieldName
+   */
   public void setFieldName(String fieldName) {
     this.fieldName = fieldName;
   }

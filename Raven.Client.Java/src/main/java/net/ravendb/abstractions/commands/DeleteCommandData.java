@@ -23,44 +23,75 @@ public class DeleteCommandData implements ICommandData {
     super();
   }
 
+  /**
+   * Additional command data. For internal use only.
+   */
   @Override
   public RavenJObject getAdditionalData() {
     return additionalData;
   }
 
+  /**
+   * Current document etag, used for concurrency checks (null to skip check)
+   */
   @Override
   public Etag getEtag() {
     return etag;
   }
 
+  /**
+   * Key of a document to delete.
+   */
   @Override
   public String getKey() {
     return key;
   }
 
+  /**
+   * RavenJObject representing document's metadata. In this case null.
+   */
   @Override
   public RavenJObject getMetadata() {
     return null;
   }
 
+  /**
+   * Returns operation method. In this case DELETE.
+   */
   @Override
   public HttpMethods getMethod() {
     return HttpMethods.DELETE;
   }
 
+  /**
+   * Additional command data. For internal use only.
+   * @param additionalData
+   */
   @Override
   public void setAdditionalData(RavenJObject additionalData) {
     this.additionalData = additionalData;
   }
 
+  /**
+   * Current document etag, used for concurrency checks (null to skip check)
+   * @param etag
+   */
   public void setEtag(Etag etag) {
     this.etag = etag;
   }
 
+  /**
+   * Key of a document to delete.
+   * @param key
+   */
   public void setKey(String key) {
     this.key = key;
   }
 
+  /**
+   * Translates this instance to a Json object.
+   * @return RavenJObject representing the command.
+   */
   @Override
   public RavenJObject toJson() {
     RavenJObject object = new RavenJObject();
