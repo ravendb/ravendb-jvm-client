@@ -27,7 +27,7 @@ public interface IGlobalAdminDatabaseCommands {
   public String[] getDatabaseNames(int pageSize, int start);
 
   /**
-   * Get admin statistics
+   * Retrieve the statistics for the database
    */
   public AdminStatistics getStatistics();
 
@@ -38,21 +38,23 @@ public interface IGlobalAdminDatabaseCommands {
   public void createDatabase(DatabaseDocument databaseDocument);
 
   /**
-   * Deteles a database with the specified name
-   * @param dbName
+   * Used to delete a database from a server, with a possibility to remove all the data from hard drive.
+   * Warning: if hardDelete is set to <c>true</c> then ALL data will be removed from the data directory of a database.
+   * @param dbName Name of a database to delete
    */
   public void deleteDatabase(String dbName);
 
   /**
-   * Deteles a database with the specified name
-   * @param dbName
-   * @param hardDelete
+   * Used to delete a database from a server, with a possibility to remove all the data from hard drive.
+   * Warning: if hardDelete is set to true then ALL data will be removed from the data directory of a database.
+   * @param dbName Name of a database to delete
+   * @param hardDelete Should all data be removed (data files, indexing files, etc.). Default: false
    */
   public void deleteDatabase(String dbName, boolean hardDelete);
 
   /**
    * Sends an async command to compact a database. During the compaction the specified database will be offline.
-   * @param databaseName
+   * @param databaseName Name of a database to compact
    */
   public Operation compactDatabase(String databaseName);
 
@@ -71,8 +73,12 @@ public interface IGlobalAdminDatabaseCommands {
 
   /**
    * Begins a backup operation
-   * @param backupLocation
-   * @param databaseDocument
+   * @param backupLocation Path to directory where backup will be stored
+   * @param databaseDocument Database configuration document that will be stored with backup in 'Database.Document'
+   * file. Pass null to use the one from system database. WARNING: Database configuration document may contain
+   * sensitive data which will be decrypted and stored in backup.
+   * @param incremental Indicates if backup is incremental
+   * @param databaseName Name of a database that will be backed up
    */
   public void startBackup(String backupLocation, DatabaseDocument databaseDocument, boolean incremental, String databaseName);
 

@@ -29,16 +29,16 @@ public interface IAdvancedDocumentSessionOperations {
   public boolean isLoaded(String id);
 
   /**
-   * Gets the store identifier for this session.
-   * The store identifier is the identifier for the particular RavenDB instance.
-   * @return The store identifier.
+   * Gets or sets a value indicating whether the session should use optimistic concurrency.
+   * When set to true, a check is made so that a change made behind the session back would fail
+   * and raise {@link ConcurrencyException}.
    */
   public String getStoreIdentifier();
 
   /**
    * Evicts the specified entity from the session.
    * Remove the entity from the delete queue and stops tracking changes for this entity.
-   * @param entity The entity;
+   * @param entity Entity to evict.
    */
   public <T> void evict(T entity);
 
@@ -50,14 +50,14 @@ public interface IAdvancedDocumentSessionOperations {
 
   /**
    * Gets a value indicating whether the session should use optimistic concurrency.
-   * When set to <c>true</c>, a check is made so that a change made behind the session back would fail
+   * When set to true, a check is made so that a change made behind the session back would fail
    * and raise {@link ConcurrencyException}.
    */
   public boolean isUseOptimisticConcurrency();
 
   /**
    * Sets a value indicating whether the session should use optimistic concurrency.
-   * When set to <c>true</c>, a check is made so that a change made behind the session back would fail
+   * When set to true, a check is made so that a change made behind the session back would fail
    * and raise {@link ConcurrencyException}.
    */
   public void setUseOptimisticConcurrency(boolean value) ;
@@ -80,9 +80,9 @@ public interface IAdvancedDocumentSessionOperations {
    * Non authoritative information is document that has been modified by a transaction that hasn't been committed.
    * The server provides the latest committed version, but it is known that attempting to write to a non authoritative document
    * will fail, because it is already modified.
-   * If set to <c>false</c>, the session will wait {@link #getNonAuthoritativeInformationTimeout()} for the transaction to commit to get an
+   * If set to false, the session will wait {@link #getNonAuthoritativeInformationTimeout()} for the transaction to commit to get an
    * authoritative information. If the wait is longer than {@link #getNonAuthoritativeInformationTimeout()}, {@link NonAuthoritativeInformationException} is thrown.
-   * @return <c>true</c> if non authoritative information is allowed; otherwise, <c>false</c>.
+   * @return true if non authoritative information is allowed; otherwise, false.
    */
   public boolean isAllowNonAuthoritativeInformation();
   /**
@@ -90,7 +90,7 @@ public interface IAdvancedDocumentSessionOperations {
    * Non authoritative information is document that has been modified by a transaction that hasn't been committed.
    * The server provides the latest committed version, but it is known that attempting to write to a non authoritative document
    * will fail, because it is already modified.
-  * If set to <c>false</c>, the session will wait {@link #getNonAuthoritativeInformationTimeout()} for the transaction to commit to get an
+  *  If set to false, the session will wait {@link #getNonAuthoritativeInformationTimeout()} for the transaction to commit to get an
    * authoritative information. If the wait is longer than {@link #getNonAuthoritativeInformationTimeout()}, {@link NonAuthoritativeInformationException} is thrown.
    */
   public void setAllowNonAuthoritativeInformation(boolean value);
@@ -115,11 +115,13 @@ public interface IAdvancedDocumentSessionOperations {
   /**
    * Sets the max number of requests per session.
    * If the {@link #getNumberOfRequests()} rise above {@link #getMaxNumberOfRequestsPerSession()}, an exception will be thrown.
+   * @param value
    */
   public void setMaxNumberOfRequestsPerSession(int value);
 
   /**
    * Gets the number of requests for this session
+   * If the {@link NumberOfRequests} rise above {@link MaxNumberOfRequestsPerSession}, an exception will be thrown.
    */
   public int getNumberOfRequests();
 
@@ -127,7 +129,7 @@ public interface IAdvancedDocumentSessionOperations {
    * Gets the metadata for the specified entity.
    * If the entity is transient, it will load the metadata from the store
    * and associate the current state of the entity with the metadata from the server.
-   * @param instance
+   * @param instance The instance.
    */
   public <T> RavenJObject getMetadataFor(T instance);
 
@@ -135,16 +137,16 @@ public interface IAdvancedDocumentSessionOperations {
    * Gets the ETag for the specified entity.
    * If the entity is transient, it will load the etag from the store
    * and associate the current state of the entity with the etag from the server.
-   * @param instance
+   * @param instance The instance.
    */
   public <T> Etag getEtagFor(T instance);
 
   /**
    * Gets the document id for the specified entity.
    *
-   * This function may return <c>null</c> if the entity isn't tracked by the session, or if the entity is
+   * This function may return null if the entity isn't tracked by the session, or if the entity is
    * a new entity with a key that should be generated on the server.
-   * @param entity
+   * @param entity The entity.
    */
   public String getDocumentId(Object entity);
 
@@ -156,21 +158,25 @@ public interface IAdvancedDocumentSessionOperations {
   /**
    * Determines whether the specified entity has changed.
    * @param entity
+   * @return true if the specified entity has changed; otherwise, false.
    */
   public boolean hasChanged(Object entity);
 
   /**
    * Defer commands to be executed on saveChanges()
-   * @param commands
+   * @param commands Array of commands to be executed.
    */
   public void defer(ICommandData... commands);
 
   /**
    * Version this entity when it is saved.  Use when Versioning bundle configured to ExcludeUnlessExplicit.
-   * @param entity
+   * @param entity Entity to version.
    */
   public void explicitlyVersion(Object entity);
 
+  /**
+   * Returns all changes for each entity stored within session. Including name of the field/property that changed, its old and new value and change type.
+   */
   public Map<String, List<DocumentsChanges>> whatChanged();
 
 }

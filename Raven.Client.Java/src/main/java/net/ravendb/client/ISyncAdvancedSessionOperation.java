@@ -23,113 +23,119 @@ public interface ISyncAdvancedSessionOperation extends IAdvancedDocumentSessionO
 
 
   /**
-   * Refreshes the specified entity from Raven server.
-   * @param entity
+   * Updates entity with latest changes from server
+   * @param entity Instance of an entity that will be refreshed
    */
   public <T> void refresh(T entity);
 
   /**
-   * Load documents with the specified key prefix
-   * @param clazz
-   * @param keyPrefix
+   * Loads multiple entities that contain common prefix.
+   * @param clazz Defines type of object
+   * @param keyPrefix Prefix for which documents should be returned e.g. "products/"
    */
   public <T> T[] loadStartingWith(Class<T> clazz, String keyPrefix);
 
   /**
-   * Load documents with the specified key prefix
-   * @param clazz
-   * @param keyPrefix
-   * @param matches
+   * Loads multiple entities that contain common prefix.
+   * @param clazz Defines type of object
+   * @param keyPrefix Prefix for which documents should be returned e.g. "products/"
+   * @param matches Pipe ('|') separated values for which document keys (after 'keyPrefix') should be matched ('?' any single character, '*' any characters)
    */
   public <T> T[] loadStartingWith(Class<T> clazz, String keyPrefix, String matches);
 
   /**
-   * Load documents with the specified key prefix
-   * @param clazz
-   * @param keyPrefix
-   * @param matches
-   * @param start
+   * Loads multiple entities that contain common prefix.
+   * @param clazz Defines type of object
+   * @param keyPrefix Prefix for which documents should be returned e.g. "products/"
+   * @param matches Pipe ('|') separated values for which document keys (after 'keyPrefix') should be matched ('?' any single character, '*' any characters)
+   * @param start Number of documents that should be skipped. By default: 0.
    */
   public <T> T[] loadStartingWith(Class<T> clazz, String keyPrefix, String matches, int start);
 
   /**
-   * Load documents with the specified key prefix
-   * @param clazz
-   * @param keyPrefix
-   * @param matches
-   * @param start
-   * @param pageSize
+   * Loads multiple entities that contain common prefix.
+   * @param clazz Defines type of object
+   * @param keyPrefix Prefix for which documents should be returned e.g. "products/"
+   * @param matches Pipe ('|') separated values for which document keys (after 'keyPrefix') should be matched ('?' any single character, '*' any characters)
+   * @param start Number of documents that should be skipped. By default: 0.
+   * @param pageSize Maximum number of documents that will be retrieved. By default: 25.
    */
   public <T> T[] loadStartingWith(Class<T> clazz, String keyPrefix, String matches, int start, int pageSize);
 
   /**
-   * Load documents with the specified key prefix
-   * @param clazz
-   * @param keyPrefix
-   * @param matches
-   * @param start
-   * @param pageSize
+   * Loads multiple entities that contain common prefix.
+   * @param clazz Defines type of object
+   * @param keyPrefix Prefix for which documents should be returned e.g. "products/"
+   * @param matches Pipe ('|') separated values for which document keys (after 'keyPrefix') should be matched ('?' any single character, '*' any characters)
+   * @param start Number of documents that should be skipped. By default: 0.
+   * @param pageSize Maximum number of documents that will be retrieved. By default: 25.
+   * @param exclude Pipe ('|') separated values for which document keys (after 'keyPrefix') should not be matched ('?' any single character, '*' any characters)
    */
   public <T> T[] loadStartingWith(Class<T> clazz, String keyPrefix, String matches, int start, int pageSize, String exclude);
 
   /**
-   * Load documents with the specified key prefix
-   * @param clazz
-   * @param keyPrefix
-   * @param matches
-   * @param start
-   * @param pageSize
+   * Loads multiple entities that contain common prefix.
+   * @param clazz Defines type of object
+   * @param keyPrefix Prefix for which documents should be returned e.g. "products/"
+   * @param matches Pipe ('|') separated values for which document keys (after 'keyPrefix') should be matched ('?' any single character, '*' any characters)
+   * @param start Number of documents that should be skipped. By default: 0.
+   * @param pageSize Maximum number of documents that will be retrieved. By default: 25.
+   * @param exclude Pipe ('|') separated values for which document keys (after 'keyPrefix') should not be matched ('?' any single character, '*' any characters)
+   * @param pagingInformation Used to perform rapid pagination on a server side
    */
   public <T> T[] loadStartingWith(Class<T> clazz, String keyPrefix, String matches, int start, int pageSize, String exclude, RavenPagingInformation pagingInformation);
 
   /**
-   * Load documents with the specified key prefix
-   * @param clazz
-   * @param keyPrefix
-   * @param matches
-   * @param start
-   * @param pageSize
+   * Loads multiple entities that contain common prefix.
+   * @param clazz Defines type of object
+   * @param keyPrefix Prefix for which documents should be returned e.g. "products/"
+   * @param matches Pipe ('|') separated values for which document keys (after 'keyPrefix') should be matched ('?' any single character, '*' any characters)
+   * @param start Number of documents that should be skipped. By default: 0.
+   * @param pageSize Maximum number of documents that will be retrieved. By default: 25.
+   * @param exclude Pipe ('|') separated values for which document keys (after 'keyPrefix') should not be matched ('?' any single character, '*' any characters)
+   * @param pagingInformation Used to perform rapid pagination on a server side
+   * @param skipAfter skip document fetching until given key is found and return documents after that key (default: null)
    */
   public <T> T[] loadStartingWith(Class<T> clazz, String keyPrefix, String matches, int start, int pageSize, String exclude, RavenPagingInformation pagingInformation, String skipAfter);
 
   /**
    * Loads documents with the specified key prefix and applies the specified results transformer against the results
-   * @param clazz
+   * @param clazz Defines type of object
    * @param transformerClass
-   * @param keyPrefix
+   * @param keyPrefix Prefix for which documents should be returned e.g. "products/"
    */
   public <TResult, TTransformer extends AbstractTransformerCreationTask> TResult[] loadStartingWith(Class<TResult> clazz, Class<TTransformer> transformerClass,
     String keyPrefix);
 
   /**
    * Loads documents with the specified key prefix and applies the specified results transformer against the results
-   * @param clazz
+   * @param clazz Defines type of object
    * @param transformerClass
-   * @param keyPrefix
-   * @param matches
+   * @param keyPrefix Prefix for which documents should be returned e.g. "products/"
+   * @param matches Pipe ('|') separated values for which document keys (after 'keyPrefix') should be matched ('?' any single character, '*' any characters)
    */
   public <TResult, TTransformer extends AbstractTransformerCreationTask> TResult[] loadStartingWith(Class<TResult> clazz, Class<TTransformer> transformerClass,
     String keyPrefix, String matches);
 
   /**
    * Loads documents with the specified key prefix and applies the specified results transformer against the results
-   * @param clazz
+   * @param clazz Defines type of object
    * @param transformerClass
-   * @param keyPrefix
-   * @param matches
-   * @param start
+   * @param keyPrefix Prefix for which documents should be returned e.g. "products/"
+   * @param matches Pipe ('|') separated values for which document keys (after 'keyPrefix') should be matched ('?' any single character, '*' any characters)
+   * @param start Number of documents that should be skipped. By default: 0.
    */
   public <TResult, TTransformer extends AbstractTransformerCreationTask> TResult[] loadStartingWith(Class<TResult> clazz, Class<TTransformer> transformerClass,
     String keyPrefix, String matches, int start);
 
   /**
    * Loads documents with the specified key prefix and applies the specified results transformer against the results
-   * @param clazz
+   * @param clazz Defines type of object
    * @param transformerClass
-   * @param keyPrefix
-   * @param matches
-   * @param start
-   * @param pageSize
+   * @param keyPrefix Prefix for which documents should be returned e.g. "products/"
+   * @param matches Pipe ('|') separated values for which document keys (after 'keyPrefix') should be matched ('?' any single character, '*' any characters)
+   * @param start Number of documents that should be skipped. By default: 0.
+   * @param pageSize Maximum number of documents that will be retrieved. By default: 25.
    */
   public <TResult, TTransformer extends AbstractTransformerCreationTask> TResult[] loadStartingWith(Class<TResult> clazz, Class<TTransformer> transformerClass,
     String keyPrefix, String matches, int start, int pageSize);
@@ -137,27 +143,27 @@ public interface ISyncAdvancedSessionOperation extends IAdvancedDocumentSessionO
 
   /**
    * Loads documents with the specified key prefix and applies the specified results transformer against the results
-   * @param clazz
+   * @param clazz Defines type of object
    * @param transformerClass
-   * @param keyPrefix
-   * @param matches
-   * @param start
-   * @param pageSize
-   * @param exclude
+   * @param keyPrefix Prefix for which documents should be returned e.g. "products/"
+   * @param matches Pipe ('|') separated values for which document keys (after 'keyPrefix') should be matched ('?' any single character, '*' any characters)
+   * @param start Number of documents that should be skipped. By default: 0.
+   * @param pageSize Maximum number of documents that will be retrieved. By default: 25.
+   * @param exclude Pipe ('|') separated values for which document keys (after 'keyPrefix') should not be matched ('?' any single character, '*' any characters)
    */
   public <TResult, TTransformer extends AbstractTransformerCreationTask> TResult[] loadStartingWith(Class<TResult> clazz, Class<TTransformer> transformerClass,
     String keyPrefix, String matches, int start, int pageSize, String exclude);
 
   /**
    * Loads documents with the specified key prefix and applies the specified results transformer against the results
-   * @param clazz
+   * @param clazz Defines type of object
    * @param transformerClass
-   * @param keyPrefix
-   * @param matches
-   * @param start
-   * @param pageSize
-   * @param exclude
-   * @param pagingInformation
+   * @param keyPrefix Prefix for which documents should be returned e.g. "products/"
+   * @param matches Pipe ('|') separated values for which document keys (after 'keyPrefix') should be matched ('?' any single character, '*' any characters)
+   * @param start Number of documents that should be skipped. By default: 0.
+   * @param pageSize Maximum number of documents that will be retrieved. By default: 25.
+   * @param exclude Pipe ('|') separated values for which document keys (after 'keyPrefix') should not be matched ('?' any single character, '*' any characters)
+   * @param pagingInformation Used to perform rapid pagination on a server side
    */
   public <TResult, TTransformer extends AbstractTransformerCreationTask> TResult[] loadStartingWith(Class<TResult> clazz, Class<TTransformer> transformerClass,
     String keyPrefix, String matches, int start, int pageSize, String exclude,
@@ -165,14 +171,15 @@ public interface ISyncAdvancedSessionOperation extends IAdvancedDocumentSessionO
 
   /**
    * Loads documents with the specified key prefix and applies the specified results transformer against the results
-   * @param clazz
+   * @param clazz Defines type of object
    * @param transformerClass
-   * @param keyPrefix
-   * @param matches
-   * @param start
-   * @param pageSize
-   * @param exclude
-   * @param pagingInformation
+   * @param keyPrefix Prefix for which documents should be returned e.g. "products/"
+   * @param matches Pipe ('|') separated values for which document keys (after 'keyPrefix') should be matched ('?' any single character, '*' any characters)
+   * @param start Number of documents that should be skipped. By default: 0.
+   * @param pageSize Maximum number of documents that will be retrieved. By default: 25.
+   * @param exclude Pipe ('|') separated values for which document keys (after 'keyPrefix') should not be matched ('?' any single character, '*' any characters)
+   * @param pagingInformation Used to perform rapid pagination on a server side
+   * @param configure Additional configuration options for operation e.g. AddTransformerParameter
    */
   public <TResult, TTransformer extends AbstractTransformerCreationTask> TResult[] loadStartingWith(Class<TResult> clazz, Class<TTransformer> transformerClass,
     String keyPrefix, String matches, int start, int pageSize, String exclude,
@@ -180,15 +187,16 @@ public interface ISyncAdvancedSessionOperation extends IAdvancedDocumentSessionO
 
   /**
    * Loads documents with the specified key prefix and applies the specified results transformer against the results
-   * @param clazz
+   * @param clazz Defines type of object
    * @param transformerClass
-   * @param keyPrefix
-   * @param matches
-   * @param start
-   * @param pageSize
-   * @param exclude
-   * @param pagingInformation
-   * @param configure
+   * @param keyPrefix Prefix for which documents should be returned e.g. "products/"
+   * @param matches Pipe ('|') separated values for which document keys (after 'keyPrefix') should be matched ('?' any single character, '*' any characters)
+   * @param start Number of documents that should be skipped. By default: 0.
+   * @param pageSize Maximum number of documents that will be retrieved. By default: 25.
+   * @param exclude Pipe ('|') separated values for which document keys (after 'keyPrefix') should not be matched ('?' any single character, '*' any characters)
+   * @param pagingInformation Used to perform rapid pagination on a server side
+   * @param configure Additional configuration options for operation e.g. AddTransformerParameter
+   * @param skipAfter Skip document fetching until given key is found and return documents after that key (default: null)
    */
   public <TResult, TTransformer extends AbstractTransformerCreationTask> TResult[] loadStartingWith(Class<TResult> clazz, Class<TTransformer> transformerClass,
     String keyPrefix, String matches, int start, int pageSize, String exclude,
@@ -206,7 +214,7 @@ public interface ISyncAdvancedSessionOperation extends IAdvancedDocumentSessionO
   public IEagerSessionOperations eagerly();
 
   /**
-   * Queries the index specified by <typeparamref name="TIndexCreator"/> using lucene syntax.
+   * Queries the index specified by <T> using lucene syntax.
    * @param clazz The result class of the query.
    * @param indexClass The type of the index creator.
    */
@@ -234,7 +242,7 @@ public interface ISyncAdvancedSessionOperation extends IAdvancedDocumentSessionO
 
   /**
    * Gets the document URL for the specified entity.
-   * @param entity
+   * @param entity Instance of an entity for which url will be returned
    */
   public String getDocumentUrl(Object entity);
 

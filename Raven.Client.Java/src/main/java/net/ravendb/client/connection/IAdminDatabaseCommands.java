@@ -15,6 +15,7 @@ public interface IAdminDatabaseCommands {
 
   /**
    * Enables indexing
+   * @param maxNumberOfParallelIndexTasks If set then maximum number of parallel indexing tasks will be set to this value.
    */
   public void startIndexing(Integer maxNumberOfParallelIndexTasks);
 
@@ -23,5 +24,8 @@ public interface IAdminDatabaseCommands {
    */
   public String getIndexingStatus();
 
+  /**
+   * Gets configuration for current database.
+   */
   public RavenJObject getDatabaseConfiguration();
 }

@@ -51,13 +51,13 @@ public interface IDocumentQueryBase<T, TSelf extends IDocumentQueryBase<T, TSelf
 
   /**
    * Takes the specified count.
-   * @param count The count.
+   * @param count Maximum number of items to take.
    */
   public TSelf take (int count);
 
   /**
    * Skips the specified count.
-   * @param count The count.
+   * @param count Number of items to skip.
    */
   public TSelf skip(int count);
 
@@ -83,12 +83,13 @@ public interface IDocumentQueryBase<T, TSelf extends IDocumentQueryBase<T, TSelf
 
   /**
    * Filter the results from the index using the specified where clause.
-   * @param whereClause The where clause.
+   * @param whereClause Lucene-syntax based query predicate.
    */
   public TSelf where(String whereClause);
 
   /**
    * Matches exact value
+   *
    * Defaults to NotAnalyzed
    * @param fieldName
    * @param value
@@ -107,7 +108,7 @@ public interface IDocumentQueryBase<T, TSelf extends IDocumentQueryBase<T, TSelf
   /**
    * Matches exact value
    *
-   * Default to allow wildcard only if analyzed
+   * Default to allow wildcards only if analyzed
    * @param fieldName
    * @param value
    * @param isAnalyzed
@@ -498,7 +499,7 @@ public interface IDocumentQueryBase<T, TSelf extends IDocumentQueryBase<T, TSelf
 
   /**
    * Instructs the query to wait for non stale results as of now for the specified timeout.
-   * @param waitTimeout The wait timeout.
+   * @param waitTimeout Maximum time to wait for index query results to become non-stale before exception is thrown.
    */
   public TSelf waitForNonStaleResultsAsOfNow(long waitTimeout);
 
@@ -510,21 +511,45 @@ public interface IDocumentQueryBase<T, TSelf extends IDocumentQueryBase<T, TSelf
 
   /**
    * Instructs the query to wait for non stale results as of the cutoff date for the specified timeout
-   * @param cutOff The cut off.
-   * @param waitTimeout The wait timeout.
+   * @param cutOff Index will be considered stale if modification date of last indexed document is greater than this value.
+   * @param waitTimeout Maximum time to wait for index query results to become non-stale before exception is thrown.
    */
   public TSelf waitForNonStaleResultsAsOf(Date cutOff, long waitTimeout);
 
   /**
    * Instructs the query to wait for non stale results as of the cutoff etag.
+   *
+   * Cutoff etag is used to check if the index has already process a document with the given
+   * etag. Unlike Cutoff, which uses dates and is susceptible to clock synchronization issues between
+   * machines, cutoff etag doesn't rely on both the server and client having a synchronized clock and
+   * can work without it.
+   * However, when used to query map/reduce indexes, it does NOT guarantee that the document that this
+   * etag belong to is actually considered for the results.
+   * What it does it guarantee that the document has been mapped, but not that the mapped values has been reduced.
+   * Since map/reduce queries, by their nature,vtend to be far less susceptible to issues with staleness, this is
+   * considered to be an acceptable tradeoff.
+   * If you need absolute no staleness with a map/reduce index, you will need to ensure synchronized clocks and
+   * use the Cutoff date option, instead.
    * @param cutOffEtag The cut off etag.
    */
   public TSelf waitForNonStaleResultsAsOf(Etag cutOffEtag);
 
   /**
    * Instructs the query to wait for non stale results as of the cutoff etag for the specified timeout.
+   *
+   * Cutoff etag is used to check if the index has already process a document with the given
+   * etag. Unlike Cutoff, which uses dates and is susceptible to clock synchronization issues between
+   * machines, cutoff etag doesn't rely on both the server and client having a synchronized clock and
+   * can work without it.
+   * However, when used to query map/reduce indexes, it does NOT guarantee that the document that this
+   * etag belong to is actually considered for the results.
+   * What it does it guarantee that the document has been mapped, but not that the mapped values has been reduced.
+   * Since map/reduce queries, by their nature,vtend to be far less susceptible to issues with staleness, this is
+   * considered to be an acceptable tradeoff.
+   * If you need absolute no staleness with a map/reduce index, you will need to ensure synchronized clocks and
+   * use the Cutoff date option, instead.
    * @param cutOffEtag the cut off etag.
-   * @param waitTimeout The wait timeout.
+   * @param waitTimeout Maximum time to wait for index query results to become non-stale before exception is thrown.
    */
   public TSelf waitForNonStaleResultsAsOf(Etag cutOffEtag, long waitTimeout);
 
@@ -543,7 +568,7 @@ public interface IDocumentQueryBase<T, TSelf extends IDocumentQueryBase<T, TSelf
   /**
    * EXPERT ONLY: Instructs the query to wait for non stale results for the specified wait timeout.
    * This shouldn't be used outside of unit tests unless you are well aware of the implications
-   * @param waitTimeout The wait timeout.
+   * @param waitTimeout Maximum time to wait for index query results to become non-stale before exception is thrown.
    */
   public TSelf waitForNonStaleResults(long waitTimeout);
 
@@ -576,7 +601,7 @@ public interface IDocumentQueryBase<T, TSelf extends IDocumentQueryBase<T, TSelf
   /**
    * Adds an ordering for a specific field to the query and specifies the type of field for sorting purposes
    * @param fieldName Name of the field.
-   * @param descending if set to true [descending]
+   * @param descending If set to true [descending]
    * @param fieldType The type of the field to be sorted.
    */
   public TSelf addOrder (String fieldName, boolean descending, Class<?> fieldType);
@@ -594,32 +619,34 @@ public interface IDocumentQueryBase<T, TSelf extends IDocumentQueryBase<T, TSelf
   /**
    * Perform a search for documents which fields that match the searchTerms.
    * If there is more than a single term, each of them will be checked independently.
-   * @param fieldName
-   * @param searchTerms
+   * @param fieldName Marks a field in which terms should be looked for
+   * @param searchTerms Space separated terms e.g. 'John Adam' means that we will look in selected field for 'John' or 'Adam'.
    */
   public TSelf search(String fieldName, String searchTerms);
 
   /**
    * Perform a search for documents which fields that match the searchTerms.
    * If there is more than a single term, each of them will be checked independently.
-   * @param fieldName
-   * @param searchTerms
+   * @param fieldName Marks a field in which terms should be looked for
+   * @param searchTerms Space separated terms e.g. 'John Adam' means that we will look in selected field for 'John' or 'Adam'.
+   * @param escapeQueryOptions  Terms escaping strategy. One of the following: EscapeAll, AllowPostfixWildcard, AllowAllWildcards, RawQuery. Default: EscapeQueryOptions.RawQuery
    */
   public TSelf search(String fieldName, String searchTerms, EscapeQueryOptions escapeQueryOptions);
 
   /**
    * Perform a search for documents which fields that match the searchTerms.
    * If there is more than a single term, each of them will be checked independently.
-   * @param propertySelector
-   * @param searchTerms
+   * @param propertySelector Expression marking a field in which terms should be looked for
+   * @param searchTerms Space separated terms e.g. 'John Adam' means that we will look in selected field for 'John' or 'Adam'.
    */
   public <TValue> TSelf search(Expression<?> propertySelector, String searchTerms);
 
   /**
    * Perform a search for documents which fields that match the searchTerms.
    * If there is more than a single term, each of them will be checked independently.
-   * @param propertySelector
-   * @param searchTerms
+   * @param propertySelector Expression marking a field in which terms should be looked for
+   * @param searchTerms Space separated terms e.g. 'John Adam' means that we will look in selected field for 'John' or 'Adam'.
+   * @param escapeQueryOptions Terms escaping strategy. One of the following: EscapeAll, AllowPostfixWildcard, AllowAllWildcards, RawQuery. Default: EscapeQueryOptions.RawQuery
    */
   public <TValue> TSelf search(Expression<?> propertySelector, String searchTerms, EscapeQueryOptions escapeQueryOptions);
 
@@ -631,26 +658,34 @@ public interface IDocumentQueryBase<T, TSelf extends IDocumentQueryBase<T, TSelf
 
   /**
    * Performs a query matching ANY of the provided values against the given field (OR)
+   * @param fieldName
+   * @param values
    */
   public TSelf containsAny(String fieldName, Collection<Object> values);
 
   /**
    * Performs a query matching ANY of the provided values against the given field (OR)
+   * @param propertySelector
+   * @param values
    */
   public TSelf containsAny(Expression<?> propertySelector, Collection<Object> values);
 
   /**
    * Performs a query matching ALL of the provided values against the given field (AND)
+   * @param fieldName
+   * @param values
    */
   public TSelf containsAll(String fieldName, Collection<Object> values);
 
   /**
    * Performs a query matching ALL of the provided values against the given field (AND)
+   * @param propertySelector
+   * @param values
    */
   public TSelf containsAll(Expression<?> propertySelector, Collection<Object> values);
 
   /**
-   * Callback to get the results of the query
+   * Called externally to raise the after query executed callback
    * @param afterQueryExecuted
    */
   public void afterQueryExecuted(Action1<QueryResult> afterQueryExecuted);

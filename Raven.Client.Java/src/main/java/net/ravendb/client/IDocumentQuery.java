@@ -22,14 +22,14 @@ import com.mysema.query.types.Path;
  */
 public interface IDocumentQuery<T> extends IDocumentQueryBase<T, IDocumentQuery<T>>, Iterable<T> {
   /**
-   * Selects the specified fields directly from the index
+   * Selects the specified fields directly from the index if the are stored. If the field is not stored in index, value will come from document directly.
    * @param projectionClass The class of the projection
-   * @param fields The fields.
+   * @param fields Array of fields to load.
    */
   public <TProjection> IDocumentQuery<TProjection> selectFields(Class<TProjection> projectionClass, String... fields);
 
   /**
-   * Selects the specified fields directly from the index
+   * Selects the specified fields directly from the index if the are stored. If the field is not stored in index, value will come from document directly.
    * @param projectionClass The class of the projection
    * @param fields
    * @param projections
@@ -37,7 +37,9 @@ public interface IDocumentQuery<T> extends IDocumentQueryBase<T, IDocumentQuery<
   public <TProjection> IDocumentQuery<TProjection> selectFields(Class<TProjection> projectionClass, String[] fields, String[] projections);
 
   /**
-   * Selects the projection fields directly from the index
+   * Selects the specified fields directly from the index if the are stored. If the field is not stored in index, value will come from document directly.
+   *
+   * Array of fields will be taken from TProjection
    * @param projectionClass The class of the projection
    */
   public <TProjection> IDocumentQuery<TProjection> selectFields(Class<TProjection> projectionClass);
@@ -49,8 +51,7 @@ public interface IDocumentQuery<T> extends IDocumentQueryBase<T, IDocumentQuery<
   public void setTransformerParameters(Map<String, RavenJToken> transformerParameter);
 
   /**
-   * Gets the query result
-   * Execute the query the first time that this is called.
+   * Gets the query result. Accessing this property for the first time will execute the query.
    * @return The query result.
    */
   public QueryResult getQueryResult();
@@ -80,10 +81,23 @@ public interface IDocumentQuery<T> extends IDocumentQueryBase<T, IDocumentQuery<
    */
   public IndexQuery getIndexQuery();
 
+  /**
+   * Ability to use one factory to determine spatial shape that will be used in query.
+   * @param path Spatial field name.
+   * @param criteria Spatial criteria factory
+   */
   public IDocumentQuery<T> spatial(Path<?> path, SpatialCriteria criteria);
 
+  /**
+   * Ability to use one factory to determine spatial shape that will be used in query.
+   * @param name Spatial field name.
+   * @param criteria Spatial criteria factory
+   */
   public IDocumentQuery<T> spatial(String name, SpatialCriteria criteria);
 
+  /**
+   * Whatever we should apply distinct operation to the query on the server side
+   */
   public boolean isDistinct();
 
   /**

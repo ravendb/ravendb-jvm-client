@@ -18,6 +18,9 @@ public class FieldHighlightings {
     this.highlightings = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
   }
 
+  /**
+   * The field name.
+   */
   public String getFieldName() {
     return fieldName;
   }
@@ -29,7 +32,7 @@ public class FieldHighlightings {
 
   /**
    * Returns the list of document's field highlighting fragments.
-   * @param documentId
+   * @param documentId The document id, or the map/reduce key field.
    */
   public String[] getFragments(String documentId) {
     if (this.highlightings.containsKey(documentId)) {

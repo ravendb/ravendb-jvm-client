@@ -35,40 +35,58 @@ public interface IDocumentSession extends AutoCloseable {
 
   /**
    * Marks the specified entity for deletion. The entity will be deleted when IDocumentSession.saveChanges is called.
-   *  WARNING: This method will not call beforeDelete listener!
+   * WARNING: This method will not call beforeDelete listener!
+   * This method allows you to call:
+   * Delete&lt;Post&gt;(1)
+   * And that call will internally be translated to
+   * Delete&lt;Post&gt;("posts/1");
+   * Or whatever your conventions specify.
+   * @param id Entity Id
    */
   public <T> void delete(Class<T> clazz, Number id);
 
   /**
    * Marks the specified entity for deletion. The entity will be deleted when IDocumentSession.saveChanges is called.
-   *  WARNING: This method will not call beforeDelete listener!
+   * WARNING: This method will not call beforeDelete listener!
+   * This method allows you to call:
+   * Delete&lt;Post&gt;(1)
+   * And that call will internally be translated to
+   * Delete&lt;Post&gt;("posts/1");
+   * Or whatever your conventions specify.
+   * @param id Entity Id
    */
   public <T> void delete(Class<T> clazz, UUID id);
 
   /**
    * Marks the specified entity for deletion. The entity will be deleted when IDocumentSession.saveChanges is called.
-   *  WARNING: This method will not call beforeDelete listener!
+   * WARNING: This method will not call beforeDelete listener!
+   * This method allows you to call:
+   * Delete&lt;Post&gt;(1)
+   * And that call will internally be translated to
+   * Delete&lt;Post&gt;("posts/1");
+   * Or whatever your conventions specify.
+   * @param id Entity Id
    */
   public void delete(String id);
 
   /**
    * Loads the specified entity with the specified id.
-   * @param clazz
-   * @param id
+   * @param clazz Defines type of object
+   * @param id Identifier of a entity that will be loaded.
    */
   public <T> T load(Class<T> clazz, String id);
 
   /**
    * Loads the specified entities with the specified ids.
-   * @param clazz
-   * @param ids
+   * @param clazz Defines type of object
+   * @param ids Array of Ids that should be loaded
    */
   public <T> T[] load(Class<T> clazz, String...ids);
 
   /**
    * Loads the specified entities with the specified ids.
-   * @param clazz
-   * @param ids
+   * @param clazz Defines type of object
+   * @param ids Collection of Ids that should be loaded
    */
   public <T> T[] load(Class<T> clazz, Collection<String> ids);
 
@@ -164,20 +182,20 @@ public interface IDocumentSession extends AutoCloseable {
 
   /**
    * Begin a load while including the specified path
-   * @param path
+   * @param path Path in documents in which server should look for a 'referenced' documents.
    */
   public ILoaderWithInclude include(String path);
 
   /**
    * Begin a load while including the specified path
-   * @param path
+   * @param path Path in documents in which server should look for a 'referenced' documents.
    */
   public ILoaderWithInclude include(Expression<?> path);
 
   /**
    * Begin a load while include the specified path
    * @param targetEntityClass Target entity class (used for id generation)
-   * @param path
+   * @param path Path in documents in which server should look for a 'referenced' documents.
    */
   public ILoaderWithInclude include(Class<?> targetEntityClass, Expression<?> path);
 
@@ -259,21 +277,24 @@ public interface IDocumentSession extends AutoCloseable {
   public void saveChanges();
 
   /**
-   * Stores the specified dynamic entity.
-   * @param entity
+   * Stores entity in session, extracts Id from entity using Conventions or generates new one if it is not available.
+   *
+   * Forces concurrency check if the Id is not available during extraction.
+   * @param entity Entity to store.
    */
   public void store(Object entity);
 
   /**
-   *  Stores the specified dynamic entity, under the specified id
-   * @param entity
-   * @param id The id to store this entity under. If other entity exists with the same id it will be overridden
+   * Stores the specified dynamic entity, under the specified id.
+   * @param entity Entity to store.
+   * @param id Id to store this entity under. If other entity exists with the same id it will be overridden.
    */
   public void store(Object entity, String id);
 
   /**
-   * Stores the specified entity with the specified etag
-   * @param entity
+   * Stores entity in session, extracts Id from entity using Conventions or generates new one if it is not available and
+   * forces concurrency check with given Etag
+   * @param entity Entity to store.
    * @param etag
    */
   public void store(Object entity, Etag etag);

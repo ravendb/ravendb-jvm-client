@@ -15,34 +15,34 @@ import com.mysema.query.types.Path;
 public interface ILazyLoaderWithInclude {
 
   /**
-   * Includes the specified path.
-   * @param path
+   * Begin a load while including the specified path
+   * @param path Path in documents in which server should look for a 'referenced' documents.
    */
   public ILazyLoaderWithInclude include(String path);
 
   /**
-   * Includes the specified path
-   * @param path
+   * Begin a load while including the specified path
+   * @param path Path in documents in which server should look for a 'referenced' documents.
    */
   public ILazyLoaderWithInclude include(Path<?> path);
 
   /**
-   * Loads the specified ids.
+   * Loads the specified entities with the specified ids.
    * @param clazz
-   * @param ids
+   * @param ids Enumerable of Ids that should be loaded
    */
   public <TResult> Lazy<TResult[]> load(Class<TResult> clazz, String... ids);
 
   /**
-   * Loads the specified ids.
-   * @param ids
+   * Loads the specified entities with the specified ids.
+   * @param ids Collection of Ids that should be loaded
    */
   public <TResult> Lazy<TResult[]> load(Class<TResult> clazz, Collection<String> ids);
 
   /**
-   * Loads the specified id.
+   * Loads the specified entity with the specified id.
    * @param clazz
-   * @param id
+   * @param id Identifier of a entity that will be loaded.
    */
   public <TResult> Lazy<TResult> load(Class<TResult> clazz, String id);
 

@@ -30,7 +30,7 @@ public interface IDocumentQueryCustomization {
    * current document store.
    * This ensures that you'll always get the most relevant results for your scenarios using simple indexes (map only or dynamic queries).
    * However, when used to query map/reduce indexes, it does NOT guarantee that the document that this etag belong to is actually considered for the results.
-   * @param waitTimeout
+   * @param waitTimeout Maximum time to wait for index query results to become non-stale before exception is thrown.
    */
   public IDocumentQueryCustomization waitForNonStaleResultsAsOfLastWrite(long waitTimeout);
 
@@ -41,33 +41,55 @@ public interface IDocumentQueryCustomization {
 
   /**
    * Instructs the query to wait for non stale results as of now for the specified timeout.
-   * @param waitTimeout timeout in milis
+   * @param waitTimeout Maximum time to wait for index query results to become non-stale before exception is thrown.
    */
   public IDocumentQueryCustomization waitForNonStaleResultsAsOfNow(long waitTimeout);
 
   /**
    * Instructs the query to wait for non stale results as of the cutoff date.
-   * @param cutOff
+   * @param cutOff Index will be considered stale if modification date of last indexed document is greater than this value.
    */
   public IDocumentQueryCustomization waitForNonStaleResultsAsOf(Date cutOff);
 
   /**
    * Instructs the query to wait for non stale results as of the cutoff date for the specified timeout
-   * @param cutOff
-   * @param waitTimeout timeout in milis
+   * @param cutOff Index will be considered stale if modification date of last indexed document is greater than this value.
+   * @param waitTimeout Maximum time to wait for index query results to become non-stale before exception is thrown.
    */
   public IDocumentQueryCustomization waitForNonStaleResultsAsOf(Date cutOff, long waitTimeout);
 
   /**
    * Instructs the query to wait for non stale results as of the cutoff etag.
    * @param cutOffEtag
+   * Cutoff etag is used to check if the index has already process a document with the given
+   * etag. Unlike Cutoff, which uses dates and is susceptible to clock synchronization issues between
+   * machines, cutoff etag doesn't rely on both the server and client having a synchronized clock and
+   * can work without it.
+   * However, when used to query map/reduce indexes, it does NOT guarantee that the document that this
+   * etag belong to is actually considered for the results.
+   * What it does it guarantee that the document has been mapped, but not that the mapped values has been reduced.
+   * Since map/reduce queries, by their nature,vtend to be far less susceptible to issues with staleness, this is
+   * considered to be an acceptable tradeoff.
+   * If you need absolute no staleness with a map/reduce index, you will need to ensure synchronized clocks and
+   * use the Cutoff date option, instead.
    */
   public IDocumentQueryCustomization waitForNonStaleResultsAsOf(Etag cutOffEtag);
 
   /**
    * Instructs the query to wait for non stale results as of the cutoff etag for the specified timeout.
    * @param cutOffEtag
-   * @param waitTimeout
+   * Cutoff etag is used to check if the index has already process a document with the given
+   * etag. Unlike Cutoff, which uses dates and is susceptible to clock synchronization issues between
+   * machines, cutoff etag doesn't rely on both the server and client having a synchronized clock and
+   * can work without it.
+   * However, when used to query map/reduce indexes, it does NOT guarantee that the document that this
+   * etag belong to is actually considered for the results.
+   * What it does it guarantee that the document has been mapped, but not that the mapped values has been reduced.
+   * Since map/reduce queries, by their nature,vtend to be far less susceptible to issues with staleness, this is
+   * considered to be an acceptable tradeoff.
+   * If you need absolute no staleness with a map/reduce index, you will need to ensure synchronized clocks and
+   * use the Cutoff date option, instead.
+   * @param waitTimeout Maximum time to wait for index query results to become non-stale before exception is thrown.
    */
   public IDocumentQueryCustomization waitForNonStaleResultsAsOf(Etag cutOffEtag, long waitTimeout);
 
@@ -98,43 +120,43 @@ public interface IDocumentQueryCustomization {
   /**
    * EXPERT ONLY: Instructs the query to wait for non stale results for the specified wait timeout.
    * This shouldn't be used outside of unit tests unless you are well aware of the implications
-   * @param waitTimeout
+   * @param waitTimeout Maximum time to wait for index query results to become non-stale before exception is thrown.
    */
   public IDocumentQueryCustomization waitForNonStaleResults(long waitTimeout);
 
   /**
-   * Filter matches to be inside the specified radius
-   * @param radius
-   * @param latitude
-   * @param longitude
+   * Filter matches to be inside the specified radius. This method assumes that spatial data is found under default spatial field name: __spatial
+   * @param radius Radius (in kilometers) in which matches should be found.
+   * @param latitude Latitude pointing to a circle center.
+   * @param longitude Longitude pointing to a circle center.
    */
   public IDocumentQueryCustomization withinRadiusOf(double radius, double latitude, double longitude);
 
   /**
    * Filter matches to be inside the specified radius
-   * @param fieldName
-   * @param radius
-   * @param latitude
-   * @param longitude
+   * @param fieldName Spatial field name.
+   * @param radius Radius (in kilometers) in which matches should be found.
+   * @param latitude Latitude pointing to a circle center.
+   * @param longitude Longitude pointing to a circle center.
    */
   public IDocumentQueryCustomization withinRadiusOf(String fieldName, double radius, double latitude, double longitude);
 
   /**
    * Filter matches to be inside the specified radius
-   * @param radius
-   * @param latitude
-   * @param longitude
-   * @param radiusUnits
+   * @param radius Radius (measured in units passed to radiusUnits parameter) in which matches should be found.
+   * @param latitude Latitude poiting to a circle center.
+   * @param longitude Longitude poiting to a circle center.
+   * @param radiusUnits Units that will be used to measure distances (Kilometers, Miles).
    */
   public IDocumentQueryCustomization withinRadiusOf(double radius, double latitude, double longitude, SpatialUnits radiusUnits);
 
   /**
    * Filter matches to be inside the specified radius
-   * @param fieldName
-   * @param radius
-   * @param latitude
-   * @param longitude
-   * @param radiusUnits
+   * @param fieldName Spatial field name.
+   * @param radius Radius (measured in units passed to radiusUnits parameter) in which matches should be found.
+   * @param latitude Latitude pointing to a circle center.
+   * @param longitude Longitude pointing to a circle center.
+   * @param radiusUnits Units that will be used to measure distances (Kilometers, Miles).
    */
   public IDocumentQueryCustomization withinRadiusOf(String fieldName, double radius, double latitude, double longitude, SpatialUnits radiusUnits);
 
@@ -147,6 +169,11 @@ public interface IDocumentQueryCustomization {
    */
   public IDocumentQueryCustomization relatesToShape(String fieldName, String shapeWKT, SpatialRelation rel);
 
+  /**
+   * Ability to use one factory to determine spatial shape that will be used in query.
+   * @param fieldName Spatial field name.
+   * @param criteria Function with spatial criteria factory
+   */
   public IDocumentQueryCustomization spatial(String fieldName, SpatialCriteria criteria);
 
   /**
@@ -177,8 +204,17 @@ public interface IDocumentQueryCustomization {
    */
   public IDocumentQueryCustomization randomOrdering(String seed);
 
+  /**
+   * Sort using custom sorter on the server
+   * @param typeName
+   */
   public IDocumentQueryCustomization customSortUsing(String typeName);
 
+  /**
+   * Sort using custom sorter on the server
+   * @param typeName
+   * @param descending
+   */
   public IDocumentQueryCustomization customSortUsing(String typeName, boolean descending);
 
   /**
