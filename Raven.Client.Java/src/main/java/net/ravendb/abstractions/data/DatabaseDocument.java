@@ -8,50 +8,62 @@ public class DatabaseDocument {
   private Map<String, String> settings;
   private Map<String, String> securedSettings;
   private boolean disabled;
+
   /**
-   * @return the id
+   * The ID of a database. Can be either the database name ("Northwind") or the full document name ("Raven/Databases/Northwind").
    */
   public String getId() {
     return id;
   }
+
   /**
-   * @param id the id to set
+   * The ID of a database. Can be either the database name ("Northwind") or the full document name ("Raven/Databases/Northwind").
+   * @param id
    */
   public void setId(String id) {
     this.id = id;
   }
+
   /**
-   * @return the settings
+   * Database settings (unsecured).
    */
   public Map<String, String> getSettings() {
     return settings;
   }
+
   /**
-   * @param settings the settings to set
+   * Database settings (unsecured).
+   * @param settings
    */
   public void setSettings(Map<String, String> settings) {
     this.settings = settings;
   }
+
   /**
-   * @return the securedSettings
+   * Database settings (secured).
    */
   public Map<String, String> getSecuredSettings() {
     return securedSettings;
   }
+
   /**
-   * @param securedSettings the securedSettings to set
+   * Database settings (secured).
+   * @param securedSettings
    */
   public void setSecuredSettings(Map<String, String> securedSettings) {
     this.securedSettings = securedSettings;
   }
+
   /**
-   * @return the disabled
+   * Indicates if database is disabled or not.
    */
   public boolean isDisabled() {
     return disabled;
   }
+
   /**
-   * @param disabled the disabled to set
+   * Indicates if database is disabled or not.
+   * @param disabled
    */
   public void setDisabled(boolean disabled) {
     this.disabled = disabled;

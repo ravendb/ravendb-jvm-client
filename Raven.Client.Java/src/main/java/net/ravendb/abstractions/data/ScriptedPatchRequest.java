@@ -12,7 +12,7 @@ import org.apache.commons.lang.builder.HashCodeBuilder;
 
 
 /**
- * A Advanced patch request for a specified document (using JavaScript)
+ * An advanced patch request for a specified document (using JavaScript)
  */
 public class ScriptedPatchRequest {
 
@@ -33,15 +33,35 @@ public class ScriptedPatchRequest {
   public ScriptedPatchRequest() {
     values = new HashMap<>();
   }
+
+  /**
+   * JavaScript function to use to patch a document
+   *
+   */
   public String getScript() {
     return script;
   }
+
+  /**
+   * Additional arguments passed to JavaScript function from Script.
+   */
   public Map<String, Object> getValues() {
     return values;
   }
+
+  /**
+   * JavaScript function to use to patch a document
+   * {@value The type.}
+   * @param script
+   */
   public void setScript(String script) {
     this.script = script;
   }
+
+  /**
+   * Additional arguments passed to JavaScript function from Script.
+   * @param values
+   */
   public void setValues(Map<String, Object> values) {
     this.values = values;
   }

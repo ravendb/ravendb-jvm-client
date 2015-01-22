@@ -37,74 +37,161 @@ public class Facet {
     this.termSortMode = FacetTermSortMode.VALUE_ASC;
   }
 
+  /**
+   * Flags indicating type of facet aggregation.
+   */
   public FacetAggregationSet getAggregation() {
     return aggregation;
   }
 
+  /**
+   * Flags indicating type of facet aggregation.
+   * @param aggregation
+   */
   public void setAggregation(FacetAggregationSet aggregation) {
     this.aggregation = aggregation;
   }
 
+  /**
+   * Type of field on which aggregation will be performed.
+   */
   public String getAggregationType() {
     return aggregationType;
   }
 
+  /**
+   * Type of field on which aggregation will be performed.
+   * @param aggregationType
+   */
   public void setAggregationType(String aggregationType) {
     this.aggregationType = aggregationType;
   }
 
+  /**
+   * Field on which aggregation will be performed.
+   */
   public String getAggregationField() {
     return aggregationField;
   }
+
+  /**
+   * Display name of facet. Will return {@link #getName() getName} if null.
+   */
   public String getDisplayName() {
     return displayName != null ? displayName : name;
   }
+
+  /**
+   * Maximum number of results to return.
+   */
   public Integer getMaxResults() {
     return maxResults;
   }
+
+  /**
+   * Mode of a facet (Default, Ranges).
+   */
   public FacetMode getMode() {
     return mode;
   }
+
+  /**
+   * Name of facet.
+   */
   public String getName() {
     return name;
   }
+
+  /**
+   * List of facet ranges.
+   */
   public List<String> getRanges() {
     return ranges;
   }
+
+  /**
+   * Indicates how terms should be sorted.
+   * {@value FacetTermSortMode.ValueAsc by default.}
+   */
   public FacetTermSortMode getTermSortMode() {
     return termSortMode;
   }
+
+  /**
+   * Indicates if remaining terms should be included in results.
+   */
   public Boolean getIncludeRemainingTerms() {
     return includeRemainingTerms;
   }
 
+  /**
+   * Indicates if remaining terms should be included in results.
+   */
   public void setIncludeRemainingTerms(Boolean includeRemainingTerms) {
     this.includeRemainingTerms = includeRemainingTerms;
   }
 
+  /**
+   * Field on which aggregation will be performed.
+   * @param aggregationField
+   */
   public void setAggregationField(String aggregationField) {
     this.aggregationField = aggregationField;
   }
+
+  /**
+   * Display name of facet. Will return {@link #getName() getName} if null.
+   * @param displayName
+   */
   public void setDisplayName(String displayName) {
     this.displayName = displayName;
   }
+
+  /**
+   * Maximum number of results to return.
+   * @param maxResults
+   */
   public void setMaxResults(Integer maxResults) {
     this.maxResults = maxResults;
   }
+
+  /**
+   * Mode of a facet (Default, Ranges).
+   * @param mode
+   */
   public void setMode(FacetMode mode) {
     this.mode = mode;
   }
+
+  /**
+   * Name of facet.
+   * @param name
+   */
   public void setName(String name) {
     this.name = name;
   }
+
+  /**
+   * List of facet ranges.
+   * @param ranges
+   */
   public void setRanges(List<String> ranges) {
     this.ranges = ranges;
   }
+
+  /**
+   * Indicates how terms should be sorted.
+   * {@value FacetTermSortMode.ValueAsc by default.}
+   * @param termSortMode
+   */
   public void setTermSortMode(FacetTermSortMode termSortMode) {
     this.termSortMode = termSortMode;
   }
 
-
+  /**
+   * List of facet ranges.
+   * @param exprs
+   */
   public void setRanges(BooleanExpression... exprs) {
     for (BooleanExpression expr: exprs) {
       this.ranges.add(parse(expr));
@@ -121,6 +208,10 @@ public class Facet {
 
   }
 
+  /**
+   * Name of facet.
+   * @param path
+   */
   public void setName(Path<?> path) {
     name = StringUtils.capitalize(path.getMetadata().getName());
   }

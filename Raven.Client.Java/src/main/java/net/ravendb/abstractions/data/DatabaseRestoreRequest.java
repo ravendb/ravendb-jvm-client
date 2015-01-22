@@ -37,10 +37,17 @@ public class DatabaseRestoreRequest {
     this.generateNewDatabaseId = generateNewDatabaseId;
   }
 
+  /**
+   * Indicates if all replication destinations should disabled after restore (only when Replication bundle is activated).
+   */
   public boolean isDisableReplicationDestinations() {
     return disableReplicationDestinations;
   }
 
+  /**
+   * Indicates if all replication destinations should disabled after restore (only when Replication bundle is activated).
+   * @param disableReplicationDestinations
+   */
   public void setDisableReplicationDestinations(boolean disableReplicationDestinations) {
     this.disableReplicationDestinations = disableReplicationDestinations;
   }
@@ -61,18 +68,32 @@ public class DatabaseRestoreRequest {
     this.backupLocation = backupLocation;
   }
 
+  /**
+   * Path to the directory of a new database. If null then default location will be assumed.
+   */
   public String getDatabaseLocation() {
     return databaseLocation;
   }
 
+  /**
+   * Path to the directory of a new database. If null then default location will be assumed.
+   * @param databaseLocation
+   */
   public void setDatabaseLocation(String databaseLocation) {
     this.databaseLocation = databaseLocation;
   }
 
+  /**
+   * Indicates what should be the name of database after restore. If null then name will be read from 'Database.Document' found in backup.
+   */
   public String getDatabaseName() {
     return databaseName;
   }
 
+  /**
+   * Indicates what should be the name of database after restore. If null then name will be read from 'Database.Document' found in backup.
+   * @param databaseName
+   */
   public void setDatabaseName(String databaseName) {
     this.databaseName = databaseName;
   }

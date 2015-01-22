@@ -23,25 +23,54 @@ public class GetRequest {
     this.query = query;
   }
 
+  /**
+   * Request headers.
+   */
   public Map<String, String> getHeaders() {
     return headers;
   }
+
+  /**
+   * Query information e.g. "?pageStart=10&pageSize=20".
+   */
   public String getQuery() {
     return query;
   }
+
+  /**
+   * Request url (relative).
+   */
   public String getUrl() {
     return url;
   }
+
+  /**
+   * Request headers.
+   * @param headers
+   */
   public void setHeaders(Map<String, String> headers) {
     this.headers = headers;
   }
+
+  /**
+   * Query information e.g. "?pageStart=10&pageSize=20".
+   * @param query
+   */
   public void setQuery(String query) {
     this.query = query;
   }
+
+  /**
+   * Request url (relative).
+   * @param url
+   */
   public void setUrl(String url) {
     this.url = url;
   }
 
+  /**
+   * Concatenated Url and Query.
+   */
   @JsonIgnore
   public String getUrlAndQuery() {
     if (query == null) {

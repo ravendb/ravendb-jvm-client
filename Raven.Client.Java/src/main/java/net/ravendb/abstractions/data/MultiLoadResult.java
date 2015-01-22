@@ -11,28 +11,30 @@ public class MultiLoadResult {
   private List<RavenJObject> includes;
 
   /**
-   * @return the results
+   * Loaded documents. The results will be in exact same order as in keys parameter.
    */
   public List<RavenJObject> getResults() {
     return results;
   }
 
   /**
-   * @param results the results to set
+   * Loaded documents. The results will be in exact same order as in keys parameter.
+   * @param results
    */
   public void setResults(List<RavenJObject> results) {
     this.results = results;
   }
 
   /**
-   * @return the includes
+   * Included documents.
    */
   public List<RavenJObject> getIncludes() {
     return includes;
   }
 
   /**
-   * @param includes the includes to set
+   * Included documents.
+   * @param includes
    */
   public void setIncludes(List<RavenJObject> includes) {
     this.includes = includes;

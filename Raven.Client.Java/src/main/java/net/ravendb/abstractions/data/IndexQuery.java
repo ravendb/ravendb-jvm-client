@@ -69,11 +69,17 @@ public class IndexQuery {
     return showTimings;
   }
 
+  /**
+   * For internal use only.
+   */
   public Map<String, SortOptions> getSortHints() {
     return sortHints;
   }
 
-
+  /**
+   * For internal use only.
+   * @param sortHints
+   */
   public void setSortHints(Map<String, SortOptions> sortHints) {
     this.sortHints = sortHints;
   }
@@ -86,61 +92,107 @@ public class IndexQuery {
     this.showTimings = showTimings;
   }
 
+  /**
+   * Used to calculate index staleness. When set to <c>true</c> CutOff will be set to DateTime.UtcNow on server side.
+   */
   public boolean isWaitForNonStaleResultsAsOfNow() {
     return waitForNonStaleResultsAsOfNow;
   }
 
+  /**
+   * CAUTION. Used by IDocumentSession ONLY. It will have NO effect if used with IDatabaseCommands or IAsyncDatabaseCommands.
+   */
   public boolean isWaitForNonStaleResults() {
     return waitForNonStaleResults;
   }
 
+  /**
+   * CAUTION. Used by IDocumentSession ONLY. It will have NO effect if used with IDatabaseCommands or IAsyncDatabaseCommands.
+   * @param waitForNonStaleResults
+   */
   public void setWaitForNonStaleResults(boolean waitForNonStaleResults) {
     this.waitForNonStaleResults = waitForNonStaleResults;
   }
 
+  /**
+   * Used to calculate index staleness. When set to <c>true</c> CutOff will be set to DateTime.UtcNow on server side.
+   * @param waitForNonStaleResultsAsOfNow
+   */
   public void setWaitForNonStaleResultsAsOfNow(boolean waitForNonStaleResultsAsOfNow) {
     this.waitForNonStaleResultsAsOfNow = waitForNonStaleResultsAsOfNow;
   }
 
+  /**
+   * Name of transformer to use on query results.
+   */
   public String getResultsTransformer() {
     return resultsTransformer;
   }
 
+  /**
+   * Name of transformer to use on query results.
+   * @param resultsTransformer
+   */
   public void setResultsTransformer(String resultsTransformer) {
     this.resultsTransformer = resultsTransformer;
   }
 
   /**
-   * @return Whatever we should apply distinct operation to the query on the server side
+   * Whatever we should apply distinct operation to the query on the server side.
    */
   public boolean isDistinct() {
     return distinct;
   }
 
+  /**
+   * Whatever we should apply distinct operation to the query on the server side.
+   * @param distinct
+   */
   public void setDistinct(boolean distinct) {
     this.distinct = distinct;
   }
 
+  /**
+   * Array of fields containing highlighting information.
+   */
   public HighlightedField[] getHighlightedFields() {
     return highlightedFields;
   }
 
+  /**
+   * Array of fields containing highlighting information.
+   * @param highlightedFields
+   */
   public void setHighlightedFields(HighlightedField[] highlightedFields) {
     this.highlightedFields = highlightedFields;
   }
 
+  /**
+   * Array of highlighter pre tags that will be applied to highlighting results.
+   */
   public String[] getHighlighterPreTags() {
     return highlighterPreTags;
   }
 
+  /**
+   * Array of highlighter pre tags that will be applied to highlighting results.
+   * @param highlighterPreTags
+   */
   public void setHighlighterPreTags(String[] highlighterPreTags) {
     this.highlighterPreTags = highlighterPreTags;
   }
 
+  /**
+   * Array of highlighter post tags that will be applied to highlighting results.
+   */
   public String[] getHighlighterPostTags() {
     return highlighterPostTags;
   }
 
+  /**
+   * Array of highlighter post tags that will be applied to highlighting results.
+   * @param highlighterPostTags
+   */
   public void setHighlighterPostTags(String[] highlighterPostTags) {
     this.highlighterPostTags = highlighterPostTags;
   }
@@ -160,30 +212,56 @@ public class IndexQuery {
     this.highlighterKeyName = highlighterKeyName;
   }
 
+  /**
+   * Whatever we should disable caching of query results
+   */
   public boolean isDisableCaching() {
     return disableCaching;
   }
 
+  /**
+   * Whatever we should disable caching of query results
+   * @param disableCaching
+   */
   public void setDisableCaching(boolean disableCaching) {
     this.disableCaching = disableCaching;
   }
 
+  /**
+   * Whatever we should get the raw index entries.
+   */
   public boolean isDebugOptionGetIndexEntires() {
     return debugOptionGetIndexEntires;
   }
 
+  /**
+   * Whatever a query result should contains an explanation about how docs scored against query
+   */
   public boolean isExplainScores() {
     return explainScores;
   }
 
+  /**
+   * Whatever a query result should contains an explanation about how docs scored against query
+   * @param explainScores
+   */
   public void setExplainScores(boolean explainScores) {
     this.explainScores = explainScores;
   }
 
+  /**
+   * Whatever we should get the raw index entries.
+   * @param debugOptionGetIndexEntires
+   */
   public void setDebugOptionGetIndexEntires(boolean debugOptionGetIndexEntires) {
     this.debugOptionGetIndexEntires = debugOptionGetIndexEntires;
   }
 
+  /**
+   * If set to true, this property will send multiple index entries from the same document (assuming the index project them)
+   * to the result transformer function. Otherwise, those entries will be consolidate an the transformer will be
+   * called just once for each document in the result set
+   */
   public boolean isAllowMultipleIndexEntriesForSameDocumentToResultTransformer() {
     return allowMultipleIndexEntriesForSameDocumentToResultTransformer;
   }
@@ -199,31 +277,54 @@ public class IndexQuery {
     this.allowMultipleIndexEntriesForSameDocumentToResultTransformer = allowMultipleIndexEntriesForSameDocumentToResultTransformer;
   }
 
+  /**
+   * For internal use only.
+   */
   public Reference<Integer> getSkippedResults() {
     return skippedResults;
   }
 
+  /**
+   * For internal use only.
+   * @param skippedResults
+   */
   public void setSkippedResults(Reference<Integer> skippedResults) {
     this.skippedResults = skippedResults;
   }
 
+  /**
+   * Changes the default operator mode we use for queries.
+   * When set to Or a query such as 'Name:John Age:18' will be interpreted as:
+   *  Name:John OR Age:18
+   * When set to And the query will be interpreted as:
+   *  Name:John AND Age:18
+   */
   public QueryOperator getDefaultOperator() {
     return defaultOperator;
   }
 
+  /**
+   * Changes the default operator mode we use for queries.
+   * When set to Or a query such as 'Name:John Age:18' will be interpreted as:
+   *  Name:John OR Age:18
+   * When set to And the query will be interpreted as:
+   *  Name:John AND Age:18
+   * @param defaultOperator
+   */
   public void setDefaultOperator(QueryOperator defaultOperator) {
     this.defaultOperator = defaultOperator;
   }
 
   /**
+   * Gets or sets the cutoff etag.
    * Cutoff etag is used to check if the index has already process a document with the given
    * etag. Unlike Cutoff, which uses dates and is susceptible to clock synchronization issues between
    * machines, cutoff etag doesn't rely on both the server and client having a synchronized clock and
    * can work without it.
    * However, when used to query map/reduce indexes, it does NOT guarantee that the document that this
    * etag belong to is actually considered for the results.
-   * What it does it guarantee that the document has been mapped, but not that the mapped values has been reduce.
-   * Since map/reduce queries, by their nature,tend to be far less susceptible to issues with staleness, this is
+   * What it does it guarantee that the document has been mapped, but not that the mapped values has been reduced.
+   * Since map/reduce queries, by their nature,vtend to be far less susceptible to issues with staleness, this is
    * considered to be an acceptable tradeoff.
    * If you need absolute no staleness with a map/reduce index, you will need to ensure synchronized clocks and
    * use the Cutoff date option, instead.
@@ -233,50 +334,103 @@ public class IndexQuery {
     return cutoffEtag;
   }
 
+  /**
+   * Default field to use when querying directly on the Lucene query
+   */
   public String getDefaultField() {
     return defaultField;
   }
 
+  /**
+   * Default field to use when querying directly on the Lucene query
+   * @param defaultField
+   */
   public void setDefaultField(String defaultField) {
     this.defaultField = defaultField;
   }
 
+  /**
+   * Gets or sets the cutoff etag.
+   * Cutoff etag is used to check if the index has already process a document with the given
+   * etag. Unlike Cutoff, which uses dates and is susceptible to clock synchronization issues between
+   * machines, cutoff etag doesn't rely on both the server and client having a synchronized clock and
+   * can work without it.
+   * However, when used to query map/reduce indexes, it does NOT guarantee that the document that this
+   * etag belong to is actually considered for the results.
+   * What it does it guarantee that the document has been mapped, but not that the mapped values has been reduced.
+   * Since map/reduce queries, by their nature,vtend to be far less susceptible to issues with staleness, this is
+   * considered to be an acceptable tradeoff.
+   * If you need absolute no staleness with a map/reduce index, you will need to ensure synchronized clocks and
+   * use the Cutoff date option, instead.
+   * @param cutoffEtag
+   */
   public void setCutoffEtag(Etag cutoffEtag) {
     this.cutoffEtag = cutoffEtag;
   }
 
+  /**
+   * Used to calculate index staleness. Index will be considered stale if modification date of last indexed document is greater than this value.
+   */
   public Date getCutoff() {
     return cutoff;
   }
 
+  /**
+   * Used to calculate index staleness. Index will be considered stale if modification date of last indexed document is greater than this value.
+   * @param cutoff
+   */
   public void setCutoff(Date cutoff) {
     this.cutoff = cutoff;
   }
 
+  /**
+   * Array of fields containing sorting information.
+   */
   public SortedField[] getSortedFields() {
     return sortedFields;
   }
 
+  /**
+   * Array of fields containing sorting information.
+   * @param sortedFields
+   */
   public void setSortedFields(SortedField[] sortedFields) {
     this.sortedFields = sortedFields;
   }
 
+  /**
+   * Number of records that should be skipped.
+   */
   public int getStart() {
     return start;
   }
 
+  /**
+   * Number of records that should be skipped.
+   * @param start
+   */
   public void setStart(int start) {
     this.start = start;
   }
 
+  /**
+   * Parameters that will be passed to transformer (if specified).
+   */
   public Map<String, RavenJToken> getTransformerParameters() {
     return transformerParameters;
   }
 
+  /**
+   * Parameters that will be passed to transformer (if specified).
+   * @param transformerParameters
+   */
   public void setTransformerParameters(Map<String, RavenJToken> transformerParameters) {
     this.transformerParameters = transformerParameters;
   }
 
+  /**
+   * For internal use only.
+   */
   public Reference<Integer> getTotalSize() {
     return totalSize;
   }
@@ -288,27 +442,54 @@ public class IndexQuery {
     return pageSizeSet;
   }
 
+  /**
+   * Actual query that will be performed (Lucene syntax).
+   */
   public String getQuery() {
     return query;
   }
 
+  /**
+   * Actual query that will be performed (Lucene syntax).
+   * @param query
+   */
   public void setQuery(String query) {
     this.query = query;
   }
 
+  /**
+   * Maximum number of records that will be retrieved.
+   */
   public int getPageSize() {
     return pageSize;
   }
 
+  /**
+   * Maximum number of records that will be retrieved.
+   * @param pageSize
+   */
   public void setPageSize(int pageSize) {
     this.pageSize = pageSize;
     this.pageSizeSet = true;
   }
 
+  /**
+   * Array of fields that will be fetched.
+   * Fetch order:
+   * 1. Stored index fields
+   * 2. Document
+   */
   public String[] getFieldsToFetch() {
     return fieldsToFetch;
   }
 
+  /**
+   * Array of fields that will be fetched.
+   * Fetch order:
+   * 1. Stored index fields
+   * 2. Document
+   * @param fieldsToFetch
+   */
   public void setFieldsToFetch(String[] fieldsToFetch) {
     this.fieldsToFetch = fieldsToFetch;
   }

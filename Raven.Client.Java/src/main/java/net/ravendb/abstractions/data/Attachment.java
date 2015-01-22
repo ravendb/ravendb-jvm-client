@@ -2,6 +2,9 @@ package net.ravendb.abstractions.data;
 
 import net.ravendb.abstractions.json.linq.RavenJObject;
 
+/**
+ * @deprecated Use RavenFS instead.
+ */
 @Deprecated
 public class Attachment {
   private byte[] data;
@@ -12,7 +15,8 @@ public class Attachment {
   private boolean canGetData;
 
   /**
-   * @return the data
+   * Returning the content of an attachment.
+   * @return data
    */
   public byte[] getData() {
     if (!canGetData) {
@@ -22,64 +26,77 @@ public class Attachment {
   }
 
   /**
-   * @param data the data to set
+   * Setting the content of an attachment.
+   * @param data
    */
   public void setData(byte[] data) {
     this.data = data;
   }
 
   /**
-   * @return the size
+   * Attachment size in bytes.
+   * <p>
    * The max size of an attachment can be 2GB.
+   * </p>
+   * @return size
    */
   public int getSize() {
     return size;
   }
 
   /**
-   * @param size the size to set
+   * Attachment size in bytes.
+   * <p>
+   * The max size of an attachment can be 2GB.
+   * </p>
+   * @param size
    */
   public void setSize(int size) {
     this.size = size;
   }
 
   /**
-   * @return the metadata
+   * RavenJObject representing attachment's metadata.
+   * @return metadata
    */
   public RavenJObject getMetadata() {
     return metadata;
   }
 
   /**
-   * @param metadata the metadata to set
+   * RavenJObject representing attachment's metadata.
+   * @param metadata
    */
   public void setMetadata(RavenJObject metadata) {
     this.metadata = metadata;
   }
 
   /**
-   * @return the etag
+   * Current attachment etag, used for concurrency checks (null to skip check).
+   * @return etag
    */
   public Etag getEtag() {
     return etag;
   }
 
   /**
-   * @param etag the etag to set
+   * Current attachment etag, used for concurrency checks (null to skip check).
+   * @param etag
    */
   public void setEtag(Etag etag) {
     this.etag = etag;
   }
 
   /**
-   * @return the key
+   * Key of an attachment.
    */
   public String getKey() {
     return key;
   }
 
   /**
-   * @param key the key to set
+   * Key of an attachment.
+   * @param key
    */
   public void setKey(String key) {
     this.key = key;

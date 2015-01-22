@@ -28,19 +28,34 @@ public class QueryResult {
   private Map<String, Double> timingsInMilliseconds;
   private long resultSize;
 
+  /**
+   * The size of the request which were sent from the server.
+   * This value is the _uncompressed_ size.
+   */
   public long getResultSize() {
     return resultSize;
   }
 
+  /**
+   * The size of the request which were sent from the server.
+   * This value is the _uncompressed_ size.
+   * @param resultSize
+   */
   public void setResultSize(long resultSize) {
     this.resultSize = resultSize;
   }
 
+  /**
+   * Detailed timings for various parts of a query (Lucene search, loading documents, transforming results) - if requested.
+   */
   public Map<String, Double> getTimingsInMilliseconds() {
     return timingsInMilliseconds;
   }
 
-
+  /**
+   * Detailed timings for various parts of a query (Lucene search, loading documents, transforming results) - if requested.
+   * @param timingsInMilliseconds
+   */
   public void setTimingsInMilliseconds(Map<String, Double> timingsInMilliseconds) {
     this.timingsInMilliseconds = timingsInMilliseconds;
   }
@@ -53,11 +68,17 @@ public class QueryResult {
     includes = new ArrayList<>();
   }
 
+  /**
+   * Explanations of document scores (if requested).
+   */
   public Map<String, String> getScoreExplanations() {
     return scoreExplanations;
   }
 
-
+  /**
+   * Explanations of document scores (if requested).
+   * @param scoreExplanations
+   */
   public void setScoreExplanations(Map<String, String> scoreExplanations) {
     this.scoreExplanations = scoreExplanations;
   }
@@ -132,81 +153,214 @@ public class QueryResult {
     }
   }
 
+  /**
+   * The duration of actually executing the query server side
+   */
   public long getDurationMiliseconds() {
     return durationMiliseconds;
   }
+
+  /**
+   * Highlighter results (if requested).
+   */
   public Map<String, Map<String, String[]>> getHighlightings() {
     return highlightings;
   }
+
+  /**
+   * Gets the document included in the result.
+   */
   public Collection<RavenJObject> getIncludes() {
     return includes;
   }
+
+  /**
+   * The last etag indexed by the index.
+   * This can be used to determine whatever the results can be cached.
+   */
   public Etag getIndexEtag() {
     return indexEtag;
   }
+
+  /**
+   * The index used to answer this query
+   */
   public String getIndexName() {
     return indexName;
   }
+
+  /**
+   * The last time the index was updated.
+   * This can be used to determine the freshness of the data.
+   * @return
+   */
   public Date getIndexTimestamp() {
     return indexTimestamp;
   }
+
+  /**
+   * The timestamp of the last time the index was queried
+   */
   public Date getLastQueryTime() {
     return lastQueryTime;
   }
+
+  /**
+   * The ETag value for this index current state, which include what docs were indexed,
+   * what document were deleted, etc.
+   */
   public Etag getResultEtag() {
     return resultEtag;
   }
+
+  /**
+   * Gets the document resulting from this query.
+   */
   public List<RavenJObject> getResults() {
     return results;
   }
+
+  /**
+   * Gets the skipped results
+   */
   public int getSkippedResults() {
     return skippedResults;
   }
+
+  /**
+   * Gets the total results for this query
+   */
   public int getTotalResults() {
     return totalResults;
   }
+
+  /**
+   * Indicates whether any of the documents returned by this query
+   * are non authoritative (modified by uncommitted transaction).
+   */
   public boolean isNonAuthoritativeInformation() {
     return nonAuthoritativeInformation;
   }
+
+  /**
+   * Gets a value indicating whether the index is stale.
+   * Value:
+   * - true - if index is stale
+   * - false - otherwise
+   * {@value true if the index is stale; otherwise, false.}
+   */
   public boolean isStale() {
     return isStale;
   }
+
+  /**
+   * The duration of actually executing the query server side
+   * @param durationMiliseconds
+   */
   public void setDurationMiliseconds(long durationMiliseconds) {
     this.durationMiliseconds = durationMiliseconds;
   }
+
+  /**
+   * Highlighter results (if requested).
+   * @param highlightings
+   */
   public void setHighlightings(Map<String, Map<String, String[]>> highlightings) {
     this.highlightings = highlightings;
   }
+
+  /**
+   * Sets the document included in the result.
+   * @param includes
+   */
   public void setIncludes(List<RavenJObject> includes) {
     this.includes = includes;
   }
+
+  /**
+   * The last etag indexed by the index.
+   * This can be used to determine whatever the results can be cached.
+   * @param indexEtag
+   */
   public void setIndexEtag(Etag indexEtag) {
     this.indexEtag = indexEtag;
   }
+
+  /**
+   * The index used to answer this query
+   * @param indexName
+   */
   public void setIndexName(String indexName) {
     this.indexName = indexName;
   }
+
+  /**
+   * The last time the index was updated.
+   * This can be used to determine the freshness of the data.
+   * @param indexTimestamp
+   */
   public void setIndexTimestamp(Date indexTimestamp) {
     this.indexTimestamp = indexTimestamp;
   }
+
+  /**
+   * The timestamp of the last time the index was queried
+   * @param lastQueryTime
+   */
   public void setLastQueryTime(Date lastQueryTime) {
     this.lastQueryTime = lastQueryTime;
   }
+
+  /**
+   * Indicates whether any of the documents returned by this query
+   * are non authoritative (modified by uncommitted transaction).
+   * @param nonAuthoritativeInformation
+   */
   public void setNonAuthoritativeInformation(boolean nonAuthoritativeInformation) {
     this.nonAuthoritativeInformation = nonAuthoritativeInformation;
   }
+
+  /**
+   * The ETag value for this index current state, which include what docs were indexed,
+   * what document were deleted, etc.
+   * @param resultEtag
+   */
   public void setResultEtag(Etag resultEtag) {
     this.resultEtag = resultEtag;
   }
+
+  /**
+   * Sets the document resulting from this query.
+   * @param results
+   */
   public void setResults(List<RavenJObject> results) {
     this.results = results;
   }
+
+  /**
+   * Sets the skipped results
+   * @param skippedResults
+   */
   public void setSkippedResults(int skippedResults) {
     this.skippedResults = skippedResults;
   }
+
+  /**
+   * Sets a value indicating whether the index is stale.
+   * Value:
+   * - true - if index is stale
+   * - false - otherwise
+   * {@value true if the index is stale; otherwise, false.}
+   * @param isStale
+   */
   public void setStale(boolean isStale) {
     this.isStale = isStale;
   }
+
+  /**
+   * Sets the total results for this query
+   * @param totalResults
+   */
   public void setTotalResults(int totalResults) {
     this.totalResults = totalResults;
   }

@@ -34,56 +34,82 @@ public class SuggestionQuery {
   private boolean popularity;
 
   /**
-   * Gets the term. The term is what the user likely entered, and will used as the basis of the suggestions.
+   * Term is what the user likely entered, and will used as the basis of the suggestions.
    */
   public String getTerm() {
     return term;
   }
 
+  /**
+   * Term is what the user likely entered, and will used as the basis of the suggestions.
+   * @param term
+   */
   public void setTerm(String term) {
     this.term = term;
   }
 
   /**
-   * Gets the field to be used in conjunction with the index.
+   * Field to be used in conjunction with the index.
    */
   public String getField() {
     return field;
   }
 
+  /**
+   * Field to be used in conjunction with the index.
+   * @param field
+   */
   public void setField(String field) {
     this.field = field;
   }
 
   /**
-   * Gets the number of suggestions to return.
+   * Maximum number of suggestions to return.
+   * Value:
+   * Default value is 15.
+   * {@value Default value is 15.}
    */
   public int getMaxSuggestions() {
     return maxSuggestions;
   }
 
+  /**
+   * * Maximum number of suggestions to return.
+   * Value:
+   * Default value is 15.
+   * {@value Default value is 15.}
+   * @param maxSuggestions
+   */
   public void setMaxSuggestions(int maxSuggestions) {
     this.maxSuggestions = maxSuggestions;
   }
 
   /**
-   * Gets the string distance algorithm.
+   * String distance algorithm to use. If null then default algorithm is used (Levenshtein).
    */
   public StringDistanceTypes getDistance() {
     return distance;
   }
 
+  /**
+   * String distance algorithm to use. If null then default algorithm is used (Levenshtein).
+   * @param distance
+   */
   public void setDistance(StringDistanceTypes distance) {
     this.distance = distance;
   }
 
   /**
-   * Gets the accuracy.
+   * Suggestion accuracy. If null then default accuracy is used (0.5f).
    */
   public Float getAccuracy() {
     return accuracy;
   }
 
+  /**
+   * Suggestion accuracy. If null then default accuracy is used (0.5f).
+   * @param accuracy
+   */
   public void setAccuracy(Float accuracy) {
     this.accuracy = accuracy;
   }
@@ -95,6 +121,10 @@ public class SuggestionQuery {
     return popularity;
   }
 
+  /**
+   * Whatever to return the terms in order of popularity
+   * @param popularity
+   */
   public void setPopularity(boolean popularity) {
     this.popularity = popularity;
   }

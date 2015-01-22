@@ -8,13 +8,16 @@ public class SuggestionQueryResult {
   private String[] suggestions;
 
   /**
-   * The suggestions based on the term and dictionary
-   * @return suggestions
+   * Suggestions based on the term and dictionary.
    */
   public String[] getSuggestions() {
     return suggestions;
   }
 
+  /**
+   * Suggestions based on the term and dictionary.
+   * @param suggestions
+   */
   public void setSuggestions(String[] suggestions) {
     this.suggestions = suggestions;
   }

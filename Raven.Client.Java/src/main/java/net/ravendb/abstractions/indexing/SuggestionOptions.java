@@ -12,30 +12,37 @@ public class SuggestionOptions {
 
   private StringDistanceTypes distance;
   private float accuracy;
+
   /**
-   * @return the distance
+   * String distance algorithm to use. Default algorithm is Levenshtein.
    */
   public StringDistanceTypes getDistance() {
     return distance;
   }
+
   /**
-   * @param distance the distance to set
+   * String distance algorithm to use. Default algorithm is Levenshtein.
+   * @param distance
    */
   public void setDistance(StringDistanceTypes distance) {
     this.distance = distance;
   }
+
   /**
-   * @return the accuracy
+   * Suggestion accuracy. If null then default accuracy is used (0.5f).
    */
   public float getAccuracy() {
     return accuracy;
   }
+
   /**
-   * @param accuracy the accuracy to set
+   * Suggestion accuracy. If null then default accuracy is used (0.5f).
+   * @param accuracy
    */
   public void setAccuracy(float accuracy) {
     this.accuracy = accuracy;
   }
+
   /* (non-Javadoc)
    * @see java.lang.Object#hashCode()
    */
@@ -47,6 +54,7 @@ public class SuggestionOptions {
     result = prime * result + ((distance == null) ? 0 : distance.hashCode());
     return result;
   }
+
   /* (non-Javadoc)
    * @see java.lang.Object#equals(java.lang.Object)
    */

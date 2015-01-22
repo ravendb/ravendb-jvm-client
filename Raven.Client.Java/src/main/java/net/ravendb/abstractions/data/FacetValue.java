@@ -53,46 +53,107 @@ public class FacetValue {
     return msg;
   }
 
-
+  /**
+   * Stores average value if FacetAggregation.Average was set.
+   */
   public Double getAverage() {
     return average;
   }
+
+  /**
+   * Stores count value if FacetAggregation.Count was set.
+   */
   public Integer getCount() {
     return count;
   }
+
+  /**
+   * Number of terms that are covered by this facet.
+   */
   public int getHits() {
     return hits;
   }
+
+  /**
+   * Stores maximum value if FacetAggregation.Max was set.
+   */
   public Double getMax() {
     return max;
   }
+
+  /**
+   * Stores minimum value if FacetAggregation.Min was set.
+   */
   public Double getMin() {
     return min;
   }
+
+  /**
+   * Name of range for which facet value applies.
+   */
   public String getRange() {
     return range;
   }
+
+  /**
+   * Stores sum of all values if FacetAggregation.Sum was set.
+   */
   public Double getSum() {
     return sum;
   }
+
+  /**
+   * Stores average value if FacetAggregation.Average was set.
+   * @param average
+   */
   public void setAverage(Double average) {
     this.average = average;
   }
+
+  /**
+   * Stores count value if FacetAggregation.Count was set.
+   * @param count
+   */
   public void setCount(Integer count) {
     this.count = count;
   }
+
+  /**
+   * Number of terms that are covered by this facet.
+   * @param hits
+   */
   public void setHits(int hits) {
     this.hits = hits;
   }
+
+  /**
+   * Stores maximum value if FacetAggregation.Max was set.
+   * @param max
+   */
   public void setMax(Double max) {
     this.max = max;
   }
+
+  /**
+   * Stores minimum value if FacetAggregation.Min was set.
+   * @param min
+   */
   public void setMin(Double min) {
     this.min = min;
   }
+
+  /**
+   * Name of range for which facet value applies.
+   * @param range
+   */
   public void setRange(String range) {
     this.range = range;
   }
+
+  /**
+   * Stores sum of all values if FacetAggregation.Sum was set.
+   * @param sum
+   */
   public void setSum(Double sum) {
     this.sum = sum;
   }
