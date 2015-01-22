@@ -14,6 +14,7 @@ import net.ravendb.abstractions.exceptions.JsonReaderException;
 import net.ravendb.abstractions.exceptions.JsonWriterException;
 import net.ravendb.abstractions.extensions.JsonExtensions;
 import net.ravendb.abstractions.json.RavenJsonTextReader;
+import net.ravendb.client.document.JsonSerializer;
 
 import org.apache.commons.lang.StringUtils;
 import org.codehaus.jackson.JsonGenerator;
@@ -34,7 +35,7 @@ public class RavenJObject extends RavenJToken implements Iterable<Entry<String, 
    * @return A {@link RavenJObject} with the values of the specified object.
    */
   public static RavenJObject fromObject(Object o) {
-    return fromObject(o, JsonExtensions.createDefaultJsonSerializer());
+    return fromObject(o,  new JsonSerializer());
   }
 
   /**
@@ -43,8 +44,8 @@ public class RavenJObject extends RavenJToken implements Iterable<Entry<String, 
    * @param objectMapper The {@link ObjectMapper} that will be used to read the object.
    * @return {@link RavenJObject} with the values of the specified object.
    */
-  public static RavenJObject fromObject(Object o, ObjectMapper objectMapper) {
-    RavenJToken token = fromObjectInternal(o, objectMapper);
+  public static RavenJObject fromObject(Object o, JsonSerializer jsonSerializer) {
+    RavenJToken token = fromObjectInternal(o, jsonSerializer);
 
     if (token != null && token.getType() != JTokenType.OBJECT)
       throw new IllegalArgumentException("Object serialized to " + token.getType()

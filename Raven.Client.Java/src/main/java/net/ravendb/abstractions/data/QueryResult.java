@@ -210,8 +210,4 @@ public class QueryResult {
   public void setTotalResults(int totalResults) {
     this.totalResults = totalResults;
   }
-
-
-
-
 }

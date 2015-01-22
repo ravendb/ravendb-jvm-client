@@ -1,5 +1,9 @@
 package net.ravendb.abstractions.data;
 
+import net.ravendb.abstractions.json.linq.RavenJObject;
+import net.ravendb.abstractions.json.linq.RavenJToken;
+import net.ravendb.client.utils.TimeSpan;
+
 
 public class SubscriptionBatchOptions {
 
@@ -34,5 +38,13 @@ public class SubscriptionBatchOptions {
 
   public void setAcknowledgmentTimeout(Long acknowledgmentTimeout) {
     this.acknowledgmentTimeout = acknowledgmentTimeout;
+  }
+
+  public RavenJObject toRavenObject() {
+    RavenJObject result = new RavenJObject();
+    result.add("MaxDocCount", maxDocCount);
+    result.add("MaxSize", maxSize);
+    result.add("AcknowledgmentTimeout", TimeSpan.formatString(acknowledgmentTimeout));
+    return result;
   }
 }

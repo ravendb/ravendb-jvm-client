@@ -200,15 +200,15 @@ public class CreateHttpJsonRequestParams implements Serializable {
     this.owner = owner;
   }
 
-  public void updateHeaders(HttpRequest webRequest) {
+  public void updateHeaders(Map<String, String> headers) {
     if (operationsHeadersDictionary != null) {
       for (Entry<String, String> kvp : operationsHeadersDictionary.entrySet()) {
-        webRequest.addHeader(kvp.getKey(), kvp.getValue());
+        headers.put(kvp.getKey(), kvp.getValue());
       }
     }
     if (operationsHeadersCollection != null) {
       for (Entry<String, List<String>> header : operationsHeadersCollection.entrySet()) {
-        webRequest.addHeader(header.getKey(), StringUtils.join(header.getValue(), ","));
+        headers.put(header.getKey(), StringUtils.join(header.getValue(), ","));
       }
     }
   }

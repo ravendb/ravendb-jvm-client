@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
+import net.ravendb.abstractions.exceptions.JsonReaderException;
 import net.ravendb.abstractions.extensions.JsonExtensions;
 import net.ravendb.abstractions.json.linq.RavenJArray;
 import net.ravendb.abstractions.json.linq.RavenJObject;
@@ -48,18 +49,30 @@ public class JsonConvert {
    * @throws JsonMappingException
    * @throws JsonParseException
    */
-  public static <T> List<T> deserializeObject(RavenJArray array, Class<T> targetClass, String propertyName) throws JsonParseException, JsonMappingException, IOException {
+  public static <T> List<T> deserializeObject(RavenJArray array, Class<T> targetClass, String propertyName) {
     initObjectMapper();
     List<T> result = new ArrayList<>();
 
-    for (RavenJToken token: array) {
-      RavenJObject object = (RavenJObject) token;
-      RavenJToken ravenJToken = object.get(propertyName);
-      result.add(objectMapper.readValue(ravenJToken.toString(), targetClass));
+    try {
+      for (RavenJToken token: array) {
+        RavenJObject object = (RavenJObject) token;
+        RavenJToken ravenJToken = object.get(propertyName);
+        result.add(objectMapper.readValue(ravenJToken.toString(), targetClass));
+      }
+      return result;
+    } catch (IOException e) {
+      throw new JsonReaderException(e.getMessage(), e);
     }
-    return result;
   }
 
+  public static <T> T deserializeObject(Class<T> targetClass, String input) {
+    initObjectMapper();
+    try {
+      return objectMapper.readValue(input, targetClass);
+    } catch (IOException e) {
+      throw new JsonReaderException(e.getMessage(), e);
+    }
+  }
 
 
 }

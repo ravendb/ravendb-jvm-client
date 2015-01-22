@@ -13,6 +13,7 @@ import org.apache.http.entity.ByteArrayEntity;
 import org.apache.http.entity.ContentType;
 import org.apache.http.entity.StringEntity;
 
+//TODO: delete me?
 public class HttpRequestHelper {
 
   public static void copyHeaders(HttpRequest src, HttpRequest dest) {

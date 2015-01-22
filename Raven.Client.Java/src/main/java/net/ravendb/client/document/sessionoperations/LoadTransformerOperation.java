@@ -43,26 +43,21 @@ public class LoadTransformerOperation {
 
       Class<?> innerType = clazz.getComponentType();
 
-      try {
-
-        for (RavenJObject result : results) {
-          List<RavenJObject> values = result.value(RavenJArray.class, "$values").values(RavenJObject.class);
-          List<Object> innerTypes = new ArrayList<>();
-          for (RavenJObject value: values) {
-            ensureNotReadVetoed(value);
-            innerTypes.add(documentSession.getConventions().createSerializer().readValue(value.toString(), innerType));
-          }
-          Object[] innerArray = (Object[]) Array.newInstance(innerType, innerTypes.size());
-          for (int i = 0; i < innerTypes.size(); i++) {
-            innerArray[i] = innerTypes.get(i);
-          }
-          items.add((T) innerArray);
+      for (RavenJObject result : results) {
+        List<RavenJObject> values = result.value(RavenJArray.class, "$values").values(RavenJObject.class);
+        List<Object> innerTypes = new ArrayList<>();
+        for (RavenJObject value: values) {
+          ensureNotReadVetoed(value);
+          innerTypes.add(documentSession.projectionToInstance(value, innerType));
         }
-
-        return (T[]) items.toArray();
-      } catch (IOException e) {
-        throw new RuntimeException(e);
+        Object[] innerArray = (Object[]) Array.newInstance(innerType, innerTypes.size());
+        for (int i = 0; i < innerTypes.size(); i++) {
+          innerArray[i] = innerTypes.get(i);
+        }
+        items.add((T) innerArray);
       }
+
+      return (T[]) items.toArray();
 
     } else {
       List<T> items = parseResults(clazz, multiLoadResult.getResults());
@@ -80,18 +75,14 @@ public class LoadTransformerOperation {
 
 
     List<T> items = new ArrayList<>();
-    try {
-      for (RavenJObject object : results) {
-        ensureNotReadVetoed(object);
-        for (RavenJToken token : object.value(RavenJArray.class, "$values")) {
-          items.add(documentSession.getConventions().createSerializer().readValue(token.toString(), clazz));
-        }
+    for (RavenJObject object : results) {
+      ensureNotReadVetoed(object);
+      for (RavenJToken token : object.value(RavenJArray.class, "$values")) {
+        items.add(documentSession.getConventions().createSerializer().deserialize(token, clazz));
       }
-
-      return items;
-    } catch (IOException e) {
-      throw new RuntimeException(e);
     }
+
+    return items;
   }
 
   private boolean ensureNotReadVetoed(RavenJObject result) {

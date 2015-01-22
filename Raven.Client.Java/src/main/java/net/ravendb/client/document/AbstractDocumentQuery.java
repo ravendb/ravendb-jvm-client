@@ -16,6 +16,7 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.regex.Pattern;
 
+import net.ravendb.abstractions.basic.CleanCloseable;
 import net.ravendb.abstractions.basic.Lazy;
 import net.ravendb.abstractions.basic.Reference;
 import net.ravendb.abstractions.basic.Tuple;
@@ -45,6 +46,7 @@ import net.ravendb.abstractions.spatial.WktSanitizer;
 import net.ravendb.abstractions.util.NetDateFormat;
 import net.ravendb.abstractions.util.NetISO8601Utils;
 import net.ravendb.abstractions.util.RavenQuery;
+import net.ravendb.abstractions.util.TimeUtils;
 import net.ravendb.abstractions.util.ValueTypeUtils;
 import net.ravendb.client.EscapeQueryOptions;
 import net.ravendb.client.FieldHighlightings;
@@ -451,20 +453,16 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
     if (criteria.getShape() instanceof String) {
       wktRef.value = (String) criteria.getShape();
     }
-    try {
-      if (wktRef.value == null && criteria.getShape() != null) {
-        ObjectMapper jsonSerializer = getDocumentConvention().createSerializer();
+    if (wktRef.value == null && criteria.getShape() != null) {
+      JsonSerializer jsonSerializer = getDocumentConvention().createSerializer();
 
-        RavenJTokenWriter jsonWriter = new RavenJTokenWriter();
-        ShapeConverter converter = new ShapeConverter();
-        jsonSerializer.writeValue(jsonWriter, criteria.getShape());
+      RavenJTokenWriter jsonWriter = new RavenJTokenWriter();
+      ShapeConverter converter = new ShapeConverter();
+      jsonSerializer.serialize(jsonWriter, criteria.getShape());
 
-        if (!converter.tryConvert(jsonWriter.getToken(), wktRef)) {
-          throw new IllegalArgumentException("Shape is invalid:" + criteria);
-        }
+      if (!converter.tryConvert(jsonWriter.getToken(), wktRef)) {
+        throw new IllegalArgumentException("Shape is invalid:" + criteria);
       }
-    } catch (IOException e) {
-      throw new RuntimeException("Unable to parse spartial data. ", e);
     }
 
     if (wktRef.value == null) {
@@ -580,16 +578,14 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
   protected void executeActualQuery() {
     theSession.incrementRequestCount();
     while (true) {
-      try (AutoCloseable context = queryOperation.enterQueryContext()) {
+      try (CleanCloseable context = queryOperation.enterQueryContext()) {
         queryOperation.logQuery();
         QueryResult result = getDatabaseCommands().query(indexName, queryOperation.getIndexQuery(), includes.toArray(new String[0]));
         if (!queryOperation.isAcceptable(result)) {
-          Thread.sleep(100);
+          TimeUtils.cleanSleep(100);
           continue;
         }
         break;
-      } catch (Exception e) {
-        throw new RuntimeException(e);
       }
     }
     invokeAfterQueryExecuted(queryOperation.getCurrentQueryResults());
@@ -1660,25 +1656,21 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
       return escaped;
     }
 
-    try {
-      RavenJTokenWriter ravenJTokenWriter = new RavenJTokenWriter();
-      conventions.createSerializer().writeValue(ravenJTokenWriter, whereParams.getValue());
-      String term = ravenJTokenWriter.getToken().toString();
+    RavenJTokenWriter ravenJTokenWriter = new RavenJTokenWriter();
+    conventions.createSerializer().serialize(ravenJTokenWriter, whereParams.getValue());
+    String term = ravenJTokenWriter.getToken().toString();
 
-      if(term.length() > 1 && term.charAt(0) == '"' && term.charAt(term.length() - 1) == '"') {
-        term = term.substring(1, term.length() - 2);
-      }
-      switch (ravenJTokenWriter.getToken().getType())
-      {
-        case OBJECT:
-        case ARRAY:
-          return "[[" + RavenQuery.escape(term, whereParams.isAllowWildcards() && whereParams.isAnalyzed(), false) + "]]";
+    if(term.length() > 1 && term.charAt(0) == '"' && term.charAt(term.length() - 1) == '"') {
+      term = term.substring(1, term.length() - 2);
+    }
+    switch (ravenJTokenWriter.getToken().getType())
+    {
+      case OBJECT:
+      case ARRAY:
+        return "[[" + RavenQuery.escape(term, whereParams.isAllowWildcards() && whereParams.isAnalyzed(), false) + "]]";
 
-        default:
-          return RavenQuery.escape(term, whereParams.isAllowWildcards() && whereParams.isAnalyzed(), true);
-      }
-    } catch (IOException e) {
-      throw new RuntimeException("Unable to serialize token", e);
+      default:
+        return RavenQuery.escape(term, whereParams.isAllowWildcards() && whereParams.isAnalyzed(), true);
     }
 
   }
@@ -1723,15 +1715,11 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
     if (ValueTypeUtils.isValueType(whereParams.getValue().getClass())) {
       return RavenQuery.escape(whereParams.getValue().toString(), false, true);
     }
-    try {
-      String term = conventions.createSerializer().writeValueAsString(whereParams.getValue());
-      if(term.length() > 1 && term.charAt(0) == '"' && term.charAt(term.length() - 1) == '"') {
-        term = term.substring(1, term.length() - 2);
-      }
-      return RavenQuery.escape(term, false, true);
-    } catch (IOException e) {
-      throw new RuntimeException("Unable to serialize token", e);
+    String term = conventions.createSerializer().serializeAsString(whereParams.getValue());
+    if(term.length() > 1 && term.charAt(0) == '"' && term.charAt(term.length() - 1) == '"') {
+      term = term.substring(1, term.length() - 2);
     }
+    return RavenQuery.escape(term, false, true);
 
   }
 

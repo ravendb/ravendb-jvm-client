@@ -1,29 +1,30 @@
 package net.ravendb.client.connection.implementation;
 
-import java.io.EOFException;
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.InetAddress;
-import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.UnknownHostException;
-import java.text.ParseException;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 
+import net.ravendb.abstractions.closure.Action0;
 import net.ravendb.abstractions.closure.Action1;
 import net.ravendb.abstractions.closure.Action3;
 import net.ravendb.abstractions.closure.Delegates;
+import net.ravendb.abstractions.closure.Function0;
 import net.ravendb.abstractions.connection.CountingStream;
-import net.ravendb.abstractions.connection.HttpRequestHelper;
+import net.ravendb.abstractions.connection.ErrorResponseException;
 import net.ravendb.abstractions.connection.OperationCredentials;
+import net.ravendb.abstractions.connection.WebRequestEventArgs;
 import net.ravendb.abstractions.data.Constants;
 import net.ravendb.abstractions.data.HttpMethods;
 import net.ravendb.abstractions.exceptions.BadRequestException;
-import net.ravendb.abstractions.exceptions.HttpOperationException;
 import net.ravendb.abstractions.exceptions.IndexCompilationException;
+import net.ravendb.abstractions.exceptions.ServerClientException;
 import net.ravendb.abstractions.exceptions.ServerVersionNotSuppportedException;
 import net.ravendb.abstractions.json.linq.JTokenType;
 import net.ravendb.abstractions.json.linq.RavenJObject;
@@ -66,11 +67,13 @@ import org.apache.http.client.methods.HttpUriRequest;
 import org.apache.http.client.utils.URIBuilder;
 import org.apache.http.entity.ContentType;
 import org.apache.http.entity.InputStreamEntity;
+import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.CloseableHttpClient;
-import org.apache.http.util.EntityUtils;
+
+import com.google.common.io.Closeables;
 
 
-public class HttpJsonRequest {
+public class HttpJsonRequest implements AutoCloseable {
 
   public static final int MINIMUM_SERVER_VERSION = 3000;
   public static final int CUSTOM_BUILD_VERSION = 13;
@@ -80,87 +83,469 @@ public class HttpJsonRequest {
   private final String url;
   private final HttpMethods method;
 
-  private volatile HttpUriRequest webRequest;
-  private volatile CloseableHttpResponse httpResponse;
-  private CachedRequest cachedRequestDetails;
-  private final HttpJsonRequestFactory factory;
-  private final IHoldProfilingInformation owner;
-  private final Convention conventions;
-  private String postedData;
+  private CloseableHttpClient httpClient;
+  private Map<String, String> headers = new HashMap<>(); //TODO: use multimap!
+
   private final StopWatch sp;
-  boolean shouldCacheRequest;
-  private InputStream postedStream;
-  private boolean disabledAuthRetries;
-  private String primaryUrl;
-  private String operationUrl;
+
   private final OperationCredentials _credentials;
 
-  private Map<String, String> responseHeaders;
-  private boolean skipServerCheck;
-  private int contentLength = -1;
+  private CachedRequest cachedRequestDetails;
+  private final HttpJsonRequestFactory factory;
+  //TODO recreate handler
+  private final IHoldProfilingInformation owner;
+  private final Convention conventions;
+  private boolean disabledAuthRetries;
+  private String postedData;
+  private boolean isRequestSendToServer;
 
-  private CloseableHttpClient httpClient;
-  private int responseStatusCode;
+  boolean shouldCacheRequest;
+  private InputStream postedStream;
+  private boolean writeCalled;
 
-  private long size;
+  private String primaryUrl;
 
-  public long getSize() {
-    return size;
-  }
-
-  public HttpMethods getMethod() {
-    return method;
-  }
-
-  public String getUrl() {
-    return url;
-  }
+  private String operationUrl;
 
   private Action3<Map<String, String>, String, String> handleReplicationStatusChanges = Delegates.delegate3();
+  private Map<String, String> responseHeaders;
 
-  /**
-   * @return the skipServerCheck
-   */
-  public boolean isSkipServerCheck() {
-    return skipServerCheck;
-  }
+  private long size;
+  private int responseStatusCode;
+
+  private boolean skipServerCheck;
+
+  private Long timeout;
+
+  private CloseableHttpResponse response;
+
+  private int contentLength = -1;
+
+  private Map<String, String> defaultRequestHeaders = new HashMap<>();
 
   public HttpJsonRequest(CreateHttpJsonRequestParams requestParams, HttpJsonRequestFactory factory) {
     sp = new StopWatch();
     sp.start();
+    this._credentials = requestParams.isDisableAuthentication()?null : requestParams.getCredentials();
+    this.disabledAuthRetries = requestParams.isDisableAuthentication();
 
     this.url = requestParams.getUrl();
+    this.method = requestParams.getMethod();
+
+    if (requestParams.getTimeout() != null) {
+      timeout = requestParams.getTimeout();
+    } else {
+      timeout = 100 * 3600L;
+    }
     this.factory = factory;
     this.owner = requestParams.getOwner();
     this.conventions = requestParams.getConvention();
-    this._credentials = requestParams.isDisableAuthentication()?null : requestParams.getCredentials();
-    this.disabledAuthRetries = requestParams.isDisableAuthentication();
-    this.method = requestParams.getMethod();
 
-    this.webRequest = createWebRequest(requestParams.getUrl(), requestParams.getMethod());
+     /* TODO:
+    if (factory.httpMessageHandler != null)
+      recreateHandler = () => factory.httpMessageHandler;
+  else
+  {
+      recreateHandler = () => new WebRequestHandler
+      {
+          UseDefaultCredentials = _credentials != null && _credentials.HasCredentials() == false,
+          Credentials = _credentials != null ? _credentials.Credentials : null,
+      };
+  }*/
+
+    httpClient = factory.getHttpClient();
+
     if (factory.isDisableRequestCompression() == false && requestParams.isDisableRequestCompression() == false) {
       if (method == HttpMethods.POST || method == HttpMethods.PUT || method == HttpMethods.PATCH
         || method == HttpMethods.EVAL) {
-        webRequest.setHeader("Content-Encoding", "gzip");
-        webRequest.setHeader("Content-Type", "application/json; charset=utf-8");
+        defaultRequestHeaders.put("Content-Encoding", "gzip");
+        defaultRequestHeaders.put("Content-Type", "application/json; charset=utf-8");
       }
       if (factory.isAcceptGzipContent()) {
         // Accept-Encoding Parameters are handled by HttpClient
-        webRequest.addHeader("Accept-Encoding", "gzip,deflate");
+        defaultRequestHeaders.put("Accept-Encoding", "gzip,deflate");
       }
-      this.httpClient = factory.getHttpClient();
-    } else {
-      this.httpClient = factory.getHttpClient();
     }
     // content type is set in RequestEntity
-    webRequest.addHeader("Raven-Client-Version", clientVersion);
+    headers.put("Raven-Client-Version", clientVersion);
     writeMetadata(requestParams.getMetadata());
-    requestParams.updateHeaders(webRequest);
-
+    requestParams.updateHeaders(headers);
   }
 
   public void removeAuthorizationHeader() {
-      webRequest.removeHeaders("Authorization");
+    defaultRequestHeaders.remove("Authorization");
+  }
+
+  public RavenJToken readResponseJson() {
+    if (skipServerCheck) {
+      RavenJToken result = factory.getCachedResponse(this, null);
+
+      RequestResultArgs args = new RequestResultArgs();
+      args.setDurationMilliseconds(calculateDuration());
+      args.setMethod(method);
+      args.setHttpResult(responseStatusCode);
+      args.setStatus(RequestStatus.AGGRESSIVELY_CACHED);
+      args.setResult(result.toString());
+      args.setUrl(url);
+      args.setPostedData(postedData);
+
+      factory.invokeLogRequest(owner, args);
+
+      return result;
+    }
+
+    if (writeCalled) {
+      return readJsonInternal();
+    }
+
+    RavenJToken result = sendRequestInternal(new Function0<HttpUriRequest>() {
+
+      @Override
+      public HttpUriRequest apply() {
+        return createWebRequest(url, method);
+      }
+    }, true);
+
+    if (result != null) {
+      return result;
+    }
+    return readJsonInternal();
+  }
+
+  private RavenJToken sendRequestInternal(final Function0<HttpUriRequest> getRequestMessage, final boolean readErrorString) {
+    if (isRequestSendToServer) {
+      throw new IllegalStateException("Request was already sent to the server, cannot retry request.");
+    }
+
+    isRequestSendToServer = true;
+
+    return runWithAuthRetry(new Function0<RavenJToken>() {
+      @SuppressWarnings("synthetic-access")
+      @Override
+      public RavenJToken apply() {
+        try {
+          HttpUriRequest requestMessage = getRequestMessage.apply();
+          copyHeadersToHttpRequestMessage(requestMessage);
+          response = httpClient.execute(requestMessage);
+          setResponseHeaders(response);
+          assertServerVersionSupported();
+          responseStatusCode = response.getStatusLine().getStatusCode();
+        } catch (IOException e) {
+          throw new ServerClientException(e);
+        } finally {
+          sp.stop();
+        }
+
+        return checkForErrorsAndReturnCachedResultIfAny(readErrorString);
+      }
+    });
+  }
+
+  private void assertServerVersionSupported() {
+    String serverBuildString = responseHeaders.get(Constants.RAVEN_SERVER_BUILD);
+    if (serverBuildString == null) {
+      return;
+    }
+    try {
+      int serverBuild = Integer.parseInt(serverBuildString);
+      if (serverBuild >= MINIMUM_SERVER_VERSION || serverBuild == CUSTOM_BUILD_VERSION) {
+        return;
+      }
+    } catch (NumberFormatException e) {
+      // we throw every time when previous return isn't  met.
+    }
+    throw new ServerVersionNotSuppportedException(
+      String.format("Server version %s is not supported. User server with build >= %d", serverBuildString, MINIMUM_SERVER_VERSION));
+  }
+
+  private <T> T runWithAuthRetry(Function0<T> requestOperation) {
+    int retries = 0;
+    while (true) {
+      ErrorResponseException responseException;
+      try {
+        return requestOperation.apply();
+      } catch (ErrorResponseException e) {
+        if (++retries >= 3 || disabledAuthRetries) {
+          throw e;
+        }
+
+        if (e.getStatusCode() != HttpStatus.SC_UNAUTHORIZED
+          && e.getStatusCode() != HttpStatus.SC_FORBIDDEN
+          && e.getStatusCode() != HttpStatus.SC_PRECONDITION_FAILED) {
+          throw e;
+        }
+        responseException = e;
+      }
+      if (response.getStatusLine().getStatusCode() == HttpStatus.SC_FORBIDDEN) {
+        handleForbiddenResponse(response);
+        throw responseException;
+      }
+      if (handleUnauthorizedResponse(response) == false) {
+        throw responseException;
+      }
+    }
+  }
+
+  private void copyHeadersToHttpRequestMessage(HttpUriRequest httpRequestMessage) {
+    for (Map.Entry<String, String> kvp : headers.entrySet()) {
+      httpRequestMessage.setHeader(kvp.getKey(), kvp.getValue());
+    }
+  }
+
+  private void setResponseHeaders(HttpResponse response) {
+    responseHeaders = new HashMap<>();
+    for (Header h : response.getAllHeaders()) {
+      responseHeaders.put(h.getName(), h.getValue());
+    }
+  }
+
+  private RavenJToken checkForErrorsAndReturnCachedResultIfAny(boolean readErrorString) {
+    if (response.getStatusLine().getStatusCode() <= 299) {
+      return null;
+    }
+
+    if (response.getStatusLine().getStatusCode() == HttpStatus.SC_UNAUTHORIZED ||
+      response.getStatusLine().getStatusCode() == HttpStatus.SC_NOT_FOUND ||
+      response.getStatusLine().getStatusCode() == HttpStatus.SC_CONFLICT) {
+      RequestResultArgs requestResultArgs = new RequestResultArgs();
+      requestResultArgs.setDurationMilliseconds(calculateDuration());
+      requestResultArgs.setMethod(method);
+      requestResultArgs.setHttpResult(response.getStatusLine().getStatusCode());
+      requestResultArgs.setStatus(RequestStatus.ERROR_ON_SERVER);
+      requestResultArgs.setResult(response.getStatusLine().getReasonPhrase());
+      requestResultArgs.setUrl(url);
+      requestResultArgs.setPostedData(postedData);
+
+      factory.invokeLogRequest(owner, requestResultArgs);
+
+      throw ErrorResponseException.fromResponseMessage(response, readErrorString);
+    }
+
+    if (response.getStatusLine().getStatusCode() == HttpStatus.SC_NOT_MODIFIED && cachedRequestDetails != null) {
+      factory.updateCacheTime(this);
+      RavenJToken result = factory.getCachedResponse(this, responseHeaders);
+      handleReplicationStatusChanges.apply(responseHeaders, primaryUrl, operationUrl);
+
+      RequestResultArgs requestResultArgs = new RequestResultArgs();
+      requestResultArgs.setDurationMilliseconds(calculateDuration());
+      requestResultArgs.setMethod(method);
+      requestResultArgs.setStatus(RequestStatus.CACHED);
+      requestResultArgs.setResult(result.toString());
+      requestResultArgs.setUrl(url);
+      requestResultArgs.setPostedData(postedData);
+      factory.invokeLogRequest(owner, requestResultArgs);
+
+      return result;
+    }
+
+    HttpEntity httpEntity = response.getEntity();
+    String readToEnd = "";
+    if (httpEntity != null) {
+      try {
+        readToEnd = IOUtils.toString(httpEntity.getContent());
+      } catch (IOException e) {
+        throw new RuntimeException(e);
+      }
+    }
+
+    RequestResultArgs requestResultArgs = new RequestResultArgs();
+    requestResultArgs.setDurationMilliseconds(calculateDuration());
+    requestResultArgs.setMethod(method);
+    requestResultArgs.setHttpResult(response.getStatusLine().getStatusCode());
+    requestResultArgs.setStatus(RequestStatus.CACHED);
+    requestResultArgs.setResult(readToEnd);
+    requestResultArgs.setUrl(url);
+    requestResultArgs.setPostedData(postedData);
+    factory.invokeLogRequest(owner, requestResultArgs);
+
+    if (StringUtils.isBlank(readToEnd)) {
+      throw ErrorResponseException.fromResponseMessage(response, true);
+    }
+
+    RavenJObject ravenJObject;
+    try {
+      ravenJObject = RavenJObject.parse(readToEnd);
+    } catch (Exception e) {
+      throw new ErrorResponseException(response, readToEnd, e);
+    }
+
+    if (ravenJObject.containsKey("IndexDefinitionProperty")) {
+      IndexCompilationException ex = new IndexCompilationException(ravenJObject.value(String.class, "Message"));
+      ex.setIndexDefinitionProperty(ravenJObject.value(String.class, "IndexDefinitionProperty"));
+      ex.setProblematicText(ravenJObject.value(String.class, "ProblematicText"));
+      throw ex;
+    }
+
+    if (response.getStatusLine().getStatusCode() == HttpStatus.SC_BAD_REQUEST
+      && ravenJObject.containsKey("Message")) {
+      throw new BadRequestException(ravenJObject.value(String.class, "Message"), ErrorResponseException.fromResponseMessage(response));
+    }
+
+    if (ravenJObject.containsKey("Error")) {
+      StringBuilder sb = new StringBuilder();
+      for (Entry<String, RavenJToken> prop : ravenJObject) {
+        if ("Error".equals(prop.getKey())) {
+          continue;
+        }
+        sb.append(prop.getKey()).append(": ").append(prop.getValue().toString());
+      }
+
+      sb.append("\n");
+      sb.append(ravenJObject.value(String.class, "Error"));
+      sb.append("\n");
+
+      throw new ErrorResponseException(response, sb.toString(), readToEnd);
+    }
+    throw new ErrorResponseException(response, readToEnd);
+  }
+
+  public byte[] readResponseBytes() throws IOException {
+    sendRequestInternal(new Function0<HttpUriRequest>() {
+      @Override
+      public HttpUriRequest apply() {
+        return createWebRequest(url, method);
+      }
+    }, false);
+
+    if (response.getEntity() == null) {
+      return new byte[0];
+    }
+    return IOUtils.toByteArray(response.getEntity().getContent());
+  }
+
+  public void executeRequest() {
+    readResponseJson();
+  }
+
+  private boolean handleUnauthorizedResponse(HttpResponse unauthorizedResponse) {
+    if (conventions.getHandleUnauthorizedResponse() == null) return false;
+
+    Action1<HttpRequest> handleUnauthorizedResponse = conventions.handleUnauthorizedResponse(unauthorizedResponse, _credentials);
+    if (handleUnauthorizedResponse == null) return false;
+
+    //TODO: fix me
+    recreateHttpClient(handleUnauthorizedResponse);
+    return true;
+  }
+
+  protected void handleForbiddenResponse(HttpResponse forbiddenResponse) {
+    if (conventions.getHandleForbiddenResponse() == null) return;
+    conventions.handleForbiddenResponse(forbiddenResponse);
+  }
+
+  private void recreateHttpClient(Action1<HttpRequest> configureHttpClient) {
+
+
+
+      // we now need to clone the request, since just calling getRequest again wouldn't do anything
+    /* TODO:
+
+      sp.reset();
+      sp.start();
+      HttpUriRequest newWebRequest = createWebRequest(this.url, this.method);
+      HttpRequestHelper.copyHeaders(webRequest, newWebRequest);
+
+      action.apply(newWebRequest);
+      if (postedData != null) {
+        HttpRequestHelper.writeDataToRequest(newWebRequest, postedData, factory.isDisableRequestCompression());
+      }
+      if (postedStream != null) {
+        try {
+          postedStream.reset();
+          HttpEntityEnclosingRequestBase requestMethod = (HttpEntityEnclosingRequestBase) webRequest;
+          InputStreamEntity streamEntity = new InputStreamEntity(postedStream, 0, ContentType.APPLICATION_JSON);
+          streamEntity.setChunked(true);
+          requestMethod.setEntity(streamEntity);
+        } catch (IOException e) {
+          throw new RuntimeException("Unable to reset input stream", e);
+        }
+      }
+      webRequest = newWebRequest;*/
+  }
+
+  private RavenJToken readJsonInternal() {
+    handleReplicationStatusChanges.apply(responseHeaders, primaryUrl, operationUrl);
+
+    try (InputStream responseStream = response.getEntity() != null
+      ? response.getEntity().getContent() : new ByteArrayInputStream(new byte[0])) {
+      CountingStream countingStream = new CountingStream(responseStream);
+      RavenJToken data = RavenJToken.tryLoad(countingStream);
+
+      size = countingStream.getNumberOfReadBytes();
+
+      if (HttpMethods.GET == method && shouldCacheRequest) {
+        factory.cacheResponse(url, data, responseHeaders);
+      }
+
+      RequestResultArgs args = new RequestResultArgs();
+      args.setDurationMilliseconds(calculateDuration());
+      args.setMethod(method);
+      args.setHttpResult(responseStatusCode);
+      args.setStatus(RequestStatus.SEND_TO_SERVER);
+      args.setResult((data != null) ? data.toString() : "");
+      args.setUrl(url);
+      args.setPostedData(postedData);
+
+      factory.invokeLogRequest(owner, args);
+
+      return data;
+    } catch (IOException e) {
+      throw new RuntimeException(e);
+    }
+  }
+
+  public HttpJsonRequest addOperationHeaders(Map<String, String> operationsHeaders) {
+    for (Entry<String, String> header : operationsHeaders.entrySet()) {
+      headers.put(header.getKey(), header.getValue());
+    }
+    return this;
+  }
+
+  public HttpJsonRequest addOperationHeader(String key, String value) {
+    headers.put(key, value);
+    return this;
+  }
+
+  public HttpJsonRequest addReplicationStatusHeaders(String thePrimaryUrl, String currentUrl,
+    IDocumentStoreReplicationInformer replicationInformer, FailoverBehaviorSet failoverBehavior,
+    HandleReplicationStatusChangesCallback handleReplicationStatusChangesCallback) {
+
+    if (thePrimaryUrl.equalsIgnoreCase(currentUrl)) {
+      return this;
+    }
+    if (replicationInformer.getFailureCount(thePrimaryUrl).longValue() <= 0) {
+      return this; // not because of failover, no need to do this.
+    }
+
+    Date lastPrimaryCheck = replicationInformer.getFailureLastCheck(thePrimaryUrl);
+    headers.put(Constants.RAVEN_CLIENT_PRIMARY_SERVER_URL, toRemoteUrl(thePrimaryUrl));
+
+    NetDateFormat sdf = new NetDateFormat();
+    headers.put(Constants.RAVEN_CLIENT_PRIMARY_SERVER_LAST_CHECK, sdf.format(lastPrimaryCheck));
+
+    primaryUrl = thePrimaryUrl;
+    operationUrl = currentUrl;
+
+    this.handleReplicationStatusChanges = handleReplicationStatusChangesCallback;
+    return this;
+  }
+
+  private static String toRemoteUrl(String thePrimaryUrl) {
+    try {
+      URIBuilder uriBuilder = new URIBuilder(thePrimaryUrl);
+      if ("localhost".equals(uriBuilder.getHost()) || "127.0.0.1".equals(uriBuilder.getHost())) {
+        uriBuilder.setHost(InetAddress.getLocalHost().getHostName());
+      }
+      return uriBuilder.toString();
+    } catch (URISyntaxException e) {
+      throw new RuntimeException("Invalid URI:" + thePrimaryUrl, e);
+    } catch (UnknownHostException e) {
+      throw new RuntimeException("Unable to fetch hostname", e);
+    }
+  }
+
+  public double calculateDuration() {
+    return sp.getTime();
   }
 
   private void writeMetadata(RavenJObject metadata) {
@@ -189,10 +574,126 @@ public class HttpJsonRequest {
           contentLength = prop.getValue().value(int.class);
           break;
         default:
-          webRequest.setHeader(headerName, value);
-
+          headers.put(headerName, value);
       }
     }
+  }
+
+  public IObservable<String> serverPull() {
+    return runWithAuthRetry(new Function0<IObservable<String>>() {
+      @SuppressWarnings("synthetic-access")
+      @Override
+      public IObservable<String> apply() {
+        try {
+          HttpUriRequest httpRequestMessage = createWebRequest(url, method);
+          response = httpClient.execute(httpRequestMessage);
+          setResponseHeaders(response);
+          assertServerVersionSupported();
+          checkForErrorsAndReturnCachedResultIfAny(true);
+
+          final ObservableLineStream observableLineStream = new ObservableLineStream(response.getEntity().getContent(), new Action0() {
+            @Override
+            public void apply() {
+              Closeables.closeQuietly(response);
+            }
+          });
+          observableLineStream.start();
+          return observableLineStream;
+        } catch (IOException e) {
+          Closeables.closeQuietly(response);
+          throw new RuntimeException(e.getMessage(), e);
+        }
+      }
+    });
+  }
+
+  public void write(final InputStream streamToWrite) {
+    postedStream = streamToWrite;
+    writeCalled = true;
+
+    ContentType contentType = null;
+    /* TODO
+    Header firstHeader = webRequest.getFirstHeader("Content-Type");
+    if (firstHeader != null) {
+      String contentValue = firstHeader.getValue();
+      if (StringUtils.isNotBlank(contentValue)) {
+        contentType = ContentType.create(contentValue);
+      }
+    }*/
+
+    sendRequestInternal(new Function0<HttpUriRequest>() {
+      @Override
+      public HttpUriRequest apply() {
+        HttpEntityEnclosingRequestBase requestMethod = (HttpEntityEnclosingRequestBase) createWebRequest(url, method);
+        InputStreamEntity innerEntity = new InputStreamEntity(postedStream, contentLength, ContentType.APPLICATION_JSON); //TODO: content type
+        HttpEntity entity = new GzipHttpEntity(innerEntity);
+        innerEntity.setChunked(true);
+        requestMethod.setEntity(entity);
+        return requestMethod;
+      }
+    }, true);
+  }
+
+  public void write(final String data) {
+    postedData = data;
+    writeCalled = true;
+
+    sendRequestInternal(new Function0<HttpUriRequest>() {
+      @SuppressWarnings("synthetic-access")
+      @Override
+      public HttpUriRequest apply() {
+        HttpUriRequest request = createWebRequest(url, method);
+        HttpEntityEnclosingRequestBase requestMethod = (HttpEntityEnclosingRequestBase) request;
+        HttpEntity entity = null;
+        StringEntity innerEntity = new StringEntity(data, ContentType.APPLICATION_JSON);
+        innerEntity.setChunked(true);
+        if (factory.isDisableRequestCompression()) {
+          entity = innerEntity;
+        } else {
+          entity = new GzipHttpEntity(innerEntity);
+        }
+        requestMethod.setEntity(entity);
+        return request;
+      }
+    }, true);
+  }
+
+  public CloseableHttpResponse executeRawResponse(String data) throws IOException {
+    return executeRawResponseInternal(new StringEntity(data));
+  }
+
+  public CloseableHttpResponse executeRawResponse() {
+    return executeRawResponseInternal(null);
+  }
+
+  public CloseableHttpResponse executeRawResponseInternal(final HttpEntity content) {
+    response = runWithAuthRetry(new Function0<CloseableHttpResponse>() {
+      @SuppressWarnings({"synthetic-access", "hiding"})
+      @Override
+      public CloseableHttpResponse apply() {
+        HttpUriRequest rawRequestMessage = createWebRequest(url, method);
+        if (content != null) {
+          ((HttpEntityEnclosingRequestBase) rawRequestMessage).setEntity(content);
+        }
+        copyHeadersToHttpRequestMessage(rawRequestMessage);
+
+        try {
+          CloseableHttpResponse response = httpClient.execute(rawRequestMessage);
+          if (response.getStatusLine().getStatusCode() >= 300 &&
+            (response.getStatusLine().getStatusCode() == HttpStatus.SC_PRECONDITION_FAILED ||
+            response.getStatusLine().getStatusCode() == HttpStatus.SC_FORBIDDEN ||
+            response.getStatusLine().getStatusCode() == HttpStatus.SC_UNAUTHORIZED)) {
+            throw new ErrorResponseException(response, "Failed request");
+          }
+        } catch (IOException e) {
+          throw new ServerClientException(e);
+        }
+        return response;
+      }
+    });
+
+    responseStatusCode = response.getStatusLine().getStatusCode();
+    return response;
   }
 
   private HttpUriRequest createWebRequest(String url, HttpMethods method) {
@@ -238,24 +739,14 @@ public class HttpJsonRequest {
         throw new IllegalArgumentException("Unknown method: " + method);
     }
 
+    if (defaultRequestHeaders != null) {
+      for (Map.Entry<String, String> kvp: defaultRequestHeaders.entrySet()) {
+        baseMethod.setHeader(kvp.getKey(), kvp.getValue());
+      }
+    }
+    setTimeout((HttpRequestBase) baseMethod, timeout);
+    factory.configureRequest(owner, new WebRequestEventArgs(baseMethod, _credentials));
     return baseMethod;
-  }
-
-  public CachedRequest getCachedRequestDetails() {
-    return this.cachedRequestDetails;
-  }
-
-  public void executeRequest() {
-    readResponseJson();
-  }
-
-  public byte[] readResponseBytes() throws IOException {
-    innerExecuteHttpClient();
-    InputStream response = httpResponse.getEntity().getContent();
-    responseHeaders = extractHeaders(httpResponse.getAllHeaders());
-    byte[] result = IOUtils.toByteArray(response);
-    EntityUtils.consumeQuietly(httpResponse.getEntity());
-    return result;
   }
 
   public static Map<String, String> extractHeaders(Header[] httpResponseHeaders) {
@@ -266,495 +757,79 @@ public class HttpJsonRequest {
     return result;
   }
 
-  private void innerExecuteHttpClient() {
-    try {
-      httpResponse = httpClient.execute(webRequest);
-    } catch (Exception e) {
-      throw new RuntimeException(e.getMessage(), e);
+  public void setTimeout(HttpRequestBase requestBase, long timeoutInMilis) {
+    RequestConfig requestConfig = requestBase.getConfig();
+    if (requestConfig == null) {
+      requestConfig = RequestConfig.DEFAULT;
     }
-    if (httpResponse.getStatusLine().getStatusCode() >= 300) {
-      throw new HttpOperationException("Invalid status code:" + httpResponse.getStatusLine().getStatusCode(), null,
-        webRequest, httpResponse);
-    }
+
+    requestConfig = RequestConfig.copy(requestConfig).setSocketTimeout((int) timeoutInMilis).setConnectTimeout((int) timeoutInMilis).build();
+    requestBase.setConfig(requestConfig);
   }
 
-  /**
-   * @return the responseStatusCode
-   */
-  public int getResponseStatusCode() {
-    return responseStatusCode;
-  }
-
-  private static String getPathAndQuery(URI src) {
-    return src.getPath() + ((src.getQuery() != null) ? "?" + src.getQuery() : "");
-  }
-
-  public RavenJToken readResponseJson() {
-    if (skipServerCheck) {
-      RavenJToken result = factory.getCachedResponse(this, null);
-
-      RequestResultArgs args = new RequestResultArgs();
-      args.setDurationMilliseconds(calculateDuration());
-      args.setMethod(method);
-      args.setHttpResult(getResponseStatusCode());
-      args.setStatus(RequestStatus.AGGRESSIVELY_CACHED);
-      args.setResult(result.toString());
-      args.setUrl(getPathAndQuery(webRequest.getURI()));
-      args.setPostedData(postedData);
-
-      factory.invokeLogRequest(owner, args);
-
-      return result;
-    }
-    int retries = 0;
-    while (true) {
-      try {
-        return readJsonInternal();
-      } catch (Exception e) {
-        if (++retries >= 3 || disabledAuthRetries) {
-          throw e;
-        }
-
-        if (e instanceof HttpOperationException) {
-          HttpOperationException httpOpException = (HttpOperationException) e;
-          if (httpOpException.getStatusCode() != HttpStatus.SC_UNAUTHORIZED
-            && httpOpException.getStatusCode() != HttpStatus.SC_FORBIDDEN
-            && httpOpException.getStatusCode() != HttpStatus.SC_PRECONDITION_FAILED) {
-            throw e;
-          }
-          if (httpOpException.getStatusCode() == HttpStatus.SC_FORBIDDEN) {
-            handleForbiddenResponse(httpOpException.getHttpResponse());
-            throw e;
-          }
-          if (handleUnauthorizedResponse(httpOpException.getHttpResponse()) == false) {
-            throw e;
-          }
-        } else {
-          throw e;
-        }
-
-      }
-    }
-  }
-
-  public double calculateDuration() {
-    return sp.getTime();
+  @Override
+  public void close() {
+    Closeables.closeQuietly(response);
   }
 
   public Map<String, String> getResponseHeaders() {
     return responseHeaders;
   }
 
-  protected void handleForbiddenResponse(HttpResponse forbiddenResponse) {
-    if (conventions.getHandleForbiddenResponse() == null) return;
-
-    conventions.handleForbiddenResponse(forbiddenResponse);
+  public CachedRequest getCachedRequestDetails() {
+    return cachedRequestDetails;
   }
 
-  private boolean handleUnauthorizedResponse(HttpResponse unauthorizedResponse) {
-    if (conventions.getHandleUnauthorizedResponse() == null) return false;
-
-    Action1<HttpRequest> handleUnauthorizedResponse = conventions.handleUnauthorizedResponse(unauthorizedResponse, _credentials);
-    if (handleUnauthorizedResponse == null) return false;
-
-    recreateWebRequest(handleUnauthorizedResponse);
-    return true;
+  public String getUrl() {
+    return url;
   }
 
-  private void recreateWebRequest(Action1<HttpRequest> action) {
-    // we now need to clone the request, since just calling getRequest again wouldn't do anything
-    sp.reset();
-    sp.start();
-    HttpUriRequest newWebRequest = createWebRequest(this.url, this.method);
-    HttpRequestHelper.copyHeaders(webRequest, newWebRequest);
-
-    action.apply(newWebRequest);
-    if (postedData != null) {
-      HttpRequestHelper.writeDataToRequest(newWebRequest, postedData, factory.isDisableRequestCompression());
-    }
-    if (postedStream != null) {
-      try {
-        postedStream.reset();
-        HttpEntityEnclosingRequestBase requestMethod = (HttpEntityEnclosingRequestBase) webRequest;
-        InputStreamEntity streamEntity = new InputStreamEntity(postedStream, 0, ContentType.APPLICATION_JSON);
-        streamEntity.setChunked(true);
-        requestMethod.setEntity(streamEntity);
-      } catch (IOException e) {
-        throw new RuntimeException("Unable to reset input stream", e);
-      }
-    }
-    webRequest = newWebRequest;
-
+  public HttpMethods getMethod() {
+    return method;
   }
 
-  private RavenJToken readJsonInternal() {
-    InputStream responseStream = null;
-    try {
-      innerExecuteHttpClient();
-      if (httpResponse.getEntity() != null) {
-        try {
-          responseStream = httpResponse.getEntity().getContent();
-        } catch (EOFException e) {
-          // ignore
-        }
-      }
-      sp.stop();
-    } catch (HttpOperationException e) {
-      sp.stop();
-      RavenJToken result = handleErrors(e);
-      if (result == null) {
-        throw e;
-      }
-      return result;
-    } catch (Exception e) {
-      sp.stop();
-      RavenJToken result = handleErrors(e);
-      if (result == null) {
-        throw new RuntimeException(e.getMessage(), e);
-      }
-      return result;
-    }
-
-    try {
-      responseHeaders = extractHeaders(httpResponse.getAllHeaders());
-      responseStatusCode = httpResponse.getStatusLine().getStatusCode();
-
-      assertServerVersionSupported();
-
-      handleReplicationStatusChanges.apply(extractHeaders(httpResponse.getAllHeaders()), primaryUrl, operationUrl);
-      CountingStream countingStream = new CountingStream(responseStream);
-      RavenJToken data = RavenJToken.tryLoad(countingStream);
-      size = countingStream.getNumberOfReadBytes();
-
-      if (HttpMethods.GET == method && shouldCacheRequest) {
-        factory.cacheResponse(url, data, responseHeaders);
-      }
-
-      RequestResultArgs args = new RequestResultArgs();
-      args.setDurationMilliseconds(calculateDuration());
-      args.setMethod(method);
-      args.setHttpResult(getResponseStatusCode());
-      args.setStatus(RequestStatus.SEND_TO_SERVER);
-      args.setResult((data != null) ? data.toString() : "");
-      args.setUrl(getPathAndQuery(webRequest.getURI()));
-      args.setPostedData(postedData);
-
-      factory.invokeLogRequest(owner, args);
-
-      return data;
-    } finally {
-      if (httpResponse != null && httpResponse.getEntity() != null) {
-        EntityUtils.consumeQuietly(httpResponse.getEntity());
-      }
-    }
+  public long getSize() {
+    return size;
   }
 
-  private void assertServerVersionSupported() {
-    String serverBuildString = responseHeaders.get(Constants.RAVEN_SERVER_BUILD);
-    try {
-      int serverBuild = Integer.parseInt(serverBuildString);
-      if (serverBuild >= MINIMUM_SERVER_VERSION || serverBuild == CUSTOM_BUILD_VERSION) {
-        return;
-      }
-    } catch (NumberFormatException e) {
-      // we throw every time when previous return isn't  met.
-    }
-    throw new ServerVersionNotSuppportedException(
-      String.format("Server version %s is not supported. User server with build >= %d", serverBuildString, MINIMUM_SERVER_VERSION));
+  public int getResponseStatusCode() {
+    return responseStatusCode;
   }
 
-  private RavenJToken handleErrors(Exception e) {
-    if (e instanceof HttpOperationException) {
-      HttpOperationException httpWebException = (HttpOperationException) e;
-      HttpResponse httpWebResponse = httpWebException.getHttpResponse();
-      if (httpWebResponse == null || httpWebException.getStatusCode() == HttpStatus.SC_UNAUTHORIZED
-        || httpWebException.getStatusCode() == HttpStatus.SC_NOT_FOUND
-        || httpWebException.getStatusCode() == HttpStatus.SC_CONFLICT) {
-        int httpResult = httpWebException.getStatusCode();
-
-        RequestResultArgs requestResultArgs = new RequestResultArgs();
-        requestResultArgs.setDurationMilliseconds(calculateDuration());
-        requestResultArgs.setMethod(method);
-        requestResultArgs.setHttpResult(httpResult);
-        requestResultArgs.setStatus(RequestStatus.ERROR_ON_SERVER);
-        requestResultArgs.setResult(e.getMessage());
-        requestResultArgs.setUrl(getPathAndQuery(webRequest.getURI()));
-        requestResultArgs.setPostedData(postedData);
-
-        factory.invokeLogRequest(owner, requestResultArgs);
-
-        return null;
-
-      }
-
-      if (httpWebException.getStatusCode() == HttpStatus.SC_NOT_MODIFIED && cachedRequestDetails != null) {
-        factory.updateCacheTime(this);
-        RavenJToken result = factory.getCachedResponse(this, extractHeaders(httpWebResponse.getAllHeaders()));
-        handleReplicationStatusChanges.apply(extractHeaders(httpWebResponse.getAllHeaders()), primaryUrl, operationUrl);
-
-        RequestResultArgs requestResultArgs = new RequestResultArgs();
-        requestResultArgs.setDurationMilliseconds(calculateDuration());
-        requestResultArgs.setMethod(method);
-        requestResultArgs.setStatus(RequestStatus.CACHED);
-        requestResultArgs.setResult(e.getMessage());
-        requestResultArgs.setUrl(getPathAndQuery(webRequest.getURI()));
-        requestResultArgs.setPostedData(postedData);
-        factory.invokeLogRequest(owner, requestResultArgs);
-
-        return result;
-      }
-
-      try {
-        HttpEntity httpEntity = httpWebException.getHttpResponse().getEntity();
-        String readToEnd = "";
-        if (httpEntity != null) {
-          readToEnd = IOUtils.toString(httpEntity.getContent());
-        }
-
-        RequestResultArgs requestResultArgs = new RequestResultArgs();
-        requestResultArgs.setDurationMilliseconds(calculateDuration());
-        requestResultArgs.setMethod(method);
-        requestResultArgs.setHttpResult(httpWebResponse.getStatusLine().getStatusCode());
-        requestResultArgs.setStatus(RequestStatus.CACHED);
-        requestResultArgs.setResult(readToEnd);
-        requestResultArgs.setUrl(getPathAndQuery(webRequest.getURI()));
-        requestResultArgs.setPostedData(postedData);
-        factory.invokeLogRequest(owner, requestResultArgs);
-
-        if (StringUtils.isBlank(readToEnd)) {
-          return null; //throws
-        }
-
-        RavenJObject ravenJObject = null;
-        try {
-          ravenJObject = RavenJObject.parse(readToEnd);
-        } catch (Exception parseEx) {
-          throw new IllegalStateException(readToEnd, e);
-        }
-
-        if (ravenJObject.containsKey("IndexDefinitionProperty")) {
-          IndexCompilationException ex = new IndexCompilationException(ravenJObject.value(String.class, "Message"));
-          ex.setIndexDefinitionProperty(ravenJObject.value(String.class, "IndexDefinitionProperty"));
-          ex.setProblematicText(ravenJObject.value(String.class, "ProblematicText"));
-          throw ex;
-        }
-
-        if (httpWebResponse.getStatusLine().getStatusCode() == HttpStatus.SC_BAD_REQUEST
-          && ravenJObject.containsKey("Message")) {
-          throw new BadRequestException(ravenJObject.value(String.class, "Message"), e);
-        }
-
-        if (ravenJObject.containsKey("Error")) {
-          StringBuilder sb = new StringBuilder();
-          for (Entry<String, RavenJToken> prop : ravenJObject) {
-            if ("Error".equals(prop.getKey())) {
-              continue;
-            }
-            sb.append(prop.getKey()).append(": ").append(prop.getValue().toString());
-          }
-
-          sb.append("\n");
-          sb.append(ravenJObject.value(String.class, "Error"));
-          sb.append("\n");
-
-          throw new IllegalStateException(sb.toString(), e);
-        }
-        throw new IllegalStateException(readToEnd, e);
-
-      } catch (IOException ee) {
-        throw new RuntimeException("Unable to get web response", ee);
-      } finally {
-        if (httpWebResponse.getEntity() != null) {
-          EntityUtils.consumeQuietly(httpWebResponse.getEntity());
-        }
-      }
-    }
-
-    throw new RuntimeException(e);
-
+  public boolean isShouldCacheRequest() {
+    return shouldCacheRequest;
   }
 
-  public HttpJsonRequest addOperationHeaders(Map<String, String> operationsHeaders) {
-    for (Entry<String, String> header : operationsHeaders.entrySet()) {
-      webRequest.addHeader(header.getKey(), header.getValue());
-    }
-    return this;
-  }
-
-  public HttpJsonRequest addOperationHeader(String key, String value) {
-    webRequest.addHeader(key, value);
-    return this;
-  }
-
-  public void write(InputStream is) {
-    this.postedStream = is;
-
-    ContentType contentType = ContentType.APPLICATION_JSON;
-    Header firstHeader = webRequest.getFirstHeader("Content-Type");
-    if (firstHeader != null) {
-      String contentValue = firstHeader.getValue();
-      if (StringUtils.isNotBlank(contentValue)) {
-        contentType = ContentType.create(contentValue);
-      }
-    }
-
-    HttpEntityEnclosingRequestBase requestMethod = (HttpEntityEnclosingRequestBase) webRequest;
-    InputStreamEntity innerEntity = new InputStreamEntity(this.postedStream, contentLength, contentType);
-    HttpEntity entity = new GzipHttpEntity(innerEntity);
-    innerEntity.setChunked(true);
-    requestMethod.setEntity(entity);
-  }
-
-  /**
-   * Remember to release resources in HttpResponse entity!
-   */
-  public CloseableHttpResponse rawExecuteRequest() {
-    try {
-      httpResponse = httpClient.execute(webRequest);
-    } catch (Exception e) {
-      throw new RuntimeException(e.getMessage(), e);
-    }
-    if (httpResponse.getStatusLine().getStatusCode() >= 300) {
-      try {
-        String rawResponse = (httpResponse.getEntity() != null) ? IOUtils.toString(httpResponse.getEntity()
-          .getContent()) : "";
-        throw new HttpOperationException("Server error response:" + httpResponse.getStatusLine().getStatusCode()
-          + rawResponse, null, webRequest, httpResponse);
-      } catch (IOException e) {
-        throw new RuntimeException("Unable to read response", e);
-      } finally {
-        if (httpResponse != null && httpResponse.getEntity() != null) {
-          EntityUtils.consumeQuietly(httpResponse.getEntity());
-        }
-      }
-    }
-    return httpResponse;
-  }
-
-  public void write(String data) {
-    postedData = data;
-    HttpRequestHelper.writeDataToRequest(webRequest, data, factory.isDisableRequestCompression());
-  }
-
-  public void setShouldCacheRequest(boolean b) {
-    this.shouldCacheRequest = b;
-  }
-
-  public boolean getShouldCacheRequest() {
-    return this.shouldCacheRequest;
-  }
-
-  public void setCachedRequestDetails(CachedRequest cachedRequest) {
-    this.cachedRequestDetails = cachedRequest;
+  public boolean isSkipServerCheck() {
+    return skipServerCheck;
   }
 
   public void setSkipServerCheck(boolean skipServerCheck) {
     this.skipServerCheck = skipServerCheck;
   }
 
-  /**
-   * @return the methodBase
-   */
-  public HttpUriRequest getWebRequest() {
-    return webRequest;
+  public void setCachedRequestDetails(CachedRequest cachedRequestDetails) {
+    this.cachedRequestDetails = cachedRequestDetails;
   }
 
-  public void setResponseStatusCode(int statusCode) {
-    this.responseStatusCode = statusCode;
+  public Long getTimeout() {
+    return timeout;
   }
 
-  public void setResponseHeaders(Map<String, String> map) {
-    this.responseHeaders = map;
+  public CloseableHttpResponse getResponse() {
+    return response;
   }
 
-  public HttpJsonRequest addReplicationStatusHeaders(String thePrimaryUrl, String currentUrl,
-    IDocumentStoreReplicationInformer replicationInformer, FailoverBehaviorSet failoverBehavior,
-    HandleReplicationStatusChangesCallback handleReplicationStatusChangesCallback) {
-
-    if (thePrimaryUrl.equalsIgnoreCase(currentUrl)) {
-      return this;
-    }
-    if (replicationInformer.getFailureCount(thePrimaryUrl).longValue() <= 0) {
-      return this; // not because of failover, no need to do this.
-    }
-
-    Date lastPrimaryCheck = replicationInformer.getFailureLastCheck(thePrimaryUrl);
-    webRequest.addHeader(Constants.RAVEN_CLIENT_PRIMARY_SERVER_URL, toRemoteUrl(thePrimaryUrl));
-
-    NetDateFormat sdf = new NetDateFormat();
-    webRequest.addHeader(Constants.RAVEN_CLIENT_PRIMARY_SERVER_LAST_CHECK, sdf.format(lastPrimaryCheck));
-
-    primaryUrl = thePrimaryUrl;
-    operationUrl = currentUrl;
-
-    this.handleReplicationStatusChanges = handleReplicationStatusChangesCallback;
-    return this;
+  public void setShouldCacheRequest(boolean shouldCacheRequest) {
+    this.shouldCacheRequest = shouldCacheRequest;
   }
 
-  private String toRemoteUrl(String thePrimaryUrl) {
-    try {
-      URIBuilder uriBuilder = new URIBuilder(thePrimaryUrl);
-      if ("localhost".equals(uriBuilder.getHost()) || "127.0.0.1".equals(uriBuilder.getHost())) {
-        uriBuilder.setHost(InetAddress.getLocalHost().getHostName());
-      }
-      return uriBuilder.toString();
-    } catch (URISyntaxException e) {
-      throw new RuntimeException("Invalid URI:" + thePrimaryUrl, e);
-    } catch (UnknownHostException e) {
-      throw new RuntimeException("Unable to fetch hostname", e);
-    }
+  public void setResponseStatusCode(int responseStatusCode) {
+    this.responseStatusCode = responseStatusCode;
   }
 
-  public void setTimeout(long timeoutInMilis) {
-    HttpRequestBase baseRequest = (HttpRequestBase) webRequest;
-    RequestConfig requestConfig = baseRequest.getConfig();
-    if (requestConfig == null) {
-      requestConfig = RequestConfig.DEFAULT;
-    }
-
-    requestConfig = RequestConfig.copy(requestConfig).setSocketTimeout((int) timeoutInMilis).setConnectTimeout((int) timeoutInMilis).build();
-    baseRequest.setConfig(requestConfig);
-  }
-
-  public IObservable<String> serverPull() {
-    int retries = 0;
-
-    while (true) {
-      HttpOperationException webException = null;
-      try {
-        HttpUriRequest webRequest = createWebRequest(url, method);
-        httpResponse = httpClient.execute(webRequest);
-        if (httpResponse.getStatusLine().getStatusCode() >= 300) {
-          throw new HttpOperationException("Unable to connect to changes API", null, webRequest, httpResponse);
-        }
-        final ObservableLineStream observableLineStream = new ObservableLineStream(httpResponse.getEntity().getContent(),  Delegates.delegate0());
-        setResponseHeaders(extractHeaders(httpResponse.getAllHeaders()));
-        observableLineStream.start();
-
-        return observableLineStream;
-      } catch (Exception e) {
-        if (++retries >= 3 || disabledAuthRetries || !(e instanceof HttpOperationException)) {
-          throw new RuntimeException(e);
-        }
-        webException = (HttpOperationException) e;
-        if (webException.getStatusCode() != HttpStatus.SC_UNAUTHORIZED &&
-          webException.getStatusCode() != HttpStatus.SC_FORBIDDEN &&
-          webException.getStatusCode() != HttpStatus.SC_PRECONDITION_FAILED) {
-          throw webException;
-        }
-      }
-
-      if (webException.getStatusCode() == HttpStatus.SC_FORBIDDEN) {
-        handleForbiddenResponse(webException.getHttpResponse());
-        throw webException;
-      }
-
-      if (!handleUnauthorizedResponse(webException.getHttpResponse())) {
-        throw webException;
-      }
-
-    }
-
+  public void setResponseHeaders(Map<String, String> responseHeaders) {
+    this.responseHeaders = responseHeaders;
   }
 
 }

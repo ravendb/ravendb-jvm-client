@@ -266,6 +266,7 @@ public class RemoteDatabaseChanges extends RemoteChangesClientBase<IDatabaseChan
     return taskedObservable;
   }
 
+  @Override
   public IObservable<BulkInsertChangeNotification> forBulkInsert() {
     return forBulkInsert(null);
   }

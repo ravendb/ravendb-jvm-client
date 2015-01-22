@@ -2,13 +2,16 @@ package net.ravendb.client;
 
 import java.util.Map;
 
+import net.ravendb.abstractions.basic.CleanCloseable;
 import net.ravendb.abstractions.data.BulkInsertOptions;
 import net.ravendb.abstractions.data.Etag;
 import net.ravendb.client.changes.IDatabaseChanges;
+import net.ravendb.client.connection.IDatabaseCommands;
 import net.ravendb.client.connection.implementation.HttpJsonRequestFactory;
 import net.ravendb.client.document.BulkInsertOperation;
 import net.ravendb.client.document.DocumentConvention;
 import net.ravendb.client.document.DocumentSessionListeners;
+import net.ravendb.client.document.IReliableSubscriptions;
 import net.ravendb.client.document.OpenSessionOptions;
 import net.ravendb.client.indexes.AbstractIndexCreationTask;
 import net.ravendb.client.indexes.AbstractTransformerCreationTask;
@@ -38,7 +41,7 @@ public interface IDocumentStore extends IDisposalNotification {
    * without touching the server.
    * @param cacheDurationInMilis
    */
-  public AutoCloseable aggressivelyCacheFor(long cacheDurationInMilis);
+  public CleanCloseable aggressivelyCacheFor(long cacheDurationInMilis);
 
   /**
    * Setup the context for aggressive caching.
@@ -47,7 +50,7 @@ public interface IDocumentStore extends IDisposalNotification {
    * we provide is current or not, but will serve the information directly from the local cache
    * without touching the server.
    */
-  public AutoCloseable aggressivelyCache();
+  public CleanCloseable aggressivelyCache();
 
   /**
    * Setup the context for no aggressive caching
@@ -56,14 +59,14 @@ public interface IDocumentStore extends IDisposalNotification {
    * queries that has been marked with WaitForNonStaleResults, we temporarily disable
    * aggressive caching.
    */
-  public AutoCloseable disableAggressiveCaching();
+  public CleanCloseable disableAggressiveCaching();
 
   /**
    * Setup the WebRequest timeout for the session
    * @param timeout Specify the timeout duration
    * @return Sets the timeout for the JsonRequest.  Scoped to the Current Thread.
    */
-  public AutoCloseable setRequestsTimeoutFor(long timeout);
+  public CleanCloseable setRequestsTimeoutFor(long timeout);
 
   /**
    * Gets the shared operations headers.
@@ -117,7 +120,7 @@ public interface IDocumentStore extends IDisposalNotification {
   /**
    * Gets the database commands.
    */
-  public net.ravendb.client.connection.IDatabaseCommands getDatabaseCommands();
+  public IDatabaseCommands getDatabaseCommands();
 
   /**
    * Executes the index creation.
@@ -166,6 +169,8 @@ public interface IDocumentStore extends IDisposalNotification {
   public BulkInsertOperation bulkInsert(String database, BulkInsertOptions options);
 
   public DocumentSessionListeners getListeners();
+
+  public IReliableSubscriptions getSubscriptions();
 
   public void setListeners(DocumentSessionListeners listeners);
 

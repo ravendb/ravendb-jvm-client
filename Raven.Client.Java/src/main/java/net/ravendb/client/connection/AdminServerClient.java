@@ -170,12 +170,8 @@ public class AdminServerClient implements IAdminDatabaseCommands, IGlobalAdminDa
 
   @Override
   public AdminStatistics getStatistics() {
-    try {
-      RavenJObject json = (RavenJObject)adminRequest.adminStats().readResponseJson();
-      return innerServerClient.convention.createSerializer().readValue(json.toString(), AdminStatistics.class);
-    } catch (IOException e) {
-      throw new RuntimeException(e);
-    }
+    RavenJObject json = (RavenJObject)adminRequest.adminStats().readResponseJson();
+    return innerServerClient.convention.createSerializer().deserialize(json, AdminStatistics.class);
   }
 
   @Override

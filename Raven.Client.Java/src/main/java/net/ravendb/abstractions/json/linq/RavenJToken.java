@@ -1,5 +1,6 @@
 package net.ravendb.abstractions.json.linq;
 
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.StringWriter;
@@ -11,10 +12,13 @@ import net.ravendb.abstractions.data.DocumentsChanges;
 import net.ravendb.abstractions.exceptions.JsonReaderException;
 import net.ravendb.abstractions.exceptions.JsonWriterException;
 import net.ravendb.abstractions.extensions.JsonExtensions;
+import net.ravendb.client.document.JsonSerializer;
 
+import org.apache.commons.io.input.NullInputStream;
 import org.codehaus.jackson.FormatSchema;
 import org.codehaus.jackson.JsonFactory;
 import org.codehaus.jackson.JsonGenerator;
+import org.codehaus.jackson.JsonParseException;
 import org.codehaus.jackson.JsonParser;
 import org.codehaus.jackson.map.ObjectMapper;
 
@@ -43,15 +47,15 @@ public abstract class RavenJToken {
    * @return RavenJToken
    */
   public static RavenJToken fromObject(Object o) {
-    return fromObjectInternal(o, JsonExtensions.createDefaultJsonSerializer());
+    return fromObjectInternal(o, new JsonSerializer());
   }
 
   @SuppressWarnings("unused")
-  private static RavenJToken fromObject(Object o, ObjectMapper objectMapper) {
-    return fromObjectInternal(o, objectMapper);
+  private static RavenJToken fromObject(Object o, JsonSerializer jsonSerializer) {
+    return fromObjectInternal(o, jsonSerializer);
   }
 
-  protected static RavenJToken fromObjectInternal(Object o, ObjectMapper objectMapper) {
+  protected static RavenJToken fromObjectInternal(Object o, JsonSerializer jsonSerializer) {
     if (o == null) {
       return RavenJValue.getNull();
     }
@@ -60,11 +64,7 @@ public abstract class RavenJToken {
     }
 
     RavenJTokenWriter ravenJTokenWriter = new RavenJTokenWriter();
-    try {
-      objectMapper.writerWithType(o.getClass()).writeValue(ravenJTokenWriter, o);
-    } catch (IOException e) {
-      throw new JsonWriterException(e.getMessage(), e);
-    }
+    jsonSerializer.serialize(ravenJTokenWriter, o);
     return ravenJTokenWriter.getToken();
   }
 

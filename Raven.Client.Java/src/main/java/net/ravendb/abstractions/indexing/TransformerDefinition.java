@@ -10,8 +10,6 @@ public class TransformerDefinition implements Cloneable {
     return indexId;
   }
 
-
-
   public void setIndexId(int indexId) {
     this.indexId = indexId;
   }

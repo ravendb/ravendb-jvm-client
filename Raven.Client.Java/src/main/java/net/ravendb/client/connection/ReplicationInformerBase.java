@@ -15,6 +15,7 @@ import net.ravendb.abstractions.basic.EventHandler;
 import net.ravendb.abstractions.basic.EventHelper;
 import net.ravendb.abstractions.basic.Reference;
 import net.ravendb.abstractions.closure.Function1;
+import net.ravendb.abstractions.connection.ErrorResponseException;
 import net.ravendb.abstractions.connection.OperationCredentials;
 import net.ravendb.abstractions.data.HttpMethods;
 import net.ravendb.abstractions.data.JsonDocument;
@@ -25,6 +26,7 @@ import net.ravendb.abstractions.json.linq.RavenJObject;
 import net.ravendb.abstractions.logging.ILog;
 import net.ravendb.abstractions.logging.LogManager;
 import net.ravendb.client.connection.ReplicationInformer.FailoverStatusChangedEventArgs;
+import net.ravendb.client.connection.implementation.HttpJsonRequest;
 import net.ravendb.client.connection.implementation.HttpJsonRequestFactory;
 import net.ravendb.client.document.Convention;
 import net.ravendb.client.document.FailoverBehavior;
@@ -36,6 +38,7 @@ import org.apache.http.HttpStatus;
 import com.google.common.base.Throwables;
 
 public abstract class ReplicationInformerBase<T> implements IReplicationInformerBase<T> {
+
   protected static ILog log = LogManager.getCurrentClassLogger();
 
   protected boolean firstTime = true;
@@ -52,7 +55,6 @@ public abstract class ReplicationInformerBase<T> implements IReplicationInformer
   protected final Map<String, FailureCounter> failureCounts = new ConcurrentHashMap<>();
 
   protected Thread refreshReplicationInformationTask;
-
 
   protected List<EventHandler<FailoverStatusChangedEventArgs>> failoverStatusChanged = new ArrayList<>();
 
@@ -110,7 +112,6 @@ public abstract class ReplicationInformerBase<T> implements IReplicationInformer
     private boolean forceCheck;
 
     private AtomicReference<Thread> checkDestination = new AtomicReference<>();
-
 
     public AtomicReference<Thread> getCheckDestination() {
       return checkDestination;
@@ -174,7 +175,8 @@ public abstract class ReplicationInformerBase<T> implements IReplicationInformer
     return getHolder(operationUrl).getLastCheck();
   }
 
-  public boolean shouldExecuteUsing(final OperationMetadata operationMetadata, final OperationMetadata primaryOperation, int currentRequest, HttpMethods method, boolean primary, Exception error) {
+  public boolean shouldExecuteUsing(final OperationMetadata operationMetadata,
+    final OperationMetadata primaryOperation, int currentRequest, HttpMethods method, boolean primary, Exception error) {
     if (primary == false) {
       assertValidOperation(method, error);
     }
@@ -189,28 +191,34 @@ public abstract class ReplicationInformerBase<T> implements IReplicationInformer
     }
 
     Thread currentTask = failureCounter.getCheckDestination().get();
-    if ((currentTask == null  || !currentTask.isAlive()) && delayTimeInMiliSec > 0) {
+    if ((currentTask == null || !currentTask.isAlive()) && delayTimeInMiliSec > 0) {
       Thread checkDestination = new Thread(new Runnable() {
+
         @Override
         public void run() {
           for (int i = 0; i < 3; i++) {
-              OperationResult<Object> r = tryOperation(new Function1<OperationMetadata, Object>() {
-                @Override
-                public OperationResult<Object> apply(OperationMetadata metadata) {
-                    CreateHttpJsonRequestParams requestParams = new CreateHttpJsonRequestParams(null, getServerCheckUrl(metadata.getUrl()), HttpMethods.GET, new RavenJObject(), metadata.getCredentials(),  conventions);
-                    requestFactory.createHttpJsonRequest(requestParams).readResponseJson();
-                    return null;
-                }
-              }, operationMetadata, primaryOperation, true);
-              if (r.isSuccess()) {
-                return;
-              }
+            OperationResult<Object> r = tryOperation(new Function1<OperationMetadata, Object>() {
 
-              try {
-                Thread.sleep(delayTimeInMiliSec);
-              } catch (InterruptedException e) {
-                e.printStackTrace();
+              @Override
+              public OperationResult<Object> apply(OperationMetadata metadata) {
+                CreateHttpJsonRequestParams requestParams = new CreateHttpJsonRequestParams(null,
+                  getServerCheckUrl(metadata.getUrl()), HttpMethods.GET, new RavenJObject(), metadata.getCredentials(),
+                  conventions);
+                try (HttpJsonRequest request = requestFactory.createHttpJsonRequest(requestParams)) {
+                  request.readResponseJson();
+                }
+                return null;
               }
+            }, operationMetadata, primaryOperation, true);
+            if (r.isSuccess()) {
+              return;
+            }
+
+            try {
+              Thread.sleep(delayTimeInMiliSec);
+            } catch (InterruptedException e) {
+              e.printStackTrace();
+            }
           }
         };
       });
@@ -254,7 +262,6 @@ public abstract class ReplicationInformerBase<T> implements IReplicationInformer
 
   }
 
-
   public boolean isFirstFailure(String operationUrl) {
     FailureCounter value = getHolder(operationUrl);
     return value.getValue().longValue() == 0;
@@ -290,12 +297,14 @@ public abstract class ReplicationInformerBase<T> implements IReplicationInformer
     return increment ? readStripingBase.incrementAndGet() : readStripingBase.get();
   }
 
-
   @Override
-  public <S> S executeWithReplication(HttpMethods method, String primaryUrl, OperationCredentials primaryCredentials, int currentRequest,
-    int currentReadStripingBase, Function1<OperationMetadata, S> operation) throws ServerClientException {
+  public <S> S executeWithReplication(HttpMethods method, String primaryUrl, OperationCredentials primaryCredentials,
+    int currentRequest, int currentReadStripingBase, Function1<OperationMetadata, S> operation)
+    throws ServerClientException {
 
-    List<OperationMetadata> localReplicationDestinations = getReplicationDestinationsUrls(); // thread safe copy
+    List<OperationMetadata> localReplicationDestinations = getReplicationDestinationsUrls(); // thread
+                                                                                             // safe
+                                                                                             // copy
     OperationMetadata primaryOperation = new OperationMetadata(primaryUrl, primaryCredentials);
 
     boolean shouldReadFromAllServers = conventions.getFailoverBehavior().contains(
@@ -305,22 +314,28 @@ public abstract class ReplicationInformerBase<T> implements IReplicationInformer
 
     if (shouldReadFromAllServers && HttpMethods.GET.equals(method)) {
       int replicationIndex = currentReadStripingBase % (localReplicationDestinations.size() + 1);
-      // if replicationIndex == destinations count, then we want to use the master
-      // if replicationIndex < 0, then we were explicitly instructed to use the master
+      // if replicationIndex == destinations count, then we want to use the
+      // master
+      // if replicationIndex < 0, then we were explicitly instructed to use the
+      // master
       if (replicationIndex < localReplicationDestinations.size() && replicationIndex >= 0) {
-        // if it is failing, ignore that, and move to the master or any of the replicas
-        if (shouldExecuteUsing(localReplicationDestinations.get(replicationIndex), primaryOperation, currentRequest, method, false, null)) {
+        // if it is failing, ignore that, and move to the master or any of the
+        // replicas
+        if (shouldExecuteUsing(localReplicationDestinations.get(replicationIndex), primaryOperation, currentRequest,
+          method, false, null)) {
 
-           operationResult = tryOperation(operation, localReplicationDestinations.get(replicationIndex), primaryOperation, true);
-           if (operationResult.success) {
-             return operationResult.result;
-           }
+          operationResult = tryOperation(operation, localReplicationDestinations.get(replicationIndex),
+            primaryOperation, true);
+          if (operationResult.success) {
+            return operationResult.result;
+          }
         }
       }
     }
 
     if (shouldExecuteUsing(primaryOperation, primaryOperation, currentRequest, method, true, null)) {
-      operationResult = tryOperation(operation, primaryOperation, null, !operationResult.wasTimeout && localReplicationDestinations.size() > 0);
+      operationResult = tryOperation(operation, primaryOperation, null, !operationResult.wasTimeout
+        && localReplicationDestinations.size() > 0);
       if (operationResult.isSuccess()) {
         return operationResult.result;
       }
@@ -338,18 +353,21 @@ public abstract class ReplicationInformerBase<T> implements IReplicationInformer
 
     for (int i = 0; i < localReplicationDestinations.size(); i++) {
       OperationMetadata replicationDestination = localReplicationDestinations.get(i);
-      if (!shouldExecuteUsing(replicationDestination, primaryOperation, currentRequest, method, false, operationResult.getError())) {
+      if (!shouldExecuteUsing(replicationDestination, primaryOperation, currentRequest, method, false,
+        operationResult.getError())) {
         continue;
       }
       boolean hasMoreReplicationDestinations = localReplicationDestinations.size() > i + 1;
 
-      operationResult = tryOperation(operation, replicationDestination, primaryOperation, !operationResult.wasTimeout && hasMoreReplicationDestinations);
+      operationResult = tryOperation(operation, replicationDestination, primaryOperation, !operationResult.wasTimeout
+        && hasMoreReplicationDestinations);
       if (operationResult.isSuccess()) {
         return operationResult.result;
       }
       incrementFailureCount(replicationDestination.getUrl());
       if (!operationResult.wasTimeout && isFirstFailure(replicationDestination.getUrl())) {
-        operationResult =  tryOperation(operation, replicationDestination, primaryOperation, hasMoreReplicationDestinations);
+        operationResult = tryOperation(operation, replicationDestination, primaryOperation,
+          hasMoreReplicationDestinations);
         if (operationResult.success) {
           return operationResult.result;
         }
@@ -357,16 +375,19 @@ public abstract class ReplicationInformerBase<T> implements IReplicationInformer
       }
     }
     // this should not be thrown, but since I know the value of should...
-    throw new IllegalStateException("Attempted to connect to master and all replicas have failed, giving up. There is a high probability of a network problem preventing access to all the replicas. Failed to get in touch with any of the " + (1 + localReplicationDestinations.size()) + " Raven instances.");
+    throw new IllegalStateException(
+      "Attempted to connect to master and all replicas have failed, giving up. There is a high probability of a network problem preventing access to all the replicas. Failed to get in touch with any of the "
+        + (1 + localReplicationDestinations.size()) + " Raven instances.");
   }
 
-
-  protected <S> OperationResult<S> tryOperation(Function1<OperationMetadata, S> operation, OperationMetadata operationMetadata, OperationMetadata primaryOperationMetadata, boolean avoidThrowing) {
+  protected <S> OperationResult<S> tryOperation(Function1<OperationMetadata, S> operation,
+    OperationMetadata operationMetadata, OperationMetadata primaryOperationMetadata, boolean avoidThrowing) {
     boolean tryWithPrimaryCredentials = isFirstFailure(operationMetadata.getUrl()) && primaryOperationMetadata != null;
     boolean shouldTryAgain = false;
     try {
 
-      S result = operation.apply(tryWithPrimaryCredentials ? new OperationMetadata(operationMetadata.getUrl(), primaryOperationMetadata.getCredentials()) : operationMetadata);
+      S result = operation.apply(tryWithPrimaryCredentials ? new OperationMetadata(operationMetadata.getUrl(),
+        primaryOperationMetadata.getCredentials()) : operationMetadata);
       resetFailureCount(operationMetadata.getUrl());
       return new OperationResult<>(result, true);
     } catch (Exception e) {
@@ -374,8 +395,8 @@ public abstract class ReplicationInformerBase<T> implements IReplicationInformer
         incrementFailureCount(operationMetadata.getUrl());
 
         Throwable rootCause = ExceptionUtils.getRootCause(e);
-        if (rootCause instanceof HttpOperationException) {
-          HttpOperationException webException = (HttpOperationException) rootCause;
+        if (rootCause instanceof ErrorResponseException) {
+          ErrorResponseException webException = (ErrorResponseException) rootCause;
           if (webException.getStatusCode() == HttpStatus.SC_UNAUTHORIZED) {
             shouldTryAgain = true;
           }
@@ -400,8 +421,8 @@ public abstract class ReplicationInformerBase<T> implements IReplicationInformer
 
   @Override
   public boolean isHttpStatus(Exception e, int... httpStatusCode) {
-    if (e instanceof HttpOperationException) {
-      HttpOperationException hoe = (HttpOperationException) e;
+    if (e instanceof ErrorResponseException) {
+      ErrorResponseException hoe = (ErrorResponseException) e;
       if (ArrayUtils.contains(httpStatusCode, hoe.getStatusCode())) {
         return true;
       }
@@ -423,7 +444,6 @@ public abstract class ReplicationInformerBase<T> implements IReplicationInformer
     return false;
   }
 
-
   public void dispose() throws InterruptedException {
     Thread replicationInformationTaskCopy = refreshReplicationInformationTask;
     if (replicationInformationTaskCopy != null) {
@@ -438,16 +458,15 @@ public abstract class ReplicationInformerBase<T> implements IReplicationInformer
   }
 
   public static class OperationResult<T> {
+
     private T result;
     private boolean wasTimeout;
     private boolean success;
     private Exception error;
 
-
     public Exception getError() {
       return error;
     }
-
 
     public void setError(Exception error) {
       this.error = error;

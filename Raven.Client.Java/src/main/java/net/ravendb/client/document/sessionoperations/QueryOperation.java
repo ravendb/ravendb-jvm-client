@@ -10,6 +10,7 @@ import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import net.ravendb.abstractions.basic.CleanCloseable;
 import net.ravendb.abstractions.basic.SharpEnum;
 import net.ravendb.abstractions.basic.Tuple;
 import net.ravendb.abstractions.closure.Action2;
@@ -108,7 +109,7 @@ public class QueryOperation {
         indexQuery.getQuery(), indexName, sessionOperations.getStoreIdentifier());
   }
 
-  public AutoCloseable enterQueryContext() {
+  public CleanCloseable enterQueryContext() {
     if (firstRequest) {
       startTiming();
       firstRequest = false;

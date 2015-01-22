@@ -30,6 +30,7 @@ import net.ravendb.abstractions.closure.Function3;
 import net.ravendb.abstractions.commands.ICommandData;
 import net.ravendb.abstractions.commands.PatchCommandData;
 import net.ravendb.abstractions.commands.ScriptedPatchCommandData;
+import net.ravendb.abstractions.connection.ErrorResponseException;
 import net.ravendb.abstractions.connection.OperationCredentials;
 import net.ravendb.abstractions.data.Attachment;
 import net.ravendb.abstractions.data.AttachmentInformation;
@@ -60,12 +61,14 @@ import net.ravendb.abstractions.data.QueryResult;
 import net.ravendb.abstractions.data.ScriptedPatchRequest;
 import net.ravendb.abstractions.data.SuggestionQuery;
 import net.ravendb.abstractions.data.SuggestionQueryResult;
+import net.ravendb.abstractions.exceptions.BadRequestException;
 import net.ravendb.abstractions.exceptions.ConcurrencyException;
 import net.ravendb.abstractions.exceptions.DocumentDoesNotExistsException;
 import net.ravendb.abstractions.exceptions.HttpOperationException;
 import net.ravendb.abstractions.exceptions.IndexCompilationException;
 import net.ravendb.abstractions.exceptions.ServerClientException;
 import net.ravendb.abstractions.exceptions.TransformCompilationException;
+import net.ravendb.abstractions.extensions.ExceptionExtensions;
 import net.ravendb.abstractions.extensions.JsonExtensions;
 import net.ravendb.abstractions.extensions.MetadataExtensions;
 import net.ravendb.abstractions.indexing.IndexDefinition;
@@ -87,8 +90,11 @@ import net.ravendb.client.connection.implementation.HttpJsonRequestFactory;
 import net.ravendb.client.connection.profiling.ProfilingInformation;
 import net.ravendb.client.document.DocumentConvention;
 import net.ravendb.client.document.ILowLevelBulkInsertOperation;
+import net.ravendb.client.document.JsonSerializer;
 import net.ravendb.client.document.RemoteBulkInsertOperation;
 import net.ravendb.client.exceptions.ConflictException;
+import net.ravendb.client.exceptions.ServerRequestError;
+import net.ravendb.client.extensions.HttpJsonRequestExtension;
 import net.ravendb.client.extensions.MultiDatabase;
 import net.ravendb.client.indexes.IndexDefinitionBuilder;
 import net.ravendb.client.listeners.IDocumentConflictListener;
@@ -98,6 +104,7 @@ import net.ravendb.imports.json.JsonConvert;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.http.HttpEntity;
+import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
@@ -131,52 +138,29 @@ public class ServerClient implements IDatabaseCommands {
 
   private boolean expect100Continue = false;
 
-  public void addFailoverStatusChanged(EventHandler<FailoverStatusChangedEventArgs> event) {
-    replicationInformer.addFailoverStatusChanged(event);
+  /**
+   * @return the url
+   */
+  public String getUrl() {
+    return url;
   }
 
-  public void removeFailoverStatusChanged(EventHandler<FailoverStatusChangedEventArgs> event) {
-    replicationInformer.removeFailoverStatusChanged(event);
-  }
-
-  public HttpJsonRequestFactory getJsonRequestFactory() {
-    return jsonRequestFactory;
+  /**
+   * @return the replicationInformer
+   */
+  public IDocumentStoreReplicationInformer getReplicationInformer() {
+    return replicationInformer;
   }
 
   @Override
-  public IndexMergeResults getIndexMergeSuggestions() {
-    String url2 = url + "/debug/suggest-index-merge";
-    HttpJsonRequest request = jsonRequestFactory.createHttpJsonRequest(new CreateHttpJsonRequestParams(this, url2,
-      HttpMethods.GET, new RavenJObject(), credentialsThatShouldBeUsedOnlyInOperationsWithoutReplication, convention));
-    request.addOperationHeaders(operationsHeaders);
-
-    try {
-      RavenJToken result = request.readResponseJson();
-      return convention.createSerializer().readValue(result.toString(), IndexMergeResults.class);
-    } catch (IOException e) {
-      throw new ServerClientException("unable to get merge suggestions", e);
-    }
+  public OperationCredentials getPrimaryCredentials() {
+    return credentialsThatShouldBeUsedOnlyInOperationsWithoutReplication;
   }
-
-  public BuildNumber getBuildNumber() {
-    String url2 = url + "/build/version";
-    HttpJsonRequest request = jsonRequestFactory.createHttpJsonRequest(new CreateHttpJsonRequestParams(this, url2,
-      HttpMethods.GET, new RavenJObject(), credentialsThatShouldBeUsedOnlyInOperationsWithoutReplication, convention));
-    request.addOperationHeaders(operationsHeaders);
-
-    try {
-      RavenJToken result = request.readResponseJson();
-      return convention.createSerializer().readValue(result.toString(), BuildNumber.class);
-    } catch (IOException e) {
-      throw new ServerClientException("unable to get merge suggestions", e);
-    }
-  }
-
 
   public ServerClient(String url, DocumentConvention convention, OperationCredentials credentials,
+    HttpJsonRequestFactory httpJsonRequestFactory, UUID sessionId,
     Function1<String, IDocumentStoreReplicationInformer> replicationInformerGetter,  String databaseName,
-    HttpJsonRequestFactory httpJsonRequestFactory, UUID sessionId, IDocumentConflictListener[] conflictListeners,
-    boolean incrementReadStripe) {
+     IDocumentConflictListener[] conflictListeners, boolean incrementReadStripe) {
     this.profilingInformation = ProfilingInformation.createProfilingInformation(sessionId);
     this.url = url;
     if (this.url.endsWith("/")) {
@@ -210,15 +194,15 @@ public class ServerClient implements IDatabaseCommands {
   }
 
   protected Collection<String> directGetIndexNames(int start, int pageSize, OperationMetadata operationMetadata) {
-    String url = RavenUrlExtensions.indexNames(operationMetadata.getUrl(), start, pageSize);
+    try (HttpJsonRequest request = jsonRequestFactory.createHttpJsonRequest(
+      new CreateHttpJsonRequestParams(this, RavenUrlExtensions.indexNames(operationMetadata.getUrl(), start, pageSize),
+        HttpMethods.GET, null,  operationMetadata.getCredentials(), convention))) {
+      RavenJArray json = (RavenJArray)request
+        .addReplicationStatusHeaders(url, operationMetadata.getUrl(), replicationInformer, convention.getFailoverBehavior(), new HandleReplicationStatusChangesCallback())
+        .readResponseJson();
 
-    HttpJsonRequest request = jsonRequestFactory.createHttpJsonRequest(new CreateHttpJsonRequestParams(this, url, HttpMethods.GET, null,  operationMetadata.getCredentials(), convention));
-
-    RavenJArray json = (RavenJArray)request
-      .addReplicationStatusHeaders(url, operationMetadata.getUrl(), replicationInformer, convention.getFailoverBehavior(), new HandleReplicationStatusChangesCallback())
-      .readResponseJson();
-
-    return json.values(String.class);
+      return json.values(String.class);
+    }
   }
 
   @Override
@@ -232,25 +216,18 @@ public class ServerClient implements IDatabaseCommands {
   }
 
   protected Collection<IndexDefinition> directGetIndexes(int start, int pageSize, OperationMetadata operationMetadata) {
-    String url2 = operationMetadata.getUrl() + "/indexes/?start=" + start + "&pageSize=" + pageSize;
-    HttpJsonRequest request = jsonRequestFactory.createHttpJsonRequest(new CreateHttpJsonRequestParams(this, url2, HttpMethods.GET, new RavenJObject(), operationMetadata.getCredentials(), convention));
-    request.addReplicationStatusHeaders(url, operationMetadata.getUrl(), replicationInformer, convention.getFailoverBehavior(), new HandleReplicationStatusChangesCallback());
+    String operationUrl = operationMetadata.getUrl() + "/indexes/?start=" + start + "&pageSize=" + pageSize;
+    try (HttpJsonRequest request = jsonRequestFactory.createHttpJsonRequest(new CreateHttpJsonRequestParams(this, operationUrl, HttpMethods.GET, new RavenJObject(), operationMetadata.getCredentials(), convention))) {
+      request.addReplicationStatusHeaders(url, operationMetadata.getUrl(), replicationInformer, convention.getFailoverBehavior(), new HandleReplicationStatusChangesCallback());
 
-    try {
       RavenJArray json = (RavenJArray) request.readResponseJson();
-
       return JsonConvert.deserializeObject(json, IndexDefinition.class, "definition");
-
-    } catch (Exception e) {
-      throw new ServerClientException("Unable to get indexes", e);
     }
   }
-
 
   @Override
   public List<TransformerDefinition> getTransformers(final int start, final int pageSize) {
     return executeWithReplication(HttpMethods.GET, new Function1<OperationMetadata, List<TransformerDefinition>>() {
-
       @Override
       public List<TransformerDefinition> apply(OperationMetadata operationMetadata) {
         return directGetTransformers(operationMetadata, start, pageSize);
@@ -259,16 +236,13 @@ public class ServerClient implements IDatabaseCommands {
   }
 
   protected List<TransformerDefinition> directGetTransformers(OperationMetadata operationMetadata, int start, int pageSize) {
-    String url2 = operationMetadata.getUrl() + "/transformers?start=" + start + "&pageSize=" + pageSize;
-    HttpJsonRequest request = jsonRequestFactory.createHttpJsonRequest(new CreateHttpJsonRequestParams(this, url2, HttpMethods.GET, new RavenJObject(), operationMetadata.getCredentials(), convention));
-    request.addReplicationStatusHeaders(url, operationMetadata.getUrl(), replicationInformer, convention.getFailoverBehavior(), new HandleReplicationStatusChangesCallback());
+    String operationUrl = operationMetadata.getUrl() + "/transformers?start=" + start + "&pageSize=" + pageSize;
+    try (HttpJsonRequest request = jsonRequestFactory.createHttpJsonRequest(new CreateHttpJsonRequestParams(this, operationUrl, HttpMethods.GET, new RavenJObject(), operationMetadata.getCredentials(), convention))) {
+      request.addReplicationStatusHeaders(url, operationMetadata.getUrl(), replicationInformer, convention.getFailoverBehavior(), new HandleReplicationStatusChangesCallback());
 
-    try {
       RavenJToken result = request.readResponseJson();
       RavenJArray json = ((RavenJArray)result);
       return JsonConvert.deserializeObject(json, TransformerDefinition.class, "definition");
-    } catch (IOException e) {
-      throw new ServerClientException("unable to get transformers", e);
     }
   }
 
@@ -284,14 +258,26 @@ public class ServerClient implements IDatabaseCommands {
   }
 
   protected void directResetIndex(String name, OperationMetadata operationMetadata) {
-    HttpJsonRequest httpJsonRequest = jsonRequestFactory.createHttpJsonRequest(
-      new CreateHttpJsonRequestParams(this, operationMetadata.getUrl() + "/indexes/" + name, HttpMethods.RESET, new RavenJObject(), operationMetadata.getCredentials(), convention)
-      .addOperationHeaders(operationsHeaders))
-      .addReplicationStatusHeaders(url, operationMetadata.getUrl(), replicationInformer, convention.getFailoverBehavior(), new HandleReplicationStatusChangesCallback());
+    try (HttpJsonRequest httpJsonRequest = jsonRequestFactory.createHttpJsonRequest(
+      new CreateHttpJsonRequestParams(this, operationMetadata.getUrl() + "/indexes/" + name, HttpMethods.RESET, new RavenJObject(), operationMetadata.getCredentials(), convention))) {
+      httpJsonRequest.addOperationHeaders(operationsHeaders);
+      httpJsonRequest.addReplicationStatusHeaders(url, operationMetadata.getUrl(), replicationInformer, convention.getFailoverBehavior(), new HandleReplicationStatusChangesCallback());
 
-    httpJsonRequest.readResponseJson();
+      httpJsonRequest.readResponseJson();
+    }
   }
 
+  @Override
+  public String putIndex(String name, IndexDefinitionBuilder indexDef) {
+    return putIndex(name, indexDef.toIndexDefinition(convention));
+  }
+
+  @Override
+  public String putIndex(String name, IndexDefinitionBuilder indexDef, boolean overwrite) {
+    return putIndex(name, indexDef.toIndexDefinition(convention), overwrite);
+  }
+
+  @SuppressWarnings("boxing")
   @Override
   public boolean indexHasChanged(final String name, final IndexDefinition definition) {
     return executeWithReplication(HttpMethods.POST, new Function1<OperationMetadata, Boolean>() {
@@ -304,19 +290,15 @@ public class ServerClient implements IDatabaseCommands {
 
   protected Boolean directIndexHasChanged(String name, IndexDefinition definition, OperationMetadata operationMetadata) {
     String requestUri = RavenUrlExtensions.indexes(operationMetadata.getUrl(), name) + "?op=hasChanged";
-    HttpJsonRequest webRequest = jsonRequestFactory.createHttpJsonRequest(
-      new CreateHttpJsonRequestParams(this, requestUri, HttpMethods.POST, new RavenJObject(), operationMetadata.getCredentials(), convention)
-      .addOperationHeaders(operationsHeaders))
-      .addReplicationStatusHeaders(url, operationMetadata.getUrl(), replicationInformer, convention.getFailoverBehavior(), new HandleReplicationStatusChangesCallback());
+    try (HttpJsonRequest webRequest = jsonRequestFactory.createHttpJsonRequest(
+      new CreateHttpJsonRequestParams(this, requestUri, HttpMethods.POST, new RavenJObject(), operationMetadata.getCredentials(), convention))) {
+      webRequest.addOperationHeaders(operationsHeaders);
+      webRequest.addReplicationStatusHeaders(url, operationMetadata.getUrl(), replicationInformer, convention.getFailoverBehavior(), new HandleReplicationStatusChangesCallback());
 
-    try {
       webRequest.write(JsonConvert.serializeObject(definition)); //we don't use default converters
-        RavenJToken responseJson = webRequest.readResponseJson();
-        return responseJson.value(Boolean.class, "Changed");
-    } catch (Exception e) {
-      throw new ServerClientException(e);
+      RavenJToken responseJson = webRequest.readResponseJson();
+      return responseJson.value(Boolean.class, "Changed");
     }
-
   }
 
   @Override
@@ -336,901 +318,6 @@ public class ServerClient implements IDatabaseCommands {
   }
 
   @Override
-  public String putIndex(String name, IndexDefinitionBuilder indexDef) {
-    return putIndex(name, indexDef.toIndexDefinition(convention));
-  }
-
-  @Override
-  public String putIndex(String name, IndexDefinitionBuilder indexDef, boolean overwrite) {
-    return putIndex(name, indexDef.toIndexDefinition(convention), overwrite);
-  }
-
-  public String directPutIndex(String name, IndexDefinition definition, boolean overwrite, OperationMetadata operationMetadata) {
-    String requestUri = operationMetadata.getUrl() + "/indexes/" + UrlUtils.escapeUriString(name) + "?definition=yes";
-
-    HttpJsonRequest checkIndexExists = jsonRequestFactory.createHttpJsonRequest(
-      new CreateHttpJsonRequestParams(this, requestUri, HttpMethods.HEAD, new RavenJObject(), operationMetadata.getCredentials(), convention)
-      .addOperationHeaders(operationsHeaders))
-      .addReplicationStatusHeaders(url, operationMetadata.getUrl(), replicationInformer, convention.getFailoverBehavior(), new HandleReplicationStatusChangesCallback());
-
-    try {
-      // If the index doesn't exist this will throw a NotFound exception and continue with a PUT request
-      checkIndexExists.executeRequest();
-      if (!overwrite) {
-        throw new IllegalStateException("Cannot put index: " + name + ", index already exists");
-      }
-    } catch (HttpOperationException e) {
-      try {
-        Reference<RuntimeException> newException = new Reference<>();
-        if (shouldRethrowIndexException(e, newException)) {
-          if (newException.value != null) {
-            throw newException.value;
-          }
-          throw e;
-        }
-
-      } finally {
-        EntityUtils.consumeQuietly(e.getHttpResponse().getEntity());
-      }
-    } catch (Exception e) {
-      throw new ServerClientException(e);
-    }
-    HttpJsonRequest request = jsonRequestFactory.createHttpJsonRequest(
-      new CreateHttpJsonRequestParams(this, requestUri, HttpMethods.PUT, new RavenJObject(), operationMetadata.getCredentials(), convention)
-      .addOperationHeaders(operationsHeaders));
-
-    try {
-      request.write(JsonConvert.serializeObject(definition)); //we don't use default converters
-
-      try {
-        RavenJToken responseJson = request.readResponseJson();
-        return responseJson.value(String.class, "Index");
-      } catch (HttpOperationException e) {
-        try {
-          Reference<RuntimeException> newException = new Reference<>();
-          if (shouldRethrowIndexException(e, newException)) {
-            throw newException.value;
-          }
-          throw new ServerClientException(e);
-        } finally {
-          EntityUtils.consumeQuietly(e.getHttpResponse().getEntity());
-        }
-      }
-    } catch (Exception e) {
-      throw new ServerClientException(e);
-    }
-  }
-
-
-  public OperationCredentials getPrimaryCredentials() {
-    return credentialsThatShouldBeUsedOnlyInOperationsWithoutReplication;
-  }
-
-  /**
-   * @return the replicationInformer
-   */
-  public IDocumentStoreReplicationInformer getReplicationInformer() {
-    return replicationInformer;
-  }
-
-  /**
-   * @return the operationsHeaders
-   */
-  @Override
-  public Map<String, String> getOperationsHeaders() {
-    return operationsHeaders;
-  }
-
-  /**
-   * @param operationsHeaders the operationsHeaders to set
-   */
-  @Override
-  public void setOperationsHeaders(Map<String, String> operationsHeaders) {
-    this.operationsHeaders = operationsHeaders;
-  }
-
-  @Override
-  public JsonDocument get(final String key) throws ServerClientException {
-    ensureIsNotNullOrEmpty(key, "key");
-    return executeWithReplication(HttpMethods.GET, new Function1<OperationMetadata, JsonDocument>() {
-      @Override
-      public JsonDocument apply(OperationMetadata operationMetadata) {
-        return directGet(operationMetadata, key);
-      }
-    });
-  }
-
-  @Override
-  public List<JsonDocument> startsWith(final String keyPrefix, final String matches, final int start, final int pageSize) throws ServerClientException {
-    return startsWith(keyPrefix, matches, start, pageSize, false);
-  }
-
-  @Override
-  public List<JsonDocument> startsWith(final String keyPrefix, final String matches, final int start, final int pageSize, final boolean metadataOnly) throws ServerClientException {
-    return startsWith(keyPrefix, matches, start, pageSize, metadataOnly, null, null, null, null, null);
-  }
-
-  @Override
-  public List<JsonDocument> startsWith(final String keyPrefix, final String matches, final int start, final int pageSize, final boolean metadataOnly, final String exclude) throws ServerClientException {
-    return startsWith(keyPrefix, matches, start, pageSize, metadataOnly, exclude, null, null, null, null);
-  }
-
-  @Override
-  public List<JsonDocument> startsWith(final String keyPrefix, final String matches, final int start, final int pageSize, final boolean metadataOnly, final String exclude, final RavenPagingInformation pagingInformation) throws ServerClientException {
-    return startsWith(keyPrefix, matches, start, pageSize, metadataOnly, exclude, pagingInformation, null, null, null);
-  }
-
-  @Override
-  public List<JsonDocument> startsWith(final String keyPrefix, final String matches, final int start, final int pageSize, final boolean metadataOnly, final String exclude, final RavenPagingInformation pagingInformation, final String transformer, final Map<String, RavenJToken> transformerParameters) throws ServerClientException {
-    return startsWith(keyPrefix, matches, start, pageSize, metadataOnly, exclude, pagingInformation, transformer, transformerParameters, null);
-  }
-
-  @Override
-  public List<JsonDocument> startsWith(final String keyPrefix, final String matches, final int start, final int pageSize, final boolean metadataOnly, final String exclude, final RavenPagingInformation pagingInformation, final String transformer, final Map<String, RavenJToken> transformerParameters, final String skipAfter) throws ServerClientException {
-    ensureIsNotNullOrEmpty(keyPrefix, "keyPrefix");
-    return executeWithReplication(HttpMethods.GET, new Function1<OperationMetadata, List<JsonDocument>>() {
-      @Override
-      public List<JsonDocument> apply(OperationMetadata operationMetadata) {
-        return directStartsWith(operationMetadata, keyPrefix, matches, start, pageSize, metadataOnly, exclude, pagingInformation, transformer, transformerParameters, skipAfter);
-      }
-    });
-  }
-
-
-  public RavenJToken executeGetRequest(final String requestUrl) {
-    ensureIsNotNullOrEmpty(requestUrl, "url");
-    return executeWithReplication(HttpMethods.GET, new Function1<OperationMetadata, RavenJToken>() {
-      @Override
-      public RavenJToken apply(OperationMetadata operationMetadata) {
-        RavenJObject metadata = new RavenJObject();
-        HttpJsonRequest jsonRequest = jsonRequestFactory.createHttpJsonRequest(
-          new CreateHttpJsonRequestParams(ServerClient.this, operationMetadata.getUrl() + requestUrl, HttpMethods.GET, metadata, operationMetadata.getCredentials(), convention).
-          addOperationHeaders(operationsHeaders));
-        try {
-          return jsonRequest.readResponseJson();
-        } catch (Exception e) {
-          throw new ServerClientException(e.getMessage(), e);
-        }
-      }
-    });
-  }
-
-  public HttpJsonRequest createRequest(HttpMethods method, String requestUrl) {
-    return createRequest(method, requestUrl, false, false, null);
-  }
-
-  public HttpJsonRequest createRequest(HttpMethods method, String requestUrl, boolean disableRequestCompression,
-    boolean disableAuthentication, Long timeout) {
-    RavenJObject metadata = new RavenJObject();
-    CreateHttpJsonRequestParams createHttpJsonRequestParams = new CreateHttpJsonRequestParams(this, url + requestUrl, method, metadata, credentialsThatShouldBeUsedOnlyInOperationsWithoutReplication, convention, timeout)
-      .addOperationHeaders(operationsHeaders);
-    createHttpJsonRequestParams.setDisableRequestCompression(disableRequestCompression);
-    createHttpJsonRequestParams.setDisableAuthentication(disableAuthentication);
-    return jsonRequestFactory.createHttpJsonRequest(createHttpJsonRequestParams);
-  }
-
-  public HttpJsonRequest createReplicationAwareRequest(String currentServerUrl, String requestUrl, HttpMethods method) {
-    return createReplicationAwareRequest(currentServerUrl, requestUrl, method, false);
-  }
-
-  public HttpJsonRequest createReplicationAwareRequest(String currentServerUrl, String requestUrl, HttpMethods method, boolean disableRequestCompression) {
-    RavenJObject metadata = new RavenJObject();
-
-    CreateHttpJsonRequestParams createHttpJsonRequestParams =
-      new CreateHttpJsonRequestParams(this, url + requestUrl, method, metadata, credentialsThatShouldBeUsedOnlyInOperationsWithoutReplication, convention)
-    .addOperationHeaders(operationsHeaders);
-    createHttpJsonRequestParams.setDisableRequestCompression(disableRequestCompression);
-    return jsonRequestFactory.createHttpJsonRequest(createHttpJsonRequestParams).addReplicationStatusHeaders(url, currentServerUrl, replicationInformer, convention.getFailoverBehavior(), new HandleReplicationStatusChangesCallback());
-
-  }
-
-
-  public <S> S executeWithReplication(HttpMethods method, Function1<OperationMetadata, S> operation) throws ServerClientException {
-    int currentRequest = ++requestCount;
-    return replicationInformer.executeWithReplication(method, url, credentialsThatShouldBeUsedOnlyInOperationsWithoutReplication, currentRequest, readStripingBase, operation);
-  }
-
-  public boolean isInFailoverMode() {
-    return replicationInformer.getFailureCount(url).longValue() > 0;
-  }
-
-  public JsonDocument directGet(OperationMetadata operationMetadata, String key) {
-    return directGet(operationMetadata, key, null);
-  }
-
-  public JsonDocument directGet(OperationMetadata operationMetadata, String key, String transform) throws ServerClientException {
-    if (key.length() > 127) {
-      MultiLoadResult multiLoadResult = directGet(new String[] { key}, operationMetadata, new String[0], null, new HashMap<String, RavenJToken>(), false);
-      List<RavenJObject> results = multiLoadResult.getResults();
-      if (results.get(0) == null) {
-        return null;
-      }
-      return SerializationHelper.ravenJObjectToJsonDocument(results.get(0));
-    }
-
-    RavenJObject metadata = new RavenJObject();
-    String actualUrl = operationMetadata.getUrl() + "/docs?id=" + UrlUtils.escapeDataString(key);
-    if (StringUtils.isNotEmpty(transform)) {
-      actualUrl += "&transformer=" + UrlUtils.escapeDataString(transform);
-    }
-
-    HttpJsonRequest request = jsonRequestFactory.createHttpJsonRequest(
-      new CreateHttpJsonRequestParams(this, actualUrl, HttpMethods.GET, metadata, operationMetadata.getCredentials(), convention)
-      .addOperationHeaders(operationsHeaders))
-      .addReplicationStatusHeaders(url, operationMetadata.getUrl(), replicationInformer, convention.getFailoverBehavior(), new HandleReplicationStatusChangesCallback());
-    try {
-      RavenJToken responseJson = request.readResponseJson();
-
-      String docKey = request.getResponseHeaders().get(Constants.DOCUMENT_ID_FIELD_NAME);
-      if (docKey == null) {
-        docKey = key;
-      }
-      docKey = UrlUtils.unescapeDataString(docKey);
-      request.getResponseHeaders().remove(Constants.DOCUMENT_ID_FIELD_NAME);
-      return SerializationHelper.deserializeJsonDocument(docKey, responseJson, request.getResponseHeaders(), request.getResponseStatusCode());
-
-    } catch (HttpOperationException e) {
-      try {
-        if (e.getStatusCode() == HttpStatus.SC_NOT_FOUND) {
-          return null;
-        } else if (e.getStatusCode() == HttpStatus.SC_CONFLICT) {
-          ByteArrayOutputStream baos = new ByteArrayOutputStream();
-          try {
-            if (e.getHttpResponse().getEntity() != null) {
-              IOUtils.copy(e.getHttpResponse().getEntity().getContent(), baos);
-            }
-
-            RavenJObject conflictsDoc = (RavenJObject) RavenJToken.tryLoad(new ByteArrayInputStream(baos.toByteArray()));
-            Etag etag = HttpExtensions.getEtagHeader(e.getHttpResponse());
-
-            ConflictException concurrencyException = tryResolveConflictOrCreateConcurrencyException(key, conflictsDoc, etag);
-
-            if (concurrencyException == null) {
-              if (resolvingConflictRetries) {
-                throw new IllegalStateException("Encountered another conflict after already resolving a conflict. Conflict resultion cannot recurse.");
-              }
-
-              resolvingConflictRetries = true;
-              try {
-                return directGet(operationMetadata, key);
-              } finally {
-                resolvingConflictRetries = false;
-              }
-            }
-            throw concurrencyException;
-
-          } catch (IOException e1) {
-            throw new ServerClientException(e1);
-          }
-
-        }
-        throw new ServerClientException(e);
-      } finally {
-        EntityUtils.consumeQuietly(e.getHttpResponse().getEntity());
-      }
-    } catch (Exception e) {
-      throw new ServerClientException(e);
-    }
-  }
-
-  protected void handleReplicationStatusChanges(Map<String, String> headers, String primaryUrl, String currentUrl) {
-    if (!primaryUrl.equalsIgnoreCase(currentUrl)) {
-      String forceCheck = headers.get(Constants.RAVEN_FORCE_PRIMARY_SERVER_CHECK);
-      boolean shouldForceCheck;
-      if (StringUtils.isNotEmpty(forceCheck)) {
-        shouldForceCheck = Boolean.valueOf(forceCheck);
-        replicationInformer.forceCheck(primaryUrl, shouldForceCheck);
-      }
-    }
-  }
-
-  private ConflictException tryResolveConflictOrCreateConcurrencyException(String key, RavenJObject conflictsDoc, Etag etag) {
-    RavenJArray ravenJArray = conflictsDoc.value(RavenJArray.class, "Conflicts");
-    if (ravenJArray == null) {
-      throw new IllegalArgumentException("Could not get conflict ids from conflicted document, are you trying to resolve a conflict when using metadata-only?");
-    }
-
-    List<String> conflictIds = new ArrayList<>();
-    for (RavenJToken token: ravenJArray) {
-      conflictIds.add(token.value(String.class));
-    }
-
-    if (conflictListeners.length > 0 && resolvingConflict == false) {
-      resolvingConflict = true;
-      try {
-        MultiLoadResult multiLoadResult = get(conflictIds.toArray(new String[0]), null);
-
-        List<JsonDocument> results = new ArrayList<>();
-        for (RavenJObject r: multiLoadResult.getResults()) {
-          results.add(SerializationHelper.toJsonDocument(r));
-        }
-
-        for(IDocumentConflictListener conflictListener: conflictListeners) {
-          Reference<JsonDocument> resolvedDocument = new Reference<>();
-          if (conflictListener.tryResolveConflict(key, results, resolvedDocument)) {
-            put(key, etag, resolvedDocument.value.getDataAsJson(), resolvedDocument.value.getMetadata());
-            return null;
-          }
-        }
-      }
-      finally {
-        resolvingConflict = false;
-      }
-    }
-
-    ConflictException conflictException = new ConflictException("Conflict detected on " + key +
-      ", conflict must be resolved before the document will be accessible", true);
-    conflictException.setConflictedVersionIds(conflictIds.toArray(new String[0]));
-    conflictException.setEtag(etag);
-    return conflictException;
-  }
-
-  private static void ensureIsNotNullOrEmpty(String key, String argName) {
-    if (key == null || "".equals(key)) {
-      throw new IllegalArgumentException("Key cannot be null or empty " + argName);
-    }
-  }
-
-  @Override
-  public List<JsonDocument> getDocuments(int start, int pageSize) {
-    return getDocuments(start, pageSize, false);
-  }
-
-  @Override
-  public List<JsonDocument> getDocuments(final int start, final int pageSize, final boolean metadataOnly) {
-    return executeWithReplication(HttpMethods.GET, new Function1<OperationMetadata, List<JsonDocument>>() {
-      @Override
-      public List<JsonDocument> apply(OperationMetadata operationMetadata) {
-        String requestUri = operationMetadata.getUrl() + "/docs?start=" + start + "&pageSize=" + pageSize;
-        if (metadataOnly) {
-          requestUri += "&metadata-only=true";
-        }
-        try {
-          RavenJToken responseJson = jsonRequestFactory
-            .createHttpJsonRequest(new CreateHttpJsonRequestParams(ServerClient.this, requestUri, HttpMethods.GET,
-              new RavenJObject(), operationMetadata.getCredentials(), convention)
-            .addOperationHeaders(operationsHeaders)).readResponseJson();
-
-          return SerializationHelper.ravenJObjectsToJsonDocuments(responseJson);
-        } catch (Exception e) {
-          throw new ServerClientException(e);
-        }
-      }
-    });
-  }
-
-  @Override
-  public PutResult put(final String key, final Etag etag, final RavenJObject document, final RavenJObject metadata) throws ServerClientException {
-    return executeWithReplication(HttpMethods.PUT, new Function1<OperationMetadata, PutResult>() {
-      @Override
-      public PutResult apply(OperationMetadata operationMetadata) {
-        return directPut(metadata, key, etag, document, operationMetadata);
-      }
-    });
-  }
-
-  @SuppressWarnings("null")
-  protected List<JsonDocument> directStartsWith(OperationMetadata operationMetadata, String keyPrefix, String matches, int start, int pageSize, boolean metadataOnly, String exclude, RavenPagingInformation pagingInformation, String transformer, Map<String, RavenJToken> transformerParameters, String skipAfter) throws ServerClientException {
-    RavenJObject metadata = new RavenJObject();
-
-    int actualStart = start;
-    boolean nextPage = pagingInformation != null && pagingInformation.isForPreviousPage(start, pageSize);
-    if (nextPage) {
-      actualStart = pagingInformation.getNextPageStart();
-    }
-
-
-    String actualUrl = operationMetadata.getUrl() + String.format("/docs?startsWith=%s&matches=%s&exclude=%s&start=%d&pageSize=%d", UrlUtils.escapeDataString(keyPrefix),
-      UrlUtils.escapeDataString(StringUtils.trimToEmpty(matches)),
-      UrlUtils.escapeDataString(StringUtils.trimToEmpty(exclude)),actualStart, pageSize);
-    if (metadataOnly) {
-      actualUrl += "&metadata-only=true";
-    }
-
-    if (StringUtils.isNotEmpty(skipAfter)) {
-      actualUrl += "&skipAfter=" + UrlUtils.escapeDataString(skipAfter);
-    }
-
-    if (StringUtils.isNotEmpty(transformer)) {
-      actualUrl += "&transformer=" + transformer;
-      if (transformerParameters != null) {
-        for (Map.Entry<String, RavenJToken> entry : transformerParameters.entrySet()) {
-          actualUrl += String.format("&tp-%s=%s", entry.getKey(), entry.getValue());
-        }
-      }
-    }
-
-    if (nextPage) {
-      actualUrl += "&next-page=true";
-    }
-
-    HttpJsonRequest jsonRequest = jsonRequestFactory.createHttpJsonRequest(
-      new CreateHttpJsonRequestParams(this, actualUrl, HttpMethods.GET, metadata, operationMetadata.getCredentials(), convention).
-      addOperationHeaders(operationsHeaders)).
-      addReplicationStatusHeaders(url, operationMetadata.getUrl(), replicationInformer, convention.getFailoverBehavior(), new HandleReplicationStatusChangesCallback());
-
-    try {
-      RavenJToken responseJson = jsonRequest.readResponseJson();
-      return SerializationHelper.ravenJObjectsToJsonDocuments(responseJson);
-    } catch (HttpOperationException e) {
-      try {
-        if (e.getStatusCode() == HttpStatus.SC_CONFLICT) {
-          throw fetchConcurrencyException(e);
-        }
-        throw e;
-      } finally {
-        EntityUtils.consumeQuietly(e.getHttpResponse().getEntity());
-      }
-    } catch (Exception e) {
-      throw new ServerClientException(e);
-    }
-  }
-
-  protected PutResult directPut(RavenJObject metadata, String key, Etag etag, RavenJObject document, OperationMetadata operationMetadata) throws ServerClientException {
-    if (metadata == null) {
-      metadata = new RavenJObject();
-    }
-    HttpMethods method = StringUtils.isNotEmpty(key) ? HttpMethods.PUT : HttpMethods.POST;
-    if (etag != null) {
-      metadata.set(Constants.METADATA_ETAG_FIELD, new RavenJValue(etag.toString()));
-    }
-    if (key != null) {
-      key = UrlUtils.escapeUriString(key);
-    }
-
-    String requestUrl = operationMetadata.getUrl() + "/docs/" + ((key != null) ? key : "");
-
-    HttpJsonRequest jsonRequest = jsonRequestFactory.createHttpJsonRequest(
-      new CreateHttpJsonRequestParams(this, requestUrl, method, metadata, operationMetadata.getCredentials(), convention)
-      .addOperationHeaders(operationsHeaders))
-      .addReplicationStatusHeaders(url, operationMetadata.getUrl(), replicationInformer, convention.getFailoverBehavior(), new HandleReplicationStatusChangesCallback());
-
-    try {
-      jsonRequest.write(document.toString());
-      RavenJObject responseJson = (RavenJObject) jsonRequest.readResponseJson();
-
-      if (responseJson == null) {
-        throw new IllegalStateException("Got null response from the server after doing a put on " + key + ", something is very wrong. Probably a garbled response.");
-      }
-
-      return new PutResult(responseJson.value(String.class, "Key"), responseJson.value(Etag.class, "ETag"));
-    } catch (Exception e) {
-      if (e instanceof HttpOperationException) {
-        try {
-          HttpOperationException httpException = (HttpOperationException) e;
-          if (httpException.getStatusCode() == HttpStatus.SC_CONFLICT) {
-            throw fetchConcurrencyException(httpException);
-          }
-        } finally {
-          EntityUtils.consumeQuietly(((HttpOperationException)e).getHttpResponse().getEntity());
-        }
-      }
-      throw new ServerClientException(e);
-    }
-  }
-
-  @Override
-  public void delete(final String key, final Etag etag) throws ServerClientException {
-    ensureIsNotNullOrEmpty(key, "key");
-    executeWithReplication(HttpMethods.DELETE, new Function1<OperationMetadata, Void>() {
-      @Override
-      public Void apply(OperationMetadata operationMetadata) {
-        directDelete(operationMetadata, key, etag);
-        return null;
-      }
-    });
-  }
-
-  @Override
-  @Deprecated
-  public void putAttachment(final String key, final Etag etag, final InputStream data, final RavenJObject metadata) {
-    executeWithReplication(HttpMethods.PUT, new Function1<OperationMetadata, Void>() {
-      @Override
-      public Void apply(OperationMetadata operationMetadata) {
-        directPutAttachment(key, metadata, etag, data, operationMetadata);
-        return null;
-      }
-    });
-  }
-
-  @Override
-  @Deprecated
-  public void updateAttachmentMetadata(final String key, final Etag etag, final RavenJObject metadata) {
-    executeWithReplication(HttpMethods.POST,new Function1<OperationMetadata, Void>() {
-      @Override
-      public Void apply(OperationMetadata operationMetadata) {
-        directUpdateAttachmentMetadata(key, metadata, etag, operationMetadata);
-        return null;
-      }
-    });
-  }
-
-  @Deprecated
-  protected void directUpdateAttachmentMetadata(String key, RavenJObject metadata, Etag etag, OperationMetadata operationMetadata) {
-    if (etag != null) {
-      metadata.set(Constants.METADATA_ETAG_FIELD, new RavenJValue(etag.toString()));
-    }
-
-    HttpJsonRequest jsonRequest = jsonRequestFactory.createHttpJsonRequest(
-      new CreateHttpJsonRequestParams(this, operationMetadata.getUrl() + "/static/" + key, HttpMethods.POST, metadata, operationMetadata.getCredentials(), convention))
-      .addReplicationStatusHeaders(url, operationMetadata.getUrl(), replicationInformer, convention.getFailoverBehavior(), new HandleReplicationStatusChangesCallback());
-
-    try {
-      jsonRequest.executeRequest();
-    } catch (HttpOperationException e) {
-      try {
-        if (e.getStatusCode() != HttpStatus.SC_INTERNAL_SERVER_ERROR) {
-          throw new ServerClientException(e);
-        }
-
-        ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        try {
-          if (e.getHttpResponse().getEntity() != null) {
-            IOUtils.copy(e.getHttpResponse().getEntity().getContent(), baos);
-          }
-        } catch (IOException e1) {
-          throw new ServerClientException(e1);
-        }
-        throw new ServerClientException("Internal server error: " + baos.toString());
-      } finally {
-        EntityUtils.consumeQuietly(e.getHttpResponse().getEntity());
-      }
-    } catch (Exception e) {
-      throw new ServerClientException(e);
-    }
-  }
-
-  @Deprecated
-  protected void directPutAttachment(String key, RavenJObject metadata, Etag etag, InputStream data, OperationMetadata operationMetadata) {
-    if (etag != null) {
-      metadata.set(Constants.METADATA_ETAG_FIELD, new RavenJValue(etag.toString()));
-    }
-
-    HttpJsonRequest jsonRequest = jsonRequestFactory.createHttpJsonRequest(
-      new CreateHttpJsonRequestParams(this, operationMetadata.getUrl() + "/static/" + key, HttpMethods.PUT, metadata, operationMetadata.getCredentials(), convention))
-      .addReplicationStatusHeaders(url, operationMetadata.getUrl(), replicationInformer, convention.getFailoverBehavior(), new HandleReplicationStatusChangesCallback());
-    try {
-      jsonRequest.write(data);
-      jsonRequest.executeRequest();
-    } catch (HttpOperationException e) {
-      if (e.getStatusCode() != HttpStatus.SC_INTERNAL_SERVER_ERROR) {
-        throw e;
-      }
-
-      ByteArrayOutputStream baos = new ByteArrayOutputStream();
-      try {
-        if (e.getHttpResponse().getEntity() != null) {
-          IOUtils.copy(e.getHttpResponse().getEntity().getContent(), baos);
-        }
-      } catch (IOException e1) {
-        throw new ServerClientException(e1);
-      } finally {
-        EntityUtils.consumeQuietly(e.getHttpResponse().getEntity());
-      }
-      throw new ServerClientException("Internal server error: " + baos.toString());
-    } catch (Exception e) {
-      throw new ServerClientException(e);
-    }
-  }
-
-  @Override
-  @Deprecated
-  public List<Attachment> getAttachmentHeadersStartingWith(final String idPrefix, final int start, final int pageSize) {
-    return executeWithReplication(HttpMethods.GET, new Function1<OperationMetadata, List<Attachment>>() {
-
-      @Override
-      public List<Attachment> apply(OperationMetadata operationMetadata) {
-        return directGetAttachmentHeadersStartingWith(HttpMethods.GET, idPrefix, start, pageSize, operationMetadata);
-      }
-    });
-  }
-
-  @Deprecated
-  protected List<Attachment> directGetAttachmentHeadersStartingWith(HttpMethods method, String idPrefix, int start, int pageSize, OperationMetadata operationMetadata) {
-    HttpJsonRequest jsonRequest = jsonRequestFactory.createHttpJsonRequest(
-      new CreateHttpJsonRequestParams(this, operationMetadata.getUrl() + "/static/?startsWith=" + idPrefix + "&start=" + start + "&pageSize=" + pageSize, method, new RavenJObject(), operationMetadata.getCredentials(),
-        convention))
-        .addReplicationStatusHeaders(url, operationMetadata.getUrl(), replicationInformer, convention.getFailoverBehavior(), new HandleReplicationStatusChangesCallback());
-    try {
-      RavenJToken responseJson = jsonRequest.readResponseJson();
-      // this method not-exists in .net version
-      return SerializationHelper.deserializeAttachements(responseJson, false);
-
-    } catch (Exception e) {
-      throw new ServerClientException(e);
-    }
-  }
-
-  @Override
-  @Deprecated
-  public Attachment getAttachment(final String key) {
-    return executeWithReplication(HttpMethods.GET, new Function1<OperationMetadata, Attachment>() {
-      @Override
-      public Attachment apply(OperationMetadata operationMetadata) {
-        return directGetAttachment(HttpMethods.GET, key, operationMetadata);
-      }
-    });
-  }
-
-  @Override
-  @Deprecated
-  public Attachment headAttachment(final String key) {
-    return executeWithReplication(HttpMethods.HEAD, new Function1<OperationMetadata, Attachment>() {
-      @Override
-      public Attachment apply(OperationMetadata operationMetadata) {
-        return directGetAttachment(HttpMethods.HEAD, key, operationMetadata);
-      }
-    });
-  }
-
-  @Deprecated
-  protected Attachment directGetAttachment(HttpMethods method, String key, OperationMetadata operationMetadata) {
-    HttpJsonRequest webRequest = jsonRequestFactory.createHttpJsonRequest(
-      new CreateHttpJsonRequestParams(this, operationMetadata.getUrl() + "/static/" + key, method, new RavenJObject(), operationMetadata.getCredentials(), convention))
-      .addReplicationStatusHeaders(url, operationMetadata.getUrl(), replicationInformer, convention.getFailoverBehavior(), new HandleReplicationStatusChangesCallback());
-
-    byte[] data = null;
-    boolean canGetData;
-    try {
-      int len;
-      if (HttpMethods.GET == method) {
-        data = webRequest.readResponseBytes();
-        len = data.length;
-        canGetData = true;
-      } else {
-        webRequest.executeRequest();
-        len = Integer.parseInt(webRequest.getResponseHeaders().get("Content-Length"));
-        canGetData = false;
-      }
-      handleReplicationStatusChanges(webRequest.getResponseHeaders(), url, operationMetadata.getUrl());
-
-      return new Attachment(canGetData, data, len, MetadataExtensions.filterHeadersAttachment(webRequest.getResponseHeaders()),
-        HttpExtensions.getEtagHeader(webRequest), null);
-
-    } catch (HttpOperationException e) {
-      try {
-        if (e.getStatusCode() == HttpStatus.SC_CONFLICT) {
-          ByteArrayOutputStream baos = new ByteArrayOutputStream();
-          try {
-            if (e.getHttpResponse().getEntity() != null) {
-              IOUtils.copy(e.getHttpResponse().getEntity().getContent(), baos);
-            }
-          } catch (IOException e1) {
-            throw new ServerClientException(e1);
-          } finally {
-            EntityUtils.consumeQuietly(e.getHttpResponse().getEntity());
-          }
-
-          RavenJObject conflictsDoc = (RavenJObject) RavenJToken.tryLoad(new ByteArrayInputStream(baos.toByteArray()));
-          List<String> conflictIds = conflictsDoc.value(RavenJArray.class, "Conflicts").values(String.class);
-
-          ConflictException ex = new ConflictException("Conflict detected on " + key + ", conflict must be resolved before the attachment will be accessible", true);
-          ex.setConflictedVersionIds(conflictIds.toArray(new String[0]));
-          ex.setEtag(HttpExtensions.getEtagHeader(e.getHttpResponse()));
-          throw ex;
-        } else if (e.getStatusCode() == HttpStatus.SC_NOT_FOUND) {
-          return null;
-        }
-        throw new ServerClientException(e);
-      } finally {
-        EntityUtils.consumeQuietly(e.getHttpResponse().getEntity());
-      }
-
-    } catch (Exception e) {
-      throw new ServerClientException(e);
-    }
-  }
-
-  @Override
-  @Deprecated
-  public void deleteAttachment(final String key, final Etag etag) {
-    executeWithReplication(HttpMethods.DELETE, new Function1<OperationMetadata, Void>() {
-      @Override
-      public Void apply(OperationMetadata operationMetadata) {
-        directDeleteAttachment(key, etag, operationMetadata);
-        return null;
-      }
-    });
-  }
-
-  @Override
-  @Deprecated
-  public AttachmentInformation[] getAttachments(final int start, final Etag startEtag, final int pageSize) {
-    return executeWithReplication(HttpMethods.GET, new Function1<OperationMetadata, AttachmentInformation[]>() {
-      @Override
-      public AttachmentInformation[] apply(OperationMetadata operationMetadata) {
-        return directGetAttachments(start, startEtag, pageSize, operationMetadata);
-      }
-    });
-  }
-
-  @Deprecated
-  protected AttachmentInformation[] directGetAttachments(int start, Etag startEtag, int pageSize,
-    OperationMetadata operationMetadata) {
-    HttpJsonRequest webRequest = jsonRequestFactory.createHttpJsonRequest(
-      new CreateHttpJsonRequestParams(this, operationMetadata.getUrl() + "/static/?pageSize=" + pageSize + "&etag=" + startEtag + "&start=" + start, HttpMethods.GET, new RavenJObject(), operationMetadata.getCredentials(), convention))
-      .addReplicationStatusHeaders(url, operationMetadata.getUrl(), replicationInformer, convention.getFailoverBehavior(), new HandleReplicationStatusChangesCallback());
-
-    try {
-      RavenJArray json = (RavenJArray)webRequest.readResponseJson();
-      return JsonExtensions.createDefaultJsonSerializer().readValue(json.toString(), AttachmentInformation[].class);
-    } catch (Exception e) {
-      throw new ServerClientException(e);
-    }
-  }
-
-  @Deprecated
-  protected void directDeleteAttachment(String key, Etag etag, OperationMetadata operationMetadata) {
-    RavenJObject metadata = new RavenJObject();
-    if (etag != null) {
-      metadata.add(Constants.METADATA_ETAG_FIELD, RavenJToken.fromObject(etag.toString()));
-    }
-    HttpJsonRequest jsonRequest = jsonRequestFactory.createHttpJsonRequest(
-      new CreateHttpJsonRequestParams(this, operationMetadata.getUrl() + "/static/" + key, HttpMethods.DELETE, metadata, operationMetadata.getCredentials(), convention))
-      .addReplicationStatusHeaders(url, operationMetadata.getUrl(), replicationInformer, convention.getFailoverBehavior(), new HandleReplicationStatusChangesCallback());
-    try {
-      jsonRequest.executeRequest();
-    } catch (Exception e) {
-      throw new ServerClientException(e);
-    }
-  }
-
-  @Override
-  public TransformerDefinition getTransformer(final String name) {
-    ensureIsNotNullOrEmpty(name, "name");
-    return executeWithReplication(HttpMethods.GET, new Function1<OperationMetadata, TransformerDefinition>() {
-      @Override
-      public TransformerDefinition apply(OperationMetadata operationMetadata) {
-        return directGetTransformer(name, operationMetadata);
-      }
-    });
-  }
-
-  @Override
-  public void deleteTransformer(final String name) {
-    ensureIsNotNullOrEmpty(name, "name");
-    executeWithReplication(HttpMethods.DELETE, new Function1<OperationMetadata, Void>() {
-      @Override
-      public Void apply(OperationMetadata operationMetadata) {
-        directDeleteTransformer(name, operationMetadata);
-        return null;
-      }
-    });
-  }
-  protected void directDeleteTransformer(final String name, OperationMetadata operationMetadata) {
-    HttpJsonRequest request = jsonRequestFactory.createHttpJsonRequest(
-      new CreateHttpJsonRequestParams(this, operationMetadata.getUrl() + "/transformers/" + name, HttpMethods.DELETE, new RavenJObject(), operationMetadata.getCredentials(), convention)
-      .addOperationHeaders(operationsHeaders))
-      .addReplicationStatusHeaders(url, operationMetadata.getUrl(), replicationInformer, convention.getFailoverBehavior(), new HandleReplicationStatusChangesCallback());
-
-    request.executeRequest();
-  }
-
-  protected TransformerDefinition directGetTransformer(final String transformerName, final OperationMetadata operationMetadata) {
-    HttpJsonRequest httpJsonRequest = jsonRequestFactory.createHttpJsonRequest(
-      new CreateHttpJsonRequestParams(this, operationMetadata.getUrl() + "/transformers/" + transformerName, HttpMethods.GET, new RavenJObject(), operationMetadata.getCredentials(), convention)
-      .addOperationHeaders(operationsHeaders))
-      .addReplicationStatusHeaders(url, operationMetadata.getUrl(), replicationInformer, convention.getFailoverBehavior(), new HandleReplicationStatusChangesCallback());
-
-    try {
-      RavenJToken transformerDef;
-      try {
-        transformerDef = httpJsonRequest.readResponseJson();
-      } catch (HttpOperationException e) {
-        try {
-          if (e.getStatusCode() == HttpStatus.SC_NOT_FOUND) {
-            return null;
-          }
-          throw e;
-        } finally {
-          EntityUtils.consumeQuietly(e.getHttpResponse().getEntity());
-        }
-      }
-
-      RavenJObject value = transformerDef.value(RavenJObject.class, "Transformer");
-      return convention.createSerializer().readValue(value.toString(), TransformerDefinition.class);
-    } catch (IOException e){
-      throw new ServerClientException("unable to get transformer:" + transformerName, e);
-    }
-  }
-
-
-
-  @Override
-  public IndexDefinition getIndex(final String name) {
-    ensureIsNotNullOrEmpty(name, "name");
-    return executeWithReplication(HttpMethods.GET, new Function1<OperationMetadata, IndexDefinition>() {
-      @Override
-      public IndexDefinition apply(OperationMetadata operationMetadata) {
-        return directGetIndex(name, operationMetadata);
-      }
-    });
-  }
-
-
-  protected IndexDefinition directGetIndex(String indexName, OperationMetadata operationMetadata) {
-    HttpJsonRequest httpJsonRequest = jsonRequestFactory.createHttpJsonRequest(
-      new CreateHttpJsonRequestParams(this, operationMetadata.getUrl() + "/indexes/" + indexName + "?definition=yes", HttpMethods.GET, new RavenJObject(), operationMetadata.getCredentials(), convention)
-      .addOperationHeaders(operationsHeaders))
-      .addReplicationStatusHeaders(url, operationMetadata.getUrl(), replicationInformer, convention.getFailoverBehavior(), new HandleReplicationStatusChangesCallback());
-
-    RavenJToken indexDef;
-    try {
-      indexDef = httpJsonRequest.readResponseJson();
-    } catch (HttpOperationException e) {
-      try {
-        if (e.getStatusCode() == HttpStatus.SC_NOT_FOUND) {
-          return null;
-        }
-        throw e;
-      } finally {
-        EntityUtils.consumeQuietly(e.getHttpResponse().getEntity());
-      }
-    } catch (Exception e) {
-      throw new ServerClientException(e);
-    }
-    RavenJObject value = indexDef.value(RavenJObject.class, "Index");
-    try {
-      return convention.createSerializer().readValue(value.toString(), IndexDefinition.class);
-    } catch (Exception e) {
-      throw new ServerClientException(e);
-    }
-  }
-
-  protected void directDelete(OperationMetadata operationMetadata, String key, Etag etag) throws ServerClientException {
-    RavenJObject metadata = new RavenJObject();
-    if (etag != null) {
-      metadata.add("ETag", RavenJToken.fromObject(etag.toString()));
-    }
-    HttpJsonRequest jsonRequest = jsonRequestFactory.createHttpJsonRequest(
-      new CreateHttpJsonRequestParams(this, operationMetadata.getUrl() + "/docs/" + UrlUtils.escapeDataString(key), HttpMethods.DELETE, metadata, operationMetadata.getCredentials(), convention).addOperationHeaders(operationsHeaders))
-      .addReplicationStatusHeaders(url, operationMetadata.getUrl(), replicationInformer, convention.getFailoverBehavior(), new HandleReplicationStatusChangesCallback());
-    try {
-      jsonRequest.executeRequest();
-    } catch (HttpOperationException e) {
-      try {
-        if (HttpStatus.SC_CONFLICT == e.getStatusCode()) {
-          throw fetchConcurrencyException(e);
-        }
-        throw e;
-      } finally {
-        EntityUtils.consumeQuietly(e.getHttpResponse().getEntity());
-      }
-    } catch (Exception e) {
-      throw new ServerClientException(e);
-    }
-
-  }
-
-  public class HandleReplicationStatusChangesCallback implements Action3<Map<String, String>, String, String> {
-    @Override
-    public void apply(Map<String, String> headers, String primaryUrl, String currentUrl) {
-      handleReplicationStatusChanges(headers, primaryUrl, currentUrl);
-    }
-  }
-
-  protected ConcurrencyException fetchConcurrencyException(HttpOperationException e) {
-
-    ByteArrayOutputStream baos = new ByteArrayOutputStream();
-    try {
-      if (e.getHttpResponse().getEntity() != null) {
-        IOUtils.copy(e.getHttpResponse().getEntity().getContent(), baos);
-      }
-    } catch (IOException e1) {
-      throw new ServerClientException(e1);
-    } finally {
-      EntityUtils.consumeQuietly(e.getHttpResponse().getEntity());
-    }
-
-    RavenJToken ravenJToken = RavenJToken.tryLoad(new ByteArrayInputStream(baos.toByteArray()));
-
-    return new ConcurrencyException(ravenJToken.value(Etag.class, "ExpectedETag"), ravenJToken.value(Etag.class, "ActualETag"), ravenJToken.value(String.class, "Error"), e);
-
-  }
-
-
-
-  @Override
   public String putTransformer(final String name, final TransformerDefinition indexDef) {
     ensureIsNotNullOrEmpty(name, "name");
     return executeWithReplication(HttpMethods.PUT, new Function1<OperationMetadata, String>() {
@@ -1241,394 +328,129 @@ public class ServerClient implements IDatabaseCommands {
     });
   }
 
+  public String directPutIndex(String name, IndexDefinition definition, boolean overwrite, OperationMetadata operationMetadata) {
+    String requestUri = operationMetadata.getUrl() + "/indexes/" + UrlUtils.escapeUriString(name) + "?definition=yes";
 
+    try (HttpJsonRequest webRequest = jsonRequestFactory.createHttpJsonRequest(
+      new CreateHttpJsonRequestParams(this, requestUri, HttpMethods.HEAD, new RavenJObject(), operationMetadata.getCredentials(), convention)
+      .addOperationHeaders(operationsHeaders))
+      .addReplicationStatusHeaders(url, operationMetadata.getUrl(), replicationInformer, convention.getFailoverBehavior(), new HandleReplicationStatusChangesCallback())) {
+
+      try {
+        // If the index doesn't exist this will throw a NotFound exception and continue with a PUT request
+        webRequest.executeRequest();
+        if (!overwrite) {
+          throw new IllegalStateException("Cannot put index: " + name + ", index already exists");
+        }
+      } catch (ErrorResponseException e) {
+        if (e.getStatusCode() != HttpStatus.SC_NOT_FOUND) {
+          throw e;
+        }
+      }
+    }
+    try (HttpJsonRequest request = jsonRequestFactory.createHttpJsonRequest(
+      new CreateHttpJsonRequestParams(this, requestUri, HttpMethods.PUT, new RavenJObject(), operationMetadata.getCredentials(), convention)
+      .addOperationHeaders(operationsHeaders))) {
+
+      ErrorResponseException responseException;
+      try {
+        request.write(JsonConvert.serializeObject(definition)); //we don't use default converters
+        RavenJToken responseJson = request.readResponseJson();
+        return responseJson.value(String.class, "Index");
+      } catch (ErrorResponseException e) {
+        if (e.getStatusCode() != HttpStatus.SC_BAD_REQUEST) {
+          throw e;
+        }
+        responseException = e;
+      }
+
+      IndexErrorObjectProto error = ExceptionExtensions.tryReadErrorResponseObject(IndexErrorObjectProto.class, responseException);
+      if (error == null) {
+        throw responseException;
+      }
+      IndexCompilationException compilationException = new IndexCompilationException(error.getMessage());
+      compilationException.setIndexDefinitionProperty(error.getIndexDefinitionProperty());
+      compilationException.setProblematicText(error.getProblematicText());
+      throw compilationException;
+    }
+  }
+
+  public static class IndexErrorObjectProto {
+    private String error;
+    private String message;
+    private String indexDefinitionProperty;
+    private String problematicText;
+
+    public String getError() {
+      return error;
+    }
+    public void setError(String error) {
+      this.error = error;
+    }
+    public String getMessage() {
+      return message;
+    }
+    public void setMessage(String message) {
+      this.message = message;
+    }
+    public String getIndexDefinitionProperty() {
+      return indexDefinitionProperty;
+    }
+    public void setIndexDefinitionProperty(String indexDefinitionProperty) {
+      this.indexDefinitionProperty = indexDefinitionProperty;
+    }
+    public String getProblematicText() {
+      return problematicText;
+    }
+    public void setProblematicText(String problematicText) {
+      this.problematicText = problematicText;
+    }
+  }
 
   public String directPutTransformer(String name, OperationMetadata operationMetadata, TransformerDefinition definition) {
     String requestUri = operationMetadata.getUrl() + "/transformers/" + name;
 
-    HttpJsonRequest request = jsonRequestFactory.createHttpJsonRequest(
+    try(HttpJsonRequest request = jsonRequestFactory.createHttpJsonRequest(
       new CreateHttpJsonRequestParams(this, requestUri, HttpMethods.PUT, new RavenJObject(), operationMetadata.getCredentials(), convention)
-      .addOperationHeaders(operationsHeaders));
+      .addOperationHeaders(operationsHeaders))) {
 
-    try {
-      request.write(JsonConvert.serializeObject(definition));
-
-
-      RavenJObject responseJson = (RavenJObject) request.readResponseJson();
-      return responseJson.value(String.class, "Transformer");
-    } catch (HttpOperationException e) {
+      ErrorResponseException responseException;
       try {
-
-        Reference<RuntimeException> newException = new Reference<>();
-        if (shouldRethrowIndexException(e, newException)) {
-          if (newException.value != null) {
-            throw new TransformCompilationException(newException.value.getMessage(), newException.value);
-          }
+        request.write(JsonConvert.serializeObject(definition));
+        RavenJObject responseJson = (RavenJObject) request.readResponseJson();
+        return responseJson.value(String.class, "Transformer");
+      } catch (BadRequestException e) {
+        throw new TransformCompilationException(e);
+      } catch (ErrorResponseException e) {
+        if (e.getStatusCode() != HttpStatus.SC_BAD_REQUEST) {
+          throw e;
         }
-        throw e;
-
-      } finally {
-        EntityUtils.consumeQuietly(e.getHttpResponse().getEntity());
+        responseException = e;
       }
 
-    } catch (Exception e) {
-      throw new ServerClientException(e);
-    }
-  }
-
-  private static boolean shouldRethrowIndexException(HttpOperationException e, Reference<RuntimeException> newException) {
-    newException.value = null;
-
-    if (e.getStatusCode() == HttpStatus.SC_INTERNAL_SERVER_ERROR) {
-
-      ByteArrayOutputStream baos = new ByteArrayOutputStream();
-      if (e.getHttpResponse().getEntity() != null) {
-        try {
-          IOUtils.copy(e.getHttpResponse().getEntity().getContent(), baos);
-        } catch (Exception ee) {
-          //ignore
-        }
-      }
-      RavenJObject error = RavenJObject.parse(baos.toString());
+      ErrorObjectProtoTransformer error = ExceptionExtensions.tryReadErrorResponseObject(ErrorObjectProtoTransformer.class, responseException);
       if (error == null) {
-        return true;
+        throw responseException;
       }
-      IndexCompilationException compilationException = new IndexCompilationException(error.value(String.class, "Message"));
-      compilationException.setIndexDefinitionProperty(error.value(String.class, "IndexDefinitionProperty"));
-      compilationException.setProblematicText(error.value(String.class, "ProblematicText"));
-      newException.value = compilationException;
-      return true;
-
+      throw new TransformCompilationException(error.getMessage());
     }
-
-    return e.getStatusCode() != HttpStatus.SC_NOT_FOUND;
-
   }
 
-  @Override
-  public QueryResult query(String index, IndexQuery query) {
-    return query(index, query, null, false, false);
-  }
+  public static class ErrorObjectProtoTransformer {
+    private String error;
+    private String message;
 
-  @Override
-  public QueryResult query(String index, IndexQuery query, String[] includes) {
-    return query(index, query, includes, false, false);
-  }
-
-  @Override
-  public QueryResult query(String index, IndexQuery query, String[] includes, boolean metadataOnly) {
-    return query(index, query, includes, metadataOnly, false);
-  }
-
-  @Override
-  public QueryResult query(final String index, final IndexQuery query, final String[] includes, final boolean metadataOnly, final boolean indexEntriesOnly) {
-    ensureIsNotNullOrEmpty(index, "index");
-    final HttpMethods method = query.getQuery() == null || query.getQuery().length() <= convention.getMaxLengthOfQueryUsingGetUrl()
-        ? HttpMethods.GET : HttpMethods.POST;
-
-    if (HttpMethods.POST.equals(method)) {
-      return executeWithReplication(method, new Function1<OperationMetadata, QueryResult>() {
-        @Override
-        public QueryResult apply(OperationMetadata operationMetadata) {
-          return directQueryAsPost(index, query, operationMetadata, includes);
-        }
-      });
+    public String getError() {
+      return error;
     }
-    return executeWithReplication(method, new Function1<OperationMetadata, QueryResult>() {
-      @Override
-      public QueryResult apply(OperationMetadata operationMetadata) {
-        return directQueryAsGet(index, query, operationMetadata, includes, metadataOnly, indexEntriesOnly);
-      }
-    });
-  }
-
-  @Override
-  public RavenJObjectIterator streamQuery(String index, IndexQuery query, Reference<QueryHeaderInformation> queryHeaderInfo) {
-
-    HttpMethods method = query.getQuery() != null && query.getQuery().length() > convention.getMaxLengthOfQueryUsingGetUrl() ? HttpMethods.POST : HttpMethods.GET;
-
-    ensureIsNotNullOrEmpty(index, "index");
-    String path = query.getIndexQueryUrl(url, index, "streams/query", false, HttpMethods.GET.equals(method));
-
-    if (HttpMethods.POST.equals(method)) {
-      path += "&postQuery=true";
+    public void setError(String error) {
+      this.error = error;
     }
-
-    HttpJsonRequest request = jsonRequestFactory.createHttpJsonRequest(
-      new CreateHttpJsonRequestParams(this, path, method, new RavenJObject(), credentialsThatShouldBeUsedOnlyInOperationsWithoutReplication, convention)
-      .addOperationHeaders(operationsHeaders))
-      .addReplicationStatusHeaders(getUrl(), url, replicationInformer,
-        convention.getFailoverBehavior(),
-        new HandleReplicationStatusChangesCallback());
-    request.removeAuthorizationHeader();
-
-    String token = getSingleAuthToken();
-
-    try {
-      token = validateThatWeCanUseAuthenticateTokens(token);
-    } catch (Exception e) {
-      throw new IllegalStateException("Could not authenticate token for query streaming, if you are using ravendb in IIS make sure you have Anonymous Authentication enabled in the IIS configuration", e);
+    public String getMessage() {
+      return message;
     }
-    request.addOperationHeader("Single-Use-Auth-Token", token);
-
-    if (HttpMethods.POST.equals(method)) {
-      request.write(query.getQuery());
-    }
-    CloseableHttpResponse webResponse = request.rawExecuteRequest();
-
-
-    QueryHeaderInformation queryHeaderInformation = new QueryHeaderInformation();
-    Map<String, String> headers = HttpJsonRequest.extractHeaders(webResponse.getAllHeaders());
-    queryHeaderInformation.setIndex(headers.get("Raven-Index"));
-    NetDateFormat sdf = new NetDateFormat();
-    try {
-      queryHeaderInformation.setIndexTimestamp(sdf.parse(headers.get("Raven-Index-Timestamp")));
-    } catch (ParseException e) {
-      throw new RuntimeException(e);
-    }
-
-    queryHeaderInformation.setIndexEtag(Etag.parse(headers.get("Raven-Index-Etag")));
-    queryHeaderInformation.setResultEtag(Etag.parse(headers.get("Raven-Result-Etag")));
-    queryHeaderInformation.setStale(Boolean.valueOf(headers.get("Raven-Is-Stale")));
-    queryHeaderInformation.setTotalResults(Integer.valueOf(headers.get("Raven-Total-Results")));
-
-    queryHeaderInfo.value = queryHeaderInformation;
-
-    return yieldStreamResults(webResponse);
-  }
-
-  @Override
-  public RavenJObjectIterator streamDocs() {
-    return streamDocs(null, null, null, 0, Integer.MAX_VALUE);
-  }
-
-  @Override
-  public RavenJObjectIterator streamDocs(Etag fromEtag) {
-    return streamDocs(fromEtag, null, null, 0, Integer.MAX_VALUE, null);
-  }
-
-  @Override
-  public RavenJObjectIterator streamDocs(Etag fromEtag, String startsWith) {
-    return streamDocs(fromEtag, startsWith, null, 0, Integer.MAX_VALUE, null);
-  }
-
-  @Override
-  public RavenJObjectIterator streamDocs(Etag fromEtag, String startsWith, String matches) {
-    return streamDocs(fromEtag, startsWith, matches, 0, Integer.MAX_VALUE, null);
-  }
-
-  @Override
-  public RavenJObjectIterator streamDocs(Etag fromEtag, String startsWith, String matches, int start) {
-    return streamDocs(fromEtag, startsWith, matches, start, Integer.MAX_VALUE, null);
-  }
-  @Override
-  public RavenJObjectIterator streamDocs(Etag fromEtag, String startsWith, String matches, int start, int pageSize) {
-    return streamDocs(fromEtag, startsWith, matches, start, pageSize, null);
-  }
-
-  @Override
-  public RavenJObjectIterator streamDocs(Etag fromEtag, String startsWith, String matches, int start, int pageSize, String exclude) {
-    return streamDocs(fromEtag, startsWith, matches, start, pageSize, exclude, null);
-  }
-
-  @Override
-  public RavenJObjectIterator streamDocs(Etag fromEtag, String startsWith, String matches, int start, int pageSize, String exclude, RavenPagingInformation pagingInformation) {
-    return streamDocs(fromEtag, startsWith, matches, start, pageSize, exclude, pagingInformation, null);
-  }
-
-
-  @SuppressWarnings("null")
-  @Override
-  public RavenJObjectIterator streamDocs(Etag fromEtag, String startsWith, String matches, int start, int pageSize, String exclude, RavenPagingInformation pagingInformation, String skipAfter) {
-
-    if (fromEtag != null && startsWith != null)
-      throw new IllegalArgumentException("Either fromEtag or startsWith must be null, you can't specify both");
-
-    StringBuilder sb = new StringBuilder(url).append("/streams/docs?");
-
-    if (fromEtag != null) {
-      sb.append("etag=")
-      .append(fromEtag)
-      .append("&");
-    } else {
-      if (startsWith != null) {
-        sb.append("startsWith=").append(UrlUtils.escapeDataString(startsWith)).append("&");
-      }
-      if(matches != null) {
-        sb.append("matches=").append(UrlUtils.escapeDataString(matches)).append("&");
-      }
-      if (exclude != null) {
-        sb.append("exclude=").append(UrlUtils.escapeDataString(exclude)).append("&");
-      }
-      if (skipAfter != null) {
-        sb.append("skipAfter=").append(UrlUtils.escapeDataString(skipAfter)).append("&");
-      }
-    }
-
-    int actualStart = start;
-
-    boolean nextPage = pagingInformation != null && pagingInformation.isForPreviousPage(start, pageSize);
-
-    if (nextPage) {
-      actualStart = pagingInformation.getNextPageStart();
-    }
-
-    if (actualStart != 0) {
-      sb.append("start=").append(actualStart).append("&");
-    }
-    if (pageSize != Integer.MAX_VALUE) {
-      sb.append("pageSize=").append(pageSize).append("&");
-    }
-
-    if (nextPage) {
-      sb.append("next-page=true").append("&");
-    }
-
-
-    HttpJsonRequest request = jsonRequestFactory.createHttpJsonRequest(
-      new CreateHttpJsonRequestParams(this, sb.toString(), HttpMethods.GET, new RavenJObject(), credentialsThatShouldBeUsedOnlyInOperationsWithoutReplication, convention)
-      .addOperationHeaders(operationsHeaders))
-      .addReplicationStatusHeaders(url, url, replicationInformer, convention.getFailoverBehavior(), new HandleReplicationStatusChangesCallback());
-
-    request.removeAuthorizationHeader();
-    String token = getSingleAuthToken();
-
-    try {
-      token = validateThatWeCanUseAuthenticateTokens(token);
-    } catch (Exception e) {
-      throw new IllegalStateException("Could not authenticate token for docs streaming, if you are using ravendb in IIS make sure you have Anonymous Authentication enabled in the IIS configuration", e);
-    }
-
-    request.addOperationHeader("Single-Use-Auth-Token", token);
-
-    CloseableHttpResponse webResponse = request.rawExecuteRequest();
-    return yieldStreamResults(webResponse);
-  }
-
-  private static RavenJObjectIterator yieldStreamResults(final CloseableHttpResponse webResponse) {
-    HttpEntity httpEntity = webResponse.getEntity();
-    try {
-      InputStream stream = httpEntity.getContent();
-      JsonParser jsonParser = new JsonFactory().createJsonParser(stream);
-      if (jsonParser.nextToken() == null || jsonParser.getCurrentToken() != JsonToken.START_OBJECT) {
-        throw new IllegalStateException("Unexpected data at start of stream");
-      }
-      if (jsonParser.nextToken() == null || jsonParser.getCurrentToken() != JsonToken.FIELD_NAME || !"Results".equals(jsonParser.getText())) {
-        throw new IllegalStateException("Unexpected data at stream 'Results' property name");
-      }
-      if (jsonParser.nextToken() == null || jsonParser.getCurrentToken() != JsonToken.START_ARRAY) {
-        throw new IllegalStateException("Unexpected data at 'Results', could not find start results array");
-      }
-
-      return new RavenJObjectIterator(webResponse, jsonParser);
-    } catch (IOException e) {
-      throw new ServerClientException(e);
-    }
-
-  }
-
-
-  protected QueryResult directQueryAsGet(final String index, final IndexQuery query, final OperationMetadata operationMetadata, final String[] includes, final boolean metadataOnly, final boolean includeEntries) {
-    String path = query.getIndexQueryUrl(operationMetadata.getUrl(), index, "indexes", true, true);
-    if (metadataOnly)
-      path += "&metadata-only=true";
-    if (includeEntries)
-      path += "&debug=entries";
-    if (includes != null && includes.length > 0) {
-      for (String include: includes) {
-        path += "&include=" + include;
-      }
-    }
-
-    HttpJsonRequest request = jsonRequestFactory.createHttpJsonRequest(
-      new CreateHttpJsonRequestParams(this, path, HttpMethods.GET, new RavenJObject(), operationMetadata.getCredentials(), convention)
-      .setAvoidCachingRequest(query.isDisableCaching())
-      .addOperationHeaders(operationsHeaders))
-      .addReplicationStatusHeaders(url, operationMetadata.getUrl(), replicationInformer,
-        convention.getFailoverBehavior(),
-        new HandleReplicationStatusChangesCallback());
-
-
-    RavenJObject json;
-    try {
-      json = (RavenJObject)request.readResponseJson();
-    } catch (HttpOperationException e) {
-      try {
-        if (e.getStatusCode() == HttpStatus.SC_NOT_FOUND) {
-          ByteArrayOutputStream baos = new ByteArrayOutputStream();
-          if (e.getHttpResponse().getEntity() != null) {
-            IOUtils.copy(e.getHttpResponse().getEntity().getContent(), baos);
-          }
-          String text = new String(baos.toByteArray());
-          if (text.contains("maxQueryString")) {
-            throw new IllegalStateException(text, e);
-          }
-          throw new IllegalStateException("There is no index named: " + index);
-        }
-
-      } catch (IllegalStateException | IOException ee) {
-        throw new ServerClientException(ee);
-      } finally {
-        EntityUtils.consumeQuietly(e.getHttpResponse().getEntity());
-      }
-      throw e;
-    } catch (Exception e) {
-      throw new ServerClientException(e);
-    }
-
-    QueryResult directQuery = SerializationHelper.toQueryResult(json, HttpExtensions.getEtagHeader(request), request.getResponseHeaders().get("Temp-Request-Time"), request.getSize());
-    List<RavenJObject> docsResults = new ArrayList<>();
-    docsResults.addAll(directQuery.getResults());
-    docsResults.addAll(directQuery.getIncludes());
-    return retryOperationBecauseOfConflict(docsResults, directQuery, new Function0<QueryResult>() {
-      @Override
-      public QueryResult apply() {
-        return directQueryAsGet(index, query, operationMetadata, includes, metadataOnly, includeEntries);
-      }
-    });
-  }
-
-  protected QueryResult directQueryAsPost(final String index, final IndexQuery query, final OperationMetadata operationMetadata, final String[] includes) {
-    StringBuilder stringBuilder = new StringBuilder();
-    query.appendQueryString(stringBuilder);
-
-    if (includes != null && includes.length > 0) {
-      for (String include: includes) {
-        stringBuilder.append("&include=").append(include);
-      }
-    }
-
-    GetRequest getRequest = new GetRequest();
-    getRequest.setQuery(stringBuilder.toString());
-    getRequest.setUrl("/indexes/" + index);
-
-    try {
-      GetResponse[] x = multiGet(new GetRequest[] { getRequest });
-      GetResponse getResponse = x[0];
-      RavenJObject json = (RavenJObject) getResponse.getResult();
-      return SerializationHelper.toQueryResult(json, HttpExtensions.getEtagHeader(getResponse), getResponse.getHeaders().get("Temp-Request-Time"), -1);
-    } catch (HttpOperationException e) {
-      try {
-        if (e.getStatusCode() == HttpStatus.SC_NOT_FOUND) {
-          ByteArrayOutputStream baos = new ByteArrayOutputStream();
-          if (e.getHttpResponse().getEntity() != null) {
-            IOUtils.copy(e.getHttpResponse().getEntity().getContent(), baos);
-          }
-          String text = new String(baos.toByteArray());
-          if (text.contains("maxQueryString")) {
-            throw new IllegalStateException(text, e);
-          }
-          throw new IllegalStateException("There is no index named: " + index);
-        }
-
-      } catch (IllegalStateException | IOException ee) {
-        throw new ServerClientException(ee);
-      } finally {
-        EntityUtils.consumeQuietly(e.getHttpResponse().getEntity());
-      }
-      throw e;
-    } catch (Exception e) {
-      throw new ServerClientException(e);
+    public void setMessage(String message) {
+      this.message = message;
     }
   }
 
@@ -1645,324 +467,22 @@ public class ServerClient implements IDatabaseCommands {
   }
 
   protected void directDeleteIndex(String name, OperationMetadata operationMetadata) {
-
-    HttpJsonRequest request = jsonRequestFactory.createHttpJsonRequest(
+    try (HttpJsonRequest request = jsonRequestFactory.createHttpJsonRequest(
         new CreateHttpJsonRequestParams(
-            this, indexes(operationMetadata.getUrl(), name), HttpMethods.DELETE, null, operationMetadata.getCredentials(), convention))
-            .addOperationHeaders(operationsHeaders);
-    request.addReplicationStatusHeaders(url, operationMetadata.getUrl(), replicationInformer, convention.getFailoverBehavior(), new HandleReplicationStatusChangesCallback());
-
-    try {
+            this, indexes(operationMetadata.getUrl(), name), HttpMethods.DELETE, null, operationMetadata.getCredentials(), convention))) {
+      request.addOperationHeaders(operationsHeaders);
+      request.addReplicationStatusHeaders(url, operationMetadata.getUrl(), replicationInformer, convention.getFailoverBehavior(), new HandleReplicationStatusChangesCallback());
       request.executeRequest();
-    } catch (Exception e) {
-      throw new ServerClientException("Unable to delete index", e);
     }
-  }
-
-
-
-  @Override
-  public MultiLoadResult get(final String[] ids, final String[] includes) {
-    return get(ids, includes, null, null, false);
   }
 
   @Override
-  public MultiLoadResult get(final String[] ids, final String[] includes, final String transformer) {
-    return get(ids, includes, transformer, null, false);
+  public Operation deleteByIndex(String indexName, IndexQuery queryToDelete) {
+    return deleteByIndex(indexName, queryToDelete, null);
   }
 
-  @Override
-  public MultiLoadResult get(final String[] ids, final String[] includes, final String transformer, final Map<String, RavenJToken> transformerParameters) {
-    return get(ids, includes, transformer, transformerParameters, false);
-  }
-
-  @Override
-  public MultiLoadResult get(final String[] ids, final String[] includes, final String transformer, final Map<String, RavenJToken> transformerParameters, final boolean metadataOnly) {
-    return executeWithReplication(HttpMethods.GET, new Function1<OperationMetadata, MultiLoadResult>() {
-
-      @Override
-      public MultiLoadResult apply(OperationMetadata operationMetadata) {
-        return directGet(ids, operationMetadata, includes, transformer, transformerParameters != null ? transformerParameters : new HashMap<String, RavenJToken>(), metadataOnly);
-      }
-    });
-  }
-
-
-  protected MultiLoadResult directGet(final String[] ids, final OperationMetadata operationMetadata, final String[] includes, final String transformer, final Map<String, RavenJToken> transformerParameters, final boolean metadataOnly) {
-
-    String path = operationMetadata.getUrl() + "/queries/?";
-
-    if (metadataOnly)
-      path += "metadata-only=true&";
-    if (includes != null && includes.length > 0) {
-      List<String> tokens = new ArrayList<>();
-      for (String include: includes) {
-        tokens.add("include=" + include);
-      }
-      path += "&" + StringUtils.join(tokens, "&");
-    }
-    if (StringUtils.isNotEmpty(transformer)) {
-      path += "&transformer=" + transformer;
-    }
-
-    if (transformerParameters != null) {
-      for (Entry<String, RavenJToken> transformerParameter: transformerParameters.entrySet()) {
-        path += String.format("&tp-%s=%s", transformerParameter.getKey(), transformerParameter.getValue());
-      }
-    }
-
-    RavenJObject metadata = new RavenJObject();
-    Set<String> uniqueIds = new LinkedHashSet<>(Arrays.asList(ids));
-    // if it is too big, we drop to POST (note that means that we can't use the HTTP cache any longer)
-    // we are fine with that, requests to load that many items are probably going to be rare
-    HttpJsonRequest request;
-
-    int uniqueIdsSum = 0;
-    for (String id: ids) {
-      uniqueIdsSum += id.length();
-    }
-
-    if (uniqueIdsSum < 1024) {
-      for (String uniqueId: uniqueIds) {
-        path += "&id=" + UrlUtils.escapeDataString(uniqueId);
-      }
-      request = jsonRequestFactory.createHttpJsonRequest(
-        new CreateHttpJsonRequestParams(this, path, HttpMethods.GET, metadata, operationMetadata.getCredentials(), convention)
-        .addOperationHeaders(operationsHeaders))
-        .addReplicationStatusHeaders(url, operationMetadata.getUrl(), replicationInformer, convention.getFailoverBehavior(), new HandleReplicationStatusChangesCallback());
-
-    } else {
-      request = jsonRequestFactory.createHttpJsonRequest(
-        new CreateHttpJsonRequestParams(this, path, HttpMethods.POST, metadata, operationMetadata.getCredentials(), convention)
-        .addOperationHeaders(operationsHeaders))
-        .addReplicationStatusHeaders(url, operationMetadata.getUrl(), replicationInformer, convention.getFailoverBehavior(), new HandleReplicationStatusChangesCallback());
-      request.write(RavenJToken.fromObject(uniqueIds).toString());
-    }
-
-    RavenJToken result = request.readResponseJson();
-    return completeMultiGet(operationMetadata, ids, includes,transformer, transformerParameters, result);
-  }
-
-  private MultiLoadResult completeMultiGet(final OperationMetadata operationMetadata, final String[] keys,
-      final String[] includes, final String transformer, final Map<String, RavenJToken> transformerParameters, RavenJToken result) {
-    HttpOperationException responseException;
-    try {
-
-      HashSet<String> uniqueKeys = new HashSet<>(Arrays.asList(keys));
-
-      List<RavenJObject> results = new ArrayList<>();
-      for (RavenJToken token: result.value(RavenJArray.class, "Results")) {
-        if (token instanceof RavenJObject) {
-          results.add((RavenJObject) token);
-        }
-      }
-
-      Map<String, RavenJObject> documents = new HashMap<>();
-      for (RavenJObject doc : results) {
-        if (doc.containsKey("@metadata") && doc.get("@metadata").value(String.class, "@id") != null) {
-          documents.put(doc.get("@metadata").value(String.class, "@id"), doc);
-        }
-      }
-
-      if (results.size() >= uniqueKeys.size()) {
-        for (int i = 0; i < uniqueKeys.size(); i++) {
-          String key = keys[i];
-          if (documents.containsKey(key)) {
-            continue;
-          }
-          documents.put(key, results.get(i));
-        }
-      }
-
-      MultiLoadResult multiLoadResult = new MultiLoadResult();
-
-      List<RavenJObject> includesList = new ArrayList<>();
-      for (RavenJToken token: result.value(RavenJArray.class, "Includes")) {
-        includesList.add((RavenJObject) token);
-      }
-      multiLoadResult.setIncludes(includesList);
-
-      List<RavenJObject> resultsList = new ArrayList<>();
-      for (String key: keys) {
-        if (documents.containsKey(key)) {
-          resultsList.add(documents.get(key));
-        } else {
-          resultsList.add(null);
-        }
-      }
-      multiLoadResult.setResults(resultsList);
-
-      List<RavenJObject> docResults = new ArrayList<>();
-      docResults.addAll(resultsList);
-      docResults.addAll(includesList);
-
-      return retryOperationBecauseOfConflict(docResults, multiLoadResult, new Function0<MultiLoadResult>() {
-        @Override
-        public MultiLoadResult apply() {
-          return directGet(keys, operationMetadata, includes, transformer, transformerParameters, false);
-        }
-      });
-    } catch (HttpOperationException e) {
-      if (e.getStatusCode() != HttpStatus.SC_CONFLICT) {
-        throw e;
-      }
-      responseException = e;
-    }
-    throw fetchConcurrencyException(responseException);
-  }
-
-  private <T> T retryOperationBecauseOfConflict(List<RavenJObject> docResults, T currentResult, Function0<T> nextTry) {
-
-    boolean requiresRetry = false;
-    for (RavenJObject docResult: docResults) {
-      requiresRetry |= assertNonConflictedDocumentAndCheckIfNeedToReload(docResult);
-    }
-    if (!requiresRetry) {
-      return currentResult;
-    }
-
-    if (resolvingConflictRetries) {
-      throw new IllegalStateException("Encountered another conflict after already resolving a conflict. Conflict resultion cannot recurse.");
-    }
-    resolvingConflictRetries = true;
-    try {
-      return nextTry.apply();
-    } finally {
-      resolvingConflictRetries = false;
-    }
-  }
-  private boolean assertNonConflictedDocumentAndCheckIfNeedToReload(RavenJObject docResult) {
-    if (docResult == null) {
-      return false;
-    }
-    RavenJToken metadata = docResult.get(Constants.METADATA);
-    if (metadata == null) {
-      return false;
-    }
-
-    if (metadata.value(Integer.TYPE, "@Http-Status-Code") == 409) {
-      ConflictException concurrencyException = tryResolveConflictOrCreateConcurrencyException(metadata.value(String.class, "@id"), docResult, HttpExtensions.etagHeaderToEtag(metadata.value(String.class, "@etag")));
-      if (concurrencyException == null) {
-        return true;
-      }
-      throw concurrencyException;
-    }
-    return false;
-  }
-
-
-
-  @Override
-  public BatchResult[] batch(final List<ICommandData> commandDatas) {
-    return executeWithReplication(HttpMethods.POST, new Function1<OperationMetadata, BatchResult[]>() {
-      @Override
-      public BatchResult[] apply(OperationMetadata operationMetadata) {
-        return directBatch(commandDatas, operationMetadata);
-      }
-    });
-  }
-
-  protected BatchResult[] directBatch(List<ICommandData> commandDatas, OperationMetadata operationMetadata) {
-    RavenJObject metadata = new RavenJObject();
-    HttpJsonRequest req = jsonRequestFactory.createHttpJsonRequest(
-      new CreateHttpJsonRequestParams(this, operationMetadata.getUrl() + "/bulk_docs", HttpMethods.POST, metadata, operationMetadata.getCredentials(), convention)
-      .addOperationHeaders(operationsHeaders))
-      .addReplicationStatusHeaders(url, operationMetadata.getUrl(), replicationInformer, convention.getFailoverBehavior(), new HandleReplicationStatusChangesCallback());
-
-
-    RavenJArray jArray = new RavenJArray();
-    for (ICommandData command: commandDatas) {
-      jArray.add(command.toJson());
-    }
-    try {
-      req.write(jArray.toString());
-
-      RavenJArray response;
-      try {
-        response = (RavenJArray)req.readResponseJson();
-        if (response == null) {
-          throw new IllegalStateException("Got null response from the server after doing a batch, something is very wrong. Probably a garbled response. Posted: " + jArray);
-        }
-      } catch (HttpOperationException e) {
-        try {
-          if (e.getStatusCode() != HttpStatus.SC_CONFLICT) {
-            throw e;
-          }
-          throw fetchConcurrencyException(e);
-        } finally {
-          EntityUtils.consumeQuietly(e.getHttpResponse().getEntity());
-        }
-      }
-      return convention.createSerializer().readValue(response.toString(), BatchResult[].class);
-    } catch (ConcurrencyException e) {
-      throw e;
-    } catch (Exception e) {
-      throw new ServerClientException(e);
-    }
-  }
-
-
-  @Override
-  public ILowLevelBulkInsertOperation getBulkInsertOperation(BulkInsertOptions options, IDatabaseChanges changes) {
-    return new RemoteBulkInsertOperation(options, this, changes);
-  }
-
-  @Override
-  public AutoCloseable forceReadFromMaster() {
-    final int old = readStripingBase;
-    readStripingBase = -1;
-    return new AutoCloseable() {
-      @Override
-      public void close() throws Exception {
-        readStripingBase = old;
-      }
-    };
-  }
-
-  @Override
-  public IDatabaseCommands forDatabase(String database) {
-    if (Constants.SYSTEM_DATABASE.equals(database)) {
-      return forSystemDatabase();
-    }
-
-    String databaseUrl = MultiDatabase.getRootDatabaseUrl(url);
-    databaseUrl = databaseUrl + "/databases/" + database;
-    if (databaseUrl.equals(url)) {
-      return this;
-    }
-    ServerClient client = new ServerClient(databaseUrl, convention, credentialsThatShouldBeUsedOnlyInOperationsWithoutReplication, replicationInformerGetter, database, jsonRequestFactory, sessionId, conflictListeners, false);
-    client.setOperationsHeaders(operationsHeaders);
-    return client;
-  }
-
-  @Override
-  public IDatabaseCommands forSystemDatabase() {
-    String databaseUrl = MultiDatabase.getRootDatabaseUrl(url);
-    if (databaseUrl.equals(url)) {
-      return this;
-    }
-    ServerClient client = new ServerClient(databaseUrl, convention, credentialsThatShouldBeUsedOnlyInOperationsWithoutReplication, replicationInformerGetter, null, jsonRequestFactory, sessionId, conflictListeners, false);
-    client.setOperationsHeaders(operationsHeaders);
-    return client;
-  }
-
-  /**
-   * @return the url
-   */
-  public String getUrl() {
-    return url;
-  }
-
-
-  /**
-   *  Perform a set based deletes using the specified index.
-   * @param indexName
-   * @param queryToDelete
-   * @param options
-   */
   @Override
   public Operation deleteByIndex(final String indexName, final IndexQuery queryToDelete, final BulkOperationOptions options) {
-
     return executeWithReplication(HttpMethods.DELETE, new Function1<OperationMetadata, Operation>() {
       @Override
       public Operation apply(OperationMetadata operationMetadata) {
@@ -1981,492 +501,50 @@ public class ServerClient implements IDatabaseCommands {
     if (notNullOptions.getStaleTimeout() != null) {
       path += "&staleTimeout=" + notNullOptions.getStaleTimeout();
     }
-    HttpJsonRequest request = jsonRequestFactory.createHttpJsonRequest(
+    try (HttpJsonRequest request = jsonRequestFactory.createHttpJsonRequest(
       new CreateHttpJsonRequestParams(this, path, HttpMethods.DELETE, new RavenJObject(), operationMetadata.getCredentials(), convention)
       .addOperationHeaders(operationsHeaders))
-      .addReplicationStatusHeaders(url, operationMetadata.getUrl(), replicationInformer, convention.getFailoverBehavior(), new HandleReplicationStatusChangesCallback());
-    RavenJToken jsonResponse;
-    try {
-      jsonResponse = request.readResponseJson();
-    } catch (HttpOperationException e) {
+      .addReplicationStatusHeaders(url, operationMetadata.getUrl(), replicationInformer, convention.getFailoverBehavior(), new HandleReplicationStatusChangesCallback())) {
+      RavenJToken jsonResponse;
       try {
+        jsonResponse = request.readResponseJson();
+      } catch (ErrorResponseException e) {
         if (e.getStatusCode() == HttpStatus.SC_NOT_FOUND) {
           throw new IllegalStateException("There is no index named: " + indexName);
         }
-        throw new ServerClientException(e);
-      } finally {
-        EntityUtils.consumeQuietly(e.getHttpResponse().getEntity());
+        throw e;
       }
-    } catch (Exception e) {
-      throw new ServerClientException(e);
-    }
 
-    if (jsonResponse == null || jsonResponse.getType() != JTokenType.OBJECT) {
-      return null;
+      if (jsonResponse == null || jsonResponse.getType() != JTokenType.OBJECT) {
+        return null;
+      }
+      RavenJToken opId = ((RavenJObject)jsonResponse).get("OperationId");
+      if (opId == null || opId.getType() != JTokenType.INTEGER) {
+        return null;
+      }
+      return new Operation(this, opId.value(Long.TYPE));
     }
-    RavenJToken opId = ((RavenJObject)jsonResponse).get("OperationId");
-    if (opId == null || opId.getType() != JTokenType.INTEGER) {
-      return null;
-    }
-    return new Operation(this, opId.value(Long.TYPE));
   }
 
   @Override
-  public Operation updateByIndex(String indexName, IndexQuery queryToUpdate, PatchRequest[] patchRequests) {
-    return updateByIndex(indexName, queryToUpdate, patchRequests, null);
-  }
-
-  @Override
-  public Operation updateByIndex(String indexName, IndexQuery queryToUpdate, ScriptedPatchRequest patch) {
-    return updateByIndex(indexName, queryToUpdate, patch, null);
-  }
-
-  @Override
-  public Operation updateByIndex(String indexName, IndexQuery queryToUpdate, PatchRequest[] patchRequests, BulkOperationOptions options) {
-    RavenJArray array = new RavenJArray();
-    for (PatchRequest request: patchRequests) {
-      array.add(request.toJson());
-    }
-
-    String requestData = array.toString();
-    BulkOperationOptions notNullOptions = (options != null) ? options : new BulkOperationOptions();
-    return updateByIndexImpl(indexName, queryToUpdate, notNullOptions, requestData, HttpMethods.PATCH);
-  }
-
-  @Override
-  public Operation updateByIndex(String indexName, IndexQuery queryToUpdate, ScriptedPatchRequest patch, BulkOperationOptions options) {
-    String requestData = RavenJObject.fromObject(patch).toString();
-    BulkOperationOptions notNullOptions = (options != null) ? options : new BulkOperationOptions();
-    return updateByIndexImpl(indexName, queryToUpdate, notNullOptions, requestData, HttpMethods.EVAL);
-  }
-
-  private Operation updateByIndexImpl(final String indexName, final IndexQuery queryToUpdate, final BulkOperationOptions options, final String requestData, final HttpMethods method) {
-    return executeWithReplication(method, new Function1<OperationMetadata, Operation>() {
+  public void deleteTransformer(final String name) {
+    ensureIsNotNullOrEmpty(name, "name");
+    executeWithReplication(HttpMethods.DELETE, new Function1<OperationMetadata, Void>() {
       @Override
-      public Operation apply(OperationMetadata operationMetadata) {
-        return directUpdateByIndexImpl(operationMetadata, indexName, queryToUpdate, options, requestData, method);
+      public Void apply(OperationMetadata operationMetadata) {
+        directDeleteTransformer(name, operationMetadata);
+        return null;
       }
     });
   }
 
-  protected Operation directUpdateByIndexImpl(OperationMetadata operationMetadata, String indexName, IndexQuery queryToUpdate, BulkOperationOptions options, String requestData, HttpMethods method) {
-    BulkOperationOptions notNullOptions = (options != null) ? options : new BulkOperationOptions();
-    String path = queryToUpdate.getIndexQueryUrl(operationMetadata.getUrl(), indexName, "bulk_docs")
-       + "&allowStale=" + notNullOptions.isAllowStale() + "&maxOpsPerSec=" + notNullOptions.getMaxOpsPerSec()
-       + "&details=" + notNullOptions.isRetrieveDetails();
-    if (notNullOptions.getStaleTimeout() != null) {
-      path += "&staleTimeout=" + notNullOptions.getStaleTimeout();
+  protected void directDeleteTransformer(final String name, OperationMetadata operationMetadata) {
+    try (HttpJsonRequest request = jsonRequestFactory.createHttpJsonRequest(
+      new CreateHttpJsonRequestParams(this, operationMetadata.getUrl() + "/transformers/" + name, HttpMethods.DELETE, new RavenJObject(), operationMetadata.getCredentials(), convention)
+      .addOperationHeaders(operationsHeaders))) {
+      request.addReplicationStatusHeaders(url, operationMetadata.getUrl(), replicationInformer, convention.getFailoverBehavior(), new HandleReplicationStatusChangesCallback());
+      request.executeRequest();
     }
-    HttpJsonRequest request = jsonRequestFactory.createHttpJsonRequest(
-      new CreateHttpJsonRequestParams(this, path, method, new RavenJObject(), operationMetadata.getCredentials(), convention)
-      .addOperationHeaders(operationsHeaders))
-      .addReplicationStatusHeaders(url, operationMetadata.getUrl(), replicationInformer, convention.getFailoverBehavior(), new HandleReplicationStatusChangesCallback());
-
-    RavenJToken jsonResponse;
-    try {
-      request.write(requestData);
-      jsonResponse = request.readResponseJson();
-    } catch (HttpOperationException e) {
-      try {
-        if (e.getStatusCode() == HttpStatus.SC_NOT_FOUND) {
-          throw new IllegalStateException("There is no index named: " + indexName);
-        }
-        throw new ServerClientException(e);
-      } finally {
-        EntityUtils.consumeQuietly(e.getHttpResponse().getEntity());
-      }
-    } catch (Exception e) {
-      throw new ServerClientException(e);
-    }
-
-    return new Operation(this, jsonResponse.value(Long.TYPE, "OperationId"));
-  }
-
-  @Override
-  public Operation deleteByIndex(String indexName, IndexQuery queryToDelete) {
-    return deleteByIndex(indexName, queryToDelete, null);
-  }
-
-  @Override
-  public SuggestionQueryResult suggest(final String index, final SuggestionQuery suggestionQuery) {
-    if (suggestionQuery == null) {
-      throw new IllegalArgumentException("suggestionQuery");
-    }
-    return executeWithReplication(HttpMethods.GET, new Function1<OperationMetadata, SuggestionQueryResult>() {
-
-      @Override
-      public SuggestionQueryResult apply(OperationMetadata operationMetadata) {
-        return directSuggest(index, suggestionQuery, operationMetadata);
-      }
-    });
-  }
-
-  @Override
-  public MultiLoadResult moreLikeThis(MoreLikeThisQuery query) {
-    RavenJToken token = executeGetRequest(query.getRequestUri());
-
-    MultiLoadResult multiLoadResult = new MultiLoadResult();
-    multiLoadResult.setIncludes(new ArrayList<>(token.value(RavenJArray.class, "Includes").values(RavenJObject.class)));
-    multiLoadResult.setResults(new ArrayList<>(token.value(RavenJArray.class, "Results").values(RavenJObject.class)));
-
-    return multiLoadResult;
-  }
-
-  protected SuggestionQueryResult directSuggest(String index, SuggestionQuery suggestionQuery, OperationMetadata operationMetadata) {
-    String requestUri = operationMetadata.getUrl() + String.format("/suggest/%s?term=%s&field=%s&max=%d&popularity=%s",
-      UrlUtils.escapeUriString(index),
-      UrlUtils.escapeDataString(suggestionQuery.getTerm()),
-      UrlUtils.escapeDataString(suggestionQuery.getField()),
-      suggestionQuery.getMaxSuggestions(),
-      suggestionQuery.isPopularity());
-
-    if (suggestionQuery.getDistance() != null) {
-      requestUri += "&distance=" + UrlUtils.escapeDataString(SharpEnum.value(suggestionQuery.getDistance()));
-    }
-    if (suggestionQuery.getAccuracy() != null) {
-      requestUri += "&accuracy=" + NumberUtil.trimZeros(String.format(Constants.getDefaultLocale(), "%.4f", suggestionQuery.getAccuracy()));
-    }
-
-    HttpJsonRequest request = jsonRequestFactory.createHttpJsonRequest(
-      new CreateHttpJsonRequestParams(this, requestUri, HttpMethods.GET, new RavenJObject(), operationMetadata.getCredentials(), convention)
-      .addOperationHeaders(operationsHeaders))
-      .addReplicationStatusHeaders(url, operationMetadata.getUrl(), replicationInformer, convention.getFailoverBehavior(), new HandleReplicationStatusChangesCallback());
-
-    try {
-      RavenJObject json = (RavenJObject)request.readResponseJson();
-
-      List<String> suggestions = new ArrayList<>();
-
-      SuggestionQueryResult result = new SuggestionQueryResult();
-      RavenJArray array = (RavenJArray) json.get("Suggestions");
-      for (RavenJToken token: array) {
-        suggestions.add(token.value(String.class));
-      }
-      result.setSuggestions(suggestions.toArray(new String[0]));
-      return result;
-    } catch (Exception e) {
-      throw new ServerClientException(e);
-    }
-  }
-
-  @Override
-  public DatabaseStatistics getStatistics() {
-    HttpJsonRequest httpJsonRequest = jsonRequestFactory.createHttpJsonRequest(
-      new CreateHttpJsonRequestParams(this,  url + "/stats", HttpMethods.GET, new RavenJObject(), credentialsThatShouldBeUsedOnlyInOperationsWithoutReplication, convention));
-
-    try {
-      RavenJObject jo = (RavenJObject)httpJsonRequest.readResponseJson();
-
-      return convention.createSerializer().readValue(jo.toString(), DatabaseStatistics.class);
-    } catch (IOException e) {
-      throw new ServerClientException(e);
-    }
-  }
-
-  @Override
-  public Long nextIdentityFor(final String name) {
-    return executeWithReplication(HttpMethods.POST, new Function1<OperationMetadata, Long>() {
-      @Override
-      public Long apply(OperationMetadata operationMetadata) {
-        return directNextIdentityFor(name, operationMetadata);
-      }
-    });
-  }
-
-  protected Long directNextIdentityFor(String name, OperationMetadata operationMetadata) {
-    HttpJsonRequest jsonRequest = jsonRequestFactory.createHttpJsonRequest(
-      new CreateHttpJsonRequestParams(this, operationMetadata.getUrl() + "/identity/next?name=" + UrlUtils.escapeDataString(name),
-        HttpMethods.POST, new RavenJObject(), operationMetadata.getCredentials(), convention)
-      .addOperationHeaders(operationsHeaders));
-    try {
-      RavenJToken ravenJToken = jsonRequest.readResponseJson();
-      return ravenJToken.value(Long.class, "Value");
-    } catch (Exception e) {
-      throw new ServerClientException(e);
-    }
-  }
-
-  @Override
-  public long seedIdentityFor(final String name, final long value) {
-    return executeWithReplication(HttpMethods.POST, new Function1<OperationMetadata, Long>() {
-      @Override
-      public Long apply(OperationMetadata operationMetadata) {
-        return directSeedIdentityFor(url, name, value);
-      }
-    });
-  }
-
-  long directSeedIdentityFor(String url, String name, long value) {
-    HttpJsonRequest request = jsonRequestFactory.createHttpJsonRequest(
-      new CreateHttpJsonRequestParams(this, url + "/identity/seed?name=" + UrlUtils.escapeDataString(name)+ "&value=" + value, HttpMethods.POST, new RavenJObject(), credentialsThatShouldBeUsedOnlyInOperationsWithoutReplication, convention)
-      .addOperationHeaders(operationsHeaders));
-
-    try {
-      RavenJToken readResponseJson = request.readResponseJson();
-      return readResponseJson.value(Long.TYPE, "Value");
-    } catch (Exception e) {
-      throw new ServerClientException(e);
-    }
-  }
-
-  @Override
-  public String urlFor(String documentKey) {
-    return url + "/docs/" + documentKey;
-  }
-
-  @Override
-  public JsonDocumentMetadata head(final String key) {
-    ensureIsNotNullOrEmpty(key, "key");
-    return executeWithReplication(HttpMethods.HEAD, new Function1<OperationMetadata, JsonDocumentMetadata>() {
-      @Override
-      public JsonDocumentMetadata apply(OperationMetadata operationMetadata) {
-        return directHead(operationMetadata, key);
-      }
-    });
-  }
-
-  protected JsonDocumentMetadata directHead(OperationMetadata operationMetadata, String key) {
-    HttpJsonRequest jsonRequest = jsonRequestFactory.createHttpJsonRequest(
-      new CreateHttpJsonRequestParams(ServerClient.this, operationMetadata.getUrl() + "/docs/" + key, HttpMethods.HEAD, new RavenJObject(), operationMetadata.getCredentials(), convention)
-      .addOperationHeaders(operationsHeaders))
-      .addReplicationStatusHeaders(url, operationMetadata.getUrl(), replicationInformer, convention.getFailoverBehavior(), new HandleReplicationStatusChangesCallback());
-
-    try {
-      jsonRequest.executeRequest();
-      return SerializationHelper.deserializeJsonDocumentMetadata(key, jsonRequest.getResponseHeaders(), jsonRequest.getResponseStatusCode());
-    } catch (HttpOperationException e) {
-      try {
-        if (e.getStatusCode() == HttpStatus.SC_NOT_FOUND) {
-          return null;
-        } else if (e.getStatusCode() == HttpStatus.SC_CONFLICT) {
-          ConflictException conflictException = new ConflictException("Conflict detected on " + key +
-            ", conflict must be resolved before the document will be accessible. Cannot get the conflicts ids because" +
-            " a HEAD request was performed. A GET request will provide more information, and if you have a document conflict listener, will automatically resolve the conflict", true);
-          conflictException.setEtag(HttpExtensions.getEtagHeader(e.getHttpResponse()));
-
-          throw conflictException;
-        }
-        throw new ServerClientException(e);
-      } finally {
-        EntityUtils.consumeQuietly(e.getHttpResponse().getEntity());
-      }
-    } catch (Exception e) {
-      throw new ServerClientException(e);
-    }
-  }
-
-  @Override
-  public GetResponse[] multiGet(final GetRequest[] requests) {
-    return executeWithReplication(HttpMethods.GET, new Function1<OperationMetadata, GetResponse[]>() {
-      @Override
-      public GetResponse[] apply(OperationMetadata operationMetadata) {
-        return directMultiGet(operationMetadata, requests);
-      }
-    });
-  }
-
-  protected GetResponse[] directMultiGet(OperationMetadata operationMetadata, GetRequest[] requests) {
-    try {
-      MultiGetOperation multiGetOperation = new MultiGetOperation(this, convention, operationMetadata.getUrl(), requests);
-
-      HttpJsonRequest httpJsonRequest = jsonRequestFactory.createHttpJsonRequest(new CreateHttpJsonRequestParams(this, multiGetOperation.getRequestUri(),
-        HttpMethods.POST, new RavenJObject(), operationMetadata.getCredentials(), convention));
-
-      GetRequest[] requestsForServer =
-        multiGetOperation.preparingForCachingRequest(jsonRequestFactory);
-
-      String postedData = JsonConvert.serializeObject(requestsForServer);
-
-      if (multiGetOperation.canFullyCache(jsonRequestFactory, httpJsonRequest, postedData)) {
-        return multiGetOperation.handleCachingResponse(new GetResponse[requests.length],
-          jsonRequestFactory);
-      }
-
-      httpJsonRequest.write(postedData);
-      RavenJArray results = (RavenJArray)httpJsonRequest.readResponseJson();
-
-      GetResponse[] responses = convention.createSerializer().readValue(results.toString(), GetResponse[].class);
-
-      multiGetOperation.tryResolveConflictOrCreateConcurrencyException(responses, new Function3<String, RavenJObject, Etag, ConflictException>() {
-        @Override
-        public ConflictException apply(String key, RavenJObject conflictsDoc, Etag etag) {
-          return tryResolveConflictOrCreateConcurrencyException(key, conflictsDoc, etag);
-        }
-      });
-
-      return multiGetOperation.handleCachingResponse(responses, jsonRequestFactory);
-    } catch (Exception e) {
-      throw new ServerClientException(e);
-    }
-  }
-
-  @Override
-  public List<String> getTerms(final String index, final String field, final String fromValue, final int pageSize) {
-    return executeWithReplication(HttpMethods.GET, new Function1<OperationMetadata, List<String>>() {
-      @Override
-      public List<String> apply(OperationMetadata operationMetadata) {
-        return directGetTerms(operationMetadata, index, field, fromValue, pageSize);
-      }
-    });
-  }
-
-  protected List<String> directGetTerms(OperationMetadata operationMetadata, String index, String field, String fromValue, int pageSize) {
-    String requestUri = operationMetadata.getUrl() + String.format("/terms/%s?field=%s&pageSize=%d&fromValue=%s",
-      UrlUtils.escapeUriString(index),
-      UrlUtils.escapeDataString(field),
-      pageSize,
-      UrlUtils.escapeDataString(fromValue != null ? fromValue : ""));
-
-    HttpJsonRequest request = jsonRequestFactory.createHttpJsonRequest(
-      new CreateHttpJsonRequestParams(this, requestUri, HttpMethods.GET, new RavenJObject(), operationMetadata.getCredentials(), convention)
-      .addOperationHeaders(operationsHeaders))
-      .addReplicationStatusHeaders(url, operationMetadata.getUrl(), replicationInformer, convention.getFailoverBehavior(), new HandleReplicationStatusChangesCallback());
-
-    try {
-      return request.readResponseJson().values(String.class);
-    } catch (Exception e) {
-      throw new ServerClientException(e);
-    }
-  }
-
-  @Override
-  public FacetResults getFacets(final String index, final IndexQuery query, final String facetSetupDoc) {
-    return getFacets(index, query, facetSetupDoc, 0, null);
-  }
-
-  @Override
-  public FacetResults getFacets(final String index, final IndexQuery query, final String facetSetupDoc, final int start) {
-    return getFacets(index, query, facetSetupDoc, start, null);
-  }
-
-
-  @Override
-  public FacetResults getFacets(final String index, final IndexQuery query, final String facetSetupDoc, final int start, final Integer pageSize) {
-    return executeWithReplication(HttpMethods.GET, new Function1<OperationMetadata, FacetResults>() {
-
-      @Override
-      public FacetResults apply(OperationMetadata operationMetadata) {
-        return directGetFacets(operationMetadata, index, query, facetSetupDoc, start, pageSize);
-      }
-    });
-  }
-
-  protected FacetResults directGetFacets(OperationMetadata operationMetadata, String index, IndexQuery query, String facetSetupDoc, int start, Integer pageSize) {
-    String requestUri = operationMetadata.getUrl() + String.format("/facets/%s?facetDoc=%s&%s&facetStart=%d&facetPageSize=%s",
-      UrlUtils.escapeUriString(index),
-      UrlUtils.escapeDataString(facetSetupDoc),
-      query.getMinimalQueryString(),
-      start,
-      pageSize != null ? pageSize : "");
-
-    final HttpJsonRequest request = jsonRequestFactory.createHttpJsonRequest(
-      new CreateHttpJsonRequestParams(this, requestUri, HttpMethods.GET, new RavenJObject(), operationMetadata.getCredentials(), convention)
-      .addOperationHeaders(operationsHeaders))
-      .addReplicationStatusHeaders(url, operationMetadata.getUrl(), replicationInformer, convention.getFailoverBehavior(), new HandleReplicationStatusChangesCallback());
-
-
-     CachedRequestOp cachedRequestDetails = jsonRequestFactory.configureCaching(requestUri, new Action2<String, String>() {
-      @Override
-      public void apply(String key, String val) {
-        request.addOperationHeader(key, val);
-      }
-    });
-    request.setCachedRequestDetails(cachedRequestDetails.getCachedRequest());
-    request.setSkipServerCheck(cachedRequestDetails.isSkipServerCheck());
-
-
-    try {
-      RavenJObject json = (RavenJObject)request.readResponseJson();
-      return JsonExtensions.createDefaultJsonSerializer().readValue(json.toString(), FacetResults.class);
-    } catch (Exception e) {
-      throw new ServerClientException(e);
-    }
-  }
-
-  @Override
-  public FacetResults getFacets(final String index, final IndexQuery query, final List<Facet> facets) {
-    return getFacets(index, query, facets, 0, null);
-  }
-
-  @Override
-  public FacetResults getFacets(final String index, final IndexQuery query, final List<Facet> facets, final int start) {
-    return getFacets(index, query, facets, start, null);
-  }
-
-  @Override
-  public FacetResults getFacets(final String index, final IndexQuery query, final List<Facet> facets, final int start, final Integer pageSize) {
-
-    final String facetsJson = JsonConvert.serializeObject(facets);
-    final HttpMethods method = facetsJson.length() > 1024 ? HttpMethods.POST : HttpMethods.GET;
-    return executeWithReplication(method, new Function1<OperationMetadata, FacetResults>() {
-      @Override
-      public FacetResults apply(OperationMetadata operationMetadata) {
-        return directGetFacets(operationMetadata, index, query, facetsJson, start, pageSize, method);
-      }
-    });
-  }
-
-  protected FacetResults directGetFacets(OperationMetadata operationMetadata, String index, IndexQuery query, String facetsJson, int start, Integer pageSize, HttpMethods method) {
-    String requestUri = operationMetadata.getUrl() + String.format("/facets/%s?%s&facetStart=%d&facetPageSize=%s",
-      UrlUtils.escapeUriString(index),
-      query.getQueryString(),
-      start,
-      (pageSize !=null ) ? pageSize.toString() : "");
-
-    if(method == HttpMethods.GET) {
-      requestUri += "&facets=" + UrlUtils.escapeDataString(facetsJson);
-    }
-
-    HttpJsonRequest request = jsonRequestFactory.createHttpJsonRequest(
-      new CreateHttpJsonRequestParams(this, requestUri, method, new RavenJObject(), operationMetadata.getCredentials(), convention)
-      .addOperationHeaders(operationsHeaders))
-      .addReplicationStatusHeaders(url, operationMetadata.getUrl(), replicationInformer, convention.getFailoverBehavior(), new HandleReplicationStatusChangesCallback());
-
-    try {
-      if (method != HttpMethods.GET)
-        request.write(facetsJson);
-
-      RavenJObject json = (RavenJObject)request.readResponseJson();
-      return JsonExtensions.createDefaultJsonSerializer().readValue(json.toString(), FacetResults.class);
-    } catch (Exception e) {
-      throw new ServerClientException(e);
-    }
-  }
-
-  @Override
-  public FacetResults[] getMultiFacets(final FacetQuery[] facetedQueries) {
-    GetRequest[] multiGetRequestItems = new GetRequest[facetedQueries.length];
-    for (int i = 0; i < facetedQueries.length; i++) {
-      FacetQuery x = facetedQueries[i];
-      String addition =
-        x.getFacetSetupDoc() != null ?
-          "facetDoc=" + x.getFacetSetupDoc() :
-           "facets=" + UrlUtils.escapeDataString(JsonConvert.serializeObject(x.getFacets()));
-
-      GetRequest request = new GetRequest();
-      request.setUrl("/facets/" + x.getIndexName());
-      request.setQuery(String.format("%s&facetSTart=%d&facetPageSize=%d&%d",
-        x.getQuery().getQueryString(),
-        x.getQuery().getStart(),
-        x.getQuery().getPageSize(),
-        addition));
-      multiGetRequestItems[i] = request;
-    }
-
-    GetResponse[] results = multiGet(multiGetRequestItems);
-
-    ObjectMapper objectMapper = JsonExtensions.createDefaultJsonSerializer();
-
-    FacetResults[] facetResults = new FacetResults[results.length];
-    try {
-      for (int facetResultCounter = 0; facetResultCounter < facetResults.length; facetResultCounter++) {
-        GetResponse curFacetDoc = results[facetResultCounter];
-        facetResults[facetResultCounter] = objectMapper.readValue(curFacetDoc.getResult().toString(), FacetResults.class);
-      }
-    } catch (IOException e) {
-      throw new RuntimeException("Unable to deserialize facets object.", e);
-    }
-    return facetResults;
   }
 
   @Override
@@ -2553,35 +631,1820 @@ public class ServerClient implements IDatabaseCommands {
   }
 
   @Override
+  public PutResult put(final String key, final Etag etag, final RavenJObject document, final RavenJObject metadata) throws ServerClientException {
+    return executeWithReplication(HttpMethods.PUT, new Function1<OperationMetadata, PutResult>() {
+      @Override
+      public PutResult apply(OperationMetadata operationMetadata) {
+        return directPut(metadata, key, etag, document, operationMetadata);
+      }
+    });
+  }
+
+  protected PutResult directPut(RavenJObject metadata, String key, Etag etag, RavenJObject document, OperationMetadata operationMetadata) throws ServerClientException {
+    if (metadata == null) {
+      metadata = new RavenJObject();
+    }
+    HttpMethods method = StringUtils.isNotEmpty(key) ? HttpMethods.PUT : HttpMethods.POST;
+    if (etag != null) {
+      metadata.set(Constants.METADATA_ETAG_FIELD, new RavenJValue(etag.toString()));
+    }
+    if (key != null) {
+      key = UrlUtils.escapeUriString(key);
+    }
+
+    String requestUrl = operationMetadata.getUrl() + "/docs/" + ((key != null) ? key : "");
+
+    try (HttpJsonRequest jsonRequest = jsonRequestFactory.createHttpJsonRequest(
+      new CreateHttpJsonRequestParams(this, requestUrl, method, metadata, operationMetadata.getCredentials(), convention)
+      .addOperationHeaders(operationsHeaders))
+      .addReplicationStatusHeaders(url, operationMetadata.getUrl(), replicationInformer, convention.getFailoverBehavior(), new HandleReplicationStatusChangesCallback())) {
+
+      ErrorResponseException responseException;
+      try {
+        jsonRequest.write(document.toString());
+        RavenJObject responseJson = (RavenJObject) jsonRequest.readResponseJson();
+
+        if (responseJson == null) {
+          throw new IllegalStateException("Got null response from the server after doing a put on " + key + ", something is very wrong. Probably a garbled response.");
+        }
+
+        return new PutResult(responseJson.value(String.class, "Key"), responseJson.value(Etag.class, "ETag"));
+      } catch (ErrorResponseException e) {
+        if (e.getStatusCode() != HttpStatus.SC_CONFLICT) {
+          throw e;
+        }
+        responseException = e;
+      }
+      throw fetchConcurrencyException(responseException);
+    }
+  }
+
+  @Override
+  public IDatabaseCommands forDatabase(String database) {
+    if (Constants.SYSTEM_DATABASE.equals(database)) {
+      return forSystemDatabase();
+    }
+
+    String databaseUrl = MultiDatabase.getRootDatabaseUrl(url);
+    databaseUrl = databaseUrl + "/databases/" + database;
+    if (databaseUrl.equals(url)) {
+      return this;
+    }
+    ServerClient client = new ServerClient(databaseUrl, convention, credentialsThatShouldBeUsedOnlyInOperationsWithoutReplication,
+      jsonRequestFactory, sessionId, replicationInformerGetter, database, conflictListeners, false);
+    client.setOperationsHeaders(operationsHeaders);
+    return client;
+  }
+
+  @Override
+  public IDatabaseCommands forSystemDatabase() {
+    String databaseUrl = MultiDatabase.getRootDatabaseUrl(url);
+    if (databaseUrl.equals(url)) {
+      return this;
+    }
+    ServerClient client = new ServerClient(databaseUrl, convention, credentialsThatShouldBeUsedOnlyInOperationsWithoutReplication,
+      jsonRequestFactory, sessionId, replicationInformerGetter, null, conflictListeners, false);
+    client.setOperationsHeaders(operationsHeaders);
+    return client;
+  }
+
+  @Override
+  public Map<String, String> getOperationsHeaders() {
+    return operationsHeaders;
+  }
+
+  @Override
+  public void setOperationsHeaders(Map<String, String> operationsHeaders) {
+    this.operationsHeaders = operationsHeaders;
+  }
+
+  @Override
+  public IGlobalAdminDatabaseCommands getGlobalAdmin() {
+    return new AdminServerClient(this);
+  }
+
+  @Override
+  public IAdminDatabaseCommands getAdmin() {
+    return new AdminServerClient(this);
+  }
+
+  @Override
+  public JsonDocument get(final String key) throws ServerClientException {
+    ensureIsNotNullOrEmpty(key, "key");
+    return executeWithReplication(HttpMethods.GET, new Function1<OperationMetadata, JsonDocument>() {
+      @Override
+      public JsonDocument apply(OperationMetadata operationMetadata) {
+        return directGet(operationMetadata, key);
+      }
+    });
+  }
+
+  @Override
+  public TransformerDefinition getTransformer(final String name) {
+    ensureIsNotNullOrEmpty(name, "name");
+    return executeWithReplication(HttpMethods.GET, new Function1<OperationMetadata, TransformerDefinition>() {
+      @Override
+      public TransformerDefinition apply(OperationMetadata operationMetadata) {
+        return directGetTransformer(name, operationMetadata);
+      }
+    });
+  }
+
+  protected TransformerDefinition directGetTransformer(final String transformerName, final OperationMetadata operationMetadata) {
+    try {
+      try (HttpJsonRequest httpJsonRequest = jsonRequestFactory.createHttpJsonRequest(
+        new CreateHttpJsonRequestParams(this, operationMetadata.getUrl() + "/transformers/" + transformerName, HttpMethods.GET, new RavenJObject(), operationMetadata.getCredentials(), convention)
+        .addOperationHeaders(operationsHeaders))
+        .addReplicationStatusHeaders(url, operationMetadata.getUrl(), replicationInformer, convention.getFailoverBehavior(), new HandleReplicationStatusChangesCallback())) {
+        RavenJToken transformerDef = httpJsonRequest.readResponseJson();
+        RavenJObject value = transformerDef.value(RavenJObject.class, "Transformer");
+        return convention.createSerializer().deserialize(value.toString(), TransformerDefinition.class);
+      }
+    } catch (ErrorResponseException we) {
+      if (we.getStatusCode() == HttpStatus.SC_NOT_FOUND) {
+        return null;
+      }
+      throw we;
+    }
+  }
+
+  @Override
+  public IndexDefinition getIndex(final String name) {
+    ensureIsNotNullOrEmpty(name, "name");
+    return executeWithReplication(HttpMethods.GET, new Function1<OperationMetadata, IndexDefinition>() {
+      @Override
+      public IndexDefinition apply(OperationMetadata operationMetadata) {
+        return directGetIndex(name, operationMetadata);
+      }
+    });
+  }
+
+  protected IndexDefinition directGetIndex(String indexName, OperationMetadata operationMetadata) {
+    try {
+      try (HttpJsonRequest httpJsonRequest = jsonRequestFactory.createHttpJsonRequest(
+        new CreateHttpJsonRequestParams(this, operationMetadata.getUrl() + "/indexes/" + indexName + "?definition=yes", HttpMethods.GET, new RavenJObject(), operationMetadata.getCredentials(), convention)
+        .addOperationHeaders(operationsHeaders))
+        .addReplicationStatusHeaders(url, operationMetadata.getUrl(), replicationInformer, convention.getFailoverBehavior(), new HandleReplicationStatusChangesCallback())) {
+        RavenJToken indexDef = httpJsonRequest.readResponseJson();
+        RavenJObject value = indexDef.value(RavenJObject.class, "Index");
+        return convention.createSerializer().deserialize(value, IndexDefinition.class);
+      }
+    } catch (ErrorResponseException we) {
+      if (we.getStatusCode() == HttpStatus.SC_NOT_FOUND) {
+        return null;
+      }
+      throw we;
+    }
+  }
+
+  public JsonDocument directGet(OperationMetadata operationMetadata, String key) {
+    if (key.length() > 127) {
+      MultiLoadResult multiLoadResult = directGet(new String[] { key}, operationMetadata, new String[0], null, new HashMap<String, RavenJToken>(), false);
+      List<RavenJObject> results = multiLoadResult.getResults();
+      if (results.get(0) == null) {
+        return null;
+      }
+      return SerializationHelper.ravenJObjectToJsonDocument(results.get(0));
+    }
+
+    RavenJObject metadata = new RavenJObject();
+    String actualUrl = operationMetadata.getUrl() + "/docs?id=" + UrlUtils.escapeDataString(key);
+    CreateHttpJsonRequestParams createHttpJsonRequestParams = new CreateHttpJsonRequestParams(this, actualUrl, HttpMethods.GET, metadata, operationMetadata.getCredentials(), convention);
+
+    try (HttpJsonRequest request = jsonRequestFactory.createHttpJsonRequest(createHttpJsonRequestParams)
+      .addOperationHeaders(operationsHeaders)
+      .addReplicationStatusHeaders(url, operationMetadata.getUrl(), replicationInformer, convention.getFailoverBehavior(), new HandleReplicationStatusChangesCallback())) {
+
+      try {
+        RavenJToken responseJson = request.readResponseJson();
+        String docKey = request.getResponseHeaders().get(Constants.DOCUMENT_ID_FIELD_NAME);
+        if (docKey == null) {
+          docKey = key;
+        }
+        docKey = UrlUtils.unescapeDataString(docKey);
+        request.getResponseHeaders().remove(Constants.DOCUMENT_ID_FIELD_NAME);
+        return SerializationHelper.deserializeJsonDocument(docKey, responseJson, request.getResponseHeaders(), request.getResponseStatusCode());
+      } catch (ErrorResponseException e) {
+        if (e.getStatusCode() == HttpStatus.SC_NOT_FOUND) {
+          return null;
+        } else if (e.getStatusCode() == HttpStatus.SC_CONFLICT) {
+          return resolveConflict(e.getResponseString(), e.getEtag(), operationMetadata, key);
+        }
+        throw e;
+      }
+    }
+  }
+
+  private JsonDocument resolveConflict(String httpResponse, Etag etag, OperationMetadata operationMetadata, String key) {
+    RavenJObject conflictsDoc = RavenJObject.parse(httpResponse);
+    ConflictException result = tryResolveConflictOrCreateConcurrencyException(operationMetadata, key, conflictsDoc, etag);
+    if (result != null) {
+      throw result;
+    }
+    return directGet(operationMetadata, key);
+  }
+
+  @Override
+  public MultiLoadResult get(final String[] ids, final String[] includes) {
+    return get(ids, includes, null, null, false);
+  }
+
+  @Override
+  public MultiLoadResult get(final String[] ids, final String[] includes, final String transformer) {
+    return get(ids, includes, transformer, null, false);
+  }
+
+  @Override
+  public MultiLoadResult get(final String[] ids, final String[] includes, final String transformer, final Map<String, RavenJToken> transformerParameters) {
+    return get(ids, includes, transformer, transformerParameters, false);
+  }
+
+  @Override
+  public MultiLoadResult get(final String[] ids, final String[] includes, final String transformer, final Map<String, RavenJToken> transformerParameters, final boolean metadataOnly) {
+    return executeWithReplication(HttpMethods.GET, new Function1<OperationMetadata, MultiLoadResult>() {
+
+      @Override
+      public MultiLoadResult apply(OperationMetadata operationMetadata) {
+        return directGet(ids, operationMetadata, includes, transformer, transformerParameters != null ? transformerParameters : new HashMap<String, RavenJToken>(), metadataOnly);
+      }
+    });
+  }
+
+  protected MultiLoadResult directGet(final String[] ids, final OperationMetadata operationMetadata, final String[] includes, final String transformer, final Map<String, RavenJToken> transformerParameters, final boolean metadataOnly) {
+    String path = operationMetadata.getUrl() + "/queries/?";
+
+    if (metadataOnly)
+      path += "metadata-only=true&";
+    if (includes != null && includes.length > 0) {
+      List<String> tokens = new ArrayList<>();
+      for (String include: includes) {
+        tokens.add("include=" + include);
+      }
+      path += "&" + StringUtils.join(tokens, "&");
+    }
+    if (StringUtils.isNotEmpty(transformer)) {
+      path += "&transformer=" + transformer;
+    }
+
+    if (transformerParameters != null) {
+      for (Entry<String, RavenJToken> transformerParameter: transformerParameters.entrySet()) {
+        path += String.format("&tp-%s=%s", transformerParameter.getKey(), transformerParameter.getValue());
+      }
+    }
+
+
+    RavenJObject metadata = new RavenJObject();
+    Set<String> uniqueIds = new LinkedHashSet<>(Arrays.asList(ids));
+    // if it is too big, we drop to POST (note that means that we can't use the HTTP cache any longer)
+    // we are fine with that, requests to load that many items are probably going to be rare
+    HttpJsonRequest request = null;
+
+    try {
+      int uniqueIdsSum = 0;
+      for (String id: ids) {
+        uniqueIdsSum += id.length();
+      }
+
+      if (uniqueIdsSum < 1024) {
+        for (String uniqueId: uniqueIds) {
+          path += "&id=" + UrlUtils.escapeDataString(uniqueId);
+        }
+        request = jsonRequestFactory.createHttpJsonRequest(
+          new CreateHttpJsonRequestParams(this, path, HttpMethods.GET, metadata, operationMetadata.getCredentials(), convention)
+          .addOperationHeaders(operationsHeaders))
+          .addReplicationStatusHeaders(url, operationMetadata.getUrl(), replicationInformer, convention.getFailoverBehavior(), new HandleReplicationStatusChangesCallback());
+
+      } else {
+        request = jsonRequestFactory.createHttpJsonRequest(
+          new CreateHttpJsonRequestParams(this, path, HttpMethods.POST, metadata, operationMetadata.getCredentials(), convention)
+          .addOperationHeaders(operationsHeaders))
+          .addReplicationStatusHeaders(url, operationMetadata.getUrl(), replicationInformer, convention.getFailoverBehavior(), new HandleReplicationStatusChangesCallback());
+        request.write(RavenJToken.fromObject(uniqueIds).toString());
+      }
+
+      RavenJToken result = request.readResponseJson();
+      return completeMultiGet(operationMetadata, ids, includes,transformer, transformerParameters, result);
+    } finally {
+      if (request != null) {
+        request.close();
+      }
+    }
+  }
+
+  private MultiLoadResult completeMultiGet(final OperationMetadata operationMetadata, final String[] keys,
+    final String[] includes, final String transformer, final Map<String, RavenJToken> transformerParameters, RavenJToken result) {
+  ErrorResponseException responseException;
+    try {
+
+      HashSet<String> uniqueKeys = new HashSet<>(Arrays.asList(keys));
+
+      List<RavenJObject> results = new ArrayList<>();
+      for (RavenJToken token: result.value(RavenJArray.class, "Results")) {
+        if (token instanceof RavenJObject) {
+          results.add((RavenJObject) token);
+        }
+      }
+
+      Map<String, RavenJObject> documents = new HashMap<>();
+      for (RavenJObject doc : results) {
+        if (doc.containsKey("@metadata") && doc.get("@metadata").value(String.class, "@id") != null) {
+          documents.put(doc.get("@metadata").value(String.class, "@id"), doc);
+        }
+      }
+
+      if (results.size() >= uniqueKeys.size()) {
+        for (int i = 0; i < uniqueKeys.size(); i++) {
+          String key = keys[i];
+          if (documents.containsKey(key)) {
+            continue;
+          }
+          documents.put(key, results.get(i));
+        }
+      }
+
+      MultiLoadResult multiLoadResult = new MultiLoadResult();
+
+      List<RavenJObject> includesList = new ArrayList<>();
+      for (RavenJToken token: result.value(RavenJArray.class, "Includes")) {
+        includesList.add((RavenJObject) token);
+      }
+      multiLoadResult.setIncludes(includesList);
+
+      List<RavenJObject> resultsList = new ArrayList<>();
+      for (String key: keys) {
+        if (documents.containsKey(key)) {
+          resultsList.add(documents.get(key));
+        } else {
+          resultsList.add(null);
+        }
+      }
+      multiLoadResult.setResults(resultsList);
+
+      List<RavenJObject> docResults = new ArrayList<>();
+      docResults.addAll(resultsList);
+      docResults.addAll(includesList);
+
+      return retryOperationBecauseOfConflict(operationMetadata, docResults, multiLoadResult, new Function0<MultiLoadResult>() {
+        @Override
+        public MultiLoadResult apply() {
+          return directGet(keys, operationMetadata, includes, transformer, transformerParameters, false);
+        }
+      }, null);
+    } catch (ErrorResponseException e) {
+      if (e.getStatusCode() != HttpStatus.SC_CONFLICT) {
+        throw e;
+      }
+      responseException = e;
+    }
+    throw fetchConcurrencyException(responseException);
+  }
+
+  @Override
+  public List<JsonDocument> getDocuments(int start, int pageSize) {
+    return getDocuments(start, pageSize, false);
+  }
+
+  @Override
+  public List<JsonDocument> getDocuments(final int start, final int pageSize, final boolean metadataOnly) {
+    return executeWithReplication(HttpMethods.GET, new Function1<OperationMetadata, List<JsonDocument>>() {
+      @Override
+      public List<JsonDocument> apply(OperationMetadata operationMetadata) {
+        String requestUri = operationMetadata.getUrl() + "/docs?start=" + start + "&pageSize=" + pageSize;
+        if (metadataOnly) {
+          requestUri += "&metadata-only=true";
+        }
+        try (HttpJsonRequest request = jsonRequestFactory
+            .createHttpJsonRequest(new CreateHttpJsonRequestParams(ServerClient.this, requestUri, HttpMethods.GET,
+              new RavenJObject(), operationMetadata.getCredentials(), convention)
+            .addOperationHeaders(operationsHeaders))) {
+          RavenJToken responseJson = request.readResponseJson();
+          return SerializationHelper.ravenJObjectsToJsonDocuments(responseJson);
+        }
+      }
+    });
+  }
+
+  //TODO: getDocuments from etag
+
+  @Override
+  public Operation updateByIndex(String indexName, IndexQuery queryToUpdate, PatchRequest[] patchRequests) {
+    return updateByIndex(indexName, queryToUpdate, patchRequests, null);
+  }
+
+  @Override
+  public Operation updateByIndex(String indexName, IndexQuery queryToUpdate, ScriptedPatchRequest patch) {
+    return updateByIndex(indexName, queryToUpdate, patch, null);
+  }
+
+  @Override
+  public Operation updateByIndex(String indexName, IndexQuery queryToUpdate, PatchRequest[] patchRequests, BulkOperationOptions options) {
+    RavenJArray array = new RavenJArray();
+    for (PatchRequest request: patchRequests) {
+      array.add(request.toJson());
+    }
+
+    String requestData = array.toString();
+    BulkOperationOptions notNullOptions = (options != null) ? options : new BulkOperationOptions();
+    return updateByIndexImpl(indexName, queryToUpdate, notNullOptions, requestData, HttpMethods.PATCH);
+  }
+
+  @Override
+  public Operation updateByIndex(String indexName, IndexQuery queryToUpdate, ScriptedPatchRequest patch, BulkOperationOptions options) {
+    String requestData = RavenJObject.fromObject(patch).toString();
+    BulkOperationOptions notNullOptions = (options != null) ? options : new BulkOperationOptions();
+    return updateByIndexImpl(indexName, queryToUpdate, notNullOptions, requestData, HttpMethods.EVAL);
+  }
+
+  @Override
+  public MultiLoadResult moreLikeThis(MoreLikeThisQuery query) {
+    final String requestUrl = query.getRequestUri();
+    ensureIsNotNullOrEmpty(requestUrl, "url");
+    RavenJToken result = executeWithReplication(HttpMethods.GET, new Function1<OperationMetadata, RavenJToken>() {
+      @Override
+      public RavenJToken apply(OperationMetadata operationMetadata) {
+        RavenJObject metadata = new RavenJObject();
+        try (HttpJsonRequest request = jsonRequestFactory
+          .createHttpJsonRequest(new CreateHttpJsonRequestParams(ServerClient.this, operationMetadata.getUrl() + requestUrl, HttpMethods.GET,
+            metadata, operationMetadata.getCredentials(), convention)
+          .addOperationHeaders(operationsHeaders))) {
+          return request.readResponseJson();
+        }
+      }
+    });
+
+    MultiLoadResult multiLoadResult = new MultiLoadResult();
+    multiLoadResult.setIncludes(new ArrayList<>(result.value(RavenJArray.class, "Includes").values(RavenJObject.class)));
+    multiLoadResult.setResults(new ArrayList<>(result.value(RavenJArray.class, "Results").values(RavenJObject.class)));
+    return multiLoadResult;
+  }
+
+  @Override
+  public Long nextIdentityFor(final String name) {
+    return executeWithReplication(HttpMethods.POST, new Function1<OperationMetadata, Long>() {
+      @Override
+      public Long apply(OperationMetadata operationMetadata) {
+        return directNextIdentityFor(name, operationMetadata);
+      }
+    });
+  }
+
+  protected Long directNextIdentityFor(String name, OperationMetadata operationMetadata) {
+    try (HttpJsonRequest jsonRequest = jsonRequestFactory.createHttpJsonRequest(
+      new CreateHttpJsonRequestParams(this, operationMetadata.getUrl() + "/identity/next?name=" + UrlUtils.escapeDataString(name),
+        HttpMethods.POST, new RavenJObject(), operationMetadata.getCredentials(), convention)
+      .addOperationHeaders(operationsHeaders))) {
+      RavenJToken ravenJToken = jsonRequest.readResponseJson();
+      return ravenJToken.value(Long.class, "Value");
+    }
+  }
+
+  @SuppressWarnings("boxing")
+  @Override
+  public long seedIdentityFor(final String name, final long value) {
+    return executeWithReplication(HttpMethods.POST, new Function1<OperationMetadata, Long>() {
+      @Override
+      public Long apply(OperationMetadata operationMetadata) {
+        return directSeedIdentityFor(operationMetadata, name, value);
+      }
+    });
+  }
+
+  @SuppressWarnings("boxing")
+  long directSeedIdentityFor(OperationMetadata operationMetadata, String name, long value) {
+    try (HttpJsonRequest request = jsonRequestFactory.createHttpJsonRequest(
+      new CreateHttpJsonRequestParams(this, operationMetadata.getUrl() + "/identity/seed?name=" + UrlUtils.escapeDataString(name)+ "&value=" + value, HttpMethods.POST, new RavenJObject(), operationMetadata.getCredentials(), convention)
+      .addOperationHeaders(operationsHeaders))) {
+      RavenJToken readResponseJson = request.readResponseJson();
+      return readResponseJson.value(Long.TYPE, "Value");
+    }
+  }
+
+  private Operation updateByIndexImpl(final String indexName, final IndexQuery queryToUpdate, final BulkOperationOptions options, final String requestData, final HttpMethods method) {
+    return executeWithReplication(method, new Function1<OperationMetadata, Operation>() {
+      @Override
+      public Operation apply(OperationMetadata operationMetadata) {
+        return directUpdateByIndexImpl(operationMetadata, indexName, queryToUpdate, options, requestData, method);
+      }
+    });
+  }
+
+  protected Operation directUpdateByIndexImpl(OperationMetadata operationMetadata, String indexName, IndexQuery queryToUpdate, BulkOperationOptions options, String requestData, HttpMethods method) {
+    BulkOperationOptions notNullOptions = (options != null) ? options : new BulkOperationOptions();
+    String path = queryToUpdate.getIndexQueryUrl(operationMetadata.getUrl(), indexName, "bulk_docs")
+       + "&allowStale=" + notNullOptions.isAllowStale() + "&maxOpsPerSec=" + notNullOptions.getMaxOpsPerSec()
+       + "&details=" + notNullOptions.isRetrieveDetails();
+    if (notNullOptions.getStaleTimeout() != null) {
+      path += "&staleTimeout=" + notNullOptions.getStaleTimeout();
+    }
+    try (HttpJsonRequest request = jsonRequestFactory.createHttpJsonRequest(
+      new CreateHttpJsonRequestParams(this, path, method, new RavenJObject(), operationMetadata.getCredentials(), convention)
+      .addOperationHeaders(operationsHeaders))
+      .addReplicationStatusHeaders(url, operationMetadata.getUrl(), replicationInformer, convention.getFailoverBehavior(), new HandleReplicationStatusChangesCallback())) {
+
+      RavenJToken jsonResponse;
+      try {
+        request.write(requestData);
+        jsonResponse = request.readResponseJson();
+      } catch (ErrorResponseException e) {
+        if (e.getStatusCode() == HttpStatus.SC_NOT_FOUND) {
+          throw new IllegalStateException("There is no index named: " + indexName);
+        }
+        throw e;
+      }
+      return new Operation(this, jsonResponse.value(Long.TYPE, "OperationId"));
+    }
+  }
+
+  @Override
+  public FacetResults getFacets(final String index, final IndexQuery query, final String facetSetupDoc) {
+    return getFacets(index, query, facetSetupDoc, 0, null);
+  }
+
+  @Override
+  public FacetResults getFacets(final String index, final IndexQuery query, final String facetSetupDoc, final int start) {
+    return getFacets(index, query, facetSetupDoc, start, null);
+  }
+
+  @Override
+  public FacetResults getFacets(final String index, final IndexQuery query, final String facetSetupDoc, final int start, final Integer pageSize) {
+    return executeWithReplication(HttpMethods.GET, new Function1<OperationMetadata, FacetResults>() {
+      @Override
+      public FacetResults apply(OperationMetadata operationMetadata) {
+        return directGetFacets(operationMetadata, index, query, facetSetupDoc, start, pageSize);
+      }
+    });
+  }
+
+  protected FacetResults directGetFacets(OperationMetadata operationMetadata, String index, IndexQuery query, String facetSetupDoc, int start, Integer pageSize) {
+    String requestUri = operationMetadata.getUrl() + String.format("/facets/%s?facetDoc=%s&%s&facetStart=%d&facetPageSize=%s",
+      UrlUtils.escapeUriString(index),
+      UrlUtils.escapeDataString(facetSetupDoc),
+      query.getMinimalQueryString(),
+      start,
+      pageSize != null ? pageSize : "");
+
+    try(final HttpJsonRequest request = jsonRequestFactory.createHttpJsonRequest(
+      new CreateHttpJsonRequestParams(this, requestUri, HttpMethods.GET, new RavenJObject(), operationMetadata.getCredentials(), convention)
+      .addOperationHeaders(operationsHeaders))
+      .addReplicationStatusHeaders(url, operationMetadata.getUrl(), replicationInformer, convention.getFailoverBehavior(), new HandleReplicationStatusChangesCallback())) {
+
+       CachedRequestOp cachedRequestDetails = jsonRequestFactory.configureCaching(requestUri, new Action2<String, String>() {
+        @Override
+        public void apply(String key, String val) {
+          request.addOperationHeader(key, val);
+        }
+      });
+      request.setCachedRequestDetails(cachedRequestDetails.getCachedRequest());
+      request.setSkipServerCheck(cachedRequestDetails.isSkipServerCheck());
+
+      RavenJObject json = (RavenJObject)request.readResponseJson();
+      return convention.createSerializer().deserialize(json.toString(), FacetResults.class);
+    }
+  }
+
+  @Override
+  public FacetResults[] getMultiFacets(final FacetQuery[] facetedQueries) {
+    GetRequest[] multiGetRequestItems = new GetRequest[facetedQueries.length];
+    for (int i = 0; i < facetedQueries.length; i++) {
+      FacetQuery x = facetedQueries[i];
+      String addition =
+        x.getFacetSetupDoc() != null ?
+          "facetDoc=" + x.getFacetSetupDoc() :
+           "facets=" + UrlUtils.escapeDataString(JsonConvert.serializeObject(x.getFacets()));
+
+      GetRequest request = new GetRequest();
+      request.setUrl("/facets/" + x.getIndexName());
+      request.setQuery(String.format("%s&facetSTart=%d&facetPageSize=%d&%d",
+        x.getQuery().getQueryString(),
+        x.getQuery().getStart(),
+        x.getQuery().getPageSize(),
+        addition));
+      multiGetRequestItems[i] = request;
+    }
+
+    GetResponse[] results = multiGet(multiGetRequestItems);
+
+    JsonSerializer jsonSerializer = convention.createSerializer();
+
+    FacetResults[] facetResults = new FacetResults[results.length];
+    for (int facetResultCounter = 0; facetResultCounter < facetResults.length; facetResultCounter++) {
+      GetResponse curFacetDoc = results[facetResultCounter];
+      facetResults[facetResultCounter] = jsonSerializer.deserialize(curFacetDoc.getResult(), FacetResults.class);
+    }
+    return facetResults;
+  }
+
+  @Override
+  public FacetResults getFacets(final String index, final IndexQuery query, final List<Facet> facets) {
+    return getFacets(index, query, facets, 0, null);
+  }
+
+  @Override
+  public FacetResults getFacets(final String index, final IndexQuery query, final List<Facet> facets, final int start) {
+    return getFacets(index, query, facets, start, null);
+  }
+
+  @Override
+  public FacetResults getFacets(final String index, final IndexQuery query, final List<Facet> facets, final int start, final Integer pageSize) {
+
+    final String facetsJson = JsonConvert.serializeObject(facets);
+    final HttpMethods method = facetsJson.length() > 1024 ? HttpMethods.POST : HttpMethods.GET;
+    return executeWithReplication(method, new Function1<OperationMetadata, FacetResults>() {
+      @Override
+      public FacetResults apply(OperationMetadata operationMetadata) {
+        return directGetFacets(operationMetadata, index, query, facetsJson, start, pageSize, method);
+      }
+    });
+  }
+
+  //TODO: trim and use get
+  protected FacetResults directGetFacets(OperationMetadata operationMetadata, String index, IndexQuery query, String facetsJson, int start, Integer pageSize, HttpMethods method) {
+    String requestUri = operationMetadata.getUrl() + String.format("/facets/%s?%s&facetStart=%d&facetPageSize=%s",
+      UrlUtils.escapeUriString(index),
+      query.getQueryString(),
+      start,
+      (pageSize !=null ) ? pageSize.toString() : "");
+
+    if(method == HttpMethods.GET) {
+      requestUri += "&facets=" + UrlUtils.escapeDataString(facetsJson);
+    }
+
+    try (HttpJsonRequest request = jsonRequestFactory.createHttpJsonRequest(
+      new CreateHttpJsonRequestParams(this, requestUri, method, new RavenJObject(), operationMetadata.getCredentials(), convention)
+      .addOperationHeaders(operationsHeaders))
+      .addReplicationStatusHeaders(url, operationMetadata.getUrl(), replicationInformer, convention.getFailoverBehavior(), new HandleReplicationStatusChangesCallback())) {
+      if (method != HttpMethods.GET)
+        request.write(facetsJson);
+
+      RavenJObject json = (RavenJObject)request.readResponseJson();
+      return convention.createSerializer().deserialize(json, FacetResults.class);
+    }
+  }
+
+  //TODO: get logs
+
+  //TODO: get license status
+
+  @Override
+  public BuildNumber getBuildNumber() {
+    try (HttpJsonRequest request = jsonRequestFactory.createHttpJsonRequest(new CreateHttpJsonRequestParams(this, url + "/build/version",
+      HttpMethods.GET, new RavenJObject(), credentialsThatShouldBeUsedOnlyInOperationsWithoutReplication, convention))) {
+      request.addOperationHeaders(operationsHeaders);
+
+      RavenJToken result = request.readResponseJson();
+      return convention.createSerializer().deserialize(result, BuildNumber.class);
+    }
+  }
+
+  @Override
+  public IndexMergeResults getIndexMergeSuggestions() throws IOException {
+    try (HttpJsonRequest request = jsonRequestFactory.createHttpJsonRequest(new CreateHttpJsonRequestParams(this, url + "/debug/suggest-index-merge",
+      HttpMethods.GET, new RavenJObject(), credentialsThatShouldBeUsedOnlyInOperationsWithoutReplication, convention))) {
+      request.addOperationHeaders(operationsHeaders);
+      RavenJToken result = request.readResponseJson();
+      return convention.createSerializer().deserialize(result, IndexMergeResults.class);
+    }
+  }
+
+  @Override
+  public List<JsonDocument> startsWith(final String keyPrefix, final String matches, final int start, final int pageSize) throws ServerClientException {
+    return startsWith(keyPrefix, matches, start, pageSize, false);
+  }
+
+  @Override
+  public List<JsonDocument> startsWith(final String keyPrefix, final String matches, final int start, final int pageSize, final boolean metadataOnly) throws ServerClientException {
+    return startsWith(keyPrefix, matches, start, pageSize, metadataOnly, null, null, null, null, null);
+  }
+
+  @Override
+  public List<JsonDocument> startsWith(final String keyPrefix, final String matches, final int start, final int pageSize, final boolean metadataOnly, final String exclude) throws ServerClientException {
+    return startsWith(keyPrefix, matches, start, pageSize, metadataOnly, exclude, null, null, null, null);
+  }
+
+  @Override
+  public List<JsonDocument> startsWith(final String keyPrefix, final String matches, final int start, final int pageSize, final boolean metadataOnly, final String exclude, final RavenPagingInformation pagingInformation) throws ServerClientException {
+    return startsWith(keyPrefix, matches, start, pageSize, metadataOnly, exclude, pagingInformation, null, null, null);
+  }
+
+  @Override
+  public List<JsonDocument> startsWith(final String keyPrefix, final String matches, final int start, final int pageSize, final boolean metadataOnly, final String exclude, final RavenPagingInformation pagingInformation, final String transformer, final Map<String, RavenJToken> transformerParameters) throws ServerClientException {
+    return startsWith(keyPrefix, matches, start, pageSize, metadataOnly, exclude, pagingInformation, transformer, transformerParameters, null);
+  }
+
+  @Override
+  public List<JsonDocument> startsWith(final String keyPrefix, final String matches, final int start, final int pageSize, final boolean metadataOnly, final String exclude, final RavenPagingInformation pagingInformation, final String transformer, final Map<String, RavenJToken> transformerParameters, final String skipAfter) throws ServerClientException {
+    ensureIsNotNullOrEmpty(keyPrefix, "keyPrefix");
+    return executeWithReplication(HttpMethods.GET, new Function1<OperationMetadata, List<JsonDocument>>() {
+      @Override
+      public List<JsonDocument> apply(OperationMetadata operationMetadata) {
+        return directStartsWith(operationMetadata, keyPrefix, matches, start, pageSize, metadataOnly, exclude, pagingInformation, transformer, transformerParameters, skipAfter);
+      }
+    });
+  }
+
+  @SuppressWarnings("null")
+  protected List<JsonDocument> directStartsWith(final OperationMetadata operationMetadata, final String keyPrefix,
+    final String matches, final int start, final int pageSize, final boolean metadataOnly, final String exclude,
+    final RavenPagingInformation pagingInformation, final String transformer,
+    final Map<String, RavenJToken> transformerParameters, final String skipAfter) throws ServerClientException {
+    RavenJObject metadata = new RavenJObject();
+
+    int actualStart = start;
+    boolean nextPage = pagingInformation != null && pagingInformation.isForPreviousPage(start, pageSize);
+    if (nextPage) {
+      actualStart = pagingInformation.getNextPageStart();
+    }
+
+
+    String actualUrl = operationMetadata.getUrl() + String.format("/docs?startsWith=%s&matches=%s&exclude=%s&start=%d&pageSize=%d", UrlUtils.escapeDataString(keyPrefix),
+      UrlUtils.escapeDataString(StringUtils.trimToEmpty(matches)),
+      UrlUtils.escapeDataString(StringUtils.trimToEmpty(exclude)),actualStart, pageSize);
+    if (metadataOnly) {
+      actualUrl += "&metadata-only=true";
+    }
+
+    if (StringUtils.isNotEmpty(skipAfter)) {
+      actualUrl += "&skipAfter=" + UrlUtils.escapeDataString(skipAfter);
+    }
+
+    if (StringUtils.isNotEmpty(transformer)) {
+      actualUrl += "&transformer=" + transformer;
+      if (transformerParameters != null) {
+        for (Map.Entry<String, RavenJToken> entry : transformerParameters.entrySet()) {
+          actualUrl += String.format("&tp-%s=%s", entry.getKey(), entry.getValue());
+        }
+      }
+    }
+
+    if (nextPage) {
+      actualUrl += "&next-page=true";
+    }
+
+    try (HttpJsonRequest request = jsonRequestFactory.createHttpJsonRequest(
+      new CreateHttpJsonRequestParams(this, actualUrl, HttpMethods.GET, metadata, operationMetadata.getCredentials(), convention).
+      addOperationHeaders(operationsHeaders)).
+      addReplicationStatusHeaders(url, operationMetadata.getUrl(), replicationInformer, convention.getFailoverBehavior(), new HandleReplicationStatusChangesCallback())) {
+      RavenJArray result = (RavenJArray)request.readResponseJson();
+
+      if (pagingInformation != null) {
+        try {
+          int nextPageStart = Integer.parseInt(request.getResponseHeaders().get(Constants.NEXT_PAGE_START));
+          pagingInformation.fill(start, pageSize, nextPageStart);
+        } catch (NumberFormatException e) {
+          //ignore
+        }
+      }
+
+      List<RavenJObject> docResults = new ArrayList<RavenJObject>();
+      for (RavenJToken token : result) {
+        if (token instanceof RavenJObject) {
+          docResults.add((RavenJObject)token.cloneToken());
+        }
+      }
+
+      final int actualStartFinal = actualStart;
+
+      List<JsonDocument> startsWithResults = SerializationHelper.ravenJObjectsToJsonDocuments(docResults);
+      return retryOperationBecauseOfConflict(operationMetadata, docResults, startsWithResults, new Function0<List<JsonDocument>>() {
+        @Override
+        public List<JsonDocument> apply() {
+          return startsWith(keyPrefix, matches, actualStartFinal, pageSize, metadataOnly, exclude, pagingInformation, transformer, transformerParameters, skipAfter);
+        }
+      }, new Function1<String, ConflictException>() {
+        @Override
+        public ConflictException apply(String conflictedResultId) {
+          ConflictException conflictException = new ConflictException("Conflict detected on "
+          + conflictedResultId.substring(0, conflictedResultId.indexOf("/conflicts/")) +
+            ", conflict must be resolved before the document will be accessible", true);
+          conflictException.setConflictedVersionIds(new String[] { conflictedResultId });
+          return conflictException;
+        }
+
+      });
+    }
+  }
+
+  @Override
+  public GetResponse[] multiGet(final GetRequest[] requests) {
+    return executeWithReplication(HttpMethods.GET, new Function1<OperationMetadata, GetResponse[]>() {
+      @Override
+      public GetResponse[] apply(OperationMetadata operationMetadata) {
+        return directMultiGet(operationMetadata, requests);
+      }
+    });
+  }
+
+  protected GetResponse[] directMultiGet(final OperationMetadata operationMetadata, GetRequest[] requests) {
+      MultiGetOperation multiGetOperation = new MultiGetOperation(this, convention, operationMetadata.getUrl(), requests);
+
+      try (HttpJsonRequest httpJsonRequest = jsonRequestFactory.createHttpJsonRequest(new CreateHttpJsonRequestParams(this, multiGetOperation.getRequestUri(),
+        HttpMethods.POST, new RavenJObject(), operationMetadata.getCredentials(), convention))) {
+        GetRequest[] requestsForServer =
+          multiGetOperation.preparingForCachingRequest(jsonRequestFactory);
+
+        String postedData = JsonConvert.serializeObject(requestsForServer);
+
+        if (multiGetOperation.canFullyCache(jsonRequestFactory, httpJsonRequest, postedData)) {
+          return multiGetOperation.handleCachingResponse(new GetResponse[requests.length],
+            jsonRequestFactory);
+        }
+
+        httpJsonRequest.write(postedData);
+        RavenJArray results = (RavenJArray)httpJsonRequest.readResponseJson();
+
+        GetResponse[] responses = convention.createSerializer().deserialize(results, GetResponse[].class);
+
+        multiGetOperation.tryResolveConflictOrCreateConcurrencyException(responses, new Function3<String, RavenJObject, Etag, ConflictException>() {
+          @Override
+          public ConflictException apply(String key, RavenJObject conflictsDoc, Etag etag) {
+            return tryResolveConflictOrCreateConcurrencyException(operationMetadata, key, conflictsDoc, etag);
+          }
+        });
+
+        return multiGetOperation.handleCachingResponse(responses, jsonRequestFactory);
+      }
+  }
+
+  @Override
+  public QueryResult query(String index, IndexQuery query) {
+    return query(index, query, null, false, false);
+  }
+
+  @Override
+  public QueryResult query(String index, IndexQuery query, String[] includes) {
+    return query(index, query, includes, false, false);
+  }
+
+  @Override
+  public QueryResult query(String index, IndexQuery query, String[] includes, boolean metadataOnly) {
+    return query(index, query, includes, metadataOnly, false);
+  }
+
+  @Override
+  public QueryResult query(final String index, final IndexQuery query, final String[] includes, final boolean metadataOnly, final boolean indexEntriesOnly) {
+    ensureIsNotNullOrEmpty(index, "index");
+    final HttpMethods method = query.getQuery() == null || query.getQuery().length() <= convention.getMaxLengthOfQueryUsingGetUrl()
+        ? HttpMethods.GET : HttpMethods.POST;
+
+    if (HttpMethods.POST.equals(method)) {
+      return executeWithReplication(method, new Function1<OperationMetadata, QueryResult>() {
+        @Override
+        public QueryResult apply(OperationMetadata operationMetadata) {
+          return directQueryAsPost(index, query, operationMetadata, includes);
+        }
+      });
+    }
+    return executeWithReplication(method, new Function1<OperationMetadata, QueryResult>() {
+      @Override
+      public QueryResult apply(OperationMetadata operationMetadata) {
+        return directQueryAsGet(index, query, operationMetadata, includes, metadataOnly, indexEntriesOnly);
+      }
+    });
+  }
+
+  protected QueryResult directQueryAsGet(final String index, final IndexQuery query, final OperationMetadata operationMetadata, final String[] includes, final boolean metadataOnly, final boolean includeEntries) {
+    String path = query.getIndexQueryUrl(operationMetadata.getUrl(), index, "indexes", true, true);
+    if (metadataOnly)
+      path += "&metadata-only=true";
+    if (includeEntries)
+      path += "&debug=entries";
+    if (includes != null && includes.length > 0) {
+      for (String include: includes) {
+        path += "&include=" + include;
+      }
+    }
+
+    try (HttpJsonRequest request = jsonRequestFactory.createHttpJsonRequest(
+      new CreateHttpJsonRequestParams(this, path, HttpMethods.GET, new RavenJObject(), operationMetadata.getCredentials(), convention)
+      .setAvoidCachingRequest(query.isDisableCaching())
+      .addOperationHeaders(operationsHeaders))
+      .addReplicationStatusHeaders(url, operationMetadata.getUrl(), replicationInformer,
+        convention.getFailoverBehavior(),
+        new HandleReplicationStatusChangesCallback())) {
+      RavenJObject json = (RavenJObject)request.readResponseJson();
+
+      ErrorResponseException responseException;
+      try {
+        if (json == null) throw new IllegalStateException("Got empty response from the server for the following request: " + request.getUrl());
+        QueryResult queryResult = SerializationHelper.toQueryResult(json, HttpExtensions.getEtagHeader(request), request.getResponseHeaders().get("Temp-Request-Time"), request.getSize());
+        List<RavenJObject> docsResults = new ArrayList<>();
+        docsResults.addAll(queryResult.getResults());
+        docsResults.addAll(queryResult.getIncludes());
+        return retryOperationBecauseOfConflict(operationMetadata, docsResults, queryResult, new Function0<QueryResult>() {
+          @Override
+          public QueryResult apply() {
+            return directQueryAsGet(index, query, operationMetadata, includes, metadataOnly, includeEntries);
+          }
+        }, null);
+
+      } catch (ErrorResponseException e) {
+        if (e.getStatusCode() == HttpStatus.SC_NOT_FOUND) {
+          String text = e.getResponseString();
+          if (text.contains("maxQueryString")) throw new IllegalStateException(text, e);
+          throw new IllegalStateException("There is no index named: " + index, e);
+        }
+        responseException = e;
+
+      }
+      if (handleException(responseException)) return null;
+      throw responseException;
+    }
+  }
+
+  protected QueryResult directQueryAsPost(final String index, final IndexQuery query, final OperationMetadata operationMetadata, final String[] includes) {
+    StringBuilder stringBuilder = new StringBuilder();
+    query.appendQueryString(stringBuilder);
+
+    if (includes != null && includes.length > 0) {
+      for (String include: includes) {
+        stringBuilder.append("&include=").append(include);
+      }
+    }
+
+    GetRequest getRequest = new GetRequest();
+    getRequest.setQuery(stringBuilder.toString());
+    getRequest.setUrl("/indexes/" + index);
+
+    try {
+      GetResponse[] x = multiGet(new GetRequest[] { getRequest });
+      GetResponse getResponse = x[0];
+      RavenJObject json = (RavenJObject) getResponse.getResult();
+      return SerializationHelper.toQueryResult(json, HttpExtensions.getEtagHeader(getResponse), getResponse.getHeaders().get("Temp-Request-Time"), -1);
+    } catch (ErrorResponseException errorResponseException) {
+      if (errorResponseException.getStatusCode() == HttpStatus.SC_NOT_FOUND) {
+        String text = errorResponseException.getResponseString();
+        if (text.contains("maxQueryString")) throw new IllegalStateException(text, errorResponseException);
+        throw new IllegalStateException("There is no index named: " + index, errorResponseException);
+      }
+      if (handleException(errorResponseException)) return null;
+
+      throw errorResponseException;
+    }
+  }
+
+  private boolean handleException(ErrorResponseException e) {
+    if (e.getStatusCode() == HttpStatus.SC_INTERNAL_SERVER_ERROR) {
+      String content = e.getResponseString();
+      RavenJObject json = RavenJObject.fromObject(content);
+      ServerRequestError error = convention.createSerializer().deserialize(json, ServerRequestError.class);
+      throw new ErrorResponseException(e, error.getError());
+
+    }
+    return false;
+  }
+
+  @Override
+  public SuggestionQueryResult suggest(final String index, final SuggestionQuery suggestionQuery) {
+    if (suggestionQuery == null) {
+      throw new IllegalArgumentException("suggestionQuery");
+    }
+    return executeWithReplication(HttpMethods.GET, new Function1<OperationMetadata, SuggestionQueryResult>() {
+      @Override
+      public SuggestionQueryResult apply(OperationMetadata operationMetadata) {
+        return directSuggest(index, suggestionQuery, operationMetadata);
+      }
+    });
+  }
+
+  protected SuggestionQueryResult directSuggest(String index, SuggestionQuery suggestionQuery, OperationMetadata operationMetadata) {
+    String requestUri = operationMetadata.getUrl() + String.format("/suggest/%s?term=%s&field=%s&max=%d&popularity=%s",
+      UrlUtils.escapeUriString(index),
+      UrlUtils.escapeDataString(suggestionQuery.getTerm()),
+      UrlUtils.escapeDataString(suggestionQuery.getField()),
+      suggestionQuery.getMaxSuggestions(),
+      suggestionQuery.isPopularity());
+
+    if (suggestionQuery.getDistance() != null) {
+      requestUri += "&distance=" + UrlUtils.escapeDataString(SharpEnum.value(suggestionQuery.getDistance()));
+    }
+    if (suggestionQuery.getAccuracy() != null) {
+      requestUri += "&accuracy=" + NumberUtil.trimZeros(String.format(Constants.getDefaultLocale(), "%.4f", suggestionQuery.getAccuracy()));
+    }
+
+    try (HttpJsonRequest request = jsonRequestFactory.createHttpJsonRequest(
+      new CreateHttpJsonRequestParams(this, requestUri, HttpMethods.GET, new RavenJObject(), operationMetadata.getCredentials(), convention)
+      .addOperationHeaders(operationsHeaders))
+      .addReplicationStatusHeaders(url, operationMetadata.getUrl(), replicationInformer, convention.getFailoverBehavior(), new HandleReplicationStatusChangesCallback())) {
+      RavenJObject json = (RavenJObject)request.readResponseJson();
+
+      List<String> suggestions = new ArrayList<>();
+
+      SuggestionQueryResult result = new SuggestionQueryResult();
+      RavenJArray array = (RavenJArray) json.get("Suggestions");
+      for (RavenJToken token: array) {
+        suggestions.add(token.value(String.class));
+      }
+      result.setSuggestions(suggestions.toArray(new String[0]));
+      return result;
+    }
+  }
+
+  @Override
+  public BatchResult[] batch(final List<ICommandData> commandDatas) {
+    return executeWithReplication(HttpMethods.POST, new Function1<OperationMetadata, BatchResult[]>() {
+      @Override
+      public BatchResult[] apply(OperationMetadata operationMetadata) {
+        return directBatch(commandDatas, operationMetadata);
+      }
+    });
+  }
+
+  protected BatchResult[] directBatch(List<ICommandData> commandDatas, OperationMetadata operationMetadata) {
+    RavenJObject metadata = new RavenJObject();
+    try (HttpJsonRequest req = jsonRequestFactory.createHttpJsonRequest(
+      new CreateHttpJsonRequestParams(this, operationMetadata.getUrl() + "/bulk_docs", HttpMethods.POST, metadata, operationMetadata.getCredentials(), convention)
+      .addOperationHeaders(operationsHeaders))
+      .addReplicationStatusHeaders(url, operationMetadata.getUrl(), replicationInformer, convention.getFailoverBehavior(), new HandleReplicationStatusChangesCallback())) {
+
+      RavenJArray jArray = new RavenJArray();
+      for (ICommandData command: commandDatas) {
+        jArray.add(command.toJson());
+      }
+
+      ErrorResponseException responseException;
+      try {
+        req.write(jArray.toString());
+        RavenJArray response = (RavenJArray)req.readResponseJson();
+
+        if (response == null) {
+          throw new IllegalStateException("Got null response from the server after doing a batch, something is very wrong. Probably a garbled response. Posted: " + jArray);
+        }
+        return JsonConvert.deserializeObject(BatchResult[].class, response.toString());
+      } catch (ErrorResponseException e) {
+        if (e.getStatusCode() != HttpStatus.SC_CONFLICT) {
+          throw e;
+        }
+        responseException = e;
+      }
+      throw fetchConcurrencyException(responseException);
+    }
+  }
+
+  protected ConcurrencyException fetchConcurrencyException(ErrorResponseException e) {
+    String text = e.getResponseString();
+    RavenJObject ravenJToken = RavenJObject.parse(text);
+    return new ConcurrencyException(
+      ravenJToken.value(Etag.class, "ExpectedETag"),
+      ravenJToken.value(Etag.class, "ActualETag"),
+      ravenJToken.value(String.class, "Error"),
+      e);
+  }
+
+  private static void ensureIsNotNullOrEmpty(String key, String argName) {
+    if (key == null || "".equals(key)) {
+      throw new IllegalArgumentException("Key cannot be null or empty " + argName);
+    }
+  }
+
+  @Override
+  @Deprecated
+  public AttachmentInformation[] getAttachments(final int start, final Etag startEtag, final int pageSize) {
+    return executeWithReplication(HttpMethods.GET, new Function1<OperationMetadata, AttachmentInformation[]>() {
+      @Override
+      public AttachmentInformation[] apply(OperationMetadata operationMetadata) {
+        return directGetAttachments(start, startEtag, pageSize, operationMetadata);
+      }
+    });
+  }
+
+  @Deprecated
+  protected AttachmentInformation[] directGetAttachments(int start, Etag startEtag, int pageSize,
+    OperationMetadata operationMetadata) {
+    try (HttpJsonRequest webRequest = jsonRequestFactory.createHttpJsonRequest(
+      new CreateHttpJsonRequestParams(this, operationMetadata.getUrl() + "/static/?pageSize=" + pageSize + "&etag=" + startEtag + "&start=" + start, HttpMethods.GET, new RavenJObject(), operationMetadata.getCredentials(), convention))
+      .addReplicationStatusHeaders(url, operationMetadata.getUrl(), replicationInformer, convention.getFailoverBehavior(), new HandleReplicationStatusChangesCallback())) {
+        RavenJArray json = (RavenJArray)webRequest.readResponseJson();
+        return convention.createSerializer().deserialize(json, AttachmentInformation[].class);
+    }
+  }
+
+  @Override
+  @Deprecated
+  public void putAttachment(final String key, final Etag etag, final InputStream data, final RavenJObject metadata) {
+    executeWithReplication(HttpMethods.PUT, new Function1<OperationMetadata, Void>() {
+      @Override
+      public Void apply(OperationMetadata operationMetadata) {
+        directPutAttachment(key, metadata, etag, data, operationMetadata);
+        return null;
+      }
+    });
+  }
+
+  @Deprecated
+  protected void directPutAttachment(String key, RavenJObject metadata, Etag etag, InputStream data, OperationMetadata operationMetadata) {
+    if (metadata == null) {
+      metadata = new RavenJObject();
+    }
+    if (etag != null) {
+      metadata.set(Constants.METADATA_ETAG_FIELD, new RavenJValue(etag.toString()));
+    }
+
+    try (HttpJsonRequest jsonRequest = jsonRequestFactory.createHttpJsonRequest(
+      new CreateHttpJsonRequestParams(this, operationMetadata.getUrl() + "/static/" + key, HttpMethods.PUT, metadata, operationMetadata.getCredentials(), convention))
+      .addReplicationStatusHeaders(url, operationMetadata.getUrl(), replicationInformer, convention.getFailoverBehavior(), new HandleReplicationStatusChangesCallback())) {
+      jsonRequest.write(data);
+    }
+  }
+
+  @Override
+  @Deprecated
+  public Attachment getAttachment(final String key) {
+    return executeWithReplication(HttpMethods.GET, new Function1<OperationMetadata, Attachment>() {
+      @Override
+      public Attachment apply(OperationMetadata operationMetadata) {
+        return directGetAttachment(HttpMethods.GET, key, operationMetadata);
+      }
+    });
+  }
+
+  @Override
+  @Deprecated
+  public Attachment headAttachment(final String key) {
+    return executeWithReplication(HttpMethods.HEAD, new Function1<OperationMetadata, Attachment>() {
+      @Override
+      public Attachment apply(OperationMetadata operationMetadata) {
+        return directGetAttachment(HttpMethods.HEAD, key, operationMetadata);
+      }
+    });
+  }
+
+  @Deprecated
+  protected Attachment directGetAttachment(HttpMethods method, String key, OperationMetadata operationMetadata) {
+    RavenJObject metadata = new RavenJObject();
+    CreateHttpJsonRequestParams createHttpJsonRequestParams = new CreateHttpJsonRequestParams(this, operationMetadata.getUrl() + "/static/" + key, method, metadata, operationMetadata.getCredentials(), convention);
+
+    try (HttpJsonRequest request = jsonRequestFactory.createHttpJsonRequest(createHttpJsonRequestParams)
+      .addReplicationStatusHeaders(url, operationMetadata.getUrl(), replicationInformer, convention.getFailoverBehavior(), new HandleReplicationStatusChangesCallback())) {
+      ErrorResponseException responseException;
+
+      try {
+        byte[] result = request.readResponseBytes();
+
+        handleReplicationStatusChanges(request.getResponseHeaders(), url, operationMetadata.getUrl());
+        return new Attachment(HttpMethods.GET.equals(method), result, result.length, MetadataExtensions.filterHeadersAttachment(request.getResponseHeaders()),
+          HttpExtensions.getEtagHeader(request), null);
+      } catch (ErrorResponseException e) {
+        if (e.getStatusCode() == HttpStatus.SC_NOT_FOUND) return null;
+        if (e.getStatusCode() != HttpStatus.SC_CONFLICT) throw e;
+        responseException = e;
+      } catch (IOException e) {
+        throw new IllegalStateException(e.getMessage(), e);
+      }
+
+
+      RavenJObject conflictsDoc = RavenJObject.parse(responseException.getResponseString());
+      List<String> conflictIds = conflictsDoc.value(RavenJArray.class, "Conflicts").values(String.class);
+
+      ConflictException ex = new ConflictException("Conflict detected on " + key + ", conflict must be resolved before the attachment will be accessible", true);
+      ex.setConflictedVersionIds(conflictIds.toArray(new String[0]));
+      ex.setEtag(responseException.getEtag());
+      throw ex;
+    }
+  }
+
+  @Override
+  @Deprecated
+  public void deleteAttachment(final String key, final Etag etag) {
+    executeWithReplication(HttpMethods.DELETE, new Function1<OperationMetadata, Void>() {
+      @Override
+      public Void apply(OperationMetadata operationMetadata) {
+        directDeleteAttachment(key, etag, operationMetadata);
+        return null;
+      }
+    });
+  }
+
+  @Deprecated
+  protected void directDeleteAttachment(String key, Etag etag, OperationMetadata operationMetadata) {
+    RavenJObject metadata = new RavenJObject();
+    if (etag != null) {
+      metadata.add(Constants.METADATA_ETAG_FIELD, RavenJToken.fromObject(etag.toString()));
+    }
+    try (HttpJsonRequest jsonRequest = jsonRequestFactory.createHttpJsonRequest(
+      new CreateHttpJsonRequestParams(this, operationMetadata.getUrl() + "/static/" + key, HttpMethods.DELETE, metadata, operationMetadata.getCredentials(), convention))
+      .addReplicationStatusHeaders(url, operationMetadata.getUrl(), replicationInformer, convention.getFailoverBehavior(), new HandleReplicationStatusChangesCallback())) {
+      jsonRequest.executeRequest();
+    }
+  }
+
+  @Override
   public AutoCloseable disableAllCaching() {
     return jsonRequestFactory.disableAllCaching();
   }
 
-  /**
-   * @return the profilingInformation
-   */
+  @Override
+  public List<String> getTerms(final String index, final String field, final String fromValue, final int pageSize) {
+    return executeWithReplication(HttpMethods.GET, new Function1<OperationMetadata, List<String>>() {
+      @Override
+      public List<String> apply(OperationMetadata operationMetadata) {
+        return directGetTerms(operationMetadata, index, field, fromValue, pageSize);
+      }
+    });
+  }
+
+  protected List<String> directGetTerms(OperationMetadata operationMetadata, String index, String field, String fromValue, int pageSize) {
+    String requestUri = operationMetadata.getUrl() + String.format("/terms/%s?field=%s&pageSize=%d&fromValue=%s",
+      UrlUtils.escapeUriString(index),
+      UrlUtils.escapeDataString(field),
+      pageSize,
+      UrlUtils.escapeDataString(fromValue != null ? fromValue : ""));
+
+    try (HttpJsonRequest request = jsonRequestFactory.createHttpJsonRequest(
+      new CreateHttpJsonRequestParams(this, requestUri, HttpMethods.GET, new RavenJObject(), operationMetadata.getCredentials(), convention)
+      .addOperationHeaders(operationsHeaders))
+      .addReplicationStatusHeaders(url, operationMetadata.getUrl(), replicationInformer, convention.getFailoverBehavior(), new HandleReplicationStatusChangesCallback())) {
+      return request.readResponseJson().values(String.class);
+    }
+  }
+
   @Override
   public ProfilingInformation getProfilingInformation() {
     return profilingInformation;
   }
 
+  public void addFailoverStatusChanged(EventHandler<FailoverStatusChangedEventArgs> event) {
+    replicationInformer.addFailoverStatusChanged(event);
+  }
 
-  public RavenJToken getOperationStatus(long id) {
+  public void removeFailoverStatusChanged(EventHandler<FailoverStatusChangedEventArgs> event) {
+    replicationInformer.removeFailoverStatusChanged(event);
+  }
+
+  @Override
+  public AutoCloseable forceReadFromMaster() {
+    final int old = readStripingBase;
+    readStripingBase = -1;
+    return new AutoCloseable() {
+      @Override
+      public void close() throws Exception {
+        readStripingBase = old;
+      }
+    };
+  }
+
+  @Override
+  public JsonDocumentMetadata head(final String key) {
+    ensureIsNotNullOrEmpty(key, "key");
+    return executeWithReplication(HttpMethods.HEAD, new Function1<OperationMetadata, JsonDocumentMetadata>() {
+      @Override
+      public JsonDocumentMetadata apply(OperationMetadata operationMetadata) {
+        return directHead(operationMetadata, key);
+      }
+    });
+  }
+
+  @Override
+  public RavenJObjectIterator streamQuery(final String index, final IndexQuery query, final Reference<QueryHeaderInformation> queryHeaderInfo) {
+    return executeWithReplication(HttpMethods.GET, new Function1<OperationMetadata, RavenJObjectIterator>() {
+      @Override
+      public RavenJObjectIterator apply(OperationMetadata operationMetadata) {
+        return directStreamQuery(operationMetadata, index, query, queryHeaderInfo);
+      }
+    });
+  }
+
+  public RavenJObjectIterator directStreamQuery(OperationMetadata operationMetadata, String index, IndexQuery query, Reference<QueryHeaderInformation> queryHeaderInfo) {
+    ensureIsNotNullOrEmpty(index, "index");
+
+    String path;
+    HttpMethods method;
+
+    if (query.getQuery() != null && query.getQuery().length() > convention.getMaxLengthOfQueryUsingGetUrl()) {
+      path = query.getIndexQueryUrl(operationMetadata.getUrl(), index, "streams/query", false, false);
+      method = HttpMethods.POST;
+    } else {
+      method = HttpMethods.GET;
+      path = query.getIndexQueryUrl(operationMetadata.getUrl(), index, "streams/query", false);
+    }
+
     HttpJsonRequest request = jsonRequestFactory.createHttpJsonRequest(
-      new CreateHttpJsonRequestParams(this, url + "/operation/status?id=" + id, HttpMethods.GET, new RavenJObject(), credentialsThatShouldBeUsedOnlyInOperationsWithoutReplication, convention)
-      .addOperationHeaders(operationsHeaders));
+      new CreateHttpJsonRequestParams(this, path, method, new RavenJObject(), credentialsThatShouldBeUsedOnlyInOperationsWithoutReplication, convention)
+      .addOperationHeaders(operationsHeaders))
+      .addReplicationStatusHeaders(getUrl(), url, replicationInformer,
+        convention.getFailoverBehavior(),
+        new HandleReplicationStatusChangesCallback());
+    request.removeAuthorizationHeader();
+
+    String token = getSingleAuthToken(operationMetadata);
     try {
-      return request.readResponseJson();
-    } catch (HttpOperationException e) {
-      try {
-        if (e.getStatusCode() == HttpStatus.SC_NOT_FOUND) {
-          return null;
-        }
-        throw e;
-      } finally {
-        EntityUtils.consumeQuietly(e.getHttpResponse().getEntity());
+      token = validateThatWeCanUseAuthenticateTokens(operationMetadata, token);
+    } catch (Exception e) {
+      request.close();
+      throw new IllegalStateException("Could not authenticate token for query streaming, if you are using ravendb in IIS make sure you have Anonymous Authentication enabled in the IIS configuration", e);
+    }
+
+    request.addOperationHeader("Single-Use-Auth-Token", token);
+
+    CloseableHttpResponse response;
+
+    try {
+      if (HttpMethods.POST.equals(method)) {
+        response = request.executeRawResponse(query.getQuery());
+      } else {
+        response = request.executeRawResponse();
+      }
+      HttpJsonRequestExtension.assertNotFailingResponse(response);
+    } catch (Exception e) {
+      request.close();
+
+      if (index.startsWith("dynamic/") && request.getResponseStatusCode() == HttpStatus.SC_NOT_FOUND) {
+        throw new IllegalStateException("StreamQuery does not support querying dynamic indexes. It is designed to be used with large data-sets and is unlikely to return all data-set after 15 sec of indexing, like query() does", e);
+      }
+      throw new IllegalStateException(e.getMessage(), e);
+    }
+
+    QueryHeaderInformation queryHeaderInformation = new QueryHeaderInformation();
+    Map<String, String> headers = HttpJsonRequest.extractHeaders(response.getAllHeaders());
+    queryHeaderInformation.setIndex(headers.get("Raven-Index"));
+    NetDateFormat sdf = new NetDateFormat();
+    try {
+      queryHeaderInformation.setIndexTimestamp(sdf.parse(headers.get("Raven-Index-Timestamp")));
+    } catch (ParseException e) {
+      throw new RuntimeException(e);
+    }
+
+    queryHeaderInformation.setIndexEtag(Etag.parse(headers.get("Raven-Index-Etag")));
+    queryHeaderInformation.setResultEtag(Etag.parse(headers.get("Raven-Result-Etag")));
+    queryHeaderInformation.setStale(Boolean.valueOf(headers.get("Raven-Is-Stale")));
+    queryHeaderInformation.setTotalResults(Integer.valueOf(headers.get("Raven-Total-Results")));
+
+    queryHeaderInfo.value = queryHeaderInformation;
+
+    return yieldStreamResults(response);
+  }
+
+  private static RavenJObjectIterator yieldStreamResults(final CloseableHttpResponse webResponse) {
+    HttpEntity httpEntity = webResponse.getEntity();
+    try {
+      InputStream stream = httpEntity.getContent();
+      JsonParser jsonParser = new JsonFactory().createJsonParser(stream);
+      if (jsonParser.nextToken() == null || jsonParser.getCurrentToken() != JsonToken.START_OBJECT) {
+        throw new IllegalStateException("Unexpected data at start of stream");
+      }
+      if (jsonParser.nextToken() == null || jsonParser.getCurrentToken() != JsonToken.FIELD_NAME || !"Results".equals(jsonParser.getText())) {
+        throw new IllegalStateException("Unexpected data at stream 'Results' property name");
+      }
+      if (jsonParser.nextToken() == null || jsonParser.getCurrentToken() != JsonToken.START_ARRAY) {
+        throw new IllegalStateException("Unexpected data at 'Results', could not find start results array");
+      }
+
+      return new RavenJObjectIterator(webResponse, jsonParser);
+    } catch (IOException e) {
+      throw new ServerClientException(e);
+    }
+  }
+
+  @Override
+  public RavenJObjectIterator streamDocs() {
+    return streamDocs(null, null, null, 0, Integer.MAX_VALUE);
+  }
+
+  @Override
+  public RavenJObjectIterator streamDocs(Etag fromEtag) {
+    return streamDocs(fromEtag, null, null, 0, Integer.MAX_VALUE, null);
+  }
+
+  @Override
+  public RavenJObjectIterator streamDocs(Etag fromEtag, String startsWith) {
+    return streamDocs(fromEtag, startsWith, null, 0, Integer.MAX_VALUE, null);
+  }
+
+  @Override
+  public RavenJObjectIterator streamDocs(Etag fromEtag, String startsWith, String matches) {
+    return streamDocs(fromEtag, startsWith, matches, 0, Integer.MAX_VALUE, null);
+  }
+
+  @Override
+  public RavenJObjectIterator streamDocs(Etag fromEtag, String startsWith, String matches, int start) {
+    return streamDocs(fromEtag, startsWith, matches, start, Integer.MAX_VALUE, null);
+  }
+  @Override
+  public RavenJObjectIterator streamDocs(Etag fromEtag, String startsWith, String matches, int start, int pageSize) {
+    return streamDocs(fromEtag, startsWith, matches, start, pageSize, null);
+  }
+
+  @Override
+  public RavenJObjectIterator streamDocs(Etag fromEtag, String startsWith, String matches, int start, int pageSize, String exclude) {
+    return streamDocs(fromEtag, startsWith, matches, start, pageSize, exclude, null);
+  }
+
+  @Override
+  public RavenJObjectIterator streamDocs(Etag fromEtag, String startsWith, String matches, int start, int pageSize, String exclude, RavenPagingInformation pagingInformation) {
+    return streamDocs(fromEtag, startsWith, matches, start, pageSize, exclude, pagingInformation, null);
+  }
+
+
+  @SuppressWarnings("null")
+  @Override
+  public RavenJObjectIterator streamDocs(final Etag fromEtag, final String startsWith, final String matches, final int start, final int pageSize, final String exclude, final RavenPagingInformation pagingInformation, final String skipAfter) {
+    return executeWithReplication(HttpMethods.GET, new Function1<OperationMetadata, RavenJObjectIterator>() {
+      @Override
+      public RavenJObjectIterator apply(OperationMetadata operationMetadata) {
+        return directStreamDocs(operationMetadata, fromEtag, startsWith, matches, start, pageSize, exclude, pagingInformation, skipAfter);
+      }
+    });
+  }
+
+  public RavenJObjectIterator directStreamDocs(OperationMetadata operationMetadata, final Etag fromEtag, final String startsWith, final String matches, final int start, final int pageSize, final String exclude, final RavenPagingInformation pagingInformation, final String skipAfter) {
+
+    if (fromEtag != null && startsWith != null)
+      throw new IllegalArgumentException("Either fromEtag or startsWith must be null, you can't specify both");
+
+    StringBuilder sb = new StringBuilder(url).append("/streams/docs?");
+
+    if (fromEtag != null) {
+      sb.append("etag=")
+      .append(fromEtag)
+      .append("&");
+    } else {
+      if (startsWith != null) {
+        sb.append("startsWith=").append(UrlUtils.escapeDataString(startsWith)).append("&");
+      }
+      if(matches != null) {
+        sb.append("matches=").append(UrlUtils.escapeDataString(matches)).append("&");
+      }
+      if (exclude != null) {
+        sb.append("exclude=").append(UrlUtils.escapeDataString(exclude)).append("&");
+      }
+      if (skipAfter != null) {
+        sb.append("skipAfter=").append(UrlUtils.escapeDataString(skipAfter)).append("&");
       }
     }
+
+    int actualStart = start;
+
+    boolean nextPage = pagingInformation != null && pagingInformation.isForPreviousPage(start, pageSize);
+
+    if (nextPage) {
+      actualStart = pagingInformation.getNextPageStart();
+    }
+
+    if (actualStart != 0) {
+      sb.append("start=").append(actualStart).append("&");
+    }
+    if (pageSize != Integer.MAX_VALUE) {
+      sb.append("pageSize=").append(pageSize).append("&");
+    }
+
+    if (nextPage) {
+      sb.append("next-page=true").append("&");
+    }
+
+    HttpJsonRequest request = jsonRequestFactory.createHttpJsonRequest(
+      new CreateHttpJsonRequestParams(this, sb.toString(), HttpMethods.GET, new RavenJObject(), credentialsThatShouldBeUsedOnlyInOperationsWithoutReplication, convention)
+      .addOperationHeaders(operationsHeaders))
+      .addReplicationStatusHeaders(url, url, replicationInformer, convention.getFailoverBehavior(), new HandleReplicationStatusChangesCallback());
+
+    request.removeAuthorizationHeader();
+    String token = getSingleAuthToken(operationMetadata);
+
+    try {
+      token = validateThatWeCanUseAuthenticateTokens(operationMetadata, token);
+    } catch (Exception e) {
+      request.close();
+      throw new IllegalStateException("Could not authenticate token for docs streaming, if you are using ravendb in IIS make sure you have Anonymous Authentication enabled in the IIS configuration", e);
+    }
+
+    request.addOperationHeader("Single-Use-Auth-Token", token);
+
+    CloseableHttpResponse response = null;
+
+    try {
+      response = request.executeRawResponse();
+      HttpJsonRequestExtension.assertNotFailingResponse(response);
+    } catch (Exception e) {
+      request.close();
+      throw new IllegalStateException(e.getMessage(), e);
+    }
+    return yieldStreamResults(response);
+
+  }
+
+  @Override
+  public void delete(final String key, final Etag etag) throws ServerClientException {
+    ensureIsNotNullOrEmpty(key, "key");
+    executeWithReplication(HttpMethods.DELETE, new Function1<OperationMetadata, Void>() {
+      @Override
+      public Void apply(OperationMetadata operationMetadata) {
+        directDelete(operationMetadata, key, etag);
+        return null;
+      }
+    });
+  }
+
+  protected void directDelete(OperationMetadata operationMetadata, String key, Etag etag) throws ServerClientException {
+    ensureIsNotNullOrEmpty(key, "key");
+    try (HttpJsonRequest jsonRequest = jsonRequestFactory.createHttpJsonRequest(
+      new CreateHttpJsonRequestParams(this, operationMetadata.getUrl() + "/docs/" + UrlUtils.escapeDataString(key), HttpMethods.DELETE, new RavenJObject(), operationMetadata.getCredentials(), convention).addOperationHeaders(operationsHeaders))
+      .addReplicationStatusHeaders(url, operationMetadata.getUrl(), replicationInformer, convention.getFailoverBehavior(), new HandleReplicationStatusChangesCallback())) {
+      jsonRequest.executeRequest();
+    }
+  }
+
+  @Override
+  public String urlFor(String documentKey) {
+    return url + "/docs/" + documentKey;
+  }
+
+  @Override
+  public ILowLevelBulkInsertOperation getBulkInsertOperation(BulkInsertOptions options, IDatabaseChanges changes) {
+    return new RemoteBulkInsertOperation(options, this, changes);
+  }
+
+  protected JsonDocumentMetadata directHead(OperationMetadata operationMetadata, String key) {
+    try (HttpJsonRequest jsonRequest = jsonRequestFactory.createHttpJsonRequest(
+      new CreateHttpJsonRequestParams(ServerClient.this, operationMetadata.getUrl() + "/docs/" + key, HttpMethods.HEAD, new RavenJObject(), operationMetadata.getCredentials(), convention)
+      .addOperationHeaders(operationsHeaders))
+      .addReplicationStatusHeaders(url, operationMetadata.getUrl(), replicationInformer, convention.getFailoverBehavior(), new HandleReplicationStatusChangesCallback())) {
+
+      try {
+        jsonRequest.executeRequest();
+        return SerializationHelper.deserializeJsonDocumentMetadata(key, jsonRequest.getResponseHeaders(), jsonRequest.getResponseStatusCode());
+      } catch (ErrorResponseException e) {
+        if (e.getStatusCode() == HttpStatus.SC_NOT_FOUND) return null;
+        if (e.getStatusCode() == HttpStatus.SC_CONFLICT) {
+          ConflictException conflictException = new ConflictException("Conflict detected on " + key +
+            ", conflict must be resolved before the document will be accessible. Cannot get the conflicts ids because" +
+            " a HEAD request was performed. A GET request will provide more information, and if you have a document conflict listener, will automatically resolve the conflict", true);
+          conflictException.setEtag(e.getEtag());
+
+          throw conflictException;
+        }
+        throw e;
+      }
+    }
+  }
+
+  public RavenJToken executeGetRequest(final String requestUrl) {
+    ensureIsNotNullOrEmpty(requestUrl, "url");
+    return executeWithReplication(HttpMethods.GET, new Function1<OperationMetadata, RavenJToken>() {
+      @Override
+      public RavenJToken apply(OperationMetadata operationMetadata) {
+        RavenJObject metadata = new RavenJObject();
+        try (HttpJsonRequest jsonRequest = jsonRequestFactory.createHttpJsonRequest(
+          new CreateHttpJsonRequestParams(ServerClient.this, operationMetadata.getUrl() + requestUrl, HttpMethods.GET, metadata, operationMetadata.getCredentials(), convention).
+          addOperationHeaders(operationsHeaders))) {
+          return jsonRequest.readResponseJson();
+        }
+      }
+    });
+  }
+
+  public HttpJsonRequest createRequest(HttpMethods method, String requestUrl) {
+    return createRequest(method, requestUrl, false, false, null);
+  }
+
+  public HttpJsonRequest createRequest(HttpMethods method, String requestUrl, boolean disableRequestCompression,
+    boolean disableAuthentication, Long timeout) {
+    RavenJObject metadata = new RavenJObject();
+    CreateHttpJsonRequestParams createHttpJsonRequestParams = new CreateHttpJsonRequestParams(this, url + requestUrl, method, metadata, credentialsThatShouldBeUsedOnlyInOperationsWithoutReplication, convention, timeout)
+      .addOperationHeaders(operationsHeaders);
+    createHttpJsonRequestParams.setDisableRequestCompression(disableRequestCompression);
+    createHttpJsonRequestParams.setDisableAuthentication(disableAuthentication);
+    return jsonRequestFactory.createHttpJsonRequest(createHttpJsonRequestParams);
+  }
+
+  public HttpJsonRequest createRequest(OperationMetadata operationMetadata, HttpMethods method, String requestUrl, boolean disableRequestCompression,
+    boolean disableAuthentication, Long timeout) {
+    RavenJObject metadata = new RavenJObject();
+    CreateHttpJsonRequestParams createHttpJsonRequestParams = new CreateHttpJsonRequestParams(this, operationMetadata.getUrl() + requestUrl, method, metadata, credentialsThatShouldBeUsedOnlyInOperationsWithoutReplication, convention, timeout)
+      .addOperationHeaders(operationsHeaders);
+    createHttpJsonRequestParams.setDisableRequestCompression(disableRequestCompression);
+    createHttpJsonRequestParams.setDisableAuthentication(disableAuthentication);
+    return jsonRequestFactory.createHttpJsonRequest(createHttpJsonRequestParams);
+  }
+
+  public HttpJsonRequest createReplicationAwareRequest(String currentServerUrl, String requestUrl, HttpMethods method) {
+    return createReplicationAwareRequest(currentServerUrl, requestUrl, method, false);
+  }
+
+  public HttpJsonRequest createReplicationAwareRequest(String currentServerUrl, String requestUrl, HttpMethods method, boolean disableRequestCompression) {
+    RavenJObject metadata = new RavenJObject();
+
+    CreateHttpJsonRequestParams createHttpJsonRequestParams =
+      new CreateHttpJsonRequestParams(this, url + requestUrl, method, metadata, credentialsThatShouldBeUsedOnlyInOperationsWithoutReplication, convention)
+    .addOperationHeaders(operationsHeaders);
+    createHttpJsonRequestParams.setDisableRequestCompression(disableRequestCompression);
+    return jsonRequestFactory.createHttpJsonRequest(createHttpJsonRequestParams).addReplicationStatusHeaders(url, currentServerUrl, replicationInformer, convention.getFailoverBehavior(), new HandleReplicationStatusChangesCallback());
+  }
+
+  @Override
+  @Deprecated
+  public void updateAttachmentMetadata(final String key, final Etag etag, final RavenJObject metadata) {
+    executeWithReplication(HttpMethods.POST,new Function1<OperationMetadata, Void>() {
+      @Override
+      public Void apply(OperationMetadata operationMetadata) {
+        directUpdateAttachmentMetadata(key, metadata, etag, operationMetadata);
+        return null;
+      }
+    });
+  }
+
+  @Deprecated
+  protected void directUpdateAttachmentMetadata(String key, RavenJObject metadata, Etag etag, OperationMetadata operationMetadata) {
+    if (etag != null) {
+      metadata.set(Constants.METADATA_ETAG_FIELD, new RavenJValue(etag.toString()));
+    }
+
+    try (HttpJsonRequest jsonRequest = jsonRequestFactory.createHttpJsonRequest(
+      new CreateHttpJsonRequestParams(this, operationMetadata.getUrl() + "/static/" + key, HttpMethods.POST, metadata, operationMetadata.getCredentials(), convention))
+      .addReplicationStatusHeaders(url, operationMetadata.getUrl(), replicationInformer, convention.getFailoverBehavior(), new HandleReplicationStatusChangesCallback())) {
+      ErrorResponseException responseException;
+      try {
+        jsonRequest.executeRequest();
+        return;
+      } catch (ErrorResponseException e) {
+        responseException = e;
+      }
+      if (!handleException(responseException)) throw responseException;
+    }
+  }
+
+  @Override
+  @Deprecated
+  public List<Attachment> getAttachmentHeadersStartingWith(final String idPrefix, final int start, final int pageSize) {
+    return executeWithReplication(HttpMethods.GET, new Function1<OperationMetadata, List<Attachment>>() {
+      @Override
+      public List<Attachment> apply(OperationMetadata operationMetadata) {
+        return directGetAttachmentHeadersStartingWith(HttpMethods.GET, idPrefix, start, pageSize, operationMetadata);
+      }
+    });
+  }
+
+  @Deprecated
+  protected List<Attachment> directGetAttachmentHeadersStartingWith(HttpMethods method, String idPrefix, int start, int pageSize, OperationMetadata operationMetadata) {
+    try (HttpJsonRequest jsonRequest = jsonRequestFactory.createHttpJsonRequest(
+      new CreateHttpJsonRequestParams(this, operationMetadata.getUrl() + "/static/?startsWith=" + idPrefix + "&start=" + start + "&pageSize=" + pageSize, method, new RavenJObject(), operationMetadata.getCredentials(),
+        convention))
+        .addReplicationStatusHeaders(url, operationMetadata.getUrl(), replicationInformer, convention.getFailoverBehavior(), new HandleReplicationStatusChangesCallback())) {
+      RavenJToken responseJson = jsonRequest.readResponseJson();
+      // this method not-exists in .net version
+      return SerializationHelper.deserializeAttachements(responseJson, false);
+    }
+  }
+
+  protected void handleReplicationStatusChanges(Map<String, String> headers, String primaryUrl, String currentUrl) {
+    if (!primaryUrl.equalsIgnoreCase(currentUrl)) {
+      String forceCheck = headers.get(Constants.RAVEN_FORCE_PRIMARY_SERVER_CHECK);
+      boolean shouldForceCheck;
+      if (StringUtils.isNotEmpty(forceCheck)) {
+        shouldForceCheck = Boolean.valueOf(forceCheck);
+        replicationInformer.forceCheck(primaryUrl, shouldForceCheck);
+      }
+    }
+  }
+
+  public <S> S executeWithReplication(HttpMethods method, Function1<OperationMetadata, S> operation) throws ServerClientException {
+    int currentRequest = ++requestCount;
+    return replicationInformer.executeWithReplication(method, url, credentialsThatShouldBeUsedOnlyInOperationsWithoutReplication, currentRequest, readStripingBase, operation);
+  }
+
+  private boolean assertNonConflictedDocumentAndCheckIfNeedToReload(OperationMetadata operationMetadata,RavenJObject docResult, Function1<String, ConflictException> onClictedQueryResult) {
+    if (docResult == null) {
+      return false;
+    }
+    RavenJToken metadata = docResult.get(Constants.METADATA);
+    if (metadata == null) {
+      return false;
+    }
+
+    if (metadata.value(Integer.TYPE, "@Http-Status-Code") == 409) {
+      ConflictException concurrencyException = tryResolveConflictOrCreateConcurrencyException(operationMetadata, metadata.value(String.class, "@id"), docResult, HttpExtensions.etagHeaderToEtag(metadata.value(String.class, "@etag")));
+      if (concurrencyException == null) {
+        return true;
+      }
+      throw concurrencyException;
+    }
+
+    if (metadata.value(Boolean.TYPE, Constants.RAVEN_REPLICATION_CONFLICT) && onClictedQueryResult != null) {
+      throw onClictedQueryResult.apply(metadata.value(String.class, "@id"));
+    }
+
+    return false;
+  }
+
+  private ConflictException tryResolveConflictOrCreateConcurrencyException(OperationMetadata operationMetadata, String key, RavenJObject conflictsDoc, Etag etag) {
+    RavenJArray ravenJArray = conflictsDoc.value(RavenJArray.class, "Conflicts");
+    if (ravenJArray == null) {
+      throw new IllegalArgumentException("Could not get conflict ids from conflicted document, are you trying to resolve a conflict when using metadata-only?");
+    }
+
+    List<String> conflictIds = new ArrayList<>();
+    for (RavenJToken token: ravenJArray) {
+      conflictIds.add(token.value(String.class));
+    }
+
+    boolean result = tryResolveConflictByUsingRegisteredListeners(operationMetadata, key, etag, conflictIds, operationMetadata);
+    if (result)
+      return null;
+
+    ConflictException conflictException = new ConflictException("Conflict detected on " + key +
+      ", conflict must be resolved before the document will be accessible", true);
+    conflictException.setConflictedVersionIds(conflictIds.toArray(new String[0]));
+    conflictException.setEtag(etag);
+    return conflictException;
+  }
+
+  @Override
+  public Boolean tryResolveConflictByUsingRegisteredListeners(OperationMetadata operationMetadata, String key,
+    Etag etag, List<String> conflictedIds,
+    OperationMetadata opUrl) {
+
+    if (operationMetadata == null) {
+      operationMetadata = new OperationMetadata(url);
+    }
+
+    if (conflictListeners.length > 0 && resolvingConflict == false) {
+      resolvingConflict = true;
+      try {
+        MultiLoadResult multiLoadResult = get(conflictedIds.toArray(new String[0]), null);
+
+        List<JsonDocument> results = new ArrayList<>();
+        for (RavenJObject r: multiLoadResult.getResults()) {
+          results.add(SerializationHelper.toJsonDocument(r));
+        }
+
+        for(IDocumentConflictListener conflictListener: conflictListeners) {
+          Reference<JsonDocument> resolvedDocument = new Reference<>();
+          if (conflictListener.tryResolveConflict(key, results, resolvedDocument)) {
+            put(key, etag, resolvedDocument.value.getDataAsJson(), resolvedDocument.value.getMetadata());
+            return true;
+          }
+        }
+      }
+      finally {
+        resolvingConflict = false;
+      }
+    }
+    return false;
+  }
+
+  private <T> T retryOperationBecauseOfConflict(OperationMetadata operationMetadata,
+    List<RavenJObject> docResults, T currentResult, Function0<T> nextTry, Function1<String, ConflictException> onClictedQueryResult) {
+
+    boolean requiresRetry = false;
+    for (RavenJObject docResult: docResults) {
+      requiresRetry |= assertNonConflictedDocumentAndCheckIfNeedToReload(operationMetadata, docResult, onClictedQueryResult);
+    }
+    if (!requiresRetry) {
+      return currentResult;
+    }
+
+    if (resolvingConflictRetries) {
+      throw new IllegalStateException("Encountered another conflict after already resolving a conflict. Conflict resultion cannot recurse.");
+    }
+    resolvingConflictRetries = true;
+    try {
+      return nextTry.apply();
+    } finally {
+      resolvingConflictRetries = false;
+    }
+  }
+
+  public RavenJToken getOperationStatus(long id) {
+    try (HttpJsonRequest request = jsonRequestFactory.createHttpJsonRequest(
+      new CreateHttpJsonRequestParams(this, url + "/operation/status?id=" + id, HttpMethods.GET, new RavenJObject(), credentialsThatShouldBeUsedOnlyInOperationsWithoutReplication, convention)
+      .addOperationHeaders(operationsHeaders))) {
+      return request.readResponseJson();
+    } catch (ErrorResponseException e) {
+      if (e.getStatusCode() == HttpStatus.SC_NOT_FOUND) return null;
+      throw e;
+    }
+  }
+
+  public String getSingleAuthToken(OperationMetadata operationMetadata) {
+    try (HttpJsonRequest tokenRequest = createRequest(operationMetadata, HttpMethods.GET, "/singleAuthToken", true, true, null)) {
+      return tokenRequest.readResponseJson().value(String.class, "Token");
+    }
+  }
+
+  private String validateThatWeCanUseAuthenticateTokens(OperationMetadata operationMetadata, String token) {
+    try (HttpJsonRequest request = createRequest(operationMetadata, HttpMethods.GET, "/singleAuthToken", true, true, null)) {
+      request.removeAuthorizationHeader();
+      request.addOperationHeader("Single-Use-Auth-Token", token);
+      RavenJToken result = request.readResponseJson();
+      return result.value(String.class, "Token");
+    }
+  }
+
+  public boolean isInFailoverMode() {
+    return replicationInformer.getFailureCount(url).longValue() > 0;
+  }
+
+  public class HandleReplicationStatusChangesCallback implements Action3<Map<String, String>, String, String> {
+    @Override
+    public void apply(Map<String, String> headers, String primaryUrl, String currentUrl) {
+      handleReplicationStatusChanges(headers, primaryUrl, currentUrl);
+    }
+  }
+
+  @Override
+  public DatabaseStatistics getStatistics() {
+    HttpJsonRequest httpJsonRequest = jsonRequestFactory.createHttpJsonRequest(
+      new CreateHttpJsonRequestParams(this,  url + "/stats", HttpMethods.GET, new RavenJObject(), credentialsThatShouldBeUsedOnlyInOperationsWithoutReplication, convention));
+
+    RavenJObject jo = (RavenJObject)httpJsonRequest.readResponseJson();
+    return convention.createSerializer().deserialize(jo, DatabaseStatistics.class);
   }
 
   @Override
@@ -2593,76 +2456,24 @@ public class ServerClient implements IDatabaseCommands {
     this.expect100Continue = expect100Continue;
   }
 
-  @Override
-  public IAdminDatabaseCommands getAdmin() {
-    return new AdminServerClient(this);
-  }
-
-  @Override
-  public IGlobalAdminDatabaseCommands getGlobalAdmin() {
-    return new AdminServerClient(this);
-  }
-
-  @Override
-  public Boolean tryResolveConflictByUsingRegisteredListeners(String key, Etag etag, String[] conflictedIds,
-    OperationMetadata operationMetadata) {
-    if (operationMetadata == null) {
-      operationMetadata = new OperationMetadata(url, null);
-    }
-    if (conflictListeners.length > 0 && resolvingConflict == false) {
-      resolvingConflict = true;
-      try {
-        MultiLoadResult multiLoadResult = get(conflictedIds, null);
-        List<JsonDocument> results = new ArrayList<>();
-        for (RavenJObject document : multiLoadResult.getResults()) {
-          results.add(SerializationHelper.toJsonDocument(document));
-        }
-
-        for (IDocumentConflictListener conflictListener : conflictListeners) {
-          Reference<JsonDocument> resolvedDocumentRef = new Reference<>();
-          if (conflictListener.tryResolveConflict(key, results, resolvedDocumentRef)) {
-            put(key, etag, resolvedDocumentRef.value.getDataAsJson(), resolvedDocumentRef.value.getMetadata());
-            return true;
-          }
-        }
-
-      } finally {
-        resolvingConflict = false;
-      }
-    }
-    return false;
-  }
-
-
-  public String getSingleAuthToken() {
-    HttpJsonRequest tokenRequest = createRequest(HttpMethods.GET, "/singleAuthToken", true, true, null);
-    return tokenRequest.readResponseJson().value(String.class, "Token");
-  }
-
-  private String validateThatWeCanUseAuthenticateTokens(String token) {
-    HttpJsonRequest request = createRequest(HttpMethods.GET, "/singleAuthToken", true, true, null);
-    request.removeAuthorizationHeader();
-    request.addOperationHeader("Single-Use-Auth-Token", token);
-    RavenJToken result = request.readResponseJson();
-    return result.value(String.class, "Token");
-  }
-
   public ReplicationDocument directGetReplicationDestinations(OperationMetadata operationMetadata) {
     CreateHttpJsonRequestParams createHttpJsonRequestParams = new CreateHttpJsonRequestParams(this, operationMetadata.getUrl() + "/replication/topology", HttpMethods.GET, null, operationMetadata.getCredentials(), convention);
-    HttpJsonRequest request = jsonRequestFactory.createHttpJsonRequest(createHttpJsonRequestParams
-      .addOperationHeaders(getOperationsHeaders())).addReplicationStatusHeaders(url, operationMetadata.getUrl(), replicationInformer, convention.getFailoverBehavior(), new HandleReplicationStatusChangesCallback());
-
-    try {
-      RavenJToken requestJson = request.readResponseJson();
-      return JsonExtensions.createDefaultJsonSerializer().readValue(requestJson.toString(), ReplicationDocument.class);
-    } catch (HttpOperationException e) {
-      if (e.getStatusCode() == HttpStatus.SC_NOT_FOUND || e.getStatusCode() == HttpStatus.SC_BAD_REQUEST) {
-        return null;
+    try (HttpJsonRequest request = jsonRequestFactory.createHttpJsonRequest(createHttpJsonRequestParams
+      .addOperationHeaders(getOperationsHeaders())).addReplicationStatusHeaders(url, operationMetadata.getUrl(), replicationInformer, convention.getFailoverBehavior(), new HandleReplicationStatusChangesCallback())) {
+      try {
+        RavenJToken requestJson = request.readResponseJson();
+        return convention.createSerializer().deserialize(requestJson, ReplicationDocument.class);
+      } catch (ErrorResponseException e) {
+        if (e.getStatusCode() == HttpStatus.SC_NOT_FOUND || e.getStatusCode() == HttpStatus.SC_BAD_REQUEST) {
+          return null;
+        }
+        throw e;
       }
-      throw e;
-    } catch (Exception e) {
-      throw new ServerClientException(e);
     }
+  }
+
+  public HttpJsonRequestFactory getJsonRequestFactory() {
+    return jsonRequestFactory;
   }
 
 }

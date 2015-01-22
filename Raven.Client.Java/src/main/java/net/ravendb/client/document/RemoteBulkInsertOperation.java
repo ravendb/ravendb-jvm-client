@@ -175,8 +175,8 @@ public class RemoteBulkInsertOperation implements ILowLevelBulkInsertOperation, 
     }
 
     operationRequest = createOperationRequest(operationUrl, token);
-    HttpPost webRequest = (HttpPost) operationRequest.getWebRequest();
-    webRequest.setEntity(new BulkInsertEntity(options, createCancellationToken()));
+    //TODO:HttpPost webRequest = (HttpPost) operationRequest.getWebRequest();
+    //TODO: webRequest.setEntity(new BulkInsertEntity(options, createCancellationToken()));
 
 
     Thread thread = new Thread(new Runnable() {
