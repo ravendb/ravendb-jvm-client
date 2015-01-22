@@ -109,7 +109,7 @@ public class DocumentConvention extends Convention implements Serializable {
 
   private final List<Tuple<Class<?>, TryConvertValueForQueryDelegate<?>>> listOfQueryValueConverters = new ArrayList<>();
 
-  private ObjectMapper objectMapper;
+  private JsonSerializer jsonSerializer;
 
   private EnumSet<IndexAndTransformerReplicationMode> indexAndTransformerReplicationMode;
 
@@ -220,6 +220,7 @@ public class DocumentConvention extends Convention implements Serializable {
         IndexAndTransformerReplicationMode.INDEXES,
         IndexAndTransformerReplicationMode.TRANSFORMERS));
     acceptGzipContent = true;
+    jsonSerializer = new JsonSerializer(this);
   }
 
   public static String defaultTransformTypeTagNameToDocumentKeyPrefix(String typeTagName) {
@@ -804,21 +805,10 @@ public class DocumentConvention extends Convention implements Serializable {
     return customRangeTypes.contains(type);
   }
 
-  public ObjectMapper createSerializer() {
-    if (objectMapper == null) {
-      synchronized (this) {
-        if (objectMapper == null) {
-          objectMapper = JsonExtensions.createDefaultJsonSerializer();
-        }
-      }
-    }
-    if (isSaveEnumsAsIntegers()) {
-      objectMapper.enable(Feature.WRITE_ENUMS_USING_INDEX);
-    } else {
-      objectMapper.disable(Feature.WRITE_ENUMS_USING_INDEX);
-    }
+  public JsonSerializer createSerializer() {
+    jsonSerializer.config();
+    return jsonSerializer;
 
-    return objectMapper;
   }
 
   public int getMaxLengthOfQueryUsingGetUrl() {

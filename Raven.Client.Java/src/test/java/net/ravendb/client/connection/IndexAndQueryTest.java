@@ -16,6 +16,7 @@ import java.util.Set;
 
 import net.ravendb.abstractions.basic.CloseableIterator;
 import net.ravendb.abstractions.basic.Reference;
+import net.ravendb.abstractions.connection.ErrorResponseException;
 import net.ravendb.abstractions.data.BulkOperationOptions;
 import net.ravendb.abstractions.data.Constants;
 import net.ravendb.abstractions.data.Etag;
@@ -27,6 +28,7 @@ import net.ravendb.abstractions.data.PatchRequest;
 import net.ravendb.abstractions.data.QueryHeaderInformation;
 import net.ravendb.abstractions.data.QueryResult;
 import net.ravendb.abstractions.data.SortedField;
+import net.ravendb.abstractions.exceptions.IndexCompilationException;
 import net.ravendb.abstractions.exceptions.ServerClientException;
 import net.ravendb.abstractions.indexing.IndexDefinition;
 import net.ravendb.abstractions.indexing.SortOptions;
@@ -50,7 +52,7 @@ import org.mockito.cglib.core.Transformer;
 
 public class IndexAndQueryTest extends RavenDBAwareTests {
 
-  @Test(expected = ServerClientException.class)
+  @Test(expected = IndexCompilationException.class)
   public void testPutInvalidIndex() throws Exception {
     try {
       createDb();
@@ -510,7 +512,7 @@ public class IndexAndQueryTest extends RavenDBAwareTests {
       try {
         dbCommands.putIndex("devStartWithM", builder.toIndexDefinition(convention), false);
         fail("Can't overwrite index.");
-      } catch (ServerClientException e) {
+      } catch (IllegalStateException e) {
         // ok
       }
 
@@ -535,7 +537,7 @@ public class IndexAndQueryTest extends RavenDBAwareTests {
       try {
         queryResult = dbCommands.query("devStartWithM", query, new String[0]);
         fail();
-      } catch (ServerClientException e) {
+      } catch (ErrorResponseException e) {
         // ok
       }
 

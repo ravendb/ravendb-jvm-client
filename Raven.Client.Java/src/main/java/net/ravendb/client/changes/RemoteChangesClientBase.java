@@ -35,7 +35,7 @@ import org.apache.http.HttpStatus;
 
 
 public abstract class RemoteChangesClientBase<TChangesApi extends IConnectableChanges, TConnectionState extends IChangesConnectionState>
-  implements AutoCloseable, IObserver<String>, IConnectableChanges {
+  implements Closeable, IObserver<String>, IConnectableChanges {
   protected static final ILog logger = LogManager.getCurrentClassLogger();
 
   private Timer clientSideHeartbeatTimer;

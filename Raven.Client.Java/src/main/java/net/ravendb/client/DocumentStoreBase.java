@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
+import net.ravendb.abstractions.basic.CleanCloseable;
 import net.ravendb.abstractions.basic.EventHelper;
 import net.ravendb.abstractions.closure.Action1;
 import net.ravendb.abstractions.data.Etag;
@@ -14,6 +15,8 @@ import net.ravendb.client.connection.profiling.ProfilingInformation;
 import net.ravendb.client.document.DocumentConvention;
 import net.ravendb.client.document.DocumentSessionListeners;
 import net.ravendb.client.document.DocumentStore;
+import net.ravendb.client.document.DocumentSubscriptions;
+import net.ravendb.client.document.IReliableSubscriptions;
 import net.ravendb.client.document.InMemoryDocumentSessionOperations;
 import net.ravendb.client.document.dtc.ITransactionRecoveryStorage;
 import net.ravendb.client.document.dtc.VolatileOnlyTransactionRecoveryStorage;
@@ -36,9 +39,9 @@ import com.google.common.collect.ImmutableList;
  */
 public abstract class DocumentStoreBase implements IDocumentStore {
   protected DocumentStoreBase() {
-
     lastEtagHolder = new GlobalLastEtagHolder();
     transactionRecoveryStorage = new VolatileOnlyTransactionRecoveryStorage();
+    subscriptions = new DocumentSubscriptions(this);
   }
 
   protected boolean useFips = false;
@@ -47,6 +50,7 @@ public abstract class DocumentStoreBase implements IDocumentStore {
   protected DocumentConvention conventions;
   protected String url;
   protected boolean initialized;
+  protected IReliableSubscriptions subscriptions;
   private DocumentSessionListeners listeners = new DocumentSessionListeners();
   protected ProfilingContext profilingContext = new ProfilingContext();
   private ILastEtagHolder lastEtagHolder;
@@ -269,7 +273,7 @@ public abstract class DocumentStoreBase implements IDocumentStore {
    * Setup the context for aggressive caching.
    */
   @Override
-  public AutoCloseable aggressivelyCache() {
+  public CleanCloseable aggressivelyCache() {
     return aggressivelyCacheFor(24 * 3600 * 1000);
   }
 
@@ -277,4 +281,7 @@ public abstract class DocumentStoreBase implements IDocumentStore {
     Encryptor.initialize(useFips);
   }
 
+  public IReliableSubscriptions getSubscriptions() {
+    return subscriptions;
+  }
 }

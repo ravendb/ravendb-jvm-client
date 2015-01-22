@@ -1,7 +1,7 @@
 package net.ravendb.abstractions.exceptions.subscriptions;
 
 
-public abstract class SubscriptionException extends Exception {
+public abstract class SubscriptionException extends RuntimeException {
 
   private int responseStatusCode;
 

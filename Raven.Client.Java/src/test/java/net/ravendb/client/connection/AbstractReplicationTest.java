@@ -30,8 +30,7 @@ public abstract class AbstractReplicationTest extends RavenDBAwareTests{
     super.init();
 
     serverClient2 = new ServerClient(DEFAULT_SERVER_URL_2, convention, new OperationCredentials(),
-      new Functions.StaticFunction1<String, IDocumentStoreReplicationInformer>((IDocumentStoreReplicationInformer)replicationInformer), null, factory,
-      UUID.randomUUID(), new IDocumentConflictListener[0], false);
+      factory, UUID.randomUUID(), new Functions.StaticFunction1<String, IDocumentStoreReplicationInformer>((IDocumentStoreReplicationInformer)replicationInformer), null,  new IDocumentConflictListener[0], false);
 
   }
 

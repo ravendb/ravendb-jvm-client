@@ -141,15 +141,15 @@ public class HttpJsonRequestFactory implements AutoCloseable {
 
   private static class SetHeader implements Action2<String, String> {
 
-    private HttpRequest request;
+    private HttpJsonRequest request;
 
-    public SetHeader(HttpRequest request) {
+    public SetHeader(HttpJsonRequest request) {
       this.request = request;
     }
 
     @Override
     public void apply(String headerName, String value) {
-      request.addHeader(headerName, value);
+      request.addOperationHeader(headerName, value);
     }
 
   }
@@ -163,18 +163,18 @@ public class HttpJsonRequestFactory implements AutoCloseable {
     request.setShouldCacheRequest(createHttpJsonRequestParams.isAvoidCachingRequest() == false
         && createHttpJsonRequestParams.getConvention().shouldCacheRequest(createHttpJsonRequestParams.getUrl()));
 
-    if (request.getShouldCacheRequest() && !getDisableHttpCaching()) {
-      CachedRequestOp cachedRequestDetails = configureCaching(createHttpJsonRequestParams.getUrl(), new SetHeader(request.getWebRequest()));
+    if (request.isShouldCacheRequest() && !getDisableHttpCaching()) {
+      CachedRequestOp cachedRequestDetails = configureCaching(createHttpJsonRequestParams.getUrl(), new SetHeader(request));
       request.setCachedRequestDetails(cachedRequestDetails.getCachedRequest());
       request.setSkipServerCheck(cachedRequestDetails.isSkipServerCheck());
     }
 
-    if (getRequestTimeout() != null) {
-      request.setTimeout(getRequestTimeout());
-    }
-
-    EventHelper.invoke(configureRequest, createHttpJsonRequestParams.getOwner(), new WebRequestEventArgs(request.getWebRequest(), createHttpJsonRequestParams.getCredentials()));
+    //we don't configure request here as we don't have request yet! - only http client instance
     return request;
+  }
+
+  public void configureRequest(IHoldProfilingInformation owner, WebRequestEventArgs args) {
+    EventHelper.invoke(configureRequest, owner, args);
   }
 
   public AutoCloseable disableAllCaching() {
@@ -341,5 +341,7 @@ public class HttpJsonRequestFactory implements AutoCloseable {
   public void setRequestTimeout(Long requestTimeout) {
     this.requestTimeout.set(requestTimeout);
   }
+
+
 
 }

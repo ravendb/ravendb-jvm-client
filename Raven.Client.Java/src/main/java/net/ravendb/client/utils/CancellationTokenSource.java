@@ -20,8 +20,12 @@ public class CancellationTokenSource {
 
     }
 
+    public boolean isCancellationRequested() {
+      return cancelled || (cancelAfterDate != null && new Date().getTime() > cancelAfterDate);
+    }
+
     public void throwIfCancellationRequested() {
-      if (cancelled || (cancelAfterDate != null && new Date().getTime() > cancelAfterDate)) {
+      if (isCancellationRequested()) {
         throw new OperationCancelledException();
       }
     }

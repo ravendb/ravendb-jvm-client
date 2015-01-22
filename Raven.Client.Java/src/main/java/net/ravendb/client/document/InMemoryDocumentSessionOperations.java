@@ -34,6 +34,7 @@ import net.ravendb.abstractions.data.HttpMethods;
 import net.ravendb.abstractions.data.JsonDocument;
 import net.ravendb.abstractions.exceptions.ConcurrencyException;
 import net.ravendb.abstractions.exceptions.ReadVetoException;
+import net.ravendb.abstractions.json.linq.RavenJArray;
 import net.ravendb.abstractions.json.linq.RavenJObject;
 import net.ravendb.abstractions.json.linq.RavenJToken;
 import net.ravendb.abstractions.json.linq.RavenJValue;
@@ -475,12 +476,12 @@ public abstract class InMemoryDocumentSessionOperations implements AutoCloseable
         if (documentType != null) {
           Class< ? > type = Class.forName(documentType);
           if (type != null) {
-            entity = getConventions().createSerializer().readValue(documentFound.toString(), type);
+            entity = getConventions().createSerializer().deserialize(documentFound, type);
           }
         }
 
         if (Objects.equals(entity, defaultValue)) {
-          entity = getConventions().createSerializer().readValue(documentFound.toString(), entityType);
+          entity = getConventions().createSerializer().deserialize(documentFound, entityType);
         }
 
         generateEntityIdOnTheClient.trySetIdentity(entity, id);
@@ -1092,6 +1093,53 @@ public abstract class InMemoryDocumentSessionOperations implements AutoCloseable
     return hash;
   }
 
+  public Object projectionToInstance(RavenJObject y, Class<?> type) {
+    handleInternalMetadata(y);
+    for (IDocumentConversionListener conversionListener : theListeners.getConversionListeners()) {
+      conversionListener.beforeConversionToEntity(null, y, null);
+    }
+
+    Object instance = getConventions().createSerializer().deserialize(y, type);
+
+    for (IDocumentConversionListener conversionListener : theListeners.getConversionListeners()) {
+      conversionListener.afterConversionToEntity(null, y, null, instance);
+    }
+    return instance;
+  }
+
+  private void handleInternalMetadata(RavenJObject result) {
+    // Implant a property with "id" value ... if not exists
+    RavenJObject metadata = result.value(RavenJObject.class, "@metadata");
+    if (metadata == null || StringUtils.isEmpty(metadata.value(String.class, "@id"))) {
+      // if the item has metadata, then nested items will not have it, so we can skip recursing down
+      for (Map.Entry<String, RavenJToken> nestedToken : result) {
+        RavenJToken nested = nestedToken.getValue();
+        if (nested instanceof RavenJObject) {
+          handleInternalMetadata((RavenJObject) nested);
+        }
+        if (nested instanceof RavenJArray) {
+          RavenJArray array = (RavenJArray) nested;
+          for (RavenJToken item : array) {
+            if (item instanceof RavenJObject) {
+              handleInternalMetadata((RavenJObject) item);
+            }
+          }
+        }
+      }
+      return;
+    }
+
+    String entityName = metadata.value(String.class, Constants.RAVEN_ENTITY_NAME);
+    String idPropName = getConventions().getFindIdentityPropertyNameFromEntityName().find(entityName);
+    if (result.containsKey(idPropName)) {
+      return;
+    }
+    result.add(idPropName, new RavenJValue(metadata.value(String.class, "@id")));
+
+  }
+
+
+
   public void trackIncludedDocument(JsonDocument include) {
       includedDocumentsByKey.put(include.getKey(), include);
   }
@@ -1157,4 +1205,8 @@ public abstract class InMemoryDocumentSessionOperations implements AutoCloseable
       throw new RuntimeException(e);
     }
   }
+
+
+
+
 }

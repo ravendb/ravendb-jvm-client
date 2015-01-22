@@ -2,7 +2,9 @@ package net.ravendb.abstractions.data;
 
 import java.util.concurrent.atomic.AtomicInteger;
 
+import net.ravendb.abstractions.json.linq.RavenJObject;
 import net.ravendb.abstractions.util.Base62Util;
+import net.ravendb.client.utils.TimeSpan;
 
 
 public class SubscriptionConnectionOptions {
@@ -53,6 +55,15 @@ public class SubscriptionConnectionOptions {
 
   public void setIgnoreSubscribersErrors(boolean ignoreSubscribersErrors) {
     this.ignoreSubscribersErrors = ignoreSubscribersErrors;
+  }
+
+  public RavenJObject toRavenObject() {
+    RavenJObject result = new RavenJObject();
+    result.add("ConnectionId", connectionId);
+    result.add("IgnoreSubscribersErrors", ignoreSubscribersErrors);
+    result.add("BatchOptions", batchOptions.toRavenObject());
+    result.add("ClientAliveNotificationInterval", TimeSpan.formatString(clientAliveNotificationInterval));
+    return result;
   }
 
 }

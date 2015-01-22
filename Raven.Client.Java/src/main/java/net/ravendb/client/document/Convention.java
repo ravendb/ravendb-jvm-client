@@ -25,6 +25,7 @@ import net.ravendb.client.indexes.AbstractIndexCreationTask;
 import net.ravendb.client.linq.LinqPathProvider;
 
 
+@SuppressWarnings("unused")
 public class Convention {
 
   private Map<Class<?>, Field> idPropertyCache = new HashMap<>();

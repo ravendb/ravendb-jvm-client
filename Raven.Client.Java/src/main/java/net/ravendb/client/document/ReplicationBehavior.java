@@ -184,14 +184,14 @@ public class ReplicationBehavior implements AutoCloseable {
       RavenUrlExtensions.lastReplicatedEtagFor(destinationUrl, sourceUrl, sourceDbId),
       HttpMethods.GET,
       new RavenJObject(), new OperationCredentials(documentStore.getApiKey()), documentStore.getConventions());
-    HttpJsonRequest httpJsonRequest = documentStore.getJsonRequestFactory().createHttpJsonRequest(createHttpJsonRequestParams);
-    RavenJToken json = httpJsonRequest.readResponseJson();
-
-    ReplicatedEtagInfo replicatedEtagInfo = new ReplicatedEtagInfo();
-    replicatedEtagInfo.setDestionationUrl(destinationUrl);
-    replicatedEtagInfo.setDocumentEtag(Etag.parse(json.value(String.class, "LastDocumentEtag")));
-    replicatedEtagInfo.setAttachmentEtag(Etag.parse(json.value(String.class, "LastAttachmentEtag")));
-    return replicatedEtagInfo;
+    try (HttpJsonRequest httpJsonRequest = documentStore.getJsonRequestFactory().createHttpJsonRequest(createHttpJsonRequestParams)) {
+      RavenJToken json = httpJsonRequest.readResponseJson();
+      ReplicatedEtagInfo replicatedEtagInfo = new ReplicatedEtagInfo();
+      replicatedEtagInfo.setDestionationUrl(destinationUrl);
+      replicatedEtagInfo.setDocumentEtag(Etag.parse(json.value(String.class, "LastDocumentEtag")));
+      replicatedEtagInfo.setAttachmentEtag(Etag.parse(json.value(String.class, "LastAttachmentEtag")));
+      return replicatedEtagInfo;
+    }
   }
 
   @Override

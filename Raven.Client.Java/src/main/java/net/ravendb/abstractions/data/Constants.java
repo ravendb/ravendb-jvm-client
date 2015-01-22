@@ -63,6 +63,8 @@ public class Constants {
 
   public static final String CUSTOM_SORT_FIELD_NAME = "__customSort";
 
+  public static final String RAVEN_REPLICATION_CONFLICT = "Raven-Replication-Conflict";
+
   public final static Locale getDefaultLocale() {
     return Locale.US;
   }

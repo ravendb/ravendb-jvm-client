@@ -2,7 +2,7 @@ package net.ravendb.client.auth;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
-
+import net.ravendb.abstractions.connection.ErrorResponseException;
 import net.ravendb.abstractions.exceptions.HttpOperationException;
 import net.ravendb.client.IDocumentSession;
 import net.ravendb.client.IDocumentStore;
@@ -35,7 +35,7 @@ public class OAuthTest extends RemoteClientTest  {
       fail();
     } catch (RuntimeException e) {
       Throwable rootCause = Throwables.getRootCause(e);
-      HttpOperationException exp = (HttpOperationException) rootCause;
+      ErrorResponseException exp = (ErrorResponseException) rootCause;
       assertEquals(HttpStatus.SC_UNAUTHORIZED, exp.getStatusCode());
     }
   }
@@ -57,8 +57,8 @@ public class OAuthTest extends RemoteClientTest  {
       fail();
     } catch (RuntimeException e) {
       Throwable rootCause = Throwables.getRootCause(e);
-      if (rootCause instanceof HttpOperationException) {
-        assertEquals(HttpStatus.SC_SERVICE_UNAVAILABLE, ((HttpOperationException) rootCause).getStatusCode());
+      if (rootCause instanceof ErrorResponseException) {
+        assertEquals(HttpStatus.SC_SERVICE_UNAVAILABLE, ((ErrorResponseException) rootCause).getStatusCode());
       } else {
         throw e;
       }
@@ -82,8 +82,8 @@ public class OAuthTest extends RemoteClientTest  {
       fail();
     } catch (RuntimeException e) {
       Throwable rootCause = Throwables.getRootCause(e);
-      if (rootCause instanceof HttpOperationException) {
-        assertEquals(HttpStatus.SC_SERVICE_UNAVAILABLE, ((HttpOperationException) rootCause).getStatusCode());
+      if (rootCause instanceof ErrorResponseException) {
+        assertEquals(HttpStatus.SC_SERVICE_UNAVAILABLE, ((ErrorResponseException) rootCause).getStatusCode());
       } else {
         throw e;
       }

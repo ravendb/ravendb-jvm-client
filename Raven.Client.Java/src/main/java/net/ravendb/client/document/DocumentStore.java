@@ -2,6 +2,7 @@ package net.ravendb.client.document;
 
 import java.io.Closeable;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -10,6 +11,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ConcurrentSkipListMap;
 
+import net.ravendb.abstractions.basic.CleanCloseable;
 import net.ravendb.abstractions.basic.EventHandler;
 import net.ravendb.abstractions.basic.EventHelper;
 import net.ravendb.abstractions.basic.VoidArgs;
@@ -233,6 +235,10 @@ public class DocumentStore extends DocumentStoreBase {
       ri.close();
     }
 
+    if (subscriptions != null) {
+      subscriptions.close();
+    }
+
     // if this is still going, we continue with disposal, it is for grace only, anyway
 
     if (jsonRequestFactory != null) {
@@ -437,8 +443,9 @@ public class DocumentStore extends DocumentStoreBase {
         }
 
         return new ServerClient(databaseUrl, conventions, new OperationCredentials(apiKey),
-          new ReplicationInformerGetter()
-        , null, jsonRequestFactory, currentSessionId.get(), getListeners().getConflictListeners().toArray(new IDocumentConflictListener[0]), true);
+          jsonRequestFactory, currentSessionId.get(),
+          new ReplicationInformerGetter(),
+          null, getListeners().getConflictListeners().toArray(new IDocumentConflictListener[0]), true);
       }
     };
 
@@ -493,14 +500,13 @@ public class DocumentStore extends DocumentStoreBase {
    * aggressive caching.
    */
   @Override
-  public AutoCloseable disableAggressiveCaching() {
+  public CleanCloseable disableAggressiveCaching() {
     assertInitialized();
     final Long old = jsonRequestFactory.getAggressiveCacheDuration();
     jsonRequestFactory.setAggressiveCacheDuration(null);
-    return new AutoCloseable() {
-
+    return new CleanCloseable() {
       @Override
-      public void close() throws Exception {
+      public void close() {
         jsonRequestFactory.setAggressiveCacheDuration(old);
       }
     };
@@ -561,7 +567,7 @@ public class DocumentStore extends DocumentStoreBase {
     }, new Function4<String, Etag, String[], OperationMetadata, Boolean>() {
       @Override
       public Boolean apply(String key, Etag etag, String[] conflictedIds, OperationMetadata opUrl) {
-        return getDatabaseCommands().tryResolveConflictByUsingRegisteredListeners(key, etag, conflictedIds, opUrl);
+        return getDatabaseCommands().tryResolveConflictByUsingRegisteredListeners(opUrl, key, etag, Arrays.asList(conflictedIds), opUrl);
       }
     }
       );
@@ -575,7 +581,7 @@ public class DocumentStore extends DocumentStoreBase {
    * without touching the server.
    */
   @Override
-  public AutoCloseable aggressivelyCacheFor(long cacheDurationInMilis)
+  public CleanCloseable aggressivelyCacheFor(long cacheDurationInMilis)
   {
     assertInitialized();
     if (cacheDurationInMilis < 1000)
@@ -586,10 +592,9 @@ public class DocumentStore extends DocumentStoreBase {
 
     aggressiveCachingUsed = true;
 
-    return new AutoCloseable() {
-
+    return new CleanCloseable() {
       @Override
-      public void close() throws Exception {
+      public void close() {
         jsonRequestFactory.setAggressiveCacheDuration(old);
       }
     };
@@ -662,20 +667,18 @@ public class DocumentStore extends DocumentStoreBase {
    * Setup the WebRequest timeout for the session
    */
   @Override
-  public AutoCloseable setRequestsTimeoutFor(long timeout) {
+  public CleanCloseable setRequestsTimeoutFor(long timeout) {
     assertInitialized();
 
     final Long old = jsonRequestFactory.getRequestTimeout();
     jsonRequestFactory.setRequestTimeout(timeout);
 
-    return new AutoCloseable() {
-
+    return new CleanCloseable() {
       @Override
-      public void close() throws Exception {
+      public void close() {
         jsonRequestFactory.setRequestTimeout(old);
       }
     };
   }
-
 
 }

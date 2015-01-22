@@ -1,5 +1,6 @@
 package net.ravendb.client.connection;
 
+import java.io.IOException;
 import java.io.InputStream;
 import java.util.Collection;
 import java.util.List;
@@ -12,6 +13,7 @@ import net.ravendb.abstractions.connection.OperationCredentials;
 import net.ravendb.abstractions.data.Attachment;
 import net.ravendb.abstractions.data.AttachmentInformation;
 import net.ravendb.abstractions.data.BatchResult;
+import net.ravendb.abstractions.data.BuildNumber;
 import net.ravendb.abstractions.data.BulkInsertOptions;
 import net.ravendb.abstractions.data.BulkOperationOptions;
 import net.ravendb.abstractions.data.DatabaseStatistics;
@@ -21,6 +23,7 @@ import net.ravendb.abstractions.data.FacetQuery;
 import net.ravendb.abstractions.data.FacetResults;
 import net.ravendb.abstractions.data.GetRequest;
 import net.ravendb.abstractions.data.GetResponse;
+import net.ravendb.abstractions.data.HttpMethods;
 import net.ravendb.abstractions.data.IndexQuery;
 import net.ravendb.abstractions.data.JsonDocument;
 import net.ravendb.abstractions.data.JsonDocumentMetadata;
@@ -41,6 +44,7 @@ import net.ravendb.abstractions.json.linq.RavenJObject;
 import net.ravendb.abstractions.json.linq.RavenJToken;
 import net.ravendb.client.RavenPagingInformation;
 import net.ravendb.client.changes.IDatabaseChanges;
+import net.ravendb.client.connection.implementation.HttpJsonRequest;
 import net.ravendb.client.connection.profiling.IHoldProfilingInformation;
 import net.ravendb.client.document.ILowLevelBulkInsertOperation;
 import net.ravendb.client.indexes.IndexDefinitionBuilder;
@@ -176,10 +180,16 @@ public interface IDatabaseCommands extends IHoldProfilingInformation {
   public QueryResult query(String index, IndexQuery query, String[] includes, boolean metadataOnly, boolean indexEntriesOnly);
 
   /**
+<<<<<<< HEAD
    * Sends multiple operations in a single request, reducing the number of remote calls and allowing several operations to share same transaction
    * @param commandDatas Commands to process
+=======
+   * Executed the specified commands as a single batch
+   * @param commandDatas
+   * @throws IOException
+>>>>>>> origin/master
    */
-  public BatchResult[] batch(final List<ICommandData> commandDatas);
+  public BatchResult[] batch(final List<ICommandData> commandDatas) throws IOException;
 
   /**
    * Returns a list of suggestions based on the specified suggestion query
@@ -813,7 +823,7 @@ public interface IDatabaseCommands extends IHoldProfilingInformation {
   /**
    * Retrieves all suggestions for an index merging
    */
-  public IndexMergeResults getIndexMergeSuggestions();
+  public IndexMergeResults getIndexMergeSuggestions() throws IOException;
 
   /**
    * Tries to resolve conflict using registered listeners
@@ -822,8 +832,14 @@ public interface IDatabaseCommands extends IHoldProfilingInformation {
    * @param conflictedIds
    * @param opUrl
    */
-  public Boolean tryResolveConflictByUsingRegisteredListeners(String key, Etag etag, String[] conflictedIds,
+  public Boolean tryResolveConflictByUsingRegisteredListeners(OperationMetadata operationMetadata, String key, Etag etag, List<String> conflictedIds,
     OperationMetadata opUrl);
 
+  /**
+   * Internal use
+   */
+  public HttpJsonRequest createRequest(HttpMethods method, String requestUrl);
+
+  public BuildNumber getBuildNumber() throws IOException;
 
 }

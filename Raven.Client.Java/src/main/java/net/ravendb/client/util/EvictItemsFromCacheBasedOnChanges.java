@@ -10,6 +10,7 @@ import net.ravendb.abstractions.data.IndexChangeTypes;
 import net.ravendb.client.changes.IDatabaseChanges;
 import net.ravendb.client.changes.IObservable;
 import net.ravendb.client.changes.IObserver;
+import net.ravendb.client.changes.ObserverAdapter;
 import net.ravendb.client.changes.RemoteDatabaseChanges;
 
 
@@ -21,18 +22,6 @@ public class EvictItemsFromCacheBasedOnChanges implements AutoCloseable {
   protected final Closeable documentsSubscription;
   protected final Closeable indexesSubscriptions;
 
-
-  private abstract class ObserverAdapter<T> implements IObserver<T> {
-    @Override
-    public void onError(Exception error) {
-      //empty by design
-    }
-
-    @Override
-    public void onCompleted() {
-      //empty by design
-    }
-  }
   protected class DocumentChangeObserver extends ObserverAdapter<DocumentChangeNotification> {
     @Override
     public void onNext(DocumentChangeNotification value) {

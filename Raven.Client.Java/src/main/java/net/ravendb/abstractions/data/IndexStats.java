@@ -6,9 +6,6 @@ import java.util.List;
 import net.ravendb.abstractions.basic.UseSharpEnum;
 import net.ravendb.abstractions.indexing.IndexLockMode;
 
-import org.apache.commons.lang.builder.EqualsBuilder;
-import org.apache.commons.lang.builder.HashCodeBuilder;
-
 
 public class IndexStats {
   private String id;
