@@ -19,6 +19,7 @@ import java.util.Map.Entry;
 import java.util.Set;
 import java.util.UUID;
 
+import net.ravendb.abstractions.basic.CleanCloseable;
 import net.ravendb.abstractions.basic.EventHandler;
 import net.ravendb.abstractions.basic.Reference;
 import net.ravendb.abstractions.basic.SharpEnum;
@@ -64,12 +65,10 @@ import net.ravendb.abstractions.data.SuggestionQueryResult;
 import net.ravendb.abstractions.exceptions.BadRequestException;
 import net.ravendb.abstractions.exceptions.ConcurrencyException;
 import net.ravendb.abstractions.exceptions.DocumentDoesNotExistsException;
-import net.ravendb.abstractions.exceptions.HttpOperationException;
 import net.ravendb.abstractions.exceptions.IndexCompilationException;
-import net.ravendb.abstractions.exceptions.ServerClientException;
+import net.ravendb.abstractions.exceptions.JsonReaderException;
 import net.ravendb.abstractions.exceptions.TransformCompilationException;
 import net.ravendb.abstractions.extensions.ExceptionExtensions;
-import net.ravendb.abstractions.extensions.JsonExtensions;
 import net.ravendb.abstractions.extensions.MetadataExtensions;
 import net.ravendb.abstractions.indexing.IndexDefinition;
 import net.ravendb.abstractions.indexing.IndexMergeResults;
@@ -81,6 +80,7 @@ import net.ravendb.abstractions.json.linq.RavenJObject;
 import net.ravendb.abstractions.json.linq.RavenJToken;
 import net.ravendb.abstractions.json.linq.RavenJValue;
 import net.ravendb.abstractions.replication.ReplicationDocument;
+import net.ravendb.abstractions.util.BomUtils;
 import net.ravendb.abstractions.util.NetDateFormat;
 import net.ravendb.client.RavenPagingInformation;
 import net.ravendb.client.changes.IDatabaseChanges;
@@ -631,7 +631,7 @@ public class ServerClient implements IDatabaseCommands {
   }
 
   @Override
-  public PutResult put(final String key, final Etag etag, final RavenJObject document, final RavenJObject metadata) throws ServerClientException {
+  public PutResult put(final String key, final Etag etag, final RavenJObject document, final RavenJObject metadata) {
     return executeWithReplication(HttpMethods.PUT, new Function1<OperationMetadata, PutResult>() {
       @Override
       public PutResult apply(OperationMetadata operationMetadata) {
@@ -640,7 +640,7 @@ public class ServerClient implements IDatabaseCommands {
     });
   }
 
-  protected PutResult directPut(RavenJObject metadata, String key, Etag etag, RavenJObject document, OperationMetadata operationMetadata) throws ServerClientException {
+  protected PutResult directPut(RavenJObject metadata, String key, Etag etag, RavenJObject document, OperationMetadata operationMetadata) {
     if (metadata == null) {
       metadata = new RavenJObject();
     }
@@ -729,7 +729,7 @@ public class ServerClient implements IDatabaseCommands {
   }
 
   @Override
-  public JsonDocument get(final String key) throws ServerClientException {
+  public JsonDocument get(final String key) {
     ensureIsNotNullOrEmpty(key, "key");
     return executeWithReplication(HttpMethods.GET, new Function1<OperationMetadata, JsonDocument>() {
       @Override
@@ -1307,32 +1307,32 @@ public class ServerClient implements IDatabaseCommands {
   }
 
   @Override
-  public List<JsonDocument> startsWith(final String keyPrefix, final String matches, final int start, final int pageSize) throws ServerClientException {
+  public List<JsonDocument> startsWith(final String keyPrefix, final String matches, final int start, final int pageSize) {
     return startsWith(keyPrefix, matches, start, pageSize, false);
   }
 
   @Override
-  public List<JsonDocument> startsWith(final String keyPrefix, final String matches, final int start, final int pageSize, final boolean metadataOnly) throws ServerClientException {
+  public List<JsonDocument> startsWith(final String keyPrefix, final String matches, final int start, final int pageSize, final boolean metadataOnly) {
     return startsWith(keyPrefix, matches, start, pageSize, metadataOnly, null, null, null, null, null);
   }
 
   @Override
-  public List<JsonDocument> startsWith(final String keyPrefix, final String matches, final int start, final int pageSize, final boolean metadataOnly, final String exclude) throws ServerClientException {
+  public List<JsonDocument> startsWith(final String keyPrefix, final String matches, final int start, final int pageSize, final boolean metadataOnly, final String exclude) {
     return startsWith(keyPrefix, matches, start, pageSize, metadataOnly, exclude, null, null, null, null);
   }
 
   @Override
-  public List<JsonDocument> startsWith(final String keyPrefix, final String matches, final int start, final int pageSize, final boolean metadataOnly, final String exclude, final RavenPagingInformation pagingInformation) throws ServerClientException {
+  public List<JsonDocument> startsWith(final String keyPrefix, final String matches, final int start, final int pageSize, final boolean metadataOnly, final String exclude, final RavenPagingInformation pagingInformation) {
     return startsWith(keyPrefix, matches, start, pageSize, metadataOnly, exclude, pagingInformation, null, null, null);
   }
 
   @Override
-  public List<JsonDocument> startsWith(final String keyPrefix, final String matches, final int start, final int pageSize, final boolean metadataOnly, final String exclude, final RavenPagingInformation pagingInformation, final String transformer, final Map<String, RavenJToken> transformerParameters) throws ServerClientException {
+  public List<JsonDocument> startsWith(final String keyPrefix, final String matches, final int start, final int pageSize, final boolean metadataOnly, final String exclude, final RavenPagingInformation pagingInformation, final String transformer, final Map<String, RavenJToken> transformerParameters) {
     return startsWith(keyPrefix, matches, start, pageSize, metadataOnly, exclude, pagingInformation, transformer, transformerParameters, null);
   }
 
   @Override
-  public List<JsonDocument> startsWith(final String keyPrefix, final String matches, final int start, final int pageSize, final boolean metadataOnly, final String exclude, final RavenPagingInformation pagingInformation, final String transformer, final Map<String, RavenJToken> transformerParameters, final String skipAfter) throws ServerClientException {
+  public List<JsonDocument> startsWith(final String keyPrefix, final String matches, final int start, final int pageSize, final boolean metadataOnly, final String exclude, final RavenPagingInformation pagingInformation, final String transformer, final Map<String, RavenJToken> transformerParameters, final String skipAfter) {
     ensureIsNotNullOrEmpty(keyPrefix, "keyPrefix");
     return executeWithReplication(HttpMethods.GET, new Function1<OperationMetadata, List<JsonDocument>>() {
       @Override
@@ -1346,7 +1346,7 @@ public class ServerClient implements IDatabaseCommands {
   protected List<JsonDocument> directStartsWith(final OperationMetadata operationMetadata, final String keyPrefix,
     final String matches, final int start, final int pageSize, final boolean metadataOnly, final String exclude,
     final RavenPagingInformation pagingInformation, final String transformer,
-    final Map<String, RavenJToken> transformerParameters, final String skipAfter) throws ServerClientException {
+    final Map<String, RavenJToken> transformerParameters, final String skipAfter) {
     RavenJObject metadata = new RavenJObject();
 
     int actualStart = start;
@@ -1792,13 +1792,25 @@ public class ServerClient implements IDatabaseCommands {
       }
 
 
-      RavenJObject conflictsDoc = RavenJObject.parse(responseException.getResponseString());
-      List<String> conflictIds = conflictsDoc.value(RavenJArray.class, "Conflicts").values(String.class);
+      try (CloseableHttpResponse response = responseException.getResponse()) {
+        String stream = BomUtils.removeUTF8BOM(IOUtils.toString(response.getEntity().getContent()).trim());
 
-      ConflictException ex = new ConflictException("Conflict detected on " + key + ", conflict must be resolved before the attachment will be accessible", true);
-      ex.setConflictedVersionIds(conflictIds.toArray(new String[0]));
-      ex.setEtag(responseException.getEtag());
-      throw ex;
+        List<String> conflictedIds;
+        if (HttpMethods.GET.equals(method)) {
+          RavenJObject conflictsDoc = RavenJObject.parse(stream);
+          conflictedIds = conflictsDoc.value(RavenJArray.class, "Conflicts").values(String.class);
+        } else {
+          conflictedIds = Arrays.asList("Cannot get conflict ids in HEAD requesT");
+        }
+
+        ConflictException ex = new ConflictException("Conflict detected on " + key + ", conflict must be resolved before the attachment will be accessible", true);
+        ex.setConflictedVersionIds(conflictedIds.toArray(new String[0]));
+        ex.setEtag(responseException.getEtag());
+        throw ex;
+
+      } catch (IOException e) {
+        throw new IllegalStateException(e.getMessage(), e);
+      }
     }
   }
 
@@ -1828,7 +1840,7 @@ public class ServerClient implements IDatabaseCommands {
   }
 
   @Override
-  public AutoCloseable disableAllCaching() {
+  public CleanCloseable disableAllCaching() {
     return jsonRequestFactory.disableAllCaching();
   }
 
@@ -1990,7 +2002,7 @@ public class ServerClient implements IDatabaseCommands {
 
       return new RavenJObjectIterator(webResponse, jsonParser);
     } catch (IOException e) {
-      throw new ServerClientException(e);
+      throw new JsonReaderException(e);
     }
   }
 
@@ -2121,7 +2133,7 @@ public class ServerClient implements IDatabaseCommands {
   }
 
   @Override
-  public void delete(final String key, final Etag etag) throws ServerClientException {
+  public void delete(final String key, final Etag etag) {
     ensureIsNotNullOrEmpty(key, "key");
     executeWithReplication(HttpMethods.DELETE, new Function1<OperationMetadata, Void>() {
       @Override
@@ -2132,7 +2144,7 @@ public class ServerClient implements IDatabaseCommands {
     });
   }
 
-  protected void directDelete(OperationMetadata operationMetadata, String key, Etag etag) throws ServerClientException {
+  protected void directDelete(OperationMetadata operationMetadata, String key, Etag etag) {
     ensureIsNotNullOrEmpty(key, "key");
     try (HttpJsonRequest jsonRequest = jsonRequestFactory.createHttpJsonRequest(
       new CreateHttpJsonRequestParams(this, operationMetadata.getUrl() + "/docs/" + UrlUtils.escapeDataString(key), HttpMethods.DELETE, new RavenJObject(), operationMetadata.getCredentials(), convention).addOperationHeaders(operationsHeaders))
@@ -2294,7 +2306,7 @@ public class ServerClient implements IDatabaseCommands {
     }
   }
 
-  public <S> S executeWithReplication(HttpMethods method, Function1<OperationMetadata, S> operation) throws ServerClientException {
+  public <S> S executeWithReplication(HttpMethods method, Function1<OperationMetadata, S> operation) {
     int currentRequest = ++requestCount;
     return replicationInformer.executeWithReplication(method, url, credentialsThatShouldBeUsedOnlyInOperationsWithoutReplication, currentRequest, readStripingBase, operation);
   }
@@ -2440,11 +2452,12 @@ public class ServerClient implements IDatabaseCommands {
 
   @Override
   public DatabaseStatistics getStatistics() {
-    HttpJsonRequest httpJsonRequest = jsonRequestFactory.createHttpJsonRequest(
-      new CreateHttpJsonRequestParams(this,  url + "/stats", HttpMethods.GET, new RavenJObject(), credentialsThatShouldBeUsedOnlyInOperationsWithoutReplication, convention));
+    try (HttpJsonRequest httpJsonRequest = jsonRequestFactory.createHttpJsonRequest(
+      new CreateHttpJsonRequestParams(this,  url + "/stats", HttpMethods.GET, new RavenJObject(), credentialsThatShouldBeUsedOnlyInOperationsWithoutReplication, convention))) {
 
-    RavenJObject jo = (RavenJObject)httpJsonRequest.readResponseJson();
-    return convention.createSerializer().deserialize(jo, DatabaseStatistics.class);
+      RavenJObject jo = (RavenJObject)httpJsonRequest.readResponseJson();
+      return convention.createSerializer().deserialize(jo, DatabaseStatistics.class);
+    }
   }
 
   @Override

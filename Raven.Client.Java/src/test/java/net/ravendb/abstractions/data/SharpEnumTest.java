@@ -13,19 +13,19 @@ import org.junit.Test;
 
 public class SharpEnumTest {
   @Test
-  public void testEnumReadWrite() throws Exception {
-    JsonSerializer mapper = new JsonSerializer(new DocumentConvention());
+  public void testEnumReadWrite() {
+    DocumentConvention convention = new DocumentConvention();
+    convention.setSaveEnumsAsIntegers(false);
+    JsonSerializer mapper = new JsonSerializer(convention);
 
     assertEquals("\"Short\"", mapper.serializeAsString(SortOptions.SHORT));
     assertEquals(SortOptions.SHORT, mapper.deserialize("\"Short\"", SortOptions.class));
 
     testDeserialization(mapper);
-
   }
 
-
   @Test
-  public void testSaveEnumsAsIntegers() throws Exception {
+  public void testSaveEnumsAsIntegers() {
     DocumentConvention convention = new DocumentConvention();
     convention.setSaveEnumsAsIntegers(true);
     JsonSerializer serializer = convention.createSerializer();
@@ -42,7 +42,7 @@ public class SharpEnumTest {
 
   }
 
-  private void testDeserialization(JsonSerializer mapper) throws Exception {
+  private void testDeserialization(JsonSerializer mapper) {
     assertEquals(SortOptions.NONE, mapper.deserialize("0", SortOptions.class));
     assertEquals(SortOptions.NONE, mapper.deserialize("\"None\"", SortOptions.class));
 
@@ -69,7 +69,7 @@ public class SharpEnumTest {
   }
 
   @Test
-  public void testSaveEnumsAsStrings() throws Exception  {
+  public void testSaveEnumsAsStrings()  {
     DocumentConvention convention = new DocumentConvention();
     convention.setSaveEnumsAsIntegers(false);
     JsonSerializer serializer = convention.createSerializer();

@@ -18,7 +18,7 @@ import org.junit.Test;
 public class IndexingOnDictionaryTest extends RemoteClientTest {
 
   @Test
-  public void canIndexValuesForDictionary() throws Exception {
+  public void canIndexValuesForDictionary() {
     try (IDocumentStore store = new DocumentStore(getDefaultUrl(), getDefaultDb()).initialize()) {
       try (IDocumentSession s = store.openSession()) {
         User u = new User();
@@ -41,7 +41,7 @@ public class IndexingOnDictionaryTest extends RemoteClientTest {
   }
 
   @Test
-  public void canIndexValuesForDictionaryAsPartOfDictionary() throws Exception {
+  public void canIndexValuesForDictionaryAsPartOfDictionary() {
     try (IDocumentStore store = new DocumentStore(getDefaultUrl(), getDefaultDb()).initialize()) {
       try (IDocumentSession s = store.openSession()) {
         User u = new User();
@@ -65,7 +65,7 @@ public class IndexingOnDictionaryTest extends RemoteClientTest {
   }
 
   @Test
-  public void canIndexNestedValuesForDictionaryAsPartOfDictionary() throws Exception {
+  public void canIndexNestedValuesForDictionaryAsPartOfDictionary() {
     try (IDocumentStore store = new DocumentStore(getDefaultUrl(), getDefaultDb()).initialize()) {
       try (IDocumentSession s = store.openSession()) {
         User u = new User();
@@ -91,7 +91,7 @@ public class IndexingOnDictionaryTest extends RemoteClientTest {
   }
 
   @Test
-  public void canIndexValuesForDictionaryWithNumberForIndex() throws Exception {
+  public void canIndexValuesForDictionaryWithNumberForIndex() {
     try (IDocumentStore store = new DocumentStore(getDefaultUrl(), getDefaultDb()).initialize()) {
       try (IDocumentSession s = store.openSession()) {
         User u = new User();

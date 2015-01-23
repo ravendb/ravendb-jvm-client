@@ -12,6 +12,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock.ReadLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock.WriteLock;
 
+import net.ravendb.abstractions.basic.CleanCloseable;
 import net.ravendb.abstractions.closure.Function1;
 
 
@@ -114,13 +115,13 @@ public class AtomicDictionary<T> implements Iterable<Entry<String, T>> {
     return items.get(key);
   }
 
-  public AutoCloseable withAllLocks() {
+  public CleanCloseable withAllLocks() {
     final WriteLock writeLock = globalLocker.writeLock();
     writeLock.lock();
-    return new AutoCloseable() {
+    return new CleanCloseable() {
 
       @Override
-      public void close() throws Exception {
+      public void close() {
         writeLock.unlock();
       }
     };

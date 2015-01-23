@@ -29,7 +29,6 @@ import net.ravendb.abstractions.data.QueryHeaderInformation;
 import net.ravendb.abstractions.data.QueryResult;
 import net.ravendb.abstractions.data.SortedField;
 import net.ravendb.abstractions.exceptions.IndexCompilationException;
-import net.ravendb.abstractions.exceptions.ServerClientException;
 import net.ravendb.abstractions.indexing.IndexDefinition;
 import net.ravendb.abstractions.indexing.SortOptions;
 import net.ravendb.abstractions.json.linq.RavenJArray;
@@ -37,8 +36,6 @@ import net.ravendb.abstractions.json.linq.RavenJObject;
 import net.ravendb.abstractions.json.linq.RavenJToken;
 import net.ravendb.abstractions.json.linq.RavenJValue;
 import net.ravendb.client.RavenDBAwareTests;
-import net.ravendb.client.connection.IDatabaseCommands;
-import net.ravendb.client.connection.Operation;
 import net.ravendb.client.indexes.AbstractIndexCreationTask;
 import net.ravendb.client.indexes.IndexDefinitionBuilder;
 import net.ravendb.client.indexes.RavenDocumentsByEntityName;
@@ -53,7 +50,7 @@ import org.mockito.cglib.core.Transformer;
 public class IndexAndQueryTest extends RavenDBAwareTests {
 
   @Test(expected = IndexCompilationException.class)
-  public void testPutInvalidIndex() throws Exception {
+  public void testPutInvalidIndex() {
     try {
       createDb();
       IndexDefinition index = new IndexDefinition();
@@ -67,7 +64,7 @@ public class IndexAndQueryTest extends RavenDBAwareTests {
   }
 
   @Test
-  public void testUpdateByIndexPatch() throws Exception {
+  public void testUpdateByIndexPatch() {
     try {
       createDb();
       IDatabaseCommands dbCommands = serverClient.forDatabase(getDbName());
@@ -95,7 +92,7 @@ public class IndexAndQueryTest extends RavenDBAwareTests {
   }
 
   @Test
-  public void testDeleteByIndex() throws Exception {
+  public void testDeleteByIndex() {
     try {
       createDb();
       IDatabaseCommands dbCommands = serverClient.forDatabase(getDbName());
@@ -129,7 +126,7 @@ public class IndexAndQueryTest extends RavenDBAwareTests {
   }
 
   @Test
-  public void testStreamQuery() throws Exception {
+  public void testStreamQuery() {
     try {
       createDb();
       IDatabaseCommands dbCommands = serverClient.forDatabase(getDbName());
@@ -162,7 +159,7 @@ public class IndexAndQueryTest extends RavenDBAwareTests {
   }
 
   @Test
-  public void testStreamDocs() throws Exception {
+  public void testStreamDocs() {
     try {
       createDb();
       IDatabaseCommands dbCommands = serverClient.forDatabase(getDbName());
@@ -211,7 +208,7 @@ public class IndexAndQueryTest extends RavenDBAwareTests {
   }
 
   @Test
-  public void testMapReduceWithDsl() throws Exception {
+  public void testMapReduceWithDsl() {
     try {
       createDb();
       IDatabaseCommands dbCommands = serverClient.forDatabase(getDbName());
@@ -235,7 +232,7 @@ public class IndexAndQueryTest extends RavenDBAwareTests {
   }
 
   @Test
-  public void testSimpleMapReduce() throws Exception {
+  public void testSimpleMapReduce() {
     try {
       createDb();
       IDatabaseCommands dbCommands = serverClient.forDatabase(getDbName());
@@ -265,7 +262,7 @@ public class IndexAndQueryTest extends RavenDBAwareTests {
   }
 
   @Test
-  public void testSortOptions() throws Exception {
+  public void testSortOptions() {
     try {
       createDb();
       IDatabaseCommands dbCommands = serverClient.forDatabase(getDbName());
@@ -306,7 +303,7 @@ public class IndexAndQueryTest extends RavenDBAwareTests {
   }
 
   @Test
-  public void testAdvancedMapReduce() throws Exception {
+  public void testAdvancedMapReduce() {
     try {
       createDb();
       IDatabaseCommands dbCommands = serverClient.forDatabase(getDbName());
@@ -330,7 +327,7 @@ public class IndexAndQueryTest extends RavenDBAwareTests {
   }
 
   @Test
-  public void testQueryWithIncludes() throws Exception {
+  public void testQueryWithIncludes() {
     try {
       createDb();
       IDatabaseCommands dbCommands = serverClient.forDatabase(getDbName());
@@ -367,7 +364,7 @@ public class IndexAndQueryTest extends RavenDBAwareTests {
   }
 
   @Test
-  public void testDynamicQuery() throws Exception {
+  public void testDynamicQuery() {
     try {
       createDb();
       IDatabaseCommands dbCommands = serverClient.forDatabase(getDbName());
@@ -483,7 +480,7 @@ public class IndexAndQueryTest extends RavenDBAwareTests {
   }
 
   @Test
-  public void testCreateIndexAndQuery() throws Exception {
+  public void testCreateIndexAndQuery() {
     try {
       createDb();
       IDatabaseCommands dbCommands = serverClient.forDatabase(getDbName());

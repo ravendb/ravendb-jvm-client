@@ -1,7 +1,5 @@
 package net.ravendb.client.connection;
 
-import java.io.IOException;
-
 import net.ravendb.abstractions.basic.Reference;
 import net.ravendb.abstractions.closure.Function1;
 import net.ravendb.abstractions.closure.Function2;
@@ -10,8 +8,8 @@ import net.ravendb.abstractions.data.AdminStatistics;
 import net.ravendb.abstractions.data.BuildNumber;
 import net.ravendb.abstractions.data.DatabaseBackupRequest;
 import net.ravendb.abstractions.data.DatabaseDocument;
-import net.ravendb.abstractions.data.HttpMethods;
 import net.ravendb.abstractions.data.DatabaseRestoreRequest;
+import net.ravendb.abstractions.data.HttpMethods;
 import net.ravendb.abstractions.json.linq.RavenJObject;
 import net.ravendb.abstractions.json.linq.RavenJToken;
 import net.ravendb.client.connection.implementation.HttpJsonRequest;
@@ -58,10 +56,10 @@ public class AdminServerClient implements IAdminDatabaseCommands, IGlobalAdminDa
   @Override
   public void createDatabase(DatabaseDocument databaseDocument) {
     Reference<RavenJObject> docRef = new Reference<>();
-    HttpJsonRequest req = adminRequest.createDatabase(databaseDocument, docRef);
-
-    req.write(docRef.value.toString());
-    req.executeRequest();
+    try (HttpJsonRequest req = adminRequest.createDatabase(databaseDocument, docRef)) {
+      req.write(docRef.value.toString());
+      req.executeRequest();
+    }
   }
 
   @Override
@@ -116,22 +114,23 @@ public class AdminServerClient implements IAdminDatabaseCommands, IGlobalAdminDa
 
   @Override
   public void startBackup(String backupLocation, DatabaseDocument databaseDocument, boolean incremental, String databaseName) {
-    HttpJsonRequest request = adminRequest.startBackup(backupLocation, databaseDocument, databaseName, incremental);
+    try (HttpJsonRequest request = adminRequest.startBackup(backupLocation, databaseDocument, databaseName, incremental)) {
+      DatabaseBackupRequest backupRequest = new DatabaseBackupRequest();
+      backupRequest.setBackupLocation(backupLocation);
+      backupRequest.setDatabaseDocument(databaseDocument);
 
-    DatabaseBackupRequest backupRequest = new DatabaseBackupRequest();
-    backupRequest.setBackupLocation(backupLocation);
-    backupRequest.setDatabaseDocument(databaseDocument);
-
-    request.write(RavenJObject.fromObject(backupRequest).toString());
-    request.executeRequest();
+      request.write(RavenJObject.fromObject(backupRequest).toString());
+      request.executeRequest();
+    }
   }
 
   @Override
   public Operation startRestore(DatabaseRestoreRequest restoreRequest) {
-    HttpJsonRequest request = adminRequest.createRestoreRequest();
-    request.write(RavenJObject.fromObject(restoreRequest).toString());
-    RavenJToken jsonResponse = request.readResponseJson();
-    return new Operation((ServerClient)innerServerClient.forSystemDatabase(), jsonResponse.value(Long.class, "OperationId"));
+    try (HttpJsonRequest request = adminRequest.createRestoreRequest()) {
+      request.write(RavenJObject.fromObject(restoreRequest).toString());
+      RavenJToken jsonResponse = request.readResponseJson();
+      return new Operation((ServerClient)innerServerClient.forSystemDatabase(), jsonResponse.value(Long.class, "OperationId"));
+    }
   }
 
 

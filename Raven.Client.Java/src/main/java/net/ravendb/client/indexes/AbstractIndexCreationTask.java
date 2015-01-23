@@ -3,7 +3,6 @@ package net.ravendb.client.indexes;
 import java.util.HashMap;
 import java.util.Map;
 
-import net.ravendb.abstractions.closure.Action2;
 import net.ravendb.abstractions.data.Constants;
 import net.ravendb.abstractions.data.HttpMethods;
 import net.ravendb.abstractions.data.StringDistanceTypes;
@@ -17,7 +16,6 @@ import net.ravendb.abstractions.indexing.SpatialOptionsFactory;
 import net.ravendb.abstractions.indexing.SuggestionOptions;
 import net.ravendb.client.IDocumentStore;
 import net.ravendb.client.connection.IDatabaseCommands;
-import net.ravendb.client.connection.OperationMetadata;
 import net.ravendb.client.connection.ServerClient;
 import net.ravendb.client.connection.implementation.HttpJsonRequest;
 import net.ravendb.client.document.DocumentConvention;
@@ -135,8 +133,7 @@ public class AbstractIndexCreationTask extends AbstractCommonApiForIndexesAndTra
     ServerClient serverClient = (ServerClient) databaseCommands;
 
     String repliaceIndexUrl = String.format("/replication/replicate-indexes?indexName=%s", UrlUtils.escapeDataString(getIndexName()));
-    HttpJsonRequest replicateIndexRequest = serverClient.createRequest(HttpMethods.POST, repliaceIndexUrl);
-    try {
+    try (HttpJsonRequest replicateIndexRequest = serverClient.createRequest(HttpMethods.POST, repliaceIndexUrl)) {
       replicateIndexRequest.executeRequest();
     } catch (Exception e) {
       // ignore errors

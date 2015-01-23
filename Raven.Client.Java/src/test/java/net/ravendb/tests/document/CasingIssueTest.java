@@ -16,7 +16,7 @@ import com.mysema.query.annotations.QueryEntity;
 public class CasingIssueTest extends RemoteClientTest {
 
   @Test
-  public void canQueryByEntityType() throws Exception {
+  public void canQueryByEntityType() {
     try (IDocumentStore store = new DocumentStore(getDefaultUrl(), getDefaultDb()).initialize()) {
       try (IDocumentSession session = store.openSession()) {
 
@@ -35,7 +35,7 @@ public class CasingIssueTest extends RemoteClientTest {
   }
 
   @Test
-  public void unitOfWorkEvenWhenQuerying() throws Exception {
+  public void unitOfWorkEvenWhenQuerying() {
     try (IDocumentStore store = new DocumentStore(getDefaultUrl(), getDefaultDb()).initialize()) {
       try (IDocumentSession session = store.openSession()) {
 

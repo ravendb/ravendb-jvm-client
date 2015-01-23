@@ -6,6 +6,7 @@ import java.io.ByteArrayInputStream;
 
 import net.ravendb.abstractions.data.Attachment;
 import net.ravendb.abstractions.json.linq.RavenJObject;
+import net.ravendb.abstractions.util.TimeUtils;
 import net.ravendb.client.IDocumentStore;
 import net.ravendb.client.connection.IDatabaseCommands;
 import net.ravendb.client.exceptions.ConflictException;
@@ -17,12 +18,12 @@ import org.junit.Test;
 public class AttachmentReplicationBugsTest extends ReplicationBase {
 
   @Test
-  public void can_replicate_documents_between_two_external_instances() throws Exception {
+  public void can_replicate_documents_between_two_external_instances() {
 
     try (IDocumentStore store1 = createStore();
       IDocumentStore store2 = createStore()) {
       tellFirstInstanceToReplicateToSecondInstance();
-      Thread.sleep(1000);
+      TimeUtils.cleanSleep(1000);
       IDatabaseCommands databaseCommands = store1.getDatabaseCommands();
       int documentCount = 20;
       for (int i = 0; i < documentCount; i++) {
@@ -39,7 +40,7 @@ public class AttachmentReplicationBugsTest extends ReplicationBase {
         }
         foundAll = countFound == documentCount;
         if (foundAll) break;
-        Thread.sleep(100);
+        TimeUtils.cleanSleep(100);
       }
       Assert.assertTrue(foundAll);
 
@@ -47,7 +48,7 @@ public class AttachmentReplicationBugsTest extends ReplicationBase {
   }
 
   @Test
-  public void can_resolve_conflict_with_delete() throws Exception {
+  public void can_resolve_conflict_with_delete() {
 
     try (IDocumentStore store1 = createStore();
       IDocumentStore store2 = createStore()) {
@@ -62,7 +63,7 @@ public class AttachmentReplicationBugsTest extends ReplicationBase {
       try {
         for (int i = 0; i < retriesCount; i++) {
           store2.getDatabaseCommands().getAttachment("static");
-          Thread.sleep(100);
+          TimeUtils.cleanSleep(100);
         }
         fail();
       } catch (ConflictException e) {

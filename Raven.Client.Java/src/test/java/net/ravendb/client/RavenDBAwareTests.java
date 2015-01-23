@@ -1,6 +1,7 @@
 package net.ravendb.client;
 
 
+import java.io.IOException;
 import java.net.InetAddress;
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -95,12 +96,12 @@ public abstract class RavenDBAwareTests {
   }
 
   @BeforeClass
-  public static void startServerBefore() throws Exception {
+  public static void startServerBefore() {
     startServer(DEFAULT_SERVER_PORT_1, true);
   }
 
   @AfterClass
-  public static void stopServerAfter() throws Exception {
+  public static void stopServerAfter() {
     stopServer(DEFAULT_SERVER_PORT_1);
   }
 
@@ -119,7 +120,7 @@ public abstract class RavenDBAwareTests {
   }
 
   @After
-  public void cleanUp() throws Exception {
+  public void cleanUp() {
     factory.close();
   }
 
@@ -149,19 +150,19 @@ public abstract class RavenDBAwareTests {
   /**
    * Creates new db with name taken from test name
    */
-  protected void createDb() throws Exception {
+  protected void createDb() {
     createDb(1);
   }
 
-  protected void createDb(int i) throws Exception {
+  protected void createDb(int i) {
     createDb(getDbName(), i);
   }
 
-  protected void createDb(String dbName) throws Exception {
+  protected void createDb(String dbName) {
     createDb(dbName, 1);
   }
 
-  protected void createDb(String dbName, int i) throws Exception {
+  protected void createDb(String dbName, int i) {
     HttpPut put = null;
     try {
       put = new HttpPut(getServerUrl(i) + "/admin/databases/" + UrlUtils.escapeDataString(dbName));
@@ -170,6 +171,8 @@ public abstract class RavenDBAwareTests {
       if (httpResponse.getStatusLine().getStatusCode() != HttpStatus.SC_OK) {
         throw new IllegalStateException("Invalid response on put:" + httpResponse.getStatusLine().getStatusCode());
       }
+    } catch (IOException e) {
+      throw new IllegalStateException("Unable to create DB", e);
     } finally {
       if (put != null) {
         put.releaseConnection();
@@ -184,7 +187,7 @@ public abstract class RavenDBAwareTests {
     return DEFAULT_SERVER_PORT_2;
   }
 
-  protected void createDbAtPort(String dbName, int port) throws Exception {
+  protected void createDbAtPort(String dbName, int port) {
     HttpPut put = null;
     try {
       put = new HttpPut("http://" + getHostName() + ":" + port + "/admin/databases/" + UrlUtils.escapeDataString(dbName));
@@ -193,6 +196,8 @@ public abstract class RavenDBAwareTests {
       if (httpResponse.getStatusLine().getStatusCode() != HttpStatus.SC_OK) {
         throw new IllegalStateException("Invalid response on put:" + httpResponse.getStatusLine().getStatusCode());
       }
+    } catch (IOException e) {
+      throw new IllegalStateException(e);
     } finally {
       if (put != null) {
         put.releaseConnection();
@@ -200,15 +205,15 @@ public abstract class RavenDBAwareTests {
     }
   }
 
-  protected void startServer() throws Exception{
+  protected void startServer() {
     startServer(DEFAULT_SERVER_PORT_1, true);
   }
 
-  protected void stopServer() throws Exception{
+  protected void stopServer() {
     stopServer(DEFAULT_SERVER_PORT_1);
   }
 
-  protected static void startServerWithOAuth(int port) throws Exception {
+  protected static void startServerWithOAuth(int port) {
     HttpPut put = null;
     try {
       put = new HttpPut(DEFAULT_SERVER_RUNNER_URL);
@@ -217,6 +222,8 @@ public abstract class RavenDBAwareTests {
       if (httpResponse.getStatusLine().getStatusCode() != HttpStatus.SC_OK) {
         throw new IllegalStateException("Invalid response on put:" + httpResponse.getStatusLine().getStatusCode());
       }
+    } catch (IOException e) {
+      throw new IllegalStateException(e);
     } finally {
       if (put != null) {
         put.releaseConnection();
@@ -224,7 +231,7 @@ public abstract class RavenDBAwareTests {
     }
   }
 
-  protected static void startServer(int port, boolean deleteData) throws Exception {
+  protected static void startServer(int port, boolean deleteData) {
     HttpPut put = null;
     try {
       String putUrl = DEFAULT_SERVER_RUNNER_URL;
@@ -237,6 +244,8 @@ public abstract class RavenDBAwareTests {
       if (httpResponse.getStatusLine().getStatusCode() != HttpStatus.SC_OK) {
         throw new IllegalStateException("Invalid response on put:" + httpResponse.getStatusLine().getStatusCode() + IOUtils.toString(httpResponse.getEntity().getContent()));
       }
+    } catch (IOException e) {
+      throw new IllegalStateException(e);
     } finally {
       if (put != null) {
         put.releaseConnection();
@@ -244,7 +253,7 @@ public abstract class RavenDBAwareTests {
     }
   }
 
-  protected static void stopServer(int port) throws Exception {
+  protected static void stopServer(int port) {
     HttpDelete delete = null;
     try {
       delete = new HttpDelete(DEFAULT_SERVER_RUNNER_URL + "?port=" + port);
@@ -252,6 +261,8 @@ public abstract class RavenDBAwareTests {
       if (httpResponse.getStatusLine().getStatusCode() != HttpStatus.SC_NO_CONTENT) {
         throw new IllegalStateException("Invalid response on put:" + httpResponse.getStatusLine().getStatusCode());
       }
+    } catch (IOException e) {
+      throw new IllegalStateException(e);
     } finally {
       if (delete != null) {
         delete.releaseConnection();
@@ -341,16 +352,16 @@ public abstract class RavenDBAwareTests {
   }
 
 
-  protected void deleteDb() throws Exception {
+  protected void deleteDb() {
     deleteDb(getDbName(), 1);
   }
 
 
-  protected void deleteDb(int i) throws Exception {
+  protected void deleteDb(int i) {
     deleteDb(getDbName(), i);
   }
 
-  protected void deleteDb(String dbName) throws Exception {
+  protected void deleteDb(String dbName) {
     deleteDb(dbName, 1);
   }
 
@@ -361,7 +372,7 @@ public abstract class RavenDBAwareTests {
     return calendar.getTime();
   }
 
-  protected void deleteDb(String dbName, int i) throws Exception {
+  protected void deleteDb(String dbName, int i) {
 
     HttpDelete deleteMethod = null;
     try {
@@ -370,6 +381,8 @@ public abstract class RavenDBAwareTests {
       if (httpResponse.getStatusLine().getStatusCode() != HttpStatus.SC_OK) {
         throw new IllegalStateException("Invalid response on put:" + httpResponse.getStatusLine().getStatusCode());
       }
+    } catch (IOException e) {
+      throw new IllegalStateException("Unable to delete db", e);
     } finally {
       if (deleteMethod != null) {
         deleteMethod.releaseConnection();

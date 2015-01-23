@@ -17,6 +17,7 @@ import java.util.TreeSet;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import net.ravendb.abstractions.basic.CleanCloseable;
 import net.ravendb.abstractions.basic.Reference;
 import net.ravendb.abstractions.basic.Tuple;
 import net.ravendb.abstractions.closure.Action1;
@@ -63,7 +64,7 @@ import com.google.common.base.Defaults;
 /**
  * Abstract implementation for in memory session operations
  */
-public abstract class InMemoryDocumentSessionOperations implements AutoCloseable {
+public abstract class InMemoryDocumentSessionOperations implements CleanCloseable {
 
   protected final List<ILazyOperation> pendingLazyOperations = new ArrayList<ILazyOperation>();
   protected final Map<ILazyOperation, Action1<Object>> onEvaluateLazy = new HashMap<>();

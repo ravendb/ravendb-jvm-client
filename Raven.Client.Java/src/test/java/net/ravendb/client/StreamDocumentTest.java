@@ -10,7 +10,7 @@ import org.junit.Test;
 
 public class StreamDocumentTest extends RemoteClientTest  {
   @Test
-  public void streamingTest() throws Exception {
+  public void streamingTest() {
     try (IDocumentStore store = new DocumentStore(getDefaultUrl(), getDefaultDb()).initialize()) {
       try (IDocumentSession session = store.openSession()) {
         for (int i = 0 ; i < 1000; i++) {

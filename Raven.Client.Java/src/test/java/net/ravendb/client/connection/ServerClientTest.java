@@ -7,6 +7,7 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import java.io.ByteArrayInputStream;
+import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -16,6 +17,7 @@ import java.util.List;
 import net.ravendb.abstractions.commands.ICommandData;
 import net.ravendb.abstractions.commands.PatchCommandData;
 import net.ravendb.abstractions.commands.PutCommandData;
+import net.ravendb.abstractions.connection.ErrorResponseException;
 import net.ravendb.abstractions.data.Attachment;
 import net.ravendb.abstractions.data.AttachmentInformation;
 import net.ravendb.abstractions.data.BatchResult;
@@ -28,7 +30,6 @@ import net.ravendb.abstractions.data.PatchCommandType;
 import net.ravendb.abstractions.data.PatchRequest;
 import net.ravendb.abstractions.data.PutResult;
 import net.ravendb.abstractions.data.UuidType;
-import net.ravendb.abstractions.exceptions.ServerClientException;
 import net.ravendb.abstractions.extensions.JsonExtensions;
 import net.ravendb.abstractions.indexing.FieldIndexing;
 import net.ravendb.abstractions.indexing.FieldStorage;
@@ -40,6 +41,7 @@ import net.ravendb.abstractions.json.linq.RavenJObject;
 import net.ravendb.abstractions.json.linq.RavenJToken;
 import net.ravendb.abstractions.json.linq.RavenJValue;
 import net.ravendb.client.RavenDBAwareTests;
+import net.ravendb.client.document.JsonSerializer;
 import net.ravendb.samples.Developer;
 
 import org.apache.commons.lang.StringUtils;
@@ -49,7 +51,7 @@ import org.junit.Test;
 public class ServerClientTest extends RavenDBAwareTests {
 
   @Test
-  public void testCreateDb() throws Exception {
+  public void testCreateDb() {
     try {
       IDatabaseCommands dbCommands = serverClient.forDatabase(getDbName());
       DatabaseDocument databaseDocument = new DatabaseDocument();
@@ -63,7 +65,7 @@ public class ServerClientTest extends RavenDBAwareTests {
 
 
   @Test
-  public void testPutGet() throws Exception {
+  public void testPutGet() {
     IDatabaseCommands dbCommands = serverClient.forDatabase(getDbName());
     try {
       createDb();
@@ -94,7 +96,7 @@ public class ServerClientTest extends RavenDBAwareTests {
       dbCommands.put(longKey, null, RavenJObject.fromObject(d1), new RavenJObject());
 
       JsonDocument developerDocument = dbCommands.get(longKey);
-      Developer readDeveloper = JsonExtensions.createDefaultJsonSerializer().readValue(developerDocument.getDataAsJson().toString(), Developer.class);
+      Developer readDeveloper =  new JsonSerializer().deserialize(developerDocument.getDataAsJson().toString(), Developer.class);
       assertEquals("john", readDeveloper.getNick());
 
       RavenJObject objectWithOutKey = new RavenJObject();
@@ -110,7 +112,7 @@ public class ServerClientTest extends RavenDBAwareTests {
   }
 
   @Test
-  public void testGetDatabaseNames() throws Exception {
+  public void testGetDatabaseNames() {
     try {
       createDb("db1");
       createDb("db2");
@@ -127,7 +129,7 @@ public class ServerClientTest extends RavenDBAwareTests {
   }
 
   @Test
-  public void testGetDocuments() throws Exception {
+  public void testGetDocuments() {
     IDatabaseCommands dbCommands = serverClient.forDatabase(getDbName());
     try {
       createDb();
@@ -170,7 +172,7 @@ public class ServerClientTest extends RavenDBAwareTests {
   }
 
   @Test
-  public void testStartsWith() throws Exception {
+  public void testStartsWith() {
     IDatabaseCommands dbCommands = serverClient.forDatabase(getDbName());
     try {
       createDb();
@@ -219,7 +221,7 @@ public class ServerClientTest extends RavenDBAwareTests {
   }
 
   @Test
-  public void testUrlFor() throws Exception {
+  public void testUrlFor() {
     IDatabaseCommands dbCommands = serverClient.forDatabase(getDbName());
     try {
       createDb();
@@ -242,7 +244,7 @@ public class ServerClientTest extends RavenDBAwareTests {
   }
 
   @Test
-  public void testDelete() throws Exception {
+  public void testDelete() {
     IDatabaseCommands dbCommands = serverClient.forDatabase(getDbName());
     try {
       createDb();
@@ -289,7 +291,7 @@ public class ServerClientTest extends RavenDBAwareTests {
 
 
   @Test
-  public void testBatch() throws Exception {
+  public void testBatch() {
     try {
       createDb();
       IDatabaseCommands commands = serverClient.forDatabase(getDbName());
@@ -333,7 +335,7 @@ public class ServerClientTest extends RavenDBAwareTests {
   }
 
   @Test
-  public void testAttachments() throws Exception {
+  public void testAttachments() throws IOException {
     IDatabaseCommands dbCommands = serverClient.forDatabase(getDbName());
     try {
       createDb();
@@ -345,9 +347,10 @@ public class ServerClientTest extends RavenDBAwareTests {
       Etag etag = new Etag();
       etag.setup(UuidType.DOCUMENTS, System.currentTimeMillis());
 
-      InputStream is  = new ByteArrayInputStream("Test test test".getBytes());
-      dbCommands.putAttachment(key, etag, is, new RavenJObject());
-      is.close();
+      try (InputStream is  = new ByteArrayInputStream("Test test test".getBytes())) {
+        dbCommands.putAttachment(key, etag, is, new RavenJObject());
+      }
+
 
       assertEquals(1l, dbCommands.getStatistics().getCountOfAttachments());
 
@@ -379,7 +382,7 @@ public class ServerClientTest extends RavenDBAwareTests {
       try {
         dbCommands.updateAttachmentMetadata(key, a.getEtag().incrementBy(10000), metadata);
         fail();
-      } catch (ServerClientException e) {
+      } catch (ErrorResponseException e) {
         //ok
       }
 
@@ -404,7 +407,7 @@ public class ServerClientTest extends RavenDBAwareTests {
   }
 
   @Test
-  public void testHead() throws Exception {
+  public void testHead() {
     IDatabaseCommands dbCommands = serverClient.forDatabase(getDbName());
     try {
       createDb();
@@ -430,7 +433,7 @@ public class ServerClientTest extends RavenDBAwareTests {
   }
 
   @Test
-  public void testIndexes() throws Exception {
+  public void testIndexes() {
 
     IDatabaseCommands dbCommands = serverClient.forDatabase(getDbName());
     try {
@@ -490,7 +493,7 @@ public class ServerClientTest extends RavenDBAwareTests {
   }
 
   @Test
-  public void testGetAttachments() throws Exception {
+  public void testGetAttachments() {
     IDatabaseCommands dbCommands = serverClient.forDatabase(getDbName());
 
     try {
@@ -508,7 +511,7 @@ public class ServerClientTest extends RavenDBAwareTests {
   }
 
   @Test
-  public void testNextIdentityFor() throws Exception {
+  public void testNextIdentityFor() {
     IDatabaseCommands dbCommands = serverClient.forDatabase(getDbName());
     try {
       createDb();

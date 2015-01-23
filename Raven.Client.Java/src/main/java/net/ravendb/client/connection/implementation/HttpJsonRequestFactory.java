@@ -7,12 +7,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import net.ravendb.abstractions.basic.CleanCloseable;
 import net.ravendb.abstractions.basic.EventHandler;
 import net.ravendb.abstractions.basic.EventHelper;
 import net.ravendb.abstractions.closure.Action2;
 import net.ravendb.abstractions.connection.WebRequestEventArgs;
 import net.ravendb.abstractions.data.Constants;
-import net.ravendb.abstractions.data.HttpMethods;
 import net.ravendb.abstractions.json.linq.RavenJToken;
 import net.ravendb.client.connection.CachedRequest;
 import net.ravendb.client.connection.CachedRequestOp;
@@ -23,13 +23,14 @@ import net.ravendb.client.extensions.MultiDatabase;
 import net.ravendb.client.util.SimpleCache;
 
 import org.apache.commons.lang.StringUtils;
-import org.apache.http.HttpRequest;
 import org.apache.http.HttpStatus;
 import org.apache.http.config.SocketConfig;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.impl.client.StandardHttpRequestRetryHandler;
 import org.apache.http.impl.conn.PoolingHttpClientConnectionManager;
+
+import com.google.common.io.Closeables;
 
 
 /**
@@ -108,14 +109,13 @@ public class HttpJsonRequestFactory implements AutoCloseable {
   }
 
   @Override
-  public void close() throws Exception {
+  public void close(){
     if (disposed) {
       return ;
     }
     disposed = true;
     cache.close();
-    httpClient.close();
-
+    Closeables.closeQuietly(httpClient);
   }
 
   public CachedRequestOp configureCaching(String url, Action2<String, String> setHeader) {
@@ -177,16 +177,16 @@ public class HttpJsonRequestFactory implements AutoCloseable {
     EventHelper.invoke(configureRequest, owner, args);
   }
 
-  public AutoCloseable disableAllCaching() {
+  public CleanCloseable disableAllCaching() {
     final Long oldAggressiveCaching = getAggressiveCacheDuration();
     final Boolean oldHttpCaching = getDisableHttpCaching();
 
     setAggressiveCacheDuration(null);
     setDisableHttpCaching(true);
 
-    return new AutoCloseable() {
+    return new CleanCloseable() {
       @Override
-      public void close() throws Exception {
+      public void close() {
         setAggressiveCacheDuration(oldAggressiveCaching);
         setDisableHttpCaching(oldHttpCaching);
       }

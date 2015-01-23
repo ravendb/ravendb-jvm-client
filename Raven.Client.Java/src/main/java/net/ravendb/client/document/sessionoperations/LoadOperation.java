@@ -2,6 +2,7 @@ package net.ravendb.client.document.sessionoperations;
 
 import java.util.Date;
 
+import net.ravendb.abstractions.basic.CleanCloseable;
 import net.ravendb.abstractions.closure.Function0;
 import net.ravendb.abstractions.data.JsonDocument;
 import net.ravendb.abstractions.logging.ILog;
@@ -15,7 +16,7 @@ public class LoadOperation {
 
   private static final ILog log = LogManager.getCurrentClassLogger();
   private final InMemoryDocumentSessionOperations sessionOperations;
-  private final Function0<AutoCloseable> disableAllCaching;
+  private final Function0<CleanCloseable> disableAllCaching;
   private final String id;
   private boolean firstRequest = true;
   private JsonDocument documentFound;
@@ -23,7 +24,7 @@ public class LoadOperation {
   private long spStart;
 
 
-  public LoadOperation(InMemoryDocumentSessionOperations sessionOperations, Function0<AutoCloseable> disableAllCaching, String id) {
+  public LoadOperation(InMemoryDocumentSessionOperations sessionOperations, Function0<CleanCloseable> disableAllCaching, String id) {
     if (id == null) {
       throw new IllegalArgumentException("The document is cannot be null");
     }

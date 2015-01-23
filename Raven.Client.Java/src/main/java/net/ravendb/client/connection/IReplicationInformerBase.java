@@ -5,16 +5,16 @@ import java.util.Date;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicLong;
 
+import net.ravendb.abstractions.basic.CleanCloseable;
 import net.ravendb.abstractions.basic.EventHandler;
 import net.ravendb.abstractions.basic.Reference;
 import net.ravendb.abstractions.closure.Function1;
 import net.ravendb.abstractions.connection.OperationCredentials;
 import net.ravendb.abstractions.data.HttpMethods;
-import net.ravendb.abstractions.exceptions.ServerClientException;
 import net.ravendb.client.connection.ReplicationInformer.FailoverStatusChangedEventArgs;
 
 
-public interface IReplicationInformerBase<T> extends Closeable {
+public interface IReplicationInformerBase<T> extends CleanCloseable {
   public void addFailoverStatusChanged(EventHandler<FailoverStatusChangedEventArgs> event);
 
   public void removeFailoverStatusChanged(EventHandler<FailoverStatusChangedEventArgs> event);
@@ -55,7 +55,7 @@ public interface IReplicationInformerBase<T> extends Closeable {
   public int getReadStripingBase(boolean increment);
 
   public <S> S executeWithReplication(HttpMethods method, String primaryUrl, OperationCredentials primaryCredentials, int currentRequest,
-    int currentReadStripingBase, Function1<OperationMetadata, S> operation) throws ServerClientException;
+    int currentReadStripingBase, Function1<OperationMetadata, S> operation);
 
   public void forceCheck(String primaryUrl, boolean shouldForceCheck);
 

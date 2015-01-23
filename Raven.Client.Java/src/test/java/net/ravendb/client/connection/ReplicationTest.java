@@ -7,11 +7,14 @@ import static org.junit.Assert.assertTrue;
 import java.util.Arrays;
 import java.util.List;
 
+import javax.swing.plaf.SliderUI;
+
 import net.ravendb.abstractions.data.Etag;
 import net.ravendb.abstractions.data.JsonDocument;
 import net.ravendb.abstractions.data.UuidType;
 import net.ravendb.abstractions.json.linq.RavenJObject;
 import net.ravendb.abstractions.replication.ReplicationDocument;
+import net.ravendb.abstractions.util.TimeUtils;
 import net.ravendb.client.connection.IDatabaseCommands;
 
 import org.junit.Test;
@@ -21,7 +24,7 @@ import org.junit.Test;
 public class ReplicationTest extends AbstractReplicationTest {
 
   @Test
-  public void testCreateDb() throws Exception {
+  public void testCreateDb() {
     try {
       createDb(SOURCE, 1);
       createDb(TARGET, 2);
@@ -48,7 +51,7 @@ public class ReplicationTest extends AbstractReplicationTest {
       assertEquals("val1", jsonDocument.getDataAsJson().get("key").value(String.class));
 
       for (int i = 0; i < 500; i++) {
-        Thread.sleep(250);
+        TimeUtils.cleanSleep(250);
         jsonDocument = target.get("testVal1");
         if (jsonDocument == null) {
           continue;

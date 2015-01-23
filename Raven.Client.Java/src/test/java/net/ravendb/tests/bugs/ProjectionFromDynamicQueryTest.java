@@ -16,7 +16,7 @@ import org.junit.Test;
 public class ProjectionFromDynamicQueryTest extends RemoteClientTest {
 
   @Test
-  public void projectNameFromDynamicQueryUsingLucene() throws Exception {
+  public void projectNameFromDynamicQueryUsingLucene() {
     try (IDocumentStore store = new DocumentStore(getDefaultUrl(), getDefaultDb()).initialize()) {
       try (IDocumentSession session = store.openSession()) {
         User user = new User();
@@ -38,7 +38,7 @@ public class ProjectionFromDynamicQueryTest extends RemoteClientTest {
   }
 
   @Test
-  public void projectNameFromDynamicQueryUsingLinq() throws Exception {
+  public void projectNameFromDynamicQueryUsingLinq() {
     try (IDocumentStore store = new DocumentStore(getDefaultUrl(), getDefaultDb()).initialize()) {
       try (IDocumentSession session = store.openSession()) {
         User user = new User();
@@ -59,7 +59,7 @@ public class ProjectionFromDynamicQueryTest extends RemoteClientTest {
   }
 
   @Test
-  public void projectNameFromDynamicQueryUsingLuceneUsingNestedObject() throws Exception {
+  public void projectNameFromDynamicQueryUsingLuceneUsingNestedObject() {
     try (IDocumentStore store = new DocumentStore(getDefaultUrl(), getDefaultDb()).initialize()) {
       try (IDocumentSession session = store.openSession()) {
         Person p = new Person();
@@ -85,7 +85,7 @@ public class ProjectionFromDynamicQueryTest extends RemoteClientTest {
   }
 
   @Test
-  public void projectNameFromDynamicQueryUsingLuceneUsingNestedProperty() throws Exception {
+  public void projectNameFromDynamicQueryUsingLuceneUsingNestedProperty() {
     try (IDocumentStore store = new DocumentStore(getDefaultUrl(), getDefaultDb()).initialize()) {
       try (IDocumentSession session = store.openSession()) {
         Person p = new Person();
@@ -110,7 +110,7 @@ public class ProjectionFromDynamicQueryTest extends RemoteClientTest {
   }
 
   @Test
-  public void projectNameFromDynamicQueryUsingLuceneUsingNestedArray() throws Exception {
+  public void projectNameFromDynamicQueryUsingLuceneUsingNestedArray() {
     try (IDocumentStore store = new DocumentStore(getDefaultUrl(), getDefaultDb()).initialize()) {
       try (IDocumentSession session = store.openSession()) {
         Person p = new Person();

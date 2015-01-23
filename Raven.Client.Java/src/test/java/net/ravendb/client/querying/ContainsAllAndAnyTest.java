@@ -20,7 +20,7 @@ import org.junit.Test;
 public class ContainsAllAndAnyTest extends RemoteClientTest {
 
   @Test
-  public void shouldQueryWithContainsAnyArray() throws Exception {
+  public void shouldQueryWithContainsAnyArray() {
 
     try (IDocumentStore store = new DocumentStore(getDefaultUrl(), getDefaultDb()).initialize()) {
 
@@ -54,7 +54,7 @@ public class ContainsAllAndAnyTest extends RemoteClientTest {
   }
 
   @Test
-  public void shouldQueryWithContainsAnyList() throws Exception {
+  public void shouldQueryWithContainsAnyList() {
 
     try (IDocumentStore store = new DocumentStore(getDefaultUrl(), getDefaultDb()).initialize()) {
 
@@ -88,7 +88,7 @@ public class ContainsAllAndAnyTest extends RemoteClientTest {
   }
 
   @Test
-  public void shouldQueryWithContainsAllArray() throws Exception {
+  public void shouldQueryWithContainsAllArray() {
 
     try (IDocumentStore store = new DocumentStore(getDefaultUrl(), getDefaultDb()).initialize()) {
 
@@ -122,7 +122,7 @@ public class ContainsAllAndAnyTest extends RemoteClientTest {
   }
 
   @Test
-  public void shouldQueryWithContainsAllList() throws Exception {
+  public void shouldQueryWithContainsAllList() {
 
     try (IDocumentStore store = new DocumentStore(getDefaultUrl(), getDefaultDb()).initialize()) {
 

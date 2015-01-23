@@ -17,7 +17,7 @@ import org.junit.Test;
 public class CanSaveUpdateAndReadTest extends RemoteClientTest {
 
   @Test
-  public void canReadEntityNameAfterUpdate() throws Exception  {
+  public void canReadEntityNameAfterUpdate()  {
     try (IDocumentStore store = new DocumentStore(getDefaultUrl(), getDefaultDb()).initialize()) {
       try (IDocumentSession s = store.openSession()) {
         Event e = new Event();
@@ -40,7 +40,7 @@ public class CanSaveUpdateAndReadTest extends RemoteClientTest {
   }
 
   @Test
-  public void can_read_entity_name_after_update_from_query() throws Exception  {
+  public void can_read_entity_name_after_update_from_query()  {
     try (IDocumentStore store = new DocumentStore(getDefaultUrl(), getDefaultDb()).initialize()) {
       try (IDocumentSession s = store.openSession()) {
         Event e = new Event();
@@ -62,7 +62,7 @@ public class CanSaveUpdateAndReadTest extends RemoteClientTest {
   }
 
   @Test
-  public void can_read_entity_name_after_update_from_query_after_entity_is_in_cache() throws Exception  {
+  public void can_read_entity_name_after_update_from_query_after_entity_is_in_cache()  {
     try (IDocumentStore store = new DocumentStore(getDefaultUrl(), getDefaultDb()).initialize()) {
       try (IDocumentSession s = store.openSession()) {
         Event e = new Event();

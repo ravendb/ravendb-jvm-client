@@ -7,9 +7,9 @@ import java.util.Map;
 
 import net.ravendb.abstractions.basic.Tuple;
 import net.ravendb.abstractions.closure.Action1;
+import net.ravendb.abstractions.connection.ErrorResponseException;
 import net.ravendb.abstractions.connection.OAuthHelper;
 import net.ravendb.abstractions.connection.WebRequestEventArgs;
-import net.ravendb.abstractions.exceptions.HttpOperationException;
 import net.ravendb.abstractions.json.linq.RavenJObject;
 import net.ravendb.client.connection.implementation.HttpJsonRequestFactory;
 
@@ -18,11 +18,11 @@ import org.apache.commons.lang.StringUtils;
 import org.apache.http.Header;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpRequest;
-import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
-import org.apache.http.client.HttpClient;
+import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.StringEntity;
+import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.util.EntityUtils;
 
 
@@ -100,66 +100,65 @@ public class SecuredAuthenticator extends AbstractAuthenticator {
 
     int tries = 0;
     try {
-    while(true) {
-      tries++;
+      while(true) {
+        tries++;
 
-      Tuple<HttpPost, String> authRequestTuple = prepareOAuthRequest(oauthSource, serverRSAExponent, serverRSAModulus, challenge, apiKey);
-      HttpPost authRequest = authRequestTuple.getItem1();
-      if (authRequestTuple.getItem2() != null) {
-        authRequest.setEntity(new StringEntity(authRequestTuple.getItem2()));
-      } else {
-        authRequest.setEntity(new StringEntity(""));
-      }
-
-      try {
-        HttpClient httpClient = jsonRequestFactory.getHttpClient();
-        HttpResponse httpResponse = httpClient.execute(authRequest);
-        if (httpResponse.getStatusLine().getStatusCode() >= 300) {
-          EntityUtils.consumeQuietly(httpResponse.getEntity());
-          throw new HttpOperationException("Invalid response from server", null, authRequest, httpResponse);
+        Tuple<HttpPost, String> authRequestTuple = prepareOAuthRequest(oauthSource, serverRSAExponent, serverRSAModulus, challenge, apiKey);
+        HttpPost authRequest = authRequestTuple.getItem1();
+        if (authRequestTuple.getItem2() != null) {
+          authRequest.setEntity(new StringEntity(authRequestTuple.getItem2()));
+        } else {
+          authRequest.setEntity(new StringEntity(""));
         }
 
-        HttpEntity httpEntity = httpResponse.getEntity();
+        CloseableHttpResponse httpResponse = null;
+
         try {
+          CloseableHttpClient httpClient = jsonRequestFactory.getHttpClient();
+          httpResponse = httpClient.execute(authRequest);
+          if (httpResponse.getStatusLine().getStatusCode() >= 300) {
+            throw new ErrorResponseException(httpResponse, "Invalid response from server");
+          }
+
+          HttpEntity httpEntity = httpResponse.getEntity();
           String token = IOUtils.toString(httpEntity.getContent());
           RavenJObject jToken = RavenJObject.parse(token);
           currentOauthToken = "Bearer " + jToken;
-        } finally {
-          EntityUtils.consumeQuietly(httpResponse.getEntity());
-        }
 
-        return new Action1<HttpRequest>() {
-          @Override
-          public void apply(HttpRequest request) {
-            request.setHeader("Authorization", currentOauthToken);
+          return new Action1<HttpRequest>() {
+            @Override
+            public void apply(HttpRequest request) {
+              request.setHeader("Authorization", currentOauthToken);
+            }
+          };
+        } catch (ErrorResponseException e) {
+          if (tries > 2) {
+           // We've already tried three times and failed
+            throw e;
           }
-        };
-      } catch (HttpOperationException e) {
-        if (tries > 2) {
-         // We've already tried three times and failed
-          throw e;
-        }
-        HttpResponse httpResponse = e.getHttpResponse();
-        if (httpResponse == null || httpResponse.getStatusLine().getStatusCode() != HttpStatus.SC_PRECONDITION_FAILED) {
-          throw e;
-        }
-        Header header = httpResponse.getFirstHeader("WWW-Authenticate");
-        if (header == null || !header.getValue().startsWith(OAuthHelper.Keys.WWWAuthenticateHeaderKey)) {
-          throw e;
-        }
+          if (httpResponse == null || httpResponse.getStatusLine().getStatusCode() != HttpStatus.SC_PRECONDITION_FAILED) {
+            throw e;
+          }
+          Header header = httpResponse.getFirstHeader("WWW-Authenticate");
+          if (header == null || !header.getValue().startsWith(OAuthHelper.Keys.WWWAuthenticateHeaderKey)) {
+            throw e;
+          }
 
-        Map<String, String> challengeDictionary = OAuthHelper.parseDictionary(header.getValue().substring(OAuthHelper.Keys.WWWAuthenticateHeaderKey.length()).trim());
-        serverRSAExponent = challengeDictionary.get(OAuthHelper.Keys.RSAExponent);
-        serverRSAModulus = challengeDictionary.get(OAuthHelper.Keys.RSAModulus);
-        challenge = challengeDictionary.get(OAuthHelper.Keys.Challenge);
+          Map<String, String> challengeDictionary = OAuthHelper.parseDictionary(header.getValue().substring(OAuthHelper.Keys.WWWAuthenticateHeaderKey.length()).trim());
+          serverRSAExponent = challengeDictionary.get(OAuthHelper.Keys.RSAExponent);
+          serverRSAModulus = challengeDictionary.get(OAuthHelper.Keys.RSAModulus);
+          challenge = challengeDictionary.get(OAuthHelper.Keys.Challenge);
 
-        if (StringUtils.isEmpty(serverRSAExponent) || StringUtils.isEmpty(serverRSAModulus) || StringUtils.isEmpty(challenge)) {
-          throw new IllegalStateException("Invalid response from server, could not parse raven authentication information: " + header.getValue());
+          if (StringUtils.isEmpty(serverRSAExponent) || StringUtils.isEmpty(serverRSAModulus) || StringUtils.isEmpty(challenge)) {
+            throw new IllegalStateException("Invalid response from server, could not parse raven authentication information: " + header.getValue());
+          }
+        } finally {
+          if (httpResponse != null) {
+            EntityUtils.consumeQuietly(httpResponse.getEntity());
+          }
         }
 
       }
-
-    }
     } catch (IOException e) {
       throw new RuntimeException(e);
     }

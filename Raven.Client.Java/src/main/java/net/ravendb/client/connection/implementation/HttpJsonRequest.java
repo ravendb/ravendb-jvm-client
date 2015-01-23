@@ -24,7 +24,8 @@ import net.ravendb.abstractions.data.Constants;
 import net.ravendb.abstractions.data.HttpMethods;
 import net.ravendb.abstractions.exceptions.BadRequestException;
 import net.ravendb.abstractions.exceptions.IndexCompilationException;
-import net.ravendb.abstractions.exceptions.ServerClientException;
+import net.ravendb.abstractions.exceptions.JsonReaderException;
+import net.ravendb.abstractions.exceptions.JsonWriterException;
 import net.ravendb.abstractions.exceptions.ServerVersionNotSuppportedException;
 import net.ravendb.abstractions.json.linq.JTokenType;
 import net.ravendb.abstractions.json.linq.RavenJObject;
@@ -33,6 +34,7 @@ import net.ravendb.abstractions.util.NetDateFormat;
 import net.ravendb.client.changes.IObservable;
 import net.ravendb.client.connection.CachedRequest;
 import net.ravendb.client.connection.CreateHttpJsonRequestParams;
+import net.ravendb.client.connection.HttpContentExtentions;
 import net.ravendb.client.connection.IDocumentStoreReplicationInformer;
 import net.ravendb.client.connection.ObservableLineStream;
 import net.ravendb.client.connection.ServerClient.HandleReplicationStatusChangesCallback;
@@ -41,6 +43,7 @@ import net.ravendb.client.connection.profiling.RequestResultArgs;
 import net.ravendb.client.connection.profiling.RequestStatus;
 import net.ravendb.client.document.Convention;
 import net.ravendb.client.document.FailoverBehaviorSet;
+import net.ravendb.client.document.RemoteBulkInsertOperation.BulkInsertEntity;
 import net.ravendb.java.http.client.GzipHttpEntity;
 import net.ravendb.java.http.client.HttpEval;
 import net.ravendb.java.http.client.HttpReset;
@@ -84,7 +87,7 @@ public class HttpJsonRequest implements AutoCloseable {
   private final HttpMethods method;
 
   private CloseableHttpClient httpClient;
-  private Map<String, String> headers = new HashMap<>(); //TODO: use multimap!
+  private Map<String, String> headers = new HashMap<>();
 
   private final StopWatch sp;
 
@@ -231,7 +234,7 @@ public class HttpJsonRequest implements AutoCloseable {
           assertServerVersionSupported();
           responseStatusCode = response.getStatusLine().getStatusCode();
         } catch (IOException e) {
-          throw new ServerClientException(e);
+          throw new JsonWriterException(e);
         } finally {
           sp.stop();
         }
@@ -423,7 +426,6 @@ public class HttpJsonRequest implements AutoCloseable {
     Action1<HttpRequest> handleUnauthorizedResponse = conventions.handleUnauthorizedResponse(unauthorizedResponse, _credentials);
     if (handleUnauthorizedResponse == null) return false;
 
-    //TODO: fix me
     recreateHttpClient(handleUnauthorizedResponse);
     return true;
   }
@@ -434,33 +436,19 @@ public class HttpJsonRequest implements AutoCloseable {
   }
 
   private void recreateHttpClient(Action1<HttpRequest> configureHttpClient) {
+    sp.reset();
+    sp.start();
+    Closeables.closeQuietly(response);
 
+    isRequestSendToServer = false;
 
-
-      // we now need to clone the request, since just calling getRequest again wouldn't do anything
-    /* TODO:
-
-      sp.reset();
-      sp.start();
-      HttpUriRequest newWebRequest = createWebRequest(this.url, this.method);
-      HttpRequestHelper.copyHeaders(webRequest, newWebRequest);
-
-      action.apply(newWebRequest);
-      if (postedData != null) {
-        HttpRequestHelper.writeDataToRequest(newWebRequest, postedData, factory.isDisableRequestCompression());
-      }
+    try {
       if (postedStream != null) {
-        try {
-          postedStream.reset();
-          HttpEntityEnclosingRequestBase requestMethod = (HttpEntityEnclosingRequestBase) webRequest;
-          InputStreamEntity streamEntity = new InputStreamEntity(postedStream, 0, ContentType.APPLICATION_JSON);
-          streamEntity.setChunked(true);
-          requestMethod.setEntity(streamEntity);
-        } catch (IOException e) {
-          throw new RuntimeException("Unable to reset input stream", e);
-        }
+        postedStream.reset();
       }
-      webRequest = newWebRequest;*/
+    } catch (IOException e) {
+      throw new RuntimeException("Unable to reset input stream", e);
+    }
   }
 
   private RavenJToken readJsonInternal() {
@@ -611,21 +599,12 @@ public class HttpJsonRequest implements AutoCloseable {
     postedStream = streamToWrite;
     writeCalled = true;
 
-    ContentType contentType = null;
-    /* TODO
-    Header firstHeader = webRequest.getFirstHeader("Content-Type");
-    if (firstHeader != null) {
-      String contentValue = firstHeader.getValue();
-      if (StringUtils.isNotBlank(contentValue)) {
-        contentType = ContentType.create(contentValue);
-      }
-    }*/
-
     sendRequestInternal(new Function0<HttpUriRequest>() {
       @Override
       public HttpUriRequest apply() {
         HttpEntityEnclosingRequestBase requestMethod = (HttpEntityEnclosingRequestBase) createWebRequest(url, method);
-        InputStreamEntity innerEntity = new InputStreamEntity(postedStream, contentLength, ContentType.APPLICATION_JSON); //TODO: content type
+        InputStreamEntity innerEntity = new InputStreamEntity(postedStream, contentLength);
+        HttpContentExtentions.setContentType(innerEntity, headers);
         HttpEntity entity = new GzipHttpEntity(innerEntity);
         innerEntity.setChunked(true);
         requestMethod.setEntity(entity);
@@ -685,10 +664,10 @@ public class HttpJsonRequest implements AutoCloseable {
             response.getStatusLine().getStatusCode() == HttpStatus.SC_UNAUTHORIZED)) {
             throw new ErrorResponseException(response, "Failed request");
           }
+          return response;
         } catch (IOException e) {
-          throw new ServerClientException(e);
+          throw new JsonReaderException(e);
         }
-        return response;
       }
     });
 
@@ -830,6 +809,33 @@ public class HttpJsonRequest implements AutoCloseable {
 
   public void setResponseHeaders(Map<String, String> responseHeaders) {
     this.responseHeaders = responseHeaders;
+  }
+
+  public HttpResponse executeRawRequest(final BulkInsertEntity bulkInsertEntity) {
+    response = runWithAuthRetry(new Function0<CloseableHttpResponse>() {
+      @Override
+      public CloseableHttpResponse apply() {
+        HttpUriRequest rawRequestMessage = createWebRequest(url, method);
+        ((HttpEntityEnclosingRequestBase)rawRequestMessage).setEntity(bulkInsertEntity);
+        copyHeadersToHttpRequestMessage(rawRequestMessage);
+
+        try {
+          CloseableHttpResponse response = httpClient.execute(rawRequestMessage);
+          if (response.getStatusLine().getStatusCode() >= 300 &&
+            (response.getStatusLine().getStatusCode() == HttpStatus.SC_PRECONDITION_FAILED ||
+             response.getStatusLine().getStatusCode() == HttpStatus.SC_FORBIDDEN ||
+             response.getStatusLine().getStatusCode() == HttpStatus.SC_UNAUTHORIZED)) {
+            throw new ErrorResponseException(response, "Failed request");
+          }
+          return response;
+        } catch (IOException e) {
+          throw new JsonWriterException(e);
+        }
+      }
+    });
+
+    responseStatusCode = response.getStatusLine().getStatusCode();
+    return response;
   }
 
 }

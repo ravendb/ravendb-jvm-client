@@ -6,6 +6,7 @@ import java.io.ByteArrayInputStream;
 
 import net.ravendb.abstractions.data.Attachment;
 import net.ravendb.abstractions.json.linq.RavenJObject;
+import net.ravendb.abstractions.util.TimeUtils;
 import net.ravendb.client.IDocumentStore;
 import net.ravendb.client.connection.IDatabaseCommands;
 import net.ravendb.client.exceptions.ConflictException;
@@ -18,7 +19,7 @@ public class AttachmentReplicationTest extends ReplicationBase {
 
   @SuppressWarnings("null")
   @Test
-  public void can_replicate_between_two_instances() throws Exception {
+  public void can_replicate_between_two_instances() {
 
     try (IDocumentStore store1 = createStore();
       IDocumentStore store2 = createStore()) {
@@ -32,7 +33,7 @@ public class AttachmentReplicationTest extends ReplicationBase {
       for (int i = 0; i < retriesCount; i++) {
         attachment = store2.getDatabaseCommands().getAttachment("ayende");
         if (attachment != null) break;
-        Thread.sleep(100);
+        TimeUtils.cleanSleep(100);
       }
 
       Assert.assertNotNull(attachment);
@@ -41,7 +42,7 @@ public class AttachmentReplicationTest extends ReplicationBase {
   }
 
   @Test
-  public void can_replicate_large_number_of_documents_between_two_instances() throws Exception {
+  public void can_replicate_large_number_of_documents_between_two_instances() {
 
     try (IDocumentStore store1 = createStore();
       IDocumentStore store2 = createStore()) {
@@ -63,14 +64,14 @@ public class AttachmentReplicationTest extends ReplicationBase {
         }
         foundAll = countFound == 150;
         if (foundAll) break;
-        Thread.sleep(100);
+        TimeUtils.cleanSleep(100);
       }
       Assert.assertTrue(foundAll);
     }
   }
 
   @Test
-  public void can_replicate_delete_between_two_instances() throws Exception {
+  public void can_replicate_delete_between_two_instances() {
 
     try (IDocumentStore store1 = createStore();
       IDocumentStore store2 = createStore()) {
@@ -82,7 +83,7 @@ public class AttachmentReplicationTest extends ReplicationBase {
 
       for (int i = 0; i < retriesCount; i++) {
         if (store2.getDatabaseCommands().getAttachment("ayende") != null) break;
-        Thread.sleep(100);
+        TimeUtils.cleanSleep(100);
       }
       Assert.assertNotNull(store2.getDatabaseCommands().getAttachment("ayende"));
 
@@ -90,14 +91,14 @@ public class AttachmentReplicationTest extends ReplicationBase {
 
       for (int i = 0; i < retriesCount; i++) {
         if (store2.getDatabaseCommands().getAttachment("ayende") == null) break;
-        Thread.sleep(100);
+        TimeUtils.cleanSleep(100);
       }
       Assert.assertNull(store2.getDatabaseCommands().getAttachment("ayende"));
     }
   }
 
   @Test
-  public void when_replicating_and_an_attachment_is_already_there_will_result_in_conflict() throws Exception {
+  public void when_replicating_and_an_attachment_is_already_there_will_result_in_conflict() {
     try (IDocumentStore store1 = createStore();
       IDocumentStore store2 = createStore()) {
 
@@ -107,7 +108,7 @@ public class AttachmentReplicationTest extends ReplicationBase {
         new RavenJObject());
 
       tellFirstInstanceToReplicateToSecondInstance();
-      Thread.sleep(1000);
+      TimeUtils.cleanSleep(1000);
 
       try {
         for (int i = 0; i < retriesCount; i++) {
@@ -124,8 +125,7 @@ public class AttachmentReplicationTest extends ReplicationBase {
   }
 
   @Test
-  public void when_replicating_and_an_attachment_is_already_there_will_result_in_conflict_and_can_get_all_conflicts()
-    throws Exception {
+  public void when_replicating_and_an_attachment_is_already_there_will_result_in_conflict_and_can_get_all_conflicts() {
 
     try (IDocumentStore store1 = createStore();
       IDocumentStore store2 = createStore()) {
@@ -135,7 +135,7 @@ public class AttachmentReplicationTest extends ReplicationBase {
         new RavenJObject());
 
       tellFirstInstanceToReplicateToSecondInstance();
-      Thread.sleep(1000);
+      TimeUtils.cleanSleep(1000);
 
       try {
         for (int i = 0; i < retriesCount; i++) {

@@ -1,6 +1,5 @@
 package net.ravendb.abstractions.data;
 
-import java.util.Collection;
 import java.util.UUID;
 
 public class DatabaseStatistics {

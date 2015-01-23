@@ -6,6 +6,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
+import net.ravendb.abstractions.basic.CleanCloseable;
 import net.ravendb.abstractions.basic.CloseableIterator;
 import net.ravendb.abstractions.basic.Reference;
 import net.ravendb.abstractions.commands.ICommandData;
@@ -36,7 +37,6 @@ import net.ravendb.abstractions.data.QueryResult;
 import net.ravendb.abstractions.data.ScriptedPatchRequest;
 import net.ravendb.abstractions.data.SuggestionQuery;
 import net.ravendb.abstractions.data.SuggestionQueryResult;
-import net.ravendb.abstractions.exceptions.ServerClientException;
 import net.ravendb.abstractions.indexing.IndexDefinition;
 import net.ravendb.abstractions.indexing.IndexMergeResults;
 import net.ravendb.abstractions.indexing.TransformerDefinition;
@@ -82,7 +82,7 @@ public interface IDatabaseCommands extends IHoldProfilingInformation {
    * Retrieve a single document for a specified key.
    * @param key Key of the document you want to retrieve
    */
-  public JsonDocument get(String key) throws ServerClientException;
+  public JsonDocument get(String key);
 
   /**
    * Retrieves documents with the specified ids, optionally specifying includes to fetch along and also optionally the transformer.
@@ -184,7 +184,7 @@ public interface IDatabaseCommands extends IHoldProfilingInformation {
    * @param commandDatas Commands to process
    * @throws IOException
    */
-  public BatchResult[] batch(final List<ICommandData> commandDatas) throws IOException;
+  public BatchResult[] batch(final List<ICommandData> commandDatas);
 
   /**
    * Returns a list of suggestions based on the specified suggestion query
@@ -452,7 +452,7 @@ public interface IDatabaseCommands extends IHoldProfilingInformation {
   /**
    * Disable all caching within the given scope
    */
-  public AutoCloseable disableAllCaching();
+  public CleanCloseable disableAllCaching();
 
   /**
    * Perform a single POST request containing multiple nested GET requests
@@ -557,7 +557,7 @@ public interface IDatabaseCommands extends IHoldProfilingInformation {
    * @param start Number of documents that should be skipped
    * @param pageSize Maximum number of documents that will be retrieved
    */
-  public List<JsonDocument> startsWith(String keyPrefix, String matches, int start, int pageSize) throws ServerClientException;
+  public List<JsonDocument> startsWith(String keyPrefix, String matches, int start, int pageSize);
 
 
   /**

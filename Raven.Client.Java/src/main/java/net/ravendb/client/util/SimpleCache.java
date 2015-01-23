@@ -1,15 +1,15 @@
 package net.ravendb.client.util;
 
-import java.util.Date;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import net.ravendb.abstractions.basic.CleanCloseable;
 import net.ravendb.abstractions.closure.Action1;
 import net.ravendb.client.connection.CachedRequest;
 import net.ravendb.client.connection.profiling.ConcurrentLruSet;
 
 
-public class SimpleCache implements AutoCloseable {
+public class SimpleCache implements CleanCloseable {
 
   private final ConcurrentLruSet<String> lruKeys;
   private final ConcurrentHashMap<String, CachedRequest> actualCache;
@@ -79,7 +79,7 @@ public class SimpleCache implements AutoCloseable {
   }
 
   @Override
-  public void close() throws Exception {
+  public void close() {
     lruKeys.clear();
     actualCache.clear();
   }

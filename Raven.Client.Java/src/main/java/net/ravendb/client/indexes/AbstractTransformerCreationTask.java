@@ -1,13 +1,9 @@
 package net.ravendb.client.indexes;
 
-import org.apache.http.client.utils.URIUtils;
-
-import net.ravendb.abstractions.closure.Action2;
 import net.ravendb.abstractions.data.HttpMethods;
 import net.ravendb.abstractions.indexing.TransformerDefinition;
 import net.ravendb.client.IDocumentStore;
 import net.ravendb.client.connection.IDatabaseCommands;
-import net.ravendb.client.connection.OperationMetadata;
 import net.ravendb.client.connection.ServerClient;
 import net.ravendb.client.connection.implementation.HttpJsonRequest;
 import net.ravendb.client.document.DocumentConvention;
@@ -78,8 +74,7 @@ public abstract class AbstractTransformerCreationTask extends AbstractCommonApiF
 
     String replicateTransformerUrl = String.format("/replication/replicate-transformers?transformerName=%s", UrlUtils.escapeDataString(getTransformerName()));
 
-    HttpJsonRequest replicateTransformerRequest = serverClient.createRequest(HttpMethods.POST, replicateTransformerUrl);
-    try {
+    try (HttpJsonRequest replicateTransformerRequest = serverClient.createRequest(HttpMethods.POST, replicateTransformerUrl)) {
       replicateTransformerRequest.executeRequest();
     } catch (Exception e) {
       // ignoring errors

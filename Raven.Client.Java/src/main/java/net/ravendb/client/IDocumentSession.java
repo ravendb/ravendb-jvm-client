@@ -4,6 +4,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.UUID;
 
+import net.ravendb.abstractions.basic.CleanCloseable;
 import net.ravendb.abstractions.data.Etag;
 import net.ravendb.client.document.ILoaderWithInclude;
 import net.ravendb.client.indexes.AbstractIndexCreationTask;
@@ -11,13 +12,12 @@ import net.ravendb.client.indexes.AbstractTransformerCreationTask;
 import net.ravendb.client.linq.IRavenQueryable;
 
 import com.mysema.query.types.Expression;
-import com.mysema.query.types.Path;
 
 
 /**
  * Interface for document session
  */
-public interface IDocumentSession extends AutoCloseable {
+public interface IDocumentSession extends CleanCloseable {
 
   /**
    * Get the accessor for advanced operations

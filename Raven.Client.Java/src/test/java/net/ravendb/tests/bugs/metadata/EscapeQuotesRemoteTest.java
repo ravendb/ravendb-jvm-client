@@ -15,7 +15,7 @@ import org.junit.Test;
 
 public class EscapeQuotesRemoteTest extends RemoteClientTest {
   @Test
-  public void canProperlyEscapeQuotesInMetadata_Remote_1() throws Exception {
+  public void canProperlyEscapeQuotesInMetadata_Remote_1() {
     try (IDocumentStore store = new DocumentStore(getDefaultUrl(), getDefaultDb()).initialize()) {
       try (IDocumentSession session = store.openSession()) {
           User user = new User();
@@ -34,7 +34,7 @@ public class EscapeQuotesRemoteTest extends RemoteClientTest {
   }
 
   @Test
-  public void canProperlyEscapeQuotesInMetadata_2() throws Exception {
+  public void canProperlyEscapeQuotesInMetadata_2() {
     try (IDocumentStore store = new DocumentStore(getDefaultUrl(), getDefaultDb()).initialize()) {
       try (IDocumentSession session = store.openSession()) {
           User user = new User();

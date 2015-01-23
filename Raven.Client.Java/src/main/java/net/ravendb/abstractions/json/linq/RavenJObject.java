@@ -12,7 +12,6 @@ import net.ravendb.abstractions.basic.Reference;
 import net.ravendb.abstractions.data.DocumentsChanges;
 import net.ravendb.abstractions.exceptions.JsonReaderException;
 import net.ravendb.abstractions.exceptions.JsonWriterException;
-import net.ravendb.abstractions.extensions.JsonExtensions;
 import net.ravendb.abstractions.json.RavenJsonTextReader;
 import net.ravendb.client.document.JsonSerializer;
 

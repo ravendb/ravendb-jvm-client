@@ -1,6 +1,5 @@
 package net.ravendb.abstractions.json.linq;
 
-import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.StringWriter;
@@ -11,16 +10,12 @@ import net.ravendb.abstractions.basic.Tuple;
 import net.ravendb.abstractions.data.DocumentsChanges;
 import net.ravendb.abstractions.exceptions.JsonReaderException;
 import net.ravendb.abstractions.exceptions.JsonWriterException;
-import net.ravendb.abstractions.extensions.JsonExtensions;
 import net.ravendb.client.document.JsonSerializer;
 
-import org.apache.commons.io.input.NullInputStream;
 import org.codehaus.jackson.FormatSchema;
 import org.codehaus.jackson.JsonFactory;
 import org.codehaus.jackson.JsonGenerator;
-import org.codehaus.jackson.JsonParseException;
 import org.codehaus.jackson.JsonParser;
-import org.codehaus.jackson.map.ObjectMapper;
 
 
 /**

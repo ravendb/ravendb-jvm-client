@@ -6,7 +6,6 @@ import java.util.Date;
 
 import net.ravendb.abstractions.basic.EventArgs;
 import net.ravendb.abstractions.connection.OperationCredentials;
-import net.ravendb.abstractions.data.Constants;
 import net.ravendb.abstractions.data.JsonDocument;
 import net.ravendb.abstractions.extensions.JsonExtensions;
 import net.ravendb.abstractions.json.linq.RavenJObject;

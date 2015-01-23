@@ -5,6 +5,7 @@ import net.ravendb.abstractions.data.IndexQuery;
 import net.ravendb.abstractions.data.QueryResult;
 import net.ravendb.abstractions.json.linq.RavenJObject;
 import net.ravendb.abstractions.json.linq.RavenJValue;
+import net.ravendb.abstractions.util.TimeUtils;
 import net.ravendb.client.RavenDBAwareTests;
 import net.ravendb.client.connection.IDatabaseCommands;
 import net.ravendb.client.indexes.IndexDefinitionBuilder;
@@ -16,7 +17,7 @@ public class WhereEntityIsTest extends RavenDBAwareTests {
 
   // this test fails sometimes when run in memory == true
   @Test
-  public void testCtanQueryUsingMultipleEntities() throws Exception {
+  public void testCtanQueryUsingMultipleEntities() {
     try {
       createDb();
       IDatabaseCommands dbCommands = serverClient.forDatabase(getDbName());
@@ -50,7 +51,7 @@ public class WhereEntityIsTest extends RavenDBAwareTests {
       for (int i = 0; i< 10;i++) {
         QueryResult queryResult = dbCommands.query("test", query, null);
         if (queryResult.getResults().size()  != 2) {
-          Thread.sleep(1000);
+          TimeUtils.cleanSleep(1000);
         } else {
           assertEquals(2, queryResult.getResults().size());
           break;

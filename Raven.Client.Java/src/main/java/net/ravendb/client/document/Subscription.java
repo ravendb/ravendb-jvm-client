@@ -4,13 +4,8 @@ import java.io.Closeable;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.locks.Condition;
-import java.util.concurrent.locks.ReentrantLock;
 
-import org.apache.commons.io.IOUtils;
-
-import com.google.common.io.Closeables;
-
+import net.ravendb.abstractions.basic.CleanCloseable;
 import net.ravendb.abstractions.basic.EventHandler;
 import net.ravendb.abstractions.basic.VoidArgs;
 import net.ravendb.abstractions.closure.Action0;
@@ -38,8 +33,10 @@ import net.ravendb.client.connection.implementation.HttpJsonRequest;
 import net.ravendb.client.connection.profiling.ConcurrentSet;
 import net.ravendb.client.utils.CancellationTokenSource;
 
+import com.google.common.io.Closeables;
 
-public class Subscription<T> implements IObservable<T>, AutoCloseable {
+
+public class Subscription<T> implements IObservable<T>, CleanCloseable {
   protected static final ILog logger = LogManager.getCurrentClassLogger();
 
   protected AutoResetEvent newDocuments = new AutoResetEvent(false);
@@ -304,7 +301,7 @@ public class Subscription<T> implements IObservable<T>, AutoCloseable {
   }
 
   @Override
-  public Closeable subscribe(final IObserver<T> observer) {
+  public CleanCloseable subscribe(final IObserver<T> observer) {
     if (errored) {
       throw new IllegalStateException("Subscription encountered errors and stopped. Cannot add any subscriber.");
     }
@@ -315,9 +312,9 @@ public class Subscription<T> implements IObservable<T>, AutoCloseable {
       }
     }
 
-    return new Closeable() {
+    return new CleanCloseable() {
       @Override
-      public void close() throws IOException {
+      public void close() {
         subscribers.remove(observer);
         if (subscribers.isEmpty()) {
           anySubscriber.reset();
@@ -396,9 +393,10 @@ public class Subscription<T> implements IObservable<T>, AutoCloseable {
     }
 
     private void closeSubscription() {
-      HttpJsonRequest closeRequest = createCloseRequest();
-      closeRequest.executeRequest();
-      closed = true;
+      try (HttpJsonRequest closeRequest = createCloseRequest()) {
+        closeRequest.executeRequest();
+        closed = true;
+      }
     }
 
     public Thread getStartPullingTask() {

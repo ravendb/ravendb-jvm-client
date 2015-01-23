@@ -10,6 +10,7 @@ import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.TimeoutException;
 
+import net.ravendb.abstractions.basic.CleanCloseable;
 import net.ravendb.abstractions.basic.EventArgs;
 import net.ravendb.abstractions.basic.EventHandler;
 import net.ravendb.abstractions.basic.EventHelper;
@@ -35,7 +36,7 @@ import org.apache.http.HttpStatus;
 
 
 public abstract class RemoteChangesClientBase<TChangesApi extends IConnectableChanges, TConnectionState extends IChangesConnectionState>
-  implements Closeable, IObserver<String>, IConnectableChanges {
+  implements CleanCloseable, IObserver<String>, IConnectableChanges {
   protected static final ILog logger = LogManager.getCurrentClassLogger();
 
   private Timer clientSideHeartbeatTimer;
@@ -196,8 +197,9 @@ public abstract class RemoteChangesClientBase<TChangesApi extends IConnectableCh
 
         CreateHttpJsonRequestParams requestParams = new CreateHttpJsonRequestParams(null, sendUrl, HttpMethods.GET, null, credentials, conventions);
         requestParams.setAvoidCachingRequest(true);
-        HttpJsonRequest httpJsonRequest = jsonRequestFactory.createHttpJsonRequest(requestParams);
-        httpJsonRequest.executeRequest();
+        try (HttpJsonRequest httpJsonRequest = jsonRequestFactory.createHttpJsonRequest(requestParams)) {
+          httpJsonRequest.executeRequest();
+        }
       } catch (Exception e) {
         throw new RuntimeException(e);
       }

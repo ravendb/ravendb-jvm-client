@@ -3,6 +3,7 @@ package net.ravendb.client.document;
 import java.io.IOException;
 import java.util.List;
 
+import net.ravendb.abstractions.basic.CleanCloseable;
 import net.ravendb.abstractions.data.SubscriptionConfig;
 import net.ravendb.abstractions.data.SubscriptionConnectionOptions;
 import net.ravendb.abstractions.data.SubscriptionCriteria;
@@ -10,7 +11,7 @@ import net.ravendb.abstractions.exceptions.subscriptions.SubscriptionException;
 import net.ravendb.abstractions.json.linq.RavenJObject;
 
 
-public interface IReliableSubscriptions extends AutoCloseable {
+public interface IReliableSubscriptions extends CleanCloseable {
 
   /**
    * It creates a data subscription in a database. The subscription will expose all documents that match the specified subscription criteria for a given type.

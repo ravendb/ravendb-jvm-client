@@ -6,7 +6,7 @@ import net.ravendb.client.RemoteClientTest;
 
 public class ComplexValuesFromTransformResults extends RemoteClientTest {
 
-  public static String createEntities(IDocumentStore documentStore) throws Exception {
+  public static String createEntities(IDocumentStore documentStore) {
     final String questionId = "question/259";
     final String answerId = "answer/540";
 

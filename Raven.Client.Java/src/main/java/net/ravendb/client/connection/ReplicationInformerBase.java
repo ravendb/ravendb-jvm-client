@@ -19,8 +19,6 @@ import net.ravendb.abstractions.connection.ErrorResponseException;
 import net.ravendb.abstractions.connection.OperationCredentials;
 import net.ravendb.abstractions.data.HttpMethods;
 import net.ravendb.abstractions.data.JsonDocument;
-import net.ravendb.abstractions.exceptions.HttpOperationException;
-import net.ravendb.abstractions.exceptions.ServerClientException;
 import net.ravendb.abstractions.json.linq.JTokenType;
 import net.ravendb.abstractions.json.linq.RavenJObject;
 import net.ravendb.abstractions.logging.ILog;
@@ -299,8 +297,7 @@ public abstract class ReplicationInformerBase<T> implements IReplicationInformer
 
   @Override
   public <S> S executeWithReplication(HttpMethods method, String primaryUrl, OperationCredentials primaryCredentials,
-    int currentRequest, int currentReadStripingBase, Function1<OperationMetadata, S> operation)
-    throws ServerClientException {
+    int currentRequest, int currentReadStripingBase, Function1<OperationMetadata, S> operation) {
 
     List<OperationMetadata> localReplicationDestinations = getReplicationDestinationsUrls(); // thread
                                                                                              // safe
@@ -385,7 +382,6 @@ public abstract class ReplicationInformerBase<T> implements IReplicationInformer
     boolean tryWithPrimaryCredentials = isFirstFailure(operationMetadata.getUrl()) && primaryOperationMetadata != null;
     boolean shouldTryAgain = false;
     try {
-
       S result = operation.apply(tryWithPrimaryCredentials ? new OperationMetadata(operationMetadata.getUrl(),
         primaryOperationMetadata.getCredentials()) : operationMetadata);
       resetFailureCount(operationMetadata.getUrl());

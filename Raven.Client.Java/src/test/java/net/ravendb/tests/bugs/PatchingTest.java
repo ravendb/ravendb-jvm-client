@@ -55,7 +55,7 @@ public class PatchingTest extends RemoteClientTest {
   }
 
   @Test
-  public void canConvertToAndFromJsonWithNestedPatchRequests() throws Exception {
+  public void canConvertToAndFromJsonWithNestedPatchRequests() {
     PatchRequest patch = new PatchRequest();
     patch.setName("Comments");
     patch.setType(PatchCommandType.MODIFY);
@@ -108,7 +108,7 @@ public class PatchingTest extends RemoteClientTest {
   }
 
   @Test
-  public void canModifyValue() throws Exception {
+  public void canModifyValue() {
     try (IDocumentStore store = new DocumentStore(getDefaultUrl(), getDefaultDb()).initialize()) {
       try (IDocumentSession session = store.openSession()) {
         Post post = new Post();
@@ -145,7 +145,7 @@ public class PatchingTest extends RemoteClientTest {
   }
 
   @Test
-  public void canAddValuesToList() throws Exception {
+  public void canAddValuesToList() {
     try (IDocumentStore store = new DocumentStore(getDefaultUrl(), getDefaultDb()).initialize()) {
       try (IDocumentSession session = store.openSession()) {
         Post post = new Post();
@@ -179,7 +179,7 @@ public class PatchingTest extends RemoteClientTest {
   }
 
   @Test
-  public void canRemoveValuesFromList() throws Exception {
+  public void canRemoveValuesFromList() {
     try (IDocumentStore store = new DocumentStore(getDefaultUrl(), getDefaultDb()).initialize()) {
       try (IDocumentSession session = store.openSession()) {
         Post post = new Post();

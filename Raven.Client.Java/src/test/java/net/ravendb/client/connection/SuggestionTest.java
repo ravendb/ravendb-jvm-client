@@ -23,7 +23,7 @@ import org.junit.Test;
 public class SuggestionTest extends RavenDBAwareTests {
 
   @Test
-  public void testSuggestion() throws Exception {
+  public void testSuggestion() {
     try {
       createDb();
       IDatabaseCommands dbCommands = serverClient.forDatabase(getDbName());

@@ -9,7 +9,6 @@ import net.ravendb.abstractions.basic.Tuple;
 import net.ravendb.client.EscapeQueryOptions;
 import net.ravendb.client.FieldHighlightings;
 import net.ravendb.client.IDocumentQuery;
-import net.ravendb.client.IDocumentQueryCustomization;
 import net.ravendb.client.WhereParams;
 
 import com.mysema.query.types.Path;

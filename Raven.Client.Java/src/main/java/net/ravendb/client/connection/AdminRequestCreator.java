@@ -104,10 +104,11 @@ public class AdminRequestCreator {
    * @param start
    */
   public String[] getDatabaseNames(int pageSize, int start) {
-    HttpJsonRequest requestForSystemDatabase = createRequestForSystemDatabase.apply(String.format("/databases?pageSize=%d&start=%d", pageSize, start), HttpMethods.GET);
-    RavenJToken result = requestForSystemDatabase.readResponseJson();
-    RavenJArray json = (RavenJArray) result;
-    return json.values(String.class).toArray(new String[0]);
+    try (HttpJsonRequest requestForSystemDatabase = createRequestForSystemDatabase.apply(String.format("/databases?pageSize=%d&start=%d", pageSize, start), HttpMethods.GET)) {
+      RavenJToken result = requestForSystemDatabase.readResponseJson();
+      RavenJArray json = (RavenJArray) result;
+      return json.values(String.class).toArray(new String[0]);
+    }
   }
 
 }

@@ -43,7 +43,7 @@ public class ArrayLengthQueryTest extends RemoteClientTest {
   }
 
   @Test
-  public void canUseSizeOnSimpleArray() throws Exception {
+  public void canUseSizeOnSimpleArray() {
     try (IDocumentStore store = new DocumentStore(getDefaultUrl(), getDefaultDb()).initialize()) {
       try (IDocumentSession session = store.openSession()) {
         session.store(generateUser("Ayende", "c#", "developer"));
@@ -63,7 +63,7 @@ public class ArrayLengthQueryTest extends RemoteClientTest {
   }
 
   @Test
-  public void canUseSizeOnList() throws Exception {
+  public void canUseSizeOnList() {
     try (IDocumentStore store = new DocumentStore(getDefaultUrl(), getDefaultDb()).initialize()) {
       try (IDocumentSession session = store.openSession()) {
         session.store(generatePost("post", 5));
@@ -93,7 +93,7 @@ public class ArrayLengthQueryTest extends RemoteClientTest {
   }
 
   @Test
-  public void canOrderOnSizeOfArray() throws Exception {
+  public void canOrderOnSizeOfArray() {
     try (IDocumentStore store = new DocumentStore(getDefaultUrl(), getDefaultDb()).initialize()) {
       try (IDocumentSession session = store.openSession()) {
         session.store(generateUser("Ayende", "c#", "developer"));
@@ -122,7 +122,7 @@ public class ArrayLengthQueryTest extends RemoteClientTest {
     }
   }
   @Test
-  public void canOrderOnListSize() throws Exception {
+  public void canOrderOnListSize() {
     try (IDocumentStore store = new DocumentStore(getDefaultUrl(), getDefaultDb()).initialize()) {
       try (IDocumentSession session = store.openSession()) {
         session.store(generatePost("post", 5));

@@ -2,6 +2,7 @@ package net.ravendb.client.util;
 
 import java.io.Closeable;
 
+import net.ravendb.abstractions.basic.CleanCloseable;
 import net.ravendb.abstractions.closure.Action1;
 import net.ravendb.abstractions.data.DocumentChangeNotification;
 import net.ravendb.abstractions.data.DocumentChangeTypes;
@@ -9,7 +10,6 @@ import net.ravendb.abstractions.data.IndexChangeNotification;
 import net.ravendb.abstractions.data.IndexChangeTypes;
 import net.ravendb.client.changes.IDatabaseChanges;
 import net.ravendb.client.changes.IObservable;
-import net.ravendb.client.changes.IObserver;
 import net.ravendb.client.changes.ObserverAdapter;
 import net.ravendb.client.changes.RemoteDatabaseChanges;
 
@@ -19,8 +19,8 @@ public class EvictItemsFromCacheBasedOnChanges implements AutoCloseable {
   protected final String databaseName;
   protected final IDatabaseChanges changes;
   protected final Action1<String> evictCacheOldItems;
-  protected final Closeable documentsSubscription;
-  protected final Closeable indexesSubscriptions;
+  protected final CleanCloseable documentsSubscription;
+  protected final CleanCloseable indexesSubscriptions;
 
   protected class DocumentChangeObserver extends ObserverAdapter<DocumentChangeNotification> {
     @Override
@@ -53,11 +53,11 @@ public class EvictItemsFromCacheBasedOnChanges implements AutoCloseable {
   }
 
   @Override
-  public void close() throws Exception {
+  public void close() {
     documentsSubscription.close();
     indexesSubscriptions.close();
 
-    try (AutoCloseable changes = (AutoCloseable) this.changes) {
+    try (CleanCloseable changes = (CleanCloseable) this.changes) {
       RemoteDatabaseChanges remoteDatabaseChanges = (RemoteDatabaseChanges) changes;
       if (remoteDatabaseChanges != null) {
         remoteDatabaseChanges.close();

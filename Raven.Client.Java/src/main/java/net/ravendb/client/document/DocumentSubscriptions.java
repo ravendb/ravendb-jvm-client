@@ -4,17 +4,13 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
 
-import org.apache.commons.io.IOUtils;
-import org.apache.http.util.EntityUtils;
-
+import net.ravendb.abstractions.basic.CleanCloseable;
 import net.ravendb.abstractions.closure.Action0;
 import net.ravendb.abstractions.connection.ErrorResponseException;
 import net.ravendb.abstractions.data.HttpMethods;
 import net.ravendb.abstractions.data.SubscriptionConfig;
 import net.ravendb.abstractions.data.SubscriptionConnectionOptions;
 import net.ravendb.abstractions.data.SubscriptionCriteria;
-import net.ravendb.abstractions.exceptions.HttpOperationException;
-import net.ravendb.abstractions.exceptions.JsonReaderException;
 import net.ravendb.abstractions.exceptions.subscriptions.SubscriptionClosedException;
 import net.ravendb.abstractions.exceptions.subscriptions.SubscriptionDoesNotExistExeption;
 import net.ravendb.abstractions.exceptions.subscriptions.SubscriptionException;
@@ -29,7 +25,7 @@ import net.ravendb.client.connection.profiling.ConcurrentSet;
 
 public class DocumentSubscriptions implements IReliableSubscriptions {
   private final IDocumentStore documentStore;
-  private final ConcurrentSet<AutoCloseable> subscriptions  = new ConcurrentSet<>();
+  private final ConcurrentSet<CleanCloseable> subscriptions  = new ConcurrentSet<>();
 
   public DocumentSubscriptions(IDocumentStore documentStore) {
     super();
@@ -72,9 +68,10 @@ public class DocumentSubscriptions implements IReliableSubscriptions {
       ? documentStore.getDatabaseCommands()
         : documentStore.getDatabaseCommands().forDatabase(database);
 
-    HttpJsonRequest request = commands.createRequest(HttpMethods.POST, "/subscriptions/create");
-    request.write(RavenJObject.fromObject(criteria).toString());
-    return request.readResponseJson().value(Long.class, "Id");
+    try (HttpJsonRequest request = commands.createRequest(HttpMethods.POST, "/subscriptions/create")) {
+      request.write(RavenJObject.fromObject(criteria).toString());
+      return request.readResponseJson().value(Long.class, "Id");
+    }
   }
 
   @Override
@@ -125,8 +122,7 @@ public class DocumentSubscriptions implements IReliableSubscriptions {
   }
 
   private static void sendOpenSubscriptionRequest(IDatabaseCommands commands, long id, SubscriptionConnectionOptions options) throws SubscriptionException {
-    HttpJsonRequest request = commands.createRequest(HttpMethods.POST, String.format("/subscriptions/open?id=%d&connection=%s", id, options.getConnectionId()));
-    try {
+    try (HttpJsonRequest request = commands.createRequest(HttpMethods.POST, String.format("/subscriptions/open?id=%d&connection=%s", id, options.getConnectionId()))) {
       request.write(options.toRavenObject().toString());
       request.executeRequest();
     } catch (Exception e) {
@@ -149,10 +145,11 @@ public class DocumentSubscriptions implements IReliableSubscriptions {
       ? documentStore.getDatabaseCommands()
         : documentStore.getDatabaseCommands().forDatabase(database);
 
-      HttpJsonRequest request = commands.createRequest(HttpMethods.GET, "/subscriptions");
-      RavenJToken response = request.readResponseJson();
-      SubscriptionConfig[] subscriptionConfigs = documentStore.getConventions().createSerializer().deserialize(response, SubscriptionConfig[].class);
-      return Arrays.asList(subscriptionConfigs);
+      try (HttpJsonRequest request = commands.createRequest(HttpMethods.GET, "/subscriptions")) {
+        RavenJToken response = request.readResponseJson();
+        SubscriptionConfig[] subscriptionConfigs = documentStore.getConventions().createSerializer().deserialize(response, SubscriptionConfig[].class);
+        return Arrays.asList(subscriptionConfigs);
+      }
   }
 
   @Override
@@ -166,8 +163,9 @@ public class DocumentSubscriptions implements IReliableSubscriptions {
       ? documentStore.getDatabaseCommands()
         : documentStore.getDatabaseCommands().forDatabase(database);
 
-      HttpJsonRequest request = commands.createRequest(HttpMethods.DELETE, "/subscriptions?id=" + id);
-      request.executeRequest();
+      try (HttpJsonRequest request = commands.createRequest(HttpMethods.DELETE, "/subscriptions?id=" + id)) {
+        request.executeRequest();
+      }
   }
 
   @Override
@@ -181,8 +179,9 @@ public class DocumentSubscriptions implements IReliableSubscriptions {
       ? documentStore.getDatabaseCommands()
         : documentStore.getDatabaseCommands().forDatabase(database);
 
-      HttpJsonRequest request = commands.createRequest(HttpMethods.POST, String.format("/subscriptions/close?id=%d&connection=&force=true", id));
-      request.executeRequest();
+      try(HttpJsonRequest request = commands.createRequest(HttpMethods.POST, String.format("/subscriptions/close?id=%d&connection=&force=true", id))) {
+        request.executeRequest();
+      }
   }
 
   public static SubscriptionException tryGetSubscriptionException(Exception ere) {
@@ -212,8 +211,8 @@ public class DocumentSubscriptions implements IReliableSubscriptions {
   }
 
   @Override
-  public void close() throws Exception {
-    for (AutoCloseable closeable: subscriptions) {
+  public void close() {
+    for (CleanCloseable closeable: subscriptions) {
       closeable.close();
     }
   }

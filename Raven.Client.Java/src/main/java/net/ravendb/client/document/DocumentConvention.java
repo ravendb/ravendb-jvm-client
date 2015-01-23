@@ -12,7 +12,6 @@ import java.util.Map;
 import net.ravendb.abstractions.basic.Reference;
 import net.ravendb.abstractions.basic.Tuple;
 import net.ravendb.abstractions.data.Constants;
-import net.ravendb.abstractions.extensions.JsonExtensions;
 import net.ravendb.abstractions.indexing.SortOptions;
 import net.ravendb.abstractions.json.linq.RavenJObject;
 import net.ravendb.client.connection.IDatabaseCommands;
@@ -39,8 +38,6 @@ import net.ravendb.client.util.Inflector;
 import org.apache.commons.lang.SerializationUtils;
 import org.apache.commons.lang.StringUtils;
 import org.codehaus.jackson.map.DeserializationProblemHandler;
-import org.codehaus.jackson.map.ObjectMapper;
-import org.codehaus.jackson.map.SerializationConfig.Feature;
 
 
 /**

@@ -13,7 +13,6 @@ import net.ravendb.client.connection.profiling.IHoldProfilingInformation;
 import net.ravendb.client.document.Convention;
 
 import org.apache.commons.lang.StringUtils;
-import org.apache.http.HttpRequest;
 
 
 public class CreateHttpJsonRequestParams implements Serializable {

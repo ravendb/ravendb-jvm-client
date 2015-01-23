@@ -6,6 +6,7 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import java.io.ByteArrayInputStream;
+import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -14,6 +15,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.UUID;
 
+import net.ravendb.abstractions.basic.CleanCloseable;
 import net.ravendb.abstractions.basic.EventHandler;
 import net.ravendb.abstractions.closure.Functions;
 import net.ravendb.abstractions.connection.ErrorResponseException;
@@ -21,14 +23,9 @@ import net.ravendb.abstractions.connection.OperationCredentials;
 import net.ravendb.abstractions.connection.WebRequestEventArgs;
 import net.ravendb.abstractions.data.Etag;
 import net.ravendb.abstractions.data.HttpMethods;
-import net.ravendb.abstractions.exceptions.HttpOperationException;
 import net.ravendb.abstractions.json.linq.RavenJObject;
 import net.ravendb.abstractions.json.linq.RavenJToken;
 import net.ravendb.client.RavenDBAwareTests;
-import net.ravendb.client.RavenDBAwareTests.FiddlerConfigureRequestHandler;
-import net.ravendb.client.connection.CreateHttpJsonRequestParams;
-import net.ravendb.client.connection.ReplicationInformer;
-import net.ravendb.client.connection.ServerClient;
 import net.ravendb.client.connection.implementation.HttpJsonRequest;
 import net.ravendb.client.connection.implementation.HttpJsonRequestFactory;
 import net.ravendb.client.connection.profiling.RequestResultArgs;
@@ -88,7 +85,7 @@ public class HttpJsonRequestTest extends RavenDBAwareTests {
   }
 
   @Test
-  public void testAttachment() throws Exception {
+  public void testAttachment() throws IOException {
 
     Map<String, String> operationHeaders = new HashMap<>();
 
@@ -123,7 +120,7 @@ public class HttpJsonRequestTest extends RavenDBAwareTests {
   }
 
   @Test
-  public void testTryGetNotExistingDocument() throws Exception {
+  public void testTryGetNotExistingDocument() {
     Map<String, String> operationHeaders = new HashMap<>();
 
     try {
@@ -148,7 +145,7 @@ public class HttpJsonRequestTest extends RavenDBAwareTests {
   }
 
   @Test
-  public void testReadResponseBytes() throws Exception {
+  public void testReadResponseBytes() throws IOException {
     try {
       createDb();
       putSampleDocument(new HashMap<String, String>());
@@ -173,7 +170,7 @@ public class HttpJsonRequestTest extends RavenDBAwareTests {
   }
 
   @Test
-  public void testDelete() throws Exception {
+  public void testDelete() {
     try {
       createDb();
 
@@ -222,7 +219,7 @@ public class HttpJsonRequestTest extends RavenDBAwareTests {
   }
 
   @Test
-  public void testAggresiveCache() throws Exception {
+  public void testAggresiveCache() {
     Map<String, String> operationHeaders = new HashMap<>();
 
     try {
@@ -239,7 +236,7 @@ public class HttpJsonRequestTest extends RavenDBAwareTests {
 
       getSampleDocument(operationHeaders);
 
-      assertEquals(1, requestQueue.size());
+      assertEquals(0, requestQueue.size());
       assertEquals(1, requestResultArgs.size());
       RequestResultArgs resultArgs = requestResultArgs.get(0);
       requestResultArgs.clear();
@@ -252,7 +249,7 @@ public class HttpJsonRequestTest extends RavenDBAwareTests {
 
   }
 
-  private void getSampleDocument(Map<String, String> operationHeaders) throws Exception {
+  private void getSampleDocument(Map<String, String> operationHeaders) {
     try (HttpJsonRequest jsonRequest = factory.createHttpJsonRequest(new CreateHttpJsonRequestParams(null,
       DEFAULT_SERVER_URL_1 + "/databases/" + getDbName() + "/docs/persons/1", HttpMethods.GET, new RavenJObject(),
       null, convention).addOperationHeaders(operationHeaders))) {
@@ -262,7 +259,7 @@ public class HttpJsonRequestTest extends RavenDBAwareTests {
   }
 
   @Test(expected = ErrorResponseException.class)
-  public void testBadRequest() throws Exception {
+  public void testBadRequest() {
     try (HttpJsonRequest jsonRequest = factory.createHttpJsonRequest(new CreateHttpJsonRequestParams(null,
       DEFAULT_SERVER_URL_1 + "/admin/noSuchEndpoint", HttpMethods.GET, new RavenJObject(), null, convention)
       .addOperationHeaders(new HashMap<String, String>()))) {
@@ -271,7 +268,7 @@ public class HttpJsonRequestTest extends RavenDBAwareTests {
   }
 
   @Test
-  public void testPutAndCache() throws Exception {
+  public void testPutAndCache() {
 
     Map<String, String> operationHeaders = new HashMap<>();
 
@@ -331,7 +328,7 @@ public class HttpJsonRequestTest extends RavenDBAwareTests {
        * Get object in non-cache scope
        */
 
-      try (AutoCloseable closable = factory.disableAllCaching()) {
+      try (CleanCloseable closable = factory.disableAllCaching()) {
         getSampleDocument(new HashMap<String, String>());
 
         requestQueue.clear();
@@ -350,7 +347,7 @@ public class HttpJsonRequestTest extends RavenDBAwareTests {
   }
 
   @Test
-  public void testPutWithOutGzip() throws Exception {
+  public void testPutWithOutGzip() {
 
     Map<String, String> operationHeaders = new HashMap<>();
     factory.setDisableRequestCompression(true);
@@ -409,7 +406,7 @@ public class HttpJsonRequestTest extends RavenDBAwareTests {
 
   }
 
-  private RavenJToken putSampleDocument(Map<String, String> operationHeaders) throws Exception {
+  private RavenJToken putSampleDocument(Map<String, String> operationHeaders) {
     try (HttpJsonRequest jsonRequest = factory.createHttpJsonRequest(new CreateHttpJsonRequestParams(null,
       DEFAULT_SERVER_URL_1 + "/databases/" + getDbName() + "/docs/persons/1", HttpMethods.PUT, new RavenJObject(),
       null, convention).addOperationHeaders(operationHeaders))) {

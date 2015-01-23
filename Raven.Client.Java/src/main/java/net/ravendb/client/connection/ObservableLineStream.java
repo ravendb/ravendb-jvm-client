@@ -6,6 +6,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.Charset;
 
+import net.ravendb.abstractions.basic.CleanCloseable;
 import net.ravendb.abstractions.closure.Action0;
 import net.ravendb.abstractions.closure.Predicate;
 import net.ravendb.client.changes.IObservable;
@@ -125,13 +126,13 @@ public class ObservableLineStream implements IObservable<String>, Closeable {
   }
 
   @Override
-  public Closeable subscribe(final IObserver<String> observer) {
+  public CleanCloseable subscribe(final IObserver<String> observer) {
     subscribers.add(observer);
 
-    return new Closeable() {
+    return new CleanCloseable() {
 
       @Override
-      public void close() throws IOException {
+      public void close(){
         subscribers.remove(observer);
       }
     };

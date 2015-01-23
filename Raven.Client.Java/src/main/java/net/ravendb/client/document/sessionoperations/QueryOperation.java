@@ -11,9 +11,6 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import net.ravendb.abstractions.basic.CleanCloseable;
-import net.ravendb.abstractions.basic.SharpEnum;
-import net.ravendb.abstractions.basic.Tuple;
-import net.ravendb.abstractions.closure.Action2;
 import net.ravendb.abstractions.data.Constants;
 import net.ravendb.abstractions.data.IndexQuery;
 import net.ravendb.abstractions.data.JsonDocument;
@@ -29,7 +26,6 @@ import net.ravendb.abstractions.logging.LogManager;
 import net.ravendb.client.connection.SerializationHelper;
 import net.ravendb.client.document.InMemoryDocumentSessionOperations;
 import net.ravendb.client.exceptions.NonAuthoritativeInformationException;
-import net.ravendb.client.utils.UrlUtils;
 
 import org.apache.commons.lang.StringUtils;
 

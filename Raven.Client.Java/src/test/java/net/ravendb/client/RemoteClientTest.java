@@ -2,6 +2,8 @@ package net.ravendb.client;
 
 import static org.junit.Assert.assertEquals;
 
+import java.io.IOException;
+
 import net.ravendb.abstractions.data.AdminStatistics;
 
 import org.apache.http.HttpResponse;
@@ -35,13 +37,15 @@ public abstract class RemoteClientTest extends RavenDBAwareTests {
     assertEquals("Expected " + i + " requests. Got: " + (currentReqCount - prevValue), i, currentReqCount - prevValue);
   }
 
-  protected void waitForAllRequestsToComplete() throws Exception {
+  protected void waitForAllRequestsToComplete() {
     HttpGet get = new HttpGet(DEFAULT_SERVER_RUNNER_URL + "?port=" + DEFAULT_SERVER_PORT_1 + "&action=waitForAllRequestsToComplete");
     HttpResponse httpResponse = null;
     try {
       httpResponse = client.execute(get);
 
       assertEquals(HttpStatus.SC_OK, httpResponse.getStatusLine().getStatusCode());
+    } catch (IOException e) {
+      throw new IllegalStateException(e);
     } finally {
       if (httpResponse != null) {
         EntityUtils.consumeQuietly(httpResponse.getEntity());

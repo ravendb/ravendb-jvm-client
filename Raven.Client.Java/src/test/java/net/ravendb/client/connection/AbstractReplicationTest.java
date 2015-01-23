@@ -36,13 +36,13 @@ public abstract class AbstractReplicationTest extends RavenDBAwareTests{
 
 
   @BeforeClass
-  public static void startServerBefore() throws Exception {
+  public static void startServerBefore() {
     startServer(DEFAULT_SERVER_PORT_1, true);
     startServer(DEFAULT_SERVER_PORT_2, true);
   }
 
   @AfterClass
-  public static void stopServerAfter() throws Exception {
+  public static void stopServerAfter() {
     stopServer(DEFAULT_SERVER_PORT_1);
     stopServer(DEFAULT_SERVER_PORT_2);
   }

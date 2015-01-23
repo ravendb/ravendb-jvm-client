@@ -1,7 +1,5 @@
 package net.ravendb.client.document;
 
-import static net.ravendb.client.connection.RavenUrlExtensions.doc;
-
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
@@ -12,8 +10,6 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeoutException;
-
-import org.apache.commons.lang.StringUtils;
 
 import net.ravendb.abstractions.closure.Function1;
 import net.ravendb.abstractions.connection.OperationCredentials;
@@ -32,8 +28,10 @@ import net.ravendb.client.connection.RavenUrlExtensions;
 import net.ravendb.client.connection.ServerClient;
 import net.ravendb.client.connection.implementation.HttpJsonRequest;
 import net.ravendb.client.utils.CancellationTokenSource;
-import net.ravendb.client.utils.TimeSpan;
 import net.ravendb.client.utils.CancellationTokenSource.CancellationToken;
+import net.ravendb.client.utils.TimeSpan;
+
+import org.apache.commons.lang.StringUtils;
 
 
 public class ReplicationBehavior implements AutoCloseable {

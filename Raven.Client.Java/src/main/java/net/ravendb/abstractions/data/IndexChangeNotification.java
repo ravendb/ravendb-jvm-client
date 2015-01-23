@@ -44,14 +44,14 @@ public class IndexChangeNotification extends EventArgs {
   }
 
   /**
-   * TODO [ppekrol]
+   * Gets etag
    */
   public Etag getEtag() {
     return etag;
   }
 
   /**
-   * TODO [ppekrol]
+   * Sets etag
    * @param etag
    */
   public void setEtag(Etag etag) {

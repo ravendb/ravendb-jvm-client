@@ -187,7 +187,7 @@ public class RavenJObjectsTest {
   }
 
   @Test
-  public void testRavenJValue() throws Exception {
+  public void testRavenJValue() {
     RavenJValue stringValue = new RavenJValue("this is string");
     assertEquals("this is string", stringValue.getValue());
     assertEquals(JTokenType.STRING, stringValue.getType());
@@ -215,7 +215,7 @@ public class RavenJObjectsTest {
   }
 
   @Test
-  public void testRavenJValueTypeDetection() throws Exception {
+  public void testRavenJValueTypeDetection() throws URISyntaxException {
     Object o = null;
     assertEquals(JTokenType.NULL, new RavenJValue(o).getType());
     assertEquals(JTokenType.STRING, new RavenJValue("string").getType());
@@ -231,7 +231,7 @@ public class RavenJObjectsTest {
 
 
   @Test
-  public void testDontIterateOnDeleted() throws Exception {
+  public void testDontIterateOnDeleted() {
     RavenJObject obj = new RavenJObject();
     obj.add("Id", new RavenJValue(5));
     obj.remove("Id");
@@ -245,7 +245,7 @@ public class RavenJObjectsTest {
 
 
   @Test
-  public void testHashCodeAndEqual() throws Exception {
+  public void testHashCodeAndEqual() {
 
     RavenJArray array1 = RavenJArray.parse("[1,2,3,4]");
     RavenJArray array2 = RavenJArray.parse("[1,2,3]");
@@ -319,7 +319,7 @@ public class RavenJObjectsTest {
   }
 
   @Test
-  public void testClone() throws Exception {
+  public void testClone() {
     RavenJValue value1 = new RavenJValue("raven is cool");
     RavenJValue clonedValue = value1.cloneToken();
     assertFalse(value1 == clonedValue); //yes, we compare using ==
@@ -328,7 +328,7 @@ public class RavenJObjectsTest {
   }
 
   @Test
-  public void testSnapshots() throws Exception {
+  public void testSnapshots() {
     RavenJValue value1=  new RavenJValue("test");
     assertFalse(value1.isSnapshot());
     value1.ensureCannotBeChangeAndEnableShapshotting();

@@ -1,6 +1,5 @@
 package net.ravendb.client.document;
 
-import java.io.IOException;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -21,7 +20,6 @@ import net.ravendb.abstractions.basic.Lazy;
 import net.ravendb.abstractions.basic.Reference;
 import net.ravendb.abstractions.basic.Tuple;
 import net.ravendb.abstractions.closure.Action1;
-import net.ravendb.abstractions.closure.Action2;
 import net.ravendb.abstractions.closure.Delegates;
 import net.ravendb.abstractions.closure.Function1;
 import net.ravendb.abstractions.data.Constants;
@@ -64,7 +62,6 @@ import net.ravendb.client.spatial.SpatialCriteria;
 
 import org.apache.commons.lang.ArrayUtils;
 import org.apache.commons.lang.StringUtils;
-import org.codehaus.jackson.map.ObjectMapper;
 
 import com.google.common.base.Defaults;
 import com.mysema.query.types.Expression;

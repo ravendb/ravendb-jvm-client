@@ -5,6 +5,7 @@ import static org.junit.Assert.fail;
 import java.io.Serializable;
 
 import net.ravendb.abstractions.data.Constants;
+import net.ravendb.abstractions.util.TimeUtils;
 import net.ravendb.client.IDocumentSession;
 import net.ravendb.client.IDocumentStore;
 import net.ravendb.client.exceptions.ConflictException;
@@ -16,7 +17,7 @@ import org.junit.Test;
 public class ConflictWhenReplicatingTest extends ReplicationBase {
 
   @Test
-  public void when_replicating_and_a_document_is_already_there_will_result_in_conflict() throws Exception {
+  public void when_replicating_and_a_document_is_already_there_will_result_in_conflict() {
 
     try (IDocumentStore store1 = createStore();
       IDocumentStore store2 = createStore()) {
@@ -33,13 +34,13 @@ public class ConflictWhenReplicatingTest extends ReplicationBase {
 
       tellFirstInstanceToReplicateToSecondInstance();
 
-      Thread.sleep(1000);
+      TimeUtils.cleanSleep(1000);
 
       try {
         for (int i = 0; i < retriesCount; i++) {
           try (IDocumentSession session = store2.openSession()) {
             session.load(Company.class, "companies/1");
-            Thread.sleep(100);
+            TimeUtils.cleanSleep(100);
           }
         }
         fail();
@@ -53,7 +54,7 @@ public class ConflictWhenReplicatingTest extends ReplicationBase {
   }
 
   @Test
-  public void can_resolve_conflict_by_deleting_conflicted_doc() throws Exception {
+  public void can_resolve_conflict_by_deleting_conflicted_doc() {
     try (
       IDocumentStore store1 = createStore();
       IDocumentStore store2 = createStore()) {
@@ -74,7 +75,7 @@ public class ConflictWhenReplicatingTest extends ReplicationBase {
         for (int i = 0; i < retriesCount; i++) {
           try(IDocumentSession session = store2.openSession()) {
             session.load(Company.class, "companies/1");
-            Thread.sleep(100);
+            TimeUtils.cleanSleep(100);
           }
         }
         fail();
@@ -89,7 +90,7 @@ public class ConflictWhenReplicatingTest extends ReplicationBase {
   }
 
   @Test
-  public void when_replicating_from_two_different_source_different_documents() throws Exception {
+  public void when_replicating_from_two_different_source_different_documents() {
     try (IDocumentStore store1 = createStore();
       IDocumentStore store2 = createStore();
       IDocumentStore store3 = createStore()) {
@@ -111,7 +112,7 @@ public class ConflictWhenReplicatingTest extends ReplicationBase {
           if (session.load(Company.class, "companies/1") != null) {
             break;
           }
-          Thread.sleep(100);
+          TimeUtils.cleanSleep(100);
         }
       }
 
@@ -121,7 +122,7 @@ public class ConflictWhenReplicatingTest extends ReplicationBase {
         for (int i = 0; i < retriesCount; i++) {
           try (IDocumentSession session3 = store3.openSession()) {
             session3.load(Company.class, "companies/1");
-            Thread.sleep(100);
+            TimeUtils.cleanSleep(100);
           }
         }
         fail();
@@ -134,7 +135,7 @@ public class ConflictWhenReplicatingTest extends ReplicationBase {
   }
 
   @Test
-  public void can_conflict_on_deletes_as_well() throws Exception {
+  public void can_conflict_on_deletes_as_well() {
 
     try (IDocumentStore store1 = createStore();
       IDocumentStore store2 = createStore();
@@ -158,7 +159,7 @@ public class ConflictWhenReplicatingTest extends ReplicationBase {
           if (session3.load(Company.class, "companies/1") != null) {
             break;
           }
-          Thread.sleep(100);
+          TimeUtils.cleanSleep(100);
         }
       }
 
@@ -172,18 +173,18 @@ public class ConflictWhenReplicatingTest extends ReplicationBase {
           if (session.load(Company.class, "companies/1") == null) {
             break;
           }
-          Thread.sleep(100);
+          TimeUtils.cleanSleep(100);
         }
       }
 
       tellInstanceToReplicateToAnotherInstance(1, 2);
 
-      Thread.sleep(1000);
+      TimeUtils.cleanSleep(1000);
       try {
         for (int i = 0; i < retriesCount; i++) {
           try (IDocumentSession session = store3.openSession()) {
             session.load(Company.class, "companies/1");
-            Thread.sleep(100);
+            TimeUtils.cleanSleep(100);
           }
         }
         fail();
@@ -196,7 +197,7 @@ public class ConflictWhenReplicatingTest extends ReplicationBase {
 
   }
 
-  public void tombstone_deleted_after_conflict_resolved() throws Exception  {
+  public void tombstone_deleted_after_conflict_resolved()  {
     try (
       IDocumentStore store1 = createStore();
       IDocumentStore store2 = createStore()
@@ -215,7 +216,7 @@ public class ConflictWhenReplicatingTest extends ReplicationBase {
           if (company != null){
             break;
           }
-          Thread.sleep(100);
+          TimeUtils.cleanSleep(100);
         }
       }
       Assert.assertNotNull(company);

@@ -1,12 +1,13 @@
 package net.ravendb.client;
 
+import net.ravendb.abstractions.basic.CleanCloseable;
 import net.ravendb.abstractions.basic.EventHandler;
 import net.ravendb.abstractions.basic.VoidArgs;
 
 /**
  * Provide a way for interested party to tell whatever implementers have been disposed
  */
-public interface IDisposalNotification extends AutoCloseable {
+public interface IDisposalNotification extends CleanCloseable {
 
   /**
    * Called after dispose is completed

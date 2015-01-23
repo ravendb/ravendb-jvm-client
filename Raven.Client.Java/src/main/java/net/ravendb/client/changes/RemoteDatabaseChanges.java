@@ -25,7 +25,6 @@ import net.ravendb.client.connection.IDocumentStoreReplicationInformer;
 import net.ravendb.client.connection.OperationMetadata;
 import net.ravendb.client.connection.implementation.HttpJsonRequestFactory;
 import net.ravendb.client.document.DocumentConvention;
-import net.ravendb.client.document.ReflectionUtil;
 import net.ravendb.client.utils.UrlUtils;
 
 import org.codehaus.jackson.map.ObjectMapper;

@@ -27,13 +27,15 @@ import net.ravendb.client.changes.IDatabaseChanges;
 import net.ravendb.client.changes.IObserver;
 import net.ravendb.client.connection.ServerClient;
 import net.ravendb.client.connection.implementation.HttpJsonRequest;
+import net.ravendb.client.extensions.HttpJsonRequestExtension;
 import net.ravendb.client.utils.CancellationTokenSource;
 import net.ravendb.client.utils.CancellationTokenSource.CancellationToken;
 
+import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.ArrayUtils;
 import org.apache.http.Header;
 import org.apache.http.HttpEntity;
-import org.apache.http.client.methods.HttpPost;
+import org.apache.http.HttpResponse;
 
 import de.undercouch.bson4jackson.BsonFactory;
 import de.undercouch.bson4jackson.BsonGenerator;
@@ -66,6 +68,7 @@ public class RemoteBulkInsertOperation implements ILowLevelBulkInsertOperation, 
   private static final int BIG_DOCUMENT_SIZE = 64 * 1024;
 
   private Action1<String> report;
+  private long responseOperationId;
   private UUID operationId;
   private transient boolean disposed;
 
@@ -100,7 +103,7 @@ public class RemoteBulkInsertOperation implements ILowLevelBulkInsertOperation, 
      changes.forBulkInsert(operationId).subscribe(this);
   }
 
-  private class BulkInsertEntity implements HttpEntity {
+  public class BulkInsertEntity implements HttpEntity {
 
     private BulkInsertOptions options;
     private CancellationToken cancellationToken;
@@ -163,35 +166,48 @@ public class RemoteBulkInsertOperation implements ILowLevelBulkInsertOperation, 
     return cancellationTokenSource.getToken();
   }
 
-  private Thread startBulkInsertAsync(BulkInsertOptions options) {
+  private Thread startBulkInsertAsync(final BulkInsertOptions options) {
     operationClient.setExpect100Continue(true);
 
-    String operationUrl = createOperationUrl(options);
+    final String operationUrl = createOperationUrl(options);
     String token = getToken();
     try {
       token = validateThatWeCanUseAuthenticateTokens(token);
     } catch (Exception e) {
       throw new IllegalStateException("Could not authenticate token for bulk insert, if you are using ravendb in IIS make sure you have Anonymous Authentication enabled in the IIS configuration", e);
     }
-
-    operationRequest = createOperationRequest(operationUrl, token);
-    //TODO:HttpPost webRequest = (HttpPost) operationRequest.getWebRequest();
-    //TODO: webRequest.setEntity(new BulkInsertEntity(options, createCancellationToken()));
-
+    final String tokenToPass = token;
 
     Thread thread = new Thread(new Runnable() {
 
       @Override
       public void run() {
-        try {
-          responseBytes = operationRequest.readResponseBytes();
-        } catch (IOException e) {
-          throw new RuntimeException(e);
+        try (HttpJsonRequest operationRequest = createOperationRequest(operationUrl, tokenToPass)) {
+          CancellationToken cancellationToken = createCancellationToken();
+          HttpResponse response = operationRequest.executeRawRequest(new BulkInsertEntity(options, cancellationToken));
+
+          HttpJsonRequestExtension.assertNotFailingResponse(response);
+          long operationId;
+
+          try {
+            String stream = IOUtils.toString(response.getEntity().getContent());
+            RavenJObject result = RavenJObject.parse(stream);
+            operationId = result.value(Long.class, "OperationId");
+
+            if (isOperationCompleted(operationId)) {
+              responseOperationId = operationId;
+            }
+          } catch (IOException e) {
+            throw new RuntimeException(e);
+          }
+
+        } finally {
+          operationClient.setExpect100Continue(false);
         }
       }
     });
 
-    operationClient.setExpect100Continue(false);
+
     thread.setUncaughtExceptionHandler(new UncaughtExceptionHandler() {
       @Override
       public void uncaughtException(Thread t, Throwable e) {
@@ -210,16 +226,18 @@ public class RemoteBulkInsertOperation implements ILowLevelBulkInsertOperation, 
   }
 
   private RavenJToken getAuthToken() {
-    HttpJsonRequest request = operationClient.createRequest(HttpMethods.GET, "/singleAuthToken", true, false, null);
-    return request.readResponseJson();
+    try (HttpJsonRequest request = operationClient.createRequest(HttpMethods.GET, "/singleAuthToken", true, false, null)) {
+      return request.readResponseJson();
+    }
   }
 
   private String validateThatWeCanUseAuthenticateTokens(String token) {
-    HttpJsonRequest request = operationClient.createRequest(HttpMethods.GET, "/singleAuthToken", true, true, null);
-    request.removeAuthorizationHeader();
-    request.addOperationHeader("Single-Use-Auth-Token", token);
-    RavenJToken result = request.readResponseJson();
-    return result.value(String.class, "Token");
+    try (HttpJsonRequest request = operationClient.createRequest(HttpMethods.GET, "/singleAuthToken", true, true, null)) {
+      request.removeAuthorizationHeader();
+      request.addOperationHeader("Single-Use-Auth-Token", token);
+      RavenJToken result = request.readResponseJson();
+      return result.value(String.class, "Token");
+    }
   }
 
   private HttpJsonRequest createOperationRequest(String operationUrl, String token) {
@@ -244,8 +262,8 @@ public class RemoteBulkInsertOperation implements ILowLevelBulkInsertOperation, 
 
     return requestUrl;
   }
-  private void writeQueueToServer(OutputStream stream, BulkInsertOptions options, CancellationToken cancellationToken) throws IOException {
 
+  private void writeQueueToServer(OutputStream stream, BulkInsertOptions options, CancellationToken cancellationToken) throws IOException {
     while (true) {
       cancellationToken.throwIfCancellationRequested();
       List<RavenJObject> batch = new ArrayList<>();
@@ -363,13 +381,8 @@ public class RemoteBulkInsertOperation implements ILowLevelBulkInsertOperation, 
 
     reportInternal("Finished writing all results to server");
 
-    long operationId = 0;
-
-    RavenJObject result = RavenJObject.parse(new String(responseBytes));
-    operationId = result.value(Long.class, "OperationId");
-
     while (true) {
-      if (isOperationCompleted(operationId)) {
+      if (isOperationCompleted(responseOperationId)) {
         break;
       }
       Thread.sleep(500);

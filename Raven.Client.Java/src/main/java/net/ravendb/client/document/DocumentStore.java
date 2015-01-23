@@ -215,7 +215,7 @@ public class DocumentStore extends DocumentStoreBase {
 
 
   @Override
-  public void close() throws Exception {
+  public void close() {
     for (EvictItemsFromCacheBasedOnChanges observeChangesAndEvictItemsFromCacheForDatabase : observeChangesAndEvictItemsFromCacheForDatabases.values()) {
       observeChangesAndEvictItemsFromCacheForDatabase.close();
     }
@@ -225,8 +225,8 @@ public class DocumentStore extends DocumentStoreBase {
       if (dbChange instanceof RemoteDatabaseChanges) {
         ((RemoteDatabaseChanges) dbChange).close();
       } else {
-        if (databaseChange.getValue() instanceof Closeable) {
-          ((Closeable) databaseChange.getValue()).close();
+        if (databaseChange.getValue() instanceof CleanCloseable) {
+          ((CleanCloseable) databaseChange.getValue()).close();
         }
       }
     }

@@ -1,15 +1,9 @@
 package net.ravendb.client.connection;
 
-import java.util.Map;
-
-import org.apache.commons.lang.StringUtils;
-
-import net.ravendb.abstractions.connection.OperationCredentials;
-import net.ravendb.abstractions.data.HttpMethods;
-import net.ravendb.client.connection.implementation.HttpJsonRequest;
-import net.ravendb.client.document.DocumentConvention;
 import net.ravendb.client.extensions.MultiDatabase;
 import net.ravendb.client.utils.UrlUtils;
+
+import org.apache.commons.lang.StringUtils;
 
 
 public class RavenUrlExtensions {

@@ -11,7 +11,7 @@ import org.junit.Test;
 public class ConnectionStringsTest {
 
   @Test
-  public void checkUrl() throws Exception {
+  public void checkUrl() {
     try (DocumentStore store = new DocumentStore()) {
       store.parseConnectionString("Url=http://localhost:8079/;");
 
@@ -24,7 +24,7 @@ public class ConnectionStringsTest {
   }
 
   @Test
-  public void checkIllegalConnstrings() throws Exception {
+  public void checkIllegalConnstrings() {
     try (DocumentStore store = new DocumentStore()) {
       try {
         store.parseConnectionString("");
@@ -38,7 +38,7 @@ public class ConnectionStringsTest {
   }
 
   @Test
-  public void checkUrlAndRmid() throws Exception {
+  public void checkUrlAndRmid() {
     try (DocumentStore store = new DocumentStore()) {
       store.parseConnectionString("Url=http://localhost:8079/;");
 
@@ -51,7 +51,7 @@ public class ConnectionStringsTest {
   }
 
   @Test
-  public void checkDefaultdb() throws Exception {
+  public void checkDefaultdb() {
     try (DocumentStore store = new DocumentStore()) {
       store.parseConnectionString("DefaultDatabase=DevMachine;");
 
@@ -64,7 +64,7 @@ public class ConnectionStringsTest {
   }
 
   @Test
-  public void checkUrlAndDefaultdb() throws Exception {
+  public void checkUrlAndDefaultdb() {
     try (DocumentStore store = new DocumentStore()) {
       store.parseConnectionString("Url=http://localhost:8079/;DefaultDatabase=DevMachine;");
 
@@ -77,7 +77,7 @@ public class ConnectionStringsTest {
   }
 
   @Test
-  public void canWorkWithDefaultDb() throws Exception {
+  public void canWorkWithDefaultDb() {
     try (DocumentStore store = new DocumentStore()) {
       store.parseConnectionString("Url=http://localhost:8079/;DefaultDatabase=DevMachine;");
 
@@ -90,7 +90,7 @@ public class ConnectionStringsTest {
   }
 
   @Test
-  public void canGetApiKey() throws Exception {
+  public void canGetApiKey() {
     try (DocumentStore store = new DocumentStore()) {
       store.parseConnectionString("Url=http://localhost:8079/;ApiKey=d5723e19-92ad-4531-adad-8611e6e05c8a;");
 

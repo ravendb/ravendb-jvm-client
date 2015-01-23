@@ -5,8 +5,6 @@ import java.io.IOException;
 import net.ravendb.abstractions.exceptions.JsonReaderException;
 import net.ravendb.abstractions.exceptions.JsonWriterException;
 import net.ravendb.abstractions.extensions.JsonExtensions;
-import net.ravendb.abstractions.indexing.SortOptions;
-import net.ravendb.abstractions.json.linq.RavenJObject;
 import net.ravendb.abstractions.json.linq.RavenJToken;
 import net.ravendb.abstractions.json.linq.RavenJTokenWriter;
 
@@ -32,6 +30,7 @@ public class JsonSerializer {
   public JsonSerializer(DocumentConvention convention) {
     this();
     this.convention = convention;
+    config();
   }
 
   public void config() {

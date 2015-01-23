@@ -11,6 +11,7 @@ import java.util.Set;
 import java.util.TreeSet;
 import java.util.UUID;
 
+import net.ravendb.abstractions.basic.CleanCloseable;
 import net.ravendb.abstractions.basic.CloseableIterator;
 import net.ravendb.abstractions.basic.Lazy;
 import net.ravendb.abstractions.basic.Reference;
@@ -31,7 +32,6 @@ import net.ravendb.abstractions.data.MultiLoadResult;
 import net.ravendb.abstractions.data.QueryHeaderInformation;
 import net.ravendb.abstractions.data.StreamResult;
 import net.ravendb.abstractions.exceptions.ConcurrencyException;
-import net.ravendb.abstractions.exceptions.ServerClientException;
 import net.ravendb.abstractions.json.linq.RavenJObject;
 import net.ravendb.abstractions.json.linq.RavenJToken;
 import net.ravendb.client.IDocumentQuery;
@@ -127,9 +127,9 @@ public class DocumentSession extends InMemoryDocumentSessionOperations implement
     return this;
   }
 
-  protected class DisableAllCachingCallback implements Function0<AutoCloseable> {
+  protected class DisableAllCachingCallback implements Function0<CleanCloseable> {
     @Override
-    public AutoCloseable apply() {
+    public CleanCloseable apply() {
       return databaseCommands.disableAllCaching();
     }
   }
@@ -1032,7 +1032,7 @@ public class DocumentSession extends InMemoryDocumentSessionOperations implement
 
       return result.toArray((TResult[])Array.newInstance(clazz, 0));
     } catch (InstantiationException | IllegalAccessException e) {
-      throw new ServerClientException(e);
+      throw new RuntimeException(e);
     }
   }
 
@@ -1112,21 +1112,17 @@ public class DocumentSession extends InMemoryDocumentSessionOperations implement
     // /morelikethis/(index-name)/(ravendb-document-id)?fields=(fields)
     IDatabaseCommands cmd = getDatabaseCommands();
 
-    try{
-      incrementRequestCount();
+    incrementRequestCount();
 
-      MultiLoadOperation multiLoadOperation = new MultiLoadOperation(this, new DisableAllCachingCallback(), null, null);
-      MultiLoadResult multiLoadResult = null;
-      do {
-        multiLoadOperation.logOperation();
-        try (AutoCloseable multiLoadContext = multiLoadOperation.enterMultiLoadContext()) {
-          multiLoadResult = cmd.moreLikeThis(parameters);
-        }
-      } while (multiLoadOperation.setResult(multiLoadResult));
+    MultiLoadOperation multiLoadOperation = new MultiLoadOperation(this, new DisableAllCachingCallback(), null, null);
+    MultiLoadResult multiLoadResult = null;
+    do {
+      multiLoadOperation.logOperation();
+      try (CleanCloseable multiLoadContext = multiLoadOperation.enterMultiLoadContext()) {
+        multiLoadResult = cmd.moreLikeThis(parameters);
+      }
+    } while (multiLoadOperation.setResult(multiLoadResult));
 
-      return multiLoadOperation.complete(entityClass);
-    } catch (Exception e) {
-      throw new ServerClientException(e);
-    }
+    return multiLoadOperation.complete(entityClass);
   }
 }

@@ -5,7 +5,6 @@ import java.io.IOException;
 import net.ravendb.abstractions.data.Etag;
 
 import org.apache.commons.io.IOUtils;
-import org.apache.http.Header;
 import org.apache.http.client.methods.CloseableHttpResponse;
 
 
@@ -62,6 +61,10 @@ public class ErrorResponseException extends RuntimeException {
     return ex;
   }
 
+
+  public CloseableHttpResponse getResponse() {
+    return response;
+  }
 
   public String getResponseString() {
     return responseString;

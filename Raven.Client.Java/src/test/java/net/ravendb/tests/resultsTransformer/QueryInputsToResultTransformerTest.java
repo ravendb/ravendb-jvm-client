@@ -6,7 +6,6 @@ import net.ravendb.client.IDocumentSession;
 import net.ravendb.client.IDocumentStore;
 import net.ravendb.client.LoadConfigurationFactory;
 import net.ravendb.client.RemoteClientTest;
-import net.ravendb.client.connection.Person;
 import net.ravendb.client.document.DocumentQueryCustomizationFactory;
 import net.ravendb.client.document.DocumentStore;
 import net.ravendb.client.indexes.AbstractTransformerCreationTask;

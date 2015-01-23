@@ -3,6 +3,7 @@ package net.ravendb.client.changes;
 import java.io.Closeable;
 import java.io.IOException;
 
+import net.ravendb.abstractions.basic.CleanCloseable;
 import net.ravendb.abstractions.closure.Predicate;
 import net.ravendb.abstractions.closure.Predicates;
 import net.ravendb.client.connection.profiling.ConcurrentSet;
@@ -20,13 +21,13 @@ public class TaskedObservable<T, TConnectionState extends IChangesConnectionStat
   }
 
   @Override
-  public Closeable subscribe(final IObserver<T> observer) {
+  public CleanCloseable subscribe(final IObserver<T> observer) {
     localConnectionState.inc();
     subscribers.add(observer);
-    return new Closeable() {
+    return new CleanCloseable() {
 
       @Override
-      public void close() throws IOException {
+      public void close() {
         localConnectionState.dec();
         subscribers.remove(observer);
       }

@@ -2,7 +2,6 @@ package net.ravendb.client;
 
 import net.ravendb.abstractions.basic.CloseableIterator;
 import net.ravendb.abstractions.basic.Reference;
-import net.ravendb.abstractions.closure.Action1;
 import net.ravendb.abstractions.data.Etag;
 import net.ravendb.abstractions.data.FacetQuery;
 import net.ravendb.abstractions.data.FacetResults;

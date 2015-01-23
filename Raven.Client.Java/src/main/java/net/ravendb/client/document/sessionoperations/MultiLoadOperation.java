@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
+import net.ravendb.abstractions.basic.CleanCloseable;
 import net.ravendb.abstractions.basic.Tuple;
 import net.ravendb.abstractions.closure.Function0;
 import net.ravendb.abstractions.data.JsonDocument;
@@ -24,7 +25,7 @@ public class MultiLoadOperation {
   private static final ILog log = LogManager.getCurrentClassLogger();
 
   private final InMemoryDocumentSessionOperations sessionOperations;
-  protected Function0<AutoCloseable> disableAllCaching;
+  protected Function0<CleanCloseable> disableAllCaching;
   private final String[] ids;
   private final Tuple<String, Class<?>>[] includes;
   boolean firstRequest = true;
@@ -33,7 +34,7 @@ public class MultiLoadOperation {
 
   private long spStart;
 
-  public MultiLoadOperation(InMemoryDocumentSessionOperations sessionOperations, Function0<AutoCloseable> disableAllCaching, String[] ids, Tuple<String, Class<?>>[] includes) {
+  public MultiLoadOperation(InMemoryDocumentSessionOperations sessionOperations, Function0<CleanCloseable> disableAllCaching, String[] ids, Tuple<String, Class<?>>[] includes) {
     this.sessionOperations = sessionOperations;
     this.disableAllCaching = disableAllCaching;
     this.ids = ids;
@@ -47,7 +48,7 @@ public class MultiLoadOperation {
     log.debug("Bulk loading ids [%s] from %s", StringUtils.join(ids, ", "), sessionOperations.getStoreIdentifier());
   }
 
-  public AutoCloseable enterMultiLoadContext() {
+  public CleanCloseable enterMultiLoadContext() {
     if (firstRequest == false) { // if this is a repeated request, we mustn't use the cached result, but have to re-query the server
       return disableAllCaching.apply();
     }
