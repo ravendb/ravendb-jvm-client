@@ -27,7 +27,7 @@ public interface IGlobalAdminDatabaseCommands {
   public String[] getDatabaseNames(int pageSize, int start);
 
   /**
-   * Retrieve the statistics for the database
+   * Gets server-wide statistics.
    */
   public AdminStatistics getStatistics();
 

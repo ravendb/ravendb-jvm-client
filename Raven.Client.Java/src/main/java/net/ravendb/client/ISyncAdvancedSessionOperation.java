@@ -101,7 +101,7 @@ public interface ISyncAdvancedSessionOperation extends IAdvancedDocumentSessionO
   /**
    * Loads documents with the specified key prefix and applies the specified results transformer against the results
    * @param clazz Defines type of object
-   * @param transformerClass
+   * @param transformerClass The transformer to use in this load operation
    * @param keyPrefix Prefix for which documents should be returned e.g. "products/"
    */
   public <TResult, TTransformer extends AbstractTransformerCreationTask> TResult[] loadStartingWith(Class<TResult> clazz, Class<TTransformer> transformerClass,
@@ -110,7 +110,7 @@ public interface ISyncAdvancedSessionOperation extends IAdvancedDocumentSessionO
   /**
    * Loads documents with the specified key prefix and applies the specified results transformer against the results
    * @param clazz Defines type of object
-   * @param transformerClass
+   * @param transformerClass The transformer to use in this load operation
    * @param keyPrefix Prefix for which documents should be returned e.g. "products/"
    * @param matches Pipe ('|') separated values for which document keys (after 'keyPrefix') should be matched ('?' any single character, '*' any characters)
    */
@@ -120,7 +120,7 @@ public interface ISyncAdvancedSessionOperation extends IAdvancedDocumentSessionO
   /**
    * Loads documents with the specified key prefix and applies the specified results transformer against the results
    * @param clazz Defines type of object
-   * @param transformerClass
+   * @param transformerClass The transformer to use in this load operation
    * @param keyPrefix Prefix for which documents should be returned e.g. "products/"
    * @param matches Pipe ('|') separated values for which document keys (after 'keyPrefix') should be matched ('?' any single character, '*' any characters)
    * @param start Number of documents that should be skipped. By default: 0.
@@ -131,7 +131,7 @@ public interface ISyncAdvancedSessionOperation extends IAdvancedDocumentSessionO
   /**
    * Loads documents with the specified key prefix and applies the specified results transformer against the results
    * @param clazz Defines type of object
-   * @param transformerClass
+   * @param transformerClass The transformer to use in this load operation
    * @param keyPrefix Prefix for which documents should be returned e.g. "products/"
    * @param matches Pipe ('|') separated values for which document keys (after 'keyPrefix') should be matched ('?' any single character, '*' any characters)
    * @param start Number of documents that should be skipped. By default: 0.
@@ -144,7 +144,7 @@ public interface ISyncAdvancedSessionOperation extends IAdvancedDocumentSessionO
   /**
    * Loads documents with the specified key prefix and applies the specified results transformer against the results
    * @param clazz Defines type of object
-   * @param transformerClass
+   * @param transformerClass The transformer to use in this load operation
    * @param keyPrefix Prefix for which documents should be returned e.g. "products/"
    * @param matches Pipe ('|') separated values for which document keys (after 'keyPrefix') should be matched ('?' any single character, '*' any characters)
    * @param start Number of documents that should be skipped. By default: 0.
@@ -157,7 +157,7 @@ public interface ISyncAdvancedSessionOperation extends IAdvancedDocumentSessionO
   /**
    * Loads documents with the specified key prefix and applies the specified results transformer against the results
    * @param clazz Defines type of object
-   * @param transformerClass
+   * @param transformerClass The transformer to use in this load operation
    * @param keyPrefix Prefix for which documents should be returned e.g. "products/"
    * @param matches Pipe ('|') separated values for which document keys (after 'keyPrefix') should be matched ('?' any single character, '*' any characters)
    * @param start Number of documents that should be skipped. By default: 0.
@@ -172,7 +172,7 @@ public interface ISyncAdvancedSessionOperation extends IAdvancedDocumentSessionO
   /**
    * Loads documents with the specified key prefix and applies the specified results transformer against the results
    * @param clazz Defines type of object
-   * @param transformerClass
+   * @param transformerClass The transformer to use in this load operation
    * @param keyPrefix Prefix for which documents should be returned e.g. "products/"
    * @param matches Pipe ('|') separated values for which document keys (after 'keyPrefix') should be matched ('?' any single character, '*' any characters)
    * @param start Number of documents that should be skipped. By default: 0.
@@ -188,7 +188,7 @@ public interface ISyncAdvancedSessionOperation extends IAdvancedDocumentSessionO
   /**
    * Loads documents with the specified key prefix and applies the specified results transformer against the results
    * @param clazz Defines type of object
-   * @param transformerClass
+   * @param transformerClass The transformer to use in this load operation
    * @param keyPrefix Prefix for which documents should be returned e.g. "products/"
    * @param matches Pipe ('|') separated values for which document keys (after 'keyPrefix') should be matched ('?' any single character, '*' any characters)
    * @param start Number of documents that should be skipped. By default: 0.
@@ -241,7 +241,7 @@ public interface ISyncAdvancedSessionOperation extends IAdvancedDocumentSessionO
   public <T> IDocumentQuery<T> documentQuery(Class<T> clazz);
 
   /**
-   * Gets the document URL for the specified entity.
+   * Returns full document url for a given entity
    * @param entity Instance of an entity for which url will be returned
    */
   public String getDocumentUrl(Object entity);
@@ -250,7 +250,7 @@ public interface ISyncAdvancedSessionOperation extends IAdvancedDocumentSessionO
    * Stream the results on the query to the client, converting them to
    * Java types along the way.
    * Does NOT track the entities in the session, and will not includes changes there when saveChanges() is called
-   * @param query
+   * @param query Query to stream results for
    */
   public <T> CloseableIterator<StreamResult<T>> stream(IRavenQueryable<T> query);
 
@@ -258,8 +258,8 @@ public interface ISyncAdvancedSessionOperation extends IAdvancedDocumentSessionO
    * Stream the results on the query to the client, converting them to
    * Java types along the way.
    * Does NOT track the entities in the session, and will not includes changes there when saveChanges() is called
-   * @param query
-   * @param queryHeaderInformation
+   * @param query Query to stream results for
+   * @param queryHeaderInformation Information about performed query
    */
   public <T> CloseableIterator<StreamResult<T>> stream(IRavenQueryable<T> query, Reference<QueryHeaderInformation> queryHeaderInformation);
 
@@ -268,7 +268,7 @@ public interface ISyncAdvancedSessionOperation extends IAdvancedDocumentSessionO
    * Stream the results on the query to the client, converting them to
    * Java types along the way.
    * Does NOT track the entities in the session, and will not includes changes there when saveChanges() is called
-   * @param query
+   * @param query Query to stream results for
    */
   public <T> CloseableIterator<StreamResult<T>> stream(IDocumentQuery<T> query);
 
@@ -276,7 +276,8 @@ public interface ISyncAdvancedSessionOperation extends IAdvancedDocumentSessionO
    * Stream the results on the query to the client, converting them to
    * Java types along the way.
    * Does NOT track the entities in the session, and will not includes changes there when saveChanges() is called
-   * @param query
+   * @param query Query to stream results for
+   * @param queryHeaderInformation Information about performed query
    */
   public <T> CloseableIterator<StreamResult<T>> stream(IDocumentQuery<T> query, Reference<QueryHeaderInformation> queryHeaderInformation);
 
@@ -293,7 +294,7 @@ public interface ISyncAdvancedSessionOperation extends IAdvancedDocumentSessionO
    * Stream the results on the query to the client, converting them to
    * Java types along the way.
    * Does NOT track the entities in the session, and will not includes changes there when saveChanges() is called
-   * @param fromEtag
+   * @param fromEtag ETag of a document from which stream should start
    */
   public <T> CloseableIterator<StreamResult<T>> stream(Class<T> entityClass, Etag fromEtag);
 
@@ -301,8 +302,8 @@ public interface ISyncAdvancedSessionOperation extends IAdvancedDocumentSessionO
    * Stream the results on the query to the client, converting them to
    * Java types along the way.
    * Does NOT track the entities in the session, and will not includes changes there when saveChanges() is called
-   * @param fromEtag
-   * @param startsWith
+   * @param fromEtag ETag of a document from which stream should start
+   * @param startsWith Prefix for which documents should be returned e.g. "products/"
    */
   public <T> CloseableIterator<StreamResult<T>> stream(Class<T> entityClass, Etag fromEtag, String startsWith);
 
@@ -310,9 +311,9 @@ public interface ISyncAdvancedSessionOperation extends IAdvancedDocumentSessionO
    * Stream the results on the query to the client, converting them to
    * Java types along the way.
    * Does NOT track the entities in the session, and will not includes changes there when saveChanges() is called
-   * @param fromEtag
-   * @param startsWith
-   * @param matches
+   * @param fromEtag ETag of a document from which stream should start
+   * @param startsWith Prefix for which documents should be returned e.g. "products/"
+   * @param matches Pipe ('|') separated values for which document keys (after 'keyPrefix') should be matched ('?' any single character, '*' any characters)
    */
   public <T> CloseableIterator<StreamResult<T>> stream(Class<T> entityClass, Etag fromEtag, String startsWith, String matches);
 
@@ -320,10 +321,10 @@ public interface ISyncAdvancedSessionOperation extends IAdvancedDocumentSessionO
    * Stream the results on the query to the client, converting them to
    * Java types along the way.
    * Does NOT track the entities in the session, and will not includes changes there when saveChanges() is called
-   * @param fromEtag
-   * @param startsWith
-   * @param matches
-   * @param start
+   * @param fromEtag ETag of a document from which stream should start
+   * @param startsWith Prefix for which documents should be returned e.g. "products/"
+   * @param matches Pipe ('|') separated values for which document keys (after 'keyPrefix') should be matched ('?' any single character, '*' any characters)
+   * @param start Number of documents that should be skipped
    */
   public <T> CloseableIterator<StreamResult<T>> stream(Class<T> entityClass, Etag fromEtag, String startsWith, String matches, int start);
 
@@ -331,11 +332,11 @@ public interface ISyncAdvancedSessionOperation extends IAdvancedDocumentSessionO
    * Stream the results on the query to the client, converting them to
    * Java types along the way.
    * Does NOT track the entities in the session, and will not includes changes there when saveChanges() is called
-   * @param fromEtag
-   * @param startsWith
-   * @param matches
-   * @param start
-   * @param pageSize
+   * @param fromEtag ETag of a document from which stream should start
+   * @param startsWith Prefix for which documents should be returned e.g. "products/"
+   * @param matches Pipe ('|') separated values for which document keys (after 'keyPrefix') should be matched ('?' any single character, '*' any characters)
+   * @param start Number of documents that should be skipped
+   * @param pageSize Maximum number of documents that will be retrieved
    */
   public <T> CloseableIterator<StreamResult<T>> stream(Class<T> entityClass, Etag fromEtag, String startsWith, String matches, int start, int pageSize);
 
@@ -343,11 +344,13 @@ public interface ISyncAdvancedSessionOperation extends IAdvancedDocumentSessionO
    * Stream the results on the query to the client, converting them to
    * Java types along the way.
    * Does NOT track the entities in the session, and will not includes changes there when saveChanges() is called
-   * @param fromEtag
-   * @param startsWith
-   * @param matches
-   * @param start
-   * @param pageSize
+   * @param entityClass
+   * @param fromEtag ETag of a document from which stream should start
+   * @param startsWith Prefix for which documents should be returned e.g. "products/"
+   * @param matches Pipe ('|') separated values for which document keys (after 'keyPrefix') should be matched ('?' any single character, '*' any characters)
+   * @param start Number of documents that should be skipped
+   * @param pageSize Maximum number of documents that will be retrieved
+   * @param pagingInformation Used to perform rapid pagination on a server side
    */
   public <T> CloseableIterator<StreamResult<T>> stream(Class<T> entityClass, Etag fromEtag, String startsWith, String matches, int start, int pageSize, RavenPagingInformation pagingInformation);
 
@@ -355,16 +358,20 @@ public interface ISyncAdvancedSessionOperation extends IAdvancedDocumentSessionO
    * Stream the results on the query to the client, converting them to
    * Java types along the way.
    * Does NOT track the entities in the session, and will not includes changes there when saveChanges() is called
-   * @param fromEtag
-   * @param startsWith
-   * @param matches
-   * @param start
-   * @param pageSize
+   * @param entityClass
+   * @param fromEtag ETag of a document from which stream should start
+   * @param startsWith Prefix for which documents should be returned e.g. "products/"
+   * @param matches Pipe ('|') separated values for which document keys (after 'keyPrefix') should be matched ('?' any single character, '*' any characters)
+   * @param start Number of documents that should be skipped
+   * @param pageSize Maximum number of documents that will be retrieved
+   * @param pagingInformation Used to perform rapid pagination on a server side
+   * @param skipAfter Skip document fetching until given key is found and return documents after that key (default: null)
    */
   public <T> CloseableIterator<StreamResult<T>> stream(Class<T> entityClass, Etag fromEtag, String startsWith, String matches, int start, int pageSize, RavenPagingInformation pagingInformation, String skipAfter);
 
   /**
-   * @param queries
+   * Sends a multiple faceted queries in a single request and calculates the facet results for each of them
+   * @param queries Array of the faceted queries that will be executed on the server-side
    */
   public FacetResults[] multiFacetedSearch(FacetQuery... queries);
 

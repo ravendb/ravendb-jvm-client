@@ -132,14 +132,14 @@ public interface IDocumentQueryBase<T, TSelf extends IDocumentQueryBase<T, TSelf
   public TSelf whereEquals (WhereParams whereParams);
 
   /**
-   * Check that the field has one of the specified value
+   * Check that the field has one of the specified values
    * @param fieldName
    * @param values
    */
   public TSelf whereIn(String fieldName, Collection<?> values);
 
   /**
-   * Check that the field has one of the specified value
+   * Check that the field has one of the specified values
    * @param propertySelector
    * @param values
    */
@@ -443,19 +443,21 @@ public interface IDocumentQueryBase<T, TSelf extends IDocumentQueryBase<T, TSelf
    * @param propertySelector The property to highlight.
    * @param fragmentLength The fragment length.
    * @param fragmentCount The maximum number of fragment for the field.
-   * @param highlightings
+   * @param highlightings Field highlightings for all results.
    */
   public <TValue> TSelf highlight(Expression<?> propertySelector, int fragmentLength, int fragmentCount, Reference<FieldHighlightings> highlightings);
 
   /**
-   * Adds matches highlighting for the specified field.
+   * Adds matches highlighting for the specified field on a Map/Reduce Index.
    *
-   * The specified field should be analysed and stored for highlighter to work.
+   * This is only valid for Map/Reduce Index querys.
+   * The specified fields should be analysed and stored for highlighter to work.
    * For each match it creates a fragment that contains matched text surrounded by highlighter tags.
    * @param propertySelector The property to highlight.
+   * @param keyPropertySelector The key property to associate highlights with.
    * @param fragmentLength The fragment length.
    * @param fragmentCount The maximum number of fragment for the field.
-   * @param highlightings
+   * @param highlightings Field highlightings for all results.
    */
   public <TValue> TSelf highlight(Expression<?> propertySelector, Expression<?> keyPropertySelector, int fragmentLength, int fragmentCount, Reference<FieldHighlightings> highlightings);
 
@@ -493,7 +495,7 @@ public interface IDocumentQueryBase<T, TSelf extends IDocumentQueryBase<T, TSelf
    *
    * This ensures that you'll always get the most relevant results for your scenarios using simple indexes (map only or dynamic queries).
    * However, when used to query map/reduce indexes, it does NOT guarantee that the document that this etag belong to is actually considered for the results.
-   * @param waitTimeout
+   * @param waitTimeout Maximum time to wait for index query results to become non-stale before exception is thrown.
    */
   public TSelf waitForNonStaleResultsAsOfLastWrite(long waitTimeout);
 
@@ -505,7 +507,7 @@ public interface IDocumentQueryBase<T, TSelf extends IDocumentQueryBase<T, TSelf
 
   /**
    * Instructs the query to wait for non stale results as of the cutoff date.
-   * @param cutOff The cut off.
+   * @param cutOff Index will be considered stale if modification date of last indexed document is greater than this value.
    */
   public TSelf waitForNonStaleResultsAsOf(Date cutOff);
 
@@ -519,6 +521,7 @@ public interface IDocumentQueryBase<T, TSelf extends IDocumentQueryBase<T, TSelf
   /**
    * Instructs the query to wait for non stale results as of the cutoff etag.
    *
+   * @param cutOffEtag
    * Cutoff etag is used to check if the index has already process a document with the given
    * etag. Unlike Cutoff, which uses dates and is susceptible to clock synchronization issues between
    * machines, cutoff etag doesn't rely on both the server and client having a synchronized clock and
@@ -530,13 +533,13 @@ public interface IDocumentQueryBase<T, TSelf extends IDocumentQueryBase<T, TSelf
    * considered to be an acceptable tradeoff.
    * If you need absolute no staleness with a map/reduce index, you will need to ensure synchronized clocks and
    * use the Cutoff date option, instead.
-   * @param cutOffEtag The cut off etag.
    */
   public TSelf waitForNonStaleResultsAsOf(Etag cutOffEtag);
 
   /**
    * Instructs the query to wait for non stale results as of the cutoff etag for the specified timeout.
    *
+   * @param cutOffEtag
    * Cutoff etag is used to check if the index has already process a document with the given
    * etag. Unlike Cutoff, which uses dates and is susceptible to clock synchronization issues between
    * machines, cutoff etag doesn't rely on both the server and client having a synchronized clock and
@@ -548,7 +551,6 @@ public interface IDocumentQueryBase<T, TSelf extends IDocumentQueryBase<T, TSelf
    * considered to be an acceptable tradeoff.
    * If you need absolute no staleness with a map/reduce index, you will need to ensure synchronized clocks and
    * use the Cutoff date option, instead.
-   * @param cutOffEtag the cut off etag.
    * @param waitTimeout Maximum time to wait for index query results to become non-stale before exception is thrown.
    */
   public TSelf waitForNonStaleResultsAsOf(Etag cutOffEtag, long waitTimeout);

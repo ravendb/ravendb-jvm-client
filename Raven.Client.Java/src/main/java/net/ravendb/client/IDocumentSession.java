@@ -101,8 +101,8 @@ public interface IDocumentSession extends AutoCloseable {
    * Load(Post.class, "posts/1");
    *
    * Or whatever your conventions specify.
-   * @param clazz
-   * @param id
+   * @param clazz Defines type of object
+   * @param id Identifier of a entity that will be loaded.
    */
   public <T> T load(Class<T> clazz, Number id);
 
@@ -117,8 +117,8 @@ public interface IDocumentSession extends AutoCloseable {
    * Load(Post.class, "posts/1");
    *
    * Or whatever your conventions specify.
-   * @param clazz
-   * @param id
+   * @param clazz Defines type of object
+   * @param id Identifier of a entity that will be loaded.
    */
   public <T> T load(Class<T> clazz, UUID id);
 
@@ -132,8 +132,8 @@ public interface IDocumentSession extends AutoCloseable {
    * Load(Post.class, "posts/1","posts/2","posts/3");
    *
    * Or whatever your conventions specify.
-   * @param clazz
-   * @param ids
+   * @param clazz Defines type of object
+   * @param ids Collection of Ids that should be loaded
    */
   public <T> T[] load(Class<T> clazz, Number... ids);
 
@@ -147,21 +147,21 @@ public interface IDocumentSession extends AutoCloseable {
    * Load(Post.class, "posts/1","posts/2","posts/3");
    *
    * Or whatever your conventions specify.
-   * @param clazz
-   * @param ids
+   * @param clazz Defines type of object
+   * @param ids Collection of Ids that should be loaded
    */
   public <T> T[] load(Class<T> clazz, UUID... ids);
 
   /**
    * Queries the specified index.
-   * @param clazz
+   * @param clazz Defines type of object
    * @param indexName Name of the index.
    */
   public <T> IRavenQueryable<T> query(Class<T> clazz, String indexName);
 
   /**
    * Queries the specified index.
-   * @param clazz
+   * @param clazz Defines type of object
    * @param indexName Name of the index.
    * @param isMapReduce Whatever we are querying a map/reduce index (modify how we treat identifier properties)
    */
@@ -169,13 +169,13 @@ public interface IDocumentSession extends AutoCloseable {
 
   /**
    * Dynamically queries RavenDB.
-   * @param clazz
+   * @param clazz Defines type of object
    */
   public <T> IRavenQueryable<T> query(Class<T> clazz);
 
   /**
    * Queries the index specified by indexCreator.
-   * @param clazz
+   * @param clazz Defines type of object
    * @param indexCreator
    */
   public <T> IRavenQueryable<T> query(Class<T> clazz, Class<? extends AbstractIndexCreationTask> indexCreator);
@@ -203,7 +203,7 @@ public interface IDocumentSession extends AutoCloseable {
    * Performs a load that will use the specified results transformer against the specified id
    * @param tranformerClass The transformer to use in this load operation
    * @param clazz The results shape to return after the load operation
-   * @param id
+   * @param id Identifier of a entity that will be loaded.
    */
   public <TResult, TTransformer extends AbstractTransformerCreationTask> TResult load(Class<TTransformer> tranformerClass,
       Class<TResult> clazz, String id);
@@ -212,8 +212,8 @@ public interface IDocumentSession extends AutoCloseable {
    * Performs a load that will use the specified results transformer against the specified id
    * @param tranformerClass The transformer to use in this load operation
    * @param clazz The results shape to return after the load operation
-   * @param id
-   * @param configure
+   * @param id Identifier of a entity that will be loaded.
+   * @param configure Additional configuration options for operation e.g. AddTransformerParameter
    */
   public <TResult, TTransformer extends AbstractTransformerCreationTask> TResult load(Class<TTransformer> tranformerClass,
       Class<TResult> clazz, String id, LoadConfigurationFactory configure);
@@ -222,7 +222,7 @@ public interface IDocumentSession extends AutoCloseable {
    * Performs a load that will use the specified results transformer against the specified id
    * @param tranformerClass The transformer to use in this load operation
    * @param clazz The results shape to return after the load operation
-   * @param ids
+   * @param ids Array of ids of documents to load
    */
   public <TResult, TTransformer extends AbstractTransformerCreationTask> TResult[] load(Class<TTransformer> tranformerClass,
       Class<TResult> clazz, String... ids);
@@ -231,8 +231,8 @@ public interface IDocumentSession extends AutoCloseable {
    * Performs a load that will use the specified results transformer against the specified id
    * @param tranformerClass The transformer to use in this load operation
    * @param clazz The results shape to return after the load operation
-   * @param ids
-   * @param configure
+   * @param ids Array of ids of documents to load
+   * @param configure Additional configuration options for operation e.g. AddTransformerParameter
    */
   public <TResult, TTransformer extends AbstractTransformerCreationTask> TResult[] load(Class<TTransformer> tranformerClass,
       Class<TResult> clazz, List<String> ids, LoadConfigurationFactory configure);
@@ -240,34 +240,34 @@ public interface IDocumentSession extends AutoCloseable {
   /**
    * Performs a load that will use the specified results transformer against the specified id
    * @param clazz The results shape to return after the load operation
-   * @param transformer
-   * @param id
+   * @param transformer The transformer to use in this load operation
+   * @param id Identifier of a entity that will be loaded.
    */
   public <TResult> TResult load(Class<TResult> clazz, String transformer, String id);
 
   /**
    * Performs a load that will use the specified results transformer against the specified id
    * @param clazz The results shape to return after the load operation
-   * @param transformer
-   * @param id
-   * @param configure
+   * @param transformer The transformer to use in this load operation
+   * @param id Identifier of a entity that will be loaded.
+   * @param configure Additional configuration options for operation e.g. AddTransformerParameter
    */
   public <TResult> TResult load(Class<TResult> clazz, String transformer, String id, LoadConfigurationFactory configure);
 
   /**
    * Performs a load that will use the specified results transformer against the specified id
    * @param clazz The results shape to return after the load operation
-   * @param transformer
-   * @param ids
+   * @param transformer The transformer to use in this load operation
+   * @param ids Array of ids of documents to load
    */
   public <TResult> TResult[] load(Class<TResult> clazz, String transformer, Collection<String> ids);
 
   /**
    * Performs a load that will use the specified results transformer against the specified id
    * @param clazz The results shape to return after the load operation
-   * @param transformer
-   * @param ids
-   * @param configure
+   * @param transformer The transformer to use in this load operation
+   * @param ids Array of ids of documents to load
+   * @param configure Additional configuration options for operation e.g. AddTransformerParameter
    */
   public <TResult> TResult[] load(Class<TResult> clazz, String transformer, Collection<String> ids, LoadConfigurationFactory configure);
 
@@ -301,9 +301,9 @@ public interface IDocumentSession extends AutoCloseable {
 
   /**
    * Stores the specified entity with the specified etag, under the specified id
-   * @param entity
+   * @param entity Entity to store.
    * @param etag
-   * @param id
+   * @param id Id to store this entity under. If other entity exists with the same id it will be overridden.
    */
   public void store(Object entity, Etag etag, String id);
 

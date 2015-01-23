@@ -17,7 +17,7 @@ import com.mysema.query.types.Path;
  */
 public interface IRavenQueryable<T> extends IOrderedQueryable<T>, LinqExtensionsQueryable<T> {
   /**
-   * Provide statistics about the query, such as total count of matching records
+   * Provide statistics about the query, such as duration, total number of results, staleness information, etc.
    * @param stats
    * @return IRavenQueryable
    */

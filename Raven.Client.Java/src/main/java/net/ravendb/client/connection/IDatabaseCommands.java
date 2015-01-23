@@ -180,14 +180,9 @@ public interface IDatabaseCommands extends IHoldProfilingInformation {
   public QueryResult query(String index, IndexQuery query, String[] includes, boolean metadataOnly, boolean indexEntriesOnly);
 
   /**
-<<<<<<< HEAD
    * Sends multiple operations in a single request, reducing the number of remote calls and allowing several operations to share same transaction
    * @param commandDatas Commands to process
-=======
-   * Executed the specified commands as a single batch
-   * @param commandDatas
    * @throws IOException
->>>>>>> origin/master
    */
   public BatchResult[] batch(final List<ICommandData> commandDatas) throws IOException;
 
@@ -276,6 +271,7 @@ public interface IDatabaseCommands extends IHoldProfilingInformation {
 
   /**
    * Lets you check if the given index definition differs from the one on a server.
+   *
    * This might be useful when you want to check the prior index deployment, if index will be overwritten, and if
    * indexing data will be lost.
    * Returns:
@@ -317,6 +313,7 @@ public interface IDatabaseCommands extends IHoldProfilingInformation {
 
   /**
    * Puts the document in the database with the specified key.
+   *
    * Returns PutResult where:
    * - Key - unique key under which document was stored,
    * - Etag - stored document etag
@@ -359,7 +356,7 @@ public interface IDatabaseCommands extends IHoldProfilingInformation {
 
   /**
    * Sends a patch request for a specific document
-   * @param key Id of the document to patch<
+   * @param key Id of the document to patch
    * @param patches Array of patch requests
    * @param etag Require specific Etag [null to ignore]
    */
@@ -786,11 +783,9 @@ public interface IDatabaseCommands extends IHoldProfilingInformation {
 
   /**
    * Retrieves the document metadata for the specified document key.
+   *
    * Returns:
-   * The document metadata for the specified document, or <c>null</c> if the document does not exist
-   * <p>
    * The document metadata for the specified document, or null if the document does not exist
-   * </p>
    * @param key Key of a document to get metadata for
    * @return The document metadata for the specified document, or null if the document does not exist
    */
@@ -840,6 +835,10 @@ public interface IDatabaseCommands extends IHoldProfilingInformation {
    */
   public HttpJsonRequest createRequest(HttpMethods method, String requestUrl);
 
+  /**
+   * Gets the build number
+   * @throws IOException
+   */
   public BuildNumber getBuildNumber() throws IOException;
 
 }

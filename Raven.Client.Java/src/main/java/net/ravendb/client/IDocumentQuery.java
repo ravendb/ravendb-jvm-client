@@ -31,8 +31,8 @@ public interface IDocumentQuery<T> extends IDocumentQueryBase<T, IDocumentQuery<
   /**
    * Selects the specified fields directly from the index if the are stored. If the field is not stored in index, value will come from document directly.
    * @param projectionClass The class of the projection
-   * @param fields
-   * @param projections
+   * @param fields Array of fields to load.
+   * @param projections Array of field projections.
    */
   public <TProjection> IDocumentQuery<TProjection> selectFields(Class<TProjection> projectionClass, String[] fields, String[] projections);
 
@@ -45,7 +45,7 @@ public interface IDocumentQuery<T> extends IDocumentQueryBase<T, IDocumentQuery<
   public <TProjection> IDocumentQuery<TProjection> selectFields(Class<TProjection> projectionClass);
 
   /**
-   * Sets user defined inputs to the query
+   * Get the facets as per the specified facets with the given start and pageSize
    * @param transformerParameter
    */
   public void setTransformerParameters(Map<String, RavenJToken> transformerParameter);

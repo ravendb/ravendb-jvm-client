@@ -79,6 +79,9 @@ public interface IDatabaseChanges extends IConnectableChanges {
    */
   public IObservable<BulkInsertChangeNotification> forBulkInsert(UUID operationId);
 
+  /**
+   * Subscribe to all bulk insert operation changes
+   */
   public IObservable<BulkInsertChangeNotification> forBulkInsert();
 
 }

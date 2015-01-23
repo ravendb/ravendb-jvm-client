@@ -29,7 +29,7 @@ public interface IAdvancedDocumentSessionOperations {
   public boolean isLoaded(String id);
 
   /**
-   * Gets or sets a value indicating whether the session should use optimistic concurrency.
+   * Gets a value indicating whether the session should use optimistic concurrency.
    * When set to true, a check is made so that a change made behind the session back would fail
    * and raise {@link ConcurrencyException}.
    */
@@ -169,7 +169,7 @@ public interface IAdvancedDocumentSessionOperations {
   public void defer(ICommandData... commands);
 
   /**
-   * Version this entity when it is saved.  Use when Versioning bundle configured to ExcludeUnlessExplicit.
+   * Version this entity when it is saved. Use when Versioning bundle configured to ExcludeUnlessExplicit.
    * @param entity Entity to version.
    */
   public void explicitlyVersion(Object entity);

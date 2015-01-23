@@ -184,45 +184,46 @@ public interface ILazySessionOperations {
 
   /**
    * Load documents with the specified key prefix
-   * @param clazz
-   * @param keyPrefix
+   * @param clazz Defines type of object
+   * @param keyPrefix Loads multiple entities that contain common prefix.
    */
   public <TResult> Lazy<TResult[]> loadStartingWith(Class<TResult> clazz, String keyPrefix);
 
   /**
    * Load documents with the specified key prefix
-   * @param clazz
-   * @param keyPrefix
-   * @param matches
+   * @param clazz Defines type of object
+   * @param keyPrefix Loads multiple entities that contain common prefix.
+   * @param matches Pipe ('|') separated values for which document keys (after 'keyPrefix') should be matched ('?' any single character, '*' any characters)
    */
   public <TResult> Lazy<TResult[]> loadStartingWith(Class<TResult> clazz, String keyPrefix, String matches);
 
   /**
    * Load documents with the specified key prefix
-   * @param clazz
-   * @param keyPrefix
-   * @param matches
-   * @param start
+   * @param clazz Defines type of object
+   * @param keyPrefix Loads multiple entities that contain common prefix.
+   * @param matches Pipe ('|') separated values for which document keys (after 'keyPrefix') should be matched ('?' any single character, '*' any characters)
+   * @param start Number of documents that should be skipped. By default: 0.
    */
   public <TResult> Lazy<TResult[]> loadStartingWith(Class<TResult> clazz, String keyPrefix, String matches, int start);
 
   /**
    * Load documents with the specified key prefix
-   * @param clazz
-   * @param keyPrefix
-   * @param matches
-   * @param start
-   * @param pageSize
+   * @param clazz Defines type of object
+   * @param keyPrefix Loads multiple entities that contain common prefix.
+   * @param matches Pipe ('|') separated values for which document keys (after 'keyPrefix') should be matched ('?' any single character, '*' any characters)
+   * @param start Number of documents that should be skipped. By default: 0.
+   * @param pageSize Maximum number of documents that will be retrieved. By default: 25.
    */
   public <TResult> Lazy<TResult[]> loadStartingWith(Class<TResult> clazz, String keyPrefix, String matches, int start, int pageSize);
 
   /**
    * Load documents with the specified key prefix
    * @param clazz Defines type of object
-   * @param keyPrefix
-   * @param matches
-   * @param start
-   * @param pageSize
+   * @param keyPrefix Loads multiple entities that contain common prefix.
+   * @param matches Pipe ('|') separated values for which document keys (after 'keyPrefix') should be matched ('?' any single character, '*' any characters)
+   * @param start Number of documents that should be skipped. By default: 0.
+   * @param pageSize Maximum number of documents that will be retrieved. By default: 25.
+   * @param exclude Pipe ('|') separated values for which document keys (after 'keyPrefix') should not be matched ('?' any single character, '*' any characters)
    */
   public <TResult> Lazy<TResult[]> loadStartingWith(Class<TResult> clazz, String keyPrefix, String matches, int start, int pageSize, String exclude);
 
@@ -233,6 +234,8 @@ public interface ILazySessionOperations {
    * @param matches Pipe ('|') separated values for which document keys (after 'keyPrefix') should be matched ('?' any single character, '*' any characters)
    * @param start Number of documents that should be skipped. By default: 0.
    * @param pageSize Maximum number of documents that will be retrieved. By default: 25.
+   * @param exclude Pipe ('|') separated values for which document keys (after 'keyPrefix') should not be matched ('?' any single character, '*' any characters)
+   * @param pagingInformation Used to perform rapid pagination on a server side
    */
   public <TResult> Lazy<TResult[]> loadStartingWith(Class<TResult> clazz, String keyPrefix, String matches, int start, int pageSize, String exclude, RavenPagingInformation pagingInformation);
 
@@ -254,7 +257,7 @@ public interface ILazySessionOperations {
   /**
    * Performs a load that will use the specified results transformer against the specified id
    * @param tranformerClass The transformer to use in this load operation
-   * @param clazz
+   * @param clazz Defines type of object
    * @param id Id of a entity to load
    * @param configure Additional configuration options for operation e.g. AddTransformerParameter
    */
@@ -264,7 +267,7 @@ public interface ILazySessionOperations {
   /**
    * Performs a load that will use the specified results transformer against the specified id
    * @param tranformerClass The transformer to use in this load operation
-   * @param clazz
+   * @param clazz Defines type of object
    * @param ids Array of ids of documents to load
    * @param configure Additional configuration options for operation e.g. AddTransformerParameter
    */
