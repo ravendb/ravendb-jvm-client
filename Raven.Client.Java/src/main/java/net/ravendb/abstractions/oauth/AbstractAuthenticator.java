@@ -21,7 +21,6 @@ public abstract class AbstractAuthenticator {
   }
 
   protected void setAuthorization(HttpClient httpClient) {
-    //TODO: is it ok ?
     if (StringUtils.isEmpty(currentOauthToken)) {
       return;
     }

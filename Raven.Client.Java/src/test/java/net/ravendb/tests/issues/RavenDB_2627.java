@@ -10,6 +10,7 @@ import net.ravendb.abstractions.data.SubscriptionConfig;
 import net.ravendb.abstractions.data.SubscriptionConnectionOptions;
 import net.ravendb.abstractions.data.SubscriptionCriteria;
 import net.ravendb.abstractions.exceptions.subscriptions.SubscriptionDoesNotExistExeption;
+import net.ravendb.abstractions.exceptions.subscriptions.SubscriptionInUseException;
 import net.ravendb.client.IDocumentStore;
 import net.ravendb.client.RemoteClientTest;
 import net.ravendb.client.document.DocumentStore;
@@ -68,7 +69,7 @@ public class RavenDB_2627 extends RemoteClientTest {
       try {
         store.getSubscriptions().open(1, new SubscriptionConnectionOptions());
         fail();
-      } catch (SubscriptionDoesNotExistExeption e) {
+      } catch (SubscriptionInUseException e) {
         assertEquals("Subscription is already in use. There can be only a single open subscription connection per subscription.", e.getMessage());
       }
     }
@@ -78,19 +79,6 @@ public class RavenDB_2627 extends RemoteClientTest {
    * private readonly TimeSpan waitForDocTimeout = TimeSpan.FromSeconds(20);
 
 
-
-        [Fact]
-        public void ShouldThrowOnAttemptToOpenAlreadyOpenedSubscription()
-        {
-            using (var store = NewDocumentStore())
-            {
-                var id = store.Subscriptions.Create(new SubscriptionCriteria());
-                store.Subscriptions.Open(id, new SubscriptionConnectionOptions());
-
-                var ex = Assert.Throws<SubscriptionInUseException>(() => store.Subscriptions.Open(id, new SubscriptionConnectionOptions()));
-                Assert.Equal("Subscription is already in use. There can be only a single open subscription connection per subscription.", ex.Message);
-            }
-        }
 
         [Fact]
         public void ShouldStreamAllDocumentsAfterSubscriptionCreation()

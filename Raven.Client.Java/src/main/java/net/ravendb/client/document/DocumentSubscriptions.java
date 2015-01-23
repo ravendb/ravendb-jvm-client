@@ -189,18 +189,16 @@ public class DocumentSubscriptions implements IReliableSubscriptions {
       ErrorResponseException opException = (ErrorResponseException) ere;
 
       try {
-        String cause = opException.getResponseString();
-
         if (opException.getStatusCode() == SubscriptionDoesNotExistExeption.RELEVANT_HTTP_STATUS_CODE) {
-          return new SubscriptionDoesNotExistExeption(cause);
+          return new SubscriptionDoesNotExistExeption(opException.getResponseString());
         }
 
         if (opException.getStatusCode() == SubscriptionInUseException.RELEVANT_HTTP_STATUS_CODE) {
-          return new SubscriptionInUseException(cause);
+          return new SubscriptionInUseException(opException.getMessage());
         }
 
         if (opException.getStatusCode() == SubscriptionClosedException.RELEVANT_HTTP_STATUS_CODE) {
-          return new SubscriptionClosedException(cause);
+          return new SubscriptionClosedException(opException.getMessage());
         }
       } catch (Exception e) {
         return null;
