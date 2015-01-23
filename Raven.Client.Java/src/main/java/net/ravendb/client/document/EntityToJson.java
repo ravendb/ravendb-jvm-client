@@ -4,6 +4,7 @@ import java.lang.reflect.Field;
 import java.util.IdentityHashMap;
 import java.util.Map;
 
+import net.ravendb.abstractions.basic.CleanCloseable;
 import net.ravendb.abstractions.data.Constants;
 import net.ravendb.abstractions.json.linq.RavenJObject;
 import net.ravendb.abstractions.json.linq.RavenJToken;
@@ -112,14 +113,14 @@ public class EntityToJson {
    * Note: This assumes that no modifications can happen during the SaveChanges. This is naturally true
    * Note: for SaveChanges (and multi threaded access will cause undefined behavior anyway).
    */
-  public AutoCloseable entitiesToJsonCachingScope() {
+  public CleanCloseable entitiesToJsonCachingScope() {
     cachedJsonDocs = new IdentityHashMap<>();
     return new DisposeCachedJsonDocs();
   }
 
-  protected class DisposeCachedJsonDocs implements AutoCloseable {
+  protected class DisposeCachedJsonDocs implements CleanCloseable {
     @Override
-    public void close() throws Exception {
+    public void close() {
       cachedJsonDocs = null;
     }
   }

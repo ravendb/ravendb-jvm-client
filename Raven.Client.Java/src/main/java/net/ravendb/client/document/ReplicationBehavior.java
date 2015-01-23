@@ -11,6 +11,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeoutException;
 
+import net.ravendb.abstractions.basic.CleanCloseable;
 import net.ravendb.abstractions.closure.Function1;
 import net.ravendb.abstractions.connection.OperationCredentials;
 import net.ravendb.abstractions.data.DatabaseStatistics;
@@ -34,7 +35,7 @@ import net.ravendb.client.utils.TimeSpan;
 import org.apache.commons.lang.StringUtils;
 
 
-public class ReplicationBehavior implements AutoCloseable {
+public class ReplicationBehavior implements CleanCloseable {
   private final DocumentStore documentStore;
 
   private ExecutorService executor;
@@ -193,7 +194,7 @@ public class ReplicationBehavior implements AutoCloseable {
   }
 
   @Override
-  public void close() throws Exception {
+  public void close() {
     if (executor != null) {
       executor.shutdownNow();
     }

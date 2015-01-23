@@ -23,6 +23,7 @@ import net.ravendb.abstractions.data.DocumentChangeTypes;
 import net.ravendb.abstractions.data.HttpMethods;
 import net.ravendb.abstractions.json.linq.RavenJObject;
 import net.ravendb.abstractions.json.linq.RavenJToken;
+import net.ravendb.abstractions.util.TimeUtils;
 import net.ravendb.client.changes.IDatabaseChanges;
 import net.ravendb.client.changes.IObserver;
 import net.ravendb.client.connection.ServerClient;
@@ -368,12 +369,16 @@ public class RemoteBulkInsertOperation implements ILowLevelBulkInsertOperation, 
 
 
   @Override
-  public void close() throws InterruptedException {
+  public void close() {
     if (disposed) {
       return ;
     }
     queue.add(END_OF_QUEUE_OBJECT);
-    operationTask.join();
+    try {
+      operationTask.join();
+    } catch (InterruptedException e) {
+      throw new IllegalStateException(e);
+    }
 
     if (operationTaskException != null) {
       throw new RuntimeException(operationTaskException);
@@ -385,7 +390,7 @@ public class RemoteBulkInsertOperation implements ILowLevelBulkInsertOperation, 
       if (isOperationCompleted(responseOperationId)) {
         break;
       }
-      Thread.sleep(500);
+      TimeUtils.cleanSleep(500);
     }
     reportInternal("Done writing to server");
   }

@@ -449,56 +449,52 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
    * @param metadata
    */
   public Object convertToEntity(Class<?> entityType, String id, RavenJObject documentFound, RavenJObject metadata) {
-    try {
-      if (RavenJObject.class.equals(entityType)) {
-        return documentFound.cloneToken();
-      }
-      for (IDocumentConversionListener extendedDocumentConversionListener: theListeners.getConversionListeners()) {
-        extendedDocumentConversionListener.beforeConversionToEntity(id, documentFound, metadata);
-      }
-
-      Object defaultValue = getDefaultValue(entityType);
-      Object entity = defaultValue;
-      ensureNotReadVetoed(metadata);
-
-      AutoCloseable disposable = null;
-      DefaultRavenContractResolver defaultRavenContractResolver = (DefaultRavenContractResolver) getConventions().getJsonContractResolver();
-      if (defaultRavenContractResolver != null && getConventions().isPreserveDocumentPropertiesNotFoundOnModel()) {
-        disposable = defaultRavenContractResolver.registerForExtensionData(new Action3<Object, String, RavenJToken>() {
-          @Override
-          public void apply(Object o, String key, RavenJToken value) {
-            registerMissingProperties(o, key, value);
-          }
-        });
-      }
-
-      try {
-        String documentType = getConventions().getJavaClass(id, documentFound, metadata);
-        if (documentType != null) {
-          Class< ? > type = Class.forName(documentType);
-          if (type != null) {
-            entity = getConventions().createSerializer().deserialize(documentFound, type);
-          }
-        }
-
-        if (Objects.equals(entity, defaultValue)) {
-          entity = getConventions().createSerializer().deserialize(documentFound, entityType);
-        }
-
-        generateEntityIdOnTheClient.trySetIdentity(entity, id);
-        for (IDocumentConversionListener extendedDocumentConversionListener: theListeners.getConversionListeners()) {
-          extendedDocumentConversionListener.afterConversionToEntity(id, documentFound, metadata, entity);
-        }
-
-        return entity;
-      } finally {
-        Closer.close(disposable);
-      }
-
-    } catch (Exception e) {
-      throw new RuntimeException(e);
+    if (RavenJObject.class.equals(entityType)) {
+      return documentFound.cloneToken();
+    }
+    for (IDocumentConversionListener extendedDocumentConversionListener: theListeners.getConversionListeners()) {
+      extendedDocumentConversionListener.beforeConversionToEntity(id, documentFound, metadata);
     }
 
+    Object defaultValue = getDefaultValue(entityType);
+    Object entity = defaultValue;
+    ensureNotReadVetoed(metadata);
+
+    CleanCloseable disposable = null;
+    DefaultRavenContractResolver defaultRavenContractResolver = (DefaultRavenContractResolver) getConventions().getJsonContractResolver();
+    if (defaultRavenContractResolver != null && getConventions().isPreserveDocumentPropertiesNotFoundOnModel()) {
+      disposable = defaultRavenContractResolver.registerForExtensionData(new Action3<Object, String, RavenJToken>() {
+        @Override
+        public void apply(Object o, String key, RavenJToken value) {
+          registerMissingProperties(o, key, value);
+        }
+      });
+    }
+
+    try {
+      String documentType = getConventions().getJavaClass(id, documentFound, metadata);
+      if (documentType != null) {
+        Class< ? > type = Class.forName(documentType);
+        if (type != null) {
+          entity = getConventions().createSerializer().deserialize(documentFound, type);
+        }
+      }
+
+      if (Objects.equals(entity, defaultValue)) {
+        entity = getConventions().createSerializer().deserialize(documentFound, entityType);
+      }
+
+      generateEntityIdOnTheClient.trySetIdentity(entity, id);
+      for (IDocumentConversionListener extendedDocumentConversionListener: theListeners.getConversionListeners()) {
+        extendedDocumentConversionListener.afterConversionToEntity(id, documentFound, metadata, entity);
+      }
+
+      return entity;
+    } catch (ClassNotFoundException e) {
+      throw new IllegalStateException(e);
+    } finally {
+      Closer.close(disposable);
+    }
   }
 
   private void registerMissingProperties(Object o, String key, RavenJToken value) {

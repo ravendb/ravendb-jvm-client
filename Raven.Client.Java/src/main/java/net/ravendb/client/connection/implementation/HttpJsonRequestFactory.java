@@ -37,7 +37,7 @@ import com.google.common.io.Closeables;
  * Create the HTTP Json Requests to the RavenDB Server
  * and manages the http cache
  */
-public class HttpJsonRequestFactory implements AutoCloseable {
+public class HttpJsonRequestFactory implements CleanCloseable {
 
   private CloseableHttpClient httpClient;
 

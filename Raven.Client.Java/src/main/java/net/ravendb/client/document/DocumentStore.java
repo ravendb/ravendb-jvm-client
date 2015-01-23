@@ -336,7 +336,7 @@ public class DocumentStore extends DocumentStoreBase {
         getDatabaseCommands().forSystemDatabase().getGlobalAdmin().ensureDatabaseExists(defaultDatabase, true);
       }
     } catch (Exception e) {
-      Closer.close(this);
+      this.close();
       throw e;
     }
 
@@ -609,7 +609,7 @@ public class DocumentStore extends DocumentStoreBase {
   public void setMaxNumberOfCachedRequests(int value) {
     maxNumberOfCachedRequests = value;
     if (jsonRequestFactory != null) {
-      Closer.close(jsonRequestFactory);
+      jsonRequestFactory.close();
     }
     jsonRequestFactory = initializeJsonRequestFactory();
   }

@@ -806,7 +806,7 @@ public interface IDatabaseCommands extends IHoldProfilingInformation {
   /**
    * Force the database commands to read directly from the master, unless there has been a failover.
    */
-  public AutoCloseable forceReadFromMaster();
+  public CleanCloseable forceReadFromMaster();
 
   /**
    * Get the low level bulk insert operation

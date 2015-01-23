@@ -2,6 +2,7 @@ package net.ravendb.tests.faceted;
 
 import java.io.IOException;
 
+import net.ravendb.abstractions.basic.CleanCloseable;
 import net.ravendb.abstractions.basic.Reference;
 import net.ravendb.abstractions.data.Etag;
 import net.ravendb.client.connection.HttpExtensions;
@@ -16,8 +17,10 @@ import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.util.EntityUtils;
 
+import com.google.common.io.Closeables;
 
-public class ConditionalGetHelper implements AutoCloseable {
+
+public class ConditionalGetHelper implements CleanCloseable {
   private CloseableHttpClient httpClient;
 
   public ConditionalGetHelper() {
@@ -69,7 +72,7 @@ public class ConditionalGetHelper implements AutoCloseable {
   }
 
   @Override
-  public void close() throws Exception {
-    httpClient.close();
+  public void close() {
+    Closeables.closeQuietly(httpClient);
   }
 }

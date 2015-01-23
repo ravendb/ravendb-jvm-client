@@ -37,7 +37,7 @@ public class LoadOperation {
     log.debug("Loading document [%s] from %s", id, sessionOperations.getStoreIdentifier());
   }
 
-  public AutoCloseable enterLoadContext() {
+  public CleanCloseable enterLoadContext() {
     if (firstRequest == false) { // if this is a repeated request, we mustn't use the cached result, but have to re-query the server
       return disableAllCaching.apply();
     }

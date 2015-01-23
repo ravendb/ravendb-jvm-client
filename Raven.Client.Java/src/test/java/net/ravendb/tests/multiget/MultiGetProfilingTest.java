@@ -6,6 +6,7 @@ import static org.junit.Assert.fail;
 
 import java.util.UUID;
 
+import net.ravendb.abstractions.basic.CleanCloseable;
 import net.ravendb.abstractions.data.GetResponse;
 import net.ravendb.abstractions.extensions.JsonExtensions;
 import net.ravendb.client.IDocumentSession;
@@ -164,7 +165,7 @@ public class MultiGetProfilingTest extends RemoteClientTest {
       }
 
       try (IDocumentSession session = store.openSession()) {
-        try (AutoCloseable scope = session.advanced().getDocumentStore().aggressivelyCacheFor(5 * 60 * 1000)) {
+        try (CleanCloseable scope = session.advanced().getDocumentStore().aggressivelyCacheFor(5 * 60 * 1000)) {
           session.load(User.class, "users/1");
         }
       }
@@ -173,7 +174,7 @@ public class MultiGetProfilingTest extends RemoteClientTest {
       try (IDocumentSession session = store.openSession()) {
         id = ((DocumentSession)session).getDatabaseCommands().getProfilingInformation().getId();
 
-        try (AutoCloseable scope = session.advanced().getDocumentStore().aggressivelyCacheFor(5 * 60 * 1000)) {
+        try (CleanCloseable scope = session.advanced().getDocumentStore().aggressivelyCacheFor(5 * 60 * 1000)) {
           session.advanced().lazily().load(User.class, "users/1");
           session.advanced().lazily().load(User.class, "users/2");
 
@@ -211,7 +212,7 @@ public class MultiGetProfilingTest extends RemoteClientTest {
       }
 
       try (IDocumentSession session = store.openSession()) {
-        try (AutoCloseable scope = session.advanced().getDocumentStore().aggressivelyCacheFor(5 * 60 * 1000)) {
+        try (CleanCloseable scope = session.advanced().getDocumentStore().aggressivelyCacheFor(5 * 60 * 1000)) {
           session.load(User.class, "users/1");
           session.load(User.class, "users/2");
         }
@@ -221,7 +222,7 @@ public class MultiGetProfilingTest extends RemoteClientTest {
       try (IDocumentSession session = store.openSession()) {
         id = ((DocumentSession)session).getDatabaseCommands().getProfilingInformation().getId();
 
-        try (AutoCloseable scope = session.advanced().getDocumentStore().aggressivelyCacheFor(5 * 60 * 1000)) {
+        try (CleanCloseable scope = session.advanced().getDocumentStore().aggressivelyCacheFor(5 * 60 * 1000)) {
           session.advanced().lazily().load(User.class, "users/1");
           session.advanced().lazily().load(User.class, "users/2");
 

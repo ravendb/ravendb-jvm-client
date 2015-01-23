@@ -11,6 +11,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 
+import net.ravendb.abstractions.basic.CleanCloseable;
 import net.ravendb.abstractions.closure.Action0;
 import net.ravendb.abstractions.closure.Action1;
 import net.ravendb.abstractions.closure.Action3;
@@ -76,7 +77,7 @@ import org.apache.http.impl.client.CloseableHttpClient;
 import com.google.common.io.Closeables;
 
 
-public class HttpJsonRequest implements AutoCloseable {
+public class HttpJsonRequest implements CleanCloseable {
 
   public static final int MINIMUM_SERVER_VERSION = 3000;
   public static final int CUSTOM_BUILD_VERSION = 13;

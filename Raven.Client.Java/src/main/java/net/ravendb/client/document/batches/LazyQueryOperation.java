@@ -3,6 +3,7 @@ package net.ravendb.client.document.batches;
 import java.util.Map;
 import java.util.Set;
 
+import net.ravendb.abstractions.basic.CleanCloseable;
 import net.ravendb.abstractions.closure.Action1;
 import net.ravendb.abstractions.data.GetRequest;
 import net.ravendb.abstractions.data.GetResponse;
@@ -107,7 +108,7 @@ public class LazyQueryOperation<T> implements ILazyOperation {
   }
 
   @Override
-  public AutoCloseable enterContext() {
+  public CleanCloseable enterContext() {
     return queryOperation.enterQueryContext();
   }
 

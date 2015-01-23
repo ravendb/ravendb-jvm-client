@@ -3,6 +3,7 @@ package net.ravendb.client.document;
 import java.io.IOException;
 import java.util.List;
 
+import net.ravendb.abstractions.basic.CleanCloseable;
 import net.ravendb.abstractions.data.Facet;
 import net.ravendb.abstractions.data.FacetResults;
 import net.ravendb.abstractions.data.GetRequest;
@@ -115,7 +116,7 @@ public class LazyFacetsOperation implements ILazyOperation {
   }
 
   @Override
-  public AutoCloseable enterContext() {
+  public CleanCloseable enterContext() {
     return null;
   }
 

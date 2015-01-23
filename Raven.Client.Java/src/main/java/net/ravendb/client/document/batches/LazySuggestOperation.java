@@ -2,6 +2,7 @@ package net.ravendb.client.document.batches;
 
 import java.util.List;
 
+import net.ravendb.abstractions.basic.CleanCloseable;
 import net.ravendb.abstractions.basic.SharpEnum;
 import net.ravendb.abstractions.data.Constants;
 import net.ravendb.abstractions.data.GetRequest;
@@ -79,7 +80,7 @@ public class LazySuggestOperation implements ILazyOperation {
   }
 
   @Override
-  public AutoCloseable enterContext() {
+  public CleanCloseable enterContext() {
     return null;
   }
 }

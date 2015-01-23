@@ -66,6 +66,7 @@ import org.apache.commons.lang.NullArgumentException;
 import org.apache.commons.lang.StringUtils;
 
 import com.google.common.base.Defaults;
+import com.google.common.io.Closeables;
 import com.mysema.query.types.Expression;
 import com.mysema.query.types.Path;
 
@@ -164,12 +165,10 @@ public class DocumentSession extends InMemoryDocumentSessionOperations implement
     boolean retry;
     do {
       loadOperation.logOperation();
-      try (AutoCloseable close = loadOperation.enterLoadContext()) {
+      try (CleanCloseable close = loadOperation.enterLoadContext()) {
         retry = loadOperation.setResult(databaseCommands.get(id));
       } catch (ConflictException e) {
         throw e;
-      } catch (Exception e) {
-        throw new RuntimeException(e);
       }
     } while (retry);
     return loadOperation.complete(clazz);
@@ -269,10 +268,8 @@ public class DocumentSession extends InMemoryDocumentSessionOperations implement
     MultiLoadResult multiLoadResult = null;
     do {
       multiLoadOperation.logOperation();
-      try (AutoCloseable context = multiLoadOperation.enterMultiLoadContext()) {
+      try (CleanCloseable context = multiLoadOperation.enterMultiLoadContext()) {
         multiLoadResult = databaseCommands.get(ids, includePaths.toArray(new String[0]));
-      } catch (Exception e) {
-        throw new RuntimeException(e);
       }
     } while (multiLoadOperation.setResult(multiLoadResult));
 
@@ -299,10 +296,8 @@ public class DocumentSession extends InMemoryDocumentSessionOperations implement
       MultiLoadResult multiLoadResult = null;
       do {
         multiLoadOperation.logOperation();
-        try (AutoCloseable context = multiLoadOperation.enterMultiLoadContext()) {
+        try (CleanCloseable context = multiLoadOperation.enterMultiLoadContext()) {
           multiLoadResult = databaseCommands.get(idsOfNotExistingObjects.toArray(new String[0]), null);
-        } catch (Exception e) {
-          throw new RuntimeException(e);
         }
       } while (multiLoadOperation.setResult(multiLoadResult));
 
@@ -708,7 +703,7 @@ public class DocumentSession extends InMemoryDocumentSessionOperations implement
    */
   @Override
   public void saveChanges() {
-    try (AutoCloseable scope = entityToJson.entitiesToJsonCachingScope()) {
+    try (CleanCloseable scope = entityToJson.entitiesToJsonCachingScope()) {
       SaveChangesData data = prepareForSaveChanges();
 
       if (data.getCommands().size() == 0) {
@@ -727,8 +722,6 @@ public class DocumentSession extends InMemoryDocumentSessionOperations implement
       updateBatchResults(Arrays.asList(batchResults), data);
     } catch (ConcurrencyException e) {
       throw e;
-    } catch (Exception e) {
-      throw new RuntimeException("Unable to save changes", e);
     }
   }
 
@@ -882,9 +875,9 @@ public class DocumentSession extends InMemoryDocumentSessionOperations implement
 
   private boolean executeLazyOperationsSingleStep(ResponseTimeInformation responseTimeInformation) {
 
-    List<AutoCloseable> disposables = new ArrayList<>();
+    List<CleanCloseable> disposables = new ArrayList<>();
     for (ILazyOperation lazyOp: pendingLazyOperations) {
-      AutoCloseable context = lazyOp.enterContext();
+      CleanCloseable context = lazyOp.enterContext();
       if (context != null) {
         disposables.add(context);
       }
@@ -920,8 +913,8 @@ public class DocumentSession extends InMemoryDocumentSessionOperations implement
       }
       return false;
     } finally {
-      for (AutoCloseable closable: disposables) {
-        Closer.close(closable);
+      for (CleanCloseable closable: disposables) {
+        closable.close();
       }
     }
   }

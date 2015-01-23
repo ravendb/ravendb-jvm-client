@@ -7,6 +7,7 @@ import java.util.Map.Entry;
 
 import org.apache.commons.lang.StringUtils;
 
+import net.ravendb.abstractions.basic.CleanCloseable;
 import net.ravendb.abstractions.data.GetRequest;
 import net.ravendb.abstractions.data.GetResponse;
 import net.ravendb.abstractions.data.MultiLoadResult;
@@ -92,7 +93,7 @@ public class LazyTransformerLoadOperation<T> implements ILazyOperation {
   }
 
   @Override
-  public AutoCloseable enterContext() {
+  public CleanCloseable enterContext() {
     return null;
   }
 

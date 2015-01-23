@@ -14,7 +14,7 @@ import net.ravendb.client.changes.ObserverAdapter;
 import net.ravendb.client.changes.RemoteDatabaseChanges;
 
 
-public class EvictItemsFromCacheBasedOnChanges implements AutoCloseable {
+public class EvictItemsFromCacheBasedOnChanges implements CleanCloseable {
 
   protected final String databaseName;
   protected final IDatabaseChanges changes;

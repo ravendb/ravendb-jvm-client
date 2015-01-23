@@ -1,5 +1,6 @@
 package net.ravendb.client.connection;
 
+import net.ravendb.abstractions.basic.CleanCloseable;
 import net.ravendb.abstractions.basic.Reference;
 import net.ravendb.abstractions.closure.Function1;
 import net.ravendb.abstractions.closure.Function2;
@@ -69,7 +70,9 @@ public class AdminServerClient implements IAdminDatabaseCommands, IGlobalAdminDa
   }
   @Override
   public void deleteDatabase(String databaseName, boolean hardDelete) {
-    adminRequest.deleteDatabase(databaseName, hardDelete).executeRequest();
+    try (HttpJsonRequest request = adminRequest.deleteDatabase(databaseName, hardDelete)) {
+      request.executeRequest();
+    }
   }
 
   @Override
@@ -79,8 +82,10 @@ public class AdminServerClient implements IAdminDatabaseCommands, IGlobalAdminDa
 
   @Override
   public Operation compactDatabase(String databaseName) {
-    RavenJToken json = adminRequest.compactDatabase(databaseName).readResponseJson();
-    return new Operation((ServerClient)innerServerClient.forSystemDatabase(), json.value(Long.class, "OperationId"));
+    try (HttpJsonRequest request = adminRequest.compactDatabase(databaseName)) {
+      RavenJToken json = request.readResponseJson();
+      return new Operation((ServerClient)innerServerClient.forSystemDatabase(), json.value(Long.class, "OperationId"));
+    }
   }
 
   @Override
@@ -89,7 +94,9 @@ public class AdminServerClient implements IAdminDatabaseCommands, IGlobalAdminDa
 
       @Override
       public Void apply(OperationMetadata operationMetadata) {
-        adminRequest.stopIndexing(operationMetadata.getUrl()).executeRequest();
+        try (HttpJsonRequest request = adminRequest.stopIndexing(operationMetadata.getUrl())) {
+          request.executeRequest();
+        }
         return null;
       }
     });
@@ -106,7 +113,9 @@ public class AdminServerClient implements IAdminDatabaseCommands, IGlobalAdminDa
 
       @Override
       public Void apply(OperationMetadata operationMetadata) {
-        adminRequest.startIndexing(operationMetadata.getUrl(), maxNumberOfParallelIndexTasks).executeRequest();
+        try (HttpJsonRequest request = adminRequest.startIndexing(operationMetadata.getUrl(), maxNumberOfParallelIndexTasks)) {
+          request.executeRequest();
+        }
         return null;
       }
     });
@@ -140,8 +149,10 @@ public class AdminServerClient implements IAdminDatabaseCommands, IGlobalAdminDa
 
       @Override
       public String apply(OperationMetadata operationMetadata) {
-        RavenJToken result = adminRequest.indexingStatus(operationMetadata.getUrl()).readResponseJson();
-        return result.value(String.class, "IndexingStatus");
+        try (HttpJsonRequest request = adminRequest.indexingStatus(operationMetadata.getUrl())) {
+          RavenJToken result = request.readResponseJson();
+          return result.value(String.class, "IndexingStatus");
+        }
       }
     });
   }
@@ -152,7 +163,9 @@ public class AdminServerClient implements IAdminDatabaseCommands, IGlobalAdminDa
 
       @Override
       public RavenJObject apply(OperationMetadata operationMetadata) {
-        return (RavenJObject) adminRequest.getDatabaseConfiguration(operationMetadata.getUrl()).readResponseJson();
+        try (HttpJsonRequest request = adminRequest.getDatabaseConfiguration(operationMetadata.getUrl())) {
+          return (RavenJObject)request.readResponseJson();
+        }
       }
     });
   }
@@ -169,8 +182,10 @@ public class AdminServerClient implements IAdminDatabaseCommands, IGlobalAdminDa
 
   @Override
   public AdminStatistics getStatistics() {
-    RavenJObject json = (RavenJObject)adminRequest.adminStats().readResponseJson();
-    return innerServerClient.convention.createSerializer().deserialize(json, AdminStatistics.class);
+    try (HttpJsonRequest request = adminRequest.adminStats()) {
+      RavenJObject json = (RavenJObject)request.readResponseJson();
+      return innerServerClient.convention.createSerializer().deserialize(json, AdminStatistics.class);
+    }
   }
 
   @Override
@@ -178,7 +193,7 @@ public class AdminServerClient implements IAdminDatabaseCommands, IGlobalAdminDa
 
     ServerClient serverClient = (ServerClient) innerServerClient.forSystemDatabase();
 
-    try (AutoCloseable readFromMaster = serverClient.forceReadFromMaster()) {
+    try (CleanCloseable readFromMaster = serverClient.forceReadFromMaster()) {
       DatabaseDocument doc = MultiDatabase.createDatabaseDocument(name);
 
       try {
@@ -196,11 +211,6 @@ public class AdminServerClient implements IAdminDatabaseCommands, IGlobalAdminDa
         new RavenDocumentsByEntityName().execute(serverClient.forDatabase(name), new DocumentConvention());
       } catch (Exception e) {
         // we really don't care if this fails, and it might, if the user doesn't have permissions on the new db
-      }
-
-    } catch (Exception e) {
-      if (ignoreFailures == false) {
-        throw new RuntimeException(e);
       }
     }
   }

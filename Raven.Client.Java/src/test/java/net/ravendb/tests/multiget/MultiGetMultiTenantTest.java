@@ -8,6 +8,7 @@ import java.util.List;
 
 import org.junit.Test;
 
+import net.ravendb.abstractions.basic.CleanCloseable;
 import net.ravendb.abstractions.basic.Lazy;
 import net.ravendb.client.IDocumentSession;
 import net.ravendb.client.IDocumentStore;
@@ -111,7 +112,7 @@ public class MultiGetMultiTenantTest extends RemoteClientTest {
 
       for (int i = 0; i < 5; i++) {
         try (IDocumentSession session = store.openSession()) {
-          try (AutoCloseable aggresiveCache = session.advanced().getDocumentStore().aggressivelyCacheFor(5 * 60 * 1000)) {
+          try (CleanCloseable aggresiveCache = session.advanced().getDocumentStore().aggressivelyCacheFor(5 * 60 * 1000)) {
             session.advanced().lazily().load(User.class, "users/1");
             session.advanced().lazily().load(User.class, "users/2");
 

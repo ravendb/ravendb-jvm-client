@@ -25,6 +25,7 @@ import net.ravendb.client.connection.IDocumentStoreReplicationInformer;
 import net.ravendb.client.connection.OperationMetadata;
 import net.ravendb.client.connection.implementation.HttpJsonRequestFactory;
 import net.ravendb.client.document.DocumentConvention;
+import net.ravendb.client.document.JsonSerializer;
 import net.ravendb.client.utils.UrlUtils;
 
 import org.codehaus.jackson.map.ObjectMapper;
@@ -92,54 +93,50 @@ public class RemoteDatabaseChanges extends RemoteChangesClientBase<IDatabaseChan
 
   @Override
   protected void notifySubscribers(String type, RavenJObject value, AtomicDictionary<DatabaseConnectionState> counters) {
-    try {
-      ObjectMapper mapper = JsonExtensions.createDefaultJsonSerializer();
-      switch (type) {
-        case "DocumentChangeNotification":
-          DocumentChangeNotification documentChangeNotification = mapper.readValue(value.toString(), DocumentChangeNotification.class);
-          for (DatabaseConnectionState counter : counters.values()) {
-            counter.send(documentChangeNotification);
-          }
-          break;
+    JsonSerializer serializer = new JsonSerializer();
+    switch (type) {
+      case "DocumentChangeNotification":
+        DocumentChangeNotification documentChangeNotification = serializer.deserialize(value.toString(), DocumentChangeNotification.class);
+        for (DatabaseConnectionState counter : counters.values()) {
+          counter.send(documentChangeNotification);
+        }
+        break;
 
-        case "BulkInsertChangeNotification":
-          BulkInsertChangeNotification bulkInsertChangeNotification = mapper.readValue(value.toString(), BulkInsertChangeNotification.class);
-          for (DatabaseConnectionState counter : counters.values()) {
-            counter.send(bulkInsertChangeNotification);
-          }
-          break;
+      case "BulkInsertChangeNotification":
+        BulkInsertChangeNotification bulkInsertChangeNotification = serializer.deserialize(value.toString(), BulkInsertChangeNotification.class);
+        for (DatabaseConnectionState counter : counters.values()) {
+          counter.send(bulkInsertChangeNotification);
+        }
+        break;
 
-        case "IndexChangeNotification":
-          IndexChangeNotification indexChangeNotification = mapper.readValue(value.toString(), IndexChangeNotification.class);
-          for (DatabaseConnectionState counter : counters.values()) {
-            counter.send(indexChangeNotification);
+      case "IndexChangeNotification":
+        IndexChangeNotification indexChangeNotification = serializer.deserialize(value.toString(), IndexChangeNotification.class);
+        for (DatabaseConnectionState counter : counters.values()) {
+          counter.send(indexChangeNotification);
+        }
+        break;
+      case "TransformerChangeNotification":
+        TransformerChangeNotification transformerChangeNotification = serializer.deserialize(value.toString(), TransformerChangeNotification.class);
+        for (DatabaseConnectionState counter : counters.values()) {
+          counter.send(transformerChangeNotification);
+        }
+        break;
+      case "ReplicationConflictNotification":
+        ReplicationConflictNotification replicationConflictNotification = serializer.deserialize(value.toString(), ReplicationConflictNotification.class);
+        for (DatabaseConnectionState counter: counters.values()) {
+          counter.send(replicationConflictNotification);
+        }
+        if (replicationConflictNotification.getItemType().equals(ReplicationConflictTypes.DOCUMENT_REPLICATION_CONFLICT)) {
+          boolean result = tryResolveConflictByUsingRegisteredConflictListeners.apply(replicationConflictNotification.getId(),
+            replicationConflictNotification.getEtag(), replicationConflictNotification.getConflicts(), null);
+          if (result) {
+            logger.debug("Document replication conflict for %s was resolved by one of the registered conflict listeners",
+              replicationConflictNotification.getId());
           }
-          break;
-        case "TransformerChangeNotification":
-          TransformerChangeNotification transformerChangeNotification = mapper.readValue(value.toString(), TransformerChangeNotification.class);
-          for (DatabaseConnectionState counter : counters.values()) {
-            counter.send(transformerChangeNotification);
-          }
-          break;
-        case "ReplicationConflictNotification":
-          ReplicationConflictNotification replicationConflictNotification = mapper.readValue(value.toString(), ReplicationConflictNotification.class);
-          for (DatabaseConnectionState counter: counters.values()) {
-            counter.send(replicationConflictNotification);
-          }
-          if (replicationConflictNotification.getItemType().equals(ReplicationConflictTypes.DOCUMENT_REPLICATION_CONFLICT)) {
-            boolean result = tryResolveConflictByUsingRegisteredConflictListeners.apply(replicationConflictNotification.getId(),
-              replicationConflictNotification.getEtag(), replicationConflictNotification.getConflicts(), null);
-            if (result) {
-              logger.debug("Document replication conflict for %s was resolved by one of the registered conflict listeners",
-                replicationConflictNotification.getId());
-            }
-          }
-          break;
-        default:
-          break;
-      }
-    } catch (IOException e) {
-      throw new RuntimeException(e);
+        }
+        break;
+      default:
+        break;
     }
   }
 

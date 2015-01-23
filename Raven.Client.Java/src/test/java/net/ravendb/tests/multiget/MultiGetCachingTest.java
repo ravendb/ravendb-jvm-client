@@ -5,7 +5,7 @@ import static org.junit.Assert.assertNotNull;
 
 import java.util.List;
 
-
+import net.ravendb.abstractions.basic.CleanCloseable;
 import net.ravendb.abstractions.basic.Lazy;
 import net.ravendb.client.IDocumentSession;
 import net.ravendb.client.IDocumentStore;
@@ -41,7 +41,7 @@ public class MultiGetCachingTest extends RemoteClientTest {
 
       for (int i = 0; i < 5; i++) {
         try (IDocumentSession session = store.openSession()) {
-          try (AutoCloseable context = session.advanced().getDocumentStore().aggressivelyCacheFor(5 * 60 * 1000)) {
+          try (CleanCloseable context = session.advanced().getDocumentStore().aggressivelyCacheFor(5 * 60 * 1000)) {
             session.advanced().lazily().load(User.class, "users/1");
             session.advanced().lazily().load(User.class, "users/2");
 
@@ -73,13 +73,13 @@ public class MultiGetCachingTest extends RemoteClientTest {
       int requests = getNumberOfRequests();
 
       try (IDocumentSession session = store.openSession()) {
-        try (AutoCloseable context = session.advanced().getDocumentStore().aggressivelyCacheFor(5 * 60 * 1000)) {
+        try (CleanCloseable context = session.advanced().getDocumentStore().aggressivelyCacheFor(5 * 60 * 1000)) {
           session.load(User.class, new String[] { "users/1" });
         }
       }
 
       try (IDocumentSession session = store.openSession()) {
-        try (AutoCloseable context = session.advanced().getDocumentStore().aggressivelyCacheFor(5 * 60 * 1000)) {
+        try (CleanCloseable context = session.advanced().getDocumentStore().aggressivelyCacheFor(5 * 60 * 1000)) {
           session.advanced().lazily().load(User.class, new String[] { "users/1" });
           session.advanced().lazily().load(User.class, "users/2");
           session.advanced().eagerly().executeAllPendingLazyOperations();
@@ -110,13 +110,13 @@ public class MultiGetCachingTest extends RemoteClientTest {
       int requests = getNumberOfRequests();
 
       try (IDocumentSession session = store.openSession()) {
-        try (AutoCloseable context = session.advanced().getDocumentStore().aggressivelyCacheFor(5 * 60 * 1000)) {
+        try (CleanCloseable context = session.advanced().getDocumentStore().aggressivelyCacheFor(5 * 60 * 1000)) {
           session.load(User.class, "users/1");
         }
       }
 
       try (IDocumentSession session = store.openSession()) {
-        try (AutoCloseable context = session.advanced().getDocumentStore().aggressivelyCacheFor(5 * 60 * 1000)) {
+        try (CleanCloseable context = session.advanced().getDocumentStore().aggressivelyCacheFor(5 * 60 * 1000)) {
           session.advanced().lazily().load(User.class, "users/1");
           session.advanced().lazily().load(User.class, "users/2");
           session.advanced().eagerly().executeAllPendingLazyOperations();
@@ -148,14 +148,14 @@ public class MultiGetCachingTest extends RemoteClientTest {
       int requests = getNumberOfRequests();
 
       try (IDocumentSession session = store.openSession()) {
-        try (AutoCloseable context = session.advanced().getDocumentStore().aggressivelyCacheFor(5 * 60 * 1000)) {
+        try (CleanCloseable context = session.advanced().getDocumentStore().aggressivelyCacheFor(5 * 60 * 1000)) {
           session.advanced().lazily().load(User.class,  "users/1" );
           session.advanced().eagerly().executeAllPendingLazyOperations();
         }
       }
 
       try (IDocumentSession session = store.openSession()) {
-        try (AutoCloseable context = session.advanced().getDocumentStore().aggressivelyCacheFor(5 * 60 * 1000)) {
+        try (CleanCloseable context = session.advanced().getDocumentStore().aggressivelyCacheFor(5 * 60 * 1000)) {
           session.load(User.class, "users/1" );
         }
       }

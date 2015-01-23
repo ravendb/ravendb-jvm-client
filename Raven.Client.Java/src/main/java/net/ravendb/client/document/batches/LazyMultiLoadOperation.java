@@ -3,6 +3,7 @@ package net.ravendb.client.document.batches;
 import java.util.ArrayList;
 import java.util.List;
 
+import net.ravendb.abstractions.basic.CleanCloseable;
 import net.ravendb.abstractions.basic.Tuple;
 import net.ravendb.abstractions.data.GetRequest;
 import net.ravendb.abstractions.data.GetResponse;
@@ -122,7 +123,7 @@ public class LazyMultiLoadOperation<T> implements ILazyOperation {
   }
 
   @Override
-  public AutoCloseable enterContext() {
+  public CleanCloseable enterContext() {
     return loadOperation.enterMultiLoadContext();
   }
 

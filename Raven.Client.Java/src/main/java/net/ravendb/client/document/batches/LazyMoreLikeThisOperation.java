@@ -1,5 +1,6 @@
 package net.ravendb.client.document.batches;
 
+import net.ravendb.abstractions.basic.CleanCloseable;
 import net.ravendb.abstractions.data.GetRequest;
 import net.ravendb.abstractions.data.GetResponse;
 import net.ravendb.abstractions.data.MoreLikeThisQuery;
@@ -75,7 +76,7 @@ public class LazyMoreLikeThisOperation<T> implements ILazyOperation {
   }
 
   @Override
-  public AutoCloseable enterContext() {
+  public CleanCloseable enterContext() {
     return multiLoadOperation.enterMultiLoadContext();
   }
 

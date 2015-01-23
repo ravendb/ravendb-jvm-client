@@ -1,5 +1,6 @@
 package net.ravendb.client.document;
 
+import net.ravendb.abstractions.basic.CleanCloseable;
 import net.ravendb.abstractions.data.Etag;
 import net.ravendb.abstractions.data.JsonDocument;
 import net.ravendb.abstractions.data.MultiLoadResult;
@@ -58,7 +59,7 @@ public class HiLoKeyGenerator extends HiLoKeyGeneratorBase {
   }
 
   private RangeValue getNextRange(IDatabaseCommands databaseCommands) {
-    try (AutoCloseable close3 = databaseCommands.forceReadFromMaster()) {
+    try (CleanCloseable close3 = databaseCommands.forceReadFromMaster()) {
 
       modifyCapacityIfRequired();
       while (true) {
@@ -108,8 +109,6 @@ public class HiLoKeyGenerator extends HiLoKeyGeneratorBase {
           // expected, we need to retry
         }
       }
-    } catch (Exception e) {
-      throw new RuntimeException(e);
     }
   }
 

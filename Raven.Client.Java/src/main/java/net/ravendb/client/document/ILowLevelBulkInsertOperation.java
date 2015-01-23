@@ -2,11 +2,12 @@ package net.ravendb.client.document;
 
 import java.util.UUID;
 
+import net.ravendb.abstractions.basic.CleanCloseable;
 import net.ravendb.abstractions.closure.Action1;
 import net.ravendb.abstractions.json.linq.RavenJObject;
 
 
-public interface ILowLevelBulkInsertOperation extends AutoCloseable {
+public interface ILowLevelBulkInsertOperation extends CleanCloseable {
   public UUID getOperationId();
 
   public boolean isAborted();

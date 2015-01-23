@@ -189,19 +189,15 @@ public abstract class RemoteChangesClientBase<TChangesApi extends IConnectableCh
     synchronized (this) {
       logger.info("Sending command %s - %s to %s with id %s", command, value, url, id);
 
-      try {
-        String sendUrl = url + "/changes/config?id=" + id + "&command=" + command;
-        if (StringUtils.isNotEmpty(value)) {
-          sendUrl += "&value=" + UrlUtils.escapeUriString(value);
-        }
+      String sendUrl = url + "/changes/config?id=" + id + "&command=" + command;
+      if (StringUtils.isNotEmpty(value)) {
+        sendUrl += "&value=" + UrlUtils.escapeUriString(value);
+      }
 
-        CreateHttpJsonRequestParams requestParams = new CreateHttpJsonRequestParams(null, sendUrl, HttpMethods.GET, null, credentials, conventions);
-        requestParams.setAvoidCachingRequest(true);
-        try (HttpJsonRequest httpJsonRequest = jsonRequestFactory.createHttpJsonRequest(requestParams)) {
-          httpJsonRequest.executeRequest();
-        }
-      } catch (Exception e) {
-        throw new RuntimeException(e);
+      CreateHttpJsonRequestParams requestParams = new CreateHttpJsonRequestParams(null, sendUrl, HttpMethods.GET, null, credentials, conventions);
+      requestParams.setAvoidCachingRequest(true);
+      try (HttpJsonRequest httpJsonRequest = jsonRequestFactory.createHttpJsonRequest(requestParams)) {
+        httpJsonRequest.executeRequest();
       }
     }
   }

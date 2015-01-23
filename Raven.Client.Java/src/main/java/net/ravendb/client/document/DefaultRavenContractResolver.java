@@ -2,6 +2,7 @@ package net.ravendb.client.document;
 
 import java.io.IOException;
 
+import net.ravendb.abstractions.basic.CleanCloseable;
 import net.ravendb.abstractions.closure.Action3;
 import net.ravendb.abstractions.json.linq.RavenJToken;
 
@@ -15,7 +16,7 @@ public class DefaultRavenContractResolver extends DeserializationProblemHandler 
 
   protected ThreadLocal<Action3<Object, String, RavenJToken>> currentExtensionData = new ThreadLocal<>();
 
-  public AutoCloseable registerForExtensionData(Action3<Object, String, RavenJToken> action) {
+  public CleanCloseable registerForExtensionData(Action3<Object, String, RavenJToken> action) {
     if (currentExtensionData.get() != null) {
       throw new IllegalStateException("Cannot add a data setter becuase on is already added.");
     }
@@ -23,9 +24,9 @@ public class DefaultRavenContractResolver extends DeserializationProblemHandler 
     return new ClearExtensionData();
   }
 
-  public class ClearExtensionData implements AutoCloseable {
+  public class ClearExtensionData implements CleanCloseable {
     @Override
-    public void close() throws Exception {
+    public void close() {
       currentExtensionData.set(null);
     }
   }

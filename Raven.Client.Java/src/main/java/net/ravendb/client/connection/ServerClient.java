@@ -1883,12 +1883,12 @@ public class ServerClient implements IDatabaseCommands {
   }
 
   @Override
-  public AutoCloseable forceReadFromMaster() {
+  public CleanCloseable forceReadFromMaster() {
     final int old = readStripingBase;
     readStripingBase = -1;
-    return new AutoCloseable() {
+    return new CleanCloseable() {
       @Override
-      public void close() throws Exception {
+      public void close() {
         readStripingBase = old;
       }
     };

@@ -4,6 +4,7 @@ import java.util.LinkedHashSet;
 import java.util.Set;
 import java.util.UUID;
 
+import net.ravendb.abstractions.basic.CleanCloseable;
 import net.ravendb.abstractions.basic.Reference;
 import net.ravendb.abstractions.closure.Action1;
 import net.ravendb.abstractions.closure.Function1;
@@ -17,7 +18,7 @@ import net.ravendb.client.extensions.MultiDatabase;
 
 
 
-public class BulkInsertOperation implements AutoCloseable {
+public class BulkInsertOperation implements CleanCloseable {
 
   public static interface BeforeEntityInsert {
     public void apply(String id, RavenJObject data, RavenJObject metadata);
@@ -86,7 +87,7 @@ public class BulkInsertOperation implements AutoCloseable {
   }
 
   @Override
-  public void close() throws Exception {
+  public void close() {
     operation.close();
   }
 

@@ -369,9 +369,9 @@ public class Subscription<T> implements IObservable<T>, CleanCloseable {
 
       Closeables.closeQuietly(endedBulkInsertsObserver);
 
-      if (changes instanceof AutoCloseable) {
-        Closeable autocloseableChanges = (Closeable) changes;
-        Closeables.closeQuietly(autocloseableChanges);
+      if (changes instanceof CleanCloseable) {
+        Closeable closeableChanges = (Closeable) changes;
+        Closeables.closeQuietly(closeableChanges);
       }
 
       cts.cancel();
