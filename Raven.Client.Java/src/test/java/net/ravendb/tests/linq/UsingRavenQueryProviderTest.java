@@ -37,7 +37,7 @@ import com.mysema.query.annotations.QueryEntity;
 public class UsingRavenQueryProviderTest extends RemoteClientTest {
 
   @Test
-  public void can_perform_Skip_Take_Query() throws Exception {
+  public void can_perform_Skip_Take_Query() {
 
     try (IDocumentStore store = new DocumentStore(getDefaultUrl(), getDefaultDb()).initialize()) {
       String indexName = "UserIndex";
@@ -75,7 +75,7 @@ public class UsingRavenQueryProviderTest extends RemoteClientTest {
   }
 
   @Test
-  public void can_perform_First_and_FirstOrDefault_Query() throws Exception {
+  public void can_perform_First_and_FirstOrDefault_Query() {
     try (IDocumentStore store = new DocumentStore(getDefaultUrl(), getDefaultDb()).initialize()) {
       String indexName = "UserIndex";
       try (IDocumentSession session = store.openSession()) {
@@ -108,7 +108,7 @@ public class UsingRavenQueryProviderTest extends RemoteClientTest {
   }
 
   @Test
-  public void can_perform_Single_and_SingleOrDefault_Query() throws Exception {
+  public void can_perform_Single_and_SingleOrDefault_Query() {
     try (IDocumentStore store = new DocumentStore(getDefaultUrl(), getDefaultDb()).initialize()) {
       String indexName = "UserIndex";
       try (IDocumentSession session = store.openSession()) {
@@ -163,7 +163,7 @@ public class UsingRavenQueryProviderTest extends RemoteClientTest {
   }
 
   @Test
-  public void can_perform_boolean_queries() throws Exception {
+  public void can_perform_boolean_queries() {
 
     try (IDocumentStore store = new DocumentStore(getDefaultUrl(), getDefaultDb()).initialize()) {
       String indexName = "UserIndex";
@@ -227,7 +227,7 @@ public class UsingRavenQueryProviderTest extends RemoteClientTest {
   }
 
   @Test
-  public void can_perform_DateTime_Comparison_Queries() throws Exception {
+  public void can_perform_DateTime_Comparison_Queries() {
     Date firstTime = new Date();
     Date secondTime = DateUtils.addMonths(firstTime, 1);
     Date thirdTime = DateUtils.addMonths(secondTime, 1);
@@ -291,7 +291,7 @@ public class UsingRavenQueryProviderTest extends RemoteClientTest {
   }
 
   @Test // See issue #105 (http://github.com/ravendb/ravendb/issues/#issue/105)
-  public void does_Not_Ignore_Expressions_Before_Where() throws Exception {
+  public void does_Not_Ignore_Expressions_Before_Where() {
 
     try (IDocumentStore store = new DocumentStore(getDefaultUrl(), getDefaultDb()).initialize()) {
       String indexName = "UserIndex";
@@ -339,9 +339,9 @@ public class UsingRavenQueryProviderTest extends RemoteClientTest {
   }
 
   @Test // See issue #145 (http://github.com/ravendb/ravendb/issues/#issue/145)
-  public void can_Use_Static_Fields_In_Where_Clauses() throws Exception {
-    
-    
+  public void can_Use_Static_Fields_In_Where_Clauses() {
+
+
     try (IDocumentStore store = new DocumentStore(getDefaultUrl(), getDefaultDb()).initialize()) {
 
       IndexDefinition indexDefinition = new IndexDefinition();
@@ -374,7 +374,7 @@ public class UsingRavenQueryProviderTest extends RemoteClientTest {
   }
 
   @Test
-  public void can_Use_Static_Properties_In_Where_Clauses() throws Exception {
+  public void can_Use_Static_Properties_In_Where_Clauses() {
     try (IDocumentStore store = new DocumentStore(getDefaultUrl(), getDefaultDb()).initialize()) {
 
       IndexDefinition indexDefinition = new IndexDefinition();
@@ -403,7 +403,7 @@ public class UsingRavenQueryProviderTest extends RemoteClientTest {
   }
 
   @Test  // See issue #145 (http://github.com/ravendb/ravendb/issues/#issue/145)
-  public void can_use_inequality_to_compare_dates() throws Exception {
+  public void can_use_inequality_to_compare_dates() {
     try (IDocumentStore store = new DocumentStore(getDefaultUrl(), getDefaultDb()).initialize()) {
 
       IndexDefinition indexDefinition = new IndexDefinition();
@@ -439,7 +439,7 @@ public class UsingRavenQueryProviderTest extends RemoteClientTest {
 
   @Test // See issue #91 http://github.com/ravendb/ravendb/issues/issue/91 and
   //discussion here http://groups.google.com/group/ravendb/browse_thread/thread/3df57d19d41fc21
-  public void can_do_projection_in_query_result() throws Exception {
+  public void can_do_projection_in_query_result() {
     try (IDocumentStore store = new DocumentStore(getDefaultUrl(), getDefaultDb()).initialize()) {
 
       IndexDefinition indexDefinition = new IndexDefinition();
@@ -500,7 +500,7 @@ public class UsingRavenQueryProviderTest extends RemoteClientTest {
   }
 
   @Test
-  public void throws_exception_when_overloaded_distinct_called() throws Exception {
+  public void throws_exception_when_overloaded_distinct_called() {
 
     try (IDocumentStore store = new DocumentStore(getDefaultUrl(), getDefaultDb()).initialize()) {
       try (IDocumentSession session = store.openSession()) {
@@ -661,7 +661,7 @@ public class UsingRavenQueryProviderTest extends RemoteClientTest {
   }
 
   @Test
-  public void can_Use_In_Array_In_Where_Clause() throws Exception {
+  public void can_Use_In_Array_In_Where_Clause() {
     try (IDocumentStore store = new DocumentStore(getDefaultUrl(), getDefaultDb()).initialize()) {
       try (IDocumentSession session = store.openSession()) {
         OrderItem orderItem1 = new OrderItem();
@@ -699,7 +699,7 @@ public class UsingRavenQueryProviderTest extends RemoteClientTest {
   }
 
   @Test
-  public void can_Use_Strings_In_Array_In_Where_Clause() throws Exception {
+  public void can_Use_Strings_In_Array_In_Where_Clause() {
     try (IDocumentStore store = new DocumentStore(getDefaultUrl(), getDefaultDb()).initialize()) {
       try (IDocumentSession session = store.openSession()) {
         OrderItem orderItem1 = new OrderItem();
@@ -753,7 +753,7 @@ public class UsingRavenQueryProviderTest extends RemoteClientTest {
   }
 
   @Test
-  public void can_Use_Enums_In_Array_In_Where_Clause() throws Exception {
+  public void can_Use_Enums_In_Array_In_Where_Clause() {
     try (IDocumentStore store = new DocumentStore(getDefaultUrl(), getDefaultDb()).initialize()) {
       try (IDocumentSession session = store.openSession()) {
         OrderItem orderItem1 = new OrderItem();
@@ -803,7 +803,7 @@ public class UsingRavenQueryProviderTest extends RemoteClientTest {
   }
 
   @Test
-  public void can_Use_Enums_In_IEnumerable_In_Where_Clause() throws Exception {
+  public void can_Use_Enums_In_IEnumerable_In_Where_Clause() {
     try (IDocumentStore store = new DocumentStore(getDefaultUrl(), getDefaultDb()).initialize()) {
       try (IDocumentSession session = store.openSession()) {
         OrderItem orderItem1 = new OrderItem();
@@ -850,7 +850,7 @@ public class UsingRavenQueryProviderTest extends RemoteClientTest {
   }
 
   @Test
-  public void can_Use_In_IEnumerable_In_Where_Clause_with_negation() throws Exception {
+  public void can_Use_In_IEnumerable_In_Where_Clause_with_negation() {
     try (IDocumentStore store = new DocumentStore(getDefaultUrl(), getDefaultDb()).initialize()) {
       try (IDocumentSession session = store.openSession()) {
         OrderItem orderItem1 = new OrderItem();
@@ -894,7 +894,7 @@ public class UsingRavenQueryProviderTest extends RemoteClientTest {
   }
 
   @Test
-  public void can_Use_In_Params_In_Where_Clause() throws Exception {
+  public void can_Use_In_Params_In_Where_Clause() {
     try (IDocumentStore store = new DocumentStore(getDefaultUrl(), getDefaultDb()).initialize()) {
       try (IDocumentSession session = store.openSession()) {
         OrderItem orderItem1 = new OrderItem();
@@ -932,7 +932,7 @@ public class UsingRavenQueryProviderTest extends RemoteClientTest {
   }
 
   @Test
-  public void can_Use_In_IEnumerable_In_Where_Clause() throws Exception {
+  public void can_Use_In_IEnumerable_In_Where_Clause() {
     try (IDocumentStore store = new DocumentStore(getDefaultUrl(), getDefaultDb()).initialize()) {
       try (IDocumentSession session = store.openSession()) {
         OrderItem orderItem1 = new OrderItem();
@@ -974,7 +974,7 @@ public class UsingRavenQueryProviderTest extends RemoteClientTest {
   }
 
   @Test
-  public void can_Use_In_IEnumerable_Not_In_Where_Clause_on_Id() throws Exception {
+  public void can_Use_In_IEnumerable_Not_In_Where_Clause_on_Id() {
     try (IDocumentStore store = new DocumentStore(getDefaultUrl(), getDefaultDb()).initialize()) {
 
       UUID guid1 = UUID.randomUUID();

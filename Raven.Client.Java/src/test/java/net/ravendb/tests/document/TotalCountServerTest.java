@@ -14,7 +14,7 @@ import org.junit.Test;
 
 public class TotalCountServerTest extends RemoteClientTest {
   @Test
-  public void totalResultIsIncludedInQueryResult() throws Exception {
+  public void totalResultIsIncludedInQueryResult() {
 
     try (IDocumentStore store = new DocumentStore(getDefaultUrl(), getDefaultDb()).initialize()) {
       try (IDocumentSession session = store.openSession()) {

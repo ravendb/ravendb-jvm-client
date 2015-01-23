@@ -27,7 +27,7 @@ public class HighlightTest extends RemoteClientTest {
 
   @SuppressWarnings("unused")
   @Test
-  public void highlightText() throws Exception {
+  public void highlightText() {
     SearchItem searchItem = new SearchItem();
     searchItem.setId("searchitems/1");
     searchItem.setName("This is a sample about a dog and his owner");
@@ -55,7 +55,7 @@ public class HighlightTest extends RemoteClientTest {
 
   @SuppressWarnings("unused")
   @Test
-  public void highlightText_CutAfterDot() throws Exception {
+  public void highlightText_CutAfterDot() {
     SearchItem searchItem = new SearchItem();
     searchItem.setId("searchitems/1");
     searchItem.setName("This is a. sample about a dog and his owner");
@@ -82,7 +82,7 @@ public class HighlightTest extends RemoteClientTest {
 
   @SuppressWarnings("unused")
   @Test
-  public void highlightText_LineRerturnedShorterThenOriginal() throws Exception {
+  public void highlightText_LineRerturnedShorterThenOriginal() {
     SearchItem searchItem = new SearchItem();
     searchItem.setId("searchitems/1");
     searchItem.setName("This is a sample about a dog and his owner");
@@ -110,7 +110,7 @@ public class HighlightTest extends RemoteClientTest {
 
   @SuppressWarnings("unused")
   @Test
-  public void highlightText_CantFindWork() throws Exception {
+  public void highlightText_CantFindWork() {
     SearchItem searchItem = new SearchItem();
     searchItem.setId("searchitems/1");
     searchItem.setName("This is a sample about a dog and his owner");
@@ -137,7 +137,7 @@ public class HighlightTest extends RemoteClientTest {
 
   @SuppressWarnings("unused")
   @Test
-  public void highlightText_FindAllReturences() throws Exception {
+  public void highlightText_FindAllReturences() {
     SearchItem searchItem = new SearchItem();
     searchItem.setId("searchitems/1");
     searchItem.setName("Once there lived a dog. He was very greedy. There were many times that he had to pay for his greed. Each time the dog promised himself, “I have learnt my lesson. Now I will never be greedy again.” But he soon forgot his promises and was as greedy as ever." +
@@ -174,7 +174,7 @@ public class HighlightTest extends RemoteClientTest {
 
   @SuppressWarnings("unused")
   @Test
-  public void highlightText_FindAllReturencesWithSeveralWords() throws Exception {
+  public void highlightText_FindAllReturencesWithSeveralWords() {
     SearchItem searchItem = new SearchItem();
     searchItem.setId("searchitems/1");
     searchItem.setName("Once there lived a dog. He was very greedy. There were many times that he had to pay for his greed. Each time the dog promised himself, “I have learnt my lesson. Now I will never be greedy again.” But he soon forgot his promises and was as greedy as ever." +

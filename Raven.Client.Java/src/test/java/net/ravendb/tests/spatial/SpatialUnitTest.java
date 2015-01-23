@@ -21,7 +21,7 @@ import com.mysema.query.annotations.QueryEntity;
 public class SpatialUnitTest extends RemoteClientTest {
 
   @Test
-  public void test() throws Exception {
+  public void test() {
     DummyGeoDoc myHouse = new DummyGeoDoc(44.757767, -93.355322);
     // The gym is about 7.32 miles (11.79 kilometers) from my house.
     DummyGeoDoc gym = new DummyGeoDoc(44.682861, -93.25);

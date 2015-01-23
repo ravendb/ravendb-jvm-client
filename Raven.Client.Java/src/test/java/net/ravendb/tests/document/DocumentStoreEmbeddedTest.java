@@ -13,7 +13,7 @@ import org.junit.Test;
 public class DocumentStoreEmbeddedTest extends RemoteClientTest {
 
   @Test
-  public void canRefreshEntityFromDatabase() throws Exception {
+  public void canRefreshEntityFromDatabase() {
     Company company = new Company();
     company.setName("Company Name");
     try (IDocumentStore store = new DocumentStore(getDefaultUrl(), getDefaultDb()).initialize()) {

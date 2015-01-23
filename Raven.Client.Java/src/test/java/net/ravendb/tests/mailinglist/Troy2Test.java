@@ -21,7 +21,7 @@ import com.mysema.query.annotations.QueryEntity;
 public class Troy2Test extends RemoteClientTest {
 
   @Test
-  public void usingDefaultFieldWithSelectFieldsFails() throws Exception {
+  public void usingDefaultFieldWithSelectFieldsFails() {
     try (IDocumentStore store = new DocumentStore(getDefaultUrl(), getDefaultDb()).initialize()) {
       new TesterSearch().execute(store);
 

@@ -44,7 +44,7 @@ public class AnyTest extends RemoteClientTest {
   }
 
   @Test
-  public void canQueryArrayWithAny() throws Exception {
+  public void canQueryArrayWithAny() {
 
     try (IDocumentStore store = new DocumentStore(getDefaultUrl(), getDefaultDb()).initialize()) {
       try (IDocumentSession session = store.openSession()) {
@@ -75,7 +75,7 @@ public class AnyTest extends RemoteClientTest {
   }
 
   @Test
-  public void canCountWithAny() throws Exception {
+  public void canCountWithAny() {
 
     try (IDocumentStore store = new DocumentStore(getDefaultUrl(), getDefaultDb()).initialize()) {
       try (IDocumentSession session = store.openSession()) {
@@ -105,7 +105,7 @@ public class AnyTest extends RemoteClientTest {
   }
 
   @Test
-  public void emptyArraysShouldBeCountedProperlyWhenUsingAny() throws Exception {
+  public void emptyArraysShouldBeCountedProperlyWhenUsingAny() {
     try (IDocumentStore store = new DocumentStore(getDefaultUrl(), getDefaultDb()).initialize()) {
       try (IDocumentSession session = store.openSession()) {
         TestDoc doc1 = new TestDoc();
@@ -134,7 +134,7 @@ public class AnyTest extends RemoteClientTest {
   }
 
   @Test
-  public void canCountNullArraysWithAnyIfHaveAnotherPropertyStoredInTheIndex() throws Exception {
+  public void canCountNullArraysWithAnyIfHaveAnotherPropertyStoredInTheIndex() {
     try (IDocumentStore store = new DocumentStore(getDefaultUrl(), getDefaultDb()).initialize()) {
       try (IDocumentSession session = store.openSession()) {
         TestDoc doc1 = new TestDoc();
@@ -180,7 +180,7 @@ public class AnyTest extends RemoteClientTest {
   }
 
   @Test
-  public void nullRefWhenQuerying() throws Exception {
+  public void nullRefWhenQuerying() {
 
     try (IDocumentStore store = new DocumentStore(getDefaultUrl(), getDefaultDb()).initialize()) {
       try (IDocumentSession session = store.openSession()) {

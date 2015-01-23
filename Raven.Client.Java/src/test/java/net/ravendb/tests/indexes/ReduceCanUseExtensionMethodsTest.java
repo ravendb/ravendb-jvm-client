@@ -52,7 +52,7 @@ public class ReduceCanUseExtensionMethodsTest extends RemoteClientTest {
   }
 
   @Test
-  public void canUseExtensionMethods() throws Exception {
+  public void canUseExtensionMethods() {
 
     try (IDocumentStore store = new DocumentStore(getDefaultUrl(), getDefaultDb()).initialize()) {
 

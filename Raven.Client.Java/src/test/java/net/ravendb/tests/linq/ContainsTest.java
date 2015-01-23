@@ -40,7 +40,7 @@ public class ContainsTest extends RemoteClientTest {
   }
 
   @Test
-  public void canQueryArrayWithContains() throws Exception {
+  public void canQueryArrayWithContains() {
 
     try (IDocumentStore store = new DocumentStore(getDefaultUrl(), getDefaultDb()).initialize()) {
       try (IDocumentSession session = store.openSession()) {
@@ -61,7 +61,7 @@ public class ContainsTest extends RemoteClientTest {
   }
 
   @Test
-  public void doesNotSupportStrings() throws Exception {
+  public void doesNotSupportStrings() {
 
     try (IDocumentStore store = new DocumentStore(getDefaultUrl(), getDefaultDb()).initialize()) {
       try (IDocumentSession session = store.openSession()) {

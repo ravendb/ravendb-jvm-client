@@ -16,7 +16,7 @@ import org.junit.Test;
 
 public class ClientKeyGeneratorTest extends RemoteClientTest {
   @Test
-  public void idIsSetFromGeneratorOnStore() throws Exception {
+  public void idIsSetFromGeneratorOnStore() {
     try (IDocumentStore store = new DocumentStore(getDefaultUrl(), getDefaultDb()).initialize()) {
       try (IDocumentSession session = store.openSession()) {
         Company company = new Company();
@@ -28,7 +28,7 @@ public class ClientKeyGeneratorTest extends RemoteClientTest {
   }
 
   @Test
-  public void differentTypesWillHaveDifferentIdGenerators() throws Exception {
+  public void differentTypesWillHaveDifferentIdGenerators() {
     try (IDocumentStore store = new DocumentStore(getDefaultUrl(), getDefaultDb()).initialize()) {
       try (IDocumentSession session = store.openSession()) {
         Company company = new Company();
@@ -44,7 +44,7 @@ public class ClientKeyGeneratorTest extends RemoteClientTest {
   }
 
   @Test
-  public void whenDocumentAlreadyExists_Can_Still_Generate_Values() throws Exception {
+  public void whenDocumentAlreadyExists_Can_Still_Generate_Values() {
     try (IDocumentStore store = new DocumentStore(getDefaultUrl(), getDefaultDb()).initialize()) {
 
       final MultiTypeHiLoKeyGenerator mk = new MultiTypeHiLoKeyGenerator(5);
@@ -86,7 +86,7 @@ public class ClientKeyGeneratorTest extends RemoteClientTest {
   }
 
   @Test
-  public void doesNotLoseValuesWhenHighIsOver() throws Exception {
+  public void doesNotLoseValuesWhenHighIsOver() {
     try (IDocumentStore store = new DocumentStore(getDefaultUrl(), getDefaultDb()).initialize()) {
       final MultiTypeHiLoKeyGenerator mk = new MultiTypeHiLoKeyGenerator(5);
 
@@ -97,7 +97,7 @@ public class ClientKeyGeneratorTest extends RemoteClientTest {
   }
 
   @Test
-  public void idIsKeptFromGeneratorOnSaveChanges() throws Exception {
+  public void idIsKeptFromGeneratorOnSaveChanges() {
     try (IDocumentStore store = new DocumentStore(getDefaultUrl(), getDefaultDb()).initialize()) {
       try (IDocumentSession session = store.openSession()) {
         Company company = new Company();
@@ -111,7 +111,7 @@ public class ClientKeyGeneratorTest extends RemoteClientTest {
   }
 
   @Test
-  public void noIdIsSetAndSoIdIsNullAfterStore() throws Exception {
+  public void noIdIsSetAndSoIdIsNullAfterStore() {
     try (IDocumentStore store = new DocumentStore(getDefaultUrl(), getDefaultDb()).initialize()) {
       store.getConventions().setDocumentKeyGenerator(new DocumentKeyGenerator() {
         @Override
@@ -130,7 +130,7 @@ public class ClientKeyGeneratorTest extends RemoteClientTest {
   }
 
   @Test
-  public void noIdIsSetAndSoIdIsSetAfterSaveChanges() throws Exception {
+  public void noIdIsSetAndSoIdIsSetAfterSaveChanges() {
     try (IDocumentStore store = new DocumentStore(getDefaultUrl(), getDefaultDb()).initialize()) {
 
       store.getConventions().setDocumentKeyGenerator(new DocumentKeyGenerator() {

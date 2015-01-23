@@ -69,7 +69,7 @@ public class CartesianTest extends RemoteClientTest {
   }
 
   @Test
-  public void points() throws Exception {
+  public void points() {
     try (IDocumentStore store = new DocumentStore(getDefaultUrl(), getDefaultDb()).initialize()) {
       store.executeIndex(new CartesianIndex());
       try (IDocumentSession session = store.openSession()) {

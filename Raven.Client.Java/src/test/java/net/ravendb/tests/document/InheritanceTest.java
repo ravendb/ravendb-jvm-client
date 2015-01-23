@@ -17,7 +17,7 @@ import org.junit.Test;
 public class InheritanceTest extends RemoteClientTest {
 
   @Test
-  public void canStorePolymorphicTypesAsDocuments() throws Exception {
+  public void canStorePolymorphicTypesAsDocuments() {
 
     try (IDocumentStore store = new DocumentStore(getDefaultUrl(), getDefaultDb()).initialize()) {
 

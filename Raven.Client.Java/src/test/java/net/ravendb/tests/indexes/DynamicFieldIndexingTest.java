@@ -41,7 +41,7 @@ public class DynamicFieldIndexingTest extends RemoteClientTest {
   }
 
   @Test
-  public void canSearchDynamically() throws Exception {
+  public void canSearchDynamically() {
 
     try (IDocumentStore store = new DocumentStore(getDefaultUrl(), getDefaultDb()).initialize()) {
       new WithDynamicIndex().execute(store);
@@ -67,7 +67,7 @@ public class DynamicFieldIndexingTest extends RemoteClientTest {
   }
 
   @Test
-  public void canSearchDynamicFieldWithSpaces() throws Exception {
+  public void canSearchDynamicFieldWithSpaces() {
     try (IDocumentStore store = new DocumentStore(getDefaultUrl(), getDefaultDb()).initialize()) {
       new WithDynamicIndex().execute(store);
       try (IDocumentSession session = store.openSession()) {

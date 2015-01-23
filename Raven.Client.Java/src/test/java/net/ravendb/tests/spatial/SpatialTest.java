@@ -141,7 +141,7 @@ public class SpatialTest extends RemoteClientTest {
   }
 
   @Test
-  public void weirdSpatialResults() throws Exception {
+  public void weirdSpatialResults() {
     try (IDocumentStore store = new DocumentStore(getDefaultUrl(), getDefaultDb()).initialize()) {
       try (IDocumentSession session = store.openSession()) {
 
@@ -178,7 +178,7 @@ public class SpatialTest extends RemoteClientTest {
   }
 
   @Test
-  public void matchSpatialResults() throws Exception {
+  public void matchSpatialResults() {
     try (IDocumentStore store = new DocumentStore(getDefaultUrl(), getDefaultDb()).initialize()) {
       try (IDocumentSession session = store.openSession()) {
 
@@ -242,7 +242,7 @@ public class SpatialTest extends RemoteClientTest {
   }
 
   @Test
-  public void weirdSpatialResults2() throws Exception {
+  public void weirdSpatialResults2() {
     try (IDocumentStore store = new DocumentStore(getDefaultUrl(), getDefaultDb()).initialize()) {
       try (IDocumentSession session = store.openSession()) {
         MySpatialDocument spatialDoc = new MySpatialDocument();

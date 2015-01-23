@@ -35,7 +35,7 @@ public class IsNullOrEmptyTest extends RemoteClientTest {
   }
 
   @Test
-  public void isNullOrEmptyEqTrue() throws Exception {
+  public void isNullOrEmptyEqTrue() {
     try (IDocumentStore store = new DocumentStore(getDefaultUrl(), getDefaultDb()).initialize()) {
       try (IDocumentSession session = store.openSession()) {
         session.store(new TestDoc("Has some content"));
@@ -51,7 +51,7 @@ public class IsNullOrEmptyTest extends RemoteClientTest {
   }
 
   @Test
-  public void isNullOrEmptyEqFalse() throws Exception {
+  public void isNullOrEmptyEqFalse() {
     try (IDocumentStore store = new DocumentStore(getDefaultUrl(), getDefaultDb()).initialize()) {
       try (IDocumentSession session = store.openSession()) {
         session.store(new TestDoc("Has some content"));

@@ -63,7 +63,7 @@ public class WktSanitizerTest extends RemoteClientTest {
   }
 
   @Test
-  public void integration() throws Exception {
+  public void integration() {
     try (IDocumentStore store = new DocumentStore(getDefaultUrl(), getDefaultDb()).initialize()) {
       store.executeIndex(new SpatialIndex());
 

@@ -17,7 +17,7 @@ import org.junit.Test;
 public class JamesCrowleyTest extends RemoteClientTest {
 
   @Test
-  public void geoSpatialTest() throws Exception {
+  public void geoSpatialTest() {
     try (IDocumentStore store = new DocumentStore(getDefaultUrl(), getDefaultDb()).initialize()) {
 
       new EventsBySimpleLocation().execute(store);

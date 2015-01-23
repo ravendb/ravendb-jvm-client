@@ -17,7 +17,7 @@ import org.junit.Test;
 public class BugsTest extends RemoteClientTest {
 
   @Test
-  public void canUseStats() throws Exception {
+  public void canUseStats() {
 
     try (IDocumentStore store = new DocumentStore(getDefaultUrl(), getDefaultDb()).initialize()) {
       try (IDocumentSession session = store.openSession()) {

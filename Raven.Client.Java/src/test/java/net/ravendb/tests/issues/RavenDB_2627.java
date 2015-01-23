@@ -18,7 +18,7 @@ import net.ravendb.client.document.DocumentStore;
 public class RavenDB_2627 extends RemoteClientTest {
 
   @Test
-  public void canCreateSubscription() throws Exception {
+  public void canCreateSubscription() {
     try (IDocumentStore store = new DocumentStore(getDefaultUrl(), getDefaultDb()).initialize()) {
       long id = store.getSubscriptions().create(new SubscriptionCriteria());
       assertEquals(1, id);
@@ -48,7 +48,7 @@ public class RavenDB_2627 extends RemoteClientTest {
   }
 
   @Test
-  public void shouldThrowWhenOpeningNoExisingSubscription() throws Exception {
+  public void shouldThrowWhenOpeningNoExisingSubscription() {
     try (IDocumentStore store = new DocumentStore(getDefaultUrl(), getDefaultDb()).initialize()) {
       try {
         store.getSubscriptions().open(1, new SubscriptionConnectionOptions());
@@ -60,7 +60,7 @@ public class RavenDB_2627 extends RemoteClientTest {
   }
 
   @Test
-  public void shouldThrowOnAttemptToOpenAlreadyOpenedSubscription() throws Exception {
+  public void shouldThrowOnAttemptToOpenAlreadyOpenedSubscription() {
     try (IDocumentStore store = new DocumentStore(getDefaultUrl(), getDefaultDb()).initialize()) {
       long id = store.getSubscriptions().create(new SubscriptionCriteria());
       store.getSubscriptions().open(1, new SubscriptionConnectionOptions());

@@ -11,7 +11,7 @@ import org.junit.Test;
 
 public class AnalyzerResolutionTest extends RemoteClientTest {
   @Test
-  public void can_resolve_internal_analyzer() throws Exception {
+  public void can_resolve_internal_analyzer() {
 
     try (IDocumentStore store = new DocumentStore(getDefaultUrl(), getDefaultDb()).initialize()) {
       QPatchingTest_Post x = QPatchingTest_Post.post;

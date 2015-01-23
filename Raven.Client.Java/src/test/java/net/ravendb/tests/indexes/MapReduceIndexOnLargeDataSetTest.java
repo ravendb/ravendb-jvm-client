@@ -18,7 +18,7 @@ import org.junit.Test;
 public class MapReduceIndexOnLargeDataSetTest extends RemoteClientTest {
 
   @Test
-  public void willNotProduceAnyErrors() throws Exception {
+  public void willNotProduceAnyErrors() {
 
     try (IDocumentStore store = new DocumentStore(getDefaultUrl(), getDefaultDb()).initialize()) {
 

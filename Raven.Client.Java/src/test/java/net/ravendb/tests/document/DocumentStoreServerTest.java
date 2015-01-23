@@ -66,7 +66,7 @@ import org.junit.Test;
 public class DocumentStoreServerTest extends RemoteClientTest {
 
   @Test
-  public void should_insert_into_db_and_set_id() throws Exception {
+  public void should_insert_into_db_and_set_id() {
     try (IDocumentStore store = new DocumentStore(getDefaultUrl(), getDefaultDb()).initialize()) {
       try (IDocumentSession session = store.openSession()) {
         Company entity = new Company();
@@ -81,7 +81,7 @@ public class DocumentStoreServerTest extends RemoteClientTest {
   }
 
   @Test
-  public void can_get_index_names() throws Exception {
+  public void can_get_index_names() {
     try (IDocumentStore store = new DocumentStore(getDefaultUrl(), getDefaultDb()).initialize()) {
       Collection<String> indexNames = store.getDatabaseCommands().getIndexNames(0, 25);
       assertTrue("Raven/DocumentsByEntityName", indexNames.contains("Raven/DocumentsByEntityName"));
@@ -89,7 +89,7 @@ public class DocumentStoreServerTest extends RemoteClientTest {
   }
 
   @Test
-  public void can_get_index_def() throws Exception {
+  public void can_get_index_def() {
     QCompany c = QCompany.company;
     try (IDocumentStore store = new DocumentStore(getDefaultUrl(), getDefaultDb()).initialize()) {
       IndexDefinitionBuilder definitionBuilder = new IndexDefinitionBuilder();
@@ -104,7 +104,7 @@ public class DocumentStoreServerTest extends RemoteClientTest {
   }
 
   @Test
-  public void can_get_indexes() throws Exception {
+  public void can_get_indexes() {
     try (IDocumentStore store = new DocumentStore(getDefaultUrl(), getDefaultDb()).initialize()) {
       IndexDefinitionBuilder definitionBuilder = new IndexDefinitionBuilder();
 
@@ -124,7 +124,7 @@ public class DocumentStoreServerTest extends RemoteClientTest {
   }
 
   @Test
-  public void can_delete_by_index() throws Exception {
+  public void can_delete_by_index() {
     Company entity = new Company();
     entity.setName("Company");
 
@@ -147,7 +147,7 @@ public class DocumentStoreServerTest extends RemoteClientTest {
   }
 
   @Test
-  public void can_order_by_using_linq() throws Exception {
+  public void can_order_by_using_linq() {
     try (IDocumentStore store = new DocumentStore(getDefaultUrl(), getDefaultDb()).initialize()) {
 
       IndexDefinition indexDefinition = new IndexDefinition();
@@ -205,7 +205,7 @@ public class DocumentStoreServerTest extends RemoteClientTest {
   }
 
   @Test
-  public void can_create_index_with_decimal_as_firstfield() throws Exception {
+  public void can_create_index_with_decimal_as_firstfield() {
 
     try (IDocumentStore store = new DocumentStore(getDefaultUrl(), getDefaultDb()).initialize()) {
       try (IDocumentSession session = store.openSession()) {
@@ -235,7 +235,7 @@ public class DocumentStoreServerTest extends RemoteClientTest {
   }
   // Can_select_from_index_using_linq_method_chain_using_decimal_and_greater_than_or_equal
   @Test
-  public void test_select_gte() throws Exception {
+  public void test_select_gte() {
     try (IDocumentStore store = new DocumentStore(getDefaultUrl(), getDefaultDb()).initialize()) {
       try (IDocumentSession session = store.openSession()) {
         Company company = new Company();
@@ -266,7 +266,7 @@ public class DocumentStoreServerTest extends RemoteClientTest {
   }
 
   @Test
-  public void can_create_index_with_decimal_as_lastfield() throws Exception {
+  public void can_create_index_with_decimal_as_lastfield() {
     try (IDocumentStore store = new DocumentStore(getDefaultUrl(), getDefaultDb()).initialize()) {
       try (IDocumentSession session = store.openSession()) {
         Company company = new Company();
@@ -295,7 +295,7 @@ public class DocumentStoreServerTest extends RemoteClientTest {
   }
 
   @Test
-  public void can_update_by_index() throws Exception {
+  public void can_update_by_index() {
     try (IDocumentStore store = new DocumentStore(getDefaultUrl(), getDefaultDb()).initialize()) {
       Company entity = new Company();
       entity.setName("Company");
@@ -325,7 +325,7 @@ public class DocumentStoreServerTest extends RemoteClientTest {
   }
 
   @Test
-  public void can_specify_cutoff_using_server() throws Exception {
+  public void can_specify_cutoff_using_server() {
 
     try (IDocumentStore store = new DocumentStore(getDefaultUrl(), getDefaultDb()).initialize()) {
       IndexQuery query = new IndexQuery();
@@ -336,7 +336,7 @@ public class DocumentStoreServerTest extends RemoteClientTest {
   }
 
   @Test
-  public void can_read_projected_dates() throws Exception {
+  public void can_read_projected_dates() {
 
     try (IDocumentStore store = new DocumentStore(getDefaultUrl(), getDefaultDb()).initialize()) {
 
@@ -383,7 +383,7 @@ public class DocumentStoreServerTest extends RemoteClientTest {
   }
 
   @Test
-  public void can_query_using_special_characters() throws Exception {
+  public void can_query_using_special_characters() {
 
 
     try (IDocumentStore store = new DocumentStore(getDefaultUrl(), getDefaultDb()).initialize()) {
@@ -416,7 +416,7 @@ public class DocumentStoreServerTest extends RemoteClientTest {
   }
 
   @Test
-  public void can_query_indexes_returning_complex_objects() throws Exception {
+  public void can_query_indexes_returning_complex_objects() {
     try (IDocumentStore store = new DocumentStore(getDefaultUrl(), getDefaultDb()).initialize()) {
 
       IndexDefinition indexDefinition = new IndexDefinition();
@@ -447,7 +447,7 @@ public class DocumentStoreServerTest extends RemoteClientTest {
   }
 
   @Test
-  public void requesting_stats() throws Exception {
+  public void requesting_stats() {
 
     try (IDocumentStore store = new DocumentStore(getDefaultUrl(), getDefaultDb()).initialize()) {
       try (IDocumentSession session = store.openSession()) {
@@ -458,7 +458,7 @@ public class DocumentStoreServerTest extends RemoteClientTest {
   }
 
   @Test
-  public void can_get_entity_back_with_enum() throws Exception {
+  public void can_get_entity_back_with_enum() {
     Company company = new Company();
     company.setName("Company Name");
     company.setType(CompanyType.PRIVATE);
@@ -478,7 +478,7 @@ public class DocumentStoreServerTest extends RemoteClientTest {
   }
 
   @Test
-  public void can_store_and_get_array_metadata() throws Exception {
+  public void can_store_and_get_array_metadata() {
 
     try (IDocumentStore store = new DocumentStore(getDefaultUrl(), getDefaultDb()).initialize()) {
       try (IDocumentSession session = store.openSession()) {
@@ -499,7 +499,7 @@ public class DocumentStoreServerTest extends RemoteClientTest {
   }
 
   @Test
-  public void can_store_using_batch() throws Exception {
+  public void can_store_using_batch() {
     Company c1 = new Company();
     c1.setName("Hibernating Rhinos");
 
@@ -525,7 +525,7 @@ public class DocumentStoreServerTest extends RemoteClientTest {
   }
 
   @Test
-  public void can_get_document_metadata() throws Exception {
+  public void can_get_document_metadata() {
 
     Company c1 = new Company();
     c1.setName("Hibernating Rhinos");
@@ -545,7 +545,7 @@ public class DocumentStoreServerTest extends RemoteClientTest {
   }
 
   @Test
-  public void when_document_does_not_exist_Then_metadata_should_be_null() throws Exception {
+  public void when_document_does_not_exist_Then_metadata_should_be_null() {
 
     try (IDocumentStore store = new DocumentStore(getDefaultUrl(), getDefaultDb()).initialize()) {
       assertNull(store.getDatabaseCommands().head("rhino1"));
@@ -553,7 +553,7 @@ public class DocumentStoreServerTest extends RemoteClientTest {
   }
 
   @Test
-  public void can_defer_commands_until_savechanges() throws Exception {
+  public void can_defer_commands_until_savechanges() {
 
     try (IDocumentStore store = new DocumentStore(getDefaultUrl(), getDefaultDb()).initialize()) {
       try (IDocumentSession session = store.openSession()) {
@@ -594,7 +594,7 @@ public class DocumentStoreServerTest extends RemoteClientTest {
   }
 
   @Test
-  public void can_get_two_documents_in_one_call() throws Exception {
+  public void can_get_two_documents_in_one_call() {
 
     try (IDocumentStore store = new DocumentStore(getDefaultUrl(), getDefaultDb()).initialize()) {
       try (IDocumentSession session = store.openSession()) {
@@ -613,7 +613,7 @@ public class DocumentStoreServerTest extends RemoteClientTest {
   }
 
   @Test
-  public void can_get_documents() throws Exception {
+  public void can_get_documents() {
 
     try (IDocumentStore store = new DocumentStore(getDefaultUrl(), getDefaultDb()).initialize()) {
       try (IDocumentSession session = store.openSession()) {
@@ -628,7 +628,7 @@ public class DocumentStoreServerTest extends RemoteClientTest {
   }
 
   @Test
-  public void can_delete_document() throws Exception {
+  public void can_delete_document() {
 
     try (IDocumentStore store = new DocumentStore(getDefaultUrl(), getDefaultDb()).initialize()) {
       try (IDocumentSession session = store.openSession()) {
@@ -651,7 +651,7 @@ public class DocumentStoreServerTest extends RemoteClientTest {
   }
 
   @Test
-  public void can_project_from_index() throws Exception {
+  public void can_project_from_index() {
     try (IDocumentStore store = new DocumentStore(getDefaultUrl(), getDefaultDb()).initialize()) {
       try (IDocumentSession session = store.openSession()) {
         Company company = new Company(null, "Company 1");
@@ -678,7 +678,7 @@ public class DocumentStoreServerTest extends RemoteClientTest {
   }
 
   @Test
-  public void can_select_from_index_using_linq_method_chain() throws Exception {
+  public void can_select_from_index_using_linq_method_chain() {
 
     try (IDocumentStore store = new DocumentStore(getDefaultUrl(), getDefaultDb()).initialize()) {
       try (IDocumentSession session = store.openSession()) {
@@ -708,7 +708,7 @@ public class DocumentStoreServerTest extends RemoteClientTest {
   }
 
   @Test
-  public void can_select_from_index_using_linq_method_chain_with_variable() throws Exception {
+  public void can_select_from_index_using_linq_method_chain_with_variable() {
 
     try (IDocumentStore store = new DocumentStore(getDefaultUrl(), getDefaultDb()).initialize()) {
       try (IDocumentSession session = store.openSession()) {
@@ -740,7 +740,7 @@ public class DocumentStoreServerTest extends RemoteClientTest {
   }
 
   @Test
-  public void can_select_from_index_using_linq_with_no_where_clause() throws Exception {
+  public void can_select_from_index_using_linq_with_no_where_clause() {
     try (IDocumentStore store = new DocumentStore(getDefaultUrl(), getDefaultDb()).initialize()) {
       try (IDocumentSession session = store.openSession()) {
         Company company = new Company(null, "Company 1");
@@ -765,7 +765,7 @@ public class DocumentStoreServerTest extends RemoteClientTest {
   }
 
   @Test
-  public void can_select_from_index_using_linq_method_chain_using_integer() throws Exception {
+  public void can_select_from_index_using_linq_method_chain_using_integer() {
     try (IDocumentStore store = new DocumentStore(getDefaultUrl(), getDefaultDb()).initialize()) {
       try (IDocumentSession session = store.openSession()) {
         Company company = new Company(null, "Company 1");
@@ -795,7 +795,7 @@ public class DocumentStoreServerTest extends RemoteClientTest {
 
   //Can_select_from_index_using_linq_method_chain_using_integer_and_greater_than_or_equal
   @Test
-  public void can_select_from_index_using_linq_method_chain_using_integer_and_gte() throws Exception {
+  public void can_select_from_index_using_linq_method_chain_using_integer_and_gte() {
     try (IDocumentStore store = new DocumentStore(getDefaultUrl(), getDefaultDb()).initialize()) {
       try (IDocumentSession session = store.openSession()) {
         Company company = new Company(null, "Company 1");
@@ -824,7 +824,7 @@ public class DocumentStoreServerTest extends RemoteClientTest {
   }
 
   @Test(expected = ConcurrencyException.class)
-  public void optimistic_concurrency() throws Exception {
+  public void optimistic_concurrency() {
 
     try (IDocumentStore store = new DocumentStore(getDefaultUrl(), getDefaultDb()).initialize()) {
       try (IDocumentSession session = store.openSession()) {
@@ -846,7 +846,7 @@ public class DocumentStoreServerTest extends RemoteClientTest {
   }
 
   @Test
-  public void should_update_stored_entity() throws Exception {
+  public void should_update_stored_entity() {
 
     try (IDocumentStore store = new DocumentStore(getDefaultUrl(), getDefaultDb()).initialize()) {
       try (IDocumentSession session = store.openSession()) {
@@ -866,7 +866,7 @@ public class DocumentStoreServerTest extends RemoteClientTest {
   }
 
   @Test
-  public void should_update_retrieved_entity() throws Exception {
+  public void should_update_retrieved_entity() {
 
     try (IDocumentStore store = new DocumentStore(getDefaultUrl(), getDefaultDb()).initialize()) {
       try (IDocumentSession session = store.openSession()) {
@@ -887,7 +887,7 @@ public class DocumentStoreServerTest extends RemoteClientTest {
   }
 
   @Test
-  public void should_retrieve_all_entities() throws Exception {
+  public void should_retrieve_all_entities() {
 
     try (IDocumentStore store = new DocumentStore(getDefaultUrl(), getDefaultDb()).initialize()) {
       try (IDocumentSession session = store.openSession()) {
@@ -907,7 +907,7 @@ public class DocumentStoreServerTest extends RemoteClientTest {
   }
 
   @Test
-  public void can_sort_from_index() throws Exception {
+  public void can_sort_from_index() {
 
     try (IDocumentStore store = new DocumentStore(getDefaultUrl(), getDefaultDb()).initialize()) {
       try (IDocumentSession session = store.openSession()) {
@@ -943,7 +943,7 @@ public class DocumentStoreServerTest extends RemoteClientTest {
   }
 
   @Test
-  public void can_query_from_spatial_index() throws Exception {
+  public void can_query_from_spatial_index() {
 
     try (IDocumentStore store = new DocumentStore(getDefaultUrl(), getDefaultDb()).initialize()) {
       try (IDocumentSession session = store.openSession()) {
@@ -997,7 +997,7 @@ public class DocumentStoreServerTest extends RemoteClientTest {
   }
 
   @Test
-  public void can_create_index_using_linq_from_client() throws Exception {
+  public void can_create_index_using_linq_from_client() {
 
     try (IDocumentStore store = new DocumentStore(getDefaultUrl(), getDefaultDb()).initialize()) {
       IndexDefinitionBuilder builder = new IndexDefinitionBuilder();
@@ -1025,7 +1025,7 @@ public class DocumentStoreServerTest extends RemoteClientTest {
   }
 
   @Test
-  public void can_create_index_using_linq_from_client_using_map_reduce() throws Exception {
+  public void can_create_index_using_linq_from_client_using_map_reduce() {
     IndexDefinitionBuilder builder = new IndexDefinitionBuilder();
 
     QLinqIndexesFromClient_User u = QLinqIndexesFromClient_User.user;
@@ -1060,7 +1060,7 @@ public class DocumentStoreServerTest extends RemoteClientTest {
   }
 
   @Test
-  public void can_get_correct_averages_from_map_reduce_index() throws Exception {
+  public void can_get_correct_averages_from_map_reduce_index() {
     QLinqIndexesFromClient_User u = QLinqIndexesFromClient_User.user;
 
     IndexDefinitionBuilder builder = new IndexDefinitionBuilder();
@@ -1104,7 +1104,7 @@ public class DocumentStoreServerTest extends RemoteClientTest {
   }
 
   @Test
-  public void can_get_correct_maximum_from_map_reduce_index() throws Exception {
+  public void can_get_correct_maximum_from_map_reduce_index() {
 
     IndexDefinitionBuilder builder = new IndexDefinitionBuilder();
     QLinqIndexesFromClient_LocationAge l = QLinqIndexesFromClient_LocationAge.locationAge;
@@ -1148,7 +1148,7 @@ public class DocumentStoreServerTest extends RemoteClientTest {
   }
 
   @Test
-  public void can_get_correct_maximum_from_map_reduce_index_using_orderbydescending() throws Exception {
+  public void can_get_correct_maximum_from_map_reduce_index_using_orderbydescending() {
     IndexDefinitionBuilder builder = new IndexDefinitionBuilder();
     QLinqIndexesFromClient_LocationAge l = QLinqIndexesFromClient_LocationAge.locationAge;
     builder.setMap("from user in docs.users select new {user.Age}");
@@ -1189,7 +1189,7 @@ public class DocumentStoreServerTest extends RemoteClientTest {
   }
 
   @Test
-  public void using_attachments() throws Exception {
+  public void using_attachments() {
     try (IDocumentStore store = new DocumentStore(getDefaultUrl(), getDefaultDb()).initialize()) {
       Attachment attachment = store.getDatabaseCommands().getAttachment("ayende");
       assertNull(attachment);
@@ -1211,7 +1211,7 @@ public class DocumentStoreServerTest extends RemoteClientTest {
   }
 
   @Test
-  public void getting_attachment_metadata() throws Exception {
+  public void getting_attachment_metadata() {
     try (IDocumentStore store = new DocumentStore(getDefaultUrl(), getDefaultDb()).initialize()) {
       RavenJObject meta = new RavenJObject();
       meta.add("Hello", new RavenJValue("World"));
@@ -1229,7 +1229,7 @@ public class DocumentStoreServerTest extends RemoteClientTest {
   }
 
   @Test
-  public void getting_headers_of_attachments_with_prefix() throws Exception {
+  public void getting_headers_of_attachments_with_prefix() {
     try (IDocumentStore store = new DocumentStore(getDefaultUrl(), getDefaultDb()).initialize()) {
       RavenJObject meta1 = new RavenJObject();
       meta1.add("Hello", new RavenJValue("World"));
@@ -1261,7 +1261,7 @@ public class DocumentStoreServerTest extends RemoteClientTest {
   }
 
   @Test
-  public void using_attachments_can_properly_set_WebRequest_Headers() throws Exception {
+  public void using_attachments_can_properly_set_WebRequest_Headers() {
     String key = String.format("%s-%d", "test", new Date().getTime());
     RavenJObject metadata = new RavenJObject();
     metadata.add("owner", 5);
@@ -1275,7 +1275,7 @@ public class DocumentStoreServerTest extends RemoteClientTest {
   }
 
   @Test
-  public void can_patch_existing_document_when_present() throws Exception {
+  public void can_patch_existing_document_when_present() {
     Company company = new Company(null, "Hibernating Rhinos");
 
     try (IDocumentStore store = new DocumentStore(getDefaultUrl(), getDefaultDb()).initialize()) {
@@ -1299,7 +1299,7 @@ public class DocumentStoreServerTest extends RemoteClientTest {
   }
 
   @Test
-  public void can_patch_default_document_when_missing() throws Exception {
+  public void can_patch_default_document_when_missing() {
 
     try (IDocumentStore store = new DocumentStore(getDefaultUrl(), getDefaultDb()).initialize()) {
       store.getDatabaseCommands().patch("Company/1", new PatchRequest[] {
@@ -1317,7 +1317,7 @@ public class DocumentStoreServerTest extends RemoteClientTest {
   }
 
   @Test
-  public void should_not_throw_when_ignore_missing_true() throws Exception {
+  public void should_not_throw_when_ignore_missing_true() {
     try (IDocumentStore store = new DocumentStore(getDefaultUrl(), getDefaultDb()).initialize()) {
       store.getDatabaseCommands().patch("Company/1", new PatchRequest[] {
           new PatchRequest(PatchCommandType.SET, "Name", new RavenJValue("Existing"))
@@ -1330,7 +1330,7 @@ public class DocumentStoreServerTest extends RemoteClientTest {
   }
 
   @Test(expected = DocumentDoesNotExistsException.class)
-  public void should_throw_when_ignore_missing_false() throws Exception {
+  public void should_throw_when_ignore_missing_false() {
     try (IDocumentStore store = new DocumentStore(getDefaultUrl(), getDefaultDb()).initialize()) {
       store.getDatabaseCommands().patch("Company/1", new PatchRequest[] {
           new PatchRequest(PatchCommandType.SET, "Name", new RavenJValue("Existing"))
@@ -1343,7 +1343,7 @@ public class DocumentStoreServerTest extends RemoteClientTest {
   }
 
   @Test
-  public void should_return_false_on_batch_delete_when_document_missing() throws Exception {
+  public void should_return_false_on_batch_delete_when_document_missing() {
     try (IDocumentStore store = new DocumentStore(getDefaultUrl(), getDefaultDb()).initialize()) {
       BatchResult[] batchResult = store.getDatabaseCommands().batch(Arrays.<ICommandData> asList(new DeleteCommandData("Company/1", null)));
 
@@ -1355,7 +1355,7 @@ public class DocumentStoreServerTest extends RemoteClientTest {
   }
 
   @Test
-  public void should_return_true_on_batch_delete_when_document_present() throws Exception {
+  public void should_return_true_on_batch_delete_when_document_present() {
     try (IDocumentStore store = new DocumentStore(getDefaultUrl(), getDefaultDb()).initialize()) {
       store.getDatabaseCommands().put("Company/1", null, new RavenJObject(), new RavenJObject());
       BatchResult[] batchResult = store.getDatabaseCommands().batch(Arrays.<ICommandData> asList(new DeleteCommandData("Company/1", null)));

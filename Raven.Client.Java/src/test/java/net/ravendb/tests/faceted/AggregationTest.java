@@ -75,7 +75,7 @@ public class AggregationTest extends RemoteClientTest {
   }
 
   @Test
-  public void canCorrectlyAggregate() throws Exception {
+  public void canCorrectlyAggregate() {
 
     QAggregationTest_Order o = QAggregationTest_Order.order;
 
@@ -126,7 +126,7 @@ public class AggregationTest extends RemoteClientTest {
   }
 
   @Test
-  public void canCorrectlyAggregate_MultipleItems() throws Exception {
+  public void canCorrectlyAggregate_MultipleItems() {
     QAggregationTest_Order o = QAggregationTest_Order.order;
 
     try (IDocumentStore store = new DocumentStore(getDefaultUrl(), getDefaultDb()).initialize()) {
@@ -187,7 +187,7 @@ public class AggregationTest extends RemoteClientTest {
   }
 
   @Test
-  public void canCorrectlyAggregate_MultipleAggregations() throws Exception {
+  public void canCorrectlyAggregate_MultipleAggregations() {
     QAggregationTest_Order o = QAggregationTest_Order.order;
 
     try (IDocumentStore store = new DocumentStore(getDefaultUrl(), getDefaultDb()).initialize()) {
@@ -242,7 +242,7 @@ public class AggregationTest extends RemoteClientTest {
   }
 
   @Test
-  public void canCorrectlyAggregate_DisplayName() throws Exception {
+  public void canCorrectlyAggregate_DisplayName() {
     QAggregationTest_Order o = QAggregationTest_Order.order;
 
     try (IDocumentStore store = new DocumentStore(getDefaultUrl(), getDefaultDb()).initialize()) {
@@ -291,7 +291,7 @@ public class AggregationTest extends RemoteClientTest {
   }
 
   @Test
-  public void canCorrectlyAggregate_Ranges() throws Exception {
+  public void canCorrectlyAggregate_Ranges() {
     QAggregationTest_Order o = QAggregationTest_Order.order;
 
     try (IDocumentStore store = new DocumentStore(getDefaultUrl(), getDefaultDb()).initialize()) {

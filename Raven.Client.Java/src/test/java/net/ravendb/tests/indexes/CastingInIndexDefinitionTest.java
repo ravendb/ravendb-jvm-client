@@ -19,7 +19,7 @@ import org.junit.Test;
 public class CastingInIndexDefinitionTest extends RemoteClientTest {
 
   @Test
-  public void canCastValuesToString() throws Exception {
+  public void canCastValuesToString() {
 
     try (IDocumentStore store = new DocumentStore(getDefaultUrl(), getDefaultDb()).initialize()) {
       store.executeIndex(new Employees_CurrentCount());

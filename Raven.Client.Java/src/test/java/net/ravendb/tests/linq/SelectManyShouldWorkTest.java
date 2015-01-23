@@ -21,7 +21,7 @@ import org.junit.Test;
 public class SelectManyShouldWorkTest extends RemoteClientTest {
 
 
-  public void insertSampleData(IDocumentStore store) throws Exception {
+  public void insertSampleData(IDocumentStore store) {
 
     try (IDocumentSession session = store.openSession()) {
       DroneStateSnapshot d1 = new DroneStateSnapshot();

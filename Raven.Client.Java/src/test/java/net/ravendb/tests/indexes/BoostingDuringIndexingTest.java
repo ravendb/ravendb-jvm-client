@@ -80,7 +80,7 @@ public class BoostingDuringIndexingTest extends RemoteClientTest {
   }
 
   @Test
-  public void canBoostFullDocument() throws Exception {
+  public void canBoostFullDocument() {
     try (IDocumentStore store = new DocumentStore(getDefaultUrl(), getDefaultDb()).initialize()) {
 
       new UserAndAccounts().execute(store);
@@ -113,7 +113,7 @@ public class BoostingDuringIndexingTest extends RemoteClientTest {
   }
 
   @Test
-  public void canGetBoostedValues() throws Exception {
+  public void canGetBoostedValues() {
 
     try (IDocumentStore store = new DocumentStore(getDefaultUrl(), getDefaultDb()).initialize()) {
 

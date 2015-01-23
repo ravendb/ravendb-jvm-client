@@ -29,7 +29,7 @@ import com.mysema.query.annotations.QueryEntity;
 public class UsingDynamicQueryWithRemoteServerTest extends RemoteClientTest {
 
   @Test
-  public void canPerformDynamicQueryUsingClientLinqQuery() throws Exception {
+  public void canPerformDynamicQueryUsingClientLinqQuery() {
     Blog blogOne = new Blog();
     blogOne.setTitle("one");
     blogOne.setCategory("Ravens");
@@ -71,7 +71,7 @@ public class UsingDynamicQueryWithRemoteServerTest extends RemoteClientTest {
   }
 
   @Test
-  public void canPerformDynamicQueryUsingClientLuceneQuery() throws Exception {
+  public void canPerformDynamicQueryUsingClientLuceneQuery() {
 
     Blog blogOne = new Blog();
     blogOne.setTitle("one");
@@ -106,7 +106,7 @@ public class UsingDynamicQueryWithRemoteServerTest extends RemoteClientTest {
   }
 
   @Test
-  public void canPerformProjectionUsingClientLinqQuery() throws Exception {
+  public void canPerformProjectionUsingClientLinqQuery() {
     Blog blogOne = new Blog();
     blogOne.setTitle("one");
     blogOne.setCategory("Ravens");
@@ -134,7 +134,7 @@ public class UsingDynamicQueryWithRemoteServerTest extends RemoteClientTest {
   }
 
   @Test
-  public void queryForASpecificTypeDoesNotBringBackOtherTypes() throws Exception {
+  public void queryForASpecificTypeDoesNotBringBackOtherTypes() {
     try (IDocumentStore store = new DocumentStore(getDefaultUrl(), getDefaultDb()).initialize()) {
       try (IDocumentSession session = store.openSession()) {
         session.store(new Tag());
@@ -151,7 +151,7 @@ public class UsingDynamicQueryWithRemoteServerTest extends RemoteClientTest {
   }
 
   @Test
-  public void canPerformLinqOrderByOnNumericField() throws Exception {
+  public void canPerformLinqOrderByOnNumericField() {
     Blog blogOne = new Blog();
     blogOne.setSortWeight(2);
 
@@ -191,7 +191,7 @@ public class UsingDynamicQueryWithRemoteServerTest extends RemoteClientTest {
   }
 
   @Test
-  public void canPerformLinqOrderByOnTextField() throws Exception {
+  public void canPerformLinqOrderByOnTextField() {
     Blog blogOne = new Blog();
     blogOne.setTitle("aaaaa");
 
@@ -226,7 +226,7 @@ public class UsingDynamicQueryWithRemoteServerTest extends RemoteClientTest {
   }
 
   @Test
-  public void canPerformDynamicQueryWithHighlightingUsingClientLuceneQuery() throws Exception {
+  public void canPerformDynamicQueryWithHighlightingUsingClientLuceneQuery() {
     Blog blogOne = new Blog();
     blogOne.setTitle("Lorem ipsum dolor sit amet, target word, consectetur adipiscing elit.");
     blogOne.setCategory("Ravens");
@@ -276,7 +276,7 @@ public class UsingDynamicQueryWithRemoteServerTest extends RemoteClientTest {
   }
 
   @Test
-  public void canPerformDynamicQueryWithHighlighting() throws Exception {
+  public void canPerformDynamicQueryWithHighlighting() {
     Blog blogOne = new Blog();
     blogOne.setTitle("Lorem ipsum dolor sit amet, target word, consectetur adipiscing elit.");
     blogOne.setCategory("Ravens");
@@ -331,7 +331,7 @@ public class UsingDynamicQueryWithRemoteServerTest extends RemoteClientTest {
   }
 
   @Test
-  public void executesQueryWithHighlightingsAgainstSimpleIndex() throws Exception {
+  public void executesQueryWithHighlightingsAgainstSimpleIndex() {
     String indexName = "BlogsForHighlightingTests";
     IndexDefinition indexDefinition = new IndexDefinition();
     indexDefinition.setMap("from blog in docs.Blogs select new { blog.Title, blog.Category }");
@@ -398,7 +398,7 @@ public class UsingDynamicQueryWithRemoteServerTest extends RemoteClientTest {
   }
 
   @Test
-  public void executesQueryWithHighlightingsAndProjections() throws Exception {
+  public void executesQueryWithHighlightingsAndProjections() {
     String indexName = "BlogsForHighlightingTests";
     IndexDefinition indexDefinition = new IndexDefinition();
     indexDefinition.setMap("from blog in docs.Blogs select new { blog.Title, blog.Category }");
@@ -451,7 +451,7 @@ public class UsingDynamicQueryWithRemoteServerTest extends RemoteClientTest {
   }
 
   @Test
-  public void executesQueryWithHighlightingsAgainstMapReduceIndex() throws Exception {
+  public void executesQueryWithHighlightingsAgainstMapReduceIndex() {
     String indexName = "BlogsForHighlightingMRTests";
     IndexDefinition indexDefinition = new IndexDefinition();
     indexDefinition.setMap("from blog in docs.Blogs select new { blog.Title, blog.Category }");

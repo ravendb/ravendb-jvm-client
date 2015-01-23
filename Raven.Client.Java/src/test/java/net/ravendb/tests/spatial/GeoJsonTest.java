@@ -53,7 +53,7 @@ public class GeoJsonTest extends RemoteClientTest {
   }
 
   @Test
-  public void pointTest() throws Exception {
+  public void pointTest() {
     try (IDocumentStore store = new DocumentStore(getDefaultUrl(), getDefaultDb()).initialize()) {
 
       store.executeIndex(new GeoJsonIndex());

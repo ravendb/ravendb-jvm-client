@@ -38,7 +38,7 @@ public class FacetedIndexLimitTest extends FacetTestBase {
   }
 
   @Test
-  public void canPerformSearchWithTwoDefaultFacets() throws Exception {
+  public void canPerformSearchWithTwoDefaultFacets() {
     Facet facet1 = new Facet();
     facet1.setName("Manufacturer");
 
@@ -94,7 +94,7 @@ public class FacetedIndexLimitTest extends FacetTestBase {
   }
 
   @Test
-  public void canPerformFacetedLimitSearch_TermAsc() throws Exception {
+  public void canPerformFacetedLimitSearch_TermAsc() {
     Facet facet1 = new Facet();
     facet1.setName("Manufacturer");
     facet1.setMaxResults(2);
@@ -141,7 +141,7 @@ public class FacetedIndexLimitTest extends FacetTestBase {
   }
 
   @Test
-  public void canPerformFacetedLimitSearch_TermDesc() throws Exception {
+  public void canPerformFacetedLimitSearch_TermDesc() {
     Facet facet1 = new Facet();
     facet1.setName("Manufacturer");
     facet1.setMaxResults(3);
@@ -190,7 +190,7 @@ public class FacetedIndexLimitTest extends FacetTestBase {
   }
 
   @Test
-  public void canPerformFacetedLimitSearch_HitsAsc() throws Exception {
+  public void canPerformFacetedLimitSearch_HitsAsc() {
     Facet facet1 = new Facet();
     facet1.setName("Manufacturer");
     facet1.setMaxResults(2);
@@ -246,7 +246,7 @@ public class FacetedIndexLimitTest extends FacetTestBase {
   }
 
   @Test
-  public void canPerformFacetedLimitSearch_HitsDesc() throws Exception {
+  public void canPerformFacetedLimitSearch_HitsDesc() {
   //also specify more results than we have
     Facet facet1 = new Facet();
     facet1.setName("Manufacturer");
@@ -297,7 +297,7 @@ public class FacetedIndexLimitTest extends FacetTestBase {
   }
 
   @Test
-  public void canPerformSearchWithTwoDefaultFacets_LuceneQuery()  throws Exception {
+  public void canPerformSearchWithTwoDefaultFacets_LuceneQuery()  {
     Facet facet1 = new Facet();
     facet1.setName("Manufacturer");
 
@@ -353,7 +353,7 @@ public class FacetedIndexLimitTest extends FacetTestBase {
   }
 
   @Test
-  public void canPerformFacetedLimitSearch_TermAsc_LuceneQuery() throws Exception {
+  public void canPerformFacetedLimitSearch_TermAsc_LuceneQuery() {
     Facet facet1 = new Facet();
     facet1.setName("Manufacturer");
     facet1.setMaxResults(2);
@@ -399,7 +399,7 @@ public class FacetedIndexLimitTest extends FacetTestBase {
   }
 
   @Test
-  public void canPerformFacetedLimitSearch_TermDesc_LuceneQuery() throws Exception {
+  public void canPerformFacetedLimitSearch_TermDesc_LuceneQuery() {
     Facet facet1 = new Facet();
     facet1.setName("Manufacturer");
     facet1.setMaxResults(3);
@@ -448,7 +448,7 @@ public class FacetedIndexLimitTest extends FacetTestBase {
   }
 
   @Test
-  public void canPerformFacetedLimitSearch_HitsAsc_LuceneQuery() throws Exception {
+  public void canPerformFacetedLimitSearch_HitsAsc_LuceneQuery() {
     Facet facet1 = new Facet();
     facet1.setName("Manufacturer");
     facet1.setMaxResults(2);
@@ -504,7 +504,7 @@ public class FacetedIndexLimitTest extends FacetTestBase {
   }
 
   @Test
-  public void canPerformFacetedLimitSearch_HitsDesc_LuceneQuery() throws Exception {
+  public void canPerformFacetedLimitSearch_HitsDesc_LuceneQuery() {
   //also specify more results than we have
     Facet facet1 = new Facet();
     facet1.setName("Manufacturer");
@@ -563,7 +563,7 @@ public class FacetedIndexLimitTest extends FacetTestBase {
     return list;
   }
 
-  private void setup(IDocumentStore store) throws Exception {
+  private void setup(IDocumentStore store) {
     try (IDocumentSession s = store.openSession()) {
       IndexDefinition indexDefinition = new IndexDefinition();
       indexDefinition.setMap("from camera in docs " +

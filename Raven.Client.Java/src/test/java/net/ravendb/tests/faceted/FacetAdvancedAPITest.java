@@ -67,7 +67,7 @@ public class FacetAdvancedAPITest {
   }
 
   @org.junit.Test
-  public void canUseNewAPIToDoMultipleQueries() throws Exception {
+  public void canUseNewAPIToDoMultipleQueries() {
     Facet oldFacet1 = new Facet();
     oldFacet1.setName("Manufacturer");
 

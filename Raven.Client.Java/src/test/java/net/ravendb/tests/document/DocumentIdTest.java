@@ -13,7 +13,7 @@ import org.junit.Test;
 public class DocumentIdTest extends RemoteClientTest {
 
   @Test
-  public void withSynchronousApiIdsAreGeneratedOnStore() throws Exception {
+  public void withSynchronousApiIdsAreGeneratedOnStore() {
     try (IDocumentStore store = new DocumentStore(getDefaultUrl(), getDefaultDb()).initialize()) {
       try (IDocumentSession session = store.openSession()) {
         TestObject obj = new TestObject();

@@ -25,14 +25,14 @@ import com.mysema.query.annotations.QueryEntity;
 public class IntersectionTest extends RemoteClientTest {
 
   @Test
-  public void canPerformIntersectionQuery_Remotely() throws Exception {
+  public void canPerformIntersectionQuery_Remotely() {
     try (IDocumentStore store = new DocumentStore(getDefaultUrl(), getDefaultDb()).initialize()) {
       executeTest(store);
     }
   }
 
   @Test
-  public void canPerformIntersectionQuery_Linq() throws Exception {
+  public void canPerformIntersectionQuery_Linq() {
     try (IDocumentStore store = new DocumentStore(getDefaultUrl(), getDefaultDb()).initialize()) {
       createIndexAndSampleData(store);
       try (IDocumentSession session = store.openSession()) {
@@ -79,7 +79,7 @@ public class IntersectionTest extends RemoteClientTest {
     return false;
   }
 
-  private void executeTest(IDocumentStore store) throws Exception {
+  private void executeTest(IDocumentStore store) {
     createIndexAndSampleData(store);
     try (IDocumentSession s = store.openSession()) {
       //This should be BarCodeNumber = -999, 10001
@@ -139,7 +139,7 @@ public class IntersectionTest extends RemoteClientTest {
 
   }
 
-  private void createIndexAndSampleData(IDocumentStore store) throws Exception {
+  private void createIndexAndSampleData(IDocumentStore store) {
     try (IDocumentSession session = store.openSession()) {
       IndexDefinition indexDefinition = new IndexDefinition();
       indexDefinition.setMap("from s in docs.TShirts " +

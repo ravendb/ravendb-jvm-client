@@ -17,7 +17,7 @@ import com.mysema.query.annotations.QueryEntity;
 public class SyncTransformWithTest extends RemoteClientTest {
 
   @Test
-  public void canRunTransformerOnSession() throws Exception {
+  public void canRunTransformerOnSession() {
     try (IDocumentStore store = new DocumentStore(getDefaultUrl(), getDefaultDb()).initialize()) {
 
       store.executeTransformer(new MyTransformer());

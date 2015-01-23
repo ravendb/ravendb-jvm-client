@@ -12,7 +12,7 @@ import org.junit.Test;
 public class NotificationOnWrongDatabaseTest extends RemoteClientTest {
 
   @Test(expected = RuntimeException.class)
-  public void shouldNotCrashServer() throws Exception {
+  public void shouldNotCrashServer() {
     try (IDocumentStore store = new DocumentStore(getDefaultUrl(), getDefaultDb()).initialize()) {
       try (IDocumentSession session = store.openSession()) {
         store.changes("does-not-exists");

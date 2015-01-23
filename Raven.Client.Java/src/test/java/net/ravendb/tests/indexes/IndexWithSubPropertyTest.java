@@ -16,7 +16,7 @@ import com.mysema.query.annotations.QueryEntity;
 
 public class IndexWithSubPropertyTest  {
   @Test
-  public void indexWithSubPropertyReturnAs_Property_SubProperty() throws Exception {
+  public void indexWithSubPropertyReturnAs_Property_SubProperty() {
     ContactIndex contactIndex = new ContactIndex();
     contactIndex.setConventions(new DocumentConvention());
     IndexDefinition result = contactIndex.createIndexDefinition();

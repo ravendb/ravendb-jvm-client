@@ -54,7 +54,7 @@ public class Webinar extends RemoteClientTest {
   }
 
   @Test
-  public void can_store_entity() throws Exception {
+  public void can_store_entity() {
 
     try (IDocumentStore store = new DocumentStore(getDefaultUrl(), getDefaultDb()).initialize()) {
       int personId = 0;

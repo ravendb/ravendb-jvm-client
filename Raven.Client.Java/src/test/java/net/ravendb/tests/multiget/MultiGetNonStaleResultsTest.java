@@ -20,7 +20,7 @@ import org.junit.Test;
 public class MultiGetNonStaleResultsTest extends RemoteClientTest {
 
   @Test
-  public void shouldBeAbleToGetNonStaleResults() throws Exception {
+  public void shouldBeAbleToGetNonStaleResults() {
 
     try (IDocumentStore store = new DocumentStore(getDefaultUrl(), getDefaultDb()).initialize()) {
       try (IDocumentSession session = store.openSession()) {

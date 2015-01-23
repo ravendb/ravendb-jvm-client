@@ -17,7 +17,7 @@ import org.junit.Test;
 
 public class MetadataPatchingTest extends RemoteClientTest {
   @Test
-  public void changeRavenEntityName() throws Exception {
+  public void changeRavenEntityName() {
     try (IDocumentStore store = new DocumentStore(getDefaultUrl(), getDefaultDb()).initialize()) {
       store.getDatabaseCommands().put("foos/1", null, RavenJObject.parse("{'Something':'something'}"), RavenJObject.parse("{'Raven-Entity-Name': 'Foos'}"));
 

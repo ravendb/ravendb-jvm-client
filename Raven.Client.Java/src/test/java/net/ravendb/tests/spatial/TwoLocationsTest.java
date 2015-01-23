@@ -62,7 +62,7 @@ public class TwoLocationsTest extends RemoteClientTest {
     }
   }
 
-  private static void setup(IDocumentStore store) throws Exception {
+  private static void setup(IDocumentStore store) {
     try (IDocumentSession session = store.openSession()) {
       Location loc1 = new Location();
       loc1.setLat(32.1067536);
@@ -82,7 +82,7 @@ public class TwoLocationsTest extends RemoteClientTest {
   }
 
   @Test
-  public void canQueryByMultipleLocations() throws Exception {
+  public void canQueryByMultipleLocations() {
     try (IDocumentStore store = new DocumentStore(getDefaultUrl(), getDefaultDb()).initialize()) {
       new MultiLocations().execute(store);
       setup(store);
@@ -110,7 +110,7 @@ public class TwoLocationsTest extends RemoteClientTest {
   }
 
   @Test
-  public void canQueryByMultipleLocations2() throws Exception {
+  public void canQueryByMultipleLocations2() {
     try (IDocumentStore store = new DocumentStore(getDefaultUrl(), getDefaultDb()).initialize()) {
       new MultiLocationsCustomFieldName().execute(store);
       setup(store);
@@ -138,7 +138,7 @@ public class TwoLocationsTest extends RemoteClientTest {
   }
 
   @Test
-  public void canQueryByMultipleLocationsRawOverHttp() throws Exception {
+  public void canQueryByMultipleLocationsRawOverHttp() {
     try (IDocumentStore store = new DocumentStore(getDefaultUrl(), getDefaultDb()).initialize()) {
 
       new MultiLocationsCustomFieldName().execute(store);

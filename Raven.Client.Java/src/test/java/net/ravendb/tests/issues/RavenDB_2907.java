@@ -100,7 +100,7 @@ public class RavenDB_2907 extends RemoteClientTest {
     }
   }
 
-  private FooAnBar makeAndStoreEntities(IDocumentStore db) throws Exception {
+  private FooAnBar makeAndStoreEntities(IDocumentStore db) {
     try (IDocumentSession session = db.openSession()) {
       Bar bar = new Bar();
       session.store(bar);
@@ -112,7 +112,7 @@ public class RavenDB_2907 extends RemoteClientTest {
   }
 
   @Test
-  public void can_include_dictionary_key() throws Exception {
+  public void can_include_dictionary_key() {
     try (IDocumentStore db = new DocumentStore(getDefaultUrl(), getDefaultDb()).initialize()) {
       FooAnBar entities = makeAndStoreEntities(db);
       IDocumentSession session = db.openSession();
@@ -127,7 +127,7 @@ public class RavenDB_2907 extends RemoteClientTest {
   }
 
   @Test
-  public void can_include_dictionary_value() throws Exception {
+  public void can_include_dictionary_value() {
     try (IDocumentStore db = new DocumentStore(getDefaultUrl(), getDefaultDb()).initialize()) {
       FooAnBar entities = makeAndStoreEntities(db);
       IDocumentSession session = db.openSession();

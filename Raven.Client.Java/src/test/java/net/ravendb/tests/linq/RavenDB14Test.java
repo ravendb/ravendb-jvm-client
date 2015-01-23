@@ -22,7 +22,7 @@ public class RavenDB14Test extends RemoteClientTest {
   private List<String> queries = new ArrayList<>();
 
   @Test
-  public void whereThenFirstHasAnd() throws Exception {
+  public void whereThenFirstHasAnd() {
     try (DocumentStore store = (DocumentStore) new DocumentStore(getDefaultUrl(), getDefaultDb()).initialize()) {
       store.registerListener(new RecordQueriesListener(queries));
 
@@ -36,7 +36,7 @@ public class RavenDB14Test extends RemoteClientTest {
   }
 
   @Test
-  public void whereThenSingleHasAnd() throws Exception {
+  public void whereThenSingleHasAnd() {
     try (DocumentStore store = (DocumentStore) new DocumentStore(getDefaultUrl(), getDefaultDb()).initialize()) {
       store.registerListener(new RecordQueriesListener(queries));
 

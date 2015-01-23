@@ -35,7 +35,7 @@ public class FacetPagingTest extends FacetTestBase {
   }
 
   @Test
-  public void canPerformFacetedPagingSearchWithNoPageSizeNoMaxResults_HitsDesc() throws Exception {
+  public void canPerformFacetedPagingSearchWithNoPageSizeNoMaxResults_HitsDesc() {
     //also specify more results than we have
     Facet facet1 = new Facet();
     facet1.setName("Manufacturer");
@@ -86,7 +86,7 @@ public class FacetPagingTest extends FacetTestBase {
   }
 
   @Test
-  public void canPerformFacetedPagingSearchWithNoPageSizeWithMaxResults_HitsDesc() throws Exception {
+  public void canPerformFacetedPagingSearchWithNoPageSizeWithMaxResults_HitsDesc() {
     //also specify more results than we have
     Facet facet1 = new Facet();
     facet1.setName("Manufacturer");
@@ -140,7 +140,7 @@ public class FacetPagingTest extends FacetTestBase {
   }
 
   @Test
-  public void canPerformFacetedPagingSearchWithPageSize_HitsDesc() throws Exception {
+  public void canPerformFacetedPagingSearchWithPageSize_HitsDesc() {
     //also specify more results than we have
     Facet facet1 = new Facet();
     facet1.setName("Manufacturer");
@@ -194,7 +194,7 @@ public class FacetPagingTest extends FacetTestBase {
   }
 
   @Test
-  public void canPerformFacetedPagingSearchWithPageSize_HitsAsc() throws Exception {
+  public void canPerformFacetedPagingSearchWithPageSize_HitsAsc() {
     //also specify more results than we have
     Facet facet1 = new Facet();
     facet1.setName("Manufacturer");
@@ -248,7 +248,7 @@ public class FacetPagingTest extends FacetTestBase {
   }
 
   @Test
-  public void canPerformFacetedPagingSearchWithPageSize_TermDesc() throws Exception {
+  public void canPerformFacetedPagingSearchWithPageSize_TermDesc() {
     //also specify more results than we have
     Facet facet1 = new Facet();
     facet1.setName("Manufacturer");
@@ -302,7 +302,7 @@ public class FacetPagingTest extends FacetTestBase {
   }
 
   @Test
-  public void canPerformFacetedPagingSearchWithPageSize_TermAsc() throws Exception {
+  public void canPerformFacetedPagingSearchWithPageSize_TermAsc() {
     //also specify more results than we have
     Facet facet1 = new Facet();
     facet1.setName("Manufacturer");
@@ -356,7 +356,7 @@ public class FacetPagingTest extends FacetTestBase {
   }
 
   @Test
-  public void canPerformFacetedPagingSearchWithPageSize_HitsDesc_LuceneQuery() throws Exception {
+  public void canPerformFacetedPagingSearchWithPageSize_HitsDesc_LuceneQuery() {
     //also specify more results than we have
     Facet facet1 = new Facet();
     facet1.setName("Manufacturer");
@@ -410,7 +410,7 @@ public class FacetPagingTest extends FacetTestBase {
   }
 
   @Test
-  public void canPerformFacetedPagingSearchWithPageSize_HitsAsc_LuceneQuery() throws Exception {
+  public void canPerformFacetedPagingSearchWithPageSize_HitsAsc_LuceneQuery() {
     //also specify more results than we have
     Facet facet1 = new Facet();
     facet1.setName("Manufacturer");
@@ -464,7 +464,7 @@ public class FacetPagingTest extends FacetTestBase {
   }
 
   @Test
-  public void canPerformFacetedPagingSearchWithPageSize_TermDesc_LuceneQuery() throws Exception {
+  public void canPerformFacetedPagingSearchWithPageSize_TermDesc_LuceneQuery() {
     //also specify more results than we have
     Facet facet1 = new Facet();
     facet1.setName("Manufacturer");
@@ -518,7 +518,7 @@ public class FacetPagingTest extends FacetTestBase {
   }
 
   @Test
-  public void canPerformFacetedPagingSearchWithPageSize_TermAsc_LuceneQuery() throws Exception {
+  public void canPerformFacetedPagingSearchWithPageSize_TermAsc_LuceneQuery() {
     //also specify more results than we have
     Facet facet1 = new Facet();
     facet1.setName("Manufacturer");
@@ -572,7 +572,7 @@ public class FacetPagingTest extends FacetTestBase {
   }
 
   @Test
-  public void canPerformFacetedPagingSearchWithNoPageSizeNoMaxResults_HitsDesc_LuceneQuery() throws Exception {
+  public void canPerformFacetedPagingSearchWithNoPageSizeNoMaxResults_HitsDesc_LuceneQuery() {
     //also specify more results than we have
     Facet facet1 = new Facet();
     facet1.setName("Manufacturer");
@@ -623,7 +623,7 @@ public class FacetPagingTest extends FacetTestBase {
   }
 
   @Test
-  public void canPerformFacetedPagingSearchWithNoPageSizeWithMaxResults_HitsDesc_LuceneQuery() throws Exception {
+  public void canPerformFacetedPagingSearchWithNoPageSizeWithMaxResults_HitsDesc_LuceneQuery() {
     //also specify more results than we have
     Facet facet1 = new Facet();
     facet1.setName("Manufacturer");
@@ -684,7 +684,7 @@ public class FacetPagingTest extends FacetTestBase {
     return list;
   }
 
-  private void setup(IDocumentStore store) throws Exception {
+  private void setup(IDocumentStore store) {
     try (IDocumentSession s = store.openSession()) {
       IndexDefinition indexDefinition = new IndexDefinition();
       indexDefinition.setMap("from camera in docs " +
