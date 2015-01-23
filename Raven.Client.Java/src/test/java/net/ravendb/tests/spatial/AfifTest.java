@@ -119,7 +119,7 @@ public class AfifTest extends RemoteClientTest {
   }
 
   @Test
-  public void shouldMatchMakeFacetsOnLocation() throws Exception {
+  public void shouldMatchMakeFacetsOnLocation() {
     try (IDocumentStore store = new DocumentStore(getDefaultUrl(), getDefaultDb()).initialize()) {
 
       usingEmbeddedRavenStoreWithVehicles(store);
@@ -142,7 +142,7 @@ public class AfifTest extends RemoteClientTest {
     }
   }
 
-  public void usingEmbeddedRavenStoreWithVehicles(IDocumentStore store) throws Exception {
+  public void usingEmbeddedRavenStoreWithVehicles(IDocumentStore store) {
     List<Vehicle> vehicles = new ArrayList<>();
 
     for (int i = 0; i< 3; i++) {

@@ -70,7 +70,7 @@ public class FlagsEnumTest extends RemoteClientTest {
   }
 
   @Test
-  public void canQueryUsingEnum() throws Exception {
+  public void canQueryUsingEnum() {
     try (IDocumentStore store = new DocumentStore(getDefaultUrl(), getDefaultDb()).initialize()) {
       new MyIndex().execute(store);
       try (IDocumentSession session = store.openSession()) {

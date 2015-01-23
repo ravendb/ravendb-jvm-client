@@ -30,7 +30,7 @@ import com.mysema.query.types.Predicate;
 public class DynamicFacetsTest extends FacetTestBase {
 
   @Test
-  public void canPerformDynamicFacetedSearch_Remotely() throws Exception {
+  public void canPerformDynamicFacetedSearch_Remotely() {
 
     try (IDocumentStore store = new DocumentStore(getDefaultUrl(), getDefaultDb()).initialize()) {
       List<Camera> cameras = getCameras(30);

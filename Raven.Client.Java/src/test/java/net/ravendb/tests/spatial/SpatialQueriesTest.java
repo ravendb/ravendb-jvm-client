@@ -60,7 +60,7 @@ public class SpatialQueriesTest extends RemoteClientTest {
   }
 
   @Test
-  public void canRunSpatialQueriesInMemory() throws Exception {
+  public void canRunSpatialQueriesInMemory() {
     try (IDocumentStore store = new DocumentStore(getDefaultUrl(), getDefaultDb()).initialize()) {
       new SpatialQueriesInMemoryTestIdx().execute(store);
     }
@@ -68,7 +68,7 @@ public class SpatialQueriesTest extends RemoteClientTest {
 
   //Failing test from http://groups.google.com/group/ravendb/browse_thread/thread/7a93f37036297d48/
   @Test
-  public void canSuccessfullyDoSpatialQueryOfNearbyLocations() throws Exception {
+  public void canSuccessfullyDoSpatialQueryOfNearbyLocations() {
     // These items is in a radius of 4 miles (approx 6,5 km)
     DummyGeoDoc areaOneDocOne = new DummyGeoDoc(55.6880508001, 13.5717346673);
     DummyGeoDoc areaOneDocTwo = new DummyGeoDoc(55.6821978456, 13.6076183965);
@@ -115,7 +115,7 @@ public class SpatialQueriesTest extends RemoteClientTest {
   }
 
   @Test
-  public void canSuccessfullyQueryByMiles() throws Exception {
+  public void canSuccessfullyQueryByMiles() {
     DummyGeoDoc myHouse = new DummyGeoDoc(44.757767, -93.355322);
 
     // The gym is about 7.32 miles (11.79 kilometers) from my house.

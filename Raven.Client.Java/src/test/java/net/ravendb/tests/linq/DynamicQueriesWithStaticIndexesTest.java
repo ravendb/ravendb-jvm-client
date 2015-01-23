@@ -23,7 +23,7 @@ import com.mysema.query.annotations.QueryEntity;
 
 public class DynamicQueriesWithStaticIndexesTest extends RemoteClientTest {
   @Test
-  public void dynamicQueryWillInterpretFieldNamesProperly() throws Exception {
+  public void dynamicQueryWillInterpretFieldNamesProperly() {
 
     try (IDocumentStore store = new DocumentStore(getDefaultUrl(), getDefaultDb()).initialize()) {
       try (IDocumentSession session = store.openSession()) {

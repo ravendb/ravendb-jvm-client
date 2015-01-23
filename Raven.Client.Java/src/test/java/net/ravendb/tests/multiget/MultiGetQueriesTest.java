@@ -24,7 +24,7 @@ import org.junit.Test;
 public class MultiGetQueriesTest extends RemoteClientTest {
 
   @Test
-  public void unlessAccessedLazyQueriesAreNoOp() throws Exception {
+  public void unlessAccessedLazyQueriesAreNoOp() {
     try (IDocumentStore store = new DocumentStore(getDefaultUrl(), getDefaultDb()).initialize()) {
       try (IDocumentSession session = store.openSession()) {
         QUser x = QUser.user;
@@ -36,7 +36,7 @@ public class MultiGetQueriesTest extends RemoteClientTest {
   }
 
   @Test
-  public void withPaging() throws Exception {
+  public void withPaging() {
     try (IDocumentStore store = new DocumentStore(getDefaultUrl(), getDefaultDb()).initialize()) {
       try (IDocumentSession session = store.openSession()) {
         User user1 = new User();
@@ -58,7 +58,7 @@ public class MultiGetQueriesTest extends RemoteClientTest {
   }
 
   @Test
-  public void canGetQueryStats() throws Exception {
+  public void canGetQueryStats() {
     try (IDocumentStore store = new DocumentStore(getDefaultUrl(), getDefaultDb()).initialize()) {
       try (IDocumentSession session = store.openSession()) {
         User user1 = new User();
@@ -96,7 +96,7 @@ public class MultiGetQueriesTest extends RemoteClientTest {
   private List<User> users = null;
 
   @Test
-  public void withQueuedActions() throws Exception {
+  public void withQueuedActions() {
     try (IDocumentStore store = new DocumentStore(getDefaultUrl(), getDefaultDb()).initialize()) {
       try (IDocumentSession session = store.openSession()) {
         User user1 = new User();
@@ -127,7 +127,7 @@ public class MultiGetQueriesTest extends RemoteClientTest {
   private User user = null;
 
   @Test
-  public void withQueuedActions_Load() throws Exception {
+  public void withQueuedActions_Load() {
     try (IDocumentStore store = new DocumentStore(getDefaultUrl(), getDefaultDb()).initialize()) {
       try (IDocumentSession session = store.openSession()) {
         User user1 = new User();
@@ -151,7 +151,7 @@ public class MultiGetQueriesTest extends RemoteClientTest {
 
 
   @Test
-  public void lazyOperationsAreBatched() throws Exception {
+  public void lazyOperationsAreBatched() {
     try (IDocumentStore store = new DocumentStore(getDefaultUrl(), getDefaultDb()).initialize()) {
       try (IDocumentSession session = store.openSession()) {
         QUser x = QUser.user;
@@ -166,7 +166,7 @@ public class MultiGetQueriesTest extends RemoteClientTest {
   }
 
   @Test
-  public void lazyMultiLoadOperationWouldBeInTheSession() throws Exception {
+  public void lazyMultiLoadOperationWouldBeInTheSession() {
     try (IDocumentStore store = new DocumentStore(getDefaultUrl(), getDefaultDb()).initialize()) {
       try (IDocumentSession session = store.openSession()) {
         User user1 = new User();
@@ -198,7 +198,7 @@ public class MultiGetQueriesTest extends RemoteClientTest {
   }
 
   @Test
-  public void lazyWithProjection() throws Exception {
+  public void lazyWithProjection() {
     try (IDocumentStore store = new DocumentStore(getDefaultUrl(), getDefaultDb()).initialize()) {
       try (IDocumentSession session = store.openSession()) {
         User user1 = new User();
@@ -223,7 +223,7 @@ public class MultiGetQueriesTest extends RemoteClientTest {
   }
 
   @Test
-  public void lazyWithProjection2() throws Exception {
+  public void lazyWithProjection2() {
     try (IDocumentStore store = new DocumentStore(getDefaultUrl(), getDefaultDb()).initialize()) {
       try (IDocumentSession session = store.openSession()) {
         User user1 = new User();
@@ -248,7 +248,7 @@ public class MultiGetQueriesTest extends RemoteClientTest {
   }
 
   @Test
-  public void lazyMultiLoadOperationWouldBeInTheSession_WithNonStaleResponse() throws Exception {
+  public void lazyMultiLoadOperationWouldBeInTheSession_WithNonStaleResponse() {
     try (IDocumentStore store = new DocumentStore(getDefaultUrl(), getDefaultDb()).initialize()) {
       try (IDocumentSession session = store.openSession()) {
         session.query(User.class).toList();
@@ -278,7 +278,7 @@ public class MultiGetQueriesTest extends RemoteClientTest {
   }
 
   @Test
-  public void canGetStatisticsWithLazyQueryResults() throws Exception {
+  public void canGetStatisticsWithLazyQueryResults() {
     try (IDocumentStore store = new DocumentStore(getDefaultUrl(), getDefaultDb()).initialize()) {
       try (IDocumentSession session = store.openSession()) {
 

@@ -13,7 +13,7 @@ import org.junit.Test;
 
 public class CanIndexReferencedEntityTest extends RemoteClientTest {
   @Test
-  public void simple() throws Exception {
+  public void simple() {
 
     try (IDocumentStore store = new DocumentStore(getDefaultUrl(), getDefaultDb()).initialize()) {
       IndexDefinition definition = new IndexDefinition();
@@ -37,7 +37,7 @@ public class CanIndexReferencedEntityTest extends RemoteClientTest {
   }
 
   @Test
-  public void whenReferencedItemChanges() throws Exception {
+  public void whenReferencedItemChanges() {
     try (IDocumentStore store = new DocumentStore(getDefaultUrl(), getDefaultDb()).initialize()) {
       IndexDefinition definition = new IndexDefinition();
       definition.setMap("from i in docs.Items select new { RefName = LoadDocument(i.Ref).Name }");
@@ -66,7 +66,7 @@ public class CanIndexReferencedEntityTest extends RemoteClientTest {
   }
 
   @Test
-  public void whenReferencedItemChangesInBatch() throws Exception {
+  public void whenReferencedItemChangesInBatch() {
     try (IDocumentStore store = new DocumentStore(getDefaultUrl(), getDefaultDb()).initialize()) {
       IndexDefinition definition = new IndexDefinition();
       definition.setMap("from i in docs.Items select new { RefName = LoadDocument(i.Ref).Name }");
@@ -96,7 +96,7 @@ public class CanIndexReferencedEntityTest extends RemoteClientTest {
   }
 
   @Test
-  public void whenReferencedItemDeleted() throws Exception {
+  public void whenReferencedItemDeleted() {
     try (IDocumentStore store = new DocumentStore(getDefaultUrl(), getDefaultDb()).initialize()) {
       IndexDefinition definition = new IndexDefinition();
       definition.setMap("from i in docs.Items select new { RefNameNotNull = LoadDocument(i.Ref).Name != null }");
@@ -125,7 +125,7 @@ public class CanIndexReferencedEntityTest extends RemoteClientTest {
   }
 
   @Test
-  public void nightOfTheLivingDead() throws Exception {
+  public void nightOfTheLivingDead() {
     try (IDocumentStore store = new DocumentStore(getDefaultUrl(), getDefaultDb()).initialize()) {
       IndexDefinition definition = new IndexDefinition();
       definition.setMap("from i in docs.Items select new { RefName = LoadDocument(i.Ref).Name }");
@@ -160,7 +160,7 @@ public class CanIndexReferencedEntityTest extends RemoteClientTest {
   }
 
   @Test
-  public void selfReferencing() throws Exception {
+  public void selfReferencing() {
     try (IDocumentStore store = new DocumentStore(getDefaultUrl(), getDefaultDb()).initialize()) {
       IndexDefinition definition = new IndexDefinition();
       definition.setMap("from i in docs.Items select new { RefName = LoadDocument(i.Ref).Name }");
@@ -186,7 +186,7 @@ public class CanIndexReferencedEntityTest extends RemoteClientTest {
   }
 
   @Test
-  public void loops() throws Exception {
+  public void loops() {
     try (IDocumentStore store = new DocumentStore(getDefaultUrl(), getDefaultDb()).initialize()) {
       IndexDefinition definition = new IndexDefinition();
       definition.setMap("from i in docs.Items select new { RefName = LoadDocument(i.Ref).Name }");

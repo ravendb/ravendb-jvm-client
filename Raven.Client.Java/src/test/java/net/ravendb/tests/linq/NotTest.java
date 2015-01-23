@@ -29,7 +29,7 @@ public class NotTest extends RemoteClientTest {
   }
 
   @Test
-  public void canQueryWithNot() throws Exception {
+  public void canQueryWithNot() {
     try (IDocumentStore store = new DocumentStore(getDefaultUrl(), getDefaultDb()).initialize()) {
       try (IDocumentSession session = store.openSession()) {
         TestDoc doc = new TestDoc();
@@ -46,7 +46,7 @@ public class NotTest extends RemoteClientTest {
   }
 
   @Test
-  public void canQueryWithOr() throws Exception {
+  public void canQueryWithOr() {
     try (IDocumentStore store = new DocumentStore(getDefaultUrl(), getDefaultDb()).initialize()) {
       try (IDocumentSession session = store.openSession()) {
         TestDoc doc = new TestDoc();
@@ -61,9 +61,9 @@ public class NotTest extends RemoteClientTest {
       }
     }
   }
-  
+
   @Test
-  public void canQueryWithAnd() throws Exception {
+  public void canQueryWithAnd() {
     try (IDocumentStore store = new DocumentStore(getDefaultUrl(), getDefaultDb()).initialize()) {
       try (IDocumentSession session = store.openSession()) {
         TestDoc doc = new TestDoc();

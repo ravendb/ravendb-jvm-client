@@ -18,7 +18,7 @@ import org.junit.Test;
 public class MultiGetMultiGetTest extends RemoteClientTest {
 
   @Test
-  public void multiGetShouldBehaveTheSameForLazyAndNotLazy() throws Exception {
+  public void multiGetShouldBehaveTheSameForLazyAndNotLazy() {
 
     try (IDocumentStore store = new DocumentStore(getDefaultUrl(), getDefaultDb()).initialize()) {
       try (IDocumentSession session = store.openSession()) {
@@ -31,7 +31,7 @@ public class MultiGetMultiGetTest extends RemoteClientTest {
   }
 
   @Test
-  public void unlessAccessedLazyOperationsAreNoOp() throws Exception {
+  public void unlessAccessedLazyOperationsAreNoOp() {
     try (IDocumentStore store = new DocumentStore(getDefaultUrl(), getDefaultDb()).initialize()) {
       try (IDocumentSession session = store.openSession()) {
         session.advanced().lazily().load(User.class, new String[] { "users/1", "users/2" });
@@ -43,7 +43,7 @@ public class MultiGetMultiGetTest extends RemoteClientTest {
   }
 
   @Test
-  public void lazyOperationsAreBatched() throws Exception {
+  public void lazyOperationsAreBatched() {
 
     try (IDocumentStore store = new DocumentStore(getDefaultUrl(), getDefaultDb()).initialize()) {
       try (IDocumentSession session = store.openSession()) {
@@ -60,7 +60,7 @@ public class MultiGetMultiGetTest extends RemoteClientTest {
   }
 
   @Test
-  public void lazyMultiLoadOperationWouldBeInTheSession() throws Exception {
+  public void lazyMultiLoadOperationWouldBeInTheSession() {
     try (IDocumentStore store = new DocumentStore(getDefaultUrl(), getDefaultDb()).initialize()) {
       try (IDocumentSession session = store.openSession()) {
         session.store(new User());
@@ -92,7 +92,7 @@ public class MultiGetMultiGetTest extends RemoteClientTest {
   }
 
   @Test
-  public void lazyLoadOperationWillHandleIncludes() throws Exception {
+  public void lazyLoadOperationWillHandleIncludes() {
     try (IDocumentStore store = new DocumentStore(getDefaultUrl(), getDefaultDb()).initialize()) {
       try (IDocumentSession session = store.openSession()) {
         User user2 = new User();

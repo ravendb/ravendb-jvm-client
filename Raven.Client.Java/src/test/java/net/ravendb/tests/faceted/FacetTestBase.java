@@ -47,7 +47,7 @@ public abstract class FacetTestBase extends RemoteClientTest {
 
   }
 
-  public static void insertCameraDataAndWaitForNonStaleResults(IDocumentStore store, List<Camera> cameras) throws Exception {
+  public static void insertCameraDataAndWaitForNonStaleResults(IDocumentStore store, List<Camera> cameras) {
     try (IDocumentSession session = store.openSession()) {
       for (Camera camera: cameras) {
         session.store(camera);

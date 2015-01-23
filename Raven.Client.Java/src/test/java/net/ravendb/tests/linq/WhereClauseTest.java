@@ -671,7 +671,7 @@ public class WhereClauseTest {
   }
 
   @After
-  public void cleanup() throws Exception {
+  public void cleanup() {
     session.close();
     store.close();
   }

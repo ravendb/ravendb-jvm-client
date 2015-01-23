@@ -17,7 +17,7 @@ import net.ravendb.client.document.DocumentStore;
 public class ComplexIndexOnNotAnalyzedFieldTest extends RemoteClientTest {
 
   @Test
-  public void canQueryOnKey() throws Exception {
+  public void canQueryOnKey() {
     try (IDocumentStore store = new DocumentStore(getDefaultUrl(), getDefaultDb()).initialize()) {
       try (IDocumentSession session = store.openSession()) {
 

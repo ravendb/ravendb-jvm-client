@@ -20,7 +20,7 @@ import org.junit.Test;
 public class BrainVTest extends RemoteClientTest {
 
   @Test
-  public void canPerformSpatialSearchWithNulls() throws Exception {
+  public void canPerformSpatialSearchWithNulls() {
     try (IDocumentStore store = new DocumentStore(getDefaultUrl(), getDefaultDb()).initialize()) {
 
       IndexDefinition indexDefinition = new IndexDefinition();
@@ -41,7 +41,7 @@ public class BrainVTest extends RemoteClientTest {
   }
 
   @Test
-  public void canUseNullCoalescingOperator() throws Exception {
+  public void canUseNullCoalescingOperator() {
     try (IDocumentStore store = new DocumentStore(getDefaultUrl(), getDefaultDb()).initialize()) {
       IndexDefinition indexDefinition = new IndexDefinition();
       indexDefinition.setMap("from e in docs.Events select new { Tag = \"Event\", _ = SpatialGenerate(e.Latitude ?? 38.9103000, e.Longitude ?? -77.3942) }");

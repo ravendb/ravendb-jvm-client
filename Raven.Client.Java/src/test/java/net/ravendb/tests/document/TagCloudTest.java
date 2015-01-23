@@ -22,7 +22,7 @@ import org.junit.Test;
 public class TagCloudTest extends RemoteClientTest {
 
   @Test
-  public void canQueryMapReduceIndex() throws Exception {
+  public void canQueryMapReduceIndex() {
 
     try (IDocumentStore store = new DocumentStore(getDefaultUrl(), getDefaultDb()).initialize()) {
 
@@ -66,7 +66,7 @@ public class TagCloudTest extends RemoteClientTest {
   }
 
   @Test
-  public void canStoreAndRetrieveTime() throws Exception {
+  public void canStoreAndRetrieveTime() {
     Date expectedTime = new Date();
 
     try (IDocumentStore store = new DocumentStore(getDefaultUrl(), getDefaultDb()).initialize()) {
@@ -87,7 +87,7 @@ public class TagCloudTest extends RemoteClientTest {
   }
 
   @Test
-  public void canQueryMapReduceIndex_WithUpdates() throws Exception {
+  public void canQueryMapReduceIndex_WithUpdates() {
 
     try (IDocumentStore store = new DocumentStore(getDefaultUrl(), getDefaultDb()).initialize()) {
       IndexDefinition indexDefinition = new IndexDefinition();
@@ -153,7 +153,7 @@ public class TagCloudTest extends RemoteClientTest {
   }
 
   @Test
-  public void canQueryMapReduceIndexOnMultipleFields() throws Exception {
+  public void canQueryMapReduceIndexOnMultipleFields() {
 
     try (IDocumentStore store = new DocumentStore(getDefaultUrl(), getDefaultDb()).initialize()) {
       IndexDefinition indexDefinition = new IndexDefinition();

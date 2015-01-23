@@ -60,7 +60,7 @@ public class ClusteringTest extends RemoteClientTest {
   }
 
   @Test
-  public void canClusterData() throws Exception {
+  public void canClusterData() {
     try (IDocumentStore store = new DocumentStore(getDefaultUrl(), getDefaultDb()).initialize()) {
 
       new LocationClustering().execute(store);

@@ -153,7 +153,7 @@ public class WithMapReduceTest extends RemoteClientTest {
   }
 
   @Test
-  public void canUseReferencesFromMapReduceMap() throws Exception {
+  public void canUseReferencesFromMapReduceMap() {
 
     try (IDocumentStore store = new DocumentStore(getDefaultUrl(), getDefaultDb()).initialize()) {
       new ProductSalesByZip().execute(store);

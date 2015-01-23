@@ -21,7 +21,7 @@ import org.junit.Test;
 
 public class SuggestionsTest extends RemoteClientTest {
 
-  private void createIndexAndData(IDocumentStore store) throws Exception {
+  private void createIndexAndData(IDocumentStore store) {
     IndexDefinition indexDefinition = new IndexDefinition();
     indexDefinition.setMap("from doc in docs select new { doc.Name }");
     indexDefinition.getSuggestions().put("Name", new SuggestionOptions());
@@ -44,7 +44,7 @@ public class SuggestionsTest extends RemoteClientTest {
   }
 
   @Test
-  public void exactMatch() throws Exception {
+  public void exactMatch() {
     try (IDocumentStore store = new DocumentStore(getDefaultUrl(), getDefaultDb()).initialize()) {
       createIndexAndData(store);
 
@@ -60,7 +60,7 @@ public class SuggestionsTest extends RemoteClientTest {
   }
 
   @Test
-  public void usingLinq() throws Exception {
+  public void usingLinq() {
     try (IDocumentStore store = new DocumentStore(getDefaultUrl(), getDefaultDb()).initialize()) {
       createIndexAndData(store);
       try (IDocumentSession session = store.openSession()) {
@@ -75,7 +75,7 @@ public class SuggestionsTest extends RemoteClientTest {
   }
 
   @Test
-  public void usingLinq_with_typo_with_options_multiple_fields() throws Exception {
+  public void usingLinq_with_typo_with_options_multiple_fields() {
     try (IDocumentStore store = new DocumentStore(getDefaultUrl(), getDefaultDb()).initialize()) {
       createIndexAndData(store);
       try (IDocumentSession session = store.openSession()) {
@@ -91,7 +91,7 @@ public class SuggestionsTest extends RemoteClientTest {
   }
 
   @Test
-  public void usingLinq_with_typo_multiple_fields_in_reverse_order() throws Exception {
+  public void usingLinq_with_typo_multiple_fields_in_reverse_order() {
     try (IDocumentStore store = new DocumentStore(getDefaultUrl(), getDefaultDb()).initialize()) {
       createIndexAndData(store);
       try (IDocumentSession session = store.openSession()) {
@@ -107,7 +107,7 @@ public class SuggestionsTest extends RemoteClientTest {
   }
 
   @Test
-  public void usingLinq_WithOptions() throws Exception {
+  public void usingLinq_WithOptions() {
     try (IDocumentStore store = new DocumentStore(getDefaultUrl(), getDefaultDb()).initialize()) {
       createIndexAndData(store);
       try (IDocumentSession session = store.openSession()) {
@@ -125,7 +125,7 @@ public class SuggestionsTest extends RemoteClientTest {
   }
 
   @Test
-  public void withTypo() throws Exception {
+  public void withTypo() {
     try (IDocumentStore store = new DocumentStore(getDefaultUrl(), getDefaultDb()).initialize()) {
       createIndexAndData(store);
       SuggestionQuery query = new SuggestionQuery("Name", "Oern");// intentional typo

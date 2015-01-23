@@ -17,10 +17,9 @@ public class GameTest extends RemoteClientTest {
 
   /**
    * http://groups.google.com/group/ravendb/browse_thread/thread/e9f045e073d7a698
-   * @throws Exception
    */
   @Test
-  public void willNotGetDuplicatedResults() throws Exception {
+  public void willNotGetDuplicatedResults() {
     try (IDocumentStore store = new DocumentStore(getDefaultUrl(), getDefaultDb()).initialize()) {
 
       IndexDefinition indexDefinition = new IndexDefinition();

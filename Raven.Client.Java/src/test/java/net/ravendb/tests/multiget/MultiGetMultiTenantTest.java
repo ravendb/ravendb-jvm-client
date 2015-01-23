@@ -23,7 +23,7 @@ public class MultiGetMultiTenantTest extends RemoteClientTest {
 
 
   @Test
-  public void canUseLazyWithMultiTenancy() throws Exception {
+  public void canUseLazyWithMultiTenancy() {
     try (IDocumentStore store = new DocumentStore(getDefaultUrl(), getDefaultDb()).initialize()) {
       try (IDocumentSession session = store.openSession()) {
         User user1 = new User();
@@ -46,7 +46,7 @@ public class MultiGetMultiTenantTest extends RemoteClientTest {
   }
 
   @Test
-  public void canCacheLazyQueryResults() throws Exception {
+  public void canCacheLazyQueryResults() {
     try (IDocumentStore store = new DocumentStore(getDefaultUrl(), getDefaultDb()).initialize()) {
 
       try (IDocumentSession session = store.openSession()) {

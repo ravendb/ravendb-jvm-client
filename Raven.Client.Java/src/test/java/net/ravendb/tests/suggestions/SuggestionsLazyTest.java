@@ -21,7 +21,7 @@ import org.junit.Test;
 public class SuggestionsLazyTest extends RemoteClientTest {
 
   @Test
-  public void usingLinq() throws Exception {
+  public void usingLinq() {
     try (IDocumentStore store = new DocumentStore(getDefaultUrl(), getDefaultDb()).initialize()) {
       IndexDefinition indexDefinition = new IndexDefinition();
       indexDefinition.setMap("from doc in docs select new { doc.Name }");

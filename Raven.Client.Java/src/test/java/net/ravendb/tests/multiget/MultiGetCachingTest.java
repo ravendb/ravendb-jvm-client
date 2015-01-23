@@ -169,7 +169,7 @@ public class MultiGetCachingTest extends RemoteClientTest {
 
 
   @Test
-  public void canCacheLazyQueryResults() throws Exception {
+  public void canCacheLazyQueryResults() {
 
     DocumentConvention conventions = new DocumentConvention();
     conventions.setShouldAggressiveCacheTrackChanges(false);
@@ -220,7 +220,7 @@ public class MultiGetCachingTest extends RemoteClientTest {
   }
 
   @Test
-  public void canCacheLazyQueryAndMultiLoadResults() throws Exception {
+  public void canCacheLazyQueryAndMultiLoadResults() {
     DocumentConvention conventions = new DocumentConvention();
     conventions.setShouldAggressiveCacheTrackChanges(false);
 
@@ -272,7 +272,7 @@ public class MultiGetCachingTest extends RemoteClientTest {
   }
 
   @Test
-  public void canMixCachingForBatchAndNonBatched_BatchedFirst() throws Exception {
+  public void canMixCachingForBatchAndNonBatched_BatchedFirst() {
     DocumentConvention conventions = new DocumentConvention();
     conventions.setShouldAggressiveCacheTrackChanges(false);
 
@@ -317,7 +317,7 @@ public class MultiGetCachingTest extends RemoteClientTest {
   }
 
   @Test
-  public void canMixCachingForBatchAndNonBatched_IndividualFirst() throws Exception {
+  public void canMixCachingForBatchAndNonBatched_IndividualFirst() {
     DocumentConvention conventions = new DocumentConvention();
     conventions.setShouldAggressiveCacheTrackChanges(false);
 

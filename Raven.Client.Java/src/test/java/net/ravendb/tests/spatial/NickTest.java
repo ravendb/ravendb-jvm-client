@@ -56,7 +56,7 @@ public class NickTest extends RemoteClientTest {
   }
 
   @Test
-  public void test() throws Exception {
+  public void test() {
     try (IDocumentStore store = new DocumentStore(getDefaultUrl(), getDefaultDb()).initialize()) {
       try (IDocumentSession session = store.openSession()) {
         MySpatialDocument mySpatialDocument = new MySpatialDocument();

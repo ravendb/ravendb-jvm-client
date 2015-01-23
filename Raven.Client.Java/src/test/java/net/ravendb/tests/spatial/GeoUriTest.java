@@ -51,7 +51,7 @@ public class GeoUriTest extends RemoteClientTest {
   }
 
   @Test
-  public void pointTest() throws Exception {
+  public void pointTest() {
     try (IDocumentStore store = new DocumentStore(getDefaultUrl(), getDefaultDb()).initialize()) {
       store.executeIndex(new PointIndex());
       try (IDocumentSession session = store.openSession()) {

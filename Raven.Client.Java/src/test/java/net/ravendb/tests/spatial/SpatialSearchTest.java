@@ -34,7 +34,7 @@ public class SpatialSearchTest extends RemoteClientTest {
   }
 
   @Test
-  public void can_do_spatial_search_with_client_api() throws Exception {
+  public void can_do_spatial_search_with_client_api() {
     try (IDocumentStore store = new DocumentStore(getDefaultUrl(), getDefaultDb()).initialize()) {
       new SpatialIdx().execute(store);
       try (IDocumentSession session = store.openSession()) {
@@ -65,7 +65,7 @@ public class SpatialSearchTest extends RemoteClientTest {
   }
 
   @Test
-  public void can_do_spatial_search_with_client_api3() throws Exception {
+  public void can_do_spatial_search_with_client_api3() {
     try (IDocumentStore store = new DocumentStore(getDefaultUrl(), getDefaultDb()).initialize()) {
       new SpatialIdx().execute(store);
       try (IDocumentSession session = store.openSession()) {
@@ -77,7 +77,7 @@ public class SpatialSearchTest extends RemoteClientTest {
   }
 
   @Test
-  public void can_do_spatial_search_with_client_api_within_given_capacity() throws Exception {
+  public void can_do_spatial_search_with_client_api_within_given_capacity() {
     try (IDocumentStore store = new DocumentStore(getDefaultUrl(), getDefaultDb()).initialize()) {
 
       new SpatialIdx().execute(store);
@@ -134,7 +134,7 @@ public class SpatialSearchTest extends RemoteClientTest {
   }
 
   @Test
-  public void can_do_spatial_search_with_client_api_addorder() throws Exception {
+  public void can_do_spatial_search_with_client_api_addorder() {
     try (IDocumentStore store = new DocumentStore(getDefaultUrl(), getDefaultDb()).initialize()) {
 
       new SpatialIdx().execute(store);

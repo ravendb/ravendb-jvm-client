@@ -57,7 +57,7 @@ public class OrderByTest extends RemoteClientTest {
   }
 
   @Test
-  public void canDescOrderBy_AProjection() throws Exception {
+  public void canDescOrderBy_AProjection() {
     try (IDocumentStore store = new DocumentStore(getDefaultUrl(), getDefaultDb()).initialize()) {
       try (IDocumentSession session = store.openSession()) {
         for (int i = 0; i < 10; i++) {
@@ -78,7 +78,7 @@ public class OrderByTest extends RemoteClientTest {
   }
 
   @Test
-  public void canAscOrderBy_AProjection() throws Exception {
+  public void canAscOrderBy_AProjection() {
     try (IDocumentStore store = new DocumentStore(getDefaultUrl(), getDefaultDb()).initialize()) {
       try (IDocumentSession session = store.openSession()) {
         for (int i = 5; i < 10; i++) {

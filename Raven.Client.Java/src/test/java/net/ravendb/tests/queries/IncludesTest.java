@@ -25,7 +25,7 @@ import com.mysema.query.annotations.QueryEntity;
 public class IncludesTest extends RemoteClientTest {
 
   @Test
-  public void can_use_includes_within_multi_load() throws Exception {
+  public void can_use_includes_within_multi_load() {
     try (IDocumentStore store = new DocumentStore(getDefaultUrl(), getDefaultDb()).initialize()) {
       try (IDocumentSession session = store.openSession()) {
         Customer customer1 = new Customer();
@@ -77,7 +77,7 @@ public class IncludesTest extends RemoteClientTest {
   }
 
   @Test
-  public void can_include_by_primary_string_property() throws Exception {
+  public void can_include_by_primary_string_property() {
 
     try (IDocumentStore store = new DocumentStore(getDefaultUrl(), getDefaultDb()).initialize()) {
       try (IDocumentSession session = store.openSession()) {
@@ -104,7 +104,7 @@ public class IncludesTest extends RemoteClientTest {
   }
 
   @Test
-  public void can_include_by_primary_valuetype_property() throws Exception {
+  public void can_include_by_primary_valuetype_property() {
     try (IDocumentStore store = new DocumentStore(getDefaultUrl(), getDefaultDb()).initialize()) {
       try (IDocumentSession session = store.openSession()) {
         Customer2 customer = new Customer2();
@@ -127,7 +127,7 @@ public class IncludesTest extends RemoteClientTest {
   }
 
   @Test
-  public void can_query_with_include_by_primary_string_property() throws Exception {
+  public void can_query_with_include_by_primary_string_property() {
     try (IDocumentStore store = new DocumentStore(getDefaultUrl(), getDefaultDb()).initialize()) {
       try (IDocumentSession session = store.openSession()) {
         Customer customer1 = new Customer();
@@ -182,7 +182,7 @@ public class IncludesTest extends RemoteClientTest {
   }
 
   @Test
-  public void can_query_with_include_by_primary_valuetype_property() throws Exception {
+  public void can_query_with_include_by_primary_valuetype_property() {
     try (IDocumentStore store = new DocumentStore(getDefaultUrl(), getDefaultDb()).initialize()) {
       try (IDocumentSession session = store.openSession()) {
         Customer2 customer1 = new Customer2();
@@ -236,7 +236,7 @@ public class IncludesTest extends RemoteClientTest {
   }
 
   @Test
-  public void can_include_by_primary_list_of_strings() throws Exception {
+  public void can_include_by_primary_list_of_strings() {
     try (IDocumentStore store = new DocumentStore(getDefaultUrl(), getDefaultDb()).initialize()) {
       try (IDocumentSession session = store.openSession()) {
         Supplier supp1 = new Supplier();
@@ -275,7 +275,7 @@ public class IncludesTest extends RemoteClientTest {
   }
 
   @Test
-  public void can_include_by_primary_list_of_valuetypes() throws Exception {
+  public void can_include_by_primary_list_of_valuetypes() {
 
     try (IDocumentStore store = new DocumentStore(getDefaultUrl(), getDefaultDb()).initialize()) {
       try (IDocumentSession session = store.openSession()) {
@@ -317,7 +317,7 @@ public class IncludesTest extends RemoteClientTest {
   }
 
   @Test
-  public void can_include_by_secondary_string_property() throws Exception {
+  public void can_include_by_secondary_string_property() {
     try (IDocumentStore store = new DocumentStore(getDefaultUrl(), getDefaultDb()).initialize()) {
       try (IDocumentSession session = store.openSession()) {
         session.store(new Customer());
@@ -341,7 +341,7 @@ public class IncludesTest extends RemoteClientTest {
   }
 
   @Test
-  public void can_include_by_secondary_valuetype_property() throws Exception {
+  public void can_include_by_secondary_valuetype_property() {
     try (IDocumentStore store = new DocumentStore(getDefaultUrl(), getDefaultDb()).initialize()) {
       try (IDocumentSession session = store.openSession()) {
         Customer2 customer = new Customer2();
@@ -368,7 +368,7 @@ public class IncludesTest extends RemoteClientTest {
   }
 
   @Test
-  public void can_include_by_list_of_secondary_string_property() throws Exception {
+  public void can_include_by_list_of_secondary_string_property() {
     try (IDocumentStore store = new DocumentStore(getDefaultUrl(), getDefaultDb()).initialize()) {
       try (IDocumentSession session = store.openSession()) {
         Product prod1 = new Product();
@@ -413,7 +413,7 @@ public class IncludesTest extends RemoteClientTest {
   }
 
   @Test
-  public void can_include_by_list_of_secondary_valuetype_property() throws Exception {
+  public void can_include_by_list_of_secondary_valuetype_property() {
     try (IDocumentStore store = new DocumentStore(getDefaultUrl(), getDefaultDb()).initialize()) {
       try (IDocumentSession session = store.openSession()) {
         UUID guid1 = UUID.randomUUID();
@@ -465,7 +465,7 @@ public class IncludesTest extends RemoteClientTest {
   }
 
   @Test
-  public void can_include_by_denormalized_property() throws Exception {
+  public void can_include_by_denormalized_property() {
     try (IDocumentStore store = new DocumentStore(getDefaultUrl(), getDefaultDb()).initialize()) {
       try (IDocumentSession session = store.openSession()) {
         Customer2 customer2 = new Customer2();

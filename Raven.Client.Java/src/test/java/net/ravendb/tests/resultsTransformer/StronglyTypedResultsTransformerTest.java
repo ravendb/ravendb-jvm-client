@@ -216,7 +216,7 @@ public class StronglyTypedResultsTransformerTest extends RemoteClientTest {
 
 
   @Test
-  public void canUseResultsTransformerOnLoadWithRemoteDatabase() throws Exception {
+  public void canUseResultsTransformerOnLoadWithRemoteDatabase() {
 
     try (IDocumentStore store = new DocumentStore(getDefaultUrl(), getDefaultDb()).initialize()) {
       new OrderWithProductInformation().execute(store);
@@ -257,7 +257,7 @@ public class StronglyTypedResultsTransformerTest extends RemoteClientTest {
   }
 
   @Test
-  public void canUseResultsTransformerOnLoadWithMultipleReturnsWithRemoteDatabase() throws Exception {
+  public void canUseResultsTransformerOnLoadWithMultipleReturnsWithRemoteDatabase() {
     try (IDocumentStore store = new DocumentStore(getDefaultUrl(), getDefaultDb()).initialize()) {
       new OrderWithProductInformationMultipleReturns().execute(store);
 
@@ -291,10 +291,9 @@ public class StronglyTypedResultsTransformerTest extends RemoteClientTest {
 
   /**
    * cannotUseResultsTransformerOnLoadWithMultipleReturnsSingleExpectation
-   * @throws Exception
    */
   @Test(expected = RuntimeException.class)
-  public void cannotUseResults1() throws Exception {
+  public void cannotUseResults1() {
     try (IDocumentStore store = new DocumentStore(getDefaultUrl(), getDefaultDb()).initialize()) {
       new OrderWithProductInformationMultipleReturns().execute(store);
 
@@ -319,7 +318,7 @@ public class StronglyTypedResultsTransformerTest extends RemoteClientTest {
   }
 
   @Test
-  public void canUseResultsTransformerOnDynamicQueryWithRemoteDatabase() throws Exception {
+  public void canUseResultsTransformerOnDynamicQueryWithRemoteDatabase() {
     try (IDocumentStore store = new DocumentStore(getDefaultUrl(), getDefaultDb()).initialize()) {
       new OrderWithProductInformation().execute(store);
 

@@ -35,7 +35,7 @@ import com.mysema.query.annotations.QueryEntity;
 public class CanQueryOnCustomClassTest extends RemoteClientTest {
 
   @Test
-  public void usingConverter() throws Exception {
+  public void usingConverter() {
 
     try (IDocumentStore store = new DocumentStore(getDefaultUrl(), getDefaultDb()).initialize()) {
       store.getConventions().createSerializer().registerModule(setupMoneyModule());

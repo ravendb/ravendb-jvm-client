@@ -20,7 +20,7 @@ import com.mysema.query.annotations.QueryEntity;
 
 public class BoundingBoxIndexTest extends RemoteClientTest {
   @Test
-  public void testBoudingBox() throws Exception {
+  public void testBoudingBox() {
     // Y YYY Y
     // Y YYY Y
     // Y YYY Y

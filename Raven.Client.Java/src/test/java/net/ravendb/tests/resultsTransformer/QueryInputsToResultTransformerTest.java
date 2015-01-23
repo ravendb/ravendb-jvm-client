@@ -148,7 +148,7 @@ public class QueryInputsToResultTransformerTest extends RemoteClientTest {
   }
 
   @Test
-  public void canUseResultsTransformerWithQueryOnLoad() throws Exception {
+  public void canUseResultsTransformerWithQueryOnLoad() {
     try (IDocumentStore store = new DocumentStore(getDefaultUrl(), getDefaultDb()).initialize()) {
       new ProductWithQueryInput().execute(store);
       try (IDocumentSession session = store.openSession()) {
@@ -168,7 +168,7 @@ public class QueryInputsToResultTransformerTest extends RemoteClientTest {
   }
 
   @Test
-  public void canUseResultsTransformerWithQueryWithRemoteDatabase() throws Exception {
+  public void canUseResultsTransformerWithQueryWithRemoteDatabase() {
     try (IDocumentStore store = new DocumentStore(getDefaultUrl(), getDefaultDb()).initialize()) {
       new ProductWithQueryInput().execute(store);
       try (IDocumentSession session = store.openSession()) {
@@ -191,7 +191,7 @@ public class QueryInputsToResultTransformerTest extends RemoteClientTest {
   }
 
   @Test
-  public void canUseResultTransformerToLoadValueOnNonStoreFieldUsingQuery() throws Exception {
+  public void canUseResultTransformerToLoadValueOnNonStoreFieldUsingQuery() {
     try (IDocumentStore store = new DocumentStore(getDefaultUrl(), getDefaultDb()).initialize()) {
       new ProductWithQueryInput().execute(store);
       try (IDocumentSession session = store.openSession()) {
@@ -214,7 +214,7 @@ public class QueryInputsToResultTransformerTest extends RemoteClientTest {
   }
 
   @Test
-  public void canUseResultsTransformerWithInclude() throws Exception {
+  public void canUseResultsTransformerWithInclude() {
     try (IDocumentStore store = new DocumentStore(getDefaultUrl(), getDefaultDb()).initialize()) {
       new ProductWithQueryInputAndInclude().execute(store);
       try (IDocumentSession session = store.openSession()) {

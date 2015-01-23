@@ -15,7 +15,7 @@ import net.ravendb.client.document.DocumentStore;
 
 public class WhereStringEqualsTest extends RemoteClientTest {
 
-  public static void setup(IDocumentStore store) throws Exception {
+  public static void setup(IDocumentStore store) {
     try (IDocumentSession session = store.openSession()) {
       session.store(new MyEntity("Some data"));
       session.store(new MyEntity("Some DATA"));
@@ -25,7 +25,7 @@ public class WhereStringEqualsTest extends RemoteClientTest {
   }
 
   @Test
-  public void queryString_IgnoreCase_ShouldWork() throws Exception {
+  public void queryString_IgnoreCase_ShouldWork() {
     try (IDocumentStore store = new DocumentStore(getDefaultUrl(), getDefaultDb()).initialize()) {
       setup(store);
 
@@ -42,7 +42,7 @@ public class WhereStringEqualsTest extends RemoteClientTest {
   }
 
   @Test
-  public void queryString_WithoutSpecifyingTheComparisonType_ShouldJustWork() throws Exception {
+  public void queryString_WithoutSpecifyingTheComparisonType_ShouldJustWork() {
     try (IDocumentStore store = new DocumentStore(getDefaultUrl(), getDefaultDb()).initialize()) {
       setup(store);
 
@@ -59,7 +59,7 @@ public class WhereStringEqualsTest extends RemoteClientTest {
   }
 
   @Test
-  public void regularStringEqual_CaseSensitive_ShouldWork() throws Exception {
+  public void regularStringEqual_CaseSensitive_ShouldWork() {
     try (IDocumentStore store = new DocumentStore(getDefaultUrl(), getDefaultDb()).initialize()) {
       setup(store);
 

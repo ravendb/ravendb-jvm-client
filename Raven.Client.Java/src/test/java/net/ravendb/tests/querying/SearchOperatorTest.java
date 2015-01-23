@@ -45,7 +45,7 @@ public class SearchOperatorTest extends RemoteClientTest {
   }
 
   @Test
-  public void dynamicLuceneQuery() throws Exception {
+  public void dynamicLuceneQuery() {
 
     try (IDocumentStore store = new DocumentStore(getDefaultUrl(), getDefaultDb()).initialize()) {
 

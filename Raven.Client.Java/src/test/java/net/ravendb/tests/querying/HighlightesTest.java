@@ -117,7 +117,7 @@ public class HighlightesTest extends RemoteClientTest {
   }
 
   @Test
-  public void searchWithHighlightes() throws Exception {
+  public void searchWithHighlightes() {
     String q = "session";
     try (IDocumentStore store = new DocumentStore(getDefaultUrl(), getDefaultDb()).initialize()) {
       try (IDocumentSession session = store.openSession()) {

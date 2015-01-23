@@ -44,7 +44,7 @@ public class SpatialTest2Test extends RemoteClientTest {
   }
 
   @Test
-  public void weirdSpatialResults() throws Exception {
+  public void weirdSpatialResults() {
     try (IDocumentStore store = new DocumentStore(getDefaultUrl(), getDefaultDb()).initialize()) {
       try (IDocumentSession session = store.openSession()) {
         Entity entity = new Entity();

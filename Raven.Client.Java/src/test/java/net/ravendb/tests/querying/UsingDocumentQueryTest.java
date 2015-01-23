@@ -18,7 +18,7 @@ import org.junit.Test;
 public class UsingDocumentQueryTest {
 
   @Test
-  public void canUnderstandSimpleEquality() throws Exception {
+  public void canUnderstandSimpleEquality() {
     IDocumentQuery<IndexedUser> q = new DocumentQuery<>(IndexedUser.class, null, null, "IndexName", null, null, null, false)
         .whereEquals("Name", "ayende", false);
     assertEquals("Name:[[ayende]]", q.toString());

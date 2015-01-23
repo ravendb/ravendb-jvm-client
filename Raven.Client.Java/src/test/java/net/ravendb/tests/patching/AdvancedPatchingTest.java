@@ -109,7 +109,7 @@ public class AdvancedPatchingTest extends RemoteClientTest {
   }
 
   @Test
-  public void canUpdateOnMissingProperty() throws Exception {
+  public void canUpdateOnMissingProperty() {
 
     try (IDocumentStore store = new DocumentStore(getDefaultUrl(), getDefaultDb()).initialize()) {
       try (IDocumentSession session = store.openSession()) {
@@ -131,7 +131,7 @@ public class AdvancedPatchingTest extends RemoteClientTest {
   }
 
   @Test
-  public void willNotErrorOnMissingDocument() throws Exception {
+  public void willNotErrorOnMissingDocument() {
     try (IDocumentStore store = new DocumentStore(getDefaultUrl(), getDefaultDb()).initialize()) {
       ScriptedPatchRequest patchRequest = new ScriptedPatchRequest();
       patchRequest.setScript("this.Test = 'a';");
@@ -142,7 +142,7 @@ public class AdvancedPatchingTest extends RemoteClientTest {
   // some tests were omitted as we don't want to test server here!
 
   @Test
-  public void shouldThrowConcurrencyExceptionIfNonCurrentEtagWasSpecified() throws Exception {
+  public void shouldThrowConcurrencyExceptionIfNonCurrentEtagWasSpecified() {
 
     try (IDocumentStore store = new DocumentStore(getDefaultUrl(), getDefaultDb()).initialize()) {
       try (IDocumentSession session = store.openSession()) {
@@ -165,7 +165,7 @@ public class AdvancedPatchingTest extends RemoteClientTest {
   }
 
   @Test
-  public void canCreateDocumentsIfPatchingAppliedByIndex() throws Exception {
+  public void canCreateDocumentsIfPatchingAppliedByIndex() {
     CustomType item1 = new CustomType();
     item1.setId("Item/1");
     item1.setValue(1);

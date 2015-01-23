@@ -34,7 +34,7 @@ public class CanQueryOnLargeXmlTest extends RemoteClientTest {
   }
 
   @Test
-  public void remote() throws Exception {
+  public void remote() {
     try (IDocumentStore store = new DocumentStore(getDefaultUrl(), getDefaultDb()).initialize()) {
       try (IDocumentSession session = store.openSession()) {
 

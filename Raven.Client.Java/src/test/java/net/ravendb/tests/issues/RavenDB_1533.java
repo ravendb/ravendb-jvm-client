@@ -36,7 +36,7 @@ public class RavenDB_1533 extends RemoteClientTest {
   }
 
   @Test
-  public void canDeleteObjectByKeyOnSyncSession() throws Exception {
+  public void canDeleteObjectByKeyOnSyncSession() {
     try (IDocumentStore store = new DocumentStore(getDefaultUrl(), getDefaultDb()).initialize()) {
       String developerId;
       Developer developer = new Developer();
@@ -62,7 +62,7 @@ public class RavenDB_1533 extends RemoteClientTest {
   }
 
   @Test
-  public void canDeleteObjectByTypeAndIdOnSyncSession() throws Exception {
+  public void canDeleteObjectByTypeAndIdOnSyncSession() {
     try (IDocumentStore store = new DocumentStore(getDefaultUrl(), getDefaultDb()).initialize()) {
       String developerId;
       Developer developer = new Developer();
@@ -88,7 +88,7 @@ public class RavenDB_1533 extends RemoteClientTest {
   }
 
   @Test
-  public void shouldNotThrowWhenDeletingUnchangedLoadedObject() throws Exception {
+  public void shouldNotThrowWhenDeletingUnchangedLoadedObject() {
     try (IDocumentStore store = new DocumentStore(getDefaultUrl(), getDefaultDb()).initialize()) {
       String developerId;
       Developer developer = new Developer();
@@ -111,7 +111,7 @@ public class RavenDB_1533 extends RemoteClientTest {
   }
 
   @Test(expected = IllegalStateException.class)
-  public void shouldThrowWhenDeletingChangedLoadedObject() throws Exception {
+  public void shouldThrowWhenDeletingChangedLoadedObject() {
     try (IDocumentStore store = new DocumentStore(getDefaultUrl(), getDefaultDb()).initialize()) {
       Developer developer = new Developer();
       developer.setNick("ayende");
@@ -131,7 +131,7 @@ public class RavenDB_1533 extends RemoteClientTest {
   }
 
   @Test(expected = IllegalStateException.class)
-  public void shouldThrowWhenDeletingNewlyCreatedEntity() throws Exception {
+  public void shouldThrowWhenDeletingNewlyCreatedEntity() {
     try (IDocumentStore store = new DocumentStore(getDefaultUrl(), getDefaultDb()).initialize()) {
       Developer developer = new Developer();
       developer.setNick("ayende");
@@ -145,7 +145,7 @@ public class RavenDB_1533 extends RemoteClientTest {
   }
 
   @Test(expected = IllegalStateException.class)
-  public void shouldThrowWhenStoringJustDeletedIdentifier() throws Exception {
+  public void shouldThrowWhenStoringJustDeletedIdentifier() {
     try (IDocumentStore store = new DocumentStore(getDefaultUrl(), getDefaultDb()).initialize()) {
       Developer developer = new Developer();
       developer.setNick("ayende");

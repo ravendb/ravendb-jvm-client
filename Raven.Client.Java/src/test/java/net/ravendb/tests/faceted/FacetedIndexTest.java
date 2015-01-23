@@ -67,7 +67,7 @@ public class FacetedIndexTest extends FacetTestBase {
   }
 
   @Test
-  public void canPerformFacetedSearch_Remotely() throws Exception {
+  public void canPerformFacetedSearch_Remotely() {
     try (IDocumentStore store = new DocumentStore(getDefaultUrl(), getDefaultDb()).initialize()) {
       executeTest(store, originalFacets);
     }
@@ -103,7 +103,7 @@ public class FacetedIndexTest extends FacetTestBase {
   }
 
   @Test
-  public void canPerformFacetedSearch_Remotely_WithStronglyTypedAPI() throws Exception {
+  public void canPerformFacetedSearch_Remotely_WithStronglyTypedAPI() {
 
     try (IDocumentStore store = new DocumentStore(getDefaultUrl(), getDefaultDb()).initialize()) {
       executeTest(store, stronglyTypedFacets);
@@ -111,7 +111,7 @@ public class FacetedIndexTest extends FacetTestBase {
   }
 
   @Test
-  public void canPerformFacetedSearch_Remotely_Lazy() throws Exception {
+  public void canPerformFacetedSearch_Remotely_Lazy() {
 
     try (IDocumentStore store = new DocumentStore(getDefaultUrl(), getDefaultDb()).initialize()) {
       setup(store, originalFacets);
@@ -143,7 +143,7 @@ public class FacetedIndexTest extends FacetTestBase {
 
   @SuppressWarnings("unused")
   @Test
-  public void canPerformFacetedSearch_Remotely_Lazy_can_work_with_others() throws Exception {
+  public void canPerformFacetedSearch_Remotely_Lazy_can_work_with_others() {
 
     try (IDocumentStore store = new DocumentStore(getDefaultUrl(), getDefaultDb()).initialize()) {
       setup(store, originalFacets);
@@ -174,7 +174,7 @@ public class FacetedIndexTest extends FacetTestBase {
     }
   }
 
-  private void executeTest(IDocumentStore store, List<Facet> facetsToUse) throws Exception {
+  private void executeTest(IDocumentStore store, List<Facet> facetsToUse) {
     setup(store, facetsToUse);
 
     try (IDocumentSession s = store.openSession()) {
@@ -198,7 +198,7 @@ public class FacetedIndexTest extends FacetTestBase {
     }
   }
 
-  private void setup(IDocumentStore store, List<Facet> facetsToUse) throws Exception {
+  private void setup(IDocumentStore store, List<Facet> facetsToUse) {
     try (IDocumentSession s = store.openSession()) {
 
       FacetSetup facetSetupDoc = new FacetSetup("facets/CameraFacets", facetsToUse);

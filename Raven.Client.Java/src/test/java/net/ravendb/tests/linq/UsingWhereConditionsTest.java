@@ -19,7 +19,7 @@ import org.junit.Test;
 public class UsingWhereConditionsTest extends RemoteClientTest {
 
   @Test
-  public void can_Use_Where() throws Exception {
+  public void can_Use_Where() {
 
     try (IDocumentStore store = new DocumentStore(getDefaultUrl(), getDefaultDb()).initialize()) {
 

@@ -22,13 +22,13 @@ import com.mysema.query.annotations.QueryEntity;
 public class IntersectionQueryWithLargeDatasetTest extends RemoteClientTest {
 
   @Test
-  public void canPerformIntersectionQuery_Remotely() throws Exception {
+  public void canPerformIntersectionQuery_Remotely() {
     try (IDocumentStore store = new DocumentStore(getDefaultUrl(), getDefaultDb()).initialize()) {
       executeTest(store);
     }
   }
 
-  private void executeTest(IDocumentStore store) throws Exception {
+  private void executeTest(IDocumentStore store) {
     createIndexAndSampleData(store);
 
     // there are 10K documents, each combination of "Lorem" and "Nullam" has 100 matching documents.
@@ -54,7 +54,7 @@ public class IntersectionQueryWithLargeDatasetTest extends RemoteClientTest {
   }
 
 
-  private void createIndexAndSampleData(IDocumentStore store) throws Exception {
+  private void createIndexAndSampleData(IDocumentStore store) {
     try (IDocumentSession session = store.openSession()) {
       IndexDefinition definition = new IndexDefinition();
       definition.setMap("from e in docs.TestAttributes from r in e.Attributes select new { Attributes_Key = r.Key, Attributes_Value = r.Value }");

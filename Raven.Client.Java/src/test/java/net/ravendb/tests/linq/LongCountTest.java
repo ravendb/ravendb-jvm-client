@@ -26,7 +26,7 @@ public class LongCountTest extends RemoteClientTest {
   }
 
   @Test
-  public void canQueryLongCount() throws Exception {
+  public void canQueryLongCount() {
     try (IDocumentStore store = new DocumentStore(getDefaultUrl(), getDefaultDb()).initialize()) {
       try (IDocumentSession session = store.openSession()) {
         TestDoc doc = new TestDoc();

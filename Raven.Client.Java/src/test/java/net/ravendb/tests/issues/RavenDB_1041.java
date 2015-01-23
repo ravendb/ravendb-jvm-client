@@ -89,7 +89,7 @@ public class RavenDB_1041 extends ReplicationBase {
   }
 
   @Test
-  public void shouldThrowTimeoutException() throws Exception {
+  public void shouldThrowTimeoutException() {
     DocumentStore store1 = createStore();
     DocumentStore store2 = createStore();
 
@@ -115,7 +115,7 @@ public class RavenDB_1041 extends ReplicationBase {
   }
 
   @Test
-  public void shouldThrowIfCannotReachEnoughDestinationServers() throws Exception {
+  public void shouldThrowIfCannotReachEnoughDestinationServers() {
     DocumentStore store1 = createStore();
     DocumentStore store2 = createStore();
 
