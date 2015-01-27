@@ -16,7 +16,7 @@ import net.ravendb.client.RemoteClientTest;
 import net.ravendb.client.document.DocumentStore;
 
 
-public class RavenDB_2907 extends RemoteClientTest {
+public class RavenDB_2907Test extends RemoteClientTest {
   @QueryEntity
   public static class Foo {
     private String id;
@@ -117,7 +117,7 @@ public class RavenDB_2907 extends RemoteClientTest {
     try (IDocumentStore db = new DocumentStore(getDefaultUrl(), getDefaultDb()).initialize()) {
       FooAnBar entities = makeAndStoreEntities(db);
       IDocumentSession session = db.openSession();
-      QRavenDB_2907_Foo f = QRavenDB_2907_Foo.foo;
+      QRavenDB_2907Test_Foo f = QRavenDB_2907Test_Foo.foo;
 
       Foo loaded = session.include(f.barIdInKey.keys()).load(Foo.class, entities.foo.getId());
       assertNotNull(loaded);
@@ -132,7 +132,7 @@ public class RavenDB_2907 extends RemoteClientTest {
     try (IDocumentStore db = new DocumentStore(getDefaultUrl(), getDefaultDb()).initialize()) {
       FooAnBar entities = makeAndStoreEntities(db);
       IDocumentSession session = db.openSession();
-      QRavenDB_2907_Foo f = QRavenDB_2907_Foo.foo;
+      QRavenDB_2907Test_Foo f = QRavenDB_2907Test_Foo.foo;
       Foo loaded = session.include(f.barIdInValue.values().select()).load(Foo.class, entities.foo.getId());
       assertNotNull(loaded);
       Bar bar = session.load(Bar.class, entities.bar.getId());

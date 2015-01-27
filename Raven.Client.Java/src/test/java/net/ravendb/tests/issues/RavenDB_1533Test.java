@@ -12,7 +12,7 @@ import net.ravendb.client.document.DocumentStore;
 import org.junit.Test;
 
 
-public class RavenDB_1533 extends RemoteClientTest {
+public class RavenDB_1533Test extends RemoteClientTest {
   public static class Developer {
     private String nick;
     private int id;

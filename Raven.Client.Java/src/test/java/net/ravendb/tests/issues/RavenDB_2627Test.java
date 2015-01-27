@@ -43,13 +43,13 @@ import net.ravendb.tests.bugs.User;
 import net.ravendb.tests.common.dto.Address;
 import net.ravendb.tests.common.dto.PersonWithAddress;
 import net.ravendb.tests.document.Company;
-import net.ravendb.tests.json.Webinar.Person;
+import net.ravendb.tests.json.WebinarTest.Person;
 import net.ravendb.utils.SpinWait;
 
 import org.junit.Test;
 
 
-public class RavenDB_2627 extends RemoteClientTest {
+public class RavenDB_2627Test extends RemoteClientTest {
 
   @Test
   public void canCreateSubscription() {

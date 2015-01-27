@@ -873,6 +873,6 @@ public interface IDatabaseCommands extends IHoldProfilingInformation {
    * Gets the build number
    * @throws IOException
    */
-  public BuildNumber getBuildNumber() throws IOException;
+  public BuildNumber getBuildNumber();
 
 }

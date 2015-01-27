@@ -14,7 +14,7 @@ import net.ravendb.client.RemoteClientTest;
 import net.ravendb.client.document.DocumentStore;
 
 
-public class SimpleIndexMerging extends RemoteClientTest {
+public class SimpleIndexMergingTest extends RemoteClientTest {
 
   @Test
   public void willSuggestMergeTwoSimpleIndexesForSameCollection() {

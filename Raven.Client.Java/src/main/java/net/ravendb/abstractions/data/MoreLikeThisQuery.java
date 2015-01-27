@@ -1,5 +1,6 @@
 package net.ravendb.abstractions.data;
 
+import java.util.HashMap;
 import java.util.Map;
 
 import net.ravendb.abstractions.json.linq.RavenJToken;
@@ -32,7 +33,7 @@ public class MoreLikeThisQuery {
   private String[] fields;
   private String documentId;
   private String indexName;
-  private Map<String, String> mapGroupFields;
+  private Map<String, String> mapGroupFields = new HashMap<>();
   private String resultsTransformer;
   private String[] includes;
   private Map<String, RavenJToken> transformerParameters;

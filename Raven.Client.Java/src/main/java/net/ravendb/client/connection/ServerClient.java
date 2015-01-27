@@ -14,6 +14,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
 
@@ -1267,11 +1268,50 @@ public class ServerClient implements IDatabaseCommands {
     return getFacets(index, query, facets, start, null);
   }
 
+  @SuppressWarnings({"unused", "boxing"})
   @Override
   public FacetResults getFacets(final String index, final IndexQuery query, final List<Facet> facets, final int start, final Integer pageSize) {
 
-    final String facetsJson = JsonConvert.serializeObject(facets);
+    RavenJArray ravenJArray = (RavenJArray) RavenJToken.fromObject(facets);
+    for (RavenJToken facet : ravenJArray) {
+      RavenJObject obj = (RavenJObject) facet;
+      if (Objects.equals(obj.value(String.class, "Name"), obj.value(String.class, "DisplayName"))) {
+        obj.remove("DisplayName");
+      }
+      RavenJArray jArray = obj.value(RavenJArray.class, "Ranges");
+      if (jArray != null && jArray.size() == 0) {
+        obj.remove("Ranges");
+      }
+      for (String props : new HashSet<String>(obj.getKeys())) {
+        if (obj.get(props).getType() == JTokenType.NULL) {
+          obj.remove(props);
+        }
+      }
+      if ("None".equals(obj.value(String.class, "Aggregation"))) {
+        obj.remove("Aggregation");
+      }
+      if ("Default".equals(obj.value(String.class, "Mode"))) {
+        obj.remove("Mode");
+      }
+      if ("ValueAsc".equals(obj.value(String.class, "TermSortMode"))) {
+        obj.remove("TermSortMode");
+      }
+      if (!obj.value(Boolean.class, "IncludeRemainingTerms")) {
+        obj.remove("IncludeRemainingTerms");
+      }
+    }
+
+    final String facetsJson = ravenJArray.toString();
     final HttpMethods method = facetsJson.length() > 1024 ? HttpMethods.POST : HttpMethods.GET;
+    if (HttpMethods.POST.equals(method)) {
+      FacetQuery facetQuery = new FacetQuery();
+      facetQuery.setFacets(facets);
+      facetQuery.setIndexName(index);
+      facetQuery.setQuery(query);
+      facetQuery.setPageSize(pageSize);
+      facetQuery.setPageStart(start);
+      return getMultiFacets(new FacetQuery[] { facetQuery })[0];
+    }
     return executeWithReplication(method, new Function1<OperationMetadata, FacetResults>() {
       @Override
       public FacetResults apply(OperationMetadata operationMetadata) {
@@ -1280,7 +1320,6 @@ public class ServerClient implements IDatabaseCommands {
     });
   }
 
-  //TODO: trim and use get
   @SuppressWarnings("boxing")
   protected FacetResults directGetFacets(OperationMetadata operationMetadata, String index, IndexQuery query, String facetsJson, int start, Integer pageSize, HttpMethods method) {
     String requestUri = operationMetadata.getUrl() + String.format("/facets/%s?%s&facetStart=%d&facetPageSize=%s",

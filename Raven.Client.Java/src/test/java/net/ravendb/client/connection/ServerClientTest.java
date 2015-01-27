@@ -1,6 +1,7 @@
 package net.ravendb.client.connection;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
@@ -12,6 +13,7 @@ import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 
 import net.ravendb.abstractions.commands.ICommandData;
@@ -21,30 +23,37 @@ import net.ravendb.abstractions.connection.ErrorResponseException;
 import net.ravendb.abstractions.data.Attachment;
 import net.ravendb.abstractions.data.AttachmentInformation;
 import net.ravendb.abstractions.data.BatchResult;
+import net.ravendb.abstractions.data.BuildNumber;
 import net.ravendb.abstractions.data.Constants;
 import net.ravendb.abstractions.data.DatabaseDocument;
 import net.ravendb.abstractions.data.Etag;
 import net.ravendb.abstractions.data.JsonDocument;
 import net.ravendb.abstractions.data.JsonDocumentMetadata;
+import net.ravendb.abstractions.data.LicensingStatus;
+import net.ravendb.abstractions.data.LogItem;
 import net.ravendb.abstractions.data.PatchCommandType;
 import net.ravendb.abstractions.data.PatchRequest;
 import net.ravendb.abstractions.data.PutResult;
 import net.ravendb.abstractions.data.UuidType;
+import net.ravendb.abstractions.exceptions.IndexCompilationException;
+import net.ravendb.abstractions.exceptions.TransformCompilationException;
 import net.ravendb.abstractions.indexing.FieldIndexing;
 import net.ravendb.abstractions.indexing.FieldStorage;
 import net.ravendb.abstractions.indexing.FieldTermVector;
 import net.ravendb.abstractions.indexing.IndexDefinition;
 import net.ravendb.abstractions.indexing.SortOptions;
+import net.ravendb.abstractions.indexing.TransformerDefinition;
 import net.ravendb.abstractions.json.linq.RavenJArray;
 import net.ravendb.abstractions.json.linq.RavenJObject;
 import net.ravendb.abstractions.json.linq.RavenJToken;
 import net.ravendb.abstractions.json.linq.RavenJValue;
+import net.ravendb.abstractions.replication.ReplicationStatistics;
 import net.ravendb.client.RavenDBAwareTests;
 import net.ravendb.client.document.JsonSerializer;
 import net.ravendb.samples.Developer;
+import net.ravendb.tests.bugs.User;
 
 import org.apache.commons.lang.StringUtils;
-import org.junit.Ignore;
 import org.junit.Test;
 
 
@@ -67,7 +76,6 @@ public class ServerClientTest extends RavenDBAwareTests {
 
   @SuppressWarnings("boxing")
   @Test
-  @Ignore
   public void testPutGet() {
     IDatabaseCommands dbCommands = serverClient.forDatabase(getDbName());
     try {
@@ -167,8 +175,6 @@ public class ServerClientTest extends RavenDBAwareTests {
       List<JsonDocument> metaOnly = dbCommands.getDocuments(0, 100, true);
       assertEquals(4, metaOnly.size());
       assertEquals(0, metaOnly.get(0).getDataAsJson().getCount());
-
-
     } finally {
       deleteDb();
     }
@@ -541,6 +547,191 @@ public class ServerClientTest extends RavenDBAwareTests {
       l = dbCommands.nextIdentityFor(key);
 
       assertEquals(new Long(2), l);
+
+    } finally {
+      deleteDb();
+    }
+  }
+
+  @Test
+  public void testIndexHasChanged() {
+    IDatabaseCommands dbCommands = serverClient.forDatabase(getDbName());
+    try {
+      createDb();
+      IndexDefinition definition = new IndexDefinition();
+      definition.setMap("from doc in docs where doc.Name != null select new {  doc.Name, doc.AccountsReceivable }");
+      definition.getStores().put("Name", FieldStorage.YES);
+      definition.getStores().put("AccountsReceivable", FieldStorage.YES);
+      dbCommands.putIndex("company_by_name", definition);
+
+      assertFalse(dbCommands.indexHasChanged("company_by_name", definition));
+
+      IndexDefinition newDefinition = new IndexDefinition();
+      definition.setMap("from doc in docs where doc.Name != null select new {  doc.Name, doc.AccountsReceivable }");
+      definition.getStores().put("Name", FieldStorage.YES);
+      definition.getStores().put("AccountsReceivable", FieldStorage.NO);
+
+      assertTrue(dbCommands.indexHasChanged("company_by_name", newDefinition));
+
+    } finally {
+      deleteDb();
+    }
+  }
+
+  @Test
+  public void testPutInvalidIndex() {
+    IDatabaseCommands dbCommands = serverClient.forDatabase(getDbName());
+    try {
+      createDb();
+      IndexDefinition definition = new IndexDefinition();
+      definition.setMap("from doc in docs where doc..Name != null select new {  doc.Name, doc.AccountsReceivable }");
+      definition.getStores().put("Name", FieldStorage.YES);
+      definition.getStores().put("AccountsReceivable", FieldStorage.YES);
+      dbCommands.putIndex("company_by_name", definition);
+
+      fail("put index should fail - invalid index def!");
+    } catch (IndexCompilationException e) {
+      //ok
+
+    } finally {
+      deleteDb();
+    }
+  }
+
+  @Test
+  public void testPutInvalidTransformer() {
+    TransformerDefinition transformer = new TransformerDefinition();
+    transformer.setTransformResults("from d innnnnnnn results select new { d.Id, d.Name, CountryAndCity = String.Join(\",\", d.Country, d.City)}");
+
+    IDatabaseCommands dbCommands = serverClient.forDatabase(getDbName());
+    try {
+      createDb();
+      dbCommands.putTransformer("trans1", transformer);
+
+      fail("putTransformer should fail - invalid transfomer def!");
+    } catch (TransformCompilationException e) {
+      //ok
+    } finally {
+      deleteDb();
+    }
+  }
+
+  @Test
+  public void testGetNotExistingTransformer() {
+    IDatabaseCommands dbCommands = serverClient.forDatabase(getDbName());
+    try {
+      createDb();
+      assertNull(dbCommands.getTransformer("no_such"));
+    } finally {
+      deleteDb();
+    }
+  }
+
+  @Test
+  public void testGetDocumentsFromEtag() {
+    IDatabaseCommands dbCommands = serverClient.forDatabase(getDbName());
+    try {
+      createDb();
+      for (int i = 0; i < 10; i++) {
+        dbCommands.put("users/" + i, null, new RavenJObject(), new RavenJObject());
+      }
+
+      List<JsonDocument> documents = dbCommands.getDocuments(Etag.empty(), 20);
+      assertEquals(10, documents.size());
+    } finally {
+      deleteDb();
+    }
+  }
+
+  @Test
+  public void testSeedIdentity() {
+    IDatabaseCommands dbCommands = serverClient.forDatabase(getDbName());
+    try {
+      createDb();
+      dbCommands.seedIdentityFor("users/", 1000);
+      assertEquals(Long.valueOf(1001), dbCommands.nextIdentityFor("users/"));
+    } finally {
+      deleteDb();
+    }
+  }
+
+  @Test
+  public void testGetLogs() {
+    IDatabaseCommands dbCommands = serverClient.forDatabase(getDbName());
+    try {
+      createDb();
+      LogItem[] logs = dbCommands.getLogs(false);
+      assertTrue(logs.length > 0);
+    } finally {
+      deleteDb();
+    }
+  }
+
+  @Test
+  public void testGetReplicationInfo() {
+    IDatabaseCommands dbCommands = serverClient.forDatabase(getDbName());
+    try {
+      createDb();
+      ReplicationStatistics replicationStatistics = dbCommands.getReplicationInfo();
+      assertNotNull(replicationStatistics);
+    } finally {
+      deleteDb();
+    }
+  }
+
+  @Test
+  public void testGetLicensingStatus() {
+    IDatabaseCommands dbCommands = serverClient.forDatabase(getDbName());
+    try {
+      createDb();
+      LicensingStatus licenseStatus = dbCommands.forSystemDatabase().getLicenseStatus();
+      assertNotNull(licenseStatus);
+    } finally {
+      deleteDb();
+    }
+  }
+
+  @Test
+  public void testGetBuildNumber() {
+    IDatabaseCommands dbCommands = serverClient.forDatabase(getDbName());
+    try {
+      createDb();
+      BuildNumber buildNumber = dbCommands.getBuildNumber();
+      assertNotNull(buildNumber);
+      assertNotNull(buildNumber.getBuildVersion());
+      assertNotNull(buildNumber.getProductVersion());
+    } finally {
+      deleteDb();
+    }
+  }
+
+  @SuppressWarnings("boxing")
+  @Test
+  public void canGetTermsForIndex() {
+    IDatabaseCommands dbCommands = serverClient.forDatabase(getDbName());
+    try {
+      createDb();
+
+      for (int i = 0; i< 15; i++) {
+        User u = new User();
+        u.setName(String.format("user%03d", i));
+        RavenJObject o = RavenJObject.fromObject(u);
+        dbCommands.put(String.format("user%03d", i), null, o, new RavenJObject());
+      }
+
+      IndexDefinition indexDefinition = new IndexDefinition();
+      indexDefinition.setMap("from doc in docs select new { doc.Name }");
+      dbCommands.putIndex("test", indexDefinition);
+
+      waitForNonStaleIndexes(dbCommands);
+
+      List<String> terms = dbCommands.getTerms("test", "Name", null, 10);
+      Collections.sort(terms);
+      assertEquals(10, terms.size());
+
+      for (int i = 0; i< 10; i++) {
+        assertEquals(String.format("user%03d", i), terms.get(i));
+      }
 
     } finally {
       deleteDb();

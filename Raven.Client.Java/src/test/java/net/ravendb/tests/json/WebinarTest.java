@@ -8,7 +8,7 @@ import net.ravendb.client.document.DocumentStore;
 import org.junit.Test;
 
 
-public class Webinar extends RemoteClientTest {
+public class WebinarTest extends RemoteClientTest {
 
   public static class Person {
     private String name;

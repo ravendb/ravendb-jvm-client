@@ -13,7 +13,7 @@ import net.ravendb.tests.bundles.replication.ReplicationBase;
 
 import org.junit.Test;
 
-public class RavenDB_1041 extends ReplicationBase {
+public class RavenDB_1041Test extends ReplicationBase {
 
   public static class ReplicatedItem {
     private String id;
