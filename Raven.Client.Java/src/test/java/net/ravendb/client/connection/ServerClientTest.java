@@ -45,6 +45,7 @@ import net.ravendb.client.document.JsonSerializer;
 import net.ravendb.samples.Developer;
 
 import org.apache.commons.lang.StringUtils;
+import org.junit.Ignore;
 import org.junit.Test;
 
 
@@ -65,6 +66,7 @@ public class ServerClientTest extends RavenDBAwareTests {
 
 
   @Test
+  @Ignore
   public void testPutGet() {
     IDatabaseCommands dbCommands = serverClient.forDatabase(getDbName());
     try {

@@ -1,19 +1,52 @@
 package net.ravendb.tests.issues;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.TimeUnit;
 
-import org.junit.Test;
-
+import net.ravendb.abstractions.basic.CleanCloseable;
+import net.ravendb.abstractions.basic.EventHandler;
+import net.ravendb.abstractions.basic.Reference;
+import net.ravendb.abstractions.basic.VoidArgs;
+import net.ravendb.abstractions.closure.Function0;
+import net.ravendb.abstractions.data.Constants;
+import net.ravendb.abstractions.data.Etag;
+import net.ravendb.abstractions.data.SubscriptionBatchOptions;
 import net.ravendb.abstractions.data.SubscriptionConfig;
 import net.ravendb.abstractions.data.SubscriptionConnectionOptions;
 import net.ravendb.abstractions.data.SubscriptionCriteria;
 import net.ravendb.abstractions.exceptions.subscriptions.SubscriptionDoesNotExistExeption;
 import net.ravendb.abstractions.exceptions.subscriptions.SubscriptionInUseException;
+import net.ravendb.abstractions.json.linq.RavenJObject;
+import net.ravendb.abstractions.json.linq.RavenJToken;
+import net.ravendb.abstractions.json.linq.RavenJValue;
+import net.ravendb.abstractions.util.TimeUtils;
+import net.ravendb.client.IDocumentSession;
 import net.ravendb.client.IDocumentStore;
 import net.ravendb.client.RemoteClientTest;
+import net.ravendb.client.changes.ObserverAdapter;
+import net.ravendb.client.document.BulkInsertOperation;
 import net.ravendb.client.document.DocumentStore;
+import net.ravendb.client.document.Subscription;
+import net.ravendb.tests.bugs.User;
+import net.ravendb.tests.common.dto.Address;
+import net.ravendb.tests.common.dto.PersonWithAddress;
+import net.ravendb.tests.document.Company;
+import net.ravendb.tests.json.Webinar.Person;
+import net.ravendb.utils.SpinWait;
+
+import org.junit.Test;
 
 
 public class RavenDB_2627 extends RemoteClientTest {
@@ -21,28 +54,28 @@ public class RavenDB_2627 extends RemoteClientTest {
   @Test
   public void canCreateSubscription() {
     try (IDocumentStore store = new DocumentStore(getDefaultUrl(), getDefaultDb()).initialize()) {
-      long id = store.getSubscriptions().create(new SubscriptionCriteria());
+      long id = store.subscriptions().create(new SubscriptionCriteria());
       assertEquals(1, id);
 
-      id = store.getSubscriptions().create(new SubscriptionCriteria());
+      id = store.subscriptions().create(new SubscriptionCriteria());
       assertEquals(2, id);
     }
   }
 
   @Test
-  public void canDeleteSubscription() throws Exception {
+  public void canDeleteSubscription() {
     try (IDocumentStore store = new DocumentStore(getDefaultUrl(), getDefaultDb()).initialize()) {
-      long id1 = store.getSubscriptions().create(new SubscriptionCriteria());
-      long id2 = store.getSubscriptions().create(new SubscriptionCriteria());
+      long id1 = store.subscriptions().create(new SubscriptionCriteria());
+      long id2 = store.subscriptions().create(new SubscriptionCriteria());
 
-      List<SubscriptionConfig> subscriptions = store.getSubscriptions().getSubscriptions(0, 5);
+      List<SubscriptionConfig> subscriptions = store.subscriptions().getSubscriptions(0, 5);
 
       assertEquals(2, subscriptions.size());
 
-      store.getSubscriptions().delete(id1);
-      store.getSubscriptions().delete(id2);
+      store.subscriptions().delete(id1);
+      store.subscriptions().delete(id2);
 
-      subscriptions = store.getSubscriptions().getSubscriptions(0, 5);
+      subscriptions = store.subscriptions().getSubscriptions(0, 5);
 
       assertEquals(0, subscriptions.size());
     }
@@ -52,7 +85,7 @@ public class RavenDB_2627 extends RemoteClientTest {
   public void shouldThrowWhenOpeningNoExisingSubscription() {
     try (IDocumentStore store = new DocumentStore(getDefaultUrl(), getDefaultDb()).initialize()) {
       try {
-        store.getSubscriptions().open(1, new SubscriptionConnectionOptions());
+        store.subscriptions().open(1, new SubscriptionConnectionOptions());
         fail();
       } catch (SubscriptionDoesNotExistExeption e) {
         assertEquals("There is no subscription configuration for specified identifier (id: 1)", e.getMessage());
@@ -60,14 +93,15 @@ public class RavenDB_2627 extends RemoteClientTest {
     }
   }
 
+  @SuppressWarnings("unused")
   @Test
   public void shouldThrowOnAttemptToOpenAlreadyOpenedSubscription() {
     try (IDocumentStore store = new DocumentStore(getDefaultUrl(), getDefaultDb()).initialize()) {
-      long id = store.getSubscriptions().create(new SubscriptionCriteria());
-      store.getSubscriptions().open(1, new SubscriptionConnectionOptions());
+      long id = store.subscriptions().create(new SubscriptionCriteria());
+      store.subscriptions().open(1, new SubscriptionConnectionOptions());
 
       try {
-        store.getSubscriptions().open(1, new SubscriptionConnectionOptions());
+        store.subscriptions().open(1, new SubscriptionConnectionOptions());
         fail();
       } catch (SubscriptionInUseException e) {
         assertEquals("Subscription is already in use. There can be only a single open subscription connection per subscription.", e.getMessage());
@@ -75,804 +109,922 @@ public class RavenDB_2627 extends RemoteClientTest {
     }
   }
 
-  /*
-   * private readonly TimeSpan waitForDocTimeout = TimeSpan.FromSeconds(20);
+  private final static int WAIT_TIME_OUT_SECONDS = 20;
 
+  @SuppressWarnings("boxing")
+  @Test
+  public void shouldStreamAllDocumentsAfterSubscriptionCreation() throws InterruptedException {
+    try (IDocumentStore store = new DocumentStore(getDefaultUrl(), getDefaultDb()).initialize()) {
 
+      storeUserAged(store, 31, "users/1");
+      storeUserAged(store, 27, "users/12");
+      storeUserAged(store, 25, "users/3");
 
-        [Fact]
-        public void ShouldStreamAllDocumentsAfterSubscriptionCreation()
-        {
-            using (var store = NewDocumentStore())
-            {
-                using (var session = store.OpenSession())
-                {
-                    session.Store(new User { Age = 31}, "users/1");
-                    session.Store(new User { Age = 27}, "users/12");
-                    session.Store(new User { Age = 25}, "users/3");
+      long id = store.subscriptions().create(new SubscriptionCriteria());
+      Subscription<RavenJObject> subscription = store.subscriptions().open(id, new SubscriptionConnectionOptions());
 
-                    session.SaveChanges();
-                }
+      final BlockingQueue<String> keys = new ArrayBlockingQueue<>(100);
+      final BlockingQueue<Integer> ages = new ArrayBlockingQueue<>(100);
 
-                var id = store.Subscriptions.Create(new SubscriptionCriteria());
-                var subscription = store.Subscriptions.Open(id, new SubscriptionConnectionOptions());
-
-                var keys = new BlockingCollection<string>();
-                var ages = new BlockingCollection<int>();
-
-                subscription.Subscribe(x => keys.Add(x[Constants.Metadata].Value<string>("@id")));
-                subscription.Subscribe(x => ages.Add(x.Value<int>("Age")));
-
-                string key;
-                Assert.True(keys.TryTake(out key, waitForDocTimeout));
-                Assert.Equal("users/1", key);
-
-                Assert.True(keys.TryTake(out key, waitForDocTimeout));
-                Assert.Equal("users/12", key);
-
-                Assert.True(keys.TryTake(out key, waitForDocTimeout));
-                Assert.Equal("users/3", key);
-
-                int age;
-                Assert.True(ages.TryTake(out age, waitForDocTimeout));
-                Assert.Equal(31, age);
-
-                Assert.True(ages.TryTake(out age, waitForDocTimeout));
-                Assert.Equal(27, age);
-
-                Assert.True(ages.TryTake(out age, waitForDocTimeout));
-                Assert.Equal(25, age);
-            }
+      subscription.subscribe(new ObserverAdapter<RavenJObject>() {
+        @Override
+        public void onNext(RavenJObject value) {
+          keys.offer(value.get(Constants.METADATA).value(String.class, "@id"));
         }
+      });
 
-        [Fact]
-        public void ShouldSendAllNewAndModifiedDocs()
-        {
-            using (var store = NewRemoteDocumentStore())
-            {
-                var id = store.Subscriptions.Create(new SubscriptionCriteria());
-                var subscription = store.Subscriptions.Open(id, new SubscriptionConnectionOptions());
-
-                var names = new BlockingCollection<string>();
-                store.Changes().WaitForAllPendingSubscriptions();
-
-                subscription.Subscribe(x => names.Add(x.Value<string>("Name")));
-
-                using (var session = store.OpenSession())
-                {
-                    session.Store(new User { Name = "James" }, "users/1");
-                    session.SaveChanges();
-                }
-
-                string name;
-                Assert.True(names.TryTake(out name, waitForDocTimeout));
-                Assert.Equal("James", name);
-
-                using (var session = store.OpenSession())
-                {
-                    session.Store(new User { Name = "Adam"}, "users/12");
-                    session.SaveChanges();
-                }
-
-                Assert.True(names.TryTake(out name, waitForDocTimeout));
-                Assert.Equal("Adam", name);
-
-                using (var session = store.OpenSession())
-                {
-                    session.Store(new User { Name = "David"}, "users/1");
-                    session.SaveChanges();
-                }
-
-                Assert.True(names.TryTake(out name, waitForDocTimeout));
-                Assert.Equal("David", name);
-            }
+      subscription.subscribe(new ObserverAdapter<RavenJObject>() {
+        @Override
+        public void onNext(RavenJObject value) {
+          ages.offer(value.value(Integer.class, "Age"));
         }
+      });
 
-        [Fact]
-        public void ShouldResendDocsIfAcknowledgmentTimeoutOccurred()
-        {
-            using (var store = NewDocumentStore())
-            {
-                var id = store.Subscriptions.Create(new SubscriptionCriteria());
-                var subscriptionZeroTimeout = store.Subscriptions.Open(id, new SubscriptionConnectionOptions
-                {
-                    BatchOptions = new SubscriptionBatchOptions()
-                    {
-                        AcknowledgmentTimeout = TimeSpan.FromMilliseconds(-10) // the client won't be able to acknowledge in negative time
-                    }
-                });
-                store.Changes().WaitForAllPendingSubscriptions();
-                var docs = new BlockingCollection<RavenJObject>();
+      String key = keys.poll(WAIT_TIME_OUT_SECONDS, TimeUnit.SECONDS);
+      assertEquals("users/1", key);
 
-                subscriptionZeroTimeout.Subscribe(docs.Add);
+      key = keys.poll(WAIT_TIME_OUT_SECONDS, TimeUnit.SECONDS);
+      assertEquals("users/12", key);
 
-                using (var session = store.OpenSession())
-                {
-                    session.Store(new User {Name = "Raven"});
-                    session.SaveChanges();
-                }
+      key = keys.poll(WAIT_TIME_OUT_SECONDS, TimeUnit.SECONDS);
+      assertEquals("users/3", key);
 
-                RavenJObject document;
+      int age = ages.poll(WAIT_TIME_OUT_SECONDS, TimeUnit.SECONDS);
+      assertEquals(31, age);
 
-                Assert.True(docs.TryTake(out document, waitForDocTimeout));
-                Assert.Equal("Raven", document.Value<string>("Name"));
+      age = ages.poll(WAIT_TIME_OUT_SECONDS, TimeUnit.SECONDS);
+      assertEquals(27, age);
 
-                Assert.True(docs.TryTake(out document, waitForDocTimeout));
-                Assert.Equal("Raven", document.Value<string>("Name"));
+      age = ages.poll(WAIT_TIME_OUT_SECONDS, TimeUnit.SECONDS);
+      assertEquals(25, age);
+    }
+  }
 
-                Assert.True(docs.TryTake(out document, waitForDocTimeout));
-                Assert.Equal("Raven", document.Value<string>("Name"));
+  private static void storeUserAged(IDocumentStore store, int age, String id) {
+    try (IDocumentSession session = store.openSession()) {
+      User u = new User();
+      u.setAge(age);
+      session.store(u, id);
+      session.saveChanges();
+    }
+  }
 
-                subscriptionZeroTimeout.Dispose();
+  @Test
+  public void shouldSendAllNewAndModifiedDocs() throws InterruptedException {
+    try (IDocumentStore store = new DocumentStore(getDefaultUrl(), getDefaultDb()).initialize()) {
 
-                // retry with longer timeout - should sent just one doc
+      long id = store.subscriptions().create(new SubscriptionCriteria());
+      Subscription<RavenJObject> subscription = store.subscriptions().open(id, new SubscriptionConnectionOptions());
 
-                var subscriptionLongerTimeout = store.Subscriptions.Open(id, new SubscriptionConnectionOptions
-                {
-                    BatchOptions = new SubscriptionBatchOptions()
-                    {
-                        AcknowledgmentTimeout = TimeSpan.FromSeconds(30)
-                    }
-                });
+      final BlockingQueue<String> names = new ArrayBlockingQueue<>(100);
+      store.changes().waitForAllPendingSubscriptions();
 
-                var docs2 = new BlockingCollection<RavenJObject>();
-
-                subscriptionLongerTimeout.Subscribe(docs2.Add);
-
-                Assert.True(docs2.TryTake(out document, waitForDocTimeout));
-                Assert.Equal("Raven", document.Value<string>("Name"));
-
-                Assert.False(docs2.TryTake(out document, waitForDocTimeout));
-            }
+      subscription.subscribe(new ObserverAdapter<RavenJObject>() {
+        @Override
+        public void onNext(RavenJObject value) {
+          names.add(value.value(String.class, "Name"));
         }
+      });
 
+      try (IDocumentSession session = store.openSession()) {
+        User user = new User();
+        user.setName("James");
+        session.store(user, "users/1");
+        session.saveChanges();
+      }
 
-        [Fact]
-        public void ShouldRespectMaxDocCountInBatch()
-        {
-            using (var store = NewDocumentStore())
-            {
-                using (var session = store.OpenSession())
-                {
-                    for (int i = 0; i < 100; i++)
-                    {
-                        session.Store(new Company());
-                    }
+      String name = names.poll(WAIT_TIME_OUT_SECONDS, TimeUnit.SECONDS);
+      assertNotNull(name);
+      assertEquals("James", name);
 
-                    session.SaveChanges();
-                }
+      try (IDocumentSession session = store.openSession()) {
+        User user = new User();
+        user.setName("Adam");
+        session.store(user, "users/12");
+        session.saveChanges();
+      }
 
-                var id = store.Subscriptions.Create(new SubscriptionCriteria());
-                var subscription = store.Subscriptions.Open(id, new SubscriptionConnectionOptions{ BatchOptions = new SubscriptionBatchOptions { MaxDocCount = 25 }});
+      name = names.poll(WAIT_TIME_OUT_SECONDS, TimeUnit.SECONDS);
+      assertNotNull(name);
+      assertEquals("Adam", name);
 
-                var batchSizes = new List<Reference<int>>();
+      try (IDocumentSession session = store.openSession()) {
+        User user = new User();
+        user.setName("David");
+        session.store(user, "users/1");
+        session.saveChanges();
+      }
 
-                subscription.BeforeBatch +=
-                    () => batchSizes.Add(new Reference<int>());
+      name = names.poll(WAIT_TIME_OUT_SECONDS, TimeUnit.SECONDS);
+      assertNotNull(name);
+      assertEquals("David", name);
+    }
+  }
 
-                subscription.Subscribe(x =>
-                {
-                    var reference = batchSizes.Last();
-                    reference.Value++;
-                });
+  @SuppressWarnings("boxing")
+  @Test
+  public void shouldResendDocsIfAcknowledgmentTimeoutOccurred() throws InterruptedException {
+    try (IDocumentStore store = new DocumentStore(getDefaultUrl(), getDefaultDb()).initialize()) {
+      long id = store.subscriptions().create(new SubscriptionCriteria());
 
-                var result = SpinWait.SpinUntil(() => batchSizes.ToList().Sum(x => x.Value) >= 100, TimeSpan.FromSeconds(60));
+      SubscriptionBatchOptions batchOptions = new SubscriptionBatchOptions();
+      batchOptions.setAcknowledgmentTimeout(-10L); // the client won't be able to acknowledge in negative time
+      SubscriptionConnectionOptions connectionOptions = new SubscriptionConnectionOptions();
+      connectionOptions.setBatchOptions(batchOptions);
+      Subscription<RavenJObject> subscriptionZeroTimeout = store.subscriptions().open(id, connectionOptions);
 
-                Assert.True(result);
+      store.changes().waitForAllPendingSubscriptions();
 
-                Assert.Equal(4, batchSizes.Count);
-
-                foreach (var reference in batchSizes)
-                {
-                    Assert.Equal(25, reference.Value);
-                }
-            }
+      final BlockingQueue<RavenJObject> docs = new ArrayBlockingQueue<>(100);
+      subscriptionZeroTimeout.subscribe(new ObserverAdapter<RavenJObject>() {
+        @Override
+        public void onNext(RavenJObject value) {
+          docs.add(value);
         }
+      });
 
-        [Fact]
-        public void ShouldRespectMaxBatchSize()
-        {
-            using (var store = NewDocumentStore())
-            {
-                using (var session = store.OpenSession())
-                {
-                    for (int i = 0; i < 100; i++)
-                    {
-                        session.Store(new Company());
-                        session.Store(new User());
-                    }
+      try (IDocumentSession session = store.openSession()) {
+        User user = new User();
+        user.setName("Raven");
+        session.store(user);
+        session.saveChanges();
+      }
 
-                    session.SaveChanges();
-                }
+      RavenJObject document;
 
-                var id = store.Subscriptions.Create(new SubscriptionCriteria());
-                var subscription = store.Subscriptions.Open(id, new SubscriptionConnectionOptions()
-                {
-                    BatchOptions = new SubscriptionBatchOptions()
-                    {
-                        MaxSize = 16 * 1024
-                    }
-                });
+      document = docs.poll(WAIT_TIME_OUT_SECONDS, TimeUnit.SECONDS);
+      assertNotNull(document);
+      assertEquals("Raven", document.value(String.class, "Name"));
 
-                var batches = new List<List<RavenJObject>>();
+      document = docs.poll(WAIT_TIME_OUT_SECONDS, TimeUnit.SECONDS);
+      assertNotNull(document);
+      assertEquals("Raven", document.value(String.class, "Name"));
 
-                subscription.BeforeBatch +=
-                    () => batches.Add(new List<RavenJObject>());
+      document = docs.poll(WAIT_TIME_OUT_SECONDS, TimeUnit.SECONDS);
+      assertNotNull(document);
+      assertEquals("Raven", document.value(String.class, "Name"));
 
-                subscription.Subscribe(x =>
-                {
-                    var list = batches.Last();
-                    list.Add(x);
-                });
+      subscriptionZeroTimeout.close();
 
-                var result = SpinWait.SpinUntil(() => batches.ToList().Sum(x => x.Count) >= 200, TimeSpan.FromSeconds(60));
+      // retry with longer timeout - should sent just one doc
 
-                Assert.True(result);
-                Assert.True(batches.Count > 1);
-            }
+      Subscription<RavenJObject> subscriptionLongerTimeout = store.subscriptions().open(id,
+        new SubscriptionConnectionOptions(new SubscriptionBatchOptions(null, 4096, 30 * 1000L)));
+
+      final BlockingQueue<RavenJObject> docs2 = new ArrayBlockingQueue<>(100);
+
+      subscriptionLongerTimeout.subscribe(new ObserverAdapter<RavenJObject>() {
+        @Override
+        public void onNext(RavenJObject value) {
+          docs2.add(value);
         }
+      });
 
-        [Fact]
-        public void ShouldRespectCollectionCriteria()
-        {
-            using (var store = NewDocumentStore())
-            {
-                using (var session = store.OpenSession())
-                {
-                    for (int i = 0; i < 100; i++)
-                    {
-                        session.Store(new Company());
-                        session.Store(new User());
-                    }
+      document = docs2.poll(WAIT_TIME_OUT_SECONDS, TimeUnit.SECONDS);
+      assertNotNull(document);
+      assertEquals("Raven", document.value(String.class, "Name"));
 
-                    session.SaveChanges();
-                }
+      document = docs2.poll(WAIT_TIME_OUT_SECONDS, TimeUnit.SECONDS);
+      assertNull(document);
+    }
+  }
 
-                var id = store.Subscriptions.Create(new SubscriptionCriteria
-                {
-                    BelongsToCollection = "Users"
-                });
-
-                var subscription = store.Subscriptions.Open(id, new SubscriptionConnectionOptions
-                {
-                    BatchOptions = new SubscriptionBatchOptions { MaxDocCount = 31 }
-                });
-
-                var docs = new List<RavenJObject>();
-
-                subscription.Subscribe(docs.Add);
-
-                Assert.True(SpinWait.SpinUntil(() => docs.Count >= 100, TimeSpan.FromSeconds(60)));
-
-
-                foreach (var jsonDocument in docs)
-                {
-                    Assert.Equal("Users", jsonDocument[Constants.Metadata].Value<string>(Constants.RavenEntityName));
-                }
-            }
+  @SuppressWarnings("boxing")
+  @Test
+  public void shouldRespectMaxDocCountInBatch() {
+    try (IDocumentStore store = new DocumentStore(getDefaultUrl(), getDefaultDb()).initialize()) {
+      try (IDocumentSession session = store.openSession()) {
+        for (int i = 0; i< 100; i++) {
+          session.store(new Company());
         }
+        session.saveChanges();
+      }
 
-        [Fact]
-        public void ShouldRespectStartsWithCriteria()
-        {
-            using (var store = NewDocumentStore())
-            {
-                using (var session = store.OpenSession())
-                {
-                    for (int i = 0; i < 100; i++)
-                    {
-                        session.Store(new User(), i % 2 == 0 ? "users/" : "users/favorite/");
-                    }
+      long id = store.subscriptions().create(new SubscriptionCriteria());
+      SubscriptionBatchOptions batchOptions = new SubscriptionBatchOptions();
+      batchOptions.setMaxDocCount(25);
+      Subscription<RavenJObject> subscription = store.subscriptions().open(id, new SubscriptionConnectionOptions(batchOptions));
 
-                    session.SaveChanges();
-                }
-
-                var id = store.Subscriptions.Create(new SubscriptionCriteria
-                {
-                    KeyStartsWith = "users/favorite/"
-                });
-
-                var subscription = store.Subscriptions.Open(id, new SubscriptionConnectionOptions
-                {
-                    BatchOptions = new SubscriptionBatchOptions()
-                    {
-                        MaxDocCount = 15
-                    }
-                });
-
-                var docs = new List<RavenJObject>();
-
-                subscription.Subscribe(docs.Add);
-
-                Assert.True(SpinWait.SpinUntil(() => docs.Count >= 50, TimeSpan.FromSeconds(60)));
-
-
-                foreach (var jsonDocument in docs)
-                {
-                    Assert.True(jsonDocument[Constants.Metadata].Value<string>("@id").StartsWith("users/favorite/"));
-                }
-            }
+      final List<Reference<Integer>> batchSizes = new ArrayList<>();
+      subscription.addBeforeBatchHandler(new EventHandler<VoidArgs>() {
+        @Override
+        public void handle(Object sender, VoidArgs event) {
+          batchSizes.add(new Reference<>(0));
         }
-
-        [Fact]
-        public void ShouldRespectPropertiesCriteria()
-        {
-            using (var store = NewDocumentStore())
-            {
-                using (var session = store.OpenSession())
-                {
-                    for (int i = 0; i < 10; i++)
-                    {
-                        session.Store(new User
-                        {
-                            Name = i % 2 == 0 ? "Jessica" : "Caroline"
-                        });
-
-                        session.Store(new Person
-                        {
-                            Name = i % 2 == 0 ? "Caroline" : "Samantha"
-                        });
-
-                        session.Store(new Company());
-                    }
-
-                    session.SaveChanges();
-                }
-
-                var id = store.Subscriptions.Create(new SubscriptionCriteria
-                {
-                    PropertiesMatch = new Dictionary<string, RavenJToken>()
-                    {
-                        {"Name", "Caroline"}
-                    }
-                });
-
-                var carolines = store.Subscriptions.Open(id, new SubscriptionConnectionOptions { BatchOptions = new SubscriptionBatchOptions { MaxDocCount = 5 }});
-
-                var docs = new List<RavenJObject>();
-
-                carolines.Subscribe(docs.Add);
-
-                Assert.True(SpinWait.SpinUntil(() => docs.Count >= 10, TimeSpan.FromSeconds(60)));
-
-
-                foreach (var jsonDocument in docs)
-                {
-                    Assert.Equal("Caroline", jsonDocument.Value<string>("Name"));
-                }
-            }
+      });
+      subscription.subscribe(new ObserverAdapter<RavenJObject>() {
+        @Override
+        public void onNext(RavenJObject value) {
+          Reference<Integer> reference = batchSizes.get(batchSizes.size() - 1);
+          reference.value += 1;
         }
+      });
 
-        [Fact]
-        public void ShouldRespectPropertiesNotMatchCriteria()
-        {
-            using (var store = NewDocumentStore())
-            {
-                using (var session = store.OpenSession())
-                {
-                    for (int i = 0; i < 10; i++)
-                    {
-                        session.Store(new User
-                        {
-                            Name = i % 2 == 0 ? "Jessica" : "Caroline"
-                        });
-
-                        session.Store(new Person
-                        {
-                            Name = i % 2 == 0 ? "Caroline" : "Samantha"
-                        });
-
-                        session.Store(new Company());
-                    }
-
-                    session.SaveChanges();
-                }
-
-                var id = store.Subscriptions.Create(new SubscriptionCriteria
-                {
-                    PropertiesNotMatch = new Dictionary<string, RavenJToken>()
-                    {
-                        {"Name", "Caroline"}
-                    }
-                });
-
-                var subscription = store.Subscriptions.Open(id, new SubscriptionConnectionOptions
-                {
-                    BatchOptions = new SubscriptionBatchOptions()
-                    {
-                        MaxDocCount = 5
-                    }
-                });
-
-                var docs = new List<RavenJObject>();
-
-                subscription.Subscribe(docs.Add);
-
-                Assert.True(SpinWait.SpinUntil(() => docs.Count >= 20, TimeSpan.FromSeconds(60)));
-
-
-                foreach (var jsonDocument in docs)
-                {
-                    Assert.True(jsonDocument.ContainsKey("Name") == false || jsonDocument.Value<string>("Name") != "Caroline");
-                }
-            }
+      boolean result = SpinWait.spinUntil(new Function0<Boolean>() {
+        @Override
+        public Boolean apply() {
+          int total = 0;
+          for (Reference<Integer> ref: batchSizes) {
+            total += ref.value;
+          }
+          return total >= 100;
         }
+      }, 60 * 1000L);
 
-        [Fact]
-        public void CanGetSubscriptionsFromDatabase()
-        {
-            using (var store = NewDocumentStore())
-            {
-                var subscriptionDocuments = store.Subscriptions.GetSubscriptions(0, 10);
+      assertTrue(result);
 
-                Assert.Equal(0, subscriptionDocuments.Count);
+      assertEquals(4, batchSizes.size());
 
-                store.Subscriptions.Create(new SubscriptionCriteria
-                {
-                    KeyStartsWith = "users/"
-                });
+      for (Reference<Integer> reference : batchSizes) {
+        assertEquals(Integer.valueOf(25), reference.value);
+      }
+    }
+  }
 
-                subscriptionDocuments = store.Subscriptions.GetSubscriptions(0, 10);
-
-                Assert.Equal(1, subscriptionDocuments.Count);
-                Assert.Equal("users/", subscriptionDocuments[0].Criteria.KeyStartsWith);
-
-                var subscription = store.Subscriptions.Open(subscriptionDocuments[0].SubscriptionId, new SubscriptionConnectionOptions());
-
-                var docs = new List<RavenJObject>();
-                subscription.Subscribe(docs.Add);
-
-                using (var session = store.OpenSession())
-                {
-                    session.Store(new User());
-                    session.SaveChanges();
-                }
-
-                Assert.True(SpinWait.SpinUntil(() => docs.Count >= 1, TimeSpan.FromSeconds(60)));
-            }
+  @SuppressWarnings("boxing")
+  @Test
+  public void shouldRespectMaxBatchSize() {
+    try (IDocumentStore store = new DocumentStore(getDefaultUrl(), getDefaultDb()).initialize()) {
+      try (IDocumentSession session = store.openSession()) {
+        for (int i = 0; i< 100; i++) {
+          session.store(new Company());
+          session.store(new User());
         }
+        session.saveChanges();
+      }
 
-        [Fact]
-        public void ShouldKeepPullingDocsAfterServerRestart()
-        {
-            var dataPath = NewDataPath("RavenDB_2627_after_restart");
+      long id = store.subscriptions().create(new SubscriptionCriteria());
+      SubscriptionBatchOptions batchOptions = new SubscriptionBatchOptions();
+      batchOptions.setMaxSize(16 * 1024);
+      Subscription<RavenJObject> subscription = store.subscriptions().open(id, new SubscriptionConnectionOptions(batchOptions));
 
-            IDocumentStore store = null;
-            try
-            {
-                var serverDisposed = false;
-
-                var server = GetNewServer(dataDirectory: dataPath, runInMemory: false);
-
-                store = new DocumentStore()
-                {
-                    Url = "http://localhost:" + server.Configuration.Port,
-                    DefaultDatabase = "RavenDB_2627"
-                }.Initialize();
-
-                using (var session = store.OpenSession())
-                {
-                    session.Store(new User());
-                    session.Store(new User());
-                    session.Store(new User());
-                    session.Store(new User());
-
-                    session.SaveChanges();
-                }
-
-                var id = store.Subscriptions.Create(new SubscriptionCriteria());
-
-                var subscription = store.Subscriptions.Open(id, new SubscriptionConnectionOptions()
-                {
-                    BatchOptions = new SubscriptionBatchOptions()
-                    {
-                        MaxDocCount = 1
-                    }
-                });
-                store.Changes().WaitForAllPendingSubscriptions();
-
-                var serverDisposingHandler = subscription.Subscribe(x =>
-                {
-                    server.Dispose(); // dispose the server
-                    serverDisposed = true;
-                });
-
-                SpinWait.SpinUntil(() => serverDisposed, TimeSpan.FromSeconds(30));
-
-                serverDisposingHandler.Dispose();
-
-                var docs = new BlockingCollection<RavenJObject>();
-                subscription.Subscribe(docs.Add);
-
-                //recreate the server
-                GetNewServer(dataDirectory: dataPath, runInMemory: false);
-
-                RavenJObject doc;
-                Assert.True(docs.TryTake(out doc, waitForDocTimeout));
-                Assert.True(docs.TryTake(out doc, waitForDocTimeout));
-                Assert.True(docs.TryTake(out doc, waitForDocTimeout));
-                Assert.True(docs.TryTake(out doc, waitForDocTimeout));
-
-                using (var session = store.OpenSession())
-                {
-                    session.Store(new User(), "users/arek");
-                    session.SaveChanges();
-                }
-
-                Assert.True(docs.TryTake(out doc, waitForDocTimeout));
-                Assert.Equal("users/arek", doc[Constants.Metadata].Value<string>("@id"));
-            }
-            finally
-            {
-                if(store != null)
-                    store.Dispose();
-            }
+      final List<List<RavenJObject>> batches = new ArrayList<>();
+      subscription.addBeforeBatchHandler(new EventHandler<VoidArgs>() {
+        @Override
+        public void handle(Object sender, VoidArgs event) {
+          batches.add(new ArrayList<RavenJObject>());
         }
-
-        [Fact]
-        public void ShouldStopPullingDocsIfThereIsNoSubscriber()
-        {
-            using (var store = NewDocumentStore())
-            {
-                var id = store.Subscriptions.Create(new SubscriptionCriteria());
-
-                var subscription = store.Subscriptions.Open(id, new SubscriptionConnectionOptions());
-                store.Changes().WaitForAllPendingSubscriptions();
-
-                using (var session = store.OpenSession())
-                {
-                    session.Store(new User(), "users/1");
-                    session.Store(new User(), "users/2");
-                    session.SaveChanges();
-                }
-
-                var docs = new BlockingCollection<RavenJObject>();
-                var subscribe = subscription.Subscribe(docs.Add);
-
-                RavenJObject doc;
-                Assert.True(docs.TryTake(out doc, waitForDocTimeout));
-                Assert.True(docs.TryTake(out doc, waitForDocTimeout));
-
-                subscribe.Dispose();
-
-                using (var session = store.OpenSession())
-                {
-                    session.Store(new User(), "users/3");
-                    session.Store(new User(), "users/4");
-                    session.SaveChanges();
-                }
-
-                Thread.Sleep(TimeSpan.FromSeconds(5)); // should not pull any docs because there is no subscriber that could process them
-
-                subscription.Subscribe(docs.Add);
-
-                Assert.True(docs.TryTake(out doc, waitForDocTimeout));
-                Assert.Equal("users/3", doc[Constants.Metadata].Value<string>("@id"));
-
-                Assert.True(docs.TryTake(out doc, waitForDocTimeout));
-                Assert.Equal("users/4", doc[Constants.Metadata].Value<string>("@id"));
-            }
+      });
+      subscription.subscribe(new ObserverAdapter<RavenJObject>() {
+        @Override
+        public void onNext(RavenJObject value) {
+          List<RavenJObject> list = batches.get(batches.size() - 1);
+          list.add(value);
         }
+      });
 
-        [Fact]
-        public void ShouldAllowToOpenSubscriptionIfClientDidntSentAliveNotificationOnTime()
-        {
-            using (var store = NewDocumentStore())
-            {
-                using (var session = store.OpenSession())
-                {
-                    session.Store(new User());
-                    session.SaveChanges();
-                }
-
-                var id = store.Subscriptions.Create(new SubscriptionCriteria());
-
-                var subscription = store.Subscriptions.Open(id, new SubscriptionConnectionOptions()
-                {
-                    ClientAliveNotificationInterval = TimeSpan.FromSeconds(2)
-                });
-                store.Changes().WaitForAllPendingSubscriptions();
-
-                subscription.AfterBatch += () => Thread.Sleep(TimeSpan.FromSeconds(20)); // to prevent the client from sending client-alive notification
-
-                var docs = new BlockingCollection<RavenJObject>();
-
-                subscription.Subscribe(docs.Add);
-                store.Changes().WaitForAllPendingSubscriptions();
-
-                RavenJObject _;
-                Assert.True(docs.TryTake(out _, waitForDocTimeout));
-
-                Thread.Sleep(TimeSpan.FromSeconds(10));
-
-                // first open subscription didn't send the client-alive notification in time, so the server should allow to open it for this subscription
-                var newSubscription = store.Subscriptions.Open(id, new SubscriptionConnectionOptions());
-
-                var docs2 = new BlockingCollection<RavenJObject>();
-                newSubscription.Subscribe(docs2.Add);
-
-                using (var session = store.OpenSession())
-                {
-                    session.Store(new User());
-                    session.SaveChanges();
-                }
-
-                Assert.True(docs2.TryTake(out _, waitForDocTimeout));
-
-                Assert.False(docs.TryTake(out _, TimeSpan.FromSeconds(2))); // make sure that first subscriber didn't get new doc
-            }
+      boolean result = SpinWait.spinUntil(new Function0<Boolean>() {
+        @Override
+        public Boolean apply() {
+          int total = 0;
+          for (List<RavenJObject> list: batches) {
+            total += list.size();
+          }
+          return total >= 200;
         }
+      }, 60 * 1000L);
 
-        [Fact]
-        public void CanReleaseSubscription()
-        {
-            using (var store = NewDocumentStore())
-            {
-                var id = store.Subscriptions.Create(new SubscriptionCriteria());
-                store.Subscriptions.Open(id, new SubscriptionConnectionOptions());
-                store.Changes().WaitForAllPendingSubscriptions();
+      assertTrue(result);
+      assertTrue(batches.size() > 1);
+    }
+  }
 
-                Assert.Throws<SubscriptionInUseException>(() => store.Subscriptions.Open(id, new SubscriptionConnectionOptions()));
-
-                store.Subscriptions.Release(id);
-
-                Assert.DoesNotThrow(() => store.Subscriptions.Open(id, new SubscriptionConnectionOptions()));
-            }
+  @SuppressWarnings("boxing")
+  @Test
+  public void shouldRespectCollectionCriteria() {
+    try (IDocumentStore store = new DocumentStore(getDefaultUrl(), getDefaultDb()).initialize()) {
+      try (IDocumentSession session = store.openSession()) {
+        for (int i = 0; i< 100; i++) {
+          session.store(new Company());
+          session.store(new User());
         }
+        session.saveChanges();
+      }
 
-        [Fact]
-        public void ShouldPullDocumentsAfterBulkInsert()
-        {
-            using (var store = NewDocumentStore())
-            {
-                var id = store.Subscriptions.Create(new SubscriptionCriteria());
-                var subscription = store.Subscriptions.Open(id, new SubscriptionConnectionOptions());
-                store.Changes().WaitForAllPendingSubscriptions();
+      SubscriptionCriteria criteria = new SubscriptionCriteria();
+      criteria.setBelongsToCollection("Users");
+      long id = store.subscriptions().create(criteria);
 
-                var docs = new BlockingCollection<RavenJObject>();
+      SubscriptionBatchOptions batchOptions = new SubscriptionBatchOptions();
+      batchOptions.setMaxDocCount(31);
+      Subscription<RavenJObject> subscription = store.subscriptions().open(id, new SubscriptionConnectionOptions(batchOptions));
 
-                subscription.Subscribe(docs.Add);
-
-                store.Changes().WaitForAllPendingSubscriptions();
-
-                using (var bulk = store.BulkInsert())
-                {
-                    bulk.Store(new User());
-                    bulk.Store(new User());
-                    bulk.Store(new User());
-                }
-
-                RavenJObject doc;
-                Assert.True(docs.TryTake(out doc, waitForDocTimeout));
-                Assert.True(docs.TryTake(out doc, waitForDocTimeout));
-            }
+      final List<RavenJObject> docs = new ArrayList<>();
+      subscription.subscribe(new ObserverAdapter<RavenJObject>() {
+        @Override
+        public void onNext(RavenJObject value) {
+          docs.add(value);
         }
+      });
 
-        [Fact]
-        public void ShouldStopPullingDocsAndCloseSubscriptionOnSubscriberErrorByDefault()
-        {
-            using (var store = NewDocumentStore())
-            {
-                var id = store.Subscriptions.Create(new SubscriptionCriteria());
-                var subscription = store.Subscriptions.Open(id, new SubscriptionConnectionOptions());
-
-                var docs = new BlockingCollection<RavenJObject>();
-
-                var subscriberException = new TaskCompletionSource<object>();
-
-                subscription.Subscribe(docs.Add);
-                subscription.Subscribe(x =>
-                {
-                    throw new Exception("Fake exception");
-                },
-                ex => subscriberException.TrySetResult(ex));
-
-                store.Changes().WaitForAllPendingSubscriptions();
-
-                store.DatabaseCommands.Put("items/1", null, new RavenJObject(), new RavenJObject());
-
-                Assert.True(subscriberException.Task.Wait(waitForDocTimeout));
-                Assert.True(subscription.IsErrored);
-
-                Assert.True(SpinWait.SpinUntil(() => subscription.IsClosed, waitForDocTimeout));
-
-                var subscriptionConfig = store.Subscriptions.GetSubscriptions(0, 1).First();
-
-                Assert.Equal(Etag.Empty, subscriptionConfig.AckEtag);
-            }
+      assertTrue(SpinWait.spinUntil(new Function0<Boolean>() {
+        @Override
+        public Boolean apply() {
+          return docs.size() >= 100;
         }
+      }, 60 * 1000L));
 
-        [Fact]
-        public void CanSetToIgnoreSubscriberErrors()
-        {
-            using (var store = NewDocumentStore())
-            {
-                var id = store.Subscriptions.Create(new SubscriptionCriteria());
-                var subscription = store.Subscriptions.Open(id, new SubscriptionConnectionOptions()
-                {
-                    IgnoreSubscribersErrors = true
-                });
-                store.Changes().WaitForAllPendingSubscriptions();
+      for (RavenJObject jsonDocument : docs) {
+        assertEquals("Users", jsonDocument.get(Constants.METADATA).value(String.class, Constants.RAVEN_ENTITY_NAME));
+      }
+    }
+  }
 
-                var docs = new BlockingCollection<RavenJObject>();
-
-                subscription.Subscribe(docs.Add);
-                subscription.Subscribe(x =>
-                {
-                    throw new Exception("Fake exception");
-                });
-
-                store.Changes().WaitForAllPendingSubscriptions();
-
-                store.DatabaseCommands.Put("items/1", null, new RavenJObject(), new RavenJObject());
-                store.DatabaseCommands.Put("items/2", null, new RavenJObject(), new RavenJObject());
-
-                RavenJObject doc;
-                Assert.True(docs.TryTake(out doc, waitForDocTimeout));
-                Assert.True(docs.TryTake(out doc, waitForDocTimeout));
-                Assert.False(subscription.IsErrored);
-            }
+  @SuppressWarnings("boxing")
+  @Test
+  public void shouldRespectStartsWithCriteria() {
+    try (IDocumentStore store = new DocumentStore(getDefaultUrl(), getDefaultDb()).initialize()) {
+      try (IDocumentSession session = store.openSession()) {
+        for (int i = 0; i< 100; i++) {
+          session.store(new User(), i % 2 == 0 ? "users/" : "users/favorite/");
         }
+        session.saveChanges();
+      }
 
-        [Fact]
-        public void CanUseNestedPropertiesInSubscriptionCriteria()
-        {
-            using (var store = NewDocumentStore())
-            {
-                using (var session = store.OpenSession())
-                {
-                    for (int i = 0; i < 10; i++)
-                    {
-                        session.Store(new PersonWithAddress
-                        {
-                            Address = new Address()
-                            {
-                                Street = "1st Street",
-                                ZipCode = i % 2 == 0 ? 999 : 12345
-                            }
-                        });
+      SubscriptionCriteria criteria = new SubscriptionCriteria();
+      criteria.setKeyStartsWith("users/favorite/");
+      long id = store.subscriptions().create(criteria);
 
-                        session.Store(new PersonWithAddress
-                        {
-                            Address = new Address()
-                            {
-                                Street = "2nd Street",
-                                ZipCode = 12345
-                            }
-                        });
+      SubscriptionBatchOptions batchOptions = new SubscriptionBatchOptions();
+      batchOptions.setMaxDocCount(15);
 
-                        session.Store(new Company());
-                    }
+      Subscription<RavenJObject> subscription = store.subscriptions().open(id, new SubscriptionConnectionOptions(batchOptions));
 
-                    session.SaveChanges();
-                }
-
-                var id = store.Subscriptions.Create(new SubscriptionCriteria
-                {
-                    PropertiesMatch = new Dictionary<string, RavenJToken>()
-                    {
-                        {"Address.Street", "1st Street"}
-                    },
-                    PropertiesNotMatch = new Dictionary<string, RavenJToken>()
-                    {
-                        {"Address.ZipCode", 999}
-                    }
-                });
-
-                var carolines = store.Subscriptions.Open(id, new SubscriptionConnectionOptions { BatchOptions = new SubscriptionBatchOptions { MaxDocCount = 5 } });
-
-                var docs = new List<RavenJObject>();
-
-                carolines.Subscribe(docs.Add);
-
-                Assert.True(SpinWait.SpinUntil(() => docs.Count >= 5, TimeSpan.FromSeconds(60)));
-
-
-                foreach (var jsonDocument in docs)
-                {
-                    Assert.Equal("1st Street", jsonDocument.Value<RavenJObject>("Address").Value<string>("Street"));
-                }
-            }
+      final List<RavenJObject> docs = new ArrayList<>();
+      subscription.subscribe(new ObserverAdapter<RavenJObject>() {
+        @Override
+        public void onNext(RavenJObject value) {
+          docs.add(value);
         }
-   */
+      });
+
+      assertTrue(SpinWait.spinUntil(new Function0<Boolean>() {
+        @Override
+        public Boolean apply() {
+          return docs.size() >= 50;
+        }
+      }, 60 * 1000L));
+
+      for (RavenJObject jsonDocument : docs) {
+        assertTrue(jsonDocument.get(Constants.METADATA).value(String.class, "@id").startsWith("users/favorite/"));
+      }
+    }
+  }
+
+  @SuppressWarnings("boxing")
+  @Test
+  public void shouldRespectPropertiesCriteria() {
+    try (IDocumentStore store = new DocumentStore(getDefaultUrl(), getDefaultDb()).initialize()) {
+      try (IDocumentSession session = store.openSession()) {
+        for (int i = 0; i < 10; i++) {
+          String name = i % 2 == 0 ? "Jessica" : "Caroline";
+          User u = new User();
+          u.setName(name);
+          session.store(u);
+
+          name = i % 2 == 0 ? "Caroline" : "Samantha";
+          Person p = new Person();
+          p.setName(name);
+          session.store(p);
+
+          session.store(new Company());
+        }
+        session.saveChanges();
+      }
+
+      SubscriptionCriteria criteria = new SubscriptionCriteria();
+      Map<String, RavenJToken> properties = new HashMap<>();
+      properties.put("Name", RavenJToken.fromObject("Caroline"));
+      criteria.setPropertiesMatch(properties);
+
+      long id = store.subscriptions().create(criteria);
+
+      SubscriptionBatchOptions batchOptions = new SubscriptionBatchOptions();
+      batchOptions.setMaxDocCount(5);
+      SubscriptionConnectionOptions options = new SubscriptionConnectionOptions(batchOptions);
+
+      Subscription<RavenJObject> carolines = store.subscriptions().open(id, options);
+
+      final List<RavenJObject> docs = new ArrayList<>();
+      carolines.subscribe(new ObserverAdapter<RavenJObject>() {
+        @Override
+        public void onNext(RavenJObject value) {
+          docs.add(value);
+        }
+      });
+
+      assertTrue(SpinWait.spinUntil(new Function0<Boolean>() {
+        @Override
+        public Boolean apply() {
+          return docs.size() >= 10;
+        }
+      }, 60 * 1000L));
+
+      for (RavenJObject jsonDocument : docs) {
+        assertEquals("Caroline", jsonDocument.value(String.class, "Name"));
+      }
+    }
+  }
+
+  @SuppressWarnings("boxing")
+  @Test
+  public void shouldRespectPropertiesNotMatchCriteria() {
+    try (IDocumentStore store = new DocumentStore(getDefaultUrl(), getDefaultDb()).initialize()) {
+      try (IDocumentSession session = store.openSession()) {
+        for (int i = 0; i < 10; i++) {
+          String name = i % 2 == 0 ? "Jessica" : "Caroline";
+          User u = new User();
+          u.setName(name);
+          session.store(u);
+
+          name = i % 2 == 0 ? "Caroline" : "Samantha";
+          Person p = new Person();
+          p.setName(name);
+          session.store(p);
+
+          session.store(new Company());
+        }
+        session.saveChanges();
+      }
+
+      SubscriptionCriteria criteria = new SubscriptionCriteria();
+      Map<String, RavenJToken> properties = new HashMap<>();
+      properties.put("Name", RavenJToken.fromObject("Caroline"));
+      criteria.setPropertiesNotMatch(properties);
+
+      long id = store.subscriptions().create(criteria);
+
+      SubscriptionBatchOptions batchOptions = new SubscriptionBatchOptions();
+      batchOptions.setMaxDocCount(5);
+      SubscriptionConnectionOptions options = new SubscriptionConnectionOptions(batchOptions);
+
+      Subscription<RavenJObject> carolines = store.subscriptions().open(id, options);
+
+      final List<RavenJObject> docs = new ArrayList<>();
+      carolines.subscribe(new ObserverAdapter<RavenJObject>() {
+        @Override
+        public void onNext(RavenJObject value) {
+          docs.add(value);
+        }
+      });
+
+      assertTrue(SpinWait.spinUntil(new Function0<Boolean>() {
+        @Override
+        public Boolean apply() {
+          return docs.size() >= 20;
+        }
+      }, 60 * 1000L));
+
+      for (RavenJObject jsonDocument : docs) {
+        assertTrue(jsonDocument.containsKey("Name") == false || !"Caroline".equals(jsonDocument.value(String.class, "Name")));
+      }
+    }
+  }
+
+  @SuppressWarnings("boxing")
+  @Test
+  public void canGetSubscriptionsFromDatabase() {
+    try (IDocumentStore store = new DocumentStore(getDefaultUrl(), getDefaultDb()).initialize()) {
+      List<SubscriptionConfig> subscriptionDocuments = store.subscriptions().getSubscriptions(0, 10);
+
+      assertEquals(0, subscriptionDocuments.size());
+
+      SubscriptionCriteria criteria = new SubscriptionCriteria();
+      criteria.setKeyStartsWith("users/");
+      store.subscriptions().create(criteria);
+
+      subscriptionDocuments = store.subscriptions().getSubscriptions(0, 10);
+      assertEquals(1, subscriptionDocuments.size());
+      assertEquals("users/", subscriptionDocuments.get(0).getCriteria().getKeyStartsWith());
+
+      Subscription<RavenJObject> subscription = store.subscriptions().open(subscriptionDocuments.get(0).getSubscriptionId(), new SubscriptionConnectionOptions());
+
+      final List<RavenJObject> docs = new ArrayList<>();
+      subscription.subscribe(new ObserverAdapter<RavenJObject>() {
+        @Override
+        public void onNext(RavenJObject value) {
+          docs.add(value);
+        }
+      });
+
+      try (IDocumentSession session = store.openSession()) {
+        session.store(new User());
+        session.saveChanges();
+      }
+
+      assertTrue(SpinWait.spinUntil(new Function0<Boolean>() {
+        @Override
+        public Boolean apply() {
+          return docs.size() >= 1;
+        }
+      }, 60 * 1000L));
+    }
+  }
+
+  protected boolean serverDisposed = false;
+
+  @SuppressWarnings("boxing")
+  @Test
+  public void shouldKeepPullingDocsAfterServerRestart() throws InterruptedException {
+    IDocumentStore store = null;
+    try {
+      serverDisposed = false;
+      RavenJObject serverDocument = getCreateServerDocument(DEFAULT_SERVER_PORT_2);
+      serverDocument.add("RunInMemory", new RavenJValue(false));
+
+      startServer(DEFAULT_SERVER_PORT_2, true, serverDocument);
+
+      store = new DocumentStore("http://localhost:" + DEFAULT_SERVER_PORT_2, "RavenDB_2627");
+      store.initialize();
+
+      store.getDatabaseCommands().getGlobalAdmin().ensureDatabaseExists("RavenDB_2627");
+
+      try (IDocumentSession session = store.openSession()) {
+        session.store(new User());
+        session.store(new User());
+        session.store(new User());
+        session.store(new User());
+
+        session.saveChanges();
+      }
+
+      long id = store.subscriptions().create(new SubscriptionCriteria());
+
+      SubscriptionBatchOptions batchOptions = new SubscriptionBatchOptions();
+      batchOptions.setMaxDocCount(1);
+      SubscriptionConnectionOptions connectionOptions = new SubscriptionConnectionOptions(batchOptions);
+      Subscription<RavenJObject> subscription = store.subscriptions().open(id, connectionOptions);
+
+      store.changes().waitForAllPendingSubscriptions();
+
+      CleanCloseable serverDisposingHandler = subscription.subscribe(new ObserverAdapter<RavenJObject>() {
+        @SuppressWarnings("synthetic-access")
+        @Override
+        public void onNext(RavenJObject value) {
+          stopServer(DEFAULT_SERVER_PORT_2);
+          TimeUtils.cleanSleep(1000);
+          serverDisposed = true;
+        }
+      });
+
+      SpinWait.spinUntil(new Function0<Boolean>() {
+        @Override
+        public Boolean apply() {
+          return serverDisposed;
+        }
+      }, 30 * 1000L);
+
+      serverDisposingHandler.close();
+
+      final BlockingQueue<RavenJObject> docs = new ArrayBlockingQueue<>(100);
+      subscription.subscribe(new ObserverAdapter<RavenJObject>() {
+        @Override
+        public void onNext(RavenJObject value) {
+          docs.add(value);
+        }
+      });
+
+      startServer(DEFAULT_SERVER_PORT_2, false, serverDocument);
+
+      assertNotNull(docs.poll(WAIT_TIME_OUT_SECONDS, TimeUnit.SECONDS));
+      assertNotNull(docs.poll(WAIT_TIME_OUT_SECONDS, TimeUnit.SECONDS));
+      assertNotNull(docs.poll(WAIT_TIME_OUT_SECONDS, TimeUnit.SECONDS));
+      assertNotNull(docs.poll(WAIT_TIME_OUT_SECONDS, TimeUnit.SECONDS));
+
+      try (IDocumentSession session = store.openSession()) {
+        session.store(new User(), "users/arek");
+        session.saveChanges();
+      }
+
+      RavenJObject arekObject = docs.poll(WAIT_TIME_OUT_SECONDS, TimeUnit.SECONDS);
+      assertNotNull(arekObject);
+      assertEquals("users/arek", arekObject.get(Constants.METADATA).value(String.class, "@id"));
+
+    } finally {
+      if (store != null) {
+        store.close();
+      }
+      stopServer(DEFAULT_SERVER_PORT_2);
+    }
+  }
+
+  @Test
+  public void shouldStopPullingDocsIfThereIsNoSubscriber() throws InterruptedException {
+    try (IDocumentStore store = new DocumentStore(getDefaultUrl(), getDefaultDb()).initialize()) {
+      long id = store.subscriptions().create(new SubscriptionCriteria());
+
+      Subscription<RavenJObject> subscription = store.subscriptions().open(id, new SubscriptionConnectionOptions());
+      store.changes().waitForAllPendingSubscriptions();
+
+      try (IDocumentSession session = store.openSession()) {
+        session.store(new User(), "users/1");
+        session.store(new User(), "users/2");
+        session.saveChanges();
+      }
+
+      final BlockingQueue<RavenJObject> docs = new ArrayBlockingQueue<>(100);
+      CleanCloseable subscribe = subscription.subscribe(new ObserverAdapter<RavenJObject>() {
+        @Override
+        public void onNext(RavenJObject value) {
+          docs.add(value);
+        }
+      });
+
+      RavenJObject doc;
+      doc = docs.poll(WAIT_TIME_OUT_SECONDS, TimeUnit.SECONDS);
+      assertNotNull(doc);
+
+      doc = docs.poll(WAIT_TIME_OUT_SECONDS, TimeUnit.SECONDS);
+      assertNotNull(doc);
+
+      subscribe.close();
+
+      try (IDocumentSession session = store.openSession()) {
+        session.store(new User(), "users/3");
+        session.saveChanges();
+      }
+
+      try (IDocumentSession session = store.openSession()) {
+        session.store(new User(), "users/4");
+        session.saveChanges();
+      }
+
+      TimeUtils.cleanSleep(5 * 1000);  // should not pull any docs because there is no subscriber that could process them
+
+      subscription.subscribe(new ObserverAdapter<RavenJObject>() {
+        @Override
+        public void onNext(RavenJObject value) {
+          docs.add(value);
+        }
+      });
+
+      doc = docs.poll(WAIT_TIME_OUT_SECONDS, TimeUnit.SECONDS);
+      assertNotNull(doc);
+      assertEquals("users/3", doc.get(Constants.METADATA).value(String.class, "@id"));
+
+      doc = docs.poll(WAIT_TIME_OUT_SECONDS, TimeUnit.SECONDS);
+      assertNotNull(doc);
+      assertEquals("users/4", doc.get(Constants.METADATA).value(String.class, "@id"));
+    }
+  }
+
+  @SuppressWarnings("boxing")
+  @Test
+  public void shouldAllowToOpenSubscriptionIfClientDidntSentAliveNotificationOnTime() throws InterruptedException {
+    try (IDocumentStore store = new DocumentStore(getDefaultUrl(), getDefaultDb()).initialize()) {
+      try (IDocumentSession session = store.openSession()) {
+        session.store(new User());
+        session.saveChanges();
+      }
+
+      long id = store.subscriptions().create(new SubscriptionCriteria());
+      SubscriptionConnectionOptions connectionOptions = new SubscriptionConnectionOptions();
+      connectionOptions.setClientAliveNotificationInterval(2 * 1000);
+      Subscription<RavenJObject> subscription = store.subscriptions().open(id, connectionOptions);
+      store.changes().waitForAllPendingSubscriptions();
+
+      subscription.addAfterBatchHandler(new EventHandler<VoidArgs>() {
+        @Override
+        public void handle(Object sender, VoidArgs event) {
+          TimeUtils.cleanSleep(20 * 1000); // to prevent the client from sending client-alive notification
+        }
+      });
+
+      final BlockingQueue<RavenJObject> docs = new ArrayBlockingQueue<>(100);
+      subscription.subscribe(new ObserverAdapter<RavenJObject>() {
+        @Override
+        public void onNext(RavenJObject value) {
+          docs.add(value);
+        }
+      });
+
+      store.changes().waitForAllPendingSubscriptions();
+
+      RavenJObject _ = docs.poll(WAIT_TIME_OUT_SECONDS, TimeUnit.SECONDS);
+      assertNotNull(_);
+
+      TimeUtils.cleanSleep(10 * 1000);
+
+      // first open subscription didn't send the client-alive notification in time, so the server should allow to open it for this subscription
+      Subscription<RavenJObject> newSubscription = store.subscriptions().open(id, new SubscriptionConnectionOptions());
+
+      final BlockingQueue<RavenJObject> docs2 = new ArrayBlockingQueue<>(100);
+      newSubscription.subscribe(new ObserverAdapter<RavenJObject>() {
+        @Override
+        public void onNext(RavenJObject value) {
+          docs2.add(value);
+        }
+      });
+
+      try (IDocumentSession session = store.openSession()) {
+        session.store(new User());
+        session.saveChanges();
+      }
+
+      assertNotNull(docs2.poll(WAIT_TIME_OUT_SECONDS, TimeUnit.SECONDS));
+      assertNull(docs.poll(WAIT_TIME_OUT_SECONDS, TimeUnit.SECONDS));
+    }
+  }
+
+  @Test
+  public void canReleaseSubscription() {
+    try (IDocumentStore store = new DocumentStore(getDefaultUrl(), getDefaultDb()).initialize()) {
+      long id = store.subscriptions().create(new SubscriptionCriteria());
+      store.subscriptions().open(id, new SubscriptionConnectionOptions());
+      store.changes().waitForAllPendingSubscriptions();
+      try {
+        store.subscriptions().open(id, new SubscriptionConnectionOptions());
+        fail();
+      } catch(SubscriptionInUseException e) {
+        //ok
+      }
+
+      store.subscriptions().release(id);
+
+      store.subscriptions().open(id, new SubscriptionConnectionOptions());
+    }
+  }
+
+  @Test
+  public void shouldPullDocumentsAfterBulkInsert() throws InterruptedException {
+    try (IDocumentStore store = new DocumentStore(getDefaultUrl(), getDefaultDb()).initialize()) {
+      long id = store.subscriptions().create(new SubscriptionCriteria());
+      Subscription<RavenJObject> subscription = store.subscriptions().open(id, new SubscriptionConnectionOptions());
+      store.changes().waitForAllPendingSubscriptions();
+
+      final BlockingQueue<RavenJObject> docs = new ArrayBlockingQueue<>(100);
+      subscription.subscribe(new ObserverAdapter<RavenJObject>() {
+        @Override
+        public void onNext(RavenJObject value) {
+          docs.add(value);
+        }
+      });
+
+      store.changes().waitForAllPendingSubscriptions();
+
+      try (BulkInsertOperation bulk = store.bulkInsert()) {
+        bulk.store(new User());
+        bulk.store(new User());
+        bulk.store(new User());
+      }
+
+      RavenJObject doc;
+      doc = docs.poll(WAIT_TIME_OUT_SECONDS, TimeUnit.SECONDS);
+      assertNotNull(doc);
+
+      doc = docs.poll(WAIT_TIME_OUT_SECONDS, TimeUnit.SECONDS);
+      assertNotNull(doc);
+    }
+  }
+
+  @SuppressWarnings("boxing")
+  @Test
+  public void shouldStopPullingDocsAndCloseSubscriptionOnSubscriberErrorByDefault() {
+    try (IDocumentStore store = new DocumentStore(getDefaultUrl(), getDefaultDb()).initialize()) {
+      long id = store.subscriptions().create(new SubscriptionCriteria());
+      final Subscription<RavenJObject> subscription = store.subscriptions().open(id, new SubscriptionConnectionOptions());
+
+      final BlockingQueue<RavenJObject> docs = new ArrayBlockingQueue<>(100);
+      subscription.subscribe(new ObserverAdapter<RavenJObject>() {
+        @Override
+        public void onNext(RavenJObject value) {
+          docs.add(value);
+        }
+      });
+
+      final Reference<Boolean> subscriberException = new Reference<>(false);
+
+      subscription.subscribe(new ObserverAdapter<RavenJObject>() {
+        @Override
+        public void onNext(RavenJObject value) {
+          throw new RuntimeException("Fake exception");
+        }
+        @Override
+        public void onError(Exception error) {
+          subscriberException.value = true;
+        }
+      });
+
+      store.changes().waitForAllPendingSubscriptions();
+
+      store.getDatabaseCommands().put("items/1", null, new RavenJObject(), new RavenJObject());
+
+      assertTrue(SpinWait.spinUntil(new Function0<Boolean>() {
+        @Override
+        public Boolean apply() {
+          return subscriberException.value;
+        }
+      }, WAIT_TIME_OUT_SECONDS * 1000L));
+
+      assertTrue(subscription.isErrored());
+
+      assertTrue(SpinWait.spinUntil(new Function0<Boolean>() {
+        @Override
+        public Boolean apply() {
+          return subscription.isClosed();
+        }
+      }, WAIT_TIME_OUT_SECONDS * 1000L));
+
+      SubscriptionConfig subscriptionConfig = store.subscriptions().getSubscriptions(0, 1).get(0);
+      assertEquals(Etag.empty(), subscriptionConfig.getAckEtag());
+    }
+  }
+
+  @Test
+  public void canSetToIgnoreSubscriberErrors() throws InterruptedException {
+    try (IDocumentStore store = new DocumentStore(getDefaultUrl(), getDefaultDb()).initialize()) {
+      long id = store.subscriptions().create(new SubscriptionCriteria());
+      SubscriptionConnectionOptions connectionOptions = new SubscriptionConnectionOptions();
+      connectionOptions.setIgnoreSubscribersErrors(true);
+      Subscription<RavenJObject> subscription = store.subscriptions().open(id, connectionOptions);
+      store.changes().waitForAllPendingSubscriptions();
+
+      final BlockingQueue<RavenJObject> docs = new ArrayBlockingQueue<>(100);
+      subscription.subscribe(new ObserverAdapter<RavenJObject>() {
+        @Override
+        public void onNext(RavenJObject value) {
+          docs.add(value);
+        }
+      });
+
+      subscription.subscribe(new ObserverAdapter<RavenJObject>() {
+        @Override
+        public void onNext(RavenJObject value) {
+          throw new RuntimeException("Fake exception");
+        }
+      });
+
+      store.changes().waitForAllPendingSubscriptions();
+
+      store.getDatabaseCommands().put("items/1", null, new RavenJObject(), new RavenJObject());
+      store.getDatabaseCommands().put("items/2", null, new RavenJObject(), new RavenJObject());
+
+      RavenJObject doc;
+      doc = docs.poll(WAIT_TIME_OUT_SECONDS, TimeUnit.SECONDS);
+      assertNotNull(doc);
+
+      doc = docs.poll(WAIT_TIME_OUT_SECONDS, TimeUnit.SECONDS);
+      assertNotNull(doc);
+
+      assertFalse(subscription.isErrored());
+    }
+  }
+
+  @SuppressWarnings("boxing")
+  @Test
+  public void canUseNestedPropertiesInSubscriptionCriteria() {
+    try (IDocumentStore store = new DocumentStore(getDefaultUrl(), getDefaultDb()).initialize()) {
+      try (IDocumentSession session = store.openSession()) {
+        for (int i =0 ; i < 10; i++) {
+          PersonWithAddress personWithAddress1 = new PersonWithAddress();
+          Address address1 = new Address();
+          personWithAddress1.setAddress(address1);
+          address1.setStreet("1st Street");
+          address1.setZipCode(i % 2 == 0 ? 999 : 12345);
+          session.store(personWithAddress1);
+
+          PersonWithAddress personWithAddress2 = new PersonWithAddress();
+          Address address2 = new Address();
+          personWithAddress2.setAddress(address2);
+          address2.setStreet("2nd Street");
+          address2.setZipCode(12345);
+          session.store(personWithAddress2);
+
+          session.store(new Company());
+        }
+        session.saveChanges();
+      }
+
+      SubscriptionCriteria criteria = new SubscriptionCriteria();
+      Map<String, RavenJToken> match = new HashMap<>();
+      match.put("Address.Street", RavenJToken.fromObject("1st Street"));
+      Map<String, RavenJToken> notMatch = new HashMap<>();
+      notMatch.put("Address.ZipCode", RavenJToken.fromObject(999));
+      criteria.setPropertiesMatch(match);
+      criteria.setPropertiesNotMatch(notMatch);
+      long id = store.subscriptions().create(criteria);
+      SubscriptionBatchOptions batchOptions = new SubscriptionBatchOptions();
+      batchOptions.setMaxDocCount(5);
+      Subscription<RavenJObject> subscription = store.subscriptions().open(id, new SubscriptionConnectionOptions(batchOptions));
+
+      final BlockingQueue<RavenJObject> docs = new ArrayBlockingQueue<>(100);
+      subscription.subscribe(new ObserverAdapter<RavenJObject>() {
+        @Override
+        public void onNext(RavenJObject value) {
+          docs.add(value);
+        }
+      });
+
+      assertTrue(SpinWait.spinUntil(new Function0<Boolean>() {
+        @Override
+        public Boolean apply() {
+          return docs.size() >= 5;
+        }
+      }, 60 * 1000L));
+
+      for (RavenJObject jsonDocument: docs) {
+        assertEquals("1st Street", jsonDocument.value(RavenJObject.class, "Address").value(String.class, "Street"));
+      }
+    }
+  }
 }

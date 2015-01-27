@@ -281,7 +281,8 @@ public abstract class DocumentStoreBase implements IDocumentStore {
     Encryptor.initialize(useFips);
   }
 
-  public IReliableSubscriptions getSubscriptions() {
+  @Override
+  public IReliableSubscriptions subscriptions() {
     return subscriptions;
   }
 }

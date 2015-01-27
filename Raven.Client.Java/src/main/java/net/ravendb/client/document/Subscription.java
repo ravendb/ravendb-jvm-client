@@ -4,11 +4,19 @@ import java.io.Closeable;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
+
+import org.apache.http.HttpStatus;
+import org.apache.http.client.methods.CloseableHttpResponse;
+import org.codehaus.jackson.JsonParser;
 
 import net.ravendb.abstractions.basic.CleanCloseable;
+import net.ravendb.abstractions.basic.EventArgs;
 import net.ravendb.abstractions.basic.EventHandler;
+import net.ravendb.abstractions.basic.EventHelper;
 import net.ravendb.abstractions.basic.VoidArgs;
 import net.ravendb.abstractions.closure.Action0;
+import net.ravendb.abstractions.closure.Function1;
 import net.ravendb.abstractions.closure.Predicate;
 import net.ravendb.abstractions.data.BulkInsertChangeNotification;
 import net.ravendb.abstractions.data.DocumentChangeNotification;
@@ -29,8 +37,11 @@ import net.ravendb.client.changes.IObservable;
 import net.ravendb.client.changes.IObserver;
 import net.ravendb.client.changes.ObserverAdapter;
 import net.ravendb.client.connection.IDatabaseCommands;
+import net.ravendb.client.connection.RavenJObjectIterator;
+import net.ravendb.client.connection.ServerClient;
 import net.ravendb.client.connection.implementation.HttpJsonRequest;
 import net.ravendb.client.connection.profiling.ConcurrentSet;
+import net.ravendb.client.extensions.HttpJsonRequestExtension;
 import net.ravendb.client.utils.CancellationTokenSource;
 
 import com.google.common.io.Closeables;
@@ -52,6 +63,7 @@ public class Subscription<T> implements IObservable<T>, CleanCloseable {
   private final boolean isStronglyTyped;
   private boolean completed;
   private final long id;
+  private final Class<T> clazz;
   private boolean disposed;
 
   private List<EventHandler<VoidArgs>> beforeBatch = new ArrayList<>();
@@ -61,6 +73,7 @@ public class Subscription<T> implements IObservable<T>, CleanCloseable {
   private boolean closed;
 
   Subscription(Class<T> clazz, long id, SubscriptionConnectionOptions options, IDatabaseCommands commands, IDatabaseChanges changes, DocumentConvention conventions, Action0 ensureOpenSubscription) {
+    this.clazz = clazz;
     this.id = id;
     this.options = options;
     this.commands = commands;
@@ -108,130 +121,107 @@ public class Subscription<T> implements IObservable<T>, CleanCloseable {
 
   private Closeable putDocumentsObserver;
   private Closeable endedBulkInsertsObserver;
+  private Etag lastProcessedEtagOnServer = null;
 
-  private void pullDocuments() {
-      while (true) {
-        try {
-          anySubscriber.waitOne();
-        } catch (InterruptedException e) {
-          e.printStackTrace(); //TODO: fix me
+  @SuppressWarnings("boxing")
+  private void pullDocuments() throws IOException, InterruptedException {
+    while (true) {
+      anySubscriber.waitOne();
+
+      cts.getToken().throwIfCancellationRequested();
+
+      boolean pulledDocs = false;
+      lastProcessedEtagOnServer = null;
+      try (HttpJsonRequest subscriptionRequest = createPullingRequest()) {
+        try (CloseableHttpResponse response = subscriptionRequest.executeRawResponse()) {
+          HttpJsonRequestExtension.assertNotFailingResponse(response);
+
+          try (RavenJObjectIterator streamedDocs = ServerClient.yieldStreamResults(response, 0, Integer.MAX_VALUE, null, new Function1<JsonParser, Boolean>() {
+            @SuppressWarnings({"synthetic-access", "boxing"})
+            @Override
+            public Boolean apply(JsonParser reader) {
+              try {
+                if (!"LastProcessedEtag".equals(reader.getText())) {
+                  return false;
+                }
+                if (reader.nextToken() == null) {
+                  errored = true;
+                  return false;
+                }
+                lastProcessedEtagOnServer = Etag.parse(reader.getText());
+                return true;
+              } catch (IOException e ) {
+                errored = true;
+                return false;
+              }
+            }
+          })) {
+            while (streamedDocs.hasNext()) {
+              if (pulledDocs == false) {
+                EventHelper.invoke(beforeBatch, this, EventArgs.EMPTY);
+              }
+              pulledDocs = true;
+
+              cts.getToken().throwIfCancellationRequested();
+
+              RavenJObject jsonDoc = streamedDocs.next();
+              for (IObserver<T> subscriber : subscribers) {
+                try {
+                  if (isStronglyTyped) {
+                    T instance = conventions.createSerializer().deserialize(jsonDoc.toString(), clazz);
+                    subscriber.onNext(instance);
+                  } else {
+                    subscriber.onNext((T) jsonDoc);
+                  }
+                } catch (Exception ex) {
+                  logger.warnException("Subscriber threw an exception", ex);
+                  if (options.isIgnoreSubscribersErrors() == false) {
+                    try {
+                      subscriber.onError(ex);
+                    } catch (Exception e) {
+                      // can happen if a subscriber doesn't have an onError handler - just ignore it
+                    }
+                    errored = true;
+                    break;
+                  }
+                }
+              }
+              if (errored) {
+                break;
+              }
+            }
+          }
         }
 
-        cts.getToken().throwIfCancellationRequested();
+        if (errored) {
+          break;
+        }
+        if (pulledDocs) {
+          try (HttpJsonRequest acknowledgmentRequest = createAcknowledgmentRequest(lastProcessedEtagOnServer)) {
+            try {
+              acknowledgmentRequest.executeRequest();
+            } catch (Exception e) {
+              if (acknowledgmentRequest.getResponseStatusCode() != HttpStatus.SC_REQUEST_TIMEOUT) // ignore acknowledgment timeouts
+                throw e;
+            }
+          }
 
-        boolean pulledDocs = false;
-        Etag lastProcessedEtagOnServer = null;
-        HttpJsonRequest subscriptionRequest = createPullingRequest();
+          EventHelper.invoke(afterBatch, this, EventArgs.EMPTY);
+          continue; // try to pull more documents from subscription
+        }
 
-
+        while (newDocuments.waitOne(options.getClientAliveNotificationInterval(), TimeUnit.MILLISECONDS) == false) {
+          try (HttpJsonRequest clientAliveRequest = createClientAliveRequest()) {
+            clientAliveRequest.executeRequest();
+          }
+        }
       }
-        /*
-+
-+                   using (var response = await subscriptionRequest.ExecuteRawResponseAsync().ConfigureAwait(false))
-+                   {
-+                       await response.AssertNotFailingResponse().ConfigureAwait(false);
-+
-+                       using (var responseStream = await response.GetResponseStreamWithHttpDecompression().ConfigureAwait(false))
-+                       {
-+                           cts.Token.ThrowIfCancellationRequested();
-+
-+                           using (var streamedDocs = new AsyncServerClient.YieldStreamResults(subscriptionRequest, responseStream, customizedEndResult: reader =>
-+                           {
-+                               if (Equals("LastProcessedEtag", reader.Value) == false)
-+                                   return false;
-+
-+                               lastProcessedEtagOnServer = Etag.Parse(reader.ReadAsString().ResultUnwrap());
-+                               return true;
-+                           }))
-+                           {
-+                               while (await streamedDocs.MoveNextAsync().ConfigureAwait(false))
-+                               {
-+                                   if (pulledDocs == false) // first doc in batch
-+                                       BeforeBatch();
-+
-+                                   pulledDocs = true;
-+
-+                                   cts.Token.ThrowIfCancellationRequested();
-+
-+                                   var jsonDoc = streamedDocs.Current;
-+                                   foreach (var subscriber in subscribers)
-+                                   {
-+                                       try
-+                                       {
-+                                           if (isStronglyTyped)
-+                                           {
-+                                               var instance = jsonDoc.Deserialize<T>(conventions);
-+                                               subscriber.OnNext(instance);
-+                                           }
-+                                           else
-+                                           {
-+                                               subscriber.OnNext((T) (object) jsonDoc);
-+                                           }
-+                                       }
-+                                       catch (Exception ex)
-+                                       {
-+                                           logger.WarnException("Subscriber threw an exception", ex);
-+
-+                                           if (options.IgnoreSubscribersErrors == false)
-+                                           {
-+                                               try
-+                                               {
-+                                                   subscriber.OnError(ex);
-+                                               }
-+                                               catch (Exception)
-+                                               {
-+                                                   // can happen if a subscriber doesn't have an onError handler - just ignore it
-+                                               }
-+                                               IsErrored = true;
-+                                               break;
-+                                           }
-+                                       }
-+                                   }
-+
-+                                   if (IsErrored)
-+                                       break;
-+                               }
-+                           }
-+                       }
-+                   }
-+
-+                   if (IsErrored)
-+                       break;
-+
-+                   if (pulledDocs)
-+                   {
-+                       using (var acknowledgmentRequest = CreateAcknowledgmentRequest(lastProcessedEtagOnServer))
-+                       {
-+                           try
-+                           {
-+                               acknowledgmentRequest.ExecuteRequest();
-+                           }
-+                           catch (Exception)
-+                           {
-+                               if (acknowledgmentRequest.ResponseStatusCode != HttpStatusCode.RequestTimeout) // ignore acknowledgment timeouts
-+                                   throw;
-+                           }
-+                       }
-+
-+                       AfterBatch();
-+
-+                       continue; // try to pull more documents from subscription
-+                   }
-+
-+                   while (newDocuments.WaitOne(options.ClientAliveNotificationInterval) == false)
-+                   {
-+                       using (var clientAliveRequest = CreateClientAliveRequest())
-+                       {
-+                           clientAliveRequest.ExecuteRequest();
-+                       }
-+                   }
-         */
-
-
+    }
   }
 
    private Thread startPullingDocs() {
      Runnable runnable = new Runnable() {
+      @SuppressWarnings("synthetic-access")
       @Override
       public void run() {
         try {
@@ -261,23 +251,22 @@ public class Subscription<T> implements IObservable<T>, CleanCloseable {
     return pullingThread;
   }
 
-  //TODO: it should return task!
   private void restartPullingTask() {
-    try {
-      Thread.sleep(15000);
-      ensureOpenSubscription.apply();
-    } catch (Exception ex) {
-      if (ex instanceof SubscriptionInUseException || ex instanceof SubscriptionDoesNotExistExeption) {
-        // another client has connected to the subscription or it has been deleted meanwhile - we cannot open it so we need to finish
-        onCompletedNotification();
-        return;
+    boolean connected = false;
+    while (!connected) {
+      try {
+        Thread.sleep(15000);
+        ensureOpenSubscription.apply();
+        connected = true;
+      } catch (Exception ex) {
+        if (ex instanceof SubscriptionInUseException || ex instanceof SubscriptionDoesNotExistExeption) {
+          // another client has connected to the subscription or it has been deleted meanwhile - we cannot open it so we need to finish
+          onCompletedNotification();
+          return;
+        }
       }
-
-      restartPullingTask();
-      return;
     }
-//TODO: startPullingTask = startPullingDocs();
-    startPullingDocs(); //TODO: delete me!
+    startPullingTask = startPullingDocs();
   }
 
   private void startWatchingDocs() {
@@ -383,9 +372,8 @@ public class Subscription<T> implements IObservable<T>, CleanCloseable {
         startPullingTask.join();
       } catch (OperationCancelledException e) {
         //ignore
-      } catch (Exception e ) {
-        e.printStackTrace();
-        //TODO: throw;
+      } catch (InterruptedException e) {
+        // ignore
       }
       if (!closed) {
         closeSubscription();

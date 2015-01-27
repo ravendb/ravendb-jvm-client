@@ -77,13 +77,13 @@ public interface IReliableSubscriptions extends CleanCloseable {
    * It downloads a list of all existing subscriptions in a database.
    * @return Existing subscriptions' configurations.
    */
-  List<SubscriptionConfig> getSubscriptions(int start, int take) throws IOException;
+  List<SubscriptionConfig> getSubscriptions(int start, int take);
 
   /**
    * It downloads a list of all existing subscriptions in a database.
    * @return Existing subscriptions' configurations.
    */
-  List<SubscriptionConfig> getSubscriptions(int start, int take, String database) throws IOException;
+  List<SubscriptionConfig> getSubscriptions(int start, int take, String database);
 
   /**
    * It deletes a subscription.

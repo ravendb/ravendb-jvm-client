@@ -30,6 +30,7 @@ import java.util.Map.Entry;
 import java.util.Set;
 import java.util.UUID;
 
+import net.ravendb.abstractions.exceptions.JsonReaderException;
 import net.ravendb.abstractions.exceptions.JsonWriterException;
 import net.ravendb.abstractions.json.linq.JTokenType;
 import net.ravendb.abstractions.json.linq.RavenJArray;
@@ -459,12 +460,12 @@ public class RavenJObjectsTest {
     try {
       RavenJObject.parse("{");
       fail("Cannot parse invalid object");
-    } catch (JsonWriterException e) { /* ok */ }
+    } catch (JsonReaderException e) { /* ok */ }
 
     try {
       RavenJObject.parse("{ 5");
       fail("Cannot parse invalid object");
-    } catch (JsonWriterException e) { /* ok */ }
+    } catch (JsonReaderException e) { /* ok */ }
 
     RavenJObject complexObject = RavenJObject.parse("{ \"a\" : 5, \"b\" : [1,2,3], \"c\" : { \"d\" : null} , \"d\" : null, \"e\": false, \"f\" : \"string\"}");
     assertEquals(6, complexObject.getCount());
@@ -501,7 +502,7 @@ public class RavenJObjectsTest {
     try {
       RavenJObject.parse("{ : 5}");
       fail("Cannot parse invalid object");
-    } catch (JsonWriterException e) { /* ok */ }
+    } catch (JsonReaderException e) { /* ok */ }
 
   }
 

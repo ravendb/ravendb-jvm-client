@@ -96,7 +96,6 @@ public class HttpJsonRequest implements CleanCloseable {
 
   private CachedRequest cachedRequestDetails;
   private final HttpJsonRequestFactory factory;
-  //TODO recreate handler
   private final IHoldProfilingInformation owner;
   private final Convention conventions;
   private boolean disabledAuthRetries;
@@ -144,18 +143,6 @@ public class HttpJsonRequest implements CleanCloseable {
     this.factory = factory;
     this.owner = requestParams.getOwner();
     this.conventions = requestParams.getConvention();
-
-     /* TODO:
-    if (factory.httpMessageHandler != null)
-      recreateHandler = () => factory.httpMessageHandler;
-  else
-  {
-      recreateHandler = () => new WebRequestHandler
-      {
-          UseDefaultCredentials = _credentials != null && _credentials.HasCredentials() == false,
-          Credentials = _credentials != null ? _credentials.Credentials : null,
-      };
-  }*/
 
     httpClient = factory.getHttpClient();
 
@@ -346,7 +333,7 @@ public class HttpJsonRequest implements CleanCloseable {
     String readToEnd = "";
     if (httpEntity != null) {
       try {
-        readToEnd = IOUtils.toString(httpEntity.getContent());
+        readToEnd = IOUtils.toString(httpEntity.getContent(), "UTF-8");
       } catch (IOException e) {
         throw new RuntimeException(e);
       }

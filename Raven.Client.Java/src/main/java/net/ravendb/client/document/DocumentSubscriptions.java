@@ -135,7 +135,7 @@ public class DocumentSubscriptions implements IReliableSubscriptions {
   }
 
   @Override
-  public List<SubscriptionConfig> getSubscriptions(int start, int take) throws IOException {
+  public List<SubscriptionConfig> getSubscriptions(int start, int take) {
     return getSubscriptions(start, take, null);
   }
 

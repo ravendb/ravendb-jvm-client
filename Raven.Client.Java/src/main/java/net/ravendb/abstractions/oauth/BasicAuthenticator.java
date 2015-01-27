@@ -24,7 +24,7 @@ public class BasicAuthenticator extends AbstractAuthenticator {
     try {
       HttpGet authRequest = prepareOAuthRequest(oauthSource, apiKey);
       try (CloseableHttpResponse httpReponse = httpClient.execute(authRequest)) {
-        final String response = IOUtils.toString(httpReponse.getEntity().getContent());
+        final String response = IOUtils.toString(httpReponse.getEntity().getContent(), "UTF-8");
         return new Action1<HttpRequest>() {
 
           @Override

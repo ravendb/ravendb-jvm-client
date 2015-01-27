@@ -1297,7 +1297,7 @@ public class ServerClient implements IDatabaseCommands {
   }
 
   @Override
-  public IndexMergeResults getIndexMergeSuggestions() throws IOException {
+  public IndexMergeResults getIndexMergeSuggestions() {
     try (HttpJsonRequest request = jsonRequestFactory.createHttpJsonRequest(new CreateHttpJsonRequestParams(this, url + "/debug/suggest-index-merge",
       HttpMethods.GET, new RavenJObject(), credentialsThatShouldBeUsedOnlyInOperationsWithoutReplication, convention))) {
       request.addOperationHeaders(operationsHeaders);
@@ -1791,9 +1791,9 @@ public class ServerClient implements IDatabaseCommands {
         throw new IllegalStateException(e.getMessage(), e);
       }
 
-
+      String stream = null;
       try (CloseableHttpResponse response = responseException.getResponse()) {
-        String stream = BomUtils.removeUTF8BOM(IOUtils.toString(response.getEntity().getContent()).trim());
+        stream = BomUtils.removeUTF8BOM(IOUtils.toString(response.getEntity().getContent(), "UTF-8")).trim();
 
         List<String> conflictedIds;
         if (HttpMethods.GET.equals(method)) {
@@ -1985,25 +1985,13 @@ public class ServerClient implements IDatabaseCommands {
     return yieldStreamResults(response);
   }
 
-  private static RavenJObjectIterator yieldStreamResults(final CloseableHttpResponse webResponse) {
-    HttpEntity httpEntity = webResponse.getEntity();
-    try {
-      InputStream stream = httpEntity.getContent();
-      JsonParser jsonParser = new JsonFactory().createJsonParser(stream);
-      if (jsonParser.nextToken() == null || jsonParser.getCurrentToken() != JsonToken.START_OBJECT) {
-        throw new IllegalStateException("Unexpected data at start of stream");
-      }
-      if (jsonParser.nextToken() == null || jsonParser.getCurrentToken() != JsonToken.FIELD_NAME || !"Results".equals(jsonParser.getText())) {
-        throw new IllegalStateException("Unexpected data at stream 'Results' property name");
-      }
-      if (jsonParser.nextToken() == null || jsonParser.getCurrentToken() != JsonToken.START_ARRAY) {
-        throw new IllegalStateException("Unexpected data at 'Results', could not find start results array");
-      }
+  public static RavenJObjectIterator yieldStreamResults(final CloseableHttpResponse webResponse) {
+    return yieldStreamResults(webResponse, 0, 0, null, null);
+  }
 
-      return new RavenJObjectIterator(webResponse, jsonParser);
-    } catch (IOException e) {
-      throw new JsonReaderException(e);
-    }
+  public static RavenJObjectIterator yieldStreamResults(final CloseableHttpResponse webResponse, final int start,
+    final int pageSize, RavenPagingInformation pagingInformation, Function1<JsonParser, Boolean> customizedEndResult) {
+      return new RavenJObjectIterator(webResponse, start, pageSize, pagingInformation, customizedEndResult);
   }
 
   @Override
@@ -2128,7 +2116,7 @@ public class ServerClient implements IDatabaseCommands {
       request.close();
       throw new IllegalStateException(e.getMessage(), e);
     }
-    return yieldStreamResults(response);
+    return yieldStreamResults(response, start, pageSize, pagingInformation, null);
 
   }
 

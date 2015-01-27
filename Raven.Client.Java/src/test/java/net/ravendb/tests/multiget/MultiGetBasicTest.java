@@ -54,7 +54,7 @@ public class MultiGetBasicTest extends RemoteClientTest {
         post.setEntity(new StringEntity(requestString, ContentType.APPLICATION_JSON));
 
         HttpResponse httpResponse = httpClient.execute(post);
-        String response = IOUtils.toString(httpResponse.getEntity().getContent());
+        String response = IOUtils.toString(httpResponse.getEntity().getContent(), "UTF-8");
         EntityUtils.consumeQuietly(httpResponse.getEntity());
 
         assertTrue(response, response.contains("Ayende"));
@@ -95,7 +95,7 @@ public class MultiGetBasicTest extends RemoteClientTest {
         post.setEntity(new StringEntity(requestString, ContentType.APPLICATION_JSON));
 
         HttpResponse httpResponse = httpClient.execute(post);
-        String response = IOUtils.toString(httpResponse.getEntity().getContent());
+        String response = IOUtils.toString(httpResponse.getEntity().getContent(), "UTF-8");
         EntityUtils.consumeQuietly(httpResponse.getEntity());
 
         assertTrue(response, response.contains("Ayende"));
@@ -131,7 +131,7 @@ public class MultiGetBasicTest extends RemoteClientTest {
         post.setEntity(new StringEntity(requestString, ContentType.APPLICATION_JSON));
 
         HttpResponse httpResponse = httpClient.execute(post);
-        String response = IOUtils.toString(httpResponse.getEntity().getContent());
+        String response = IOUtils.toString(httpResponse.getEntity().getContent(), "UTF-8");
         EntityUtils.consumeQuietly(httpResponse.getEntity());
 
         GetResponse[] results = JsonExtensions.createDefaultJsonSerializer().readValue(response, GetResponse[].class);
@@ -153,7 +153,7 @@ public class MultiGetBasicTest extends RemoteClientTest {
 
 
         httpResponse = httpClient.execute(post);
-        response = IOUtils.toString(httpResponse.getEntity().getContent());
+        response = IOUtils.toString(httpResponse.getEntity().getContent(), "UTF-8");
         EntityUtils.consumeQuietly(httpResponse.getEntity());
 
         results = JsonExtensions.createDefaultJsonSerializer().readValue(response, GetResponse[].class);

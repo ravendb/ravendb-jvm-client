@@ -14,7 +14,7 @@ public class HttpJsonRequestExtension {
         .append("\n");
 
       try {
-        String error = IOUtils.toString(response.getEntity().getContent());
+        String error = IOUtils.toString(response.getEntity().getContent(), "UTF-8");
         sb.append(error);
       } catch (IOException e) {
         sb.append(e.getMessage());

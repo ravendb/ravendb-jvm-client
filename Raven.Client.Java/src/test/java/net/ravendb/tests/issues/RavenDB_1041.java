@@ -27,7 +27,7 @@ public class RavenDB_1041 extends ReplicationBase {
   }
 
   @Test
-  public void canWaitForReplication() throws Exception {
+  public void canWaitForReplication() throws TimeoutException {
     DocumentStore store1 = createStore();
     DocumentStore store2 = createStore();
     DocumentStore store3 = createStore();

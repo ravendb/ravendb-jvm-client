@@ -49,7 +49,7 @@ public class ErrorResponseException extends RuntimeException {
     String responseString = null;
     if (readErrorString && response.getEntity() != null) {
       try {
-        responseString = IOUtils.toString(response.getEntity().getContent());
+        responseString = IOUtils.toString(response.getEntity().getContent(), "UTF-8");
         sb.append(responseString);
       } catch (IOException e) {
         sb.append(e.getMessage());

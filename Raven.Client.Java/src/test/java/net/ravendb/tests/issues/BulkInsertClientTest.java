@@ -17,7 +17,7 @@ import org.junit.Test;
 
 public class BulkInsertClientTest extends RemoteClientTest {
   @Test
-  public void canCreateAndDisposeUsingBulk() throws Exception {
+  public void canCreateAndDisposeUsingBulk() throws InterruptedException {
     try (IDocumentStore store = new DocumentStore(getDefaultUrl(), getDefaultDb()).initialize()) {
       try (BulkInsertOperation bulkInsert = store.bulkInsert()) {
         bulkInsert.setReport(new Action1<String>() {
@@ -41,7 +41,7 @@ public class BulkInsertClientTest extends RemoteClientTest {
   }
 
   @Test
-  public void canAbortAndDisposeUsingBulk() throws Exception {
+  public void canAbortAndDisposeUsingBulk() throws InterruptedException {
     try (IDocumentStore store = new DocumentStore(getDefaultUrl(), getDefaultDb()).initialize()) {
       try (BulkInsertOperation bulkInsert = store.bulkInsert()) {
         bulkInsert.setReport(new Action1<String>() {

@@ -1,9 +1,9 @@
 package net.ravendb.tests.faceted;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
-
 import static com.mysema.query.collections.CollQueryFactory.from;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.HashMap;
@@ -23,7 +23,6 @@ import net.ravendb.tests.faceted.QCamera;
 
 import org.apache.http.HttpStatus;
 import org.junit.Test;
-
 
 import com.mysema.query.types.Predicate;
 
@@ -61,7 +60,7 @@ public class DynamicFacetsTest extends FacetTestBase {
   }
 
   @Test
-  public void remoteDynamicFacetedSearchHonorsConditionalGet() throws Exception {
+  public void remoteDynamicFacetedSearchHonorsConditionalGet() throws IOException {
 
     try (IDocumentStore store = new DocumentStore(getDefaultUrl(), getDefaultDb()).initialize()) {
       createCameraCostIndex(store);

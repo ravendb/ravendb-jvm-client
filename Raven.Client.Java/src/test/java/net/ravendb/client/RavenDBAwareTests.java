@@ -232,6 +232,10 @@ public abstract class RavenDBAwareTests {
   }
 
   protected static void startServer(int port, boolean deleteData) {
+    startServer(port, deleteData, getCreateServerDocument(port));
+  }
+
+  protected static void startServer(int port, boolean deleteData, RavenJObject serverDocument) {
     HttpPut put = null;
     try {
       String putUrl = DEFAULT_SERVER_RUNNER_URL;
@@ -239,10 +243,10 @@ public abstract class RavenDBAwareTests {
         putUrl += "?deleteData=true";
       }
       put = new HttpPut(putUrl);
-      put.setEntity(new StringEntity(getCreateServerDocument(port), ContentType.APPLICATION_JSON));
+      put.setEntity(new StringEntity(serverDocument.toString(), ContentType.APPLICATION_JSON));
       HttpResponse httpResponse = client.execute(put);
       if (httpResponse.getStatusLine().getStatusCode() != HttpStatus.SC_OK) {
-        throw new IllegalStateException("Invalid response on put:" + httpResponse.getStatusLine().getStatusCode() + IOUtils.toString(httpResponse.getEntity().getContent()));
+        throw new IllegalStateException("Invalid response on put:" + httpResponse.getStatusLine().getStatusCode() + IOUtils.toString(httpResponse.getEntity().getContent(), "UTF-8"));
       }
     } catch (IOException e) {
       throw new IllegalStateException(e);
@@ -283,13 +287,13 @@ public abstract class RavenDBAwareTests {
     return doc.toString();
   }
 
-  protected static String getCreateServerDocument(int port) {
+  protected static RavenJObject getCreateServerDocument(int port) {
     RavenJObject doc = new RavenJObject();
     doc.add("Port", new RavenJValue(port));
     doc.add("RunInMemory", new RavenJValue(RUN_IN_MEMORY));
     doc.add("ApiKeyName", new RavenJValue("java"));
     doc.add("DefaultStorageTypeName", new RavenJValue(DEFAULT_STORAGE_TYPE_NAME));
-    return doc.toString();
+    return doc;
   }
 
   protected static String getCreateServerDocumentWithApiKey(int port) {

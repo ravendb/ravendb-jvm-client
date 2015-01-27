@@ -191,7 +191,7 @@ public class RemoteBulkInsertOperation implements ILowLevelBulkInsertOperation, 
           long operationId;
 
           try {
-            String stream = IOUtils.toString(response.getEntity().getContent());
+            String stream = IOUtils.toString(response.getEntity().getContent(), "UTF-8");
             RavenJObject result = RavenJObject.parse(stream);
             operationId = result.value(Long.class, "OperationId");
 

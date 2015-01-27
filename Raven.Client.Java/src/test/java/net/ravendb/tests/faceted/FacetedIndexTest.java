@@ -4,6 +4,7 @@ import static com.mysema.query.collections.CollQueryFactory.from;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
@@ -74,7 +75,7 @@ public class FacetedIndexTest extends FacetTestBase {
   }
 
   @Test
-  public void remoteFacetedSearchHonorsConditionalGet() throws Exception {
+  public void remoteFacetedSearchHonorsConditionalGet() throws IOException {
 
     try (IDocumentStore store = new DocumentStore(getDefaultUrl(), getDefaultDb()).initialize()) {
       setup(store, stronglyTypedFacets);

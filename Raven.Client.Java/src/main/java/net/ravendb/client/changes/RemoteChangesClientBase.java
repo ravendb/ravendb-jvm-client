@@ -173,8 +173,7 @@ public abstract class RemoteChangesClientBase<TChangesApi extends IConnectableCh
       }
     }, 10000, 10000);
 
-    // called in subclass subscribeOnServer();
-
+    subscribeOnServer();
   }
 
   protected void clientSideHeartbeat() {

@@ -170,7 +170,7 @@ public interface IDocumentStore extends IDisposalNotification {
 
   public DocumentSessionListeners getListeners();
 
-  public IReliableSubscriptions getSubscriptions();
+  public IReliableSubscriptions subscriptions();
 
   public void setListeners(DocumentSessionListeners listeners);
 

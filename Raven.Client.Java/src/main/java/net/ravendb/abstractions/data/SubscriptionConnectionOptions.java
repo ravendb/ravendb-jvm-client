@@ -14,14 +14,19 @@ public class SubscriptionConnectionOptions {
   public SubscriptionConnectionOptions() {
     connectionId = connectionCounter.incrementAndGet() + "/" + Base62Util.base62Random();
     batchOptions = new SubscriptionBatchOptions();
-    clientAliveNotificationInterval = 2 * 60 * 1000L;
+    clientAliveNotificationInterval = 2 * 60 * 1000;
+  }
+
+  public SubscriptionConnectionOptions(SubscriptionBatchOptions batchOptions) {
+    this();
+    this.batchOptions = batchOptions;
   }
 
   public String connectionId;
 
   private SubscriptionBatchOptions batchOptions;
 
-  private Long clientAliveNotificationInterval;
+  private Integer clientAliveNotificationInterval;
 
   private boolean ignoreSubscribersErrors;
 
@@ -41,11 +46,11 @@ public class SubscriptionConnectionOptions {
     this.batchOptions = batchOptions;
   }
 
-  public Long getClientAliveNotificationInterval() {
+  public Integer getClientAliveNotificationInterval() {
     return clientAliveNotificationInterval;
   }
 
-  public void setClientAliveNotificationInterval(Long clientAliveNotificationInterval) {
+  public void setClientAliveNotificationInterval(Integer clientAliveNotificationInterval) {
     this.clientAliveNotificationInterval = clientAliveNotificationInterval;
   }
 

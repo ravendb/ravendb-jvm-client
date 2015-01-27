@@ -52,7 +52,6 @@ public class RemoteDatabaseChanges extends RemoteChangesClientBase<IDatabaseChan
     IDocumentStoreReplicationInformer replicationInformer, Action0 onDispose,
     Function4<String, Etag, String[], OperationMetadata, Boolean> tryResolveConflictByUsingRegisteredConflictListeners) {
     super(url, apiKey, jsonRequestFactory, conventions, replicationInformer, onDispose);
-    subscribeOnServer();
     this.conventions = conventions;
     this.tryResolveConflictByUsingRegisteredConflictListeners = tryResolveConflictByUsingRegisteredConflictListeners;
   }
@@ -70,23 +69,35 @@ public class RemoteDatabaseChanges extends RemoteChangesClientBase<IDatabaseChan
     if (watchAllTransformers) {
       send("watch-transformers", null);
     }
-    for (String watchedDoc : watchedDocs) {
-      send("watch-doc", watchedDoc);
+    if (watchedDocs != null) {
+      for (String watchedDoc : watchedDocs) {
+        send("watch-doc", watchedDoc);
+      }
     }
-    for (String watchedPrefix : watchedPrefixes) {
-      send("watch-prefix", watchedPrefix);
+    if (watchedPrefixes != null) {
+      for (String watchedPrefix : watchedPrefixes) {
+        send("watch-prefix", watchedPrefix);
+      }
     }
-    for (String watchedCollection : watchedCollections) {
-      send("watch-collection", watchedCollection);
+    if (watchedCollections != null) {
+      for (String watchedCollection : watchedCollections) {
+        send("watch-collection", watchedCollection);
+      }
     }
-    for (String watchedType : watchedTypes) {
-      send("watch-type", watchedType);
+    if (watchedTypes != null) {
+      for (String watchedType : watchedTypes) {
+        send("watch-type", watchedType);
+      }
     }
-    for (String watchedIndex : watchedIndexes) {
-      send("watch-indexes", watchedIndex);
+    if (watchedIndexes != null) {
+      for (String watchedIndex : watchedIndexes) {
+        send("watch-indexes", watchedIndex);
+      }
     }
-    for (String watchedBulkInsert : watchedBulkInserts) {
-      send("watch-bulk-operation", watchedBulkInsert);
+    if (watchedBulkInserts != null) {
+      for (String watchedBulkInsert : watchedBulkInserts) {
+        send("watch-bulk-operation", watchedBulkInsert);
+      }
     }
   }
 

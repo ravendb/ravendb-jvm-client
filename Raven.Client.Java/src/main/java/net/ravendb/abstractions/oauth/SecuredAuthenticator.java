@@ -121,7 +121,7 @@ public class SecuredAuthenticator extends AbstractAuthenticator {
           }
 
           HttpEntity httpEntity = httpResponse.getEntity();
-          String token = IOUtils.toString(httpEntity.getContent());
+          String token = IOUtils.toString(httpEntity.getContent(), "UTF-8");
           RavenJObject jToken = RavenJObject.parse(token);
           currentOauthToken = "Bearer " + jToken;
 

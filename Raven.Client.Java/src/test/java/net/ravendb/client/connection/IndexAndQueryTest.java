@@ -36,6 +36,7 @@ import net.ravendb.abstractions.json.linq.RavenJObject;
 import net.ravendb.abstractions.json.linq.RavenJToken;
 import net.ravendb.abstractions.json.linq.RavenJValue;
 import net.ravendb.client.RavenDBAwareTests;
+import net.ravendb.client.RavenDBAwareTests.FiddlerConfigureRequestHandler;
 import net.ravendb.client.indexes.AbstractIndexCreationTask;
 import net.ravendb.client.indexes.IndexDefinitionBuilder;
 import net.ravendb.client.indexes.RavenDocumentsByEntityName;

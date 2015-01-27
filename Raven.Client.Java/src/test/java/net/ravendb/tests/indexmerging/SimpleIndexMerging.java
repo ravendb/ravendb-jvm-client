@@ -17,7 +17,7 @@ import net.ravendb.client.document.DocumentStore;
 public class SimpleIndexMerging extends RemoteClientTest {
 
   @Test
-  public void willSuggestMergeTwoSimpleIndexesForSameCollection() throws Exception {
+  public void willSuggestMergeTwoSimpleIndexesForSameCollection() {
     try (IDocumentStore store = new DocumentStore(getDefaultUrl(), getDefaultDb()).initialize()) {
 
 

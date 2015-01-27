@@ -818,7 +818,7 @@ public interface IDatabaseCommands extends IHoldProfilingInformation {
   /**
    * Retrieves all suggestions for an index merging
    */
-  public IndexMergeResults getIndexMergeSuggestions() throws IOException;
+  public IndexMergeResults getIndexMergeSuggestions();
 
   /**
    * Tries to resolve conflict using registered listeners

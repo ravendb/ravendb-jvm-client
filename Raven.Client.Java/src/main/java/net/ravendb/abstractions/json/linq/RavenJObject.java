@@ -116,7 +116,7 @@ public class RavenJObject extends RavenJToken implements Iterable<Entry<String, 
       throw new JsonReaderException("Error reading RavenJObject from JsonReader.");
 
     } catch (IOException e) {
-      throw new JsonWriterException(e.getMessage(), e);
+      throw new JsonReaderException(e.getMessage(), e);
     }
   }
 

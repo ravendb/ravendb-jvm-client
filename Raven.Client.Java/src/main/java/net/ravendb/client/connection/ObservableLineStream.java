@@ -25,6 +25,8 @@ public class ObservableLineStream implements IObservable<String>, Closeable {
   private final Action0 onDispose;
   private Thread task;
 
+  private volatile boolean disposed = false;
+
   private final ConcurrentSet<IObserver<String>> subscribers = new ConcurrentSet<>();
 
   public ObservableLineStream(InputStream stream, Action0 onDispose) {
@@ -35,6 +37,7 @@ public class ObservableLineStream implements IObservable<String>, Closeable {
   public void start() {
     task = new Thread(new Runnable() {
 
+      @SuppressWarnings("synthetic-access")
       @Override
       public void run() {
 
@@ -93,8 +96,8 @@ public class ObservableLineStream implements IObservable<String>, Closeable {
             posInBuffer -= startPos;
           } catch (Exception e) {
             IOUtils.closeQuietly(stream);
-            if (e instanceof EOFException) {
-              return ;
+            if (disposed) {
+              return;
             }
             for (IObserver<String> subscriber : subscribers) {
               subscriber.onError(e);
@@ -119,6 +122,7 @@ public class ObservableLineStream implements IObservable<String>, Closeable {
 
   @Override
   public void close() throws IOException {
+    disposed = true;
     for (IObserver<String> subscriber : subscribers) {
       subscriber.onCompleted();
     }

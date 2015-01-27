@@ -15,6 +15,14 @@ public class SubscriptionBatchOptions {
     acknowledgmentTimeout = 60 * 1000L;
   }
 
+  public SubscriptionBatchOptions(Integer maxSize, int maxDocCount, Long acknowledgmentTimeout) {
+    super();
+    this.maxSize = maxSize;
+    this.maxDocCount = maxDocCount;
+    this.acknowledgmentTimeout = acknowledgmentTimeout;
+  }
+
+
   public Integer getMaxSize() {
     return maxSize;
   }
