@@ -49,12 +49,14 @@ public class Etag implements Comparable<Etag> {
     this.changes = changes;
   }
 
+  @SuppressWarnings("boxing")
   public byte[] toByteArray() {
     byte[] block1 = longToBytes(Long.valueOf(restarts));
     byte[] block2 = longToBytes(Long.valueOf(changes));
     return ArrayUtils.addAll(block1, block2);
   }
 
+  @SuppressWarnings("static-method")
   private byte[] longToBytes(long x) {
     ByteBuffer buffer = ByteBuffer.allocate(8);
     buffer.putLong(x);
@@ -64,6 +66,7 @@ public class Etag implements Comparable<Etag> {
   /* (non-Javadoc)
    * @see java.lang.Object#toString()
    */
+  @SuppressWarnings("boxing")
   @Override
   public String toString() {
     StringBuffer sb = new StringBuffer();

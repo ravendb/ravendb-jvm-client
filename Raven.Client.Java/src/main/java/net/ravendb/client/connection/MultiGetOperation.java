@@ -66,6 +66,7 @@ public class MultiGetOperation {
 
   }
 
+  @SuppressWarnings("boxing")
   public GetRequest[] preparingForCachingRequest(HttpJsonRequestFactory jsonRequestFactory) {
     cachedData = new CachedRequest[requests.length];
     GetRequest[] requestsForServer = Arrays.copyOf(requests, requests.length);
@@ -147,6 +148,7 @@ public class MultiGetOperation {
     return responses;
   }
 
+  @SuppressWarnings("boxing")
   public void tryResolveConflictOrCreateConcurrencyException(GetResponse[] responses,
     Function3<String, RavenJObject, Etag, ConflictException> tryResolveConflictOrCreateConcurrencyException) {
 
@@ -207,6 +209,7 @@ public class MultiGetOperation {
     }
   }
 
+  @SuppressWarnings("static-method")
   private void tryResolveConflictOrCreateConcurrencyExceptionForSingleDocument(
     Function3<String, RavenJObject, Etag, ConflictException> tryResolveConflictOrCreateConcurrencyException, String id,
     Etag etag, RavenJObject docResult, GetResponse response) {

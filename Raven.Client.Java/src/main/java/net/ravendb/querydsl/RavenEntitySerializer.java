@@ -32,6 +32,7 @@ public class RavenEntitySerializer extends EntitySerializer {
     super.outro(model, writer);
   }
 
+  @SuppressWarnings("static-method")
   private boolean hasListProperty(EntityType model) {
     for (Property property : model.getProperties()) {
       if (property.getType().getFullName().equals(List.class.getName())) {
@@ -42,6 +43,7 @@ public class RavenEntitySerializer extends EntitySerializer {
     return false;
   }
 
+  @SuppressWarnings("static-method")
   private boolean hasArrayProperty(EntityType model) {
     for (Property property : model.getProperties()) {
       if (TypeCategory.ARRAY.equals(property.getType().getCategory())) {
@@ -52,6 +54,7 @@ public class RavenEntitySerializer extends EntitySerializer {
     return false;
   }
 
+  @SuppressWarnings("static-method")
   private boolean hasMapProperty(EntityType model) {
     for (Property property : model.getProperties()) {
       if (TypeCategory.MAP.equals(property.getType().getCategory())) {
@@ -117,7 +120,7 @@ public class RavenEntitySerializer extends EntitySerializer {
       writer.imports(SimpleExpression.class, RavenList.class);
     }
     if (hasArrayProperty(model)) {
-      writer.imports(SimpleExpression.class, RavenArray.class);
+      writer.imports(RavenArray.class);
     }
     if (hasMapProperty(model)) {
       writer.imports(SimpleExpression.class, RavenMap.class);

@@ -26,8 +26,6 @@ public class EtagTest {
     public void setTag(Etag tag) {
       this.tag = tag;
     }
-
-
   }
 
   @Test
@@ -36,12 +34,12 @@ public class EtagTest {
     assertNotEquals(0L, random.getChanges());
   }
 
+  @SuppressWarnings("synthetic-access")
   @Test
   public void testParseEtagUsingDefaultFactor() throws JsonParseException, JsonMappingException, IOException {
     EtagHolder etagHolder = JsonExtensions.createDefaultJsonSerializer().readValue("{\"Tag\": \"00000001-0000-0100-0000-000000000002\"}", EtagHolder.class);
     assertEquals(Etag.parse("00000001-0000-0100-0000-000000000002"), etagHolder.tag);
   }
-
 
   @Test
   public void testEmpty() {

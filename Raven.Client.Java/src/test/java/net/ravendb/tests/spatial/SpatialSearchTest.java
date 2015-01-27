@@ -76,6 +76,7 @@ public class SpatialSearchTest extends RemoteClientTest {
     }
   }
 
+  @SuppressWarnings("boxing")
   @Test
   public void can_do_spatial_search_with_client_api_within_given_capacity() {
     try (IDocumentStore store = new DocumentStore(getDefaultUrl(), getDefaultDb()).initialize()) {

@@ -42,6 +42,7 @@ public class SharpEnumTest {
 
   }
 
+  @SuppressWarnings("static-method")
   private void testDeserialization(JsonSerializer mapper) {
     assertEquals(SortOptions.NONE, mapper.deserialize("0", SortOptions.class));
     assertEquals(SortOptions.NONE, mapper.deserialize("\"None\"", SortOptions.class));

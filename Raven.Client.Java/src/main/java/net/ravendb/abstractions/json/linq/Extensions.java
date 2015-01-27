@@ -48,6 +48,7 @@ public class Extensions {
     return new RavenJTokenIterable(clazz, source, key);
   }
 
+  @SuppressWarnings("unused")
   public static <T extends RavenJToken, U> U value(Class<T> clazzT, Class<U> clazzU, Iterable<T> value) //where T : RavenJToken
   {
     RavenJToken token = null;
@@ -162,6 +163,7 @@ public class Extensions {
       this.key = key;
     }
 
+    @SuppressWarnings("synthetic-access")
     @Override
     public Iterator<U> iterator() {
       return new RavenJTokenIterator<>();
@@ -169,6 +171,7 @@ public class Extensions {
 
     private class RavenJTokenIterator<T> implements Iterator<T> {
 
+      @SuppressWarnings("synthetic-access")
       Iterator<RavenJToken> sourceIterator = source.iterator();
 
       @Override
@@ -176,7 +179,7 @@ public class Extensions {
         return sourceIterator.hasNext();
       }
 
-      @SuppressWarnings("unchecked")
+      @SuppressWarnings({"unchecked", "synthetic-access"})
       @Override
       public T next() {
         RavenJToken token = sourceIterator.next();
@@ -242,6 +245,7 @@ public class Extensions {
 
   }
 
+  @SuppressWarnings("unused")
   public static boolean compareDifferentLengthRavenJObjectData(Collection<DocumentsChanges> docChanges, RavenJObject otherObj, RavenJObject selfObj, String fieldName) {
     Map<String, String> diffData = new HashMap<>();
     String descr = "";
@@ -311,6 +315,7 @@ public class Extensions {
     docChanges.add(documentsChanges);
   }
 
+  @SuppressWarnings("unused")
   public static void addChanges(List<DocumentsChanges> docChanges, String key, RavenJToken value, RavenJToken token, String fieldName) {
     DocumentsChanges docChange = new DocumentsChanges();
     docChange.setFieldNewType(value.getType().toString());

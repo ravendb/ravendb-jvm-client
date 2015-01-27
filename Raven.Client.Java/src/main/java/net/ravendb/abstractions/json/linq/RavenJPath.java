@@ -66,6 +66,7 @@ public class RavenJPath {
     }
   }
 
+  @SuppressWarnings("boxing")
   private void parseIndexer(char indexerOpenChar) throws Exception {
     this.currentIndex++;
 
@@ -100,7 +101,7 @@ public class RavenJPath {
     return evaluate(root, errorWhenNoMatch, false);
   }
 
-  @SuppressWarnings("null")
+  @SuppressWarnings({"null", "boxing"})
   public RavenJToken evaluate(RavenJToken root, boolean errorWhenNoMatch, boolean createSnapshots) {
     RavenJToken current = root;
 

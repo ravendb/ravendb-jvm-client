@@ -57,6 +57,7 @@ public class ConflictResolverTest {
     assertEquals("{\"Name\"/* >>>> auto merged array start */:[1]/* <<<< auto merged array end */}", conflictsResolver.resolve().getDocument());
   }
 
+  @SuppressWarnings("boxing")
   @Test
   public void canMergeAdditionalProperties() throws JsonGenerationException, IOException {
     RavenJObject object1 = new RavenJObject();
@@ -136,6 +137,7 @@ public class ConflictResolverTest {
     assertEquals("{\"Nicks\"/* >>>> auto merged array start */:[\"Oren\",\"Ayende\"]/* <<<< auto merged array end */}", conflictsResolver.resolve().getDocument());
   }
 
+  @SuppressWarnings("boxing")
   @Test
   public void canMergeArrays_SameStart() throws JsonGenerationException, IOException {
     RavenJObject object1 = new RavenJObject();

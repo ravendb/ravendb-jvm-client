@@ -10,6 +10,7 @@ public class SubscriptionBatchOptions {
   private int maxDocCount;
   private Long acknowledgmentTimeout;
 
+  @SuppressWarnings("boxing")
   public SubscriptionBatchOptions() {
     maxDocCount = 4096;
     acknowledgmentTimeout = 60 * 1000L;
@@ -47,6 +48,7 @@ public class SubscriptionBatchOptions {
     this.acknowledgmentTimeout = acknowledgmentTimeout;
   }
 
+  @SuppressWarnings("boxing")
   public RavenJObject toRavenObject() {
     RavenJObject result = new RavenJObject();
     result.add("MaxDocCount", maxDocCount);

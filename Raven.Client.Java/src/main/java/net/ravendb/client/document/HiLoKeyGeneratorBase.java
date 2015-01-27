@@ -37,6 +37,7 @@ public abstract class HiLoKeyGeneratorBase {
     return tag + convention.getIdentityPartsSeparator()+lastServerPrefix+nextId;
   }
 
+  @SuppressWarnings("boxing")
   protected long getMaxFromDocument(JsonDocument document, long minMax) {
     long max;
     if (document.getDataAsJson().containsKey("ServerHi")) { // convert from hi to max

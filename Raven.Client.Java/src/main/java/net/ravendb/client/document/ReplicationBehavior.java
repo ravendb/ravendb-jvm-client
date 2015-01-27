@@ -17,7 +17,6 @@ import net.ravendb.abstractions.connection.OperationCredentials;
 import net.ravendb.abstractions.data.DatabaseStatistics;
 import net.ravendb.abstractions.data.Etag;
 import net.ravendb.abstractions.data.HttpMethods;
-import net.ravendb.abstractions.exceptions.OperationCancelledException;
 import net.ravendb.abstractions.json.linq.RavenJObject;
 import net.ravendb.abstractions.json.linq.RavenJToken;
 import net.ravendb.abstractions.replication.ReplicatedEtagInfo;
@@ -61,6 +60,7 @@ public class ReplicationBehavior implements CleanCloseable {
     }
   }
 
+  @SuppressWarnings("boxing")
   public int waitSync(Etag etag, Long timeout, final String database, int replicas) throws TimeoutException {
 
     if (etag == null) {

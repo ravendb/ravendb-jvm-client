@@ -30,7 +30,6 @@ import net.ravendb.abstractions.data.PatchCommandType;
 import net.ravendb.abstractions.data.PatchRequest;
 import net.ravendb.abstractions.data.PutResult;
 import net.ravendb.abstractions.data.UuidType;
-import net.ravendb.abstractions.extensions.JsonExtensions;
 import net.ravendb.abstractions.indexing.FieldIndexing;
 import net.ravendb.abstractions.indexing.FieldStorage;
 import net.ravendb.abstractions.indexing.FieldTermVector;
@@ -49,6 +48,7 @@ import org.junit.Ignore;
 import org.junit.Test;
 
 
+@SuppressWarnings("deprecation")
 public class ServerClientTest extends RavenDBAwareTests {
 
   @Test
@@ -65,6 +65,7 @@ public class ServerClientTest extends RavenDBAwareTests {
   }
 
 
+  @SuppressWarnings("boxing")
   @Test
   @Ignore
   public void testPutGet() {

@@ -72,6 +72,7 @@ public class JsonExtensions {
     return objectMapper;
   }
 
+  @SuppressWarnings("synthetic-access")
   private static SimpleModule createCustomSerializeModule() {
     SimpleModule module = new SimpleModule("customSerializers", new Version(1, 0, 0, null));
     module.addDeserializer(Etag.class, new EtagDeserializer(Etag.class));
@@ -118,6 +119,7 @@ public class JsonExtensions {
       super((Class<Enum<?>>) t);
     }
 
+    @SuppressWarnings("boxing")
     @Override
     public void serialize(Enum<?> value, JsonGenerator jgen, SerializerProvider provider) throws IOException,
       JsonGenerationException {
@@ -153,6 +155,7 @@ public class JsonExtensions {
     private Map<Enum, Long> enumValues = new HashMap<>();
     private boolean cacheInitialized = false;
 
+    @SuppressWarnings("boxing")
     private void initCache() {
       if (cacheInitialized) {
         return;
@@ -171,6 +174,7 @@ public class JsonExtensions {
 
     }
 
+    @SuppressWarnings("boxing")
     @Override
     public void serialize(EnumSet value, JsonGenerator jgen, SerializerProvider provider) throws IOException,
       JsonGenerationException {
@@ -228,6 +232,7 @@ public class JsonExtensions {
       super(vc);
     }
 
+    @SuppressWarnings("unchecked")
     @Override
     public T deserialize(JsonParser jp, DeserializationContext ctxt) throws IOException, JsonProcessingException {
       return (T) RavenJToken.load(jp);
@@ -243,6 +248,7 @@ public class JsonExtensions {
       super(vc);
     }
 
+    @SuppressWarnings("boxing")
     @Override
     public T deserialize(JsonParser jp, DeserializationContext ctxt) throws IOException, JsonProcessingException {
       try {
@@ -266,7 +272,7 @@ public class JsonExtensions {
       }
     }
 
-    @SuppressWarnings("unchecked")
+    @SuppressWarnings({"unchecked", "boxing"})
     private void initCache() throws NoSuchMethodException, SecurityException, IllegalAccessException,
       IllegalArgumentException, InvocationTargetException {
       if (!cache.isEmpty()) {

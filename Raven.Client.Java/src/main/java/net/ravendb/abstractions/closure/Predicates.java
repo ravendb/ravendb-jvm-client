@@ -3,6 +3,7 @@ package net.ravendb.abstractions.closure;
 
 public class Predicates {
   public static class True<T> implements Predicate<T> {
+    @SuppressWarnings("boxing")
     @Override
     public Boolean apply(T input) {
       return true;
@@ -10,6 +11,7 @@ public class Predicates {
   }
 
   public static class False<T> implements Predicate<T> {
+    @SuppressWarnings("boxing")
     @Override
     public Boolean apply(T input) {
       return false;
@@ -26,6 +28,7 @@ public class Predicates {
       this.right = right;
     }
 
+    @SuppressWarnings("boxing")
     @Override
     public Boolean apply(T input) {
       return left.apply(input) && right.apply(input);

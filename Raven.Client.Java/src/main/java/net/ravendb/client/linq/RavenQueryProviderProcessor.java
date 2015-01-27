@@ -32,7 +32,6 @@ import net.ravendb.client.document.DocumentQueryCustomizationFactory;
 import net.ravendb.client.document.IAbstractDocumentQuery;
 import net.ravendb.client.linq.LinqPathProvider.Result;
 
-
 import com.google.common.collect.Lists;
 import com.mysema.codegen.StringUtils;
 import com.mysema.query.support.Expressions;
@@ -150,6 +149,7 @@ public class RavenQueryProviderProcessor<T> {
     }
   }
 
+  @SuppressWarnings("boxing")
   private void visitMemberAccess(Path< ? > expression, boolean boolValue) {
     if (expression.getType().equals(Boolean.class)) {
       ExpressionInfo memberInfo = getMember(expression);
@@ -248,12 +248,14 @@ public class RavenQueryProviderProcessor<T> {
   }
 
 
+  @SuppressWarnings("unchecked")
   private void visitContainsAny(Operation<Boolean> expression) {
     ExpressionInfo memberInfo = getMember(expression.getArg(0));
     Object objects = getValueFromExpression(expression.getArg(1), getMemberType(memberInfo));
     documentQuery.containsAny(memberInfo.getPath(), (Collection<Object>)objects);
   }
 
+  @SuppressWarnings("unchecked")
   private void visitContainsAll(Operation<Boolean> expression) {
     ExpressionInfo memberInfo = getMember(expression.getArg(0));
     Object objects = getValueFromExpression(expression.getArg(1), getMemberType(memberInfo));
@@ -500,6 +502,7 @@ public class RavenQueryProviderProcessor<T> {
 
   }
 
+  @SuppressWarnings("static-method")
   private boolean isMemberAccessForQuerySource(Expression< ? > arg) {
     if (!(arg instanceof Path<?>)) {
       return false;
@@ -534,6 +537,7 @@ public class RavenQueryProviderProcessor<T> {
     documentQuery.closeSubclause();
   }
 
+  @SuppressWarnings("static-method")
   private Class<?> getMemberType(ExpressionInfo memberInfo) {
     return memberInfo.getClazz();
   }
@@ -649,6 +653,7 @@ public class RavenQueryProviderProcessor<T> {
     currentPath = oldPath;
   }
 
+  @SuppressWarnings("unused")
   private void visitConstant(Constant< ? > expression, boolean boolValue) {
     if (String.class.equals(expression.getType())) {
       if (currentPath.endsWith(",")) {
@@ -752,6 +757,7 @@ public class RavenQueryProviderProcessor<T> {
     }
   }
 
+  @SuppressWarnings("static-method")
   private Class<?> extractRootTypeForSelect(Expression<?> expression) {
     if (expression instanceof Path) {
       Path<?> path = (Path<?>) expression;
@@ -954,6 +960,7 @@ public class RavenQueryProviderProcessor<T> {
 
   }
 
+  @SuppressWarnings("boxing")
   private void visitOrderBy(OrderSpecifier< ? >[] orderSpecs) {
     for (OrderSpecifier<?> orderSpec : orderSpecs) {
       ExpressionInfo result = getMemberDirect(orderSpec.getTarget());
@@ -973,11 +980,13 @@ public class RavenQueryProviderProcessor<T> {
     }
   }
 
+  @SuppressWarnings("boxing")
   private void visitSkip(Constant<Integer> constantExpression) {
     //Don't have to worry about the cast failing, the Skip() extension method only takes an int
     documentQuery.skip(constantExpression.getConstant());
   }
 
+  @SuppressWarnings("boxing")
   private void visitTake(Constant<Integer> constantExpression) {
     //Don't have to worry about the cast failing, the Take() extension method only takes an int
     documentQuery.take(constantExpression.getConstant());
@@ -1160,6 +1169,7 @@ public class RavenQueryProviderProcessor<T> {
     }
   }
 
+  @SuppressWarnings("boxing")
   private <TProjection> Object getQueryResult(IDocumentQuery<TProjection> finalQuery) {
     List<TProjection> list = null;
     switch (queryType)

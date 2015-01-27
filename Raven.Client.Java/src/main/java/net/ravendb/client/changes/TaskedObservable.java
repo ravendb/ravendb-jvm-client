@@ -1,8 +1,5 @@
 package net.ravendb.client.changes;
 
-import java.io.Closeable;
-import java.io.IOException;
-
 import net.ravendb.abstractions.basic.CleanCloseable;
 import net.ravendb.abstractions.closure.Predicate;
 import net.ravendb.abstractions.closure.Predicates;
@@ -34,6 +31,7 @@ public class TaskedObservable<T, TConnectionState extends IChangesConnectionStat
     };
   }
 
+  @SuppressWarnings("boxing")
   public void send(T msg) {
     try {
       if (!filter.apply(msg)) {

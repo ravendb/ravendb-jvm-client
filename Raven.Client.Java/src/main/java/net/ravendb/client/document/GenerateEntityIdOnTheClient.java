@@ -48,6 +48,7 @@ public class GenerateEntityIdOnTheClient {
     }
   }
 
+  @SuppressWarnings("boxing")
   private boolean getIdAsString(Object entity, Object value, Field identityProperty, Reference<String> idHolder) {
     if (value instanceof String) {
       idHolder.value = (String) value;

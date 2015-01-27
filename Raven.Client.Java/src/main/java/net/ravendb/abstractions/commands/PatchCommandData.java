@@ -145,6 +145,7 @@ public class PatchCommandData implements ICommandData {
    * Translates this instance to a Json object.
    * @return RavenJObject representing the command.
    */
+  @SuppressWarnings("boxing")
   @Override
   public RavenJObject toJson() {
     RavenJObject ret = new RavenJObject();

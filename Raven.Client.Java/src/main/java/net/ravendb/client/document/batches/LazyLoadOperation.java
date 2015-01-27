@@ -103,6 +103,7 @@ public class LazyLoadOperation<T> implements ILazyOperation {
     return commands.get(key);
   }
 
+  @SuppressWarnings("hiding")
   public void handleEmbeddedResponse(Object result) {
     handleResponse((JsonDocument) result);
   }

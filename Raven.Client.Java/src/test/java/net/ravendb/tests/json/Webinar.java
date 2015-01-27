@@ -53,6 +53,7 @@ public class Webinar extends RemoteClientTest {
 
   }
 
+  @SuppressWarnings("boxing")
   @Test
   public void can_store_entity() {
 

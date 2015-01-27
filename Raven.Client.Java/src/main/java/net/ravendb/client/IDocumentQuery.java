@@ -203,11 +203,13 @@ public interface IDocumentQuery<T> extends IDocumentQueryBase<T, IDocumentQuery<
   /**
    * Returns first result
    */
+  @Override
   public T first();
 
   /**
    * Returns first result
    */
+  @Override
   public T firstOrDefault();
 
   /**
@@ -218,11 +220,13 @@ public interface IDocumentQuery<T> extends IDocumentQueryBase<T, IDocumentQuery<
   /**
    * Returns single result
    */
+  @Override
   public T single();
 
   /**
    * Returns single result
    */
+  @Override
   public T singleOrDefault();
 
   /**

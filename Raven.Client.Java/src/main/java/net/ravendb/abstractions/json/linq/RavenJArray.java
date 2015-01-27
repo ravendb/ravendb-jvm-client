@@ -107,6 +107,7 @@ public class RavenJArray extends RavenJToken implements Iterable<RavenJToken> {
     return items.size();
   }
 
+  @SuppressWarnings("static-access")
   public static RavenJArray load(JsonParser parser) {
     try {
       if (parser.getCurrentToken() == null) {

@@ -91,6 +91,7 @@ public class LazyMultiLoadOperation<T> implements ILazyOperation {
     this.requiresRetry = requiresRetry;
   }
 
+  @SuppressWarnings("hiding")
   @Override
   public void handleResponse(GetResponse response) {
     if (response.isForceRetry()) {

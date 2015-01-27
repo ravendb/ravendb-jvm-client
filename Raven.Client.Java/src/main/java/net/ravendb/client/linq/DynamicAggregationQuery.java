@@ -15,7 +15,6 @@ import net.ravendb.abstractions.data.FacetResult;
 import net.ravendb.abstractions.data.FacetResults;
 import net.ravendb.abstractions.extensions.ExpressionExtensions;
 
-
 import com.mysema.query.types.Path;
 import com.mysema.query.types.expr.BooleanExpression;
 
@@ -90,6 +89,7 @@ public class DynamicAggregationQuery<T> {
     return this;
   }
 
+  @SuppressWarnings("static-method")
   private boolean isNumeric(Path<?> path) {
     Class< ? > type = path.getType();
     return int.class.equals(type) || Integer.class.equals(type)
@@ -123,6 +123,7 @@ public class DynamicAggregationQuery<T> {
     last.setAggregationType(mapJavaToDotNetNumberClass(path.getType()));
   }
 
+  @SuppressWarnings("static-method")
   private String mapJavaToDotNetNumberClass(Class<?> clazz) {
     if (Integer.class.equals(clazz)) {
       return "System.Int32";
@@ -172,6 +173,7 @@ public class DynamicAggregationQuery<T> {
     final Lazy<FacetResults> facetsLazy = queryable.toFacetsLazy(AggregationQueryDsl.getDslFacets(facets));
     return new Lazy<>(new Function0<FacetResults>() {
 
+      @SuppressWarnings("synthetic-access")
       @Override
       public FacetResults apply() {
         return handleRenames(facetsLazy.getValue());

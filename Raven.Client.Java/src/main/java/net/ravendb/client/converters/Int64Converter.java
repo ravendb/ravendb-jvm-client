@@ -7,6 +7,7 @@ public class Int64Converter implements ITypeConverter {
     return Long.class.equals(sourceType) || Long.TYPE.equals(sourceType);
   }
 
+  @SuppressWarnings("boxing")
   @Override
   public String convertFrom(String tag, Object value, boolean allowNull) {
     Long val = (Long) value;

@@ -45,6 +45,7 @@ public abstract class RemoteChangesClientBase<TChangesApi extends IConnectableCh
   private OperationCredentials credentials;
   private final HttpJsonRequestFactory jsonRequestFactory;
   protected final Convention conventions;
+  @SuppressWarnings("rawtypes")
   private final IReplicationInformerBase replicationInformer;
 
   private final Action0 onDispose;
@@ -64,6 +65,7 @@ public abstract class RemoteChangesClientBase<TChangesApi extends IConnectableCh
   private volatile boolean disposed;
 
 
+  @SuppressWarnings("rawtypes")
   public RemoteChangesClientBase(String url, String apiKey, HttpJsonRequestFactory jsonRequestFactory, Convention conventions,
     IReplicationInformerBase replicationInformer, Action0 onDispose) {
     connectionStatusChanged = Arrays.<EventHandler<VoidArgs>> asList(new EventHandler<VoidArgs>() {
@@ -103,6 +105,7 @@ public abstract class RemoteChangesClientBase<TChangesApi extends IConnectableCh
     return connected;
   }
 
+  @SuppressWarnings({"unused", "boxing"})
   protected void logOnConnectionStatusChanged(Object sender, EventArgs eventArgs) {
     logger.info("Connection (%s) status changed, new status: %s", url, connected);
   }
@@ -276,6 +279,7 @@ public abstract class RemoteChangesClientBase<TChangesApi extends IConnectableCh
     }
   }
 
+  @SuppressWarnings("hiding")
   protected abstract void notifySubscribers(String type, RavenJObject value, AtomicDictionary<DatabaseConnectionState> counters);
 
   protected abstract void subscribeOnServer();

@@ -24,6 +24,7 @@ public class RavenDocumentsByEntityName extends AbstractIndexCreationTask {
     return "Raven/DocumentsByEntityName";
   }
 
+  @SuppressWarnings("hiding")
   @Override
   public IndexDefinition createIndexDefinition() {
     IndexDefinition def = new IndexDefinition();

@@ -489,6 +489,7 @@ public class IndexDefinition {
    *  we want to avoid calculating the cost of doing this over and over again on each
    *  query.
    */
+  @SuppressWarnings("boxing")
   @JsonIgnore
   public int getIndexHash()
   {
@@ -499,6 +500,7 @@ public class IndexDefinition {
     return cachedHashCode;
   }
 
+  @SuppressWarnings("hiding")
   public String getType() {
     String name =  StringUtils.defaultIfEmpty(this.name, "");
 
@@ -554,46 +556,6 @@ public class IndexDefinition {
       return name;
     }
     return getMap();
-  }
-
-
-  @Override
-  public IndexDefinition clone() {
-    IndexDefinition indexDefinition = new IndexDefinition();
-    indexDefinition.setIndexId(indexId);
-    indexDefinition.setName(name);
-    indexDefinition.setReduce(reduce);
-    indexDefinition.cachedHashCode = cachedHashCode;
-
-    indexDefinition.setMaxIndexOutputsPerDocument(maxIndexOutputsPerDocument);
-    if (maps != null) {
-      indexDefinition.setMaps(new HashSet<>(maps));
-    }
-    if (analyzers != null) {
-      indexDefinition.setAnalyzers(new HashMap<>(analyzers));
-    }
-    if (fields != null) {
-      indexDefinition.setFields(new ArrayList<>(fields));
-    }
-    if (indexes != null) {
-      indexDefinition.setIndexes(new HashMap<>(indexes));
-    }
-    if (sortOptions != null) {
-      indexDefinition.setSortOptions(new HashMap<>(sortOptions));
-    }
-    if (stores != null) {
-      indexDefinition.setStores(new HashMap<>(stores));
-    }
-    if (suggestions != null) {
-      indexDefinition.setSuggestions(new HashMap<>(suggestions));
-    }
-    if (termVectors != null) {
-      indexDefinition.setTermVectors(new HashMap<>(termVectors));
-    }
-    if (spatialIndexes != null) {
-      indexDefinition.setSpatialIndexes(new HashMap<>(spatialIndexes));
-    }
-    return indexDefinition;
   }
 
 }

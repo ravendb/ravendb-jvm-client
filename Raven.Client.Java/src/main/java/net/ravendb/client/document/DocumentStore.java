@@ -1,6 +1,5 @@
 package net.ravendb.client.document;
 
-import java.io.Closeable;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -45,7 +44,6 @@ import net.ravendb.client.delegates.HttpResponseWithMetaHandler;
 import net.ravendb.client.extensions.MultiDatabase;
 import net.ravendb.client.listeners.IDocumentConflictListener;
 import net.ravendb.client.util.EvictItemsFromCacheBasedOnChanges;
-import net.ravendb.client.utils.Closer;
 import net.ravendb.client.utils.RequirementsChecker;
 
 import org.apache.commons.lang.StringUtils;
@@ -323,6 +321,7 @@ public class DocumentStore extends DocumentStoreBase {
       if (conventions.getDocumentKeyGenerator() == null) { // don't overwrite what the user is doing
         final MultiDatabaseHiLoGenerator generator = new MultiDatabaseHiLoGenerator(32);
         conventions.setDocumentKeyGenerator(new DocumentKeyGenerator() {
+          @SuppressWarnings("synthetic-access")
           @Override
           public String generate(String dbName, IDatabaseCommands databaseCommands, Object entity) {
             return generator.generateDocumentKey(dbName, databaseCommands, conventions, entity);
@@ -354,6 +353,7 @@ public class DocumentStore extends DocumentStoreBase {
     conventions.setDisableProfiling(false);
     jsonRequestFactory.addLogRequestEventHandler(new EventHandler<RequestResultArgs>() {
 
+      @SuppressWarnings("synthetic-access")
       @Override
       public void handle(Object sender, final RequestResultArgs args) {
         if (conventions.isDisableProfiling()) {
@@ -394,7 +394,7 @@ public class DocumentStore extends DocumentStoreBase {
     });
 
     conventions.setHandleUnauthorizedResponse(new HttpResponseWithMetaHandler() {
-      @SuppressWarnings("null")
+      @SuppressWarnings({"null", "synthetic-access"})
       @Override
       public Action1<HttpRequest> handle(HttpResponse response, OperationCredentials credentials) {
         Header oauthSourceHeader = response.getFirstHeader("OAuth-Source");
@@ -434,6 +434,7 @@ public class DocumentStore extends DocumentStoreBase {
     final String rootDatabaseUrl = MultiDatabase.getRootDatabaseUrl(url);
     databaseCommandsGenerator = new Function0<IDatabaseCommands>() {
 
+      @SuppressWarnings("synthetic-access")
       @Override
       public IDatabaseCommands apply() {
         String databaseUrl = getUrl();
@@ -532,6 +533,7 @@ public class DocumentStore extends DocumentStoreBase {
     }
     return databaseChanges.getOrAdd(database, new Function1<String, IDatabaseChanges>() {
 
+      @SuppressWarnings("hiding")
       @Override
       public IDatabaseChanges apply(String database) {
         return createDatabaseChanges(database);
@@ -560,6 +562,7 @@ public class DocumentStore extends DocumentStoreBase {
       getConventions(),
       getReplicationInformerForDatabase(database),
       new Action0() {
+      @SuppressWarnings("synthetic-access")
       @Override
       public void apply() {
         databaseChanges.remove(databaseClousure);
@@ -580,6 +583,7 @@ public class DocumentStore extends DocumentStoreBase {
    * we provide is current or not, but will serve the information directly from the local cache
    * without touching the server.
    */
+  @SuppressWarnings("boxing")
   @Override
   public CleanCloseable aggressivelyCacheFor(long cacheDurationInMilis)
   {
@@ -631,12 +635,13 @@ public class DocumentStore extends DocumentStoreBase {
       changes(database != null ? database : getDefaultDatabase()));
   }
 
+  @SuppressWarnings("synthetic-access")
   @Override
   protected void afterSessionCreated(InMemoryDocumentSessionOperations session) {
     if (conventions.isShouldAggressiveCacheTrackChanges() && aggressiveCachingUsed) {
       String databaseName = session.getDatabaseName();
       if (databaseName == null) {
-        databaseName = Constants.SYSTEM_DATABASE;
+        databaseName = defaultDatabase;
       }
       observeChangesAndEvictItemsFromCacheForDatabases.putIfAbsent(databaseName,
         new EvictItemsFromCacheBasedOnChanges(databaseName, changes(databaseName), new ExpireItemsFromCacheAction()));
@@ -657,6 +662,7 @@ public class DocumentStore extends DocumentStoreBase {
     return this;
   }
 
+  @SuppressWarnings("hiding")
   public IDocumentStore withApiKey(String apiKey) {
     RequirementsChecker.checkOAuthDeps();
     this.apiKey = apiKey;
@@ -666,6 +672,7 @@ public class DocumentStore extends DocumentStoreBase {
   /**
    * Setup the WebRequest timeout for the session
    */
+  @SuppressWarnings("boxing")
   @Override
   public CleanCloseable setRequestsTimeoutFor(long timeout) {
     assertInitialized();

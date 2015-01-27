@@ -135,6 +135,7 @@ public class ObservableLineStream implements IObservable<String>, Closeable {
 
     return new CleanCloseable() {
 
+      @SuppressWarnings("synthetic-access")
       @Override
       public void close(){
         subscribers.remove(observer);

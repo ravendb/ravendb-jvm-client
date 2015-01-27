@@ -2,8 +2,6 @@ package net.ravendb.client.connection;
 
 import static net.ravendb.client.connection.RavenUrlExtensions.indexes;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.text.ParseException;
@@ -44,7 +42,6 @@ import net.ravendb.abstractions.data.DatabaseStatistics;
 import net.ravendb.abstractions.data.Etag;
 import net.ravendb.abstractions.data.Facet;
 import net.ravendb.abstractions.data.FacetQuery;
-import net.ravendb.abstractions.data.FacetResult;
 import net.ravendb.abstractions.data.FacetResults;
 import net.ravendb.abstractions.data.GetRequest;
 import net.ravendb.abstractions.data.GetResponse;
@@ -52,6 +49,8 @@ import net.ravendb.abstractions.data.HttpMethods;
 import net.ravendb.abstractions.data.IndexQuery;
 import net.ravendb.abstractions.data.JsonDocument;
 import net.ravendb.abstractions.data.JsonDocumentMetadata;
+import net.ravendb.abstractions.data.LicensingStatus;
+import net.ravendb.abstractions.data.LogItem;
 import net.ravendb.abstractions.data.MoreLikeThisQuery;
 import net.ravendb.abstractions.data.MultiLoadResult;
 import net.ravendb.abstractions.data.PatchRequest;
@@ -66,7 +65,6 @@ import net.ravendb.abstractions.exceptions.BadRequestException;
 import net.ravendb.abstractions.exceptions.ConcurrencyException;
 import net.ravendb.abstractions.exceptions.DocumentDoesNotExistsException;
 import net.ravendb.abstractions.exceptions.IndexCompilationException;
-import net.ravendb.abstractions.exceptions.JsonReaderException;
 import net.ravendb.abstractions.exceptions.TransformCompilationException;
 import net.ravendb.abstractions.extensions.ExceptionExtensions;
 import net.ravendb.abstractions.extensions.MetadataExtensions;
@@ -80,6 +78,7 @@ import net.ravendb.abstractions.json.linq.RavenJObject;
 import net.ravendb.abstractions.json.linq.RavenJToken;
 import net.ravendb.abstractions.json.linq.RavenJValue;
 import net.ravendb.abstractions.replication.ReplicationDocument;
+import net.ravendb.abstractions.replication.ReplicationStatistics;
 import net.ravendb.abstractions.util.BomUtils;
 import net.ravendb.abstractions.util.NetDateFormat;
 import net.ravendb.client.RavenPagingInformation;
@@ -103,19 +102,12 @@ import net.ravendb.imports.json.JsonConvert;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
-import org.apache.http.HttpEntity;
-import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
 import org.apache.http.client.methods.CloseableHttpResponse;
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.util.EntityUtils;
-import org.codehaus.jackson.JsonFactory;
 import org.codehaus.jackson.JsonParser;
-import org.codehaus.jackson.JsonToken;
-import org.codehaus.jackson.map.JsonDeserializer;
-import org.codehaus.jackson.map.ObjectMapper;
 
 
+@SuppressWarnings("deprecation")
 public class ServerClient implements IDatabaseCommands {
 
   private final ProfilingInformation profilingInformation;
@@ -128,6 +120,7 @@ public class ServerClient implements IDatabaseCommands {
   protected final HttpJsonRequestFactory jsonRequestFactory;
   private final UUID sessionId;
   private final Function1<String, IDocumentStoreReplicationInformer> replicationInformerGetter;
+  @SuppressWarnings("unused")
   private final String databaseName;
   private final IDocumentStoreReplicationInformer replicationInformer;
   protected int requestCount;
@@ -491,6 +484,7 @@ public class ServerClient implements IDatabaseCommands {
     });
   }
 
+  @SuppressWarnings("boxing")
   protected Operation directDeleteByIndex(OperationMetadata operationMetadata, String indexName, IndexQuery queryToDelete, BulkOperationOptions options) {
     BulkOperationOptions notNullOptions = (options != null) ? options : new BulkOperationOptions();
     String path = queryToDelete.getIndexQueryUrl(operationMetadata.getUrl(), indexName, "bulk_docs") + "&allowStale=" + notNullOptions.isAllowStale()
@@ -1024,7 +1018,30 @@ public class ServerClient implements IDatabaseCommands {
     });
   }
 
-  //TODO: getDocuments from etag
+  @Override
+  public List<JsonDocument> getDocuments(final Etag fromEtag, final int pageSize) {
+    return getDocuments(fromEtag, pageSize, false);
+  }
+
+  @Override
+  public List<JsonDocument> getDocuments(final Etag fromEtag, final int pageSize, final boolean metadataOnly) {
+    return executeWithReplication(HttpMethods.GET, new Function1<OperationMetadata, List<JsonDocument>>() {
+      @Override
+      public List<JsonDocument> apply(OperationMetadata operationMetadata) {
+        String requestUri = operationMetadata.getUrl() + "/docs?etag=" + fromEtag + "&pageSize=" + pageSize;
+        if (metadataOnly) {
+          requestUri += "&metadata-only=true";
+        }
+        try (HttpJsonRequest request = jsonRequestFactory
+            .createHttpJsonRequest(new CreateHttpJsonRequestParams(ServerClient.this, requestUri, HttpMethods.GET,
+              new RavenJObject(), operationMetadata.getCredentials(), convention)
+            .addOperationHeaders(operationsHeaders))) {
+          RavenJToken responseJson = request.readResponseJson();
+          return SerializationHelper.ravenJObjectsToJsonDocuments(responseJson);
+        }
+      }
+    });
+  }
 
   @Override
   public Operation updateByIndex(String indexName, IndexQuery queryToUpdate, PatchRequest[] patchRequests) {
@@ -1128,6 +1145,7 @@ public class ServerClient implements IDatabaseCommands {
     });
   }
 
+  @SuppressWarnings("boxing")
   protected Operation directUpdateByIndexImpl(OperationMetadata operationMetadata, String indexName, IndexQuery queryToUpdate, BulkOperationOptions options, String requestData, HttpMethods method) {
     BulkOperationOptions notNullOptions = (options != null) ? options : new BulkOperationOptions();
     String path = queryToUpdate.getIndexQueryUrl(operationMetadata.getUrl(), indexName, "bulk_docs")
@@ -1175,6 +1193,7 @@ public class ServerClient implements IDatabaseCommands {
     });
   }
 
+  @SuppressWarnings("boxing")
   protected FacetResults directGetFacets(OperationMetadata operationMetadata, String index, IndexQuery query, String facetSetupDoc, int start, Integer pageSize) {
     String requestUri = operationMetadata.getUrl() + String.format("/facets/%s?facetDoc=%s&%s&facetStart=%d&facetPageSize=%s",
       UrlUtils.escapeUriString(index),
@@ -1202,6 +1221,7 @@ public class ServerClient implements IDatabaseCommands {
     }
   }
 
+  @SuppressWarnings("boxing")
   @Override
   public FacetResults[] getMultiFacets(final FacetQuery[] facetedQueries) {
     GetRequest[] multiGetRequestItems = new GetRequest[facetedQueries.length];
@@ -1229,6 +1249,9 @@ public class ServerClient implements IDatabaseCommands {
     FacetResults[] facetResults = new FacetResults[results.length];
     for (int facetResultCounter = 0; facetResultCounter < facetResults.length; facetResultCounter++) {
       GetResponse curFacetDoc = results[facetResultCounter];
+      if (curFacetDoc.isRequestHasErrors()) {
+        throw new IllegalStateException("Got an error from server, status code: " + curFacetDoc.getStatus() + "\n" + curFacetDoc.getResult());
+      }
       facetResults[facetResultCounter] = jsonSerializer.deserialize(curFacetDoc.getResult(), FacetResults.class);
     }
     return facetResults;
@@ -1258,6 +1281,7 @@ public class ServerClient implements IDatabaseCommands {
   }
 
   //TODO: trim and use get
+  @SuppressWarnings("boxing")
   protected FacetResults directGetFacets(OperationMetadata operationMetadata, String index, IndexQuery query, String facetsJson, int start, Integer pageSize, HttpMethods method) {
     String requestUri = operationMetadata.getUrl() + String.format("/facets/%s?%s&facetStart=%d&facetPageSize=%s",
       UrlUtils.escapeUriString(index),
@@ -1281,9 +1305,44 @@ public class ServerClient implements IDatabaseCommands {
     }
   }
 
-  //TODO: get logs
+  @Override
+  public LogItem[] getLogs(final boolean errorsOnly) {
+    return executeWithReplication(HttpMethods.GET, new Function1<OperationMetadata, LogItem[]>() {
+      @SuppressWarnings("synthetic-access")
+      @Override
+      public LogItem[] apply(OperationMetadata operationMetadata) {
+        String requestUri = url + "/logs";
+        if (errorsOnly) {
+          requestUri += "?type=error";
+        }
+        try (HttpJsonRequest request = jsonRequestFactory.createHttpJsonRequest(new CreateHttpJsonRequestParams(ServerClient.this, requestUri, HttpMethods.GET, new RavenJObject(), operationMetadata.getCredentials(), convention))) {
+          request.addOperationHeaders(operationsHeaders);
+          request.addReplicationStatusHeaders(url, operationMetadata.getUrl(), replicationInformer, convention.getFailoverBehavior(), new HandleReplicationStatusChangesCallback());
 
-  //TODO: get license status
+          RavenJToken result = request.readResponseJson();
+          return convention.createSerializer().deserialize(result, LogItem[].class);
+        }
+      }
+    });
+  }
+
+  @Override
+  public ReplicationStatistics getReplicationInfo() {
+    try (HttpJsonRequest request = jsonRequestFactory.createHttpJsonRequest(new CreateHttpJsonRequestParams(ServerClient.this, url + "/replication/info",HttpMethods.GET, new RavenJObject(), credentialsThatShouldBeUsedOnlyInOperationsWithoutReplication, convention))) {
+      request.addOperationHeaders(operationsHeaders);
+      RavenJToken result = request.readResponseJson();
+      return convention.createSerializer().deserialize(result, ReplicationStatistics.class);
+    }
+  }
+
+  @Override
+  public LicensingStatus getLicenseStatus() {
+    try (HttpJsonRequest request = jsonRequestFactory.createHttpJsonRequest(new CreateHttpJsonRequestParams(ServerClient.this, url + "/license/status",HttpMethods.GET, new RavenJObject(), credentialsThatShouldBeUsedOnlyInOperationsWithoutReplication, convention))) {
+      request.addOperationHeaders(operationsHeaders);
+      RavenJToken result = request.readResponseJson();
+      return convention.createSerializer().deserialize(result, LicensingStatus.class);
+    }
+  }
 
   @Override
   public BuildNumber getBuildNumber() {
@@ -1342,7 +1401,7 @@ public class ServerClient implements IDatabaseCommands {
     });
   }
 
-  @SuppressWarnings("null")
+  @SuppressWarnings({"null", "boxing"})
   protected List<JsonDocument> directStartsWith(final OperationMetadata operationMetadata, final String keyPrefix,
     final String matches, final int start, final int pageSize, final boolean metadataOnly, final String exclude,
     final RavenPagingInformation pagingInformation, final String transformer,
@@ -1395,7 +1454,7 @@ public class ServerClient implements IDatabaseCommands {
         }
       }
 
-      List<RavenJObject> docResults = new ArrayList<RavenJObject>();
+      List<RavenJObject> docResults = new ArrayList<>();
       for (RavenJToken token : result) {
         if (token instanceof RavenJObject) {
           docResults.add((RavenJObject)token.cloneToken());
@@ -1455,6 +1514,7 @@ public class ServerClient implements IDatabaseCommands {
         GetResponse[] responses = convention.createSerializer().deserialize(results, GetResponse[].class);
 
         multiGetOperation.tryResolveConflictOrCreateConcurrencyException(responses, new Function3<String, RavenJObject, Etag, ConflictException>() {
+          @SuppressWarnings("synthetic-access")
           @Override
           public ConflictException apply(String key, RavenJObject conflictsDoc, Etag etag) {
             return tryResolveConflictOrCreateConcurrencyException(operationMetadata, key, conflictsDoc, etag);
@@ -1551,6 +1611,7 @@ public class ServerClient implements IDatabaseCommands {
     }
   }
 
+  @SuppressWarnings("unused")
   protected QueryResult directQueryAsPost(final String index, final IndexQuery query, final OperationMetadata operationMetadata, final String[] includes) {
     StringBuilder stringBuilder = new StringBuilder();
     query.appendQueryString(stringBuilder);
@@ -1606,6 +1667,7 @@ public class ServerClient implements IDatabaseCommands {
     });
   }
 
+  @SuppressWarnings("boxing")
   protected SuggestionQueryResult directSuggest(String index, SuggestionQuery suggestionQuery, OperationMetadata operationMetadata) {
     String requestUri = operationMetadata.getUrl() + String.format("/suggest/%s?term=%s&field=%s&max=%d&popularity=%s",
       UrlUtils.escapeUriString(index),
@@ -1854,6 +1916,7 @@ public class ServerClient implements IDatabaseCommands {
     });
   }
 
+  @SuppressWarnings("boxing")
   protected List<String> directGetTerms(OperationMetadata operationMetadata, String index, String field, String fromValue, int pageSize) {
     String requestUri = operationMetadata.getUrl() + String.format("/terms/%s?field=%s&pageSize=%d&fromValue=%s",
       UrlUtils.escapeUriString(index),
@@ -1915,6 +1978,7 @@ public class ServerClient implements IDatabaseCommands {
     });
   }
 
+  @SuppressWarnings("boxing")
   public RavenJObjectIterator directStreamQuery(OperationMetadata operationMetadata, String index, IndexQuery query, Reference<QueryHeaderInformation> queryHeaderInfo) {
     ensureIsNotNullOrEmpty(index, "index");
 
@@ -2034,7 +2098,6 @@ public class ServerClient implements IDatabaseCommands {
   }
 
 
-  @SuppressWarnings("null")
   @Override
   public RavenJObjectIterator streamDocs(final Etag fromEtag, final String startsWith, final String matches, final int start, final int pageSize, final String exclude, final RavenPagingInformation pagingInformation, final String skipAfter) {
     return executeWithReplication(HttpMethods.GET, new Function1<OperationMetadata, RavenJObjectIterator>() {
@@ -2045,6 +2108,7 @@ public class ServerClient implements IDatabaseCommands {
     });
   }
 
+  @SuppressWarnings("null")
   public RavenJObjectIterator directStreamDocs(OperationMetadata operationMetadata, final Etag fromEtag, final String startsWith, final String matches, final int start, final int pageSize, final String exclude, final RavenPagingInformation pagingInformation, final String skipAfter) {
 
     if (fromEtag != null && startsWith != null)
@@ -2137,7 +2201,17 @@ public class ServerClient implements IDatabaseCommands {
     try (HttpJsonRequest jsonRequest = jsonRequestFactory.createHttpJsonRequest(
       new CreateHttpJsonRequestParams(this, operationMetadata.getUrl() + "/docs/" + UrlUtils.escapeDataString(key), HttpMethods.DELETE, new RavenJObject(), operationMetadata.getCredentials(), convention).addOperationHeaders(operationsHeaders))
       .addReplicationStatusHeaders(url, operationMetadata.getUrl(), replicationInformer, convention.getFailoverBehavior(), new HandleReplicationStatusChangesCallback())) {
-      jsonRequest.executeRequest();
+      if (etag != null) {
+        jsonRequest.addOperationHeader("If-None-Match", etag.toString());
+      }
+      try {
+        jsonRequest.executeRequest();
+      } catch (ErrorResponseException e) {
+        if (e.getStatusCode() != HttpStatus.SC_CONFLICT) {
+          throw e;
+        }
+        throw fetchConcurrencyException(e);
+      }
     }
   }
 
@@ -2190,6 +2264,7 @@ public class ServerClient implements IDatabaseCommands {
     });
   }
 
+  @Override
   public HttpJsonRequest createRequest(HttpMethods method, String requestUrl) {
     return createRequest(method, requestUrl, false, false, null);
   }
@@ -2283,6 +2358,7 @@ public class ServerClient implements IDatabaseCommands {
     }
   }
 
+  @SuppressWarnings("boxing")
   protected void handleReplicationStatusChanges(Map<String, String> headers, String primaryUrl, String currentUrl) {
     if (!primaryUrl.equalsIgnoreCase(currentUrl)) {
       String forceCheck = headers.get(Constants.RAVEN_FORCE_PRIMARY_SERVER_CHECK);
@@ -2299,6 +2375,7 @@ public class ServerClient implements IDatabaseCommands {
     return replicationInformer.executeWithReplication(method, url, credentialsThatShouldBeUsedOnlyInOperationsWithoutReplication, currentRequest, readStripingBase, operation);
   }
 
+  @SuppressWarnings("boxing")
   private boolean assertNonConflictedDocumentAndCheckIfNeedToReload(OperationMetadata operationMetadata,RavenJObject docResult, Function1<String, ConflictException> onClictedQueryResult) {
     if (docResult == null) {
       return false;
@@ -2323,6 +2400,7 @@ public class ServerClient implements IDatabaseCommands {
     return false;
   }
 
+  @SuppressWarnings("boxing")
   private ConflictException tryResolveConflictOrCreateConcurrencyException(OperationMetadata operationMetadata, String key, RavenJObject conflictsDoc, Etag etag) {
     RavenJArray ravenJArray = conflictsDoc.value(RavenJArray.class, "Conflicts");
     if (ravenJArray == null) {
@@ -2345,6 +2423,7 @@ public class ServerClient implements IDatabaseCommands {
     return conflictException;
   }
 
+  @SuppressWarnings("boxing")
   @Override
   public Boolean tryResolveConflictByUsingRegisteredListeners(OperationMetadata operationMetadata, String key,
     Etag etag, List<String> conflictedIds,

@@ -42,6 +42,7 @@ public class ArrayLengthQueryTest extends RemoteClientTest {
     return post;
   }
 
+  @SuppressWarnings("boxing")
   @Test
   public void canUseSizeOnSimpleArray() {
     try (IDocumentStore store = new DocumentStore(getDefaultUrl(), getDefaultDb()).initialize()) {
@@ -62,6 +63,7 @@ public class ArrayLengthQueryTest extends RemoteClientTest {
     }
   }
 
+  @SuppressWarnings("boxing")
   @Test
   public void canUseSizeOnList() {
     try (IDocumentStore store = new DocumentStore(getDefaultUrl(), getDefaultDb()).initialize()) {

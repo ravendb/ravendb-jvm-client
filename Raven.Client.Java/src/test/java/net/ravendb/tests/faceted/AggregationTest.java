@@ -20,7 +20,6 @@ import net.ravendb.tests.faceted.QAggregationTest_Order;
 
 import org.junit.Test;
 
-
 import com.mysema.query.annotations.QueryEntity;
 
 public class AggregationTest extends RemoteClientTest {
@@ -74,6 +73,7 @@ public class AggregationTest extends RemoteClientTest {
 
   }
 
+  @SuppressWarnings("boxing")
   @Test
   public void canCorrectlyAggregate() {
 
@@ -125,6 +125,7 @@ public class AggregationTest extends RemoteClientTest {
     }
   }
 
+  @SuppressWarnings("boxing")
   @Test
   public void canCorrectlyAggregate_MultipleItems() {
     QAggregationTest_Order o = QAggregationTest_Order.order;
@@ -186,6 +187,7 @@ public class AggregationTest extends RemoteClientTest {
     }
   }
 
+  @SuppressWarnings("boxing")
   @Test
   public void canCorrectlyAggregate_MultipleAggregations() {
     QAggregationTest_Order o = QAggregationTest_Order.order;
@@ -290,6 +292,7 @@ public class AggregationTest extends RemoteClientTest {
     }
   }
 
+  @SuppressWarnings("boxing")
   @Test
   public void canCorrectlyAggregate_Ranges() {
     QAggregationTest_Order o = QAggregationTest_Order.order;

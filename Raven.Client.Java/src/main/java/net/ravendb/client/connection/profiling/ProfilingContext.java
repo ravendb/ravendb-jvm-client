@@ -30,6 +30,7 @@ public class ProfilingContext {
   public ProfilingInformation tryGet(final UUID id) {
     return leastRecentlyUsedCache.firstOrDefault(new Function1<ProfilingInformation, Boolean>() {
 
+      @SuppressWarnings("boxing")
       @Override
       public Boolean apply(ProfilingInformation input) {
         return input.getId().equals(id);

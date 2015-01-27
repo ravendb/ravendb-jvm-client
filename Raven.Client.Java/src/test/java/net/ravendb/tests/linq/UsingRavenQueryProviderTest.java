@@ -31,11 +31,11 @@ import net.ravendb.tests.linq.QUsingRavenQueryProviderTest_OrderItem;
 import org.apache.commons.lang.time.DateUtils;
 import org.junit.Test;
 
-
 import com.mysema.query.annotations.QueryEntity;
 
 public class UsingRavenQueryProviderTest extends RemoteClientTest {
 
+  @SuppressWarnings("boxing")
   @Test
   public void can_perform_Skip_Take_Query() {
 
@@ -74,6 +74,7 @@ public class UsingRavenQueryProviderTest extends RemoteClientTest {
     }
   }
 
+  @SuppressWarnings("boxing")
   @Test
   public void can_perform_First_and_FirstOrDefault_Query() {
     try (IDocumentStore store = new DocumentStore(getDefaultUrl(), getDefaultDb()).initialize()) {
@@ -107,6 +108,7 @@ public class UsingRavenQueryProviderTest extends RemoteClientTest {
     }
   }
 
+  @SuppressWarnings("boxing")
   @Test
   public void can_perform_Single_and_SingleOrDefault_Query() {
     try (IDocumentStore store = new DocumentStore(getDefaultUrl(), getDefaultDb()).initialize()) {
@@ -162,6 +164,7 @@ public class UsingRavenQueryProviderTest extends RemoteClientTest {
     }
   }
 
+  @SuppressWarnings("boxing")
   @Test
   public void can_perform_boolean_queries() {
 
@@ -290,6 +293,7 @@ public class UsingRavenQueryProviderTest extends RemoteClientTest {
     }
   }
 
+  @SuppressWarnings("boxing")
   @Test // See issue #105 (http://github.com/ravendb/ravendb/issues/#issue/105)
   public void does_Not_Ignore_Expressions_Before_Where() {
 
@@ -437,6 +441,7 @@ public class UsingRavenQueryProviderTest extends RemoteClientTest {
     }
   }
 
+  @SuppressWarnings("boxing")
   @Test // See issue #91 http://github.com/ravendb/ravendb/issues/issue/91 and
   //discussion here http://groups.google.com/group/ravendb/browse_thread/thread/3df57d19d41fc21
   public void can_do_projection_in_query_result() {
@@ -660,6 +665,7 @@ public class UsingRavenQueryProviderTest extends RemoteClientTest {
     session.saveChanges();
   }
 
+  @SuppressWarnings("boxing")
   @Test
   public void can_Use_In_Array_In_Where_Clause() {
     try (IDocumentStore store = new DocumentStore(getDefaultUrl(), getDefaultDb()).initialize()) {
@@ -849,6 +855,7 @@ public class UsingRavenQueryProviderTest extends RemoteClientTest {
     }
   }
 
+  @SuppressWarnings("boxing")
   @Test
   public void can_Use_In_IEnumerable_In_Where_Clause_with_negation() {
     try (IDocumentStore store = new DocumentStore(getDefaultUrl(), getDefaultDb()).initialize()) {
@@ -893,6 +900,7 @@ public class UsingRavenQueryProviderTest extends RemoteClientTest {
     }
   }
 
+  @SuppressWarnings("boxing")
   @Test
   public void can_Use_In_Params_In_Where_Clause() {
     try (IDocumentStore store = new DocumentStore(getDefaultUrl(), getDefaultDb()).initialize()) {
@@ -931,6 +939,7 @@ public class UsingRavenQueryProviderTest extends RemoteClientTest {
     }
   }
 
+  @SuppressWarnings("boxing")
   @Test
   public void can_Use_In_IEnumerable_In_Where_Clause() {
     try (IDocumentStore store = new DocumentStore(getDefaultUrl(), getDefaultDb()).initialize()) {
@@ -973,6 +982,7 @@ public class UsingRavenQueryProviderTest extends RemoteClientTest {
     }
   }
 
+  @SuppressWarnings("boxing")
   @Test
   public void can_Use_In_IEnumerable_Not_In_Where_Clause_on_Id() {
     try (IDocumentStore store = new DocumentStore(getDefaultUrl(), getDefaultDb()).initialize()) {

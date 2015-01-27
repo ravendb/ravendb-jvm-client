@@ -234,6 +234,7 @@ public class DocumentStoreServerTest extends RemoteClientTest {
     }
   }
   // Can_select_from_index_using_linq_method_chain_using_decimal_and_greater_than_or_equal
+  @SuppressWarnings("boxing")
   @Test
   public void test_select_gte() {
     try (IDocumentStore store = new DocumentStore(getDefaultUrl(), getDefaultDb()).initialize()) {
@@ -764,6 +765,7 @@ public class DocumentStoreServerTest extends RemoteClientTest {
     }
   }
 
+  @SuppressWarnings("boxing")
   @Test
   public void can_select_from_index_using_linq_method_chain_using_integer() {
     try (IDocumentStore store = new DocumentStore(getDefaultUrl(), getDefaultDb()).initialize()) {
@@ -794,6 +796,7 @@ public class DocumentStoreServerTest extends RemoteClientTest {
   }
 
   //Can_select_from_index_using_linq_method_chain_using_integer_and_greater_than_or_equal
+  @SuppressWarnings("boxing")
   @Test
   public void can_select_from_index_using_linq_method_chain_using_integer_and_gte() {
     try (IDocumentStore store = new DocumentStore(getDefaultUrl(), getDefaultDb()).initialize()) {
@@ -1260,6 +1263,7 @@ public class DocumentStoreServerTest extends RemoteClientTest {
     }
   }
 
+  @SuppressWarnings("boxing")
   @Test
   public void using_attachments_can_properly_set_WebRequest_Headers() {
     String key = String.format("%s-%d", "test", new Date().getTime());
@@ -1342,6 +1346,7 @@ public class DocumentStoreServerTest extends RemoteClientTest {
     }
   }
 
+  @SuppressWarnings("boxing")
   @Test
   public void should_return_false_on_batch_delete_when_document_missing() {
     try (IDocumentStore store = new DocumentStore(getDefaultUrl(), getDefaultDb()).initialize()) {
@@ -1354,6 +1359,7 @@ public class DocumentStoreServerTest extends RemoteClientTest {
     }
   }
 
+  @SuppressWarnings("boxing")
   @Test
   public void should_return_true_on_batch_delete_when_document_present() {
     try (IDocumentStore store = new DocumentStore(getDefaultUrl(), getDefaultDb()).initialize()) {

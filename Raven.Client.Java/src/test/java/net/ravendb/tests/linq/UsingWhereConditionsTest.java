@@ -18,6 +18,7 @@ import org.junit.Test;
 
 public class UsingWhereConditionsTest extends RemoteClientTest {
 
+  @SuppressWarnings("boxing")
   @Test
   public void can_Use_Where() {
 
@@ -137,6 +138,7 @@ public class UsingWhereConditionsTest extends RemoteClientTest {
 
   private final static String REPO = "/svn/repo/";
 
+  @SuppressWarnings("static-method")
   private void addData(IDocumentSession session) {
 
     CommitInfo commit1 = new CommitInfo();

@@ -1,7 +1,6 @@
 package net.ravendb.tests.suggestions;
 
 import static org.junit.Assert.assertEquals;
-
 import net.ravendb.abstractions.data.StringDistanceTypes;
 import net.ravendb.abstractions.data.SuggestionQuery;
 import net.ravendb.abstractions.data.SuggestionQueryResult;
@@ -167,6 +166,7 @@ public class SuggestionsUsingAnIndexTest extends RemoteClientTest {
     }
   }
 
+  @SuppressWarnings("boxing")
   @Test
   public void usingLinq_WithOptions() {
     try (IDocumentStore store = new DocumentStore(getDefaultUrl(), getDefaultDb()).initialize()) {
@@ -198,6 +198,7 @@ public class SuggestionsUsingAnIndexTest extends RemoteClientTest {
     }
   }
 
+  @SuppressWarnings("boxing")
   @Test
   public void withTypo() {
     try (IDocumentStore store = new DocumentStore(getDefaultUrl(), getDefaultDb()).initialize()) {

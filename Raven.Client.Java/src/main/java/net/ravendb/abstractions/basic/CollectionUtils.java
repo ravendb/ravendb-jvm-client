@@ -10,6 +10,7 @@ import net.ravendb.abstractions.closure.Function1;
 
 public class CollectionUtils {
 
+  @SuppressWarnings("boxing")
   public static <T> T firstOrDefault(Collection<? extends T> collection, Function1<T, Boolean> predicate) {
     for (T element: collection) {
       if (predicate.apply(element)) {
@@ -20,7 +21,6 @@ public class CollectionUtils {
   }
 
   public static <T> List<T> except(Iterable<T> source, Iterable<T> second) {
-
     List<T> secondAsList = new ArrayList<>();
     Iterator<T> secondIterator = second.iterator();
     while (secondIterator.hasNext()) {
@@ -37,6 +37,4 @@ public class CollectionUtils {
     }
     return result;
   }
-
-
 }

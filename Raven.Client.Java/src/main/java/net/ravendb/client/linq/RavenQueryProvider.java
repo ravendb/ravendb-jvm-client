@@ -109,6 +109,7 @@ public class RavenQueryProvider<T> implements IRavenQueryProvider {
     return fieldsToRename;
   }
 
+  @SuppressWarnings("hiding")
   @Override
   public <S> IRavenQueryProvider forClass(Class<S> clazz) {
     if (this.clazz.equals(clazz)) {
@@ -156,7 +157,7 @@ public class RavenQueryProvider<T> implements IRavenQueryProvider {
     this.resultTranformer = transformerName;
   }
 
-
+  @SuppressWarnings("hiding")
   protected <S> RavenQueryProviderProcessor<S> getQueryProviderProcessor(Class<S> clazz) {
     return new RavenQueryProviderProcessor<>(clazz, queryGenerator, customizeQuery, afterQueryExecuted, indexName,
         fieldsToFetch, fieldsToRename, isMapReduce, resultTranformer, transformerParameters);
@@ -165,6 +166,7 @@ public class RavenQueryProvider<T> implements IRavenQueryProvider {
   /**
    * Convert the expression to a Lucene query
    */
+  @SuppressWarnings({"hiding", "unchecked"})
   @Override
   public <S> IDocumentQuery<S> toDocumentQuery(Class<S> clazz, Expression<?> expression) {
     RavenQueryProviderProcessor<T> processor = getQueryProviderProcessor(this.clazz);
@@ -173,6 +175,7 @@ public class RavenQueryProvider<T> implements IRavenQueryProvider {
     return result;
   }
 
+  @SuppressWarnings("hiding")
   @Override
   public <S> Lazy<List<S>> lazily(Class<S> clazz, Expression< ? > expression, Action1<List<S>> onEval) {
     final RavenQueryProviderProcessor<S> processor = getQueryProviderProcessor(clazz);
@@ -211,6 +214,7 @@ public class RavenQueryProvider<T> implements IRavenQueryProvider {
    * Register the query as a lazy-count query in the session and return a lazy
    * Register the query as a lazy-count query in the session and return a lazy
    */
+  @SuppressWarnings("hiding")
   @Override
   public <T> Lazy<Integer> countLazily(Class<T> clazz, Expression<?> expression) {
       RavenQueryProviderProcessor<T> processor = getQueryProviderProcessor(clazz);

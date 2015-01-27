@@ -1,6 +1,5 @@
 package net.ravendb.client.connection;
 
-import java.io.Closeable;
 import java.util.Date;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicLong;

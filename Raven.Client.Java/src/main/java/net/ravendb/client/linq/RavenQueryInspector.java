@@ -59,6 +59,7 @@ public class RavenQueryInspector<T> implements IRavenQueryable<T>, IRavenQueryIn
   private InMemoryDocumentSessionOperations session;
   private boolean isMapReduce;
 
+  @SuppressWarnings("hiding")
   public void init(Class<T> clazz, IRavenQueryProvider provider, RavenQueryStatistics queryStats, RavenQueryHighlightings highlightings, String indexName, Expression<?> expression, InMemoryDocumentSessionOperations session, IDatabaseCommands databaseCommands, boolean isMapReduce) {
     this.clazz = clazz;
     if (provider == null) {
@@ -286,6 +287,7 @@ public class RavenQueryInspector<T> implements IRavenQueryable<T>, IRavenQueryIn
     return toFacetsLazy(facets, start, null);
   }
 
+  @SuppressWarnings("hiding")
   @Override
   public Lazy<FacetResults> toFacetsLazy(List<Facet> facets, int start, Integer pageSize) {
     List<Facet> facetsList = facets;
@@ -473,6 +475,7 @@ public class RavenQueryInspector<T> implements IRavenQueryable<T>, IRavenQueryIn
     return search(fieldSelector, searchTerms, 1.0, new SearchOptionsSet(SearchOptions.GUESS), escapeQueryOptions);
   }
 
+  @SuppressWarnings("boxing")
   @Override
   public IRavenQueryable<T> search(Path< ? > fieldSelector, String searchTerms, double boost, SearchOptionsSet options, EscapeQueryOptions escapeQueryOptions) {
     // we use constant null to preserve arguments indexes
@@ -485,11 +488,13 @@ public class RavenQueryInspector<T> implements IRavenQueryable<T>, IRavenQueryIn
     return provider.createQuery(Expressions.operation(Object.class, LinqOps.Query.ORDER_BY_SCORE, getExpression()));
   }
 
+  @SuppressWarnings("boxing")
   @Override
   public IRavenQueryable<T> skip(int itemsToSkip) {
     return provider.createQuery(Expressions.operation(Object.class, LinqOps.Query.SKIP, getExpression(), Expressions.constant(itemsToSkip)));
   }
 
+  @SuppressWarnings("boxing")
   @Override
   public IRavenQueryable<T> take(int amount) {
     return provider.createQuery(Expressions.operation(Object.class, LinqOps.Query.TAKE, getExpression(), Expressions.constant(amount)));
@@ -502,6 +507,7 @@ public class RavenQueryInspector<T> implements IRavenQueryable<T>, IRavenQueryIn
     return ((Iterable<T>) execute).iterator();
   }
 
+  @SuppressWarnings("unchecked")
   @Override
   public T firstOrDefault() {
     return (T) provider.execute(Expressions.operation(Object.class, LinqOps.Query.FIRST_OR_DEFAULT, getExpression()));
@@ -512,26 +518,31 @@ public class RavenQueryInspector<T> implements IRavenQueryable<T>, IRavenQueryIn
     return EnumerableUtils.toList(iterator());
   }
 
+  @SuppressWarnings("unchecked")
   @Override
   public T first() {
     return (T) provider.execute(Expressions.operation(Object.class, LinqOps.Query.FIRST, getExpression()));
   }
 
+  @SuppressWarnings("unchecked")
   @Override
   public T singleOrDefault() {
     return (T) provider.execute(Expressions.operation(Object.class, LinqOps.Query.SINGLE_OR_DEFAULT, getExpression()));
   }
 
+  @SuppressWarnings("unchecked")
   @Override
   public T single() {
     return (T) provider.execute(Expressions.operation(Object.class, LinqOps.Query.SINGLE, getExpression()));
   }
 
+  @SuppressWarnings("boxing")
   @Override
   public int count() {
     return (int) provider.execute(Expressions.operation(Object.class, LinqOps.Query.COUNT, getExpression()));
   }
 
+  @SuppressWarnings("boxing")
   @Override
   public long longCount() {
     return (long) provider.execute(Expressions.operation(Object.class, LinqOps.Query.LONG_COUNT, getExpression()));
@@ -547,6 +558,7 @@ public class RavenQueryInspector<T> implements IRavenQueryable<T>, IRavenQueryIn
     return provider.createQuery(Expressions.operation(Object.class, LinqOps.Query.SELECT, getExpression(), Expressions.constant(projectionClass) )).as(projectionClass);
   }
 
+  @SuppressWarnings("unchecked")
   @Override
   public <TProjection> IRavenQueryable<TProjection> select(Path<TProjection> projectionPath) {
     return (IRavenQueryable<TProjection>) provider.createQuery(Expressions.operation(Object.class, LinqOps.Query.SELECT, getExpression(), projectionPath )).as(projectionPath.getType());
@@ -616,6 +628,7 @@ public class RavenQueryInspector<T> implements IRavenQueryable<T>, IRavenQueryIn
     return where(predicate).longCount();
   }
 
+  @SuppressWarnings("boxing")
   @Override
   public boolean any() {
     return (boolean) provider.execute(Expressions.operation(Boolean.class, LinqOps.Query.ANY_RESULT, getExpression()));

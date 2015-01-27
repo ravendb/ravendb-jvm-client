@@ -120,12 +120,14 @@ public class DocumentConvention extends Convention implements Serializable {
     setDefaultQueryingConsistency(ConsistencyOptions.NONE);
     setFailoverBehavior(FailoverBehaviorSet.of(FailoverBehavior.ALLOW_READS_FROM_SECONDARIES));
     setShouldCacheRequest(new RequestCachePolicy() {
+      @SuppressWarnings("boxing")
       @Override
       public Boolean shouldCacheRequest(String url) {
         return true;
       }
     });
     setFindIdentityProperty(new IdentityPropertyFinder() {
+      @SuppressWarnings("boxing")
       @Override
       public Boolean find(Field input) {
         return input.getName().equals("id");
@@ -152,6 +154,7 @@ public class DocumentConvention extends Convention implements Serializable {
       }
     });
     setFindFullDocumentKeyFromNonStringIdentifier(new DocumentKeyFinder() {
+      @SuppressWarnings("boxing")
       @Override
       public String find(Object id, Class< ? > type, Boolean allowNull) {
         return defaultFindFullDocumentKeyFromNonStringIdentifier(id, type, allowNull);
@@ -748,6 +751,7 @@ public class DocumentConvention extends Convention implements Serializable {
     }
   }
 
+  @SuppressWarnings("unchecked")
   public boolean tryConvertValueForQuery(String fieldName, Object value, QueryValueConvertionType convertionType, Reference<String> strValue) {
     for (Tuple<Class<?>, TryConvertValueForQueryDelegate<?>> queryValueConverterTuple : listOfQueryValueConverters) {
       if (queryValueConverterTuple.getItem1().isInstance(value)) {

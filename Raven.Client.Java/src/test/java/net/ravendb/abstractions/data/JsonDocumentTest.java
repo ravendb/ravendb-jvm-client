@@ -14,6 +14,7 @@ import org.junit.Test;
 
 
 public class JsonDocumentTest {
+  @SuppressWarnings("boxing")
   @Test
   public void testToJson() {
     RavenJObject doc = new RavenJObject();

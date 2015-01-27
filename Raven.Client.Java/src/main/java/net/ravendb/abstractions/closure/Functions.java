@@ -2,6 +2,7 @@ package net.ravendb.abstractions.closure;
 
 public class Functions {
   public static  class AlwaysTrue<S> implements Function1<S, Boolean> {
+    @SuppressWarnings("boxing")
     @Override
     public Boolean apply(S input) {
       return true;
@@ -9,6 +10,7 @@ public class Functions {
   }
 
   public static class AlwaysFalse<S> implements Function1<S, Boolean> {
+    @SuppressWarnings("boxing")
     @Override
     public Boolean apply(S input) {
       return false;

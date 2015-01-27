@@ -7,6 +7,7 @@ public class Int32Converter implements ITypeConverter {
     return Integer.class.equals(sourceType) || Integer.TYPE.equals(sourceType);
   }
 
+  @SuppressWarnings("boxing")
   @Override
   public String convertFrom(String tag, Object value, boolean allowNull) {
     Integer val = (Integer) value;

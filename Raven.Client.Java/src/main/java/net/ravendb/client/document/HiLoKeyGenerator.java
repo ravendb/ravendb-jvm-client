@@ -58,6 +58,7 @@ public class HiLoKeyGenerator extends HiLoKeyGeneratorBase {
     }
   }
 
+  @SuppressWarnings("boxing")
   private RangeValue getNextRange(IDatabaseCommands databaseCommands) {
     try (CleanCloseable close3 = databaseCommands.forceReadFromMaster()) {
 

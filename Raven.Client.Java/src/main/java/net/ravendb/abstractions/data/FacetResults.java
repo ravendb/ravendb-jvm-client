@@ -5,6 +5,7 @@ import java.util.Map;
 
 public class FacetResults {
   private Map<String, FacetResult> results;
+  private Etag indexStateEtag;
 
   /**
    * A list of results for the facet.  One entry for each term/range as specified in the facet setup document.
@@ -23,5 +24,15 @@ public class FacetResults {
 
   public FacetResults() {
     results = new HashMap<>();
+  }
+
+
+  public Etag getIndexStateEtag() {
+    return indexStateEtag;
+  }
+
+
+  public void setIndexStateEtag(Etag indexStateEtag) {
+    this.indexStateEtag = indexStateEtag;
   }
 }

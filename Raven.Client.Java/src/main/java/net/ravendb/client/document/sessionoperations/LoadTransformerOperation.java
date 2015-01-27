@@ -84,6 +84,7 @@ public class LoadTransformerOperation {
     return items;
   }
 
+  @SuppressWarnings("static-access")
   private boolean ensureNotReadVetoed(RavenJObject result) {
     RavenJObject metadata = result.value(RavenJObject.class, Constants.METADATA);
     if (metadata != null) {

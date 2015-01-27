@@ -9,6 +9,7 @@ import net.ravendb.client.utils.UrlUtils;
  * A query using spatial filtering
  */
 public class SpatialIndexQuery extends IndexQuery {
+  @SuppressWarnings("boxing")
   public static String getQueryShapeFromLatLon(double lat, double lng, double radius) {
     return String.format(Constants.getDefaultLocale(), "Circle(%.6f %.6f d=%.6f)", lng, lat, radius);
   }
@@ -126,6 +127,7 @@ public class SpatialIndexQuery extends IndexQuery {
   /**
    *  Gets the custom query string variables.
    */
+  @SuppressWarnings("boxing")
   @Override
   protected String getCustomQueryStringVariables() {
     String unitsParam = "";

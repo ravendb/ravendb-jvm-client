@@ -6,6 +6,7 @@ public class TimeUtils {
     try {
       Thread.sleep(duration);
     } catch (InterruptedException e) {
+      //ignore
     }
   }
 }

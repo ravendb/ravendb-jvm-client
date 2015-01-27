@@ -15,6 +15,7 @@ import org.junit.Assert;
 import org.junit.Test;
 
 
+@SuppressWarnings("deprecation")
 public class AttachmentReplicationBugsTest extends ReplicationBase {
 
   @Test

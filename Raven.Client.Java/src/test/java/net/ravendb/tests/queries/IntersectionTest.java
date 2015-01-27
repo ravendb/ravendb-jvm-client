@@ -31,6 +31,7 @@ public class IntersectionTest extends RemoteClientTest {
     }
   }
 
+  @SuppressWarnings("boxing")
   @Test
   public void canPerformIntersectionQuery_Linq() {
     try (IDocumentStore store = new DocumentStore(getDefaultUrl(), getDefaultDb()).initialize()) {
@@ -61,6 +62,7 @@ public class IntersectionTest extends RemoteClientTest {
     }
   }
 
+  @SuppressWarnings("static-method")
   private boolean hasGrayLarge(TShirt tShirts) {
     for (TShirtType type : tShirts.getTypes()) {
       if (type.getColor().equals("Gray") && type.getSize().equals("Large")) {
@@ -70,6 +72,7 @@ public class IntersectionTest extends RemoteClientTest {
     return false;
   }
 
+  @SuppressWarnings("static-method")
   private boolean hasBlueSmall(TShirt tShirts) {
     for (TShirtType type : tShirts.getTypes()) {
       if (type.getColor().equals("Gray") && type.getSize().equals("Large")) {
@@ -79,6 +82,7 @@ public class IntersectionTest extends RemoteClientTest {
     return false;
   }
 
+  @SuppressWarnings("boxing")
   private void executeTest(IDocumentStore store) {
     createIndexAndSampleData(store);
     try (IDocumentSession s = store.openSession()) {
@@ -156,6 +160,7 @@ public class IntersectionTest extends RemoteClientTest {
     }
   }
 
+  @SuppressWarnings("static-method")
   private List<TShirt> getSampleData() {
     TShirt tShirt1 = new TShirt(null, "Wolf", 10001, Arrays.asList(
         new TShirtType("Blue", "Small"),

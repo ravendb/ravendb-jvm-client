@@ -76,6 +76,7 @@ public class ReplicationConflictsTest extends ReplicationBase {
     }
   }
 
+  @SuppressWarnings("deprecation")
   @Test
   public void canGetNotificationsAboutConflictedAttachements() throws Exception {
     try (IDocumentStore store1 = createStore();

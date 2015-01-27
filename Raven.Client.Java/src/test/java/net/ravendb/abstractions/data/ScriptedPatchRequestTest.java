@@ -17,6 +17,7 @@ import org.junit.Test;
 
 public class ScriptedPatchRequestTest {
 
+  @SuppressWarnings("boxing")
   @Test
   public void testScriptedPatchRequest() throws JsonGenerationException, JsonMappingException, IOException {
     Map<String, Object> values = new HashMap<>();

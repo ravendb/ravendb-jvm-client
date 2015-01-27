@@ -43,6 +43,7 @@ public class LazyMoreLikeThisOperation<T> implements ILazyOperation {
   }
 
 
+  @SuppressWarnings("unused")
   public LazyMoreLikeThisOperation(Class<T> clazz, MultiLoadOperation multiLoadOperation, MoreLikeThisQuery query) {
     super();
     this.multiLoadOperation = multiLoadOperation;
@@ -57,6 +58,7 @@ public class LazyMoreLikeThisOperation<T> implements ILazyOperation {
     return new GetRequest(uri.substring(0, separator), uri.substring(separator + 1, uri.length() - separator - 1));
   }
 
+  @SuppressWarnings("hiding")
   @Override
   public void handleResponse(GetResponse response) {
     RavenJToken result = response.getResult();

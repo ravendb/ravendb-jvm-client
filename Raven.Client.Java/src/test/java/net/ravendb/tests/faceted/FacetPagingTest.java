@@ -34,6 +34,7 @@ public class FacetPagingTest extends FacetTestBase {
     data = getCameras(numCameras);
   }
 
+  @SuppressWarnings("boxing")
   @Test
   public void canPerformFacetedPagingSearchWithNoPageSizeNoMaxResults_HitsDesc() {
     //also specify more results than we have
@@ -85,6 +86,7 @@ public class FacetPagingTest extends FacetTestBase {
     }
   }
 
+  @SuppressWarnings("boxing")
   @Test
   public void canPerformFacetedPagingSearchWithNoPageSizeWithMaxResults_HitsDesc() {
     //also specify more results than we have
@@ -139,6 +141,7 @@ public class FacetPagingTest extends FacetTestBase {
     }
   }
 
+  @SuppressWarnings("boxing")
   @Test
   public void canPerformFacetedPagingSearchWithPageSize_HitsDesc() {
     //also specify more results than we have
@@ -193,6 +196,7 @@ public class FacetPagingTest extends FacetTestBase {
     }
   }
 
+  @SuppressWarnings("boxing")
   @Test
   public void canPerformFacetedPagingSearchWithPageSize_HitsAsc() {
     //also specify more results than we have
@@ -247,6 +251,7 @@ public class FacetPagingTest extends FacetTestBase {
     }
   }
 
+  @SuppressWarnings("boxing")
   @Test
   public void canPerformFacetedPagingSearchWithPageSize_TermDesc() {
     //also specify more results than we have
@@ -301,6 +306,7 @@ public class FacetPagingTest extends FacetTestBase {
     }
   }
 
+  @SuppressWarnings("boxing")
   @Test
   public void canPerformFacetedPagingSearchWithPageSize_TermAsc() {
     //also specify more results than we have
@@ -355,6 +361,7 @@ public class FacetPagingTest extends FacetTestBase {
     }
   }
 
+  @SuppressWarnings("boxing")
   @Test
   public void canPerformFacetedPagingSearchWithPageSize_HitsDesc_LuceneQuery() {
     //also specify more results than we have
@@ -409,6 +416,7 @@ public class FacetPagingTest extends FacetTestBase {
     }
   }
 
+  @SuppressWarnings("boxing")
   @Test
   public void canPerformFacetedPagingSearchWithPageSize_HitsAsc_LuceneQuery() {
     //also specify more results than we have
@@ -463,6 +471,7 @@ public class FacetPagingTest extends FacetTestBase {
     }
   }
 
+  @SuppressWarnings("boxing")
   @Test
   public void canPerformFacetedPagingSearchWithPageSize_TermDesc_LuceneQuery() {
     //also specify more results than we have
@@ -517,6 +526,7 @@ public class FacetPagingTest extends FacetTestBase {
     }
   }
 
+  @SuppressWarnings("boxing")
   @Test
   public void canPerformFacetedPagingSearchWithPageSize_TermAsc_LuceneQuery() {
     //also specify more results than we have
@@ -571,6 +581,7 @@ public class FacetPagingTest extends FacetTestBase {
     }
   }
 
+  @SuppressWarnings("boxing")
   @Test
   public void canPerformFacetedPagingSearchWithNoPageSizeNoMaxResults_HitsDesc_LuceneQuery() {
     //also specify more results than we have
@@ -622,6 +633,7 @@ public class FacetPagingTest extends FacetTestBase {
     }
   }
 
+  @SuppressWarnings("boxing")
   @Test
   public void canPerformFacetedPagingSearchWithNoPageSizeWithMaxResults_HitsDesc_LuceneQuery() {
     //also specify more results than we have
@@ -676,6 +688,7 @@ public class FacetPagingTest extends FacetTestBase {
     }
   }
 
+  @SuppressWarnings({"boxing", "static-method"})
   private List<GroupResult> mapToTuple(Map<String, Integer> map) {
     List<GroupResult> list=  new ArrayList<>();
     for (Map.Entry<String, Integer> entry : map.entrySet()) {

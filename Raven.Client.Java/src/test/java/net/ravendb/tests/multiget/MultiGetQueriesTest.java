@@ -35,6 +35,7 @@ public class MultiGetQueriesTest extends RemoteClientTest {
     }
   }
 
+  @SuppressWarnings("boxing")
   @Test
   public void withPaging() {
     try (IDocumentStore store = new DocumentStore(getDefaultUrl(), getDefaultDb()).initialize()) {
@@ -57,6 +58,7 @@ public class MultiGetQueriesTest extends RemoteClientTest {
     }
   }
 
+  @SuppressWarnings("boxing")
   @Test
   public void canGetQueryStats() {
     try (IDocumentStore store = new DocumentStore(getDefaultUrl(), getDefaultDb()).initialize()) {
@@ -95,6 +97,7 @@ public class MultiGetQueriesTest extends RemoteClientTest {
 
   private List<User> users = null;
 
+  @SuppressWarnings("boxing")
   @Test
   public void withQueuedActions() {
     try (IDocumentStore store = new DocumentStore(getDefaultUrl(), getDefaultDb()).initialize()) {
@@ -113,6 +116,7 @@ public class MultiGetQueriesTest extends RemoteClientTest {
         QUser x = QUser.user;
         session.query(User.class).where(x.age.eq(0)).skip(1).take(2).lazily(new Action1<List<User>>() {
 
+          @SuppressWarnings("synthetic-access")
           @Override
           public void apply(List<User> first) {
             users = first;
@@ -137,6 +141,7 @@ public class MultiGetQueriesTest extends RemoteClientTest {
       }
       try (IDocumentSession session = store.openSession()) {
         session.advanced().lazily().load(User.class, "users/1", new Action1<User>() {
+          @SuppressWarnings("synthetic-access")
           @Override
           public void apply(User first) {
             user = first;

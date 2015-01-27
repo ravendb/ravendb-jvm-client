@@ -7,8 +7,6 @@ import static org.junit.Assert.assertTrue;
 import java.util.Arrays;
 import java.util.List;
 
-import javax.swing.plaf.SliderUI;
-
 import net.ravendb.abstractions.data.Etag;
 import net.ravendb.abstractions.data.JsonDocument;
 import net.ravendb.abstractions.data.UuidType;

@@ -34,6 +34,7 @@ import org.codehaus.jackson.map.type.SimpleType;
 import org.codehaus.jackson.map.type.TypeFactory;
 
 
+@SuppressWarnings("deprecation")
 public class SerializationHelper {
 
   /**
@@ -122,6 +123,7 @@ public class SerializationHelper {
    * Java only
    * @param responseJson
    */
+  @SuppressWarnings({"boxing"})
   public static List<Attachment> deserializeAttachements(RavenJToken responseJson, boolean canReadData) {
     RavenJArray array = (RavenJArray) responseJson;
 
@@ -138,6 +140,7 @@ public class SerializationHelper {
     return result;
   }
 
+  @SuppressWarnings("boxing")
   public static JsonDocumentMetadata deserializeJsonDocumentMetadata(String docKey, Map<String, String> headers, int responseStatusCode) {
     RavenJObject meta = MetadataExtensions.filterHeadersToObject(headers);
     Etag etag = HttpExtensions.etagHeaderToEtag(headers.get(Constants.METADATA_ETAG_FIELD));
@@ -150,6 +153,7 @@ public class SerializationHelper {
     return result;
   }
 
+  @SuppressWarnings("boxing")
   public static JsonDocument ravenJObjectToJsonDocument(RavenJObject doc) {
     RavenJObject metadata = (RavenJObject) doc.get("@metadata");
     doc.remove("@metadata");
@@ -165,6 +169,7 @@ public class SerializationHelper {
     return jsonDocument;
   }
 
+  @SuppressWarnings("boxing")
   public static JsonDocument deserializeJsonDocument(String docKey, RavenJToken responseJson, Map<String, String> headers, int responseStatusCode) {
     RavenJObject jsonData = (RavenJObject) responseJson;
 
@@ -178,6 +183,7 @@ public class SerializationHelper {
     return ravenJObjectToJsonDocument(r);
   }
 
+  @SuppressWarnings({"unused", "boxing", "unchecked"})
   public static QueryResult toQueryResult(RavenJObject json, Etag etagHeader, String tempRequestTime, long numberOfCharactersRead) {
     QueryResult result = new QueryResult();
     result.setStale(json.value(Boolean.class, "IsStale"));

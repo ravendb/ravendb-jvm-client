@@ -1,6 +1,7 @@
 package net.ravendb.client.utils;
 
 public class TimeSpan {
+  @SuppressWarnings("boxing")
   public static String formatString(long time) {
     long milis = time % 1000;
     time = time / 1000; // seconds

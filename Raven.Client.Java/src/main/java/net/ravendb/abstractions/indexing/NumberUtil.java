@@ -33,6 +33,7 @@ public class NumberUtil {
    * @param number
    * @return string representation of number
    */
+  @SuppressWarnings("boxing")
   public static String numberToString(float number) {
     return "Fx" + trimZeros(String.format(Constants.getDefaultLocale(), "%.11f", number));
   }
@@ -42,6 +43,7 @@ public class NumberUtil {
    * @param number
    * @return string representation of number
    */
+  @SuppressWarnings("boxing")
   public static String numberToString(double number) {
     return "Dx" + trimZeros(String.format(Constants.getDefaultLocale(), "%.11f", number));
   }
@@ -65,6 +67,7 @@ public class NumberUtil {
    * @param number
    * @return number
    */
+  @SuppressWarnings("boxing")
   public static Object stringToNumber(String number)
   {
     if (number == null)

@@ -78,6 +78,7 @@ public class WhereClauseTest {
     assertEquals("Active:false", q.toString());
   }
 
+  @SuppressWarnings("boxing")
   @Test
   public void handlesNegativeEquality() {
     RavenQueryInspector<IndexedUser> indexedUsers = getRavenQueryInspector();
@@ -86,6 +87,7 @@ public class WhereClauseTest {
     assertEquals("Active:false", q.toString());
   }
 
+  @SuppressWarnings("boxing")
   @Test
   public void handleDoubleRangeSearch() {
     RavenQueryInspector<IndexedUser> indexedUsers = getRavenQueryInspector();
@@ -112,6 +114,7 @@ public class WhereClauseTest {
     assertEquals("Name:foo*", q.toString());
   }
 
+  @SuppressWarnings("boxing")
   @Test
   public void startsWithEqTrue() {
     RavenQueryInspector<IndexedUser> indexedUsers = getRavenQueryInspector();
@@ -120,6 +123,7 @@ public class WhereClauseTest {
     assertEquals("Name:foo*", q.toString());
   }
 
+  @SuppressWarnings("boxing")
   @Test
   public void startsWithEqFalse() {
     RavenQueryInspector<IndexedUser> indexedUsers = getRavenQueryInspector();
@@ -144,6 +148,7 @@ public class WhereClauseTest {
     assertEquals("(Name:[[NULL_VALUE]] OR Name:[[EMPTY_STRING]])", q.toString());
   }
 
+  @SuppressWarnings("boxing")
   @Test
   public void isNullOrEmptyEqTrue() {
     RavenQueryInspector<IndexedUser> indexedUsers = getRavenQueryInspector();
@@ -152,6 +157,7 @@ public class WhereClauseTest {
     assertEquals("(Name:[[NULL_VALUE]] OR Name:[[EMPTY_STRING]])", q.toString());
   }
 
+  @SuppressWarnings("boxing")
   @Test
   public void isNullOrEmptyEqFalse() {
     RavenQueryInspector<IndexedUser> indexedUsers = getRavenQueryInspector();
@@ -176,6 +182,7 @@ public class WhereClauseTest {
     assertEquals("(*:* AND -(Name:[[NULL_VALUE]] OR Name:[[EMPTY_STRING]]))", q.toString());
   }
 
+  @SuppressWarnings("boxing")
   @Test
   public void isNullOrEmpty_AnyEqTrue() {
     RavenQueryInspector<IndexedUser> indexedUsers = getRavenQueryInspector();
@@ -184,6 +191,7 @@ public class WhereClauseTest {
     assertEquals("(*:* AND -(Name:[[NULL_VALUE]] OR Name:[[EMPTY_STRING]]))", q.toString());
   }
 
+  @SuppressWarnings("boxing")
   @Test
   public void isNullOrEmpty_AnyEqFalse() {
     RavenQueryInspector<IndexedUser> indexedUsers = getRavenQueryInspector();
@@ -192,6 +200,7 @@ public class WhereClauseTest {
     assertEquals("(*:* AND -(*:* AND -(Name:[[NULL_VALUE]] OR Name:[[EMPTY_STRING]])))", q.toString());
   }
 
+  @SuppressWarnings("boxing")
   @Test
   public void isNullOrEmpty_AnyNegated() {
     RavenQueryInspector<IndexedUser> indexedUsers = getRavenQueryInspector();
@@ -237,6 +246,7 @@ public class WhereClauseTest {
     assertEquals("Name:[[ayende]]", q.toString());
   }
 
+  @SuppressWarnings("boxing")
   @Test
   //we can't use value then property in QueryDSL
   public void canCompareValueThenPropertyGT() {
@@ -246,6 +256,7 @@ public class WhereClauseTest {
     assertEquals("Age_Range:{* TO Ix15}", q.toString());
   }
 
+  @SuppressWarnings("boxing")
   @Test
   //we can't use value then property in QueryDSL
   public void canCompareValueThenPropertyGE() {
@@ -255,6 +266,7 @@ public class WhereClauseTest {
     assertEquals("Age_Range:[* TO Ix15]", q.toString());
   }
 
+  @SuppressWarnings("boxing")
   @Test
   //we can't use value then property in QueryDSL
   public void canCompareValueThenPropertyLT() {
@@ -264,6 +276,7 @@ public class WhereClauseTest {
     assertEquals("Age_Range:{Ix15 TO NULL}", q.toString());
   }
 
+  @SuppressWarnings("boxing")
   @Test
   //we can't use value then property in QueryDSL
   public void canCompareValueThenPropertyLE() {
@@ -273,6 +286,7 @@ public class WhereClauseTest {
     assertEquals("Age_Range:[Ix15 TO NULL]", q.toString());
   }
 
+  @SuppressWarnings("boxing")
   @Test
   //we can't use value then property in QueryDSL
   public void canCompareValueThenPropertyEQ() {
@@ -282,6 +296,7 @@ public class WhereClauseTest {
     assertEquals("Age:15", q.toString());
   }
 
+  @SuppressWarnings("boxing")
   @Test
   //we can't use value then property in QueryDSL
   public void canCompareValueThenPropertyNE() {
@@ -391,6 +406,7 @@ public class WhereClauseTest {
 
   }
 
+  @SuppressWarnings("static-method")
   private Date mkDate(int year, int month, int day) {
     Calendar calendar = Calendar.getInstance(TimeZone.getTimeZone("GMT"));
     calendar = DateUtils.truncate(calendar, Calendar.DAY_OF_MONTH);
@@ -398,6 +414,7 @@ public class WhereClauseTest {
     return calendar.getTime();
   }
 
+  @SuppressWarnings("boxing")
   @Test
   public void negatingSubClauses() {
     IDocumentQuery<Object> query = new DocumentQuery<>(Object.class, null, null, null, null, null, null, false).not()
@@ -458,6 +475,7 @@ public class WhereClauseTest {
     assertEquals("<Name, Age>: Birthday:[2010-05-15T00:00:00.0000000Z TO NULL]", q.toString());
   }
 
+  @SuppressWarnings("boxing")
   @Test
   public void canUnderstandSimpleEqualityOnInt() {
     RavenQueryInspector<IndexedUser> indexedUsers = getRavenQueryInspector();
@@ -466,6 +484,7 @@ public class WhereClauseTest {
     assertEquals("Age:3", q.toString());
   }
 
+  @SuppressWarnings("boxing")
   @Test
   public void canUnderstandGreaterThanOnInt() {
     RavenQueryInspector<IndexedUser> indexedUsers = getRavenQueryInspector();
@@ -482,6 +501,7 @@ public class WhereClauseTest {
     assertEquals("<Name, Age>: Birthday:[2010-05-15T00:00:00.0000000Z TO NULL]", q.toString());
   }
 
+  @SuppressWarnings("boxing")
   @Test
   public void canUnderstandConvertExpressions() {
     RavenQueryInspector<IndexedUser> indexedUsers = getRavenQueryInspector();
@@ -490,6 +510,7 @@ public class WhereClauseTest {
     assertEquals("Age:3", q.toString());
   }
 
+  @SuppressWarnings("boxing")
   @Test
   public void canChainMultipleWhereClauses() {
     RavenQueryInspector<IndexedUser> indexedUsers = getRavenQueryInspector();
@@ -524,6 +545,7 @@ public class WhereClauseTest {
     assertEquals("Properties:*", q.toString());
   }
 
+  @SuppressWarnings("boxing")
   @Test
   public void anyOnCollectionEqTrue() {
     RavenQueryInspector<IndexedUser> indexedUsers = getRavenQueryInspector();
@@ -532,6 +554,7 @@ public class WhereClauseTest {
     assertEquals("Properties:*", q.toString());
   }
 
+  @SuppressWarnings("boxing")
   @Test
   public void anyOnCollectionEqFalse() {
     RavenQueryInspector<IndexedUser> indexedUsers = getRavenQueryInspector();
@@ -635,7 +658,7 @@ public class WhereClauseTest {
 
   @QueryEntity
   public static interface IAnimal {
-
+    // empty by design
   }
 
   @QueryEntity

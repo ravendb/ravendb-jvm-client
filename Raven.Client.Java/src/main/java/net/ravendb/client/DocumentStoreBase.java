@@ -126,6 +126,7 @@ public abstract class DocumentStoreBase implements IDocumentStore {
     this.conventions = conventions;
   }
 
+  @SuppressWarnings("hiding")
   public DocumentStore withConventions(DocumentConvention conventions) {
     this.conventions = conventions;
     return (DocumentStore) this;

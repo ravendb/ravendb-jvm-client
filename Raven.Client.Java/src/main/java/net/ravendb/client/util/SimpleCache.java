@@ -21,6 +21,7 @@ public class SimpleCache implements CleanCloseable {
   public SimpleCache(int maxNumberOfCacheEntries) {
     actualCache = new ConcurrentHashMap<>();
     lruKeys = new ConcurrentLruSet<>(maxNumberOfCacheEntries, new Action1<String>() {
+      @SuppressWarnings("synthetic-access")
       @Override
       public void apply(String key) {
         actualCache.remove(key);
@@ -32,6 +33,7 @@ public class SimpleCache implements CleanCloseable {
     return Runtime.getRuntime().freeMemory() / 1024 / 1024;
   }
 
+  @SuppressWarnings("boxing")
   public void set(String key, CachedRequest val) {
     if (memoryPressureCounterOnSet.incrementAndGet() % 25 == 0) {
       tryClearMemory();
@@ -52,6 +54,7 @@ public class SimpleCache implements CleanCloseable {
     }
   }
 
+  @SuppressWarnings("boxing")
   public CachedRequest get(String key) {
     CachedRequest value = null;
     if (actualCache.containsKey(key)) {
@@ -84,6 +87,7 @@ public class SimpleCache implements CleanCloseable {
     actualCache.clear();
   }
 
+  @SuppressWarnings("boxing")
   public void forceServerCheckOfCachedItemsForDatabase(String databaseName) {
     Long existingValue = lastWritePerDb.putIfAbsent(databaseName, 1L);
     if (existingValue != null) {

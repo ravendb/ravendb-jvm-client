@@ -204,6 +204,7 @@ public class ConflictsResolver {
     throw new IllegalStateException("Could not understand how to deal with: " + propertyValue);
   }
 
+  @SuppressWarnings("static-method")
   private void writeRawData(JsonGenerator writer, String data, int indent) throws JsonGenerationException, IOException {
     StringBuffer sb = new StringBuffer();
     String[] lines = data.split("\n");

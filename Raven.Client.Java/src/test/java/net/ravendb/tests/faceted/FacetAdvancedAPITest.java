@@ -66,6 +66,7 @@ public class FacetAdvancedAPITest {
 
   }
 
+  @SuppressWarnings("boxing")
   @org.junit.Test
   public void canUseNewAPIToDoMultipleQueries() {
     Facet oldFacet1 = new Facet();
@@ -114,6 +115,7 @@ public class FacetAdvancedAPITest {
 
   }
 
+  @SuppressWarnings("boxing")
   @org.junit.Test
   public void newAPIThrowsExceptionsForInvalidExpressions() {
     QFacetAdvancedAPITest_Test x = QFacetAdvancedAPITest_Test.test;
@@ -159,6 +161,7 @@ public class FacetAdvancedAPITest {
     }
   }
 
+  @SuppressWarnings("static-method")
   private Date makeDate(int year, int month, int day) {
     Calendar cal = Calendar.getInstance(TimeZone.getTimeZone("GMT"));
     cal.set(year, month - 1, day);
@@ -187,6 +190,7 @@ public class FacetAdvancedAPITest {
 
   }
 
+  @SuppressWarnings("static-method")
   private boolean areFacetsEqual(Facet left, Facet right) {
     return left.getName().equals(right.getName())
         && left.getMode().equals(right.getMode())

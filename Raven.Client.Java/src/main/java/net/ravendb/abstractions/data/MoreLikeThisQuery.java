@@ -307,6 +307,7 @@ public class MoreLikeThisQuery {
     this.stopWordsDocumentId = stopWordsDocumentId;
   }
 
+  @SuppressWarnings("boxing")
   public String getRequestUri() {
     if (StringUtils.isEmpty(indexName)) {
       throw new IllegalArgumentException("Index name cannot be null or empty");

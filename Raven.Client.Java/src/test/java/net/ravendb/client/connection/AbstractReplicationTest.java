@@ -24,6 +24,7 @@ public abstract class AbstractReplicationTest extends RavenDBAwareTests{
   protected static final String TARGET = "target";
 
 
+  @SuppressWarnings("cast")
   @Before
   @Override
   public void init() {

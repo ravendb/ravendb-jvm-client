@@ -80,6 +80,7 @@ public class AdminServerClient implements IAdminDatabaseCommands, IGlobalAdminDa
     return innerServerClient;
   }
 
+  @SuppressWarnings("boxing")
   @Override
   public Operation compactDatabase(String databaseName) {
     try (HttpJsonRequest request = adminRequest.compactDatabase(databaseName)) {
@@ -133,6 +134,7 @@ public class AdminServerClient implements IAdminDatabaseCommands, IGlobalAdminDa
     }
   }
 
+  @SuppressWarnings("boxing")
   @Override
   public Operation startRestore(DatabaseRestoreRequest restoreRequest) {
     try (HttpJsonRequest request = adminRequest.createRestoreRequest()) {

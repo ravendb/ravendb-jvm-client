@@ -28,6 +28,8 @@ import net.ravendb.abstractions.data.HttpMethods;
 import net.ravendb.abstractions.data.IndexQuery;
 import net.ravendb.abstractions.data.JsonDocument;
 import net.ravendb.abstractions.data.JsonDocumentMetadata;
+import net.ravendb.abstractions.data.LicensingStatus;
+import net.ravendb.abstractions.data.LogItem;
 import net.ravendb.abstractions.data.MoreLikeThisQuery;
 import net.ravendb.abstractions.data.MultiLoadResult;
 import net.ravendb.abstractions.data.PatchRequest;
@@ -42,6 +44,7 @@ import net.ravendb.abstractions.indexing.IndexMergeResults;
 import net.ravendb.abstractions.indexing.TransformerDefinition;
 import net.ravendb.abstractions.json.linq.RavenJObject;
 import net.ravendb.abstractions.json.linq.RavenJToken;
+import net.ravendb.abstractions.replication.ReplicationStatistics;
 import net.ravendb.client.RavenPagingInformation;
 import net.ravendb.client.changes.IDatabaseChanges;
 import net.ravendb.client.connection.implementation.HttpJsonRequest;
@@ -50,6 +53,7 @@ import net.ravendb.client.document.ILowLevelBulkInsertOperation;
 import net.ravendb.client.indexes.IndexDefinitionBuilder;
 
 
+@SuppressWarnings("deprecation")
 public interface IDatabaseCommands extends IHoldProfilingInformation {
 
   /**
@@ -144,6 +148,21 @@ public interface IDatabaseCommands extends IHoldProfilingInformation {
    * @param metadataOnly Specifies if only document metadata should be returned
    */
   public List<JsonDocument> getDocuments(int start, int pageSize, boolean metadataOnly);
+
+  /**
+   * Retrieves multiple documents.
+   * @param fromEtag Etag from which documents should start
+   * @param pageSize Maximum number of documents that will be retrieved
+   */
+  public List<JsonDocument> getDocuments(Etag fromEtag, int pageSize);
+
+  /**
+   * Retrieves multiple documents.
+   * @param fromEtag Etag from which documents should start
+   * @param pageSize Maximum number of documents that will be retrieved
+   * @param metadataOnly Specifies if only document metadata should be returned
+   */
+  public List<JsonDocument> getDocuments(Etag fromEtag, int pageSize, boolean metadataOnly);
 
   /**
    * Queries the specified index in the Raven-flavored Lucene query syntax
@@ -780,6 +799,21 @@ public interface IDatabaseCommands extends IHoldProfilingInformation {
    */
   public FacetResults[] getMultiFacets(FacetQuery[] facetedQueries);
 
+  /**
+   * Gets the license status
+   */
+  public LicensingStatus getLicenseStatus();
+
+  /**
+   * Gets the Logs
+   */
+  public LogItem[] getLogs(boolean errorsOnly);
+
+
+  /**
+   * Get replication info
+   */
+  public ReplicationStatistics getReplicationInfo();
 
   /**
    * Retrieves the document metadata for the specified document key.

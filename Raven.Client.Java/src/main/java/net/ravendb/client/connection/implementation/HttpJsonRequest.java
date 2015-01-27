@@ -126,6 +126,7 @@ public class HttpJsonRequest implements CleanCloseable {
 
   private Map<String, String> defaultRequestHeaders = new HashMap<>();
 
+  @SuppressWarnings("boxing")
   public HttpJsonRequest(CreateHttpJsonRequestParams requestParams, HttpJsonRequestFactory factory) {
     sp = new StopWatch();
     sp.start();
@@ -191,6 +192,7 @@ public class HttpJsonRequest implements CleanCloseable {
 
     RavenJToken result = sendRequestInternal(new Function0<HttpUriRequest>() {
 
+      @SuppressWarnings("synthetic-access")
       @Override
       public HttpUriRequest apply() {
         return createWebRequest(url, method);
@@ -232,6 +234,7 @@ public class HttpJsonRequest implements CleanCloseable {
     });
   }
 
+  @SuppressWarnings("boxing")
   private void assertServerVersionSupported() {
     String serverBuildString = responseHeaders.get(Constants.RAVEN_SERVER_BUILD);
     if (serverBuildString == null) {
@@ -392,6 +395,7 @@ public class HttpJsonRequest implements CleanCloseable {
 
   public byte[] readResponseBytes() throws IOException {
     sendRequestInternal(new Function0<HttpUriRequest>() {
+      @SuppressWarnings("synthetic-access")
       @Override
       public HttpUriRequest apply() {
         return createWebRequest(url, method);
@@ -423,6 +427,7 @@ public class HttpJsonRequest implements CleanCloseable {
     conventions.handleForbiddenResponse(forbiddenResponse);
   }
 
+  @SuppressWarnings("unused")
   private void recreateHttpClient(Action1<HttpRequest> configureHttpClient) {
     sp.reset();
     sp.start();
@@ -482,6 +487,7 @@ public class HttpJsonRequest implements CleanCloseable {
     return this;
   }
 
+  @SuppressWarnings("unused")
   public HttpJsonRequest addReplicationStatusHeaders(String thePrimaryUrl, String currentUrl,
     IDocumentStoreReplicationInformer replicationInformer, FailoverBehaviorSet failoverBehavior,
     HandleReplicationStatusChangesCallback handleReplicationStatusChangesCallback) {
@@ -524,6 +530,7 @@ public class HttpJsonRequest implements CleanCloseable {
     return sp.getTime();
   }
 
+  @SuppressWarnings("boxing")
   private void writeMetadata(RavenJObject metadata) {
     if (metadata == null || metadata.getCount() == 0) {
       return;
@@ -588,6 +595,7 @@ public class HttpJsonRequest implements CleanCloseable {
     writeCalled = true;
 
     sendRequestInternal(new Function0<HttpUriRequest>() {
+      @SuppressWarnings("synthetic-access")
       @Override
       public HttpUriRequest apply() {
         HttpEntityEnclosingRequestBase requestMethod = (HttpEntityEnclosingRequestBase) createWebRequest(url, method);
@@ -663,6 +671,7 @@ public class HttpJsonRequest implements CleanCloseable {
     return response;
   }
 
+  @SuppressWarnings({"hiding", "boxing"})
   private HttpUriRequest createWebRequest(String url, HttpMethods method) {
 
     HttpUriRequest baseMethod = null;
@@ -801,6 +810,7 @@ public class HttpJsonRequest implements CleanCloseable {
 
   public HttpResponse executeRawRequest(final BulkInsertEntity bulkInsertEntity) {
     response = runWithAuthRetry(new Function0<CloseableHttpResponse>() {
+      @SuppressWarnings({"synthetic-access", "hiding"})
       @Override
       public CloseableHttpResponse apply() {
         HttpUriRequest rawRequestMessage = createWebRequest(url, method);

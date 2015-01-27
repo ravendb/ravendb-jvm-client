@@ -125,6 +125,7 @@ public class EntityToJson {
     }
   }
 
+  @SuppressWarnings("unused")
   private static void trySimplifyingJson(RavenJObject jObject) {
     // empty for now - register custom clean up methods
   }

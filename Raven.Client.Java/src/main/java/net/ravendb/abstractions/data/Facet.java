@@ -9,7 +9,6 @@ import net.ravendb.abstractions.util.RavenQuery;
 
 import org.apache.commons.lang.StringUtils;
 
-
 import com.mysema.query.types.Constant;
 import com.mysema.query.types.Expression;
 import com.mysema.query.types.Operation;
@@ -30,6 +29,7 @@ public class Facet {
   private List<String> ranges;
   private Integer maxResults;
   private FacetTermSortMode termSortMode;
+  @SuppressWarnings("boxing")
   private Boolean includeRemainingTerms = false;
 
   public Facet() {
@@ -301,6 +301,7 @@ public class Facet {
     return isLeft ? "[" : "]";
   }
 
+  @SuppressWarnings("boxing")
   private static String getStringValue(Object value) {
     String clazzName = value.getClass().getName();
 

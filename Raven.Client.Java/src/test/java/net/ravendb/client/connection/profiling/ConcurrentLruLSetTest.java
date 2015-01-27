@@ -53,6 +53,7 @@ public class ConcurrentLruLSetTest {
     assertTrue(dropped.iterator().next().equals("Item #1"));
 
     String string = set1.firstOrDefault(new Function1<String, Boolean>() {
+      @SuppressWarnings("boxing")
       @Override
       public Boolean apply(String input) {
         return "Item #4".equals(input);

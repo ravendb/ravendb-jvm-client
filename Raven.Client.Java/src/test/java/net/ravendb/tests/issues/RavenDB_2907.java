@@ -100,6 +100,7 @@ public class RavenDB_2907 extends RemoteClientTest {
     }
   }
 
+  @SuppressWarnings("static-method")
   private FooAnBar makeAndStoreEntities(IDocumentStore db) {
     try (IDocumentSession session = db.openSession()) {
       Bar bar = new Bar();

@@ -45,6 +45,7 @@ public class DictionaryWithParentSnapshotTest {
     assertNotNull("It should contain DELETE_MARKER", localChanges.get("name"));
   }
 
+  @SuppressWarnings("static-access")
   @Test
   public void canDuplicateKeys() {
     DictionaryWithParentSnapshot map = new DictionaryWithParentSnapshot(String.CASE_INSENSITIVE_ORDER);
@@ -52,6 +53,7 @@ public class DictionaryWithParentSnapshotTest {
     map.put("name", RavenJValue.parse("5"));
   }
 
+  @SuppressWarnings("static-access")
   @Test
   public void testClear() {
     DictionaryWithParentSnapshot map = new DictionaryWithParentSnapshot(String.CASE_INSENSITIVE_ORDER);
@@ -68,6 +70,7 @@ public class DictionaryWithParentSnapshotTest {
     map.put("key", RavenJToken.fromObject("a"));
   }
 
+  @SuppressWarnings("static-access")
   @Test
   public void testValues() {
     DictionaryWithParentSnapshot map = new DictionaryWithParentSnapshot(String.CASE_INSENSITIVE_ORDER);
@@ -96,6 +99,7 @@ public class DictionaryWithParentSnapshotTest {
     assertNotNull(map.entrySet());
   }
 
+  @SuppressWarnings("static-access")
   @Test
   public void testPutAll() {
     DictionaryWithParentSnapshot map = new DictionaryWithParentSnapshot(String.CASE_INSENSITIVE_ORDER);
@@ -114,6 +118,7 @@ public class DictionaryWithParentSnapshotTest {
     assertTrue(snapshot.keySet().isEmpty());
   }
 
+  @SuppressWarnings({"static-access"})
   @Test
   public void testWithParents() {
     DictionaryWithParentSnapshot map = new DictionaryWithParentSnapshot(String.CASE_INSENSITIVE_ORDER);
@@ -155,6 +160,7 @@ public class DictionaryWithParentSnapshotTest {
 
   }
 
+  @SuppressWarnings("static-access")
   @Test
   public void testIteration() {
     DictionaryWithParentSnapshot map = new DictionaryWithParentSnapshot(String.CASE_INSENSITIVE_ORDER);

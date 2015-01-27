@@ -34,6 +34,7 @@ import com.mysema.query.annotations.QueryEntity;
 
 public class CanQueryOnCustomClassTest extends RemoteClientTest {
 
+  @SuppressWarnings("boxing")
   @Test
   public void usingConverter() {
 
@@ -55,6 +56,7 @@ public class CanQueryOnCustomClassTest extends RemoteClientTest {
     }
   }
 
+  @SuppressWarnings("static-method")
   private Module setupMoneyModule() {
     SimpleModule module = new SimpleModule("moneyModule", new Version(1, 0, 0, null));
     module.addDeserializer(Money.class, new MoneyDeserializer());

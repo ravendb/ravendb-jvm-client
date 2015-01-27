@@ -72,6 +72,7 @@ public class DatabaseConnectionState implements IChangesConnectionState {
     EventHelper.invoke(onBulkInsertChangeNotification, bulkInsertChangeNotification);
   }
 
+  @Override
   public void error(Exception e) {
     EventHelper.invoke(onError, new ExceptionEventArgs(e));
   }
@@ -81,12 +82,14 @@ public class DatabaseConnectionState implements IChangesConnectionState {
     this.onZero = onZero;
   }
 
+  @Override
   public void inc() {
     synchronized (this) {
       value++;
     }
   }
 
+  @Override
   public void dec() {
     synchronized (this) {
      if (--value == 0) {

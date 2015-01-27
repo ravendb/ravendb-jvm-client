@@ -14,6 +14,7 @@ public class DocumentMetadata {
   private String key;
   private RavenJObject originalMetadata;
   private boolean forceConcurrencyCheck;
+  private boolean ignoreChanges;
   public RavenJObject getOriginalValue() {
     return originalValue;
   }
@@ -50,7 +51,20 @@ public class DocumentMetadata {
   public void setForceConcurrencyCheck(boolean forceConcurrencyCheck) {
     this.forceConcurrencyCheck = forceConcurrencyCheck;
   }
-
-
-
+  /**
+   * If set to true, the session will ignore this document
+   * when SaveChanges() is called, and won't perform and change tracking
+   * @return
+   */
+  public boolean isIgnoreChanges() {
+    return ignoreChanges;
+  }
+  /**
+   * If set to true, the session will ignore this document
+   * when SaveChanges() is called, and won't perform and change tracking
+   * @return
+   */
+  public void setIgnoreChanges(boolean ignoreChanges) {
+    this.ignoreChanges = ignoreChanges;
+  }
 }

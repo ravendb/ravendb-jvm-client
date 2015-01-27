@@ -6,6 +6,7 @@ import java.util.Arrays;
 
 
 public class HashEncryptorBase {
+  @SuppressWarnings("boxing")
   public byte[] computeHash(String hashAlgorithm, byte[] bytes, Integer size) throws NoSuchAlgorithmException {
     MessageDigest messageDigest = MessageDigest.getInstance(hashAlgorithm);
     byte[] digest = messageDigest.digest(bytes);

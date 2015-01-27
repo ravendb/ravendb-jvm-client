@@ -59,7 +59,9 @@ public class RemoteBulkInsertOperation implements ILowLevelBulkInsertOperation, 
   private static final RavenJObject ABORT_MARKER = new RavenJObject();
   private static final RavenJObject SKIP_MARKER = new RavenJObject();
 
+  @SuppressWarnings("unused")
   private HttpJsonRequest operationRequest;
+  @SuppressWarnings("unused")
   private byte[] responseBytes;
   private final Thread operationTask;
   private Exception operationTaskException;
@@ -106,6 +108,7 @@ public class RemoteBulkInsertOperation implements ILowLevelBulkInsertOperation, 
 
   public class BulkInsertEntity implements HttpEntity {
 
+    @SuppressWarnings("hiding")
     private BulkInsertOptions options;
     private CancellationToken cancellationToken;
 
@@ -144,6 +147,7 @@ public class RemoteBulkInsertOperation implements ILowLevelBulkInsertOperation, 
       throw new IllegalStateException("Not supported!");
     }
 
+    @SuppressWarnings("synthetic-access")
     @Override
     public void writeTo(OutputStream outstream) throws IOException {
       writeQueueToServer(outstream, options, cancellationToken);
@@ -167,6 +171,7 @@ public class RemoteBulkInsertOperation implements ILowLevelBulkInsertOperation, 
     return cancellationTokenSource.getToken();
   }
 
+  @SuppressWarnings("hiding")
   private Thread startBulkInsertAsync(final BulkInsertOptions options) {
     operationClient.setExpect100Continue(true);
 
@@ -181,6 +186,7 @@ public class RemoteBulkInsertOperation implements ILowLevelBulkInsertOperation, 
 
     Thread thread = new Thread(new Runnable() {
 
+      @SuppressWarnings({"synthetic-access", "boxing"})
       @Override
       public void run() {
         try (HttpJsonRequest operationRequest = createOperationRequest(operationUrl, tokenToPass)) {
@@ -210,6 +216,7 @@ public class RemoteBulkInsertOperation implements ILowLevelBulkInsertOperation, 
 
 
     thread.setUncaughtExceptionHandler(new UncaughtExceptionHandler() {
+      @SuppressWarnings("synthetic-access")
       @Override
       public void uncaughtException(Thread t, Throwable e) {
         operationTaskException = (Exception) e;
@@ -241,12 +248,14 @@ public class RemoteBulkInsertOperation implements ILowLevelBulkInsertOperation, 
     }
   }
 
+  @SuppressWarnings("boxing")
   private HttpJsonRequest createOperationRequest(String operationUrl, String token) {
     HttpJsonRequest request = operationClient.createRequest(HttpMethods.POST, operationUrl, true, true, 6 * 3600 * 1000L);
     request.addOperationHeader("Single-Use-Auth-Token", token);
     return request;
   }
 
+  @SuppressWarnings("hiding")
   private String createOperationUrl(BulkInsertOptions options) {
     String requestUrl = "/bulkInsert?";
     if (options.isOverwriteExisting()) {
@@ -264,6 +273,7 @@ public class RemoteBulkInsertOperation implements ILowLevelBulkInsertOperation, 
     return requestUrl;
   }
 
+  @SuppressWarnings("hiding")
   private void writeQueueToServer(OutputStream stream, BulkInsertOptions options, CancellationToken cancellationToken) throws IOException {
     while (true) {
       cancellationToken.throwIfCancellationRequested();
@@ -301,6 +311,7 @@ public class RemoteBulkInsertOperation implements ILowLevelBulkInsertOperation, 
     write(id, metadata, data, null);
   }
 
+  @SuppressWarnings("boxing")
   @Override
   public void write(String id, RavenJObject metadata, RavenJObject data, Integer dataSize) throws InterruptedException {
     if (id == null) {
@@ -352,6 +363,7 @@ public class RemoteBulkInsertOperation implements ILowLevelBulkInsertOperation, 
   }
 
 
+  @SuppressWarnings({"hiding", "boxing"})
   private boolean isOperationCompleted(long operationId) {
     RavenJToken status = getOperationStatus(operationId);
     if (status == null) {
@@ -363,6 +375,7 @@ public class RemoteBulkInsertOperation implements ILowLevelBulkInsertOperation, 
     return false;
   }
 
+  @SuppressWarnings("hiding")
   private RavenJToken getOperationStatus(long operationId) {
     return operationClient.getOperationStatus(operationId);
   }
@@ -395,6 +408,7 @@ public class RemoteBulkInsertOperation implements ILowLevelBulkInsertOperation, 
     reportInternal("Done writing to server");
   }
 
+  @SuppressWarnings({"hiding", "boxing"})
   private  void flushBatch(OutputStream requestStream, Collection<RavenJObject> localBatch) throws IOException {
     if (localBatch.isEmpty()) {
       return ;

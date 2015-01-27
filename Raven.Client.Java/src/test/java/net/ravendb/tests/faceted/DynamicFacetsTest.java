@@ -28,6 +28,7 @@ import com.mysema.query.types.Predicate;
 
 public class DynamicFacetsTest extends FacetTestBase {
 
+  @SuppressWarnings("boxing")
   @Test
   public void canPerformDynamicFacetedSearch_Remotely() {
 
@@ -94,6 +95,7 @@ public class DynamicFacetsTest extends FacetTestBase {
     }
   }
 
+  @SuppressWarnings("boxing")
   private void checkFacetResultsMatchInMemoryData(FacetResults facetResults, List<Camera> filteredData) {
     QCamera c = QCamera.camera;
 
@@ -132,6 +134,7 @@ public class DynamicFacetsTest extends FacetTestBase {
 
   }
 
+  @SuppressWarnings("static-method")
   private void checkFacetCount(long expectedCount, FacetValue facets) {
     if (expectedCount > 0) {
       assertNotNull(facets);

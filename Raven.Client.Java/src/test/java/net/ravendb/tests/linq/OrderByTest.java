@@ -1,7 +1,6 @@
 package net.ravendb.tests.linq;
 
 import static org.junit.Assert.assertEquals;
-
 import net.ravendb.client.IDocumentSession;
 import net.ravendb.client.IDocumentStore;
 import net.ravendb.client.RemoteClientTest;
@@ -50,12 +49,14 @@ public class OrderByTest extends RemoteClientTest {
 
     }
 
+    @SuppressWarnings("boxing")
     public Section(int position) {
       this.position = position;
       this.name = String.format("Position: %d", position);
     }
   }
 
+  @SuppressWarnings("boxing")
   @Test
   public void canDescOrderBy_AProjection() {
     try (IDocumentStore store = new DocumentStore(getDefaultUrl(), getDefaultDb()).initialize()) {
@@ -77,6 +78,7 @@ public class OrderByTest extends RemoteClientTest {
     }
   }
 
+  @SuppressWarnings("boxing")
   @Test
   public void canAscOrderBy_AProjection() {
     try (IDocumentStore store = new DocumentStore(getDefaultUrl(), getDefaultDb()).initialize()) {
@@ -105,7 +107,4 @@ public class OrderByTest extends RemoteClientTest {
       }
     }
   }
-
-
-
 }

@@ -138,6 +138,7 @@ public class LinqPathProvider {
     throw new IllegalArgumentException("Don't know how to translate: " + expression);
   }
 
+  @SuppressWarnings("static-method")
   private Field fetchMaybeProperty(Path<?> memberExpression) {
     try {
       Path<?> parent = memberExpression.getMetadata().getParent();
@@ -162,6 +163,7 @@ public class LinqPathProvider {
     }
   }
 
+  @SuppressWarnings("static-method")
   private String extractPath(Path<?> expression) {
     List<String> items = new ArrayList<>();
 
@@ -192,6 +194,7 @@ public class LinqPathProvider {
     return expression;
   }
 
+  @SuppressWarnings({"unused", "boxing"})
   public Object getValueFromExpression(Expression<?> expression, Class< ? > type) {
     if (expression == null) {
       return new IllegalArgumentException("Value is missing");
@@ -232,6 +235,7 @@ public class LinqPathProvider {
     return false;
   }
 
+  @SuppressWarnings("unused")
   private void assertNoComputation(Path<?> expression) {
     //empty
   }

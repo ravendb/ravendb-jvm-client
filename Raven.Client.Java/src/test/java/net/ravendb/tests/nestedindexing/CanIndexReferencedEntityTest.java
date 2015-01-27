@@ -1,7 +1,6 @@
 package net.ravendb.tests.nestedindexing;
 
 import static org.junit.Assert.assertEquals;
-
 import net.ravendb.abstractions.indexing.IndexDefinition;
 import net.ravendb.client.IDocumentSession;
 import net.ravendb.client.IDocumentStore;
@@ -36,6 +35,7 @@ public class CanIndexReferencedEntityTest extends RemoteClientTest {
     }
   }
 
+  @SuppressWarnings("boxing")
   @Test
   public void whenReferencedItemChanges() {
     try (IDocumentStore store = new DocumentStore(getDefaultUrl(), getDefaultDb()).initialize()) {
@@ -65,6 +65,7 @@ public class CanIndexReferencedEntityTest extends RemoteClientTest {
     }
   }
 
+  @SuppressWarnings("boxing")
   @Test
   public void whenReferencedItemChangesInBatch() {
     try (IDocumentStore store = new DocumentStore(getDefaultUrl(), getDefaultDb()).initialize()) {
@@ -95,6 +96,7 @@ public class CanIndexReferencedEntityTest extends RemoteClientTest {
     }
   }
 
+  @SuppressWarnings("boxing")
   @Test
   public void whenReferencedItemDeleted() {
     try (IDocumentStore store = new DocumentStore(getDefaultUrl(), getDefaultDb()).initialize()) {
@@ -124,6 +126,7 @@ public class CanIndexReferencedEntityTest extends RemoteClientTest {
     }
   }
 
+  @SuppressWarnings("boxing")
   @Test
   public void nightOfTheLivingDead() {
     try (IDocumentStore store = new DocumentStore(getDefaultUrl(), getDefaultDb()).initialize()) {
@@ -159,6 +162,7 @@ public class CanIndexReferencedEntityTest extends RemoteClientTest {
     }
   }
 
+  @SuppressWarnings("boxing")
   @Test
   public void selfReferencing() {
     try (IDocumentStore store = new DocumentStore(getDefaultUrl(), getDefaultDb()).initialize()) {
@@ -185,6 +189,7 @@ public class CanIndexReferencedEntityTest extends RemoteClientTest {
     }
   }
 
+  @SuppressWarnings("boxing")
   @Test
   public void loops() {
     try (IDocumentStore store = new DocumentStore(getDefaultUrl(), getDefaultDb()).initialize()) {

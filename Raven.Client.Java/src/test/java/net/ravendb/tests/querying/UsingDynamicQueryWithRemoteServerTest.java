@@ -28,6 +28,7 @@ import com.mysema.query.annotations.QueryEntity;
 
 public class UsingDynamicQueryWithRemoteServerTest extends RemoteClientTest {
 
+  @SuppressWarnings("boxing")
   @Test
   public void canPerformDynamicQueryUsingClientLinqQuery() {
     Blog blogOne = new Blog();

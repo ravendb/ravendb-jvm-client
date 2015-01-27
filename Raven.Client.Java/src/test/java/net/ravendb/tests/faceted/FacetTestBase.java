@@ -58,6 +58,7 @@ public abstract class FacetTestBase extends RemoteClientTest {
     }
   }
 
+  @SuppressWarnings("boxing")
   public static List<Facet> getFacets() {
     QCamera c = QCamera.camera;
 
@@ -116,6 +117,7 @@ public abstract class FacetTestBase extends RemoteClientTest {
 
   private static final Random random = new Random(1337);
 
+  @SuppressWarnings("boxing")
   public static List<Camera> getCameras(int numCameras) {
     List<Camera> cameraList = new ArrayList<>(numCameras);
     for (int i = 1; i <= numCameras; i++) {

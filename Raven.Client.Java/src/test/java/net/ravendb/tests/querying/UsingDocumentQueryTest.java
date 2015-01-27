@@ -103,6 +103,7 @@ public class UsingDocumentQueryTest {
   }
 
 
+  @SuppressWarnings("static-method")
   private Date mkDate(int year, int month, int day) {
     Calendar calendar = Calendar.getInstance(TimeZone.getTimeZone("GMT"));
     calendar = DateUtils.truncate(calendar, Calendar.DAY_OF_MONTH);
@@ -163,6 +164,7 @@ public class UsingDocumentQueryTest {
     assertEquals("<Name, Age>: Birthday:[2010-05-15T00:00:00.0000000Z TO NULL]", fields + q.toString());
   }
 
+  @SuppressWarnings("boxing")
   @Test
   public void canUnderstandSimpleEqualityOnInt() {
     DocumentQuery<IndexedUser> q = (DocumentQuery<IndexedUser>) new DocumentQuery<>(IndexedUser.class, null, null, "IndexName", null, null, null, false)
@@ -170,6 +172,7 @@ public class UsingDocumentQueryTest {
     assertEquals("Age:3", q.toString());
   }
 
+  @SuppressWarnings("boxing")
   @Test
   public void canUnderstandGreaterThanOnInt() {
     // should DocumentQuery<T> understand how to generate range field names?

@@ -76,6 +76,7 @@ public class RavenJValue extends RavenJToken {
    * Initializes a new instance of the {@link RavenJValue} class with the given value.
    * @param value
    */
+  @SuppressWarnings("boxing")
   public RavenJValue(int value) {
     this(value, JTokenType.INTEGER);
   }
@@ -84,6 +85,7 @@ public class RavenJValue extends RavenJToken {
    * Initializes a new instance of the {@link RavenJValue} class with the given value.
    * @param value
    */
+  @SuppressWarnings("boxing")
   public RavenJValue(long value) {
     this(value, JTokenType.INTEGER);
   }
@@ -92,6 +94,7 @@ public class RavenJValue extends RavenJToken {
    * Initializes a new instance of the {@link RavenJValue} class with the given value.
    * @param value
    */
+  @SuppressWarnings("boxing")
   public RavenJValue(double value) {
     this(value, JTokenType.FLOAT);
   }
@@ -100,6 +103,7 @@ public class RavenJValue extends RavenJToken {
    * Initializes a new instance of the {@link RavenJValue} class with the given value.
    * @param value
    */
+  @SuppressWarnings("boxing")
   public RavenJValue(float value) {
     this(value, JTokenType.FLOAT);
   }
@@ -116,6 +120,7 @@ public class RavenJValue extends RavenJToken {
    * Initializes a new instance of the {@link RavenJValue} class with the given value.
    * @param value
    */
+  @SuppressWarnings("boxing")
   public RavenJValue(boolean value) {
     this(value, JTokenType.BOOLEAN);
   }
@@ -144,6 +149,7 @@ public class RavenJValue extends RavenJToken {
     this(value, getValueType(null, value));
   }
 
+  @SuppressWarnings("unused")
   private static JTokenType getValueType(JTokenType current, Object value) {
     if (value == null) {
       return JTokenType.NULL;
@@ -223,6 +229,7 @@ public class RavenJValue extends RavenJToken {
     return new RavenJValue(null, JTokenType.NULL);
   }
 
+  @SuppressWarnings("boxing")
   @Override
   public void writeTo(JsonGenerator writer) {
     try {
@@ -302,6 +309,7 @@ public class RavenJValue extends RavenJToken {
     return valuesEquals(this, other);
   }
 
+  @SuppressWarnings("incomplete-switch")
   private static boolean valuesEquals(RavenJValue v1, RavenJValue v2) {
     if (v1.getType() == v2.getType() && v1.getType() != JTokenType.BYTES && v1.getValue() != null && v1.getValue().equals(v2.getValue())) {
       return true;
@@ -397,6 +405,7 @@ public class RavenJValue extends RavenJToken {
     return null;
   }
 
+  @SuppressWarnings("boxing")
   private static boolean compareFloats(RavenJValue v1, RavenJValue v2) {
     Number ov1 = (Number) v1.getValue();
     Number ov2 = (Number) v2.getValue();
@@ -432,6 +441,7 @@ public class RavenJValue extends RavenJToken {
     }
   }
 
+  @SuppressWarnings("boxing")
   private BigDecimal asBigDecimal() {
     Number number = (Number) value;
     if (value instanceof BigDecimal) {

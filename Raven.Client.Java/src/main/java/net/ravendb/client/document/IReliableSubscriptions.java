@@ -1,6 +1,5 @@
 package net.ravendb.client.document;
 
-import java.io.IOException;
 import java.util.List;
 
 import net.ravendb.abstractions.basic.CleanCloseable;

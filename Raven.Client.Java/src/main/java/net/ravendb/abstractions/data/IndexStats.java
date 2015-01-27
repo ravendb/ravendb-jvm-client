@@ -29,6 +29,7 @@ public class IndexStats {
   private String isOnRam;
   private IndexLockMode lockMode;
   private List<String> forEntityName;
+  private boolean testIndex;
 
   private IndexingPerformanceStats[] performance;
   public int docsCount;
@@ -375,6 +376,20 @@ public class IndexStats {
    */
   public void setPerformance(IndexingPerformanceStats[] performance) {
     this.performance = performance;
+  }
+
+  /**
+   * Indicates if this is a test index (works on a limited data set - for testing purposes only)
+   */
+  public boolean isTestIndex() {
+    return testIndex;
+  }
+
+  /**
+   * Indicates if this is a test index (works on a limited data set - for testing purposes only)
+   */
+  public void setTestIndex(boolean testIndex) {
+    this.testIndex = testIndex;
   }
 
   @Override

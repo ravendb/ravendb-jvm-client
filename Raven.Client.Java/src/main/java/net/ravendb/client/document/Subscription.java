@@ -123,7 +123,7 @@ public class Subscription<T> implements IObservable<T>, CleanCloseable {
   private Closeable endedBulkInsertsObserver;
   private Etag lastProcessedEtagOnServer = null;
 
-  @SuppressWarnings("boxing")
+  @SuppressWarnings({"boxing", "unchecked"})
   private void pullDocuments() throws IOException, InterruptedException {
     while (true) {
       anySubscriber.waitOne();
@@ -137,7 +137,7 @@ public class Subscription<T> implements IObservable<T>, CleanCloseable {
           HttpJsonRequestExtension.assertNotFailingResponse(response);
 
           try (RavenJObjectIterator streamedDocs = ServerClient.yieldStreamResults(response, 0, Integer.MAX_VALUE, null, new Function1<JsonParser, Boolean>() {
-            @SuppressWarnings({"synthetic-access", "boxing"})
+            @SuppressWarnings({"synthetic-access"})
             @Override
             public Boolean apply(JsonParser reader) {
               try {
@@ -165,10 +165,13 @@ public class Subscription<T> implements IObservable<T>, CleanCloseable {
               cts.getToken().throwIfCancellationRequested();
 
               RavenJObject jsonDoc = streamedDocs.next();
+              T instance = null;
               for (IObserver<T> subscriber : subscribers) {
                 try {
                   if (isStronglyTyped) {
-                    T instance = conventions.createSerializer().deserialize(jsonDoc.toString(), clazz);
+                    if (instance == null) {
+                      instance = conventions.createSerializer().deserialize(jsonDoc.toString(), clazz);
+                    }
                     subscriber.onNext(instance);
                   } else {
                     subscriber.onNext((T) jsonDoc);
@@ -176,12 +179,12 @@ public class Subscription<T> implements IObservable<T>, CleanCloseable {
                 } catch (Exception ex) {
                   logger.warnException("Subscriber threw an exception", ex);
                   if (options.isIgnoreSubscribersErrors() == false) {
+                    errored = true;
                     try {
                       subscriber.onError(ex);
                     } catch (Exception e) {
                       // can happen if a subscriber doesn't have an onError handler - just ignore it
                     }
-                    errored = true;
                     break;
                   }
                 }
@@ -302,6 +305,7 @@ public class Subscription<T> implements IObservable<T>, CleanCloseable {
     }
 
     return new CleanCloseable() {
+      @SuppressWarnings("synthetic-access")
       @Override
       public void close() {
         subscribers.remove(observer);
@@ -312,21 +316,25 @@ public class Subscription<T> implements IObservable<T>, CleanCloseable {
     };
   }
 
+    @SuppressWarnings("boxing")
     private HttpJsonRequest createAcknowledgmentRequest(Etag lastProcessedEtag) {
       return commands.createRequest(HttpMethods.POST,
         String.format("/subscriptions/acknowledgeBatch?id=%d&lastEtag=%s&connection=%s", id, lastProcessedEtag, options.getConnectionId()));
     }
 
+    @SuppressWarnings("boxing")
     private HttpJsonRequest createPullingRequest() {
       return commands.createRequest(HttpMethods.GET,
         String.format("/subscriptions/pull?id=%d&connection=%s", id, options.getConnectionId()));
     }
 
+    @SuppressWarnings("boxing")
     private HttpJsonRequest createClientAliveRequest() {
       return commands.createRequest(HttpMethods.PATCH,
         String.format("/subscriptions/client-alive?id=%d&connection=%s", id, options.getConnectionId()));
     }
 
+    @SuppressWarnings("boxing")
     private HttpJsonRequest createCloseRequest() {
       return commands.createRequest(HttpMethods.POST,
         String.format("/subscriptions/close?id=%d&connection=%s", id, options.getConnectionId()));

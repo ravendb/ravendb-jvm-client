@@ -11,8 +11,6 @@ import net.ravendb.client.IDocumentSessionImpl;
 
 import com.google.common.base.Defaults;
 import com.mysema.query.types.Expression;
-import com.mysema.query.types.Path;
-
 
 /**
  * Fluent implementation for specifying include paths
@@ -27,6 +25,7 @@ public class MultiLoaderWithInclude implements ILoaderWithInclude {
     this.session = session;
   }
 
+  @SuppressWarnings("boxing")
   @Override
   public ILoaderWithInclude include(Class<?> targetClass, Expression<?> path) {
     Class< ? > type = path.getType();
@@ -60,37 +59,40 @@ public class MultiLoaderWithInclude implements ILoaderWithInclude {
     return include(ExpressionExtensions.toPropertyPath(path));
   }
 
-  @SuppressWarnings("cast")
+  @SuppressWarnings({"cast", "unchecked"})
   @Override
   public <TResult> TResult[] load(Class<TResult> clazz, String... ids) {
     return session.loadInternal(clazz, ids, (Tuple<String, Class<?>>[])includes.toArray(new Tuple[0]));
   }
 
-  @SuppressWarnings("cast")
+  @SuppressWarnings({"cast", "unchecked"})
   @Override
   public <TResult> TResult[] load(Class<TResult> clazz, Collection<String> ids) {
     return session.loadInternal(clazz, ids.toArray(new String[0]), (Tuple<String, Class<?>>[])includes.toArray(new Tuple[0]));
   }
 
-  @SuppressWarnings("cast")
+  @SuppressWarnings({"cast", "unchecked"})
   @Override
   public <TResult> TResult load(Class<TResult> clazz, String id) {
     TResult[] results = session.loadInternal(clazz, new String[] { id }, (Tuple<String, Class<?>>[])includes.toArray(new Tuple[0]));
     return results.length > 0 ? results[0] : Defaults.defaultValue(clazz);
   }
 
+  @SuppressWarnings("boxing")
   @Override
   public <TResult> TResult load(Class<TResult> clazz, Number id) {
     String documentKey = session.getConventions().getFindFullDocumentKeyFromNonStringIdentifier().find(id, clazz, false);
     return load(clazz, documentKey);
   }
 
+  @SuppressWarnings("boxing")
   @Override
   public <TResult> TResult load(Class<TResult> clazz, UUID id) {
     String documentKey = session.getConventions().getFindFullDocumentKeyFromNonStringIdentifier().find(id, clazz, false);
     return load(clazz, documentKey);
   }
 
+  @SuppressWarnings("boxing")
   @Override
   public <TResult> TResult[] load(Class<TResult> clazz, UUID... ids) {
     List<String> documentIds = new ArrayList<>();
@@ -100,6 +102,7 @@ public class MultiLoaderWithInclude implements ILoaderWithInclude {
     return load(clazz, documentIds);
   }
 
+  @SuppressWarnings("boxing")
   @Override
   public <TResult> TResult[] load(Class<TResult> clazz, Number... ids) {
     List<String> documentIds = new ArrayList<>();

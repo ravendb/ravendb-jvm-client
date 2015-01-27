@@ -16,9 +16,11 @@ import org.junit.Test;
 
 
 public class UsingStronglyTypedDocumentQueryTest {
+  @SuppressWarnings("static-method")
   private IDocumentQuery<IndexedUser> createUserQuery() {
     return new DocumentQuery<>(IndexedUser.class, null, null, "IndexName", null, null, null, false);
   }
+  @SuppressWarnings("static-method")
   private Date mkDate(int year, int month, int day) {
     Calendar calendar = Calendar.getInstance(TimeZone.getTimeZone("GMT"));
     calendar = DateUtils.truncate(calendar, Calendar.DAY_OF_MONTH);

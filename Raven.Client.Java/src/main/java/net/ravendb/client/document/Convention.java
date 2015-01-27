@@ -81,6 +81,7 @@ public class Convention {
    * Gets the identity property.
    * @param type
    */
+  @SuppressWarnings("boxing")
   public Field getIdentityProperty(Class<?> type) {
     if (idPropertyCache.containsKey(type)) {
       return idPropertyCache.get(type);

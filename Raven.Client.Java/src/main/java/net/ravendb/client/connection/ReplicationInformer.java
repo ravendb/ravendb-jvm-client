@@ -92,10 +92,12 @@ public class ReplicationInformer extends ReplicationInformerBase<ServerClient> i
     }
   }
 
+  @Override
   protected String getServerCheckUrl(String baseUrl) {
       return baseUrl + "/replication/topology?check-server-reachable";
   }
 
+  @SuppressWarnings("hiding")
   @Override
   public void refreshReplicationInformation(ServerClient commands) {
     synchronized (this) {

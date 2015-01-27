@@ -100,14 +100,14 @@ public class IndexQuery {
   }
 
   /**
-   * CAUTION. Used by IDocumentSession ONLY. It will have NO effect if used with IDatabaseCommands or IAsyncDatabaseCommands.
+   * CAUTION. Used by IDocumentSession ONLY. It will have NO effect if used with IDatabaseCommands.
    */
   public boolean isWaitForNonStaleResults() {
     return waitForNonStaleResults;
   }
 
   /**
-   * CAUTION. Used by IDocumentSession ONLY. It will have NO effect if used with IDatabaseCommands or IAsyncDatabaseCommands.
+   * CAUTION. Used by IDocumentSession ONLY. It will have NO effect if used with IDatabaseCommands.
    * @param waitForNonStaleResults
    */
   public void setWaitForNonStaleResults(boolean waitForNonStaleResults) {

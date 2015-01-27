@@ -21,6 +21,7 @@ import org.junit.Test;
 
 public class TagCloudTest extends RemoteClientTest {
 
+  @SuppressWarnings("boxing")
   @Test
   public void canQueryMapReduceIndex() {
 
@@ -86,6 +87,7 @@ public class TagCloudTest extends RemoteClientTest {
     }
   }
 
+  @SuppressWarnings("boxing")
   @Test
   public void canQueryMapReduceIndex_WithUpdates() {
 

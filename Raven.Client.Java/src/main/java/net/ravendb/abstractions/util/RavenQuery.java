@@ -130,12 +130,14 @@ public class RavenQuery {
     return buffer.toString();
   }
 
+  @SuppressWarnings("boxing")
   private static final Set<Character> fieldChars = new HashSet<>(Arrays.asList('*', '?', '+', '&', '|', '!', '(', ')', '{', '}', '[', ']', '^', '"',  '~', '\\', ':', ' ', '\t'));
 
   /**
    * Escapes Lucene field
    * @param field
    */
+  @SuppressWarnings("boxing")
   public static String escapeField(String field) {
     // method doesn't allocate a StringBuilder unless the string requires escaping
     // also this copies chunks of the original string into the StringBuilder which

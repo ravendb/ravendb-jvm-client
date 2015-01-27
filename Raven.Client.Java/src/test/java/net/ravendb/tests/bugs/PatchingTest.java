@@ -54,6 +54,7 @@ public class PatchingTest extends RemoteClientTest {
     }
   }
 
+  @SuppressWarnings("boxing")
   @Test
   public void canConvertToAndFromJsonWithNestedPatchRequests() {
     PatchRequest patch = new PatchRequest();
@@ -79,6 +80,7 @@ public class PatchingTest extends RemoteClientTest {
     assertEquals(patch.getNested().length, backToPatch.getNested().length);
   }
 
+  @SuppressWarnings("boxing")
   @Test
   public void canConvertToAndFromJsonWithoutNestedPatchRequests() {
     PatchRequest patch = new PatchRequest();
@@ -93,6 +95,7 @@ public class PatchingTest extends RemoteClientTest {
     assertArrayEquals(patch.getNested(), backToPatch.getNested());
   }
 
+  @SuppressWarnings("boxing")
   @Test
   public void canConvertToAndFromJsonWithEmptyNestedPatchRequests() {
     PatchRequest patch = new PatchRequest();
@@ -107,6 +110,7 @@ public class PatchingTest extends RemoteClientTest {
     assertArrayEquals(patch.getNested(), backToPatch.getNested());
   }
 
+  @SuppressWarnings("boxing")
   @Test
   public void canModifyValue() {
     try (IDocumentStore store = new DocumentStore(getDefaultUrl(), getDefaultDb()).initialize()) {
@@ -178,6 +182,7 @@ public class PatchingTest extends RemoteClientTest {
     }
   }
 
+  @SuppressWarnings("boxing")
   @Test
   public void canRemoveValuesFromList() {
     try (IDocumentStore store = new DocumentStore(getDefaultUrl(), getDefaultDb()).initialize()) {

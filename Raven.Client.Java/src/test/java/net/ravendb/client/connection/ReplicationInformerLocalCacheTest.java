@@ -4,7 +4,6 @@ import java.util.Calendar;
 import java.util.Date;
 
 import static org.junit.Assert.assertEquals;
-
 import net.ravendb.abstractions.data.Etag;
 import net.ravendb.abstractions.data.JsonDocument;
 import net.ravendb.abstractions.json.linq.RavenJObject;
@@ -18,6 +17,7 @@ import org.junit.Test;
 
 public class ReplicationInformerLocalCacheTest {
 
+  @SuppressWarnings("boxing")
   @Test
   public void simpleCacheTest() {
 

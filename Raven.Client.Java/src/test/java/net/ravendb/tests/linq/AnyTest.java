@@ -19,7 +19,6 @@ import net.ravendb.tests.linq.QAnyTest_TestDoc;
 
 import org.junit.Test;
 
-
 import com.mysema.query.annotations.QueryEntity;
 
 public class AnyTest extends RemoteClientTest {
@@ -43,6 +42,7 @@ public class AnyTest extends RemoteClientTest {
     }
   }
 
+  @SuppressWarnings("synthetic-access")
   @Test
   public void canQueryArrayWithAny() {
 

@@ -37,6 +37,7 @@ public class DatabaseStatistics {
   @Deprecated
   private long countOfAttachments;
   private String[] staleIndexes;
+  private int currentNumberOfParallelTasks;
   private int currentNumberOfItemsToIndexInSingleBatch;
   private int currentNumberOfItemsToReduceInSingleBatch;
   private float databaseTransactionVersionSizeInMB;
@@ -128,6 +129,20 @@ public class DatabaseStatistics {
    */
   public int getCountOfIndexes() {
     return countOfIndexes;
+  }
+
+  /**
+   * The concurrency level that RavenDB is currently using
+   */
+  public int getCurrentNumberOfParallelTasks() {
+    return currentNumberOfParallelTasks;
+  }
+
+  /**
+   * The concurrency level that RavenDB is currently using
+   */
+  public void setCurrentNumberOfParallelTasks(int currentNumberOfParallelTasks) {
+    this.currentNumberOfParallelTasks = currentNumberOfParallelTasks;
   }
 
   /**

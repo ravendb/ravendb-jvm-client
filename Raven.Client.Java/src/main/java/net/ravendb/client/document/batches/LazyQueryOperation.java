@@ -85,6 +85,7 @@ public class LazyQueryOperation<T> implements ILazyOperation {
     this.requiresRetry = requiresRetry;
   }
 
+  @SuppressWarnings("hiding")
   @Override
   public void handleResponse(GetResponse response) {
     if (response.getStatus() == HttpStatus.SC_NOT_FOUND) {
@@ -95,6 +96,7 @@ public class LazyQueryOperation<T> implements ILazyOperation {
     handleResponse(queryResult);
   }
 
+  @SuppressWarnings("hiding")
   private void handleResponse(QueryResult queryResult) {
     requiresRetry = queryOperation.isAcceptable(queryResult) == false;
     if (requiresRetry) {

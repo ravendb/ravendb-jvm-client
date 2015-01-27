@@ -29,6 +29,7 @@ public class SpatialCriteriaFactory {
     return relatesToShape(shape, SpatialRelation.WITHIN);
   }
 
+  @SuppressWarnings("boxing")
   public SpatialCriteria withinRadiusOf(double radius, double x, double y) {
     String circle = String.format(Constants.getDefaultLocale(), "Circle(%.6f %.6f d=%.6f)", x, y, radius);
     return relatesToShape(circle, SpatialRelation.WITHIN);

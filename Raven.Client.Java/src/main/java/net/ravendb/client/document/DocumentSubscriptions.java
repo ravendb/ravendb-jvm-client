@@ -1,6 +1,5 @@
 package net.ravendb.client.document;
 
-import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
 
@@ -79,6 +78,7 @@ public class DocumentSubscriptions implements IReliableSubscriptions {
     return open(clazz, id, options, null);
   }
 
+  @SuppressWarnings("boxing")
   @Override
   public <T> Subscription<T> open(Class<T> clazz, final long id, final SubscriptionConnectionOptions options, String database) throws SubscriptionException {
     if (options == null) {
@@ -101,6 +101,7 @@ public class DocumentSubscriptions implements IReliableSubscriptions {
 
     Subscription<T> subscription = new Subscription<>(clazz, id, options, commands, documentStore.changes(database), documentStore.getConventions(),
       new Action0() {
+        @SuppressWarnings("synthetic-access")
         @Override
         public void apply() {
           sendOpenSubscriptionRequest(commands, id, options); // to ensure that subscription is open try to call it with the same connection id
@@ -121,6 +122,7 @@ public class DocumentSubscriptions implements IReliableSubscriptions {
     return open(RavenJObject.class, id, options, database);
   }
 
+  @SuppressWarnings("boxing")
   private static void sendOpenSubscriptionRequest(IDatabaseCommands commands, long id, SubscriptionConnectionOptions options) throws SubscriptionException {
     try (HttpJsonRequest request = commands.createRequest(HttpMethods.POST, String.format("/subscriptions/open?id=%d&connection=%s", id, options.getConnectionId()))) {
       request.write(options.toRavenObject().toString());
@@ -173,6 +175,7 @@ public class DocumentSubscriptions implements IReliableSubscriptions {
     release(id, null);
   }
 
+  @SuppressWarnings("boxing")
   @Override
   public void release(long id, String database) {
     IDatabaseCommands commands = database == null

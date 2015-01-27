@@ -45,6 +45,7 @@ public class LoadOperation {
     return null;
   }
 
+  @SuppressWarnings("boxing")
   public boolean setResult(JsonDocument document) {
     firstRequest = false;
     documentFound = document;
@@ -57,6 +58,7 @@ public class LoadOperation {
         && (new Date().getTime() - spStart) < sessionOperations.getNonAuthoritativeInformationTimeout();
   }
 
+  @SuppressWarnings("unchecked")
   public <T> T complete(Class<T> clazz) {
     if (documentFound == null) {
       sessionOperations.registerMissing(id);

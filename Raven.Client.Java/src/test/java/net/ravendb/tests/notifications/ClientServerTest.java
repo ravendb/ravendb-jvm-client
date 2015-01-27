@@ -66,6 +66,7 @@ public class ClientServerTest extends RemoteClientTest {
       IDatabaseChanges taskObservable = store.changes(getDefaultDb());
       IObservable<DocumentChangeNotification> observable = taskObservable.forDocument("items/1");
       observable.where(new Predicate<DocumentChangeNotification>() {
+        @SuppressWarnings("boxing")
         @Override
         public Boolean apply(DocumentChangeNotification input) {
           return input.getType().equals(DocumentChangeTypes.DELETE);

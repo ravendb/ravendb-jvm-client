@@ -93,6 +93,7 @@ public class FacetedIndexLimitTest extends FacetTestBase {
     }
   }
 
+  @SuppressWarnings("boxing")
   @Test
   public void canPerformFacetedLimitSearch_TermAsc() {
     Facet facet1 = new Facet();
@@ -140,6 +141,7 @@ public class FacetedIndexLimitTest extends FacetTestBase {
 
   }
 
+  @SuppressWarnings("boxing")
   @Test
   public void canPerformFacetedLimitSearch_TermDesc() {
     Facet facet1 = new Facet();
@@ -189,6 +191,7 @@ public class FacetedIndexLimitTest extends FacetTestBase {
     }
   }
 
+  @SuppressWarnings("boxing")
   @Test
   public void canPerformFacetedLimitSearch_HitsAsc() {
     Facet facet1 = new Facet();
@@ -245,6 +248,7 @@ public class FacetedIndexLimitTest extends FacetTestBase {
     }
   }
 
+  @SuppressWarnings("boxing")
   @Test
   public void canPerformFacetedLimitSearch_HitsDesc() {
   //also specify more results than we have
@@ -352,6 +356,7 @@ public class FacetedIndexLimitTest extends FacetTestBase {
     }
   }
 
+  @SuppressWarnings("boxing")
   @Test
   public void canPerformFacetedLimitSearch_TermAsc_LuceneQuery() {
     Facet facet1 = new Facet();
@@ -398,6 +403,7 @@ public class FacetedIndexLimitTest extends FacetTestBase {
     }
   }
 
+  @SuppressWarnings("boxing")
   @Test
   public void canPerformFacetedLimitSearch_TermDesc_LuceneQuery() {
     Facet facet1 = new Facet();
@@ -447,6 +453,7 @@ public class FacetedIndexLimitTest extends FacetTestBase {
     }
   }
 
+  @SuppressWarnings("boxing")
   @Test
   public void canPerformFacetedLimitSearch_HitsAsc_LuceneQuery() {
     Facet facet1 = new Facet();
@@ -503,6 +510,7 @@ public class FacetedIndexLimitTest extends FacetTestBase {
     }
   }
 
+  @SuppressWarnings("boxing")
   @Test
   public void canPerformFacetedLimitSearch_HitsDesc_LuceneQuery() {
   //also specify more results than we have
@@ -555,6 +563,7 @@ public class FacetedIndexLimitTest extends FacetTestBase {
   }
 
 
+  @SuppressWarnings({"static-method", "boxing"})
   private List<GroupResult> mapToTuple(Map<String, Integer> map) {
     List<GroupResult> list=  new ArrayList<>();
     for (Map.Entry<String, Integer> entry : map.entrySet()) {

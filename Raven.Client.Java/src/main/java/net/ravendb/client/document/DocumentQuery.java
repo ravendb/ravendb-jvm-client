@@ -38,6 +38,20 @@ import org.apache.commons.lang.StringUtils;
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 import com.mysema.query.types.Expression;
 import com.mysema.query.types.Path;
 import com.mysema.query.types.path.ListPath;
@@ -143,12 +157,14 @@ public class DocumentQuery<T> extends AbstractDocumentQuery<T, DocumentQuery<T>>
     return this;
   }
 
+  @SuppressWarnings("boxing")
   @Override
   public IDocumentQuery<T> sortByDistance(double lat, double lng) {
     orderBy(String.format("%s;%f;%f", Constants.DISTANCE_FIELD_NAME, lat, lng));
     return this;
   }
 
+  @SuppressWarnings("boxing")
   @Override
   public IDocumentQuery<T> sortByDistance(double lat, double lng, String sortedFieldName) {
     orderBy(String.format("%s;%f;%f;%s", Constants.DISTANCE_FIELD_NAME, lat, lng, sortedFieldName));
@@ -296,12 +312,14 @@ public class DocumentQuery<T> extends AbstractDocumentQuery<T, DocumentQuery<T>>
     return this;
   }
 
+  @SuppressWarnings("hiding")
   @Override
   public <TValue> IDocumentQuery<T> whereBetween(Expression< ?  super TValue> propertySelector, TValue start, TValue end) {
     whereBetween(getMemberQueryPath(propertySelector), start, end);
     return this;
   }
 
+  @SuppressWarnings("hiding")
   @Override
   public <TValue> IDocumentQuery<T> whereBetweenOrEqual(Expression< ? super TValue > propertySelector, TValue start, TValue end) {
     whereBetweenOrEqual(getMemberQueryPath(propertySelector), start, end);
@@ -367,12 +385,14 @@ public class DocumentQuery<T> extends AbstractDocumentQuery<T, DocumentQuery<T>>
     return this;
   }
 
+  @SuppressWarnings("hiding")
   @Override
   public <TValue> IDocumentQuery<T> highlight(Expression< ? > propertySelector, int fragmentLength, int fragmentCount, Reference<FieldHighlightings> highlightings) {
     highlight(getMemberQueryPath(propertySelector), fragmentLength, fragmentCount, highlightings);
     return this;
   }
 
+  @SuppressWarnings("hiding")
   @Override
   public <TValue> IDocumentQuery<T> highlight(Expression< ? > propertySelector, Expression<?> keyPropertySelector, int fragmentLength, int fragmentCount, Reference<FieldHighlightings> highlightings) {
     highlight(getMemberQueryPath(propertySelector), getMemberQueryPath(propertySelector), fragmentLength, fragmentCount, highlightings);
@@ -433,11 +453,13 @@ public class DocumentQuery<T> extends AbstractDocumentQuery<T, DocumentQuery<T>>
     return toFacetsLazy(facetSetupDoc, 0, null);
   }
 
+  @SuppressWarnings("hiding")
   @Override
   public Lazy<FacetResults> toFacetsLazy(String facetSetupDoc, int start) {
     return toFacetsLazy(facetSetupDoc, start, null);
   }
 
+  @SuppressWarnings("hiding")
   @Override
   public Lazy<FacetResults> toFacetsLazy(String facetSetupDoc, int start, Integer pageSize) {
     IndexQuery indexQuery = getIndexQuery();
@@ -452,11 +474,13 @@ public class DocumentQuery<T> extends AbstractDocumentQuery<T, DocumentQuery<T>>
     return toFacetsLazy(facets, 0, null);
   }
 
+  @SuppressWarnings("hiding")
   @Override
   public Lazy<FacetResults> toFacetsLazy(List<Facet> facets, int start) {
     return toFacetsLazy(facets, start, null);
   }
 
+  @SuppressWarnings("hiding")
   @Override
   public Lazy<FacetResults> toFacetsLazy(List<Facet> facets, int start, Integer pageSize) {
     if (facets.isEmpty()) {
@@ -473,11 +497,13 @@ public class DocumentQuery<T> extends AbstractDocumentQuery<T, DocumentQuery<T>>
     return toFacets(facetSetupDoc, 0, null);
   }
 
+  @SuppressWarnings("hiding")
   @Override
   public FacetResults toFacets(String facetSetupDoc, int start) {
     return toFacets(facetSetupDoc, start, null);
   }
 
+  @SuppressWarnings("hiding")
   @Override
   public FacetResults toFacets(String facetSetupDoc, int start, Integer pageSize) {
     return getFacets(facetSetupDoc, start, pageSize);
@@ -488,11 +514,13 @@ public class DocumentQuery<T> extends AbstractDocumentQuery<T, DocumentQuery<T>>
     return toFacets(facets, 0, null);
   }
 
+  @SuppressWarnings("hiding")
   @Override
   public FacetResults toFacets(List<Facet> facets, int start) {
     return toFacets(facets, start, null);
   }
 
+  @SuppressWarnings("hiding")
   @Override
   public FacetResults toFacets(List<Facet> facets, int start, Integer pageSize) {
     if (facets.isEmpty()) {

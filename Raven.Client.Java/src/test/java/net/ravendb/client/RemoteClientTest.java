@@ -22,15 +22,18 @@ public abstract class RemoteClientTest extends RavenDBAwareTests {
     return getDbName();
   }
 
+  @SuppressWarnings("unused")
   protected AdminStatistics getAdminStats(String db) {
     return serverClient.getGlobalAdmin().getStatistics();
   }
 
+  @SuppressWarnings("boxing")
   public Integer getNumberOfRequests() {
     AdminStatistics adminStats = getAdminStats(getDefaultDb());
     return adminStats.getTotalNumberOfRequests();
   }
 
+  @SuppressWarnings("boxing")
   protected void assertNumberOfRequests(int i, int prevValue) {
     int currentReqCount = getNumberOfRequests();
     currentReqCount--; //  remove one as it is current request for adminStats

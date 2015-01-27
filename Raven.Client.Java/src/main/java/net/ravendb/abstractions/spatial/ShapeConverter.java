@@ -94,6 +94,7 @@ public class ShapeConverter {
     return false;
   }
 
+  @SuppressWarnings("static-method")
   private String findKeyThatMatches(Map<String, Object> keyValues, String regExp) {
     for (String key: keyValues.keySet()) {
       if (key.toLowerCase().matches(regExp)) {
@@ -103,6 +104,7 @@ public class ShapeConverter {
     return null;
   }
 
+  @SuppressWarnings("static-method")
   private boolean isNumber(Object obj) {
     if (obj instanceof Number) {
       return true;
@@ -114,6 +116,7 @@ public class ShapeConverter {
     return false;
   }
 
+  @SuppressWarnings("static-method")
   private double getDouble(Object obj) {
     if (obj instanceof Number) {
       return ((Number)obj).doubleValue();
@@ -128,6 +131,7 @@ public class ShapeConverter {
     return 0.0;
   }
 
+  @SuppressWarnings("boxing")
   protected String makePoint(double x, double y) {
     return String.format(Constants.getDefaultLocale(), "POINT (%f %f)", x, y);
   }

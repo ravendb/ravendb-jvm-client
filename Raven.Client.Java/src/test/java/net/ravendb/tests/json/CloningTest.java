@@ -4,7 +4,6 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
-
 import net.ravendb.abstractions.json.linq.RavenJObject;
 import net.ravendb.abstractions.json.linq.RavenJToken;
 import net.ravendb.abstractions.json.linq.RavenJValue;
@@ -78,6 +77,7 @@ public class CloningTest {
     assertEquals(2, f.getCount());
   }
 
+  @SuppressWarnings("boxing")
   @Test
   public void cloningTestsWorksCorrectly() {
     RavenJObject f = new RavenJObject();
@@ -103,6 +103,7 @@ public class CloningTest {
     assertNotNull(f1.get("2"));
   }
 
+  @SuppressWarnings("boxing")
   @Test
   public void changingValuesOfParent() {
     RavenJObject obj = RavenJObject.parse(" { 'Me': { 'ObjectID': 1} }");

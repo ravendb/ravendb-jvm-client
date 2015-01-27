@@ -71,18 +71,21 @@ public class LazyMultiLoaderWithInclude implements ILazyLoaderWithInclude {
     });
   }
 
+  @SuppressWarnings("boxing")
   @Override
   public <TResult> Lazy<TResult> load(Class<TResult> clazz, Number id) {
     String documentKey = session.getConventions().getFindFullDocumentKeyFromNonStringIdentifier().find(id, clazz, false);
     return load(clazz, documentKey);
   }
 
+  @SuppressWarnings("boxing")
   @Override
   public <TResult> Lazy<TResult> load(Class<TResult> clazz, UUID id) {
     String documentKey = session.getConventions().getFindFullDocumentKeyFromNonStringIdentifier().find(id, clazz, false);
     return load(clazz, documentKey);
   }
 
+  @SuppressWarnings("boxing")
   @Override
   public <TResult> Lazy<TResult[]> load(Class<TResult> clazz, Number... ids) {
     List<String> documentKeys = new ArrayList<>();
@@ -92,6 +95,7 @@ public class LazyMultiLoaderWithInclude implements ILazyLoaderWithInclude {
     return load(clazz, documentKeys);
   }
 
+  @SuppressWarnings("boxing")
   @Override
   public <TResult> Lazy<TResult[]> load(Class<TResult> clazz, UUID... ids) {
     List<String> documentKeys = new ArrayList<>();

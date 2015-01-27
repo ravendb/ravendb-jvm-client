@@ -11,10 +11,12 @@ import org.apache.commons.logging.LogFactory;
 
 public class UrlUtils {
 
+  @SuppressWarnings("boxing")
   public static final Character DUMMY_CHAR = 0xFFFF;
 
   private static Log log = LogFactory.getLog(UrlUtils.class.getCanonicalName());
 
+  @SuppressWarnings("boxing")
   public static String escapeDataString(String stringToEscape) {
     if (stringToEscape == null) {
       throw new IllegalArgumentException("String is null");
@@ -32,6 +34,7 @@ public class UrlUtils {
     return new String(dest, 0, position.value);
   }
 
+  @SuppressWarnings("boxing")
   private static void escapeAsciiChar(char ch, char[] to, Reference<Integer> posRef) {
     to[posRef.value++] = '%';
     to[posRef.value++] = HEX_UPPER_CHARS[(ch & 0xf0) >> 4];
@@ -66,6 +69,7 @@ public class UrlUtils {
 
         short count = 1;
         for (; count < maxSize && pStr.charAt(i + count) > 0x7F; ++count) {
+          //empty by design
         }
         // Is the last a high surrogate?
         if (pStr.charAt(i + count-1) >= 0xD800 && pStr.charAt(i + count-1) <= 0xDBFF) {
@@ -117,6 +121,7 @@ public class UrlUtils {
   }
 
 
+  @SuppressWarnings("boxing")
   private static char[] ensureDestinationSize(String pStr, char[] dest, int currentInputPos, short charsToAdd, int minReallocateChars,
     Reference<Integer> destPos, int prevInputPos) {
     if (dest == null || dest.length < destPos.value + (currentInputPos - prevInputPos) + charsToAdd) {
@@ -185,6 +190,7 @@ public class UrlUtils {
   }
 
 
+  @SuppressWarnings("boxing")
   public static String escapeUriString(String stringToEscape) {
     if (stringToEscape == null) {
       throw new IllegalArgumentException("String is null");

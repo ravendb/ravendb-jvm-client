@@ -47,6 +47,7 @@ public class SecuredAuthenticator extends AbstractAuthenticator {
       e.getRequest().setHeader("Has-Api-Key", "true");
     }
   }
+  @SuppressWarnings({"static-method", "hiding"})
   private Tuple<HttpPost, String> prepareOAuthRequest(String oauthSource, String serverRSAExponent, String serverRSAModulus, String challenge, String apiKey) {
     HttpPost authRequest = new HttpPost(oauthSource);
     authRequest.setHeader("grant_type", "client_credentials");
@@ -86,6 +87,7 @@ public class SecuredAuthenticator extends AbstractAuthenticator {
 
 
 
+  @SuppressWarnings("hiding")
   @Override
   public Action1<HttpRequest> doOAuthRequest(String oauthSource, String apiKey) {
     String serverRSAExponent = null;

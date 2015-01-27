@@ -66,7 +66,7 @@ import com.google.common.base.Defaults;
  */
 public abstract class InMemoryDocumentSessionOperations implements CleanCloseable {
 
-  protected final List<ILazyOperation> pendingLazyOperations = new ArrayList<ILazyOperation>();
+  protected final List<ILazyOperation> pendingLazyOperations = new ArrayList<>();
   protected final Map<ILazyOperation, Action1<Object>> onEvaluateLazy = new HashMap<>();
 
   private static AtomicInteger counter = new AtomicInteger();
@@ -161,6 +161,7 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
    * @param listeners
    * @param id
    */
+  @SuppressWarnings("boxing")
   protected InMemoryDocumentSessionOperations(String dbName,
       DocumentStoreBase documentStore,
       DocumentSessionListeners listeners,
@@ -307,6 +308,7 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
    * current session
    * @param id
    */
+  @SuppressWarnings("hiding")
   public boolean isLoaded(String id) {
     if (isDeleted(id)) {
       return false;
@@ -319,6 +321,7 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
    * or known to be missing
    * @param id
    */
+  @SuppressWarnings("hiding")
   public boolean isDeleted(String id) {
     return knownMissingIds.contains(id);
   }
@@ -367,6 +370,7 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
     }
   }
 
+  @SuppressWarnings("boxing")
   public void incrementRequestCount() {
     if (++numberOfRequests > maxNumberOfRequestsPerSession)
       throw new IllegalStateException(String.format("The maximum number of requests (%d) allowed for this session has been reached."  +
@@ -408,6 +412,7 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
    * @param metadata
    * @param noTracking
    */
+  @SuppressWarnings("boxing")
   public Object trackEntity(Class<?> entityType, String key, RavenJObject document, RavenJObject metadata, boolean noTracking) {
     document.remove("@metadata");
     Object entity;
@@ -448,6 +453,7 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
    * @param documentFound
    * @param metadata
    */
+  @SuppressWarnings("hiding")
   public Object convertToEntity(Class<?> entityType, String id, RavenJObject documentFound, RavenJObject metadata) {
     if (RavenJObject.class.equals(entityType)) {
       return documentFound.cloneToken();
@@ -464,6 +470,7 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
     DefaultRavenContractResolver defaultRavenContractResolver = (DefaultRavenContractResolver) getConventions().getJsonContractResolver();
     if (defaultRavenContractResolver != null && getConventions().isPreserveDocumentPropertiesNotFoundOnModel()) {
       disposable = defaultRavenContractResolver.registerForExtensionData(new Action3<Object, String, RavenJToken>() {
+        @SuppressWarnings("synthetic-access")
         @Override
         public void apply(Object o, String key, RavenJToken value) {
           registerMissingProperties(o, key, value);
@@ -542,6 +549,7 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
   /**
    * Marks the specified entity for deletion. The entity will be deleted when SaveChanges is called.
    */
+  @SuppressWarnings("boxing")
   public <T> void delete(T entity) {
     if (entity == null) {
       throw new IllegalArgumentException("Entity is null");
@@ -562,6 +570,7 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
    * Marks the specified entity for deletion. The entity will be deleted when IDocumentSession.saveChanges() is called.
    * WARNING: This method will not call beforeDelete listener!
    */
+  @SuppressWarnings({"hiding", "boxing"})
   public <T> void delete(Class<T> clazz, Number id) {
     delete(getConventions().getFindFullDocumentKeyFromNonStringIdentifier().find(id, clazz, false));
   }
@@ -570,6 +579,7 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
    * Marks the specified entity for deletion. The entity will be deleted when IDocumentSession.saveChanges() is called.
    * WARNING: This method will not call beforeDelete listener!
    */
+  @SuppressWarnings({"hiding", "boxing"})
   public <T> void delete(Class<T> clazz, UUID id) {
     delete(getConventions().getFindFullDocumentKeyFromNonStringIdentifier().find(id, clazz, false));
   }
@@ -578,6 +588,7 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
    * Marks the specified entity for deletion. The entity will be deleted when IDocumentSession.saveChanges() is called.
    * WARNING: This method will not call beforeDelete listener!
    */
+  @SuppressWarnings("hiding")
   public void delete(String id)
   {
       if (id == null) {
@@ -617,6 +628,7 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
    * Stores the specified entity in the session. The entity will be saved when SaveChanges is called.
    * @param entity
    */
+  @SuppressWarnings("hiding")
   public void store(Object entity) {
     Reference<String> id = new Reference<>();
 
@@ -638,6 +650,7 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
    * @param entity
    * @param id
    */
+  @SuppressWarnings("hiding")
   public void store(Object entity, String id) {
     storeInternal(entity, null, id, false);
   }
@@ -648,10 +661,12 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
    * @param etag
    * @param id
    */
+  @SuppressWarnings("hiding")
   public void store(Object entity, Etag etag, String id) {
     storeInternal(entity, etag, id, true);
   }
 
+  @SuppressWarnings("hiding")
   private void storeInternal(Object entity, Etag etag, String id, boolean forceConcurrencyCheck) {
     if (entity == null) {
       throw new IllegalArgumentException("entity is null");
@@ -706,10 +721,12 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
 
   protected abstract String generateKey(Object entity);
 
+  @SuppressWarnings("unused")
   protected void rememberEntityForDocumentKeyGeneration(Object entity) {
     throw new NotImplementedException("You cannot set GenerateDocumentKeysOnStore to false without implementing RememberEntityForDocumentKeyGeneration");
   }
 
+  @SuppressWarnings("hiding")
   protected void storeEntityInUnitOfWork(String id, Object entity, Etag etag, RavenJObject metadata, boolean forceConcurrencyCheck) {
     deletedEntities.remove(entity);
     if (id != null) {
@@ -731,6 +748,7 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
     }
   }
 
+  @SuppressWarnings("hiding")
   protected void assertNoNonUniqueInstance(Object entity, String id) {
     if (id == null || id.endsWith("/") || !entitiesByKey.containsKey(id) || entitiesByKey.get(id) == entity) {
       return;
@@ -879,6 +897,7 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
     }
   }
 
+  @SuppressWarnings("boxing")
   private void prepareForEntitiesDeletion(SaveChangesData result, Map<String, List<DocumentsChanges>> changes) {
     DocumentMetadata value = null;
 
@@ -947,6 +966,10 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
     getMetadataFor(entity).add(Constants.RAVEN_READ_ONLY, new RavenJValue(true));
   }
 
+  public void ignoreChangesFor(Object entity) {
+    getDocumentMetadata(entity).setIgnoreChanges(true);
+  }
+
 
   protected boolean entityChanged(Object entity, DocumentMetadata documentMetadata) {
     return entityChanged(entity, documentMetadata, null);
@@ -957,9 +980,14 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
    * @param entity
    * @param documentMetadata
    */
+  @SuppressWarnings("boxing")
   protected boolean entityChanged(Object entity, DocumentMetadata documentMetadata, Map<String, List<DocumentsChanges>> changes) {
     if (documentMetadata == null) {
       return true;
+    }
+
+    if (documentMetadata.isIgnoreChanges()) {
+      return false;
     }
 
     Reference<String> idHolder = new Reference<>();
@@ -1035,6 +1063,7 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
   /**
    *  Version this entity when it is saved.  Use when Versioning bundle configured to ExcludeUnlessExplicit.
    */
+  @SuppressWarnings("boxing")
   public void explicitlyVersion(Object entity) {
     RavenJObject metadata = getMetadataFor(entity);
     metadata.add(Constants.RAVEN_CREATE_VERSION, true);
@@ -1048,6 +1077,7 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
     //empty by design
   }
 
+  @SuppressWarnings("boxing")
   protected void logBatch(SaveChangesData data) {
 
     if (log.isDebugEnabled()) {
@@ -1060,6 +1090,7 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
     }
   }
 
+  @SuppressWarnings("hiding")
   public void registerMissing(String id) {
     knownMissingIds.add(id);
   }
@@ -1071,6 +1102,7 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
     for (RavenJObject result : results) {
       for (String include: includes) {
         IncludesUtil.include(result, include, new Action1<String>() {
+          @SuppressWarnings("hiding")
           @Override
           public void apply(String id) {
             if (id == null) {
@@ -1141,6 +1173,7 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
       includedDocumentsByKey.put(include.getKey(), include);
   }
 
+  @SuppressWarnings("rawtypes")
   public String createDynamicIndexName(Class clazz) {
     String indexName = "dynamic";
     if (Types.isEntityType(clazz)) {
@@ -1149,6 +1182,7 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
     return indexName;
   }
 
+  @SuppressWarnings({"hiding", "boxing"})
   public boolean checkIfIdAlreadyIncluded(String[] ids, Tuple<String, Class<?>>[] includes) {
     for (String id : ids) {
       if (knownMissingIds.contains(id)) {

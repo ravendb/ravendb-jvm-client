@@ -94,6 +94,7 @@ public class MultiGetMultiTenantTest extends RemoteClientTest {
     }
   }
 
+  @SuppressWarnings("boxing")
   @Test
   public void canAggressivelyCacheLoads() throws Exception {
     try (IDocumentStore store = new DocumentStore(getDefaultUrl(), getDefaultDb())) {

@@ -100,18 +100,21 @@ public class LazySessionOperations implements ILazySessionOperations {
     return delegate.addLazyOperation(lazyLoadOperation, onEval);
   }
 
+  @SuppressWarnings("boxing")
   @Override
   public <T> Lazy<T> load(Class<T> clazz, Number id, Action1<T> onEval) {
     String documentKey = delegate.getConventions().getFindFullDocumentKeyFromNonStringIdentifier().find(id, clazz, false);
     return load(clazz, documentKey, onEval);
   }
 
+  @SuppressWarnings("boxing")
   @Override
   public <T> Lazy<T> load(Class<T> clazz, UUID id, Action1<T> onEval) {
     String documentKey = delegate.getConventions().getFindFullDocumentKeyFromNonStringIdentifier().find(id, clazz, false);
     return load(clazz, documentKey, onEval);
   }
 
+  @SuppressWarnings("boxing")
   @Override
   public <T> Lazy<T[]> load(Class<T> clazz, Number... ids) {
     List<String> documentKeys = new ArrayList<>();
@@ -121,6 +124,7 @@ public class LazySessionOperations implements ILazySessionOperations {
     return load(clazz, documentKeys, null);
   }
 
+  @SuppressWarnings("boxing")
   @Override
   public <T> Lazy<T[]> load(Class<T> clazz, UUID... ids) {
     List<String> documentKeys = new ArrayList<>();
@@ -130,7 +134,7 @@ public class LazySessionOperations implements ILazySessionOperations {
     return load(clazz, documentKeys, null);
   }
 
-  @SuppressWarnings("unchecked")
+  @SuppressWarnings({"unchecked", "boxing"})
   @Override
   public <TResult> Lazy<TResult[]> load(Class<TResult> clazz, Action1<TResult[]> onEval, Number... ids) {
     List<String> documentKeys = new ArrayList<>();
@@ -140,7 +144,7 @@ public class LazySessionOperations implements ILazySessionOperations {
     return delegate.lazyLoadInternal(clazz, documentKeys.toArray(new String[0]), new Tuple[0], onEval);
   }
 
-  @SuppressWarnings("unchecked")
+  @SuppressWarnings({"unchecked", "boxing"})
   @Override
   public <TResult> Lazy<TResult[]> load(Class<TResult> clazz, Action1<TResult[]> onEval, UUID... ids) {
     List<String> documentKeys = new ArrayList<>();

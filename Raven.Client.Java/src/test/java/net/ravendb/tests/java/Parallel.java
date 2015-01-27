@@ -42,6 +42,7 @@ public class Parallel {
     executor.shutdown();
   }
 
+  @SuppressWarnings("boxing")
   public static void For(int start, int stop, final LoopBody<Integer> loopBody) {
     ExecutorService executor = Executors.newFixedThreadPool(cpus);
     List<Future< ? >> futures = new LinkedList<>();

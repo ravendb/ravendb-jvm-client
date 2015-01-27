@@ -67,6 +67,7 @@ public class LazyFacetsOperation implements ILazyOperation {
     this.facetSetupDoc = null;
   }
 
+  @SuppressWarnings("boxing")
   @Override
   public GetRequest createRequest() {
     String addition = null;
@@ -78,7 +79,7 @@ public class LazyFacetsOperation implements ILazyOperation {
 
     GetRequest getRequest = new GetRequest();
     getRequest.setUrl("/facets/" + index);
-    getRequest.setQuery(String.format("%s&facetStart=%d&facetPageSize=%d&%s", query.getMinimalQueryString(), start, pageSize, addition));
+    getRequest.setQuery(String.format("%s&facetStart=%d&facetPageSize=%d&%s", query.getQueryString(), start, pageSize, addition));
     return getRequest;
   }
 
@@ -92,6 +93,7 @@ public class LazyFacetsOperation implements ILazyOperation {
     return requiresRetry;
   }
 
+  @SuppressWarnings("hiding")
   @Override
   public void handleResponse(GetResponse response) {
     if (response.getStatus() != HttpStatus.SC_OK && response.getStatus() != HttpStatus.SC_NOT_MODIFIED) {

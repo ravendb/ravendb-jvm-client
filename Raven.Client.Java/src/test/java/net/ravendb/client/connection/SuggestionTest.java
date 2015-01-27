@@ -22,6 +22,7 @@ import org.junit.Test;
 
 public class SuggestionTest extends RavenDBAwareTests {
 
+  @SuppressWarnings({"boxing", "static-access"})
   @Test
   public void testSuggestion() {
     try {

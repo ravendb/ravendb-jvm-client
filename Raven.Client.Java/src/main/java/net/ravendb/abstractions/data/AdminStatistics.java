@@ -2,6 +2,9 @@ package net.ravendb.abstractions.data;
 
 import java.util.List;
 
+/**
+ * Server-wide statistics that contain memory usage and loaded resources information.
+ */
 public class AdminStatistics {
   private String serverName;
   private int totalNumberOfRequests;

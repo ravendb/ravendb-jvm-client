@@ -155,6 +155,7 @@ public class JsonDocument implements IJsonDocumentMetadata {
   /**
    * Translate the json document to a {@link RavenJObject}
    */
+  @SuppressWarnings({"hiding", "boxing"})
   public RavenJObject toJson() {
     dataAsJson.ensureCannotBeChangeAndEnableShapshotting();
     metadata.ensureCannotBeChangeAndEnableShapshotting();

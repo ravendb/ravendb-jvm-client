@@ -19,7 +19,6 @@ import net.ravendb.tests.queries.QIncludesTest_Order3;
 
 import org.junit.Test;
 
-
 import com.mysema.query.annotations.QueryEntity;
 
 public class IncludesTest extends RemoteClientTest {
@@ -103,6 +102,7 @@ public class IncludesTest extends RemoteClientTest {
     }
   }
 
+  @SuppressWarnings("boxing")
   @Test
   public void can_include_by_primary_valuetype_property() {
     try (IDocumentStore store = new DocumentStore(getDefaultUrl(), getDefaultDb()).initialize()) {
@@ -126,6 +126,7 @@ public class IncludesTest extends RemoteClientTest {
     }
   }
 
+  @SuppressWarnings("boxing")
   @Test
   public void can_query_with_include_by_primary_string_property() {
     try (IDocumentStore store = new DocumentStore(getDefaultUrl(), getDefaultDb()).initialize()) {
@@ -181,6 +182,7 @@ public class IncludesTest extends RemoteClientTest {
     }
   }
 
+  @SuppressWarnings("boxing")
   @Test
   public void can_query_with_include_by_primary_valuetype_property() {
     try (IDocumentStore store = new DocumentStore(getDefaultUrl(), getDefaultDb()).initialize()) {
@@ -340,6 +342,7 @@ public class IncludesTest extends RemoteClientTest {
     }
   }
 
+  @SuppressWarnings("boxing")
   @Test
   public void can_include_by_secondary_valuetype_property() {
     try (IDocumentStore store = new DocumentStore(getDefaultUrl(), getDefaultDb()).initialize()) {
@@ -464,6 +467,7 @@ public class IncludesTest extends RemoteClientTest {
     }
   }
 
+  @SuppressWarnings("boxing")
   @Test
   public void can_include_by_denormalized_property() {
     try (IDocumentStore store = new DocumentStore(getDefaultUrl(), getDefaultDb()).initialize()) {

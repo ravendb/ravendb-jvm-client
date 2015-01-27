@@ -1,7 +1,5 @@
 package net.ravendb.client.util;
 
-import java.io.Closeable;
-
 import net.ravendb.abstractions.basic.CleanCloseable;
 import net.ravendb.abstractions.closure.Action1;
 import net.ravendb.abstractions.data.DocumentChangeNotification;
@@ -52,6 +50,7 @@ public class EvictItemsFromCacheBasedOnChanges implements CleanCloseable {
     indexesSubscriptions = indexSub.subscribe(new IndexChangeObserver());
   }
 
+  @SuppressWarnings("hiding")
   @Override
   public void close() {
     documentsSubscription.close();

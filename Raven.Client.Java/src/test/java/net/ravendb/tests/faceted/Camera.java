@@ -74,6 +74,7 @@ public class Camera {
   public void setAdvancedFeatures(List<String> advancedFeatures) {
     this.advancedFeatures = advancedFeatures;
   }
+  @SuppressWarnings("boxing")
   @Override
   public String toString() {
     return String.format("%3d: %s %10s - L%4.2f %.1fX zoom, %.1f megapixels, [%s]", id, dateOfListing.toString(), manufacturer,

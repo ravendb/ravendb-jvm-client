@@ -1,6 +1,5 @@
 package net.ravendb.client.changes;
 
-import java.io.IOException;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentSkipListSet;
 
@@ -18,7 +17,6 @@ import net.ravendb.abstractions.data.IndexChangeNotification;
 import net.ravendb.abstractions.data.ReplicationConflictNotification;
 import net.ravendb.abstractions.data.ReplicationConflictTypes;
 import net.ravendb.abstractions.data.TransformerChangeNotification;
-import net.ravendb.abstractions.extensions.JsonExtensions;
 import net.ravendb.abstractions.json.linq.RavenJObject;
 import net.ravendb.abstractions.util.AtomicDictionary;
 import net.ravendb.client.connection.IDocumentStoreReplicationInformer;
@@ -27,8 +25,6 @@ import net.ravendb.client.connection.implementation.HttpJsonRequestFactory;
 import net.ravendb.client.document.DocumentConvention;
 import net.ravendb.client.document.JsonSerializer;
 import net.ravendb.client.utils.UrlUtils;
-
-import org.codehaus.jackson.map.ObjectMapper;
 
 
 
@@ -43,6 +39,7 @@ public class RemoteDatabaseChanges extends RemoteChangesClientBase<IDatabaseChan
   protected boolean watchAllDocs;
   protected boolean watchAllIndexes;
   protected boolean watchAllTransformers;
+  @SuppressWarnings("hiding")
   protected DocumentConvention conventions;
 
   private final Function4<String, Etag, String[] , OperationMetadata, Boolean> tryResolveConflictByUsingRegisteredConflictListeners;
@@ -102,6 +99,7 @@ public class RemoteDatabaseChanges extends RemoteChangesClientBase<IDatabaseChan
   }
 
 
+  @SuppressWarnings({"hiding", "boxing"})
   @Override
   protected void notifySubscribers(String type, RavenJObject value, AtomicDictionary<DatabaseConnectionState> counters) {
     JsonSerializer serializer = new JsonSerializer();
@@ -173,6 +171,7 @@ public class RemoteDatabaseChanges extends RemoteChangesClientBase<IDatabaseChan
     });
     counter.inc();
     final TaskedObservable<IndexChangeNotification, DatabaseConnectionState> taskedObservable = new TaskedObservable<>(counter, new Predicate<IndexChangeNotification>() {
+      @SuppressWarnings("boxing")
       @Override
       public Boolean apply(IndexChangeNotification notification) {
         return notification.getName().equalsIgnoreCase(indexName);
@@ -216,6 +215,7 @@ public class RemoteDatabaseChanges extends RemoteChangesClientBase<IDatabaseChan
     });
 
     final TaskedObservable<DocumentChangeNotification, DatabaseConnectionState> taskedObservable = new TaskedObservable<>(counter, new Predicate<DocumentChangeNotification>() {
+      @SuppressWarnings("boxing")
       @Override
       public Boolean apply(DocumentChangeNotification notification) {
         return notification.getId().equalsIgnoreCase(docId);
@@ -301,6 +301,7 @@ public class RemoteDatabaseChanges extends RemoteChangesClientBase<IDatabaseChan
     });
 
     final TaskedObservable<BulkInsertChangeNotification, DatabaseConnectionState> taskedObservable = new TaskedObservable<>(counter, new Predicate<BulkInsertChangeNotification>() {
+      @SuppressWarnings("boxing")
       @Override
       public Boolean apply(BulkInsertChangeNotification notification) {
         return operationId == null || notification.getOperationId().equals(operationId);
@@ -416,6 +417,7 @@ public class RemoteDatabaseChanges extends RemoteChangesClientBase<IDatabaseChan
     });
 
     final TaskedObservable<DocumentChangeNotification, DatabaseConnectionState> taskedObservable = new TaskedObservable<>(counter, new Predicate<DocumentChangeNotification>() {
+      @SuppressWarnings("boxing")
       @Override
       public Boolean apply(DocumentChangeNotification notification) {
         return notification.getId() != null && notification.getId().toLowerCase().startsWith(docIdPrefix.toLowerCase());
@@ -460,6 +462,7 @@ public class RemoteDatabaseChanges extends RemoteChangesClientBase<IDatabaseChan
     });
 
     final TaskedObservable<DocumentChangeNotification, DatabaseConnectionState> taskedObservable = new TaskedObservable<>(counter, new Predicate<DocumentChangeNotification>() {
+      @SuppressWarnings("boxing")
       @Override
       public Boolean apply(DocumentChangeNotification notification) {
         return notification.getCollectionName() != null &&  notification.getCollectionName().equalsIgnoreCase(collectionName);
@@ -512,6 +515,7 @@ public class RemoteDatabaseChanges extends RemoteChangesClientBase<IDatabaseChan
     });
 
     final TaskedObservable<DocumentChangeNotification, DatabaseConnectionState> taskedObservable = new TaskedObservable<>(counter, new Predicate<DocumentChangeNotification>() {
+      @SuppressWarnings("boxing")
       @Override
       public Boolean apply(DocumentChangeNotification notification) {
         return notification.getTypeName() != null &&  notification.getTypeName().equalsIgnoreCase(typeName);

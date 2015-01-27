@@ -42,6 +42,7 @@ public class FipsSymmetricalEncryptor  implements ISymmetricalEncryptor {
     secretKey = kgen.generateKey();
   }
 
+  @SuppressWarnings("hiding")
   @Override
   public void generateIV() {
     byte[] iv = new byte[16];

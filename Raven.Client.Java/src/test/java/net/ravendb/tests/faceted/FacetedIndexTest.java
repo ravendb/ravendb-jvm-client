@@ -111,6 +111,7 @@ public class FacetedIndexTest extends FacetTestBase {
     }
   }
 
+  @SuppressWarnings("boxing")
   @Test
   public void canPerformFacetedSearch_Remotely_Lazy() {
 
@@ -142,7 +143,7 @@ public class FacetedIndexTest extends FacetTestBase {
     }
   }
 
-  @SuppressWarnings("unused")
+  @SuppressWarnings({"unused", "boxing"})
   @Test
   public void canPerformFacetedSearch_Remotely_Lazy_can_work_with_others() {
 
@@ -175,6 +176,7 @@ public class FacetedIndexTest extends FacetTestBase {
     }
   }
 
+  @SuppressWarnings("boxing")
   private void executeTest(IDocumentStore store, List<Facet> facetsToUse) {
     setup(store, facetsToUse);
 
@@ -210,7 +212,7 @@ public class FacetedIndexTest extends FacetTestBase {
     insertCameraDataAndWaitForNonStaleResults(store, data);
   }
 
-  @SuppressWarnings("unused")
+  @SuppressWarnings({"unused", "boxing", "static-method"})
   private void printFacetResults(FacetResults facetResults) {
     for(Map.Entry<String, FacetResult> kvp : facetResults.getResults().entrySet()) {
       if (kvp.getValue().getValues().size() > 0) {
@@ -223,6 +225,7 @@ public class FacetedIndexTest extends FacetTestBase {
     }
   }
 
+  @SuppressWarnings("boxing")
   private void checkFacetResultsMatchInMemoryData(FacetResults facetResults, List<Camera> filteredData) {
     QCamera c = QCamera.camera;
 
@@ -262,6 +265,7 @@ public class FacetedIndexTest extends FacetTestBase {
   }
 
 
+  @SuppressWarnings("static-method")
   private void checkFacetCount(long expectedCount, FacetValue facets) {
     if (expectedCount > 0) {
       assertNotNull(facets);

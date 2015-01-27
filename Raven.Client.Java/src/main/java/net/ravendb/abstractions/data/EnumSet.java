@@ -34,6 +34,7 @@ public class EnumSet<T extends Enum<T>, S extends EnumSet<T, S>> {
     return storage;
   }
 
+  @SuppressWarnings("boxing")
   private int getValue(Enum<?> prop) {
     try {
       return (int) getValueMethod.invoke(prop);

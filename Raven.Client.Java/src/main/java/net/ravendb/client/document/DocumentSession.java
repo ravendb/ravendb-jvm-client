@@ -60,15 +60,12 @@ import net.ravendb.client.linq.IRavenQueryProvider;
 import net.ravendb.client.linq.IRavenQueryable;
 import net.ravendb.client.linq.RavenQueryInspector;
 import net.ravendb.client.linq.RavenQueryProvider;
-import net.ravendb.client.utils.Closer;
 
 import org.apache.commons.lang.NullArgumentException;
 import org.apache.commons.lang.StringUtils;
 
 import com.google.common.base.Defaults;
-import com.google.common.io.Closeables;
 import com.mysema.query.types.Expression;
-import com.mysema.query.types.Path;
 
 /**
  * Implements Unit of Work for accessing the RavenDB server
@@ -129,6 +126,7 @@ public class DocumentSession extends InMemoryDocumentSessionOperations implement
   }
 
   protected class DisableAllCachingCallback implements Function0<CleanCloseable> {
+    @SuppressWarnings("synthetic-access")
     @Override
     public CleanCloseable apply() {
       return databaseCommands.disableAllCaching();
@@ -188,18 +186,21 @@ public class DocumentSession extends InMemoryDocumentSessionOperations implement
     return ((IDocumentSessionImpl) this).loadInternal(clazz, ids);
   }
 
+  @SuppressWarnings("boxing")
   @Override
   public <T> T load(Class<T> clazz, Number id) {
     String documentKey = getConventions().getFindFullDocumentKeyFromNonStringIdentifier().find(id, clazz, false);
     return load(clazz, documentKey);
   }
 
+  @SuppressWarnings("boxing")
   @Override
   public <T> T load(Class<T> clazz, UUID id) {
     String documentKey = getConventions().getFindFullDocumentKeyFromNonStringIdentifier().find(id, clazz, false);
     return load(clazz, documentKey);
   }
 
+  @SuppressWarnings("boxing")
   @Override
   public <T> T[] load(Class<T> clazz, Number... ids) {
     List<String> documentKeys = new ArrayList<>();
@@ -209,6 +210,7 @@ public class DocumentSession extends InMemoryDocumentSessionOperations implement
     return load(clazz, documentKeys.toArray(new String[0]));
   }
 
+  @SuppressWarnings("boxing")
   @Override
   public <T> T[] load(Class<T> clazz, UUID... ids) {
     List<String> documentKeys = new ArrayList<>();
@@ -223,6 +225,7 @@ public class DocumentSession extends InMemoryDocumentSessionOperations implement
     return loadUsingTransformerInternal(clazz, ids, transformer, null);
   }
 
+  @SuppressWarnings("unchecked")
   private <T> T[] loadUsingTransformerInternal(Class<T> clazz, String[] ids, String transformer, Map<String, RavenJToken> transformerParameters) {
     if (transformer == null) {
       throw new NullArgumentException("transformer");
@@ -239,7 +242,7 @@ public class DocumentSession extends InMemoryDocumentSessionOperations implement
 
 
 
-  @SuppressWarnings("null")
+  @SuppressWarnings({"null", "unchecked"})
   @Override
   public <T> T[] loadInternal(Class<T> clazz, String[] ids, Tuple<String, Class<?>>[] includes) {
     if (ids.length == 0) {
@@ -276,6 +279,7 @@ public class DocumentSession extends InMemoryDocumentSessionOperations implement
     return multiLoadOperation.complete(clazz);
   }
 
+  @SuppressWarnings("unchecked")
   @Override
   public <T> T[] loadInternal(Class<T> clazz, String[] ids) {
     if (ids.length == 0) {
@@ -516,6 +520,7 @@ public class DocumentSession extends InMemoryDocumentSessionOperations implement
     return stream(query, _);
   }
 
+  @SuppressWarnings("unchecked")
   @Override
   public <T> CloseableIterator<StreamResult<T>> stream(IRavenQueryable<T> query, Reference<QueryHeaderInformation> queryHeaderInformationRef) {
     IRavenQueryProvider queryProvider = (IRavenQueryProvider)query.getProvider();
@@ -670,13 +675,13 @@ public class DocumentSession extends InMemoryDocumentSessionOperations implement
       return innerIterator.hasNext();
     }
 
+    @Override
     public void close() {
       closed = true;
       innerIterator.close();
     }
 
-
-
+    @SuppressWarnings("unchecked")
     @Override
     public StreamResult<T> next() {
       if (closed) {
@@ -809,6 +814,7 @@ public class DocumentSession extends InMemoryDocumentSessionOperations implement
       pendingLazyOperations.add(operation);
 
       Lazy<Integer> lazyValue = new Lazy<>(new Function0<Integer>() {
+        @SuppressWarnings("boxing")
         @Override
         public Integer apply() {
           executeAllPendingLazyOperations();
@@ -826,6 +832,7 @@ public class DocumentSession extends InMemoryDocumentSessionOperations implement
   public <T> Lazy<T[]> lazyLoadInternal(final Class<T> clazz, final String[] ids, Tuple<String, Class<?>>[] includes, Action1<T[]> onEval) {
     if (checkIfIdAlreadyIncluded(ids, includes)) {
       return new Lazy<>(new Function0<T[]>() {
+        @SuppressWarnings("unchecked")
         @Override
         public T[] apply() {
           T[] result = (T[]) Array.newInstance(clazz, ids.length);
@@ -841,6 +848,7 @@ public class DocumentSession extends InMemoryDocumentSessionOperations implement
     return addLazyOperation(lazyOp, onEval);
   }
 
+  @SuppressWarnings("boxing")
   @Override
   public ResponseTimeInformation executeAllPendingLazyOperations() {
     if (pendingLazyOperations.size() == 0)
@@ -873,6 +881,7 @@ public class DocumentSession extends InMemoryDocumentSessionOperations implement
     }
   }
 
+  @SuppressWarnings("boxing")
   private boolean executeLazyOperationsSingleStep(ResponseTimeInformation responseTimeInformation) {
 
     List<CleanCloseable> disposables = new ArrayList<>();
@@ -949,6 +958,7 @@ public class DocumentSession extends InMemoryDocumentSessionOperations implement
     return loadStartingWith(clazz, keyPrefix, matches, start, pageSize, exclude, pagingInformation, null);
   }
 
+  @SuppressWarnings("unchecked")
   @Override
   public <T> T[] loadStartingWith(Class<T> clazz, String keyPrefix, String matches, int start, int pageSize, String exclude, RavenPagingInformation pagingInformation, String skipAfter) {
     incrementRequestCount();
@@ -1003,6 +1013,7 @@ public class DocumentSession extends InMemoryDocumentSessionOperations implement
     return loadStartingWith(clazz, transformerClass, keyPrefix, matches, start, pageSize, exclude, pagingInformation, configure, null);
   }
 
+  @SuppressWarnings("unchecked")
   @Override
   public <TResult, TTransformer extends AbstractTransformerCreationTask> TResult[] loadStartingWith(Class<TResult> clazz, Class<TTransformer> transformerClass,
     String keyPrefix, String matches, int start, int pageSize, String exclude,

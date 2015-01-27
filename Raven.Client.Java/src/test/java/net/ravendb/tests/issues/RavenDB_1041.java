@@ -68,6 +68,7 @@ public class RavenDB_1041 extends ReplicationBase {
     assertNotNull(store3.getDatabaseCommands().get("Replicated/2"));
   }
 
+  @SuppressWarnings("boxing")
   @Test
   public void canSpecifyTimeoutWhenWaitingForReplication() throws Exception {
     DocumentStore store1 = createStore();
@@ -88,6 +89,7 @@ public class RavenDB_1041 extends ReplicationBase {
     assertNotNull(store3.getDatabaseCommands().get("Replicated/1"));
   }
 
+  @SuppressWarnings("boxing")
   @Test
   public void shouldThrowTimeoutException() {
     DocumentStore store1 = createStore();

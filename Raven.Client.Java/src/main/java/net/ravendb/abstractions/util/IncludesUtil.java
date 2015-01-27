@@ -18,6 +18,7 @@ public class IncludesUtil {
 
   private final static Pattern INCLUDE_PREFIX_REGEX = Pattern.compile("[^(]*(\\([^(]+\\))");
 
+  @SuppressWarnings("synthetic-access")
   private static IncludePath getIncludePath(String include) {
     IncludePath result = new IncludePath();
     result.setPath(include);
@@ -31,6 +32,7 @@ public class IncludesUtil {
   }
 
 
+  @SuppressWarnings("incomplete-switch")
   private static void executeInternal(RavenJToken token, String prefix, Action2<String, String> loadId) {
     if (token == null) {
       return; // nothing to do

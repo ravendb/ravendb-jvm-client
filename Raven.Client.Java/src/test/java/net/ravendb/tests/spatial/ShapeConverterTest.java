@@ -23,6 +23,7 @@ import com.mysema.query.annotations.QueryEntity;
 
 public class ShapeConverterTest extends RemoteClientTest {
 
+  @SuppressWarnings("boxing")
   @Test
   public void points() {
     try (IDocumentStore store = new DocumentStore(getDefaultUrl(), getDefaultDb()).initialize()) {

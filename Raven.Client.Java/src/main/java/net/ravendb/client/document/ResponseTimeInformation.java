@@ -12,6 +12,7 @@ public class ResponseTimeInformation {
   private List<ResponseTimeItem> durationBreakdown;
 
 
+  @SuppressWarnings("boxing")
   public ResponseTimeInformation() {
     totalClientDuration = 0L;
     totalServerDuration = 0L;
@@ -47,6 +48,7 @@ public class ResponseTimeInformation {
     this.durationBreakdown = durationBreakdown;
   }
 
+  @SuppressWarnings("boxing")
   public void computeServerTotal() {
     long total = 0;
     for (ResponseTimeItem item : durationBreakdown) {

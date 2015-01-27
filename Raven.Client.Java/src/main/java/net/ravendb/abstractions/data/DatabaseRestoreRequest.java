@@ -52,18 +52,31 @@ public class DatabaseRestoreRequest {
     this.disableReplicationDestinations = disableReplicationDestinations;
   }
 
+  /**
+   * Maximum number of seconds to wait for restore to start (only one restore can run simultaneously). If exceeded, then status code 503 (Service Unavailable) will be returned.
+   */
   public Integer getRestoreStartTimeout() {
     return restoreStartTimeout;
   }
 
+  /**
+   * Maximum number of seconds to wait for restore to start (only one restore can run simultaneously). If exceeded, then status code 503 (Service Unavailable) will be returned.
+   */
   public void setRestoreStartTimeout(Integer restoreStartTimeout) {
     this.restoreStartTimeout = restoreStartTimeout;
   }
 
+  /**
+   * Path to directory where backup lies.
+   */
   public String getBackupLocation() {
     return backupLocation;
   }
 
+  /**
+   * Path to directory where backup lies.
+   * @param backupLocation
+   */
   public void setBackupLocation(String backupLocation) {
     this.backupLocation = backupLocation;
   }
@@ -92,32 +105,49 @@ public class DatabaseRestoreRequest {
 
   /**
    * Indicates what should be the name of database after restore. If null then name will be read from 'Database.Document' found in backup.
-   * @param databaseName
    */
   public void setDatabaseName(String databaseName) {
     this.databaseName = databaseName;
   }
 
+  /**
+   * Path to directory where journals lies (if null, then default location will be assumed).
+   */
   public String getJournalsLocation() {
     return journalsLocation;
   }
 
+  /**
+   * Path to directory where journals lies (if null, then default location will be assumed).
+   */
   public void setJournalsLocation(String journalsLocation) {
     this.journalsLocation = journalsLocation;
   }
 
+  /**
+   * Path to directory where indexes lies (if null, then default location will be assumed).
+   */
   public String getIndexesLocation() {
     return indexesLocation;
   }
 
+  /**
+   * Path to directory where indexes lies (if null, then default location will be assumed).
+   */
   public void setIndexesLocation(String indexesLocation) {
     this.indexesLocation = indexesLocation;
   }
 
+  /**
+   * Indicates if defragmentation should take place after restore.
+   */
   public boolean isDefrag() {
     return defrag;
   }
 
+  /**
+   * Indicates if defragmentation should take place after restore.
+   */
   public void setDefrag(boolean defrag) {
     this.defrag = defrag;
   }

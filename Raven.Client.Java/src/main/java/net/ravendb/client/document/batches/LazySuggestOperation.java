@@ -49,6 +49,7 @@ public class LazySuggestOperation implements ILazyOperation {
     this.suggestionQuery = suggestionQuery;
   }
 
+  @SuppressWarnings("boxing")
   @Override
   public GetRequest createRequest() {
     String query = String.format("term=%s&field=%s&max=%d", suggestionQuery.getTerm(), suggestionQuery.getField(), suggestionQuery.getMaxSuggestions());
@@ -65,6 +66,7 @@ public class LazySuggestOperation implements ILazyOperation {
     return getRequest;
   }
 
+  @SuppressWarnings("hiding")
   @Override
   public void handleResponse(GetResponse response) {
     if (response.getStatus() != HttpStatus.SC_OK && response.getStatus() != HttpStatus.SC_NOT_MODIFIED) {

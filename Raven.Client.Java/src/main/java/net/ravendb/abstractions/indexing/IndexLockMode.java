@@ -7,6 +7,7 @@ import net.ravendb.abstractions.basic.UseSharpEnum;
 public enum IndexLockMode {
   UNLOCK,
   LOCKED_IGNORE,
-  LOCKED_ERROR;
+  LOCKED_ERROR,
+  SIDE_BY_SIDE;
 
 }

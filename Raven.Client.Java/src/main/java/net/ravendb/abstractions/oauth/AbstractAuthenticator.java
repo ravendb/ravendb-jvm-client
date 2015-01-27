@@ -13,6 +13,7 @@ public abstract class AbstractAuthenticator {
 
   protected String currentOauthToken;
 
+  @SuppressWarnings("unused")
   public void configureRequest(Object sender, WebRequestEventArgs e) {
     if (StringUtils.isEmpty(currentOauthToken)) {
       return;
@@ -20,6 +21,7 @@ public abstract class AbstractAuthenticator {
     setHeader(e.getRequest(), "Authorization", currentOauthToken);
   }
 
+  @SuppressWarnings("unused")
   protected void setAuthorization(HttpClient httpClient) {
     if (StringUtils.isEmpty(currentOauthToken)) {
       return;

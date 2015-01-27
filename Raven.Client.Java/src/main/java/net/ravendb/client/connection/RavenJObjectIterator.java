@@ -77,6 +77,7 @@ public class RavenJObjectIterator implements CloseableIterator<RavenJObject> {
     }
   }
 
+  @SuppressWarnings("boxing")
   private void tryReadNextPageStart() throws IOException {
     if (jsonParser.nextToken() == null || jsonParser.getCurrentToken() != JsonToken.FIELD_NAME) {
       return;

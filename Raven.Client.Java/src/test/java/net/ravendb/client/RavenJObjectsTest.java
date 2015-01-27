@@ -187,6 +187,7 @@ public class RavenJObjectsTest {
     }
   }
 
+  @SuppressWarnings("boxing")
   @Test
   public void testRavenJValue() {
     RavenJValue stringValue = new RavenJValue("this is string");
@@ -245,6 +246,7 @@ public class RavenJObjectsTest {
 
 
 
+  @SuppressWarnings("boxing")
   @Test
   public void testHashCodeAndEqual() {
 
@@ -271,6 +273,7 @@ public class RavenJObjectsTest {
 
   }
 
+  @SuppressWarnings("boxing")
   @Test
   public void testEquality() throws URISyntaxException, MalformedURLException {
     innerEqCheck(RavenJToken.fromObject(new byte[] { 1,2,3}), RavenJToken.fromObject(new byte[] {1,2,3}));
@@ -314,6 +317,7 @@ public class RavenJObjectsTest {
 
   }
 
+  @SuppressWarnings("static-method")
   private void innerEqCheck(RavenJToken t1, RavenJToken t2) {
     assertEquals(t1, t2);
     assertEquals(t2, t1);
@@ -359,6 +363,7 @@ public class RavenJObjectsTest {
     array.createSnapshot();
   }
 
+  @SuppressWarnings("boxing")
   @Test
   public void testSetValue() {
     RavenJValue value1 =  new RavenJValue("test");
@@ -434,6 +439,7 @@ public class RavenJObjectsTest {
   }
 
 
+  @SuppressWarnings("boxing")
   @Test
   public void testParser() {
     innerTestParseRavenJValue("null", JTokenType.NULL, null);
@@ -662,6 +668,7 @@ public class RavenJObjectsTest {
 
   }
 
+  @SuppressWarnings("static-method")
   private void innerTestParseRavenJValue(String input, JTokenType expectedTokenType, Object expectedValue) {
     RavenJToken ravenJToken = RavenJToken.parse(input);
     RavenJValue ravenJValue = (RavenJValue) ravenJToken;
@@ -671,6 +678,7 @@ public class RavenJObjectsTest {
 
   }
 
+  @SuppressWarnings("static-method")
   private ComplexObject getComplexObject() throws MalformedURLException {
     ComplexObject complexObject = new ComplexObject();
     complexObject.setBigDecimal(new BigDecimal("120.123456"));

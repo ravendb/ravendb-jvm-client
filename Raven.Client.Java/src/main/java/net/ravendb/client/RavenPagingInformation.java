@@ -7,6 +7,7 @@ public class RavenPagingInformation {
   private int pageSize;
   private int nextPageStart;
 
+  @SuppressWarnings("hiding")
   public void fill(int start, int pageSize, int nextPageStart) {
     if (start < 0) {
       throw new IllegalStateException("Start must be greather or equals than 0.");
@@ -20,6 +21,7 @@ public class RavenPagingInformation {
     this.nextPageStart = nextPageStart;
   }
 
+  @SuppressWarnings("hiding")
   public boolean isForPreviousPage(int start, int pageSize) {
     if (this.pageSize != pageSize) {
       return false;

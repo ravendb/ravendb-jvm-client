@@ -1,7 +1,6 @@
 package net.ravendb.abstractions.data;
 
 import static org.junit.Assert.assertEquals;
-
 import net.ravendb.abstractions.data.PatchCommandType;
 import net.ravendb.abstractions.data.PatchRequest;
 import net.ravendb.abstractions.json.linq.RavenJObject;
@@ -11,6 +10,7 @@ import org.junit.Test;
 
 
 public class PatchRequestTest {
+  @SuppressWarnings("boxing")
   @Test
   public void testConversion() {
     PatchRequest request = new PatchRequest();

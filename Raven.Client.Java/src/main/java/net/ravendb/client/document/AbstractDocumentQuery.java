@@ -63,6 +63,7 @@ import net.ravendb.client.spatial.SpatialCriteria;
 import org.apache.commons.lang.ArrayUtils;
 import org.apache.commons.lang.StringUtils;
 
+import com.google.common.base.CharMatcher;
 import com.google.common.base.Defaults;
 import com.mysema.query.types.Expression;
 import com.mysema.query.types.Path;
@@ -284,6 +285,7 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
     return theSession;
   }
 
+  @SuppressWarnings("static-method")
   private long getDefaultTimeout() {
     return 15 * 1000;
   }
@@ -397,7 +399,7 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
     return (TSelf) this;
   }
 
-  @SuppressWarnings("unchecked")
+  @SuppressWarnings({"unchecked", "hiding"})
   protected TSelf generateQueryWithinRadiusOf(String fieldName, double radius, double latitude, double longitude, double distanceErrorPct) {
     generateQueryWithinRadiusOf(fieldName, radius, latitude, longitude, distanceErrorPct, (SpatialUnits) null);
     return (TSelf) this;
@@ -411,6 +413,7 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
    * @param longitude
    * @param distanceErrorPct
    */
+  @SuppressWarnings("hiding")
   protected TSelf generateQueryWithinRadiusOf(String fieldName, double radius, double latitude, double longitude, double distanceErrorPct, SpatialUnits radiusUnits) {
     return generateSpatialQueryData(fieldName, SpatialIndexQuery.getQueryShapeFromLatLon(latitude, longitude, radius), SpatialRelation.WITHIN, distanceErrorPct, radiusUnits);
   }
@@ -421,13 +424,13 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
     return (TSelf) this;
   }
 
-  @SuppressWarnings("unchecked")
+  @SuppressWarnings({"unchecked", "hiding"})
   protected TSelf generateSpatialQueryData(String fieldName, String shapeWKT, SpatialRelation relation, double distanceErrorPct) {
     generateSpatialQueryData(fieldName, shapeWKT, relation, distanceErrorPct, null);
     return (TSelf) this;
   }
 
-  @SuppressWarnings("unchecked")
+  @SuppressWarnings({"unchecked", "hiding"})
   protected TSelf generateSpatialQueryData(String fieldName, String shapeWKT, SpatialRelation relation, double distanceErrorPct, SpatialUnits radiusUnits) {
     isSpatialQuery = true;
     spatialFieldName = fieldName;
@@ -444,7 +447,7 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
     return (TSelf) this;
   }
 
-  @SuppressWarnings("unchecked")
+  @SuppressWarnings({"unchecked", "hiding"})
   protected TSelf generateSpatialQueryData(String fieldName, SpatialCriteria criteria, double distanceErrorPct) {
     Reference<String> wktRef = new Reference<>();
     if (criteria.getShape() instanceof String) {
@@ -487,7 +490,7 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
     return (IDocumentQuery<T>) this;
   }
 
-  @SuppressWarnings("unchecked")
+  @SuppressWarnings({"unchecked", "boxing"})
   @Override
   public IDocumentQuery<T> include(Class<?> targetClass, Path<?> path) {
     String fullId = getDocumentConvention().getFindFullDocumentKeyFromNonStringIdentifier().find(-1, targetClass, false);
@@ -776,7 +779,7 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
     fieldName = descending ? "-" + fieldName : fieldName;
     orderByFields = (String[]) ArrayUtils.add(orderByFields, fieldName);
     if (theSession != null) {
-      sortByHints.add(new Tuple<String, SortOptions>(fieldName, theSession.getConventions().getDefaultSortOption(fieldType)));
+      sortByHints.add(new Tuple<>(fieldName, theSession.getConventions().getDefaultSortOption(fieldType)));
     }
     return (IDocumentQuery<T>) this;
   }
@@ -796,7 +799,7 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
     }
   }
 
-  @SuppressWarnings("unchecked")
+  @SuppressWarnings({"unchecked", "boxing"})
   @Override
   public IDocumentQuery<T> take(int count) {
     pageSize = count;
@@ -841,6 +844,7 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
     return result.get(0);
   }
 
+  @SuppressWarnings("boxing")
   private List<T> executeQueryOperation(int take) {
     if (pageSize == null || pageSize > take) {
           take(take);
@@ -1061,7 +1065,7 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
    * @param end The end.
    */
   @Override
-  @SuppressWarnings("unchecked")
+  @SuppressWarnings({"unchecked", "hiding"})
   public IDocumentQuery<T> whereBetween(String fieldName, Object start, Object end) {
     appendSpaceIfNeeded(queryText.length() > 0);
 
@@ -1096,7 +1100,7 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
    * @param end The end.
    */
   @Override
-  @SuppressWarnings("unchecked")
+  @SuppressWarnings({"unchecked", "hiding"})
   public IDocumentQuery<T> whereBetweenOrEqual(String fieldName, Object start, Object end) {
     appendSpaceIfNeeded(queryText.length() > 0);
     if ((start != null ? start : end) != null && theSession != null) {
@@ -1122,6 +1126,7 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
     return (IDocumentQuery<T>) this;
   }
 
+  @SuppressWarnings("hiding")
   private String getFieldNameForRangeQueries(String fieldName, Object start, Object end) {
     WhereParams whereParams = new WhereParams();
     whereParams.setFieldName(fieldName);
@@ -1221,7 +1226,7 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
    * @param boost boosting factor where 1.0 is default, less than 1.0 is lower weight, greater than 1.0 is higher weight
    */
   @Override
-  @SuppressWarnings("unchecked")
+  @SuppressWarnings({"unchecked", "boxing"})
   public IDocumentQuery<T> boost(Double boost) {
     if (queryText.length() < 1) {
       throw new IllegalStateException("Missing where clause");
@@ -1245,7 +1250,7 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
    * @param fuzzy 0.0 to 1.0 where 1.0 means closer match
    */
   @Override
-  @SuppressWarnings("unchecked")
+  @SuppressWarnings({"unchecked", "boxing"})
   public IDocumentQuery<T> fuzzy(Double fuzzy) {
     if (queryText.length() < 1) {
       throw new IllegalStateException("Missing where clause");
@@ -1451,6 +1456,7 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
    * Callback to get the results of the query
    * @param afterQueryExecutedCallback
    */
+  @SuppressWarnings("hiding")
   public void afterQueryExecuted(Action1<QueryResult> afterQueryExecutedCallback) {
     this.afterQueryExecutedCallback = Delegates.combine(this.afterQueryExecutedCallback, afterQueryExecutedCallback);
   }
@@ -1470,6 +1476,7 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
    * Generates the index query.
    * @param query The query.
    */
+  @SuppressWarnings("boxing")
   protected IndexQuery generateIndexQuery(String query) {
     if(isSpatialQuery) {
       if ("dynamic".equals(indexName) || indexName.startsWith("dynamic/")) {
@@ -1605,12 +1612,16 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
       default:
         throw new IllegalArgumentException("Value:" + escapeQueryOptions);
     }
-    lastEquality = Tuple.create(fieldName, "(" + searchTerms + ")");
+
+    boolean hasWhiteSpace = CharMatcher.WHITESPACE.matchesAnyOf(searchTerms);
+    lastEquality = Tuple.create(fieldName, hasWhiteSpace ? "(" + searchTerms + ")" : searchTerms);
+
 
     queryText.append(fieldName).append(":").append("(").append(searchTerms).append(")");
     return (IDocumentQuery<T>) this;
   }
 
+  @SuppressWarnings("boxing")
   private String transformToEqualValue(WhereParams whereParams) {
     if (whereParams.getValue() == null) {
       return Constants.NULL_VALUE_NOT_ANALYZED;
@@ -1673,6 +1684,7 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
   }
 
 
+  @SuppressWarnings("boxing")
   private String transformToRangeValue(WhereParams whereParams) {
     if (whereParams.getValue() == null) {
       return Constants.NULL_VALUE_NOT_ANALYZED;
@@ -1747,12 +1759,14 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
     return (IDocumentQuery<T>) this;
   }
 
+  @SuppressWarnings("unchecked")
   @Override
   public IDocumentQuery<T> containsAny(String fieldName, Collection<Object> values) {
       containsAnyAllProcessor(fieldName, values, "OR");
       return (IDocumentQuery<T>) this;
   }
 
+  @SuppressWarnings("unchecked")
   @Override
   public IDocumentQuery<T> containsAll(String fieldName, Collection<Object> values) {
       containsAnyAllProcessor(fieldName, values, "AND");

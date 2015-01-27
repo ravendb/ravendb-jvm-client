@@ -294,6 +294,7 @@ public class DictionaryWithParentSnapshot implements Map<String, RavenJToken>, I
     private Iterator<java.util.Map.Entry<String, RavenJToken>> parentIterator;
     private Iterator<java.util.Map.Entry<String, RavenJToken>> localIterator;
 
+    @SuppressWarnings("synthetic-access")
     private Iterator<java.util.Map.Entry<String, RavenJToken>> getCurrentIterator() {
       if (!parentProcessed) {
         if (parentSnapshot != null) {

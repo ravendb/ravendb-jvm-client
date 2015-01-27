@@ -35,6 +35,7 @@ public class RavenDB_1533 extends RemoteClientTest {
 
   }
 
+  @SuppressWarnings("boxing")
   @Test
   public void canDeleteObjectByKeyOnSyncSession() {
     try (IDocumentStore store = new DocumentStore(getDefaultUrl(), getDefaultDb()).initialize()) {
@@ -61,6 +62,7 @@ public class RavenDB_1533 extends RemoteClientTest {
     }
   }
 
+  @SuppressWarnings("boxing")
   @Test
   public void canDeleteObjectByTypeAndIdOnSyncSession() {
     try (IDocumentStore store = new DocumentStore(getDefaultUrl(), getDefaultDb()).initialize()) {
@@ -87,6 +89,7 @@ public class RavenDB_1533 extends RemoteClientTest {
     }
   }
 
+  @SuppressWarnings("boxing")
   @Test
   public void shouldNotThrowWhenDeletingUnchangedLoadedObject() {
     try (IDocumentStore store = new DocumentStore(getDefaultUrl(), getDefaultDb()).initialize()) {
@@ -110,6 +113,7 @@ public class RavenDB_1533 extends RemoteClientTest {
     }
   }
 
+  @SuppressWarnings("boxing")
   @Test(expected = IllegalStateException.class)
   public void shouldThrowWhenDeletingChangedLoadedObject() {
     try (IDocumentStore store = new DocumentStore(getDefaultUrl(), getDefaultDb()).initialize()) {
@@ -130,6 +134,7 @@ public class RavenDB_1533 extends RemoteClientTest {
     }
   }
 
+  @SuppressWarnings("boxing")
   @Test(expected = IllegalStateException.class)
   public void shouldThrowWhenDeletingNewlyCreatedEntity() {
     try (IDocumentStore store = new DocumentStore(getDefaultUrl(), getDefaultDb()).initialize()) {
@@ -144,6 +149,7 @@ public class RavenDB_1533 extends RemoteClientTest {
     }
   }
 
+  @SuppressWarnings("boxing")
   @Test(expected = IllegalStateException.class)
   public void shouldThrowWhenStoringJustDeletedIdentifier() {
     try (IDocumentStore store = new DocumentStore(getDefaultUrl(), getDefaultDb()).initialize()) {

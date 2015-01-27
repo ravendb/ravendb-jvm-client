@@ -62,6 +62,7 @@ public class IndexDefinitionBuilder {
     this.lockMode = IndexLockMode.UNLOCK;
   }
 
+  @SuppressWarnings("static-method")
   private <S> Map<String, S> convertToStringDictionary(Map<Path< ? >, S> input) {
     Map<String, S> result = new HashMap<>();
     for (Entry<Path<?>, S> value: input.entrySet()) {
@@ -190,7 +191,7 @@ public class IndexDefinitionBuilder {
     return toIndexDefinition(convention, true);
   }
 
-  @SuppressWarnings("deprecation")
+  @SuppressWarnings({"hiding", "unused"})
   public IndexDefinition toIndexDefinition(DocumentConvention convention, boolean validateMap) {
     if (map == null && validateMap)
       throw new IllegalStateException(

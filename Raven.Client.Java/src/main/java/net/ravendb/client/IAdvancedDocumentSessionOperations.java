@@ -175,6 +175,13 @@ public interface IAdvancedDocumentSessionOperations {
   public void explicitlyVersion(Object entity);
 
   /**
+   * Mark the entity as one that should be ignore for change tracking purposes,
+   * it still takes part in the session, but is ignored for saveChanges.
+   * @param entity
+   */
+  public void ignoreChangesFor(Object entity);
+
+  /**
    * Returns all changes for each entity stored within session. Including name of the field/property that changed, its old and new value and change type.
    */
   public Map<String, List<DocumentsChanges>> whatChanged();

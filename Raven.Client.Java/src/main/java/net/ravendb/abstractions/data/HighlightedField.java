@@ -18,26 +18,21 @@ public final class HighlightedField {
   private int fragmentCount;
   private String fragmentsField;
 
-
   public String getField() {
     return field;
   }
-
 
   public int getFragmentLength() {
     return fragmentLength;
   }
 
-
   public int getFragmentCount() {
     return fragmentCount;
   }
 
-
   public String getFragmentsField() {
     return fragmentsField;
   }
-
 
   public HighlightedField(String field, int fragmentLength, int fragmentCount, String fragmentsField) {
     this.field = field;
@@ -46,7 +41,7 @@ public final class HighlightedField {
     this.fragmentsField = fragmentsField;
   }
 
-
+  @SuppressWarnings("boxing")
   public static boolean TryParse(String value, Reference<HighlightedField> result)
   {
     result.value = null;
@@ -82,6 +77,7 @@ public final class HighlightedField {
     return true;
   }
 
+  @SuppressWarnings("boxing")
   @Override
   public String toString() {
     String frag = StringUtils.isEmpty(this.fragmentsField) ? "" : "," + this.fragmentsField;

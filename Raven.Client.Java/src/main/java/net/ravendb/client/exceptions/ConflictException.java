@@ -30,14 +30,17 @@ public class ConflictException extends RuntimeException {
     this.etag = etag;
   }
 
+  @SuppressWarnings("unused")
   public ConflictException(boolean properlyHandlesClientSideResolution) {
     // empty by design
   }
 
+  @SuppressWarnings("unused")
   public ConflictException(String message, boolean properlyHandlesClientSideResolution) {
     super(message);
   }
 
+  @SuppressWarnings("unused")
   public ConflictException(String message, Exception inner, boolean properlyHandlesClientSideResolution) {
     super(message, inner);
   }

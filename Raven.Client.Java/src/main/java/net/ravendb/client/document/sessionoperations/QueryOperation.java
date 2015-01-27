@@ -118,6 +118,7 @@ public class QueryOperation {
     return sessionOperations.getDocumentStore().disableAggressiveCaching();
   }
 
+  @SuppressWarnings("boxing")
   public boolean shouldQueryAgain(Exception e) {
     if (e instanceof NonAuthoritativeInformationException == false) {
       return false;
@@ -253,6 +254,7 @@ public class QueryOperation {
     currentQueryResults.ensureSnapshot();
   }
 
+  @SuppressWarnings("boxing")
   public boolean isAcceptable(QueryResult result) {
     if (!sessionOperations.isAllowNonAuthoritativeInformation() &&
         result.isNonAuthoritativeInformation()) {

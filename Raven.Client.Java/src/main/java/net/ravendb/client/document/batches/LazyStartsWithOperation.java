@@ -45,6 +45,7 @@ public class LazyStartsWithOperation<T> implements ILazyOperation {
     this.skipAfter = skipAfter;
   }
 
+  @SuppressWarnings("boxing")
   @Override
   public GetRequest createRequest() {
     int actualStart = start;
@@ -131,6 +132,7 @@ public class LazyStartsWithOperation<T> implements ILazyOperation {
     return entites.toArray();
   }
 
+  @SuppressWarnings("hiding")
   public void handleEmbeddedResponse(Object result) {
     this.result = result;
   }

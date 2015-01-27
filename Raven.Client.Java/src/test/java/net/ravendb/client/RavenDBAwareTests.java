@@ -105,6 +105,7 @@ public abstract class RavenDBAwareTests {
     stopServer(DEFAULT_SERVER_PORT_1);
   }
 
+  @SuppressWarnings("cast")
   @Before
   public void init() {
     System.setProperty("java.net.preferIPv4Stack" , "true");
@@ -180,6 +181,7 @@ public abstract class RavenDBAwareTests {
     }
   }
 
+  @SuppressWarnings("static-method")
   private int getDefaultServerPort(int i) {
     if (i == 1) {
       return DEFAULT_SERVER_PORT_1;
@@ -235,6 +237,7 @@ public abstract class RavenDBAwareTests {
     startServer(port, deleteData, getCreateServerDocument(port));
   }
 
+  @SuppressWarnings("unused")
   protected static void startServer(int port, boolean deleteData, RavenJObject serverDocument) {
     HttpPut put = null;
     try {
@@ -275,6 +278,7 @@ public abstract class RavenDBAwareTests {
   }
 
 
+  @SuppressWarnings("static-access")
   protected String getCreateDbDocument(String dbName, int port) {
     RavenJObject doc = new RavenJObject();
     RavenJObject settings = new RavenJObject();
@@ -296,6 +300,7 @@ public abstract class RavenDBAwareTests {
     return doc;
   }
 
+  @SuppressWarnings("boxing")
   protected static String getCreateServerDocumentWithApiKey(int port) {
     RavenJObject doc = new RavenJObject();
     doc.add("Port", port);

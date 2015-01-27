@@ -56,6 +56,7 @@ public class MultiLoadOperation {
     return null;
   }
 
+  @SuppressWarnings("boxing")
   public boolean setResult(MultiLoadResult multiLoadResult) {
     firstRequest = false;
     includeResults = SerializationHelper.ravenJObjectsToJsonDocuments(multiLoadResult.getIncludes()).toArray(new JsonDocument[0]);
@@ -75,6 +76,7 @@ public class MultiLoadOperation {
     return true;
   }
 
+  @SuppressWarnings("unchecked")
   public <T> T[] complete(Class<T> clazz) {
     for (int i = 0; i < includeResults.length; i++) {
       sessionOperations.trackIncludedDocument(includeResults[i]);

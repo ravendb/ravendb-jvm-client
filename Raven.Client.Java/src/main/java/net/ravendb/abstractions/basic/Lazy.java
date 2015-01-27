@@ -19,15 +19,14 @@ public class Lazy<T> {
   public T getValue() {
     if (valueCreated) {
       return value;
-    } else {
-      synchronized (this) {
-       if (!valueCreated) {
-         value = valueFactory.apply();
-         valueCreated = true;
-       }
-      }
-      return value;
     }
+    synchronized (this) {
+      if (!valueCreated) {
+        value = valueFactory.apply();
+        valueCreated = true;
+      }
+     }
+     return value;
   }
 
 }

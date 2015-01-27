@@ -81,6 +81,7 @@ public class RavenJTokenWriter extends JsonGenerator {
     addParent(new RavenJObject());
   }
 
+  @SuppressWarnings("hiding")
   private void addParent(RavenJToken token) throws JsonGenerationException {
     if (this.token == null) {
       this.token = token;
@@ -104,10 +105,12 @@ public class RavenJTokenWriter extends JsonGenerator {
 
   }
 
+  @SuppressWarnings("hiding")
   private void addValue(Object value, JTokenType type) throws JsonGenerationException {
     addValue(new RavenJValue(value), type);
   }
 
+  @SuppressWarnings("hiding")
   private void addValue(RavenJValue value, JTokenType type) throws JsonGenerationException {
     if (tokenStack.isEmpty()) {
       this.value = value;
@@ -208,11 +211,13 @@ public class RavenJTokenWriter extends JsonGenerator {
     addValue(Arrays.copyOfRange(data, offset, offset + len), JTokenType.BYTES);
   }
 
+  @SuppressWarnings("boxing")
   @Override
   public void writeNumber(int v) throws IOException, JsonGenerationException {
     addValue(v, JTokenType.INTEGER);
   }
 
+  @SuppressWarnings("boxing")
   @Override
   public void writeNumber(long v) throws IOException, JsonGenerationException {
     addValue(v, JTokenType.INTEGER);
@@ -223,11 +228,13 @@ public class RavenJTokenWriter extends JsonGenerator {
     addValue(v, JTokenType.INTEGER);
   }
 
+  @SuppressWarnings("boxing")
   @Override
   public void writeNumber(double d) throws IOException, JsonGenerationException {
     addValue(d, JTokenType.FLOAT);
   }
 
+  @SuppressWarnings("boxing")
   @Override
   public void writeNumber(float f) throws IOException, JsonGenerationException {
     addValue(f, JTokenType.FLOAT);
@@ -243,6 +250,7 @@ public class RavenJTokenWriter extends JsonGenerator {
     throw new UnsupportedOperationException("Operation not supported");
   }
 
+  @SuppressWarnings("boxing")
   @Override
   public void writeBoolean(boolean state) throws IOException, JsonGenerationException {
     addValue(state, JTokenType.BOOLEAN);

@@ -23,6 +23,7 @@ import org.junit.Test;
 
 public class MultiGetCachingTest extends RemoteClientTest {
 
+  @SuppressWarnings("boxing")
   @Test
   public void canAggressivelyCacheLoads() throws Exception {
 
@@ -56,6 +57,7 @@ public class MultiGetCachingTest extends RemoteClientTest {
     }
   }
 
+  @SuppressWarnings("boxing")
   @Test
   public void canAggressivelyCachePartOfMultiGet_SimpleFirst() throws Exception {
 
@@ -93,6 +95,7 @@ public class MultiGetCachingTest extends RemoteClientTest {
     }
   }
 
+  @SuppressWarnings("boxing")
   @Test
   public void canAggressivelyCachePartOfMultiGet_DirectLoad() throws Exception {
 
@@ -130,6 +133,7 @@ public class MultiGetCachingTest extends RemoteClientTest {
     }
   }
 
+  @SuppressWarnings("boxing")
   @Test
   public void canAggressivelyCachePartOfMultiGet_BatchFirst() throws Exception {
 

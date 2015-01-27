@@ -101,6 +101,7 @@ public abstract class RavenJToken {
     }
   }
 
+  @SuppressWarnings({"boxing", "incomplete-switch"})
   public static RavenJToken readFrom(JsonParser parser) {
     try {
       if (parser.getCurrentToken() == null) {
@@ -132,6 +133,7 @@ public abstract class RavenJToken {
     throw new JsonReaderException("Error reading RavenJToken from JsonParser");
   }
 
+  @SuppressWarnings("unused")
   protected void addForCloning(String key, RavenJToken token) {
     //empty by design
   }
@@ -155,6 +157,7 @@ public abstract class RavenJToken {
     }
   }
 
+  @SuppressWarnings("unused")
   public String toString(FormatSchema schema, Object[] converters) {
     //implement me
     return toString();
@@ -382,6 +385,7 @@ public abstract class RavenJToken {
     return isEqual;
   }
 
+  @SuppressWarnings("boxing")
   public int deepHashCode() {
     Stack<Tuple<Integer, RavenJToken>> stack = new Stack<>();
     int ret = 0;
@@ -437,6 +441,7 @@ public abstract class RavenJToken {
     throw new UnsupportedOperationException();
   }
 
+  @SuppressWarnings("unused")
   public <T> List<T> values(Class<T> clazz) {
     throw new UnsupportedOperationException();
   }
@@ -453,6 +458,7 @@ public abstract class RavenJToken {
 
   public abstract void writeTo(JsonGenerator writer);
 
+  @SuppressWarnings("unused")
   public <T> T value(Class<T> clazz, String key) {
     throw new IllegalStateException("Unsupported operation!");
   }

@@ -140,6 +140,7 @@ public class ScriptedPatchCommandData implements ICommandData {
    * Translates this instance to a Json object.
    * @return RavenJObject representing the command.
    */
+  @SuppressWarnings({"hiding", "static-access"})
   @Override
   public RavenJObject toJson() {
     RavenJObject ret = new RavenJObject();

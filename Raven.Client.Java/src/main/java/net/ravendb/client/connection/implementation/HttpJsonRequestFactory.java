@@ -118,6 +118,7 @@ public class HttpJsonRequestFactory implements CleanCloseable {
     Closeables.closeQuietly(httpClient);
   }
 
+  @SuppressWarnings("boxing")
   public CachedRequestOp configureCaching(String url, Action2<String, String> setHeader) {
     CachedRequest cachedRequest = cache.get(url);
     if (cachedRequest == null) {
@@ -154,6 +155,7 @@ public class HttpJsonRequestFactory implements CleanCloseable {
 
   }
 
+  @SuppressWarnings("boxing")
   public HttpJsonRequest createHttpJsonRequest(CreateHttpJsonRequestParams createHttpJsonRequestParams) {
     if (disposed) {
       throw new IllegalStateException("Object was disposed!");
@@ -177,6 +179,7 @@ public class HttpJsonRequestFactory implements CleanCloseable {
     EventHelper.invoke(configureRequest, owner, args);
   }
 
+  @SuppressWarnings("boxing")
   public CleanCloseable disableAllCaching() {
     final Long oldAggressiveCaching = getAggressiveCacheDuration();
     final Boolean oldHttpCaching = getDisableHttpCaching();
@@ -225,6 +228,7 @@ public class HttpJsonRequestFactory implements CleanCloseable {
     return cache.getCurrentSize();
   }
 
+  @SuppressWarnings("boxing")
   public boolean getDisableHttpCaching() {
     Boolean value = disableHttpCaching.get();
     if (value == null) {

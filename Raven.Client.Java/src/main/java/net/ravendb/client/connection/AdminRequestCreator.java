@@ -17,6 +17,7 @@ import net.ravendb.client.utils.UrlUtils;
 public class AdminRequestCreator {
   //url, method
   private final Function2<String, HttpMethods, HttpJsonRequest> createRequestForSystemDatabase;
+  @SuppressWarnings("unused")
   private final Function2<String, HttpMethods, HttpJsonRequest> createRequest;
 
   //currentServerUrl, operationUrl, method
@@ -71,6 +72,7 @@ public class AdminRequestCreator {
     return createRequestForSystemDatabase.apply("/admin/stats", HttpMethods.GET);
   }
 
+  @SuppressWarnings("unused")
   public HttpJsonRequest startBackup(String backupLocation, DatabaseDocument databaseDocument, String databaseName, boolean incremental) {
     if (databaseName == Constants.SYSTEM_DATABASE) {
         return createRequestForSystemDatabase.apply("/admin/backup", HttpMethods.POST);
@@ -103,6 +105,7 @@ public class AdminRequestCreator {
    * @param pageSize
    * @param start
    */
+  @SuppressWarnings("boxing")
   public String[] getDatabaseNames(int pageSize, int start) {
     try (HttpJsonRequest requestForSystemDatabase = createRequestForSystemDatabase.apply(String.format("/databases?pageSize=%d&start=%d", pageSize, start), HttpMethods.GET)) {
       RavenJToken result = requestForSystemDatabase.readResponseJson();

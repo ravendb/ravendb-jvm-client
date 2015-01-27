@@ -11,6 +11,7 @@ public class SubscriptionConnectionOptions {
 
   private static AtomicInteger connectionCounter = new AtomicInteger();
 
+  @SuppressWarnings("boxing")
   public SubscriptionConnectionOptions() {
     connectionId = connectionCounter.incrementAndGet() + "/" + Base62Util.base62Random();
     batchOptions = new SubscriptionBatchOptions();
@@ -62,6 +63,7 @@ public class SubscriptionConnectionOptions {
     this.ignoreSubscribersErrors = ignoreSubscribersErrors;
   }
 
+  @SuppressWarnings("boxing")
   public RavenJObject toRavenObject() {
     RavenJObject result = new RavenJObject();
     result.add("ConnectionId", connectionId);

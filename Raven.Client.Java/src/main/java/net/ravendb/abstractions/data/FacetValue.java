@@ -11,6 +11,7 @@ public class FacetValue {
   private Double min;
   private Double average;
 
+  @SuppressWarnings("boxing")
   public Double getAggregation(FacetAggregation aggregation) {
     switch(aggregation) {
     case NONE:

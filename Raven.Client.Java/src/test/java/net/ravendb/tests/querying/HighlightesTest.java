@@ -116,6 +116,7 @@ public class HighlightesTest extends RemoteClientTest {
     }
   }
 
+  @SuppressWarnings("boxing")
   @Test
   public void searchWithHighlightes() {
     String q = "session";

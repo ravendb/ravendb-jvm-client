@@ -20,6 +20,7 @@ public class CancellationTokenSource {
 
     }
 
+    @SuppressWarnings("boxing")
     public boolean isCancellationRequested() {
       return cancelled || (cancelAfterDate != null && new Date().getTime() > cancelAfterDate);
     }
@@ -35,6 +36,7 @@ public class CancellationTokenSource {
     cancelled = true;
   }
 
+  @SuppressWarnings("boxing")
   public void cancelAfter(long timeoutInMilis) {
     this.cancelAfterDate = new Date().getTime() + timeoutInMilis;
   }

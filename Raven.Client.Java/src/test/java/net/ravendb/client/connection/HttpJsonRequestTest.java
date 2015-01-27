@@ -68,6 +68,7 @@ public class HttpJsonRequestTest extends RavenDBAwareTests {
   private void initFactory() {
     factory.addConfigureRequestEventHandler(new EventHandler<WebRequestEventArgs>() {
 
+      @SuppressWarnings("synthetic-access")
       @Override
       public void handle(Object sender, WebRequestEventArgs event) {
         requestQueue.add(event.getRequest());
@@ -76,6 +77,7 @@ public class HttpJsonRequestTest extends RavenDBAwareTests {
 
     factory.addLogRequestEventHandler(new EventHandler<RequestResultArgs>() {
 
+      @SuppressWarnings("synthetic-access")
       @Override
       public void handle(Object sender, RequestResultArgs event) {
         requestResultArgs.add(event);
@@ -144,6 +146,7 @@ public class HttpJsonRequestTest extends RavenDBAwareTests {
 
   }
 
+  @SuppressWarnings("static-access")
   @Test
   public void testReadResponseBytes() throws IOException {
     try {
@@ -218,6 +221,7 @@ public class HttpJsonRequestTest extends RavenDBAwareTests {
     }
   }
 
+  @SuppressWarnings("boxing")
   @Test
   public void testAggresiveCache() {
     Map<String, String> operationHeaders = new HashMap<>();

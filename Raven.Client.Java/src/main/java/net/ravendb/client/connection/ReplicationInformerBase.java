@@ -173,6 +173,7 @@ public abstract class ReplicationInformerBase<T> implements IReplicationInformer
     return getHolder(operationUrl).getLastCheck();
   }
 
+  @SuppressWarnings("unused")
   public boolean shouldExecuteUsing(final OperationMetadata operationMetadata,
     final OperationMetadata primaryOperation, int currentRequest, HttpMethods method, boolean primary, Exception error) {
     if (primary == false) {
@@ -192,6 +193,7 @@ public abstract class ReplicationInformerBase<T> implements IReplicationInformer
     if ((currentTask == null || !currentTask.isAlive()) && delayTimeInMiliSec > 0) {
       Thread checkDestination = new Thread(new Runnable() {
 
+        @SuppressWarnings("synthetic-access")
         @Override
         public void run() {
           for (int i = 0; i < 3; i++) {
@@ -218,7 +220,7 @@ public abstract class ReplicationInformerBase<T> implements IReplicationInformer
               e.printStackTrace();
             }
           }
-        };
+        }
       });
 
       if (failureCounter.getCheckDestination().compareAndSet(currentTask, checkDestination)) {
@@ -265,6 +267,7 @@ public abstract class ReplicationInformerBase<T> implements IReplicationInformer
     return value.getValue().longValue() == 0;
   }
 
+  @SuppressWarnings("boxing")
   public void incrementFailureCount(String operationUrl) {
     FailureCounter value = getHolder(operationUrl);
     value.setForceCheck(false);
@@ -280,6 +283,7 @@ public abstract class ReplicationInformerBase<T> implements IReplicationInformer
       || JTokenType.NULL.equals(document.getDataAsJson().get("Destinations").getType());
   }
 
+  @SuppressWarnings("boxing")
   public void resetFailureCount(String operationUrl) {
     FailureCounter value = getHolder(operationUrl);
     long oldVal = value.getValue().getAndSet(0);
@@ -295,6 +299,7 @@ public abstract class ReplicationInformerBase<T> implements IReplicationInformer
     return increment ? readStripingBase.incrementAndGet() : readStripingBase.get();
   }
 
+  @SuppressWarnings("synthetic-access")
   @Override
   public <S> S executeWithReplication(HttpMethods method, String primaryUrl, OperationCredentials primaryCredentials,
     int currentRequest, int currentReadStripingBase, Function1<OperationMetadata, S> operation) {
@@ -377,6 +382,7 @@ public abstract class ReplicationInformerBase<T> implements IReplicationInformer
         + (1 + localReplicationDestinations.size()) + " Raven instances.");
   }
 
+  @SuppressWarnings("boxing")
   protected <S> OperationResult<S> tryOperation(Function1<OperationMetadata, S> operation,
     OperationMetadata operationMetadata, OperationMetadata primaryOperationMetadata, boolean avoidThrowing) {
     boolean tryWithPrimaryCredentials = isFirstFailure(operationMetadata.getUrl()) && primaryOperationMetadata != null;

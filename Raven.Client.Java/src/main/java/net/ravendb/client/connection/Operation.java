@@ -11,6 +11,7 @@ public class Operation {
 
   public Operation(final ServerClient client, long id) {
     this(new Function1<Long, RavenJToken>() {
+      @SuppressWarnings("boxing")
       @Override
       public RavenJToken apply(Long input) {
         return client.getOperationStatus(input);
@@ -30,6 +31,7 @@ public class Operation {
     this.state = state;
   }
 
+  @SuppressWarnings("boxing")
   public RavenJToken waitForCompletion() {
     if (statusFetcher == null)
       return state;

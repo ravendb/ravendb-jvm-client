@@ -32,7 +32,7 @@ public class GeoJsonWktConverter {
     return false;
   }
 
-  @SuppressWarnings("null")
+  @SuppressWarnings("static-method")
   private boolean tryParseTypeString(RavenJObject obj, Reference<String> result) {
     Reference<RavenJToken> typeRef = new Reference<>();
     typeRef.value = null;
@@ -204,6 +204,7 @@ public class GeoJsonWktConverter {
     return false;
   }
 
+  @SuppressWarnings("static-method")
   private boolean tryParseCoordinate(RavenJArray coordinates, Reference<StringBuilder> result) {
     if (coordinates != null && coordinates.size() > 1) {
       for (RavenJToken token : coordinates) {
