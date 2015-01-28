@@ -25,8 +25,6 @@ public class MoreLikeThisTest extends RemoteClientTest {
       Posts_ByTitleAndContent index = new Posts_ByTitleAndContent();
       index.execute(store);
 
-      useFiddler(store);
-
       try (IDocumentSession session = store.openSession()) {
         session.store(new Post("posts/1", "doduck", "prototype"));
         session.store(new Post("posts/2", "doduck", "prototype your idea"));
