@@ -2,6 +2,9 @@ package net.ravendb.core.bundles;
 
 import static org.junit.Assert.assertEquals;
 
+import java.util.Arrays;
+import java.util.Comparator;
+
 import org.junit.Test;
 
 import net.ravendb.abstractions.data.MoreLikeThisQuery;
@@ -22,6 +25,8 @@ public class MoreLikeThisTest extends RemoteClientTest {
       Posts_ByTitleAndContent index = new Posts_ByTitleAndContent();
       index.execute(store);
 
+      useFiddler(store);
+
       try (IDocumentSession session = store.openSession()) {
         session.store(new Post("posts/1", "doduck", "prototype"));
         session.store(new Post("posts/2", "doduck", "prototype your idea"));
@@ -38,11 +43,23 @@ public class MoreLikeThisTest extends RemoteClientTest {
         query.setMinimumTermFrequency(0);
         Post[] list = session.advanced().moreLikeThis(Post.class, Posts_ByTitleAndContent.class, query);
         assertEquals(3, list.length);
+
+        Arrays.sort(list, new Comparator<Post>() {
+          @Override
+          public int compare(Post o1, Post o2) {
+            int c1 = o1.getTitle().toLowerCase().compareTo(o2.getTitle().toLowerCase());
+            if (c1 != 0) {
+              return c1;
+            }
+            return o1.getDesc().toLowerCase().compareTo(o2.getDesc().toLowerCase());
+          }
+        });
+
         assertEquals("doduck", list[0].getTitle());
-        assertEquals("prototype your idea", list[0].getDesc());
+        assertEquals("love programming", list[0].getDesc());
 
         assertEquals("doduck", list[1].getTitle());
-        assertEquals("love programming", list[1].getDesc());
+        assertEquals("prototype your idea", list[1].getDesc());
 
         assertEquals("We do", list[2].getTitle());
         assertEquals("prototype", list[2].getDesc());
