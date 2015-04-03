@@ -1,5 +1,6 @@
 package net.ravendb.client;
 
+import java.util.Date;
 import java.util.Map;
 
 import net.ravendb.abstractions.basic.CleanCloseable;
@@ -121,6 +122,22 @@ public interface IDocumentStore extends IDisposalNotification {
    * Gets the database commands.
    */
   public IDatabaseCommands getDatabaseCommands();
+
+  /**
+   * Executes the index creation in side-by-side mode.
+   * @param indexCreationTask
+   * @param minimumEtagBeforeReplace
+   * @param replaceTimeUtc
+   */
+  public void sideBySideExecuteIndex(AbstractIndexCreationTask indexCreationTask);
+
+  /**
+   * Executes the index creation in side-by-side mode.
+   * @param indexCreationTask
+   * @param minimumEtagBeforeReplace
+   * @param replaceTimeUtc
+   */
+  public void sideBySideExecuteIndex(AbstractIndexCreationTask indexCreationTask, Etag minimumEtagBeforeReplace, Date replaceTimeUtc);
 
   /**
    * Executes the index creation.

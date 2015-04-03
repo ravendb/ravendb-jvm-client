@@ -102,18 +102,22 @@ public class SpatialIndexQuery extends IndexQuery {
     setQuery(query.getQuery());
     setStart(query.getStart());
     setCutoff(query.getCutoff());
-    setCutoffEtag(query.getCutoffEtag());
     setWaitForNonStaleResultsAsOfNow(query.isWaitForNonStaleResultsAsOfNow());
+    setCutoffEtag(query.getCutoffEtag());
     setPageSize(query.getPageSize());
     setFieldsToFetch(query.getFieldsToFetch());
+    setDefaultField(query.getDefaultField());
+    setDefaultOperator(query.getDefaultOperator());
     setSortedFields(query.getSortedFields());
+    setHighlightedFields(query.getHighlightedFields());
     setHighlighterPreTags(query.getHighlighterPreTags());
     setHighlighterPostTags(query.getHighlighterPostTags());
     setHighlighterKeyName(query.getHighlighterKeyName());
-    setHighlightedFields(query.getHighlightedFields());
-    setTransformerParameters(query.getTransformerParameters());
     setResultsTransformer(query.getResultsTransformer());
-    setDefaultOperator(query.getDefaultOperator());
+    setTransformerParameters(query.getTransformerParameters());
+    setExplainScores(query.isExplainScores());
+    setSortHints(query.getSortHints());
+    setDistinct(query.isDistinct());
     setAllowMultipleIndexEntriesForSameDocumentToResultTransformer(query.isAllowMultipleIndexEntriesForSameDocumentToResultTransformer());
   }
 

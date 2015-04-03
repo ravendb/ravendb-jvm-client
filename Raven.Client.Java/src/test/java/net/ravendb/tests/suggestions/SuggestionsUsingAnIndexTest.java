@@ -59,7 +59,7 @@ public class SuggestionsUsingAnIndexTest extends RemoteClientTest {
       try (IDocumentSession session = store.openSession()) {
         SuggestionQuery suggestionQuery = new SuggestionQuery();
         suggestionQuery.setField("Name");
-        suggestionQuery.setTerm("Oren");
+        suggestionQuery.setTerm("Owen");
         suggestionQuery.setMaxSuggestions(10);
         SuggestionQueryResult suggestionQueryResult = store.getDatabaseCommands().suggest("DefaultSuggestionIndex", suggestionQuery);
         assertEquals(1, suggestionQueryResult.getSuggestions().length);
@@ -88,7 +88,7 @@ public class SuggestionsUsingAnIndexTest extends RemoteClientTest {
       try (IDocumentSession session = store.openSession()) {
         QUser x = QUser.user;
         SuggestionQueryResult suggestionQueryResult = session.query(User.class, DefaultSuggestionIndex.class)
-          .where(x.name.eq("Oren"))
+          .where(x.name.eq("Owen"))
           .suggest();
         assertEquals(1, suggestionQueryResult.getSuggestions().length);
         assertEquals("oren", suggestionQueryResult.getSuggestions()[0]);

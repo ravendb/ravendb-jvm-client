@@ -25,7 +25,7 @@ import org.codehaus.jackson.JsonGenerator;
 public class ConflictsResolver {
 
   private RavenJObject[] docs;
-  private RavenJTokenComparator ravenJTokenComparator = new RavenJTokenComparator();
+  private RavenJTokenComparator ravenJTokenComparator = RavenJTokenComparator.getDefault();
 
   private final boolean isMetadataResolver;
 
@@ -267,7 +267,7 @@ public class ConflictsResolver {
 
 
   public static class Conflicted {
-    private final Set<RavenJToken> values = new TreeSet<>(new RavenJTokenComparator());
+    private final Set<RavenJToken> values = new TreeSet<>(RavenJTokenComparator.getDefault());
 
     public Set<RavenJToken> getValues() {
       return values;

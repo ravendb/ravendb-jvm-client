@@ -25,8 +25,19 @@ public class RavenQueryStatistics {
   private boolean nonAuthoritativeInformation;
   private Date lastQueryTime;
   private Map<String, Double> timingsInMilliseconds;
+  private Etag resultEtag;
   private long resultSize;
   private Map<String, String> scoreExplanations;
+
+
+  public Etag getResultEtag() {
+    return resultEtag;
+  }
+
+
+  public void setResultEtag(Etag resultEtag) {
+    this.resultEtag = resultEtag;
+  }
 
   /**
    * The size of the request which were sent from the server.
@@ -221,6 +232,7 @@ public class RavenQueryStatistics {
     timingsInMilliseconds = qr.getTimingsInMilliseconds();
     indexEtag = qr.getIndexEtag();
     resultSize = qr.getResultSize();
+    resultEtag = qr.getResultEtag();
     scoreExplanations = qr.getScoreExplanations();
   }
 

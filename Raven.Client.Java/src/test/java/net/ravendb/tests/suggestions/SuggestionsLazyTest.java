@@ -47,7 +47,7 @@ public class SuggestionsLazyTest extends RemoteClientTest {
         int oldRequests = session.advanced().getNumberOfRequests();
 
         QUser x = QUser.user;
-        Lazy<SuggestionQueryResult> suggestionQueryResult = session.query(User.class, "test").where(x.name.eq("Oren")).suggestLazy();
+        Lazy<SuggestionQueryResult> suggestionQueryResult = session.query(User.class, "test").where(x.name.eq("Owen")).suggestLazy();
 
         assertEquals(oldRequests, session.advanced().getNumberOfRequests());
         assertEquals(1, suggestionQueryResult.getValue().getSuggestions().length);

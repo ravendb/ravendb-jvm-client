@@ -539,7 +539,9 @@ public class DocumentSession extends InMemoryDocumentSessionOperations implement
     IRavenQueryInspector ravenQueryInspector = (IRavenQueryInspector) query;
     IndexQuery indexQuery = ravenQueryInspector.getIndexQuery();
 
-    if (indexQuery.isWaitForNonStaleResults() || indexQuery.isWaitForNonStaleResultsAsOfNow()) {
+    boolean waitForNonStaleResultsWasSetGloably = advanced().getDocumentStore().getConventions().getDefaultQueryingConsistency() == ConsistencyOptions.ALWAYS_WAIT_FOR_NON_STALE_RESULTS_AS_OF_LAST_WRITE;
+
+    if (!waitForNonStaleResultsWasSetGloably && (indexQuery.isWaitForNonStaleResults() || indexQuery.isWaitForNonStaleResultsAsOfNow())) {
       throw new IllegalArgumentException(
           "Since stream() does not wait for indexing (by design), streaming query with WaitForNonStaleResults is not supported.");
     }

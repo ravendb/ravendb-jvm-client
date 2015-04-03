@@ -2,6 +2,7 @@ package net.ravendb.client.changes;
 
 import java.io.Closeable;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
@@ -68,7 +69,8 @@ public abstract class RemoteChangesClientBase<TChangesApi extends IConnectableCh
   @SuppressWarnings("rawtypes")
   public RemoteChangesClientBase(String url, String apiKey, HttpJsonRequestFactory jsonRequestFactory, Convention conventions,
     IReplicationInformerBase replicationInformer, Action0 onDispose) {
-    connectionStatusChanged = Arrays.<EventHandler<VoidArgs>> asList(new EventHandler<VoidArgs>() {
+    connectionStatusChanged = new ArrayList<>();
+    connectionStatusChanged.add(new EventHandler<VoidArgs>() {
       @Override
       public void handle(Object sender, VoidArgs event) {
         logOnConnectionStatusChanged(sender, event);

@@ -45,7 +45,7 @@ public class HttpJsonRequestFactory implements CleanCloseable {
 
   private List<EventHandler<RequestResultArgs>> logRequest = new ArrayList<>();
 
-  private final int maxNumberOfCachedRequests;
+  private int maxNumberOfCachedRequests;
   private SimpleCache cache;
   private final boolean acceptGzipContent;
   protected AtomicInteger numOfCachedRequests = new AtomicInteger();
@@ -72,7 +72,7 @@ public class HttpJsonRequestFactory implements CleanCloseable {
       .setDefaultSocketConfig(SocketConfig.custom().setTcpNoDelay(true).build()).
       build();
     this.maxNumberOfCachedRequests = maxNumberOfCachedRequests;
-    resetCache();
+    resetCache(null);
   }
 
   public boolean isAcceptGzipContent() {
@@ -284,14 +284,22 @@ public class HttpJsonRequestFactory implements CleanCloseable {
     logRequest.remove(event);
   }
 
+  @SuppressWarnings("boxing")
+  public void resetCache(Integer newMaxNumberOfCachedRequests) {
+    if (newMaxNumberOfCachedRequests != null && newMaxNumberOfCachedRequests == maxNumberOfCachedRequests) {
+      return;
+    }
 
-
-  public void resetCache() {
     if (cache != null) {
       try {
         cache.close();
       } catch (Exception e) { /*ignore */ }
     }
+
+    if (newMaxNumberOfCachedRequests != null) {
+      maxNumberOfCachedRequests = newMaxNumberOfCachedRequests;
+    }
+
     cache = new SimpleCache(maxNumberOfCachedRequests);
     numOfCachedRequests = new AtomicInteger();
   }

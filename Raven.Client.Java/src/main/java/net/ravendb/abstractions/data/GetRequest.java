@@ -9,6 +9,8 @@ public class GetRequest {
   private String url;
   private Map<String, String> headers = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
   private String query;
+  private HttpMethods method;
+  private String content;
 
   public GetRequest() {
     //empty by design
@@ -21,6 +23,22 @@ public class GetRequest {
   public GetRequest(String url, String query) {
     this.url = url;
     this.query = query;
+  }
+
+  public String getContent() {
+    return content;
+  }
+
+  public void setContent(String content) {
+    this.content = content;
+  }
+
+  public HttpMethods getMethod() {
+    return method;
+  }
+
+  public void setMethod(HttpMethods method) {
+    this.method = method;
   }
 
   /**

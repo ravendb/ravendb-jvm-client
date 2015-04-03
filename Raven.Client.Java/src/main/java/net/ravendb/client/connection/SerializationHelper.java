@@ -190,9 +190,11 @@ public class SerializationHelper {
     result.setIndexTimestamp(json.value(Date.class, "IndexTimestamp"));
     result.setIndexEtag(Etag.parse(json.value(String.class, "IndexEtag")));
     result.setIncludes(json.value(RavenJArray.class, "Includes").values(RavenJObject.class));
+    result.setResultEtag(Etag.parse(json.value(String.class, "ResultEtag")));
     result.setTotalResults(json.value(Integer.class, "TotalResults"));
     result.setIndexName(json.value(String.class, "IndexName"));
     result.setSkippedResults(json.value(Integer.class, "SkippedResults"));
+    result.setLastQueryTime(json.value(Date.class, "LastQueryTime"));
     RavenJObject timings = json.value(RavenJObject.class, "TimingsInMilliseconds");
     if (timings == null) {
       timings = new RavenJObject();

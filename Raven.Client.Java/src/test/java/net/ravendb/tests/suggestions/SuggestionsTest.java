@@ -50,7 +50,7 @@ public class SuggestionsTest extends RemoteClientTest {
 
       SuggestionQuery suggestionQuery = new SuggestionQuery();
       suggestionQuery.setField("Name");
-      suggestionQuery.setTerm("Oren");
+      suggestionQuery.setTerm("Owen");
       suggestionQuery.setMaxSuggestions(10);
 
       SuggestionQueryResult suggestionQueryResult = store.getDatabaseCommands().suggest("Test", suggestionQuery);
@@ -66,7 +66,7 @@ public class SuggestionsTest extends RemoteClientTest {
       try (IDocumentSession session = store.openSession()) {
         QUser x = QUser.user;
         SuggestionQueryResult suggestionResult = session.query(User.class, "test")
-          .where(x.name.eq("Oren"))
+          .where(x.name.eq("Owen"))
           .suggest();
         assertEquals(1, suggestionResult.getSuggestions().length);
         assertEquals("oren", suggestionResult.getSuggestions()[0]);

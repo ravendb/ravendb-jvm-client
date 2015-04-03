@@ -7,7 +7,6 @@ public class ReplicatedEtagInfo {
 
   private String destionationUrl;
   private Etag documentEtag;
-  private Etag attachmentEtag;
 
   public String getDestionationUrl() {
     return destionationUrl;
@@ -23,14 +22,6 @@ public class ReplicatedEtagInfo {
 
   public void setDocumentEtag(Etag documentEtag) {
     this.documentEtag = documentEtag;
-  }
-
-  public Etag getAttachmentEtag() {
-    return attachmentEtag;
-  }
-
-  public void setAttachmentEtag(Etag attachmentEtag) {
-    this.attachmentEtag = attachmentEtag;
   }
 
 }

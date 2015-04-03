@@ -11,7 +11,7 @@ import net.ravendb.abstractions.json.linq.RavenJToken;
 
 public class SubscriptionCriteria {
   private String keyStartsWith;
-  private String belongsToCollection;
+  private String[] belongsToAnyCollection;
   private Map<String, RavenJToken> propertiesMatch;
   private Map<String, RavenJToken> propertiesNotMatch;
 
@@ -31,12 +31,12 @@ public class SubscriptionCriteria {
     this.keyStartsWith = keyStartsWith;
   }
 
-  public String getBelongsToCollection() {
-    return belongsToCollection;
+  public String[] getBelongsToAnyCollection() {
+    return belongsToAnyCollection;
   }
 
-  public void setBelongsToCollection(String belongsToCollection) {
-    this.belongsToCollection = belongsToCollection;
+  public void setBelongsToAnyCollection(String... belongsToAnyCollection) {
+    this.belongsToAnyCollection = belongsToAnyCollection;
   }
 
   public Map<String, RavenJToken> getPropertiesMatch() {

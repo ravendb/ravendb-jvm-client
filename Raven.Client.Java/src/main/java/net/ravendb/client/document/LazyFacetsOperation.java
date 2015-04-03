@@ -8,6 +8,7 @@ import net.ravendb.abstractions.data.Facet;
 import net.ravendb.abstractions.data.FacetResults;
 import net.ravendb.abstractions.data.GetRequest;
 import net.ravendb.abstractions.data.GetResponse;
+import net.ravendb.abstractions.data.HttpMethods;
 import net.ravendb.abstractions.data.IndexQuery;
 import net.ravendb.abstractions.data.QueryResult;
 import net.ravendb.abstractions.extensions.JsonExtensions;
@@ -15,9 +16,6 @@ import net.ravendb.abstractions.json.linq.RavenJObject;
 import net.ravendb.client.document.batches.ILazyOperation;
 import net.ravendb.client.utils.UrlUtils;
 import net.ravendb.imports.json.JsonConvert;
-
-import org.apache.http.HttpStatus;
-
 
 public class LazyFacetsOperation implements ILazyOperation {
 
@@ -72,14 +70,26 @@ public class LazyFacetsOperation implements ILazyOperation {
   public GetRequest createRequest() {
     String addition = null;
     if (facetSetupDoc != null) {
-      addition = "facetDoc="  + facetSetupDoc;
-    } else {
-      addition = "facets=" + UrlUtils.escapeDataString(JsonConvert.serializeObject(facets));
+      addition = "facetDoc=" + facetSetupDoc;
+      GetRequest getRequest = new GetRequest();
+      getRequest.setUrl("/facets/" + index);
+      getRequest.setQuery(String.format("%s&facetStart=%d&facetPageSize=%d&%s", query.getQueryString(), start, pageSize, addition));
+      return getRequest;
+    }
+
+    String unescapedFacetsJson = JsonConvert.serializeObject(facets);
+    if (unescapedFacetsJson.length() < (32 * 1024 - 1)) {
+      addition = "facets=" + UrlUtils.escapeDataString(unescapedFacetsJson);
+      GetRequest getRequest = new GetRequest();
+      getRequest.setUrl("/facets/" + index);
+      getRequest.setQuery(String.format("%s&facetStart=%d&facetPageSize=%d&%s", query.getQueryString(), start, pageSize, addition));
+      return getRequest;
     }
 
     GetRequest getRequest = new GetRequest();
     getRequest.setUrl("/facets/" + index);
-    getRequest.setQuery(String.format("%s&facetStart=%d&facetPageSize=%d&%s", query.getQueryString(), start, pageSize, addition));
+    getRequest.setMethod(HttpMethods.POST);
+    getRequest.setContent(unescapedFacetsJson);
     return getRequest;
   }
 
@@ -96,7 +106,7 @@ public class LazyFacetsOperation implements ILazyOperation {
   @SuppressWarnings("hiding")
   @Override
   public void handleResponse(GetResponse response) {
-    if (response.getStatus() != HttpStatus.SC_OK && response.getStatus() != HttpStatus.SC_NOT_MODIFIED) {
+    if (response.isRequestHasErrors()) {
       throw new IllegalStateException("Got an unexpected response code for the request: " + response.getStatus() + "\n" + response.getResult());
     }
     try {

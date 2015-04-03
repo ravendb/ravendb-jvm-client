@@ -33,10 +33,27 @@ public class MoreLikeThisQuery {
   private String[] fields;
   private String documentId;
   private String indexName;
+  private String additionalQuery;
   private Map<String, String> mapGroupFields = new HashMap<>();
   private String resultsTransformer;
   private String[] includes;
   private Map<String, RavenJToken> transformerParameters;
+
+  /**
+   * An additional query that the matching documents need to also
+   * match to be returned.
+   */
+  public String getAdditionalQuery() {
+    return additionalQuery;
+  }
+
+  /**
+   * An additional query that the matching documents need to also
+   * match to be returned.
+   */
+  public void setAdditionalQuery(String additionalQuery) {
+    this.additionalQuery = additionalQuery;
+  }
 
   /**
    * Array of paths under which document Ids can be found. All found documents will be returned with the query results.
@@ -337,6 +354,9 @@ public class MoreLikeThisQuery {
       for (String field: fields) {
         uri.append("fields=").append(field).append("&");
       }
+    }
+    if (StringUtils.isNotBlank(additionalQuery)) {
+      uri.append("query=").append(UrlUtils.escapeDataString(additionalQuery)).append("&");
     }
     if (boost != null && boost != DEFAULT_BOOST) {
       uri.append("boost=true&");

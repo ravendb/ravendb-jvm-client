@@ -1,6 +1,7 @@
 package net.ravendb.client;
 
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -109,6 +110,18 @@ public abstract class DocumentStoreBase implements IDocumentStore {
   public void executeIndex(AbstractIndexCreationTask indexCreationTask) {
     indexCreationTask.execute(getDatabaseCommands(), getConventions());
   }
+
+  @Override
+  public void sideBySideExecuteIndex(AbstractIndexCreationTask indexCreationTask) {
+    sideBySideExecuteIndex(indexCreationTask, null, null);
+  }
+
+  @Override
+  public void sideBySideExecuteIndex(AbstractIndexCreationTask indexCreationTask, Etag minimumEtagBeforeReplace,
+    Date replaceTimeUtc) {
+    indexCreationTask.sideBySideExecute(getDatabaseCommands(), getConventions(), minimumEtagBeforeReplace, replaceTimeUtc);
+  }
+
   @Override
   public void executeTransformer(AbstractTransformerCreationTask transformerCreationTask) {
     transformerCreationTask.execute(getDatabaseCommands(), getConventions());

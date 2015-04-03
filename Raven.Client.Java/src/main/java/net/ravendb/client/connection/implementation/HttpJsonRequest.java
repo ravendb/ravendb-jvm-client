@@ -642,8 +642,8 @@ public class HttpJsonRequest implements CleanCloseable {
   }
 
   public CloseableHttpResponse executeRawResponseInternal(final HttpEntity content) {
-    response = runWithAuthRetry(new Function0<CloseableHttpResponse>() {
-      @SuppressWarnings({"synthetic-access", "hiding"})
+    return runWithAuthRetry(new Function0<CloseableHttpResponse>() {
+      @SuppressWarnings({"synthetic-access"})
       @Override
       public CloseableHttpResponse apply() {
         HttpUriRequest rawRequestMessage = createWebRequest(url, method);
@@ -653,7 +653,8 @@ public class HttpJsonRequest implements CleanCloseable {
         copyHeadersToHttpRequestMessage(rawRequestMessage);
 
         try {
-          CloseableHttpResponse response = httpClient.execute(rawRequestMessage);
+          response = httpClient.execute(rawRequestMessage);
+          responseStatusCode = response.getStatusLine().getStatusCode();
           if (response.getStatusLine().getStatusCode() >= 300 &&
             (response.getStatusLine().getStatusCode() == HttpStatus.SC_PRECONDITION_FAILED ||
             response.getStatusLine().getStatusCode() == HttpStatus.SC_FORBIDDEN ||
@@ -666,9 +667,6 @@ public class HttpJsonRequest implements CleanCloseable {
         }
       }
     });
-
-    responseStatusCode = response.getStatusLine().getStatusCode();
-    return response;
   }
 
   @SuppressWarnings({"hiding", "boxing"})
@@ -809,8 +807,8 @@ public class HttpJsonRequest implements CleanCloseable {
   }
 
   public HttpResponse executeRawRequest(final BulkInsertEntity bulkInsertEntity) {
-    response = runWithAuthRetry(new Function0<CloseableHttpResponse>() {
-      @SuppressWarnings({"synthetic-access", "hiding"})
+    return runWithAuthRetry(new Function0<CloseableHttpResponse>() {
+      @SuppressWarnings({"synthetic-access"})
       @Override
       public CloseableHttpResponse apply() {
         HttpUriRequest rawRequestMessage = createWebRequest(url, method);
@@ -818,7 +816,8 @@ public class HttpJsonRequest implements CleanCloseable {
         copyHeadersToHttpRequestMessage(rawRequestMessage);
 
         try {
-          CloseableHttpResponse response = httpClient.execute(rawRequestMessage);
+          response = httpClient.execute(rawRequestMessage);
+          responseStatusCode = response.getStatusLine().getStatusCode();
           if (response.getStatusLine().getStatusCode() >= 300 &&
             (response.getStatusLine().getStatusCode() == HttpStatus.SC_PRECONDITION_FAILED ||
              response.getStatusLine().getStatusCode() == HttpStatus.SC_FORBIDDEN ||
@@ -831,9 +830,6 @@ public class HttpJsonRequest implements CleanCloseable {
         }
       }
     });
-
-    responseStatusCode = response.getStatusLine().getStatusCode();
-    return response;
   }
 
 }

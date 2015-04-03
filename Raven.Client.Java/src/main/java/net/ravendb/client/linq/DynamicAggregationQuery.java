@@ -187,6 +187,7 @@ public class DynamicAggregationQuery<T> {
           && !facetResults.getResults().containsKey(rename.getKey())) {
         FacetResult value = facetResults.getResults().get(rename.getValue());
         facetResults.getResults().put(rename.getKey(), value);
+        facetResults.getResults().remove(rename.getValue());
       }
     }
     return facetResults;

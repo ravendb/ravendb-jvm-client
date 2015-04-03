@@ -43,7 +43,7 @@ public class DocumentSubscriptions implements IReliableSubscriptions {
     }
 
     SubscriptionCriteria criteriaCopy = new SubscriptionCriteria();
-    criteriaCopy.setBelongsToCollection(documentStore.getConventions().getTypeTagName(expectedType));
+    criteriaCopy.setBelongsToAnyCollection(new String[] { documentStore.getConventions().getTypeTagName(expectedType)});
     criteriaCopy.setKeyStartsWith(criteria.getKeyStartsWith());
     criteriaCopy.setPropertiesMatch(criteria.getPropertiesMatch());
     criteriaCopy.setPropertiesNotMatch(criteria.getPropertiesNotMatch());

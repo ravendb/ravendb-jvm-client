@@ -169,7 +169,7 @@ public class ReplicationBehavior implements CleanCloseable {
 
       ReplicatedEtagInfo etags = getReplicatedEtagsFor(url, sourceUrl, sourceDbId);
 
-      boolean replicated = etag.compareTo(etags.getDocumentEtag()) <= 0 || etag.compareTo(etags.getAttachmentEtag()) <= 0;
+      boolean replicated = etag.compareTo(etags.getDocumentEtag()) <= 0;
       if (replicated) {
         return;
       }
@@ -189,7 +189,6 @@ public class ReplicationBehavior implements CleanCloseable {
       ReplicatedEtagInfo replicatedEtagInfo = new ReplicatedEtagInfo();
       replicatedEtagInfo.setDestionationUrl(destinationUrl);
       replicatedEtagInfo.setDocumentEtag(Etag.parse(json.value(String.class, "LastDocumentEtag")));
-      replicatedEtagInfo.setAttachmentEtag(Etag.parse(json.value(String.class, "LastAttachmentEtag")));
       return replicatedEtagInfo;
     }
   }

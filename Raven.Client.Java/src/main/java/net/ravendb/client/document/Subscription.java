@@ -36,6 +36,7 @@ import net.ravendb.client.changes.IDatabaseChanges;
 import net.ravendb.client.changes.IObservable;
 import net.ravendb.client.changes.IObserver;
 import net.ravendb.client.changes.ObserverAdapter;
+import net.ravendb.client.changes.RemoteDatabaseChanges;
 import net.ravendb.client.connection.IDatabaseCommands;
 import net.ravendb.client.connection.RavenJObjectIterator;
 import net.ravendb.client.connection.ServerClient;
@@ -66,11 +67,14 @@ public class Subscription<T> implements IObservable<T>, CleanCloseable {
   private final Class<T> clazz;
   private boolean disposed;
 
+  private EventHandler<VoidArgs> eventHandler;
+
   private List<EventHandler<VoidArgs>> beforeBatch = new ArrayList<>();
   private List<EventHandler<VoidArgs>> afterBatch = new ArrayList<>();
 
   private boolean errored;
   private boolean closed;
+  private boolean firstConnection = true;
 
   Subscription(Class<T> clazz, long id, SubscriptionConnectionOptions options, IDatabaseCommands commands, IDatabaseChanges changes, DocumentConvention conventions, Action0 ensureOpenSubscription) {
     this.clazz = clazz;
@@ -273,6 +277,15 @@ public class Subscription<T> implements IObservable<T>, CleanCloseable {
   }
 
   private void startWatchingDocs() {
+     eventHandler = new EventHandler<VoidArgs>() {
+      @SuppressWarnings("synthetic-access")
+      @Override
+      public void handle(Object sender, VoidArgs event) {
+        changesApiConnectionChanged(sender, event);
+      }
+    };
+    changes.addConnectionStatusChanged(eventHandler);
+
     putDocumentsObserver = changes.forAllDocuments().subscribe(new ObserverAdapter<DocumentChangeNotification>() {
       @Override
       public void onNext(DocumentChangeNotification notification) {
@@ -290,6 +303,19 @@ public class Subscription<T> implements IObservable<T>, CleanCloseable {
         }
       }
     });
+  }
+
+  @SuppressWarnings("unused")
+  private void changesApiConnectionChanged(Object sender, EventArgs e) {
+    if (firstConnection) {
+      firstConnection = false;
+      return;
+    }
+
+    RemoteDatabaseChanges changesApi = (RemoteDatabaseChanges) sender;
+    if (changesApi.isConnected()){
+      newDocuments.set();
+    }
   }
 
   @Override
@@ -375,6 +401,10 @@ public class Subscription<T> implements IObservable<T>, CleanCloseable {
 
       newDocuments.set();
       anySubscriber.set();
+
+      if (eventHandler != null) {
+        changes.removeConnectionStatusChanges(eventHandler);
+      }
 
       try {
         startPullingTask.join();

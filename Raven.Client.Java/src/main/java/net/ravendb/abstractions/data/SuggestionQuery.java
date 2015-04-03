@@ -14,7 +14,6 @@ public class SuggestionQuery {
    */
   public SuggestionQuery() {
     maxSuggestions = DEFAULT_MAX_SUGGESTIONS;
-    distance = StringDistanceTypes.LEVENSHTEIN;
   }
 
 

@@ -342,10 +342,6 @@ public class DocumentStore extends DocumentStoreBase {
     return this;
   }
 
-  private HttpJsonRequestFactory initializeJsonRequestFactory() {
-      return new HttpJsonRequestFactory(maxNumberOfCachedRequests, getConventions().isAcceptGzipContent());
-  }
-
   public void initializeProfiling() {
     if (jsonRequestFactory == null) {
       throw new IllegalStateException("Cannot call InitializeProfiling() before Initialize() was called.");
@@ -610,12 +606,10 @@ public class DocumentStore extends DocumentStoreBase {
     return maxNumberOfCachedRequests;
   }
 
+  @SuppressWarnings("boxing")
   public void setMaxNumberOfCachedRequests(int value) {
     maxNumberOfCachedRequests = value;
-    if (jsonRequestFactory != null) {
-      jsonRequestFactory.close();
-    }
-    jsonRequestFactory = initializeJsonRequestFactory();
+    jsonRequestFactory.resetCache(maxNumberOfCachedRequests);
   }
 
 

@@ -402,7 +402,7 @@ public class RavenDB_2627Test extends RemoteClientTest {
       }
 
       SubscriptionCriteria criteria = new SubscriptionCriteria();
-      criteria.setBelongsToCollection("Users");
+      criteria.setBelongsToAnyCollection("Users");
       long id = store.subscriptions().create(criteria);
 
       SubscriptionBatchOptions batchOptions = new SubscriptionBatchOptions();

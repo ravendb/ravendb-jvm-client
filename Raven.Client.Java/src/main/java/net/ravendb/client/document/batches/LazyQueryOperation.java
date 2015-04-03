@@ -29,11 +29,12 @@ public class LazyQueryOperation<T> implements ILazyOperation {
   private Object result;
   private boolean requiresRetry;
 
-  public LazyQueryOperation(Class<T> clazz, QueryOperation queryOperation, Action1<QueryResult> afterQueryExecuted, Set<String> includes) {
+  public LazyQueryOperation(Class<T> clazz, QueryOperation queryOperation, Action1<QueryResult> afterQueryExecuted, Set<String> includes, Map<String, String> headers) {
     this.clazz = clazz;
     this.queryOperation = queryOperation;
     this.afterQueryExecuted = afterQueryExecuted;
     this.includes = includes;
+    this.headers = headers;
   }
 
   @Override

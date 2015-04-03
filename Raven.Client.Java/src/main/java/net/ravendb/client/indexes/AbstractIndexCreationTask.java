@@ -1,19 +1,24 @@
 package net.ravendb.client.indexes;
 
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
 import net.ravendb.abstractions.data.Constants;
+import net.ravendb.abstractions.data.Etag;
 import net.ravendb.abstractions.data.HttpMethods;
 import net.ravendb.abstractions.data.StringDistanceTypes;
+import net.ravendb.abstractions.data.IndexStats.IndexingPriority;
 import net.ravendb.abstractions.indexing.FieldIndexing;
 import net.ravendb.abstractions.indexing.FieldStorage;
 import net.ravendb.abstractions.indexing.FieldTermVector;
 import net.ravendb.abstractions.indexing.IndexDefinition;
+import net.ravendb.abstractions.indexing.IndexReplaceDocument;
 import net.ravendb.abstractions.indexing.SortOptions;
 import net.ravendb.abstractions.indexing.SpatialOptions;
 import net.ravendb.abstractions.indexing.SpatialOptionsFactory;
 import net.ravendb.abstractions.indexing.SuggestionOptions;
+import net.ravendb.abstractions.json.linq.RavenJObject;
 import net.ravendb.client.IDocumentStore;
 import net.ravendb.client.connection.IDatabaseCommands;
 import net.ravendb.client.connection.ServerClient;
@@ -30,6 +35,8 @@ import com.mysema.query.types.Path;
 public class AbstractIndexCreationTask extends AbstractCommonApiForIndexesAndTransformers {
 
   protected DocumentConvention conventions;
+  private IndexingPriority priority;
+
   protected String map;
   protected String reduce;
 
@@ -70,6 +77,26 @@ public class AbstractIndexCreationTask extends AbstractCommonApiForIndexesAndTra
   }
 
   /**
+   *  index can have a priority that controls how much power of the indexing process it is allowed to consume. index priority can be forced by the user.
+   *  There are four available values that you can set: Normal, Idle, Disabled, Abandoned
+   * @param priority Default value: null means that the priority of the index is Normal.
+   */
+  public IndexingPriority getPriority() {
+    return priority;
+  }
+
+  /**
+   *  index can have a priority that controls how much power of the indexing process it is allowed to consume. index priority can be forced by the user.
+   *  There are four available values that you can set: Normal, Idle, Disabled, Abandoned
+   * @param priority Default value: null means that the priority of the index is Normal.
+   */
+  public void setPriority(IndexingPriority priority) {
+    this.priority = priority;
+  }
+
+
+
+  /**
    * Gets the conventions that should be used when index definition is created.
    * @return
    */
@@ -103,12 +130,61 @@ public class AbstractIndexCreationTask extends AbstractCommonApiForIndexesAndTra
     this.disableInMemoryIndexing = disableInMemoryIndexing;
   }
 
+  public void sideBySideExecute(IDocumentStore store) {
+    store.sideBySideExecuteIndex(this);
+  }
+
+  public void sideBySideExecute(IDocumentStore store, Etag minimumEtagBeforeReplace, Date replaceTimeUtc) {
+    store.sideBySideExecuteIndex(this, minimumEtagBeforeReplace, replaceTimeUtc);
+  }
+
   /**
    * Executes the index creation against the specified document store.
    * @param store
    */
   public void execute(IDocumentStore store) {
     store.executeIndex(this);
+  }
+
+  /**
+   * Executes the index creation using in side-by-side mode.
+   * @param databaseCommands
+   * @param conventions
+   * @param minimumEtagBeforeReplace
+   * @param replaceTimeUtc
+   */
+  public void sideBySideExecute(IDatabaseCommands databaseCommands, DocumentConvention documentConvention,
+    Etag minimumEtagBeforeReplace, Date replaceTimeUtc) {
+    conventions = documentConvention;
+    IndexDefinition indexDefinition = createIndexDefinition();
+    IndexDefinition serverDef = databaseCommands.getIndex(getIndexName());
+    if (serverDef != null) {
+      if (currentOrLegacyIndexDefinitionEquals(documentConvention, serverDef, indexDefinition)) {
+        return;
+      }
+
+      String replaceIndexName = "ReplacementOf/" + getIndexName();
+      databaseCommands.putIndex(replaceIndexName, indexDefinition);
+
+      IndexReplaceDocument indexReplaceDocument = new IndexReplaceDocument();
+      indexReplaceDocument.setIndexToReplace(serverDef.getName());
+      indexReplaceDocument.setMinimumEtagBeforeReplace(minimumEtagBeforeReplace);
+      indexReplaceDocument.setReplaceTimeUtc(replaceTimeUtc);
+
+      databaseCommands.put(Constants.INDEX_REPLACE_PREFIX + replaceIndexName, null, RavenJObject.fromObject(indexReplaceDocument), new RavenJObject());
+    } else {
+      // since index doesn't exist yet - create it in normal mode
+      databaseCommands.putIndex(getIndexName(), indexDefinition);
+    }
+  }
+
+  @SuppressWarnings({"static-method", "unused"})
+  private boolean currentOrLegacyIndexDefinitionEquals(DocumentConvention documentConvention, IndexDefinition serverDef, IndexDefinition indexDefinition) {
+    if (serverDef.equals(indexDefinition)) {
+      return true;
+    }
+    return false;
+    // in java we don't support pretty printing
   }
 
   /**
@@ -123,6 +199,10 @@ public class AbstractIndexCreationTask extends AbstractCommonApiForIndexesAndTra
     // to a noop of the index already exists and the stored definition matches
     // the new definition.
     databaseCommands.putIndex(getIndexName(), indexDefinition, true);
+
+    if (priority != null) {
+      databaseCommands.setIndexPriority(getIndexName(), priority);
+    }
 
     if (conventions.getIndexAndTransformerReplicationMode().contains(IndexAndTransformerReplicationMode.INDEXES)) {
       replicateIndexesIfNeeded(databaseCommands);
@@ -332,5 +412,6 @@ public class AbstractIndexCreationTask extends AbstractCommonApiForIndexesAndTra
     options.setDistance(StringDistanceTypes.LEVENSHTEIN);
     suggestion(field, options);
   }
+
 
 }

@@ -65,6 +65,8 @@ public class Constants {
 
   public static final String RAVEN_REPLICATION_CONFLICT = "Raven-Replication-Conflict";
 
+  public static final String INDEX_REPLACE_PREFIX = "Raven/Indexes/Replace/";
+
   public final static Locale getDefaultLocale() {
     return Locale.US;
   }

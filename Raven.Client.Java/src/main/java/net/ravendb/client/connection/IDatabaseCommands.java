@@ -26,6 +26,7 @@ import net.ravendb.abstractions.data.GetRequest;
 import net.ravendb.abstractions.data.GetResponse;
 import net.ravendb.abstractions.data.HttpMethods;
 import net.ravendb.abstractions.data.IndexQuery;
+import net.ravendb.abstractions.data.IndexStats.IndexingPriority;
 import net.ravendb.abstractions.data.JsonDocument;
 import net.ravendb.abstractions.data.JsonDocumentMetadata;
 import net.ravendb.abstractions.data.LicensingStatus;
@@ -40,6 +41,7 @@ import net.ravendb.abstractions.data.ScriptedPatchRequest;
 import net.ravendb.abstractions.data.SuggestionQuery;
 import net.ravendb.abstractions.data.SuggestionQueryResult;
 import net.ravendb.abstractions.indexing.IndexDefinition;
+import net.ravendb.abstractions.indexing.IndexLockMode;
 import net.ravendb.abstractions.indexing.IndexMergeResults;
 import net.ravendb.abstractions.indexing.TransformerDefinition;
 import net.ravendb.abstractions.json.linq.RavenJObject;
@@ -238,6 +240,20 @@ public interface IDatabaseCommands extends IHoldProfilingInformation {
    * @param name Name of an index to reset
    */
   public void resetIndex(String name);
+
+  /**
+   * Sets the index lock mode
+   * @param name
+   * @param lockMode
+   */
+  public void setIndexLock(String name, IndexLockMode lockMode);
+
+  /**
+   * Sets the index priority
+   * @param name
+   * @param priority
+   */
+  public void setIndexPriority(String name, IndexingPriority priority);
 
   /**
    * Retrieves an index definition from a database.
