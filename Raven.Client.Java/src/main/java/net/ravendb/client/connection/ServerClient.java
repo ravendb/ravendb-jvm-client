@@ -1670,15 +1670,16 @@ public class ServerClient implements IDatabaseCommands {
 
   protected QueryResult directQueryAsGet(final String index, final IndexQuery query, final OperationMetadata operationMetadata, final String[] includes, final boolean metadataOnly, final boolean includeEntries) {
     String path = query.getIndexQueryUrl(operationMetadata.getUrl(), index, "indexes", true, true);
-    if (metadataOnly)
-      path += "&metadata-only=true";
-    if (includeEntries)
-      path += "&debug=entries";
-    if (includes != null && includes.length > 0) {
+    if (includes != null) {
       for (String include: includes) {
         path += "&include=" + include;
       }
     }
+    if (metadataOnly)
+      path += "&metadata-only=true";
+    if (includeEntries)
+      path += "&debug=entries";
+
 
     try (HttpJsonRequest request = jsonRequestFactory.createHttpJsonRequest(
       new CreateHttpJsonRequestParams(this, path, HttpMethods.GET, new RavenJObject(), operationMetadata.getCredentials(), convention)
