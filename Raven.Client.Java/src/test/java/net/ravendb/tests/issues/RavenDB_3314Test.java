@@ -1,19 +1,11 @@
 package net.ravendb.tests.issues;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
-
-import java.util.Collections;
-
 import net.ravendb.abstractions.data.IndexStats;
 import net.ravendb.abstractions.data.IndexStats.IndexingPriority;
-import net.ravendb.client.IDocumentSession;
 import net.ravendb.client.IDocumentStore;
 import net.ravendb.client.RemoteClientTest;
 import net.ravendb.client.document.DocumentConvention;
-import net.ravendb.client.document.DocumentSession;
 import net.ravendb.client.document.DocumentStore;
 import net.ravendb.client.indexes.AbstractIndexCreationTask;
 

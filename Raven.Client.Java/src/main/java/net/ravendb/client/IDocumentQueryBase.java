@@ -423,6 +423,20 @@ public interface IDocumentQueryBase<T, TSelf extends IDocumentQueryBase<T, TSelf
    */
   public TSelf highlight(String fieldName, int fragmentLength, int fragmentCount, Reference<FieldHighlightings> highlightings);
 
+
+  /**
+   * Adds matches highlighting for the specified field.
+   *
+   * The specified field should be analysed and stored for highlighter to work.
+   * For each match it creates a fragment that contains matched text surrounded by highlighter tags.
+   * @param fieldName The field name to highlight.
+   * @param fieldKeyName The field key to associate highlights with.
+   * @param fragmentLength The fragment length.
+   * @param fragmentCount The fragment count.
+   * @param highlightings The maximum number of fragments for the field.
+   */
+  public TSelf highlight(String fieldName, String fieldKeyName, int fragmentLength, int fragmentCount, Reference<FieldHighlightings> highlightings);
+
   /**
    * Adds matches highlighting for the specified field.
    *
