@@ -182,10 +182,10 @@ public class QueryInputsToResultTransformerTest extends RemoteClientTest {
         Result result = session.query(Product.class)
           .customize(new DocumentQueryCustomizationFactory().waitForNonStaleResults())
           .transformWith(ProductWithQueryInput.class, ProductWithQueryInput.Result.class)
-          .addTransformerParameter("input", "Foo")
+          .addTransformerParameter("input", "Fo bar + x!")
           .single();
 
-        assertEquals("Foo", result.getInput());
+        assertEquals("Fo bar + x!", result.getInput());
       }
     }
   }

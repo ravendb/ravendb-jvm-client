@@ -596,7 +596,7 @@ public class IndexQuery {
 
     if (transformerParameters != null) {
       for (Map.Entry<String, RavenJToken> input: transformerParameters.entrySet()) {
-        path.append("&tp-").append(input.getKey()).append("=").append(input.getValue().toString());
+        path.append("&tp-").append(input.getKey()).append("=").append(UrlUtils.escapeDataString(input.getValue().toString()));
       }
     }
 
