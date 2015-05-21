@@ -7,6 +7,7 @@ import java.util.Set;
 import net.ravendb.abstractions.basic.Lazy;
 import net.ravendb.abstractions.closure.Action1;
 import net.ravendb.abstractions.data.QueryResult;
+import net.ravendb.abstractions.json.linq.RavenJObject;
 import net.ravendb.abstractions.json.linq.RavenJToken;
 import net.ravendb.client.IDocumentQuery;
 import net.ravendb.client.document.DocumentQueryCustomizationFactory;
@@ -23,6 +24,12 @@ public interface IRavenQueryProvider extends IQueryProvider {
    * @param afterQueryExecuted
    */
   void afterQueryExecuted(Action1<QueryResult> afterQueryExecuted);
+
+  /**
+   * Callback to get the results of the stream
+   * @param afterStreamExecuted
+   */
+  void afterStreamExecuted(Action1<RavenJObject> afterStreamExecuted);
 
   /**
    * Customizes the query using the specified action

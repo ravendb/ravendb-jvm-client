@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
+import org.apache.commons.lang.StringUtils;
 import org.apache.http.HttpStatus;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.codehaus.jackson.JsonParser;
@@ -19,13 +20,16 @@ import net.ravendb.abstractions.closure.Action0;
 import net.ravendb.abstractions.closure.Function1;
 import net.ravendb.abstractions.closure.Predicate;
 import net.ravendb.abstractions.data.BulkInsertChangeNotification;
+import net.ravendb.abstractions.data.Constants;
 import net.ravendb.abstractions.data.DocumentChangeNotification;
 import net.ravendb.abstractions.data.DocumentChangeTypes;
 import net.ravendb.abstractions.data.Etag;
 import net.ravendb.abstractions.data.HttpMethods;
 import net.ravendb.abstractions.data.SubscriptionConnectionOptions;
 import net.ravendb.abstractions.exceptions.OperationCancelledException;
+import net.ravendb.abstractions.exceptions.subscriptions.SubscriptionClosedException;
 import net.ravendb.abstractions.exceptions.subscriptions.SubscriptionDoesNotExistExeption;
+import net.ravendb.abstractions.exceptions.subscriptions.SubscriptionException;
 import net.ravendb.abstractions.exceptions.subscriptions.SubscriptionInUseException;
 import net.ravendb.abstractions.json.linq.RavenJObject;
 import net.ravendb.abstractions.logging.ILog;
@@ -61,6 +65,7 @@ public class Subscription<T> implements IObservable<T>, CleanCloseable {
   private final ConcurrentSet<IObserver<T>> subscribers = new ConcurrentSet<>();
   private final SubscriptionConnectionOptions options;
   private final CancellationTokenSource cts = new CancellationTokenSource();
+  private GenerateEntityIdOnTheClient generateEntityIdOnTheClient;
   private final boolean isStronglyTyped;
   private boolean completed;
   private final long id;
@@ -76,7 +81,7 @@ public class Subscription<T> implements IObservable<T>, CleanCloseable {
   private boolean closed;
   private boolean firstConnection = true;
 
-  Subscription(Class<T> clazz, long id, SubscriptionConnectionOptions options, IDatabaseCommands commands, IDatabaseChanges changes, DocumentConvention conventions, Action0 ensureOpenSubscription) {
+  Subscription(Class<T> clazz, long id, final String database, SubscriptionConnectionOptions options, final IDatabaseCommands commands, IDatabaseChanges changes, final DocumentConvention conventions, Action0 ensureOpenSubscription) {
     this.clazz = clazz;
     this.id = id;
     this.options = options;
@@ -85,7 +90,17 @@ public class Subscription<T> implements IObservable<T>, CleanCloseable {
     this.conventions = conventions;
     this.ensureOpenSubscription = ensureOpenSubscription;
 
-    isStronglyTyped = !RavenJObject.class.equals(clazz);
+    if (!RavenJObject.class.equals(clazz)) {
+      isStronglyTyped = true;
+      generateEntityIdOnTheClient = new GenerateEntityIdOnTheClient(conventions, new Function1<Object, String>() {
+        @Override
+        public String apply(Object entity) {
+          return conventions.generateDocumentKey(database, commands, entity);
+        }
+      });
+    } else {
+      isStronglyTyped = false;
+    }
 
     startWatchingDocs();
     startPullingTask = startPullingDocs();
@@ -175,6 +190,10 @@ public class Subscription<T> implements IObservable<T>, CleanCloseable {
                   if (isStronglyTyped) {
                     if (instance == null) {
                       instance = conventions.createSerializer().deserialize(jsonDoc.toString(), clazz);
+                      String docId = jsonDoc.get(Constants.METADATA).value(String.class, "@id");
+                      if (StringUtils.isNotEmpty(docId)) {
+                        generateEntityIdOnTheClient.trySetIdentity(instance, docId);
+                      }
                     }
                     subscriber.onNext(instance);
                   } else {
@@ -236,6 +255,16 @@ public class Subscription<T> implements IObservable<T>, CleanCloseable {
         } catch (Exception ex) {
           if (cts.getToken().isCancellationRequested()) {
             return;
+          }
+
+          if (ex instanceof SubscriptionException) {
+            SubscriptionException subscriptionEx = DocumentSubscriptions.tryGetSubscriptionException(ex);
+            if (subscriptionEx != null && subscriptionEx instanceof SubscriptionClosedException) {
+              // someone forced us to drop the connection by calling subscriptions.release
+              onCompletedNotification();
+              closed = true;
+              return;
+            }
           }
 
           restartPullingTask();

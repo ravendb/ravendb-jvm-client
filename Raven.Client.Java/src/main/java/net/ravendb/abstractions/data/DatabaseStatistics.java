@@ -28,6 +28,20 @@ public class DatabaseStatistics {
   private FutureBatchStats[] prefetches;
   private UUID databaseId;
   private boolean supportsDtc;
+  private Boolean is64Bit;
+
+  /**
+   * Indicates if process is 64-bit
+   */
+  public Boolean getIs64Bit() {
+    return is64Bit;
+  }
+  /**
+   * Indicates if process is 64-bit
+   */
+  public void setIs64Bit(Boolean is64Bit) {
+    this.is64Bit = is64Bit;
+  }
 
   /**
    * Total number of transformers in database.

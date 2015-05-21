@@ -20,6 +20,9 @@ import net.ravendb.client.IDocumentStore;
 import net.ravendb.client.connection.IDatabaseCommands;
 import net.ravendb.client.connection.implementation.HttpJsonRequest;
 import net.ravendb.client.connection.profiling.ConcurrentSet;
+import net.ravendb.client.extensions.MultiDatabase;
+import net.ravendb.client.utils.Lang;
+import net.ravendb.imports.json.JsonConvert;
 
 
 public class DocumentSubscriptions implements IReliableSubscriptions {
@@ -99,7 +102,7 @@ public class DocumentSubscriptions implements IReliableSubscriptions {
 
     sendOpenSubscriptionRequest(commands, id, options);
 
-    Subscription<T> subscription = new Subscription<>(clazz, id, options, commands, documentStore.changes(database), documentStore.getConventions(),
+    Subscription<T> subscription = new Subscription<>(clazz, id, Lang.coalesce(database, MultiDatabase.getDatabaseName(documentStore.getUrl())), options, commands, documentStore.changes(database), documentStore.getConventions(),
       new Action0() {
         @SuppressWarnings("synthetic-access")
         @Override
@@ -187,24 +190,50 @@ public class DocumentSubscriptions implements IReliableSubscriptions {
       }
   }
 
+  public static class ErrorAndUrl {
+    private String url;
+    private String error;
+
+    public String getUrl() {
+      return url;
+    }
+
+    public void setUrl(String url) {
+      this.url = url;
+    }
+
+    public String getError() {
+      return error;
+    }
+
+    public void setError(String error) {
+      this.error = error;
+    }
+  }
+
   public static SubscriptionException tryGetSubscriptionException(Exception ere) {
     if (ere instanceof ErrorResponseException) {
       ErrorResponseException opException = (ErrorResponseException) ere;
 
+      String text = opException.getResponseString();
+
       try {
         if (opException.getStatusCode() == SubscriptionDoesNotExistExeption.RELEVANT_HTTP_STATUS_CODE) {
-          return new SubscriptionDoesNotExistExeption(opException.getResponseString());
+          ErrorAndUrl errorResult = JsonConvert.deserializeObject(ErrorAndUrl.class, text);
+          return new SubscriptionDoesNotExistExeption(errorResult.getError());
         }
 
         if (opException.getStatusCode() == SubscriptionInUseException.RELEVANT_HTTP_STATUS_CODE) {
-          return new SubscriptionInUseException(opException.getMessage());
+          ErrorAndUrl errorResult = JsonConvert.deserializeObject(ErrorAndUrl.class, text);
+          return new SubscriptionInUseException(errorResult.getError());
         }
 
         if (opException.getStatusCode() == SubscriptionClosedException.RELEVANT_HTTP_STATUS_CODE) {
-          return new SubscriptionClosedException(opException.getMessage());
+          ErrorAndUrl errorResult = JsonConvert.deserializeObject(ErrorAndUrl.class, text);
+          return new SubscriptionClosedException(errorResult.getError());
         }
       } catch (Exception e) {
-        return null;
+        throw new RuntimeException(e);
       }
 
     }

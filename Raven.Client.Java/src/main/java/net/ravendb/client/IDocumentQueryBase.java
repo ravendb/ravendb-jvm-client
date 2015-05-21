@@ -5,12 +5,14 @@ import java.util.Date;
 
 import net.ravendb.abstractions.basic.Reference;
 import net.ravendb.abstractions.closure.Action1;
+import net.ravendb.abstractions.closure.Function1;
 import net.ravendb.abstractions.data.Etag;
 import net.ravendb.abstractions.data.IndexQuery;
 import net.ravendb.abstractions.data.QueryOperator;
 import net.ravendb.abstractions.data.QueryResult;
 import net.ravendb.abstractions.indexing.SpatialOptions.SpatialRelation;
 import net.ravendb.abstractions.indexing.SpatialOptions.SpatialUnits;
+import net.ravendb.abstractions.json.linq.RavenJObject;
 import net.ravendb.client.document.DocumentConvention;
 
 import com.mysema.query.types.Expression;
@@ -707,10 +709,22 @@ public interface IDocumentQueryBase<T, TSelf extends IDocumentQueryBase<T, TSelf
   public void afterQueryExecuted(Action1<QueryResult> afterQueryExecuted);
 
   /**
+   * Callback to get the results of the stream
+   * @param afterStreamExecutedCallback
+   */
+  public void afterStreamExecuted(Function1<Reference<RavenJObject>, Boolean> afterStreamExecutedCallback);
+
+  /**
    * Called externally to raise the after query executed callback
    * @param result
    */
   public void invokeAfterQueryExecuted(QueryResult result);
+
+  /**
+   * Called externally to raise the after query executed callback
+   * @param resultRef
+   */
+  public void invokeAfterStreamExecuted(Reference<RavenJObject> resultRef);
 
   /**
    * Provide statistics about the query, such as total count of matching records

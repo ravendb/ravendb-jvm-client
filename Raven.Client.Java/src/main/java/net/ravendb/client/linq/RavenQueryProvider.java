@@ -8,8 +8,11 @@ import java.util.Map;
 import java.util.Set;
 
 import net.ravendb.abstractions.basic.Lazy;
+import net.ravendb.abstractions.basic.Reference;
 import net.ravendb.abstractions.closure.Action1;
+import net.ravendb.abstractions.closure.Function1;
 import net.ravendb.abstractions.data.QueryResult;
+import net.ravendb.abstractions.json.linq.RavenJObject;
 import net.ravendb.abstractions.json.linq.RavenJToken;
 import net.ravendb.client.IDocumentQuery;
 import net.ravendb.client.RavenQueryHighlightings;
@@ -24,6 +27,7 @@ import com.mysema.query.types.Expression;
 public class RavenQueryProvider<T> implements IRavenQueryProvider {
 
   private Action1<QueryResult> afterQueryExecuted;
+  private Action1<RavenJObject> afterStreamExecuted;
   private DocumentQueryCustomizationFactory customizeQuery;
   private final String indexName;
   private final IDocumentQueryGenerator queryGenerator;
@@ -137,6 +141,11 @@ public class RavenQueryProvider<T> implements IRavenQueryProvider {
     this.afterQueryExecuted = afterQueryExecutedCallback;
   }
 
+  @Override
+  public void afterStreamExecuted(Action1<RavenJObject> afterStreamExecutedCallback) {
+    this.afterStreamExecuted = afterStreamExecutedCallback;
+  }
+
   /**
    *  Customizes the query using the specified action
    */
@@ -159,8 +168,8 @@ public class RavenQueryProvider<T> implements IRavenQueryProvider {
 
   @SuppressWarnings("hiding")
   protected <S> RavenQueryProviderProcessor<S> getQueryProviderProcessor(Class<S> clazz) {
-    return new RavenQueryProviderProcessor<>(clazz, queryGenerator, customizeQuery, afterQueryExecuted, indexName,
-        fieldsToFetch, fieldsToRename, isMapReduce, resultTranformer, transformerParameters);
+    return new RavenQueryProviderProcessor<>(clazz, queryGenerator, customizeQuery, afterQueryExecuted, afterStreamExecuted,
+      indexName, fieldsToFetch, fieldsToRename, isMapReduce, resultTranformer, transformerParameters);
   }
 
   /**
@@ -169,9 +178,17 @@ public class RavenQueryProvider<T> implements IRavenQueryProvider {
   @SuppressWarnings({"hiding", "unchecked"})
   @Override
   public <S> IDocumentQuery<S> toDocumentQuery(Class<S> clazz, Expression<?> expression) {
-    RavenQueryProviderProcessor<T> processor = getQueryProviderProcessor(this.clazz);
+    final RavenQueryProviderProcessor<T> processor = getQueryProviderProcessor(this.clazz);
     IDocumentQuery<S> result = (IDocumentQuery<S>) processor.getDocumentQueryFor(expression);
-    result.setResultTransformer(resultTranformer);
+    if (fieldsToFetch.size() > 0) {
+      result.afterStreamExecuted(new Function1<Reference<RavenJObject>, Boolean>() {
+        @SuppressWarnings("boxing")
+        @Override
+        public Boolean apply(Reference<RavenJObject> input) {
+          return processor.renameSingleResult(input);
+        }
+      });
+    }
     return result;
   }
 

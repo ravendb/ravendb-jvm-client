@@ -237,6 +237,7 @@ public class DocumentQuery<T> extends AbstractDocumentQuery<T, DocumentQuery<T>>
     documentQuery.lastEquality = lastEquality;
     documentQuery.shouldExplainScores = shouldExplainScores;
     documentQuery.afterQueryExecuted(afterQueryExecutedCallback);
+    documentQuery.afterStreamExecutedCallback = afterStreamExecutedCallback;
     return documentQuery;
 
   }

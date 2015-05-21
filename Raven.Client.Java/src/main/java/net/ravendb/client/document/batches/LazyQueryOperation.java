@@ -89,6 +89,13 @@ public class LazyQueryOperation<T> implements ILazyOperation {
   @SuppressWarnings("hiding")
   @Override
   public void handleResponse(GetResponse response) {
+
+    if (response.isForceRetry()) {
+      result = null;
+      requiresRetry = true;
+      return;
+    }
+
     if (response.getStatus() == HttpStatus.SC_NOT_FOUND) {
       throw new IllegalStateException("There is no index named: " + queryOperation.getIndexName() + "\n" + response.getResult());
     }

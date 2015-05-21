@@ -72,7 +72,7 @@ public class ReplicationBehavior implements CleanCloseable {
     }
 
     if (timeout == null) {
-      timeout = (long) (30 * 1000);
+      timeout = (long) (60 * 1000);
     }
 
     final Etag etagToCheck = etag;

@@ -37,6 +37,7 @@ import net.ravendb.abstractions.indexing.NumberUtil;
 import net.ravendb.abstractions.indexing.SortOptions;
 import net.ravendb.abstractions.indexing.SpatialOptions.SpatialRelation;
 import net.ravendb.abstractions.indexing.SpatialOptions.SpatialUnits;
+import net.ravendb.abstractions.json.linq.RavenJObject;
 import net.ravendb.abstractions.json.linq.RavenJToken;
 import net.ravendb.abstractions.json.linq.RavenJTokenWriter;
 import net.ravendb.abstractions.spatial.ShapeConverter;
@@ -248,6 +249,7 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
   protected boolean shouldExplainScores;
 
   protected Action1<QueryResult> afterQueryExecutedCallback;
+  protected Function1<Reference<RavenJObject>, Boolean> afterStreamExecutedCallback;
   protected Etag cutoffEtag;
   protected QueryOperator defaultOperator = QueryOperator.OR;
 
@@ -1541,6 +1543,13 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
   }
 
   /**
+   * Callback to get the results of the stream
+   */
+  public void afterStreamExecuted(Function1<Reference<RavenJObject>, Boolean> afterStreamExecutedCallback) {
+    this.afterStreamExecutedCallback = Delegates.combine(this.afterStreamExecutedCallback, afterStreamExecutedCallback);
+  }
+
+  /**
    * Called externally to raise the after query executed callback
    *
    * @param result
@@ -1549,6 +1558,16 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
     Action1<QueryResult> queryExecuted = afterQueryExecutedCallback;
     if (queryExecuted != null) {
       queryExecuted.apply(result);
+    }
+  }
+
+  /**
+   * Called externally to raise the after stream executed callback
+   */
+  public void invokeAfterStreamExecuted(Reference<RavenJObject> resultRef) {
+    Function1<Reference<RavenJObject>, Boolean> streamExecuted = afterStreamExecutedCallback;
+    if (streamExecuted != null) {
+      streamExecuted.apply(resultRef);
     }
   }
 

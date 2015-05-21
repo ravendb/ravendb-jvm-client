@@ -44,6 +44,7 @@ import net.ravendb.client.delegates.HttpResponseWithMetaHandler;
 import net.ravendb.client.extensions.MultiDatabase;
 import net.ravendb.client.listeners.IDocumentConflictListener;
 import net.ravendb.client.util.EvictItemsFromCacheBasedOnChanges;
+import net.ravendb.client.utils.Lang;
 import net.ravendb.client.utils.RequirementsChecker;
 
 import org.apache.commons.lang.StringUtils;
@@ -282,7 +283,7 @@ public class DocumentStore extends DocumentStoreBase {
     UUID sessionId = UUID.randomUUID();
     currentSessionId.set(sessionId);
     try {
-      DocumentSession session = new DocumentSession(options.getDatabase(), this, getListeners(), sessionId,
+      DocumentSession session = new DocumentSession(Lang.coalesce(options.getDatabase(), defaultDatabase, MultiDatabase.getDatabaseName(url)), this, getListeners(), sessionId,
         setupCommands(getDatabaseCommands(), options.getDatabase(), options));
       session.setDatabaseName(options.getDatabase() != null ? options.getDatabase() : defaultDatabase);
 
@@ -542,13 +543,10 @@ public class DocumentStore extends DocumentStoreBase {
       throw new IllegalStateException("Changes API requires usage of server/client");
     }
 
-    if (database == null) {
-      database = defaultDatabase;
-    }
-
+    database = Lang.coalesce(database, defaultDatabase, MultiDatabase.getDatabaseName(url));
 
     String dbUrl = MultiDatabase.getRootDatabaseUrl(url);
-    if (StringUtils.isNotEmpty(database)) {
+    if (StringUtils.isNotEmpty(database) && !database.equalsIgnoreCase(Constants.SYSTEM_DATABASE)) {
       dbUrl = dbUrl + "/databases/" + database;
     }
     final String databaseClousure = database;
@@ -634,9 +632,7 @@ public class DocumentStore extends DocumentStoreBase {
   protected void afterSessionCreated(InMemoryDocumentSessionOperations session) {
     if (conventions.isShouldAggressiveCacheTrackChanges() && aggressiveCachingUsed) {
       String databaseName = session.getDatabaseName();
-      if (databaseName == null) {
-        databaseName = defaultDatabase;
-      }
+      databaseName = Lang.coalesce(databaseName, defaultDatabase);
       observeChangesAndEvictItemsFromCacheForDatabases.putIfAbsent(databaseName,
         new EvictItemsFromCacheBasedOnChanges(databaseName, changes(databaseName), new ExpireItemsFromCacheAction()));
     }

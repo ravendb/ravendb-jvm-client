@@ -57,6 +57,7 @@ public class RavenQueryProviderProcessor<T> {
   private final DocumentQueryCustomizationFactory customizeQuery;
   protected final IDocumentQueryGenerator queryGenerator;
   private final Action1<QueryResult> afterQueryExecuted;
+  private final Action1<RavenJObject> afterStreamExecuted;
   private boolean chanedWhere;
   private int insideWhere;
   private IAbstractDocumentQuery<T> documentQuery;
@@ -86,7 +87,7 @@ public class RavenQueryProviderProcessor<T> {
   }
 
   public RavenQueryProviderProcessor(Class<T> clazz, IDocumentQueryGenerator queryGenerator, DocumentQueryCustomizationFactory customizeQuery,
-    Action1<QueryResult> afterQueryExecuted, String indexName, Set<String> fieldsToFetch, List<RenamedField> fieldsToRename, boolean isMapReduce,
+    Action1<QueryResult> afterQueryExecuted, Action1<RavenJObject> afterStreamExecuted, String indexName, Set<String> fieldsToFetch, List<RenamedField> fieldsToRename, boolean isMapReduce,
     String resultsTransformer, Map<String, RavenJToken> transformerParameters) {
     this.clazz = clazz;
     this.fieldsToFetch = fieldsToFetch;
@@ -96,6 +97,7 @@ public class RavenQueryProviderProcessor<T> {
     this.indexName = indexName;
     this.isMapReduce = isMapReduce;
     this.afterQueryExecuted = afterQueryExecuted;
+    this.afterStreamExecuted = afterStreamExecuted;
     this.customizeQuery = customizeQuery;
     this.resultsTransformer = resultsTransformer;
     this.transformerParameters = transformerParameters;
@@ -1128,6 +1130,15 @@ public class RavenQueryProviderProcessor<T> {
     for (int index = 0; index < queryResult.getResults().size(); index++) {
       RavenJObject result = queryResult.getResults().get(index);
       RavenJObject safeToModify = result.createSnapshot();
+      if (!renameSingleResult(new Reference<>(safeToModify))) {
+        continue;
+      }
+      safeToModify.ensureCannotBeChangeAndEnableShapshotting();
+      queryResult.getResults().set(index, safeToModify);
+    }
+  }
+
+  public boolean renameSingleResult(Reference<RavenJObject> doc) {
       boolean changed = false;
       Map<String, RavenJToken> values = new HashMap<>();
 
@@ -1138,11 +1149,13 @@ public class RavenQueryProviderProcessor<T> {
 
       for(String renamedField : renamedFieldSet) {
         Reference<RavenJToken> valueRef = new Reference<>();
-        if (safeToModify.tryGetValue(renamedField, valueRef) == false) {
+        if (doc.value.tryGetValue(renamedField, valueRef) == false) {
           continue;
         }
         values.put(renamedField, valueRef.value);
-        safeToModify.remove(renamedField);
+        if (!fieldsToFetch.contains(renamedField)) {
+          doc.value.remove(renamedField);
+        }
       }
       for (RenamedField rename : fieldsToRename) {
         if (!values.containsKey(rename.getOriginalField())) {
@@ -1152,21 +1165,14 @@ public class RavenQueryProviderProcessor<T> {
         changed = true;
         RavenJObject ravenJObject = (RavenJObject) ((val instanceof RavenJObject) ? val : null);
         if (rename.getNewField() == null && ravenJObject != null) {
-          safeToModify = ravenJObject;
+          doc.value = ravenJObject;
         } else if (rename.getNewField() != null) {
-          safeToModify.set(rename.getNewField(), val);
+          doc.value.set(rename.getNewField(), val);
         } else {
-          safeToModify.set(rename.getOriginalField(), val);
+          doc.value.set(rename.getOriginalField(), val);
         }
       }
-
-      if (!changed) {
-        continue;
-      }
-      safeToModify.ensureCannotBeChangeAndEnableShapshotting();
-      queryResult.getResults().set(index, safeToModify);
-
-    }
+    return changed;
   }
 
   @SuppressWarnings("boxing")

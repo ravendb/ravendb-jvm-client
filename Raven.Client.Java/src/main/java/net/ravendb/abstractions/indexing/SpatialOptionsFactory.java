@@ -35,6 +35,10 @@ public class SpatialOptionsFactory {
         options = factory.quadPrefixTreeIndex(maxTreeLevel);
         break;
 
+      case BOUNDING_BOX:
+        options = factory.boundingBoxIndex();
+        break;
+
       default:
         options = factory.geohashPrefixTreeIndex(maxTreeLevel);
         break;

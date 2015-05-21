@@ -48,12 +48,14 @@ import net.ravendb.client.connection.HttpExtensions;
 import net.ravendb.client.document.batches.ILazyOperation;
 import net.ravendb.client.exceptions.NonAuthoritativeInformationException;
 import net.ravendb.client.exceptions.NonUniqueObjectException;
+import net.ravendb.client.extensions.MultiDatabase;
 import net.ravendb.client.listeners.IDocumentConversionListener;
 import net.ravendb.client.listeners.IDocumentDeleteListener;
 import net.ravendb.client.listeners.IDocumentStoreListener;
 import net.ravendb.client.util.IdentityHashSet;
 import net.ravendb.client.util.Types;
 import net.ravendb.client.utils.Closer;
+import net.ravendb.client.utils.Lang;
 
 import org.apache.commons.lang.NotImplementedException;
 import org.apache.commons.lang.StringUtils;
@@ -110,6 +112,7 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
   private boolean allowNonAuthoritativeInformation;
 
   private final List<ICommandData> deferedCommands = new ArrayList<>();
+  protected String _databaseName;
   private GenerateEntityIdOnTheClient generateEntityIdOnTheClient;
   public EntityToJson entityToJson;
 
@@ -151,7 +154,7 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
   }
 
   public String getDatabaseName() {
-    return databaseName;
+    return Lang.coalesce(databaseName, MultiDatabase.getDatabaseName(documentStore.getUrl()));
   }
 
   /**
@@ -174,7 +177,7 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
     this.allowNonAuthoritativeInformation = true;
     this.nonAuthoritativeInformationTimeout = 15 * 1000L;
     this.maxNumberOfRequestsPerSession = documentStore.getConventions().getMaxNumberOfRequestsPerSession();
-    this.generateEntityIdOnTheClient = new GenerateEntityIdOnTheClient(documentStore, new Function1<Object, String>() {
+    this.generateEntityIdOnTheClient = new GenerateEntityIdOnTheClient(documentStore.getConventions(), new Function1<Object, String>() {
       @Override
       public String apply(Object entity) {
         return generateKey(entity);
@@ -281,21 +284,40 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
       if (generateEntityIdOnTheClient.tryGetIdFromInstance(instance, idHolder)) {
         assertNoNonUniqueInstance(instance, idHolder.value);
         JsonDocument jsonDocument = getJsonDocument(idHolder.value);
-        entitiesByKey.put(idHolder.value, instance);
-
-        value = new DocumentMetadata();
-        value.setEtag(useOptimisticConcurrency ? Etag.empty(): null);
-        value.setKey(idHolder.value);
-        value.setOriginalMetadata(jsonDocument.getMetadata());
-        value.setMetadata(jsonDocument.getMetadata().cloneToken());
-        value.setOriginalValue(new RavenJObject());
-
+        value = getDocumentMetadataValue(instance, idHolder, jsonDocument);
       } else {
         throw new IllegalStateException("Could not find the document key for " + instance);
       }
       return value;
     }
   }
+
+  protected <T> DocumentMetadata getDocumentMetadataValue(T instance, Reference<String> idHolder, JsonDocument jsonDocument) {
+    entitiesByKey.put(idHolder.value, instance);
+    DocumentMetadata value = new DocumentMetadata();
+    value.setEtag(useOptimisticConcurrency ? Etag.empty(): null);
+    value.setKey(idHolder.value);
+    value.setOriginalMetadata(jsonDocument.getMetadata());
+    value.setMetadata(jsonDocument.getMetadata().cloneToken());
+    value.setOriginalValue(new RavenJObject());
+    entitiesAndMetadata.put(instance, value);
+    return value;
+  }
+
+  /*
+   * GetDocumentMetadataValue<T>(T instance, string id, JsonDocument jsonDocument)
++       {
++           entitiesByKey[id] = instance;
++           return entitiesAndMetadata[instance] = new DocumentMetadata
++           {
++               ETag = UseOptimisticConcurrency ? Etag.Empty : null,
++               Key = id,
++               OriginalMetadata = jsonDocument.Metadata,
++               Metadata = (RavenJObject)jsonDocument.Metadata.CloneToken(),
++               OriginalValue = new RavenJObject()
++           };
++       }
+   */
 
   /**
    * Get the json document by key from the store

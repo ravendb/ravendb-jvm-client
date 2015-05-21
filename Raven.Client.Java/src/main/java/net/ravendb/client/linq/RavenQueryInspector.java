@@ -195,13 +195,13 @@ public class RavenQueryInspector<T> implements IRavenQueryable<T>, IRavenQueryIn
   }
 
   private RavenQueryProviderProcessor<T> getRavenQueryProvider() {
-    return new RavenQueryProviderProcessor<>(clazz, provider.getQueryGenerator(), provider.getCustomizeQuery(), null, indexName,
+    return new RavenQueryProviderProcessor<>(clazz, provider.getQueryGenerator(), provider.getCustomizeQuery(), null, null, indexName,
         new HashSet<String>(), new ArrayList<RenamedField>(), isMapReduce, provider.getResultTranformer(), provider.getTransformerParameters());
   }
 
   @Override
   public String getIndexQueried() {
-    RavenQueryProviderProcessor<T> ravenQueryProvider = new RavenQueryProviderProcessor<>(clazz, provider.getQueryGenerator(), null, null, indexName, new HashSet<String>(),
+    RavenQueryProviderProcessor<T> ravenQueryProvider = new RavenQueryProviderProcessor<>(clazz, provider.getQueryGenerator(), null, null, null, indexName, new HashSet<String>(),
         new ArrayList<RenamedField>(), isMapReduce, provider.getResultTranformer(), provider.getTransformerParameters());
     IDocumentQuery<T> documentQuery = ravenQueryProvider.getDocumentQueryFor(expression);
     return ((IRavenQueryInspector)documentQuery).getIndexQueried();
@@ -222,7 +222,7 @@ public class RavenQueryInspector<T> implements IRavenQueryable<T>, IRavenQueryIn
 
   @Override
   public Tuple<String, String> getLastEqualityTerm() {
-    RavenQueryProviderProcessor<T> ravenQueryProvider = new RavenQueryProviderProcessor<>(clazz, provider.getQueryGenerator(), null, null, indexName, new HashSet<String>(),
+    RavenQueryProviderProcessor<T> ravenQueryProvider = new RavenQueryProviderProcessor<>(clazz, provider.getQueryGenerator(), null, null, null, indexName, new HashSet<String>(),
         new ArrayList<RenamedField>(), isMapReduce, provider.getResultTranformer(), provider.getTransformerParameters());
     IDocumentQuery<T> documentQuery = ravenQueryProvider.getDocumentQueryFor(expression);
     return ((IRavenQueryInspector) documentQuery).getLastEqualityTerm();

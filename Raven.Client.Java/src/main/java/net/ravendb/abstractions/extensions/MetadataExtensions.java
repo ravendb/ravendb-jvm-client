@@ -85,6 +85,7 @@ public class MetadataExtensions {
     HEADERS_TO_IGNORE_CLIENT.add("Referer");
     HEADERS_TO_IGNORE_CLIENT.add("TE");
     HEADERS_TO_IGNORE_CLIENT.add("User-Agent");
+    HEADERS_TO_IGNORE_CLIENT.add("DNT");
     //Response headers
     HEADERS_TO_IGNORE_CLIENT.add("Accept-Ranges");
     HEADERS_TO_IGNORE_CLIENT.add("Age");

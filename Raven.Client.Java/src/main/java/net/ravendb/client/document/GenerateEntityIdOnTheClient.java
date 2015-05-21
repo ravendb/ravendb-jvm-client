@@ -6,7 +6,6 @@ import java.util.UUID;
 import net.ravendb.abstractions.basic.Reference;
 import net.ravendb.abstractions.closure.Function1;
 import net.ravendb.abstractions.data.Constants;
-import net.ravendb.client.IDocumentStore;
 import net.ravendb.client.converters.ITypeConverter;
 
 import org.apache.commons.lang.NullArgumentException;
@@ -14,16 +13,16 @@ import org.apache.commons.lang.reflect.FieldUtils;
 
 
 public class GenerateEntityIdOnTheClient {
-  private final IDocumentStore documentStore;
+  private final DocumentConvention conventions;
   private final Function1<Object, String> generateKey;
 
-  public GenerateEntityIdOnTheClient(IDocumentStore documentStore, Function1<Object, String> generateKey) {
-    this.documentStore = documentStore;
+  public GenerateEntityIdOnTheClient(DocumentConvention conventions, Function1<Object, String> generateKey) {
+    this.conventions = conventions;
     this.generateKey = generateKey;
   }
 
   private Field getIdentityProperty(Class<?> entityType) {
-    return documentStore.getConventions().getIdentityProperty(entityType);
+    return conventions.getIdentityProperty(entityType);
   }
 
   /**
@@ -58,7 +57,7 @@ public class GenerateEntityIdOnTheClient {
       value = Constants.EMPTY_UUID;
     }
     if (idHolder.value == null && value != null) { //need conversion
-      idHolder.value = documentStore.getConventions().getFindFullDocumentKeyFromNonStringIdentifier().find(value, entity.getClass(), true);
+      idHolder.value = conventions.getFindFullDocumentKeyFromNonStringIdentifier().find(value, entity.getClass(), true);
       return true;
     }
     return idHolder.value != null;
@@ -94,7 +93,7 @@ public class GenerateEntityIdOnTheClient {
    */
   public void trySetIdentity(Object entity, String id) {
     Class<?> entityType = entity.getClass();
-    Field identityProperty = documentStore.getConventions().getIdentityProperty(entityType);
+    Field identityProperty = conventions.getIdentityProperty(entityType);
 
     if (identityProperty == null) {
       return;
@@ -108,9 +107,9 @@ public class GenerateEntityIdOnTheClient {
       if (String.class.equals(propertyOrFieldType)) {
         FieldUtils.writeField(field, entity, id, true);
       } else { // need converting
-        for (ITypeConverter converter : documentStore.getConventions().getIdentityTypeConvertors()) {
+        for (ITypeConverter converter : conventions.getIdentityTypeConvertors()) {
           if (converter.canConvertFrom(propertyOrFieldType)) {
-            FieldUtils.writeField(field, entity, converter.convertTo(documentStore.getConventions().getFindIdValuePartForValueTypeConversion().find(entity, id)), true);
+            FieldUtils.writeField(field, entity, converter.convertTo(conventions.getFindIdValuePartForValueTypeConversion().find(entity, id)), true);
             return;
           }
         }

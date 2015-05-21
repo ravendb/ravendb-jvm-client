@@ -71,9 +71,9 @@ public abstract class HiLoKeyGeneratorBase {
     if (span < 5 * 1000) {
       span = new Date().getTime() - lastRequestedUtc2;
       if (span < 3000) {
-        capacity *= 4;
+        capacity *= Math.max(capacity, Math.max(capacity * 2, capacity * 4));
       } else {
-        capacity *= 2;
+        capacity *= Math.max(capacity, capacity * 2);
       }
     } else if (span > 60 * 1000) {
       capacity = Math.max(baseCapacity, capacity / 2);

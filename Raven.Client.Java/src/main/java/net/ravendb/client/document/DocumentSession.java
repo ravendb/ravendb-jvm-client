@@ -389,7 +389,6 @@ public class DocumentSession extends InMemoryDocumentSessionOperations implement
     return getConventions().generateDocumentKey(dbName, databaseCommands, entity);
   }
 
-
   /**
    * Begin a load while including the specified path
    */
@@ -579,6 +578,7 @@ public class DocumentSession extends InMemoryDocumentSessionOperations implement
     @Override
     public StreamResult<T> next() {
       RavenJObject nextValue = innerIterator.next();
+      query.invokeAfterStreamExecuted(new Reference<>(nextValue));
       RavenJObject meta = nextValue.value(RavenJObject.class, Constants.METADATA);
 
       String key = null;

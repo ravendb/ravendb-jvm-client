@@ -72,7 +72,7 @@ public class BulkInsertOperation implements CleanCloseable {
     // Fitzchak: Should not be ever null because of the above code, please refactor this.
     databaseCommands = finalDatabase == null ? documentStore.getDatabaseCommands().forSystemDatabase()
       :documentStore.getDatabaseCommands().forDatabase(finalDatabase);
-    generateEntityIdOnTheClient = new GenerateEntityIdOnTheClient(documentStore, new Function1<Object, String>() {
+    generateEntityIdOnTheClient = new GenerateEntityIdOnTheClient(documentStore.getConventions(), new Function1<Object, String>() {
       @Override
       public String apply(Object entity) {
         return documentStore.getConventions().generateDocumentKey(finalDatabase, getDatabaseCommands(), entity);

@@ -1279,8 +1279,8 @@ public class ServerClient implements IDatabaseCommands {
         request.setUrl("/facets/" + x.getIndexName());
         request.setQuery(String.format("%s&facetStart=%d&facetPageSize=%d&%d",
           x.getQuery().getQueryString(),
-          x.getQuery().getStart(),
-          x.getQuery().getPageSize(),
+          x.getPageStart(),
+          x.getPageSize(),
           addition));
         multiGetRequestItems[i] = request;
       } else {
@@ -1291,8 +1291,8 @@ public class ServerClient implements IDatabaseCommands {
           request.setUrl("/facets/" + x.getIndexName());
           request.setQuery(String.format("%s&facetStart=%d&facetPageSize=%d&%d",
             x.getQuery().getQueryString(),
-            x.getQuery().getStart(),
-            x.getQuery().getPageSize(),
+            x.getPageStart(),
+            x.getPageSize(),
             addition));
           multiGetRequestItems[i] = request;
         } else {
@@ -2608,7 +2608,7 @@ public class ServerClient implements IDatabaseCommands {
     }
 
     if (resolvingConflictRetries) {
-      throw new IllegalStateException("Encountered another conflict after already resolving a conflict. Conflict resultion cannot recurse.");
+      throw new IllegalStateException("Encountered another conflict after already resolving a conflict. Conflict resolution cannot recurse.");
     }
     resolvingConflictRetries = true;
     try {

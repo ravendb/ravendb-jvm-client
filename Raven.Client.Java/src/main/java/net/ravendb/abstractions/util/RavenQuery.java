@@ -36,7 +36,6 @@ public class RavenQuery {
       return "\"\"";
     }
 
-    boolean isPhrase = false;
     int start = 0;
     int length = term.length();
     StringBuilder buffer = null;
@@ -86,14 +85,9 @@ public class RavenQuery {
         case ' ':
         case '\t':
           {
-            if (!isPhrase && makePhrase) {
-              if (buffer == null) {
-                // allocate builder with headroom
-                buffer = new StringBuilder(length * 2);
-              }
-
-              buffer.insert(0, "\"");
-              isPhrase = true;
+            if (makePhrase) {
+              //If it is a phrase there is no need to double escape just escape the original term.
+              return new StringBuilder(term).insert(0, "\"").append("\"").toString();
             }
             break;
           }
@@ -120,11 +114,6 @@ public class RavenQuery {
     if (length > start) {
       // append any trailing substring
       buffer.append(term, start, length);
-    }
-
-    if (isPhrase) {
-      // quoted phrase
-      buffer.append('"');
     }
 
     return buffer.toString();

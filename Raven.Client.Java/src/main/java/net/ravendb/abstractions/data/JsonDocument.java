@@ -155,8 +155,15 @@ public class JsonDocument implements IJsonDocumentMetadata {
   /**
    * Translate the json document to a {@link RavenJObject}
    */
-  @SuppressWarnings({"hiding", "boxing"})
   public RavenJObject toJson() {
+    return toJson(false);
+  }
+
+  /**
+   * Translate the json document to a {@link RavenJObject}
+   */
+  @SuppressWarnings({"hiding", "boxing"})
+  public RavenJObject toJson(boolean checkForId) {
     dataAsJson.ensureCannotBeChangeAndEnableShapshotting();
     metadata.ensureCannotBeChangeAndEnableShapshotting();
 
@@ -174,6 +181,11 @@ public class JsonDocument implements IJsonDocumentMetadata {
     if (nonAuthoritativeInformation) {
       metadata.add("Non-Authoritative-Information", new RavenJValue(nonAuthoritativeInformation));
     }
+
+    if (checkForId && !metadata.containsKey("@id")) {
+      metadata.add("@id", key);
+    }
+
     doc.add("@metadata", metadata);
 
     return doc;

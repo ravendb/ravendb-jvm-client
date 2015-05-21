@@ -1,5 +1,6 @@
 package net.ravendb.abstractions.closure;
 
+
 public class Delegates {
 
   public static class Delegate0 implements Action0 {
@@ -60,6 +61,24 @@ public class Delegates {
       public void apply(X input) {
           first.apply(input);
           second.apply(input);
+      }
+    };
+  }
+
+  //TODO: which value should we return?
+  public static <X, Y> Function1<X, Y> combine(final Function1<X, Y> first, final Function1<X, Y> second) {
+    if (first == null) {
+      return second;
+    }
+    if (second == null) {
+      return first;
+    }
+    return new Function1<X, Y>() {
+
+      @Override
+      public Y apply(X input) {
+          first.apply(input);
+          return second.apply(input);
       }
     };
   }
