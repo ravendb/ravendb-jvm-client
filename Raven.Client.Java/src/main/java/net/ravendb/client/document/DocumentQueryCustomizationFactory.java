@@ -2,12 +2,14 @@ package net.ravendb.client.document;
 
 import java.util.Date;
 import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Set;
 
 import javax.annotation.concurrent.Immutable;
 
 import net.ravendb.abstractions.basic.Reference;
 import net.ravendb.abstractions.closure.Action1;
+import net.ravendb.abstractions.closure.Function2;
 import net.ravendb.abstractions.data.Etag;
 import net.ravendb.abstractions.data.IndexQuery;
 import net.ravendb.abstractions.indexing.SpatialOptions.SpatialRelation;
@@ -134,6 +136,16 @@ public class DocumentQueryCustomizationFactory implements IDocumentQueryCustomiz
       @Override
       public void apply(IDocumentQueryCustomization documentQuery) {
         documentQuery.waitForNonStaleResultsAsOf(cutOffEtag);
+      }
+    });
+  }
+
+  @Override
+  public DocumentQueryCustomizationFactory transformResults(final Function2<IndexQuery, List<Object>, List<Object>> func) {
+    return new DocumentQueryCustomizationFactory(actions, new Action1<IDocumentQueryCustomization>() {
+      @Override
+      public void apply(IDocumentQueryCustomization documentQuery) {
+        documentQuery.transformResults(func);
       }
     });
   }

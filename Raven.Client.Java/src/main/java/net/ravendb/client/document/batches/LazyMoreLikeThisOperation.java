@@ -1,5 +1,8 @@
 package net.ravendb.client.document.batches;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import net.ravendb.abstractions.basic.CleanCloseable;
 import net.ravendb.abstractions.data.GetRequest;
 import net.ravendb.abstractions.data.GetResponse;
@@ -10,7 +13,7 @@ import net.ravendb.abstractions.json.linq.RavenJArray;
 import net.ravendb.abstractions.json.linq.RavenJObject;
 import net.ravendb.abstractions.json.linq.RavenJToken;
 import net.ravendb.client.document.sessionoperations.MultiLoadOperation;
-
+import net.ravendb.client.shard.ShardStrategy;
 
 public class LazyMoreLikeThisOperation<T> implements ILazyOperation {
 
@@ -20,7 +23,6 @@ public class LazyMoreLikeThisOperation<T> implements ILazyOperation {
   private QueryResult queryResult;
   private Object result;
   private boolean requiresRetry;
-
 
   @Override
   public QueryResult getQueryResult() {
@@ -74,6 +76,47 @@ public class LazyMoreLikeThisOperation<T> implements ILazyOperation {
     requiresRetry = multiLoadOperation.setResult(multiLoadResult);
     if (requiresRetry == false) {
       result = multiLoadOperation.complete(clazz);
+    }
+  }
+
+  @SuppressWarnings("hiding")
+  @Override
+  public void handleResponses(GetResponse[] responses, ShardStrategy shardStrategy) {
+    List<MultiLoadResult> list = new ArrayList<>();
+    for (GetResponse response: responses) {
+      RavenJToken result = response.getResult();
+      MultiLoadResult loadResult = new MultiLoadResult();
+      list.add(loadResult);
+      loadResult.setResults(result.value(RavenJArray.class, "Includes").values(RavenJObject.class));
+      loadResult.setIncludes(result.value(RavenJArray.class, "Results").values(RavenJObject.class));
+    }
+
+    int capacity = 0;
+    for (MultiLoadResult r: list) {
+      capacity = Math.max(capacity, r.getResults().size());
+    }
+
+    MultiLoadResult finalResult = new MultiLoadResult();
+    finalResult.setIncludes(new ArrayList<RavenJObject>());
+    List<RavenJObject> rList = new ArrayList<>();
+    for (int i =0 ; i < capacity; i++) {
+      rList.add(null);
+    }
+    finalResult.setResults(rList);
+
+    for (MultiLoadResult multiLoadResult: list) {
+      finalResult.getIncludes().addAll(multiLoadResult.getIncludes());
+      for (int i = 0; i < multiLoadResult.getResults().size(); i++) {
+        if (finalResult.getResults().get(i) == null) {
+          finalResult.getResults().set(i, multiLoadResult.getResults().get(i));
+        }
+      }
+    }
+
+    requiresRetry = multiLoadOperation.setResult(finalResult);
+
+    if (!requiresRetry) {
+      this.result = multiLoadOperation.complete(clazz);
     }
   }
 

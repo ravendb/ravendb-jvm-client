@@ -16,6 +16,7 @@ import net.ravendb.abstractions.json.linq.RavenJArray;
 import net.ravendb.abstractions.json.linq.RavenJObject;
 import net.ravendb.abstractions.json.linq.RavenJToken;
 import net.ravendb.client.document.sessionoperations.LoadTransformerOperation;
+import net.ravendb.client.shard.ShardStrategy;
 import net.ravendb.client.utils.UrlUtils;
 
 
@@ -80,6 +81,18 @@ public class LazyTransformerLoadOperation<T> implements ILazyOperation {
   public boolean isRequiresRetry() {
     return requiresRetry;
   }
+
+  @Override
+  public void handleResponses(GetResponse[] responses, ShardStrategy shardStrategy) {
+    for (GetResponse response: responses) {
+      if (response.getStatus() == 200) {
+        handleResponse(response);
+        return;
+      }
+    }
+    handleResponse((GetResponse)null);
+  }
+
 
   @Override
   public void handleResponse(GetResponse response) {

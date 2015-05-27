@@ -65,7 +65,6 @@ public class Delegates {
     };
   }
 
-  //TODO: which value should we return?
   public static <X, Y> Function1<X, Y> combine(final Function1<X, Y> first, final Function1<X, Y> second) {
     if (first == null) {
       return second;

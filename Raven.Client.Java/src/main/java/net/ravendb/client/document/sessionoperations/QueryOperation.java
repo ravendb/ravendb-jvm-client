@@ -11,6 +11,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import net.ravendb.abstractions.basic.CleanCloseable;
+import net.ravendb.abstractions.closure.Function2;
 import net.ravendb.abstractions.data.Constants;
 import net.ravendb.abstractions.data.IndexQuery;
 import net.ravendb.abstractions.data.JsonDocument;
@@ -39,6 +40,7 @@ public class QueryOperation {
   private final boolean waitForNonStaleResults;
   private boolean disableEntitiesTracking;
   private final long timeout;
+  private final Function2<IndexQuery, List<Object>, List<Object>> transformResults;
   private final Set<String> includes;
   private QueryResult currentQueryResults;
   private final String[] projectionFields;
@@ -62,11 +64,13 @@ public class QueryOperation {
   private long spStop;
 
   public QueryOperation(InMemoryDocumentSessionOperations sessionOperations, String indexName, IndexQuery indexQuery,
-      String[] projectionFields, boolean waitForNonStaleResults,long timeout,
+      String[] projectionFields, boolean waitForNonStaleResults, long timeout,
+      Function2<IndexQuery, List<Object>, List<Object>> transformResults,
       Set<String> includes, boolean disableEntitiesTracking) {
     this.indexQuery = indexQuery;
     this.waitForNonStaleResults = waitForNonStaleResults;
     this.timeout = timeout;
+    this.transformResults = transformResults;
     this.includes = includes;
     this.projectionFields = projectionFields;
     this.sessionOperations = sessionOperations;
@@ -126,6 +130,7 @@ public class QueryOperation {
     return (new Date().getTime()  - spStart) <= sessionOperations.getNonAuthoritativeInformationTimeout();
   }
 
+  @SuppressWarnings("unchecked")
   public <T> List<T> complete(Class<T> clazz)
   {
     QueryResult queryResult = currentQueryResults.createSnapshot();
@@ -149,7 +154,11 @@ public class QueryOperation {
       sessionOperations.registerMissingIncludes(notNullResults, includes);
     }
 
-    return list;
+    if (transformResults == null) {
+      return list;
+    }
+
+    return ((List<T>) transformResults.apply(indexQuery, (List<Object>) list));
   }
 
   public boolean isDisableEntitiesTracking() {

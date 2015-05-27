@@ -343,6 +343,7 @@ public class DocumentStore extends DocumentStoreBase {
     return this;
   }
 
+  @Override
   public void initializeProfiling() {
     if (jsonRequestFactory == null) {
       throw new IllegalStateException("Cannot call InitializeProfiling() before Initialize() was called.");

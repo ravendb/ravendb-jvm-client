@@ -13,6 +13,7 @@ import net.ravendb.abstractions.json.linq.RavenJArray;
 import net.ravendb.abstractions.json.linq.RavenJObject;
 import net.ravendb.abstractions.json.linq.RavenJToken;
 import net.ravendb.client.document.sessionoperations.MultiLoadOperation;
+import net.ravendb.client.shard.ShardStrategy;
 import net.ravendb.client.utils.UrlUtils;
 
 import org.apache.commons.lang.StringUtils;
@@ -89,6 +90,50 @@ public class LazyMultiLoadOperation<T> implements ILazyOperation {
 
   public void setRequiresRetry(boolean requiresRetry) {
     this.requiresRetry = requiresRetry;
+  }
+
+
+
+  @SuppressWarnings("hiding")
+  @Override
+  public void handleResponses(GetResponse[] responses, ShardStrategy shardStrategy) {
+    List<MultiLoadResult> list = new ArrayList<>();
+    for (GetResponse response: responses) {
+      RavenJToken result = response.getResult();
+      MultiLoadResult loadResult = new MultiLoadResult();
+      list.add(loadResult);
+      loadResult.setResults(result.value(RavenJArray.class, "Includes").values(RavenJObject.class));
+      loadResult.setIncludes(result.value(RavenJArray.class, "Results").values(RavenJObject.class));
+    }
+
+    int capacity = 0;
+    for (MultiLoadResult r: list) {
+      capacity = Math.max(capacity, r.getResults().size());
+    }
+
+    MultiLoadResult finalResult = new MultiLoadResult();
+    finalResult.setIncludes(new ArrayList<RavenJObject>());
+    List<RavenJObject> rList = new ArrayList<>();
+    for (int i =0 ; i < capacity; i++) {
+      rList.add(null);
+    }
+    finalResult.setResults(rList);
+
+    for (MultiLoadResult multiLoadResult: list) {
+      finalResult.getIncludes().addAll(multiLoadResult.getIncludes());
+      for (int i = 0; i < multiLoadResult.getResults().size(); i++) {
+        if (finalResult.getResults().get(i) == null) {
+          finalResult.getResults().set(i, multiLoadResult.getResults().get(i));
+        }
+      }
+    }
+
+    requiresRetry = loadOperation.setResult(finalResult);
+
+    if (!requiresRetry) {
+      this.result = loadOperation.complete(clazz);
+    }
+
   }
 
   @SuppressWarnings("hiding")

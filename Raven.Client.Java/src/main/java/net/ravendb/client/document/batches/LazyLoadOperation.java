@@ -11,6 +11,7 @@ import net.ravendb.abstractions.data.QueryResult;
 import net.ravendb.client.connection.IDatabaseCommands;
 import net.ravendb.client.connection.SerializationHelper;
 import net.ravendb.client.document.sessionoperations.LoadOperation;
+import net.ravendb.client.shard.ShardStrategy;
 import net.ravendb.client.utils.UrlUtils;
 
 import org.apache.http.HttpStatus;
@@ -67,6 +68,17 @@ public class LazyLoadOperation<T> implements ILazyOperation {
 
   public void setRequiresRetry(boolean requiresRetry) {
     this.requiresRetry = requiresRetry;
+  }
+
+  @Override
+  public void handleResponses(GetResponse[] responses, ShardStrategy shardStrategy) {
+    for (GetResponse response: responses) {
+      if (response.getStatus() == 200) {
+        handleResponse(response);
+        return;
+      }
+    }
+    handleResponse((GetResponse)null);
   }
 
   @Override

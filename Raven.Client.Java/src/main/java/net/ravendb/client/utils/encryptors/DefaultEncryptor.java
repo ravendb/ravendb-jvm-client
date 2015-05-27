@@ -15,6 +15,15 @@ public class DefaultEncryptor implements IEncryptor {
         throw new RuntimeException(e);
       }
     }
+
+    @Override
+    public byte[] compute16(byte[] bytes) {
+      try {
+        return computeHash("MD5", bytes, null);
+      } catch (NoSuchAlgorithmException e) {
+        throw new RuntimeException(e);
+      }
+    }
   }
 
   @Override

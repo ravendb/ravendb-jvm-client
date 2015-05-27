@@ -1,6 +1,8 @@
 package net.ravendb.client.document.batches;
 
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Set;
 
 import net.ravendb.abstractions.basic.CleanCloseable;
 import net.ravendb.abstractions.basic.SharpEnum;
@@ -10,7 +12,10 @@ import net.ravendb.abstractions.data.GetResponse;
 import net.ravendb.abstractions.data.QueryResult;
 import net.ravendb.abstractions.data.SuggestionQuery;
 import net.ravendb.abstractions.data.SuggestionQueryResult;
+import net.ravendb.abstractions.json.linq.RavenJArray;
 import net.ravendb.abstractions.json.linq.RavenJObject;
+import net.ravendb.abstractions.json.linq.RavenJToken;
+import net.ravendb.client.shard.ShardStrategy;
 
 import org.apache.http.HttpStatus;
 
@@ -80,6 +85,22 @@ public class LazySuggestOperation implements ILazyOperation {
     suggestionQueryResult.setSuggestions(values.toArray(new String[0]));
     this.result = suggestionQueryResult;
   }
+
+  @SuppressWarnings("hiding")
+  @Override
+  public void handleResponses(GetResponse[] responses, ShardStrategy shardStrategy) {
+    SuggestionQueryResult result = new SuggestionQueryResult();
+    Set<String> suggestons = new LinkedHashSet<>();
+    for (GetResponse item: responses) {
+      RavenJObject data = (RavenJObject)item.getResult();
+      for (RavenJToken suggestion : data.value(RavenJArray.class, "Suggestions")) {
+        suggestons.add(suggestion.value(String.class));
+      }
+    }
+    result.setSuggestions(suggestons.toArray(new String[0]));
+    this.result = result;
+  }
+
 
   @Override
   public CleanCloseable enterContext() {

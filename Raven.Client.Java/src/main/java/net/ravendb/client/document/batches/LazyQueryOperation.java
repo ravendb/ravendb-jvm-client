@@ -1,5 +1,7 @@
 package net.ravendb.client.document.batches;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -12,6 +14,7 @@ import net.ravendb.abstractions.json.linq.RavenJObject;
 import net.ravendb.client.connection.HttpExtensions;
 import net.ravendb.client.connection.SerializationHelper;
 import net.ravendb.client.document.sessionoperations.QueryOperation;
+import net.ravendb.client.shard.ShardStrategy;
 
 import org.apache.http.HttpStatus;
 
@@ -45,8 +48,6 @@ public class LazyQueryOperation<T> implements ILazyOperation {
   public void setQueryResult(QueryResult queryResult) {
     this.queryResult = queryResult;
   }
-
-
 
   @Override
   public GetRequest createRequest() {
@@ -84,6 +85,38 @@ public class LazyQueryOperation<T> implements ILazyOperation {
 
   public void setRequiresRetry(boolean requiresRetry) {
     this.requiresRetry = requiresRetry;
+  }
+
+  @SuppressWarnings("hiding")
+  @Override
+  public void handleResponses(GetResponse[] responses, ShardStrategy shardStrategy) {
+    int notFoundCounts = 0;
+    for (GetResponse resp: responses) {
+      if (resp.getStatus() == 404) {
+        notFoundCounts++;
+      }
+    }
+    if (notFoundCounts != 0) {
+      throw new IllegalStateException("There is no index named: " + queryOperation.getIndexName() + " in " + notFoundCounts + "shards");
+    }
+
+
+    List<QueryResult> list = new ArrayList<>();
+    for (GetResponse response: responses) {
+      list.add(SerializationHelper.toQueryResult((RavenJObject) response.getResult(), HttpExtensions.getEtagHeader(response), response.getHeaders().get("Temp-Request-Time"), -1));
+    }
+
+    QueryResult queryResult = shardStrategy.getMergeQueryResults().apply(queryOperation.getIndexQuery(), list);
+    requiresRetry = !queryOperation.isAcceptable(queryResult);
+    if (requiresRetry) {
+      return;
+    }
+    if (afterQueryExecuted != null) {
+      afterQueryExecuted.apply(queryResult);
+    }
+
+    this.result = queryOperation.complete(clazz);
+    this.queryResult = queryResult;
   }
 
   @SuppressWarnings("hiding")

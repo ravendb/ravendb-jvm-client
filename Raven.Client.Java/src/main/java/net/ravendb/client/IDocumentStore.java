@@ -189,6 +189,8 @@ public interface IDocumentStore extends IDisposalNotification {
 
   public IReliableSubscriptions subscriptions();
 
+  public void initializeProfiling();
+
   public void setListeners(DocumentSessionListeners listeners);
 
 }

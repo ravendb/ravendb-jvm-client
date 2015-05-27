@@ -149,7 +149,7 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
     return id;
   }
 
-  protected void setDatabaseName(String databaseName) {
+  public void setDatabaseName(String databaseName) {
     this.databaseName = databaseName;
   }
 
@@ -1158,7 +1158,7 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
     return instance;
   }
 
-  private void handleInternalMetadata(RavenJObject result) {
+  protected void handleInternalMetadata(RavenJObject result) {
     // Implant a property with "id" value ... if not exists
     RavenJObject metadata = result.value(RavenJObject.class, "@metadata");
     if (metadata == null || StringUtils.isEmpty(metadata.value(String.class, "@id"))) {

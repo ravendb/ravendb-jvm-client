@@ -37,6 +37,7 @@ import net.ravendb.abstractions.json.linq.RavenJToken;
 import net.ravendb.client.IDocumentQuery;
 import net.ravendb.client.IDocumentSessionImpl;
 import net.ravendb.client.ISyncAdvancedSessionOperation;
+import net.ravendb.client.ITransactionalDocumentSession;
 import net.ravendb.client.LoadConfigurationFactory;
 import net.ravendb.client.RavenPagingInformation;
 import net.ravendb.client.RavenQueryHighlightings;
@@ -71,7 +72,9 @@ import com.mysema.query.types.Expression;
  * Implements Unit of Work for accessing the RavenDB server
  *
  */
-public class DocumentSession extends InMemoryDocumentSessionOperations implements IDocumentSessionImpl, ISyncAdvancedSessionOperation, IDocumentQueryGenerator {
+public class DocumentSession extends InMemoryDocumentSessionOperations
+  implements IDocumentSessionImpl, ISyncAdvancedSessionOperation,
+  IDocumentQueryGenerator, ITransactionalDocumentSession {
 
   private IDatabaseCommands databaseCommands;
 

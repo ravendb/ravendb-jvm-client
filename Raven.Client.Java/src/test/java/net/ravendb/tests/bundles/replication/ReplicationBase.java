@@ -5,6 +5,7 @@ import static org.junit.Assert.assertTrue;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
 import net.ravendb.abstractions.basic.Reference;
 import net.ravendb.abstractions.data.Constants;
@@ -24,7 +25,6 @@ import net.ravendb.client.listeners.IDocumentConflictListener;
 import org.apache.commons.lang.StringUtils;
 import org.junit.After;
 import org.junit.Assert;
-
 
 public class ReplicationBase extends RavenDBAwareTests {
 
@@ -77,14 +77,13 @@ public class ReplicationBase extends RavenDBAwareTests {
 
   protected void setupReplication(IDatabaseCommands source, String... urls) {
     List<RavenJObject> targets = new ArrayList<>();
-    for (String url: urls) {
+    for (String url : urls) {
       RavenJObject target = new RavenJObject();
       target.add("Url", url);
       targets.add(target);
     }
     setupReplication(source, targets);
   }
-
 
   protected void setupReplication(IDatabaseCommands source, List<RavenJObject> targets) {
     RavenJObject destinations = new RavenJObject();
@@ -120,13 +119,14 @@ public class ReplicationBase extends RavenDBAwareTests {
   public static class ClientSideConflictResolution implements IDocumentConflictListener {
 
     @Override
-    public boolean tryResolveConflict(String key, List<JsonDocument> conflictedDocs, Reference<JsonDocument> resolvedDocument) {
+    public boolean tryResolveConflict(String key, List<JsonDocument> conflictedDocs,
+      Reference<JsonDocument> resolvedDocument) {
       RavenJObject dataAsJson = new RavenJObject();
 
       List<String> items = new ArrayList<>();
 
       for (JsonDocument conflictedDoc : conflictedDocs) {
-        items.add(conflictedDoc.getDataAsJson().value(String.class,"Name"));
+        items.add(conflictedDoc.getDataAsJson().value(String.class, "Name"));
       }
 
       Collections.sort(items);
@@ -139,4 +139,14 @@ public class ReplicationBase extends RavenDBAwareTests {
 
   }
 
+  @SuppressWarnings("hiding")
+  public int[] getRequestsCounts(Map<String, IDocumentStore> stores) {
+    int[] result = new int[stores.size()];
+    int i = 0;
+    for (IDocumentStore store: stores.values()) {
+      result[i] = store.getDatabaseCommands().getGlobalAdmin().getStatistics().getTotalNumberOfRequests();
+      i++;
+    }
+    return result;
+  }
 }

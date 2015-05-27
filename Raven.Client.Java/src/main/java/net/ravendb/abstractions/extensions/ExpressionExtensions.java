@@ -1,5 +1,6 @@
 package net.ravendb.abstractions.extensions;
 
+import java.lang.reflect.Field;
 import java.util.Stack;
 
 import org.apache.commons.lang.StringUtils;
@@ -16,6 +17,17 @@ import com.mysema.query.types.TemplateExpression;
 import com.mysema.query.types.Visitor;
 
 public class ExpressionExtensions {
+
+  public static Field toProperty(Expression<?> expr) {
+    try {
+      Path<?> path = (Path<?>) expr;
+      Class<?> rootType = path.getRoot().getType();
+      String propName = path.getMetadata().getName();
+      return rootType.getDeclaredField(propName);
+    } catch (NoSuchFieldException e) {
+      return null;
+    }
+  }
 
   public static String toPropertyPath(Expression<?> expr) {
     return toPropertyPath(expr, '.', ',');

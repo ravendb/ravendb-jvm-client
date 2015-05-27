@@ -151,8 +151,6 @@ public class RavenJObject extends RavenJToken implements Iterable<Entry<String, 
     this.comparer = null;
   }
 
-
-
   @Override
   public boolean deepEquals(RavenJToken other, List<DocumentsChanges> changes) {
     if (other instanceof RavenJObject == false) {

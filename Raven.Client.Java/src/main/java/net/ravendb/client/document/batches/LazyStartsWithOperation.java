@@ -1,5 +1,6 @@
 package net.ravendb.client.document.batches;
 
+import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -12,9 +13,9 @@ import net.ravendb.abstractions.data.QueryResult;
 import net.ravendb.abstractions.json.linq.RavenJArray;
 import net.ravendb.abstractions.json.linq.RavenJObject;
 import net.ravendb.client.RavenPagingInformation;
-import net.ravendb.client.connection.IDatabaseCommands;
 import net.ravendb.client.connection.SerializationHelper;
 import net.ravendb.client.document.InMemoryDocumentSessionOperations;
+import net.ravendb.client.shard.ShardStrategy;
 import net.ravendb.client.utils.UrlUtils;
 
 
@@ -118,18 +119,51 @@ public class LazyStartsWithOperation<T> implements ILazyOperation {
     result = resultList.toArray();
   }
 
+
+  @SuppressWarnings("unchecked")
+  @Override
+  public void handleResponses(GetResponse[] responses, ShardStrategy shardStrategy) {
+    boolean anyError = false;
+    for (GetResponse r: responses) {
+      if (r.isRequestHasErrors()) {
+        anyError = true;
+        break;
+      }
+    }
+    if (anyError) {
+      this.result = null;
+      requiresRetry = true;
+      return;
+    }
+
+    List<JsonDocument> jsonDocuments = new ArrayList<>();
+    for (GetResponse response : responses) {
+      List<JsonDocument> documents = SerializationHelper.ravenJObjectsToJsonDocuments(response.getResult());
+      for (JsonDocument d: documents) {
+        for (JsonDocument oldDoc: jsonDocuments) {
+          if (d.getKey().equals(oldDoc.getKey())) {
+            throw new IllegalStateException("Found document with id: " + d.getKey() + " on more than a single shard, which is not allowed. Document keys have to be unique cluster-wide.");
+          }
+        }
+      }
+
+      jsonDocuments.addAll(documents);
+    }
+
+    T[] finalResult = (T[]) Array.newInstance(clazz, jsonDocuments.size());
+    this.result = finalResult;
+
+    int i = 0;
+    for (JsonDocument doc: jsonDocuments) {
+      Object entity = sessionOperations.trackEntity(clazz, doc);
+      finalResult[i] = (T) entity;
+      i++;
+    }
+  }
+
   @Override
   public CleanCloseable enterContext() {
     return null;
-  }
-
-  public Object executeEmbedded(IDatabaseCommands commands) {
-    List<JsonDocument> docs = commands.startsWith(keyPrefix, matches, start, pageSize);
-    List<Object> entites = new ArrayList<>();
-    for (JsonDocument doc: docs) {
-      entites.add(sessionOperations.trackEntity(clazz, doc));
-    }
-    return entites.toArray();
   }
 
   @SuppressWarnings("hiding")

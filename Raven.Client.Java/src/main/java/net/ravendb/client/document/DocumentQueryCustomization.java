@@ -1,9 +1,11 @@
 package net.ravendb.client.document;
 
 import java.util.Date;
+import java.util.List;
 
 import net.ravendb.abstractions.basic.Reference;
 import net.ravendb.abstractions.closure.Action1;
+import net.ravendb.abstractions.closure.Function2;
 import net.ravendb.abstractions.data.Etag;
 import net.ravendb.abstractions.data.IndexQuery;
 import net.ravendb.abstractions.indexing.SpatialOptions.SpatialRelation;
@@ -32,6 +34,12 @@ public class DocumentQueryCustomization implements IDocumentQueryCustomization {
   @Override
   public IDocumentQueryCustomization waitForNonStaleResultsAsOfLastWrite(long waitTimeout) {
     delegate.waitForNonStaleResultsAsOfLastWrite(waitTimeout);
+    return this;
+  }
+
+  @Override
+  public IDocumentQueryCustomization transformResults(Function2<IndexQuery, List<Object>, List<Object>> func) {
+    delegate.transformResults(func);
     return this;
   }
 

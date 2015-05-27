@@ -2,10 +2,13 @@ package net.ravendb.client.document;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.Map;
 
 import net.ravendb.abstractions.basic.CleanCloseable;
 import net.ravendb.abstractions.data.Facet;
+import net.ravendb.abstractions.data.FacetResult;
 import net.ravendb.abstractions.data.FacetResults;
+import net.ravendb.abstractions.data.FacetValue;
 import net.ravendb.abstractions.data.GetRequest;
 import net.ravendb.abstractions.data.GetResponse;
 import net.ravendb.abstractions.data.HttpMethods;
@@ -14,6 +17,7 @@ import net.ravendb.abstractions.data.QueryResult;
 import net.ravendb.abstractions.extensions.JsonExtensions;
 import net.ravendb.abstractions.json.linq.RavenJObject;
 import net.ravendb.client.document.batches.ILazyOperation;
+import net.ravendb.client.shard.ShardStrategy;
 import net.ravendb.client.utils.UrlUtils;
 import net.ravendb.imports.json.JsonConvert;
 
@@ -117,11 +121,53 @@ public class LazyFacetsOperation implements ILazyOperation {
     }
   }
 
+  @SuppressWarnings("hiding")
+  @Override
+  public void handleResponses(GetResponse[] responses, ShardStrategy shardStrategy) {
+    FacetResults result = new FacetResults();
+    try {
+      for (GetResponse getResponse: responses) {
+        RavenJObject response = (RavenJObject) getResponse.getResult();
+        FacetResults facet = JsonExtensions.createDefaultJsonSerializer().readValue(response.toString(), FacetResults.class);
+        for (Map.Entry<String, FacetResult> facetResult : facet.getResults().entrySet()) {
+          if (!result.getResults().containsKey(facetResult.getKey())) {
+            result.getResults().put(facetResult.getKey(), new FacetResult());
+          }
+
+          FacetResult newFacetResult = result.getResults().get(facetResult.getKey());
+          for (FacetValue facetValue : facetResult.getValue().getValues()) {
+            boolean anySet = false;
+            for (FacetValue innerValue :newFacetResult.getValues()) {
+              if (innerValue.getRange().equals(facetValue.getRange())) {
+                anySet = true;
+                innerValue.setHits(innerValue.getHits() + facetValue.getHits());
+              }
+            }
+            if (!anySet) {
+              FacetValue newValue = new FacetValue();
+              newValue.setHits(facetValue.getHits());
+              newValue.setRange(facetValue.getRange());
+              newFacetResult.getValues().add(newValue);
+            }
+          }
+
+          for (String facetTerm : facetResult.getValue().getRemainingTerms()) {
+            if (!newFacetResult.getRemainingTerms().contains(facetTerm)) {
+              newFacetResult.getRemainingTerms().add(facetTerm);
+            }
+          }
+        }
+        this.result = result;
+      }
+    } catch (IOException e) {
+      throw new RuntimeException(e);
+    }
+  }
+
   @Override
   public QueryResult getQueryResult() {
     return queryResult;
   }
-
 
   public void setQueryResult(QueryResult queryResult) {
     this.queryResult = queryResult;
@@ -131,5 +177,4 @@ public class LazyFacetsOperation implements ILazyOperation {
   public CleanCloseable enterContext() {
     return null;
   }
-
 }

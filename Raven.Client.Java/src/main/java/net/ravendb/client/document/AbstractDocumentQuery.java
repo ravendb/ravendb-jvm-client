@@ -22,6 +22,7 @@ import net.ravendb.abstractions.basic.Tuple;
 import net.ravendb.abstractions.closure.Action1;
 import net.ravendb.abstractions.closure.Delegates;
 import net.ravendb.abstractions.closure.Function1;
+import net.ravendb.abstractions.closure.Function2;
 import net.ravendb.abstractions.data.Constants;
 import net.ravendb.abstractions.data.Etag;
 import net.ravendb.abstractions.data.Facet;
@@ -86,7 +87,7 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
   private final LinqPathProvider linqPathProvider;
   protected Action1<IndexQuery> beforeQueryExecutionAction;
 
-  protected final Set<Class<?>> rootTypes;
+  protected Set<Class<?>> rootTypes;
 
   static Map<Class<?>, Function1<Object, String>> implicitStringsCache = new HashMap<>();
 
@@ -106,6 +107,8 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
    * The index to query
    */
   protected final String indexName;
+
+  protected Function2<IndexQuery, List<Object>, List<Object>> transformResultsFunc;
 
   protected String defaultField;
 
@@ -525,7 +528,7 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
       beforeQueryExecutionAction.apply(indexQuery);
     }
     return new QueryOperation(theSession, indexName, indexQuery, projectionFields, theWaitForNonStaleResults, timeout,
-      includes, disableEntitiesTracking);
+      transformResultsFunc, includes, disableEntitiesTracking);
   }
 
   @Override
@@ -694,6 +697,12 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
   @SuppressWarnings("unchecked")
   public IDocumentQuery<T> beforeQueryExecution(Action1<IndexQuery> action) {
     beforeQueryExecutionAction = Delegates.combine(beforeQueryExecutionAction, action);
+    return (IDocumentQuery<T>) this;
+  }
+
+  @SuppressWarnings({"unchecked", "hiding"})
+  public IDocumentQuery<T> transformResults(Function2<IndexQuery, List<Object>, List<Object>> resultsTransformer) {
+    this.transformResultsFunc = resultsTransformer;
     return (IDocumentQuery<T>) this;
   }
 
@@ -1545,6 +1554,7 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
   /**
    * Callback to get the results of the stream
    */
+  @SuppressWarnings("hiding")
   public void afterStreamExecuted(Function1<Reference<RavenJObject>, Boolean> afterStreamExecutedCallback) {
     this.afterStreamExecutedCallback = Delegates.combine(this.afterStreamExecutedCallback, afterStreamExecutedCallback);
   }

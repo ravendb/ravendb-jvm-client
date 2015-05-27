@@ -2,6 +2,7 @@ package net.ravendb.client.document;
 
 import java.io.Serializable;
 import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.EnumSet;
@@ -35,7 +36,7 @@ import net.ravendb.client.delegates.RequestCachePolicy;
 import net.ravendb.client.delegates.TypeTagNameToDocumentKeyPrefixTransformer;
 import net.ravendb.client.util.Inflector;
 
-import org.apache.commons.lang.SerializationUtils;
+import org.apache.commons.beanutils.BeanUtils;
 import org.apache.commons.lang.StringUtils;
 import org.codehaus.jackson.map.DeserializationProblemHandler;
 
@@ -699,7 +700,13 @@ public class DocumentConvention extends Convention implements Serializable {
    */
   @Override
   public DocumentConvention clone() {
-    return (DocumentConvention) SerializationUtils.clone(this);
+    DocumentConvention cloned = new DocumentConvention();
+    try {
+      BeanUtils.copyProperties(cloned, this);
+    } catch (IllegalAccessException | InvocationTargetException e) {
+      throw new RuntimeException(e);
+    }
+    return cloned;
   }
 
   /**

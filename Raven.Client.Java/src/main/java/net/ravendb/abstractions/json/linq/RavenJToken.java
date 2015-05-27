@@ -3,6 +3,8 @@ package net.ravendb.abstractions.json.linq;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.StringWriter;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Stack;
 
@@ -12,6 +14,7 @@ import net.ravendb.abstractions.exceptions.JsonReaderException;
 import net.ravendb.abstractions.exceptions.JsonWriterException;
 import net.ravendb.client.document.JsonSerializer;
 
+import org.apache.commons.lang.StringUtils;
 import org.codehaus.jackson.FormatSchema;
 import org.codehaus.jackson.JsonFactory;
 import org.codehaus.jackson.JsonGenerator;
@@ -466,4 +469,41 @@ public abstract class RavenJToken {
   public <T> T value(Class<T> clazz) {
     return Extensions.value(clazz, this);
   }
+
+  public RavenJToken selectTokenWithRavenSyntaxReturningSingleValue(String path) {
+    List<Tuple<RavenJToken, RavenJToken>> tupleList = this.selectTokenWithRavenSyntaxReturningFlatStructure(path);
+    return tupleList.size() == 0 ? null : tupleList.get(0).getItem1();
+  }
+
+  public List<Tuple<RavenJToken, RavenJToken>> selectTokenWithRavenSyntaxReturningFlatStructure(String path) {
+    boolean createSnapshots = false;
+    String[] pathParts = path.split(",");
+    RavenJToken result = selectToken(pathParts[0], false, createSnapshots);
+
+    if (pathParts.length == 1) {
+      return Arrays.asList(Tuple.create(result, this));
+    }
+    if (result == null || result.getType() == JTokenType.NULL) {
+      return Arrays.asList();
+    }
+
+    if (result.getType() == JTokenType.OBJECT) {
+      RavenJObject ravenJObject = (RavenJObject) result;
+      if (ravenJObject.containsKey("$values")) {
+        result = ravenJObject.value(RavenJToken.class, "$values");
+      }
+    }
+
+    List<Tuple<RavenJToken, RavenJToken>> outcome = new ArrayList<>();
+
+    for (RavenJToken item : result.values(RavenJToken.class)) {
+      String[] pathWOFirstElement = Arrays.copyOfRange(pathParts, 1, pathParts.length);
+      String innerPath = StringUtils.join(pathWOFirstElement, ",");
+      outcome.addAll(item.selectTokenWithRavenSyntaxReturningFlatStructure(innerPath));
+    }
+
+    return outcome;
+
+  }
+
 }

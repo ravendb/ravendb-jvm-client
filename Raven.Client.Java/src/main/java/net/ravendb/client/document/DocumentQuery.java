@@ -33,25 +33,6 @@ import net.ravendb.client.spatial.SpatialCriteria;
 
 import org.apache.commons.lang.StringUtils;
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 import com.mysema.query.types.Expression;
 import com.mysema.query.types.Path;
 import com.mysema.query.types.path.ListPath;
@@ -216,6 +197,7 @@ public class DocumentQuery<T> extends AbstractDocumentQuery<T, DocumentQuery<T>>
     documentQuery.distinct = distinct;
     documentQuery.allowMultipleIndexEntriesForSameDocumentToResultTransformer = allowMultipleIndexEntriesForSameDocumentToResultTransformer;
     documentQuery.negate = negate;
+    documentQuery.transformResultsFunc = transformResultsFunc;
     documentQuery.includes = new HashSet<>(includes);
     documentQuery.isSpatialQuery = isSpatialQuery;
     documentQuery.spatialFieldName = spatialFieldName;
