@@ -5,8 +5,10 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 
 import net.ravendb.abstractions.basic.CleanCloseable;
 import net.ravendb.abstractions.closure.Function2;
@@ -77,8 +79,18 @@ public class ParallelShardAccessStrategy implements IShardAccessStrategy, CleanC
       });
     }
     try {
-      threadPool.invokeAll(tasks);
+      List<Future<Void>> invokeAll = threadPool.invokeAll(tasks);
 
+      for (Future<Void> f : invokeAll) {
+        try {
+          f.get();
+        } catch (ExecutionException e) {
+          if (e.getCause() instanceof RuntimeException) {
+            throw (RuntimeException)e.getCause();
+          }
+          throw new RuntimeException(e);
+        }
+      }
       boolean allErrored = false;
       for (Exception e : errors) {
         allErrored &= e != null;

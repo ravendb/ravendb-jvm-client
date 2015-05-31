@@ -666,7 +666,7 @@ implements IDocumentQueryGenerator, IDocumentSessionImpl, ISyncAdvancedSessionOp
         for (ILazyOperation op : lazyOperations) {
           requests.add(op.createRequest());
         }
-        GetResponse[][] multiResponses = getShardStrategy().getShardAccessStrategy().apply(GetResponse.class, operationPerShard.getKey(), new ShardRequestData(),
+        GetResponse[][] multiResponses = getShardStrategy().getShardAccessStrategy().apply(GetResponse[].class, operationPerShard.getKey(), new ShardRequestData(),
           new Function2<IDatabaseCommands, Integer, GetResponse[]>() {
             @Override
             public GetResponse[] apply(IDatabaseCommands commands, Integer i) {
