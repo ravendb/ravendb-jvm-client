@@ -11,7 +11,6 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import net.ravendb.abstractions.basic.CleanCloseable;
-import net.ravendb.abstractions.closure.Function2;
 import net.ravendb.abstractions.data.Constants;
 import net.ravendb.abstractions.data.IndexQuery;
 import net.ravendb.abstractions.data.JsonDocument;
@@ -27,6 +26,7 @@ import net.ravendb.abstractions.logging.LogManager;
 import net.ravendb.client.connection.SerializationHelper;
 import net.ravendb.client.document.InMemoryDocumentSessionOperations;
 import net.ravendb.client.exceptions.NonAuthoritativeInformationException;
+import net.ravendb.client.shard.ShardReduceFunction;
 
 import org.apache.commons.lang.StringUtils;
 
@@ -40,7 +40,7 @@ public class QueryOperation {
   private final boolean waitForNonStaleResults;
   private boolean disableEntitiesTracking;
   private final long timeout;
-  private final Function2<IndexQuery, List<Object>, List<Object>> transformResults;
+  private final ShardReduceFunction transformResults;
   private final Set<String> includes;
   private QueryResult currentQueryResults;
   private final String[] projectionFields;
@@ -65,7 +65,7 @@ public class QueryOperation {
 
   public QueryOperation(InMemoryDocumentSessionOperations sessionOperations, String indexName, IndexQuery indexQuery,
       String[] projectionFields, boolean waitForNonStaleResults, long timeout,
-      Function2<IndexQuery, List<Object>, List<Object>> transformResults,
+      ShardReduceFunction transformResults,
       Set<String> includes, boolean disableEntitiesTracking) {
     this.indexQuery = indexQuery;
     this.waitForNonStaleResults = waitForNonStaleResults;

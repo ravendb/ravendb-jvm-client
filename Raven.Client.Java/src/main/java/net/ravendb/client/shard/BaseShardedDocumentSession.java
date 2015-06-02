@@ -13,7 +13,6 @@ import java.util.UUID;
 
 import net.ravendb.abstractions.basic.Tuple;
 import net.ravendb.abstractions.closure.Action1;
-import net.ravendb.abstractions.closure.Function2;
 import net.ravendb.abstractions.commands.ICommandData;
 import net.ravendb.abstractions.data.Constants;
 import net.ravendb.abstractions.data.Etag;
@@ -232,7 +231,7 @@ public abstract class BaseShardedDocumentSession<TDatabaseCommands> extends InMe
 
   public <T> IRavenQueryable<T> query(Class<T> clazz) {
     String indexName = createDynamicIndexName(clazz);
-    return query(clazz, indexName).customize(new DocumentQueryCustomizationFactory().transformResults(new Function2<IndexQuery, List<Object>, List<Object>>() {
+    return query(clazz, indexName).customize(new DocumentQueryCustomizationFactory().transformResults(new ShardReduceFunction() {
       @Override
       public List<Object> apply(IndexQuery query, List<Object> results) {
         int size = query.getPageSize();
@@ -253,11 +252,19 @@ public abstract class BaseShardedDocumentSession<TDatabaseCommands> extends InMe
     return query(clazz, tIndexCreator, null);
   }
 
-  public <T> IRavenQueryable<T> query(Class<T> clazz, Class<? extends AbstractIndexCreationTask> tIndexCreator, Function2<IndexQuery, List<Object>, List<Object>> reduceFunction) {
+  public <T> IRavenQueryable<T> query(Class<T> clazz, Class<? extends AbstractIndexCreationTask> tIndexCreator, ShardReduceFunction reduceFunction) {
     try {
       AbstractIndexCreationTask indexCreator = tIndexCreator.newInstance();
       if (indexCreator.isMapReduce() && reduceFunction == null) {
         throw new NullArgumentException("reduceFunction");
+      }
+      if (!indexCreator.isMapReduce() && reduceFunction == null) {
+        reduceFunction = new ShardReduceFunction() {
+          @Override
+          public List<Object> apply(IndexQuery indexQuery, List<Object> results) {
+            return new ArrayList<>(results.subList(0, indexQuery.getPageSize()));
+          }
+        };
       }
       return query(clazz, indexCreator.getIndexName(), indexCreator.isMapReduce())
         .customize(new DocumentQueryCustomizationFactory().transformResults(reduceFunction));

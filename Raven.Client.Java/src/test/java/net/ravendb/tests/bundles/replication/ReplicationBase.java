@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.Map;
 
 import net.ravendb.abstractions.basic.Reference;
+import net.ravendb.abstractions.closure.Action1;
 import net.ravendb.abstractions.data.Constants;
 import net.ravendb.abstractions.data.JsonDocument;
 import net.ravendb.abstractions.json.linq.RavenJArray;
@@ -33,11 +34,18 @@ public class ReplicationBase extends RavenDBAwareTests {
   protected int retriesCount = 500;
 
   public DocumentStore createStore() {
+    return createStore(null);
+  }
+
+  public DocumentStore createStore(Action1<DocumentStore> config) {
     int port = DEFAULT_SERVER_PORT_1 + stores.size();
     try {
       startServer(port, true);
       createDbAtPort(getDbName(), port);
       DocumentStore store = new DocumentStore("http://" + getHostName() + ":" + port, getDbName());
+      if (config != null) {
+        config.apply(store);
+      }
       store.initialize();
       stores.add(store);
       return store;

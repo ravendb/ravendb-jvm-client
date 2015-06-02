@@ -61,6 +61,7 @@ import net.ravendb.client.linq.IRavenQueryProvider;
 import net.ravendb.client.linq.IRavenQueryable;
 import net.ravendb.client.linq.RavenQueryInspector;
 import net.ravendb.client.linq.RavenQueryProvider;
+import net.ravendb.client.shard.ShardReduceFunction;
 
 import org.apache.commons.lang.NullArgumentException;
 import org.apache.commons.lang.StringUtils;
@@ -357,6 +358,11 @@ public class DocumentSession extends InMemoryDocumentSessionOperations
     } catch (InstantiationException | IllegalAccessException e) {
       throw new RuntimeException(tIndexCreator.getName() + " does not have argumentless constructor.");
     }
+  }
+
+  @Override
+  public <T> IRavenQueryable<T> query(Class<T> clazz, Class<? extends AbstractIndexCreationTask> tIndexCreator, ShardReduceFunction reduceFunction) {
+    throw new UnsupportedOperationException("Passing reduce function only make sense for reduce indexes on ShardedDocumentStore");
   }
 
   /**

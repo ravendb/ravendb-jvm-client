@@ -468,7 +468,7 @@ implements IDocumentQueryGenerator, IDocumentSessionImpl, ISyncAdvancedSessionOp
       ShardRequestData shardRequest = new ShardRequestData();
       shardRequest.setEntityType(clazz);
       shardRequest.setKeys(currentShardIds);
-      MultiLoadOperation[] multiLoadOperations = getShardStrategy().getShardAccessStrategy().apply(clazz, shard.getKey(), shardRequest, new Function2<IDatabaseCommands, Integer, MultiLoadOperation>() {
+      MultiLoadOperation[] multiLoadOperations = getShardStrategy().getShardAccessStrategy().apply(MultiLoadOperation.class, shard.getKey(), shardRequest, new Function2<IDatabaseCommands, Integer, MultiLoadOperation>() {
         @Override
         public MultiLoadOperation apply(final IDatabaseCommands dbCmd, Integer i) {
           MultiLoadOperation multiLoadOperation = new MultiLoadOperation(ShardedDocumentSession.this, new Function0<CleanCloseable>() {

@@ -16,6 +16,7 @@ import net.ravendb.abstractions.data.Etag;
 import net.ravendb.abstractions.data.IndexQuery;
 import net.ravendb.abstractions.data.QueryResult;
 import net.ravendb.abstractions.data.SortedField;
+import net.ravendb.abstractions.json.linq.JTokenType;
 import net.ravendb.abstractions.json.linq.RavenJObject;
 import net.ravendb.abstractions.json.linq.RavenJToken;
 import net.ravendb.client.IDocumentStore;
@@ -123,11 +124,19 @@ public class ShardStrategy {
           @Override
           public int compare(RavenJObject o1, RavenJObject o2) {
             for (int i = 0; i < fieldsToSort.size(); i++) {
+              int orderSignum = desceding.get(i);
               RavenJToken t1 = o1.selectTokenWithRavenSyntaxReturningSingleValue(fieldsToSort.get(i));
               RavenJToken t2 = o2.selectTokenWithRavenSyntaxReturningSingleValue(fieldsToSort.get(i));
-              int result = t1.toString().compareTo(t2.toString());
-              if (result != 0) {
-                return result;
+              if (t1.getType() == JTokenType.INTEGER && t2.getType() == JTokenType.INTEGER) {
+                int result = t1.value(Integer.class).compareTo(t2.value(Integer.class)) * orderSignum;
+                if (result != 0) {
+                  return result;
+                }
+              } else {
+                int result = t1.toString().compareTo(t2.toString()) * orderSignum;
+                if (result != 0) {
+                  return result;
+                }
               }
             }
             return 0;

@@ -10,6 +10,7 @@ import net.ravendb.client.document.ILoaderWithInclude;
 import net.ravendb.client.indexes.AbstractIndexCreationTask;
 import net.ravendb.client.indexes.AbstractTransformerCreationTask;
 import net.ravendb.client.linq.IRavenQueryable;
+import net.ravendb.client.shard.ShardReduceFunction;
 
 import com.mysema.query.types.Expression;
 
@@ -179,6 +180,17 @@ public interface IDocumentSession extends CleanCloseable {
    * @param indexCreator
    */
   public <T> IRavenQueryable<T> query(Class<T> clazz, Class<? extends AbstractIndexCreationTask> indexCreator);
+
+  /**
+   * Queries the index specified by indexCreator.
+   *
+   * This method only makes sense for ShardedDocumentStore + Reduce Indexes
+   * @param clazz
+   * @param indexCreator
+   * @param reduceFunction
+   * @return
+   */
+  public <T> IRavenQueryable<T> query(Class<T> clazz, Class<? extends AbstractIndexCreationTask> indexCreator, ShardReduceFunction reduceFunction);
 
   /**
    * Begin a load while including the specified path

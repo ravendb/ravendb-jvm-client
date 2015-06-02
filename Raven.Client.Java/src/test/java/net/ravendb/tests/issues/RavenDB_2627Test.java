@@ -46,6 +46,7 @@ import net.ravendb.tests.document.Company;
 import net.ravendb.tests.json.WebinarTest.Person;
 import net.ravendb.utils.SpinWait;
 
+import org.junit.Ignore;
 import org.junit.Test;
 
 
@@ -432,6 +433,7 @@ public class RavenDB_2627Test extends RemoteClientTest {
 
   @SuppressWarnings("boxing")
   @Test
+  @Ignore("RavenDB-3522 Subscriptions poison pill")
   public void shouldRespectStartsWithCriteria() {
     try (IDocumentStore store = new DocumentStore(getDefaultUrl(), getDefaultDb()).initialize()) {
       try (IDocumentSession session = store.openSession()) {

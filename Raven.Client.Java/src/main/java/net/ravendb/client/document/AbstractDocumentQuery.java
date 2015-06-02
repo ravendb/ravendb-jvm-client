@@ -22,7 +22,6 @@ import net.ravendb.abstractions.basic.Tuple;
 import net.ravendb.abstractions.closure.Action1;
 import net.ravendb.abstractions.closure.Delegates;
 import net.ravendb.abstractions.closure.Function1;
-import net.ravendb.abstractions.closure.Function2;
 import net.ravendb.abstractions.data.Constants;
 import net.ravendb.abstractions.data.Etag;
 import net.ravendb.abstractions.data.Facet;
@@ -60,6 +59,7 @@ import net.ravendb.client.document.batches.LazyQueryOperation;
 import net.ravendb.client.document.sessionoperations.QueryOperation;
 import net.ravendb.client.linq.LinqPathProvider;
 import net.ravendb.client.listeners.IDocumentQueryListener;
+import net.ravendb.client.shard.ShardReduceFunction;
 import net.ravendb.client.spatial.SpatialCriteria;
 
 import org.apache.commons.lang.ArrayUtils;
@@ -108,7 +108,7 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
    */
   protected final String indexName;
 
-  protected Function2<IndexQuery, List<Object>, List<Object>> transformResultsFunc;
+  protected ShardReduceFunction transformResultsFunc;
 
   protected String defaultField;
 
@@ -701,7 +701,7 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
   }
 
   @SuppressWarnings({"unchecked", "hiding"})
-  public IDocumentQuery<T> transformResults(Function2<IndexQuery, List<Object>, List<Object>> resultsTransformer) {
+  public IDocumentQuery<T> transformResults(ShardReduceFunction resultsTransformer) {
     this.transformResultsFunc = resultsTransformer;
     return (IDocumentQuery<T>) this;
   }

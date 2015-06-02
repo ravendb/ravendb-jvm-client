@@ -92,8 +92,6 @@ public class LazyMultiLoadOperation<T> implements ILazyOperation {
     this.requiresRetry = requiresRetry;
   }
 
-
-
   @SuppressWarnings("hiding")
   @Override
   public void handleResponses(GetResponse[] responses, ShardStrategy shardStrategy) {
@@ -102,8 +100,17 @@ public class LazyMultiLoadOperation<T> implements ILazyOperation {
       RavenJToken result = response.getResult();
       MultiLoadResult loadResult = new MultiLoadResult();
       list.add(loadResult);
-      loadResult.setResults(result.value(RavenJArray.class, "Includes").values(RavenJObject.class));
-      loadResult.setIncludes(result.value(RavenJArray.class, "Results").values(RavenJObject.class));
+
+      List<RavenJObject> results = new ArrayList<>();
+      for (RavenJToken token: result.value(RavenJArray.class, "Results")) {
+        if (token instanceof RavenJObject) {
+          results.add((RavenJObject) token);
+        } else {
+          results.add(null);
+        }
+      }
+      loadResult.setResults(results);
+      loadResult.setIncludes(result.value(RavenJArray.class, "Includes").values(RavenJObject.class));
     }
 
     int capacity = 0;

@@ -1,15 +1,14 @@
 package net.ravendb.client;
 
 import java.util.Date;
-import java.util.List;
 
 import net.ravendb.abstractions.basic.Reference;
 import net.ravendb.abstractions.closure.Action1;
-import net.ravendb.abstractions.closure.Function2;
 import net.ravendb.abstractions.data.Etag;
 import net.ravendb.abstractions.data.IndexQuery;
 import net.ravendb.abstractions.indexing.SpatialOptions.SpatialRelation;
 import net.ravendb.abstractions.indexing.SpatialOptions.SpatialUnits;
+import net.ravendb.client.shard.ShardReduceFunction;
 import net.ravendb.client.spatial.SpatialCriteria;
 
 import com.mysema.query.types.Path;
@@ -53,7 +52,7 @@ public interface IDocumentQueryCustomization {
    */
   public IDocumentQueryCustomization waitForNonStaleResultsAsOf(Date cutOff);
 
-  public IDocumentQueryCustomization transformResults(Function2<IndexQuery, List<Object>, List<Object>> func);
+  public IDocumentQueryCustomization transformResults(ShardReduceFunction func);
 
   /**
    * Instructs the query to wait for non stale results as of the cutoff date for the specified timeout
