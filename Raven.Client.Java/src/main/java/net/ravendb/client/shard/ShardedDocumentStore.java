@@ -318,11 +318,11 @@ public class ShardedDocumentStore extends DocumentStoreBase {
   }
 
   public ShardedBulkInsertOperation shardedBulkInsert() {
-    return new ShardedBulkInsertOperation(null, null, null);
+    return new ShardedBulkInsertOperation(null, this, new BulkInsertOptions());
   }
 
   public ShardedBulkInsertOperation shardedBulkInsert(String database) {
-    return new ShardedBulkInsertOperation(database, null, null);
+    return new ShardedBulkInsertOperation(database, this, new BulkInsertOptions());
   }
 
   public ShardedBulkInsertOperation shardedBulkInsert(String database, ShardedDocumentStore store, BulkInsertOptions options) {

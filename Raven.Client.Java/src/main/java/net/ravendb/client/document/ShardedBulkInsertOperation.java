@@ -64,7 +64,7 @@ public class ShardedBulkInsertOperation implements CleanCloseable {
 
     public void store(Object entity) throws InterruptedException {
         String shardId = shardResolutionStrategy.generateShardIdFor(entity, this);
-        IDatabaseCommands databaseCommands = shards.get(shardId).getDatabaseCommands();
+        databaseCommands = shards.get(shardId).getDatabaseCommands();
 
         database = MultiDatabase.getDatabaseName(shards.get(shardId).getUrl());
 

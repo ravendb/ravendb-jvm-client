@@ -108,7 +108,7 @@ public class CanMapReduceTest extends ShardingScenario {
 
     new TotalPostsPerDay().execute(shardedDocumentStore);
     try (IDocumentSession session = shardedDocumentStore.openSession()) {
-      QCanMapReduce_TotalPostsPerDay_ReduceResult r = QCanMapReduce_TotalPostsPerDay_ReduceResult.reduceResult;
+      QCanMapReduceTest_TotalPostsPerDay_ReduceResult r = QCanMapReduceTest_TotalPostsPerDay_ReduceResult.reduceResult;
       List<TotalPostsPerDay.ReduceResult> posts = session.query(TotalPostsPerDay.ReduceResult.class, TotalPostsPerDay.class, new ShardReduceFunction() {
         @SuppressWarnings({"boxing", "hiding"})
         @Override
@@ -162,7 +162,7 @@ public class CanMapReduceTest extends ShardingScenario {
 
     new PostSearch().execute(shardedDocumentStore);
 
-    QCanMapReduce_PostSearch_Result p = QCanMapReduce_PostSearch_Result.result;
+    QCanMapReduceTest_PostSearch_Result p = QCanMapReduceTest_PostSearch_Result.result;
 
     try (IDocumentSession session = shardedDocumentStore.openSession()) {
       List<Post> posts = session.query(PostSearch.Result.class, PostSearch.class)
@@ -248,7 +248,7 @@ public class CanMapReduceTest extends ShardingScenario {
     public PostSearch() {
       map = "from post in docs.posts select new { Query = new object[] { post.Title, post.Content }, post.VotesUpCount } ";
 
-      QCanMapReduce_PostSearch_Result p = QCanMapReduce_PostSearch_Result.result;
+      QCanMapReduceTest_PostSearch_Result p = QCanMapReduceTest_PostSearch_Result.result;
       index(p.query, FieldIndexing.ANALYZED);
       sort(p.votesUpCount, SortOptions.INT);
     }
