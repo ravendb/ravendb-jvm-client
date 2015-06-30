@@ -1,85 +1,22 @@
 package net.ravendb.client.connection;
 
-import static net.ravendb.client.connection.RavenUrlExtensions.indexes;
-
-import java.io.IOException;
-import java.io.InputStream;
-import java.text.ParseException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Objects;
-import java.util.Set;
-import java.util.UUID;
-
 import net.ravendb.abstractions.basic.CleanCloseable;
 import net.ravendb.abstractions.basic.EventHandler;
 import net.ravendb.abstractions.basic.Reference;
 import net.ravendb.abstractions.basic.SharpEnum;
-import net.ravendb.abstractions.closure.Action2;
-import net.ravendb.abstractions.closure.Action3;
-import net.ravendb.abstractions.closure.Function0;
-import net.ravendb.abstractions.closure.Function1;
-import net.ravendb.abstractions.closure.Function3;
+import net.ravendb.abstractions.closure.*;
 import net.ravendb.abstractions.commands.ICommandData;
 import net.ravendb.abstractions.commands.PatchCommandData;
 import net.ravendb.abstractions.commands.ScriptedPatchCommandData;
 import net.ravendb.abstractions.connection.ErrorResponseException;
 import net.ravendb.abstractions.connection.OperationCredentials;
-import net.ravendb.abstractions.data.Attachment;
-import net.ravendb.abstractions.data.AttachmentInformation;
-import net.ravendb.abstractions.data.BatchResult;
-import net.ravendb.abstractions.data.BuildNumber;
-import net.ravendb.abstractions.data.BulkInsertOptions;
-import net.ravendb.abstractions.data.BulkOperationOptions;
-import net.ravendb.abstractions.data.Constants;
-import net.ravendb.abstractions.data.DatabaseStatistics;
-import net.ravendb.abstractions.data.Etag;
-import net.ravendb.abstractions.data.Facet;
-import net.ravendb.abstractions.data.FacetQuery;
-import net.ravendb.abstractions.data.FacetResults;
-import net.ravendb.abstractions.data.GetRequest;
-import net.ravendb.abstractions.data.GetResponse;
-import net.ravendb.abstractions.data.HttpMethods;
-import net.ravendb.abstractions.data.IndexQuery;
+import net.ravendb.abstractions.data.*;
 import net.ravendb.abstractions.data.IndexStats.IndexingPriority;
-import net.ravendb.abstractions.data.JsonDocument;
-import net.ravendb.abstractions.data.JsonDocumentMetadata;
-import net.ravendb.abstractions.data.LicensingStatus;
-import net.ravendb.abstractions.data.LogItem;
-import net.ravendb.abstractions.data.MoreLikeThisQuery;
-import net.ravendb.abstractions.data.MultiLoadResult;
-import net.ravendb.abstractions.data.PatchRequest;
-import net.ravendb.abstractions.data.PatchResult;
-import net.ravendb.abstractions.data.PutResult;
-import net.ravendb.abstractions.data.QueryHeaderInformation;
-import net.ravendb.abstractions.data.QueryResult;
-import net.ravendb.abstractions.data.ScriptedPatchRequest;
-import net.ravendb.abstractions.data.SuggestionQuery;
-import net.ravendb.abstractions.data.SuggestionQueryResult;
-import net.ravendb.abstractions.exceptions.BadRequestException;
-import net.ravendb.abstractions.exceptions.ConcurrencyException;
-import net.ravendb.abstractions.exceptions.DocumentDoesNotExistsException;
-import net.ravendb.abstractions.exceptions.IndexCompilationException;
-import net.ravendb.abstractions.exceptions.TransformCompilationException;
+import net.ravendb.abstractions.exceptions.*;
 import net.ravendb.abstractions.extensions.ExceptionExtensions;
 import net.ravendb.abstractions.extensions.MetadataExtensions;
-import net.ravendb.abstractions.indexing.IndexDefinition;
-import net.ravendb.abstractions.indexing.IndexLockMode;
-import net.ravendb.abstractions.indexing.IndexMergeResults;
-import net.ravendb.abstractions.indexing.NumberUtil;
-import net.ravendb.abstractions.indexing.TransformerDefinition;
-import net.ravendb.abstractions.json.linq.JTokenType;
-import net.ravendb.abstractions.json.linq.RavenJArray;
-import net.ravendb.abstractions.json.linq.RavenJObject;
-import net.ravendb.abstractions.json.linq.RavenJToken;
-import net.ravendb.abstractions.json.linq.RavenJValue;
+import net.ravendb.abstractions.indexing.*;
+import net.ravendb.abstractions.json.linq.*;
 import net.ravendb.abstractions.replication.ReplicationDocument;
 import net.ravendb.abstractions.replication.ReplicationStatistics;
 import net.ravendb.abstractions.util.BomUtils;
@@ -90,10 +27,7 @@ import net.ravendb.client.connection.ReplicationInformer.FailoverStatusChangedEv
 import net.ravendb.client.connection.implementation.HttpJsonRequest;
 import net.ravendb.client.connection.implementation.HttpJsonRequestFactory;
 import net.ravendb.client.connection.profiling.ProfilingInformation;
-import net.ravendb.client.document.DocumentConvention;
-import net.ravendb.client.document.ILowLevelBulkInsertOperation;
-import net.ravendb.client.document.JsonSerializer;
-import net.ravendb.client.document.RemoteBulkInsertOperation;
+import net.ravendb.client.document.*;
 import net.ravendb.client.exceptions.ConflictException;
 import net.ravendb.client.exceptions.ServerRequestError;
 import net.ravendb.client.extensions.HttpJsonRequestExtension;
@@ -102,12 +36,19 @@ import net.ravendb.client.indexes.IndexDefinitionBuilder;
 import net.ravendb.client.listeners.IDocumentConflictListener;
 import net.ravendb.client.utils.UrlUtils;
 import net.ravendb.imports.json.JsonConvert;
-
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.http.HttpStatus;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.codehaus.jackson.JsonParser;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.text.ParseException;
+import java.util.*;
+import java.util.Map.Entry;
+
+import static net.ravendb.client.connection.RavenUrlExtensions.indexes;
 
 
 @SuppressWarnings("deprecation")
@@ -366,14 +307,14 @@ public class ServerClient implements IDatabaseCommands {
   public String directPutIndex(String name, IndexDefinition definition, boolean overwrite, OperationMetadata operationMetadata) {
     String requestUri = operationMetadata.getUrl() + "/indexes/" + UrlUtils.escapeUriString(name) + "?definition=yes";
 
-    try (HttpJsonRequest webRequest = jsonRequestFactory.createHttpJsonRequest(
+    try (HttpJsonRequest request = jsonRequestFactory.createHttpJsonRequest(
       new CreateHttpJsonRequestParams(this, requestUri, HttpMethods.HEAD, new RavenJObject(), operationMetadata.getCredentials(), convention)
       .addOperationHeaders(operationsHeaders))
       .addReplicationStatusHeaders(url, operationMetadata.getUrl(), replicationInformer, convention.getFailoverBehavior(), new HandleReplicationStatusChangesCallback())) {
 
       try {
         // If the index doesn't exist this will throw a NotFound exception and continue with a PUT request
-        webRequest.executeRequest();
+        request.executeRequest();
         if (!overwrite) {
           throw new IllegalStateException("Cannot put index: " + name + ", index already exists");
         }
@@ -1050,9 +991,9 @@ public class ServerClient implements IDatabaseCommands {
           requestUri += "&metadata-only=true";
         }
         try (HttpJsonRequest request = jsonRequestFactory
-          .createHttpJsonRequest(new CreateHttpJsonRequestParams(ServerClient.this, requestUri, HttpMethods.GET,
-            new RavenJObject(), operationMetadata.getCredentials(), convention)
-          .addOperationHeaders(operationsHeaders))) {
+                .createHttpJsonRequest(new CreateHttpJsonRequestParams(ServerClient.this, requestUri, HttpMethods.GET,
+                        new RavenJObject(), operationMetadata.getCredentials(), convention)
+                        .addOperationHeaders(operationsHeaders))) {
           RavenJToken responseJson = request.readResponseJson();
           return SerializationHelper.ravenJObjectsToJsonDocuments(responseJson);
         }
@@ -1075,9 +1016,9 @@ public class ServerClient implements IDatabaseCommands {
           requestUri += "&metadata-only=true";
         }
         try (HttpJsonRequest request = jsonRequestFactory
-          .createHttpJsonRequest(new CreateHttpJsonRequestParams(ServerClient.this, requestUri, HttpMethods.GET,
-            new RavenJObject(), operationMetadata.getCredentials(), convention)
-          .addOperationHeaders(operationsHeaders))) {
+                .createHttpJsonRequest(new CreateHttpJsonRequestParams(ServerClient.this, requestUri, HttpMethods.GET,
+                        new RavenJObject(), operationMetadata.getCredentials(), convention)
+                        .addOperationHeaders(operationsHeaders))) {
           RavenJToken responseJson = request.readResponseJson();
           return SerializationHelper.ravenJObjectsToJsonDocuments(responseJson);
         }
@@ -1267,7 +1208,6 @@ public class ServerClient implements IDatabaseCommands {
   @Override
   public FacetResults[] getMultiFacets(final FacetQuery[] facetedQueries) {
     JsonSerializer jsonSerializer = convention.createSerializer();
-
     GetRequest[] multiGetRequestItems = new GetRequest[facetedQueries.length];
     for (int i = 0; i < facetedQueries.length; i++) {
       FacetQuery x = facetedQueries[i];
@@ -1278,13 +1218,13 @@ public class ServerClient implements IDatabaseCommands {
         GetRequest request = new GetRequest();
         request.setUrl("/facets/" + x.getIndexName());
         request.setQuery(String.format("%s&facetStart=%d&facetPageSize=%d&%d",
-          x.getQuery().getQueryString(),
+                x.getQuery().getQueryString(),
           x.getPageStart(),
           x.getPageSize(),
           addition));
         multiGetRequestItems[i] = request;
       } else {
-        String serializedFacets = jsonSerializer.serializeAsString(x.getFacets());
+        String serializedFacets = serializeFacetsToFacetsJsonString(x.getFacets());
         if (serializedFacets.length() < (32 * 1024 - 1)) {
           addition = "facets=" + UrlUtils.escapeDataString(serializedFacets);
           GetRequest request = new GetRequest();
@@ -1298,6 +1238,7 @@ public class ServerClient implements IDatabaseCommands {
         } else {
           GetRequest request = new GetRequest();
           request.setUrl("/facets/" + x.getIndexName());
+          request.setQuery(String.format("%s&facetStart=%d&facetPageSize=%d", x.getQuery().getQueryString(), x.getPageStart(), x.getPageSize()));
           request.setMethod(HttpMethods.POST);
           request.setContent(serializedFacets);
           multiGetRequestItems[i] = request;
@@ -1332,6 +1273,26 @@ public class ServerClient implements IDatabaseCommands {
   @Override
   public FacetResults getFacets(final String index, final IndexQuery query, final List<Facet> facets, final int start, final Integer pageSize) {
 
+    final String facetsJson = serializeFacetsToFacetsJsonString(facets);
+    final HttpMethods method = facetsJson.length() > 1024 ? HttpMethods.POST : HttpMethods.GET;
+    if (HttpMethods.POST.equals(method)) {
+      FacetQuery facetQuery = new FacetQuery();
+      facetQuery.setFacets(facets);
+      facetQuery.setIndexName(index);
+      facetQuery.setQuery(query);
+      facetQuery.setPageSize(pageSize);
+      facetQuery.setPageStart(start);
+      return getMultiFacets(new FacetQuery[] { facetQuery })[0];
+    }
+    return executeWithReplication(method, new Function1<OperationMetadata, FacetResults>() {
+      @Override
+      public FacetResults apply(OperationMetadata operationMetadata) {
+        return directGetFacets(operationMetadata, index, query, facetsJson, start, pageSize, method);
+      }
+    });
+  }
+
+  private String serializeFacetsToFacetsJsonString(List<Facet> facets) {
     RavenJArray ravenJArray = (RavenJArray) RavenJToken.fromObject(facets);
     for (RavenJToken facet : ravenJArray) {
       RavenJObject obj = (RavenJObject) facet;
@@ -1361,23 +1322,7 @@ public class ServerClient implements IDatabaseCommands {
       }
     }
 
-    final String facetsJson = ravenJArray.toString();
-    final HttpMethods method = facetsJson.length() > 1024 ? HttpMethods.POST : HttpMethods.GET;
-    if (HttpMethods.POST.equals(method)) {
-      FacetQuery facetQuery = new FacetQuery();
-      facetQuery.setFacets(facets);
-      facetQuery.setIndexName(index);
-      facetQuery.setQuery(query);
-      facetQuery.setPageSize(pageSize);
-      facetQuery.setPageStart(start);
-      return getMultiFacets(new FacetQuery[] { facetQuery })[0];
-    }
-    return executeWithReplication(method, new Function1<OperationMetadata, FacetResults>() {
-      @Override
-      public FacetResults apply(OperationMetadata operationMetadata) {
-        return directGetFacets(operationMetadata, index, query, facetsJson, start, pageSize, method);
-      }
-    });
+    return ravenJArray.toString();
   }
 
   @SuppressWarnings("boxing")
@@ -2360,6 +2305,9 @@ public class ServerClient implements IDatabaseCommands {
 
   @Override
   public ILowLevelBulkInsertOperation getBulkInsertOperation(BulkInsertOptions options, IDatabaseChanges changes) {
+    if (options.getChunkedBulkInsertOptions() != null) {
+      return new ChunkedRemoteBulkInsertOperation(options, this, changes);
+    }
     return new RemoteBulkInsertOperation(options, this, changes);
   }
 

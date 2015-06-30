@@ -304,21 +304,6 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
     return value;
   }
 
-  /*
-   * GetDocumentMetadataValue<T>(T instance, string id, JsonDocument jsonDocument)
-+       {
-+           entitiesByKey[id] = instance;
-+           return entitiesAndMetadata[instance] = new DocumentMetadata
-+           {
-+               ETag = UseOptimisticConcurrency ? Etag.Empty : null,
-+               Key = id,
-+               OriginalMetadata = jsonDocument.Metadata,
-+               Metadata = (RavenJObject)jsonDocument.Metadata.CloneToken(),
-+               OriginalValue = new RavenJObject()
-+           };
-+       }
-   */
-
   /**
    * Get the json document by key from the store
    * @param documentKey
@@ -428,11 +413,11 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
 
   /**
    * Tracks the entity.
-   * @param entityType
-   * @param key
-   * @param document
-   * @param metadata
-   * @param noTracking
+   * @param entityType The entityType
+   * @param key The key
+   * @param document The document
+   * @param metadata The metadata
+   * @param noTracking Entity tracking is enabled if true, disabled otherwise.
    */
   @SuppressWarnings("boxing")
   public Object trackEntity(Class<?> entityType, String key, RavenJObject document, RavenJObject metadata, boolean noTracking) {
@@ -526,12 +511,19 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
     }
   }
 
-  private void registerMissingProperties(Object o, String key, RavenJToken value) {
+  private void registerMissingProperties(Object o, String key, Object value) {
     if (!entityToJson.getMissingDictionary().containsKey(o)) {
       entityToJson.getMissingDictionary().put(o, new HashMap<String, RavenJToken>());
     }
     Map<String, RavenJToken> dictionary = entityToJson.getMissingDictionary().get(o);
-    dictionary.put(key, value);
+    dictionary.put(key, convertValueToJToken(value));
+  }
+
+  private static RavenJToken convertValueToJToken(Object value) {
+    if (value instanceof RavenJToken)  {
+      return (RavenJToken)value;
+    }
+    return RavenJToken.fromObject(value);
   }
 
   /**
@@ -1000,7 +992,7 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
   /**
    * Determines if the entity have changed.
    * @param entity
-   * @param documentMetadata
+   * @param documentMetadata The map of changes
    */
   @SuppressWarnings("boxing")
   protected boolean entityChanged(Object entity, DocumentMetadata documentMetadata, Map<String, List<DocumentsChanges>> changes) {
@@ -1027,17 +1019,15 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
     }
 
     RavenJObject newObj = entityToJson.convertEntityToJson(documentMetadata.getKey(), entity, documentMetadata.getMetadata());
-    if (changes != null) {
-      List<DocumentsChanges> changedData = new ArrayList<>();
-      if ((RavenJToken.deepEquals(newObj, documentMetadata.getOriginalValue(), changedData) == false) ||
-        (RavenJToken.deepEquals(documentMetadata.getMetadata(), documentMetadata.getOriginalMetadata(), changedData) == false)) {
-        changes.put(documentMetadata.getKey(), changedData);
-        return false;
-      }
-      return true;
+
+    List<DocumentsChanges> changedData = changes != null ? new ArrayList<DocumentsChanges>() : null;
+    boolean changed = (RavenJToken.deepEquals(newObj, documentMetadata.getOriginalValue(), changedData) == false) ||
+            (RavenJToken.deepEquals(documentMetadata.getMetadata(), documentMetadata.getOriginalMetadata(), changedData) == false);
+
+    if (changes != null && !changedData.isEmpty()) {
+      changes.put(documentMetadata.getKey(), changedData);
     }
-    return RavenJToken.deepEquals(newObj, documentMetadata.getOriginalValue()) == false ||
-      RavenJToken.deepEquals(documentMetadata.getMetadata(), documentMetadata.getOriginalMetadata(), null) == false;
+    return changed;
   }
 
   /**

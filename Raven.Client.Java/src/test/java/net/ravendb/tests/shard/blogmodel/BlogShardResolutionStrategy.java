@@ -5,7 +5,6 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import net.ravendb.client.ITransactionalDocumentSession;
 import net.ravendb.client.shard.IShardResolutionStrategy;
 import net.ravendb.client.shard.ShardRequestData;
 import net.ravendb.tests.shard.blogmodel.CanMapReduceTest.TotalPostsPerDay;
@@ -22,7 +21,7 @@ public class BlogShardResolutionStrategy implements IShardResolutionStrategy {
   }
 
   @Override
-  public String generateShardIdFor(Object entity, ITransactionalDocumentSession sessionMetadata) {
+  public String generateShardIdFor(Object entity, Object sessionMetadata) {
     return getShardIdFromObjectType(entity);
   }
 
@@ -60,6 +59,7 @@ public class BlogShardResolutionStrategy implements IShardResolutionStrategy {
     if (User.class.equals(requestData.getEntityType())) {
       return Arrays.asList("Users");
     }
+
     if (Blog.class.equals(requestData.getEntityType())) {
       return Arrays.asList("Blogs");
     }

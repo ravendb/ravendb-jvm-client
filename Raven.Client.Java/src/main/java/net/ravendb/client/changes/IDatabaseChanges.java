@@ -2,11 +2,7 @@ package net.ravendb.client.changes;
 
 import java.util.UUID;
 
-import net.ravendb.abstractions.data.BulkInsertChangeNotification;
-import net.ravendb.abstractions.data.DocumentChangeNotification;
-import net.ravendb.abstractions.data.IndexChangeNotification;
-import net.ravendb.abstractions.data.ReplicationConflictNotification;
-import net.ravendb.abstractions.data.TransformerChangeNotification;
+import net.ravendb.abstractions.data.*;
 
 
 public interface IDatabaseChanges extends IConnectableChanges {
@@ -83,5 +79,15 @@ public interface IDatabaseChanges extends IConnectableChanges {
    * Subscribe to all bulk insert operation changes
    */
   public IObservable<BulkInsertChangeNotification> forBulkInsert();
+
+  /**
+   *  Subscribe to changes for all data subscriptions.
+   */
+  public IObservable<DataSubscriptionChangeNotification> forAllDataSubscriptions();
+
+  /**
+   * Subscribe to changes for a specified data subscription.
+   */
+  public IObservable<DataSubscriptionChangeNotification> forDataSubscription(long id);
 
 }

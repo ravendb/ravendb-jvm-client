@@ -28,9 +28,9 @@ public class HiLoKeyGenerator extends HiLoKeyGeneratorBase {
 
   /**
    * Generates the document key.
-   * @param databaseCommands
-   * @param convention
-   * @param entity
+   * @param databaseCommands Low level database commands.
+   * @param convention Convention
+   * @param entity The entity.
    */
   public String generateDocumentKey(IDatabaseCommands databaseCommands, DocumentConvention convention, Object entity) {
     return getDocumentKeyFromId(convention, nextId(databaseCommands));
@@ -60,7 +60,7 @@ public class HiLoKeyGenerator extends HiLoKeyGeneratorBase {
 
   @SuppressWarnings("boxing")
   private RangeValue getNextRange(IDatabaseCommands databaseCommands) {
-    try (CleanCloseable close3 = databaseCommands.forceReadFromMaster()) {
+    try (CleanCloseable readFromMaster = databaseCommands.forceReadFromMaster()) {
 
       modifyCapacityIfRequired();
       while (true) {

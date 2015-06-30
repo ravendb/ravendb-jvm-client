@@ -39,7 +39,7 @@ public interface ILazySessionOperations {
    * Loads the specified entities with the specified ids and a function to call when it is evaluated
    * @param clazz Defines type of object
    * @param ids Array of Ids that should be loaded
-   * @param onEval
+   * @param onEval Action to be executed on evaluation
    */
   public <TResult> Lazy<TResult[]> load(Class<TResult> clazz, String[] ids, Action1<TResult[]> onEval);
 
@@ -53,7 +53,7 @@ public interface ILazySessionOperations {
    * Loads the specified entities with the specified ids and a function to call when it is evaluated
    * @param clazz Defines type of object
    * @param ids Collection of Ids that should be loaded
-   * @param onEval
+   * @param onEval Action to be executed on evaluation
    */
   public <TResult> Lazy<TResult[]> load(Class<TResult> clazz, Collection<String> ids, Action1<TResult[]> onEval);
 
@@ -68,7 +68,7 @@ public interface ILazySessionOperations {
    * Loads the specified id and a function to call when it is evaluated
    * @param clazz Defines type of object
    * @param id Identifier of a entity that will be loaded.
-   * @param onEval
+   * @param onEval Action to be executed on evaluation
    */
   public <TResult> Lazy<TResult> load(Class<TResult> clazz, String id, Action1<TResult> onEval);
 
@@ -110,7 +110,7 @@ public interface ILazySessionOperations {
    *
    * Or whatever your conventions specify.
    * @param id
-   * @param onEval
+   * @param onEval Action to be executed on evaluation
    */
   public <TResult> Lazy<TResult> load(Class<TResult> clazz, Number id, Action1<TResult> onEval);
 
@@ -126,7 +126,7 @@ public interface ILazySessionOperations {
    *
    * Or whatever your conventions specify.
    * @param id
-   * @param onEval
+   * @param onEval Action to be executed on evaluation
    */
   public <TResult> Lazy<TResult> load(Class<TResult> clazz, UUID id, Action1<TResult> onEval);
 
@@ -256,22 +256,22 @@ public interface ILazySessionOperations {
 
   /**
    * Performs a load that will use the specified results transformer against the specified id
-   * @param tranformerClass The transformer to use in this load operation
+   * @param transformerClass The transformer to use in this load operation
    * @param clazz Defines type of object
    * @param id Id of a entity to load
    * @param configure Additional configuration options for operation e.g. AddTransformerParameter
    */
-  public <TResult, TTransformer extends AbstractTransformerCreationTask> Lazy<TResult> load(Class<TTransformer> tranformerClass,
+  public <TResult, TTransformer extends AbstractTransformerCreationTask> Lazy<TResult> load(Class<TTransformer> transformerClass,
     Class<TResult> clazz, String id, LoadConfigurationFactory configure);
 
   /**
    * Performs a load that will use the specified results transformer against the specified id
-   * @param tranformerClass The transformer to use in this load operation
+   * @param transformerClass The transformer to use in this load operation
    * @param clazz Defines type of object
    * @param ids Array of ids of documents to load
    * @param configure Additional configuration options for operation e.g. AddTransformerParameter
    */
-  public <TResult, TTransformer extends AbstractTransformerCreationTask> Lazy<TResult[]> load(Class<TTransformer> tranformerClass,
+  public <TResult, TTransformer extends AbstractTransformerCreationTask> Lazy<TResult[]> load(Class<TTransformer> transformerClass,
     Class<TResult> clazz, String[] ids, LoadConfigurationFactory configure);
 
 

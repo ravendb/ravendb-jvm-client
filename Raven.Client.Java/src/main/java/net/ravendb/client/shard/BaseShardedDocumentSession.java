@@ -150,6 +150,10 @@ public abstract class BaseShardedDocumentSession<TDatabaseCommands> extends InMe
       RavenJObject metadata = getMetadataFor(entity);
       String shardId = metadata.value(String.class, Constants.RAVEN_SHARD_ID);
 
+      if (shardId == null) {
+        throw new UnsupportedOperationException("Cannot save a document when the shard id isn't defined. Missing Raven-Shard-Id in the metadata");
+      }
+
       SaveChangesData shardSaveChangesData = saveChangesPerShard.get(shardId);
       if (shardSaveChangesData == null) {
         shardSaveChangesData = new SaveChangesData();

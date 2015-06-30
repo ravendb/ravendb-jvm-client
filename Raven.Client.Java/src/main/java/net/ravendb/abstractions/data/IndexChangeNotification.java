@@ -14,14 +14,14 @@ public class IndexChangeNotification extends EventArgs {
   }
 
   /**
-   * Type of change that occured on index.
+   * Type of change that occurred on index.
    */
   public IndexChangeTypes getType() {
     return type;
   }
 
   /**
-   * Type of change that occured on index.
+   * Type of change that occurred on index.
    * @param type
    */
   public void setType(IndexChangeTypes type) {

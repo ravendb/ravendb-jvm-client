@@ -71,14 +71,14 @@ public class DocumentsChanges {
   }
 
   /**
-   * Type of change that occured.
+   * Type of change that occurred.
    */
   public ChangeType getChange() {
     return change;
   }
 
   /**
-   * Type of change that occured.
+   * Type of change that occurred.
    * @param change
    */
   public void setChange(ChangeType change) {
@@ -86,14 +86,14 @@ public class DocumentsChanges {
   }
 
   /**
-   * Name of field on which the change occured.
+   * Name of field on which the change occurred.
    */
   public String getFieldName() {
     return fieldName;
   }
 
   /**
-   * Name of field on which the change occured.
+   * Name of field on which the change occurred.
    * @param fieldName
    */
   public void setFieldName(String fieldName) {

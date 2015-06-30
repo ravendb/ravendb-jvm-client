@@ -23,7 +23,7 @@ public class MultiDatabase {
     }
     DatabaseDocument document = new DatabaseDocument();
     document.setId("Raven/Databases/" + name);
-    document.getSettings().put("Raven/DataDir", "~\\Databases\\" + name);
+    document.getSettings().put("Raven/DataDir", "~\\" + name);
     return document;
   }
 
@@ -47,7 +47,7 @@ public class MultiDatabase {
   }
 
   public static String getRootDatabaseUrl(String url) {
-    int indexOfDatabases = url.indexOf("/databases/");
+    int indexOfDatabases = url.toLowerCase().indexOf("/databases/");
     if (indexOfDatabases != -1) {
       url = url.substring(0, indexOfDatabases);
     }
@@ -62,7 +62,7 @@ public class MultiDatabase {
       return null;
     }
     String databaseUrl = url;
-    int indexOfDatabases = databaseUrl.indexOf("/databases/");
+    int indexOfDatabases = databaseUrl.toLowerCase().indexOf("/databases/");
     if (indexOfDatabases != -1) {
       databaseUrl = databaseUrl.substring(indexOfDatabases + "/databases/".length());
       Matcher matcher = Pattern.compile(VALID_DB_NAME_CHARS).matcher(databaseUrl);

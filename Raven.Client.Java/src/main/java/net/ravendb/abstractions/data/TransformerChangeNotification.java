@@ -8,14 +8,14 @@ public class TransformerChangeNotification extends EventArgs {
   private String name;
 
   /**
-   * Type of change that occured on transformer.
+   * Type of change that occurred on transformer.
    */
   public TransformerChangeTypes getType() {
     return type;
   }
 
   /**
-   * Type of change that occured on transformer.
+   * Type of change that occurred on transformer.
    * @param type
    */
   public void setType(TransformerChangeTypes type) {

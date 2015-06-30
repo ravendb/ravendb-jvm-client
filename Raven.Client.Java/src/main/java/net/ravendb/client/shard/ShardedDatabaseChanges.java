@@ -6,11 +6,7 @@ import java.util.UUID;
 
 import net.ravendb.abstractions.basic.EventHandler;
 import net.ravendb.abstractions.basic.VoidArgs;
-import net.ravendb.abstractions.data.BulkInsertChangeNotification;
-import net.ravendb.abstractions.data.DocumentChangeNotification;
-import net.ravendb.abstractions.data.IndexChangeNotification;
-import net.ravendb.abstractions.data.ReplicationConflictNotification;
-import net.ravendb.abstractions.data.TransformerChangeNotification;
+import net.ravendb.abstractions.data.*;
 import net.ravendb.client.changes.IDatabaseChanges;
 import net.ravendb.client.changes.IObservable;
 
@@ -152,6 +148,24 @@ public class ShardedDatabaseChanges implements IDatabaseChanges {
     List<IObservable<BulkInsertChangeNotification>> observables = new ArrayList<>(shardedDatabaseChanges.length);
     for (IDatabaseChanges changes: shardedDatabaseChanges) {
       observables.add(changes.forBulkInsert(operationId));
+    }
+    return new ShardedObservable<>(observables);
+  }
+
+  @Override
+  public IObservable<DataSubscriptionChangeNotification> forAllDataSubscriptions() {
+    List<IObservable<DataSubscriptionChangeNotification>> observables = new ArrayList<>(shardedDatabaseChanges.length);
+    for (IDatabaseChanges changes: shardedDatabaseChanges) {
+      observables.add(changes.forAllDataSubscriptions());
+    }
+    return new ShardedObservable<>(observables);
+  }
+
+  @Override
+  public IObservable<DataSubscriptionChangeNotification> forDataSubscription(long id) {
+    List<IObservable<DataSubscriptionChangeNotification>> observables = new ArrayList<>(shardedDatabaseChanges.length);
+    for (IDatabaseChanges changes: shardedDatabaseChanges) {
+      observables.add(changes.forDataSubscription(id));
     }
     return new ShardedObservable<>(observables);
   }

@@ -19,6 +19,8 @@ import net.ravendb.abstractions.data.Etag;
 import net.ravendb.abstractions.data.HttpMethods;
 import net.ravendb.abstractions.json.linq.RavenJObject;
 import net.ravendb.abstractions.json.linq.RavenJToken;
+import net.ravendb.abstractions.logging.ILog;
+import net.ravendb.abstractions.logging.LogManager;
 import net.ravendb.abstractions.replication.ReplicatedEtagInfo;
 import net.ravendb.abstractions.replication.ReplicationDestination;
 import net.ravendb.abstractions.replication.ReplicationDocument;
@@ -37,6 +39,8 @@ import org.apache.commons.lang.StringUtils;
 
 public class ReplicationBehavior implements CleanCloseable {
   private final DocumentStore documentStore;
+  private final static ILog log = LogManager.getCurrentClassLogger();
+
 
   private ExecutorService executor;
 
@@ -177,8 +181,6 @@ public class ReplicationBehavior implements CleanCloseable {
     }
   }
 
-
-
   private ReplicatedEtagInfo getReplicatedEtagsFor(String destinationUrl, String sourceUrl, String sourceDbId) {
     CreateHttpJsonRequestParams createHttpJsonRequestParams = new CreateHttpJsonRequestParams(null,
       RavenUrlExtensions.lastReplicatedEtagFor(destinationUrl, sourceUrl, sourceDbId),
@@ -186,9 +188,11 @@ public class ReplicationBehavior implements CleanCloseable {
       new RavenJObject(), new OperationCredentials(documentStore.getApiKey()), documentStore.getConventions());
     try (HttpJsonRequest httpJsonRequest = documentStore.getJsonRequestFactory().createHttpJsonRequest(createHttpJsonRequestParams)) {
       RavenJToken json = httpJsonRequest.readResponseJson();
+      Etag etag = Etag.parse(json.value(String.class, "LastDocumentEtag"));
+      log.debug("Received last replicated document Etag %s from server %s", etag, destinationUrl);
       ReplicatedEtagInfo replicatedEtagInfo = new ReplicatedEtagInfo();
       replicatedEtagInfo.setDestionationUrl(destinationUrl);
-      replicatedEtagInfo.setDocumentEtag(Etag.parse(json.value(String.class, "LastDocumentEtag")));
+      replicatedEtagInfo.setDocumentEtag(etag);
       return replicatedEtagInfo;
     }
   }

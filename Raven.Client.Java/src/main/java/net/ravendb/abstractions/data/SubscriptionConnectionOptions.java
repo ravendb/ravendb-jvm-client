@@ -16,6 +16,8 @@ public class SubscriptionConnectionOptions {
     connectionId = connectionCounter.incrementAndGet() + "/" + Base62Util.base62Random();
     batchOptions = new SubscriptionBatchOptions();
     clientAliveNotificationInterval = 2 * 60 * 1000;
+    timeToWaitBeforeConnectionRetry = 15 * 1000;
+    strategy = SubscriptionOpeningStrategy.OPEN_IF_FREE;
   }
 
   public SubscriptionConnectionOptions(SubscriptionBatchOptions batchOptions) {
@@ -27,9 +29,21 @@ public class SubscriptionConnectionOptions {
 
   private SubscriptionBatchOptions batchOptions;
 
+  private Integer timeToWaitBeforeConnectionRetry;
+
   private Integer clientAliveNotificationInterval;
 
   private boolean ignoreSubscribersErrors;
+
+  private SubscriptionOpeningStrategy strategy;
+
+  public Integer getTimeToWaitBeforeConnectionRetry() {
+    return timeToWaitBeforeConnectionRetry;
+  }
+
+  public void setTimeToWaitBeforeConnectionRetry(Integer timeToWaitBeforeConnectionRetry) {
+    this.timeToWaitBeforeConnectionRetry = timeToWaitBeforeConnectionRetry;
+  }
 
   public String getConnectionId() {
     return connectionId;
@@ -45,6 +59,14 @@ public class SubscriptionConnectionOptions {
 
   public void setBatchOptions(SubscriptionBatchOptions batchOptions) {
     this.batchOptions = batchOptions;
+  }
+
+  public SubscriptionOpeningStrategy getStrategy() {
+    return strategy;
+  }
+
+  public void setStrategy(SubscriptionOpeningStrategy strategy) {
+    this.strategy = strategy;
   }
 
   public Integer getClientAliveNotificationInterval() {

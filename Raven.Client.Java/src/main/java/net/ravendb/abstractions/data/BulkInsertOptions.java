@@ -9,10 +9,32 @@ public class BulkInsertOptions {
   private int batchSize;
   private int writeTimeoutMiliseconds;
   private boolean skipOverwriteIfUnchanged;
+  private ChunkedBulkInsertOptions chunkedBulkInsertOptions;
 
   public BulkInsertOptions() {
     batchSize = 512;
     writeTimeoutMiliseconds = 15 * 1000;
+    chunkedBulkInsertOptions = new ChunkedBulkInsertOptions();
+    chunkedBulkInsertOptions.setMaxDocumentsPerChunk(batchSize * 4);
+    chunkedBulkInsertOptions.setMaxChunkVolumeInBytes(8 * 1024 * 1024);
+  }
+
+  /**
+   * Represents options of the chunked functionality of the bulk insert operation,
+   * which allows opening new connection for each chunk by amount of documents and total size.
+   * If Set to null, bulk insert will be performed in a not chunked manner.
+   */
+  public ChunkedBulkInsertOptions getChunkedBulkInsertOptions() {
+    return chunkedBulkInsertOptions;
+  }
+
+  /**
+   * Represents options of the chunked functionality of the bulk insert operation,
+   * which allows opening new connection for each chunk by amount of documents and total size.
+   * If Set to null, bulk insert will be performed in a not chunked manner.
+   */
+  public void setChunkedBulkInsertOptions(ChunkedBulkInsertOptions chunkedBulkInsertOptions) {
+    this.chunkedBulkInsertOptions = chunkedBulkInsertOptions;
   }
 
   /**

@@ -18,10 +18,9 @@ public class EntityToJson {
   //All the listeners for this session
   private DocumentSessionListeners listeners;
 
-  private IdentityHashMap<Object, Map<String, RavenJToken>> missingDictionary = new IdentityHashMap<>();
+  private final IdentityHashMap<Object, Map<String, RavenJToken>> missingDictionary = new IdentityHashMap<>();
 
   protected IdentityHashMap<Object, RavenJObject> cachedJsonDocs;
-
 
   public IdentityHashMap<Object, RavenJObject> getCachedJsonDocs() {
     return cachedJsonDocs;
@@ -29,10 +28,6 @@ public class EntityToJson {
 
   public IdentityHashMap<Object, Map<String, RavenJToken>> getMissingDictionary() {
     return missingDictionary;
-  }
-
-  public void setMissingDictionary(IdentityHashMap<Object, Map<String, RavenJToken>> missingDictionary) {
-    this.missingDictionary = missingDictionary;
   }
 
   public DocumentSessionListeners getListeners() {

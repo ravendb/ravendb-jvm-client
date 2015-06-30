@@ -767,7 +767,7 @@ implements IDocumentQueryGenerator, IDocumentSessionImpl, ISyncAdvancedSessionOp
 
         IDatabaseCommands databaseCommands = shardDbCommands.get(shardId);
         if (databaseCommands == null) {
-          throw new IllegalStateException("ShardedDocumentStore cannot found a DatabaseCommands for shard id '" + shardId + "'");
+          throw new IllegalStateException("ShardedDocumentStore can't find a DatabaseCommands for shard id '" + shardId + "'");
         }
         BatchResult[] results = databaseCommands.batch(shardAndObject.getValue().getCommands());
         updateBatchResults(Arrays.asList(results), shardAndObject.getValue());

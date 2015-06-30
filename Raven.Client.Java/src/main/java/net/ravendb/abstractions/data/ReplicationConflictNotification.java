@@ -16,14 +16,14 @@ public class ReplicationConflictNotification extends EventArgs {
   }
 
   /**
-   * Type of conflict that occured (None, DocumentReplicationConflict, AttachmentReplicationConflict).
+   * Type of conflict that occurred (None, DocumentReplicationConflict, AttachmentReplicationConflict).
    */
   public ReplicationConflictTypes getItemType() {
     return itemType;
   }
 
   /**
-   * Type of conflict that occured (None, DocumentReplicationConflict, AttachmentReplicationConflict).
+   * Type of conflict that occurred (None, DocumentReplicationConflict, AttachmentReplicationConflict).
    * @param itemType
    */
   public void setItemType(ReplicationConflictTypes itemType) {
@@ -31,14 +31,14 @@ public class ReplicationConflictNotification extends EventArgs {
   }
 
   /**
-   * Identifier of a document/attachment on which replication conflict occured.
+   * Identifier of a document/attachment on which replication conflict occurred.
    */
   public String getId() {
     return id;
   }
 
   /**
-   * Identifier of a document/attachment on which replication conflict occured.
+   * Identifier of a document/attachment on which replication conflict occurred.
    * @param id
    */
   public void setId(String id) {
@@ -61,14 +61,14 @@ public class ReplicationConflictNotification extends EventArgs {
   }
 
   /**
-   * Operation type on which conflict occured (Put, Delete).
+   * Operation type on which conflict occurred (Put, Delete).
    */
   public ReplicationOperationTypes getOperationType() {
     return operationType;
   }
 
   /**
-   * Operation type on which conflict occured (Put, Delete).
+   * Operation type on which conflict occurred (Put, Delete).
    * @param operationType
    */
   public void setOperationType(ReplicationOperationTypes operationType) {

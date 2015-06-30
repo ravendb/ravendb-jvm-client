@@ -23,10 +23,7 @@ import net.ravendb.client.IDocumentStore;
 import net.ravendb.client.changes.IDatabaseChanges;
 import net.ravendb.client.connection.IDatabaseCommands;
 import net.ravendb.client.connection.implementation.HttpJsonRequestFactory;
-import net.ravendb.client.document.BulkInsertOperation;
-import net.ravendb.client.document.DocumentConvention;
-import net.ravendb.client.document.DocumentKeyGenerator;
-import net.ravendb.client.document.OpenSessionOptions;
+import net.ravendb.client.document.*;
 import net.ravendb.client.indexes.AbstractIndexCreationTask;
 import net.ravendb.client.indexes.AbstractTransformerCreationTask;
 
@@ -294,21 +291,45 @@ public class ShardedDocumentStore extends DocumentStoreBase {
     throw new UnsupportedOperationException("This isn't a single last written etag when sharding");
   }
 
+  /**
+   * Cannot use BulkInsert using sharded store, use shardedBulkInsert, instead
+   */
   @Override
+  @Deprecated
   public BulkInsertOperation bulkInsert() {
     return bulkInsert(null, null);
   }
 
+  /**
+   * Cannot use BulkInsert using sharded store, use shardedBulkInsert, instead
+     */
   @Override
   public BulkInsertOperation bulkInsert(String database) {
     return bulkInsert(database, null);
 
   }
 
+  /**
+   * Cannot use BulkInsert using sharded store, use shardedBulkInsert, instead
+     */
   @Override
   public BulkInsertOperation bulkInsert(String database, BulkInsertOptions options) {
-    return new BulkInsertOperation(database, this, getListeners(), options != null ? options : new BulkInsertOptions(), changes(database));
+    throw new UnsupportedOperationException("Cannot use BulkInsert using sharded store, use shardedBulkInsert, instead");
   }
+
+  public ShardedBulkInsertOperation shardedBulkInsert() {
+    return new ShardedBulkInsertOperation(null, null, null);
+  }
+
+  public ShardedBulkInsertOperation shardedBulkInsert(String database) {
+    return new ShardedBulkInsertOperation(database, null, null);
+  }
+
+  public ShardedBulkInsertOperation shardedBulkInsert(String database, ShardedDocumentStore store, BulkInsertOptions options) {
+    //TODO: store param isn't used!
+    return new ShardedBulkInsertOperation(database, this, options != null ? options : new BulkInsertOptions());
+  }
+
 
   @Override
   public void initializeProfiling() {
@@ -329,6 +350,28 @@ public class ShardedDocumentStore extends DocumentStoreBase {
       for (IDocumentStore store : shards.values()) {
         store.initialize();
       }
+
+      Map<UUID, Integer> shardsPointingToSameDb = new HashMap<>();
+
+      for (Map.Entry<String, IDocumentStore> x : shardStrategy.getShards().entrySet()) {
+        try {
+          UUID databaseId = x.getValue().getDatabaseCommands().getStatistics().getDatabaseId();
+          if (shardsPointingToSameDb.containsKey(x.getKey())) {
+            shardsPointingToSameDb.put(databaseId, shardsPointingToSameDb.get(x.getKey()) + 1);
+          } else {
+            shardsPointingToSameDb.put(databaseId, 1);
+          }
+        } catch (Exception e) {
+          // we ignore connection error here
+        }
+      }
+
+      for (Map.Entry<UUID, Integer> entry : shardsPointingToSameDb.entrySet()) {
+        if (entry.getValue() > 1) {
+          throw new UnsupportedOperationException("Multiple keys in shard map are not supported. Duplicate database id = " + entry.getKey());
+        }
+      }
+
       if (getConventions().getDocumentKeyGenerator() == null) { // don't overwrite what the user is doing
         final ShardedHiloKeyGenerator generator = new ShardedHiloKeyGenerator(this, 32);
         getConventions().setDocumentKeyGenerator(new DocumentKeyGenerator() {

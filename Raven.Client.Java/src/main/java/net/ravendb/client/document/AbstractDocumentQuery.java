@@ -959,6 +959,11 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
   @SuppressWarnings("unchecked")
   public IDocumentQuery<T> whereEquals(WhereParams whereParams) {
     ensureValidFieldName(whereParams);
+
+    if (theSession != null && whereParams.getValue() != null) {
+      sortByHints.add(Tuple.create(whereParams.getFieldName(), theSession.getConventions().getDefaultSortOption(whereParams.getValue().getClass())));
+    }
+
     String transformToEqualValue = transformToEqualValue(whereParams);
     lastEquality = new Tuple<>(whereParams.getFieldName(), transformToEqualValue);
 

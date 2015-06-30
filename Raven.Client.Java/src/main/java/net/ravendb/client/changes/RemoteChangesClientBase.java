@@ -199,8 +199,8 @@ public abstract class RemoteChangesClientBase<TChangesApi extends IConnectableCh
 
       CreateHttpJsonRequestParams requestParams = new CreateHttpJsonRequestParams(null, sendUrl, HttpMethods.GET, null, credentials, conventions);
       requestParams.setAvoidCachingRequest(true);
-      try (HttpJsonRequest httpJsonRequest = jsonRequestFactory.createHttpJsonRequest(requestParams)) {
-        httpJsonRequest.executeRequest();
+      try (HttpJsonRequest request = jsonRequestFactory.createHttpJsonRequest(requestParams)) {
+        request.executeRequest();
       }
     }
   }

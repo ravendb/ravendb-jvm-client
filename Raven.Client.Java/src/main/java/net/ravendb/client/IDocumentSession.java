@@ -299,7 +299,7 @@ public interface IDocumentSession extends CleanCloseable {
   /**
    * Stores the specified dynamic entity, under the specified id.
    * @param entity Entity to store.
-   * @param id Id to store this entity under. If other entity exists with the same id it will be overridden.
+   * @param id Id to store this entity under. If other entity exists with the same id it will be overwritten.
    */
   public void store(Object entity, String id);
 
@@ -315,7 +315,7 @@ public interface IDocumentSession extends CleanCloseable {
    * Stores the specified entity with the specified etag, under the specified id
    * @param entity Entity to store.
    * @param etag
-   * @param id Id to store this entity under. If other entity exists with the same id it will be overridden.
+   * @param id Id to store this entity under. If other entity exists with the same id it will be overwritten.
    */
   public void store(Object entity, Etag etag, String id);
 

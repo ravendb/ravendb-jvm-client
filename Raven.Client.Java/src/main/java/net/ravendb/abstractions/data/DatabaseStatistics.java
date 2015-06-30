@@ -11,6 +11,7 @@ public class DatabaseStatistics {
   @Deprecated
   private Etag lastAttachmentEtag;
   private int countOfIndexes;
+  private int countOfIndexesExcludingDisabledAndAbandoned;
   private int countOfResultTransformers;
   private int[] inMemoryIndexingQueueSize;
   private long approximateTaskCount;
@@ -19,6 +20,7 @@ public class DatabaseStatistics {
   @Deprecated
   private long countOfAttachments;
   private String[] staleIndexes;
+  private int countOfStaleIndexesExcludingDisabledAndAbandoned;
   private int currentNumberOfParallelTasks;
   private int currentNumberOfItemsToIndexInSingleBatch;
   private int currentNumberOfItemsToReduceInSingleBatch;
@@ -29,6 +31,34 @@ public class DatabaseStatistics {
   private UUID databaseId;
   private boolean supportsDtc;
   private Boolean is64Bit;
+
+  /**
+   * Total number of stale indexes excluding disabled and abandoned
+   */
+  public int getCountOfStaleIndexesExcludingDisabledAndAbandoned() {
+    return countOfStaleIndexesExcludingDisabledAndAbandoned;
+  }
+
+  /**
+   * Total number of stale indexes excluding disabled and abandoned
+   */
+  public void setCountOfStaleIndexesExcludingDisabledAndAbandoned(int countOfStaleIndexesExcludingDisabledAndAbandoned) {
+    this.countOfStaleIndexesExcludingDisabledAndAbandoned = countOfStaleIndexesExcludingDisabledAndAbandoned;
+  }
+
+  /**
+   * Total number of indexes in database excluding disabled and abandoned
+   */
+  public int getCountOfIndexesExcludingDisabledAndAbandoned() {
+    return countOfIndexesExcludingDisabledAndAbandoned;
+  }
+
+  /**
+   * Total number of indexes in database excluding disabled and abandoned
+   */
+  public void setCountOfIndexesExcludingDisabledAndAbandoned(int countOfIndexesExcludingDisabledAndAbandoned) {
+    this.countOfIndexesExcludingDisabledAndAbandoned = countOfIndexesExcludingDisabledAndAbandoned;
+  }
 
   /**
    * Indicates if process is 64-bit
@@ -171,7 +201,7 @@ public class DatabaseStatistics {
   }
 
   /**
-   * Array of indexing errors that occured in database.
+   * Array of indexing errors that occurred in database.
    */
   public IndexingError[] getErrors() {
     return errors;

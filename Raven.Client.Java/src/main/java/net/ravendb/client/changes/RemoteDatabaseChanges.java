@@ -10,13 +10,7 @@ import net.ravendb.abstractions.closure.Function1;
 import net.ravendb.abstractions.closure.Function4;
 import net.ravendb.abstractions.closure.Predicate;
 import net.ravendb.abstractions.closure.Predicates;
-import net.ravendb.abstractions.data.BulkInsertChangeNotification;
-import net.ravendb.abstractions.data.DocumentChangeNotification;
-import net.ravendb.abstractions.data.Etag;
-import net.ravendb.abstractions.data.IndexChangeNotification;
-import net.ravendb.abstractions.data.ReplicationConflictNotification;
-import net.ravendb.abstractions.data.ReplicationConflictTypes;
-import net.ravendb.abstractions.data.TransformerChangeNotification;
+import net.ravendb.abstractions.data.*;
 import net.ravendb.abstractions.json.linq.RavenJObject;
 import net.ravendb.abstractions.util.AtomicDictionary;
 import net.ravendb.client.connection.IDocumentStoreReplicationInformer;
@@ -36,9 +30,11 @@ public class RemoteDatabaseChanges extends RemoteChangesClientBase<IDatabaseChan
   protected final ConcurrentSkipListSet<String> watchedCollections = new ConcurrentSkipListSet<>();
   protected final ConcurrentSkipListSet<String> watchedIndexes = new ConcurrentSkipListSet<>();
   protected final ConcurrentSkipListSet<String> watchedBulkInserts = new ConcurrentSkipListSet<>();
+  protected final ConcurrentSkipListSet<Long> watchedDataSubscriptions = new ConcurrentSkipListSet<>();
   protected boolean watchAllDocs;
   protected boolean watchAllIndexes;
   protected boolean watchAllTransformers;
+  protected boolean watchAllDataSubscriptions;
   @SuppressWarnings("hiding")
   protected DocumentConvention conventions;
 
@@ -65,6 +61,9 @@ public class RemoteDatabaseChanges extends RemoteChangesClientBase<IDatabaseChan
     }
     if (watchAllTransformers) {
       send("watch-transformers", null);
+    }
+    if (watchAllDataSubscriptions) {
+      send("watch-data-subscriptions", null);
     }
     if (watchedDocs != null) {
       for (String watchedDoc : watchedDocs) {
@@ -144,6 +143,12 @@ public class RemoteDatabaseChanges extends RemoteChangesClientBase<IDatabaseChan
           }
         }
         break;
+      case "DataSubscriptionChangeNotification":
+        DataSubscriptionChangeNotification dataSubscriptionChangeNotification = serializer.deserialize(value.toString(), DataSubscriptionChangeNotification.class);
+        for (DatabaseConnectionState counter: counters.values()) {
+          counter.send(dataSubscriptionChangeNotification);
+        }
+        break;
       default:
         break;
     }
@@ -152,23 +157,18 @@ public class RemoteDatabaseChanges extends RemoteChangesClientBase<IDatabaseChan
 
   @Override
   public IObservable<IndexChangeNotification> forIndex(final String indexName) {
-    DatabaseConnectionState counter = counters.getOrAdd("indexes/" + indexName, new Function1<String, DatabaseConnectionState>() {
 
+    DatabaseConnectionState counter = getOrAddConnectionState("indexes/" + indexName, "watch-index", "unwatch-index", new Action0() {
       @Override
-      public DatabaseConnectionState apply(String s) {
+      public void apply() {
         watchedIndexes.add(indexName);
-        send("watch-index", indexName);
-
-        return new DatabaseConnectionState(new Action0() {
-          @Override
-          public void apply() {
-            watchedIndexes.remove(indexName);
-            send("unwatch-index", indexName);
-            counters.remove("indexes/" + indexName);
-          }
-        });
       }
-    });
+    }, new Action0() {
+      @Override
+      public void apply() {
+        watchedIndexes.remove(indexName);
+      }
+    }, indexName);
     counter.inc();
     final TaskedObservable<IndexChangeNotification, DatabaseConnectionState> taskedObservable = new TaskedObservable<>(counter, new Predicate<IndexChangeNotification>() {
       @SuppressWarnings("boxing")
@@ -193,26 +193,19 @@ public class RemoteDatabaseChanges extends RemoteChangesClientBase<IDatabaseChan
     return taskedObservable;
   }
 
-
-
   @Override
   public IObservable<DocumentChangeNotification> forDocument(final String docId) {
-    DatabaseConnectionState counter = counters.getOrAdd("docs/" + docId, new Function1<String, DatabaseConnectionState>() {
+    DatabaseConnectionState counter = getOrAddConnectionState("docs/" + docId, "watch-doc", "unwatch-doc", new Action0() {
       @Override
-      public DatabaseConnectionState apply(String s) {
+      public void apply() {
         watchedDocs.add(docId);
-        send("watch-doc", docId);
-
-        return new DatabaseConnectionState(new Action0() {
-          @Override
-          public void apply() {
-            watchedDocs.remove(docId);
-            send("unwatch-doc", docId);
-            counters.remove("docs/" + docId);
-          }
-        });
       }
-    });
+    }, new Action0() {
+      @Override
+      public void apply() {
+        watchedDocs.remove(docId);
+      }
+    }, docId);
 
     final TaskedObservable<DocumentChangeNotification, DatabaseConnectionState> taskedObservable = new TaskedObservable<>(counter, new Predicate<DocumentChangeNotification>() {
       @SuppressWarnings("boxing")
@@ -239,22 +232,17 @@ public class RemoteDatabaseChanges extends RemoteChangesClientBase<IDatabaseChan
 
   @Override
   public IObservable<DocumentChangeNotification> forAllDocuments() {
-    DatabaseConnectionState counter = counters.getOrAdd("all-docs", new Function1<String, DatabaseConnectionState>() {
+    DatabaseConnectionState counter = getOrAddConnectionState("all-docs", "watch-docs", "unwatch-docs", new Action0() {
       @Override
-      public DatabaseConnectionState apply(String s) {
+      public void apply() {
         watchAllDocs = true;
-        send("watch-docs", null);
-
-        return new DatabaseConnectionState(new Action0() {
-          @Override
-          public void apply() {
-            watchAllDocs = false;
-            send("unwatch-docs", null);
-            counters.remove("all-docs");
-          }
-        });
       }
-    });
+    }, new Action0() {
+      @Override
+      public void apply() {
+        watchAllDocs = false;
+      }
+    }, null);
 
     final TaskedObservable<DocumentChangeNotification, DatabaseConnectionState> taskedObservable = new TaskedObservable<>(counter, Predicates.<DocumentChangeNotification> alwaysTrue());
 
@@ -296,6 +284,22 @@ public class RemoteDatabaseChanges extends RemoteChangesClientBase<IDatabaseChan
             send("unwatch-bulk-operation", id);
             counters.remove("bulk-operations/" + operationId);
           }
+        }, new Action1<DatabaseConnectionState>() {
+          @Override
+          public void apply(final DatabaseConnectionState existingConnectionState) {
+            if (counters.get("bulk-operations/" + id) != null) {
+              return;
+            }
+
+            counters.getOrAdd("bulk-operations/" + id, new Function1<String, DatabaseConnectionState>() {
+              @Override
+              public DatabaseConnectionState apply(String input) {
+                return existingConnectionState;
+              }
+            });
+
+            send("watch-bulk-operation", id);
+          }
         });
       }
     });
@@ -324,24 +328,125 @@ public class RemoteDatabaseChanges extends RemoteChangesClientBase<IDatabaseChan
   }
 
   @Override
-  public IObservable<IndexChangeNotification> forAllIndexes() {
-    DatabaseConnectionState counter = counters.getOrAdd("all-indexes", new Function1<String, DatabaseConnectionState>() {
+  public IObservable<DataSubscriptionChangeNotification> forAllDataSubscriptions() {
+    DatabaseConnectionState counter = getOrAddConnectionState("all-data-subscriptions", "watch-data-subscriptions", "unwatch-data-subscriptions", new Action0() {
+      @Override
+      public void apply() {
+        watchAllDataSubscriptions = true;
+      }
+    }, new Action0() {
+      @Override
+      public void apply() {
+        watchAllDataSubscriptions = false;
+      }
+    }, null);
+    final TaskedObservable<DataSubscriptionChangeNotification, DatabaseConnectionState> taskedObservable = new TaskedObservable<>(counter, Predicates.<DataSubscriptionChangeNotification> alwaysTrue());
 
+    counter.getOnDataSubscriptionNotification().add(new Action1<DataSubscriptionChangeNotification>() {
+      @Override
+      public void apply(DataSubscriptionChangeNotification msg) {
+        taskedObservable.send(msg);
+      }
+    });
+    counter.getOnError().add(new Action1<ExceptionEventArgs>() {
+      @Override
+      public void apply(ExceptionEventArgs ex) {
+        taskedObservable.error(ex.getException());
+      }
+    });
+    return taskedObservable;
+  }
+
+  @Override
+  public IObservable<DataSubscriptionChangeNotification> forDataSubscription(final long subscriptionId) {
+    DatabaseConnectionState counter = getOrAddConnectionState("subscriptions/" + subscriptionId, "watch-data-subscription", "unwatch-data-subscription", new Action0() {
+      @Override
+      public void apply() {
+        watchedDataSubscriptions.add(subscriptionId);
+      }
+    }, new Action0() {
+      @Override
+      public void apply() {
+        watchedDataSubscriptions.remove(subscriptionId);
+      }
+    }, String.valueOf(subscriptionId));
+    final TaskedObservable<DataSubscriptionChangeNotification, DatabaseConnectionState> taskedObservable = new TaskedObservable<>(counter, new Predicate<DataSubscriptionChangeNotification>() {
+      @SuppressWarnings("boxing")
+      @Override
+      public Boolean apply(DataSubscriptionChangeNotification notification) {
+        return notification.getId() == subscriptionId;
+      }
+    });
+
+    counter.getOnDataSubscriptionNotification().add(new Action1<DataSubscriptionChangeNotification>() {
+      @Override
+      public void apply(DataSubscriptionChangeNotification msg) {
+        taskedObservable.send(msg);
+      }
+    });
+    counter.getOnError().add(new Action1<ExceptionEventArgs>() {
+      @Override
+      public void apply(ExceptionEventArgs ex) {
+        taskedObservable.error(ex.getException());
+      }
+    });
+    return taskedObservable;
+  }
+
+  private DatabaseConnectionState getOrAddConnectionState(final String name, final String watchCommand,
+                                                          final String unwatchCommand, final Action0 afterConnection,
+                                                          final Action0 beforeDisconnect, final String value) {
+    DatabaseConnectionState counter = counters.getOrAdd(name, new Function1<String, DatabaseConnectionState>() {
       @Override
       public DatabaseConnectionState apply(String s) {
-        watchAllIndexes = true;
-        send("watch-indexes", null);
+        afterConnection.apply();
+        send(watchCommand, value);
 
         return new DatabaseConnectionState(new Action0() {
           @Override
           public void apply() {
-            watchAllIndexes = false;
-            send("unwatch-indexes", null);
-            counters.remove("all-indexes");
+            beforeDisconnect.apply();
+            send(unwatchCommand, value);
+            counters.remove(name);
+          }
+        }, new Action1<DatabaseConnectionState>() {
+          @Override
+          public void apply(final DatabaseConnectionState existingConnectionState) {
+            if (counters.get(name) != null) {
+              return;
+            }
+            counters.getOrAdd(name, new Function1<String, DatabaseConnectionState>() {
+                      @Override
+                      public DatabaseConnectionState apply(String input) {
+                        return existingConnectionState;
+                      }
+                    }
+            );
+
+            afterConnection.apply();
+            send(watchCommand, value);
           }
         });
       }
+
     });
+    return counter;
+  }
+
+  @Override
+  public IObservable<IndexChangeNotification> forAllIndexes() {
+    DatabaseConnectionState counter = getOrAddConnectionState("all-indexes", "watch-indexes", "unwatch-indxes", new Action0() {
+      @Override
+      public void apply() {
+        watchAllIndexes = true;
+      }
+    }, new Action0() {
+      @Override
+      public void apply() {
+        watchAllIndexes = false;
+      }
+    }, null);
+
     counter.inc();
     final TaskedObservable<IndexChangeNotification, DatabaseConnectionState> taskedObservable = new TaskedObservable<>(counter, Predicates.<IndexChangeNotification> alwaysTrue());
 
@@ -362,23 +467,17 @@ public class RemoteDatabaseChanges extends RemoteChangesClientBase<IDatabaseChan
 
   @Override
   public IObservable<TransformerChangeNotification> forAllTransformers() {
-    DatabaseConnectionState counter = counters.getOrAdd("all-transformers", new Function1<String, DatabaseConnectionState>() {
-
+    DatabaseConnectionState counter = getOrAddConnectionState("all-transformers", "watch-transformers", "unwatch-transformers", new Action0() {
       @Override
-      public DatabaseConnectionState apply(String s) {
+      public void apply() {
         watchAllTransformers = true;
-        send("watch-transformers", null);
-
-        return new DatabaseConnectionState(new Action0() {
-          @Override
-          public void apply() {
-            watchAllTransformers = false;
-            send("unwatch-transformers", null);
-            counters.remove("all-transformers");
-          }
-        });
       }
-    });
+    }, new Action0() {
+      @Override
+      public void apply() {
+        watchAllTransformers = false;
+      }
+    }, null);
     counter.inc();
     final TaskedObservable<TransformerChangeNotification, DatabaseConnectionState> taskedObservable = new TaskedObservable<>(counter, Predicates.<TransformerChangeNotification> alwaysTrue());
 
@@ -399,22 +498,17 @@ public class RemoteDatabaseChanges extends RemoteChangesClientBase<IDatabaseChan
 
   @Override
   public IObservable<DocumentChangeNotification> forDocumentsStartingWith(final String docIdPrefix) {
-    DatabaseConnectionState counter = counters.getOrAdd("prefixes" + docIdPrefix, new Function1<String, DatabaseConnectionState>() {
+    DatabaseConnectionState counter = getOrAddConnectionState("prefixes/" + docIdPrefix, "watch-prefix", "unwatch-prefix", new Action0() {
       @Override
-      public DatabaseConnectionState apply(String s) {
+      public void apply() {
         watchedPrefixes.add(docIdPrefix);
-        send("watch-prefix", docIdPrefix);
-
-        return new DatabaseConnectionState(new Action0() {
-          @Override
-          public void apply() {
-            watchedPrefixes.remove(docIdPrefix);
-            send("unwatch-prefix", docIdPrefix);
-            counters.remove("prefixes/" + docIdPrefix);
-          }
-        });
       }
-    });
+    }, new Action0() {
+      @Override
+      public void apply() {
+        watchedPrefixes.remove(docIdPrefix);
+      }
+    }, docIdPrefix);
 
     final TaskedObservable<DocumentChangeNotification, DatabaseConnectionState> taskedObservable = new TaskedObservable<>(counter, new Predicate<DocumentChangeNotification>() {
       @SuppressWarnings("boxing")
@@ -444,22 +538,17 @@ public class RemoteDatabaseChanges extends RemoteChangesClientBase<IDatabaseChan
     if (collectionName == null) {
       throw new IllegalArgumentException("Collection name is null");
     }
-    DatabaseConnectionState counter = counters.getOrAdd("collections/" + collectionName, new Function1<String, DatabaseConnectionState>() {
+    DatabaseConnectionState counter = getOrAddConnectionState("collections/" + collectionName, "watch-collection", "unwatch-collection", new Action0() {
       @Override
-      public DatabaseConnectionState apply(String s) {
+      public void apply() {
         watchedCollections.add(collectionName);
-        send("watch-collection", collectionName);
-
-        return new DatabaseConnectionState(new Action0() {
-          @Override
-          public void apply() {
-            watchedCollections.remove(collectionName);
-            send("unwatch-collection", collectionName);
-            counters.remove("collections/" + collectionName);
-          }
-        });
       }
-    });
+    }, new Action0() {
+      @Override
+      public void apply() {
+        watchedCollections.remove(collectionName);
+      }
+    }, collectionName);
 
     final TaskedObservable<DocumentChangeNotification, DatabaseConnectionState> taskedObservable = new TaskedObservable<>(counter, new Predicate<DocumentChangeNotification>() {
       @SuppressWarnings("boxing")
@@ -497,22 +586,17 @@ public class RemoteDatabaseChanges extends RemoteChangesClientBase<IDatabaseChan
     }
     final String encodedTypeName = UrlUtils.escapeDataString(typeName);
 
-    DatabaseConnectionState counter = counters.getOrAdd("types/" + typeName, new Function1<String, DatabaseConnectionState>() {
+    DatabaseConnectionState counter = getOrAddConnectionState("types/" + typeName, "watch-type", "unwatch-type", new Action0() {
       @Override
-      public DatabaseConnectionState apply(String s) {
+      public void apply() {
         watchedTypes.add(typeName);
-        send("watch-type", encodedTypeName);
-
-        return new DatabaseConnectionState(new Action0() {
-          @Override
-          public void apply() {
-            watchedTypes.remove(typeName);
-            send("unwatch-type", encodedTypeName);
-            counters.remove("types/" + typeName);
-          }
-        });
       }
-    });
+    }, new Action0() {
+      @Override
+      public void apply() {
+        watchedTypes.remove(typeName);
+      }
+    }, encodedTypeName);
 
     final TaskedObservable<DocumentChangeNotification, DatabaseConnectionState> taskedObservable = new TaskedObservable<>(counter, new Predicate<DocumentChangeNotification>() {
       @SuppressWarnings("boxing")
@@ -546,22 +630,17 @@ public class RemoteDatabaseChanges extends RemoteChangesClientBase<IDatabaseChan
 
   @Override
   public IObservable<ReplicationConflictNotification> forAllReplicationConflicts() {
-    DatabaseConnectionState counter = counters.getOrAdd("all-replication-conflicts", new Function1<String, DatabaseConnectionState>() {
+    DatabaseConnectionState counter = getOrAddConnectionState("all-replication-conflicts", "watch-replication-conflicts", "unwatch-replication-conflicts", new Action0() {
       @Override
-      public DatabaseConnectionState apply(String s) {
+      public void apply() {
         watchAllIndexes = true;
-        send("watch-replication-conflicts", null);
-
-        return new DatabaseConnectionState(new Action0() {
-          @Override
-          public void apply() {
-            watchAllIndexes = false;
-            send("unwatch-replication-conflicts", null);
-            counters.remove("all-replication-conflicts");
-          }
-        });
       }
-    });
+    }, new Action0() {
+      @Override
+      public void apply() {
+        watchAllIndexes = false;
+      }
+    }, null);
 
     final TaskedObservable<ReplicationConflictNotification, DatabaseConnectionState> taskedObservable = new TaskedObservable<>(counter, Predicates.<ReplicationConflictNotification> alwaysTrue());
 

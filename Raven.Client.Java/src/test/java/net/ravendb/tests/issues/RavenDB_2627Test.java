@@ -26,7 +26,7 @@ import net.ravendb.abstractions.data.SubscriptionBatchOptions;
 import net.ravendb.abstractions.data.SubscriptionConfig;
 import net.ravendb.abstractions.data.SubscriptionConnectionOptions;
 import net.ravendb.abstractions.data.SubscriptionCriteria;
-import net.ravendb.abstractions.exceptions.subscriptions.SubscriptionDoesNotExistExeption;
+import net.ravendb.abstractions.exceptions.subscriptions.SubscriptionDoesNotExistException;
 import net.ravendb.abstractions.exceptions.subscriptions.SubscriptionInUseException;
 import net.ravendb.abstractions.json.linq.RavenJObject;
 import net.ravendb.abstractions.json.linq.RavenJToken;
@@ -88,7 +88,7 @@ public class RavenDB_2627Test extends RemoteClientTest {
       try {
         store.subscriptions().open(1, new SubscriptionConnectionOptions());
         fail();
-      } catch (SubscriptionDoesNotExistExeption e) {
+      } catch (SubscriptionDoesNotExistException e) {
         assertEquals("There is no subscription configuration for specified identifier (id: 1)", e.getMessage());
       }
     }
@@ -655,6 +655,8 @@ public class RavenDB_2627Test extends RemoteClientTest {
       SubscriptionBatchOptions batchOptions = new SubscriptionBatchOptions();
       batchOptions.setMaxDocCount(1);
       SubscriptionConnectionOptions connectionOptions = new SubscriptionConnectionOptions(batchOptions);
+      connectionOptions.setTimeToWaitBeforeConnectionRetry(5000);
+      connectionOptions.setClientAliveNotificationInterval(2000);
       Subscription<RavenJObject> subscription = store.subscriptions().open(id, connectionOptions);
 
       store.changes().waitForAllPendingSubscriptions();
@@ -664,7 +666,7 @@ public class RavenDB_2627Test extends RemoteClientTest {
         @Override
         public void onNext(RavenJObject value) {
           stopServer(DEFAULT_SERVER_PORT_2);
-          TimeUtils.cleanSleep(1000);
+          TimeUtils.cleanSleep(3000);
           serverDisposed = true;
         }
       });
@@ -698,7 +700,7 @@ public class RavenDB_2627Test extends RemoteClientTest {
         session.saveChanges();
       }
 
-      RavenJObject arekObject = docs.poll(WAIT_TIME_OUT_SECONDS, TimeUnit.SECONDS);
+      RavenJObject arekObject = docs.poll(WAIT_TIME_OUT_SECONDS, TimeUnit.SECONDS); 
       assertNotNull(arekObject);
       assertEquals("users/arek", arekObject.get(Constants.METADATA).value(String.class, "@id"));
 
@@ -781,6 +783,7 @@ public class RavenDB_2627Test extends RemoteClientTest {
 
       long id = store.subscriptions().create(new SubscriptionCriteria());
       SubscriptionConnectionOptions connectionOptions = new SubscriptionConnectionOptions();
+      connectionOptions.setTimeToWaitBeforeConnectionRetry(4000);
       connectionOptions.setClientAliveNotificationInterval(2 * 1000);
       Subscription<RavenJObject> subscription = store.subscriptions().open(id, connectionOptions);
       store.changes().waitForAllPendingSubscriptions();
@@ -918,12 +921,12 @@ public class RavenDB_2627Test extends RemoteClientTest {
         }
       }, WAIT_TIME_OUT_SECONDS * 1000L));
 
-      assertTrue(subscription.isErrored());
+      assertTrue(subscription.isErroredBecauseOfSubscriber());
 
       assertTrue(SpinWait.spinUntil(new Function0<Boolean>() {
         @Override
         public Boolean apply() {
-          return subscription.isClosed();
+          return subscription.isConnectionClosed();
         }
       }, WAIT_TIME_OUT_SECONDS * 1000L));
 
@@ -968,7 +971,7 @@ public class RavenDB_2627Test extends RemoteClientTest {
       doc = docs.poll(WAIT_TIME_OUT_SECONDS, TimeUnit.SECONDS);
       assertNotNull(doc);
 
-      assertFalse(subscription.isErrored());
+      assertFalse(subscription.isErroredBecauseOfSubscriber());
     }
   }
 

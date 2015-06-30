@@ -6,12 +6,9 @@ import java.util.List;
 import net.ravendb.abstractions.basic.CleanCloseable;
 import net.ravendb.abstractions.closure.Action0;
 import net.ravendb.abstractions.connection.ErrorResponseException;
-import net.ravendb.abstractions.data.HttpMethods;
-import net.ravendb.abstractions.data.SubscriptionConfig;
-import net.ravendb.abstractions.data.SubscriptionConnectionOptions;
-import net.ravendb.abstractions.data.SubscriptionCriteria;
+import net.ravendb.abstractions.data.*;
 import net.ravendb.abstractions.exceptions.subscriptions.SubscriptionClosedException;
-import net.ravendb.abstractions.exceptions.subscriptions.SubscriptionDoesNotExistExeption;
+import net.ravendb.abstractions.exceptions.subscriptions.SubscriptionDoesNotExistException;
 import net.ravendb.abstractions.exceptions.subscriptions.SubscriptionException;
 import net.ravendb.abstractions.exceptions.subscriptions.SubscriptionInUseException;
 import net.ravendb.abstractions.json.linq.RavenJObject;
@@ -100,9 +97,19 @@ public class DocumentSubscriptions implements IReliableSubscriptions {
       ? documentStore.getDatabaseCommands()
         : documentStore.getDatabaseCommands().forDatabase(database);
 
-    sendOpenSubscriptionRequest(commands, id, options);
+    boolean open = true;
+    try {
 
-    Subscription<T> subscription = new Subscription<>(clazz, id, Lang.coalesce(database, MultiDatabase.getDatabaseName(documentStore.getUrl())), options, commands, documentStore.changes(database), documentStore.getConventions(),
+      sendOpenSubscriptionRequest(commands, id, options);
+    } catch (SubscriptionException subscriptionException) {
+      if (options.getStrategy() != SubscriptionOpeningStrategy.WAIT_FOR_FREE || !(subscriptionException instanceof SubscriptionInUseException)) {
+        throw subscriptionException;
+      }
+      open = false;
+    }
+
+    Subscription<T> subscription = new Subscription<>(clazz, id, Lang.coalesce(database, MultiDatabase.getDatabaseName(documentStore.getUrl())),
+            options, commands, documentStore.changes(database), documentStore.getConventions(), open,
       new Action0() {
         @SuppressWarnings("synthetic-access")
         @Override
@@ -218,9 +225,9 @@ public class DocumentSubscriptions implements IReliableSubscriptions {
       String text = opException.getResponseString();
 
       try {
-        if (opException.getStatusCode() == SubscriptionDoesNotExistExeption.RELEVANT_HTTP_STATUS_CODE) {
+        if (opException.getStatusCode() == SubscriptionDoesNotExistException.RELEVANT_HTTP_STATUS_CODE) {
           ErrorAndUrl errorResult = JsonConvert.deserializeObject(ErrorAndUrl.class, text);
-          return new SubscriptionDoesNotExistExeption(errorResult.getError());
+          return new SubscriptionDoesNotExistException(errorResult.getError());
         }
 
         if (opException.getStatusCode() == SubscriptionInUseException.RELEVANT_HTTP_STATUS_CODE) {

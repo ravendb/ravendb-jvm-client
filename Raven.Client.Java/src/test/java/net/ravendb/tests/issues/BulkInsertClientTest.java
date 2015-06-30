@@ -61,12 +61,9 @@ public class BulkInsertClientTest extends RemoteClientTest {
         } catch (IllegalStateException e) {
           //ok
         }
-
       }
     }
   }
-
-
 
   public static class User {
     private String id;

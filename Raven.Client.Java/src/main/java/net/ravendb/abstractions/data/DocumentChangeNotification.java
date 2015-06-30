@@ -19,14 +19,14 @@ public class DocumentChangeNotification extends EventArgs {
   }
 
   /**
-   * Type of change that occured on document.
+   * Type of change that occurred on document.
    */
   public DocumentChangeTypes getType() {
     return type;
   }
 
   /**
-   * Type of change that occured on document.
+   * Type of change that occurred on document.
    * @param type
    */
   public void setType(DocumentChangeTypes type) {

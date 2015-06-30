@@ -1,6 +1,6 @@
 package net.ravendb.client.spatial;
 
-import net.ravendb.abstractions.data.Constants;
+import net.ravendb.abstractions.data.SpatialIndexQuery;
 import net.ravendb.abstractions.indexing.SpatialOptions.SpatialRelation;
 
 public class SpatialCriteriaFactory {
@@ -29,10 +29,17 @@ public class SpatialCriteriaFactory {
     return relatesToShape(shape, SpatialRelation.WITHIN);
   }
 
+  /**
+   * Order of parameters in this method is inconsistent with the rest of the API (x = longitude, y = latitude). Please use 'WithinRadius'.
+   */
   @SuppressWarnings("boxing")
+  @Deprecated
   public SpatialCriteria withinRadiusOf(double radius, double x, double y) {
-    String circle = String.format(Constants.getDefaultLocale(), "Circle(%.6f %.6f d=%.6f)", x, y, radius);
-    return relatesToShape(circle, SpatialRelation.WITHIN);
+    return relatesToShape(SpatialIndexQuery.getQueryShapeFromLatLon(y, x, radius), SpatialRelation.WITHIN);
+  }
+
+  public SpatialCriteria withinRadius(double radius, double latitude, double longitude) {
+    return relatesToShape(SpatialIndexQuery.getQueryShapeFromLatLon(latitude, longitude, radius), SpatialRelation.WITHIN);
   }
 
 }

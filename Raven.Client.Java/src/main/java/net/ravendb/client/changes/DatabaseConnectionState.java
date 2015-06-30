@@ -7,23 +7,21 @@ import net.ravendb.abstractions.basic.EventHelper;
 import net.ravendb.abstractions.basic.ExceptionEventArgs;
 import net.ravendb.abstractions.closure.Action0;
 import net.ravendb.abstractions.closure.Action1;
-import net.ravendb.abstractions.data.BulkInsertChangeNotification;
-import net.ravendb.abstractions.data.DocumentChangeNotification;
-import net.ravendb.abstractions.data.IndexChangeNotification;
-import net.ravendb.abstractions.data.ReplicationConflictNotification;
-import net.ravendb.abstractions.data.TransformerChangeNotification;
-
+import net.ravendb.abstractions.data.*;
 
 
 public class DatabaseConnectionState implements IChangesConnectionState {
   private final Action0 onZero;
   private int value;
 
+  private Action1<DatabaseConnectionState> ensureConnection;
+
   private List<Action1<DocumentChangeNotification>> onDocumentChangeNotification = new ArrayList<>();
   private List<Action1<BulkInsertChangeNotification>> onBulkInsertChangeNotification = new ArrayList<>();
   private List<Action1<IndexChangeNotification>> onIndexChangeNotification = new ArrayList<>();
   private List<Action1<TransformerChangeNotification>> onTransformerChangeNotification = new ArrayList<>();
   private List<Action1<ReplicationConflictNotification>> onReplicationConflictNotification = new ArrayList<>();
+  private List<Action1<DataSubscriptionChangeNotification>> onDataSubscriptionNotification = new ArrayList<>();
 
   private List<Action1<ExceptionEventArgs>> onError = new ArrayList<>();
 
@@ -46,6 +44,10 @@ public class DatabaseConnectionState implements IChangesConnectionState {
 
   public List<Action1<ReplicationConflictNotification>> getOnReplicationConflictNotification() {
     return onReplicationConflictNotification;
+  }
+
+  public List<Action1<DataSubscriptionChangeNotification>> getOnDataSubscriptionNotification() {
+    return onDataSubscriptionNotification;
   }
 
   public List<Action1<ExceptionEventArgs>> getOnError() {
@@ -72,20 +74,26 @@ public class DatabaseConnectionState implements IChangesConnectionState {
     EventHelper.invoke(onBulkInsertChangeNotification, bulkInsertChangeNotification);
   }
 
+  public void send(DataSubscriptionChangeNotification dataSubscriptionChangeNotification) {
+    EventHelper.invoke(onDataSubscriptionNotification, dataSubscriptionChangeNotification);
+  }
+
   @Override
   public void error(Exception e) {
     EventHelper.invoke(onError, new ExceptionEventArgs(e));
   }
 
-  public DatabaseConnectionState(Action0 onZero) {
+  public DatabaseConnectionState(Action0 onZero, Action1<DatabaseConnectionState> ensureConnection) {
     value =0;
     this.onZero = onZero;
+    this.ensureConnection = ensureConnection;
   }
 
   @Override
   public void inc() {
     synchronized (this) {
-      value++;
+      if (++value == 1)
+        ensureConnection.apply(this);
     }
   }
 

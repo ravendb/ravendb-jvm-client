@@ -12,7 +12,6 @@ import java.util.regex.Pattern;
 import net.ravendb.abstractions.closure.Function1;
 import net.ravendb.abstractions.data.Constants;
 import net.ravendb.abstractions.extensions.ExpressionExtensions;
-import net.ravendb.client.ITransactionalDocumentSession;
 
 import org.apache.commons.beanutils.ConvertUtils;
 import org.apache.commons.lang.StringUtils;
@@ -111,10 +110,10 @@ public class DefaultShardResolutionStrategy implements IShardResolutionStrategy 
    * Generate a shard id for the specified entity
    */
   @Override
-  public String generateShardIdFor(Object entity, ITransactionalDocumentSession sessionMetadata) {
+  public String generateShardIdFor(Object entity, Object owner) {
     if (shardResultToStringByType.isEmpty()) {
       // one shard per session
-      return shardIds.get(sessionMetadata.hashCode() % shardIds.size());
+      return shardIds.get(owner.hashCode() % shardIds.size());
     }
 
     Function1<Object, String> func = shardResultToStringByType.get(entity.getClass());

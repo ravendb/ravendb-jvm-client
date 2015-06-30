@@ -36,10 +36,10 @@ import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.ArrayUtils;
 import org.apache.http.Header;
 import org.apache.http.HttpEntity;
-import org.apache.http.HttpResponse;
 
 import de.undercouch.bson4jackson.BsonFactory;
 import de.undercouch.bson4jackson.BsonGenerator;
+import org.apache.http.client.methods.CloseableHttpResponse;
 
 
 public class RemoteBulkInsertOperation implements ILowLevelBulkInsertOperation, IObserver<BulkInsertChangeNotification> {
@@ -90,11 +90,13 @@ public class RemoteBulkInsertOperation implements ILowLevelBulkInsertOperation, 
     this.report = report;
   }
 
-
-
   public RemoteBulkInsertOperation(BulkInsertOptions options, ServerClient client, IDatabaseChanges changes) {
+    this(options, client, changes, null);
+  }
+
+  public RemoteBulkInsertOperation(BulkInsertOptions options, ServerClient client, IDatabaseChanges changes, UUID existingOperationId) {
     this.options = options;
-    operationId = UUID.randomUUID();
+    operationId = existingOperationId != null ? existingOperationId : UUID.randomUUID();
     operationClient = client;
     queue = new ArrayBlockingQueue<>(Math.max(128, (options.getBatchSize() * 3) / 2));
 
@@ -191,7 +193,7 @@ public class RemoteBulkInsertOperation implements ILowLevelBulkInsertOperation, 
       public void run() {
         try (HttpJsonRequest operationRequest = createOperationRequest(operationUrl, tokenToPass)) {
           CancellationToken cancellationToken = createCancellationToken();
-          HttpResponse response = operationRequest.executeRawRequest(new BulkInsertEntity(options, cancellationToken));
+          CloseableHttpResponse response = operationRequest.executeRawRequest(new BulkInsertEntity(options, cancellationToken));
 
           HttpJsonRequestExtension.assertNotFailingResponse(response);
           long operationId;

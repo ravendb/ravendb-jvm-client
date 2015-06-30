@@ -6,6 +6,10 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
+import net.ravendb.abstractions.closure.Action1;
+import net.ravendb.abstractions.connection.ErrorResponseException;
+import net.ravendb.abstractions.data.*;
+import net.ravendb.client.utils.Observers;
 import org.apache.commons.lang.StringUtils;
 import org.apache.http.HttpStatus;
 import org.apache.http.client.methods.CloseableHttpResponse;
@@ -19,16 +23,9 @@ import net.ravendb.abstractions.basic.VoidArgs;
 import net.ravendb.abstractions.closure.Action0;
 import net.ravendb.abstractions.closure.Function1;
 import net.ravendb.abstractions.closure.Predicate;
-import net.ravendb.abstractions.data.BulkInsertChangeNotification;
-import net.ravendb.abstractions.data.Constants;
-import net.ravendb.abstractions.data.DocumentChangeNotification;
-import net.ravendb.abstractions.data.DocumentChangeTypes;
-import net.ravendb.abstractions.data.Etag;
-import net.ravendb.abstractions.data.HttpMethods;
-import net.ravendb.abstractions.data.SubscriptionConnectionOptions;
 import net.ravendb.abstractions.exceptions.OperationCancelledException;
 import net.ravendb.abstractions.exceptions.subscriptions.SubscriptionClosedException;
-import net.ravendb.abstractions.exceptions.subscriptions.SubscriptionDoesNotExistExeption;
+import net.ravendb.abstractions.exceptions.subscriptions.SubscriptionDoesNotExistException;
 import net.ravendb.abstractions.exceptions.subscriptions.SubscriptionException;
 import net.ravendb.abstractions.exceptions.subscriptions.SubscriptionInUseException;
 import net.ravendb.abstractions.json.linq.RavenJObject;
@@ -70,6 +67,7 @@ public class Subscription<T> implements IObservable<T>, CleanCloseable {
   private boolean completed;
   private final long id;
   private final Class<T> clazz;
+  private CleanCloseable dataSubscriptionReleasedObserver;
   private boolean disposed;
 
   private EventHandler<VoidArgs> eventHandler;
@@ -77,11 +75,15 @@ public class Subscription<T> implements IObservable<T>, CleanCloseable {
   private List<EventHandler<VoidArgs>> beforeBatch = new ArrayList<>();
   private List<EventHandler<VoidArgs>> afterBatch = new ArrayList<>();
 
-  private boolean errored;
-  private boolean closed;
+  private boolean isErroredBecauseOfSubscriber;
+  private Exception lastSubscriberException;
+  private Exception subscriptionConnectionException;
+  private boolean connectionClosed;
   private boolean firstConnection = true;
 
-  Subscription(Class<T> clazz, long id, final String database, SubscriptionConnectionOptions options, final IDatabaseCommands commands, IDatabaseChanges changes, final DocumentConvention conventions, Action0 ensureOpenSubscription) {
+  Subscription(Class<T> clazz, long id, final String database, SubscriptionConnectionOptions options,
+               final IDatabaseCommands commands, IDatabaseChanges changes, final DocumentConvention conventions,
+               final boolean open, Action0 ensureOpenSubscription) {
     this.clazz = clazz;
     this.id = id;
     this.options = options;
@@ -102,6 +104,21 @@ public class Subscription<T> implements IObservable<T>, CleanCloseable {
       isStronglyTyped = false;
     }
 
+    if (open) {
+      start();
+    } else {
+      if (options.getStrategy() != SubscriptionOpeningStrategy.WAIT_FOR_FREE) {
+        throw new IllegalStateException("Subscription isn't open while its opening strategy is: " + options.getStrategy());
+      }
+    }
+
+    if (options.getStrategy() == SubscriptionOpeningStrategy.WAIT_FOR_FREE) {
+      waitForSubscriptionReleased();
+    }
+
+  }
+
+  private void start() {
     startWatchingDocs();
     startPullingTask = startPullingDocs();
   }
@@ -123,17 +140,10 @@ public class Subscription<T> implements IObservable<T>, CleanCloseable {
   }
 
   /**
-   * It indicates if the subscription is in errored state.
-   */
-  public boolean isErrored() {
-    return errored;
-  }
-
-  /**
    * It determines if the subscription is closed.
    */
-  public boolean isClosed() {
-    return closed;
+  public boolean isConnectionClosed() {
+    return connectionClosed;
   }
 
   private Thread startPullingTask;
@@ -142,106 +152,134 @@ public class Subscription<T> implements IObservable<T>, CleanCloseable {
   private Closeable endedBulkInsertsObserver;
   private Etag lastProcessedEtagOnServer = null;
 
+  /**
+   * @return It indicates if the subscription is in errored state because one of subscribers threw an exception.
+     */
+  public boolean isErroredBecauseOfSubscriber() {
+    return isErroredBecauseOfSubscriber;
+  }
+
+  /**
+   *  The last subscription connection exception.
+     */
+  public Exception getSubscriptionConnectionException() {
+    return subscriptionConnectionException;
+  }
+
+  /**
+   * The last exception thrown by one of subscribers.
+     */
+  public Exception getLastSubscriberException() {
+    return lastSubscriberException;
+  }
+
   @SuppressWarnings({"boxing", "unchecked"})
   private void pullDocuments() throws IOException, InterruptedException {
-    while (true) {
-      anySubscriber.waitOne();
+    try {
+      while (true) {
+        anySubscriber.waitOne();
 
-      cts.getToken().throwIfCancellationRequested();
+        cts.getToken().throwIfCancellationRequested();
 
-      boolean pulledDocs = false;
-      lastProcessedEtagOnServer = null;
-      try (HttpJsonRequest subscriptionRequest = createPullingRequest()) {
-        try (CloseableHttpResponse response = subscriptionRequest.executeRawResponse()) {
-          HttpJsonRequestExtension.assertNotFailingResponse(response);
+        boolean pulledDocs = false;
+        lastProcessedEtagOnServer = null;
+        try (HttpJsonRequest subscriptionRequest = createPullingRequest()) {
+          try (CloseableHttpResponse response = subscriptionRequest.executeRawResponse()) {
+            HttpJsonRequestExtension.assertNotFailingResponse(response);
 
-          try (RavenJObjectIterator streamedDocs = ServerClient.yieldStreamResults(response, 0, Integer.MAX_VALUE, null, new Function1<JsonParser, Boolean>() {
-            @SuppressWarnings({"synthetic-access"})
-            @Override
-            public Boolean apply(JsonParser reader) {
-              try {
-                if (!"LastProcessedEtag".equals(reader.getText())) {
-                  return false;
-                }
-                if (reader.nextToken() == null) {
-                  errored = true;
-                  return false;
-                }
-                lastProcessedEtagOnServer = Etag.parse(reader.getText());
-                return true;
-              } catch (IOException e ) {
-                errored = true;
-                return false;
-              }
-            }
-          })) {
-            while (streamedDocs.hasNext()) {
-              if (pulledDocs == false) {
-                EventHelper.invoke(beforeBatch, this, EventArgs.EMPTY);
-              }
-              pulledDocs = true;
-
-              cts.getToken().throwIfCancellationRequested();
-
-              RavenJObject jsonDoc = streamedDocs.next();
-              T instance = null;
-              for (IObserver<T> subscriber : subscribers) {
+            try (RavenJObjectIterator streamedDocs = ServerClient.yieldStreamResults(response, 0, Integer.MAX_VALUE, null, new Function1<JsonParser, Boolean>() {
+              @SuppressWarnings({"synthetic-access"})
+              @Override
+              public Boolean apply(JsonParser reader) {
                 try {
-                  if (isStronglyTyped) {
-                    if (instance == null) {
-                      instance = conventions.createSerializer().deserialize(jsonDoc.toString(), clazz);
-                      String docId = jsonDoc.get(Constants.METADATA).value(String.class, "@id");
-                      if (StringUtils.isNotEmpty(docId)) {
-                        generateEntityIdOnTheClient.trySetIdentity(instance, docId);
-                      }
-                    }
-                    subscriber.onNext(instance);
-                  } else {
-                    subscriber.onNext((T) jsonDoc);
+                  if (!"LastProcessedEtag".equals(reader.getText())) {
+                    return false;
                   }
-                } catch (Exception ex) {
-                  logger.warnException("Subscriber threw an exception", ex);
-                  if (options.isIgnoreSubscribersErrors() == false) {
-                    errored = true;
-                    try {
-                      subscriber.onError(ex);
-                    } catch (Exception e) {
-                      // can happen if a subscriber doesn't have an onError handler - just ignore it
-                    }
-                    break;
+                  if (reader.nextToken() == null) {
+                    return false;
                   }
+                  lastProcessedEtagOnServer = Etag.parse(reader.getText());
+                  return true;
+                } catch (IOException e) {
+                  return false;
                 }
               }
-              if (errored) {
-                break;
+            })) {
+              while (streamedDocs.hasNext()) {
+                if (pulledDocs == false) {
+                  EventHelper.invoke(beforeBatch, this, EventArgs.EMPTY);
+                }
+                pulledDocs = true;
+
+                cts.getToken().throwIfCancellationRequested();
+
+                RavenJObject jsonDoc = streamedDocs.next();
+                T instance = null;
+                for (IObserver<T> subscriber : subscribers) {
+                  try {
+                    if (isStronglyTyped) {
+                      if (instance == null) {
+                        instance = conventions.createSerializer().deserialize(jsonDoc.toString(), clazz);
+                        String docId = jsonDoc.get(Constants.METADATA).value(String.class, "@id");
+                        if (StringUtils.isNotEmpty(docId)) {
+                          generateEntityIdOnTheClient.trySetIdentity(instance, docId);
+                        }
+                      }
+                      subscriber.onNext(instance);
+                    } else {
+                      subscriber.onNext((T) jsonDoc);
+                    }
+                  } catch (Exception ex) {
+                    logger.warnException("Subscriber threw an exception", ex);
+                    if (options.isIgnoreSubscribersErrors() == false) {
+                      isErroredBecauseOfSubscriber = true;
+                      lastSubscriberException = ex;
+                      try {
+                        subscriber.onError(ex);
+                      } catch (Exception e) {
+                        // can happen if a subscriber doesn't have an onError handler - just ignore it
+                      }
+                      break;
+                    }
+                  }
+                }
+                if (isErroredBecauseOfSubscriber) {
+                  break;
+                }
               }
             }
           }
-        }
 
-        if (errored) {
-          break;
-        }
-        if (pulledDocs) {
-          try (HttpJsonRequest acknowledgmentRequest = createAcknowledgmentRequest(lastProcessedEtagOnServer)) {
-            try {
-              acknowledgmentRequest.executeRequest();
-            } catch (Exception e) {
-              if (acknowledgmentRequest.getResponseStatusCode() != HttpStatus.SC_REQUEST_TIMEOUT) // ignore acknowledgment timeouts
-                throw e;
+          if (isErroredBecauseOfSubscriber) {
+            break;
+          }
+          if (pulledDocs) {
+            try (HttpJsonRequest acknowledgmentRequest = createAcknowledgmentRequest(lastProcessedEtagOnServer)) {
+              try {
+                acknowledgmentRequest.executeRequest();
+              } catch (Exception e) {
+                if (acknowledgmentRequest.getResponseStatusCode() != HttpStatus.SC_REQUEST_TIMEOUT) // ignore acknowledgment timeouts
+                  throw e;
+              }
             }
+
+            EventHelper.invoke(afterBatch, this, EventArgs.EMPTY);
+            continue; // try to pull more documents from subscription
           }
 
-          EventHelper.invoke(afterBatch, this, EventArgs.EMPTY);
-          continue; // try to pull more documents from subscription
-        }
-
-        while (newDocuments.waitOne(options.getClientAliveNotificationInterval(), TimeUnit.MILLISECONDS) == false) {
-          try (HttpJsonRequest clientAliveRequest = createClientAliveRequest()) {
-            clientAliveRequest.executeRequest();
+          while (newDocuments.waitOne(options.getClientAliveNotificationInterval(), TimeUnit.MILLISECONDS) == false) {
+            try (HttpJsonRequest clientAliveRequest = createClientAliveRequest()) {
+              clientAliveRequest.executeRequest();
+            }
           }
         }
       }
+    } catch (ErrorResponseException e) {
+      SubscriptionException subscriptionException = DocumentSubscriptions.tryGetSubscriptionException(e);
+      if (subscriptionException != null) {
+        throw subscriptionException;
+      }
+      throw e;
     }
   }
 
@@ -251,32 +289,26 @@ public class Subscription<T> implements IObservable<T>, CleanCloseable {
       @Override
       public void run() {
         try {
+          subscriptionConnectionException = null;
           pullDocuments();
         } catch (Exception ex) {
           if (cts.getToken().isCancellationRequested()) {
             return;
           }
 
-          if (ex instanceof SubscriptionException) {
-            SubscriptionException subscriptionEx = DocumentSubscriptions.tryGetSubscriptionException(ex);
-            if (subscriptionEx != null && subscriptionEx instanceof SubscriptionClosedException) {
-              // someone forced us to drop the connection by calling subscriptions.release
-              onCompletedNotification();
-              closed = true;
-              return;
-            }
+          if (tryHandleRejectedConnection(ex, false)) {
+            return;
           }
 
           restartPullingTask();
         }
 
-        if (errored) {
-          onCompletedNotification();
-
+        if (isErroredBecauseOfSubscriber) {
           try {
-            closeSubscription();
+            startPullingTask = null; // prevent from calling Wait() on this in Dispose because we are already inside this task
+            close();
           } catch (Exception e) {
-            logger.warnException("Exception happened during an attempt to close subscription after it becomes faulted", e);
+            logger.warnException("Exception happened during an attempt to close subscription after it had become faulted", e);
           }
         }
       }
@@ -291,13 +323,11 @@ public class Subscription<T> implements IObservable<T>, CleanCloseable {
     boolean connected = false;
     while (!connected) {
       try {
-        Thread.sleep(15000);
+        Thread.sleep(options.getTimeToWaitBeforeConnectionRetry());
         ensureOpenSubscription.apply();
         connected = true;
       } catch (Exception ex) {
-        if (ex instanceof SubscriptionInUseException || ex instanceof SubscriptionDoesNotExistExeption) {
-          // another client has connected to the subscription or it has been deleted meanwhile - we cannot open it so we need to finish
-          onCompletedNotification();
+        if (tryHandleRejectedConnection(ex, true)) {
           return;
         }
       }
@@ -305,8 +335,21 @@ public class Subscription<T> implements IObservable<T>, CleanCloseable {
     startPullingTask = startPullingDocs();
   }
 
+  private boolean tryHandleRejectedConnection(Exception ex, boolean handleClosedException) {
+    subscriptionConnectionException = ex;
+    if (ex instanceof SubscriptionInUseException ||  // another client has connected to the subscription
+            ex instanceof  SubscriptionDoesNotExistException ||  // subscription has been deleted meanwhile
+            (handleClosedException && ex instanceof SubscriptionClosedException)) { // someone forced us to drop the connection by calling Subscriptions.Release
+      connectionClosed = true;
+      startPullingTask = null;  // prevent from calling wait() on this in close
+      close();
+      return true;
+    }
+    return false;
+  }
+
   private void startWatchingDocs() {
-     eventHandler = new EventHandler<VoidArgs>() {
+    eventHandler = new EventHandler<VoidArgs>() {
       @SuppressWarnings("synthetic-access")
       @Override
       public void handle(Object sender, VoidArgs event) {
@@ -334,13 +377,33 @@ public class Subscription<T> implements IObservable<T>, CleanCloseable {
     });
   }
 
+  private void waitForSubscriptionReleased() {
+    IObservable<DataSubscriptionChangeNotification> dataSubscriptionObservable = changes.forDataSubscription(id);
+    dataSubscriptionReleasedObserver = dataSubscriptionObservable.subscribe(new Observers.ActionBasedObserver<>(new Action1<DataSubscriptionChangeNotification>() {
+      @Override
+      public void apply(DataSubscriptionChangeNotification notification) {
+        if (notification.getType() == DataSubscriptionChangeTypes.SUBSCRIPTION_RELEASED) {
+          try {
+            ensureOpenSubscription.apply();
+          } catch (Exception e) {
+            return ;
+          }
+
+          // succeeded in opening the subscription
+
+          // no longer need to be notified about subscription status changes
+          dataSubscriptionReleasedObserver.close();
+          dataSubscriptionReleasedObserver = null;
+
+          // start standard stuff
+          start();
+        }
+      }
+    }));
+  }
+
   @SuppressWarnings("unused")
   private void changesApiConnectionChanged(Object sender, EventArgs e) {
-    if (firstConnection) {
-      firstConnection = false;
-      return;
-    }
-
     RemoteDatabaseChanges changesApi = (RemoteDatabaseChanges) sender;
     if (changesApi.isConnected()){
       newDocuments.set();
@@ -349,7 +412,7 @@ public class Subscription<T> implements IObservable<T>, CleanCloseable {
 
   @Override
   public CleanCloseable subscribe(final IObserver<T> observer) {
-    if (errored) {
+    if (isErroredBecauseOfSubscriber) {
       throw new IllegalStateException("Subscription encountered errors and stopped. Cannot add any subscriber.");
     }
 
@@ -421,6 +484,8 @@ public class Subscription<T> implements IObservable<T>, CleanCloseable {
 
       Closeables.closeQuietly(endedBulkInsertsObserver);
 
+      Closeables.closeQuietly(dataSubscriptionReleasedObserver);
+
       if (changes instanceof CleanCloseable) {
         Closeable closeableChanges = (Closeable) changes;
         Closeables.closeQuietly(closeableChanges);
@@ -436,13 +501,15 @@ public class Subscription<T> implements IObservable<T>, CleanCloseable {
       }
 
       try {
-        startPullingTask.join();
+        if (startPullingTask != null) {
+          startPullingTask.join();
+        }
       } catch (OperationCancelledException e) {
         //ignore
       } catch (InterruptedException e) {
         // ignore
       }
-      if (!closed) {
+      if (!connectionClosed) {
         closeSubscription();
       }
     }
@@ -450,7 +517,7 @@ public class Subscription<T> implements IObservable<T>, CleanCloseable {
     private void closeSubscription() {
       try (HttpJsonRequest closeRequest = createCloseRequest()) {
         closeRequest.executeRequest();
-        closed = true;
+        connectionClosed = true;
       }
     }
 

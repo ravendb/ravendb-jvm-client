@@ -806,7 +806,7 @@ public class HttpJsonRequest implements CleanCloseable {
     this.responseHeaders = responseHeaders;
   }
 
-  public HttpResponse executeRawRequest(final BulkInsertEntity bulkInsertEntity) {
+  public CloseableHttpResponse executeRawRequest(final BulkInsertEntity bulkInsertEntity) {
     return runWithAuthRetry(new Function0<CloseableHttpResponse>() {
       @SuppressWarnings({"synthetic-access"})
       @Override

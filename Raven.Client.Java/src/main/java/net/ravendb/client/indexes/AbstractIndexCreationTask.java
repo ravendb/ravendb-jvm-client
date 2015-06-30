@@ -180,11 +180,8 @@ public class AbstractIndexCreationTask extends AbstractCommonApiForIndexesAndTra
 
   @SuppressWarnings({"static-method", "unused"})
   private boolean currentOrLegacyIndexDefinitionEquals(DocumentConvention documentConvention, IndexDefinition serverDef, IndexDefinition indexDefinition) {
-    if (serverDef.equals(indexDefinition)) {
-      return true;
-    }
-    return false;
     // in java we don't support pretty printing
+    return serverDef.equals(indexDefinition);
   }
 
   /**

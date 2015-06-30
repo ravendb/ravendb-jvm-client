@@ -49,7 +49,7 @@ public class GetRequest {
   }
 
   /**
-   * Query information e.g. "?pageStart=10&pageSize=20".
+   * Query information e.g. "?pageStart=10&amp;pageSize=20".
    */
   public String getQuery() {
     return query;

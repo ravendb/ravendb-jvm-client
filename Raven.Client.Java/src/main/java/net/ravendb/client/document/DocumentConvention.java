@@ -424,9 +424,9 @@ public class DocumentConvention extends Convention implements Serializable {
 
   /**
    * Generates the document key.
-   * @param dbName
-   * @param databaseCommands
-   * @param entity
+   * @param dbName Name of the database
+   * @param databaseCommands Low level database commands.
+   * @param entity The entity.
    */
   public String generateDocumentKey(String dbName, IDatabaseCommands databaseCommands, Object entity) {
     Class<?> type = entity.getClass();
