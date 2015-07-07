@@ -1,10 +1,10 @@
 package net.ravendb.client.indexes;
 
-import java.util.HashSet;
-import java.util.Set;
-
 import net.ravendb.abstractions.indexing.IndexDefinition;
 import net.ravendb.client.document.DocumentConvention;
+
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * Allow to create indexes with multiple maps
@@ -40,7 +40,7 @@ public class AbstractMultiMapIndexCreationTask extends AbstractIndexCreationTask
     builder.setReduce(reduce);
     builder.setStores(stores);
     builder.setStoresStrings(storesStrings);
-    builder.setSuggestions(indexSuggestions);
+    builder.setSuggestionsOptions(indexSuggestionsOptions);
     builder.setTermVectors(termVectors);
     builder.setTermVectorsStrings(termVectorsStrings);
     builder.setSpatialIndexes(spatialIndexes);

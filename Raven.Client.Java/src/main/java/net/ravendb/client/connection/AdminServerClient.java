@@ -33,12 +33,6 @@ public class AdminServerClient implements IAdminDatabaseCommands, IGlobalAdminDa
       public HttpJsonRequest apply(String url, HttpMethods method) {
         return ((ServerClient)innerServerClient.forSystemDatabase()).createRequest(method, url);
       }
-    }, new Function2<String, HttpMethods, HttpJsonRequest>() {
-
-      @Override
-      public HttpJsonRequest apply(String url, HttpMethods method) {
-        return innerServerClient.createRequest(method, url);
-      }
     }, new Function3<String, String, HttpMethods, HttpJsonRequest>() {
 
       @Override

@@ -1,22 +1,16 @@
 package net.ravendb.client.shard;
 
-import java.lang.reflect.Field;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-
+import com.mysema.query.types.Path;
 import net.ravendb.abstractions.closure.Function1;
 import net.ravendb.abstractions.data.Constants;
 import net.ravendb.abstractions.extensions.ExpressionExtensions;
-
 import org.apache.commons.beanutils.ConvertUtils;
 import org.apache.commons.lang.StringUtils;
 
-import com.mysema.query.types.Path;
+import java.lang.reflect.Field;
+import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class DefaultShardResolutionStrategy implements IShardResolutionStrategy {
 
@@ -134,6 +128,14 @@ public class DefaultShardResolutionStrategy implements IShardResolutionStrategy 
   }
 
   /**
+   * Selects the shard ids appropriate for the specified data.
+   * @return Return a list of shards ids that will be search. Returning null means search all shards.
+     */
+  public List<String> potentialShardsFor(ShardRequestData requestData, List<String> potentialShardsIds) {
+    return potentialShardsIds;
+  }
+
+  /**
    *  Selects the shard ids appropriate for the specified data.
    *  @return Return a list of shards ids that will be search. Returning null means search all shards.
    */
@@ -142,7 +144,7 @@ public class DefaultShardResolutionStrategy implements IShardResolutionStrategy 
     if (requestData.getQuery() != null) {
       Pattern regex = regexToCaptureShardIdFromQueriesByType.get(requestData.getEntityType());
       if (regex == null) {
-        return null; // we have no special knowledge, let us just query everything
+        return potentialShardsFor(requestData, null); // we have no special knowledge, let us just query everything
       }
 
       Matcher collection = regex.matcher(requestData.getQuery().getQuery());
@@ -158,19 +160,19 @@ public class DefaultShardResolutionStrategy implements IShardResolutionStrategy 
       }
 
       if (potentialShardsFor.size() == 0) {
-        return null;
+        return potentialShardsFor(requestData, null);
       }
 
       for (String queryShardId : potentialShardsFor) {
         if (!shardIds.contains(queryShardId)) {
-          return null; // we couldn't find the shard ids here, maybe there is something wrong in the query, sending to all shards
+          return potentialShardsFor(requestData, null); // we couldn't find the shard ids here, maybe there is something wrong in the query, sending to all shards
         }
       }
-      return potentialShardsFor;
+      return potentialShardsFor(requestData, potentialShardsFor);
     }
 
     if (requestData.getKeys().isEmpty()) { // we are only optimized for keys
-      return null;
+      return potentialShardsFor(requestData, null);
     }
 
     // we are looking for search by key, let us see if we can narrow it down by using the
@@ -179,15 +181,15 @@ public class DefaultShardResolutionStrategy implements IShardResolutionStrategy 
     for (String key: requestData.getKeys()) {
       int start = key.toLowerCase().indexOf(shardStrategy.getConventions().getIdentityPartsSeparator().toLowerCase());
       if (start == -1) {
-        return null; //if we couldn't figure it out, select from all
+        return potentialShardsFor(requestData, null); //if we couldn't figure it out, select from all
       }
       String maybeShardId = key.substring(0, start);
       if (shardIds.contains(maybeShardId)) {
         list.add(maybeShardId);
       } else {
-        return null; // we couldn't find it there, select from all
+        return potentialShardsFor(requestData, null); // we couldn't find it there, select from all
       }
     }
-    return list;
+    return potentialShardsFor(requestData, list);
   }
 }

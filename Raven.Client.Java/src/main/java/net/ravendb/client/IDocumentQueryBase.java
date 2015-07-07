@@ -1,8 +1,8 @@
 package net.ravendb.client;
 
-import java.util.Collection;
-import java.util.Date;
-
+import com.mysema.query.types.Expression;
+import com.mysema.query.types.Path;
+import com.mysema.query.types.path.ListPath;
 import net.ravendb.abstractions.basic.Reference;
 import net.ravendb.abstractions.closure.Action1;
 import net.ravendb.abstractions.closure.Function1;
@@ -15,9 +15,8 @@ import net.ravendb.abstractions.indexing.SpatialOptions.SpatialUnits;
 import net.ravendb.abstractions.json.linq.RavenJObject;
 import net.ravendb.client.document.DocumentConvention;
 
-import com.mysema.query.types.Expression;
-import com.mysema.query.types.Path;
-import com.mysema.query.types.path.ListPath;
+import java.util.Collection;
+import java.util.Date;
 
 
 /**
@@ -300,12 +299,40 @@ public interface IDocumentQueryBase<T, TSelf extends IDocumentQueryBase<T, TSelf
   public TSelf proximity (int proximity);
 
   /**
+   * Order the search results in alphanumeric order
+   * @param fieldName  The order by field name
+     */
+  TSelf alphaNumericOrdering(String fieldName);
+
+  /**
+   * Order the search results in alphanumeric order
+   * @param fieldName  The order by field name
+   * @param descending Descending?
+   */
+  TSelf alphaNumericOrdering(String fieldName, boolean descending);
+
+  /**
+   * Order the search results in alphanumeric order
+   * @param propertySelector Property selector for the field.
+   * @return
+   */
+  TSelf alphaNumericOrdering(Expression<?> propertySelector);
+
+  /**
+   * Order the search results in alphanumeric order
+   * @param propertySelector Property selector for the field.
+   * @param descending Descending?
+   * @return
+     */
+  TSelf alphaNumericOrdering(Expression<?> propertySelector, boolean descending);
+
+  /**
    * Filter matches to be inside the specified radius
    * @param radius The radius.
    * @param latitude The latitude.
    * @param longitude The longitude.
    */
-  public TSelf withinRadiusOf(double radius, double latitude, double longitude);
+  TSelf withinRadiusOf(double radius, double latitude, double longitude);
 
   /**
    * Filter matches to be inside the specified radius
@@ -314,7 +341,7 @@ public interface IDocumentQueryBase<T, TSelf extends IDocumentQueryBase<T, TSelf
    * @param longitude The longitude.
    * @param radiusUnits The unit of the radius.
    */
-  public TSelf withinRadiusOf(double radius, double latitude, double longitude, SpatialUnits radiusUnits);
+  TSelf withinRadiusOf(double radius, double latitude, double longitude, SpatialUnits radiusUnits);
 
   /**
    * Filter matches to be inside the specified radius
@@ -333,7 +360,7 @@ public interface IDocumentQueryBase<T, TSelf extends IDocumentQueryBase<T, TSelf
    * @param longitude The longitude.
    * @param radiusUnits The unit of the radius.
    */
-  public TSelf withinRadiusOf(String fieldName, double radius, double latitude, double longitude, SpatialUnits radiusUnits);
+  TSelf withinRadiusOf(String fieldName, double radius, double latitude, double longitude, SpatialUnits radiusUnits);
 
   /**
    * Filter matches based on a given shape - only documents with the shape defined in fieldName that
@@ -605,9 +632,21 @@ public interface IDocumentQueryBase<T, TSelf extends IDocumentQueryBase<T, TSelf
   /**
    * Adds an ordering for a specific field to the query
    * @param fieldName Name of the field.
+   */
+  public TSelf addOrder(String fieldName);
+
+  /**
+   * Adds an ordering for a specific field to the query
+   * @param fieldName Name of the field.
    * @param descending If set to true [descending]
    */
   public TSelf addOrder(String fieldName, boolean descending);
+
+  /**
+   * Adds an ordering for a specific field to the query
+   * @param propertySelector Property selector for the field.
+   */
+  public <TValue> TSelf addOrder(Expression<?> propertySelector);
 
   /**
    * Adds an ordering for a specific field to the query

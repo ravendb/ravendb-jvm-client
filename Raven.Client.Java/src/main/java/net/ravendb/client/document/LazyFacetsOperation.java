@@ -16,6 +16,7 @@ import net.ravendb.abstractions.data.IndexQuery;
 import net.ravendb.abstractions.data.QueryResult;
 import net.ravendb.abstractions.extensions.JsonExtensions;
 import net.ravendb.abstractions.json.linq.RavenJObject;
+import net.ravendb.client.connection.ServerClient;
 import net.ravendb.client.document.batches.ILazyOperation;
 import net.ravendb.client.shard.ShardStrategy;
 import net.ravendb.client.utils.UrlUtils;
@@ -81,7 +82,7 @@ public class LazyFacetsOperation implements ILazyOperation {
       return getRequest;
     }
 
-    String unescapedFacetsJson = JsonConvert.serializeObject(facets);
+    String unescapedFacetsJson = ServerClient.serializeFacetsToFacetsJsonString(facets);
     if (unescapedFacetsJson.length() < (32 * 1024 - 1)) {
       addition = "facets=" + UrlUtils.escapeDataString(unescapedFacetsJson);
       GetRequest getRequest = new GetRequest();

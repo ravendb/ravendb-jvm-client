@@ -4,19 +4,77 @@ package net.ravendb.abstractions.data;
  * Options used during BulkInsert execution.
  */
 public class BulkInsertOptions {
+
+
+  public enum BulkInsertCompression {
+    NONE,
+    GZIP;
+  }
+
+  public enum BulkInsertFormat {
+    BSON,
+    JSON
+  }
+
   private boolean overwriteExisting;
   private boolean checkReferencesInIndexes;
   private int batchSize;
   private int writeTimeoutMiliseconds;
   private boolean skipOverwriteIfUnchanged;
   private ChunkedBulkInsertOptions chunkedBulkInsertOptions;
+  private BulkInsertCompression compression = BulkInsertCompression.NONE;
+  private BulkInsertFormat format = BulkInsertFormat.BSON;
 
   public BulkInsertOptions() {
     batchSize = 512;
     writeTimeoutMiliseconds = 15 * 1000;
+    compression = BulkInsertCompression.GZIP;
+    format = BulkInsertFormat.BSON;
     chunkedBulkInsertOptions = new ChunkedBulkInsertOptions();
     chunkedBulkInsertOptions.setMaxDocumentsPerChunk(batchSize * 4);
     chunkedBulkInsertOptions.setMaxChunkVolumeInBytes(8 * 1024 * 1024);
+  }
+
+  /**
+   *  This specify which compression format we will use. Some are better than others and/or special purpose.
+   *   You can also disable compression altogether.
+   *
+   *   Pre v3.5 bulk inserts only support GZip compression.
+   */
+  public BulkInsertCompression getCompression() {
+    return compression;
+  }
+
+  /**
+   *  This specify which compression format we will use. Some are better than others and/or special purpose.
+   *   You can also disable compression altogether.
+   *
+   *   Pre v3.5 bulk inserts only support GZip compression.
+   */
+  public void setCompression(BulkInsertCompression compression) {
+    this.compression = compression;
+  }
+
+  /**
+   * Will specify which type of format you will send the bulk insert request. While the default is most of the
+   * times enough for you. Selecting the proper encoding for bulk inserts based on you data assumptions could give
+   * your code a performance push and/or smaller network requirements.
+   *
+   * Pre v3.5 bulk inserts only support BSON format.
+   */
+  public BulkInsertFormat getFormat() {
+    return format;
+  }
+
+  /**
+   * Will specify which type of format you will send the bulk insert request. While the default is most of the
+   * times enough for you. Selecting the proper encoding for bulk inserts based on you data assumptions could give
+   * your code a performance push and/or smaller network requirements.
+   *
+   * Pre v3.5 bulk inserts only support BSON format.
+   */
+  public void setFormat(BulkInsertFormat format) {
+    this.format = format;
   }
 
   /**

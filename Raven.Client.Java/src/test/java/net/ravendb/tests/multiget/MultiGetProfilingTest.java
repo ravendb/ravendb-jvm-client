@@ -1,11 +1,5 @@
 package net.ravendb.tests.multiget;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
-
-import java.util.UUID;
-
 import net.ravendb.abstractions.basic.CleanCloseable;
 import net.ravendb.abstractions.data.GetResponse;
 import net.ravendb.abstractions.extensions.JsonExtensions;
@@ -13,14 +7,15 @@ import net.ravendb.client.IDocumentSession;
 import net.ravendb.client.IDocumentStore;
 import net.ravendb.client.RemoteClientTest;
 import net.ravendb.client.connection.profiling.ProfilingInformation;
-import net.ravendb.client.document.DocumentQueryCustomizationFactory;
-import net.ravendb.client.document.DocumentSession;
-import net.ravendb.client.document.DocumentStore;
+import net.ravendb.client.document.*;
 import net.ravendb.client.indexes.RavenDocumentsByEntityName;
 import net.ravendb.tests.bugs.QUser;
 import net.ravendb.tests.bugs.User;
-
 import org.junit.Test;
+
+import java.util.UUID;
+
+import static org.junit.Assert.*;
 
 
 public class MultiGetProfilingTest extends RemoteClientTest {
@@ -28,7 +23,9 @@ public class MultiGetProfilingTest extends RemoteClientTest {
   @Test
   public void canProfileLazyRequests() throws Exception {
 
-    try (IDocumentStore store = new DocumentStore(getDefaultUrl(), getDefaultDb()).initialize()) {
+    try (IDocumentStore store = new DocumentStore(getDefaultUrl(), getDefaultDb())) {
+      store.getConventions().setFailoverBehavior(FailoverBehaviorSet.of(FailoverBehavior.FAIL_IMMEDIATELY));
+      store.initialize();
       ((DocumentStore) store).initializeProfiling();
       try (IDocumentSession session = store.openSession()) {
         // handle the initial request for replication information
@@ -58,7 +55,9 @@ public class MultiGetProfilingTest extends RemoteClientTest {
   @Test
   public void canProfilePartiallyCachedLazyRequest() throws Exception {
 
-    try (IDocumentStore store = new DocumentStore(getDefaultUrl(), getDefaultDb()).initialize()) {
+    try (IDocumentStore store = new DocumentStore(getDefaultUrl(), getDefaultDb())) {
+      store.getConventions().setFailoverBehavior(FailoverBehaviorSet.of(FailoverBehavior.FAIL_IMMEDIATELY));
+      store.initialize();
       ((DocumentStore) store).initializeProfiling();
       try (IDocumentSession session = store.openSession()) {
         User user1 = new User();
@@ -105,7 +104,9 @@ public class MultiGetProfilingTest extends RemoteClientTest {
   @Test
   public void canProfileFullyCached () throws Exception {
 
-    try (IDocumentStore store = new DocumentStore(getDefaultUrl(), getDefaultDb()).initialize()) {
+    try (IDocumentStore store = new DocumentStore(getDefaultUrl(), getDefaultDb())) {
+      store.getConventions().setFailoverBehavior(FailoverBehaviorSet.of(FailoverBehavior.FAIL_IMMEDIATELY));
+      store.initialize();
       ((DocumentStore) store).initializeProfiling();
       try (IDocumentSession session = store.openSession()) {
         User user1 = new User();
@@ -150,7 +151,9 @@ public class MultiGetProfilingTest extends RemoteClientTest {
 
   @Test
   public void canProfilePartiallyAggressivelyCached() throws Exception {
-    try (IDocumentStore store = new DocumentStore(getDefaultUrl(), getDefaultDb()).initialize()) {
+    try (IDocumentStore store = new DocumentStore(getDefaultUrl(), getDefaultDb())) {
+      store.getConventions().setFailoverBehavior(FailoverBehaviorSet.of(FailoverBehavior.FAIL_IMMEDIATELY));
+      store.initialize();
       ((DocumentStore) store).initializeProfiling();
       try (IDocumentSession session = store.openSession()) {
         User user1 = new User();
@@ -197,7 +200,9 @@ public class MultiGetProfilingTest extends RemoteClientTest {
 
   @Test
   public void canProfileFullyAggressivelyCached() throws Exception {
-    try (IDocumentStore store = new DocumentStore(getDefaultUrl(), getDefaultDb()).initialize()) {
+    try (IDocumentStore store = new DocumentStore(getDefaultUrl(), getDefaultDb())) {
+      store.getConventions().setFailoverBehavior(FailoverBehaviorSet.of(FailoverBehavior.FAIL_IMMEDIATELY));
+      store.initialize();
       ((DocumentStore) store).initializeProfiling();
       try (IDocumentSession session = store.openSession()) {
         User user1 = new User();
@@ -245,7 +250,9 @@ public class MultiGetProfilingTest extends RemoteClientTest {
 
   @Test
   public void canProfileErrors() throws Exception {
-    try (IDocumentStore store = new DocumentStore(getDefaultUrl(), getDefaultDb()).initialize()) {
+    try (IDocumentStore store = new DocumentStore(getDefaultUrl(), getDefaultDb())) {
+      store.getConventions().setFailoverBehavior(FailoverBehaviorSet.of(FailoverBehavior.FAIL_IMMEDIATELY));
+      store.initialize();
       ((DocumentStore) store).initializeProfiling();
       try (IDocumentSession session = store.openSession()) {
         User user1 = new User();

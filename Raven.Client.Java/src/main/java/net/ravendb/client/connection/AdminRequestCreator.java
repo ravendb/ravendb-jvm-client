@@ -17,18 +17,14 @@ import net.ravendb.client.utils.UrlUtils;
 public class AdminRequestCreator {
   //url, method
   private final Function2<String, HttpMethods, HttpJsonRequest> createRequestForSystemDatabase;
-  @SuppressWarnings("unused")
-  private final Function2<String, HttpMethods, HttpJsonRequest> createRequest;
 
   //currentServerUrl, operationUrl, method
   private final Function3<String, String, HttpMethods, HttpJsonRequest> createReplicationAwareRequest;
 
   public AdminRequestCreator(Function2<String, HttpMethods, HttpJsonRequest> createRequestForSystemDatabase,
-    Function2<String, HttpMethods, HttpJsonRequest> createRequest,
     Function3<String, String, HttpMethods, HttpJsonRequest> createReplicationAwareRequest) {
     super();
     this.createRequestForSystemDatabase = createRequestForSystemDatabase;
-    this.createRequest = createRequest;
     this.createReplicationAwareRequest = createReplicationAwareRequest;
   }
 

@@ -5,12 +5,53 @@ import java.util.Map;
 
 
 public class DatabaseMetrics {
+
+  public static class OneMinuteMetricData implements IMetricsData {
+    private int count;
+    private long min;
+    private long max;
+    private double avg;
+
+    public int getCount() {
+      return count;
+    }
+
+    public void setCount(int count) {
+      this.count = count;
+    }
+
+    public long getMin() {
+      return min;
+    }
+
+    public void setMin(long min) {
+      this.min = min;
+    }
+
+    public long getMax() {
+      return max;
+    }
+
+    public void setMax(long max) {
+      this.max = max;
+    }
+
+    public double getAvg() {
+      return avg;
+    }
+
+    public void setAvg(double avg) {
+      this.avg = avg;
+    }
+  }
+
   private double docsWritesPerSecond;
   private double indexedPerSecond;
   private double reducedPerSecond;
   private double requestsPerSecond;
   private MeterData requests;
   private HistogramData requestDuration;
+  private OneMinuteMetricData requestDurationLastMinute;
   private HistogramData staleIndexMaps;
   private HistogramData staleIndexReduces;
   private Map<String, Map<String, String>> gauges;
@@ -63,6 +104,14 @@ public class DatabaseMetrics {
     return replicationDurationMeter;
   }
 
+
+  public OneMinuteMetricData getRequestDurationLastMinute() {
+    return requestDurationLastMinute;
+  }
+
+  public void setRequestDurationLastMinute(OneMinuteMetricData requestDurationLastMinute) {
+    this.requestDurationLastMinute = requestDurationLastMinute;
+  }
 
   public void setReplicationDurationMeter(Map<String, MeterData> replicationDurationMeter) {
     this.replicationDurationMeter = replicationDurationMeter;

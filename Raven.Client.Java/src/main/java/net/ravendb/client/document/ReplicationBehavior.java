@@ -1,43 +1,51 @@
 package net.ravendb.client.document;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Date;
-import java.util.List;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
-import java.util.concurrent.TimeoutException;
-
 import net.ravendb.abstractions.basic.CleanCloseable;
 import net.ravendb.abstractions.closure.Function1;
 import net.ravendb.abstractions.connection.OperationCredentials;
 import net.ravendb.abstractions.data.DatabaseStatistics;
 import net.ravendb.abstractions.data.Etag;
 import net.ravendb.abstractions.data.HttpMethods;
-import net.ravendb.abstractions.json.linq.RavenJObject;
 import net.ravendb.abstractions.json.linq.RavenJToken;
 import net.ravendb.abstractions.logging.ILog;
 import net.ravendb.abstractions.logging.LogManager;
 import net.ravendb.abstractions.replication.ReplicatedEtagInfo;
 import net.ravendb.abstractions.replication.ReplicationDestination;
-import net.ravendb.abstractions.replication.ReplicationDocument;
-import net.ravendb.client.connection.CreateHttpJsonRequestParams;
-import net.ravendb.client.connection.IDatabaseCommands;
-import net.ravendb.client.connection.OperationMetadata;
-import net.ravendb.client.connection.RavenUrlExtensions;
-import net.ravendb.client.connection.ServerClient;
+import net.ravendb.abstractions.replication.ReplicationDocumentWithClusterInformation;
+import net.ravendb.client.connection.*;
 import net.ravendb.client.connection.implementation.HttpJsonRequest;
 import net.ravendb.client.utils.CancellationTokenSource;
 import net.ravendb.client.utils.CancellationTokenSource.CancellationToken;
 import net.ravendb.client.utils.TimeSpan;
-
 import org.apache.commons.lang.StringUtils;
+
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Date;
+import java.util.List;
+import java.util.concurrent.*;
 
 
 public class ReplicationBehavior implements CleanCloseable {
+
+  public final static class DestinationAndSourceCollections {
+    private String destination;
+    private String[] sourceCollections;
+
+    public DestinationAndSourceCollections(String destination, String[] sourceCollections) {
+      this.destination = destination;
+      this.sourceCollections = sourceCollections;
+    }
+
+    public String getDestination() {
+      return destination;
+    }
+
+    public String[] getSourceCollections() {
+      return sourceCollections;
+    }
+  }
+
   private final DocumentStore documentStore;
   private final static ILog log = LogManager.getCurrentClassLogger();
 
@@ -86,9 +94,9 @@ public class ReplicationBehavior implements CleanCloseable {
 
     databaseCommands.forceReadFromMaster();
 
-    ReplicationDocument replicationDocument = databaseCommands.executeWithReplication(HttpMethods.GET, new Function1<OperationMetadata, ReplicationDocument>() {
+    ReplicationDocumentWithClusterInformation replicationDocument = databaseCommands.executeWithReplication(HttpMethods.GET, new Function1<OperationMetadata, ReplicationDocumentWithClusterInformation>() {
       @Override
-      public ReplicationDocument apply(OperationMetadata operationMetadata) {
+      public ReplicationDocumentWithClusterInformation apply(OperationMetadata operationMetadata) {
         return databaseCommands.directGetReplicationDestinations(operationMetadata);
       }
     });
@@ -97,11 +105,11 @@ public class ReplicationBehavior implements CleanCloseable {
       return -1;
     }
 
-    List<String> destinationsToCheck = new ArrayList<>();
+    List<DestinationAndSourceCollections> destinationsToCheck = new ArrayList<>();
     for (ReplicationDestination destination : replicationDocument.getDestinations()) {
       if (!destination.getDisabled() && !destination.getIgnoredClient()) {
         String url = StringUtils.isEmpty(destination.getClientVisibleUrl()) ? destination.getUrl() : destination.getClientVisibleUrl();
-        destinationsToCheck.add(RavenUrlExtensions.forDatabase(url, destination.getDatabase()));
+        destinationsToCheck.add(new DestinationAndSourceCollections(RavenUrlExtensions.forDatabase(url, destination.getDatabase()), destination.getSourceCollections()));
       }
     }
 
@@ -122,11 +130,11 @@ public class ReplicationBehavior implements CleanCloseable {
     final String sourceDbId = sourceStatistics.getDatabaseId().toString();
 
     Collection<Callable<Void>> tasks = new ArrayList<>();
-    for (final String destination: destinationsToCheck) {
+    for (final DestinationAndSourceCollections destination: destinationsToCheck) {
       tasks.add(new Callable<Void>() {
         @Override
         public Void call() throws Exception {
-          waitForReplicationFromServer(destination, sourceUrl, sourceDbId, etagToCheck, cts.getToken());
+          waitForReplicationFromServer(destination.getDestination(), sourceUrl, sourceDbId, etagToCheck, destination.getSourceCollections(), cts.getToken());
           return null;
         }
       });
@@ -166,12 +174,13 @@ public class ReplicationBehavior implements CleanCloseable {
   }
 
   protected void waitForReplicationFromServer(String url, String sourceUrl, String sourceDbId, Etag etag,
-    CancellationToken cancellationToken) throws InterruptedException {
+                                              String[] sourceCollections, CancellationToken cancellationToken)
+          throws InterruptedException {
 
     while (true) {
       cancellationToken.throwIfCancellationRequested();
 
-      ReplicatedEtagInfo etags = getReplicatedEtagsFor(url, sourceUrl, sourceDbId);
+      ReplicatedEtagInfo etags = getReplicatedEtagsFor(url, sourceUrl, sourceDbId, sourceCollections);
 
       boolean replicated = etag.compareTo(etags.getDocumentEtag()) <= 0;
       if (replicated) {
@@ -181,11 +190,11 @@ public class ReplicationBehavior implements CleanCloseable {
     }
   }
 
-  private ReplicatedEtagInfo getReplicatedEtagsFor(String destinationUrl, String sourceUrl, String sourceDbId) {
+  private ReplicatedEtagInfo getReplicatedEtagsFor(String destinationUrl, String sourceUrl, String sourceDbId, String[] sourceCollections) {
     CreateHttpJsonRequestParams createHttpJsonRequestParams = new CreateHttpJsonRequestParams(null,
-      RavenUrlExtensions.lastReplicatedEtagFor(destinationUrl, sourceUrl, sourceDbId),
+      RavenUrlExtensions.lastReplicatedEtagFor(destinationUrl, sourceUrl, sourceDbId, sourceCollections),
       HttpMethods.GET,
-      new RavenJObject(), new OperationCredentials(documentStore.getApiKey()), documentStore.getConventions());
+      new OperationCredentials(documentStore.getApiKey()), documentStore.getConventions(), null, null);
     try (HttpJsonRequest httpJsonRequest = documentStore.getJsonRequestFactory().createHttpJsonRequest(createHttpJsonRequestParams)) {
       RavenJToken json = httpJsonRequest.readResponseJson();
       Etag etag = Etag.parse(json.value(String.class, "LastDocumentEtag"));

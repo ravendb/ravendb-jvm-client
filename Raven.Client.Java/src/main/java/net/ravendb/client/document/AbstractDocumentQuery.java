@@ -1,20 +1,9 @@
 package net.ravendb.client.document;
 
-import java.lang.reflect.Field;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.UUID;
-import java.util.regex.Pattern;
-
+import com.google.common.base.CharMatcher;
+import com.google.common.base.Defaults;
+import com.mysema.query.types.Expression;
+import com.mysema.query.types.Path;
 import net.ravendb.abstractions.basic.CleanCloseable;
 import net.ravendb.abstractions.basic.Lazy;
 import net.ravendb.abstractions.basic.Reference;
@@ -22,16 +11,7 @@ import net.ravendb.abstractions.basic.Tuple;
 import net.ravendb.abstractions.closure.Action1;
 import net.ravendb.abstractions.closure.Delegates;
 import net.ravendb.abstractions.closure.Function1;
-import net.ravendb.abstractions.data.Constants;
-import net.ravendb.abstractions.data.Etag;
-import net.ravendb.abstractions.data.Facet;
-import net.ravendb.abstractions.data.FacetResults;
-import net.ravendb.abstractions.data.HighlightedField;
-import net.ravendb.abstractions.data.IndexQuery;
-import net.ravendb.abstractions.data.QueryOperator;
-import net.ravendb.abstractions.data.QueryResult;
-import net.ravendb.abstractions.data.SortedField;
-import net.ravendb.abstractions.data.SpatialIndexQuery;
+import net.ravendb.abstractions.data.*;
 import net.ravendb.abstractions.extensions.ExpressionExtensions;
 import net.ravendb.abstractions.indexing.NumberUtil;
 import net.ravendb.abstractions.indexing.SortOptions;
@@ -42,17 +22,8 @@ import net.ravendb.abstractions.json.linq.RavenJToken;
 import net.ravendb.abstractions.json.linq.RavenJTokenWriter;
 import net.ravendb.abstractions.spatial.ShapeConverter;
 import net.ravendb.abstractions.spatial.WktSanitizer;
-import net.ravendb.abstractions.util.NetDateFormat;
-import net.ravendb.abstractions.util.NetISO8601Utils;
-import net.ravendb.abstractions.util.RavenQuery;
-import net.ravendb.abstractions.util.TimeUtils;
-import net.ravendb.abstractions.util.ValueTypeUtils;
-import net.ravendb.client.EscapeQueryOptions;
-import net.ravendb.client.FieldHighlightings;
-import net.ravendb.client.IDocumentQuery;
-import net.ravendb.client.RavenQueryHighlightings;
-import net.ravendb.client.RavenQueryStatistics;
-import net.ravendb.client.WhereParams;
+import net.ravendb.abstractions.util.*;
+import net.ravendb.client.*;
 import net.ravendb.client.connection.IDatabaseCommands;
 import net.ravendb.client.connection.IRavenQueryInspector;
 import net.ravendb.client.document.batches.LazyQueryOperation;
@@ -61,14 +32,12 @@ import net.ravendb.client.linq.LinqPathProvider;
 import net.ravendb.client.listeners.IDocumentQueryListener;
 import net.ravendb.client.shard.ShardReduceFunction;
 import net.ravendb.client.spatial.SpatialCriteria;
-
 import org.apache.commons.lang.ArrayUtils;
 import org.apache.commons.lang.StringUtils;
 
-import com.google.common.base.CharMatcher;
-import com.google.common.base.Defaults;
-import com.mysema.query.types.Expression;
-import com.mysema.query.types.Path;
+import java.lang.reflect.Field;
+import java.util.*;
+import java.util.regex.Pattern;
 
 /**
  * A query against a Raven index
@@ -659,6 +628,28 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
     return (projectionFields != null) ? Arrays.asList(projectionFields) : Collections.<String> emptyList();
   }
 
+  @Override
+  public IDocumentQuery<T> alphaNumericOrdering(String fieldName) {
+    alphaNumericOrdering(fieldName, false);
+    return (IDocumentQuery<T>) this;
+  }
+
+  @Override
+  public IDocumentQuery<T> alphaNumericOrdering(String fieldName, boolean descending) {
+    addOrder(Constants.ALPHA_NUMERIC_FIELD_NAME + ";" + fieldName, descending);
+    return (IDocumentQuery<T>) this;
+  }
+
+  public IDocumentQuery<T> alphaNumericOrdering(Expression<?> expression) {
+    addOrder(getMemberQueryPath(expression), false);
+    return (IDocumentQuery<T>) this;
+  }
+
+  public IDocumentQuery<T> alphaNumericOrdering(Expression<?> expression, boolean descending) {
+    addOrder(getMemberQueryPath(expression), descending);
+    return (IDocumentQuery<T>) this;
+  }
+
   /**
    * Order the search results randomly
    */
@@ -769,6 +760,19 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
   @SuppressWarnings("unchecked")
   public IDocumentQuery<T> showTimings() {
     showQueryTimings = true;
+    return (IDocumentQuery<T>) this;
+  }
+
+
+  /**
+   * Adds an ordering for a specific field to the query
+   *
+   * @param fieldName
+   *          Name of the field.
+   */
+  @SuppressWarnings("unchecked")
+  public IDocumentQuery<T> addOrder(String fieldName) {
+    addOrder(fieldName, false);
     return (IDocumentQuery<T>) this;
   }
 

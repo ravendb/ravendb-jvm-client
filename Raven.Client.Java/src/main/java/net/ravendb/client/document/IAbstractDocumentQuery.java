@@ -1,9 +1,6 @@
 package net.ravendb.client.document;
 
-import java.util.Collection;
-import java.util.Date;
-import java.util.Iterator;
-
+import com.mysema.query.types.Path;
 import net.ravendb.abstractions.basic.Reference;
 import net.ravendb.abstractions.basic.Tuple;
 import net.ravendb.client.EscapeQueryOptions;
@@ -11,7 +8,9 @@ import net.ravendb.client.FieldHighlightings;
 import net.ravendb.client.IDocumentQuery;
 import net.ravendb.client.WhereParams;
 
-import com.mysema.query.types.Path;
+import java.util.Collection;
+import java.util.Date;
+import java.util.Iterator;
 
 
 /**
@@ -39,6 +38,16 @@ public interface IAbstractDocumentQuery<T> {
    * Gets the fields for projection
    */
   public Collection<String> getProjectionFields();
+
+  /**
+   * Order the search results in alphanumeric order
+     */
+  IDocumentQuery<T> alphaNumericOrdering(String fieldName);
+
+  /**
+   * Order the search results in alphanumeric order
+     */
+  IDocumentQuery<T> alphaNumericOrdering(String fieldName, boolean descending);
 
   /**
    *  Order the search results randomly

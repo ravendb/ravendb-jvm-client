@@ -1,7 +1,7 @@
 package net.ravendb.client;
 
-import java.util.Date;
-
+import com.mysema.query.types.Expression;
+import com.mysema.query.types.Path;
 import net.ravendb.abstractions.basic.Reference;
 import net.ravendb.abstractions.closure.Action1;
 import net.ravendb.abstractions.data.Etag;
@@ -11,7 +11,7 @@ import net.ravendb.abstractions.indexing.SpatialOptions.SpatialUnits;
 import net.ravendb.client.shard.ShardReduceFunction;
 import net.ravendb.client.spatial.SpatialCriteria;
 
-import com.mysema.query.types.Path;
+import java.util.Date;
 
 
 /**
@@ -291,6 +291,69 @@ public interface IDocumentQueryCustomization {
    * Usage of this option will prevent holding query results in memory.
    */
   public IDocumentQueryCustomization noTracking();
+
+  /**
+   * Adds an ordering for a specific field to the query
+   * @param fieldName Name of the field.
+     */
+  public IDocumentQueryCustomization addOrder(String fieldName);
+
+  /**
+   * Adds an ordering for a specific field to the query
+   * @param fieldName Name of the field.
+   * @param descending Descending?
+     */
+  public IDocumentQueryCustomization addOrder(String fieldName, boolean descending);
+
+  /**
+   * Adds an ordering for a specific field to the query
+   * @param propertySelector Property selector for the field
+   */
+  public IDocumentQueryCustomization addOrder(Expression<?> propertySelector);
+
+  /**
+   * Adds an ordering for a specific field to the query
+   * @param propertySelector Property selector for the field
+   * @param descending Descending?
+     */
+  public IDocumentQueryCustomization addOrder(Expression<?> propertySelector, boolean descending);
+
+  /**
+   *  Adds an ordering for a specific field to the query and specifies the type of field for sorting purposes
+   * @param fieldName Name of the field.
+   * @param descending Descending?
+   * @param fieldType the class of the field to be sorted.
+     * @return
+     */
+  public IDocumentQueryCustomization addOrder(String fieldName, boolean descending, Class fieldType);
+
+  /**
+   * Order the search results in alphanumeric order
+   * @param fieldName The order by field name.
+   */
+  public IDocumentQueryCustomization alphaNumericOrdering(String fieldName);
+
+
+  /**
+   * Order the search results in alphanumeric order
+   * @param fieldName The order by field name.
+   * @param descending Should be ordered by descending.
+     */
+  public IDocumentQueryCustomization alphaNumericOrdering(String fieldName, boolean descending);
+
+  /**
+   * Order the search results in alphanumeric order
+   * @param propertySelector The order by field name.
+   */
+  public IDocumentQueryCustomization alphaNumericOrdering(Expression<?> propertySelector);
+
+
+  /**
+   * Order the search results in alphanumeric order
+   * @param propertySelector The order by field name.
+   * @param descending Should be ordered by descending.
+   */
+  public IDocumentQueryCustomization alphaNumericOrdering(Expression<?> propertySelector, boolean descending);
 
   /**
    * Disables caching for query results.

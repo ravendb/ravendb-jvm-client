@@ -1,20 +1,12 @@
 package net.ravendb.client.document;
 
-import java.io.Serializable;
-import java.lang.reflect.Field;
-import java.lang.reflect.InvocationTargetException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.EnumSet;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
 import net.ravendb.abstractions.basic.Reference;
 import net.ravendb.abstractions.basic.Tuple;
+import net.ravendb.abstractions.cluster.ClusterBehavior;
 import net.ravendb.abstractions.data.Constants;
 import net.ravendb.abstractions.indexing.SortOptions;
 import net.ravendb.abstractions.json.linq.RavenJObject;
+import net.ravendb.client.QueryConvention;
 import net.ravendb.client.connection.IDatabaseCommands;
 import net.ravendb.client.connection.IDocumentStoreReplicationInformer;
 import net.ravendb.client.connection.ReplicationInformer;
@@ -23,29 +15,26 @@ import net.ravendb.client.converters.ITypeConverter;
 import net.ravendb.client.converters.Int32Converter;
 import net.ravendb.client.converters.Int64Converter;
 import net.ravendb.client.converters.UUIDConverter;
-import net.ravendb.client.delegates.DocumentKeyFinder;
-import net.ravendb.client.delegates.IdConvention;
-import net.ravendb.client.delegates.IdValuePartFinder;
-import net.ravendb.client.delegates.IdentityPropertyFinder;
-import net.ravendb.client.delegates.IdentityPropertyNameFinder;
-import net.ravendb.client.delegates.JavaClassFinder;
-import net.ravendb.client.delegates.JavaClassNameFinder;
-import net.ravendb.client.delegates.PropertyNameFinder;
-import net.ravendb.client.delegates.ReplicationInformerFactory;
-import net.ravendb.client.delegates.RequestCachePolicy;
-import net.ravendb.client.delegates.TypeTagNameToDocumentKeyPrefixTransformer;
+import net.ravendb.client.delegates.*;
+import net.ravendb.client.indexes.AbstractIndexCreationTask;
 import net.ravendb.client.util.Inflector;
-
 import org.apache.commons.beanutils.BeanUtils;
 import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang.reflect.FieldUtils;
 import org.codehaus.jackson.map.DeserializationProblemHandler;
+
+import java.io.Serializable;
+import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Modifier;
+import java.util.*;
 
 
 /**
  * Note: we removed logic related to applyReduceFunction because we don't support map/reduce on shards
  * we also don't support contractResolver - Jackson customization can be performed via JsonExtensions#getDefaultObjectMapper() instance
  */
-public class DocumentConvention extends Convention implements Serializable {
+public class DocumentConvention extends QueryConvention implements Serializable {
 
   private final List<Tuple<Class<?>, IdConvention>> listOfRegisteredIdConventions =
       new ArrayList<>();
@@ -112,6 +101,12 @@ public class DocumentConvention extends Convention implements Serializable {
   private EnumSet<IndexAndTransformerReplicationMode> indexAndTransformerReplicationMode;
 
   private boolean acceptGzipContent;
+
+  private ClusterBehavior clusterBehavior = ClusterBehavior.NONE;
+
+  protected Map<Class<?>, Field> idPropertyCache = new HashMap<>();
+
+  private IdentityPropertyFinder findIdentityProperty;
 
   public DocumentConvention() {
 
@@ -204,7 +199,7 @@ public class DocumentConvention extends Convention implements Serializable {
     setFindIdValuePartForValueTypeConversion(new IdValuePartFinder() {
       @Override
       public String find(Object entity, String id) {
-        String[] splits = id.split(identityPartsSeparator);
+        String[] splits = id.split(getIdentityPartsSeparator());
         for (int i = splits.length - 1; i >= 0; i--) {
           if (StringUtils.isNotEmpty(splits[i])) {
             return splits[i];
@@ -222,6 +217,7 @@ public class DocumentConvention extends Convention implements Serializable {
         IndexAndTransformerReplicationMode.TRANSFORMERS));
     acceptGzipContent = true;
     jsonSerializer = new JsonSerializer(this);
+    setRequestTimeThresholdInMiliseconds(100);
   }
 
   public static String defaultTransformTypeTagNameToDocumentKeyPrefix(String typeTagName) {
@@ -258,7 +254,7 @@ public class DocumentConvention extends Convention implements Serializable {
     String tag = getTypeTagName(type);
     if (tag != null) {
       tag = transformTypeTagNameToDocumentKeyPrefix.transform(tag);
-      tag += identityPartsSeparator;
+      tag += getIdentityPartsSeparator();
     }
     if (converter != null) {
       return converter.convertFrom(tag, id, allowNull);
@@ -306,21 +302,6 @@ public class DocumentConvention extends Convention implements Serializable {
    */
   public void setIdentityTypeConvertors(List<ITypeConverter> identityTypeConvertors) {
     this.identityTypeConvertors = identityTypeConvertors;
-  }
-
-  /**
-   * Gets the identity parts separator used by the HiLo generators
-   */
-  public String getIdentityPartsSeparator() {
-    return identityPartsSeparator;
-  }
-
-  /**
-   * Sets the identity parts separator used by the HiLo generators
-   * @param identityPartsSeparator
-   */
-  public void setIdentityPartsSeparator(String identityPartsSeparator) {
-    this.identityPartsSeparator = identityPartsSeparator;
   }
 
   /**
@@ -867,6 +848,82 @@ public class DocumentConvention extends Convention implements Serializable {
 
   public void setAcceptGzipContent(boolean acceptGzipContent) {
     this.acceptGzipContent = acceptGzipContent;
+  }
+
+  public ClusterBehavior getClusterBehavior() {
+    return clusterBehavior;
+  }
+
+  public void setClusterBehavior(ClusterBehavior clusterBehavior) {
+    this.clusterBehavior = clusterBehavior;
+  }
+
+  /**
+   * Gets the function to find the identity property.
+   */
+  public IdentityPropertyFinder getFindIdentityProperty() {
+    return findIdentityProperty;
+  }
+
+  /**
+   * Sets the function to find the identity property.
+   * @param findIdentityProperty
+   */
+  public void setFindIdentityProperty(IdentityPropertyFinder findIdentityProperty) {
+    this.findIdentityProperty = findIdentityProperty;
+  }
+
+
+  /**
+   * Gets the identity property.
+   * @param type
+   */
+  @SuppressWarnings("boxing")
+  public Field getIdentityProperty(Class<?> type) {
+    if (idPropertyCache.containsKey(type)) {
+      return idPropertyCache.get(type);
+    }
+    // we want to ignore nested entities from index creation tasks
+    if (type.isMemberClass() && type.getDeclaringClass() != null && AbstractIndexCreationTask.class.isAssignableFrom(type.getDeclaringClass())) {
+      idPropertyCache.put(type, null);
+      return null;
+    }
+
+    Field identityProperty = null;
+    for (Field f : getPropertiesForType(type)) {
+      if (findIdentityProperty.find(f)) {
+        identityProperty = f;
+        break;
+      }
+    }
+
+    if (identityProperty != null && !identityProperty.getDeclaringClass().equals(type)) {
+      Field propertyInfo = FieldUtils.getField(identityProperty.getDeclaringClass(), identityProperty.getName());
+      if (propertyInfo != null) {
+        identityProperty = propertyInfo;
+      }
+    }
+
+    idPropertyCache.put(type, identityProperty);
+    return identityProperty;
+  }
+
+
+
+  private static Iterable<Field> getPropertiesForType(Class<?> type) {
+    List<Field> result = new ArrayList<>();
+    do {
+      Field[] fields = type.getDeclaredFields();
+      for (Field field : fields) {
+        if (field.isSynthetic() || Modifier.isStatic(field.getModifiers())) {
+          continue;
+        }
+        result.add(field);
+      }
+      type = type.getSuperclass();
+    } while (type != null && !Object.class.equals(type));
+
+    return result;
   }
 
 }

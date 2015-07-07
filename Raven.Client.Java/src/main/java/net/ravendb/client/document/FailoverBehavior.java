@@ -29,6 +29,12 @@ public enum FailoverBehavior {
 
   ALLOW_READS_FROM_SECONDARIES_AND_WRITES_TO_SECONDARIES(3),
 
+  /**
+   * Allow read from secondaries when request time threshold is surpassed (configurable in conventions).
+   * Average request time is calculated using 60 second exponentially-weighted moving average (EWMA).
+   */
+  ALLOW_READ_FROM_SECONDARIES_WHEN_REQUEST_TIME_THRESHOLD_IS_SURPASSED(5),
+
   /** Immediately fail the request, without attempting any failover. This is true for both
    * reads and writes. The RavenDB client will not even check that you are using replication.
    *

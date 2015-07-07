@@ -1,14 +1,21 @@
 package net.ravendb.client.connection;
 
 import java.io.File;
+import java.util.List;
 
 import net.ravendb.abstractions.data.JsonDocument;
+import net.ravendb.abstractions.extensions.JsonExtensions;
 import net.ravendb.abstractions.json.linq.RavenJObject;
+import net.ravendb.abstractions.json.linq.RavenJToken;
 import net.ravendb.abstractions.logging.ILog;
 import net.ravendb.abstractions.logging.LogManager;
 
+import net.ravendb.client.document.JsonSerializer;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang.StringUtils;
+import org.codehaus.jackson.map.type.CollectionType;
+import org.codehaus.jackson.map.type.SimpleType;
+import org.codehaus.jackson.type.JavaType;
 
 
 public class ReplicationInformerLocalCache {
@@ -56,4 +63,28 @@ public class ReplicationInformerLocalCache {
     }
   }
 
+  public static List<OperationMetadata> tryLoadClusterNodesFromLocalCache(String serverHash) {
+    try {
+      String path = "RavenDB Cluster Nodes For - " + serverHash;
+      File file = new File(tempDir, path);
+      String fileContent = FileUtils.readFileToString(file);
+      if (StringUtils.isBlank(fileContent)) {
+        return null;
+      }
+      return JsonExtensions.createDefaultJsonSerializer().readValue(fileContent, CollectionType.construct(List.class, SimpleType.construct(OperationMetadata.class)));
+    } catch (Exception e) {
+      log.error("Could not understand the persisted cluster nodes", e);
+      return null;
+    }
+  }
+
+  public static void trySavingClusterNodesToLocalCache(String serverHash, List<OperationMetadata> nodes) {
+    try {
+      String path = "RavenDB Cluster Nodes For - " + serverHash;
+      File file = new File(tempDir, path);
+      FileUtils.writeStringToFile(file, RavenJObject.fromObject(nodes).toString());
+    } catch (Exception e) {
+      log.error("Could not persist the cluster nodes", e);
+    }
+  }
 }

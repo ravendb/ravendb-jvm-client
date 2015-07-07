@@ -1,23 +1,12 @@
 package net.ravendb.client.indexes;
 
-import java.util.Date;
-import java.util.HashMap;
-import java.util.Map;
-
+import com.mysema.query.types.Path;
 import net.ravendb.abstractions.data.Constants;
 import net.ravendb.abstractions.data.Etag;
 import net.ravendb.abstractions.data.HttpMethods;
-import net.ravendb.abstractions.data.StringDistanceTypes;
 import net.ravendb.abstractions.data.IndexStats.IndexingPriority;
-import net.ravendb.abstractions.indexing.FieldIndexing;
-import net.ravendb.abstractions.indexing.FieldStorage;
-import net.ravendb.abstractions.indexing.FieldTermVector;
-import net.ravendb.abstractions.indexing.IndexDefinition;
-import net.ravendb.abstractions.indexing.IndexReplaceDocument;
-import net.ravendb.abstractions.indexing.SortOptions;
-import net.ravendb.abstractions.indexing.SpatialOptions;
-import net.ravendb.abstractions.indexing.SpatialOptionsFactory;
-import net.ravendb.abstractions.indexing.SuggestionOptions;
+import net.ravendb.abstractions.data.StringDistanceTypes;
+import net.ravendb.abstractions.indexing.*;
 import net.ravendb.abstractions.json.linq.RavenJObject;
 import net.ravendb.client.IDocumentStore;
 import net.ravendb.client.connection.IDatabaseCommands;
@@ -27,7 +16,7 @@ import net.ravendb.client.document.DocumentConvention;
 import net.ravendb.client.document.IndexAndTransformerReplicationMode;
 import net.ravendb.client.utils.UrlUtils;
 
-import com.mysema.query.types.Path;
+import java.util.*;
 
 /**
  * Base class for creating indexes
@@ -50,7 +39,7 @@ public class AbstractIndexCreationTask extends AbstractCommonApiForIndexesAndTra
   protected Map<String, SortOptions> indexSortOptionsStrings;
   protected Map<Path<?>, String> analyzers;
   protected Map<String, String> analyzersStrings;
-  protected Map<Path<?>, SuggestionOptions> indexSuggestions;
+  protected Set<Path<?>> indexSuggestionsOptions;
   protected Map<Path<?>, FieldTermVector> termVectors;
   protected Map<String, FieldTermVector> termVectorsStrings;
   protected Map<Path<?>, SpatialOptions> spatialIndexes;
@@ -66,7 +55,7 @@ public class AbstractIndexCreationTask extends AbstractCommonApiForIndexesAndTra
     this.indexesStrings = new HashMap<>();
     this.indexSortOptions = new HashMap<>();
     this.indexSortOptionsStrings = new HashMap<>();
-    this.indexSuggestions = new HashMap<>();
+    this.indexSuggestionsOptions = new HashSet<>();
     this.analyzers = new HashMap<>();
     this.analyzersStrings = new HashMap<>();
     this.termVectors = new HashMap<>();
@@ -233,7 +222,7 @@ public class AbstractIndexCreationTask extends AbstractCommonApiForIndexesAndTra
     builder.setReduce(reduce);
     builder.setStores(stores);
     builder.setStoresStrings(storesStrings);
-    builder.setSuggestions(indexSuggestions);
+    builder.setSuggestionsOptions(indexSuggestionsOptions);
     builder.setTermVectors(termVectors);
     builder.setTermVectorsStrings(termVectorsStrings);
     builder.setSpatialIndexes(spatialIndexes);
@@ -393,21 +382,9 @@ public class AbstractIndexCreationTask extends AbstractCommonApiForIndexesAndTra
   /**
    * Register a field to be sorted
    * @param field
-   * @param suggestion
-   */
-  protected void suggestion(Path<?> field, SuggestionOptions suggestion) {
-    indexSuggestions.put(field, suggestion);
-  }
-
-  /**
-   * Register a field to be sorted
-   * @param field
    */
   protected void suggestion(Path<?> field) {
-    SuggestionOptions options = new SuggestionOptions();
-    options.setAccuracy(0.5f);
-    options.setDistance(StringDistanceTypes.LEVENSHTEIN);
-    suggestion(field, options);
+    indexSuggestionsOptions.add(field);
   }
 
 

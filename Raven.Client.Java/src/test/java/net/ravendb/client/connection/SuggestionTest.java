@@ -1,10 +1,5 @@
 package net.ravendb.client.connection;
 
-import static org.junit.Assert.assertEquals;
-
-import java.util.Arrays;
-import java.util.List;
-
 import net.ravendb.abstractions.data.Constants;
 import net.ravendb.abstractions.data.StringDistanceTypes;
 import net.ravendb.abstractions.data.SuggestionQuery;
@@ -15,9 +10,12 @@ import net.ravendb.abstractions.indexing.SuggestionOptions;
 import net.ravendb.abstractions.json.linq.RavenJObject;
 import net.ravendb.abstractions.json.linq.RavenJValue;
 import net.ravendb.client.RavenDBAwareTests;
-import net.ravendb.client.connection.IDatabaseCommands;
-
 import org.junit.Test;
+
+import java.util.Arrays;
+import java.util.List;
+
+import static org.junit.Assert.assertEquals;
 
 
 public class SuggestionTest extends RavenDBAwareTests {
@@ -45,7 +43,7 @@ public class SuggestionTest extends RavenDBAwareTests {
       SuggestionOptions suggestionOptions = new SuggestionOptions();
       suggestionOptions.setAccuracy(0.5f);
       suggestionOptions.setDistance(StringDistanceTypes.DEFAULT);
-      index.getSuggestions().put("FullName", suggestionOptions);
+      index.getSuggestionsOptions().add("FullName");
       dbCommands.putIndex("suggestIndex", index);
 
       SuggestionQuery suggestionQuery = new SuggestionQuery();

@@ -1,53 +1,45 @@
 package net.ravendb.client;
 
 
-import java.io.IOException;
-import java.net.InetAddress;
-import java.util.ArrayList;
-import java.util.Calendar;
-import java.util.Date;
-import java.util.List;
-import java.util.TimeZone;
-import java.util.UUID;
-
 import net.ravendb.abstractions.basic.EventHandler;
 import net.ravendb.abstractions.closure.Functions;
+import net.ravendb.abstractions.cluster.ClusterBehavior;
 import net.ravendb.abstractions.connection.OperationCredentials;
 import net.ravendb.abstractions.connection.WebRequestEventArgs;
 import net.ravendb.abstractions.json.linq.RavenJObject;
 import net.ravendb.abstractions.json.linq.RavenJValue;
-import net.ravendb.client.IDocumentStore;
 import net.ravendb.client.connection.IDatabaseCommands;
-import net.ravendb.client.connection.IDocumentStoreReplicationInformer;
 import net.ravendb.client.connection.ReplicationInformer;
 import net.ravendb.client.connection.ServerClient;
 import net.ravendb.client.connection.implementation.HttpJsonRequestFactory;
+import net.ravendb.client.connection.request.IRequestExecuter;
+import net.ravendb.client.connection.request.ReplicationAwareRequestExecuter;
 import net.ravendb.client.document.DocumentConvention;
 import net.ravendb.client.document.FailoverBehavior;
 import net.ravendb.client.document.FailoverBehaviorSet;
 import net.ravendb.client.listeners.IDocumentConflictListener;
+import net.ravendb.client.metrics.RequestTimeMetric;
 import net.ravendb.client.utils.UrlUtils;
-
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.CharUtils;
 import org.apache.commons.lang.time.DateUtils;
 import org.apache.http.HttpHost;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
-import org.apache.http.client.HttpClient;
 import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.methods.HttpDelete;
 import org.apache.http.client.methods.HttpPut;
 import org.apache.http.client.methods.HttpRequestBase;
 import org.apache.http.entity.ContentType;
 import org.apache.http.entity.StringEntity;
+import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
-import org.junit.After;
-import org.junit.AfterClass;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Rule;
+import org.junit.*;
 import org.junit.rules.TestName;
+
+import java.io.IOException;
+import java.net.InetAddress;
+import java.util.*;
 
 
 public abstract class RavenDBAwareTests {
@@ -73,7 +65,7 @@ public abstract class RavenDBAwareTests {
 
   private static final String DEFAULT_STORAGE_TYPE_NAME = "voron";
 
-  protected static HttpClient client = HttpClients.createDefault();
+  protected static CloseableHttpClient client = HttpClients.createDefault();
 
   public static String getHostName() {
     try {
@@ -115,8 +107,14 @@ public abstract class RavenDBAwareTests {
 
     replicationInformer = new ReplicationInformer(convention, factory);
 
+    RequestTimeMetric requestTimeMetric = new RequestTimeMetric();
+    ReplicationAwareRequestExecuter executer = new ReplicationAwareRequestExecuter(replicationInformer, requestTimeMetric);
+
     serverClient = new ServerClient(DEFAULT_SERVER_URL_1, convention, new OperationCredentials(),
-      factory, UUID.randomUUID(), new Functions.StaticFunction1<String, IDocumentStoreReplicationInformer>((IDocumentStoreReplicationInformer)replicationInformer), null,  new IDocumentConflictListener[0], false);
+      factory, UUID.randomUUID(),
+            new Functions.StaticFunction4<ServerClient, String, ClusterBehavior, Boolean, IRequestExecuter>(executer),
+            new Functions.StaticFunction1<String, RequestTimeMetric>(requestTimeMetric),
+            null,  new IDocumentConflictListener[0], false, ClusterBehavior.NONE);
 
   }
 
@@ -233,12 +231,12 @@ public abstract class RavenDBAwareTests {
     }
   }
 
-  protected static void startServer(int port, boolean deleteData) {
+  public static void startServer(int port, boolean deleteData) {
     startServer(port, deleteData, getCreateServerDocument(port));
   }
 
   @SuppressWarnings("unused")
-  protected static void startServer(int port, boolean deleteData, RavenJObject serverDocument) {
+  public static void startServer(int port, boolean deleteData, RavenJObject serverDocument) {
     HttpPut put = null;
     try {
       String putUrl = DEFAULT_SERVER_RUNNER_URL;
@@ -260,7 +258,7 @@ public abstract class RavenDBAwareTests {
     }
   }
 
-  protected static void stopServer(int port) {
+  public static void stopServer(int port) {
     HttpDelete delete = null;
     try {
       delete = new HttpDelete(DEFAULT_SERVER_RUNNER_URL + "?port=" + port);
@@ -291,7 +289,7 @@ public abstract class RavenDBAwareTests {
     return doc.toString();
   }
 
-  protected static RavenJObject getCreateServerDocument(int port) {
+  public static RavenJObject getCreateServerDocument(int port) {
     RavenJObject doc = new RavenJObject();
     doc.add("Port", new RavenJValue(port));
     doc.add("RunInMemory", new RavenJValue(RUN_IN_MEMORY));
@@ -335,9 +333,7 @@ public abstract class RavenDBAwareTests {
     return result;
   }
 
-
-  protected String getDbName() {
-    String method = testName.getMethodName();
+  public static String getDbNameBasedOnTestName(String method) {
     StringBuilder dbName = new StringBuilder();
     if (method.length() > 15) {
       dbName.append(method.substring(0, 10));
@@ -358,6 +354,12 @@ public abstract class RavenDBAwareTests {
       return method;
     }
     return dbName.toString();
+  }
+
+
+  protected String getDbName() {
+    String method = testName.getMethodName();
+    return getDbNameBasedOnTestName(method);
   }
 
 

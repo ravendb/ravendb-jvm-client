@@ -1,22 +1,9 @@
 package net.ravendb.client.changes;
 
-import java.io.Closeable;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
-import java.util.Map;
-import java.util.Timer;
-import java.util.TimerTask;
-import java.util.concurrent.TimeoutException;
-
-import net.ravendb.abstractions.basic.CleanCloseable;
-import net.ravendb.abstractions.basic.EventArgs;
-import net.ravendb.abstractions.basic.EventHandler;
-import net.ravendb.abstractions.basic.EventHelper;
-import net.ravendb.abstractions.basic.Reference;
-import net.ravendb.abstractions.basic.VoidArgs;
+import net.ravendb.abstractions.basic.*;
 import net.ravendb.abstractions.closure.Action0;
+import net.ravendb.abstractions.closure.Action1;
+import net.ravendb.abstractions.closure.Function1;
 import net.ravendb.abstractions.connection.OperationCredentials;
 import net.ravendb.abstractions.data.HttpMethods;
 import net.ravendb.abstractions.json.linq.RavenJObject;
@@ -24,29 +11,34 @@ import net.ravendb.abstractions.logging.ILog;
 import net.ravendb.abstractions.logging.LogManager;
 import net.ravendb.abstractions.util.AtomicDictionary;
 import net.ravendb.abstractions.util.Base62Util;
+import net.ravendb.client.ConventionBase;
 import net.ravendb.client.connection.CreateHttpJsonRequestParams;
-import net.ravendb.client.connection.IReplicationInformerBase;
+import net.ravendb.client.connection.HttpConnectionHelper;
 import net.ravendb.client.connection.implementation.HttpJsonRequest;
 import net.ravendb.client.connection.implementation.HttpJsonRequestFactory;
-import net.ravendb.client.document.Convention;
 import net.ravendb.client.utils.UrlUtils;
-
 import org.apache.commons.lang.StringUtils;
 import org.apache.http.HttpStatus;
 
+import java.io.Closeable;
+import java.io.IOException;
+import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
+import java.util.*;
+import java.util.concurrent.TimeoutException;
 
-public abstract class RemoteChangesClientBase<TChangesApi extends IConnectableChanges, TConnectionState extends IChangesConnectionState>
+
+public abstract class RemoteChangesClientBase<TChangesApi extends IConnectableChanges, TConnectionState extends IChangesConnectionState, TConventions extends ConventionBase>
   implements CleanCloseable, IObserver<String>, IConnectableChanges {
   protected static final ILog logger = LogManager.getCurrentClassLogger();
+
+  private Class<TConnectionState> connectionStateClass;
 
   private Timer clientSideHeartbeatTimer;
 
   private final String url;
   private OperationCredentials credentials;
   private final HttpJsonRequestFactory jsonRequestFactory;
-  protected final Convention conventions;
-  @SuppressWarnings("rawtypes")
-  private final IReplicationInformerBase replicationInformer;
 
   private final Action0 onDispose;
 
@@ -56,7 +48,8 @@ public abstract class RemoteChangesClientBase<TChangesApi extends IConnectableCh
   private static int connectionCounter;
   private final String id;
 
-  protected final AtomicDictionary<DatabaseConnectionState> counters = new AtomicDictionary<>(String.CASE_INSENSITIVE_ORDER);
+  // This is the StateCounters, it is not related to the counters database
+  protected final AtomicDictionary<TConnectionState> counters = new AtomicDictionary<>(String.CASE_INSENSITIVE_ORDER);
 
   private boolean connected;
 
@@ -64,10 +57,13 @@ public abstract class RemoteChangesClientBase<TChangesApi extends IConnectableCh
 
   private volatile boolean disposed;
 
+  protected TConventions conventions;
+
 
   @SuppressWarnings("rawtypes")
-  public RemoteChangesClientBase(String url, String apiKey, HttpJsonRequestFactory jsonRequestFactory, Convention conventions,
-    IReplicationInformerBase replicationInformer, Action0 onDispose) {
+  protected RemoteChangesClientBase(Class<TConnectionState> tConnectionStateClass, String url, String apiKey, HttpJsonRequestFactory jsonRequestFactory, TConventions conventions,
+    Action0 onDispose) {
+    this.connectionStateClass = tConnectionStateClass;
     connectionStatusChanged = new ArrayList<>();
     connectionStatusChanged.add(new EventHandler<VoidArgs>() {
       @Override
@@ -85,11 +81,14 @@ public abstract class RemoteChangesClientBase<TChangesApi extends IConnectableCh
     this.credentials = new OperationCredentials(apiKey);
     this.jsonRequestFactory = jsonRequestFactory;
     this.conventions = conventions;
-    this.replicationInformer = replicationInformer;
     this.onDispose = onDispose;
     establishConnection();
   }
 
+
+  public TConventions getConventions() {
+    return conventions;
+  }
 
   @Override
   public void addConnectionStatusChanged(EventHandler<VoidArgs> handler) {
@@ -122,7 +121,7 @@ public abstract class RemoteChangesClientBase<TChangesApi extends IConnectableCh
       clientSideHeartbeatTimer = null;
     }
 
-    CreateHttpJsonRequestParams requestParams = new CreateHttpJsonRequestParams(null, url + "/changes/events?id=" + id, HttpMethods.GET, null, credentials, conventions);
+    CreateHttpJsonRequestParams requestParams = new CreateHttpJsonRequestParams(null, url + "/changes/events?id=" + id, HttpMethods.GET, null, credentials, conventions, null, null);
     requestParams.setAvoidCachingRequest(true);
     requestParams.setDisableRequestCompression(true);
     logger.info("Trying to connect to %s with id %s", requestParams.getUrl(), id);
@@ -139,10 +138,10 @@ public abstract class RemoteChangesClientBase<TChangesApi extends IConnectableCh
         throw e;
       }
       Reference<Boolean> timeoutRef = new Reference<>();
-      if (!replicationInformer.isServerDown(e, timeoutRef)) {
+      if (!HttpConnectionHelper.isServerDown(e, timeoutRef)) {
         throw e;
       }
-      if (replicationInformer.isHttpStatus(e, HttpStatus.SC_NOT_FOUND, HttpStatus.SC_FORBIDDEN, HttpStatus.SC_SERVICE_UNAVAILABLE)) {
+      if (HttpConnectionHelper.isHttpStatus(e, HttpStatus.SC_NOT_FOUND, HttpStatus.SC_FORBIDDEN, HttpStatus.SC_SERVICE_UNAVAILABLE)) {
         throw e;
       }
       logger.warn("Failed to connect to %s with id %s, will try again in 15 seconds", url, id);
@@ -197,7 +196,7 @@ public abstract class RemoteChangesClientBase<TChangesApi extends IConnectableCh
         sendUrl += "&value=" + UrlUtils.escapeUriString(value);
       }
 
-      CreateHttpJsonRequestParams requestParams = new CreateHttpJsonRequestParams(null, sendUrl, HttpMethods.GET, null, credentials, conventions);
+      CreateHttpJsonRequestParams requestParams = new CreateHttpJsonRequestParams(null, sendUrl, HttpMethods.GET, null, credentials, conventions, null, null);
       requestParams.setAvoidCachingRequest(true);
       try (HttpJsonRequest request = jsonRequestFactory.createHttpJsonRequest(requestParams)) {
         request.executeRequest();
@@ -244,7 +243,7 @@ public abstract class RemoteChangesClientBase<TChangesApi extends IConnectableCh
     try {
       establishConnection();
     } catch (Exception e) {
-      for (Map.Entry<String, DatabaseConnectionState> keyValuePair : counters) {
+      for (Map.Entry<String, TConnectionState> keyValuePair : counters) {
         keyValuePair.getValue().error(e);
       }
       counters.clear();
@@ -281,13 +280,80 @@ public abstract class RemoteChangesClientBase<TChangesApi extends IConnectableCh
   }
 
   @SuppressWarnings("hiding")
-  protected abstract void notifySubscribers(String type, RavenJObject value, AtomicDictionary<DatabaseConnectionState> counters);
+  protected abstract void notifySubscribers(String type, RavenJObject value, AtomicDictionary<TConnectionState> counters);
 
   protected abstract void subscribeOnServer();
 
   @Override
   public void onCompleted() {
     //empty by design
+  }
+
+  protected TConnectionState getOrAddConnectionState(final String name, final String watchCommand,
+                                                          final String unwatchCommand, final Action0 afterConnection,
+                                                          final Action0 beforeDisconnect, final String value) {
+
+    TConnectionState counter = counters.getOrAdd(name, new Function1<String, TConnectionState>() {
+      @Override
+      public TConnectionState apply(String s) {
+
+        Action0 onZero = new Action0() {
+          @Override
+          public void apply() {
+            beforeDisconnect.apply();
+            send(unwatchCommand, value);
+            counters.remove(name);
+          }
+        };
+
+        Action1<TConnectionState> ensureConnection = new Action1<TConnectionState>() {
+          @Override
+          public void apply(final TConnectionState existingConnectionState) {
+            if (counters.get(name) != null) {
+              return;
+            }
+            counters.getOrAdd(name, new Function1<String, TConnectionState>() {
+                      @Override
+                      public TConnectionState apply(String input) {
+                        return existingConnectionState;
+                      }
+                    }
+            );
+
+            afterConnection.apply();
+            send(watchCommand, value);
+          }
+        };
+
+        Action0 counterSubscriptionTask = new Action0() {
+          @Override
+          public void apply() {
+            afterConnection.apply();
+            send(watchCommand, value);
+          }
+        };
+
+        counterSubscriptionTask.apply();
+
+        return createTConnectionState(onZero, ensureConnection);
+      }
+
+    });
+    return counter;
+  }
+
+  private TConnectionState createTConnectionState(Object... args) {
+    try {
+      Constructor<TConnectionState> declaredConstructor = (Constructor<TConnectionState>) connectionStateClass.getDeclaredConstructors()[0];
+      TConnectionState tConnectionState = declaredConstructor.newInstance(args);
+      return tConnectionState;
+    } catch (InvocationTargetException e) {
+      throw new IllegalStateException(e.getMessage(), e);
+    } catch (InstantiationException e) {
+      throw new IllegalStateException(e.getMessage(), e);
+    } catch (IllegalAccessException e) {
+      throw new IllegalStateException(e.getMessage(), e);
+    }
   }
 
 }

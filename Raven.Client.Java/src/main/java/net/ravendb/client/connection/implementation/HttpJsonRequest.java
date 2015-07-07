@@ -1,80 +1,46 @@
 package net.ravendb.client.connection.implementation;
 
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.net.InetAddress;
-import java.net.URISyntaxException;
-import java.net.UnknownHostException;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Map.Entry;
-
+import com.google.common.io.Closeables;
+import com.google.common.io.CountingInputStream;
 import net.ravendb.abstractions.basic.CleanCloseable;
-import net.ravendb.abstractions.closure.Action0;
-import net.ravendb.abstractions.closure.Action1;
-import net.ravendb.abstractions.closure.Action3;
-import net.ravendb.abstractions.closure.Delegates;
-import net.ravendb.abstractions.closure.Function0;
-import net.ravendb.abstractions.connection.CountingStream;
+import net.ravendb.abstractions.closure.*;
 import net.ravendb.abstractions.connection.ErrorResponseException;
 import net.ravendb.abstractions.connection.OperationCredentials;
 import net.ravendb.abstractions.connection.WebRequestEventArgs;
 import net.ravendb.abstractions.data.Constants;
 import net.ravendb.abstractions.data.HttpMethods;
-import net.ravendb.abstractions.exceptions.BadRequestException;
-import net.ravendb.abstractions.exceptions.IndexCompilationException;
-import net.ravendb.abstractions.exceptions.JsonReaderException;
-import net.ravendb.abstractions.exceptions.JsonWriterException;
-import net.ravendb.abstractions.exceptions.ServerVersionNotSuppportedException;
+import net.ravendb.abstractions.exceptions.*;
 import net.ravendb.abstractions.json.linq.JTokenType;
 import net.ravendb.abstractions.json.linq.RavenJObject;
 import net.ravendb.abstractions.json.linq.RavenJToken;
-import net.ravendb.abstractions.util.NetDateFormat;
+import net.ravendb.client.ConventionBase;
 import net.ravendb.client.changes.IObservable;
-import net.ravendb.client.connection.CachedRequest;
-import net.ravendb.client.connection.CreateHttpJsonRequestParams;
-import net.ravendb.client.connection.HttpContentExtentions;
-import net.ravendb.client.connection.IDocumentStoreReplicationInformer;
-import net.ravendb.client.connection.ObservableLineStream;
-import net.ravendb.client.connection.ServerClient.HandleReplicationStatusChangesCallback;
+import net.ravendb.client.connection.*;
 import net.ravendb.client.connection.profiling.IHoldProfilingInformation;
 import net.ravendb.client.connection.profiling.RequestResultArgs;
 import net.ravendb.client.connection.profiling.RequestStatus;
-import net.ravendb.client.document.Convention;
-import net.ravendb.client.document.FailoverBehaviorSet;
 import net.ravendb.client.document.RemoteBulkInsertOperation.BulkInsertEntity;
+import net.ravendb.client.metrics.IRequestTimeMetric;
 import net.ravendb.java.http.client.GzipHttpEntity;
 import net.ravendb.java.http.client.HttpEval;
 import net.ravendb.java.http.client.HttpReset;
-
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.time.StopWatch;
-import org.apache.http.Header;
-import org.apache.http.HttpEntity;
-import org.apache.http.HttpRequest;
-import org.apache.http.HttpResponse;
-import org.apache.http.HttpStatus;
+import org.apache.http.*;
 import org.apache.http.client.config.RequestConfig;
-import org.apache.http.client.methods.CloseableHttpResponse;
-import org.apache.http.client.methods.HttpDelete;
-import org.apache.http.client.methods.HttpEntityEnclosingRequestBase;
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.client.methods.HttpHead;
-import org.apache.http.client.methods.HttpPatch;
-import org.apache.http.client.methods.HttpPost;
-import org.apache.http.client.methods.HttpPut;
-import org.apache.http.client.methods.HttpRequestBase;
-import org.apache.http.client.methods.HttpUriRequest;
-import org.apache.http.client.utils.URIBuilder;
+import org.apache.http.client.methods.*;
 import org.apache.http.entity.ContentType;
 import org.apache.http.entity.InputStreamEntity;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.CloseableHttpClient;
 
-import com.google.common.io.Closeables;
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Map.Entry;
 
 
 public class HttpJsonRequest implements CleanCloseable {
@@ -97,8 +63,9 @@ public class HttpJsonRequest implements CleanCloseable {
   private CachedRequest cachedRequestDetails;
   private final HttpJsonRequestFactory factory;
   private final IHoldProfilingInformation owner;
-  private final Convention conventions;
+  private final ConventionBase conventions;
   private boolean disabledAuthRetries;
+  private IRequestTimeMetric requestTimeMetric;
   private String postedData;
   private boolean isRequestSendToServer;
 
@@ -144,6 +111,7 @@ public class HttpJsonRequest implements CleanCloseable {
     this.factory = factory;
     this.owner = requestParams.getOwner();
     this.conventions = requestParams.getConvention();
+    this.requestTimeMetric = requestParams.getRequestTimeMetric();
 
     httpClient = factory.getHttpClient();
 
@@ -224,9 +192,21 @@ public class HttpJsonRequest implements CleanCloseable {
           assertServerVersionSupported();
           responseStatusCode = response.getStatusLine().getStatusCode();
         } catch (IOException e) {
+          /* TODO:
+          +				catch (HttpRequestException e)
++				{
++					if (Response == null) //something bad happened and httpClient.SendAsync failed -> i.e. server down, network down
++						e.Data.Add(Constants.RequestFailedExceptionMarker, true);
++
++					throw ErrorResponseException.FromHttpRequestException(e);
++				}
+           */
           throw new JsonWriterException(e);
         } finally {
           sp.stop();
+          if (requestTimeMetric != null) {
+            requestTimeMetric.update((int)sp.getTime());
+          }
         }
 
         return checkForErrorsAndReturnCachedResultIfAny(readErrorString);
@@ -413,7 +393,7 @@ public class HttpJsonRequest implements CleanCloseable {
   }
 
   private boolean handleUnauthorizedResponse(HttpResponse unauthorizedResponse) {
-    if (conventions.getHandleUnauthorizedResponse() == null) return false;
+    if (conventions == null || conventions.getHandleUnauthorizedResponse() == null) return false;
 
     Action1<HttpRequest> handleUnauthorizedResponse = conventions.handleUnauthorizedResponse(unauthorizedResponse, _credentials);
     if (handleUnauthorizedResponse == null) return false;
@@ -423,7 +403,7 @@ public class HttpJsonRequest implements CleanCloseable {
   }
 
   protected void handleForbiddenResponse(HttpResponse forbiddenResponse) {
-    if (conventions.getHandleForbiddenResponse() == null) return;
+    if (conventions == null || conventions.getHandleForbiddenResponse() == null) return;
     conventions.handleForbiddenResponse(forbiddenResponse);
   }
 
@@ -449,10 +429,10 @@ public class HttpJsonRequest implements CleanCloseable {
 
     try (InputStream responseStream = response.getEntity() != null
       ? response.getEntity().getContent() : new ByteArrayInputStream(new byte[0])) {
-      CountingStream countingStream = new CountingStream(responseStream);
+      CountingInputStream countingStream = new CountingInputStream(responseStream);
       RavenJToken data = RavenJToken.tryLoad(countingStream);
 
-      size = countingStream.getNumberOfReadBytes();
+      size = countingStream.getCount();
 
       if (HttpMethods.GET == method && shouldCacheRequest) {
         factory.cacheResponse(url, data, responseHeaders);
@@ -487,43 +467,16 @@ public class HttpJsonRequest implements CleanCloseable {
     return this;
   }
 
-  @SuppressWarnings("unused")
-  public HttpJsonRequest addReplicationStatusHeaders(String thePrimaryUrl, String currentUrl,
-    IDocumentStoreReplicationInformer replicationInformer, FailoverBehaviorSet failoverBehavior,
-    HandleReplicationStatusChangesCallback handleReplicationStatusChangesCallback) {
-
-    if (thePrimaryUrl.equalsIgnoreCase(currentUrl)) {
-      return this;
-    }
-    if (replicationInformer.getFailureCount(thePrimaryUrl).longValue() <= 0) {
-      return this; // not because of failover, no need to do this.
-    }
-
-    Date lastPrimaryCheck = replicationInformer.getFailureLastCheck(thePrimaryUrl);
-    headers.put(Constants.RAVEN_CLIENT_PRIMARY_SERVER_URL, toRemoteUrl(thePrimaryUrl));
-
-    NetDateFormat sdf = new NetDateFormat();
-    headers.put(Constants.RAVEN_CLIENT_PRIMARY_SERVER_LAST_CHECK, sdf.format(lastPrimaryCheck));
-
-    primaryUrl = thePrimaryUrl;
-    operationUrl = currentUrl;
-
-    this.handleReplicationStatusChanges = handleReplicationStatusChangesCallback;
+  public HttpJsonRequest addRequestExecuterAndReplicationHeaders(ServerClient serverClient, String currentUrl) {
+    serverClient.getRequestExecuter().addHeaders(this, serverClient, currentUrl);
     return this;
   }
 
-  private static String toRemoteUrl(String thePrimaryUrl) {
-    try {
-      URIBuilder uriBuilder = new URIBuilder(thePrimaryUrl);
-      if ("localhost".equals(uriBuilder.getHost()) || "127.0.0.1".equals(uriBuilder.getHost())) {
-        uriBuilder.setHost(InetAddress.getLocalHost().getHostName());
-      }
-      return uriBuilder.toString();
-    } catch (URISyntaxException e) {
-      throw new RuntimeException("Invalid URI:" + thePrimaryUrl, e);
-    } catch (UnknownHostException e) {
-      throw new RuntimeException("Unable to fetch hostname", e);
-    }
+  public void addReplicationStatusChangeBehavior(String thePrimaryUrl, String currentUrl, Action3<Map<String, String>, String, String> handleReplicationStatusChanges) {
+    primaryUrl = thePrimaryUrl;
+    operationUrl = currentUrl;
+    this.handleReplicationStatusChanges = handleReplicationStatusChanges;
+
   }
 
   public double calculateDuration() {
@@ -832,4 +785,7 @@ public class HttpJsonRequest implements CleanCloseable {
     });
   }
 
+  public Action3<Map<String, String>, String, String> getHandleReplicationStatusChanges() {
+    return handleReplicationStatusChanges;
+  }
 }

@@ -1,14 +1,5 @@
 package net.ravendb.tests.notifications;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-
-import java.util.concurrent.ArrayBlockingQueue;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.TimeUnit;
-
-import org.junit.Test;
-
 import net.ravendb.abstractions.closure.Action1;
 import net.ravendb.abstractions.data.DocumentChangeNotification;
 import net.ravendb.abstractions.data.DocumentChangeTypes;
@@ -20,6 +11,14 @@ import net.ravendb.client.RemoteClientTest;
 import net.ravendb.client.changes.IDatabaseChanges;
 import net.ravendb.client.document.DocumentStore;
 import net.ravendb.client.utils.Observers;
+import org.junit.Test;
+
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.TimeUnit;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 
 
 public class FilteredTest extends RemoteClientTest {

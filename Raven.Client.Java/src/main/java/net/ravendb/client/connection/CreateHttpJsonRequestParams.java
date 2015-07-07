@@ -1,18 +1,19 @@
 package net.ravendb.client.connection;
 
+import net.ravendb.abstractions.connection.OperationCredentials;
+import net.ravendb.abstractions.data.HttpMethods;
+import net.ravendb.abstractions.json.linq.RavenJObject;
+import net.ravendb.client.ConventionBase;
+import net.ravendb.client.connection.profiling.IHoldProfilingInformation;
+import net.ravendb.client.delegates.RequestCachePolicy;
+import net.ravendb.client.metrics.IRequestTimeMetric;
+import org.apache.commons.lang.StringUtils;
+
 import java.io.Serializable;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-
-import net.ravendb.abstractions.connection.OperationCredentials;
-import net.ravendb.abstractions.data.HttpMethods;
-import net.ravendb.abstractions.json.linq.RavenJObject;
-import net.ravendb.client.connection.profiling.IHoldProfilingInformation;
-import net.ravendb.client.document.Convention;
-
-import org.apache.commons.lang.StringUtils;
 
 
 public class CreateHttpJsonRequestParams implements Serializable {
@@ -26,27 +27,39 @@ public class CreateHttpJsonRequestParams implements Serializable {
   private boolean avoidCachingRequest;
   private HttpMethods method;
   private RavenJObject metadata;
-  private Convention convention;
+  private ConventionBase convention;
   private OperationCredentials credentials;
   private boolean disableRequestCompression;
   private Long timeout;
   private boolean disableAuthentication;
+  private RequestCachePolicy shouldCacheRequest;
+  private IRequestTimeMetric requestTimeMetric;
 
-  public CreateHttpJsonRequestParams(IHoldProfilingInformation owner, String url, HttpMethods method, RavenJObject metadata, OperationCredentials credentials, Convention convention) {
-    this(owner, url, method, metadata, credentials, convention, null);
-  }
-
-  public CreateHttpJsonRequestParams(IHoldProfilingInformation owner, String url, HttpMethods method, RavenJObject metadata, OperationCredentials credentials, Convention convention, Long timeout) {
-    super();
-
-    this.method = method;
-    this.url = url;
+  public CreateHttpJsonRequestParams(IHoldProfilingInformation owner, String url, HttpMethods method, RavenJObject metadata, OperationCredentials credentials, ConventionBase convention, IRequestTimeMetric requestTimeMetric, Long timeout) {
     this.owner = owner;
+    this.url = url;
+    this.method = method;
     this.metadata = metadata;
     this.credentials = credentials;
     this.convention = convention;
+    this.requestTimeMetric = requestTimeMetric;
     this.timeout = timeout;
     this.operationsHeadersCollection = new HashMap<>();
+    this.shouldCacheRequest = convention != null ? convention.getShouldCacheRequest() : new RequestCachePolicy() {
+      @Override
+      public Boolean shouldCacheRequest(String url) {
+        return false;
+      }
+    };
+  }
+
+  public CreateHttpJsonRequestParams(IHoldProfilingInformation owner, String url, HttpMethods method, OperationCredentials credentials, ConventionBase convention, IRequestTimeMetric requestTimeMetric, Long timeout) {
+    this(owner, url, method, new RavenJObject(), credentials, convention, requestTimeMetric, timeout);
+  }
+
+  public CreateHttpJsonRequestParams(IHoldProfilingInformation owner, String url, HttpMethods method, OperationCredentials credentials, RequestCachePolicy shouldCacheRequest, IRequestTimeMetric requestTimeMetric, Long timeout) {
+    this(owner, url, method, new RavenJObject(), credentials, null, requestTimeMetric, timeout);
+    this.shouldCacheRequest = shouldCacheRequest;
   }
 
   /**
@@ -97,7 +110,7 @@ public class CreateHttpJsonRequestParams implements Serializable {
   /**
    * @return the convention
    */
-  public Convention getConvention() {
+  public ConventionBase getConvention() {
     return convention;
   }
 
@@ -167,7 +180,7 @@ public class CreateHttpJsonRequestParams implements Serializable {
   /**
    * @param convention the convention to set
    */
-  public void setConvention(Convention convention) {
+  public void setConvention(ConventionBase convention) {
     this.convention = convention;
   }
 
@@ -212,6 +225,14 @@ public class CreateHttpJsonRequestParams implements Serializable {
     }
   }
 
+  public RequestCachePolicy getShouldCacheRequest() {
+    return shouldCacheRequest;
+  }
+
+  public void setShouldCacheRequest(RequestCachePolicy shouldCacheRequest) {
+    this.shouldCacheRequest = shouldCacheRequest;
+  }
+
   public Long getTimeout() {
     return timeout;
   }
@@ -226,5 +247,13 @@ public class CreateHttpJsonRequestParams implements Serializable {
 
   public void setDisableAuthentication(boolean disableAuthentication) {
     this.disableAuthentication = disableAuthentication;
+  }
+
+  public IRequestTimeMetric getRequestTimeMetric() {
+    return requestTimeMetric;
+  }
+
+  public void setRequestTimeMetric(IRequestTimeMetric requestTimeMetric) {
+    this.requestTimeMetric = requestTimeMetric;
   }
 }

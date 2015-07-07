@@ -35,6 +35,19 @@ public class Functions {
 
   }
 
+  public static class StaticFunction4<A, B, C, D, T> implements Function4<A, B, C, D, T> {
+
+    private T inner;
+    public StaticFunction4(T value) {
+      this.inner = value;
+    }
+
+    @Override
+    public T apply(A first, B second, C third, D fourth) {
+      return inner;
+    }
+  }
+
 
   public static <T> Function1<T, Boolean> alwaysTrue() {
     return new AlwaysTrue<>();

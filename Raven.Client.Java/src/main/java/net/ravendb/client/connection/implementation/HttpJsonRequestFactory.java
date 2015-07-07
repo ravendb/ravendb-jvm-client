@@ -1,12 +1,6 @@
 package net.ravendb.client.connection.implementation;
 
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.atomic.AtomicInteger;
-
+import com.google.common.io.Closeables;
 import net.ravendb.abstractions.basic.CleanCloseable;
 import net.ravendb.abstractions.basic.EventHandler;
 import net.ravendb.abstractions.basic.EventHelper;
@@ -21,7 +15,6 @@ import net.ravendb.client.connection.profiling.IHoldProfilingInformation;
 import net.ravendb.client.connection.profiling.RequestResultArgs;
 import net.ravendb.client.extensions.MultiDatabase;
 import net.ravendb.client.util.SimpleCache;
-
 import org.apache.commons.lang.StringUtils;
 import org.apache.http.HttpStatus;
 import org.apache.http.config.SocketConfig;
@@ -30,7 +23,8 @@ import org.apache.http.impl.client.HttpClients;
 import org.apache.http.impl.client.StandardHttpRequestRetryHandler;
 import org.apache.http.impl.conn.PoolingHttpClientConnectionManager;
 
-import com.google.common.io.Closeables;
+import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
 
 
 /**
@@ -68,7 +62,7 @@ public class HttpJsonRequestFactory implements CleanCloseable {
 
     PoolingHttpClientConnectionManager cm = new PoolingHttpClientConnectionManager();
     cm.setDefaultMaxPerRoute(10);
-    this.httpClient = HttpClients.custom().setConnectionManager(cm).setRetryHandler(new StandardHttpRequestRetryHandler(0, false))
+    this.httpClient = HttpClients.custom().setConnectionManager(cm).disableRedirectHandling().setRetryHandler(new StandardHttpRequestRetryHandler(0, false))
       .setDefaultSocketConfig(SocketConfig.custom().setTcpNoDelay(true).build()).
       build();
     this.maxNumberOfCachedRequests = maxNumberOfCachedRequests;
@@ -163,7 +157,7 @@ public class HttpJsonRequestFactory implements CleanCloseable {
 
     HttpJsonRequest request = new HttpJsonRequest(createHttpJsonRequestParams, this);
     request.setShouldCacheRequest(createHttpJsonRequestParams.isAvoidCachingRequest() == false
-        && createHttpJsonRequestParams.getConvention().shouldCacheRequest(createHttpJsonRequestParams.getUrl()));
+        && createHttpJsonRequestParams.getShouldCacheRequest().shouldCacheRequest(createHttpJsonRequestParams.getUrl()));
 
     if (request.isShouldCacheRequest() && !getDisableHttpCaching()) {
       CachedRequestOp cachedRequestDetails = configureCaching(createHttpJsonRequestParams.getUrl(), new SetHeader(request));

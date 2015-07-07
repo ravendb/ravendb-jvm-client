@@ -1,7 +1,7 @@
 package net.ravendb.client.document;
 
-import java.util.Date;
-
+import com.mysema.query.types.Expression;
+import com.mysema.query.types.Path;
 import net.ravendb.abstractions.basic.Reference;
 import net.ravendb.abstractions.closure.Action1;
 import net.ravendb.abstractions.data.Etag;
@@ -13,7 +13,7 @@ import net.ravendb.client.IDocumentQueryCustomization;
 import net.ravendb.client.shard.ShardReduceFunction;
 import net.ravendb.client.spatial.SpatialCriteria;
 
-import com.mysema.query.types.Path;
+import java.util.Date;
 
 
 public class DocumentQueryCustomization implements IDocumentQueryCustomization {
@@ -251,5 +251,57 @@ public class DocumentQueryCustomization implements IDocumentQueryCustomization {
     return delegate.toString();
   }
 
+  @Override
+  public IDocumentQueryCustomization addOrder(String fieldName) {
+    delegate.addOrder(fieldName);
+    return this;
+  }
 
+  @Override
+  public IDocumentQueryCustomization addOrder(String fieldName, boolean descending) {
+    delegate.addOrder(fieldName, descending);
+    return this;
+  }
+
+  @Override
+  public IDocumentQueryCustomization addOrder(String fieldName, boolean descending, Class fieldType) {
+    delegate.addOrder(fieldName, descending, fieldType);
+    return this;
+  }
+
+  @Override
+  public IDocumentQueryCustomization addOrder(Expression<?> propertySelector) {
+    delegate.addOrder(propertySelector);
+    return this;
+  }
+
+  @Override
+  public IDocumentQueryCustomization addOrder(Expression<?> propertySelector, boolean descending) {
+    delegate.addOrder(propertySelector, descending);
+    return this;
+  }
+
+  @Override
+  public IDocumentQueryCustomization alphaNumericOrdering(String fieldName) {
+    delegate.alphaNumericOrdering(fieldName);
+    return this;
+  }
+
+  @Override
+  public IDocumentQueryCustomization alphaNumericOrdering(String fieldName, boolean descending) {
+    delegate.alphaNumericOrdering(fieldName, descending);
+    return this;
+  }
+
+  @Override
+  public IDocumentQueryCustomization alphaNumericOrdering(Expression<?> propertySelector) {
+    delegate.alphaNumericOrdering(propertySelector);
+    return this;
+  }
+
+  @Override
+  public IDocumentQueryCustomization alphaNumericOrdering(Expression<?> propertySelector, boolean descending) {
+    delegate.alphaNumericOrdering(propertySelector, descending);
+    return this;
+  }
 }

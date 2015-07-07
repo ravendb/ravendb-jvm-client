@@ -1,18 +1,11 @@
 package net.ravendb.abstractions.indexing;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Set;
-
-import net.ravendb.abstractions.data.StringDistanceTypes;
-
 import org.apache.commons.lang.StringUtils;
 import org.codehaus.jackson.annotate.JsonIgnore;
 import org.codehaus.jackson.annotate.JsonProperty;
+
+import java.util.*;
+import java.util.Map.Entry;
 
 
 public class IndexDefinition {
@@ -54,6 +47,7 @@ public class IndexDefinition {
   private Map<String, SuggestionOptions> suggestions;
   private Map<String, FieldTermVector> termVectors;
   private Map<String, SpatialOptions> spatialIndexes;
+  private Set<String> suggestionsOptions;
   private Integer cachedHashCode;
   private boolean disableInMemoryIndexing;
 
@@ -217,22 +211,13 @@ public class IndexDefinition {
   }
 
 
-  /**
-   * Index field suggestion settings.
-   */
-  public Map<String, SuggestionOptions> getSuggestions() {
-    return suggestions;
+  public Set<String> getSuggestionsOptions() {
+    return suggestionsOptions != null ? suggestionsOptions : (suggestionsOptions = new HashSet<>());
   }
 
-
-  /**
-   * Index field suggestion settings.
-   * @param suggestions
-   */
-  public void setSuggestions(Map<String, SuggestionOptions> suggestions) {
-    this.suggestions = suggestions;
+  public void setSuggestionsOptions(Set<String> suggestionsOptions) {
+    this.suggestionsOptions = suggestionsOptions;
   }
-
 
   /**
    * Index field storage settings.
@@ -404,7 +389,7 @@ public class IndexDefinition {
     result = prime * result + ((sortOptions == null) ? 0 : sortOptions.hashCode());
     result = prime * result + ((spatialIndexes == null) ? 0 : spatialIndexes.hashCode());
     result = prime * result + ((stores == null) ? 0 : stores.hashCode());
-    result = prime * result + ((suggestions == null) ? 0 : suggestions.hashCode());
+    result = prime * result + ((suggestionsOptions == null) ? 0 : suggestionsOptions.hashCode());
     result = prime * result + ((termVectors == null) ? 0 : termVectors.hashCode());
     return result;
   }
@@ -462,10 +447,10 @@ public class IndexDefinition {
         return false;
     } else if (!stores.equals(other.stores))
       return false;
-    if (suggestions == null) {
-      if (other.suggestions != null)
+    if (suggestionsOptions == null) {
+      if (other.suggestionsOptions != null)
         return false;
-    } else if (!suggestions.equals(other.suggestions))
+    } else if (!suggestionsOptions.equals(other.suggestionsOptions))
       return false;
     if (maxIndexOutputsPerDocument == null) {
       if (other.maxIndexOutputsPerDocument != null)
@@ -524,12 +509,6 @@ public class IndexDefinition {
     for (String key: new HashSet<>(analyzers.keySet())) {
       if (StringUtils.isEmpty(analyzers.get(key))) {
         analyzers.remove(key);
-      }
-    }
-
-    for (String key: new HashSet<>(suggestions.keySet())) {
-      if (suggestions.get(key).getDistance() == StringDistanceTypes.NONE) {
-        suggestions.remove(key);
       }
     }
 

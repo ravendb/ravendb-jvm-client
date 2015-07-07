@@ -1,21 +1,15 @@
 package net.ravendb.client.indexes;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Map.Entry;
-
+import com.mysema.query.types.Path;
 import net.ravendb.abstractions.extensions.ExpressionExtensions;
-import net.ravendb.abstractions.indexing.FieldIndexing;
-import net.ravendb.abstractions.indexing.FieldStorage;
-import net.ravendb.abstractions.indexing.FieldTermVector;
-import net.ravendb.abstractions.indexing.IndexDefinition;
-import net.ravendb.abstractions.indexing.IndexLockMode;
-import net.ravendb.abstractions.indexing.SortOptions;
-import net.ravendb.abstractions.indexing.SpatialOptions;
-import net.ravendb.abstractions.indexing.SuggestionOptions;
+import net.ravendb.abstractions.indexing.*;
 import net.ravendb.client.document.DocumentConvention;
 
-import com.mysema.query.types.Path;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
 
 
 
@@ -38,7 +32,7 @@ public class IndexDefinitionBuilder {
   private Map<String, SortOptions> sortOptionsStrings;
   private Map<Path<?>, String> analyzers;
   private Map<String, String> analyzersStrings;
-  private Map<Path<?>, SuggestionOptions> suggestions;
+  private Set<Path<?>> suggestionsOptions;
   private Map<Path<?>, FieldTermVector> termVectors;
   private Map<String, FieldTermVector> termVectorsStrings;
   private Map<Path<?>, SpatialOptions> spatialIndexes;
@@ -52,7 +46,7 @@ public class IndexDefinitionBuilder {
     this.indexesStrings = new HashMap<>();
     this.sortOptions = new HashMap<>();
     this.sortOptionsStrings = new HashMap<>();
-    this.suggestions = new HashMap<>();
+    this.suggestionsOptions = new HashSet<>();
     this.analyzers = new HashMap<>();
     this.analyzersStrings = new HashMap<>();
     this.termVectors = new HashMap<>();
@@ -60,6 +54,16 @@ public class IndexDefinitionBuilder {
     this.spatialIndexes = new HashMap<>();
     this.spatialIndexesStrings = new HashMap<>();
     this.lockMode = IndexLockMode.UNLOCK;
+  }
+
+  @SuppressWarnings("static-method")
+  private Set<String> convertToStringSet(Set<Path< ? >> input) {
+    Set<String> result = new HashSet<>();
+    for (Path<?> path : input) {
+      String propertyPath = ExpressionExtensions.toPropertyPath(path, '_');
+      result.add(propertyPath);
+    }
+    return result;
   }
 
   @SuppressWarnings("static-method")
@@ -100,6 +104,13 @@ public class IndexDefinitionBuilder {
     return disableInMemoryIndexing;
   }
 
+  public Set<Path<?>> getSuggestionsOptions() {
+    return suggestionsOptions;
+  }
+
+  public void setSuggestionsOptions(Set<Path<?>> suggestionsOptions) {
+    this.suggestionsOptions = suggestionsOptions;
+  }
 
   public void setDisableInMemoryIndexing(boolean disableInMemoryIndexing) {
     this.disableInMemoryIndexing = disableInMemoryIndexing;
@@ -119,9 +130,6 @@ public class IndexDefinitionBuilder {
   }
   public Map<String, FieldStorage> getStoresStrings() {
     return storesStrings;
-  }
-  public Map<Path< ? >, SuggestionOptions> getSuggestions() {
-    return suggestions;
   }
   public Map<Path< ? >, FieldTermVector> getTermVectors() {
     return termVectors;
@@ -175,9 +183,6 @@ public class IndexDefinitionBuilder {
   public void setStoresStrings(Map<String, FieldStorage> storesStrings) {
     this.storesStrings = storesStrings;
   }
-  public void setSuggestions(Map<Path< ? >, SuggestionOptions> suggestions) {
-    this.suggestions = suggestions;
-  }
 
   public void setTermVectors(Map<Path< ? >, FieldTermVector> termVectors) {
     this.termVectors = termVectors;
@@ -205,7 +210,7 @@ public class IndexDefinitionBuilder {
     indexDefinition.setStores(convertToStringDictionary(stores));
     indexDefinition.setSortOptions(convertToStringDictionary(sortOptions));
     indexDefinition.setAnalyzers(convertToStringDictionary(analyzers));
-    indexDefinition.setSuggestions(convertToStringDictionary(suggestions));
+    indexDefinition.setSuggestionsOptions(convertToStringSet(suggestionsOptions));
     indexDefinition.setTermVectors(convertToStringDictionary(termVectors));
     indexDefinition.setSpatialIndexes(convertToStringDictionary(spatialIndexes));
 

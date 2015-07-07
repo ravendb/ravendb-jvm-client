@@ -1,11 +1,9 @@
 package net.ravendb.tests.suggestions;
 
-import static org.junit.Assert.assertEquals;
 import net.ravendb.abstractions.data.StringDistanceTypes;
 import net.ravendb.abstractions.data.SuggestionQuery;
 import net.ravendb.abstractions.data.SuggestionQueryResult;
 import net.ravendb.abstractions.indexing.IndexDefinition;
-import net.ravendb.abstractions.indexing.SuggestionOptions;
 import net.ravendb.client.IDocumentSession;
 import net.ravendb.client.IDocumentStore;
 import net.ravendb.client.RemoteClientTest;
@@ -13,8 +11,9 @@ import net.ravendb.client.document.DocumentQueryCustomizationFactory;
 import net.ravendb.client.document.DocumentStore;
 import net.ravendb.tests.bugs.QUser;
 import net.ravendb.tests.bugs.User;
-
 import org.junit.Test;
+
+import static org.junit.Assert.assertEquals;
 
 
 
@@ -24,7 +23,7 @@ public class SuggestionsTest extends RemoteClientTest {
   private void createIndexAndData(IDocumentStore store) {
     IndexDefinition indexDefinition = new IndexDefinition();
     indexDefinition.setMap("from doc in docs select new { doc.Name }");
-    indexDefinition.getSuggestions().put("Name", new SuggestionOptions());
+    indexDefinition.getSuggestionsOptions().add("Name");
 
     store.getDatabaseCommands().putIndex("Test", indexDefinition);
 

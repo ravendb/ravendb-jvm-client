@@ -383,6 +383,12 @@ public class DocumentQuery<T> extends AbstractDocumentQuery<T, DocumentQuery<T>>
   }
 
   @Override
+  public <TValue> IDocumentQuery<T> addOrder(Expression< ? > propertySelector) {
+    addOrder(propertySelector, false);
+    return this;
+  }
+
+  @Override
   public <TValue> IDocumentQuery<T> addOrder(Expression< ? > propertySelector, boolean descending) {
     addOrder(getMemberQueryPath(propertySelector), descending);
     return this;

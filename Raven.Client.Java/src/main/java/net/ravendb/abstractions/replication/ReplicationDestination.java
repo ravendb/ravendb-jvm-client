@@ -8,6 +8,7 @@ import org.apache.commons.lang.builder.HashCodeBuilder;
 public class ReplicationDestination {
 
   private String url;
+  private String[] sourceCollections;
   private String username;
   private String password;
   private String domain;
@@ -40,6 +41,25 @@ public class ReplicationDestination {
    */
   public void setSkipIndexReplication(boolean skipIndexReplication) {
     this.skipIndexReplication = skipIndexReplication;
+  }
+
+  /**
+   * If an option to replicate only from specific collections is selected,
+   * replicate documents only from the specified collections
+     */
+  public String[] getSourceCollections() {
+    return sourceCollections != null ? sourceCollections : (sourceCollections = new String[0]);
+  }
+
+  /**
+   * If an option to replicate only from specific collections is selected,
+   * replicate documents only from the specified collections
+   */
+  public void setSourceCollections(String[] sourceCollections) {
+    this.sourceCollections = sourceCollections;
+    if (sourceCollections != null && sourceCollections.length > 0) {
+      ignoredClient = true;
+    }
   }
 
   public String getApiKey() {
@@ -141,6 +161,10 @@ public class ReplicationDestination {
       return description;
     }
 
+  }
+
+  public boolean canBeFailover() {
+    return !ignoredClient && !disabled && sourceCollections.length == 0;
   }
 
   @Override

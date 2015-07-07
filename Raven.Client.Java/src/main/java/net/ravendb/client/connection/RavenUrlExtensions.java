@@ -10,6 +10,9 @@ public class RavenUrlExtensions {
 
   public static String forDatabase(String url, String database) {
     if (StringUtils.isNotEmpty(database) && !url.contains("/databases/")){
+      if (url.endsWith("/")) {
+        return url + "databases/" + database;
+      }
       return url + "/databases/" + database;
     }
     return url;
@@ -21,6 +24,10 @@ public class RavenUrlExtensions {
 
   public static String indexDefinition(String url, String index) {
     return url + "/indexes/" + index + "?definition=yes";
+  }
+
+  public static String indexingPerformanceStatistics(String url) {
+    return url + "/debug/indexing-perf-stats";
   }
 
   public static String tranformer(String url, String transformer) {
@@ -35,6 +42,14 @@ public class RavenUrlExtensions {
     return url + "/stats";
   }
 
+  public static String userInfo(String url) {
+    return url + "/debug/user-info";
+  }
+
+  public static String userPermission(String url, String database, boolean readOnly) {
+    return url + "/debug/user-info" + "?database=" + database + "&method=" + (readOnly?"GET":"POST");
+  }
+
   public static String adminStats(String url) {
     return MultiDatabase.getRootDatabaseUrl(url) + "/admin/stats";
   }
@@ -44,6 +59,10 @@ public class RavenUrlExtensions {
   }
 
   public static String lastReplicatedEtagFor(String destinationUrl, String sourceUrl, String sourceDbId) {
+    return lastReplicatedEtagFor(destinationUrl, sourceUrl, sourceDbId, null);
+  }
+
+  public static String lastReplicatedEtagFor(String destinationUrl, String sourceUrl, String sourceDbId, String[] sourceCollections) {
     return destinationUrl + "/replication/lastEtag?from=" + UrlUtils.escapeDataString(sourceUrl)  + "&dbId=" + sourceDbId;
   }
 

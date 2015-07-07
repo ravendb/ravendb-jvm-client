@@ -1,27 +1,37 @@
 package net.ravendb.client.connection;
 
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Date;
-
 import net.ravendb.abstractions.basic.EventArgs;
+import net.ravendb.abstractions.cluster.ClusterInformation;
 import net.ravendb.abstractions.connection.OperationCredentials;
 import net.ravendb.abstractions.data.JsonDocument;
 import net.ravendb.abstractions.extensions.JsonExtensions;
 import net.ravendb.abstractions.json.linq.RavenJObject;
 import net.ravendb.abstractions.replication.ReplicationDestination;
-import net.ravendb.abstractions.replication.ReplicationDocument;
+import net.ravendb.abstractions.replication.ReplicationDestinationWithClusterInformation;
+import net.ravendb.abstractions.replication.ReplicationDocumentWithClusterInformation;
 import net.ravendb.client.connection.implementation.HttpJsonRequestFactory;
-import net.ravendb.client.document.Convention;
+import net.ravendb.client.connection.request.FailureCounters;
+import net.ravendb.client.document.DocumentConvention;
 import net.ravendb.client.document.FailoverBehavior;
 import net.ravendb.client.extensions.MultiDatabase;
-
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.time.DateUtils;
 
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Date;
+
 public class ReplicationInformer extends ReplicationInformerBase<ServerClient> implements IDocumentStoreReplicationInformer {
 
+  private final Object replicationLock = new Object();
+
+  private boolean firstTime = true;
+
+  private Date lastReplicationUpdate = new Date(0);
+
   private ReplicationDestination[] failoverServers;
+
+  protected Thread refreshReplicationInformationTask;
 
   @Override
   public void setFailoverServers(ReplicationDestination[] failoverServers) {
@@ -39,7 +49,7 @@ public class ReplicationInformer extends ReplicationInformerBase<ServerClient> i
     return failoverServers;
   }
 
-  public ReplicationInformer(Convention conventions, HttpJsonRequestFactory jsonRequestFactory) {
+  public ReplicationInformer(DocumentConvention conventions, HttpJsonRequestFactory jsonRequestFactory) {
     super(conventions, jsonRequestFactory, 1000);
   }
 
@@ -105,9 +115,9 @@ public class ReplicationInformer extends ReplicationInformerBase<ServerClient> i
 
       JsonDocument document;
       try {
-        RavenJObject replicationDestinations = RavenJObject.fromObject(commands.directGetReplicationDestinations(new OperationMetadata(commands.getUrl(), commands.getPrimaryCredentials())));
+        RavenJObject replicationDestinations = RavenJObject.fromObject(commands.directGetReplicationDestinations(new OperationMetadata(commands.getUrl(), commands.getPrimaryCredentials(), ClusterInformation.NOT_IN_CLUSTER)));
         document =  replicationDestinations == null ? null : SerializationHelper.toJsonDocument(replicationDestinations);
-        failureCounts.put(commands.getUrl(), new FailureCounter()); // we just hit the master, so we can reset its failure count
+        getFailureCounters().getFailureCounts().put(commands.getUrl(), new FailureCounters.FailureCounter()); // we just hit the master, so we can reset its failure count
       } catch (Exception e) {
         log.error("Could not contact master for new replication information", e);
         document = ReplicationInformerLocalCache.tryLoadReplicationInformationFromLocalCache(serverHash);
@@ -123,32 +133,35 @@ public class ReplicationInformer extends ReplicationInformerBase<ServerClient> i
     }
   }
 
-  private void updateReplicationInformationFromDocument(JsonDocument document) {
-    ReplicationDocument replicationDocument = null;
+  public void updateReplicationInformationFromDocument(JsonDocument document) {
+    ReplicationDocumentWithClusterInformation replicationDocument = null;
     try {
       replicationDocument = JsonExtensions.createDefaultJsonSerializer().readValue(document.getDataAsJson().toString(),
-        ReplicationDocument.class);
+              ReplicationDocumentWithClusterInformation.class);
     } catch (IOException e) {
       log.error("Mapping Exception", e);
       return;
     }
     replicationDestinations = new ArrayList<>();
-    for (ReplicationDestination x : replicationDocument.getDestinations()) {
+    for (ReplicationDestinationWithClusterInformation x : replicationDocument.getDestinations()) {
       String url = StringUtils.isEmpty(x.getClientVisibleUrl()) ? x.getUrl() : x.getClientVisibleUrl();
-      if (StringUtils.isEmpty(url) || Boolean.TRUE.equals(x.getDisabled()) || Boolean.TRUE.equals(x.getIgnoredClient())) {
+      if (StringUtils.isEmpty(url)) {
+        return;
+      }
+      if (!x.canBeFailover()) {
         return;
       }
       if (StringUtils.isEmpty(x.getDatabase())) {
-        replicationDestinations.add(new OperationMetadata(url,new OperationCredentials(x.getApiKey())));
+        replicationDestinations.add(new OperationMetadata(url, new OperationCredentials(x.getApiKey()), x.getClusterInformation()));
         return;
       }
       replicationDestinations.add(new OperationMetadata(MultiDatabase.getRootDatabaseUrl(url) + "/databases/"
-        + x.getDatabase(), new OperationCredentials(x.getApiKey())));
+        + x.getDatabase(), new OperationCredentials(x.getApiKey()), x.getClusterInformation()));
     }
 
     for (OperationMetadata replicationDestination : replicationDestinations) {
-      if (!failureCounts.containsKey(replicationDestination.getUrl())) {
-        failureCounts.put(replicationDestination.getUrl(), new FailureCounter());
+      if (!getFailureCounters().getFailureCounts().containsKey(replicationDestination.getUrl())) {
+        getFailureCounters().getFailureCounts().put(replicationDestination.getUrl(), new FailureCounters.FailureCounter());
       }
     }
 

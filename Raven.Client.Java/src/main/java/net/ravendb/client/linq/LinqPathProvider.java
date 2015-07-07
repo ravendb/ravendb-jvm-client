@@ -1,23 +1,16 @@
 package net.ravendb.client.linq;
 
-import java.lang.reflect.Field;
-import java.util.ArrayList;
-import java.util.List;
-
+import com.mysema.query.types.*;
+import com.mysema.query.types.expr.NumberOperation;
+import com.mysema.query.types.path.MapPath;
 import net.ravendb.abstractions.basic.Reference;
-import net.ravendb.client.document.Convention;
-
+import net.ravendb.client.QueryConvention;
 import org.apache.commons.lang.StringUtils;
 import org.codehaus.jackson.annotate.JsonProperty;
 
-import com.mysema.query.types.Constant;
-import com.mysema.query.types.Expression;
-import com.mysema.query.types.Operation;
-import com.mysema.query.types.Ops;
-import com.mysema.query.types.Path;
-import com.mysema.query.types.PathType;
-import com.mysema.query.types.expr.NumberOperation;
-import com.mysema.query.types.path.MapPath;
+import java.lang.reflect.Field;
+import java.util.ArrayList;
+import java.util.List;
 
 public class LinqPathProvider {
   public static class Result {
@@ -53,9 +46,9 @@ public class LinqPathProvider {
 
   }
 
-  private final Convention conventions;
+  private final QueryConvention conventions;
 
-  public LinqPathProvider(Convention documentConvention) {
+  public LinqPathProvider(QueryConvention documentConvention) {
     this.conventions = documentConvention;
   }
 

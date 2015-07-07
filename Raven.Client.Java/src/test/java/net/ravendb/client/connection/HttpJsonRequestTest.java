@@ -1,23 +1,9 @@
 package net.ravendb.client.connection;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
-
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.UUID;
-
 import net.ravendb.abstractions.basic.CleanCloseable;
 import net.ravendb.abstractions.basic.EventHandler;
 import net.ravendb.abstractions.closure.Functions;
+import net.ravendb.abstractions.cluster.ClusterBehavior;
 import net.ravendb.abstractions.connection.ErrorResponseException;
 import net.ravendb.abstractions.connection.OperationCredentials;
 import net.ravendb.abstractions.connection.WebRequestEventArgs;
@@ -30,11 +16,13 @@ import net.ravendb.client.connection.implementation.HttpJsonRequest;
 import net.ravendb.client.connection.implementation.HttpJsonRequestFactory;
 import net.ravendb.client.connection.profiling.RequestResultArgs;
 import net.ravendb.client.connection.profiling.RequestStatus;
+import net.ravendb.client.connection.request.IRequestExecuter;
+import net.ravendb.client.connection.request.ReplicationAwareRequestExecuter;
 import net.ravendb.client.document.DocumentConvention;
 import net.ravendb.client.document.FailoverBehavior;
 import net.ravendb.client.document.FailoverBehaviorSet;
 import net.ravendb.client.listeners.IDocumentConflictListener;
-
+import net.ravendb.client.metrics.RequestTimeMetric;
 import org.apache.commons.io.IOUtils;
 import org.apache.http.HttpRequest;
 import org.apache.http.HttpResponse;
@@ -44,6 +32,14 @@ import org.apache.http.client.methods.HttpGet;
 import org.apache.http.util.EntityUtils;
 import org.junit.Before;
 import org.junit.Test;
+
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.*;
+import java.util.Map.Entry;
+
+import static org.junit.Assert.*;
 
 public class HttpJsonRequestTest extends RavenDBAwareTests {
 
@@ -60,8 +56,14 @@ public class HttpJsonRequestTest extends RavenDBAwareTests {
 
     replicationInformer = new ReplicationInformer(convention, factory);
 
+    RequestTimeMetric requestTimeMetric = new RequestTimeMetric();
+    ReplicationAwareRequestExecuter executer = new ReplicationAwareRequestExecuter(replicationInformer, requestTimeMetric);
+
     serverClient = new ServerClient(DEFAULT_SERVER_URL_1, convention, new OperationCredentials(),
-      factory, UUID.randomUUID(), new Functions.StaticFunction1<String, IDocumentStoreReplicationInformer>(replicationInformer), null,  new IDocumentConflictListener[0], false);
+      factory, UUID.randomUUID(),
+            new Functions.StaticFunction4<ServerClient, String, ClusterBehavior, Boolean, IRequestExecuter>(executer),
+            new Functions.StaticFunction1<String, RequestTimeMetric>(requestTimeMetric)
+            , null,  new IDocumentConflictListener[0], false, ClusterBehavior.NONE);
     initFactory();
   }
 
@@ -100,7 +102,7 @@ public class HttpJsonRequestTest extends RavenDBAwareTests {
 
       try (HttpJsonRequest jsonRequest = factory.createHttpJsonRequest(new CreateHttpJsonRequestParams(null,
         DEFAULT_SERVER_URL_1 + "/databases/" + getDbName() + "/static/images/ravendb.png", HttpMethods.PUT, metadata,
-        null, convention).addOperationHeaders(operationHeaders))) {
+        null, convention, null, null).addOperationHeaders(operationHeaders))) {
 
         jsonRequest.write(ravenImage);
         jsonRequest.executeRequest();
@@ -129,8 +131,8 @@ public class HttpJsonRequestTest extends RavenDBAwareTests {
       createDb();
 
       try (HttpJsonRequest jsonRequest = factory.createHttpJsonRequest(new CreateHttpJsonRequestParams(null,
-        DEFAULT_SERVER_URL_1 + "/databases/" + getDbName() + "/docs/persons/10", HttpMethods.GET, new RavenJObject(),
-        null, convention).addOperationHeaders(operationHeaders))) {
+        DEFAULT_SERVER_URL_1 + "/databases/" + getDbName() + "/docs/persons/10", HttpMethods.GET,
+        null, convention, null, null).addOperationHeaders(operationHeaders))) {
 
         try {
           jsonRequest.readResponseJson();
@@ -157,8 +159,8 @@ public class HttpJsonRequestTest extends RavenDBAwareTests {
       for (int i = 0; i < 10; i++) {
 
         try (HttpJsonRequest jsonRequest = factory.createHttpJsonRequest(new CreateHttpJsonRequestParams(null,
-          DEFAULT_SERVER_URL_1 + "/databases/" + getDbName() + "/docs/persons/1", HttpMethods.GET, new RavenJObject(),
-          null, convention).addOperationHeaders(new HashMap<String, String>()))) {
+          DEFAULT_SERVER_URL_1 + "/databases/" + getDbName() + "/docs/persons/1", HttpMethods.GET,
+          null, convention, null, null).addOperationHeaders(new HashMap<String, String>()))) {
 
           byte[] responseBytes = jsonRequest.readResponseBytes();
           assertNotNull(responseBytes);
@@ -192,7 +194,7 @@ public class HttpJsonRequestTest extends RavenDBAwareTests {
       // try with invalid ETag
       try (HttpJsonRequest jsonRequest = factory.createHttpJsonRequest(new CreateHttpJsonRequestParams(null,
         DEFAULT_SERVER_URL_1 + "/databases/" + getDbName() + "/docs/persons/1", HttpMethods.DELETE, ravenJObject, null,
-        convention).addOperationHeaders(operationHeaders))) {
+        convention, null, null).addOperationHeaders(operationHeaders))) {
         try {
           jsonRequest.executeRequest();
           fail("request should throw");
@@ -211,7 +213,7 @@ public class HttpJsonRequestTest extends RavenDBAwareTests {
       // try with invalid ETag
       try (HttpJsonRequest jsonRequest = factory.createHttpJsonRequest(new CreateHttpJsonRequestParams(null,
         DEFAULT_SERVER_URL_1 + "/databases/" + getDbName() + "/docs/persons/1", HttpMethods.DELETE, ravenJObject, null,
-        convention).addOperationHeaders(operationHeaders))) {
+        convention, null, null).addOperationHeaders(operationHeaders))) {
         jsonRequest.executeRequest();
         assertEquals(HttpStatus.SC_NO_CONTENT, requestResultArgs.get(0).getHttpResult());
       }
@@ -255,8 +257,8 @@ public class HttpJsonRequestTest extends RavenDBAwareTests {
 
   private void getSampleDocument(Map<String, String> operationHeaders) {
     try (HttpJsonRequest jsonRequest = factory.createHttpJsonRequest(new CreateHttpJsonRequestParams(null,
-      DEFAULT_SERVER_URL_1 + "/databases/" + getDbName() + "/docs/persons/1", HttpMethods.GET, new RavenJObject(),
-      null, convention).addOperationHeaders(operationHeaders))) {
+      DEFAULT_SERVER_URL_1 + "/databases/" + getDbName() + "/docs/persons/1", HttpMethods.GET,
+      null, convention, null, null).addOperationHeaders(operationHeaders))) {
       RavenJToken responseJson = jsonRequest.readResponseJson();
       assertNotNull(responseJson);
     }
@@ -265,7 +267,7 @@ public class HttpJsonRequestTest extends RavenDBAwareTests {
   @Test(expected = ErrorResponseException.class)
   public void testBadRequest() {
     try (HttpJsonRequest jsonRequest = factory.createHttpJsonRequest(new CreateHttpJsonRequestParams(null,
-      DEFAULT_SERVER_URL_1 + "/admin/noSuchEndpoint", HttpMethods.GET, new RavenJObject(), null, convention)
+      DEFAULT_SERVER_URL_1 + "/admin/noSuchEndpoint", HttpMethods.GET, null, convention, null, null)
       .addOperationHeaders(new HashMap<String, String>()))) {
       jsonRequest.readResponseJson();
     }
@@ -412,8 +414,8 @@ public class HttpJsonRequestTest extends RavenDBAwareTests {
 
   private RavenJToken putSampleDocument(Map<String, String> operationHeaders) {
     try (HttpJsonRequest jsonRequest = factory.createHttpJsonRequest(new CreateHttpJsonRequestParams(null,
-      DEFAULT_SERVER_URL_1 + "/databases/" + getDbName() + "/docs/persons/1", HttpMethods.PUT, new RavenJObject(),
-      null, convention).addOperationHeaders(operationHeaders))) {
+            DEFAULT_SERVER_URL_1 + "/databases/" + getDbName() + "/docs/persons/1", HttpMethods.PUT,
+            null, convention, null, null).addOperationHeaders(operationHeaders))) {
       Person person = new Person("5", "John", "Smith");
 
       jsonRequest.write(RavenJObject.fromObject(person).toString());

@@ -1,28 +1,22 @@
 package net.ravendb.client.changes;
 
-import java.util.UUID;
-import java.util.concurrent.ConcurrentSkipListSet;
-
 import net.ravendb.abstractions.basic.ExceptionEventArgs;
-import net.ravendb.abstractions.closure.Action0;
-import net.ravendb.abstractions.closure.Action1;
-import net.ravendb.abstractions.closure.Function1;
-import net.ravendb.abstractions.closure.Function4;
-import net.ravendb.abstractions.closure.Predicate;
-import net.ravendb.abstractions.closure.Predicates;
+import net.ravendb.abstractions.closure.*;
 import net.ravendb.abstractions.data.*;
 import net.ravendb.abstractions.json.linq.RavenJObject;
 import net.ravendb.abstractions.util.AtomicDictionary;
-import net.ravendb.client.connection.IDocumentStoreReplicationInformer;
 import net.ravendb.client.connection.OperationMetadata;
 import net.ravendb.client.connection.implementation.HttpJsonRequestFactory;
 import net.ravendb.client.document.DocumentConvention;
 import net.ravendb.client.document.JsonSerializer;
 import net.ravendb.client.utils.UrlUtils;
 
+import java.util.UUID;
+import java.util.concurrent.ConcurrentSkipListSet;
 
 
-public class RemoteDatabaseChanges extends RemoteChangesClientBase<IDatabaseChanges, DatabaseConnectionState> implements IDatabaseChanges {
+
+public class RemoteDatabaseChanges extends RemoteChangesClientBase<IDatabaseChanges, DatabaseConnectionState, DocumentConvention> implements IDatabaseChanges {
 
   protected final ConcurrentSkipListSet<String> watchedDocs = new ConcurrentSkipListSet<>();
   protected final ConcurrentSkipListSet<String> watchedPrefixes = new ConcurrentSkipListSet<>();
@@ -35,16 +29,13 @@ public class RemoteDatabaseChanges extends RemoteChangesClientBase<IDatabaseChan
   protected boolean watchAllIndexes;
   protected boolean watchAllTransformers;
   protected boolean watchAllDataSubscriptions;
-  @SuppressWarnings("hiding")
-  protected DocumentConvention conventions;
 
   private final Function4<String, Etag, String[] , OperationMetadata, Boolean> tryResolveConflictByUsingRegisteredConflictListeners;
 
 
   public RemoteDatabaseChanges(String url, String apiKey, HttpJsonRequestFactory jsonRequestFactory, DocumentConvention conventions,
-    IDocumentStoreReplicationInformer replicationInformer, Action0 onDispose,
-    Function4<String, Etag, String[], OperationMetadata, Boolean> tryResolveConflictByUsingRegisteredConflictListeners) {
-    super(url, apiKey, jsonRequestFactory, conventions, replicationInformer, onDispose);
+    Action0 onDispose, Function4<String, Etag, String[], OperationMetadata, Boolean> tryResolveConflictByUsingRegisteredConflictListeners) {
+    super(DatabaseConnectionState.class, url, apiKey, jsonRequestFactory, conventions, onDispose);
     this.conventions = conventions;
     this.tryResolveConflictByUsingRegisteredConflictListeners = tryResolveConflictByUsingRegisteredConflictListeners;
   }
@@ -391,46 +382,6 @@ public class RemoteDatabaseChanges extends RemoteChangesClientBase<IDatabaseChan
       }
     });
     return taskedObservable;
-  }
-
-  private DatabaseConnectionState getOrAddConnectionState(final String name, final String watchCommand,
-                                                          final String unwatchCommand, final Action0 afterConnection,
-                                                          final Action0 beforeDisconnect, final String value) {
-    DatabaseConnectionState counter = counters.getOrAdd(name, new Function1<String, DatabaseConnectionState>() {
-      @Override
-      public DatabaseConnectionState apply(String s) {
-        afterConnection.apply();
-        send(watchCommand, value);
-
-        return new DatabaseConnectionState(new Action0() {
-          @Override
-          public void apply() {
-            beforeDisconnect.apply();
-            send(unwatchCommand, value);
-            counters.remove(name);
-          }
-        }, new Action1<DatabaseConnectionState>() {
-          @Override
-          public void apply(final DatabaseConnectionState existingConnectionState) {
-            if (counters.get(name) != null) {
-              return;
-            }
-            counters.getOrAdd(name, new Function1<String, DatabaseConnectionState>() {
-                      @Override
-                      public DatabaseConnectionState apply(String input) {
-                        return existingConnectionState;
-                      }
-                    }
-            );
-
-            afterConnection.apply();
-            send(watchCommand, value);
-          }
-        });
-      }
-
-    });
-    return counter;
   }
 
   @Override

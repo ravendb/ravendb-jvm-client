@@ -36,6 +36,8 @@ public class Constants {
   public final static String METADATA = "@metadata";
   public final static String METADATA_ETAG_FIELD = "ETag";
 
+  public final static String ALPHA_NUMERIC_FIELD_NAME = "__alphaNumeric";
+
 
   public final static String RAVEN_LAST_MODIFIED_DATE_FORMAT = "yyyy-MM-dd'T'HH:mm:ss.SSSSSSSX";
   public final static UUID EMPTY_UUID = UUID.fromString("00000000-0000-0000-0000-000000000000");
@@ -73,7 +75,22 @@ public class Constants {
     return Locale.US;
   }
 
+  public static class Global {
+    public static final String REPLICATION_DESTINATIONS_DOCUMENT_NAME = "Raven/Global/Replication/Destinations";
+  }
 
+  public static class Cluster
+  {
+    public static final String CLUSTER_CONFIGURATION_DOCUMENT_KEY = "Raven/Cluster/Configuration";
+
+    public static final String NON_CLUSTER_DATABASE_MARKER = "Raven-Non-Cluster-Database";
+
+    public static final String CLUSTER_AWARE_HEADER = "Raven-Cluster-Aware";
+
+    public static final String CLUSTER_READ_BEHAVIOR_HEADER = "Raven-Cluster-Read-Behavior";
+
+    public static final String CLUSTER_FAILOVER_BEHAVIOR_HEADER = "Raven-Cluster-Failover-Behavior";
+  }
 
 
 

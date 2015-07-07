@@ -66,7 +66,7 @@ public class ConcurrentSet<T> implements Set<T> {
   public boolean addAll(Collection<? extends T> c) {
     boolean changed = false;
     for (T item: c) {
-      changed &= innerMap.put(item, value) == null;
+      changed |= innerMap.put(item, value) == null;
     }
     return changed;
   }

@@ -31,7 +31,6 @@ public class IndexStats {
   private List<String> forEntityName;
   private boolean testIndex;
 
-  private IndexingPerformanceStats[] performance;
   public int docsCount;
 
   /**
@@ -364,21 +363,6 @@ public class IndexStats {
   }
 
   /**
-   * Performance statistics for this index.
-   */
-  public IndexingPerformanceStats[] getPerformance() {
-    return performance;
-  }
-
-  /**
-   * Performance statistics for this index.
-   * @param performance
-   */
-  public void setPerformance(IndexingPerformanceStats[] performance) {
-    this.performance = performance;
-  }
-
-  /**
    * Indicates if this is a test index (works on a limited data set - for testing purposes only)
    */
   public boolean isTestIndex() {
@@ -415,109 +399,6 @@ public class IndexStats {
 
     public int getCode() {
       return code;
-    }
-
-  }
-
-  public static class IndexingPerformanceStats {
-    private String operation;
-    private int itemsCount;
-    private int inputCount;
-    private int outputCount;
-    private Date started;
-    private Date completed;
-    private String duration;
-    private double durationMilliseconds;
-    private int loadDocumentCount;
-    private long loadDocumentDurationMs;
-    private String waitingTimeSinceLastBatchCompleted;
-
-    public String getOperation() {
-      return operation;
-    }
-
-    public void setOperation(String operation) {
-      this.operation = operation;
-    }
-
-    public int getItemsCount() {
-      return itemsCount;
-    }
-
-    public void setItemsCount(int itemsCount) {
-      this.itemsCount = itemsCount;
-    }
-
-    public int getInputCount() {
-      return inputCount;
-    }
-
-    public void setInputCount(int inputCount) {
-      this.inputCount = inputCount;
-    }
-
-    public int getOutputCount() {
-      return outputCount;
-    }
-
-    public void setOutputCount(int outputCount) {
-      this.outputCount = outputCount;
-    }
-
-    public Date getStarted() {
-      return started;
-    }
-
-    public void setStarted(Date started) {
-      this.started = started;
-    }
-
-    public Date getCompleted() {
-      return completed;
-    }
-
-    public void setCompleted(Date completed) {
-      this.completed = completed;
-    }
-
-    public String getDuration() {
-      return duration;
-    }
-
-    public void setDuration(String duration) {
-      this.duration = duration;
-    }
-
-    public double getDurationMilliseconds() {
-      return durationMilliseconds;
-    }
-
-    public void setDurationMilliseconds(double durationMilliseconds) {
-      this.durationMilliseconds = durationMilliseconds;
-    }
-
-    public int getLoadDocumentCount() {
-      return loadDocumentCount;
-    }
-
-    public void setLoadDocumentCount(int loadDocumentCount) {
-      this.loadDocumentCount = loadDocumentCount;
-    }
-
-    public long getLoadDocumentDurationMs() {
-      return loadDocumentDurationMs;
-    }
-
-    public void setLoadDocumentDurationMs(long loadDocumentDurationMs) {
-      this.loadDocumentDurationMs = loadDocumentDurationMs;
-    }
-
-    public String getWaitingTimeSinceLastBatchCompleted() {
-      return waitingTimeSinceLastBatchCompleted;
-    }
-
-    public void setWaitingTimeSinceLastBatchCompleted(String waitingTimeSinceLastBatchCompleted) {
-      this.waitingTimeSinceLastBatchCompleted = waitingTimeSinceLastBatchCompleted;
     }
 
   }

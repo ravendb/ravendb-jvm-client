@@ -1,10 +1,8 @@
 package net.ravendb.tests.suggestions;
 
-import static org.junit.Assert.assertEquals;
 import net.ravendb.abstractions.data.StringDistanceTypes;
 import net.ravendb.abstractions.data.SuggestionQuery;
 import net.ravendb.abstractions.data.SuggestionQueryResult;
-import net.ravendb.abstractions.indexing.SuggestionOptions;
 import net.ravendb.client.IDocumentSession;
 import net.ravendb.client.IDocumentStore;
 import net.ravendb.client.RemoteClientTest;
@@ -13,8 +11,9 @@ import net.ravendb.client.document.DocumentStore;
 import net.ravendb.client.indexes.AbstractIndexCreationTask;
 import net.ravendb.tests.bugs.QUser;
 import net.ravendb.tests.bugs.User;
-
 import org.junit.Test;
+
+import static org.junit.Assert.assertEquals;
 
 
 
@@ -32,10 +31,7 @@ public class SuggestionsUsingAnIndexTest extends RemoteClientTest {
     public SuggestionIndex() {
       map = "from user in docs.users select new { user.Name}";
       QUser x = QUser.user;
-      SuggestionOptions suggestionOptions = new SuggestionOptions();
-      suggestion(x.name, suggestionOptions);
-      suggestionOptions.setAccuracy(0.2f);
-      suggestionOptions.setDistance(StringDistanceTypes.LEVENSHTEIN);
+      suggestion(x.name);
     }
   }
 

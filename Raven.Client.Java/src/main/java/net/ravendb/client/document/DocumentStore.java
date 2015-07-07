@@ -1,31 +1,14 @@
 package net.ravendb.client.document;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.ConcurrentSkipListMap;
-
 import net.ravendb.abstractions.basic.CleanCloseable;
 import net.ravendb.abstractions.basic.EventHandler;
 import net.ravendb.abstractions.basic.EventHelper;
 import net.ravendb.abstractions.basic.VoidArgs;
-import net.ravendb.abstractions.closure.Action0;
-import net.ravendb.abstractions.closure.Action1;
-import net.ravendb.abstractions.closure.Function0;
-import net.ravendb.abstractions.closure.Function1;
-import net.ravendb.abstractions.closure.Function4;
+import net.ravendb.abstractions.closure.*;
+import net.ravendb.abstractions.cluster.ClusterBehavior;
 import net.ravendb.abstractions.connection.OperationCredentials;
 import net.ravendb.abstractions.connection.WebRequestEventArgs;
-import net.ravendb.abstractions.data.BulkInsertOptions;
-import net.ravendb.abstractions.data.ConnectionStringParser;
-import net.ravendb.abstractions.data.Constants;
-import net.ravendb.abstractions.data.Etag;
-import net.ravendb.abstractions.data.RavenConnectionStringOptions;
+import net.ravendb.abstractions.data.*;
 import net.ravendb.abstractions.oauth.BasicAuthenticator;
 import net.ravendb.abstractions.oauth.SecuredAuthenticator;
 import net.ravendb.abstractions.util.AtomicDictionary;
@@ -40,17 +23,25 @@ import net.ravendb.client.connection.OperationMetadata;
 import net.ravendb.client.connection.ServerClient;
 import net.ravendb.client.connection.implementation.HttpJsonRequestFactory;
 import net.ravendb.client.connection.profiling.RequestResultArgs;
+import net.ravendb.client.connection.request.ClusterAwareRequestExecuter;
+import net.ravendb.client.connection.request.IRequestExecuter;
+import net.ravendb.client.connection.request.ReplicationAwareRequestExecuter;
 import net.ravendb.client.delegates.HttpResponseWithMetaHandler;
 import net.ravendb.client.extensions.MultiDatabase;
 import net.ravendb.client.listeners.IDocumentConflictListener;
+import net.ravendb.client.metrics.RequestTimeMetric;
 import net.ravendb.client.util.EvictItemsFromCacheBasedOnChanges;
 import net.ravendb.client.utils.Lang;
 import net.ravendb.client.utils.RequirementsChecker;
-
 import org.apache.commons.lang.StringUtils;
 import org.apache.http.Header;
 import org.apache.http.HttpRequest;
 import org.apache.http.HttpResponse;
+
+import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.ConcurrentSkipListMap;
 
 
 /**
@@ -76,6 +67,9 @@ public class DocumentStore extends DocumentStoreBase {
   private ReplicationBehavior replication;
 
   private ConcurrentMap<String, EvictItemsFromCacheBasedOnChanges> observeChangesAndEvictItemsFromCacheForDatabases = new ConcurrentHashMap<>();
+
+  private final ConcurrentMap<String, ClusterAwareRequestExecuter> clusterAwareRequestExecuters = new ConcurrentHashMap<>();
+  private final ConcurrentMap<String, RequestTimeMetric> requestTimeMetrics = new ConcurrentHashMap<>();
 
   private String apiKey;
   private String defaultDatabase;
@@ -442,9 +436,18 @@ public class DocumentStore extends DocumentStoreBase {
         }
 
         return new ServerClient(databaseUrl, conventions, new OperationCredentials(apiKey),
-          jsonRequestFactory, currentSessionId.get(),
-          new ReplicationInformerGetter(),
-          null, getListeners().getConflictListeners().toArray(new IDocumentConflictListener[0]), true);
+                jsonRequestFactory, currentSessionId.get(),
+                new Function4<ServerClient, String, ClusterBehavior, Boolean, IRequestExecuter>() {
+                  @Override
+                  public IRequestExecuter apply(ServerClient serverClient, String databaseName, ClusterBehavior clusterBehavior, Boolean incrementStrippingBase) {
+                    return getRequestExecuterForDatabase(serverClient, databaseName, clusterBehavior, incrementStrippingBase);
+                  }
+                }, new Function1<String, RequestTimeMetric>() {
+          @Override
+          public RequestTimeMetric apply(String databseName) {
+            return getRequestTimeMetricForDatabase(databseName);
+          }
+        }, null, getListeners().getConflictListeners().toArray(new IDocumentConflictListener[0]), true, conventions.getClusterBehavior());
       }
     };
 
@@ -489,6 +492,52 @@ public class DocumentStore extends DocumentStoreBase {
     }
 
     return informer;
+  }
+
+  private IRequestExecuter getRequestExecuterForDatabase(ServerClient serverClient, String databaseName, ClusterBehavior clusterBehavior, boolean incrementStrippingBase) {
+    String key = getUrl();
+    databaseName = Lang.coalesce(databaseName, getDefaultDatabase());
+    if (StringUtils.isNotEmpty(databaseName)) {
+      key = MultiDatabase.getRootDatabaseUrl(getUrl()) + "/databases/" + databaseName;
+    }
+
+    IRequestExecuter requestExecuter = null;
+    if (clusterBehavior == ClusterBehavior.NONE) {
+      IDocumentStoreReplicationInformer replicationInformer = conventions.getReplicationInformerFactory().create(url, jsonRequestFactory);
+      requestExecuter = new ReplicationAwareRequestExecuter(replicationInformer, getRequestTimeMetricForDatabase(databaseName));
+    } else {
+      clusterAwareRequestExecuters.putIfAbsent(key, new ClusterAwareRequestExecuter());
+      requestExecuter = clusterAwareRequestExecuters.get(key);
+    }
+
+    requestExecuter.getReadStripingBase(incrementStrippingBase);
+
+    if (getFailoverServers() == null) {
+      return requestExecuter;
+    }
+
+    if (databaseName.equals(defaultDatabase)) {
+      if (getFailoverServers().isSetForDefaultDatabase() && requestExecuter.getFailoverServers() == null) {
+        requestExecuter.setFailoverServers(getFailoverServers().getForDefaultDatabase());
+      }
+    } else {
+      if (failoverServers.isSetForDatabase(databaseName) && requestExecuter.getFailoverServers() == null) {
+        requestExecuter.setFailoverServers(getFailoverServers().getForDatabase(databaseName));
+      }
+    }
+
+    return requestExecuter;
+  }
+
+  public RequestTimeMetric getRequestTimeMetricForDatabase(String databaseName) {
+    String key = getUrl();
+    databaseName = Lang.coalesce(databaseName, getDefaultDatabase());
+    if (StringUtils.isNotEmpty(databaseName)) {
+      key = MultiDatabase.getRootDatabaseUrl(getUrl()) + "/databases/" + databaseName;
+    }
+
+    requestTimeMetrics.putIfAbsent(key, new RequestTimeMetric());
+    return requestTimeMetrics.get(key);
   }
 
   /**
@@ -555,7 +604,6 @@ public class DocumentStore extends DocumentStoreBase {
     return new RemoteDatabaseChanges(dbUrl, apiKey,
       jsonRequestFactory,
       getConventions(),
-      getReplicationInformerForDatabase(database),
       new Action0() {
       @SuppressWarnings("synthetic-access")
       @Override

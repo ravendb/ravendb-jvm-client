@@ -18,7 +18,8 @@ public enum UuidType {
   INDEXING((byte)9),
   DOCUMENT_REFERENCES((byte)11),
   SUBSCRIPTIONS((byte)12),
-  TRANSFORMERS((byte)13);
+  TRANSFORMERS((byte)13),
+  CLUSTER((byte)14);
 
   private byte value;
 

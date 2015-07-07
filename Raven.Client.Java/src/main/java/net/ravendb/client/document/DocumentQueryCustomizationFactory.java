@@ -1,11 +1,7 @@
 package net.ravendb.client.document;
 
-import java.util.Date;
-import java.util.LinkedHashSet;
-import java.util.Set;
-
-import javax.annotation.concurrent.Immutable;
-
+import com.mysema.query.types.Expression;
+import com.mysema.query.types.Path;
 import net.ravendb.abstractions.basic.Reference;
 import net.ravendb.abstractions.closure.Action1;
 import net.ravendb.abstractions.data.Etag;
@@ -17,7 +13,10 @@ import net.ravendb.client.IDocumentQueryCustomization;
 import net.ravendb.client.shard.ShardReduceFunction;
 import net.ravendb.client.spatial.SpatialCriteria;
 
-import com.mysema.query.types.Path;
+import javax.annotation.concurrent.Immutable;
+import java.util.Date;
+import java.util.LinkedHashSet;
+import java.util.Set;
 
 /**
  * Allows query customization
@@ -582,4 +581,93 @@ public class DocumentQueryCustomizationFactory implements IDocumentQueryCustomiz
     });
   }
 
+  @Override
+  public IDocumentQueryCustomization addOrder(final String fieldName) {
+    return new DocumentQueryCustomizationFactory(actions, new Action1<IDocumentQueryCustomization>() {
+      @Override
+      public void apply(IDocumentQueryCustomization documentQuery) {
+        documentQuery.addOrder(fieldName);
+      }
+    });
+  }
+
+  @Override
+  public IDocumentQueryCustomization addOrder(final String fieldName, final boolean descending) {
+    return new DocumentQueryCustomizationFactory(actions, new Action1<IDocumentQueryCustomization>() {
+      @Override
+      public void apply(IDocumentQueryCustomization documentQuery) {
+        documentQuery.addOrder(fieldName, descending);
+      }
+    });
+  }
+
+  @Override
+  public IDocumentQueryCustomization addOrder(final String fieldName, final boolean descending, final Class fieldType) {
+    return new DocumentQueryCustomizationFactory(actions, new Action1<IDocumentQueryCustomization>() {
+      @Override
+      public void apply(IDocumentQueryCustomization documentQuery) {
+        documentQuery.addOrder(fieldName, descending, fieldType);
+      }
+    });
+  }
+
+  @Override
+  public IDocumentQueryCustomization addOrder(final Expression<?> propertySelector) {
+    return new DocumentQueryCustomizationFactory(actions, new Action1<IDocumentQueryCustomization>() {
+      @Override
+      public void apply(IDocumentQueryCustomization documentQuery) {
+        documentQuery.addOrder(propertySelector);
+      }
+    });
+  }
+
+  @Override
+  public IDocumentQueryCustomization addOrder(final Expression<?> propertySelector, final boolean descending) {
+    return new DocumentQueryCustomizationFactory(actions, new Action1<IDocumentQueryCustomization>() {
+      @Override
+      public void apply(IDocumentQueryCustomization documentQuery) {
+        documentQuery.addOrder(propertySelector, descending);
+      }
+    });
+  }
+
+  @Override
+  public IDocumentQueryCustomization alphaNumericOrdering(final String fieldName) {
+    return new DocumentQueryCustomizationFactory(actions, new Action1<IDocumentQueryCustomization>() {
+      @Override
+      public void apply(IDocumentQueryCustomization documentQuery) {
+        documentQuery.alphaNumericOrdering(fieldName);
+      }
+    });
+  }
+
+  @Override
+  public IDocumentQueryCustomization alphaNumericOrdering(final String fieldName, final boolean descending) {
+    return new DocumentQueryCustomizationFactory(actions, new Action1<IDocumentQueryCustomization>() {
+      @Override
+      public void apply(IDocumentQueryCustomization documentQuery) {
+        documentQuery.addOrder(fieldName, descending);
+      }
+    });
+  }
+
+  @Override
+  public IDocumentQueryCustomization alphaNumericOrdering(final Expression<?> propertySelector) {
+    return new DocumentQueryCustomizationFactory(actions, new Action1<IDocumentQueryCustomization>() {
+      @Override
+      public void apply(IDocumentQueryCustomization documentQuery) {
+        documentQuery.addOrder(propertySelector);
+      }
+    });
+  }
+
+  @Override
+  public IDocumentQueryCustomization alphaNumericOrdering(final Expression<?> propertySelector, final boolean descending) {
+    return new DocumentQueryCustomizationFactory(actions, new Action1<IDocumentQueryCustomization>() {
+      @Override
+      public void apply(IDocumentQueryCustomization documentQuery) {
+        documentQuery.addOrder(propertySelector, descending);
+      }
+    });
+  }
 }

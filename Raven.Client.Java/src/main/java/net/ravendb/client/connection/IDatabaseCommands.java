@@ -1,45 +1,13 @@
 package net.ravendb.client.connection;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
-
 import net.ravendb.abstractions.basic.CleanCloseable;
 import net.ravendb.abstractions.basic.CloseableIterator;
 import net.ravendb.abstractions.basic.Reference;
+import net.ravendb.abstractions.cluster.ClusterBehavior;
 import net.ravendb.abstractions.commands.ICommandData;
 import net.ravendb.abstractions.connection.OperationCredentials;
-import net.ravendb.abstractions.data.Attachment;
-import net.ravendb.abstractions.data.AttachmentInformation;
-import net.ravendb.abstractions.data.BatchResult;
-import net.ravendb.abstractions.data.BuildNumber;
-import net.ravendb.abstractions.data.BulkInsertOptions;
-import net.ravendb.abstractions.data.BulkOperationOptions;
-import net.ravendb.abstractions.data.DatabaseStatistics;
-import net.ravendb.abstractions.data.Etag;
-import net.ravendb.abstractions.data.Facet;
-import net.ravendb.abstractions.data.FacetQuery;
-import net.ravendb.abstractions.data.FacetResults;
-import net.ravendb.abstractions.data.GetRequest;
-import net.ravendb.abstractions.data.GetResponse;
-import net.ravendb.abstractions.data.HttpMethods;
-import net.ravendb.abstractions.data.IndexQuery;
+import net.ravendb.abstractions.data.*;
 import net.ravendb.abstractions.data.IndexStats.IndexingPriority;
-import net.ravendb.abstractions.data.JsonDocument;
-import net.ravendb.abstractions.data.JsonDocumentMetadata;
-import net.ravendb.abstractions.data.LicensingStatus;
-import net.ravendb.abstractions.data.LogItem;
-import net.ravendb.abstractions.data.MoreLikeThisQuery;
-import net.ravendb.abstractions.data.MultiLoadResult;
-import net.ravendb.abstractions.data.PatchRequest;
-import net.ravendb.abstractions.data.PutResult;
-import net.ravendb.abstractions.data.QueryHeaderInformation;
-import net.ravendb.abstractions.data.QueryResult;
-import net.ravendb.abstractions.data.ScriptedPatchRequest;
-import net.ravendb.abstractions.data.SuggestionQuery;
-import net.ravendb.abstractions.data.SuggestionQueryResult;
 import net.ravendb.abstractions.indexing.IndexDefinition;
 import net.ravendb.abstractions.indexing.IndexLockMode;
 import net.ravendb.abstractions.indexing.IndexMergeResults;
@@ -53,6 +21,12 @@ import net.ravendb.client.connection.implementation.HttpJsonRequest;
 import net.ravendb.client.connection.profiling.IHoldProfilingInformation;
 import net.ravendb.client.document.ILowLevelBulkInsertOperation;
 import net.ravendb.client.indexes.IndexDefinitionBuilder;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
 
 
 @SuppressWarnings("deprecation")
@@ -430,6 +404,12 @@ public interface IDatabaseCommands extends IHoldProfilingInformation {
   public IDatabaseCommands forDatabase(String database);
 
   /**
+   * Create a new instance of {@link IDatabaseCommands} that will interacts with the specified database
+   * @param database
+   */
+  public IDatabaseCommands forDatabase(String database, ClusterBehavior clusterBehavior);
+
+  /**
    * Creates a new instance of {@link IDatabaseCommands} that will interacts with the default database.
    */
   public IDatabaseCommands forSystemDatabase();
@@ -438,6 +418,20 @@ public interface IDatabaseCommands extends IHoldProfilingInformation {
    * Retrieve the statistics for the database
    */
   public DatabaseStatistics getStatistics();
+
+  /**
+   * Retrieve the user info
+   * @return
+     */
+  public UserInfo getUserInfo();
+
+  /**
+   *  Retrieves user permissions for a specified database
+   * @param database name of the database we want to retrive the permissions
+   * @param readOnly the type of the operations allowed, read only , or read-write
+   * @return
+     */
+  public UserPermission getUserPermission(String database, boolean readOnly);
 
   /**
    * Downloads a single attachment.
@@ -864,6 +858,11 @@ public interface IDatabaseCommands extends IHoldProfilingInformation {
    * @param changes
    */
   public ILowLevelBulkInsertOperation getBulkInsertOperation(BulkInsertOptions options, IDatabaseChanges changes);
+
+  /**
+   * Retrieves indexing performance statistics for all indexes
+     */
+  public List<IndexingPerformanceStatistics> getIndexingPerformanceStatistics();
 
   /**
    * Retrieves all suggestions for an index merging

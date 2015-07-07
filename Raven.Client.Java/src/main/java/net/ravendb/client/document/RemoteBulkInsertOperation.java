@@ -1,5 +1,28 @@
 package net.ravendb.client.document;
 
+import com.google.common.io.CountingOutputStream;
+import de.undercouch.bson4jackson.BsonFactory;
+import de.undercouch.bson4jackson.BsonGenerator;
+import net.ravendb.abstractions.closure.Action1;
+import net.ravendb.abstractions.data.*;
+import net.ravendb.abstractions.json.linq.RavenJObject;
+import net.ravendb.abstractions.json.linq.RavenJToken;
+import net.ravendb.abstractions.util.TimeUtils;
+import net.ravendb.client.changes.IDatabaseChanges;
+import net.ravendb.client.changes.IObserver;
+import net.ravendb.client.connection.ServerClient;
+import net.ravendb.client.connection.implementation.HttpJsonRequest;
+import net.ravendb.client.extensions.HttpJsonRequestExtension;
+import net.ravendb.client.utils.CancellationTokenSource;
+import net.ravendb.client.utils.CancellationTokenSource.CancellationToken;
+import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang.ArrayUtils;
+import org.apache.http.Header;
+import org.apache.http.HttpEntity;
+import org.apache.http.client.methods.CloseableHttpResponse;
+import org.codehaus.jackson.JsonFactory;
+import org.codehaus.jackson.JsonGenerator;
+
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -15,36 +38,11 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.zip.GZIPOutputStream;
 
-import net.ravendb.abstractions.closure.Action1;
-import net.ravendb.abstractions.data.BulkInsertChangeNotification;
-import net.ravendb.abstractions.data.BulkInsertOptions;
-import net.ravendb.abstractions.data.Constants;
-import net.ravendb.abstractions.data.DocumentChangeTypes;
-import net.ravendb.abstractions.data.HttpMethods;
-import net.ravendb.abstractions.json.linq.RavenJObject;
-import net.ravendb.abstractions.json.linq.RavenJToken;
-import net.ravendb.abstractions.util.TimeUtils;
-import net.ravendb.client.changes.IDatabaseChanges;
-import net.ravendb.client.changes.IObserver;
-import net.ravendb.client.connection.ServerClient;
-import net.ravendb.client.connection.implementation.HttpJsonRequest;
-import net.ravendb.client.extensions.HttpJsonRequestExtension;
-import net.ravendb.client.utils.CancellationTokenSource;
-import net.ravendb.client.utils.CancellationTokenSource.CancellationToken;
-
-import org.apache.commons.io.IOUtils;
-import org.apache.commons.lang.ArrayUtils;
-import org.apache.http.Header;
-import org.apache.http.HttpEntity;
-
-import de.undercouch.bson4jackson.BsonFactory;
-import de.undercouch.bson4jackson.BsonGenerator;
-import org.apache.http.client.methods.CloseableHttpResponse;
-
 
 public class RemoteBulkInsertOperation implements ILowLevelBulkInsertOperation, IObserver<BulkInsertChangeNotification> {
 
-  private final BsonFactory bsonFactory = new BsonFactory();
+  private final static BsonFactory bsonFactory = new BsonFactory();
+  private final static JsonFactory jsonFactory = new JsonFactory();
 
   private final static RavenJObject END_OF_QUEUE_OBJECT = RavenJObject.parse("{ \"QueueFinished\" : true }");
 
@@ -67,6 +65,9 @@ public class RemoteBulkInsertOperation implements ILowLevelBulkInsertOperation, 
   private Exception operationTaskException;
   private int total;
   private boolean aborted;
+
+  private int localCount;
+  private long size;
 
   private static final int BIG_DOCUMENT_SIZE = 64 * 1024;
 
@@ -259,20 +260,37 @@ public class RemoteBulkInsertOperation implements ILowLevelBulkInsertOperation, 
 
   @SuppressWarnings("hiding")
   private String createOperationUrl(BulkInsertOptions options) {
-    String requestUrl = "/bulkInsert?";
+    StringBuilder requestUrl = new StringBuilder("/bulkInsert?");
     if (options.isOverwriteExisting()) {
-      requestUrl += "overwriteExisting=true";
+      requestUrl.append("overwriteExisting=true");
     }
     if (options.isCheckReferencesInIndexes()) {
-      requestUrl += "&checkReferencesInIndexes=true";
+      requestUrl.append("&checkReferencesInIndexes=true");
     }
     if (options.isSkipOverwriteIfUnchanged()) {
-      requestUrl += "&skipOverwriteIfUnchanged=true";
+      requestUrl.append("&skipOverwriteIfUnchanged=true");
+    }
+    switch (options.getFormat()) {
+      case BSON:
+        requestUrl.append("&format=bson");
+        break;
+      case JSON:
+        requestUrl.append("&format=json");
+        break;
     }
 
-    requestUrl += "&operationId=" + operationId;
+    switch (options.getCompression()) {
+      case NONE:
+        requestUrl.append("&compression=none");
+        break;
+      case GZIP:
+        requestUrl.append("&compression=gzip");
+        break;
+    }
 
-    return requestUrl;
+    requestUrl.append("&operationId=" + operationId);
+
+    return requestUrl.toString();
   }
 
   @SuppressWarnings("hiding")
@@ -411,7 +429,7 @@ public class RemoteBulkInsertOperation implements ILowLevelBulkInsertOperation, 
   }
 
   @SuppressWarnings({"hiding", "boxing"})
-  private  void flushBatch(OutputStream requestStream, Collection<RavenJObject> localBatch) throws IOException {
+  private void flushBatch(OutputStream requestStream, Collection<RavenJObject> localBatch) throws IOException {
     if (localBatch.isEmpty()) {
       return ;
     }
@@ -419,7 +437,7 @@ public class RemoteBulkInsertOperation implements ILowLevelBulkInsertOperation, 
       throw new IllegalStateException("Operation was timed out or has been aborted");
     }
     bufferedStream.reset();
-    writeToBuffer(localBatch);
+    long bytesWrittenToServer = writeToBuffer(options, bufferedStream, localBatch);
 
     byte[] bytes = ByteBuffer.allocate(4).putInt(bufferedStream.size()).array();
     ArrayUtils.reverse(bytes);
@@ -428,6 +446,8 @@ public class RemoteBulkInsertOperation implements ILowLevelBulkInsertOperation, 
     requestStream.flush();
 
     total += localBatch.size();
+    localCount += localBatch.size();
+    size += bytesWrittenToServer;
 
     Action1<String> report = getReport();
     if (report != null) {
@@ -436,22 +456,65 @@ public class RemoteBulkInsertOperation implements ILowLevelBulkInsertOperation, 
 
   }
 
-  private void writeToBuffer(Collection<RavenJObject> localBatch) throws IOException {
-    GZIPOutputStream gzipOutputStream = new GZIPOutputStream(bufferedStream);
+  private long writeToBuffer(BulkInsertOptions options, ByteArrayOutputStream stream, Collection<RavenJObject> batch) throws IOException {
+    switch (this.options.getCompression()) {
+      case GZIP:
+        GZIPOutputStream gzipOutputStream = new GZIPOutputStream(bufferedStream);
+        return writeBatchToBuffer(options, gzipOutputStream, batch);
+      case NONE:
+        return writeBatchToBuffer(options, stream, batch);
+      default:
+        throw new UnsupportedOperationException(String.format("The compression algorithm %s is not supported.", options.getCompression()));
+    }
 
-    BsonGenerator bsonWriter = bsonFactory.createJsonGenerator(gzipOutputStream);
+  }
+  private static long writeBatchToBuffer(BulkInsertOptions options, OutputStream stream, Collection<RavenJObject> batch) throws IOException {
+    try (CountingOutputStream countingStream = new CountingOutputStream(stream)) {
+      switch (options.getFormat()) {
+        case BSON:
+          writeBsonBatchToBuffer(options, countingStream, batch);
+          break;
+        case JSON:
+          writeJsonBatchToBuffer(options, countingStream, batch);
+          break;
+        default:
+          throw new UnsupportedOperationException(String.format("The format %s is not supported)", options.getFormat()));
+
+      }
+      countingStream.flush();
+      return countingStream.getCount();
+    }
+  }
+
+  private static void writeBsonBatchToBuffer(BulkInsertOptions options, OutputStream stream, Collection<RavenJObject> batch) throws IOException {
+    BsonGenerator bsonWriter = bsonFactory.createJsonGenerator(stream);
     bsonWriter.disable(org.codehaus.jackson.JsonGenerator.Feature.AUTO_CLOSE_TARGET);
 
-    byte[] bytes = ByteBuffer.allocate(4).putInt(localBatch.size()).array();
+    byte[] bytes = ByteBuffer.allocate(4).putInt(batch.size()).array();
     ArrayUtils.reverse(bytes);
-    gzipOutputStream.write(bytes);
-    for (RavenJObject doc : localBatch) {
+    stream.write(bytes);
+
+    for (RavenJObject doc : batch) {
       doc.writeTo(bsonWriter);
     }
     bsonWriter.close();
-    gzipOutputStream.finish();
-    bufferedStream.flush();
+    stream.flush();
   }
+
+  private static void writeJsonBatchToBuffer(BulkInsertOptions options, OutputStream stream, Collection<RavenJObject> batch) throws IOException{
+    byte[] bytes = ByteBuffer.allocate(4).putInt(batch.size()).array();
+    ArrayUtils.reverse(bytes);
+    stream.write(bytes);
+
+    JsonGenerator jsonGenerator = jsonFactory.createJsonGenerator(stream);
+
+    for (RavenJObject doc: batch) {
+      doc.writeTo(jsonGenerator);
+    }
+    jsonGenerator.flush();
+  }
+
+
 
   private void reportInternal(String format, Object... args) {
     Action1<String> onReport = report;

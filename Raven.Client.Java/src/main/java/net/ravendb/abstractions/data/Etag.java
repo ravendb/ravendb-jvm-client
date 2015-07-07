@@ -1,12 +1,11 @@
 package net.ravendb.abstractions.data;
 
-import java.nio.ByteBuffer;
-import java.util.UUID;
-
 import net.ravendb.abstractions.basic.Reference;
-
 import org.apache.commons.lang.ArrayUtils;
 import org.apache.commons.lang.StringUtils;
+
+import java.nio.ByteBuffer;
+import java.util.UUID;
 
 
 public class Etag implements Comparable<Etag> {
@@ -106,7 +105,7 @@ public class Etag implements Comparable<Etag> {
 
   private static byte hexStringToByte(String s) {
     return (byte) ((Character.digit(s.charAt(0), 16) << 4)
-        + Character.digit(s.charAt(0+1), 16));
+        + Character.digit(s.charAt(1), 16));
   }
 
   public static Etag parse(String str) {
