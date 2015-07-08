@@ -17,14 +17,9 @@ import java.util.List;
 
 import static org.junit.Assert.*;
 
-@RunWith(Parameterized.class)
+
 public class BasicTest extends RaftTestBase {
 
-    private int numberOfNodes;
-
-    public BasicTest(int numberOfNodes) {
-        this.numberOfNodes = numberOfNodes;
-    }
 
     @Test
     public void requestExecuterShouldDependOnClusterBehavior() {
@@ -49,9 +44,53 @@ public class BasicTest extends RaftTestBase {
         }
     }
 
+    @RunWith(Parameterized.class)
+    public static class WithParamTest extends RaftTestBase {
+
+        private int numberofnodes;
+
+        public WithParamTest(int numberofnodes) {
+            this.numberofnodes = numberofnodes;
+        }
+
+        @Test
+        public void clientsShouldBeAbleToPerformCommandsEvenIfTheyDoNotPointToLeader() throws IOException { //TODO: inline data
+            List<DocumentStore> clusterStores = createRaftCluster(numberofnodes, "Replication", new Action1<DocumentStore>() {
+                @Override
+                public void apply(DocumentStore store) {
+                    store.getConventions().setClusterBehavior(ClusterBehavior.READ_FROM_LEADER_WRITE_TO_LEADER);
+                }
+            }, getDbName());
+
+            setupClusterConfiguration(clusterStores);
+
+            for (int i = 0; i < clusterStores.size(); i++) {
+                DocumentStore store = clusterStores.get(i);
+                store.getDatabaseCommands().put("keys/" + i, null, new RavenJObject(), new RavenJObject());
+            }
+
+            for (int i = 0; i < clusterStores.size(); i++) {
+                for (DocumentStore store : clusterStores) {
+                    waitForDocument(store.getDatabaseCommands(), "keys/" + i);
+                }
+            }
+
+            for (int i = 0; i < clusterStores.size(); i++) {
+                DocumentStore store = clusterStores.get(i);
+                store.getDatabaseCommands().put("keys/" + (i + clusterStores.size()), null, new RavenJObject(), new RavenJObject());
+            }
+
+            for (int i = 0; i < clusterStores.size(); i++) {
+                for (DocumentStore store : clusterStores) {
+                    waitForDocument(store.getDatabaseCommands(), "keys/" + (i + clusterStores.size()));
+                }
+            }
+        }
+    }
+
     @Test
-    public void clientsShouldBeAbleToPerformCommandsEvenIfTheyDoNotPointToLeader() throws IOException { //TODO: inline data
-        List<DocumentStore> clusterStores = createRaftCluster(numberOfNodes, "Replication", new Action1<DocumentStore>() {
+    public void nonClusterCommandsCanPerformCommandsOnClusterServers() throws IOException {
+        List<DocumentStore> clusterStores = createRaftCluster(2, "Replication", new Action1<DocumentStore>() {
             @Override
             public void apply(DocumentStore store) {
                 store.getConventions().setClusterBehavior(ClusterBehavior.READ_FROM_LEADER_WRITE_TO_LEADER);
@@ -59,6 +98,36 @@ public class BasicTest extends RaftTestBase {
         }, getDbName());
 
         setupClusterConfiguration(clusterStores);
+
+        try (DocumentStore store1 = clusterStores.get(0);
+        DocumentStore store2 = clusterStores.get(1)) {
+            ServerClient nonClusterCommands1 = (ServerClient) store1.getDatabaseCommands().forDatabase(store1.getDefaultDatabase(), ClusterBehavior.NONE);
+            ServerClient nonClusterCommands2 = (ServerClient) store2.getDatabaseCommands().forDatabase(store2.getDefaultDatabase(), ClusterBehavior.NONE);
+
+            nonClusterCommands1.put("keys/1", null, new RavenJObject(), new RavenJObject());
+            nonClusterCommands2.put("keys/2", null, new RavenJObject(), new RavenJObject());
+
+            for (DocumentStore clusterStore : clusterStores) {
+                waitForDocument(clusterStore.getDatabaseCommands(), "keys/1");
+                waitForDocument(clusterStore.getDatabaseCommands(), "keys/2");
+            }
+        }
+    }
+
+    @Test
+    public void clientShouldHandleLeaderShutdown() throws IOException {
+        List<DocumentStore> clusterStores = createRaftCluster(3, "Replication", new Action1<DocumentStore>() {
+            @Override
+            public void apply(DocumentStore store) {
+                store.getConventions().setClusterBehavior(ClusterBehavior.READ_FROM_LEADER_WRITE_TO_LEADER);
+            }
+        }, getDbName());
+
+        setupClusterConfiguration(clusterStores);
+
+        for (DocumentStore clusterStore : clusterStores) {
+            ((ServerClient)clusterStore.getDatabaseCommands()).getRequestExecuter().updateReplicationInformationIfNeeded((ServerClient) clusterStore.getDatabaseCommands(), true);
+        }
 
         for (int i = 0; i < clusterStores.size(); i++) {
             DocumentStore store = clusterStores.get(i);
@@ -71,17 +140,21 @@ public class BasicTest extends RaftTestBase {
             }
         }
 
-        for (int i = 0; i < clusterStores.size(); i++) {
-            DocumentStore store = clusterStores.get(i);
-            store.getDatabaseCommands().put("keys/" + (i + clusterStores.size()), null, new RavenJObject(), new RavenJObject());
-        }
+        DocumentStore leaderStore = stopLeader();
 
-        for (int i = 0; i < clusterStores.size(); i++) {
-            for (DocumentStore store : clusterStores) {
-                waitForDocument(store.getDatabaseCommands(), "keys/" + (i + clusterStores.size()));
+        try {
+            for (int i = 0; i < clusterStores.size(); i++) {
+                DocumentStore store = clusterStores.get(i);
+                store.getDatabaseCommands().put("keys/" + (i + clusterStores.size()), null, new RavenJObject(), new RavenJObject());
             }
+
+            for (int i = 0; i < clusterStores.size(); i++) {
+                for (DocumentStore store : clusterStores) {
+                    waitForDocument(store.getDatabaseCommands(), "keys/" + (i + clusterStores.size()));
+                }
+            }
+        } finally {
+            leaderStore.close();
         }
     }
-
-    //TODO:
 }

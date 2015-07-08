@@ -402,7 +402,7 @@ public class ClusterAwareRequestExecuter implements IRequestExecuter {
 
     private static OperationMetadata convertReplicationDestinationToOperationMetadata(ReplicationDestination destination, ClusterInformation clusterInformation) {
         String url = StringUtils.isEmpty(destination.getClientVisibleUrl()) ? destination.getUrl() : destination.getClientVisibleUrl();
-        if (StringUtils.isEmpty(url) || destination.getDisabled() || destination.getIgnoredClient()) {
+        if (StringUtils.isEmpty(url) || Boolean.TRUE.equals(destination.getDisabled()) || Boolean.TRUE.equals(destination.getIgnoredClient())) {
             return null;
         }
 

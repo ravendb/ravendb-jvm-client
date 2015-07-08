@@ -32,6 +32,7 @@ import org.junit.rules.TestName;
 import org.junit.runners.Parameterized;
 
 import java.io.IOException;
+import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -42,7 +43,6 @@ public abstract class RaftTestBase {
 
     @Rule
     public TestName testName = new TestName();
-
 
     private final static int PORT_RANGE_START = 9000;
 
@@ -60,7 +60,7 @@ public abstract class RaftTestBase {
     @Parameterized.Parameters(name = "Cluster with {0} nodes")
     public static Collection<Object[]> data()  {
         return Arrays.asList(new Object[][]{
-                {1}, {3}, {5}
+                {1}, {3}
         });
     }
 
@@ -179,7 +179,7 @@ public abstract class RaftTestBase {
 
         List<DocumentStore> stores = new ArrayList<>();
         for (int i = 0; i < numberOfNodes; i++) {
-            DocumentStore documentStore = new DocumentStore("http://localhost:" + ports.get(i), getDbName());
+            DocumentStore documentStore = new DocumentStore("http://localhost:" + ports.get(i) + "/", getDbName());
             if (configureStore != null) {
                 configureStore.apply(documentStore);
             }
@@ -223,80 +223,49 @@ public abstract class RaftTestBase {
         }, 10 * 1000L);
     }
 
-/* TODO
-		public List<DocumentStore> ExtendRaftCluster(int numberOfExtraNodes, string activeBundles = null, Action<DocumentStore> configureStore = null, [CallerMemberName] string databaseName = null, bool inMemory = true)
-		{
-			var leader = servers.FirstOrDefault(server => server.Options.ClusterManager.Value.IsLeader());
-			Assert.NotNull(leader);
+    public DocumentStore stopLeader() throws MalformedURLException {
+        DocumentStore leaderDocumentStore = findLeaderDocumentStore();
+        if (leaderDocumentStore == null) {
+            throw new IllegalStateException("Unable to find leader store");
+        }
 
-			var nodes = Enumerable.Range(0, numberOfExtraNodes)
-				.Select(x => GetNewServer(GetPort(), activeBundles: activeBundles, databaseName: databaseName, runInMemory:inMemory))
-				.ToList();
+        // now find leader port
+        int leaderServerPort = new URL(leaderDocumentStore.getUrl()).getPort();
 
-			var allNodesFinishedJoining = new ManualResetEventSlim();
-			leader.Options.ClusterManager.Value.Engine.TopologyChanged += command =>
-			{
-				if (command.Requested.AllNodeNames.All(command.Requested.IsVoter))
-				{
-					allNodesFinishedJoining.Set();
-				}
-			};
+        RavenDBAwareTests.stopServer(leaderServerPort);
+        storesToDispose.remove(leaderDocumentStore);
 
-			for (var i = 0; i < numberOfExtraNodes; i++)
-			{
-				var n = nodes[i];
+        return leaderDocumentStore;
+    }
 
-				if (n == leader)
-					continue;
+    private DocumentStore findLeaderDocumentStore() {
+        String leaderUrl = findLeaderUrl();
+        for (DocumentStore documentStore : storesToDispose) {
+            if (leaderUrl.equals(documentStore.getUrl())) {
+                return documentStore;
+            }
+        }
 
-				Assert.True(leader.Options.ClusterManager.Value.Engine.AddToClusterAsync(new NodeConnectionInfo
-				{
-					Name = RaftHelper.GetNodeName(n.SystemDatabase.TransactionalStorage.Id),
-					Uri = RaftHelper.GetNodeUrl(n.SystemDatabase.Configuration.ServerUrl)
-				}).Wait(10000));
-				Assert.True(allNodesFinishedJoining.Wait(10000));
-				allNodesFinishedJoining.Reset();
-			}
+        return null;
+    }
 
-			return nodes
-				.Select(node => NewRemoteDocumentStore(ravenDbServer: node, activeBundles: activeBundles, configureStore: configureStore, databaseName: databaseName))
-				.ToList();
-		}
+    private String findLeaderUrl() {
+        DocumentStore firstStore = storesToDispose.get(0);
+        try (HttpJsonRequest request = firstStore.getDatabaseCommands().createRequest(HttpMethods.GET, "/cluster/topology")) {
+            RavenJObject response = (RavenJObject) request.readResponseJson();
 
-		public void RemoveFromCluster(RavenDbServer serverToRemove)
-		{
-			var leader = servers.FirstOrDefault(server => server.Options.ClusterManager.Value.IsLeader());
-			if (leader == null)
-				throw new InvalidOperationException("Leader is currently not present, thus can't remove node from cluster");
-			if (leader == serverToRemove)
-			{
-				leader.Options.ClusterManager.Value.Engine.StepDownAsync().Wait();
-			}
-			else
-			{
-				leader.Options.ClusterManager.Value.Engine.RemoveFromClusterAsync(serverToRemove.Options.ClusterManager.Value.Engine.Options.SelfConnection).Wait(10000);
-			}
-		}
+            String currentLeader = response.value(String.class, "CurrentLeader");
 
-		private void WaitForClusterToBecomeNonStale(IReadOnlyCollection<RavenDbServer> nodes)
-		{
-			var numberOfNodes = nodes.Count;
-			var result = SpinWait.SpinUntil(() => nodes.All(x => x.Options.ClusterManager.Value.Engine.CurrentTopology.AllVotingNodes.Count() == numberOfNodes), TimeSpan.FromSeconds(10));
-
-			if (result == false)
-				throw new InvalidOperationException("Cluster is stale.");
-		}
-
-		protected void WaitForClusterToBecomeNonStale(int numberOfNodes)
-		{
-			servers.ForEach(server => Assert.True(SpinWait.SpinUntil(() =>
-			{
-				var topology = server.Options.ClusterManager.Value.Engine.CurrentTopology;
-				return topology.AllVotingNodes.Count() == numberOfNodes;
-			}, TimeSpan.FromSeconds(15))));
-		}
-
-*/
+            RavenJArray allVoting = response.value(RavenJArray.class, "AllVotingNodes");
+            // map node id to url
+            for (RavenJToken ravenJToken : allVoting) {
+                if (currentLeader.equals(ravenJToken.value(String.class, "Name"))) {
+                    return ravenJToken.value(String.class, "Uri");
+                }
+            }
+        }
+        throw new IllegalStateException("Unable to find leader!");
+    }
 
     protected void setupClusterConfiguration(List<DocumentStore> clusterStores) throws IOException {
         setupClusterConfiguration(clusterStores, true);
