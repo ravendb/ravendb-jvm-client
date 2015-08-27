@@ -1,16 +1,5 @@
 package net.ravendb.client.document;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Date;
-import java.util.List;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
-import java.util.concurrent.TimeoutException;
-
 import net.ravendb.abstractions.basic.CleanCloseable;
 import net.ravendb.abstractions.closure.Function1;
 import net.ravendb.abstractions.connection.OperationCredentials;
@@ -24,17 +13,18 @@ import net.ravendb.abstractions.logging.LogManager;
 import net.ravendb.abstractions.replication.ReplicatedEtagInfo;
 import net.ravendb.abstractions.replication.ReplicationDestination;
 import net.ravendb.abstractions.replication.ReplicationDocument;
-import net.ravendb.client.connection.CreateHttpJsonRequestParams;
-import net.ravendb.client.connection.IDatabaseCommands;
-import net.ravendb.client.connection.OperationMetadata;
-import net.ravendb.client.connection.RavenUrlExtensions;
-import net.ravendb.client.connection.ServerClient;
+import net.ravendb.client.connection.*;
 import net.ravendb.client.connection.implementation.HttpJsonRequest;
 import net.ravendb.client.utils.CancellationTokenSource;
 import net.ravendb.client.utils.CancellationTokenSource.CancellationToken;
 import net.ravendb.client.utils.TimeSpan;
-
 import org.apache.commons.lang.StringUtils;
+
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Date;
+import java.util.List;
+import java.util.concurrent.*;
 
 
 public class ReplicationBehavior implements CleanCloseable {
@@ -121,15 +111,21 @@ public class ReplicationBehavior implements CleanCloseable {
     DatabaseStatistics sourceStatistics = sourceCommands.getStatistics();
     final String sourceDbId = sourceStatistics.getDatabaseId().toString();
 
+    final ReplicatedEtagInfo[] latestEtags = new ReplicatedEtagInfo[destinationsToCheck.size()];
+
     Collection<Callable<Void>> tasks = new ArrayList<>();
+
+    int i = 0;
     for (final String destination: destinationsToCheck) {
+      final Integer index = i;
       tasks.add(new Callable<Void>() {
         @Override
         public Void call() throws Exception {
-          waitForReplicationFromServer(destination, sourceUrl, sourceDbId, etagToCheck, cts.getToken());
+          waitForReplicationFromServer(destination, sourceUrl, sourceDbId, etagToCheck, latestEtags, index, cts.getToken());
           return null;
         }
       });
+      i++;
     }
 
 
@@ -159,23 +155,29 @@ public class ReplicationBehavior implements CleanCloseable {
 
 
     // we have either completed (but not enough) or cancelled, meaning timeout
-    String msg = String.format("Confirmed that the specified etag %s was replicated to %d of %d servers after %s",
-        etag, completedCount, destinationsToCheck.size(), TimeSpan.formatString(new Date().getTime() - started));
+    String msg = String.format("Could only confirm that the specified Etag %s was replicated to %d of %d servers after %s. Details: %s",
+        etag, completedCount, destinationsToCheck.size(), TimeSpan.formatString(new Date().getTime() - started), StringUtils.join(latestEtags));
 
     throw new TimeoutException(msg);
   }
 
   protected void waitForReplicationFromServer(String url, String sourceUrl, String sourceDbId, Etag etag,
+                                              ReplicatedEtagInfo[] latestEtags, int index,
     CancellationToken cancellationToken) throws InterruptedException {
 
     while (true) {
       cancellationToken.throwIfCancellationRequested();
+      try {
+        ReplicatedEtagInfo etags = getReplicatedEtagsFor(url, sourceUrl, sourceDbId);
 
-      ReplicatedEtagInfo etags = getReplicatedEtagsFor(url, sourceUrl, sourceDbId);
+        latestEtags[index] = etags;
 
-      boolean replicated = etag.compareTo(etags.getDocumentEtag()) <= 0;
-      if (replicated) {
-        return;
+        boolean replicated = etag.compareTo(etags.getDocumentEtag()) <= 0;
+        if (replicated) {
+          return;
+        }
+      } catch (Exception e) {
+        log.debugException("Failed to get replicated etags for " + sourceUrl, e);
       }
       Thread.sleep(100);
     }

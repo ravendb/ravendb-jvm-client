@@ -4,6 +4,7 @@ public class TransformerDefinition implements Cloneable {
   private String transformResults;
   private int indexId;
   private String name;
+  private TransformerLockMode lockMode;
 
   /**
    * Transformer identifier (internal).
@@ -92,4 +93,11 @@ public class TransformerDefinition implements Cloneable {
   }
 
 
+  public TransformerLockMode getLockMode() {
+    return lockMode;
+  }
+
+  public void setLockMode(TransformerLockMode lockMode) {
+    this.lockMode = lockMode;
+  }
 }

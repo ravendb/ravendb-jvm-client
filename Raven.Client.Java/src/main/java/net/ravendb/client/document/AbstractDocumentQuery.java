@@ -1,18 +1,7 @@
 package net.ravendb.client.document;
 
 import java.lang.reflect.Field;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
 import java.util.regex.Pattern;
 
 import net.ravendb.abstractions.basic.CleanCloseable;
@@ -172,7 +161,12 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
   /**
    * The types to sort the fields by (NULL if not specified)
    */
-  protected Set<Tuple<String, SortOptions>> sortByHints = new HashSet<>();
+  protected Set<Tuple<String, SortOptions>> sortByHints = new TreeSet<>(new Comparator<Tuple<String, SortOptions>>() {
+    @Override
+    public int compare(Tuple<String, SortOptions> o1, Tuple<String, SortOptions> o2) {
+      return o1.getItem1().compareTo(o2.getItem1());
+    }
+  });
 
   /**
    * The page size to use when querying the index

@@ -1,14 +1,10 @@
 package net.ravendb.client.connection;
 
-import java.io.IOException;
-import java.io.InputStream;
-
 import net.ravendb.abstractions.basic.CloseableIterator;
 import net.ravendb.abstractions.closure.Function1;
 import net.ravendb.abstractions.exceptions.JsonReaderException;
 import net.ravendb.abstractions.json.linq.RavenJObject;
 import net.ravendb.client.RavenPagingInformation;
-
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.http.HttpEntity;
@@ -18,6 +14,9 @@ import org.codehaus.jackson.JsonFactory;
 import org.codehaus.jackson.JsonParseException;
 import org.codehaus.jackson.JsonParser;
 import org.codehaus.jackson.JsonToken;
+
+import java.io.IOException;
+import java.io.InputStream;
 
 public class RavenJObjectIterator implements CloseableIterator<RavenJObject> {
 

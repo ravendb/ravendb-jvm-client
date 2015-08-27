@@ -1,9 +1,9 @@
 package net.ravendb.client.document;
 
+import com.mysema.query.types.Expression;
+
 import java.util.Collection;
 import java.util.UUID;
-
-import com.mysema.query.types.Expression;
 
 /**
  * Fluent interface for specifying include paths
@@ -110,6 +110,5 @@ public interface ILoaderWithInclude {
    * @param ids
    */
   public <TResult> TResult[] load(Class<TResult> clazz, Number... ids);
-
 
 }

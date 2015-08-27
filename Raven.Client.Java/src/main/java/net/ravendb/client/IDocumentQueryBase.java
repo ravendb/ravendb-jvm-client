@@ -1,8 +1,8 @@
 package net.ravendb.client;
 
-import java.util.Collection;
-import java.util.Date;
-
+import com.mysema.query.types.Expression;
+import com.mysema.query.types.Path;
+import com.mysema.query.types.path.ListPath;
 import net.ravendb.abstractions.basic.Reference;
 import net.ravendb.abstractions.closure.Action1;
 import net.ravendb.abstractions.closure.Function1;
@@ -15,9 +15,8 @@ import net.ravendb.abstractions.indexing.SpatialOptions.SpatialUnits;
 import net.ravendb.abstractions.json.linq.RavenJObject;
 import net.ravendb.client.document.DocumentConvention;
 
-import com.mysema.query.types.Expression;
-import com.mysema.query.types.Path;
-import com.mysema.query.types.path.ListPath;
+import java.util.Collection;
+import java.util.Date;
 
 
 /**
@@ -545,7 +544,7 @@ public interface IDocumentQueryBase<T, TSelf extends IDocumentQueryBase<T, TSelf
    * However, when used to query map/reduce indexes, it does NOT guarantee that the document that this
    * etag belong to is actually considered for the results.
    * What it does it guarantee that the document has been mapped, but not that the mapped values has been reduced.
-   * Since map/reduce queries, by their nature,vtend to be far less susceptible to issues with staleness, this is
+   * Since map/reduce queries, by their nature, tend to be far less susceptible to issues with staleness, this is
    * considered to be an acceptable tradeoff.
    * If you need absolute no staleness with a map/reduce index, you will need to ensure synchronized clocks and
    * use the Cutoff date option, instead.
@@ -563,7 +562,7 @@ public interface IDocumentQueryBase<T, TSelf extends IDocumentQueryBase<T, TSelf
    * However, when used to query map/reduce indexes, it does NOT guarantee that the document that this
    * etag belong to is actually considered for the results.
    * What it does it guarantee that the document has been mapped, but not that the mapped values has been reduced.
-   * Since map/reduce queries, by their nature,vtend to be far less susceptible to issues with staleness, this is
+   * Since map/reduce queries, by their nature, tend to be far less susceptible to issues with staleness, this is
    * considered to be an acceptable tradeoff.
    * If you need absolute no staleness with a map/reduce index, you will need to ensure synchronized clocks and
    * use the Cutoff date option, instead.

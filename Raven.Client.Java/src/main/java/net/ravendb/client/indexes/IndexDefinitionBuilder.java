@@ -1,26 +1,19 @@
 package net.ravendb.client.indexes;
 
+import com.mysema.query.types.Path;
+import net.ravendb.abstractions.extensions.ExpressionExtensions;
+import net.ravendb.abstractions.indexing.*;
+import net.ravendb.client.document.DocumentConvention;
+
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
-
-import net.ravendb.abstractions.extensions.ExpressionExtensions;
-import net.ravendb.abstractions.indexing.FieldIndexing;
-import net.ravendb.abstractions.indexing.FieldStorage;
-import net.ravendb.abstractions.indexing.FieldTermVector;
-import net.ravendb.abstractions.indexing.IndexDefinition;
-import net.ravendb.abstractions.indexing.IndexLockMode;
-import net.ravendb.abstractions.indexing.SortOptions;
-import net.ravendb.abstractions.indexing.SpatialOptions;
-import net.ravendb.abstractions.indexing.SuggestionOptions;
-import net.ravendb.client.document.DocumentConvention;
-
-import com.mysema.query.types.Path;
 
 
 
 public class IndexDefinitionBuilder {
 
+  private String indexName;
   private String map;
   private String reduce;
   private Map<Path<?>, FieldStorage> stores;
@@ -46,6 +39,11 @@ public class IndexDefinitionBuilder {
 
 
   public IndexDefinitionBuilder() {
+    this(null);
+  }
+
+  public IndexDefinitionBuilder(String indexName) {
+    this.indexName = indexName;
     this.stores = new HashMap<>();
     this.storesStrings = new HashMap<>();
     this.indexes = new HashMap<>();
@@ -195,7 +193,7 @@ public class IndexDefinitionBuilder {
   public IndexDefinition toIndexDefinition(DocumentConvention convention, boolean validateMap) {
     if (map == null && validateMap)
       throw new IllegalStateException(
-        String.format("Map is required to generate an index, you cannot create an index without a valid Map property (in index %s).", getClass().getSimpleName()));
+        String.format("Map is required to generate an index, you cannot create an index without a valid Map property (in index %s).", indexName));
 
     IndexDefinition indexDefinition = new IndexDefinition();
     if (reduce != null) {

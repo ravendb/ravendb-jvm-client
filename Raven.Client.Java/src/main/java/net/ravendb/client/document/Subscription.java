@@ -1,28 +1,13 @@
 package net.ravendb.client.document;
 
-import java.io.Closeable;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.concurrent.TimeUnit;
-
-import net.ravendb.abstractions.closure.Action1;
-import net.ravendb.abstractions.connection.ErrorResponseException;
-import net.ravendb.abstractions.data.*;
-import net.ravendb.client.utils.Observers;
-import org.apache.commons.lang.StringUtils;
-import org.apache.http.HttpStatus;
-import org.apache.http.client.methods.CloseableHttpResponse;
-import org.codehaus.jackson.JsonParser;
-
-import net.ravendb.abstractions.basic.CleanCloseable;
-import net.ravendb.abstractions.basic.EventArgs;
-import net.ravendb.abstractions.basic.EventHandler;
-import net.ravendb.abstractions.basic.EventHelper;
-import net.ravendb.abstractions.basic.VoidArgs;
+import com.google.common.io.Closeables;
+import net.ravendb.abstractions.basic.*;
 import net.ravendb.abstractions.closure.Action0;
+import net.ravendb.abstractions.closure.Action1;
 import net.ravendb.abstractions.closure.Function1;
 import net.ravendb.abstractions.closure.Predicate;
+import net.ravendb.abstractions.connection.ErrorResponseException;
+import net.ravendb.abstractions.data.*;
 import net.ravendb.abstractions.exceptions.OperationCancelledException;
 import net.ravendb.abstractions.exceptions.subscriptions.SubscriptionClosedException;
 import net.ravendb.abstractions.exceptions.subscriptions.SubscriptionDoesNotExistException;
@@ -33,11 +18,7 @@ import net.ravendb.abstractions.logging.ILog;
 import net.ravendb.abstractions.logging.LogManager;
 import net.ravendb.abstractions.util.AutoResetEvent;
 import net.ravendb.abstractions.util.ManualResetEvent;
-import net.ravendb.client.changes.IDatabaseChanges;
-import net.ravendb.client.changes.IObservable;
-import net.ravendb.client.changes.IObserver;
-import net.ravendb.client.changes.ObserverAdapter;
-import net.ravendb.client.changes.RemoteDatabaseChanges;
+import net.ravendb.client.changes.*;
 import net.ravendb.client.connection.IDatabaseCommands;
 import net.ravendb.client.connection.RavenJObjectIterator;
 import net.ravendb.client.connection.ServerClient;
@@ -45,8 +26,17 @@ import net.ravendb.client.connection.implementation.HttpJsonRequest;
 import net.ravendb.client.connection.profiling.ConcurrentSet;
 import net.ravendb.client.extensions.HttpJsonRequestExtension;
 import net.ravendb.client.utils.CancellationTokenSource;
+import net.ravendb.client.utils.Observers;
+import org.apache.commons.lang.StringUtils;
+import org.apache.http.HttpStatus;
+import org.apache.http.client.methods.CloseableHttpResponse;
+import org.codehaus.jackson.JsonParser;
 
-import com.google.common.io.Closeables;
+import java.io.Closeable;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 
 public class Subscription<T> implements IObservable<T>, CleanCloseable {
@@ -73,7 +63,9 @@ public class Subscription<T> implements IObservable<T>, CleanCloseable {
   private EventHandler<VoidArgs> eventHandler;
 
   private List<EventHandler<VoidArgs>> beforeBatch = new ArrayList<>();
-  private List<EventHandler<VoidArgs>> afterBatch = new ArrayList<>();
+  private List<EventHandler<DocumentProcessedEventArgs>> afterBatch = new ArrayList<>();
+  private List<EventHandler<VoidArgs>> beforeAcknowledgment = new ArrayList<>();
+  private List<EventHandler<LastProcessedEtagEventArgs>> afterAcknowledgment = new ArrayList<>();
 
   private boolean isErroredBecauseOfSubscriber;
   private Exception lastSubscriberException;
@@ -131,12 +123,28 @@ public class Subscription<T> implements IObservable<T>, CleanCloseable {
     beforeBatch.remove(handler);
   }
 
-  public void addAfterBatchHandler(EventHandler<VoidArgs> handler) {
+  public void addAfterBatchHandler(EventHandler<DocumentProcessedEventArgs> handler) {
     afterBatch.add(handler);
   }
 
-  public void removeAfterBatchHandler(EventHandler<VoidArgs> handler) {
+  public void removeAfterBatchHandler(EventHandler<DocumentProcessedEventArgs> handler) {
     afterBatch.remove(handler);
+  }
+
+  public void addBeforeAcknowledgmentHandler(EventHandler<VoidArgs> handler) {
+    beforeAcknowledgment.add(handler);
+  }
+
+  public void removeBeforeAcknowledgmentHandler(EventHandler<VoidArgs> handler) {
+    beforeAcknowledgment.remove(handler);
+  }
+
+  public void addAfterAcknowledgmentHandler(EventHandler<LastProcessedEtagEventArgs> handler) {
+    afterAcknowledgment.add(handler);
+  }
+
+  public void removeAfterAcknowledgmentHandler(EventHandler<LastProcessedEtagEventArgs> handler) {
+    afterAcknowledgment.remove(handler);
   }
 
   /**
@@ -176,6 +184,8 @@ public class Subscription<T> implements IObservable<T>, CleanCloseable {
   @SuppressWarnings({"boxing", "unchecked"})
   private void pullDocuments() throws IOException, InterruptedException {
     try {
+      Etag lastProcessedEtagOnClient = null;
+
       while (true) {
         anySubscriber.waitOne();
 
@@ -183,6 +193,7 @@ public class Subscription<T> implements IObservable<T>, CleanCloseable {
 
         boolean pulledDocs = false;
         lastProcessedEtagOnServer = null;
+        int processedDocs = 0;
         try (HttpJsonRequest subscriptionRequest = createPullingRequest()) {
           try (CloseableHttpResponse response = subscriptionRequest.executeRawResponse()) {
             HttpJsonRequestExtension.assertNotFailingResponse(response);
@@ -243,6 +254,7 @@ public class Subscription<T> implements IObservable<T>, CleanCloseable {
                     }
                   }
                 }
+                processedDocs++;
                 if (isErroredBecauseOfSubscriber) {
                   break;
                 }
@@ -253,18 +265,29 @@ public class Subscription<T> implements IObservable<T>, CleanCloseable {
           if (isErroredBecauseOfSubscriber) {
             break;
           }
-          if (pulledDocs) {
-            try (HttpJsonRequest acknowledgmentRequest = createAcknowledgmentRequest(lastProcessedEtagOnServer)) {
-              try {
-                acknowledgmentRequest.executeRequest();
-              } catch (Exception e) {
-                if (acknowledgmentRequest.getResponseStatusCode() != HttpStatus.SC_REQUEST_TIMEOUT) // ignore acknowledgment timeouts
-                  throw e;
+
+          if (lastProcessedEtagOnServer != null) {
+
+            // This is an acknowledge when the server returns documents to the subscriber.
+            if (pulledDocs) {
+              EventHelper.invoke(beforeAcknowledgment, this, EventArgs.EMPTY);
+              acknowledgeBatchToServer(lastProcessedEtagOnServer);
+              EventHelper.invoke(afterAcknowledgment, this, new LastProcessedEtagEventArgs(lastProcessedEtagOnServer));
+
+              EventHelper.invoke(afterBatch, this, new DocumentProcessedEventArgs(processedDocs));
+              continue; // try to pull more documents from subscription
+            } else {
+              if (!lastProcessedEtagOnClient.equals(lastProcessedEtagOnServer)) {
+                // This is a silent acknowledge, this can happen because there was no documents in range
+                // to be accessible in the time available. This condition can happen when documents must match
+                // a set of conditions to be eligible.
+                acknowledgeBatchToServer(lastProcessedEtagOnServer);
+
+                lastProcessedEtagOnClient = lastProcessedEtagOnServer;
+
+                continue; // try to pull more documents from subscription
               }
             }
-
-            EventHelper.invoke(afterBatch, this, EventArgs.EMPTY);
-            continue; // try to pull more documents from subscription
           }
 
           while (newDocuments.waitOne(options.getClientAliveNotificationInterval(), TimeUnit.MILLISECONDS) == false) {
@@ -280,6 +303,17 @@ public class Subscription<T> implements IObservable<T>, CleanCloseable {
         throw subscriptionException;
       }
       throw e;
+    }
+  }
+
+  private void acknowledgeBatchToServer(Etag lastProcessedEtagOnServer) {
+    try (HttpJsonRequest acknowledgmentRequest = createAcknowledgmentRequest(lastProcessedEtagOnServer)) {
+      try {
+        acknowledgmentRequest.executeRequest();
+      } catch (Exception e) {
+        if (acknowledgmentRequest.getResponseStatusCode() != HttpStatus.SC_REQUEST_TIMEOUT) // ignore acknowledgment timeouts
+          throw e;
+      }
     }
   }
 
@@ -529,5 +563,29 @@ public class Subscription<T> implements IObservable<T>, CleanCloseable {
     public IObservable<T> where(Predicate<T> predicate) {
       throw new IllegalStateException("Where is not supported in subscriptions!");
     }
+
+  public static class DocumentProcessedEventArgs extends EventArgs {
+    public DocumentProcessedEventArgs(int documentsProcessed) {
+      this.documentsProcessed = documentsProcessed;
+    }
+
+    private final int documentsProcessed;
+
+    public int getDocumentsProcessed() {
+      return documentsProcessed;
+    }
+  }
+
+  public static class LastProcessedEtagEventArgs extends EventArgs {
+    private final Etag lastProcessedEtag;
+
+    public LastProcessedEtagEventArgs(Etag lastProcessedEtag) {
+      this.lastProcessedEtag = lastProcessedEtag;
+    }
+
+    public Etag getLastProcessedEtag() {
+      return lastProcessedEtag;
+    }
+  }
 
 }

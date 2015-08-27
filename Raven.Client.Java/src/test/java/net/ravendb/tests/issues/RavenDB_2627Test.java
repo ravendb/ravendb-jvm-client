@@ -1,31 +1,11 @@
 package net.ravendb.tests.issues;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
-
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.ArrayBlockingQueue;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.TimeUnit;
-
 import net.ravendb.abstractions.basic.CleanCloseable;
 import net.ravendb.abstractions.basic.EventHandler;
 import net.ravendb.abstractions.basic.Reference;
 import net.ravendb.abstractions.basic.VoidArgs;
 import net.ravendb.abstractions.closure.Function0;
-import net.ravendb.abstractions.data.Constants;
-import net.ravendb.abstractions.data.Etag;
-import net.ravendb.abstractions.data.SubscriptionBatchOptions;
-import net.ravendb.abstractions.data.SubscriptionConfig;
-import net.ravendb.abstractions.data.SubscriptionConnectionOptions;
-import net.ravendb.abstractions.data.SubscriptionCriteria;
+import net.ravendb.abstractions.data.*;
 import net.ravendb.abstractions.exceptions.subscriptions.SubscriptionDoesNotExistException;
 import net.ravendb.abstractions.exceptions.subscriptions.SubscriptionInUseException;
 import net.ravendb.abstractions.json.linq.RavenJObject;
@@ -45,9 +25,18 @@ import net.ravendb.tests.common.dto.PersonWithAddress;
 import net.ravendb.tests.document.Company;
 import net.ravendb.tests.json.WebinarTest.Person;
 import net.ravendb.utils.SpinWait;
-
 import org.junit.Ignore;
 import org.junit.Test;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.TimeUnit;
+
+import static org.junit.Assert.*;
 
 
 public class RavenDB_2627Test extends RemoteClientTest {
@@ -788,9 +777,9 @@ public class RavenDB_2627Test extends RemoteClientTest {
       Subscription<RavenJObject> subscription = store.subscriptions().open(id, connectionOptions);
       store.changes().waitForAllPendingSubscriptions();
 
-      subscription.addAfterBatchHandler(new EventHandler<VoidArgs>() {
+      subscription.addAfterBatchHandler(new EventHandler<Subscription.DocumentProcessedEventArgs>() {
         @Override
-        public void handle(Object sender, VoidArgs event) {
+        public void handle(Object sender, Subscription.DocumentProcessedEventArgs event) {
           TimeUtils.cleanSleep(20 * 1000); // to prevent the client from sending client-alive notification
         }
       });

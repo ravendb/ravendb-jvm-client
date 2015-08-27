@@ -1,60 +1,20 @@
 package net.ravendb.client.shard;
 
-import java.beans.IntrospectionException;
-import java.beans.Introspector;
-import java.beans.PropertyDescriptor;
-import java.lang.reflect.Array;
-import java.lang.reflect.InvocationTargetException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Date;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Set;
-import java.util.TreeMap;
-import java.util.UUID;
-
-import net.ravendb.abstractions.basic.CleanCloseable;
-import net.ravendb.abstractions.basic.CloseableIterator;
-import net.ravendb.abstractions.basic.Lazy;
-import net.ravendb.abstractions.basic.Reference;
-import net.ravendb.abstractions.basic.Tuple;
+import com.google.common.base.Defaults;
+import com.google.common.base.Objects;
+import com.mysema.query.types.Expression;
+import net.ravendb.abstractions.basic.*;
 import net.ravendb.abstractions.closure.Action1;
 import net.ravendb.abstractions.closure.Function0;
 import net.ravendb.abstractions.closure.Function1;
 import net.ravendb.abstractions.closure.Function2;
-import net.ravendb.abstractions.data.BatchResult;
-import net.ravendb.abstractions.data.Constants;
-import net.ravendb.abstractions.data.Etag;
-import net.ravendb.abstractions.data.FacetQuery;
-import net.ravendb.abstractions.data.FacetResults;
-import net.ravendb.abstractions.data.GetRequest;
-import net.ravendb.abstractions.data.GetResponse;
-import net.ravendb.abstractions.data.JsonDocument;
-import net.ravendb.abstractions.data.MoreLikeThisQuery;
-import net.ravendb.abstractions.data.MultiLoadResult;
-import net.ravendb.abstractions.data.QueryHeaderInformation;
-import net.ravendb.abstractions.data.StreamResult;
+import net.ravendb.abstractions.data.*;
 import net.ravendb.abstractions.json.linq.RavenJArray;
 import net.ravendb.abstractions.json.linq.RavenJObject;
 import net.ravendb.abstractions.json.linq.RavenJToken;
-import net.ravendb.client.IDocumentQuery;
-import net.ravendb.client.IDocumentSessionImpl;
-import net.ravendb.client.ISyncAdvancedSessionOperation;
-import net.ravendb.client.LoadConfigurationFactory;
-import net.ravendb.client.RavenPagingInformation;
+import net.ravendb.client.*;
 import net.ravendb.client.connection.IDatabaseCommands;
-import net.ravendb.client.document.DocumentMetadata;
-import net.ravendb.client.document.DocumentSessionListeners;
-import net.ravendb.client.document.ILoaderWithInclude;
-import net.ravendb.client.document.LazyShardSessionOperations;
-import net.ravendb.client.document.MultiLoaderWithInclude;
-import net.ravendb.client.document.RavenLoadConfiguration;
-import net.ravendb.client.document.ResponseTimeInformation;
-import net.ravendb.client.document.SaveChangesData;
+import net.ravendb.client.document.*;
 import net.ravendb.client.document.batches.IEagerSessionOperations;
 import net.ravendb.client.document.batches.ILazyOperation;
 import net.ravendb.client.document.batches.ILazySessionOperations;
@@ -69,9 +29,13 @@ import net.ravendb.client.linq.IDocumentQueryGenerator;
 import net.ravendb.client.linq.IRavenQueryable;
 import net.ravendb.client.linq.RavenQueryInspector;
 
-import com.google.common.base.Defaults;
-import com.google.common.base.Objects;
-import com.mysema.query.types.Expression;
+import java.beans.IntrospectionException;
+import java.beans.Introspector;
+import java.beans.PropertyDescriptor;
+import java.lang.reflect.Array;
+import java.lang.reflect.InvocationTargetException;
+import java.util.*;
+import java.util.Map.Entry;
 
 
 public class ShardedDocumentSession extends BaseShardedDocumentSession<IDatabaseCommands>
@@ -315,19 +279,30 @@ implements IDocumentQueryGenerator, IDocumentSessionImpl, ISyncAdvancedSessionOp
     return loadInternal(clazz, ids.toArray(new String[0]), null, transformer, configuration.getTransformerParameters());
   }
 
+  @Override
+  public <T> T[] loadInternal(Class<T> clazz, String[] ids, String transformer) {
+    return loadInternal(clazz, ids, transformer, null);
+  }
+
+  @Override
+  public <T> T[] loadInternal(Class<T> clazz, String[] ids, String transformer, Map<String, RavenJToken> transformerParameters) {
+    return loadInternal(clazz, ids, null, transformer, transformerParameters);
+  }
+
   @SuppressWarnings("rawtypes")
-  private <T> T[] loadInternal(Class<T> clazz, String[] ids, List<Tuple<String, Class>> includes, String transformer) {
+  public <T> T[] loadInternal(Class<T> clazz, String[] ids, Tuple<String, Class<?>>[] includes, String transformer) {
     return loadInternal(clazz, ids, includes, transformer, null);
   }
 
   @SuppressWarnings({"null", "unchecked", "rawtypes"})
-  private <T> T[] loadInternal(final Class<T> clazz, final String[] ids, List<Tuple<String, Class>> includes, final String transformer, final Map<String, RavenJToken> transformerParameters) {
+  @Override
+  public <T> T[] loadInternal(final Class<T> clazz, final String[] ids, Tuple<String, Class<?>>[] includes, final String transformer, final Map<String, RavenJToken> transformerParameters) {
 
     T[] results = (T[]) Array.newInstance(clazz, ids.length);
-    final String[] includePaths = includes != null ? new String[includes.size()] : null;
+    final String[] includePaths = includes != null ? new String[includes.length] : null;
     if (includes != null) {
-      for (int i = 0; i < includes.size(); i++) {
-        includePaths[i] = includes.get(i).getItem1();
+      for (int i = 0; i < includes.length; i++) {
+        includePaths[i] = includes[i].getItem1();
       }
     }
 

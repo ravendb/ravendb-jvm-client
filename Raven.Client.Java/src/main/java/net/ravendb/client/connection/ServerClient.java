@@ -184,6 +184,23 @@ public class ServerClient implements IDatabaseCommands {
   }
 
   @Override
+  public void setTransformerLock(final String name, final TransformerLockMode lockMode) {
+    executeWithReplication(HttpMethods.POST, new Function1<OperationMetadata, Void>() {
+      @Override
+      public Void apply(OperationMetadata operationMetadata) {
+        String operationUrl = operationMetadata.getUrl() + "/transformers/" + name + "?op=lockModeChange&mode=" + lockMode;
+        try (HttpJsonRequest request = jsonRequestFactory.createHttpJsonRequest(new CreateHttpJsonRequestParams(ServerClient.this, operationUrl, HttpMethods.POST, new RavenJObject(), operationMetadata.getCredentials(), convention))) {
+          request.addOperationHeaders(operationsHeaders);
+          request.addReplicationStatusHeaders(url, operationMetadata.getUrl(), replicationInformer, convention.getFailoverBehavior(), new HandleReplicationStatusChangesCallback());
+
+          request.readResponseJson();
+        }
+        return null;
+      }
+    });
+  }
+
+  @Override
   public void resetIndex(final String name) {
     executeWithReplication(HttpMethods.RESET, new Function1<OperationMetadata, Void>() {
       @Override
@@ -251,6 +268,32 @@ public class ServerClient implements IDatabaseCommands {
   @Override
   public String putIndex(String name, IndexDefinitionBuilder indexDef, boolean overwrite) {
     return putIndex(name, indexDef.toIndexDefinition(convention), overwrite);
+  }
+
+  @Override
+  public String[] putIndexes(final IndexToAdd[] indexesToAdd) {
+    return executeWithReplication(HttpMethods.PUT, new Function1<OperationMetadata, String[]>() {
+      @Override
+      public String[] apply(OperationMetadata operationMetadata) {
+        return directPutIndexes(indexesToAdd, operationMetadata);
+      }
+    });
+  }
+
+  @Override
+  public String[] putSideBySideIndexes(final IndexToAdd[] indexesToAdd) {
+    return putSideBySideIndexes(indexesToAdd, null, null);
+  }
+
+  @Override
+  public String[] putSideBySideIndexes(final IndexToAdd[] indexesToAdd, final Etag minimumEtagBeforeReplace, final Date replaceTimeUtc) {
+    return executeWithReplication(HttpMethods.PUT, new Function1<OperationMetadata, String[]>() {
+        @Override
+        public String[] apply(OperationMetadata operationMetadata) {
+          return directPutSideBySideIndexes(indexesToAdd, operationMetadata, minimumEtagBeforeReplace, replaceTimeUtc);
+        }
+      }
+    );
   }
 
   @SuppressWarnings("boxing")
@@ -350,6 +393,55 @@ public class ServerClient implements IDatabaseCommands {
       throw compilationException;
     }
   }
+
+  private String[] directPutIndexes(IndexToAdd[] indexesToAdd, OperationMetadata operationMetadata) {
+    String requestUrl = operationMetadata.getUrl() + "/indexes";
+    return putIndexes(operationMetadata, requestUrl, indexesToAdd);
+  }
+
+  private String[] directPutSideBySideIndexes(IndexToAdd[] indexesToAdd, OperationMetadata operationMetadata, Etag minimumEtagBeforeReplace, Date replaceTimeUtc) {
+    SideBySideIndexes sideBySideIndexes = new SideBySideIndexes();
+    sideBySideIndexes.setIndexesToAdd(indexesToAdd);
+    sideBySideIndexes.setMinimumEtagBeforeReplace(minimumEtagBeforeReplace);
+    sideBySideIndexes.setReplaceTimeUtc(replaceTimeUtc);
+
+    String requestUri = operationMetadata.getUrl() + "/side-by-side-indexes";
+    return putIndexes(operationMetadata, requestUri, sideBySideIndexes);
+  }
+
+  private String[] putIndexes(OperationMetadata operationMetadata, String requestUri, Object obj) {
+    try (HttpJsonRequest request = jsonRequestFactory.createHttpJsonRequest(new CreateHttpJsonRequestParams(this, requestUri, HttpMethods.PUT, new RavenJObject(), operationMetadata.getCredentials(), convention))) {
+      request.addOperationHeaders(operationsHeaders);
+
+      String serializeObject = JsonConvert.serializeObject(obj);
+
+      ErrorResponseException responseException = null;
+      try {
+        request.write(serializeObject);
+        RavenJToken result = request.readResponseJson();
+        return result.value(RavenJArray.class, "Indexes").values(String.class).toArray(new String[0]);
+      } catch (ErrorResponseException e ) {
+        if (e.getStatusCode() != HttpStatus.SC_BAD_REQUEST) {
+          throw e;
+
+        }
+        responseException = e;
+      }
+      IndexErrorObjectProto error = ExceptionExtensions.tryReadErrorResponseObject(IndexErrorObjectProto.class, responseException);
+      if (error == null) {
+        throw responseException;
+      }
+
+      IndexCompilationException indexCompilationException = new IndexCompilationException(error.getMessage());
+      indexCompilationException.setIndexDefinitionProperty(error.getIndexDefinitionProperty());
+      indexCompilationException.setProblematicText(error.getProblematicText());
+
+      throw indexCompilationException;
+
+    }
+  }
+
+
 
   public static class IndexErrorObjectProto {
     private String error;
@@ -1292,7 +1384,7 @@ public class ServerClient implements IDatabaseCommands {
     });
   }
 
-  private String serializeFacetsToFacetsJsonString(List<Facet> facets) {
+  protected static String serializeFacetsToFacetsJsonString(List<Facet> facets) {
     RavenJArray ravenJArray = (RavenJArray) RavenJToken.fromObject(facets);
     for (RavenJToken facet : ravenJArray) {
       RavenJObject obj = (RavenJObject) facet;
@@ -1303,7 +1395,7 @@ public class ServerClient implements IDatabaseCommands {
       if (jArray != null && jArray.size() == 0) {
         obj.remove("Ranges");
       }
-      for (String props : new HashSet<String>(obj.getKeys())) {
+      for (String props : new HashSet<>(obj.getKeys())) {
         if (obj.get(props).getType() == JTokenType.NULL) {
           obj.remove(props);
         }

@@ -22,7 +22,9 @@ public enum IndexChangeTypes {
 
   INDEX_DEMOTED_TO_DISABLED(256),
 
-  INDEX_MARKED_AS_ERRORED(512);
+  INDEX_MARKED_AS_ERRORED(512),
+
+  SIDE_BY_SIDE_REPLACE(1024);
 
   private int value;
 

@@ -1,47 +1,15 @@
 package net.ravendb.client.document;
 
-import java.lang.reflect.Array;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Date;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.TreeSet;
-import java.util.UUID;
-
-import net.ravendb.abstractions.basic.CleanCloseable;
-import net.ravendb.abstractions.basic.CloseableIterator;
-import net.ravendb.abstractions.basic.Lazy;
-import net.ravendb.abstractions.basic.Reference;
-import net.ravendb.abstractions.basic.Tuple;
+import com.google.common.base.Defaults;
+import com.mysema.query.types.Expression;
+import net.ravendb.abstractions.basic.*;
 import net.ravendb.abstractions.closure.Action1;
 import net.ravendb.abstractions.closure.Function0;
-import net.ravendb.abstractions.data.BatchResult;
-import net.ravendb.abstractions.data.Constants;
-import net.ravendb.abstractions.data.Etag;
-import net.ravendb.abstractions.data.FacetQuery;
-import net.ravendb.abstractions.data.FacetResults;
-import net.ravendb.abstractions.data.GetRequest;
-import net.ravendb.abstractions.data.GetResponse;
-import net.ravendb.abstractions.data.IndexQuery;
-import net.ravendb.abstractions.data.JsonDocument;
-import net.ravendb.abstractions.data.MoreLikeThisQuery;
-import net.ravendb.abstractions.data.MultiLoadResult;
-import net.ravendb.abstractions.data.QueryHeaderInformation;
-import net.ravendb.abstractions.data.StreamResult;
+import net.ravendb.abstractions.data.*;
 import net.ravendb.abstractions.exceptions.ConcurrencyException;
 import net.ravendb.abstractions.json.linq.RavenJObject;
 import net.ravendb.abstractions.json.linq.RavenJToken;
-import net.ravendb.client.IDocumentQuery;
-import net.ravendb.client.IDocumentSessionImpl;
-import net.ravendb.client.ISyncAdvancedSessionOperation;
-import net.ravendb.client.ITransactionalDocumentSession;
-import net.ravendb.client.LoadConfigurationFactory;
-import net.ravendb.client.RavenPagingInformation;
-import net.ravendb.client.RavenQueryHighlightings;
-import net.ravendb.client.RavenQueryStatistics;
+import net.ravendb.client.*;
 import net.ravendb.client.connection.IDatabaseCommands;
 import net.ravendb.client.connection.IRavenQueryInspector;
 import net.ravendb.client.connection.SerializationHelper;
@@ -56,18 +24,13 @@ import net.ravendb.client.document.sessionoperations.QueryOperation;
 import net.ravendb.client.exceptions.ConflictException;
 import net.ravendb.client.indexes.AbstractIndexCreationTask;
 import net.ravendb.client.indexes.AbstractTransformerCreationTask;
-import net.ravendb.client.linq.IDocumentQueryGenerator;
-import net.ravendb.client.linq.IRavenQueryProvider;
-import net.ravendb.client.linq.IRavenQueryable;
-import net.ravendb.client.linq.RavenQueryInspector;
-import net.ravendb.client.linq.RavenQueryProvider;
+import net.ravendb.client.linq.*;
 import net.ravendb.client.shard.ShardReduceFunction;
-
 import org.apache.commons.lang.NullArgumentException;
 import org.apache.commons.lang.StringUtils;
 
-import com.google.common.base.Defaults;
-import com.mysema.query.types.Expression;
+import java.lang.reflect.Array;
+import java.util.*;
 
 /**
  * Implements Unit of Work for accessing the RavenDB server
@@ -224,13 +187,13 @@ public class DocumentSession extends InMemoryDocumentSessionOperations
     return load(clazz, documentKeys.toArray(new String[0]));
   }
 
-
-  private <T> T[] loadUsingTransformerInternal(Class<T> clazz, String[] ids, String transformer) {
-    return loadUsingTransformerInternal(clazz, ids, transformer, null);
+  @Override
+  public <T> T[] loadInternal(Class<T> clazz, String[] ids, String transformer) {
+    return loadInternal(clazz, ids, transformer, null);
   }
 
   @SuppressWarnings("unchecked")
-  private <T> T[] loadUsingTransformerInternal(Class<T> clazz, String[] ids, String transformer, Map<String, RavenJToken> transformerParameters) {
+  public <T> T[] loadInternal(Class<T> clazz, String[] ids, String transformer, Map<String, RavenJToken> transformerParameters) {
     if (transformer == null) {
       throw new NullArgumentException("transformer");
     }
@@ -244,7 +207,44 @@ public class DocumentSession extends InMemoryDocumentSessionOperations
     return new LoadTransformerOperation(this, transformer, ids).complete(clazz, multiLoadResult);
   }
 
+  @Override
+  public <T> T[] loadInternal(Class<T> clazz, String[] ids, Tuple<String, Class<?>>[] includes, String transformer) {
+    return loadInternal(clazz, ids, includes, transformer, null);
+  }
 
+  @Override
+  public <T> T[] loadInternal(Class<T> clazz, String[] ids, Tuple<String, Class<?>>[] includes, String transformer, Map<String, RavenJToken> transformerParameters) {
+    if (transformer == null) {
+      throw new NullArgumentException("transformer");
+    }
+
+    if (ids.length == 0) {
+      return (T[]) Array.newInstance(clazz, 0);
+    }
+
+    incrementRequestCount();
+
+    if (checkIfIdAlreadyIncluded(ids, includes)) {
+      T[] result = (T[]) Array.newInstance(clazz, ids.length);
+      for (int i = 0; i < ids.length; i++) {
+        result[i] = load(clazz, ids[i]);
+      }
+      return result;
+    }
+
+
+    List<String> includePaths = null;
+    if (includes != null) {
+      includePaths = new ArrayList<>();
+      for (Tuple<String, Class<?>> item: includes) {
+        includePaths.add(item.getItem1());
+      }
+    }
+
+    MultiLoadResult multiLoadResult = databaseCommands.get(ids, includePaths.toArray(new String[0]), transformer, transformerParameters);
+    return new LoadTransformerOperation(this, transformer, ids).complete(clazz, multiLoadResult);
+
+  }
 
   @SuppressWarnings({"null", "unchecked"})
   @Override
@@ -439,7 +439,7 @@ public class DocumentSession extends InMemoryDocumentSessionOperations
       if (configureFactory != null) {
         configureFactory.configure(configuration);
       }
-      TResult[] loadResult = loadUsingTransformerInternal(clazz, new String[] { id} , transformer, configuration.getTransformerParameters());
+      TResult[] loadResult = loadInternal(clazz, new String[] { id} , transformer, configuration.getTransformerParameters());
       if (loadResult != null && loadResult.length > 0 ) {
         return loadResult[0];
       }
@@ -454,7 +454,7 @@ public class DocumentSession extends InMemoryDocumentSessionOperations
       Class<TResult> clazz, String... ids) {
     try {
       String transformer = tranformerClass.newInstance().getTransformerName();
-      return loadUsingTransformerInternal(clazz, ids , transformer);
+      return loadInternal(clazz, ids , transformer);
     } catch (Exception e) {
       throw new RuntimeException(e);
     }
@@ -469,7 +469,7 @@ public class DocumentSession extends InMemoryDocumentSessionOperations
       if (configureFactory != null) {
         configureFactory.configure(configuration);
       }
-      return loadUsingTransformerInternal(clazz, ids.toArray(new String[0]) , transformer, configuration.getTransformerParameters());
+      return loadInternal(clazz, ids.toArray(new String[0]) , transformer, configuration.getTransformerParameters());
     } catch (Exception e) {
       throw new RuntimeException(e);
     }
@@ -487,7 +487,7 @@ public class DocumentSession extends InMemoryDocumentSessionOperations
       configure.configure(configuration);
     }
 
-    TResult[] loadResult = loadUsingTransformerInternal(clazz, new String[] { id }, transformer, configuration.getTransformerParameters());
+    TResult[] loadResult = loadInternal(clazz, new String[] { id }, transformer, configuration.getTransformerParameters());
     if (loadResult != null && loadResult.length > 0 ) {
       return loadResult[0];
     }
@@ -507,7 +507,7 @@ public class DocumentSession extends InMemoryDocumentSessionOperations
       configure.configure(configuration);
     }
 
-    return loadUsingTransformerInternal(clazz, ids.toArray(new String[0]), transformer, configuration.getTransformerParameters());
+    return loadInternal(clazz, ids.toArray(new String[0]), transformer, configuration.getTransformerParameters());
   }
 
   /**

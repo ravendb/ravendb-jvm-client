@@ -1,7 +1,6 @@
 package net.ravendb.client;
 
-import java.util.Date;
-
+import com.mysema.query.types.Path;
 import net.ravendb.abstractions.basic.Reference;
 import net.ravendb.abstractions.closure.Action1;
 import net.ravendb.abstractions.data.Etag;
@@ -11,7 +10,7 @@ import net.ravendb.abstractions.indexing.SpatialOptions.SpatialUnits;
 import net.ravendb.client.shard.ShardReduceFunction;
 import net.ravendb.client.spatial.SpatialCriteria;
 
-import com.mysema.query.types.Path;
+import java.util.Date;
 
 
 /**
@@ -71,7 +70,7 @@ public interface IDocumentQueryCustomization {
    * However, when used to query map/reduce indexes, it does NOT guarantee that the document that this
    * etag belong to is actually considered for the results.
    * What it does it guarantee that the document has been mapped, but not that the mapped values has been reduced.
-   * Since map/reduce queries, by their nature,vtend to be far less susceptible to issues with staleness, this is
+   * Since map/reduce queries, by their nature, tend to be far less susceptible to issues with staleness, this is
    * considered to be an acceptable tradeoff.
    * If you need absolute no staleness with a map/reduce index, you will need to ensure synchronized clocks and
    * use the Cutoff date option, instead.
@@ -88,7 +87,7 @@ public interface IDocumentQueryCustomization {
    * However, when used to query map/reduce indexes, it does NOT guarantee that the document that this
    * etag belong to is actually considered for the results.
    * What it does it guarantee that the document has been mapped, but not that the mapped values has been reduced.
-   * Since map/reduce queries, by their nature,vtend to be far less susceptible to issues with staleness, this is
+   * Since map/reduce queries, by their nature, tend to be far less susceptible to issues with staleness, this is
    * considered to be an acceptable tradeoff.
    * If you need absolute no staleness with a map/reduce index, you will need to ensure synchronized clocks and
    * use the Cutoff date option, instead.

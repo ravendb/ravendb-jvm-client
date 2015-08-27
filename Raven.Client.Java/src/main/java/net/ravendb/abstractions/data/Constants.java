@@ -69,6 +69,8 @@ public class Constants {
 
   public static final String INDEX_REPLACE_PREFIX = "Raven/Indexes/Replace/";
 
+  public static final String SIDE_BY_SIDE_INDEX_NAME_PREFIX = "ReplacementOf/";
+
   public final static Locale getDefaultLocale() {
     return Locale.US;
   }

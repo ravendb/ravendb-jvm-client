@@ -1,38 +1,26 @@
 package net.ravendb.client;
 
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
-
+import com.google.common.collect.ImmutableList;
 import net.ravendb.abstractions.basic.CleanCloseable;
 import net.ravendb.abstractions.basic.EventHelper;
 import net.ravendb.abstractions.closure.Action1;
 import net.ravendb.abstractions.data.Etag;
 import net.ravendb.abstractions.data.FailoverServers;
+import net.ravendb.abstractions.data.IndexStats;
+import net.ravendb.abstractions.data.IndexToAdd;
 import net.ravendb.client.connection.profiling.ProfilingContext;
 import net.ravendb.client.connection.profiling.ProfilingInformation;
-import net.ravendb.client.document.DocumentConvention;
-import net.ravendb.client.document.DocumentSessionListeners;
-import net.ravendb.client.document.DocumentStore;
-import net.ravendb.client.document.DocumentSubscriptions;
-import net.ravendb.client.document.IReliableSubscriptions;
-import net.ravendb.client.document.InMemoryDocumentSessionOperations;
+import net.ravendb.client.document.*;
 import net.ravendb.client.document.dtc.ITransactionRecoveryStorage;
 import net.ravendb.client.document.dtc.VolatileOnlyTransactionRecoveryStorage;
 import net.ravendb.client.indexes.AbstractIndexCreationTask;
 import net.ravendb.client.indexes.AbstractTransformerCreationTask;
-import net.ravendb.client.listeners.IDocumentConflictListener;
-import net.ravendb.client.listeners.IDocumentConversionListener;
-import net.ravendb.client.listeners.IDocumentDeleteListener;
-import net.ravendb.client.listeners.IDocumentQueryListener;
-import net.ravendb.client.listeners.IDocumentStoreListener;
+import net.ravendb.client.listeners.*;
 import net.ravendb.client.util.GlobalLastEtagHolder;
 import net.ravendb.client.util.ILastEtagHolder;
 import net.ravendb.client.utils.encryptors.Encryptor;
 
-import com.google.common.collect.ImmutableList;
+import java.util.*;
 
 
 /**
@@ -109,6 +97,46 @@ public abstract class DocumentStoreBase implements IDocumentStore {
   @Override
   public void executeIndex(AbstractIndexCreationTask indexCreationTask) {
     indexCreationTask.execute(getDatabaseCommands(), getConventions());
+  }
+
+  public void executeIndexes(List<AbstractIndexCreationTask> indexCreationTasks) {
+    List<IndexToAdd> indexesToAdd = new ArrayList<>();
+    for (AbstractIndexCreationTask creationTask : indexCreationTasks) {
+      IndexToAdd indexToAdd = new IndexToAdd();
+      indexToAdd.setDefinition(creationTask.createIndexDefinition());
+      indexToAdd.setName(creationTask.getIndexName());
+      indexToAdd.setPriority(creationTask.getPriority() != null ? creationTask.getPriority() : IndexStats.IndexingPriority.NORMAL);
+      indexesToAdd.add(indexToAdd);
+    }
+
+    getDatabaseCommands().putIndexes(indexesToAdd.toArray(new IndexToAdd[0]));
+
+    for (AbstractIndexCreationTask creationTask : indexCreationTasks) {
+      creationTask.afterExecute(getDatabaseCommands(), getConventions());
+    }
+  }
+
+  @Override
+  public void sideBySideExecuteIndexes(List<AbstractIndexCreationTask> indexCreationTasks) {
+    sideBySideExecuteIndexes(indexCreationTasks, null, null);
+  }
+
+  @Override
+  public void sideBySideExecuteIndexes(List<AbstractIndexCreationTask> indexCreationTasks, Etag minimumEtagBeforeReplace, Date replaceTimeUtc) {
+    List<IndexToAdd> indexesToAdd = new ArrayList<>();
+    for (AbstractIndexCreationTask creationTask : indexCreationTasks) {
+      IndexToAdd indexToAdd = new IndexToAdd();
+      indexToAdd.setDefinition(creationTask.createIndexDefinition());
+      indexToAdd.setName(creationTask.getIndexName());
+      indexToAdd.setPriority(creationTask.getPriority() != null ? creationTask.getPriority() : IndexStats.IndexingPriority.NORMAL);
+      indexesToAdd.add(indexToAdd);
+    }
+
+    getDatabaseCommands().putSideBySideIndexes(indexesToAdd.toArray(new IndexToAdd[0]), minimumEtagBeforeReplace, replaceTimeUtc);
+
+    for (AbstractIndexCreationTask creationTask : indexCreationTasks) {
+      creationTask.afterExecute(getDatabaseCommands(), getConventions());
+    }
   }
 
   @Override

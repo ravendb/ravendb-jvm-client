@@ -24,4 +24,8 @@ public class ReplicatedEtagInfo {
     this.documentEtag = documentEtag;
   }
 
+  @Override
+  public String toString() {
+    return String.format("Url: %s, Etag: %s", destionationUrl, documentEtag == null ? "no etag" : documentEtag.toString());
+  }
 }

@@ -1,17 +1,16 @@
 package net.ravendb.tests.issues;
 
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
-
-import java.util.concurrent.TimeoutException;
-
 import net.ravendb.abstractions.data.PutResult;
 import net.ravendb.abstractions.json.linq.RavenJObject;
 import net.ravendb.client.IDocumentSession;
 import net.ravendb.client.document.DocumentStore;
 import net.ravendb.tests.bundles.replication.ReplicationBase;
-
 import org.junit.Test;
+
+import java.util.concurrent.TimeoutException;
+
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 
 public class RavenDB_1041Test extends ReplicationBase {
 
@@ -131,11 +130,11 @@ public class RavenDB_1041Test extends ReplicationBase {
     }
 
     try {
-      store1.getReplication().waitSync(null, null, null, 3);
+      store1.getReplication().waitSync(null, 10 * 1000L, null, 3);
       throw new AssertionError("Wait should throw TimeoutException");
     } catch (TimeoutException e) {
       // expected
-      assertTrue(e.getMessage().contains("Confirmed that the specified etag"));
+      assertTrue(e.getMessage().contains("Could only confirm that the specified Etag"));
     }
   }
 

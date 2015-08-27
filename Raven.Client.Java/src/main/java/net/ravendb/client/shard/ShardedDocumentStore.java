@@ -1,13 +1,5 @@
 package net.ravendb.client.shard;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
-
 import net.ravendb.abstractions.basic.CleanCloseable;
 import net.ravendb.abstractions.basic.EventHandler;
 import net.ravendb.abstractions.basic.EventHelper;
@@ -26,6 +18,8 @@ import net.ravendb.client.connection.implementation.HttpJsonRequestFactory;
 import net.ravendb.client.document.*;
 import net.ravendb.client.indexes.AbstractIndexCreationTask;
 import net.ravendb.client.indexes.AbstractTransformerCreationTask;
+
+import java.util.*;
 
 /**
  * Implements a sharded document store
@@ -437,6 +431,27 @@ public class ShardedDocumentStore extends DocumentStoreBase {
         return null;
       }
     });
+  }
+
+  @Override
+  public void executeIndexes(List<AbstractIndexCreationTask> indexCreationTasks) {
+    Collection<IDocumentStore> stores = shardStrategy.getShards().values();
+    for (IDocumentStore store : stores) {
+      store.executeIndexes(indexCreationTasks);
+    }
+  }
+
+  @Override
+  public void sideBySideExecuteIndexes(List<AbstractIndexCreationTask> indexCreationTasks) {
+    sideBySideExecuteIndexes(indexCreationTasks, null, null);
+  }
+
+  @Override
+  public void sideBySideExecuteIndexes(List<AbstractIndexCreationTask> indexCreationTasks, Etag minimumEtagBeforeReplace, Date replaceTimeUtc) {
+    Collection<IDocumentStore> stores = shardStrategy.getShards().values();
+    for (IDocumentStore store : stores) {
+      store.sideBySideExecuteIndexes(indexCreationTasks, minimumEtagBeforeReplace, replaceTimeUtc);
+    }
   }
 
   @Override

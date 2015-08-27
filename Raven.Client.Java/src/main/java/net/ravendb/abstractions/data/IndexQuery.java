@@ -1,18 +1,17 @@
 package net.ravendb.abstractions.data;
 
-import java.util.Date;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Map.Entry;
-
 import net.ravendb.abstractions.basic.Reference;
 import net.ravendb.abstractions.indexing.SortOptions;
 import net.ravendb.abstractions.json.linq.RavenJToken;
 import net.ravendb.abstractions.util.EscapingHelper;
 import net.ravendb.abstractions.util.NetDateFormat;
 import net.ravendb.client.utils.UrlUtils;
-
 import org.apache.commons.lang.StringUtils;
+
+import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Map.Entry;
 
 
 /**
@@ -324,7 +323,7 @@ public class IndexQuery {
    * However, when used to query map/reduce indexes, it does NOT guarantee that the document that this
    * etag belong to is actually considered for the results.
    * What it does it guarantee that the document has been mapped, but not that the mapped values has been reduced.
-   * Since map/reduce queries, by their nature,vtend to be far less susceptible to issues with staleness, this is
+   * Since map/reduce queries, by their nature, tend to be far less susceptible to issues with staleness, this is
    * considered to be an acceptable tradeoff.
    * If you need absolute no staleness with a map/reduce index, you will need to ensure synchronized clocks and
    * use the Cutoff date option, instead.
@@ -358,7 +357,7 @@ public class IndexQuery {
    * However, when used to query map/reduce indexes, it does NOT guarantee that the document that this
    * etag belong to is actually considered for the results.
    * What it does it guarantee that the document has been mapped, but not that the mapped values has been reduced.
-   * Since map/reduce queries, by their nature,vtend to be far less susceptible to issues with staleness, this is
+   * Since map/reduce queries, by their nature, tend to be far less susceptible to issues with staleness, this is
    * considered to be an acceptable tradeoff.
    * If you need absolute no staleness with a map/reduce index, you will need to ensure synchronized clocks and
    * use the Cutoff date option, instead.

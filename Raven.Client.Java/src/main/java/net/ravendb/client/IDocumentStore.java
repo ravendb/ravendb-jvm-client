@@ -1,21 +1,18 @@
 package net.ravendb.client;
 
-import java.util.Date;
-import java.util.Map;
-
 import net.ravendb.abstractions.basic.CleanCloseable;
 import net.ravendb.abstractions.data.BulkInsertOptions;
 import net.ravendb.abstractions.data.Etag;
 import net.ravendb.client.changes.IDatabaseChanges;
 import net.ravendb.client.connection.IDatabaseCommands;
 import net.ravendb.client.connection.implementation.HttpJsonRequestFactory;
-import net.ravendb.client.document.BulkInsertOperation;
-import net.ravendb.client.document.DocumentConvention;
-import net.ravendb.client.document.DocumentSessionListeners;
-import net.ravendb.client.document.IReliableSubscriptions;
-import net.ravendb.client.document.OpenSessionOptions;
+import net.ravendb.client.document.*;
 import net.ravendb.client.indexes.AbstractIndexCreationTask;
 import net.ravendb.client.indexes.AbstractTransformerCreationTask;
+
+import java.util.Date;
+import java.util.List;
+import java.util.Map;
 
 
 /**
@@ -26,13 +23,13 @@ public interface IDocumentStore extends IDisposalNotification {
   /**
    * Subscribe to change notifications from the server
    */
-  public IDatabaseChanges changes();
+  IDatabaseChanges changes();
 
   /**
    * Subscribe to change notifications from the server
    * @param database
    */
-  public IDatabaseChanges changes(String database);
+  IDatabaseChanges changes(String database);
 
   /**
    * Setup the context for aggressive caching.
@@ -42,7 +39,7 @@ public interface IDocumentStore extends IDisposalNotification {
    * without touching the server.
    * @param cacheDurationInMilis
    */
-  public CleanCloseable aggressivelyCacheFor(long cacheDurationInMilis);
+  CleanCloseable aggressivelyCacheFor(long cacheDurationInMilis);
 
   /**
    * Setup the context for aggressive caching.
@@ -51,7 +48,7 @@ public interface IDocumentStore extends IDisposalNotification {
    * we provide is current or not, but will serve the information directly from the local cache
    * without touching the server.
    */
-  public CleanCloseable aggressivelyCache();
+  CleanCloseable aggressivelyCache();
 
   /**
    * Setup the context for no aggressive caching
@@ -60,68 +57,74 @@ public interface IDocumentStore extends IDisposalNotification {
    * queries that has been marked with WaitForNonStaleResults, we temporarily disable
    * aggressive caching.
    */
-  public CleanCloseable disableAggressiveCaching();
+  CleanCloseable disableAggressiveCaching();
 
   /**
    * Setup the WebRequest timeout for the session
    * @param timeout Specify the timeout duration
    * @return Sets the timeout for the JsonRequest.  Scoped to the Current Thread.
    */
-  public CleanCloseable setRequestsTimeoutFor(long timeout);
+  CleanCloseable setRequestsTimeoutFor(long timeout);
 
   /**
    * Gets the shared operations headers.
    */
-  public Map<String, String> getSharedOperationsHeaders();
+  Map<String, String> getSharedOperationsHeaders();
 
 
   /**
    * Get the {@link HttpJsonRequestFactory} for this store
    */
-  public HttpJsonRequestFactory getJsonRequestFactory();
+  HttpJsonRequestFactory getJsonRequestFactory();
 
   /**
    * Whatever this instance has json request factory available
    */
-  public boolean hasJsonRequestFactory();
+  boolean hasJsonRequestFactory();
 
   /**
    * Sets the identifier
    * @param identifier
    */
-  public void setIdentifier(String identifier);
+  void setIdentifier(String identifier);
 
   /**
    * Gets the identifier
    */
-  public String getIdentifier();
+  String getIdentifier();
 
   /**
    * Initializes this instance.
    */
-  public IDocumentStore initialize();
+  IDocumentStore initialize();
 
   /**
    * Opens the session.
    */
-  public IDocumentSession openSession();
+  IDocumentSession openSession();
 
   /**
    * Opens the session for a particular database
    * @param database
    */
-  public IDocumentSession openSession(String database);
+  IDocumentSession openSession(String database);
 
   /**
    * Opens the session with the specified options.
    * @param sessionOptions
    */
-  public IDocumentSession openSession(OpenSessionOptions sessionOptions);
+  IDocumentSession openSession(OpenSessionOptions sessionOptions);
 
   /**
    * Gets the database commands.
    */
-  public IDatabaseCommands getDatabaseCommands();
+  IDatabaseCommands getDatabaseCommands();
+
+  /**
+   * Executes the index creation in side-by-side mode.
+   * @param indexCreationTask
+   */
+  void sideBySideExecuteIndex(AbstractIndexCreationTask indexCreationTask);
 
   /**
    * Executes the index creation in side-by-side mode.
@@ -129,68 +132,67 @@ public interface IDocumentStore extends IDisposalNotification {
    * @param minimumEtagBeforeReplace
    * @param replaceTimeUtc
    */
-  public void sideBySideExecuteIndex(AbstractIndexCreationTask indexCreationTask);
+  void sideBySideExecuteIndex(AbstractIndexCreationTask indexCreationTask, Etag minimumEtagBeforeReplace, Date replaceTimeUtc);
 
-  /**
-   * Executes the index creation in side-by-side mode.
-   * @param indexCreationTask
-   * @param minimumEtagBeforeReplace
-   * @param replaceTimeUtc
-   */
-  public void sideBySideExecuteIndex(AbstractIndexCreationTask indexCreationTask, Etag minimumEtagBeforeReplace, Date replaceTimeUtc);
+  void sideBySideExecuteIndexes(List<AbstractIndexCreationTask> indexCreationTasks);
+
+  void sideBySideExecuteIndexes(List<AbstractIndexCreationTask> indexCreationTasks, Etag minimumEtagBeforeReplace, Date replaceTimeUtc);
 
   /**
    * Executes the index creation.
    * @param indexCreationTask
    */
-  public void executeIndex(AbstractIndexCreationTask indexCreationTask);
+  void executeIndex(AbstractIndexCreationTask indexCreationTask);
+
+
+  void executeIndexes(List<AbstractIndexCreationTask> indexCreationTasks);
 
   /**
    * executes the transformer creation
    * @param transformerCreationTask
    */
-  public void executeTransformer(AbstractTransformerCreationTask transformerCreationTask);
+  void executeTransformer(AbstractTransformerCreationTask transformerCreationTask);
 
   /**
    * Gets the conventions.
    */
-  public DocumentConvention getConventions();
+  DocumentConvention getConventions();
 
   /**
    * Gets the URL.
    */
-  public String getUrl();
+  String getUrl();
 
   /**
    * Gets the etag of the last document written by any session belonging to this
    * document store
    */
-  public Etag getLastWrittenEtag();
+  Etag getLastWrittenEtag();
 
   /**
    * Performs bulk insert
    */
-  public BulkInsertOperation bulkInsert();
+  BulkInsertOperation bulkInsert();
 
   /**
    * Performs bulk insert
    * @param database
    */
-  public BulkInsertOperation bulkInsert(String database);
+  BulkInsertOperation bulkInsert(String database);
 
   /**
    * Performs bulk insert
    * @param database
    * @param options
    */
-  public BulkInsertOperation bulkInsert(String database, BulkInsertOptions options);
+  BulkInsertOperation bulkInsert(String database, BulkInsertOptions options);
 
-  public DocumentSessionListeners getListeners();
+  DocumentSessionListeners getListeners();
 
-  public IReliableSubscriptions subscriptions();
+  IReliableSubscriptions subscriptions();
 
-  public void initializeProfiling();
+  void initializeProfiling();
 
-  public void setListeners(DocumentSessionListeners listeners);
+  void setListeners(DocumentSessionListeners listeners);
 
 }

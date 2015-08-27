@@ -1,23 +1,12 @@
 package net.ravendb.client.indexes;
 
-import java.util.Date;
-import java.util.HashMap;
-import java.util.Map;
-
+import com.mysema.query.types.Path;
 import net.ravendb.abstractions.data.Constants;
 import net.ravendb.abstractions.data.Etag;
 import net.ravendb.abstractions.data.HttpMethods;
-import net.ravendb.abstractions.data.StringDistanceTypes;
 import net.ravendb.abstractions.data.IndexStats.IndexingPriority;
-import net.ravendb.abstractions.indexing.FieldIndexing;
-import net.ravendb.abstractions.indexing.FieldStorage;
-import net.ravendb.abstractions.indexing.FieldTermVector;
-import net.ravendb.abstractions.indexing.IndexDefinition;
-import net.ravendb.abstractions.indexing.IndexReplaceDocument;
-import net.ravendb.abstractions.indexing.SortOptions;
-import net.ravendb.abstractions.indexing.SpatialOptions;
-import net.ravendb.abstractions.indexing.SpatialOptionsFactory;
-import net.ravendb.abstractions.indexing.SuggestionOptions;
+import net.ravendb.abstractions.data.StringDistanceTypes;
+import net.ravendb.abstractions.indexing.*;
 import net.ravendb.abstractions.json.linq.RavenJObject;
 import net.ravendb.client.IDocumentStore;
 import net.ravendb.client.connection.IDatabaseCommands;
@@ -27,7 +16,9 @@ import net.ravendb.client.document.DocumentConvention;
 import net.ravendb.client.document.IndexAndTransformerReplicationMode;
 import net.ravendb.client.utils.UrlUtils;
 
-import com.mysema.query.types.Path;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * Base class for creating indexes
@@ -79,7 +70,6 @@ public class AbstractIndexCreationTask extends AbstractCommonApiForIndexesAndTra
   /**
    *  index can have a priority that controls how much power of the indexing process it is allowed to consume. index priority can be forced by the user.
    *  There are four available values that you can set: Normal, Idle, Disabled, Abandoned
-   * @param priority Default value: null means that the priority of the index is Normal.
    */
   public IndexingPriority getPriority() {
     return priority;
@@ -148,34 +138,49 @@ public class AbstractIndexCreationTask extends AbstractCommonApiForIndexesAndTra
 
   /**
    * Executes the index creation using in side-by-side mode.
-   * @param databaseCommands
-   * @param conventions
-   * @param minimumEtagBeforeReplace
-   * @param replaceTimeUtc
    */
   public void sideBySideExecute(IDatabaseCommands databaseCommands, DocumentConvention documentConvention,
     Etag minimumEtagBeforeReplace, Date replaceTimeUtc) {
     conventions = documentConvention;
     IndexDefinition indexDefinition = createIndexDefinition();
+
+    String replaceIndexName = Constants.SIDE_BY_SIDE_INDEX_NAME_PREFIX + getIndexName();
+    //check if side by side index exists
+    IndexDefinition sideBySideDef = databaseCommands.getIndex(replaceIndexName);
+    if (sideBySideDef != null) {
+      if (currentOrLegacyIndexDefinitionEquals(documentConvention, sideBySideDef, indexDefinition)) {
+        return;
+      }
+
+      updateSideBySideIndex(databaseCommands, minimumEtagBeforeReplace, replaceTimeUtc, replaceIndexName, indexDefinition, documentConvention);
+      return;
+    }
+
+    //check if "regular" index exists
     IndexDefinition serverDef = databaseCommands.getIndex(getIndexName());
     if (serverDef != null) {
       if (currentOrLegacyIndexDefinitionEquals(documentConvention, serverDef, indexDefinition)) {
         return;
       }
-
-      String replaceIndexName = "ReplacementOf/" + getIndexName();
-      databaseCommands.putIndex(replaceIndexName, indexDefinition);
-
-      IndexReplaceDocument indexReplaceDocument = new IndexReplaceDocument();
-      indexReplaceDocument.setIndexToReplace(serverDef.getName());
-      indexReplaceDocument.setMinimumEtagBeforeReplace(minimumEtagBeforeReplace);
-      indexReplaceDocument.setReplaceTimeUtc(replaceTimeUtc);
-
-      databaseCommands.put(Constants.INDEX_REPLACE_PREFIX + replaceIndexName, null, RavenJObject.fromObject(indexReplaceDocument), new RavenJObject());
+      updateSideBySideIndex(databaseCommands, minimumEtagBeforeReplace, replaceTimeUtc, replaceIndexName, indexDefinition, documentConvention);
     } else {
       // since index doesn't exist yet - create it in normal mode
       databaseCommands.putIndex(getIndexName(), indexDefinition);
+      afterExecute(databaseCommands, documentConvention);
     }
+  }
+
+  private void updateSideBySideIndex(IDatabaseCommands databaseCommands, Etag minimumEtagBeforeReplace, Date replaceTimeUtc, String replaceIndexName, IndexDefinition indexDefinition, DocumentConvention documentConvention) {
+    databaseCommands.putIndex(replaceIndexName, indexDefinition, true);
+
+    IndexReplaceDocument indexReplaceDocument = new IndexReplaceDocument();
+    indexReplaceDocument.setIndexToReplace(getIndexName());
+    indexReplaceDocument.setMinimumEtagBeforeReplace(minimumEtagBeforeReplace);
+    indexReplaceDocument.setReplaceTimeUtc(replaceTimeUtc);
+
+    databaseCommands.put(Constants.INDEX_REPLACE_PREFIX + replaceIndexName, null, RavenJObject.fromObject(indexReplaceDocument), new RavenJObject());
+
+    afterExecute(databaseCommands, documentConvention);
   }
 
   @SuppressWarnings({"static-method", "unused"})
@@ -201,7 +206,11 @@ public class AbstractIndexCreationTask extends AbstractCommonApiForIndexesAndTra
       databaseCommands.setIndexPriority(getIndexName(), priority);
     }
 
-    if (conventions.getIndexAndTransformerReplicationMode().contains(IndexAndTransformerReplicationMode.INDEXES)) {
+    afterExecute(databaseCommands, documentConvention);
+  }
+
+  public void afterExecute(IDatabaseCommands databaseCommands, DocumentConvention documentConvention) {
+    if (documentConvention.getIndexAndTransformerReplicationMode().contains(IndexAndTransformerReplicationMode.INDEXES)) {
       replicateIndexesIfNeeded(databaseCommands);
     }
   }
@@ -222,7 +231,7 @@ public class AbstractIndexCreationTask extends AbstractCommonApiForIndexesAndTra
       conventions = new DocumentConvention();
     }
 
-    IndexDefinitionBuilder builder = new IndexDefinitionBuilder();
+    IndexDefinitionBuilder builder = new IndexDefinitionBuilder(getIndexName());
     builder.setIndexes(indexes);
     builder.setIndexesStrings(indexesStrings);
     builder.setSortOptions(indexSortOptions);

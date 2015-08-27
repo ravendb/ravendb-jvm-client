@@ -1,16 +1,6 @@
 package net.ravendb.client.connection;
 
-import java.net.SocketException;
-import java.net.SocketTimeoutException;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicLong;
-import java.util.concurrent.atomic.AtomicReference;
-
+import com.google.common.base.Throwables;
 import net.ravendb.abstractions.basic.EventHandler;
 import net.ravendb.abstractions.basic.EventHelper;
 import net.ravendb.abstractions.basic.Reference;
@@ -28,12 +18,20 @@ import net.ravendb.client.connection.implementation.HttpJsonRequest;
 import net.ravendb.client.connection.implementation.HttpJsonRequestFactory;
 import net.ravendb.client.document.Convention;
 import net.ravendb.client.document.FailoverBehavior;
-
 import org.apache.commons.lang.ArrayUtils;
 import org.apache.commons.lang.exception.ExceptionUtils;
 import org.apache.http.HttpStatus;
 
-import com.google.common.base.Throwables;
+import java.net.SocketException;
+import java.net.SocketTimeoutException;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.AtomicReference;
 
 public abstract class ReplicationInformerBase<T> implements IReplicationInformerBase<T> {
 
@@ -103,7 +101,7 @@ public abstract class ReplicationInformerBase<T> implements IReplicationInformer
     this.delayTimeInMiliSec = delayTime;
   }
 
-  public static class FailureCounter {
+  protected static class FailureCounter {
 
     private AtomicLong value = new AtomicLong();
     private Date lastCheck;
@@ -174,7 +172,7 @@ public abstract class ReplicationInformerBase<T> implements IReplicationInformer
   }
 
   @SuppressWarnings("unused")
-  public boolean shouldExecuteUsing(final OperationMetadata operationMetadata,
+  protected boolean shouldExecuteUsing(final OperationMetadata operationMetadata,
     final OperationMetadata primaryOperation, int currentRequest, HttpMethods method, boolean primary, Exception error) {
     if (primary == false) {
       assertValidOperation(method, error);
@@ -233,7 +231,7 @@ public abstract class ReplicationInformerBase<T> implements IReplicationInformer
 
   protected abstract String getServerCheckUrl(String baseUrl);
 
-  protected void assertValidOperation(HttpMethods method, Exception error) {
+  private void assertValidOperation(HttpMethods method, Exception error) {
     if (conventions.getFailoverBehaviorWithoutFlags().contains(FailoverBehavior.ALLOW_READS_FROM_SECONDARIES)) {
       if (HttpMethods.GET.equals(method)) {
         return;
@@ -262,13 +260,13 @@ public abstract class ReplicationInformerBase<T> implements IReplicationInformer
 
   }
 
-  public boolean isFirstFailure(String operationUrl) {
+  private boolean isFirstFailure(String operationUrl) {
     FailureCounter value = getHolder(operationUrl);
     return value.getValue().longValue() == 0;
   }
 
   @SuppressWarnings("boxing")
-  public void incrementFailureCount(String operationUrl) {
+  private void incrementFailureCount(String operationUrl) {
     FailureCounter value = getHolder(operationUrl);
     value.setForceCheck(false);
     long current = value.getValue().incrementAndGet();
@@ -284,7 +282,7 @@ public abstract class ReplicationInformerBase<T> implements IReplicationInformer
   }
 
   @SuppressWarnings("boxing")
-  public void resetFailureCount(String operationUrl) {
+  protected void resetFailureCount(String operationUrl) {
     FailureCounter value = getHolder(operationUrl);
     long oldVal = value.getValue().getAndSet(0);
     value.setLastCheck(new Date());

@@ -1,12 +1,11 @@
 package net.ravendb.abstractions.data;
 
-import java.util.HashMap;
-import java.util.Map;
-
 import com.mysema.query.types.Expression;
-
 import net.ravendb.abstractions.extensions.ExpressionExtensions;
 import net.ravendb.abstractions.json.linq.RavenJToken;
+
+import java.util.HashMap;
+import java.util.Map;
 
 
 public class SubscriptionCriteria {
@@ -14,6 +13,7 @@ public class SubscriptionCriteria {
   private String[] belongsToAnyCollection;
   private Map<String, RavenJToken> propertiesMatch;
   private Map<String, RavenJToken> propertiesNotMatch;
+  private Etag startEtag;
 
 
 
@@ -73,4 +73,11 @@ public class SubscriptionCriteria {
     propertiesNotMatch.put(field, RavenJToken.fromObject(value));
   }
 
+  public Etag getStartEtag() {
+    return startEtag;
+  }
+
+  public void setStartEtag(Etag startEtag) {
+    this.startEtag = startEtag;
+  }
 }

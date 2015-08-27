@@ -11,6 +11,7 @@ import net.ravendb.client.IDocumentSessionImpl;
 
 import com.google.common.base.Defaults;
 import com.mysema.query.types.Expression;
+import net.ravendb.client.indexes.AbstractTransformerCreationTask;
 
 /**
  * Fluent implementation for specifying include paths
@@ -111,4 +112,5 @@ public class MultiLoaderWithInclude implements ILoaderWithInclude {
     }
     return load(clazz, documentIds);
   }
+
 }

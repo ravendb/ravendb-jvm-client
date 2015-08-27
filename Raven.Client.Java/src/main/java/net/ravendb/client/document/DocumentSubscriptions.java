@@ -1,8 +1,5 @@
 package net.ravendb.client.document;
 
-import java.util.Arrays;
-import java.util.List;
-
 import net.ravendb.abstractions.basic.CleanCloseable;
 import net.ravendb.abstractions.closure.Action0;
 import net.ravendb.abstractions.connection.ErrorResponseException;
@@ -20,6 +17,9 @@ import net.ravendb.client.connection.profiling.ConcurrentSet;
 import net.ravendb.client.extensions.MultiDatabase;
 import net.ravendb.client.utils.Lang;
 import net.ravendb.imports.json.JsonConvert;
+
+import java.util.Arrays;
+import java.util.List;
 
 
 public class DocumentSubscriptions implements IReliableSubscriptions {
@@ -47,6 +47,7 @@ public class DocumentSubscriptions implements IReliableSubscriptions {
     criteriaCopy.setKeyStartsWith(criteria.getKeyStartsWith());
     criteriaCopy.setPropertiesMatch(criteria.getPropertiesMatch());
     criteriaCopy.setPropertiesNotMatch(criteria.getPropertiesNotMatch());
+    criteriaCopy.setStartEtag(criteria.getStartEtag());
 
     return create(criteria, database);
   }
