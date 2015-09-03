@@ -8,7 +8,7 @@ Simply put ravendb dependency to your pom:
 <dependency>
   <groupId>net.ravendb</groupId>
   <artifactId>ravendb-client</artifactId>
-  <version>3.0.0</version>
+  <version>3.2.0</version>
 </dependency>
 ```
 
@@ -31,7 +31,7 @@ Sample pom:
     <dependency>
       <groupId>net.ravendb</groupId>
       <artifactId>ravendb-client</artifactId>
-      <version>3.0.1-SNAPSHOT</version>
+      <version>3.2.0-SNAPSHOT</version>
     </dependency>
   </dependencies>
 
