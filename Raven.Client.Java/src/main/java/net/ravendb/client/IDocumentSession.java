@@ -1,9 +1,6 @@
 package net.ravendb.client;
 
-import java.util.Collection;
-import java.util.List;
-import java.util.UUID;
-
+import com.mysema.query.types.Expression;
 import net.ravendb.abstractions.basic.CleanCloseable;
 import net.ravendb.abstractions.data.Etag;
 import net.ravendb.client.document.ILoaderWithInclude;
@@ -12,7 +9,9 @@ import net.ravendb.client.indexes.AbstractTransformerCreationTask;
 import net.ravendb.client.linq.IRavenQueryable;
 import net.ravendb.client.shard.ShardReduceFunction;
 
-import com.mysema.query.types.Expression;
+import java.util.Collection;
+import java.util.List;
+import java.util.UUID;
 
 
 /**
@@ -213,40 +212,40 @@ public interface IDocumentSession extends CleanCloseable {
 
   /**
    * Performs a load that will use the specified results transformer against the specified id
-   * @param tranformerClass The transformer to use in this load operation
+   * @param transformerClass The transformer to use in this load operation
    * @param clazz The results shape to return after the load operation
    * @param id Identifier of a entity that will be loaded.
    */
-  public <TResult, TTransformer extends AbstractTransformerCreationTask> TResult load(Class<TTransformer> tranformerClass,
+  public <TResult, TTransformer extends AbstractTransformerCreationTask> TResult load(Class<TTransformer> transformerClass,
       Class<TResult> clazz, String id);
 
   /**
    * Performs a load that will use the specified results transformer against the specified id
-   * @param tranformerClass The transformer to use in this load operation
+   * @param transformerClass The transformer to use in this load operation
    * @param clazz The results shape to return after the load operation
    * @param id Identifier of a entity that will be loaded.
    * @param configure Additional configuration options for operation e.g. AddTransformerParameter
    */
-  public <TResult, TTransformer extends AbstractTransformerCreationTask> TResult load(Class<TTransformer> tranformerClass,
+  public <TResult, TTransformer extends AbstractTransformerCreationTask> TResult load(Class<TTransformer> transformerClass,
       Class<TResult> clazz, String id, LoadConfigurationFactory configure);
 
   /**
    * Performs a load that will use the specified results transformer against the specified id
-   * @param tranformerClass The transformer to use in this load operation
+   * @param transformerClass The transformer to use in this load operation
    * @param clazz The results shape to return after the load operation
    * @param ids Array of ids of documents to load
    */
-  public <TResult, TTransformer extends AbstractTransformerCreationTask> TResult[] load(Class<TTransformer> tranformerClass,
+  public <TResult, TTransformer extends AbstractTransformerCreationTask> TResult[] load(Class<TTransformer> transformerClass,
       Class<TResult> clazz, String... ids);
 
   /**
    * Performs a load that will use the specified results transformer against the specified id
-   * @param tranformerClass The transformer to use in this load operation
+   * @param transformerClass The transformer to use in this load operation
    * @param clazz The results shape to return after the load operation
    * @param ids Array of ids of documents to load
    * @param configure Additional configuration options for operation e.g. AddTransformerParameter
    */
-  public <TResult, TTransformer extends AbstractTransformerCreationTask> TResult[] load(Class<TTransformer> tranformerClass,
+  public <TResult, TTransformer extends AbstractTransformerCreationTask> TResult[] load(Class<TTransformer> transformerClass,
       Class<TResult> clazz, List<String> ids, LoadConfigurationFactory configure);
 
   /**

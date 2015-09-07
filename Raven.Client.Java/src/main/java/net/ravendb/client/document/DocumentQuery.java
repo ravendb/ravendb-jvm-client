@@ -1,16 +1,8 @@
 package net.ravendb.client.document;
 
-import java.beans.IntrospectionException;
-import java.beans.Introspector;
-import java.beans.PropertyDescriptor;
-import java.lang.reflect.Field;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-
+import com.mysema.query.types.Expression;
+import com.mysema.query.types.Path;
+import com.mysema.query.types.path.ListPath;
 import net.ravendb.abstractions.basic.Lazy;
 import net.ravendb.abstractions.basic.Reference;
 import net.ravendb.abstractions.basic.SharpEnum;
@@ -30,12 +22,13 @@ import net.ravendb.client.connection.IDatabaseCommands;
 import net.ravendb.client.linq.EnumerableUtils;
 import net.ravendb.client.listeners.IDocumentQueryListener;
 import net.ravendb.client.spatial.SpatialCriteria;
-
 import org.apache.commons.lang.StringUtils;
 
-import com.mysema.query.types.Expression;
-import com.mysema.query.types.Path;
-import com.mysema.query.types.path.ListPath;
+import java.beans.IntrospectionException;
+import java.beans.Introspector;
+import java.beans.PropertyDescriptor;
+import java.lang.reflect.Field;
+import java.util.*;
 
 /**
  * A query against a Raven index
@@ -153,8 +146,9 @@ public class DocumentQuery<T> extends AbstractDocumentQuery<T, DocumentQuery<T>>
   }
 
   @Override
-  public void setTransformerParameters(Map<String, RavenJToken> transformerParameters) {
+  public IDocumentQuery<T> setTransformerParameters(Map<String, RavenJToken> transformerParameters) {
     this.transformerParameters = transformerParameters;
+    return this;
   }
 
   /**

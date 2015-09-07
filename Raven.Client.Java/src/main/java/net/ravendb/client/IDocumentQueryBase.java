@@ -602,6 +602,14 @@ public interface IDocumentQueryBase<T, TSelf extends IDocumentQueryBase<T, TSelf
   public TSelf randomOrdering(String seed);
 
   /**
+   * Order the search results randomly
+   * @param typeName
+   * @param descending
+   * @return
+     */
+  public TSelf customSortUsing(String typeName, boolean descending);
+
+  /**
    * Adds an ordering for a specific field to the query
    * @param fieldName Name of the field.
    * @param descending If set to true [descending]

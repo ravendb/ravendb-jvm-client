@@ -1,8 +1,6 @@
 package net.ravendb.client;
 
-import java.util.List;
-import java.util.Map;
-
+import com.mysema.query.types.Path;
 import net.ravendb.abstractions.basic.Lazy;
 import net.ravendb.abstractions.closure.Action1;
 import net.ravendb.abstractions.data.Facet;
@@ -12,7 +10,8 @@ import net.ravendb.abstractions.data.QueryResult;
 import net.ravendb.abstractions.json.linq.RavenJToken;
 import net.ravendb.client.spatial.SpatialCriteria;
 
-import com.mysema.query.types.Path;
+import java.util.List;
+import java.util.Map;
 
 
 /**
@@ -48,7 +47,7 @@ public interface IDocumentQuery<T> extends IDocumentQueryBase<T, IDocumentQuery<
    * Get the facets as per the specified facets with the given start and pageSize
    * @param transformerParameter
    */
-  public void setTransformerParameters(Map<String, RavenJToken> transformerParameter);
+  public IDocumentQuery<T> setTransformerParameters(Map<String, RavenJToken> transformerParameter);
 
   /**
    * Gets the query result. Accessing this property for the first time will execute the query.

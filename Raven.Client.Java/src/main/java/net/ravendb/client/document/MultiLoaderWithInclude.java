@@ -1,17 +1,17 @@
 package net.ravendb.client.document;
 
+import com.google.common.base.Defaults;
+import com.mysema.query.types.Expression;
+import net.ravendb.abstractions.basic.Tuple;
+import net.ravendb.abstractions.extensions.ExpressionExtensions;
+import net.ravendb.client.IDocumentSessionImpl;
+import net.ravendb.client.LoadConfigurationFactory;
+import net.ravendb.client.indexes.AbstractTransformerCreationTask;
+
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.UUID;
-
-import net.ravendb.abstractions.basic.Tuple;
-import net.ravendb.abstractions.extensions.ExpressionExtensions;
-import net.ravendb.client.IDocumentSessionImpl;
-
-import com.google.common.base.Defaults;
-import com.mysema.query.types.Expression;
-import net.ravendb.client.indexes.AbstractTransformerCreationTask;
 
 /**
  * Fluent implementation for specifying include paths
@@ -113,4 +113,35 @@ public class MultiLoaderWithInclude implements ILoaderWithInclude {
     return load(clazz, documentIds);
   }
 
+  @Override
+  public <TResult, TTransformer extends AbstractTransformerCreationTask> TResult load(Class<TTransformer> transformerClass, Class<TResult> clazz, String id, LoadConfigurationFactory configure) {
+    try {
+      String transformer = transformerClass.newInstance().getTransformerName();
+      RavenLoadConfiguration configuration = new RavenLoadConfiguration();
+      if (configure != null) {
+        configure.configure(configuration);
+      }
+      TResult[] loadResult = session.loadInternal(clazz, new String[] { id }, (Tuple<String, Class<?>>[])includes.toArray(new Tuple[0]), transformer, configuration.getTransformerParameters());
+      if (loadResult != null && loadResult.length > 0 ) {
+        return loadResult[0];
+      }
+      return null;
+    } catch (Exception e) {
+      throw new RuntimeException(e);
+    }
+  }
+
+  @Override
+  public <TResult, TTransformer extends AbstractTransformerCreationTask> TResult[] load(Class<TTransformer> transformerClass, Class<TResult> clazz, String[] ids, LoadConfigurationFactory configure) {
+    try {
+      String transformer = transformerClass.newInstance().getTransformerName();
+      RavenLoadConfiguration configuration = new RavenLoadConfiguration();
+      if (configure != null) {
+        configure.configure(configuration);
+      }
+      return session.loadInternal(clazz, ids, (Tuple<String, Class<?>>[])includes.toArray(new Tuple[0]), transformer, configuration.getTransformerParameters());
+    } catch (Exception e) {
+      throw new RuntimeException(e);
+    }
+  }
 }

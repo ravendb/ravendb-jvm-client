@@ -1,11 +1,6 @@
 package net.ravendb.client.document;
 
-import java.util.Date;
-import java.util.LinkedHashSet;
-import java.util.Set;
-
-import javax.annotation.concurrent.Immutable;
-
+import com.mysema.query.types.Path;
 import net.ravendb.abstractions.basic.Reference;
 import net.ravendb.abstractions.closure.Action1;
 import net.ravendb.abstractions.data.Etag;
@@ -17,7 +12,10 @@ import net.ravendb.client.IDocumentQueryCustomization;
 import net.ravendb.client.shard.ShardReduceFunction;
 import net.ravendb.client.spatial.SpatialCriteria;
 
-import com.mysema.query.types.Path;
+import javax.annotation.concurrent.Immutable;
+import java.util.Date;
+import java.util.LinkedHashSet;
+import java.util.Set;
 
 /**
  * Allows query customization
@@ -399,7 +397,7 @@ public class DocumentQueryCustomizationFactory implements IDocumentQueryCustomiz
   }
 
   @Override
-  public IDocumentQueryCustomization customSortUsing(final String typeName) {
+  public DocumentQueryCustomizationFactory customSortUsing(final String typeName) {
     return new DocumentQueryCustomizationFactory(actions, new Action1<IDocumentQueryCustomization>() {
       @Override
       public void apply(IDocumentQueryCustomization documentQuery) {
@@ -409,7 +407,7 @@ public class DocumentQueryCustomizationFactory implements IDocumentQueryCustomiz
   }
 
   @Override
-  public IDocumentQueryCustomization customSortUsing(final String typeName, final boolean descending) {
+  public DocumentQueryCustomizationFactory customSortUsing(final String typeName, final boolean descending) {
     return new DocumentQueryCustomizationFactory(actions, new Action1<IDocumentQueryCustomization>() {
       @Override
       public void apply(IDocumentQueryCustomization documentQuery) {

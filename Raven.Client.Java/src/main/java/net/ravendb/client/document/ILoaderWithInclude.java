@@ -1,6 +1,8 @@
 package net.ravendb.client.document;
 
 import com.mysema.query.types.Expression;
+import net.ravendb.client.LoadConfigurationFactory;
+import net.ravendb.client.indexes.AbstractTransformerCreationTask;
 
 import java.util.Collection;
 import java.util.UUID;
@@ -110,5 +112,25 @@ public interface ILoaderWithInclude {
    * @param ids
    */
   public <TResult> TResult[] load(Class<TResult> clazz, Number... ids);
+
+  /**
+   * Performs a load that will use the specified results transformer against the specified id
+   * @param transformerClass The transformer to use in this load operation
+   * @param clazz Defines type of object
+   * @param id Id of a entity to load
+   * @param configure Additional configuration options for operation e.g. AddTransformerParameter
+   */
+  public <TResult, TTransformer extends AbstractTransformerCreationTask> TResult load(Class<TTransformer> transformerClass,
+                                                                                            Class<TResult> clazz, String id, LoadConfigurationFactory configure);
+
+  /**
+   * Performs a load that will use the specified results transformer against the specified id
+   * @param transformerClass The transformer to use in this load operation
+   * @param clazz Defines type of object
+   * @param ids Array of ids of documents to load
+   * @param configure Additional configuration options for operation e.g. AddTransformerParameter
+   */
+  public <TResult, TTransformer extends AbstractTransformerCreationTask> TResult[] load(Class<TTransformer> transformerClass,
+                                                                                              Class<TResult> clazz, String[] ids, LoadConfigurationFactory configure);
 
 }
