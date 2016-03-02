@@ -1,13 +1,11 @@
 package net.ravendb.todomvc;
 
-import java.util.logging.Logger;
+import net.ravendb.client.IDocumentStore;
+import net.ravendb.client.document.DocumentStore;
 
 import javax.servlet.ServletContext;
 import javax.servlet.ServletContextEvent;
 import javax.servlet.ServletContextListener;
-
-import net.ravendb.client.IDocumentStore;
-import net.ravendb.client.document.DocumentStore;
 
 /**
  * @author Tyczo, AIS.PL
@@ -16,8 +14,6 @@ import net.ravendb.client.document.DocumentStore;
 public class ContextManager implements ServletContextListener {
 
     public static final String DOCUMENT_STORE = "documentStore";
-
-    private static Logger log = Logger.getLogger(ContextManager.class.getName());
 
     private static final String RAVENDB_PARAMETER_NAME = "ravenDB.url";
 

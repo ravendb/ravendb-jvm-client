@@ -1,6 +1,7 @@
 package net.ravendb.todomvc;
 
 import java.io.IOException;
+import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -38,40 +39,30 @@ public class JSONTodoListServlet extends HttpServlet {
     @Override
     protected void doDelete(HttpServletRequest request, HttpServletResponse response) throws ServletException,
         IOException {
-        ServletContext context = request.getSession().getServletContext();
-        IDocumentStore store = (IDocumentStore) context.getAttribute(ContextManager.DOCUMENT_STORE);
+        IDocumentStore store = getStore(request);
 
         String[] ids = request.getParameterValues("id");
 
-        if (ids != null) {
-            try (DocumentSession session = (DocumentSession) store.openSession()) {
+        if (ids != null && ids.length > 0) {
+            List<ICommandData> commands = new ArrayList<>();
 
-                List<ICommandData> commands = new ArrayList<>();
+            for (String id : ids) {
+                DeleteCommandData patchCommand = new DeleteCommandData();
 
-                for (String id : ids) {
-                    DeleteCommandData patchCommand = new DeleteCommandData();
+                patchCommand.setKey(store.getConventions().defaultFindFullDocumentKeyFromNonStringIdentifier(
+                    Integer.valueOf(id), Todo.class, false));
 
-                    patchCommand.setKey(store.getConventions().defaultFindFullDocumentKeyFromNonStringIdentifier(
-                        Integer.valueOf(id), Todo.class, false));
-
-                    commands.add(patchCommand);
-                }
-
-                session.getDatabaseCommands().batch(commands);
-                session.saveChanges();
-
-            } catch (Exception e) {
-                throw new RuntimeException(e);
+                commands.add(patchCommand);
             }
-        }
 
+            store.getDatabaseCommands().batch(commands);
+        }
     }
 
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
 
-        ServletContext context = request.getSession().getServletContext();
-        IDocumentStore store = (IDocumentStore) context.getAttribute(ContextManager.DOCUMENT_STORE);
+        IDocumentStore store = getStore(request);
 
         String searchText = request.getParameter("search");
 
@@ -88,68 +79,58 @@ public class JSONTodoListServlet extends HttpServlet {
 
             List<Todo> todosList = query.toList();
 
-            response.getWriter().write(RavenJArray.fromObject(todosList).toString());
-            response.getWriter().close();
-
-        } catch (Exception e) {
-            throw new RuntimeException(e);
+            try (PrintWriter writer = response.getWriter()) {
+                writer.write(RavenJArray.fromObject(todosList).toString());
+            }
         }
+    }
+
+    private IDocumentStore getStore(HttpServletRequest request) {
+        ServletContext context = request.getSession().getServletContext();
+        return (IDocumentStore) context.getAttribute(ContextManager.DOCUMENT_STORE);
     }
 
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException,
         IOException {
-        ServletContext context = request.getSession().getServletContext();
-        IDocumentStore store = (IDocumentStore) context.getAttribute(ContextManager.DOCUMENT_STORE);
+        IDocumentStore store = getStore(request);
 
         try (IDocumentSession session = store.openSession()) {
             Todo todo = new Todo(request.getParameter("title"));
             session.store(todo);
             session.saveChanges();
-
-        } catch (Exception e) {
-            throw new RuntimeException(e);
         }
-
     }
 
     @Override
     protected void doPut(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-        ServletContext context = request.getSession().getServletContext();
-        IDocumentStore store = (IDocumentStore) context.getAttribute(ContextManager.DOCUMENT_STORE);
+        IDocumentStore store = getStore(request);
 
         String[] ids = request.getParameterValues("id");
 
         if (ids != null) {
+            List<ICommandData> commands = new ArrayList<>();
+            List<PatchRequest> patchRequests = new ArrayList<>();
 
-            try (DocumentSession session = (DocumentSession) store.openSession()) {
-                List<ICommandData> commands = new ArrayList<>();
-                List<PatchRequest> patchRequests = new ArrayList<>();
-
-                if (StringUtils.isNotBlank(request.getParameter("title"))) {
-                    patchRequests.add(new PatchRequest(PatchCommandType.SET, "Title", new RavenJValue(request
-                        .getParameter("title"))));
-                }
-                if (StringUtils.isNotBlank(request.getParameter("completed"))) {
-                    patchRequests.add(new PatchRequest(PatchCommandType.SET, "Completed", new RavenJValue(Boolean
-                        .valueOf(request.getParameter("completed")))));
-                }
-
-                for (String id : ids) {
-                    PatchCommandData patchCommand = new PatchCommandData();
-
-                    patchCommand.setKey(store.getConventions().defaultFindFullDocumentKeyFromNonStringIdentifier(
-                        Integer.valueOf(id), Todo.class, false));
-                    patchCommand.setPatches(patchRequests.toArray(new PatchRequest[patchRequests.size()]));
-
-                    commands.add(patchCommand);
-                }
-                session.getDatabaseCommands().batch(commands);
-                session.saveChanges();
-
-            } catch (Exception e) {
-                throw new RuntimeException(e);
+            if (StringUtils.isNotBlank(request.getParameter("title"))) {
+                patchRequests.add(new PatchRequest(PatchCommandType.SET, "Title", new RavenJValue(request
+                    .getParameter("title"))));
             }
+            if (StringUtils.isNotBlank(request.getParameter("completed"))) {
+                patchRequests.add(new PatchRequest(PatchCommandType.SET, "Completed", new RavenJValue(Boolean
+                    .valueOf(request.getParameter("completed")))));
+            }
+
+            for (String id : ids) {
+                PatchCommandData patchCommand = new PatchCommandData();
+
+                patchCommand.setKey(store.getConventions().defaultFindFullDocumentKeyFromNonStringIdentifier(
+                    Integer.valueOf(id), Todo.class, false));
+                patchCommand.setPatches(patchRequests.toArray(new PatchRequest[patchRequests.size()]));
+
+                commands.add(patchCommand);
+            }
+            store.getDatabaseCommands().batch(commands);
         }
     }
 
