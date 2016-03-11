@@ -1,4 +1,6 @@
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
   <parent>
     <groupId>org.sonatype.oss</groupId>
@@ -27,20 +29,12 @@
 
   <developers>
     <developer>
-      <email>marcin@ais.pl</email>
-      <id>marcin@ais.pl</id>
+      <email>marcin@ravendb.net</email>
+      <id>marcin@ravendb.net</id>
       <name>Marcin Lewandowski</name>
-      <organizationUrl>http://ais.pl</organizationUrl>
+      <organizationUrl>http://ravendb.net</organizationUrl>
       <roles>
         <role>developer</role>
-      </roles>
-    </developer>
-    <developer>
-      <email>pikus@ais.pl</email>
-      <id>pikus@ais.pl</id>
-      <name>Tomasz Pik</name>
-      <organizationUrl>http://ais.pl</organizationUrl>
-      <roles>
         <role>release manager</role>
       </roles>
     </developer>
@@ -52,6 +46,11 @@
       <name>Blazej Majewski</name>
       <organizationUrl>http://ais.pl</organizationUrl>
       <organization>ais.pl</organization>
+    </contributor>
+    <contributor>
+      <email>pikus@ais.pl</email>
+      <name>Tomasz Pik</name>
+      <organizationUrl>http://ais.pl</organizationUrl>
     </contributor>
   </contributors>
 
