@@ -632,7 +632,7 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
     if (queryOperation == null) {
       executeBeforeQueryListeners();
       take(0);
-      initializeQueryOperation();
+      queryOperation = initializeQueryOperation();
     }
 
     LazyQueryOperation<T> lazyQueryOperation = new LazyQueryOperation<>(clazz, queryOperation,
