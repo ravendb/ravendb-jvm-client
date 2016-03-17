@@ -54,7 +54,7 @@ public class RavenDB_3420Test extends ReplicationBase {
                 }
             }
 
-            try (IDocumentStore store12 = new DocumentStore(store1.getUrl()).initialize()) {
+            try (IDocumentStore store12 = new DocumentStore(store1.getUrl(), store1.getDefaultDatabase()).initialize()) {
                 try (IDocumentSession session = store12.openSession()) {
                     Profile docs = session.load(Profile.class, "Shard1/bulk1");
                     Profile docs2 = session.load(Profile.class, "shard1/profiles/2");
@@ -67,7 +67,7 @@ public class RavenDB_3420Test extends ReplicationBase {
                 }
             }
 
-            try (IDocumentStore store22 = new DocumentStore(store2.getUrl()).initialize()) {
+            try (IDocumentStore store22 = new DocumentStore(store2.getUrl(), store2.getDefaultDatabase()).initialize()) {
                 try (IDocumentSession session = store22.openSession()) {
                     Profile docs = session.load(Profile.class, "shard2/profiles/1");
                     List<Profile> totalDocs = session.query(Profile.class).toList();

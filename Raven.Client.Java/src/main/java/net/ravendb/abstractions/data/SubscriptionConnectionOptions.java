@@ -18,6 +18,7 @@ public class SubscriptionConnectionOptions {
     clientAliveNotificationInterval = 2 * 60 * 1000;
     timeToWaitBeforeConnectionRetry = 15 * 1000;
     strategy = SubscriptionOpeningStrategy.OPEN_IF_FREE;
+    pullingRequestTimeout = 5 * 60 * 1000L;
   }
 
   public SubscriptionConnectionOptions(SubscriptionBatchOptions batchOptions) {
@@ -32,6 +33,8 @@ public class SubscriptionConnectionOptions {
   private Integer timeToWaitBeforeConnectionRetry;
 
   private Integer clientAliveNotificationInterval;
+
+  private Long pullingRequestTimeout;
 
   private boolean ignoreSubscribersErrors;
 
@@ -85,6 +88,14 @@ public class SubscriptionConnectionOptions {
     this.ignoreSubscribersErrors = ignoreSubscribersErrors;
   }
 
+  public Long getPullingRequestTimeout() {
+    return pullingRequestTimeout;
+  }
+
+  public void setPullingRequestTimeout(Long pullingRequestTimeout) {
+    this.pullingRequestTimeout = pullingRequestTimeout;
+  }
+
   @SuppressWarnings("boxing")
   public RavenJObject toRavenObject() {
     RavenJObject result = new RavenJObject();
@@ -92,6 +103,7 @@ public class SubscriptionConnectionOptions {
     result.add("IgnoreSubscribersErrors", ignoreSubscribersErrors);
     result.add("BatchOptions", batchOptions.toRavenObject());
     result.add("ClientAliveNotificationInterval", TimeSpan.formatString(clientAliveNotificationInterval));
+    result.add("PullingRequestTimeout", TimeSpan.formatString(pullingRequestTimeout));
     return result;
   }
 

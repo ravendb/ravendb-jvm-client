@@ -42,6 +42,12 @@ public interface IAdvancedDocumentSessionOperations {
    */
   public <T> void evict(T entity);
 
+
+  /**
+   * Removes the specify documentId from the list of known missing ids.
+   * @param id documentId to unregister
+     */
+  public void unregisterMissing(String id);
   /**
    * Clears this instance.
    * Remove all entities from the delete queue and stops tracking changes for all entities.

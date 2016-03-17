@@ -28,11 +28,26 @@ public class IndexStats {
   private Date lastIndexingTime;
   private String isOnRam;
   private IndexLockMode lockMode;
+  private boolean isMapReduce;
   private List<String> forEntityName;
   private boolean testIndex;
 
   private IndexingPerformanceStats[] performance;
   public int docsCount;
+
+  /**
+   * Indicates if it is a MapReduce index.
+     */
+  public boolean isMapReduce() {
+    return isMapReduce;
+  }
+
+  /**
+   * Indicates if it is a MapReduce index.
+     */
+  public void setMapReduce(boolean mapReduce) {
+    isMapReduce = mapReduce;
+  }
 
   /**
    * List of all entity names (collections) for which this index is working.

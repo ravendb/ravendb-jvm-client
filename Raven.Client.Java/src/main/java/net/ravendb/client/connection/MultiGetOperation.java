@@ -100,7 +100,7 @@ public class MultiGetOperation {
       args.setUrl(httpJsonRequest.getUrl());
       args.setPostedData(postedData);
 
-      jsonRequestFactory.invokeLogRequest(holdProfilingInformation, args);
+      jsonRequestFactory.onLogRequest(holdProfilingInformation, args);
       return true;
     }
     return false;

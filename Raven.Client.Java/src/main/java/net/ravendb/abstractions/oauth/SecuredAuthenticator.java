@@ -28,12 +28,10 @@ import org.apache.http.util.EntityUtils;
 
 public class SecuredAuthenticator extends AbstractAuthenticator {
 
-  private final String apiKey;
   private HttpJsonRequestFactory jsonRequestFactory;
 
-  public SecuredAuthenticator(String apiKey, HttpJsonRequestFactory jsonRequestFactory) {
+  public SecuredAuthenticator(HttpJsonRequestFactory jsonRequestFactory) {
     super();
-    this.apiKey = apiKey;
     this.jsonRequestFactory = jsonRequestFactory;
   }
 
@@ -43,7 +41,7 @@ public class SecuredAuthenticator extends AbstractAuthenticator {
       super.configureRequest(sender, e);
       return;
     }
-    if (apiKey != null) {
+    if (e.getCredentials() != null && e.getCredentials().getApiKey() != null) {
       e.getRequest().setHeader("Has-Api-Key", "true");
     }
   }

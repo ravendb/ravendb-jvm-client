@@ -155,6 +155,7 @@ public class QueryResult {
 
   /**
    * The duration of actually executing the query server side
+   * -1 is returned in case the query results retrieved from cache
    */
   public long getDurationMiliseconds() {
     return durationMiliseconds;
@@ -255,6 +256,7 @@ public class QueryResult {
 
   /**
    * The duration of actually executing the query server side
+   * -1 is returned in case the query results retrieved from cache
    * @param durationMiliseconds
    */
   public void setDurationMiliseconds(long durationMiliseconds) {

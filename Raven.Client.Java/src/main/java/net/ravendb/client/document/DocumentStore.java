@@ -42,6 +42,7 @@ import net.ravendb.client.connection.implementation.HttpJsonRequestFactory;
 import net.ravendb.client.connection.profiling.RequestResultArgs;
 import net.ravendb.client.delegates.HttpResponseWithMetaHandler;
 import net.ravendb.client.extensions.MultiDatabase;
+import net.ravendb.client.extensions.SecurityExtensions;
 import net.ravendb.client.listeners.IDocumentConflictListener;
 import net.ravendb.client.util.EvictItemsFromCacheBasedOnChanges;
 import net.ravendb.client.utils.Lang;
@@ -312,10 +313,10 @@ public class DocumentStore extends DocumentStoreBase {
 
     assertValidConfiguration();
 
-    jsonRequestFactory = new HttpJsonRequestFactory(getMaxNumberOfCachedRequests());
+    jsonRequestFactory = new HttpJsonRequestFactory(getMaxNumberOfCachedRequests(), conventions.isAcceptGzipContent());
     try {
       initializeEncryptor();
-      initializeSecurity();
+      SecurityExtensions.initializeSecurity(conventions, jsonRequestFactory, getUrl());
 
       initializeInternal();
 
@@ -366,51 +367,6 @@ public class DocumentStore extends DocumentStoreBase {
           return;
         }
         profilingContext.recordAction(sender, args);
-      }
-    });
-  }
-
-  private void initializeSecurity() {
-    if (conventions.getHandleUnauthorizedResponse() != null) {
-      return ; // already setup by the user
-    }
-
-    final BasicAuthenticator basicAuthenticator = new BasicAuthenticator(jsonRequestFactory.getHttpClient(), jsonRequestFactory.isEnableBasicAuthenticationOverUnsecuredHttpEvenThoughPasswordsWouldBeSentOverTheWireInClearTextToBeStolenByHackers());
-    final SecuredAuthenticator securedAuthenticator = new SecuredAuthenticator(apiKey, jsonRequestFactory);
-
-    jsonRequestFactory.addConfigureRequestEventHandler(new EventHandler<WebRequestEventArgs>() {
-      @Override
-      public void handle(Object sender, WebRequestEventArgs event) {
-        basicAuthenticator.configureRequest(sender, event);
-      }
-    });
-    jsonRequestFactory.addConfigureRequestEventHandler(new EventHandler<WebRequestEventArgs>() {
-      @Override
-      public void handle(Object sender, WebRequestEventArgs event) {
-        securedAuthenticator.configureRequest(sender, event);
-      }
-    });
-
-    conventions.setHandleUnauthorizedResponse(new HttpResponseWithMetaHandler() {
-      @SuppressWarnings({"null", "synthetic-access"})
-      @Override
-      public Action1<HttpRequest> handle(HttpResponse response, OperationCredentials credentials) {
-        Header oauthSourceHeader = response.getFirstHeader("OAuth-Source");
-        String oauthSource = null;
-        if (oauthSourceHeader != null) {
-          oauthSource = oauthSourceHeader.getValue();
-        }
-        if (StringUtils.isNotEmpty(oauthSource) && !oauthSource.toLowerCase().endsWith("/OAuth/API-Key".toLowerCase())) {
-          return basicAuthenticator.doOAuthRequest(oauthSource, credentials.getApiKey());
-        }
-        if (apiKey == null) {
-          //AssertUnauthorizedCredentialSupportWindowsAuth(response);
-          return null;
-        }
-        if (StringUtils.isEmpty(oauthSource)) {
-          oauthSource = getUrl() + "/OAuth/API-Key";
-        }
-        return securedAuthenticator.doOAuthRequest(oauthSource, credentials.getApiKey());
       }
     });
   }

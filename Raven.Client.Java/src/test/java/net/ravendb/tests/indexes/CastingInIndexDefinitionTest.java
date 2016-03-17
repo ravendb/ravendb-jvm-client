@@ -89,14 +89,20 @@ public class CastingInIndexDefinitionTest extends RemoteClientTest {
 
     }
     public Employees_CurrentCount() {
-      map = "from employee in docs.employees " +
-      		"let status = employee[\"@metadata\"] " +
-      		"where status.Value<string>(\"test\") == \"2\" " +
-      		"select new { Count = 1 }";
+      map = "from employee in docs.Employees " +
+              "select new { " +
+              "  employee = employee, " +
+              "  status = employee[\"@metadata\"] " +
+              "} into this0 " +
+              "where this0.status.Value<string>(\"Test\") == \"2\" " +
+              "select new { " +
+              "  Count = 1 " +
+              "}";
       reduce = "from result in results " +
-      		"group result by 0 " +
-      		"into g " +
-      		"select new { Count = g.Sum(x => x.Count) };";
+              "group result by 0 into g " +
+              "select new { " +
+              "  Count = Enumerable.Sum(g, x => ((int)x.Count)) " +
+              "}";
     }
 
   }

@@ -2,13 +2,12 @@ package net.ravendb.tests.linq;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
-import java.util.Calendar;
-import java.util.Date;
-import java.util.List;
-import java.util.TimeZone;
+import java.util.*;
 
+import com.google.common.collect.Sets;
 import net.ravendb.abstractions.extensions.JsonExtensions;
 import net.ravendb.client.IDocumentQuery;
 import net.ravendb.client.IDocumentSession;
@@ -472,7 +471,11 @@ public class WhereClauseTest {
     RavenQueryInspector<IndexedUser> indexedUsers = getRavenQueryInspector();
     QWhereClauseTest_IndexedUser user = QWhereClauseTest_IndexedUser.indexedUser;
     IRavenQueryable<IndexedUser> q = indexedUsers.where(user.birthday.goe(mkDate(2010, 5, 15))).select(IndexedUser.class, user.name, user.age);
-    assertEquals("<Name, Age>: Birthday:[2010-05-15T00:00:00.0000000Z TO NULL]", q.toString());
+
+    HashSet<String> allowedAnswers = Sets.newHashSet("<Name, Age>: Birthday:[2010-05-15T00:00:00.0000000Z TO NULL]",
+            "<Age, Name>: Birthday:[2010-05-15T00:00:00.0000000Z TO NULL]");
+
+    assertTrue(allowedAnswers.contains(q.toString()));
   }
 
   @SuppressWarnings("boxing")
@@ -498,7 +501,10 @@ public class WhereClauseTest {
     RavenQueryInspector<IndexedUser> indexedUsers = getRavenQueryInspector();
     QWhereClauseTest_IndexedUser user = QWhereClauseTest_IndexedUser.indexedUser;
     IRavenQueryable<IndexedUser> q = indexedUsers.where(user.birthday.goe(mkDate(2010, 5, 15))).select(IndexedUser.class, user.name, user.age);
-    assertEquals("<Name, Age>: Birthday:[2010-05-15T00:00:00.0000000Z TO NULL]", q.toString());
+
+    Set<String> allowedAnswers = Sets.newHashSet("<Name, Age>: Birthday:[2010-05-15T00:00:00.0000000Z TO NULL]",
+            "<Age, Name>: Birthday:[2010-05-15T00:00:00.0000000Z TO NULL]");
+    assertTrue(allowedAnswers.contains(q.toString()));
   }
 
   @SuppressWarnings("boxing")

@@ -194,7 +194,7 @@ public abstract class ReplicationInformerBase<T> implements IReplicationInformer
         @SuppressWarnings("synthetic-access")
         @Override
         public void run() {
-          for (int i = 0; i < 3; i++) {
+          for (int i = 0; i < 5; i++) {
             OperationResult<Object> r = tryOperation(new Function1<OperationMetadata, Object>() {
 
               @Override

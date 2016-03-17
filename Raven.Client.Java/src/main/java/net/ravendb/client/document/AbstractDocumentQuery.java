@@ -252,6 +252,8 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
 
   protected boolean allowMultipleIndexEntriesForSameDocumentToResultTransformer;
 
+  private Class originalType;
+
   private static final Pattern ESPACE_POSTFIX_WILDCARD = Pattern.compile("\\\\\\*($|\\s)");
 
   /**
@@ -954,7 +956,7 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
   public IDocumentQuery<T> whereEquals(WhereParams whereParams) {
     ensureValidFieldName(whereParams);
 
-    if (theSession != null && whereParams.getValue() != null) {
+    if (theSession != null && whereParams.getValue() != null && !"*".equals(whereParams.getValue())) {
       sortByHints.add(Tuple.create(whereParams.getFieldName(), theSession.getConventions().getDefaultSortOption(whereParams.getValue().getClass())));
     }
 
@@ -1082,7 +1084,7 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
   @Override
   @SuppressWarnings("unchecked")
   public IDocumentQuery<T> whereEndsWith(String fieldName, Object value) {
-    // http://lucene.apache.org/java/2_4_0/queryparsersyntax.html#Wildcard%20Searches
+    // https://lucene.apache.org/core/2_9_4/queryparsersyntax.html#Wildcard%20Searches
     // You cannot use a * or ? symbol as the first character of a search
 
     // NOTE: doesn't fully match EndsWith semantics
@@ -1761,12 +1763,12 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
         .getConventions()
         .getFindFullDocumentKeyFromNonStringIdentifier()
         .find(whereParams.getValue(),
-          whereParams.getFieldTypeForIdentifier() != null ? whereParams.getFieldTypeForIdentifier() : clazz, false);
+           originalType != null ? originalType : (whereParams.getFieldTypeForIdentifier() != null ? whereParams.getFieldTypeForIdentifier() : clazz), false);
     }
 
     if (whereParams.getValue() instanceof String) {
       String strValue = (String) whereParams.getValue();
-      strValue = RavenQuery.escape(strValue, whereParams.isAllowWildcards() && whereParams.isAnalyzed(), true);
+      strValue = RavenQuery.escape(strValue, whereParams.isAllowWildcards() && whereParams.isAnalyzed(), whereParams.isAnalyzed());
       return whereParams.isAnalyzed() ? strValue : "[[" + strValue + "]]";
     }
 
@@ -1969,4 +1971,7 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
     return (IDocumentQuery<T>) this;
   }
 
+  public void setOriginalQueryType(Class originalType) {
+    this.originalType = originalType;
+  }
 }

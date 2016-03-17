@@ -701,7 +701,7 @@ public class DocumentSession extends InMemoryDocumentSessionOperations
       RavenJObject next = innerIterator.next();
       JsonDocument document = SerializationHelper.ravenJObjectToJsonDocument(next);
       StreamResult<T> streamResult = new StreamResult<>();
-      streamResult.setDocument((T) convertToEntity(entityClass, document.getKey(), document.getDataAsJson(), document.getMetadata()));
+      streamResult.setDocument((T) convertToEntity(entityClass, document.getKey(), document.getDataAsJson(), document.getMetadata(), false));
       streamResult.setEtag(document.getEtag());
       streamResult.setKey(document.getKey());
       streamResult.setMetadata(document.getMetadata());
@@ -972,10 +972,15 @@ public class DocumentSession extends InMemoryDocumentSessionOperations
   @SuppressWarnings("unchecked")
   @Override
   public <T> T[] loadStartingWith(Class<T> clazz, String keyPrefix, String matches, int start, int pageSize, String exclude, RavenPagingInformation pagingInformation, String skipAfter) {
+
+    QueryOperation queryOperation = new QueryOperation(this, "Load/StartingWith", null, null, false, 0, null, null, false);
+
     incrementRequestCount();
+
     List<JsonDocument> results = getDatabaseCommands().startsWith(keyPrefix, matches, start, pageSize, false, exclude, pagingInformation, null, null, skipAfter);
+    List<T> response = new ArrayList<>(results.size());
     for (JsonDocument doc: results) {
-      trackEntity(clazz, doc);
+      response.add(queryOperation.deserialize(clazz, doc.toJson()));
     }
     return results.toArray((T[])Array.newInstance(clazz, 0));
   }

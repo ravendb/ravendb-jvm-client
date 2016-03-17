@@ -131,7 +131,7 @@ public abstract class BaseShardedDocumentSession<TDatabaseCommands> extends InMe
     return createDynamicIndexName(clazz);
   }
 
-  protected Map<String, SaveChangesData> getChangesToSavePerShard(SaveChangesData data) {
+  protected Map<String, SaveChangesData> createSaveChangesBatchPerShardFromDeferredCommands() {
     Map<String, SaveChangesData> saveChangesPerShard = new HashMap<>();
     for (Map.Entry<String, List<ICommandData>> deferredCommands : deferredCommandsByShard.entrySet()) {
       SaveChangesData saveChangesData = saveChangesPerShard.get(deferredCommands.getKey());
@@ -145,25 +145,6 @@ public abstract class BaseShardedDocumentSession<TDatabaseCommands> extends InMe
 
     deferredCommandsByShard.clear();
 
-    for (int index = 0; index < data.getEntities().size(); index++) {
-      Object entity = data.getEntities().get(index);
-      RavenJObject metadata = getMetadataFor(entity);
-      String shardId = metadata.value(String.class, Constants.RAVEN_SHARD_ID);
-
-      if (shardId == null) {
-        throw new UnsupportedOperationException("Cannot save a document when the shard id isn't defined. Missing Raven-Shard-Id in the metadata");
-      }
-
-      SaveChangesData shardSaveChangesData = saveChangesPerShard.get(shardId);
-      if (shardSaveChangesData == null) {
-        shardSaveChangesData = new SaveChangesData();
-        saveChangesPerShard.put(shardId, shardSaveChangesData);
-      }
-
-      shardSaveChangesData.getEntities().add(entity);
-      shardSaveChangesData.getCommands().add(data.getCommands().get(index));
-
-    }
     return saveChangesPerShard;
   }
 

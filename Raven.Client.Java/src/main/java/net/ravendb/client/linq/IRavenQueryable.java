@@ -71,4 +71,13 @@ public interface IRavenQueryable<T> extends IOrderedQueryable<T>, LinqExtensions
    */
   IRavenQueryable<T> distinct();
 
+  /**
+   * Holds the original query type only when TransformWith is invoked otherwise null.
+     */
+  Class getOriginalQueryType();
+
+  /**
+   * Holds the original query type only when TransformWith is invoked otherwise null.
+     */
+  void setOriginalQueryType(Class clazz);
 }

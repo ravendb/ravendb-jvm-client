@@ -1,9 +1,7 @@
 package net.ravendb.client.document.sessionoperations;
 
 import java.lang.reflect.Array;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
+import java.util.*;
 
 import net.ravendb.abstractions.basic.CleanCloseable;
 import net.ravendb.abstractions.basic.Tuple;
@@ -82,12 +80,7 @@ public class MultiLoadOperation {
       sessionOperations.trackIncludedDocument(includeResults[i]);
     }
 
-    JsonDocument[] selectedResults = selectResults();
-
-    T[] finalResults = (T[]) Array.newInstance(clazz, selectedResults.length);
-    for (int i = 0; i < selectedResults.length; i++) {
-      finalResults[i] = (T) (selectedResults[i] == null ? Defaults.defaultValue(clazz) : sessionOperations.trackEntity(clazz, selectedResults[i]));
-    }
+    T[] finalResults = ids != null ? returnResultsById(clazz) : returnResults(clazz);
 
     for (int i = 0; i < finalResults.length; i++) {
       if (finalResults[i] == null) {
@@ -114,6 +107,69 @@ public class MultiLoadOperation {
     return finalResults;
   }
 
+  private <T> T[] returnResults(Class<T> clazz) {
+
+    T[] finalResults = (T[]) Array.newInstance(clazz, results.length);
+    JsonDocument[] selectedResults = selectResults();
+
+    for (int i = 0; i < selectedResults.length; i++) {
+      if (results[i] != null) {
+        finalResults[i] = (T) sessionOperations.trackEntity(clazz, selectedResults[i]);
+      }
+    }
+    return finalResults;
+  }
+
+  private <T> T[] returnResultsById(Class<T> clazz) {
+    T[] finalResults = (T[]) Array.newInstance(clazz, results.length);
+    TreeMap<String, FinalResultPositionById> dic = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
+
+    for (int i = 0; i < ids.length; i++) {
+      if (ids[i] == null) {
+        continue;
+      }
+
+      FinalResultPositionById position = dic.get(ids[i]);
+      if (position == null) {
+        FinalResultPositionById finalResultPositionById = new FinalResultPositionById();
+        finalResultPositionById.singleReturn = i;
+        dic.put(ids[i], finalResultPositionById);
+      } else {
+        if (position.singleReturn != null) {
+          position.multipleReturns = new ArrayList<>(2);
+          position.multipleReturns.add(position.singleReturn);
+          position.singleReturn = null;
+        }
+        position.multipleReturns.add(i);
+      }
+    }
+
+    for (JsonDocument jsonDocument : results) {
+      if (jsonDocument == null) {
+        continue;
+      }
+
+      String id = jsonDocument.getMetadata().value(String.class, "@id");
+      if (id == null) {
+        continue;
+      }
+
+      FinalResultPositionById position = dic.get(id);
+
+      if (position != null) {
+        if (position.singleReturn != null) {
+          finalResults[position.singleReturn] = (T) sessionOperations.trackEntity(clazz, jsonDocument);
+        } else if (position.multipleReturns != null) {
+          T trackedEntity = (T) sessionOperations.trackEntity(clazz, jsonDocument);
+          for (Integer pos : position.multipleReturns) {
+            finalResults[pos] = trackedEntity;
+          }
+        }
+      }
+    }
+    return finalResults;
+  }
+
   private JsonDocument[] selectResults() {
     if (ids == null) {
       return results;
@@ -130,6 +186,11 @@ public class MultiLoadOperation {
     }
 
     return finalResult;
+  }
+
+  private static class FinalResultPositionById {
+    public Integer singleReturn;
+    public List<Integer> multipleReturns;
   }
 
 }

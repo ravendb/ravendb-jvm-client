@@ -35,6 +35,7 @@ import net.ravendb.abstractions.data.HttpMethods;
 import net.ravendb.abstractions.data.JsonDocument;
 import net.ravendb.abstractions.exceptions.ConcurrencyException;
 import net.ravendb.abstractions.exceptions.ReadVetoException;
+import net.ravendb.abstractions.extensions.MetadataExtensions;
 import net.ravendb.abstractions.json.linq.RavenJArray;
 import net.ravendb.abstractions.json.linq.RavenJObject;
 import net.ravendb.abstractions.json.linq.RavenJToken;
@@ -428,7 +429,7 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
       // instance, and return that, ignoring anything new.
       return entitiesByKey.get(key);
     } else {
-      entity = convertToEntity(entityType, key, document, metadata);
+      entity = convertToEntity(entityType, key, document, metadata, false);
     }
 
     String etag = metadata.value(String.class, "@etag");
@@ -456,12 +457,13 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
   /**
    * Converts the json document to an entity.
    * @param entityType
-   * @param id
-   * @param documentFound
-   * @param metadata
+   * @param id The id.
+   * @param documentFound The document found
+   * @param metadata The metadata
+   * @param isStreaming Is the conversion is part of the streaming? If yes, no sense in registering missing properties
    */
   @SuppressWarnings("hiding")
-  public Object convertToEntity(Class<?> entityType, String id, RavenJObject documentFound, RavenJObject metadata) {
+  public Object convertToEntity(Class<?> entityType, String id, RavenJObject documentFound, RavenJObject metadata, boolean isStreaming) {
     if (RavenJObject.class.equals(entityType)) {
       return documentFound.cloneToken();
     }
@@ -475,7 +477,7 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
 
     CleanCloseable disposable = null;
     DefaultRavenContractResolver defaultRavenContractResolver = (DefaultRavenContractResolver) getConventions().getJsonContractResolver();
-    if (defaultRavenContractResolver != null && getConventions().isPreserveDocumentPropertiesNotFoundOnModel()) {
+    if (!isStreaming && defaultRavenContractResolver != null && getConventions().isPreserveDocumentPropertiesNotFoundOnModel()) {
       disposable = defaultRavenContractResolver.registerForExtensionData(new Action3<Object, String, RavenJToken>() {
         @SuppressWarnings("synthetic-access")
         @Override
@@ -796,7 +798,7 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
     putCommand.setDocument(json);
     putCommand.setEtag(etag);
     putCommand.setKey(documentMetadata.getKey());
-    putCommand.setMetadata(documentMetadata.getMetadata().cloneToken());
+    putCommand.setMetadata(MetadataExtensions.filterHeadersToObject(documentMetadata.getMetadata().cloneToken()));
     return putCommand;
 
   }
@@ -1106,6 +1108,11 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
   public void registerMissing(String id) {
     knownMissingIds.add(id);
   }
+
+  public void unregisterMissing(String id) {
+    knownMissingIds.remove(id);
+  }
+
   public void registerMissingIncludes(Collection<RavenJObject> results, Collection<String> includes) {
     if (includes == null || includes.isEmpty()){
       return;
@@ -1234,7 +1241,7 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
     value.setOriginalMetadata(jsonDocument.getMetadata().cloneToken());
     value.setEtag(jsonDocument.getEtag());
     value.setOriginalValue(jsonDocument.getDataAsJson());
-    Object newEntity = convertToEntity(entity.getClass(), value.getKey(), jsonDocument.getDataAsJson(), jsonDocument.getMetadata());
+    Object newEntity = convertToEntity(entity.getClass(), value.getKey(), jsonDocument.getDataAsJson(), jsonDocument.getMetadata(), false);
 
     try {
       for (PropertyDescriptor propertyDescriptor : Introspector.getBeanInfo(entity.getClass()).getPropertyDescriptors()) {

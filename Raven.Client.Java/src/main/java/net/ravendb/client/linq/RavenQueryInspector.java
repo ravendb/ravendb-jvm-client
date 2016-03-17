@@ -58,6 +58,7 @@ public class RavenQueryInspector<T> implements IRavenQueryable<T>, IRavenQueryIn
   private IDatabaseCommands databaseCommands;
   private InMemoryDocumentSessionOperations session;
   private boolean isMapReduce;
+  private Class originalQueryType;
 
   @SuppressWarnings("hiding")
   public void init(Class<T> clazz, IRavenQueryProvider provider, RavenQueryStatistics queryStats, RavenQueryHighlightings highlightings, String indexName, Expression<?> expression, InMemoryDocumentSessionOperations session, IDatabaseCommands databaseCommands, boolean isMapReduce) {
@@ -130,7 +131,16 @@ public class RavenQueryInspector<T> implements IRavenQueryable<T>, IRavenQueryIn
     try {
       AbstractTransformerCreationTask transformer = transformerClazz.newInstance();
       provider.transformWith(transformer.getTransformerName());
-      return as(resultClass);
+      IRavenQueryable<S> res = as(resultClass);
+      if (res.getOriginalQueryType() == null) {
+        res.setOriginalQueryType(clazz);
+      }
+      IQueryProvider provider = res.getProvider();
+
+      if (provider instanceof IRavenQueryProvider) {
+        ((IRavenQueryProvider)provider).setOriginalQueryType(res.getOriginalQueryType());
+      }
+      return res;
     } catch (Exception e){
       throw new RuntimeException(e);
     }
@@ -139,7 +149,16 @@ public class RavenQueryInspector<T> implements IRavenQueryable<T>, IRavenQueryIn
   @Override
   public <S> IRavenQueryable<S> transformWith(String transformerName, Class<S> resultClass) {
     provider.transformWith(transformerName);
-    return as(resultClass);
+    IRavenQueryable<S> res = as(resultClass);
+    if (res.getOriginalQueryType() == null) {
+      res.setOriginalQueryType(clazz);
+    }
+    IQueryProvider provider = res.getProvider();
+
+    if (provider instanceof IRavenQueryProvider) {
+      ((IRavenQueryProvider)provider).setOriginalQueryType(res.getOriginalQueryType());
+    }
+    return res;
   }
 
   @Override
@@ -196,13 +215,13 @@ public class RavenQueryInspector<T> implements IRavenQueryable<T>, IRavenQueryIn
 
   private RavenQueryProviderProcessor<T> getRavenQueryProvider() {
     return new RavenQueryProviderProcessor<>(clazz, provider.getQueryGenerator(), provider.getCustomizeQuery(), null, null, indexName,
-        new HashSet<String>(), new ArrayList<RenamedField>(), isMapReduce, provider.getResultTranformer(), provider.getTransformerParameters());
+        new HashSet<String>(), new ArrayList<RenamedField>(), isMapReduce, provider.getResultTranformer(), provider.getTransformerParameters(), originalQueryType);
   }
 
   @Override
   public String getIndexQueried() {
     RavenQueryProviderProcessor<T> ravenQueryProvider = new RavenQueryProviderProcessor<>(clazz, provider.getQueryGenerator(), null, null, null, indexName, new HashSet<String>(),
-        new ArrayList<RenamedField>(), isMapReduce, provider.getResultTranformer(), provider.getTransformerParameters());
+        new ArrayList<RenamedField>(), isMapReduce, provider.getResultTranformer(), provider.getTransformerParameters(), originalQueryType);
     IDocumentQuery<T> documentQuery = ravenQueryProvider.getDocumentQueryFor(expression);
     return ((IRavenQueryInspector)documentQuery).getIndexQueried();
   }
@@ -223,7 +242,7 @@ public class RavenQueryInspector<T> implements IRavenQueryable<T>, IRavenQueryIn
   @Override
   public Tuple<String, String> getLastEqualityTerm() {
     RavenQueryProviderProcessor<T> ravenQueryProvider = new RavenQueryProviderProcessor<>(clazz, provider.getQueryGenerator(), null, null, null, indexName, new HashSet<String>(),
-        new ArrayList<RenamedField>(), isMapReduce, provider.getResultTranformer(), provider.getTransformerParameters());
+        new ArrayList<RenamedField>(), isMapReduce, provider.getResultTranformer(), provider.getTransformerParameters(), originalQueryType);
     IDocumentQuery<T> documentQuery = ravenQueryProvider.getDocumentQueryFor(expression);
     return ((IRavenQueryInspector) documentQuery).getLastEqualityTerm();
   }
@@ -634,4 +653,13 @@ public class RavenQueryInspector<T> implements IRavenQueryable<T>, IRavenQueryIn
     return (boolean) provider.execute(Expressions.operation(Boolean.class, LinqOps.Query.ANY_RESULT, getExpression()));
   }
 
+  @Override
+  public Class getOriginalQueryType() {
+    return originalQueryType;
+  }
+
+  @Override
+  public void setOriginalQueryType(Class originalQueryType) {
+    this.originalQueryType = originalQueryType;
+  }
 }

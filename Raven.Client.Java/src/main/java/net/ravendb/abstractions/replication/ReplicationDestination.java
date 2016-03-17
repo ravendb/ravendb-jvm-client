@@ -17,6 +17,7 @@ public class ReplicationDestination {
   private boolean skipIndexReplication;
   private Boolean ignoredClient;
   private Boolean disabled;
+  private String authenticationScheme;
   private String clientVisibleUrl;
 
   public String getHumane() {
@@ -24,6 +25,14 @@ public class ReplicationDestination {
       return null;
     }
     return url + " " + database;
+  }
+
+  public String getAuthenticationScheme() {
+    return authenticationScheme;
+  }
+
+  public void setAuthenticationScheme(String authenticationScheme) {
+    this.authenticationScheme = authenticationScheme;
   }
 
   /**

@@ -67,7 +67,7 @@ public class ConflictResolverTest {
     object2.add("Age", 2);
 
     ConflictsResolver conflictsResolver = new ConflictsResolver(object1, object2);
-    assertEquals("{\"Name\":\"Oren\",\"Age\":2}", conflictsResolver.resolve().getDocument());
+    assertEquals(RavenJObject.parse("{\"Name\":\"Oren\",\"Age\":2}"), RavenJObject.parse(conflictsResolver.resolve().getDocument()));
   }
 
   @Test

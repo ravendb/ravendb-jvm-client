@@ -86,8 +86,7 @@ public class RavenQuery {
         case '\t':
           {
             if (makePhrase) {
-              //If it is a phrase there is no need to double escape just escape the original term.
-              return new StringBuilder(term).insert(0, "\"").append("\"").toString();
+              return new StringBuilder(escape(term, allowWildcards, false)).insert(0, "\"").append("\"").toString();
             }
             break;
           }

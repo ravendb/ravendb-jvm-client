@@ -10,6 +10,7 @@ import java.util.Map.Entry;
 import java.util.Set;
 import java.util.TreeSet;
 
+import com.sun.xml.internal.bind.v2.runtime.reflect.opt.Const;
 import net.ravendb.abstractions.data.Constants;
 import net.ravendb.abstractions.json.linq.RavenJArray;
 import net.ravendb.abstractions.json.linq.RavenJObject;
@@ -25,9 +26,11 @@ import net.ravendb.client.utils.UrlUtils;
 public class MetadataExtensions {
   public final static Set<String> HEADERS_TO_IGNORE_CLIENT = new TreeSet<>(String.CASE_INSENSITIVE_ORDER);
   public final static Set<String> PREFIXES_IN_HEADERS_TO_IGNORE_CLIENT = new TreeSet<>(String.CASE_INSENSITIVE_ORDER);
+  public final static Set<String> HEADERS_TO_IGNORE_FOR_CLIENT = new TreeSet<>(String.CASE_INSENSITIVE_ORDER);
   static {
     // Raven internal headers
     HEADERS_TO_IGNORE_CLIENT.add(Constants.RAVEN_SERVER_BUILD);
+    HEADERS_TO_IGNORE_CLIENT.add("SerializedSizeOnDisk");
     HEADERS_TO_IGNORE_CLIENT.add("Raven-Client-Version");
     HEADERS_TO_IGNORE_CLIENT.add("Non-Authoritative-Information");
     HEADERS_TO_IGNORE_CLIENT.add("Raven-Timer-Request");
@@ -122,6 +125,11 @@ public class MetadataExtensions {
 
     PREFIXES_IN_HEADERS_TO_IGNORE_CLIENT.add("Temp");
     PREFIXES_IN_HEADERS_TO_IGNORE_CLIENT.add("X-NewRelic");
+
+    HEADERS_TO_IGNORE_FOR_CLIENT.addAll(HEADERS_TO_IGNORE_CLIENT);
+
+    HEADERS_TO_IGNORE_FOR_CLIENT.remove(Constants.LAST_MODIFIED);
+    HEADERS_TO_IGNORE_FOR_CLIENT.remove(Constants.RAVEN_LAST_MODIFIED);
   }
 
   /**
@@ -154,7 +162,7 @@ public class MetadataExtensions {
   }
 
   public static RavenJObject filterHeadersToObject(RavenJObject self) {
-    return filterHeadersToObject(self, HEADERS_TO_IGNORE_CLIENT, PREFIXES_IN_HEADERS_TO_IGNORE_CLIENT);
+    return filterHeadersToObject(self, HEADERS_TO_IGNORE_FOR_CLIENT, PREFIXES_IN_HEADERS_TO_IGNORE_CLIENT);
   }
 
   @SuppressWarnings("static-access")
@@ -180,7 +188,7 @@ public class MetadataExtensions {
           continue;
         }
       }
-      if (HEADERS_TO_IGNORE_CLIENT.contains(header.getKey())) {
+      if (HEADERS_TO_IGNORE_FOR_CLIENT.contains(header.getKey())) {
         continue;
       }
       Set<String> values = new HashSet<>();

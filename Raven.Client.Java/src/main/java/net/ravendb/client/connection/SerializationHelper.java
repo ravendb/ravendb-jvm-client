@@ -142,13 +142,17 @@ public class SerializationHelper {
 
   @SuppressWarnings("boxing")
   public static JsonDocumentMetadata deserializeJsonDocumentMetadata(String docKey, Map<String, String> headers, int responseStatusCode) {
-    RavenJObject meta = MetadataExtensions.filterHeadersToObject(headers);
+    RavenJObject metadata = MetadataExtensions.filterHeadersToObject(headers);
     Etag etag = HttpExtensions.etagHeaderToEtag(headers.get(Constants.METADATA_ETAG_FIELD));
+
+    Date lastModified = getLastModifiedDate(headers);
+    metadata.add(Constants.LAST_MODIFIED, lastModified);
+
     JsonDocumentMetadata result =  new JsonDocumentMetadata();
     result.setEtag(etag);
     result.setKey(docKey);
-    result.setLastModified(getLastModifiedDate(headers));
-    result.setMetadata(meta);
+    result.setLastModified(lastModified);
+    result.setMetadata(metadata);
     result.setNonAuthoritativeInformation(responseStatusCode == HttpStatus.SC_NON_AUTHORITATIVE_INFORMATION);
     return result;
   }
@@ -160,6 +164,7 @@ public class SerializationHelper {
     String key = extract(metadata, "@id", "", String.class);
 
     Date lastModified = getLastModified(metadata);
+    metadata.add(Constants.LAST_MODIFIED, lastModified);
 
     Etag etag = extract(metadata, "@etag", Etag.empty(), Etag.class);
     boolean nai = extract(metadata, "Non-Authoritative-Information", false, Boolean.class);
@@ -173,10 +178,13 @@ public class SerializationHelper {
   public static JsonDocument deserializeJsonDocument(String docKey, RavenJToken responseJson, Map<String, String> headers, int responseStatusCode) {
     RavenJObject jsonData = (RavenJObject) responseJson;
 
-    RavenJObject meta = MetadataExtensions.filterHeadersToObject(headers);
+    RavenJObject metadata = MetadataExtensions.filterHeadersToObject(headers);
     Etag etag = HttpExtensions.etagHeaderToEtag(headers.get(Constants.METADATA_ETAG_FIELD));
 
-    return new JsonDocument(jsonData, meta, docKey, responseStatusCode == HttpStatus.SC_NON_AUTHORITATIVE_INFORMATION, etag, getLastModifiedDate(headers));
+    Date lastModified = getLastModifiedDate(headers);
+    metadata.add(Constants.LAST_MODIFIED, lastModified);
+
+    return new JsonDocument(jsonData, metadata, docKey, responseStatusCode == HttpStatus.SC_NON_AUTHORITATIVE_INFORMATION, etag, lastModified);
   }
 
   public static JsonDocument toJsonDocument(RavenJObject r) {

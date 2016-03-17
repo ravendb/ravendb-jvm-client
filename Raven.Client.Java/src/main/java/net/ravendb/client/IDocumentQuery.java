@@ -8,6 +8,7 @@ import net.ravendb.abstractions.data.FacetResults;
 import net.ravendb.abstractions.data.IndexQuery;
 import net.ravendb.abstractions.data.QueryResult;
 import net.ravendb.abstractions.json.linq.RavenJToken;
+import net.ravendb.client.indexes.AbstractTransformerCreationTask;
 import net.ravendb.client.spatial.SpatialCriteria;
 
 import java.util.List;
@@ -93,6 +94,11 @@ public interface IDocumentQuery<T> extends IDocumentQueryBase<T, IDocumentQuery<
    * @param criteria Spatial criteria factory
    */
   public IDocumentQuery<T> spatial(String name, SpatialCriteria criteria);
+
+  /**
+   *  Sets a transformer to use after executing a query
+     */
+  public <TTransformer extends AbstractTransformerCreationTask, TTransformerResult> IDocumentQuery<TTransformerResult> setResultTransformer(Class<TTransformer> transformerClass, Class<TTransformerResult> resultClass);
 
   /**
    * Whatever we should apply distinct operation to the query on the server side

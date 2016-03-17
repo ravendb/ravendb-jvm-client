@@ -104,4 +104,8 @@ public interface IRavenQueryProvider extends IQueryProvider {
    * @param foo
    */
   public void addTransformerParameter(String input, RavenJToken foo);
+
+  public Class getOriginalQueryType();
+
+  public void setOriginalQueryType(Class clazz);
 }

@@ -2,14 +2,12 @@ package net.ravendb.client.document.sessionoperations;
 
 import java.io.IOException;
 import java.lang.reflect.Field;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
+import java.util.*;
 import java.util.Map.Entry;
-import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import com.sun.xml.internal.bind.v2.runtime.reflect.opt.Const;
 import net.ravendb.abstractions.basic.CleanCloseable;
 import net.ravendb.abstractions.data.Constants;
 import net.ravendb.abstractions.data.IndexQuery;
@@ -185,8 +183,8 @@ public class QueryOperation {
 
     if (StringUtils.isNotEmpty(documentId) && String.class.equals(clazz) && // __document_id is present, and result type is a string
         projectionFields != null && projectionFields.length== 1 && // We are projecting one field only (although that could be derived from the
-        // previous check, one could never be too careful
-        ((metadata != null && result.getCount() == 2) || (metadata == null && result.getCount() == 1)) // there are no more props in the result object
+                                                                   // previous check, one could never be too careful
+            hasSingleValidProperty(result, metadata) // there are no more props in the result object
         ) {
       return (T)documentId;
     }
@@ -209,10 +207,46 @@ public class QueryOperation {
     return deserializedResult;
   }
 
+  private boolean hasSingleValidProperty(RavenJObject result, RavenJObject metadata) {
+    if (metadata == null && result.getCount() == 1) {
+      return true; // { Foo: val }
+    }
+    if (metadata != null && result.getCount() == 2) {
+      return true; // { @metadata: {} , Foo: val}
+    }
+    if (metadata != null && result.getCount() == 3) {
+      String entityName = metadata.value(String.class, Constants.RAVEN_ENTITY_NAME);
+      String idPropName = sessionOperations.getConventions().getFindIdentityPropertyNameFromEntityName().find(entityName);
+
+      if (result.containsKey(idPropName)) {
+        // when we try to project the id by name
+        RavenJToken token = result.value(RavenJToken.class, idPropName);
+
+        if (token == null || token.getType() == JTokenType.NULL) {
+          return true; // { @metadata: {}, Foo: val, Id: null }
+        }
+      }
+    }
+    return false;
+  }
+
   private <T> T deserializedResult(Class<T> clazz, RavenJObject result) {
-    if (projectionFields != null && projectionFields.length == 1) { // we only select a single field
-      if (String.class.equals(clazz) || Number.class.isAssignableFrom(clazz) || clazz.isEnum()) {
+    if (String.class.equals(clazz) || Number.class.isAssignableFrom(clazz) || clazz.isEnum()) {
+      if (projectionFields != null && projectionFields.length == 1) { // we only select a single field
         return result.value(clazz, projectionFields[0]);
+      }
+
+      switch (result.getCount()) {
+        case 1:
+          return result.value(clazz, projectionFields[0]);
+        case 2:
+          if (result.containsKey(Constants.METADATA)) {
+            HashSet<String> keys = new HashSet<>(result.getKeys());
+            keys.remove(Constants.METADATA);
+
+            return result.value(clazz, keys.iterator().next());
+          }
+          break;
       }
     }
 

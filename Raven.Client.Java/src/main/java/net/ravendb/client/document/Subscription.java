@@ -36,15 +36,21 @@ import java.io.Closeable;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 
 
 public class Subscription<T> implements IObservable<T>, CleanCloseable {
+
+  private final static Object END_OF_COLLECTION_MARKER = new Object();
+
+  private final ExecutorService executorService = Executors.newFixedThreadPool(3);
+
   protected static final ILog logger = LogManager.getCurrentClassLogger();
 
-  protected AutoResetEvent newDocuments = new AutoResetEvent(false);
-  private ManualResetEvent anySubscriber = new ManualResetEvent(false);
+  private final Class<T> clazz;
 
+  private final AutoResetEvent newDocuments = new AutoResetEvent(false);
+  private final ManualResetEvent anySubscriber = new ManualResetEvent(false);
   private final IDatabaseCommands commands;
   private final IDatabaseChanges changes;
   private final DocumentConvention conventions;
@@ -54,24 +60,28 @@ public class Subscription<T> implements IObservable<T>, CleanCloseable {
   private final CancellationTokenSource cts = new CancellationTokenSource();
   private GenerateEntityIdOnTheClient generateEntityIdOnTheClient;
   private final boolean isStronglyTyped;
-  private boolean completed;
   private final long id;
-  private final Class<T> clazz;
+  private Future<?> pullingTask;
+  private Future<?> startPullingTask;
+  private CleanCloseable putDocumentsObserver;
+  private CleanCloseable endedBulkInsertsObserver;
   private CleanCloseable dataSubscriptionReleasedObserver;
+  private boolean completed;
   private boolean disposed;
-
-  private EventHandler<VoidArgs> eventHandler;
+  private boolean firstConnection = true;
 
   private List<EventHandler<VoidArgs>> beforeBatch = new ArrayList<>();
   private List<EventHandler<DocumentProcessedEventArgs>> afterBatch = new ArrayList<>();
   private List<EventHandler<VoidArgs>> beforeAcknowledgment = new ArrayList<>();
   private List<EventHandler<LastProcessedEtagEventArgs>> afterAcknowledgment = new ArrayList<>();
 
+
+  private EventHandler<VoidArgs> eventHandler;
+
   private boolean isErroredBecauseOfSubscriber;
   private Exception lastSubscriberException;
-  private Exception subscriptionConnectionException;
+  private Throwable subscriptionConnectionException;
   private boolean connectionClosed;
-  private boolean firstConnection = true;
 
   Subscription(Class<T> clazz, long id, final String database, SubscriptionConnectionOptions options,
                final IDatabaseCommands commands, IDatabaseChanges changes, final DocumentConvention conventions,
@@ -107,7 +117,6 @@ public class Subscription<T> implements IObservable<T>, CleanCloseable {
     if (options.getStrategy() == SubscriptionOpeningStrategy.WAIT_FOR_FREE) {
       waitForSubscriptionReleased();
     }
-
   }
 
   private void start() {
@@ -115,195 +124,176 @@ public class Subscription<T> implements IObservable<T>, CleanCloseable {
     startPullingTask = startPullingDocs();
   }
 
-  public void addBeforeBatchHandler(EventHandler<VoidArgs> handler) {
-    beforeBatch.add(handler);
-  }
-
-  public void removeBeforeBatchHandler(EventHandler<VoidArgs> handler) {
-    beforeBatch.remove(handler);
-  }
-
-  public void addAfterBatchHandler(EventHandler<DocumentProcessedEventArgs> handler) {
-    afterBatch.add(handler);
-  }
-
-  public void removeAfterBatchHandler(EventHandler<DocumentProcessedEventArgs> handler) {
-    afterBatch.remove(handler);
-  }
-
-  public void addBeforeAcknowledgmentHandler(EventHandler<VoidArgs> handler) {
-    beforeAcknowledgment.add(handler);
-  }
-
-  public void removeBeforeAcknowledgmentHandler(EventHandler<VoidArgs> handler) {
-    beforeAcknowledgment.remove(handler);
-  }
-
-  public void addAfterAcknowledgmentHandler(EventHandler<LastProcessedEtagEventArgs> handler) {
-    afterAcknowledgment.add(handler);
-  }
-
-  public void removeAfterAcknowledgmentHandler(EventHandler<LastProcessedEtagEventArgs> handler) {
-    afterAcknowledgment.remove(handler);
-  }
-
-  /**
-   * It determines if the subscription is closed.
-   */
-  public boolean isConnectionClosed() {
-    return connectionClosed;
-  }
-
-  private Thread startPullingTask;
-
-  private Closeable putDocumentsObserver;
-  private Closeable endedBulkInsertsObserver;
-  private Etag lastProcessedEtagOnServer = null;
-
-  /**
-   * @return It indicates if the subscription is in errored state because one of subscribers threw an exception.
-     */
-  public boolean isErroredBecauseOfSubscriber() {
-    return isErroredBecauseOfSubscriber;
-  }
-
-  /**
-   *  The last subscription connection exception.
-     */
-  public Exception getSubscriptionConnectionException() {
-    return subscriptionConnectionException;
-  }
-
-  /**
-   * The last exception thrown by one of subscribers.
-     */
-  public Exception getLastSubscriberException() {
-    return lastSubscriberException;
-  }
-
   @SuppressWarnings({"boxing", "unchecked"})
-  private void pullDocuments() throws IOException, InterruptedException {
-    try {
-      Etag lastProcessedEtagOnClient = null;
+  private Future<?> pullDocuments() {
+    return executorService.submit(new Callable<Void>() {
+      @Override
+      public Void call() throws Exception {
+        try {
+          Etag lastProcessedEtagOnClient = null;
 
-      while (true) {
-        anySubscriber.waitOne();
+          while (true) {
+            anySubscriber.waitOne();
 
-        cts.getToken().throwIfCancellationRequested();
+            cts.getToken().throwIfCancellationRequested();
 
-        boolean pulledDocs = false;
-        lastProcessedEtagOnServer = null;
-        int processedDocs = 0;
-        try (HttpJsonRequest subscriptionRequest = createPullingRequest()) {
-          try (CloseableHttpResponse response = subscriptionRequest.executeRawResponse()) {
-            HttpJsonRequestExtension.assertNotFailingResponse(response);
+            boolean pulledDocs = false;
+            final Reference<Etag> lastProcessedEtagOnServerRef = new Reference<>();
+            final Reference<Integer> processedDocsRef = new Reference<>(0);
 
-            try (RavenJObjectIterator streamedDocs = ServerClient.yieldStreamResults(response, 0, Integer.MAX_VALUE, null, new Function1<JsonParser, Boolean>() {
-              @SuppressWarnings({"synthetic-access"})
-              @Override
-              public Boolean apply(JsonParser reader) {
-                try {
-                  if (!"LastProcessedEtag".equals(reader.getText())) {
-                    return false;
-                  }
-                  if (reader.nextToken() == null) {
-                    return false;
-                  }
-                  lastProcessedEtagOnServer = Etag.parse(reader.getText());
-                  return true;
-                } catch (IOException e) {
-                  return false;
-                }
-              }
-            })) {
-              while (streamedDocs.hasNext()) {
-                if (pulledDocs == false) {
-                  EventHelper.invoke(beforeBatch, this, EventArgs.EMPTY);
-                }
-                pulledDocs = true;
+            final BlockingQueue<Object> queue = new ArrayBlockingQueue<>(options.getBatchOptions().getMaxDocCount() + 1);
+            Future<?> processingTask = null;
 
-                cts.getToken().throwIfCancellationRequested();
+            try (HttpJsonRequest subscriptionRequest = createPullingRequest()) {
+              try (CloseableHttpResponse response = subscriptionRequest.executeRawResponse()) {
+                HttpJsonRequestExtension.assertNotFailingResponse(response);
 
-                RavenJObject jsonDoc = streamedDocs.next();
-                T instance = null;
-                for (IObserver<T> subscriber : subscribers) {
-                  try {
-                    if (isStronglyTyped) {
-                      if (instance == null) {
-                        instance = conventions.createSerializer().deserialize(jsonDoc.toString(), clazz);
-                        String docId = jsonDoc.get(Constants.METADATA).value(String.class, "@id");
-                        if (StringUtils.isNotEmpty(docId)) {
-                          generateEntityIdOnTheClient.trySetIdentity(instance, docId);
-                        }
+                try (RavenJObjectIterator streamedDocs = ServerClient.yieldStreamResults(response, 0, Integer.MAX_VALUE, null, new Function1<JsonParser, Boolean>() {
+                  @SuppressWarnings({"synthetic-access"})
+                  @Override
+                  public Boolean apply(JsonParser reader) {
+                    try {
+                      if (!"LastProcessedEtag".equals(reader.getText())) {
+                        return false;
                       }
-                      subscriber.onNext(instance);
-                    } else {
-                      subscriber.onNext((T) jsonDoc);
+                      if (reader.nextToken() == null) {
+                        return false;
+                      }
+                      lastProcessedEtagOnServerRef.value = Etag.parse(reader.getText());
+                      return true;
+                    } catch (IOException e) {
+                      return false;
                     }
-                  } catch (Exception ex) {
-                    logger.warnException("Subscriber threw an exception", ex);
-                    if (options.isIgnoreSubscribersErrors() == false) {
-                      isErroredBecauseOfSubscriber = true;
-                      lastSubscriberException = ex;
-                      try {
-                        subscriber.onError(ex);
-                      } catch (Exception e) {
-                        // can happen if a subscriber doesn't have an onError handler - just ignore it
+                  }
+                })) {
+                  while (streamedDocs.hasNext()) {
+                    if (pulledDocs == false) {
+                      EventHelper.invoke(beforeBatch, this, EventArgs.EMPTY);
+
+                      processingTask = executorService.submit(new Runnable() {
+                        @Override
+                        public void run() {
+                          T doc;
+                          try {
+                            while (true) {
+                              Object takenObject = queue.take();
+
+                              if (END_OF_COLLECTION_MARKER == takenObject) {
+                                break;
+                              }
+
+                              doc = (T) takenObject;
+                              cts.getToken().throwIfCancellationRequested();
+
+                              for (IObserver<T> subscriber : subscribers) {
+                                try {
+                                  subscriber.onNext(doc);
+                                } catch (Exception ex) {
+                                  logger.warnException("Subscriber threw an exception", ex);
+                                  if (options.isIgnoreSubscribersErrors() == false) {
+                                    isErroredBecauseOfSubscriber = true;
+                                    lastSubscriberException = ex;
+                                    try {
+                                      subscriber.onError(ex);
+                                    } catch (Exception e) {
+                                      // can happen if a subscriber doesn't have an onError handler - just ignore it
+                                    }
+                                    break;
+                                  }
+                                }
+                              }
+
+                              if (isErroredBecauseOfSubscriber) {
+                                break;
+                              }
+
+                              processedDocsRef.value++;
+                            }
+                          } catch (InterruptedException e) {
+                            throw new RuntimeException(e);
+                          }
+                        }
+                      });
+                    }
+                    pulledDocs = true;
+
+                    cts.getToken().throwIfCancellationRequested();
+
+                    RavenJObject jsonDoc = streamedDocs.next();
+
+                    if (isStronglyTyped) {
+                      T instance = conventions.createSerializer().deserialize(jsonDoc.toString(), clazz);
+                      String docId = jsonDoc.get(Constants.METADATA).value(String.class, "@id");
+
+                      if (StringUtils.isNotEmpty(docId)) {
+                        generateEntityIdOnTheClient.trySetIdentity(instance, docId);
                       }
+
+                      queue.add(instance);
+                    } else {
+                      queue.add((T) jsonDoc);
+                    }
+
+                    if (isErroredBecauseOfSubscriber) {
                       break;
                     }
                   }
                 }
-                processedDocs++;
-                if (isErroredBecauseOfSubscriber) {
-                  break;
+              }
+
+              queue.add(END_OF_COLLECTION_MARKER);
+
+              if (processingTask != null) {
+                processingTask.get();
+              }
+
+              if (isErroredBecauseOfSubscriber) {
+                break;
+              }
+
+              if (lastProcessedEtagOnServerRef.value != null) {
+
+                // This is an acknowledge when the server returns documents to the subscriber.
+                if (pulledDocs) {
+                  EventHelper.invoke(beforeAcknowledgment, this, EventArgs.EMPTY);
+                  acknowledgeBatchToServer(lastProcessedEtagOnServerRef.value);
+                  EventHelper.invoke(afterAcknowledgment, this, new LastProcessedEtagEventArgs(lastProcessedEtagOnServerRef.value));
+
+                  EventHelper.invoke(afterBatch, this, new DocumentProcessedEventArgs(processedDocsRef.value));
+                  continue; // try to pull more documents from subscription
+                } else {
+                  if (!lastProcessedEtagOnServerRef.value.equals(lastProcessedEtagOnClient)) {
+                    // This is a silent acknowledge, this can happen because there was no documents in range
+                    // to be accessible in the time available. This condition can happen when documents must match
+                    // a set of conditions to be eligible.
+                    acknowledgeBatchToServer(lastProcessedEtagOnServerRef.value);
+
+                    lastProcessedEtagOnClient = lastProcessedEtagOnServerRef.value;
+
+                    continue; // try to pull more documents from subscription
+                  }
+                }
+              }
+
+              while (newDocuments.waitOne(options.getClientAliveNotificationInterval(), TimeUnit.MILLISECONDS) == false) {
+                try (HttpJsonRequest clientAliveRequest = createClientAliveRequest()) {
+                  clientAliveRequest.executeRequest();
                 }
               }
             }
           }
-
-          if (isErroredBecauseOfSubscriber) {
-            break;
+        } catch (InterruptedException | IOException e) {
+          throw new RuntimeException(e);
+        } catch (ErrorResponseException e) {
+          SubscriptionException subscriptionException = DocumentSubscriptions.tryGetSubscriptionException(e);
+          if (subscriptionException != null) {
+            throw subscriptionException;
           }
-
-          if (lastProcessedEtagOnServer != null) {
-
-            // This is an acknowledge when the server returns documents to the subscriber.
-            if (pulledDocs) {
-              EventHelper.invoke(beforeAcknowledgment, this, EventArgs.EMPTY);
-              acknowledgeBatchToServer(lastProcessedEtagOnServer);
-              EventHelper.invoke(afterAcknowledgment, this, new LastProcessedEtagEventArgs(lastProcessedEtagOnServer));
-
-              EventHelper.invoke(afterBatch, this, new DocumentProcessedEventArgs(processedDocs));
-              continue; // try to pull more documents from subscription
-            } else {
-              if (!lastProcessedEtagOnClient.equals(lastProcessedEtagOnServer)) {
-                // This is a silent acknowledge, this can happen because there was no documents in range
-                // to be accessible in the time available. This condition can happen when documents must match
-                // a set of conditions to be eligible.
-                acknowledgeBatchToServer(lastProcessedEtagOnServer);
-
-                lastProcessedEtagOnClient = lastProcessedEtagOnServer;
-
-                continue; // try to pull more documents from subscription
-              }
-            }
-          }
-
-          while (newDocuments.waitOne(options.getClientAliveNotificationInterval(), TimeUnit.MILLISECONDS) == false) {
-            try (HttpJsonRequest clientAliveRequest = createClientAliveRequest()) {
-              clientAliveRequest.executeRequest();
-            }
-          }
+          throw e;
         }
+        return null;
       }
-    } catch (ErrorResponseException e) {
-      SubscriptionException subscriptionException = DocumentSubscriptions.tryGetSubscriptionException(e);
-      if (subscriptionException != null) {
-        throw subscriptionException;
-      }
-      throw e;
-    }
+    });
   }
 
   private void acknowledgeBatchToServer(Etag lastProcessedEtagOnServer) {
@@ -317,20 +307,24 @@ public class Subscription<T> implements IObservable<T>, CleanCloseable {
     }
   }
 
-   private Thread startPullingDocs() {
-     Runnable runnable = new Runnable() {
-      @SuppressWarnings("synthetic-access")
+   private Future<?> startPullingDocs() {
+     return executorService.submit(new Runnable() {
       @Override
       public void run() {
+        subscriptionConnectionException = null;
+        pullingTask = pullDocuments();
+
         try {
-          subscriptionConnectionException = null;
-          pullDocuments();
+          pullingTask.get();
         } catch (Exception ex) {
           if (cts.getToken().isCancellationRequested()) {
             return;
           }
 
-          if (tryHandleRejectedConnection(ex, false)) {
+          logger.warn(String.format("Subscription #%d. Pulling task threw the following exception: ", id), ex);
+
+          if (ex instanceof ExecutionException && tryHandleRejectedConnection(ex.getCause(), false)) {
+            logger.debug(String.format("Subscription #%d. Stopping the connection '%s'", id, options.getConnectionId()));
             return;
           }
 
@@ -346,36 +340,38 @@ public class Subscription<T> implements IObservable<T>, CleanCloseable {
           }
         }
       }
-    };
-
-    Thread pullingThread = new Thread(runnable, "Subscription pulling thread");
-    pullingThread.start();
-    return pullingThread;
+    });
   }
 
-  private void restartPullingTask() {
-    boolean connected = false;
-    while (!connected) {
-      try {
-        Thread.sleep(options.getTimeToWaitBeforeConnectionRetry());
-        ensureOpenSubscription.apply();
-        connected = true;
-      } catch (Exception ex) {
-        if (tryHandleRejectedConnection(ex, true)) {
-          return;
+  private Future<?> restartPullingTask() {
+    return executorService.submit(new Runnable() {
+      @Override
+      public void run() {
+        try {
+          Thread.sleep(options.getTimeToWaitBeforeConnectionRetry());
+          ensureOpenSubscription.apply();
+        } catch (Exception ex) {
+          if (tryHandleRejectedConnection(ex, true)) {
+            return;
+          }
+
+          restartPullingTask();
+          return ;
         }
+
+        startPullingTask = startPullingDocs();
       }
-    }
-    startPullingTask = startPullingDocs();
+    });
   }
 
-  private boolean tryHandleRejectedConnection(Exception ex, boolean handleClosedException) {
+  private boolean tryHandleRejectedConnection(Throwable ex, boolean handleClosedException) {
     subscriptionConnectionException = ex;
     if (ex instanceof SubscriptionInUseException ||  // another client has connected to the subscription
             ex instanceof  SubscriptionDoesNotExistException ||  // subscription has been deleted meanwhile
             (handleClosedException && ex instanceof SubscriptionClosedException)) { // someone forced us to drop the connection by calling Subscriptions.Release
       connectionClosed = true;
-      startPullingTask = null;  // prevent from calling wait() on this in close
+      startPullingTask = null; // prevent from calling Wait() on this in close because we can be already inside this task
+      pullingTask = null; // prevent from calling Wait() on this in close because we can be already inside this task
       close();
       return true;
     }
@@ -438,6 +434,11 @@ public class Subscription<T> implements IObservable<T>, CleanCloseable {
 
   @SuppressWarnings("unused")
   private void changesApiConnectionChanged(Object sender, EventArgs e) {
+    if (firstConnection) {
+      firstConnection = false;
+      return;
+    }
+
     RemoteDatabaseChanges changesApi = (RemoteDatabaseChanges) sender;
     if (changesApi.isConnected()){
       newDocuments.set();
@@ -477,7 +478,7 @@ public class Subscription<T> implements IObservable<T>, CleanCloseable {
     @SuppressWarnings("boxing")
     private HttpJsonRequest createPullingRequest() {
       return commands.createRequest(HttpMethods.GET,
-        String.format("/subscriptions/pull?id=%d&connection=%s", id, options.getConnectionId()));
+        String.format("/subscriptions/pull?id=%d&connection=%s", id, options.getConnectionId()), false, false, options.getPullingRequestTimeout());
     }
 
     @SuppressWarnings("boxing")
@@ -520,7 +521,7 @@ public class Subscription<T> implements IObservable<T>, CleanCloseable {
 
       Closeables.closeQuietly(dataSubscriptionReleasedObserver);
 
-      if (changes instanceof CleanCloseable) {
+      if (changes instanceof CleanCloseable) { //TODO delete this?
         Closeable closeableChanges = (Closeable) changes;
         Closeables.closeQuietly(closeableChanges);
       }
@@ -534,15 +535,27 @@ public class Subscription<T> implements IObservable<T>, CleanCloseable {
         changes.removeConnectionStatusChanges(eventHandler);
       }
 
-      try {
-        if (startPullingTask != null) {
-          startPullingTask.join();
+      Future[] futures = new Future[] { pullingTask, startPullingTask };
+
+      for (int i = 0; i < futures.length; i++) {
+        try {
+          Future future = futures[i];
+          if (future != null) {
+            future.get();
+          }
+        } catch (InterruptedException e) {
+          throw new RuntimeException(e);
+        } catch (ExecutionException e ) {
+          if (!(e.getCause() instanceof OperationCancelledException)) {
+            throw new RuntimeException(e);
+          }
         }
-      } catch (OperationCancelledException e) {
-        //ignore
-      } catch (InterruptedException e) {
-        // ignore
       }
+
+      executorService.shutdown(); //TODO: make sure this invocation will throw is any task in queue will throw
+      // TODO: verify if it stopping underlaying threads
+      // TODO: filter for operation canceled exception and don't rethrow if such
+
       if (!connectionClosed) {
         closeSubscription();
       }
@@ -553,10 +566,6 @@ public class Subscription<T> implements IObservable<T>, CleanCloseable {
         closeRequest.executeRequest();
         connectionClosed = true;
       }
-    }
-
-    public Thread getStartPullingTask() {
-      return startPullingTask;
     }
 
     @Override
@@ -587,5 +596,67 @@ public class Subscription<T> implements IObservable<T>, CleanCloseable {
       return lastProcessedEtag;
     }
   }
+
+
+  public void addBeforeBatchHandler(EventHandler<VoidArgs> handler) {
+    beforeBatch.add(handler);
+  }
+
+  public void removeBeforeBatchHandler(EventHandler<VoidArgs> handler) {
+    beforeBatch.remove(handler);
+  }
+
+  public void addAfterBatchHandler(EventHandler<DocumentProcessedEventArgs> handler) {
+    afterBatch.add(handler);
+  }
+
+  public void removeAfterBatchHandler(EventHandler<DocumentProcessedEventArgs> handler) {
+    afterBatch.remove(handler);
+  }
+
+  public void addBeforeAcknowledgmentHandler(EventHandler<VoidArgs> handler) {
+    beforeAcknowledgment.add(handler);
+  }
+
+  public void removeBeforeAcknowledgmentHandler(EventHandler<VoidArgs> handler) {
+    beforeAcknowledgment.remove(handler);
+  }
+
+  public void addAfterAcknowledgmentHandler(EventHandler<LastProcessedEtagEventArgs> handler) {
+    afterAcknowledgment.add(handler);
+  }
+
+  public void removeAfterAcknowledgmentHandler(EventHandler<LastProcessedEtagEventArgs> handler) {
+    afterAcknowledgment.remove(handler);
+  }
+
+  /**
+   * It determines if the subscription is closed.
+   */
+  public boolean isConnectionClosed() {
+    return connectionClosed;
+  }
+
+  /**
+   * @return It indicates if the subscription is in errored state because one of subscribers threw an exception.
+   */
+  public boolean isErroredBecauseOfSubscriber() {
+    return isErroredBecauseOfSubscriber;
+  }
+
+  /**
+   *  The last subscription connection exception.
+   */
+  public Throwable getSubscriptionConnectionException() {
+    return subscriptionConnectionException;
+  }
+
+  /**
+   * The last exception thrown by one of subscribers.
+   */
+  public Throwable getLastSubscriberException() {
+    return lastSubscriberException;
+  }
+
 
 }

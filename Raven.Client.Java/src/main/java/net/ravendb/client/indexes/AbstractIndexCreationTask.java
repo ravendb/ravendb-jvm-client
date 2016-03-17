@@ -162,6 +162,14 @@ public class AbstractIndexCreationTask extends AbstractCommonApiForIndexesAndTra
       if (currentOrLegacyIndexDefinitionEquals(documentConvention, serverDef, indexDefinition)) {
         return;
       }
+
+      switch (serverDef.getLockMode()) {
+        case LOCKED_IGNORE:
+          return;
+        case LOCKED_ERROR:
+          throw new IllegalStateException(String.format("Can't replace locked index %d its lock mode is set to: LockedError", serverDef.getIndexId()));
+      }
+
       updateSideBySideIndex(databaseCommands, minimumEtagBeforeReplace, replaceTimeUtc, replaceIndexName, indexDefinition, documentConvention);
     } else {
       // since index doesn't exist yet - create it in normal mode

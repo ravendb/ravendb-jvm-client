@@ -272,7 +272,7 @@ public abstract class RemoteChangesClientBase<TChangesApi extends IConnectableCh
         case "Heartbeat":
           break;
         default:
-          notifySubscribers(type, value, counters);
+          notifySubscribers(type, value, counters.getSnapshot());
           break;
       }
     } catch (IOException e) {
@@ -281,7 +281,7 @@ public abstract class RemoteChangesClientBase<TChangesApi extends IConnectableCh
   }
 
   @SuppressWarnings("hiding")
-  protected abstract void notifySubscribers(String type, RavenJObject value, AtomicDictionary<DatabaseConnectionState> counters);
+  protected abstract void notifySubscribers(String type, RavenJObject value, Iterable<Map.Entry<String, DatabaseConnectionState>> counters);
 
   protected abstract void subscribeOnServer();
 

@@ -267,6 +267,15 @@ public interface IDatabaseCommands extends IHoldProfilingInformation {
    */
   public String putIndex(final String name, final IndexDefinition definition, final boolean overwrite);
 
+
+  /**
+   * Creates an index with the specified name, based on an index definition
+   * @param name Name of the index
+   * @param definition Definition of an index
+   * @param precomputeBatchOperation Operation of first time index population
+     */
+  public String putIndex(final String name, final IndexDefinition definition, final boolean overwrite, Reference<Operation> precomputeBatchOperation);
+
   /**
    * Creates an index with the specified name, based on an index definition that is created by the supplied IndexDefinitionBuilder
    * @param name Name of an index
@@ -877,6 +886,8 @@ public interface IDatabaseCommands extends IHoldProfilingInformation {
    * Internal use
    */
   public HttpJsonRequest createRequest(HttpMethods method, String requestUrl);
+
+  public HttpJsonRequest createRequest(HttpMethods method, String requestUrl, boolean disableRequestCompression, boolean disableAuthentication, Long timeout);
 
   /**
    * Gets the build number

@@ -22,6 +22,7 @@ import net.ravendb.client.connection.profiling.RequestResultArgs;
 import net.ravendb.client.extensions.MultiDatabase;
 import net.ravendb.client.util.SimpleCache;
 
+import net.ravendb.java.http.client.RavenResponseContentEncoding;
 import org.apache.commons.lang.StringUtils;
 import org.apache.http.HttpStatus;
 import org.apache.http.config.SocketConfig;
@@ -31,6 +32,7 @@ import org.apache.http.impl.client.StandardHttpRequestRetryHandler;
 import org.apache.http.impl.conn.PoolingHttpClientConnectionManager;
 
 import com.google.common.io.Closeables;
+import org.apache.http.protocol.HttpProcessorBuilder;
 
 
 /**
@@ -68,9 +70,14 @@ public class HttpJsonRequestFactory implements CleanCloseable {
 
     PoolingHttpClientConnectionManager cm = new PoolingHttpClientConnectionManager();
     cm.setDefaultMaxPerRoute(10);
-    this.httpClient = HttpClients.custom().setConnectionManager(cm).setRetryHandler(new StandardHttpRequestRetryHandler(0, false))
-      .setDefaultSocketConfig(SocketConfig.custom().setTcpNoDelay(true).build()).
-      build();
+    this.httpClient = HttpClients
+            .custom()
+            .setConnectionManager(cm)
+            .disableContentCompression()
+            .addInterceptorLast(new RavenResponseContentEncoding())
+            .setRetryHandler(new StandardHttpRequestRetryHandler(0, false))
+            .setDefaultSocketConfig(SocketConfig.custom().setTcpNoDelay(true).build()).
+            build();
     this.maxNumberOfCachedRequests = maxNumberOfCachedRequests;
     resetCache(null);
   }
@@ -258,7 +265,7 @@ public class HttpJsonRequestFactory implements CleanCloseable {
     numOfCachedRequests.incrementAndGet();
   }
 
-  public void invokeLogRequest(IHoldProfilingInformation sender, RequestResultArgs requestResult) {
+  public void onLogRequest(IHoldProfilingInformation sender, RequestResultArgs requestResult) {
     EventHelper.invoke(logRequest, sender, requestResult);
   }
 

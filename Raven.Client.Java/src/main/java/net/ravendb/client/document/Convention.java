@@ -233,4 +233,5 @@ public class Convention {
   public void setSaveEnumsAsIntegers(boolean saveEnumsAsIntegers) {
     this.saveEnumsAsIntegers = saveEnumsAsIntegers;
   }
+
 }

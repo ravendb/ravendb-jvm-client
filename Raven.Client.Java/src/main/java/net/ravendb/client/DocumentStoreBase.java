@@ -15,6 +15,7 @@ import net.ravendb.client.document.dtc.ITransactionRecoveryStorage;
 import net.ravendb.client.document.dtc.VolatileOnlyTransactionRecoveryStorage;
 import net.ravendb.client.indexes.AbstractIndexCreationTask;
 import net.ravendb.client.indexes.AbstractTransformerCreationTask;
+import net.ravendb.client.indexes.IndexCreation;
 import net.ravendb.client.listeners.*;
 import net.ravendb.client.util.GlobalLastEtagHolder;
 import net.ravendb.client.util.ILastEtagHolder;
@@ -94,22 +95,18 @@ public abstract class DocumentStoreBase implements IDocumentStore {
     this.sharedOperationsHeaders = sharedOperationsHeaders;
   }
 
+  /**
+   *  Executes index creation.
+     */
   @Override
   public void executeIndex(AbstractIndexCreationTask indexCreationTask) {
     indexCreationTask.execute(getDatabaseCommands(), getConventions());
   }
 
   public void executeIndexes(List<AbstractIndexCreationTask> indexCreationTasks) {
-    List<IndexToAdd> indexesToAdd = new ArrayList<>();
-    for (AbstractIndexCreationTask creationTask : indexCreationTasks) {
-      IndexToAdd indexToAdd = new IndexToAdd();
-      indexToAdd.setDefinition(creationTask.createIndexDefinition());
-      indexToAdd.setName(creationTask.getIndexName());
-      indexToAdd.setPriority(creationTask.getPriority() != null ? creationTask.getPriority() : IndexStats.IndexingPriority.NORMAL);
-      indexesToAdd.add(indexToAdd);
-    }
+    IndexToAdd[] indexesToAdd = IndexCreation.createIndexesToAdd(indexCreationTasks, conventions);
 
-    getDatabaseCommands().putIndexes(indexesToAdd.toArray(new IndexToAdd[0]));
+    getDatabaseCommands().putIndexes(indexesToAdd);
 
     for (AbstractIndexCreationTask creationTask : indexCreationTasks) {
       creationTask.afterExecute(getDatabaseCommands(), getConventions());
@@ -123,16 +120,9 @@ public abstract class DocumentStoreBase implements IDocumentStore {
 
   @Override
   public void sideBySideExecuteIndexes(List<AbstractIndexCreationTask> indexCreationTasks, Etag minimumEtagBeforeReplace, Date replaceTimeUtc) {
-    List<IndexToAdd> indexesToAdd = new ArrayList<>();
-    for (AbstractIndexCreationTask creationTask : indexCreationTasks) {
-      IndexToAdd indexToAdd = new IndexToAdd();
-      indexToAdd.setDefinition(creationTask.createIndexDefinition());
-      indexToAdd.setName(creationTask.getIndexName());
-      indexToAdd.setPriority(creationTask.getPriority() != null ? creationTask.getPriority() : IndexStats.IndexingPriority.NORMAL);
-      indexesToAdd.add(indexToAdd);
-    }
+    IndexToAdd[] indexesToAdd = IndexCreation.createIndexesToAdd(indexCreationTasks, conventions);
 
-    getDatabaseCommands().putSideBySideIndexes(indexesToAdd.toArray(new IndexToAdd[0]), minimumEtagBeforeReplace, replaceTimeUtc);
+    getDatabaseCommands().putSideBySideIndexes(indexesToAdd, minimumEtagBeforeReplace, replaceTimeUtc);
 
     for (AbstractIndexCreationTask creationTask : indexCreationTasks) {
       creationTask.afterExecute(getDatabaseCommands(), getConventions());

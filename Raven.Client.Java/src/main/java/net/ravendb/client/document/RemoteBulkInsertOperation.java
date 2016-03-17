@@ -206,6 +206,7 @@ public class RemoteBulkInsertOperation implements ILowLevelBulkInsertOperation, 
             if (isOperationCompleted(operationId)) {
               responseOperationId = operationId;
             }
+
           } catch (IOException e) {
             throw new RuntimeException(e);
           }

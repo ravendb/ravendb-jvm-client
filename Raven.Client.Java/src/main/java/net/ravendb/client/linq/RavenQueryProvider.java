@@ -37,6 +37,7 @@ public class RavenQueryProvider<T> implements IRavenQueryProvider {
   private final boolean isMapReduce;
   private final Map<String, RavenJToken> transformerParameters = new HashMap<>();
   private final Class<T> clazz;
+  private Class originalQueryType;
 
   private Set<String> fieldsToFetch = new HashSet<>();
   private String resultTranformer;
@@ -169,7 +170,7 @@ public class RavenQueryProvider<T> implements IRavenQueryProvider {
   @SuppressWarnings("hiding")
   protected <S> RavenQueryProviderProcessor<S> getQueryProviderProcessor(Class<S> clazz) {
     return new RavenQueryProviderProcessor<>(clazz, queryGenerator, customizeQuery, afterQueryExecuted, afterStreamExecuted,
-      indexName, fieldsToFetch, fieldsToRename, isMapReduce, resultTranformer, transformerParameters);
+      indexName, fieldsToFetch, fieldsToRename, isMapReduce, resultTranformer, transformerParameters, originalQueryType);
   }
 
   /**
@@ -249,4 +250,13 @@ public class RavenQueryProvider<T> implements IRavenQueryProvider {
 
   }
 
+  @Override
+  public Class getOriginalQueryType() {
+    return originalQueryType;
+  }
+
+  @Override
+  public void setOriginalQueryType(Class originalQueryType) {
+    this.originalQueryType = originalQueryType;
+  }
 }

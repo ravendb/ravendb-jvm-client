@@ -1,5 +1,6 @@
 package net.ravendb.client.connection;
 
+import com.google.common.io.Closeables;
 import net.ravendb.abstractions.basic.CleanCloseable;
 import net.ravendb.abstractions.basic.EventHandler;
 import net.ravendb.abstractions.basic.Reference;
@@ -19,6 +20,7 @@ import net.ravendb.abstractions.indexing.*;
 import net.ravendb.abstractions.json.linq.*;
 import net.ravendb.abstractions.replication.ReplicationDocument;
 import net.ravendb.abstractions.replication.ReplicationStatistics;
+import net.ravendb.abstractions.smuggler.ExportOptions;
 import net.ravendb.abstractions.util.BomUtils;
 import net.ravendb.abstractions.util.NetDateFormat;
 import net.ravendb.client.RavenPagingInformation;
@@ -34,6 +36,7 @@ import net.ravendb.client.extensions.HttpJsonRequestExtension;
 import net.ravendb.client.extensions.MultiDatabase;
 import net.ravendb.client.indexes.IndexDefinitionBuilder;
 import net.ravendb.client.listeners.IDocumentConflictListener;
+import net.ravendb.client.util.SingleAuthTokenRetriever;
 import net.ravendb.client.utils.UrlUtils;
 import net.ravendb.imports.json.JsonConvert;
 import org.apache.commons.io.IOUtils;
@@ -109,6 +112,7 @@ public class ServerClient implements IDatabaseCommands {
       rootUrl = rootUrl.substring(0, databasesIndex);
     }
     this.jsonRequestFactory = httpJsonRequestFactory;
+
     this.sessionId = sessionId;
     this.convention = convention;
     this.credentialsThatShouldBeUsedOnlyInOperationsWithoutReplication = credentials;
@@ -271,6 +275,16 @@ public class ServerClient implements IDatabaseCommands {
   }
 
   @Override
+  public String putIndex(final String name, final IndexDefinition definition, final boolean overwrite, final Reference<Operation> precomputeBatchOperation) {
+    return executeWithReplication(HttpMethods.PUT, new Function1<OperationMetadata, String>() {
+      @Override
+      public String apply(OperationMetadata operationMetadata) {
+        return directPutIndexWithOperation(name, definition, overwrite, operationMetadata, precomputeBatchOperation);
+      }
+    });
+  }
+
+  @Override
   public String[] putIndexes(final IndexToAdd[] indexesToAdd) {
     return executeWithReplication(HttpMethods.PUT, new Function1<OperationMetadata, String[]>() {
       @Override
@@ -376,6 +390,60 @@ public class ServerClient implements IDatabaseCommands {
         request.write(JsonConvert.serializeObject(definition)); //we don't use default converters
         RavenJToken responseJson = request.readResponseJson();
         return responseJson.value(String.class, "Index");
+      } catch (ErrorResponseException e) {
+        if (e.getStatusCode() != HttpStatus.SC_BAD_REQUEST) {
+          throw e;
+        }
+        responseException = e;
+      }
+
+      IndexErrorObjectProto error = ExceptionExtensions.tryReadErrorResponseObject(IndexErrorObjectProto.class, responseException);
+      if (error == null) {
+        throw responseException;
+      }
+      IndexCompilationException compilationException = new IndexCompilationException(error.getMessage());
+      compilationException.setIndexDefinitionProperty(error.getIndexDefinitionProperty());
+      compilationException.setProblematicText(error.getProblematicText());
+      throw compilationException;
+    }
+  }
+
+  private String directPutIndexWithOperation(String name, IndexDefinition indexDef, boolean overwrite, OperationMetadata operationMetadata, Reference<Operation> precomputeBatchOperation) {
+    String requestUri = operationMetadata.getUrl() + "/indexes/" + UrlUtils.escapeUriString(name) + "?definition=yes&includePrecomputeOperation=yes";
+
+    try (HttpJsonRequest request = jsonRequestFactory.createHttpJsonRequest(
+            new CreateHttpJsonRequestParams(this, requestUri, HttpMethods.HEAD, new RavenJObject(), operationMetadata.getCredentials(), convention)
+                    .addOperationHeaders(operationsHeaders))
+            .addReplicationStatusHeaders(url, operationMetadata.getUrl(), replicationInformer, convention.getFailoverBehavior(), new HandleReplicationStatusChangesCallback())) {
+
+      try {
+        // If the index doesn't exist this will throw a NotFound exception and continue with a PUT request
+        request.executeRequest();
+        if (!overwrite) {
+          throw new IllegalStateException("Cannot put index: " + name + ", index already exists");
+        }
+      } catch (ErrorResponseException e) {
+        if (e.getStatusCode() != HttpStatus.SC_NOT_FOUND) {
+          throw e;
+        }
+      }
+    }
+    try (HttpJsonRequest request = jsonRequestFactory.createHttpJsonRequest(
+            new CreateHttpJsonRequestParams(this, requestUri, HttpMethods.PUT, new RavenJObject(), operationMetadata.getCredentials(), convention)
+                    .addOperationHeaders(operationsHeaders))) {
+
+      ErrorResponseException responseException;
+      try {
+        request.write(JsonConvert.serializeObject(indexDef)); //we don't use default converters
+        RavenJToken result = request.readResponseJson();
+
+        precomputeBatchOperation.value = null;
+
+        if (result instanceof RavenJObject && ((RavenJObject) result).containsKey("OperationId")) {
+          Long operationId = result.value(Long.class, "OperationId");
+          precomputeBatchOperation.value = operationId != -1 ? new Operation(this, operationId) : null;
+        }
+        return result.value(String.class, "Index");
       } catch (ErrorResponseException e) {
         if (e.getStatusCode() != HttpStatus.SC_BAD_REQUEST) {
           throw e;
@@ -716,6 +784,8 @@ public class ServerClient implements IDatabaseCommands {
     HttpMethods method = StringUtils.isNotEmpty(key) ? HttpMethods.PUT : HttpMethods.POST;
     if (etag != null) {
       metadata.set(Constants.METADATA_ETAG_FIELD, new RavenJValue(etag.toString()));
+    } else {
+      metadata.remove(Constants.METADATA_ETAG_FIELD);
     }
     if (key != null) {
       key = UrlUtils.escapeUriString(key);
@@ -966,37 +1036,32 @@ public class ServerClient implements IDatabaseCommands {
     Set<String> uniqueIds = new LinkedHashSet<>(Arrays.asList(ids));
     // if it is too big, we drop to POST (note that means that we can't use the HTTP cache any longer)
     // we are fine with that, requests to load that many items are probably going to be rare
-    HttpJsonRequest request = null;
 
-    try {
-      int uniqueIdsSum = 0;
-      for (String id: ids) {
-        uniqueIdsSum += id.length();
+    int uniqueIdsSum = 0;
+    for (String id : ids) {
+      uniqueIdsSum += id.length();
+    }
+
+    boolean isGet = uniqueIdsSum < 1024;
+    HttpMethods method = isGet ? HttpMethods.GET : HttpMethods.POST;
+
+    if (isGet) {
+      for (String uniqueId : uniqueIds) {
+        path += "&id=" + UrlUtils.escapeDataString(uniqueId);
       }
+    }
 
-      if (uniqueIdsSum < 1024) {
-        for (String uniqueId: uniqueIds) {
-          path += "&id=" + UrlUtils.escapeDataString(uniqueId);
-        }
-        request = jsonRequestFactory.createHttpJsonRequest(
-          new CreateHttpJsonRequestParams(this, path, HttpMethods.GET, metadata, operationMetadata.getCredentials(), convention)
-          .addOperationHeaders(operationsHeaders))
-          .addReplicationStatusHeaders(url, operationMetadata.getUrl(), replicationInformer, convention.getFailoverBehavior(), new HandleReplicationStatusChangesCallback());
+    CreateHttpJsonRequestParams createHttpJsonRequestParams = new CreateHttpJsonRequestParams(this, path, HttpMethods.GET, metadata, operationMetadata.getCredentials(), convention)
+            .addOperationHeaders(operationsHeaders);
 
-      } else {
-        request = jsonRequestFactory.createHttpJsonRequest(
-          new CreateHttpJsonRequestParams(this, path, HttpMethods.POST, metadata, operationMetadata.getCredentials(), convention)
-          .addOperationHeaders(operationsHeaders))
-          .addReplicationStatusHeaders(url, operationMetadata.getUrl(), replicationInformer, convention.getFailoverBehavior(), new HandleReplicationStatusChangesCallback());
+    try (HttpJsonRequest request = jsonRequestFactory.createHttpJsonRequest(createHttpJsonRequestParams)
+            .addReplicationStatusHeaders(url, operationMetadata.getUrl(), replicationInformer, convention.getFailoverBehavior(), new HandleReplicationStatusChangesCallback())) {
+      if (!isGet) {
         request.write(RavenJToken.fromObject(uniqueIds).toString());
       }
 
       RavenJToken result = request.readResponseJson();
-      return completeMultiGet(operationMetadata, ids, includes,transformer, transformerParameters, result);
-    } finally {
-      if (request != null) {
-        request.close();
-      }
+      return completeMultiGet(operationMetadata, ids, includes, transformer, transformerParameters, result);
     }
   }
 
@@ -1731,6 +1796,11 @@ public class ServerClient implements IDatabaseCommands {
       try {
         if (json == null) throw new IllegalStateException("Got empty response from the server for the following request: " + request.getUrl());
         QueryResult queryResult = SerializationHelper.toQueryResult(json, HttpExtensions.getEtagHeader(request), request.getResponseHeaders().get("Temp-Request-Time"), request.getSize());
+
+        if (request.getResponseStatusCode() == HttpStatus.SC_NOT_MODIFIED) {
+          queryResult.setDurationMiliseconds(-1);
+        }
+
         List<RavenJObject> docsResults = new ArrayList<>();
         docsResults.addAll(queryResult.getResults());
         docsResults.addAll(queryResult.getIncludes());
@@ -1974,6 +2044,8 @@ public class ServerClient implements IDatabaseCommands {
     }
     if (etag != null) {
       metadata.set(Constants.METADATA_ETAG_FIELD, new RavenJValue(etag.toString()));
+    } else {
+      metadata.remove(Constants.METADATA_ETAG_FIELD);
     }
 
     try (HttpJsonRequest jsonRequest = jsonRequestFactory.createHttpJsonRequest(
@@ -2143,6 +2215,39 @@ public class ServerClient implements IDatabaseCommands {
     });
   }
 
+  public RavenJObjectIterator streamExport(ExportOptions options) {
+    String path = "/smuggler/export";
+    HttpJsonRequest request = createRequest(HttpMethods.POST, path);
+
+    request.removeAuthorizationHeader();
+
+    SingleAuthTokenRetriever tokenRetriever = new SingleAuthTokenRetriever(this, jsonRequestFactory, convention, operationsHeaders, new OperationMetadata(url, getPrimaryCredentials()));
+    String token = tokenRetriever.getToken();
+    try {
+      token = tokenRetriever.validateThatWeCanUseToken(token);
+    } catch (Exception e) {
+      request.close();
+
+      throw new IllegalStateException("Could not authenticate token for export streaming, if you are using ravendb in IIS make sure you have Anonymous Authentication enabled in the IIS configuration", e);
+    }
+
+    request.addOperationHeader("Single-Use-Auth-Token", token);
+
+
+    CloseableHttpResponse response = null;
+    try {
+      response = request.executeRawResponse(RavenJObject.fromObject(options).toString());
+    } catch (Exception e) {
+      if (response != null) {
+        Closeables.closeQuietly(response);
+      }
+
+      throw new RuntimeException(e);
+    }
+
+    return yieldStreamResults(response);
+  }
+
   @Override
   public RavenJObjectIterator streamQuery(final String index, final IndexQuery query, final Reference<QueryHeaderInformation> queryHeaderInfo) {
     return executeWithReplication(HttpMethods.GET, new Function1<OperationMetadata, RavenJObjectIterator>() {
@@ -2176,9 +2281,11 @@ public class ServerClient implements IDatabaseCommands {
         new HandleReplicationStatusChangesCallback());
     request.removeAuthorizationHeader();
 
-    String token = getSingleAuthToken(operationMetadata);
+    SingleAuthTokenRetriever tokenRetriever = new SingleAuthTokenRetriever(this, jsonRequestFactory, convention, operationsHeaders, operationMetadata);
+    String token = tokenRetriever.getToken();
+
     try {
-      token = validateThatWeCanUseAuthenticateTokens(operationMetadata, token);
+      token = tokenRetriever.validateThatWeCanUseToken(token);
     } catch (Exception e) {
       request.close();
       throw new IllegalStateException("Could not authenticate token for query streaming, if you are using ravendb in IIS make sure you have Anonymous Authentication enabled in the IIS configuration", e);
@@ -2334,14 +2441,14 @@ public class ServerClient implements IDatabaseCommands {
       .addOperationHeaders(operationsHeaders))
       .addReplicationStatusHeaders(url, url, replicationInformer, convention.getFailoverBehavior(), new HandleReplicationStatusChangesCallback());
 
-    request.removeAuthorizationHeader();
-    String token = getSingleAuthToken(operationMetadata);
+    SingleAuthTokenRetriever tokenRetriever = new SingleAuthTokenRetriever(this, jsonRequestFactory, convention, operationsHeaders, operationMetadata);
+    String token = tokenRetriever.getToken();
 
     try {
-      token = validateThatWeCanUseAuthenticateTokens(operationMetadata, token);
+      token = tokenRetriever.validateThatWeCanUseToken(token);
     } catch (Exception e) {
       request.close();
-      throw new IllegalStateException("Could not authenticate token for docs streaming, if you are using ravendb in IIS make sure you have Anonymous Authentication enabled in the IIS configuration", e);
+      throw new IllegalStateException("Could not authenticate token for query streaming, if you are using ravendb in IIS make sure you have Anonymous Authentication enabled in the IIS configuration", e);
     }
 
     request.addOperationHeader("Single-Use-Auth-Token", token);
@@ -2451,16 +2558,6 @@ public class ServerClient implements IDatabaseCommands {
     boolean disableAuthentication, Long timeout) {
     RavenJObject metadata = new RavenJObject();
     CreateHttpJsonRequestParams createHttpJsonRequestParams = new CreateHttpJsonRequestParams(this, url + requestUrl, method, metadata, credentialsThatShouldBeUsedOnlyInOperationsWithoutReplication, convention, timeout)
-    .addOperationHeaders(operationsHeaders);
-    createHttpJsonRequestParams.setDisableRequestCompression(disableRequestCompression);
-    createHttpJsonRequestParams.setDisableAuthentication(disableAuthentication);
-    return jsonRequestFactory.createHttpJsonRequest(createHttpJsonRequestParams);
-  }
-
-  public HttpJsonRequest createRequest(OperationMetadata operationMetadata, HttpMethods method, String requestUrl, boolean disableRequestCompression,
-    boolean disableAuthentication, Long timeout) {
-    RavenJObject metadata = new RavenJObject();
-    CreateHttpJsonRequestParams createHttpJsonRequestParams = new CreateHttpJsonRequestParams(this, operationMetadata.getUrl() + requestUrl, method, metadata, credentialsThatShouldBeUsedOnlyInOperationsWithoutReplication, convention, timeout)
     .addOperationHeaders(operationsHeaders);
     createHttpJsonRequestParams.setDisableRequestCompression(disableRequestCompression);
     createHttpJsonRequestParams.setDisableAuthentication(disableAuthentication);
@@ -2666,21 +2763,6 @@ public class ServerClient implements IDatabaseCommands {
     } catch (ErrorResponseException e) {
       if (e.getStatusCode() == HttpStatus.SC_NOT_FOUND) return null;
       throw e;
-    }
-  }
-
-  public String getSingleAuthToken(OperationMetadata operationMetadata) {
-    try (HttpJsonRequest tokenRequest = createRequest(operationMetadata, HttpMethods.GET, "/singleAuthToken", true, true, null)) {
-      return tokenRequest.readResponseJson().value(String.class, "Token");
-    }
-  }
-
-  private String validateThatWeCanUseAuthenticateTokens(OperationMetadata operationMetadata, String token) {
-    try (HttpJsonRequest request = createRequest(operationMetadata, HttpMethods.GET, "/singleAuthToken", true, true, null)) {
-      request.removeAuthorizationHeader();
-      request.addOperationHeader("Single-Use-Auth-Token", token);
-      RavenJToken result = request.readResponseJson();
-      return result.value(String.class, "Token");
     }
   }
 

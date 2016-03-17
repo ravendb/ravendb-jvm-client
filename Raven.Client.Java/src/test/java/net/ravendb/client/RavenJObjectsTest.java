@@ -390,19 +390,19 @@ public class RavenJObjectsTest {
     RavenJObject complexObject = RavenJObject.parse("{ \"a\" : 5,  \"e\": true, \"f\" : \"string\"}");
 
     List<String> valuesString = complexObject.values(String.class);
-    assertEquals("5", valuesString.get(2));
+    assertEquals("5", valuesString.get(0));
     assertEquals("true", valuesString.get(1));
-    assertEquals("string", valuesString.get(0));
+    assertEquals("string", valuesString.get(2));
 
     List<Integer> valuesInt = complexObject.values(Integer.class);
-    assertEquals(new Integer(5), valuesInt.get(2));
+    assertEquals(new Integer(5), valuesInt.get(0));
     assertEquals(new Integer(1), valuesInt.get(1));
-    assertEquals(new Integer(0), valuesInt.get(0));
+    assertEquals(new Integer(0), valuesInt.get(2));
 
     List<Boolean> valuesBool = complexObject.values(Boolean.class);
-    assertEquals(Boolean.FALSE, valuesBool.get(2));
-    assertEquals(Boolean.TRUE, valuesBool.get(1));
     assertEquals(Boolean.FALSE, valuesBool.get(0));
+    assertEquals(Boolean.TRUE, valuesBool.get(1));
+    assertEquals(Boolean.FALSE, valuesBool.get(2));
 
     complexObject = RavenJObject.parse("{ \"b\" : [1,2,3]}");
     List<RavenJArray>valuesArray = complexObject.values(RavenJArray.class);

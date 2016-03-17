@@ -154,7 +154,7 @@ public class HttpJsonRequest implements CleanCloseable {
         defaultRequestHeaders.put("Content-Type", "application/json; charset=utf-8");
       }
       if (factory.isAcceptGzipContent()) {
-        // Accept-Encoding Parameters are handled by HttpClient
+        // accept encoding is turned off in HttpClient, so we deal with it manually
         defaultRequestHeaders.put("Accept-Encoding", "gzip,deflate");
       }
     }
@@ -181,7 +181,7 @@ public class HttpJsonRequest implements CleanCloseable {
       args.setUrl(url);
       args.setPostedData(postedData);
 
-      factory.invokeLogRequest(owner, args);
+      factory.onLogRequest(owner, args);
 
       return result;
     }
@@ -282,7 +282,9 @@ public class HttpJsonRequest implements CleanCloseable {
 
   private void copyHeadersToHttpRequestMessage(HttpUriRequest httpRequestMessage) {
     for (Map.Entry<String, String> kvp : headers.entrySet()) {
-      httpRequestMessage.setHeader(kvp.getKey(), kvp.getValue());
+      if (!Constants.LAST_MODIFIED.equals(kvp.getKey())) {
+        httpRequestMessage.setHeader(kvp.getKey(), kvp.getValue());
+      }
     }
   }
 
@@ -310,7 +312,7 @@ public class HttpJsonRequest implements CleanCloseable {
       requestResultArgs.setUrl(url);
       requestResultArgs.setPostedData(postedData);
 
-      factory.invokeLogRequest(owner, requestResultArgs);
+      factory.onLogRequest(owner, requestResultArgs);
 
       throw ErrorResponseException.fromResponseMessage(response, readErrorString);
     }
@@ -327,7 +329,7 @@ public class HttpJsonRequest implements CleanCloseable {
       requestResultArgs.setResult(result.toString());
       requestResultArgs.setUrl(url);
       requestResultArgs.setPostedData(postedData);
-      factory.invokeLogRequest(owner, requestResultArgs);
+      factory.onLogRequest(owner, requestResultArgs);
 
       return result;
     }
@@ -350,7 +352,7 @@ public class HttpJsonRequest implements CleanCloseable {
     requestResultArgs.setResult(readToEnd);
     requestResultArgs.setUrl(url);
     requestResultArgs.setPostedData(postedData);
-    factory.invokeLogRequest(owner, requestResultArgs);
+    factory.onLogRequest(owner, requestResultArgs);
 
     if (StringUtils.isBlank(readToEnd)) {
       throw ErrorResponseException.fromResponseMessage(response, true);
@@ -467,7 +469,7 @@ public class HttpJsonRequest implements CleanCloseable {
       args.setUrl(url);
       args.setPostedData(postedData);
 
-      factory.invokeLogRequest(owner, args);
+      factory.onLogRequest(owner, args);
 
       return data;
     } catch (IOException e) {

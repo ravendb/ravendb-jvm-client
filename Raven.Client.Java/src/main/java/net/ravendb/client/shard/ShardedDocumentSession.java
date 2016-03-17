@@ -22,6 +22,7 @@ import net.ravendb.client.document.batches.LazyMultiLoadOperation;
 import net.ravendb.client.document.sessionoperations.LoadOperation;
 import net.ravendb.client.document.sessionoperations.LoadTransformerOperation;
 import net.ravendb.client.document.sessionoperations.MultiLoadOperation;
+import net.ravendb.client.document.sessionoperations.QueryOperation;
 import net.ravendb.client.exceptions.ConflictException;
 import net.ravendb.client.indexes.AbstractIndexCreationTask;
 import net.ravendb.client.indexes.AbstractTransformerCreationTask;
@@ -138,10 +139,20 @@ implements IDocumentQueryGenerator, IDocumentSessionImpl, ISyncAdvancedSessionOp
   @SuppressWarnings("unchecked")
   @Override
   public <T> T load(final Class<T> clazz, final String id) {
+    if (isDeleted(id)) {
+      return null;
+    }
+
     Object existingEntity;
     if (entitiesByKey.containsKey(id)) {
       existingEntity = entitiesByKey.get(id);
       return (T) existingEntity;
+    }
+
+    JsonDocument value = includedDocumentsByKey.get(id);
+    if (value != null) {
+      includedDocumentsByKey.remove(id);
+      return (T) trackEntity(clazz, value);
     }
 
     incrementRequestCount();
@@ -328,26 +339,10 @@ implements IDocumentQueryGenerator, IDocumentSessionImpl, ISyncAdvancedSessionOp
           public T[] apply(IDatabaseCommands dbCmd, Integer i) {
             // Returns array of arrays, public APIs don't surface that yet though as we only support Transform
             // With a single Id
-            List<RavenJObject> dbGetResults = dbCmd.get(currentShardIds.toArray(new String[0]), includePaths, transformer, transformerParameters)
-              .getResults();
+            MultiLoadResult multiLoadResult = dbCmd.get(currentShardIds.toArray(new String[0]), includePaths, transformer, transformerParameters);
 
-            List<T> items = new ArrayList<>();
+            return new LoadTransformerOperation(ShardedDocumentSession.this, transformer, ids).complete(clazz, multiLoadResult);
 
-            for (RavenJObject result : dbGetResults) {
-              List<RavenJObject> values = result.value(RavenJArray.class, "$values").values(RavenJObject.class);
-              List<Object> innerTypes = new ArrayList<>();
-              for (RavenJObject value: values) {
-                handleInternalMetadata(value);
-                innerTypes.add(convertToEntity(clazz, null, value, new RavenJObject()));
-              }
-              Object[] innerArray = (Object[]) Array.newInstance(clazz, innerTypes.size());
-              for (int j = 0; j < innerTypes.size(); j++) {
-                innerArray[j] = innerTypes.get(j);
-              }
-              items.add((T) innerArray);
-            }
-
-            return (T[]) items.toArray();
           }
         });
         int items = 0;
@@ -413,7 +408,7 @@ implements IDocumentQueryGenerator, IDocumentSessionImpl, ISyncAdvancedSessionOp
   @SuppressWarnings({"cast", "unchecked"})
   @Override
   public <T> T[] loadInternal(Class<T> clazz, String[] ids) {
-    return loadInternal(clazz, ids, (Tuple<String, Class<?>>[]) new Tuple[0]);
+    return loadInternal(clazz, ids, (Tuple<String, Class<?>>[]) null);
   }
 
   @SuppressWarnings({"unchecked", "null"})
@@ -750,6 +745,30 @@ implements IDocumentQueryGenerator, IDocumentSessionImpl, ISyncAdvancedSessionOp
     }
   }
 
+  protected Map<String, SaveChangesData> getChangesToSavePerShard(SaveChangesData data) {
+    Map<String, SaveChangesData> saveChangesPerShard = createSaveChangesBatchPerShardFromDeferredCommands();
+
+    for (int index = 0; index < data.getEntities().size(); index++) {
+      Object entity = data.getEntities().get(index);
+      RavenJObject metadata = getMetadataFor(entity);
+      String shardId = metadata.value(String.class, Constants.RAVEN_SHARD_ID);
+      if (shardId == null) {
+        throw new IllegalStateException("Cannot save a document when the shard id isn't defined. Missing Raven-Shard-Id in the metadata");
+      }
+
+      SaveChangesData shardSaveChangesData = saveChangesPerShard.get(shardId);
+      if (shardSaveChangesData == null) {
+        shardSaveChangesData = new SaveChangesData();
+        saveChangesPerShard.put(shardId, shardSaveChangesData);
+      }
+
+      shardSaveChangesData.getEntities().add(entity);
+      shardSaveChangesData.getCommands().add(data.getCommands().get(index));
+    }
+
+    return saveChangesPerShard;
+  }
+
   @SuppressWarnings("boxing")
   @Override
   public <T> void refresh(final T entity) {
@@ -773,7 +792,7 @@ implements IDocumentQueryGenerator, IDocumentSessionImpl, ISyncAdvancedSessionOp
         value.setOriginalMetadata(jsonDocument.getMetadata().cloneToken());
         value.setEtag(jsonDocument.getEtag());
         value.setOriginalValue(jsonDocument.getDataAsJson());
-        Object newEntity = convertToEntity(entity.getClass(), value.getKey(), jsonDocument.getDataAsJson(), jsonDocument.getMetadata());
+        Object newEntity = convertToEntity(entity.getClass(), value.getKey(), jsonDocument.getDataAsJson(), jsonDocument.getMetadata(), false);
         try {
           for (PropertyDescriptor propertyDescriptor : Introspector.getBeanInfo(entity.getClass()).getPropertyDescriptors()) {
             if (propertyDescriptor.getWriteMethod() == null || propertyDescriptor.getReadMethod() == null) {
@@ -846,10 +865,12 @@ implements IDocumentQueryGenerator, IDocumentSessionImpl, ISyncAdvancedSessionOp
         return dbCmd.startsWith(keyPrefix, matches, start, pageSize, false, exclude, pagingInformation, skipAfter, null, null);
       }
     });
+
+    QueryOperation queryOperation = new QueryOperation(this, "Load/StartingWith", null, null, false, 0, null, null, false);
     List<T> mergedResult = new ArrayList<>();
     for (List<JsonDocument> docList: results) {
       for (JsonDocument doc: docList) {
-        mergedResult.add((T) trackEntity(clazz, doc));
+        mergedResult.add(queryOperation.deserialize(clazz, doc.toJson()));
       }
     }
 
@@ -931,10 +952,12 @@ implements IDocumentQueryGenerator, IDocumentSessionImpl, ISyncAdvancedSessionOp
         targetLength += l.size();
       }
       TResult[] result = (TResult[]) Array.newInstance(clazz, targetLength);
+      QueryOperation queryOperation = new QueryOperation(this, "Load/StartingWith", null, null, false, 0, null, null, false);
+
       int i = 0;
       for (List<JsonDocument> l: results) {
         for (JsonDocument d: l) {
-          result[i] = (TResult) trackEntity(clazz, d);
+          result[i] = queryOperation.deserialize(clazz, d.toJson());
           i++;
         }
       }

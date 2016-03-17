@@ -77,6 +77,7 @@ public class RavenQueryProviderProcessor<T> {
 
   private boolean insideSelect = false;
   private final boolean isMapReduce;
+  private Class originalQueryType;
 
 
   /**
@@ -88,7 +89,7 @@ public class RavenQueryProviderProcessor<T> {
 
   public RavenQueryProviderProcessor(Class<T> clazz, IDocumentQueryGenerator queryGenerator, DocumentQueryCustomizationFactory customizeQuery,
     Action1<QueryResult> afterQueryExecuted, Action1<RavenJObject> afterStreamExecuted, String indexName, Set<String> fieldsToFetch, List<RenamedField> fieldsToRename, boolean isMapReduce,
-    String resultsTransformer, Map<String, RavenJToken> transformerParameters) {
+    String resultsTransformer, Map<String, RavenJToken> transformerParameters, Class originalType) {
     this.clazz = clazz;
     this.fieldsToFetch = fieldsToFetch;
     this.fieldsToRename = fieldsToRename;
@@ -102,6 +103,7 @@ public class RavenQueryProviderProcessor<T> {
     this.resultsTransformer = resultsTransformer;
     this.transformerParameters = transformerParameters;
     linqPathProvider = new LinqPathProvider(queryGenerator.getConventions());
+    this.originalQueryType = originalType;
   }
 
   public Set<String> getFieldsToFetch() {
@@ -1064,6 +1066,8 @@ public class RavenQueryProviderProcessor<T> {
     IDocumentQuery<T> q = queryGenerator.documentQuery(clazz, indexName, isMapReduce);
     q.setTransformerParameters(transformerParameters);
     documentQuery = (IAbstractDocumentQuery<T>) q;
+
+    documentQuery.setOriginalQueryType(originalQueryType);
 
     q.setResultTransformer(resultsTransformer);
     visitExpression(expression);

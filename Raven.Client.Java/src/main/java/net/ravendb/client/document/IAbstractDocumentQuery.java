@@ -391,4 +391,9 @@ public interface IAbstractDocumentQuery<T> {
 
   public IDocumentQuery<T> setAllowMultipleIndexEntriesForSameDocumentToResultTransformer(boolean value);
 
+  /**
+   * Sets the original query type incase of TransforWith usage.
+     */
+  public void setOriginalQueryType(Class originalType);
+
 }

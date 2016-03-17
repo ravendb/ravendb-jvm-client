@@ -62,6 +62,7 @@ public class ReplicationStatistics {
     private Date lastHeartbeatReceived;
     private Etag lastEtagCheckedForReplication;
     private Etag lastReplicatedEtag;
+    private Etag lastReplicatedAttachmentEtag;
     private Date lastReplicatedLastModified;
     private Date lastSuccessTimestamp;
     private Date lastFailureTimestamp;
@@ -165,6 +166,14 @@ public class ReplicationStatistics {
 
     public int getFailureCount() {
       return this.failureCountInternal;
+    }
+
+    public Etag getLastReplicatedAttachmentEtag() {
+      return lastReplicatedAttachmentEtag;
+    }
+
+    public void setLastReplicatedAttachmentEtag(Etag lastReplicatedAttachmentEtag) {
+      this.lastReplicatedAttachmentEtag = lastReplicatedAttachmentEtag;
     }
   }
 

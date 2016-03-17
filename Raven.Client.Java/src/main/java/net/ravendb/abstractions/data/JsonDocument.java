@@ -1,10 +1,14 @@
 package net.ravendb.abstractions.data;
 
+import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.Locale;
+import java.util.TimeZone;
 
 import net.ravendb.abstractions.json.linq.RavenJObject;
 import net.ravendb.abstractions.json.linq.RavenJValue;
 import net.ravendb.abstractions.util.NetDateFormat;
+import org.codehaus.jackson.map.util.ISO8601DateFormat;
 
 
 /**
@@ -171,9 +175,14 @@ public class JsonDocument implements IJsonDocumentMetadata {
     RavenJObject metadata = this.metadata.createSnapshot();
 
     if (lastModified != null) {
-      NetDateFormat fdf = new NetDateFormat();
-      metadata.add(Constants.LAST_MODIFIED, new RavenJValue(this.lastModified));
-      metadata.add(Constants.RAVEN_LAST_MODIFIED, new RavenJValue(fdf.format(this.lastModified)));
+      NetDateFormat ravenDateFormat = new NetDateFormat();
+
+      SimpleDateFormat dateFormat = new SimpleDateFormat(
+              "EEE, dd MMM yyyy HH:mm:ss z", Locale.US);
+      dateFormat.setTimeZone(TimeZone.getTimeZone("GMT"));
+
+      metadata.add(Constants.LAST_MODIFIED, new RavenJValue(dateFormat.format(this.lastModified)));
+      metadata.add(Constants.RAVEN_LAST_MODIFIED, new RavenJValue(ravenDateFormat.format(this.lastModified)));
     }
     if (etag != null) {
       metadata.add("@etag", new RavenJValue(etag.toString()));

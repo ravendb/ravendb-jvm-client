@@ -1,5 +1,6 @@
 package net.ravendb.client.document;
 
+import com.google.common.collect.Sets;
 import com.mysema.query.types.Expression;
 import com.mysema.query.types.Path;
 import com.mysema.query.types.path.ListPath;
@@ -19,6 +20,7 @@ import net.ravendb.client.EscapeQueryOptions;
 import net.ravendb.client.FieldHighlightings;
 import net.ravendb.client.IDocumentQuery;
 import net.ravendb.client.connection.IDatabaseCommands;
+import net.ravendb.client.indexes.AbstractTransformerCreationTask;
 import net.ravendb.client.linq.EnumerableUtils;
 import net.ravendb.client.listeners.IDocumentQueryListener;
 import net.ravendb.client.spatial.SpatialCriteria;
@@ -104,6 +106,56 @@ public class DocumentQuery<T> extends AbstractDocumentQuery<T, DocumentQuery<T>>
   public IDocumentQuery<T> setResultTransformer(String resultsTransformer) {
     this.resultsTransformer = resultsTransformer;
     return this;
+  }
+
+  @Override
+  public <TTransformer extends AbstractTransformerCreationTask, TTransformerResult> IDocumentQuery<TTransformerResult> setResultTransformer(Class<TTransformer> transformerClass, Class<TTransformerResult> resultClass) {
+    DocumentQuery<TTransformerResult> documentQuery = new DocumentQuery<>(resultClass, theSession, theDatabaseCommands, indexName, fieldsToFetch, projectionFields, Arrays.asList(queryListeners), isMapReduce);
+
+    try {
+      documentQuery.pageSize = pageSize;
+      documentQuery.queryText = new StringBuilder(queryText.toString());
+      documentQuery.start = start;
+      documentQuery.timeout = timeout;
+      documentQuery.cutoff = cutoff;
+      documentQuery.cutoffEtag = cutoffEtag;
+      documentQuery.queryStats = queryStats;
+      documentQuery.theWaitForNonStaleResults = theWaitForNonStaleResults;
+      documentQuery.theWaitForNonStaleResultsAsOfNow = theWaitForNonStaleResultsAsOfNow;
+      documentQuery.sortByHints = sortByHints;
+      documentQuery.orderByFields = orderByFields;
+      documentQuery.distinct = distinct;
+      documentQuery.allowMultipleIndexEntriesForSameDocumentToResultTransformer = allowMultipleIndexEntriesForSameDocumentToResultTransformer;
+      documentQuery.negate = negate;
+      documentQuery.transformResultsFunc = transformResultsFunc;
+      documentQuery.includes = new HashSet<>(includes);
+      documentQuery.isSpatialQuery = isSpatialQuery;
+      documentQuery.spatialFieldName = spatialFieldName;
+      documentQuery.queryShape = queryShape;
+      documentQuery.spatialRelation = spatialRelation;
+      documentQuery.spatialUnits = spatialUnits;
+      documentQuery.distanceErrorPct = distanceErrorPct;
+      HashSet<Class<?>> rootTypes = new HashSet<>();
+      rootTypes.add(clazz);
+      documentQuery.rootTypes = rootTypes;
+      documentQuery.defaultField = defaultField;
+      documentQuery.beforeQueryExecutionAction = beforeQueryExecutionAction;
+      documentQuery.highlightedFields = new ArrayList<>(highlightedFields);
+      documentQuery.highlighterPreTags = highlighterPreTags;
+      documentQuery.highlighterPostTags = highlighterPostTags;
+      documentQuery.resultsTransformer = transformerClass.newInstance().getTransformerName();
+      documentQuery.transformerParameters = transformerParameters;
+      documentQuery.disableEntitiesTracking = disableEntitiesTracking;
+      documentQuery.disableCaching = disableCaching;
+      documentQuery.showQueryTimings = showQueryTimings;
+      documentQuery.lastEquality = lastEquality;
+      documentQuery.defaultOperator = defaultOperator;
+      documentQuery.shouldExplainScores = shouldExplainScores;
+    } catch (IllegalAccessException | InstantiationException e) {
+      throw new RuntimeException(e);
+    }
+
+    return documentQuery;
   }
 
   @Override

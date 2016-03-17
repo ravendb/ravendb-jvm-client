@@ -1,18 +1,17 @@
 package net.ravendb.abstractions.util;
 
-import java.util.Collection;
-import java.util.Comparator;
-import java.util.Iterator;
+import java.util.*;
 import java.util.Map.Entry;
-import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ConcurrentSkipListMap;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock.ReadLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock.WriteLock;
 
 import net.ravendb.abstractions.basic.CleanCloseable;
+import net.ravendb.abstractions.basic.Tuple;
 import net.ravendb.abstractions.closure.Function1;
 
 
@@ -22,6 +21,9 @@ public class AtomicDictionary<T> implements Iterable<Entry<String, T>> {
   private final ConcurrentMap<String, T> items;
   private final ReentrantReadWriteLock globalLocker = new ReentrantReadWriteLock(true);
   private final static String nullValue =  "Null Replacement: " + UUID.randomUUID();
+  private List<Map.Entry<String, T>> snapshot;
+  private final AtomicLong snapshotVersion = new AtomicLong(0);
+  private final AtomicLong version = new AtomicLong(0);
 
   public AtomicDictionary(Comparator<String> comparer) {
     items = new ConcurrentSkipListMap<>(comparer);
@@ -56,6 +58,7 @@ public class AtomicDictionary<T> implements Iterable<Entry<String, T>> {
         val = items.get(key);
         if (val == null) {
           val = actualGenerator.apply(closureValue);
+          version.incrementAndGet();
           items.put(key, val);
         }
         return val;
@@ -64,6 +67,18 @@ public class AtomicDictionary<T> implements Iterable<Entry<String, T>> {
     } finally {
       readLock.unlock();
     }
+  }
+
+  public List<Map.Entry<String, T>> getSnapshot() {
+    long currentVersion = version.get();
+
+    if (currentVersion != snapshotVersion.get() || snapshot == null) {
+
+      snapshot = new ArrayList<>(items.entrySet());
+      snapshotVersion.set(currentVersion);
+    }
+
+    return snapshot;
   }
 
   /**
@@ -93,11 +108,13 @@ public class AtomicDictionary<T> implements Iterable<Entry<String, T>> {
       value = locks.get(key);
       if (value == null) {
         items.remove(key);
+        version.incrementAndGet();
         return ;
       }
       synchronized (value) {
           locks.remove(key);
           items.remove(key);
+          version.incrementAndGet();
       }
     } finally {
       readLock.unlock();
@@ -105,10 +122,10 @@ public class AtomicDictionary<T> implements Iterable<Entry<String, T>> {
 
   }
 
-
   public void clear() {
     items.clear();
     locks.clear();
+    version.incrementAndGet();
   }
 
   public T get(String key) {

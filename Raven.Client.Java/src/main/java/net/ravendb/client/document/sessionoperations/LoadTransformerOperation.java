@@ -7,12 +7,13 @@ import java.util.List;
 import net.ravendb.abstractions.data.Constants;
 import net.ravendb.abstractions.data.JsonDocument;
 import net.ravendb.abstractions.data.MultiLoadResult;
+import net.ravendb.abstractions.extensions.JsonExtensions;
 import net.ravendb.abstractions.json.linq.RavenJArray;
 import net.ravendb.abstractions.json.linq.RavenJObject;
 import net.ravendb.abstractions.json.linq.RavenJToken;
 import net.ravendb.client.connection.SerializationHelper;
 import net.ravendb.client.document.InMemoryDocumentSessionOperations;
-
+import net.ravendb.client.listeners.IDocumentConversionListener;
 
 
 public class LoadTransformerOperation {
@@ -76,8 +77,22 @@ public class LoadTransformerOperation {
     List<T> items = new ArrayList<>();
     for (RavenJObject object : results) {
       ensureNotReadVetoed(object);
-      for (RavenJToken token : object.value(RavenJArray.class, "$values")) {
-        items.add(documentSession.getConventions().createSerializer().deserialize(token, clazz));
+
+      QueryOperation queryOperation = new QueryOperation(documentSession, "Load/Transformer", null, null, false, 0, null, null, false);
+
+      for (RavenJToken value : object.value(RavenJArray.class, "$values")) {
+
+        RavenJObject ravenJObject = JsonExtensions.toJObject(value);
+        for (IDocumentConversionListener iDocumentConversionListener : documentSession.getListeners().getConversionListeners()) {
+          iDocumentConversionListener.beforeConversionToEntity(null, ravenJObject, null);
+        }
+
+        T obj = queryOperation.deserialize(clazz, ravenJObject);
+        items.add(obj);
+
+        for (IDocumentConversionListener iDocumentConversionListener : documentSession.getListeners().getConversionListeners()) {
+          iDocumentConversionListener.afterConversionToEntity(null, ravenJObject, null, obj);
+        }
       }
     }
 
