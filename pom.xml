@@ -7,6 +7,8 @@
   <version>3.2.1-SNAPSHOT</version>
   <packaging>pom</packaging>
   <name>RavenDB</name>
+  <description>RavenDB Java Client</description>
+  <url>http://ravendb.net</url>
 
   <scm>
     <connection>scm:git:https://github.com/ravendb/jvm-client.git</connection>
