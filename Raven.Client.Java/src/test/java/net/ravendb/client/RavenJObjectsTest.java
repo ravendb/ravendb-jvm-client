@@ -30,6 +30,7 @@ import java.util.Map.Entry;
 import java.util.Set;
 import java.util.UUID;
 
+import com.google.common.collect.Sets;
 import net.ravendb.abstractions.exceptions.JsonReaderException;
 import net.ravendb.abstractions.exceptions.JsonWriterException;
 import net.ravendb.abstractions.json.linq.JTokenType;
@@ -42,6 +43,7 @@ import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.lang.StringUtils;
 import org.codehaus.jackson.JsonFactory;
 import org.codehaus.jackson.JsonGenerator;
+import org.junit.Assert;
 import org.junit.Test;
 
 
@@ -385,24 +387,16 @@ public class RavenJObjectsTest {
 
   @Test
   public void testValues() {
-    //RavenJObject complexObject = RavenJObject.parse("{ \"a\" : 5, \"b\" : [1,2,3], \"c\" : { \"d\" : null} , \"d\" : null, \"e\": false, \"f\" : \"string\"}");
-
     RavenJObject complexObject = RavenJObject.parse("{ \"a\" : 5,  \"e\": true, \"f\" : \"string\"}");
 
     List<String> valuesString = complexObject.values(String.class);
-    assertEquals("5", valuesString.get(0));
-    assertEquals("true", valuesString.get(1));
-    assertEquals("string", valuesString.get(2));
+    assertEquals(Sets.newHashSet("5", "true", "string"), new HashSet<>(valuesString));
 
     List<Integer> valuesInt = complexObject.values(Integer.class);
-    assertEquals(new Integer(5), valuesInt.get(0));
-    assertEquals(new Integer(1), valuesInt.get(1));
-    assertEquals(new Integer(0), valuesInt.get(2));
+    assertEquals(Sets.newHashSet(new Integer(5), new Integer(1), new Integer(0)), new HashSet<>(valuesInt));
 
     List<Boolean> valuesBool = complexObject.values(Boolean.class);
-    assertEquals(Boolean.FALSE, valuesBool.get(0));
-    assertEquals(Boolean.TRUE, valuesBool.get(1));
-    assertEquals(Boolean.FALSE, valuesBool.get(2));
+    Assert.assertEquals(Sets.newHashSet(Boolean.FALSE, Boolean.TRUE), new HashSet<>(valuesBool));
 
     complexObject = RavenJObject.parse("{ \"b\" : [1,2,3]}");
     List<RavenJArray>valuesArray = complexObject.values(RavenJArray.class);
