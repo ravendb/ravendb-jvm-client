@@ -34,6 +34,9 @@ public class ReplicationInformerLocalCache {
     try {
       String path = "RavenDB Replication Information For - " + serverHash;
       File file = new File(tempDir, path);
+      if (!file.exists()) {
+        return null;
+      }
       String fileContent = FileUtils.readFileToString(file);
       if (StringUtils.isBlank(fileContent)) {
         return null;
