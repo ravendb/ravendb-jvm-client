@@ -69,6 +69,7 @@
         <dependency>
             <groupId>net.ravendb</groupId>
             <artifactId>ravendb-client</artifactId>
+            <!-- make sure you update version in teamcity build when bumping this version -->
             <version>3.2.0</version>
         </dependency>
         <dependency>
