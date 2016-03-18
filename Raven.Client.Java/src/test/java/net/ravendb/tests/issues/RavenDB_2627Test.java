@@ -619,7 +619,7 @@ public class RavenDB_2627Test extends RemoteClientTest {
 
             startServer(DEFAULT_SERVER_PORT_2, true, serverDocument);
 
-            store = new DocumentStore("http://localhost:" + DEFAULT_SERVER_PORT_2, "RavenDB_2627");
+            store = new DocumentStore("http://" + ravenServerHostName() + ":" + DEFAULT_SERVER_PORT_2, "RavenDB_2627");
             store.initialize();
 
             store.getDatabaseCommands().getGlobalAdmin().ensureDatabaseExists("RavenDB_2627");
