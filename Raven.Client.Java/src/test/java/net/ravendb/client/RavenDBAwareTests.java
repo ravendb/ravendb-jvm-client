@@ -16,7 +16,6 @@ import net.ravendb.abstractions.connection.OperationCredentials;
 import net.ravendb.abstractions.connection.WebRequestEventArgs;
 import net.ravendb.abstractions.json.linq.RavenJObject;
 import net.ravendb.abstractions.json.linq.RavenJValue;
-import net.ravendb.client.IDocumentStore;
 import net.ravendb.client.connection.IDatabaseCommands;
 import net.ravendb.client.connection.IDocumentStoreReplicationInformer;
 import net.ravendb.client.connection.ReplicationInformer;
@@ -30,6 +29,7 @@ import net.ravendb.client.utils.UrlUtils;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.CharUtils;
+import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.time.DateUtils;
 import org.apache.http.HttpHost;
 import org.apache.http.HttpResponse;
@@ -62,21 +62,26 @@ public abstract class RavenDBAwareTests {
 
   public final static int DEFAULT_SERVER_PORT_1 = 8123;
   public final static int DEFAULT_SERVER_PORT_2 = 8124;
-  public final static String DEFAULT_SERVER_URL_1 = "http://" + getHostName() + ":" + DEFAULT_SERVER_PORT_1;
-  public final static String DEFAULT_SERVER_URL_2 = "http://" + getHostName() + ":" + DEFAULT_SERVER_PORT_2;
+  public final static String DEFAULT_SERVER_URL_1 = "http://" + ravenServerHostName() + ":" + DEFAULT_SERVER_PORT_1;
+  public final static String DEFAULT_SERVER_URL_2 = "http://" + ravenServerHostName() + ":" + DEFAULT_SERVER_PORT_2;
 
   public final static int DEFAULT_RUNNER_PORT = 8585;
 
   public final static boolean RUN_IN_MEMORY = true;
 
-  public final static String DEFAULT_SERVER_RUNNER_URL = "http://" + getHostName() + ":" + DEFAULT_RUNNER_PORT + "/servers";
+  public final static String DEFAULT_SERVER_RUNNER_URL = "http://" + ravenServerHostName() + ":" + DEFAULT_RUNNER_PORT + "/servers";
 
   private static final String DEFAULT_STORAGE_TYPE_NAME = "voron";
 
   protected static HttpClient client = HttpClients.createDefault();
 
-  public static String getHostName() {
+  public static String ravenServerHostName() {
     try {
+      String raven_location = System.getenv("RAVEN_LOCATION");
+      if (StringUtils.isNotBlank(raven_location)) {
+        return raven_location;
+      }
+
       return InetAddress.getLocalHost().getHostName();
     } catch (Exception e) {
       throw new RuntimeException(e);
@@ -192,7 +197,7 @@ public abstract class RavenDBAwareTests {
   protected void createDbAtPort(String dbName, int port) {
     HttpPut put = null;
     try {
-      put = new HttpPut("http://" + getHostName() + ":" + port + "/admin/databases/" + UrlUtils.escapeDataString(dbName));
+      put = new HttpPut("http://" + ravenServerHostName() + ":" + port + "/admin/databases/" + UrlUtils.escapeDataString(dbName));
       put.setEntity(new StringEntity(getCreateDbDocument(dbName, port), ContentType.APPLICATION_JSON));
       HttpResponse httpResponse = client.execute(put);
       if (httpResponse.getStatusLine().getStatusCode() != HttpStatus.SC_OK) {

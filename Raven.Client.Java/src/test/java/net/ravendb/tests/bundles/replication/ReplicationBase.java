@@ -42,7 +42,7 @@ public class ReplicationBase extends RavenDBAwareTests {
     try {
       startServer(port, true);
       createDbAtPort(getDbName(), port);
-      DocumentStore store = new DocumentStore("http://" + getHostName() + ":" + port, getDbName());
+      DocumentStore store = new DocumentStore("http://" + ravenServerHostName() + ":" + port, getDbName());
       if (config != null) {
         config.apply(store);
       }
@@ -60,7 +60,7 @@ public class ReplicationBase extends RavenDBAwareTests {
   }
 
   public void tellInstanceToReplicateToAnotherInstance(int src, int dest) {
-    ReplicationDocument repDoc = createReplicationDocument("http://" + getHostName() + ":"
+    ReplicationDocument repDoc = createReplicationDocument("http://" + ravenServerHostName() + ":"
       + (DEFAULT_SERVER_PORT_1 + dest), getDbName());
     try (IDocumentSession s = stores.get(src).openSession()) {
       s.store(repDoc, "Raven/Replication/Destinations");
