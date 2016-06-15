@@ -3,3 +3,8 @@
 .classpath
 .project
 .idea/
+ravendb-parent.iml
+/Raven.Java.Release/ravendb-release.iml
+/Raven.Client.Java/ravendb-client.iml
+/Samples/Raven.Sample.Java.Todo.Servlets/ravendb-client-todomvc.iml
+/Samples/Raven.Sample.Java.Todo.Spring/ravendb-client-todomvc-spring.iml
