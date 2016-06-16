@@ -178,10 +178,18 @@ public class RemoteBulkInsertOperation implements ILowLevelBulkInsertOperation, 
     operationClient.setExpect100Continue(true);
 
     final String operationUrl = createOperationUrl(options);
-    String token = getToken();
+    String token;
+    try {
+      token = getToken();
+    } catch (Exception e) {
+      queue.add(END_OF_QUEUE_OBJECT);
+      throw new IllegalStateException("Could not get token for bulk insert", e);
+    }
+
     try {
       token = validateThatWeCanUseAuthenticateTokens(token);
     } catch (Exception e) {
+      queue.add(END_OF_QUEUE_OBJECT);
       throw new IllegalStateException("Could not authenticate token for bulk insert, if you are using ravendb in IIS make sure you have Anonymous Authentication enabled in the IIS configuration", e);
     }
     final String tokenToPass = token;

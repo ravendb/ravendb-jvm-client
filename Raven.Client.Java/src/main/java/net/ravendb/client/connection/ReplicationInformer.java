@@ -114,6 +114,7 @@ public class ReplicationInformer extends ReplicationInformerBase<ServerClient> i
       }
       if (document == null) {
         lastReplicationUpdate = new Date(); // checked and not found
+        replicationDestinations.clear(); // clear destinations that could be retrieved from local storage
         return;
       }
 

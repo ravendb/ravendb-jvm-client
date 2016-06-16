@@ -10,6 +10,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 import net.ravendb.abstractions.basic.CleanCloseable;
 import net.ravendb.abstractions.basic.EventHandler;
 import net.ravendb.abstractions.basic.EventHelper;
+import net.ravendb.abstractions.basic.VoidArgs;
+import net.ravendb.abstractions.closure.Action0;
 import net.ravendb.abstractions.closure.Action2;
 import net.ravendb.abstractions.connection.WebRequestEventArgs;
 import net.ravendb.abstractions.data.Constants;
@@ -46,6 +48,8 @@ public class HttpJsonRequestFactory implements CleanCloseable {
   private List<EventHandler<WebRequestEventArgs>> configureRequest = new ArrayList<>();
 
   private List<EventHandler<RequestResultArgs>> logRequest = new ArrayList<>();
+
+  private Action0 onDispose;
 
   private int maxNumberOfCachedRequests;
   private SimpleCache cache;
@@ -123,6 +127,9 @@ public class HttpJsonRequestFactory implements CleanCloseable {
     disposed = true;
     cache.close();
     Closeables.closeQuietly(httpClient);
+    if (onDispose != null) {
+      onDispose.apply();
+    }
   }
 
   @SuppressWarnings("boxing")
@@ -361,6 +368,11 @@ public class HttpJsonRequestFactory implements CleanCloseable {
     this.requestTimeout.set(requestTimeout);
   }
 
+  public Action0 getOnDispose() {
+    return onDispose;
+  }
 
-
+  public void setOnDispose(Action0 onDispose) {
+    this.onDispose = onDispose;
+  }
 }

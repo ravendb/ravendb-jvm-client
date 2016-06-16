@@ -1,5 +1,6 @@
 package net.ravendb.client.changes;
 
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentSkipListSet;
@@ -101,39 +102,39 @@ public class RemoteDatabaseChanges extends RemoteChangesClientBase<IDatabaseChan
 
   @SuppressWarnings({"hiding", "boxing"})
   @Override
-  protected void notifySubscribers(String type, RavenJObject value, Iterable<Map.Entry<String, DatabaseConnectionState>> counters) {
+  protected void notifySubscribers(String type, RavenJObject value, List<DatabaseConnectionState> connections) {
     JsonSerializer serializer = new JsonSerializer();
     switch (type) {
       case "DocumentChangeNotification":
         DocumentChangeNotification documentChangeNotification = serializer.deserialize(value.toString(), DocumentChangeNotification.class);
-        for (Map.Entry<String, DatabaseConnectionState> counter : counters) {
-          counter.getValue().send(documentChangeNotification);
+        for (DatabaseConnectionState counter : connections) {
+          counter.send(documentChangeNotification);
         }
         break;
 
       case "BulkInsertChangeNotification":
         BulkInsertChangeNotification bulkInsertChangeNotification = serializer.deserialize(value.toString(), BulkInsertChangeNotification.class);
-        for (Map.Entry<String, DatabaseConnectionState> counter : counters) {
-          counter.getValue().send(bulkInsertChangeNotification);
+        for (DatabaseConnectionState counter : connections) {
+          counter.send(bulkInsertChangeNotification);
         }
         break;
 
       case "IndexChangeNotification":
         IndexChangeNotification indexChangeNotification = serializer.deserialize(value.toString(), IndexChangeNotification.class);
-        for (Map.Entry<String, DatabaseConnectionState> counter : counters) {
-          counter.getValue().send(indexChangeNotification);
+        for (DatabaseConnectionState counter : connections) {
+          counter.send(indexChangeNotification);
         }
         break;
       case "TransformerChangeNotification":
         TransformerChangeNotification transformerChangeNotification = serializer.deserialize(value.toString(), TransformerChangeNotification.class);
-        for (Map.Entry<String, DatabaseConnectionState> counter : counters) {
-          counter.getValue().send(transformerChangeNotification);
+        for (DatabaseConnectionState counter : connections) {
+          counter.send(transformerChangeNotification);
         }
         break;
       case "ReplicationConflictNotification":
         ReplicationConflictNotification replicationConflictNotification = serializer.deserialize(value.toString(), ReplicationConflictNotification.class);
-        for (Map.Entry<String, DatabaseConnectionState> counter : counters) {
-          counter.getValue().send(replicationConflictNotification);
+        for (DatabaseConnectionState counter : connections) {
+          counter.send(replicationConflictNotification);
         }
         if (replicationConflictNotification.getItemType().equals(ReplicationConflictTypes.DOCUMENT_REPLICATION_CONFLICT)) {
           boolean result = tryResolveConflictByUsingRegisteredConflictListeners.apply(replicationConflictNotification.getId(),
@@ -146,8 +147,8 @@ public class RemoteDatabaseChanges extends RemoteChangesClientBase<IDatabaseChan
         break;
       case "DataSubscriptionChangeNotification":
         DataSubscriptionChangeNotification dataSubscriptionChangeNotification = serializer.deserialize(value.toString(), DataSubscriptionChangeNotification.class);
-        for (Map.Entry<String, DatabaseConnectionState> counter : counters) {
-          counter.getValue().send(dataSubscriptionChangeNotification);
+        for (DatabaseConnectionState counter : connections) {
+          counter.send(dataSubscriptionChangeNotification);
         }
         break;
       default:

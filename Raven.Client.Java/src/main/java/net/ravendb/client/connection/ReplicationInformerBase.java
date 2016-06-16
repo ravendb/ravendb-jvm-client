@@ -233,7 +233,7 @@ public abstract class ReplicationInformerBase<T> implements IReplicationInformer
 
   private void assertValidOperation(HttpMethods method, Exception error) {
     if (conventions.getFailoverBehaviorWithoutFlags().contains(FailoverBehavior.ALLOW_READS_FROM_SECONDARIES)) {
-      if (HttpMethods.GET.equals(method)) {
+      if (HttpMethods.GET.equals(method) || HttpMethods.HEAD.equals(method)) {
         return;
       }
     }
@@ -243,7 +243,7 @@ public abstract class ReplicationInformerBase<T> implements IReplicationInformer
     }
     if (conventions.getFailoverBehaviorWithoutFlags().contains(FailoverBehavior.FAIL_IMMEDIATELY)) {
       if (conventions.getFailoverBehaviorWithoutFlags().contains(FailoverBehavior.READ_FROM_ALL_SERVERS)) {
-        if (HttpMethods.GET.equals(method)) {
+        if (HttpMethods.GET.equals(method) || HttpMethods.HEAD.equals(method)) {
           return;
         }
       }
@@ -420,9 +420,11 @@ public abstract class ReplicationInformerBase<T> implements IReplicationInformer
   }
 
   @Override
-  public boolean isHttpStatus(Exception e, int... httpStatusCode) {
+  public boolean isHttpStatus(Exception e, Reference<Integer> statusCodeRef, int... httpStatusCode) {
+    statusCodeRef.value = HttpStatus.SC_INTERNAL_SERVER_ERROR;
     if (e instanceof ErrorResponseException) {
       ErrorResponseException hoe = (ErrorResponseException) e;
+      statusCodeRef.value = hoe.getStatusCode();
       if (ArrayUtils.contains(httpStatusCode, hoe.getStatusCode())) {
         return true;
       }

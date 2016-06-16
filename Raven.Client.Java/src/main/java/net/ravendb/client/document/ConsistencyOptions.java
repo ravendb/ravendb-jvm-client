@@ -17,7 +17,10 @@ public enum ConsistencyOptions {
 
   /**
    *  After updating a documents, will only accept queries which already indexed the updated value.
+   * @deprecated  Beware of AlwaysWaitForNonStaleResultsAsOfLastWrite overuse.
+   * See: http://ravendb.net/docs/article-page/3.0/csharp/client-api/configuration/conventions/querying#defaultqueryingconsistency
    */
+  @Deprecated
   ALWAYS_WAIT_FOR_NON_STALE_RESULTS_AS_OF_LAST_WRITE,
 
   /**

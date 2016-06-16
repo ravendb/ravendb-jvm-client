@@ -524,8 +524,8 @@ public class DocumentSession extends InMemoryDocumentSessionOperations
 
   @Override
   public <T> CloseableIterator<StreamResult<T>> stream(IRavenQueryable<T> query) {
-    Reference<QueryHeaderInformation> _ = new Reference<>();
-    return stream(query, _);
+    Reference<QueryHeaderInformation> __ = new Reference<>();
+    return stream(query, __);
   }
 
   @SuppressWarnings("unchecked")
@@ -538,8 +538,8 @@ public class DocumentSession extends InMemoryDocumentSessionOperations
 
   @Override
   public <T> CloseableIterator<StreamResult<T>> stream(IDocumentQuery<T> query) {
-    Reference<QueryHeaderInformation> _ = new Reference<>();
-    return stream(query, _);
+    Reference<QueryHeaderInformation> __ = new Reference<>();
+    return stream(query, __);
   }
 
   @Override

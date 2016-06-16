@@ -21,7 +21,7 @@ public class AtomicDictionary<T> implements Iterable<Entry<String, T>> {
   private final ConcurrentMap<String, T> items;
   private final ReentrantReadWriteLock globalLocker = new ReentrantReadWriteLock(true);
   private final static String nullValue =  "Null Replacement: " + UUID.randomUUID();
-  private List<Map.Entry<String, T>> snapshot;
+  private List<T> snapshot;
   private final AtomicLong snapshotVersion = new AtomicLong(0);
   private final AtomicLong version = new AtomicLong(0);
 
@@ -69,12 +69,12 @@ public class AtomicDictionary<T> implements Iterable<Entry<String, T>> {
     }
   }
 
-  public List<Map.Entry<String, T>> getSnapshot() {
+  public List<T> getValuesSnapshot() {
     long currentVersion = version.get();
 
     if (currentVersion != snapshotVersion.get() || snapshot == null) {
 
-      snapshot = new ArrayList<>(items.entrySet());
+      snapshot = new ArrayList<>(items.values());
       snapshotVersion.set(currentVersion);
     }
 

@@ -643,7 +643,7 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
 
   protected void executeBeforeQueryListeners() {
     for (IDocumentQueryListener documentQueryListener : queryListeners) {
-      documentQueryListener.beforeQueryExecuted(new DocumentQueryCustomization((DocumentQuery<?>) this));
+      documentQueryListener.beforeQueryExecuted(new DocumentQueryCustomization((DocumentQuery) this));
     }
   }
 
@@ -956,7 +956,7 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
   public IDocumentQuery<T> whereEquals(WhereParams whereParams) {
     ensureValidFieldName(whereParams);
 
-    if (theSession != null && whereParams.getValue() != null && !"*".equals(whereParams.getValue())) {
+    if (theSession != null && whereParams.getValue() != null && !(whereParams.getValue() instanceof String)) {
       sortByHints.add(Tuple.create(whereParams.getFieldName(), theSession.getConventions().getDefaultSortOption(whereParams.getValue().getClass())));
     }
 
@@ -1746,6 +1746,11 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
     }
 
     Class<?> type = whereParams.getValue().getClass();
+
+    if (conventions.isSaveEnumsAsIntegers() && type.isEnum()) {
+      return String.valueOf(((Enum<?>) whereParams.getValue()).ordinal());
+    }
+
     if (Boolean.class.equals(type)) {
       return (boolean) whereParams.getValue() ? "true" : "false";
     }

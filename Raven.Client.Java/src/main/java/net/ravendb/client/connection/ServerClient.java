@@ -1265,7 +1265,6 @@ public class ServerClient implements IDatabaseCommands {
       }
     });
   }
-
   @SuppressWarnings("boxing")
   long directSeedIdentityFor(OperationMetadata operationMetadata, String name, long value) {
     try (HttpJsonRequest request = jsonRequestFactory.createHttpJsonRequest(
@@ -1273,6 +1272,36 @@ public class ServerClient implements IDatabaseCommands {
       .addOperationHeaders(operationsHeaders))) {
       RavenJToken readResponseJson = request.readResponseJson();
       return readResponseJson.value(Long.TYPE, "Value");
+    }
+  }
+
+  @Override
+  public void seedIdentities(final Map<String, Long> identities) {
+    executeWithReplication(HttpMethods.POST, new Function1<OperationMetadata, Void>() {
+      @Override
+      public Void apply(OperationMetadata operationMetadata) {
+        directSeedIdentities(operationMetadata, identities);
+        return null;
+      }
+    });
+  }
+
+  @SuppressWarnings("boxing")
+  void directSeedIdentities(OperationMetadata operationMetadata, Map<String, Long> identities) {
+    try (HttpJsonRequest request = jsonRequestFactory.createHttpJsonRequest(
+            new CreateHttpJsonRequestParams(this, operationMetadata.getUrl() + "/identity/seed/bulk?name=", HttpMethods.POST, new RavenJObject(), operationMetadata.getCredentials(), convention)
+                    .addOperationHeaders(operationsHeaders))) {
+
+      RavenJArray payload = new RavenJArray();
+      for (Map.Entry<String, Long> entry : identities.entrySet()) {
+        RavenJObject item = new RavenJObject();
+        item.add("key", entry.getKey());
+        item.add("value", entry.getValue());
+        payload.add(item);
+      }
+
+      request.write(payload.toString());
+      request.executeRequest();
     }
   }
 

@@ -1,6 +1,7 @@
 package net.ravendb.client.extensions;
 
 import net.ravendb.abstractions.basic.EventHandler;
+import net.ravendb.abstractions.closure.Action0;
 import net.ravendb.abstractions.closure.Action1;
 import net.ravendb.abstractions.connection.OperationCredentials;
 import net.ravendb.abstractions.connection.WebRequestEventArgs;
@@ -22,7 +23,14 @@ public class SecurityExtensions {
         }
 
         final BasicAuthenticator basicAuthenticator = new BasicAuthenticator(requestFactory.getHttpClient(), requestFactory.isEnableBasicAuthenticationOverUnsecuredHttpEvenThoughPasswordsWouldBeSentOverTheWireInClearTextToBeStolenByHackers());
-        final SecuredAuthenticator securedAuthenticator = new SecuredAuthenticator(requestFactory);
+        final SecuredAuthenticator securedAuthenticator = new SecuredAuthenticator(requestFactory, true);
+
+        requestFactory.setOnDispose(new Action0() {
+            @Override
+            public void apply() {
+                securedAuthenticator.close();
+            }
+        });
 
         requestFactory.addConfigureRequestEventHandler(new EventHandler<WebRequestEventArgs>() {
             @Override

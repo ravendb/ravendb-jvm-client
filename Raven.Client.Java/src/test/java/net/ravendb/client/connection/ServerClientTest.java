@@ -16,6 +16,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
+import com.google.common.collect.Maps;
 import net.ravendb.abstractions.commands.ICommandData;
 import net.ravendb.abstractions.commands.PatchCommandData;
 import net.ravendb.abstractions.commands.PutCommandData;
@@ -649,6 +650,18 @@ public class ServerClientTest extends RavenDBAwareTests {
     try {
       createDb();
       dbCommands.seedIdentityFor("users/", 1000);
+      assertEquals(Long.valueOf(1001), dbCommands.nextIdentityFor("users/"));
+    } finally {
+      deleteDb();
+    }
+  }
+
+  @Test
+  public void testSeedIdentities() {
+    IDatabaseCommands dbCommands = serverClient.forDatabase(getDbName());
+    try {
+      createDb();
+      dbCommands.seedIdentities(Collections.singletonMap("users/", 1000L));
       assertEquals(Long.valueOf(1001), dbCommands.nextIdentityFor("users/"));
     } finally {
       deleteDb();

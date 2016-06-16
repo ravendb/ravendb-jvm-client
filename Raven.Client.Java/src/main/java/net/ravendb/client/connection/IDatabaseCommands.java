@@ -669,6 +669,11 @@ public interface IDatabaseCommands extends IHoldProfilingInformation {
   public long seedIdentityFor(final String name, final long value) ;
 
   /**
+   * Seeds the next identities value on the server
+     */
+  public void seedIdentities(final Map<String, Long> identities);
+
+  /**
    * Deletes the document with the specified key
    * @param key The key of a document to be deleted
    * @param etag current document etag, used for concurrency checks (null to skip check)

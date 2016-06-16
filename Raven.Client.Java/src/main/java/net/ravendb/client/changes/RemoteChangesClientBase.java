@@ -136,13 +136,12 @@ public abstract class RemoteChangesClientBase<TChangesApi extends IConnectableCh
       EventHelper.invoke(connectionStatusChanged, this, EventArgs.EMPTY);
 
       if (disposed) {
+        logger.warn("Failed to connect to %s with id %s, probably shutting down...", url, id);
         throw e;
       }
-      Reference<Boolean> timeoutRef = new Reference<>();
-      if (!replicationInformer.isServerDown(e, timeoutRef)) {
-        throw e;
-      }
-      if (replicationInformer.isHttpStatus(e, HttpStatus.SC_NOT_FOUND, HttpStatus.SC_FORBIDDEN, HttpStatus.SC_SERVICE_UNAVAILABLE)) {
+      Reference<Integer> codeRef = new Reference<>();
+      if (replicationInformer.isHttpStatus(e, codeRef, HttpStatus.SC_NOT_FOUND, HttpStatus.SC_FORBIDDEN, HttpStatus.SC_SERVICE_UNAVAILABLE, HttpStatus.SC_UNAUTHORIZED)) {
+        logger.error("Failed to connect to %s with id %s, server returned with an error code: %d", url, id, codeRef.value);
         throw e;
       }
       logger.warn("Failed to connect to %s with id %s, will try again in 15 seconds", url, id);
@@ -272,7 +271,7 @@ public abstract class RemoteChangesClientBase<TChangesApi extends IConnectableCh
         case "Heartbeat":
           break;
         default:
-          notifySubscribers(type, value, counters.getSnapshot());
+          notifySubscribers(type, value, counters.getValuesSnapshot());
           break;
       }
     } catch (IOException e) {
@@ -281,7 +280,7 @@ public abstract class RemoteChangesClientBase<TChangesApi extends IConnectableCh
   }
 
   @SuppressWarnings("hiding")
-  protected abstract void notifySubscribers(String type, RavenJObject value, Iterable<Map.Entry<String, DatabaseConnectionState>> counters);
+  protected abstract void notifySubscribers(String type, RavenJObject value, List<DatabaseConnectionState> connections);
 
   protected abstract void subscribeOnServer();
 

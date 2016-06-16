@@ -11,6 +11,7 @@ import net.ravendb.abstractions.closure.Function1;
 import net.ravendb.abstractions.connection.OperationCredentials;
 import net.ravendb.abstractions.data.HttpMethods;
 import net.ravendb.client.connection.ReplicationInformer.FailoverStatusChangedEventArgs;
+import org.apache.http.HttpStatus;
 
 
 public interface IReplicationInformerBase<T> extends CleanCloseable {
@@ -60,5 +61,5 @@ public interface IReplicationInformerBase<T> extends CleanCloseable {
 
   public boolean isServerDown(Exception e, Reference<Boolean> timeout);
 
-  public boolean isHttpStatus(Exception e, int... httpStatusCode);
+  public boolean isHttpStatus(Exception e, Reference<Integer> statusCode, int... httpStatusCode);
 }

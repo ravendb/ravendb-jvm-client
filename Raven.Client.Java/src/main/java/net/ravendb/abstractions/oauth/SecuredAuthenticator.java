@@ -4,7 +4,9 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Timer;
 
+import net.ravendb.abstractions.basic.CleanCloseable;
 import net.ravendb.abstractions.basic.Tuple;
 import net.ravendb.abstractions.closure.Action1;
 import net.ravendb.abstractions.connection.ErrorResponseException;
@@ -26,13 +28,27 @@ import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.util.EntityUtils;
 
 
-public class SecuredAuthenticator extends AbstractAuthenticator {
+public class SecuredAuthenticator extends AbstractAuthenticator implements CleanCloseable {
 
   private HttpJsonRequestFactory jsonRequestFactory;
+  private final boolean autoRefreshToken;
+  private Timer autoRefreshTimer;
+  private Object locker = new Object();
 
-  public SecuredAuthenticator(HttpJsonRequestFactory jsonRequestFactory) {
+  private final int DEFAULT_REFRESH_TIME_IN_MILLIS = 29 * 60 * 1000;
+
+  public SecuredAuthenticator(HttpJsonRequestFactory jsonRequestFactory, boolean autoRefreshToken) {
     super();
     this.jsonRequestFactory = jsonRequestFactory;
+    this.autoRefreshToken = autoRefreshToken;
+  }
+
+  @Override
+  public void close() {
+    if (autoRefreshTimer != null) {
+      autoRefreshTimer.cancel();
+    }
+    autoRefreshTimer = null;
   }
 
   @Override
@@ -125,6 +141,8 @@ public class SecuredAuthenticator extends AbstractAuthenticator {
           RavenJObject jToken = RavenJObject.parse(token);
           currentOauthToken = "Bearer " + jToken;
 
+          scheduleTokenRefresh(oauthSource, apiKey);
+
           return new Action1<HttpRequest>() {
             @Override
             public void apply(HttpRequest request) {
@@ -162,6 +180,21 @@ public class SecuredAuthenticator extends AbstractAuthenticator {
     } catch (IOException e) {
       throw new RuntimeException(e);
     }
+  }
 
+  private void scheduleTokenRefresh(String oauthSource, String apiKey) {
+    if (!autoRefreshToken) {
+      return;
+    }
+
+    synchronized (locker) {
+      if (autoRefreshTimer != null) {
+       // autoRefreshTimer.ch //TODO: update current schedule,
+        // in java code we probably always create timer and schedule action / cancel in here (using purge?)
+        //DoOAuthRequestAsync(null, oauthSource, apiKey), null, defaultRefreshTimeInMilis, Timeout.InfiniteTimeSpan);
+      } else {
+        //autoRefreshTimer = new Timer() // TODO: create new schedule without repeat
+      }
+    }
   }
 }

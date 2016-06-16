@@ -96,12 +96,7 @@ public class ObservableLineStream implements IObservable<String>, Closeable {
             posInBuffer -= startPos;
           } catch (Exception e) {
             IOUtils.closeQuietly(stream);
-            if (disposed) {
-              return;
-            }
-            for (IObserver<String> subscriber : subscribers) {
-              subscriber.onError(e);
-            }
+            disposeAndSignalConnectionError(e);
             return;
           }
         }
@@ -110,6 +105,15 @@ public class ObservableLineStream implements IObservable<String>, Closeable {
     }, "ObservableLineStream");
     task.setDaemon(true);
     task.start();
+  }
+
+  private void disposeAndSignalConnectionError(Exception e) {
+    if (disposed) {
+      return;
+    }
+    for (IObserver<String> subscriber : subscribers) {
+      subscriber.onError(e);
+    }
   }
 
   public Thread getTask() {
