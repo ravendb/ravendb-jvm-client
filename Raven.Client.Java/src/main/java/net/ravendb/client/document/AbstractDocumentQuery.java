@@ -1598,7 +1598,6 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
 
       SpatialIndexQuery spatialIndexQuery = new SpatialIndexQuery();
       spatialIndexQuery.setQuery(query);
-      spatialIndexQuery.setPageSize(pageSize != null ? pageSize : 128);
       spatialIndexQuery.setStart(start);
       spatialIndexQuery.setCutoff(cutoff);
       spatialIndexQuery.setCutoffEtag(cutoffEtag);
@@ -1640,6 +1639,10 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
       spatialIndexQuery.setDisableCaching(disableCaching);
       spatialIndexQuery.setShowTimings(showQueryTimings);
       spatialIndexQuery.setExplainScores(shouldExplainScores);
+
+      if (pageSize != null) {
+        spatialIndexQuery.setPageSize(pageSize);
+      }
 
       return spatialIndexQuery;
 

@@ -392,7 +392,7 @@ public abstract class RavenDBAwareTests {
     try {
       deleteMethod = new HttpDelete(getServerUrl(i) + "/admin/databases/" + UrlUtils.escapeDataString(dbName) + "?hard-delete=true");
       HttpResponse httpResponse = client.execute(deleteMethod);
-      if (httpResponse.getStatusLine().getStatusCode() != HttpStatus.SC_OK) {
+      if (httpResponse.getStatusLine().getStatusCode() != HttpStatus.SC_OK && httpResponse.getStatusLine().getStatusCode() != HttpStatus.SC_NO_CONTENT) {
         throw new IllegalStateException("Invalid response on put:" + httpResponse.getStatusLine().getStatusCode());
       }
     } catch (IOException e) {
