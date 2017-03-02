@@ -2,7 +2,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>net.ravendb</groupId>
   <artifactId>ravendb-parent</artifactId>
-  <version>3.2.2-SNAPSHOT</version>
+  <version>3.2.2</version>
   <packaging>pom</packaging>
   <name>RavenDB</name>
   <description>RavenDB Java Client</description>
@@ -12,7 +12,7 @@
     <connection>scm:git:https://github.com/ravendb/jvm-client.git</connection>
     <developerConnection>scm:git:git@github.com:ravendb/jvm-client.git</developerConnection>
     <url>https://github.com/ravendb/jvm-client</url>
-    <tag>HEAD</tag>
+    <tag>v3.2.2</tag>
   </scm>
 
   <licenses>
