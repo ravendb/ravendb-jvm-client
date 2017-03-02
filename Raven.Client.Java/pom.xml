@@ -4,7 +4,7 @@
   <parent>
     <groupId>net.ravendb</groupId>
     <artifactId>ravendb-parent</artifactId>
-    <version>3.2.2</version>
+    <version>3.2.3-SNAPSHOT</version>
   </parent>
 
   <artifactId>ravendb-client</artifactId>
