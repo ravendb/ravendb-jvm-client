@@ -91,15 +91,18 @@ public class RemoteBulkInsertOperation implements ILowLevelBulkInsertOperation, 
   }
 
   public RemoteBulkInsertOperation(BulkInsertOptions options, ServerClient client, IDatabaseChanges changes) {
-    this(options, client, changes, null);
+    this(options, client, changes, null, null);
   }
 
-  public RemoteBulkInsertOperation(BulkInsertOptions options, ServerClient client, IDatabaseChanges changes, UUID existingOperationId) {
+  public RemoteBulkInsertOperation(BulkInsertOptions options, ServerClient client, IDatabaseChanges changes, RemoteBulkInsertOperation previousTask, UUID existingOperationId) {
     this.options = options;
     operationId = existingOperationId != null ? existingOperationId : UUID.randomUUID();
     operationClient = client;
     queue = new ArrayBlockingQueue<>(Math.max(128, (options.getBatchSize() * 3) / 2));
 
+    if (previousTask != null) {
+      this.total += previousTask.total;
+    }
     operationTask = startBulkInsertAsync(options);
     subscribeToBulkInsertNotifications(changes);
   }
@@ -225,6 +228,7 @@ public class RemoteBulkInsertOperation implements ILowLevelBulkInsertOperation, 
       }
     });
 
+    thread.setName("Bulk insert");
 
     thread.setUncaughtExceptionHandler(new UncaughtExceptionHandler() {
       @SuppressWarnings("synthetic-access")

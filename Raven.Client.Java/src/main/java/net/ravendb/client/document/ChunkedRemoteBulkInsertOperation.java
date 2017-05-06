@@ -21,7 +21,6 @@ public class ChunkedRemoteBulkInsertOperation implements ILowLevelBulkInsertOper
     private long currentChunkSize;
     private boolean disposed;
     private Action1<String> report;
-    //TODO: previous task?
 
     public ChunkedRemoteBulkInsertOperation(BulkInsertOptions options, ServerClient serverClient, IDatabaseChanges changes) {
         this.options = options;
@@ -56,7 +55,7 @@ public class ChunkedRemoteBulkInsertOperation implements ILowLevelBulkInsertOper
 
     private RemoteBulkInsertOperation getBulkInsertOperation() {
         if (current == null) {
-            return current = createBulkInsertOperation();
+            return current = createBulkInsertOperation(null);
         }
 
         if (processedItemsInCurrentOperation < options.getChunkedBulkInsertOptions().getMaxDocumentsPerChunk()) {
@@ -65,16 +64,18 @@ public class ChunkedRemoteBulkInsertOperation implements ILowLevelBulkInsertOper
             }
         }
 
-        //TODO: do we need prev task logic?
+        if (this.current != null) {
+            this.current.close();
+        }
 
         currentChunkSize = 0;
         processedItemsInCurrentOperation = 0;
-        current = createBulkInsertOperation();
+        current = createBulkInsertOperation(this.current);
         return current;
     }
 
-    private RemoteBulkInsertOperation createBulkInsertOperation() {
-        RemoteBulkInsertOperation operation = new RemoteBulkInsertOperation(options, client, changes, getOperationId());
+    private RemoteBulkInsertOperation createBulkInsertOperation(RemoteBulkInsertOperation previous) {
+        RemoteBulkInsertOperation operation = new RemoteBulkInsertOperation(options, client, changes, previous, getOperationId());
         if (getReport() != null) {
             operation.setReport(Delegates.combine(operation.getReport(), getReport()));
         }
@@ -101,6 +102,9 @@ public class ChunkedRemoteBulkInsertOperation implements ILowLevelBulkInsertOper
         if (disposed) {
             return;
         }
+
+        disposed = true;
+
         if (current != null) {
             current.close();
         }

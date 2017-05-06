@@ -5,6 +5,8 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.fail;
 
 import net.ravendb.abstractions.closure.Action1;
+import net.ravendb.abstractions.data.BulkInsertOptions;
+import net.ravendb.abstractions.data.BulkOperationOptions;
 import net.ravendb.client.IDocumentSession;
 import net.ravendb.client.IDocumentStore;
 import net.ravendb.client.RemoteClientTest;
@@ -39,6 +41,26 @@ public class BulkInsertClientTest extends RemoteClientTest {
       }
     }
   }
+
+    @Test
+    public void canHandleBulkInsertWithMultipleChunks() throws InterruptedException {
+        try (IDocumentStore store = new DocumentStore(getDefaultUrl(), getDefaultDb()).initialize()) {
+            BulkInsertOptions bulkOperationOptions = new BulkInsertOptions();
+            bulkOperationOptions.getChunkedBulkInsertOptions().setMaxDocumentsPerChunk(2);
+            try (BulkInsertOperation bulkInsert = store.bulkInsert(getDefaultDb(), bulkOperationOptions)) {
+
+                for (int i = 0; i < 100; i++) {
+                    User user = new User();
+                    user.setName("Marcin");
+                    bulkInsert.store(user);
+                }
+            }
+
+            try (IDocumentSession session = store.openSession()) {
+                assertEquals(100, session.query(User.class).count());
+            }
+        }
+    }
 
   @Test
   public void canAbortAndDisposeUsingBulk() throws InterruptedException {
