@@ -117,9 +117,7 @@ public class IndexAndQueryTest extends RavenDBAwareTests {
       BulkOperationOptions options = new BulkOperationOptions();
       options.setRetrieveDetails(true);
       Operation operation = dbCommands.deleteByIndex(indexName, new IndexQuery(), options);
-      RavenJArray completion = (RavenJArray) operation.waitForCompletion();
-      assertEquals(2, completion.size());
-
+      operation.waitForCompletion();
     } finally {
       deleteDb();
     }

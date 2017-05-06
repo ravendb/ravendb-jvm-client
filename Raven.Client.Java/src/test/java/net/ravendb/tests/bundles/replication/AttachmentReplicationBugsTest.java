@@ -56,7 +56,7 @@ public class AttachmentReplicationBugsTest extends ReplicationBase {
 
       store1.getDatabaseCommands().putAttachment("static", null, new ByteArrayInputStream(new byte[] {(byte) 1}),
         new RavenJObject());
-      store2.getDatabaseCommands().putAttachment("static", null, new ByteArrayInputStream(new byte[] {(byte) 1}),
+      store2.getDatabaseCommands().putAttachment("static", null, new ByteArrayInputStream(new byte[] {(byte) 2}),
         new RavenJObject());
 
       tellFirstInstanceToReplicateToSecondInstance();

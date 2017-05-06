@@ -31,7 +31,7 @@ public class ReplicationBase extends RavenDBAwareTests {
 
   private List<IDocumentStore> stores = new ArrayList<>();
 
-  protected int retriesCount = 500;
+  protected int retriesCount = 100;
 
   public DocumentStore createStore() {
     return createStore(null);

@@ -485,12 +485,14 @@ public class UsingRavenQueryProviderTest extends RemoteClientTest {
         List<SomeDataProjection> luceneResult = session.advanced().documentQuery(OrderItem.class, "ByLineCost")
             .where("Cost_Range:{Dx1 TO NULL}")
             .selectFields(SomeDataProjection.class)
+            .waitForNonStaleResults()
             .toList();
 
         QUsingRavenQueryProviderTest_OrderItem x = QUsingRavenQueryProviderTest_OrderItem.orderItem;
         List<SomeDataProjection> projectionResult = session.query(OrderItem.class, "ByLineCost")
             .where(x.cost.gt(1))
             .select(SomeDataProjection.class)
+                .customize(new DocumentQueryCustomizationFactory().waitForNonStaleResults())
             .toList();
 
         assertEquals(luceneResult.size(), projectionResult.size());

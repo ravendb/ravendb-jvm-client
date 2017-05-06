@@ -28,7 +28,9 @@ public class ConflictWhenReplicatingTest extends ReplicationBase {
       }
 
       try (IDocumentSession session2 = store2.openSession()) {
-        session2.store(new Company());
+        Company company = new Company();
+        company.setName("Company2");
+        session2.store(company);
         session2.saveChanges();
       }
 
@@ -65,7 +67,9 @@ public class ConflictWhenReplicatingTest extends ReplicationBase {
       }
 
       try (IDocumentSession session = store2.openSession()) {
-        session.store(new Company());
+        Company company = new Company();
+        company.setName("second");
+        session.store(company);
         session.saveChanges();
       }
 
@@ -101,7 +105,9 @@ public class ConflictWhenReplicatingTest extends ReplicationBase {
       }
 
       try (IDocumentSession session2 = store2.openSession()) {
-        session2.store(new Company());
+        Company company = new Company();
+        company.setName("Company2");
+        session2.store(company);
         session2.saveChanges();
       }
 

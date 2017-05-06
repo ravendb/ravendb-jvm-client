@@ -16,6 +16,10 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
+import com.google.common.base.Predicate;
+import com.google.common.base.Predicates;
+import com.google.common.collect.Collections2;
+import com.google.common.collect.Iterables;
 import com.google.common.collect.Maps;
 import net.ravendb.abstractions.commands.ICommandData;
 import net.ravendb.abstractions.commands.PatchCommandData;
@@ -56,6 +60,8 @@ import net.ravendb.tests.bugs.User;
 
 import org.apache.commons.lang.StringUtils;
 import org.junit.Test;
+
+import javax.annotation.Nullable;
 
 
 @SuppressWarnings("deprecation")
@@ -165,15 +171,19 @@ public class ServerClientTest extends RavenDBAwareTests {
       assertTrue(jsonDocumentList.get(3).getDataAsJson().containsKey("key"));
 
       jsonDocumentList = dbCommands.getDocuments(0, 2);
+      jsonDocumentList = filterDocuments(jsonDocumentList, "testVal");
       assertEquals(2, jsonDocumentList.size());
 
       jsonDocumentList = dbCommands.getDocuments(0, 10);
+      jsonDocumentList = filterDocuments(jsonDocumentList, "testVal");
       assertEquals(4, jsonDocumentList.size());
 
       jsonDocumentList = dbCommands.getDocuments(2, 10);
+      jsonDocumentList = filterDocuments(jsonDocumentList, "testVal");
       assertEquals(2, jsonDocumentList.size());
 
       List<JsonDocument> metaOnly = dbCommands.getDocuments(0, 100, true);
+      metaOnly = filterDocuments(metaOnly, "testVal");
       assertEquals(4, metaOnly.size());
       assertEquals(0, metaOnly.get(0).getDataAsJson().getCount());
     } finally {
@@ -269,7 +279,7 @@ public class ServerClientTest extends RavenDBAwareTests {
       result = dbCommands.put("tests/aval4", etag, RavenJObject.parse("{ \"key\" : \"val4\"}"), new RavenJObject());
       assertNotNull(result);
 
-      List<JsonDocument> jsonDocumentList = dbCommands.getDocuments(0, 5);
+      List<JsonDocument> jsonDocumentList = filterDocuments(dbCommands.getDocuments(0, 5), "tests/");
       assertEquals(4, jsonDocumentList.size());
 
       JsonDocument jsonDocument = dbCommands.get("tests/val1a");
@@ -277,21 +287,21 @@ public class ServerClientTest extends RavenDBAwareTests {
       dbCommands.delete(jsonDocument.getKey(), jsonDocument.getEtag());
 
       jsonDocumentList = dbCommands.getDocuments(0, 5);
-      assertEquals(3, jsonDocumentList.size());
+      assertEquals(3, filterDocuments(jsonDocumentList, "tests/").size());
 
       jsonDocument = dbCommands.get("tests/val2a");
       dbCommands.delete(jsonDocument.getKey(), jsonDocument.getEtag());
-      jsonDocumentList = dbCommands.getDocuments(0, 5);
+      jsonDocumentList = filterDocuments(dbCommands.getDocuments(0, 5), "tests/");
       assertEquals(2, jsonDocumentList.size());
 
       jsonDocument = dbCommands.get("tests/val3a");
       dbCommands.delete(jsonDocument.getKey(), jsonDocument.getEtag());
-      jsonDocumentList = dbCommands.getDocuments(0, 5);
+      jsonDocumentList = filterDocuments(dbCommands.getDocuments(0, 5), "tests/");
       assertEquals(1, jsonDocumentList.size());
 
       jsonDocument = dbCommands.get("tests/aval4");
       dbCommands.delete(jsonDocument.getKey(), jsonDocument.getEtag());
-      jsonDocumentList = dbCommands.getDocuments(0, 5);
+      jsonDocumentList = filterDocuments(dbCommands.getDocuments(0, 5), "tests/");
       assertEquals(0, jsonDocumentList.size());
 
     } finally {
@@ -459,10 +469,18 @@ public class ServerClientTest extends RavenDBAwareTests {
       dbCommands.resetIndex("firstIndex");
 
       Collection<String> indexNames = dbCommands.getIndexNames(0, 10);
+
+      indexNames = Collections2.filter(indexNames, Predicates.not(Predicates.containsPattern("Raven/")));
       List<String> expectedIndexNames = Arrays.asList("firstIndex");
-      assertEquals(expectedIndexNames, indexNames);
+      assertEquals(expectedIndexNames, new ArrayList<>(indexNames));
 
       Collection<IndexDefinition> collection = dbCommands.getIndexes(0, 10);
+      collection = Collections2.filter(collection, new Predicate<IndexDefinition>() {
+        @Override
+        public boolean apply(@Nullable IndexDefinition indexDefinition) {
+          return !indexDefinition.getName().startsWith("Raven/");
+        }
+      });
       assertEquals(1, collection.size());
 
       dbCommands.deleteIndex("firstIndex");
@@ -493,13 +511,14 @@ public class ServerClientTest extends RavenDBAwareTests {
       assertEquals(FieldTermVector.WITH_POSITIONS_AND_OFFSETS, complexReturn.getTermVectors().get("Name"));
       assertEquals("Raven.Database.Indexing.Collation.Cultures.SvCollationAnalyzer, Raven.Database", complexReturn.getAnalyzers().get("Name"));
 
-      assertEquals(new ArrayList<String>(), dbCommands.getIndexNames(0, 10));
+      indexNames = dbCommands.getIndexNames(0, 10);
+      indexNames = Collections2.filter(indexNames, Predicates.not(Predicates.containsPattern("Raven/")));
+      assertEquals(0, indexNames.size());
 
 
     } finally {
       deleteDb();
     }
-
   }
 
   @Test
@@ -638,7 +657,8 @@ public class ServerClientTest extends RavenDBAwareTests {
       }
 
       List<JsonDocument> documents = dbCommands.getDocuments(Etag.empty(), 20);
-      assertEquals(10, documents.size());
+
+      assertEquals(10, filterDocuments(documents, "users/").size());
     } finally {
       deleteDb();
     }

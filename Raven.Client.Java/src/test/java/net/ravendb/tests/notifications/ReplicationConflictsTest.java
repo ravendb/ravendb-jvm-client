@@ -81,8 +81,8 @@ public class ReplicationConflictsTest extends ReplicationBase {
   public void canGetNotificationsAboutConflictedAttachements() throws Exception {
     try (IDocumentStore store1 = createStore();
       IDocumentStore store2 = createStore()) {
-      store1.getDatabaseCommands().putAttachment("attachment/1", null, new ByteArrayInputStream(new byte[] { 1,2,3}), new RavenJObject());
-      store2.getDatabaseCommands().putAttachment("attachment/1", null, new ByteArrayInputStream(new byte[] { 1,2,3}), new RavenJObject());
+      store1.getDatabaseCommands().putAttachment("attachment/1", null, new ByteArrayInputStream(new byte[] { 1, 2, 3 }), new RavenJObject());
+      store2.getDatabaseCommands().putAttachment("attachment/1", null, new ByteArrayInputStream(new byte[] { 1, 2, 3, 4 }), new RavenJObject());
 
 
       final BlockingQueue<ReplicationConflictNotification> list = new ArrayBlockingQueue<>(20);

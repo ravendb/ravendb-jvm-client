@@ -14,6 +14,7 @@ import net.ravendb.abstractions.basic.EventHandler;
 import net.ravendb.abstractions.closure.Functions;
 import net.ravendb.abstractions.connection.OperationCredentials;
 import net.ravendb.abstractions.connection.WebRequestEventArgs;
+import net.ravendb.abstractions.data.JsonDocument;
 import net.ravendb.abstractions.json.linq.RavenJObject;
 import net.ravendb.abstractions.json.linq.RavenJValue;
 import net.ravendb.client.connection.IDatabaseCommands;
@@ -330,6 +331,16 @@ public abstract class RavenDBAwareTests {
       }
 
     }
+  }
+
+  protected List<JsonDocument> filterDocuments(List<JsonDocument> input, String prefix) {
+    List<JsonDocument> output = new ArrayList<>();
+    for (JsonDocument jsonDocument : input) {
+      if (jsonDocument.getKey().startsWith(prefix)) {
+        output.add(jsonDocument);
+      }
+    }
+    return output;
   }
 
   protected <T> List<T> extractSinglePropertyFromList(List<RavenJObject> inputList, String propName, Class<T> resultClass) {
