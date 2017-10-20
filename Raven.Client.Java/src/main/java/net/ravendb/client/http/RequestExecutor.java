@@ -687,7 +687,7 @@ TODO:
         return _readBalanceBehavior == ReadBalanceBehavior.FASTEST_NODE &&
                 _nodeSelector != null &&
                 _nodeSelector.inSpeedTestPhase() &&
-                Optional.ofNullable(_nodeSelector).map(x -> x.getTopology()).map(x -> x.getNodes()).map(x -> x.size() > 0).orElse(false) &&
+                Optional.ofNullable(_nodeSelector).map(x -> x.getTopology()).map(x -> x.getNodes()).map(x -> x.size() > 1).orElse(false) &&
                 command.isReadRequest() &&
                 command.getResponseType() == RavenCommandResponseType.OBJECT &&
                 chosenNode != null;
