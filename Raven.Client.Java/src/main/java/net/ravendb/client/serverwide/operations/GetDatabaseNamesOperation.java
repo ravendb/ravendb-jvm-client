@@ -1,7 +1,6 @@
 package net.ravendb.client.serverwide.operations;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import net.ravendb.client.documents.conventions.DocumentConventions;
 import net.ravendb.client.http.RavenCommand;
@@ -23,7 +22,7 @@ public class GetDatabaseNamesOperation implements IServerOperation<String[]> {
     }
 
     @Override
-    public RavenCommand<String[]> getCommand(DocumentConventions conventions, ObjectMapper context) {
+    public RavenCommand<String[]> getCommand(DocumentConventions conventions) {
         return new GetDatabaseNamesCommand(_start, _pageSize);
     }
 
@@ -43,14 +42,14 @@ public class GetDatabaseNamesOperation implements IServerOperation<String[]> {
         }
 
         @Override
-        public HttpRequestBase createRequest(ObjectMapper ctx, ServerNode node, Reference<String> url) {
+        public HttpRequestBase createRequest(ServerNode node, Reference<String> url) {
             url.value = node.getUrl() + "/databases?start=" + _start + "&pageSize=" + _pageSize + "&namesOnly=true";
 
             return new HttpGet();
         }
 
         @Override
-        public void setResponse(ObjectMapper mapper, InputStream response, boolean fromCache) throws IOException {
+        public void setResponse(InputStream response, boolean fromCache) throws IOException {
             if (response == null) {
                 throwInvalidResponse();
                 return;

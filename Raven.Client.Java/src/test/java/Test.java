@@ -17,7 +17,7 @@ public class Test {
 
         Long operationId = command.getResult();
 
-        RavenCommand<String[]> databaseNamesCommand = new GetDatabaseNamesOperation(0, 10).getCommand(new DocumentConventions(), JsonExtensions.getMapper());
+        RavenCommand<String[]> databaseNamesCommand = new GetDatabaseNamesOperation(0, 10).getCommand(new DocumentConventions());
 
         executor.execute(databaseNamesCommand);
 

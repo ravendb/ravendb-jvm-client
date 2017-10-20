@@ -1,6 +1,5 @@
 package net.ravendb.client.http;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import net.ravendb.client.documents.conventions.DocumentConventions;
 import net.ravendb.client.documents.operations.configuration.GetClientConfigurationOperation;
 import net.ravendb.client.documents.session.SessionInfo;
@@ -12,11 +11,8 @@ import net.ravendb.client.serverwide.commands.GetTopologyCommand;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.CloseableHttpResponse;
-import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpRequestBase;
-import org.apache.http.client.methods.HttpUriRequest;
 import org.apache.http.config.SocketConfig;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
@@ -486,7 +482,7 @@ TODO:
         try {
             CloseableHttpResponse response = command.send(httpClient, request);
 
-            command.processResponse(JsonExtensions.getMapper(), response, urlRef.value);
+            command.processResponse(response, urlRef.value);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
@@ -802,7 +798,7 @@ TODO:
 
     private <TResult> HttpRequestBase createRequest(ServerNode node, RavenCommand<TResult> command, Reference<String> url) {
         try {
-            HttpRequestBase request = command.createRequest(JsonExtensions.getMapper(), node, url); //TODO: pass mapper?
+            HttpRequestBase request = command.createRequest(node, url);
             request.setURI(new URI(url.value));
 
         /* TODO

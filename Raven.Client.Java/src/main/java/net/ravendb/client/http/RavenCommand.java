@@ -2,6 +2,7 @@ package net.ravendb.client.http;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import net.ravendb.client.extensions.HttpExtensions;
+import net.ravendb.client.extensions.JsonExtensions;
 import net.ravendb.client.primitives.Reference;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.HttpEntity;
@@ -25,6 +26,7 @@ public abstract class RavenCommand<TResult> {
     protected RavenCommandResponseType responseType;
     protected boolean canCache;
     protected boolean canCacheAggressively;
+    protected ObjectMapper mapper = JsonExtensions.getDefaultMapper();
 
     public abstract boolean isReadRequest();
 
@@ -63,9 +65,9 @@ public abstract class RavenCommand<TResult> {
         this.canCacheAggressively = true;
     }
 
-    public abstract HttpRequestBase createRequest(ObjectMapper ctx, ServerNode node, Reference<String> url);
+    public abstract HttpRequestBase createRequest(ServerNode node, Reference<String> url);
 
-    public void setResponse(ObjectMapper mapper, InputStream response, boolean fromCache) throws IOException {
+    public void setResponse(InputStream response, boolean fromCache) throws IOException {
         if (responseType == RavenCommandResponseType.EMPTY || responseType == RavenCommandResponseType.RAW) {
             throwInvalidResponse();
         }
@@ -77,7 +79,7 @@ public abstract class RavenCommand<TResult> {
         return client.execute(request);
     }
 
-    public void setResponseRaw(CloseableHttpResponse response, InputStream stream, ObjectMapper context) {
+    public void setResponseRaw(CloseableHttpResponse response, InputStream stream) {
         throw new UnsupportedOperationException("When " + responseType + " is set to Raw then please override this method to handle the response. ");
     }
 
@@ -111,11 +113,11 @@ public abstract class RavenCommand<TResult> {
         return failedNodes != null && failedNodes.containsKey(node);
     }
 
-    public ResponseDisposeHandling processResponse(ObjectMapper context, CloseableHttpResponse response, String url) { //TODO: http cache
+    public ResponseDisposeHandling processResponse(CloseableHttpResponse response, String url) { //TODO: http cache
         //TODO: fake impl!
         try {
             HttpEntity entity = response.getEntity();
-            setResponse(context, entity.getContent(), false);
+            setResponse(entity.getContent(), false);
             return ResponseDisposeHandling.AUTOMATIC;
         } catch (IOException e) {
             throw new RuntimeException(e);

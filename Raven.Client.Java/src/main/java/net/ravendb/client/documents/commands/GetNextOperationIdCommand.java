@@ -1,7 +1,7 @@
 package net.ravendb.client.documents.commands;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import net.ravendb.client.extensions.JsonExtensions;
 import net.ravendb.client.http.RavenCommand;
 import net.ravendb.client.http.ServerNode;
 import net.ravendb.client.primitives.Reference;
@@ -22,15 +22,15 @@ public class GetNextOperationIdCommand extends RavenCommand<Long> {
     }
 
     @Override
-    public HttpRequestBase createRequest(ObjectMapper context, ServerNode node, Reference<String> url) {
+    public HttpRequestBase createRequest(ServerNode node, Reference<String> url) {
         url.value = node.getUrl() + "/databases/" + node.getDatabase() + "/operations/next-operation-id";
 
         return new HttpGet();
     }
 
     @Override
-    public void setResponse(ObjectMapper context, InputStream response, boolean fromCache) throws IOException {
-        JsonNode jsonNode = context.readTree(response);
+    public void setResponse(InputStream response, boolean fromCache) throws IOException {
+        JsonNode jsonNode = mapper.readTree(response);
 
         if (jsonNode.has("Id")) {
             result = jsonNode.get("Id").asLong();

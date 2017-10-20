@@ -1,6 +1,5 @@
 package net.ravendb.client.serverwide.commands;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import net.ravendb.client.http.RavenCommand;
 import net.ravendb.client.http.ServerNode;
 import net.ravendb.client.http.Topology;
@@ -26,7 +25,7 @@ public class GetTopologyCommand extends RavenCommand<Topology> {
     }
 
     @Override
-    public HttpRequestBase createRequest(ObjectMapper ctx, ServerNode node, Reference<String> url) {
+    public HttpRequestBase createRequest(ServerNode node, Reference<String> url) {
         url.value = node.getUrl() + "/topology?name=" + node.getDatabase();
         if (StringUtils.isNotEmpty(forcedUrl)) {
             url.value += "&url=" + forcedUrl;
@@ -36,7 +35,7 @@ public class GetTopologyCommand extends RavenCommand<Topology> {
     }
 
     @Override
-    public void setResponse(ObjectMapper mapper, InputStream response, boolean fromCache) throws IOException {
+    public void setResponse(InputStream response, boolean fromCache) throws IOException {
         if (response == null) {
             return;
         }

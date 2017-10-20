@@ -1,7 +1,6 @@
 package net.ravendb.client.extensions;
 
 import com.fasterxml.jackson.core.JsonParser;
-import com.fasterxml.jackson.databind.DeserializationConfig;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.PropertyNamingStrategy;
@@ -13,24 +12,18 @@ import net.ravendb.client.primitives.NetDateFormat;
 import net.ravendb.client.primitives.SharpAwareJacksonAnnotationIntrospector;
 import org.apache.commons.lang3.StringUtils;
 
-import java.io.IOException;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
-import java.util.HashMap;
-import java.util.LinkedHashSet;
-import java.util.Map;
-import java.util.Set;
-
 
 public class JsonExtensions {
 
-    //TODO: it is temporary!
-
     private static ObjectMapper _defaultMapper;
 
-    public static ObjectMapper getMapper() {
+    public static ObjectMapper getDefaultMapper() {
         if (_defaultMapper == null) {
-            _defaultMapper = createDefaultJsonSerializer();
+            synchronized (JsonExtensions.class) {
+                if (_defaultMapper == null) {
+                    _defaultMapper = createDefaultJsonSerializer();
+                }
+            }
         }
 
         return _defaultMapper;

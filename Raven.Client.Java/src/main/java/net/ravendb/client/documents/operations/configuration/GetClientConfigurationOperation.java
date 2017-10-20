@@ -1,6 +1,5 @@
 package net.ravendb.client.documents.operations.configuration;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import net.ravendb.client.documents.conventions.DocumentConventions;
 import net.ravendb.client.documents.operations.IAdminOperation;
 import net.ravendb.client.http.RavenCommand;
@@ -15,7 +14,7 @@ import java.io.InputStream;
 
 public class GetClientConfigurationOperation implements IAdminOperation<GetClientConfigurationOperation.Result> {
     @Override
-    public RavenCommand<Result> getCommand(DocumentConventions conventions, ObjectMapper context) {
+    public RavenCommand<Result> getCommand(DocumentConventions conventions) {
         return new GetClientConfigurationCommand();
     }
 
@@ -30,18 +29,18 @@ public class GetClientConfigurationOperation implements IAdminOperation<GetClien
         }
 
         @Override
-        public HttpRequestBase createRequest(ObjectMapper ctx, ServerNode node, Reference<String> url) {
+        public HttpRequestBase createRequest(ServerNode node, Reference<String> url) {
             url.value = node.getUrl() + "/databases/" + node.getDatabase() + "/configuration/client";
 
             return new HttpGet();
         }
 
         @Override
-        public void setResponse(ObjectMapper ctx, InputStream response, boolean fromCache) throws IOException {
+        public void setResponse(InputStream response, boolean fromCache) throws IOException {
             if (response == null) {
                 return;
             }
-            result = ctx.readValue(response, resultClass);
+            result = mapper.readValue(response, resultClass);
         }
     }
 
