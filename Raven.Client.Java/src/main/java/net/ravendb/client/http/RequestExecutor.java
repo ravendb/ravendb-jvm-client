@@ -1,12 +1,12 @@
 package net.ravendb.client.http;
 
 import com.google.common.base.Stopwatch;
+import com.sun.security.ntlm.Server;
 import net.ravendb.client.Constants;
 import net.ravendb.client.documents.conventions.DocumentConventions;
 import net.ravendb.client.documents.operations.configuration.GetClientConfigurationOperation;
 import net.ravendb.client.documents.session.SessionInfo;
 import net.ravendb.client.extensions.HttpExtensions;
-import net.ravendb.client.extensions.JsonExtensions;
 import net.ravendb.client.primitives.CleanCloseable;
 import net.ravendb.client.primitives.Reference;
 import net.ravendb.client.primitives.Tuple;
@@ -90,7 +90,7 @@ public class RequestExecutor implements CleanCloseable {
 
     protected NodeSelector _nodeSelector;
 
-    private Duration _defaultTimeout; //TODO: is it used?
+    private Duration _defaultTimeout;
 
     public long numberOfServerRequests;
 
@@ -122,20 +122,18 @@ public class RequestExecutor implements CleanCloseable {
 
     protected boolean _disableClientConfigurationUpdates;
 
-    /* TODO:
-        public TimeSpan? DefaultTimeout
-        {
-            get => _defaultTimeout;
-            set
-            {
-                if (value.HasValue && value.Value > GlobalHttpClientTimeout)
-                    throw new InvalidOperationException($"Maximum request timeout is set to '{GlobalHttpClientTimeout}' but was '{value}'.");
+    public Duration getDefaultTimeout() {
+        return _defaultTimeout;
+    }
 
-                _defaultTimeout = value;
-            }
+    public void setDefaultTimeout(Duration defaultTimeout) {
+        if (defaultTimeout != null && defaultTimeout.toMillis() > GLOBAL_HTTP_CLIENT_TIMEOUT.toMillis()) {
+            throw new IllegalArgumentException("Maximum request timeout is set to " + GLOBAL_HTTP_CLIENT_TIMEOUT.toMillis() + " but was " + defaultTimeout.toMillis());
         }
 
-    */
+        this._defaultTimeout = defaultTimeout;
+    }
+
     protected RequestExecutor(String databaseName, DocumentConventions conventions) { //TODO: X509Certificate2 certificate
         _readBalanceBehavior = conventions.getReadBalanceBehavior();
         _databaseName = databaseName;
@@ -146,7 +144,7 @@ public class RequestExecutor implements CleanCloseable {
 
         String thumbprint = "";
 
-        //TODO:    if (certificate != null)    thumbprint = certificate.Thumbprint;
+        //TODO: if (certificate != null)    thumbprint = certificate.Thumbprint;
 
         httpClient = globalHttpClient.computeIfAbsent(thumbprint, (thumb) -> createClient());
     }
@@ -189,89 +187,93 @@ public class RequestExecutor implements CleanCloseable {
             CompletableFuture.completedFuture(null);
         }
 
-        try {
-            _updateTopologySemaphore.acquire();
-        } catch (InterruptedException e) {
-            throw new RuntimeException(e);
-        }
-
-        boolean oldDisableClientConfigurationUpdates = _disableClientConfigurationUpdates;
-        _disableClientConfigurationUpdates = true;
-
-        try {
-            if (_disposed) {
-                CompletableFuture.completedFuture(null);
+        return CompletableFuture.runAsync(() -> {
+            try {
+                _updateTopologySemaphore.acquire();
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
             }
 
+            boolean oldDisableClientConfigurationUpdates = _disableClientConfigurationUpdates;
+            _disableClientConfigurationUpdates = true;
 
-            GetClientConfigurationOperation.GetClientConfigurationCommand command = new GetClientConfigurationOperation.GetClientConfigurationCommand();
-            CurrentIndexAndNode currentIndexAndNode = chooseNodeForRequest(command, null);
-            execute(currentIndexAndNode.currentNode, currentIndexAndNode.currentIndex, command, false, null);
+            try {
+                if (_disposed) {
+                    return;
+                }
 
-            GetClientConfigurationOperation.Result result = command.getResult();
-            if (result == null) {
-                return null; //TODO:
+                GetClientConfigurationOperation.GetClientConfigurationCommand command = new GetClientConfigurationOperation.GetClientConfigurationCommand();
+                CurrentIndexAndNode currentIndexAndNode = chooseNodeForRequest(command, null);
+                execute(currentIndexAndNode.currentNode, currentIndexAndNode.currentIndex, command, false, null);
+
+                GetClientConfigurationOperation.Result result = command.getResult();
+                if (result == null) {
+                    return;
+                }
+
+                conventions.updateFrom(result.getConfiguration());
+                clientConfigurationEtag = result.getEtag();
+
+            } finally {
+                _disableClientConfigurationUpdates = oldDisableClientConfigurationUpdates;
+                _updateClientConfigurationSemaphore.release();
             }
-
-            conventions.updateFrom(result.getConfiguration());
-            clientConfigurationEtag = result.getEtag();
-
-        } finally {
-            _disableClientConfigurationUpdates = oldDisableClientConfigurationUpdates;
-            _updateClientConfigurationSemaphore.release();
-        }
-
-
-        return null; //TODO: remove me!  - convert to CompletableFuture
+        });
     }
 
-    public boolean updateTopologyAsync(ServerNode node, int timeout) {
+    public CompletableFuture<Boolean> updateTopologyAsync(ServerNode node, int timeout) {
         return updateTopologyAsync(node, timeout, false);
     }
 
-    public boolean updateTopologyAsync(ServerNode node, int timeout, boolean forceUpdate) {
+    public CompletableFuture<Boolean> updateTopologyAsync(ServerNode node, int timeout, boolean forceUpdate) {
         if (_disposed) {
-            return false;
+            return CompletableFuture.completedFuture(false);
         }
 
-        //prevent double topology updates if execution takes too much time
-        // --> in cases with transient issues
-        // TODO: var lockTaken = await _updateTopologySemaphore.WaitAsync(timeout).ConfigureAwait(false);
-        //TODO:  if (lockTaken == false)
-        // TODO:  return false;
+        return CompletableFuture.supplyAsync(() -> {
 
-        try {
-
-            if (_disposed) {
-                return false;
+            //prevent double topology updates if execution takes too much time
+            // --> in cases with transient issues
+            try {
+                boolean lockTaken = _updateTopologySemaphore.tryAcquire(timeout, TimeUnit.MILLISECONDS);
+                if (!lockTaken) {
+                    return false;
+                }
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
             }
 
-            GetTopologyCommand command = new GetTopologyCommand();
-            execute(node, null, command, false, null);
+            try {
 
-            //TODO: var serverHash = ServerHash.GetServerHash(node.Url, _databaseName);
-            //TODO: TopologyLocalCache.TrySavingTopologyToLocalCache(serverHash, command.Result, context);
-
-            if (_nodeSelector == null) {
-                _nodeSelector = new NodeSelector(command.getResult());
-
-                if (_readBalanceBehavior == ReadBalanceBehavior.FASTEST_NODE) {
-                    _nodeSelector.scheduleSpeedTest();
+                if (_disposed) {
+                    return false;
                 }
-            } else if (_nodeSelector.onUpdateTopology(command.getResult(), forceUpdate)) {
-                //TODO: disposeAllFailedNodesTimers();
-                if (_readBalanceBehavior == ReadBalanceBehavior.FASTEST_NODE) {
-                    _nodeSelector.scheduleSpeedTest();
+
+                GetTopologyCommand command = new GetTopologyCommand();
+                execute(node, null, command, false, null);
+
+                if (_nodeSelector == null) {
+                    _nodeSelector = new NodeSelector(command.getResult());
+
+                    if (_readBalanceBehavior == ReadBalanceBehavior.FASTEST_NODE) {
+                        _nodeSelector.scheduleSpeedTest();
+                    }
+                } else if (_nodeSelector.onUpdateTopology(command.getResult(), forceUpdate)) {
+                    //TODO: disposeAllFailedNodesTimers();
+                    if (_readBalanceBehavior == ReadBalanceBehavior.FASTEST_NODE) {
+                        _nodeSelector.scheduleSpeedTest();
+                    }
                 }
+
+                topologyEtag = _nodeSelector.getTopology().getEtag();
+
+            } finally {
+                _updateTopologySemaphore.release();
             }
 
-            topologyEtag = _nodeSelector.getTopology().getEtag();
+            return true;
+        });
 
-        } finally {
-            //TODO:_updateTopologySemaphore.Release();
-        }
-
-        return true;
     }
 
         /* TODO:
@@ -300,7 +302,7 @@ public class RequestExecutor implements CleanCloseable {
             execute(currentIndexAndNode.currentNode, currentIndexAndNode.currentIndex, command, true, sessionInfo);
             return;
         } else {
-            unlikelyExecuteAsync(command, topologyUpdate, sessionInfo);
+            unlikelyExecute(command, topologyUpdate, sessionInfo);
         }
     }
 
@@ -320,8 +322,8 @@ public class RequestExecutor implements CleanCloseable {
                 throw new IllegalArgumentException();
         }
     }
- //TODO: is it really async?
-    private <TResult> void unlikelyExecuteAsync(RavenCommand<TResult> command, CompletableFuture<Void> topologyUpdate, SessionInfo sessionInfo) {
+
+    private <TResult> void unlikelyExecute(RavenCommand<TResult> command, CompletableFuture<Void> topologyUpdate, SessionInfo sessionInfo) {
         try {
             if (topologyUpdate == null) {
                 synchronized (this) {
@@ -396,18 +398,15 @@ TODO:
         return CompletableFuture.runAsync(() -> {
 
             for (String url : initialUrls) {
-
                 try {
-
                     ServerNode serverNode = new ServerNode();
                     serverNode.setUrl(url);
                     serverNode.setDatabase(_databaseName);
 
-                    updateTopologyAsync(serverNode, Integer.MAX_VALUE);
+                    updateTopologyAsync(serverNode, Integer.MAX_VALUE).get(); //TODO: it may block!
 
                     initializeUpdateTopologyTimer();
                     return;
-
                 } catch (Exception e) { //TODO: handle https
                     if (initialUrls.length == 0) {
                         _lastKnownUrls = initialUrls;
@@ -644,23 +643,19 @@ TODO:
                 }
 
                 if (refreshTopology || refreshClientConfiguration) {
-                    /* TODO:
-                     var tasks = new Task[2];
 
-                        tasks[0] = refreshTopology
-                            ? UpdateTopologyAsync(new ServerNode
-                            {
-                                Url = chosenNode.Url,
-                                Database = _databaseName
-                            }, 0)
-                            : Task.CompletedTask;
+                    ServerNode serverNode = new ServerNode();
+                    serverNode.setUrl(chosenNode.getUrl());
+                    serverNode.setDatabase(_databaseName);
 
-                        tasks[1] = refreshClientConfiguration
-                            ? UpdateClientConfigurationAsync()
-                            : Task.CompletedTask;
+                    CompletableFuture<Boolean> topologyTask = refreshTopology ? updateTopologyAsync(serverNode, 0) : CompletableFuture.completedFuture(false);
+                    CompletableFuture<Void> clientConfiguration = refreshClientConfiguration ? updateClientConfigurationAsync() : CompletableFuture.completedFuture(null);
 
-                        await Task.WhenAll(tasks).ConfigureAwait(false);
-                     */
+                    try {
+                        CompletableFuture.allOf(topologyTask, clientConfiguration).get();
+                    } catch (Exception e) {
+                        throw new RuntimeException(e); //TODO: better exception handling
+                    }
                 }
             }
         }
@@ -877,39 +872,39 @@ TODO:
 
         return serverStream;
     }
+*/
 
-    private async Task<bool> HandleServerDown<TResult>(string url, ServerNode chosenNode, int? nodeIndex, JsonOperationContext context, RavenCommand<TResult> command, HttpRequestMessage request, HttpResponseMessage response, Exception e, SessionInfo sessionInfo)
-    {
-        if (command.FailedNodes == null)
-            command.FailedNodes = new Dictionary<ServerNode, Exception>();
+    private <TResult> boolean handleServerDown(String url, ServerNode chosenNode, Integer nodeIndex, RavenCommand<TResult> command, HttpRequestBase request, CloseableHttpResponse response, Exception e, SessionInfo sessionInfo) {
+        if (command.getFailedNodes() == null) {
+            command.setFailedNodes(new HashMap<>());
+        }
 
-        await AddFailedResponseToCommand(chosenNode, context, command, request, response, e).ConfigureAwait(false);
+        addFailedResponseToCommand(chosenNode, command, request, response, e);
 
-        if (nodeIndex.HasValue == false)
-        {
+        if (nodeIndex == null) {
             //We executed request over a node not in the topology. This means no failover...
             return false;
         }
 
-        SpawnHealthChecks(chosenNode, nodeIndex.Value);
+        //TODO:  SpawnHealthChecks(chosenNode, nodeIndex.Value);
 
-        if (_nodeSelector == null)
+        if (_nodeSelector == null) {
             return false;
+        }
 
-        _nodeSelector.OnFailedRequest(nodeIndex.Value);
+        _nodeSelector.onFailedRequest(nodeIndex);
 
-        var (currentIndex, currentNode) = _nodeSelector.GetPreferredNode();
-        if (command.FailedNodes.ContainsKey(currentNode))
-        {
+        CurrentIndexAndNode currentIndexAndNode = _nodeSelector.getPreferredNode();
+        if (command.getFailedNodes().containsKey(currentIndexAndNode.currentNode)) {
             return false; //we tried all the nodes...nothing left to do
         }
 
-        OnFailedRequest(url, e);
-
-        await ExecuteAsync(currentNode, currentIndex, context, command, sessionInfo: sessionInfo).ConfigureAwait(false);
+        execute(currentIndexAndNode.currentNode, currentIndexAndNode.currentIndex, command, false, sessionInfo);
 
         return true;
     }
+
+    /*
 
     private void SpawnHealthChecks(ServerNode chosenNode, int nodeIndex)
     {
@@ -966,11 +961,12 @@ TODO:
         return ExecuteAsync(serverNode, nodeIndex, context, new GetStatisticsCommand(debugTag: "failure=check"), shouldRetry: false);
     }
 
-    private static async Task AddFailedResponseToCommand<TResult>(ServerNode chosenNode, JsonOperationContext context, RavenCommand<TResult> command, HttpRequestMessage request, HttpResponseMessage response, Exception e)
-    {
-        if (response != null)
-        {
-            var stream = await response.Content.ReadAsStreamAsync().ConfigureAwait(false);
+*/
+    //TODO: make sure we dispose response in case of failure!
+    private static <TResult> void addFailedResponseToCommand(ServerNode chosenNode, RavenCommand<TResult> command, HttpRequestBase request, CloseableHttpResponse respoonse, Exception e) {
+        if (respoonse != null) {
+            /* TODO
+             var stream = await response.Content.ReadAsStreamAsync().ConfigureAwait(false);
             var ms = new MemoryStream();
             await stream.CopyToAsync(ms).ConfigureAwait(false);
             try
@@ -994,18 +990,24 @@ TODO:
                 }, response.StatusCode));
             }
             return;
+             */
+
         }
-        //this would be connections that didn't have response, such as "couldn't connect to remote server"
-        command.FailedNodes.Add(chosenNode, ExceptionDispatcher.Get(new ExceptionDispatcher.ExceptionSchema
-        {
-            Url = request.RequestUri.ToString(),
-            Message = e.Message,
-            Error = e.ToString(),
-            Type = e.GetType().FullName
-        }, HttpStatusCode.InternalServerError));
+
+        // this would be connections that didn't have response, such as "couldn't connect to remote server"
+        command.getFailedNodes().put(chosenNode, new Exception("TODO")); //TODO:
+                /* TODO:
+                ExceptionDispatcher.Get(new ExceptionDispatcher.ExceptionSchema
+                {
+                    Url = request.RequestUri.ToString(),
+                    Message = e.Message,
+                    Error = e.ToString(),
+                    Type = e.GetType().FullName
+                }, HttpStatusCode.InternalServerError));
+            }
+                 */
     }
 
-*/
     protected boolean _disposed;
     protected CompletableFuture<Void> _firstTopologyUpdate;
     protected String[] _lastKnownUrls;
@@ -1117,8 +1119,6 @@ TODO:
      */
 
 
-
-
     private void ensureNodeSelector() throws ExecutionException, InterruptedException {
         if (!_firstTopologyUpdate.isDone()) {
             _firstTopologyUpdate.get();
@@ -1133,5 +1133,4 @@ TODO:
             _nodeSelector = new NodeSelector(topology);
         }
     }
-
 }

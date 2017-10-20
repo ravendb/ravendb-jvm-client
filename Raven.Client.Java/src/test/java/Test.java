@@ -9,7 +9,7 @@ public class Test {
 
 //TODO: make sure it throws properly when server not found
     public static void main(String[] args) {
-        RequestExecutor executor = RequestExecutor.create(new String[]{"http://localhost:8080"}, "db1", new DocumentConventions());
+        RequestExecutor executor = RequestExecutor.create(new String[]{"http://localhost:8085"}, "db1", new DocumentConventions());
 
         GetNextOperationIdCommand command = new GetNextOperationIdCommand();
 
