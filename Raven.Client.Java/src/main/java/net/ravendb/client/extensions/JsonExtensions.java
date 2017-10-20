@@ -9,6 +9,8 @@ import com.fasterxml.jackson.databind.cfg.MapperConfig;
 import com.fasterxml.jackson.databind.introspect.AnnotatedField;
 import com.fasterxml.jackson.databind.introspect.AnnotatedMethod;
 import com.fasterxml.jackson.databind.introspect.AnnotatedParameter;
+import net.ravendb.client.primitives.NetDateFormat;
+import net.ravendb.client.primitives.SharpAwareJacksonAnnotationIntrospector;
 import org.apache.commons.lang3.StringUtils;
 
 import java.io.IOException;
@@ -39,10 +41,9 @@ public class JsonExtensions {
         objectMapper.setPropertyNamingStrategy(new DotNetNamingStrategy());
         objectMapper.disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES);
         objectMapper.configure(JsonParser.Feature.ALLOW_SINGLE_QUOTES, true);
-        //TODO: objectMapper.setSerializationConfig(objectMapper.getSerializationConfig().withDateFormat(new NetDateFormat()));
-        //TODO: objectMapper.setDeserializationConfig(objectMapper.getDeserializationConfig().withDateFormat(new NetDateFormat()));
-
-        //TODO: objectMapper.setAnnotationIntrospector(new SharpAwareJacksonAnnotationIntrospector());
+        objectMapper.setConfig(objectMapper.getSerializationConfig().with(new NetDateFormat()));
+        objectMapper.setConfig(objectMapper.getDeserializationConfig().with(new NetDateFormat()));
+        objectMapper.setAnnotationIntrospector(new SharpAwareJacksonAnnotationIntrospector());
         return objectMapper;
     }
 

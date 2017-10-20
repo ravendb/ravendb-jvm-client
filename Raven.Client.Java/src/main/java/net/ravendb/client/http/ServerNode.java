@@ -1,7 +1,10 @@
 package net.ravendb.client.http;
 
+import net.ravendb.client.primitives.UseSharpEnum;
+
 public class ServerNode {
 
+    @UseSharpEnum
     public enum Role {
         NONE,
         PROMOTABLE,
