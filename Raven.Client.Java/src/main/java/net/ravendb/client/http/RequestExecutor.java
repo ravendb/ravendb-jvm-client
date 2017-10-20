@@ -1,16 +1,22 @@
 package net.ravendb.client.http;
 
+import com.google.common.base.Stopwatch;
+import net.ravendb.client.Constants;
 import net.ravendb.client.documents.conventions.DocumentConventions;
 import net.ravendb.client.documents.operations.configuration.GetClientConfigurationOperation;
 import net.ravendb.client.documents.session.SessionInfo;
+import net.ravendb.client.extensions.HttpExtensions;
 import net.ravendb.client.extensions.JsonExtensions;
 import net.ravendb.client.primitives.CleanCloseable;
 import net.ravendb.client.primitives.Reference;
 import net.ravendb.client.primitives.Tuple;
 import net.ravendb.client.serverwide.commands.GetTopologyCommand;
+import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.apache.http.HttpStatus;
+import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpRequestBase;
 import org.apache.http.config.SocketConfig;
@@ -20,6 +26,7 @@ import org.apache.http.impl.client.StandardHttpRequestRetryHandler;
 import org.apache.http.impl.conn.PoolingHttpClientConnectionManager;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -479,204 +486,197 @@ TODO:
         Reference<String> urlRef = new Reference<>();
         HttpRequestBase request = createRequest(chosenNode, command, urlRef);
 
-        try {
-            CloseableHttpResponse response = command.send(httpClient, request);
+        Reference<String> cachedChangeVector = new Reference<>();
+        Reference<Object> cachedValue = new Reference<>(); //TODO: use some type here!
 
-            command.processResponse(response, urlRef.value);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-
-    }
-
-    /*
-
-
-        using (var cachedItem = GetFromCache(context, command, url, out string cachedChangeVector, out BlittableJsonReaderObject cachedValue))
-        {
-            if (cachedChangeVector != null)
-            {
+        try (HttpCache.ReleaseCacheItem cachedItem = getFromCache(command, urlRef.value, cachedChangeVector, cachedValue)) {
+            if (cachedChangeVector.value != null) {
+                /* TODO
                 var aggressiveCacheOptions = AggressiveCaching.Value;
-                if (aggressiveCacheOptions != null &&
-                    cachedItem.Age < aggressiveCacheOptions.Duration &&
-                    cachedItem.MightHaveBeenModified == false &&
-                    command.CanCacheAggressively)
-                {
-                    command.SetResponse(cachedValue, fromCache: true);
-                    return;
-                }
+                    if (aggressiveCacheOptions != null &&
+                        cachedItem.Age < aggressiveCacheOptions.Duration &&
+                        cachedItem.MightHaveBeenModified == false &&
+                        command.CanCacheAggressively)
+                    {
+                        command.SetResponse(cachedValue, fromCache: true);
+                        return;
+                    }
+                 */
 
-                request.Headers.TryAddWithoutValidation("If-None-Match", $"\"{cachedChangeVector}\"");
+                request.addHeader("If-None-Match", "\"" + cachedChangeVector.value + "\"");
             }
 
-            if (_disableClientConfigurationUpdates == false)
-                request.Headers.TryAddWithoutValidation(Constants.Headers.ClientConfigurationEtag, $"\"{ClientConfigurationEtag}\"");
+            if (!_disableClientConfigurationUpdates) {
+                request.addHeader(Constants.Headers.CLIENT_CONFIGURATION_ETAG, "\"" + clientConfigurationEtag + "\"");
+            }
 
-            if (_disableTopologyUpdates == false)
-                request.Headers.TryAddWithoutValidation(Constants.Headers.TopologyEtag, $"\"{TopologyEtag}\"");
+            if (!_disableTopologyUpdates) {
+                request.addHeader(Constants.Headers.TOPOLOGY_ETAG, "\"" + topologyEtag + "\"");
+            }
 
-            var sp = Stopwatch.StartNew();
-            HttpResponseMessage response = null;
-            var responseDispose = ResponseDisposeHandling.Automatic;
-            try
-            {
+            Stopwatch sp = Stopwatch.createStarted();
+            CloseableHttpResponse response = null;
+            ResponseDisposeHandling responseDispose = ResponseDisposeHandling.AUTOMATIC;
 
-                Interlocked.Increment(ref NumberOfServerRequests);
-                var timeout = command.Timeout ?? _defaultTimeout;
-                if (timeout.HasValue)
-                {
+            try {
+                numberOfServerRequests++; //TODO: interlocked?
+
+                Duration timeout = command.getTimeout() != null ? command.getTimeout() : _defaultTimeout;
+
+                if (timeout != null) {
+                    throw new UnsupportedOperationException("TDODO");
+                    /*
                     if (timeout > GlobalHttpClientTimeout)
-                        ThrowTimeoutTooLarge(timeout);
+                            ThrowTimeoutTooLarge(timeout);
 
-                    using (var cts = CancellationTokenSource.CreateLinkedTokenSource(token, CancellationToken.None))
-                    {
-                        cts.CancelAfter(timeout.Value);
-                        try
+                        using (var cts = CancellationTokenSource.CreateLinkedTokenSource(token, CancellationToken.None))
                         {
-                            var preferredTask = command.SendAsync(HttpClient, request, cts.Token);
-                            if (ShouldExecuteOnAll(chosenNode, command))
+                            cts.CancelAfter(timeout.Value);
+                            try
                             {
-                                await ExecuteOnAllToFigureOutTheFastest(chosenNode, command, preferredTask, cts.Token).ConfigureAwait(false);
-                            }
-
-                            response = await preferredTask.ConfigureAwait(false);
-                        }
-                        catch (OperationCanceledException e)
-                        {
-                            if (cts.IsCancellationRequested && token.IsCancellationRequested == false) // only when we timed out
-                            {
-                                var timeoutException = new TimeoutException($"The request for {request.RequestUri} failed with timeout after {timeout}", e);
-                                if (shouldRetry == false)
-                                    throw timeoutException;
-
-                                sp.Stop();
-                                if (sessionInfo != null)
+                                var preferredTask = command.SendAsync(HttpClient, request, cts.Token);
+                                if (ShouldExecuteOnAll(chosenNode, command))
                                 {
-                                    sessionInfo.AsyncCommandRunning = false;
+                                    await ExecuteOnAllToFigureOutTheFastest(chosenNode, command, preferredTask, cts.Token).ConfigureAwait(false);
                                 }
 
-                                if (await HandleServerDown(url, chosenNode, nodeIndex, context, command, request, response, e, sessionInfo).ConfigureAwait(false) == false)
-                                {
-                                    ThrowFailedToContactAllNodes(command, request, e, timeoutException);
-                                }
-
-                                return;
+                                response = await preferredTask.ConfigureAwait(false);
                             }
-                            throw;
+                            catch (OperationCanceledException e)
+                            {
+                                if (cts.IsCancellationRequested && token.IsCancellationRequested == false) // only when we timed out
+                                {
+                                    var timeoutException = new TimeoutException($"The request for {request.RequestUri} failed with timeout after {timeout}", e);
+                                    if (shouldRetry == false)
+                                        throw timeoutException;
+
+                                    sp.Stop();
+                                    if (sessionInfo != null)
+                                    {
+                                        sessionInfo.AsyncCommandRunning = false;
+                                    }
+
+                                    if (await HandleServerDown(url, chosenNode, nodeIndex, context, command, request, response, e, sessionInfo).ConfigureAwait(false) == false)
+                                    {
+                                        ThrowFailedToContactAllNodes(command, request, e, timeoutException);
+                                    }
+
+                                    return;
+                                }
+                                throw;
+                            }
                         }
-                    }
-                }
-                else
-                {
-                    var preferredTask = command.SendAsync(HttpClient, request, token);
-                    if (ShouldExecuteOnAll(chosenNode, command))
-                    {
-                        await ExecuteOnAllToFigureOutTheFastest(chosenNode, command, preferredTask, token).ConfigureAwait(false);
+                     */
+                } else {
+                    CloseableHttpResponse preferredTask = command.send(httpClient, request); //TODO: it returns task!
+                    if (shouldExecuteOnAll(chosenNode, command)) {
+                        //TODO: await ExecuteOnAllToFigureOutTheFastest(chosenNode, command, preferredTask, token).ConfigureAwait(false);
                     }
 
-                    response = await preferredTask.ConfigureAwait(false);
-                }
-                sp.Stop();
-            }
-            catch (HttpRequestException e) // server down, network down
-            {
-                if (shouldRetry == false)
-                    throw;
-                sp.Stop();
-                if (sessionInfo != null)
-                {
-                    sessionInfo.AsyncCommandRunning = false;
+                    response = preferredTask; //TODO: here we should await
                 }
 
-                if (await HandleServerDown(url, chosenNode, nodeIndex, context, command, request, response, e, sessionInfo).ConfigureAwait(false) == false)
-                {
-                    ThrowFailedToContactAllNodes(command, request, e, null);
+                sp.stop();
+            } catch (IOException e) {
+                if (!shouldRetry) {
+                    throw new RuntimeException(e); //TODO: use better exception!
                 }
+                sp.stop();
+
+                //TODO :if (await HandleServerDown(url, chosenNode, nodeIndex, context, command, request, response, e, sessionInfo).ConfigureAwait(false) == false)
+                //TODO:    ThrowFailedToContactAllNodes(command, request, e, null);
 
                 return;
             }
-            finally
-            {
-                if (sessionInfo != null)
-                {
-                    sessionInfo.AsyncCommandRunning = false;
-                }
-            }
 
-            command.StatusCode = response.StatusCode;
+            command.statusCode = response.getStatusLine().getStatusCode();
 
-            var refreshTopology = response.GetBoolHeader(Constants.Headers.RefreshTopology) ?? false;
-            var refreshClientConfiguration = response.GetBoolHeader(Constants.Headers.RefreshClientConfiguration) ?? false;
+            Boolean refreshTopology = Optional.ofNullable(HttpExtensions.getBooleanHeader(response, Constants.Headers.REFRESH_TOPOLOGY)).orElse(false);
+            Boolean refreshClientConfiguration = Optional.ofNullable(HttpExtensions.getBooleanHeader(response, Constants.Headers.REFRESH_CLIENT_CONFIGURATION)).orElse(false);
 
-            try
-            {
-                if (response.StatusCode == HttpStatusCode.NotModified)
-                {
-                    cachedItem.NotModified();
+            try {
+                if (response.getStatusLine().getStatusCode() == HttpStatus.SC_NOT_MODIFIED) {
+                    cachedItem.notModified();
 
-                    if (command.ResponseType == RavenCommandResponseType.Object)
-                        command.SetResponse(cachedValue, fromCache: true);
+                    try {
+                        if (command.getResponseType() == RavenCommandResponseType.OBJECT) {
+                            command.setResponse((InputStream)cachedValue.value, true); //TODO: remove cast!
+                        }
+                    } catch (IOException e) {
+                        throw new RuntimeException(e); //TODO: use better exception!
+                    }
 
                     return;
                 }
 
-                if (response.IsSuccessStatusCode == false)
-                {
+                if (response.getStatusLine().getStatusCode() >= 400) {
+                    /* TODO
                     if (await HandleUnsuccessfulResponse(chosenNode, nodeIndex, context, command, request, response, url, sessionInfo, shouldRetry).ConfigureAwait(false) == false)
-                    {
-                        if (response.Headers.TryGetValues("Database-Missing", out var databaseMissing))
                         {
-                            var name = databaseMissing.FirstOrDefault();
-                            if (name != null)
-                                throw new DatabaseDoesNotExistException(name);
+                            if (response.Headers.TryGetValues("Database-Missing", out var databaseMissing))
+                            {
+                                var name = databaseMissing.FirstOrDefault();
+                                if (name != null)
+                                    throw new DatabaseDoesNotExistException(name);
+                            }
+
+                            if (command.FailedNodes.Count == 0) //precaution, should never happen at this point
+                                throw new InvalidOperationException("Received unsuccessful response and couldn't recover from it. Also, no record of exceptions per failed nodes. This is weird and should not happen.");
+
+                            if (command.FailedNodes.Count == 1)
+                            {
+                                var node = command.FailedNodes.First();
+                                throw node.Value;
+                            }
+
+                            throw new AllTopologyNodesDownException("Received unsuccessful response from all servers and couldn't recover from it.",
+                                new AggregateException(command.FailedNodes.Select(x => new UnsuccessfulRequestException(x.Key.Url, x.Value))));
                         }
-
-                        if (command.FailedNodes.Count == 0) //precaution, should never happen at this point
-                            throw new InvalidOperationException("Received unsuccessful response and couldn't recover from it. Also, no record of exceptions per failed nodes. This is weird and should not happen.");
-
-                        if (command.FailedNodes.Count == 1)
-                        {
-                            var node = command.FailedNodes.First();
-                            throw node.Value;
-                        }
-
-                        throw new AllTopologyNodesDownException("Received unsuccessful response from all servers and couldn't recover from it.",
-                            new AggregateException(command.FailedNodes.Select(x => new UnsuccessfulRequestException(x.Key.Url, x.Value))));
-                    }
-                    return; // we either handled this already in the unsuccessful response or we are throwing
+                        return; // we either handled this already in the unsuccessful response or we are throwing
+                     */
                 }
 
-                responseDispose = await command.ProcessResponse(context, Cache, response, url).ConfigureAwait(false);
-                _lastReturnedResponse = DateTime.UtcNow;
-            }
-            finally
-            {
-                if (responseDispose == ResponseDisposeHandling.Automatic)
-                {
-                    response.Dispose();
+                responseDispose = command.processResponse(cache, response, urlRef.value);
+                _lastReturnedResponse = new Date();
+            } finally {
+                if (responseDispose == ResponseDisposeHandling.AUTOMATIC) {
+                    IOUtils.closeQuietly(response);
                 }
-                if (refreshTopology || refreshClientConfiguration)
-                {
-                    var tasks = new Task[2];
 
-                    tasks[0] = refreshTopology
-                        ? UpdateTopologyAsync(new ServerNode
-                        {
-                            Url = chosenNode.Url,
-                            Database = _databaseName
-                        }, 0)
-                        : Task.CompletedTask;
+                if (refreshTopology || refreshClientConfiguration) {
+                    /* TODO:
+                     var tasks = new Task[2];
 
-                    tasks[1] = refreshClientConfiguration
-                        ? UpdateClientConfigurationAsync()
-                        : Task.CompletedTask;
+                        tasks[0] = refreshTopology
+                            ? UpdateTopologyAsync(new ServerNode
+                            {
+                                Url = chosenNode.Url,
+                                Database = _databaseName
+                            }, 0)
+                            : Task.CompletedTask;
 
-                    await Task.WhenAll(tasks).ConfigureAwait(false);
+                        tasks[1] = refreshClientConfiguration
+                            ? UpdateClientConfigurationAsync()
+                            : Task.CompletedTask;
+
+                        await Task.WhenAll(tasks).ConfigureAwait(false);
+                     */
                 }
             }
         }
     }
-    */
+
+    public void setTimeout(HttpRequestBase requestBase, long timeoutInMilis) {
+        RequestConfig requestConfig = requestBase.getConfig();
+        if (requestConfig == null) {
+            requestConfig = RequestConfig.DEFAULT;
+        }
+
+        requestConfig = RequestConfig.copy(requestConfig).setSocketTimeout((int) timeoutInMilis).setConnectTimeout((int) timeoutInMilis).build();
+        requestBase.setConfig(requestConfig);
+    }
+
+    /*
 
     private <TResult> void throwFailedToContactAllNodes(RavenCommand<TResult> command, HttpRequestBase request, Exception e, Exception timeoutException) {
         //tODO: throw new //TODO:
@@ -686,7 +686,9 @@ TODO:
         return _nodeSelector != null ? _nodeSelector.inSpeedTestPhase() : false;
     }
 
-    private <TResult> boolean shouldExecuteonAll(ServerNode chosenNode, RavenCommand<TResult> command) {
+*/
+
+    private <TResult> boolean shouldExecuteOnAll(ServerNode chosenNode, RavenCommand<TResult> command) {
         return _readBalanceBehavior == ReadBalanceBehavior.FASTEST_NODE &&
                 _nodeSelector != null &&
                 _nodeSelector.inSpeedTestPhase() &&
@@ -782,19 +784,17 @@ TODO:
     {
         throw new InvalidOperationException($"Maximum request timeout is set to '{GlobalHttpClientTimeout}' but was '{timeout}'.");
     }
+    */
 
-    private HttpCache.ReleaseCacheItem GetFromCache<TResult>(JsonOperationContext context, RavenCommand<TResult> command, string url, out string cachedChangeVector, out BlittableJsonReaderObject cachedValue)
-    {
-        if (command.CanCache && command.IsReadRequest && command.ResponseType == RavenCommandResponseType.Object)
-        {
-            return Cache.Get(context, url, out cachedChangeVector, out cachedValue);
+    private <TResult> HttpCache.ReleaseCacheItem getFromCache(RavenCommand<TResult> command, String url, Reference<String> cachedChangeVector, Reference<Object> cachedValue) { //TODO: avoid object here
+        if (command.canCache() && command.isReadRequest() && command.getResponseType() == RavenCommandResponseType.OBJECT) {
+            return cache.get(url, cachedChangeVector, cachedValue);
         }
 
-        cachedChangeVector = null;
-        cachedValue = null;
+        cachedChangeVector.value = null;
+        cachedValue.value = null;
         return new HttpCache.ReleaseCacheItem();
     }
-*/
 
     private <TResult> HttpRequestBase createRequest(ServerNode node, RavenCommand<TResult> command, Reference<String> url) {
         try {

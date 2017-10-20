@@ -16,29 +16,39 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
+import java.time.Duration;
 import java.util.Map;
 
 public abstract class RavenCommand<TResult> {
 
     protected Class<TResult> resultClass;
     protected TResult result;
-    protected HttpStatus statusCode;
+    protected int statusCode;
     protected RavenCommandResponseType responseType;
+    protected Duration timeout;
     protected boolean canCache;
     protected boolean canCacheAggressively;
     protected ObjectMapper mapper = JsonExtensions.getDefaultMapper();
 
     public abstract boolean isReadRequest();
 
+    public Duration getTimeout() {
+        return timeout;
+    }
+
+    public void setTimeout(Duration timeout) {
+        this.timeout = timeout;
+    }
+
     public RavenCommandResponseType getResponseType() {
         return responseType;
     }
 
-    public HttpStatus getStatusCode() {
+    public int getStatusCode() {
         return statusCode;
     }
 
-    public void setStatusCode(HttpStatus statusCode) {
+    public void setStatusCode(int statusCode) {
         this.statusCode = statusCode;
     }
 
@@ -113,7 +123,7 @@ public abstract class RavenCommand<TResult> {
         return failedNodes != null && failedNodes.containsKey(node);
     }
 
-    public ResponseDisposeHandling processResponse(CloseableHttpResponse response, String url) { //TODO: http cache
+    public ResponseDisposeHandling processResponse(HttpCache cache, CloseableHttpResponse response, String url) {
         //TODO: fake impl!
         try {
             HttpEntity entity = response.getEntity();
@@ -135,7 +145,7 @@ public abstract class RavenCommand<TResult> {
             {
                 if (ResponseType == RavenCommandResponseType.Object)
                 {
-                    var contentLength = response.Content.Headers.ContentLength;
+                    var contentLength = response.Content.Headers.CONTENT_LENGTH;
                     if (contentLength.HasValue && contentLength == 0)
                         return ResponseDisposeHandling.Automatic;
 
