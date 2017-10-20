@@ -1,0 +1,218 @@
+package net.ravendb.client.http;
+
+import net.ravendb.client.exceptions.AllTopologyNodesDownException;
+import net.ravendb.client.primitives.CleanCloseable;
+
+import java.util.Arrays;
+import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
+
+public class NodeSelector implements CleanCloseable {
+
+    //TODO: private Timer _updateFastestNodeTimer;
+    private NodeSelectorState _state;
+
+    public Topology getTopology() {
+        return _state.topology;
+    }
+
+    public NodeSelector(Topology topology) {
+        _state = new NodeSelectorState(0, topology);
+    }
+
+    public void onFailedRequest(int nodeIndex) {
+        NodeSelectorState state = _state;
+        if (nodeIndex < 0 || nodeIndex >= state.failures.length) {
+            return; // probably already changed
+        }
+
+        state.failures[nodeIndex]++; //TODO: interlocked?
+    }
+
+    public boolean onUpdateTopology(Topology topology) {
+        return onUpdateTopology(topology, false);
+    }
+
+    public boolean onUpdateTopology(Topology topology, boolean forceUpdate) {
+        if (topology == null) {
+            return false;
+        }
+
+        if (_state.topology.getEtag() >= topology.getEtag() && !forceUpdate) {
+            return false;
+        }
+
+        NodeSelectorState state = new NodeSelectorState(0, topology);
+
+        _state = state;
+
+        return true;
+    }
+
+    public CurrentIndexAndNode getPreferredNode() {
+        NodeSelectorState state = _state;
+        int[] stateFailures = state.failures;
+        List<ServerNode> serverNodes = state.nodes;
+        int len = Math.min(serverNodes.size(), stateFailures.length);
+        for (int i = 0; i < len; i++) {
+            if (stateFailures[i] == 0) {
+                return new CurrentIndexAndNode(i, serverNodes.get(i));
+            }
+        }
+        return unlikelyEveryoneFaultedChoice(state);
+    }
+
+    private static CurrentIndexAndNode unlikelyEveryoneFaultedChoice(NodeSelectorState state) {
+        // if there are all marked as failed, we'll chose the first
+        // one so the user will get an error (or recover :-) );
+        if(state.nodes.size() == 0)
+            throw new AllTopologyNodesDownException("There are no nodes in the topology at all");
+
+        return new CurrentIndexAndNode (0, state.nodes.get(0));
+    }
+
+    public CurrentIndexAndNode getNodeBySessionId(int sessionId) {
+        NodeSelectorState state = _state;
+        int index = sessionId % state.topology.getNodes().size();
+
+        for (int i = index; i < state.failures.length; i++) {
+            if (state.failures[i] == 0 && state.nodes.get(i).getServerRole() == ServerNode.Role.MEMBER) {
+                return new CurrentIndexAndNode(i, state.nodes.get(i));
+            }
+        }
+
+        for (int i = 0; i < index; i++) {
+            if (state.failures[i] == 0 && state.nodes.get(i).getServerRole() == ServerNode.Role.MEMBER) {
+                return new CurrentIndexAndNode(i, state.nodes.get(i));
+            }
+        }
+
+        return getPreferredNode();
+    }
+
+    public CurrentIndexAndNode getFastestNode() {
+        NodeSelectorState state = _state;
+        if (state.failures[state.fastest] == 0 && state.nodes.get(state.fastest).getServerRole() == ServerNode.Role.MEMBER) {
+            return new CurrentIndexAndNode(state.fastest, state.nodes.get(state.fastest));
+        }
+
+        // if the fastest node has failures, we'll immeidately schedule
+        // another run of finding who the fastest node is, in the meantime
+        // we'll just use the server preferred node or failover as usual
+
+        switchToSpeedTestPhase(null);
+        return getPreferredNode();
+    }
+
+    public void restoreNodeIndex(int nodeIndex) {
+        NodeSelectorState state = _state;
+        if (state.currentNodeIndex < nodeIndex) {
+            return; // nothing to do
+        }
+
+        state.failures[nodeIndex] = 0;
+    }
+
+    protected static void throwEmptyTopology() {
+        throw new IllegalStateException("Empty database topology, this shouldn't happen.");
+    }
+
+    private void switchToSpeedTestPhase(Object __) {
+        NodeSelectorState state = _state;
+
+        if (!state.speedTestMode.compareAndSet(0, 1)) {
+            return;
+        }
+
+        Arrays.fill(state.fastestRecords, 0);
+
+        state.speedTestMode.incrementAndGet();
+    }
+
+    public boolean inSpeedTestPhase() {
+        return _state.speedTestMode.get() > 1;
+    }
+
+    public void recordFastest(int index, ServerNode node) {
+        NodeSelectorState state = _state;
+        int[] stateFastest = state.fastestRecords;
+
+        // the following two checks are to verify that things didn't move
+        // while we were computing the fastest node, we verify that the index
+        // of the fastest node and the identity of the node didn't change during
+        // our check
+        if (index < 0 || index >= stateFastest.length)
+            return;
+
+        if (node != state.nodes.get(index)) {
+            return;
+        }
+
+        if (++stateFastest[index] >= 10) {
+            selectFastest(state, index);
+        }
+
+        if (state.speedTestMode.incrementAndGet() <= state.nodes.size() * 10) {
+            return;
+        }
+
+        //too many concurrent speed tests are happening
+        int maxIndex = findMaxIndex(state);
+        selectFastest(state, maxIndex);
+    }
+
+    private static int findMaxIndex(NodeSelectorState state) {
+        int[] stateFastest = state.fastestRecords;
+        int maxIndex = 0;
+        int maxValue = 0;
+
+        for (int i = 0; i < stateFastest.length; i++) {
+            if (maxValue >= stateFastest[i]) {
+                continue;
+            }
+
+            maxIndex = i;
+            maxValue = stateFastest[i];
+        }
+
+        return maxIndex;
+    }
+
+    private void selectFastest(NodeSelectorState state, int index) {
+        state.fastest = index;
+        state.speedTestMode.set(0);
+
+        //TODO: _updateFastestNodeTimer.Change(TimeSpan.FromMinutes(1), Timeout.InfiniteTimeSpan);
+    }
+
+    public void scheduleSpeedTest() {
+        //TODO: if (_updateFastestNodeTimer == null)
+        //TODO:    _updateFastestNodeTimer = new Timer(SwitchToSpeedTestPhase, null, Timeout.InfiniteTimeSpan, Timeout.InfiniteTimeSpan);
+        switchToSpeedTestPhase(null);
+    }
+
+    @Override
+    public void close() {
+        //TODO: _updateFastestNodeTimer?.Dispose();
+    }
+
+    private static class NodeSelectorState {
+        public final Topology topology;
+        public final int currentNodeIndex;
+        public final List<ServerNode> nodes;
+        public final int[] failures;
+        public final int[] fastestRecords;
+        public int fastest;
+        public AtomicInteger speedTestMode = new AtomicInteger(0);
+
+        public NodeSelectorState(int currentNodeIndex, Topology topology) {
+            this.topology = topology;
+            this.currentNodeIndex = currentNodeIndex;
+            this.nodes = topology.getNodes();
+            this.failures = new int[topology.getNodes().size()];
+            this.fastestRecords = new int[topology.getNodes().size()];
+
+        }
+    }
+
+}
