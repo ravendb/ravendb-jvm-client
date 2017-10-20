@@ -408,7 +408,7 @@ TODO:
                     serverNode.setUrl(url);
                     serverNode.setDatabase(_databaseName);
 
-                    updateTopologyAsync(serverNode, Integer.MAX_VALUE).get(); //TODO: it may block!
+                    updateTopologyAsync(serverNode, Integer.MAX_VALUE).get();
 
                     initializeUpdateTopologyTimer();
                     return;

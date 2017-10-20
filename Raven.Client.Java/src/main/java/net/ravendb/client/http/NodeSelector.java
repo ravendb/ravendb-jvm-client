@@ -65,8 +65,9 @@ public class NodeSelector implements CleanCloseable {
     private static CurrentIndexAndNode unlikelyEveryoneFaultedChoice(NodeSelectorState state) {
         // if there are all marked as failed, we'll chose the first
         // one so the user will get an error (or recover :-) );
-        if(state.nodes.size() == 0)
+        if (state.nodes.size() == 0) {
             throw new AllTopologyNodesDownException("There are no nodes in the topology at all");
+        }
 
         return new CurrentIndexAndNode (0, state.nodes.get(0));
     }

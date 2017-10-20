@@ -3,20 +3,19 @@ package net.ravendb.executor;
 import net.ravendb.RemoteTestBase;
 import net.ravendb.client.documents.commands.GetNextOperationIdCommand;
 import net.ravendb.client.documents.conventions.DocumentConventions;
+import net.ravendb.client.exceptions.AllTopologyNodesDownException;
 import net.ravendb.client.exceptions.DatabaseDoesNotExistException;
 import net.ravendb.client.http.RavenCommand;
 import net.ravendb.client.http.RequestExecutor;
 import net.ravendb.client.http.ServerNode;
 import net.ravendb.client.primitives.ExceptionsUtils;
 import net.ravendb.client.serverwide.operations.GetDatabaseNamesOperation;
-import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 
 public class RequestExecutorTest extends RemoteTestBase {
 
@@ -140,6 +139,44 @@ public class RequestExecutorTest extends RemoteTestBase {
                 assertThat(command.getResult()).isNotNull();
             });
         });
+    }
+
+    @Test
+    public void canChooseOnlineNode() {
+        DocumentConventions documentConventions = new DocumentConventions();
+
+        withServer(url -> {
+            withDatabase(dbName -> {
+                RequestExecutor executor = RequestExecutor.create(new String[]{"http://no_such_host:8080", "http://another_offlilne:8080", url}, dbName, documentConventions);
+
+                GetNextOperationIdCommand command = new GetNextOperationIdCommand();
+                executor.execute(command);
+
+                assertThat(command.getResult()).isNotNull();
+
+                List<ServerNode> topologyNodes = executor.getTopologyNodes();
+
+                assertThat(topologyNodes)
+                        .hasSize(1)
+                        .hasOnlyOneElementSatisfying(x -> x.getUrl().equals(url));
+
+                assertThat(executor.getUrl()).isEqualTo(url);
+            });
+        });
+    }
+
+    @Test
+    public void failsWhenServerIsOffline() {
+        DocumentConventions documentConventions = new DocumentConventions();
+
+        assertThatThrownBy(() -> {
+            // don't even start server
+            RequestExecutor executor = RequestExecutor.create(new String[]{"http://no_such_host:8081"}, "db1", documentConventions);
+
+            GetNextOperationIdCommand command = new GetNextOperationIdCommand();
+
+            executor.execute(command);
+        }).isExactlyInstanceOf(AllTopologyNodesDownException.class);
     }
 
 }
