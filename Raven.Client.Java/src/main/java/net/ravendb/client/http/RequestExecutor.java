@@ -486,7 +486,7 @@ TODO:
         HttpRequestBase request = createRequest(chosenNode, command, urlRef);
 
         Reference<String> cachedChangeVector = new Reference<>();
-        Reference<Object> cachedValue = new Reference<>(); //TODO: use some type here!
+        Reference<String> cachedValue = new Reference<>();
 
         try (HttpCache.ReleaseCacheItem cachedItem = getFromCache(command, urlRef.value, cachedChangeVector, cachedValue)) {
             if (cachedChangeVector.value != null) {
@@ -599,7 +599,7 @@ TODO:
 
                     try {
                         if (command.getResponseType() == RavenCommandResponseType.OBJECT) {
-                            command.setResponse((InputStream)cachedValue.value, true); //TODO: remove cast!
+                            command.setResponse(cachedValue.value, true);
                         }
                     } catch (IOException e) {
                         throw new RuntimeException(e); //TODO: use better exception!
@@ -781,7 +781,7 @@ TODO:
     }
     */
 
-    private <TResult> HttpCache.ReleaseCacheItem getFromCache(RavenCommand<TResult> command, String url, Reference<String> cachedChangeVector, Reference<Object> cachedValue) { //TODO: avoid object here
+    private <TResult> HttpCache.ReleaseCacheItem getFromCache(RavenCommand<TResult> command, String url, Reference<String> cachedChangeVector, Reference<String> cachedValue) {
         if (command.canCache() && command.isReadRequest() && command.getResponseType() == RavenCommandResponseType.OBJECT) {
             return cache.get(url, cachedChangeVector, cachedValue);
         }

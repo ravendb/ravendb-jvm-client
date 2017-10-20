@@ -1,6 +1,5 @@
 import net.ravendb.client.documents.commands.GetNextOperationIdCommand;
 import net.ravendb.client.documents.conventions.DocumentConventions;
-import net.ravendb.client.extensions.JsonExtensions;
 import net.ravendb.client.http.RavenCommand;
 import net.ravendb.client.http.RequestExecutor;
 import net.ravendb.client.serverwide.operations.GetDatabaseNamesOperation;
@@ -30,5 +29,7 @@ public class Test {
         GetNextOperationIdCommand command2 = new GetNextOperationIdCommand();
 
         executor.execute(command2);
+
+        System.out.println(command2.getResult());
     }
 }

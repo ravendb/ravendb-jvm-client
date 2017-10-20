@@ -49,7 +49,7 @@ public class GetDatabaseNamesOperation implements IServerOperation<String[]> {
         }
 
         @Override
-        public void setResponse(InputStream response, boolean fromCache) throws IOException {
+        public void setResponse(String response, boolean fromCache) throws IOException {
             if (response == null) {
                 throwInvalidResponse();
                 return;

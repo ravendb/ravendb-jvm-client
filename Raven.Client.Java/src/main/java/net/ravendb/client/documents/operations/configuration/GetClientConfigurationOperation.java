@@ -36,7 +36,7 @@ public class GetClientConfigurationOperation implements IAdminOperation<GetClien
         }
 
         @Override
-        public void setResponse(InputStream response, boolean fromCache) throws IOException {
+        public void setResponse(String response, boolean fromCache) throws IOException {
             if (response == null) {
                 return;
             }
@@ -45,7 +45,7 @@ public class GetClientConfigurationOperation implements IAdminOperation<GetClien
     }
 
     public static class Result {
-        private long etag; //TODO: case might be wrong...
+        private long etag;
         private ClientConfiguration configuration;
 
         public long getEtag() {

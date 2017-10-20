@@ -29,7 +29,7 @@ public class GetNextOperationIdCommand extends RavenCommand<Long> {
     }
 
     @Override
-    public void setResponse(InputStream response, boolean fromCache) throws IOException {
+    public void setResponse(String response, boolean fromCache) throws IOException {
         JsonNode jsonNode = mapper.readTree(response);
 
         if (jsonNode.has("Id")) {

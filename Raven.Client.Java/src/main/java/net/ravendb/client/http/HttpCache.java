@@ -13,11 +13,11 @@ public class HttpCache implements CleanCloseable {
 
     }
 
-    public void set(String url, String changeVector, InputStream result) {
+    public void set(String url, String changeVector, String result) {
         //TODO:
     }
 
-    public ReleaseCacheItem get(String url, Reference<String> cachedChangeVector, Reference<Object> cachedValue) {
+    public ReleaseCacheItem get(String url, Reference<String> cachedChangeVector, Reference<String> cachedValue) {
         return new ReleaseCacheItem();
     }
 

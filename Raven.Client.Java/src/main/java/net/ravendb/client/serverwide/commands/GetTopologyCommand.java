@@ -35,7 +35,7 @@ public class GetTopologyCommand extends RavenCommand<Topology> {
     }
 
     @Override
-    public void setResponse(InputStream response, boolean fromCache) throws IOException {
+    public void setResponse(String response, boolean fromCache) throws IOException {
         if (response == null) {
             return;
         }
