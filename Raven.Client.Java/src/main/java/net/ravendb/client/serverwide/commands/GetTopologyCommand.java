@@ -9,7 +9,6 @@ import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpRequestBase;
 
 import java.io.IOException;
-import java.io.InputStream;
 
 public class GetTopologyCommand extends RavenCommand<Topology> {
 

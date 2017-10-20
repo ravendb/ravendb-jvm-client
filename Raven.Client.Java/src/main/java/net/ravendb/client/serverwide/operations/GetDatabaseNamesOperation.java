@@ -10,7 +10,6 @@ import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpRequestBase;
 
 import java.io.IOException;
-import java.io.InputStream;
 
 public class GetDatabaseNamesOperation implements IServerOperation<String[]> {
     private final int _start;

@@ -1,11 +1,13 @@
 package net.ravendb.client.http;
 
 import com.google.common.base.Stopwatch;
-import com.sun.security.ntlm.Server;
 import net.ravendb.client.Constants;
 import net.ravendb.client.documents.conventions.DocumentConventions;
 import net.ravendb.client.documents.operations.configuration.GetClientConfigurationOperation;
 import net.ravendb.client.documents.session.SessionInfo;
+import net.ravendb.client.exceptions.AllTopologyNodesDownException;
+import net.ravendb.client.exceptions.AuthorizationException;
+import net.ravendb.client.exceptions.DatabaseDoesNotExistException;
 import net.ravendb.client.extensions.HttpExtensions;
 import net.ravendb.client.primitives.CleanCloseable;
 import net.ravendb.client.primitives.Reference;
@@ -15,6 +17,7 @@ import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.apache.http.Header;
 import org.apache.http.HttpStatus;
 import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.methods.CloseableHttpResponse;
@@ -26,7 +29,6 @@ import org.apache.http.impl.client.StandardHttpRequestRetryHandler;
 import org.apache.http.impl.conn.PoolingHttpClientConnectionManager;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -34,13 +36,14 @@ import java.net.URL;
 import java.time.Duration;
 import java.util.*;
 import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
 
 public class RequestExecutor implements CleanCloseable {
 
     public static final String CLIENT_VERSION = "4.0.0";
 
-    private static final ConcurrentMap<String, CloseableHttpClient> globalHttpClient = new ConcurrentHashMap<>(); //TODO: should we dispose this somewhere?
+    private static final ConcurrentMap<String, CloseableHttpClient> globalHttpClient = new ConcurrentHashMap<>();
 
     private static final Duration GLOBAL_HTTP_CLIENT_TIMEOUT = Duration.ofHours(12);
 
@@ -65,7 +68,7 @@ public class RequestExecutor implements CleanCloseable {
         return cache;
     }
 
-    //TODO: public readonly AsyncLocal<AggressiveCacheOptions> AggressiveCaching = new AsyncLocal<AggressiveCacheOptions>();
+    public final ThreadLocal<AggressiveCacheOptions> AggressiveCaching = new ThreadLocal<>();
 
     public Topology getTopology() {
         return _nodeSelector != null ? _nodeSelector.getTopology() : null;
@@ -92,7 +95,7 @@ public class RequestExecutor implements CleanCloseable {
 
     private Duration _defaultTimeout;
 
-    public long numberOfServerRequests;
+    public AtomicLong numberOfServerRequests = new AtomicLong(0);
 
     public String getUrl() {
         if (_nodeSelector == null) {
@@ -162,7 +165,7 @@ public class RequestExecutor implements CleanCloseable {
     }
 
     public static RequestExecutor createForSingleNodeWithoutConfigurationUpdates(String url, String databaseName, DocumentConventions conventions) { //TODO: X509Certificate2 certificate
-        final String[] initialUrls = validateUrls(new String[] { url });
+        final String[] initialUrls = validateUrls(new String[]{url});
 
         RequestExecutor executor = new RequestExecutor(databaseName, conventions);
 
@@ -332,7 +335,7 @@ public class RequestExecutor implements CleanCloseable {
                             throw new IllegalStateException("No known topology and no previously known one, cannot proceed, likely a bug");
                         }
 
-                        _firstTopologyUpdate  = firstTopologyUpdate(_lastKnownUrls);
+                        _firstTopologyUpdate = firstTopologyUpdate(_lastKnownUrls);
                     }
 
                     topologyUpdate = _firstTopologyUpdate;
@@ -490,17 +493,18 @@ TODO:
 
         try (HttpCache.ReleaseCacheItem cachedItem = getFromCache(command, urlRef.value, cachedChangeVector, cachedValue)) {
             if (cachedChangeVector.value != null) {
-                /* TODO
-                var aggressiveCacheOptions = AggressiveCaching.Value;
-                    if (aggressiveCacheOptions != null &&
-                        cachedItem.Age < aggressiveCacheOptions.Duration &&
-                        cachedItem.MightHaveBeenModified == false &&
-                        command.CanCacheAggressively)
-                    {
-                        command.SetResponse(cachedValue, fromCache: true);
-                        return;
+                AggressiveCacheOptions aggressiveCacheOptions = AggressiveCaching.get();
+                if (aggressiveCacheOptions != null &&
+                        cachedItem.getAge().compareTo(aggressiveCacheOptions.getDuration()) < 0 &&
+                        !cachedItem.getMightHaveBeenModified() &&
+                        command.canCacheAggressively()) {
+                    try {
+                        command.setResponse(cachedValue.value, true);
+                    } catch (IOException e) {
+                        throw new RuntimeException(e);
                     }
-                 */
+                    return;
+                }
 
                 request.addHeader("If-None-Match", "\"" + cachedChangeVector.value + "\"");
             }
@@ -518,7 +522,7 @@ TODO:
             ResponseDisposeHandling responseDispose = ResponseDisposeHandling.AUTOMATIC;
 
             try {
-                numberOfServerRequests++; //TODO: interlocked?
+                numberOfServerRequests.incrementAndGet();
 
                 Duration timeout = command.getTimeout() != null ? command.getTimeout() : _defaultTimeout;
 
@@ -582,9 +586,9 @@ TODO:
                 }
                 sp.stop();
 
-                //TODO :if (await HandleServerDown(url, chosenNode, nodeIndex, context, command, request, response, e, sessionInfo).ConfigureAwait(false) == false)
-                //TODO:    ThrowFailedToContactAllNodes(command, request, e, null);
-
+                if (!handleServerDown(urlRef.value, chosenNode, nodeIndex, command, request, response, e, sessionInfo)) {
+                    throwFailedToContactAllNodes(command, request, e, null);
+                }
                 return;
             }
 
@@ -609,30 +613,26 @@ TODO:
                 }
 
                 if (response.getStatusLine().getStatusCode() >= 400) {
-                    /* TODO
-                    if (await HandleUnsuccessfulResponse(chosenNode, nodeIndex, context, command, request, response, url, sessionInfo, shouldRetry).ConfigureAwait(false) == false)
-                        {
-                            if (response.Headers.TryGetValues("Database-Missing", out var databaseMissing))
-                            {
-                                var name = databaseMissing.FirstOrDefault();
-                                if (name != null)
-                                    throw new DatabaseDoesNotExistException(name);
-                            }
-
-                            if (command.FailedNodes.Count == 0) //precaution, should never happen at this point
-                                throw new InvalidOperationException("Received unsuccessful response and couldn't recover from it. Also, no record of exceptions per failed nodes. This is weird and should not happen.");
-
-                            if (command.FailedNodes.Count == 1)
-                            {
-                                var node = command.FailedNodes.First();
-                                throw node.Value;
-                            }
-
-                            throw new AllTopologyNodesDownException("Received unsuccessful response from all servers and couldn't recover from it.",
-                                new AggregateException(command.FailedNodes.Select(x => new UnsuccessfulRequestException(x.Key.Url, x.Value))));
+                    if (!handleUnsuccessfulResponse(chosenNode, nodeIndex, command, request, response, urlRef.value, sessionInfo, shouldRetry)) {
+                        Header dbMissingHeader = response.getFirstHeader("Database-Missing");
+                        if (dbMissingHeader != null && dbMissingHeader.getValue() != null) {
+                            throw new DatabaseDoesNotExistException(dbMissingHeader.getValue());
                         }
-                        return; // we either handled this already in the unsuccessful response or we are throwing
-                     */
+
+                        if (command.getFailedNodes().size() == 0) { //precaution, should never happen at this point
+                            throw new IllegalStateException("Received unsuccessful response and couldn't recover from it. Also, no record of exceptions per failed nodes. This is weird and should not happen.");
+                        }
+
+                        if (command.getFailedNodes().size() == 1) {
+                            Collection<Exception> values = command.getFailedNodes().values();
+                            values.stream().findFirst().ifPresent(v -> {
+                                throw new RuntimeException(v);
+                            });
+                        }
+
+                        throw new AllTopologyNodesDownException("Received unsuccessful response from all servers and couldn't recover from it.");
+                    }
+                    return; // we either handled this already in the unsuccessful response or we are throwing
                 }
 
                 responseDispose = command.processResponse(cache, response, urlRef.value);
@@ -671,17 +671,18 @@ TODO:
         requestBase.setConfig(requestConfig);
     }
 
-    /*
-
     private <TResult> void throwFailedToContactAllNodes(RavenCommand<TResult> command, HttpRequestBase request, Exception e, Exception timeoutException) {
-        //tODO: throw new //TODO:
+        String message = "Tried to send " + command.resultClass.getName() + " request via " + request.getMethod() + " " + request.getURI() + " to all configured nodes in the topology, " +
+                "all of them seem to be down or not responding. I've tried to access the following nodes: ";
+
+        message += Optional.ofNullable(_nodeSelector).map(x -> x.getTopology().getNodes().stream().map(n -> n.getUrl()).collect(Collectors.joining(", "))).orElse("");
+
+        throw new AllTopologyNodesDownException(message, timeoutException != null ? timeoutException : e);
     }
 
     public boolean inSpeedTestPhase() {
-        return _nodeSelector != null ? _nodeSelector.inSpeedTestPhase() : false;
+        return Optional.ofNullable(_nodeSelector).map(x -> x.inSpeedTestPhase()).orElse(false);
     }
-
-*/
 
     private <TResult> boolean shouldExecuteOnAll(ServerNode chosenNode, RavenCommand<TResult> command) {
         return _readBalanceBehavior == ReadBalanceBehavior.FASTEST_NODE &&
@@ -694,12 +695,6 @@ TODO:
     }
 
     /*
-    private void ThrowFailedToContactAllNodes<TResult>(RavenCommand<TResult> command, HttpRequestMessage request, Exception e, Exception timeoutException)
-    {
-        throw new AllTopologyNodesDownException(
-            $"Tried to send '{command.GetType().Name}' request via `{request.Method} {request.RequestUri.PathAndQuery}` to all configured nodes in the topology, all of them seem to be down or not responding. I've tried to access the following nodes: " +
-            string.Join(",", _nodeSelector?.Topology.Nodes.Select(x => x.Url) ?? new string[0]), _nodeSelector?.Topology, timeoutException ?? e);
-    }
 
     private static readonly Task<HttpRequestMessage> NeverEndingRequest = new TaskCompletionSource<HttpRequestMessage>().Task;
 
@@ -775,11 +770,11 @@ TODO:
         // of the nodes, in which case we have nothing to do
     }
 
-    private static void ThrowTimeoutTooLarge(TimeSpan? timeout)
-    {
-        throw new InvalidOperationException($"Maximum request timeout is set to '{GlobalHttpClientTimeout}' but was '{timeout}'.");
-    }
     */
+
+    private static void throwTimeoutTooLarnge(Duration duration) {
+        throw new IllegalArgumentException("Maximum request timeout is set to " + GLOBAL_HTTP_CLIENT_TIMEOUT + " but was " + duration);
+    }
 
     private <TResult> HttpCache.ReleaseCacheItem getFromCache(RavenCommand<TResult> command, String url, Reference<String> cachedChangeVector, Reference<String> cachedValue) {
         if (command.canCache() && command.isReadRequest() && command.getResponseType() == RavenCommandResponseType.OBJECT) {
@@ -806,59 +801,67 @@ TODO:
         }
     }
 
-    /*
+    /* TODO
 
     public event Action<StringBuilder> AdditionalErrorInformation;
+*/
 
-    private async Task<bool> HandleUnsuccessfulResponse<TResult>(ServerNode chosenNode, int? nodeIndex, JsonOperationContext context, RavenCommand<TResult> command, HttpRequestMessage request, HttpResponseMessage response, string url, SessionInfo sessionInfo, bool shouldRetry)
-    {
-        switch (response.StatusCode)
-        {
-            case HttpStatusCode.NotFound:
-                Cache.SetNotFound(url);
-                if (command.ResponseType == RavenCommandResponseType.Empty)
+    private <TResult> boolean handleUnsuccessfulResponse(ServerNode chosenNode, Integer nodeIndex, RavenCommand<TResult> command, HttpRequestBase request, CloseableHttpResponse response, String url, SessionInfo sessionInfo, boolean shouldRetry) {
+        try {
+            switch (response.getStatusLine().getStatusCode()) {
+                case HttpStatus.SC_NOT_FOUND:
+                    cache.setNotFound(url);
+                    if (command.getResponseType() == RavenCommandResponseType.EMPTY) {
+                        return true;
+                    } else if (command.getResponseType() == RavenCommandResponseType.OBJECT) {
+                        command.setResponse(null, false);
+                    } else {
+                        command.setResponseRaw(response, null);
+                    }
                     return true;
-                else if (command.ResponseType == RavenCommandResponseType.Object)
-                    command.SetResponse(null, fromCache: false);
-                else
-                    command.SetResponseRaw(response, null, context);
-                return true;
-            case HttpStatusCode.Forbidden:
-                throw new AuthorizationException("Forbidden access to " + chosenNode.Database + "@" + chosenNode.Url + ", " +
-                    (Certificate == null ? "a certificate is required." : Certificate.FriendlyName + " does not have permission to access it or is unknown.") +
-                    request.Method + " " + request.RequestUri);
-            case HttpStatusCode.Gone: // request not relevant for the chosen node - the database has been moved to a different one
-                if (shouldRetry == false)
-                    return false;
 
-                await UpdateTopologyAsync(chosenNode, Timeout.Infinite, forceUpdate: true).ConfigureAwait(false);
-                var (index, node) = ChooseNodeForRequest(command, sessionInfo);
-                await ExecuteAsync(node, index, context, command, shouldRetry: false, sessionInfo: sessionInfo).ConfigureAwait(false);
-                return true;
-            case HttpStatusCode.GatewayTimeout:
-            case HttpStatusCode.RequestTimeout:
-            case HttpStatusCode.BadGateway:
-            case HttpStatusCode.ServiceUnavailable:
-                await HandleServerDown(url, chosenNode, nodeIndex, context, command, request, response, null, sessionInfo).ConfigureAwait(false);
-                break;
-            case HttpStatusCode.Conflict:
-                await HandleConflict(context, response).ConfigureAwait(false);
-                break;
-            default:
-                command.OnResponseFailure(response);
-                await ExceptionDispatcher.Throw(context, response, AdditionalErrorInformation).ConfigureAwait(false);
-                break;
+                case HttpStatus.SC_FORBIDDEN: //TODO: include info about certificates
+                    throw new AuthorizationException("Forbidden access to " + chosenNode.getDatabase() + "@" + chosenNode.getUrl() + ", " + request.getMethod() + " " + request.getURI());
+                case HttpStatus.SC_GONE: // request not relevant for the chosen node - the database has been moved to a different one
+                    if (!shouldRetry) {
+                        return false;
+                    }
+
+                    updateTopologyAsync(chosenNode, Integer.MAX_VALUE, true).get();
+
+                    CurrentIndexAndNode currentIndexAndNode = chooseNodeForRequest(command, sessionInfo);
+                    execute(currentIndexAndNode.currentNode, currentIndexAndNode.currentIndex, command, false, sessionInfo);
+                    return true;
+                case HttpStatus.SC_GATEWAY_TIMEOUT:
+                case HttpStatus.SC_REQUEST_TIMEOUT:
+                case HttpStatus.SC_BAD_GATEWAY:
+                case HttpStatus.SC_SERVICE_UNAVAILABLE:
+                    handleServerDown(url, chosenNode, nodeIndex, command, request, response, null, sessionInfo);
+                    break;
+                case HttpStatus.SC_CONFLICT:
+                    handleConflict(response);
+                    break;
+                default:
+                    command.onResponseFailure(response);
+                    //TODO: await ExceptionDispatcher.Throw(context, response, AdditionalErrorInformation).ConfigureAwait(false);
+                    break;
+
+            }
+        } catch (IOException | ExecutionException | InterruptedException e) {
+            throw new RuntimeException(e); //TODO:
         }
+
         return false;
     }
 
-    private static Task HandleConflict(JsonOperationContext context, HttpResponseMessage response)
-    {
+    private static void handleConflict(CloseableHttpResponse response) {
         // TODO: Conflict resolution
         // current implementation is temporary
 
-        return ExceptionDispatcher.Throw(context, response);
+        //TODO: ExceptionDispatcher.Throw(response);
     }
+
+    /* //TODO: is it needed?
 
     public static async Task<Stream> ReadAsStreamUncompressedAsync(HttpResponseMessage response)
     {
@@ -1020,7 +1023,8 @@ TODO:
 
         try {
             _updateTopologySemaphore.acquire();
-        } catch (InterruptedException e) {}
+        } catch (InterruptedException e) {
+        }
 
         if (_disposed) {
             return;

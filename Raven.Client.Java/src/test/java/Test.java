@@ -4,11 +4,15 @@ import net.ravendb.client.http.RavenCommand;
 import net.ravendb.client.http.RequestExecutor;
 import net.ravendb.client.serverwide.operations.GetDatabaseNamesOperation;
 
+import java.time.Duration;
+
 public class Test {
 
 //TODO: make sure it throws properly when server not found
     public static void main(String[] args) throws Exception {
-        RequestExecutor executor = RequestExecutor.create(new String[]{"http://localhost:8080"}, "db1", new DocumentConventions());
+        System.out.println(Duration.ofHours(4));
+
+        RequestExecutor executor = RequestExecutor.create(new String[]{"http://localhost:8080"}, "db6dfd", new DocumentConventions());
 
         GetNextOperationIdCommand command = new GetNextOperationIdCommand();
 

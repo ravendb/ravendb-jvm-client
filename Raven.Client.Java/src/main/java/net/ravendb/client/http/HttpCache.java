@@ -3,7 +3,7 @@ package net.ravendb.client.http;
 import net.ravendb.client.primitives.CleanCloseable;
 import net.ravendb.client.primitives.Reference;
 
-import java.io.InputStream;
+import java.time.Duration;
 
 //TODO:
 public class HttpCache implements CleanCloseable {
@@ -21,9 +21,20 @@ public class HttpCache implements CleanCloseable {
         return new ReleaseCacheItem();
     }
 
+    public void setNotFound(String url) {
+    }
+
     public static class ReleaseCacheItem implements CleanCloseable {
         public void notModified() {
             //TODO:
+        }
+
+        public Duration getAge() {
+            return null;
+        }
+
+        public boolean getMightHaveBeenModified() {
+            return false;
         }
 
         @Override

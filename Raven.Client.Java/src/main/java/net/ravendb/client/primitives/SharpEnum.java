@@ -3,7 +3,6 @@ package net.ravendb.client.primitives;
 import com.google.common.base.CaseFormat;
 
 import java.util.Arrays;
-import java.util.stream.Collectors;
 
 /**
  * Utility class for inter-language enum conversion
@@ -15,6 +14,6 @@ public class SharpEnum {
     }
 
     public static String[] values(Enum<?>[] enumValues) {
-        return Arrays.stream(enumValues).map(x -> value(x)).toArray(String[]::new);
+        return Arrays.stream(enumValues).map(SharpEnum::value).toArray(String[]::new);
     }
 }

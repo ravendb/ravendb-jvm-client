@@ -10,6 +10,6 @@ public class Tuple<A,B> {
     }
 
     public static <A, B> Tuple create(A first, B second) {
-        return new Tuple(first, second);
+        return new Tuple<>(first, second);
     }
 }

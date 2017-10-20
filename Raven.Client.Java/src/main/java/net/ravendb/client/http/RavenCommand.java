@@ -19,7 +19,6 @@ import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.time.Duration;
 import java.util.Map;
-import java.util.Optional;
 
 public abstract class RavenCommand<TResult> {
 
@@ -91,6 +90,7 @@ public abstract class RavenCommand<TResult> {
         return client.execute(request);
     }
 
+    @SuppressWarnings("unused")
     public void setResponseRaw(CloseableHttpResponse response, InputStream stream) {
         throw new UnsupportedOperationException("When " + responseType + " is set to Raw then please override this method to handle the response. ");
     }
@@ -105,6 +105,7 @@ public abstract class RavenCommand<TResult> {
         this.failedNodes = failedNodes;
     }
 
+    @SuppressWarnings("unused")
     protected String urlEncode(String value) {
         try {
             return URLEncoder.encode(value, "UTF-8");
@@ -162,30 +163,7 @@ public abstract class RavenCommand<TResult> {
 
         return ResponseDisposeHandling.AUTOMATIC;
     }
-    /*
-        public virtual async Task<ResponseDisposeHandling> ProcessResponse(JsonOperationContext context, HttpCache cache, HttpResponseMessage response, string url)
-        {
-            if (ResponseType == RavenCommandResponseType.Empty || response.StatusCode == HttpStatusCode.NoContent)
-                return ResponseDisposeHandling.Automatic;
 
-            using (var stream = await response.Content.ReadAsStreamAsync().ConfigureAwait(false))
-            {
-                if (ResponseType == RavenCommandResponseType.Object)
-                {
-
-
-                }
-
-                // We do not cache the stream response.
-                using (var uncompressedStream = await RequestExecutor.ReadAsStreamUncompressedAsync(response).ConfigureAwait(false))
-                    SetResponseRaw(response, uncompressedStream, context);
-            }
-            return ResponseDisposeHandling.Automatic;
-        }
-
-        */
-
-    //TODO: here we have a problem with double reads!
     protected void cacheResponse(HttpCache cache, String url, CloseableHttpResponse response, String responseJson) {
         if (!canCache()) {
             return;
@@ -203,12 +181,14 @@ public abstract class RavenCommand<TResult> {
         throw new IllegalStateException("Resposen is invalid");
     }
 
+    @SuppressWarnings("unused")
     protected void addChangeVectorIfNotNull(String changeVector, HttpRequestBase request) {
         if (changeVector != null) {
             request.addHeader("If-Match", "\"" + changeVector + "\"");
         }
     }
 
+    @SuppressWarnings("unused")
     public void onResponseFailure(CloseableHttpResponse response) {
 
     }

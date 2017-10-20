@@ -1,7 +1,6 @@
 package net.ravendb.client.documents.commands;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import net.ravendb.client.extensions.JsonExtensions;
 import net.ravendb.client.http.RavenCommand;
 import net.ravendb.client.http.ServerNode;
 import net.ravendb.client.primitives.Reference;
@@ -9,7 +8,6 @@ import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpRequestBase;
 
 import java.io.IOException;
-import java.io.InputStream;
 
 public class GetNextOperationIdCommand extends RavenCommand<Long> {
     public GetNextOperationIdCommand() {
