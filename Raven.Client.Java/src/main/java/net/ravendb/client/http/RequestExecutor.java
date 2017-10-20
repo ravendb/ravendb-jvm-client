@@ -8,8 +8,10 @@ import net.ravendb.client.documents.session.SessionInfo;
 import net.ravendb.client.exceptions.AllTopologyNodesDownException;
 import net.ravendb.client.exceptions.AuthorizationException;
 import net.ravendb.client.exceptions.DatabaseDoesNotExistException;
+import net.ravendb.client.exceptions.ExceptionDispatcher;
 import net.ravendb.client.extensions.HttpExtensions;
 import net.ravendb.client.primitives.CleanCloseable;
+import net.ravendb.client.primitives.ExceptionsUtils;
 import net.ravendb.client.primitives.Reference;
 import net.ravendb.client.primitives.Tuple;
 import net.ravendb.client.serverwide.commands.GetTopologyCommand;
@@ -343,14 +345,14 @@ public class RequestExecutor implements CleanCloseable {
             }
 
             topologyUpdate.get();
-        } catch (Exception e) {
+        } catch (InterruptedException | ExecutionException e) {
             synchronized (this) {
                 if (_firstTopologyUpdate == topologyUpdate) {
                     _firstTopologyUpdate = null; // next request will raise it
                 }
             }
 
-            throw new IllegalStateException(e);
+            throw ExceptionsUtils.unwrapException(e);
         }
 
         CurrentIndexAndNode currentIndexAndNode = chooseNodeForRequest(command, sessionInfo);
@@ -451,7 +453,6 @@ TODO:
     }
 
     protected static String[] validateUrls(String[] initialUrls) { //TODO: certificate
-
         String[] cleanUrls = new String[initialUrls.length];
         for (int index = 0; index < initialUrls.length; index++) {
             String url = initialUrls[index];
@@ -464,8 +465,6 @@ TODO:
             cleanUrls[index] = StringUtils.stripEnd(url, "/");
         }
         return cleanUrls;
-
-        //TODO: handle https validation
     }
 
     private void initializeUpdateTopologyTimer() {
@@ -791,20 +790,15 @@ TODO:
             HttpRequestBase request = command.createRequest(node, url);
             request.setURI(new URI(url.value));
 
-        /* TODO
-         if (!request.Headers.Contains("Raven-Client-Version"))
-                request.Headers.Add("Raven-Client-Version", ClientVersion);
-         */
+            if (!request.containsHeader("Raven-Client-Version")) {
+                request.addHeader("Raven-Client-Version", CLIENT_VERSION);
+            }
+
             return request;
         } catch (URISyntaxException e) {
             throw new IllegalArgumentException("Unable to parse URL", e);
         }
     }
-
-    /* TODO
-
-    public event Action<StringBuilder> AdditionalErrorInformation;
-*/
 
     private <TResult> boolean handleUnsuccessfulResponse(ServerNode chosenNode, Integer nodeIndex, RavenCommand<TResult> command, HttpRequestBase request, CloseableHttpResponse response, String url, SessionInfo sessionInfo, boolean shouldRetry) {
         try {
@@ -843,22 +837,20 @@ TODO:
                     break;
                 default:
                     command.onResponseFailure(response);
-                    //TODO: await ExceptionDispatcher.Throw(context, response, AdditionalErrorInformation).ConfigureAwait(false);
+                    ExceptionDispatcher.throwException(response);
                     break;
-
             }
         } catch (IOException | ExecutionException | InterruptedException e) {
-            throw new RuntimeException(e); //TODO:
+            throw ExceptionsUtils.unwrapException(e);
         }
 
         return false;
     }
 
     private static void handleConflict(CloseableHttpResponse response) {
-        // TODO: Conflict resolution
         // current implementation is temporary
 
-        //TODO: ExceptionDispatcher.Throw(response);
+        ExceptionDispatcher.throwException(response);
     }
 
     /* //TODO: is it needed?
@@ -966,8 +958,8 @@ TODO:
 
 */
     //TODO: make sure we dispose response in case of failure!
-    private static <TResult> void addFailedResponseToCommand(ServerNode chosenNode, RavenCommand<TResult> command, HttpRequestBase request, CloseableHttpResponse respoonse, Exception e) {
-        if (respoonse != null) {
+    private static <TResult> void addFailedResponseToCommand(ServerNode chosenNode, RavenCommand<TResult> command, HttpRequestBase request, CloseableHttpResponse response, Exception e) {
+        if (response != null) {
             /* TODO
              var stream = await response.Content.ReadAsStreamAsync().ConfigureAwait(false);
             var ms = new MemoryStream();
@@ -1123,9 +1115,9 @@ TODO:
      */
 
 
-    private void ensureNodeSelector() throws ExecutionException, InterruptedException {
+    private void ensureNodeSelector() {
         if (!_firstTopologyUpdate.isDone()) {
-            _firstTopologyUpdate.get();
+            ExceptionsUtils.accept(() -> _firstTopologyUpdate.get());
         }
 
         if (_nodeSelector == null) {
