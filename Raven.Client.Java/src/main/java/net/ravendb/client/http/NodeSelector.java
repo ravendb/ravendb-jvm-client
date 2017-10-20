@@ -26,7 +26,7 @@ public class NodeSelector implements CleanCloseable {
             return; // probably already changed
         }
 
-        state.failures[nodeIndex]++; //TODO: interlocked?
+        state.failures[nodeIndex].incrementAndGet();
     }
 
     public boolean onUpdateTopology(Topology topology) {
@@ -51,11 +51,11 @@ public class NodeSelector implements CleanCloseable {
 
     public CurrentIndexAndNode getPreferredNode() {
         NodeSelectorState state = _state;
-        int[] stateFailures = state.failures;
+        AtomicInteger[] stateFailures = state.failures;
         List<ServerNode> serverNodes = state.nodes;
         int len = Math.min(serverNodes.size(), stateFailures.length);
         for (int i = 0; i < len; i++) {
-            if (stateFailures[i] == 0) {
+            if (stateFailures[i].get() == 0) {
                 return new CurrentIndexAndNode(i, serverNodes.get(i));
             }
         }
@@ -76,13 +76,13 @@ public class NodeSelector implements CleanCloseable {
         int index = sessionId % state.topology.getNodes().size();
 
         for (int i = index; i < state.failures.length; i++) {
-            if (state.failures[i] == 0 && state.nodes.get(i).getServerRole() == ServerNode.Role.MEMBER) {
+            if (state.failures[i].get() == 0 && state.nodes.get(i).getServerRole() == ServerNode.Role.MEMBER) {
                 return new CurrentIndexAndNode(i, state.nodes.get(i));
             }
         }
 
         for (int i = 0; i < index; i++) {
-            if (state.failures[i] == 0 && state.nodes.get(i).getServerRole() == ServerNode.Role.MEMBER) {
+            if (state.failures[i].get() == 0 && state.nodes.get(i).getServerRole() == ServerNode.Role.MEMBER) {
                 return new CurrentIndexAndNode(i, state.nodes.get(i));
             }
         }
@@ -92,7 +92,7 @@ public class NodeSelector implements CleanCloseable {
 
     public CurrentIndexAndNode getFastestNode() {
         NodeSelectorState state = _state;
-        if (state.failures[state.fastest] == 0 && state.nodes.get(state.fastest).getServerRole() == ServerNode.Role.MEMBER) {
+        if (state.failures[state.fastest].get() == 0 && state.nodes.get(state.fastest).getServerRole() == ServerNode.Role.MEMBER) {
             return new CurrentIndexAndNode(state.fastest, state.nodes.get(state.fastest));
         }
 
@@ -110,7 +110,7 @@ public class NodeSelector implements CleanCloseable {
             return; // nothing to do
         }
 
-        state.failures[nodeIndex] = 0;
+        state.failures[nodeIndex].set(0);
     }
 
     protected static void throwEmptyTopology() {
@@ -200,7 +200,7 @@ public class NodeSelector implements CleanCloseable {
         public final Topology topology;
         public final int currentNodeIndex;
         public final List<ServerNode> nodes;
-        public final int[] failures;
+        public final AtomicInteger[] failures;
         public final int[] fastestRecords;
         public int fastest;
         public AtomicInteger speedTestMode = new AtomicInteger(0);
@@ -209,7 +209,10 @@ public class NodeSelector implements CleanCloseable {
             this.topology = topology;
             this.currentNodeIndex = currentNodeIndex;
             this.nodes = topology.getNodes();
-            this.failures = new int[topology.getNodes().size()];
+            this.failures = new AtomicInteger[topology.getNodes().size()];
+            for (int i = 0; i < this.failures.length; i++) {
+                this.failures[i] = new AtomicInteger(0);
+            }
             this.fastestRecords = new int[topology.getNodes().size()];
 
         }
