@@ -2,14 +2,16 @@ package net.ravendb.client.http;
 
 import net.ravendb.client.exceptions.AllTopologyNodesDownException;
 import net.ravendb.client.primitives.CleanCloseable;
+import net.ravendb.client.primitives.Timer;
 
+import java.time.Duration;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class NodeSelector implements CleanCloseable {
 
-    //TODO: private Timer _updateFastestNodeTimer;
+    private Timer _updateFastestNodeTimer;
     private NodeSelectorState _state;
 
     public Topology getTopology() {
@@ -101,7 +103,7 @@ public class NodeSelector implements CleanCloseable {
         // another run of finding who the fastest node is, in the meantime
         // we'll just use the server preferred node or failover as usual
 
-        switchToSpeedTestPhase(null);
+        switchToSpeedTestPhase();
         return getPreferredNode();
     }
 
@@ -118,7 +120,7 @@ public class NodeSelector implements CleanCloseable {
         throw new IllegalStateException("Empty database topology, this shouldn't happen.");
     }
 
-    private void switchToSpeedTestPhase(Object __) {
+    private void switchToSpeedTestPhase() {
         NodeSelectorState state = _state;
 
         if (!state.speedTestMode.compareAndSet(0, 1)) {
@@ -183,18 +185,22 @@ public class NodeSelector implements CleanCloseable {
         state.fastest = index;
         state.speedTestMode.set(0);
 
-        //TODO: _updateFastestNodeTimer.Change(TimeSpan.FromMinutes(1), Timeout.InfiniteTimeSpan);
+        if (_updateFastestNodeTimer != null) {
+            _updateFastestNodeTimer.change(Duration.ofMinutes(1));
+        } else {
+            _updateFastestNodeTimer = new Timer(this::switchToSpeedTestPhase, Duration.ofMinutes(1));
+        }
     }
 
     public void scheduleSpeedTest() {
-        //TODO: if (_updateFastestNodeTimer == null)
-        //TODO:    _updateFastestNodeTimer = new Timer(SwitchToSpeedTestPhase, null, Timeout.InfiniteTimeSpan, Timeout.InfiniteTimeSpan);
-        switchToSpeedTestPhase(null);
+        switchToSpeedTestPhase();
     }
 
     @Override
     public void close() {
-        //TODO: _updateFastestNodeTimer?.Dispose();
+        if (_updateFastestNodeTimer != null) {
+            _updateFastestNodeTimer.close();
+        }
     }
 
     private static class NodeSelectorState {

@@ -2,6 +2,7 @@ package net.ravendb.client.http;
 
 import com.google.common.base.Stopwatch;
 import net.ravendb.client.Constants;
+import net.ravendb.client.documents.commands.GetStatisticsCommand;
 import net.ravendb.client.documents.conventions.DocumentConventions;
 import net.ravendb.client.documents.operations.configuration.GetClientConfigurationOperation;
 import net.ravendb.client.documents.session.SessionInfo;
@@ -10,10 +11,9 @@ import net.ravendb.client.exceptions.AuthorizationException;
 import net.ravendb.client.exceptions.DatabaseDoesNotExistException;
 import net.ravendb.client.exceptions.ExceptionDispatcher;
 import net.ravendb.client.extensions.HttpExtensions;
-import net.ravendb.client.primitives.CleanCloseable;
-import net.ravendb.client.primitives.ExceptionsUtils;
-import net.ravendb.client.primitives.Reference;
-import net.ravendb.client.primitives.Tuple;
+import net.ravendb.client.extensions.JsonExtensions;
+import net.ravendb.client.primitives.*;
+import net.ravendb.client.primitives.Timer;
 import net.ravendb.client.serverwide.commands.GetTopologyCommand;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -38,6 +38,7 @@ import java.net.URL;
 import java.time.Duration;
 import java.util.*;
 import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
 
@@ -89,9 +90,7 @@ public class RequestExecutor implements CleanCloseable {
                 .orElse(null);
     }
 
-    /* TODO:
     private Timer _updateTopologyTimer;
-    */
 
     protected NodeSelector _nodeSelector;
 
@@ -264,7 +263,7 @@ public class RequestExecutor implements CleanCloseable {
                         _nodeSelector.scheduleSpeedTest();
                     }
                 } else if (_nodeSelector.onUpdateTopology(command.getResult(), forceUpdate)) {
-                    //TODO: disposeAllFailedNodesTimers();
+                    disposeAllFailedNodesTimers();
                     if (_readBalanceBehavior == ReadBalanceBehavior.FASTEST_NODE) {
                         _nodeSelector.scheduleSpeedTest();
                     }
@@ -281,20 +280,12 @@ public class RequestExecutor implements CleanCloseable {
 
     }
 
-        /* TODO:
-
-        protected void DisposeAllFailedNodesTimers()
-        {
-            var oldFailedNodesTimers = _failedNodesTimers;
-            _failedNodesTimers.Clear();
-
-            foreach (var failedNodesTimers in oldFailedNodesTimers)
-            {
-                failedNodesTimers.Value.Dispose();
-            }
-
-        }
-*/
+    protected void disposeAllFailedNodesTimers() {
+        _failedNodesTimers.forEach((node, status) -> {
+            status.close();
+        });
+        _failedNodesTimers.clear();
+    }
 
     public <TResult> void execute(RavenCommand<TResult> command) {
         execute(command, null);
@@ -359,42 +350,33 @@ public class RequestExecutor implements CleanCloseable {
         execute(currentIndexAndNode.currentNode, currentIndexAndNode.currentIndex, command, true, sessionInfo);
     }
 
-    /*
-TODO:
-    private void UpdateTopologyCallback(object _)
-    {
-        var time = DateTime.UtcNow;
-        if (time - _lastReturnedResponse <= TimeSpan.FromMinutes(5))
+    private void updateTopologyCallback() {
+        Date time = new Date();
+        if (time.getTime() - _lastReturnedResponse.getTime() <= Duration.ofMinutes(5).toMillis()) {
             return;
+        }
 
         ServerNode serverNode;
 
-        try
-        {
-            var preferredNode = _nodeSelector.GetPreferredNode();
-            serverNode = preferredNode.Node;
-        }
-        catch (Exception e)
-        {
-            if (Logger.IsInfoEnabled)
-                Logger.Info("Couldn't get preferred node Topology from _updateTopologyTimer task", e);
+        try {
+            CurrentIndexAndNode preferredNode = _nodeSelector.getPreferredNode();
+            serverNode = preferredNode.currentNode;
+        } catch (Exception e) {
+            if (logger.isInfoEnabled()) {
+                logger.info("Couldn't get preferred node Topology from _updateTopologyTimer", e);
+            }
             return;
         }
-        GC.KeepAlive(Task.Run(async () =>
-        {
-            try
-            {
-                await UpdateTopologyAsync(serverNode, 0).ConfigureAwait(false);
-            }
-            catch (Exception e)
-            {
-                if (Logger.IsInfoEnabled)
-                    Logger.Info("Couldn't Update Topology from _updateTopologyTimer task", e);
-            }
-        }));
+
+        updateTopologyAsync(serverNode, 0)
+                .exceptionally(ex -> { //TODO: test me!
+                    if (logger.isInfoEnabled()) {
+                        logger.info("Couldn't update topology from _updateTopologyTimer", ex);
+                    }
+                    return null;
+                });
     }
 
-*/
     protected CompletableFuture<Void> firstTopologyUpdate(String[] inputUrls) {
         final String[] initialUrls = validateUrls(inputUrls);
 
@@ -468,20 +450,18 @@ TODO:
     }
 
     private void initializeUpdateTopologyTimer() {
-        /* TODO:
-         if (_updateTopologyTimer != null)
+        if (_updateTopologyTimer != null) {
+            return;
+        }
+
+        synchronized (this) {
+            if (_updateTopologyTimer != null) {
                 return;
-
-            lock (this)
-            {
-                if (_updateTopologyTimer != null)
-                    return;
-
-                _updateTopologyTimer = new Timer(UpdateTopologyCallback, null, TimeSpan.FromMinutes(5), TimeSpan.FromMinutes(5));
             }
-         */
-    }
 
+            _updateTopologyTimer = new Timer(this::updateTopologyCallback, Duration.ofMinutes(5), Duration.ofMinutes(5));
+        }
+    }
 
     public <TResult> void execute(ServerNode chosenNode, Integer nodeIndex, RavenCommand<TResult> command, boolean shouldRetry, SessionInfo sessionInfo) {
         Reference<String> urlRef = new Reference<>();
@@ -570,18 +550,18 @@ TODO:
                         }
                      */
                 } else {
-                    CloseableHttpResponse preferredTask = command.send(httpClient, request); //TODO: it returns task!
-                    if (shouldExecuteOnAll(chosenNode, command)) {
-                        //TODO: await ExecuteOnAllToFigureOutTheFastest(chosenNode, command, preferredTask, token).ConfigureAwait(false);
-                    }
 
-                    response = preferredTask; //TODO: here we should await
+                    if (shouldExecuteOnAll(chosenNode, command)) {
+                        response = executeOnAllToFigureOutTheFastest(chosenNode, command);
+                    } else {
+                        response = command.send(httpClient, request);
+                    }
                 }
 
                 sp.stop();
             } catch (IOException e) {
                 if (!shouldRetry) {
-                    throw new RuntimeException(e); //TODO: use better exception!
+                    throw ExceptionsUtils.unwrapException(e);
                 }
                 sp.stop();
 
@@ -605,7 +585,7 @@ TODO:
                             command.setResponse(cachedValue.value, true);
                         }
                     } catch (IOException e) {
-                        throw new RuntimeException(e); //TODO: use better exception!
+                        throw ExceptionsUtils.unwrapException(e);
                     }
 
                     return;
@@ -653,7 +633,7 @@ TODO:
                     try {
                         CompletableFuture.allOf(topologyTask, clientConfiguration).get();
                     } catch (Exception e) {
-                        throw new RuntimeException(e); //TODO: better exception handling
+                        throw ExceptionsUtils.unwrapException(e);
                     }
                 }
             }
@@ -693,83 +673,65 @@ TODO:
                 chosenNode != null;
     }
 
-    /*
+    private <TResult> CloseableHttpResponse executeOnAllToFigureOutTheFastest(ServerNode chosenNode, RavenCommand<TResult> command) {
+        AtomicInteger numberOfFailedTasks = new AtomicInteger();
 
-    private static readonly Task<HttpRequestMessage> NeverEndingRequest = new TaskCompletionSource<HttpRequestMessage>().Task;
+        CompletableFuture<IndexAndResponse> preferredTask = null;
 
-    private async Task ExecuteOnAllToFigureOutTheFastest<TResult>(ServerNode chosenNode, RavenCommand<TResult> command, Task<HttpResponseMessage> preferredTask,
-        CancellationToken token = default(CancellationToken))
-    {
-        int numberOfFailedTasks = 0;
+        List<ServerNode> nodes = _nodeSelector.getTopology().getNodes();
+        List<CompletableFuture<IndexAndResponse>> tasks = new ArrayList<>(Collections.nCopies(nodes.size(), null));
 
-        var nodes = _nodeSelector.Topology.Nodes;
-        var tasks = new Task[nodes.Count];
-        for (int i = 0; i < nodes.Count; i++)
-        {
-            if (nodes[i].ClusterTag == chosenNode.ClusterTag)
-            {
-                tasks[i] = preferredTask;
-                continue;
+        for (int i = 0; i < nodes.size(); i++) {
+            final int taskNumber = i;
+            numberOfServerRequests.incrementAndGet();
+
+            CompletableFuture<IndexAndResponse> task =  CompletableFuture.supplyAsync(() -> {
+                try {
+                    Reference<String> strRef = new Reference<>();
+                    HttpRequestBase request = createRequest(nodes.get(taskNumber), command, strRef);
+                    return new IndexAndResponse(taskNumber, command.send(httpClient, request));
+                } catch (Exception e){
+                    numberOfFailedTasks.incrementAndGet();
+                    tasks.set(taskNumber, null);
+                    throw new RuntimeException("Request execution failed", e);
+                }
+            });
+
+            if (nodes.get(i).getClusterTag() == chosenNode.getClusterTag()) {
+                preferredTask = task;
+            } else {
+                task.thenAcceptAsync(result -> {
+                    IOUtils.closeQuietly(result.respose);
+                });
             }
 
-            IDisposable disposable = null;
+            tasks.set(i, task);
+        }
 
-            try
-            {
-                disposable = ContextPool.AllocateOperationContext(out var tmpCtx);
-                var request = CreateRequest(tmpCtx, nodes[i], command, out var _);
-
-                Interlocked.Increment(ref NumberOfServerRequests);
-                tasks[i] = command.SendAsync(HttpClient, request, token).ContinueWith(x =>
-                {
-                    try
-                    {
-                        if (x.Exception != null)
-                        {
-                            // we need to make sure that the response is
-                            // properly disposed from all the calls
-                            x.Result.Dispose();
-                        }
+        while (numberOfFailedTasks.get() < tasks.size()) {
+            try {
+                IndexAndResponse fastest = (IndexAndResponse) CompletableFuture.anyOf(tasks.stream().filter(x -> x != null).toArray(CompletableFuture[]::new)).get();
+                _nodeSelector.recordFastest(fastest.index, nodes.get(fastest.index));
+                break;
+            } catch (InterruptedException | ExecutionException e) {
+                for (int i = 0; i < nodes.size(); i++) {
+                    if (tasks.get(i).isCompletedExceptionally()) {
+                        numberOfFailedTasks.incrementAndGet();
+                        tasks.set(i, null);
                     }
-                    catch (Exception)
-                    {
-                        // there is really nothing we can do here
-                    }
-                    finally
-                    {
-                        disposable?.Dispose();
-                    }
-                }, token);
-            }
-            catch (Exception)
-            {
-                numberOfFailedTasks++;
-                // nothing we can do about it
-                tasks[i] = NeverEndingRequest;
-                disposable?.Dispose();
+                }
             }
         }
 
-        while (numberOfFailedTasks < tasks.Length)
-        {
-            // here we rely on WhenAny NOT throwing if the completed
-            // task has failed
-            var completed = await Task.WhenAny(tasks).ConfigureAwait(false);
-            var index = Array.IndexOf(tasks, completed);
-            if (completed.IsCanceled || completed.IsFaulted)
-            {
-                tasks[index] = NeverEndingRequest;
-                numberOfFailedTasks++;
-                continue;
-            }
-            _nodeSelector.RecordFastest(index, nodes[index]);
-            return;
-        }
         // we can reach here if the number of failed task equal to the nuber
         // of the nodes, in which case we have nothing to do
-    }
 
-    */
+        try {
+            return preferredTask.get().respose;
+        } catch (InterruptedException | ExecutionException e) {
+            throw ExceptionsUtils.unwrapException(e);
+        }
+    }
 
     private static void throwTimeoutTooLarnge(Duration duration) {
         throw new IllegalArgumentException("Maximum request timeout is set to " + GLOBAL_HTTP_CLIENT_TIMEOUT + " but was " + duration);
@@ -881,7 +843,7 @@ TODO:
             return false;
         }
 
-        //TODO:  SpawnHealthChecks(chosenNode, nodeIndex.Value);
+        spawnHealthChecks(chosenNode, nodeIndex);
 
         if (_nodeSelector == null) {
             return false;
@@ -899,108 +861,96 @@ TODO:
         return true;
     }
 
-    /*
-
-    private void SpawnHealthChecks(ServerNode chosenNode, int nodeIndex)
-    {
-        var nodeStatus = new NodeStatus(this, nodeIndex, chosenNode);
-        if (_failedNodesTimers.TryAdd(chosenNode, nodeStatus))
-            nodeStatus.StartTimer();
+    private void spawnHealthChecks(ServerNode chosenNode, int nodeIndex) {
+        NodeStatus nodeStatus = new NodeStatus(this, nodeIndex, chosenNode);
+        if (_failedNodesTimers.putIfAbsent(chosenNode, nodeStatus) == null) {
+            nodeStatus.startTimer();
+        }
     }
 
-    private async Task CheckNodeStatusCallback(NodeStatus nodeStatus)
-    {
-        var copy = TopologyNodes;
-        if (nodeStatus.NodeIndex >= copy.Count)
+    private void checkNodeStatusCallback(NodeStatus nodeStatus) {
+        List<ServerNode> copy = getTopologyNodes();
+
+        if (nodeStatus.nodeIndex >= copy.size()) {
             return; // topology index changed / removed
-        var serverNode = copy[nodeStatus.NodeIndex];
-        if (ReferenceEquals(serverNode, nodeStatus.Node) == false)
-            return; // topology changed, nothing to check
+        }
 
-        try
-        {
-            using (ContextPool.AllocateOperationContext(out JsonOperationContext context))
-            {
-                NodeStatus status;
-                try
-                {
-                    await PerformHealthCheck(serverNode, nodeStatus.NodeIndex, context).ConfigureAwait(false);
-                }
-                catch (Exception e)
-                {
-                    if (Logger.IsInfoEnabled)
-                        Logger.Info($"{serverNode.ClusterTag} is still down", e);
+        ServerNode serverNode = copy.get(nodeStatus.nodeIndex);
+        if (serverNode != nodeStatus.node) {
+            return;  // topology changed, nothing to check
+        }
 
-                    if (_failedNodesTimers.TryGetValue(nodeStatus.Node, out status))
-                        nodeStatus.UpdateTimer();
+        try {
+            NodeStatus status;
 
-                    return;// will wait for the next timer call
+            try {
+                performHealthCheck(serverNode, nodeStatus.nodeIndex);
+            } catch (Exception e) {
+                if (logger.isInfoEnabled()) {
+                    logger.info(serverNode.getClusterTag() + " is still down", e);
                 }
 
-                if (_failedNodesTimers.TryRemove(nodeStatus.Node, out status))
-                {
-                    status.Dispose();
+                status = _failedNodesTimers.get(nodeStatus.node);
+                if (status != null) {
+                    nodeStatus.updateTimer();
                 }
-                _nodeSelector?.RestoreNodeIndex(nodeStatus.NodeIndex);
+
+                return; // will wait for the next timer call
+            }
+
+            status = _failedNodesTimers.get(nodeStatus.node);
+            if (status != null) {
+                _failedNodesTimers.remove(status);
+                status.close();
+            }
+
+            if (_nodeSelector != null) {
+                _nodeSelector.restoreNodeIndex(nodeStatus.nodeIndex);
+            }
+
+        } catch (Exception e) {
+            if (logger.isInfoEnabled()) {
+                logger.info("Failed to check node topology, will ignore this node until next topology update", e);
             }
         }
-        catch (Exception e)
-        {
-            if (Logger.IsInfoEnabled)
-                Logger.Info("Failed to check node topology, will ignore this node until next topology update", e);
-        }
     }
 
-    protected virtual Task PerformHealthCheck(ServerNode serverNode, int nodeIndex, JsonOperationContext context)
-    {
-        return ExecuteAsync(serverNode, nodeIndex, context, new GetStatisticsCommand(debugTag: "failure=check"), shouldRetry: false);
+    protected void performHealthCheck(ServerNode serverNode, int nodeIndex) {
+        execute(serverNode, nodeIndex, new GetStatisticsCommand("failure=check"), false, null);
     }
 
-*/
-    //TODO: make sure we dispose response in case of failure!
+    //FIXME: make sure we dispose response in case of failure!
     private static <TResult> void addFailedResponseToCommand(ServerNode chosenNode, RavenCommand<TResult> command, HttpRequestBase request, CloseableHttpResponse response, Exception e) {
-        if (response != null) {
-            /* TODO
-             var stream = await response.Content.ReadAsStreamAsync().ConfigureAwait(false);
-            var ms = new MemoryStream();
-            await stream.CopyToAsync(ms).ConfigureAwait(false);
-            try
-            {
-                ms.Position = 0;
-                using (var responseJson = context.ReadForMemory(ms, "RequestExecutor/HandleServerDown/ReadResponseContent"))
-                {
-                    command.FailedNodes.Add(chosenNode, ExceptionDispatcher.Get(JsonDeserializationClient.ExceptionSchema(responseJson), response.StatusCode));
-                }
-            }
-            catch
-            {
-                // we failed to parse the error
-                ms.Position = 0;
-                command.FailedNodes.Add(chosenNode, ExceptionDispatcher.Get(new ExceptionDispatcher.ExceptionSchema
-                {
-                    Url = request.RequestUri.ToString(),
-                    Message = "Got unrecognized response from the server",
-                    Error = new StreamReader(ms).ReadToEnd(),
-                    Type = "Unparseable Server Response"
-                }, response.StatusCode));
-            }
-            return;
-             */
+        //TODO: make sure we dispose response entity in this case !
+        if (response != null && response.getEntity() != null) {
+            String responseJson = null;
+            try {
+                responseJson = IOUtils.toString(response.getEntity().getContent(), "UTF-8");
 
+                Exception readException = ExceptionDispatcher.get(JsonExtensions.getDefaultMapper().readValue(responseJson, ExceptionDispatcher.ExceptionSchema.class), response.getStatusLine().getStatusCode());
+                command.getFailedNodes().put(chosenNode, readException);
+            } catch (Exception _) {
+                ExceptionDispatcher.ExceptionSchema exceptionSchema = new ExceptionDispatcher.ExceptionSchema();
+                exceptionSchema.setUrl(request.getURI().toString());
+                exceptionSchema.setMessage("Get unrecognized response from the server");
+                exceptionSchema.setError(responseJson);
+                exceptionSchema.setType("Unparsable Server Response");
+
+                Exception exceptionToUse = ExceptionDispatcher.get(exceptionSchema, response.getStatusLine().getStatusCode());
+
+                command.getFailedNodes().put(chosenNode, exceptionToUse);
+            }
+
+            return;
         }
 
         // this would be connections that didn't have response, such as "couldn't connect to remote server"
-        command.getFailedNodes().put(chosenNode, new Exception("TODO")); //TODO:
-                /* TODO:
-                ExceptionDispatcher.Get(new ExceptionDispatcher.ExceptionSchema
-                {
-                    Url = request.RequestUri.ToString(),
-                    Message = e.Message,
-                    Error = e.ToString(),
-                    Type = e.GetType().FullName
-                }, HttpStatusCode.InternalServerError));
-            }
-                 */
+        ExceptionDispatcher.ExceptionSchema exceptionSchema = new ExceptionDispatcher.ExceptionSchema();
+        exceptionSchema.setUrl(request.getURI().toString());
+        exceptionSchema.setMessage(e.getMessage());
+        exceptionSchema.setError(e.toString());
+        exceptionSchema.setType(e.getClass().getCanonicalName());
+        command.getFailedNodes().put(chosenNode, ExceptionDispatcher.get(exceptionSchema, HttpStatus.SC_INTERNAL_SERVER_ERROR));
     }
 
     protected boolean _disposed;
@@ -1024,8 +974,9 @@ TODO:
 
         _disposed = true;
         cache.close();
-        //TODO: _updateTopologyTimer?.Dispose();
-        //TODO: disposeAllFailedNodesTimers();
+
+        _updateTopologyTimer.close();
+        disposeAllFailedNodesTimers();
     }
 
     private CloseableHttpClient createClient() {
@@ -1047,72 +998,53 @@ TODO:
     //TODO: ValidateClientKeyUsages
 
     public static class NodeStatus implements CleanCloseable {
+
+        private Duration _timerPeriod;
+        private final RequestExecutor _requestExectutor;
+        public final int nodeIndex;
+        public final ServerNode node;
+        private Timer _timer;
+
+        public NodeStatus(RequestExecutor requestExecutor, int nodeIndex, ServerNode node) {
+            _requestExectutor = requestExecutor;
+            this.nodeIndex = nodeIndex;
+            this.node = node;
+            _timerPeriod = Duration.ofMillis(100);
+        }
+
+        private Duration nextTimerPeriod() {
+            if (_timerPeriod.compareTo(Duration.ofSeconds(5)) >= 0) {
+                return Duration.ofSeconds(5);
+            }
+
+            _timerPeriod = _timerPeriod.plus(Duration.ofMillis(100));
+
+            return _timerPeriod;
+        }
+
+        public void startTimer() {
+            _timer = new Timer(this::timerCallback, _timerPeriod);
+        }
+
+        public void updateTimer() {
+            _timer.change(nextTimerPeriod());
+        }
+
+        private void timerCallback() {
+            _requestExectutor.checkNodeStatusCallback(this);
+        }
+
         @Override
         public void close() {
-            //TODO:
+            _timer.close();
         }
     }
 
-    /*
+    private CurrentIndexAndNode getPreferredNode() {
+        ensureNodeSelector();
 
-
-        public class NodeStatus : IDisposable
-        {
-            private TimeSpan _timerPeriod;
-            private readonly RequestExecutor _requestExecutor;
-            public readonly int NodeIndex;
-            public readonly ServerNode Node;
-            private Timer _timer;
-
-            public NodeStatus(RequestExecutor requestExecutor, int nodeIndex, ServerNode node)
-            {
-                _requestExecutor = requestExecutor;
-                NodeIndex = nodeIndex;
-                Node = node;
-                _timerPeriod = TimeSpan.FromMilliseconds(100);
-            }
-
-            private TimeSpan NextTimerPeriod()
-            {
-                if (_timerPeriod >= TimeSpan.FromSeconds(5))
-                    return TimeSpan.FromSeconds(5);
-
-                _timerPeriod += TimeSpan.FromMilliseconds(100);
-                return _timerPeriod;
-            }
-
-            public void StartTimer()
-            {
-                _timer = new Timer(TimerCallback, null, _timerPeriod, Timeout.InfiniteTimeSpan);
-            }
-
-            private void TimerCallback(object state)
-            {
-                GC.KeepAlive(_requestExecutor.CheckNodeStatusCallback(this));
-            }
-
-            public void UpdateTimer()
-            {
-                Debug.Assert(_timer != null);
-                _timer.Change(NextTimerPeriod(), Timeout.InfiniteTimeSpan);
-            }
-
-            public void Dispose()
-            {
-                _timer?.Dispose();
-            }
-        }
-
-        public async Task<(int, ServerNode)> GetPreferredNode()
-        {
-            await EnsureNodeSelector().ConfigureAwait(false);
-
-            return _nodeSelector.GetPreferredNode();
-        }
-
-
-
-     */
+        return _nodeSelector.getPreferredNode();
+    }
 
 
     private void ensureNodeSelector() {
@@ -1127,6 +1059,16 @@ TODO:
             topology.setEtag(topologyEtag);
 
             _nodeSelector = new NodeSelector(topology);
+        }
+    }
+
+    public static class IndexAndResponse {
+        public int index;
+        public CloseableHttpResponse respose;
+
+        public IndexAndResponse(int index, CloseableHttpResponse respose) {
+            this.index = index;
+            this.respose = respose;
         }
     }
 }

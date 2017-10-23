@@ -6,8 +6,14 @@ import net.ravendb.client.serverwide.ClientConfiguration;
 //TODO: implement me!
 public class DocumentConventions {
 
+    private ReadBalanceBehavior readBalanceBehavior = ReadBalanceBehavior.NONE;
+
+    public void setReadBalanceBehavior(ReadBalanceBehavior readBalanceBehavior) {
+        this.readBalanceBehavior = readBalanceBehavior;
+    }
+
     public ReadBalanceBehavior getReadBalanceBehavior() {
-        return ReadBalanceBehavior.NONE; //TODO:
+        return this.readBalanceBehavior;
     }
 
     public DocumentConventions clone() {

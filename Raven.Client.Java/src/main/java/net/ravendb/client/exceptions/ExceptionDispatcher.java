@@ -18,4 +18,49 @@ public class ExceptionDispatcher {
         }
 
     }
+
+    public static Exception get(ExceptionSchema schema, int httpStatusCode) {
+        //TODO: get
+        return null;
+    }
+
+
+    public static class ExceptionSchema {
+        private String url;
+        private String type;
+        private String message;
+        private String error;
+
+        public String getUrl() {
+            return url;
+        }
+
+        public void setUrl(String url) {
+            this.url = url;
+        }
+
+        public String getType() {
+            return type;
+        }
+
+        public void setType(String type) {
+            this.type = type;
+        }
+
+        public String getMessage() {
+            return message;
+        }
+
+        public void setMessage(String message) {
+            this.message = message;
+        }
+
+        public String getError() {
+            return error;
+        }
+
+        public void setError(String error) {
+            this.error = error;
+        }
+    }
 }

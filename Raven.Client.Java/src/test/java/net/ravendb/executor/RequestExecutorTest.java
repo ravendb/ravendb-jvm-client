@@ -6,6 +6,7 @@ import net.ravendb.client.documents.conventions.DocumentConventions;
 import net.ravendb.client.exceptions.AllTopologyNodesDownException;
 import net.ravendb.client.exceptions.DatabaseDoesNotExistException;
 import net.ravendb.client.http.RavenCommand;
+import net.ravendb.client.http.ReadBalanceBehavior;
 import net.ravendb.client.http.RequestExecutor;
 import net.ravendb.client.http.ServerNode;
 import net.ravendb.client.primitives.ExceptionsUtils;
@@ -172,6 +173,7 @@ public class RequestExecutorTest extends RemoteTestBase {
         assertThatThrownBy(() -> {
             // don't even start server
             RequestExecutor executor = RequestExecutor.create(new String[]{"http://no_such_host:8081"}, "db1", documentConventions);
+
 
             GetNextOperationIdCommand command = new GetNextOperationIdCommand();
 
