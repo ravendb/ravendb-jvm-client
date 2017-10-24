@@ -1,0 +1,81 @@
+package net.ravendb.client.serverwide.operations;
+
+import com.fasterxml.jackson.core.JsonProcessingException;
+import net.ravendb.client.documents.conventions.DocumentConventions;
+import net.ravendb.client.http.RavenCommand;
+import net.ravendb.client.http.ServerNode;
+import net.ravendb.client.primitives.ExceptionsUtils;
+import net.ravendb.client.primitives.Reference;
+import net.ravendb.client.serverwide.DatabaseRecord;
+import org.apache.http.client.methods.HttpPut;
+import org.apache.http.client.methods.HttpRequestBase;
+import org.apache.http.entity.ContentType;
+import org.apache.http.entity.StringEntity;
+
+import java.io.IOException;
+import java.util.Optional;
+
+public class CreateDatabaseOperation implements IServerOperation<DatabasePutResult> {
+
+    private final DatabaseRecord databaseRecord;
+    private final int replicationFactor;
+
+    public CreateDatabaseOperation(DatabaseRecord databaseRecord) {
+        this(databaseRecord, 1);
+    }
+
+    public CreateDatabaseOperation(DatabaseRecord databaseRecord, int replicationFactor) {
+        this.databaseRecord = databaseRecord;
+        this.replicationFactor = replicationFactor;
+    }
+
+    @Override
+    public RavenCommand<DatabasePutResult> getCommand(DocumentConventions conventions) {
+        return new CreateDatabaseCommand(conventions, databaseRecord, this);
+    }
+
+    private static class CreateDatabaseCommand extends RavenCommand<DatabasePutResult> {
+        private final DocumentConventions conventions;
+        private final DatabaseRecord databaseRecord;
+        private final CreateDatabaseOperation createDatabaseOperation;
+        private final String databaseName;
+
+        public CreateDatabaseCommand(DocumentConventions conventions, DatabaseRecord databaseRecord, CreateDatabaseOperation createDatabaseOperation) {
+            super(DatabasePutResult.class);
+            this.conventions = conventions;
+            this.databaseRecord = databaseRecord;
+            this.createDatabaseOperation = createDatabaseOperation;
+            this.databaseName = Optional.ofNullable(databaseRecord).map(x -> x.getDatabaseName()).orElseThrow(() -> new IllegalArgumentException("Database name is required"));
+        }
+
+        @Override
+        public HttpRequestBase createRequest(ServerNode node, Reference<String> url) {
+            url.value = node.getUrl() + "/admin/databases?name=" + databaseName;
+
+            url.value += "&replication-factor=" + createDatabaseOperation.replicationFactor;
+
+            try {
+                String databaseDocument = mapper.writeValueAsString(databaseRecord);
+                HttpPut request = new HttpPut();
+                request.setEntity(new StringEntity(databaseDocument, ContentType.APPLICATION_JSON));
+                return request;
+            } catch (JsonProcessingException e) {
+                throw ExceptionsUtils.unwrapException(e);
+            }
+        }
+
+        @Override
+        public void setResponse(String response, boolean fromCache) throws IOException {
+            if (response == null) {
+                throwInvalidResponse();
+            }
+
+            result = mapper.readValue(response, DatabasePutResult.class);
+        }
+
+        @Override
+        public boolean isReadRequest() {
+            return false;
+        }
+    }
+}

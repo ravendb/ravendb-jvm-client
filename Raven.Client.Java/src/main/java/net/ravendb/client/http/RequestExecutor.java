@@ -120,11 +120,15 @@ public class RequestExecutor implements CleanCloseable {
         return clientConfigurationEtag;
     }
 
-    public final DocumentConventions conventions;
+    private final DocumentConventions conventions;
 
     protected boolean _disableTopologyUpdates;
 
     protected boolean _disableClientConfigurationUpdates;
+
+    public DocumentConventions getConventions() {
+        return conventions;
+    }
 
     public Duration getDefaultTimeout() {
         return _defaultTimeout;

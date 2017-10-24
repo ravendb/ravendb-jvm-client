@@ -30,7 +30,7 @@ public class IndexInformation {
         this.stale = stale;
     }
 
-    /* TODO
+    /* TODO + test
 
         public IndexState State { get; set; }
 

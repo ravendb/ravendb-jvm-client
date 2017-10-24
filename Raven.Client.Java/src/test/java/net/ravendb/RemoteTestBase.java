@@ -1,21 +1,19 @@
 package net.ravendb;
 
-import java.util.function.BiConsumer;
-import java.util.function.Consumer;
+import net.ravendb.client.test.driver.RavenServerLocator;
+import net.ravendb.client.test.driver.RavenTestDriver;
 
-public class RemoteTestBase {
+public class RemoteTestBase extends RavenTestDriver {
 
-
-    public void withServer(Consumer<String> consumer) {
-        //TODO:
-
-        consumer.accept("http://localhost:8080");
+    private static class TestServiceLocator extends RavenServerLocator {
+        @Override
+        public String getServerPath() {
+            return "C:\\temp\\RavenDB-4.0.0-nightly-20171020-0400-windows-x64\\Server\\Raven.Server.exe"; //TODO: from variable?
+        }
     }
 
-    public void withDatabase(Consumer<String> action) {
-
-        //TODO :
-        action.accept("db1");
+    public RemoteTestBase() {
+        super(new TestServiceLocator());
     }
 
 }
