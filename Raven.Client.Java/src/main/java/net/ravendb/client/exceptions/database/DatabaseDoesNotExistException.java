@@ -1,6 +1,8 @@
-package net.ravendb.client.exceptions;
+package net.ravendb.client.exceptions.database;
 
-public class DatabaseDoesNotExistException extends RuntimeException {
+import net.ravendb.client.exceptions.RavenException;
+
+public class DatabaseDoesNotExistException extends RavenException {
     public DatabaseDoesNotExistException() {
     }
 

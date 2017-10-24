@@ -1,10 +1,9 @@
 package net.ravendb.client.test.driver;
 
 import com.google.common.base.Stopwatch;
-import com.sun.javaws.exceptions.InvalidArgumentException;
 import net.ravendb.client.documents.DocumentStore;
 import net.ravendb.client.documents.IDocumentStore;
-import net.ravendb.client.exceptions.DatabaseDoesNotExistException;
+import net.ravendb.client.exceptions.database.DatabaseDoesNotExistException;
 import net.ravendb.client.primitives.CleanCloseable;
 import net.ravendb.client.serverwide.DatabaseRecord;
 import net.ravendb.client.serverwide.operations.CreateDatabaseOperation;

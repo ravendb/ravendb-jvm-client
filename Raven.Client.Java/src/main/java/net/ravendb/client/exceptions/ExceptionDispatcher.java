@@ -1,29 +1,148 @@
 package net.ravendb.client.exceptions;
 
+import net.ravendb.client.extensions.JsonExtensions;
+import net.ravendb.client.http.RequestExecutor;
 import net.ravendb.client.primitives.ExceptionsUtils;
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang3.concurrent.ConcurrentException;
+import org.apache.http.HttpStatus;
 import org.apache.http.client.methods.CloseableHttpResponse;
 
 import java.io.IOException;
+import java.io.InputStream;
+import java.lang.reflect.InvocationTargetException;
 
-//TODO:
+import static com.sun.beans.finder.PrimitiveWrapperMap.getType;
+
 public class ExceptionDispatcher {
 
-    public static void throwException(CloseableHttpResponse response) {
-        try {
-            String string = IOUtils.toString(response.getEntity().getContent(), "utf-8");
-            throw new RuntimeException(string);
-        } catch (IOException e) {
-            throw ExceptionsUtils.unwrapException(e);
+    public static Exception get(ExceptionSchema schema, int code) {
+        return get(schema.getMessage(), schema.getError(), schema.getType(), code);
+    }
+
+    public static Exception get(String message, String error, String typeAsString, int code) {
+        if (code == HttpStatus.SC_CONFLICT) {
+            if (typeAsString.contains("DocumentConflictException")) {
+                //TODO: return DocumentConflictException.From(message);
+            }
+            //TODO: return new ConcurrencyException(message);
         }
 
+        Class<?> type = getType(typeAsString);
+        if (type == null) {
+            return new RavenException(error);
+        }
+
+        Exception exception;
+        try {
+            exception = (Exception) type.getConstructor(String.class).newInstance(error);
+        } catch (Exception e) {
+            return new RavenException(error);
+        }
+
+        if (!RavenException.class.isAssignableFrom(type)) {
+            return new RavenException(error, exception);
+        }
+
+        return exception;
     }
 
-    public static Exception get(ExceptionSchema schema, int httpStatusCode) {
-        //TODO: get
-        return null;
+    public static void throwException(CloseableHttpResponse response) { //TODO: delete me ?
+        if (response == null) {
+            throw new IllegalArgumentException("Response cannot be null");
+        }
+
+        try {
+            InputStream stream = RequestExecutor.readAsStream(response);
+            String json = IOUtils.toString(stream, "UTF-8");
+            ExceptionSchema schema = JsonExtensions.getDefaultMapper().readValue(json, ExceptionSchema.class);
+
+            if (response.getStatusLine().getStatusCode() == HttpStatus.SC_CONFLICT) {
+                throwConflict(schema, json);
+            }
+
+            Class<?> type = getType(schema.getType());
+            if (type == null) {
+                throw RavenException.generic(schema.getError(), json);
+            }
+
+            RavenException exception;
+
+            try {
+                exception = (RavenException) type.getConstructor(String.class).newInstance(schema.getError());
+            } catch (Exception e) {
+                throw RavenException.generic(schema.getError(), json);
+            }
+
+            if (!RavenException.class.isAssignableFrom(type)) {
+                throw new RavenException(schema.getError(), exception);
+            }
+
+
+            /* TODO
+             if (type == typeof(TransformerCompilationException))
+                {
+                    var transformerCompilationException = (TransformerCompilationException)exception;
+                    json.TryGet(nameof(TransformerCompilationException.TransformerDefinitionProperty), out transformerCompilationException.TransformerDefinitionProperty);
+                    json.TryGet(nameof(TransformerCompilationException.ProblematicText), out transformerCompilationException.ProblematicText);
+
+                    throw transformerCompilationException;
+                }
+
+                if (type == typeof(IndexCompilationException))
+                {
+                    var indexCompilationException = (IndexCompilationException)exception;
+                    json.TryGet(nameof(IndexCompilationException.IndexDefinitionProperty), out indexCompilationException.IndexDefinitionProperty);
+                    json.TryGet(nameof(IndexCompilationException.ProblematicText), out indexCompilationException.ProblematicText);
+
+                    throw indexCompilationException;
+                }
+
+             */
+
+            throw exception;
+
+        } catch (IOException e) {
+            throw new RavenException(e.getMessage(), e);
+        } finally {
+            IOUtils.closeQuietly(response);
+        }
     }
 
+
+    private static void throwConflict(ExceptionSchema schema, String json) {
+        /* TODO:
+         if (schema.Type.Contains(nameof(DocumentConflictException))) // temporary!
+                throw DocumentConflictException.From(json);
+
+            throw new ConcurrencyException(schema.Message);
+         */
+
+        throw new RavenException() ;//TODO: delet eme!
+    }
+
+
+    private static Class<?> getType(String typeAsString) {
+        String prefix = "Raven.Client.Exceptions.";
+        if (typeAsString.startsWith(prefix)) {
+            String exceptionName = typeAsString.substring(prefix.length());
+            if (exceptionName.contains(".")) {
+                String[] tokens = exceptionName.split("\\.");
+                for (int i = 0; i < tokens.length - 1; i++) {
+                    tokens[i] = tokens[i].toLowerCase();
+                }
+                exceptionName = String.join(".", tokens);
+            }
+
+            try {
+                return Class.forName(RavenException.class.getPackage().getName() + "." + exceptionName);
+            } catch (Exception e) {
+                return null;
+            }
+        } else {
+            return null;
+        }
+    }
 
     public static class ExceptionSchema {
         private String url;

@@ -8,7 +8,7 @@ import net.ravendb.client.documents.operations.configuration.GetClientConfigurat
 import net.ravendb.client.documents.session.SessionInfo;
 import net.ravendb.client.exceptions.AllTopologyNodesDownException;
 import net.ravendb.client.exceptions.AuthorizationException;
-import net.ravendb.client.exceptions.DatabaseDoesNotExistException;
+import net.ravendb.client.exceptions.database.DatabaseDoesNotExistException;
 import net.ravendb.client.exceptions.ExceptionDispatcher;
 import net.ravendb.client.extensions.HttpExtensions;
 import net.ravendb.client.extensions.JsonExtensions;
@@ -31,6 +31,7 @@ import org.apache.http.impl.client.StandardHttpRequestRetryHandler;
 import org.apache.http.impl.conn.PoolingHttpClientConnectionManager;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -819,21 +820,9 @@ public class RequestExecutor implements CleanCloseable {
         ExceptionDispatcher.throwException(response);
     }
 
-    /* //TODO: is it needed?
-
-    public static async Task<Stream> ReadAsStreamUncompressedAsync(HttpResponseMessage response)
-    {
-        var serverStream = await response.Content.ReadAsStreamAsync().ConfigureAwait(false);
-        var stream = serverStream;
-        var encoding = response.Content.Headers.ContentEncoding.FirstOrDefault();
-        if (encoding != null && encoding.Contains("gzip"))
-            return new GZipStream(stream, CompressionMode.Decompress);
-        if (encoding != null && encoding.Contains("deflate"))
-            return new DeflateStream(stream, CompressionMode.Decompress);
-
-        return serverStream;
+    public static InputStream readAsStream(CloseableHttpResponse response) throws IOException {
+        return response.getEntity().getContent();
     }
-*/
 
     private <TResult> boolean handleServerDown(String url, ServerNode chosenNode, Integer nodeIndex, RavenCommand<TResult> command, HttpRequestBase request, CloseableHttpResponse response, Exception e, SessionInfo sessionInfo) {
         if (command.getFailedNodes() == null) {
@@ -979,7 +968,10 @@ public class RequestExecutor implements CleanCloseable {
         _disposed = true;
         cache.close();
 
-        _updateTopologyTimer.close();
+        if (_updateTopologyTimer != null) {
+            _updateTopologyTimer.close();
+        }
+        
         disposeAllFailedNodesTimers();
     }
 

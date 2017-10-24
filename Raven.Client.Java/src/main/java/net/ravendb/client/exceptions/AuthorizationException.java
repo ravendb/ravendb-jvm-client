@@ -1,5 +1,6 @@
 package net.ravendb.client.exceptions;
 
+//TODO: extends SecurityException
 public class AuthorizationException extends RuntimeException {
 
     public AuthorizationException() {
