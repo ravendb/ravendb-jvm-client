@@ -27,8 +27,6 @@ public class DocumentStore extends DocumentStoreBase {
     private AdminOperationExecutor adminOperationExecutor;
     private OperationExecutor operationExecutor;
 
-    //TODO: private DatabaseSmuggler _smuggler;
-
     private String identifier;
     //tODO: private bool _aggressiveCachingUsed;
 
@@ -137,7 +135,6 @@ public class DocumentStore extends DocumentStoreBase {
             return session;
         }
 
-        public event EventHandler<RequestExecutor> RequestExecutorCreated;
 */
 
     @Override
@@ -160,10 +157,8 @@ public class DocumentStore extends DocumentStoreBase {
 
         if (!getConventions().getDisableTopologyUpdates()) {
             executor = RequestExecutor.create(getUrls(), getDatabase(), getConventions()); //TODO: certificates
-            //TODO:  RequestExecutorCreated?.Invoke(this, requestExecutor);
         } else {
             executor = RequestExecutor.createForSingleNodeWithConfigurationUpdates(getUrls()[0], getDatabase(), getConventions()); //TODO: certificates
-            //tODO: RequestExecutorCreated?.Invoke(this, forSingleNode);
         }
 
         requestExecutors.put(database, executor);
@@ -350,8 +345,6 @@ public class DocumentStore extends DocumentStoreBase {
     public void removeAfterCloseListener(EventHandler<VoidArgs> event) {
         this.afterDispose.remove(event);
     }
-
-    //TODO: public DatabaseSmuggler Smuggler => _smuggler ?? (_smuggler = new DatabaseSmuggler(this));
 
     @Override
     public AdminOperationExecutor admin() {

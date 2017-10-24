@@ -42,8 +42,8 @@ public class AdminOperationExecutor {
         return new AdminOperationExecutor(store, databaseName);
     }
 
-    public void send(IVoidServerOperation operation) {
-        VoidRavenCommand command = operation.getCommand(requestExecutor.getConventions());
+    public void send(IVoidAdminOperation operation) {
+        RavenCommand command = operation.getCommand(requestExecutor.getConventions());
         requestExecutor.execute(command);
     }
 

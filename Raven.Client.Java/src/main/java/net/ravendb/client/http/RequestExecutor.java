@@ -197,7 +197,7 @@ public class RequestExecutor implements CleanCloseable {
 
         return CompletableFuture.runAsync(() -> {
             try {
-                _updateTopologySemaphore.acquire();
+                _updateClientConfigurationSemaphore.acquire();
             } catch (InterruptedException e) {
                 throw new RuntimeException(e);
             }
@@ -1035,7 +1035,9 @@ public class RequestExecutor implements CleanCloseable {
         }
 
         private void timerCallback() {
-            _requestExectutor.checkNodeStatusCallback(this);
+            if (!_requestExectutor._disposed) {
+                _requestExectutor.checkNodeStatusCallback(this);
+            }
         }
 
         @Override
