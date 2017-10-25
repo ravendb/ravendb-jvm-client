@@ -1,4 +1,4 @@
-package net.ravendb.client.operations;
+package net.ravendb.client.documents.commands;
 
 import com.google.common.base.Stopwatch;
 import net.ravendb.client.RemoteTestBase;
