@@ -1,18 +1,23 @@
 package net.ravendb.client.serverwide;
 
+import net.ravendb.client.serverwide.operations.DatabasePromotionStatus;
+
 import java.util.Dictionary;
 import java.util.List;
 import java.util.Map;
 
 public class DatabaseTopology {
+
     private List<String> members;
     private List<String> promotables;
     private List<String> rehabs;
 
     private Map<String, String> predefinedMentors;
     private Map<String, String> demotionReasons;
-
-    //TODO: other props
+    private Map<String, DatabasePromotionStatus> promotablesStatus;
+    private int replicationFactor;
+    private boolean dynamicNodesDistribution;
+    private LeaderStamp stamp;
 
 
     public List<String> getMembers() {
@@ -53,5 +58,37 @@ public class DatabaseTopology {
 
     public void setDemotionReasons(Map<String, String> demotionReasons) {
         this.demotionReasons = demotionReasons;
+    }
+
+    public Map<String, DatabasePromotionStatus> getPromotablesStatus() {
+        return promotablesStatus;
+    }
+
+    public void setPromotablesStatus(Map<String, DatabasePromotionStatus> promotablesStatus) {
+        this.promotablesStatus = promotablesStatus;
+    }
+
+    public int getReplicationFactor() {
+        return replicationFactor;
+    }
+
+    public void setReplicationFactor(int replicationFactor) {
+        this.replicationFactor = replicationFactor;
+    }
+
+    public boolean isDynamicNodesDistribution() {
+        return dynamicNodesDistribution;
+    }
+
+    public void setDynamicNodesDistribution(boolean dynamicNodesDistribution) {
+        this.dynamicNodesDistribution = dynamicNodesDistribution;
+    }
+
+    public LeaderStamp getStamp() {
+        return stamp;
+    }
+
+    public void setStamp(LeaderStamp stamp) {
+        this.stamp = stamp;
     }
 }
