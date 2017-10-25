@@ -1,8 +1,10 @@
 package net.ravendb.client.test.driver;
 
 import com.google.common.base.Stopwatch;
+import com.google.common.collect.Sets;
 import net.ravendb.client.documents.DocumentStore;
 import net.ravendb.client.documents.IDocumentStore;
+import net.ravendb.client.exceptions.cluster.NoLeaderException;
 import net.ravendb.client.exceptions.database.DatabaseDoesNotExistException;
 import net.ravendb.client.primitives.CleanCloseable;
 import net.ravendb.client.serverwide.DatabaseRecord;
@@ -13,8 +15,11 @@ import org.apache.commons.lang3.NotImplementedException;
 import java.io.*;
 import java.time.Duration;
 import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.ConcurrentSkipListSet;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
@@ -27,7 +32,7 @@ public abstract class RavenTestDriver implements CleanCloseable {
 
     private static Process globalServerProcess;
 
-    private final ConcurrentMap<DocumentStore, Object> documentStores = new ConcurrentHashMap<>();
+    private final Set<DocumentStore> documentStores = Sets.newConcurrentHashSet();
 
     private static AtomicInteger index = new AtomicInteger();
 
@@ -81,7 +86,7 @@ public abstract class RavenTestDriver implements CleanCloseable {
         store.initialize();
 
         store.addAfterCloseListener(((sender, event) -> {
-            if (!documentStores.containsKey(store)) {
+            if (!documentStores.contains(store)) {
                 return;
             }
 
@@ -89,7 +94,9 @@ public abstract class RavenTestDriver implements CleanCloseable {
                 store.admin().server().send(new DeleteDatabasesOperation(store.getDatabase(), true));
             } catch (DatabaseDoesNotExistException e) {
                 // ignore
-            } //TODO: NoLeaderException
+            } catch (NoLeaderException e) {
+                // ignore
+            }
         }));
 
         setupDatabase(store);
@@ -99,7 +106,7 @@ public abstract class RavenTestDriver implements CleanCloseable {
                 WaitForIndexing(store, name, waitForIndexingTimeout);
          */
 
-        documentStores.remove(store);
+        documentStores.add(store);
         return store;
     }
 
@@ -349,7 +356,7 @@ public abstract class RavenTestDriver implements CleanCloseable {
 
         ArrayList<Exception> exceptions = new ArrayList<>();
 
-        for (DocumentStore documentStore : documentStores.keySet()) {
+        for (DocumentStore documentStore : documentStores) {
             try {
                 documentStore.close();
             } catch (Exception e) {

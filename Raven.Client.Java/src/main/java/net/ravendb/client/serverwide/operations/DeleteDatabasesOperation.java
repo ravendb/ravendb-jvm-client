@@ -16,7 +16,7 @@ import java.time.Duration;
 
 public class DeleteDatabasesOperation implements IServerOperation<DeleteDatabaseResult> {
 
-    private final Parameters paramters;
+    private final Parameters parameters;
 
     public DeleteDatabasesOperation(String databaseName, boolean hardDelete) {
         this(databaseName, hardDelete, null, null);
@@ -40,24 +40,24 @@ public class DeleteDatabasesOperation implements IServerOperation<DeleteDatabase
             parameters.setFromNodes(new String[] { fromNode });
         }
 
-        this.paramters = parameters;
+        this.parameters = parameters;
     }
 
-    public DeleteDatabasesOperation(Parameters paramters) {
-        if (paramters == null) {
+    public DeleteDatabasesOperation(Parameters parameters) {
+        if (parameters == null) {
             throw new IllegalArgumentException("Parameters cannot be null");
         }
 
-        if (paramters.getDatabaseNames() == null || paramters.getDatabaseNames().length == 0) {
+        if (parameters.getDatabaseNames() == null || parameters.getDatabaseNames().length == 0) {
             throw new IllegalArgumentException("Database names cannot be null");
         }
 
-        this.paramters = paramters;
+        this.parameters = parameters;
     }
 
     @Override
     public RavenCommand<DeleteDatabaseResult> getCommand(DocumentConventions conventions) {
-        return new DeleteDatabaseCommand(conventions, this.paramters);
+        return new DeleteDatabaseCommand(conventions, this.parameters);
     }
 
     private static class DeleteDatabaseCommand extends RavenCommand<DeleteDatabaseResult> {

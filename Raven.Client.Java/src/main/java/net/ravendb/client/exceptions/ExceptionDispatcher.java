@@ -1,5 +1,9 @@
 package net.ravendb.client.exceptions;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import net.ravendb.client.exceptions.documents.DocumentConflictException;
+import net.ravendb.client.exceptions.documents.compilation.IndexCompilationException;
+import net.ravendb.client.exceptions.documents.compilation.TransformerCompilationException;
 import net.ravendb.client.extensions.JsonExtensions;
 import net.ravendb.client.http.RequestExecutor;
 import net.ravendb.client.primitives.ExceptionsUtils;
@@ -23,9 +27,9 @@ public class ExceptionDispatcher {
     public static Exception get(String message, String error, String typeAsString, int code) {
         if (code == HttpStatus.SC_CONFLICT) {
             if (typeAsString.contains("DocumentConflictException")) {
-                //TODO: return DocumentConflictException.From(message);
+                return DocumentConflictException.fromMessage(message);
             }
-            //TODO: return new ConcurrencyException(message);
+            return new ConcurrencyException(message);
         }
 
         Class<?> type = getType(typeAsString);
@@ -47,7 +51,7 @@ public class ExceptionDispatcher {
         return exception;
     }
 
-    public static void throwException(CloseableHttpResponse response) { //TODO: delete me ?
+    public static void throwException(CloseableHttpResponse response) {
         if (response == null) {
             throw new IllegalArgumentException("Response cannot be null");
         }
@@ -79,26 +83,37 @@ public class ExceptionDispatcher {
             }
 
 
-            /* TODO
-             if (type == typeof(TransformerCompilationException))
-                {
-                    var transformerCompilationException = (TransformerCompilationException)exception;
-                    json.TryGet(nameof(TransformerCompilationException.TransformerDefinitionProperty), out transformerCompilationException.TransformerDefinitionProperty);
-                    json.TryGet(nameof(TransformerCompilationException.ProblematicText), out transformerCompilationException.ProblematicText);
-
-                    throw transformerCompilationException;
+            if (TransformerCompilationException.class.equals(type)) {
+                TransformerCompilationException transformerCompilationException = (TransformerCompilationException) exception;
+                JsonNode jsonNode = JsonExtensions.getDefaultMapper().readTree(stream);
+                JsonNode transformerDefinitionProperty = jsonNode.get("TransformerDefinitionProperty");
+                if (transformerDefinitionProperty != null) {
+                    transformerCompilationException.setTransformerDefinitionProperty(transformerDefinitionProperty.asText());
                 }
 
-                if (type == typeof(IndexCompilationException))
-                {
-                    var indexCompilationException = (IndexCompilationException)exception;
-                    json.TryGet(nameof(IndexCompilationException.IndexDefinitionProperty), out indexCompilationException.IndexDefinitionProperty);
-                    json.TryGet(nameof(IndexCompilationException.ProblematicText), out indexCompilationException.ProblematicText);
-
-                    throw indexCompilationException;
+                JsonNode problematicText = jsonNode.get("ProblematicText");
+                if (problematicText != null) {
+                    transformerCompilationException.setProblematicText(problematicText.asText());
                 }
 
-             */
+                throw transformerCompilationException;
+            }
+
+            if (IndexCompilationException.class.equals(type)) {
+                IndexCompilationException indexCompilationException = (IndexCompilationException) exception;
+                JsonNode jsonNode = JsonExtensions.getDefaultMapper().readTree(stream);
+                JsonNode indexDefinitionProperty = jsonNode.get("TransformerDefinitionProperty");
+                if (indexDefinitionProperty != null) {
+                    indexCompilationException.setIndexDefinitionProperty(indexDefinitionProperty.asText());
+                }
+
+                JsonNode problematicText = jsonNode.get("ProblematicText");
+                if (problematicText != null) {
+                    indexCompilationException.setProblematicText(problematicText.asText());
+                }
+
+                throw indexCompilationException;
+            }
 
             throw exception;
 
@@ -111,14 +126,10 @@ public class ExceptionDispatcher {
 
 
     private static void throwConflict(ExceptionSchema schema, String json) {
-        /* TODO:
-         if (schema.Type.Contains(nameof(DocumentConflictException))) // temporary!
-                throw DocumentConflictException.From(json);
-
-            throw new ConcurrencyException(schema.Message);
-         */
-
-        throw new RavenException() ;//TODO: delet eme!
+        if (schema.getType().contains("DocumentConflictException")) {
+            throw DocumentConflictException.fromJson(json);
+        }
+        throw new ConcurrencyException(schema.getMessage());
     }
 
 
