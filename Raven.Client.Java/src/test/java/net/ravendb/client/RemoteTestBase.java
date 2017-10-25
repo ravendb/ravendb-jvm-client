@@ -1,4 +1,4 @@
-package net.ravendb;
+package net.ravendb.client;
 
 import net.ravendb.client.test.driver.RavenServerLocator;
 import net.ravendb.client.test.driver.RavenTestDriver;

@@ -1,6 +1,6 @@
-package net.ravendb.operations;
+package net.ravendb.client.operations;
 
-import net.ravendb.RemoteTestBase;
+import net.ravendb.client.RemoteTestBase;
 import net.ravendb.client.documents.IDocumentStore;
 import net.ravendb.client.documents.commands.GetNextOperationIdCommand;
 import org.junit.jupiter.api.Test;

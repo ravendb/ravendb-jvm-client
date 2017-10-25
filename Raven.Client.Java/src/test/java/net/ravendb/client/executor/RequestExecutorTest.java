@@ -1,6 +1,6 @@
-package net.ravendb.executor;
+package net.ravendb.client.executor;
 
-import net.ravendb.RemoteTestBase;
+import net.ravendb.client.RemoteTestBase;
 import net.ravendb.client.documents.IDocumentStore;
 import net.ravendb.client.documents.commands.GetNextOperationIdCommand;
 import net.ravendb.client.documents.conventions.DocumentConventions;

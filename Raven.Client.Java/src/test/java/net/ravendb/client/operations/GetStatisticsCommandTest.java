@@ -1,14 +1,14 @@
-package net.ravendb.operations;
+package net.ravendb.client.operations;
 
 import com.google.common.base.Stopwatch;
-import net.ravendb.RemoteTestBase;
+import net.ravendb.client.RemoteTestBase;
 import net.ravendb.client.documents.IDocumentStore;
 import net.ravendb.client.documents.commands.GetNextOperationIdCommand;
 import net.ravendb.client.documents.commands.GetStatisticsCommand;
 import net.ravendb.client.documents.operations.DatabaseStatistics;
 import net.ravendb.client.documents.operations.IndexInformation;
 import net.ravendb.client.http.RequestExecutor;
-import net.ravendb.infrastructure.CreateSampleDataOperation;
+import net.ravendb.client.infrastructure.CreateSampleDataOperation;
 import org.apache.commons.lang3.time.StopWatch;
 import org.junit.jupiter.api.Test;
 

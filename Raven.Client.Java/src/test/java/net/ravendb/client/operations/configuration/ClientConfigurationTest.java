@@ -1,6 +1,6 @@
-package net.ravendb.operations.configuration;
+package net.ravendb.client.operations.configuration;
 
-import net.ravendb.RemoteTestBase;
+import net.ravendb.client.RemoteTestBase;
 import net.ravendb.client.documents.IDocumentStore;
 import net.ravendb.client.documents.operations.configuration.GetClientConfigurationOperation;
 import net.ravendb.client.documents.operations.configuration.PutClientConfigurationOperation;

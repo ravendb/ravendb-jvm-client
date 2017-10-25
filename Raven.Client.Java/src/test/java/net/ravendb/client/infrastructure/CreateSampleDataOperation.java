@@ -1,4 +1,4 @@
-package net.ravendb.infrastructure;
+package net.ravendb.client.infrastructure;
 
 import net.ravendb.client.documents.conventions.DocumentConventions;
 import net.ravendb.client.documents.operations.IVoidAdminOperation;
