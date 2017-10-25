@@ -1,7 +1,7 @@
 package net.ravendb.client.exceptions;
 
 
-//TODO: rewrite exceptions from c# and make sure it is mapped properly
+//TODO: rewrite subscriptions exceptions
 
 public class RavenException extends RuntimeException {
 
