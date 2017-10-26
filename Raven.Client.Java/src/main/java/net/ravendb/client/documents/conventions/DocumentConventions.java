@@ -20,8 +20,6 @@ public class DocumentConventions {
 
     private ReadBalanceBehavior readBalanceBehavior = ReadBalanceBehavior.NONE;
 
-
-
     public void setReadBalanceBehavior(ReadBalanceBehavior readBalanceBehavior) {
         this.readBalanceBehavior = readBalanceBehavior;
     }

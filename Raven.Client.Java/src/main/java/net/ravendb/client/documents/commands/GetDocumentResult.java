@@ -1,7 +1,7 @@
 package net.ravendb.client.documents.commands;
 
 import com.fasterxml.jackson.databind.node.ArrayNode;
-import jdk.nashorn.internal.ir.ObjectNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 
 public class GetDocumentResult {
 

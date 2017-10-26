@@ -1,12 +1,23 @@
 package net.ravendb.client.test.client.documents;
 
+import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.google.common.collect.Lists;
 import net.ravendb.client.RemoteTestBase;
 import net.ravendb.client.documents.IDocumentStore;
+import net.ravendb.client.documents.commands.GetDocumentCommand;
+import net.ravendb.client.documents.commands.GetDocumentResult;
+import net.ravendb.client.documents.session.DocumentSession;
 import net.ravendb.client.documents.session.IDocumentSession;
+import net.ravendb.client.extensions.JsonExtensions;
+import net.ravendb.client.http.RequestExecutor;
 import net.ravendb.client.infrastructure.entities.Person;
 import net.ravendb.client.infrastructure.entities.User;
-import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
+
+import java.io.IOException;
+import java.util.ArrayList;
+
+import static org.assertj.core.api.Assertions.assertThat;
 
 public class BasicDocumentsTest extends RemoteTestBase {
 
@@ -31,7 +42,7 @@ public class BasicDocumentsTest extends RemoteTestBase {
 
             try (IDocumentSession session = store.openSession()) {
                 User user = session.load(User.class, documentId);
-                Assertions.assertThat(user).isNull();
+                assertThat(user).isNull();
             }
 
             try (IDocumentSession session = store.openSession()) {
@@ -44,87 +55,101 @@ public class BasicDocumentsTest extends RemoteTestBase {
         }
     }
 
-    /* TODO
+    @Test
+    public void get() throws IOException {
+        try (IDocumentStore store = getDocumentStore()) {
+            ObjectNode dummy = JsonExtensions.getDefaultMapper().valueToTree(new User());
+            dummy.remove("Id");
 
+            try (IDocumentSession session = store.openSession()) {
+                User user1 = new User();
+                user1.setName("Fitzchak");
 
-        [Fact]
-        public async Task GetAsync()
-        {
-            using (var store = GetDocumentStore())
-            {
-                var dummy = JObject.FromObject(new User());
-                dummy.Remove("Id");
+                User user2 = new User();
+                user2.setName("Arek");
 
-                using (var session = store.OpenAsyncSession())
-                {
-                    await session.StoreAsync(new User { Name = "Fitzchak" }, "users/1");
-                    await session.StoreAsync(new User { Name = "Arek" }, "users/2");
+                session.store(user1, "users/1");
+                session.store(user2, "users/2");
 
-                    await session.SaveChangesAsync();
-                }
-
-                var requestExecuter = store
-                    .GetRequestExecutor();
-
-                using (requestExecuter.ContextPool.AllocateOperationContext(out JsonOperationContext context))
-                {
-                    var getDocumentCommand = new GetDocumentCommand(new[] { "users/1", "users/2" }, includes: null, metadataOnly: false);
-
-                    requestExecuter
-                        .Execute(getDocumentCommand, context);
-
-                    var docs = getDocumentCommand.Result;
-                    Assert.Equal(2, docs.Results.Length);
-
-                    var doc1 = docs.Results[0] as BlittableJsonReaderObject;
-                    var doc2 = docs.Results[1] as BlittableJsonReaderObject;
-
-                    Assert.NotNull(doc1);
-
-                    var doc1Properties = doc1.GetPropertyNames();
-                    Assert.True(doc1Properties.Contains("@metadata"));
-                    Assert.Equal(dummy.Count + 1, doc1Properties.Length); // +1 for @metadata
-
-                    Assert.NotNull(doc2);
-
-                    var doc2Properties = doc2.GetPropertyNames();
-                    Assert.True(doc2Properties.Contains("@metadata"));
-                    Assert.Equal(dummy.Count + 1, doc2Properties.Length); // +1 for @metadata
-
-                    using (var session = (DocumentSession)store.OpenSession())
-                    {
-                        var user1 = (User)session.EntityToBlittable.ConvertToEntity(typeof(User), "users/1", doc1);
-                        var user2 = (User)session.EntityToBlittable.ConvertToEntity(typeof(User), "users/2", doc2);
-
-                        Assert.Equal("Fitzchak", user1.Name);
-                        Assert.Equal("Arek", user2.Name);
-                    }
-
-                    getDocumentCommand = new GetDocumentCommand(new[] {"users/1", "users/2"}, includes: null,
-                        metadataOnly: true);
-
-                    requestExecuter
-                        .Execute(getDocumentCommand, context);
-
-                    docs = getDocumentCommand.Result;
-                    Assert.Equal(2, docs.Results.Length);
-
-                    doc1 = docs.Results[0] as BlittableJsonReaderObject;
-                    doc2 = docs.Results[1] as BlittableJsonReaderObject;
-
-                    Assert.NotNull(doc1);
-
-                    doc1Properties = doc1.GetPropertyNames();
-                    Assert.True(doc1Properties.Contains("@metadata"));
-                    Assert.Equal(1, doc1Properties.Length);
-
-                    Assert.NotNull(doc2);
-
-                    doc2Properties = doc2.GetPropertyNames();
-                    Assert.True(doc2Properties.Contains("@metadata"));
-                    Assert.Equal(1, doc2Properties.Length);
-                }
+                session.saveChanges();
             }
+
+            RequestExecutor requestExecutor = store.getRequestExecutor();
+
+            GetDocumentCommand getDocumentCommand = new GetDocumentCommand(new String[]{"users/1", "users/2"}, null, false);
+
+            requestExecutor.execute(getDocumentCommand);
+
+            GetDocumentResult docs = getDocumentCommand.getResult();
+            assertThat(docs.getResults().size())
+                    .isEqualTo(2);
+
+            ObjectNode doc1 = (ObjectNode) docs.getResults().get(0);
+            ObjectNode doc2 = (ObjectNode) docs.getResults().get(1);
+
+            assertThat(doc1)
+                    .isNotNull();
+
+            ArrayList<String> doc1Properties = Lists.newArrayList(doc1.fieldNames());
+            assertThat(doc1Properties)
+                    .contains("@metadata");
+
+            assertThat(doc1Properties.size())
+                    .isEqualTo(dummy.size() + 1); // +1 for @metadata
+
+            assertThat(doc2)
+                    .isNotNull();
+
+            ArrayList<String> doc2Properties = Lists.newArrayList(doc2.fieldNames());
+            assertThat(doc2Properties)
+                    .contains("@metadata");
+
+            assertThat(doc2Properties.size())
+                    .isEqualTo(dummy.size() + 1); // +1 for @metadata
+
+            try (DocumentSession session = (DocumentSession) store.openSession()) {
+                User user1 = (User) session.getEntityToJson().convertToEntity(User.class, "users/1", doc1);
+                User user2 = (User) session.getEntityToJson().convertToEntity(User.class, "users/2", doc2);
+
+                assertThat(user1.getName())
+                        .isEqualTo("Fitzchak");
+
+                assertThat(user2.getName())
+                        .isEqualTo("Arek");
+            }
+
+            getDocumentCommand = new GetDocumentCommand(new String[] { "users/1", "users/2"}, null, true);
+
+            requestExecutor.execute(getDocumentCommand);
+
+            docs = getDocumentCommand.getResult();
+
+            assertThat(docs.getResults())
+                    .hasSize(2);
+
+            doc1 = (ObjectNode) docs.getResults().get(0);
+            doc2 = (ObjectNode) docs.getResults().get(1);
+
+            assertThat(doc1)
+                    .isNotNull();
+
+            doc1Properties = Lists.newArrayList(doc1.fieldNames());
+            assertThat(doc1Properties)
+                    .contains("@metadata");
+
+            assertThat(doc1Properties.size())
+                    .isEqualTo(1);
+
+            assertThat(doc2)
+                    .isNotNull();
+
+            doc2Properties = Lists.newArrayList(doc2.fieldNames());
+            assertThat(doc2Properties)
+                    .contains("@metadata");
+
+            assertThat(doc2Properties.size())
+                    .isEqualTo(1);
+
         }
-     */
+    }
 }

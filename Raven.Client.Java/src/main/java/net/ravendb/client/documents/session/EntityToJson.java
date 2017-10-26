@@ -4,7 +4,12 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import net.ravendb.client.Constants;
+import net.ravendb.client.documents.conventions.DocumentConventions;
 import net.ravendb.client.extensions.JsonExtensions;
+import org.apache.commons.lang3.StringUtils;
+
+import java.lang.reflect.Field;
+import java.util.stream.StreamSupport;
 
 public class EntityToJson {
 
@@ -33,12 +38,9 @@ public class EntityToJson {
 
         writeMetadata(mapper, jsonNode, documentInfo);
 
-        /* TODO
-         var type = entity.GetType();
-
-                var changes = TryRemoveIdentityProperty(reader, type, _session.Conventions);
-                changes |= TrySimplifyJson(reader);
-         */
+        Class<?> clazz = entity.getClass();
+        tryRemoveIdentityProperty(jsonNode, clazz, _session.getConventions());
+        //TODO: TrySimplifyJson(reader);
 
         return jsonNode;
     }
@@ -149,20 +151,22 @@ public class EntityToJson {
                 throw new InvalidOperationException($"Could not convert document {id} to entity of type {entityType}",
                     ex);
             }
+        }*/
+
+    private static boolean tryRemoveIdentityProperty(ObjectNode document, Class entityType, DocumentConventions conventions) {
+        Field identityProperty = conventions.getIdentityProperty(entityType);
+
+        if (identityProperty == null) {
+            return false;
         }
 
-        private static bool TryRemoveIdentityProperty(BlittableJsonReaderObject document, Type entityType, DocumentConventions conventions)
-        {
-            var identityProperty = conventions.GetIdentityProperty(entityType);
-            if (identityProperty == null)
-                return false;
+        document.remove(StringUtils.capitalize(identityProperty.getName()));
 
-            if (document.Modifications == null)
-                document.Modifications = new DynamicJsonValue(document);
+        return true;
+    }
 
-            document.Modifications.Remove(identityProperty.Name);
-            return true;
-        }
+
+    /* TODO
 
         private static bool TrySimplifyJson(BlittableJsonReaderObject document)
         {

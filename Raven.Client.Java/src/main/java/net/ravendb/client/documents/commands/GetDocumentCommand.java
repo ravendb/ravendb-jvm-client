@@ -1,13 +1,22 @@
 package net.ravendb.client.documents.commands;
 
+import com.fasterxml.jackson.core.JsonGenerator;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.common.collect.Sets;
+import net.ravendb.client.extensions.JsonExtensions;
 import net.ravendb.client.http.RavenCommand;
 import net.ravendb.client.http.ServerNode;
+import net.ravendb.client.json.ContentProviderHttpEntity;
 import net.ravendb.client.primitives.Reference;
 import net.ravendb.client.util.UrlUtils;
 import org.apache.http.client.methods.HttpGet;
+import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpRequestBase;
+import org.apache.http.entity.ContentType;
 
 import java.io.IOException;
+import java.util.LinkedHashSet;
+import java.util.Set;
 
 public class GetDocumentCommand extends RavenCommand<GetDocumentResult> {
 
@@ -104,45 +113,66 @@ public class GetDocumentCommand extends RavenCommand<GetDocumentResult> {
             }
         }
 
-        HttpGet request = new HttpGet();
+        HttpRequestBase request = new HttpGet();
 
         if (_id != null) {
             pathBuilder.append("&id=");
             pathBuilder.append(UrlUtils.escapeDataString(_id));
         } else if (_ids != null) {
-            prepareRequestWithMultipleIds(pathBuilder, request, _ids);
+            request = prepareRequestWithMultipleIds(pathBuilder, request, _ids);
         }
 
         url.value = pathBuilder.toString();
         return request;
     }
 
-    public static void prepareRequestWithMultipleIds(StringBuilder pathBuilder, HttpRequestBase request, String[] ids) {
-        /*
-        TODO
-         var uniqueIds = new HashSet<string>(ids);
-            // if it is too big, we drop to POST (note that means that we can't use the HTTP cache any longer)
-            // we are fine with that, requests to load > 1024 items are going to be rare
-            var isGet = uniqueIds.Sum(x => x.Length) < 1024;
-            if (isGet)
-            {
-                uniqueIds.ApplyIfNotNull(id => pathBuilder.Append($"&id={Uri.EscapeDataString(id)}"));
-            }
-            else
-            {
-                request.Method = HttpMethod.Post;
+    public static HttpRequestBase prepareRequestWithMultipleIds(StringBuilder pathBuilder, HttpRequestBase request, String[] ids) {
+        Set<String> uniqueIds = new LinkedHashSet<>();
+        for (String id : ids) {
+            uniqueIds.add(id);
+        }
 
-                request.Content = new BlittableJsonContent(stream =>
-                {
-                    using (var writer = new BlittableJsonTextWriter(context, stream))
-                    {
-                        writer.WriteStartObject();
-                        writer.WriteArray("Ids", uniqueIds);
-                        writer.WriteEndObject();
+        // if it is too big, we drop to POST (note that means that we can't use the HTTP cache any longer)
+        // we are fine with that, requests to load > 1024 items are going to be rare
+        boolean isGet = uniqueIds.stream()
+                .map(x -> x.length())
+                .reduce((prev, current) -> prev + current)
+                .orElse(0) < 1024;
+
+        if (isGet) {
+            uniqueIds.forEach(x -> {
+                if (x != null) {
+                    pathBuilder.append("&id=");
+                    pathBuilder.append(UrlUtils.escapeDataString(x));
+                }
+            });
+
+            return new HttpGet();
+        } else {
+            HttpPost httpPost = new HttpPost();
+
+            ObjectMapper mapper = JsonExtensions.getDefaultMapper();
+
+            httpPost.setEntity(new ContentProviderHttpEntity(outputStream -> {
+                try (JsonGenerator generator = mapper.getFactory().createGenerator(outputStream)) {
+                    generator.writeStartObject();
+                    generator.writeFieldName("Ids");
+                    generator.writeStartArray();
+
+                    for (String id : uniqueIds) {
+                        generator.writeString(id);
                     }
-                });
-            }
-         */
+
+                    generator.writeEndArray();
+                    generator.writeEndObject();
+
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
+            }, ContentType.APPLICATION_JSON));
+
+            return httpPost;
+        }
     }
 
     @Override

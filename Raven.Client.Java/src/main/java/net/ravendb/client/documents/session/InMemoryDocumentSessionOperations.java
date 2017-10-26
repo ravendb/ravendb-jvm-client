@@ -563,7 +563,6 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
 
         String tag = _requestExecutor.getConventions().getCollectionName(entity);
 
-
         ObjectMapper mapper = JsonExtensions.getDefaultMapper();
         ObjectNode metadata = mapper.createObjectNode();
 
