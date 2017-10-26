@@ -8,9 +8,8 @@ import com.google.common.base.Defaults;
 import net.ravendb.client.Constants;
 import net.ravendb.client.documents.DocumentStoreBase;
 import net.ravendb.client.documents.IDocumentStore;
-import net.ravendb.client.documents.commands.batches.BatchOptions;
-import net.ravendb.client.documents.commands.batches.ICommandData;
-import net.ravendb.client.documents.commands.batches.PutCommandDataWithJson;
+import net.ravendb.client.documents.IdTypeAndName;
+import net.ravendb.client.documents.commands.batches.*;
 import net.ravendb.client.documents.conventions.DocumentConventions;
 import net.ravendb.client.documents.identity.GenerateEntityIdOnTheClient;
 import net.ravendb.client.documents.session.operations.lazy.ILazyOperation;
@@ -19,11 +18,14 @@ import net.ravendb.client.extensions.JsonExtensions;
 import net.ravendb.client.http.CurrentIndexAndNode;
 import net.ravendb.client.http.RequestExecutor;
 import net.ravendb.client.http.ServerNode;
+import net.ravendb.client.json.JsonOperation;
 import net.ravendb.client.primitives.CleanCloseable;
+import net.ravendb.client.primitives.Lang;
 import net.ravendb.client.primitives.Reference;
 import net.ravendb.client.util.IdentityHashSet;
 import org.apache.commons.lang3.NotImplementedException;
 import org.apache.commons.lang3.StringUtils;
+import sun.plugin.dom.exception.InvalidStateException;
 
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -208,11 +210,7 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
 
     protected final List<ICommandData> deferredCommands = new ArrayList<>();
 
-    /* TODO
-
-        protected readonly Dictionary<(string, CommandType, string), ICommandData> DeferredCommandsDictionary = new Dictionary<(string, CommandType, string), ICommandData>();
-*/
-
+    protected final Map<IdTypeAndName, ICommandData> deferredCommandsMap = new HashMap<>();
 
     public int getDeferredCommandsCount() {
         return deferredCommands.size();
@@ -486,25 +484,22 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
         String changeVector = null;
         DocumentInfo documentInfo = documentsById.getValue(id);
         if (documentInfo != null) {
-            /* TODO
-            var newObj = EntityToBlittable.ConvertEntityToBlittable(documentInfo.Entity, documentInfo);
-                if (documentInfo.Entity != null && EntityChanged(newObj, documentInfo, null))
-                {
-                    throw new InvalidOperationException(
-                        "Can't delete changed entity using identifier. Use Delete<T>(T entity) instead.");
-                }
-                if (documentInfo.Entity != null)
-                {
-                    DocumentsByEntity.Remove(documentInfo.Entity);
-                }
-                DocumentsById.Remove(id);
-                changeVector = documentInfo.ChangeVector;
-             */
+            ObjectNode newObj = entityToJson.convertEntityToJson(documentInfo.getEntity(), documentInfo);
+            if (documentInfo.getEntity() != null && entityChanged(newObj, documentInfo, null)) {
+                throw new IllegalStateException("Can't delete changed entity using identifier. Use delete(Class clazz, T entity) instead.");
+            }
+
+            if (documentInfo.getEntity() != null) {
+                documentsByEntity.remove(documentInfo.getEntity());
+            }
+
+            documentsById.remove(id);
+            changeVector = documentInfo.getChangeVector();
         }
 
         knownMissingIds.add(id);
         changeVector = isUseOptimisticConcurrency() ? changeVector : null;
-        //TODO: Defer(new DeleteCommandData(id, expectedChangeVector ?? changeVector));
+        defer(new DeleteCommandData(id, Lang.coalesce(expectedChangeVector, changeVector)));
     }
 
     /**
@@ -552,11 +547,9 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
             generateEntityIdOnTheClient.trySetIdentity(entity, id);
         }
 
-        /* TODO
-
-        if (DeferredCommandsDictionary.ContainsKey((id, CommandType.ClientAnyCommand, null)))
-        throw new InvalidOperationException("Can't store document, there is a deferred command registered for this document in the session. Document id: " + id);
-        */
+        if (deferredCommandsMap.containsKey(IdTypeAndName.create(id, CommandType.CLIENT_ANY_COMMAND, null))) {
+            throw new InvalidStateException("Can't store document, there is a deferred command registered for this document in the session. Document id: " + id);
+        }
 
         if (deletedEntities.contains(entity)) {
             throw new IllegalStateException("Can't store object, it was already deleted in this session.  Document id: " + id);
@@ -676,7 +669,7 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
         SaveChangesData result = new SaveChangesData(this);
 
         deferredCommands.clear();
-        //TODO: DeferredCommandsDictionary.Clear();
+        deferredCommandsMap.clear();
 
         prepareForEntitiesDeletion(result, null);
         prepareForEntitiesPuts(result);
@@ -759,13 +752,15 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
 
             ObjectNode document = entityToJson.convertEntityToJson(entity.getKey(), entity.getValue());
 
-            /* TODO
-            if (entity.Value.IgnoreChanges || EntityChanged(document, entity.Value, null) == false)
+            if (entity.getValue().isIgnoreChanges() || !entityChanged(document, entity.getValue(), null)) {
                 continue;
+            }
 
-            if (result.DeferredCommandsDictionary.TryGetValue((entity.Value.Id, CommandType.ClientNotAttachmentPUT, null), out ICommandData command))
-            ThrowInvalidModifiedDocumentWithDeferredCommand(command);
-
+            ICommandData command = result.deferredCommandsMap.get(IdTypeAndName.create(entity.getValue().getId(), CommandType.CLIENT_ANY_COMMAND, null));
+            if (command != null) {
+                throwInvalidModifiedDocumentWithDeferredCommand(command);
+            }
+            /* TODO
             var onOnBeforeStore = OnBeforeStore;
             if (onOnBeforeStore != null)
             {
@@ -795,25 +790,21 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
         }
     }
 
+    private static void throwInvalidModifiedDocumentWithDeferredCommand(ICommandData resultCommand) {
+        throw new IllegalStateException("Cannot perform save because document " + resultCommand.getId()
+                + " has been deleted by the session and is also taking part in deferred " + resultCommand.getType() + " command");
+    }
+
+    private static void throwInvalidDeletedDocumentWithDeferredCommand(ICommandData resultCommand) {
+        throw new IllegalStateException("Cannot perform save because document " + resultCommand.getId()
+                + " has been deleted by the session and is also taking part in deferred " + resultCommand.getType() + " command");
+    }
+
+    protected boolean entityChanged(ObjectNode newObj, DocumentInfo documentInfo, Map<String, List<DocumentsChanges>> changes) {
+        return JsonOperation.entityChanged(newObj, documentInfo, changes);
+    }
+
     /* TODO:
-
-
-    private static void ThrowInvalidDeletedDocumentWithDeferredCommand(ICommandData resultCommand)
-    {
-        throw new InvalidOperationException(
-                $"Cannot perform save because document {resultCommand.Id} has been deleted by the session and is also taking part in deferred {resultCommand.Type} command");
-    }
-
-    private static void ThrowInvalidModifiedDocumentWithDeferredCommand(ICommandData resultCommand)
-    {
-        throw new InvalidOperationException(
-                $"Cannot perform save because document {resultCommand.Id} has been modified by the session and is also taking part in deferred {resultCommand.Type} command");
-    }
-
-    protected bool EntityChanged(BlittableJsonReaderObject newObj, DocumentInfo documentInfo, IDictionary<string, DocumentsChanges[]> changes)
-    {
-        return BlittableOperation.EntityChanged(newObj, documentInfo, changes);
-    }
 
     public IDictionary<string, DocumentsChanges[]> WhatChanged()
     {
@@ -903,97 +894,72 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
     {
         GetDocumentInfo(entity).IgnoreChanges = true;
     }
-
-    /// <summary>
-    /// Evicts the specified entity from the session.
-    /// Remove the entity from the delete queue and stops tracking changes for this entity.
-    /// </summary>
-    /// <typeparam name="T"></typeparam>
-    /// <param name="entity">The entity.</param>
-    public void Evict<T>(T entity)
-    {
-        DocumentInfo documentInfo;
-        if (DocumentsByEntity.TryGetValue(entity, out documentInfo))
-        {
-            DocumentsByEntity.Remove(entity);
-            DocumentsById.Remove(documentInfo.Id);
-        }
-        DeletedEntities.Remove(entity);
-    }
-
-    /// <summary>
-    /// Clears this instance.
-    /// Remove all entities from the delete queue and stops tracking changes for all entities.
-    /// </summary>
-    public void Clear()
-    {
-        DocumentsByEntity.Clear();
-        DeletedEntities.Clear();
-        DocumentsById.Clear();
-        KnownMissingIds.Clear();
-        IncludedDocumentsById.Clear();
-    }
-
-    /// <summary>
-    ///     Defer commands to be executed on SaveChanges()
-    /// </summary>
-    /// <param name="command">Command to be executed</param>
-    /// <param name="commands">Array of commands to be executed.</param>
-    public void Defer(ICommandData command, params ICommandData[] commands)
-    {
-        // The signature here is like this in order to avoid calling 'Defer()' without any parameter.
-
-        DeferredCommands.Add(command);
-        DeferInternal(command);
-
-        if (commands != null)
-            Defer(commands);
-    }
-
-    /// <summary>
-    /// Defer commands to be executed on SaveChanges()
-    /// </summary>
-    /// <param name="commands">The commands to be executed</param>
-    public void Defer(ICommandData[] commands)
-    {
-        DeferredCommands.AddRange(commands);
-        foreach (var command in commands)
-        {
-            DeferInternal(command);
-        }
-    }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private void DeferInternal(ICommandData command)
-    {
-        DeferredCommandsDictionary[(command.Id, command.Type, command.Name)] = command;
-        DeferredCommandsDictionary[(command.Id, CommandType.ClientAnyCommand, null)] = command;
-        if (command.Type != CommandType.AttachmentPUT)
-            DeferredCommandsDictionary[(command.Id, CommandType.ClientNotAttachmentPUT, null)] = command;
-    }
     */
 
+    /**
+     * Evicts the specified entity from the session.
+     * Remove the entity from the delete queue and stops tracking changes for this entity.
+     */
+    public <T> void evict(T entity) {
+        DocumentInfo documentInfo = documentsByEntity.get(entity);
+        if (documentInfo != null) {
+            documentsByEntity.remove(entity);
+            documentsById.remove(documentInfo.getId());
+        }
+
+        deletedEntities.remove(entity);
+    }
+
+    /**
+     * Clears this instance.
+     * Remove all entities from the delete queue and stops tracking changes for all entities.
+     */
+    public void clear() {
+        documentsByEntity.clear();
+        deletedEntities.clear();
+        documentsById.clear();
+        knownMissingIds.clear();
+        includedDocumentsById.clear();
+    }
+
+    /**
+     * Defer commands to be executed on saveChanges()
+     */
+    public void defer(ICommandData command, ICommandData... commands) {
+        deferredCommands.add(command);
+        deferInternal(command);
+
+        if (commands != null && commands.length > 0)
+            defer(commands);
+    }
+
+    /**
+     * Defer commands to be executed on saveChanges()
+     */
+    public void defer(ICommandData[] commands) {
+        deferredCommands.addAll(Arrays.asList(commands));
+        for (ICommandData command : commands) {
+            deferInternal(command);
+        }
+    }
+
+    private void deferInternal(ICommandData command) {
+        deferredCommandsMap.put(IdTypeAndName.create(command.getId(), command.getType(), command.getName()), command);
+        deferredCommandsMap.put(IdTypeAndName.create(command.getId(), CommandType.CLIENT_ANY_COMMAND, null), command);
+
+        if (!CommandType.ATTACHMENT_PUT.equals(command.getType())) {
+            deferredCommandsMap.put(IdTypeAndName.create(command.getId(), CommandType.CLIENT_NOT_ATTACHMENT_PUT, null), command);
+        }
+    }
+
     private void close(boolean isDisposing) {
-        /* TODO:
-        if (_isDisposed)
+        if (_isDisposed) {
             return;
+        }
 
         _isDisposed = true;
 
-        if (isDisposing && RunningOn.FinalizerThread == false)
-        {
-            GC.SuppressFinalize(this);
-
-            _releaseOperationContext.Dispose();
-        }
-        else
-        {
-            // when we are disposed from the finalizer then we have to dispose the context immediately instead of returning it to the pool because
-            // the finalizer of ArenaMemoryAllocator could be already called so we cannot return such context to the pool (RavenDB-7571)
-
-            Context.Dispose();
-        }
-        */
+        // nothing more to do for now
     }
 
     /**
@@ -1367,14 +1333,14 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
 
     public static class SaveChangesData {
         private final List<ICommandData> deferredCommands;
-        //TODO:public readonly Dictionary<(string, CommandType, string), ICommandData> DeferredCommandsDictionary;
+        private final Map<IdTypeAndName, ICommandData> deferredCommandsMap;
         private final List<ICommandData> sessionCommands = new ArrayList<>();
         private final List<Object> entities = new ArrayList<>();
         private final BatchOptions options;
 
         public SaveChangesData(InMemoryDocumentSessionOperations session) {
             deferredCommands = new ArrayList<>(session.deferredCommands);
-            //TODO: DeferredCommandsDictionary = new Dictionary<(string, CommandType, string), ICommandData>(session.DeferredCommandsDictionary);
+            deferredCommandsMap = new HashMap<>(session.deferredCommandsMap);
             options = session._saveChangesOptions;
         }
 
@@ -1392,6 +1358,10 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
 
         public BatchOptions getOptions() {
             return options;
+        }
+
+        public Map<IdTypeAndName, ICommandData> getDeferredCommandsMap() {
+            return deferredCommandsMap;
         }
     }
 
