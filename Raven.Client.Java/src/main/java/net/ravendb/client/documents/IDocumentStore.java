@@ -3,6 +3,8 @@ package net.ravendb.client.documents;
 import net.ravendb.client.documents.conventions.DocumentConventions;
 import net.ravendb.client.documents.operations.AdminOperationExecutor;
 import net.ravendb.client.documents.operations.OperationExecutor;
+import net.ravendb.client.documents.session.IDocumentSession;
+import net.ravendb.client.documents.session.SessionOptions;
 import net.ravendb.client.http.RequestExecutor;
 import net.ravendb.client.primitives.CleanCloseable;
 import net.ravendb.client.util.IDisposalNotification;
@@ -70,23 +72,22 @@ public interface IDocumentStore extends IDisposalNotification {
     IDocumentStore initialize();
 
 
+    /**
+     * Opens the session
+     */
+    IDocumentSession openSession();
+
+    /**
+     * Opens the session for a particular database
+     */
+    IDocumentSession openSession(String database);
+
+    /**
+     * Opens the session with the specified options.
+     */
+    IDocumentSession openSession(SessionOptions sessionOptions);
 
     /* TODO
-        /// <summary>
-        /// Opens the session.
-        /// </summary>
-        /// <returns></returns>
-        IDocumentSession OpenSession();
-
-        /// <summary>
-        /// Opens the session for a particular database
-        /// </summary>
-        IDocumentSession OpenSession(string database);
-
-        /// <summary>
-        /// Opens the session with the specified options.
-        /// </summary>
-        IDocumentSession OpenSession(SessionOptions sessionOptions);
 
         /// <summary>
         /// Executes the index creation.
@@ -94,7 +95,6 @@ public interface IDocumentStore extends IDisposalNotification {
         void ExecuteIndex(AbstractIndexCreationTask task);
 
         void ExecuteIndexes(IEnumerable<AbstractIndexCreationTask> tasks);
-
 */
 
     /**

@@ -4,15 +4,21 @@ import com.google.common.base.Stopwatch;
 import com.google.common.collect.Sets;
 import net.ravendb.client.documents.DocumentStore;
 import net.ravendb.client.documents.IDocumentStore;
+import net.ravendb.client.documents.session.IDocumentSession;
 import net.ravendb.client.exceptions.cluster.NoLeaderException;
 import net.ravendb.client.exceptions.database.DatabaseDoesNotExistException;
 import net.ravendb.client.primitives.CleanCloseable;
 import net.ravendb.client.serverwide.DatabaseRecord;
 import net.ravendb.client.serverwide.operations.CreateDatabaseOperation;
 import net.ravendb.client.serverwide.operations.DeleteDatabasesOperation;
+import net.ravendb.client.util.UrlUtils;
 import org.apache.commons.lang3.NotImplementedException;
 
+import java.awt.*;
 import java.io.*;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.net.URLEncoder;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -128,7 +134,7 @@ public abstract class RavenTestDriver implements CleanCloseable {
         StringBuilder sb = new StringBuilder();
 
         Stopwatch startupDuration = Stopwatch.createStarted();
-        BufferedReader reader = new BufferedReader (new InputStreamReader(stdout));
+        BufferedReader reader = new BufferedReader(new InputStreamReader(stdout));
 
         while (true) {
 
@@ -139,8 +145,7 @@ public abstract class RavenTestDriver implements CleanCloseable {
                 break;
             }
             String prefix = "Server available on: ";
-            if (line.startsWith(prefix))
-            {
+            if (line.startsWith(prefix)) {
                 url = line.substring(prefix.length());
                 break;
             }
@@ -198,7 +203,7 @@ public abstract class RavenTestDriver implements CleanCloseable {
         }
 
         DocumentStore store = new DocumentStore();
-        store.setUrls(new String[] { url });
+        store.setUrls(new String[]{url});
         store.setDatabase("test.manager");
 
         globalServer = store;
@@ -272,30 +277,50 @@ public abstract class RavenTestDriver implements CleanCloseable {
     }
 
 
+    public void waitForUserToContinueTheTest(IDocumentStore store) {
+        String databaseNameEncoded = UrlUtils.escapeDataString(store.getDatabase());
+        String documentsPage = store.getUrls()[0] + "/studio/index.html#databases/documents?&database=" + databaseNameEncoded + "&withStop=true";
+
+        openBrowser(documentsPage);
+
+        do {
+            try {
+                Thread.sleep(500);
+            } catch (InterruptedException e) {
+            }
+
+            try (IDocumentSession session = store.openSession()) {
+                if (session.load(Object.class, "Debug/Done") != null) {
+                    break;
+                }
+            }
+
+        } while (true);
+    }
+
+    protected void openBrowser(String url) {
+        System.out.println(url);
+
+        if (Desktop.isDesktopSupported()) {
+            Desktop desktop = Desktop.getDesktop();
+            try {
+                desktop.browse(new URI(url));
+            } catch (IOException | URISyntaxException e) {
+                throw new RuntimeException(e);
+            }
+        } else {
+            Runtime runtime = Runtime.getRuntime();
+            try {
+                runtime.exec("xdg-open " + url);
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        }
+    }
+
     /* TODO
     {
 
-
-
-
-        public void WaitForUserToContinueTheTest(IDocumentStore store)
-        {
-            var databaseNameEncoded = Uri.EscapeDataString(store.Database);
-            var documentsPage = store.Urls[0] + "/studio/index.html#databases/documents?&database=" + databaseNameEncoded + "&withStop=true";
-
-            OpenBrowser(documentsPage); // start the server
-
-            do
-            {
-                Thread.Sleep(500);
-
-                using (var session = store.OpenSession())
-                {
-                    if (session.Load<object>("Debug/Done") != null)
-                        break;
-                }
-            } while (true);
-        }
 
         protected virtual void OpenBrowser(string url)
         {
@@ -322,7 +347,7 @@ public abstract class RavenTestDriver implements CleanCloseable {
             return;
         }
 
-        if (e == null ){
+        if (e == null) {
             throw new IllegalArgumentException("Exception can not be null");
         }
 

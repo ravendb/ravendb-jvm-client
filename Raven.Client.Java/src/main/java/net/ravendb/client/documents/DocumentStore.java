@@ -2,12 +2,16 @@ package net.ravendb.client.documents;
 
 import net.ravendb.client.documents.operations.AdminOperationExecutor;
 import net.ravendb.client.documents.operations.OperationExecutor;
+import net.ravendb.client.documents.session.DocumentSession;
+import net.ravendb.client.documents.session.IDocumentSession;
+import net.ravendb.client.documents.session.SessionOptions;
 import net.ravendb.client.http.RequestExecutor;
 import net.ravendb.client.primitives.*;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ConcurrentSkipListMap;
@@ -96,46 +100,41 @@ public class DocumentStore extends DocumentStoreBase {
         }
     }
 
+    /**
+     * Opens the session.
+     * @return
+     */
+    @Override
+    public IDocumentSession openSession() {
+        return openSession(new SessionOptions());
+    }
 
+    /**
+     * Opens the session for a particular database
+     */
+    @Override
+    public IDocumentSession openSession(String database) {
+        SessionOptions sessionOptions = new SessionOptions();
+        sessionOptions.setDatabase(database);
 
-    /*TODO
+        return openSession(sessionOptions);
+    }
 
-        /// <summary>
-        /// Opens the session.
-        /// </summary>
-        /// <returns></returns>
-        public override IDocumentSession OpenSession()
-        {
-            return OpenSession(new SessionOptions());
-        }
+    @Override
+    public IDocumentSession openSession(SessionOptions options) {
+        assertInitialized();
+        ensureNotClosed();
 
-        /// <summary>
-        /// Opens the session for a particular database
-        /// </summary>
-        public override IDocumentSession OpenSession(string database)
-        {
-            return OpenSession(new SessionOptions
-            {
-                Database = database
-            });
-        }
+        UUID sessionId = UUID.randomUUID();
+        String databaseName = Lang.coalesce(options.getDatabase(), getDatabase());
+        RequestExecutor requestExecutor = Lang.coalesce(options.getRequestExecutor(), getRequestExecutor(databaseName));
 
+        DocumentSession session = new DocumentSession(databaseName, this, sessionId, requestExecutor);
+        //TODO: registerEvents(session);
+        // AfterSessionCreated(session);
+        return session;
 
-        public override IDocumentSession OpenSession(SessionOptions options)
-        {
-            AssertInitialized();
-            EnsureNotClosed();
-
-            var sessionId = Guid.NewGuid();
-            var databaseName = options.Database ?? Database;
-            var requestExecutor = options.RequestExecutor ?? GetRequestExecutor(databaseName);
-            var session = new DocumentSession(databaseName, this, sessionId, requestExecutor);
-            RegisterEvents(session);
-            // AfterSessionCreated(session);
-            return session;
-        }
-
-*/
+    }
 
     @Override
     public RequestExecutor getRequestExecutor() {
@@ -309,29 +308,6 @@ public class DocumentStore extends DocumentStoreBase {
             //AfterSessionCreated(session);
             return session;
         }
-
-        /// <summary>
-        /// Opens the async session.
-        /// </summary>
-        /// <returns></returns>
-        public override IAsyncDocumentSession OpenAsyncSession(string database)
-        {
-            return OpenAsyncSession(new SessionOptions
-            {
-                Database = database
-            });
-        }
-
-        public override IAsyncDocumentSession OpenAsyncSession(SessionOptions options)
-        {
-            return OpenAsyncSessionInternal(options);
-        }
-
-        public override IAsyncDocumentSession OpenAsyncSession()
-        {
-            return OpenAsyncSessionInternal(new SessionOptions());
-        }
-
 
 */
 

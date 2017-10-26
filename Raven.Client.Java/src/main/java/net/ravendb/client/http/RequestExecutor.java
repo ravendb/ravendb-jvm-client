@@ -1038,12 +1038,23 @@ public class RequestExecutor implements CleanCloseable {
         }
     }
 
-    private CurrentIndexAndNode getPreferredNode() {
+    public CurrentIndexAndNode getPreferredNode() {
         ensureNodeSelector();
 
         return _nodeSelector.getPreferredNode();
     }
 
+    public CurrentIndexAndNode getNodeBySessionId(int sessionId) {
+        ensureNodeSelector();
+
+        return _nodeSelector.getNodeBySessionId(sessionId);
+    }
+
+    public CurrentIndexAndNode getFastestNode() {
+        ensureNodeSelector();
+
+        return _nodeSelector.getFastestNode();
+    }
 
     private void ensureNodeSelector() {
         if (!_firstTopologyUpdate.isDone()) {
