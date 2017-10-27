@@ -100,11 +100,11 @@ public class EntityToJson {
                 {
                     entity = _session.Conventions.DeserializeEntityFromBlittable(entityType, document);
                 }
-
-                if (id != null)
-                    _session.GenerateEntityIdOnTheClient.TrySetIdentity(entity, id);
-
              */
+            if (id != null) {
+                _session.getGenerateEntityIdOnTheClient().trySetIdentity(entity, id);
+            }
+
             return entity;
         } catch (Exception e) {
             throw new IllegalStateException("Could not convert document " + id + " to entity of type " + entityType.getName(), e);

@@ -12,14 +12,21 @@ import net.ravendb.client.serverwide.ClientConfiguration;
 import net.ravendb.client.util.Inflector;
 import net.ravendb.client.util.ReflectionUtil;
 import org.apache.commons.beanutils.BeanUtils;
+import org.apache.commons.beanutils.PropertyUtilsBean;
 import org.apache.commons.lang3.NotImplementedException;
+import org.apache.commons.lang3.StringUtils;
 
+import java.beans.IntrospectionException;
+import java.beans.Introspector;
+import java.beans.PropertyDescriptor;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.function.BiFunction;
 import java.util.function.Function;
+import java.util.stream.StreamSupport;
 
 public class DocumentConventions {
 
@@ -52,7 +59,7 @@ public class DocumentConventions {
             return null;
         };
         _findJavaClassName = type -> ReflectionUtil.getFullNameWithoutVersionInformation(type);
-        //TODO: TransformTypeCollectionNameToDocumentIdPrefix = DefaultTransformCollectionNameToDocumentIdPrefix;
+        _transformClassCollectionNameToDocumentIdPrefix = collectionName -> defaultTransformCollectionNameToDocumentIdPrefix(collectionName);
 
         _findCollectionName = type -> defaultGetCollectionName(type);
 
@@ -85,9 +92,9 @@ public class DocumentConventions {
     private String _identityPartsSeparator;
     private boolean _disableTopologyUpdates;
 
-    private Function<Field, Boolean> _findIdentityProperty;
+    private Function<PropertyDescriptor, Boolean> _findIdentityProperty;
 
-    //TODO: private Func<string, string> _transformTypeCollectionNameToDocumentIdPrefix;
+    private Function<String, String> _transformClassCollectionNameToDocumentIdPrefix;
     private BiFunction<String, Object, String> _documentIdGenerator;
     private Function<String, String> _findIdentityPropertyNameFromEntityName;
     //TODO: private Func<Type, string, string, string, string> _findPropertyNameForIndex;
@@ -283,37 +290,30 @@ public class DocumentConventions {
         assertNotFrozen();
         this._documentIdGenerator = _documentIdGenerator;
     }
-/* TODO
-
-        /// <summary>
-        ///     Translates the types collection name to the document id prefix
-        /// </summary>
-        public Func<string, string> TransformTypeCollectionNameToDocumentIdPrefix
-        {
-            get => _transformTypeCollectionNameToDocumentIdPrefix;
-            set
-            {
-                AssertNotFrozen();
-                _transformTypeCollectionNameToDocumentIdPrefix = value;
-            }
-        }
 
 
-        /// <summary>
-        ///     Gets or sets the function to find the identity property.
-        /// </summary>
-        /// <value>The find identity property.</value>
-        public Func<MemberInfo, bool> FindIdentityProperty
-        {
-            get => _findIdentityProperty;
-            set
-            {
-                AssertNotFrozen();
-                _findIdentityProperty = value;
-            }
-        }
+    /**
+     *  Translates the types collection name to the document id prefix
+     */
+    public Function<String, String> getTransformClassCollectionNameToDocumentIdPrefix() {
+        return _transformClassCollectionNameToDocumentIdPrefix;
+    }
 
-        */
+    /**
+     *  Translates the types collection name to the document id prefix
+     */
+    public void setTransformClassCollectionNameToDocumentIdPrefix(Function<String, String> _transformClassCollectionNameToDocumentIdPrefix) {
+        assertNotFrozen();
+        this._transformClassCollectionNameToDocumentIdPrefix = _transformClassCollectionNameToDocumentIdPrefix;
+    }
+
+    public Function<PropertyDescriptor, Boolean> getFindIdentityProperty() {
+        return _findIdentityProperty;
+    }
+
+    public void setFindIdentityProperty(Function<PropertyDescriptor, Boolean> _findIdentityProperty) {
+        this._findIdentityProperty = _findIdentityProperty;
+    }
 
     public boolean isDisableTopologyUpdates() {
         return _disableTopologyUpdates;
@@ -576,6 +576,18 @@ public class DocumentConventions {
 
 */
 
+    private static Field getField(Class<?> clazz, String name) {
+        Field field = null;
+        while (clazz != null && field == null) {
+            try {
+                field = clazz.getDeclaredField(name);
+            } catch (Exception e) {
+            }
+            clazz = clazz.getSuperclass();
+        }
+        return field;
+    }
+
     /**
      *  Gets the identity property.
      */
@@ -585,41 +597,21 @@ public class DocumentConventions {
             return info;
         }
 
-        return null; //TODO:
+        try {
+            Field idField = Arrays.stream(Introspector.getBeanInfo(clazz).getPropertyDescriptors())
+                    .filter(x -> _findIdentityProperty.apply(x))
+                    .findFirst()
+                    .map(x -> getField(clazz, x.getName()))
+                    .orElse(null);
 
+            _idPropertyCache.put(clazz, idField);
+
+            return idField;
+        } catch (IntrospectionException e) {
+            throw new RuntimeException(e);
+        }
     }
 
-    /* TODO
-
-        /// <summary>
-        ///     Gets the identity property.
-        /// </summary>
-        /// <param name="type">The type.</param>
-        /// <returns></returns>
-        public MemberInfo GetIdentityProperty(Type type)
-        {
-            var currentIdPropertyCache = _idPropertyCache;
-            if (currentIdPropertyCache.TryGetValue(type, out var info))
-                return info;
-
-            var identityProperty = GetPropertiesForType(type).FirstOrDefault(FindIdentityProperty);
-
-            if (identityProperty != null && identityProperty.DeclaringType != type)
-            {
-                var propertyInfo = identityProperty.DeclaringType.GetProperty(identityProperty.Name);
-                identityProperty = propertyInfo ?? identityProperty;
-            }
-
-            _idPropertyCache = new Dictionary<Type, MemberInfo>(currentIdPropertyCache)
-            {
-                {type, identityProperty}
-            };
-
-            return identityProperty;
-        }
-
-
-*/
     public void updateFrom(ClientConfiguration configuration) {
         /* TODO
         if (configuration == null)
@@ -657,17 +649,21 @@ public class DocumentConventions {
 
     }
 
-    /*
-        public static string DefaultTransformCollectionNameToDocumentIdPrefix(string collectionName)
-        {
-            var count = collectionName.Count(char.IsUpper);
+    public static String defaultTransformCollectionNameToDocumentIdPrefix(String collectionName) {
+        long upperCount = collectionName.chars()
+                .filter(x -> Character.isUpperCase(x))
+                .count();
 
-            if (count <= 1) // simple name, just lower case it
-                return collectionName.ToLowerInvariant();
 
-            // multiple capital letters, so probably something that we want to preserve caps on.
-            return collectionName;
+        if (upperCount <= 1) {
+            return collectionName.toLowerCase();
         }
+
+        // multiple capital letters, so probably something that we want to preserve caps on.
+        return collectionName;
+    }
+
+    /*
 
         private static IEnumerable<MemberInfo> GetPropertiesForType(Type type)
         {

@@ -1,5 +1,6 @@
 package net.ravendb.client.documents;
 
+import net.ravendb.client.documents.identity.MultiDatabaseHiLoIdGenerator;
 import net.ravendb.client.documents.operations.AdminOperationExecutor;
 import net.ravendb.client.documents.operations.OperationExecutor;
 import net.ravendb.client.documents.session.DocumentSession;
@@ -26,7 +27,7 @@ public class DocumentStore extends DocumentStoreBase {
 
     private final ConcurrentMap<String, RequestExecutor> requestExecutors = new ConcurrentSkipListMap<>(String.CASE_INSENSITIVE_ORDER);
 
-    //TODO: private AsyncMultiDatabaseHiLoIdGenerator _asyncMultiDbHiLo;
+    private MultiDatabaseHiLoIdGenerator _multiDbHiLo;
 
     private AdminOperationExecutor adminOperationExecutor;
     private OperationExecutor operationExecutor;
@@ -77,21 +78,18 @@ public class DocumentStore extends DocumentStoreBase {
             Task.WaitAll(tasks.ToArray(), TimeSpan.FromSeconds(3));
             // if this is still going, we continue with disposal, it is for graceful shutdown only, anyway
 
-            //return unused hilo keys
-            if (_asyncMultiDbHiLo != null)
-            {
-                try
-                {
-                    AsyncHelpers.RunSync(() => _asyncMultiDbHiLo.ReturnUnusedRange());
-                }
-                catch
-                {
-                    // failed, because server is down.
-                }
-            }
-
-            Subscriptions?.Dispose();
 */
+
+        if (_multiDbHiLo != null) {
+            try {
+                _multiDbHiLo.returnUnusedRange();
+            } catch (Exception e ){
+                // ignore
+            }
+        }
+
+        //TODO: Subscriptions?.Dispose();
+
         disposed = true;
         EventHelper.invoke(afterDispose, this, EventArgs.EMPTY);
 
@@ -194,14 +192,12 @@ public class DocumentStore extends DocumentStoreBase {
         assertValidConfiguration();
 
         try {
-            /* TODO
-             if (Conventions.AsyncDocumentIdGenerator == null) // don't overwrite what the user is doing
-                {
-                    var generator = new AsyncMultiDatabaseHiLoIdGenerator(this, Conventions);
-                    _asyncMultiDbHiLo = generator;
-                    Conventions.AsyncDocumentIdGenerator = (dbName, entity) => generator.GenerateDocumentIdAsync(dbName, entity);
-                }
-             */
+            if (getConventions().getDocumentIdGenerator() == null) { // don't overwrite what the user is doing
+                MultiDatabaseHiLoIdGenerator generator = new MultiDatabaseHiLoIdGenerator(this, getConventions());
+                _multiDbHiLo = generator;
+
+                getConventions().setDocumentIdGenerator((dbName, entity) -> generator.generateDocumentId(dbName, entity));
+            }
 
             getConventions().freeze();
             initialized = true;

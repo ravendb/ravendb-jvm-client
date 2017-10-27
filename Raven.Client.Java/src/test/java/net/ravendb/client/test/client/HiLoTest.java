@@ -1,9 +1,12 @@
 package net.ravendb.client.test.client;
 
 import net.ravendb.client.RemoteTestBase;
+import net.ravendb.client.documents.DocumentStore;
 import net.ravendb.client.documents.IDocumentStore;
 import net.ravendb.client.documents.identity.HiLoIdGenerator;
+import net.ravendb.client.documents.identity.MultiDatabaseHiLoIdGenerator;
 import net.ravendb.client.documents.session.IDocumentSession;
+import net.ravendb.client.infrastructure.entities.User;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
 
@@ -74,122 +77,115 @@ public class HiLoTest extends RemoteTestBase { //TODO: extends replication test
         }
     }
 
+    @Test
+    public void hiLoMultiDb() throws IOException {
+        try (DocumentStore store = (DocumentStore) getDocumentStore()) {
+
+            try (IDocumentSession session = store.openSession()) {
+                HiloDoc hiloDoc = new HiloDoc();
+                hiloDoc.setMax(64);
+                session.store(hiloDoc, "Raven/Hilo/users");
+
+                HiloDoc productsHilo = new HiloDoc();
+                productsHilo.setMax(128);
+                session.store(productsHilo, "Raven/Hilo/products");
+
+                session.saveChanges();
+
+                MultiDatabaseHiLoIdGenerator multiDbHilo = new MultiDatabaseHiLoIdGenerator(store, store.getConventions());
+                String generateDocumentKey = multiDbHilo.generateDocumentId(null, new User());
+                assertThat(generateDocumentKey)
+                        .isEqualTo("users/65-A");
+
+                generateDocumentKey = multiDbHilo.generateDocumentId(null, new Product());
+                assertThat(generateDocumentKey)
+                        .isEqualTo("products/129-A");
+
+            }
+        }
+    }
+
+    @Test
+    public void capacityShouldDouble() throws IOException {
+        try (DocumentStore store = (DocumentStore) getDocumentStore()) {
+
+            HiLoIdGenerator hiLoIdGenerator = new HiLoIdGenerator("users", store, store.getDatabase(), store.getConventions().getIdentityPartsSeparator());
+
+            try (IDocumentSession session = store.openSession()) {
+                HiloDoc hiloDoc = new HiloDoc();
+                hiloDoc.setMax(64);
+                session.store(hiloDoc, "Raven/Hilo/users");
+                session.saveChanges();
+
+                for (int i = 0; i < 32; i++) {
+                    hiLoIdGenerator.generateDocumentId(new User());
+                }
+            }
+
+            try (IDocumentSession session = store.openSession()) {
+                HiloDoc hiloDoc = session.load(HiloDoc.class, "Raven/Hilo/users");
+                long max = hiloDoc.getMax();
+                assertThat(max)
+                        .isEqualTo(96);
+
+                //we should be receiving a range of 64 now
+                hiLoIdGenerator.generateDocumentId(new User());
+            }
+
+            try (IDocumentSession session = store.openSession()) {
+                HiloDoc hiloDoc = session.load(HiloDoc.class, "Raven/Hilo/users");
+                long max = hiloDoc.getMax();
+                assertThat(max)
+                        .isEqualTo(160);
+            }
+        }
+    }
+
+    @Test
+    public void returnUnusedRangeOnClose() throws IOException {
+        try (DocumentStore store = (DocumentStore) getDocumentStore()) {
+
+            DocumentStore newStore = new DocumentStore();
+            newStore.setUrls(store.getUrls());
+            newStore.setDatabase(store.getDatabase());
+
+            newStore.initialize();
+
+            try (IDocumentSession session = newStore.openSession()) {
+                HiloDoc hiloDoc = new HiloDoc();
+                hiloDoc.setMax(32);
+                session.store(hiloDoc, "Raven/Hilo/users");
+
+                session.saveChanges();
+
+                session.store(new User());
+                session.store(new User());
+
+                session.saveChanges();
+            }
+
+            newStore.close(); //on document store close, hilo-return should be called
+
+
+            newStore = new DocumentStore();
+            newStore.setUrls(store.getUrls());
+            newStore.setDatabase(store.getDatabase());
+
+            newStore.initialize();
+
+            try (IDocumentSession session = newStore.openSession()) {
+                HiloDoc hiloDoc = session.load(HiloDoc.class, "Raven/Hilo/users");
+                long max = hiloDoc.getMax();
+                assertThat(max)
+                        .isEqualTo(34);
+            }
+
+            newStore.close(); //on document store close, hilo-return should be called
+        }
+    }
+
    /* TODO
-   [Fact]
-        public void HiLo_Async_MultiDb()
-        {
-            using (var store = GetDocumentStore())
-            {
-                using (var session = store.OpenSession())
-                {
-                    session.Store(new HiloDoc
-                    {
-                        Max = 64
-                    }, "Raven/Hilo/users");
 
-                    session.Store(new HiloDoc
-                    {
-                        Max = 128
-                    }, "Raven/Hilo/products");
-
-                    session.SaveChanges();
-
-
-                    var multiDbHiLo = new AsyncMultiDatabaseHiLoIdGenerator(store, store.Conventions);
-
-                    var generateDocumentKey = multiDbHiLo.GenerateDocumentIdAsync(null, new User()).GetAwaiter().GetResult();
-                    Assert.Equal("users/65-A", generateDocumentKey);
-
-                    generateDocumentKey = multiDbHiLo.GenerateDocumentIdAsync(null, new Product()).GetAwaiter().GetResult();
-                    Assert.Equal("products/129-A", generateDocumentKey);
-                }
-            }
-        }
-
-        [Fact]
-        public void Capacity_Should_Double()
-        {
-            using (var store = GetDocumentStore())
-            {
-                var hiLoKeyGenerator = new AsyncHiLoIdGenerator("users", store, store.Database,
-                    store.Conventions.IdentityPartsSeparator);
-
-                using (var session = store.OpenSession())
-                {
-                    session.Store(new HiloDoc
-                    {
-                        Max = 64
-                    }, "Raven/Hilo/users");
-
-                    session.SaveChanges();
-
-                    for (var i = 0; i < 32; i++)
-                        hiLoKeyGenerator.GenerateDocumentIdAsync(new User()).GetAwaiter().GetResult();
-                }
-
-                using (var session = store.OpenSession())
-                {
-                    var hiloDoc = session.Load<HiloDoc>("Raven/Hilo/Users");
-                    var max = hiloDoc.Max;
-                    Assert.Equal(max, 96);
-
-                    //we should be receiving a range of 64 now
-                    hiLoKeyGenerator.GenerateDocumentIdAsync(new User()).GetAwaiter().GetResult();
-                }
-
-                using (var session = store.OpenSession())
-                {
-                    var hiloDoc = session.Load<HiloDoc>("Raven/Hilo/users");
-                    var max = hiloDoc.Max;
-                    Assert.Equal(max, 160);
-                }
-            }
-        }
-
-        [Fact]
-        public void Return_Unused_Range_On_Dispose()
-        {
-            using (var store = GetDocumentStore())
-            {
-                var newStore = new DocumentStore()
-                {
-                    Urls = store.Urls,
-                    Database = store.Database
-                };
-                newStore.Initialize();
-
-                using (var session = newStore.OpenSession())
-                {
-                    session.Store(new HiloDoc
-                    {
-                        Max = 32
-                    }, "Raven/Hilo/users");
-
-                    session.SaveChanges();
-
-                    session.Store(new User());
-                    session.Store(new User());
-
-                    session.SaveChanges();
-                }
-                newStore.Dispose(); //on document store dispose, hilo-return should be called
-
-                newStore = new DocumentStore()
-                {
-                    Urls = store.Urls,
-                    Database = store.Database
-                };
-                newStore.Initialize();
-
-                using (var session = newStore.OpenSession())
-                {
-                    var hiloDoc = session.Load<HiloDoc>("Raven/Hilo/users");
-                    var max = hiloDoc.Max;
-                    Assert.Equal(34, max);
-                }
-                newStore.Dispose();
-            }
-        }
 
         [Fact]
         public async Task Should_Resolve_Conflict_With_Highest_Number()
