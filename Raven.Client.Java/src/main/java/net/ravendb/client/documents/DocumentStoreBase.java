@@ -3,6 +3,8 @@ package net.ravendb.client.documents;
 import net.ravendb.client.documents.conventions.DocumentConventions;
 import net.ravendb.client.documents.operations.AdminOperationExecutor;
 import net.ravendb.client.documents.operations.OperationExecutor;
+import net.ravendb.client.documents.session.IDocumentSession;
+import net.ravendb.client.documents.session.SessionOptions;
 import net.ravendb.client.http.RequestExecutor;
 import net.ravendb.client.primitives.EventHandler;
 import net.ravendb.client.primitives.VoidArgs;
@@ -44,11 +46,13 @@ public abstract class DocumentStoreBase implements IDocumentStore {
 
     public abstract IDocumentStore initialize();
 
-    /* TODO
+    public abstract IDocumentSession openSession();
 
-        public abstract IDocumentSession OpenSession();
-        public abstract IDocumentSession OpenSession(string database);
-        public abstract IDocumentSession OpenSession(SessionOptions sessionOptions);
+    public abstract IDocumentSession openSession(String database);
+
+    public abstract IDocumentSession openSession(SessionOptions sessionOptions);
+
+    /* TODO
 
         /// <summary>
         /// Executes index creation.

@@ -292,19 +292,6 @@ public class DocumentStore extends DocumentStoreBase {
             GC.KeepAlive(lazy.Value); // here we force it to be evaluated
         }
 
-        private AsyncDocumentSession OpenAsyncSessionInternal(SessionOptions options)
-        {
-            AssertInitialized();
-            EnsureNotClosed();
-
-            var sessionId = Guid.NewGuid();
-            var databaseName = options.Database ?? Database;
-            var requestExecutor = options.RequestExecutor ?? GetRequestExecutor(databaseName);
-            var session = new AsyncDocumentSession(databaseName, this, requestExecutor, sessionId);
-            //AfterSessionCreated(session);
-            return session;
-        }
-
 */
 
     private List<EventHandler<VoidArgs>> afterDispose = new ArrayList<>();
@@ -338,7 +325,6 @@ public class DocumentStore extends DocumentStoreBase {
 
         return operationExecutor;
     }
-
 
     /* TODO
         public override BulkInsertOperation BulkInsert(string database = null)

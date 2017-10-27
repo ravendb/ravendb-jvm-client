@@ -16,13 +16,12 @@ public interface IAdvancedSessionOperations  extends IAdvancedDocumentSessionOpe
      */
     ILazySessionOperations lazily();
 
-    /* TODO
+    /**
+     * Updates entity with latest changes from server
+     */
+    <T> void refresh(T entity);
 
-        /// <summary>
-        ///     Updates entity with latest changes from server
-        /// </summary>
-        /// <param name="entity">Instance of an entity that will be refreshed</param>
-        void Refresh<T>(T entity);
+    /* TODO
 
         /// <summary>
         /// Query the specified index using provided raw query

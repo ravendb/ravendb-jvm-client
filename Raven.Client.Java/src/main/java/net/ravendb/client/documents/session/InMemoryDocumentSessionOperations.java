@@ -586,28 +586,6 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
         throw new NotImplementedException("You cannot set GenerateDocumentIdsOnStore to false without implementing RememberEntityForDocumentIdGeneration");
     }
 
-    /* TODO:
-
-    protected internal async Task<string> GenerateDocumentIdForStorageAsync(object entity)
-    {
-        if (entity is IDynamicMetaObjectProvider)
-        {
-            if (GenerateEntityIdOnTheClient.TryGetIdFromDynamic(entity, out string id))
-                return id;
-
-            id = await GenerateIdAsync(entity).ConfigureAwait(false);
-            // If we generated a new id, store it back into the Id field so the client has access to it
-            if (id != null)
-                GenerateEntityIdOnTheClient.TrySetIdOnDynamic(entity, id);
-            return id;
-        }
-
-        var result = await GetOrGenerateDocumentIdAsync(entity).ConfigureAwait(false);
-        GenerateEntityIdOnTheClient.TrySetIdentity(entity, result);
-        return result;
-    }
-
-*/
     protected void storeEntityInUnitOfWork(String id, Object entity, String changeVector, ObjectNode metadata, ConcurrencyCheckMode forceConcurrencyCheck) {
         deletedEntities.remove(entity);
 
@@ -643,25 +621,6 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
         throw new NonUniqueObjectException("Attempted to associate a different object with id '" + id + "'.");
     }
 
-    /* TODO
-
-    protected async Task<string> GetOrGenerateDocumentIdAsync(object entity)
-    {
-        string id;
-        GenerateEntityIdOnTheClient.TryGetIdFromInstance(entity, out id);
-
-        Task<string> generator =
-                id != null
-                        ? Task.FromResult(id)
-                        : GenerateIdAsync(entity);
-
-        var result = await generator.ConfigureAwait(false);
-        if (result != null && result.StartsWith("/"))
-            throw new InvalidOperationException("Cannot use value '" + id + "' as a document id because it begins with a '/'");
-
-        return result;
-    }
-*/
     public SaveChangesData prepareForSaveChanges() {
         SaveChangesData result = new SaveChangesData(this);
 
