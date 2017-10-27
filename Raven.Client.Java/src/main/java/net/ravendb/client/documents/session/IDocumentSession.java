@@ -1,6 +1,10 @@
 package net.ravendb.client.documents.session;
 
+import net.ravendb.client.documents.session.loaders.ILoaderWithInclude;
 import net.ravendb.client.primitives.CleanCloseable;
+
+import java.util.Collection;
+import java.util.Map;
 
 /**
  * Interface for document session
@@ -59,38 +63,14 @@ public interface IDocumentSession extends CleanCloseable {
      */
     void store(Object entity, String id);
 
-    /* TODO
+    /**
+     * Begin a load while including the specified path
+     * Path in documents in which server should look for a 'referenced' documents.
+     */
+    ILoaderWithInclude include(String path);
 
-        /// <summary>
-        ///     Begin a load while including the specified path
-        /// </summary>
-        /// <param name="path">Path in documents in which server should look for a 'referenced' documents.</param>
-        ILoaderWithInclude<object> Include(string path);
 
-        /// <summary>
-        ///     Begin a load while including the specified path
-        /// </summary>
-        /// <param name="path">Path in documents in which server should look for a 'referenced' documents.</param>
-        ILoaderWithInclude<T> Include<T>(Expression<Func<T, string>> path);
-
-        /// <summary>
-        ///     Begin a load while including the specified path
-        /// </summary>
-        /// <param name="path">Path in documents in which server should look for a 'referenced' documents.</param>
-        ILoaderWithInclude<T> Include<T>(Expression<Func<T, IEnumerable<string>>> path);
-
-        /// <summary>
-        ///     Begin a load while including the specified path
-        /// </summary>
-        /// <param name="path">Path in documents in which server should look for a 'referenced' documents.</param>
-        ILoaderWithInclude<T> Include<T, TInclude>(Expression<Func<T, string>> path);
-
-        /// <summary>
-        ///     Begin a load while including the specified path
-        /// </summary>
-        /// <param name="path">Path in documents in which server should look for a 'referenced' documents.</param>
-        ILoaderWithInclude<T> Include<T, TInclude>(Expression<Func<T, IEnumerable<string>>> path);
-*/
+    //TODO: another includes here?
 
     /**
      *  Loads the specified entity with the specified id.
@@ -99,12 +79,12 @@ public interface IDocumentSession extends CleanCloseable {
      */
     <T> T load(Class<T> clazz, String id);
 
+    /**
+     *  Loads the specified entities with the specified ids.
+     */
+    <TResult> Map<String, TResult> load(Class<TResult> clazz, Collection<String> ids);
+
     /*TODO
-        /// <summary>
-        ///     Loads the specified entities with the specified ids.
-        /// </summary>
-        /// <param name="ids">Enumerable of Ids that should be loaded</param>
-        Dictionary<string, TResult> Load<TResult>(IEnumerable<string> ids);
 
           /// <summary>
         ///     Queries the specified index using Linq.

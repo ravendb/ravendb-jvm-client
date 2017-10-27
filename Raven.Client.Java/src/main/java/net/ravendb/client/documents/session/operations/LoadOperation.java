@@ -1,18 +1,17 @@
 package net.ravendb.client.documents.session.operations;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.base.Defaults;
 import net.ravendb.client.documents.commands.GetDocumentCommand;
 import net.ravendb.client.documents.commands.GetDocumentResult;
 import net.ravendb.client.documents.session.DocumentInfo;
 import net.ravendb.client.documents.session.InMemoryDocumentSessionOperations;
-import net.ravendb.client.http.RequestExecutor;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
 public class LoadOperation {
 
@@ -32,10 +31,9 @@ public class LoadOperation {
             return null;
         }
 
-        /* TODO:
-        if (_session.CheckIfIdAlreadyIncluded(_ids, _includes))
-                return null;
-         */
+        if (_session.checkIfIdAlreadyIncluded(_ids, _includes != null ? Arrays.asList(_includes) : null)) {
+            return null;
+        }
 
         _session.incrementRequestCount();
 
@@ -63,26 +61,27 @@ public class LoadOperation {
         return this;
     }
 
-    /* TODO:
+    public LoadOperation withIncludes(String[] includes) {
+        _includes = includes;
+        return this;
+    }
 
+    public LoadOperation byIds(String[] ids) {
+        return byIds(Arrays.asList(ids));
+    }
 
-        public LoadOperation WithIncludes(string[] includes)
-        {
-            _includes = includes;
-            return this;
+    public LoadOperation byIds(Collection<String> ids) {
+        _ids = ids.toArray(new String[0]);
+
+        Set<String> distinct = new TreeSet<>(String::compareToIgnoreCase);
+        distinct.addAll(ids);
+
+        for (String id : distinct) {
+            byId(id);
         }
 
-        public LoadOperation ByIds(IEnumerable<string> ids)
-        {
-            _ids = ids.ToArray();
-            foreach (var id in _ids.Distinct(StringComparer.OrdinalIgnoreCase))
-            {
-                ById(id);
-            }
-
-            return this;
-        }
-*/
+        return this;
+    }
 
     public <T> T getDocument(Class<T> clazz) {
         return getDocument(clazz, _ids[0]);
@@ -102,38 +101,36 @@ public class LoadOperation {
             return _session.trackEntity(clazz, doc);
         }
 
-        /* TODO
-         if (_session.IncludedDocumentsById.TryGetValue(id, out doc))
-                return _session.TrackEntity<T>(doc);
-         */
+
+        doc = _session.includedDocumentsById.get(id);
+        if (doc != null) {
+            return _session.trackEntity(clazz, doc);
+        }
 
         return Defaults.defaultValue(clazz);
     }
 
-    /* TODO:
+    public <T> Map<String, T> getDocuments(Class<T> clazz) {
+        Map<String, T> finalResults = new TreeMap<>(String::compareToIgnoreCase);
 
-
-        public Dictionary<string, T> GetDocuments<T>()
-        {
-            var finalResults = new Dictionary<string, T>(StringComparer.OrdinalIgnoreCase);
-            for (var i = 0; i < _ids.Length; i++)
-            {
-                var id = _ids[i];
-                if (id == null)
-                    continue;
-                finalResults[id] = GetDocument<T>(id);
+        for (int i = 0; i < _ids.length; i++) {
+            String id = _ids[i];
+            if (id == null) {
+                continue;
             }
-            return finalResults;
-        }
-*/
 
+            finalResults.put(id, getDocument(clazz));
+        }
+
+        return finalResults;
+
+    }
     public void setResult(GetDocumentResult result) {
         if (result == null) {
             return;
         }
 
-        // TODO: _session.RegisterIncludes(result.Includes);
-
+        _session.registerIncludes(result.getIncludes());
 
         for (JsonNode document : result.getResults()) {
             if (document == null) {
@@ -143,6 +140,7 @@ public class LoadOperation {
             DocumentInfo newDocumentInfo = DocumentInfo.getNewDocumentInfo((ObjectNode) document);
             _session.documentsById.add(newDocumentInfo);
         }
-        //TODO: _session.RegisterMissingIncludes(result.Results, result.Includes, _includes);
+
+        _session.registerMissingIncludes(result.getResults(), result.getIncludes(), _includes);
     }
 }

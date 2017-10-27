@@ -3,14 +3,19 @@ package net.ravendb.client.documents.session;
 import com.google.common.base.Defaults;
 import net.ravendb.client.documents.DocumentStore;
 import net.ravendb.client.documents.commands.GetDocumentCommand;
+import net.ravendb.client.documents.commands.HeadDocumentCommand;
 import net.ravendb.client.documents.commands.batches.BatchCommand;
 import net.ravendb.client.documents.linq.IDocumentQueryGenerator;
+import net.ravendb.client.documents.session.loaders.ILoaderWithInclude;
+import net.ravendb.client.documents.session.loaders.MultiLoaderWithInclude;
 import net.ravendb.client.documents.session.operations.BatchOperation;
 import net.ravendb.client.documents.session.operations.LoadOperation;
 import net.ravendb.client.documents.session.operations.lazy.IEagerSessionOperations;
 import net.ravendb.client.documents.session.operations.lazy.ILazySessionOperations;
 import net.ravendb.client.http.RequestExecutor;
 
+import java.util.Collection;
+import java.util.Map;
 import java.util.UUID;
 
 public class DocumentSession extends InMemoryDocumentSessionOperations implements IAdvancedSessionOperations, IDocumentSessionImpl, IDocumentQueryGenerator {
@@ -66,46 +71,42 @@ public class DocumentSession extends InMemoryDocumentSessionOperations implement
         }
     }
 
-    /*
-
-        /// <summary>
-        /// Check if document exists without loading it
-        /// </summary>
-        /// <param name="id">Document id.</param>
-        /// <returns></returns>
-        public bool Exists(string id)
-        {
-            if (id == null)
-                throw new ArgumentNullException(nameof(id));
-
-            if (DocumentsById.TryGetValue(id, out _))
-                return true;
-
-            var command = new HeadDocumentCommand(id, null);
-            RequestExecutor.Execute(command, Context, sessionInfo: SessionInfo);
-
-            return command.Result != null;
+    /**
+     * Check if document exists without loading it
+     */
+    public boolean exists(String id) {
+        if (id == null) {
+            throw new IllegalArgumentException("id cannot be null");
         }
 
-        /// <summary>
-        /// Refreshes the specified entity from Raven server.
-        /// </summary>
-        /// <typeparam name="T"></typeparam>
-        /// <param name="entity">The entity.</param>
-        public void Refresh<T>(T entity)
-        {
-            DocumentInfo documentInfo;
-            if (DocumentsByEntity.TryGetValue(entity, out documentInfo) == false)
-                throw new InvalidOperationException("Cannot refresh a transient instance");
-            IncrementRequestCount();
-
-            var command = new GetDocumentCommand(new[] { documentInfo.Id }, includes: null, metadataOnly: false);
-            RequestExecutor.Execute(command, Context, sessionInfo: SessionInfo);
-
-            RefreshInternal(entity, command, documentInfo);
+        if (documentsById.getValue(id) != null) {
+            return true;
         }
 
-*/
+        HeadDocumentCommand command = new HeadDocumentCommand(id, null);
+
+        _requestExecutor.execute(command, sessionInfo);
+
+        return command.getResult() != null;
+    }
+
+    /**
+     * Refreshes the specified entity from Raven server.
+     */
+    public <T> void refresh(T entity) {
+        DocumentInfo documentInfo = documentsByEntity.get(entity);
+        if (documentInfo == null) {
+            throw new IllegalStateException("Cannot refresh a transient instance");
+        }
+
+        incrementRequestCount();
+
+        GetDocumentCommand command = new GetDocumentCommand(new String[]{documentInfo.getId()}, null, false);
+        _requestExecutor.execute(command, sessionInfo);
+
+        refreshInternal(entity, command, documentInfo);
+    }
+
     /**
      * Generates the document ID.
      */
@@ -189,56 +190,17 @@ public class DocumentSession extends InMemoryDocumentSessionOperations implement
             return false;
         }
     }
+    */
 
-     /// <summary>
-        /// Begin a load while including the specified path
-        /// </summary>
-        /// <param name="path">The path.</param>
-        /// <returns></returns>
-        public ILoaderWithInclude<T> Include<T>(Expression<Func<T, string>> path)
-        {
-            return new MultiLoaderWithInclude<T>(this).Include(path);
-        }
+    /**
+     * Begin a load while including the specified path
+     */
+    public ILoaderWithInclude include(String path) {
+        return new MultiLoaderWithInclude(this).include(path);
+    }
 
-        /// <summary>
-        /// Begin a load while including the specified path
-        /// </summary>
-        /// <param name="path">The path.</param>
-        /// <returns></returns>
-        public ILoaderWithInclude<T> Include<T, TInclude>(Expression<Func<T, string>> path)
-        {
-            return new MultiLoaderWithInclude<T>(this).Include<TInclude>(path);
-        }
+    /* TODO
 
-        /// <summary>
-        /// Begin a load while including the specified path
-        /// </summary>
-        /// <param name="path">The path.</param>
-        /// <returns></returns>
-        public ILoaderWithInclude<T> Include<T>(Expression<Func<T, IEnumerable<string>>> path)
-        {
-            return new MultiLoaderWithInclude<T>(this).Include(path);
-        }
-
-        /// <summary>
-        /// Begin a load while including the specified path
-        /// </summary>
-        /// <param name="path">The path.</param>
-        /// <returns></returns>
-        public ILoaderWithInclude<T> Include<T, TInclude>(Expression<Func<T, IEnumerable<string>>> path)
-        {
-            return new MultiLoaderWithInclude<T>(this).Include<TInclude>(path);
-        }
-
-        /// <summary>
-        /// Begin a load while including the specified path
-        /// </summary>
-        /// <param name="path">The path.</param>
-        /// <returns></returns>
-        public ILoaderWithInclude<object> Include(string path)
-        {
-            return new MultiLoaderWithInclude<object>(this).Include(path);
-        }
 
          /// <summary>
         /// Begin a load while including the specified path
@@ -386,50 +348,49 @@ public class DocumentSession extends InMemoryDocumentSessionOperations implement
         return loadOperation.getDocument(clazz);
     }
 
-    /* TODO:
 
+    /**
+     * Loads the specified entities with the specified ids.
+     */
+    public <T> Map<String, T> load(Class<T> clazz, Collection<String> ids) {
+        LoadOperation loadOperation = new LoadOperation(this);
+        loadInternal(clazz, ids.toArray(new String[0]), loadOperation);
+        return loadOperation.getDocuments(clazz);
+    }
 
-        /// <summary>
-        /// Loads the specified entities with the specified ids.
-        /// </summary>
-        /// <param name="ids">The ids.</param>
-        public Dictionary<string, T> Load<T>(IEnumerable<string> ids)
-        {
-            var loadOperation = new LoadOperation(this);
-            LoadInternal(ids.ToArray(), loadOperation);
-            return loadOperation.GetDocuments<T>();
-        }
+    private <T> void loadInternal(Class<T> clazz, String[] ids, LoadOperation operation) { //TODO optional stream parameter
+        operation.byIds(ids);
 
-        private void LoadInternal(string[] ids, LoadOperation operation, Stream stream = null)
-        {
-            operation.ByIds(ids);
-
-            var command = operation.CreateRequest();
-            if (command != null)
-            {
-                RequestExecutor.Execute(command, Context, sessionInfo: SessionInfo);
-                if(stream!=null)
+        GetDocumentCommand command = operation.createRequest();
+        if (command != null) {
+            _requestExecutor.execute(command, sessionInfo);
+            /* TODO
+             if(stream!=null)
                     Context.Write(stream, command.Result.Results.Parent);
                 else
                     operation.SetResult(command.Result);
-            }
+             */
+
+            operation.setResult(command.getResult()); //TODO: delete me after impl stream
         }
 
-        public Dictionary<string, T> LoadInternal<T>(string[] ids, string[] includes)
-        {
-            var loadOperation = new LoadOperation(this);
-            loadOperation.ByIds(ids);
-            loadOperation.WithIncludes(includes);
+    }
 
-            var command = loadOperation.CreateRequest();
-            if (command != null)
-            {
-                RequestExecutor.Execute(command, Context, sessionInfo: SessionInfo);
-                loadOperation.SetResult(command.Result);
-            }
+    public <TResult> Map<String, TResult> loadInternal(Class<TResult> clazz, String[] ids, String[] includes) {
+        LoadOperation loadOperation = new LoadOperation(this);
+        loadOperation.byIds(ids);
+        loadOperation.withIncludes(includes);
 
-            return loadOperation.GetDocuments<T>();
+        GetDocumentCommand command = loadOperation.createRequest();
+        if (command != null) {
+            _requestExecutor.execute(command, sessionInfo);
+            loadOperation.setResult(command.getResult());
         }
+
+        return loadOperation.getDocuments(clazz);
+    }
+
+    /*
 
         public T[] LoadStartingWith<T>(string idPrefix, string matches = null, int start = 0, int pageSize = 25, string exclude = null,
             string startAfter = null)
@@ -666,50 +627,11 @@ public class DocumentSession extends InMemoryDocumentSessionOperations implement
             return new DocumentQuery<T>(this, indexName, collectionName, isGroupBy: isMapReduce);
         }
 
-        /// <summary>
-        ///     Queries the specified index using Linq.
-        /// </summary>
-        /// <typeparam name="T">The result of the query</typeparam>
-        /// <param name="indexName">Name of the index (mutually exclusive with collectionName)</param>
-        /// <param name="collectionName">Name of the collection (mutually exclusive with indexName)</param>
-        /// <param name="isMapReduce">Whether we are querying a map/reduce index (modify how we treat identifier properties)</param>
-        public IRavenQueryable<T> Query<T>(string indexName = null, string collectionName = null, bool isMapReduce = false)
-        {
-            var type = typeof(T);
-            (indexName, collectionName) = ProcessQueryParameters(type, indexName, collectionName, Conventions);
-
-            var queryStatistics = new QueryStatistics();
-            var highlightings = new QueryHighlightings();
-            var ravenQueryProvider = new RavenQueryProvider<T>(this, indexName, collectionName, type, queryStatistics, highlightings, isMapReduce);
-            var inspector = new RavenQueryInspector<T>();
-            inspector.Init(ravenQueryProvider, queryStatistics, highlightings, indexName, collectionName, null, this, isMapReduce);
-            return inspector;
-        }
-
-        /// <summary>
-        /// Create a new query for <typeparam name="T"/>
-        /// </summary>
-        public IAsyncDocumentQuery<T> AsyncQuery<T>(string indexName, string collectionName, bool isMapReduce)
-        {
-            throw new NotSupportedException();
-        }
-
         public RavenQueryInspector<S> CreateRavenQueryInspector<S>()
         {
             return new RavenQueryInspector<S>();
         }
 
-        /// <summary>
-        /// Queries the index specified by <typeparamref name="TIndexCreator"/> using Linq.
-        /// </summary>
-        /// <typeparam name="T">The result of the query</typeparam>
-        /// <typeparam name="TIndexCreator">The type of the index creator.</typeparam>
-        /// <returns></returns>
-        public IRavenQueryable<T> Query<T, TIndexCreator>() where TIndexCreator : AbstractIndexCreationTask, new()
-        {
-            var indexCreator = new TIndexCreator();
-            return Query<T>(indexCreator.IndexName, null, indexCreator.IsMapReduce);
-        }
 
         /// <summary>
         /// Create a new query for <typeparam name="T"/>

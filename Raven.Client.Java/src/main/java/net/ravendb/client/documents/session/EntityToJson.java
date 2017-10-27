@@ -9,6 +9,9 @@ import net.ravendb.client.extensions.JsonExtensions;
 import org.apache.commons.lang3.StringUtils;
 
 import java.lang.reflect.Field;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.TreeMap;
 import java.util.stream.StreamSupport;
 
 public class EntityToJson {
@@ -22,9 +25,11 @@ public class EntityToJson {
         this._session = _session;
     }
 
-    /* TODO
-        public readonly Dictionary<object, Dictionary<string, object>> MissingDictionary = new Dictionary<object, Dictionary<string, object>>(ObjectReferenceEqualityComparer<object>.Default);
-*/
+    private final Map<Object, Map<String, Object>> missingDictionary = new TreeMap<>((o1, o2) -> o1 == o2 ? 0 : 1);
+
+    public Map<Object, Map<String, Object>> getMissingDictionary() {
+        return missingDictionary;
+    }
 
     public ObjectNode convertEntityToJson(Object entity, DocumentInfo documentInfo) {
         // maybe we don't need to do anything?
@@ -55,13 +60,7 @@ public class EntityToJson {
         if (documentInfo.getMetadata() != null && documentInfo.getMetadata().size() > 0) {
             setMetadata = true;
             documentInfo.getMetadata().fieldNames().forEachRemaining(property -> {
-                if (property.length() > 0 && property.startsWith("@")) {
-                    if (!property.equals(Constants.Documents.Metadata.COLLECTION) && !Constants.Documents.Metadata.EXPIRES.equals(property)) {
-                        return;
-                    }
-                }
-
-                metadataNode.set(property, documentInfo.getMetadata().get(property));
+                metadataNode.set(property, documentInfo.getMetadata().get(property).deepCopy());
             });
         }
 
@@ -77,7 +76,7 @@ public class EntityToJson {
     }
 
     /**
-     * Converts a BlittableJsonReaderObject to an entity.
+     * Converts a json object to an entity.
      */
     public Object convertToEntity(Class entityType, String id, ObjectNode document) {
         try {
@@ -88,10 +87,11 @@ public class EntityToJson {
             Object defaultValue = InMemoryDocumentSessionOperations.getDefaultValue(entityType);
             Object entity = defaultValue;
 
-            Class documentType =_session.getConventions().getJavaClass(id, document);
+            String documentType =_session.getConventions().getJavaClass(id, document);
             if (documentType != null) {
-                if (entityType.isAssignableFrom(documentType)) {
-                    entity = _session.getConventions().deserializeEntityFromJson(documentType, document);
+                Class type = Class.forName(documentType);
+                if (entityType.isAssignableFrom(type)) {
+                    entity = _session.getConventions().getDeserializeEntityFromJson().apply(type, document);
                 }
             }
 

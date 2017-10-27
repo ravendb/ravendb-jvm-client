@@ -48,7 +48,7 @@ public class JsonOperation {
             newChange(field, null, null, docChanges, DocumentsChanges.ChangeType.REMOVED_FIELD);
         }
 
-        for (String prop : newFields) {
+        for (String prop : newJsonProps) {
 
             if (Constants.Documents.Metadata.LAST_MODIFIED.equals(prop) ||
                     Constants.Documents.Metadata.COLLECTION.equals(prop) ||
@@ -143,7 +143,7 @@ public class JsonOperation {
             return true;
         }
 
-        return !oldProp.asText().equals(newProp.asText());
+        return oldProp.asText().equals(newProp.asText());
     }
 
     private static boolean compareJsonArray(String id, ArrayNode oldArray, ArrayNode newArray, Map<String, List<DocumentsChanges>> changes, List<DocumentsChanges> docChanges, String propName) {

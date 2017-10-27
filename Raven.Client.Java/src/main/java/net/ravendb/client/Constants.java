@@ -22,6 +22,16 @@ public class Constants {
             public static final String CHANGE_VECTOR = "@change-vector";
             public static final String EXPIRES = "@expires";
         }
+
+        public static class Indexing {
+            private Indexing() {}
+
+            public static class Fields {
+                private Fields() {}
+
+                public static final String DOCUMENT_ID_FIELD_NAME = "id()";
+            }
+        }
     }
 
     public static class Headers {

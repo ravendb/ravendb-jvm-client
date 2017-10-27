@@ -30,11 +30,13 @@ public interface IAdvancedSessionOperations  extends IAdvancedDocumentSessionOpe
         /// <typeparam name="T">The query result type</typeparam>
         IRawDocumentQuery<T> RawQuery<T>(string query);
 
-          /// <summary>
-        ///     Check if document exists
-        /// </summary>
-        /// <param name="id">Document id</param>
-        bool Exists(string id);
+*/
+
+    /**
+     * Check if document exists
+     */
+    boolean exists(String id);
+    /*
 
         /// <summary>
         ///     Loads multiple entities that contain common prefix.

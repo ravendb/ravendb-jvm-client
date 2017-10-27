@@ -9,6 +9,7 @@ import net.ravendb.client.http.ServerNode;
 import net.ravendb.client.json.ContentProviderHttpEntity;
 import net.ravendb.client.primitives.Reference;
 import net.ravendb.client.util.UrlUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpRequestBase;
@@ -109,7 +110,7 @@ public class GetDocumentCommand extends RavenCommand<GetDocumentResult> {
         if (_includes != null) {
             for (String include : _includes) {
                 pathBuilder.append("&include=");
-                pathBuilder.append(_includes);
+                pathBuilder.append(StringUtils.capitalize(include)); //TODO: move this capitalize to utils / conventions?
             }
         }
 

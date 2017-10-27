@@ -10,7 +10,7 @@ public class ServerOperationExecutor {
     private final ClusterRequestExecutor requestExecutor;
 
     public ServerOperationExecutor(DocumentStoreBase store) {
-        requestExecutor = store.getConventions().getDisableTopologyUpdates() ?
+        requestExecutor = store.getConventions().isDisableTopologyUpdates() ?
                 ClusterRequestExecutor.createForSingleNode(store.getUrls()[0]) :
                 ClusterRequestExecutor.create(store.getUrls());
     }

@@ -2,13 +2,16 @@ package net.ravendb.client.documents.session;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.databind.node.TextNode;
 import com.google.common.base.Defaults;
+import com.google.common.collect.Lists;
 import net.ravendb.client.Constants;
 import net.ravendb.client.documents.DocumentStoreBase;
 import net.ravendb.client.documents.IDocumentStore;
 import net.ravendb.client.documents.IdTypeAndName;
+import net.ravendb.client.documents.commands.GetDocumentResult;
 import net.ravendb.client.documents.commands.batches.*;
 import net.ravendb.client.documents.conventions.DocumentConventions;
 import net.ravendb.client.documents.identity.GenerateEntityIdOnTheClient;
@@ -16,6 +19,7 @@ import net.ravendb.client.documents.session.operations.lazy.ILazyOperation;
 import net.ravendb.client.exceptions.documents.session.NonUniqueObjectException;
 import net.ravendb.client.extensions.JsonExtensions;
 import net.ravendb.client.http.CurrentIndexAndNode;
+import net.ravendb.client.http.RavenCommand;
 import net.ravendb.client.http.RequestExecutor;
 import net.ravendb.client.http.ServerNode;
 import net.ravendb.client.json.JsonOperation;
@@ -25,11 +29,12 @@ import net.ravendb.client.primitives.Reference;
 import net.ravendb.client.util.IdentityHashSet;
 import org.apache.commons.lang3.NotImplementedException;
 import org.apache.commons.lang3.StringUtils;
-import sun.plugin.dom.exception.InvalidStateException;
 
+import java.awt.event.KeyEvent;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
 
 public abstract class InMemoryDocumentSessionOperations implements CleanCloseable {
 
@@ -76,7 +81,7 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
 
 */
     //Entities whose id we already know do not exists, because they are a missing include, or a missing load, etc.
-    protected final Set<String> knownMissingIds = new TreeSet<>(String.CASE_INSENSITIVE_ORDER);
+    protected final Set<String> knownMissingIds = new TreeSet<>(String.CASE_INSENSITIVE_ORDER); //TODO: do we need this this requires select token syntax in IncludesUtils
 
     private Map<String, Object> externalState;
 
@@ -114,7 +119,7 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
     /**
      * Translate between an ID and its associated entity
      */
-    protected final Map<String, DocumentInfo> includedDocumentsById = new TreeMap<>(String::compareToIgnoreCase);
+    public final Map<String, DocumentInfo> includedDocumentsById = new TreeMap<>(String::compareToIgnoreCase);
 
     /**
      * hold the data required to manage the data for RavenDB's Unit of Work
@@ -237,7 +242,7 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
         this._documentStore = documentStore;
         this._requestExecutor = requestExecutor;
 
-        this.useOptimisticConcurrency = requestExecutor.getConventions().getUseOptimisticConcurrency();
+        this.useOptimisticConcurrency = requestExecutor.getConventions().isUseOptimisticConcurrency();
         this.maxNumberOfRequestsPerSession = requestExecutor.getConventions().getMaxNumberOfRequestsPerSession();
         this.generateEntityIdOnTheClient = new GenerateEntityIdOnTheClient(_requestExecutor.getConventions(), this::generateId);
         this.entityToJson = new EntityToJson(this);
@@ -382,24 +387,20 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
             return docInfo.getEntity();
         }
 
-        /* TODO:
+        docInfo = includedDocumentsById.get(id);
+        if (docInfo != null) {
+            if (docInfo.getEntity() == null) {
+                docInfo.setEntity(convertToEntity(entityType, id, document));
+            }
 
-            DocumentInfo docInfo;
+            if (!noTracking) {
+                includedDocumentsById.remove(id);
+                documentsById.add(docInfo);
+                documentsByEntity.put(docInfo.getEntity(), docInfo);
+            }
 
-            if (IncludedDocumentsById.TryGetValue(id, out docInfo))
-            {
-                if (docInfo.Entity == null)
-                    docInfo.Entity = ConvertToEntity(entityType, id, document);
-
-                if (noTracking == false)
-                {
-                    IncludedDocumentsById.Remove(id);
-                    DocumentsById.Add(docInfo);
-                    DocumentsByEntity[docInfo.Entity] = docInfo;
-                }
-                return docInfo.Entity;
-            }*/
-
+            return docInfo.getEntity();
+        }
 
         Object entity = convertToEntity(entityType, id, document);
 
@@ -430,18 +431,15 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
         return entityToJson.convertToEntity(entityType, id, documentFound);
     }
 
-    /* TODO
-        private void RegisterMissingProperties(object o, string id, object value)
-        {
-            Dictionary<string, object> dictionary;
-            if (EntityToBlittable.MissingDictionary.TryGetValue(o, out dictionary) == false)
-            {
-                EntityToBlittable.MissingDictionary[o] = dictionary = new Dictionary<string, object>();
-            }
-
-            dictionary[id] = value;
+    private void registerMissingProperties(Object o, String id, Object value) {
+        Map<String, Object> map = entityToJson.getMissingDictionary().get(o);
+        if (map == null) {
+            map = new HashMap<>();
+            entityToJson.getMissingDictionary().put(o, map);
         }
-*/
+
+        map.put(id, value);
+    }
 
     /**
      * Gets the default value of the specified type.
@@ -548,7 +546,7 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
         }
 
         if (deferredCommandsMap.containsKey(IdTypeAndName.create(id, CommandType.CLIENT_ANY_COMMAND, null))) {
-            throw new InvalidStateException("Can't store document, there is a deferred command registered for this document in the session. Document id: " + id);
+            throw new IllegalStateException("Can't store document, there is a deferred command registered for this document in the session. Document id: " + id);
         }
 
         if (deletedEntities.contains(entity)) {
@@ -676,11 +674,9 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
         return result;
     }
 
-    /* TODO:
-
-    private static void UpdateMetadataModifications(DocumentInfo documentInfo)
-    {
-        if (documentInfo.MetadataInstance == null || ((MetadataAsDictionary)documentInfo.MetadataInstance).Changed == false)
+    private static void updateMetadataModifications(DocumentInfo documentInfo) {
+        /* TODO
+          if (documentInfo.MetadataInstance == null || ((MetadataAsDictionary)documentInfo.MetadataInstance).Changed == false)
             return;
 
         if (documentInfo.Metadata.Modifications == null || documentInfo.Metadata.Modifications.Properties.Count == 0)
@@ -691,58 +687,58 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
         {
             documentInfo.Metadata.Modifications[prop] = documentInfo.MetadataInstance[prop];
         }
+         */
     }
-    */
 
-    private void prepareForEntitiesDeletion(SaveChangesData result, Map<String, DocumentsChanges> changes) {
-        /* TODO
-         foreach (var deletedEntity in DeletedEntities)
-        {
-            if (DocumentsByEntity.TryGetValue(deletedEntity, out DocumentInfo documentInfo) == false)
+
+    private void prepareForEntitiesDeletion(SaveChangesData result, Map<String, List<DocumentsChanges>> changes) {
+        for (Object deletedEntity : deletedEntities) {
+            DocumentInfo documentInfo = documentsByEntity.get(deletedEntity);
+            if (documentInfo == null) {
                 continue;
-
-            if (changes != null)
-            {
-                var docChanges = new List<DocumentsChanges>();
-                var change = new DocumentsChanges
-                {
-                    FieldNewValue = string.Empty,
-                            FieldOldValue = string.Empty,
-                            Change = DocumentsChanges.ChangeType.DocumentDeleted
-                };
-
-                docChanges.Add(change);
-                changes[documentInfo.Id] = docChanges.ToArray();
             }
-            else
-            {
-                if (result.DeferredCommandsDictionary.TryGetValue((documentInfo.Id, CommandType.ClientAnyCommand, null), out ICommandData command))
-                ThrowInvalidDeletedDocumentWithDeferredCommand(command);
 
-                string changeVector = null;
-                if (DocumentsById.TryGetValue(documentInfo.Id, out documentInfo))
-                {
-                    changeVector = documentInfo.ChangeVector;
+            if (changes != null) {
+                List<DocumentsChanges> docChanges = new ArrayList<>();
+                DocumentsChanges change = new DocumentsChanges();
+                change.setFieldNewValue("");
+                change.setFieldOldValue("");
+                change.setChange(DocumentsChanges.ChangeType.DOCUMENT_DELETED);
 
-                    if (documentInfo.Entity != null)
-                    {
-                        var afterStoreEventArgs = new AfterStoreEventArgs(this, documentInfo.Id, documentInfo.Entity);
-                        OnAfterStore?.Invoke(this, afterStoreEventArgs);
+                docChanges.add(change);
+                changes.put(documentInfo.getId(), docChanges);
+            } else {
+                ICommandData command = result.getDeferredCommandsMap().get(IdTypeAndName.create(documentInfo.getId(), CommandType.CLIENT_ANY_COMMAND, null));
+                if (command != null) {
+                    throwInvalidDeletedDocumentWithDeferredCommand(command);
+                }
 
-                        DocumentsByEntity.Remove(documentInfo.Entity);
-                        result.Entities.Add(documentInfo.Entity);
+                String changeVector = null;
+                documentInfo = documentsById.getValue(documentInfo.getId());
+
+                if (documentInfo != null) {
+                    changeVector = documentInfo.getChangeVector();
+
+                    if (documentInfo.getEntity() != null) {
+                        // TODO var afterStoreEventArgs = new AfterStoreEventArgs(this, documentInfo.Id, documentInfo.Entity);
+                        //TODO: OnAfterStore?.Invoke(this, afterStoreEventArgs);
+
+                        documentsByEntity.remove(documentInfo.getEntity());
+                        result.getEntities().add(documentInfo.getEntity());
                     }
 
-                    DocumentsById.Remove(documentInfo.Id);
+                    documentsById.remove(documentInfo.getId());
                 }
-                changeVector = UseOptimisticConcurrency ? changeVector : null;
-                var beforeDeleteEventArgs = new BeforeDeleteEventArgs(this, documentInfo.Id, documentInfo.Entity);
-                OnBeforeDelete?.Invoke(this, beforeDeleteEventArgs);
-                result.SessionCommands.Add(new DeleteCommandData(documentInfo.Id, changeVector));
+
+                changeVector = useOptimisticConcurrency ? changeVector : null;
+                //TODO: var beforeDeleteEventArgs = new BeforeDeleteEventArgs(this, documentInfo.Id, documentInfo.Entity);
+                //TODO: OnBeforeDelete?.Invoke(this, beforeDeleteEventArgs);
+                result.getSessionCommands().add(new DeleteCommandData(documentInfo.getId(), changeVector));
             }
+
+            deletedEntities.clear();
         }
-        DeletedEntities.Clear();
-         */
+
     }
 
     private void prepareForEntitiesPuts(SaveChangesData result) {
@@ -803,52 +799,45 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
         return JsonOperation.entityChanged(newObj, documentInfo, changes);
     }
 
-    /* TODO:
+    public Map<String, List<DocumentsChanges>> whatChanged() {
+        HashMap<String, List<DocumentsChanges>> changes = new HashMap<>();
 
-    public IDictionary<string, DocumentsChanges[]> WhatChanged()
-    {
-        var changes = new Dictionary<string, DocumentsChanges[]>();
+        prepareForEntitiesDeletion(null, changes);
+        getAllEntitiesChanges(changes);
 
-        PrepareForEntitiesDeletion(null, changes);
-        GetAllEntitiesChanges(changes);
         return changes;
     }
 
-    /// <summary>
-    /// Gets a value indicating whether any of the entities tracked by the session has changes.
-    /// </summary>
-    /// <value></value>
-    public bool HasChanges
-    {
-        get
-        {
-            foreach (var entity in DocumentsByEntity)
-            {
-                var document = EntityToBlittable.ConvertEntityToBlittable(entity.Key, entity.Value);
-                if (EntityChanged(document, entity.Value, null))
-                {
-                    return true;
-                }
+
+    /**
+     * Gets a value indicating whether any of the entities tracked by the session has changes.
+     */
+    public boolean hasChanges() {
+        for (Map.Entry<Object, DocumentInfo> entity : documentsByEntity.entrySet()) {
+            ObjectNode document = entityToJson.convertEntityToJson(entity.getKey(), entity.getValue());
+            if (entityChanged(document, entity.getValue(), null)) {
+                return true;
             }
-            return DeletedEntities.Count > 0;
         }
+
+        return !deletedEntities.isEmpty();
     }
 
-    /// <summary>
-    /// Determines whether the specified entity has changed.
-    /// </summary>
-    /// <param name="entity">The entity.</param>
-    /// <returns>
-    /// 	<c>true</c> if the specified entity has changed; otherwise, <c>false</c>.
-    /// </returns>
-    public bool HasChanged(object entity)
-    {
-        DocumentInfo documentInfo;
-        if (DocumentsByEntity.TryGetValue(entity, out documentInfo) == false)
+    /**
+     * Determines whether the specified entity has changed.
+     */
+    public boolean hasChanged(Object entity) {
+        DocumentInfo documentInfo = documentsByEntity.get(entity);
+
+        if (documentInfo == null) {
             return false;
-        var document = EntityToBlittable.ConvertEntityToBlittable(entity, documentInfo);
-        return EntityChanged(document, documentInfo, null);
+        }
+
+        ObjectNode document = entityToJson.convertEntityToJson(entity, documentInfo);
+        return entityChanged(document, documentInfo, null);
     }
+
+    /* TODO
 
     public void WaitForReplicationAfterSaveChanges(TimeSpan? timeout = null, bool throwOnTimeout = true,
                                                    int replicas = 1, bool majority = false)
@@ -875,25 +864,24 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
         _saveChangesOptions.WaitForSpecificIndexes = indexes;
     }
 
-    private void GetAllEntitiesChanges(IDictionary<string, DocumentsChanges[]> changes)
-    {
-        foreach (var pair in DocumentsById)
-        {
-            UpdateMetadataModifications(pair.Value);
-            var newObj = EntityToBlittable.ConvertEntityToBlittable(pair.Value.Entity, pair.Value);
-            EntityChanged(newObj, pair.Value, changes);
+
+    */
+
+    private void getAllEntitiesChanges(Map<String, List<DocumentsChanges>> changes) {
+        for (Map.Entry<String, DocumentInfo> pair : documentsById) {
+            updateMetadataModifications(pair.getValue());
+            ObjectNode newObj = entityToJson.convertEntityToJson(pair.getValue().getEntity(), pair.getValue());
+            entityChanged(newObj, pair.getValue(), changes);
         }
     }
 
-    /// <summary>
-    /// Mark the entity as one that should be ignore for change tracking purposes,
-    /// it still takes part in the session, but is ignored for SaveChanges.
-    /// </summary>
-    public void IgnoreChangesFor(object entity)
-    {
-        GetDocumentInfo(entity).IgnoreChanges = true;
+    /**
+     * Mark the entity as one that should be ignore for change tracking purposes,
+     * it still takes part in the session, but is ignored for SaveChanges.
+     */
+    public void ignoreChangesFor(Object entity) {
+        getDocumentInfo(entity).setIgnoreChanges(true);
     }
-    */
 
     /**
      * Evicts the specified entity from the session.
@@ -968,74 +956,77 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
         this.close(true);
     }
 
-    /*
-
-
-    public void RegisterMissing(string id)
-    {
-        KnownMissingIds.Add(id);
+    public void registerMissing(String id) {
+        knownMissingIds.add(id);
     }
 
-    public void UnregisterMissing(string id)
-    {
-        KnownMissingIds.Remove(id);
+    public void unregisterMissing(String id) {
+        knownMissingIds.remove(id);
     }
 
-    internal void RegisterIncludes(BlittableJsonReaderObject includes)
-    {
-        if (includes == null)
+    public void registerIncludes(ObjectNode includes) {
+        if (includes == null) {
             return;
+        }
 
-        var propertyDetails = new BlittableJsonReaderObject.PropertyDetails();
-        foreach (var propertyIndex in includes.GetPropertiesByInsertionOrder())
-        {
-            includes.GetPropertyByIndex(propertyIndex, ref propertyDetails);
+        for (String fieldName : Lists.newArrayList(includes.fieldNames())) {
+            JsonNode fieldValue = includes.get(fieldName);
 
-            if (propertyDetails.Value == null)
+            if (fieldValue == null) {
                 continue;
+            }
 
-            var json = (BlittableJsonReaderObject)propertyDetails.Value;
+            ObjectNode json = (ObjectNode) fieldValue;
 
-            var newDocumentInfo = DocumentInfo.GetNewDocumentInfo(json);
+            DocumentInfo newDocumentInfo = DocumentInfo.getNewDocumentInfo(json);
+            /* TODO
+
             if (newDocumentInfo.Metadata.TryGetConflict(out var conflict) && conflict)
                 continue;
+             */
 
-            IncludedDocumentsById[newDocumentInfo.Id] = newDocumentInfo;
+            includedDocumentsById.put(newDocumentInfo.getId(), newDocumentInfo);
         }
     }
 
-    public void RegisterMissingIncludes(BlittableJsonReaderArray results, BlittableJsonReaderObject includes, ICollection<string> includePaths)
-    {
-        if (includePaths == null || includePaths.Count == 0)
+    public void registerMissingIncludes(ArrayNode results, ObjectNode includes, String[] includePaths) {
+        if (includePaths == null || includePaths.length == 0) {
             return;
+        }
 
-        foreach (BlittableJsonReaderObject result in results)
-        {
-            foreach (var include in includePaths)
-            {
-                if (include == Constants.Documents.Indexing.Fields.DocumentIdFieldName)
+        for (JsonNode result : results) {
+            for (String include : includePaths) {
+                if (Constants.Documents.Indexing.Fields.DOCUMENT_ID_FIELD_NAME.equals(include)) {
                     continue;
-
-                IncludesUtil.Include(result, include, id =>
-                        {
-                if (id == null)
-                    return;
-
-                if (IsLoaded(id))
-                    return;
-
-                if (includes.TryGet(id, out BlittableJsonReaderObject document))
-                {
-                    var metadata = document.GetMetadata();
-                    if (metadata.TryGetConflict(out var conflict) && conflict)
-                        return;
                 }
 
-                RegisterMissing(id);
-                    });
+                IncludesUtil.include((ObjectNode)result, include, id -> {
+                    if (id == null) {
+                        return;
+                    }
+
+                    if (isLoaded(id)) {
+                        return;
+                    }
+
+                    JsonNode document = includes.get(id);
+                    if (document != null) {
+                        JsonNode metadata = document.get(Constants.Documents.Metadata.KEY);
+
+                        /* TODO:
+                         var metadata = document.GetMetadata();
+                            if (metadata.TryGetConflict(out var conflict) && conflict)
+                                return;
+                         */
+                    }
+
+                    registerMissing(id);
+                });
             }
         }
     }
+
+    /* TODO
 
     public override int GetHashCode()
     {
@@ -1107,61 +1098,70 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
         HandleInternalMetadata(document);
         return EntityToBlittable.ConvertToEntity(entityType, id, document);
     }
+*/
 
-    public bool CheckIfIdAlreadyIncluded(string[] ids, KeyValuePair<string, Type>[] includes)
-    {
-        return CheckIfIdAlreadyIncluded(ids, includes.Select(x => x.Key));
+    public boolean checkIfIdAlreadyIncluded(String[] ids, Map.Entry<String, Class>[] includes) {
+        return checkIfIdAlreadyIncluded(ids, Arrays.stream(includes).map(x -> x.getKey()).collect(Collectors.toList()));
     }
 
-    public bool CheckIfIdAlreadyIncluded(string[] ids, IEnumerable<string> includes)
-    {
-        foreach (var id in ids)
-        {
-            if (KnownMissingIds.Contains(id))
+    public boolean checkIfIdAlreadyIncluded(String[] ids, Collection<String> includes) {
+        for (String id : ids) {
+            if (knownMissingIds.contains(id)) {
                 continue;
+            }
 
             // Check if document was already loaded, the check if we've received it through include
-            if (DocumentsById.TryGetValue(id, out DocumentInfo documentInfo) == false &&
-                    IncludedDocumentsById.TryGetValue(id, out documentInfo) == false)
-                return false;
-
-            if (documentInfo.Entity == null)
-                return false;
-
-            if (includes == null)
-                continue;
-
-            foreach (var include in includes)
-            {
-                var hasAll = true;
-                IncludesUtil.Include(documentInfo.Document, include, s =>
-                        {
-                                hasAll &= IsLoaded(s);
-                    });
-
-                if (hasAll == false)
+            DocumentInfo documentInfo = documentsById.getValue(id);
+            if (documentInfo == null) {
+                documentInfo = includedDocumentsById.get(id);
+                if (documentInfo == null) {
                     return false;
+                }
             }
+
+            if (documentInfo.getEntity() == null) {
+                return false;
+            }
+
+            if (includes == null) {
+                continue;
+            }
+
+            for (String include : includes) {
+                final boolean[] hasAll = {true}; //using fake arary here to force final keyword on variable
+
+                IncludesUtil.include(documentInfo.getDocument(), include, s -> {
+                    hasAll[0] &= isLoaded(s);
+                });
+
+                if (!hasAll[0]) {
+                    return false;
+                }
+
+            }
+
         }
+
         return true;
     }
 
-    protected void RefreshInternal<T>(T entity, RavenCommand<GetDocumentResult> cmd, DocumentInfo documentInfo)
-    {
-        var document = (BlittableJsonReaderObject)cmd.Result.Results[0];
-        if (document == null)
-            throw new InvalidOperationException("Document '" + documentInfo.Id +
-                    "' no longer exists and was probably deleted");
+    protected <T> void refreshInternal(T entity, RavenCommand<GetDocumentResult> cmd, DocumentInfo documentInfo) {
+        ObjectNode document = (ObjectNode) cmd.getResult().getResults().get(0);
+        if (document == null) {
+            throw new IllegalStateException("Document '" + documentInfo.getId() + "' no longer exists and was probably deleted");
+        }
 
-        document.TryGetMember(Constants.Documents.Metadata.Key, out object value);
-        documentInfo.Metadata = value as BlittableJsonReaderObject;
+        ObjectNode value = (ObjectNode) document.get(Constants.Documents.Metadata.KEY);
+        documentInfo.setMetadata(value);
 
-        document.TryGetMember(Constants.Documents.Metadata.ChangeVector, out var changeVector);
-        documentInfo.ChangeVector = changeVector as string;
+        JsonNode changeVector = document.get(Constants.Documents.Metadata.CHANGE_VECTOR); //TODO: metadata here?
+        documentInfo.setChangeVector(changeVector.asText());
 
-        documentInfo.Document = document;
+        documentInfo.setDocument(document);
 
-        documentInfo.Entity = ConvertToEntity(typeof(T), documentInfo.Id, document);
+        documentInfo.setEntity(convertToEntity(entity.getClass(), documentInfo.getId(), document));
+
+        /* TODO
 
         var type = entity.GetType();
         foreach (var property in ReflectionUtil.GetPropertiesAndFieldsFor(type, BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic))
@@ -1174,7 +1174,10 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
                 continue;
             prop.SetValue(entity, prop.GetValue(documentInfo.Entity));
         }
+         */
     }
+
+    /*TODO
 
     protected static T GetOperationResult<T>(object result)
     {
