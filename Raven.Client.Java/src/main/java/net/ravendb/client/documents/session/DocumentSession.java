@@ -348,6 +348,12 @@ public class DocumentSession extends InMemoryDocumentSessionOperations implement
         return loadOperation.getDocument(clazz);
     }
 
+    public <T> Map<String, T> load(Class<T> clazz, String... ids) {
+        LoadOperation loadOperation = new LoadOperation(this);
+        loadInternal(clazz, ids, loadOperation);
+        return loadOperation.getDocuments(clazz);
+    }
+
 
     /**
      * Loads the specified entities with the specified ids.

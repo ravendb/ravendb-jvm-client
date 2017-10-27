@@ -82,6 +82,12 @@ public interface IDocumentSession extends CleanCloseable {
     /**
      *  Loads the specified entities with the specified ids.
      */
+    <TResult> Map<String, TResult> load(Class<TResult> clazz, String... ids);
+
+
+    /**
+     *  Loads the specified entities with the specified ids.
+     */
     <TResult> Map<String, TResult> load(Class<TResult> clazz, Collection<String> ids);
 
     /*TODO
