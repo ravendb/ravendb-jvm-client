@@ -1,6 +1,10 @@
 package net.ravendb.client.documents.session;
 
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import net.ravendb.client.documents.IDocumentStore;
+import net.ravendb.client.documents.commands.batches.ICommandData;
+import net.ravendb.client.http.RequestExecutor;
+import net.ravendb.client.http.ServerNode;
 
 import java.util.List;
 import java.util.Map;
@@ -15,37 +19,36 @@ public interface IAdvancedDocumentSessionOperations {
      */
     IDocumentStore getDocumentStore();
 
+    /**
+     * Allow extensions to provide additional state per session
+     */
+    Map<String, Object> getExternalState();
+
+    ServerNode getCurrentSessionNode();
+
+    RequestExecutor getRequestExecutor();
+
     /* TODO
-
-     /// <summary>
-     ///     Allow extensions to provide additional state per session
-     /// </summary>
-     IDictionary<string, object> ExternalState { get; }
-
-     Task<ServerNode> GetCurrentSessionNode();
-
-     RequestExecutor RequestExecutor { get; }
-     JsonOperationContext Context { get; }
-
      event EventHandler<BeforeStoreEventArgs> OnBeforeStore;
      event EventHandler<AfterStoreEventArgs> OnAfterStore;
      event EventHandler<BeforeDeleteEventArgs> OnBeforeDelete;
      event EventHandler<BeforeQueryExecutedEventArgs> OnBeforeQueryExecuted;
-
-     /// <summary>
-     ///     Gets a value indicating whether any of the entities tracked by the session has changes.
-     /// </summary>
-     bool HasChanges { get; }
-
-     /// <summary>
-     ///     Gets or sets the max number of requests per session.
-     ///     If the <see cref="NumberOfRequests" /> rise above <see cref="MaxNumberOfRequestsPerSession" />, an exception will
-     ///     be thrown.
-     /// </summary>
-     /// <value>The max number of requests per session.</value>
-     int MaxNumberOfRequestsPerSession { get; set; }
-
      */
+
+    /**
+     * Gets a value indicating whether any of the entities tracked by the session has changes.
+     */
+    boolean hasChanges();
+
+    /**
+     * Gets the max number of requests per session.
+     */
+    int getMaxNumberOfRequestsPerSession();
+
+    /**
+     * Sets the max number of requests per session.
+     */
+    void setMaxNumberOfRequestsPerSession(int maxRequests);
 
     /**
      * Gets the number of requests for this session
@@ -57,15 +60,19 @@ public interface IAdvancedDocumentSessionOperations {
      */
     String storeIdentifier();
 
-    /* TODO:
+    /**
+     * Gets value indicating whether the session should use optimistic concurrency.
+     * When set to true, a check is made so that a change made behind the session back would fail
+     * and raise ConcurrencyException
+     */
+    boolean isUseOptimisticConcurrency();
 
-     /// <summary>
-     ///     Gets or sets a value indicating whether the session should use optimistic concurrency.
-     ///     When set to <c>true</c>, a check is made so that a change made behind the session back would fail
-     ///     and raise <see cref="ConcurrencyException" />.
-     /// </summary>
-     bool UseOptimisticConcurrency { get; set; }
-*/
+    /**
+     * Sets value indicating whether the session should use optimistic concurrency.
+     * When set to true, a check is made so that a change made behind the session back would fail
+     * and raise ConcurrencyException
+     */
+    void setUseOptimisticConcurrency(boolean useOptimisticConcurrency);
 
     /**
      * Clears this instance.
@@ -73,30 +80,21 @@ public interface IAdvancedDocumentSessionOperations {
      */
     void clear();
 
-
-    /* TODO
-
-     /// <summary>
-     ///     Defer commands to be executed on SaveChanges()
-     /// </summary>
-     /// <param name="command">Command to be executed</param>
-     /// <param name="commands">Array of commands to be executed.</param>
-     void Defer(ICommandData command, params ICommandData[] commands);
-
-     /// <summary>
-     ///     Defer commands to be executed on SaveChanges()
-     /// </summary>
-     /// <param name="commands">Array of commands to be executed.</param>
-     void Defer(ICommandData[] commands);
-
-     /// <summary>
-     ///     Evicts the specified entity from the session.
-     ///     Remove the entity from the delete queue and stops tracking changes for this entity.
-     /// </summary>
-     /// <param name="entity">Entity to evict.</param>
-     void Evict<T>(T entity);
-
+    /**
+     * Defer commands to be executed on saveChanges()
      */
+    void defer(ICommandData command, ICommandData... commands);
+
+    /**
+     * Defer commands to be executed on saveChanges()
+     */
+    void defer(ICommandData[] commands);
+
+    /**
+     * Evicts the specified entity from the session.
+     * Remove the entity from the delete queue and stops tracking changes for this entity.
+     */
+    <T> void evict(T entity);
 
     /**
      * Gets the document id for the specified entity.
@@ -158,16 +156,12 @@ public interface IAdvancedDocumentSessionOperations {
      /// </summary>
      void WaitForIndexesAfterSaveChanges(TimeSpan? timeout = null, bool throwOnTimeout = true, string[] indexes = null);
 
-     /// <summary>
-     /// Convert blittable to entity
-     /// </summary>
-     /// <param name="entityType"></param>
-     /// <param name="id"></param>
-     /// <param name="documentFound"></param>
-     /// <returns></returns>
-     object ConvertToEntity(Type entityType, string id, BlittableJsonReaderObject documentFound);
-
      */
+
+    /**
+     * Convert json to entity
+     */
+    Object convertToEntity(Class entityType, String id, ObjectNode documentFound);
 
     EntityToJson getEntityToJson();
 }
