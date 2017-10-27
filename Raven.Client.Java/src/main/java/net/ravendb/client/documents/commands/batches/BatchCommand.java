@@ -11,6 +11,7 @@ import net.ravendb.client.json.ContentProviderHttpEntity;
 import net.ravendb.client.json.JsonArrayResult;
 import net.ravendb.client.primitives.CleanCloseable;
 import net.ravendb.client.primitives.Reference;
+import net.ravendb.client.util.TimeUtils;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpRequestBase;
 import org.apache.http.entity.ContentType;
@@ -109,7 +110,7 @@ public class BatchCommand extends RavenCommand<JsonArrayResult> implements Clean
 
 
         StringBuilder sb = new StringBuilder(node.getUrl() + "/databases/" + node.getDatabase() + "/bulk_docs");
-        //TODO: AppendOptions(sb);
+        appendOptions(sb);
 
         url.value = sb.toString();
         return request;
@@ -124,45 +125,41 @@ public class BatchCommand extends RavenCommand<JsonArrayResult> implements Clean
         result = mapper.readValue(response, JsonArrayResult.class);
     }
 
-    /*
-    TODO
+    private void appendOptions(StringBuilder sb) {
+        if (_options == null) {
+            return;
+        }
 
-        private void AppendOptions(StringBuilder sb)
-        {
-            if (_options == null)
-                return;
+        sb.append("?");
 
-            sb.AppendLine("?");
+        if (_options.isWaitForReplicas()) {
+            sb.append("&waitForReplicasTimeout=")
+                    .append(TimeUtils.durationToTimeSpan(_options.getWaitForIndexesTimeout()));
 
-            if (_options.WaitForReplicas)
-            {
-                sb.Append("&waitForReplicasTimeout=").Append(_options.WaitForReplicasTimeout);
-
-                if (_options.ThrowOnTimeoutInWaitForReplicas)
-                    sb.Append("&throwOnTimeoutInWaitForReplicas=true");
-
-                sb.Append("&numberOfReplicasToWaitFor=");
-                sb.Append(_options.Majority
-                    ? "majority"
-                    : _options.NumberOfReplicasToWaitFor.ToString());
+            if (_options.isThrowOnTimeoutInWaitForReplicas()) {
+                sb.append("&throwOnTimeoutInWaitForReplicas=true");
             }
 
-            if (_options.WaitForIndexes)
-            {
-                sb.Append("&waitForIndexesTimeout=").Append(_options.WaitForIndexesTimeout);
-                if (_options.ThrowOnTimeoutInWaitForIndexes)
-                {
-                    sb.Append("&waitForIndexThrow=true");
-                }
-                if (_options.WaitForSpecificIndexes != null)
-                {
-                    foreach (var specificIndex in _options.WaitForSpecificIndexes)
-                    {
-                        sb.Append("&waitForSpecificIndex=").Append(specificIndex);
-                    }
+            sb.append("&numberOfReplicasToWaitFor=");
+            sb.append(_options.isMajority() ? "majority" : _options.getNumberOfReplicasToWaitFor());
+        }
+
+        if (_options.isWaitForIndexes()) {
+            sb.append("&waitForIndexesTimeout=")
+                        .append(TimeUtils.durationToTimeSpan(_options.getWaitForIndexesTimeout()));
+
+            if (_options.isThrowOnTimeoutInWaitForIndexes()) {
+                sb.append("&waitForIndexThrow=true");
+            }
+
+            if (_options.getWaitForSpecificIndexes() != null) {
+                for (String specificIndex : _options.getWaitForSpecificIndexes()) {
+                    sb.append("&waitForSpecificIndex=").append(specificIndex);
                 }
             }
-        }*/
+        }
+    }
+
 
     @Override
     public boolean isReadRequest() {

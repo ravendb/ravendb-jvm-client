@@ -74,7 +74,11 @@ public class LoadOperation {
         _ids = ids.toArray(new String[0]);
 
         Set<String> distinct = new TreeSet<>(String::compareToIgnoreCase);
-        distinct.addAll(ids);
+        for (String id : ids) {
+            if (id != null) {
+                distinct.add(id);
+            }
+        }
 
         for (String id : distinct) {
             byId(id);
@@ -119,7 +123,7 @@ public class LoadOperation {
                 continue;
             }
 
-            finalResults.put(id, getDocument(clazz));
+            finalResults.put(id, getDocument(clazz, id));
         }
 
         return finalResults;
@@ -133,7 +137,7 @@ public class LoadOperation {
         _session.registerIncludes(result.getIncludes());
 
         for (JsonNode document : result.getResults()) {
-            if (document == null) {
+            if (document == null || document.isNull()) {
                 continue;
             }
 

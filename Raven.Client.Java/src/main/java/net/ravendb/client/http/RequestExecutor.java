@@ -41,9 +41,15 @@ import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 public class RequestExecutor implements CleanCloseable {
+
+    /**
+     * Extension point to plug - in request post processing like adding proxy etc.
+     */
+    public static Consumer<HttpRequestBase> requestPostProcessor = null;
 
     public static final String CLIENT_VERSION = "4.0.0";
 
@@ -759,6 +765,10 @@ public class RequestExecutor implements CleanCloseable {
 
             if (!request.containsHeader("Raven-Client-Version")) {
                 request.addHeader("Raven-Client-Version", CLIENT_VERSION);
+            }
+
+            if (requestPostProcessor != null) {
+                requestPostProcessor.accept(request);
             }
 
             return request;
