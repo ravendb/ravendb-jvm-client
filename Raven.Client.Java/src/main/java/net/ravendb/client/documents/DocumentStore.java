@@ -317,7 +317,6 @@ public class DocumentStore extends DocumentStoreBase {
     }
 
     @Override
-
     public OperationExecutor operations() {
         if (operationExecutor == null) {
             operationExecutor = new OperationExecutor(this);

@@ -1,5 +1,6 @@
 package net.ravendb.client.test.driver;
 
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.base.Stopwatch;
 import com.google.common.collect.Sets;
 import net.ravendb.client.documents.DocumentStore;
@@ -290,7 +291,7 @@ public abstract class RavenTestDriver implements CleanCloseable {
             }
 
             try (IDocumentSession session = store.openSession()) {
-                if (session.load(Object.class, "Debug/Done") != null) {
+                if (session.load(ObjectNode.class, "Debug/Done") != null) {
                     break;
                 }
             }
