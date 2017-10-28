@@ -8,6 +8,7 @@ import net.ravendb.client.Constants;
 import net.ravendb.client.exceptions.RavenException;
 import net.ravendb.client.extensions.JsonExtensions;
 import net.ravendb.client.http.ReadBalanceBehavior;
+import net.ravendb.client.primitives.Lang;
 import net.ravendb.client.serverwide.ClientConfiguration;
 import net.ravendb.client.util.Inflector;
 import net.ravendb.client.util.ReflectionUtil;
@@ -15,6 +16,7 @@ import org.apache.commons.beanutils.BeanUtils;
 import org.apache.commons.beanutils.PropertyUtilsBean;
 import org.apache.commons.lang3.NotImplementedException;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.http.util.LangUtils;
 
 import java.beans.IntrospectionException;
 import java.beans.Introspector;
@@ -34,13 +36,8 @@ public class DocumentConventions {
 
     private static Map<Class, String> _cachedDefaultTypeCollectionNames = new HashMap<>();
 
-
-    /* TODO:
-        //TODO: private readonly List<Tuple<Type, Func<string, object, Task<string>>>> _listOfRegisteredIdConventionsAsync = new List<Tuple<Type, Func<string, object, Task<string>>>>();
-
-        //TODO: private readonly List<Tuple<Type, Func<ValueType, string>>> _listOfRegisteredIdLoadConventions = new List<Tuple<Type, Func<ValueType, string>>>();
-
-*/
+    //TODO: private readonly List<Tuple<Type, Func<string, object, Task<string>>>> _listOfRegisteredIdConventionsAsync = new List<Tuple<Type, Func<string, object, Task<string>>>>();
+    //TODO: private readonly List<Tuple<Type, Func<ValueType, string>>> _listOfRegisteredIdLoadConventions = new List<Tuple<Type, Func<ValueType, string>>>();
 
     public DocumentConventions() {
         _readBalanceBehavior = ReadBalanceBehavior.NONE;
@@ -613,40 +610,33 @@ public class DocumentConventions {
     }
 
     public void updateFrom(ClientConfiguration configuration) {
-        /* TODO
-        if (configuration == null)
+        if (configuration == null) {
+            return;
+        }
+
+        synchronized (this) {
+            if (configuration.isDisabled() && _originalConfiguration == null) { // nothing to do
                 return;
-
-            lock (this)
-            {
-                if (configuration.Disabled && _originalConfiguration == null) // nothing to do
-                    return;
-
-                if (configuration.Disabled && _originalConfiguration != null) // need to revert to original values
-                {
-                    _maxNumberOfRequestsPerSession = _originalConfiguration.MaxNumberOfRequestsPerSession.Value;
-                    _prettifyGeneratedLinqExpressions = _originalConfiguration.PrettifyGeneratedLinqExpressions.Value;
-                    _readBalanceBehavior = _originalConfiguration.ReadBalanceBehavior.Value;
-
-                    _originalConfiguration = null;
-                    return;
-                }
-
-                if (_originalConfiguration == null)
-                    _originalConfiguration = new ClientConfiguration
-                    {
-                        Etag = -1,
-                        MaxNumberOfRequestsPerSession = MaxNumberOfRequestsPerSession,
-                        PrettifyGeneratedLinqExpressions = PrettifyGeneratedLinqExpressions,
-                        ReadBalanceBehavior = ReadBalanceBehavior
-                    };
-
-                _maxNumberOfRequestsPerSession = configuration.MaxNumberOfRequestsPerSession ?? _originalConfiguration.MaxNumberOfRequestsPerSession.Value;
-                _prettifyGeneratedLinqExpressions = configuration.PrettifyGeneratedLinqExpressions ?? _originalConfiguration.PrettifyGeneratedLinqExpressions.Value;
-                _readBalanceBehavior = configuration.ReadBalanceBehavior ?? _originalConfiguration.ReadBalanceBehavior.Value;
             }
-         */
 
+            if (configuration.isDisabled() && _originalConfiguration != null) { // need to revert to original values
+                _maxNumberOfRequestsPerSession = _originalConfiguration.getMaxNumberOfRequestsPerSession();
+                _readBalanceBehavior = _originalConfiguration.getReadBalanceBehavior();
+
+                _originalConfiguration = null;
+                return;
+            }
+
+            if (_originalConfiguration == null) {
+                _originalConfiguration = new ClientConfiguration();
+                _originalConfiguration.setEtag(-1);
+                _originalConfiguration.setMaxNumberOfRequestsPerSession(_maxNumberOfRequestsPerSession);
+                _originalConfiguration.setReadBalanceBehavior(_readBalanceBehavior);
+            }
+
+            _maxNumberOfRequestsPerSession = Lang.coalesce(configuration.getMaxNumberOfRequestsPerSession(), _originalConfiguration.getMaxNumberOfRequestsPerSession());
+            _readBalanceBehavior = Lang.coalesce(configuration.getReadBalanceBehavior(), _originalConfiguration.getReadBalanceBehavior());
+        }
     }
 
     public static String defaultTransformCollectionNameToDocumentIdPrefix(String collectionName) {
@@ -663,7 +653,7 @@ public class DocumentConventions {
         return collectionName;
     }
 
-    /*
+    /* TODO
 
         private static IEnumerable<MemberInfo> GetPropertiesForType(Type type)
         {

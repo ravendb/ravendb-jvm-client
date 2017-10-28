@@ -85,7 +85,6 @@ public class BatchCommand extends RavenCommand<JsonArrayResult> implements Clean
                 generator.writeEndArray();
                 generator.writeEndObject();
             } catch (IOException e) {
-                //TODO:
                 throw new RuntimeException(e);
             }
 

@@ -1,6 +1,5 @@
 package net.ravendb.client.exceptions;
 
-
 //TODO: rewrite subscriptions exceptions
 
 public class RavenException extends RuntimeException {

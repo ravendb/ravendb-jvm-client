@@ -1,10 +1,7 @@
 package net.ravendb.client.json;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.node.ArrayNode;
-import com.fasterxml.jackson.databind.node.JsonNodeType;
-import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.fasterxml.jackson.databind.node.ValueNode;
+import com.fasterxml.jackson.databind.node.*;
 import com.google.common.collect.Lists;
 import net.ravendb.client.Constants;
 import net.ravendb.client.documents.session.DocumentInfo;
@@ -218,6 +215,17 @@ public class JsonOperation {
     }
 
     private static void newChange(String name, Object newValue, Object oldValue, List<DocumentsChanges> docChanges, DocumentsChanges.ChangeType change) {
+        if (newValue instanceof NumericNode) {
+            NumericNode node = (NumericNode) newValue;
+            newValue = node.numberValue();
+        }
+
+        if (oldValue instanceof NumericNode) {
+            NumericNode node = (NumericNode) oldValue;
+            oldValue = node.numberValue();
+        }
+
+
         DocumentsChanges documentsChanges = new DocumentsChanges();
         documentsChanges.setFieldName(name);
         documentsChanges.setFieldNewValue(newValue);

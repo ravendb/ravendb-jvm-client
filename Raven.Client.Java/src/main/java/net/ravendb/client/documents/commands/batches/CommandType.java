@@ -1,5 +1,6 @@
 package net.ravendb.client.documents.commands.batches;
 
+import com.fasterxml.jackson.annotation.JsonValue;
 import net.ravendb.client.primitives.UseSharpEnum;
 
 public enum CommandType { //TODO: custom json values

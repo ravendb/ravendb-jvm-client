@@ -95,12 +95,10 @@ public class EntityToJson {
                 }
             }
 
-            /* TODO:
-               if (Equals(entity, defaultValue))
-                {
-                    entity = _session.Conventions.DeserializeEntityFromBlittable(entityType, document);
-                }
-             */
+            if (entity == defaultValue) {
+                entity = _session.getConventions().getDeserializeEntityFromJson().apply(entityType, document);
+            }
+
             if (id != null) {
                 _session.getGenerateEntityIdOnTheClient().trySetIdentity(entity, id);
             }

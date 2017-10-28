@@ -144,7 +144,7 @@ public interface IAdvancedDocumentSessionOperations {
      */
     Map<String, List<DocumentsChanges>> whatChanged();
 
-    /* TODO
+    /* TODO - use options object ?
 
      /// <summary>
      /// SaveChanges will wait for the changes made to be replicates to `replicas` nodes

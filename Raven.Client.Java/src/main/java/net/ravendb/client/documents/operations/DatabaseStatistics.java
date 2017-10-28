@@ -22,7 +22,6 @@ public class DatabaseStatistics {
     private boolean is64Bit;
     private String pager;
     private Date lastIndexingTime;
-    //TODO: size on disk
 
       /* TODO
         public Size SizeOnDisk { get; set; }
