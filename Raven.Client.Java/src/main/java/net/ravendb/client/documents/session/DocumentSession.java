@@ -634,14 +634,6 @@ public class DocumentSession extends InMemoryDocumentSessionOperations implement
         }
 
 
-        /// <summary>
-        /// Create a new query for <typeparam name="T"/>
-        /// </summary>
-        IDocumentQuery<T> IDocumentQueryGenerator.Query<T>(string indexName, string collectionName, bool isMapReduce)
-        {
-            return Advanced.DocumentQuery<T>(indexName, collectionName, isMapReduce);
-        }
-
           public IRawDocumentQuery<T> RawQuery<T>(string query)
         {
             var documentQuery = new DocumentQuery<T>(this, null, null, false);
