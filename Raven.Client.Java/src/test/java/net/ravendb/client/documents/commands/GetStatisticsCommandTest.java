@@ -25,6 +25,7 @@ public class GetStatisticsCommandTest extends RemoteTestBase {
 
             RequestExecutor executor = store.getRequestExecutor();
 
+            //TODO: this can take a lot of time - consumer creating less data for this test
             CreateSampleDataOperation sampleData = new CreateSampleDataOperation();
             store.admin().send(sampleData);
 

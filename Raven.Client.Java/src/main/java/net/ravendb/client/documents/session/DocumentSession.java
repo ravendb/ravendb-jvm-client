@@ -633,11 +633,6 @@ public class DocumentSession extends InMemoryDocumentSessionOperations implement
             return new DocumentQuery<T>(this, indexName, collectionName, isGroupBy: isMapReduce);
         }
 
-        public RavenQueryInspector<S> CreateRavenQueryInspector<S>()
-        {
-            return new RavenQueryInspector<S>();
-        }
-
 
         /// <summary>
         /// Create a new query for <typeparam name="T"/>
