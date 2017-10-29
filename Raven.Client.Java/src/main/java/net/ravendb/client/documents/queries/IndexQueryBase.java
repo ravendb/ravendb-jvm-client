@@ -163,4 +163,6 @@ public class IndexQueryBase<T> implements IIndexQuery {
         result = 31 * result + (cutoffEtag != null ? cutoffEtag.hashCode() : 0);
         return result;
     }
+
+
 }

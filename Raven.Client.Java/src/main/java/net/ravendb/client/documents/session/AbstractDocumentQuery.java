@@ -924,29 +924,36 @@ If you really want to do in memory filtering on the data returned from the query
             WhereTokens.AddLast(WhereToken.Search(fieldName, AddQueryParameter(searchTerms), @operator));
         }
 
+*/
 
-        /// <inheritdoc />
-        public override string ToString()
-        {
-            if (QueryRaw != null)
-                return QueryRaw;
+    @Override
+    public String toString() {
+        if (queryRaw != null) {
+            return queryRaw;
+        }
 
-            if (_currentClauseDepth != 0)
-                throw new InvalidOperationException(string.Format("A clause was not closed correctly within this query, current clause depth = {0}", _currentClauseDepth));
+        if (_currentClauseDepth != 0) {
+            throw new IllegalStateException("A clause was not closed correctly within this query, current clause depth = " + _currentClauseDepth);
+        }
 
-            var queryText = new StringBuilder();
+        StringBuilder queryText = new StringBuilder();
 
-            BuildDeclare(queryText);
-            BuildFrom(queryText);
-            BuildGroupBy(queryText);
+//TODO        buildDeclare(queryText);
+        //TODO: buildFrom(queryText);
+        /* TODO
+        BuildGroupBy(queryText);
             BuildWhere(queryText);
             BuildOrderBy(queryText);
             BuildLoad(queryText);
             BuildSelect(queryText);
             BuildInclude(queryText);
 
-            return queryText.ToString();
-        }
+         */
+
+        return queryText.toString();
+    }
+
+    /*
 
         private void BuildInclude(StringBuilder queryText)
         {

@@ -1,8 +1,10 @@
 package net.ravendb.client.documents.commands;
 
+import com.fasterxml.jackson.core.JsonGenerator;
 import net.ravendb.client.documents.conventions.DocumentConventions;
 import net.ravendb.client.documents.queries.IndexQuery;
 import net.ravendb.client.documents.queries.QueryResult;
+import net.ravendb.client.extensions.JsonExtensions;
 import net.ravendb.client.http.RavenCommand;
 import net.ravendb.client.http.ServerNode;
 import net.ravendb.client.json.ContentProviderHttpEntity;
@@ -69,7 +71,11 @@ public class QueryCommand extends RavenCommand<QueryResult> {
 
         HttpPost request = new HttpPost();
         request.setEntity(new ContentProviderHttpEntity(outputStream -> {
-            //TODO: writer.WriteIndexQuery(_conventions, ctx, _indexQuery);
+            try (JsonGenerator generator = mapper.getFactory().createGenerator(outputStream)) {
+                JsonExtensions.writeIndexQuery(generator, _indexQuery);
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
         }, ContentType.APPLICATION_JSON));
 
         url.value = path.toString();
@@ -83,7 +89,7 @@ public class QueryCommand extends RavenCommand<QueryResult> {
             return;
         }
 
-        //TODO: JsonDeserializationClient.QueryResult(response);
+        result = mapper.readValue(response, QueryResult.class);
         if (fromCache) {
             result.setDurationInMs(-1);
         }

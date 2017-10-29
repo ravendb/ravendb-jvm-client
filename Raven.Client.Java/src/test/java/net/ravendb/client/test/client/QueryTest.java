@@ -33,11 +33,13 @@ public class QueryTest extends RemoteTestBase {
                 session.store(user3, "users/3");
                 session.saveChanges();
 
+
+
+                List<User> rawUserList = session.advanced().rawQuery(User.class, "from Users").toList();
+
                 //TODO: those are temporary queries
                 List<User> queryResult = session.advanced().documentQuery(User.class, null, "users", false)
                         .toList();
-
-                List<User> rawUserList = session.advanced().rawQuery(User.class, "from Users").toList();
 
                 assertThat(queryResult)
                         .hasSize(3);

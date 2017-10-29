@@ -1,7 +1,10 @@
 package net.ravendb.client.documents.session.operations;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.fasterxml.jackson.databind.node.TextNode;
 import com.google.common.base.Stopwatch;
+import net.ravendb.client.Constants;
 import net.ravendb.client.documents.commands.QueryCommand;
 import net.ravendb.client.documents.queries.IndexQuery;
 import net.ravendb.client.documents.queries.QueryResult;
@@ -103,13 +106,15 @@ public class QueryOperation {
 
         ArrayList<T> list = new ArrayList<>();
         for (JsonNode document : queryResult.getResults()) {
-            /* TODO
-             var metadata = document.GetMetadata();
+            ObjectNode metadata = (ObjectNode) document.get(Constants.Documents.Metadata.KEY);
+            JsonNode idNode = metadata.get(Constants.Documents.Metadata.ID);
 
-                metadata.TryGetId(out var id);
+            String id = null;
+            if (idNode != null && idNode.isTextual()) {
+                id = ((TextNode)idNode).asText();
+            }
 
-                list.Add(Deserialize<T>(id, document, metadata, _projectionFields, DisableEntitiesTracking, _session));
-             */
+            list.add(deserialize(clazz, id, (ObjectNode) document, metadata, _projectionFields, _disableEntitiesTracking, _session));
         }
 
         if (!_disableEntitiesTracking) {
@@ -119,10 +124,9 @@ public class QueryOperation {
         return list;
     }
 
-    /* TODO
-        internal static T Deserialize<T>(string id, BlittableJsonReaderObject document, BlittableJsonReaderObject metadata, string[] projectionFields, bool disableEntitiesTracking, InMemoryDocumentSessionOperations session)
-        {
-            if (metadata.TryGetProjection(out var projection) == false || projection == false)
+    static <T> T deserialize(Class<T> clazz, String id, ObjectNode document, ObjectNode metadata, String[] projectionFields, boolean disableEntitiesTracking, InMemoryDocumentSessionOperations session) {
+        /* TODO
+          if (metadata.TryGetProjection(out var projection) == false || projection == false)
                 return session.TrackEntity<T>(id, document, metadata, disableEntitiesTracking);
 
             if (projectionFields != null && projectionFields.Length == 1) // we only select a single field
@@ -145,10 +149,12 @@ public class QueryOperation {
                 if (innerJson != null)
                     document = innerJson;
             }
+         */
 
-            var result = (T)session.Conventions.DeserializeEntityFromBlittable(typeof(T), document);
+        T result = (T) session.getConventions().deserializeEntityFromJson(clazz, document);
 
-            if (string.IsNullOrEmpty(id) == false)
+        /* TODO
+          if (string.IsNullOrEmpty(id) == false)
             {
                 // we need to make an additional check, since it is possible that a value was explicitly stated
                 // for the identity property, in which case we don't want to override it.
@@ -157,10 +163,9 @@ public class QueryOperation {
                 if (identityProperty != null && (document.TryGetMember(identityProperty.Name, out value) == false || value == null))
                     session.GenerateEntityIdOnTheClient.TrySetIdentity(result, id);
             }
-
-            return result;
-        }
-*/
+         */
+        return result;
+    }
 
     public boolean isDisableEntitiesTracking() {
         return _disableEntitiesTracking;

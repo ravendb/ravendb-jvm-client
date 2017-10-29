@@ -1,5 +1,6 @@
 package net.ravendb.client.extensions;
 
+import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -8,9 +9,12 @@ import com.fasterxml.jackson.databind.cfg.MapperConfig;
 import com.fasterxml.jackson.databind.introspect.AnnotatedField;
 import com.fasterxml.jackson.databind.introspect.AnnotatedMethod;
 import com.fasterxml.jackson.databind.introspect.AnnotatedParameter;
+import net.ravendb.client.documents.queries.IndexQuery;
 import net.ravendb.client.primitives.NetDateFormat;
 import net.ravendb.client.primitives.SharpAwareJacksonAnnotationIntrospector;
 import org.apache.commons.lang3.StringUtils;
+
+import java.io.IOException;
 
 
 public class JsonExtensions {
@@ -61,6 +65,83 @@ public class JsonExtensions {
         public String nameForConstructorParameter(MapperConfig<?> config, AnnotatedParameter ctorParam, String defaultName) {
             return StringUtils.capitalize(defaultName);
         }
+    }
+
+    public static void writeIndexQuery(JsonGenerator generator, IndexQuery query) throws IOException {
+        generator.writeStartObject();
+
+        generator.writeStringField("Query", query.getQuery());
+
+        if (query.isPageSizeSet() && query.getPageSize() >= 0) {
+            generator.writeNumberField("PageSize", query.getPageSize());
+        }
+
+        /* TODO
+          if (query.WaitForNonStaleResults)
+            {
+                writer.WritePropertyName(nameof(query.WaitForNonStaleResults));
+                writer.WriteBool(query.WaitForNonStaleResults);
+                writer.WriteComma();
+            }
+
+            if (query.CutoffEtag.HasValue)
+            {
+                writer.WritePropertyName(nameof(query.CutoffEtag));
+                writer.WriteInteger(query.CutoffEtag.Value);
+                writer.WriteComma();
+            }
+
+            if (query.Start > 0)
+            {
+                writer.WritePropertyName(nameof(query.Start));
+                writer.WriteInteger(query.Start);
+                writer.WriteComma();
+            }
+
+            if (query.WaitForNonStaleResultsTimeout.HasValue)
+            {
+                writer.WritePropertyName(nameof(query.WaitForNonStaleResultsTimeout));
+                writer.WriteString(query.WaitForNonStaleResultsTimeout.Value.ToInvariantString());
+                writer.WriteComma();
+            }
+
+            if (query.DisableCaching)
+            {
+                writer.WritePropertyName(nameof(query.DisableCaching));
+                writer.WriteBool(query.DisableCaching);
+                writer.WriteComma();
+            }
+
+            if (query.ExplainScores)
+            {
+                writer.WritePropertyName(nameof(query.DisableCaching));
+                writer.WriteBool(query.DisableCaching);
+                writer.WriteComma();
+            }
+
+            if (query.ShowTimings)
+            {
+                writer.WritePropertyName(nameof(query.ShowTimings));
+                writer.WriteBool(query.ShowTimings);
+                writer.WriteComma();
+            }
+
+            if (query.SkipDuplicateChecking)
+            {
+                writer.WritePropertyName(nameof(query.SkipDuplicateChecking));
+                writer.WriteBool(query.SkipDuplicateChecking);
+                writer.WriteComma();
+            }
+
+            writer.WritePropertyName(nameof(query.QueryParameters));
+            if (query.QueryParameters != null)
+                writer.WriteObject(EntityToBlittable.ConvertEntityToBlittable(query.QueryParameters, conventions, context));
+            else
+                writer.WriteNull();
+
+         */
+
+        generator.writeEndObject();
     }
 
 }
