@@ -1,10 +1,16 @@
 package net.ravendb.client.documents.session.operations;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.google.common.base.Stopwatch;
+import net.ravendb.client.documents.commands.QueryCommand;
 import net.ravendb.client.documents.queries.IndexQuery;
+import net.ravendb.client.documents.queries.QueryResult;
 import net.ravendb.client.documents.session.InMemoryDocumentSessionOperations;
+import net.ravendb.client.exceptions.documents.indexes.IndexDoesNotExistException;
+import net.ravendb.client.primitives.CleanCloseable;
 
 import java.time.Duration;
+import java.util.ArrayList;
 import java.util.List;
 
 public class QueryOperation {
@@ -18,6 +24,7 @@ public class QueryOperation {
     private QueryResult _currentQueryResults;
     private final String[] _projectionFields;
     private Stopwatch _sp;
+    private boolean _disableEntitiesTracking;
     //TODO: private static readonly Logger Logger = LoggingSource.Instance.GetLogger<QueryOperation>("Raven.NewClient.Client");
 
 
@@ -30,7 +37,7 @@ public class QueryOperation {
         _waitForNonStaleResults = waitForNonStaleResults;
         _timeout = timeout;
         _projectionFields = projectionFields;
-        //TODO DisableEntitiesTracking = disableEntitiesTracking;
+        _disableEntitiesTracking = disableEntitiesTracking;
         _metadataOnly = metadataOnly;
         _indexEntriesOnly = indexEntriesOnly;
 
@@ -45,76 +52,74 @@ public class QueryOperation {
         return new QueryCommand(_session.getConventions(), _indexQuery, _metadataOnly, _indexEntriesOnly);
     }
 
-    /* TODO
-        public QueryResult CurrentQueryResults => _currentQueryResults;
-
-        public void SetResult(QueryResult queryResult)
-        {
-            EnsureIsAcceptableAndSaveResult(queryResult);
-        }
-
-        private void AssertPageSizeSet()
-        {
-            if (_session.Conventions.ThrowIfQueryPageSizeIsNotSet == false)
-                return;
-
-            if (_indexQuery.PageSizeSet)
-                return;
-
-            throw new InvalidOperationException("Attempt to query without explicitly specifying a page size. You can use .Take() methods to set maximum number of results. By default the page size is set to int.MaxValue and can cause severe performance degradation.");
-        }
-
-        private void StartTiming()
-        {
-            _sp = Stopwatch.StartNew();
-        }
-
-        public void LogQuery()
-        {
-            if (Logger.IsInfoEnabled)
-                Logger.Info($"Executing query '{_indexQuery.Query}' on index '{_indexName}' in '{_session.StoreIdentifier}'");
-        }
-
-        public IDisposable EnterQueryContext()
-        {
-            StartTiming();
-
-            if (_waitForNonStaleResults == false)
-                return null;
-
-            return _session.DocumentStore.DisableAggressiveCaching();
-        }
-
-*/
-
-    public <T> List<T> complete(Class<T> clazz) {
-        return null; //TODO
+    public QueryResult getCurrentQueryResults() {
+        return _currentQueryResults;
     }
 
-    /* TODO
-        public List<T> Complete<T>()
-        {
-            var queryResult = _currentQueryResults.CreateSnapshot();
+    public void setResult(QueryResult queryResult) {
+        ensureIsAcceptableAndSaveResult(queryResult);
+    }
 
-            if (DisableEntitiesTracking == false)
-                _session.RegisterIncludes(queryResult.Includes);
+    private void assertPageSizeSet() {
+        if (!_session.getConventions().isThrowIfQueryPageSizeIsNotSet()) {
+            return;
+        }
 
-            var list = new List<T>();
-            foreach (BlittableJsonReaderObject document in queryResult.Results)
-            {
-                var metadata = document.GetMetadata();
+        if (_indexQuery.isPageSizeSet()) {
+            return;
+        }
+
+        throw new IllegalStateException("Attempt to query without explicitly specifying a page size. " +
+                "You can use .take() methods to set maximum number of results. By default the page size is set to Integer.MAX_VALUE and can cause severe performance degradation.");
+    }
+
+    private void startTiming() {
+        _sp = Stopwatch.createStarted();
+    }
+
+    public void logQuery() {
+        /* TODO
+        if (Logger.IsInfoEnabled)
+            Logger.Info($"Executing query '{_indexQuery.Query}' on index '{_indexName}' in '{_session.StoreIdentifier}'");
+        */
+    }
+
+    public CleanCloseable enterQueryContext() {
+        startTiming();
+
+        if (!_waitForNonStaleResults) {
+            return null;
+        }
+
+        return _session.getDocumentStore().disableAggressiveCaching();
+    }
+
+    public <T> List<T> complete(Class<T> clazz) {
+        QueryResult queryResult = _currentQueryResults.createSnapshot();
+
+        if (!_disableEntitiesTracking) {
+            _session.registerIncludes(queryResult.getIncludes());
+        }
+
+        ArrayList<T> list = new ArrayList<>();
+        for (JsonNode document : queryResult.getResults()) {
+            /* TODO
+             var metadata = document.GetMetadata();
 
                 metadata.TryGetId(out var id);
 
                 list.Add(Deserialize<T>(id, document, metadata, _projectionFields, DisableEntitiesTracking, _session));
-            }
-
-            if (DisableEntitiesTracking == false)
-                _session.RegisterMissingIncludes(queryResult.Results, queryResult.Includes, queryResult.IncludedPaths);
-
-            return list;
+             */
         }
 
+        if (!_disableEntitiesTracking) {
+            _session.registerMissingIncludes(queryResult.getResults(), queryResult.getIncludes(), queryResult.getIncludedPaths());
+        }
+
+        return list;
+    }
+
+    /* TODO
         internal static T Deserialize<T>(string id, BlittableJsonReaderObject document, BlittableJsonReaderObject metadata, string[] projectionFields, bool disableEntitiesTracking, InMemoryDocumentSessionOperations session)
         {
             if (metadata.TryGetProjection(out var projection) == false || projection == false)
@@ -155,33 +160,45 @@ public class QueryOperation {
 
             return result;
         }
+*/
 
-        public bool DisableEntitiesTracking { get; set; }
+    public boolean isDisableEntitiesTracking() {
+        return _disableEntitiesTracking;
+    }
 
-        public void EnsureIsAcceptableAndSaveResult(QueryResult result)
-        {
-            if (result == null)
-                throw new IndexDoesNotExistException("Could not find index " + _indexName);
+    public void setDisableEntitiesTracking(boolean disableEntitiesTracking) {
+        this._disableEntitiesTracking = disableEntitiesTracking;
+    }
 
-            if (_waitForNonStaleResults && result.IsStale)
-            {
-                _sp.Stop();
-                var msg = $"Waited for {_sp.ElapsedMilliseconds:#,#;;0}ms for the query to return non stale result.";
+    public void ensureIsAcceptableAndSaveResult(QueryResult result) {
+        if (result == null) {
+            throw new IndexDoesNotExistException("Could not find index " + _indexName);
+        }
+
+        if (_waitForNonStaleResults && result.isStale()) {
+            _sp.stop();
+
+            /* TODO
+            var msg = $"Waited for {_sp.ElapsedMilliseconds:#,#;;0}ms for the query to return non stale result.";
 
                 throw new TimeoutException(msg);
-            }
+             */
+        }
 
-            _currentQueryResults = result;
-            _currentQueryResults.EnsureSnapshot();
+        _currentQueryResults = result;
+        _currentQueryResults.ensureSnapshot();
 
-            if (Logger.IsInfoEnabled)
+        /* TODO
+          if (Logger.IsInfoEnabled)
             {
                 var isStale = result.IsStale ? "stale " : "";
                 Logger.Info($"Query returned {result.Results.Items.Count()}/{result.TotalResults} {isStale}results");
             }
-        }
+         */
+    }
 
-        public IndexQuery IndexQuery => _indexQuery;
 
-     */
+    public IndexQuery getIndexQuery() {
+        return _indexQuery;
+    }
 }

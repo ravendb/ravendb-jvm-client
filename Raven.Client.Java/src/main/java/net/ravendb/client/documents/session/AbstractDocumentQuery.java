@@ -1,8 +1,10 @@
 package net.ravendb.client.documents.session;
 
 import net.ravendb.client.Parameters;
+import net.ravendb.client.documents.commands.QueryCommand;
 import net.ravendb.client.documents.queries.IndexQuery;
 import net.ravendb.client.documents.session.operations.QueryOperation;
+import net.ravendb.client.primitives.CleanCloseable;
 
 import java.util.Iterator;
 import java.util.List;
@@ -33,17 +35,21 @@ public class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQuery<T, TSe
         /// </summary>
         protected bool Negate;
 
-        /// <summary>
-        /// The index to query
-        /// </summary>
-        public string IndexName { get; }
-
-        public string CollectionName { get; }
-
-        private int _currentClauseDepth;
         */
 
+    private String indexName;
+    private String collectionName;
+    private int _currentClauseDepth;
+
     protected String queryRaw;
+
+    public String getIndexName() {
+        return indexName;
+    }
+
+    public String getCollectionName() {
+        return collectionName;
+    }
 
     // TODO protected KeyValuePair<string, object> LastEquality;
 
@@ -200,15 +206,8 @@ public class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQuery<T, TSe
     protected QueryOperation initializeQueryOperation() {
         IndexQuery indexQuery = getIndexQuery();
 
-        /* TODO
-          return new QueryOperation(TheSession,
-                IndexName,
-                indexQuery,
-                FieldsToFetchToken?.Projections,
-                TheWaitForNonStaleResults,
-                Timeout,
-                DisableEntitiesTracking);
-         */
+        return new QueryOperation(theSession, indexName, indexQuery, null, false, null, false, false, false);
+        //TODO: pass  FieldsToFetchToken?.Projections,         TheWaitForNonStaleResults,                  Timeout,                DisableEntitiesTracking
     }
 
     public IndexQuery getIndexQuery() {
@@ -879,17 +878,16 @@ If you really want to do in memory filtering on the data returned from the query
 
         #endregion
 
-        /// <summary>
-        ///   Generates the index query.
-        /// </summary>
-        /// <param name = "query">The query.</param>
-        /// <returns></returns>
-        protected IndexQuery GenerateIndexQuery(string query)
-        {
-            var indexQuery = new IndexQuery
-            {
-                Query = query,
-                Start = Start,
+*/
+
+    /**
+     * Generates the index query.
+     */
+    protected IndexQuery generateIndexQuery(String query) {
+        IndexQuery indexQuery = new IndexQuery();
+        indexQuery.setQuery(query);
+        /* TODO
+         Start = Start,
                 CutoffEtag = CutoffEtag,
                 WaitForNonStaleResults = TheWaitForNonStaleResults,
                 WaitForNonStaleResultsTimeout = Timeout,
@@ -897,13 +895,15 @@ If you really want to do in memory filtering on the data returned from the query
                 DisableCaching = DisableCaching,
                 ShowTimings = ShowQueryTimings,
                 ExplainScores = ShouldExplainScores
-            };
+         */
 
-            if (PageSize != null)
-                indexQuery.PageSize = PageSize.Value;
-
-            return indexQuery;
+        if (pageSize != null) {
+            indexQuery.setPageSize(pageSize);
         }
+        return indexQuery;
+    }
+
+    /* TODO
 
         /// <summary>
         /// Perform a search for documents which fields that match the searchTerms.
@@ -1729,6 +1729,17 @@ If you really want to do in memory filtering on the data returned from the query
 
         queryOperation = initializeQueryOperation();
         executeActualQuery();
+    }
+
+    private void executeActualQuery() {
+        try (CleanCloseable context = queryOperation.enterQueryContext()) {
+            queryOperation.logQuery();
+
+            QueryCommand command = queryOperation.createRequest();
+            theSession.getRequestExecutor().execute(command);
+            queryOperation.setResult(command.getResult());
+        }
+        //TODO: InvokeAfterQueryExecuted(QueryOperation.CurrentQueryResults);
     }
 
     @Override

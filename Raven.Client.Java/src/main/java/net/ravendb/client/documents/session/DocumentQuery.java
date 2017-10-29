@@ -729,19 +729,6 @@ public class DocumentQuery<T> extends AbstractDocumentQuery<T, DocumentQuery<T>>
             return ((DocumentSession)TheSession).AddLazyOperation(lazyQueryOperation, onEval);
         }
 
-        private void ExecuteActualQuery()
-        {
-            using (QueryOperation.EnterQueryContext())
-            {
-                QueryOperation.LogQuery();
-                var command = QueryOperation.CreateRequest();
-                TheSession.RequestExecutor.Execute(command, TheSession.Context);
-                QueryOperation.SetResult(command.Result);
-            }
-
-            InvokeAfterQueryExecuted(QueryOperation.CurrentQueryResults);
-        }
-
         private DocumentQuery<TResult> CreateDocumentQueryInternal<TResult>(QueryData queryData = null)
         {
             var newFieldsToFetch = queryData != null && queryData.Fileds.Length > 0

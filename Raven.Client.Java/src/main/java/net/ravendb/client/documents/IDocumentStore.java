@@ -44,17 +44,25 @@ public interface IDocumentStore extends IDisposalNotification {
         /// without touching the server.
         /// </remarks>
         IDisposable AggressivelyCache(string database = null);
+        */
 
-        /// <summary>
-        /// Setup the context for no aggressive caching
-        /// </summary>
-        /// <remarks>
-        /// This is mainly useful for internal use inside RavenDB, when we are executing
-        /// queries that has been marked with WaitForNonStaleResults, we temporarily disable
-        /// aggressive caching.
-        /// </remarks>
-        IDisposable DisableAggressiveCaching(string database = null);
-*/
+    /**
+     * Setup the context for no aggressive caching
+     *
+     * This is mainly useful for internal use inside RavenDB, when we are executing
+     * queries that have been marked with WaitForNonStaleResults, we temporarily disable
+     * aggressive caching.
+     */
+    CleanCloseable disableAggressiveCaching();
+
+    /**
+     * Setup the context for no aggressive caching
+     *
+     * This is mainly useful for internal use inside RavenDB, when we are executing
+     * queries that have been marked with WaitForNonStaleResults, we temporarily disable
+     * aggressive caching.
+     */
+    CleanCloseable disableAggressiveCaching(String database);
 
     /**
      * @return Gets the identifier for this store.

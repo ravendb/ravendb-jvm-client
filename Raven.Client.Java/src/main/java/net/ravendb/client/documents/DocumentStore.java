@@ -6,6 +6,7 @@ import net.ravendb.client.documents.operations.OperationExecutor;
 import net.ravendb.client.documents.session.DocumentSession;
 import net.ravendb.client.documents.session.IDocumentSession;
 import net.ravendb.client.documents.session.SessionOptions;
+import net.ravendb.client.http.AggressiveCacheOptions;
 import net.ravendb.client.http.RequestExecutor;
 import net.ravendb.client.primitives.*;
 
@@ -219,25 +220,36 @@ public class DocumentStore extends DocumentStoreBase {
         }
     }
 
+    /**
+     * Setup the context for no aggressive caching
+     *
+     * This is mainly useful for internal use inside RavenDB, when we are executing
+     * queries that have been marked with WaitForNonStaleResults, we temporarily disable
+     * aggressive caching.
+     */
+    public CleanCloseable disableAggressiveCaching() {
+        return disableAggressiveCaching(null);
+    }
+
+    /**
+     * Setup the context for no aggressive caching
+     *
+     * This is mainly useful for internal use inside RavenDB, when we are executing
+     * queries that have been marked with WaitForNonStaleResults, we temporarily disable
+     * aggressive caching.
+     */
+    public CleanCloseable disableAggressiveCaching(String databaseName) {
+        assertInitialized();
+        RequestExecutor re = getRequestExecutor(Lang.coalesce(database, getDatabase()));
+        AggressiveCacheOptions old = re.AggressiveCaching.get();
+        re.AggressiveCaching.set(null);
+
+        return () -> {
+            re.AggressiveCaching.set(old);
+        };
+    }
+
         /* TODO
-
-        /// <summary>
-        /// Setup the context for no aggressive caching
-        /// </summary>
-        /// <remarks>
-        /// This is mainly useful for internal use inside RavenDB, when we are executing
-        /// queries that have been marked with WaitForNonStaleResults, we temporarily disable
-        /// aggressive caching.
-        /// </remarks>
-        public override IDisposable DisableAggressiveCaching(string database = null)
-        {
-            AssertInitialized();
-            var re = GetRequestExecutor(database ?? Database);
-            var old = re.AggressiveCaching.Value;
-            re.AggressiveCaching.Value = null;
-            return new DisposableAction(() => re.AggressiveCaching.Value = old);
-        }
-
         /// <summary>
         /// Subscribe to change notifications from the server
         /// </summary>

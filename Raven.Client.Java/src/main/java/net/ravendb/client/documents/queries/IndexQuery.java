@@ -23,6 +23,10 @@ public class IndexQuery extends IndexQueryWithParameters<Parameters> {
         this.disableCaching = disableCaching;
     }
 
+    public long getQueryHash() {
+        return 0;//TODO delete me!
+    }
+
     /* TODO
 
         public ulong GetQueryHash(JsonOperationContext ctx)

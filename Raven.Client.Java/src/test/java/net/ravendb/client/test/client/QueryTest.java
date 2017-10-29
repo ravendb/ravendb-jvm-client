@@ -33,7 +33,7 @@ public class QueryTest extends RemoteTestBase {
                 session.store(user3, "users/3");
                 session.saveChanges();
 
-                //TODO: it is temporary queries
+                //TODO: those are temporary queries
                 List<User> queryResult = session.advanced().documentQuery(User.class, null, "users", false)
                         .toList();
 
