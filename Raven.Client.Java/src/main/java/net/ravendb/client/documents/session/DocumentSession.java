@@ -633,14 +633,17 @@ public class DocumentSession extends InMemoryDocumentSessionOperations implement
             return new DocumentQuery<T>(this, indexName, collectionName, isGroupBy: isMapReduce);
         }
 
+*/
 
-          public IRawDocumentQuery<T> RawQuery<T>(string query)
-        {
-            var documentQuery = new DocumentQuery<T>(this, null, null, false);
-            documentQuery.RawQuery(query);
-            return documentQuery;
-        }
+    public <T> IDocumentQuery<T> documentQuery(Class<T> clazz, String indexName, String collectionName, boolean isMapReduce) {
+        return new DocumentQuery<T>(clazz, this, indexName, collectionName, isMapReduce);
+    }
 
+    public <T> IRawDocumentQuery<T> rawQuery(Class<T> clazz, String query) {
+        return new RawDocumentQuery<T>(clazz, this, query);
+    }
+
+    /* TODO
           public IEnumerator<StreamResult<T>> Stream<T>(IQueryable<T> query)
         {
             var queryProvider = (IRavenQueryProvider)query.Provider;

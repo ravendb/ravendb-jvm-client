@@ -1,5 +1,7 @@
 package net.ravendb.client.documents.session;
 
+import java.util.Iterator;
+
 /**
  * Mostly used by the linq provider
  */
@@ -327,4 +329,6 @@ public interface IAbstractDocumentQuery<T> {
 
         void OrderByDistanceDescending(string fieldName, string shapeWkt);
      */
+
+    Iterator<T> iterator();
 }

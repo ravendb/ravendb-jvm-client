@@ -3,7 +3,7 @@ package net.ravendb.client.documents.session;
 /**
  *  A query against a Raven index
  */
-public interface IDocumentQueryBase<T, TSelf extends IDocumentQueryBase<T, TSelf>> {
+public interface IDocumentQueryBase<T, TSelf extends IDocumentQueryBase<T, TSelf>> extends IQueryBase<T, TSelf> {
     /* TODO
      /// <summary>
         ///  The last term that we asked the query to use equals on

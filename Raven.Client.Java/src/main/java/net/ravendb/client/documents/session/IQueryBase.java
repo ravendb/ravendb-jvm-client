@@ -7,7 +7,7 @@ public interface IQueryBase<T, TSelf extends IQueryBase<T, TSelf>> {
     /**
      * Gets the document convention from the query session
      */
-    DocumentConventions getConventions();
+    //TODO: DocumentConventions getConventions();
 
     /* TODO:
         /// <summary>
@@ -40,13 +40,13 @@ public interface IQueryBase<T, TSelf extends IQueryBase<T, TSelf>> {
     /**
      * Disables caching for query results.
      */
-    TSelf noCaching();
+    //TODO: TSelf noCaching();
 
     /**
      * Disables tracking for queried entities by Raven's Unit of Work.
      * Usage of this option will prevent holding query results in memory.
      */
-    TSelf noTracking();
+    //TODO: TSelf noTracking();
     /* TODO
 
         /// <summary>

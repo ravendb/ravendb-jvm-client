@@ -1,9 +1,19 @@
 package net.ravendb.client.documents.session;
 
+import net.ravendb.client.Parameters;
+import net.ravendb.client.documents.queries.IndexQuery;
+import net.ravendb.client.documents.session.operations.QueryOperation;
+
+import java.util.Iterator;
+import java.util.List;
+
 /**
  * A query against a Raven index
  */
 public class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQuery<T, TSelf>> implements IDocumentQueryCustomization, IAbstractDocumentQuery<T> {
+
+    protected Class<T> clazz;
+
     /* TODO
       private readonly Dictionary<string, string> _aliasToGroupByFieldName = new Dictionary<string, string>();
 
@@ -31,25 +41,23 @@ public class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQuery<T, TSe
         public string CollectionName { get; }
 
         private int _currentClauseDepth;
+        */
 
-        protected string QueryRaw;
+    protected String queryRaw;
 
-        protected KeyValuePair<string, object> LastEquality;
+    // TODO protected KeyValuePair<string, object> LastEquality;
 
-        protected Parameters QueryParameters = new Parameters();
+    protected Parameters queryParameters = new Parameters();
 
-        protected bool IsIntersect;
+    protected boolean isIntersect;
 
-        protected bool IsGroupBy;
-        /// <summary>
-        /// The session for this query
-        /// </summary>
-        protected readonly InMemoryDocumentSessionOperations TheSession;
+    protected boolean isGroupBy;
 
-        /// <summary>
-        ///   The page size to use when querying the index
-        /// </summary>
-        protected int? PageSize;
+    protected final InMemoryDocumentSessionOperations theSession;
+
+    protected Integer pageSize;
+
+    /* TODO
 
         protected LinkedList<QueryToken> SelectTokens = new LinkedList<QueryToken>();
 
@@ -138,19 +146,13 @@ public class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQuery<T, TSe
                 return TimeSpan.FromSeconds(15);
             }
         }
+*/
 
-        /// <summary>
-        /// Initializes a new instance of the <see cref="AbstractDocumentQuery{T, TSelf}"/> class.
-        /// </summary>
-        protected AbstractDocumentQuery(InMemoryDocumentSessionOperations session,
-                                     string indexName,
-                                     string collectionName,
-                                     bool isGroupBy,
-                                     DeclareToken declareToken,
-                                     List<LoadToken> loadTokens,
-                                     string fromAlias = null)
-        {
-            IsGroupBy = isGroupBy;
+    protected AbstractDocumentQuery(Class<T> clazz, InMemoryDocumentSessionOperations session, String indexName,
+                                    String collectionName, boolean isGroupBy) { // TODO:  DeclareToken declareToken,         List<LoadToken> loadTokens,         string fromAlias = null)
+        this.clazz = clazz;
+        /* TODO
+          IsGroupBy = isGroupBy;
             IndexName = indexName;
             CollectionName = collectionName;
 
@@ -159,13 +161,18 @@ public class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQuery<T, TSe
             DeclareToken = declareToken;
 
             LoadTokens = loadTokens;
-
+*/
+        theSession = session;
+        /* TODO
             TheSession = session;
             AfterQueryExecuted(UpdateStatsAndHighlightings);
 
             _conventions = session == null ? new DocumentConventions() : session.Conventions;
             _linqPathProvider = new LinqPathProvider(_conventions);
-        }
+         */
+    }
+
+    /* TODO
 
         #region TSelf Members
 
@@ -188,29 +195,30 @@ public class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQuery<T, TSe
             CutoffEtag = null;
             Timeout = waitTimeout;
         }
+        */
 
-        protected internal QueryOperation InitializeQueryOperation()
-        {
-            var indexQuery = GetIndexQuery();
+    protected QueryOperation initializeQueryOperation() {
+        IndexQuery indexQuery = getIndexQuery();
 
-            return new QueryOperation(TheSession,
+        /* TODO
+          return new QueryOperation(TheSession,
                 IndexName,
                 indexQuery,
                 FieldsToFetchToken?.Projections,
                 TheWaitForNonStaleResults,
                 Timeout,
                 DisableEntitiesTracking);
-        }
+         */
+    }
 
-        public IndexQuery GetIndexQuery()
-        {
-            var query = ToString();
-            var indexQuery = GenerateIndexQuery(query);
-            BeforeQueryExecutedCallback?.Invoke(indexQuery);
+    public IndexQuery getIndexQuery() {
+        String query = toString();
+        IndexQuery indexQuery = generateIndexQuery(query);
+        //TODO: BeforeQueryExecutedCallback?.Invoke(indexQuery);
+        return indexQuery;
+    }
 
-            return indexQuery;
-        }
-
+    /* TODO
         /// <summary>
         ///   Gets the fields for projection
         /// </summary>
@@ -399,25 +407,19 @@ If you really want to do in memory filtering on the data returned from the query
             Include(path.ToPropertyPath());
         }
 
-        /// <summary>
-        ///   Takes the specified count.
-        /// </summary>
-        /// <param name = "count">The count.</param>
-        /// <returns></returns>
-        public void Take(int count)
-        {
-            PageSize = count;
-        }
 
-        /// <summary>
-        ///   Skips the specified count.
-        /// </summary>
-        /// <param name = "count">The count.</param>
-        /// <returns></returns>
-        public void Skip(int count)
-        {
-            Start = count;
-        }
+*/
+
+    protected void _take(int count) {
+        pageSize = count;
+    }
+
+    protected void _skip(int count) {
+        //tODO:
+    }
+
+    /*
+
 
         /// <summary>
         ///   Filter the results from the index using the specified where clause.
@@ -1460,7 +1462,15 @@ If you really want to do in memory filtering on the data returned from the query
 
         protected Action<BlittableJsonReaderObject> AfterStreamExecutedCallback;
 
-        public QueryOperation QueryOperation { get; protected set; }
+*/
+
+    protected QueryOperation queryOperation;
+
+    public QueryOperation getQueryOperation() {
+        return queryOperation;
+    }
+
+    /* TODO
 
         /// <inheritdoc />
         public IDocumentQueryCustomization BeforeQueryExecuted(Action<IndexQuery> action)
@@ -1705,4 +1715,30 @@ If you really want to do in memory filtering on the data returned from the query
             OrderByTokens.AddLast(OrderByToken.CreateDistanceDescending(fieldName, AddQueryParameter(shapeWkt)));
         }
      */
+
+    protected void initSync() {
+        if (queryOperation != null) {
+            return;
+        }
+
+
+        /* TODO
+            var beforeQueryExecutedEventArgs = new BeforeQueryExecutedEventArgs(TheSession, this);
+            TheSession.OnBeforeQueryExecutedInvoke(beforeQueryExecutedEventArgs);
+            */
+
+        queryOperation = initializeQueryOperation();
+        executeActualQuery();
+    }
+
+    @Override
+    public Iterator<T> iterator() {
+        initSync();
+
+        return queryOperation.complete(clazz).iterator();
+    }
+
+    public List<T> toList() {
+        return EnumerableUtils.toList(iterator());
+    }
 }

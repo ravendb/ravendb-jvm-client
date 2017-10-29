@@ -21,15 +21,10 @@ public interface IAdvancedSessionOperations  extends IAdvancedDocumentSessionOpe
      */
     <T> void refresh(T entity);
 
-    /* TODO
-
-        /// <summary>
-        /// Query the specified index using provided raw query
-        /// </summary>
-        /// <typeparam name="T">The query result type</typeparam>
-        IRawDocumentQuery<T> RawQuery<T>(string query);
-
-*/
+    /**
+     * Query the specified index using provided raw query
+     */
+    <T>IRawDocumentQuery<T> rawQuery(Class<T> clazz, String query);
 
     /**
      * Check if document exists
@@ -122,7 +117,12 @@ public interface IAdvancedSessionOperations  extends IAdvancedDocumentSessionOpe
         /// <param name="collectionName">Name of the collection (mutually exclusive with indexName)</param>
         /// <param name="isMapReduce">Whether we are querying a map/reduce index (modify how we treat identifier properties)</param>
         IDocumentQuery<T> DocumentQuery<T>(string indexName = null, string collectionName = null, bool isMapReduce = false);
+*/
 
+    //tODO: overrides + doc from above!
+    <T> IDocumentQuery<T> documentQuery(Class<T> clazz, String indexName, String collectionName, boolean isMapReduce);
+
+    /* TODO
          /// <summary>
         ///     Stream the results on the query to the client, converting them to
         ///     CLR types along the way.

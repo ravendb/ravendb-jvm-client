@@ -1,14 +1,12 @@
 package net.ravendb.client.documents.session;
 
-public class DocumentQuery<T> extends AbstractDocumentQuery<T, DocumentQuery<T>> implements IDocumentQuery<T>, IRawDocumentQuery<T> {
+public class DocumentQuery<T> extends AbstractDocumentQuery<T, DocumentQuery<T>> implements IDocumentQuery<T> {
+
+    public DocumentQuery(Class<T> clazz, InMemoryDocumentSessionOperations session, String indexName, String collectionName, boolean isGroupBy) {
+        super(clazz, session, indexName, collectionName, isGroupBy); //TODO:DeclareToken declareToken = null, List<LoadToken> loadTokens = null, string fromAlias = null
+    }
+
     /* TODO
-    /// <summary>
-        /// Initializes a new instance of the <see cref="DocumentQuery{T}"/> class.
-        /// </summary>
-        public DocumentQuery(InMemoryDocumentSessionOperations session, string indexName, string collectionName, bool isGroupBy, DeclareToken declareToken = null, List<LoadToken> loadTokens = null, string fromAlias = null)
-            : base(session, indexName, collectionName, isGroupBy, declareToken, loadTokens ,fromAlias)
-        {
-        }
 
         /// <inheritdoc />
         public IDocumentQuery<TProjection> SelectFields<TProjection>()
@@ -279,27 +277,20 @@ public class DocumentQuery<T> extends AbstractDocumentQuery<T, DocumentQuery<T>>
 
             return QueryOperation.CurrentQueryResults.CreateSnapshot();
         }
+        */
 
-        /// <inheritdoc />
-        IDocumentQuery<T> IQueryBase<T, IDocumentQuery<T>>.Take(int count)
-        {
-            Take(count);
-            return this;
-        }
+    @Override
+    public IDocumentQuery<T> take(int count) {
+        _take(count);
+        return this;
+    }
 
-        /// <inheritdoc />
-        IRawDocumentQuery<T> IQueryBase<T, IRawDocumentQuery<T>>.Take(int count)
-        {
-            Take(count);
-            return this;
-        }
+    public IDocumentQuery<T> skip(int count) {
+        _skip(count);
+        return this;
+    }
 
-        /// <inheritdoc />
-        IDocumentQuery<T> IQueryBase<T, IDocumentQuery<T>>.Skip(int count)
-        {
-            Skip(count);
-            return this;
-        }
+    /* TODO
 
         /// <inheritdoc />
         IRawDocumentQuery<T> IQueryBase<T, IRawDocumentQuery<T>>.Skip(int count)
@@ -736,18 +727,6 @@ public class DocumentQuery<T> extends AbstractDocumentQuery<T, DocumentQuery<T>>
 
             var lazyQueryOperation = new LazyQueryOperation<T>(TheSession.Conventions, QueryOperation, AfterQueryExecutedCallback);
             return ((DocumentSession)TheSession).AddLazyOperation(lazyQueryOperation, onEval);
-        }
-
-        protected void InitSync()
-        {
-            if (QueryOperation != null)
-                return;
-
-            var beforeQueryExecutedEventArgs = new BeforeQueryExecutedEventArgs(TheSession, this);
-            TheSession.OnBeforeQueryExecutedInvoke(beforeQueryExecutedEventArgs);
-
-            QueryOperation = InitializeQueryOperation();
-            ExecuteActualQuery();
         }
 
         private void ExecuteActualQuery()

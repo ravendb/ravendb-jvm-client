@@ -11,6 +11,8 @@ import java.util.Map;
  */
 public interface IDocumentSession extends CleanCloseable {
 
+    //TODO: expose document query as we won't have query method for now.
+
     /**
      * Get the accessor for advanced operations
      *
@@ -90,22 +92,5 @@ public interface IDocumentSession extends CleanCloseable {
      */
     <TResult> Map<String, TResult> load(Class<TResult> clazz, Collection<String> ids);
 
-    /*TODO
-
-          /// <summary>
-        ///     Queries the specified index using Linq.
-        /// </summary>
-        /// <typeparam name="T">The result of the query</typeparam>
-        /// <param name="indexName">Name of the index (mutually exclusive with collectionName)</param>
-        /// <param name="collectionName">Name of the collection (mutually exclusive with indexName)</param>
-        /// <param name="isMapReduce">Whether we are querying a map/reduce index (modify how we treat identifier properties)</param>
-        IRavenQueryable<T> Query<T>(string indexName = null, string collectionName = null, bool isMapReduce = false);
-
-        /// <summary>
-        ///     Queries the index specified by <typeparamref name="TIndexCreator" /> using Linq.
-        /// </summary>
-        /// <typeparam name="T">The result of the query</typeparam>
-        /// <typeparam name="TIndexCreator">The type of the index creator.</typeparam>
-        IRavenQueryable<T> Query<T, TIndexCreator>() where TIndexCreator : AbstractIndexCreationTask, new();
-     */
+    //TODO: query ?
 }

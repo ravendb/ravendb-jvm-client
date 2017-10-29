@@ -3,7 +3,7 @@ package net.ravendb.client.documents.session;
 /**
  * A query against a Raven index
  */
-public interface IDocumentQuery<T> extends IDocumentQueryBase<T, IDocumentQuery<T>>, IDocumentQueryBaseSingle<T> { //TODO: extends iterator, enumerable (import props)
+public interface IDocumentQuery<T> extends IDocumentQueryBase<T, IDocumentQuery<T>>, IDocumentQueryBaseSingle<T>, IEnumerableQuery<T> { //TODO: extends iterator
 
     /* TODO
   string IndexName { get; }
@@ -89,4 +89,5 @@ public interface IDocumentQuery<T> extends IDocumentQueryBase<T, IDocumentQuery<
 
         IGroupByDocumentQuery<T> GroupBy(string fieldName, params string[] fieldNames);
      */
+
 }
