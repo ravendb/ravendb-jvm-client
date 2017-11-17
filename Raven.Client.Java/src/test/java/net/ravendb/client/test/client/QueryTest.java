@@ -4,6 +4,7 @@ import net.ravendb.client.RemoteTestBase;
 import net.ravendb.client.documents.IDocumentStore;
 import net.ravendb.client.documents.session.IDocumentSession;
 import net.ravendb.client.infrastructure.entities.User;
+import net.ravendb.client.primitives.CleanCloseable;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
 
@@ -19,6 +20,7 @@ public class QueryTest extends RemoteTestBase {
     public void querySimple() throws IOException {
         try (IDocumentStore store = getDocumentStore()) {
             try (IDocumentSession session = store.openSession()) {
+
                 User user1 = new User();
                 user1.setName("John");
 
@@ -33,11 +35,6 @@ public class QueryTest extends RemoteTestBase {
                 session.store(user3, "users/3");
                 session.saveChanges();
 
-
-
-                List<User> rawUserList = session.advanced().rawQuery(User.class, "from Users").toList();
-
-                //TODO: those are temporary queries
                 List<User> queryResult = session.advanced().documentQuery(User.class, null, "users", false)
                         .toList();
 

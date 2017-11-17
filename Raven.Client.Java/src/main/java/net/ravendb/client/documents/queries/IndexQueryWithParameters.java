@@ -50,18 +50,6 @@ public abstract class IndexQueryWithParameters<T> extends IndexQueryBase<T> {
         this.showTimings = showTimings;
     }
 
-    /* TODO
-        /// <summary>
-        /// Gets the custom query string variables.
-        /// </summary>
-        /// <returns></returns>
-        protected virtual string GetCustomQueryStringVariables()
-        {
-            //TODO: Can remove this
-            return string.Empty;
-        }
-        */
-
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;

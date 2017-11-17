@@ -1,6 +1,7 @@
 package net.ravendb.client.documents.session.operations.lazy;
 
 public interface ILazyOperation {
+
     /* TODO
      GetRequest CreateRequest(JsonOperationContext ctx);
         object Result { get; }
@@ -8,4 +9,5 @@ public interface ILazyOperation {
         bool RequiresRetry { get; }
         void HandleResponse(GetResponse response);
      */
+
 }

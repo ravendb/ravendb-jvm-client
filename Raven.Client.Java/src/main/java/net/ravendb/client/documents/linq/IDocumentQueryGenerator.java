@@ -1,6 +1,7 @@
 package net.ravendb.client.documents.linq;
 
 import net.ravendb.client.documents.conventions.DocumentConventions;
+import net.ravendb.client.documents.session.IDocumentQuery;
 
 /**
  * Generate a new document query
@@ -13,8 +14,8 @@ public interface IDocumentQueryGenerator {
 
 
     /**
-     * Create a new query for
+     * Create a new query for T
      */
-    //TODO: <T> IDocumentQuery<T> documentQuery(Class<T> clazz, String indexName, boolean isMapReduce);
+    <T> IDocumentQuery<T> documentQuery(Class<T> clazz, String indexName, String collectionName, boolean isMapReduce);
 
 }

@@ -2,8 +2,10 @@ package net.ravendb.client.documents.session;
 
 import net.ravendb.client.Parameters;
 import net.ravendb.client.documents.commands.QueryCommand;
+import net.ravendb.client.documents.conventions.DocumentConventions;
 import net.ravendb.client.documents.queries.IndexQuery;
 import net.ravendb.client.documents.session.operations.QueryOperation;
+import net.ravendb.client.documents.session.tokens.FromToken;
 import net.ravendb.client.primitives.CleanCloseable;
 
 import java.util.Iterator;
@@ -30,12 +32,12 @@ public class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQuery<T, TSe
 
         private static Dictionary<Type, Func<object, string>> _implicitStringsCache = new Dictionary<Type, Func<object, string>>();
 
-        /// <summary>
-        /// Whether to negate the next operation
-        /// </summary>
-        protected bool Negate;
-
         */
+
+    /**
+     * Whether to negate the next operation
+     */
+    protected boolean negate;
 
     private String indexName;
     private String collectionName;
@@ -66,9 +68,9 @@ public class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQuery<T, TSe
     /* TODO
 
         protected LinkedList<QueryToken> SelectTokens = new LinkedList<QueryToken>();
-
-        protected readonly FromToken FromToken;
-
+*/
+    protected final FromToken fromToken;
+    /* TODO
         protected readonly DeclareToken DeclareToken;
 
         protected readonly List<LoadToken> LoadTokens;
@@ -84,9 +86,12 @@ public class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQuery<T, TSe
         /// <summary>
         ///   which record to start reading from
         /// </summary>
-        protected int Start;
+        protected int Start;*/
 
-        private readonly DocumentConventions _conventions;
+    private final DocumentConventions _conventions;
+
+    /*TODO
+
         /// <summary>
         /// Timeout for this query
         /// </summary>
@@ -157,23 +162,22 @@ public class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQuery<T, TSe
     protected AbstractDocumentQuery(Class<T> clazz, InMemoryDocumentSessionOperations session, String indexName,
                                     String collectionName, boolean isGroupBy) { // TODO:  DeclareToken declareToken,         List<LoadToken> loadTokens,         string fromAlias = null)
         this.clazz = clazz;
-        /* TODO
-          IsGroupBy = isGroupBy;
-            IndexName = indexName;
-            CollectionName = collectionName;
+        //TODO:IsGroupBy = isGroupBy;
 
-            FromToken = FromToken.Create(indexName, collectionName, fromAlias);
+        this.indexName = indexName;
+        this.collectionName = collectionName;
+        this.fromToken = FromToken.create(indexName, collectionName, null); //TODO: from alias as 3-rd param
+        /* TODO
 
             DeclareToken = declareToken;
 
             LoadTokens = loadTokens;
 */
         theSession = session;
+        //TODO: AfterQueryExecuted(UpdateStatsAndHighlightings);
+        _conventions = session == null ? new DocumentConventions() : session.getConventions();
         /* TODO
-            TheSession = session;
-            AfterQueryExecuted(UpdateStatsAndHighlightings);
 
-            _conventions = session == null ? new DocumentConventions() : session.Conventions;
             _linqPathProvider = new LinqPathProvider(_conventions);
          */
     }
@@ -938,8 +942,8 @@ If you really want to do in memory filtering on the data returned from the query
 
         StringBuilder queryText = new StringBuilder();
 
-//TODO        buildDeclare(queryText);
-        //TODO: buildFrom(queryText);
+//TODO        buildDeclare(queryText)
+        buildFrom(queryText);
         /* TODO
         BuildGroupBy(queryText);
             BuildWhere(queryText);
@@ -1125,12 +1129,11 @@ If you really want to do in memory filtering on the data returned from the query
                 token = token.Next;
             }
         }
-
-        private void BuildFrom(StringBuilder writer)
-        {
-            FromToken.WriteTo(writer);
-        }
-
+*/
+    private void buildFrom(StringBuilder writer) {
+        fromToken.writeTo(writer);
+    }
+    /*
         private void BuildDeclare(StringBuilder writer)
         {
             DeclareToken?.WriteTo(writer);

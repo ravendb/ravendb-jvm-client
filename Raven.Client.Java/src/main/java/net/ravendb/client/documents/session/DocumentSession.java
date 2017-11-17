@@ -636,11 +636,11 @@ public class DocumentSession extends InMemoryDocumentSessionOperations implement
 */
 
     public <T> IDocumentQuery<T> documentQuery(Class<T> clazz, String indexName, String collectionName, boolean isMapReduce) {
-        return new DocumentQuery<T>(clazz, this, indexName, collectionName, isMapReduce);
+        return new DocumentQuery<>(clazz, this, indexName, collectionName, isMapReduce);
     }
 
     public <T> IRawDocumentQuery<T> rawQuery(Class<T> clazz, String query) {
-        return new RawDocumentQuery<T>(clazz, this, query);
+        return new RawDocumentQuery<>(clazz, this, query);
     }
 
     /* TODO

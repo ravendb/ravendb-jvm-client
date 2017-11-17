@@ -9,12 +9,18 @@ import net.ravendb.client.documents.commands.QueryCommand;
 import net.ravendb.client.documents.queries.IndexQuery;
 import net.ravendb.client.documents.queries.QueryResult;
 import net.ravendb.client.documents.session.InMemoryDocumentSessionOperations;
+import net.ravendb.client.exceptions.TimeoutException;
 import net.ravendb.client.exceptions.documents.indexes.IndexDoesNotExistException;
 import net.ravendb.client.primitives.CleanCloseable;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 
+import java.lang.reflect.Field;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 public class QueryOperation {
     private final InMemoryDocumentSessionOperations _session;
@@ -28,8 +34,7 @@ public class QueryOperation {
     private final String[] _projectionFields;
     private Stopwatch _sp;
     private boolean _disableEntitiesTracking;
-    //TODO: private static readonly Logger Logger = LoggingSource.Instance.GetLogger<QueryOperation>("Raven.NewClient.Client");
-
+    private static final Log logger = LogFactory.getLog(QueryOperation.class);
 
     public QueryOperation(InMemoryDocumentSessionOperations session, String indexName, IndexQuery indexQuery,
                           String[] projectionFields, boolean waitForNonStaleResults, Duration timeout,
@@ -50,7 +55,7 @@ public class QueryOperation {
     public QueryCommand createRequest() {
         _session.incrementRequestCount();
 
-        //TODO: logQuery();
+        logQuery();
 
         return new QueryCommand(_session.getConventions(), _indexQuery, _metadataOnly, _indexEntriesOnly);
     }
@@ -81,10 +86,9 @@ public class QueryOperation {
     }
 
     public void logQuery() {
-        /* TODO
-        if (Logger.IsInfoEnabled)
-            Logger.Info($"Executing query '{_indexQuery.Query}' on index '{_indexName}' in '{_session.StoreIdentifier}'");
-        */
+        if (logger.isInfoEnabled()) {
+            logger.info("Executing query " + _indexQuery.getQuery() + " on index " + _indexName + " in " + _session.storeIdentifier());
+        }
     }
 
     public CleanCloseable enterQueryContext() {
@@ -111,7 +115,7 @@ public class QueryOperation {
 
             String id = null;
             if (idNode != null && idNode.isTextual()) {
-                id = ((TextNode)idNode).asText();
+                id = ((TextNode) idNode).asText();
             }
 
             list.add(deserialize(clazz, id, (ObjectNode) document, metadata, _projectionFields, _disableEntitiesTracking, _session));
@@ -153,17 +157,19 @@ public class QueryOperation {
 
         T result = (T) session.getConventions().deserializeEntityFromJson(clazz, document);
 
-        /* TODO
-          if (string.IsNullOrEmpty(id) == false)
-            {
-                // we need to make an additional check, since it is possible that a value was explicitly stated
-                // for the identity property, in which case we don't want to override it.
-                object value;
-                var identityProperty = session.Conventions.GetIdentityProperty(typeof(T));
-                if (identityProperty != null && (document.TryGetMember(identityProperty.Name, out value) == false || value == null))
-                    session.GenerateEntityIdOnTheClient.TrySetIdentity(result, id);
+        if (StringUtils.isNotEmpty(id)) {
+            // we need to make an additional check, since it is possible that a value was explicitly stated
+            // for the identity property, in which case we don't want to override it.
+            Field identityProperty = session.getConventions().getIdentityProperty(clazz);
+            if (identityProperty != null) {
+                JsonNode value = document.get(StringUtils.capitalize(identityProperty.getName()));
+
+                if (value == null) {
+                    session.getGenerateEntityIdOnTheClient().trySetIdentity(result, id);
+                }
             }
-         */
+        }
+
         return result;
     }
 
@@ -183,23 +189,16 @@ public class QueryOperation {
         if (_waitForNonStaleResults && result.isStale()) {
             _sp.stop();
 
-            /* TODO
-            var msg = $"Waited for {_sp.ElapsedMilliseconds:#,#;;0}ms for the query to return non stale result.";
-
-                throw new TimeoutException(msg);
-             */
+            throw new TimeoutException("Waited for " + _sp.elapsed(TimeUnit.MILLISECONDS) + "ms for the query to return non stale result.");
         }
 
         _currentQueryResults = result;
         _currentQueryResults.ensureSnapshot();
 
-        /* TODO
-          if (Logger.IsInfoEnabled)
-            {
-                var isStale = result.IsStale ? "stale " : "";
-                Logger.Info($"Query returned {result.Results.Items.Count()}/{result.TotalResults} {isStale}results");
-            }
-         */
+        if (logger.isInfoEnabled()) {
+            String isStale = result.isStale() ? "stale " : "";
+            logger.info("Query returned " + result.getResults().size() + "/" + result.getTotalResults() + isStale + "results");
+        }
     }
 
 
