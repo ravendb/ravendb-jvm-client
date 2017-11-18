@@ -306,13 +306,21 @@ public class DocumentQuery<T> extends AbstractDocumentQuery<T, DocumentQuery<T>>
             return this;
         }
 
-        /// <inheritdoc />
-        IDocumentQuery<T> IDocumentQueryBase<T, IDocumentQuery<T>>.WhereEquals(string fieldName, object value, bool exact)
-        {
-            WhereEquals(fieldName, value, exact);
-            return this;
-        }
+*/
 
+    @Override
+    public IDocumentQuery<T> whereEquals(String fieldName, Object value) {
+        _whereEquals(fieldName, value, false);
+        return this;
+    }
+
+    @Override
+    public IDocumentQuery<T> whereEquals(String fieldName, Object value, boolean exact) {
+        _whereEquals(fieldName, value, exact);
+        return this;
+    }
+
+    /* TODO
         /// <inheritdoc />
         IDocumentQuery<T> IDocumentQueryBase<T, IDocumentQuery<T>>.WhereEquals<TValue>(Expression<Func<T, TValue>> propertySelector, TValue value, bool exact)
         {
@@ -362,33 +370,23 @@ public class DocumentQuery<T> extends AbstractDocumentQuery<T, DocumentQuery<T>>
             return this;
         }
 
-        /// <inheritdoc />
-        IDocumentQuery<T> IDocumentQueryBase<T, IDocumentQuery<T>>.WhereStartsWith(string fieldName, object value)
-        {
-            WhereStartsWith(fieldName, value);
-            return this;
-        }
+*/
 
-        /// <inheritdoc />
-        public IDocumentQuery<T> WhereStartsWith<TValue>(Expression<Func<T, TValue>> propertySelector, TValue value)
-        {
-            WhereStartsWith(GetMemberQueryPath(propertySelector.Body), value);
-            return this;
-        }
+    @Override
+    public IDocumentQuery<T> whereStartsWith(String fieldName, Object value) {
+        _whereStartsWith(fieldName, value);
+        return this;
+    }
 
-        /// <inheritdoc />
-        IDocumentQuery<T> IDocumentQueryBase<T, IDocumentQuery<T>>.WhereEndsWith(string fieldName, object value)
-        {
-            WhereEndsWith(fieldName, value);
-            return this;
-        }
+    @Override
+    public IDocumentQuery<T> whereEndsWith(String fieldName, Object value) {
+        _whereEndsWith(fieldName, value);
+        return this;
+    }
 
-        /// <inheritdoc />
-        public IDocumentQuery<T> WhereEndsWith<TValue>(Expression<Func<T, TValue>> propertySelector, TValue value)
-        {
-            WhereEndsWith(GetMemberQueryPath(propertySelector.Body), value);
-            return this;
-        }
+    //TODO: public IDocumentQuery<T> WhereEndsWith<TValue>(Expression<Func<T, TValue>> propertySelector, TValue value)
+
+    /* TODO
 
         /// <inheritdoc />
         IDocumentQuery<T> IDocumentQueryBase<T, IDocumentQuery<T>>.WhereBetween(string fieldName, object start, object end, bool exact)

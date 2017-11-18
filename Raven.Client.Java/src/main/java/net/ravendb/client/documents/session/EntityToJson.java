@@ -50,7 +50,30 @@ public class EntityToJson {
         return jsonNode;
     }
 
-    private void writeMetadata(ObjectMapper mapper, ObjectNode jsonNode, DocumentInfo documentInfo) {
+    public static ObjectNode convertEntityToJson(Object entity, DocumentConventions conventions) {
+        return convertEntityToJson(entity, conventions, null);
+    }
+
+    public static ObjectNode convertEntityToJson(Object entity, DocumentConventions conventions, DocumentInfo documentInfo) {
+        // maybe we don't need to do anything?
+        if (entity instanceof ObjectNode) {
+            return (ObjectNode) entity;
+        }
+
+        ObjectMapper mapper = JsonExtensions.getDefaultMapper();
+
+        ObjectNode jsonNode = mapper.valueToTree(entity);
+
+        writeMetadata(mapper, jsonNode, documentInfo);
+
+        Class<?> clazz = entity.getClass();
+        tryRemoveIdentityProperty(jsonNode, clazz, conventions);
+        //TODO: TrySimplifyJson(reader);
+
+        return jsonNode;
+    }
+
+    private static void writeMetadata(ObjectMapper mapper, ObjectNode jsonNode, DocumentInfo documentInfo) {
         if (documentInfo == null) {
             return;
         }

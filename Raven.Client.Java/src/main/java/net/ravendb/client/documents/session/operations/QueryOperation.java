@@ -196,7 +196,7 @@ public class QueryOperation {
         _currentQueryResults.ensureSnapshot();
 
         if (logger.isInfoEnabled()) {
-            String isStale = result.isStale() ? "stale " : "";
+            String isStale = result.isStale() ? "stale " : " ";
             logger.info("Query returned " + result.getResults().size() + "/" + result.getTotalResults() + isStale + "results");
         }
     }

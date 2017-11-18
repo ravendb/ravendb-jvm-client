@@ -1,14 +1,21 @@
 package net.ravendb.client.documents.session;
 
+import jdk.nashorn.internal.objects.annotations.Where;
 import net.ravendb.client.Parameters;
 import net.ravendb.client.documents.commands.QueryCommand;
 import net.ravendb.client.documents.conventions.DocumentConventions;
 import net.ravendb.client.documents.queries.IndexQuery;
+import net.ravendb.client.documents.queries.QueryFieldUtil;
+import net.ravendb.client.documents.queries.QueryOperator;
 import net.ravendb.client.documents.session.operations.QueryOperation;
-import net.ravendb.client.documents.session.tokens.FromToken;
+import net.ravendb.client.documents.session.tokens.*;
 import net.ravendb.client.primitives.CleanCloseable;
+import net.ravendb.client.primitives.Tuple;
 
+import javax.management.Query;
+import java.util.Date;
 import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.List;
 
 /**
@@ -20,8 +27,11 @@ public class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQuery<T, TSe
 
     /* TODO
       private readonly Dictionary<string, string> _aliasToGroupByFieldName = new Dictionary<string, string>();
+*/
 
-        protected QueryOperator DefaultOperator;
+    protected QueryOperator defaultOperatator = QueryOperator.AND;
+
+    /* TODO
 
         private readonly LinqPathProvider _linqPathProvider;
 
@@ -53,7 +63,7 @@ public class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQuery<T, TSe
         return collectionName;
     }
 
-    // TODO protected KeyValuePair<string, object> LastEquality;
+    protected Tuple<String, Object> lastEquality;
 
     protected Parameters queryParameters = new Parameters();
 
@@ -65,10 +75,8 @@ public class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQuery<T, TSe
 
     protected Integer pageSize;
 
-    /* TODO
+    protected List<QueryToken> selectTokens = new LinkedList<>();
 
-        protected LinkedList<QueryToken> SelectTokens = new LinkedList<QueryToken>();
-*/
     protected final FromToken fromToken;
     /* TODO
         protected readonly DeclareToken DeclareToken;
@@ -76,13 +84,13 @@ public class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQuery<T, TSe
         protected readonly List<LoadToken> LoadTokens;
 
         protected internal FieldsToFetchToken FieldsToFetchToken;
+*/
+    protected List<QueryToken> whereTokens = new LinkedList<>();
 
-        protected LinkedList<QueryToken> WhereTokens = new LinkedList<QueryToken>();
+    protected List<QueryToken> groupByTokens = new LinkedList<>();
 
-        protected LinkedList<QueryToken> GroupByTokens = new LinkedList<QueryToken>();
-
-        protected LinkedList<QueryToken> OrderByTokens = new LinkedList<QueryToken>();
-
+    protected List<QueryToken> orderByTokens = new LinkedList<>();
+    /* TODO
         /// <summary>
         ///   which record to start reading from
         /// </summary>
@@ -270,13 +278,16 @@ public class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQuery<T, TSe
         {
             _aliasToGroupByFieldName[projectedName] = fieldName;
         }
+*/
 
-        private void AssertNoRawQuery()
-        {
-            if (QueryRaw != null)
+    private void assertNoRawQuery() {
+        /* TODO
+         if (QueryRaw != null)
                 throw new InvalidOperationException(
                     "RawQuery was called, cannot modify this query by calling on operations that would modify the query (such as Where, Select, OrderBy, GroupBy, etc)");
-        }
+         */
+    }
+    /*
 
         public void RawQuery(string query)
         {
@@ -349,13 +360,14 @@ public class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQuery<T, TSe
             SelectTokens.AddLast(GroupByCountToken.Create(projectedName));
         }
 
-        public void WhereTrue()
-        {
-            AppendOperatorIfNeeded(WhereTokens);
-            NegateIfNeeded(null);
+*/
+    protected void whereTrue() {
+        appendOperatorIfNeeded(whereTokens);
+        negateIfNeeded(null);
 
-            WhereTokens.AddLast(TrueToken.Instance);
-        }
+        whereTokens.add(TrueToken.INSTANCE);
+    }
+    /* TODO;
 
         /// <summary>
         ///   Includes the specified path in the query, loading the document specified in that path
@@ -418,7 +430,7 @@ If you really want to do in memory filtering on the data returned from the query
     }
 
     protected void _skip(int count) {
-        //tODO:
+        //tODO:  Start = count;
     }
 
     /*
@@ -462,81 +474,66 @@ If you really want to do in memory filtering on the data returned from the query
             WhereTokens.AddLast(CloseSubclauseToken.Instance);
         }
 
-        /// <summary>
-        ///   Matches value
-        /// </summary>
-        public void WhereEquals(string fieldName, object value, bool exact = false)
-        {
-            WhereEquals(new WhereParams
-            {
-                FieldName = fieldName,
-                Value = value,
-                Exact = exact
-            });
+*/
+    protected void _whereEquals(String fieldName, Object value, boolean exact) {
+        WhereParams params = new WhereParams();
+        params.setFieldName(fieldName);
+        params.setValue(value);
+        params.setExact(exact);
+        _whereEquals(params);
+    }
+
+    protected void _whereEquals(WhereParams whereParams) {
+        if (negate) {
+            negate = false;
+            _whereNotEquals(whereParams);
+            return;
         }
 
-        /// <summary>
-        ///   Matches value
-        /// </summary>
-        public void WhereEquals(WhereParams whereParams)
-        {
-            if (Negate)
-            {
-                Negate = false;
-                WhereNotEquals(whereParams);
-                return;
-            }
+        Object transformToEqualValue = transformValue(whereParams);
+        lastEquality = Tuple.create(whereParams.getFieldName(), transformToEqualValue);
 
-            var transformToEqualValue = TransformValue(whereParams);
-            LastEquality = new KeyValuePair<string, object>(whereParams.FieldName, transformToEqualValue);
+        appendOperatorIfNeeded(whereTokens);
 
-            AppendOperatorIfNeeded(WhereTokens);
+        whereParams.setFieldName(ensureValidFieldName(whereParams.getFieldName(), whereParams.isNestedPath()));
+        whereTokens.add(WhereToken.equals(whereParams.getFieldName(), addQueryParameter(transformToEqualValue), whereParams.isExact()));
 
-            whereParams.FieldName = EnsureValidFieldName(whereParams.FieldName, whereParams.IsNestedPath);
-            WhereTokens.AddLast(WhereToken.Equals(whereParams.FieldName, AddQueryParameter(transformToEqualValue), whereParams.Exact));
+    }
+
+    protected void _whereNotEquals(String fieldName, Object value) {
+        _whereNotEquals(fieldName, value, false);
+    }
+
+    protected void _whereNotEquals(String fieldName, Object value, boolean exact) {
+        WhereParams params = new WhereParams();
+        params.setFieldName(fieldName);
+        params.setValue(value);
+        params.setExact(exact);
+
+        _whereNotEquals(params);
+    }
+
+    protected void _whereNotEquals(WhereParams whereParams) {
+        if (negate) {
+            negate = false;
+            _whereEquals(whereParams);
+            return;
         }
 
-        /// <summary>
-        ///   Not matches value
-        /// </summary>
-        public void WhereNotEquals(string fieldName, object value, bool exact = false)
-        {
-            WhereNotEquals(new WhereParams
-            {
-                FieldName = fieldName,
-                Value = value,
-                Exact = exact
-            });
-        }
+        Object transformToEqualValue = transformValue(whereParams);
+        lastEquality = Tuple.create(whereParams.getFieldName(), transformToEqualValue);
 
-        /// <summary>
-        ///   Not matches value
-        /// </summary>
-        public void WhereNotEquals(WhereParams whereParams)
-        {
-            if (Negate)
-            {
-                Negate = false;
-                WhereEquals(whereParams);
-                return;
-            }
+        appendOperatorIfNeeded(whereTokens);
 
-            var transformToEqualValue = TransformValue(whereParams);
-            LastEquality = new KeyValuePair<string, object>(whereParams.FieldName, transformToEqualValue);
+        whereParams.setFieldName(ensureValidFieldName(whereParams.getFieldName(), whereParams.isNestedPath()));
+        whereTokens.add(WhereToken.notEquals(whereParams.getFieldName(), addQueryParameter(transformToEqualValue), whereParams.isExact()));
+    }
 
-            AppendOperatorIfNeeded(WhereTokens);
+    protected void negateNext() {
+        negate = !negate;
+    }
 
-            whereParams.FieldName = EnsureValidFieldName(whereParams.FieldName, whereParams.IsNestedPath);
-            WhereTokens.AddLast(WhereToken.NotEquals(whereParams.FieldName, AddQueryParameter(transformToEqualValue), whereParams.Exact));
-        }
-
-        ///<summary>
-        /// Negate the next operation
-        ///</summary>
-        public void NegateNext()
-        {
-            Negate = !Negate;
-        }
+    /* TODO
 
         /// <summary>
         /// Check that the field has one of the specified value
@@ -551,55 +548,46 @@ If you really want to do in memory filtering on the data returned from the query
             WhereTokens.AddLast(WhereToken.In(fieldName, AddQueryParameter(TransformEnumerable(fieldName, UnpackEnumerable(values)).ToArray()), exact));
         }
 
-        /// <summary>
-        ///   Matches fields which starts with the specified value.
-        /// </summary>
-        /// <param name = "fieldName">Name of the field.</param>
-        /// <param name = "value">The value.</param>
-        public void WhereStartsWith(string fieldName, object value)
-        {
-            var whereParams = new WhereParams
-            {
-                FieldName = fieldName,
-                Value = value,
-                AllowWildcards = true
-            };
+*/
+    protected void _whereStartsWith(String fieldName, Object value) {
+        WhereParams whereParams = new WhereParams();
+        whereParams.setFieldName(fieldName);
+        whereParams.setValue(value);
+        whereParams.setAllowWildcards(true);
 
-            var transformToEqualValue = TransformValue(whereParams);
-            LastEquality = new KeyValuePair<string, object>(whereParams.FieldName, transformToEqualValue);
+        Object transformToEqualValue = transformValue(whereParams);
 
-            AppendOperatorIfNeeded(WhereTokens);
+        lastEquality = Tuple.create(whereParams.getFieldName(), transformToEqualValue);
 
-            whereParams.FieldName = EnsureValidFieldName(whereParams.FieldName, whereParams.IsNestedPath);
-            NegateIfNeeded(whereParams.FieldName);
+        appendOperatorIfNeeded(whereTokens);
 
-            WhereTokens.AddLast(WhereToken.StartsWith(whereParams.FieldName, AddQueryParameter(transformToEqualValue)));
-        }
+        whereParams.setFieldName(ensureValidFieldName(whereParams.getFieldName(), whereParams.isNestedPath()));
+        negateIfNeeded(whereParams.getFieldName());
 
-        /// <summary>
-        ///   Matches fields which ends with the specified value.
-        /// </summary>
-        /// <param name = "fieldName">Name of the field.</param>
-        /// <param name = "value">The value.</param>
-        public void WhereEndsWith(string fieldName, object value)
-        {
-            var whereParams = new WhereParams
-            {
-                FieldName = fieldName,
-                Value = value,
-                AllowWildcards = true
-            };
+        whereTokens.add(WhereToken.startsWith(whereParams.getFieldName(), addQueryParameter(transformToEqualValue), false));
+    }
 
-            var transformToEqualValue = TransformValue(whereParams);
-            LastEquality = new KeyValuePair<string, object>(whereParams.FieldName, transformToEqualValue);
+    /**
+     * Matches fields which ends with the specified value.
+     */
+    protected void _whereEndsWith(String fieldName, Object value) {
+        WhereParams whereParams = new WhereParams();
+        whereParams.setFieldName(fieldName);
+        whereParams.setValue(value);
+        whereParams.setAllowWildcards(true);
 
-            AppendOperatorIfNeeded(WhereTokens);
+        Object transformToEqualValue = transformValue(whereParams);
+        lastEquality = Tuple.create(whereParams.getFieldName(), transformToEqualValue);
 
-            whereParams.FieldName = EnsureValidFieldName(whereParams.FieldName, whereParams.IsNestedPath);
-            NegateIfNeeded(whereParams.FieldName);
+        appendOperatorIfNeeded(whereTokens);
 
-            WhereTokens.AddLast(WhereToken.EndsWith(whereParams.FieldName, AddQueryParameter(transformToEqualValue)));
-        }
+        whereParams.setFieldName(ensureValidFieldName(whereParams.getFieldName(), whereParams.isNestedPath()));
+        negateIfNeeded(whereParams.getFieldName());
+
+        whereTokens.add(WhereToken.endsWith(whereParams.getFieldName(), addQueryParameter(transformToEqualValue), false));
+    }
+
+    /* TODO:
 
         /// <summary>
         ///   Matches fields where the value is between the specified start and end, exclusive
@@ -679,19 +667,20 @@ If you really want to do in memory filtering on the data returned from the query
             WhereTokens.AddLast(WhereToken.LessThanOrEqual(fieldName, AddQueryParameter(value == null ? "NULL" : TransformValue(new WhereParams { Value = value, FieldName = fieldName }, forRange: true)), exact));
         }
 
-        /// <summary>
-        ///   Add an AND to the query
-        /// </summary>
-        public void AndAlso()
-        {
-            if (WhereTokens.Last == null)
-                return;
-
-            if (WhereTokens.Last.Value is QueryOperatorToken)
-                throw new InvalidOperationException("Cannot add AND, previous token was already an operator token.");
-
-            WhereTokens.AddLast(QueryOperatorToken.And);
+    */
+    protected void _andAlso() {
+        if (whereTokens.isEmpty()) {
+            return;
         }
+
+        if (whereTokens.get(whereTokens.size() - 1) instanceof QueryOperatorToken) {
+            throw new IllegalStateException("Cannot add AND, previous token was already an operator token.");
+        }
+
+        whereTokens.add(QueryOperatorToken.AND);
+
+    }
+    /* TODO
 
         /// <summary>
         ///   Add an OR to the query
@@ -895,7 +884,9 @@ If you really want to do in memory filtering on the data returned from the query
                 CutoffEtag = CutoffEtag,
                 WaitForNonStaleResults = TheWaitForNonStaleResults,
                 WaitForNonStaleResultsTimeout = Timeout,
-                QueryParameters = QueryParameters,
+                */
+        indexQuery.setQueryParameters(queryParameters);
+        /* TODO
                 DisableCaching = DisableCaching,
                 ShowTimings = ShowQueryTimings,
                 ExplainScores = ShouldExplainScores
@@ -944,9 +935,9 @@ If you really want to do in memory filtering on the data returned from the query
 
 //TODO        buildDeclare(queryText)
         buildFrom(queryText);
+        //TODO: BuildGroupBy(queryText);
+        buildWhere(queryText);
         /* TODO
-        BuildGroupBy(queryText);
-            BuildWhere(queryText);
             BuildOrderBy(queryText);
             BuildLoad(queryText);
             BuildSelect(queryText);
@@ -1013,16 +1004,16 @@ If you really want to do in memory filtering on the data returned from the query
                 throw new InvalidOperationException("Cannot add INTERSECT at this point.");
         }
 
-        public void WhereExists(string fieldName)
-        {
-            fieldName = EnsureValidFieldName(fieldName, isNestedPath: false);
+*/
+    protected void _whereExists(String fieldName) {
+        fieldName = ensureValidFieldName(fieldName, false);
 
-            AppendOperatorIfNeeded(WhereTokens);
-            NegateIfNeeded(fieldName);
+        appendOperatorIfNeeded(whereTokens);
+        negateIfNeeded(fieldName);
 
-            WhereTokens.AddLast(WhereToken.Exists(fieldName));
-        }
-
+        whereTokens.add(WhereToken.exists(fieldName));
+    }
+    /*
         public void ContainsAny(string fieldName, IEnumerable<object> values)
         {
             fieldName = EnsureValidFieldName(fieldName, isNestedPath: false);
@@ -1133,6 +1124,7 @@ If you really want to do in memory filtering on the data returned from the query
     private void buildFrom(StringBuilder writer) {
         fromToken.writeTo(writer);
     }
+
     /*
         private void BuildDeclare(StringBuilder writer)
         {
@@ -1154,31 +1146,31 @@ If you really want to do in memory filtering on the data returned from the query
             }
         }
 
-        private void BuildWhere(StringBuilder writer)
-        {
-            if (WhereTokens.Count == 0)
-                return;
-
-            writer
-                .Append(" WHERE ");
-
-            if (IsIntersect)
-                writer.Append("intersect(");
-
-            var token = WhereTokens.First;
-            while (token != null)
-            {
-                AddSpaceIfNeeded(token.Previous?.Value, token.Value, writer);
-
-                token.Value.WriteTo(writer);
-
-                token = token.Next;
-            }
-
-            if (IsIntersect)
-                writer.Append(") ");
+*/
+    private void buildWhere(StringBuilder writer) {
+        if (whereTokens.isEmpty()) {
+            return;
         }
 
+        writer
+                .append(" WHERE ");
+
+        if (isIntersect) {
+            writer
+                    .append("intersect(");
+        }
+
+        for (int i = 0; i < whereTokens.size(); i++) {
+            addSpaceIfNeeded(i > 0 ? whereTokens.get(i - 1) : null, whereTokens.get(i), writer);
+            whereTokens.get(i).writeTo(writer);
+        }
+
+        if (isIntersect) {
+            writer.append(") ");
+        }
+    }
+
+    /* TODO
         private void BuildGroupBy(StringBuilder writer)
         {
             if (GroupByTokens.Count == 0)
@@ -1219,47 +1211,54 @@ If you really want to do in memory filtering on the data returned from the query
             }
 
         }
-
-        private static void AddSpaceIfNeeded(QueryToken previousToken, QueryToken currentToken, StringBuilder writer)
-        {
-            if (previousToken == null)
-                return;
-
-            if (previousToken is OpenSubclauseToken || currentToken is CloseSubclauseToken || currentToken is IntersectMarkerToken)
-                return;
-
-            writer.Append(" ");
+        */
+    private static void addSpaceIfNeeded(QueryToken previousToken, QueryToken currentToken, StringBuilder writer) {
+        if (previousToken == null) {
+            return;
         }
 
+        if (previousToken instanceof OpenSubclauseToken || currentToken instanceof CloseSubclauseToken || currentToken instanceof IntersectMarkerToken) {
+            return;
+        }
+        writer.append(" ");
+    }
+
+    private void appendOperatorIfNeeded(List<QueryToken> tokens) {
+        assertNoRawQuery();
+
+        if (tokens.isEmpty()) {
+            return;
+        }
+
+        QueryToken lastToken = tokens.get(tokens.size() - 1);
+        if (!(lastToken instanceof WhereToken) && !(lastToken instanceof CloseSubclauseToken)) {
+            return;
+        }
+
+        WhereToken lastWhere = null;
+
+        for (int i = tokens.size() - 1; i >= 0; i--) {
+            if (tokens.get(i) instanceof WhereToken) {
+                lastWhere = (WhereToken) tokens.get(i);
+                break;
+            }
+        }
+
+        QueryOperatorToken token = defaultOperatator == QueryOperator.AND ? QueryOperatorToken.AND : QueryOperatorToken.OR;
+
+        if (lastWhere != null && lastWhere.getSearchOperator() != null) {
+            token = QueryOperatorToken.OR; // default to OR operator after search if AND was not specified explicitly
+        }
+
+        tokens.add(token);
+    }
+    /* TODO
         private void AppendOperatorIfNeeded(LinkedList<QueryToken> tokens)
         {
-            AssertNoRawQuery();
-
-            if (tokens.Count == 0)
-                return;
-
-            var lastToken = tokens.Last.Value;
-
-            if (lastToken is WhereToken == false && lastToken is CloseSubclauseToken == false)
-                return;
-
-            WhereToken lastWhere = null;
-
-            var current = tokens.Last;
-            while (current != null)
-            {
-                lastWhere = current.Value as WhereToken;
-
-                if (lastWhere != null)
-                    break;
-
-                current = current.Previous;
-            }
-
             var token = DefaultOperator == QueryOperator.And ? QueryOperatorToken.And : QueryOperatorToken.Or;
 
             if (lastWhere?.SearchOperator != null)
-                token = QueryOperatorToken.Or; // default to OR operator after search if AND was not specified explicitly
+                token = QueryOperatorToken.Or;
 
             tokens.AddLast(token);
         }
@@ -1287,26 +1286,28 @@ If you really want to do in memory filtering on the data returned from the query
                 yield return TransformValue(nestedWhereParams);
             }
         }
+        */
 
-        private void NegateIfNeeded(string fieldName)
-        {
-            if (Negate == false)
-                return;
-
-            Negate = false;
-
-            if (WhereTokens.Count == 0 || WhereTokens.Last.Value is OpenSubclauseToken)
-            {
-                if (fieldName != null)
-                    WhereExists(fieldName);
-                else
-                    WhereTrue();
-
-                AndAlso();
-            }
-
-            WhereTokens.AddLast(NegateToken.Instance);
+    private void negateIfNeeded(String fieldName) {
+        if (!negate) {
+            return;
         }
+
+        negate = false;
+
+        if (whereTokens.isEmpty() || whereTokens.get(whereTokens.size() - 1) instanceof OpenSubclauseToken) {
+            if (fieldName != null) {
+                _whereExists(fieldName);
+            } else {
+                whereTrue();
+            }
+            _andAlso();
+        }
+
+        whereTokens.add(NegateToken.INSTANCE);
+    }
+
+    /* TODO
 
         private static IEnumerable<object> UnpackEnumerable(IEnumerable items)
         {
@@ -1326,13 +1327,14 @@ If you really want to do in memory filtering on the data returned from the query
                 }
             }
         }
+*/
+    private String ensureValidFieldName(String fieldName, boolean isNestedPath) {
+        if (theSession == null || theSession.getConventions() == null || isNestedPath || isGroupBy) {
+            return QueryFieldUtil.escapeIfNecessary(fieldName);
+        }
 
-        private string EnsureValidFieldName(string fieldName, bool isNestedPath)
-        {
-            if (TheSession?.Conventions == null || isNestedPath || IsGroupBy)
-                return QueryFieldUtil.EscapeIfNecessary(fieldName);
-
-            foreach (var rootType in RootTypes)
+        /* TODO
+          foreach (var rootType in RootTypes)
             {
                 var identityProperty = TheSession.Conventions.GetIdentityProperty(rootType);
                 if (identityProperty != null && identityProperty.Name == fieldName)
@@ -1340,9 +1342,12 @@ If you really want to do in memory filtering on the data returned from the query
                     return Constants.Documents.Indexing.Fields.DocumentIdFieldName;
                 }
             }
+         */
 
-            return QueryFieldUtil.EscapeIfNecessary(fieldName);
-        }
+        return QueryFieldUtil.escapeIfNecessary(fieldName);
+
+    }
+    /* TODO
 
         private static Func<object, string> GetImplicitStringConversion(Type type)
         {
@@ -1375,47 +1380,62 @@ If you really want to do in memory filtering on the data returned from the query
             };
             return func;
         }
+        */
 
-        private object TransformValue(WhereParams whereParams, bool forRange = false)
-        {
-            if (whereParams.Value == null)
-                return null;
-            if (Equals(whereParams.Value, string.Empty))
-                return string.Empty;
+    private Object transformValue(WhereParams whereParams) {
+        return transformValue(whereParams, false);
+    }
 
-            var type = whereParams.Value.GetType().GetNonNullableType();
+    private Object transformValue(WhereParams whereParams, boolean forRange) {
+        if (whereParams.getValue() == null) {
+            return null;
+        }
 
-            if (type == typeof(DateTime) || type == typeof(DateTimeOffset))
-                return whereParams.Value;
-            if (type == typeof(string))
-                return (string)whereParams.Value;
-            if (type == typeof(int))
-                return whereParams.Value;
-            if (type == typeof(long))
-                return whereParams.Value;
-            if (type == typeof(decimal))
-                return whereParams.Value;
-            if (type == typeof(double))
-                return whereParams.Value;
-            if (whereParams.Value is TimeSpan)
-            {
-                if (forRange)
-                    return ((TimeSpan)whereParams.Value).Ticks;
+        if ("".equals(whereParams.getValue())) {
+            return "";
+        }
 
-                return whereParams.Value;
-            }
-            if (whereParams.Value is float)
-                return whereParams.Value;
-            if (whereParams.Value is string)
-                return whereParams.Value;
-            if (whereParams.Value is bool)
-                return whereParams.Value;
-            if (whereParams.Value is Guid)
-                return whereParams.Value;
-            if (type.GetTypeInfo().IsEnum)
-                return whereParams.Value;
+        Class<?> clazz = whereParams.getValue().getClass();
+        if (Date.class.equals(clazz)) {
+            return whereParams.getValue();
+        }
 
-            if (whereParams.Value is ValueType)
+        if (String.class.equals(clazz)) {
+            return whereParams.getValue();
+        }
+
+        if (Integer.class.equals(clazz)) {
+            return whereParams.getValue();
+        }
+
+        if (Long.class.equals(clazz)) {
+            return whereParams.getValue();
+        }
+
+        if (Float.class.equals(clazz)) {
+            return whereParams.getValue();
+        }
+
+        if (Double.class.equals(clazz)) {
+            return whereParams.getValue();
+        }
+
+        //TODO timespan - duration ?
+
+        if (String.class.equals(clazz)) {
+            return whereParams.getValue();
+        }
+
+        if (Boolean.class.equals(clazz)) {
+            return whereParams.getValue();
+        }
+
+        if (clazz.isEnum()) {
+            return whereParams.getValue();
+        }
+
+        /* TODO
+          if (whereParams.Value is ValueType)
                 return Convert.ToString(whereParams.Value, CultureInfo.InvariantCulture);
 
             var result = GetImplicitStringConversion(whereParams.Value.GetType());
@@ -1425,15 +1445,18 @@ If you really want to do in memory filtering on the data returned from the query
             if (_conventions.TryConvertValueForQuery(whereParams.FieldName, whereParams.Value, forRange, out var strVal))
                 return strVal;
 
-            return whereParams.Value;
-        }
+         */
+        return whereParams.getValue();
 
-        private string AddQueryParameter(object value)
-        {
-            var parameterName = $"p{QueryParameters.Count.ToInvariantString()}";
-            QueryParameters.Add(parameterName, value);
-            return parameterName;
-        }
+    }
+
+    private String addQueryParameter(Object value) {
+        String parameterName = "p" + queryParameters.size();
+        queryParameters.put(parameterName, value);
+        return parameterName;
+    }
+
+    /* TODO
 
         protected void UpdateFieldsToFetchToken(FieldsToFetchToken fieldsToFetch)
         {

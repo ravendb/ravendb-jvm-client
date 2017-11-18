@@ -9,7 +9,9 @@ import com.fasterxml.jackson.databind.cfg.MapperConfig;
 import com.fasterxml.jackson.databind.introspect.AnnotatedField;
 import com.fasterxml.jackson.databind.introspect.AnnotatedMethod;
 import com.fasterxml.jackson.databind.introspect.AnnotatedParameter;
+import net.ravendb.client.documents.conventions.DocumentConventions;
 import net.ravendb.client.documents.queries.IndexQuery;
+import net.ravendb.client.documents.session.EntityToJson;
 import net.ravendb.client.primitives.NetDateFormat;
 import net.ravendb.client.primitives.SharpAwareJacksonAnnotationIntrospector;
 import org.apache.commons.lang3.StringUtils;
@@ -67,7 +69,7 @@ public class JsonExtensions {
         }
     }
 
-    public static void writeIndexQuery(JsonGenerator generator, IndexQuery query) throws IOException {
+    public static void writeIndexQuery(JsonGenerator generator, DocumentConventions conventions, IndexQuery query) throws IOException {
         generator.writeStartObject();
 
         generator.writeStringField("Query", query.getQuery());
@@ -132,14 +134,13 @@ public class JsonExtensions {
                 writer.WriteBool(query.SkipDuplicateChecking);
                 writer.WriteComma();
             }
-
-            writer.WritePropertyName(nameof(query.QueryParameters));
-            if (query.QueryParameters != null)
-                writer.WriteObject(EntityToBlittable.ConvertEntityToBlittable(query.QueryParameters, conventions, context));
-            else
-                writer.WriteNull();
-
-         */
+*/
+        generator.writeFieldName("QueryParameters");
+        if (query.getQueryParameters() != null) {
+            generator.writeObject(EntityToJson.convertEntityToJson(query.getQueryParameters(), conventions));
+        } else {
+            generator.writeNull();
+        }
 
         generator.writeEndObject();
     }

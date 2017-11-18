@@ -44,38 +44,51 @@ public class QueryTest extends RemoteTestBase {
         }
     }
 
-    /* TODO
+    @Test
+    public void queryWithWhereClause() throws IOException {
+        try (IDocumentStore store = getDocumentStore()) {
+            try (IDocumentSession session = store.openSession()) {
 
-        [Fact]
-        public void Query_With_Where_Clause()
-        {
-            using (var store = GetDocumentStore())
-            {
-                using (var newSession = store.OpenSession())
-                {
-                    newSession.Store(new User { Name = "John" }, "users/1");
-                    newSession.Store(new User { Name = "Jane" }, "users/2");
-                    newSession.Store(new User { Name = "Tarzan" }, "users/3");
-                    newSession.SaveChanges();
+                User user1 = new User();
+                user1.setName("John");
 
-                    var queryResult = newSession.Query<User>()
-                        .Where(x => x.Name.StartsWith("J"))
-                        .ToList();
+                User user2 = new User();
+                user2.setName("Jane");
 
-                    var queryResult2 = newSession.Query<User>()
-                        .Where(x => x.Name.Equals("Tarzan"))
-                        .ToList();
+                User user3 = new User();
+                user3.setName("Tarzan");
 
-                    var queryResult3 = newSession.Query<User>()
-                        .Where(x => x.Name.EndsWith("n"))
-                        .ToList();
+                session.store(user1, "users/1");
+                session.store(user2, "users/2");
+                session.store(user3, "users/3");
+                session.saveChanges();
 
-                    Assert.Equal(queryResult.Count, 2);
-                    Assert.Equal(queryResult2.Count, 1);
-                    Assert.Equal(queryResult3.Count, 2);
-                }
+                List<User> queryResult = session.advanced().documentQuery(User.class, null, "users", false)
+                        .whereStartsWith("Name", "J")
+                        .toList();
+
+                List<User> queryResult2 = session.advanced().documentQuery(User.class, null, "users", false)
+                        .whereEquals("Name", "Tarzan")
+                        .toList();
+
+                List<User> queryResult3 = session.advanced().documentQuery(User.class, null, "users", false)
+                        .whereEndsWith("Name", "n")
+                        .toList();
+
+                assertThat(queryResult)
+                        .hasSize(2);
+
+                assertThat(queryResult2)
+                        .hasSize(1);
+
+                assertThat(queryResult3)
+                        .hasSize(2);
             }
         }
+    }
+
+    /* TODO
+
 
         [Fact]
         public void Query_With_Customize()

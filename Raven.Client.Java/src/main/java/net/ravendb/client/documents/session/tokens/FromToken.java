@@ -1,6 +1,7 @@
 package net.ravendb.client.documents.session.tokens;
 
-import java.util.stream.StreamSupport;
+import java.util.Arrays;
+import java.util.List;
 
 public class FromToken extends QueryToken {
 
@@ -40,7 +41,7 @@ public class FromToken extends QueryToken {
         return new FromToken(indexName, collectionName, alias);
     }
 
-    private static final char[] WHITE_SPACE_CHARS = new char[] { ' ', '\t', '\r', '\n' }; //TODO: \v ?
+    private static final List<Character> WHITE_SPACE_CHARS = Arrays.asList( new Character[] { ' ', '\t', '\r', '\n' }); //TODO: \v ?
 
     @Override
     public void writeTo(StringBuilder writer) {
@@ -51,19 +52,15 @@ public class FromToken extends QueryToken {
         if (dynamic) {
             writer.append("FROM ");
 
-            /* TODO:
-            if(CollectionName.IndexOfAny(_whiteSpaceChars) != -1)
-                {
-                    if (CollectionName.IndexOf('"') != -1)
-                    {
-                        ThrowInvalidcollectionName();
-                    }
-                    writer.Append('"').Append(CollectionName).Append('"');
+            if (collectionName.chars().anyMatch(x -> WHITE_SPACE_CHARS.contains(x))) {
+                if (collectionName.indexOf("\"") != -1) {
+                    throwInvalidCollectionName();
                 }
-             */
 
-
-            writeField(writer, collectionName); //TODO wrap this in else
+                writer.append('"').append(collectionName).append('"');
+            } else {
+                writeField(writer, collectionName);
+            }
 
             if (alias != null) {
                 writer.append(" as ").append(alias);

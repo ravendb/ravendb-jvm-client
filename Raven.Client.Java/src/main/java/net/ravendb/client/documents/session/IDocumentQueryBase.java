@@ -358,12 +358,14 @@ If you really want to do in memory filtering on the data returned from the query
         /// <param name="end">The end.</param>
         TSelf WhereBetween<TValue>(Expression<Func<T, TValue>> propertySelector, TValue start, TValue end, bool exact = false);
 
-        /// <summary>
-        ///     Matches fields which ends with the specified value.
-        /// </summary>
-        /// <param name="fieldName">Name of the field.</param>
-        /// <param name="value">The value.</param>
-        TSelf WhereEndsWith(string fieldName, object value);
+*/
+
+    /**
+     * Matches fields which ends with the specified value.
+     */
+    TSelf whereEndsWith(String fieldName, Object value);
+
+    /* TODO
 
         /// <summary>
         ///     Matches fields which ends with the specified value.
@@ -372,11 +374,19 @@ If you really want to do in memory filtering on the data returned from the query
         /// <param name="value">The value.</param>
         TSelf WhereEndsWith<TValue>(Expression<Func<T, TValue>> propertySelector, TValue value);
 
-        /// <summary>
-        ///     Matches value
-        /// </summary>
-        TSelf WhereEquals(string fieldName, object value, bool exact = false);
+*/
 
+    /**
+     * Matches value
+     */
+    TSelf whereEquals(String fieldName, Object value);
+
+    /**
+     * Matches value
+     */
+    TSelf whereEquals(String fieldName, Object value, boolean exact);
+
+    /* TODO
         /// <summary>
         ///     Matches value
         /// </summary>
@@ -467,14 +477,16 @@ If you really want to do in memory filtering on the data returned from the query
         /// <param name="propertySelector">Property selector for the field.</param>
         /// <param name="value">The value.</param>
         TSelf WhereLessThanOrEqual<TValue>(Expression<Func<T, TValue>> propertySelector, TValue value, bool exact = false);
+*/
 
-        /// <summary>
-        ///     Matches fields which starts with the specified value.
-        /// </summary>
-        /// <param name="fieldName">Name of the field.</param>
-        /// <param name="value">The value.</param>
-        TSelf WhereStartsWith(string fieldName, object value);
+    /**
+     * Matches fields which starts with the specified value.
+     * @param fieldName Name of the field.
+     * @param value The value.
+     */
+    TSelf whereStartsWith(String fieldName, Object value);
 
+    /*
         /// <summary>
         ///     Matches fields which starts with the specified value.
         /// </summary>
