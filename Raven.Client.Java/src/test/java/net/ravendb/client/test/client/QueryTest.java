@@ -2,7 +2,9 @@ package net.ravendb.client.test.client;
 
 import net.ravendb.client.RemoteTestBase;
 import net.ravendb.client.documents.IDocumentStore;
+import net.ravendb.client.documents.indexes.AbstractIndexCreationTask;
 import net.ravendb.client.documents.session.IDocumentSession;
+import net.ravendb.client.documents.session.OrderingType;
 import net.ravendb.client.infrastructure.entities.User;
 import net.ravendb.client.primitives.CleanCloseable;
 import org.assertj.core.api.Assertions;
@@ -87,57 +89,116 @@ public class QueryTest extends RemoteTestBase {
         }
     }
 
-    /* TODO
+    @Test
+    public void queryWithCustomize() throws IOException {
+        try (IDocumentStore store = getDocumentStore()) {
 
+            new DogsIndex().execute(store);
 
-        [Fact]
-        public void Query_With_Customize()
-        {
-            using (var store = GetDocumentStore())
-            {
-                new DogsIndex().Execute(store);
-                using (var newSession = store.OpenSession())
-                {
-                    newSession.Store(new Dog { Name = "Snoopy", Breed = "Beagle", Color = "White", Age = 6, IsVaccinated = true }, "dogs/1");
-                    newSession.Store(new Dog { Name = "Brian", Breed = "Labrador", Color = "White", Age = 12, IsVaccinated = false }, "dogs/2");
-                    newSession.Store(new Dog { Name = "Django", Breed = "Jack Russel", Color = "Black", Age = 3, IsVaccinated = true }, "dogs/3");
-                    newSession.Store(new Dog { Name = "Beethoven", Breed = "St. Bernard", Color = "Brown", Age = 1, IsVaccinated = false }, "dogs/4");
-                    newSession.Store(new Dog { Name = "Scooby Doo", Breed = "Great Dane", Color = "Brown", Age = 0, IsVaccinated = false }, "dogs/5");
-                    newSession.Store(new Dog { Name = "Old Yeller", Breed = "Black Mouth Cur", Color = "White", Age = 2, IsVaccinated = true }, "dogs/6");
-                    newSession.Store(new Dog { Name = "Benji", Breed = "Mixed", Color = "White", Age = 0, IsVaccinated = false }, "dogs/7");
-                    newSession.Store(new Dog { Name = "Lassie", Breed = "Collie", Color = "Brown", Age = 6, IsVaccinated = true }, "dogs/8");
+            try (IDocumentSession newSession = store.openSession()) {
+                Dog dog1 = new Dog();
+                dog1.setName("Snoopy");
+                dog1.setBreed("Beagle");
+                dog1.setColor("White");
+                dog1.setAge(6);
+                dog1.setVaccinated(true);
 
-                    newSession.SaveChanges();
-                }
-                using (var newSession = store.OpenSession())
-                {
-                    List<DogsIndex.Result> queryResult;
-                    try
-                    {
-                        queryResult = newSession.Query<DogsIndex.Result, DogsIndex>()
-                            .Customize(x => x.WaitForNonStaleResults())
-                            .OrderBy(x => x.Name, OrderingType.AlphaNumeric)
-                            .Where(x => x.Age > 2)
-                            .ToList();
-                    }
-                    catch (Exception e)
-                    {
-                        Console.WriteLine(e);
-                        for (int i = 0; i < 3; i++)
-                        {
-                            Console.Beep();
-                        }
-                        Console.ReadLine();
-                        throw;
-                    }
+                newSession.store(dog1, "docs/1");
 
-                    Assert.Equal(queryResult[0].Name, "Brian");
-                    Assert.Equal(queryResult[1].Name, "Django");
-                    Assert.Equal(queryResult[2].Name, "Lassie");
-                    Assert.Equal(queryResult[3].Name, "Snoopy");
-                }
+                Dog dog2 = new Dog();
+                dog2.setName("Brian");
+                dog2.setBreed("Labrador");
+                dog2.setColor("White");
+                dog2.setAge(12);
+                dog2.setVaccinated(false);
+
+                newSession.store(dog2, "docs/2");
+
+                Dog dog3 = new Dog();
+                dog3.setName("Django");
+                dog3.setBreed("Jack Russel");
+                dog3.setColor("Black");
+                dog3.setAge(3);
+                dog3.setVaccinated(true);
+
+                newSession.store(dog3, "docs/3");
+
+                Dog dog4 = new Dog();
+                dog4.setName("Beethoven");
+                dog4.setBreed("St. Bernard");
+                dog4.setColor("Brown");
+                dog4.setAge(1);
+                dog4.setVaccinated(false);
+
+                newSession.store(dog4, "docs/4");
+
+                Dog dog5 = new Dog();
+                dog5.setName("Scooby Doo");
+                dog5.setBreed("Great Dane");
+                dog5.setColor("Brown");
+                dog5.setAge(0);
+                dog5.setVaccinated(false);
+
+                newSession.store(dog5, "docs/5");
+
+                Dog dog6 = new Dog();
+                dog6.setName("Old Yeller");
+                dog6.setBreed("Black Mouth Cur");
+                dog6.setColor("White");
+                dog6.setAge(2);
+                dog6.setVaccinated(true);
+
+                newSession.store(dog6, "docs/6");
+
+                Dog dog7 = new Dog();
+                dog7.setName("Benji");
+                dog7.setBreed("Mixed");
+                dog7.setColor("White");
+                dog7.setAge(0);
+                dog7.setVaccinated(false);
+
+                newSession.store(dog7, "docs/7");
+
+                Dog dog8 = new Dog();
+                dog8.setName("Lassie");
+                dog8.setBreed("Collie");
+                dog8.setColor("Brown");
+                dog8.setAge(6);
+                dog8.setVaccinated(true);
+
+                newSession.store(dog8, "docs/8");
+
+                newSession.saveChanges();
+            }
+
+            try (IDocumentSession newSession = store.openSession()) {
+
+                List<DogsIndex.Result> queryResult = newSession.advanced()
+                        .documentQuery(DogsIndex.Result.class, new DogsIndex().getIndexName(), null, false)
+                        .waitForNonStaleResults()
+                        .orderBy("Name", OrderingType.ALPHA_NUMERIC)
+                        .whereGreaterThan("Age", 2)
+                        .toList();
+
+                assertThat(queryResult)
+                        .hasSize(4);
+
+                assertThat(queryResult.get(0).getName())
+                        .isEqualTo("Brian");
+
+                assertThat(queryResult.get(1).getName())
+                        .isEqualTo("Django");
+
+                assertThat(queryResult.get(2).getName())
+                        .isEqualTo("Lassie");
+
+                assertThat(queryResult.get(3).getName())
+                        .isEqualTo("Snoopy");
             }
         }
+    }
+
+    /* TODO
 
         [Fact]
         public void Query_Long_Request()
@@ -207,37 +268,98 @@ public class QueryTest extends RemoteTestBase {
                 }
             }
         }
+        */
 
-        public class Dog
-        {
-            public string Id { get; set; }
-            public string Name { get; set; }
-            public string Breed { get; set; }
-            public string Color { get; set; }
-            public int Age { get; set; }
-            public bool IsVaccinated { get; set; }
+    public static class Dog {
+        private String id;
+        private String name;
+        private String breed;
+        private String color;
+        private int age;
+        private boolean isVaccinated;
+
+        public String getId() {
+            return id;
         }
 
-        public class DogsIndex : AbstractIndexCreationTask<Dog>
-        {
-            public class Result
-            {
-                public string Name { get; set; }
-                public int Age { get; set; }
-                public bool IsVaccinated { get; set; }
-            }
+        public void setId(String id) {
+            this.id = id;
+        }
 
-            public DogsIndex()
-            {
-                Map = dogs => from dog in dogs
-                              select new
-                              {
-                                  dog.Name,
-                                  dog.Age,
-                                  dog.IsVaccinated
-                              };
-            }
+        public String getName() {
+            return name;
+        }
+
+        public void setName(String name) {
+            this.name = name;
+        }
+
+        public String getBreed() {
+            return breed;
+        }
+
+        public void setBreed(String breed) {
+            this.breed = breed;
+        }
+
+        public String getColor() {
+            return color;
+        }
+
+        public void setColor(String color) {
+            this.color = color;
+        }
+
+        public int getAge() {
+            return age;
+        }
+
+        public void setAge(int age) {
+            this.age = age;
+        }
+
+        public boolean isVaccinated() {
+            return isVaccinated;
+        }
+
+        public void setVaccinated(boolean vaccinated) {
+            isVaccinated = vaccinated;
         }
     }
-     */
+
+    public static class DogsIndex extends AbstractIndexCreationTask {
+        public static class Result {
+            private String name;
+            private int age;
+            private boolean isVaccinated;
+
+            public String getName() {
+                return name;
+            }
+
+            public void setName(String name) {
+                this.name = name;
+            }
+
+            public int getAge() {
+                return age;
+            }
+
+            public void setAge(int age) {
+                this.age = age;
+            }
+
+            public boolean isVaccinated() {
+                return isVaccinated;
+            }
+
+            public void setVaccinated(boolean vaccinated) {
+                isVaccinated = vaccinated;
+            }
+        }
+
+        public DogsIndex() {
+            map = "from dog in docs.dogs select new { dog.Name, dog.Age, dog.IsVaccinated }";
+        }
+    }
 }

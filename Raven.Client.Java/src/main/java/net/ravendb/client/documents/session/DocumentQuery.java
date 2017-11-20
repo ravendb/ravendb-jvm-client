@@ -1,9 +1,20 @@
 package net.ravendb.client.documents.session;
 
+import net.ravendb.client.documents.session.tokens.DeclareToken;
+import net.ravendb.client.documents.session.tokens.LoadToken;
+
+import java.time.Duration;
+import java.util.List;
+
 public class DocumentQuery<T> extends AbstractDocumentQuery<T, DocumentQuery<T>> implements IDocumentQuery<T> {
 
     public DocumentQuery(Class<T> clazz, InMemoryDocumentSessionOperations session, String indexName, String collectionName, boolean isGroupBy) {
-        super(clazz, session, indexName, collectionName, isGroupBy); //TODO:DeclareToken declareToken = null, List<LoadToken> loadTokens = null, string fromAlias = null
+        this(clazz, session, indexName, collectionName, isGroupBy, null, null, null);
+    }
+
+    public DocumentQuery(Class<T> clazz, InMemoryDocumentSessionOperations session, String indexName, String collectionName, boolean isGroupBy,
+                         DeclareToken declareToken, List<LoadToken> loadTokens, String fromAlias) {
+        super(clazz, session, indexName, collectionName, isGroupBy, declareToken, loadTokens, fromAlias);
     }
 
     /* TODO
@@ -57,13 +68,14 @@ public class DocumentQuery<T> extends AbstractDocumentQuery<T, DocumentQuery<T>>
         {
             return CreateDocumentQueryInternal<TProjection>(queryData);
         }
+*/
 
-        /// <inheritdoc />
-        IDocumentQuery<T> IQueryBase<T, IDocumentQuery<T>>.WaitForNonStaleResults(TimeSpan waitTimeout)
-        {
-            WaitForNonStaleResults(waitTimeout);
-            return this;
-        }
+    public IDocumentQuery<T> waitForNonStaleResults(Duration waitTimeout) {
+        _waitForNonStaleResults(waitTimeout);
+        return this;
+    }
+
+    /* TODO
 
         /// <inheritdoc />
         IRawDocumentQuery<T> IQueryBase<T, IRawDocumentQuery<T>>.WaitForNonStaleResults(TimeSpan waitTimeout)
@@ -401,13 +413,31 @@ public class DocumentQuery<T> extends AbstractDocumentQuery<T, DocumentQuery<T>>
             WhereBetween(GetMemberQueryPath(propertySelector.Body), start, end, exact);
             return this;
         }
+*/
 
-        /// <inheritdoc />
-        IDocumentQuery<T> IDocumentQueryBase<T, IDocumentQuery<T>>.WhereGreaterThan(string fieldName, object value, bool exact)
-        {
-            WhereGreaterThan(fieldName, value, exact);
-            return this;
-        }
+    @Override
+    public IDocumentQuery<T> whereGreaterThan(String fieldName, Object value) {
+        return whereGreaterThan(fieldName, value, false);
+    }
+
+    @Override
+    public IDocumentQuery<T> whereGreaterThan(String fieldName, Object value, boolean exact) {
+        _whereGreaterThan(fieldName, value, exact);
+        return this;
+    }
+
+    @Override
+    public IDocumentQuery<T> whereGreaterThanOrEqual(String fieldName, Object value) {
+        return whereGreaterThanOrEqual(fieldName, value, false);
+    }
+
+    @Override
+    public IDocumentQuery<T> whereGreaterThanOrEqual(String fieldName, Object value, boolean exact) {
+        _whereGreaterThanOrEqual(fieldName, value, exact);
+        return this;
+    }
+
+    /* TODO
 
         /// <inheritdoc />
         public IDocumentQuery<T> WhereGreaterThan<TValue>(Expression<Func<T, TValue>> propertySelector, TValue value, bool exact = false)
@@ -415,14 +445,6 @@ public class DocumentQuery<T> extends AbstractDocumentQuery<T, DocumentQuery<T>>
             WhereGreaterThan(GetMemberQueryPath(propertySelector.Body), value, exact);
             return this;
         }
-
-        /// <inheritdoc />
-        IDocumentQuery<T> IDocumentQueryBase<T, IDocumentQuery<T>>.WhereGreaterThanOrEqual(string fieldName, object value, bool exact)
-        {
-            WhereGreaterThanOrEqual(fieldName, value, exact);
-            return this;
-        }
-
         /// <inheritdoc />
         public IDocumentQuery<T> WhereGreaterThanOrEqual<TValue>(Expression<Func<T, TValue>> propertySelector, TValue value, bool exact = false)
         {
@@ -430,26 +452,34 @@ public class DocumentQuery<T> extends AbstractDocumentQuery<T, DocumentQuery<T>>
             return this;
         }
 
-        /// <inheritdoc />
-        IDocumentQuery<T> IDocumentQueryBase<T, IDocumentQuery<T>>.WhereLessThan(string fieldName, object value, bool exact)
-        {
-            WhereLessThan(fieldName, value, exact);
-            return this;
-        }
+    */
+    public IDocumentQuery<T> whereLessThan(String fieldName, Object value) {
+        return whereLessThan(fieldName, value, false);
+    }
+
+    public IDocumentQuery<T> whereLessThan(String fieldName, Object value, boolean exact) {
+        _whereLessThan(fieldName, value, exact);
+        return this;
+    }
+    /* TODO
 
         /// <inheritdoc />
         public IDocumentQuery<T> WhereLessThan<TValue>(Expression<Func<T, TValue>> propertySelector, TValue value, bool exact = false)
         {
             WhereLessThan(GetMemberQueryPath(propertySelector.Body), value, exact);
             return this;
-        }
+        }*/
 
-        /// <inheritdoc />
-        IDocumentQuery<T> IDocumentQueryBase<T, IDocumentQuery<T>>.WhereLessThanOrEqual(string fieldName, object value, bool exact)
-        {
-            WhereLessThanOrEqual(fieldName, value, exact);
-            return this;
-        }
+    public IDocumentQuery<T> whereLessThanOrEqual(String fieldName, Object value) {
+        return whereLessThanOrEqual(fieldName, value, false);
+    }
+
+    public IDocumentQuery<T> whereLessThanOrEqual(String fieldName, Object value, boolean exact) {
+        _whereLessThanOrEqual(fieldName, value, exact);
+        return this;
+    }
+
+    /* TODO
 
         /// <inheritdoc />
         public IDocumentQuery<T> WhereLessThanOrEqual<TValue>(Expression<Func<T, TValue>> propertySelector, TValue value, bool exact = false)
@@ -547,13 +577,18 @@ public class DocumentQuery<T> extends AbstractDocumentQuery<T, DocumentQuery<T>>
         {
             return CreateDocumentQueryInternal<TResult>();
         }
+*/
 
-        /// <inheritdoc />
-        IDocumentQuery<T> IDocumentQueryBase<T, IDocumentQuery<T>>.OrderBy(string field, OrderingType ordering)
-        {
-            OrderBy(field, ordering);
-            return this;
-        }
+    public IDocumentQuery<T> orderBy(String field) {
+        return orderBy(field, OrderingType.STRING);
+    }
+
+    public IDocumentQuery<T> orderBy(String field, OrderingType ordering) {
+        _orderBy(field, ordering);
+        return this;
+    }
+
+    /*
 
         /// <inheritdoc />
         public IDocumentQuery<T> OrderBy<TValue>(params Expression<Func<T, TValue>>[] propertySelectors)
@@ -564,13 +599,19 @@ public class DocumentQuery<T> extends AbstractDocumentQuery<T, DocumentQuery<T>>
             }
             return this;
         }
+        */
 
-        /// <inheritdoc />
-        IDocumentQuery<T> IDocumentQueryBase<T, IDocumentQuery<T>>.OrderByDescending(string field, OrderingType ordering)
-        {
-            OrderByDescending(field, ordering);
-            return this;
-        }
+    public IDocumentQuery<T> orderByDescending(String field) {
+        return orderByDescending(field, OrderingType.STRING);
+    }
+
+    public IDocumentQuery<T> orderByDescending(String field, OrderingType ordering) {
+        _orderByDescending(field, ordering);
+        return this;
+    }
+
+    /*TODO
+
 
         /// <inheritdoc />
         public IDocumentQuery<T> OrderByDescending<TValue>(params Expression<Func<T, TValue>>[] propertySelectors)
@@ -610,14 +651,12 @@ public class DocumentQuery<T> extends AbstractDocumentQuery<T, DocumentQuery<T>>
             WaitForNonStaleResultsAsOf(cutOffEtag, waitTimeout);
             return this;
         }
-
-        /// <inheritdoc />
-        IDocumentQuery<T> IQueryBase<T, IDocumentQuery<T>>.WaitForNonStaleResults()
-        {
-            WaitForNonStaleResults();
-            return this;
-        }
-
+*/
+    public IDocumentQuery<T> waitForNonStaleResults() {
+        _waitForNonStaleResults();
+        return this;
+    }
+    /* TODO:
         /// <inheritdoc />
         IRawDocumentQuery<T> IQueryBase<T, IRawDocumentQuery<T>>.WaitForNonStaleResults()
         {

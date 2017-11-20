@@ -78,27 +78,20 @@ public class JsonExtensions {
             generator.writeNumberField("PageSize", query.getPageSize());
         }
 
+        if (query.isWaitForNonStaleResults()) {
+            generator.writeBooleanField("WaitForNonStaleResults", query.isWaitForNonStaleResults());
+        }
+
+        if (query.getCutoffEtag() != null) {
+            generator.writeNumberField("CutoffEtag", query.getCutoffEtag());
+        }
+
+        if (query.getStart() > 0) {
+            generator.writeNumberField("Start", query.getStart());
+        }
+
         /* TODO
-          if (query.WaitForNonStaleResults)
-            {
-                writer.WritePropertyName(nameof(query.WaitForNonStaleResults));
-                writer.WriteBool(query.WaitForNonStaleResults);
-                writer.WriteComma();
-            }
 
-            if (query.CutoffEtag.HasValue)
-            {
-                writer.WritePropertyName(nameof(query.CutoffEtag));
-                writer.WriteInteger(query.CutoffEtag.Value);
-                writer.WriteComma();
-            }
-
-            if (query.Start > 0)
-            {
-                writer.WritePropertyName(nameof(query.Start));
-                writer.WriteInteger(query.Start);
-                writer.WriteComma();
-            }
 
             if (query.WaitForNonStaleResultsTimeout.HasValue)
             {

@@ -79,13 +79,15 @@ public interface IQueryBase<T, TSelf extends IQueryBase<T, TSelf>> {
         ///     Select the default operator to use for this query
         /// </summary>
         TSelf UsingDefaultOperator(QueryOperator queryOperator);
+*/
 
-        /// <summary>
-        ///     EXPERT ONLY: Instructs the query to wait for non stale results.
-        ///     This shouldn't be used outside of unit tests unless you are well aware of the implications
-        /// </summary>
-        TSelf WaitForNonStaleResults();
+    /**
+     * EXPERT ONLY: Instructs the query to wait for non stale results.
+     * This shouldn't be used outside of unit tests unless you are well aware of the implications
+     */
+    TSelf waitForNonStaleResults();
 
+    /*
         /// <summary>
         ///     EXPERT ONLY: Instructs the query to wait for non stale results for the specified wait timeout.
         ///     This shouldn't be used outside of unit tests unless you are well aware of the implications

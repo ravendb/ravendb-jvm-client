@@ -1,8 +1,12 @@
 package net.ravendb.client.documents;
 
 import net.ravendb.client.documents.conventions.DocumentConventions;
+import net.ravendb.client.documents.indexes.AbstractIndexCreationTask;
+import net.ravendb.client.documents.indexes.IndexCreation;
+import net.ravendb.client.documents.indexes.IndexDefinition;
 import net.ravendb.client.documents.operations.AdminOperationExecutor;
 import net.ravendb.client.documents.operations.OperationExecutor;
+import net.ravendb.client.documents.operations.indexes.PutIndexesOperation;
 import net.ravendb.client.documents.session.IDocumentSession;
 import net.ravendb.client.documents.session.SessionOptions;
 import net.ravendb.client.http.RequestExecutor;
@@ -12,6 +16,7 @@ import org.apache.commons.lang3.StringUtils;
 
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.List;
 
 /**
  *  Contains implementation of some IDocumentStore operations shared by DocumentStore implementations
@@ -52,44 +57,18 @@ public abstract class DocumentStoreBase implements IDocumentStore {
 
     public abstract IDocumentSession openSession(SessionOptions sessionOptions);
 
-    /* TODO
+    public void executeIndex(AbstractIndexCreationTask task) {
+        assertInitialized();
+        task.execute(this, conventions);
+    }
 
-        /// <summary>
-        /// Executes index creation.
-        /// </summary>
-        public virtual void ExecuteIndex(AbstractIndexCreationTask task)
-        {
-            AsyncHelpers.RunSync(() => ExecuteIndexAsync(task));
-        }
+    @Override
+    public void executeIndexes(List<AbstractIndexCreationTask> tasks) {
+        assertInitialized();
+        IndexDefinition[] indexesToAdd = IndexCreation.createIndexesToAdd(tasks, conventions);
 
-        /// <summary>
-        /// Executes index creation.
-        /// </summary>
-        public virtual Task ExecuteIndexAsync(AbstractIndexCreationTask task, CancellationToken token = default(CancellationToken))
-        {
-            AssertInitialized();
-            return task.ExecuteAsync(this, Conventions, token);
-        }
-
-        /// <summary>
-        /// Executes indexes creation.
-        /// </summary>
-        public virtual void ExecuteIndexes(IEnumerable<AbstractIndexCreationTask> tasks)
-        {
-            AsyncHelpers.RunSync(() => ExecuteIndexesAsync(tasks));
-        }
-
-        /// <summary>
-        /// Executes indexes creation.
-        /// </summary>
-        public virtual Task ExecuteIndexesAsync(IEnumerable<AbstractIndexCreationTask> tasks, CancellationToken token = default(CancellationToken))
-        {
-            AssertInitialized();
-            var indexesToAdd = IndexCreation.CreateIndexesToAdd(tasks, Conventions);
-
-            return Admin.SendAsync(new PutIndexesOperation(indexesToAdd), token);
-        }
-        */
+        admin().send(new PutIndexesOperation(indexesToAdd));
+    }
 
     private DocumentConventions conventions;
 

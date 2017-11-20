@@ -225,11 +225,21 @@ If you really want to do in memory filtering on the data returned from the query
         /// </summary>
         TSelf OrElse();
 
-        /// <summary>
-        ///     Order the results by the specified fields
-        ///     The field is the name of the field to sort, defaulting to sorting by ascending.
-        /// </summary>
-        TSelf OrderBy(string field, OrderingType ordering = OrderingType.String);
+        */
+
+    /**
+     * Order the results by the specified fields
+     * The field is the name of the field to sort, defaulting to sorting by ascending.
+     */
+    TSelf orderBy(String field);
+
+    /**
+     * Order the results by the specified fields
+     * The field is the name of the field to sort, defaulting to sorting by ascending.
+     */
+    TSelf orderBy(String field, OrderingType ordering);
+
+    /* TODO
 
         /// <summary>
         ///     Order the results by the specified fields
@@ -237,13 +247,20 @@ If you really want to do in memory filtering on the data returned from the query
         /// </summary>
         /// <param name="propertySelectors">Property selectors for the fields.</param>
         TSelf OrderBy<TValue>(params Expression<Func<T, TValue>>[] propertySelectors);
+*/
 
-        /// <summary>
-        ///     Order the results by the specified fields
-        ///     The field is the name of the field to sort, defaulting to sorting by descending.
-        /// </summary>
-        TSelf OrderByDescending(string field, OrderingType ordering = OrderingType.String);
+    /**
+     * Order the results by the specified fields
+     * The field is the name of the field to sort, defaulting to sorting by descending.
+     */
+    TSelf orderByDescending(String field);
 
+    /**
+     * Order the results by the specified fields
+     * The field is the name of the field to sort, defaulting to sorting by descending.
+     */
+    TSelf orderByDescending(String field, OrderingType ordering);
+    /* TODO
         /// <summary>
         ///     Order the results by the specified fields
         ///     The field is the name of the field to sort, defaulting to sorting by descending.
@@ -412,26 +429,37 @@ If you really want to do in memory filtering on the data returned from the query
         /// </summary>
         TSelf WhereNotEquals(WhereParams whereParams);
 
-        /// <summary>
-        ///     Matches fields where the value is greater than the specified value
-        /// </summary>
-        /// <param name="fieldName">Name of the field.</param>
-        /// <param name="value">The value.</param>
-        TSelf WhereGreaterThan(string fieldName, object value, bool exact = false);
+*/
 
+    /**
+     * Matches fields where the value is greater than the specified value
+     */
+    TSelf whereGreaterThan(String fieldName, Object value);
+
+    /**
+     * Matches fields where the value is greater than the specified value
+     */
+    TSelf whereGreaterThan(String fieldName, Object value, boolean exact);
+
+    /* TODO
         /// <summary>
         ///     Matches fields where the value is greater than the specified value
         /// </summary>
         /// <param name="propertySelector">Property selector for the field.</param>
         /// <param name="value">The value.</param>
         TSelf WhereGreaterThan<TValue>(Expression<Func<T, TValue>> propertySelector, TValue value, bool exact = false);
+*/
 
-        /// <summary>
-        ///     Matches fields where the value is greater than or equal to the specified value
-        /// </summary>
-        /// <param name="fieldName">Name of the field.</param>
-        /// <param name="value">The value.</param>
-        TSelf WhereGreaterThanOrEqual(string fieldName, object value, bool exact = false);
+    /**
+     * Matches fields where the value is greater than or equal to the specified value
+     */
+    TSelf whereGreaterThanOrEqual(String fieldName, Object value);
+
+    /**
+     * Matches fields where the value is greater than or equal to the specified value
+     */
+    TSelf whereGreaterThanOrEqual(String fieldName, Object value, boolean exact);
+    /* TODO
 
         /// <summary>
         ///     Matches fields where the value is greater than or equal to the specified value
@@ -449,28 +477,38 @@ If you really want to do in memory filtering on the data returned from the query
         ///     Check that the field has one of the specified values
         /// </summary>
         TSelf WhereIn<TValue>(Expression<Func<T, TValue>> propertySelector, IEnumerable<TValue> values, bool exact = false);
+*/
 
-        /// <summary>
-        ///     Matches fields where the value is less than the specified value
-        /// </summary>
-        /// <param name="fieldName">Name of the field.</param>
-        /// <param name="value">The value.</param>
-        TSelf WhereLessThan(string fieldName, object value, bool exact = false);
+    /**
+     * Matches fields where the value is less than the specified value
+     */
+    TSelf whereLessThan(String fieldName, Object value);
 
+    /**
+     * Matches fields where the value is less than the specified value
+     */
+    TSelf whereLessThan(String fieldName, Object value, boolean exact);
+
+    /* TODO
         /// <summary>
         ///     Matches fields where the value is less than the specified value
         /// </summary>
         /// <param name="propertySelector">Property selector for the field.</param>
         /// <param name="value">The value.</param>
         TSelf WhereLessThan<TValue>(Expression<Func<T, TValue>> propertySelector, TValue value, bool exact = false);
+*/
 
-        /// <summary>
-        ///     Matches fields where the value is less than or equal to the specified value
-        /// </summary>
-        /// <param name="fieldName">Name of the field.</param>
-        /// <param name="value">The value.</param>
-        TSelf WhereLessThanOrEqual(string fieldName, object value, bool exact = false);
+    /**
+     *  Matches fields where the value is less than or equal to the specified value
+     */
+    TSelf whereLessThanOrEqual(String fieldName, Object value);
 
+    /**
+     *  Matches fields where the value is less than or equal to the specified value
+     */
+    TSelf whereLessThanOrEqual(String fieldName, Object value, boolean exact);
+
+    /* TODO
         /// <summary>
         ///     Matches fields where the value is less than or equal to the specified value
         /// </summary>

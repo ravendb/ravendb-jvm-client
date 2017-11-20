@@ -101,7 +101,7 @@ public class ExceptionDispatcher {
 
             if (IndexCompilationException.class.equals(type)) {
                 IndexCompilationException indexCompilationException = (IndexCompilationException) exception;
-                JsonNode jsonNode = JsonExtensions.getDefaultMapper().readTree(stream);
+                JsonNode jsonNode = JsonExtensions.getDefaultMapper().readTree(json);
                 JsonNode indexDefinitionProperty = jsonNode.get("TransformerDefinitionProperty");
                 if (indexDefinitionProperty != null) {
                     indexCompilationException.setIndexDefinitionProperty(indexDefinitionProperty.asText());

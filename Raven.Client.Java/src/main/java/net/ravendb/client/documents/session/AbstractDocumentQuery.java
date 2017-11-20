@@ -13,6 +13,7 @@ import net.ravendb.client.primitives.CleanCloseable;
 import net.ravendb.client.primitives.Tuple;
 
 import javax.management.Query;
+import java.time.Duration;
 import java.util.Date;
 import java.util.Iterator;
 import java.util.LinkedList;
@@ -21,7 +22,7 @@ import java.util.List;
 /**
  * A query against a Raven index
  */
-public class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQuery<T, TSelf>> implements IDocumentQueryCustomization, IAbstractDocumentQuery<T> {
+public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQuery<T, TSelf>> implements IAbstractDocumentQuery<T> {
 
     protected Class<T> clazz;
 
@@ -78,36 +79,27 @@ public class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQuery<T, TSe
     protected List<QueryToken> selectTokens = new LinkedList<>();
 
     protected final FromToken fromToken;
-    /* TODO
-        protected readonly DeclareToken DeclareToken;
+    protected final DeclareToken declareToken;
+    protected final List<LoadToken> loadTokens;
+    protected FieldsToFetchToken fieldsToFetchToken;
 
-        protected readonly List<LoadToken> LoadTokens;
-
-        protected internal FieldsToFetchToken FieldsToFetchToken;
-*/
     protected List<QueryToken> whereTokens = new LinkedList<>();
 
     protected List<QueryToken> groupByTokens = new LinkedList<>();
 
     protected List<QueryToken> orderByTokens = new LinkedList<>();
-    /* TODO
-        /// <summary>
-        ///   which record to start reading from
-        /// </summary>
-        protected int Start;*/
+
+    protected int start;
 
     private final DocumentConventions _conventions;
 
+    protected Duration timeout;
+
+    protected boolean theWaitForNonStaleResults;
+
+
     /*TODO
 
-        /// <summary>
-        /// Timeout for this query
-        /// </summary>
-        protected TimeSpan? Timeout;
-        /// <summary>
-        /// Should we wait for non stale results
-        /// </summary>
-        protected bool TheWaitForNonStaleResults;
         /// <summary>
         /// The paths to include when loading the query
         /// </summary>
@@ -153,34 +145,29 @@ public class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQuery<T, TSe
 
         public bool IsDynamicMapReduce => GroupByTokens.Count > 0;
 
-        protected long? CutoffEtag;
-
-        private static TimeSpan DefaultTimeout
-        {
-            get
-            {
-                if (Debugger.IsAttached) // increase timeout if we are debugging
-                    return TimeSpan.FromMinutes(15);
-
-                return TimeSpan.FromSeconds(15);
-            }
-        }
 */
+    protected Long cutoffEtag;
+
+    private static Duration getDefaultTimeout() {
+        return Duration.ofSeconds(15);
+    }
 
     protected AbstractDocumentQuery(Class<T> clazz, InMemoryDocumentSessionOperations session, String indexName,
-                                    String collectionName, boolean isGroupBy) { // TODO:  DeclareToken declareToken,         List<LoadToken> loadTokens,         string fromAlias = null)
-        this.clazz = clazz;
-        //TODO:IsGroupBy = isGroupBy;
+                                    String collectionName, boolean isGroupBy, DeclareToken declareToken,
+                                    List<LoadToken> loadTokens) {
+        this(clazz, session, indexName, collectionName, isGroupBy, declareToken, loadTokens, null);
+    }
 
+    protected AbstractDocumentQuery(Class<T> clazz, InMemoryDocumentSessionOperations session, String indexName,
+                                    String collectionName, boolean isGroupBy, DeclareToken declareToken,
+                                    List<LoadToken> loadTokens, String fromAlias) {
+        this.clazz = clazz;
+        this.isGroupBy = isGroupBy;
         this.indexName = indexName;
         this.collectionName = collectionName;
-        this.fromToken = FromToken.create(indexName, collectionName, null); //TODO: from alias as 3-rd param
-        /* TODO
-
-            DeclareToken = declareToken;
-
-            LoadTokens = loadTokens;
-*/
+        this.fromToken = FromToken.create(indexName, collectionName, fromAlias);
+        this.declareToken = declareToken;
+        this.loadTokens = loadTokens;
         theSession = session;
         //TODO: AfterQueryExecuted(UpdateStatsAndHighlightings);
         _conventions = session == null ? new DocumentConventions() : session.getConventions();
@@ -202,24 +189,23 @@ public class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQuery<T, TSe
             DefaultOperator = @operator;
         }
 
-        /// <summary>
-        ///   Instruct the query to wait for non stale result for the specified wait timeout.
-        /// </summary>
-        /// <param name = "waitTimeout">The wait timeout.</param>
-        /// <returns></returns>
-        public void WaitForNonStaleResults(TimeSpan waitTimeout)
-        {
-            TheWaitForNonStaleResults = true;
-            CutoffEtag = null;
-            Timeout = waitTimeout;
-        }
         */
+
+    /**
+     * Instruct the query to wait for non stale result for the specified wait timeout.
+     */
+    protected void _waitForNonStaleResults(Duration waitTimeout) {
+        theWaitForNonStaleResults = true;
+        cutoffEtag = null;
+        timeout = waitTimeout;
+    }
 
     protected QueryOperation initializeQueryOperation() {
         IndexQuery indexQuery = getIndexQuery();
 
-        return new QueryOperation(theSession, indexName, indexQuery, null, false, null, false, false, false);
-        //TODO: pass  FieldsToFetchToken?.Projections,         TheWaitForNonStaleResults,                  Timeout,                DisableEntitiesTracking
+        return new QueryOperation(theSession, indexName, indexQuery, null,
+                theWaitForNonStaleResults, timeout, false, false, false);
+        //TODO: pass  FieldsToFetchToken?.Projections,  DisableEntitiesTracking
     }
 
     public IndexQuery getIndexQuery() {
@@ -287,6 +273,7 @@ public class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQuery<T, TSe
                     "RawQuery was called, cannot modify this query by calling on operations that would modify the query (such as Where, Select, OrderBy, GroupBy, etc)");
          */
     }
+
     /*
 
         public void RawQuery(string query)
@@ -608,66 +595,80 @@ If you really want to do in memory filtering on the data returned from the query
 
             WhereTokens.AddLast(WhereToken.Between(fieldName, fromParameterName, toParameterName, exact));
         }
+*/
 
-        /// <summary>
-        ///   Matches fields where the value is greater than the specified value
-        /// </summary>
-        /// <param name = "fieldName">Name of the field.</param>
-        /// <param name = "value">The value.</param>
-        public void WhereGreaterThan(string fieldName, object value, bool exact = false)
-        {
-            fieldName = EnsureValidFieldName(fieldName, isNestedPath: false);
+    protected void _whereGreaterThan(String fieldName, Object value) {
+        _whereGreaterThan(fieldName, value, false);
+    }
 
-            AppendOperatorIfNeeded(WhereTokens);
-            NegateIfNeeded(fieldName);
+    /**
+     * Matches fields where the value is greater than the specified value
+     */
+    protected void _whereGreaterThan(String fieldName, Object value, boolean exact) {
+        fieldName = ensureValidFieldName(fieldName, false);
 
-            WhereTokens.AddLast(WhereToken.GreaterThan(fieldName, AddQueryParameter(value == null ? "*" : TransformValue(new WhereParams { Value = value, FieldName = fieldName }, forRange: true)), exact));
-        }
+        appendOperatorIfNeeded(whereTokens);
+        negateIfNeeded(fieldName);
+        WhereParams whereParams = new WhereParams();
+        whereParams.setValue(value);
+        whereParams.setFieldName(fieldName);
 
-        /// <summary>
-        ///   Matches fields where the value is greater than or equal to the specified value
-        /// </summary>
-        /// <param name = "fieldName">Name of the field.</param>
-        /// <param name = "value">The value.</param>
-        public void WhereGreaterThanOrEqual(string fieldName, object value, bool exact = false)
-        {
-            fieldName = EnsureValidFieldName(fieldName, isNestedPath: false);
+        whereTokens.add(WhereToken.greaterThan(fieldName, addQueryParameter(value == null ? "*" : transformValue(whereParams, true)), exact));
+    }
 
-            AppendOperatorIfNeeded(WhereTokens);
-            NegateIfNeeded(fieldName);
+    protected void _whereGreaterThanOrEqual(String fieldName, Object value) {
+        _whereGreaterThanOrEqual(fieldName, value, false);
+    }
 
-            WhereTokens.AddLast(WhereToken.GreaterThanOrEqual(fieldName, AddQueryParameter(value == null ? "*" : TransformValue(new WhereParams { Value = value, FieldName = fieldName }, forRange: true)), exact));
-        }
+    /**
+     * Matches fields where the value is greater than or equal to the specified value
+     */
+    protected void _whereGreaterThanOrEqual(String fieldName, Object value, boolean exact) {
+        fieldName = ensureValidFieldName(fieldName, false);
 
-        /// <summary>
-        ///   Matches fields where the value is less than the specified value
-        /// </summary>
-        /// <param name = "fieldName">Name of the field.</param>
-        /// <param name = "value">The value.</param>
-        public void WhereLessThan(string fieldName, object value, bool exact = false)
-        {
-            fieldName = EnsureValidFieldName(fieldName, isNestedPath: false);
+        appendOperatorIfNeeded(whereTokens);
+        negateIfNeeded(fieldName);
+        WhereParams whereParams = new WhereParams();
+        whereParams.setValue(value);
+        whereParams.setFieldName(fieldName);
 
-            AppendOperatorIfNeeded(WhereTokens);
-            NegateIfNeeded(fieldName);
+        whereTokens.add(WhereToken.greaterThanOrEqual(fieldName, addQueryParameter(value == null ? "*" : transformValue(whereParams, true)), exact));
+    }
 
-            WhereTokens.AddLast(WhereToken.LessThan(fieldName, AddQueryParameter(value == null ? "NULL" : TransformValue(new WhereParams { Value = value, FieldName = fieldName }, forRange: true)), exact));
-        }
+    protected void _whereLessThan(String fieldName, Object value) {
+        _whereLessThan(fieldName, value);
+    }
 
-        /// <summary>
-        ///   Matches fields where the value is less than or equal to the specified value
-        /// </summary>
-        /// <param name = "fieldName">Name of the field.</param>
-        /// <param name = "value">The value.</param>
-        public void WhereLessThanOrEqual(string fieldName, object value, bool exact = false)
-        {
-            AppendOperatorIfNeeded(WhereTokens);
-            NegateIfNeeded(fieldName);
+    protected void _whereLessThan(String fieldName, Object value, boolean exact) {
+        fieldName = ensureValidFieldName(fieldName, false);
 
-            WhereTokens.AddLast(WhereToken.LessThanOrEqual(fieldName, AddQueryParameter(value == null ? "NULL" : TransformValue(new WhereParams { Value = value, FieldName = fieldName }, forRange: true)), exact));
-        }
+        appendOperatorIfNeeded(whereTokens);
+        negateIfNeeded(fieldName);
 
-    */
+        WhereParams whereParams = new WhereParams();
+        whereParams.setValue(value);
+        whereParams.setFieldName(fieldName);
+
+        whereTokens.add(WhereToken.lessThan(fieldName,
+                addQueryParameter(value == null ? "NULL" : transformValue(whereParams, true)), exact));
+    }
+
+    protected void _whereLessThanOrEqual(String fieldName, Object value) {
+        _whereLessThanOrEqual(fieldName, value);
+    }
+
+    protected void _whereLessThanOrEqual(String fieldName, Object value, boolean exact) {
+        appendOperatorIfNeeded(whereTokens);
+        negateIfNeeded(fieldName);
+
+        WhereParams whereParams = new WhereParams();
+        whereParams.setValue(value);
+        whereParams.setFieldName(fieldName);
+
+        whereTokens.add(WhereToken.lessThanOrEqual(fieldName,
+                addQueryParameter(value == null ? "NULL" : transformValue(whereParams, true)), exact));
+    }
+
     protected void _andAlso() {
         if (whereTokens.isEmpty()) {
             return;
@@ -780,31 +781,31 @@ If you really want to do in memory filtering on the data returned from the query
 
             whereToken.Proximity = proximity;
         }
+*/
 
-        /// <summary>
-        ///   Order the results by the specified fields
-        ///   The fields are the names of the fields to sort, defaulting to sorting by ascending.
-        ///   You can prefix a field name with '-' to indicate sorting by descending or '+' to sort by ascending
-        /// </summary>
-        public void OrderBy(string field, OrderingType ordering = OrderingType.String)
-        {
-            AssertNoRawQuery();
-            var f = EnsureValidFieldName(field, isNestedPath: false);
-            OrderByTokens.AddLast(OrderByToken.CreateAscending(f, ordering));
-        }
+    /**
+     * Order the results by the specified fields
+     * The fields are the names of the fields to sort, defaulting to sorting by ascending.
+     * You can prefix a field name with '-' to indicate sorting by descending or '+' to sort by ascending
+     */
+    protected void _orderBy(String field, OrderingType ordering) {
+        assertNoRawQuery();
+        String f = ensureValidFieldName(field, false);
+        orderByTokens.add(OrderByToken.createAscending(f, ordering));
+    }
 
-        /// <summary>
-        ///   Order the results by the specified fields
-        ///   The fields are the names of the fields to sort, defaulting to sorting by descending.
-        ///   You can prefix a field name with '-' to indicate sorting by descending or '+' to sort by ascending
-        /// </summary>
-        /// <param name = "fields">The fields.</param>
-        public void OrderByDescending(string field, OrderingType ordering = OrderingType.String)
-        {
-            AssertNoRawQuery();
-            var f = EnsureValidFieldName(field, isNestedPath: false);
-            OrderByTokens.AddLast(OrderByToken.CreateDescending(f, ordering));
-        }
+    /**
+     * Order the results by the specified fields
+     * The fields are the names of the fields to sort, defaulting to sorting by descending.
+     * You can prefix a field name with '-' to indicate sorting by descending or '+' to sort by ascending
+     */
+    protected void _orderByDescending(String field, OrderingType ordering) {
+        assertNoRawQuery();
+        String f = ensureValidFieldName(field, false);
+        orderByTokens.add(OrderByToken.createDescending(f, ordering));
+    }
+
+    /* TODO
 
         public void OrderByScore()
         {
@@ -835,15 +836,16 @@ If you really want to do in memory filtering on the data returned from the query
             Timeout = waitTimeout;
             CutoffEtag = cutOffEtag;
         }
+        */
 
-        /// <summary>
-        ///   EXPERT ONLY: Instructs the query to wait for non stale results.
-        ///   This shouldn't be used outside of unit tests unless you are well aware of the implications
-        /// </summary>
-        public void WaitForNonStaleResults()
-        {
-            WaitForNonStaleResults(DefaultTimeout);
-        }
+    /**
+     * EXPERT ONLY: Instructs the query to wait for non stale results.
+     * This shouldn't be used outside of unit tests unless you are well aware of the implications
+     */
+    protected void _waitForNonStaleResults() {
+        _waitForNonStaleResults(getDefaultTimeout());
+    }
+    /* TODO
 
         /// <summary>
         /// Provide statistics about the query, such as total count of matching records
@@ -879,8 +881,8 @@ If you really want to do in memory filtering on the data returned from the query
     protected IndexQuery generateIndexQuery(String query) {
         IndexQuery indexQuery = new IndexQuery();
         indexQuery.setQuery(query);
+        indexQuery.setStart(start);
         /* TODO
-         Start = Start,
                 CutoffEtag = CutoffEtag,
                 WaitForNonStaleResults = TheWaitForNonStaleResults,
                 WaitForNonStaleResultsTimeout = Timeout,
@@ -935,14 +937,14 @@ If you really want to do in memory filtering on the data returned from the query
 
 //TODO        buildDeclare(queryText)
         buildFrom(queryText);
-        //TODO: BuildGroupBy(queryText);
+        buildGroupBy(queryText);
         buildWhere(queryText);
+        buildOrderBy(queryText);
+
         /* TODO
-            BuildOrderBy(queryText);
             BuildLoad(queryText);
             BuildSelect(queryText);
             BuildInclude(queryText);
-
          */
 
         return queryText.toString();
@@ -1013,6 +1015,7 @@ If you really want to do in memory filtering on the data returned from the query
 
         whereTokens.add(WhereToken.exists(fieldName));
     }
+
     /*
         public void ContainsAny(string fieldName, IEnumerable<object> values)
         {
@@ -1170,48 +1173,46 @@ If you really want to do in memory filtering on the data returned from the query
         }
     }
 
-    /* TODO
-        private void BuildGroupBy(StringBuilder writer)
-        {
-            if (GroupByTokens.Count == 0)
-                return;
-
-            writer
-                .Append(" GROUP BY ");
-
-            var token = GroupByTokens.First;
-            while (token != null)
-            {
-                if (token.Previous != null)
-                    writer.Append(", ");
-
-                token.Value.WriteTo(writer);
-
-                token = token.Next;
-            }
+    private void buildGroupBy(StringBuilder writer) {
+        if (groupByTokens.isEmpty()) {
+            return;
         }
 
-        private void BuildOrderBy(StringBuilder writer)
-        {
-            if (OrderByTokens.Count == 0)
-                return;
+        writer
+                .append(" GROUP BY ");
 
-            writer
-                .Append(" ORDER BY ");
+        boolean isFirst = true;
 
-            var token = OrderByTokens.First;
-            while (token != null)
-            {
-                if (token.Previous != null)
-                    writer.Append(", ");
-
-                token.Value.WriteTo(writer);
-
-                token = token.Next;
+        for (QueryToken token : groupByTokens) {
+            if (!isFirst) {
+                writer.append(", ");
             }
 
+            token.writeTo(writer);
+            isFirst = false;
         }
-        */
+    }
+
+    private void buildOrderBy(StringBuilder writer) {
+        if (orderByTokens.isEmpty()) {
+            return;
+        }
+
+        writer
+                .append(" ORDER BY ");
+
+        boolean isFirst = true;
+
+        for (QueryToken token : orderByTokens) {
+            if (!isFirst) {
+                writer.append(", ");
+            }
+
+            token.writeTo(writer);
+            isFirst = false;
+        }
+    }
+
     private static void addSpaceIfNeeded(QueryToken previousToken, QueryToken currentToken, StringBuilder writer) {
         if (previousToken == null) {
             return;

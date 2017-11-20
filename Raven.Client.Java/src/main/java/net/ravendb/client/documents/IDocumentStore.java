@@ -1,6 +1,7 @@
 package net.ravendb.client.documents;
 
 import net.ravendb.client.documents.conventions.DocumentConventions;
+import net.ravendb.client.documents.indexes.AbstractIndexCreationTask;
 import net.ravendb.client.documents.operations.AdminOperationExecutor;
 import net.ravendb.client.documents.operations.OperationExecutor;
 import net.ravendb.client.documents.session.IDocumentSession;
@@ -8,6 +9,8 @@ import net.ravendb.client.documents.session.SessionOptions;
 import net.ravendb.client.http.RequestExecutor;
 import net.ravendb.client.primitives.CleanCloseable;
 import net.ravendb.client.util.IDisposalNotification;
+
+import java.util.List;
 
 /**
  * Interface for managing access to RavenDB and open sessions.
@@ -95,15 +98,12 @@ public interface IDocumentStore extends IDisposalNotification {
      */
     IDocumentSession openSession(SessionOptions sessionOptions);
 
-    /* TODO
+    /**
+     * Executes the index creation
+     */
+    void executeIndex(AbstractIndexCreationTask task);
 
-        /// <summary>
-        /// Executes the index creation.
-        /// </summary>
-        void ExecuteIndex(AbstractIndexCreationTask task);
-
-        void ExecuteIndexes(IEnumerable<AbstractIndexCreationTask> tasks);
-*/
+    void executeIndexes(List<AbstractIndexCreationTask> tasks);
 
     /**
      * Gets the conventions
