@@ -29,7 +29,7 @@ public class DatabaseStatistics {
 
     public IndexInformation[] getStaleIndexes() {
         return Arrays.stream(indexes)
-            .filter(x -> x.isStale())
+            .filter(x -> x.getIsStale())
             .toArray(IndexInformation[]::new);
     }
 

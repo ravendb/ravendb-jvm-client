@@ -7,6 +7,7 @@ import net.ravendb.client.documents.session.IDocumentSession;
 import net.ravendb.client.documents.session.OrderingType;
 import net.ravendb.client.infrastructure.entities.User;
 import net.ravendb.client.primitives.CleanCloseable;
+import org.apache.commons.lang3.StringUtils;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
 
@@ -96,77 +97,7 @@ public class QueryTest extends RemoteTestBase {
             new DogsIndex().execute(store);
 
             try (IDocumentSession newSession = store.openSession()) {
-                Dog dog1 = new Dog();
-                dog1.setName("Snoopy");
-                dog1.setBreed("Beagle");
-                dog1.setColor("White");
-                dog1.setAge(6);
-                dog1.setVaccinated(true);
-
-                newSession.store(dog1, "docs/1");
-
-                Dog dog2 = new Dog();
-                dog2.setName("Brian");
-                dog2.setBreed("Labrador");
-                dog2.setColor("White");
-                dog2.setAge(12);
-                dog2.setVaccinated(false);
-
-                newSession.store(dog2, "docs/2");
-
-                Dog dog3 = new Dog();
-                dog3.setName("Django");
-                dog3.setBreed("Jack Russel");
-                dog3.setColor("Black");
-                dog3.setAge(3);
-                dog3.setVaccinated(true);
-
-                newSession.store(dog3, "docs/3");
-
-                Dog dog4 = new Dog();
-                dog4.setName("Beethoven");
-                dog4.setBreed("St. Bernard");
-                dog4.setColor("Brown");
-                dog4.setAge(1);
-                dog4.setVaccinated(false);
-
-                newSession.store(dog4, "docs/4");
-
-                Dog dog5 = new Dog();
-                dog5.setName("Scooby Doo");
-                dog5.setBreed("Great Dane");
-                dog5.setColor("Brown");
-                dog5.setAge(0);
-                dog5.setVaccinated(false);
-
-                newSession.store(dog5, "docs/5");
-
-                Dog dog6 = new Dog();
-                dog6.setName("Old Yeller");
-                dog6.setBreed("Black Mouth Cur");
-                dog6.setColor("White");
-                dog6.setAge(2);
-                dog6.setVaccinated(true);
-
-                newSession.store(dog6, "docs/6");
-
-                Dog dog7 = new Dog();
-                dog7.setName("Benji");
-                dog7.setBreed("Mixed");
-                dog7.setColor("White");
-                dog7.setAge(0);
-                dog7.setVaccinated(false);
-
-                newSession.store(dog7, "docs/7");
-
-                Dog dog8 = new Dog();
-                dog8.setName("Lassie");
-                dog8.setBreed("Collie");
-                dog8.setColor("Brown");
-                dog8.setAge(6);
-                dog8.setVaccinated(true);
-
-                newSession.store(dog8, "docs/8");
+                createDogs(newSession);
 
                 newSession.saveChanges();
             }
@@ -198,77 +129,153 @@ public class QueryTest extends RemoteTestBase {
         }
     }
 
-    /* TODO
+    private void createDogs(IDocumentSession newSession) {
+        Dog dog1 = new Dog();
+        dog1.setName("Snoopy");
+        dog1.setBreed("Beagle");
+        dog1.setColor("White");
+        dog1.setAge(6);
+        dog1.setVaccinated(true);
 
-        [Fact]
-        public void Query_Long_Request()
-        {
-            using (var store = GetDocumentStore())
-            {
-                using (var newSession = store.OpenSession())
-                {
-                    var longName = new string('x', 2048);
-                    newSession.Store(new User { Name = longName }, "users/1");
-                    newSession.SaveChanges();
+        newSession.store(dog1, "docs/1");
 
-                    var queryResult = newSession.Query<User>()
-                        .Where(x => x.Name.Equals(longName))
-                        .ToList();
+        Dog dog2 = new Dog();
+        dog2.setName("Brian");
+        dog2.setBreed("Labrador");
+        dog2.setColor("White");
+        dog2.setAge(12);
+        dog2.setVaccinated(false);
 
-                    Assert.Equal(queryResult.Count, 1);
-                }
+        newSession.store(dog2, "docs/2");
+
+        Dog dog3 = new Dog();
+        dog3.setName("Django");
+        dog3.setBreed("Jack Russel");
+        dog3.setColor("Black");
+        dog3.setAge(3);
+        dog3.setVaccinated(true);
+
+        newSession.store(dog3, "docs/3");
+
+        Dog dog4 = new Dog();
+        dog4.setName("Beethoven");
+        dog4.setBreed("St. Bernard");
+        dog4.setColor("Brown");
+        dog4.setAge(1);
+        dog4.setVaccinated(false);
+
+        newSession.store(dog4, "docs/4");
+
+        Dog dog5 = new Dog();
+        dog5.setName("Scooby Doo");
+        dog5.setBreed("Great Dane");
+        dog5.setColor("Brown");
+        dog5.setAge(0);
+        dog5.setVaccinated(false);
+
+        newSession.store(dog5, "docs/5");
+
+        Dog dog6 = new Dog();
+        dog6.setName("Old Yeller");
+        dog6.setBreed("Black Mouth Cur");
+        dog6.setColor("White");
+        dog6.setAge(2);
+        dog6.setVaccinated(true);
+
+        newSession.store(dog6, "docs/6");
+
+        Dog dog7 = new Dog();
+        dog7.setName("Benji");
+        dog7.setBreed("Mixed");
+        dog7.setColor("White");
+        dog7.setAge(0);
+        dog7.setVaccinated(false);
+
+        newSession.store(dog7, "docs/7");
+
+        Dog dog8 = new Dog();
+        dog8.setName("Lassie");
+        dog8.setBreed("Collie");
+        dog8.setColor("Brown");
+        dog8.setAge(6);
+        dog8.setVaccinated(true);
+
+        newSession.store(dog8, "docs/8");
+    }
+
+    @Test
+    public void queryLongRequest() throws IOException {
+        try (IDocumentStore store = getDocumentStore()) {
+            try (IDocumentSession newSession = store.openSession()) {
+                String longName = StringUtils.repeat('x', 2048);
+                User user = new User();
+                user.setName(longName);
+                newSession.store(user, "users/1");
+
+                newSession.saveChanges();
+
+                List<User> queryResult = newSession
+                        .advanced()
+                        .documentQuery(User.class, null, "Users", false)
+                        .whereEquals("Name", longName)
+                        .toList();
+
+                assertThat(queryResult)
+                        .hasSize(1);
             }
         }
+    }
 
-        [Fact]
-        public void Query_By_Index()
-        {
-            using (var store = GetDocumentStore())
-            {
-                new DogsIndex().Execute(store);
-                using (var newSession = store.OpenSession())
-                {
-                    newSession.Store(new Dog { Name = "Snoopy", Breed = "Beagle", Color = "White", Age = 6, IsVaccinated = true}, "dogs/1");
-                    newSession.Store(new Dog { Name = "Brian", Breed = "Labrador", Color = "White", Age = 12, IsVaccinated = false }, "dogs/2");
-                    newSession.Store(new Dog { Name = "Django", Breed = "Jack Russel", Color = "Black", Age = 3, IsVaccinated = true }, "dogs/3");
-                    newSession.Store(new Dog { Name = "Beethoven", Breed = "St. Bernard", Color = "Brown", Age = 1, IsVaccinated = false }, "dogs/4");
-                    newSession.Store(new Dog { Name = "Scooby Doo", Breed = "Great Dane", Color = "Brown", Age = 0, IsVaccinated = false }, "dogs/5");
-                    newSession.Store(new Dog { Name = "Old Yeller", Breed = "Black Mouth Cur", Color = "White", Age = 2, IsVaccinated = true }, "dogs/6");
-                    newSession.Store(new Dog { Name = "Benji", Breed = "Mixed", Color = "White", Age = 0, IsVaccinated = false }, "dogs/7");
-                    newSession.Store(new Dog { Name = "Lassie", Breed = "Collie", Color = "Brown", Age = 6, IsVaccinated = true }, "dogs/8");
+    @Test
+    public void queryByIndex() throws IOException {
+        try (IDocumentStore store = getDocumentStore()) {
 
-                    newSession.SaveChanges();
+            new DogsIndex().execute(store);
 
-                    WaitForIndexing(store);
-                }
+            try (IDocumentSession newSession = store.openSession()) {
+                createDogs(newSession);
 
-                using (var newSession = store.OpenSession())
-                {
-                    var queryResult = newSession.Query<DogsIndex.Result, DogsIndex>()
-                        .Where(x => x.Age > 2 && x.IsVaccinated == false)
-                        .ToList();
+                newSession.saveChanges();
 
-                    Assert.Equal(queryResult.Count, 1);
-                    Assert.Equal(queryResult[0].Name, "Brian");
+                waitForIndexing(store, store.getDatabase(), null);
+            }
 
-                    var queryResult2 = newSession.Query<DogsIndex.Result, DogsIndex>()
-                        .Where(x => x.Age <= 2 && x.IsVaccinated == false)
-                        .ToList();
+            try (IDocumentSession newSession = store.openSession()) {
+                List<DogsIndex.Result> queryResult = newSession.advanced()
+                        .documentQuery(DogsIndex.Result.class, new DogsIndex().getIndexName(), null, false)
+                        .whereGreaterThan("Age", 2)
+                        .andAlso()
+                        .whereEquals("Vaccinated", false)
+                        .toList();
 
-                    Assert.Equal(queryResult2.Count, 3);
+                assertThat(queryResult)
+                        .hasSize(1);
 
-                    var list = new List<string>();
-                    foreach (var dog in queryResult2)
-                    {
-                        list.Add(dog.Name);
-                    }
-                    Assert.True(list.Contains("Beethoven"));
-                    Assert.True(list.Contains("Scooby Doo"));
-                    Assert.True(list.Contains("Benji"));
-                }
+                assertThat(queryResult.get(0).getName())
+                        .isEqualTo("Brian");
+
+
+                List<DogsIndex.Result> queryResult2 = newSession.advanced()
+                        .documentQuery(DogsIndex.Result.class, new DogsIndex().getIndexName(), null, false)
+                        .whereLessThanOrEqual("Age", 2)
+                        .andAlso()
+                        .whereEquals("Vaccinated", false)
+                        .toList();
+
+                assertThat(queryResult2)
+                        .hasSize(3);
+
+                List<String> list = queryResult2.stream()
+                        .map(x -> x.getName())
+                        .collect(toList());
+
+                assertThat(list)
+                        .contains("Beethoven")
+                        .contains("Scooby Doo")
+                        .contains("Benji");
             }
         }
-        */
+    }
 
     public static class Dog {
         private String id;
@@ -359,7 +366,7 @@ public class QueryTest extends RemoteTestBase {
         }
 
         public DogsIndex() {
-            map = "from dog in docs.dogs select new { dog.Name, dog.Age, dog.IsVaccinated }";
+            map = "from dog in docs.dogs select new { dog.Name, dog.Age, dog.Vaccinated }";
         }
     }
 }

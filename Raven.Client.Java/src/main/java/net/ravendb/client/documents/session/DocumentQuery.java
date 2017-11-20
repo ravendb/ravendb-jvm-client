@@ -502,12 +502,12 @@ public class DocumentQuery<T> extends AbstractDocumentQuery<T, DocumentQuery<T>>
             return this;
         }
 
-        /// <inheritdoc />
-        IDocumentQuery<T> IDocumentQueryBase<T, IDocumentQuery<T>>.AndAlso()
-        {
-            AndAlso();
-            return this;
-        }
+*/
+    public IDocumentQuery<T> andAlso() {
+        _andAlso();
+        return this;
+    }
+    /*
 
         /// <inheritdoc />
         IDocumentQuery<T> IDocumentQueryBase<T, IDocumentQuery<T>>.OrElse()

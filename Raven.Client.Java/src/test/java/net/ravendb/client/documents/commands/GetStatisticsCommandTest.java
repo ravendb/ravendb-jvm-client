@@ -29,6 +29,8 @@ public class GetStatisticsCommandTest extends RemoteTestBase {
             CreateSampleDataOperation sampleData = new CreateSampleDataOperation();
             store.admin().send(sampleData);
 
+            waitForIndexing(store, store.getDatabase(), null);
+
             GetStatisticsCommand command = new GetStatisticsCommand();
             executor.execute(command);
 
@@ -80,7 +82,7 @@ public class GetStatisticsCommandTest extends RemoteTestBase {
                 assertThat(indexInformation.getName())
                         .isNotNull();
 
-                assertThat(indexInformation.isStale())
+                assertThat(indexInformation.getIsStale())
                         .isFalse();
 
                 assertThat(indexInformation.getState())

@@ -26,6 +26,8 @@ public class Constants {
         public static class Indexing {
             private Indexing() {}
 
+            public static final String SIDE_BY_SIDE_INDEX_NAME_PREFIX = "ReplacementOf/";
+
             public static class Fields {
                 private Fields() {}
 

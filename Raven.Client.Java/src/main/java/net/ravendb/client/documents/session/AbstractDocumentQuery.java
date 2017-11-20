@@ -882,11 +882,9 @@ If you really want to do in memory filtering on the data returned from the query
         IndexQuery indexQuery = new IndexQuery();
         indexQuery.setQuery(query);
         indexQuery.setStart(start);
-        /* TODO
-                CutoffEtag = CutoffEtag,
-                WaitForNonStaleResults = TheWaitForNonStaleResults,
-                WaitForNonStaleResultsTimeout = Timeout,
-                */
+        indexQuery.setCutoffEtag(cutoffEtag);
+        indexQuery.setWaitForNonStaleResults(theWaitForNonStaleResults);
+        indexQuery.setWaitForNonStaleResultsTimeout(timeout);
         indexQuery.setQueryParameters(queryParameters);
         /* TODO
                 DisableCaching = DisableCaching,

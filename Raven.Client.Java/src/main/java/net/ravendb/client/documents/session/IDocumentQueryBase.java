@@ -30,11 +30,14 @@ public interface IDocumentQueryBase<T, TSelf extends IDocumentQueryBase<T, TSelf
         /// <param name="descending">if set to <c>true</c> [descending].</param>
         /// <param name="ordering">Ordering type.</param>
         TSelf AddOrder<TValue>(Expression<Func<T, TValue>> propertySelector, bool descending = false, OrderingType ordering = OrderingType.String);
+*/
 
-        /// <summary>
-        ///     Add an AND to the query
-        /// </summary>
-        TSelf AndAlso();
+    /**
+     *  Add an AND to the query
+     */
+    TSelf andAlso();
+
+    /* TODO
 
         /// <summary>
         ///     Specifies a boost weight to the last where clause.

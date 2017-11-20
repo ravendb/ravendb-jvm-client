@@ -3,15 +3,24 @@ package net.ravendb.client.test.driver;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.base.Stopwatch;
 import com.google.common.collect.Sets;
+import net.ravendb.client.Constants;
 import net.ravendb.client.documents.DocumentStore;
 import net.ravendb.client.documents.IDocumentStore;
+import net.ravendb.client.documents.commands.GetStatisticsCommand;
+import net.ravendb.client.documents.indexes.IndexState;
+import net.ravendb.client.documents.operations.AdminOperationExecutor;
+import net.ravendb.client.documents.operations.DatabaseStatistics;
+import net.ravendb.client.documents.operations.GetStatisticsOperation;
+import net.ravendb.client.documents.operations.IndexInformation;
 import net.ravendb.client.documents.session.IDocumentSession;
+import net.ravendb.client.exceptions.TimeoutException;
 import net.ravendb.client.exceptions.cluster.NoLeaderException;
 import net.ravendb.client.exceptions.database.DatabaseDoesNotExistException;
 import net.ravendb.client.primitives.CleanCloseable;
 import net.ravendb.client.serverwide.DatabaseRecord;
 import net.ravendb.client.serverwide.operations.CreateDatabaseOperation;
 import net.ravendb.client.serverwide.operations.DeleteDatabasesOperation;
+import net.ravendb.client.util.TimeUtils;
 import net.ravendb.client.util.UrlUtils;
 import org.apache.commons.lang3.NotImplementedException;
 
@@ -22,7 +31,9 @@ import java.net.URISyntaxException;
 import java.net.URLEncoder;
 import java.time.Duration;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Comparator;
+import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -30,6 +41,7 @@ import java.util.concurrent.ConcurrentSkipListSet;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 
 public abstract class RavenTestDriver implements CleanCloseable {
 
@@ -225,36 +237,44 @@ public abstract class RavenTestDriver implements CleanCloseable {
         }
     }
 
-    public void waitForIndexing(IDocumentStore store, String database) {
-        throw new NotImplementedException("not yet impolemeneted");
-        /* TODO
+    public void waitForIndexing(IDocumentStore store) {
+        waitForIndexing(store, null, null);
+    }
 
+    public void waitForIndexing(IDocumentStore store, String database, Duration timeout) {
+        AdminOperationExecutor admin = store.admin().forDatabase(database);
 
-        public void WaitForIndexing(IDocumentStore store, string database = null, TimeSpan? timeout = null)
-        {
-            var admin = store.Admin.ForDatabase(database);
+        if (timeout == null) {
+            timeout = Duration.ofMinutes(1);
+        }
 
-            timeout = timeout ?? TimeSpan.FromMinutes(1);
+        Stopwatch sp = Stopwatch.createStarted();
 
-            var sp = Stopwatch.StartNew();
-            while (sp.Elapsed < timeout.Value)
-            {
-                var databaseStatistics = admin.Send(new GetStatisticsOperation());
-                var indexes = databaseStatistics.Indexes
-                    .Where(x => x.State != IndexState.Disabled);
+        while (sp.elapsed(TimeUnit.MILLISECONDS) < timeout.toMillis()) {
+            DatabaseStatistics databaseStatistics = admin.send(new GetStatisticsOperation());
 
-                if (indexes.All(x => x.IsStale == false
-                    && x.Name.StartsWith(Constants.Documents.Indexing.SideBySideIndexNamePrefix) == false))
-                    return;
+            List<IndexInformation> indexes = Arrays.stream(databaseStatistics.getIndexes())
+                    .filter(x -> !IndexState.DISABLED.equals(x.getState()))
+                    .collect(Collectors.toList());
 
-                if (databaseStatistics.Indexes.Any(x => x.State == IndexState.Error))
-                {
-                    break;
-                }
-
-                Thread.Sleep(100);
+            if (indexes.stream().allMatch(x -> !x.getIsStale() &&
+                    !x.getName().startsWith(Constants.Documents.Indexing.SIDE_BY_SIDE_INDEX_NAME_PREFIX))) {
+                return;
             }
 
+            if (Arrays.stream(databaseStatistics.getIndexes()).anyMatch(x -> IndexState.ERROR.equals(x.getState()))) {
+                break;
+            }
+
+            try {
+                Thread.sleep(100);
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
+            }
+        }
+
+        throw new TimeoutException(); //TODO:
+        /* TODO
             var errors = admin.Send(new GetIndexErrorsOperation());
 
             string allIndexErrorsText = string.Empty;

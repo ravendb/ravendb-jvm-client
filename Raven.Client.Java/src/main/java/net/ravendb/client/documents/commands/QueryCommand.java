@@ -21,7 +21,7 @@ public class QueryCommand extends RavenCommand<QueryResult> {
     private final boolean _metadataOnly;
     private final boolean _indexEntriesOnly;
 
-    public QueryCommand(DocumentConventions conventions, IndexQuery indexQuery, boolean metadataOnly, boolean indexEntiresOnly) {
+    public QueryCommand(DocumentConventions conventions, IndexQuery indexQuery, boolean metadataOnly, boolean indexEntriesOnly) {
         super(QueryResult.class);
 
         if (conventions == null) {
@@ -35,7 +35,7 @@ public class QueryCommand extends RavenCommand<QueryResult> {
         _conventions = conventions;
         _indexQuery = indexQuery;
         _metadataOnly = metadataOnly;
-        _indexEntriesOnly = indexEntiresOnly;
+        _indexEntriesOnly = indexEntriesOnly;
 
 /* TODO
 
