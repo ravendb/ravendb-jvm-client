@@ -177,38 +177,30 @@ public abstract class AbstractIndexCreationTask {
         {
             StoresStrings.Add(Constants.Documents.Indexing.Fields.AllFields, storage);
         }
+*/
 
-        /// <summary>
-        /// Register a field to be stored
-        /// </summary>
-        protected void Store(string field, FieldStorage storage)
-        {
-            StoresStrings.Add(field, storage);
-        }
-
-        /// <summary>
-        /// Register a field to be analyzed
-        /// </summary>
-        protected void Analyze(string field, string analyzer)
-        {
-            AnalyzersStrings.Add(field, analyzer);
-        }
-
-        /// <summary>
-        /// Register a field to have term vectors
-        /// </summary>
-        protected void TermVector(string field, FieldTermVector termVector)
-        {
-            TermVectorsStrings.Add(field, termVector);
-        }
-
-        /// <summary>
-        /// Register a field to be sorted
-        /// </summary>
-        protected void Suggestion(Expression<Func<TReduceResult, object>> field)
-        {
-            IndexSuggestions.Add(field);
-        }
+    /**
+     * Register a field to be stored
      */
+    protected void store(String field, FieldStorage storage) {
+        storesStrings.put(field, storage);
+    }
 
+    /**
+     * Register a field to be analyzed
+     */
+    protected void analyze(String field, String analyzer) {
+        analyzersStrings.put(field, analyzer);
+    }
+
+    /**
+     * Register a field to have term vectors
+     */
+    protected void termVector(String field, FieldTermVector termVector) {
+        termVectorsStrings.put(field, termVector);
+    }
+
+    protected void suggestion(String field) {
+        indexSuggestions.add(field);
+    }
 }

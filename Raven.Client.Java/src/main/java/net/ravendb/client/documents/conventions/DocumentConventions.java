@@ -85,7 +85,7 @@ public class DocumentConventions {
     private boolean _frozen;
     private ClientConfiguration _originalConfiguration;
     private Map<Class, Field> _idPropertyCache = new HashMap<>();
-    //TODO: private bool _saveEnumsAsIntegers;
+    private boolean _saveEnumsAsIntegers;
     private String _identityPartsSeparator;
     private boolean _disableTopologyUpdates;
 
@@ -329,36 +329,20 @@ public class DocumentConventions {
         this._identityPartsSeparator = _identityPartsSeparator;
     }
 
-    /* TODO
+    /**
+     * Saves Enums as integers and instruct the Linq provider to query enums as integer values.
+     */
+    public boolean isSaveEnumsAsIntegers() {
+        return _saveEnumsAsIntegers;
+    }
 
-        /// <summary>
-        ///     Saves Enums as integers and instruct the Linq provider to query enums as integer values.
-        /// </summary>
-        public bool SaveEnumsAsIntegers
-        {
-            get => _saveEnumsAsIntegers;
-            set
-            {
-                AssertNotFrozen();
-                _saveEnumsAsIntegers = value;
-            }
-        }
-
-        public void RegisterCustomQueryTranslator<T>(Expression<Func<T, object>> member, CustomQueryTranslator translator)
-        {
-            AssertNotFrozen();
-
-            var body = member.Body as UnaryExpression;
-            if (body == null)
-                throw new NotSupportedException("A custom query translator can only be used to evaluate a simple member access or method call.");
-
-            var info = GetMemberInfoFromExpression(body.Operand);
-
-            if (_customQueryTranslators.ContainsKey(info) == false)
-                _customQueryTranslators.Add(info, translator);
-        }
-
-*/
+    /**
+     * Saves Enums as integers and instruct the Linq provider to query enums as integer values.
+     */
+    public void setSaveEnumsAsIntegers(boolean saveEnumsAsIntegers) {
+        assertNotFrozen();
+        this._saveEnumsAsIntegers = saveEnumsAsIntegers;
+    }
 
     /**
      *  Default method used when finding a collection name for a type

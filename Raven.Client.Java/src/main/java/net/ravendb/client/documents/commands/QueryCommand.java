@@ -14,6 +14,7 @@ import org.apache.http.client.methods.HttpRequestBase;
 import org.apache.http.entity.ContentType;
 
 import java.io.IOException;
+import java.time.Duration;
 
 public class QueryCommand extends RavenCommand<QueryResult> {
     private final DocumentConventions _conventions;
@@ -37,12 +38,9 @@ public class QueryCommand extends RavenCommand<QueryResult> {
         _metadataOnly = metadataOnly;
         _indexEntriesOnly = indexEntriesOnly;
 
-/* TODO
-
-            if (indexQuery.WaitForNonStaleResultsTimeout.HasValue && indexQuery.WaitForNonStaleResultsTimeout != TimeSpan.MaxValue)
-                Timeout = indexQuery.WaitForNonStaleResultsTimeout.Value.Add(TimeSpan.FromSeconds(10)); // giving the server an opportunity to finish the response
- */
-
+        if (indexQuery.getWaitForNonStaleResultsTimeout() != null) {
+            timeout = indexQuery.getWaitForNonStaleResultsTimeout().plus(Duration.ofSeconds(10)); // giving the server an opportunity to finish the response
+        }
     }
 
     @Override

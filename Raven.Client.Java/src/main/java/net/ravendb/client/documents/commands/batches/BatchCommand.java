@@ -61,10 +61,7 @@ public class BatchCommand extends RavenCommand<JsonArrayResult> implements Clean
                 }
             }
             */
-        /* TODO:
-
-            Timeout = options?.RequestTimeout;
-         */
+        timeout = options != null ? options.getRequestTimeout() : null;
     }
 
     @Override

@@ -7,17 +7,18 @@ import net.ravendb.client.documents.conventions.DocumentConventions;
 import net.ravendb.client.documents.queries.IndexQuery;
 import net.ravendb.client.documents.queries.QueryFieldUtil;
 import net.ravendb.client.documents.queries.QueryOperator;
+import net.ravendb.client.documents.queries.QueryResult;
 import net.ravendb.client.documents.session.operations.QueryOperation;
 import net.ravendb.client.documents.session.tokens.*;
 import net.ravendb.client.primitives.CleanCloseable;
+import net.ravendb.client.primitives.Reference;
 import net.ravendb.client.primitives.Tuple;
+import org.apache.commons.lang3.StringUtils;
 
 import javax.management.Query;
 import java.time.Duration;
-import java.util.Date;
-import java.util.Iterator;
-import java.util.LinkedList;
-import java.util.List;
+import java.util.*;
+import java.util.function.Consumer;
 
 /**
  * A query against a Raven index
@@ -26,9 +27,7 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
 
     protected Class<T> clazz;
 
-    /* TODO
-      private readonly Dictionary<string, string> _aliasToGroupByFieldName = new Dictionary<string, string>();
-*/
+    private final Map<String, String> _aliasToGroupByFieldName = new HashMap<>();
 
     protected QueryOperator defaultOperatator = QueryOperator.AND;
 
@@ -97,55 +96,47 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
 
     protected boolean theWaitForNonStaleResults;
 
+    protected Set<String> includes = new HashSet<>();
 
     /*TODO
-
-        /// <summary>
-        /// The paths to include when loading the query
-        /// </summary>
-        protected HashSet<string> Includes = new HashSet<string>();
 
         /// <summary>
         /// Holds the query stats
         /// </summary>
         protected QueryStatistics QueryStats = new QueryStatistics();
-
-        /// <summary>
-        /// Determines if entities should be tracked and kept in memory
-        /// </summary>
-        protected bool DisableEntitiesTracking;
-
-        /// <summary>
-        /// Determine if query results should be cached.
-        /// </summary>
-        protected bool DisableCaching;
-
-        /// <summary>
-        /// Indicates if detailed timings should be calculated for various query parts (Lucene search, loading documents, transforming results). Default: false
-        /// </summary>
-        protected bool ShowQueryTimings;
-
-        /// <summary>
-        /// Determine if scores of query results should be explained
-        /// </summary>
-        protected bool ShouldExplainScores;
-
-        public bool IsDistinct => SelectTokens.First?.Value is DistinctToken;
-
-        /// <summary>
-        /// Gets the document convention from the query session
-        /// </summary>
-        public DocumentConventions Conventions => _conventions;
-
-        /// <summary>
-        ///   Gets the session associated with this document query
-        /// </summary>
-        public IDocumentSession Session => (IDocumentSession)TheSession;
-        public IAsyncDocumentSession AsyncSession => (IAsyncDocumentSession)TheSession;
-
-        public bool IsDynamicMapReduce => GroupByTokens.Count > 0;
-
 */
+    protected boolean disableEntitiesTracking;
+
+    protected boolean disableCaching;
+
+    protected boolean showQueryTimings;
+
+    protected boolean shouldExplainScores;
+
+    public boolean isDistinct() {
+        return selectTokens.isEmpty() ? false : selectTokens.get(0) instanceof DistinctToken;
+    }
+
+    /**
+     * Gets the document convention from the query session
+     */
+    public DocumentConventions getConventions() {
+        return _conventions;
+    }
+
+    /**
+     * Gets the session associated with this document query
+     */
+    public IDocumentSession getSession() {
+        return (IDocumentSession) theSession;
+    }
+
+    /*TODO public IAsyncDocumentSession AsyncSession => (IAsyncDocumentSession)TheSession; */
+
+    public boolean isDynamicMapReduce() {
+        return !groupByTokens.isEmpty();
+    }
+
     protected Long cutoffEtag;
 
     private static Duration getDefaultTimeout() {
@@ -177,19 +168,13 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
          */
     }
 
-    /* TODO
-
-        #region TSelf Members
-
-        public void UsingDefaultOperator(QueryOperator @operator)
-        {
-            if (WhereTokens.Count != 0)
-                throw new InvalidOperationException("Default operator can only be set before any where clause is added.");
-
-            DefaultOperator = @operator;
+    protected void usingDefaultOperator(QueryOperator operator) {
+        if (!whereTokens.isEmpty()) {
+            throw new IllegalStateException("Default operator can only be set before any where clause is added.");
         }
 
-        */
+        defaultOperatator = operator;
+    }
 
     /**
      * Instruct the query to wait for non stale result for the specified wait timeout.
@@ -204,8 +189,8 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
         IndexQuery indexQuery = getIndexQuery();
 
         return new QueryOperation(theSession, indexName, indexQuery, null,
-                theWaitForNonStaleResults, timeout, false, false, false);
-        //TODO: pass  FieldsToFetchToken?.Projections,  DisableEntitiesTracking
+                theWaitForNonStaleResults, timeout, disableEntitiesTracking, false, false);
+        //TODO: pass  FieldsToFetchToken?.Projections
     }
 
     public IndexQuery getIndexQuery() {
@@ -224,30 +209,31 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
         {
             return FieldsToFetchToken?.Projections ?? Enumerable.Empty<string>();
         }
+        */
 
-        /// <summary>
-        /// Order the search results randomly
-        /// </summary>
-        public void RandomOrdering()
-        {
-            AssertNoRawQuery();
-            OrderByTokens.AddLast(OrderByToken.Random);
+    /**
+     * Order the search results randomly
+     */
+    protected void _randomOrdering() {
+        assertNoRawQuery();
+        orderByTokens.add(OrderByToken.random);
+    }
+
+    /**
+     * Order the search results randomly using the specified seed
+     * this is useful if you want to have repeatable random queries
+     */
+    protected void _randomOrdering(String seed) {
+        assertNoRawQuery();
+
+        if (StringUtils.isBlank(seed)) {
+            _randomOrdering();
+            return;
         }
 
-        /// <summary>
-        /// Order the search results randomly using the specified seed
-        /// this is useful if you want to have repeatable random queries
-        /// </summary>
-        public void RandomOrdering(string seed)
-        {
-            AssertNoRawQuery();
-            if (string.IsNullOrWhiteSpace(seed))
-            {
-                RandomOrdering();
-                return;
-            }
-            OrderByTokens.AddLast(OrderByToken.CreateRandom(seed));
-        }
+        orderByTokens.add(OrderByToken.createRandom(seed));
+    }
+    /*TODO
 
         public void CustomSortUsing(string typeName, bool descending)
         {
@@ -267,14 +253,12 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
 */
 
     private void assertNoRawQuery() {
-        /* TODO
-         if (QueryRaw != null)
-                throw new InvalidOperationException(
-                    "RawQuery was called, cannot modify this query by calling on operations that would modify the query (such as Where, Select, OrderBy, GroupBy, etc)");
-         */
+        if (queryRaw != null) {
+            throw new IllegalStateException("RawQuery was called, cannot modify this query by calling on operations that would modify the query (such as Where, Select, OrderBy, GroupBy, etc)");
+        }
     }
 
-    /*
+    /* TODO
 
         public void RawQuery(string query)
         {
@@ -284,15 +268,17 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
                 GroupByTokens.Count != 0)
                 throw new InvalidOperationException("You can only use RawQuery on a new query, without applying any operations (such as Where, Select, OrderBy, GroupBy, etc)");
             QueryRaw = query;
+        }*/
+
+    public void addParameter(String name, Object value) {
+        if (queryParameters.containsKey(name)) {
+            throw new IllegalStateException("The parameter " + name + " was already added");
         }
 
-        public void AddParameter(string name, object value)
-        {
-            if (QueryParameters.ContainsKey(name))
-                throw new InvalidOperationException("The parameter " + name + " was already added");
-            QueryParameters[name] = value;
-        }
+        queryParameters.put(name, value);
+    }
 
+    /* TODO
         public void GroupBy(string fieldName, params string[] fieldNames)
         {
             if (FromToken.IsDynamic == false)
@@ -348,120 +334,63 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
         }
 
 */
-    protected void whereTrue() {
+    protected void _whereTrue() {
         appendOperatorIfNeeded(whereTokens);
         negateIfNeeded(null);
 
         whereTokens.add(TrueToken.INSTANCE);
     }
-    /* TODO;
 
-        /// <summary>
-        ///   Includes the specified path in the query, loading the document specified in that path
-        /// </summary>
-        /// <param name = "path">The path.</param>
-        public void Include(string path)
-        {
-            Includes.Add(path);
-        }
+    /**
+     * Includes the specified path in the query, loading the document specified in that path
+     */
+    protected void _include(String path) {
+        includes.add(path);
+    }
 
-        /// <summary>
-        ///   This function exists solely to forbid in memory where clause on IDocumentQuery, because
-        ///   that is nearly always a mistake.
-        /// </summary>
-        [Obsolete(
-            @"
-You cannot issue an in memory filter - such as Where(x=>x.Name == ""Ayende"") - on IDocumentQuery.
-This is likely a bug, because this will execute the filter in memory, rather than in RavenDB.
-Consider using session.Query<T>() instead of session.Advanced.DocumentQuery<T>. The session.Query<T>() method fully supports Linq queries, while session.Advanced.DocumentQuery<T>() is intended for lower level API access.
-If you really want to do in memory filtering on the data returned from the query, you can use: session.Advanced.DocumentQuery<T>().ToList().Where(x=>x.Name == ""Ayende"")
-"
-            , true)]
-        public IEnumerable<T> Where(Func<T, bool> predicate)
-        {
-            throw new NotSupportedException();
-        }
-
-
-        /// <summary>
-        ///   This function exists solely to forbid in memory where clause on IDocumentQuery, because
-        ///   that is nearly always a mistake.
-        /// </summary>
-        [Obsolete(
-            @"
-You cannot issue an in memory filter - such as Count(x=>x.Name == ""Ayende"") - on IDocumentQuery.
-This is likely a bug, because this will execute the filter in memory, rather than in RavenDB.
-Consider using session.Query<T>() instead of session.Advanced.DocumentQuery<T>. The session.Query<T>() method fully supports Linq queries, while session.Advanced.DocumentQuery<T>() is intended for lower level API access.
-If you really want to do in memory filtering on the data returned from the query, you can use: session.Advanced.DocumentQuery<T>().ToList().Count(x=>x.Name == ""Ayende"")
-"
-            , true)]
-        public int Count(Func<T, bool> predicate)
-        {
-            throw new NotSupportedException();
-        }
-
-        /// <summary>
-        ///   Includes the specified path in the query, loading the document specified in that path
-        /// </summary>
-        /// <param name = "path">The path.</param>
-        public void Include(Expression<Func<T, object>> path)
-        {
-            Include(path.ToPropertyPath());
-        }
-
-
-*/
+    //TODO: public void Include(Expression<Func<T, object>> path)
 
     protected void _take(int count) {
         pageSize = count;
     }
 
     protected void _skip(int count) {
-        //tODO:  Start = count;
+        start = count;
     }
 
-    /*
+    /**
+     * Filter the results from the index using the specified where clause.
+     */
+    protected void _whereLucene(String fieldName, String whereClause) {
+        fieldName = ensureValidFieldName(fieldName, false);
 
+        appendOperatorIfNeeded(whereTokens);
+        negateIfNeeded(fieldName);
 
-        /// <summary>
-        ///   Filter the results from the index using the specified where clause.
-        /// </summary>
-        public void WhereLucene(string fieldName, string whereClause)
-        {
-            fieldName = EnsureValidFieldName(fieldName, isNestedPath: false);
+        whereTokens.add(WhereToken.lucene(fieldName, addQueryParameter(whereClause)));
+    }
 
-            AppendOperatorIfNeeded(WhereTokens);
-            NegateIfNeeded(fieldName);
+    /**
+     * Simplified method for opening a new clause within the query
+     */
+    protected void _openSubcluase() {
+        _currentClauseDepth++;
 
-            WhereTokens.AddLast(WhereToken.Lucene(fieldName, AddQueryParameter(whereClause)));
-        }
+        appendOperatorIfNeeded(whereTokens);
+        negateIfNeeded(null);
 
-        /// <summary>
-        ///   Simplified method for opening a new clause within the query
-        /// </summary>
-        /// <returns></returns>
-        public void OpenSubclause()
-        {
-            _currentClauseDepth++;
+        whereTokens.add(OpenSubclauseToken.INSTANCE);
+    }
 
-            AppendOperatorIfNeeded(WhereTokens);
-            NegateIfNeeded(null);
+    /**
+     * Simplified method for closing a clause within the query
+     */
+    protected void _closeSubclause() {
+        _currentClauseDepth--;
 
-            WhereTokens.AddLast(OpenSubclauseToken.Instance);
-        }
+        whereTokens.add(CloseSubclauseToken.INSTANCE);
+    }
 
-        /// <summary>
-        ///   Simplified method for closing a clause within the query
-        /// </summary>
-        /// <returns></returns>
-        public void CloseSubclause()
-        {
-            _currentClauseDepth--;
-
-            WhereTokens.AddLast(CloseSubclauseToken.Instance);
-        }
-
-*/
     protected void _whereEquals(String fieldName, Object value, boolean exact) {
         WhereParams params = new WhereParams();
         params.setFieldName(fieldName);
@@ -681,21 +610,23 @@ If you really want to do in memory filtering on the data returned from the query
         whereTokens.add(QueryOperatorToken.AND);
 
     }
-    /* TODO
 
-        /// <summary>
-        ///   Add an OR to the query
-        /// </summary>
-        public void OrElse()
-        {
-            if (WhereTokens.Last == null)
-                return;
-
-            if (WhereTokens.Last.Value is QueryOperatorToken)
-                throw new InvalidOperationException("Cannot add OR, previous token was already an operator token.");
-
-            WhereTokens.AddLast(QueryOperatorToken.Or);
+    /**
+     * Add an OR to the query
+     */
+    protected void orElse() {
+        if (whereTokens.isEmpty()) {
+            return;
         }
+
+        if (whereTokens.get(whereTokens.size() - 1) instanceof QueryOperatorToken) {
+            throw new IllegalStateException("Cannot add OR, previous token was already an operator token.");
+        }
+
+        whereTokens.add(QueryOperatorToken.OR);
+    }
+
+    /* TODO
 
         /// <summary>
         ///   Specifies a boost weight to the last where clause.
@@ -805,38 +736,32 @@ If you really want to do in memory filtering on the data returned from the query
         orderByTokens.add(OrderByToken.createDescending(f, ordering));
     }
 
-    /* TODO
+    protected void _orderByScore() {
+        assertNoRawQuery();
 
-        public void OrderByScore()
-        {
-            AssertNoRawQuery();
-            OrderByTokens.AddLast(OrderByToken.ScoreAscending);
-        }
+        orderByTokens.add(OrderByToken.scoreAscending);
+    }
 
-        public void OrderByScoreDescending()
-        {
-            AssertNoRawQuery();
-            OrderByTokens.AddLast(OrderByToken.ScoreDescending);
-        }
+    protected void _orderByScoreDescending() {
+        assertNoRawQuery();
+        orderByTokens.add(OrderByToken.scoreDescending);
+    }
 
-        /// <summary>
-        /// Instructs the query to wait for non stale results as of the cutoff etag.
-        /// </summary>
-        public void WaitForNonStaleResultsAsOf(long cutOffEtag)
-        {
-            WaitForNonStaleResultsAsOf(cutOffEtag, DefaultTimeout);
-        }
+    /**
+     * Instructs the query to wait for non stale results as of the cutoff etag.
+     */
+    protected void _waitForNonStaleResultsAsOf(long cutoffEtag) {
+        _waitForNonStaleResultsAsOf(cutoffEtag, getDefaultTimeout());
+    }
 
-        /// <summary>
-        /// Instructs the query to wait for non stale results as of the cutoff etag.
-        /// </summary>
-        public void WaitForNonStaleResultsAsOf(long cutOffEtag, TimeSpan waitTimeout)
-        {
-            TheWaitForNonStaleResults = true;
-            Timeout = waitTimeout;
-            CutoffEtag = cutOffEtag;
-        }
-        */
+    /**
+     * Instructs the query to wait for non stale results as of the cutoff etag.
+     */
+    protected void _waitForNonStaleResultsAsOf(long cutoffEtag, Duration waitTimeout) {
+        theWaitForNonStaleResults = true;
+        timeout = waitTimeout;
+        this.cutoffEtag = cutoffEtag;
+    }
 
     /**
      * EXPERT ONLY: Instructs the query to wait for non stale results.
@@ -845,6 +770,7 @@ If you really want to do in memory filtering on the data returned from the query
     protected void _waitForNonStaleResults() {
         _waitForNonStaleResults(getDefaultTimeout());
     }
+
     /* TODO
 
         /// <summary>
@@ -870,9 +796,6 @@ If you really want to do in memory filtering on the data returned from the query
         {
             AfterStreamExecutedCallback?.Invoke(result);
         }
-
-        #endregion
-
 */
 
     /**
@@ -886,11 +809,9 @@ If you really want to do in memory filtering on the data returned from the query
         indexQuery.setWaitForNonStaleResults(theWaitForNonStaleResults);
         indexQuery.setWaitForNonStaleResultsTimeout(timeout);
         indexQuery.setQueryParameters(queryParameters);
-        /* TODO
-                DisableCaching = DisableCaching,
-                ShowTimings = ShowQueryTimings,
-                ExplainScores = ShouldExplainScores
-         */
+        indexQuery.setDisableCaching(disableCaching);
+        indexQuery.setShowTimings(showQueryTimings);
+        indexQuery.setExplainScores(shouldExplainScores);
 
         if (pageSize != null) {
             indexQuery.setPageSize(pageSize);
@@ -1298,7 +1219,7 @@ If you really want to do in memory filtering on the data returned from the query
             if (fieldName != null) {
                 _whereExists(fieldName);
             } else {
-                whereTrue();
+                _whereTrue();
             }
             _andAlso();
         }
@@ -1487,14 +1408,12 @@ If you really want to do in memory filtering on the data returned from the query
             }
         }
 
-
-          protected Action<IndexQuery> BeforeQueryExecutedCallback;
-
-        protected Action<QueryResult> AfterQueryExecutedCallback;
-
-        protected Action<BlittableJsonReaderObject> AfterStreamExecutedCallback;
-
 */
+    protected Consumer<IndexQuery> beforeQueryExecutedCallback; //TODO: list of listeners
+
+    protected Consumer<QueryResult> afterQueryExecutedCallback; //TODO: list of listeners
+
+    //TODO protected Action<BlittableJsonReaderObject> AfterStreamExecutedCallback;
 
     protected QueryOperation queryOperation;
 

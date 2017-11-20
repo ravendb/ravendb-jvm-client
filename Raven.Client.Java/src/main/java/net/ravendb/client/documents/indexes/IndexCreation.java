@@ -7,7 +7,6 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
 public class IndexCreation {
     private static final Log logger = LogFactory.getLog(IndexCreation.class);

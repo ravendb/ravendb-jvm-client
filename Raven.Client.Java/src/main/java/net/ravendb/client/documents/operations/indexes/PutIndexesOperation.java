@@ -7,6 +7,7 @@ import net.ravendb.client.documents.conventions.DocumentConventions;
 import net.ravendb.client.documents.indexes.IndexDefinition;
 import net.ravendb.client.documents.indexes.PutIndexResult;
 import net.ravendb.client.documents.operations.IAdminOperation;
+import net.ravendb.client.documents.operations.PutIndexesResponse;
 import net.ravendb.client.documents.session.EntityToJson;
 import net.ravendb.client.extensions.JsonExtensions;
 import net.ravendb.client.http.RavenCommand;
@@ -88,7 +89,7 @@ public class PutIndexesOperation implements IAdminOperation<PutIndexResult[]> {
 
         @Override
         public void setResponse(String response, boolean fromCache) throws IOException {
-            //TODO: result = JsonDeserializationClient.PutIndexesResponse(response).Results;
+            result = mapper.readValue(response, PutIndexesResponse.class).getResults();
         }
 
         @Override

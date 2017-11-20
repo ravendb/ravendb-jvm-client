@@ -28,7 +28,7 @@ public class IndexQueryBase<T> implements IIndexQuery {
     }
 
     /**
-     * Actual query that will be performed (Lucene syntax). //TODO or RQL?
+     * Actual query that will be performed (Lucene syntax).
      */
     public void setQuery(String query) {
         this.query = query;

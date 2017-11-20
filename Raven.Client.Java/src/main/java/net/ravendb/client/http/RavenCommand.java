@@ -114,7 +114,7 @@ public abstract class RavenCommand<TResult> {
         }
     }
 
-    public static void encureIsNotNullOrString(String value, String name) {
+    public static void ensureIsNotNullOrString(String value, String name) {
         if (StringUtils.isEmpty(value)) {
             throw new IllegalArgumentException(name + " cannot be null or empty");
         }

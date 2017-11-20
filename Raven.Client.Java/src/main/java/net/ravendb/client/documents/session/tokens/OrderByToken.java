@@ -20,30 +20,21 @@ public class OrderByToken extends QueryToken {
 
     public static OrderByToken scoreDescending = new OrderByToken("score()", true, OrderingType.STRING);
 
-    /*
-    TODO
-        public static OrderByToken CreateDistanceAscending(string fieldName, string latitudeParameterName, string longitudeParameterName)
-        {
-            return new OrderByToken($"distance({fieldName}, point(${latitudeParameterName}, ${longitudeParameterName}))", false, OrderingType.String);
-        }
+    public static OrderByToken createDistanceAscending(String fieldName, String latitudeParameterName, String longitudeParameterName) {
+        return new OrderByToken("distance(" + fieldName + ", point(" + latitudeParameterName + ", " + longitudeParameterName + "))", false, OrderingType.STRING);
+    }
 
-        public static OrderByToken CreateDistanceAscending(string fieldName, string shapeWktParameterName)
-        {
-            return new OrderByToken($"distance({fieldName}, wkt(${shapeWktParameterName}))", false, OrderingType.String);
-        }
+    public static OrderByToken createDistanceAscending(String fieldName, String shapeWktParameterName) {
+        return new OrderByToken("distance(" + fieldName + ", wkt(" + shapeWktParameterName + "))", false, OrderingType.STRING);
+    }
 
-        public static OrderByToken CreateDistanceDescending(string fieldName, string latitudeParameterName, string longitudeParameterName)
-        {
-            return new OrderByToken($"distance({fieldName}, point(${latitudeParameterName}, ${longitudeParameterName}))", true, OrderingType.String);
-        }
+    public static OrderByToken createDistanceDescending(String fieldName, String latitudeParameterName, String longitudeParameterName) {
+        return new OrderByToken("distance(" + fieldName + ", point(" + latitudeParameterName + ", " + longitudeParameterName + "))", true, OrderingType.STRING);
+    }
 
-        public static OrderByToken CreateDistanceDescending(string fieldName, string shapeWktParameterName)
-        {
-            return new OrderByToken($"distance({fieldName}, wkt(${shapeWktParameterName}))", true, OrderingType.String);
-        }
-
-
-     */
+    public static OrderByToken createDistanceDescending(String fieldName, String shapeWktParameterName) {
+        return new OrderByToken("distance(" + fieldName + ", wkt(" + shapeWktParameterName + "))", true, OrderingType.STRING);
+    }
 
     public static OrderByToken createRandom(String seed) {
         if (seed == null) {
