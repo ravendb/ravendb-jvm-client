@@ -7,6 +7,7 @@ import net.ravendb.client.documents.conventions.DocumentConventions;
 import net.ravendb.client.documents.operations.configuration.GetClientConfigurationOperation;
 import net.ravendb.client.documents.session.SessionInfo;
 import net.ravendb.client.exceptions.AllTopologyNodesDownException;
+import net.ravendb.client.exceptions.TimeoutException;
 import net.ravendb.client.exceptions.database.DatabaseDoesNotExistException;
 import net.ravendb.client.exceptions.ExceptionDispatcher;
 import net.ravendb.client.exceptions.security.AuthorizationException;
@@ -24,6 +25,7 @@ import org.apache.http.HttpStatus;
 import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpRequestBase;
+import org.apache.http.client.methods.RequestBuilder;
 import org.apache.http.config.SocketConfig;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
@@ -32,10 +34,7 @@ import org.apache.http.impl.conn.PoolingHttpClientConnectionManager;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.MalformedURLException;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.net.URL;
+import java.net.*;
 import java.time.Duration;
 import java.util.*;
 import java.util.concurrent.*;
@@ -63,7 +62,7 @@ public class RequestExecutor implements CleanCloseable {
 
     private final ConcurrentMap<ServerNode, NodeStatus> _failedNodesTimers = new ConcurrentHashMap<>();
 
-    // TODO: public X509Certificate2 Certificate { get; }
+    // TBD: public X509Certificate2 Certificate { get; }
 
     private final String _databaseName;
 
@@ -149,17 +148,17 @@ public class RequestExecutor implements CleanCloseable {
         this._defaultTimeout = defaultTimeout;
     }
 
-    protected RequestExecutor(String databaseName, DocumentConventions conventions) { //TODO: X509Certificate2 certificate
+    protected RequestExecutor(String databaseName, DocumentConventions conventions) { //TBD: X509Certificate2 certificate
         _readBalanceBehavior = conventions.getReadBalanceBehavior();
         _databaseName = databaseName;
-        // TODO: Certificate = certificate;
+        // TBD: Certificate = certificate;
 
         _lastReturnedResponse = new Date();
         this.conventions = conventions.clone();
 
         String thumbprint = "";
 
-        //TODO: if (certificate != null)    thumbprint = certificate.Thumbprint;
+        //TBD: if (certificate != null)    thumbprint = certificate.Thumbprint;
 
         httpClient = globalHttpClient.computeIfAbsent(thumbprint, (thumb) -> createClient());
     }
@@ -445,7 +444,7 @@ public class RequestExecutor implements CleanCloseable {
         });
     }
 
-    protected static String[] validateUrls(String[] initialUrls) { //TODO: certificate
+    protected static String[] validateUrls(String[] initialUrls) { //TBD: certificate
         String[] cleanUrls = new String[initialUrls.length];
         for (int index = 0; index < initialUrls.length; index++) {
             String url = initialUrls[index];
@@ -517,49 +516,34 @@ public class RequestExecutor implements CleanCloseable {
                 Duration timeout = command.getTimeout() != null ? command.getTimeout() : _defaultTimeout;
 
                 if (timeout != null) {
-                    throw new UnsupportedOperationException("TDODO");
-                    /*
-                    if (timeout > GlobalHttpClientTimeout)
-                            ThrowTimeoutTooLarge(timeout);
+                    if (timeout.toMillis() > GLOBAL_HTTP_CLIENT_TIMEOUT.toMillis()) {
+                        throwTimeoutTooLarnge(timeout);
+                    }
 
-                        using (var cts = CancellationTokenSource.CreateLinkedTokenSource(token, CancellationToken.None))
-                        {
-                            cts.CancelAfter(timeout.Value);
-                            try
-                            {
-                                var preferredTask = command.SendAsync(HttpClient, request, cts.Token);
-                                if (ShouldExecuteOnAll(chosenNode, command))
-                                {
-                                    await ExecuteOnAllToFigureOutTheFastest(chosenNode, command, preferredTask, cts.Token).ConfigureAwait(false);
-                                }
-
-                                response = await preferredTask.ConfigureAwait(false);
-                            }
-                            catch (OperationCanceledException e)
-                            {
-                                if (cts.IsCancellationRequested && token.IsCancellationRequested == false) // only when we timed out
-                                {
-                                    var timeoutException = new TimeoutException($"The request for {request.RequestUri} failed with timeout after {timeout}", e);
-                                    if (shouldRetry == false)
-                                        throw timeoutException;
-
-                                    sp.Stop();
-                                    if (sessionInfo != null)
-                                    {
-                                        sessionInfo.AsyncCommandRunning = false;
-                                    }
-
-                                    if (await HandleServerDown(url, chosenNode, nodeIndex, context, command, request, response, e, sessionInfo).ConfigureAwait(false) == false)
-                                    {
-                                        ThrowFailedToContactAllNodes(command, request, e, timeoutException);
-                                    }
-
-                                    return;
-                                }
-                                throw;
-                            }
+                    try {
+                        if (shouldExecuteOnAll(chosenNode, command)) {
+                            response = executeOnAllToFigureOutTheFastest(chosenNode, command);
+                        } else {
+                            RequestConfig.Builder config = request.getConfig() != null ? RequestConfig.copy(request.getConfig()) : RequestConfig.custom();
+                            config.setSocketTimeout((int)timeout.toMillis());
+                            request.setConfig(config.build());
+                            response = command.send(httpClient, request);
                         }
-                     */
+                    } catch (SocketTimeoutException e) { //TODO: check me!
+
+                        TimeoutException timeoutException = new TimeoutException("The request for " + request.getURI() + " failed with theout after " + timeout, e);
+                        if (!shouldRetry) {
+                            throw timeoutException;
+                        }
+
+                        sp.stop();
+
+                        if (!handleServerDown(urlRef.value, chosenNode, nodeIndex, command, request, response, e, sessionInfo)) {
+                            throwFailedToContactAllNodes(command, request, e, timeoutException);
+                        }
+                        return;
+                    }
+                    //TODO: test me!
                 } else {
 
                     if (shouldExecuteOnAll(chosenNode, command)) {
@@ -986,7 +970,7 @@ public class RequestExecutor implements CleanCloseable {
     }
 
     private CloseableHttpClient createClient() {
-        //TODO: certifciates handling, timeout: GlobalHttpClientTimeout?
+        //TBD: certifciates handling, timeout: GlobalHttpClientTimeout?
 
         PoolingHttpClientConnectionManager cm = new PoolingHttpClientConnectionManager();
         cm.setDefaultMaxPerRoute(10);
@@ -1001,7 +985,7 @@ public class RequestExecutor implements CleanCloseable {
     }
 
 
-    //TODO: ValidateClientKeyUsages
+    //TBD: ValidateClientKeyUsages
 
     public static class NodeStatus implements CleanCloseable {
 

@@ -41,7 +41,7 @@ public class FromToken extends QueryToken {
         return new FromToken(indexName, collectionName, alias);
     }
 
-    private static final List<Character> WHITE_SPACE_CHARS = Arrays.asList( new Character[] { ' ', '\t', '\r', '\n' }); //TODO: \v ?
+    private static final List<Character> WHITE_SPACE_CHARS = Arrays.asList( new Character[] { ' ', '\t', '\r', '\n' });
 
     @Override
     public void writeTo(StringBuilder writer) {

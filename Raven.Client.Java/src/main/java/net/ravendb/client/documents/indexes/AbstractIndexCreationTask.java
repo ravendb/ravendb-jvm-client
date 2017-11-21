@@ -156,6 +156,7 @@ public abstract class AbstractIndexCreationTask {
         indexesStrings.put(field, indexing);
     }
 
+
     /* TODO
       /// <summary>
         /// Register a field to be spatially indexed

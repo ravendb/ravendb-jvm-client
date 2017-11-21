@@ -1,11 +1,12 @@
 package net.ravendb.client.documents.session;
 
 public interface IGroupByDocumentQuery<T> {
-    /* TODO
-     IGroupByDocumentQuery<T> SelectKey(string projectedName = null);
 
-        IDocumentQuery<T> SelectSum(GroupByField field, params GroupByField[] fields);
+    IGroupByDocumentQuery<T> selectKey();
+    IGroupByDocumentQuery<T> selectKey(String projectedName);
 
-        IDocumentQuery<T> SelectCount(string projectedName = null);
-     */
+    IDocumentQuery<T> selectSum(GroupByField field, GroupByField... fields);
+
+    IDocumentQuery<T> selectCount();
+    IDocumentQuery<T> selectCount(String projectedName);
 }

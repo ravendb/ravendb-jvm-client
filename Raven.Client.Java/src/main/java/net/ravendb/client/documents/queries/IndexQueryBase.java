@@ -4,7 +4,7 @@ import java.time.Duration;
 
 public class IndexQueryBase<T> implements IIndexQuery {
 
-    private int _pageSize = Integer.MAX_VALUE; ///TODO: validate!
+    private int _pageSize = Integer.MAX_VALUE;
     private boolean pageSizeSet;
     private String query;
     private T queryParameters;

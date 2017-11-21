@@ -10,10 +10,13 @@ public interface IDocumentQueryBase<T, TSelf extends IDocumentQueryBase<T, TSelf
         /// </summary>
         /// <param name="isAsync"></param>
         KeyValuePair<string, object> GetLastEqualityTerm(bool isAsync = false);
-        /// <summary>
-        ///     Negate the next operation
-        /// </summary>
-        TSelf Not { get; }
+        */
+
+    /**
+     * Negate the next operation
+     */
+    TSelf not();
+    /* TODO
 
         /// <summary>
         ///     Adds an ordering for a specific field to the query

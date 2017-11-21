@@ -1,6 +1,6 @@
 package net.ravendb.client.documents.session.tokens;
 
-import jdk.nashorn.internal.objects.annotations.Where;
+import net.ravendb.client.Constants;
 import net.ravendb.client.documents.queries.SearchOperator;
 
 public class WhereToken extends QueryToken {
@@ -18,6 +18,8 @@ public class WhereToken extends QueryToken {
     private Double fuzzy;
     private Integer proximity;
     private boolean exact;
+    private ShapeToken whereShape;
+    private double distanceErrorPct;
 
     public String getFieldName() {
         return fieldName;
@@ -71,11 +73,21 @@ public class WhereToken extends QueryToken {
         return searchOperator;
     }
 
-    /* TODO:
+    public ShapeToken getWhereShape() {
+        return whereShape;
+    }
 
-        public ShapeToken WhereShape { get; private set; }
-        public double DistanceErrorPct { get; private set; }
-*/
+    public void setWhereShape(ShapeToken whereShape) {
+        this.whereShape = whereShape;
+    }
+
+    public double getDistanceErrorPct() {
+        return distanceErrorPct;
+    }
+
+    public void setDistanceErrorPct(double distanceErrorPct) {
+        this.distanceErrorPct = distanceErrorPct;
+    }
 
     public static WhereToken equals(String fieldName, String parameterName, boolean exact) {
         WhereToken token = new WhereToken();
@@ -200,55 +212,46 @@ public class WhereToken extends QueryToken {
         token.whereOperator = WhereOperator.EXISTS;
         return token;
     }
-    /* TODO
 
-        public static QueryToken Within(string fieldName, ShapeToken shape, double distanceErrorPct)
-        {
-            return new WhereToken
-            {
-                FieldName = fieldName,
-                ParameterName = null,
-                WhereOperator = WhereOperator.Within,
-                WhereShape = shape,
-                DistanceErrorPct = distanceErrorPct
-            };
-        }
+    public static QueryToken within(String fieldName, ShapeToken shape, double distanceErrorPct) {
+        WhereToken token = new WhereToken();
+        token.fieldName = fieldName;
+        token.parameterName = null;
+        token.whereOperator = WhereOperator.WITHIN;
+        token.whereShape = shape;
+        token.distanceErrorPct = distanceErrorPct;
+        return token;
+    }
 
-        public static QueryToken Contains(string fieldName, ShapeToken shape, double distanceErrorPct)
-        {
-            return new WhereToken
-            {
-                FieldName = fieldName,
-                ParameterName = null,
-                WhereOperator = WhereOperator.Contains,
-                WhereShape = shape,
-                DistanceErrorPct = distanceErrorPct
-            };
-        }
+    public static QueryToken contains(String fieldName, ShapeToken shape, double distanceErrorPct) {
+        WhereToken token = new WhereToken();
+        token.fieldName = fieldName;
+        token.parameterName = null;
+        token.whereOperator = WhereOperator.CONTAINS;
+        token.whereShape = shape;
+        token.distanceErrorPct = distanceErrorPct;
+        return token;
+    }
 
-        public static QueryToken Disjoint(string fieldName, ShapeToken shape, double distanceErrorPct)
-        {
-            return new WhereToken
-            {
-                FieldName = fieldName,
-                ParameterName = null,
-                WhereOperator = WhereOperator.Disjoint,
-                WhereShape = shape,
-                DistanceErrorPct = distanceErrorPct
-            };
-        }
+    public static QueryToken disjoint(String fieldName, ShapeToken shape, double distanceErrorPct) {
+        WhereToken token = new WhereToken();
+        token.fieldName = fieldName;
+        token.parameterName = null;
+        token.whereOperator = WhereOperator.DISJOINT;
+        token.whereShape = shape;
+        token.distanceErrorPct = distanceErrorPct;
+        return token;
+    }
 
-        public static QueryToken Intersects(string fieldName, ShapeToken shape, double distanceErrorPct)
-        {
-            return new WhereToken
-            {
-                FieldName = fieldName,
-                ParameterName = null,
-                WhereOperator = WhereOperator.Intersects,
-                WhereShape = shape,
-                DistanceErrorPct = distanceErrorPct
-            };
-        }*/
+    public static QueryToken intersects(String fieldNam, ShapeToken shape, double distanceErrorPct) {
+        WhereToken token = new WhereToken();
+        token.fieldName = fieldNam;
+        token.parameterName = null;
+        token.whereOperator = WhereOperator.INTERSECTS;
+        token.whereShape = shape;
+        token.distanceErrorPct = distanceErrorPct;
+        return token;
+    }
 
     @Override
     public void writeTo(StringBuilder writer) {
@@ -378,15 +381,12 @@ public class WhereToken extends QueryToken {
             case INTERSECTS:
                 writer
                         .append(", ");
-                /* TODO
-                    WhereShape.WriteTo(writer);
+                whereShape.writeTo(writer);
 
-                    if (Math.Abs(DistanceErrorPct - Constants.Documents.Indexing.Spatial.DefaultDistanceErrorPct) > double.Epsilon)
-                    {
-                        writer.Append(", ");
-                        writer.Append(DistanceErrorPct);
-                    }
-                 */
+                if (Math.abs(distanceErrorPct - Constants.Documents.Indexing.Spatial.DEFAULT_DISTANCE_ERROR_PCT) > 1e-40) {
+                    writer.append(", ");
+                    writer.append(distanceErrorPct);
+                }
                 writer
                         .append(")");
                 break;
@@ -418,8 +418,5 @@ public class WhereToken extends QueryToken {
                     .append(boost)
                     .append(")");
         }
-
-
-
     }
 }

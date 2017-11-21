@@ -1,117 +1,127 @@
 package net.ravendb.client.documents.session;
 
+import net.ravendb.client.documents.conventions.DocumentConventions;
+
+import java.time.Duration;
 import java.util.Iterator;
 
 /**
  * Mostly used by the linq provider
  */
 public interface IAbstractDocumentQuery<T> {
+
+    String getIndexName();
+
+    String getCollectionName();
+
+    /**
+     * Gets the document convention from the query session
+     */
+    DocumentConventions getConventions();
+
+    /**
+     * Determines if it is a dynamic map-reduce query
+     */
+    boolean isDynamicMapReduce();
+
+    /**
+     * Instruct the query to wait for non stale result for the specified wait timeout.
+     */
+    void _waitForNonStaleResults(Duration waitTimeout);
+
+
+
     /* TODO
-     string IndexName { get; }
-
-        string CollectionName { get; }
-
-        /// <summary>
-        /// Gets the document convention from the query session
-        /// </summary>
-        DocumentConventions Conventions { get; }
-
-        /// <summary>
-        /// Determines if it is a dynamic map-reduce query
-        /// </summary>
-        bool IsDynamicMapReduce { get; }
-
-        /// <summary>
-        ///   Instruct the query to wait for non stale result for the specified wait timeout.
-        /// </summary>
-        /// <param name = "waitTimeout">The wait timeout.</param>
-        /// <returns></returns>
-        void WaitForNonStaleResults(TimeSpan waitTimeout);
 
         /// <summary>
         ///   Gets the fields for projection
         /// </summary>
         /// <returns></returns>
-        IEnumerable<string> GetProjectionFields();
+        IEnumerable<string> GetProjectionFields();*/
 
-        /// <summary>
-        /// Order the search results randomly
-        /// </summary>
-        void RandomOrdering();
+    /**
+     * Order the search results randomly
+     */
+    void _randomOrdering();
 
-        /// <summary>
-        /// Order the search results randomly using the specified seed
-        /// this is useful if you want to have repeatable random queries
-        /// </summary>
-        void RandomOrdering(string seed);
+    /**
+     * Order the search results randomly using the specified seed
+     * this is useful if you want to have repeatable random queries
+     */
+    void _randomOrdering(String seed);
 
-        /// <summary>
-        /// Sort using custom sorter on the server
-        /// </summary>
-        void CustomSortUsing(string typeName, bool descending = false);
+    /**
+     * Sort using custom sorter on the server
+     */
+    void _customSortUsing(String typeName);
 
-        /// <summary>
-        ///   Includes the specified path in the query, loading the document specified in that path
-        /// </summary>
-        /// <param name = "path">The path.</param>
-        void Include(string path);
+    /**
+     * Sort using custom sorter on the server
+     */
+    void _customSortUsing(String typeName, boolean descending);
 
-        /// <summary>
-        ///   Includes the specified path in the query, loading the document specified in that path
-        /// </summary>
-        /// <param name = "path">The path.</param>
-        void Include(Expression<Func<T, object>> path);
+    /**
+     * Includes the specified path in the query, loading the document specified in that path
+     */
+    void _include(String path);
 
-        /// <summary>
-        ///   Takes the specified count.
-        /// </summary>
-        /// <param name = "count">The count.</param>
-        /// <returns></returns>
-        void Take(int count);
+    // TBD linq void Include(Expression<Func<T, object>> path);
 
-        /// <summary>
-        ///   Skips the specified count.
-        /// </summary>
-        /// <param name = "count">The count.</param>
-        /// <returns></returns>
-        void Skip(int count);
+    /**
+     * Takes the specified count.
+     */
+    void _take(int count);
 
-        /// <summary>
-        ///   Matches value
-        /// </summary>
-        void WhereEquals(string fieldName, object value, bool exact = false);
+    /**
+     * Skips the specified count.
+     */
+    void _skip(int count);
 
-        /// <summary>
-        ///   Matches value
-        /// </summary>
-        void WhereEquals(WhereParams whereParams);
+    /**
+     * Matches value
+     */
+    void _whereEquals(String fieldName, Object value);
 
-        /// <summary>
-        ///   Not matches value
-        /// </summary>
-        void WhereNotEquals(string fieldName, object value, bool exact = false);
+    /**
+     * Matches value
+     */
+    void _whereEquals(String fieldName, Object value, boolean exact);
 
-        /// <summary>
-        ///   Not matches value
-        /// </summary>
-        void WhereNotEquals(WhereParams whereParams);
+    /**
+     * Matches value
+     */
+    void _whereEquals(WhereParams whereParams);
 
-        /// <summary>
-        ///   Simplified method for opening a new clause within the query
-        /// </summary>
-        /// <returns></returns>
-        void OpenSubclause();
+    /**
+     * Not matches value
+     */
+    void _whereNotEquals(String fieldName, Object value);
 
-        /// <summary>
-        ///   Simplified method for closing a clause within the query
-        /// </summary>
-        /// <returns></returns>
-        void CloseSubclause();
+    /**
+     * Not matches value
+     */
+    void _whereNotEquals(String fieldName, Object value, boolean exact);
 
-        ///<summary>
-        /// Negate the next operation
-        ///</summary>
-        void NegateNext();
+    /**
+     * Not matches value
+     */
+    void _whereNotEquals(WhereParams whereParams);
+
+    /**
+     * Simplified method for opening a new clause within the query
+     */
+    void _openSubclause();
+
+    /**
+     * Simplified method for closing a clause within the query
+     */
+    void _closeSubclause();
+
+    /**
+     * Negate the next operation
+     */
+    void _negateNext();
+    /* TODO
 
         /// <summary>
         /// Check that the field has one of the specified value
@@ -158,16 +168,19 @@ public interface IAbstractDocumentQuery<T> {
         void WhereLessThanOrEqual(string fieldName, object value, bool exact = false);
 
         void WhereExists(string fieldName);
+*/
 
-        /// <summary>
-        ///   Add an AND to the query
-        /// </summary>
-        void AndAlso();
+    /**
+     * Add an AND to the query
+     */
+    void _andAlso();
 
-        /// <summary>
-        ///   Add an OR to the query
-        /// </summary>
-        void OrElse();
+    /**
+     * Add an OR to the query
+     */
+    void _orElse();
+
+    /* TODO:
 
         /// <summary>
         ///   Specifies a boost weight to the last where clause.
@@ -325,10 +338,12 @@ public interface IAbstractDocumentQuery<T> {
 
         void OrderByDistance(string fieldName, string shapeWkt);
 
-        void OrderByDistanceDescending(string fieldName, double latitude, double longitude);
-
-        void OrderByDistanceDescending(string fieldName, string shapeWkt);
      */
+
+    void _orderByDistanceDescending(String fieldName, double latitude, double longitude);
+
+
+    void _orderByDistanceDescending(String fieldName, String shapeWkt);
 
     Iterator<T> iterator();
 }

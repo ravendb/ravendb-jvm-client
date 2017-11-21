@@ -1,5 +1,6 @@
 package net.ravendb.client.documents.session;
 
+import net.ravendb.client.documents.queries.QueryResult;
 import net.ravendb.client.documents.session.tokens.DeclareToken;
 import net.ravendb.client.documents.session.tokens.LoadToken;
 
@@ -271,25 +272,19 @@ public class DocumentQuery<T> extends AbstractDocumentQuery<T, DocumentQuery<T>>
             Include(path);
             return this;
         }
+*/
 
-        /// <inheritdoc />
-        IDocumentQuery<T> IDocumentQueryBase<T, IDocumentQuery<T>>.Not
-        {
-            get
-            {
-                NegateNext();
-                return this;
-            }
-        }
+    @Override
+    public IDocumentQuery<T> not() {
+        _negateNext();
+        return this;
+    }
 
-        /// <inheritdoc />
-        public QueryResult GetQueryResult()
-        {
-            InitSync();
+    public QueryResult getQueryResult() {
+        initSync();
 
-            return QueryOperation.CurrentQueryResults.CreateSnapshot();
-        }
-        */
+        return queryOperation.getCurrentQueryResults().createSnapshot();
+    }
 
     @Override
     public IDocumentQuery<T> take(int count) {

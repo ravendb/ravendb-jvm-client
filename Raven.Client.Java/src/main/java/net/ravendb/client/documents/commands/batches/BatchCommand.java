@@ -23,7 +23,7 @@ import java.util.List;
 public class BatchCommand extends RavenCommand<JsonArrayResult> implements CleanCloseable {
 
     private final List<ICommandData> _commands;
-    //TODO: private readonly HashSet<Stream> _attachmentStreams;
+    //TBD: attachments private readonly HashSet<Stream> _attachmentStreams;
     private final BatchOptions _options;
 
     public BatchCommand(DocumentConventions conventions, List<ICommandData> commands) {
@@ -43,7 +43,7 @@ public class BatchCommand extends RavenCommand<JsonArrayResult> implements Clean
             throw new IllegalArgumentException("commands cannot be null");
         }
 
-        /* TODO:
+        /* TBD: attachments
             for (var i = 0; i < commands.Count; i++)
             {
                 var command = commands[i];
@@ -86,7 +86,7 @@ public class BatchCommand extends RavenCommand<JsonArrayResult> implements Clean
             }
 
 
-            /* TODO
+            /* TBD: attachments
 
             if (_attachmentStreams != null && _attachmentStreams.Count > 0)
             {

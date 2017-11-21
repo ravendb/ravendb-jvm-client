@@ -1,6 +1,7 @@
 package net.ravendb.client.documents.session;
 
 import jdk.nashorn.internal.objects.annotations.Where;
+import net.ravendb.client.Constants;
 import net.ravendb.client.Parameters;
 import net.ravendb.client.documents.commands.QueryCommand;
 import net.ravendb.client.documents.conventions.DocumentConventions;
@@ -31,18 +32,9 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
 
     protected QueryOperator defaultOperatator = QueryOperator.AND;
 
-    /* TODO
+    //TODO: private readonly LinqPathProvider _linqPathProvider;
 
-        private readonly LinqPathProvider _linqPathProvider;
-
-        protected readonly HashSet<Type> RootTypes = new HashSet<Type>
-        {
-            typeof (T)
-        };
-
-        private static Dictionary<Type, Func<object, string>> _implicitStringsCache = new Dictionary<Type, Func<object, string>>();
-
-        */
+    protected final Set<Class> rootTypes = new HashSet<>();
 
     /**
      * Whether to negate the next operation
@@ -153,6 +145,7 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
                                     String collectionName, boolean isGroupBy, DeclareToken declareToken,
                                     List<LoadToken> loadTokens, String fromAlias) {
         this.clazz = clazz;
+        rootTypes.add(clazz);
         this.isGroupBy = isGroupBy;
         this.indexName = indexName;
         this.collectionName = collectionName;
@@ -179,7 +172,7 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
     /**
      * Instruct the query to wait for non stale result for the specified wait timeout.
      */
-    protected void _waitForNonStaleResults(Duration waitTimeout) {
+    public void _waitForNonStaleResults(Duration waitTimeout) {
         theWaitForNonStaleResults = true;
         cutoffEtag = null;
         timeout = waitTimeout;
@@ -214,7 +207,7 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
     /**
      * Order the search results randomly
      */
-    protected void _randomOrdering() {
+    public void _randomOrdering() {
         assertNoRawQuery();
         orderByTokens.add(OrderByToken.random);
     }
@@ -223,7 +216,7 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
      * Order the search results randomly using the specified seed
      * this is useful if you want to have repeatable random queries
      */
-    protected void _randomOrdering(String seed) {
+    public void _randomOrdering(String seed) {
         assertNoRawQuery();
 
         if (StringUtils.isBlank(seed)) {
@@ -233,24 +226,25 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
 
         orderByTokens.add(OrderByToken.createRandom(seed));
     }
-    /*TODO
 
-        public void CustomSortUsing(string typeName, bool descending)
-        {
-            if (descending)
-            {
-                OrderByDescending(Constants.Documents.Indexing.Fields.CustomSortFieldName + ";" + typeName);
-                return;
-            }
+    @Override
+    public void _customSortUsing(String typeName) {
+        _customSortUsing(typeName, false);
+    }
 
-            OrderBy(Constants.Documents.Indexing.Fields.CustomSortFieldName + ";" + typeName);
+    @Override
+    public void _customSortUsing(String typeName, boolean descending) {
+        if (descending) {
+            _orderByDescending(Constants.Documents.Indexing.Fields.CUSTOM_SORT_FIELD_NAME + ";" + typeName);
+            return;
         }
 
-        internal void AddGroupByAlias(string fieldName, string projectedName)
-        {
-            _aliasToGroupByFieldName[projectedName] = fieldName;
-        }
-*/
+        _orderBy(Constants.Documents.Indexing.Fields.CUSTOM_SORT_FIELD_NAME + ";" + typeName);
+    }
+
+    protected void addGroupByAlias(String fieldName, String projectedName) {
+        _aliasToGroupByFieldName.put(projectedName, fieldName);
+    }
 
     private void assertNoRawQuery() {
         if (queryRaw != null) {
@@ -334,7 +328,7 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
         }
 
 */
-    protected void _whereTrue() {
+    public void _whereTrue() {
         appendOperatorIfNeeded(whereTokens);
         negateIfNeeded(null);
 
@@ -344,24 +338,24 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
     /**
      * Includes the specified path in the query, loading the document specified in that path
      */
-    protected void _include(String path) {
+    public void _include(String path) {
         includes.add(path);
     }
 
     //TODO: public void Include(Expression<Func<T, object>> path)
 
-    protected void _take(int count) {
+    public void _take(int count) {
         pageSize = count;
     }
 
-    protected void _skip(int count) {
+    public void _skip(int count) {
         start = count;
     }
 
     /**
      * Filter the results from the index using the specified where clause.
      */
-    protected void _whereLucene(String fieldName, String whereClause) {
+    public void _whereLucene(String fieldName, String whereClause) {
         fieldName = ensureValidFieldName(fieldName, false);
 
         appendOperatorIfNeeded(whereTokens);
@@ -373,7 +367,7 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
     /**
      * Simplified method for opening a new clause within the query
      */
-    protected void _openSubcluase() {
+    public void _openSubclause() {
         _currentClauseDepth++;
 
         appendOperatorIfNeeded(whereTokens);
@@ -385,13 +379,17 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
     /**
      * Simplified method for closing a clause within the query
      */
-    protected void _closeSubclause() {
+    public void _closeSubclause() {
         _currentClauseDepth--;
 
         whereTokens.add(CloseSubclauseToken.INSTANCE);
     }
 
-    protected void _whereEquals(String fieldName, Object value, boolean exact) {
+    public void _whereEquals(String fieldName, Object value) {
+        _whereEquals(fieldName, value, false);
+    }
+
+    public void _whereEquals(String fieldName, Object value, boolean exact) {
         WhereParams params = new WhereParams();
         params.setFieldName(fieldName);
         params.setValue(value);
@@ -399,7 +397,7 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
         _whereEquals(params);
     }
 
-    protected void _whereEquals(WhereParams whereParams) {
+    public void _whereEquals(WhereParams whereParams) {
         if (negate) {
             negate = false;
             _whereNotEquals(whereParams);
@@ -416,11 +414,11 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
 
     }
 
-    protected void _whereNotEquals(String fieldName, Object value) {
+    public void _whereNotEquals(String fieldName, Object value) {
         _whereNotEquals(fieldName, value, false);
     }
 
-    protected void _whereNotEquals(String fieldName, Object value, boolean exact) {
+    public void _whereNotEquals(String fieldName, Object value, boolean exact) {
         WhereParams params = new WhereParams();
         params.setFieldName(fieldName);
         params.setValue(value);
@@ -429,7 +427,7 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
         _whereNotEquals(params);
     }
 
-    protected void _whereNotEquals(WhereParams whereParams) {
+    public void _whereNotEquals(WhereParams whereParams) {
         if (negate) {
             negate = false;
             _whereEquals(whereParams);
@@ -445,7 +443,7 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
         whereTokens.add(WhereToken.notEquals(whereParams.getFieldName(), addQueryParameter(transformToEqualValue), whereParams.isExact()));
     }
 
-    protected void negateNext() {
+    public void _negateNext() {
         negate = !negate;
     }
 
@@ -465,7 +463,7 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
         }
 
 */
-    protected void _whereStartsWith(String fieldName, Object value) {
+    public void _whereStartsWith(String fieldName, Object value) {
         WhereParams whereParams = new WhereParams();
         whereParams.setFieldName(fieldName);
         whereParams.setValue(value);
@@ -486,7 +484,7 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
     /**
      * Matches fields which ends with the specified value.
      */
-    protected void _whereEndsWith(String fieldName, Object value) {
+    public void _whereEndsWith(String fieldName, Object value) {
         WhereParams whereParams = new WhereParams();
         whereParams.setFieldName(fieldName);
         whereParams.setValue(value);
@@ -526,14 +524,14 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
         }
 */
 
-    protected void _whereGreaterThan(String fieldName, Object value) {
+    public void _whereGreaterThan(String fieldName, Object value) {
         _whereGreaterThan(fieldName, value, false);
     }
 
     /**
      * Matches fields where the value is greater than the specified value
      */
-    protected void _whereGreaterThan(String fieldName, Object value, boolean exact) {
+    public void _whereGreaterThan(String fieldName, Object value, boolean exact) {
         fieldName = ensureValidFieldName(fieldName, false);
 
         appendOperatorIfNeeded(whereTokens);
@@ -545,14 +543,14 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
         whereTokens.add(WhereToken.greaterThan(fieldName, addQueryParameter(value == null ? "*" : transformValue(whereParams, true)), exact));
     }
 
-    protected void _whereGreaterThanOrEqual(String fieldName, Object value) {
+    public void _whereGreaterThanOrEqual(String fieldName, Object value) {
         _whereGreaterThanOrEqual(fieldName, value, false);
     }
 
     /**
      * Matches fields where the value is greater than or equal to the specified value
      */
-    protected void _whereGreaterThanOrEqual(String fieldName, Object value, boolean exact) {
+    public void _whereGreaterThanOrEqual(String fieldName, Object value, boolean exact) {
         fieldName = ensureValidFieldName(fieldName, false);
 
         appendOperatorIfNeeded(whereTokens);
@@ -564,11 +562,11 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
         whereTokens.add(WhereToken.greaterThanOrEqual(fieldName, addQueryParameter(value == null ? "*" : transformValue(whereParams, true)), exact));
     }
 
-    protected void _whereLessThan(String fieldName, Object value) {
+    public void _whereLessThan(String fieldName, Object value) {
         _whereLessThan(fieldName, value);
     }
 
-    protected void _whereLessThan(String fieldName, Object value, boolean exact) {
+    public void _whereLessThan(String fieldName, Object value, boolean exact) {
         fieldName = ensureValidFieldName(fieldName, false);
 
         appendOperatorIfNeeded(whereTokens);
@@ -582,11 +580,11 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
                 addQueryParameter(value == null ? "NULL" : transformValue(whereParams, true)), exact));
     }
 
-    protected void _whereLessThanOrEqual(String fieldName, Object value) {
+    public void _whereLessThanOrEqual(String fieldName, Object value) {
         _whereLessThanOrEqual(fieldName, value);
     }
 
-    protected void _whereLessThanOrEqual(String fieldName, Object value, boolean exact) {
+    public void _whereLessThanOrEqual(String fieldName, Object value, boolean exact) {
         appendOperatorIfNeeded(whereTokens);
         negateIfNeeded(fieldName);
 
@@ -598,7 +596,7 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
                 addQueryParameter(value == null ? "NULL" : transformValue(whereParams, true)), exact));
     }
 
-    protected void _andAlso() {
+    public void _andAlso() {
         if (whereTokens.isEmpty()) {
             return;
         }
@@ -614,7 +612,7 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
     /**
      * Add an OR to the query
      */
-    protected void orElse() {
+    public void _orElse() {
         if (whereTokens.isEmpty()) {
             return;
         }
@@ -713,13 +711,21 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
             whereToken.Proximity = proximity;
         }
 */
+    /**
+     * Order the results by the specified fields
+     * The fields are the names of the fields to sort, defaulting to sorting by ascending.
+     * You can prefix a field name with '-' to indicate sorting by descending or '+' to sort by ascending
+     */
+    public void _orderBy(String field) {
+        _orderBy(field, OrderingType.STRING);
+    }
 
     /**
      * Order the results by the specified fields
      * The fields are the names of the fields to sort, defaulting to sorting by ascending.
      * You can prefix a field name with '-' to indicate sorting by descending or '+' to sort by ascending
      */
-    protected void _orderBy(String field, OrderingType ordering) {
+    public void _orderBy(String field, OrderingType ordering) {
         assertNoRawQuery();
         String f = ensureValidFieldName(field, false);
         orderByTokens.add(OrderByToken.createAscending(f, ordering));
@@ -730,19 +736,28 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
      * The fields are the names of the fields to sort, defaulting to sorting by descending.
      * You can prefix a field name with '-' to indicate sorting by descending or '+' to sort by ascending
      */
-    protected void _orderByDescending(String field, OrderingType ordering) {
+    public void _orderByDescending(String field) {
+        _orderByDescending(field, OrderingType.STRING);
+    }
+
+    /**
+     * Order the results by the specified fields
+     * The fields are the names of the fields to sort, defaulting to sorting by descending.
+     * You can prefix a field name with '-' to indicate sorting by descending or '+' to sort by ascending
+     */
+    public void _orderByDescending(String field, OrderingType ordering) {
         assertNoRawQuery();
         String f = ensureValidFieldName(field, false);
         orderByTokens.add(OrderByToken.createDescending(f, ordering));
     }
 
-    protected void _orderByScore() {
+    public void _orderByScore() {
         assertNoRawQuery();
 
         orderByTokens.add(OrderByToken.scoreAscending);
     }
 
-    protected void _orderByScoreDescending() {
+    public void _orderByScoreDescending() {
         assertNoRawQuery();
         orderByTokens.add(OrderByToken.scoreDescending);
     }
@@ -750,14 +765,14 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
     /**
      * Instructs the query to wait for non stale results as of the cutoff etag.
      */
-    protected void _waitForNonStaleResultsAsOf(long cutoffEtag) {
+    public void _waitForNonStaleResultsAsOf(long cutoffEtag) {
         _waitForNonStaleResultsAsOf(cutoffEtag, getDefaultTimeout());
     }
 
     /**
      * Instructs the query to wait for non stale results as of the cutoff etag.
      */
-    protected void _waitForNonStaleResultsAsOf(long cutoffEtag, Duration waitTimeout) {
+    public void _waitForNonStaleResultsAsOf(long cutoffEtag, Duration waitTimeout) {
         theWaitForNonStaleResults = true;
         timeout = waitTimeout;
         this.cutoffEtag = cutoffEtag;
@@ -767,7 +782,7 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
      * EXPERT ONLY: Instructs the query to wait for non stale results.
      * This shouldn't be used outside of unit tests unless you are well aware of the implications
      */
-    protected void _waitForNonStaleResults() {
+    public void _waitForNonStaleResults() {
         _waitForNonStaleResults(getDefaultTimeout());
     }
 
@@ -869,7 +884,7 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
         return queryText.toString();
     }
 
-    /*
+    /* TODO:
 
         private void BuildInclude(StringBuilder queryText)
         {
@@ -926,7 +941,7 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
         }
 
 */
-    protected void _whereExists(String fieldName) {
+    public void _whereExists(String fieldName) {
         fieldName = ensureValidFieldName(fieldName, false);
 
         appendOperatorIfNeeded(whereTokens);
@@ -935,7 +950,7 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
         whereTokens.add(WhereToken.exists(fieldName));
     }
 
-    /*
+    /* TODO:
         public void ContainsAny(string fieldName, IEnumerable<object> values)
         {
             fieldName = EnsureValidFieldName(fieldName, isNestedPath: false);
@@ -1047,7 +1062,7 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
         fromToken.writeTo(writer);
     }
 
-    /*
+    /* TODO
         private void BuildDeclare(StringBuilder writer)
         {
             DeclareToken?.WriteTo(writer);
@@ -1376,39 +1391,25 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
         return parameterName;
     }
 
-    /* TODO
+    protected void updateFieldsToFetchToken(FieldsToFetchToken fieldsToFetch) {
+        this.fieldsToFetchToken = fieldsToFetch;
 
-        protected void UpdateFieldsToFetchToken(FieldsToFetchToken fieldsToFetch)
-        {
-            FieldsToFetchToken = fieldsToFetch;
+        if (selectTokens.isEmpty()) {
+            selectTokens.add(fieldsToFetch);
+        } else {
+            Optional<QueryToken> fetchToken = selectTokens.stream()
+                    .filter(x -> x instanceof FieldsToFetchToken)
+                    .findFirst();
 
-            if (SelectTokens.Count == 0)
-            {
-                SelectTokens.AddLast(fieldsToFetch);
-            }
-            else
-            {
-                var current = SelectTokens.First;
-                var replaced = false;
-
-                while (current != null)
-                {
-                    if (current.Value is FieldsToFetchToken)
-                    {
-                        current.Value = fieldsToFetch;
-                        replaced = true;
-                        break;
-                    }
-
-                    current = current.Next;
-                }
-
-                if (replaced == false)
-                    SelectTokens.AddLast(fieldsToFetch);
+            if (fetchToken.isPresent()) {
+                int idx = selectTokens.indexOf(fetchToken.get());
+                selectTokens.set(idx, fieldsToFetch);
+            } else {
+                selectTokens.add(fieldsToFetch);
             }
         }
+    }
 
-*/
     protected Consumer<IndexQuery> beforeQueryExecutedCallback; //TODO: list of listeners
 
     protected Consumer<QueryResult> afterQueryExecutedCallback; //TODO: list of listeners
@@ -1443,27 +1444,22 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
             AfterStreamExecutedCallback += action;
             return this;
         }
+*/
 
-        /// <inheritdoc />
-        public IDocumentQueryCustomization NoTracking()
-        {
-            DisableEntitiesTracking = true;
-            return this;
-        }
+    public void _noTracking() {
+        disableEntitiesTracking = true;
+    }
 
-        /// <inheritdoc />
-        public IDocumentQueryCustomization NoCaching()
-        {
-            DisableCaching = true;
-            return this;
-        }
+    public void _noCaching() {
+        disableCaching = true;
+    }
 
-        /// <inheritdoc />
-        public IDocumentQueryCustomization ShowTimings()
-        {
-            ShowQueryTimings = true;
-            return this;
-        }
+    public void _showTimings() {
+        showQueryTimings = true;
+    }
+
+    /*TODO
+
 
         /// <inheritdoc />
         IDocumentQueryCustomization IDocumentQueryCustomization.RandomOrdering()
@@ -1654,18 +1650,16 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
             OrderByTokens.AddLast(OrderByToken.CreateDistanceAscending(fieldName, AddQueryParameter(shapeWkt)));
         }
 
-        /// <inheritdoc />
-        public void OrderByDistanceDescending(string fieldName, double latitude, double longitude)
-        {
-            OrderByTokens.AddLast(OrderByToken.CreateDistanceDescending(fieldName, AddQueryParameter(latitude), AddQueryParameter(longitude)));
-        }
 
-        /// <inheritdoc />
-        public void OrderByDistanceDescending(string fieldName, string shapeWkt)
-        {
-            OrderByTokens.AddLast(OrderByToken.CreateDistanceDescending(fieldName, AddQueryParameter(shapeWkt)));
-        }
      */
+
+    public void _orderByDistanceDescending(String fieldName, double latitude, double longitude) {
+        orderByTokens.add(OrderByToken.createDistanceDescending(fieldName, addQueryParameter(latitude), addQueryParameter(longitude)));
+    }
+
+    public void _orderByDistanceDescending(String fieldName, String shapeWkt) {
+        orderByTokens.add(OrderByToken.createDistanceDescending(fieldName, addQueryParameter(shapeWkt)));
+    }
 
     protected void initSync() {
         if (queryOperation != null) {

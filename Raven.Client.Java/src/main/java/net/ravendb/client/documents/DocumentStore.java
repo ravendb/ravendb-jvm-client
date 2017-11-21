@@ -34,7 +34,7 @@ public class DocumentStore extends DocumentStoreBase {
     private OperationExecutor operationExecutor;
 
     private String identifier;
-    //tODO: private bool _aggressiveCachingUsed;
+    private boolean _aggressiveCachingUsed;
 
     /**
      * Gets the identifier for this store.
@@ -101,7 +101,6 @@ public class DocumentStore extends DocumentStoreBase {
 
     /**
      * Opens the session.
-     * @return
      */
     @Override
     public IDocumentSession openSession() {

@@ -1,22 +1,24 @@
 package net.ravendb.client.documents.session;
 
+import net.ravendb.client.documents.queries.QueryResult;
+
 /**
  * A query against a Raven index
  */
 public interface IDocumentQuery<T> extends IDocumentQueryBase<T, IDocumentQuery<T>>, IDocumentQueryBaseSingle<T>, IEnumerableQuery<T> { //TODO: extends iterator
 
+    String getIndexName();
+
+    /**
+     * Whether we should apply distinct operation to the query on the server side
+     */
+    boolean isDistinct();
+
+    /**
+     * Returns the query result. Accessing this property for the first time will execute the query.
+     */
+    QueryResult getQueryResult();
     /* TODO
-  string IndexName { get; }
-
-        /// <summary>
-        ///     Whether we should apply distinct operation to the query on the server side
-        /// </summary>
-        bool IsDistinct { get; }
-
-        /// <summary>
-        ///     Returns the query result. Accessing this property for the first time will execute the query.
-        /// </summary>
-        QueryResult GetQueryResult();
 
         /// <summary>
         ///     Selects the specified fields directly from the index if the are stored. If the field is not stored in index, value

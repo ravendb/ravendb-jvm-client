@@ -35,6 +35,13 @@ public class Constants {
                 public static final String REDUCE_KEY_HASH_FIELD_NAME = "hash(key())";
                 public static final String REDUCE_KEY_KEY_VALUE_FIELD_NAME = "key()";
                 public static final String SPATIAL_SHAPE_FIELD_NAME = "spatial(shape)";
+                public static final String CUSTOM_SORT_FIELD_NAME = "__customSort";
+            }
+
+            public static class Spatial {
+                private Spatial() {}
+
+                public static final double DEFAULT_DISTANCE_ERROR_PCT = 0.025d;
             }
         }
     }

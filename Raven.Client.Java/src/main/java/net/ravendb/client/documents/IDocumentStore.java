@@ -17,13 +17,13 @@ import java.util.List;
  */
 public interface IDocumentStore extends IDisposalNotification {
 
-    //TODO: X509Certificate2 Certificate { get; }
+    //TBD: X509Certificate2 Certificate { get; }
     //TODO: event EventHandler<BeforeStoreEventArgs> OnBeforeStore;
     //TODO: event EventHandler<AfterStoreEventArgs> OnAfterStore;
     //TODO: event EventHandler<BeforeDeleteEventArgs> OnBeforeDelete;
     //TODO: event EventHandler<BeforeQueryExecutedEventArgs> OnBeforeQueryExecuted;
 
-    //TODO: IDatabaseChanges Changes(string database = null);
+    //TBD: IDatabaseChanges Changes(string database = null);
 
     /* TODO:
         /// <summary>
@@ -115,8 +115,8 @@ public interface IDocumentStore extends IDisposalNotification {
      */
     String[] getUrls();
 
-    //TODO: BulkInsertOperation BulkInsert(string database = null);
-    //TODO: IReliableSubscriptions Subscriptions { get; }
+    //TBD: BulkInsertOperation BulkInsert(string database = null);
+    //TBD: IReliableSubscriptions Subscriptions { get; }
 
     String getDatabase();
 

@@ -18,7 +18,7 @@ public class ClusterRequestExecutor extends RequestExecutor {
     protected ClusterRequestExecutor(DocumentConventions conventions) {
         super(null, conventions);
 
-        /* TODO
+        /* TBD certs
          // Here we are explicitly ignoring trust issues in the case of ClusterRequestExecutor.
             // this is because we don't actually require trust, we just use the certificate
             // as a way to authenticate. Either we encounter the same server certificate which we already
@@ -27,19 +27,19 @@ public class ClusterRequestExecutor extends RequestExecutor {
          */
     }
 
-    public static ClusterRequestExecutor create(String[] urls, String databaseName, DocumentConventions conventions) { //TODO: X509Certificate2 certificate
+    public static ClusterRequestExecutor create(String[] urls, String databaseName, DocumentConventions conventions) { //TBD: X509Certificate2 certificate
         throw new UnsupportedOperationException();
     }
 
-    public static ClusterRequestExecutor createForSingleNodeWithConfigurationUpdates(String url, String databaseName, DocumentConventions conventions) { //TODO: X509Certificate2 certificate
+    public static ClusterRequestExecutor createForSingleNodeWithConfigurationUpdates(String url, String databaseName, DocumentConventions conventions) { //TBD: X509Certificate2 certificate
         throw new UnsupportedOperationException();
     }
 
-    public static ClusterRequestExecutor createForSingleNodeWithoutConfigurationUpdates(String url, String databaseName, DocumentConventions conventions) { //TODO: X509Certificate2 certificate
+    public static ClusterRequestExecutor createForSingleNodeWithoutConfigurationUpdates(String url, String databaseName, DocumentConventions conventions) { //TBD: X509Certificate2 certificate
         throw new UnsupportedOperationException();
     }
 
-    public static ClusterRequestExecutor createForSingleNode(String url) { //TODO: X509Certificate2 certificate
+    public static ClusterRequestExecutor createForSingleNode(String url) { //TBD: X509Certificate2 certificate
         url = validateUrls(new String[]{url})[0];
 
         ClusterRequestExecutor executor = new ClusterRequestExecutor(DocumentConventions.defaultConventions);
