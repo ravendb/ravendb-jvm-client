@@ -5,10 +5,7 @@ import net.ravendb.client.Constants;
 import net.ravendb.client.Parameters;
 import net.ravendb.client.documents.commands.QueryCommand;
 import net.ravendb.client.documents.conventions.DocumentConventions;
-import net.ravendb.client.documents.queries.IndexQuery;
-import net.ravendb.client.documents.queries.QueryFieldUtil;
-import net.ravendb.client.documents.queries.QueryOperator;
-import net.ravendb.client.documents.queries.QueryResult;
+import net.ravendb.client.documents.queries.*;
 import net.ravendb.client.documents.session.operations.QueryOperation;
 import net.ravendb.client.documents.session.tokens.*;
 import net.ravendb.client.primitives.CleanCloseable;
@@ -17,9 +14,11 @@ import net.ravendb.client.primitives.Tuple;
 import org.apache.commons.lang3.StringUtils;
 
 import javax.management.Query;
+import java.lang.reflect.Field;
 import java.time.Duration;
 import java.util.*;
 import java.util.function.Consumer;
+import java.util.stream.StreamSupport;
 
 /**
  * A query against a Raven index
@@ -193,16 +192,12 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
         return indexQuery;
     }
 
-    /* TODO
-        /// <summary>
-        ///   Gets the fields for projection
-        /// </summary>
-        /// <returns></returns>
-        public IEnumerable<string> GetProjectionFields()
-        {
-            return FieldsToFetchToken?.Projections ?? Enumerable.Empty<string>();
-        }
-        */
+    /**
+     * Gets the fields for projection
+     */
+    public List<String> getProjectionFields() {
+        return fieldsToFetchToken != null && fieldsToFetchToken.projections != null ? Arrays.asList(fieldsToFetchToken.projections) : Collections.emptyList();
+    }
 
     /**
      * Order the search results randomly
@@ -272,62 +267,76 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
         queryParameters.put(name, value);
     }
 
-    /* TODO
-        public void GroupBy(string fieldName, params string[] fieldNames)
-        {
-            if (FromToken.IsDynamic == false)
-                throw new InvalidOperationException("GroupBy only works with dynamic queries.");
-            AssertNoRawQuery();
-            IsGroupBy = true;
+    @Override
+    public void _groupBy(String fieldName, String... fieldNames) {
+        if (!fromToken.isDynamic()) {
+            throw new IllegalStateException("GroupBy only works with dynamic queries");
+        }
 
-            fieldName = EnsureValidFieldName(fieldName, isNestedPath: false);
+        assertNoRawQuery();
+        isGroupBy = true;
 
-            GroupByTokens.AddLast(GroupByToken.Create(fieldName));
+        fieldName = ensureValidFieldName(fieldName, false);
 
-            if (fieldNames == null || fieldNames.Length <= 0)
-                return;
+        groupByTokens.add(GroupByToken.create(fieldName));
 
-            foreach (var name in fieldNames)
-            {
-                fieldName = EnsureValidFieldName(name, isNestedPath: false);
+        if (fieldNames == null || fieldNames.length <= 0) {
+            return;
+        }
 
-                GroupByTokens.AddLast(GroupByToken.Create(fieldName));
+        for (String name : fieldNames) {
+            fieldName = ensureValidFieldName(name, false);
+            groupByTokens.add(GroupByToken.create(fieldName));
+        }
+    }
+
+    @Override
+    public void _groupByKey(String fieldName) {
+        _groupByKey(fieldName, null);
+    }
+
+    @Override
+    public void _groupByKey(String fieldName, String projectedName) {
+        assertNoRawQuery();
+        isGroupBy = true;
+
+        if (projectedName != null && _aliasToGroupByFieldName.containsKey(projectedName)) {
+            String aliasedFieldName = _aliasToGroupByFieldName.get(projectedName);
+            if (fieldName == null || fieldName.equalsIgnoreCase(projectedName)) {
+                fieldName = aliasedFieldName;
             }
         }
 
-        public void GroupByKey(string fieldName = null, string projectedName = null)
-        {
-            AssertNoRawQuery();
-            IsGroupBy = true;
+        selectTokens.add(GroupByKeyToken.create(fieldName, projectedName));
+    }
 
-            if (projectedName != null && _aliasToGroupByFieldName.TryGetValue(projectedName, out var aliasedFieldName))
-            {
-                if (fieldName == null || fieldName.Equals(projectedName, StringComparison.Ordinal))
-                    fieldName = aliasedFieldName;
-            }
+    @Override
+    public void _groupBySum(String fieldName) {
+        _groupBySum(fieldName, null);
+    }
 
-            SelectTokens.AddLast(GroupByKeyToken.Create(fieldName, projectedName));
-        }
+    @Override
+    public void _groupBySum(String fieldName, String projectedName) {
+        assertNoRawQuery();
+        isGroupBy = true;
 
-        public void GroupBySum(string fieldName, string projectedName = null)
-        {
-            AssertNoRawQuery();
-            IsGroupBy = true;
+        fieldName = ensureValidFieldName(fieldName, false);
+        selectTokens.add(GroupBySumToken.create(fieldName, projectedName));
+    }
 
-            fieldName = EnsureValidFieldName(fieldName, isNestedPath: false);
+    @Override
+    public void _groupByCount() {
+        _groupByCount(null);
+    }
 
-            SelectTokens.AddLast(GroupBySumToken.Create(fieldName, projectedName));
-        }
+    @Override
+    public void _groupByCount(String projectedName) {
+        assertNoRawQuery();
+        isGroupBy = true;
 
-        public void GroupByCount(string projectedName = null)
-        {
-            AssertNoRawQuery();
-            IsGroupBy = true;
+        selectTokens.add(GroupByCountToken.create(projectedName));
+    }
 
-            SelectTokens.AddLast(GroupByCountToken.Create(projectedName));
-        }
-
-*/
     public void _whereTrue() {
         appendOperatorIfNeeded(whereTokens);
         negateIfNeeded(null);
@@ -447,22 +456,27 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
         negate = !negate;
     }
 
-    /* TODO
+    /**
+     * Check that the field has one of the specified value
+     */
+    @Override
+    public void _whereIn(String fieldName, Collection<Object> values) {
+        _whereIn(fieldName, values, false);
+    }
 
-        /// <summary>
-        /// Check that the field has one of the specified value
-        /// </summary>
-        public void WhereIn(string fieldName, IEnumerable<object> values, bool exact = false)
-        {
-            fieldName = EnsureValidFieldName(fieldName, isNestedPath: false);
+    /**
+     * Check that the field has one of the specified value
+     */
+    @Override
+    public void _whereIn(String fieldName, Collection<Object> values, boolean exact) {
+        fieldName = ensureValidFieldName(fieldName, false);
 
-            AppendOperatorIfNeeded(WhereTokens);
-            NegateIfNeeded(fieldName);
+        appendOperatorIfNeeded(whereTokens);
+        negateIfNeeded(fieldName);
 
-            WhereTokens.AddLast(WhereToken.In(fieldName, AddQueryParameter(TransformEnumerable(fieldName, UnpackEnumerable(values)).ToArray()), exact));
-        }
+        whereTokens.add(WhereToken.in(fieldName, addQueryParameter(transformCollection(fieldName, unpackCollection(values))), exact));
+    }
 
-*/
     public void _whereStartsWith(String fieldName, Object value) {
         WhereParams whereParams = new WhereParams();
         whereParams.setFieldName(fieldName);
@@ -501,28 +515,34 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
         whereTokens.add(WhereToken.endsWith(whereParams.getFieldName(), addQueryParameter(transformToEqualValue), false));
     }
 
-    /* TODO:
+    @Override
+    public void _whereBetween(String fieldName, Object start, Object end) {
+        _whereBetween(fieldName, start, end, false);
+    }
 
-        /// <summary>
-        ///   Matches fields where the value is between the specified start and end, exclusive
-        /// </summary>
-        /// <param name = "fieldName">Name of the field.</param>
-        /// <param name = "start">The start.</param>
-        /// <param name = "end">The end.</param>
-        /// <returns></returns>
-        public void WhereBetween(string fieldName, object start, object end, bool exact = false)
-        {
-            fieldName = EnsureValidFieldName(fieldName, isNestedPath: false);
+    /**
+     * Matches fields where the value is between the specified start and end, exclusive
+     */
+    @Override
+    public void _whereBetween(String fieldName, Object start, Object end, boolean exact) {
+        fieldName = ensureValidFieldName(fieldName, false);
 
-            AppendOperatorIfNeeded(WhereTokens);
-            NegateIfNeeded(fieldName);
+        appendOperatorIfNeeded(whereTokens);
+        negateIfNeeded(fieldName);
 
-            var fromParameterName = AddQueryParameter(start == null ? "*" : TransformValue(new WhereParams { Value = start, FieldName = fieldName }, forRange: true));
-            var toParameterName = AddQueryParameter(end == null ? "NULL" : TransformValue(new WhereParams { Value = end, FieldName = fieldName }, forRange: true));
+        WhereParams startParams = new WhereParams();
+        startParams.setValue(start);
+        startParams.setFieldName(fieldName);
 
-            WhereTokens.AddLast(WhereToken.Between(fieldName, fromParameterName, toParameterName, exact));
-        }
-*/
+        WhereParams endParams = new WhereParams();
+        endParams.setValue(end);
+        endParams.setFieldName(fieldName);
+
+        String fromParameterName = addQueryParameter(start == null ? "*" : transformValue(startParams, true));
+        String toParameterName = addQueryParameter(start == null ? "NULL" : transformValue(endParams, true));
+
+        whereTokens.add(WhereToken.between(fieldName, fromParameterName, toParameterName, exact));
+    }
 
     public void _whereGreaterThan(String fieldName, Object value) {
         _whereGreaterThan(fieldName, value, false);
@@ -624,93 +644,84 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
         whereTokens.add(QueryOperatorToken.OR);
     }
 
-    /* TODO
-
-        /// <summary>
-        ///   Specifies a boost weight to the last where clause.
-        ///   The higher the boost factor, the more relevant the term will be.
-        /// </summary>
-        /// <param name = "boost">boosting factor where 1.0 is default, less than 1.0 is lower weight, greater than 1.0 is higher weight</param>
-        /// <returns></returns>
-        /// <remarks>
-        ///   http://lucene.apache.org/java/2_4_0/queryparsersyntax.html#Boosting%20a%20Term
-        /// </remarks>
-        public void Boost(decimal boost)
-        {
-            if (boost == 1m) // 1.0 is the default
-                return;
-
-            var whereToken = WhereTokens.Last?.Value as WhereToken;
-            if (whereToken == null)
-                throw new InvalidOperationException("Missing where clause");
-
-            if (boost <= 0m)
-                throw new ArgumentOutOfRangeException(nameof(boost), "Boost factor must be a positive number");
-
-            whereToken.Boost = boost;
+    /**
+     * Specifies a boost weight to the last where clause.
+     * The higher the boost factor, the more relevant the term will be.
+     *
+     * boosting factor where 1.0 is default, less than 1.0 is lower weight, greater than 1.0 is higher weight
+     *
+     * http://lucene.apache.org/java/2_4_0/queryparsersyntax.html#Boosting%20a%20Term
+     */
+    @Override
+    public void _boost(double boost) {
+        if (boost == 1.0) {
+            return;
         }
 
-        /// <summary>
-        ///   Specifies a fuzziness factor to the single word term in the last where clause
-        /// </summary>
-        /// <param name = "fuzzy">0.0 to 1.0 where 1.0 means closer match</param>
-        /// <returns></returns>
-        /// <remarks>
-        ///   http://lucene.apache.org/java/2_4_0/queryparsersyntax.html#Fuzzy%20Searches
-        /// </remarks>
-        public void Fuzzy(decimal fuzzy)
-        {
-            var whereToken = WhereTokens.Last?.Value as WhereToken;
-            if (whereToken == null)
-            {
-                throw new InvalidOperationException("Missing where clause");
-            }
-
-            if (fuzzy < 0m || fuzzy > 1m)
-            {
-                throw new ArgumentOutOfRangeException(nameof(fuzzy), "Fuzzy distance must be between 0.0 and 1.0");
-            }
-
-            //var ch = QueryText[QueryText.Length - 1]; // TODO [ppekrol]
-            //if (ch == '"' || ch == ']')
-            //{
-            //    // this check is overly simplistic
-            //    throw new InvalidOperationException("Fuzzy factor can only modify single word terms");
-            //}
-
-            whereToken.Fuzzy = fuzzy;
+        if (whereTokens.isEmpty()) {
+            throw new IllegalStateException("Missing where clause");
         }
 
-        /// <summary>
-        ///   Specifies a proximity distance for the phrase in the last where clause
-        /// </summary>
-        /// <param name = "proximity">number of words within</param>
-        /// <returns></returns>
-        /// <remarks>
-        ///   http://lucene.apache.org/java/2_4_0/queryparsersyntax.html#Proximity%20Searches
-        /// </remarks>
-        public void Proximity(int proximity)
-        {
-            var whereToken = WhereTokens.Last?.Value as WhereToken;
-            if (whereToken == null)
-            {
-                throw new InvalidOperationException("Missing where clause");
-            }
-
-            if (proximity < 1)
-            {
-                throw new ArgumentOutOfRangeException(nameof(proximity), "Proximity distance must be a positive number");
-            }
-
-            //if (QueryText[QueryText.Length - 1] != '"') // TODO [ppekrol]
-            //{
-            //    // this check is overly simplistic
-            //    throw new InvalidOperationException("Proximity distance can only modify a phrase");
-            //}
-
-            whereToken.Proximity = proximity;
+        QueryToken whereToken = whereTokens.get(whereTokens.size() - 1);
+        if (!(whereToken instanceof WhereToken)) {
+            throw new IllegalStateException("Missing where clause");
         }
-*/
+
+        if (boost <= 0.0) {
+            throw new IllegalArgumentException("Boost factor must be a positive number");
+        }
+
+        ((WhereToken) whereToken).setBoost(boost);
+    }
+
+    /**
+     * Specifies a fuzziness factor to the single word term in the last where clause
+     *
+     * 0.0 to 1.0 where 1.0 means closer match
+     *
+     * http://lucene.apache.org/java/2_4_0/queryparsersyntax.html#Fuzzy%20Searches
+     */
+    @Override
+    public void _fuzzy(double fuzzy) {
+        if (whereTokens.isEmpty()) {
+            throw new IllegalStateException("Missing where clause");
+        }
+
+        QueryToken whereToken = whereTokens.get(whereTokens.size() - 1);
+        if (!(whereToken instanceof WhereToken)) {
+            throw new IllegalStateException("Missing where clause");
+        }
+
+        if (fuzzy < 0.0 || fuzzy > 1.0) {
+            throw new IllegalArgumentException("Fuzzy distance must be between 0.0 and 1.0");
+        }
+
+        ((WhereToken) whereToken).setFuzzy(fuzzy);
+    }
+
+    /**
+     * Specifies a proximity distance for the phrase in the last where clause
+     *
+     * http://lucene.apache.org/java/2_4_0/queryparsersyntax.html#Proximity%20Searches
+     */
+    @Override
+    public void _proximity(int proximity) {
+        if (whereTokens.isEmpty()) {
+            throw new IllegalStateException("Missing where clause");
+        }
+
+        QueryToken whereToken = whereTokens.get(whereTokens.size() - 1);
+        if (!(whereToken instanceof WhereToken)) {
+            throw new IllegalStateException("Missing where clause");
+        }
+
+        if (proximity < 1) {
+            throw new IllegalArgumentException("Proximity distance must be a positive number");
+        }
+
+        ((WhereToken) whereToken).setProximity(proximity);
+    }
+
     /**
      * Order the results by the specified fields
      * The fields are the names of the fields to sort, defaulting to sorting by ascending.
@@ -834,28 +845,31 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
         return indexQuery;
     }
 
-    /* TODO
+    /**
+     * Perform a search for documents which fields that match the searchTerms.
+     * If there is more than a single term, each of them will be checked independently.
+     */
+    @Override
+    public void _search(String fieldName, String searchTerms) {
+        _search(fieldName, searchTerms, SearchOperator.OR);
+    }
 
-        /// <summary>
-        /// Perform a search for documents which fields that match the searchTerms.
-        /// If there is more than a single term, each of them will be checked independently.
-        /// </summary>
-        public void Search(string fieldName, string searchTerms, SearchOperator @operator = SearchOperator.Or)
-        {
-            var hasWhiteSpace = searchTerms.Any(char.IsWhiteSpace);
-            LastEquality = new KeyValuePair<string, object>(fieldName,
-                hasWhiteSpace ? "(" + searchTerms + ")" : searchTerms
-            );
+    /**
+     * Perform a search for documents which fields that match the searchTerms.
+     * If there is more than a single term, each of them will be checked independently.
+     */
+    @Override
+    public void _search(String fieldName, String searchTerms, SearchOperator operator) {
+        boolean hasWhiteSpace = searchTerms.chars().anyMatch(x -> Character.isWhitespace(x));
+        lastEquality = Tuple.create(fieldName, hasWhiteSpace ? "(" + searchTerms + ")" : searchTerms);
 
-            AppendOperatorIfNeeded(WhereTokens);
+        appendOperatorIfNeeded(whereTokens);
 
-            fieldName = EnsureValidFieldName(fieldName, isNestedPath: false);
-            NegateIfNeeded(fieldName);
+        fieldName = ensureValidFieldName(fieldName, false);
+        negateIfNeeded(fieldName);
 
-            WhereTokens.AddLast(WhereToken.Search(fieldName, AddQueryParameter(searchTerms), @operator));
-        }
-
-*/
+        whereTokens.add(WhereToken.search(fieldName, addQueryParameter(searchTerms), operator));
+    }
 
     @Override
     public String toString() {
@@ -868,15 +882,15 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
         }
 
         StringBuilder queryText = new StringBuilder();
-
-//TODO        buildDeclare(queryText)
+        buildDeclare(queryText);
         buildFrom(queryText);
         buildGroupBy(queryText);
         buildWhere(queryText);
         buildOrderBy(queryText);
 
+        buildLoad(queryText);
+
         /* TODO
-            BuildLoad(queryText);
             BuildSelect(queryText);
             BuildInclude(queryText);
          */
@@ -918,29 +932,31 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
                 }
             }
         }
+        */
 
-        /// <summary>
-        /// The last term that we asked the query to use equals on
-        /// </summary>
-        public KeyValuePair<string, object> GetLastEqualityTerm(bool isAsync = false)
-        {
-            return LastEquality;
-        }
+    /**
+     * The last term that we asked the query to use equals on
+     */
+    @Override
+    public Tuple<String, Object> getLastEqualityTerm() {
+        return lastEquality;
+    }
 
-        public void Intersect()
-        {
-            var last = WhereTokens.Last?.Value;
-            if (last is WhereToken || last is CloseSubclauseToken)
-            {
-                IsIntersect = true;
+    @Override
+    public void _intersect() {
+        if (whereTokens.size() > 0) {
+            QueryToken last = whereTokens.get(whereTokens.size() - 1);
+            if (last instanceof WhereToken || last instanceof CloseSubclauseToken) {
+                isIntersect = true;
 
-                WhereTokens.AddLast(IntersectMarkerToken.Instance);
+                whereTokens.add(IntersectMarkerToken.INSTANCE);
+                return;
             }
-            else
-                throw new InvalidOperationException("Cannot add INTERSECT at this point.");
         }
 
-*/
+        throw new IllegalStateException("Cannot add INTERSECT at this point.");
+    }
+
     public void _whereExists(String fieldName) {
         fieldName = ensureValidFieldName(fieldName, false);
 
@@ -950,140 +966,125 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
         whereTokens.add(WhereToken.exists(fieldName));
     }
 
-    /* TODO:
-        public void ContainsAny(string fieldName, IEnumerable<object> values)
-        {
-            fieldName = EnsureValidFieldName(fieldName, isNestedPath: false);
+    @Override
+    public void _containsAny(String fieldName, Collection<Object> values) {
+        fieldName = ensureValidFieldName(fieldName, false);
 
-            AppendOperatorIfNeeded(WhereTokens);
-            NegateIfNeeded(fieldName);
+        appendOperatorIfNeeded(whereTokens);
+        negateIfNeeded(fieldName);
 
-            var array = TransformEnumerable(fieldName, UnpackEnumerable(values))
-                .ToArray();
-
-            if (array.Length == 0)
-            {
-                WhereTokens.AddLast(TrueToken.Instance);
-                return;
-            }
-
-            WhereTokens.AddLast(WhereToken.In(fieldName, AddQueryParameter(array), exact: false));
+        Collection<Object> array = transformCollection(fieldName, unpackCollection(values));
+        if (array.isEmpty()) {
+            whereTokens.add(TrueToken.INSTANCE);
+            return;
         }
 
-        public void ContainsAll(string fieldName, IEnumerable<object> values)
-        {
-            fieldName = EnsureValidFieldName(fieldName, isNestedPath: false);
+        whereTokens.add(WhereToken.in(fieldName, addQueryParameter(array), false));
+    }
 
-            AppendOperatorIfNeeded(WhereTokens);
-            NegateIfNeeded(fieldName);
+    @Override
+    public void _containsAll(String fieldName, Collection<Object> values) {
+        fieldName = ensureValidFieldName(fieldName, false);
 
-            var array = TransformEnumerable(fieldName, UnpackEnumerable(values))
-                .ToArray();
+        appendOperatorIfNeeded(whereTokens);
+        negateIfNeeded(fieldName);
 
-            if (array.Length == 0)
-            {
-                WhereTokens.AddLast(TrueToken.Instance);
-                return;
-            }
+        Collection<Object> array = transformCollection(fieldName, unpackCollection(values));
 
-            WhereTokens.AddLast(WhereToken.AllIn(fieldName, AddQueryParameter(array)));
+        if (array.isEmpty()) {
+            whereTokens.add(TrueToken.INSTANCE);
+            return;
         }
 
-        public void AddRootType(Type type)
-        {
-            RootTypes.Add(type);
+        whereTokens.add(WhereToken.allIn(fieldName, addQueryParameter(array)));
+    }
+
+    @Override
+    public void _addRootType(Class clazz) {
+        rootTypes.add(clazz);
+    }
+
+    //TBD public string GetMemberQueryPathForOrderBy(Expression expression)
+    //TBD public string GetMemberQueryPath(Expression expression)
+
+
+    @Override
+    public void _distinct() {
+        if (isDistinct()) {
+            throw new IllegalStateException("The is already a distinct query");
         }
 
-        public string GetMemberQueryPathForOrderBy(Expression expression)
-        {
-            var memberQueryPath = GetMemberQueryPath(expression);
-            return memberQueryPath;
+        if (selectTokens.isEmpty()) {
+            selectTokens.add(DistinctToken.INSTANCE);
+        } else {
+            selectTokens.add(0, DistinctToken.INSTANCE);
         }
+    }
 
-        public string GetMemberQueryPath(Expression expression)
-        {
-            var result = _linqPathProvider.GetPath(expression);
-            result.Path = result.Path.Substring(result.Path.IndexOf('.') + 1);
+    private void UpdateStatsAndHighlightings(QueryResult queryResult) {
+        //TODO: QueryStats.UpdateQueryStats(queryResult);
+        //TBD: Highlightings.Update(queryResult);
+    }
 
-            if (expression.NodeType == ExpressionType.ArrayLength)
-                result.Path += ".Length";
+    /* TODO
 
-            var propertyName = IndexName == null || FromToken.IsDynamic
-                ? _conventions.FindPropertyNameForDynamicIndex(typeof(T), IndexName, "", result.Path)
-                : _conventions.FindPropertyNameForIndex(typeof(T), IndexName, "", result.Path);
-            return propertyName;
-        }
 
-        public void Distinct()
-        {
-            if (IsDistinct)
-                throw new InvalidOperationException("This is already a distinct query.");
+                    private void BuildSelect(StringBuilder writer)
+                    {
+                        if (SelectTokens.Count == 0)
+                            return;
 
-            SelectTokens.AddFirst(DistinctToken.Instance);
-        }
+                        writer
+                            .Append(" SELECT ");
 
-        private void UpdateStatsAndHighlightings(QueryResult queryResult)
-        {
-            QueryStats.UpdateQueryStats(queryResult);
-            Highlightings.Update(queryResult);
-        }
+                        var token = SelectTokens.First;
+                        if (SelectTokens.Count == 1 && token.Value is DistinctToken)
+                        {
+                            token.Value.WriteTo(writer);
+                            writer.Append(" *");
 
-        private void BuildSelect(StringBuilder writer)
-        {
-            if (SelectTokens.Count == 0)
-                return;
+                            return;
+                        }
 
-            writer
-                .Append(" SELECT ");
+                        while (token != null)
+                        {
+                            if (token.Previous != null && token.Previous.Value is DistinctToken == false)
+                                writer.Append(",");
 
-            var token = SelectTokens.First;
-            if (SelectTokens.Count == 1 && token.Value is DistinctToken)
-            {
-                token.Value.WriteTo(writer);
-                writer.Append(" *");
+                            AddSpaceIfNeeded(token.Previous?.Value, token.Value, writer);
 
-                return;
-            }
+                            token.Value.WriteTo(writer);
 
-            while (token != null)
-            {
-                if (token.Previous != null && token.Previous.Value is DistinctToken == false)
-                    writer.Append(",");
-
-                AddSpaceIfNeeded(token.Previous?.Value, token.Value, writer);
-
-                token.Value.WriteTo(writer);
-
-                token = token.Next;
-            }
-        }
-*/
+                            token = token.Next;
+                        }
+                    }
+            */
     private void buildFrom(StringBuilder writer) {
         fromToken.writeTo(writer);
     }
 
-    /* TODO
-        private void BuildDeclare(StringBuilder writer)
-        {
-            DeclareToken?.WriteTo(writer);
+    private void buildDeclare(StringBuilder writer) {
+        if (declareToken != null) {
+            declareToken.writeTo(writer);
+        }
+    }
+
+    private void buildLoad(StringBuilder writer) {
+        if (loadTokens == null || loadTokens.isEmpty()) {
+            return;
         }
 
-        private void BuildLoad(StringBuilder writer)
-        {
-            if (LoadTokens == null || LoadTokens.Count == 0)
-                return;
+        writer.append(" LOAD ");
 
-            writer.Append(" LOAD ");
-
-            for (int i = 0; i < LoadTokens.Count; i++)
-            {
-                if (i != 0)
-                    writer.Append(", ");
-                LoadTokens[i].WriteTo(writer);
+        for (int i = 0; i < loadTokens.size(); i++) {
+            if (i != 0) {
+                writer.append(", ");
             }
-        }
 
-*/
+            loadTokens.get(i).writeTo(writer);
+        }
+    }
+
     private void buildWhere(StringBuilder writer) {
         if (whereTokens.isEmpty()) {
             return;
@@ -1187,41 +1188,25 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
 
         tokens.add(token);
     }
-    /* TODO
-        private void AppendOperatorIfNeeded(LinkedList<QueryToken> tokens)
-        {
-            var token = DefaultOperator == QueryOperator.And ? QueryOperatorToken.And : QueryOperatorToken.Or;
 
-            if (lastWhere?.SearchOperator != null)
-                token = QueryOperatorToken.Or;
-
-            tokens.AddLast(token);
-        }
-
-        private IEnumerable<object> TransformEnumerable(string fieldName, IEnumerable<object> values)
-        {
-            foreach (var value in values)
-            {
-                var enumerable = value as IEnumerable;
-                if (enumerable != null && value is string == false)
-                {
-                    foreach (var transformedValue in TransformEnumerable(fieldName, enumerable.Cast<object>()))
-                        yield return transformedValue;
-
-                    continue;
+    private Collection<Object> transformCollection(String fieldName, Collection<Object> values) {
+        List<Object> result = new ArrayList<>();
+        for (Object value : values) {
+            if (value instanceof Collection) {
+                for (Object transformedValue : transformCollection(fieldName, (Collection)value)) {
+                    result.add(transformedValue);
                 }
+            } else {
+                WhereParams nestedWhereParams = new WhereParams();
+                nestedWhereParams.setAllowWildcards(true);
+                nestedWhereParams.setFieldName(fieldName);
+                nestedWhereParams.setValue(value);
 
-                var nestedWhereParams = new WhereParams
-                {
-                    AllowWildcards = true,
-                    FieldName = fieldName,
-                    Value = value
-                };
-
-                yield return TransformValue(nestedWhereParams);
+                result.add(transformValue(nestedWhereParams));
             }
         }
-        */
+        return result;
+    }
 
     private void negateIfNeeded(String fieldName) {
         if (!negate) {
@@ -1242,80 +1227,35 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
         whereTokens.add(NegateToken.INSTANCE);
     }
 
-    /* TODO
+    private static Collection<Object> unpackCollection(Collection items) {
+        List<Object> results = new ArrayList<>();
 
-        private static IEnumerable<object> UnpackEnumerable(IEnumerable items)
-        {
-            foreach (var item in items)
-            {
-                var enumerable = item as IEnumerable;
-                if (enumerable != null && item is string == false)
-                {
-                    foreach (var nested in UnpackEnumerable(enumerable))
-                    {
-                        yield return nested;
-                    }
+        for (Object item : items) {
+            if (item instanceof Collection) {
+                for (Object nested : unpackCollection((Collection)item)) {
+                    results.add(nested);
                 }
-                else
-                {
-                    yield return item;
-                }
+            } else {
+                results.add(item);
             }
         }
-*/
+
+        return results;
+    }
     private String ensureValidFieldName(String fieldName, boolean isNestedPath) {
         if (theSession == null || theSession.getConventions() == null || isNestedPath || isGroupBy) {
             return QueryFieldUtil.escapeIfNecessary(fieldName);
         }
 
-        /* TODO
-          foreach (var rootType in RootTypes)
-            {
-                var identityProperty = TheSession.Conventions.GetIdentityProperty(rootType);
-                if (identityProperty != null && identityProperty.Name == fieldName)
-                {
-                    return Constants.Documents.Indexing.Fields.DocumentIdFieldName;
-                }
+        for (Class rootType : rootTypes) {
+            Field identityProperty = theSession.getConventions().getIdentityProperty(rootType);
+            if (identityProperty != null && identityProperty.getName().equals(fieldName)) { //TODO: verify casing
+                return Constants.Documents.Indexing.Fields.DOCUMENT_ID_FIELD_NAME;
             }
-         */
+        }
 
         return QueryFieldUtil.escapeIfNecessary(fieldName);
-
     }
-    /* TODO
-
-        private static Func<object, string> GetImplicitStringConversion(Type type)
-        {
-            if (type == null)
-                return null;
-
-            Func<object, string> value;
-            var localStringsCache = _implicitStringsCache;
-            if (localStringsCache.TryGetValue(type, out value))
-                return value;
-
-            var methodInfo = type.GetMethod("op_Implicit", new[] { type });
-
-            if (methodInfo == null || methodInfo.ReturnType != typeof(string))
-            {
-                _implicitStringsCache = new Dictionary<Type, Func<object, string>>(localStringsCache)
-                {
-                    {type, null}
-                };
-                return null;
-            }
-
-            var arg = Expression.Parameter(typeof(object), "self");
-
-            var func = (Func<object, string>)Expression.Lambda(Expression.Call(methodInfo, Expression.Convert(arg, type)), arg).Compile();
-
-            _implicitStringsCache = new Dictionary<Type, Func<object, string>>(localStringsCache)
-            {
-                {type, func}
-            };
-            return func;
-        }
-        */
 
     private Object transformValue(WhereParams whereParams) {
         return transformValue(whereParams, false);
@@ -1370,12 +1310,6 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
         }
 
         /* TODO
-          if (whereParams.Value is ValueType)
-                return Convert.ToString(whereParams.Value, CultureInfo.InvariantCulture);
-
-            var result = GetImplicitStringConversion(whereParams.Value.GetType());
-            if (result != null)
-                return result(whereParams.Value);
 
             if (_conventions.TryConvertValueForQuery(whereParams.FieldName, whereParams.Value, forRange, out var strVal))
                 return strVal;
@@ -1458,6 +1392,7 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
         showQueryTimings = true;
     }
 
+
     /*TODO
 
 
@@ -1516,68 +1451,21 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
             WaitForNonStaleResultsAsOf(cutOffEtag, waitTimeout);
             return this;
         }
-          /// <summary>
-        ///   The fields to highlight
-        /// </summary>
-        protected List<HighlightedField> HighlightedFields = new List<HighlightedField>();
 
-        /// <summary>
-        ///   Highlighter pre tags
-        /// </summary>
-        protected string[] HighlighterPreTags = new string[0];
+        */
 
-        /// <summary>
-        ///   Highlighter post tags
-        /// </summary>
-        protected string[] HighlighterPostTags = new string[0];
+    //TBD protected List<HighlightedField> HighlightedFields = new List<HighlightedField>();
+    //TBD protected string[] HighlighterPreTags = new string[0];
+    //TBD protected string[] HighlighterPostTags = new string[0];
+    //TBD protected string HighlighterKeyName;
+    //TBD protected QueryHighlightings Highlightings = new QueryHighlightings();
+    //TBD public void SetHighlighterTags(string preTag, string postTag)
+    //TBD public void Highlight(string fieldName, int fragmentLength, int fragmentCount, string fragmentsField)
+    //TBD public void Highlight(string fieldName, int fragmentLength, int fragmentCount, out FieldHighlightings fieldHighlightings)
+    //TBD public void Highlight(string fieldName, string fieldKeyName, int fragmentLength, int fragmentCount, out FieldHighlightings fieldHighlightings)
+    //TBD public void SetHighlighterTags(string[] preTags, string[] postTags)
 
-        /// <summary>
-        ///   Highlighter key
-        /// </summary>
-        protected string HighlighterKeyName;
-
-        /// <summary>
-        /// Holds the query highlights
-        /// </summary>
-        protected QueryHighlightings Highlightings = new QueryHighlightings();
-
-        /// <inheritdoc />
-        public void SetHighlighterTags(string preTag, string postTag)
-        {
-            SetHighlighterTags(new[] { preTag }, new[] { postTag });
-        }
-
-        /// <inheritdoc />
-        public void Highlight(string fieldName, int fragmentLength, int fragmentCount, string fragmentsField)
-        {
-            throw new NotImplementedException("This feature is not yet implemented");
-            //HighlightedFields.Add(new HighlightedField(fieldName, fragmentLength, fragmentCount, fragmentsField));
-        }
-
-        /// <inheritdoc />
-        public void Highlight(string fieldName, int fragmentLength, int fragmentCount, out FieldHighlightings fieldHighlightings)
-        {
-            throw new NotImplementedException("This feature is not yet implemented");
-            //HighlightedFields.Add(new HighlightedField(fieldName, fragmentLength, fragmentCount, null));
-            //fieldHighlightings = Highlightings.AddField(fieldName);
-        }
-
-        /// <inheritdoc />
-        public void Highlight(string fieldName, string fieldKeyName, int fragmentLength, int fragmentCount, out FieldHighlightings fieldHighlightings)
-        {
-            throw new NotImplementedException("This feature is not yet implemented");
-            //HighlighterKeyName = fieldKeyName;
-            //HighlightedFields.Add(new HighlightedField(fieldName, fragmentLength, fragmentCount, null));
-            //fieldHighlightings = Highlightings.AddField(fieldName);
-        }
-
-        /// <inheritdoc />
-        public void SetHighlighterTags(string[] preTags, string[] postTags)
-        {
-            throw new NotImplementedException("This feature is not yet implemented");
-            //HighlighterPreTags = preTags;
-            //HighlighterPostTags = postTags;
-        }
+    /* TODO
 
          protected void WithinRadiusOf(string fieldName, double radius, double latitude, double longitude, SpatialUnits? radiusUnits, double distErrorPercent)
         {
@@ -1637,21 +1525,17 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
 
             WhereTokens.AddLast(criteria.ToQueryToken(fieldName, AddQueryParameter));
         }
-
-        /// <inheritdoc />
-        public void OrderByDistance(string fieldName, double latitude, double longitude)
-        {
-            OrderByTokens.AddLast(OrderByToken.CreateDistanceAscending(fieldName, AddQueryParameter(latitude), AddQueryParameter(longitude)));
-        }
-
-        /// <inheritdoc />
-        public void OrderByDistance(string fieldName, string shapeWkt)
-        {
-            OrderByTokens.AddLast(OrderByToken.CreateDistanceAscending(fieldName, AddQueryParameter(shapeWkt)));
-        }
-
-
      */
+
+    @Override
+    public void _orderByDistance(String fieldName, double latitude, double longitude) {
+        orderByTokens.add(OrderByToken.createDistanceAscending(fieldName, addQueryParameter(latitude), addQueryParameter(longitude)));
+    }
+
+    @Override
+    public void _orderByDistance(String fieldName, String shapeWkt) {
+        orderByTokens.add(OrderByToken.createDistanceAscending(fieldName, addQueryParameter(shapeWkt)));
+    }
 
     public void _orderByDistanceDescending(String fieldName, double latitude, double longitude) {
         orderByTokens.add(OrderByToken.createDistanceDescending(fieldName, addQueryParameter(latitude), addQueryParameter(longitude)));
@@ -1665,8 +1549,6 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
         if (queryOperation != null) {
             return;
         }
-
-
         /* TODO
             var beforeQueryExecutedEventArgs = new BeforeQueryExecutedEventArgs(TheSession, this);
             TheSession.OnBeforeQueryExecutedInvoke(beforeQueryExecutedEventArgs);

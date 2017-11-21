@@ -1,9 +1,13 @@
 package net.ravendb.client.documents.session;
 
 import net.ravendb.client.documents.conventions.DocumentConventions;
+import net.ravendb.client.documents.queries.SearchOperator;
+import net.ravendb.client.primitives.Tuple;
 
 import java.time.Duration;
+import java.util.Collection;
 import java.util.Iterator;
+import java.util.List;
 
 /**
  * Mostly used by the linq provider
@@ -29,15 +33,10 @@ public interface IAbstractDocumentQuery<T> {
      */
     void _waitForNonStaleResults(Duration waitTimeout);
 
-
-
-    /* TODO
-
-        /// <summary>
-        ///   Gets the fields for projection
-        /// </summary>
-        /// <returns></returns>
-        IEnumerable<string> GetProjectionFields();*/
+    /**
+     * Gets the fields for projection
+     */
+    List<String> getProjectionFields();
 
     /**
      * Order the search results randomly
@@ -121,54 +120,78 @@ public interface IAbstractDocumentQuery<T> {
      * Negate the next operation
      */
     void _negateNext();
-    /* TODO
 
-        /// <summary>
-        /// Check that the field has one of the specified value
-        /// </summary>
-        void WhereIn(string fieldName, IEnumerable<object> values, bool exact = false);
+    /**
+     * Check that the field has one of the specified value
+     */
+    void _whereIn(String fieldName, Collection<Object> values);
 
-        /// <summary>
-        ///   Matches fields which starts with the specified value.
-        /// </summary>
-        /// <param name = "fieldName">Name of the field.</param>
-        /// <param name = "value">The value.</param>
-        void WhereStartsWith(string fieldName, object value);
+    /**
+     * Check that the field has one of the specified value
+     */
+    void _whereIn(String fieldName, Collection<Object> values, boolean exact);
 
-        /// <summary>
-        ///   Matches fields which ends with the specified value.
-        /// </summary>
-        /// <param name = "fieldName">Name of the field.</param>
-        /// <param name = "value">The value.</param>
-        void WhereEndsWith(string fieldName, object value);
+    /**
+     * Matches fields which starts with the specified value.
+     */
+    void _whereStartsWith(String fieldName, Object value);
 
-        /// <summary>
-        ///   Matches fields where the value is between the specified start and end, exclusive
-        /// </summary>
-        void WhereBetween(string fieldName, object start, object end, bool exact = false);
+    /**
+     * Matches fields which ends with the specified value.
+     */
+    void _whereEndsWith(String fieldName, Object value);
 
-        /// <summary>
-        ///   Matches fields where the value is greater than the specified value
-        /// </summary>
-        void WhereGreaterThan(string fieldName, object value, bool exact = false);
+    /**
+     * Matches fields where the value is between the specified start and end, exclusive
+     */
+    void _whereBetween(String fieldName, Object start, Object end);
 
-        /// <summary>
-        ///   Matches fields where the value is greater than or equal to the specified value
-        /// </summary>
-        void WhereGreaterThanOrEqual(string fieldName, object value, bool exact = false);
+    /**
+     * Matches fields where the value is between the specified start and end, exclusive
+     */
+    void _whereBetween(String fieldName, Object start, Object end, boolean exact);
 
-        /// <summary>
-        ///   Matches fields where the value is less than the specified value
-        /// </summary>
-        void WhereLessThan(string fieldName, object value, bool exact = false);
+    /**
+     * Matches fields where the value is greater than the specified value
+     */
+    void _whereGreaterThan(String fieldName, Object value);
 
-        /// <summary>
-        ///   Matches fields where the value is less than or equal to the specified value
-        /// </summary>
-        void WhereLessThanOrEqual(string fieldName, object value, bool exact = false);
+    /**
+     * Matches fields where the value is greater than the specified value
+     */
+    void _whereGreaterThan(String fieldName, Object value, boolean exact);
 
-        void WhereExists(string fieldName);
-*/
+    /**
+     * Matches fields where the value is greater than or equal to the specified value
+     */
+    void _whereGreaterThanOrEqual(String fieldName, Object value);
+
+    /**
+     * Matches fields where the value is greater than or equal to the specified value
+     */
+    void _whereGreaterThanOrEqual(String fieldName, Object value, boolean exact);
+
+    /**
+     * Matches fields where the value is less than the specified value
+     */
+    void _whereLessThan(String fieldName, Object value);
+
+    /**
+     * Matches fields where the value is less than the specified value
+     */
+    void _whereLessThan(String fieldName, Object value, boolean exact);
+
+    /**
+     * Matches fields where the value is less than or equal to the specified value
+     */
+    void _whereLessThanOrEqual(String fieldName, Object value);
+
+    /**
+     * Matches fields where the value is less than or equal to the specified value
+     */
+    void _whereLessThanOrEqual(String fieldName, Object value, boolean exact);
+
+    void _whereExists(String fieldName);
 
     /**
      * Add an AND to the query
@@ -180,168 +203,124 @@ public interface IAbstractDocumentQuery<T> {
      */
     void _orElse();
 
-    /* TODO:
-
-        /// <summary>
-        ///   Specifies a boost weight to the last where clause.
-        ///   The higher the boost factor, the more relevant the term will be.
-        /// </summary>
-        /// <param name = "boost">boosting factor where 1.0 is default, less than 1.0 is lower weight, greater than 1.0 is higher weight</param>
-        /// <returns></returns>
-        /// <remarks>
-        ///   http://lucene.apache.org/java/2_4_0/queryparsersyntax.html#Boosting%20a%20Term
-        /// </remarks>
-        void Boost(decimal boost);
-
-        /// <summary>
-        ///   Specifies a fuzziness factor to the single word term in the last where clause
-        /// </summary>
-        /// <param name = "fuzzy">0.0 to 1.0 where 1.0 means closer match</param>
-        /// <returns></returns>
-        /// <remarks>
-        ///   http://lucene.apache.org/java/2_4_0/queryparsersyntax.html#Fuzzy%20Searches
-        /// </remarks>
-        void Fuzzy(decimal fuzzy);
-
-        /// <summary>
-        ///   Specifies a proximity distance for the phrase in the last where clause
-        /// </summary>
-        /// <param name = "proximity">number of words within</param>
-        /// <returns></returns>
-        /// <remarks>
-        ///   http://lucene.apache.org/java/2_4_0/queryparsersyntax.html#Proximity%20Searches
-        /// </remarks>
-        void Proximity(int proximity);
-
-        /// <summary>
-        ///   Order the results by the specified fields
-        ///   The field is the name of the field to sort, defaulting to sorting by ascending.
-        /// </summary>
-        /// <param name = "field">The fields.</param>
-        void OrderBy(string field, OrderingType ordering = OrderingType.String);
-
-        void OrderByDescending(string field, OrderingType ordering = OrderingType.String);
-
-        void OrderByScore();
-
-        void OrderByScoreDescending();
-
-        /// <summary>
-        ///   Adds matches highlighting for the specified field.
-        /// </summary>
-        /// <remarks>
-        ///   The specified field should be analyzed and stored for highlighter to work.
-        ///   For each match it creates a fragment that contains matched text surrounded by highlighter tags.
-        /// </remarks>
-        /// <param name="fieldName">The field name to highlight.</param>
-        /// <param name="fragmentLength">The fragment length.</param>
-        /// <param name="fragmentCount">The maximum number of fragments for the field.</param>
-        /// <param name="fragmentsField">The field in query results item to put highlights into.</param>
-        void Highlight(string fieldName, int fragmentLength, int fragmentCount, string fragmentsField);
-
-        /// <summary>
-        ///   Adds matches highlighting for the specified field.
-        /// </summary>
-        /// <remarks>
-        ///   The specified field should be analyzed and stored for highlighter to work.
-        ///   For each match it creates a fragment that contains matched text surrounded by highlighter tags.
-        /// </remarks>
-        /// <param name="fieldName">The field name to highlight.</param>
-        /// <param name="fragmentLength">The fragment length.</param>
-        /// <param name="fragmentCount">The maximum number of fragments for the field.</param>
-        /// <param name="highlightings">Field highlights for all results.</param>
-        void Highlight(string fieldName, int fragmentLength, int fragmentCount, out FieldHighlightings highlightings);
-
-        /// <summary>
-        ///   Adds matches highlighting for the specified field on a Map/Reduce Index.
-        /// </summary>
-        /// <remarks>
-        ///   This is only valid for Map/Reduce Index queries.
-        ///   The specified field and key should be analyzed and stored for highlighter to work.
-        ///   For each match it creates a fragment that contains matched text surrounded by highlighter tags.
-        /// </remarks>
-        /// <param name="fieldName">The field name to highlight.</param>
-        /// <param name="fieldKeyName">The field key to associate highlights with.</param>
-        /// <param name="fragmentLength">The fragment length.</param>
-        /// <param name="fragmentCount">The maximum number of fragments for the field.</param>
-        /// <param name="highlightings">Field highlights for all results.</param>
-        void Highlight(string fieldName, string fieldKeyName, int fragmentLength, int fragmentCount, out FieldHighlightings highlightings);
-
-        /// <summary>
-        ///   Sets the tags to highlight matches with.
-        /// </summary>
-        /// <param name="preTag">Prefix tag.</param>
-        /// <param name="postTag">Postfix tag.</param>
-        void SetHighlighterTags(string preTag, string postTag);
-
-        /// <summary>
-        ///   Sets the tags to highlight matches with.
-        /// </summary>
-        /// <param name="preTags">Prefix tags.</param>
-        /// <param name="postTags">Postfix tags.</param>
-        void SetHighlighterTags(string[] preTags, string[] postTags);
-
-        /// <summary>
-        ///   EXPERT ONLY: Instructs the query to wait for non stale results.
-        ///   This shouldn't be used outside of unit tests unless you are well aware of the implications
-        /// </summary>
-        void WaitForNonStaleResults();
-
-        /// <summary>
-        /// Perform a search for documents which fields that match the searchTerms.
-        /// If there is more than a single term, each of them will be checked independently.
-        /// </summary>
-        void Search(string fieldName, string searchTerms, SearchOperator @operator = SearchOperator.Or);
-
-        /// <summary>
-        ///   Returns a <see cref = "System.String" /> that represents this instance.
-        /// </summary>
-        /// <returns>
-        ///   A <see cref = "System.String" /> that represents this instance.
-        /// </returns>
-        string ToString();
-
-        /// <summary>
-        ///   The last term that we asked the query to use equals on
-        /// </summary>
-        KeyValuePair<string, object> GetLastEqualityTerm(bool isAsync = false);
-
-        void Intersect();
-        void AddRootType(Type type);
-        void Distinct();
-
-        /// <summary>
-        /// Performs a query matching ANY of the provided values against the given field (OR)
-        /// </summary>
-        void ContainsAny(string fieldName, IEnumerable<object> values);
-
-        /// <summary>
-        /// Performs a query matching ALL of the provided values against the given field (AND)
-        /// </summary>
-        void ContainsAll(string fieldName, IEnumerable<object> values);
-
-        void GroupBy(string fieldName, params string[] fieldNames);
-
-        void GroupByKey(string fieldName, string projectedName = null);
-
-        void GroupBySum(string fieldName, string projectedName = null);
-
-        void GroupByCount(string projectedName = null);
-
-        void WhereTrue();
-
-        void Spatial(SpatialDynamicField field, SpatialCriteria criteria);
-
-        void Spatial(string fieldName, SpatialCriteria criteria);
-
-        void OrderByDistance(string fieldName, double latitude, double longitude);
-
-        void OrderByDistance(string fieldName, string shapeWkt);
-
+    /**
+     * Specifies a boost weight to the last where clause.
+     * The higher the boost factor, the more relevant the term will be.
+     *
+     * boosting factor where 1.0 is default, less than 1.0 is lower weight, greater than 1.0 is higher weight
+     *
+     * http://lucene.apache.org/java/2_4_0/queryparsersyntax.html#Boosting%20a%20Term
      */
+    void _boost(double boost);
+
+    /**
+     * Specifies a fuzziness factor to the single word term in the last where clause
+     *
+     * 0.0 to 1.0 where 1.0 means closer match
+     *
+     * http://lucene.apache.org/java/2_4_0/queryparsersyntax.html#Fuzzy%20Searches
+     */
+    void _fuzzy(double fuzzy);
+
+    /**
+     * Specifies a proximity distance for the phrase in the last where clause
+     *
+     * http://lucene.apache.org/java/2_4_0/queryparsersyntax.html#Proximity%20Searches
+     */
+    void _proximity(int proximity);
+
+    /**
+     * Order the results by the specified fields
+     * The field is the name of the field to sort, defaulting to sorting by ascending.
+     */
+    void _orderBy(String field);
+
+    /**
+     * Order the results by the specified fields
+     * The field is the name of the field to sort, defaulting to sorting by ascending.
+     */
+    void _orderBy(String field, OrderingType ordering);
+
+    void _orderByDescending(String field);
+
+    void _orderByDescending(String field, OrderingType ordering);
+
+    void _orderByScore();
+
+    void _orderByScoreDescending();
+
+    //TBD void Highlight(string fieldName, int fragmentLength, int fragmentCount, string fragmentsField);
+    //TBD void Highlight(string fieldName, int fragmentLength, int fragmentCount, out FieldHighlightings highlightings);
+    //TBD void Highlight(string fieldName, string fieldKeyName, int fragmentLength, int fragmentCount, out FieldHighlightings highlightings);
+    //TBD void SetHighlighterTags(string preTag, string postTag);
+    //TBD void SetHighlighterTags(string[] preTags, string[] postTags);
+
+    /**
+     * EXPERT ONLY: Instructs the query to wait for non stale results.
+     * This shouldn't be used outside of unit tests unless you are well aware of the implications
+     */
+    void _waitForNonStaleResults();
+
+    /**
+     * Perform a search for documents which fields that match the searchTerms.
+     * If there is more than a single term, each of them will be checked independently.
+     */
+    void _search(String fieldName, String searchTerms);
+
+    /**
+     * Perform a search for documents which fields that match the searchTerms.
+     * If there is more than a single term, each of them will be checked independently.
+     */
+    void _search(String fieldName, String searchTerms, SearchOperator operator);
+
+    String toString();
+
+    /**
+     * The last term that we asked the query to use equals on
+     */
+    Tuple<String, Object> getLastEqualityTerm();
+
+    void _intersect();
+
+    void _addRootType(Class clazz);
+
+    void _distinct();
+
+    /**
+     * Performs a query matching ANY of the provided values against the given field (OR)
+     */
+    void _containsAny(String fieldName, Collection<Object> values);
+
+    /**
+     * Performs a query matching ALL of the provided values against the given field (AND)
+     */
+    void _containsAll(String fieldName, Collection<Object> values);
+
+    void _groupBy(String fieldName, String... fieldNames);
+
+    void _groupByKey(String fieldName);
+
+    void _groupByKey(String fieldName, String projectedName);
+
+    void _groupBySum(String fieldName);
+
+    void _groupBySum(String fieldName, String projectedName);
+
+    void _groupByCount();
+
+    void _groupByCount(String projectedName);
+
+    void _whereTrue();
+
+    //TODO: void Spatial(SpatialDynamicField field, SpatialCriteria criteria);
+
+    //TODO: void Spatial(string fieldName, SpatialCriteria criteria);
+
+    void _orderByDistance(String fieldName, double latitude, double longitude);
+
+    void _orderByDistance(String fieldName, String shapeWkt);
 
     void _orderByDistanceDescending(String fieldName, double latitude, double longitude);
-
 
     void _orderByDistanceDescending(String fieldName, String shapeWkt);
 

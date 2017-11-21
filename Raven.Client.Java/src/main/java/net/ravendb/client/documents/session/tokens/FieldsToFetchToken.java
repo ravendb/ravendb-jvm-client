@@ -2,9 +2,9 @@ package net.ravendb.client.documents.session.tokens;
 
 public class FieldsToFetchToken extends QueryToken {
 
-    private final String[] fieldsToFetch;
-    private final String[] projections;
-    private final boolean customFunction;
+    public final String[] fieldsToFetch;
+    public final String[] projections;
+    public final boolean customFunction;
 
     private FieldsToFetchToken(String[] fieldsToFetch, String[] projections, boolean customFunction) {
         this.fieldsToFetch = fieldsToFetch;
