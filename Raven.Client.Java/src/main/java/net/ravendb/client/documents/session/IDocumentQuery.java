@@ -1,6 +1,11 @@
 package net.ravendb.client.documents.session;
 
 import net.ravendb.client.documents.queries.QueryResult;
+import net.ravendb.client.documents.queries.spatial.SpatialCriteria;
+import net.ravendb.client.documents.queries.spatial.SpatialCriteriaFactory;
+import net.ravendb.client.documents.queries.spatial.SpatialDynamicField;
+
+import java.util.function.Function;
 
 /**
  * A query against a Raven index
@@ -43,24 +48,19 @@ public interface IDocumentQuery<T> extends IDocumentQueryBase<T, IDocumentQuery<
         /// </summary>
         /// <typeparam name="TProjection">Type of the projection from which fields will be taken.</typeparam>
         IDocumentQuery<TProjection> SelectFields<TProjection>();
+*/
+    //TBD IDocumentQuery<T> Spatial(Expression<Func<T, object>> path, Func<SpatialCriteriaFactory, SpatialCriteria> clause);
 
-        /// <summary>
-        ///     Ability to use one factory to determine spatial shape that will be used in query.
-        /// </summary>
-        /// <param name="path">Spatial field name.</param>
-        /// <param name="clause">function with spatial criteria factory</param>
-        IDocumentQuery<T> Spatial(Expression<Func<T, object>> path, Func<SpatialCriteriaFactory, SpatialCriteria> clause);
+    /**
+     * Ability to use one factory to determine spatial shape that will be used in query.
+     */
+    IDocumentQuery<T> spatial(String fieldName, Function<SpatialCriteriaFactory, SpatialCriteria> clause);
 
-        /// <summary>
-        ///     Ability to use one factory to determine spatial shape that will be used in query.
-        /// </summary>
-        /// <param name="fieldName">Spatial field name.</param>
-        /// <param name="clause">function with spatial criteria factory</param>
-        IDocumentQuery<T> Spatial(string fieldName, Func<SpatialCriteriaFactory, SpatialCriteria> clause);
+    IDocumentQuery<T> spatial(SpatialDynamicField field, Function<SpatialCriteriaFactory, SpatialCriteria> clause);
 
-        IDocumentQuery<T> Spatial(SpatialDynamicField field, Func<SpatialCriteriaFactory, SpatialCriteria> clause);
+    //TBD IDocumentQuery<T> spatial(Function<SpatialDynamicFieldFactory<T>, SpatialDynamicField> field, Function<SpatialCriteriaFactory, SpatialCriteria> clause);
 
-        IDocumentQuery<T> Spatial(Func<SpatialDynamicFieldFactory<T>, SpatialDynamicField> field, Func<SpatialCriteriaFactory, SpatialCriteria> clause);
+    /* TODO
 
         /// <summary>
         /// Get the facets as per the specified facet document with the given start and pageSize
@@ -87,8 +87,8 @@ public interface IDocumentQuery<T> extends IDocumentQueryBase<T, IDocumentQuery<
         /// Changes the return type of the query
         /// </summary>
         IDocumentQuery<TResult> OfType<TResult>();
-
-        IGroupByDocumentQuery<T> GroupBy(string fieldName, params string[] fieldNames);
      */
+
+    IGroupByDocumentQuery<T> groupBy(String fieldName, String... fieldNames);
 
 }

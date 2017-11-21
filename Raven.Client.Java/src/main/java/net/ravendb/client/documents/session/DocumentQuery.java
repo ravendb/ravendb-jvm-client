@@ -1,11 +1,16 @@
 package net.ravendb.client.documents.session;
 
+import com.google.common.base.Defaults;
 import net.ravendb.client.Constants;
 import net.ravendb.client.documents.indexes.spatial.SpatialRelation;
 import net.ravendb.client.documents.indexes.spatial.SpatialUnits;
+import net.ravendb.client.documents.queries.IndexQuery;
 import net.ravendb.client.documents.queries.QueryOperator;
 import net.ravendb.client.documents.queries.QueryResult;
 import net.ravendb.client.documents.queries.SearchOperator;
+import net.ravendb.client.documents.queries.spatial.SpatialCriteria;
+import net.ravendb.client.documents.queries.spatial.SpatialCriteriaFactory;
+import net.ravendb.client.documents.queries.spatial.SpatialDynamicField;
 import net.ravendb.client.documents.session.tokens.DeclareToken;
 import net.ravendb.client.documents.session.tokens.LoadToken;
 import net.ravendb.client.primitives.Reference;
@@ -13,6 +18,8 @@ import net.ravendb.client.primitives.Reference;
 import java.time.Duration;
 import java.util.Collection;
 import java.util.List;
+import java.util.function.Consumer;
+import java.util.function.Function;
 
 public class DocumentQuery<T> extends AbstractDocumentQuery<T, DocumentQuery<T>> implements IDocumentQuery<T> {
 
@@ -83,16 +90,6 @@ public class DocumentQuery<T> extends AbstractDocumentQuery<T, DocumentQuery<T>>
         return this;
     }
 
-    /* TODO
-
-        /// <inheritdoc />
-        IRawDocumentQuery<T> IQueryBase<T, IRawDocumentQuery<T>>.WaitForNonStaleResults(TimeSpan waitTimeout)
-        {
-            WaitForNonStaleResults(waitTimeout);
-            return this;
-        }
-*/
-
     @Override
     public IDocumentQuery<T> addOrder(String fieldName, boolean descending) {
         return addOrder(fieldName, descending, OrderingType.STRING);
@@ -109,30 +106,21 @@ public class DocumentQuery<T> extends AbstractDocumentQuery<T, DocumentQuery<T>>
     }
 
     //TBD public IDocumentQuery<T> AddOrder<TValue>(Expression<Func<T, TValue>> propertySelector, bool descending, OrderingType ordering)
-    /* TODO
 
+    @Override
+    public IDocumentQuery<T> addAfterQueryExecutedListener(Consumer<QueryResult> action) {
+        _addAfterQueryExecutedListener(action);
+        return this;
+    }
 
-        void IQueryBase<T, IDocumentQuery<T>>.AfterQueryExecuted(Action<QueryResult> action)
-        {
-            AfterQueryExecuted(action);
-        }
+    @Override
+    public IDocumentQuery<T> removeAfterQueryExecutedListener(Consumer<QueryResult> action) {
+        _removeAfterQueryExecutedListener(action);
+        return this;
+    }
 
-        void IQueryBase<T, IRawDocumentQuery<T>>.AfterQueryExecuted(Action<QueryResult> action)
-        {
-            AfterQueryExecuted(action);
-        }
-
-        void IQueryBase<T, IDocumentQuery<T>>.AfterStreamExecuted(Action<BlittableJsonReaderObject> action)
-        {
-            AfterStreamExecuted(action);
-        }
-
-        void IQueryBase<T, IRawDocumentQuery<T>>.AfterStreamExecuted(Action<BlittableJsonReaderObject> action)
-        {
-            AfterStreamExecuted(action);
-        }
-
-*/
+    //TBD void IQueryBase<T, IDocumentQuery<T>>.AfterStreamExecuted(Action<BlittableJsonReaderObject> action)
+    //TBD void IQueryBase<T, IRawDocumentQuery<T>>.AfterStreamExecuted(Action<BlittableJsonReaderObject> action)
 
     public IDocumentQuery<T> openSubclause() {
         _openSubclause();
@@ -216,18 +204,12 @@ public class DocumentQuery<T> extends AbstractDocumentQuery<T, DocumentQuery<T>>
         _include(path);
         return this;
     }
-    //TODO: IDocumentQuery<T> IDocumentQueryBase<T, IDocumentQuery<T>>.Include(Expression<Func<T, object>> path)
+    //TBD: IDocumentQuery<T> IDocumentQueryBase<T, IDocumentQuery<T>>.Include(Expression<Func<T, object>> path)
 
     @Override
     public IDocumentQuery<T> not() {
         negateNext();
         return this;
-    }
-
-    public QueryResult getQueryResult() {
-        initSync();
-
-        return queryOperation.getCurrentQueryResults().createSnapshot();
     }
 
     @Override
@@ -240,14 +222,6 @@ public class DocumentQuery<T> extends AbstractDocumentQuery<T, DocumentQuery<T>>
         _skip(count);
         return this;
     }
-
-    /* TODO
-        IRawDocumentQuery<T> IQueryBase<T, IRawDocumentQuery<T>>.Skip(int count)
-        {
-            Skip(count);
-            return this;
-        }
-*/
 
     @Override
     public IDocumentQuery<T> whereLucene(String fieldName, String whereClause) {
@@ -436,22 +410,14 @@ public class DocumentQuery<T> extends AbstractDocumentQuery<T, DocumentQuery<T>>
         return this;
     }
 
+    @Override
+    public IGroupByDocumentQuery<T> groupBy(String fieldName, String... fieldNames) {
+        _groupBy(fieldName, fieldNames);
+
+        return new GroupByDocumentQuery<>(this);
+    }
+
     /* TODO
-
-
-        /// <inheritdoc />
-        IGroupByDocumentQuery<T> IDocumentQuery<T>.GroupBy(string fieldName, params string[] fieldNames)
-        {
-            GroupBy(fieldName, fieldNames);
-            return new GroupByDocumentQuery<T>(this);
-        }
-
-        /// <inheritdoc />
-        IDocumentQuery<T> IRawDocumentQuery<T>.AddParameter(string name, object value)
-        {
-            AddParameter(name, value);
-            return this;
-        }
 
         /// <inheritdoc />
         public IDocumentQuery<TResult> OfType<TResult>()
@@ -469,18 +435,7 @@ public class DocumentQuery<T> extends AbstractDocumentQuery<T, DocumentQuery<T>>
         return this;
     }
 
-    /*
-
-        /// <inheritdoc />
-        public IDocumentQuery<T> OrderBy<TValue>(params Expression<Func<T, TValue>>[] propertySelectors)
-        {
-            foreach (var item in propertySelectors)
-            {
-                OrderBy(GetMemberQueryPathForOrderBy(item), OrderingUtil.GetOrderingOfType(item.ReturnType));
-            }
-            return this;
-        }
-        */
+    //TBD public IDocumentQuery<T> OrderBy<TValue>(params Expression<Func<T, TValue>>[] propertySelectors)
 
     public IDocumentQuery<T> orderByDescending(String field) {
         return orderByDescending(field, OrderingType.STRING);
@@ -491,73 +446,39 @@ public class DocumentQuery<T> extends AbstractDocumentQuery<T, DocumentQuery<T>>
         return this;
     }
 
-    /*TODO
+    //TBD public IDocumentQuery<T> OrderByDescending<TValue>(params Expression<Func<T, TValue>>[] propertySelectors)
 
+    @Override
+    public IDocumentQuery<T> waitForNonStaleResultsAsOf(long cutoffEtag) {
+        _waitForNonStaleResultsAsOf(cutoffEtag);
+        return this;
+    }
 
-        /// <inheritdoc />
-        public IDocumentQuery<T> OrderByDescending<TValue>(params Expression<Func<T, TValue>>[] propertySelectors)
-        {
-            foreach (var item in propertySelectors)
-            {
-                OrderByDescending(GetMemberQueryPathForOrderBy(item), OrderingUtil.GetOrderingOfType(item.ReturnType));
-            }
+    @Override
+    public IDocumentQuery<T> waitForNonStaleResultsAsOf(long cutOffEtag, Duration waitTimeout) {
+        _waitForNonStaleResultsAsOf(cutoffEtag, waitTimeout);
+        return this;
+    }
 
-            return this;
-        }
-
-        /// <inheritdoc />
-        IDocumentQuery<T> IQueryBase<T, IDocumentQuery<T>>.WaitForNonStaleResultsAsOf(long cutOffEtag)
-        {
-            WaitForNonStaleResultsAsOf(cutOffEtag);
-            return this;
-        }
-
-        /// <inheritdoc />
-        IRawDocumentQuery<T> IQueryBase<T, IRawDocumentQuery<T>>.WaitForNonStaleResultsAsOf(long cutOffEtag)
-        {
-            WaitForNonStaleResultsAsOf(cutOffEtag);
-            return this;
-        }
-
-        /// <inheritdoc />
-        IDocumentQuery<T> IQueryBase<T, IDocumentQuery<T>>.WaitForNonStaleResultsAsOf(long cutOffEtag, TimeSpan waitTimeout)
-        {
-            WaitForNonStaleResultsAsOf(cutOffEtag, waitTimeout);
-            return this;
-        }
-
-        /// <inheritdoc />
-        IRawDocumentQuery<T> IQueryBase<T, IRawDocumentQuery<T>>.WaitForNonStaleResultsAsOf(long cutOffEtag, TimeSpan waitTimeout)
-        {
-            WaitForNonStaleResultsAsOf(cutOffEtag, waitTimeout);
-            return this;
-        }
-*/
     public IDocumentQuery<T> waitForNonStaleResults() {
         _waitForNonStaleResults();
         return this;
     }
+
+    @Override
+    public IDocumentQuery<T> addBeforeQueryExecutedListener(Consumer<IndexQuery> action) {
+        _addBeforeQueryExecutedListener(action);
+        return this;
+    }
+
+    @Override
+    public IDocumentQuery<T> removeBeforeQueryExecutedListener(Consumer<IndexQuery> action) {
+        _removeBeforeQueryExecutedListener(action);
+        return this;
+    }
+
     /* TODO:
-        /// <inheritdoc />
-        IRawDocumentQuery<T> IQueryBase<T, IRawDocumentQuery<T>>.WaitForNonStaleResults()
-        {
-            WaitForNonStaleResults();
-            return this;
-        }
 
-        /// <inheritdoc />
-        IDocumentQuery<T> IQueryBase<T, IDocumentQuery<T>>.BeforeQueryExecuted(Action<IndexQuery> beforeQueryExecuted)
-        {
-            BeforeQueryExecuted(beforeQueryExecuted);
-            return this;
-        }
-
-        /// <inheritdoc />
-        IRawDocumentQuery<T> IQueryBase<T, IRawDocumentQuery<T>>.BeforeQueryExecuted(Action<IndexQuery> beforeQueryExecuted)
-        {
-            BeforeQueryExecuted(beforeQueryExecuted);
-            return this;
-        }
 
         /// <inheritdoc />
         IEnumerator IEnumerable.GetEnumerator()
@@ -572,47 +493,9 @@ public class DocumentQuery<T> extends AbstractDocumentQuery<T, DocumentQuery<T>>
             return QueryOperation.Complete<T>().GetEnumerator();
         }
 
-        /// <inheritdoc />
-        public T First()
-        {
-            return ExecuteQueryOperation(1).First();
-        }
+*/
 
-        /// <inheritdoc />
-        public T FirstOrDefault()
-        {
-            return ExecuteQueryOperation(1).FirstOrDefault();
-        }
-
-        /// <inheritdoc />
-        public T Single()
-        {
-            return ExecuteQueryOperation(2).Single();
-        }
-
-        /// <inheritdoc />
-        public T SingleOrDefault()
-        {
-            return ExecuteQueryOperation(2).SingleOrDefault();
-        }
-
-        private IEnumerable<T> ExecuteQueryOperation(int take)
-        {
-            if (PageSize.HasValue == false || PageSize > take)
-                Take(take);
-
-            InitSync();
-
-            return QueryOperation.Complete<T>();
-        }
-
-        /// <inheritdoc />
-        public int Count()
-        {
-            Take(0);
-            var queryResult = GetQueryResult();
-            return queryResult.TotalResults;
-        }
+    /* TODO
 
         /// <inheritdoc />
         public Lazy<IEnumerable<T>> Lazily()
@@ -756,32 +639,21 @@ public class DocumentQuery<T> extends AbstractDocumentQuery<T, DocumentQuery<T>>
     //TBD IDocumentQuery<T> IDocumentQueryBase<T, IDocumentQuery<T>>.SetHighlighterTags(string[] preTags, string[] postTags)
     //TBD public IDocumentQuery<T> Spatial(Expression<Func<T, object>> path, Func<SpatialCriteriaFactory, SpatialCriteria> clause)
 
-    /* TODO
+    @Override
+    public IDocumentQuery<T> spatial(String fieldName, Function<SpatialCriteriaFactory, SpatialCriteria> clause) {
+        SpatialCriteria criteria = clause.apply(SpatialCriteriaFactory.INSTANCE);
+        _spatial(fieldName, criteria);
+        return this;
+    }
 
-        /// <inheritdoc />
-        public IDocumentQuery<T> Spatial(string fieldName, Func<SpatialCriteriaFactory, SpatialCriteria> clause)
-        {
-            var criteria = clause(SpatialCriteriaFactory.Instance);
-            Spatial(fieldName, criteria);
-            return this;
-        }
+    @Override
+    public IDocumentQuery<T> spatial(SpatialDynamicField field, Function<SpatialCriteriaFactory, SpatialCriteria> clause) {
+        SpatialCriteria criteria = clause.apply(SpatialCriteriaFactory.INSTANCE);
+        _spatial(field, criteria);
+        return this;
+    }
 
-        public IDocumentQuery<T> Spatial(SpatialDynamicField field, Func<SpatialCriteriaFactory, SpatialCriteria> clause)
-        {
-            var criteria = clause(SpatialCriteriaFactory.Instance);
-            Spatial(field, criteria);
-            return this;
-        }
-
-        /// <inheritdoc />
-        public IDocumentQuery<T> Spatial(Func<SpatialDynamicFieldFactory<T>, SpatialDynamicField> field, Func<SpatialCriteriaFactory, SpatialCriteria> clause)
-        {
-            var criteria = clause(SpatialCriteriaFactory.Instance);
-            var dynamicField = field(new SpatialDynamicFieldFactory<T>());
-            Spatial(dynamicField, criteria);
-            return this;
-        }
-*/
+    //TBD public IDocumentQuery<T> Spatial(Func<SpatialDynamicFieldFactory<T>, SpatialDynamicField> field, Func<SpatialCriteriaFactory, SpatialCriteria> clause)
     //TBD IDocumentQuery<T> IDocumentQueryBase<T, IDocumentQuery<T>>.WithinRadiusOf<TValue>(Expression<Func<T, TValue>> propertySelector, double radius, double latitude, double longitude, SpatialUnits? radiusUnits, double distanceErrorPct)
 
     @Override

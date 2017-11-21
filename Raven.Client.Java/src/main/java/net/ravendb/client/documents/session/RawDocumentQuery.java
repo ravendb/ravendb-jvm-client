@@ -1,7 +1,12 @@
 package net.ravendb.client.documents.session;
 
+import net.ravendb.client.documents.queries.IndexQuery;
 import net.ravendb.client.documents.queries.QueryOperator;
+import net.ravendb.client.documents.queries.QueryResult;
 import net.ravendb.client.primitives.Reference;
+
+import java.time.Duration;
+import java.util.function.Consumer;
 
 public class RawDocumentQuery<T> extends AbstractDocumentQuery<T, RawDocumentQuery<T>> implements IRawDocumentQuery<T> {
 
@@ -24,6 +29,24 @@ public class RawDocumentQuery<T> extends AbstractDocumentQuery<T, RawDocumentQue
     @Override
     public RawDocumentQuery<T> waitForNonStaleResults() {
         _waitForNonStaleResults();
+        return this;
+    }
+
+    @Override
+    public IRawDocumentQuery<T> waitForNonStaleResults(Duration waitTimeout) {
+        _waitForNonStaleResults(waitTimeout);
+        return this;
+    }
+
+    @Override
+    public IRawDocumentQuery<T> waitForNonStaleResultsAsOf(long cutoffEtag) {
+        _waitForNonStaleResultsAsOf(cutoffEtag);
+        return this;
+    }
+
+    @Override
+    public IRawDocumentQuery<T> waitForNonStaleResultsAsOf(long cutOffEtag, Duration waitTimeout) {
+        _waitForNonStaleResultsAsOf(cutoffEtag, waitTimeout);
         return this;
     }
 
@@ -56,4 +79,35 @@ public class RawDocumentQuery<T> extends AbstractDocumentQuery<T, RawDocumentQue
         _statistics(stats);
         return this;
     }
+
+    @Override
+    public IRawDocumentQuery<T> removeAfterQueryExecutedListener(Consumer<QueryResult> action) {
+        _removeAfterQueryExecutedListener(action);
+        return this;
+    }
+
+    @Override
+    public IRawDocumentQuery<T> addAfterQueryExecutedListener(Consumer<QueryResult> action) {
+        _addAfterQueryExecutedListener(action);
+        return this;
+    }
+
+    @Override
+    public IRawDocumentQuery<T> addBeforeQueryExecutedListener(Consumer<IndexQuery> action) {
+        _addBeforeQueryExecutedListener(action);
+        return this;
+    }
+
+    @Override
+    public IRawDocumentQuery<T> removeBeforeQueryExecutedListener(Consumer<IndexQuery> action) {
+        _removeBeforeQueryExecutedListener(action);
+        return this;
+    }
+
+    @Override
+    public IRawDocumentQuery<T> addParameter(String name, Object value) {
+        _addParameter(name, value);
+        return this;
+    }
+
 }

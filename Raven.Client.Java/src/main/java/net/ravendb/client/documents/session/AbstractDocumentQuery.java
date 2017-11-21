@@ -1,5 +1,6 @@
 package net.ravendb.client.documents.session;
 
+import com.google.common.base.Defaults;
 import jdk.nashorn.internal.objects.annotations.Where;
 import net.ravendb.client.Constants;
 import net.ravendb.client.Parameters;
@@ -256,7 +257,7 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
         queryRaw = query;
     }
 
-    public void addParameter(String name, Object value) {
+    public void _addParameter(String name, Object value) {
         if (queryParameters.containsKey(name)) {
             throw new IllegalStateException("The parameter " + name + " was already added");
         }
@@ -1328,19 +1329,19 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
         return queryOperation;
     }
 
-    public void addBeforeQueryExecutedListener(Consumer<IndexQuery> action) {
+    public void _addBeforeQueryExecutedListener(Consumer<IndexQuery> action) {
         beforeQueryExecutedCallback.add(action);
     }
 
-    public void removeBeforeQueryExecutedListener(Consumer<IndexQuery> action) {
+    public void _removeBeforeQueryExecutedListener(Consumer<IndexQuery> action) {
         beforeQueryExecutedCallback.remove(action);
     }
 
-    public void addAfterQueryExecutedListener(Consumer<QueryResult> action) {
+    public void _addAfterQueryExecutedListener(Consumer<QueryResult> action) {
         afterQueryExecutedCallback.add(action);
     }
 
-    public void removeAfterQueryExecutedListener(Consumer<QueryResult> action) {
+    public void _removeAfterQueryExecutedListener(Consumer<QueryResult> action) {
         afterQueryExecutedCallback.remove(action);
     }
 
@@ -1531,5 +1532,56 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
 
     public List<T> toList() {
         return EnumerableUtils.toList(iterator());
+    }
+
+    public QueryResult getQueryResult() {
+        initSync();
+
+        return queryOperation.getCurrentQueryResults().createSnapshot();
+    }
+
+    public T first() {
+        Collection<T> result = executeQueryOperation(1);
+        return result.isEmpty() ? null : result.stream().findFirst().get();
+    }
+
+    public T firstOrDefault() {
+        Collection<T> result = executeQueryOperation(1);
+        return result.stream().findFirst().orElseGet(() -> Defaults.defaultValue(clazz));
+    }
+
+    public T single() {
+        Collection<T> result = executeQueryOperation(2);
+        if (result.size() > 1) {
+            throw new IllegalStateException("Expected single result, got: " + result.size());
+        }
+        return result.stream().findFirst().orElse(null);
+    }
+
+    public T singleOrDefault() {
+        Collection<T> result = executeQueryOperation(2);
+        if (result.size() > 1) {
+            throw new IllegalStateException("Expected single result, got: " + result.size());
+        }
+        if (result.isEmpty()) {
+            return Defaults.defaultValue(clazz);
+        }
+        return result.stream().findFirst().get();
+    }
+
+    public int count() {
+        _take(0);
+        QueryResult queryResult = getQueryResult();
+        return queryResult.getTotalResults();
+    }
+
+    private Collection<T> executeQueryOperation(int take) {
+        if (pageSize == null || pageSize > take) {
+            _take(take);
+        }
+
+        initSync();
+
+        return queryOperation.complete(clazz);
     }
 }
