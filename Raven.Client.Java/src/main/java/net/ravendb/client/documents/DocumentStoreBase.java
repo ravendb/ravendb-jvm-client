@@ -24,7 +24,7 @@ import java.util.List;
 public abstract class DocumentStoreBase implements IDocumentStore {
 
     protected DocumentStoreBase() {
-        //TODO: Subscriptions = new DocumentSubscriptions(this);
+        //TBD: Subscriptions = new DocumentSubscriptions(this);
     }
 
     public abstract void close();
@@ -41,7 +41,7 @@ public abstract class DocumentStoreBase implements IDocumentStore {
 
     //TODO: public abstract IDisposable AggressivelyCacheFor(TimeSpan cacheDuration, string database = null);
 
-    //TODO: public abstract IDatabaseChanges Changes(string database = null);
+    //TBD: public abstract IDatabaseChanges Changes(string database = null);
 
     //TODO: public abstract IDisposable DisableAggressiveCaching(string database = null);
 
@@ -116,9 +116,9 @@ public abstract class DocumentStoreBase implements IDocumentStore {
 
     protected boolean initialized;
 
-    //TODO:  private X509Certificate2 _certificate;
-    //TODO: public abstract BulkInsertOperation BulkInsert(string database = null);
-    //TODO:  public IReliableSubscriptions Subscriptions { get; }
+    //TBD:  private X509Certificate2 _certificate;
+    //TBD: public abstract BulkInsertOperation BulkInsert(string database = null);
+    //TBD:  public IReliableSubscriptions Subscriptions { get; }
 
     protected void ensureNotClosed() {
         if (disposed) {
@@ -165,7 +165,7 @@ public abstract class DocumentStoreBase implements IDocumentStore {
         this.database = database;
     }
 
-    /* TODO
+    /* TBD
      /// <summary>
         /// The client certificate to use for authentication
         /// </summary>

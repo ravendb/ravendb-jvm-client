@@ -1,5 +1,8 @@
 package net.ravendb.client.documents.session;
 
+import net.ravendb.client.documents.queries.QueryOperator;
+import net.ravendb.client.primitives.Reference;
+
 public class RawDocumentQuery<T> extends AbstractDocumentQuery<T, RawDocumentQuery<T>> implements IRawDocumentQuery<T> {
 
     public RawDocumentQuery(Class<T> clazz, InMemoryDocumentSessionOperations session, String rawQuery) {
@@ -24,5 +27,33 @@ public class RawDocumentQuery<T> extends AbstractDocumentQuery<T, RawDocumentQue
         return this;
     }
 
-    //TODO: other interface specific methods from DocumentQuery
+    @Override
+    public IRawDocumentQuery<T> showTimings() {
+        _showTimings();
+        return this;
+    }
+
+    @Override
+    public IRawDocumentQuery<T> noTracking() {
+        _noTracking();
+        return this;
+    }
+
+    @Override
+    public IRawDocumentQuery<T> noCaching() {
+        _noCaching();
+        return this;
+    }
+
+    @Override
+    public IRawDocumentQuery<T> usingDefaultOperator(QueryOperator queryOperator) {
+        _usingDefaultOperator(defaultOperatator);
+        return this;
+    }
+
+    @Override
+    public IRawDocumentQuery<T> statistics(Reference<QueryStatistics> stats) {
+        _statistics(stats);
+        return this;
+    }
 }

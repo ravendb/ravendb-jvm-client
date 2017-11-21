@@ -163,19 +163,19 @@ public class RequestExecutor implements CleanCloseable {
         httpClient = globalHttpClient.computeIfAbsent(thumbprint, (thumb) -> createClient());
     }
 
-    public static RequestExecutor create(String[] urls, String databaseName, DocumentConventions conventions) { //TODO: X509Certificate2 certificate
+    public static RequestExecutor create(String[] urls, String databaseName, DocumentConventions conventions) { //TBD: X509Certificate2 certificate
         RequestExecutor executor = new RequestExecutor(databaseName, conventions);
         executor._firstTopologyUpdate = executor.firstTopologyUpdate(urls);
         return executor;
     }
 
-    public static RequestExecutor createForSingleNodeWithConfigurationUpdates(String url, String databaseName, DocumentConventions conventions) { //TODO: X509Certificate2 certificate
+    public static RequestExecutor createForSingleNodeWithConfigurationUpdates(String url, String databaseName, DocumentConventions conventions) { //TBD: X509Certificate2 certificate
         RequestExecutor executor = createForSingleNodeWithoutConfigurationUpdates(url, databaseName, conventions);
         executor._disableClientConfigurationUpdates = false;
         return executor;
     }
 
-    public static RequestExecutor createForSingleNodeWithoutConfigurationUpdates(String url, String databaseName, DocumentConventions conventions) { //TODO: X509Certificate2 certificate
+    public static RequestExecutor createForSingleNodeWithoutConfigurationUpdates(String url, String databaseName, DocumentConventions conventions) { //TBD: X509Certificate2 certificate
         final String[] initialUrls = validateUrls(new String[]{url});
 
         RequestExecutor executor = new RequestExecutor(databaseName, conventions);
@@ -404,7 +404,7 @@ public class RequestExecutor implements CleanCloseable {
 
                     initializeUpdateTopologyTimer();
                     return;
-                } catch (Exception e) { //TODO: handle https
+                } catch (Exception e) { //TBD: handle https
                     if (initialUrls.length == 0) {
                         _lastKnownUrls = initialUrls;
                         throw new IllegalStateException("Cannot get topology from server: " + url, e);
@@ -775,7 +775,7 @@ public class RequestExecutor implements CleanCloseable {
                     }
                     return true;
 
-                case HttpStatus.SC_FORBIDDEN: //TODO: include info about certificates
+                case HttpStatus.SC_FORBIDDEN: //TBD: include info about certificates
                     throw new AuthorizationException("Forbidden access to " + chosenNode.getDatabase() + "@" + chosenNode.getUrl() + ", " + request.getMethod() + " " + request.getURI());
                 case HttpStatus.SC_GONE: // request not relevant for the chosen node - the database has been moved to a different one
                     if (!shouldRetry) {

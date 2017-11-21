@@ -1,6 +1,12 @@
 package net.ravendb.client.documents.session;
 
 import net.ravendb.client.documents.conventions.DocumentConventions;
+import net.ravendb.client.documents.queries.IndexQuery;
+import net.ravendb.client.documents.queries.QueryOperator;
+import net.ravendb.client.documents.queries.QueryResult;
+import net.ravendb.client.primitives.Reference;
+
+import java.util.function.Consumer;
 
 public interface IQueryBase<T, TSelf extends IQueryBase<T, TSelf>> {
 
@@ -9,77 +15,56 @@ public interface IQueryBase<T, TSelf extends IQueryBase<T, TSelf>> {
      */
     DocumentConventions getConventions();
 
-    /* TODO:
-        /// <summary>
-        ///     Callback to get the results of the query
-        /// </summary>
-        void AfterQueryExecuted(Action<QueryResult> action);
+    void addBeforeQueryExecutedListener(Consumer<IndexQuery> action);
 
+    void removeBeforeQueryExecutedListener(Consumer<IndexQuery> action);
 
-        /// <summary>
-        ///     Callback to get the results of the stream
-        /// </summary>
-        void AfterStreamExecuted(Action<BlittableJsonReaderObject> action);
+    void addAfterQueryExecutedListener(Consumer<QueryResult> action);
 
-        /// <summary>
-        ///     Allows you to modify the index query before it is sent to the server
-        /// </summary>
-        TSelf BeforeQueryExecuted(Action<IndexQuery> beforeQueryExecuted);
+    void removeAfterQueryExecutedListener(Consumer<QueryResult> action);
 
-        /// <summary>
-        ///     Called externally to raise the after query executed callback
-        /// </summary>
-        void InvokeAfterQueryExecuted(QueryResult result);
+    //TBD void AfterStreamExecuted(Action<BlittableJsonReaderObject> action);
 
-        /// <summary>
-        ///     Called externally to raise the after query executed callback
-        /// </summary>
-        void InvokeAfterStreamExecuted(BlittableJsonReaderObject result);
-*/
+    void invokeAfterQueryExecuted(QueryResult result);
+
+    //TBD void InvokeAfterStreamExecuted(BlittableJsonReaderObject result);
 
     /**
      * Disables caching for query results.
      */
-    //TODO: TSelf noCaching();
+    TSelf noCaching();
 
     /**
      * Disables tracking for queried entities by Raven's Unit of Work.
      * Usage of this option will prevent holding query results in memory.
      */
-    //TODO: TSelf noTracking();
-    /* TODO
+    TSelf noTracking();
 
-        /// <summary>
-        ///     Enables calculation of timings for various parts of a query (Lucene search, loading documents, transforming
-        ///     results). Default: false
-        /// </summary>
-        TSelf ShowTimings();
-*/
+    /**
+     * Enables calculation of timings for various parts of a query (Lucene search, loading documents, transforming
+     * results). Default: false
+     */
+    TSelf showTimings();
 
     /**
      * Skips the specified count.
      */
     TSelf skip(int count);
-    /* TODO
 
-        /// <summary>
-        ///     Provide statistics about the query, such as total count of matching records
-        /// </summary>
-        TSelf Statistics(out QueryStatistics stats);
-*/
+    /**
+     * Provide statistics about the query, such as total count of matching records
+     */
+    TSelf statistics(Reference<QueryStatistics> stats);
 
     /**
      * Takes the specified count.
      */
     TSelf take(int count);
 
-    /* TODO
-
-        /// <summary>
-        ///     Select the default operator to use for this query
-        /// </summary>
-        TSelf UsingDefaultOperator(QueryOperator queryOperator);
-*/
+    /**
+     * Select the default operator to use for this query
+     */
+    TSelf usingDefaultOperator(QueryOperator queryOperator);
 
     /**
      * EXPERT ONLY: Instructs the query to wait for non stale results.
@@ -87,7 +72,7 @@ public interface IQueryBase<T, TSelf extends IQueryBase<T, TSelf>> {
      */
     TSelf waitForNonStaleResults();
 
-    /*
+    /* TODO
         /// <summary>
         ///     EXPERT ONLY: Instructs the query to wait for non stale results for the specified wait timeout.
         ///     This shouldn't be used outside of unit tests unless you are well aware of the implications
@@ -132,9 +117,10 @@ public interface IQueryBase<T, TSelf extends IQueryBase<T, TSelf>> {
         /// <param name="waitTimeout">Maximum time to wait for index query results to become non-stale before exception is thrown.</param>
         TSelf WaitForNonStaleResultsAsOf(long cutOffEtag, TimeSpan waitTimeout);
 
-        /// <summary>
-        ///     Create the index query object for this query
-        /// </summary>
-        IndexQuery GetIndexQuery();
      */
+
+    /**
+     * Create the index query object for this query
+     */
+    IndexQuery getIndexQuery();
 }

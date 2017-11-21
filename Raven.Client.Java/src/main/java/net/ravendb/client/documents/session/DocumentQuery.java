@@ -3,10 +3,12 @@ package net.ravendb.client.documents.session;
 import net.ravendb.client.Constants;
 import net.ravendb.client.documents.indexes.spatial.SpatialRelation;
 import net.ravendb.client.documents.indexes.spatial.SpatialUnits;
+import net.ravendb.client.documents.queries.QueryOperator;
 import net.ravendb.client.documents.queries.QueryResult;
 import net.ravendb.client.documents.queries.SearchOperator;
 import net.ravendb.client.documents.session.tokens.DeclareToken;
 import net.ravendb.client.documents.session.tokens.LoadToken;
+import net.ravendb.client.primitives.Reference;
 
 import java.time.Duration;
 import java.util.Collection;
@@ -179,81 +181,35 @@ public class DocumentQuery<T> extends AbstractDocumentQuery<T, DocumentQuery<T>>
 
     //TBD public IDocumentQuery<T> ContainsAll<TValue>(Expression<Func<T, TValue>> propertySelector, IEnumerable<TValue> values)
 
+    @Override
+    public IDocumentQuery<T> statistics(Reference<QueryStatistics> stats) {
+        _statistics(stats);
+        return this;
+    }
 
-    /*TODO
+    @Override
+    public IDocumentQuery<T> usingDefaultOperator(QueryOperator queryOperator) {
+        _usingDefaultOperator(queryOperator);
+        return this;
+    }
 
-        /// <inheritdoc />
-        IDocumentQuery<T> IQueryBase<T, IDocumentQuery<T>>.Statistics(out QueryStatistics stats)
-        {
-            Statistics(out stats);
-            return this;
-        }
+    @Override
+    public IDocumentQuery<T> noTracking() {
+        _noTracking();
+        return this;
+    }
 
-        /// <inheritdoc />
-        IRawDocumentQuery<T> IQueryBase<T, IRawDocumentQuery<T>>.Statistics(out QueryStatistics stats)
-        {
-            Statistics(out stats);
-            return this;
-        }
+    @Override
+    public IDocumentQuery<T> noCaching() {
+        _noCaching();
+        return this;
+    }
 
-        /// <inheritdoc />
-        IDocumentQuery<T> IQueryBase<T, IDocumentQuery<T>>.UsingDefaultOperator(QueryOperator queryOperator)
-        {
-            UsingDefaultOperator(queryOperator);
-            return this;
-        }
-
-        /// <inheritdoc />
-        IRawDocumentQuery<T> IQueryBase<T, IRawDocumentQuery<T>>.UsingDefaultOperator(QueryOperator queryOperator)
-        {
-            UsingDefaultOperator(queryOperator);
-            return this;
-        }
-
-        /// <inheritdoc />
-        IDocumentQuery<T> IQueryBase<T, IDocumentQuery<T>>.NoTracking()
-        {
-            NoTracking();
-            return this;
-        }
-
-        /// <inheritdoc />
-        IRawDocumentQuery<T> IQueryBase<T, IRawDocumentQuery<T>>.NoTracking()
-        {
-            NoTracking();
-            return this;
-        }
-
-        /// <inheritdoc />
-        IDocumentQuery<T> IQueryBase<T, IDocumentQuery<T>>.NoCaching()
-        {
-            NoCaching();
-            return this;
-        }
-
-        /// <inheritdoc />
-        IRawDocumentQuery<T> IQueryBase<T, IRawDocumentQuery<T>>.NoCaching()
-        {
-            NoCaching();
-            return this;
-        }
-
-        /// <inheritdoc />
-        IDocumentQuery<T> IQueryBase<T, IDocumentQuery<T>>.ShowTimings()
-        {
-            ShowTimings();
-            return this;
-        }
-
-        /// <inheritdoc />
-        IRawDocumentQuery<T> IQueryBase<T, IRawDocumentQuery<T>>.ShowTimings()
-        {
-            ShowTimings();
-            return this;
-        }
-
-*/
-
+    @Override
+    public IDocumentQuery<T> showTimings() {
+        _showTimings();
+        return this;
+    }
 
     @Override
     public IDocumentQuery<T> include(String path) {

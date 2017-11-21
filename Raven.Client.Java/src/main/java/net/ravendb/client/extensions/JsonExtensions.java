@@ -91,43 +91,29 @@ public class JsonExtensions {
         }
 
         /* TODO
-
-
             if (query.WaitForNonStaleResultsTimeout.HasValue)
             {
                 writer.WritePropertyName(nameof(query.WaitForNonStaleResultsTimeout));
                 writer.WriteString(query.WaitForNonStaleResultsTimeout.Value.ToInvariantString());
                 writer.WriteComma();
-            }
+            }*/
 
-            if (query.DisableCaching)
-            {
-                writer.WritePropertyName(nameof(query.DisableCaching));
-                writer.WriteBool(query.DisableCaching);
-                writer.WriteComma();
-            }
+        if (query.isDisableCaching()) {
+            generator.writeBooleanField("DisableCaching", query.isDisableCaching());
+        }
 
-            if (query.ExplainScores)
-            {
-                writer.WritePropertyName(nameof(query.DisableCaching));
-                writer.WriteBool(query.DisableCaching);
-                writer.WriteComma();
-            }
+        if (query.isExplainScores()) {
+            generator.writeBooleanField("ExplainScores", query.isExplainScores());
+        }
 
-            if (query.ShowTimings)
-            {
-                writer.WritePropertyName(nameof(query.ShowTimings));
-                writer.WriteBool(query.ShowTimings);
-                writer.WriteComma();
-            }
+        if (query.isShowTimings()) {
+            generator.writeBooleanField("ShowTimings", query.isShowTimings());
+        }
 
-            if (query.SkipDuplicateChecking)
-            {
-                writer.WritePropertyName(nameof(query.SkipDuplicateChecking));
-                writer.WriteBool(query.SkipDuplicateChecking);
-                writer.WriteComma();
-            }
-*/
+        if (query.isSkipDuplicateChecking()) {
+            generator.writeBooleanField("SkipDuplicateChecking", query.isSkipDuplicateChecking());
+        }
+
         generator.writeFieldName("QueryParameters");
         if (query.getQueryParameters() != null) {
             generator.writeObject(EntityToJson.convertEntityToJson(query.getQueryParameters(), conventions));

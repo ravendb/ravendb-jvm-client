@@ -93,13 +93,11 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
 
     protected Set<String> includes = new HashSet<>();
 
-    /*TODO
+    /**
+     * Holds the query stats
+     */
+    protected QueryStatistics queryStats = new QueryStatistics();
 
-        /// <summary>
-        /// Holds the query stats
-        /// </summary>
-        protected QueryStatistics QueryStats = new QueryStatistics();
-*/
     protected boolean disableEntitiesTracking;
 
     protected boolean disableCaching;
@@ -126,7 +124,7 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
         return (IDocumentSession) theSession;
     }
 
-    /*TODO public IAsyncDocumentSession AsyncSession => (IAsyncDocumentSession)TheSession; */
+    //TBD public IAsyncDocumentSession AsyncSession => (IAsyncDocumentSession)TheSession;
 
     public boolean isDynamicMapReduce() {
         return !groupByTokens.isEmpty();
@@ -161,7 +159,7 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
         //TBD _linqPathProvider = new LinqPathProvider(_conventions);
     }
 
-    protected void usingDefaultOperator(QueryOperator operator) {
+    public void _usingDefaultOperator(QueryOperator operator) {
         if (!whereTokens.isEmpty()) {
             throw new IllegalStateException("Default operator can only be set before any where clause is added.");
         }
@@ -795,32 +793,23 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
         _waitForNonStaleResults(getDefaultTimeout());
     }
 
-    /* TODO
+    /**
+     * Provide statistics about the query, such as total count of matching records
+     */
+    public void _statistics(Reference<QueryStatistics> stats) {
+        stats.value = queryStats;
+    }
 
-        /// <summary>
-        /// Provide statistics about the query, such as total count of matching records
-        /// </summary>
-        public void Statistics(out QueryStatistics stats)
-        {
-            stats = QueryStats;
+    /**
+     * Called externally to raise the after query executed callback
+     */
+    public void invokeAfterQueryExecuted(QueryResult result) {
+        for (Consumer<QueryResult> consumer : afterQueryExecutedCallback) {
+            consumer.accept(result);
         }
+    }
 
-        /// <summary>
-        /// Called externally to raise the after query executed callback
-        /// </summary>
-        public void InvokeAfterQueryExecuted(QueryResult result)
-        {
-            AfterQueryExecutedCallback?.Invoke(result);
-        }
-
-        /// <summary>
-        /// Called externally to raise the after stream executed callback
-        /// </summary>
-        public void InvokeAfterStreamExecuted(BlittableJsonReaderObject result)
-        {
-            AfterStreamExecutedCallback?.Invoke(result);
-        }
-*/
+    //TBD public void InvokeAfterStreamExecuted(BlittableJsonReaderObject result)
 
     /**
      * Generates the index query.
@@ -1012,6 +1001,7 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
     }
 
     private void UpdateStatsAndHighlightings(QueryResult queryResult) {
+        queryStats.updateQueryStats(queryResult);
         //TODO: QueryStats.UpdateQueryStats(queryResult);
         //TBD: Highlightings.Update(queryResult);
     }
@@ -1326,11 +1316,11 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
         }
     }
 
-    protected Consumer<IndexQuery> beforeQueryExecutedCallback; //TODO: list of listeners
+    protected List<Consumer<IndexQuery>> beforeQueryExecutedCallback = new ArrayList<>();
 
-    protected Consumer<QueryResult> afterQueryExecutedCallback; //TODO: list of listeners
+    protected List<Consumer<QueryResult>> afterQueryExecutedCallback = new ArrayList<>();
 
-    //TODO protected Action<BlittableJsonReaderObject> AfterStreamExecutedCallback;
+    //TBD protected Action<BlittableJsonReaderObject> AfterStreamExecutedCallback;
 
     protected QueryOperation queryOperation;
 
@@ -1338,29 +1328,23 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
         return queryOperation;
     }
 
-    /* TODO
+    public void addBeforeQueryExecutedListener(Consumer<IndexQuery> action) {
+        beforeQueryExecutedCallback.add(action);
+    }
 
-        /// <inheritdoc />
-        public IDocumentQueryCustomization BeforeQueryExecuted(Action<IndexQuery> action)
-        {
-            BeforeQueryExecutedCallback += action;
-            return this;
-        }
+    public void removeBeforeQueryExecutedListener(Consumer<IndexQuery> action) {
+        beforeQueryExecutedCallback.remove(action);
+    }
 
-        /// <inheritdoc />
-        public IDocumentQueryCustomization AfterQueryExecuted(Action<QueryResult> action)
-        {
-            AfterQueryExecutedCallback += action;
-            return this;
-        }
+    public void addAfterQueryExecutedListener(Consumer<QueryResult> action) {
+        afterQueryExecutedCallback.add(action);
+    }
 
-        /// <inheritdoc />
-        public IDocumentQueryCustomization AfterStreamExecuted(Action<BlittableJsonReaderObject> action)
-        {
-            AfterStreamExecutedCallback += action;
-            return this;
-        }
-*/
+    public void removeAfterQueryExecutedListener(Consumer<QueryResult> action) {
+        afterQueryExecutedCallback.remove(action);
+    }
+
+    //TBD public IDocumentQueryCustomization AfterStreamExecuted(Action<BlittableJsonReaderObject> action)
 
     public void _noTracking() {
         disableEntitiesTracking = true;
@@ -1373,7 +1357,6 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
     public void _showTimings() {
         showQueryTimings = true;
     }
-
 
     /*TODO
         IDocumentQueryCustomization IDocumentQueryCustomization.RandomOrdering()
@@ -1536,7 +1519,7 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
             theSession.getRequestExecutor().execute(command);
             queryOperation.setResult(command.getResult());
         }
-        //TODO: InvokeAfterQueryExecuted(QueryOperation.CurrentQueryResults);
+        invokeAfterQueryExecuted(queryOperation.getCurrentQueryResults());
     }
 
     @Override

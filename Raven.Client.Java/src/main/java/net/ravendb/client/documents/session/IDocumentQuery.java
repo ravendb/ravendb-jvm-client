@@ -83,7 +83,6 @@ public interface IDocumentQuery<T> extends IDocumentQueryBase<T, IDocumentQuery<
         Lazy<FacetedQueryResult> GetFacetsLazy(List<Facet> facets, int facetStart, int? facetPageSize);
 
 
-
         /// <summary>
         /// Changes the return type of the query
         /// </summary>

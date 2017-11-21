@@ -1,0 +1,122 @@
+package net.ravendb.client.documents.session;
+
+import net.ravendb.client.documents.queries.QueryResult;
+
+/**
+ * Statistics about a raven query.
+ * Such as how many records match the query
+ */
+public class QueryStatistics {
+
+    private boolean isStale;
+
+    private long durationInMs;
+
+    /**
+     * Whether the query returned potentially stale results
+     */
+    public boolean isStale() {
+        return isStale;
+    }
+
+    /**
+     * Whether the query returned potentially stale results
+     */
+    public void setStale(boolean stale) {
+        isStale = stale;
+    }
+
+    /**
+     * The duration of the query _server side_
+     */
+    public long getDurationInMs() {
+        return durationInMs;
+    }
+
+    /**
+     * The duration of the query _server side_
+     */
+    public void setDurationInMs(long durationInMs) {
+        this.durationInMs = durationInMs;
+    }
+
+    /* TODO
+     public QueryStatistics()
+        {
+            TimingsInMs = new Dictionary<string, double>();
+        }
+
+
+        /// <summary>
+        /// What was the total count of the results that matched the query
+        /// </summary>
+        public int TotalResults { get; set; }
+
+        /// <summary>
+        /// Gets or sets the skipped results
+        /// </summary>
+        public int SkippedResults { get; set; }
+
+        /// <summary>
+        /// The time when the query results were unstale.
+        /// </summary>
+        public DateTime Timestamp { get; set; }
+
+        /// <summary>
+        /// The name of the index queried
+        /// </summary>
+        public string IndexName { get; set; }
+
+        /// <summary>
+        /// The timestamp of the queried index
+        /// </summary>
+        public DateTime IndexTimestamp { get; set; }
+
+        /// <summary>
+        /// The timestamp of the last time the index was queried
+        /// </summary>
+        public DateTime LastQueryTime { get; set; }
+
+        /// <summary>
+        /// Detailed timings for various parts of a query (Lucene search, loading documents, transforming results)
+        /// </summary>
+        public Dictionary<string, double> TimingsInMs { get; set; }
+
+        public long? ResultEtag { get; set; }
+
+        /// <summary>
+        /// The size of the request which were sent from the server.
+        /// This value is the _uncompressed_ size.
+        /// </summary>
+        public long ResultSize { get; set; }
+*/
+    public void updateQueryStats(QueryResult qr) {
+        //TODO:
+    }
+    /* TODO
+        /// <summary>
+        /// Update the query stats from the query results
+        /// </summary>
+        internal void UpdateQueryStats(QueryResult qr)
+        {
+            IsStale = qr.IsStale;
+            DurationInMs = qr.DurationInMs;
+            TotalResults = qr.TotalResults;
+            SkippedResults = qr.SkippedResults;
+            Timestamp = qr.IndexTimestamp;
+            IndexName = qr.IndexName;
+            IndexTimestamp = qr.IndexTimestamp;
+            TimingsInMs = qr.TimingsInMs;
+            LastQueryTime = qr.LastQueryTime;
+            ResultSize = qr.ResultSize;
+            ResultEtag = qr.ResultEtag;
+            ScoreExplanations = qr.ScoreExplanations;
+        }
+
+        /// <summary>
+        /// Gets or sets explanations of document scores
+        /// </summary>
+        public Dictionary<string, string> ScoreExplanations { get; set; }
+     */
+
+}
