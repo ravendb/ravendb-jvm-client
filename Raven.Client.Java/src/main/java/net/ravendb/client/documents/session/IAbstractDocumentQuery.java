@@ -2,6 +2,8 @@ package net.ravendb.client.documents.session;
 
 import net.ravendb.client.documents.conventions.DocumentConventions;
 import net.ravendb.client.documents.queries.SearchOperator;
+import net.ravendb.client.documents.queries.spatial.SpatialCriteria;
+import net.ravendb.client.documents.queries.spatial.SpatialDynamicField;
 import net.ravendb.client.primitives.Tuple;
 
 import java.time.Duration;
@@ -119,7 +121,7 @@ public interface IAbstractDocumentQuery<T> {
     /**
      * Negate the next operation
      */
-    void _negateNext();
+    void negateNext();
 
     /**
      * Check that the field has one of the specified value
@@ -312,9 +314,9 @@ public interface IAbstractDocumentQuery<T> {
 
     void _whereTrue();
 
-    //TODO: void Spatial(SpatialDynamicField field, SpatialCriteria criteria);
+    void _spatial(SpatialDynamicField field, SpatialCriteria criteria);
 
-    //TODO: void Spatial(string fieldName, SpatialCriteria criteria);
+    void _spatial(String fieldName, SpatialCriteria criteria);
 
     void _orderByDistance(String fieldName, double latitude, double longitude);
 

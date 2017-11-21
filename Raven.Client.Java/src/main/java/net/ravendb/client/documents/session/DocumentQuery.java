@@ -1,10 +1,15 @@
 package net.ravendb.client.documents.session;
 
+import net.ravendb.client.Constants;
+import net.ravendb.client.documents.indexes.spatial.SpatialRelation;
+import net.ravendb.client.documents.indexes.spatial.SpatialUnits;
 import net.ravendb.client.documents.queries.QueryResult;
+import net.ravendb.client.documents.queries.SearchOperator;
 import net.ravendb.client.documents.session.tokens.DeclareToken;
 import net.ravendb.client.documents.session.tokens.LoadToken;
 
 import java.time.Duration;
+import java.util.Collection;
 import java.util.List;
 
 public class DocumentQuery<T> extends AbstractDocumentQuery<T, DocumentQuery<T>> implements IDocumentQuery<T> {
@@ -30,33 +35,33 @@ public class DocumentQuery<T> extends AbstractDocumentQuery<T, DocumentQuery<T>>
             return SelectFields<TProjection>(new QueryData(fields, projections));
         }
 
-        /// <inheritdoc />
-        IDocumentQuery<T> IDocumentQueryBase<T, IDocumentQuery<T>>.Distinct()
-        {
-            Distinct();
-            return this;
-        }
+*/
 
-        /// <inheritdoc />
-        IDocumentQuery<T> IDocumentQueryBase<T, IDocumentQuery<T>>.OrderByScore()
-        {
-            OrderByScore();
-            return this;
-        }
+    @Override
+    public IDocumentQuery<T> distinct() {
+        _distinct();
+        return this;
+    }
 
-        /// <inheritdoc />
-        IDocumentQuery<T> IDocumentQueryBase<T, IDocumentQuery<T>>.OrderByScoreDescending()
-        {
-            OrderByScoreDescending();
-            return this;
-        }
+    @Override
+    public IDocumentQuery<T> orderByScore() {
+        _orderByScore();
+        return this;
+    }
 
-        /// <inheritdoc />
-        public IDocumentQuery<T> ExplainScores()
-        {
-            ShouldExplainScores = true;
-            return this;
-        }
+    @Override
+    public IDocumentQuery<T> orderByScoreDescending() {
+        _orderByScoreDescending();
+        return this;
+    }
+
+    @Override
+    public IDocumentQuery<T> explainScores() {
+        shouldExplainScores = true;
+        return this;
+    }
+
+    /* TODO
 
         /// <inheritdoc />
         public IDocumentQuery<TProjection> SelectFields<TProjection>(params string[] fields)
@@ -84,29 +89,26 @@ public class DocumentQuery<T> extends AbstractDocumentQuery<T, DocumentQuery<T>>
             WaitForNonStaleResults(waitTimeout);
             return this;
         }
+*/
 
-        /// <inheritdoc />
-        IDocumentQuery<T> IDocumentQueryBase<T, IDocumentQuery<T>>.AddOrder(string fieldName, bool descending, OrderingType ordering)
-        {
-            if (descending)
-                OrderByDescending(fieldName, ordering);
-            else
-                OrderBy(fieldName, ordering);
+    @Override
+    public IDocumentQuery<T> addOrder(String fieldName, boolean descending) {
+        return addOrder(fieldName, descending, OrderingType.STRING);
+    }
 
-            return this;
+    @Override
+    public IDocumentQuery<T> addOrder(String fieldName, boolean descending, OrderingType ordering) {
+        if (descending) {
+            orderByDescending(fieldName, ordering);
+        } else {
+            orderBy(fieldName, ordering);
         }
+        return this;
+    }
 
-        /// <inheritdoc />
-        public IDocumentQuery<T> AddOrder<TValue>(Expression<Func<T, TValue>> propertySelector, bool descending, OrderingType ordering)
-        {
-            var fieldName = GetMemberQueryPath(propertySelector.Body);
-            if (descending)
-                OrderByDescending(fieldName, ordering);
-            else
-                OrderBy(fieldName, ordering);
+    //TBD public IDocumentQuery<T> AddOrder<TValue>(Expression<Func<T, TValue>> propertySelector, bool descending, OrderingType ordering)
+    /* TODO
 
-            return this;
-        }
 
         void IQueryBase<T, IDocumentQuery<T>>.AfterQueryExecuted(Action<QueryResult> action)
         {
@@ -127,68 +129,58 @@ public class DocumentQuery<T> extends AbstractDocumentQuery<T, DocumentQuery<T>>
         {
             AfterStreamExecuted(action);
         }
-        /// <inheritdoc />
-        IDocumentQuery<T> IDocumentQueryBase<T, IDocumentQuery<T>>.OpenSubclause()
-        {
-            OpenSubclause();
-            return this;
-        }
 
-        /// <inheritdoc />
-        IDocumentQuery<T> IDocumentQueryBase<T, IDocumentQuery<T>>.CloseSubclause()
-        {
-            CloseSubclause();
-            return this;
-        }
+*/
 
-        /// <inheritdoc />
-        IDocumentQuery<T> IDocumentQueryBase<T, IDocumentQuery<T>>.Search(string fieldName, string searchTerms, SearchOperator @operator)
-        {
-            Search(fieldName, searchTerms, @operator);
-            return this;
-        }
+    public IDocumentQuery<T> openSubclause() {
+        _openSubclause();
+        return this;
+    }
 
-        /// <inheritdoc />
-        public IDocumentQuery<T> Search<TValue>(Expression<Func<T, TValue>> propertySelector, string searchTerms, SearchOperator @operator)
-        {
-            Search(GetMemberQueryPath(propertySelector.Body), searchTerms, @operator);
-            return this;
-        }
+    @Override
+    public IDocumentQuery<T> closeSubclause() {
+        _closeSubclause();
+        return this;
+    }
 
-        /// <inheritdoc />
-        IDocumentQuery<T> IDocumentQueryBase<T, IDocumentQuery<T>>.Intersect()
-        {
-            Intersect();
-            return this;
-        }
+    @Override
+    public IDocumentQuery<T> search(String fieldName, String searchTerms) {
+        _search(fieldName, searchTerms);
+        return this;
+    }
 
-        /// <inheritdoc />
-        IDocumentQuery<T> IDocumentQueryBase<T, IDocumentQuery<T>>.ContainsAny(string fieldName, IEnumerable<object> values)
-        {
-            ContainsAny(fieldName, values);
-            return this;
-        }
+    @Override
+    public IDocumentQuery<T> search(String fieldName, String searchTerms, SearchOperator operator) {
+        _search(fieldName, searchTerms, operator);
+        return this;
+    }
 
-        /// <inheritdoc />
-        public IDocumentQuery<T> ContainsAny<TValue>(Expression<Func<T, TValue>> propertySelector, IEnumerable<TValue> values)
-        {
-            ContainsAny(GetMemberQueryPath(propertySelector.Body), values.Cast<object>());
-            return this;
-        }
+    //TBD public IDocumentQuery<T> Search<TValue>(Expression<Func<T, TValue>> propertySelector, string searchTerms, SearchOperator @operator)
 
-        /// <inheritdoc />
-        IDocumentQuery<T> IDocumentQueryBase<T, IDocumentQuery<T>>.ContainsAll(string fieldName, IEnumerable<object> values)
-        {
-            ContainsAll(fieldName, values);
-            return this;
-        }
+    @Override
+    public IDocumentQuery<T> intersect() {
+        _intersect();
+        return this;
+    }
 
-        /// <inheritdoc />
-        public IDocumentQuery<T> ContainsAll<TValue>(Expression<Func<T, TValue>> propertySelector, IEnumerable<TValue> values)
-        {
-            ContainsAll(GetMemberQueryPath(propertySelector.Body), values.Cast<object>());
-            return this;
-        }
+    @Override
+    public IDocumentQuery<T> containsAny(String fieldName, Collection<Object> values) {
+        _containsAny(fieldName, values);
+        return this;
+    }
+
+    //TBD public IDocumentQuery<T> ContainsAny<TValue>(Expression<Func<T, TValue>> propertySelector, IEnumerable<TValue> values)
+
+    @Override
+    public IDocumentQuery<T> containsAll(String fieldName, Collection<Object> values) {
+        _containsAll(fieldName, values);
+        return this;
+    }
+
+    //TBD public IDocumentQuery<T> ContainsAll<TValue>(Expression<Func<T, TValue>> propertySelector, IEnumerable<TValue> values)
+
+
+    /*TODO
 
         /// <inheritdoc />
         IDocumentQuery<T> IQueryBase<T, IDocumentQuery<T>>.Statistics(out QueryStatistics stats)
@@ -259,24 +251,20 @@ public class DocumentQuery<T> extends AbstractDocumentQuery<T, DocumentQuery<T>>
             ShowTimings();
             return this;
         }
-        /// <inheritdoc />
-        IDocumentQuery<T> IDocumentQueryBase<T, IDocumentQuery<T>>.Include(string path)
-        {
-            Include(path);
-            return this;
-        }
 
-        /// <inheritdoc />
-        IDocumentQuery<T> IDocumentQueryBase<T, IDocumentQuery<T>>.Include(Expression<Func<T, object>> path)
-        {
-            Include(path);
-            return this;
-        }
 */
+
+
+    @Override
+    public IDocumentQuery<T> include(String path) {
+        _include(path);
+        return this;
+    }
+    //TODO: IDocumentQuery<T> IDocumentQueryBase<T, IDocumentQuery<T>>.Include(Expression<Func<T, object>> path)
 
     @Override
     public IDocumentQuery<T> not() {
-        _negateNext();
+        negateNext();
         return this;
     }
 
@@ -298,22 +286,18 @@ public class DocumentQuery<T> extends AbstractDocumentQuery<T, DocumentQuery<T>>
     }
 
     /* TODO
-
-        /// <inheritdoc />
         IRawDocumentQuery<T> IQueryBase<T, IRawDocumentQuery<T>>.Skip(int count)
         {
             Skip(count);
             return this;
         }
-
-        /// <inheritdoc />
-        IDocumentQuery<T> IDocumentQueryBase<T, IDocumentQuery<T>>.WhereLucene(string fieldName, string whereClause)
-        {
-            WhereLucene(fieldName, whereClause);
-            return this;
-        }
-
 */
+
+    @Override
+    public IDocumentQuery<T> whereLucene(String fieldName, String whereClause) {
+        _whereLucene(fieldName, whereClause);
+        return this;
+    }
 
     @Override
     public IDocumentQuery<T> whereEquals(String fieldName, Object value) {
@@ -327,57 +311,46 @@ public class DocumentQuery<T> extends AbstractDocumentQuery<T, DocumentQuery<T>>
         return this;
     }
 
-    /* TODO
-        /// <inheritdoc />
-        IDocumentQuery<T> IDocumentQueryBase<T, IDocumentQuery<T>>.WhereEquals<TValue>(Expression<Func<T, TValue>> propertySelector, TValue value, bool exact)
-        {
-            WhereEquals(GetMemberQueryPath(propertySelector.Body), value, exact);
-            return this;
-        }
+    //TBD IDocumentQuery<T> IDocumentQueryBase<T, IDocumentQuery<T>>.WhereEquals<TValue>(Expression<Func<T, TValue>> propertySelector, TValue value, bool exact)
 
-        /// <inheritdoc />
-        IDocumentQuery<T> IDocumentQueryBase<T, IDocumentQuery<T>>.WhereEquals(WhereParams whereParams)
-        {
-            WhereEquals(whereParams);
-            return this;
-        }
+    @Override
+    public IDocumentQuery<T> whereEquals(WhereParams whereParams) {
+        _whereEquals(whereParams);
+        return this;
+    }
 
-        /// <inheritdoc />
-        IDocumentQuery<T> IDocumentQueryBase<T, IDocumentQuery<T>>.WhereNotEquals(string fieldName, object value, bool exact)
-        {
-            WhereNotEquals(fieldName, value, exact);
-            return this;
-        }
+    @Override
+    public IDocumentQuery<T> whereNotEquals(String fieldName, Object value) {
+        _whereNotEquals(fieldName, value);
+        return this;
+    }
 
-        /// <inheritdoc />
-        IDocumentQuery<T> IDocumentQueryBase<T, IDocumentQuery<T>>.WhereNotEquals<TValue>(Expression<Func<T, TValue>> propertySelector, TValue value, bool exact)
-        {
-            WhereNotEquals(GetMemberQueryPath(propertySelector.Body), value, exact);
-            return this;
-        }
+    @Override
+    public IDocumentQuery<T> whereNotEquals(String fieldName, Object value, boolean exact) {
+        _whereNotEquals(fieldName, value, exact);
+        return this;
+    }
 
-        /// <inheritdoc />
-        IDocumentQuery<T> IDocumentQueryBase<T, IDocumentQuery<T>>.WhereNotEquals(WhereParams whereParams)
-        {
-            WhereNotEquals(whereParams);
-            return this;
-        }
+    //TBD IDocumentQuery<T> IDocumentQueryBase<T, IDocumentQuery<T>>.WhereNotEquals<TValue>(Expression<Func<T, TValue>> propertySelector, TValue value, bool exact)
 
-        /// <inheritdoc />
-        IDocumentQuery<T> IDocumentQueryBase<T, IDocumentQuery<T>>.WhereIn(string fieldName, IEnumerable<object> values, bool exact)
-        {
-            WhereIn(fieldName, values, exact);
-            return this;
-        }
+    @Override
+    public IDocumentQuery<T> whereNotEquals(WhereParams whereParams) {
+        _whereNotEquals(whereParams);
+        return this;
+    }
 
-        /// <inheritdoc />
-        public IDocumentQuery<T> WhereIn<TValue>(Expression<Func<T, TValue>> propertySelector, IEnumerable<TValue> values, bool exact = false)
-        {
-            WhereIn(GetMemberQueryPath(propertySelector.Body), values.Cast<object>(), exact);
-            return this;
-        }
+    @Override
+    public IDocumentQuery<T> whereIn(String fieldName, Collection<Object> values) {
+        return whereIn(fieldName, values, false);
+    }
 
-*/
+    @Override
+    public IDocumentQuery<T> whereIn(String fieldName, Collection<Object> values, boolean exact) {
+        _whereIn(fieldName, values, exact);
+        return this;
+    }
+
+    //TBD public IDocumentQuery<T> WhereIn<TValue>(Expression<Func<T, TValue>> propertySelector, IEnumerable<TValue> values, bool exact = false)
 
     @Override
     public IDocumentQuery<T> whereStartsWith(String fieldName, Object value) {
@@ -391,24 +364,20 @@ public class DocumentQuery<T> extends AbstractDocumentQuery<T, DocumentQuery<T>>
         return this;
     }
 
-    //TODO: public IDocumentQuery<T> WhereEndsWith<TValue>(Expression<Func<T, TValue>> propertySelector, TValue value)
+    //TBD: public IDocumentQuery<T> WhereEndsWith<TValue>(Expression<Func<T, TValue>> propertySelector, TValue value)
 
-    /* TODO
+    @Override
+    public IDocumentQuery<T> whereBetween(String fieldName, Object start, Object end) {
+        return whereBetween(fieldName, start, end, false);
+    }
 
-        /// <inheritdoc />
-        IDocumentQuery<T> IDocumentQueryBase<T, IDocumentQuery<T>>.WhereBetween(string fieldName, object start, object end, bool exact)
-        {
-            WhereBetween(fieldName, start, end, exact);
-            return this;
-        }
+    @Override
+    public IDocumentQuery<T> whereBetween(String fieldName, Object start, Object end, boolean exact) {
+        _whereBetween(fieldName, start, end, exact);
+        return this;
+    }
 
-        /// <inheritdoc />
-        public IDocumentQuery<T> WhereBetween<TValue>(Expression<Func<T, TValue>> propertySelector, TValue start, TValue end, bool exact = false)
-        {
-            WhereBetween(GetMemberQueryPath(propertySelector.Body), start, end, exact);
-            return this;
-        }
-*/
+    //TBD public IDocumentQuery<T> WhereBetween<TValue>(Expression<Func<T, TValue>> propertySelector, TValue start, TValue end, bool exact = false)
 
     @Override
     public IDocumentQuery<T> whereGreaterThan(String fieldName, Object value) {
@@ -432,22 +401,9 @@ public class DocumentQuery<T> extends AbstractDocumentQuery<T, DocumentQuery<T>>
         return this;
     }
 
-    /* TODO
+    //TBD public IDocumentQuery<T> WhereGreaterThan<TValue>(Expression<Func<T, TValue>> propertySelector, TValue value, bool exact = false)
+    //TBD public IDocumentQuery<T> WhereGreaterThanOrEqual<TValue>(Expression<Func<T, TValue>> propertySelector, TValue value, bool exact = false)
 
-        /// <inheritdoc />
-        public IDocumentQuery<T> WhereGreaterThan<TValue>(Expression<Func<T, TValue>> propertySelector, TValue value, bool exact = false)
-        {
-            WhereGreaterThan(GetMemberQueryPath(propertySelector.Body), value, exact);
-            return this;
-        }
-        /// <inheritdoc />
-        public IDocumentQuery<T> WhereGreaterThanOrEqual<TValue>(Expression<Func<T, TValue>> propertySelector, TValue value, bool exact = false)
-        {
-            WhereGreaterThanOrEqual(GetMemberQueryPath(propertySelector.Body), value, exact);
-            return this;
-        }
-
-    */
     public IDocumentQuery<T> whereLessThan(String fieldName, Object value) {
         return whereLessThan(fieldName, value, false);
     }
@@ -456,14 +412,8 @@ public class DocumentQuery<T> extends AbstractDocumentQuery<T, DocumentQuery<T>>
         _whereLessThan(fieldName, value, exact);
         return this;
     }
-    /* TODO
 
-        /// <inheritdoc />
-        public IDocumentQuery<T> WhereLessThan<TValue>(Expression<Func<T, TValue>> propertySelector, TValue value, bool exact = false)
-        {
-            WhereLessThan(GetMemberQueryPath(propertySelector.Body), value, exact);
-            return this;
-        }*/
+    //TBD public IDocumentQuery<T> WhereLessThanOrEqual<TValue>(Expression<Func<T, TValue>> propertySelector, TValue value, bool exact = false)
 
     public IDocumentQuery<T> whereLessThanOrEqual(String fieldName, Object value) {
         return whereLessThanOrEqual(fieldName, value, false);
@@ -474,84 +424,64 @@ public class DocumentQuery<T> extends AbstractDocumentQuery<T, DocumentQuery<T>>
         return this;
     }
 
-    /* TODO
+    //TBD public IDocumentQuery<T> WhereLessThanOrEqual<TValue>(Expression<Func<T, TValue>> propertySelector, TValue value, bool exact = false)
+    //TBD public IDocumentQuery<T> WhereExists<TValue>(Expression<Func<T, TValue>> propertySelector)
 
-        /// <inheritdoc />
-        public IDocumentQuery<T> WhereLessThanOrEqual<TValue>(Expression<Func<T, TValue>> propertySelector, TValue value, bool exact = false)
-        {
-            WhereLessThanOrEqual(GetMemberQueryPath(propertySelector.Body), value, exact);
-            return this;
-        }
+    @Override
+    public IDocumentQuery<T> whereExists(String fieldName) {
+        _whereExists(fieldName);
+        return this;
+    }
 
-        /// <inheritdoc />
-        public IDocumentQuery<T> WhereExists<TValue>(Expression<Func<T, TValue>> propertySelector)
-        {
-            WhereExists(GetMemberQueryPath(propertySelector.Body));
-            return this;
-        }
-
-        /// <inheritdoc />
-        IDocumentQuery<T> IDocumentQueryBase<T, IDocumentQuery<T>>.WhereExists(string fieldName)
-        {
-            WhereExists(fieldName);
-            return this;
-        }
-
-*/
     public IDocumentQuery<T> andAlso() {
         _andAlso();
         return this;
     }
-    /*
 
-        /// <inheritdoc />
-        IDocumentQuery<T> IDocumentQueryBase<T, IDocumentQuery<T>>.OrElse()
-        {
-            OrElse();
-            return this;
-        }
+    @Override
+    public IDocumentQuery<T> orElse() {
+        _orElse();
+        return this;
+    }
 
-        /// <inheritdoc />
-        IDocumentQuery<T> IDocumentQueryBase<T, IDocumentQuery<T>>.Boost(decimal boost)
-        {
-            Boost(boost);
-            return this;
-        }
+    @Override
+    public IDocumentQuery<T> boost(double boost) {
+        _boost(boost);
+        return this;
+    }
 
-        /// <inheritdoc />
-        IDocumentQuery<T> IDocumentQueryBase<T, IDocumentQuery<T>>.Fuzzy(decimal fuzzy)
-        {
-            Fuzzy(fuzzy);
-            return this;
-        }
+    @Override
+    public IDocumentQuery<T> fuzzy(double fuzzy) {
+        _fuzzy(fuzzy);
+        return this;
+    }
 
-        /// <inheritdoc />
-        IDocumentQuery<T> IDocumentQueryBase<T, IDocumentQuery<T>>.Proximity(int proximity)
-        {
-            Proximity(proximity);
-            return this;
-        }
+    @Override
+    public IDocumentQuery<T> proximity(int proxomity) {
+        _proximity(proxomity);
+        return this;
+    }
 
-        /// <inheritdoc />
-        IDocumentQuery<T> IDocumentQueryBase<T, IDocumentQuery<T>>.RandomOrdering()
-        {
-            RandomOrdering();
-            return this;
-        }
+    @Override
+    public IDocumentQuery<T> randomOrdering() {
+        _randomOrdering();
+        return this;
+    }
 
-        /// <inheritdoc />
-        IDocumentQuery<T> IDocumentQueryBase<T, IDocumentQuery<T>>.RandomOrdering(string seed)
-        {
-            RandomOrdering(seed);
-            return this;
-        }
+    @Override
+    public IDocumentQuery<T> randomOrdering(String seed) {
+        randomOrdering(seed);
+        return this;
+    }
 
-        /// <inheritdoc />
-        IDocumentQuery<T> IDocumentQueryBase<T, IDocumentQuery<T>>.CustomSortUsing(string typeName, bool descending)
-        {
-            CustomSortUsing(typeName, descending);
-            return this;
-        }
+    @Override
+    public IDocumentQuery<T> customSortUsing(String typeName, boolean descending) {
+        _customSortUsing(typeName, descending);
+        return this;
+    }
+
+    /* TODO
+
 
         /// <inheritdoc />
         IGroupByDocumentQuery<T> IDocumentQuery<T>.GroupBy(string fieldName, params string[] fieldNames)
@@ -857,94 +787,20 @@ public class DocumentQuery<T> extends AbstractDocumentQuery<T, DocumentQuery<T>>
             var lazyFacetsOperation = new LazyFacetsOperation(Conventions, query);
             return ((DocumentSession)TheSession).AddLazyOperation(lazyFacetsOperation, (Action<FacetedQueryResult>)null);
         }  /// <inheritdoc />
-        IDocumentQuery<T> IDocumentQueryBase<T, IDocumentQuery<T>>.Highlight(
-            string fieldName,
-            int fragmentLength,
-            int fragmentCount,
-            string fragmentsField)
-        {
-            Highlight(fieldName, fragmentLength, fragmentCount, fragmentsField);
-            return this;
-        }
 
-        /// <inheritdoc />
-        IDocumentQuery<T> IDocumentQueryBase<T, IDocumentQuery<T>>.Highlight(
-            string fieldName,
-            int fragmentLength,
-            int fragmentCount,
-            out FieldHighlightings highlightings)
-        {
-            Highlight(fieldName, fragmentLength, fragmentCount, out highlightings);
-            return this;
-        }
 
-        /// <inheritdoc />
-        IDocumentQuery<T> IDocumentQueryBase<T, IDocumentQuery<T>>.Highlight(
-            string fieldName,
-            string fieldKeyName,
-            int fragmentLength,
-            int fragmentCount,
-            out FieldHighlightings highlightings)
-        {
-            Highlight(fieldName, fieldKeyName, fragmentLength, fragmentCount, out highlightings);
-            return this;
-        }
+        */
+    //TBD IDocumentQuery<T> IDocumentQueryBase<T, IDocumentQuery<T>>.Highlight(string fieldName, int fragmentLength, int fragmentCount, string fragmentsField)
+    //TBD IDocumentQuery<T> IDocumentQueryBase<T, IDocumentQuery<T>>.Highlight(string fieldName, int fragmentLength, int fragmentCount, out FieldHighlightings highlightings)
+    //TBD IDocumentQuery<T> IDocumentQueryBase<T, IDocumentQuery<T>>.Highlight(string fieldName,string fieldKeyName, int fragmentLength,int fragmentCount,out FieldHighlightings highlightings)
+    //TBD IDocumentQuery<T> IDocumentQueryBase<T, IDocumentQuery<T>>.Highlight<TValue>(Expression<Func<T, TValue>> propertySelector, int fragmentLength, int fragmentCount, Expression<Func<T, IEnumerable>> fragmentsPropertySelector)
+    //TBD IDocumentQuery<T> IDocumentQueryBase<T, IDocumentQuery<T>>.Highlight<TValue>(Expression<Func<T, TValue>> propertySelector, int fragmentLength, int fragmentCount, out FieldHighlightings fieldHighlightings)
+    //TBD IDocumentQuery<T> IDocumentQueryBase<T, IDocumentQuery<T>>.Highlight<TValue>(Expression<Func<T, TValue>> propertySelector, Expression<Func<T, TValue>> keyPropertySelector, int fragmentLength, int fragmentCount, out FieldHighlightings fieldHighlightings)
+    //TBD IDocumentQuery<T> IDocumentQueryBase<T, IDocumentQuery<T>>.SetHighlighterTags(string preTag, string postTag)
+    //TBD IDocumentQuery<T> IDocumentQueryBase<T, IDocumentQuery<T>>.SetHighlighterTags(string[] preTags, string[] postTags)
+    //TBD public IDocumentQuery<T> Spatial(Expression<Func<T, object>> path, Func<SpatialCriteriaFactory, SpatialCriteria> clause)
 
-        /// <inheritdoc />
-        IDocumentQuery<T> IDocumentQueryBase<T, IDocumentQuery<T>>.Highlight<TValue>(
-            Expression<Func<T, TValue>> propertySelector,
-            int fragmentLength,
-            int fragmentCount,
-            Expression<Func<T, IEnumerable>> fragmentsPropertySelector)
-        {
-            var fieldName = GetMemberQueryPath(propertySelector);
-            var fragmentsField = GetMemberQueryPath(fragmentsPropertySelector);
-            Highlight(fieldName, fragmentLength, fragmentCount, fragmentsField);
-            return this;
-        }
-
-        /// <inheritdoc />
-        IDocumentQuery<T> IDocumentQueryBase<T, IDocumentQuery<T>>.Highlight<TValue>(
-            Expression<Func<T, TValue>> propertySelector,
-            int fragmentLength,
-            int fragmentCount,
-            out FieldHighlightings fieldHighlightings)
-        {
-            Highlight(GetMemberQueryPath(propertySelector), fragmentLength, fragmentCount, out fieldHighlightings);
-            return this;
-        }
-
-        /// <inheritdoc />
-        IDocumentQuery<T> IDocumentQueryBase<T, IDocumentQuery<T>>.Highlight<TValue>(
-            Expression<Func<T, TValue>> propertySelector,
-            Expression<Func<T, TValue>> keyPropertySelector,
-            int fragmentLength,
-            int fragmentCount,
-            out FieldHighlightings fieldHighlightings)
-        {
-            Highlight(GetMemberQueryPath(propertySelector), GetMemberQueryPath(keyPropertySelector), fragmentLength, fragmentCount, out fieldHighlightings);
-            return this;
-        }
-
-        /// <inheritdoc />
-        IDocumentQuery<T> IDocumentQueryBase<T, IDocumentQuery<T>>.SetHighlighterTags(string preTag, string postTag)
-        {
-            SetHighlighterTags(new[] { preTag }, new[] { postTag });
-            return this;
-        }
-
-        /// <inheritdoc />
-        IDocumentQuery<T> IDocumentQueryBase<T, IDocumentQuery<T>>.SetHighlighterTags(string[] preTags, string[] postTags)
-        {
-            SetHighlighterTags(preTags, postTags);
-            return this;
-        }
-
-         /// <inheritdoc />
-        public IDocumentQuery<T> Spatial(Expression<Func<T, object>> path, Func<SpatialCriteriaFactory, SpatialCriteria> clause)
-        {
-            return Spatial(path.ToPropertyPath(), clause);
-        }
+    /* TODO
 
         /// <inheritdoc />
         public IDocumentQuery<T> Spatial(string fieldName, Func<SpatialCriteriaFactory, SpatialCriteria> clause)
@@ -969,89 +825,67 @@ public class DocumentQuery<T> extends AbstractDocumentQuery<T, DocumentQuery<T>>
             Spatial(dynamicField, criteria);
             return this;
         }
+*/
+    //TBD IDocumentQuery<T> IDocumentQueryBase<T, IDocumentQuery<T>>.WithinRadiusOf<TValue>(Expression<Func<T, TValue>> propertySelector, double radius, double latitude, double longitude, SpatialUnits? radiusUnits, double distanceErrorPct)
 
-        /// <inheritdoc />
-        IDocumentQuery<T> IDocumentQueryBase<T, IDocumentQuery<T>>.WithinRadiusOf<TValue>(Expression<Func<T, TValue>> propertySelector, double radius, double latitude, double longitude, SpatialUnits? radiusUnits, double distanceErrorPct)
-        {
-            WithinRadiusOf(propertySelector.ToPropertyPath(), radius, latitude, longitude, radiusUnits, distanceErrorPct);
-            return this;
-        }
+    @Override
+    public IDocumentQuery<T> withinRadiusOf(String fieldName, double radius, double latitude, double longitude) {
+        return withinRadiusOf(fieldName, radius, latitude, longitude, null, Constants.Documents.Indexing.Spatial.DEFAULT_DISTANCE_ERROR_PCT);
+    }
 
-        /// <inheritdoc />
-        IDocumentQuery<T> IDocumentQueryBase<T, IDocumentQuery<T>>.WithinRadiusOf(string fieldName, double radius, double latitude, double longitude, SpatialUnits? radiusUnits, double distanceErrorPct)
-        {
-            WithinRadiusOf(fieldName, radius, latitude, longitude, radiusUnits, distanceErrorPct);
-            return this;
-        }
+    @Override
+    public IDocumentQuery<T> withinRadiusOf(String fieldName, double radius, double latitude, double longitude, SpatialUnits radiusUnits) {
+        return withinRadiusOf(fieldName, radius, latitude, longitude, radiusUnits, Constants.Documents.Indexing.Spatial.DEFAULT_DISTANCE_ERROR_PCT);
+    }
 
-        /// <inheritdoc />
-        IDocumentQuery<T> IDocumentQueryBase<T, IDocumentQuery<T>>.RelatesToShape<TValue>(Expression<Func<T, TValue>> propertySelector, string shapeWKT, SpatialRelation relation, double distanceErrorPct)
-        {
-            Spatial(propertySelector.ToPropertyPath(), shapeWKT, relation, distanceErrorPct);
-            return this;
-        }
+    @Override
+    public IDocumentQuery<T> withinRadiusOf(String fieldName, double radius, double latitude, double longitude, SpatialUnits radiusUnits, double distanceErrorPct) {
+        _withinRadiusOf(fieldName, radius, latitude, longitude, radiusUnits, distanceErrorPct);
+        return this;
+    }
 
-        /// <inheritdoc />
-        IDocumentQuery<T> IDocumentQueryBase<T, IDocumentQuery<T>>.RelatesToShape(string fieldName, string shapeWKT, SpatialRelation relation, double distanceErrorPct)
-        {
-            Spatial(fieldName, shapeWKT, relation, distanceErrorPct);
-            return this;
-        }
+    //TBD IDocumentQuery<T> IDocumentQueryBase<T, IDocumentQuery<T>>.RelatesToShape<TValue>(Expression<Func<T, TValue>> propertySelector, string shapeWKT, SpatialRelation relation, double distanceErrorPct)
 
-        /// <inheritdoc />
-        IDocumentQuery<T> IDocumentQueryBase<T, IDocumentQuery<T>>.OrderByDistance<TValue>(Expression<Func<T, TValue>> propertySelector, double latitude, double longitude)
-        {
-            OrderByDistance(propertySelector.ToPropertyPath(), latitude, longitude);
-            return this;
-        }
+    @Override
+    public IDocumentQuery<T> relatesToShape(String fieldName, String shapeWKT, SpatialRelation relation) {
+        return relatesToShape(fieldName, shapeWKT, relation, Constants.Documents.Indexing.Spatial.DEFAULT_DISTANCE_ERROR_PCT);
+    }
 
-        /// <inheritdoc />
-        IDocumentQuery<T> IDocumentQueryBase<T, IDocumentQuery<T>>.OrderByDistance(string fieldName, double latitude, double longitude)
-        {
-            OrderByDistance(fieldName, latitude, longitude);
-            return this;
-        }
+    @Override
+    public IDocumentQuery<T> relatesToShape(String fieldName, String shapeWKT, SpatialRelation relation, double distanceErrorPct) {
+        _spatial(fieldName, shapeWKT, relation, distanceErrorPct);
+        return this;
+    }
 
-        /// <inheritdoc />
-        IDocumentQuery<T> IDocumentQueryBase<T, IDocumentQuery<T>>.OrderByDistance<TValue>(Expression<Func<T, TValue>> propertySelector, string shapeWkt)
-        {
-            OrderByDistance(propertySelector.ToPropertyPath(), shapeWkt);
-            return this;
-        }
+    //TBD IDocumentQuery<T> IDocumentQueryBase<T, IDocumentQuery<T>>.OrderByDistance<TValue>(Expression<Func<T, TValue>> propertySelector, double latitude, double longitude)
 
-        /// <inheritdoc />
-        IDocumentQuery<T> IDocumentQueryBase<T, IDocumentQuery<T>>.OrderByDistance(string fieldName, string shapeWkt)
-        {
-            OrderByDistance(fieldName, shapeWkt);
-            return this;
-        }
+    @Override
+    public IDocumentQuery<T> orderByDistance(String fieldName, double latitude, double longitude) {
+        _orderByDistance(fieldName, latitude, longitude);
+        return this;
+    }
 
-        /// <inheritdoc />
-        IDocumentQuery<T> IDocumentQueryBase<T, IDocumentQuery<T>>.OrderByDistanceDescending<TValue>(Expression<Func<T, TValue>> propertySelector, double latitude, double longitude)
-        {
-            OrderByDistanceDescending(propertySelector.ToPropertyPath(), latitude, longitude);
-            return this;
-        }
+    //TBD IDocumentQuery<T> IDocumentQueryBase<T, IDocumentQuery<T>>.OrderByDistance<TValue>(Expression<Func<T, TValue>> propertySelector, string shapeWkt)
 
-        /// <inheritdoc />
-        IDocumentQuery<T> IDocumentQueryBase<T, IDocumentQuery<T>>.OrderByDistanceDescending(string fieldName, double latitude, double longitude)
-        {
-            OrderByDistanceDescending(fieldName, latitude, longitude);
-            return this;
-        }
+    @Override
+    public IDocumentQuery<T> orderByDistance(String fieldName, String shapeWkt) {
+        orderByDistance(fieldName, shapeWkt);
+        return this;
+    }
 
-        /// <inheritdoc />
-        IDocumentQuery<T> IDocumentQueryBase<T, IDocumentQuery<T>>.OrderByDistanceDescending<TValue>(Expression<Func<T, TValue>> propertySelector, string shapeWkt)
-        {
-            OrderByDistanceDescending(propertySelector.ToPropertyPath(), shapeWkt);
-            return this;
-        }
+    //TBD IDocumentQuery<T> IDocumentQueryBase<T, IDocumentQuery<T>>.OrderByDistanceDescending<TValue>(Expression<Func<T, TValue>> propertySelector, double latitude, double longitude)
 
-        /// <inheritdoc />
-        IDocumentQuery<T> IDocumentQueryBase<T, IDocumentQuery<T>>.OrderByDistanceDescending(string fieldName, string shapeWkt)
-        {
-            OrderByDistanceDescending(fieldName, shapeWkt);
-            return this;
-        }
-     */
+    @Override
+    public IDocumentQuery<T> orderByDistanceDescending(String fieldName, double latitude, double longitude) {
+        _orderByDistanceDescending(fieldName, latitude, longitude);
+        return this;
+    }
+
+    //TBD IDocumentQuery<T> IDocumentQueryBase<T, IDocumentQuery<T>>.OrderByDistanceDescending<TValue>(Expression<Func<T, TValue>> propertySelector, string shapeWkt)
+
+    @Override
+    public IDocumentQuery<T> orderByDistanceDescending(String fieldName, String shapeWkt) {
+        _orderByDistanceDescending(fieldName, shapeWkt);
+        return this;
+    }
 }

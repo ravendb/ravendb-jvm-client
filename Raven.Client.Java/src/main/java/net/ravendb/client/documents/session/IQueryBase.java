@@ -7,7 +7,7 @@ public interface IQueryBase<T, TSelf extends IQueryBase<T, TSelf>> {
     /**
      * Gets the document convention from the query session
      */
-    //TODO: DocumentConventions getConventions();
+    DocumentConventions getConventions();
 
     /* TODO:
         /// <summary>

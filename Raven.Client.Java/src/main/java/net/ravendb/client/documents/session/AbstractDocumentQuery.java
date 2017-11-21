@@ -5,7 +5,11 @@ import net.ravendb.client.Constants;
 import net.ravendb.client.Parameters;
 import net.ravendb.client.documents.commands.QueryCommand;
 import net.ravendb.client.documents.conventions.DocumentConventions;
+import net.ravendb.client.documents.indexes.spatial.SpatialRelation;
+import net.ravendb.client.documents.indexes.spatial.SpatialUnits;
 import net.ravendb.client.documents.queries.*;
+import net.ravendb.client.documents.queries.spatial.SpatialCriteria;
+import net.ravendb.client.documents.queries.spatial.SpatialDynamicField;
 import net.ravendb.client.documents.session.operations.QueryOperation;
 import net.ravendb.client.documents.session.tokens.*;
 import net.ravendb.client.primitives.CleanCloseable;
@@ -31,7 +35,7 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
 
     protected QueryOperator defaultOperatator = QueryOperator.AND;
 
-    //TODO: private readonly LinqPathProvider _linqPathProvider;
+    //TBD: private readonly LinqPathProvider _linqPathProvider;
 
     protected final Set<Class> rootTypes = new HashSet<>();
 
@@ -154,10 +158,7 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
         theSession = session;
         //TODO: AfterQueryExecuted(UpdateStatsAndHighlightings);
         _conventions = session == null ? new DocumentConventions() : session.getConventions();
-        /* TODO
-
-            _linqPathProvider = new LinqPathProvider(_conventions);
-         */
+        //TBD _linqPathProvider = new LinqPathProvider(_conventions);
     }
 
     protected void usingDefaultOperator(QueryOperator operator) {
@@ -180,9 +181,8 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
     protected QueryOperation initializeQueryOperation() {
         IndexQuery indexQuery = getIndexQuery();
 
-        return new QueryOperation(theSession, indexName, indexQuery, null,
+        return new QueryOperation(theSession, indexName, indexQuery, fieldsToFetchToken != null ? fieldsToFetchToken.projections : null,
                 theWaitForNonStaleResults, timeout, disableEntitiesTracking, false, false);
-        //TODO: pass  FieldsToFetchToken?.Projections
     }
 
     public IndexQuery getIndexQuery() {
@@ -247,17 +247,16 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
         }
     }
 
-    /* TODO
+    public void _rawQuery(String query) {
+        if (!selectTokens.isEmpty() ||
+                !whereTokens.isEmpty() ||
+                !orderByTokens.isEmpty() ||
+                !groupByTokens.isEmpty()) {
+            throw new IllegalStateException("You can only use rawQuery on a new query, without applying any operations (such as where, select, orderBy, groupBy, etc)");
+        }
 
-        public void RawQuery(string query)
-        {
-            if (SelectTokens.Count != 0 ||
-                WhereTokens.Count != 0 ||
-                OrderByTokens.Count != 0 ||
-                GroupByTokens.Count != 0)
-                throw new InvalidOperationException("You can only use RawQuery on a new query, without applying any operations (such as Where, Select, OrderBy, GroupBy, etc)");
-            QueryRaw = query;
-        }*/
+        queryRaw = query;
+    }
 
     public void addParameter(String name, Object value) {
         if (queryParameters.containsKey(name)) {
@@ -351,7 +350,7 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
         includes.add(path);
     }
 
-    //TODO: public void Include(Expression<Func<T, object>> path)
+    //TBD: public void Include(Expression<Func<T, object>> path)
 
     public void _take(int count) {
         pageSize = count;
@@ -452,7 +451,7 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
         whereTokens.add(WhereToken.notEquals(whereParams.getFieldName(), addQueryParameter(transformToEqualValue), whereParams.isExact()));
     }
 
-    public void _negateNext() {
+    public void negateNext() {
         negate = !negate;
     }
 
@@ -626,7 +625,6 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
         }
 
         whereTokens.add(QueryOperatorToken.AND);
-
     }
 
     /**
@@ -889,50 +887,42 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
         buildOrderBy(queryText);
 
         buildLoad(queryText);
-
-        /* TODO
-            BuildSelect(queryText);
-            BuildInclude(queryText);
-         */
+        buildSelect(queryText);
+        buildInclude(queryText);
 
         return queryText.toString();
     }
 
-    /* TODO:
+    private void buildInclude(StringBuilder queryText) {
+        if (includes == null || includes.isEmpty()) {
+            return;
+        }
 
-        private void BuildInclude(StringBuilder queryText)
-        {
-            if (Includes == null || Includes.Count == 0)
-                return;
+        queryText.append(" INCLUDE ");
+        boolean first = true;
+        for (String include : includes) {
+            if (!first) {
+                queryText.append(",");
+            }
+            first = false;
 
-            queryText.Append(" INCLUDE ");
-            bool first = true;
-            foreach (var include in Includes)
-            {
-                if (first == false)
-                    queryText.Append(",");
-                first = false;
-                var requiredQuotes = false;
-                for (int i = 0; i < include.Length; i++)
-                {
-                    var ch = include[i];
-                    if (char.IsLetterOrDigit(ch) == false && ch != '_' && ch != '.')
-                    {
-                        requiredQuotes = true;
-                        break;
-                    }
-                }
-                if (requiredQuotes)
-                {
-                    queryText.Append("'").Append(include.Replace("'", "\\'")).Append("'");
-                }
-                else
-                {
-                    queryText.Append(include);
+            boolean requiredQuotes = false;
+
+            for (int i = 0; i < include.length(); i++) {
+                char ch = include.charAt(i);
+                if (!Character.isLetterOrDigit(ch) && ch != '_' && ch != '.') {
+                    requiredQuotes = true;
+                    break;
                 }
             }
+
+            if (requiredQuotes) {
+                queryText.append("'").append(include.replaceAll("'", "\\'")).append("'");
+            } else {
+                queryText.append(include);
+            }
         }
-        */
+    }
 
     /**
      * The last term that we asked the query to use equals on
@@ -1026,39 +1016,31 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
         //TBD: Highlightings.Update(queryResult);
     }
 
-    /* TODO
+    private void buildSelect(StringBuilder writer) {
+        if (selectTokens.isEmpty()) {
+            return;
+        }
 
+        writer.append(" SELECT ");
+        if (selectTokens.size() == 1 && selectTokens.get(0) instanceof DistinctToken) {
+            selectTokens.get(0).writeTo(writer);
+            writer.append(" *");
 
-                    private void BuildSelect(StringBuilder writer)
-                    {
-                        if (SelectTokens.Count == 0)
-                            return;
+            return;
+        }
 
-                        writer
-                            .Append(" SELECT ");
+        for (int i = 0; i < selectTokens.size(); i++) {
+            QueryToken token = selectTokens.get(i);
+            if (i > 0 && (selectTokens.get(i - 1) instanceof DistinctToken)) {
+                writer.append(",");
+            }
 
-                        var token = SelectTokens.First;
-                        if (SelectTokens.Count == 1 && token.Value is DistinctToken)
-                        {
-                            token.Value.WriteTo(writer);
-                            writer.Append(" *");
+            addSpaceIfNeeded(i > 0 ? selectTokens.get(i - 1) : null, token, writer);
 
-                            return;
-                        }
+            token.writeTo(writer);
+        }
+    }
 
-                        while (token != null)
-                        {
-                            if (token.Previous != null && token.Previous.Value is DistinctToken == false)
-                                writer.Append(",");
-
-                            AddSpaceIfNeeded(token.Previous?.Value, token.Value, writer);
-
-                            token.Value.WriteTo(writer);
-
-                            token = token.Next;
-                        }
-                    }
-            */
     private void buildFrom(StringBuilder writer) {
         fromToken.writeTo(writer);
     }
@@ -1394,30 +1376,24 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
 
 
     /*TODO
-
-
-        /// <inheritdoc />
         IDocumentQueryCustomization IDocumentQueryCustomization.RandomOrdering()
         {
             RandomOrdering();
             return this;
         }
 
-        /// <inheritdoc />
         IDocumentQueryCustomization IDocumentQueryCustomization.RandomOrdering(string seed)
         {
             RandomOrdering(seed);
             return this;
         }
 
-        /// <inheritdoc />
         IDocumentQueryCustomization IDocumentQueryCustomization.CustomSortUsing(string typeName)
         {
             CustomSortUsing(typeName, false);
             return this;
         }
 
-        /// <inheritdoc />
         IDocumentQueryCustomization IDocumentQueryCustomization.CustomSortUsing(string typeName, bool descending)
         {
             CustomSortUsing(typeName, descending);
@@ -1465,67 +1441,61 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
     //TBD public void Highlight(string fieldName, string fieldKeyName, int fragmentLength, int fragmentCount, out FieldHighlightings fieldHighlightings)
     //TBD public void SetHighlighterTags(string[] preTags, string[] postTags)
 
-    /* TODO
+    protected void _withinRadiusOf(String fieldName, double radius, double latitude, double longitude, SpatialUnits radiusUnits, double distErrorPercent) {
+        fieldName = ensureValidFieldName(fieldName, false);
 
-         protected void WithinRadiusOf(string fieldName, double radius, double latitude, double longitude, SpatialUnits? radiusUnits, double distErrorPercent)
-        {
-            fieldName = EnsureValidFieldName(fieldName, isNestedPath: false);
+        appendOperatorIfNeeded(whereTokens);
+        negateIfNeeded(fieldName);
 
-            AppendOperatorIfNeeded(WhereTokens);
-            NegateIfNeeded(fieldName);
+        whereTokens.add(WhereToken.within(fieldName, ShapeToken.circle(addQueryParameter(radius), addQueryParameter(latitude), addQueryParameter(longitude), radiusUnits), distErrorPercent));
+    }
 
-            WhereTokens.AddLast(WhereToken.Within(fieldName, ShapeToken.Circle(AddQueryParameter(radius), AddQueryParameter(latitude), AddQueryParameter(longitude), radiusUnits), distErrorPercent));
+    protected void _spatial(String fieldName, String shapeWKT, SpatialRelation relation, double distErrorPercent) {
+        fieldName = ensureValidFieldName(fieldName, false);
+
+        appendOperatorIfNeeded(whereTokens);
+        negateIfNeeded(fieldName);
+
+        ShapeToken wktToken = ShapeToken.wkt(addQueryParameter(shapeWKT));
+
+        QueryToken relationToken;
+        switch (relation) {
+            case WITHIN:
+                relationToken = WhereToken.within(fieldName, wktToken, distErrorPercent);
+                break;
+            case CONTAINS:
+                relationToken = WhereToken.contains(fieldName, wktToken, distErrorPercent);
+                break;
+            case DISJOINT:
+                relationToken = WhereToken.disjoint(fieldName, wktToken, distErrorPercent);
+                break;
+            case INTERSECTS:
+                relationToken = WhereToken.intersects(fieldName, wktToken, distErrorPercent);
+                break;
+            default:
+                throw new IllegalArgumentException();
         }
 
-        protected void Spatial(string fieldName, string shapeWKT, SpatialRelation relation, double distErrorPercent)
-        {
-            fieldName = EnsureValidFieldName(fieldName, isNestedPath: false);
+        whereTokens.add(relationToken);
+    }
 
-            AppendOperatorIfNeeded(WhereTokens);
-            NegateIfNeeded(fieldName);
+    @Override
+    public void _spatial(SpatialDynamicField dynamicField, SpatialCriteria criteria) {
+        appendOperatorIfNeeded(whereTokens);
+        negateIfNeeded(null);
 
-            var wktToken = ShapeToken.Wkt(AddQueryParameter(shapeWKT));
-            QueryToken relationToken;
-            switch (relation)
-            {
-                case SpatialRelation.Within:
-                    relationToken = WhereToken.Within(fieldName, wktToken, distErrorPercent);
-                    break;
-                case SpatialRelation.Contains:
-                    relationToken = WhereToken.Contains(fieldName, wktToken, distErrorPercent);
-                    break;
-                case SpatialRelation.Disjoint:
-                    relationToken = WhereToken.Disjoint(fieldName, wktToken, distErrorPercent);
-                    break;
-                case SpatialRelation.Intersects:
-                    relationToken = WhereToken.Intersects(fieldName, wktToken, distErrorPercent);
-                    break;
-                default:
-                    throw new ArgumentOutOfRangeException(nameof(relation), relation, null);
-            }
+        whereTokens.add(criteria.toQueryToken(dynamicField.toField(this::ensureValidFieldName), this::addQueryParameter));
+    }
 
-            WhereTokens.AddLast(relationToken);
-        }
+    @Override
+    public void _spatial(String fieldName, SpatialCriteria criteria) {
+        fieldName = ensureValidFieldName(fieldName, false);
 
-        public void Spatial(SpatialDynamicField dynamicField, SpatialCriteria criteria)
-        {
-            AppendOperatorIfNeeded(WhereTokens);
-            NegateIfNeeded(null);
+        appendOperatorIfNeeded(whereTokens);
+        negateIfNeeded(fieldName);
 
-            WhereTokens.AddLast(criteria.ToQueryToken(dynamicField.ToField(EnsureValidFieldName), AddQueryParameter));
-        }
-
-        /// <inheritdoc />
-        public void Spatial(string fieldName, SpatialCriteria criteria)
-        {
-            fieldName = EnsureValidFieldName(fieldName, isNestedPath: false);
-
-            AppendOperatorIfNeeded(WhereTokens);
-            NegateIfNeeded(fieldName);
-
-            WhereTokens.AddLast(criteria.ToQueryToken(fieldName, AddQueryParameter));
-        }
-     */
+        whereTokens.add(criteria.toQueryToken(fieldName, this::addQueryParameter));
+    }
 
     @Override
     public void _orderByDistance(String fieldName, double latitude, double longitude) {

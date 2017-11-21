@@ -370,7 +370,7 @@ public class DocumentSession extends InMemoryDocumentSessionOperations implement
         GetDocumentCommand command = operation.createRequest();
         if (command != null) {
             _requestExecutor.execute(command, sessionInfo);
-            /* TODO
+            /* TBD
              if(stream!=null)
                     Context.Write(stream, command.Result.Results.Parent);
                 else
