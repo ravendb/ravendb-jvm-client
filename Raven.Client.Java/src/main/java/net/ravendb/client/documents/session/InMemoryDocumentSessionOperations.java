@@ -80,6 +80,7 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
         this.onBeforeStore.add(handler);
 
     }
+
     public void removeBeforeStoreListener(EventHandler<BeforeStoreEventArgs> handler) {
         this.onBeforeStore.remove(handler);
     }
@@ -95,6 +96,7 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
     public void addBeforeDeleteListener(EventHandler<BeforeDeleteEventArgs> handler) {
         this.onBeforeDelete.add(handler);
     }
+
     public void removeBeforeDeleteListener(EventHandler<BeforeDeleteEventArgs> handler) {
         this.onBeforeDelete.remove(handler);
     }
@@ -102,6 +104,7 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
     public void addBeforeQueryExecutedListener(EventHandler<BeforeQueryExecutedEventArgs> handler) {
         this.onBeforeQueryExecuted.add(handler);
     }
+
     public void removeBeforeQueryExecutedListener(EventHandler<BeforeQueryExecutedEventArgs> handler) {
         this.onBeforeQueryExecuted.remove(handler);
     }
@@ -980,7 +983,7 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
                     continue;
                 }
 
-                IncludesUtil.include((ObjectNode)result, include, id -> {
+                IncludesUtil.include((ObjectNode) result, include, id -> {
                     if (id == null) {
                         return;
                     }
