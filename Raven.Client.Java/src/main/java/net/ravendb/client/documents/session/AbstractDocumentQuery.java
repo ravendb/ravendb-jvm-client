@@ -155,7 +155,7 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
         this.declareToken = declareToken;
         this.loadTokens = loadTokens;
         theSession = session;
-        //TODO: AfterQueryExecuted(UpdateStatsAndHighlightings);
+        _addAfterQueryExecutedListener(this::updateStatsAndHighlightings);
         _conventions = session == null ? new DocumentConventions() : session.getConventions();
         //TBD _linqPathProvider = new LinqPathProvider(_conventions);
     }
@@ -187,7 +187,7 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
     public IndexQuery getIndexQuery() {
         String query = toString();
         IndexQuery indexQuery = generateIndexQuery(query);
-        //TODO: BeforeQueryExecutedCallback?.Invoke(indexQuery);
+        invokeBeforeQueryExecuted(indexQuery);
         return indexQuery;
     }
 
@@ -810,6 +810,12 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
         }
     }
 
+    public void invokeBeforeQueryExecuted(IndexQuery query) {
+        for (Consumer<IndexQuery> consumer : beforeQueryExecutedCallback) {
+            consumer.accept(query);
+        }
+    }
+
     //TBD public void InvokeAfterStreamExecuted(BlittableJsonReaderObject result)
 
     /**
@@ -1001,9 +1007,8 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
         }
     }
 
-    private void UpdateStatsAndHighlightings(QueryResult queryResult) {
+    private void updateStatsAndHighlightings(QueryResult queryResult) {
         queryStats.updateQueryStats(queryResult);
-        //TODO: QueryStats.UpdateQueryStats(queryResult);
         //TBD: Highlightings.Update(queryResult);
     }
 
@@ -1358,61 +1363,6 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
     public void _showTimings() {
         showQueryTimings = true;
     }
-
-    /*TODO
-        IDocumentQueryCustomization IDocumentQueryCustomization.RandomOrdering()
-        {
-            RandomOrdering();
-            return this;
-        }
-
-        IDocumentQueryCustomization IDocumentQueryCustomization.RandomOrdering(string seed)
-        {
-            RandomOrdering(seed);
-            return this;
-        }
-
-        IDocumentQueryCustomization IDocumentQueryCustomization.CustomSortUsing(string typeName)
-        {
-            CustomSortUsing(typeName, false);
-            return this;
-        }
-
-        IDocumentQueryCustomization IDocumentQueryCustomization.CustomSortUsing(string typeName, bool descending)
-        {
-            CustomSortUsing(typeName, descending);
-            return this;
-        }
-
-        /// <inheritdoc />
-        IDocumentQueryCustomization IDocumentQueryCustomization.WaitForNonStaleResults(TimeSpan waitTimeout)
-        {
-            WaitForNonStaleResults(waitTimeout);
-            return this;
-        }
-
-        /// <inheritdoc />
-        IDocumentQueryCustomization IDocumentQueryCustomization.WaitForNonStaleResults()
-        {
-            WaitForNonStaleResults();
-            return this;
-        }
-
-        /// <inheritdoc />
-        IDocumentQueryCustomization IDocumentQueryCustomization.WaitForNonStaleResultsAsOf(long cutOffEtag)
-        {
-            WaitForNonStaleResultsAsOf(cutOffEtag);
-            return this;
-        }
-
-        /// <inheritdoc />
-        IDocumentQueryCustomization IDocumentQueryCustomization.WaitForNonStaleResultsAsOf(long cutOffEtag, TimeSpan waitTimeout)
-        {
-            WaitForNonStaleResultsAsOf(cutOffEtag, waitTimeout);
-            return this;
-        }
-
-        */
 
     //TBD protected List<HighlightedField> HighlightedFields = new List<HighlightedField>();
     //TBD protected string[] HighlighterPreTags = new string[0];

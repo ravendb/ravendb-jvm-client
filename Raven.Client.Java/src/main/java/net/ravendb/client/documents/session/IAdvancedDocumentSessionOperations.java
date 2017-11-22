@@ -5,6 +5,7 @@ import net.ravendb.client.documents.IDocumentStore;
 import net.ravendb.client.documents.commands.batches.ICommandData;
 import net.ravendb.client.http.RequestExecutor;
 import net.ravendb.client.http.ServerNode;
+import net.ravendb.client.primitives.EventHandler;
 
 import java.util.List;
 import java.util.Map;
@@ -28,12 +29,17 @@ public interface IAdvancedDocumentSessionOperations {
 
     RequestExecutor getRequestExecutor();
 
-    /* TODO
-     event EventHandler<BeforeStoreEventArgs> OnBeforeStore;
-     event EventHandler<AfterStoreEventArgs> OnAfterStore;
-     event EventHandler<BeforeDeleteEventArgs> OnBeforeDelete;
-     event EventHandler<BeforeQueryExecutedEventArgs> OnBeforeQueryExecuted;
-     */
+    void addBeforeStoreListener(EventHandler<BeforeStoreEventArgs> handler);
+    void removeBeforeStoreListener(EventHandler<BeforeStoreEventArgs> handler);
+
+    void addAfterStoreListener(EventHandler<AfterStoreEventArgs> handler);
+    void removeAfterStoreListener(EventHandler<AfterStoreEventArgs> handler);
+
+    void addBeforeDeleteListener(EventHandler<BeforeDeleteEventArgs> handler);
+    void removeBeforeDeleteListener(EventHandler<BeforeDeleteEventArgs> handler);
+
+    void addBeforeQueryExecutedListener(EventHandler<BeforeQueryExecutedEventArgs> handler);
+    void removeBeforeQueryExecutedListener(EventHandler<BeforeQueryExecutedEventArgs> handler);
 
     /**
      * Gets a value indicating whether any of the entities tracked by the session has changes.
@@ -104,16 +110,12 @@ public interface IAdvancedDocumentSessionOperations {
      */
     String getDocumentId(Object entity);
 
-    /* TODO:
-
-     /// <summary>
-     ///     Gets the metadata for the specified entity.
-     ///     If the entity is transient, it will load the metadata from the store
-     ///     and associate the current state of the entity with the metadata from the server.
-     /// </summary>
-     /// <param name="instance">The instance.</param>
-     IMetadataDictionary GetMetadataFor<T>(T instance);
+    /**
+     * Gets the metadata for the specified entity.
+     * If the entity is transient, it will load the metadata from the store
+     * and associate the current state of the entity with the metadata from the server.
      */
+    <T> IMetadataDictionary getMetadataFor(T instance);
 
     /**
      * Gets change vector for the specified entity.

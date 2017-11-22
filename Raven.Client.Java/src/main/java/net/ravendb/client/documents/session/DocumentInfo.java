@@ -24,7 +24,7 @@ public class DocumentInfo {
     private ObjectNode metadata;
     private ObjectNode document;
 
-    //tODO: public IMetadataDictionary MetadataInstance { get; set; }
+    private IMetadataDictionary metadataInstance;
 
     private Object entity;
     private boolean newDocument;
@@ -112,6 +112,14 @@ public class DocumentInfo {
 
     public void setCollection(String collection) {
         this.collection = collection;
+    }
+
+    public IMetadataDictionary getMetadataInstance() {
+        return metadataInstance;
+    }
+
+    public void setMetadataInstance(IMetadataDictionary metadataInstance) {
+        this.metadataInstance = metadataInstance;
     }
 
     /**

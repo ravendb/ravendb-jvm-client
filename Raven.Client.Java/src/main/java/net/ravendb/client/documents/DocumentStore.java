@@ -89,7 +89,7 @@ public class DocumentStore extends DocumentStoreBase {
             }
         }
 
-        //TODO: Subscriptions?.Dispose();
+        //TBD: Subscriptions?.Dispose();
 
         disposed = true;
         EventHelper.invoke(afterDispose, this, EventArgs.EMPTY);
@@ -128,7 +128,7 @@ public class DocumentStore extends DocumentStoreBase {
         RequestExecutor requestExecutor = Lang.coalesce(options.getRequestExecutor(), getRequestExecutor(databaseName));
 
         DocumentSession session = new DocumentSession(databaseName, this, sessionId, requestExecutor);
-        //TODO: registerEvents(session);
+        registerEvents(session);
         // AfterSessionCreated(session);
         return session;
 
@@ -336,13 +336,5 @@ public class DocumentStore extends DocumentStoreBase {
         return operationExecutor;
     }
 
-    /* TODO
-        public override BulkInsertOperation BulkInsert(string database = null)
-        {
-            AssertInitialized();
-            return new BulkInsertOperation(database ?? Database, this);
-        }
-    }
-     */
-
+    // TBD public override BulkInsertOperation BulkInsert(string database = null)
 }

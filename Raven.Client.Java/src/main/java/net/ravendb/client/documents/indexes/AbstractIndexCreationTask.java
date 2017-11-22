@@ -1,14 +1,17 @@
 package net.ravendb.client.documents.indexes;
 
+import net.ravendb.client.Constants;
 import net.ravendb.client.documents.IDocumentStore;
 import net.ravendb.client.documents.conventions.DocumentConventions;
 import net.ravendb.client.documents.indexes.spatial.SpatialOptions;
+import net.ravendb.client.documents.indexes.spatial.SpatialOptionsFactory;
 import net.ravendb.client.documents.operations.indexes.PutIndexesOperation;
 
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Function;
 
 /**
  * Base class for creating indexes
@@ -156,29 +159,18 @@ public abstract class AbstractIndexCreationTask {
         indexesStrings.put(field, indexing);
     }
 
+    /**
+     * Register a field to be spatially indexed
+     */
+    protected void spatial(String field, Function<SpatialOptionsFactory, SpatialOptions> indexing) {
+        spatialOptionsStrings.put(field, indexing.apply(new SpatialOptionsFactory()));
+    }
 
-    /* TODO
-      /// <summary>
-        /// Register a field to be spatially indexed
-        /// </summary>
-        protected void Spatial(string field, Func<SpatialOptionsFactory, SpatialOptions> indexing)
-        {
-            SpatialIndexesStrings.Add(field, indexing(new SpatialOptionsFactory()));
-        }
+    //TBD protected void Store(Expression<Func<TReduceResult, object>> field, FieldStorage storage)
 
-        /// <summary>
-        /// Register a field to be stored
-        /// </summary>
-        protected void Store(Expression<Func<TReduceResult, object>> field, FieldStorage storage)
-        {
-            Stores.Add(field, storage);
-        }
-
-        protected void StoreAllFields(FieldStorage storage)
-        {
-            StoresStrings.Add(Constants.Documents.Indexing.Fields.AllFields, storage);
-        }
-*/
+    protected void storeAllFields(FieldStorage storage) {
+        storesStrings.put(Constants.Documents.Indexing.Fields.ALL_FIELDS, storage);
+    }
 
     /**
      * Register a field to be stored

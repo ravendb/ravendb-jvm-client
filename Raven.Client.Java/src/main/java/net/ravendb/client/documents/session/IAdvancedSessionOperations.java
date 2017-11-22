@@ -1,5 +1,6 @@
 package net.ravendb.client.documents.session;
 
+import net.ravendb.client.documents.indexes.AbstractIndexCreationTask;
 import net.ravendb.client.documents.session.operations.lazy.IEagerSessionOperations;
 import net.ravendb.client.documents.session.operations.lazy.ILazySessionOperations;
 
@@ -96,7 +97,8 @@ public interface IAdvancedSessionOperations extends IAdvancedDocumentSessionOper
     //TBD patch API void Patch<T, U>(T entity, Expression<Func<T, IEnumerable<U>>> path, Expression<Func<JavaScriptArray<U>, object>> arrayAdder);
     //TBD patch API void Patch<T, U>(string id, Expression<Func<T, IEnumerable<U>>> path, Expression<Func<JavaScriptArray<U>, object>> arrayAdder);
 
-    //TODO: IDocumentQuery<T> DocumentQuery<T, TIndexCreator>() where TIndexCreator : AbstractIndexCreationTask, new();
+    <T, TIndex extends AbstractIndexCreationTask> IDocumentQuery<T> documentQuery(Class<T> clazz, Class<TIndex> indexClazz);
+
     /**
      * Query the specified index using Lucene syntax
      * @param clazz The result of the query

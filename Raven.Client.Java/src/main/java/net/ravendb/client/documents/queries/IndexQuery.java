@@ -2,6 +2,9 @@ package net.ravendb.client.documents.queries;
 
 import net.ravendb.client.Parameters;
 
+import java.io.IOException;
+import java.util.Optional;
+
 /**
  * All the information required to query an index
  */
@@ -23,30 +26,24 @@ public class IndexQuery extends IndexQueryWithParameters<Parameters> {
         this.disableCaching = disableCaching;
     }
 
-    public long getQueryHash() {
-        return 0;//TODO delete me!
+    public String getQueryHash() {
+        QueryHashCalculator hasher = new QueryHashCalculator();
+        try {
+            hasher.write(getQuery());
+            hasher.write(isWaitForNonStaleResults());
+            hasher.write(isSkipDuplicateChecking());
+            hasher.write(isShowTimings());
+            hasher.write(isExplainScores());
+            hasher.write(Optional.ofNullable(getWaitForNonStaleResultsTimeout()).map(x -> x.toMillis()).orElse(0L));
+            hasher.write(getCutoffEtag());
+            hasher.write(getStart());
+            hasher.write(getPageSize());
+            hasher.write(getQueryParameters());
+            return hasher.getHash();
+        } catch (IOException e) {
+            throw new RuntimeException("Unable to calculate hash", e);
+        }
     }
-
-    /* TODO
-
-        public ulong GetQueryHash(JsonOperationContext ctx)
-        {
-            using (var hasher = new QueryHashCalculator(ctx))
-            {
-                hasher.Write(Query);
-                hasher.Write(WaitForNonStaleResults);
-                hasher.Write(SkipDuplicateChecking);
-                hasher.Write(ShowTimings);
-                hasher.Write(ExplainScores);
-                hasher.Write(WaitForNonStaleResultsTimeout?.Ticks);
-                hasher.Write(CutoffEtag);
-                hasher.Write(Start);
-                hasher.Write(PageSize);
-                hasher.Write(QueryParameters);
-
-                return hasher.GetHash();
-            }
-        }*/
 
     @Override
     public boolean equals(Object o) {

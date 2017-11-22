@@ -477,24 +477,6 @@ public class DocumentQuery<T> extends AbstractDocumentQuery<T, DocumentQuery<T>>
         return this;
     }
 
-    /* TODO:
-
-
-        /// <inheritdoc />
-        IEnumerator IEnumerable.GetEnumerator()
-        {
-            return GetEnumerator();
-        }
-
-        /// <inheritdoc />
-        public IEnumerator<T> GetEnumerator()
-        {
-            InitSync();
-            return QueryOperation.Complete<T>().GetEnumerator();
-        }
-
-*/
-
     /* TODO
 
         /// <inheritdoc />

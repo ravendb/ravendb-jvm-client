@@ -14,6 +14,7 @@ import net.ravendb.client.documents.queries.IndexQuery;
 import net.ravendb.client.documents.session.EntityToJson;
 import net.ravendb.client.primitives.NetDateFormat;
 import net.ravendb.client.primitives.SharpAwareJacksonAnnotationIntrospector;
+import net.ravendb.client.util.TimeUtils;
 import org.apache.commons.lang3.StringUtils;
 
 import java.io.IOException;
@@ -90,13 +91,9 @@ public class JsonExtensions {
             generator.writeNumberField("Start", query.getStart());
         }
 
-        /* TODO
-            if (query.WaitForNonStaleResultsTimeout.HasValue)
-            {
-                writer.WritePropertyName(nameof(query.WaitForNonStaleResultsTimeout));
-                writer.WriteString(query.WaitForNonStaleResultsTimeout.Value.ToInvariantString());
-                writer.WriteComma();
-            }*/
+        if (query.getWaitForNonStaleResultsTimeout() != null) {
+            generator.writeStringField("WaitForNonStaleResultsTimeout", TimeUtils.durationToTimeSpan(query.getWaitForNonStaleResultsTimeout()));
+        }
 
         if (query.isDisableCaching()) {
             generator.writeBooleanField("DisableCaching", query.isDisableCaching());

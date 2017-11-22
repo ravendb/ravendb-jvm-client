@@ -4,10 +4,10 @@ import net.ravendb.client.documents.conventions.DocumentConventions;
 import net.ravendb.client.documents.indexes.AbstractIndexCreationTask;
 import net.ravendb.client.documents.operations.AdminOperationExecutor;
 import net.ravendb.client.documents.operations.OperationExecutor;
-import net.ravendb.client.documents.session.IDocumentSession;
-import net.ravendb.client.documents.session.SessionOptions;
+import net.ravendb.client.documents.session.*;
 import net.ravendb.client.http.RequestExecutor;
 import net.ravendb.client.primitives.CleanCloseable;
+import net.ravendb.client.primitives.EventHandler;
 import net.ravendb.client.util.IDisposalNotification;
 
 import java.util.List;
@@ -18,10 +18,18 @@ import java.util.List;
 public interface IDocumentStore extends IDisposalNotification {
 
     //TBD: X509Certificate2 Certificate { get; }
-    //TODO: event EventHandler<BeforeStoreEventArgs> OnBeforeStore;
-    //TODO: event EventHandler<AfterStoreEventArgs> OnAfterStore;
-    //TODO: event EventHandler<BeforeDeleteEventArgs> OnBeforeDelete;
-    //TODO: event EventHandler<BeforeQueryExecutedEventArgs> OnBeforeQueryExecuted;
+
+    void addBeforeStoreListener(EventHandler<BeforeStoreEventArgs> handler);
+    void removeBeforeStoreListener(EventHandler<BeforeStoreEventArgs> handler);
+
+    void addAfterStoreListener(EventHandler<AfterStoreEventArgs> handler);
+    void removeAfterStoreListener(EventHandler<AfterStoreEventArgs> handler);
+
+    void addBeforeDeleteListener(EventHandler<BeforeDeleteEventArgs> handler);
+    void removeBeforeDeleteListener(EventHandler<BeforeDeleteEventArgs> handler);
+
+    void addBeforeQueryExecutedListener(EventHandler<BeforeQueryExecutedEventArgs> handler);
+    void removeBeforeQueryExecutedListener(EventHandler<BeforeQueryExecutedEventArgs> handler);
 
     //TBD: IDatabaseChanges Changes(string database = null);
 

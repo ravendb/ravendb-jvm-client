@@ -116,6 +116,11 @@ public interface IDocumentQueryBase<T, TSelf extends IDocumentQueryBase<T, TSelf
     void negateNext();
 
     /**
+     *  Simplified method for opening a new clause within the query
+     */
+    TSelf openSubclause();
+
+    /**
      * Add an OR to the query
      */
     TSelf orElse();

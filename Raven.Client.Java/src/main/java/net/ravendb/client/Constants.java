@@ -34,6 +34,7 @@ public class Constants {
                 public static final String DOCUMENT_ID_FIELD_NAME = "id()";
                 public static final String REDUCE_KEY_HASH_FIELD_NAME = "hash(key())";
                 public static final String REDUCE_KEY_KEY_VALUE_FIELD_NAME = "key()";
+                public static final String ALL_FIELDS = "__all_fields";
                 public static final String SPATIAL_SHAPE_FIELD_NAME = "spatial(shape)";
                 public static final String CUSTOM_SORT_FIELD_NAME = "__customSort";
             }

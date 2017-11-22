@@ -3,6 +3,7 @@ package net.ravendb.client.documents.session.operations;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import net.ravendb.client.Constants;
 import net.ravendb.client.documents.commands.batches.BatchCommand;
+import net.ravendb.client.documents.session.AfterStoreEventArgs;
 import net.ravendb.client.documents.session.DocumentInfo;
 import net.ravendb.client.documents.session.InMemoryDocumentSessionOperations;
 import net.ravendb.client.json.JsonArrayResult;
@@ -86,10 +87,8 @@ public class BatchOperation {
             _session.documentsById.add(documentInfo);
             _session.getGenerateEntityIdOnTheClient().trySetIdentity(entity, id);
 
-            /* TODO
-             var afterStoreEventArgs = new AfterStoreEventArgs(_session, documentInfo.Id, documentInfo.Entity);
-                _session.OnAfterStoreInvoke(afterStoreEventArgs);
-             */
+            AfterStoreEventArgs afterStoreEventArgs = new AfterStoreEventArgs(_session, documentInfo.getId(), documentInfo.getEntity());
+            _session.onAfterStoreInvoke(afterStoreEventArgs);
         }
     }
 

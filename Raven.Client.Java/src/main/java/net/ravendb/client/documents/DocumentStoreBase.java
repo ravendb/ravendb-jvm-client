@@ -7,8 +7,7 @@ import net.ravendb.client.documents.indexes.IndexDefinition;
 import net.ravendb.client.documents.operations.AdminOperationExecutor;
 import net.ravendb.client.documents.operations.OperationExecutor;
 import net.ravendb.client.documents.operations.indexes.PutIndexesOperation;
-import net.ravendb.client.documents.session.IDocumentSession;
-import net.ravendb.client.documents.session.SessionOptions;
+import net.ravendb.client.documents.session.*;
 import net.ravendb.client.http.RequestExecutor;
 import net.ravendb.client.primitives.EventHandler;
 import net.ravendb.client.primitives.VoidArgs;
@@ -16,12 +15,18 @@ import org.apache.commons.lang3.StringUtils;
 
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
  *  Contains implementation of some IDocumentStore operations shared by DocumentStore implementations
  */
 public abstract class DocumentStoreBase implements IDocumentStore {
+
+    private List<EventHandler<BeforeStoreEventArgs>> onBeforeStore = new ArrayList<>();
+    private List<EventHandler<AfterStoreEventArgs>> onAfterStore = new ArrayList<>();
+    private List<EventHandler<BeforeDeleteEventArgs>> onBeforeDelete = new ArrayList<>();
+    private List<EventHandler<BeforeQueryExecutedEventArgs>> onBeforeQueryExecuted = new ArrayList<>();
 
     protected DocumentStoreBase() {
         //TBD: Subscriptions = new DocumentSubscriptions(this);
@@ -137,16 +142,39 @@ public abstract class DocumentStoreBase implements IDocumentStore {
             var onSessionCreatedInternal = SessionCreatedInternal;
             onSessionCreatedInternal?.Invoke(session);
         }
-          ///<summary>
-        /// Internal notification for integration tools, mainly
-        ///</summary>
         public event Action<InMemoryDocumentSessionOperations> SessionCreatedInternal;
         public event Action<string> TopologyUpdatedInternal;
-        public event EventHandler<BeforeStoreEventArgs> OnBeforeStore;
-        public event EventHandler<AfterStoreEventArgs> OnAfterStore;
-        public event EventHandler<BeforeDeleteEventArgs> OnBeforeDelete;
-        public event EventHandler<BeforeQueryExecutedEventArgs> OnBeforeQueryExecuted;
      */
+
+    public void addBeforeStoreListener(EventHandler<BeforeStoreEventArgs> handler) {
+        this.onBeforeStore.add(handler);
+
+    }
+    public void removeBeforeStoreListener(EventHandler<BeforeStoreEventArgs> handler) {
+        this.onBeforeStore.remove(handler);
+    }
+
+    public void addAfterStoreListener(EventHandler<AfterStoreEventArgs> handler) {
+        this.onAfterStore.add(handler);
+    }
+
+    public void removeAfterStoreListener(EventHandler<AfterStoreEventArgs> handler) {
+        this.onAfterStore.remove(handler);
+    }
+
+    public void addBeforeDeleteListener(EventHandler<BeforeDeleteEventArgs> handler) {
+        this.onBeforeDelete.add(handler);
+    }
+    public void removeBeforeDeleteListener(EventHandler<BeforeDeleteEventArgs> handler) {
+        this.onBeforeDelete.remove(handler);
+    }
+
+    public void addBeforeQueryExecutedListener(EventHandler<BeforeQueryExecutedEventArgs> handler) {
+        this.onBeforeQueryExecuted.add(handler);
+    }
+    public void removeBeforeQueryExecutedListener(EventHandler<BeforeQueryExecutedEventArgs> handler) {
+        this.onBeforeQueryExecuted.remove(handler);
+    }
 
     protected String database;
 
@@ -197,14 +225,26 @@ public abstract class DocumentStoreBase implements IDocumentStore {
             return AggressivelyCacheFor(TimeSpan.FromDays(1), database);
         }
 
-        protected void RegisterEvents(InMemoryDocumentSessionOperations session)
-        {
-            session.OnBeforeStore += OnBeforeStore;
-            session.OnAfterStore += OnAfterStore;
-            session.OnBeforeDelete += OnBeforeDelete;
-            session.OnBeforeQueryExecuted += OnBeforeQueryExecuted;
-        }
         */
+
+    protected void registerEvents(InMemoryDocumentSessionOperations session) {
+        for (EventHandler<BeforeStoreEventArgs> handler : onBeforeStore) {
+            session.addBeforeStoreListener(handler);
+        }
+
+        for (EventHandler<AfterStoreEventArgs> handler : onAfterStore) {
+            session.addAfterStoreListener(handler);
+        }
+
+        for (EventHandler<BeforeDeleteEventArgs> handler : onBeforeDelete) {
+            session.addBeforeDeleteListener(handler);
+        }
+
+        for (EventHandler<BeforeQueryExecutedEventArgs> handler : onBeforeQueryExecuted) {
+            session.addBeforeQueryExecutedListener(handler);
+        }
+
+    }
 
     public abstract AdminOperationExecutor admin();
 

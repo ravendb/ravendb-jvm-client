@@ -23,9 +23,8 @@ import net.ravendb.client.http.RavenCommand;
 import net.ravendb.client.http.RequestExecutor;
 import net.ravendb.client.http.ServerNode;
 import net.ravendb.client.json.JsonOperation;
-import net.ravendb.client.primitives.CleanCloseable;
-import net.ravendb.client.primitives.Lang;
-import net.ravendb.client.primitives.Reference;
+import net.ravendb.client.json.MetadataAsDictionary;
+import net.ravendb.client.primitives.*;
 import net.ravendb.client.util.IdentityHashSet;
 import org.apache.commons.lang3.NotImplementedException;
 import org.apache.commons.lang3.StringUtils;
@@ -72,14 +71,41 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
      */
     protected final Set<Object> deletedEntities = new IdentityHashSet<>();
 
-    /* TODO:
+    private List<EventHandler<BeforeStoreEventArgs>> onBeforeStore = new ArrayList<>();
+    private List<EventHandler<AfterStoreEventArgs>> onAfterStore = new ArrayList<>();
+    private List<EventHandler<BeforeDeleteEventArgs>> onBeforeDelete = new ArrayList<>();
+    private List<EventHandler<BeforeQueryExecutedEventArgs>> onBeforeQueryExecuted = new ArrayList<>();
 
-        public event EventHandler<BeforeStoreEventArgs> OnBeforeStore;
-        public event EventHandler<AfterStoreEventArgs> OnAfterStore;
-        public event EventHandler<BeforeDeleteEventArgs> OnBeforeDelete;
-        public event EventHandler<BeforeQueryExecutedEventArgs> OnBeforeQueryExecuted;
+    public void addBeforeStoreListener(EventHandler<BeforeStoreEventArgs> handler) {
+        this.onBeforeStore.add(handler);
 
-*/
+    }
+    public void removeBeforeStoreListener(EventHandler<BeforeStoreEventArgs> handler) {
+        this.onBeforeStore.remove(handler);
+    }
+
+    public void addAfterStoreListener(EventHandler<AfterStoreEventArgs> handler) {
+        this.onAfterStore.add(handler);
+    }
+
+    public void removeAfterStoreListener(EventHandler<AfterStoreEventArgs> handler) {
+        this.onAfterStore.remove(handler);
+    }
+
+    public void addBeforeDeleteListener(EventHandler<BeforeDeleteEventArgs> handler) {
+        this.onBeforeDelete.add(handler);
+    }
+    public void removeBeforeDeleteListener(EventHandler<BeforeDeleteEventArgs> handler) {
+        this.onBeforeDelete.remove(handler);
+    }
+
+    public void addBeforeQueryExecutedListener(EventHandler<BeforeQueryExecutedEventArgs> handler) {
+        this.onBeforeQueryExecuted.add(handler);
+    }
+    public void removeBeforeQueryExecutedListener(EventHandler<BeforeQueryExecutedEventArgs> handler) {
+        this.onBeforeQueryExecuted.remove(handler);
+    }
+
     //Entities whose id we already know do not exists, because they are a missing include, or a missing load, etc.
     protected final Set<String> knownMissingIds = new TreeSet<>(String.CASE_INSENSITIVE_ORDER); //TODO: do we need this this requires select token syntax in IncludesUtils
 
@@ -250,29 +276,24 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
         sessionInfo = new SessionInfo(_clientSessionId);
     }
 
-    /* TODO:
+    /**
+     * Gets the metadata for the specified entity.
+     */
+    public <T> IMetadataDictionary getMetadataFor(T instance) {
+        if (instance == null) {
+            throw new IllegalArgumentException("Instance cannot be null");
+        }
 
-        /// <summary>
-        /// Gets the metadata for the specified entity.
-        /// </summary>
-        /// <typeparam name="T"></typeparam>
-        /// <param name="instance">The instance.</param>
-        /// <returns></returns>
-        public IMetadataDictionary GetMetadataFor<T>(T instance)
-        {
-            if (instance == null)
-                throw new ArgumentNullException(nameof(instance));
+        DocumentInfo documentInfo = getDocumentInfo(instance);
+        if (documentInfo.getMetadataInstance() != null) {
+            return documentInfo.getMetadataInstance();
+        }
 
-            var documentInfo = GetDocumentInfo(instance);
-
-            if (documentInfo.MetadataInstance != null)
-                return documentInfo.MetadataInstance;
-
-            var metadataAsBlittable = documentInfo.Metadata;
-            var metadata = new MetadataAsDictionary(metadataAsBlittable);
-            documentInfo.MetadataInstance = metadata;
-            return metadata;
-        }*/
+        ObjectNode metadataAsJson = documentInfo.getMetadata();
+        MetadataAsDictionary metadata = new MetadataAsDictionary(metadataAsJson);
+        documentInfo.setMetadataInstance(metadata);
+        return metadata;
+    }
 
     /**
      * Gets the Change Vector for the specified entity.
@@ -690,8 +711,8 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
                 }
 
                 changeVector = useOptimisticConcurrency ? changeVector : null;
-                //TODO: var beforeDeleteEventArgs = new BeforeDeleteEventArgs(this, documentInfo.Id, documentInfo.Entity);
-                //TODO: OnBeforeDelete?.Invoke(this, beforeDeleteEventArgs);
+                BeforeDeleteEventArgs beforeDeleteEventArgs = new BeforeDeleteEventArgs(this, documentInfo.getId(), documentInfo.getEntity());
+                EventHelper.invoke(onBeforeDelete, this, beforeDeleteEventArgs);
                 result.getSessionCommands().add(new DeleteCommandData(documentInfo.getId(), changeVector));
             }
 
@@ -985,17 +1006,12 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
         }
     }
 
-    /* TODO
-
-    public override int GetHashCode()
-    {
+    @Override
+    public int hashCode() {
         return _hash;
     }
 
-    public override bool Equals(object obj)
-    {
-        return ReferenceEquals(obj, this);
-    }
+    /* TODO
 
     internal void HandleInternalMetadata(BlittableJsonReaderObject result)
     {
@@ -1163,11 +1179,12 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
         throw new InvalidCastException($"Unable to cast {result.GetType().Name} to {typeof(T).Name}");
     }
 
-
-    public void OnAfterStoreInvoke(AfterStoreEventArgs afterStoreEventArgs)
-    {
-        OnAfterStore?.Invoke(this, afterStoreEventArgs);
+*/
+    public void onAfterStoreInvoke(AfterStoreEventArgs afterStoreEventArgs) {
+        EventHelper.invoke(onAfterStore, this, afterStoreEventArgs);
     }
+
+    /* TODO
 
     public void OnBeforeQueryExecutedInvoke(BeforeQueryExecutedEventArgs beforeQueryExecutedEventArgs)
     {
@@ -1189,53 +1206,11 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
     }
 }
 
-
-  public AttachmentName[] GetAttachmentNames(object entity)
-        {
-            if (entity == null ||
-                DocumentsByEntity.TryGetValue(entity, out DocumentInfo document) == false ||
-                document.Metadata.TryGet(Constants.Documents.Metadata.Attachments, out BlittableJsonReaderArray attachments) == false)
-                return Array.Empty<AttachmentName>();
-
-            var results = new AttachmentName[attachments.Length];
-            for (var i = 0; i < attachments.Length; i++)
-            {
-                var attachment = (BlittableJsonReaderObject)attachments[i];
-                results[i] = JsonDeserializationClient.AttachmentName(attachment);
-            }
-            return results;
-        }
-
-        public void StoreAttachment(string documentId, string name, Stream stream, string contentType = null)
-        {
-            if (string.IsNullOrWhiteSpace(documentId))
-                throw new ArgumentNullException(nameof(documentId));
-            if (string.IsNullOrWhiteSpace(name))
-                throw new ArgumentNullException(nameof(name));
-
-            if (DeferredCommandsDictionary.ContainsKey((documentId, CommandType.DELETE, null)))
-                throw new InvalidOperationException($"Can't store attachment {name} of document {documentId}, there is a deferred command registered for this document to be deleted.");
-
-            if (DeferredCommandsDictionary.ContainsKey((documentId, CommandType.AttachmentPUT, name)))
-                throw new InvalidOperationException($"Can't store attachment {name} of document {documentId}, there is a deferred command registered to create an attachment with the same name.");
-
-            if (DeferredCommandsDictionary.ContainsKey((documentId, CommandType.AttachmentDELETE, name)))
-                throw new InvalidOperationException($"Can't store attachment {name} of document {documentId}, there is a deferred command registered to delete an attachment with the same name.");
-
-            if (DocumentsById.TryGetValue(documentId, out DocumentInfo documentInfo) &&
-                DeletedEntities.Contains(documentInfo.Entity))
-                throw new InvalidOperationException($"Can't store attachment {name} of document {documentId}, the document was already deleted in this session.");
-
-            Defer(new PutAttachmentCommandData(documentId, name, stream, contentType, null));
-        }
-
-        public void StoreAttachment(object entity, string name, Stream stream, string contentType = null)
-        {
-            if (DocumentsByEntity.TryGetValue(entity, out DocumentInfo document) == false)
-                ThrowEntityNotInSession(entity);
-
-            StoreAttachment(document.Id, name, stream, contentType);
-        }
+        */
+    //TBD public AttachmentName[] GetAttachmentNames(object entity)
+    //TBD public void StoreAttachment(string documentId, string name, Stream stream, string contentType = null)
+    //TBD public void StoreAttachment(object entity, string name, Stream stream, string contentType = null)
+    /* TODO
 
         protected void ThrowEntityNotInSession(object entity)
         {
@@ -1243,37 +1218,11 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
                                         "Use documentId instead or track the entity in the session.", nameof(entity));
         }
 
-        public void DeleteAttachment(object entity, string name)
-        {
-            if (DocumentsByEntity.TryGetValue(entity, out DocumentInfo document) == false)
-                ThrowEntityNotInSession(entity);
 
-            DeleteAttachment(document.Id, name);
-        }
-
-        public void DeleteAttachment(string documentId, string name)
-        {
-            if (string.IsNullOrWhiteSpace(documentId))
-                throw new ArgumentNullException(nameof(documentId));
-            if (string.IsNullOrWhiteSpace(name))
-                throw new ArgumentNullException(nameof(name));
-
-            if (DeferredCommandsDictionary.ContainsKey((documentId, CommandType.DELETE, null)) ||
-                DeferredCommandsDictionary.ContainsKey((documentId, CommandType.AttachmentDELETE, name)))
-                return; // no-op
-
-            if (DocumentsById.TryGetValue(documentId, out DocumentInfo documentInfo) &&
-                DeletedEntities.Contains(documentInfo.Entity))
-                return; // no-op
-
-            if (DeferredCommandsDictionary.ContainsKey((documentId, CommandType.AttachmentPUT, name)))
-                throw new InvalidOperationException($"Can't delete attachment {name} of document {documentId}, there is a deferred command registered to create an attachment with the same name.");
-
-            Defer(new DeleteAttachmentCommandData(documentId, name, null));
-        }
-    }
 
      */
+    //TBD public void DeleteAttachment(object entity, string name)
+    //TBD public void DeleteAttachment(string documentId, string name)
 
     public enum ConcurrencyCheckMode {
         /**
