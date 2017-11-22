@@ -10,6 +10,13 @@ import java.util.Optional;
  */
 public class IndexQuery extends IndexQueryWithParameters<Parameters> {
 
+    public IndexQuery() {
+    }
+
+    public IndexQuery(String query) {
+        this.setQuery(query);
+    }
+
     private boolean disableCaching;
 
     /**

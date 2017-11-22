@@ -53,22 +53,11 @@ public class AdminOperationExecutor {
         return command.getResult();
     }
 
-    /* TODO:
-        public Operation Send(IAdminOperation<OperationIdResult> operation)
-        {
-            return AsyncHelpers.RunSync(() => SendAsync(operation));
-        }
+    public Operation sendOperation(IAdminOperation<OperationIdResult> operation) {
+        RavenCommand<OperationIdResult> command = operation.getCommand(requestExecutor.getConventions());
 
-        public async Task<Operation> SendAsync(IAdminOperation<OperationIdResult> operation, CancellationToken token = default(CancellationToken))
-        {
-            JsonOperationContext context;
-            using (RequestExecutor.ContextPool.AllocateOperationContext(out context))
-            {
-                var command = operation.GetCommand(_requestExecutor.Conventions, context);
-
-                await _requestExecutor.ExecuteAsync(command, context, token).ConfigureAwait(false);
-                return new Operation(_requestExecutor, () => _store.Changes(_databaseName), _requestExecutor.Conventions, command.Result.OperationId);
-            }
-        }
-     */
+        requestExecutor.execute(command);
+        return new Operation(requestExecutor, requestExecutor.getConventions(), command.getResult().getOperationId());
+        //TBD pass changes as well
+    }
 }

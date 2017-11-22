@@ -17,7 +17,7 @@ import java.util.List;
  */
 public interface IDocumentStore extends IDisposalNotification {
 
-    //TBD: X509Certificate2 Certificate { get; }
+    //TODO: X509Certificate2 Certificate { get; }
 
     void addBeforeStoreListener(EventHandler<BeforeStoreEventArgs> handler);
     void removeBeforeStoreListener(EventHandler<BeforeStoreEventArgs> handler);

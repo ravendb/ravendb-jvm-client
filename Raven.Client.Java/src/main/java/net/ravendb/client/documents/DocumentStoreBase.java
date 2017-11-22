@@ -121,7 +121,7 @@ public abstract class DocumentStoreBase implements IDocumentStore {
 
     protected boolean initialized;
 
-    //TBD:  private X509Certificate2 _certificate;
+    //TODO:  private X509Certificate2 _certificate;
     //TBD: public abstract BulkInsertOperation BulkInsert(string database = null);
     //TBD:  public IReliableSubscriptions Subscriptions { get; }
 

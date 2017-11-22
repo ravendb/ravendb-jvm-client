@@ -58,23 +58,25 @@ public class OperationExecutor {
         return command.getResult();
     }
 
+    public Operation sendOperation(IOperation<OperationIdResult> operation) {
+        return sendOperation(operation, null, false);
+    }
+
+    public Operation sendOperation(IOperation<OperationIdResult> operation, SessionInfo sessionInfo) {
+        return sendOperation(operation, sessionInfo, false);
+    }
+
+    public Operation sendOperation(IOperation<OperationIdResult> operation, SessionInfo sessionInfo, boolean isServerOperation) {
+        RavenCommand<OperationIdResult> command = operation.getCommand(store, requestExecutor.getConventions(), requestExecutor.getCache());
+
+        requestExecutor.execute(command, sessionInfo);
+
+        return new Operation(requestExecutor, requestExecutor.getConventions(), command.getResult().getOperationId(), isServerOperation);
+    }
+
+
     /* TODO
 
-          public Operation Send(IOperation<OperationIdResult> operation, SessionInfo sessionInfo = null, bool isServerOperation = false)
-        {
-            return AsyncHelpers.RunSync(() => SendAsync(operation, default(CancellationToken), sessionInfo, isServerOperation));
-        }
-
-        public async Task<Operation> SendAsync(IOperation<OperationIdResult> operation, CancellationToken token = default(CancellationToken), SessionInfo sessionInfo = null, bool isServerOperation = false)
-        {
-            using (GetContext(out JsonOperationContext context))
-            {
-                var command = operation.GetCommand(_store, _requestExecutor.Conventions, context, _requestExecutor.Cache);
-
-                await _requestExecutor.ExecuteAsync(command, context, token, sessionInfo).ConfigureAwait(false);
-                return new Operation(_requestExecutor, () => _store.Changes(_databaseName), _requestExecutor.Conventions, command.Result.OperationId, isServerOperation);
-            }
-        }
            public PatchStatus Send(PatchOperation operation)
         {
             return AsyncHelpers.RunSync(() => SendAsync(operation));

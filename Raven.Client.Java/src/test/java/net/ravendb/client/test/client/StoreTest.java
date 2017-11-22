@@ -78,13 +78,13 @@ public class StoreTest extends RemoteTestBase {
                 user1.setName("RavenDB");
                 session.store(user1, "users/1");
 
-                assertThat(session.advanced().getChangeVectorFor(user1))
-                        .isNotNull();
+                session.saveChanges();
 
                 assertThat(session.advanced().isLoaded("users/1"))
                         .isTrue();
 
-                session.saveChanges();
+                assertThat(session.advanced().getChangeVectorFor(user1))
+                        .isNotNull();
             }
 
             assertThat(storeLevelCallBack[0])

@@ -62,7 +62,7 @@ public class RequestExecutor implements CleanCloseable {
 
     private final ConcurrentMap<ServerNode, NodeStatus> _failedNodesTimers = new ConcurrentHashMap<>();
 
-    // TBD: public X509Certificate2 Certificate { get; }
+    // TODO: public X509Certificate2 Certificate { get; }
 
     private final String _databaseName;
 
