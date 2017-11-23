@@ -12,7 +12,7 @@ public class IndexInformation {
     private long etag;
     private String name;
 
-    private boolean isStale;
+    private boolean isStale; //TODO rename to stale ?
     private IndexState state;
     private IndexLockMode lockMode;
     private IndexPriority priority;
