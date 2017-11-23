@@ -13,6 +13,7 @@ import org.apache.http.client.methods.HttpRequestBase;
 import java.io.IOException;
 
 public class CompactIndexOperation implements IAdminOperation<OperationIdResult> {
+    //TODO: is it no longer supported on server side!
 
     private final String _indexName;
 

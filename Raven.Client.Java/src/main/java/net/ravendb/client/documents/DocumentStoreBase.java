@@ -12,9 +12,11 @@ import net.ravendb.client.http.RequestExecutor;
 import net.ravendb.client.primitives.EventHandler;
 import net.ravendb.client.primitives.VoidArgs;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.http.ssl.SSLContexts;
 
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.security.KeyStore;
 import java.util.ArrayList;
 import java.util.List;
 

@@ -28,6 +28,7 @@ import org.apache.http.client.methods.HttpRequestBase;
 import org.apache.http.client.methods.RequestBuilder;
 import org.apache.http.config.SocketConfig;
 import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.impl.client.StandardHttpRequestRetryHandler;
 import org.apache.http.impl.conn.PoolingHttpClientConnectionManager;
@@ -44,6 +45,8 @@ import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 public class RequestExecutor implements CleanCloseable {
+
+    public static Consumer<HttpClientBuilder> configureHttpClient = null;
 
     /**
      * Extension point to plug - in request post processing like adding proxy etc.
@@ -700,7 +703,7 @@ public class RequestExecutor implements CleanCloseable {
                 preferredTask = task;
             } else {
                 task.thenAcceptAsync(result -> {
-                    IOUtils.closeQuietly(result.respose);
+                    IOUtils.closeQuietly(result.response);
                 });
             }
 
@@ -726,7 +729,7 @@ public class RequestExecutor implements CleanCloseable {
         // of the nodes, in which case we have nothing to do
 
         try {
-            return preferredTask.get().respose;
+            return preferredTask.get().response;
         } catch (InterruptedException | ExecutionException e) {
             throw ExceptionsUtils.unwrapException(e);
         }
@@ -978,14 +981,19 @@ public class RequestExecutor implements CleanCloseable {
 
         PoolingHttpClientConnectionManager cm = new PoolingHttpClientConnectionManager();
         cm.setDefaultMaxPerRoute(10);
-        return HttpClients
+        HttpClientBuilder httpClientBuilder = HttpClients
                 .custom()
                 .setConnectionManager(cm)
                 .disableContentCompression()
                 //TODO : .addInterceptorLast(new RavenResponseContentEncoding())
                 .setRetryHandler(new StandardHttpRequestRetryHandler(0, false))
-                .setDefaultSocketConfig(SocketConfig.custom().setTcpNoDelay(true).build()).
-                        build();
+                .setDefaultSocketConfig(SocketConfig.custom().setTcpNoDelay(true).build());
+
+        if (configureHttpClient != null) {
+            configureHttpClient.accept(httpClientBuilder);
+        }
+
+        return httpClientBuilder.build();
     }
 
 
@@ -994,13 +1002,13 @@ public class RequestExecutor implements CleanCloseable {
     public static class NodeStatus implements CleanCloseable {
 
         private Duration _timerPeriod;
-        private final RequestExecutor _requestExectutor;
+        private final RequestExecutor _requestExecutor;
         public final int nodeIndex;
         public final ServerNode node;
         private Timer _timer;
 
         public NodeStatus(RequestExecutor requestExecutor, int nodeIndex, ServerNode node) {
-            _requestExectutor = requestExecutor;
+            _requestExecutor = requestExecutor;
             this.nodeIndex = nodeIndex;
             this.node = node;
             _timerPeriod = Duration.ofMillis(100);
@@ -1025,8 +1033,8 @@ public class RequestExecutor implements CleanCloseable {
         }
 
         private void timerCallback() {
-            if (!_requestExectutor._disposed) {
-                _requestExectutor.checkNodeStatusCallback(this);
+            if (!_requestExecutor._disposed) {
+                _requestExecutor.checkNodeStatusCallback(this);
             }
         }
 
@@ -1071,11 +1079,11 @@ public class RequestExecutor implements CleanCloseable {
 
     public static class IndexAndResponse {
         public int index;
-        public CloseableHttpResponse respose;
+        public CloseableHttpResponse response;
 
-        public IndexAndResponse(int index, CloseableHttpResponse respose) {
+        public IndexAndResponse(int index, CloseableHttpResponse response) {
             this.index = index;
-            this.respose = respose;
+            this.response = response;
         }
     }
 }
