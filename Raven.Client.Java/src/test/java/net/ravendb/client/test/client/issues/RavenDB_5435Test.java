@@ -1,6 +1,5 @@
 package net.ravendb.client.test.client.issues;
 
-import jdk.nashorn.internal.ir.annotations.Ignore;
 import net.ravendb.client.RemoteTestBase;
 import net.ravendb.client.documents.IDocumentStore;
 import net.ravendb.client.documents.indexes.AbstractIndexCreationTask;
@@ -8,6 +7,7 @@ import net.ravendb.client.documents.operations.Operation;
 import net.ravendb.client.documents.operations.indexes.CompactIndexOperation;
 import net.ravendb.client.documents.session.IDocumentSession;
 import net.ravendb.client.infrastructure.entities.User;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
@@ -20,7 +20,7 @@ public class RavenDB_5435Test extends RemoteTestBase {
     }
 
     @Test
-    @Ignore
+    @Disabled("Waiting to database compact ")
     public void canCompact() throws IOException {
         try (IDocumentStore store = getDocumentStore()) {
             new Users_ByName().execute(store);

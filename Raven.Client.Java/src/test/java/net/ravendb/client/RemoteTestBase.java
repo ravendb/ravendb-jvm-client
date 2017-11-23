@@ -14,7 +14,7 @@ public class RemoteTestBase extends RavenTestDriver {
     private static class TestServiceLocator extends RavenServerLocator {
         @Override
         public String getServerPath() {
-            return "C:\\temp\\RavenDB-4.0.0-nightly-20171116-0916-windows-x64\\Server\\Raven.Server.exe"; //TODO: from variable?
+            return "C:\\temp\\RavenDB-4.0.0-nightly-20171122-0501-windows-x64\\Server\\Raven.Server.exe"; //TODO: from variable?
         }
     }
 

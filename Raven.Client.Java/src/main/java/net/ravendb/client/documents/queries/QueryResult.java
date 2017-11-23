@@ -9,10 +9,6 @@ import java.util.Map;
 
 public class QueryResult extends GenericQueryResult<ArrayNode, ObjectNode> {
 
-    public void ensureSnapshot() {
-
-    }
-
     /**
      * Creates a snapshot of the query results
      */

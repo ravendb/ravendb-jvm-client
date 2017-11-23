@@ -59,7 +59,7 @@ public class GetDocumentCommand extends RavenCommand<GetDocumentResult> {
         _metadataOnly = metadataOnly;
     }
 
-    public GetDocumentCommand(String startWith, String startAfter, String matches, String exclude, int start, int pageSize) {
+    public GetDocumentCommand(String startWith, String startAfter, String matches, String exclude, int start, int pageSize, boolean metadataOnly) {
         super(GetDocumentResult.class);
         if (startWith == null) {
             throw new IllegalArgumentException("startWith cannot be null");
@@ -70,6 +70,7 @@ public class GetDocumentCommand extends RavenCommand<GetDocumentResult> {
         _exclude = exclude;
         _start = start;
         _pageSize = pageSize;
+        _metadataOnly = metadataOnly;
     }
 
     @Override

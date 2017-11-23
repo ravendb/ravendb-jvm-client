@@ -554,6 +554,7 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
 
         DocumentInfo value = documentsByEntity.get(entity);
         if (value != null) {
+            value.setChangeVector(Lang.coalesce(changeVector, value.getChangeVector()));
             value.setConcurrencyCheckMode(forceConcurrencyCheck);
             return;
         }
@@ -719,7 +720,9 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
                 result.getSessionCommands().add(new DeleteCommandData(documentInfo.getId(), changeVector));
             }
 
-            deletedEntities.clear();
+            if (changes == null) {
+                deletedEntities.clear();
+            }
         }
 
     }
@@ -1132,8 +1135,10 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
         ObjectNode value = (ObjectNode) document.get(Constants.Documents.Metadata.KEY);
         documentInfo.setMetadata(value);
 
-        JsonNode changeVector = document.get(Constants.Documents.Metadata.CHANGE_VECTOR); //TODO: metadata here?
-        documentInfo.setChangeVector(changeVector.asText());
+        if (documentInfo.getMetadata() != null) {
+            JsonNode changeVector = value.get(Constants.Documents.Metadata.CHANGE_VECTOR);
+            documentInfo.setChangeVector(changeVector.asText());
+        }
 
         documentInfo.setDocument(document);
 

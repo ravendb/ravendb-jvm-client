@@ -9,6 +9,7 @@ import net.ravendb.client.documents.commands.QueryCommand;
 import net.ravendb.client.documents.queries.IndexQuery;
 import net.ravendb.client.documents.queries.QueryResult;
 import net.ravendb.client.documents.session.InMemoryDocumentSessionOperations;
+import net.ravendb.client.documents.session.tokens.FieldsToFetchToken;
 import net.ravendb.client.exceptions.TimeoutException;
 import net.ravendb.client.exceptions.documents.indexes.IndexDoesNotExistException;
 import net.ravendb.client.primitives.CleanCloseable;
@@ -31,20 +32,20 @@ public class QueryOperation {
     private final boolean _indexEntriesOnly;
     private final Duration _timeout;
     private QueryResult _currentQueryResults;
-    private final String[] _projectionFields;
+    private final FieldsToFetchToken _fieldsToFetch;
     private Stopwatch _sp;
     private boolean _disableEntitiesTracking;
     private static final Log logger = LogFactory.getLog(QueryOperation.class);
 
     public QueryOperation(InMemoryDocumentSessionOperations session, String indexName, IndexQuery indexQuery,
-                          String[] projectionFields, boolean waitForNonStaleResults, Duration timeout,
+                          FieldsToFetchToken fieldsToFetch, boolean waitForNonStaleResults, Duration timeout,
                           boolean disableEntitiesTracking, boolean metadataOnly, boolean indexEntriesOnly) {
         _session = session;
         _indexName = indexName;
         _indexQuery = indexQuery;
         _waitForNonStaleResults = waitForNonStaleResults;
         _timeout = timeout;
-        _projectionFields = projectionFields;
+        _fieldsToFetch = fieldsToFetch;
         _disableEntitiesTracking = disableEntitiesTracking;
         _metadataOnly = metadataOnly;
         _indexEntriesOnly = indexEntriesOnly;
@@ -118,7 +119,7 @@ public class QueryOperation {
                 id = ((TextNode) idNode).asText();
             }
 
-            list.add(deserialize(clazz, id, (ObjectNode) document, metadata, _projectionFields, _disableEntitiesTracking, _session));
+            list.add(deserialize(clazz, id, (ObjectNode) document, metadata, _fieldsToFetch, _disableEntitiesTracking, _session));
         }
 
         if (!_disableEntitiesTracking) {
@@ -128,30 +129,32 @@ public class QueryOperation {
         return list;
     }
 
-    static <T> T deserialize(Class<T> clazz, String id, ObjectNode document, ObjectNode metadata, String[] projectionFields, boolean disableEntitiesTracking, InMemoryDocumentSessionOperations session) {
+    static <T> T deserialize(Class<T> clazz, String id, ObjectNode document, ObjectNode metadata, FieldsToFetchToken fieldsToFetchToken, boolean disableEntitiesTracking, InMemoryDocumentSessionOperations session) {
         /* TODO
           if (metadata.TryGetProjection(out var projection) == false || projection == false)
                 return session.TrackEntity<T>(id, document, metadata, disableEntitiesTracking);
 
-            if (projectionFields != null && projectionFields.Length == 1) // we only select a single field
+             if (fieldsToFetch?.Projections != null && fieldsToFetch.Projections.Length == 1) // we only select a single field
             {
                 var type = typeof(T);
                 var typeInfo = type.GetTypeInfo();
                 if (type == typeof(string) || typeInfo.IsValueType || typeInfo.IsEnum)
                 {
-                    var projectionField = projectionFields[0];
+                    var projectionField = fieldsToFetch.Projections[0];
                     T value;
                     return document.TryGet(projectionField, out value) == false
                         ? default(T)
                         : value;
                 }
 
-                if (document.TryGetMember(projectionFields[0], out object inner) == false)
+                if (document.TryGetMember(fieldsToFetch.Projections[0], out object inner) == false)
                     return default(T);
 
-                var innerJson = inner as BlittableJsonReaderObject;
-                if (innerJson != null)
-                    document = innerJson;
+                if (fieldsToFetch.FieldsToFetch != null && fieldsToFetch.FieldsToFetch[0] == fieldsToFetch.Projections[0])
+                {
+                    if (inner is BlittableJsonReaderObject innerJson) //extraction from original type
+                        document = innerJson;
+                }
             }
          */
 
@@ -193,7 +196,7 @@ public class QueryOperation {
         }
 
         _currentQueryResults = result;
-        _currentQueryResults.ensureSnapshot();
+        //_currentQueryResults.ensureSnapshot();
 
         if (logger.isInfoEnabled()) {
             String isStale = result.isStale() ? "stale " : " ";

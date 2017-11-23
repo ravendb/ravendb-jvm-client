@@ -18,5 +18,7 @@ public enum WhereOperator {
     WITHIN,
     CONTAINS,
     DISJOINT,
-    INTERSECTS
+    INTERSECTS,
+    REGEX,
+    CMP_X_CHG_MATCH
 }

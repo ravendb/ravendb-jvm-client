@@ -40,6 +40,8 @@ public class GenericQueryResult<TResult, TIncludes> extends QueryResultBase<TRes
         this.skippedResults = skippedResults;
     }
 
+    //TODO: comment out hightligings - every where
+    // TODO comment out custom sorting!
     /**
      * Highlighter results (if requested).
      */

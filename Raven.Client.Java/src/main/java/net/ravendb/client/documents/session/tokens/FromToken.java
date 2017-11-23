@@ -62,16 +62,16 @@ public class FromToken extends QueryToken {
                 writeField(writer, collectionName);
             }
 
-            if (alias != null) {
-                writer.append(" as ").append(alias);
-            }
-            return;
+        } else {
+            writer
+                    .append("FROM INDEX '")
+                    .append(indexName)
+                    .append("'");
         }
 
-        writer
-                .append("FROM INDEX '")
-                .append(indexName)
-                .append("'");
+        if (alias != null) {
+            writer.append(" as ").append(alias);
+        }
     }
 
     private void throwInvalidCollectionName() {

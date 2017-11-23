@@ -135,27 +135,4 @@ public class QueryHashCalculator {
             write(kvp.getValue());
         }
     }
-    /* TODO
-
-        public void Write(IReadOnlyList<Facet> facets)
-        {
-            if (facets == null)
-                return;
-            for (int i = 0; i < facets.Count; i++)
-            {
-                var facet = facets[i];
-                Write(facet.AggregationField);
-                Write(facet.AggregationType);
-                Write(facet.DisplayName);
-                Write(facet.IncludeRemainingTerms);
-                Write(facet.MaxResults);
-                Write(facet.Name);
-                Write((int)facet.Aggregation);
-                Write((int)facet.Mode);
-                Write((int)facet.TermSortMode);
-                Write(facet.Ranges);
-            }
-        }
-     */
-
 }

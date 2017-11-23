@@ -195,6 +195,10 @@ public interface IAbstractDocumentQuery<T> {
 
     void _whereExists(String fieldName);
 
+    //TODO: void WhereRegex(string fieldName, string pattern);
+
+    //TODO: void CmpXchg(string key, object value);
+
     /**
      * Add an AND to the query
      */
@@ -325,6 +329,12 @@ public interface IAbstractDocumentQuery<T> {
     void _orderByDistanceDescending(String fieldName, double latitude, double longitude);
 
     void _orderByDistanceDescending(String fieldName, String shapeWkt);
+
+    //TBD: MoreLikeThisScope MoreLikeThis();
+    //TBD void AggregateBy(FacetBase facet);
+    //TBD void AggregateUsing(string facetSetupDocumentKey);
+    //TBD void AddFromAliasToWhereTokens(string fromAlias);
+    //TBD string LoadParameter(object id);
 
     Iterator<T> iterator();
 }

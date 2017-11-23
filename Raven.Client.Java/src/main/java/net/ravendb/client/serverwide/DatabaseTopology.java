@@ -19,7 +19,6 @@ public class DatabaseTopology {
     private boolean dynamicNodesDistribution;
     private LeaderStamp stamp;
 
-
     public List<String> getMembers() {
         return members;
     }

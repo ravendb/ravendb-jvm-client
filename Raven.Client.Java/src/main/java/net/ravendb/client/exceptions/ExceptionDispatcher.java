@@ -3,20 +3,14 @@ package net.ravendb.client.exceptions;
 import com.fasterxml.jackson.databind.JsonNode;
 import net.ravendb.client.exceptions.documents.DocumentConflictException;
 import net.ravendb.client.exceptions.documents.compilation.IndexCompilationException;
-import net.ravendb.client.exceptions.documents.compilation.TransformerCompilationException;
 import net.ravendb.client.extensions.JsonExtensions;
 import net.ravendb.client.http.RequestExecutor;
-import net.ravendb.client.primitives.ExceptionsUtils;
 import org.apache.commons.io.IOUtils;
-import org.apache.commons.lang3.concurrent.ConcurrentException;
 import org.apache.http.HttpStatus;
 import org.apache.http.client.methods.CloseableHttpResponse;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.lang.reflect.InvocationTargetException;
-
-import static com.sun.beans.finder.PrimitiveWrapperMap.getType;
 
 public class ExceptionDispatcher {
 
@@ -80,23 +74,6 @@ public class ExceptionDispatcher {
 
             if (!RavenException.class.isAssignableFrom(type)) {
                 throw new RavenException(schema.getError(), exception);
-            }
-
-
-            if (TransformerCompilationException.class.equals(type)) {
-                TransformerCompilationException transformerCompilationException = (TransformerCompilationException) exception;
-                JsonNode jsonNode = JsonExtensions.getDefaultMapper().readTree(stream);
-                JsonNode transformerDefinitionProperty = jsonNode.get("TransformerDefinitionProperty");
-                if (transformerDefinitionProperty != null) {
-                    transformerCompilationException.setTransformerDefinitionProperty(transformerDefinitionProperty.asText());
-                }
-
-                JsonNode problematicText = jsonNode.get("ProblematicText");
-                if (problematicText != null) {
-                    transformerCompilationException.setProblematicText(problematicText.asText());
-                }
-
-                throw transformerCompilationException;
             }
 
             if (IndexCompilationException.class.equals(type)) {

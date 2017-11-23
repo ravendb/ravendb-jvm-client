@@ -16,6 +16,7 @@ import net.ravendb.client.documents.session.tokens.*;
 import net.ravendb.client.primitives.CleanCloseable;
 import net.ravendb.client.primitives.Reference;
 import net.ravendb.client.primitives.Tuple;
+import org.apache.commons.lang3.NotImplementedException;
 import org.apache.commons.lang3.StringUtils;
 
 import javax.management.Query;
@@ -133,6 +134,8 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
 
     protected Long cutoffEtag;
 
+    private boolean _isInMoreLikeThis;
+
     private static Duration getDefaultTimeout() {
         return Duration.ofSeconds(15);
     }
@@ -180,7 +183,7 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
     protected QueryOperation initializeQueryOperation() {
         IndexQuery indexQuery = getIndexQuery();
 
-        return new QueryOperation(theSession, indexName, indexQuery, fieldsToFetchToken != null ? fieldsToFetchToken.projections : null,
+        return new QueryOperation(theSession, indexName, indexQuery, fieldsToFetchToken,
                 theWaitForNonStaleResults, timeout, disableEntitiesTracking, false, false);
     }
 
@@ -336,12 +339,25 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
     }
 
     public void _whereTrue() {
-        appendOperatorIfNeeded(whereTokens);
-        negateIfNeeded(null);
+        List<QueryToken> tokens = getCurrentWhereTokens();
+        appendOperatorIfNeeded(tokens);
+        negateIfNeeded(tokens, null);
 
-        whereTokens.add(TrueToken.INSTANCE);
+        tokens.add(TrueToken.INSTANCE);
     }
 
+    /* TODO
+     public MoreLikeThisScope _moreLikeThis()
+        {
+            AppendOperatorIfNeeded(WhereTokens);
+
+            var token = new MoreLikeThisToken();
+            WhereTokens.AddLast(token);
+
+            _isInMoreLikeThis = true;
+            return new MoreLikeThisScope(token, AddQueryParameter, () => _isInMoreLikeThis = false);
+        }
+     */
     /**
      * Includes the specified path in the query, loading the document specified in that path
      */
@@ -365,10 +381,11 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
     public void _whereLucene(String fieldName, String whereClause) {
         fieldName = ensureValidFieldName(fieldName, false);
 
-        appendOperatorIfNeeded(whereTokens);
-        negateIfNeeded(fieldName);
+        List<QueryToken> tokens = getCurrentWhereTokens();
+        appendOperatorIfNeeded(tokens);
+        negateIfNeeded(tokens, fieldName);
 
-        whereTokens.add(WhereToken.lucene(fieldName, addQueryParameter(whereClause)));
+        tokens.add(WhereToken.lucene(fieldName, addQueryParameter(whereClause)));
     }
 
     /**
@@ -377,10 +394,11 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
     public void _openSubclause() {
         _currentClauseDepth++;
 
-        appendOperatorIfNeeded(whereTokens);
-        negateIfNeeded(null);
+        List<QueryToken> tokens = getCurrentWhereTokens();
+        appendOperatorIfNeeded(tokens);
+        negateIfNeeded(tokens, null);
 
-        whereTokens.add(OpenSubclauseToken.INSTANCE);
+        tokens.add(OpenSubclauseToken.INSTANCE);
     }
 
     /**
@@ -389,7 +407,8 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
     public void _closeSubclause() {
         _currentClauseDepth--;
 
-        whereTokens.add(CloseSubclauseToken.INSTANCE);
+        List<QueryToken> tokens = getCurrentWhereTokens();
+        tokens.add(CloseSubclauseToken.INSTANCE);
     }
 
     public void _whereEquals(String fieldName, Object value) {
@@ -414,10 +433,11 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
         Object transformToEqualValue = transformValue(whereParams);
         lastEquality = Tuple.create(whereParams.getFieldName(), transformToEqualValue);
 
-        appendOperatorIfNeeded(whereTokens);
+        List<QueryToken> tokens = getCurrentWhereTokens();
+        appendOperatorIfNeeded(tokens);
 
         whereParams.setFieldName(ensureValidFieldName(whereParams.getFieldName(), whereParams.isNestedPath()));
-        whereTokens.add(WhereToken.equals(whereParams.getFieldName(), addQueryParameter(transformToEqualValue), whereParams.isExact()));
+        tokens.add(WhereToken.equals(whereParams.getFieldName(), addQueryParameter(transformToEqualValue), whereParams.isExact()));
 
     }
 
@@ -444,10 +464,11 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
         Object transformToEqualValue = transformValue(whereParams);
         lastEquality = Tuple.create(whereParams.getFieldName(), transformToEqualValue);
 
-        appendOperatorIfNeeded(whereTokens);
+        List<QueryToken> tokens = getCurrentWhereTokens();
+        appendOperatorIfNeeded(tokens);
 
         whereParams.setFieldName(ensureValidFieldName(whereParams.getFieldName(), whereParams.isNestedPath()));
-        whereTokens.add(WhereToken.notEquals(whereParams.getFieldName(), addQueryParameter(transformToEqualValue), whereParams.isExact()));
+        tokens.add(WhereToken.notEquals(whereParams.getFieldName(), addQueryParameter(transformToEqualValue), whereParams.isExact()));
     }
 
     public void negateNext() {
@@ -469,10 +490,11 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
     public void _whereIn(String fieldName, Collection<Object> values, boolean exact) {
         fieldName = ensureValidFieldName(fieldName, false);
 
-        appendOperatorIfNeeded(whereTokens);
-        negateIfNeeded(fieldName);
+        List<QueryToken> tokens = getCurrentWhereTokens();
+        appendOperatorIfNeeded(tokens);
+        negateIfNeeded(tokens, fieldName);
 
-        whereTokens.add(WhereToken.in(fieldName, addQueryParameter(transformCollection(fieldName, unpackCollection(values))), exact));
+        tokens.add(WhereToken.in(fieldName, addQueryParameter(transformCollection(fieldName, unpackCollection(values))), exact));
     }
 
     public void _whereStartsWith(String fieldName, Object value) {
@@ -485,12 +507,13 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
 
         lastEquality = Tuple.create(whereParams.getFieldName(), transformToEqualValue);
 
-        appendOperatorIfNeeded(whereTokens);
+        List<QueryToken> tokens = getCurrentWhereTokens();
+        appendOperatorIfNeeded(tokens);
 
         whereParams.setFieldName(ensureValidFieldName(whereParams.getFieldName(), whereParams.isNestedPath()));
-        negateIfNeeded(whereParams.getFieldName());
+        negateIfNeeded(tokens, whereParams.getFieldName());
 
-        whereTokens.add(WhereToken.startsWith(whereParams.getFieldName(), addQueryParameter(transformToEqualValue), false));
+        tokens.add(WhereToken.startsWith(whereParams.getFieldName(), addQueryParameter(transformToEqualValue), false));
     }
 
     /**
@@ -505,12 +528,13 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
         Object transformToEqualValue = transformValue(whereParams);
         lastEquality = Tuple.create(whereParams.getFieldName(), transformToEqualValue);
 
-        appendOperatorIfNeeded(whereTokens);
+        List<QueryToken> tokens = getCurrentWhereTokens();
+        appendOperatorIfNeeded(tokens);
 
         whereParams.setFieldName(ensureValidFieldName(whereParams.getFieldName(), whereParams.isNestedPath()));
-        negateIfNeeded(whereParams.getFieldName());
+        negateIfNeeded(tokens, whereParams.getFieldName());
 
-        whereTokens.add(WhereToken.endsWith(whereParams.getFieldName(), addQueryParameter(transformToEqualValue), false));
+        tokens.add(WhereToken.endsWith(whereParams.getFieldName(), addQueryParameter(transformToEqualValue), false));
     }
 
     @Override
@@ -525,8 +549,9 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
     public void _whereBetween(String fieldName, Object start, Object end, boolean exact) {
         fieldName = ensureValidFieldName(fieldName, false);
 
-        appendOperatorIfNeeded(whereTokens);
-        negateIfNeeded(fieldName);
+        List<QueryToken> tokens = getCurrentWhereTokens();
+        appendOperatorIfNeeded(tokens);
+        negateIfNeeded(tokens, fieldName);
 
         WhereParams startParams = new WhereParams();
         startParams.setValue(start);
@@ -539,7 +564,7 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
         String fromParameterName = addQueryParameter(start == null ? "*" : transformValue(startParams, true));
         String toParameterName = addQueryParameter(start == null ? "NULL" : transformValue(endParams, true));
 
-        whereTokens.add(WhereToken.between(fieldName, fromParameterName, toParameterName, exact));
+        tokens.add(WhereToken.between(fieldName, fromParameterName, toParameterName, exact));
     }
 
     public void _whereGreaterThan(String fieldName, Object value) {
@@ -552,13 +577,14 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
     public void _whereGreaterThan(String fieldName, Object value, boolean exact) {
         fieldName = ensureValidFieldName(fieldName, false);
 
-        appendOperatorIfNeeded(whereTokens);
-        negateIfNeeded(fieldName);
+        List<QueryToken> tokens = getCurrentWhereTokens();
+        appendOperatorIfNeeded(tokens);
+        negateIfNeeded(tokens, fieldName);
         WhereParams whereParams = new WhereParams();
         whereParams.setValue(value);
         whereParams.setFieldName(fieldName);
 
-        whereTokens.add(WhereToken.greaterThan(fieldName, addQueryParameter(value == null ? "*" : transformValue(whereParams, true)), exact));
+        tokens.add(WhereToken.greaterThan(fieldName, addQueryParameter(value == null ? "*" : transformValue(whereParams, true)), exact));
     }
 
     public void _whereGreaterThanOrEqual(String fieldName, Object value) {
@@ -571,13 +597,14 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
     public void _whereGreaterThanOrEqual(String fieldName, Object value, boolean exact) {
         fieldName = ensureValidFieldName(fieldName, false);
 
-        appendOperatorIfNeeded(whereTokens);
-        negateIfNeeded(fieldName);
+        List<QueryToken> tokens = getCurrentWhereTokens();
+        appendOperatorIfNeeded(tokens);
+        negateIfNeeded(tokens, fieldName);
         WhereParams whereParams = new WhereParams();
         whereParams.setValue(value);
         whereParams.setFieldName(fieldName);
 
-        whereTokens.add(WhereToken.greaterThanOrEqual(fieldName, addQueryParameter(value == null ? "*" : transformValue(whereParams, true)), exact));
+        tokens.add(WhereToken.greaterThanOrEqual(fieldName, addQueryParameter(value == null ? "*" : transformValue(whereParams, true)), exact));
     }
 
     public void _whereLessThan(String fieldName, Object value) {
@@ -587,14 +614,15 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
     public void _whereLessThan(String fieldName, Object value, boolean exact) {
         fieldName = ensureValidFieldName(fieldName, false);
 
-        appendOperatorIfNeeded(whereTokens);
-        negateIfNeeded(fieldName);
+        List<QueryToken> tokens = getCurrentWhereTokens();
+        appendOperatorIfNeeded(tokens);
+        negateIfNeeded(tokens, fieldName);
 
         WhereParams whereParams = new WhereParams();
         whereParams.setValue(value);
         whereParams.setFieldName(fieldName);
 
-        whereTokens.add(WhereToken.lessThan(fieldName,
+        tokens.add(WhereToken.lessThan(fieldName,
                 addQueryParameter(value == null ? "NULL" : transformValue(whereParams, true)), exact));
     }
 
@@ -603,42 +631,70 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
     }
 
     public void _whereLessThanOrEqual(String fieldName, Object value, boolean exact) {
-        appendOperatorIfNeeded(whereTokens);
-        negateIfNeeded(fieldName);
+        List<QueryToken> tokens = getCurrentWhereTokens();
+        appendOperatorIfNeeded(tokens);
+        negateIfNeeded(tokens, fieldName);
 
         WhereParams whereParams = new WhereParams();
         whereParams.setValue(value);
         whereParams.setFieldName(fieldName);
 
-        whereTokens.add(WhereToken.lessThanOrEqual(fieldName,
+        tokens.add(WhereToken.lessThanOrEqual(fieldName,
                 addQueryParameter(value == null ? "NULL" : transformValue(whereParams, true)), exact));
     }
 
+    /* TODO
+    /// <summary>
+        ///   Matches fields where Regex.IsMatch(filedName, pattern)
+        /// </summary>
+        /// <param name = "fieldName">Name of the field.</param>
+        /// <param name="pattern"> The pattern to match</param>
+        public void WhereRegex(string fieldName, string pattern)
+        {
+            var tokens = GetCurrentWhereTokens();
+            AppendOperatorIfNeeded(tokens);
+            NegateIfNeeded(tokens, fieldName);
+
+            tokens.AddLast(WhereToken.Regex(fieldName, AddQueryParameter(TransformValue(new WhereParams { Value = pattern, FieldName = fieldName }))));
+        }
+
+        public void CmpXchg(string key, object value)
+        {
+            var tokens = GetCurrentWhereTokens();
+            AppendOperatorIfNeeded(tokens);
+            NegateIfNeeded(tokens, key);
+
+            tokens.AddLast(WhereToken.CmpXchg(key, AddQueryParameter(value), SearchOperator.Or));
+        }
+     */
+
     public void _andAlso() {
-        if (whereTokens.isEmpty()) {
+        List<QueryToken> tokens = getCurrentWhereTokens();
+        if (tokens.isEmpty()) {
             return;
         }
 
-        if (whereTokens.get(whereTokens.size() - 1) instanceof QueryOperatorToken) {
+        if (tokens.get(tokens.size() - 1) instanceof QueryOperatorToken) {
             throw new IllegalStateException("Cannot add AND, previous token was already an operator token.");
         }
 
-        whereTokens.add(QueryOperatorToken.AND);
+        tokens.add(QueryOperatorToken.AND);
     }
 
     /**
      * Add an OR to the query
      */
     public void _orElse() {
-        if (whereTokens.isEmpty()) {
+        List<QueryToken> tokens = getCurrentWhereTokens();
+        if (tokens.isEmpty()) {
             return;
         }
 
-        if (whereTokens.get(whereTokens.size() - 1) instanceof QueryOperatorToken) {
+        if (tokens.get(tokens.size() - 1) instanceof QueryOperatorToken) {
             throw new IllegalStateException("Cannot add OR, previous token was already an operator token.");
         }
 
-        whereTokens.add(QueryOperatorToken.OR);
+        tokens.add(QueryOperatorToken.OR);
     }
 
     /**
@@ -655,11 +711,12 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
             return;
         }
 
-        if (whereTokens.isEmpty()) {
+        List<QueryToken> tokens = getCurrentWhereTokens();
+        if (tokens.isEmpty()) {
             throw new IllegalStateException("Missing where clause");
         }
 
-        QueryToken whereToken = whereTokens.get(whereTokens.size() - 1);
+        QueryToken whereToken = tokens.get(tokens.size() - 1);
         if (!(whereToken instanceof WhereToken)) {
             throw new IllegalStateException("Missing where clause");
         }
@@ -680,11 +737,12 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
      */
     @Override
     public void _fuzzy(double fuzzy) {
-        if (whereTokens.isEmpty()) {
+        List<QueryToken> tokens = getCurrentWhereTokens();
+        if (tokens.isEmpty()) {
             throw new IllegalStateException("Missing where clause");
         }
 
-        QueryToken whereToken = whereTokens.get(whereTokens.size() - 1);
+        QueryToken whereToken = tokens.get(tokens.size() - 1);
         if (!(whereToken instanceof WhereToken)) {
             throw new IllegalStateException("Missing where clause");
         }
@@ -703,11 +761,12 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
      */
     @Override
     public void _proximity(int proximity) {
-        if (whereTokens.isEmpty()) {
+        List<QueryToken> tokens = getCurrentWhereTokens();
+        if (tokens.isEmpty()) {
             throw new IllegalStateException("Missing where clause");
         }
 
-        QueryToken whereToken = whereTokens.get(whereTokens.size() - 1);
+        QueryToken whereToken = tokens.get(tokens.size() - 1);
         if (!(whereToken instanceof WhereToken)) {
             throw new IllegalStateException("Missing where clause");
         }
@@ -857,12 +916,13 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
         boolean hasWhiteSpace = searchTerms.chars().anyMatch(x -> Character.isWhitespace(x));
         lastEquality = Tuple.create(fieldName, hasWhiteSpace ? "(" + searchTerms + ")" : searchTerms);
 
-        appendOperatorIfNeeded(whereTokens);
+        List<QueryToken> tokens = getCurrentWhereTokens();
+        appendOperatorIfNeeded(tokens);
 
         fieldName = ensureValidFieldName(fieldName, false);
-        negateIfNeeded(fieldName);
+        negateIfNeeded(tokens, fieldName);
 
-        whereTokens.add(WhereToken.search(fieldName, addQueryParameter(searchTerms), operator));
+        tokens.add(WhereToken.search(fieldName, addQueryParameter(searchTerms), operator));
     }
 
     @Override
@@ -930,12 +990,13 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
 
     @Override
     public void _intersect() {
-        if (whereTokens.size() > 0) {
-            QueryToken last = whereTokens.get(whereTokens.size() - 1);
+        List<QueryToken> tokens = getCurrentWhereTokens();
+        if (tokens.size() > 0) {
+            QueryToken last = tokens.get(tokens.size() - 1);
             if (last instanceof WhereToken || last instanceof CloseSubclauseToken) {
                 isIntersect = true;
 
-                whereTokens.add(IntersectMarkerToken.INSTANCE);
+                tokens.add(IntersectMarkerToken.INSTANCE);
                 return;
             }
         }
@@ -946,43 +1007,46 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
     public void _whereExists(String fieldName) {
         fieldName = ensureValidFieldName(fieldName, false);
 
-        appendOperatorIfNeeded(whereTokens);
-        negateIfNeeded(fieldName);
+        List<QueryToken> tokens = getCurrentWhereTokens();
+        appendOperatorIfNeeded(tokens);
+        negateIfNeeded(tokens, fieldName);
 
-        whereTokens.add(WhereToken.exists(fieldName));
+        tokens.add(WhereToken.exists(fieldName));
     }
 
     @Override
     public void _containsAny(String fieldName, Collection<Object> values) {
         fieldName = ensureValidFieldName(fieldName, false);
 
-        appendOperatorIfNeeded(whereTokens);
-        negateIfNeeded(fieldName);
+        List<QueryToken> tokens = getCurrentWhereTokens();
+        appendOperatorIfNeeded(tokens);
+        negateIfNeeded(tokens, fieldName);
 
         Collection<Object> array = transformCollection(fieldName, unpackCollection(values));
         if (array.isEmpty()) {
-            whereTokens.add(TrueToken.INSTANCE);
+            tokens.add(TrueToken.INSTANCE);
             return;
         }
 
-        whereTokens.add(WhereToken.in(fieldName, addQueryParameter(array), false));
+        tokens.add(WhereToken.in(fieldName, addQueryParameter(array), false));
     }
 
     @Override
     public void _containsAll(String fieldName, Collection<Object> values) {
         fieldName = ensureValidFieldName(fieldName, false);
 
-        appendOperatorIfNeeded(whereTokens);
-        negateIfNeeded(fieldName);
+        List<QueryToken> tokens = getCurrentWhereTokens();
+        appendOperatorIfNeeded(tokens);
+        negateIfNeeded(tokens, fieldName);
 
         Collection<Object> array = transformCollection(fieldName, unpackCollection(values));
 
         if (array.isEmpty()) {
-            whereTokens.add(TrueToken.INSTANCE);
+            tokens.add(TrueToken.INSTANCE);
             return;
         }
 
-        whereTokens.add(WhereToken.allIn(fieldName, addQueryParameter(array)));
+        tokens.add(WhereToken.allIn(fieldName, addQueryParameter(array)));
     }
 
     @Override
@@ -1031,7 +1095,7 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
                 writer.append(",");
             }
 
-            addSpaceIfNeeded(i > 0 ? selectTokens.get(i - 1) : null, token, writer);
+            DocumentQueryHelper.addSpaceIfNeeded(i > 0 ? selectTokens.get(i - 1) : null, token, writer);
 
             token.writeTo(writer);
         }
@@ -1077,7 +1141,7 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
         }
 
         for (int i = 0; i < whereTokens.size(); i++) {
-            addSpaceIfNeeded(i > 0 ? whereTokens.get(i - 1) : null, whereTokens.get(i), writer);
+            DocumentQueryHelper.addSpaceIfNeeded(i > 0 ? whereTokens.get(i - 1) : null, whereTokens.get(i), writer);
             whereTokens.get(i).writeTo(writer);
         }
 
@@ -1124,17 +1188,6 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
             token.writeTo(writer);
             isFirst = false;
         }
-    }
-
-    private static void addSpaceIfNeeded(QueryToken previousToken, QueryToken currentToken, StringBuilder writer) {
-        if (previousToken == null) {
-            return;
-        }
-
-        if (previousToken instanceof OpenSubclauseToken || currentToken instanceof CloseSubclauseToken || currentToken instanceof IntersectMarkerToken) {
-            return;
-        }
-        writer.append(" ");
     }
 
     private void appendOperatorIfNeeded(List<QueryToken> tokens) {
@@ -1186,14 +1239,14 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
         return result;
     }
 
-    private void negateIfNeeded(String fieldName) {
+    private void negateIfNeeded(List<QueryToken> tokens, String fieldName) {
         if (!negate) {
             return;
         }
 
         negate = false;
 
-        if (whereTokens.isEmpty() || whereTokens.get(whereTokens.size() - 1) instanceof OpenSubclauseToken) {
+        if (tokens.isEmpty() || tokens.get(tokens.size() - 1) instanceof OpenSubclauseToken) {
             if (fieldName != null) {
                 _whereExists(fieldName);
             } else {
@@ -1202,7 +1255,7 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
             _andAlso();
         }
 
-        whereTokens.add(NegateToken.INSTANCE);
+        tokens.add(NegateToken.INSTANCE);
     }
 
     private static Collection<Object> unpackCollection(Collection items) {
@@ -1303,6 +1356,26 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
         return parameterName;
     }
 
+    private List<QueryToken> getCurrentWhereTokens() {
+        if (!_isInMoreLikeThis) {
+            return whereTokens;
+        }
+
+        if (whereTokens.isEmpty()) {
+            throw new IllegalStateException("Cannot get MoreLikeThisToken because there are no where token specified.");
+        }
+
+        /* TODO
+          var moreLikeThisToken = WhereTokens.Last.Value as MoreLikeThisToken;
+
+            if (moreLikeThisToken == null)
+                throw new InvalidOperationException($"Last token is not '{nameof(MoreLikeThisToken)}'.");
+
+            return moreLikeThisToken.WhereTokens;
+         */
+        throw new NotImplementedException("More like this");
+    }
+
     protected void updateFieldsToFetchToken(FieldsToFetchToken fieldsToFetch) {
         this.fieldsToFetchToken = fieldsToFetch;
 
@@ -1378,17 +1451,19 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
     protected void _withinRadiusOf(String fieldName, double radius, double latitude, double longitude, SpatialUnits radiusUnits, double distErrorPercent) {
         fieldName = ensureValidFieldName(fieldName, false);
 
-        appendOperatorIfNeeded(whereTokens);
-        negateIfNeeded(fieldName);
+        List<QueryToken> tokens = getCurrentWhereTokens();
+        appendOperatorIfNeeded(tokens);
+        negateIfNeeded(tokens, fieldName);
 
-        whereTokens.add(WhereToken.within(fieldName, ShapeToken.circle(addQueryParameter(radius), addQueryParameter(latitude), addQueryParameter(longitude), radiusUnits), distErrorPercent));
+        tokens.add(WhereToken.within(fieldName, ShapeToken.circle(addQueryParameter(radius), addQueryParameter(latitude), addQueryParameter(longitude), radiusUnits), distErrorPercent));
     }
 
     protected void _spatial(String fieldName, String shapeWKT, SpatialRelation relation, double distErrorPercent) {
         fieldName = ensureValidFieldName(fieldName, false);
 
-        appendOperatorIfNeeded(whereTokens);
-        negateIfNeeded(fieldName);
+        List<QueryToken> tokens = getCurrentWhereTokens();
+        appendOperatorIfNeeded(tokens);
+        negateIfNeeded(tokens, fieldName);
 
         ShapeToken wktToken = ShapeToken.wkt(addQueryParameter(shapeWKT));
 
@@ -1410,25 +1485,27 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
                 throw new IllegalArgumentException();
         }
 
-        whereTokens.add(relationToken);
+        tokens.add(relationToken);
     }
 
     @Override
     public void _spatial(SpatialDynamicField dynamicField, SpatialCriteria criteria) {
-        appendOperatorIfNeeded(whereTokens);
-        negateIfNeeded(null);
+        List<QueryToken> tokens = getCurrentWhereTokens();
+        appendOperatorIfNeeded(tokens);
+        negateIfNeeded(tokens, null);
 
-        whereTokens.add(criteria.toQueryToken(dynamicField.toField(this::ensureValidFieldName), this::addQueryParameter));
+        tokens.add(criteria.toQueryToken(dynamicField.toField(this::ensureValidFieldName), this::addQueryParameter));
     }
 
     @Override
     public void _spatial(String fieldName, SpatialCriteria criteria) {
         fieldName = ensureValidFieldName(fieldName, false);
 
-        appendOperatorIfNeeded(whereTokens);
-        negateIfNeeded(fieldName);
+        List<QueryToken> tokens = getCurrentWhereTokens();
+        appendOperatorIfNeeded(tokens);
+        negateIfNeeded(tokens, fieldName);
 
-        whereTokens.add(criteria.toQueryToken(fieldName, this::addQueryParameter));
+        tokens.add(criteria.toQueryToken(fieldName, this::addQueryParameter));
     }
 
     @Override

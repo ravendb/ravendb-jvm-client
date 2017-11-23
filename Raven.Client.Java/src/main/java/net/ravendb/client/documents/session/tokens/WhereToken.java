@@ -197,6 +197,15 @@ public class WhereToken extends QueryToken {
         return token;
     }
 
+    public static WhereToken cmpXchg(String fieldName, String parameterName, SearchOperator op) {
+        WhereToken token = new WhereToken();
+        token.fieldName = fieldName;
+        token.parameterName = parameterName;
+        token.whereOperator = WhereOperator.CMP_X_CHG_MATCH;
+        token.searchOperator = op;
+        return token;
+    }
+
     public static WhereToken lucene(String fieldName, String parameterName) {
         WhereToken token = new WhereToken();
         token.fieldName = fieldName;
@@ -253,6 +262,21 @@ public class WhereToken extends QueryToken {
         return token;
     }
 
+    public static QueryToken regex(String fieldName, String parameterName) {
+        WhereToken token = new WhereToken();
+        token.fieldName = fieldName;
+        token.parameterName = parameterName;
+        token.whereOperator = WhereOperator.REGEX;
+        return token;
+    }
+
+    public void addAlias(String alias) {
+        if ("id()".equals(fieldName)) {
+            return;
+        }
+        fieldName = alias + "." + fieldName;
+    }
+
     @Override
     public void writeTo(StringBuilder writer) {
         if (boost != null) {
@@ -299,6 +323,11 @@ public class WhereToken extends QueryToken {
             case INTERSECTS:
                 writer.append("intersects(");
                 break;
+            case REGEX:
+                writer.append("regex(");
+                break;
+            case CMP_X_CHG_MATCH:
+                writer.append("cmpxchg.match(");
         }
 
         writeField(writer, fieldName);
@@ -363,9 +392,16 @@ public class WhereToken extends QueryToken {
                 }
                 writer.append(")");
                 break;
+            case CMP_X_CHG_MATCH:
+                writer
+                        .append(", $")
+                        .append(parameterName)
+                        .append(")");
+                break;
             case LUCENE:
             case STARTS_WITH:
             case ENDS_WITH:
+            case REGEX:
                 writer
                         .append(", $")
                         .append(parameterName)
