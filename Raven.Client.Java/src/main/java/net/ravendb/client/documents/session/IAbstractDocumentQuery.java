@@ -1,6 +1,7 @@
 package net.ravendb.client.documents.session;
 
 import net.ravendb.client.documents.conventions.DocumentConventions;
+import net.ravendb.client.documents.queries.GroupByMethod;
 import net.ravendb.client.documents.queries.SearchOperator;
 import net.ravendb.client.documents.queries.spatial.SpatialCriteria;
 import net.ravendb.client.documents.queries.spatial.SpatialDynamicField;
@@ -303,6 +304,8 @@ public interface IAbstractDocumentQuery<T> {
     void _containsAll(String fieldName, Collection<Object> values);
 
     void _groupBy(String fieldName, String... fieldNames);
+
+    void _groupBy(Tuple<String, GroupByMethod> field, Tuple<String, GroupByMethod>... fields);
 
     void _groupByKey(String fieldName);
 

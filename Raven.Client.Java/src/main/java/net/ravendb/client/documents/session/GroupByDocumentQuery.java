@@ -10,12 +10,17 @@ public class GroupByDocumentQuery<T> implements IGroupByDocumentQuery<T> {
 
     @Override
     public IGroupByDocumentQuery<T> selectKey() {
-        return selectKey(null);
+        return selectKey(null, null);
     }
 
     @Override
-    public IGroupByDocumentQuery<T> selectKey(String projectedName) {
-        _query._groupByKey(null, projectedName);
+    public IGroupByDocumentQuery<T> selectKey(String fieldName) {
+        return selectKey(fieldName, null);
+    }
+
+    @Override
+    public IGroupByDocumentQuery<T> selectKey(String fieldName, String projectedName) {
+        _query._groupByKey(fieldName, projectedName);
         return this;
     }
 

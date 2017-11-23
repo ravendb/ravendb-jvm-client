@@ -3,7 +3,8 @@ package net.ravendb.client.documents.session;
 public interface IGroupByDocumentQuery<T> {
 
     IGroupByDocumentQuery<T> selectKey();
-    IGroupByDocumentQuery<T> selectKey(String projectedName);
+    IGroupByDocumentQuery<T> selectKey(String fieldName);
+    IGroupByDocumentQuery<T> selectKey(String fieldName, String projectedName);
 
     IDocumentQuery<T> selectSum(GroupByField field, GroupByField... fields);
 

@@ -763,9 +763,19 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
 
             entity.getValue().setDocument(document);
 
-            String changeVector = useOptimisticConcurrency && entity.getValue().getConcurrencyCheckMode() != ConcurrencyCheckMode.DISABLED
-                    || entity.getValue().getConcurrencyCheckMode() == ConcurrencyCheckMode.FORCED
-                    ? entity.getValue().getChangeVector() : null;
+            String changeVector;
+            if (useOptimisticConcurrency) {
+                if (entity.getValue().getConcurrencyCheckMode() != ConcurrencyCheckMode.DISABLED) {
+                    // if the user didn't provide a change vector, we'll test for an empty one
+                    changeVector = Lang.coalesce(entity.getValue().getChangeVector(), "");
+                } else {
+                    changeVector = null;
+                }
+            } else if (entity.getValue().getConcurrencyCheckMode() == ConcurrencyCheckMode.FORCED) {
+                changeVector = entity.getValue().getChangeVector();
+            } else {
+                changeVector = null;
+            }
 
             result.getSessionCommands().add(new PutCommandDataWithJson(entity.getValue().getId(), changeVector, document));
         }

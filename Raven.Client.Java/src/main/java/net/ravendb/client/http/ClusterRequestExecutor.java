@@ -145,6 +145,10 @@ public class ClusterRequestExecutor extends RequestExecutor {
         return CompletableFuture.completedFuture(null);
     }
 
+    protected void throwExceptions(String details) {
+        throw new IllegalStateException("Failed to retrieve cluster topology from all known nodes" + System.lineSeparator() + details);
+    }
+
     @Override
     public void close() {
         try {

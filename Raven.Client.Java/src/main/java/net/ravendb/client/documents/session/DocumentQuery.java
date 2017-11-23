@@ -4,16 +4,14 @@ import com.google.common.base.Defaults;
 import net.ravendb.client.Constants;
 import net.ravendb.client.documents.indexes.spatial.SpatialRelation;
 import net.ravendb.client.documents.indexes.spatial.SpatialUnits;
-import net.ravendb.client.documents.queries.IndexQuery;
-import net.ravendb.client.documents.queries.QueryOperator;
-import net.ravendb.client.documents.queries.QueryResult;
-import net.ravendb.client.documents.queries.SearchOperator;
+import net.ravendb.client.documents.queries.*;
 import net.ravendb.client.documents.queries.spatial.SpatialCriteria;
 import net.ravendb.client.documents.queries.spatial.SpatialCriteriaFactory;
 import net.ravendb.client.documents.queries.spatial.SpatialDynamicField;
 import net.ravendb.client.documents.session.tokens.DeclareToken;
 import net.ravendb.client.documents.session.tokens.LoadToken;
 import net.ravendb.client.primitives.Reference;
+import net.ravendb.client.primitives.Tuple;
 
 import java.time.Duration;
 import java.util.Collection;
@@ -146,6 +144,8 @@ public class DocumentQuery<T> extends AbstractDocumentQuery<T, DocumentQuery<T>>
     }
 
     //TBD public IDocumentQuery<T> Search<TValue>(Expression<Func<T, TValue>> propertySelector, string searchTerms, SearchOperator @operator)
+
+    //TBD IDocumentQuery<T> IFilterDocumentQueryBase<T, IDocumentQuery<T>>.CmpXchg(string key, T value)
 
     @Override
     public IDocumentQuery<T> intersect() {
@@ -413,6 +413,13 @@ public class DocumentQuery<T> extends AbstractDocumentQuery<T, DocumentQuery<T>>
     @Override
     public IGroupByDocumentQuery<T> groupBy(String fieldName, String... fieldNames) {
         _groupBy(fieldName, fieldNames);
+
+        return new GroupByDocumentQuery<>(this);
+    }
+
+    @Override
+    public IGroupByDocumentQuery<T> groupBy(Tuple<String, GroupByMethod> field, Tuple<String, GroupByMethod>... fields) {
+        _groupBy(field, fields);
 
         return new GroupByDocumentQuery<>(this);
     }

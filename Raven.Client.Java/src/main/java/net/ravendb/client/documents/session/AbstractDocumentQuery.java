@@ -24,6 +24,7 @@ import java.lang.reflect.Field;
 import java.time.Duration;
 import java.util.*;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
 /**
@@ -270,6 +271,15 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
 
     @Override
     public void _groupBy(String fieldName, String... fieldNames) {
+        List<Tuple<String, GroupByMethod>> mapping = Arrays.stream(fieldNames)
+                .map(x -> (Tuple<String, GroupByMethod>)Tuple.create(x, GroupByMethod.NONE))
+                .collect(Collectors.toList());
+
+        _groupBy(Tuple.create(fieldName, GroupByMethod.NONE), mapping.toArray(new Tuple[0]));
+    }
+
+    @Override
+    public void _groupBy(Tuple<String, GroupByMethod> field, Tuple<String, GroupByMethod>... fields) {
         if (!fromToken.isDynamic()) {
             throw new IllegalStateException("GroupBy only works with dynamic queries");
         }
@@ -277,17 +287,17 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
         assertNoRawQuery();
         isGroupBy = true;
 
-        fieldName = ensureValidFieldName(fieldName, false);
+        String fieldName = ensureValidFieldName(field.first, false);
 
-        groupByTokens.add(GroupByToken.create(fieldName));
+        groupByTokens.add(GroupByToken.create(fieldName, field.second));
 
-        if (fieldNames == null || fieldNames.length <= 0) {
+        if (fields == null || fields.length <= 0) {
             return;
         }
 
-        for (String name : fieldNames) {
-            fieldName = ensureValidFieldName(name, false);
-            groupByTokens.add(GroupByToken.create(fieldName));
+        for (Tuple<String, GroupByMethod> item : fields) {
+            fieldName = ensureValidFieldName(item.first, false);
+            groupByTokens.add(GroupByToken.create(fieldName, item.second));
         }
     }
 
@@ -306,6 +316,9 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
             if (fieldName == null || fieldName.equalsIgnoreCase(projectedName)) {
                 fieldName = aliasedFieldName;
             }
+        } else if (fieldName != null && _aliasToGroupByFieldName.containsValue(fieldName)) {
+            String aliasedFieldName = _aliasToGroupByFieldName.get(fieldName);
+            fieldName = aliasedFieldName;
         }
 
         selectTokens.add(GroupByKeyToken.create(fieldName, projectedName));

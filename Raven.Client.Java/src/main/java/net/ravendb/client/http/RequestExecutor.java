@@ -440,8 +440,12 @@ public class RequestExecutor implements CleanCloseable {
 
             _lastKnownUrls = initialUrls;
             String details = list.stream().map(x -> x.first + " -> " + Optional.ofNullable(x.second).map(m -> m.getMessage()).orElse("")).collect(Collectors.joining(", "));
-            throw new IllegalStateException("Failed to retrieve cluster topology from all known nodes" + System.lineSeparator() + details);
+            throwExceptions(details);
         });
+    }
+
+    protected void throwExceptions(String details) {
+        throw new IllegalStateException("Failed to retrieve database topology from all known nodes" + System.lineSeparator() + details);
     }
 
     protected static String[] validateUrls(String[] initialUrls) { //TBD: certificate
@@ -1051,7 +1055,7 @@ public class RequestExecutor implements CleanCloseable {
     }
 
     private void ensureNodeSelector() {
-        if (!_firstTopologyUpdate.isDone()) {
+        if (_firstTopologyUpdate != null && !_firstTopologyUpdate.isDone()) {
             ExceptionsUtils.accept(() -> _firstTopologyUpdate.get());
         }
 

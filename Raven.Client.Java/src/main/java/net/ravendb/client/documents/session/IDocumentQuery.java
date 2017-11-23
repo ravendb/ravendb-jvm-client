@@ -1,9 +1,11 @@
 package net.ravendb.client.documents.session;
 
+import net.ravendb.client.documents.queries.GroupByMethod;
 import net.ravendb.client.documents.queries.QueryResult;
 import net.ravendb.client.documents.queries.spatial.SpatialCriteria;
 import net.ravendb.client.documents.queries.spatial.SpatialCriteriaFactory;
 import net.ravendb.client.documents.queries.spatial.SpatialDynamicField;
+import net.ravendb.client.primitives.Tuple;
 
 import java.util.function.Function;
 
@@ -63,32 +65,21 @@ public interface IDocumentQuery<T> extends IDocumentQueryBase<T, IDocumentQuery<
     /* TODO
 
         /// <summary>
-        /// Get the facets as per the specified facet document with the given start and pageSize
-        /// </summary>
-        FacetedQueryResult GetFacets(string facetSetupDoc, int start, int? pageSize);
-
-        /// <summary>
-        /// Get the facet results as per the specified facets with the given start and pageSize
-        /// </summary>
-        FacetedQueryResult GetFacets(List<Facet> facets, int start, int? pageSize);
-
-        /// <summary>
-        ///     Get the facets lazily as per the specified doc with the given start and pageSize
-        /// </summary>
-        Lazy<FacetedQueryResult> GetFacetsLazy(string facetSetupDoc, int facetStart, int? facetPageSize);
-
-        /// <summary>
-        ///     Get the facets lazily as per the specified doc with the given start and pageSize
-        /// </summary>
-        Lazy<FacetedQueryResult> GetFacetsLazy(List<Facet> facets, int facetStart, int? facetPageSize);
-
-
-        /// <summary>
         /// Changes the return type of the query
         /// </summary>
         IDocumentQuery<TResult> OfType<TResult>();
      */
 
     IGroupByDocumentQuery<T> groupBy(String fieldName, String... fieldNames);
+
+    IGroupByDocumentQuery<T> groupBy(Tuple<String, GroupByMethod> field, Tuple<String, GroupByMethod>... fields);
+
+    //TBD IDocumentQuery<T> MoreLikeThis(MoreLikeThisOptions options = null);
+    //TBD IDocumentQuery<T> MoreLikeThis(string document, MoreLikeThisOptions options = null);
+    //TBD IDocumentQuery<T> MoreLikeThis(Action<IFilterDocumentQueryBase<T, IDocumentQuery<T>>> predicate, MoreLikeThisOptions options = null);
+    //TBD IAggregationDocumentQuery<T> AggregateBy(Action<IFacetFactory<T>> factory = null);
+    //TBD IAggregationDocumentQuery<T> AggregateBy(FacetBase facet);
+    //TBD IAggregationDocumentQuery<T> AggregateBy(IEnumerable<Facet> facets);
+    //TBD IAggregationDocumentQuery<T> AggregateUsing(string facetSetupDocumentKey);
 
 }

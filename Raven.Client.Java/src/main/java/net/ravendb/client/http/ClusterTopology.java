@@ -27,6 +27,10 @@ public class ClusterTopology {
     }
 
     public String getUrlFromTag(String tag) {
+        if (tag == null) {
+            return null;
+        }
+
         if (members != null && members.containsKey(tag)) {
             return members.get(tag);
         }
