@@ -10,7 +10,6 @@ import net.ravendb.client.primitives.Reference;
 import net.ravendb.client.util.UrlUtils;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpRequestBase;
-import org.apache.http.client.utils.URIUtils;
 
 import java.io.IOException;
 

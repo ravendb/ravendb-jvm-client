@@ -3,6 +3,7 @@ package net.ravendb.client.documents.operations.indexes;
 import net.ravendb.client.documents.conventions.DocumentConventions;
 import net.ravendb.client.documents.indexes.IndexStats;
 import net.ravendb.client.documents.operations.IAdminOperation;
+import net.ravendb.client.documents.operations.ResultsResponse;
 import net.ravendb.client.http.RavenCommand;
 import net.ravendb.client.http.ServerNode;
 import net.ravendb.client.primitives.Reference;
@@ -35,7 +36,7 @@ public class GetIndexesStatisticsOperation implements IAdminOperation<IndexStats
                 throwInvalidResponse();
             }
 
-            result = mapper.readValue(response, resultClass);
+            result = mapper.readValue(response, ResultsResponse.GetIndexStatisticsResponse.class).getResults();
         }
 
         @Override

@@ -5,6 +5,7 @@ import net.ravendb.client.documents.operations.IAdminOperation;
 import net.ravendb.client.documents.queries.TermsQueryResult;
 import net.ravendb.client.http.RavenCommand;
 import net.ravendb.client.http.ServerNode;
+import net.ravendb.client.primitives.Lang;
 import net.ravendb.client.primitives.Reference;
 import net.ravendb.client.util.UrlUtils;
 import org.apache.http.client.methods.HttpGet;
@@ -73,7 +74,7 @@ public class GetTermsOperation implements IAdminOperation<String[]> {
         public HttpRequestBase createRequest(ServerNode node, Reference<String> url) {
             url.value = node.getUrl() + "/databases/" + node.getDatabase() + "/indexes/terms?name=" +
                     UrlUtils.escapeDataString(_indexName) + "&field=" + UrlUtils.escapeDataString(_field) +
-                    "&fromValue=" + _fromValue + "&pageSize=" + _pageSize;
+                    "&fromValue=" + Lang.coalesce(_fromValue, "") + "&pageSize=" + Lang.coalesce(_pageSize, "");
 
             return new HttpGet();
         }
