@@ -359,7 +359,7 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
         tokens.add(TrueToken.INSTANCE);
     }
 
-    /* TODO
+    /* TBD
      public MoreLikeThisScope _moreLikeThis()
         {
             AppendOperatorIfNeeded(WhereTokens);
@@ -1378,7 +1378,7 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
             throw new IllegalStateException("Cannot get MoreLikeThisToken because there are no where token specified.");
         }
 
-        /* TODO
+        /* TBD
           var moreLikeThisToken = WhereTokens.Last.Value as MoreLikeThisToken;
 
             if (moreLikeThisToken == null)
@@ -1543,10 +1543,9 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
         if (queryOperation != null) {
             return;
         }
-        /* TODO
-            var beforeQueryExecutedEventArgs = new BeforeQueryExecutedEventArgs(TheSession, this);
-            TheSession.OnBeforeQueryExecutedInvoke(beforeQueryExecutedEventArgs);
-            */
+
+        BeforeQueryExecutedEventArgs beforeQueryExecutedEventArgs = new BeforeQueryExecutedEventArgs(theSession);
+        theSession.onBeforeQueryExecutedInvoke(beforeQueryExecutedEventArgs);
 
         queryOperation = initializeQueryOperation();
         executeActualQuery();

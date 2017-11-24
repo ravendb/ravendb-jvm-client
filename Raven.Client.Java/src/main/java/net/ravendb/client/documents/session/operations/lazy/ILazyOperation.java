@@ -2,7 +2,7 @@ package net.ravendb.client.documents.session.operations.lazy;
 
 public interface ILazyOperation {
 
-    /* TODO
+    /* TBD
      GetRequest CreateRequest(JsonOperationContext ctx);
         object Result { get; }
         QueryResult QueryResult { get; }

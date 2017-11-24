@@ -9,13 +9,13 @@ public interface IAdvancedSessionOperations extends IAdvancedDocumentSessionOper
     /**
      *  Access the eager operations
      */
-    IEagerSessionOperations eagerly();
+    //TBD IEagerSessionOperations eagerly();
 
     /**
      *  Access the lazy operations
      * @return
      */
-    ILazySessionOperations lazily();
+    //TBD ILazySessionOperations lazily();
 
     /**
      * Updates entity with latest changes from server
@@ -73,23 +73,13 @@ public interface IAdvancedSessionOperations extends IAdvancedDocumentSessionOper
         ///     null)
         /// </param>
         void LoadStartingWithIntoStream(string idPrefix, Stream output, string matches = null, int start = 0, int pageSize = 25, string exclude = null, string startAfter = null);
-
-        /// <summary>
-        ///     Loads the specified entities with the specified ids directly into a given stream.
-        /// </summary>
-        /// <param name="ids">Enumerable of the Ids of the documents that should be loaded</param>
-        /// <param name="output">the stream that will contain the load results</param>
-        void LoadIntoStream(IEnumerable<string> ids, Stream output);
-
-          List<T> MoreLikeThis<T, TIndexCreator>(string documentId) where TIndexCreator : AbstractIndexCreationTask, new();
-
-        List<T> MoreLikeThis<T, TIndexCreator>(MoreLikeThisQuery query) where TIndexCreator : AbstractIndexCreationTask, new();
-
-        List<T> MoreLikeThis<T>(string index, string documentId);
-
-        List<T> MoreLikeThis<T>(MoreLikeThisQuery query);
-
 */
+
+    //TBD void LoadIntoStream(IEnumerable<string> ids, Stream output);
+    //TBD List<T> MoreLikeThis<T, TIndexCreator>(string documentId) where TIndexCreator : AbstractIndexCreationTask, new();
+    //TBD List<T> MoreLikeThis<T, TIndexCreator>(MoreLikeThisQuery query) where TIndexCreator : AbstractIndexCreationTask, new();
+    //TBD List<T> MoreLikeThis<T>(string index, string documentId);
+    //TBD List<T> MoreLikeThis<T>(MoreLikeThisQuery query);
     //TBD patch API void Increment<T, U>(T entity, Expression<Func<T, U>> path, U valToAdd);
     //TBD patch API void Increment<T, U>(string id, Expression<Func<T, U>> path, U valToAdd);
     //TBD patch API void Patch<T, U>(string id, Expression<Func<T, U>> path, U value);

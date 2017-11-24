@@ -4,7 +4,7 @@ package net.ravendb.client.documents.session.operations.lazy;
  * Specify interface for lazy operation for the session
  */
 public interface ILazySessionOperations {
-    /* TODO:
+    /* TBD:
      /// <summary>
         ///     Begin a load while including the specified path
         /// </summary>

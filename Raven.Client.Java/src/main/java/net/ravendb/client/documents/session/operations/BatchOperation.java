@@ -82,7 +82,7 @@ public class BatchOperation {
             documentInfo.setId(id);
             documentInfo.setChangeVector(changeVector);
             documentInfo.getDocument().set(Constants.Documents.Metadata.KEY, documentInfo.getMetadata());
-            //TODO: documentInfo.MetadataInstance = null;
+            documentInfo.setMetadataInstance(null);
 
             _session.documentsById.add(documentInfo);
             _session.getGenerateEntityIdOnTheClient().trySetIdentity(entity, id);

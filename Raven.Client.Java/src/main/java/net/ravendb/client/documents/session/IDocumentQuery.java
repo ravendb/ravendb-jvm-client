@@ -63,7 +63,6 @@ public interface IDocumentQuery<T> extends IDocumentQueryBase<T, IDocumentQuery<
     //TBD IDocumentQuery<T> spatial(Function<SpatialDynamicFieldFactory<T>, SpatialDynamicField> field, Function<SpatialCriteriaFactory, SpatialCriteria> clause);
 
     /* TODO
-
         /// <summary>
         /// Changes the return type of the query
         /// </summary>

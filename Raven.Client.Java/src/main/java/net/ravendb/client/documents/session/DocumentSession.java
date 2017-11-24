@@ -35,18 +35,21 @@ public class DocumentSession extends InMemoryDocumentSessionOperations implement
     /**
      * Access the lazy operations
      */
+    /* TBD
     @Override
     public ILazySessionOperations lazily() {
-        return this; //TODO: return LazySessionOperations here - see old client!
-    }
+        return this; //TBD  return LazySessionOperations here - see old client!
+    }*/
 
     /**
      * Access the eager operations
      */
+    /* TBD
     @Override
     public IEagerSessionOperations eagerly() {
         return this;
     }
+    */
 
     /**
      * Initializes new DocumentSession
@@ -200,134 +203,18 @@ public class DocumentSession extends InMemoryDocumentSessionOperations implement
         return new MultiLoaderWithInclude(this).include(path);
     }
 
-    /* TODO
-
-
-         /// <summary>
-        /// Begin a load while including the specified path
-        /// </summary>
-        /// <param name="path">The path.</param>
-        ILazyLoaderWithInclude<T> ILazySessionOperations.Include<T>(Expression<Func<T, string>> path)
-        {
-            return new LazyMultiLoaderWithInclude<T>(this).Include(path);
-        }
-
-        /// <summary>
-        /// Begin a load while including the specified path
-        /// </summary>
-        /// <param name="path">The path.</param>
-        ILazyLoaderWithInclude<T> ILazySessionOperations.Include<T>(Expression<Func<T, IEnumerable<string>>> path)
-        {
-            return new LazyMultiLoaderWithInclude<T>(this).Include(path);
-        }
-
-        /// <summary>
-        /// Loads the specified ids.
-        /// </summary>
-        Lazy<Dictionary<string, T>> ILazySessionOperations.Load<T>(IEnumerable<string> ids)
-        {
-            return Lazily.Load<T>(ids, null);
-        }
-
-        /// <summary>
-        /// Loads the specified ids and a function to call when it is evaluated
-        /// </summary>
-        Lazy<Dictionary<string, T>> ILazySessionOperations.Load<T>(IEnumerable<string> ids, Action<Dictionary<string, T>> onEval)
-        {
-            return LazyLoadInternal(ids.ToArray(), new string[0], onEval);
-        }
-
-        /// <summary>
-        /// Loads the specified id.
-        /// </summary>
-        /// <typeparam name="T"></typeparam>
-        /// <param name="id">The id.</param>
-        /// <returns></returns>
-        Lazy<T> ILazySessionOperations.Load<T>(string id)
-        {
-            return Lazily.Load(id, (Action<T>)null);
-        }
-
-        /// <summary>
-        /// Loads the specified id and a function to call when it is evaluated
-        /// </summary>
-        Lazy<T> ILazySessionOperations.Load<T>(string id, Action<T> onEval)
-        {
-            if (IsLoaded(id))
-                return new Lazy<T>(() => Load<T>(id));
-            //TODO - DisableAllCaching
-            var lazyLoadOperation = new LazyLoadOperation<T>(this, new LoadOperation(this).ById(id)).ById(id);
-            return AddLazyOperation(lazyLoadOperation, onEval);
-        }
-
-        internal Lazy<T> AddLazyOperation<T>(ILazyOperation operation, Action<T> onEval)
-        {
-            PendingLazyOperations.Add(operation);
-            var lazyValue = new Lazy<T>(() =>
-            {
-                ExecuteAllPendingLazyOperations();
-                return GetOperationResult<T>(operation.Result);
-            });
-
-            if (onEval != null)
-                OnEvaluateLazy[operation] = theResult => onEval(GetOperationResult<T>(theResult));
-
-            return lazyValue;
-        }
-
-        Lazy<Dictionary<string, TResult>> ILazySessionOperations.LoadStartingWith<TResult>(string idPrefix, string matches, int start, int pageSize, string exclude, string startAfter)
-        {
-            var operation = new LazyStartsWithOperation<TResult>(idPrefix, matches, exclude, start, pageSize, this, startAfter);
-
-            return AddLazyOperation<Dictionary<string, TResult>>(operation, null);
-        }
-
-        Lazy<List<TResult>> ILazySessionOperations.MoreLikeThis<TResult>(MoreLikeThisQuery query)
-        {
-            //TODO - DisableAllCaching
-            var lazyOp = new LazyMoreLikeThisOperation<TResult>(this, query);
-            return AddLazyOperation<List<TResult>>(lazyOp, null);
-        }
-
-        /// <summary>
-        /// Begin a load while including the specified path
-        /// </summary>
-        /// <param name="path">The path.</param>
-        ILazyLoaderWithInclude<object> ILazySessionOperations.Include(string path)
-        {
-            return new LazyMultiLoaderWithInclude<object>(this).Include(path);
-        }
-
-        /// <summary>
-        /// Register to lazily load documents and include
-        /// </summary>
-        public Lazy<Dictionary<string, T>> LazyLoadInternal<T>(string[] ids, string[] includes, Action<Dictionary<string, T>> onEval)
-        {
-            if (CheckIfIdAlreadyIncluded(ids, includes))
-            {
-                return new Lazy<Dictionary<string, T>>(() => ids.ToDictionary(x => x, Load<T>));
-            }
-            var loadOperation = new LoadOperation(this)
-                .ByIds(ids)
-                .WithIncludes(includes);
-
-            var lazyOp = new LazyLoadOperation<T>(this, loadOperation).ByIds(ids).WithIncludes(includes);
-            return AddLazyOperation(lazyOp, onEval);
-        }
-
-        internal Lazy<int> AddLazyCountOperation(ILazyOperation operation)
-        {
-            PendingLazyOperations.Add(operation);
-            var lazyValue = new Lazy<int>(() =>
-            {
-                ExecuteAllPendingLazyOperations();
-                return operation.QueryResult.TotalResults;
-            });
-
-            return lazyValue;
-        }
-
-    */
+    //TBD ILazyLoaderWithInclude<T> ILazySessionOperations.Include<T>(Expression<Func<T, string>> path)
+    //TBD ILazyLoaderWithInclude<T> ILazySessionOperations.Include<T>(Expression<Func<T, IEnumerable<string>>> path)
+    //TBD Lazy<Dictionary<string, T>> ILazySessionOperations.Load<T>(IEnumerable<string> ids)
+    //TBD Lazy<Dictionary<string, T>> ILazySessionOperations.Load<T>(IEnumerable<string> ids, Action<Dictionary<string, T>> onEval)
+    //TBD Lazy<T> ILazySessionOperations.Load<T>(string id)
+    //TBD Lazy<T> ILazySessionOperations.Load<T>(string id, Action<T> onEval)
+    //TBD internal Lazy<T> AddLazyOperation<T>(ILazyOperation operation, Action<T> onEval)
+    //TBD Lazy<Dictionary<string, TResult>> ILazySessionOperations.LoadStartingWith<TResult>(string idPrefix, string matches, int start, int pageSize, string exclude, string startAfter)
+    //TBD Lazy<List<TResult>> ILazySessionOperations.MoreLikeThis<TResult>(MoreLikeThisQuery query)
+    //TBD ILazyLoaderWithInclude<object> ILazySessionOperations.Include(string path)
+    //TBD public Lazy<Dictionary<string, T>> LazyLoadInternal<T>(string[] ids, string[] includes, Action<Dictionary<string, T>> onEval)
+    //TBD internal Lazy<int> AddLazyCountOperation(ILazyOperation operation)
 
     @Override
     public <T> T load(Class<T> clazz, String id) {
@@ -378,7 +265,7 @@ public class DocumentSession extends InMemoryDocumentSessionOperations implement
                     operation.SetResult(command.Result);
              */
 
-            operation.setResult(command.getResult()); //TODO: delete me after impl stream
+            operation.setResult(command.getResult()); //TBD: delete me after impl stream
         }
 
     }
@@ -397,7 +284,7 @@ public class DocumentSession extends InMemoryDocumentSessionOperations implement
         return loadOperation.getDocuments(clazz);
     }
 
-    /*
+    /* TODO
 
         public T[] LoadStartingWith<T>(string idPrefix, string matches = null, int start = 0, int pageSize = 25, string exclude = null,
             string startAfter = null)
@@ -433,57 +320,14 @@ public class DocumentSession extends InMemoryDocumentSessionOperations implement
 
             return command;
         }
+        */
+    //TBD public void LoadIntoStream(IEnumerable<string> ids, Stream output)
+    //TBD public List<T> MoreLikeThis<T, TIndexCreator>(string documentId) where TIndexCreator : AbstractIndexCreationTask, new()
+    //TBD public List<T> MoreLikeThis<T, TIndexCreator>(MoreLikeThisQuery query) where TIndexCreator : AbstractIndexCreationTask, new()
+    //TBD public List<T> MoreLikeThis<T>(string index, string documentId)
+    //TBD public List<T> MoreLikeThis<T>(MoreLikeThisQuery query)
 
-        public void LoadIntoStream(IEnumerable<string> ids, Stream output)
-        {
-            LoadInternal(ids.ToArray(), new LoadOperation(this), output);
-        }
-
-          public List<T> MoreLikeThis<T, TIndexCreator>(string documentId) where TIndexCreator : AbstractIndexCreationTask, new()
-        {
-            if (documentId == null)
-                throw new ArgumentNullException(nameof(documentId));
-
-            var index = new TIndexCreator();
-            return MoreLikeThis<T>(new MoreLikeThisQuery { Query = CreateQuery(index.IndexName), DocumentId = documentId });
-        }
-
-        public List<T> MoreLikeThis<T, TIndexCreator>(MoreLikeThisQuery query) where TIndexCreator : AbstractIndexCreationTask, new()
-        {
-            if (query == null)
-                throw new ArgumentNullException(nameof(query));
-
-            var index = new TIndexCreator();
-            query.Query = CreateQuery(index.IndexName);
-
-            return MoreLikeThis<T>(query);
-        }
-
-        public List<T> MoreLikeThis<T>(string index, string documentId)
-        {
-            if (index == null) throw new ArgumentNullException(nameof(index));
-            if (documentId == null)
-                throw new ArgumentNullException(nameof(documentId));
-
-            return MoreLikeThis<T>(new MoreLikeThisQuery { Query = CreateQuery(index), DocumentId = documentId });
-        }
-
-        public List<T> MoreLikeThis<T>(MoreLikeThisQuery query)
-        {
-            if (query == null)
-                throw new ArgumentNullException(nameof(query));
-
-            var operation = new MoreLikeThisOperation(this, query);
-
-            var command = operation.CreateRequest();
-            RequestExecutor.Execute(command, Context, sessionInfo: SessionInfo);
-
-            var result = command.Result;
-            operation.SetResult(result);
-
-            return operation.Complete<T>();
-        }
-
+    /* TODO
         private static string CreateQuery(string indexName)
         {
             var fromToken = FromToken.Create(indexName, null);
@@ -493,7 +337,6 @@ public class DocumentSession extends InMemoryDocumentSessionOperations implement
 
             return sb.ToString();
         }
-
 
         private int _valsCount;
         private int _customCount;

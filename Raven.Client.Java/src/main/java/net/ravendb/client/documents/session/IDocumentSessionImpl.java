@@ -12,5 +12,5 @@ public interface IDocumentSessionImpl extends IDocumentSession, ILazySessionOper
 
     <T> Map<String, T> loadInternal(Class<T> clazz, String[] ids, String[] includes);
 
-    //TODO: Lazy<Dictionary<string, T>> LazyLoadInternal<T>(string[] ids, string[] includes, Action<Dictionary<string, T>> onEval);
+    //TBD: Lazy<Dictionary<string, T>> LazyLoadInternal<T>(string[] ids, string[] includes, Action<Dictionary<string, T>> onEval);
 }

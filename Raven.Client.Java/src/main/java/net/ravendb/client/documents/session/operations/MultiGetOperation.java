@@ -1,5 +1,5 @@
 package net.ravendb.client.documents.session.operations;
 
 public class MultiGetOperation {
-    //TODO:
+    //TBD: used in lazy execution
 }

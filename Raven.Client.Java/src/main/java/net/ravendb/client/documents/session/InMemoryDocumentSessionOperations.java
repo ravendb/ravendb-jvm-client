@@ -704,8 +704,8 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
                     changeVector = documentInfo.getChangeVector();
 
                     if (documentInfo.getEntity() != null) {
-                        // TODO var afterStoreEventArgs = new AfterStoreEventArgs(this, documentInfo.Id, documentInfo.Entity);
-                        //TODO: OnAfterStore?.Invoke(this, afterStoreEventArgs);
+                        AfterStoreEventArgs afterStoreEventArgs = new AfterStoreEventArgs(this, documentInfo.getId(), documentInfo.getEntity());
+                        EventHelper.invoke(onAfterStore, this, afterStoreEventArgs);
 
                         documentsByEntity.remove(documentInfo.getEntity());
                         result.getEntities().add(documentInfo.getEntity());
@@ -1202,12 +1202,12 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
         EventHelper.invoke(onAfterStore, this, afterStoreEventArgs);
     }
 
+    public void onBeforeQueryExecutedInvoke(BeforeQueryExecutedEventArgs beforeQueryExecutedEventArgs) {
+        EventHelper.invoke(onBeforeQueryExecuted, this, beforeQueryExecutedEventArgs);
+    }
+
     /* TODO
 
-    public void OnBeforeQueryExecutedInvoke(BeforeQueryExecutedEventArgs beforeQueryExecutedEventArgs)
-    {
-        OnBeforeQueryExecuted?.Invoke(this, beforeQueryExecutedEventArgs);
-    }
 
     protected (string IndexName, string CollectionName) ProcessQueryParameters(Type type, string indexName, string collectionName, DocumentConventions conventions)
     {
