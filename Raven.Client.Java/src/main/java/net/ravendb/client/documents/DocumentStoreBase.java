@@ -217,8 +217,6 @@ public abstract class DocumentStoreBase implements IDocumentStore {
 
     /* TODO
 
-        public abstract IDisposable SetRequestsTimeout(TimeSpan timeout, string database = null);
-
         /// <summary>
         /// Setup the context for aggressive caching.
         /// </summary>

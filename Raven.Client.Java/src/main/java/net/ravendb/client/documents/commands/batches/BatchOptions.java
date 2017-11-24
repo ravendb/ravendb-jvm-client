@@ -15,8 +15,6 @@ public class BatchOptions {
     private boolean throwOnTimeoutInWaitForIndexes;
     private String[] waitForSpecificIndexes;
 
-    private Duration requestTimeout;
-
     public boolean isWaitForReplicas() {
         return waitForReplicas;
     }
@@ -87,13 +85,5 @@ public class BatchOptions {
 
     public void setWaitForSpecificIndexes(String[] waitForSpecificIndexes) {
         this.waitForSpecificIndexes = waitForSpecificIndexes;
-    }
-
-    public Duration getRequestTimeout() {
-        return requestTimeout;
-    }
-
-    public void setRequestTimeout(Duration requestTimeout) {
-        this.requestTimeout = requestTimeout;
     }
 }

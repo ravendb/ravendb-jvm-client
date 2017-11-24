@@ -26,20 +26,11 @@ public abstract class RavenCommand<TResult> {
     protected TResult result;
     protected int statusCode;
     protected RavenCommandResponseType responseType;
-    protected Duration timeout;
     protected boolean canCache;
     protected boolean canCacheAggressively;
     protected ObjectMapper mapper = JsonExtensions.getDefaultMapper();
 
     public abstract boolean isReadRequest();
-
-    public Duration getTimeout() {
-        return timeout;
-    }
-
-    public void setTimeout(Duration timeout) {
-        this.timeout = timeout;
-    }
 
     public RavenCommandResponseType getResponseType() {
         return responseType;

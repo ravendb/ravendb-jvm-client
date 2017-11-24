@@ -7,7 +7,6 @@ import net.ravendb.client.documents.conventions.DocumentConventions;
 import net.ravendb.client.documents.operations.configuration.GetClientConfigurationOperation;
 import net.ravendb.client.documents.session.SessionInfo;
 import net.ravendb.client.exceptions.AllTopologyNodesDownException;
-import net.ravendb.client.exceptions.TimeoutException;
 import net.ravendb.client.exceptions.database.DatabaseDoesNotExistException;
 import net.ravendb.client.exceptions.ExceptionDispatcher;
 import net.ravendb.client.exceptions.security.AuthorizationException;
@@ -22,10 +21,8 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.http.Header;
 import org.apache.http.HttpStatus;
-import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpRequestBase;
-import org.apache.http.client.methods.RequestBuilder;
 import org.apache.http.config.SocketConfig;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClientBuilder;
@@ -56,8 +53,6 @@ public class RequestExecutor implements CleanCloseable {
     public static final String CLIENT_VERSION = "4.0.0";
 
     private static final ConcurrentMap<String, CloseableHttpClient> globalHttpClient = new ConcurrentHashMap<>();
-
-    private static final Duration GLOBAL_HTTP_CLIENT_TIMEOUT = Duration.ofHours(12);
 
     private final Semaphore _updateTopologySemaphore = new Semaphore(1);
 
@@ -103,8 +98,6 @@ public class RequestExecutor implements CleanCloseable {
 
     protected NodeSelector _nodeSelector;
 
-    private Duration _defaultTimeout;
-
     public AtomicLong numberOfServerRequests = new AtomicLong(0);
 
     public String getUrl() {
@@ -137,18 +130,6 @@ public class RequestExecutor implements CleanCloseable {
 
     public DocumentConventions getConventions() {
         return conventions;
-    }
-
-    public Duration getDefaultTimeout() {
-        return _defaultTimeout;
-    }
-
-    public void setDefaultTimeout(Duration defaultTimeout) {
-        if (defaultTimeout != null && defaultTimeout.toMillis() > GLOBAL_HTTP_CLIENT_TIMEOUT.toMillis()) {
-            throw new IllegalArgumentException("Maximum request timeout is set to " + GLOBAL_HTTP_CLIENT_TIMEOUT.toMillis() + " but was " + defaultTimeout.toMillis());
-        }
-
-        this._defaultTimeout = defaultTimeout;
     }
 
     protected RequestExecutor(String databaseName, DocumentConventions conventions) { //TBD: X509Certificate2 certificate
@@ -520,44 +501,10 @@ public class RequestExecutor implements CleanCloseable {
             try {
                 numberOfServerRequests.incrementAndGet();
 
-                Duration timeout = command.getTimeout() != null ? command.getTimeout() : _defaultTimeout;
-
-                if (timeout != null) {
-                    if (timeout.toMillis() > GLOBAL_HTTP_CLIENT_TIMEOUT.toMillis()) {
-                        throwTimeoutTooLarnge(timeout);
-                    }
-
-                    try {
-                        if (shouldExecuteOnAll(chosenNode, command)) {
-                            response = executeOnAllToFigureOutTheFastest(chosenNode, command);
-                        } else {
-                            RequestConfig.Builder config = request.getConfig() != null ? RequestConfig.copy(request.getConfig()) : RequestConfig.custom();
-                            config.setSocketTimeout((int)timeout.toMillis());
-                            request.setConfig(config.build());
-                            response = command.send(httpClient, request);
-                        }
-                    } catch (SocketTimeoutException e) { //TODO: check me!
-
-                        TimeoutException timeoutException = new TimeoutException("The request for " + request.getURI() + " failed with theout after " + timeout, e);
-                        if (!shouldRetry) {
-                            throw timeoutException;
-                        }
-
-                        sp.stop();
-
-                        if (!handleServerDown(urlRef.value, chosenNode, nodeIndex, command, request, response, e, sessionInfo)) {
-                            throwFailedToContactAllNodes(command, request, e, timeoutException);
-                        }
-                        return;
-                    }
-                    //TODO: test me!
+                if (shouldExecuteOnAll(chosenNode, command)) {
+                    response = executeOnAllToFigureOutTheFastest(chosenNode, command);
                 } else {
-
-                    if (shouldExecuteOnAll(chosenNode, command)) {
-                        response = executeOnAllToFigureOutTheFastest(chosenNode, command);
-                    } else {
-                        response = command.send(httpClient, request);
-                    }
+                    response = command.send(httpClient, request);
                 }
 
                 sp.stop();
@@ -642,16 +589,6 @@ public class RequestExecutor implements CleanCloseable {
         }
     }
 
-    public void setTimeout(HttpRequestBase requestBase, long timeoutInMilis) {
-        RequestConfig requestConfig = requestBase.getConfig();
-        if (requestConfig == null) {
-            requestConfig = RequestConfig.DEFAULT;
-        }
-
-        requestConfig = RequestConfig.copy(requestConfig).setSocketTimeout((int) timeoutInMilis).setConnectTimeout((int) timeoutInMilis).build();
-        requestBase.setConfig(requestConfig);
-    }
-
     private <TResult> void throwFailedToContactAllNodes(RavenCommand<TResult> command, HttpRequestBase request, Exception e, Exception timeoutException) {
         String message = "Tried to send " + command.resultClass.getName() + " request via " + request.getMethod() + " " + request.getURI() + " to all configured nodes in the topology, " +
                 "all of them seem to be down or not responding. I've tried to access the following nodes: ";
@@ -733,10 +670,6 @@ public class RequestExecutor implements CleanCloseable {
         } catch (InterruptedException | ExecutionException e) {
             throw ExceptionsUtils.unwrapException(e);
         }
-    }
-
-    private static void throwTimeoutTooLarnge(Duration duration) {
-        throw new IllegalArgumentException("Maximum request timeout is set to " + GLOBAL_HTTP_CLIENT_TIMEOUT + " but was " + duration);
     }
 
     private <TResult> HttpCache.ReleaseCacheItem getFromCache(RavenCommand<TResult> command, String url, Reference<String> cachedChangeVector, Reference<String> cachedValue) {
@@ -977,7 +910,7 @@ public class RequestExecutor implements CleanCloseable {
     }
 
     private CloseableHttpClient createClient() {
-        //TBD: certifciates handling, timeout: GlobalHttpClientTimeout?
+        //TBD: certifciates handling
 
         PoolingHttpClientConnectionManager cm = new PoolingHttpClientConnectionManager();
         cm.setDefaultMaxPerRoute(10);

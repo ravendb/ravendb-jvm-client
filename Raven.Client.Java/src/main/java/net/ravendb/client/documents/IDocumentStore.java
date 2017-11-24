@@ -136,5 +136,4 @@ public interface IDocumentStore extends IDisposalNotification {
 
     OperationExecutor operations();
 
-    //TODO:IDisposable SetRequestsTimeout(TimeSpan timeout, string database = null);
 }

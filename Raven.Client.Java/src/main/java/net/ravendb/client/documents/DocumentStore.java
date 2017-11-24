@@ -163,23 +163,6 @@ public class DocumentStore extends DocumentStoreBase {
         return executor;
     }
 
-    /* TODO
-        public override IDisposable SetRequestsTimeout(TimeSpan timeout, string database = null)
-        {
-            AssertInitialized();
-
-            var requestExecutor = GetRequestExecutor(database);
-            var oldTimeout = requestExecutor.DefaultTimeout;
-            requestExecutor.DefaultTimeout = timeout;
-
-            return new DisposableAction(() =>
-            {
-                requestExecutor.DefaultTimeout = oldTimeout;
-            });
-        }
-
-        */
-
     /**
      * Initializes this instance.
      */

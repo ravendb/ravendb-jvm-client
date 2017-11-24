@@ -37,10 +37,6 @@ public class QueryCommand extends RavenCommand<QueryResult> {
         _indexQuery = indexQuery;
         _metadataOnly = metadataOnly;
         _indexEntriesOnly = indexEntriesOnly;
-
-        if (indexQuery.getWaitForNonStaleResultsTimeout() != null) {
-            timeout = indexQuery.getWaitForNonStaleResultsTimeout().plus(Duration.ofSeconds(10)); // giving the server an opportunity to finish the response
-        }
     }
 
     @Override
