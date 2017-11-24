@@ -23,6 +23,7 @@ public class QueryResult extends GenericQueryResult<ArrayNode, ObjectNode> {
         queryResult.setSkippedResults(getSkippedResults());
         queryResult.setTotalResults(getTotalResults());
 
+        /* TBD
         Map<String, Map<String, List<String>>> highlightings = getHighlightings();
 
         if (highlightings != null) {
@@ -31,7 +32,7 @@ public class QueryResult extends GenericQueryResult<ArrayNode, ObjectNode> {
                 newHighlights.put(hightlightEntry.getKey(), new HashMap<>(hightlightEntry.getValue()));
             }
             queryResult.setHighlightings(highlightings);
-        }
+        }*/
 
         if (getScoreExplanations() != null) {
             queryResult.setScoreExplanations(new HashMap<>(getScoreExplanations()));

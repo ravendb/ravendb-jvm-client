@@ -55,12 +55,12 @@ public interface IAbstractDocumentQuery<T> {
     /**
      * Sort using custom sorter on the server
      */
-    void _customSortUsing(String typeName);
+    //TBD void _customSortUsing(String typeName);
 
     /**
      * Sort using custom sorter on the server
      */
-    void _customSortUsing(String typeName, boolean descending);
+    //TBD void _customSortUsing(String typeName, boolean descending);
 
     /**
      * Includes the specified path in the query, loading the document specified in that path

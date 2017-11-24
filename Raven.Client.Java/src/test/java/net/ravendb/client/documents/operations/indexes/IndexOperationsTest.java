@@ -57,8 +57,6 @@ public class IndexOperationsTest extends RemoteTestBase {
         }
     }
 
-    //TODO: index errors
-
     @Test
     public void getCanIndexes() throws IOException {
         try (IDocumentStore store = getDocumentStore()) {

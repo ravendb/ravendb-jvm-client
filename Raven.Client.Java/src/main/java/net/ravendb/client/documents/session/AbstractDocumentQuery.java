@@ -225,6 +225,7 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
         orderByTokens.add(OrderByToken.createRandom(seed));
     }
 
+    /* TBD
     @Override
     public void _customSortUsing(String typeName) {
         _customSortUsing(typeName, false);
@@ -238,7 +239,7 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
         }
 
         _orderBy(Constants.Documents.Indexing.Fields.CUSTOM_SORT_FIELD_NAME + ";" + typeName);
-    }
+    }*/
 
     protected void addGroupByAlias(String fieldName, String projectedName) {
         _aliasToGroupByFieldName.put(projectedName, fieldName);

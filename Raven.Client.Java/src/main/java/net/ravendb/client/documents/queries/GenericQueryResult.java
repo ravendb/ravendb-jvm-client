@@ -6,7 +6,7 @@ import java.util.Map;
 public class GenericQueryResult<TResult, TIncludes> extends QueryResultBase<TResult, TIncludes> {
     private int totalResults;
     private int skippedResults;
-    private Map<String, Map<String, List<String>>> highlightings;
+    //TBD private Map<String, Map<String, List<String>>> highlightings;
     private long durationInMs;
     private Map<String, String> scoreExplanations;
     private Map<String, Double> timingsInMs;
@@ -40,21 +40,21 @@ public class GenericQueryResult<TResult, TIncludes> extends QueryResultBase<TRes
         this.skippedResults = skippedResults;
     }
 
-    //TODO: comment out hightligings - every where
-    // TODO comment out custom sorting!
     /**
      * Highlighter results (if requested).
      */
+    /* TBD
     public Map<String, Map<String, List<String>>> getHighlightings() {
         return highlightings;
-    }
+    }*/
 
     /**
      * Highlighter results (if requested).
      */
+    /* TBD
     public void setHighlightings(Map<String, Map<String, List<String>>> highlightings) {
         this.highlightings = highlightings;
-    }
+    }*/
 
     /**
      * The duration of actually executing the query server side

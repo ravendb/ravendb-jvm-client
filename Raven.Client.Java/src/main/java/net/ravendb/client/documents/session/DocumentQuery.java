@@ -404,11 +404,12 @@ public class DocumentQuery<T> extends AbstractDocumentQuery<T, DocumentQuery<T>>
         return this;
     }
 
+    /* TBD
     @Override
     public IDocumentQuery<T> customSortUsing(String typeName, boolean descending) {
         _customSortUsing(typeName, descending);
         return this;
-    }
+    }*/
 
     @Override
     public IGroupByDocumentQuery<T> groupBy(String fieldName, String... fieldNames) {
