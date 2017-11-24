@@ -260,6 +260,6 @@ public interface IFilterDocumentQueryBase<T, TSelf extends IDocumentQueryBase<T,
      */
     TSelf relatesToShape(String fieldName, String shapeWKT, SpatialRelation relation, double distanceErrorPct);
 
-    //TBD TSelf CmpXchg(string key, T value);
+    TSelf cmpXChg(String key, T value);
 
 }

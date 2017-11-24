@@ -657,30 +657,30 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
                 addQueryParameter(value == null ? "NULL" : transformValue(whereParams, true)), exact));
     }
 
-    /* TODO
-    /// <summary>
-        ///   Matches fields where Regex.IsMatch(filedName, pattern)
-        /// </summary>
-        /// <param name = "fieldName">Name of the field.</param>
-        /// <param name="pattern"> The pattern to match</param>
-        public void WhereRegex(string fieldName, string pattern)
-        {
-            var tokens = GetCurrentWhereTokens();
-            AppendOperatorIfNeeded(tokens);
-            NegateIfNeeded(tokens, fieldName);
-
-            tokens.AddLast(WhereToken.Regex(fieldName, AddQueryParameter(TransformValue(new WhereParams { Value = pattern, FieldName = fieldName }))));
-        }
-
-        public void CmpXchg(string key, object value)
-        {
-            var tokens = GetCurrentWhereTokens();
-            AppendOperatorIfNeeded(tokens);
-            NegateIfNeeded(tokens, key);
-
-            tokens.AddLast(WhereToken.CmpXchg(key, AddQueryParameter(value), SearchOperator.Or));
-        }
+    /**
+     * Matches fields where Regex.IsMatch(filedName, pattern)
      */
+    @Override
+    public void _whereRegex(String fieldName, String pattern) {
+        List<QueryToken> tokens = getCurrentWhereTokens();
+        appendOperatorIfNeeded(tokens);
+        negateIfNeeded(tokens, fieldName);
+
+        WhereParams whereParams = new WhereParams();
+        whereParams.setValue(pattern);
+        whereParams.setFieldName(fieldName);
+
+        tokens.add(WhereToken.regex(fieldName, addQueryParameter(transformValue(whereParams))));
+    }
+
+    @Override
+    public void _cmpXchg(String key, Object value) {
+        List<QueryToken> tokens = getCurrentWhereTokens();
+        appendOperatorIfNeeded(tokens);
+        negateIfNeeded(tokens, key);
+
+        tokens.add(WhereToken.cmpXchg(key, addQueryParameter(value), SearchOperator.OR));
+    }
 
     public void _andAlso() {
         List<QueryToken> tokens = getCurrentWhereTokens();

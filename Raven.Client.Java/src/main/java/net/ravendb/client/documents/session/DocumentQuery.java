@@ -145,7 +145,11 @@ public class DocumentQuery<T> extends AbstractDocumentQuery<T, DocumentQuery<T>>
 
     //TBD public IDocumentQuery<T> Search<TValue>(Expression<Func<T, TValue>> propertySelector, string searchTerms, SearchOperator @operator)
 
-    //TBD IDocumentQuery<T> IFilterDocumentQueryBase<T, IDocumentQuery<T>>.CmpXchg(string key, T value)
+    @Override
+    public IDocumentQuery<T> cmpXChg(String key, T value) {
+        _cmpXchg(key, value);
+        return this;
+    }
 
     @Override
     public IDocumentQuery<T> intersect() {

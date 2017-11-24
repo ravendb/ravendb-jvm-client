@@ -196,9 +196,9 @@ public interface IAbstractDocumentQuery<T> {
 
     void _whereExists(String fieldName);
 
-    //TODO: void WhereRegex(string fieldName, string pattern);
+    void _whereRegex(String fieldName, String pattern);
 
-    //TODO: void CmpXchg(string key, object value);
+    void _cmpXchg(String key, Object value);
 
     /**
      * Add an AND to the query
