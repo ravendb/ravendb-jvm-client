@@ -178,7 +178,7 @@ public abstract class RavenCommand<TResult> {
     }
 
     protected static void throwInvalidResponse() {
-        throw new IllegalStateException("Resposen is invalid");
+        throw new IllegalStateException("Response is invalid");
     }
 
     @SuppressWarnings("unused")

@@ -1,5 +1,7 @@
 package net.ravendb.client.documents.operations.indexes;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ArrayNode;
 import net.ravendb.client.documents.conventions.DocumentConventions;
 import net.ravendb.client.documents.indexes.IndexErrors;
 import net.ravendb.client.documents.operations.IAdminOperation;
@@ -55,10 +57,13 @@ public class GetIndexErrorsOperation implements IAdminOperation<IndexErrors[]> {
         public void setResponse(String response, boolean fromCache) throws IOException {
             if (response == null) {
                 throwInvalidResponse();
-                return ;
+                return;
             }
-
-            result = mapper.readValue(response, resultClass);
+            ArrayNode results = (ArrayNode)mapper.readTree(response).get("Results");
+            result = new IndexErrors[results.size()];
+            for (int i = 0; i < results.size(); i++) {
+                result[i] = mapper.convertValue(results.get(i), IndexErrors.class);
+            }
         }
 
         @Override

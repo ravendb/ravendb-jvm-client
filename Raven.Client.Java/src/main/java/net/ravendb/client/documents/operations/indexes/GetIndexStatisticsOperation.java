@@ -55,7 +55,7 @@ public class GetIndexStatisticsOperation implements IAdminOperation<IndexStats> 
             }
 
             IndexStats[] results = mapper.readValue(response, ResultsResponse.GetIndexStatisticsResponse.class).getResults();
-            if (response.length() != 1) {
+            if (results.length != 1) {
                 throwInvalidResponse();
             }
 
