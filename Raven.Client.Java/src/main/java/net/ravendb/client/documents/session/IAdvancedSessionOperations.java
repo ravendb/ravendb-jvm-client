@@ -4,6 +4,8 @@ import net.ravendb.client.documents.indexes.AbstractIndexCreationTask;
 import net.ravendb.client.documents.session.operations.lazy.IEagerSessionOperations;
 import net.ravendb.client.documents.session.operations.lazy.ILazySessionOperations;
 
+import java.util.List;
+
 public interface IAdvancedSessionOperations extends IAdvancedDocumentSessionOperations {
 
     /**
@@ -108,5 +110,8 @@ public interface IAdvancedSessionOperations extends IAdvancedDocumentSessionOper
     // TBD stream IEnumerator<StreamResult<T>> Stream<T>(string startsWith, string matches = null, int start = 0, int pageSize = int.MaxValue, string startAfter = null);
     // TBD stream void StreamInto<T>(IDocumentQuery<T> query, Stream output);
     // TBD stream void StreamInto<T>(IRawDocumentQuery<T> query, Stream output);
-    // TBD revisions List<T> GetRevisionsFor<T>(string id, int start = 0, int pageSize = 25);
+
+    <T> List<T> getRevisionsFor(Class<T> clazz, String id);
+    <T> List<T> getRevisionsFor(Class<T> clazz, String id, int start);
+    <T> List<T> getRevisionsFor(Class<T> clazz, String id, int start, int pageSize);
 }

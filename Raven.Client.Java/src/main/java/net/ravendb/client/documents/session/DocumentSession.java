@@ -3,6 +3,7 @@ package net.ravendb.client.documents.session;
 import com.google.common.base.Defaults;
 import net.ravendb.client.documents.DocumentStore;
 import net.ravendb.client.documents.commands.GetDocumentCommand;
+import net.ravendb.client.documents.commands.GetRevisionsCommand;
 import net.ravendb.client.documents.commands.HeadDocumentCommand;
 import net.ravendb.client.documents.commands.batches.BatchCommand;
 import net.ravendb.client.documents.indexes.AbstractIndexCreationTask;
@@ -10,12 +11,14 @@ import net.ravendb.client.documents.linq.IDocumentQueryGenerator;
 import net.ravendb.client.documents.session.loaders.ILoaderWithInclude;
 import net.ravendb.client.documents.session.loaders.MultiLoaderWithInclude;
 import net.ravendb.client.documents.session.operations.BatchOperation;
+import net.ravendb.client.documents.session.operations.GetRevisionOperation;
 import net.ravendb.client.documents.session.operations.LoadOperation;
 import net.ravendb.client.documents.session.operations.lazy.IEagerSessionOperations;
 import net.ravendb.client.documents.session.operations.lazy.ILazySessionOperations;
 import net.ravendb.client.http.RequestExecutor;
 
 import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
@@ -252,7 +255,7 @@ public class DocumentSession extends InMemoryDocumentSessionOperations implement
         return loadOperation.getDocuments(clazz);
     }
 
-    private <T> void loadInternal(Class<T> clazz, String[] ids, LoadOperation operation) { //TODO optional stream parameter
+    private <T> void loadInternal(Class<T> clazz, String[] ids, LoadOperation operation) { //TBD optional stream parameter
         operation.byIds(ids);
 
         GetDocumentCommand command = operation.createRequest();
@@ -387,15 +390,21 @@ public class DocumentSession extends InMemoryDocumentSessionOperations implement
     //TBD private StreamResult<T> CreateStreamResult<T>(BlittableJsonReaderObject json, string[] projectionFields)
     //TBD public IEnumerator<StreamResult<T>> Stream<T>(string startsWith, string matches = null, int start = 0, int pageSize = int.MaxValue, string startAfter = null)
 
-    /* TODO
-         public List<T> GetRevisionsFor<T>(string id, int start = 0, int pageSize = 25)
-        {
-            var operation = new GetRevisionOperation(this, id, start, pageSize);
+    public <T> List<T> getRevisionsFor(Class<T> clazz, String id) {
+        return getRevisionsFor(clazz, id, 0, 25);
+    }
 
-            var command = operation.CreateRequest();
-            RequestExecutor.Execute(command, Context, sessionInfo: SessionInfo);
-            operation.SetResult(command.Result);
-            return operation.Complete<T>();
-        }
-     */
+    public <T> List<T> getRevisionsFor(Class<T> clazz, String id, int start) {
+        return getRevisionsFor(clazz, id, start, 25);
+    }
+
+    public <T> List<T> getRevisionsFor(Class<T> clazz, String id, int start, int pageSize) {
+        GetRevisionOperation operation = new GetRevisionOperation(this, id, start, pageSize);
+
+        GetRevisionsCommand command = operation.createRequest();
+        getRequestExecutor().execute(command, sessionInfo);
+        operation.setResult(command.getResult());
+        return operation.complete(clazz);
+    }
+
 }

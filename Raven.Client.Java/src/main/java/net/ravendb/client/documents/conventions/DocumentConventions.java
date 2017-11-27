@@ -9,6 +9,7 @@ import net.ravendb.client.exceptions.RavenException;
 import net.ravendb.client.extensions.JsonExtensions;
 import net.ravendb.client.http.ReadBalanceBehavior;
 import net.ravendb.client.primitives.Lang;
+import net.ravendb.client.primitives.Tuple;
 import net.ravendb.client.serverwide.ClientConfiguration;
 import net.ravendb.client.util.Inflector;
 import net.ravendb.client.util.ReflectionUtil;
@@ -23,9 +24,7 @@ import java.beans.Introspector;
 import java.beans.PropertyDescriptor;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.stream.StreamSupport;
@@ -36,8 +35,34 @@ public class DocumentConventions {
 
     private static Map<Class, String> _cachedDefaultTypeCollectionNames = new HashMap<>();
 
-    //TODO: private readonly List<Tuple<Type, Func<string, object, Task<string>>>> _listOfRegisteredIdConventionsAsync = new List<Tuple<Type, Func<string, object, Task<string>>>>();
-    //TODO: private readonly List<Tuple<Type, Func<ValueType, string>>> _listOfRegisteredIdLoadConventions = new List<Tuple<Type, Func<ValueType, string>>>();
+    //TODO: private readonly List<(Type Type, TryConvertValueForQueryDelegate<object> Convert)> _listOfQueryValueConverters = new List<(Type, TryConvertValueForQueryDelegate<object>)>();
+
+    private final List<Tuple<Class, BiFunction<String, Object, String>>> _listOfRegisteredIdConventions = new ArrayList<>();
+
+    private boolean _frozen;
+    private ClientConfiguration _originalConfiguration;
+    private Map<Class, Field> _idPropertyCache = new HashMap<>();
+    private boolean _saveEnumsAsIntegers;
+    private String _identityPartsSeparator;
+    private boolean _disableTopologyUpdates;
+
+    private Function<PropertyDescriptor, Boolean> _findIdentityProperty;
+
+    private Function<String, String> _transformClassCollectionNameToDocumentIdPrefix;
+    private BiFunction<String, Object, String> _documentIdGenerator;
+    private Function<String, String> _findIdentityPropertyNameFromEntityName;
+
+    private Function<Class, String> _findCollectionName;
+
+    private Function<Class, String> _findJavaClassName;
+    private BiFunction<String, ObjectNode, String> _findJavaClass;
+
+    private boolean _useOptimisticConcurrency;
+    private boolean _throwIfQueryPageSizeIsNotSet;
+    private int _maxNumberOfRequestsPerSession;
+
+    private ReadBalanceBehavior _readBalanceBehavior;
+    private BiFunction<Class, ObjectNode, Object> _deserializeEntityFromJson;
 
     public DocumentConventions() {
         _readBalanceBehavior = ReadBalanceBehavior.NONE;
@@ -60,57 +85,9 @@ public class DocumentConventions {
 
         _findCollectionName = type -> defaultGetCollectionName(type);
 
-        //TODO FindPropertyNameForIndex = (indexedType, indexedName, path, prop) => (path + prop).Replace("[].", "_").Replace(".", "_");
-        //TODO FindPropertyNameForDynamicIndex = (indexedType, indexedName, path, prop) => path + prop;
-
         _maxNumberOfRequestsPerSession = 30;
-
-        /* TODO
-
-            JsonContractResolver = new DefaultRavenContractResolver();
-            CustomizeJsonSerializer = serializer => { }; // todo: remove this or merge with SerializeEntityToJsonStream
-            SerializeEntityToJsonStream = (entity, streamWriter) =>
-            {
-                var jsonSerializer = CreateSerializer();
-                jsonSerializer.Serialize(streamWriter, entity);
-                streamWriter.Flush();
-            };
-        }*/
-
         _deserializeEntityFromJson = (clazz, json) -> deserializeEntityFromJson(clazz, json);
     }
-
-
-
-    private boolean _frozen;
-    private ClientConfiguration _originalConfiguration;
-    private Map<Class, Field> _idPropertyCache = new HashMap<>();
-    private boolean _saveEnumsAsIntegers;
-    private String _identityPartsSeparator;
-    private boolean _disableTopologyUpdates;
-
-    private Function<PropertyDescriptor, Boolean> _findIdentityProperty;
-
-    private Function<String, String> _transformClassCollectionNameToDocumentIdPrefix;
-    private BiFunction<String, Object, String> _documentIdGenerator;
-    private Function<String, String> _findIdentityPropertyNameFromEntityName;
-    //TODO: private Func<Type, string, string, string, string> _findPropertyNameForIndex;
-
-    private Function<Class, String> _findCollectionName;
-
-    //TODO: private IContractResolver _jsonContractResolver;
-
-    private Function<Class, String> _findJavaClassName;
-    private BiFunction<String, ObjectNode, String> _findJavaClass;
-
-    private boolean _useOptimisticConcurrency;
-    private boolean _throwIfQueryPageSizeIsNotSet;
-    private int _maxNumberOfRequestsPerSession;
-
-    //TODO: private Action<JsonSerializer> _customizeJsonSerializer;
-    //TODO: private Action<object, StreamWriter> _serializeEntityToJsonStream;
-    private ReadBalanceBehavior _readBalanceBehavior;
-    private BiFunction<Class, ObjectNode, Object> _deserializeEntityFromJson;
 
     public BiFunction<Class, ObjectNode, Object> getDeserializeEntityFromJson() {
         return _deserializeEntityFromJson;
@@ -136,32 +113,6 @@ public class DocumentConventions {
             throw new RavenException("Cannot deserialize entity", e);
         }
     }
-/* TODO
-
-        public Action<object, StreamWriter> SerializeEntityToJsonStream
-        {
-            get => _serializeEntityToJsonStream;
-            set
-            {
-                AssertNotFrozen();
-                _serializeEntityToJsonStream = value;
-            }
-        }
-
-        /// <summary>
-        ///     Register an action to customize the json serializer used by the <see cref="DocumentStore" />
-        /// </summary>
-        public Action<JsonSerializer> CustomizeJsonSerializer
-        {
-            get => _customizeJsonSerializer;
-            set
-            {
-                AssertNotFrozen();
-                _customizeJsonSerializer = value;
-            }
-        }
-
-*/
 
     public int getMaxNumberOfRequestsPerSession() {
         return _maxNumberOfRequestsPerSession;
@@ -223,22 +174,6 @@ public class DocumentConventions {
         assertNotFrozen();
         this._findJavaClassName = _findJavaClassName;
     }
-    /* TODO
-
-        /// <summary>
-        ///     Gets or sets the json contract resolver.
-        /// </summary>
-        /// <value>The json contract resolver.</value>
-        public IContractResolver JsonContractResolver
-        {
-            get => _jsonContractResolver;
-            set
-            {
-                AssertNotFrozen();
-                _jsonContractResolver = value;
-            }
-        }
-     */
 
     public Function<Class, String> getFindCollectionName() {
         return _findCollectionName;
@@ -249,35 +184,14 @@ public class DocumentConventions {
         this._findCollectionName = _findCollectionName;
     }
 
-    /*
+    public Function<String, String> getFindIdentityPropertyNameFromEntityName() {
+        return _findIdentityPropertyNameFromEntityName;
+    }
 
-        /// <summary>
-        ///     Gets or sets the function to find the indexed property name
-        ///     given the indexed document type, the index name, the current path and the property path.
-        /// </summary>
-        public Func<Type, string, string, string, string> FindPropertyNameForIndex
-        {
-            get => _findPropertyNameForIndex;
-            set
-            {
-                AssertNotFrozen();
-                _findPropertyNameForIndex = value;
-            }
-        }
-
-        /// <summary>
-        ///     Get or sets the function to get the identity property name from the entity name
-        /// </summary>
-        public Func<string, string> FindIdentityPropertyNameFromEntityName
-        {
-            get => _findIdentityPropertyNameFromEntityName;
-            set
-            {
-                AssertNotFrozen();
-                _findIdentityPropertyNameFromEntityName = value;
-            }
-        }
-*/
+    public void setFindIdentityPropertyNameFromEntityName(Function<String, String> findIdentityPropertyNameFromEntityName) {
+        assertNotFrozen();
+        this._findIdentityPropertyNameFromEntityName = findIdentityPropertyNameFromEntityName;
+    }
 
     public BiFunction<String, Object, String> getDocumentIdGenerator() {
         return _documentIdGenerator;
@@ -390,117 +304,39 @@ public class DocumentConventions {
     public String generateDocumentId(String databaseName, Object entity) {
         Class<?> clazz = entity.getClass();
 
-        /* TODO
-        foreach (var typeToRegisteredIdConvention in _listOfRegisteredIdConventionsAsync
-                .Where(typeToRegisteredIdConvention => typeToRegisteredIdConvention.Item1.IsAssignableFrom(type)))
-                return typeToRegisteredIdConvention.Item2(databaseName, entity);
-         */
+        for (Tuple<Class, BiFunction<String, Object, String>> listOfRegisteredIdConvention : _listOfRegisteredIdConventions) {
+            if (listOfRegisteredIdConvention.first.isAssignableFrom(clazz)) {
+                return listOfRegisteredIdConvention.second.apply(databaseName, entity);
+            }
+        }
 
         return _documentIdGenerator.apply(databaseName, entity);
     }
 
-    /* TODO
+    /**
+     * Register an id convention for a single type (and all of its derived types.
+     * Note that you can still fall back to the DocumentIdGenerator if you want.
+     */
+    public <TEntity> DocumentConventions registerIdConvention(Class<TEntity> clazz, BiFunction<String, TEntity, String> function) {
+        assertNotFrozen();
 
-        /// <summary>
-        ///     Register an async id convention for a single type (and all of its derived types.
-        ///     Note that you can still fall back to the DocumentIdGenerator if you want.
-        /// </summary>
-        public DocumentConventions RegisterAsyncIdConvention<TEntity>(Func<string, TEntity, Task<string>> func)
-        {
-            AssertNotFrozen();
+        _listOfRegisteredIdConventions.stream()
+                .filter(x -> x.first.equals(clazz))
+                .findFirst()
+                .ifPresent(x -> _listOfRegisteredIdConventions.remove(x));
 
-            var type = typeof(TEntity);
-            var entryToRemove = _listOfRegisteredIdConventionsAsync.FirstOrDefault(x => x.Item1 == type);
-            if (entryToRemove != null)
-                _listOfRegisteredIdConventionsAsync.Remove(entryToRemove);
-
-            int index;
-            for (index = 0; index < _listOfRegisteredIdConventionsAsync.Count; index++)
-            {
-                var entry = _listOfRegisteredIdConventionsAsync[index];
-                if (entry.Item1.IsAssignableFrom(type))
-                    break;
+        int index;
+        for (index = 0; index < _listOfRegisteredIdConventions.size(); index++) {
+            Tuple<Class, BiFunction<String, Object, String>> entry = _listOfRegisteredIdConventions.get(index);
+            if (entry.first.isAssignableFrom(clazz)) {
+                break;
             }
-
-            var item = new Tuple<Type, Func<string, object, Task<string>>>(typeof(TEntity), (dbName, o) => func(dbName, (TEntity)o));
-            _listOfRegisteredIdConventionsAsync.Insert(index, item);
-
-            return this;
         }
 
-        /// <summary>
-        ///     Register an id convention for a single type (and all its derived types) to be used when calling
-        ///     session.Load{TEntity}(TId id)
-        ///     It is used by the default implementation of FindFullDocumentIdFromNonStringIdentifier.
-        /// </summary>
-        public DocumentConventions RegisterIdLoadConvention<TEntity>(Func<ValueType, string> func)
-        {
-            AssertNotFrozen();
+        _listOfRegisteredIdConventions.add(index, Tuple.create(clazz, function));
 
-            var type = typeof(TEntity);
-            var entryToRemove = _listOfRegisteredIdLoadConventions.FirstOrDefault(x => x.Item1 == type);
-            if (entryToRemove != null)
-                _listOfRegisteredIdLoadConventions.Remove(entryToRemove);
-
-            int index;
-            for (index = 0; index < _listOfRegisteredIdLoadConventions.Count; index++)
-            {
-                var entry = _listOfRegisteredIdLoadConventions[index];
-                if (entry.Item1.IsAssignableFrom(type))
-                    break;
-            }
-
-            var item = new Tuple<Type, Func<ValueType, string>>(typeof(TEntity), func);
-            _listOfRegisteredIdLoadConventions.Insert(index, item);
-
-            return this;
-        }
-
-
-        /// <summary>
-        ///     Creates the serializer.
-        /// </summary>
-        /// <returns></returns>
-        public JsonSerializer CreateSerializer()
-        {
-            var jsonSerializer = new JsonSerializer
-            {
-                DateParseHandling = DateParseHandling.None,
-                ObjectCreationHandling = ObjectCreationHandling.Auto,
-                ContractResolver = JsonContractResolver,
-                TypeNameHandling = TypeNameHandling.Auto,
-                TypeNameAssemblyFormatHandling = TypeNameAssemblyFormatHandling.Simple,
-                ConstructorHandling = ConstructorHandling.AllowNonPublicDefaultConstructor,
-                FloatParseHandling = FloatParseHandling.Double
-            };
-
-            CustomizeJsonSerializer(jsonSerializer);
-            //TODO - EFRAT
-            if (SaveEnumsAsIntegers == false)
-                jsonSerializer.Converters.Add(new StringEnumConverter());
-
-            jsonSerializer.Converters.Add(JsonDateTimeISO8601Converter.Instance);
-            jsonSerializer.Converters.Add(JsonLuceneDateTimeConverter.Instance);
-            jsonSerializer.Converters.Add(JsonObjectConverter.Instance);
-            jsonSerializer.Converters.Add(JsonDictionaryDateTimeKeysConverter.Instance);
-            jsonSerializer.Converters.Add(ParametersConverter.Instance);
-            jsonSerializer.Converters.Add(JsonLinqEnumerableConverter.Instance);
-            // TODO: Iftah
-            //var convertersToUse = SaveEnumsAsIntegers ? DefaultConvertersEnumsAsIntegers : DefaultConverters;
-            //if (jsonSerializer.Converters.Count == 0)
-            //{
-            //    jsonSerializer.Converters = convertersToUse;
-            //}
-            //else
-            //{
-            //    for (int i = convertersToUse.Count - 1; i >= 0; i--)
-            //    {
-            //        jsonSerializer.Converters.Insert(0, convertersToUse[i]);
-            //    }
-            //}
-            return jsonSerializer;
-        }
-*/
+        return this;
+    }
 
     /**
      * Get the java class (if exists) from the document
@@ -528,34 +364,6 @@ public class DocumentConventions {
         }
         return cloned;
     }
-
-    /* TODO
-
-        public static RangeType GetRangeType(object o)
-        {
-            if (o == null)
-                return RangeType.None;
-
-            var type = o as Type ?? o.GetType();
-            return GetRangeType(type);
-        }
-
-        public static RangeType GetRangeType(Type type)
-        {
-            var nonNullable = Nullable.GetUnderlyingType(type);
-            if (nonNullable != null)
-                type = nonNullable;
-
-            if (type == typeof(int) || type == typeof(long) || type == typeof(short) || type == typeof(TimeSpan))
-                return RangeType.Long;
-
-            if (type == typeof(double) || type == typeof(float) || type == typeof(decimal))
-                return RangeType.Double;
-
-            return RangeType.None;
-        }
-
-*/
 
     private static Field getField(Class<?> clazz, String name) {
         Field field = null;
@@ -639,15 +447,6 @@ public class DocumentConventions {
 
     /* TODO
 
-        private static IEnumerable<MemberInfo> GetPropertiesForType(Type type)
-        {
-            foreach (var propertyInfo in ReflectionUtil.GetPropertiesAndFieldsFor(type, BindingFlags.Public | BindingFlags.Instance | BindingFlags.NonPublic))
-                yield return propertyInfo;
-
-            foreach (var @interface in type.GetInterfaces())
-                foreach (var propertyInfo in GetPropertiesForType(@interface))
-                    yield return propertyInfo;
-        }
 
         public void RegisterQueryValueConverter<T>(TryConvertValueForQueryDelegate<T> converter)
         {
@@ -684,28 +483,6 @@ public class DocumentConventions {
 
             strValue = null;
             return false;
-        }
-
-        internal LinqPathProvider.Result TranslateCustomQueryExpression(LinqPathProvider provider, Expression expression)
-        {
-            var member = GetMemberInfoFromExpression(expression);
-
-            return _customQueryTranslators.TryGetValue(member, out var translator) == false
-                ? null
-                : translator.Invoke(provider, expression);
-        }
-
-        private static MemberInfo GetMemberInfoFromExpression(Expression expression)
-        {
-            var callExpression = expression as MethodCallExpression;
-            if (callExpression != null)
-                return callExpression.Method;
-
-            var memberExpression = expression as MemberExpression;
-            if (memberExpression != null)
-                return memberExpression.Member;
-
-            throw new NotSupportedException("A custom query translator can only be used to evaluate a simple member access or method call.");
         }
 
 
