@@ -11,6 +11,7 @@ public class DatabaseStatistics {
     private long countOfDocuments;
     private long countOfRevisionDocuments;
     private long countOfDocumentsConflicts;
+    private long countOfTombstones;
     private long countOfConflicts;
     private long countOfAttachments;
     private long countOfUniqueAttachments;
@@ -79,6 +80,14 @@ public class DatabaseStatistics {
 
     public void setCountOfDocumentsConflicts(long countOfDocumentsConflicts) {
         this.countOfDocumentsConflicts = countOfDocumentsConflicts;
+    }
+
+    public long getCountOfTombstones() {
+        return countOfTombstones;
+    }
+
+    public void setCountOfTombstones(long countOfTombstones) {
+        this.countOfTombstones = countOfTombstones;
     }
 
     public long getCountOfConflicts() {

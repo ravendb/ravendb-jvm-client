@@ -4,8 +4,8 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.collect.Lists;
 import net.ravendb.client.RemoteTestBase;
 import net.ravendb.client.documents.IDocumentStore;
-import net.ravendb.client.documents.commands.GetDocumentCommand;
-import net.ravendb.client.documents.commands.GetDocumentResult;
+import net.ravendb.client.documents.commands.GetDocumentsCommand;
+import net.ravendb.client.documents.commands.GetDocumentsResult;
 import net.ravendb.client.documents.session.DocumentSession;
 import net.ravendb.client.documents.session.IDocumentSession;
 import net.ravendb.client.extensions.JsonExtensions;
@@ -76,11 +76,11 @@ public class BasicDocumentsTest extends RemoteTestBase {
 
             RequestExecutor requestExecutor = store.getRequestExecutor();
 
-            GetDocumentCommand getDocumentCommand = new GetDocumentCommand(new String[]{"users/1", "users/2"}, null, false);
+            GetDocumentsCommand getDocumentsCommand = new GetDocumentsCommand(new String[]{"users/1", "users/2"}, null, false);
 
-            requestExecutor.execute(getDocumentCommand);
+            requestExecutor.execute(getDocumentsCommand);
 
-            GetDocumentResult docs = getDocumentCommand.getResult();
+            GetDocumentsResult docs = getDocumentsCommand.getResult();
             assertThat(docs.getResults().size())
                     .isEqualTo(2);
 
@@ -118,11 +118,11 @@ public class BasicDocumentsTest extends RemoteTestBase {
                         .isEqualTo("Arek");
             }
 
-            getDocumentCommand = new GetDocumentCommand(new String[] { "users/1", "users/2"}, null, true);
+            getDocumentsCommand = new GetDocumentsCommand(new String[] { "users/1", "users/2"}, null, true);
 
-            requestExecutor.execute(getDocumentCommand);
+            requestExecutor.execute(getDocumentsCommand);
 
-            docs = getDocumentCommand.getResult();
+            docs = getDocumentsCommand.getResult();
 
             assertThat(docs.getResults())
                     .hasSize(2);

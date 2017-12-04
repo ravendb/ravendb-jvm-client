@@ -7,6 +7,6 @@ import net.ravendb.client.http.VoidRavenCommand;
 /**
  * Represents server operation which doesn't return any response
  */
-public interface IVoidServerOperation extends IServerOperation<Void> {
+public interface IVoidMaintenanceOperation extends IMaintenanceOperation<Void> {
     VoidRavenCommand getCommand(DocumentConventions conventions);
 }

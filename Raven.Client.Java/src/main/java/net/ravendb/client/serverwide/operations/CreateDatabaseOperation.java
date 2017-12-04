@@ -15,7 +15,7 @@ import org.apache.http.entity.StringEntity;
 import java.io.IOException;
 import java.util.Optional;
 
-public class CreateDatabaseOperation implements IServerOperation<DatabasePutResult> {
+public class CreateDatabaseOperation implements IMaintenanceOperation<DatabasePutResult> {
 
     private final DatabaseRecord databaseRecord;
     private final int replicationFactor;

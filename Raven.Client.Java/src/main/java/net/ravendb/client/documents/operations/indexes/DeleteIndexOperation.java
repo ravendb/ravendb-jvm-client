@@ -1,16 +1,15 @@
 package net.ravendb.client.documents.operations.indexes;
 
 import net.ravendb.client.documents.conventions.DocumentConventions;
-import net.ravendb.client.documents.operations.IVoidAdminOperation;
+import net.ravendb.client.documents.operations.IVoidMaintenanceOperation;
 import net.ravendb.client.http.ServerNode;
 import net.ravendb.client.http.VoidRavenCommand;
-import net.ravendb.client.primitives.HttpReset;
 import net.ravendb.client.primitives.Reference;
 import net.ravendb.client.util.UrlUtils;
 import org.apache.http.client.methods.HttpDelete;
 import org.apache.http.client.methods.HttpRequestBase;
 
-public class DeleteIndexOperation implements IVoidAdminOperation {
+public class DeleteIndexOperation implements IVoidMaintenanceOperation {
     private final String _indexName;
 
     public DeleteIndexOperation(String indexName) {

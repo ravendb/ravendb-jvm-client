@@ -13,7 +13,6 @@ import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 import java.util.Date;
-import java.util.HashSet;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -818,7 +817,7 @@ this.Value = another.Value;
             def1.setMaps(Sets.newHashSet("from doc in docs.CustomTypes select new { doc.Value }"));
 
 
-            store.admin().send(new PutIndexesOperation(def1));
+            store.maintenance().send(new PutIndexesOperation(def1));
 
             try (IDocumentSession session = store.openSession()) {
                 session

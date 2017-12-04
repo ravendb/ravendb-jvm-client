@@ -197,11 +197,12 @@ public class DocumentQuery<T> extends AbstractDocumentQuery<T, DocumentQuery<T>>
         return this;
     }
 
+    /* TBD
     @Override
     public IDocumentQuery<T> showTimings() {
         _showTimings();
         return this;
-    }
+    }*/
 
     @Override
     public IDocumentQuery<T> include(String path) {
@@ -364,6 +365,13 @@ public class DocumentQuery<T> extends AbstractDocumentQuery<T, DocumentQuery<T>>
     @Override
     public IDocumentQuery<T> whereExists(String fieldName) {
         _whereExists(fieldName);
+        return this;
+    }
+
+    //TBD IDocumentQuery<T> IFilterDocumentQueryBase<T, IDocumentQuery<T>>.WhereRegex<TValue>(Expression<Func<T, TValue>> propertySelector, string pattern)
+    @Override
+    public IDocumentQuery<T> whereRegex(String fieldName, String pattern) {
+        _whereRegex(fieldName, pattern);
         return this;
     }
 
@@ -566,7 +574,7 @@ public class DocumentQuery<T> extends AbstractDocumentQuery<T, DocumentQuery<T>>
                 HighlighterPostTags = HighlighterPostTags,
                 DisableEntitiesTracking = DisableEntitiesTracking,
                 DisableCaching = DisableCaching,
-                ShowQueryTimings = ShowQueryTimings,
+                //TBD ShowQueryTimings = ShowQueryTimings,
                 LastEquality = LastEquality,
                 ShouldExplainScores = ShouldExplainScores,
                 IsIntersect = IsIntersect,

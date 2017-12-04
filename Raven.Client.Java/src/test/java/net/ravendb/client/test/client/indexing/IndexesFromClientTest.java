@@ -7,7 +7,6 @@ import net.ravendb.client.documents.indexes.AbstractIndexCreationTask;
 import net.ravendb.client.documents.operations.DatabaseStatistics;
 import net.ravendb.client.documents.operations.indexes.DeleteIndexOperation;
 import net.ravendb.client.documents.operations.indexes.ResetIndexOperation;
-import net.ravendb.client.documents.operations.indexes.StopIndexOperation;
 import net.ravendb.client.documents.session.IDocumentSession;
 import net.ravendb.client.infrastructure.entities.User;
 import org.junit.jupiter.api.Test;
@@ -46,7 +45,7 @@ public class IndexesFromClientTest extends RemoteTestBase {
 
             Thread.sleep(2); /// avoid the same millisecond
 
-            store.admin().send(new ResetIndexOperation(indexName));
+            store.maintenance().send(new ResetIndexOperation(indexName));
             waitForIndexing(store);
 
             command = new GetStatisticsCommand();
@@ -71,7 +70,7 @@ public class IndexesFromClientTest extends RemoteTestBase {
         try (IDocumentStore store = getDocumentStore()) {
             store.executeIndex(new UsersIndex());
 
-            store.admin().send(new DeleteIndexOperation(new UsersIndex().getIndexName()));
+            store.maintenance().send(new DeleteIndexOperation(new UsersIndex().getIndexName()));
 
             GetStatisticsCommand command = new GetStatisticsCommand();
             store.getRequestExecutor().execute(command);

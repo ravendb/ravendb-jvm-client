@@ -1,7 +1,7 @@
 package net.ravendb.client.documents;
 
 import net.ravendb.client.documents.identity.MultiDatabaseHiLoIdGenerator;
-import net.ravendb.client.documents.operations.AdminOperationExecutor;
+import net.ravendb.client.documents.operations.MaintenanceOperationExecutor;
 import net.ravendb.client.documents.operations.OperationExecutor;
 import net.ravendb.client.documents.session.DocumentSession;
 import net.ravendb.client.documents.session.IDocumentSession;
@@ -14,7 +14,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ConcurrentSkipListMap;
 
@@ -30,7 +29,7 @@ public class DocumentStore extends DocumentStoreBase {
 
     private MultiDatabaseHiLoIdGenerator _multiDbHiLo;
 
-    private AdminOperationExecutor adminOperationExecutor;
+    private MaintenanceOperationExecutor maintenanceOperationExecutor;
     private OperationExecutor operationExecutor;
 
     private String identifier;
@@ -300,14 +299,14 @@ public class DocumentStore extends DocumentStoreBase {
     }
 
     @Override
-    public AdminOperationExecutor admin() {
+    public MaintenanceOperationExecutor maintenance() {
         assertInitialized();
 
-        if (adminOperationExecutor == null) {
-            adminOperationExecutor = new AdminOperationExecutor(this);
+        if (maintenanceOperationExecutor == null) {
+            maintenanceOperationExecutor = new MaintenanceOperationExecutor(this);
         }
 
-        return adminOperationExecutor;
+        return maintenanceOperationExecutor;
     }
 
     @Override

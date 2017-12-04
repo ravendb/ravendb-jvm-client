@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.databind.node.TextNode;
 import net.ravendb.client.documents.commands.GetOperationStateOperation;
 import net.ravendb.client.documents.conventions.DocumentConventions;
+import net.ravendb.client.http.RavenCommand;
 import net.ravendb.client.http.RequestExecutor;
 import org.apache.commons.lang3.NotImplementedException;
 
@@ -14,7 +15,6 @@ public class Operation {
     //TBD private readonly Func<IDatabaseChanges> _changes;
     private final DocumentConventions _conventions;
     private final long _id;
-    private final boolean _isServerStoreOperation;
 
     //TBD public Action<IOperationProgress> OnProgressChanged;
     //TBD private IDisposable _subscription;
@@ -24,26 +24,24 @@ public class Operation {
     }
 
     public Operation(RequestExecutor requestExecutor, DocumentConventions conventions, long id) {
-        this(requestExecutor, conventions, id, false);
-    }
-
-    public Operation(RequestExecutor requestExecutor, DocumentConventions conventions, long id, boolean isServerStoreOperation) {
         _requestExecutor = requestExecutor;
         //TBD _changes = changes;
         _conventions = conventions;
         _id = id;
-        _isServerStoreOperation = isServerStoreOperation;
     }
 
     //TBD currently we simply pull for status - implement this using changes API
 
     private ObjectNode fetchOperationsStatus() {
-        GetOperationStateOperation.GetOperationStateCommand command = new GetOperationStateOperation.GetOperationStateCommand(_conventions, _id, _isServerStoreOperation);
+        RavenCommand<ObjectNode> command = getOperationStateCommand(_conventions, _id);
         _requestExecutor.execute(command);
 
         return command.getResult();
     }
 
+    protected RavenCommand<ObjectNode> getOperationStateCommand(DocumentConventions conventions, long id) {
+        return new GetOperationStateOperation.GetOperationStateCommand(_conventions, _id);
+    }
     public void waitForCompletion() {
         while (true) {
             ObjectNode status = fetchOperationsStatus();

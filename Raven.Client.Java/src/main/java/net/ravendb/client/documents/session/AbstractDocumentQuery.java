@@ -105,7 +105,7 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
 
     protected boolean disableCaching;
 
-    protected boolean showQueryTimings;
+    //TBD protected boolean showQueryTimings;
 
     protected boolean shouldExplainScores;
 
@@ -184,8 +184,7 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
     protected QueryOperation initializeQueryOperation() {
         IndexQuery indexQuery = getIndexQuery();
 
-        return new QueryOperation(theSession, indexName, indexQuery, fieldsToFetchToken,
-                theWaitForNonStaleResults, timeout, disableEntitiesTracking, false, false);
+        return new QueryOperation(theSession, indexName, indexQuery, fieldsToFetchToken, disableEntitiesTracking, false, false);
     }
 
     public IndexQuery getIndexQuery() {
@@ -903,7 +902,7 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
         indexQuery.setWaitForNonStaleResultsTimeout(timeout);
         indexQuery.setQueryParameters(queryParameters);
         indexQuery.setDisableCaching(disableCaching);
-        indexQuery.setShowTimings(showQueryTimings);
+        //TBD indexQuery.setShowTimings(showQueryTimings);
         indexQuery.setExplainScores(shouldExplainScores);
 
         if (pageSize != null) {
@@ -927,9 +926,6 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
      */
     @Override
     public void _search(String fieldName, String searchTerms, SearchOperator operator) {
-        boolean hasWhiteSpace = searchTerms.chars().anyMatch(x -> Character.isWhitespace(x));
-        lastEquality = Tuple.create(fieldName, hasWhiteSpace ? "(" + searchTerms + ")" : searchTerms);
-
         List<QueryToken> tokens = getCurrentWhereTokens();
         appendOperatorIfNeeded(tokens);
 
@@ -992,14 +988,6 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
                 queryText.append(include);
             }
         }
-    }
-
-    /**
-     * The last term that we asked the query to use equals on
-     */
-    @Override
-    public Tuple<String, Object> getLastEqualityTerm() {
-        return lastEquality;
     }
 
     @Override
@@ -1447,9 +1435,10 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
         disableCaching = true;
     }
 
+    /* TBD
     public void _showTimings() {
         showQueryTimings = true;
-    }
+    }*/
 
     //TBD protected List<HighlightedField> HighlightedFields = new List<HighlightedField>();
     //TBD protected string[] HighlighterPreTags = new string[0];
@@ -1554,8 +1543,6 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
 
     private void executeActualQuery() {
         try (CleanCloseable context = queryOperation.enterQueryContext()) {
-            queryOperation.logQuery();
-
             QueryCommand command = queryOperation.createRequest();
             theSession.getRequestExecutor().execute(command);
             queryOperation.setResult(command.getResult());

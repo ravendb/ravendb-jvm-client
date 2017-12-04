@@ -45,7 +45,7 @@ public interface IQueryBase<T, TSelf extends IQueryBase<T, TSelf>> {
      * Enables calculation of timings for various parts of a query (Lucene search, loading documents, transforming
      * results). Default: false
      */
-    TSelf showTimings();
+    //TBD TSelf showTimings();
 
     /**
      * Skips the specified count.

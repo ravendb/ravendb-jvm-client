@@ -2,7 +2,7 @@ package net.ravendb.client.documents.session;
 
 import com.google.common.base.Defaults;
 import net.ravendb.client.documents.DocumentStore;
-import net.ravendb.client.documents.commands.GetDocumentCommand;
+import net.ravendb.client.documents.commands.GetDocumentsCommand;
 import net.ravendb.client.documents.commands.GetRevisionsCommand;
 import net.ravendb.client.documents.commands.HeadDocumentCommand;
 import net.ravendb.client.documents.commands.batches.BatchCommand;
@@ -13,8 +13,6 @@ import net.ravendb.client.documents.session.loaders.MultiLoaderWithInclude;
 import net.ravendb.client.documents.session.operations.BatchOperation;
 import net.ravendb.client.documents.session.operations.GetRevisionOperation;
 import net.ravendb.client.documents.session.operations.LoadOperation;
-import net.ravendb.client.documents.session.operations.lazy.IEagerSessionOperations;
-import net.ravendb.client.documents.session.operations.lazy.ILazySessionOperations;
 import net.ravendb.client.http.RequestExecutor;
 
 import java.util.Collection;
@@ -54,11 +52,17 @@ public class DocumentSession extends InMemoryDocumentSessionOperations implement
     }
     */
 
+    //TBD public IAttachmentsSessionOperations Attachments { get; }
+    //TBD public IRevisionsSessionOperations Revisions { get; }
+
     /**
      * Initializes new DocumentSession
      */
     public DocumentSession(String dbName, DocumentStore documentStore, UUID id, RequestExecutor requestExecutor) {
         super(dbName, documentStore, requestExecutor, id);
+
+        //TBD Attachments = new DocumentSessionAttachments(this);
+        //TBD Revisions = new DocumentSessionRevisions(this);
     }
 
     /**
@@ -108,7 +112,7 @@ public class DocumentSession extends InMemoryDocumentSessionOperations implement
 
         incrementRequestCount();
 
-        GetDocumentCommand command = new GetDocumentCommand(new String[]{documentInfo.getId()}, null, false);
+        GetDocumentsCommand command = new GetDocumentsCommand(new String[]{documentInfo.getId()}, null, false);
         _requestExecutor.execute(command, sessionInfo);
 
         refreshInternal(entity, command, documentInfo);
@@ -229,7 +233,7 @@ public class DocumentSession extends InMemoryDocumentSessionOperations implement
 
         loadOperation.byId(id);
 
-        GetDocumentCommand command = loadOperation.createRequest();
+        GetDocumentsCommand command = loadOperation.createRequest();
 
         if (command != null) {
             _requestExecutor.execute(command, sessionInfo);
@@ -258,7 +262,7 @@ public class DocumentSession extends InMemoryDocumentSessionOperations implement
     private <T> void loadInternal(Class<T> clazz, String[] ids, LoadOperation operation) { //TBD optional stream parameter
         operation.byIds(ids);
 
-        GetDocumentCommand command = operation.createRequest();
+        GetDocumentsCommand command = operation.createRequest();
         if (command != null) {
             _requestExecutor.execute(command, sessionInfo);
             /* TBD
@@ -278,7 +282,7 @@ public class DocumentSession extends InMemoryDocumentSessionOperations implement
         loadOperation.byIds(ids);
         loadOperation.withIncludes(includes);
 
-        GetDocumentCommand command = loadOperation.createRequest();
+        GetDocumentsCommand command = loadOperation.createRequest();
         if (command != null) {
             _requestExecutor.execute(command, sessionInfo);
             loadOperation.setResult(command.getResult());
@@ -304,7 +308,7 @@ public class DocumentSession extends InMemoryDocumentSessionOperations implement
             LoadStartingWithInternal(idPrefix, new LoadStartingWithOperation(this), output, matches, start, pageSize, exclude, startAfter);
         }
 
-        private GetDocumentCommand LoadStartingWithInternal(string idPrefix, LoadStartingWithOperation operation, Stream stream = null, string matches = null,
+        private GetDocumentsCommand LoadStartingWithInternal(string idPrefix, LoadStartingWithOperation operation, Stream stream = null, string matches = null,
             int start = 0, int pageSize = 25, string exclude = null,
             string startAfter = null)
         {
@@ -390,6 +394,7 @@ public class DocumentSession extends InMemoryDocumentSessionOperations implement
     //TBD private StreamResult<T> CreateStreamResult<T>(BlittableJsonReaderObject json, string[] projectionFields)
     //TBD public IEnumerator<StreamResult<T>> Stream<T>(string startsWith, string matches = null, int start = 0, int pageSize = int.MaxValue, string startAfter = null)
 
+    /* TODO delete - move?
     public <T> List<T> getRevisionsFor(Class<T> clazz, String id) {
         return getRevisionsFor(clazz, id, 0, 25);
     }
@@ -405,6 +410,6 @@ public class DocumentSession extends InMemoryDocumentSessionOperations implement
         getRequestExecutor().execute(command, sessionInfo);
         operation.setResult(command.getResult());
         return operation.complete(clazz);
-    }
+    }*/
 
 }

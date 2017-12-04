@@ -3,23 +3,21 @@ package net.ravendb.client.documents.operations;
 import net.ravendb.client.documents.DocumentStoreBase;
 import net.ravendb.client.http.RavenCommand;
 import net.ravendb.client.http.RequestExecutor;
-import net.ravendb.client.http.VoidRavenCommand;
-import net.ravendb.client.serverwide.operations.IVoidServerOperation;
 import net.ravendb.client.serverwide.operations.ServerOperationExecutor;
 import org.apache.commons.lang3.StringUtils;
 
-public class AdminOperationExecutor {
+public class MaintenanceOperationExecutor {
 
     private final DocumentStoreBase store;
     private final String databaseName;
     private RequestExecutor requestExecutor;
     private ServerOperationExecutor serverOperationExecutor;
 
-    public AdminOperationExecutor(DocumentStoreBase store) {
+    public MaintenanceOperationExecutor(DocumentStoreBase store) {
         this(store, null);
     }
 
-    public AdminOperationExecutor(DocumentStoreBase store, String databaseName) {
+    public MaintenanceOperationExecutor(DocumentStoreBase store, String databaseName) {
         this.store = store;
         this.databaseName = databaseName;
         this.requestExecutor = store.getRequestExecutor(databaseName);
@@ -34,26 +32,26 @@ public class AdminOperationExecutor {
         }
     }
 
-    public AdminOperationExecutor forDatabase(String databaseName) {
+    public MaintenanceOperationExecutor forDatabase(String databaseName) {
         if (StringUtils.equalsIgnoreCase(this.databaseName, databaseName)) {
             return this;
         }
 
-        return new AdminOperationExecutor(store, databaseName);
+        return new MaintenanceOperationExecutor(store, databaseName);
     }
 
-    public void send(IVoidAdminOperation operation) {
+    public void send(IVoidMaintenanceOperation operation) {
         RavenCommand command = operation.getCommand(requestExecutor.getConventions());
         requestExecutor.execute(command);
     }
 
-    public <TResult> TResult send(IAdminOperation<TResult> operation) {
+    public <TResult> TResult send(IMaintenanceOperation<TResult> operation) {
         RavenCommand<TResult> command = operation.getCommand(requestExecutor.getConventions());
         requestExecutor.execute(command);
         return command.getResult();
     }
 
-    public Operation sendOperation(IAdminOperation<OperationIdResult> operation) {
+    public Operation sendOperation(IMaintenanceOperation<OperationIdResult> operation) {
         RavenCommand<OperationIdResult> command = operation.getCommand(requestExecutor.getConventions());
 
         requestExecutor.execute(command);

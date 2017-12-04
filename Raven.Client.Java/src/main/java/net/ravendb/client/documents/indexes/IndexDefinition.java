@@ -26,7 +26,7 @@ public class IndexDefinition {
     private Map<String, IndexFieldOptions> fields;
     private IndexConfiguration configuration;
     private IndexType indexType;
-    private boolean testIndex;
+    //TBD private boolean testIndex;
     private String outputReduceToCollection;
 
     /**
@@ -188,16 +188,18 @@ public class IndexDefinition {
     /**
      * Whether this is a temporary test only index
      */
-    public boolean isTestIndex() {
+    /* TBD public boolean isTestIndex() {
         return testIndex;
-    }
+    }*/
 
     /**
      * Whether this is a temporary test only index
      */
+    /* TBD
     public void setTestIndex(boolean testIndex) {
         this.testIndex = testIndex;
     }
+    */
 
     /**
      * If not null than each reduce result will be created as a document in the specified collection name.

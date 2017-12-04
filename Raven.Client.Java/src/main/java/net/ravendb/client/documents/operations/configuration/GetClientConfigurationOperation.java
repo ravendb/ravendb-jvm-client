@@ -1,7 +1,7 @@
 package net.ravendb.client.documents.operations.configuration;
 
 import net.ravendb.client.documents.conventions.DocumentConventions;
-import net.ravendb.client.documents.operations.IAdminOperation;
+import net.ravendb.client.documents.operations.IMaintenanceOperation;
 import net.ravendb.client.http.RavenCommand;
 import net.ravendb.client.http.ServerNode;
 import net.ravendb.client.primitives.Reference;
@@ -11,7 +11,7 @@ import org.apache.http.client.methods.HttpRequestBase;
 
 import java.io.IOException;
 
-public class GetClientConfigurationOperation implements IAdminOperation<GetClientConfigurationOperation.Result> {
+public class GetClientConfigurationOperation implements IMaintenanceOperation<GetClientConfigurationOperation.Result> {
     @Override
     public RavenCommand<Result> getCommand(DocumentConventions conventions) {
         return new GetClientConfigurationCommand();

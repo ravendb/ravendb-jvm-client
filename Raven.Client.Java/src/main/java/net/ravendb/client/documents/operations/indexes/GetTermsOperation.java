@@ -1,7 +1,7 @@
 package net.ravendb.client.documents.operations.indexes;
 
 import net.ravendb.client.documents.conventions.DocumentConventions;
-import net.ravendb.client.documents.operations.IAdminOperation;
+import net.ravendb.client.documents.operations.IMaintenanceOperation;
 import net.ravendb.client.documents.queries.TermsQueryResult;
 import net.ravendb.client.http.RavenCommand;
 import net.ravendb.client.http.ServerNode;
@@ -13,7 +13,7 @@ import org.apache.http.client.methods.HttpRequestBase;
 
 import java.io.IOException;
 
-public class GetTermsOperation implements IAdminOperation<String[]> {
+public class GetTermsOperation implements IMaintenanceOperation<String[]> {
 
     private final String _indexName;
     private final String _field;

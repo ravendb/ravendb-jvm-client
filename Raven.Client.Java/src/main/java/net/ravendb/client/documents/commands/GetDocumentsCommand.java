@@ -2,7 +2,6 @@ package net.ravendb.client.documents.commands;
 
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.common.collect.Sets;
 import net.ravendb.client.extensions.JsonExtensions;
 import net.ravendb.client.http.RavenCommand;
 import net.ravendb.client.http.ServerNode;
@@ -19,7 +18,7 @@ import java.io.IOException;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
-public class GetDocumentCommand extends RavenCommand<GetDocumentResult> {
+public class GetDocumentsCommand extends RavenCommand<GetDocumentsResult> {
 
     private String _id;
 
@@ -30,26 +29,26 @@ public class GetDocumentCommand extends RavenCommand<GetDocumentResult> {
 
     private String _startWith;
     private String _matches;
-    private int _start;
-    private int _pageSize;
+    private Integer _start;
+    private Integer _pageSize;
     private String _exclude;
     private String _startAfter;
 
-    public GetDocumentCommand(int start, int pageSize) {
-        super(GetDocumentResult.class);
+    public GetDocumentsCommand(int start, int pageSize) {
+        super(GetDocumentsResult.class);
         _start = start;
         _pageSize = pageSize;
     }
 
-    public GetDocumentCommand(String id, String[] includes, boolean metadataOnly) {
-        super(GetDocumentResult.class);
+    public GetDocumentsCommand(String id, String[] includes, boolean metadataOnly) {
+        super(GetDocumentsResult.class);
         _id = id;
         _includes = includes;
         _metadataOnly = metadataOnly;
     }
 
-    public GetDocumentCommand(String[] ids, String[] includes, boolean metadataOnly) {
-        super(GetDocumentResult.class);
+    public GetDocumentsCommand(String[] ids, String[] includes, boolean metadataOnly) {
+        super(GetDocumentsResult.class);
         if (ids == null || ids.length == 0) {
             throw new IllegalArgumentException("Please supply at least one id");
         }
@@ -59,8 +58,8 @@ public class GetDocumentCommand extends RavenCommand<GetDocumentResult> {
         _metadataOnly = metadataOnly;
     }
 
-    public GetDocumentCommand(String startWith, String startAfter, String matches, String exclude, int start, int pageSize, boolean metadataOnly) {
-        super(GetDocumentResult.class);
+    public GetDocumentsCommand(String startWith, String startAfter, String matches, String exclude, int start, int pageSize, boolean metadataOnly) {
+        super(GetDocumentsResult.class);
         if (startWith == null) {
             throw new IllegalArgumentException("startWith cannot be null");
         }
@@ -80,6 +79,14 @@ public class GetDocumentCommand extends RavenCommand<GetDocumentResult> {
                 .append(node.getDatabase())
                 .append("/docs?");
 
+        if (_start != null) {
+            pathBuilder.append("&start=").append(_start);
+        }
+
+        if (_pageSize != null) {
+            pathBuilder.append("&pageSize=").append(_pageSize);
+        }
+
         if (_metadataOnly) {
             pathBuilder.append("&metadata-only=true");
         }
@@ -87,10 +94,6 @@ public class GetDocumentCommand extends RavenCommand<GetDocumentResult> {
         if (_startWith != null) {
             pathBuilder.append("startsWith=");
             pathBuilder.append(UrlUtils.escapeDataString(_startWith));
-            pathBuilder.append("&start=");
-            pathBuilder.append(_start);
-            pathBuilder.append("&pageSize=");
-            pathBuilder.append(_pageSize);
 
             if (_matches != null) {
                 pathBuilder.append("&matches=");

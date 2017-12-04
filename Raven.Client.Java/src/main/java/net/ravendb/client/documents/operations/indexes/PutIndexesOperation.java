@@ -6,7 +6,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import net.ravendb.client.documents.conventions.DocumentConventions;
 import net.ravendb.client.documents.indexes.IndexDefinition;
 import net.ravendb.client.documents.indexes.PutIndexResult;
-import net.ravendb.client.documents.operations.IAdminOperation;
+import net.ravendb.client.documents.operations.IMaintenanceOperation;
 import net.ravendb.client.documents.operations.PutIndexesResponse;
 import net.ravendb.client.documents.session.EntityToJson;
 import net.ravendb.client.extensions.JsonExtensions;
@@ -20,7 +20,7 @@ import org.apache.http.entity.ContentType;
 
 import java.io.IOException;
 
-public class PutIndexesOperation implements IAdminOperation<PutIndexResult[]> {
+public class PutIndexesOperation implements IMaintenanceOperation<PutIndexResult[]> {
 
     private final IndexDefinition[] _indexToAdd;
 

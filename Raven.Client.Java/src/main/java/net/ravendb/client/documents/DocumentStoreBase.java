@@ -4,7 +4,7 @@ import net.ravendb.client.documents.conventions.DocumentConventions;
 import net.ravendb.client.documents.indexes.AbstractIndexCreationTask;
 import net.ravendb.client.documents.indexes.IndexCreation;
 import net.ravendb.client.documents.indexes.IndexDefinition;
-import net.ravendb.client.documents.operations.AdminOperationExecutor;
+import net.ravendb.client.documents.operations.MaintenanceOperationExecutor;
 import net.ravendb.client.documents.operations.OperationExecutor;
 import net.ravendb.client.documents.operations.indexes.PutIndexesOperation;
 import net.ravendb.client.documents.session.*;
@@ -12,11 +12,9 @@ import net.ravendb.client.http.RequestExecutor;
 import net.ravendb.client.primitives.EventHandler;
 import net.ravendb.client.primitives.VoidArgs;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.http.ssl.SSLContexts;
 
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.security.KeyStore;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -74,7 +72,7 @@ public abstract class DocumentStoreBase implements IDocumentStore {
         assertInitialized();
         IndexDefinition[] indexesToAdd = IndexCreation.createIndexesToAdd(tasks, conventions);
 
-        admin().send(new PutIndexesOperation(indexesToAdd));
+        maintenance().send(new PutIndexesOperation(indexesToAdd));
     }
 
     private DocumentConventions conventions;
@@ -246,7 +244,7 @@ public abstract class DocumentStoreBase implements IDocumentStore {
 
     }
 
-    public abstract AdminOperationExecutor admin();
+    public abstract MaintenanceOperationExecutor maintenance();
 
     public abstract OperationExecutor operations();
 

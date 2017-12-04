@@ -103,9 +103,10 @@ public class JsonExtensions {
             generator.writeBooleanField("ExplainScores", query.isExplainScores());
         }
 
+        /* TBD
         if (query.isShowTimings()) {
             generator.writeBooleanField("ShowTimings", query.isShowTimings());
-        }
+        }*/
 
         if (query.isSkipDuplicateChecking()) {
             generator.writeBooleanField("SkipDuplicateChecking", query.isSkipDuplicateChecking());

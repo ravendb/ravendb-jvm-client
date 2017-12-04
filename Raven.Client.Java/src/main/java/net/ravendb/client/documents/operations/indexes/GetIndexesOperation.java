@@ -2,7 +2,7 @@ package net.ravendb.client.documents.operations.indexes;
 
 import net.ravendb.client.documents.conventions.DocumentConventions;
 import net.ravendb.client.documents.indexes.IndexDefinition;
-import net.ravendb.client.documents.operations.IAdminOperation;
+import net.ravendb.client.documents.operations.IMaintenanceOperation;
 import net.ravendb.client.documents.operations.ResultsResponse;
 import net.ravendb.client.http.RavenCommand;
 import net.ravendb.client.http.ServerNode;
@@ -12,7 +12,7 @@ import org.apache.http.client.methods.HttpRequestBase;
 
 import java.io.IOException;
 
-public class GetIndexesOperation implements IAdminOperation<IndexDefinition[]> {
+public class GetIndexesOperation implements IMaintenanceOperation<IndexDefinition[]> {
 
     private final int _start;
     private final int _pageSize;

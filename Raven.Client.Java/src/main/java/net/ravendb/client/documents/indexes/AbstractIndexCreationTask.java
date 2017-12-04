@@ -147,7 +147,7 @@ public abstract class AbstractIndexCreationTask {
             indexDefinition.setPriority(priority);
         }
 
-        store.admin().send(new PutIndexesOperation(indexDefinition));
+        store.maintenance().send(new PutIndexesOperation(indexDefinition));
     }
 
     // AbstractGenericIndexCreationTask

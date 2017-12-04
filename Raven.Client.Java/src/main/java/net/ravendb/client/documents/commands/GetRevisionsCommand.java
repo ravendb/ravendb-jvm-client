@@ -13,10 +13,32 @@ import java.io.IOException;
 
 public class GetRevisionsCommand extends RavenCommand<ArrayNode> {
 
-    private final String _id;
-    private final Integer _start;
-    private final Integer _pageSize;
-    private final boolean _metadataOnly;
+    private String _id;
+    private Integer _start;
+    private Integer _pageSize;
+    private boolean _metadataOnly;
+    private String _changeVector;
+    private String[] _changeVectors;
+
+    public GetRevisionsCommand(String changeVector) {
+        this(changeVector, false);
+    }
+
+    public GetRevisionsCommand(String changeVector, boolean metadataOnly) {
+        super(ArrayNode.class);
+        _changeVector = changeVector;
+        _metadataOnly = metadataOnly;
+    }
+
+    public GetRevisionsCommand(String[] changeVectors) {
+        this(changeVectors, false);
+    }
+
+    public GetRevisionsCommand(String[] changeVectors, boolean metadataOnly) {
+        super(ArrayNode.class);
+        _changeVectors = changeVectors;
+        _metadataOnly = metadataOnly;
+    }
 
     public GetRevisionsCommand(String id, Integer start, Integer pageSize) {
         this(id, start, pageSize, false);
@@ -41,9 +63,17 @@ public class GetRevisionsCommand extends RavenCommand<ArrayNode> {
         StringBuilder pathBuilder = new StringBuilder(node.getUrl())
                 .append("/databases/")
                 .append(node.getDatabase())
-                .append("/revisions")
-                .append("?id=")
-                .append(UrlUtils.escapeDataString(_id));
+                .append("/revisions?");
+
+        if (_id != null) {
+            pathBuilder.append("&id=").append(UrlUtils.escapeDataString(_id));
+        } else if (_changeVector != null) {
+            pathBuilder.append("&changeVector=").append(UrlUtils.escapeDataString(_changeVector));
+        } else if (_changeVectors != null) {
+            for (String changeVector : _changeVectors) {
+                pathBuilder.append("&changeVector=").append(UrlUtils.escapeDataString(changeVector));
+            }
+        }
 
         if (_start != null) {
             pathBuilder.append("&start=").append(_start);
@@ -64,7 +94,7 @@ public class GetRevisionsCommand extends RavenCommand<ArrayNode> {
     @Override
     public void setResponse(String response, boolean fromCache) throws IOException {
         if (response == null) {
-            throwInvalidResponse();
+            result = null;
         }
 
         result = (ArrayNode) mapper.readTree(response);

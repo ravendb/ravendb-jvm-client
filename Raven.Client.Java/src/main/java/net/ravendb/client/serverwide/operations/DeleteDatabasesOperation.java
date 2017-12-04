@@ -14,7 +14,7 @@ import org.apache.http.entity.StringEntity;
 import java.io.IOException;
 import java.time.Duration;
 
-public class DeleteDatabasesOperation implements IServerOperation<DeleteDatabaseResult> {
+public class DeleteDatabasesOperation implements IMaintenanceOperation<DeleteDatabaseResult> {
 
     private final Parameters parameters;
 

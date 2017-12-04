@@ -4,7 +4,7 @@ import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import net.ravendb.client.documents.conventions.DocumentConventions;
 import net.ravendb.client.documents.indexes.IndexLockMode;
-import net.ravendb.client.documents.operations.IVoidAdminOperation;
+import net.ravendb.client.documents.operations.IVoidMaintenanceOperation;
 import net.ravendb.client.documents.session.EntityToJson;
 import net.ravendb.client.http.ServerNode;
 import net.ravendb.client.http.VoidRavenCommand;
@@ -16,7 +16,7 @@ import org.apache.http.entity.ContentType;
 
 import java.io.IOException;
 
-public class SetIndexesLockOperation implements IVoidAdminOperation {
+public class SetIndexesLockOperation implements IVoidMaintenanceOperation {
 
     private final Parameters _parameters;
 

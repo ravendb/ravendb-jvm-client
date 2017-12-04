@@ -20,14 +20,14 @@ public class IndexOperationsTest extends RemoteTestBase {
         try (IDocumentStore store = getDocumentStore()) {
             new IndexesFromClientTest.UsersIndex().execute(store);
 
-            String[] indexNames = store.admin().send(new GetIndexNamesOperation(0, 10));
+            String[] indexNames = store.maintenance().send(new GetIndexNamesOperation(0, 10));
 
             assertThat(indexNames)
                     .contains("UsersIndex");
 
-            store.admin().send(new DeleteIndexOperation("UsersIndex"));
+            store.maintenance().send(new DeleteIndexOperation("UsersIndex"));
 
-            indexNames = store.admin().send(new GetIndexNamesOperation(0, 10));
+            indexNames = store.maintenance().send(new GetIndexNamesOperation(0, 10));
 
             assertThat(indexNames)
                     .isEmpty();
@@ -39,17 +39,17 @@ public class IndexOperationsTest extends RemoteTestBase {
         try (IDocumentStore store = getDocumentStore()) {
             new IndexesFromClientTest.UsersIndex().execute(store);
 
-            store.admin().send(new DisableIndexOperation("UsersIndex"));
+            store.maintenance().send(new DisableIndexOperation("UsersIndex"));
 
-            IndexingStatus indexingStatus = store.admin().send(new GetIndexingStatusOperation());
+            IndexingStatus indexingStatus = store.maintenance().send(new GetIndexingStatusOperation());
 
             IndexingStatus.IndexStatus indexStatus = indexingStatus.getIndexes()[0];
             assertThat(indexStatus.getStatus())
                     .isEqualTo(IndexRunningStatus.DISABLED);
 
-            store.admin().send(new EnableIndexOperation("UsersIndex"));
+            store.maintenance().send(new EnableIndexOperation("UsersIndex"));
 
-            indexingStatus = store.admin().send(new GetIndexingStatusOperation());
+            indexingStatus = store.maintenance().send(new GetIndexingStatusOperation());
 
             indexStatus = indexingStatus.getIndexes()[0];
             assertThat(indexingStatus.getStatus())
@@ -63,7 +63,7 @@ public class IndexOperationsTest extends RemoteTestBase {
             new IndexesFromClientTest.UsersIndex().execute(store);
 
 
-            IndexDefinition[] indexDefinitions = store.admin().send(new GetIndexesOperation(0, 10));
+            IndexDefinition[] indexDefinitions = store.maintenance().send(new GetIndexesOperation(0, 10));
             assertThat(indexDefinitions)
                     .hasSize(1);
 
@@ -76,7 +76,7 @@ public class IndexOperationsTest extends RemoteTestBase {
             new IndexesFromClientTest.UsersIndex().execute(store);
 
 
-            IndexStats[] indexStats = store.admin().send(new GetIndexesStatisticsOperation());
+            IndexStats[] indexStats = store.maintenance().send(new GetIndexesStatisticsOperation());
 
             assertThat(indexStats)
                     .hasSize(1);
@@ -97,7 +97,7 @@ public class IndexOperationsTest extends RemoteTestBase {
 
             waitForIndexing(store, store.getDatabase());
 
-            String[] terms = store.admin().send(new GetTermsOperation("UsersIndex", "Name", null));
+            String[] terms = store.maintenance().send(new GetTermsOperation("UsersIndex", "Name", null));
 
             assertThat(terms)
                     .hasSize(1)
@@ -112,14 +112,14 @@ public class IndexOperationsTest extends RemoteTestBase {
             IndexesFromClientTest.UsersIndex index = new IndexesFromClientTest.UsersIndex();
             IndexDefinition indexDef = index.createIndexDefinition();
 
-            store.admin().send(new PutIndexesOperation(indexDef));
+            store.maintenance().send(new PutIndexesOperation(indexDef));
 
-            assertThat(store.admin().send(new IndexHasChangedOperation(indexDef)))
+            assertThat(store.maintenance().send(new IndexHasChangedOperation(indexDef)))
                     .isFalse();
 
             indexDef.setMaps(Sets.newHashSet("from users"));
 
-            assertThat(store.admin().send(new IndexHasChangedOperation(indexDef)))
+            assertThat(store.maintenance().send(new IndexHasChangedOperation(indexDef)))
                     .isTrue();
         }
     }
@@ -130,18 +130,18 @@ public class IndexOperationsTest extends RemoteTestBase {
             IndexesFromClientTest.UsersIndex index = new IndexesFromClientTest.UsersIndex();
             IndexDefinition indexDef = index.createIndexDefinition();
 
-            store.admin().send(new PutIndexesOperation(indexDef));
+            store.maintenance().send(new PutIndexesOperation(indexDef));
 
-            store.admin().send(new StopIndexingOperation());
+            store.maintenance().send(new StopIndexingOperation());
 
-            IndexingStatus indexingStatus = store.admin().send(new GetIndexingStatusOperation());
+            IndexingStatus indexingStatus = store.maintenance().send(new GetIndexingStatusOperation());
 
             assertThat(indexingStatus.getStatus())
                     .isEqualTo(IndexRunningStatus.PAUSED);
 
-            store.admin().send(new StartIndexingOperation());
+            store.maintenance().send(new StartIndexingOperation());
 
-            indexingStatus = store.admin().send(new GetIndexingStatusOperation());
+            indexingStatus = store.maintenance().send(new GetIndexingStatusOperation());
 
             assertThat(indexingStatus.getStatus())
                     .isEqualTo(IndexRunningStatus.RUNNING);
@@ -155,20 +155,20 @@ public class IndexOperationsTest extends RemoteTestBase {
             IndexesFromClientTest.UsersIndex index = new IndexesFromClientTest.UsersIndex();
             IndexDefinition indexDef = index.createIndexDefinition();
 
-            store.admin().send(new PutIndexesOperation(indexDef));
+            store.maintenance().send(new PutIndexesOperation(indexDef));
 
-            store.admin().send(new StopIndexOperation(indexDef.getName()));
+            store.maintenance().send(new StopIndexOperation(indexDef.getName()));
 
-            IndexingStatus indexingStatus = store.admin().send(new GetIndexingStatusOperation());
+            IndexingStatus indexingStatus = store.maintenance().send(new GetIndexingStatusOperation());
 
             assertThat(indexingStatus.getStatus())
                     .isEqualTo(IndexRunningStatus.RUNNING);
             assertThat(indexingStatus.getIndexes()[0].getStatus())
                     .isEqualTo(IndexRunningStatus.PAUSED);
 
-            store.admin().send(new StartIndexOperation(indexDef.getName()));
+            store.maintenance().send(new StartIndexOperation(indexDef.getName()));
 
-            indexingStatus = store.admin().send(new GetIndexingStatusOperation());
+            indexingStatus = store.maintenance().send(new GetIndexingStatusOperation());
 
             assertThat(indexingStatus.getStatus())
                     .isEqualTo(IndexRunningStatus.RUNNING);
@@ -184,10 +184,10 @@ public class IndexOperationsTest extends RemoteTestBase {
             IndexesFromClientTest.UsersIndex index = new IndexesFromClientTest.UsersIndex();
             IndexDefinition indexDef = index.createIndexDefinition();
 
-            store.admin().send(new PutIndexesOperation(indexDef));
+            store.maintenance().send(new PutIndexesOperation(indexDef));
 
-            store.admin().send(new SetIndexesLockOperation(indexDef.getName(), IndexLockMode.LOCKED_ERROR));
-            IndexDefinition newIndexDef = store.admin().send(new GetIndexOperation(indexDef.getName()));
+            store.maintenance().send(new SetIndexesLockOperation(indexDef.getName(), IndexLockMode.LOCKED_ERROR));
+            IndexDefinition newIndexDef = store.maintenance().send(new GetIndexOperation(indexDef.getName()));
 
             assertThat(newIndexDef.getLockMode())
                     .isEqualTo(IndexLockMode.LOCKED_ERROR);
@@ -200,10 +200,10 @@ public class IndexOperationsTest extends RemoteTestBase {
             IndexesFromClientTest.UsersIndex index = new IndexesFromClientTest.UsersIndex();
             IndexDefinition indexDef = index.createIndexDefinition();
 
-            store.admin().send(new PutIndexesOperation(indexDef));
+            store.maintenance().send(new PutIndexesOperation(indexDef));
 
-            store.admin().send(new SetIndexesPriorityOperation(indexDef.getName(), IndexPriority.HIGH));
-            IndexDefinition newIndexDef = store.admin().send(new GetIndexOperation(indexDef.getName()));
+            store.maintenance().send(new SetIndexesPriorityOperation(indexDef.getName(), IndexPriority.HIGH));
+            IndexDefinition newIndexDef = store.maintenance().send(new GetIndexOperation(indexDef.getName()));
 
             assertThat(newIndexDef.getPriority())
                     .isEqualTo(IndexPriority.HIGH);
@@ -216,7 +216,7 @@ public class IndexOperationsTest extends RemoteTestBase {
             UsersInvalidIndex index = new UsersInvalidIndex();
             IndexDefinition indexDef = index.createIndexDefinition();
 
-            store.admin().send(new PutIndexesOperation(indexDef));
+            store.maintenance().send(new PutIndexesOperation(indexDef));
 
             try (IDocumentSession session = store.openSession()) {
                 User user = new User();
@@ -228,8 +228,8 @@ public class IndexOperationsTest extends RemoteTestBase {
 
             waitForIndexing(store, store.getDatabase());
 
-            IndexErrors[] indexErrors = store.admin().send(new GetIndexErrorsOperation());
-            IndexErrors[] perIndexErrors = store.admin().send(new GetIndexErrorsOperation(new String[] { indexDef.getName() }));
+            IndexErrors[] indexErrors = store.maintenance().send(new GetIndexErrorsOperation());
+            IndexErrors[] perIndexErrors = store.maintenance().send(new GetIndexErrorsOperation(new String[] { indexDef.getName() }));
 
             assertThat(indexErrors)
                     .hasSize(1);
@@ -245,7 +245,7 @@ public class IndexOperationsTest extends RemoteTestBase {
             Users_Index index = new Users_Index();
             IndexDefinition indexDef = index.createIndexDefinition();
 
-            store.admin().send(new PutIndexesOperation(indexDef));
+            store.maintenance().send(new PutIndexesOperation(indexDef));
 
             try (IDocumentSession session = store.openSession()) {
                 User user = new User();
@@ -257,7 +257,7 @@ public class IndexOperationsTest extends RemoteTestBase {
 
             waitForIndexing(store, store.getDatabase());
 
-            IndexStats stats = store.admin().send(new GetIndexStatisticsOperation(indexDef.getName()));
+            IndexStats stats = store.maintenance().send(new GetIndexStatisticsOperation(indexDef.getName()));
             assertThat(stats.getEntriesCount())
                     .isEqualTo(1);
         }

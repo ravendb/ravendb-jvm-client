@@ -11,6 +11,6 @@ public class WktField extends SpatialDynamicField {
 
     @Override
     public String toField(BiFunction<String, Boolean, String> ensureValidFieldName) {
-        return "wkt(" + ensureValidFieldName.apply(wkt, false) + ")";
+        return "spatial.    wkt(" + ensureValidFieldName.apply(wkt, false) + ")";
     }
 }

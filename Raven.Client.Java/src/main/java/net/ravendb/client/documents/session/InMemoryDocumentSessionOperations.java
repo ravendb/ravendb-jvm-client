@@ -11,7 +11,7 @@ import net.ravendb.client.Constants;
 import net.ravendb.client.documents.DocumentStoreBase;
 import net.ravendb.client.documents.IDocumentStore;
 import net.ravendb.client.documents.IdTypeAndName;
-import net.ravendb.client.documents.commands.GetDocumentResult;
+import net.ravendb.client.documents.commands.GetDocumentsResult;
 import net.ravendb.client.documents.commands.batches.*;
 import net.ravendb.client.documents.conventions.DocumentConventions;
 import net.ravendb.client.documents.identity.GenerateEntityIdOnTheClient;
@@ -29,7 +29,6 @@ import net.ravendb.client.util.IdentityHashSet;
 import org.apache.commons.lang3.NotImplementedException;
 import org.apache.commons.lang3.StringUtils;
 
-import java.awt.event.KeyEvent;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
@@ -1136,7 +1135,7 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
         return true;
     }
 
-    protected <T> void refreshInternal(T entity, RavenCommand<GetDocumentResult> cmd, DocumentInfo documentInfo) {
+    protected <T> void refreshInternal(T entity, RavenCommand<GetDocumentsResult> cmd, DocumentInfo documentInfo) {
         ObjectNode document = (ObjectNode) cmd.getResult().getResults().get(0);
         if (document == null) {
             throw new IllegalStateException("Document '" + documentInfo.getId() + "' no longer exists and was probably deleted");
@@ -1225,9 +1224,9 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
 }
 
         */
-    //TBD public AttachmentName[] GetAttachmentNames(object entity)
-    //TBD public void StoreAttachment(string documentId, string name, Stream stream, string contentType = null)
-    //TBD public void StoreAttachment(object entity, string name, Stream stream, string contentType = null)
+    //TBD public AttachmentName[] GetAttachmentNames(object entity) --> attachments
+    //TBD public void StoreAttachment(string documentId, string name, Stream stream, string contentType = null) --> attachments
+    //TBD public void StoreAttachment(object entity, string name, Stream stream, string contentType = null) --> attachments
     /* TODO
 
         protected void ThrowEntityNotInSession(object entity)
@@ -1239,8 +1238,8 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
 
 
      */
-    //TBD public void DeleteAttachment(object entity, string name)
-    //TBD public void DeleteAttachment(string documentId, string name)
+    //TBD public void DeleteAttachment(object entity, string name) --> attachments
+    //TBD public void DeleteAttachment(string documentId, string name) --> attachments
 
     public enum ConcurrencyCheckMode {
         /**

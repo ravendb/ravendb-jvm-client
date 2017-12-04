@@ -6,9 +6,8 @@ import com.google.common.collect.Sets;
 import net.ravendb.client.Constants;
 import net.ravendb.client.documents.DocumentStore;
 import net.ravendb.client.documents.IDocumentStore;
-import net.ravendb.client.documents.commands.GetStatisticsCommand;
 import net.ravendb.client.documents.indexes.IndexState;
-import net.ravendb.client.documents.operations.AdminOperationExecutor;
+import net.ravendb.client.documents.operations.MaintenanceOperationExecutor;
 import net.ravendb.client.documents.operations.DatabaseStatistics;
 import net.ravendb.client.documents.operations.GetStatisticsOperation;
 import net.ravendb.client.documents.operations.IndexInformation;
@@ -20,28 +19,20 @@ import net.ravendb.client.primitives.CleanCloseable;
 import net.ravendb.client.serverwide.DatabaseRecord;
 import net.ravendb.client.serverwide.operations.CreateDatabaseOperation;
 import net.ravendb.client.serverwide.operations.DeleteDatabasesOperation;
-import net.ravendb.client.util.TimeUtils;
 import net.ravendb.client.util.UrlUtils;
-import org.apache.commons.lang3.NotImplementedException;
 
 import java.awt.*;
 import java.io.*;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.net.URLEncoder;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Comparator;
 import java.util.List;
 import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.ConcurrentSkipListSet;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
-import java.util.stream.StreamSupport;
 
 public abstract class RavenTestDriver implements CleanCloseable {
 
@@ -95,7 +86,7 @@ public abstract class RavenTestDriver implements CleanCloseable {
         DatabaseRecord databaseRecord = new DatabaseRecord();
         databaseRecord.setDatabaseName(name);
         CreateDatabaseOperation createDatabaseOperation = new CreateDatabaseOperation(databaseRecord);
-        documentStore.admin().server().send(createDatabaseOperation);
+        documentStore.maintenance().server().send(createDatabaseOperation);
 
 
         DocumentStore store = new DocumentStore();
@@ -110,7 +101,7 @@ public abstract class RavenTestDriver implements CleanCloseable {
             }
 
             try {
-                store.admin().server().send(new DeleteDatabasesOperation(store.getDatabase(), true));
+                store.maintenance().server().send(new DeleteDatabasesOperation(store.getDatabase(), true));
             } catch (DatabaseDoesNotExistException e) {
                 // ignore
             } catch (NoLeaderException e) {
@@ -246,7 +237,7 @@ public abstract class RavenTestDriver implements CleanCloseable {
     }
 
     public void waitForIndexing(IDocumentStore store, String database, Duration timeout) {
-        AdminOperationExecutor admin = store.admin().forDatabase(database);
+        MaintenanceOperationExecutor admin = store.maintenance().forDatabase(database);
 
         if (timeout == null) {
             timeout = Duration.ofMinutes(1);

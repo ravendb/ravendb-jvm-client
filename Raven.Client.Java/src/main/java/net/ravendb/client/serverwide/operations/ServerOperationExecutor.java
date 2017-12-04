@@ -7,23 +7,27 @@ import net.ravendb.client.http.VoidRavenCommand;
 
 public class ServerOperationExecutor {
 
+    private final DocumentStoreBase store;
     private final ClusterRequestExecutor requestExecutor;
 
     public ServerOperationExecutor(DocumentStoreBase store) {
+        this.store = store;
         requestExecutor = store.getConventions().isDisableTopologyUpdates() ?
                 ClusterRequestExecutor.createForSingleNode(store.getUrls()[0]) :
                 ClusterRequestExecutor.create(store.getUrls());
     }
 
-    public void send(IVoidServerOperation operation) {
+    public void send(IVoidMaintenanceOperation operation) {
         VoidRavenCommand command = operation.getCommand(requestExecutor.getConventions());
         requestExecutor.execute(command);
     }
 
-    public <TResult> TResult send(IServerOperation<TResult> operation) {
+    public <TResult> TResult send(IMaintenanceOperation<TResult> operation) {
         RavenCommand<TResult> command = operation.getCommand(requestExecutor.getConventions());
         requestExecutor.execute(command);
 
         return command.getResult();
     }
+
+    //TODO: public async Task<Operation> Send(IServerOperation<OperationIdResult> operation, CancellationToken token = default(CancellationToken))
 }

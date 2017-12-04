@@ -13,6 +13,6 @@ public class PointField extends SpatialDynamicField {
 
     @Override
     public String toField(BiFunction<String, Boolean, String> ensureValidFieldName) {
-        return "point(" + ensureValidFieldName.apply(latitude, false) + ", " + ensureValidFieldName.apply(longitude, false) + ")";
+        return "spatial.point(" + ensureValidFieldName.apply(latitude, false) + ", " + ensureValidFieldName.apply(longitude, false) + ")";
     }
 }

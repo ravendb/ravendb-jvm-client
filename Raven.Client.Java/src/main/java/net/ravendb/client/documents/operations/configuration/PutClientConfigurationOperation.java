@@ -2,7 +2,7 @@ package net.ravendb.client.documents.operations.configuration;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import net.ravendb.client.documents.conventions.DocumentConventions;
-import net.ravendb.client.documents.operations.IVoidAdminOperation;
+import net.ravendb.client.documents.operations.IVoidMaintenanceOperation;
 import net.ravendb.client.http.ServerNode;
 import net.ravendb.client.http.VoidRavenCommand;
 import net.ravendb.client.primitives.ExceptionsUtils;
@@ -13,7 +13,7 @@ import org.apache.http.client.methods.HttpRequestBase;
 import org.apache.http.entity.ContentType;
 import org.apache.http.entity.StringEntity;
 
-public class PutClientConfigurationOperation implements IVoidAdminOperation {
+public class PutClientConfigurationOperation implements IVoidMaintenanceOperation {
     private final ClientConfiguration configuration;
 
     public PutClientConfigurationOperation(ClientConfiguration configuration) {

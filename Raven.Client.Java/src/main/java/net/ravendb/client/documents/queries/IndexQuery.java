@@ -39,7 +39,7 @@ public class IndexQuery extends IndexQueryWithParameters<Parameters> {
             hasher.write(getQuery());
             hasher.write(isWaitForNonStaleResults());
             hasher.write(isSkipDuplicateChecking());
-            hasher.write(isShowTimings());
+            //TBD hasher.write(isShowTimings());
             hasher.write(isExplainScores());
             hasher.write(Optional.ofNullable(getWaitForNonStaleResultsTimeout()).map(x -> x.toMillis()).orElse(0L));
             hasher.write(getCutoffEtag());

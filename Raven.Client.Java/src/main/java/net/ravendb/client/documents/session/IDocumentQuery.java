@@ -73,12 +73,8 @@ public interface IDocumentQuery<T> extends IDocumentQueryBase<T, IDocumentQuery<
 
     IGroupByDocumentQuery<T> groupBy(Tuple<String, GroupByMethod> field, Tuple<String, GroupByMethod>... fields);
 
-    //TBD IDocumentQuery<T> MoreLikeThis(MoreLikeThisOptions options = null);
-    //TBD IDocumentQuery<T> MoreLikeThis(string document, MoreLikeThisOptions options = null);
-    //TBD IDocumentQuery<T> MoreLikeThis(Action<IFilterDocumentQueryBase<T, IDocumentQuery<T>>> predicate, MoreLikeThisOptions options = null);
-    //TBD IAggregationDocumentQuery<T> AggregateBy(Action<IFacetFactory<T>> factory = null);
-    //TBD IAggregationDocumentQuery<T> AggregateBy(FacetBase facet);
-    //TBD IAggregationDocumentQuery<T> AggregateBy(IEnumerable<Facet> facets);
-    //TBD IAggregationDocumentQuery<T> AggregateUsing(string facetSetupDocumentKey);
+    //TBD MoreLikeThis
+    //TBD AggregateBy
+    //TBD SuggestUsing
 
 }

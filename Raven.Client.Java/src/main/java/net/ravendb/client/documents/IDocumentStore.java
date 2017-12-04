@@ -2,7 +2,7 @@ package net.ravendb.client.documents;
 
 import net.ravendb.client.documents.conventions.DocumentConventions;
 import net.ravendb.client.documents.indexes.AbstractIndexCreationTask;
-import net.ravendb.client.documents.operations.AdminOperationExecutor;
+import net.ravendb.client.documents.operations.MaintenanceOperationExecutor;
 import net.ravendb.client.documents.operations.OperationExecutor;
 import net.ravendb.client.documents.session.*;
 import net.ravendb.client.http.RequestExecutor;
@@ -132,7 +132,7 @@ public interface IDocumentStore extends IDisposalNotification {
 
     RequestExecutor getRequestExecutor(String databaseName);
 
-    AdminOperationExecutor admin();
+    MaintenanceOperationExecutor maintenance();
 
     OperationExecutor operations();
 

@@ -19,6 +19,9 @@ public interface IAdvancedSessionOperations extends IAdvancedDocumentSessionOper
      */
     //TBD ILazySessionOperations lazily();
 
+    //TBD IAttachmentsSessionOperations Attachments { get; }
+    //TBD IRevisionsSessionOperations Revisions { get; }
+
     /**
      * Updates entity with latest changes from server
      */
@@ -111,7 +114,4 @@ public interface IAdvancedSessionOperations extends IAdvancedDocumentSessionOper
     // TBD stream void StreamInto<T>(IDocumentQuery<T> query, Stream output);
     // TBD stream void StreamInto<T>(IRawDocumentQuery<T> query, Stream output);
 
-    <T> List<T> getRevisionsFor(Class<T> clazz, String id);
-    <T> List<T> getRevisionsFor(Class<T> clazz, String id, int start);
-    <T> List<T> getRevisionsFor(Class<T> clazz, String id, int start, int pageSize);
 }

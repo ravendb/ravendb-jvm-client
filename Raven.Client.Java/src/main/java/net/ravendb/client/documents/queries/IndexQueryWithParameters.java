@@ -6,7 +6,7 @@ public abstract class IndexQueryWithParameters<T> extends IndexQueryBase<T> {
 
     private boolean explainScores;
 
-    private boolean showTimings;
+    //TBD private boolean showTimings;
 
     /**
      * Allow to skip duplicate checking during queries
@@ -39,16 +39,18 @@ public abstract class IndexQueryWithParameters<T> extends IndexQueryBase<T> {
     /**
      * Indicates if detailed timings should be calculated for various query parts (Lucene search, loading documents, transforming results). Default: false
      */
-    public boolean isShowTimings() {
+    /* TBD public boolean isShowTimings() {
         return showTimings;
-    }
+    }*/
 
     /**
      * Indicates if detailed timings should be calculated for various query parts (Lucene search, loading documents, transforming results). Default: false
      */
+    /* TBD
     public void setShowTimings(boolean showTimings) {
         this.showTimings = showTimings;
     }
+    */
 
     @Override
     public boolean equals(Object o) {
@@ -59,14 +61,15 @@ public abstract class IndexQueryWithParameters<T> extends IndexQueryBase<T> {
         IndexQueryWithParameters<?> that = (IndexQueryWithParameters<?>) o;
 
         if (skipDuplicateChecking != that.skipDuplicateChecking) return false;
-        return showTimings == that.showTimings;
+        return true;
+        //TBD return showTimings == that.showTimings;
     }
 
     @Override
     public int hashCode() {
         int result = super.hashCode();
         result = 31 * result + (skipDuplicateChecking ? 1 : 0);
-        result = 31 * result + (showTimings ? 1 : 0);
+        //TBD result = 31 * result + (showTimings ? 1 : 0);
         return result;
     }
 }

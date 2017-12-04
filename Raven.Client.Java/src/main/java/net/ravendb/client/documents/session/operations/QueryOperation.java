@@ -27,10 +27,8 @@ public class QueryOperation {
     private final InMemoryDocumentSessionOperations _session;
     private final String _indexName;
     private final IndexQuery _indexQuery;
-    private final boolean _waitForNonStaleResults;
     private final boolean _metadataOnly;
     private final boolean _indexEntriesOnly;
-    private final Duration _timeout;
     private QueryResult _currentQueryResults;
     private final FieldsToFetchToken _fieldsToFetch;
     private Stopwatch _sp;
@@ -38,13 +36,10 @@ public class QueryOperation {
     private static final Log logger = LogFactory.getLog(QueryOperation.class);
 
     public QueryOperation(InMemoryDocumentSessionOperations session, String indexName, IndexQuery indexQuery,
-                          FieldsToFetchToken fieldsToFetch, boolean waitForNonStaleResults, Duration timeout,
-                          boolean disableEntitiesTracking, boolean metadataOnly, boolean indexEntriesOnly) {
+                          FieldsToFetchToken fieldsToFetch, boolean disableEntitiesTracking, boolean metadataOnly, boolean indexEntriesOnly) {
         _session = session;
         _indexName = indexName;
         _indexQuery = indexQuery;
-        _waitForNonStaleResults = waitForNonStaleResults;
-        _timeout = timeout;
         _fieldsToFetch = fieldsToFetch;
         _disableEntitiesTracking = disableEntitiesTracking;
         _metadataOnly = metadataOnly;
@@ -95,7 +90,7 @@ public class QueryOperation {
     public CleanCloseable enterQueryContext() {
         startTiming();
 
-        if (!_waitForNonStaleResults) {
+        if (!_indexQuery.isWaitForNonStaleResults()) {
             return null;
         }
 
@@ -189,7 +184,7 @@ public class QueryOperation {
             throw new IndexDoesNotExistException("Could not find index " + _indexName);
         }
 
-        if (_waitForNonStaleResults && result.isStale()) {
+        if (_indexQuery.isWaitForNonStaleResults() && result.isStale()) {
             _sp.stop();
 
             throw new TimeoutException("Waited for " + _sp.elapsed(TimeUnit.MILLISECONDS) + "ms for the query to return non stale result.");

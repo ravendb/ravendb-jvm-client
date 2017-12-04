@@ -3,17 +3,11 @@ package net.ravendb.client.documents.indexes;
 import net.ravendb.client.documents.IDocumentStore;
 import net.ravendb.client.documents.conventions.DocumentConventions;
 import net.ravendb.client.documents.operations.indexes.PutIndexesOperation;
-import net.ravendb.client.documents.session.operations.QueryOperation;
-import net.ravendb.client.exceptions.documents.compilation.IndexCompilationException;
 import net.ravendb.client.primitives.Lang;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import java.util.ArrayList;
 import java.util.Collection;
-import java.util.List;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
 
 public class IndexCreation {
     private static final Log logger = LogFactory.getLog(IndexCreation.class);
@@ -30,7 +24,7 @@ public class IndexCreation {
 
         try {
             IndexDefinition[] indexesToAdd = createIndexesToAdd(indexes, conventions);
-            store.admin().send(new PutIndexesOperation(indexesToAdd));
+            store.maintenance().send(new PutIndexesOperation(indexesToAdd));
         } catch (Exception e) { // For old servers that don't have the new endpoint for executing multiple indexes
             logger.info("Could not create indexes in one shot (maybe using older version of RavenDB ?)", e);
 

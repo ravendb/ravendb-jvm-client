@@ -206,6 +206,12 @@ public interface IFilterDocumentQueryBase<T, TSelf extends IDocumentQueryBase<T,
      */
     TSelf whereExists(String fieldName);
 
+    //TBD TSelf WhereRegex<TValue>(Expression<Func<T, TValue>> propertySelector, string pattern);
+
+    /**
+     * Checks value of a given field against supplied regular expression pattern
+     */
+    TSelf whereRegex(String fieldName, String pattern);
 
     //TBD TSelf WithinRadiusOf<TValue>(Expression<Func<T, TValue>> propertySelector, double radius, double latitude, double longitude, SpatialUnits? radiusUnits = null, double distanceErrorPct = Constants.Documents.Indexing.Spatial.DefaultDistanceErrorPct);
 

@@ -13,11 +13,6 @@ import java.util.Collection;
 public interface IDocumentQueryBase<T, TSelf extends IDocumentQueryBase<T, TSelf>> extends IQueryBase<T, TSelf>, IFilterDocumentQueryBase<T, TSelf> {
 
     /**
-     * The last term that we asked the query to use equals on
-     */
-    Tuple<String, Object> getLastEqualityTerm();
-
-    /**
      * Adds an ordering for a specific field to the query
      */
     TSelf addOrder(String fieldName, boolean descending);

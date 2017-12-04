@@ -31,27 +31,19 @@ public class OperationExecutor {
     }
 
     public void send(IVoidOperation operation) {
-        send(operation, null, false);
+        send(operation, null);
     }
 
     public void send(IVoidOperation operation, SessionInfo sessionInfo) {
-        send(operation, sessionInfo, false);
-    }
-
-    public void send(IVoidOperation operation, SessionInfo sessionInfo, boolean isServerOperation) {
         RavenCommand<Void> command = operation.getCommand(store, requestExecutor.getConventions(), requestExecutor.getCache());
         requestExecutor.execute(command, sessionInfo);
     }
 
     public <TResult> void send(IOperation<TResult> operation) {
-        send(operation, null, false);
+        send(operation, null);
     }
 
-    public <TResult> void send(IOperation<TResult> operation, SessionInfo sessionInfo) {
-        send(operation, sessionInfo, false);
-    }
-
-    public <TResult> TResult send(IOperation<TResult> operation, SessionInfo sessionInfo, boolean isServerOperation) {
+    public <TResult> TResult send(IOperation<TResult> operation, SessionInfo sessionInfo) {
         RavenCommand<TResult> command = operation.getCommand(store, requestExecutor.getConventions(), requestExecutor.getCache());
         requestExecutor.execute(command);
 
@@ -59,19 +51,15 @@ public class OperationExecutor {
     }
 
     public Operation sendOperation(IOperation<OperationIdResult> operation) {
-        return sendOperation(operation, null, false);
+        return sendOperation(operation, null);
     }
 
     public Operation sendOperation(IOperation<OperationIdResult> operation, SessionInfo sessionInfo) {
-        return sendOperation(operation, sessionInfo, false);
-    }
-
-    public Operation sendOperation(IOperation<OperationIdResult> operation, SessionInfo sessionInfo, boolean isServerOperation) {
         RavenCommand<OperationIdResult> command = operation.getCommand(store, requestExecutor.getConventions(), requestExecutor.getCache());
 
         requestExecutor.execute(command, sessionInfo);
 
-        return new Operation(requestExecutor, requestExecutor.getConventions(), command.getResult().getOperationId(), isServerOperation);
+        return new Operation(requestExecutor, requestExecutor.getConventions(), command.getResult().getOperationId());
     }
 
 

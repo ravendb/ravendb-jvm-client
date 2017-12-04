@@ -1,19 +1,14 @@
 package net.ravendb.client.documents.commands;
 
-import com.google.common.base.Stopwatch;
 import net.ravendb.client.RemoteTestBase;
 import net.ravendb.client.documents.IDocumentStore;
-import net.ravendb.client.documents.commands.GetNextOperationIdCommand;
-import net.ravendb.client.documents.commands.GetStatisticsCommand;
 import net.ravendb.client.documents.operations.DatabaseStatistics;
 import net.ravendb.client.documents.operations.IndexInformation;
 import net.ravendb.client.http.RequestExecutor;
 import net.ravendb.client.infrastructure.CreateSampleDataOperation;
-import org.apache.commons.lang3.time.StopWatch;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
-import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -26,7 +21,7 @@ public class GetStatisticsCommandTest extends RemoteTestBase {
             RequestExecutor executor = store.getRequestExecutor();
 
             CreateSampleDataOperation sampleData = new CreateSampleDataOperation();
-            store.admin().send(sampleData);
+            store.maintenance().send(sampleData);
 
             waitForIndexing(store, store.getDatabase(), null);
 

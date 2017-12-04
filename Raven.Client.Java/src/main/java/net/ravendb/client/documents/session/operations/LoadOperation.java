@@ -1,11 +1,10 @@
 package net.ravendb.client.documents.session.operations;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.base.Defaults;
-import net.ravendb.client.documents.commands.GetDocumentCommand;
-import net.ravendb.client.documents.commands.GetDocumentResult;
+import net.ravendb.client.documents.commands.GetDocumentsCommand;
+import net.ravendb.client.documents.commands.GetDocumentsResult;
 import net.ravendb.client.documents.session.DocumentInfo;
 import net.ravendb.client.documents.session.InMemoryDocumentSessionOperations;
 import org.apache.commons.logging.Log;
@@ -26,7 +25,7 @@ public class LoadOperation {
         this._session = _session;
     }
 
-    public GetDocumentCommand createRequest() {
+    public GetDocumentsCommand createRequest() {
         if (_idsToCheckOnServer.size() == 0) {
             return null;
         }
@@ -41,7 +40,7 @@ public class LoadOperation {
             logger.info("Requesting the following ids " + String.join(",", _idsToCheckOnServer) + " from " + _session.storeIdentifier());
         }
 
-        return new GetDocumentCommand(_idsToCheckOnServer.toArray(new String[0]), _includes, false);
+        return new GetDocumentsCommand(_idsToCheckOnServer.toArray(new String[0]), _includes, false);
     }
 
     public LoadOperation byId(String id) {
@@ -129,7 +128,7 @@ public class LoadOperation {
         return finalResults;
 
     }
-    public void setResult(GetDocumentResult result) {
+    public void setResult(GetDocumentsResult result) {
         if (result == null) {
             return;
         }

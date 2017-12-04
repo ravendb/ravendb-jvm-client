@@ -1,10 +1,8 @@
 package net.ravendb.client.documents.operations.indexes;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.node.ArrayNode;
 import net.ravendb.client.documents.conventions.DocumentConventions;
 import net.ravendb.client.documents.indexes.IndexDefinition;
-import net.ravendb.client.documents.operations.IAdminOperation;
+import net.ravendb.client.documents.operations.IMaintenanceOperation;
 import net.ravendb.client.documents.operations.ResultsResponse;
 import net.ravendb.client.http.RavenCommand;
 import net.ravendb.client.http.ServerNode;
@@ -15,7 +13,7 @@ import org.apache.http.client.methods.HttpRequestBase;
 
 import java.io.IOException;
 
-public class GetIndexOperation implements IAdminOperation<IndexDefinition> {
+public class GetIndexOperation implements IMaintenanceOperation<IndexDefinition> {
 
     private final String _indexName;
 

@@ -1,9 +1,8 @@
 package net.ravendb.client.documents.operations.indexes;
 
 import net.ravendb.client.documents.conventions.DocumentConventions;
-import net.ravendb.client.documents.indexes.IndexStats;
 import net.ravendb.client.documents.indexes.IndexingStatus;
-import net.ravendb.client.documents.operations.IAdminOperation;
+import net.ravendb.client.documents.operations.IMaintenanceOperation;
 import net.ravendb.client.http.RavenCommand;
 import net.ravendb.client.http.ServerNode;
 import net.ravendb.client.primitives.Reference;
@@ -12,7 +11,7 @@ import org.apache.http.client.methods.HttpRequestBase;
 
 import java.io.IOException;
 
-public class GetIndexingStatusOperation implements IAdminOperation<IndexingStatus> {
+public class GetIndexingStatusOperation implements IMaintenanceOperation<IndexingStatus> {
     @Override
     public RavenCommand<IndexingStatus> getCommand(DocumentConventions conventions) {
         return new GetIndexingStatusOperation.GetIndexingStatusCommand();

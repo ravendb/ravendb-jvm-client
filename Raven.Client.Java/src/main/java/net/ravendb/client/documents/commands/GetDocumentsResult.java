@@ -3,7 +3,7 @@ package net.ravendb.client.documents.commands;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
-public class GetDocumentResult {
+public class GetDocumentsResult {
 
     private ObjectNode includes;
     private ArrayNode results;

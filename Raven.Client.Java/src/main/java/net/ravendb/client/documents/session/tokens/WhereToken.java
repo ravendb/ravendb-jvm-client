@@ -226,7 +226,7 @@ public class WhereToken extends QueryToken {
         WhereToken token = new WhereToken();
         token.fieldName = fieldName;
         token.parameterName = null;
-        token.whereOperator = WhereOperator.WITHIN;
+        token.whereOperator = WhereOperator.SPATIAL_WITHIN;
         token.whereShape = shape;
         token.distanceErrorPct = distanceErrorPct;
         return token;
@@ -236,7 +236,7 @@ public class WhereToken extends QueryToken {
         WhereToken token = new WhereToken();
         token.fieldName = fieldName;
         token.parameterName = null;
-        token.whereOperator = WhereOperator.CONTAINS;
+        token.whereOperator = WhereOperator.SPATIAL_CONTAINS;
         token.whereShape = shape;
         token.distanceErrorPct = distanceErrorPct;
         return token;
@@ -246,7 +246,7 @@ public class WhereToken extends QueryToken {
         WhereToken token = new WhereToken();
         token.fieldName = fieldName;
         token.parameterName = null;
-        token.whereOperator = WhereOperator.DISJOINT;
+        token.whereOperator = WhereOperator.SPATIAL_DISJOINT;
         token.whereShape = shape;
         token.distanceErrorPct = distanceErrorPct;
         return token;
@@ -256,7 +256,7 @@ public class WhereToken extends QueryToken {
         WhereToken token = new WhereToken();
         token.fieldName = fieldNam;
         token.parameterName = null;
-        token.whereOperator = WhereOperator.INTERSECTS;
+        token.whereOperator = WhereOperator.SPATIAL_INTERSECTS;
         token.whereShape = shape;
         token.distanceErrorPct = distanceErrorPct;
         return token;
@@ -311,17 +311,17 @@ public class WhereToken extends QueryToken {
             case EXISTS:
                 writer.append("exists(");
                 break;
-            case WITHIN:
-                writer.append("within(");
+            case SPATIAL_WITHIN:
+                writer.append("spatial.within(");
                 break;
-            case CONTAINS:
-                writer.append("contains(");
+            case SPATIAL_CONTAINS:
+                writer.append("spatial.contains(");
                 break;
-            case DISJOINT:
-                writer.append("disjoint(");
+            case SPATIAL_DISJOINT:
+                writer.append("spatial.disjoint(");
                 break;
-            case INTERSECTS:
-                writer.append("intersects(");
+            case SPATIAL_INTERSECTS:
+                writer.append("spatial.intersects(");
                 break;
             case REGEX:
                 writer.append("regex(");
@@ -411,10 +411,10 @@ public class WhereToken extends QueryToken {
                 writer
                         .append(")");
                 break;
-            case WITHIN:
-            case CONTAINS:
-            case DISJOINT:
-            case INTERSECTS:
+            case SPATIAL_WITHIN:
+            case SPATIAL_CONTAINS:
+            case SPATIAL_DISJOINT:
+            case SPATIAL_INTERSECTS:
                 writer
                         .append(", ");
                 whereShape.writeTo(writer);

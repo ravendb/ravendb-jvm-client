@@ -4,7 +4,7 @@ import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import net.ravendb.client.documents.conventions.DocumentConventions;
 import net.ravendb.client.documents.indexes.IndexDefinition;
-import net.ravendb.client.documents.operations.IAdminOperation;
+import net.ravendb.client.documents.operations.IMaintenanceOperation;
 import net.ravendb.client.documents.session.EntityToJson;
 import net.ravendb.client.http.RavenCommand;
 import net.ravendb.client.http.ServerNode;
@@ -16,7 +16,7 @@ import org.apache.http.entity.ContentType;
 
 import java.io.IOException;
 
-public class IndexHasChangedOperation implements IAdminOperation<Boolean> {
+public class IndexHasChangedOperation implements IMaintenanceOperation<Boolean> {
 
     private final IndexDefinition _definition;
 

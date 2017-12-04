@@ -282,11 +282,6 @@ public interface IAbstractDocumentQuery<T> {
 
     String toString();
 
-    /**
-     * The last term that we asked the query to use equals on
-     */
-    Tuple<String, Object> getLastEqualityTerm();
-
     void _intersect();
 
     void _addRootType(Class clazz);
@@ -338,6 +333,7 @@ public interface IAbstractDocumentQuery<T> {
     //TBD void AggregateUsing(string facetSetupDocumentKey);
     //TBD void AddFromAliasToWhereTokens(string fromAlias);
     //TBD string LoadParameter(object id);
+    //TBD  void SuggestUsing(SuggestionBase suggestion);
 
     Iterator<T> iterator();
 }

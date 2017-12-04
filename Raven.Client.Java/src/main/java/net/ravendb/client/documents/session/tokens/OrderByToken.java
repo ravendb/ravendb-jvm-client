@@ -21,19 +21,19 @@ public class OrderByToken extends QueryToken {
     public static OrderByToken scoreDescending = new OrderByToken("score()", true, OrderingType.STRING);
 
     public static OrderByToken createDistanceAscending(String fieldName, String latitudeParameterName, String longitudeParameterName) {
-        return new OrderByToken("distance(" + fieldName + ", point(" + latitudeParameterName + ", " + longitudeParameterName + "))", false, OrderingType.STRING);
+        return new OrderByToken("spatial.distance(" + fieldName + ", point(" + latitudeParameterName + ", " + longitudeParameterName + "))", false, OrderingType.STRING);
     }
 
     public static OrderByToken createDistanceAscending(String fieldName, String shapeWktParameterName) {
-        return new OrderByToken("distance(" + fieldName + ", wkt(" + shapeWktParameterName + "))", false, OrderingType.STRING);
+        return new OrderByToken("spatial.distance(" + fieldName + ", wkt(" + shapeWktParameterName + "))", false, OrderingType.STRING);
     }
 
     public static OrderByToken createDistanceDescending(String fieldName, String latitudeParameterName, String longitudeParameterName) {
-        return new OrderByToken("distance(" + fieldName + ", point(" + latitudeParameterName + ", " + longitudeParameterName + "))", true, OrderingType.STRING);
+        return new OrderByToken("spatial.distance(" + fieldName + ", point(" + latitudeParameterName + ", " + longitudeParameterName + "))", true, OrderingType.STRING);
     }
 
     public static OrderByToken createDistanceDescending(String fieldName, String shapeWktParameterName) {
-        return new OrderByToken("distance(" + fieldName + ", wkt(" + shapeWktParameterName + "))", true, OrderingType.STRING);
+        return new OrderByToken("spatial.distance(" + fieldName + ", wkt(" + shapeWktParameterName + "))", true, OrderingType.STRING);
     }
 
     public static OrderByToken createRandom(String seed) {
