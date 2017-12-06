@@ -43,7 +43,7 @@ public class GetStatisticsCommandTest extends RemoteTestBase {
                     .isEqualTo(1059);
 
             assertThat(stats.getCountOfRevisionDocuments())
-                    .isEqualTo(0);
+                    .isGreaterThan(0);
 
             assertThat(stats.getCountOfDocumentsConflicts())
                     .isEqualTo(0);
@@ -52,7 +52,7 @@ public class GetStatisticsCommandTest extends RemoteTestBase {
                     .isEqualTo(0);
 
             assertThat(stats.getCountOfUniqueAttachments())
-                    .isEqualTo(0);
+                    .isEqualTo(17);
 
             assertThat(stats.getDatabaseChangeVector())
                     .isNotEmpty();
