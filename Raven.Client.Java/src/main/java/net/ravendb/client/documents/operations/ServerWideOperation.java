@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import net.ravendb.client.documents.conventions.DocumentConventions;
 import net.ravendb.client.http.RavenCommand;
 import net.ravendb.client.http.RequestExecutor;
+import net.ravendb.client.serverwide.operations.GetServerWideOperationStateCommand;
 
 public class ServerWideOperation extends Operation {
 

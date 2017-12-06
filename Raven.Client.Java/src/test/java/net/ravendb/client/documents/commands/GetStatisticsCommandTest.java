@@ -70,9 +70,6 @@ public class GetStatisticsCommandTest extends RemoteTestBase {
                     .isNotNull();
 
             for (IndexInformation indexInformation : stats.getIndexes()) {
-                assertThat(indexInformation.getEtag())
-                        .isNotNull();
-
                 assertThat(indexInformation.getName())
                         .isNotNull();
 
