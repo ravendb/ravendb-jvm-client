@@ -10,6 +10,7 @@ import net.ravendb.client.documents.operations.indexes.PutIndexesOperation;
 import net.ravendb.client.documents.session.*;
 import net.ravendb.client.http.RequestExecutor;
 import net.ravendb.client.primitives.EventHandler;
+import net.ravendb.client.primitives.Lang;
 import net.ravendb.client.primitives.VoidArgs;
 import org.apache.commons.lang3.StringUtils;
 
@@ -63,16 +64,27 @@ public abstract class DocumentStoreBase implements IDocumentStore {
     public abstract IDocumentSession openSession(SessionOptions sessionOptions);
 
     public void executeIndex(AbstractIndexCreationTask task) {
+        executeIndex(task, null);
+    }
+
+    public void executeIndex(AbstractIndexCreationTask task, String database) {
         assertInitialized();
-        task.execute(this, conventions);
+        task.execute(this, conventions, database);
     }
 
     @Override
     public void executeIndexes(List<AbstractIndexCreationTask> tasks) {
+        executeIndexes(tasks);
+    }
+
+    @Override
+    public void executeIndexes(List<AbstractIndexCreationTask> tasks, String database) {
         assertInitialized();
         IndexDefinition[] indexesToAdd = IndexCreation.createIndexesToAdd(tasks, conventions);
 
-        maintenance().send(new PutIndexesOperation(indexesToAdd));
+        maintenance()
+                .forDatabase(Lang.coalesce(database, getDatabase()))
+                .send(new PutIndexesOperation(indexesToAdd));
     }
 
     private DocumentConventions conventions;

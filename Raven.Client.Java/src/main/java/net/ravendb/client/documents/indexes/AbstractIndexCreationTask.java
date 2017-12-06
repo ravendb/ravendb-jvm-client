@@ -6,6 +6,7 @@ import net.ravendb.client.documents.conventions.DocumentConventions;
 import net.ravendb.client.documents.indexes.spatial.SpatialOptions;
 import net.ravendb.client.documents.indexes.spatial.SpatialOptionsFactory;
 import net.ravendb.client.documents.operations.indexes.PutIndexesOperation;
+import net.ravendb.client.primitives.Lang;
 
 import java.util.HashMap;
 import java.util.HashSet;
@@ -130,24 +131,36 @@ public abstract class AbstractIndexCreationTask {
      * Executes the index creation against the specified document database using the specified conventions
      */
     public void execute(IDocumentStore store, DocumentConventions conventions) {
-        putIndex(store, conventions);
+        execute(store, conventions, null);
     }
 
-    private void putIndex(IDocumentStore store, DocumentConventions conventions) {
-        setConventions(conventions);
+    /**
+     * Executes the index creation against the specified document database using the specified conventions
+     */
+    public void execute(IDocumentStore store, DocumentConventions conventions, String database) {
+        putIndex(store, conventions, database);
+    }
 
-        IndexDefinition indexDefinition = createIndexDefinition();
-        indexDefinition.setName(getIndexName());
+    private void putIndex(IDocumentStore store, DocumentConventions conventions, String database) {
+        DocumentConventions oldConventions = getConventions();
+        try {
+            setConventions(Lang.coalesce(conventions, getConventions(), store.getConventions()));
 
-        if (lockMode != null) {
-            indexDefinition.setLockMode(lockMode);
+            IndexDefinition indexDefinition = createIndexDefinition();
+            indexDefinition.setName(getIndexName());
+
+            if (lockMode != null) {
+                indexDefinition.setLockMode(lockMode);
+            }
+
+            if (priority != null) {
+                indexDefinition.setPriority(priority);
+            }
+
+            store.maintenance().forDatabase(Lang.coalesce(database, store.getDatabase())).send(new PutIndexesOperation(indexDefinition));
+        } finally {
+            setConventions(oldConventions);
         }
-
-        if (priority != null) {
-            indexDefinition.setPriority(priority);
-        }
-
-        store.maintenance().send(new PutIndexesOperation(indexDefinition));
     }
 
     // AbstractGenericIndexCreationTask

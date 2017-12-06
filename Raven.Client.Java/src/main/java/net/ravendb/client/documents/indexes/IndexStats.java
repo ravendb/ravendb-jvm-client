@@ -5,7 +5,6 @@ import java.util.Map;
 
 public class IndexStats {
 
-    private long etag;
     private String name;
     private int mapAttempts;
     private int mapSuccesses;
@@ -30,19 +29,6 @@ public class IndexStats {
     private int errorsCount;
     private boolean isTestIndex;
 
-    /**
-     * Index identifier.
-     */
-    public long getEtag() {
-        return etag;
-    }
-
-    /**
-     * Index identifier.
-     */
-    public void setEtag(long etag) {
-        this.etag = etag;
-    }
 
     /**
      * Index name.

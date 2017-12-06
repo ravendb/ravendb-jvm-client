@@ -56,6 +56,10 @@ public class GetRevisionsCommand extends RavenCommand<ArrayNode> {
         _metadataOnly = metadataOnly;
     }
 
+    public String[] getChangeVectors() {
+        return _changeVectors;
+    }
+
     @Override
     public HttpRequestBase createRequest(ServerNode node, Reference<String> url) {
         HttpGet request = new HttpGet();

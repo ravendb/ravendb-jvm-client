@@ -6,13 +6,17 @@ import net.ravendb.client.documents.session.IDocumentQuery;
 import net.ravendb.client.documents.session.IDocumentSession;
 import net.ravendb.client.documents.session.IRawDocumentQuery;
 import net.ravendb.client.infrastructure.entities.User;
+import org.apache.commons.lang3.StringUtils;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
+import java.util.Arrays;
+import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 public class ExistsTest extends RemoteTestBase {
+
     @Test
     public void checkIfDocumentExists() throws IOException {
         try (IDocumentStore store = getDocumentStore()) {

@@ -1025,11 +1025,6 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
         negateIfNeeded(tokens, fieldName);
 
         Collection<Object> array = transformCollection(fieldName, unpackCollection(values));
-        if (array.isEmpty()) {
-            tokens.add(TrueToken.INSTANCE);
-            return;
-        }
-
         tokens.add(WhereToken.in(fieldName, addQueryParameter(array), false));
     }
 

@@ -8,6 +8,10 @@ import java.time.Duration;
 //TODO:
 public class HttpCache implements CleanCloseable {
 
+    public HttpCache(int size) {
+        //TODO:
+    }
+
     @Override
     public void close() {
 

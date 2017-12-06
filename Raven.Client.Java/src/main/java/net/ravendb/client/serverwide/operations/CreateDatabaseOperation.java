@@ -31,20 +31,20 @@ public class CreateDatabaseOperation implements IMaintenanceOperation<DatabasePu
 
     @Override
     public RavenCommand<DatabasePutResult> getCommand(DocumentConventions conventions) {
-        return new CreateDatabaseCommand(conventions, databaseRecord, this);
+        return new CreateDatabaseCommand(conventions, databaseRecord, replicationFactor);
     }
 
     private static class CreateDatabaseCommand extends RavenCommand<DatabasePutResult> {
         private final DocumentConventions conventions;
         private final DatabaseRecord databaseRecord;
-        private final CreateDatabaseOperation createDatabaseOperation;
+        private final int replicationFactor;
         private final String databaseName;
 
-        public CreateDatabaseCommand(DocumentConventions conventions, DatabaseRecord databaseRecord, CreateDatabaseOperation createDatabaseOperation) {
+        public CreateDatabaseCommand(DocumentConventions conventions, DatabaseRecord databaseRecord, int replicationFactor) {
             super(DatabasePutResult.class);
             this.conventions = conventions;
             this.databaseRecord = databaseRecord;
-            this.createDatabaseOperation = createDatabaseOperation;
+            this.replicationFactor = replicationFactor;
             this.databaseName = Optional.ofNullable(databaseRecord).map(x -> x.getDatabaseName()).orElseThrow(() -> new IllegalArgumentException("Database name is required"));
         }
 
@@ -52,7 +52,7 @@ public class CreateDatabaseOperation implements IMaintenanceOperation<DatabasePu
         public HttpRequestBase createRequest(ServerNode node, Reference<String> url) {
             url.value = node.getUrl() + "/admin/databases?name=" + databaseName;
 
-            url.value += "&replication-factor=" + createDatabaseOperation.replicationFactor;
+            url.value += "&replication-factor=" + replicationFactor;
 
             try {
                 String databaseDocument = mapper.writeValueAsString(databaseRecord);

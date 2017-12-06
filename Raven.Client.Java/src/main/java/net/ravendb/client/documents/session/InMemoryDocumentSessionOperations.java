@@ -454,16 +454,6 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
         return entityToJson.convertToEntity(entityType, id, documentFound);
     }
 
-    private void registerMissingProperties(Object o, String id, Object value) {
-        Map<String, Object> map = entityToJson.getMissingDictionary().get(o);
-        if (map == null) {
-            map = new HashMap<>();
-            entityToJson.getMissingDictionary().put(o, map);
-        }
-
-        map.put(id, value);
-    }
-
     /**
      * Gets the default value of the specified type.
      */
@@ -1083,7 +1073,7 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
         }
     }
 
-    public object DeserializeFromTransformer(Type entityType, string id, BlittableJsonReaderObject document)
+    private object DeserializeFromTransformer(Type entityType, string id, BlittableJsonReaderObject document)
     {
         HandleInternalMetadata(document);
         return EntityToBlittable.ConvertToEntity(entityType, id, document);

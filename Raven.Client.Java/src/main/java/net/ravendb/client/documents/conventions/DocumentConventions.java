@@ -63,6 +63,7 @@ public class DocumentConventions {
 
     private ReadBalanceBehavior _readBalanceBehavior;
     private BiFunction<Class, ObjectNode, Object> _deserializeEntityFromJson;
+    private int _maxHttpCacheSize;
 
     public DocumentConventions() {
         _readBalanceBehavior = ReadBalanceBehavior.NONE;
@@ -87,6 +88,7 @@ public class DocumentConventions {
 
         _maxNumberOfRequestsPerSession = 30;
         _deserializeEntityFromJson = (clazz, json) -> deserializeEntityFromJson(clazz, json);
+        _maxHttpCacheSize = 128 * 1024 * 1024; //TODO:
     }
 
     public BiFunction<Class, ObjectNode, Object> getDeserializeEntityFromJson() {
@@ -112,6 +114,14 @@ public class DocumentConventions {
         } catch (JsonProcessingException e) {
             throw new RavenException("Cannot deserialize entity", e);
         }
+    }
+
+    public int getMaxHttpCacheSize() {
+        return _maxHttpCacheSize;
+    }
+
+    public void setMaxHttpCacheSize(int maxHttpCacheSize) {
+        this._maxHttpCacheSize = maxHttpCacheSize;
     }
 
     public int getMaxNumberOfRequestsPerSession() {

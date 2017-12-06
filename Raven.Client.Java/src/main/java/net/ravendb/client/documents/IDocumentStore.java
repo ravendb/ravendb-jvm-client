@@ -111,7 +111,11 @@ public interface IDocumentStore extends IDisposalNotification {
      */
     void executeIndex(AbstractIndexCreationTask task);
 
+    void executeIndex(AbstractIndexCreationTask task, String database);
+
     void executeIndexes(List<AbstractIndexCreationTask> tasks);
+
+    void executeIndexes(List<AbstractIndexCreationTask> tasks, String database);
 
     /**
      * Gets the conventions

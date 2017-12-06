@@ -69,7 +69,7 @@ public class RequestExecutor implements CleanCloseable {
     private Date _lastReturnedResponse;
     protected final ReadBalanceBehavior _readBalanceBehavior;
 
-    private final HttpCache cache = new HttpCache();
+    private final HttpCache cache;
 
     public HttpCache getCache() {
         return cache;
@@ -133,6 +133,7 @@ public class RequestExecutor implements CleanCloseable {
     }
 
     protected RequestExecutor(String databaseName, DocumentConventions conventions) { //TBD: X509Certificate2 certificate
+        cache = new HttpCache(conventions.getMaxHttpCacheSize());
         _readBalanceBehavior = conventions.getReadBalanceBehavior();
         _databaseName = databaseName;
         // TBD: Certificate = certificate;

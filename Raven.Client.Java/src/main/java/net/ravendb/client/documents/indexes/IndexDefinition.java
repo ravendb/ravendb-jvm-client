@@ -16,7 +16,6 @@ public class IndexDefinition {
         configuration = new IndexConfiguration();
     }
 
-    private Long etag;
     private String name;
     private IndexPriority priority;
     private IndexLockMode lockMode;
@@ -28,20 +27,6 @@ public class IndexDefinition {
     private IndexType indexType;
     //TBD private boolean testIndex;
     private String outputReduceToCollection;
-
-    /**
-     * Index etag (internal).
-     */
-    public Long getEtag() {
-        return etag;
-    }
-
-    /**
-     * Index etag (internal).
-     */
-    public void setEtag(Long etag) {
-        this.etag = etag;
-    }
 
     /**
      * This is the means by which the outside world refers to this index definition
