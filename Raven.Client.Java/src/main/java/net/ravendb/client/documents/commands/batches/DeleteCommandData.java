@@ -48,6 +48,12 @@ public class DeleteCommandData implements ICommandData {
         generator.writeStringField("ChangeVector", changeVector);
         generator.writeObjectField("Type", type);
 
+        serializeExtraFields(generator);
+
         generator.writeEndObject();
+    }
+
+    protected void serializeExtraFields(JsonGenerator generator) throws IOException {
+        // empty by design
     }
 }

@@ -252,7 +252,7 @@ public abstract class RavenTestDriver implements CleanCloseable {
                     .filter(x -> !IndexState.DISABLED.equals(x.getState()))
                     .collect(Collectors.toList());
 
-            if (indexes.stream().allMatch(x -> !x.getIsStale() &&
+            if (indexes.stream().allMatch(x -> !x.isStale() &&
                     !x.getName().startsWith(Constants.Documents.Indexing.SIDE_BY_SIDE_INDEX_NAME_PREFIX))) {
                 return;
             }

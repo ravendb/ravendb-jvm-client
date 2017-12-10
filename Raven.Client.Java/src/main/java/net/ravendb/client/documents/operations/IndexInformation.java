@@ -1,5 +1,6 @@
 package net.ravendb.client.documents.operations;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import net.ravendb.client.documents.indexes.IndexLockMode;
 import net.ravendb.client.documents.indexes.IndexPriority;
 import net.ravendb.client.documents.indexes.IndexState;
@@ -10,7 +11,8 @@ import java.util.Date;
 public class IndexInformation {
     private String name;
 
-    private boolean isStale; //TODO rename to stale ?
+    @JsonProperty("IsStale")
+    private boolean stale;
     private IndexState state;
     private IndexLockMode lockMode;
     private IndexPriority priority;
@@ -25,12 +27,12 @@ public class IndexInformation {
         this.name = name;
     }
 
-    public boolean getIsStale() {
-        return isStale;
+    public boolean isStale() {
+        return stale;
     }
 
-    public void setIsStale(boolean stale) {
-        this.isStale = stale;
+    public void setStale(boolean stale) {
+        this.stale = stale;
     }
 
     public IndexState getState() {

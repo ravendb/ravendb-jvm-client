@@ -126,7 +126,7 @@ public class DocumentSession extends InMemoryDocumentSessionOperations implement
         return getConventions().generateDocumentId(getDatabaseName(), entity);
     }
 
-    /* TODO
+    /* TBD
 
         public ResponseTimeInformation ExecuteAllPendingLazyOperations()
         {
@@ -333,21 +333,6 @@ public class DocumentSession extends InMemoryDocumentSessionOperations implement
     //TBD public List<T> MoreLikeThis<T, TIndexCreator>(MoreLikeThisQuery query) where TIndexCreator : AbstractIndexCreationTask, new()
     //TBD public List<T> MoreLikeThis<T>(string index, string documentId)
     //TBD public List<T> MoreLikeThis<T>(MoreLikeThisQuery query)
-
-    /* TODO
-        private static string CreateQuery(string indexName)
-        {
-            var fromToken = FromToken.Create(indexName, null);
-
-            var sb = new StringBuilder();
-            fromToken.WriteTo(sb);
-
-            return sb.ToString();
-        }
-
-        private int _valsCount;
-        private int _customCount;
-*/
 
     //TBD public void Increment<T, U>(T entity, Expression<Func<T, U>> path, U valToAdd)
     //TBD public void Increment<T, U>(string id, Expression<Func<T, U>> path, U valToAdd)

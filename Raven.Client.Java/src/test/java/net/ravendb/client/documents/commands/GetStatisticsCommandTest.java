@@ -73,7 +73,7 @@ public class GetStatisticsCommandTest extends RemoteTestBase {
                 assertThat(indexInformation.getName())
                         .isNotNull();
 
-                assertThat(indexInformation.getIsStale())
+                assertThat(indexInformation.isStale())
                         .isFalse();
 
                 assertThat(indexInformation.getState())

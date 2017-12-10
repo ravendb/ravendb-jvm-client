@@ -648,19 +648,12 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
     }
 
     private static void updateMetadataModifications(DocumentInfo documentInfo) {
-        /* TODO
-          if (documentInfo.MetadataInstance == null || ((MetadataAsDictionary)documentInfo.MetadataInstance).Changed == false)
-            return;
-
-        if (documentInfo.Metadata.Modifications == null || documentInfo.Metadata.Modifications.Properties.Count == 0)
-        {
-            documentInfo.Metadata.Modifications = new DynamicJsonValue();
+        ObjectMapper mapper = JsonExtensions.getDefaultMapper();
+        if (documentInfo.getMetadataInstance() != null) {
+            for (String prop : documentInfo.getMetadataInstance().keySet()) {
+                documentInfo.getMetadata().set(prop, mapper.convertValue(documentInfo.getMetadataInstance().get(prop), JsonNode.class));
+            }
         }
-        foreach (var prop in documentInfo.MetadataInstance.Keys)
-        {
-            documentInfo.Metadata.Modifications[prop] = documentInfo.MetadataInstance[prop];
-        }
-         */
     }
 
 
@@ -718,7 +711,7 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
 
     private void prepareForEntitiesPuts(SaveChangesData result) {
         for (Map.Entry<Object, DocumentInfo> entity : documentsByEntity.entrySet()) {
-            //TODO: updateMetadataModifications(entity.getValue());
+            updateMetadataModifications(entity.getValue());
 
             ObjectNode document = entityToJson.convertEntityToJson(entity.getKey(), entity.getValue());
 
@@ -822,7 +815,7 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
         return entityChanged(document, documentInfo, null);
     }
 
-    /* TODO
+    /* TBD
 
     public void WaitForReplicationAfterSaveChanges(TimeSpan? timeout = null, bool throwOnTimeout = true,
                                                    int replicas = 1, bool majority = false)

@@ -62,12 +62,10 @@ public interface IDocumentQuery<T> extends IDocumentQueryBase<T, IDocumentQuery<
 
     //TBD IDocumentQuery<T> spatial(Function<SpatialDynamicFieldFactory<T>, SpatialDynamicField> field, Function<SpatialCriteriaFactory, SpatialCriteria> clause);
 
-    /* TODO
-        /// <summary>
-        /// Changes the return type of the query
-        /// </summary>
-        IDocumentQuery<TResult> OfType<TResult>();
+    /**
+     * Changes the return type of the query
      */
+    <TResult> IDocumentQuery<TResult> ofType(Class<TResult> resultClass);
 
     IGroupByDocumentQuery<T> groupBy(String fieldName, String... fieldNames);
 

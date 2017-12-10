@@ -1,6 +1,6 @@
 package net.ravendb.client.documents.session;
 
-import com.google.common.base.Defaults;
+import com.google.common.collect.Sets;
 import net.ravendb.client.Constants;
 import net.ravendb.client.documents.indexes.spatial.SpatialRelation;
 import net.ravendb.client.documents.indexes.spatial.SpatialUnits;
@@ -9,12 +9,14 @@ import net.ravendb.client.documents.queries.spatial.SpatialCriteria;
 import net.ravendb.client.documents.queries.spatial.SpatialCriteriaFactory;
 import net.ravendb.client.documents.queries.spatial.SpatialDynamicField;
 import net.ravendb.client.documents.session.tokens.DeclareToken;
+import net.ravendb.client.documents.session.tokens.FieldsToFetchToken;
 import net.ravendb.client.documents.session.tokens.LoadToken;
 import net.ravendb.client.primitives.Reference;
 import net.ravendb.client.primitives.Tuple;
 
 import java.time.Duration;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -437,14 +439,10 @@ public class DocumentQuery<T> extends AbstractDocumentQuery<T, DocumentQuery<T>>
         return new GroupByDocumentQuery<>(this);
     }
 
-    /* TODO
-
-        /// <inheritdoc />
-        public IDocumentQuery<TResult> OfType<TResult>()
-        {
-            return CreateDocumentQueryInternal<TResult>();
-        }
-*/
+    @Override
+    public <TResult> IDocumentQuery<TResult> ofType(Class<TResult> tResultClass) {
+        return createDocumentQueryInternal(tResultClass);
+    }
 
     public IDocumentQuery<T> orderBy(String field) {
         return orderBy(field, OrderingType.STRING);
@@ -497,7 +495,7 @@ public class DocumentQuery<T> extends AbstractDocumentQuery<T, DocumentQuery<T>>
         return this;
     }
 
-    /* TODO
+    /* TBD
 
         /// <inheritdoc />
         public Lazy<IEnumerable<T>> Lazily()
@@ -530,60 +528,65 @@ public class DocumentQuery<T> extends AbstractDocumentQuery<T, DocumentQuery<T>>
 
             var lazyQueryOperation = new LazyQueryOperation<T>(TheSession.Conventions, QueryOperation, AfterQueryExecutedCallback);
             return ((DocumentSession)TheSession).AddLazyOperation(lazyQueryOperation, onEval);
-        }
+        }*/
 
-        private DocumentQuery<TResult> CreateDocumentQueryInternal<TResult>(QueryData queryData = null)
-        {
-            var newFieldsToFetch = queryData != null && queryData.Fileds.Length > 0
-                ? FieldsToFetchToken.Create(queryData.Fileds, queryData.Projections.ToArray(), queryData.IsCustomFunction)
+    private <TResult> DocumentQuery<TResult> createDocumentQueryInternal(Class<TResult> resultClass) {
+        return createDocumentQueryInternal(resultClass, null);
+    }
+
+    private <TResult> DocumentQuery<TResult> createDocumentQueryInternal(Class<TResult> resultClass, QueryData queryData) {
+        FieldsToFetchToken newFieldsToFetch = queryData != null && queryData.getFields().length > 0
+                ? FieldsToFetchToken.create(queryData.getFields(), queryData.getProjections(), queryData.isCustomFunction())
                 : null;
 
-            if (newFieldsToFetch != null)
-                UpdateFieldsToFetchToken(newFieldsToFetch);
-
-            var query = new DocumentQuery<TResult>(
-                TheSession,
-                IndexName,
-                CollectionName,
-                IsGroupBy,
-                queryData?.DeclareToken,
-                queryData?.LoadTokens,
-                queryData?.FromAlias)
-            {
-                QueryRaw = QueryRaw,
-                PageSize = PageSize,
-                SelectTokens = SelectTokens,
-                FieldsToFetchToken = FieldsToFetchToken,
-                WhereTokens = WhereTokens,
-                OrderByTokens = OrderByTokens,
-                GroupByTokens = GroupByTokens,
-                QueryParameters = QueryParameters,
-                Start = Start,
-                Timeout = Timeout,
-                CutoffEtag = CutoffEtag,
-                QueryStats = QueryStats,
-                TheWaitForNonStaleResults = TheWaitForNonStaleResults,
-                Negate = Negate,
-                Includes = new HashSet<string>(Includes),
-                RootTypes = { typeof(T) },
-                BeforeQueryExecutedCallback = BeforeQueryExecutedCallback,
-                AfterQueryExecutedCallback = AfterQueryExecutedCallback,
-                AfterStreamExecutedCallback = AfterStreamExecutedCallback,
-                HighlightedFields = new List<HighlightedField>(HighlightedFields),
-                HighlighterPreTags = HighlighterPreTags,
-                HighlighterPostTags = HighlighterPostTags,
-                DisableEntitiesTracking = DisableEntitiesTracking,
-                DisableCaching = DisableCaching,
-                //TBD ShowQueryTimings = ShowQueryTimings,
-                LastEquality = LastEquality,
-                ShouldExplainScores = ShouldExplainScores,
-                IsIntersect = IsIntersect,
-                DefaultOperator = DefaultOperator
-            };
-
-            query.AfterQueryExecuted(AfterQueryExecutedCallback);
-            return query;
+        if (newFieldsToFetch != null) {
+            updateFieldsToFetchToken(newFieldsToFetch);
         }
+
+        DocumentQuery query = new DocumentQuery<>(resultClass,
+                theSession,
+                getIndexName(),
+                getCollectionName(),
+                isGroupBy,
+                queryData != null ? queryData.getDeclareToken() : null,
+                queryData != null ? queryData.getLoadTokens() : null,
+                queryData != null ? queryData.getFromAlias() : null);
+
+        query.queryRaw = queryRaw;
+        query.pageSize = pageSize;
+        query.selectTokens = selectTokens;
+        query.fieldsToFetchToken = fieldsToFetchToken;
+        query.whereTokens = whereTokens;
+        query.orderByTokens = orderByTokens;
+        query.groupByTokens = groupByTokens;
+        query.queryParameters = queryParameters;
+        query.start = start;
+        query.timeout = timeout;
+        query.cutoffEtag = cutoffEtag;
+        query.queryStats = queryStats;
+        query.theWaitForNonStaleResults = theWaitForNonStaleResults;
+        query.negate = negate;
+        query.includes = new HashSet(includes);
+        query.rootTypes = Sets.newHashSet(clazz);
+        query.beforeQueryExecutedCallback = beforeQueryExecutedCallback;
+        query.afterQueryExecutedCallback = afterQueryExecutedCallback;
+        /* TBD AfterStreamExecutedCallback = AfterStreamExecutedCallback,
+        query.HighlightedFields = new List<HighlightedField>(HighlightedFields),
+        query.HighlighterPreTags = HighlighterPreTags,
+        query.HighlighterPostTags = HighlighterPostTags,
+        */
+        query.disableEntitiesTracking = disableEntitiesTracking;
+        query.disableCaching = disableCaching;
+        //TBD ShowQueryTimings = ShowQueryTimings,
+        query.lastEquality = lastEquality;
+        query.shouldExplainScores = shouldExplainScores;
+        query.isIntersect = isIntersect;
+        query.defaultOperatator = defaultOperatator;
+
+        return query;
+    }
+
+    /* TBD
 
           /// <inheritdoc />
         public FacetedQueryResult GetFacets(string facetSetupDoc, int facetStart, int? facetPageSize)

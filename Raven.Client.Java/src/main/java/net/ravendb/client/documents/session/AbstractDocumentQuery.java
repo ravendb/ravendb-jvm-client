@@ -40,7 +40,7 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
 
     //TBD: private readonly LinqPathProvider _linqPathProvider;
 
-    protected final Set<Class> rootTypes = new HashSet<>();
+    protected Set<Class> rootTypes = new HashSet<>();
 
     /**
      * Whether to negate the next operation
@@ -1323,7 +1323,7 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
             return whereParams.getValue();
         }
 
-        //TODO timespan - duration ?
+        //TBD timespan - duration ?
 
         if (String.class.equals(clazz)) {
             return whereParams.getValue();
@@ -1337,11 +1337,9 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
             return whereParams.getValue();
         }
 
-        /* TODO
-
+        /* TBD
             if (_conventions.TryConvertValueForQuery(whereParams.FieldName, whereParams.Value, forRange, out var strVal))
                 return strVal;
-
          */
         return whereParams.getValue();
 

@@ -146,7 +146,7 @@ public interface IAdvancedDocumentSessionOperations {
      */
     Map<String, List<DocumentsChanges>> whatChanged();
 
-    /* TODO - use options object ?
+    /* TBD - use options object?
 
      /// <summary>
      /// SaveChanges will wait for the changes made to be replicates to `replicas` nodes
@@ -157,7 +157,6 @@ public interface IAdvancedDocumentSessionOperations {
      /// SaveChanges will wait for the indexes to catch up with the saved changes
      /// </summary>
      void WaitForIndexesAfterSaveChanges(TimeSpan? timeout = null, bool throwOnTimeout = true, string[] indexes = null);
-
      */
 
     /**

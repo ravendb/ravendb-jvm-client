@@ -21,7 +21,7 @@ public class IndexStats {
     private IndexPriority priority;
     private Date createdTimestamp;
     private Date lastIndexingTime;
-    private boolean isStale; //TODO : check mapping
+    private boolean stale;
     private IndexLockMode lockMode;
     private IndexType type;
     private IndexRunningStatus status;
@@ -246,11 +246,11 @@ public class IndexStats {
     }
 
     public boolean isStale() {
-        return isStale;
+        return stale;
     }
 
     public void setStale(boolean stale) {
-        isStale = stale;
+        stale = stale;
     }
 
     /**

@@ -1,5 +1,17 @@
 package net.ravendb.client.documents.commands.batches;
 
-public class DeletePrefixedCommandData {
-    //TODO:
+import com.fasterxml.jackson.core.JsonGenerator;
+
+import java.io.IOException;
+
+public class DeletePrefixedCommandData extends DeleteCommandData {
+    private boolean isPrefixed = true;
+
+    public DeletePrefixedCommandData(String prefix) {
+        super(prefix, null);
+    }
+
+    protected void serializeExtraFields(JsonGenerator generator) throws IOException {
+        generator.writeBooleanField("IdPrefixed", isPrefixed);
+    }
 }

@@ -2,13 +2,14 @@ package net.ravendb.client.primitives;
 
 import com.fasterxml.jackson.core.Version;
 import com.fasterxml.jackson.databind.AnnotationIntrospector;
+import com.fasterxml.jackson.databind.introspect.JacksonAnnotationIntrospector;
 
 /**
  * Performs custom enum serialization for enums annotated with {@link UseSharpEnum}
  * <p>
  * In Java there is convention for enums values: THIS_IS_ENUM, in .NET we have: ThisIsEnum.
  */
-public class SharpAwareJacksonAnnotationIntrospector extends AnnotationIntrospector {
+public class SharpAwareJacksonAnnotationIntrospector extends JacksonAnnotationIntrospector {
 
 
     @Override

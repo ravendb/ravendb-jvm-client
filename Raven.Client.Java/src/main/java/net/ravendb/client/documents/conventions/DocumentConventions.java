@@ -35,7 +35,7 @@ public class DocumentConventions {
 
     private static Map<Class, String> _cachedDefaultTypeCollectionNames = new HashMap<>();
 
-    //TODO: private readonly List<(Type Type, TryConvertValueForQueryDelegate<object> Convert)> _listOfQueryValueConverters = new List<(Type, TryConvertValueForQueryDelegate<object>)>();
+    //TBD: private readonly List<(Type Type, TryConvertValueForQueryDelegate<object> Convert)> _listOfQueryValueConverters = new List<(Type, TryConvertValueForQueryDelegate<object>)>();
 
     private final List<Tuple<Class, BiFunction<String, Object, String>>> _listOfRegisteredIdConventions = new ArrayList<>();
 
@@ -455,9 +455,7 @@ public class DocumentConventions {
         return collectionName;
     }
 
-    /* TODO
-
-
+    /* TBD
         public void RegisterQueryValueConverter<T>(TryConvertValueForQueryDelegate<T> converter)
         {
             AssertNotFrozen();
@@ -494,8 +492,6 @@ public class DocumentConventions {
             strValue = null;
             return false;
         }
-
-
      */
 
     public void freeze() {
