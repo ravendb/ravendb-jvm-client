@@ -1,5 +1,6 @@
 package net.ravendb.client.test.client;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import net.ravendb.client.RemoteTestBase;
 import net.ravendb.client.documents.DocumentStore;
 import net.ravendb.client.documents.IDocumentStore;
@@ -21,6 +22,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 public class HiLoTest extends RemoteTestBase { //TODO: extends replication test
 
     private static class HiloDoc {
+        @JsonProperty("Max")
         private long max;
 
         public long getMax() {

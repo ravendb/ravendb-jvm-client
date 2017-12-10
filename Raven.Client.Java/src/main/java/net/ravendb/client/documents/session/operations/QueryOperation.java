@@ -1,5 +1,6 @@
 package net.ravendb.client.documents.session.operations;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.databind.node.TextNode;
@@ -105,16 +106,21 @@ public class QueryOperation {
         }
 
         ArrayList<T> list = new ArrayList<>();
-        for (JsonNode document : queryResult.getResults()) {
-            ObjectNode metadata = (ObjectNode) document.get(Constants.Documents.Metadata.KEY);
-            JsonNode idNode = metadata.get(Constants.Documents.Metadata.ID);
 
-            String id = null;
-            if (idNode != null && idNode.isTextual()) {
-                id = ((TextNode) idNode).asText();
+        try {
+            for (JsonNode document : queryResult.getResults()) {
+                ObjectNode metadata = (ObjectNode) document.get(Constants.Documents.Metadata.KEY);
+                JsonNode idNode = metadata.get(Constants.Documents.Metadata.ID);
+
+                String id = null;
+                if (idNode != null && idNode.isTextual()) {
+                    id = ((TextNode) idNode).asText();
+                }
+
+                list.add(deserialize(clazz, id, (ObjectNode) document, metadata, _fieldsToFetch, _disableEntitiesTracking, _session));
             }
-
-            list.add(deserialize(clazz, id, (ObjectNode) document, metadata, _fieldsToFetch, _disableEntitiesTracking, _session));
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException("Unable to read json: " + e.getMessage(), e);
         }
 
         if (!_disableEntitiesTracking) {
@@ -124,7 +130,7 @@ public class QueryOperation {
         return list;
     }
 
-    static <T> T deserialize(Class<T> clazz, String id, ObjectNode document, ObjectNode metadata, FieldsToFetchToken fieldsToFetchToken, boolean disableEntitiesTracking, InMemoryDocumentSessionOperations session) {
+    static <T> T deserialize(Class<T> clazz, String id, ObjectNode document, ObjectNode metadata, FieldsToFetchToken fieldsToFetchToken, boolean disableEntitiesTracking, InMemoryDocumentSessionOperations session) throws JsonProcessingException {
         /* TODO
           if (metadata.TryGetProjection(out var projection) == false || projection == false)
                 return session.TrackEntity<T>(id, document, metadata, disableEntitiesTracking);
@@ -153,7 +159,7 @@ public class QueryOperation {
             }
          */
 
-        T result = (T) session.getConventions().deserializeEntityFromJson(clazz, document);
+        T result = session.getConventions().getEntityMapper().treeToValue(document, clazz);
 
         if (StringUtils.isNotEmpty(id)) {
             // we need to make an additional check, since it is possible that a value was explicitly stated

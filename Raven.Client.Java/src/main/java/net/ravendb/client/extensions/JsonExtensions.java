@@ -47,6 +47,16 @@ public class JsonExtensions {
         return objectMapper;
     }
 
+    public static ObjectMapper getDefaultEntityMapper() {
+        ObjectMapper objectMapper = new ObjectMapper();
+        objectMapper.disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES);
+        objectMapper.configure(JsonParser.Feature.ALLOW_SINGLE_QUOTES, true);
+        objectMapper.setConfig(objectMapper.getSerializationConfig().with(new NetDateFormat()));
+        objectMapper.setConfig(objectMapper.getDeserializationConfig().with(new NetDateFormat()));
+        objectMapper.setAnnotationIntrospector(new SharpAwareJacksonAnnotationIntrospector());
+        return objectMapper;
+    }
+
     public static class DotNetNamingStrategy extends PropertyNamingStrategy {
 
         @Override

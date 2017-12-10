@@ -37,7 +37,7 @@ public class EntityToJson {
             return (ObjectNode) entity;
         }
 
-        ObjectMapper mapper = JsonExtensions.getDefaultMapper();
+        ObjectMapper mapper = _session.getConventions().getEntityMapper();
 
         ObjectNode jsonNode = mapper.valueToTree(entity);
 
@@ -114,12 +114,12 @@ public class EntityToJson {
             if (documentType != null) {
                 Class type = Class.forName(documentType);
                 if (entityType.isAssignableFrom(type)) {
-                    entity = _session.getConventions().getDeserializeEntityFromJson().apply(type, document);
+                    entity = _session.getConventions().getEntityMapper().treeToValue(document, type);
                 }
             }
 
             if (entity == defaultValue) {
-                entity = _session.getConventions().getDeserializeEntityFromJson().apply(entityType, document);
+                entity = _session.getConventions().getEntityMapper().treeToValue(document, entityType);
             }
 
             if (id != null) {

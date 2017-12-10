@@ -67,15 +67,15 @@ public class QueryTest extends RemoteTestBase {
                 session.saveChanges();
 
                 List<User> queryResult = session.advanced().documentQuery(User.class, null, "users", false)
-                        .whereStartsWith("Name", "J")
+                        .whereStartsWith("name", "J")
                         .toList();
 
                 List<User> queryResult2 = session.advanced().documentQuery(User.class, null, "users", false)
-                        .whereEquals("Name", "Tarzan")
+                        .whereEquals("name", "Tarzan")
                         .toList();
 
                 List<User> queryResult3 = session.advanced().documentQuery(User.class, null, "users", false)
-                        .whereEndsWith("Name", "n")
+                        .whereEndsWith("name", "n")
                         .toList();
 
                 assertThat(queryResult)
@@ -107,8 +107,8 @@ public class QueryTest extends RemoteTestBase {
                 List<DogsIndex.Result> queryResult = newSession.advanced()
                         .documentQuery(DogsIndex.Result.class, new DogsIndex().getIndexName(), null, false)
                         .waitForNonStaleResults()
-                        .orderBy("Name", OrderingType.ALPHA_NUMERIC)
-                        .whereGreaterThan("Age", 2)
+                        .orderBy("name", OrderingType.ALPHA_NUMERIC)
+                        .whereGreaterThan("age", 2)
                         .toList();
 
                 assertThat(queryResult)
@@ -217,7 +217,7 @@ public class QueryTest extends RemoteTestBase {
                 List<User> queryResult = newSession
                         .advanced()
                         .documentQuery(User.class, null, "Users", false)
-                        .whereEquals("Name", longName)
+                        .whereEquals("name", longName)
                         .toList();
 
                 assertThat(queryResult)
@@ -243,9 +243,9 @@ public class QueryTest extends RemoteTestBase {
             try (IDocumentSession newSession = store.openSession()) {
                 List<DogsIndex.Result> queryResult = newSession.advanced()
                         .documentQuery(DogsIndex.Result.class, new DogsIndex().getIndexName(), null, false)
-                        .whereGreaterThan("Age", 2)
+                        .whereGreaterThan("age", 2)
                         .andAlso()
-                        .whereEquals("Vaccinated", false)
+                        .whereEquals("vaccinated", false)
                         .toList();
 
                 assertThat(queryResult)
@@ -257,9 +257,9 @@ public class QueryTest extends RemoteTestBase {
 
                 List<DogsIndex.Result> queryResult2 = newSession.advanced()
                         .documentQuery(DogsIndex.Result.class, new DogsIndex().getIndexName(), null, false)
-                        .whereLessThanOrEqual("Age", 2)
+                        .whereLessThanOrEqual("age", 2)
                         .andAlso()
-                        .whereEquals("Vaccinated", false)
+                        .whereEquals("vaccinated", false)
                         .toList();
 
                 assertThat(queryResult2)
@@ -366,7 +366,7 @@ public class QueryTest extends RemoteTestBase {
         }
 
         public DogsIndex() {
-            map = "from dog in docs.dogs select new { dog.Name, dog.Age, dog.Vaccinated }";
+            map = "from dog in docs.dogs select new { dog.name, dog.age, dog.vaccinated }";
         }
     }
 }

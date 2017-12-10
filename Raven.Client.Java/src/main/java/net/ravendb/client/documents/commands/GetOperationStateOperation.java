@@ -55,7 +55,7 @@ public class GetOperationStateOperation implements IMaintenanceOperation<ObjectN
             }
 
             ObjectNode node = (ObjectNode) JsonExtensions.getDefaultMapper().readTree(response);
-            result = (ObjectNode) _conventions.deserializeEntityFromJson(ObjectNode.class, node);
+            result = node;
         }
     }
 

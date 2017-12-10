@@ -59,7 +59,7 @@ public class BasicDocumentsTest extends RemoteTestBase {
     public void get() throws IOException {
         try (IDocumentStore store = getDocumentStore()) {
             ObjectNode dummy = JsonExtensions.getDefaultMapper().valueToTree(new User());
-            dummy.remove("Id");
+            dummy.remove("id");
 
             try (IDocumentSession session = store.openSession()) {
                 User user1 = new User();

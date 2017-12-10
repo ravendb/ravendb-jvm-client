@@ -61,7 +61,7 @@ public class IndexesFromClientTest extends RemoteTestBase {
 
     public static class UsersIndex extends AbstractIndexCreationTask {
         public UsersIndex() {
-            map = "from user in docs.users select new { user.Name }";
+            map = "from user in docs.users select new { user.name }";
         }
     }
 

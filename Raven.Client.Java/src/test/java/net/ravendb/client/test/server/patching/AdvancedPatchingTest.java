@@ -814,7 +814,7 @@ this.Value = another.Value;
 
             IndexDefinition def1 = new IndexDefinition();
             def1.setName("TestIndex");
-            def1.setMaps(Sets.newHashSet("from doc in docs.CustomTypes select new { doc.Value }"));
+            def1.setMaps(Sets.newHashSet("from doc in docs.CustomTypes select new { doc.value }"));
 
 
             store.maintenance().send(new PutIndexesOperation(def1));
@@ -826,13 +826,13 @@ this.Value = another.Value;
                         .toList();
             }
 
-            Operation operation = store.operations().sendOperation(new PatchByQueryOperation("FROM INDEX 'TestIndex' WHERE Value = 1 update { put('NewItem/3', {'CopiedValue': this.Value });}"));
+            Operation operation = store.operations().sendOperation(new PatchByQueryOperation("FROM INDEX 'TestIndex' WHERE value = 1 update { put('NewItem/3', {'copiedValue': this.value });}"));
 
             operation.waitForCompletion();
 
             try (IDocumentSession session = store.openSession()) {
                 ObjectNode jsonDocument = session.load(ObjectNode.class, "NewItem/3");
-                assertThat(jsonDocument.get("CopiedValue").asText())
+                assertThat(jsonDocument.get("copiedValue").asText())
                         .isEqualTo("1");
             }
         }

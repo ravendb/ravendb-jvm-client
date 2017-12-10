@@ -41,6 +41,6 @@ public class GetServerWideOperationStateCommand extends RavenCommand<ObjectNode>
         }
 
         ObjectNode node = (ObjectNode) JsonExtensions.getDefaultMapper().readTree(response);
-        result = (ObjectNode) _conventions.deserializeEntityFromJson(ObjectNode.class, node);
+        result = node;
     }
 }

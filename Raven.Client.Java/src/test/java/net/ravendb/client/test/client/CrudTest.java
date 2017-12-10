@@ -1,9 +1,13 @@
 package net.ravendb.client.test.client;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import net.ravendb.client.RemoteTestBase;
 import net.ravendb.client.documents.IDocumentStore;
+import net.ravendb.client.documents.commands.GetDocumentsCommand;
+import net.ravendb.client.documents.commands.GetDocumentsResult;
 import net.ravendb.client.documents.session.DocumentsChanges;
 import net.ravendb.client.documents.session.IDocumentSession;
+import net.ravendb.client.extensions.JsonExtensions;
 import net.ravendb.client.infrastructure.entities.User;
 import org.junit.jupiter.api.Test;
 
@@ -14,6 +18,66 @@ import java.util.Map;
 import static org.assertj.core.api.Assertions.assertThat;
 
 public class CrudTest extends RemoteTestBase {
+
+    @Test
+    public void entitiesAreSavedUsingLowerCase() throws IOException {
+        try (IDocumentStore store = getDocumentStore()) {
+
+            try (IDocumentSession newSession = store.openSession()) {
+                User user1 = new User();
+                user1.setLastName("user1");
+                newSession.store(user1, "users/1");
+                newSession.saveChanges();
+            }
+
+            GetDocumentsCommand documentsCommand = new GetDocumentsCommand("users/1", null, false);
+            store.getRequestExecutor().execute(documentsCommand);
+
+            GetDocumentsResult result = documentsCommand.getResult();
+
+            JsonNode userJson = result.getResults().get(0);
+            assertThat(userJson.has("lastName"))
+                    .isTrue();
+
+            try (IDocumentSession newSession = store.openSession()) {
+                List<User> users = newSession.advanced().rawQuery(User.class, "from Users where lastName = 'user1'").toList();
+
+                assertThat(users)
+                        .hasSize(1);
+            }
+        }
+    }
+
+    @Test
+    public void canCustomizePropertyNamingStrategy() throws IOException {
+        try (IDocumentStore store = getDocumentStore()) {
+
+            store.getConventions().getEntityMapper().setPropertyNamingStrategy(new JsonExtensions.DotNetNamingStrategy());
+
+            try (IDocumentSession newSession = store.openSession()) {
+                User user1 = new User();
+                user1.setLastName("user1");
+                newSession.store(user1, "users/1");
+                newSession.saveChanges();
+            }
+
+            GetDocumentsCommand documentsCommand = new GetDocumentsCommand("users/1", null, false);
+            store.getRequestExecutor().execute(documentsCommand);
+
+            GetDocumentsResult result = documentsCommand.getResult();
+
+            JsonNode userJson = result.getResults().get(0);
+            assertThat(userJson.has("LastName"))
+                    .isTrue();
+
+            try (IDocumentSession newSession = store.openSession()) {
+                List<User> users = newSession.advanced().rawQuery(User.class, "from Users where LastName = 'user1'").toList();
+
+                assertThat(users)
+                        .hasSize(1);
+            }
+        }
+    }
 
     @Test
     public void crudOperations() throws IOException {
@@ -319,7 +383,7 @@ public class CrudTest extends RemoteTestBase {
                         .hasSize(4);
 
                 assertThat(changes.get("family/1").get(0).getFieldName())
-                        .isEqualTo("Name");
+                        .isEqualTo("name");
                 assertThat(changes.get("family/1").get(0).getChange())
                         .isEqualTo(DocumentsChanges.ChangeType.FIELD_CHANGED);
                 assertThat(changes.get("family/1").get(0).getFieldOldValue().toString())
@@ -328,7 +392,7 @@ public class CrudTest extends RemoteTestBase {
                         .isEqualTo("\"RavenDB\"");
 
                 assertThat(changes.get("family/1").get(1).getFieldName())
-                        .isEqualTo("Age");
+                        .isEqualTo("age");
                 assertThat(changes.get("family/1").get(1).getChange())
                         .isEqualTo(DocumentsChanges.ChangeType.FIELD_CHANGED);
                 assertThat(changes.get("family/1").get(1).getFieldOldValue().toString())
@@ -337,7 +401,7 @@ public class CrudTest extends RemoteTestBase {
                         .isEqualTo("4");
 
                 assertThat(changes.get("family/1").get(2).getFieldName())
-                        .isEqualTo("Name");
+                        .isEqualTo("name");
                 assertThat(changes.get("family/1").get(2).getChange())
                         .isEqualTo(DocumentsChanges.ChangeType.FIELD_CHANGED);
                 assertThat(changes.get("family/1").get(2).getFieldOldValue().toString())
@@ -346,7 +410,7 @@ public class CrudTest extends RemoteTestBase {
                         .isEqualTo("\"Hibernating Rhinos\"");
 
                 assertThat(changes.get("family/1").get(3).getFieldName())
-                        .isEqualTo("Age");
+                        .isEqualTo("age");
                 assertThat(changes.get("family/1").get(3).getChange())
                         .isEqualTo(DocumentsChanges.ChangeType.FIELD_CHANGED);
                 assertThat(changes.get("family/1").get(3).getFieldOldValue().toString())
@@ -373,7 +437,7 @@ public class CrudTest extends RemoteTestBase {
                         .hasSize(4);
 
                 assertThat(changes.get("family/1").get(0).getFieldName())
-                        .isEqualTo("Name");
+                        .isEqualTo("name");
                 assertThat(changes.get("family/1").get(0).getChange())
                         .isEqualTo(DocumentsChanges.ChangeType.FIELD_CHANGED);
                 assertThat(changes.get("family/1").get(0).getFieldOldValue().toString())
@@ -382,7 +446,7 @@ public class CrudTest extends RemoteTestBase {
                         .isEqualTo("\"Toli\"");
 
                 assertThat(changes.get("family/1").get(1).getFieldName())
-                        .isEqualTo("Age");
+                        .isEqualTo("age");
                 assertThat(changes.get("family/1").get(1).getChange())
                         .isEqualTo(DocumentsChanges.ChangeType.FIELD_CHANGED);
                 assertThat(changes.get("family/1").get(1).getFieldOldValue().toString())
@@ -391,7 +455,7 @@ public class CrudTest extends RemoteTestBase {
                         .isEqualTo("5");
 
                 assertThat(changes.get("family/1").get(2).getFieldName())
-                        .isEqualTo("Name");
+                        .isEqualTo("name");
                 assertThat(changes.get("family/1").get(2).getChange())
                         .isEqualTo(DocumentsChanges.ChangeType.FIELD_CHANGED);
                 assertThat(changes.get("family/1").get(2).getFieldOldValue().toString())
@@ -400,7 +464,7 @@ public class CrudTest extends RemoteTestBase {
                         .isEqualTo("\"Boki\"");
 
                 assertThat(changes.get("family/1").get(3).getFieldName())
-                        .isEqualTo("Age");
+                        .isEqualTo("age");
                 assertThat(changes.get("family/1").get(3).getChange())
                         .isEqualTo(DocumentsChanges.ChangeType.FIELD_CHANGED);
                 assertThat(changes.get("family/1").get(3).getFieldOldValue().toString())

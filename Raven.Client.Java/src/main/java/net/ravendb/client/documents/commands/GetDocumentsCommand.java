@@ -114,7 +114,7 @@ public class GetDocumentsCommand extends RavenCommand<GetDocumentsResult> {
         if (_includes != null) {
             for (String include : _includes) {
                 pathBuilder.append("&include=");
-                pathBuilder.append(StringUtils.capitalize(include)); //TODO: move this capitalize to utils / conventions?
+                pathBuilder.append(include);
             }
         }
 

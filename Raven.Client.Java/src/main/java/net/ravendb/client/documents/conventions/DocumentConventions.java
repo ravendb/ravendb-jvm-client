@@ -2,6 +2,7 @@ package net.ravendb.client.documents.conventions;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.databind.node.TextNode;
 import net.ravendb.client.Constants;
@@ -62,8 +63,8 @@ public class DocumentConventions {
     private int _maxNumberOfRequestsPerSession;
 
     private ReadBalanceBehavior _readBalanceBehavior;
-    private BiFunction<Class, ObjectNode, Object> _deserializeEntityFromJson;
     private int _maxHttpCacheSize;
+    private ObjectMapper _entityMapper;
 
     public DocumentConventions() {
         _readBalanceBehavior = ReadBalanceBehavior.NONE;
@@ -87,17 +88,16 @@ public class DocumentConventions {
         _findCollectionName = type -> defaultGetCollectionName(type);
 
         _maxNumberOfRequestsPerSession = 30;
-        _deserializeEntityFromJson = (clazz, json) -> deserializeEntityFromJson(clazz, json);
         _maxHttpCacheSize = 128 * 1024 * 1024; //TODO:
+        _entityMapper = JsonExtensions.getDefaultEntityMapper();
     }
 
-    public BiFunction<Class, ObjectNode, Object> getDeserializeEntityFromJson() {
-        return _deserializeEntityFromJson;
+    public ObjectMapper getEntityMapper() {
+        return _entityMapper;
     }
 
-    public void setDeserializeEntityFromJson(BiFunction<Class, ObjectNode, Object> _deserializeEntityFromJson) {
-        assertNotFrozen();
-        this._deserializeEntityFromJson = _deserializeEntityFromJson;
+    public void setEntityMapper(ObjectMapper entityMapper) {
+        _entityMapper = entityMapper;
     }
 
     public ReadBalanceBehavior getReadBalanceBehavior() {

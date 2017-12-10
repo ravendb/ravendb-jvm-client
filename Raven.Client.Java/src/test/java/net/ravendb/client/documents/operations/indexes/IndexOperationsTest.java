@@ -97,7 +97,7 @@ public class IndexOperationsTest extends RemoteTestBase {
 
             waitForIndexing(store, store.getDatabase());
 
-            String[] terms = store.maintenance().send(new GetTermsOperation("UsersIndex", "Name", null));
+            String[] terms = store.maintenance().send(new GetTermsOperation("UsersIndex", "name", null));
 
             assertThat(terms)
                     .hasSize(1)
@@ -265,13 +265,13 @@ public class IndexOperationsTest extends RemoteTestBase {
 
     public static class Users_Index extends AbstractIndexCreationTask {
         public Users_Index() {
-            map = "from u in docs.Users select new { u.Name }";
+            map = "from u in docs.Users select new { u.name }";
         }
     }
 
     public static class UsersInvalidIndex extends AbstractIndexCreationTask {
         public UsersInvalidIndex() {
-            map = "from u in docs.Users select new { A = 5 / u.Age }";
+            map = "from u in docs.Users select new { a = 5 / u.Age }";
         }
     }
 }

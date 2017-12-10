@@ -42,9 +42,9 @@ public class RavenDB903Test extends RemoteTestBase {
     public void test1() throws IOException {
         doTest(session -> {
             return session.advanced().documentQuery(Product.class, TestIndex.class)
-                    .search("Description", "Hello")
+                    .search("description", "Hello")
                     .intersect()
-                    .whereEquals("Name", "Bar");
+                    .whereEquals("name", "Bar");
         });
     }
 
@@ -52,9 +52,9 @@ public class RavenDB903Test extends RemoteTestBase {
     public void test2() throws IOException {
         doTest(session -> {
             return session.advanced().documentQuery(Product.class, TestIndex.class)
-                    .whereEquals("Name", "Bar")
+                    .whereEquals("name", "Bar")
                     .intersect()
-                    .search("Description", "Hello");
+                    .search("description", "Hello");
         });
     }
 
@@ -95,9 +95,9 @@ public class RavenDB903Test extends RemoteTestBase {
 
     public static class TestIndex extends AbstractIndexCreationTask {
         public TestIndex() {
-            map = "from product in docs.Products select new { product.Name, product.Description }";
+            map = "from product in docs.Products select new { product.name, product.description }";
 
-            index("Description", FieldIndexing.SEARCH);
+            index("description", FieldIndexing.SEARCH);
         }
     }
 }

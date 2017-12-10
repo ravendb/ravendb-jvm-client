@@ -28,11 +28,11 @@ public class RavenDB_5669Test extends RemoteTestBase {
 
                 query.openSubclause();
 
-                query = query.whereEquals("Type", "Cat");
+                query = query.whereEquals("type", "Cat");
                 query = query.orElse();
-                query = query.search("Name", "Peter*");
+                query = query.search("name", "Peter*");
                 query = query.andAlso();
-                query = query.search("Name", "Pan*");
+                query = query.search("name", "Pan*");
 
                 query.closeSubclause();
 
@@ -55,14 +55,14 @@ public class RavenDB_5669Test extends RemoteTestBase {
 
                 query.openSubclause();
 
-                query = query.whereEquals("Type", "Cat");
+                query = query.whereEquals("type", "Cat");
                 query = query.orElse();
 
                 query.openSubclause();
 
-                query = query.search("Name", "Pan*");
+                query = query.search("name", "Pan*");
                 query = query.andAlso();
-                query = query.search("Name", "Peter*");
+                query = query.search("name", "Peter*");
                 query = query.closeSubclause();
 
                 query.closeSubclause();
@@ -121,10 +121,10 @@ public class RavenDB_5669Test extends RemoteTestBase {
 
     public static class Animal_Index extends AbstractIndexCreationTask {
         public Animal_Index() {
-            map = "from animal in docs.Animals select new { Name = animal.Name, Type = animal.Type }";
+            map = "from animal in docs.Animals select new { name = animal.name, type = animal.type }";
 
-            analyze("Name", "StandardAnalyzer");
-            index("Name", FieldIndexing.SEARCH);
+            analyze("name", "StandardAnalyzer");
+            index("name", FieldIndexing.SEARCH);
         }
     }
 }
