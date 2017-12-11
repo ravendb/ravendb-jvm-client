@@ -39,7 +39,7 @@ public class RavenDB903Test extends RemoteTestBase {
     }
 
     @Test
-    public void test1() throws IOException {
+    public void test1() throws Exception {
         doTest(session -> {
             return session.advanced().documentQuery(Product.class, TestIndex.class)
                     .search("description", "Hello")
@@ -49,7 +49,7 @@ public class RavenDB903Test extends RemoteTestBase {
     }
 
     @Test
-    public void test2() throws IOException {
+    public void test2() throws Exception {
         doTest(session -> {
             return session.advanced().documentQuery(Product.class, TestIndex.class)
                     .whereEquals("name", "Bar")
@@ -58,7 +58,7 @@ public class RavenDB903Test extends RemoteTestBase {
         });
     }
 
-    private void doTest(Function<IDocumentSession, IDocumentQuery<Product>> queryFunction) throws IOException {
+    private void doTest(Function<IDocumentSession, IDocumentQuery<Product>> queryFunction) throws Exception {
         try (IDocumentStore store = getDocumentStore()) {
             store.executeIndex(new TestIndex());
 

@@ -18,7 +18,7 @@ import static org.assertj.core.api.Assertions.setMaxElementsForPrinting;
 public class GetNextOperationIdCommandTest extends RemoteTestBase {
 
     @Test
-    public void canGetNextOperationId() throws IOException {
+    public void canGetNextOperationId() throws Exception {
         try (IDocumentStore store = getDocumentStore()) {
 
             GetNextOperationIdCommand command = new GetNextOperationIdCommand();

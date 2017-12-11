@@ -18,7 +18,7 @@ public class StoreTest extends RemoteTestBase {
 
 
     @Test
-    public void storeDocument() throws IOException {
+    public void storeDocument() throws Exception {
         try (IDocumentStore store = getDocumentStore()) {
 
             try (IDocumentSession session = store.openSession()) {
@@ -37,7 +37,7 @@ public class StoreTest extends RemoteTestBase {
     }
 
     @Test
-    public void storeDocuments() throws IOException {
+    public void storeDocuments() throws Exception {
         try (IDocumentStore store = getDocumentStore()) {
 
             try (IDocumentSession session = store.openSession()) {
@@ -59,7 +59,7 @@ public class StoreTest extends RemoteTestBase {
     }
 
     @Test
-    public void notifyAfterStore() throws IOException {
+    public void notifyAfterStore() throws Exception {
         try (IDocumentStore store = getDocumentStore()) {
             final IMetadataDictionary[] storeLevelCallBack = new IMetadataDictionary[1];
             final IMetadataDictionary[] sessionLevelCallback = new IMetadataDictionary[1];

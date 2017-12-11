@@ -18,7 +18,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 public class ExistsTest extends RemoteTestBase {
 
     @Test
-    public void checkIfDocumentExists() throws IOException {
+    public void checkIfDocumentExists() throws Exception {
         try (IDocumentStore store = getDocumentStore()) {
 
             try (IDocumentSession session = store.openSession()) {

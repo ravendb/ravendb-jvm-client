@@ -17,7 +17,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 public class RavenDB_5669Test extends RemoteTestBase {
 
     @Test
-    public void workingTestWithDifferentSearchTermOrder() throws IOException {
+    public void workingTestWithDifferentSearchTermOrder() throws Exception {
         try (IDocumentStore store = getDocumentStore()) {
             store.executeIndex(new Animal_Index());
 
@@ -44,7 +44,7 @@ public class RavenDB_5669Test extends RemoteTestBase {
     }
 
     @Test
-    public void workingTestWithSubclause() throws IOException {
+    public void workingTestWithSubclause() throws Exception {
         try (IDocumentStore store = getDocumentStore()) {
             store.executeIndex(new Animal_Index());
 

@@ -20,11 +20,22 @@ import net.ravendb.client.serverwide.DatabaseRecord;
 import net.ravendb.client.serverwide.operations.CreateDatabaseOperation;
 import net.ravendb.client.serverwide.operations.DeleteDatabasesOperation;
 import net.ravendb.client.util.UrlUtils;
+import org.apache.commons.io.IOUtils;
+import org.apache.http.client.methods.HttpPost;
+import org.apache.http.config.SocketConfig;
+import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.http.impl.client.HttpClientBuilder;
+import org.apache.http.impl.client.HttpClients;
+import org.apache.http.impl.client.StandardHttpRequestRetryHandler;
+import org.apache.http.ssl.SSLContexts;
 
+import javax.net.ssl.SSLContext;
 import java.awt.*;
 import java.io.*;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.security.*;
+import java.security.cert.CertificateException;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -37,10 +48,13 @@ import java.util.stream.Collectors;
 public abstract class RavenTestDriver implements CleanCloseable {
 
     private RavenServerLocator locator;
+    private RavenServerLocator securedLocator;
 
     private static IDocumentStore globalServer;
-
     private static Process globalServerProcess;
+
+    private static IDocumentStore globalSecuredServer;
+    private static Process globalSecuredServerProcess;
 
     private final Set<DocumentStore> documentStores = Sets.newConcurrentHashSet();
 
@@ -48,8 +62,9 @@ public abstract class RavenTestDriver implements CleanCloseable {
 
     protected boolean disposed;
 
-    public RavenTestDriver(RavenServerLocator locator) {
+    public RavenTestDriver(RavenServerLocator locator, RavenServerLocator securedLocator) {
         this.locator = locator;
+        this.securedLocator = securedLocator;
     }
 
     public boolean isDisposed() {
@@ -58,31 +73,41 @@ public abstract class RavenTestDriver implements CleanCloseable {
 
     public static boolean debug;
 
-    public static Process getGlobalServerProcess() {
-        return globalServerProcess;
+    public DocumentStore getSecuredDocumentStore() throws Exception {
+        return getDocumentStore("test_db", true, null);
     }
 
-    public IDocumentStore getDocumentStore() throws IOException {
+    public KeyStore getTestClientCertificate() throws IOException, GeneralSecurityException {
+        KeyStore clientStore = KeyStore.getInstance("PKCS12");
+        clientStore.load(new FileInputStream(securedLocator.getServerCertificatePath()), "".toCharArray());
+        return clientStore;
+    }
+
+    public DocumentStore getDocumentStore() throws Exception {
         return getDocumentStore("test_db");
     }
 
-    public IDocumentStore getDocumentStore(String database) throws IOException {
-        return getDocumentStore(database, null);
+    public DocumentStore getSecuredDocumentStore(String database) throws Exception {
+        return getDocumentStore(database, true, null);
     }
 
-    public IDocumentStore getDocumentStore(String database, Duration waitForIndexingTimeout) throws IOException {
+    public DocumentStore getDocumentStore(String database) throws Exception {
+        return getDocumentStore(database, false, null);
+    }
+
+    public DocumentStore getDocumentStore(String database, boolean secured, Duration waitForIndexingTimeout) throws Exception {
         String name = database + "_" + index.incrementAndGet();
         reportInfo("getDocumentStore for db " + database + ".");
 
-        if (globalServer == null) {
+        if (getGlobalServer(secured) == null) {
             synchronized (RavenTestDriver.class) {
-                if (globalServer == null) {
-                    runServer();
+                if (getGlobalServer(secured) == null) {
+                    runServer(secured);
                 }
             }
         }
 
-        IDocumentStore documentStore = globalServer;
+        IDocumentStore documentStore = getGlobalServer(secured);
         DatabaseRecord databaseRecord = new DatabaseRecord();
         databaseRecord.setDatabaseName(name);
         CreateDatabaseOperation createDatabaseOperation = new CreateDatabaseOperation(databaseRecord);
@@ -92,6 +117,10 @@ public abstract class RavenTestDriver implements CleanCloseable {
         DocumentStore store = new DocumentStore();
         store.setUrls(documentStore.getUrls());
         store.setDatabase(name);
+
+        if (secured) {
+            store.setCertificate(getTestClientCertificate());
+        }
 
         store.initialize();
 
@@ -125,15 +154,16 @@ public abstract class RavenTestDriver implements CleanCloseable {
         // empty by design
     }
 
-    private IDocumentStore runServer() throws IOException {
-        Process process = globalServerProcess = RavenServerRunner.run(this.locator);
+    private IDocumentStore runServer(boolean secured) throws Exception {
+        Process process = RavenServerRunner.run(secured ? this.securedLocator : this.locator);
+        setGlobalServerProcess(secured, process);
 
         reportInfo("Starting global server");
 
-        Runtime.getRuntime().addShutdownHook(new Thread(() -> killGlobalServerProcess()));
+        Runtime.getRuntime().addShutdownHook(new Thread(() -> killGlobalServerProcess(secured)));
 
         String url = null;
-        InputStream stdout = globalServerProcess.getInputStream();
+        InputStream stdout = getGlobalProcess(secured).getInputStream();
 
         StringBuilder sb = new StringBuilder();
 
@@ -144,6 +174,10 @@ public abstract class RavenTestDriver implements CleanCloseable {
 
             //TODO: handle timeout!
             String line = reader.readLine();
+
+            if (line == null) {
+                throw new RuntimeException(IOUtils.toString(getGlobalProcess(secured).getErrorStream(), "UTF-8"));
+            }
 
             if (startupDuration.elapsed(TimeUnit.MINUTES) >= 1) {
                 break;
@@ -210,13 +244,26 @@ public abstract class RavenTestDriver implements CleanCloseable {
         store.setUrls(new String[]{url});
         store.setDatabase("test.manager");
 
-        globalServer = store;
+        if (secured) {
+            globalSecuredServer = store;
+            KeyStore clientCert = getTestClientCertificate();
+            store.setCertificate(clientCert);
+        } else {
+            globalServer = store;
+        }
         return store.initialize();
     }
 
-    private static void killGlobalServerProcess() {
-        Process p = RavenTestDriver.globalServerProcess;
-        globalServerProcess = null;
+    private static void killGlobalServerProcess(boolean secured) {
+        Process p = null;
+        if (secured) {
+            p = RavenTestDriver.globalSecuredServerProcess;
+            globalSecuredServerProcess = null;
+        } else {
+            p = RavenTestDriver.globalServerProcess;
+            globalServerProcess = null;
+        }
+
         if (p != null && p.isAlive()) {
             reportInfo("Kill global server");
 
@@ -225,6 +272,22 @@ public abstract class RavenTestDriver implements CleanCloseable {
             } catch (Exception e) {
                 reportError(e);
             }
+        }
+    }
+
+    private IDocumentStore getGlobalServer(boolean secured) {
+        return secured ? globalSecuredServer : globalServer;
+    }
+
+    private Process getGlobalProcess(boolean secured) {
+        return secured ? globalSecuredServerProcess : globalServerProcess;
+    }
+
+    private void setGlobalServerProcess(boolean secured, Process p) {
+        if (secured) {
+            globalSecuredServerProcess = p;
+        } else {
+            globalServerProcess = p;
         }
     }
 
@@ -333,30 +396,6 @@ public abstract class RavenTestDriver implements CleanCloseable {
             }
         }
     }
-
-    /* TODO
-    {
-
-
-        protected virtual void OpenBrowser(string url)
-        {
-            Console.WriteLine(url);
-
-            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-            {
-                Process.Start(new ProcessStartInfo("cmd", $"/c start \"Stop & look at studio\" \"{url}\"")); // Works ok on windows
-                return;
-            }
-
-            if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
-            {
-                Process.Start("xdg-open", url); // Works ok on linux
-                return;
-            }
-
-            throw new NotImplementedException("Implement your own browser opening mechanism.");
-        }
-        */
 
     private static void reportError(Exception e) {
         if (!debug) {

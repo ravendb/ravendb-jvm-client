@@ -20,7 +20,7 @@ public class IndexesFromClientTest extends RemoteTestBase {
 
 
     @Test
-    public void canReset() throws IOException, InterruptedException {
+    public void canReset() throws Exception {
         try (IDocumentStore store = getDocumentStore()) {
             try (IDocumentSession session = store.openSession()) {
                 User user1 = new User();
@@ -66,7 +66,7 @@ public class IndexesFromClientTest extends RemoteTestBase {
     }
 
     @Test
-    public void canDelete() throws IOException {
+    public void canDelete() throws Exception {
         try (IDocumentStore store = getDocumentStore()) {
             store.executeIndex(new UsersIndex());
 

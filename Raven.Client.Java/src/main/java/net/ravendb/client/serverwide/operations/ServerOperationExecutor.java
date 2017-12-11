@@ -13,8 +13,8 @@ public class ServerOperationExecutor {
     public ServerOperationExecutor(DocumentStoreBase store) {
         this.store = store;
         requestExecutor = store.getConventions().isDisableTopologyUpdates() ?
-                ClusterRequestExecutor.createForSingleNode(store.getUrls()[0]) :
-                ClusterRequestExecutor.create(store.getUrls());
+                ClusterRequestExecutor.createForSingleNode(store.getUrls()[0], store.getCertificate()) :
+                ClusterRequestExecutor.create(store.getUrls(), store.getCertificate());
     }
 
     public void send(IVoidMaintenanceOperation operation) {

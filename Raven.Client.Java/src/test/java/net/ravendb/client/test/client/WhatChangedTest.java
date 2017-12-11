@@ -16,7 +16,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 public class WhatChangedTest extends RemoteTestBase {
 
     @Test
-    public void whatChangedNewField() throws IOException {
+    public void whatChangedNewField() throws Exception {
         try (IDocumentStore store = getDocumentStore()) {
             try (IDocumentSession newSession = store.openSession()) {
                 BasicName basicName = new BasicName();
@@ -43,7 +43,7 @@ public class WhatChangedTest extends RemoteTestBase {
     }
 
     @Test
-    public void whatChangedRemovedField() throws IOException {
+    public void whatChangedRemovedField() throws Exception {
         try (IDocumentStore store = getDocumentStore()) {
             try (IDocumentSession newSession = store.openSession()) {
                 NameAndAge nameAndAge = new NameAndAge();
@@ -73,7 +73,7 @@ public class WhatChangedTest extends RemoteTestBase {
 
 
     @Test
-    public void whatChangedChangeField() throws IOException {
+    public void whatChangedChangeField() throws Exception {
         try (IDocumentStore store = getDocumentStore()) {
             try (IDocumentSession newSession = store.openSession()) {
                 BasicAge basicAge = new BasicAge();
@@ -103,7 +103,7 @@ public class WhatChangedTest extends RemoteTestBase {
 
 
     @Test
-    public void whatChangedArrayValueChanged() throws IOException {
+    public void whatChangedArrayValueChanged() throws Exception {
         try (IDocumentStore store = getDocumentStore()) {
             try (IDocumentSession newSession = store.openSession()) {
                 Arr arr = new Arr();

@@ -10,6 +10,7 @@ import net.ravendb.client.primitives.CleanCloseable;
 import net.ravendb.client.primitives.EventHandler;
 import net.ravendb.client.util.IDisposalNotification;
 
+import java.security.KeyStore;
 import java.util.List;
 
 /**
@@ -17,7 +18,7 @@ import java.util.List;
  */
 public interface IDocumentStore extends IDisposalNotification {
 
-    //TODO: X509Certificate2 Certificate { get; }
+    KeyStore getCertificate();
 
     void addBeforeStoreListener(EventHandler<BeforeStoreEventArgs> handler);
     void removeBeforeStoreListener(EventHandler<BeforeStoreEventArgs> handler);

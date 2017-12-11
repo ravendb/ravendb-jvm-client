@@ -16,7 +16,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 public class IndexOperationsTest extends RemoteTestBase {
 
     @Test
-    public void canDeleteIndex() throws IOException {
+    public void canDeleteIndex() throws Exception {
         try (IDocumentStore store = getDocumentStore()) {
             new IndexesFromClientTest.UsersIndex().execute(store);
 
@@ -35,7 +35,7 @@ public class IndexOperationsTest extends RemoteTestBase {
     }
 
     @Test
-    public void canDisableAndEnableIndex() throws IOException {
+    public void canDisableAndEnableIndex() throws Exception {
         try (IDocumentStore store = getDocumentStore()) {
             new IndexesFromClientTest.UsersIndex().execute(store);
 
@@ -58,7 +58,7 @@ public class IndexOperationsTest extends RemoteTestBase {
     }
 
     @Test
-    public void getCanIndexes() throws IOException {
+    public void getCanIndexes() throws Exception {
         try (IDocumentStore store = getDocumentStore()) {
             new IndexesFromClientTest.UsersIndex().execute(store);
 
@@ -71,7 +71,7 @@ public class IndexOperationsTest extends RemoteTestBase {
     }
 
     @Test
-    public void getCanIndexesStats() throws IOException {
+    public void getCanIndexesStats() throws Exception {
         try (IDocumentStore store = getDocumentStore()) {
             new IndexesFromClientTest.UsersIndex().execute(store);
 
@@ -84,7 +84,7 @@ public class IndexOperationsTest extends RemoteTestBase {
     }
 
     @Test
-    public void getTerms() throws IOException {
+    public void getTerms() throws Exception {
         try (IDocumentStore store = getDocumentStore()) {
             new IndexesFromClientTest.UsersIndex().execute(store);
 
@@ -107,7 +107,7 @@ public class IndexOperationsTest extends RemoteTestBase {
     }
 
     @Test
-    public void hasIndexChanged() throws IOException {
+    public void hasIndexChanged() throws Exception {
         try (IDocumentStore store = getDocumentStore()) {
             IndexesFromClientTest.UsersIndex index = new IndexesFromClientTest.UsersIndex();
             IndexDefinition indexDef = index.createIndexDefinition();
@@ -125,7 +125,7 @@ public class IndexOperationsTest extends RemoteTestBase {
     }
 
     @Test
-    public void canStopStartIndexing() throws IOException {
+    public void canStopStartIndexing() throws Exception {
         try (IDocumentStore store = getDocumentStore()) {
             IndexesFromClientTest.UsersIndex index = new IndexesFromClientTest.UsersIndex();
             IndexDefinition indexDef = index.createIndexDefinition();
@@ -150,7 +150,7 @@ public class IndexOperationsTest extends RemoteTestBase {
     }
 
     @Test
-    public void canStopStartIndex() throws IOException {
+    public void canStopStartIndex() throws Exception {
         try (IDocumentStore store = getDocumentStore()) {
             IndexesFromClientTest.UsersIndex index = new IndexesFromClientTest.UsersIndex();
             IndexDefinition indexDef = index.createIndexDefinition();
@@ -179,7 +179,7 @@ public class IndexOperationsTest extends RemoteTestBase {
     }
 
     @Test
-    public void canSetIndexLockMode() throws IOException {
+    public void canSetIndexLockMode() throws Exception {
         try (IDocumentStore store = getDocumentStore()) {
             IndexesFromClientTest.UsersIndex index = new IndexesFromClientTest.UsersIndex();
             IndexDefinition indexDef = index.createIndexDefinition();
@@ -195,7 +195,7 @@ public class IndexOperationsTest extends RemoteTestBase {
     }
 
     @Test
-    public void canSetIndexPriority() throws IOException {
+    public void canSetIndexPriority() throws Exception {
         try (IDocumentStore store = getDocumentStore()) {
             IndexesFromClientTest.UsersIndex index = new IndexesFromClientTest.UsersIndex();
             IndexDefinition indexDef = index.createIndexDefinition();
@@ -211,7 +211,7 @@ public class IndexOperationsTest extends RemoteTestBase {
     }
 
     @Test
-    public void canListErrors() throws IOException {
+    public void canListErrors() throws Exception {
         try (IDocumentStore store = getDocumentStore()) {
             UsersInvalidIndex index = new UsersInvalidIndex();
             IndexDefinition indexDef = index.createIndexDefinition();
@@ -240,7 +240,7 @@ public class IndexOperationsTest extends RemoteTestBase {
     }
 
     @Test
-    public void canGetIndexStatistics() throws IOException {
+    public void canGetIndexStatistics() throws Exception {
         try (IDocumentStore store = getDocumentStore()) {
             Users_Index index = new Users_Index();
             IndexDefinition indexDef = index.createIndexDefinition();

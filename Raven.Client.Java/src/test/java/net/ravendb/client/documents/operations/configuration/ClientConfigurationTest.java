@@ -13,7 +13,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 public class ClientConfigurationTest extends RemoteTestBase {
 
     @Test
-    public void canHandleNoConfiguration() throws IOException {
+    public void canHandleNoConfiguration() throws Exception {
         try (IDocumentStore store = getDocumentStore()) {
             GetClientConfigurationOperation operation = new GetClientConfigurationOperation();
             GetClientConfigurationOperation.Result result = store.maintenance().send(operation);
@@ -27,7 +27,7 @@ public class ClientConfigurationTest extends RemoteTestBase {
     }
 
     @Test
-    public void canSaveAndReadClientConfiguration() throws IOException {
+    public void canSaveAndReadClientConfiguration() throws Exception {
         try (IDocumentStore store = getDocumentStore()) {
 
             ClientConfiguration configurationToSave = new ClientConfiguration();

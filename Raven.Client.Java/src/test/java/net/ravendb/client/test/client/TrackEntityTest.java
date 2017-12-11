@@ -14,7 +14,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 public class TrackEntityTest extends RemoteTestBase {
     @Test
-    public void deletingEntityThatIsNotTrackedShouldThrow() throws IOException {
+    public void deletingEntityThatIsNotTrackedShouldThrow() throws Exception {
         try (IDocumentStore store = getDocumentStore()) {
 
             try (IDocumentSession session = store.openSession()) {
@@ -28,7 +28,7 @@ public class TrackEntityTest extends RemoteTestBase {
     }
 
     @Test
-    public void loadingDeletedDocumentShouldReturnNull() throws IOException {
+    public void loadingDeletedDocumentShouldReturnNull() throws Exception {
         try (IDocumentStore store = getDocumentStore()) {
             try (IDocumentSession session = store.openSession()) {
                 User user1 = new User();
@@ -60,7 +60,7 @@ public class TrackEntityTest extends RemoteTestBase {
     }
 
     @Test
-    public void storingDocumentWithTheSameIdInTheSameSessionShouldThrow() throws IOException {
+    public void storingDocumentWithTheSameIdInTheSameSessionShouldThrow() throws Exception {
         try (IDocumentStore store = getDocumentStore()) {
             try (IDocumentSession session = store.openSession()) {
                 User user = new User();

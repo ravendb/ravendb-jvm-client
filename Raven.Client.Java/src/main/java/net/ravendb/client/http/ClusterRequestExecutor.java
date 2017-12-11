@@ -4,6 +4,7 @@ import net.ravendb.client.documents.conventions.DocumentConventions;
 import net.ravendb.client.serverwide.commands.GetClusterTopologyCommand;
 import net.ravendb.client.serverwide.commands.GetTcpInfoCommand;
 
+import java.security.KeyStore;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
@@ -13,36 +14,28 @@ import java.util.stream.Collectors;
 
 public class ClusterRequestExecutor extends RequestExecutor {
 
-    private final Semaphore clusterTopologySemaphone = new Semaphore(1);
+    private final Semaphore clusterTopologySemaphore = new Semaphore(1);
 
-    protected ClusterRequestExecutor(DocumentConventions conventions) {
-        super(null, conventions);
-
-        /* TODO certs
-         // Here we are explicitly ignoring trust issues in the case of ClusterRequestExecutor.
-            // this is because we don't actually require trust, we just use the certificate
-            // as a way to authenticate. Either we encounter the same server certificate which we already
-            // trust, or the admin is going to tell us which specific certs we can trust.
-            ServerCertificateCustomValidationCallback += (msg, cert, chain, errors) => true;
-         */
+    protected ClusterRequestExecutor(KeyStore certificate, DocumentConventions conventions) {
+        super(null, certificate, conventions);
     }
 
-    public static ClusterRequestExecutor create(String[] urls, String databaseName, DocumentConventions conventions) { //TODO: X509Certificate2 certificate
+    public static ClusterRequestExecutor create(String[] urls, String databaseName, KeyStore certificate, DocumentConventions conventions) {
         throw new UnsupportedOperationException();
     }
 
-    public static ClusterRequestExecutor createForSingleNodeWithConfigurationUpdates(String url, String databaseName, DocumentConventions conventions) { //TODO: X509Certificate2 certificate
+    public static ClusterRequestExecutor createForSingleNodeWithConfigurationUpdates(String url, String databaseName, KeyStore certificate, DocumentConventions conventions) {
         throw new UnsupportedOperationException();
     }
 
-    public static ClusterRequestExecutor createForSingleNodeWithoutConfigurationUpdates(String url, String databaseName, DocumentConventions conventions) { //TODO: X509Certificate2 certificate
+    public static ClusterRequestExecutor createForSingleNodeWithoutConfigurationUpdates(String url, String databaseName, KeyStore certificate, DocumentConventions conventions) {
         throw new UnsupportedOperationException();
     }
 
-    public static ClusterRequestExecutor createForSingleNode(String url) { //TODO: X509Certificate2 certificate
-        url = validateUrls(new String[]{url})[0];
+    public static ClusterRequestExecutor createForSingleNode(String url, KeyStore certificate) {
+        url = validateUrls(new String[]{url}, certificate)[0];
 
-        ClusterRequestExecutor executor = new ClusterRequestExecutor(DocumentConventions.defaultConventions);
+        ClusterRequestExecutor executor = new ClusterRequestExecutor(certificate, DocumentConventions.defaultConventions);
 
         ServerNode serverNode = new ServerNode();
         serverNode.setUrl(url);
@@ -61,12 +54,12 @@ public class ClusterRequestExecutor extends RequestExecutor {
         return executor;
     }
 
-    public static ClusterRequestExecutor create(String[] urls) {
-        return create(urls, null);
+    public static ClusterRequestExecutor create(String[] urls, KeyStore certificate) {
+        return create(urls, certificate, null);
     }
 
-    public static ClusterRequestExecutor create(String[] urls, DocumentConventions conventions) {
-        ClusterRequestExecutor executor = new ClusterRequestExecutor(conventions != null ? conventions : DocumentConventions.defaultConventions);
+    public static ClusterRequestExecutor create(String[] urls, KeyStore certificate, DocumentConventions conventions) {
+        ClusterRequestExecutor executor = new ClusterRequestExecutor(certificate, conventions != null ? conventions : DocumentConventions.defaultConventions);
 
         executor._disableClientConfigurationUpdates = true;
         executor._firstTopologyUpdate = executor.firstTopologyUpdate(urls);
@@ -86,7 +79,7 @@ public class ClusterRequestExecutor extends RequestExecutor {
 
         return CompletableFuture.supplyAsync(() -> {
             try {
-                boolean lockTaken = clusterTopologySemaphone.tryAcquire(timeout, TimeUnit.MILLISECONDS);
+                boolean lockTaken = clusterTopologySemaphore.tryAcquire(timeout, TimeUnit.MILLISECONDS);
                 if (!lockTaken) {
                     return false;
                 }
@@ -133,7 +126,7 @@ public class ClusterRequestExecutor extends RequestExecutor {
                     }
                 }
             } finally {
-                clusterTopologySemaphone.release();
+                clusterTopologySemaphore.release();
             }
 
             return true;
@@ -152,7 +145,7 @@ public class ClusterRequestExecutor extends RequestExecutor {
     @Override
     public void close() {
         try {
-            clusterTopologySemaphone.acquire();
+            clusterTopologySemaphore.acquire();
         } catch (InterruptedException e) {
         }
 

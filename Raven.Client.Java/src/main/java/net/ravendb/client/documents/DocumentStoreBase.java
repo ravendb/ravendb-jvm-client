@@ -16,6 +16,7 @@ import org.apache.commons.lang3.StringUtils;
 
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.security.KeyStore;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -133,7 +134,8 @@ public abstract class DocumentStoreBase implements IDocumentStore {
 
     protected boolean initialized;
 
-    //TODO:  private X509Certificate2 _certificate;
+    private KeyStore _certificate;
+
     //TBD: public abstract BulkInsertOperation BulkInsert(string database = null);
     //TBD:  public IReliableSubscriptions Subscriptions { get; }
 
@@ -205,21 +207,22 @@ public abstract class DocumentStoreBase implements IDocumentStore {
         this.database = database;
     }
 
-    /* TBD
-     /// <summary>
-        /// The client certificate to use for authentication
-        /// </summary>
-        public X509Certificate2 Certificate
-        {
-            get => _certificate;
-            set
-            {
-                if(Initialized)
-                    throw new InvalidOperationException("You cannot change the certificate after the document store was initialized");
-                _certificate = value;
-            }
-        }
+    /**
+     * The client certificate to use for authentication
      */
+    public KeyStore getCertificate() {
+        return _certificate;
+    }
+
+    /**
+     * The client certificate to use for authentication
+     */
+    public void setCertificate(KeyStore certificate) {
+        if (initialized) {
+            throw new IllegalStateException("You cannot change the certificate after the document store was initialized");
+        }
+        _certificate = certificate;
+    }
 
     public abstract RequestExecutor getRequestExecutor();
 

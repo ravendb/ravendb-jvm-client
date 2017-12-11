@@ -60,7 +60,7 @@ public class LoadTest extends RemoteTestBase {
     }
 
     @Test
-    public void loadWithIncludes() throws IOException {
+    public void loadWithIncludes() throws Exception {
         try (IDocumentStore store = getDocumentStore()) {
 
             String barId;
@@ -113,7 +113,7 @@ public class LoadTest extends RemoteTestBase {
 
 
     @Test
-    public void loadWithIncludesAndMissingDocument() throws IOException {
+    public void loadWithIncludesAndMissingDocument() throws Exception {
         try (IDocumentStore store = getDocumentStore()) {
 
             String barId;

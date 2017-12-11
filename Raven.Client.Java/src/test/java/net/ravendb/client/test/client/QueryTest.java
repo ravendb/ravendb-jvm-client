@@ -20,7 +20,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 public class QueryTest extends RemoteTestBase {
 
     @Test
-    public void querySimple() throws IOException {
+    public void querySimple() throws Exception {
         try (IDocumentStore store = getDocumentStore()) {
             try (IDocumentSession session = store.openSession()) {
 
@@ -48,7 +48,7 @@ public class QueryTest extends RemoteTestBase {
     }
 
     @Test
-    public void queryWithWhereClause() throws IOException {
+    public void queryWithWhereClause() throws Exception {
         try (IDocumentStore store = getDocumentStore()) {
             try (IDocumentSession session = store.openSession()) {
 
@@ -91,7 +91,7 @@ public class QueryTest extends RemoteTestBase {
     }
 
     @Test
-    public void queryWithCustomize() throws IOException {
+    public void queryWithCustomize() throws Exception {
         try (IDocumentStore store = getDocumentStore()) {
 
             new DogsIndex().execute(store);
@@ -204,7 +204,7 @@ public class QueryTest extends RemoteTestBase {
     }
 
     @Test
-    public void queryLongRequest() throws IOException {
+    public void queryLongRequest() throws Exception {
         try (IDocumentStore store = getDocumentStore()) {
             try (IDocumentSession newSession = store.openSession()) {
                 String longName = StringUtils.repeat('x', 2048);
@@ -227,7 +227,7 @@ public class QueryTest extends RemoteTestBase {
     }
 
     @Test
-    public void queryByIndex() throws IOException {
+    public void queryByIndex() throws Exception {
         try (IDocumentStore store = getDocumentStore()) {
 
             new DogsIndex().execute(store);

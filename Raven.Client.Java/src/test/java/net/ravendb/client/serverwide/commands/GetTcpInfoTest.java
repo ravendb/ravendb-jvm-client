@@ -10,7 +10,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 public class GetTcpInfoTest extends RemoteTestBase {
     @Test
-    public void canGetTcpInfo() throws IOException {
+    public void canGetTcpInfo() throws Exception {
         try (IDocumentStore store = getDocumentStore()) {
 
             GetTcpInfoCommand command = new GetTcpInfoCommand("test");

@@ -20,7 +20,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 public class CrudTest extends RemoteTestBase {
 
     @Test
-    public void entitiesAreSavedUsingLowerCase() throws IOException {
+    public void entitiesAreSavedUsingLowerCase() throws Exception {
         try (IDocumentStore store = getDocumentStore()) {
 
             try (IDocumentSession newSession = store.openSession()) {
@@ -49,7 +49,7 @@ public class CrudTest extends RemoteTestBase {
     }
 
     @Test
-    public void canCustomizePropertyNamingStrategy() throws IOException {
+    public void canCustomizePropertyNamingStrategy() throws Exception {
         try (IDocumentStore store = getDocumentStore()) {
 
             store.getConventions().getEntityMapper().setPropertyNamingStrategy(new JsonExtensions.DotNetNamingStrategy());
@@ -80,7 +80,7 @@ public class CrudTest extends RemoteTestBase {
     }
 
     @Test
-    public void crudOperations() throws IOException {
+    public void crudOperations() throws Exception {
         try (IDocumentStore store = getDocumentStore()) {
 
             try (IDocumentSession newSession = store.openSession()) {
@@ -134,7 +134,7 @@ public class CrudTest extends RemoteTestBase {
     }
 
     @Test
-    public void crudOperationsWithWhatChanged() throws IOException {
+    public void crudOperationsWithWhatChanged() throws Exception {
         try (IDocumentStore store = getDocumentStore()) {
 
             try (IDocumentSession newSession = store.openSession()) {
@@ -193,7 +193,7 @@ public class CrudTest extends RemoteTestBase {
     }
 
     @Test
-    public void crudOperationsWithArrayInObject() throws IOException {
+    public void crudOperationsWithArrayInObject() throws Exception {
         try (IDocumentStore store = getDocumentStore()) {
 
             try (IDocumentSession newSession = store.openSession()) {
@@ -213,7 +213,7 @@ public class CrudTest extends RemoteTestBase {
     }
 
     @Test
-    public void crudOperationsWithArrayInObject2() throws IOException {
+    public void crudOperationsWithArrayInObject2() throws Exception {
         try (IDocumentStore store = getDocumentStore()) {
 
             try (IDocumentSession newSession = store.openSession()) {
@@ -238,7 +238,7 @@ public class CrudTest extends RemoteTestBase {
     }
 
     @Test
-    public void crudOperationsWithArrayInObject3() throws IOException {
+    public void crudOperationsWithArrayInObject3() throws Exception {
         try (IDocumentStore store = getDocumentStore()) {
 
             try (IDocumentSession newSession = store.openSession()) {
@@ -258,7 +258,7 @@ public class CrudTest extends RemoteTestBase {
     }
 
     @Test
-    public void crudOperationsWithArrayInObject4() throws IOException {
+    public void crudOperationsWithArrayInObject4() throws Exception {
         try (IDocumentStore store = getDocumentStore()) {
 
             try (IDocumentSession newSession = store.openSession()) {
@@ -278,7 +278,7 @@ public class CrudTest extends RemoteTestBase {
     }
 
     @Test
-    public void crudOperationsWithNull() throws IOException {
+    public void crudOperationsWithNull() throws Exception {
         try (IDocumentStore store = getDocumentStore()) {
 
             try (IDocumentSession newSession = store.openSession()) {
@@ -346,7 +346,7 @@ public class CrudTest extends RemoteTestBase {
     }
 
     @Test
-    public void crudOperationsWithArrayOfObjects() throws IOException {
+    public void crudOperationsWithArrayOfObjects() throws Exception {
         try (IDocumentStore store = getDocumentStore()) {
 
             try (IDocumentSession newSession = store.openSession()) {
@@ -500,7 +500,7 @@ public class CrudTest extends RemoteTestBase {
     }
 
     @Test
-    public void crudOperationsWithArrayOfArrays() throws IOException {
+    public void crudOperationsWithArrayOfArrays() throws Exception {
         try (IDocumentStore store = getDocumentStore()) {
 
             try (IDocumentSession newSession = store.openSession()) {
@@ -593,7 +593,7 @@ public class CrudTest extends RemoteTestBase {
     }
 
     @Test
-    public void crudCanUpdatePropertyToNull() throws IOException {
+    public void crudCanUpdatePropertyToNull() throws Exception {
         try (IDocumentStore store = getDocumentStore()) {
 
             try (IDocumentSession newSession = store.openSession()) {
@@ -619,7 +619,7 @@ public class CrudTest extends RemoteTestBase {
     }
 
     @Test
-    public void crudCanUpdatePropertyFromNullToObject() throws IOException {
+    public void crudCanUpdatePropertyFromNullToObject() throws Exception {
         try (IDocumentStore store = getDocumentStore()) {
 
             try (IDocumentSession session = store.openSession()) {

@@ -16,7 +16,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 public class LoadTest extends RemoteTestBase {
 
     @Test
-    public void loadDocumentById() throws IOException {
+    public void loadDocumentById() throws Exception {
         try (IDocumentStore store = getDocumentStore()) {
             try (IDocumentSession session = store.openSession()) {
                 User user = new User();
@@ -39,7 +39,7 @@ public class LoadTest extends RemoteTestBase {
     }
 
     @Test
-    public void loadDocumentsByIds() throws IOException {
+    public void loadDocumentsByIds() throws Exception {
         try (IDocumentStore store = getDocumentStore()) {
             try (IDocumentSession session = store.openSession()) {
                 User user1 = new User();
@@ -62,7 +62,7 @@ public class LoadTest extends RemoteTestBase {
     }
 
     @Test
-    public void loadNullShouldReturnNull() throws IOException {
+    public void loadNullShouldReturnNull() throws Exception {
         try (IDocumentStore store = getDocumentStore()) {
             try (IDocumentSession session = store.openSession()) {
                 User user1 = new User();
@@ -85,7 +85,7 @@ public class LoadTest extends RemoteTestBase {
     }
 
     @Test
-    public void loadMultiIdsWithNullShouldReturnDictionaryWithoutNulls() throws IOException {
+    public void loadMultiIdsWithNullShouldReturnDictionaryWithoutNulls() throws Exception {
         try (IDocumentStore store = getDocumentStore()) {
             try (IDocumentSession session = store.openSession()) {
                 User user1 = new User();
@@ -123,7 +123,7 @@ public class LoadTest extends RemoteTestBase {
     }
 
     @Test
-    public void loadDocumentWithINtArrayAndLongArray() throws IOException {
+    public void loadDocumentWithINtArrayAndLongArray() throws Exception {
         try (IDocumentStore store = getDocumentStore()) {
             try (IDocumentSession session = store.openSession()) {
                 GeekPerson geek1 = new GeekPerson();
@@ -161,7 +161,7 @@ public class LoadTest extends RemoteTestBase {
     }
 
     @Test
-    public void shouldLoadManyIdsAsPostRequest() throws IOException {
+    public void shouldLoadManyIdsAsPostRequest() throws Exception {
         try (IDocumentStore store = getDocumentStore()) {
             List<String> ids = new ArrayList<>();
 

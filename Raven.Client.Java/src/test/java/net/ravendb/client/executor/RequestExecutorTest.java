@@ -22,11 +22,11 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 public class RequestExecutorTest extends RemoteTestBase {
 
     @Test
-    public void failuresDoesNotBlockConnectionPool() throws IOException {
+    public void failuresDoesNotBlockConnectionPool() throws Exception {
         DocumentConventions conventions = new DocumentConventions();
 
         try (IDocumentStore store = getDocumentStore()) {
-            try (RequestExecutor executor = RequestExecutor.create(store.getUrls(), "no_such_db", conventions)) {
+            try (RequestExecutor executor = RequestExecutor.create(store.getUrls(), "no_such_db", null, conventions)) {
                 int errorsCount = 0;
 
                 for (int i = 0; i < 40; i++) {
@@ -51,11 +51,11 @@ public class RequestExecutorTest extends RemoteTestBase {
 
 
     @Test
-    public void canIssueManyRequests() throws IOException {
+    public void canIssueManyRequests() throws Exception {
         DocumentConventions conventions = new DocumentConventions();
 
         try (IDocumentStore store = getDocumentStore()) {
-            try (RequestExecutor executor = RequestExecutor.create(store.getUrls(), store.getDatabase(), conventions)) {
+            try (RequestExecutor executor = RequestExecutor.create(store.getUrls(), store.getDatabase(), null, conventions)) {
                 for (int i = 0; i < 50; i++) {
                     GetDatabaseNamesOperation databaseNamesOperation = new GetDatabaseNamesOperation(0, 20);
                     RavenCommand<String[]> command = databaseNamesOperation.getCommand(conventions);
@@ -66,11 +66,11 @@ public class RequestExecutorTest extends RemoteTestBase {
     }
 
     @Test
-    public void canFetchDatabasesNames() throws IOException {
+    public void canFetchDatabasesNames() throws Exception {
         DocumentConventions conventions = new DocumentConventions();
 
         try (IDocumentStore store = getDocumentStore()) {
-            try (RequestExecutor executor = RequestExecutor.create(store.getUrls(), store.getDatabase(), conventions)) {
+            try (RequestExecutor executor = RequestExecutor.create(store.getUrls(), store.getDatabase(), null, conventions)) {
                 GetDatabaseNamesOperation databaseNamesOperation = new GetDatabaseNamesOperation(0, 20);
                 RavenCommand<String[]> command = databaseNamesOperation.getCommand(conventions);
                 executor.execute(command);
@@ -83,11 +83,11 @@ public class RequestExecutorTest extends RemoteTestBase {
     }
 
     @Test
-    public void throwsWhenUpdatingTopologyOfNotExistingDb() throws IOException {
+    public void throwsWhenUpdatingTopologyOfNotExistingDb() throws Exception {
         DocumentConventions conventions = new DocumentConventions();
 
         try (IDocumentStore store = getDocumentStore()) {
-            try (RequestExecutor executor = RequestExecutor.create(store.getUrls(), "no_such_db", conventions)) {
+            try (RequestExecutor executor = RequestExecutor.create(store.getUrls(), "no_such_db", null, conventions)) {
 
                 ServerNode serverNode = new ServerNode();
                 serverNode.setUrl(store.getUrls()[0]);
@@ -101,11 +101,11 @@ public class RequestExecutorTest extends RemoteTestBase {
     }
 
     @Test
-    public void throwsWhenDatabaseDoesntExist() throws IOException {
+    public void throwsWhenDatabaseDoesntExist() throws Exception {
         DocumentConventions conventions = new DocumentConventions();
 
         try (IDocumentStore store = getDocumentStore()) {
-            try (RequestExecutor executor = RequestExecutor.create(store.getUrls(), "no_such_db", conventions)) {
+            try (RequestExecutor executor = RequestExecutor.create(store.getUrls(), "no_such_db", null, conventions)) {
 
                 GetNextOperationIdCommand command = new GetNextOperationIdCommand();
 
@@ -117,10 +117,10 @@ public class RequestExecutorTest extends RemoteTestBase {
     }
 
     @Test
-    public void canCreateSingleNodeRequestExecutor() throws IOException {
+    public void canCreateSingleNodeRequestExecutor() throws Exception {
         DocumentConventions documentConventions = new DocumentConventions();
         try (IDocumentStore store = getDocumentStore()) {
-            try (RequestExecutor executor = RequestExecutor.createForSingleNodeWithoutConfigurationUpdates(store.getUrls()[0], store.getDatabase(), documentConventions)) {
+            try (RequestExecutor executor = RequestExecutor.createForSingleNodeWithoutConfigurationUpdates(store.getUrls()[0], store.getDatabase(), null, documentConventions)) {
 
                 List<ServerNode> nodes = executor.getTopologyNodes();
 
@@ -140,14 +140,14 @@ public class RequestExecutorTest extends RemoteTestBase {
     }
 
     @Test
-    public void canChooseOnlineNode() throws IOException {
+    public void canChooseOnlineNode() throws Exception {
         DocumentConventions documentConventions = new DocumentConventions();
 
         try (IDocumentStore store = getDocumentStore()) {
             String url = store.getUrls()[0];
             String dbName = store.getDatabase();
 
-            try (RequestExecutor executor = RequestExecutor.create(new String[]{"http://no_such_host:8080", "http://another_offlilne:8080", url}, dbName, documentConventions)) {
+            try (RequestExecutor executor = RequestExecutor.create(new String[]{"http://no_such_host:8080", "http://another_offlilne:8080", url}, dbName, null, documentConventions)) {
                 GetNextOperationIdCommand command = new GetNextOperationIdCommand();
                 executor.execute(command);
 
@@ -170,7 +170,7 @@ public class RequestExecutorTest extends RemoteTestBase {
 
         assertThatThrownBy(() -> {
             // don't even start server
-            try (RequestExecutor executor = RequestExecutor.create(new String[]{"http://no_such_host:8081"}, "db1", documentConventions)) {
+            try (RequestExecutor executor = RequestExecutor.create(new String[]{"http://no_such_host:8081"}, "db1", null, documentConventions)) {
                 GetNextOperationIdCommand command = new GetNextOperationIdCommand();
 
                 executor.execute(command);

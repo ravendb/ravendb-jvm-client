@@ -1,5 +1,7 @@
 package net.ravendb.client.test.driver;
 
+import org.apache.commons.lang3.ArrayUtils;
+
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -28,11 +30,13 @@ public abstract class RavenServerRunner {
         }
 
         String[] commandArguments = new String[] {
-                locator.getCommandArguments(),
-                "--ServerUrl=http://127.0.0.1:0",
+                locator.withHttps() ? "--ServerUrl=https://127.0.0.1:8085" : "--ServerUrl=http://127.0.0.1:0",
                 "--RunInMemory=true",
                 "--Testing.ParentProcessId=" + getProcessId("0")
         };
+
+
+        commandArguments = ArrayUtils.addAll(locator.getCommandArguments(), commandArguments);
 
         ProcessStartInfo processStartInfo = new ProcessStartInfo();
         processStartInfo.setCommand(locator.getCommand());

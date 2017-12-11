@@ -14,7 +14,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 public class GetTopologyTest extends RemoteTestBase {
     @Test
-    public void canGetTopology() throws IOException {
+    public void canGetTopology() throws Exception {
         try (IDocumentStore store = getDocumentStore()) {
 
             GetTopologyCommand command = new GetTopologyCommand();

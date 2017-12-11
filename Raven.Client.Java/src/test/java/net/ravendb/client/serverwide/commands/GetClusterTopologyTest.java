@@ -13,7 +13,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 public class GetClusterTopologyTest extends RemoteTestBase {
     @Test
-    public void canGetTopology() throws IOException {
+    public void canGetTopology() throws Exception {
         try (IDocumentStore store = getDocumentStore()) {
 
             GetClusterTopologyCommand command = new GetClusterTopologyCommand();

@@ -7,8 +7,8 @@ import net.ravendb.client.documents.conventions.DocumentConventions;
 import net.ravendb.client.documents.operations.configuration.GetClientConfigurationOperation;
 import net.ravendb.client.documents.session.SessionInfo;
 import net.ravendb.client.exceptions.AllTopologyNodesDownException;
-import net.ravendb.client.exceptions.database.DatabaseDoesNotExistException;
 import net.ravendb.client.exceptions.ExceptionDispatcher;
+import net.ravendb.client.exceptions.database.DatabaseDoesNotExistException;
 import net.ravendb.client.exceptions.security.AuthorizationException;
 import net.ravendb.client.extensions.HttpExtensions;
 import net.ravendb.client.extensions.JsonExtensions;
@@ -29,10 +29,23 @@ import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.impl.client.StandardHttpRequestRetryHandler;
 import org.apache.http.impl.conn.PoolingHttpClientConnectionManager;
+import org.apache.http.ssl.SSLContexts;
+import sun.plugin.dom.exception.InvalidStateException;
 
+import javax.net.ssl.HostnameVerifier;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLSession;
+import javax.net.ssl.SSLSocketFactory;
+import javax.xml.bind.DatatypeConverter;
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.*;
+import java.net.MalformedURLException;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.net.URL;
+import java.security.*;
+import java.security.cert.Certificate;
+import java.security.cert.CertificateEncodingException;
 import java.time.Duration;
 import java.util.*;
 import java.util.concurrent.*;
@@ -60,7 +73,7 @@ public class RequestExecutor implements CleanCloseable {
 
     private final ConcurrentMap<ServerNode, NodeStatus> _failedNodesTimers = new ConcurrentHashMap<>();
 
-    // TODO: public X509Certificate2 Certificate { get; }
+    private KeyStore certificate;
 
     private final String _databaseName;
 
@@ -132,38 +145,62 @@ public class RequestExecutor implements CleanCloseable {
         return conventions;
     }
 
-    protected RequestExecutor(String databaseName, DocumentConventions conventions) { //TBD: X509Certificate2 certificate
+    public KeyStore getCertificate() {
+        return certificate;
+    }
+
+    protected RequestExecutor(String databaseName, KeyStore certificate, DocumentConventions conventions) {
         cache = new HttpCache(conventions.getMaxHttpCacheSize());
         _readBalanceBehavior = conventions.getReadBalanceBehavior();
         _databaseName = databaseName;
-        // TBD: Certificate = certificate;
+        this.certificate = certificate;
 
         _lastReturnedResponse = new Date();
         this.conventions = conventions.clone();
 
         String thumbprint = "";
-
-        //TBD: if (certificate != null)    thumbprint = certificate.Thumbprint;
+        if (certificate != null) {
+            thumbprint = extractThumbprintFromCertificate(certificate);
+        }
 
         httpClient = globalHttpClient.computeIfAbsent(thumbprint, (thumb) -> createClient());
     }
 
-    public static RequestExecutor create(String[] urls, String databaseName, DocumentConventions conventions) { //TBD: X509Certificate2 certificate
-        RequestExecutor executor = new RequestExecutor(databaseName, conventions);
+    private String extractThumbprintFromCertificate(KeyStore certificate) {
+        try {
+            ArrayList<String> aliases = Collections.list(certificate.aliases());
+
+            if (aliases.size() != 1) {
+                throw new IllegalStateException("Expected single certificate in keystore.");
+            }
+
+            String alias = aliases.get(0);
+            Certificate clientCertificate = certificate.getCertificate(alias);
+
+            byte[] sha1 = MessageDigest.getInstance("SHA-1").digest(clientCertificate.getEncoded());
+            return DatatypeConverter.printHexBinary(sha1);
+
+        } catch (KeyStoreException | NoSuchAlgorithmException | CertificateEncodingException e) {
+            throw new IllegalStateException("Unable to extract certificate thumbprint " + e.getMessage(), e);
+        }
+    }
+
+    public static RequestExecutor create(String[] urls, String databaseName, KeyStore certificate, DocumentConventions conventions) {
+        RequestExecutor executor = new RequestExecutor(databaseName, certificate, conventions);
         executor._firstTopologyUpdate = executor.firstTopologyUpdate(urls);
         return executor;
     }
 
-    public static RequestExecutor createForSingleNodeWithConfigurationUpdates(String url, String databaseName, DocumentConventions conventions) { //TBD: X509Certificate2 certificate
-        RequestExecutor executor = createForSingleNodeWithoutConfigurationUpdates(url, databaseName, conventions);
+    public static RequestExecutor createForSingleNodeWithConfigurationUpdates(String url, String databaseName, KeyStore certificate, DocumentConventions conventions) {
+        RequestExecutor executor = createForSingleNodeWithoutConfigurationUpdates(url, databaseName, certificate, conventions);
         executor._disableClientConfigurationUpdates = false;
         return executor;
     }
 
-    public static RequestExecutor createForSingleNodeWithoutConfigurationUpdates(String url, String databaseName, DocumentConventions conventions) { //TBD: X509Certificate2 certificate
-        final String[] initialUrls = validateUrls(new String[]{url});
+    public static RequestExecutor createForSingleNodeWithoutConfigurationUpdates(String url, String databaseName, KeyStore certificate, DocumentConventions conventions) { //TBD: X509Certificate2 certificate
+        final String[] initialUrls = validateUrls(new String[]{url}, certificate);
 
-        RequestExecutor executor = new RequestExecutor(databaseName, conventions);
+        RequestExecutor executor = new RequestExecutor(databaseName, certificate, conventions);
 
         Topology topology = new Topology();
         topology.setEtag(-1L);
@@ -373,7 +410,7 @@ public class RequestExecutor implements CleanCloseable {
     }
 
     protected CompletableFuture<Void> firstTopologyUpdate(String[] inputUrls) {
-        final String[] initialUrls = validateUrls(inputUrls);
+        final String[] initialUrls = validateUrls(inputUrls, certificate);
 
         ArrayList<Tuple<String, Exception>> list = new ArrayList<>();
 
@@ -389,7 +426,12 @@ public class RequestExecutor implements CleanCloseable {
 
                     initializeUpdateTopologyTimer();
                     return;
-                } catch (Exception e) { //TBD: handle https
+                } catch (DatabaseDoesNotExistException e) {
+                    // Will happen on all node in the cluster,
+                    // so errors immediately
+                    _lastKnownUrls = initialUrls;
+                    throw e;
+                } catch (Exception e) { //TODO: handle https
                     if (initialUrls.length == 0) {
                         _lastKnownUrls = initialUrls;
                         throw new IllegalStateException("Cannot get topology from server: " + url, e);
@@ -433,8 +475,9 @@ public class RequestExecutor implements CleanCloseable {
         throw new IllegalStateException("Failed to retrieve database topology from all known nodes" + System.lineSeparator() + details);
     }
 
-    protected static String[] validateUrls(String[] initialUrls) { //TBD: certificate
+    protected static String[] validateUrls(String[] initialUrls, KeyStore certificate) {
         String[] cleanUrls = new String[initialUrls.length];
+        boolean requireHttps = certificate != null;
         for (int index = 0; index < initialUrls.length; index++) {
             String url = initialUrls[index];
             try {
@@ -444,7 +487,24 @@ public class RequestExecutor implements CleanCloseable {
             }
 
             cleanUrls[index] = StringUtils.stripEnd(url, "/");
+            requireHttps |= url.startsWith("https://");
         }
+
+        if (!requireHttps) {
+            return cleanUrls;
+        }
+
+        for (String url : initialUrls) {
+            if (!url.startsWith("http://")) {
+                continue;
+            }
+
+            if (certificate != null) {
+                throw new IllegalStateException("The url " + url + " is using HTTP, but a certificate is specified, which require us to use HTTPS");
+            }
+            throw new InvalidStateException("The url " + url + " is using HTTP, but other urls are using HTTPS, and mixing of HTTP and HTTPS is not allowed.");
+        }
+
         return cleanUrls;
     }
 
@@ -911,17 +971,32 @@ public class RequestExecutor implements CleanCloseable {
     }
 
     private CloseableHttpClient createClient() {
-        //TBD: certifciates handling
-
-        PoolingHttpClientConnectionManager cm = new PoolingHttpClientConnectionManager();
-        cm.setDefaultMaxPerRoute(10);
         HttpClientBuilder httpClientBuilder = HttpClients
                 .custom()
-                .setConnectionManager(cm)
+                .setMaxConnPerRoute(10)
                 .disableContentCompression()
                 //TODO : .addInterceptorLast(new RavenResponseContentEncoding())
                 .setRetryHandler(new StandardHttpRequestRetryHandler(0, false))
                 .setDefaultSocketConfig(SocketConfig.custom().setTcpNoDelay(true).build());
+
+        if (certificate != null) {
+            try {
+                httpClientBuilder.setSSLHostnameVerifier((s, sslSession) -> {
+                    // Here we are explicitly ignoring trust issues in the case of ClusterRequestExecutor.
+                    // this is because we don't actually require trust, we just use the certificate
+                    // as a way to authenticate. Either we encounter the same server certificate which we already
+                    // trust, or the admin is going to tell us which specific certs we can trust.
+                    return true;
+                });
+
+                SSLContext context = SSLContexts.custom()
+                        .loadKeyMaterial(certificate, "".toCharArray())
+                        .build();
+                httpClientBuilder.setSSLContext(context);
+            } catch (KeyStoreException | UnrecoverableKeyException | NoSuchAlgorithmException | KeyManagementException e) {
+                throw new IllegalStateException("Unable to configure ssl context: " + e.getMessage(), e);
+            }
+        }
 
         if (configureHttpClient != null) {
             configureHttpClient.accept(httpClientBuilder);

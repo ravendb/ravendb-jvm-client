@@ -795,7 +795,7 @@ this.Value = another.Value;
 */
 
     @Test
-    public void canCreateDocumentsIfPatchingAppliedByIndex() throws IOException {
+    public void canCreateDocumentsIfPatchingAppliedByIndex() throws Exception {
         try (IDocumentStore store = getDocumentStore()) {
 
             try (IDocumentSession newSession = store.openSession()) {

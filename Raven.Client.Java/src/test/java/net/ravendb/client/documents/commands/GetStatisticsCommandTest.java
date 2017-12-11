@@ -15,7 +15,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 public class GetStatisticsCommandTest extends RemoteTestBase {
 
     @Test
-    public void canGetStats() throws IOException {
+    public void canGetStats() throws Exception {
         try (IDocumentStore store = getDocumentStore()) {
 
             RequestExecutor executor = store.getRequestExecutor();

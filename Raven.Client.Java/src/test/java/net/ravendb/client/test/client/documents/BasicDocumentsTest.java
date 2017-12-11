@@ -56,7 +56,7 @@ public class BasicDocumentsTest extends RemoteTestBase {
     }
 
     @Test
-    public void get() throws IOException {
+    public void get() throws Exception {
         try (IDocumentStore store = getDocumentStore()) {
             ObjectNode dummy = JsonExtensions.getDefaultMapper().valueToTree(new User());
             dummy.remove("id");

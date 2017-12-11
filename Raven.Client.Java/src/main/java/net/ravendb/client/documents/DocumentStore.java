@@ -35,6 +35,20 @@ public class DocumentStore extends DocumentStoreBase {
     private String identifier;
     private boolean _aggressiveCachingUsed;
 
+    public DocumentStore(String url, String database) {
+        this.setUrls(new String[]{ url });
+        this.setDatabase(database);
+    }
+
+    public DocumentStore(String[] urls, String database) {
+        this.setUrls(urls);
+        this.setDatabase(database);
+    }
+
+    public DocumentStore() {
+
+    }
+
     /**
      * Gets the identifier for this store.
      */
@@ -152,9 +166,9 @@ public class DocumentStore extends DocumentStoreBase {
         }
 
         if (!getConventions().isDisableTopologyUpdates()) {
-            executor = RequestExecutor.create(getUrls(), getDatabase(), getConventions()); //TODO: certificates
+            executor = RequestExecutor.create(getUrls(), getDatabase(), getCertificate(), getConventions());
         } else {
-            executor = RequestExecutor.createForSingleNodeWithConfigurationUpdates(getUrls()[0], getDatabase(), getConventions()); //TODO: certificates
+            executor = RequestExecutor.createForSingleNodeWithConfigurationUpdates(getUrls()[0], getDatabase(), getCertificate(), getConventions());
         }
 
         requestExecutors.put(database, executor);

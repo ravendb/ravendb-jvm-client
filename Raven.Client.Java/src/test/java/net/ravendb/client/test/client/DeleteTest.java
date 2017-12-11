@@ -14,7 +14,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 public class DeleteTest extends RemoteTestBase {
 
     @Test
-    public void deleteDocumentByEntity() throws IOException {
+    public void deleteDocumentByEntity() throws Exception {
         try (IDocumentStore store = getDocumentStore()) {
 
             try (IDocumentSession newSession = store.openSession()) {
@@ -40,7 +40,7 @@ public class DeleteTest extends RemoteTestBase {
     }
 
     @Test
-    public void deleteDocumentById() throws IOException {
+    public void deleteDocumentById() throws Exception {
         try (IDocumentStore store = getDocumentStore()) {
 
             try (IDocumentSession newSession = store.openSession()) {
