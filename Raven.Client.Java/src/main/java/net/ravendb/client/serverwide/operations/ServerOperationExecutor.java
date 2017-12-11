@@ -17,17 +17,15 @@ public class ServerOperationExecutor {
                 ClusterRequestExecutor.create(store.getUrls(), store.getCertificate());
     }
 
-    public void send(IVoidMaintenanceOperation operation) {
+    public void send(IVoidServerOperation operation) {
         VoidRavenCommand command = operation.getCommand(requestExecutor.getConventions());
         requestExecutor.execute(command);
     }
 
-    public <TResult> TResult send(IMaintenanceOperation<TResult> operation) {
+    public <TResult> TResult send(IServerOperation<TResult> operation) {
         RavenCommand<TResult> command = operation.getCommand(requestExecutor.getConventions());
         requestExecutor.execute(command);
 
         return command.getResult();
     }
-
-    //TODO: public async Task<Operation> Send(IServerOperation<OperationIdResult> operation, CancellationToken token = default(CancellationToken))
 }

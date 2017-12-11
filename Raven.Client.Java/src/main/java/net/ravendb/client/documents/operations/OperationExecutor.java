@@ -5,6 +5,7 @@ import net.ravendb.client.documents.session.SessionInfo;
 import net.ravendb.client.http.RavenCommand;
 import net.ravendb.client.http.RequestExecutor;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.http.HttpStatus;
 
 public class OperationExecutor {
 
@@ -62,65 +63,41 @@ public class OperationExecutor {
         return new Operation(requestExecutor, requestExecutor.getConventions(), command.getResult().getOperationId());
     }
 
+    public PatchStatus send(PatchOperation operation) {
+        RavenCommand<PatchResult> command = operation.getCommand(store, requestExecutor.getConventions(), requestExecutor.getCache());
 
-    /* TODO
+        requestExecutor.execute(command);
 
-           public PatchStatus Send(PatchOperation operation)
-        {
-            return AsyncHelpers.RunSync(() => SendAsync(operation));
+        if (command.getStatusCode() == HttpStatus.SC_NOT_MODIFIED) {
+            return PatchStatus.NOT_MODIFIED;
         }
 
-        public async Task<PatchStatus> SendAsync(PatchOperation operation, CancellationToken token = default(CancellationToken))
-        {
-            JsonOperationContext context;
-            using (GetContext(out context))
-            {
-                var command = operation.GetCommand(_store, _requestExecutor.Conventions, context, _requestExecutor.Cache);
-
-                await _requestExecutor.ExecuteAsync(command, context, token).ConfigureAwait(false);
-
-                if (command.StatusCode == HttpStatusCode.NotModified)
-                    return PatchStatus.NotModified;
-
-                if (command.StatusCode == HttpStatusCode.NotFound)
-                    return PatchStatus.DocumentDoesNotExist;
-
-                return command.Result.Status;
-            }
+        if (command.getStatusCode() == HttpStatus.SC_NOT_FOUND) {
+            return PatchStatus.DOCUMENT_DOES_NOT_EXIST;
         }
 
-        public PatchOperation.Result<TEntity> Send<TEntity>(PatchOperation<TEntity> operation)
-        {
-            return AsyncHelpers.RunSync(() => SendAsync(operation));
+        return command.getResult().getStatus();
+    }
+
+    public <TEntity> PatchOperation.Result<TEntity> send(Class<TEntity> entityClass, PatchOperation operation) {
+        RavenCommand<PatchResult> command = operation.getCommand(store, requestExecutor.getConventions(), requestExecutor.getCache());
+
+        requestExecutor.execute(command);
+
+        PatchOperation.Result<TEntity> result = new PatchOperation.Result<>();
+
+        if (command.getStatusCode() == HttpStatus.SC_NOT_MODIFIED) {
+            result.setStatus(PatchStatus.NOT_MODIFIED);
+            return result;
         }
 
-        public async Task<PatchOperation.Result<TEntity>> SendAsync<TEntity>(PatchOperation<TEntity> operation, CancellationToken token = default(CancellationToken))
-        {
-            JsonOperationContext context;
-            using (GetContext(out context))
-            {
-                var command = operation.GetCommand(_store, _requestExecutor.Conventions, context, _requestExecutor.Cache);
-
-                await _requestExecutor.ExecuteAsync(command, context, token).ConfigureAwait(false);
-
-                var result = new PatchOperation.Result<TEntity>();
-
-                if (command.StatusCode == HttpStatusCode.NotModified)
-                {
-                    result.Status = PatchStatus.NotModified;
-                    return result;
-                }
-
-                if (command.StatusCode == HttpStatusCode.NotFound)
-                {
-                    result.Status = PatchStatus.DocumentDoesNotExist;
-                    return result;
-                }
-
-                result.Status = command.Result.Status;
-                result.Document = (TEntity)_requestExecutor.Conventions.DeserializeEntityFromBlittable(typeof(TEntity), command.Result.ModifiedDocument);
-                return result;
-            }
+        if (command.getStatusCode() == HttpStatus.SC_NOT_FOUND) {
+            result.setStatus(PatchStatus.DOCUMENT_DOES_NOT_EXIST);
+            return result;
         }
-     */
+
+        result.setStatus(command.getResult().getStatus());
+        result.setDocument((TEntity) requestExecutor.getConventions().deserializeEntityFromJson(entityClass, command.getResult().getModifiedDocument()));
+        return result;
+    }
 }

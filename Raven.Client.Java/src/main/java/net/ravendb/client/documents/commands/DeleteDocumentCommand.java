@@ -10,6 +10,10 @@ public class DeleteDocumentCommand extends VoidRavenCommand {
     private final String _id;
     private final String _changeVector;
 
+    public DeleteDocumentCommand(String id) {
+        this(id, null);
+    }
+
     public DeleteDocumentCommand(String id, String changeVector) {
         if (id == null) {
             throw new IllegalArgumentException("Id cannot be null");

@@ -46,11 +46,11 @@ public abstract class DocumentStoreBase implements IDocumentStore {
         return disposed;
     }
 
-    //TODO: public abstract IDisposable AggressivelyCacheFor(TimeSpan cacheDuration, string database = null);
+    //TBD: public abstract IDisposable AggressivelyCacheFor(TimeSpan cacheDuration, string database = null);
 
     //TBD: public abstract IDatabaseChanges Changes(string database = null);
 
-    //TODO: public abstract IDisposable DisableAggressiveCaching(string database = null);
+    //TBD: public abstract IDisposable DisableAggressiveCaching(string database = null);
 
     public abstract String getIdentifier();
 
@@ -228,7 +228,7 @@ public abstract class DocumentStoreBase implements IDocumentStore {
 
     public abstract RequestExecutor getRequestExecutor(String databaseName);
 
-    /* TODO
+    /* TBD
 
         /// <summary>
         /// Setup the context for aggressive caching.

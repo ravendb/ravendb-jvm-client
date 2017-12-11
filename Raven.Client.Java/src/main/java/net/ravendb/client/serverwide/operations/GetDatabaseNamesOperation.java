@@ -11,7 +11,7 @@ import org.apache.http.client.methods.HttpRequestBase;
 
 import java.io.IOException;
 
-public class GetDatabaseNamesOperation implements IMaintenanceOperation<String[]> {
+public class GetDatabaseNamesOperation implements IServerOperation<String[]> {
     private final int _start;
     private final int _pageSize;
 

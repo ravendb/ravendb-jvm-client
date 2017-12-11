@@ -33,30 +33,8 @@ public interface IDocumentStore extends IDisposalNotification {
     void removeBeforeQueryExecutedListener(EventHandler<BeforeQueryExecutedEventArgs> handler);
 
     //TBD: IDatabaseChanges Changes(string database = null);
-
-    /* TODO:
-        /// <summary>
-        /// Setup the context for aggressive caching.
-        /// </summary>
-        /// <param name="cacheDuration">Specify the aggressive cache duration</param>
-        /// <param name="database">The database to cache, if not specified, the default database will be used</param>
-        /// <remarks>
-        /// Aggressive caching means that we will not check the server to see whether the response
-        /// we provide is current or not, but will serve the information directly from the local cache
-        /// without touching the server.
-        /// </remarks>
-        IDisposable AggressivelyCacheFor(TimeSpan cacheDuration, string database = null);
-
-        /// <summary>
-        /// Setup the context for aggressive caching.
-        /// </summary>
-        /// <remarks>
-        /// Aggressive caching means that we will not check the server to see whether the response
-        /// we provide is current or not, but will serve the information directly from the local cache
-        /// without touching the server.
-        /// </remarks>
-        IDisposable AggressivelyCache(string database = null);
-        */
+    //TBD: IDisposable AggressivelyCacheFor(TimeSpan cacheDuration, string database = null);
+    //TBD IDisposable AggressivelyCache(string database = null);
 
     /**
      * Setup the context for no aggressive caching

@@ -1,5 +1,7 @@
 package net.ravendb.client.documents.operations;
 
+import net.ravendb.client.util.Size;
+
 import java.util.Arrays;
 import java.util.Date;
 import java.util.stream.Collectors;
@@ -23,10 +25,7 @@ public class DatabaseStatistics {
     private boolean is64Bit;
     private String pager;
     private Date lastIndexingTime;
-
-      /* TODO
-        public Size SizeOnDisk { get; set; }
-     */
+    private Size sizeOnDisk;
 
     public IndexInformation[] getStaleIndexes() {
         return Arrays.stream(indexes)
@@ -154,4 +153,12 @@ public class DatabaseStatistics {
         this.lastIndexingTime = lastIndexingTime;
     }
 
+
+    public Size getSizeOnDisk() {
+        return sizeOnDisk;
+    }
+
+    public void setSizeOnDisk(Size sizeOnDisk) {
+        this.sizeOnDisk = sizeOnDisk;
+    }
 }

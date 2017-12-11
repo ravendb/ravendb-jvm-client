@@ -244,62 +244,10 @@ public class DocumentStore extends DocumentStoreBase {
         };
     }
 
-        /* TODO
-        /// <summary>
-        /// Subscribe to change notifications from the server
-        /// </summary>
-        public override IDatabaseChanges Changes(string database = null)
-        {
-            AssertInitialized();
-
-            return _databaseChanges.GetOrAdd(database ?? Database, CreateDatabaseChanges);
-        }
-
-        protected virtual IDatabaseChanges CreateDatabaseChanges(string database)
-        {
-            return new DatabaseChanges(GetRequestExecutor(database), database, () => _databaseChanges.Remove(database));
-        }
-
-        /// <summary>
-        /// Setup the context for aggressive caching.
-        /// </summary>
-        /// <remarks>
-        /// Aggressive caching means that we will not check the server to see whether the response
-        /// we provide is current or not, but will serve the information directly from the local cache
-        /// without touching the server.
-        /// </remarks>
-        public override IDisposable AggressivelyCacheFor(TimeSpan cacheDuration, string database = null)
-        {
-            AssertInitialized();
-            database = database ?? Database;
-            if (_aggressiveCachingUsed == false)
-            {
-                ListenToChangesAndUpdateTheCache(database);
-            }
-            var re = GetRequestExecutor(database);
-            var old = re.AggressiveCaching.Value;
-            re.AggressiveCaching.Value = new AggressiveCacheOptions
-            {
-                Duration = cacheDuration
-            };
-            return new DisposableAction(() => re.AggressiveCaching.Value = old);
-        }
-
-        private void ListenToChangesAndUpdateTheCache(string database)
-        {
-            Debug.Assert(database != null);
-            // this is intentionally racy, most cases, we'll already
-            // have this set once, so we won't need to do it again
-            _aggressiveCachingUsed = true;
-            if (_aggressiveCacheChanges.TryGetValue(database, out var lazy) == false)
-            {
-                lazy = _aggressiveCacheChanges.GetOrAdd(database, new Lazy<EvictItemsFromCacheBasedOnChanges>(
-                    () => new EvictItemsFromCacheBasedOnChanges(this, database)));
-            }
-            GC.KeepAlive(lazy.Value); // here we force it to be evaluated
-        }
-
-*/
+    //TBD public override IDatabaseChanges Changes(string database = null)
+    //TBD protected virtual IDatabaseChanges CreateDatabaseChanges(string database)
+    //TBD public override IDisposable AggressivelyCacheFor(TimeSpan cacheDuration, string database = null)
+    //TBD private void ListenToChangesAndUpdateTheCache(string database)
 
     private List<EventHandler<VoidArgs>> afterDispose = new ArrayList<>();
 

@@ -907,9 +907,7 @@ public class RequestExecutor implements CleanCloseable {
         execute(serverNode, nodeIndex, new GetStatisticsCommand("failure=check"), false, null);
     }
 
-    //FIXME: make sure we dispose response in case of failure!
     private static <TResult> void addFailedResponseToCommand(ServerNode chosenNode, RavenCommand<TResult> command, HttpRequestBase request, CloseableHttpResponse response, Exception e) {
-        //TODO: make sure we dispose response entity in this case !
         if (response != null && response.getEntity() != null) {
             String responseJson = null;
             try {
@@ -975,7 +973,6 @@ public class RequestExecutor implements CleanCloseable {
                 .custom()
                 .setMaxConnPerRoute(10)
                 .disableContentCompression()
-                //TODO : .addInterceptorLast(new RavenResponseContentEncoding())
                 .setRetryHandler(new StandardHttpRequestRetryHandler(0, false))
                 .setDefaultSocketConfig(SocketConfig.custom().setTcpNoDelay(true).build());
 

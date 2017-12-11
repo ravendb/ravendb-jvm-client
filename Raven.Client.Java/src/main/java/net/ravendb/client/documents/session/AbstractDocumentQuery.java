@@ -1277,7 +1277,7 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
 
         for (Class rootType : rootTypes) {
             Field identityProperty = theSession.getConventions().getIdentityProperty(rootType);
-            if (identityProperty != null && identityProperty.getName().equals(fieldName)) { //TODO: verify casing
+            if (identityProperty != null && identityProperty.getName().equals(fieldName)) {
                 return Constants.Documents.Indexing.Fields.DOCUMENT_ID_FIELD_NAME;
             }
         }

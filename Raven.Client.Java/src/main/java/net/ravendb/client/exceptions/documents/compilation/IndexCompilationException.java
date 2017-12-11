@@ -32,6 +32,4 @@ public class IndexCompilationException extends CompilationException {
     public void setProblematicText(String problematicText) {
         this.problematicText = problematicText;
     }
-
-    //TODO: custom toString
 }

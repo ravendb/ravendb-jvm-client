@@ -8,8 +8,6 @@ import net.ravendb.client.http.RequestExecutor;
 import net.ravendb.client.infrastructure.CreateSampleDataOperation;
 import org.junit.jupiter.api.Test;
 
-import java.io.IOException;
-
 import static org.assertj.core.api.Assertions.assertThat;
 
 public class GetStatisticsCommandTest extends RemoteTestBase {
@@ -67,6 +65,12 @@ public class GetStatisticsCommandTest extends RemoteTestBase {
                     .isNotNull();
 
             assertThat(stats.getIndexes())
+                    .isNotNull();
+
+            assertThat(stats.getSizeOnDisk().getHumaneSize())
+                    .isNotNull();
+
+            assertThat(stats.getSizeOnDisk().getSizeInBytes())
                     .isNotNull();
 
             for (IndexInformation indexInformation : stats.getIndexes()) {

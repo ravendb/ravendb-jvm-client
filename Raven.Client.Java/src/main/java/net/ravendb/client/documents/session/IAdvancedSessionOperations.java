@@ -58,28 +58,9 @@ public interface IAdvancedSessionOperations extends IAdvancedDocumentSessionOper
         /// </param>
         T[] LoadStartingWith<T>(string idPrefix, string matches = null, int start = 0, int pageSize = 25, string exclude = null, string startAfter = null);
 
-        /// <summary>
-        ///     Loads multiple entities that contain common prefix into a given stream.
-        /// </summary>
-        /// <param name="idPrefix">prefix for which documents should be returned e.g. "products/"</param>
-        /// <param name="output">the stream that will contain the load results</param>
-        /// <param name="matches">
-        ///     pipe ('|') separated values for which document IDs (after 'idPrefix') should be matched ('?'
-        ///     any single character, '*' any characters)
-        /// </param>
-        /// <param name="start">number of documents that should be skipped. By default: 0.</param>
-        /// <param name="pageSize">maximum number of documents that will be retrieved. By default: 25.</param>
-        /// <param name="exclude">
-        ///     pipe ('|') separated values for which document IDs (after 'idPrefix') should not be matched
-        ///     ('?' any single character, '*' any characters)
-        /// </param>
-        /// <param name="startAfter">
-        ///     skip document fetching until given ID is found and return documents after that ID (default:
-        ///     null)
-        /// </param>
-        void LoadStartingWithIntoStream(string idPrefix, Stream output, string matches = null, int start = 0, int pageSize = 25, string exclude = null, string startAfter = null);
 */
 
+    //TBD void LoadStartingWithIntoStream(string idPrefix, Stream output, string matches = null, int start = 0, int pageSize = 25, string exclude = null, string startAfter = null);
     //TBD void LoadIntoStream(IEnumerable<string> ids, Stream output);
     //TBD List<T> MoreLikeThis<T, TIndexCreator>(string documentId) where TIndexCreator : AbstractIndexCreationTask, new();
     //TBD List<T> MoreLikeThis<T, TIndexCreator>(MoreLikeThisQuery query) where TIndexCreator : AbstractIndexCreationTask, new();
