@@ -197,7 +197,7 @@ public class RequestExecutor implements CleanCloseable {
         return executor;
     }
 
-    public static RequestExecutor createForSingleNodeWithoutConfigurationUpdates(String url, String databaseName, KeyStore certificate, DocumentConventions conventions) { //TBD: X509Certificate2 certificate
+    public static RequestExecutor createForSingleNodeWithoutConfigurationUpdates(String url, String databaseName, KeyStore certificate, DocumentConventions conventions) {
         final String[] initialUrls = validateUrls(new String[]{url}, certificate);
 
         RequestExecutor executor = new RequestExecutor(databaseName, certificate, conventions);

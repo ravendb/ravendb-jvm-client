@@ -333,7 +333,7 @@ public interface IAbstractDocumentQuery<T> {
     //TBD void AggregateUsing(string facetSetupDocumentKey);
     //TBD void AddFromAliasToWhereTokens(string fromAlias);
     //TBD string LoadParameter(object id);
-    //TBD  void SuggestUsing(SuggestionBase suggestion);
+    //TBD void SuggestUsing(SuggestionBase suggestion);
 
     Iterator<T> iterator();
 }

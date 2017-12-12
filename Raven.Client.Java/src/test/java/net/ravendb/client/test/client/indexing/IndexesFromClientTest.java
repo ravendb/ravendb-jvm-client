@@ -6,12 +6,14 @@ import net.ravendb.client.documents.commands.GetStatisticsCommand;
 import net.ravendb.client.documents.indexes.AbstractIndexCreationTask;
 import net.ravendb.client.documents.operations.DatabaseStatistics;
 import net.ravendb.client.documents.operations.indexes.DeleteIndexOperation;
+import net.ravendb.client.documents.operations.indexes.GetIndexNamesOperation;
 import net.ravendb.client.documents.operations.indexes.ResetIndexOperation;
 import net.ravendb.client.documents.session.IDocumentSession;
 import net.ravendb.client.infrastructure.entities.User;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.Date;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -56,6 +58,19 @@ public class IndexesFromClientTest extends RemoteTestBase {
             Date secondIndexingTime = statistics.getLastIndexingTime();
             assertThat(firstIndexingTime)
                     .isBefore(secondIndexingTime);
+        }
+    }
+
+    @Test
+    public void canExecuteManyIndexes() throws Exception {
+        try (IDocumentStore store = getDocumentStore()) {
+            store.executeIndexes(Arrays.asList(new UsersIndex()));
+
+            GetIndexNamesOperation indexNamesOperation = new GetIndexNamesOperation(0, 10);
+            String[] indexNames = store.maintenance().send(indexNamesOperation);
+
+            assertThat(indexNames)
+                    .hasSize(1);
         }
     }
 

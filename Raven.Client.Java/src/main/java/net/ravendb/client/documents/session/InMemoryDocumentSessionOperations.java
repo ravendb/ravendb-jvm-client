@@ -77,7 +77,6 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
 
     public void addBeforeStoreListener(EventHandler<BeforeStoreEventArgs> handler) {
         this.onBeforeStore.add(handler);
-
     }
 
     public void removeBeforeStoreListener(EventHandler<BeforeStoreEventArgs> handler) {
@@ -815,35 +814,8 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
         return entityChanged(document, documentInfo, null);
     }
 
-    /* TBD
-
-    public void WaitForReplicationAfterSaveChanges(TimeSpan? timeout = null, bool throwOnTimeout = true,
-                                                   int replicas = 1, bool majority = false)
-    {
-        var realTimeout = timeout ?? TimeSpan.FromSeconds(15);
-        if (_saveChangesOptions == null)
-            _saveChangesOptions = new BatchOptions();
-        _saveChangesOptions.WaitForReplicas = true;
-        _saveChangesOptions.Majority = majority;
-        _saveChangesOptions.NumberOfReplicasToWaitFor = replicas;
-        _saveChangesOptions.WaitForReplicasTimeout = realTimeout;
-        _saveChangesOptions.ThrowOnTimeoutInWaitForReplicas = throwOnTimeout;
-    }
-
-    public void WaitForIndexesAfterSaveChanges(TimeSpan? timeout = null, bool throwOnTimeout = false,
-                                               string[] indexes = null)
-    {
-        var realTimeout = timeout ?? TimeSpan.FromSeconds(15);
-        if (_saveChangesOptions == null)
-            _saveChangesOptions = new BatchOptions();
-        _saveChangesOptions.WaitForIndexes = true;
-        _saveChangesOptions.WaitForIndexesTimeout = realTimeout;
-        _saveChangesOptions.ThrowOnTimeoutInWaitForIndexes = throwOnTimeout;
-        _saveChangesOptions.WaitForSpecificIndexes = indexes;
-    }
-
-
-    */
+    //TBD public void WaitForReplicationAfterSaveChanges(TimeSpan? timeout = null, bool throwOnTimeout = true, int replicas = 1, bool majority = false)
+    //TBD public void WaitForIndexesAfterSaveChanges(TimeSpan? timeout = null, bool throwOnTimeout = false, string[] indexes = null)
 
     private void getAllEntitiesChanges(Map<String, List<DocumentsChanges>> changes) {
         for (Map.Entry<String, DocumentInfo> pair : documentsById) {

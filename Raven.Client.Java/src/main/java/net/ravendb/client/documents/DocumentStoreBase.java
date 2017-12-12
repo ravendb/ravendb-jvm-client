@@ -75,7 +75,7 @@ public abstract class DocumentStoreBase implements IDocumentStore {
 
     @Override
     public void executeIndexes(List<AbstractIndexCreationTask> tasks) {
-        executeIndexes(tasks);
+        executeIndexes(tasks, null);
     }
 
     @Override
@@ -137,7 +137,7 @@ public abstract class DocumentStoreBase implements IDocumentStore {
     private KeyStore _certificate;
 
     //TBD: public abstract BulkInsertOperation BulkInsert(string database = null);
-    //TBD:  public IReliableSubscriptions Subscriptions { get; }
+    //TBD: public IReliableSubscriptions Subscriptions { get; }
 
     protected void ensureNotClosed() {
         if (disposed) {
@@ -228,17 +228,7 @@ public abstract class DocumentStoreBase implements IDocumentStore {
 
     public abstract RequestExecutor getRequestExecutor(String databaseName);
 
-    /* TBD
-
-        /// <summary>
-        /// Setup the context for aggressive caching.
-        /// </summary>
-        public IDisposable AggressivelyCache(string database = null)
-        {
-            return AggressivelyCacheFor(TimeSpan.FromDays(1), database);
-        }
-
-        */
+    //TBD public IDisposable AggressivelyCache(string database = null)
 
     protected void registerEvents(InMemoryDocumentSessionOperations session) {
         for (EventHandler<BeforeStoreEventArgs> handler : onBeforeStore) {

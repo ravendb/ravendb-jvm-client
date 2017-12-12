@@ -36,21 +36,8 @@ public abstract class IndexQueryWithParameters<T> extends IndexQueryBase<T> {
         this.explainScores = explainScores;
     }
 
-    /**
-     * Indicates if detailed timings should be calculated for various query parts (Lucene search, loading documents, transforming results). Default: false
-     */
-    /* TBD public boolean isShowTimings() {
-        return showTimings;
-    }*/
-
-    /**
-     * Indicates if detailed timings should be calculated for various query parts (Lucene search, loading documents, transforming results). Default: false
-     */
-    /* TBD
-    public void setShowTimings(boolean showTimings) {
-        this.showTimings = showTimings;
-    }
-    */
+    //TBD public boolean isShowTimings()
+    //TBD public void setShowTimings(boolean showTimings) {
 
     @Override
     public boolean equals(Object o) {

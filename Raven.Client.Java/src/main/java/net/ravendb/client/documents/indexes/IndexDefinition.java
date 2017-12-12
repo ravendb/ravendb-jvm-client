@@ -170,21 +170,9 @@ public class IndexDefinition {
         return IndexType.MAP_REDUCE;
     }
 
-    /**
-     * Whether this is a temporary test only index
-     */
-    /* TBD public boolean isTestIndex() {
-        return testIndex;
-    }*/
+    //TBD public boolean isTestIndex()
 
-    /**
-     * Whether this is a temporary test only index
-     */
-    /* TBD
-    public void setTestIndex(boolean testIndex) {
-        this.testIndex = testIndex;
-    }
-    */
+    //TBD public void setTestIndex(boolean testIndex)
 
     /**
      * If not null than each reduce result will be created as a document in the specified collection name.

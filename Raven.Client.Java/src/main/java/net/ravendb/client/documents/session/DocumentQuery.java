@@ -13,6 +13,7 @@ import net.ravendb.client.documents.session.tokens.FieldsToFetchToken;
 import net.ravendb.client.documents.session.tokens.LoadToken;
 import net.ravendb.client.primitives.Reference;
 import net.ravendb.client.primitives.Tuple;
+import net.ravendb.client.util.ReflectionUtil;
 
 import java.time.Duration;
 import java.util.Collection;
@@ -32,19 +33,17 @@ public class DocumentQuery<T> extends AbstractDocumentQuery<T, DocumentQuery<T>>
         super(clazz, session, indexName, collectionName, isGroupBy, declareToken, loadTokens, fromAlias);
     }
 
-    /* TODO
-
-        /// <inheritdoc />
-        public IDocumentQuery<TProjection> SelectFields<TProjection>()
-        {
-            var propertyInfos = ReflectionUtil.GetPropertiesAndFieldsFor<TProjection>(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance).ToList();
+    @Override
+    public <TProjection> IDocumentQuery<TProjection> selectFields(Class<TProjection> projectionClass) {
+        /* TODO
+         var propertyInfos = ReflectionUtil.GetPropertiesAndFieldsFor<TProjection>(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance).ToList();
             var projections = propertyInfos.Select(x => x.Name).ToArray();
             var identityProperty = Conventions.GetIdentityProperty(typeof(TProjection));
             var fields = propertyInfos.Select(p => p == identityProperty ? Constants.Documents.Indexing.Fields.DocumentIdFieldName : p.Name).ToArray();
             return SelectFields<TProjection>(new QueryData(fields, projections));
-        }
-
-*/
+         */
+        return null;
+    }
 
     @Override
     public IDocumentQuery<T> distinct() {
@@ -70,20 +69,16 @@ public class DocumentQuery<T> extends AbstractDocumentQuery<T, DocumentQuery<T>>
         return this;
     }
 
-    /* TODO
+    @Override
+    public <TProjection> IDocumentQuery<TProjection> selectFields(Class<TProjection> projectionClass, String... fields) {
+        QueryData queryData = new QueryData(fields, fields);
+        return selectFields(projectionClass, queryData);
+    }
 
-        /// <inheritdoc />
-        public IDocumentQuery<TProjection> SelectFields<TProjection>(params string[] fields)
-        {
-            return SelectFields<TProjection>(new QueryData(fields, fields));
-        }
-
-        /// <inheritdoc />
-        public IDocumentQuery<TProjection> SelectFields<TProjection>(QueryData queryData)
-        {
-            return CreateDocumentQueryInternal<TProjection>(queryData);
-        }
-*/
+    @Override
+    public <TProjection> IDocumentQuery<TProjection> selectFields(Class<TProjection> projectionClass, QueryData queryData) {
+        return createDocumentQueryInternal(projectionClass, queryData);
+    }
 
     public IDocumentQuery<T> waitForNonStaleResults(Duration waitTimeout) {
         _waitForNonStaleResults(waitTimeout);
@@ -199,12 +194,7 @@ public class DocumentQuery<T> extends AbstractDocumentQuery<T, DocumentQuery<T>>
         return this;
     }
 
-    /* TBD
-    @Override
-    public IDocumentQuery<T> showTimings() {
-        _showTimings();
-        return this;
-    }*/
+    //TBD  public IDocumentQuery<T> showTimings()
 
     @Override
     public IDocumentQuery<T> include(String path) {
@@ -418,12 +408,7 @@ public class DocumentQuery<T> extends AbstractDocumentQuery<T, DocumentQuery<T>>
         return this;
     }
 
-    /* TBD
-    @Override
-    public IDocumentQuery<T> customSortUsing(String typeName, boolean descending) {
-        _customSortUsing(typeName, descending);
-        return this;
-    }*/
+    //TBD public IDocumentQuery<T> customSortUsing(String typeName, boolean descending)
 
     @Override
     public IGroupByDocumentQuery<T> groupBy(String fieldName, String... fieldNames) {
@@ -495,40 +480,11 @@ public class DocumentQuery<T> extends AbstractDocumentQuery<T, DocumentQuery<T>>
         return this;
     }
 
-    /* TBD
+    //TBD public Lazy<IEnumerable<T>> Lazily()
 
-        /// <inheritdoc />
-        public Lazy<IEnumerable<T>> Lazily()
-        {
-            return Lazily(null);
-        }
+    //TBD public Lazy<int> CountLazily()
 
-        /// <inheritdoc />
-        public Lazy<int> CountLazily()
-        {
-            if (QueryOperation == null)
-            {
-                Take(0);
-                QueryOperation = InitializeQueryOperation();
-            }
-
-
-            var lazyQueryOperation = new LazyQueryOperation<T>(TheSession.Conventions, QueryOperation, AfterQueryExecutedCallback);
-
-            return ((DocumentSession)TheSession).AddLazyCountOperation(lazyQueryOperation);
-        }
-
-        /// <inheritdoc />
-        public Lazy<IEnumerable<T>> Lazily(Action<IEnumerable<T>> onEval)
-        {
-            if (QueryOperation == null)
-            {
-                QueryOperation = InitializeQueryOperation();
-            }
-
-            var lazyQueryOperation = new LazyQueryOperation<T>(TheSession.Conventions, QueryOperation, AfterQueryExecutedCallback);
-            return ((DocumentSession)TheSession).AddLazyOperation(lazyQueryOperation, onEval);
-        }*/
+    //TBD public Lazy<IEnumerable<T>> Lazily(Action<IEnumerable<T>> onEval)
 
     private <TResult> DocumentQuery<TResult> createDocumentQueryInternal(Class<TResult> resultClass) {
         return createDocumentQueryInternal(resultClass, null);
@@ -586,54 +542,10 @@ public class DocumentQuery<T> extends AbstractDocumentQuery<T, DocumentQuery<T>>
         return query;
     }
 
-    /* TBD
-
-          /// <inheritdoc />
-        public FacetedQueryResult GetFacets(string facetSetupDoc, int facetStart, int? facetPageSize)
-        {
-            var q = GetIndexQuery();
-            var query = FacetQuery.Create(q, facetSetupDoc, null, facetStart, facetPageSize, Conventions);
-
-            var command = new GetFacetsCommand(Conventions, TheSession.Context, query);
-            TheSession.RequestExecutor.Execute(command, TheSession.Context);
-
-            return command.Result;
-        }
-
-        /// <inheritdoc />
-        public FacetedQueryResult GetFacets(List<Facet> facets, int facetStart, int? facetPageSize)
-        {
-            var q = GetIndexQuery();
-            var query = FacetQuery.Create(q, null, facets, facetStart, facetPageSize, Conventions);
-
-            var command = new GetFacetsCommand(Conventions, TheSession.Context, query);
-            TheSession.RequestExecutor.Execute(command, TheSession.Context);
-
-            return command.Result;
-        }
-
-        /// <inheritdoc />
-        public Lazy<FacetedQueryResult> GetFacetsLazy(string facetSetupDoc, int facetStart, int? facetPageSize)
-        {
-            var q = GetIndexQuery();
-            var query = FacetQuery.Create(q, facetSetupDoc, null, facetStart, facetPageSize, Conventions);
-
-            var lazyFacetsOperation = new LazyFacetsOperation(Conventions, query);
-            return ((DocumentSession)TheSession).AddLazyOperation(lazyFacetsOperation, (Action<FacetedQueryResult>)null);
-        }
-
-        /// <inheritdoc />
-        public Lazy<FacetedQueryResult> GetFacetsLazy(List<Facet> facets, int facetStart, int? facetPageSize)
-        {
-            var q = GetIndexQuery();
-            var query = FacetQuery.Create(q, null, facets, facetStart, facetPageSize, Conventions);
-
-            var lazyFacetsOperation = new LazyFacetsOperation(Conventions, query);
-            return ((DocumentSession)TheSession).AddLazyOperation(lazyFacetsOperation, (Action<FacetedQueryResult>)null);
-        }  /// <inheritdoc />
-
-
-        */
+    //TBD public FacetedQueryResult GetFacets(string facetSetupDoc, int facetStart, int? facetPageSize)
+    //TBD public FacetedQueryResult GetFacets(List<Facet> facets, int facetStart, int? facetPageSize)
+    //TBD public Lazy<FacetedQueryResult> GetFacetsLazy(string facetSetupDoc, int facetStart, int? facetPageSize)
+    //TBD public Lazy<FacetedQueryResult> GetFacetsLazy(List<Facet> facets, int facetStart, int? facetPageSize)
     //TBD IDocumentQuery<T> IDocumentQueryBase<T, IDocumentQuery<T>>.Highlight(string fieldName, int fragmentLength, int fragmentCount, string fragmentsField)
     //TBD IDocumentQuery<T> IDocumentQueryBase<T, IDocumentQuery<T>>.Highlight(string fieldName, int fragmentLength, int fragmentCount, out FieldHighlightings highlightings)
     //TBD IDocumentQuery<T> IDocumentQueryBase<T, IDocumentQuery<T>>.Highlight(string fieldName,string fieldKeyName, int fragmentLength,int fragmentCount,out FieldHighlightings highlightings)

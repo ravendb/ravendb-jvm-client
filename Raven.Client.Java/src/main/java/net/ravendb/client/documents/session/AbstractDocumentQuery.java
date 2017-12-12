@@ -224,21 +224,8 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
         orderByTokens.add(OrderByToken.createRandom(seed));
     }
 
-    /* TBD
-    @Override
-    public void _customSortUsing(String typeName) {
-        _customSortUsing(typeName, false);
-    }
-
-    @Override
-    public void _customSortUsing(String typeName, boolean descending) {
-        if (descending) {
-            _orderByDescending(Constants.Documents.Indexing.Fields.CUSTOM_SORT_FIELD_NAME + ";" + typeName);
-            return;
-        }
-
-        _orderBy(Constants.Documents.Indexing.Fields.CUSTOM_SORT_FIELD_NAME + ";" + typeName);
-    }*/
+    //TBD public void _customSortUsing(String typeName)
+    //TBD public void _customSortUsing(String typeName, boolean descending)
 
     protected void addGroupByAlias(String fieldName, String projectedName) {
         _aliasToGroupByFieldName.put(projectedName, fieldName);
@@ -1428,11 +1415,7 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
         disableCaching = true;
     }
 
-    /* TBD
-    public void _showTimings() {
-        showQueryTimings = true;
-    }*/
-
+    //TBD public void _showTimings()
     //TBD protected List<HighlightedField> HighlightedFields = new List<HighlightedField>();
     //TBD protected string[] HighlighterPreTags = new string[0];
     //TBD protected string[] HighlighterPostTags = new string[0];

@@ -40,21 +40,8 @@ public class GenericQueryResult<TResult, TIncludes> extends QueryResultBase<TRes
         this.skippedResults = skippedResults;
     }
 
-    /**
-     * Highlighter results (if requested).
-     */
-    /* TBD
-    public Map<String, Map<String, List<String>>> getHighlightings() {
-        return highlightings;
-    }*/
-
-    /**
-     * Highlighter results (if requested).
-     */
-    /* TBD
-    public void setHighlightings(Map<String, Map<String, List<String>>> highlightings) {
-        this.highlightings = highlightings;
-    }*/
+    //TBD public Map<String, Map<String, List<String>>> getHighlightings()
+    //TBD public void setHighlightings(Map<String, Map<String, List<String>>> highlightings) {
 
     /**
      * The duration of actually executing the query server side

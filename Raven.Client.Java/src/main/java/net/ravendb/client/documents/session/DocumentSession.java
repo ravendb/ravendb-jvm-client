@@ -36,21 +36,12 @@ public class DocumentSession extends InMemoryDocumentSessionOperations implement
     /**
      * Access the lazy operations
      */
-    /* TBD
-    @Override
-    public ILazySessionOperations lazily() {
-        return this; //TBD  return LazySessionOperations here - see old client!
-    }*/
+    //TBD public ILazySessionOperations lazily() {
 
     /**
      * Access the eager operations
      */
-    /* TBD
-    @Override
-    public IEagerSessionOperations eagerly() {
-        return this;
-    }
-    */
+    //TBD public IEagerSessionOperations eagerly() {
 
     //TBD public IAttachmentsSessionOperations Attachments { get; }
     //TBD public IRevisionsSessionOperations Revisions { get; }
@@ -126,82 +117,8 @@ public class DocumentSession extends InMemoryDocumentSessionOperations implement
         return getConventions().generateDocumentId(getDatabaseName(), entity);
     }
 
-    /* TBD
-
-        public ResponseTimeInformation ExecuteAllPendingLazyOperations()
-        {
-            if (PendingLazyOperations.Count == 0)
-                return new ResponseTimeInformation();
-
-            try
-            {
-                var sw = Stopwatch.StartNew();
-
-                IncrementRequestCount();
-
-                var responseTimeDuration = new ResponseTimeInformation();
-
-                while (ExecuteLazyOperationsSingleStep(responseTimeDuration))
-                {
-                    Thread.Sleep(100);
-                }
-
-                responseTimeDuration.ComputeServerTotal();
-
-
-                foreach (var pendingLazyOperation in PendingLazyOperations)
-                {
-                    Action<object> value;
-                    if (OnEvaluateLazy.TryGetValue(pendingLazyOperation, out value))
-                        value(pendingLazyOperation.Result);
-                }
-                responseTimeDuration.TotalClientDuration = sw.Elapsed;
-                return responseTimeDuration;
-            }
-            finally
-            {
-                PendingLazyOperations.Clear();
-            }
-        }
-
-        private bool ExecuteLazyOperationsSingleStep(ResponseTimeInformation responseTimeInformation)
-        {
-            //WIP - Not final
-            var requests = PendingLazyOperations.Select(x => x.CreateRequest(Context)).ToList();
-            var multiGetOperation = new MultiGetOperation(this);
-            var multiGetCommand = multiGetOperation.CreateRequest(requests);
-            RequestExecutor.Execute(multiGetCommand, Context, sessionInfo: SessionInfo);
-            var responses = multiGetCommand.Result;
-
-            for (var i = 0; i < PendingLazyOperations.Count; i++)
-            {
-                long totalTime;
-                string tempReqTime;
-                var response = responses[i];
-
-                response.Headers.TryGetValue(Constants.Headers.RequestTime, out tempReqTime);
-
-                long.TryParse(tempReqTime, out totalTime);
-
-                responseTimeInformation.DurationBreakdown.Add(new ResponseTimeItem
-                {
-                    Url = requests[i].UrlAndQuery,
-                    Duration = TimeSpan.FromMilliseconds(totalTime)
-                });
-
-                if (response.RequestHasErrors())
-                    throw new InvalidOperationException("Got an error from server, status code: " + (int)response.StatusCode + Environment.NewLine + response.Result);
-
-                PendingLazyOperations[i].HandleResponse(response);
-                if (PendingLazyOperations[i].RequiresRetry)
-                {
-                    return true;
-                }
-            }
-            return false;
-        }
-    }
-    */
+    //TBD public ResponseTimeInformation ExecuteAllPendingLazyOperations()
+    //TBD private bool ExecuteLazyOperationsSingleStep(ResponseTimeInformation responseTimeInformation)
 
     /**
      * Begin a load while including the specified path
@@ -300,13 +217,10 @@ public class DocumentSession extends InMemoryDocumentSessionOperations implement
             LoadStartingWithInternal(idPrefix, loadStartingWithOperation, null, matches, start, pageSize, exclude, startAfter);
             return loadStartingWithOperation.GetDocuments<T>();
         }
+        */
 
-
-        public void LoadStartingWithIntoStream(string idPrefix, Stream output, string matches = null, int start = 0, int pageSize = 25, string exclude = null,
-            string startAfter = null)
-        {
-            LoadStartingWithInternal(idPrefix, new LoadStartingWithOperation(this), output, matches, start, pageSize, exclude, startAfter);
-        }
+    //TBD public void LoadStartingWithIntoStream(string idPrefix, Stream output, string matches = null, int start = 0, int pageSize = 25, string exclude = null, string startAfter = null)
+    /* TODO
 
         private GetDocumentsCommand LoadStartingWithInternal(string idPrefix, LoadStartingWithOperation operation, Stream stream = null, string matches = null,
             int start = 0, int pageSize = 25, string exclude = null,

@@ -455,49 +455,12 @@ public class DocumentConventions {
         return collectionName;
     }
 
-    /* TBD
-        public void RegisterQueryValueConverter<T>(TryConvertValueForQueryDelegate<T> converter)
-        {
-            AssertNotFrozen();
-
-            int index;
-            for (index = 0; index < _listOfQueryValueConverters.Count; index++)
-            {
-                var entry = _listOfQueryValueConverters[index];
-                if (entry.Type.IsAssignableFrom(typeof(T)))
-                    break;
-            }
-
-            _listOfQueryValueConverters.Insert(index, (typeof(T), Actual));
-
-            bool Actual(string name, object value, bool forRange, out string strValue)
-            {
-                if (value is T)
-                    return converter(name, (T)value, forRange, out strValue);
-                strValue = null;
-                return false;
-            }
-        }
-
-        public bool TryConvertValueForQuery(string fieldName, object value, bool forRange, out string strValue)
-        {
-            foreach (var queryValueConverter in _listOfQueryValueConverters)
-            {
-                if (queryValueConverter.Type.IsInstanceOfType(value) == false)
-                    continue;
-
-                return queryValueConverter.Convert(fieldName, value, forRange, out strValue);
-            }
-
-            strValue = null;
-            return false;
-        }
-     */
+    //TBD public void RegisterQueryValueConverter<T>(TryConvertValueForQueryDelegate<T> converter)
+    //TBD public bool TryConvertValueForQuery(string fieldName, object value, bool forRange, out string strValue)
 
     public void freeze() {
         _frozen = true;
     }
-
 
     private void assertNotFrozen() {
         if (_frozen) {

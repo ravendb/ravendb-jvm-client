@@ -1,6 +1,7 @@
 package net.ravendb.client.documents.session;
 
 import net.ravendb.client.documents.queries.GroupByMethod;
+import net.ravendb.client.documents.queries.QueryData;
 import net.ravendb.client.documents.queries.QueryResult;
 import net.ravendb.client.documents.queries.spatial.SpatialCriteria;
 import net.ravendb.client.documents.queries.spatial.SpatialCriteriaFactory;
@@ -25,32 +26,25 @@ public interface IDocumentQuery<T> extends IDocumentQueryBase<T, IDocumentQuery<
      * Returns the query result. Accessing this property for the first time will execute the query.
      */
     QueryResult getQueryResult();
-    /* TODO
 
-        /// <summary>
-        ///     Selects the specified fields directly from the index if the are stored. If the field is not stored in index, value
-        ///     will come from document directly.
-        /// </summary>
-        /// <typeparam name="TProjection">Type of the projection.</typeparam>
-        /// <param name="fields">Array of fields to load.</param>
-        IDocumentQuery<TProjection> SelectFields<TProjection>(params string[] fields);
+    /**
+     * Selects the specified fields directly from the index if the are stored. If the field is not stored in index, value
+     *  will come from document directly.
+     */
+    <TProjection> IDocumentQuery<TProjection> selectFields(Class<TProjection> projectionClass);
 
-        /// <summary>
-        ///     Selects the specified fields directly from the index if the are stored. If the field is not stored in index, value
-        ///     will come from document directly.
-        /// </summary>
-        /// <typeparam name="TProjection">Type of the projection.</typeparam>
-        /// <param name="queryData">An object containing the fields to load, field projections and a From-Token alias name</param>
-        IDocumentQuery<TProjection> SelectFields<TProjection>(QueryData queryData);
+    /**
+     * Selects the specified fields directly from the index if the are stored. If the field is not stored in index, value
+     *  will come from document directly.
+     */
+    <TProjection> IDocumentQuery<TProjection> selectFields(Class<TProjection> projectionClass, String... fields);
 
-        /// <summary>
-        ///     Selects the specified fields directly from the index if the are stored. If the field is not stored in index, value
-        ///     will come from document directly.
-        ///     <para>Array of fields will be taken from TProjection</para>
-        /// </summary>
-        /// <typeparam name="TProjection">Type of the projection from which fields will be taken.</typeparam>
-        IDocumentQuery<TProjection> SelectFields<TProjection>();
-*/
+    /**
+     * Selects the specified fields directly from the index if the are stored. If the field is not stored in index, value
+     * will come from document directly.
+     */
+    <TProjection> IDocumentQuery<TProjection> selectFields(Class<TProjection> projectionClass, QueryData queryData);
+
     //TBD IDocumentQuery<T> Spatial(Expression<Func<T, object>> path, Func<SpatialCriteriaFactory, SpatialCriteria> clause);
 
     /**
