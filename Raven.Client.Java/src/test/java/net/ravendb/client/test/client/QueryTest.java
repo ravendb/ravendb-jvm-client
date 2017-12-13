@@ -106,7 +106,7 @@ public class QueryTest extends RemoteTestBase {
 
                 List<DogsIndex.Result> queryResult = newSession.advanced()
                         .documentQuery(DogsIndex.Result.class, new DogsIndex().getIndexName(), null, false)
-                        .waitForNonStaleResults()
+                        .waitForNonStaleResults(null)
                         .orderBy("name", OrderingType.ALPHA_NUMERIC)
                         .whereGreaterThan("age", 2)
                         .toList();

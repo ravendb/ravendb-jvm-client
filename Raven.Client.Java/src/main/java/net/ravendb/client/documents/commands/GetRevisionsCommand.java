@@ -88,7 +88,7 @@ public class GetRevisionsCommand extends RavenCommand<ArrayNode> {
         }
 
         if (_metadataOnly) {
-            pathBuilder.append("&metadata-only=true");
+            pathBuilder.append("&metadataOnly=true");
         }
 
         url.value = pathBuilder.toString();

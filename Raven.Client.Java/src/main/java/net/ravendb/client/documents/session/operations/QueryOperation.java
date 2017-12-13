@@ -95,7 +95,7 @@ public class QueryOperation {
             return null;
         }
 
-        return _session.getDocumentStore().disableAggressiveCaching();
+        return _session.getDocumentStore().disableAggressiveCaching(_session.getDatabaseName());
     }
 
     public <T> List<T> complete(Class<T> clazz) {
@@ -190,11 +190,7 @@ public class QueryOperation {
             throw new IndexDoesNotExistException("Could not find index " + _indexName);
         }
 
-        if (_indexQuery.isWaitForNonStaleResults() && result.isStale()) {
-            _sp.stop();
-
-            throw new TimeoutException("Waited for " + _sp.elapsed(TimeUnit.MILLISECONDS) + "ms for the query to return non stale result.");
-        }
+        ensureIsAcceptable(result, _indexQuery.isWaitForNonStaleResults(), _sp, _session);
 
         _currentQueryResults = result;
         //_currentQueryResults.ensureSnapshot();
@@ -202,6 +198,16 @@ public class QueryOperation {
         if (logger.isInfoEnabled()) {
             String isStale = result.isStale() ? "stale " : " ";
             logger.info("Query returned " + result.getResults().size() + "/" + result.getTotalResults() + isStale + "results");
+        }
+    }
+
+    public static void ensureIsAcceptable(QueryResult result, boolean waitForNonStaleResults, Stopwatch duration, InMemoryDocumentSessionOperations session) {
+        if (waitForNonStaleResults && result.isStale()) {
+            duration.stop();
+
+            String msg = "Waited for " + duration.toString() + " for the query to return non stale result.";
+            throw new TimeoutException(msg);
+
         }
     }
 

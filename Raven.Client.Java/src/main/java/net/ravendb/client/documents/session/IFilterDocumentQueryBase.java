@@ -245,26 +245,26 @@ public interface IFilterDocumentQueryBase<T, TSelf extends IDocumentQueryBase<T,
     TSelf withinRadiusOf(String fieldName, double radius, double latitude, double longitude, SpatialUnits radiusUnits, double distanceErrorPct);
 
 
-    //TBD TSelf RelatesToShape<TValue>(Expression<Func<T, TValue>> propertySelector, string shapeWKT, SpatialRelation relation, double distanceErrorPct = Constants.Documents.Indexing.Spatial.DefaultDistanceErrorPct);
+    //TBD TSelf RelatesToShape<TValue>(Expression<Func<T, TValue>> propertySelector, string shapeWkt, SpatialRelation relation, double distanceErrorPct = Constants.Documents.Indexing.Spatial.DefaultDistanceErrorPct);
 
     /**
      * Filter matches based on a given shape - only documents with the shape defined in fieldName that
-     * have a relation rel with the given shapeWKT will be returned
+     * have a relation rel with the given shapeWkt will be returned
      * @param fieldName Spatial field name.
-     * @param shapeWKT WKT formatted shape
+     * @param shapeWkt WKT formatted shape
      * @param relation Spatial relation to check (Within, Contains, Disjoint, Intersects, Nearby)
      */
-    TSelf relatesToShape(String fieldName, String shapeWKT, SpatialRelation relation);
+    TSelf relatesToShape(String fieldName, String shapeWkt, SpatialRelation relation);
 
     /**
      * Filter matches based on a given shape - only documents with the shape defined in fieldName that
-     * have a relation rel with the given shapeWKT will be returned
+     * have a relation rel with the given shapeWkt will be returned
      * @param fieldName Spatial field name.
-     * @param shapeWKT WKT formatted shape
+     * @param shapeWkt WKT formatted shape
      * @param relation Spatial relation to check (Within, Contains, Disjoint, Intersects, Nearby)
      * @param distanceErrorPct The allowed error percentage. By default: 0.025
      */
-    TSelf relatesToShape(String fieldName, String shapeWKT, SpatialRelation relation, double distanceErrorPct);
+    TSelf relatesToShape(String fieldName, String shapeWkt, SpatialRelation relation, double distanceErrorPct);
 
     TSelf cmpXChg(String key, T value);
 

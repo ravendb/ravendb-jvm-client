@@ -6,15 +6,15 @@ import net.ravendb.client.documents.session.tokens.ShapeToken;
 import java.util.function.Function;
 
 public class WktCriteria extends SpatialCriteria {
-    private final String _shapeWKT;
+    private final String _shapeWkt;
 
-    public WktCriteria(String shapeWKT, SpatialRelation relation, double distanceErrorPct) {
+    public WktCriteria(String shapeWkt, SpatialRelation relation, double distanceErrorPct) {
         super(relation, distanceErrorPct);
-        _shapeWKT = shapeWKT;
+        _shapeWkt = shapeWkt;
     }
 
     @Override
     protected ShapeToken getShapeToken(Function<Object, String> addQueryParameter) {
-        return ShapeToken.wkt(addQueryParameter.apply(_shapeWKT));
+        return ShapeToken.wkt(addQueryParameter.apply(_shapeWkt));
     }
 }

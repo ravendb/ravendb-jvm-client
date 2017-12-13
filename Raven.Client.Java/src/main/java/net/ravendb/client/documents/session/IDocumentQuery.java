@@ -3,9 +3,9 @@ package net.ravendb.client.documents.session;
 import net.ravendb.client.documents.queries.GroupByMethod;
 import net.ravendb.client.documents.queries.QueryData;
 import net.ravendb.client.documents.queries.QueryResult;
+import net.ravendb.client.documents.queries.spatial.DynamicSpatialField;
 import net.ravendb.client.documents.queries.spatial.SpatialCriteria;
 import net.ravendb.client.documents.queries.spatial.SpatialCriteriaFactory;
-import net.ravendb.client.documents.queries.spatial.SpatialDynamicField;
 import net.ravendb.client.primitives.Tuple;
 
 import java.util.function.Function;
@@ -52,9 +52,9 @@ public interface IDocumentQuery<T> extends IDocumentQueryBase<T, IDocumentQuery<
      */
     IDocumentQuery<T> spatial(String fieldName, Function<SpatialCriteriaFactory, SpatialCriteria> clause);
 
-    IDocumentQuery<T> spatial(SpatialDynamicField field, Function<SpatialCriteriaFactory, SpatialCriteria> clause);
+    IDocumentQuery<T> spatial(DynamicSpatialField field, Function<SpatialCriteriaFactory, SpatialCriteria> clause);
 
-    //TBD IDocumentQuery<T> spatial(Function<SpatialDynamicFieldFactory<T>, SpatialDynamicField> field, Function<SpatialCriteriaFactory, SpatialCriteria> clause);
+    //TBD IDocumentQuery<T> spatial(Function<SpatialDynamicFieldFactory<T>, DynamicSpatialField> field, Function<SpatialCriteriaFactory, SpatialCriteria> clause);
 
     /**
      * Changes the return type of the query

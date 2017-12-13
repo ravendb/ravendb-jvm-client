@@ -3,8 +3,8 @@ package net.ravendb.client.documents.session;
 import net.ravendb.client.documents.conventions.DocumentConventions;
 import net.ravendb.client.documents.queries.GroupByMethod;
 import net.ravendb.client.documents.queries.SearchOperator;
+import net.ravendb.client.documents.queries.spatial.DynamicSpatialField;
 import net.ravendb.client.documents.queries.spatial.SpatialCriteria;
-import net.ravendb.client.documents.queries.spatial.SpatialDynamicField;
 import net.ravendb.client.primitives.Tuple;
 
 import java.time.Duration;
@@ -262,11 +262,6 @@ public interface IAbstractDocumentQuery<T> {
     //TBD void SetHighlighterTags(string preTag, string postTag);
     //TBD void SetHighlighterTags(string[] preTags, string[] postTags);
 
-    /**
-     * EXPERT ONLY: Instructs the query to wait for non stale results.
-     * This shouldn't be used outside of unit tests unless you are well aware of the implications
-     */
-    void _waitForNonStaleResults();
 
     /**
      * Perform a search for documents which fields that match the searchTerms.
@@ -316,21 +311,30 @@ public interface IAbstractDocumentQuery<T> {
 
     void _whereTrue();
 
-    void _spatial(SpatialDynamicField field, SpatialCriteria criteria);
+    void _spatial(DynamicSpatialField field, SpatialCriteria criteria);
 
     void _spatial(String fieldName, SpatialCriteria criteria);
 
+    void _orderByDistance(DynamicSpatialField field, double latitude, double longitude);
+
     void _orderByDistance(String fieldName, double latitude, double longitude);
+
+    void _orderByDistance(DynamicSpatialField field, String shapeWkt);
 
     void _orderByDistance(String fieldName, String shapeWkt);
 
+    void _orderByDistanceDescending(DynamicSpatialField field, double latitude, double longitude);
+
     void _orderByDistanceDescending(String fieldName, double latitude, double longitude);
+
+    void _orderByDistanceDescending(DynamicSpatialField field, String shapeWkt);
 
     void _orderByDistanceDescending(String fieldName, String shapeWkt);
 
     //TBD: MoreLikeThisScope MoreLikeThis();
     //TBD void AggregateBy(FacetBase facet);
-    //TBD void AggregateUsing(string facetSetupDocumentKey);
+    //TBD IAggregationDocumentQuery<T> AggregateBy(Action<IFacetBuilder<T>> builder);
+    //TBD void AggregateUsing(string facetSetupDocumentId);
     //TBD void AddFromAliasToWhereTokens(string fromAlias);
     //TBD string LoadParameter(object id);
     //TBD void SuggestUsing(SuggestionBase suggestion);

@@ -27,26 +27,8 @@ public class RawDocumentQuery<T> extends AbstractDocumentQuery<T, RawDocumentQue
     }
 
     @Override
-    public RawDocumentQuery<T> waitForNonStaleResults() {
-        _waitForNonStaleResults();
-        return this;
-    }
-
-    @Override
     public IRawDocumentQuery<T> waitForNonStaleResults(Duration waitTimeout) {
         _waitForNonStaleResults(waitTimeout);
-        return this;
-    }
-
-    @Override
-    public IRawDocumentQuery<T> waitForNonStaleResultsAsOf(long cutoffEtag) {
-        _waitForNonStaleResultsAsOf(cutoffEtag);
-        return this;
-    }
-
-    @Override
-    public IRawDocumentQuery<T> waitForNonStaleResultsAsOf(long cutOffEtag, Duration waitTimeout) {
-        _waitForNonStaleResultsAsOf(cutoffEtag, waitTimeout);
         return this;
     }
 

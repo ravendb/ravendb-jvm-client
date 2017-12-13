@@ -49,14 +49,14 @@ public class QueryCommand extends RavenCommand<QueryResult> {
         StringBuilder path = new StringBuilder(node.getUrl())
                 .append("/databases/")
                 .append(node.getDatabase())
-                .append("/queries?query-hash=")
+                .append("/queries?queryHash=")
                 // we need to add a query hash because we are using POST queries
                 // so we need to unique parameter per query so the query cache will
                 // work properly
                 .append(_indexQuery.getQueryHash());
 
         if (_metadataOnly) {
-            path.append("&metadata-only=true");
+            path.append("&metadataOnly=true");
         }
 
         if (_indexEntriesOnly) {

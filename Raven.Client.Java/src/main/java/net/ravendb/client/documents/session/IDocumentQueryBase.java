@@ -3,6 +3,7 @@ package net.ravendb.client.documents.session;
 import net.ravendb.client.documents.indexes.spatial.SpatialRelation;
 import net.ravendb.client.documents.indexes.spatial.SpatialUnits;
 import net.ravendb.client.documents.queries.SearchOperator;
+import net.ravendb.client.documents.queries.spatial.DynamicSpatialField;
 import net.ravendb.client.primitives.Tuple;
 
 import java.util.Collection;
@@ -141,6 +142,17 @@ public interface IDocumentQueryBase<T, TSelf extends IDocumentQueryBase<T, TSelf
     //TBD TSelf SetHighlighterTags(string[] preTags, string[] postTags);
 
 
+    /**
+     * Sorts the query results by distance.
+     */
+    TSelf orderByDistance(DynamicSpatialField field, double latitude, double longitude);
+
+    //TBD TSelf OrderByDistance(Func<DynamicSpatialFieldFactory<T>, DynamicSpatialField> field, double latitude, double longitude);
+
+    TSelf orderByDistance(DynamicSpatialField field, String shapeWkt);
+
+    //TBD TSelf OrderByDistance(Func<DynamicSpatialFieldFactory<T>, DynamicSpatialField> field, string shapeWkt);
+
     //TBD TSelf OrderByDistance<TValue>(Expression<Func<T, TValue>> propertySelector, double latitude, double longitude);
 
     /**
@@ -154,6 +166,17 @@ public interface IDocumentQueryBase<T, TSelf extends IDocumentQueryBase<T, TSelf
      * Sorts the query results by distance.
      */
     TSelf orderByDistance(String fieldName, String shapeWkt);
+
+    /**
+     * Sorts the query results by distance.
+     */
+    TSelf orderByDistanceDescending(DynamicSpatialField field, double latitude, double longitude);
+
+    //TBD TSelf OrderByDistanceDescending(Func<DynamicSpatialFieldFactory<T>, DynamicSpatialField> field, double latitude, double longitude);
+
+    TSelf orderByDistanceDescending(DynamicSpatialField field, String shapeWkt);
+
+    //TBD TSelf OrderByDistanceDescending(Func<DynamicSpatialFieldFactory<T>, DynamicSpatialField> field, string shapeWkt);
 
     //TBD TSelf OrderByDistanceDescending<TValue>(Expression<Func<T, TValue>> propertySelector, double latitude, double longitude);
 

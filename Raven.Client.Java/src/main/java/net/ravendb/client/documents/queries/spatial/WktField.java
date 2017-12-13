@@ -2,7 +2,7 @@ package net.ravendb.client.documents.queries.spatial;
 
 import java.util.function.BiFunction;
 
-public class WktField extends SpatialDynamicField {
+public class WktField extends DynamicSpatialField {
     public final String wkt;
 
     public WktField(String wkt) {

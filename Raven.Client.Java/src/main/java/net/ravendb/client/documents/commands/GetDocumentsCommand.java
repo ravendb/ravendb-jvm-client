@@ -88,7 +88,7 @@ public class GetDocumentsCommand extends RavenCommand<GetDocumentsResult> {
         }
 
         if (_metadataOnly) {
-            pathBuilder.append("&metadata-only=true");
+            pathBuilder.append("&metadataOnly=true");
         }
 
         if (_startWith != null) {

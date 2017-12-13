@@ -5,15 +5,14 @@ import net.ravendb.client.Constants;
 import net.ravendb.client.documents.indexes.spatial.SpatialRelation;
 import net.ravendb.client.documents.indexes.spatial.SpatialUnits;
 import net.ravendb.client.documents.queries.*;
+import net.ravendb.client.documents.queries.spatial.DynamicSpatialField;
 import net.ravendb.client.documents.queries.spatial.SpatialCriteria;
 import net.ravendb.client.documents.queries.spatial.SpatialCriteriaFactory;
-import net.ravendb.client.documents.queries.spatial.SpatialDynamicField;
 import net.ravendb.client.documents.session.tokens.DeclareToken;
 import net.ravendb.client.documents.session.tokens.FieldsToFetchToken;
 import net.ravendb.client.documents.session.tokens.LoadToken;
 import net.ravendb.client.primitives.Reference;
 import net.ravendb.client.primitives.Tuple;
-import net.ravendb.client.util.ReflectionUtil;
 
 import java.time.Duration;
 import java.util.Collection;
@@ -80,6 +79,7 @@ public class DocumentQuery<T> extends AbstractDocumentQuery<T, DocumentQuery<T>>
         return createDocumentQueryInternal(projectionClass, queryData);
     }
 
+    @Override
     public IDocumentQuery<T> waitForNonStaleResults(Duration waitTimeout) {
         _waitForNonStaleResults(waitTimeout);
         return this;
@@ -452,23 +452,6 @@ public class DocumentQuery<T> extends AbstractDocumentQuery<T, DocumentQuery<T>>
     //TBD public IDocumentQuery<T> OrderByDescending<TValue>(params Expression<Func<T, TValue>>[] propertySelectors)
 
     @Override
-    public IDocumentQuery<T> waitForNonStaleResultsAsOf(long cutoffEtag) {
-        _waitForNonStaleResultsAsOf(cutoffEtag);
-        return this;
-    }
-
-    @Override
-    public IDocumentQuery<T> waitForNonStaleResultsAsOf(long cutOffEtag, Duration waitTimeout) {
-        _waitForNonStaleResultsAsOf(cutoffEtag, waitTimeout);
-        return this;
-    }
-
-    public IDocumentQuery<T> waitForNonStaleResults() {
-        _waitForNonStaleResults();
-        return this;
-    }
-
-    @Override
     public IDocumentQuery<T> addBeforeQueryExecutedListener(Consumer<IndexQuery> action) {
         _addBeforeQueryExecutedListener(action);
         return this;
@@ -518,7 +501,6 @@ public class DocumentQuery<T> extends AbstractDocumentQuery<T, DocumentQuery<T>>
         query.queryParameters = queryParameters;
         query.start = start;
         query.timeout = timeout;
-        query.cutoffEtag = cutoffEtag;
         query.queryStats = queryStats;
         query.theWaitForNonStaleResults = theWaitForNonStaleResults;
         query.negate = negate;
@@ -564,13 +546,13 @@ public class DocumentQuery<T> extends AbstractDocumentQuery<T, DocumentQuery<T>>
     }
 
     @Override
-    public IDocumentQuery<T> spatial(SpatialDynamicField field, Function<SpatialCriteriaFactory, SpatialCriteria> clause) {
+    public IDocumentQuery<T> spatial(DynamicSpatialField field, Function<SpatialCriteriaFactory, SpatialCriteria> clause) {
         SpatialCriteria criteria = clause.apply(SpatialCriteriaFactory.INSTANCE);
         _spatial(field, criteria);
         return this;
     }
 
-    //TBD public IDocumentQuery<T> Spatial(Func<SpatialDynamicFieldFactory<T>, SpatialDynamicField> field, Func<SpatialCriteriaFactory, SpatialCriteria> clause)
+    //TBD public IDocumentQuery<T> Spatial(Func<SpatialDynamicFieldFactory<T>, DynamicSpatialField> field, Func<SpatialCriteriaFactory, SpatialCriteria> clause)
     //TBD IDocumentQuery<T> IDocumentQueryBase<T, IDocumentQuery<T>>.WithinRadiusOf<TValue>(Expression<Func<T, TValue>> propertySelector, double radius, double latitude, double longitude, SpatialUnits? radiusUnits, double distanceErrorPct)
 
     @Override
@@ -589,18 +571,35 @@ public class DocumentQuery<T> extends AbstractDocumentQuery<T, DocumentQuery<T>>
         return this;
     }
 
-    //TBD IDocumentQuery<T> IDocumentQueryBase<T, IDocumentQuery<T>>.RelatesToShape<TValue>(Expression<Func<T, TValue>> propertySelector, string shapeWKT, SpatialRelation relation, double distanceErrorPct)
+    //TBD IDocumentQuery<T> IDocumentQueryBase<T, IDocumentQuery<T>>.RelatesToShape<TValue>(Expression<Func<T, TValue>> propertySelector, string shapeWkt, SpatialRelation relation, double distanceErrorPct)
 
     @Override
-    public IDocumentQuery<T> relatesToShape(String fieldName, String shapeWKT, SpatialRelation relation) {
-        return relatesToShape(fieldName, shapeWKT, relation, Constants.Documents.Indexing.Spatial.DEFAULT_DISTANCE_ERROR_PCT);
+    public IDocumentQuery<T> relatesToShape(String fieldName, String shapeWkt, SpatialRelation relation) {
+        return relatesToShape(fieldName, shapeWkt, relation, Constants.Documents.Indexing.Spatial.DEFAULT_DISTANCE_ERROR_PCT);
     }
 
     @Override
-    public IDocumentQuery<T> relatesToShape(String fieldName, String shapeWKT, SpatialRelation relation, double distanceErrorPct) {
-        _spatial(fieldName, shapeWKT, relation, distanceErrorPct);
+    public IDocumentQuery<T> relatesToShape(String fieldName, String shapeWkt, SpatialRelation relation, double distanceErrorPct) {
+        _spatial(fieldName, shapeWkt, relation, distanceErrorPct);
         return this;
     }
+
+    @Override
+    public IDocumentQuery<T> orderByDistance(DynamicSpatialField field, double latitude, double longitude) {
+        _orderByDistance(field, latitude, longitude);
+        return this;
+    }
+
+    //TBD IDocumentQuery<T> IDocumentQueryBase<T, IDocumentQuery<T>>.OrderByDistance(Func<DynamicSpatialFieldFactory<T>, DynamicSpatialField> field, double latitude, double longitude)
+
+    @Override
+    public IDocumentQuery<T> orderByDistance(DynamicSpatialField field, String shapeWkt) {
+        _orderByDistance(field, shapeWkt);
+        return this;
+    }
+
+    //TBD IDocumentQuery<T> IDocumentQueryBase<T, IDocumentQuery<T>>.OrderByDistance(Func<DynamicSpatialFieldFactory<T>, DynamicSpatialField> field, string shapeWkt)
+
 
     //TBD IDocumentQuery<T> IDocumentQueryBase<T, IDocumentQuery<T>>.OrderByDistance<TValue>(Expression<Func<T, TValue>> propertySelector, double latitude, double longitude)
 
@@ -617,6 +616,22 @@ public class DocumentQuery<T> extends AbstractDocumentQuery<T, DocumentQuery<T>>
         orderByDistance(fieldName, shapeWkt);
         return this;
     }
+
+    @Override
+    public IDocumentQuery<T> orderByDistanceDescending(DynamicSpatialField field, double latitude, double longitude) {
+        _orderByDistanceDescending(field, latitude, longitude);
+        return this;
+    }
+
+    //TBD IDocumentQuery<T> IDocumentQueryBase<T, IDocumentQuery<T>>.OrderByDistanceDescending(Func<DynamicSpatialFieldFactory<T>, DynamicSpatialField> field, double latitude, double longitude)
+
+    @Override
+    public IDocumentQuery<T> orderByDistanceDescending(DynamicSpatialField field, String shapeWkt) {
+        orderByDistanceDescending(field, shapeWkt);
+        return this;
+    }
+
+    //TBD IDocumentQuery<T> IDocumentQueryBase<T, IDocumentQuery<T>>.OrderByDistanceDescending(Func<DynamicSpatialFieldFactory<T>, DynamicSpatialField> field, string shapeWkt)
 
     //TBD IDocumentQuery<T> IDocumentQueryBase<T, IDocumentQuery<T>>.OrderByDistanceDescending<TValue>(Expression<Func<T, TValue>> propertySelector, double latitude, double longitude)
 

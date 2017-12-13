@@ -1,7 +1,6 @@
 package net.ravendb.client.documents.session;
 
 import com.google.common.base.Defaults;
-import jdk.nashorn.internal.objects.annotations.Where;
 import net.ravendb.client.Constants;
 import net.ravendb.client.Parameters;
 import net.ravendb.client.documents.commands.QueryCommand;
@@ -10,22 +9,21 @@ import net.ravendb.client.documents.indexes.spatial.SpatialRelation;
 import net.ravendb.client.documents.indexes.spatial.SpatialUnits;
 import net.ravendb.client.documents.queries.*;
 import net.ravendb.client.documents.queries.spatial.SpatialCriteria;
-import net.ravendb.client.documents.queries.spatial.SpatialDynamicField;
+import net.ravendb.client.documents.queries.spatial.DynamicSpatialField;
 import net.ravendb.client.documents.session.operations.QueryOperation;
 import net.ravendb.client.documents.session.tokens.*;
 import net.ravendb.client.primitives.CleanCloseable;
+import net.ravendb.client.primitives.Lang;
 import net.ravendb.client.primitives.Reference;
 import net.ravendb.client.primitives.Tuple;
 import org.apache.commons.lang3.NotImplementedException;
 import org.apache.commons.lang3.StringUtils;
 
-import javax.management.Query;
 import java.lang.reflect.Field;
 import java.time.Duration;
 import java.util.*;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
-import java.util.stream.StreamSupport;
 
 /**
  * A query against a Raven index
@@ -133,8 +131,6 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
         return !groupByTokens.isEmpty();
     }
 
-    protected Long cutoffEtag;
-
     private boolean _isInMoreLikeThis;
 
     private static Duration getDefaultTimeout() {
@@ -174,11 +170,11 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
 
     /**
      * Instruct the query to wait for non stale result for the specified wait timeout.
+     * This shouldn't be used outside of unit tests unless you are well aware of the implications
      */
     public void _waitForNonStaleResults(Duration waitTimeout) {
         theWaitForNonStaleResults = true;
-        cutoffEtag = null;
-        timeout = waitTimeout;
+        timeout = Lang.coalesce(waitTimeout, getDefaultTimeout());
     }
 
     protected QueryOperation initializeQueryOperation() {
@@ -259,7 +255,7 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
     @Override
     public void _groupBy(String fieldName, String... fieldNames) {
         List<Tuple<String, GroupByMethod>> mapping = Arrays.stream(fieldNames)
-                .map(x -> (Tuple<String, GroupByMethod>)Tuple.create(x, GroupByMethod.NONE))
+                .map(x -> (Tuple<String, GroupByMethod>) Tuple.create(x, GroupByMethod.NONE))
                 .collect(Collectors.toList());
 
         _groupBy(Tuple.create(fieldName, GroupByMethod.NONE), mapping.toArray(new Tuple[0]));
@@ -358,6 +354,7 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
             return new MoreLikeThisScope(token, AddQueryParameter, () => _isInMoreLikeThis = false);
         }
      */
+
     /**
      * Includes the specified path in the query, loading the document specified in that path
      */
@@ -700,9 +697,9 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
     /**
      * Specifies a boost weight to the last where clause.
      * The higher the boost factor, the more relevant the term will be.
-     *
+     * <p>
      * boosting factor where 1.0 is default, less than 1.0 is lower weight, greater than 1.0 is higher weight
-     *
+     * <p>
      * http://lucene.apache.org/java/2_4_0/queryparsersyntax.html#Boosting%20a%20Term
      */
     @Override
@@ -730,9 +727,9 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
 
     /**
      * Specifies a fuzziness factor to the single word term in the last where clause
-     *
+     * <p>
      * 0.0 to 1.0 where 1.0 means closer match
-     *
+     * <p>
      * http://lucene.apache.org/java/2_4_0/queryparsersyntax.html#Fuzzy%20Searches
      */
     @Override
@@ -756,7 +753,7 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
 
     /**
      * Specifies a proximity distance for the phrase in the last where clause
-     *
+     * <p>
      * http://lucene.apache.org/java/2_4_0/queryparsersyntax.html#Proximity%20Searches
      */
     @Override
@@ -830,30 +827,6 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
     }
 
     /**
-     * Instructs the query to wait for non stale results as of the cutoff etag.
-     */
-    public void _waitForNonStaleResultsAsOf(long cutoffEtag) {
-        _waitForNonStaleResultsAsOf(cutoffEtag, getDefaultTimeout());
-    }
-
-    /**
-     * Instructs the query to wait for non stale results as of the cutoff etag.
-     */
-    public void _waitForNonStaleResultsAsOf(long cutoffEtag, Duration waitTimeout) {
-        theWaitForNonStaleResults = true;
-        timeout = waitTimeout;
-        this.cutoffEtag = cutoffEtag;
-    }
-
-    /**
-     * EXPERT ONLY: Instructs the query to wait for non stale results.
-     * This shouldn't be used outside of unit tests unless you are well aware of the implications
-     */
-    public void _waitForNonStaleResults() {
-        _waitForNonStaleResults(getDefaultTimeout());
-    }
-
-    /**
      * Provide statistics about the query, such as total count of matching records
      */
     public void _statistics(Reference<QueryStatistics> stats) {
@@ -884,7 +857,6 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
         IndexQuery indexQuery = new IndexQuery();
         indexQuery.setQuery(query);
         indexQuery.setStart(start);
-        indexQuery.setCutoffEtag(cutoffEtag);
         indexQuery.setWaitForNonStaleResults(theWaitForNonStaleResults);
         indexQuery.setWaitForNonStaleResultsTimeout(timeout);
         indexQuery.setQueryParameters(queryParameters);
@@ -1208,7 +1180,7 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
         List<Object> result = new ArrayList<>();
         for (Object value : values) {
             if (value instanceof Collection) {
-                for (Object transformedValue : transformCollection(fieldName, (Collection)value)) {
+                for (Object transformedValue : transformCollection(fieldName, (Collection) value)) {
                     result.add(transformedValue);
                 }
             } else {
@@ -1247,7 +1219,7 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
 
         for (Object item : items) {
             if (item instanceof Collection) {
-                for (Object nested : unpackCollection((Collection)item)) {
+                for (Object nested : unpackCollection((Collection) item)) {
                     results.add(nested);
                 }
             } else {
@@ -1257,6 +1229,7 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
 
         return results;
     }
+
     private String ensureValidFieldName(String fieldName, boolean isNestedPath) {
         if (theSession == null || theSession.getConventions() == null || isNestedPath || isGroupBy) {
             return QueryFieldUtil.escapeIfNecessary(fieldName);
@@ -1437,14 +1410,14 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
         tokens.add(WhereToken.within(fieldName, ShapeToken.circle(addQueryParameter(radius), addQueryParameter(latitude), addQueryParameter(longitude), radiusUnits), distErrorPercent));
     }
 
-    protected void _spatial(String fieldName, String shapeWKT, SpatialRelation relation, double distErrorPercent) {
+    protected void _spatial(String fieldName, String shapeWkt, SpatialRelation relation, double distErrorPercent) {
         fieldName = ensureValidFieldName(fieldName, false);
 
         List<QueryToken> tokens = getCurrentWhereTokens();
         appendOperatorIfNeeded(tokens);
         negateIfNeeded(tokens, fieldName);
 
-        ShapeToken wktToken = ShapeToken.wkt(addQueryParameter(shapeWKT));
+        ShapeToken wktToken = ShapeToken.wkt(addQueryParameter(shapeWkt));
 
         QueryToken relationToken;
         switch (relation) {
@@ -1468,7 +1441,7 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
     }
 
     @Override
-    public void _spatial(SpatialDynamicField dynamicField, SpatialCriteria criteria) {
+    public void _spatial(DynamicSpatialField dynamicField, SpatialCriteria criteria) {
         List<QueryToken> tokens = getCurrentWhereTokens();
         appendOperatorIfNeeded(tokens);
         negateIfNeeded(tokens, null);
@@ -1488,8 +1461,24 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
     }
 
     @Override
+    public void _orderByDistance(DynamicSpatialField field, double latitude, double longitude) {
+        if (field == null) {
+            throw new IllegalArgumentException("Field cannot be null");
+        }
+        _orderByDistance(field.toField(this::ensureValidFieldName), latitude, longitude);
+    }
+
+    @Override
     public void _orderByDistance(String fieldName, double latitude, double longitude) {
         orderByTokens.add(OrderByToken.createDistanceAscending(fieldName, addQueryParameter(latitude), addQueryParameter(longitude)));
+    }
+
+    @Override
+    public void _orderByDistance(DynamicSpatialField field, String shapeWkt) {
+        if (field == null) {
+            throw new IllegalArgumentException("Field cannot be null");
+        }
+        _orderByDistance(field.toField(this::ensureValidFieldName), shapeWkt);
     }
 
     @Override
@@ -1497,10 +1486,28 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
         orderByTokens.add(OrderByToken.createDistanceAscending(fieldName, addQueryParameter(shapeWkt)));
     }
 
+    @Override
+    public void _orderByDistanceDescending(DynamicSpatialField field, double latitude, double longitude) {
+        if (field == null) {
+            throw new IllegalArgumentException("Field cannot be null");
+        }
+        _orderByDistanceDescending(field.toField(this::ensureValidFieldName), latitude, longitude);
+    }
+
+    @Override
     public void _orderByDistanceDescending(String fieldName, double latitude, double longitude) {
         orderByTokens.add(OrderByToken.createDistanceDescending(fieldName, addQueryParameter(latitude), addQueryParameter(longitude)));
     }
 
+    @Override
+    public void _orderByDistanceDescending(DynamicSpatialField field, String shapeWkt) {
+        if (field == null) {
+            throw new IllegalArgumentException("Field cannot be null");
+        }
+        _orderByDistanceDescending(field.toField(this::ensureValidFieldName), shapeWkt);
+    }
+
+    @Override
     public void _orderByDistanceDescending(String fieldName, String shapeWkt) {
         orderByTokens.add(OrderByToken.createDistanceDescending(fieldName, addQueryParameter(shapeWkt)));
     }

@@ -93,10 +93,6 @@ public class JsonExtensions {
             generator.writeBooleanField("WaitForNonStaleResults", query.isWaitForNonStaleResults());
         }
 
-        if (query.getCutoffEtag() != null) {
-            generator.writeNumberField("CutoffEtag", query.getCutoffEtag());
-        }
-
         if (query.getStart() > 0) {
             generator.writeNumberField("Start", query.getStart());
         }

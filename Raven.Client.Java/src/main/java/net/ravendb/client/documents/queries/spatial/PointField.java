@@ -2,7 +2,7 @@ package net.ravendb.client.documents.queries.spatial;
 
 import java.util.function.BiFunction;
 
-public class PointField extends SpatialDynamicField {
+public class PointField extends DynamicSpatialField {
     public final String latitude;
     public final String longitude;
 
