@@ -76,7 +76,7 @@ public class DocumentStore extends DocumentStoreBase {
     }
 
     public void close() {
-        /* TODO
+        /* TBD
 
             foreach (var observeChangesAndEvictItemsFromCacheForDatabase in _observeChangesAndEvictItemsFromCacheForDatabases)
                 observeChangesAndEvictItemsFromCacheForDatabase.Value.Dispose();

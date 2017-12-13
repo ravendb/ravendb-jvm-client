@@ -36,7 +36,7 @@ import java.util.stream.Collectors;
 
 public abstract class InMemoryDocumentSessionOperations implements CleanCloseable {
 
-    private static AtomicInteger _clientSessionIdCounter = new AtomicInteger(); //tODO: thread static?
+    private static AtomicInteger _clientSessionIdCounter = new AtomicInteger();
 
     protected final int _clientSessionId = _clientSessionIdCounter.incrementAndGet();
 
@@ -722,18 +722,20 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
             if (command != null) {
                 throwInvalidModifiedDocumentWithDeferredCommand(command);
             }
-            /* TODO
-            var onOnBeforeStore = OnBeforeStore;
-            if (onOnBeforeStore != null)
-            {
-                var beforeStoreEventArgs = new BeforeStoreEventArgs(this, entity.Value.Id, entity.Key);
-                onOnBeforeStore(this, beforeStoreEventArgs);
-                if (beforeStoreEventArgs.MetadataAccessed)
-                    UpdateMetadataModifications(entity.Value);
-                if (beforeStoreEventArgs.MetadataAccessed ||
-                        EntityChanged(document, entity.Value, null))
-                    document = EntityToBlittable.ConvertEntityToBlittable(entity.Key, entity.Value);
-            }*/
+
+            List<EventHandler<BeforeStoreEventArgs>> onBeforeStore = this.onBeforeStore;
+            if (onBeforeStore != null && !onBeforeStore.isEmpty()) {
+                BeforeStoreEventArgs beforeStoreEventArgs = new BeforeStoreEventArgs(this, entity.getValue().getId(), entity.getKey());
+                EventHelper.invoke(onBeforeStore, this, beforeStoreEventArgs);
+
+                if (beforeStoreEventArgs.isMetadataAccessed()) {
+                    updateMetadataModifications(entity.getValue());
+                }
+
+                if (beforeStoreEventArgs.isMetadataAccessed() || entityChanged(document, entity.getValue(), null)) {
+                    document = entityToJson.convertEntityToJson(entity.getKey(), entity.getValue());
+                }
+            }
 
             entity.getValue().setNewDocument(false);
             result.getEntities().add(entity.getKey());
@@ -1182,17 +1184,12 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
     //TBD public AttachmentName[] GetAttachmentNames(object entity) --> attachments
     //TBD public void StoreAttachment(string documentId, string name, Stream stream, string contentType = null) --> attachments
     //TBD public void StoreAttachment(object entity, string name, Stream stream, string contentType = null) --> attachments
-    /* TODO
 
-        protected void ThrowEntityNotInSession(object entity)
-        {
-            throw new ArgumentException(entity + " is not associated with the session, cannot add attachment to it. " +
-                                        "Use documentId instead or track the entity in the session.", nameof(entity));
-        }
+    protected void throwEntityNotInSession(Object entity) {
+        throw new IllegalArgumentException(entity + " is not associated with the session, cannot add attachment to it. " +
+        "Use documentId instead or track the entity in the session.");
+    }
 
-
-
-     */
     //TBD public void DeleteAttachment(object entity, string name) --> attachments
     //TBD public void DeleteAttachment(string documentId, string name) --> attachments
 

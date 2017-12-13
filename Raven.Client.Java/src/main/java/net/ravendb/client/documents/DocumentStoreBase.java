@@ -150,15 +150,6 @@ public abstract class DocumentStoreBase implements IDocumentStore {
             throw new IllegalStateException("You cannot open a session or access the database commands before initializing the document store. Did you forget calling initialize()?");
         }
     }
-    /* TODO
-     protected virtual void AfterSessionCreated(InMemoryDocumentSessionOperations session)
-        {
-            var onSessionCreatedInternal = SessionCreatedInternal;
-            onSessionCreatedInternal?.Invoke(session);
-        }
-        public event Action<InMemoryDocumentSessionOperations> SessionCreatedInternal;
-        public event Action<string> TopologyUpdatedInternal;
-     */
 
     public void addBeforeStoreListener(EventHandler<BeforeStoreEventArgs> handler) {
         this.onBeforeStore.add(handler);
@@ -252,11 +243,4 @@ public abstract class DocumentStoreBase implements IDocumentStore {
     public abstract MaintenanceOperationExecutor maintenance();
 
     public abstract OperationExecutor operations();
-
-    /* TODO
-        protected void OnTopologyUpdatedInternal(string databaseName)
-        {
-            TopologyUpdatedInternal?.Invoke(databaseName);
-        }
-     */
 }

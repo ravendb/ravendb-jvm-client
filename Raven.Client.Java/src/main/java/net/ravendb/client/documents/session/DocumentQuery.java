@@ -14,14 +14,19 @@ import net.ravendb.client.documents.session.tokens.LoadToken;
 import net.ravendb.client.primitives.Reference;
 import net.ravendb.client.primitives.Tuple;
 
+import java.beans.IntrospectionException;
+import java.beans.Introspector;
+import java.beans.PropertyDescriptor;
+import java.lang.reflect.Field;
 import java.time.Duration;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
-public class DocumentQuery<T> extends AbstractDocumentQuery<T, DocumentQuery<T>> implements IDocumentQuery<T> {
+public class DocumentQuery<T> extends AbstractDocumentQuery<T, DocumentQuery<T>> implements IDocumentQuery<T>, IDocumentQueryCustomization<IDocumentQuery<T>> {
 
     public DocumentQuery(Class<T> clazz, InMemoryDocumentSessionOperations session, String indexName, String collectionName, boolean isGroupBy) {
         this(clazz, session, indexName, collectionName, isGroupBy, null, null, null);
@@ -34,14 +39,24 @@ public class DocumentQuery<T> extends AbstractDocumentQuery<T, DocumentQuery<T>>
 
     @Override
     public <TProjection> IDocumentQuery<TProjection> selectFields(Class<TProjection> projectionClass) {
-        /* TODO
-         var propertyInfos = ReflectionUtil.GetPropertiesAndFieldsFor<TProjection>(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance).ToList();
-            var projections = propertyInfos.Select(x => x.Name).ToArray();
-            var identityProperty = Conventions.GetIdentityProperty(typeof(TProjection));
-            var fields = propertyInfos.Select(p => p == identityProperty ? Constants.Documents.Indexing.Fields.DocumentIdFieldName : p.Name).ToArray();
-            return SelectFields<TProjection>(new QueryData(fields, projections));
-         */
-        return null;
+
+        try {
+            Field identityProperty = getConventions().getIdentityProperty(projectionClass);
+
+            PropertyDescriptor[] propertyDescriptors = Introspector.getBeanInfo(projectionClass).getPropertyDescriptors();
+
+            String[] projections = Arrays.stream(propertyDescriptors)
+                    .map(x -> x.getName())
+                    .toArray(String[]::new);
+
+            String[] fields = Arrays.stream(propertyDescriptors)
+                    .map(p -> p.getName().equals(identityProperty.getName()) ? Constants.Documents.Indexing.Fields.DOCUMENT_ID_FIELD_NAME : p.getName())
+                    .toArray(String[]::new);
+
+            return selectFields(projectionClass, new QueryData(fields, projections));
+        } catch (IntrospectionException e) {
+            throw new RuntimeException("Unable to project to class: " + projectionClass.getName() + e.getMessage(), e);
+        }
     }
 
     @Override

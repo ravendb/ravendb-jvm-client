@@ -8,12 +8,15 @@ import net.ravendb.client.documents.commands.HeadDocumentCommand;
 import net.ravendb.client.documents.commands.batches.BatchCommand;
 import net.ravendb.client.documents.indexes.AbstractIndexCreationTask;
 import net.ravendb.client.documents.linq.IDocumentQueryGenerator;
+import net.ravendb.client.documents.queries.Query;
 import net.ravendb.client.documents.session.loaders.ILoaderWithInclude;
 import net.ravendb.client.documents.session.loaders.MultiLoaderWithInclude;
 import net.ravendb.client.documents.session.operations.BatchOperation;
 import net.ravendb.client.documents.session.operations.GetRevisionOperation;
 import net.ravendb.client.documents.session.operations.LoadOperation;
+import net.ravendb.client.documents.session.operations.LoadStartingWithOperation;
 import net.ravendb.client.http.RequestExecutor;
+import org.apache.commons.lang3.StringUtils;
 
 import java.util.Collection;
 import java.util.List;
@@ -208,40 +211,48 @@ public class DocumentSession extends InMemoryDocumentSessionOperations implement
         return loadOperation.getDocuments(clazz);
     }
 
-    /* TODO
+    public <T> T[] loadStartingWith(Class<T> clazz, String idPrefix) {
+        return loadStartingWith(clazz, idPrefix, null, 0, 25, null, null);
+    }
 
-        public T[] LoadStartingWith<T>(string idPrefix, string matches = null, int start = 0, int pageSize = 25, string exclude = null,
-            string startAfter = null)
-        {
-            var loadStartingWithOperation = new LoadStartingWithOperation(this);
-            LoadStartingWithInternal(idPrefix, loadStartingWithOperation, null, matches, start, pageSize, exclude, startAfter);
-            return loadStartingWithOperation.GetDocuments<T>();
-        }
-        */
+    public <T> T[] loadStartingWith(Class<T> clazz, String idPrefix, String matches) {
+        return loadStartingWith(clazz, idPrefix, matches, 0, 25, null, null);
+    }
+
+    public <T> T[] loadStartingWith(Class<T> clazz, String idPrefix, String matches, int start) {
+        return loadStartingWith(clazz, idPrefix, matches, start, 25, null, null);
+    }
+
+    public <T> T[] loadStartingWith(Class<T> clazz, String idPrefix, String matches, int start, int pageSize) {
+        return loadStartingWith(clazz, idPrefix, matches, start, pageSize, null, null);
+    }
+
+    public <T> T[] loadStartingWith(Class<T> clazz, String idPrefix, String matches, int start, int pageSize, String exclude) {
+        return loadStartingWith(clazz, idPrefix, matches, start, pageSize, exclude, null);
+    }
+
+    public <T> T[] loadStartingWith(Class<T> clazz, String idPrefix, String matches, int start, int pageSize, String exclude, String startAfter) {
+        LoadStartingWithOperation loadStartingWithOperation = new LoadStartingWithOperation(this);
+        loadStartingWithInternal(idPrefix, loadStartingWithOperation, matches, start, pageSize, exclude, startAfter);
+        return loadStartingWithOperation.getDocuments(clazz);
+    }
 
     //TBD public void LoadStartingWithIntoStream(string idPrefix, Stream output, string matches = null, int start = 0, int pageSize = 25, string exclude = null, string startAfter = null)
-    /* TODO
 
-        private GetDocumentsCommand LoadStartingWithInternal(string idPrefix, LoadStartingWithOperation operation, Stream stream = null, string matches = null,
-            int start = 0, int pageSize = 25, string exclude = null,
-            string startAfter = null)
-        {
-            operation.WithStartWith(idPrefix, matches, start, pageSize, exclude, startAfter);
+    private GetDocumentsCommand loadStartingWithInternal(String idPrefix, LoadStartingWithOperation operation,
+                                                         String matches, int start, int pageSize, String exclude, String startAfter) {
+        operation.withStartWith(idPrefix, matches, start, pageSize, exclude, startAfter);
 
-            var command = operation.CreateRequest();
-            if (command != null)
-            {
-                RequestExecutor.Execute(command, Context, sessionInfo: SessionInfo);
+        GetDocumentsCommand command = operation.createRequest();
+        if (command != null) {
+            _requestExecutor.execute(command, sessionInfo);
 
-                if (stream != null)
-                    Context.Write(stream, command.Result.Results.Parent);
-                else
-                    operation.SetResult(command.Result);
-            }
-
-            return command;
+            operation.setResult(command.getResult());
+            //TBD handle stream
         }
-        */
+        return command;
+    }
+
     //TBD public void LoadIntoStream(IEnumerable<string> ids, Stream output)
     //TBD public List<T> MoreLikeThis<T, TIndexCreator>(string documentId) where TIndexCreator : AbstractIndexCreationTask, new()
     //TBD public List<T> MoreLikeThis<T, TIndexCreator>(MoreLikeThisQuery query) where TIndexCreator : AbstractIndexCreationTask, new()
@@ -281,6 +292,15 @@ public class DocumentSession extends InMemoryDocumentSessionOperations implement
         return new RawDocumentQuery<>(clazz, this, query);
     }
 
+    @Override
+    public <T> IDocumentQuery<T> query(Class<T> clazz, Query collectionOrIndexName) {
+        if (StringUtils.isNotEmpty(collectionOrIndexName.getCollection())) {
+            return documentQuery(clazz, null, collectionOrIndexName.getCollection(), false);
+        }
+
+        return documentQuery(clazz, collectionOrIndexName.getIndexName(), null, false);
+    }
+
     //TBD public IEnumerator<StreamResult<T>> Stream<T>(IQueryable<T> query)
     //TBD public IEnumerator<StreamResult<T>> Stream<T>(IQueryable<T> query, out StreamQueryStatistics streamQueryStats)
     //TBD public IEnumerator<StreamResult<T>> Stream<T>(IDocumentQuery<T> query)
@@ -293,7 +313,7 @@ public class DocumentSession extends InMemoryDocumentSessionOperations implement
     //TBD private StreamResult<T> CreateStreamResult<T>(BlittableJsonReaderObject json, string[] projectionFields)
     //TBD public IEnumerator<StreamResult<T>> Stream<T>(string startsWith, string matches = null, int start = 0, int pageSize = int.MaxValue, string startAfter = null)
 
-    /* TODO delete - move?
+    /* TBD move to revisions
     public <T> List<T> getRevisionsFor(Class<T> clazz, String id) {
         return getRevisionsFor(clazz, id, 0, 25);
     }

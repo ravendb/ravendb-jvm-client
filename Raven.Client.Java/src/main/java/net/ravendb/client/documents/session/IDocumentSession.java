@@ -1,5 +1,6 @@
 package net.ravendb.client.documents.session;
 
+import net.ravendb.client.documents.queries.Query;
 import net.ravendb.client.documents.session.loaders.ILoaderWithInclude;
 import net.ravendb.client.primitives.CleanCloseable;
 
@@ -10,8 +11,6 @@ import java.util.Map;
  * Interface for document session
  */
 public interface IDocumentSession extends CleanCloseable {
-
-    //TODO: expose document query as we won't have query method for now.
 
     /**
      * Get the accessor for advanced operations
@@ -92,5 +91,5 @@ public interface IDocumentSession extends CleanCloseable {
      */
     <TResult> Map<String, TResult> load(Class<TResult> clazz, Collection<String> ids);
 
-    //TBD: query ?
+    <T> IDocumentQuery<T> query(Class<T> clazz, Query collectionOrIndexName);
 }
