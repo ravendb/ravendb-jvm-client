@@ -147,6 +147,78 @@ public class QueryTest extends RemoteTestBase {
         }
     }
 
+    @Test
+    public void queryMapReduceIndex() throws Exception {
+        try (IDocumentStore store = getDocumentStore()) {
+            addUsers(store);
+
+            store.executeIndex(new UsersByName());
+            waitForIndexing(store);
+
+            try (IDocumentSession session = store.openSession()) {
+
+                List<ReduceResult> results = session.query(ReduceResult.class, Query.index("UsersByName"))
+                        .orderByDescending("count")
+                        .toList();
+
+                assertThat(results.get(0).getCount())
+                        .isEqualTo(2);
+                assertThat(results.get(0).getName())
+                        .isEqualTo("John");
+
+                assertThat(results.get(1).getCount())
+                        .isEqualTo(1);
+                assertThat(results.get(1).getName())
+                        .isEqualTo("Tarzan");
+            }
+        }
+    }
+
+    @Test
+    public void queryWithSelect() throws Exception {
+        try (IDocumentStore store = getDocumentStore()) {
+            addUsers(store);
+
+            store.executeIndex(new UsersByName());
+            waitForIndexing(store);
+
+            try (IDocumentSession session = store.openSession()) {
+
+                List<User> usersAge = session.query(User.class)
+                        .selectFields(User.class, "age")
+                        .toList();
+
+                for (User user : usersAge) {
+                    assertThat(user.getAge())
+                            .isPositive();
+
+                    assertThat(user.getId())
+                            .isNotNull();
+                }
+            }
+        }
+    }
+
+    public static class UsersByName extends AbstractIndexCreationTask {
+        public UsersByName() {
+
+            map = "from c in docs.Users select new " +
+                    " {" +
+                    "    c.name, " +
+                    "    count = 1" +
+                    "}";
+
+            reduce = "from result in results " +
+                    "group result by result.name " +
+                    "into g " +
+                    "select new " +
+                    "{ " +
+                    "  name = g.Key, " +
+                    "  count = g.Sum(x => x.count) " +
+                    "}";
+        }
+    }
+
     private void addUsers(IDocumentStore store) {
         try (IDocumentSession session = store.openSession()) {
             User user1 = new User();
