@@ -1,6 +1,5 @@
 package net.ravendb.client.test.client;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
 import net.ravendb.client.RemoteTestBase;
 import net.ravendb.client.documents.IDocumentStore;
 import net.ravendb.client.documents.indexes.AbstractIndexCreationTask;
@@ -9,12 +8,10 @@ import net.ravendb.client.documents.session.GroupByField;
 import net.ravendb.client.documents.session.IDocumentSession;
 import net.ravendb.client.documents.session.OrderingType;
 import net.ravendb.client.infrastructure.entities.User;
-import net.ravendb.client.primitives.CleanCloseable;
 import org.apache.commons.lang3.StringUtils;
-import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
 
-import java.io.IOException;
+import java.util.Arrays;
 import java.util.List;
 
 import static java.util.stream.Collectors.toList;
@@ -152,9 +149,6 @@ public class QueryTest extends RemoteTestBase {
         try (IDocumentStore store = getDocumentStore()) {
             addUsers(store);
 
-            store.executeIndex(new UsersByName());
-            waitForIndexing(store);
-
             try (IDocumentSession session = store.openSession()) {
 
                 List<ReduceResult> results = session.query(ReduceResult.class, Query.index("UsersByName"))
@@ -198,9 +192,6 @@ public class QueryTest extends RemoteTestBase {
         try (IDocumentStore store = getDocumentStore()) {
             addUsers(store);
 
-            store.executeIndex(new UsersByName());
-            waitForIndexing(store);
-
             try (IDocumentSession session = store.openSession()) {
 
                 List<User> usersAge = session.query(User.class)
@@ -214,6 +205,125 @@ public class QueryTest extends RemoteTestBase {
                     assertThat(user.getId())
                             .isNotNull();
                 }
+            }
+        }
+    }
+
+    @Test
+    public void queryWithWhereIn() throws Exception {
+        try (IDocumentStore store = getDocumentStore()) {
+            addUsers(store);
+
+            try (IDocumentSession session = store.openSession()) {
+
+                List<User> users = session.query(User.class)
+                        .whereIn("name", Arrays.asList("Tarzan", "no_such"))
+                        .toList();
+
+                assertThat(users)
+                        .hasSize(1);
+            }
+        }
+    }
+
+    @Test
+    public void queryWithWhereBetween() throws Exception {
+        try (IDocumentStore store = getDocumentStore()) {
+            addUsers(store);
+
+            try (IDocumentSession session = store.openSession()) {
+
+                List<User> users = session.query(User.class)
+                        .whereBetween("age", 4, 5)
+                        .toList();
+
+                assertThat(users)
+                        .hasSize(1);
+
+                assertThat(users.get(0).getName())
+                        .isEqualTo("John");
+
+            }
+        }
+    }
+
+    @Test
+    public void queryWithWhereLessThan() throws Exception {
+        try (IDocumentStore store = getDocumentStore()) {
+            addUsers(store);
+
+            try (IDocumentSession session = store.openSession()) {
+
+                List<User> users = session.query(User.class)
+                        .whereLessThan("age", 3)
+                        .toList();
+
+                assertThat(users)
+                        .hasSize(1);
+
+                assertThat(users.get(0).getName())
+                        .isEqualTo("Tarzan");
+
+            }
+        }
+    }
+
+    @Test
+    public void queryWithWhereLessThanOrEqual() throws Exception {
+        try (IDocumentStore store = getDocumentStore()) {
+            addUsers(store);
+
+            try (IDocumentSession session = store.openSession()) {
+
+                List<User> users = session.query(User.class)
+                        .whereLessThanOrEqual("age", 3)
+                        .toList();
+
+                assertThat(users)
+                        .hasSize(2);
+
+            }
+        }
+    }
+
+    @Test
+    public void queryWithWhereGreaterThan() throws Exception {
+        try (IDocumentStore store = getDocumentStore()) {
+            addUsers(store);
+
+            try (IDocumentSession session = store.openSession()) {
+
+                List<User> users = session.query(User.class)
+                        .whereGreaterThan("age", 3)
+                        .toList();
+
+                assertThat(users)
+                        .hasSize(1);
+
+                assertThat(users.get(0).getName())
+                        .isEqualTo("John");
+
+            }
+        }
+    }
+
+    @Test
+    public void queryWithWhereGreaterThanOrEqual() throws Exception {
+        try (IDocumentStore store = getDocumentStore()) {
+            addUsers(store);
+
+            store.executeIndex(new UsersByName());
+            waitForIndexing(store);
+
+            try (IDocumentSession session = store.openSession()) {
+
+                List<User> users = session.query(User.class)
+                        .whereGreaterThanOrEqual("age", 3)
+                        .toList();
+
+                assertThat(users)
+                        .hasSize(2);
+
             }
         }
     }
@@ -257,6 +367,10 @@ public class QueryTest extends RemoteTestBase {
             session.store(user3, "users/3");
             session.saveChanges();
         }
+
+        store.executeIndex(new UsersByName());
+        waitForIndexing(store);
+
     }
 
     public static class ReduceResult {
