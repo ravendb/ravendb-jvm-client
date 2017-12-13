@@ -175,6 +175,25 @@ public class QueryTest extends RemoteTestBase {
     }
 
     @Test
+    public void querySingleProperty() throws Exception {
+        try (IDocumentStore store = getDocumentStore()) {
+            addUsers(store);
+
+            try (IDocumentSession session = store.openSession()) {
+
+                List<Integer> ages = session.query(User.class)
+                        .addOrder("age", true, OrderingType.LONG)
+                        .selectFields(Integer.class, "age")
+                        .toList();
+
+                assertThat(ages)
+                        .hasSize(3)
+                        .containsSequence(5, 3, 2);
+            }
+        }
+    }
+
+    @Test
     public void queryWithSelect() throws Exception {
         try (IDocumentStore store = getDocumentStore()) {
             addUsers(store);
@@ -240,8 +259,7 @@ public class QueryTest extends RemoteTestBase {
         }
     }
 
-    public static class ReduceResult
-    {
+    public static class ReduceResult {
         private int count;
         private String name;
         private int age;

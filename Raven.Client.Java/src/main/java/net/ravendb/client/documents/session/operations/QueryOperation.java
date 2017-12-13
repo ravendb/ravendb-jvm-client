@@ -4,6 +4,8 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.databind.node.TextNode;
+import com.fasterxml.jackson.databind.node.ValueNode;
+import com.google.common.base.Defaults;
 import com.google.common.base.Stopwatch;
 import net.ravendb.client.Constants;
 import net.ravendb.client.documents.commands.QueryCommand;
@@ -13,7 +15,10 @@ import net.ravendb.client.documents.session.InMemoryDocumentSessionOperations;
 import net.ravendb.client.documents.session.tokens.FieldsToFetchToken;
 import net.ravendb.client.exceptions.TimeoutException;
 import net.ravendb.client.exceptions.documents.indexes.IndexDoesNotExistException;
+import net.ravendb.client.extensions.JsonExtensions;
 import net.ravendb.client.primitives.CleanCloseable;
+import net.ravendb.client.primitives.Lang;
+import org.apache.commons.lang3.ClassUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -130,36 +135,33 @@ public class QueryOperation {
         return list;
     }
 
-    static <T> T deserialize(Class<T> clazz, String id, ObjectNode document, ObjectNode metadata, FieldsToFetchToken fieldsToFetchToken, boolean disableEntitiesTracking, InMemoryDocumentSessionOperations session) throws JsonProcessingException {
+    static <T> T deserialize(Class<T> clazz, String id, ObjectNode document, ObjectNode metadata, FieldsToFetchToken fieldsToFetch, boolean disableEntitiesTracking, InMemoryDocumentSessionOperations session) throws JsonProcessingException {
 
         JsonNode projection = metadata.get("@projection");
         if (projection == null || !projection.asBoolean()) {
             return (T)session.trackEntity(clazz, id, document, metadata, disableEntitiesTracking);
         }
-        /* TODO
-             if (fieldsToFetch?.Projections != null && fieldsToFetch.Projections.Length == 1) // we only select a single field
-            {
-                var type = typeof(T);
-                var typeInfo = type.GetTypeInfo();
-                if (type == typeof(string) || typeInfo.IsValueType || typeInfo.IsEnum)
-                {
-                    var projectionField = fieldsToFetch.Projections[0];
-                    T value;
-                    return document.TryGet(projectionField, out value) == false
-                        ? default(T)
-                        : value;
-                }
 
-                if (document.TryGetMember(fieldsToFetch.Projections[0], out object inner) == false)
-                    return default(T);
-
-                if (fieldsToFetch.FieldsToFetch != null && fieldsToFetch.FieldsToFetch[0] == fieldsToFetch.Projections[0])
-                {
-                    if (inner is BlittableJsonReaderObject innerJson) //extraction from original type
-                        document = innerJson;
+        if (fieldsToFetch != null && fieldsToFetch.projections != null && fieldsToFetch.projections.length == 1) { // we only select a single field
+            if (String.class.equals(clazz) || ClassUtils.isPrimitiveOrWrapper(clazz) || clazz.isEnum()) {
+                String projectField = fieldsToFetch.projections[0];
+                JsonNode jsonNode = document.get(projectField);
+                if (jsonNode != null && jsonNode instanceof ValueNode) {
+                    return Lang.coalesce(JsonExtensions.getDefaultEntityMapper().convertValue(jsonNode, clazz), Defaults.defaultValue(clazz));
                 }
             }
-         */
+
+            JsonNode inner = document.get(fieldsToFetch.projections[0]);
+            if (inner == null) {
+                return Defaults.defaultValue(clazz);
+            }
+
+            if (fieldsToFetch.fieldsToFetch != null && fieldsToFetch.fieldsToFetch[0].equals(fieldsToFetch.projections[0])) {
+                if (inner instanceof ObjectNode) { //extraction from original type
+                    document = (ObjectNode) inner;
+                }
+            }
+        }
 
         T result = session.getConventions().getEntityMapper().treeToValue(document, clazz);
 
