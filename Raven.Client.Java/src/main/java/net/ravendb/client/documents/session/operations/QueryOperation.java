@@ -131,10 +131,12 @@ public class QueryOperation {
     }
 
     static <T> T deserialize(Class<T> clazz, String id, ObjectNode document, ObjectNode metadata, FieldsToFetchToken fieldsToFetchToken, boolean disableEntitiesTracking, InMemoryDocumentSessionOperations session) throws JsonProcessingException {
-        /* TODO
-          if (metadata.TryGetProjection(out var projection) == false || projection == false)
-                return session.TrackEntity<T>(id, document, metadata, disableEntitiesTracking);
 
+        JsonNode projection = metadata.get("@projection");
+        if (projection == null || !projection.asBoolean()) {
+            return (T)session.trackEntity(clazz, id, document, metadata, disableEntitiesTracking);
+        }
+        /* TODO
              if (fieldsToFetch?.Projections != null && fieldsToFetch.Projections.Length == 1) // we only select a single field
             {
                 var type = typeof(T);

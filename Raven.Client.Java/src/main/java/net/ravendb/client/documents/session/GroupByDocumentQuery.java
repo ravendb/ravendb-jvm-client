@@ -45,7 +45,7 @@ public class GroupByDocumentQuery<T> implements IGroupByDocumentQuery<T> {
 
     @Override
     public IDocumentQuery<T> selectCount() {
-        return selectCount(null);
+        return selectCount("count");
     }
 
     @Override

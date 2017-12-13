@@ -91,5 +91,7 @@ public interface IDocumentSession extends CleanCloseable {
      */
     <TResult> Map<String, TResult> load(Class<TResult> clazz, Collection<String> ids);
 
+    <T> IDocumentQuery<T> query(Class<T> clazz);
+
     <T> IDocumentQuery<T> query(Class<T> clazz, Query collectionOrIndexName);
 }

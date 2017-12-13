@@ -1,8 +1,11 @@
 package net.ravendb.client.test.client;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import net.ravendb.client.RemoteTestBase;
 import net.ravendb.client.documents.IDocumentStore;
 import net.ravendb.client.documents.indexes.AbstractIndexCreationTask;
+import net.ravendb.client.documents.queries.Query;
+import net.ravendb.client.documents.session.GroupByField;
 import net.ravendb.client.documents.session.IDocumentSession;
 import net.ravendb.client.documents.session.OrderingType;
 import net.ravendb.client.infrastructure.entities.User;
@@ -66,15 +69,15 @@ public class QueryTest extends RemoteTestBase {
                 session.store(user3, "users/3");
                 session.saveChanges();
 
-                List<User> queryResult = session.advanced().documentQuery(User.class, null, "users", false)
+                List<User> queryResult = session.query(User.class, Query.collection("users"))
                         .whereStartsWith("name", "J")
                         .toList();
 
-                List<User> queryResult2 = session.advanced().documentQuery(User.class, null, "users", false)
+                List<User> queryResult2 = session.query(User.class, Query.collection("users"))
                         .whereEquals("name", "Tarzan")
                         .toList();
 
-                List<User> queryResult3 = session.advanced().documentQuery(User.class, null, "users", false)
+                List<User> queryResult3 = session.query(User.class, Query.collection("users"))
                         .whereEndsWith("name", "n")
                         .toList();
 
@@ -87,6 +90,112 @@ public class QueryTest extends RemoteTestBase {
                 assertThat(queryResult3)
                         .hasSize(2);
             }
+        }
+    }
+
+    @Test
+    public void queryMapReduceWithCount() throws Exception {
+        try (IDocumentStore store = getDocumentStore()) {
+            addUsers(store);
+
+            try (IDocumentSession session = store.openSession()) {
+                List<ReduceResult> results = session.query(User.class)
+                        .groupBy("name")
+                        .selectKey()
+                        .selectCount()
+                        .orderByDescending("count")
+                        .ofType(ReduceResult.class)
+                        .toList();
+
+                assertThat(results.get(0).getCount())
+                        .isEqualTo(2);
+                assertThat(results.get(0).getName())
+                        .isEqualTo("John");
+
+                assertThat(results.get(1).getCount())
+                        .isEqualTo(1);
+                assertThat(results.get(1).getName())
+                        .isEqualTo("Tarzan");
+            }
+        }
+    }
+
+    @Test
+    public void queryMapReduceWithSum() throws Exception {
+        try (IDocumentStore store = getDocumentStore()) {
+            addUsers(store);
+
+            try (IDocumentSession session = store.openSession()) {
+                List<ReduceResult> results = session.query(User.class)
+                        .groupBy("name")
+                        .selectKey()
+                        .selectSum(new GroupByField("age"))
+                        .orderByDescending("age")
+                        .ofType(ReduceResult.class)
+                        .toList();
+
+                assertThat(results.get(0).getAge())
+                        .isEqualTo(8);
+                assertThat(results.get(0).getName())
+                        .isEqualTo("John");
+
+                assertThat(results.get(1).getAge())
+                        .isEqualTo(2);
+                assertThat(results.get(1).getName())
+                        .isEqualTo("Tarzan");
+            }
+        }
+    }
+
+    private void addUsers(IDocumentStore store) {
+        try (IDocumentSession session = store.openSession()) {
+            User user1 = new User();
+            user1.setName("John");
+            user1.setAge(3);
+
+            User user2 = new User();
+            user2.setName("John");
+            user2.setAge(5);
+
+            User user3 = new User();
+            user3.setName("Tarzan");
+            user3.setAge(2);
+
+            session.store(user1, "users/1");
+            session.store(user2, "users/2");
+            session.store(user3, "users/3");
+            session.saveChanges();
+        }
+    }
+
+    public static class ReduceResult
+    {
+        private int count;
+        private String name;
+        private int age;
+
+        public int getAge() {
+            return age;
+        }
+
+        public void setAge(int age) {
+            this.age = age;
+        }
+
+        public int getCount() {
+            return count;
+        }
+
+        public void setCount(int count) {
+            this.count = count;
+        }
+
+        public String getName() {
+            return name;
+        }
+
+        public void setName(String name) {
+            this.name = name;
         }
     }
 

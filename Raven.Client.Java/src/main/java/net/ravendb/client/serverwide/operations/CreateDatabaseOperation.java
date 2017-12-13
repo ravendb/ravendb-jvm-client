@@ -52,7 +52,7 @@ public class CreateDatabaseOperation implements IServerOperation<DatabasePutResu
         public HttpRequestBase createRequest(ServerNode node, Reference<String> url) {
             url.value = node.getUrl() + "/admin/databases?name=" + databaseName;
 
-            url.value += "&replicationF actor=" + replicationFactor;
+            url.value += "&replicationFactor=" + replicationFactor;
 
             try {
                 String databaseDocument = mapper.writeValueAsString(databaseRecord);

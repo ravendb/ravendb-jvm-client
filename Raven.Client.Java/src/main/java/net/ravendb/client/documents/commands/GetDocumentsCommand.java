@@ -92,7 +92,7 @@ public class GetDocumentsCommand extends RavenCommand<GetDocumentsResult> {
         }
 
         if (_startWith != null) {
-            pathBuilder.append("startsWith=");
+            pathBuilder.append("&startsWith=");
             pathBuilder.append(UrlUtils.escapeDataString(_startWith));
 
             if (_matches != null) {

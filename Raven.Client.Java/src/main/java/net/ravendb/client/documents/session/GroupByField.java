@@ -4,6 +4,18 @@ public class GroupByField {
     private String fieldName;
     private String projectedName;
 
+    public GroupByField() {
+    }
+
+    public GroupByField(String fieldName) {
+        this.fieldName = fieldName;
+    }
+
+    public GroupByField(String fieldName, String projectedName) {
+        this.fieldName = fieldName;
+        this.projectedName = projectedName;
+    }
+
     public String getFieldName() {
         return fieldName;
     }
@@ -19,4 +31,6 @@ public class GroupByField {
     public void setProjectedName(String projectedName) {
         this.projectedName = projectedName;
     }
+
+
 }

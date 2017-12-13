@@ -264,7 +264,7 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
     @Override
     public void _groupBy(Tuple<String, GroupByMethod> field, Tuple<String, GroupByMethod>... fields) {
         if (!fromToken.isDynamic()) {
-            throw new IllegalStateException("GroupBy only works with dynamic queries");
+            throw new IllegalStateException("groupBy only works with dynamic queries");
         }
 
         assertNoRawQuery();
@@ -1047,7 +1047,7 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
 
         for (int i = 0; i < selectTokens.size(); i++) {
             QueryToken token = selectTokens.get(i);
-            if (i > 0 && (selectTokens.get(i - 1) instanceof DistinctToken)) {
+            if (i > 0 && !(selectTokens.get(i - 1) instanceof DistinctToken)) {
                 writer.append(",");
             }
 
@@ -1517,7 +1517,7 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
             return;
         }
 
-        BeforeQueryExecutedEventArgs beforeQueryExecutedEventArgs = new BeforeQueryExecutedEventArgs(theSession, (IDocumentQueryCustomization) this);
+        BeforeQueryExecutedEventArgs beforeQueryExecutedEventArgs = new BeforeQueryExecutedEventArgs(theSession);
         theSession.onBeforeQueryExecutedInvoke(beforeQueryExecutedEventArgs);
 
         queryOperation = initializeQueryOperation();

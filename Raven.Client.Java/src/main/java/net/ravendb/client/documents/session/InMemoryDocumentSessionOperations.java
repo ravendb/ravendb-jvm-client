@@ -383,7 +383,7 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
     /**
      * Tracks the entity.
      */
-    private Object trackEntity(Class entityType, String id, ObjectNode document, ObjectNode metadata, boolean noTracking) {
+    public Object trackEntity(Class entityType, String id, ObjectNode document, ObjectNode metadata, boolean noTracking) {
         /* TODO:
          if (string.IsNullOrEmpty(id))
             {
@@ -1162,25 +1162,21 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
         EventHelper.invoke(onBeforeQueryExecuted, this, beforeQueryExecutedEventArgs);
     }
 
-    /* TODO
+    protected Tuple<String, String> processQueryParameters(Class clazz, String indexName, String collectionName, DocumentConventions conventions) {
+        boolean isIndex = StringUtils.isNotBlank(indexName);
+        boolean isCollection = StringUtils.isNotEmpty(collectionName);
 
+        if (isIndex && isCollection) {
+            throw new IllegalStateException("Parameters indexName and collectionName are mutually exclusive. Please specify only one of them.");
+        }
 
-    protected (string IndexName, string CollectionName) ProcessQueryParameters(Type type, string indexName, string collectionName, DocumentConventions conventions)
-    {
-        var isIndex = string.IsNullOrWhiteSpace(indexName) == false;
-        var isCollection = string.IsNullOrWhiteSpace(collectionName) == false;
+        if (!isIndex && !isCollection) {
+            collectionName = conventions.getCollectionName(clazz);
+        }
 
-        if (isIndex && isCollection)
-            throw new InvalidOperationException($"Parameters '{nameof(indexName)}' and '{nameof(collectionName)}' are mutually exclusive. Please specify only one of them.");
-
-        if (isIndex == false && isCollection == false)
-            collectionName = Conventions.GetCollectionName(type);
-
-        return (indexName, collectionName);
+        return Tuple.create(indexName, collectionName);
     }
-}
 
-        */
     //TBD public AttachmentName[] GetAttachmentNames(object entity) --> attachments
     //TBD public void StoreAttachment(string documentId, string name, Stream stream, string contentType = null) --> attachments
     //TBD public void StoreAttachment(object entity, string name, Stream stream, string contentType = null) --> attachments

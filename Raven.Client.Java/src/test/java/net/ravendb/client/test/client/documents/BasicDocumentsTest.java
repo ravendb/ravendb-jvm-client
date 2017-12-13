@@ -138,7 +138,7 @@ public class BasicDocumentsTest extends RemoteTestBase {
                     .contains("@metadata");
 
             assertThat(doc1Properties.size())
-                    .isEqualTo(1);
+                    .isEqualTo(1 + dummy.size());
 
             assertThat(doc2)
                     .isNotNull();
@@ -148,7 +148,7 @@ public class BasicDocumentsTest extends RemoteTestBase {
                     .contains("@metadata");
 
             assertThat(doc2Properties.size())
-                    .isEqualTo(1);
+                    .isEqualTo(1 + dummy.size());
 
         }
     }

@@ -16,6 +16,7 @@ import net.ravendb.client.documents.session.operations.GetRevisionOperation;
 import net.ravendb.client.documents.session.operations.LoadOperation;
 import net.ravendb.client.documents.session.operations.LoadStartingWithOperation;
 import net.ravendb.client.http.RequestExecutor;
+import net.ravendb.client.primitives.Tuple;
 import org.apache.commons.lang3.StringUtils;
 
 import java.util.Collection;
@@ -165,7 +166,7 @@ public class DocumentSession extends InMemoryDocumentSessionOperations implement
 
     public <T> Map<String, T> load(Class<T> clazz, String... ids) {
         LoadOperation loadOperation = new LoadOperation(this);
-        loadInternal(clazz, ids, loadOperation);
+        loadInternal(ids, loadOperation);
         return loadOperation.getDocuments(clazz);
     }
 
@@ -175,11 +176,11 @@ public class DocumentSession extends InMemoryDocumentSessionOperations implement
      */
     public <T> Map<String, T> load(Class<T> clazz, Collection<String> ids) {
         LoadOperation loadOperation = new LoadOperation(this);
-        loadInternal(clazz, ids.toArray(new String[0]), loadOperation);
+        loadInternal(ids.toArray(new String[0]), loadOperation);
         return loadOperation.getDocuments(clazz);
     }
 
-    private <T> void loadInternal(Class<T> clazz, String[] ids, LoadOperation operation) { //TBD optional stream parameter
+    private <T> void loadInternal(String[] ids, LoadOperation operation) { //TBD optional stream parameter
         operation.byIds(ids);
 
         GetDocumentsCommand command = operation.createRequest();
@@ -285,11 +286,20 @@ public class DocumentSession extends InMemoryDocumentSessionOperations implement
      * @return
      */
     public <T> IDocumentQuery<T> documentQuery(Class<T> clazz, String indexName, String collectionName, boolean isMapReduce) {
+        Tuple<String, String> indexNameAndCollection = processQueryParameters(clazz, indexName, collectionName, getConventions());
+        indexName = indexNameAndCollection.first;
+        collectionName = indexNameAndCollection.second;
+
         return new DocumentQuery<>(clazz, this, indexName, collectionName, isMapReduce);
     }
 
     public <T> IRawDocumentQuery<T> rawQuery(Class<T> clazz, String query) {
         return new RawDocumentQuery<>(clazz, this, query);
+    }
+
+    @Override
+    public <T> IDocumentQuery<T> query(Class<T> clazz) {
+        return documentQuery(clazz, null, null, false);
     }
 
     @Override
