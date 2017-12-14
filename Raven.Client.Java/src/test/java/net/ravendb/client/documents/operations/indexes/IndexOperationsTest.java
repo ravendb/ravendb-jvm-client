@@ -49,7 +49,6 @@ public class IndexOperationsTest extends RemoteTestBase {
 
             indexingStatus = store.maintenance().send(new GetIndexingStatusOperation());
 
-            indexStatus = indexingStatus.getIndexes()[0];
             assertThat(indexingStatus.getStatus())
                     .isEqualTo(IndexRunningStatus.RUNNING);
         }

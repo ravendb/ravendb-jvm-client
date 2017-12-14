@@ -41,7 +41,7 @@ public class FromToken extends QueryToken {
         return new FromToken(indexName, collectionName, alias);
     }
 
-    private static final List<Character> WHITE_SPACE_CHARS = Arrays.asList( new Character[] { ' ', '\t', '\r', '\n' });
+    private static final List<Character> WHITE_SPACE_CHARS = Arrays.asList(' ', '\t', '\r', '\n');
 
     @Override
     public void writeTo(StringBuilder writer) {
@@ -52,8 +52,8 @@ public class FromToken extends QueryToken {
         if (dynamic) {
             writer.append("FROM ");
 
-            if (collectionName.chars().anyMatch(x -> WHITE_SPACE_CHARS.contains(x))) {
-                if (collectionName.indexOf("\"") != -1) {
+            if (collectionName.chars().anyMatch(x -> WHITE_SPACE_CHARS.contains((char) x))) {
+                if (collectionName.contains("\"")) {
                     throwInvalidCollectionName();
                 }
 

@@ -27,12 +27,12 @@ public abstract class AbstractIndexCreationTask {
     protected IndexPriority priority;
     protected IndexLockMode lockMode;
 
-    protected Map<String, FieldStorage> storesStrings;
-    protected Map<String, FieldIndexing> indexesStrings;
-    protected Map<String, String> analyzersStrings;
-    protected Set<String> indexSuggestions;
-    protected Map<String, FieldTermVector> termVectorsStrings;
-    protected Map<String, SpatialOptions> spatialOptionsStrings;
+    protected final Map<String, FieldStorage> storesStrings;
+    protected final Map<String, FieldIndexing> indexesStrings;
+    protected final Map<String, String> analyzersStrings;
+    protected final Set<String> indexSuggestions;
+    protected final Map<String, FieldTermVector> termVectorsStrings;
+    protected final Map<String, SpatialOptions> spatialOptionsStrings;
 
     protected String outputReduceToCollection;
 

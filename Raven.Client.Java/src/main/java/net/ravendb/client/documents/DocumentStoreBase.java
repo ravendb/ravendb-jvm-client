@@ -25,10 +25,10 @@ import java.util.List;
  */
 public abstract class DocumentStoreBase implements IDocumentStore {
 
-    private List<EventHandler<BeforeStoreEventArgs>> onBeforeStore = new ArrayList<>();
-    private List<EventHandler<AfterStoreEventArgs>> onAfterStore = new ArrayList<>();
-    private List<EventHandler<BeforeDeleteEventArgs>> onBeforeDelete = new ArrayList<>();
-    private List<EventHandler<BeforeQueryExecutedEventArgs>> onBeforeQueryExecuted = new ArrayList<>();
+    private final List<EventHandler<BeforeStoreEventArgs>> onBeforeStore = new ArrayList<>();
+    private final List<EventHandler<AfterStoreEventArgs>> onAfterStore = new ArrayList<>();
+    private final List<EventHandler<BeforeDeleteEventArgs>> onBeforeDelete = new ArrayList<>();
+    private final List<EventHandler<BeforeQueryExecutedEventArgs>> onBeforeQueryExecuted = new ArrayList<>();
 
     protected DocumentStoreBase() {
         //TBD: Subscriptions = new DocumentSubscriptions(this);

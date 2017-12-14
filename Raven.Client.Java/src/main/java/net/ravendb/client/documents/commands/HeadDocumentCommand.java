@@ -12,8 +12,6 @@ import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpHead;
 import org.apache.http.client.methods.HttpRequestBase;
 
-import java.io.IOException;
-
 public class HeadDocumentCommand extends RavenCommand<String> {
 
     private final String _id;
@@ -65,7 +63,7 @@ public class HeadDocumentCommand extends RavenCommand<String> {
     }
 
     @Override
-    public void setResponse(String response, boolean fromCache) throws IOException {
+    public void setResponse(String response, boolean fromCache) {
         if (response != null) {
             throwInvalidResponse();
         }

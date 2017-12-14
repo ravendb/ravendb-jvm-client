@@ -6,7 +6,7 @@ public class TimeUtils {
 
     public static String durationToTimeSpan(Duration duration) {
         long time = duration.toMillis();
-        long milis = time % 1000;
+        long millis = time % 1000;
         time = time / 1000; // seconds
         long seconds = time % 60;
         time = time / 60; // in minutes
@@ -24,9 +24,9 @@ public class TimeUtils {
         sb.append(String.format("%02d", hours)).append(":");
         sb.append(String.format("%02d", minutes)).append(":");
         sb.append(String.format("%02d", seconds));
-        if (milis > 0) {
+        if (millis > 0) {
             sb.append(".");
-            sb.append(String.format("%03d", milis)).append("0000");
+            sb.append(String.format("%03d", millis)).append("0000");
         }
 
         return sb.toString();

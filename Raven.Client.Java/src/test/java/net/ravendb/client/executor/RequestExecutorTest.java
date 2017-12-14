@@ -13,7 +13,6 @@ import net.ravendb.client.primitives.ExceptionsUtils;
 import net.ravendb.client.serverwide.operations.GetDatabaseNamesOperation;
 import org.junit.jupiter.api.Test;
 
-import java.io.IOException;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -93,9 +92,10 @@ public class RequestExecutorTest extends RemoteTestBase {
                 serverNode.setUrl(store.getUrls()[0]);
                 serverNode.setDatabase("no_such");
 
-                assertThatThrownBy(() -> {
-                    ExceptionsUtils.accept(() -> executor.updateTopologyAsync(serverNode, 5000).get());
-                }).isExactlyInstanceOf(DatabaseDoesNotExistException.class);
+                assertThatThrownBy(() ->
+                        ExceptionsUtils.accept(() ->
+                                executor.updateTopologyAsync(serverNode, 5000).get()))
+                        .isExactlyInstanceOf(DatabaseDoesNotExistException.class);
             }
         }
     }
@@ -109,9 +109,9 @@ public class RequestExecutorTest extends RemoteTestBase {
 
                 GetNextOperationIdCommand command = new GetNextOperationIdCommand();
 
-                assertThatThrownBy(() -> {
-                    executor.execute(command);
-                }).isExactlyInstanceOf(DatabaseDoesNotExistException.class);
+                assertThatThrownBy(() ->
+                        executor.execute(command))
+                        .isExactlyInstanceOf(DatabaseDoesNotExistException.class);
             }
         }
     }
@@ -156,8 +156,10 @@ public class RequestExecutorTest extends RemoteTestBase {
                 List<ServerNode> topologyNodes = executor.getTopologyNodes();
 
                 assertThat(topologyNodes)
-                        .hasSize(1)
-                        .hasOnlyOneElementSatisfying(x -> x.getUrl().equals(url));
+                        .hasSize(1);
+
+                assertThat(topologyNodes.get(0).getUrl().equals(url))
+                        .isTrue();
 
                 assertThat(executor.getUrl()).isEqualTo(url);
             }

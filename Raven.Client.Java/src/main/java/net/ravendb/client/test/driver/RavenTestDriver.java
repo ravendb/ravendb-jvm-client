@@ -38,8 +38,8 @@ import java.util.stream.Collectors;
 
 public abstract class RavenTestDriver implements CleanCloseable {
 
-    private RavenServerLocator locator;
-    private RavenServerLocator securedLocator;
+    private final RavenServerLocator locator;
+    private final RavenServerLocator securedLocator;
 
     private static IDocumentStore globalServer;
     private static Process globalServerProcess;
@@ -49,7 +49,7 @@ public abstract class RavenTestDriver implements CleanCloseable {
 
     private final Set<DocumentStore> documentStores = Sets.newConcurrentHashSet();
 
-    private static AtomicInteger index = new AtomicInteger();
+    private static final AtomicInteger index = new AtomicInteger();
 
     protected boolean disposed;
 
@@ -141,6 +141,7 @@ public abstract class RavenTestDriver implements CleanCloseable {
     }
 
 
+    @SuppressWarnings("EmptyMethod")
     protected void setupDatabase(IDocumentStore documentStore) {
         // empty by design
     }
@@ -246,7 +247,7 @@ public abstract class RavenTestDriver implements CleanCloseable {
     }
 
     private static void killGlobalServerProcess(boolean secured) {
-        Process p = null;
+        Process p;
         if (secured) {
             p = RavenTestDriver.globalSecuredServerProcess;
             globalSecuredServerProcess = null;
@@ -356,7 +357,7 @@ public abstract class RavenTestDriver implements CleanCloseable {
         do {
             try {
                 Thread.sleep(500);
-            } catch (InterruptedException e) {
+            } catch (InterruptedException ignored) {
             }
 
             try (IDocumentSession session = store.openSession()) {

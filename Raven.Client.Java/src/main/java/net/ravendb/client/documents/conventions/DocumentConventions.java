@@ -27,9 +27,9 @@ import java.util.function.Function;
 
 public class DocumentConventions {
 
-    public static DocumentConventions defaultConventions = new DocumentConventions();
+    public static final DocumentConventions defaultConventions = new DocumentConventions();
 
-    private static Map<Class, String> _cachedDefaultTypeCollectionNames = new HashMap<>();
+    private static final Map<Class, String> _cachedDefaultTypeCollectionNames = new HashMap<>();
 
     //TBD: private readonly List<(Type Type, TryConvertValueForQueryDelegate<object> Convert)> _listOfQueryValueConverters = new List<(Type, TryConvertValueForQueryDelegate<object>)>();
 
@@ -37,7 +37,7 @@ public class DocumentConventions {
 
     private boolean _frozen;
     private ClientConfiguration _originalConfiguration;
-    private Map<Class, Field> _idPropertyCache = new HashMap<>();
+    private final Map<Class, Field> _idPropertyCache = new HashMap<>();
     private boolean _saveEnumsAsIntegers;
     private String _identityPartsSeparator;
     private boolean _disableTopologyUpdates;
@@ -362,6 +362,7 @@ public class DocumentConventions {
     /**
      * Clone the current conventions to a new instance
      */
+    @SuppressWarnings("MethodDoesntCallSuperMethod")
     public DocumentConventions clone() {
         DocumentConventions cloned = new DocumentConventions();
         try {
@@ -377,7 +378,7 @@ public class DocumentConventions {
         while (clazz != null && field == null) {
             try {
                 field = clazz.getDeclaredField(name);
-            } catch (Exception e) {
+            } catch (Exception ignored) {
             }
             clazz = clazz.getSuperclass();
         }

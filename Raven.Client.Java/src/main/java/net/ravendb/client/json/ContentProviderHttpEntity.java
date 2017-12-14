@@ -8,7 +8,7 @@ import java.util.function.Consumer;
 
 public class ContentProviderHttpEntity extends AbstractHttpEntity {
 
-    private Consumer<OutputStream> contentProvider;
+    private final Consumer<OutputStream> contentProvider;
 
     public ContentProviderHttpEntity(Consumer<OutputStream> contentProvider, ContentType contentType) {
         this.contentProvider = contentProvider;

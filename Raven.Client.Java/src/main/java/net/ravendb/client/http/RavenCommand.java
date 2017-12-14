@@ -21,13 +21,13 @@ import java.util.Map;
 
 public abstract class RavenCommand<TResult> {
 
-    protected Class<TResult> resultClass;
+    protected final Class<TResult> resultClass;
     protected TResult result;
     protected int statusCode;
     protected RavenCommandResponseType responseType;
     protected boolean canCache;
     protected boolean canCacheAggressively;
-    protected ObjectMapper mapper = JsonExtensions.getDefaultMapper();
+    protected final ObjectMapper mapper = JsonExtensions.getDefaultMapper();
 
     public abstract boolean isReadRequest();
 

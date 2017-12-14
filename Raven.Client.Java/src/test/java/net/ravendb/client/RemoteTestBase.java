@@ -55,9 +55,7 @@ public class RemoteTestBase extends RavenTestDriver {
             request.setConfig(requestConfig);
         };
 
-        return () -> {
-            RequestExecutor.requestPostProcessor = null;
-        };
+        return () -> RequestExecutor.requestPostProcessor = null;
     }
 
 }

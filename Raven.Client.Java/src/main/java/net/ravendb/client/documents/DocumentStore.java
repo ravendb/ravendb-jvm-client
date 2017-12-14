@@ -192,7 +192,7 @@ public class DocumentStore extends DocumentStoreBase {
                 MultiDatabaseHiLoIdGenerator generator = new MultiDatabaseHiLoIdGenerator(this, getConventions());
                 _multiDbHiLo = generator;
 
-                getConventions().setDocumentIdGenerator((dbName, entity) -> generator.generateDocumentId(dbName, entity));
+                getConventions().setDocumentIdGenerator(generator::generateDocumentId);
             }
 
             getConventions().freeze();
@@ -239,9 +239,7 @@ public class DocumentStore extends DocumentStoreBase {
         AggressiveCacheOptions old = re.AggressiveCaching.get();
         re.AggressiveCaching.set(null);
 
-        return () -> {
-            re.AggressiveCaching.set(old);
-        };
+        return () -> re.AggressiveCaching.set(old);
     }
 
     //TBD public override IDatabaseChanges Changes(string database = null)
@@ -249,7 +247,7 @@ public class DocumentStore extends DocumentStoreBase {
     //TBD public override IDisposable AggressivelyCacheFor(TimeSpan cacheDuration, string database = null)
     //TBD private void ListenToChangesAndUpdateTheCache(string database)
 
-    private List<EventHandler<VoidArgs>> afterDispose = new ArrayList<>();
+    private final List<EventHandler<VoidArgs>> afterDispose = new ArrayList<>();
 
     public void addAfterCloseListener(EventHandler<VoidArgs> event) {
         this.afterDispose.add(event);

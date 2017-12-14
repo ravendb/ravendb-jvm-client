@@ -20,8 +20,8 @@ import java.io.IOException;
 public class PatchOperation implements IOperation<PatchResult> {
 
     public static class Payload {
-        private PatchRequest patch;
-        private PatchRequest patchIfMissing;
+        private final PatchRequest patch;
+        private final PatchRequest patchIfMissing;
 
         public Payload(PatchRequest patch, PatchRequest patchIfMissing) {
             this.patch = patch;

@@ -210,7 +210,7 @@ public class NodeSelector implements CleanCloseable {
         public final AtomicInteger[] failures;
         public final int[] fastestRecords;
         public int fastest;
-        public AtomicInteger speedTestMode = new AtomicInteger(0);
+        public final AtomicInteger speedTestMode = new AtomicInteger(0);
 
         public NodeSelectorState(int currentNodeIndex, Topology topology) {
             this.topology = topology;

@@ -146,7 +146,7 @@ public class ClusterRequestExecutor extends RequestExecutor {
     public void close() {
         try {
             clusterTopologySemaphore.acquire();
-        } catch (InterruptedException e) {
+        } catch (InterruptedException ignored) {
         }
 
         super.close();

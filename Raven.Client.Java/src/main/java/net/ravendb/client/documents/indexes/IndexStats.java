@@ -250,7 +250,7 @@ public class IndexStats {
     }
 
     public void setStale(boolean stale) {
-        stale = stale;
+        this.stale = stale;
     }
 
     /**

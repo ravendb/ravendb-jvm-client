@@ -37,7 +37,7 @@ public class DeleteDocumentCommandTest extends RemoteTestBase {
     public void canDeleteDocumentByEtag() throws Exception {
         try (IDocumentStore store = getDocumentStore()) {
 
-            String changeVector = null;
+            String changeVector;
 
             try (IDocumentSession session = store.openSession()) {
                 User user = new User();
@@ -54,9 +54,9 @@ public class DeleteDocumentCommandTest extends RemoteTestBase {
                 session.saveChanges();
             }
             DeleteDocumentCommand command = new DeleteDocumentCommand("users/1", changeVector);
-            assertThatThrownBy(() -> {
-                store.getRequestExecutor().execute(command);
-            }).isExactlyInstanceOf(ConcurrencyException.class);
+            assertThatThrownBy(() ->
+                    store.getRequestExecutor().execute(command))
+                    .isExactlyInstanceOf(ConcurrencyException.class);
         }
     }
 

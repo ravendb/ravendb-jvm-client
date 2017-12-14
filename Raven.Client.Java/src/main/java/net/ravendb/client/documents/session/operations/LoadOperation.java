@@ -116,8 +116,7 @@ public class LoadOperation {
     public <T> Map<String, T> getDocuments(Class<T> clazz) {
         Map<String, T> finalResults = new TreeMap<>(String::compareToIgnoreCase);
 
-        for (int i = 0; i < _ids.length; i++) {
-            String id = _ids[i];
+        for (String id : _ids) {
             if (id == null) {
                 continue;
             }

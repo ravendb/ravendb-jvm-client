@@ -2,7 +2,7 @@ package net.ravendb.client.documents.session;
 
 public class SessionInfo {
 
-    private Integer sessionId;
+    private final Integer sessionId;
 
     public SessionInfo(Integer sessionId) {
         this.sessionId = sessionId;

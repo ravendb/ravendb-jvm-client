@@ -6,9 +6,9 @@ public class BeforeDeleteEventArgs extends EventArgs {
 
     private IMetadataDictionary _documentMetadata;
 
-    private InMemoryDocumentSessionOperations session;
-    private String documentId;
-    private Object entity;
+    private final InMemoryDocumentSessionOperations session;
+    private final String documentId;
+    private final Object entity;
 
     public BeforeDeleteEventArgs(InMemoryDocumentSessionOperations session, String documentId, Object entity) {
         this.session = session;

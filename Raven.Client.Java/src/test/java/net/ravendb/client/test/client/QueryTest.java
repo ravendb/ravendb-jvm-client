@@ -652,7 +652,7 @@ public class QueryTest extends RemoteTestBase {
                 assertThat(users)
                         .hasSize(3);
 
-                List<String> names = users.stream().map(x -> x.getName()).collect(toList());
+                List<String> names = users.stream().map(User::getName).collect(toList());
                 assertThat(names)
                         .containsSequence("Tarzan", "John", "John");
 

@@ -52,7 +52,7 @@ import java.util.stream.Collectors;
 
 public class RequestExecutor implements CleanCloseable {
 
-    public static Consumer<HttpClientBuilder> configureHttpClient = null;
+    public static final Consumer<HttpClientBuilder> configureHttpClient = null;
 
     /**
      * Extension point to plug - in request post processing like adding proxy etc.
@@ -69,7 +69,7 @@ public class RequestExecutor implements CleanCloseable {
 
     private final ConcurrentMap<ServerNode, NodeStatus> _failedNodesTimers = new ConcurrentHashMap<>();
 
-    private KeyStore certificate;
+    private final KeyStore certificate;
 
     private final String _databaseName;
 
@@ -92,7 +92,7 @@ public class RequestExecutor implements CleanCloseable {
         return _nodeSelector != null ? _nodeSelector.getTopology() : null;
     }
 
-    private CloseableHttpClient httpClient;
+    private final CloseableHttpClient httpClient;
 
     public CloseableHttpClient getHttpClient() {
         return httpClient;
@@ -109,7 +109,7 @@ public class RequestExecutor implements CleanCloseable {
 
     protected NodeSelector _nodeSelector;
 
-    public AtomicLong numberOfServerRequests = new AtomicLong(0);
+    public final AtomicLong numberOfServerRequests = new AtomicLong(0);
 
     public String getUrl() {
         if (_nodeSelector == null) {
@@ -968,7 +968,7 @@ public class RequestExecutor implements CleanCloseable {
 
         try {
             _updateTopologySemaphore.acquire();
-        } catch (InterruptedException e) {
+        } catch (InterruptedException ignored) {
         }
 
         if (_disposed) {
@@ -1101,8 +1101,8 @@ public class RequestExecutor implements CleanCloseable {
     }
 
     public static class IndexAndResponse {
-        public int index;
-        public CloseableHttpResponse response;
+        public final int index;
+        public final CloseableHttpResponse response;
 
         public IndexAndResponse(int index, CloseableHttpResponse response) {
             this.index = index;

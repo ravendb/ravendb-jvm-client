@@ -9,10 +9,10 @@ import java.io.IOException;
 public class PutCommandDataBase<T extends JsonNode> implements ICommandData {
 
     private String id;
-    private String name = null;
+    private final String name = null;
     private String changeVector;
     private T document;
-    private CommandType type = CommandType.PUT;
+    private final CommandType type = CommandType.PUT;
 
     protected PutCommandDataBase(String id, String changeVector, T document) {
         if (document == null) {

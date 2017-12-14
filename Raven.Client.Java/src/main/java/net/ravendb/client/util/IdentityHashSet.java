@@ -19,6 +19,7 @@ public class IdentityHashSet<T> implements Set<T> {
         return inner.isEmpty();
     }
 
+    @SuppressWarnings("SuspiciousMethodCalls")
     @Override
     public boolean contains(Object o) {
         return inner.containsKey(o);
@@ -46,6 +47,7 @@ public class IdentityHashSet<T> implements Set<T> {
         return result;
     }
 
+    @SuppressWarnings("SuspiciousMethodCalls")
     @Override
     public boolean remove(Object o) {
         boolean result = inner.containsKey(o);
@@ -53,6 +55,7 @@ public class IdentityHashSet<T> implements Set<T> {
         return result;
     }
 
+    @SuppressWarnings("SuspiciousMethodCalls")
     @Override
     public boolean containsAll(Collection<?> c) {
         for (Object o : c) {

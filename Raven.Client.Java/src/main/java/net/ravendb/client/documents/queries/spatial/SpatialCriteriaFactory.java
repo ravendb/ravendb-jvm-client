@@ -6,7 +6,7 @@ import net.ravendb.client.documents.indexes.spatial.SpatialUnits;
 
 public class SpatialCriteriaFactory {
 
-    public static SpatialCriteriaFactory INSTANCE = new SpatialCriteriaFactory();
+    public static final SpatialCriteriaFactory INSTANCE = new SpatialCriteriaFactory();
 
     private SpatialCriteriaFactory() {}
 

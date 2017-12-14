@@ -7,10 +7,10 @@ import java.io.IOException;
 
 public class DeleteCommandData implements ICommandData {
 
-    private String id;
+    private final String id;
     private String name;
     private String changeVector;
-    private CommandType type = CommandType.DELETE;
+    private final CommandType type = CommandType.DELETE;
 
     public DeleteCommandData(String id, String changeVector) {
         this.id = id;

@@ -8,18 +8,18 @@ import java.util.Map;
  */
 public class ReflectionUtil {
 
-    private static Map<Class<?>, String> fullnameCache = new HashMap<>();
+    private static final Map<Class<?>, String> fullNameCache = new HashMap<>();
 
     /**
      * Note: we can't fetch generic types information in Java - hence we are limited to simple getName on class object
      */
     public static String getFullNameWithoutVersionInformation(Class<?> entityType) {
-        if (fullnameCache.containsKey(entityType)) {
-            return fullnameCache.get(entityType);
+        if (fullNameCache.containsKey(entityType)) {
+            return fullNameCache.get(entityType);
         }
 
         String fullName = entityType.getName();
-        fullnameCache.put(entityType, fullName);
+        fullNameCache.put(entityType, fullName);
         return fullName;
     }
 }

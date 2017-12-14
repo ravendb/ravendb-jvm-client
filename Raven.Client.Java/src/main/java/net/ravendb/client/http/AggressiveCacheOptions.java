@@ -3,7 +3,7 @@ package net.ravendb.client.http;
 import java.time.Duration;
 
 public class AggressiveCacheOptions {
-    private Duration duration;
+    private final Duration duration;
 
     public Duration getDuration() {
         return duration;

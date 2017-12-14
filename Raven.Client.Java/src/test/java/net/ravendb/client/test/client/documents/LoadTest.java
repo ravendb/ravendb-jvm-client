@@ -65,7 +65,7 @@ public class LoadTest extends RemoteTestBase {
                 foo.setName("Beginning");
                 session.store(foo);
 
-                String fooId = barId = session.advanced().getDocumentId(foo);
+                String fooId = session.advanced().getDocumentId(foo);
                 Bar bar = new Bar();
                 bar.setName("End");
                 bar.setFooId(fooId);

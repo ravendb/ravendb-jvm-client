@@ -7,7 +7,6 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.Collection;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
@@ -76,8 +75,8 @@ public class QueryHashCalculator {
         if (s == null) {
             return;
         }
-        for (int i = 0; i < s.length; i++) {
-            write(s[i]);
+        for (String value : s) {
+            write(value);
         }
     }
 
@@ -86,8 +85,8 @@ public class QueryHashCalculator {
             return;
         }
 
-        for (int i = 0; i < s.size(); i++) {
-            write(s.get(i));
+        for (String value : s) {
+            write(value);
         }
     }
 
@@ -116,9 +115,8 @@ public class QueryHashCalculator {
         } else if (value == null) {
             // write nothing
         } else if (value instanceof Collection) {
-            Iterator iterator = ((Collection) value).iterator();
-            while (iterator.hasNext()) {
-                writeParameterValue(iterator.next());
+            for (Object o : ((Collection) value)) {
+                writeParameterValue(o);
             }
         } else {
             write(value.toString());

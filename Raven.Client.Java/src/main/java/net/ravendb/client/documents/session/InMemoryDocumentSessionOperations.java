@@ -36,7 +36,7 @@ import java.util.stream.Collectors;
 
 public abstract class InMemoryDocumentSessionOperations implements CleanCloseable {
 
-    private static AtomicInteger _clientSessionIdCounter = new AtomicInteger();
+    private static final AtomicInteger _clientSessionIdCounter = new AtomicInteger();
 
     protected final int _clientSessionId = _clientSessionIdCounter.incrementAndGet();
 
@@ -45,18 +45,18 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
     protected final List<ILazyOperation> pendingLazyOperations = new ArrayList<>();
     protected final Map<ILazyOperation, Consumer<Object>> onEvaluateLazy = new HashMap<>();
 
-    private static AtomicInteger _instancesCounter = new AtomicInteger();
+    private static final AtomicInteger _instancesCounter = new AtomicInteger();
 
     private final int _hash = _instancesCounter.incrementAndGet();
-    protected boolean generateDocumentKeysOnStore = true;
-    protected SessionInfo sessionInfo;
+    protected final boolean generateDocumentKeysOnStore = true;
+    protected final SessionInfo sessionInfo;
     private BatchOptions _saveChangesOptions;
 
     private boolean _isDisposed;
 
     protected ObjectMapper mapper = JsonExtensions.getDefaultMapper();
 
-    private UUID id;
+    private final UUID id;
 
     /**
      * The session id
@@ -70,10 +70,10 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
      */
     protected final Set<Object> deletedEntities = new IdentityHashSet<>();
 
-    private List<EventHandler<BeforeStoreEventArgs>> onBeforeStore = new ArrayList<>();
-    private List<EventHandler<AfterStoreEventArgs>> onAfterStore = new ArrayList<>();
-    private List<EventHandler<BeforeDeleteEventArgs>> onBeforeDelete = new ArrayList<>();
-    private List<EventHandler<BeforeQueryExecutedEventArgs>> onBeforeQueryExecuted = new ArrayList<>();
+    private final List<EventHandler<BeforeStoreEventArgs>> onBeforeStore = new ArrayList<>();
+    private final List<EventHandler<AfterStoreEventArgs>> onAfterStore = new ArrayList<>();
+    private final List<EventHandler<BeforeDeleteEventArgs>> onBeforeDelete = new ArrayList<>();
+    private final List<EventHandler<BeforeQueryExecutedEventArgs>> onBeforeQueryExecuted = new ArrayList<>();
 
     public void addBeforeStoreListener(EventHandler<BeforeStoreEventArgs> handler) {
         this.onBeforeStore.add(handler);
@@ -155,7 +155,7 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
 
     protected final DocumentStoreBase _documentStore;
 
-    private String databaseName;
+    private final String databaseName;
 
     public String getDatabaseName() {
         return databaseName;
@@ -248,13 +248,13 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
         return deferredCommands.size();
     }
 
-    private GenerateEntityIdOnTheClient generateEntityIdOnTheClient;
+    private final GenerateEntityIdOnTheClient generateEntityIdOnTheClient;
 
     public GenerateEntityIdOnTheClient getGenerateEntityIdOnTheClient() {
         return generateEntityIdOnTheClient;
     }
 
-    private EntityToJson entityToJson;
+    private final EntityToJson entityToJson;
 
     public EntityToJson getEntityToJson() {
         return entityToJson;
@@ -989,7 +989,7 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
     }
 
     public boolean checkIfIdAlreadyIncluded(String[] ids, Map.Entry<String, Class>[] includes) {
-        return checkIfIdAlreadyIncluded(ids, Arrays.stream(includes).map(x -> x.getKey()).collect(Collectors.toList()));
+        return checkIfIdAlreadyIncluded(ids, Arrays.stream(includes).map(Map.Entry::getKey).collect(Collectors.toList()));
     }
 
     public boolean checkIfIdAlreadyIncluded(String[] ids, Collection<String> includes) {
@@ -1016,7 +1016,7 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
             }
 
             for (String include : includes) {
-                final boolean[] hasAll = {true}; //using fake arary here to force final keyword on variable
+                final boolean[] hasAll = {true}; //using fake array here to force final keyword on variable
 
                 IncludesUtil.include(documentInfo.getDocument(), include, s -> {
                     hasAll[0] &= isLoaded(s);

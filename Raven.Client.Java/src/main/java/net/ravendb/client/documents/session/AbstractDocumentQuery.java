@@ -29,7 +29,7 @@ import java.util.function.Consumer;
  */
 public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQuery<T, TSelf>> implements IAbstractDocumentQuery<T> {
 
-    protected Class<T> clazz;
+    protected final Class<T> clazz;
 
     private final Map<String, String> _aliasToGroupByFieldName = new HashMap<>();
 
@@ -44,8 +44,8 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
      */
     protected boolean negate;
 
-    private String indexName;
-    private String collectionName;
+    private final String indexName;
+    private final String collectionName;
     private int _currentClauseDepth;
 
     protected String queryRaw;

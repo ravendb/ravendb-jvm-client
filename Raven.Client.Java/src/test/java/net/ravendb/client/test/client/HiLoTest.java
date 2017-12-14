@@ -78,7 +78,7 @@ public class HiLoTest extends RemoteTestBase { //TODO: extends replication test
 
     @Test
     public void hiLoMultiDb() throws Exception {
-        try (DocumentStore store = (DocumentStore) getDocumentStore()) {
+        try (DocumentStore store = getDocumentStore()) {
 
             try (IDocumentSession session = store.openSession()) {
                 HiloDoc hiloDoc = new HiloDoc();
@@ -106,7 +106,7 @@ public class HiLoTest extends RemoteTestBase { //TODO: extends replication test
 
     @Test
     public void capacityShouldDouble() throws Exception {
-        try (DocumentStore store = (DocumentStore) getDocumentStore()) {
+        try (DocumentStore store = getDocumentStore()) {
 
             HiLoIdGenerator hiLoIdGenerator = new HiLoIdGenerator("users", store, store.getDatabase(), store.getConventions().getIdentityPartsSeparator());
 
@@ -142,7 +142,7 @@ public class HiLoTest extends RemoteTestBase { //TODO: extends replication test
 
     @Test
     public void returnUnusedRangeOnClose() throws Exception {
-        try (DocumentStore store = (DocumentStore) getDocumentStore()) {
+        try (DocumentStore store = getDocumentStore()) {
 
             DocumentStore newStore = new DocumentStore();
             newStore.setUrls(store.getUrls());

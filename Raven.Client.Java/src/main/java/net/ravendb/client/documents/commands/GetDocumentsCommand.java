@@ -138,7 +138,7 @@ public class GetDocumentsCommand extends RavenCommand<GetDocumentsResult> {
         // if it is too big, we drop to POST (note that means that we can't use the HTTP cache any longer)
         // we are fine with that, requests to load > 1024 items are going to be rare
         boolean isGet = uniqueIds.stream()
-                .map(x -> x.length())
+                .map(String::length)
                 .reduce((prev, current) -> prev + current)
                 .orElse(0) < 1024;
 

@@ -38,22 +38,18 @@ public class RavenDB903Test extends RemoteTestBase {
 
     @Test
     public void test1() throws Exception {
-        doTest(session -> {
-            return session.advanced().documentQuery(Product.class, TestIndex.class)
-                    .search("description", "Hello")
-                    .intersect()
-                    .whereEquals("name", "Bar");
-        });
+        doTest(session -> session.advanced().documentQuery(Product.class, TestIndex.class)
+                .search("description", "Hello")
+                .intersect()
+                .whereEquals("name", "Bar"));
     }
 
     @Test
     public void test2() throws Exception {
-        doTest(session -> {
-            return session.advanced().documentQuery(Product.class, TestIndex.class)
-                    .whereEquals("name", "Bar")
-                    .intersect()
-                    .search("description", "Hello");
-        });
+        doTest(session -> session.advanced().documentQuery(Product.class, TestIndex.class)
+                .whereEquals("name", "Bar")
+                .intersect()
+                .search("description", "Hello"));
     }
 
     private void doTest(Function<IDocumentSession, IDocumentQuery<Product>> queryFunction) throws Exception {

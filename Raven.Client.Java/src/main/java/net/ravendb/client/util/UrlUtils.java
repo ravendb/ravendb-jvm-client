@@ -13,7 +13,7 @@ public class UrlUtils {
     @SuppressWarnings("boxing")
     public static final Character DUMMY_CHAR = 0xFFFF;
 
-    private static Log log = LogFactory.getLog(UrlUtils.class.getCanonicalName());
+    private static final Log log = LogFactory.getLog(UrlUtils.class.getCanonicalName());
 
     @SuppressWarnings("boxing")
     public static String escapeDataString(String stringToEscape) {
