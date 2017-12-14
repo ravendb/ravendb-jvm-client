@@ -20,10 +20,7 @@ public class ClusterTopology {
             return true;
         }
 
-        if (watchers != null && watchers.containsKey(node)) {
-            return true;
-        }
-        return false;
+        return watchers != null && watchers.containsKey(node);
     }
 
     public String getUrlFromTag(String tag) {

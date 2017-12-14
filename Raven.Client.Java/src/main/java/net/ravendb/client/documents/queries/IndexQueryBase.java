@@ -110,9 +110,7 @@ public class IndexQueryBase<T> implements IIndexQuery {
         if (start != that.start) return false;
         if (waitForNonStaleResults != that.waitForNonStaleResults) return false;
         if (query != null ? !query.equals(that.query) : that.query != null) return false;
-        if (waitForNonStaleResultsTimeout != null ? !waitForNonStaleResultsTimeout.equals(that.waitForNonStaleResultsTimeout) : that.waitForNonStaleResultsTimeout != null)
-            return false;
-        return true;
+        return waitForNonStaleResultsTimeout != null ? waitForNonStaleResultsTimeout.equals(that.waitForNonStaleResultsTimeout) : that.waitForNonStaleResultsTimeout == null;
     }
 
     @Override

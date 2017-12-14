@@ -47,8 +47,7 @@ public abstract class IndexQueryWithParameters<T> extends IndexQueryBase<T> {
 
         IndexQueryWithParameters<?> that = (IndexQueryWithParameters<?>) o;
 
-        if (skipDuplicateChecking != that.skipDuplicateChecking) return false;
-        return true;
+        return skipDuplicateChecking == that.skipDuplicateChecking;
         //TBD return showTimings == that.showTimings;
     }
 

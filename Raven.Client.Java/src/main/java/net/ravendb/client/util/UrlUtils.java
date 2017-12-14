@@ -152,10 +152,7 @@ public class UrlUtils {
             return true;
         } else if (c < '!') {
             return true;
-        } else if (c == '>' || c == '<' || c == '%' || c == '"' || c == '`') {
-            return true;
-        }
-        return false;
+        } else return c == '>' || c == '<' || c == '%' || c == '"' || c == '`';
     }
 
     private static boolean isNotUnreserved(char c) {
@@ -165,10 +162,7 @@ public class UrlUtils {
             return true;
         } else if (c < '\'' && c != '!') {
             return true;
-        } else if (c == '+' || c == ',' || c == '/') {
-            return true;
-        }
-        return false;
+        } else return c == '+' || c == ',' || c == '/';
     }
 
 
