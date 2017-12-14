@@ -4,11 +4,12 @@ import net.ravendb.client.RemoteTestBase;
 import net.ravendb.client.documents.IDocumentStore;
 import net.ravendb.client.documents.indexes.AbstractIndexCreationTask;
 import net.ravendb.client.documents.queries.Query;
-import net.ravendb.client.documents.session.GroupByField;
-import net.ravendb.client.documents.session.IDocumentSession;
-import net.ravendb.client.documents.session.OrderingType;
+import net.ravendb.client.documents.queries.SearchOperator;
+import net.ravendb.client.documents.session.*;
 import net.ravendb.client.infrastructure.entities.User;
+import net.ravendb.client.primitives.Reference;
 import org.apache.commons.lang3.StringUtils;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import java.util.Arrays;
@@ -312,11 +313,7 @@ public class QueryTest extends RemoteTestBase {
         try (IDocumentStore store = getDocumentStore()) {
             addUsers(store);
 
-            store.executeIndex(new UsersByName());
-            waitForIndexing(store);
-
             try (IDocumentSession session = store.openSession()) {
-
                 List<User> users = session.query(User.class)
                         .whereGreaterThanOrEqual("age", 3)
                         .toList();
@@ -327,6 +324,335 @@ public class QueryTest extends RemoteTestBase {
             }
         }
     }
+
+    private static class UserProjection {
+        private String id;
+        private String name;
+
+        public String getId() {
+            return id;
+        }
+
+        public void setId(String id) {
+            this.id = id;
+        }
+
+        public String getName() {
+            return name;
+        }
+
+        public void setName(String name) {
+            this.name = name;
+        }
+    }
+
+    @Test
+    public void queryWithProjection() throws Exception {
+        try (IDocumentStore store = getDocumentStore()) {
+            addUsers(store);
+
+            try (IDocumentSession session = store.openSession()) {
+
+                List<UserProjection> projections = session.query(User.class)
+                        .selectFields(UserProjection.class)
+                        .toList();
+
+                assertThat(projections)
+                        .hasSize(3);
+
+                for (UserProjection projection : projections) {
+                    assertThat(projection.getId())
+                            .isNotNull();
+
+                    assertThat(projection.getName())
+                            .isNotNull();
+                }
+            }
+        }
+    }
+
+    @Test
+    public void queryWithProjection2() throws Exception {
+        try (IDocumentStore store = getDocumentStore()) {
+            addUsers(store);
+
+            try (IDocumentSession session = store.openSession()) {
+
+                List<UserProjection> projections = session.query(User.class)
+                        .selectFields(UserProjection.class, "lastName")
+                        .toList();
+
+                assertThat(projections)
+                        .hasSize(3);
+
+                for (UserProjection projection : projections) {
+                    assertThat(projection.getId())
+                            .isNotNull();
+
+                    assertThat(projection.getName())
+                            .isNull(); // we didn't specify this field in mapping
+                }
+            }
+        }
+    }
+
+    @Test
+    public void queryDistinct() throws Exception {
+        try (IDocumentStore store = getDocumentStore()) {
+            addUsers(store);
+
+            try (IDocumentSession session = store.openSession()) {
+                List<String> uniqueNames = session.query(User.class)
+                        .selectFields(String.class, "name")
+                        .distinct()
+                        .toList();
+
+                assertThat(uniqueNames)
+                        .hasSize(2)
+                        .contains("Tarzan")
+                        .contains("John");
+            }
+        }
+    }
+
+    @Test
+    public void querySearchWithOr() throws Exception {
+        try (IDocumentStore store = getDocumentStore()) {
+            addUsers(store);
+
+            try (IDocumentSession session = store.openSession()) {
+                List<User> uniqueNames = session.query(User.class)
+                        .search("name", "Tarzan John", SearchOperator.OR)
+                        .toList();
+
+                assertThat(uniqueNames)
+                        .hasSize(3);
+            }
+        }
+    }
+
+    @Test
+    public void queryNoTracking() throws Exception {
+        try (IDocumentStore store = getDocumentStore()) {
+            addUsers(store);
+
+            try (DocumentSession session = (DocumentSession) store.openSession()) {
+                List<User> users = session.query(User.class)
+                        .noTracking()
+                        .toList();
+
+                assertThat(users)
+                        .hasSize(3);
+
+                for (User user : users) {
+                    assertThat(session.isLoaded(user.getId()))
+                            .isFalse();
+                }
+            }
+        }
+    }
+
+    @Test
+    public void querySkipTake() throws Exception {
+        try (IDocumentStore store = getDocumentStore()) {
+            addUsers(store);
+
+            try (DocumentSession session = (DocumentSession) store.openSession()) {
+                List<User> users = session.query(User.class)
+                        .orderBy("name")
+                        .skip(2)
+                        .take(1)
+                        .toList();
+
+                assertThat(users)
+                        .hasSize(1);
+
+                assertThat(users.get(0).getName())
+                        .isEqualTo("Tarzan");
+            }
+        }
+    }
+
+    @Test
+    public void queryLucene() throws Exception {
+        try (IDocumentStore store = getDocumentStore()) {
+            addUsers(store);
+
+            try (DocumentSession session = (DocumentSession) store.openSession()) {
+                List<User> users = session.query(User.class)
+                        .whereLucene("name", "Tarzan")
+                        .toList();
+
+                assertThat(users)
+                        .hasSize(1);
+
+                for (User user : users) {
+                    assertThat(user.getName())
+                            .isEqualTo("Tarzan");
+                }
+            }
+        }
+    }
+
+    @Test
+    public void queryWhereExact() throws Exception {
+        try (IDocumentStore store = getDocumentStore()) {
+            addUsers(store);
+
+            try (DocumentSession session = (DocumentSession) store.openSession()) {
+                List<User> users = session.query(User.class)
+                        .whereEquals("name", "tarzan")
+                        .toList();
+
+                assertThat(users)
+                        .hasSize(1);
+
+                users = session.query(User.class)
+                        .whereEquals("name", "tarzan", true)
+                        .toList();
+
+                assertThat(users)
+                        .hasSize(0); // we queried for tarzan with exact
+
+                users = session.query(User.class)
+                        .whereEquals("name", "Tarzan", true)
+                        .toList();
+
+                assertThat(users)
+                        .hasSize(1); // we queried for Tarzan with exact
+            }
+        }
+    }
+
+    @Test
+    public void queryWhereNot() throws Exception {
+        try (IDocumentStore store = getDocumentStore()) {
+            addUsers(store);
+
+            try (DocumentSession session = (DocumentSession) store.openSession()) {
+                assertThat(session.query(User.class)
+                        .not()
+                        .whereEquals("name", "tarzan")
+                        .toList())
+                        .hasSize(2);
+
+                assertThat(session.query(User.class)
+                        .whereNotEquals("name", "tarzan")
+                        .toList())
+                        .hasSize(2);
+
+                assertThat(session.query(User.class)
+                        .whereNotEquals("name", "Tarzan", true)
+                        .toList())
+                        .hasSize(2);
+            }
+        }
+    }
+
+    @Test
+    public void queryRandomOrder() throws Exception {
+        try (IDocumentStore store = getDocumentStore()) {
+            addUsers(store);
+
+            try (DocumentSession session = (DocumentSession) store.openSession()) {
+                assertThat(session.query(User.class)
+                        .randomOrdering()
+                        .toList())
+                        .hasSize(3);
+
+                assertThat(session.query(User.class)
+                        .randomOrdering("123")
+                        .toList())
+                        .hasSize(3);
+            }
+        }
+    }
+
+    @Test
+    public void queryWhereExists() throws Exception {
+        try (IDocumentStore store = getDocumentStore()) {
+            addUsers(store);
+
+            try (DocumentSession session = (DocumentSession) store.openSession()) {
+                assertThat(session.query(User.class)
+                        .whereExists("name")
+                        .toList())
+                        .hasSize(3);
+
+                assertThat(session.query(User.class)
+                        .whereExists("name")
+                        .andAlso()
+                        .not()
+                        .whereExists("no_such_field")
+                        .toList())
+                        .hasSize(3);
+            }
+        }
+    }
+
+    @Test
+    public void queryWithBoost() throws Exception {
+        try (IDocumentStore store = getDocumentStore()) {
+            addUsers(store);
+
+            try (DocumentSession session = (DocumentSession) store.openSession()) {
+                List<User> users = session.query(User.class)
+                        .whereEquals("name", "Tarzan")
+                        .boost(5)
+                        .orElse()
+                        .whereEquals("name", "John")
+                        .boost(2)
+                        .orderByScoreDescending()
+                        .toList();
+
+                assertThat(users)
+                        .hasSize(3);
+
+                List<String> names = users.stream().map(x -> x.getName()).collect(toList());
+                assertThat(names)
+                        .containsSequence("Tarzan", "John", "John");
+
+                users = session.query(User.class)
+                        .whereEquals("name", "Tarzan")
+                        .boost(2)
+                        .orElse()
+                        .whereEquals("name", "John")
+                        .boost(5)
+                        .orderByScoreDescending()
+                        .toList();
+
+                assertThat(users)
+                        .hasSize(3);
+
+                names = users.stream().map(x -> x.getName()).collect(toList());
+                assertThat(names)
+                        .containsSequence("John", "John", "Tarzan");
+            }
+        }
+    }
+
+    @Test
+    @Disabled("waiting for explain scores")
+    public void queryStats() throws Exception {
+        try (IDocumentStore store = getDocumentStore()) {
+            addUsers(store);
+
+            Reference<QueryStatistics> stats = new Reference<>();
+
+            try (IDocumentSession session = store.openSession()) {
+                List<User> users = session.query(User.class)
+                        .search("name", "John")
+                        .explainScores()
+                        .orderByScoreDescending()
+                        .statistics(stats)
+                        .toList();
+
+                assertThat(users)
+                        .hasSize(3);
+            }
+        }
+    }
+
 
     public static class UsersByName extends AbstractIndexCreationTask {
         public UsersByName() {
@@ -370,7 +696,6 @@ public class QueryTest extends RemoteTestBase {
 
         store.executeIndex(new UsersByName());
         waitForIndexing(store);
-
     }
 
     public static class ReduceResult {

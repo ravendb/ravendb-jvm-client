@@ -1,5 +1,6 @@
 package net.ravendb.client.documents.session;
 
+import net.ravendb.client.documents.queries.GroupBy;
 import net.ravendb.client.documents.queries.GroupByMethod;
 import net.ravendb.client.documents.queries.QueryData;
 import net.ravendb.client.documents.queries.QueryResult;
@@ -13,7 +14,7 @@ import java.util.function.Function;
 /**
  * A query against a Raven index
  */
-public interface IDocumentQuery<T> extends IDocumentQueryBase<T, IDocumentQuery<T>>, IDocumentQueryBaseSingle<T>, IEnumerableQuery<T> { //TODO: extends iterator
+public interface IDocumentQuery<T> extends IDocumentQueryBase<T, IDocumentQuery<T>>, IDocumentQueryBaseSingle<T>, IEnumerableQuery<T> {
 
     String getIndexName();
 
@@ -63,7 +64,7 @@ public interface IDocumentQuery<T> extends IDocumentQueryBase<T, IDocumentQuery<
 
     IGroupByDocumentQuery<T> groupBy(String fieldName, String... fieldNames);
 
-    IGroupByDocumentQuery<T> groupBy(Tuple<String, GroupByMethod> field, Tuple<String, GroupByMethod>... fields);
+    IGroupByDocumentQuery<T> groupBy(GroupBy field, GroupBy... fields);
 
     //TBD MoreLikeThis
     //TBD AggregateBy

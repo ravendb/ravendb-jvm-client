@@ -419,7 +419,7 @@ public class DocumentQuery<T> extends AbstractDocumentQuery<T, DocumentQuery<T>>
 
     @Override
     public IDocumentQuery<T> randomOrdering(String seed) {
-        randomOrdering(seed);
+        _randomOrdering(seed);
         return this;
     }
 
@@ -433,7 +433,7 @@ public class DocumentQuery<T> extends AbstractDocumentQuery<T, DocumentQuery<T>>
     }
 
     @Override
-    public IGroupByDocumentQuery<T> groupBy(Tuple<String, GroupByMethod> field, Tuple<String, GroupByMethod>... fields) {
+    public IGroupByDocumentQuery<T> groupBy(GroupBy field, GroupBy... fields) {
         _groupBy(field, fields);
 
         return new GroupByDocumentQuery<>(this);

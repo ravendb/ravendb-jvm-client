@@ -1,12 +1,6 @@
 package net.ravendb.client.documents.session;
 
-import net.ravendb.client.documents.indexes.spatial.SpatialRelation;
-import net.ravendb.client.documents.indexes.spatial.SpatialUnits;
-import net.ravendb.client.documents.queries.SearchOperator;
 import net.ravendb.client.documents.queries.spatial.DynamicSpatialField;
-import net.ravendb.client.primitives.Tuple;
-
-import java.util.Collection;
 
 /**
  *  A query against a Raven index

@@ -119,7 +119,7 @@ public class QueryOperation {
 
                 String id = null;
                 if (idNode != null && idNode.isTextual()) {
-                    id = ((TextNode) idNode).asText();
+                    id = idNode.asText();
                 }
 
                 list.add(deserialize(clazz, id, (ObjectNode) document, metadata, _fieldsToFetch, _disableEntitiesTracking, _session));

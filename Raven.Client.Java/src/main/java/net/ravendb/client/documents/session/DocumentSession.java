@@ -280,10 +280,17 @@ public class DocumentSession extends InMemoryDocumentSessionOperations implement
     /**
      * Query the specified index using Lucene syntax
      * @param clazz The result of the query
+     */
+    public <T> IDocumentQuery<T> documentQuery(Class<T> clazz) {
+        return documentQuery(clazz, null, null, false);
+    }
+
+    /**
+     * Query the specified index using Lucene syntax
+     * @param clazz The result of the query
      * @param indexName Name of the index (mutually exclusive with collectionName)
      * @param collectionName Name of the collection (mutually exclusive with indexName)
      * @param isMapReduce Whether we are querying a map/reduce index (modify how we treat identifier properties)
-     * @return
      */
     public <T> IDocumentQuery<T> documentQuery(Class<T> clazz, String indexName, String collectionName, boolean isMapReduce) {
         Tuple<String, String> indexNameAndCollection = processQueryParameters(clazz, indexName, collectionName, getConventions());

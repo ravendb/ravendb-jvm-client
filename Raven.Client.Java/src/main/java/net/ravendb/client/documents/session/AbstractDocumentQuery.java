@@ -254,15 +254,15 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
 
     @Override
     public void _groupBy(String fieldName, String... fieldNames) {
-        List<Tuple<String, GroupByMethod>> mapping = Arrays.stream(fieldNames)
-                .map(x -> (Tuple<String, GroupByMethod>) Tuple.create(x, GroupByMethod.NONE))
-                .collect(Collectors.toList());
+        GroupBy[] mapping = Arrays.stream(fieldNames)
+                .map(x -> GroupBy.field (x))
+                .toArray(GroupBy[]::new);
 
-        _groupBy(Tuple.create(fieldName, GroupByMethod.NONE), mapping.toArray(new Tuple[0]));
+        _groupBy(GroupBy.field(fieldName), mapping);
     }
 
     @Override
-    public void _groupBy(Tuple<String, GroupByMethod> field, Tuple<String, GroupByMethod>... fields) {
+    public void _groupBy(GroupBy field, GroupBy... fields) {
         if (!fromToken.isDynamic()) {
             throw new IllegalStateException("groupBy only works with dynamic queries");
         }
@@ -270,17 +270,17 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
         assertNoRawQuery();
         isGroupBy = true;
 
-        String fieldName = ensureValidFieldName(field.first, false);
+        String fieldName = ensureValidFieldName(field.getField(), false);
 
-        groupByTokens.add(GroupByToken.create(fieldName, field.second));
+        groupByTokens.add(GroupByToken.create(fieldName, field.getMethod()));
 
         if (fields == null || fields.length <= 0) {
             return;
         }
 
-        for (Tuple<String, GroupByMethod> item : fields) {
-            fieldName = ensureValidFieldName(item.first, false);
-            groupByTokens.add(GroupByToken.create(fieldName, item.second));
+        for (GroupBy item : fields) {
+            fieldName = ensureValidFieldName(item.getField(), false);
+            groupByTokens.add(GroupByToken.create(fieldName, item.getMethod()));
         }
     }
 

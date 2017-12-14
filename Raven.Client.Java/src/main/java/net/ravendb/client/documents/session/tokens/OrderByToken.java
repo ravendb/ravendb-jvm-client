@@ -41,7 +41,7 @@ public class OrderByToken extends QueryToken {
             throw new IllegalArgumentException("seed cannot be null");
         }
 
-        return new OrderByToken("random(" + seed.replaceAll("'", "''") + "')", false, OrderingType.STRING);
+        return new OrderByToken("random('" + seed.replaceAll("'", "''") + "')", false, OrderingType.STRING);
     }
 
     public static OrderByToken createAscending(String fieldName, OrderingType ordering) {
