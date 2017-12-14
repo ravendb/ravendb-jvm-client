@@ -4,23 +4,18 @@ import net.ravendb.client.http.RequestExecutor;
 import net.ravendb.client.primitives.CleanCloseable;
 import net.ravendb.client.test.driver.RavenServerLocator;
 import net.ravendb.client.test.driver.RavenTestDriver;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.http.HttpHost;
 import org.apache.http.client.config.RequestConfig;
 
 public class RemoteTestBase extends RavenTestDriver {
 
     private static class TestServiceLocator extends RavenServerLocator {
-        @Override
-        public String getServerPath() {
-            return "C:\\temp\\RavenDB-4.0.0-custom-40-windows-x64\\Server\\Raven.Server.exe"; //TODO: from variable?
-        }
     }
 
     private static class TestSecuredServiceLocator extends RavenServerLocator {
-        @Override
-        public String getServerPath() {
-            return "C:\\temp\\RavenDB-4.0.0-custom-40-windows-x64\\Server\\Raven.Server.exe"; //TODO: from variable?
-        }
+
+        public static final String ENV_CERTIFICATE_PATH = "RAVENDB_JAVA_TEST_CERTIFICATE_PATH";
 
         @Override
         public boolean withHttps() {
@@ -34,8 +29,14 @@ public class RemoteTestBase extends RavenTestDriver {
 
         @Override
         public String getServerCertificatePath() {
-            //TODO:
-            return "C:\\Users\\Marcin\\Downloads\\javatest.Cluster.Settings\\A\\cluster.server.certificate.javatest.pfx";
+            String certificatePath = System.getenv(ENV_CERTIFICATE_PATH);
+            if (StringUtils.isBlank(certificatePath)) {
+                throw new IllegalStateException("Unable to find RavenDB server certificate path. " +
+                        "Please make sure " + ENV_CERTIFICATE_PATH + " environment variable is set and is valid " +
+                        "(current value = " + certificatePath + ")");
+            }
+
+            return certificatePath;
         }
     }
 
