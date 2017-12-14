@@ -33,7 +33,7 @@ public class LoadStartingWithOperation {
     }
 
     public GetDocumentsCommand createRequest() {
-        _session.incrementRequestCount();;
+        _session.incrementRequestCount();
 
         if (logger.isInfoEnabled()) {
             logger.info("Requesting documents with ids starting with '" + _startWith + "' from " + _session.storeIdentifier());
@@ -77,6 +77,7 @@ public class LoadStartingWithOperation {
         }
     }
 
+    @SuppressWarnings("unchecked")
     public <T> T[] getDocuments(Class<T> clazz) {
         int i = 0;
         T[] finalResults = (T[]) Array.newInstance(clazz, _returnedIds.size());

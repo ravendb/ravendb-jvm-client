@@ -17,6 +17,7 @@ import java.util.List;
 
 import static java.util.stream.Collectors.toList;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 public class QueryTest extends RemoteTestBase {
 
@@ -550,11 +551,54 @@ public class QueryTest extends RemoteTestBase {
     }
 
     @Test
+    public void queryFirst() throws Exception {
+        try (IDocumentStore store = getDocumentStore()) {
+            addUsers(store);
+
+            try (DocumentSession session = (DocumentSession) store.openSession()) {
+
+                User first = session.query(User.class)
+                        .first();
+
+                assertThat(first)
+                        .isNotNull();
+
+                assertThat(session.query(User.class)
+                        .whereEquals("name", "Tarzan")
+                        .single())
+                        .isNotNull();
+
+                assertThat(first)
+                        .isNotNull();
+
+                assertThatThrownBy(() -> session.query(User.class).single())
+                        .isExactlyInstanceOf(IllegalStateException.class);
+            }
+        }
+    }
+
+    @Test
+    public void queryParameters() throws Exception {
+        try (IDocumentStore store = getDocumentStore()) {
+            addUsers(store);
+
+            try (DocumentSession session = (DocumentSession) store.openSession()) {
+
+                assertThat(session.rawQuery(User.class, "from Users where name = $name")
+                        .addParameter("name", "Tarzan")
+                        .count())
+                        .isEqualTo(1);
+            }
+        }
+    }
+
+    @Test
     public void queryRandomOrder() throws Exception {
         try (IDocumentStore store = getDocumentStore()) {
             addUsers(store);
 
             try (DocumentSession session = (DocumentSession) store.openSession()) {
+
                 assertThat(session.query(User.class)
                         .randomOrdering()
                         .toList())

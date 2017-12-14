@@ -79,6 +79,7 @@ public class OperationExecutor {
         return command.getResult().getStatus();
     }
 
+    @SuppressWarnings("unchecked")
     public <TEntity> PatchOperation.Result<TEntity> send(Class<TEntity> entityClass, PatchOperation operation) {
         RavenCommand<PatchResult> command = operation.getCommand(store, requestExecutor.getConventions(), requestExecutor.getCache());
 

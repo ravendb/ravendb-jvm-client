@@ -56,10 +56,9 @@ public class ExplainQueryCommand extends RavenCommand<ExplainQueryCommand.Explai
 
     @Override
     public HttpRequestBase createRequest(ServerNode node, Reference<String> url) {
-        StringBuilder path = new StringBuilder(node.getUrl());
-        path.append("/databases/")
-                .append(node.getDatabase())
-                .append("queries?debug=explain");
+        String path = node.getUrl() + "/databases/" +
+                node.getDatabase() +
+                "queries?debug=explain";
 
         HttpPost request = new HttpPost();
 
@@ -71,7 +70,7 @@ public class ExplainQueryCommand extends RavenCommand<ExplainQueryCommand.Explai
             }
         }, ContentType.APPLICATION_JSON));
 
-        url.value = path.toString();
+        url.value = path;
         return request;
     }
 

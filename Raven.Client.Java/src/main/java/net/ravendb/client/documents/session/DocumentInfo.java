@@ -1,12 +1,8 @@
 package net.ravendb.client.documents.session;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.sun.xml.internal.bind.v2.runtime.reflect.opt.Const;
 import net.ravendb.client.Constants;
-
-import javax.print.Doc;
 
 /**
  * Information held about an entity by the session

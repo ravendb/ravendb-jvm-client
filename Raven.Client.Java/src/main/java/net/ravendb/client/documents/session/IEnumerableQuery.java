@@ -6,7 +6,6 @@ public interface IEnumerableQuery<T> {
 
     /**
      * Materialize query, executes request and returns with results
-     * @return
      */
     List<T> toList();
 }

@@ -31,7 +31,7 @@ public class ContentProviderHttpEntity extends AbstractHttpEntity {
     }
 
     @Override
-    public void writeTo(OutputStream outstream) throws IOException {
+    public void writeTo(OutputStream outstream) {
         this.contentProvider.accept(outstream);
     }
 

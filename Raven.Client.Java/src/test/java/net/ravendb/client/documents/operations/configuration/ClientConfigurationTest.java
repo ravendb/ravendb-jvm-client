@@ -6,8 +6,6 @@ import net.ravendb.client.http.ReadBalanceBehavior;
 import net.ravendb.client.serverwide.ClientConfiguration;
 import org.junit.jupiter.api.Test;
 
-import java.io.IOException;
-
 import static org.assertj.core.api.Assertions.assertThat;
 
 public class ClientConfigurationTest extends RemoteTestBase {

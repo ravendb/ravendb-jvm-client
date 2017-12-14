@@ -2,11 +2,9 @@ package net.ravendb.client.documents.session;
 
 import net.ravendb.client.documents.conventions.DocumentConventions;
 import net.ravendb.client.documents.queries.GroupBy;
-import net.ravendb.client.documents.queries.GroupByMethod;
 import net.ravendb.client.documents.queries.SearchOperator;
 import net.ravendb.client.documents.queries.spatial.DynamicSpatialField;
 import net.ravendb.client.documents.queries.spatial.SpatialCriteria;
-import net.ravendb.client.primitives.Tuple;
 
 import java.time.Duration;
 import java.util.Collection;
@@ -53,14 +51,8 @@ public interface IAbstractDocumentQuery<T> {
      */
     void _randomOrdering(String seed);
 
-    /**
-     * Sort using custom sorter on the server
-     */
     //TBD void _customSortUsing(String typeName);
 
-    /**
-     * Sort using custom sorter on the server
-     */
     //TBD void _customSortUsing(String typeName, boolean descending);
 
     /**

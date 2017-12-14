@@ -1,6 +1,5 @@
 package net.ravendb.client.documents.queries;
 
-import java.util.List;
 import java.util.Map;
 
 public class GenericQueryResult<TResult, TIncludes> extends QueryResultBase<TResult, TIncludes> {

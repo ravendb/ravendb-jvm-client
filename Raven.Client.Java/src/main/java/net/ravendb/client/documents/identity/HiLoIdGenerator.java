@@ -1,6 +1,5 @@
 package net.ravendb.client.documents.identity;
 
-import net.ravendb.client.documents.DocumentStore;
 import net.ravendb.client.documents.IDocumentStore;
 import net.ravendb.client.documents.commands.HiLoReturnCommand;
 import net.ravendb.client.documents.commands.NextHiLoCommand;

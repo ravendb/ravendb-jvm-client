@@ -9,8 +9,6 @@ import net.ravendb.client.infrastructure.entities.User;
 import net.ravendb.client.test.client.indexing.IndexesFromClientTest;
 import org.junit.jupiter.api.Test;
 
-import java.io.IOException;
-
 import static org.assertj.core.api.Assertions.assertThat;
 
 public class IndexOperationsTest extends RemoteTestBase {

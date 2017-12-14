@@ -3,6 +3,7 @@ package net.ravendb.client.documents.operations;
 import net.ravendb.client.documents.DocumentStoreBase;
 import net.ravendb.client.http.RavenCommand;
 import net.ravendb.client.http.RequestExecutor;
+import net.ravendb.client.http.VoidRavenCommand;
 import net.ravendb.client.serverwide.operations.ServerOperationExecutor;
 import org.apache.commons.lang3.StringUtils;
 
@@ -41,7 +42,7 @@ public class MaintenanceOperationExecutor {
     }
 
     public void send(IVoidMaintenanceOperation operation) {
-        RavenCommand command = operation.getCommand(requestExecutor.getConventions());
+        VoidRavenCommand command = operation.getCommand(requestExecutor.getConventions());
         requestExecutor.execute(command);
     }
 

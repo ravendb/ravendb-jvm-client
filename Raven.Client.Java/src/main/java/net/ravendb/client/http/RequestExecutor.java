@@ -28,14 +28,10 @@ import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.impl.client.StandardHttpRequestRetryHandler;
-import org.apache.http.impl.conn.PoolingHttpClientConnectionManager;
 import org.apache.http.ssl.SSLContexts;
 import sun.plugin.dom.exception.InvalidStateException;
 
-import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.SSLContext;
-import javax.net.ssl.SSLSession;
-import javax.net.ssl.SSLSocketFactory;
 import javax.xml.bind.DatatypeConverter;
 import java.io.IOException;
 import java.io.InputStream;
@@ -104,8 +100,8 @@ public class RequestExecutor implements CleanCloseable {
 
     public List<ServerNode> getTopologyNodes() {
         return Optional.ofNullable(getTopology())
-                .map(x -> x.getNodes())
-                .map(x -> Collections.unmodifiableList(x))
+                .map(Topology::getNodes)
+                .map(Collections::unmodifiableList)
                 .orElse(null);
     }
 
@@ -210,7 +206,7 @@ public class RequestExecutor implements CleanCloseable {
         ServerNode serverNode = new ServerNode();
         serverNode.setDatabase(databaseName);
         serverNode.setUrl(initialUrls[0]);
-        topology.setNodes(Arrays.asList(serverNode));
+        topology.setNodes(Collections.singletonList(serverNode));
 
         executor._nodeSelector = new NodeSelector(topology);
         executor.topologyEtag = -2;
@@ -222,7 +218,7 @@ public class RequestExecutor implements CleanCloseable {
 
     protected CompletableFuture<Void> updateClientConfigurationAsync() {
         if (_disposed) {
-            CompletableFuture.completedFuture(null);
+            return CompletableFuture.completedFuture(null);
         }
 
         return CompletableFuture.runAsync(() -> {
@@ -411,6 +407,7 @@ public class RequestExecutor implements CleanCloseable {
                 });
     }
 
+    @SuppressWarnings("unchecked")
     protected CompletableFuture<Void> firstTopologyUpdate(String[] inputUrls) {
         final String[] initialUrls = validateUrls(inputUrls, certificate);
 
@@ -658,7 +655,7 @@ public class RequestExecutor implements CleanCloseable {
         String message = "Tried to send " + command.resultClass.getName() + " request via " + request.getMethod() + " " + request.getURI() + " to all configured nodes in the topology, " +
                 "all of them seem to be down or not responding. I've tried to access the following nodes: ";
 
-        message += Optional.ofNullable(_nodeSelector).map(x -> x.getTopology().getNodes().stream().map(n -> n.getUrl()).collect(Collectors.joining(", "))).orElse("");
+        message += Optional.ofNullable(_nodeSelector).map(x -> x.getTopology().getNodes().stream().map(ServerNode::getUrl).collect(Collectors.joining(", "))).orElse("");
 
         if (topologyTakenFromNode != null) {
             String nodes = Optional.ofNullable(_nodeSelector).map(x ->
@@ -680,7 +677,11 @@ public class RequestExecutor implements CleanCloseable {
         return _readBalanceBehavior == ReadBalanceBehavior.FASTEST_NODE &&
                 _nodeSelector != null &&
                 _nodeSelector.inSpeedTestPhase() &&
-                Optional.ofNullable(_nodeSelector).map(x -> x.getTopology()).map(x -> x.getNodes()).map(x -> x.size() > 1).orElse(false) &&
+                Optional.ofNullable(_nodeSelector)
+                        .map(NodeSelector::getTopology)
+                        .map(x -> x.getNodes())
+                        .map(x -> x.size() > 1)
+                        .orElse(false) &&
                 command.isReadRequest() &&
                 command.getResponseType() == RavenCommandResponseType.OBJECT &&
                 chosenNode != null;
@@ -710,7 +711,7 @@ public class RequestExecutor implements CleanCloseable {
                 }
             });
 
-            if (nodes.get(i).getClusterTag() == chosenNode.getClusterTag()) {
+            if (nodes.get(i).getClusterTag().equals(chosenNode.getClusterTag())) {
                 preferredTask = task;
             } else {
                 task.thenAcceptAsync(result -> {
@@ -736,7 +737,7 @@ public class RequestExecutor implements CleanCloseable {
             }
         }
 
-        // we can reach here if the number of failed task equal to the nuber
+        // we can reach here if the number of failed task equal to the number
         // of the nodes, in which case we have nothing to do
 
         try {
@@ -780,12 +781,15 @@ public class RequestExecutor implements CleanCloseable {
             switch (response.getStatusLine().getStatusCode()) {
                 case HttpStatus.SC_NOT_FOUND:
                     cache.setNotFound(url);
-                    if (command.getResponseType() == RavenCommandResponseType.EMPTY) {
-                        return true;
-                    } else if (command.getResponseType() == RavenCommandResponseType.OBJECT) {
-                        command.setResponse(null, false);
-                    } else {
-                        command.setResponseRaw(response, null);
+                    switch (command.getResponseType()) {
+                        case EMPTY:
+                            return true;
+                        case OBJECT:
+                            command.setResponse(null, false);
+                            break;
+                        default:
+                            command.setResponseRaw(response, null);
+                            break;
                     }
                     return true;
 
@@ -928,7 +932,7 @@ public class RequestExecutor implements CleanCloseable {
 
                 Exception readException = ExceptionDispatcher.get(JsonExtensions.getDefaultMapper().readValue(responseJson, ExceptionDispatcher.ExceptionSchema.class), response.getStatusLine().getStatusCode());
                 command.getFailedNodes().put(chosenNode, readException);
-            } catch (Exception _) {
+            } catch (Exception __) {
                 ExceptionDispatcher.ExceptionSchema exceptionSchema = new ExceptionDispatcher.ExceptionSchema();
                 exceptionSchema.setUrl(request.getURI().toString());
                 exceptionSchema.setMessage("Get unrecognized response from the server");

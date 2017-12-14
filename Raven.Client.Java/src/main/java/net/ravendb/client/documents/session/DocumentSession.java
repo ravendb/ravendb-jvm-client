@@ -3,7 +3,6 @@ package net.ravendb.client.documents.session;
 import com.google.common.base.Defaults;
 import net.ravendb.client.documents.DocumentStore;
 import net.ravendb.client.documents.commands.GetDocumentsCommand;
-import net.ravendb.client.documents.commands.GetRevisionsCommand;
 import net.ravendb.client.documents.commands.HeadDocumentCommand;
 import net.ravendb.client.documents.commands.batches.BatchCommand;
 import net.ravendb.client.documents.indexes.AbstractIndexCreationTask;
@@ -12,7 +11,6 @@ import net.ravendb.client.documents.queries.Query;
 import net.ravendb.client.documents.session.loaders.ILoaderWithInclude;
 import net.ravendb.client.documents.session.loaders.MultiLoaderWithInclude;
 import net.ravendb.client.documents.session.operations.BatchOperation;
-import net.ravendb.client.documents.session.operations.GetRevisionOperation;
 import net.ravendb.client.documents.session.operations.LoadOperation;
 import net.ravendb.client.documents.session.operations.LoadStartingWithOperation;
 import net.ravendb.client.http.RequestExecutor;
@@ -20,7 +18,6 @@ import net.ravendb.client.primitives.Tuple;
 import org.apache.commons.lang3.StringUtils;
 
 import java.util.Collection;
-import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
@@ -37,14 +34,8 @@ public class DocumentSession extends InMemoryDocumentSessionOperations implement
         return this;
     }
 
-    /**
-     * Access the lazy operations
-     */
     //TBD public ILazySessionOperations lazily() {
 
-    /**
-     * Access the eager operations
-     */
     //TBD public IEagerSessionOperations eagerly() {
 
     //TBD public IAttachmentsSessionOperations Attachments { get; }

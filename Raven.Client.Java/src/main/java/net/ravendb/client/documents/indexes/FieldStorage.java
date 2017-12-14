@@ -12,5 +12,5 @@ public enum FieldStorage {
     /**
      * Do not store the field value in the index.
      */
-    NO;
+    NO
 }

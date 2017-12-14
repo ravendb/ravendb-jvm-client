@@ -1,22 +1,11 @@
 package net.ravendb.client.documents.session;
 
 import net.ravendb.client.documents.indexes.AbstractIndexCreationTask;
-import net.ravendb.client.documents.session.operations.lazy.IEagerSessionOperations;
-import net.ravendb.client.documents.session.operations.lazy.ILazySessionOperations;
-
-import java.util.List;
 
 public interface IAdvancedSessionOperations extends IAdvancedDocumentSessionOperations {
 
-    /**
-     *  Access the eager operations
-     */
     //TBD IEagerSessionOperations eagerly();
 
-    /**
-     *  Access the lazy operations
-     * @return
-     */
     //TBD ILazySessionOperations lazily();
 
     //TBD IAttachmentsSessionOperations Attachments { get; }

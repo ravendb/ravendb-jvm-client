@@ -146,12 +146,16 @@ public class NetISO8601Utils {
             } else {
 
                 char timezoneIndicator = date.charAt(offset);
-                if (timezoneIndicator == '+' || timezoneIndicator == '-') {
-                    timezoneId = GMT_ID + date.substring(offset);
-                } else if (timezoneIndicator == 'Z') {
-                    timezoneId = GMT_ID;
-                } else {
-                    throw new IndexOutOfBoundsException("Invalid time zone indicator " + timezoneIndicator);
+                switch (timezoneIndicator) {
+                    case '+':
+                    case '-':
+                        timezoneId = GMT_ID + date.substring(offset);
+                        break;
+                    case 'Z':
+                        timezoneId = GMT_ID;
+                        break;
+                    default:
+                        throw new IndexOutOfBoundsException("Invalid time zone indicator " + timezoneIndicator);
                 }
             }
             TimeZone timezone = TimeZone.getTimeZone(timezoneId);

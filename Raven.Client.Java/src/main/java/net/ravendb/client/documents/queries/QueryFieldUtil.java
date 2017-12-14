@@ -1,6 +1,5 @@
 package net.ravendb.client.documents.queries;
 
-import com.sun.xml.internal.bind.v2.runtime.reflect.opt.Const;
 import net.ravendb.client.Constants;
 import org.apache.commons.lang3.StringUtils;
 

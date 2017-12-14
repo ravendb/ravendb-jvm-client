@@ -4,8 +4,6 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
 import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 
 public class QueryResult extends GenericQueryResult<ArrayNode, ObjectNode> {
 

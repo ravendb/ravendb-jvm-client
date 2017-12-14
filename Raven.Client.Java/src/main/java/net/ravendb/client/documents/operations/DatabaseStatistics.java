@@ -4,7 +4,6 @@ import net.ravendb.client.util.Size;
 
 import java.util.Arrays;
 import java.util.Date;
-import java.util.stream.Collectors;
 
 public class DatabaseStatistics {
 

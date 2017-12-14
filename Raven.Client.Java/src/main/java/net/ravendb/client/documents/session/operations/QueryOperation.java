@@ -3,7 +3,6 @@ package net.ravendb.client.documents.session.operations;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.fasterxml.jackson.databind.node.TextNode;
 import com.fasterxml.jackson.databind.node.ValueNode;
 import com.google.common.base.Defaults;
 import com.google.common.base.Stopwatch;
@@ -24,10 +23,8 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import java.lang.reflect.Field;
-import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 
 public class QueryOperation {
     private final InMemoryDocumentSessionOperations _session;
@@ -135,6 +132,7 @@ public class QueryOperation {
         return list;
     }
 
+    @SuppressWarnings("unchecked")
     static <T> T deserialize(Class<T> clazz, String id, ObjectNode document, ObjectNode metadata, FieldsToFetchToken fieldsToFetch, boolean disableEntitiesTracking, InMemoryDocumentSessionOperations session) throws JsonProcessingException {
 
         JsonNode projection = metadata.get("@projection");

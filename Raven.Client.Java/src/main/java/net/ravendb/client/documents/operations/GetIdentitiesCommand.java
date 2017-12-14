@@ -23,6 +23,7 @@ public class GetIdentitiesCommand extends RavenCommand<Map<String, Long>> {
         }
     }
 
+    @SuppressWarnings("unchecked")
     public GetIdentitiesCommand() {
         super((Class<Map<String, Long>>)((Class<?>)Map.class));
     }

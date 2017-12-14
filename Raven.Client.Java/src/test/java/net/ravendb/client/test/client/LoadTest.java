@@ -5,10 +5,8 @@ import net.ravendb.client.documents.IDocumentStore;
 import net.ravendb.client.documents.session.IDocumentSession;
 import net.ravendb.client.infrastructure.entities.GeekPerson;
 import net.ravendb.client.infrastructure.entities.User;
-import net.ravendb.client.primitives.CleanCloseable;
 import org.junit.jupiter.api.Test;
 
-import java.io.IOException;
 import java.util.*;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
@@ -114,8 +112,8 @@ public class LoadTest extends RemoteTestBase {
                 assertThat(user2)
                         .isNotNull();
 
-                HashSet unorderedSetOfIdsWithNull = new HashSet<String>(Arrays.asList(orderedArrayOfIdsWithNull));
-                Map users2 = newSession.load(User.class, unorderedSetOfIdsWithNull);
+                Set<String> unorderedSetOfIdsWithNull = new HashSet<>(Arrays.asList(orderedArrayOfIdsWithNull));
+                Map<String, User> users2 = newSession.load(User.class, unorderedSetOfIdsWithNull);
 
                 assertThat(users2)
                         .hasSize(2);
@@ -219,14 +217,14 @@ public class LoadTest extends RemoteTestBase {
                 User[] users = newSession.advanced().loadStartingWith(User.class, "A");
 
                 assertThat(Arrays.stream(users)
-                        .map(x -> x.getId())
+                        .map(User::getId)
                         .collect(Collectors.toList()))
                         .containsSequence("Aaa", "Abc", "Afa", "Ala");
 
                 users = newSession.advanced().loadStartingWith(User.class, "A", null, 1, 2);
 
                 assertThat(Arrays.stream(users)
-                        .map(x -> x.getId())
+                        .map(User::getId)
                         .collect(Collectors.toList()))
                         .containsSequence("Abc", "Afa");
 

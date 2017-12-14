@@ -127,9 +127,6 @@ public interface IDocumentQueryBase<T, TSelf extends IDocumentQueryBase<T, TSelf
      */
     TSelf randomOrdering(String seed);
 
-    /**
-     * Order the search results randomly
-     */
     //TBD TSelf customSortUsing(String typeName, boolean descending);
 
     //TBD TSelf SetHighlighterTags(string preTag, string postTag);

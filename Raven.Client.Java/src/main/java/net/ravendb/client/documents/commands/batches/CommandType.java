@@ -1,7 +1,5 @@
 package net.ravendb.client.documents.commands.batches;
 
-import net.ravendb.client.primitives.UseSharpEnum;
-
 public enum CommandType {
     NONE,
     PUT,

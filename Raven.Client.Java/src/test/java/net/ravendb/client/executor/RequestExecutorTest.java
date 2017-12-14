@@ -165,7 +165,7 @@ public class RequestExecutorTest extends RemoteTestBase {
     }
 
     @Test
-    public void failsWhenServerIsOffline() throws IOException {
+    public void failsWhenServerIsOffline() {
         DocumentConventions documentConventions = new DocumentConventions();
 
         assertThatThrownBy(() -> {

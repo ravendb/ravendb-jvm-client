@@ -2,13 +2,9 @@ package net.ravendb.client.serverwide.commands;
 
 import net.ravendb.client.RemoteTestBase;
 import net.ravendb.client.documents.IDocumentStore;
-import net.ravendb.client.http.ClusterTopology;
-import net.ravendb.client.http.ClusterTopologyResponse;
 import net.ravendb.client.http.ServerNode;
 import net.ravendb.client.http.Topology;
 import org.junit.jupiter.api.Test;
-
-import java.io.IOException;
 
 import static org.assertj.core.api.Assertions.assertThat;
 

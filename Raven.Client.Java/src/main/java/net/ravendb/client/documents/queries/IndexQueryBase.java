@@ -11,7 +11,6 @@ public class IndexQueryBase<T> implements IIndexQuery {
     private int start;
     private boolean waitForNonStaleResults;
     private Duration waitForNonStaleResultsTimeout;
-    private Long cutoffEtag;
 
     /**
      * Whether the page size was explicitly set or still at its default value
@@ -113,7 +112,7 @@ public class IndexQueryBase<T> implements IIndexQuery {
         if (query != null ? !query.equals(that.query) : that.query != null) return false;
         if (waitForNonStaleResultsTimeout != null ? !waitForNonStaleResultsTimeout.equals(that.waitForNonStaleResultsTimeout) : that.waitForNonStaleResultsTimeout != null)
             return false;
-        return cutoffEtag != null ? cutoffEtag.equals(that.cutoffEtag) : that.cutoffEtag == null;
+        return true;
     }
 
     @Override
@@ -124,7 +123,6 @@ public class IndexQueryBase<T> implements IIndexQuery {
         result = 31 * result + start;
         result = 31 * result + (waitForNonStaleResults ? 1 : 0);
         result = 31 * result + (waitForNonStaleResultsTimeout != null ? waitForNonStaleResultsTimeout.hashCode() : 0);
-        result = 31 * result + (cutoffEtag != null ? cutoffEtag.hashCode() : 0);
         return result;
     }
 

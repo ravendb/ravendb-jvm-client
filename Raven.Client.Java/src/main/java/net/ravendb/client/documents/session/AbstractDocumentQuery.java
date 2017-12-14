@@ -23,7 +23,6 @@ import java.lang.reflect.Field;
 import java.time.Duration;
 import java.util.*;
 import java.util.function.Consumer;
-import java.util.stream.Collectors;
 
 /**
  * A query against a Raven index
@@ -605,7 +604,7 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
     }
 
     public void _whereLessThan(String fieldName, Object value) {
-        _whereLessThan(fieldName, value);
+        _whereLessThan(fieldName, value, false);
     }
 
     public void _whereLessThan(String fieldName, Object value, boolean exact) {
@@ -624,7 +623,7 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
     }
 
     public void _whereLessThanOrEqual(String fieldName, Object value) {
-        _whereLessThanOrEqual(fieldName, value);
+        _whereLessThanOrEqual(fieldName, value, false);
     }
 
     public void _whereLessThanOrEqual(String fieldName, Object value, boolean exact) {
@@ -1180,9 +1179,7 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
         List<Object> result = new ArrayList<>();
         for (Object value : values) {
             if (value instanceof Collection) {
-                for (Object transformedValue : transformCollection(fieldName, (Collection) value)) {
-                    result.add(transformedValue);
-                }
+                result.addAll(transformCollection(fieldName, (Collection) value));
             } else {
                 WhereParams nestedWhereParams = new WhereParams();
                 nestedWhereParams.setAllowWildcards(true);
@@ -1219,9 +1216,7 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
 
         for (Object item : items) {
             if (item instanceof Collection) {
-                for (Object nested : unpackCollection((Collection) item)) {
-                    results.add(nested);
-                }
+                results.addAll(unpackCollection((Collection) item));
             } else {
                 results.add(item);
             }

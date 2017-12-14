@@ -5,7 +5,7 @@ import net.ravendb.client.serverwide.commands.GetClusterTopologyCommand;
 import net.ravendb.client.serverwide.commands.GetTcpInfoCommand;
 
 import java.security.KeyStore;
-import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Semaphore;
@@ -42,7 +42,7 @@ public class ClusterRequestExecutor extends RequestExecutor {
 
         Topology topology = new Topology();
         topology.setEtag(-1L);
-        topology.setNodes(Arrays.asList(serverNode));
+        topology.setNodes(Collections.singletonList(serverNode));
 
         NodeSelector nodeSelector = new NodeSelector(topology);
 

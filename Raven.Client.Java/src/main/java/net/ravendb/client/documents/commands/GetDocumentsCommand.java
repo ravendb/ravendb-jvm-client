@@ -8,13 +8,13 @@ import net.ravendb.client.http.ServerNode;
 import net.ravendb.client.json.ContentProviderHttpEntity;
 import net.ravendb.client.primitives.Reference;
 import net.ravendb.client.util.UrlUtils;
-import org.apache.commons.lang3.StringUtils;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpRequestBase;
 import org.apache.http.entity.ContentType;
 
 import java.io.IOException;
+import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
@@ -133,9 +133,7 @@ public class GetDocumentsCommand extends RavenCommand<GetDocumentsResult> {
 
     public static HttpRequestBase prepareRequestWithMultipleIds(StringBuilder pathBuilder, HttpRequestBase request, String[] ids) {
         Set<String> uniqueIds = new LinkedHashSet<>();
-        for (String id : ids) {
-            uniqueIds.add(id);
-        }
+        Collections.addAll(uniqueIds, ids);
 
         // if it is too big, we drop to POST (note that means that we can't use the HTTP cache any longer)
         // we are fine with that, requests to load > 1024 items are going to be rare

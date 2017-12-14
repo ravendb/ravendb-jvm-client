@@ -1,7 +1,5 @@
 package net.ravendb.client.primitives;
 
-import com.google.common.collect.ComputationException;
-
 import java.util.concurrent.ExecutionException;
 
 public class ExceptionsUtils {

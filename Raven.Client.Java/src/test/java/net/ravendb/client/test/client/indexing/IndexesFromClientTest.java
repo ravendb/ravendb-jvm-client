@@ -12,8 +12,7 @@ import net.ravendb.client.documents.session.IDocumentSession;
 import net.ravendb.client.infrastructure.entities.User;
 import org.junit.jupiter.api.Test;
 
-import java.io.IOException;
-import java.util.Arrays;
+import java.util.Collections;
 import java.util.Date;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -64,7 +63,7 @@ public class IndexesFromClientTest extends RemoteTestBase {
     @Test
     public void canExecuteManyIndexes() throws Exception {
         try (IDocumentStore store = getDocumentStore()) {
-            store.executeIndexes(Arrays.asList(new UsersIndex()));
+            store.executeIndexes(Collections.singletonList(new UsersIndex()));
 
             GetIndexNamesOperation indexNamesOperation = new GetIndexNamesOperation(0, 10);
             String[] indexNames = store.maintenance().send(indexNamesOperation);

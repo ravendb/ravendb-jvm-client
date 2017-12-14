@@ -99,7 +99,7 @@ public class NodeSelector implements CleanCloseable {
             return new CurrentIndexAndNode(state.fastest, state.nodes.get(state.fastest));
         }
 
-        // if the fastest node has failures, we'll immeidately schedule
+        // if the fastest node has failures, we'll immediately schedule
         // another run of finding who the fastest node is, in the meantime
         // we'll just use the server preferred node or failover as usual
 

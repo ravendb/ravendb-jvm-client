@@ -2,7 +2,6 @@ package net.ravendb.client.serverwide;
 
 import net.ravendb.client.serverwide.operations.DatabasePromotionStatus;
 
-import java.util.Dictionary;
 import java.util.List;
 import java.util.Map;
 

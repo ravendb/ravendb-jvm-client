@@ -376,6 +376,7 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
     /**
      * Tracks the entity inside the unit of work
      */
+    @SuppressWarnings("unchecked")
     public <T> T trackEntity(Class<T> clazz, DocumentInfo documentFound) {
         return (T) trackEntity(clazz, documentFound.getId(), documentFound.getDocument(), documentFound.getMetadata(), false);
     }
@@ -514,7 +515,7 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
     public void store(Object entity) {
         Reference<String> stringReference = new Reference<>();
         boolean hasId = generateEntityIdOnTheClient.tryGetIdFromInstance(entity, stringReference);
-        storeInternal(entity, null, null, hasId == false ? ConcurrencyCheckMode.FORCED : ConcurrencyCheckMode.AUTO);
+        storeInternal(entity, null, null, !hasId ? ConcurrencyCheckMode.FORCED : ConcurrencyCheckMode.AUTO);
     }
 
     /**

@@ -9,6 +9,7 @@ import net.ravendb.client.infrastructure.entities.OrderLine;
 import org.junit.jupiter.api.Test;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 import static net.ravendb.client.documents.queries.GroupBy.array;
@@ -366,7 +367,7 @@ public class RavenDB_8761 extends RemoteTestBase {
             Address address2 = new Address();
             address2.setCountry("USA");
             Order order2 = new Order();
-            order2.setLines(Arrays.asList(orderLine21));
+            order2.setLines(Collections.singletonList(orderLine21));
             order2.setShipTo(address2);
             session.store(order2);
 

@@ -98,6 +98,7 @@ public class EntityToJson {
     /**
      * Converts a json object to an entity.
      */
+    @SuppressWarnings("unchecked")
     public Object convertToEntity(Class entityType, String id, ObjectNode document) {
         try {
             if (ObjectNode.class.equals(entityType)) {

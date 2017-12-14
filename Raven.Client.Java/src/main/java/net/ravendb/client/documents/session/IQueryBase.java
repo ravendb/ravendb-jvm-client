@@ -41,10 +41,6 @@ public interface IQueryBase<T, TSelf extends IQueryBase<T, TSelf>> {
      */
     TSelf noTracking();
 
-    /**
-     * Enables calculation of timings for various parts of a query (Lucene search, loading documents, transforming
-     * results). Default: false
-     */
     //TBD TSelf showTimings();
 
     /**

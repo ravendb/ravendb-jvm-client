@@ -15,10 +15,6 @@ import net.ravendb.client.serverwide.ClientConfiguration;
 import net.ravendb.client.util.Inflector;
 import net.ravendb.client.util.ReflectionUtil;
 import org.apache.commons.beanutils.BeanUtils;
-import org.apache.commons.beanutils.PropertyUtilsBean;
-import org.apache.commons.lang3.NotImplementedException;
-import org.apache.commons.lang3.StringUtils;
-import org.apache.http.util.LangUtils;
 
 import java.beans.IntrospectionException;
 import java.beans.Introspector;
@@ -28,7 +24,6 @@ import java.lang.reflect.InvocationTargetException;
 import java.util.*;
 import java.util.function.BiFunction;
 import java.util.function.Function;
-import java.util.stream.StreamSupport;
 
 public class DocumentConventions {
 
@@ -311,6 +306,7 @@ public class DocumentConventions {
     /**
      * Generates the document id.
      */
+    @SuppressWarnings("unchecked")
     public String generateDocumentId(String databaseName, Object entity) {
         Class<?> clazz = entity.getClass();
 
@@ -327,6 +323,7 @@ public class DocumentConventions {
      * Register an id convention for a single type (and all of its derived types.
      * Note that you can still fall back to the DocumentIdGenerator if you want.
      */
+    @SuppressWarnings("unchecked")
     public <TEntity> DocumentConventions registerIdConvention(Class<TEntity> clazz, BiFunction<String, TEntity, String> function) {
         assertNotFrozen();
 

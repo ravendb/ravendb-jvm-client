@@ -124,11 +124,11 @@ public class UrlUtils {
                                                 Reference<Integer> destPos, int prevInputPos) {
         if (dest == null || dest.length < destPos.value + (currentInputPos - prevInputPos) + charsToAdd) {
             // allocating or reallocating array by ensuring enough space based on maxCharsToAdd.
-            char[] newresult = new char[destPos.value + (currentInputPos - prevInputPos) + minReallocateChars];
+            char[] newResult = new char[destPos.value + (currentInputPos - prevInputPos) + minReallocateChars];
             if (dest != null && destPos.value != 0) {
-                System.arraycopy(dest, 0, newresult, 0, Math.min(dest.length, newresult.length));
+                System.arraycopy(dest, 0, newResult, 0, Math.min(dest.length, newResult.length));
             }
-            dest = newresult;
+            dest = newResult;
         }
         // ensuring we copied everything form the input string left before last escaping
         while (prevInputPos != currentInputPos)

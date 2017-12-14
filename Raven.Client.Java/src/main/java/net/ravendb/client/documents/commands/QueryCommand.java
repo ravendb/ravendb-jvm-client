@@ -14,7 +14,6 @@ import org.apache.http.client.methods.HttpRequestBase;
 import org.apache.http.entity.ContentType;
 
 import java.io.IOException;
-import java.time.Duration;
 
 public class QueryCommand extends RavenCommand<QueryResult> {
     private final DocumentConventions _conventions;

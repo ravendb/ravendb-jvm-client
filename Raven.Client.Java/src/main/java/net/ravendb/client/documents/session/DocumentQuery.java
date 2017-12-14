@@ -12,7 +12,6 @@ import net.ravendb.client.documents.session.tokens.DeclareToken;
 import net.ravendb.client.documents.session.tokens.FieldsToFetchToken;
 import net.ravendb.client.documents.session.tokens.LoadToken;
 import net.ravendb.client.primitives.Reference;
-import net.ravendb.client.primitives.Tuple;
 
 import java.beans.IntrospectionException;
 import java.beans.Introspector;
@@ -628,7 +627,7 @@ public class DocumentQuery<T> extends AbstractDocumentQuery<T, DocumentQuery<T>>
 
     @Override
     public IDocumentQuery<T> orderByDistance(String fieldName, String shapeWkt) {
-        orderByDistance(fieldName, shapeWkt);
+        _orderByDistance(fieldName, shapeWkt);
         return this;
     }
 
@@ -642,7 +641,7 @@ public class DocumentQuery<T> extends AbstractDocumentQuery<T, DocumentQuery<T>>
 
     @Override
     public IDocumentQuery<T> orderByDistanceDescending(DynamicSpatialField field, String shapeWkt) {
-        orderByDistanceDescending(field, shapeWkt);
+        _orderByDistanceDescending(field, shapeWkt);
         return this;
     }
 

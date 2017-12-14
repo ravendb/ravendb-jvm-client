@@ -7,5 +7,5 @@ public enum IndexState {
     NORMAL,
     DISABLED,
     IDLE,
-    ERROR;
+    ERROR
 }
