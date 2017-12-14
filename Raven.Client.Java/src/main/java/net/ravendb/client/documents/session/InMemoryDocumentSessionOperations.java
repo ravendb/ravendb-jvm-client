@@ -453,6 +453,7 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
     /**
      * Gets the default value of the specified type.
      */
+    @SuppressWarnings("unchecked")
     public static Object getDefaultValue(Class clazz) {
         return Defaults.defaultValue(clazz);
     }

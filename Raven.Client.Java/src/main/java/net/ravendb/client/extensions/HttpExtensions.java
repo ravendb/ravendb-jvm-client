@@ -36,7 +36,7 @@ public class HttpExtensions {
 
     private static String etagHeaderToChangeVector(String responseHeader) {
         if (StringUtils.isEmpty(responseHeader)) {
-            throw new IllegalStateException("Response dind't had an ETag header");
+            throw new IllegalStateException("Response did't had an ETag header");
         }
 
         if (responseHeader.startsWith("\"")) {

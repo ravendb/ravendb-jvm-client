@@ -461,7 +461,7 @@ public class RequestExecutor implements CleanCloseable {
 
             _nodeSelector = new NodeSelector(topology);
 
-            for (String url : initialUrls) {
+            if (initialUrls != null && initialUrls.length > 0) {
                 initializeUpdateTopologyTimer();
                 return;
             }

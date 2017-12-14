@@ -4,7 +4,7 @@ import net.ravendb.client.primitives.EventArgs;
 
 public class BeforeQueryExecutedEventArgs extends EventArgs {
 
-    private InMemoryDocumentSessionOperations session;
+    private final InMemoryDocumentSessionOperations session;
 
     public BeforeQueryExecutedEventArgs(InMemoryDocumentSessionOperations session) {
         this.session = session;

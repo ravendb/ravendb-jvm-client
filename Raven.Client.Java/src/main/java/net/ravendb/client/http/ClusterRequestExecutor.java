@@ -20,14 +20,17 @@ public class ClusterRequestExecutor extends RequestExecutor {
         super(null, certificate, conventions);
     }
 
+    @SuppressWarnings("unused")
     public static ClusterRequestExecutor create(String[] urls, String databaseName, KeyStore certificate, DocumentConventions conventions) {
         throw new UnsupportedOperationException();
     }
 
+    @SuppressWarnings("unused")
     public static ClusterRequestExecutor createForSingleNodeWithConfigurationUpdates(String url, String databaseName, KeyStore certificate, DocumentConventions conventions) {
         throw new UnsupportedOperationException();
     }
 
+    @SuppressWarnings("unused")
     public static ClusterRequestExecutor createForSingleNodeWithoutConfigurationUpdates(String url, String databaseName, KeyStore certificate, DocumentConventions conventions) {
         throw new UnsupportedOperationException();
     }

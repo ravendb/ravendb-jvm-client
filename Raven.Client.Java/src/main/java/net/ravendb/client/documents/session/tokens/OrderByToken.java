@@ -14,11 +14,11 @@ public class OrderByToken extends QueryToken {
         _ordering = ordering;
     }
 
-    public static OrderByToken random = new OrderByToken("random()", false, OrderingType.STRING);
+    public static final OrderByToken random = new OrderByToken("random()", false, OrderingType.STRING);
 
-    public static OrderByToken scoreAscending = new OrderByToken("score()", false, OrderingType.STRING);
+    public static final OrderByToken scoreAscending = new OrderByToken("score()", false, OrderingType.STRING);
 
-    public static OrderByToken scoreDescending = new OrderByToken("score()", true, OrderingType.STRING);
+    public static final OrderByToken scoreDescending = new OrderByToken("score()", true, OrderingType.STRING);
 
     public static OrderByToken createDistanceAscending(String fieldName, String latitudeParameterName, String longitudeParameterName) {
         return new OrderByToken("spatial.distance(" + fieldName + ", point(" + latitudeParameterName + ", " + longitudeParameterName + "))", false, OrderingType.STRING);

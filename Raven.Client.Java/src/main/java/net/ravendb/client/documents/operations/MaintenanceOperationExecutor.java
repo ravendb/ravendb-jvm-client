@@ -11,7 +11,7 @@ public class MaintenanceOperationExecutor {
 
     private final DocumentStoreBase store;
     private final String databaseName;
-    private RequestExecutor requestExecutor;
+    private final RequestExecutor requestExecutor;
     private ServerOperationExecutor serverOperationExecutor;
 
     public MaintenanceOperationExecutor(DocumentStoreBase store) {

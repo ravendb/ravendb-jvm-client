@@ -25,11 +25,11 @@ public class HiLoIdGenerator {
     private volatile RangeValue _range;
     protected String serverTag;
 
-    public HiLoIdGenerator(String tag, IDocumentStore store, String dbName, String identityPartsSeperator) {
+    public HiLoIdGenerator(String tag, IDocumentStore store, String dbName, String identityPartsSeparator) {
         _store = store;
         _tag = tag;
         _dbName = dbName;
-        _identityPartsSeparator = identityPartsSeperator;
+        _identityPartsSeparator = identityPartsSeparator;
         _range = new RangeValue(1, 0);
     }
 

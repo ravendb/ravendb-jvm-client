@@ -2,8 +2,8 @@ package net.ravendb.client.documents.session.tokens;
 
 public class LoadToken extends QueryToken {
 
-    private String argument;
-    private String alias;
+    private final String argument;
+    private final String alias;
 
     private LoadToken(String argument, String alias) {
         this.argument = argument;

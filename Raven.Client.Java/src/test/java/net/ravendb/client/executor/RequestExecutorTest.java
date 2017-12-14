@@ -101,7 +101,7 @@ public class RequestExecutorTest extends RemoteTestBase {
     }
 
     @Test
-    public void throwsWhenDatabaseDoesntExist() throws Exception {
+    public void throwsWhenDatabaseDoesNotExist() throws Exception {
         DocumentConventions conventions = new DocumentConventions();
 
         try (IDocumentStore store = getDocumentStore()) {

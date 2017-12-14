@@ -57,8 +57,8 @@ public class MultiTypeHiLoIdGenerator {
     }
 
     public void returnUnusedRange() {
-        for (HiLoIdGenerator genetator : _idGeneratorsByTag.values()) {
-            genetator.returnUnusedRange();
+        for (HiLoIdGenerator generator : _idGeneratorsByTag.values()) {
+            generator.returnUnusedRange();
         }
     }
 

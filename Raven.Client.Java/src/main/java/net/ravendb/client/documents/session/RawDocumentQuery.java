@@ -48,7 +48,7 @@ public class RawDocumentQuery<T> extends AbstractDocumentQuery<T, RawDocumentQue
 
     @Override
     public IRawDocumentQuery<T> usingDefaultOperator(QueryOperator queryOperator) {
-        _usingDefaultOperator(defaultOperatator);
+        _usingDefaultOperator(defaultOperator);
         return this;
     }
 

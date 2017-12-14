@@ -405,8 +405,8 @@ public class DocumentQuery<T> extends AbstractDocumentQuery<T, DocumentQuery<T>>
     }
 
     @Override
-    public IDocumentQuery<T> proximity(int proxomity) {
-        _proximity(proxomity);
+    public IDocumentQuery<T> proximity(int proximity) {
+        _proximity(proximity);
         return this;
     }
 
@@ -518,6 +518,7 @@ public class DocumentQuery<T> extends AbstractDocumentQuery<T, DocumentQuery<T>>
         query.queryStats = queryStats;
         query.theWaitForNonStaleResults = theWaitForNonStaleResults;
         query.negate = negate;
+        //noinspection unchecked
         query.includes = new HashSet(includes);
         query.rootTypes = Sets.newHashSet(clazz);
         query.beforeQueryExecutedCallback = beforeQueryExecutedCallback;
@@ -533,7 +534,7 @@ public class DocumentQuery<T> extends AbstractDocumentQuery<T, DocumentQuery<T>>
         query.lastEquality = lastEquality;
         query.shouldExplainScores = shouldExplainScores;
         query.isIntersect = isIntersect;
-        query.defaultOperatator = defaultOperatator;
+        query.defaultOperator = defaultOperator;
 
         return query;
     }

@@ -35,12 +35,12 @@ public class IndexHasChangedOperation implements IMaintenanceOperation<Boolean> 
 
     private static class IndexHasChangedCommand extends RavenCommand<Boolean> {
 
-        private final ObjectNode _defition;
+        private final ObjectNode _definition;
 
         public IndexHasChangedCommand(DocumentConventions conventions, IndexDefinition definition) {
             super(Boolean.class);
 
-            _defition = EntityToJson.convertEntityToJson(definition, conventions);
+            _definition = EntityToJson.convertEntityToJson(definition, conventions);
         }
 
         @Override
@@ -56,7 +56,7 @@ public class IndexHasChangedOperation implements IMaintenanceOperation<Boolean> 
 
             request.setEntity(new ContentProviderHttpEntity(outputStream -> {
                 try (JsonGenerator generator = mapper.getFactory().createGenerator(outputStream)) {
-                    generator.writeTree(_defition);
+                    generator.writeTree(_definition);
                 } catch (IOException e) {
                     throw new RuntimeException(e);
                 }

@@ -42,7 +42,7 @@ public class QueryCommand extends RavenCommand<QueryResult> {
     public HttpRequestBase createRequest(ServerNode node, Reference<String> url) {
         canCache = !_indexQuery.isDisableCaching();
 
-        // we won't allow aggresive caching of queries with WaitForNonStaleResults
+        // we won't allow aggressive caching of queries with WaitForNonStaleResults
         canCacheAggressively = canCache && !_indexQuery.isWaitForNonStaleResults();
 
         StringBuilder path = new StringBuilder(node.getUrl())

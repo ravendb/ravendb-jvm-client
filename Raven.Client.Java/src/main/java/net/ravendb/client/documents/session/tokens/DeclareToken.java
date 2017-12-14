@@ -2,9 +2,9 @@ package net.ravendb.client.documents.session.tokens;
 
 public class DeclareToken extends QueryToken {
 
-    private String name;
-    private String parameters;
-    private String body;
+    private final String name;
+    private final String parameters;
+    private final String body;
 
     private DeclareToken(String name, String body, String parameters) {
         this.name = name;

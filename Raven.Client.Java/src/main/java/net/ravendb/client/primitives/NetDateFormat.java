@@ -12,7 +12,7 @@ import java.util.GregorianCalendar;
 public class NetDateFormat extends DateFormat {
   private static final long serialVersionUID = 1L;
 
-  // those classes are to try to allow a consistent behavior for hascode/equals and other methods
+  // those classes are to try to allow a consistent behavior for hashcode/equals and other methods
   private static final Calendar CALENDAR = new GregorianCalendar();
   private static final NumberFormat NUMBER_FORMAT = new DecimalFormat();
 

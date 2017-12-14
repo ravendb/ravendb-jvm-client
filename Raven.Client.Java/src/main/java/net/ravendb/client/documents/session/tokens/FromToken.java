@@ -5,10 +5,10 @@ import java.util.List;
 
 public class FromToken extends QueryToken {
 
-    private String collectionName;
-    private String indexName;
-    private boolean dynamic;
-    private String alias;
+    private final String collectionName;
+    private final String indexName;
+    private final boolean dynamic;
+    private final String alias;
 
     public String getCollectionName() {
         return collectionName;

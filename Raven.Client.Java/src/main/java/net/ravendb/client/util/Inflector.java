@@ -10,6 +10,7 @@ import java.util.regex.Pattern;
 /**
  * Class responsible for pluralizing words
  */
+@SuppressWarnings("SpellCheckingInspection")
 public class Inflector {
 
     private static final List<Rule> plurals = new ArrayList<>();

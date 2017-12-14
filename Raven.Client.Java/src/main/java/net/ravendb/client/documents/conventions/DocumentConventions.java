@@ -340,7 +340,7 @@ public class DocumentConventions {
             }
         }
 
-        _listOfRegisteredIdConventions.add(index, Tuple.create(clazz, function));
+        _listOfRegisteredIdConventions.add(index, Tuple.create(clazz, (BiFunction<String, Object, String>) function));
 
         return this;
     }

@@ -86,14 +86,14 @@ public class QueryStatistics {
     }
 
     /**
-     * The time when the query results were unstale.
+     * The time when the query results were non stale.
      */
     public Date getTimestamp() {
         return timestamp;
     }
 
     /**
-     * The time when the query results were unstale.
+     * The time when the query results were non stale.
      */
     public void setTimestamp(Date timestamp) {
         this.timestamp = timestamp;

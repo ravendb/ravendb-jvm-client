@@ -33,7 +33,7 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
 
     private final Map<String, String> _aliasToGroupByFieldName = new HashMap<>();
 
-    protected QueryOperator defaultOperatator = QueryOperator.AND;
+    protected QueryOperator defaultOperator = QueryOperator.AND;
 
     //TBD: private readonly LinqPathProvider _linqPathProvider;
 
@@ -107,7 +107,7 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
     protected boolean shouldExplainScores;
 
     public boolean isDistinct() {
-        return selectTokens.isEmpty() ? false : selectTokens.get(0) instanceof DistinctToken;
+        return !selectTokens.isEmpty() && selectTokens.get(0) instanceof DistinctToken;
     }
 
     /**
@@ -164,7 +164,7 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
             throw new IllegalStateException("Default operator can only be set before any where clause is added.");
         }
 
-        defaultOperatator = operator;
+        defaultOperator = operator;
     }
 
     /**
@@ -419,6 +419,7 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
         _whereEquals(params);
     }
 
+    @SuppressWarnings("unchecked")
     public void _whereEquals(WhereParams whereParams) {
         if (negate) {
             negate = false;
@@ -450,6 +451,7 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
         _whereNotEquals(params);
     }
 
+    @SuppressWarnings("unchecked")
     public void _whereNotEquals(WhereParams whereParams) {
         if (negate) {
             negate = false;
@@ -493,6 +495,7 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
         tokens.add(WhereToken.in(fieldName, addQueryParameter(transformCollection(fieldName, unpackCollection(values))), exact));
     }
 
+    @SuppressWarnings("unchecked")
     public void _whereStartsWith(String fieldName, Object value) {
         WhereParams whereParams = new WhereParams();
         whereParams.setFieldName(fieldName);
@@ -515,6 +518,7 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
     /**
      * Matches fields which ends with the specified value.
      */
+    @SuppressWarnings("unchecked")
     public void _whereEndsWith(String fieldName, Object value) {
         WhereParams whereParams = new WhereParams();
         whereParams.setFieldName(fieldName);
@@ -1166,7 +1170,7 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
             }
         }
 
-        QueryOperatorToken token = defaultOperatator == QueryOperator.AND ? QueryOperatorToken.AND : QueryOperatorToken.OR;
+        QueryOperatorToken token = defaultOperator == QueryOperator.AND ? QueryOperatorToken.AND : QueryOperatorToken.OR;
 
         if (lastWhere != null && lastWhere.getSearchOperator() != null) {
             token = QueryOperatorToken.OR; // default to OR operator after search if AND was not specified explicitly
@@ -1175,6 +1179,7 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
         tokens.add(token);
     }
 
+    @SuppressWarnings("unchecked")
     private Collection<Object> transformCollection(String fieldName, Collection<Object> values) {
         List<Object> result = new ArrayList<>();
         for (Object value : values) {

@@ -5,7 +5,7 @@ import com.fasterxml.jackson.core.JsonGenerator;
 import java.io.IOException;
 
 public class DeletePrefixedCommandData extends DeleteCommandData {
-    private boolean isPrefixed = true;
+    private final boolean isPrefixed = true;
 
     public DeletePrefixedCommandData(String prefix) {
         super(prefix, null);

@@ -48,7 +48,7 @@
             <version>2.9.2</version>
         </dependency>
 
-        <!-- test deps -->
+        <!-- test dependencies -->
         <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter-engine</artifactId>

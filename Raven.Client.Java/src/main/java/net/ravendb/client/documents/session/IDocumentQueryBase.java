@@ -114,7 +114,7 @@ public interface IDocumentQueryBase<T, TSelf extends IDocumentQueryBase<T, TSelf
      * Specifies a proximity distance for the phrase in the last where clause
      * http://lucene.apache.org/java/2_4_0/queryparsersyntax.html#Proximity%20Searches
      */
-    TSelf proximity(int proxomity);
+    TSelf proximity(int proximity);
 
     /**
      * Order the search results randomly

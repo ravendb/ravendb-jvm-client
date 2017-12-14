@@ -12,7 +12,7 @@ import java.util.Map;
 
 public class QueryHashCalculator {
 
-    private ByteArrayOutputStream _buffer = new ByteArrayOutputStream();
+    private final ByteArrayOutputStream _buffer = new ByteArrayOutputStream();
 
     public String getHash() {
         return DigestUtils.md5Hex(_buffer.toByteArray());

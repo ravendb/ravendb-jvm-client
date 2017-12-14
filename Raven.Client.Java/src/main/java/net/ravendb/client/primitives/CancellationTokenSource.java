@@ -34,7 +34,7 @@ public class CancellationTokenSource {
     }
 
     @SuppressWarnings("boxing")
-    public void cancelAfter(long timeoutInMilis) {
-        this.cancelAfterDate = new Date().getTime() + timeoutInMilis;
+    public void cancelAfter(long timeoutInMillis) {
+        this.cancelAfterDate = new Date().getTime() + timeoutInMillis;
     }
 }
