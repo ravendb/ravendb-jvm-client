@@ -675,29 +675,6 @@ public class QueryTest extends RemoteTestBase {
         }
     }
 
-    @Test
-    @Disabled("waiting for explain scores")
-    public void queryStats() throws Exception {
-        try (IDocumentStore store = getDocumentStore()) {
-            addUsers(store);
-
-            Reference<QueryStatistics> stats = new Reference<>();
-
-            try (IDocumentSession session = store.openSession()) {
-                List<User> users = session.query(User.class)
-                        .search("name", "John")
-                        .explainScores()
-                        .orderByScoreDescending()
-                        .statistics(stats)
-                        .toList();
-
-                assertThat(users)
-                        .hasSize(3);
-            }
-        }
-    }
-
-
     public static class UsersByName extends AbstractIndexCreationTask {
         public UsersByName() {
 

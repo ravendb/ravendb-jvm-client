@@ -4,7 +4,7 @@ public abstract class IndexQueryWithParameters<T> extends IndexQueryBase<T> {
 
     private boolean skipDuplicateChecking;
 
-    private boolean explainScores;
+    //TBD private boolean explainScores;
 
     //TBD private boolean showTimings;
 
@@ -22,19 +22,9 @@ public abstract class IndexQueryWithParameters<T> extends IndexQueryBase<T> {
         this.skipDuplicateChecking = skipDuplicateChecking;
     }
 
-    /**
-     * Whatever a query result should contain an explanation about how docs scored against query
-     */
-    public boolean isExplainScores() {
-        return explainScores;
-    }
+    //TBD public boolean isExplainScores() {
 
-    /**
-     * Whatever a query result should contain an explanation about how docs scored against query
-     */
-    public void setExplainScores(boolean explainScores) {
-        this.explainScores = explainScores;
-    }
+    //TBD public void setExplainScores(boolean explainScores) {
 
     //TBD public boolean isShowTimings()
     //TBD public void setShowTimings(boolean showTimings) {

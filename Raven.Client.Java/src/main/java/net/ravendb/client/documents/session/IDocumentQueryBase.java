@@ -34,10 +34,7 @@ public interface IDocumentQueryBase<T, TSelf extends IDocumentQueryBase<T, TSelf
      */
     TSelf distinct();
 
-    /**
-     * Adds explanations of scores calculated for queried documents to the query result
-     */
-    TSelf explainScores();
+    //TBD TSelf explainScores();
 
     /**
      * Specifies a fuzziness factor to the single word term in the last where clause

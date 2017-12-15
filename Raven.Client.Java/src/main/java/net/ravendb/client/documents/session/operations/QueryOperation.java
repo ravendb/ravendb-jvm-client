@@ -25,6 +25,7 @@ import org.apache.commons.logging.LogFactory;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 public class QueryOperation {
     private final InMemoryDocumentSessionOperations _session;
@@ -195,11 +196,32 @@ public class QueryOperation {
         ensureIsAcceptable(result, _indexQuery.isWaitForNonStaleResults(), _sp, _session);
 
         _currentQueryResults = result;
-        //_currentQueryResults.ensureSnapshot();
 
         if (logger.isInfoEnabled()) {
-            String isStale = result.isStale() ? "stale " : " ";
-            logger.info("Query returned " + result.getResults().size() + "/" + result.getTotalResults() + isStale + "results");
+            String isStale = result.isStale() ? " stale " : " ";
+
+            StringBuilder parameters = new StringBuilder();
+            if (_indexQuery.getQueryParameters() != null && !_indexQuery.getQueryParameters().isEmpty()) {
+                parameters.append("(parameters: ");
+
+                boolean first = true;
+
+                for (Map.Entry<String, Object> parameter : _indexQuery.getQueryParameters().entrySet()) {
+                    if (!first) {
+                        parameters.append(", ");
+                    }
+
+                    parameters.append(parameter.getKey())
+                            .append(" = ")
+                            .append(parameter.getValue());
+
+                    first = false;
+                }
+
+                parameters.append(") ");
+            }
+
+            logger.info("Query " + _indexQuery.getQuery() + " " + parameters.toString() + "returned " + result.getResults().size() + isStale + "results (total index results: " + result.getTotalResults() + ")");
         }
     }
 

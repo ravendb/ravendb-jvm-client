@@ -827,8 +827,6 @@ public class RequestExecutor implements CleanCloseable {
     }
 
     private static void handleConflict(CloseableHttpResponse response) {
-        // current implementation is temporary
-
         ExceptionDispatcher.throwException(response);
     }
 

@@ -76,11 +76,7 @@ public class DocumentQuery<T> extends AbstractDocumentQuery<T, DocumentQuery<T>>
         return this;
     }
 
-    @Override
-    public IDocumentQuery<T> explainScores() {
-        shouldExplainScores = true;
-        return this;
-    }
+    //TBD public IDocumentQuery<T> explainScores() {
 
     @Override
     public <TProjection> IDocumentQuery<TProjection> selectFields(Class<TProjection> projectionClass, String... fields) {
@@ -532,7 +528,7 @@ public class DocumentQuery<T> extends AbstractDocumentQuery<T, DocumentQuery<T>>
         query.disableCaching = disableCaching;
         //TBD ShowQueryTimings = ShowQueryTimings,
         query.lastEquality = lastEquality;
-        query.shouldExplainScores = shouldExplainScores;
+        //TBD query.shouldExplainScores = shouldExplainScores;
         query.isIntersect = isIntersect;
         query.defaultOperator = defaultOperator;
 

@@ -104,7 +104,7 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
 
     //TBD protected boolean showQueryTimings;
 
-    protected boolean shouldExplainScores;
+    //TBD protected boolean shouldExplainScores;
 
     public boolean isDistinct() {
         return !selectTokens.isEmpty() && selectTokens.get(0) instanceof DistinctToken;
@@ -865,7 +865,7 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
         indexQuery.setQueryParameters(queryParameters);
         indexQuery.setDisableCaching(disableCaching);
         //TBD indexQuery.setShowTimings(showQueryTimings);
-        indexQuery.setExplainScores(shouldExplainScores);
+        //TBD indexQuery.setExplainScores(shouldExplainScores);
 
         if (pageSize != null) {
             indexQuery.setPageSize(pageSize);

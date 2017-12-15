@@ -16,7 +16,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-public class HiLoTest extends RemoteTestBase { //TODO: extends replication test
+public class HiLoTest extends RemoteTestBase {
 
     private static class HiloDoc {
         @JsonProperty("Max")

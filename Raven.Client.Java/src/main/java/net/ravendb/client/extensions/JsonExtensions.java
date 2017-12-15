@@ -105,9 +105,10 @@ public class JsonExtensions {
             generator.writeBooleanField("DisableCaching", query.isDisableCaching());
         }
 
+        /* TBD
         if (query.isExplainScores()) {
             generator.writeBooleanField("ExplainScores", query.isExplainScores());
-        }
+        }*/
 
         /* TBD
         if (query.isShowTimings()) {
