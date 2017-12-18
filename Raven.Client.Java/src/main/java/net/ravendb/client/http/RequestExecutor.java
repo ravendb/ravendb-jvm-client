@@ -754,7 +754,7 @@ public class RequestExecutor implements CleanCloseable {
 
         cachedChangeVector.value = null;
         cachedValue.value = null;
-        return new HttpCache.ReleaseCacheItem();
+        return new HttpCache.ReleaseCacheItem(null);
     }
 
     private <TResult> HttpRequestBase createRequest(ServerNode node, RavenCommand<TResult> command, Reference<String> url) {

@@ -83,26 +83,7 @@ public class DocumentConventions {
         _findCollectionName = type -> defaultGetCollectionName(type);
 
         _maxNumberOfRequestsPerSession = 30;
-        _maxHttpCacheSize = 128 * 1024 * 1024; //TODO:
-
-        /* TODO
-          int httpCacheSizeInMb = 32; // Used if 32 bits architecture
-+            if (IntPtr.Size == 8)
-+            {
-+                // This is actual usable memory, not total installed memory. If other
-+                // processes are active consuming memory we will be acting accordingly
-+                // In the future we may want to be more dynamic about this.
-+                double usableMemory = MemoryInformation.GetMemoryInfoInGb().UsableMemory;
-+                if (usableMemory <= 3)
-+                    httpCacheSizeInMb = 64; // Used if we are in low memory conditions
-+                else if (usableMemory <= 6)
-+                    httpCacheSizeInMb = 128; // Used if we are in mid memory conditions
-+                else
-+                    httpCacheSizeInMb = 512; // We have enough memory to be aggresive.
-+            }
-+
-+            MaxHttpCacheSize = new Size(httpCacheSizeInMb, SizeUnit.Megabytes);
-         */
+        _maxHttpCacheSize = 128 * 1024 * 1024;
 
         _entityMapper = JsonExtensions.getDefaultEntityMapper();
     }

@@ -16,6 +16,31 @@ import static org.assertj.core.api.Assertions.assertThat;
 public class LoadTest extends RemoteTestBase {
 
     @Test
+    public void loadCanUseCache() throws Exception {
+        try (IDocumentStore store = getDocumentStore()) {
+            try (IDocumentSession session = store.openSession()) {
+                User user = new User();
+                user.setName("RavenDB");
+
+                session.store(user, "users/1");
+                session.saveChanges();
+            }
+
+            try (IDocumentSession newSession = store.openSession()) {
+                User user = newSession.load(User.class, "users/1");
+                assertThat(user)
+                        .isNotNull();
+            }
+
+            try (IDocumentSession newSession = store.openSession()) {
+                User user = newSession.load(User.class, "users/1");
+                assertThat(user)
+                        .isNotNull();
+            }
+        }
+    }
+
+    @Test
     public void loadDocumentById() throws Exception {
         try (IDocumentStore store = getDocumentStore()) {
             try (IDocumentSession session = store.openSession()) {

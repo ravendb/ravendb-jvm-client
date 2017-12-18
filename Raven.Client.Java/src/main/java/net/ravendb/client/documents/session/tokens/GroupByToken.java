@@ -5,7 +5,7 @@ import net.ravendb.client.documents.queries.GroupByMethod;
 public class GroupByToken extends QueryToken {
 
     private final String _fieldName;
-    private final GroupByMethod _method; //TODO: write test for group by array values
+    private final GroupByMethod _method;
 
     private GroupByToken(String fieldName, GroupByMethod method) {
         _fieldName = fieldName;

@@ -1,49 +1,90 @@
 package net.ravendb.client.http;
 
+import com.google.common.cache.Cache;
+import com.google.common.cache.CacheBuilder;
 import net.ravendb.client.primitives.CleanCloseable;
 import net.ravendb.client.primitives.Reference;
 
 import java.time.Duration;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.util.Date;
 
-//TODO:
 public class HttpCache implements CleanCloseable {
 
+    private Cache<String, HttpCacheItem> items;
+
     public HttpCache(int size) {
-        //TODO:
+        items = CacheBuilder.newBuilder()
+                .softValues()
+                .maximumWeight(size)
+                .weigher((String k, HttpCacheItem v) -> v.payload != null ?  v.payload.length() + 20 : 20)
+                .build();
     }
 
     @Override
     public void close() {
-
+        items.invalidateAll();
+        items = null;
     }
 
     public void set(String url, String changeVector, String result) {
-        //TODO:
+        HttpCacheItem httpCacheItem = new HttpCacheItem();
+        httpCacheItem.changeVector = changeVector;
+        httpCacheItem.payload = result;
+        httpCacheItem.cache = this;
+
+        items.put(url, httpCacheItem);
     }
 
-    public ReleaseCacheItem get(String url, Reference<String> cachedChangeVector, Reference<String> cachedValue) {
-        return new ReleaseCacheItem();
+    public ReleaseCacheItem get(String url, Reference<String> changeVectorRef, Reference<String> responseRef) {
+        HttpCacheItem item = items.getIfPresent(url);
+        if (item != null) {
+            changeVectorRef.value = item.changeVector;
+            responseRef.value = item.payload;
+
+            return new ReleaseCacheItem(item);
+        }
+
+        changeVectorRef.value = null;
+        responseRef.value = null;
+        return new ReleaseCacheItem(null);
     }
 
     public void setNotFound(String url) {
+        HttpCacheItem httpCacheItem = new HttpCacheItem();
+        httpCacheItem.changeVector = "404 response";
+        httpCacheItem.cache = this;
+
+        items.put(url, httpCacheItem);
     }
 
     public static class ReleaseCacheItem implements CleanCloseable {
+        public final HttpCacheItem item;
+
+        public ReleaseCacheItem(HttpCacheItem item) {
+            this.item = item;
+        }
+
         public void notModified() {
-            //TODO:
+            if (item != null) {
+                item.lastServerUpdate = LocalDateTime.now();
+            }
         }
 
         public Duration getAge() {
-            return null;
+            if (item == null) {
+                return Duration.ofMillis(Long.MAX_VALUE);
+            }
+            return Duration.between(item.lastServerUpdate, LocalDateTime.now());
         }
 
         public boolean getMightHaveBeenModified() {
-            return false;
+            return false; //TBD
         }
 
         @Override
         public void close() {
-            //TODO:
         }
     }
 }
