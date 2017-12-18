@@ -139,7 +139,7 @@ public class EntityToJson {
             return false;
         }
 
-        document.remove(StringUtils.capitalize(identityProperty.getName()));
+        document.remove(identityProperty.getName());
 
         return true;
     }

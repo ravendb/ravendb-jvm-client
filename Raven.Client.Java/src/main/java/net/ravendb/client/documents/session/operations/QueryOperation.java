@@ -169,7 +169,7 @@ public class QueryOperation {
             // for the identity property, in which case we don't want to override it.
             Field identityProperty = session.getConventions().getIdentityProperty(clazz);
             if (identityProperty != null) {
-                JsonNode value = document.get(StringUtils.capitalize(identityProperty.getName()));
+                JsonNode value = document.get(identityProperty.getName());
 
                 if (value == null) {
                     session.getGenerateEntityIdOnTheClient().trySetIdentity(result, id);
