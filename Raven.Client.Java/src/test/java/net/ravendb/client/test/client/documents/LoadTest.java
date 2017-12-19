@@ -3,6 +3,7 @@ package net.ravendb.client.test.client.documents;
 import net.ravendb.client.RemoteTestBase;
 import net.ravendb.client.documents.IDocumentStore;
 import net.ravendb.client.documents.session.IDocumentSession;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -108,6 +109,7 @@ public class LoadTest extends RemoteTestBase {
 
 
     @Test
+    @Disabled("waiting for IncludesUtils")
     public void loadWithIncludesAndMissingDocument() throws Exception {
         try (IDocumentStore store = getDocumentStore()) {
 
