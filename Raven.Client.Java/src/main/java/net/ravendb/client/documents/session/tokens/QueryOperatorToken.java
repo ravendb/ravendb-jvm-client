@@ -17,10 +17,10 @@ public class QueryOperatorToken extends QueryToken {
     @Override
     public void writeTo(StringBuilder writer) {
         if (_queryOperator == QueryOperator.AND) {
-            writer.append("AND");
+            writer.append("and");
             return;
         }
 
-        writer.append("OR");
+        writer.append("or");
     }
 }

@@ -50,7 +50,7 @@ public class FromToken extends QueryToken {
         }
 
         if (dynamic) {
-            writer.append("FROM ");
+            writer.append("from ");
 
             if (collectionName.chars().anyMatch(x -> WHITE_SPACE_CHARS.contains((char) x))) {
                 if (collectionName.contains("\"")) {
@@ -64,7 +64,7 @@ public class FromToken extends QueryToken {
 
         } else {
             writer
-                    .append("FROM INDEX '")
+                    .append("from index '")
                     .append(indexName)
                     .append("'");
         }

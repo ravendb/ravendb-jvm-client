@@ -22,13 +22,13 @@ public abstract class QueryToken {
     private static final Set<String> RQL_KEYWORDS = new TreeSet<>();
 
     static {
-        RQL_KEYWORDS.add("AS");
-        RQL_KEYWORDS.add("SELECT");
-        RQL_KEYWORDS.add("WHERE");
-        RQL_KEYWORDS.add("LOAD");
-        RQL_KEYWORDS.add("GROUP");
-        RQL_KEYWORDS.add("ORDER");
-        RQL_KEYWORDS.add("INCLUDE");
+        RQL_KEYWORDS.add("as");
+        RQL_KEYWORDS.add("select");
+        RQL_KEYWORDS.add("where");
+        RQL_KEYWORDS.add("load");
+        RQL_KEYWORDS.add("group");
+        RQL_KEYWORDS.add("order");
+        RQL_KEYWORDS.add("include");
 
     }
 }

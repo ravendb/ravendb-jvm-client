@@ -9,6 +9,6 @@ public class NegateToken extends QueryToken {
     @Override
     public void writeTo(StringBuilder writer) {
         writer
-                .append("NOT");
+                .append("not");
     }
 }

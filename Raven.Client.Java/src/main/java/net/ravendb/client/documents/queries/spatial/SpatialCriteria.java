@@ -3,6 +3,7 @@ package net.ravendb.client.documents.queries.spatial;
 import net.ravendb.client.documents.indexes.spatial.SpatialRelation;
 import net.ravendb.client.documents.session.tokens.QueryToken;
 import net.ravendb.client.documents.session.tokens.ShapeToken;
+import net.ravendb.client.documents.session.tokens.WhereOperator;
 import net.ravendb.client.documents.session.tokens.WhereToken;
 
 import java.util.function.Function;
@@ -22,25 +23,25 @@ public abstract class SpatialCriteria {
     public QueryToken toQueryToken(String fieldName, Function<Object, String> addQueryParameter) {
         ShapeToken shapeToken = getShapeToken(addQueryParameter);
 
-        QueryToken relationToken;
+        WhereOperator whereOperator;
 
         switch (_relation) {
             case WITHIN:
-                relationToken = WhereToken.within(fieldName, shapeToken, _distanceErrorPct);
+                whereOperator = WhereOperator.SPATIAL_WITHIN;
                 break;
             case CONTAINS:
-                relationToken = WhereToken.contains(fieldName, shapeToken, _distanceErrorPct);
+                whereOperator = WhereOperator.SPATIAL_CONTAINS;
                 break;
             case DISJOINT:
-                relationToken = WhereToken.disjoint(fieldName, shapeToken, _distanceErrorPct);
+                whereOperator = WhereOperator.SPATIAL_DISJOINT;
                 break;
             case INTERSECTS:
-                relationToken = WhereToken.intersects(fieldName, shapeToken, _distanceErrorPct);
+                whereOperator = WhereOperator.SPATIAL_INTERSECTS;
                 break;
             default:
                 throw new IllegalArgumentException();
         }
 
-        return relationToken;
+        return WhereToken.create(whereOperator, fieldName, null, new WhereToken.WhereOptions(shapeToken, _distanceErrorPct));
     }
 }

@@ -73,4 +73,9 @@ public interface IQueryBase<T, TSelf extends IQueryBase<T, TSelf>> {
      * Create the index query object for this query
      */
     IndexQuery getIndexQuery();
+
+    /**
+     * Add a named parameter to the query
+     */
+    TSelf addParameter(String name, Object value);
 }

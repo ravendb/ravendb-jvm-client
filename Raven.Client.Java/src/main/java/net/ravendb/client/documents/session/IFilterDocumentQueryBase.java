@@ -3,8 +3,13 @@ package net.ravendb.client.documents.session;
 import net.ravendb.client.documents.indexes.spatial.SpatialRelation;
 import net.ravendb.client.documents.indexes.spatial.SpatialUnits;
 import net.ravendb.client.documents.queries.SearchOperator;
+import net.ravendb.client.documents.queries.spatial.DynamicSpatialField;
+import net.ravendb.client.documents.queries.spatial.SpatialCriteria;
+import net.ravendb.client.documents.queries.spatial.SpatialCriteriaFactory;
 
+import java.lang.reflect.Method;
 import java.util.Collection;
+import java.util.function.Function;
 
 public interface IFilterDocumentQueryBase<T, TSelf extends IDocumentQueryBase<T, TSelf>> extends IQueryBase<T, TSelf> {
 
@@ -106,7 +111,18 @@ public interface IFilterDocumentQueryBase<T, TSelf extends IDocumentQueryBase<T,
      */
     TSelf whereEquals(String fieldName, Object value, boolean exact);
 
+    /**
+     * Matches value
+     */
+    TSelf whereEquals(String fieldName, MethodCall method);
+
+    /**
+     * Matches value
+     */
+    TSelf whereEquals(String fieldName, MethodCall method, boolean exact);
+
     //TBD TSelf WhereEquals<TValue>(Expression<Func<T, TValue>> propertySelector, TValue value, bool exact = false);
+    //TBD TSelf WhereEquals<TValue>(Expression<Func<T, TValue>> propertySelector, MethodCall value, bool exact = false);
 
     /**
      * Matches value
@@ -123,7 +139,18 @@ public interface IFilterDocumentQueryBase<T, TSelf extends IDocumentQueryBase<T,
      */
     TSelf whereNotEquals(String fieldName, Object value, boolean exact);
 
+    /**
+     * Not matches value
+     */
+    TSelf whereNotEquals(String fieldName, MethodCall method);
+
+    /**
+     * Not matches value
+     */
+    TSelf whereNotEquals(String fieldName, MethodCall method, boolean exact);
+
     //TBD TSelf WhereNotEquals<TValue>(Expression<Func<T, TValue>> propertySelector, TValue value, bool exact = false);
+    //TBD TSelf WhereNotEquals<TValue>(Expression<Func<T, TValue>> propertySelector, MethodCall value, bool exact = false);
 
     /**
      * Not matches value
@@ -266,6 +293,15 @@ public interface IFilterDocumentQueryBase<T, TSelf extends IDocumentQueryBase<T,
      */
     TSelf relatesToShape(String fieldName, String shapeWkt, SpatialRelation relation, double distanceErrorPct);
 
-    TSelf cmpXChg(String key, T value);
+    //TBD IDocumentQuery<T> Spatial(Expression<Func<T, object>> path, Func<SpatialCriteriaFactory, SpatialCriteria> clause);
+
+    /**
+     * Ability to use one factory to determine spatial shape that will be used in query.
+     */
+    IDocumentQuery<T> spatial(String fieldName, Function<SpatialCriteriaFactory, SpatialCriteria> clause);
+
+    IDocumentQuery<T> spatial(DynamicSpatialField field, Function<SpatialCriteriaFactory, SpatialCriteria> clause);
+
+    //TBD IDocumentQuery<T> spatial(Function<SpatialDynamicFieldFactory<T>, DynamicSpatialField> field, Function<SpatialCriteriaFactory, SpatialCriteria> clause);
 
 }

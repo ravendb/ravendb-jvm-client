@@ -23,7 +23,7 @@ public class DeclareToken extends QueryToken {
     @Override
     public void writeTo(StringBuilder writer) {
         writer
-                .append("DECLARE ")
+                .append("declare ")
                 .append("function ")
                 .append(name)
                 .append("(")

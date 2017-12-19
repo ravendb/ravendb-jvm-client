@@ -4,6 +4,7 @@ import net.ravendb.client.http.RavenCommand;
 import net.ravendb.client.http.ServerNode;
 import net.ravendb.client.http.Topology;
 import net.ravendb.client.primitives.Reference;
+import net.ravendb.client.util.UrlUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpRequestBase;
@@ -12,22 +13,17 @@ import java.io.IOException;
 
 public class GetTopologyCommand extends RavenCommand<Topology> {
 
-    private final String forcedUrl;
-
     public GetTopologyCommand() {
-        this(null);
-    }
-
-    public GetTopologyCommand(String forcedUrl) {
         super(Topology.class);
-        this.forcedUrl = forcedUrl;
     }
 
     @Override
     public HttpRequestBase createRequest(ServerNode node, Reference<String> url) {
         url.value = node.getUrl() + "/topology?name=" + node.getDatabase();
-        if (StringUtils.isNotEmpty(forcedUrl)) {
-            url.value += "&url=" + forcedUrl;
+        if (node.getUrl().toLowerCase().contains(".fiddler")) {
+            // we want to keep the '.fiddler' stuff there so we'll keep tracking request
+            // so we are going to ask the server to respect it
+            url.value += "&localUrl=" + UrlUtils.escapeDataString(node.getUrl());
         }
 
         return new HttpGet();

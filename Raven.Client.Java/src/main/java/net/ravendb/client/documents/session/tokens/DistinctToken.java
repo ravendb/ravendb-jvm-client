@@ -10,6 +10,6 @@ public class DistinctToken extends QueryToken {
     @Override
     public void writeTo(StringBuilder writer) {
         writer
-                .append("DISTINCT");
+                .append("distinct");
     }
 }

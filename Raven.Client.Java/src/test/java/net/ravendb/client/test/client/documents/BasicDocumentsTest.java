@@ -57,7 +57,7 @@ public class BasicDocumentsTest extends RemoteTestBase {
     @Test
     public void get() throws Exception {
         try (IDocumentStore store = getDocumentStore()) {
-            ObjectNode dummy = JsonExtensions.getDefaultMapper().valueToTree(new User());
+            ObjectNode dummy = JsonExtensions.getDefaultEntityMapper().valueToTree(new User());
             dummy.remove("id");
 
             try (IDocumentSession session = store.openSession()) {
@@ -137,7 +137,7 @@ public class BasicDocumentsTest extends RemoteTestBase {
                     .contains("@metadata");
 
             assertThat(doc1Properties.size())
-                    .isEqualTo(1 + dummy.size());
+                    .isEqualTo(1);
 
             assertThat(doc2)
                     .isNotNull();
@@ -147,7 +147,7 @@ public class BasicDocumentsTest extends RemoteTestBase {
                     .contains("@metadata");
 
             assertThat(doc2Properties.size())
-                    .isEqualTo(1 + dummy.size());
+                    .isEqualTo(1);
 
         }
     }

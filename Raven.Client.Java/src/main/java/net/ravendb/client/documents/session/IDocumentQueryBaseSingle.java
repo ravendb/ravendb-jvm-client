@@ -29,6 +29,5 @@ public interface IDocumentQueryBaseSingle<T> {
      */
     int count();
 
-    //TBD Lazy<IEnumerable<T>> Lazily();
     //TBD Lazy<IEnumerable<T>> Lazily(Action<IEnumerable<T>> onEval);
 }

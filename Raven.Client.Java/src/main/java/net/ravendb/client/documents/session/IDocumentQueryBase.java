@@ -1,6 +1,10 @@
 package net.ravendb.client.documents.session;
 
 import net.ravendb.client.documents.queries.spatial.DynamicSpatialField;
+import net.ravendb.client.documents.queries.spatial.SpatialCriteria;
+import net.ravendb.client.documents.queries.spatial.SpatialCriteriaFactory;
+
+import java.util.function.Function;
 
 /**
  *  A query against a Raven index

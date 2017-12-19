@@ -85,6 +85,16 @@ public interface IAbstractDocumentQuery<T> {
     /**
      * Matches value
      */
+    void _whereEquals(String fieldName, MethodCall method);
+
+    /**
+     * Matches value
+     */
+    void _whereEquals(String fieldName, MethodCall method, boolean exact);
+
+    /**
+     * Matches value
+     */
     void _whereEquals(WhereParams whereParams);
 
     /**
@@ -96,6 +106,16 @@ public interface IAbstractDocumentQuery<T> {
      * Not matches value
      */
     void _whereNotEquals(String fieldName, Object value, boolean exact);
+
+    /**
+     * Not matches value
+     */
+    void _whereNotEquals(String fieldName, MethodCall method);
+
+    /**
+     * Not matches value
+     */
+    void _whereNotEquals(String fieldName, MethodCall method, boolean exact);
 
     /**
      * Not matches value
@@ -190,8 +210,6 @@ public interface IAbstractDocumentQuery<T> {
     void _whereExists(String fieldName);
 
     void _whereRegex(String fieldName, String pattern);
-
-    void _cmpXchg(String key, Object value);
 
     /**
      * Add an AND to the query

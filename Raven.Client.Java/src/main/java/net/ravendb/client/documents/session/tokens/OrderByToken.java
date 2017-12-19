@@ -58,18 +58,18 @@ public class OrderByToken extends QueryToken {
 
         switch (_ordering) {
             case LONG:
-                writer.append(" AS long");
+                writer.append(" as long");
                 break;
             case DOUBLE:
-                writer.append(" AS double");
+                writer.append(" as double");
                 break;
             case ALPHA_NUMERIC:
-                writer.append(" AS alphaNumeric");
+                writer.append(" as alphaNumeric");
                 break;
         }
 
         if (_descending) { // we only add this if we have to, ASC is the default and reads nicer
-            writer.append(" DESC");
+            writer.append(" desc");
         }
     }
 }

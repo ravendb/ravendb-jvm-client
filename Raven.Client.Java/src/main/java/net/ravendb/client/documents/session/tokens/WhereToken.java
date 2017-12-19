@@ -2,272 +2,206 @@ package net.ravendb.client.documents.session.tokens;
 
 import net.ravendb.client.Constants;
 import net.ravendb.client.documents.queries.SearchOperator;
+import net.ravendb.client.primitives.Lang;
+import net.ravendb.client.primitives.UseSharpEnum;
 
 public class WhereToken extends QueryToken {
 
     private WhereToken() {
     }
 
+    @UseSharpEnum
+    public enum MethodsType {
+        CMP_X_CHG
+    }
+
+    public static class WhereMethodCall {
+        public MethodsType methodType;
+        public String[] parameters;
+        public String property;
+    }
+
+    public static class WhereOptions {
+        private SearchOperator searchOperator;
+        private String fromParameterName;
+        private String toParameterName;
+        private Double boost;
+        private Double fuzzy;
+        private Integer proximity;
+        private boolean exact;
+        private WhereMethodCall method;
+        private ShapeToken whereShape;
+        private double distanceErrorPct;
+
+        public static WhereOptions defaultOptions() {
+            return new WhereOptions();
+        }
+
+        private WhereOptions() {
+        }
+
+        public WhereOptions(boolean exact) {
+            this.exact = exact;
+        }
+
+        public WhereOptions(boolean exact, String from, String to) {
+            this.exact = exact;
+            this.fromParameterName = from;
+            this.toParameterName = to;
+        }
+
+        public WhereOptions(SearchOperator search) {
+            this.searchOperator = search;
+        }
+
+        public WhereOptions(ShapeToken shape, double distance) {
+            whereShape = shape;
+            distanceErrorPct = distance;
+        }
+
+        public WhereOptions(MethodsType methodType, String[] parameters, String property) {
+            this(methodType, parameters, property, false);
+        }
+
+        public WhereOptions(MethodsType methodType, String[] parameters, String property, boolean exact) {
+            method = new WhereMethodCall();
+            method.methodType = methodType;
+            method.parameters = parameters;
+            method.property = property;
+
+            this.exact = exact;
+        }
+
+        public SearchOperator getSearchOperator() {
+            return searchOperator;
+        }
+
+        public void setSearchOperator(SearchOperator searchOperator) {
+            this.searchOperator = searchOperator;
+        }
+
+        public String getFromParameterName() {
+            return fromParameterName;
+        }
+
+        public void setFromParameterName(String fromParameterName) {
+            this.fromParameterName = fromParameterName;
+        }
+
+        public String getToParameterName() {
+            return toParameterName;
+        }
+
+        public void setToParameterName(String toParameterName) {
+            this.toParameterName = toParameterName;
+        }
+
+        public Double getBoost() {
+            return boost;
+        }
+
+        public void setBoost(Double boost) {
+            this.boost = boost;
+        }
+
+        public Double getFuzzy() {
+            return fuzzy;
+        }
+
+        public void setFuzzy(Double fuzzy) {
+            this.fuzzy = fuzzy;
+        }
+
+        public Integer getProximity() {
+            return proximity;
+        }
+
+        public void setProximity(Integer proximity) {
+            this.proximity = proximity;
+        }
+
+        public boolean isExact() {
+            return exact;
+        }
+
+        public void setExact(boolean exact) {
+            this.exact = exact;
+        }
+
+        public WhereMethodCall getMethod() {
+            return method;
+        }
+
+        public void setMethod(WhereMethodCall method) {
+            this.method = method;
+        }
+
+        public ShapeToken getWhereShape() {
+            return whereShape;
+        }
+
+        public void setWhereShape(ShapeToken whereShape) {
+            this.whereShape = whereShape;
+        }
+
+        public double getDistanceErrorPct() {
+            return distanceErrorPct;
+        }
+
+        public void setDistanceErrorPct(double distanceErrorPct) {
+            this.distanceErrorPct = distanceErrorPct;
+        }
+
+    }
+
     private String fieldName;
     private WhereOperator whereOperator;
-    private SearchOperator searchOperator;
     private String parameterName;
-    private String fromParameterName;
-    private String toParameterName;
-    private Double boost;
-    private Double fuzzy;
-    private Integer proximity;
-    private boolean exact;
-    private ShapeToken whereShape;
-    private double distanceErrorPct;
+    private WhereOptions options;
+
+    public static WhereToken create(WhereOperator op, String fieldName, String parameterName) {
+        return create(op, fieldName, parameterName, null);
+    }
+
+    public static WhereToken create(WhereOperator op, String fieldName, String parameterName, WhereOptions options) {
+        WhereToken token = new WhereToken();
+        token.fieldName = fieldName;
+        token.parameterName = parameterName;
+        token.whereOperator = op;
+        token.options = Lang.coalesce(options, WhereOptions.defaultOptions());
+        return token;
+    }
 
     public String getFieldName() {
         return fieldName;
+    }
+
+    public void setFieldName(String fieldName) {
+        this.fieldName = fieldName;
     }
 
     public WhereOperator getWhereOperator() {
         return whereOperator;
     }
 
+    public void setWhereOperator(WhereOperator whereOperator) {
+        this.whereOperator = whereOperator;
+    }
+
     public String getParameterName() {
         return parameterName;
     }
 
-    public String getFromParameterName() {
-        return fromParameterName;
+    public void setParameterName(String parameterName) {
+        this.parameterName = parameterName;
     }
 
-    public String getToParameterName() {
-        return toParameterName;
+    public WhereOptions getOptions() {
+        return options;
     }
 
-    public Double getBoost() {
-        return boost;
-    }
-
-    public void setBoost(Double boost) {
-        this.boost = boost;
-    }
-
-    public Double getFuzzy() {
-        return fuzzy;
-    }
-
-    public void setFuzzy(Double fuzzy) {
-        this.fuzzy = fuzzy;
-    }
-
-    public Integer getProximity() {
-        return proximity;
-    }
-
-    public void setProximity(Integer proximity) {
-        this.proximity = proximity;
-    }
-
-    public boolean isExact() {
-        return exact;
-    }
-
-    public SearchOperator getSearchOperator() {
-        return searchOperator;
-    }
-
-    public ShapeToken getWhereShape() {
-        return whereShape;
-    }
-
-    public void setWhereShape(ShapeToken whereShape) {
-        this.whereShape = whereShape;
-    }
-
-    public double getDistanceErrorPct() {
-        return distanceErrorPct;
-    }
-
-    public void setDistanceErrorPct(double distanceErrorPct) {
-        this.distanceErrorPct = distanceErrorPct;
-    }
-
-    public static WhereToken equals(String fieldName, String parameterName, boolean exact) {
-        WhereToken token = new WhereToken();
-        token.fieldName = fieldName;
-        token.parameterName = parameterName;
-        token.whereOperator = WhereOperator.EQUALS;
-        token.exact = exact;
-        return token;
-    }
-
-    public static WhereToken notEquals(String fieldName, String parameterName, boolean exact) {
-        WhereToken token = new WhereToken();
-        token.fieldName = fieldName;
-        token.parameterName = parameterName;
-        token.whereOperator = WhereOperator.NOT_EQUALS;
-        token.exact = exact;
-        return token;
-    }
-
-    public static WhereToken startsWith(String fieldName, String parameterName, boolean exact) {
-        WhereToken token = new WhereToken();
-        token.fieldName = fieldName;
-        token.parameterName = parameterName;
-        token.whereOperator = WhereOperator.STARTS_WITH;
-        token.exact = exact;
-        return token;
-    }
-
-    public static WhereToken endsWith(String fieldName, String parameterName, boolean exact) {
-        WhereToken token = new WhereToken();
-        token.fieldName = fieldName;
-        token.parameterName = parameterName;
-        token.whereOperator = WhereOperator.ENDS_WITH;
-        token.exact = exact;
-        return token;
-    }
-
-    public static WhereToken greaterThan(String fieldName, String parameterName, boolean exact) {
-        WhereToken token = new WhereToken();
-        token.fieldName = fieldName;
-        token.parameterName = parameterName;
-        token.whereOperator = WhereOperator.GREATER_THAN;
-        token.exact = exact;
-        return token;
-    }
-
-    public static WhereToken greaterThanOrEqual(String fieldName, String parameterName, boolean exact) {
-        WhereToken token = new WhereToken();
-        token.fieldName = fieldName;
-        token.parameterName = parameterName;
-        token.whereOperator = WhereOperator.GREATER_THAN_OR_EQUAL;
-        token.exact = exact;
-        return token;
-    }
-
-    public static WhereToken lessThan(String fieldName, String parameterName, boolean exact) {
-        WhereToken token = new WhereToken();
-        token.fieldName = fieldName;
-        token.parameterName = parameterName;
-        token.whereOperator = WhereOperator.LESS_THAN;
-        token.exact = exact;
-        return token;
-    }
-
-    public static WhereToken lessThanOrEqual(String fieldName, String parameterName, boolean exact) {
-        WhereToken token = new WhereToken();
-        token.fieldName = fieldName;
-        token.parameterName = parameterName;
-        token.whereOperator = WhereOperator.LESS_THAN_OR_EQUAL;
-        token.exact = exact;
-        return token;
-    }
-
-    public static WhereToken in(String fieldName, String parameterName, boolean exact) {
-        WhereToken token = new WhereToken();
-        token.fieldName = fieldName;
-        token.parameterName = parameterName;
-        token.whereOperator = WhereOperator.IN;
-        token.exact = exact;
-        return token;
-    }
-
-    public static WhereToken allIn(String fieldName, String parameterName) {
-        WhereToken token = new WhereToken();
-        token.fieldName = fieldName;
-        token.parameterName = parameterName;
-        token.whereOperator = WhereOperator.ALL_IN;
-        return token;
-    }
-
-    public static WhereToken between(String fieldName, String fromParameterName, String toParameterName, boolean exact) {
-        WhereToken token = new WhereToken();
-        token.fieldName = fieldName;
-        token.fromParameterName = fromParameterName;
-        token.toParameterName = toParameterName;
-        token.whereOperator = WhereOperator.BETWEEN;
-        token.exact = exact;
-        return token;
-    }
-
-    public static WhereToken search(String fieldName, String parameterName, SearchOperator op) {
-        WhereToken token = new WhereToken();
-        token.fieldName = fieldName;
-        token.parameterName = parameterName;
-        token.whereOperator = WhereOperator.SEARCH;
-        token.searchOperator = op;
-        return token;
-    }
-
-    public static WhereToken cmpXchg(String fieldName, String parameterName, SearchOperator op) {
-        WhereToken token = new WhereToken();
-        token.fieldName = fieldName;
-        token.parameterName = parameterName;
-        token.whereOperator = WhereOperator.CMP_X_CHG_MATCH;
-        token.searchOperator = op;
-        return token;
-    }
-
-    public static WhereToken lucene(String fieldName, String parameterName) {
-        WhereToken token = new WhereToken();
-        token.fieldName = fieldName;
-        token.parameterName = parameterName;
-        token.whereOperator = WhereOperator.LUCENE;
-        return token;
-    }
-
-    public static WhereToken exists(String fieldName) {
-        WhereToken token = new WhereToken();
-        token.fieldName = fieldName;
-        token.parameterName = null;
-        token.whereOperator = WhereOperator.EXISTS;
-        return token;
-    }
-
-    public static QueryToken within(String fieldName, ShapeToken shape, double distanceErrorPct) {
-        WhereToken token = new WhereToken();
-        token.fieldName = fieldName;
-        token.parameterName = null;
-        token.whereOperator = WhereOperator.SPATIAL_WITHIN;
-        token.whereShape = shape;
-        token.distanceErrorPct = distanceErrorPct;
-        return token;
-    }
-
-    public static QueryToken contains(String fieldName, ShapeToken shape, double distanceErrorPct) {
-        WhereToken token = new WhereToken();
-        token.fieldName = fieldName;
-        token.parameterName = null;
-        token.whereOperator = WhereOperator.SPATIAL_CONTAINS;
-        token.whereShape = shape;
-        token.distanceErrorPct = distanceErrorPct;
-        return token;
-    }
-
-    public static QueryToken disjoint(String fieldName, ShapeToken shape, double distanceErrorPct) {
-        WhereToken token = new WhereToken();
-        token.fieldName = fieldName;
-        token.parameterName = null;
-        token.whereOperator = WhereOperator.SPATIAL_DISJOINT;
-        token.whereShape = shape;
-        token.distanceErrorPct = distanceErrorPct;
-        return token;
-    }
-
-    public static QueryToken intersects(String fieldNam, ShapeToken shape, double distanceErrorPct) {
-        WhereToken token = new WhereToken();
-        token.fieldName = fieldNam;
-        token.parameterName = null;
-        token.whereOperator = WhereOperator.SPATIAL_INTERSECTS;
-        token.whereShape = shape;
-        token.distanceErrorPct = distanceErrorPct;
-        return token;
-    }
-
-    public static QueryToken regex(String fieldName, String parameterName) {
-        WhereToken token = new WhereToken();
-        token.fieldName = fieldName;
-        token.parameterName = parameterName;
-        token.whereOperator = WhereOperator.REGEX;
-        return token;
+    public void setOptions(WhereOptions options) {
+        this.options = options;
     }
 
     public void addAlias(String alias) {
@@ -277,21 +211,52 @@ public class WhereToken extends QueryToken {
         fieldName = alias + "." + fieldName;
     }
 
+    private boolean writeMethod(StringBuilder writer) {
+        if (options.getMethod() != null) {
+            switch (options.getMethod().methodType) {
+                case CMP_X_CHG:
+                    writer.append("cmpxchg(");
+                    break;
+                default:
+                    throw new IllegalArgumentException("Unsupported method: " + options.getMethod().methodType);
+            }
+
+            boolean first = true;
+            for (String parameter : options.getMethod().parameters) {
+                if (!first) {
+                    writer.append(",");
+                }
+                first = false;
+                writer.append("$");
+                writer.append(parameter);
+            }
+            writer.append(")");
+
+            if (options.getMethod().property != null) {
+                writer.append(".")
+                        .append(options.getMethod().property);
+            }
+            return true;
+        }
+
+        return false;
+    }
+
     @Override
     public void writeTo(StringBuilder writer) {
-        if (boost != null) {
+        if (options.boost != null) {
             writer.append("boost(");
         }
 
-        if (fuzzy != null) {
+        if (options.fuzzy != null) {
             writer.append("fuzzy(");
         }
 
-        if (proximity != null) {
+        if (options.proximity != null) {
             writer.append("proximity(");
         }
 
-        if (exact) {
+        if (options.exact) {
             writer.append("exact(");
         }
 
@@ -326,13 +291,79 @@ public class WhereToken extends QueryToken {
             case REGEX:
                 writer.append("regex(");
                 break;
-            case CMP_X_CHG_MATCH:
-                writer.append("cmpxchg.match(");
         }
+
+        writeInnerWhere(writer);
+
+        if (options.exact) {
+            writer.append(")");
+        }
+
+        if (options.proximity != null) {
+            writer
+                    .append(", ")
+                    .append(options.proximity)
+                    .append(")");
+        }
+
+        if (options.fuzzy != null) {
+            writer
+                    .append(", ")
+                    .append(options.fuzzy)
+                    .append(")");
+        }
+
+        if (options.boost != null) {
+            writer
+                    .append(", ")
+                    .append(options.boost)
+                    .append(")");
+        }
+    }
+
+    private void writeInnerWhere(StringBuilder writer) {
 
         writeField(writer, fieldName);
 
         switch (whereOperator) {
+            case EQUALS:
+                writer
+                        .append(" = ");
+                break;
+
+            case NOT_EQUALS:
+                writer
+                        .append(" != ");
+                break;
+            case GREATER_THAN:
+                writer
+                        .append(" > ");
+                break;
+            case GREATER_THAN_OR_EQUAL:
+                writer
+                        .append(" >= ");
+                break;
+            case LESS_THAN:
+                writer
+                        .append(" < ");
+                break;
+            case LESS_THAN_OR_EQUAL:
+                writer
+                        .append(" <= ");
+                break;
+            default:
+                specialOperator(writer);
+                return;
+        }
+
+        if (!writeMethod(writer)) {
+            writer.append("$").append(parameterName);
+        }
+    }
+
+    private void specialOperator(StringBuilder writer) {
+        switch (whereOperator)
+        {
             case IN:
                 writer
                         .append(" in ($")
@@ -341,62 +372,26 @@ public class WhereToken extends QueryToken {
                 break;
             case ALL_IN:
                 writer
-                        .append(" ALL IN ($")
+                        .append(" all in ($")
                         .append(parameterName)
                         .append(")");
                 break;
             case BETWEEN:
                 writer
-                        .append(" BETWEEN $")
-                        .append(fromParameterName)
-                        .append(" AND $")
-                        .append(toParameterName);
-                break;
-            case EQUALS:
-                writer
-                        .append(" = $")
-                        .append(parameterName);
+                        .append(" between $")
+                        .append(options.fromParameterName)
+                        .append(" and $")
+                        .append(options.toParameterName);
                 break;
 
-            case NOT_EQUALS:
-                writer
-                        .append(" != $")
-                        .append(parameterName);
-                break;
-            case GREATER_THAN:
-                writer
-                        .append(" > $")
-                        .append(parameterName);
-                break;
-            case GREATER_THAN_OR_EQUAL:
-                writer
-                        .append(" >= $")
-                        .append(parameterName);
-                break;
-            case LESS_THAN:
-                writer
-                        .append(" < $")
-                        .append(parameterName);
-                break;
-            case LESS_THAN_OR_EQUAL:
-                writer
-                        .append(" <= $")
-                        .append(parameterName);
-                break;
             case SEARCH:
                 writer
                         .append(", $")
                         .append(parameterName);
-                if (searchOperator == SearchOperator.AND) {
-                    writer.append(", AND");
+                if (options.searchOperator == SearchOperator.AND) {
+                    writer.append(", and");
                 }
                 writer.append(")");
-                break;
-            case CMP_X_CHG_MATCH:
-                writer
-                        .append(", $")
-                        .append(parameterName)
-                        .append(")");
                 break;
             case LUCENE:
             case STARTS_WITH:
@@ -417,42 +412,17 @@ public class WhereToken extends QueryToken {
             case SPATIAL_INTERSECTS:
                 writer
                         .append(", ");
-                whereShape.writeTo(writer);
+                options.whereShape.writeTo(writer);
 
-                if (Math.abs(distanceErrorPct - Constants.Documents.Indexing.Spatial.DEFAULT_DISTANCE_ERROR_PCT) > 1e-40) {
+                if (Math.abs(options.distanceErrorPct - Constants.Documents.Indexing.Spatial.DEFAULT_DISTANCE_ERROR_PCT) > 1e-40) {
                     writer.append(", ");
-                    writer.append(distanceErrorPct);
+                    writer.append(options.distanceErrorPct);
                 }
                 writer
                         .append(")");
                 break;
             default:
                 throw new IllegalArgumentException();
-        }
-
-        if (exact) {
-            writer.append(")");
-        }
-
-        if (proximity != null) {
-            writer
-                    .append(", ")
-                    .append(proximity)
-                    .append(")");
-        }
-
-        if (fuzzy != null) {
-            writer
-                    .append(", ")
-                    .append(fuzzy)
-                    .append(")");
-        }
-
-        if (boost != null) {
-            writer
-                    .append(", ")
-                    .append(boost)
-                    .append(")");
         }
     }
 }

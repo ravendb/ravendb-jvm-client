@@ -28,13 +28,13 @@ public interface IDocumentQuery<T> extends IDocumentQueryBase<T, IDocumentQuery<
 
     /**
      * Selects the specified fields directly from the index if the are stored. If the field is not stored in index, value
-     *  will come from document directly.
+     * will come from document directly.
      */
     <TProjection> IDocumentQuery<TProjection> selectFields(Class<TProjection> projectionClass);
 
     /**
      * Selects the specified fields directly from the index if the are stored. If the field is not stored in index, value
-     *  will come from document directly.
+     * will come from document directly.
      */
     <TProjection> IDocumentQuery<TProjection> selectFields(Class<TProjection> projectionClass, String... fields);
 
@@ -43,17 +43,6 @@ public interface IDocumentQuery<T> extends IDocumentQueryBase<T, IDocumentQuery<
      * will come from document directly.
      */
     <TProjection> IDocumentQuery<TProjection> selectFields(Class<TProjection> projectionClass, QueryData queryData);
-
-    //TBD IDocumentQuery<T> Spatial(Expression<Func<T, object>> path, Func<SpatialCriteriaFactory, SpatialCriteria> clause);
-
-    /**
-     * Ability to use one factory to determine spatial shape that will be used in query.
-     */
-    IDocumentQuery<T> spatial(String fieldName, Function<SpatialCriteriaFactory, SpatialCriteria> clause);
-
-    IDocumentQuery<T> spatial(DynamicSpatialField field, Function<SpatialCriteriaFactory, SpatialCriteria> clause);
-
-    //TBD IDocumentQuery<T> spatial(Function<SpatialDynamicFieldFactory<T>, DynamicSpatialField> field, Function<SpatialCriteriaFactory, SpatialCriteria> clause);
 
     /**
      * Changes the return type of the query

@@ -96,6 +96,12 @@ public class DocumentQuery<T> extends AbstractDocumentQuery<T, DocumentQuery<T>>
     }
 
     @Override
+    public IDocumentQuery<T> addParameter(String name, Object value) {
+        _addParameter(name, value);
+        return this;
+    }
+
+    @Override
     public IDocumentQuery<T> addOrder(String fieldName, boolean descending) {
         return addOrder(fieldName, descending, OrderingType.STRING);
     }
@@ -111,6 +117,7 @@ public class DocumentQuery<T> extends AbstractDocumentQuery<T, DocumentQuery<T>>
     }
 
     //TBD public IDocumentQuery<T> AddOrder<TValue>(Expression<Func<T, TValue>> propertySelector, bool descending, OrderingType ordering)
+
 
     @Override
     public IDocumentQuery<T> addAfterQueryExecutedListener(Consumer<QueryResult> action) {
@@ -151,12 +158,6 @@ public class DocumentQuery<T> extends AbstractDocumentQuery<T, DocumentQuery<T>>
     }
 
     //TBD public IDocumentQuery<T> Search<TValue>(Expression<Func<T, TValue>> propertySelector, string searchTerms, SearchOperator @operator)
-
-    @Override
-    public IDocumentQuery<T> cmpXChg(String key, T value) {
-        _cmpXchg(key, value);
-        return this;
-    }
 
     @Override
     public IDocumentQuery<T> intersect() {
@@ -248,7 +249,20 @@ public class DocumentQuery<T> extends AbstractDocumentQuery<T, DocumentQuery<T>>
         return this;
     }
 
+    @Override
+    public IDocumentQuery<T> whereEquals(String fieldName, MethodCall method) {
+        _whereEquals(fieldName, method);
+        return this;
+    }
+
+    @Override
+    public IDocumentQuery<T> whereEquals(String fieldName, MethodCall method, boolean exact) {
+        _whereEquals(fieldName, method, exact);
+        return this;
+    }
+
     //TBD IDocumentQuery<T> IDocumentQueryBase<T, IDocumentQuery<T>>.WhereEquals<TValue>(Expression<Func<T, TValue>> propertySelector, TValue value, bool exact)
+    //TBD IDocumentQuery<T> IFilterDocumentQueryBase<T, IDocumentQuery<T>>.WhereEquals<TValue>(Expression<Func<T, TValue>> propertySelector, MethodCall value, bool exact)
 
     @Override
     public IDocumentQuery<T> whereEquals(WhereParams whereParams) {
@@ -268,7 +282,20 @@ public class DocumentQuery<T> extends AbstractDocumentQuery<T, DocumentQuery<T>>
         return this;
     }
 
+    @Override
+    public IDocumentQuery<T> whereNotEquals(String fieldName, MethodCall method) {
+        _whereNotEquals(fieldName, method);
+        return this;
+    }
+
+    @Override
+    public IDocumentQuery<T> whereNotEquals(String fieldName, MethodCall method, boolean exact) {
+        _whereNotEquals(fieldName, method, exact);
+        return this;
+    }
+
     //TBD IDocumentQuery<T> IDocumentQueryBase<T, IDocumentQuery<T>>.WhereNotEquals<TValue>(Expression<Func<T, TValue>> propertySelector, TValue value, bool exact)
+    //TBD IDocumentQuery<T> IFilterDocumentQueryBase<T, IDocumentQuery<T>>.WhereNotEquals<TValue>(Expression<Func<T, TValue>> propertySelector, MethodCall value, bool exact)
 
     @Override
     public IDocumentQuery<T> whereNotEquals(WhereParams whereParams) {
@@ -527,7 +554,6 @@ public class DocumentQuery<T> extends AbstractDocumentQuery<T, DocumentQuery<T>>
         query.disableEntitiesTracking = disableEntitiesTracking;
         query.disableCaching = disableCaching;
         //TBD ShowQueryTimings = ShowQueryTimings,
-        query.lastEquality = lastEquality;
         //TBD query.shouldExplainScores = shouldExplainScores;
         query.isIntersect = isIntersect;
         query.defaultOperator = defaultOperator;
