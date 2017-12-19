@@ -51,11 +51,11 @@ public class OperationExecutor {
         return command.getResult();
     }
 
-    public Operation sendOperation(IOperation<OperationIdResult> operation) {
-        return sendOperation(operation, null);
+    public Operation sendAsync(IOperation<OperationIdResult> operation) {
+        return sendAsync(operation, null);
     }
 
-    public Operation sendOperation(IOperation<OperationIdResult> operation, SessionInfo sessionInfo) {
+    public Operation sendAsync(IOperation<OperationIdResult> operation, SessionInfo sessionInfo) {
         RavenCommand<OperationIdResult> command = operation.getCommand(store, requestExecutor.getConventions(), requestExecutor.getCache());
 
         requestExecutor.execute(command, sessionInfo);

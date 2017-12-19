@@ -14,11 +14,11 @@ import java.io.InputStream;
 
 public class ExceptionDispatcher {
 
-    public static Exception get(ExceptionSchema schema, int code) {
+    public static RavenException get(ExceptionSchema schema, int code) {
         return get(schema.getMessage(), schema.getError(), schema.getType(), code);
     }
 
-    public static Exception get(String message, String error, String typeAsString, int code) {
+    public static RavenException get(String message, String error, String typeAsString, int code) {
         if (code == HttpStatus.SC_CONFLICT) {
             if (typeAsString.contains("DocumentConflictException")) {
                 return DocumentConflictException.fromMessage(message);
@@ -31,9 +31,9 @@ public class ExceptionDispatcher {
             return new RavenException(error);
         }
 
-        Exception exception;
+        RavenException exception;
         try {
-            exception = (Exception) type.getConstructor(String.class).newInstance(error);
+            exception = (RavenException) type.getConstructor(String.class).newInstance(error);
         } catch (Exception e) {
             return new RavenException(error);
         }

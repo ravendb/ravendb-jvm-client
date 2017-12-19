@@ -52,7 +52,7 @@ public class MaintenanceOperationExecutor {
         return command.getResult();
     }
 
-    public Operation sendOperation(IMaintenanceOperation<OperationIdResult> operation) {
+    public Operation sendAsync(IMaintenanceOperation<OperationIdResult> operation) {
         RavenCommand<OperationIdResult> command = operation.getCommand(requestExecutor.getConventions());
 
         requestExecutor.execute(command);

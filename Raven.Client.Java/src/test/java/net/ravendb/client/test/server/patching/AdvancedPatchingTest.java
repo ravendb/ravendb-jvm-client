@@ -825,7 +825,7 @@ this.Value = another.Value;
                         .toList();
             }
 
-            Operation operation = store.operations().sendOperation(new PatchByQueryOperation("FROM INDEX 'TestIndex' WHERE value = 1 update { put('NewItem/3', {'copiedValue': this.value });}"));
+            Operation operation = store.operations().sendAsync(new PatchByQueryOperation("FROM INDEX 'TestIndex' WHERE value = 1 update { put('NewItem/3', {'copiedValue': this.value });}"));
 
             operation.waitForCompletion();
 

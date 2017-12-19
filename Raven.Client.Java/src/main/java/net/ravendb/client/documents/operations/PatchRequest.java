@@ -43,4 +43,12 @@ public class PatchRequest {
     public PatchRequest() {
         values = new HashMap<>();
     }
+
+    public static PatchRequest forScript(String script) {
+        PatchRequest request = new PatchRequest();
+        request
+                .setScript(script);
+
+        return request;
+    }
 }

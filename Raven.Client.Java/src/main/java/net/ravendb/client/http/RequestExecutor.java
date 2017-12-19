@@ -399,7 +399,7 @@ public class RequestExecutor implements CleanCloseable {
         }
 
         updateTopologyAsync(serverNode, 0)
-                .exceptionally(ex -> { //TODO: test me!
+                .exceptionally(ex -> {
                     if (logger.isInfoEnabled()) {
                         logger.info("Couldn't update topology from _updateTopologyTimer", ex);
                     }
@@ -432,7 +432,7 @@ public class RequestExecutor implements CleanCloseable {
                     // so errors immediately
                     _lastKnownUrls = initialUrls;
                     throw e;
-                } catch (Exception e) { //TODO: handle https
+                } catch (Exception e) {
                     if (initialUrls.length == 0) {
                         _lastKnownUrls = initialUrls;
                         throw new IllegalStateException("Cannot get topology from server: " + url, e);

@@ -1,10 +1,14 @@
 package net.ravendb.client.documents.operations;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import net.ravendb.client.documents.commands.GetOperationStateOperation;
 import net.ravendb.client.documents.conventions.DocumentConventions;
+import net.ravendb.client.exceptions.ExceptionDispatcher;
+import net.ravendb.client.extensions.JsonExtensions;
 import net.ravendb.client.http.RavenCommand;
 import net.ravendb.client.http.RequestExecutor;
+import net.ravendb.client.primitives.OperationCancelledException;
 import org.apache.commons.lang3.NotImplementedException;
 
 public class Operation {
@@ -49,9 +53,11 @@ public class Operation {
                 case "Completed":
                     return ;
                 case "Cancelled":
-                    throw new NotImplementedException(""); //TODO
+                    throw new OperationCancelledException();
                 case "Faulted":
-                    throw new NotImplementedException(""); //TODO
+                    JsonNode result = status.get("Result");
+                    OperationExceptionResult exceptionResult = JsonExtensions.getDefaultMapper().convertValue(result, OperationExceptionResult.class);
+                    throw ExceptionDispatcher.get(exceptionResult.getMessage(), exceptionResult.getError(), exceptionResult.getType(), exceptionResult.getStatusCode());
             }
 
             try {
@@ -61,5 +67,4 @@ public class Operation {
             }
         }
     }
-
 }
