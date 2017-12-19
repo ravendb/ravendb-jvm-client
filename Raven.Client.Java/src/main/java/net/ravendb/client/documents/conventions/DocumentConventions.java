@@ -9,12 +9,12 @@ import net.ravendb.client.Constants;
 import net.ravendb.client.exceptions.RavenException;
 import net.ravendb.client.extensions.JsonExtensions;
 import net.ravendb.client.http.ReadBalanceBehavior;
-import net.ravendb.client.primitives.Lang;
 import net.ravendb.client.primitives.Tuple;
 import net.ravendb.client.serverwide.ClientConfiguration;
 import net.ravendb.client.util.Inflector;
 import net.ravendb.client.util.ReflectionUtil;
 import org.apache.commons.beanutils.BeanUtils;
+import org.apache.commons.lang3.ObjectUtils;
 
 import java.beans.IntrospectionException;
 import java.beans.Introspector;
@@ -435,8 +435,8 @@ public class DocumentConventions {
                 _originalConfiguration.setReadBalanceBehavior(_readBalanceBehavior);
             }
 
-            _maxNumberOfRequestsPerSession = Lang.coalesce(configuration.getMaxNumberOfRequestsPerSession(), _originalConfiguration.getMaxNumberOfRequestsPerSession());
-            _readBalanceBehavior = Lang.coalesce(configuration.getReadBalanceBehavior(), _originalConfiguration.getReadBalanceBehavior());
+            _maxNumberOfRequestsPerSession = ObjectUtils.firstNonNull(configuration.getMaxNumberOfRequestsPerSession(), _originalConfiguration.getMaxNumberOfRequestsPerSession());
+            _readBalanceBehavior = ObjectUtils.firstNonNull(configuration.getReadBalanceBehavior(), _originalConfiguration.getReadBalanceBehavior());
         }
     }
 

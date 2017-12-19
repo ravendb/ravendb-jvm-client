@@ -16,8 +16,8 @@ import net.ravendb.client.exceptions.TimeoutException;
 import net.ravendb.client.exceptions.documents.indexes.IndexDoesNotExistException;
 import net.ravendb.client.extensions.JsonExtensions;
 import net.ravendb.client.primitives.CleanCloseable;
-import net.ravendb.client.primitives.Lang;
 import org.apache.commons.lang3.ClassUtils;
+import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -146,7 +146,7 @@ public class QueryOperation {
                 String projectField = fieldsToFetch.projections[0];
                 JsonNode jsonNode = document.get(projectField);
                 if (jsonNode != null && jsonNode instanceof ValueNode) {
-                    return Lang.coalesce(JsonExtensions.getDefaultEntityMapper().convertValue(jsonNode, clazz), Defaults.defaultValue(clazz));
+                    return ObjectUtils.firstNonNull(JsonExtensions.getDefaultEntityMapper().convertValue(jsonNode, clazz), Defaults.defaultValue(clazz));
                 }
             }
 

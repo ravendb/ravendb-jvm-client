@@ -10,8 +10,8 @@ import net.ravendb.client.documents.operations.indexes.PutIndexesOperation;
 import net.ravendb.client.documents.session.*;
 import net.ravendb.client.http.RequestExecutor;
 import net.ravendb.client.primitives.EventHandler;
-import net.ravendb.client.primitives.Lang;
 import net.ravendb.client.primitives.VoidArgs;
+import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.StringUtils;
 
 import java.net.MalformedURLException;
@@ -84,7 +84,7 @@ public abstract class DocumentStoreBase implements IDocumentStore {
         IndexDefinition[] indexesToAdd = IndexCreation.createIndexesToAdd(tasks, conventions);
 
         maintenance()
-                .forDatabase(Lang.coalesce(database, getDatabase()))
+                .forDatabase(ObjectUtils.firstNonNull(database, getDatabase()))
                 .send(new PutIndexesOperation(indexesToAdd));
     }
 

@@ -2,8 +2,8 @@ package net.ravendb.client.documents.session.tokens;
 
 import net.ravendb.client.Constants;
 import net.ravendb.client.documents.queries.SearchOperator;
-import net.ravendb.client.primitives.Lang;
 import net.ravendb.client.primitives.UseSharpEnum;
+import org.apache.commons.lang3.ObjectUtils;
 
 public class WhereToken extends QueryToken {
 
@@ -168,7 +168,7 @@ public class WhereToken extends QueryToken {
         token.fieldName = fieldName;
         token.parameterName = parameterName;
         token.whereOperator = op;
-        token.options = Lang.coalesce(options, WhereOptions.defaultOptions());
+        token.options = ObjectUtils.firstNonNull(options, WhereOptions.defaultOptions());
         return token;
     }
 

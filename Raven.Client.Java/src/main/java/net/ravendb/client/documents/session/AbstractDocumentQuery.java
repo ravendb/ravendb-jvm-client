@@ -13,14 +13,12 @@ import net.ravendb.client.documents.queries.spatial.DynamicSpatialField;
 import net.ravendb.client.documents.session.operations.QueryOperation;
 import net.ravendb.client.documents.session.tokens.*;
 import net.ravendb.client.primitives.CleanCloseable;
-import net.ravendb.client.primitives.Lang;
 import net.ravendb.client.primitives.Reference;
-import net.ravendb.client.primitives.Tuple;
 import org.apache.commons.lang3.NotImplementedException;
+import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.StringUtils;
 
 import java.lang.reflect.Field;
-import java.lang.reflect.Method;
 import java.time.Duration;
 import java.util.*;
 import java.util.function.Consumer;
@@ -175,7 +173,7 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
     @Override
     public void _waitForNonStaleResults(Duration waitTimeout) {
         theWaitForNonStaleResults = true;
-        timeout = Lang.coalesce(waitTimeout, getDefaultTimeout());
+        timeout = ObjectUtils.firstNonNull(waitTimeout, getDefaultTimeout());
     }
 
     protected QueryOperation initializeQueryOperation() {

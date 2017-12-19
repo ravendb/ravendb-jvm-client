@@ -10,9 +10,9 @@ import net.ravendb.client.http.HttpCache;
 import net.ravendb.client.http.RavenCommand;
 import net.ravendb.client.http.ServerNode;
 import net.ravendb.client.json.ContentProviderHttpEntity;
-import net.ravendb.client.primitives.Lang;
 import net.ravendb.client.primitives.Reference;
 import net.ravendb.client.util.TimeUtils;
+import org.apache.commons.lang3.ObjectUtils;
 import org.apache.http.client.methods.HttpPatch;
 import org.apache.http.client.methods.HttpRequestBase;
 import org.apache.http.entity.ContentType;
@@ -56,7 +56,7 @@ public class PatchByQueryOperation implements IOperation<OperationIdResult> {
             super(OperationIdResult.class);
             _conventions = conventions;
             _queryToUpdate = queryToUpdate;
-            _options = Lang.coalesce(options, new QueryOperationOptions());
+            _options = ObjectUtils.firstNonNull(options, new QueryOperationOptions());
         }
 
         @Override

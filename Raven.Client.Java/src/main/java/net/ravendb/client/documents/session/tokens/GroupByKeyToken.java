@@ -1,6 +1,6 @@
 package net.ravendb.client.documents.session.tokens;
 
-import net.ravendb.client.primitives.Lang;
+import org.apache.commons.lang3.ObjectUtils;
 
 public class GroupByKeyToken extends QueryToken {
 
@@ -18,7 +18,7 @@ public class GroupByKeyToken extends QueryToken {
 
     @Override
     public void writeTo(StringBuilder writer) {
-        writeField(writer, Lang.coalesce(_fieldName, "key()"));
+        writeField(writer, ObjectUtils.firstNonNull(_fieldName, "key()"));
 
         if (_projectedName == null || _projectedName.equals(_fieldName)) {
             return;

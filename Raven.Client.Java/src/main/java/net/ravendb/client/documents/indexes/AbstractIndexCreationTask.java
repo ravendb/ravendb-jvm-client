@@ -6,7 +6,7 @@ import net.ravendb.client.documents.conventions.DocumentConventions;
 import net.ravendb.client.documents.indexes.spatial.SpatialOptions;
 import net.ravendb.client.documents.indexes.spatial.SpatialOptionsFactory;
 import net.ravendb.client.documents.operations.indexes.PutIndexesOperation;
-import net.ravendb.client.primitives.Lang;
+import org.apache.commons.lang3.ObjectUtils;
 
 import java.util.HashMap;
 import java.util.HashSet;
@@ -144,7 +144,7 @@ public abstract class AbstractIndexCreationTask {
     private void putIndex(IDocumentStore store, DocumentConventions conventions, String database) {
         DocumentConventions oldConventions = getConventions();
         try {
-            setConventions(Lang.coalesce(conventions, getConventions(), store.getConventions()));
+            setConventions(ObjectUtils.firstNonNull(conventions, getConventions(), store.getConventions()));
 
             IndexDefinition indexDefinition = createIndexDefinition();
             indexDefinition.setName(getIndexName());
@@ -157,7 +157,7 @@ public abstract class AbstractIndexCreationTask {
                 indexDefinition.setPriority(priority);
             }
 
-            store.maintenance().forDatabase(Lang.coalesce(database, store.getDatabase())).send(new PutIndexesOperation(indexDefinition));
+            store.maintenance().forDatabase(ObjectUtils.firstNonNull(database, store.getDatabase())).send(new PutIndexesOperation(indexDefinition));
         } finally {
             setConventions(oldConventions);
         }

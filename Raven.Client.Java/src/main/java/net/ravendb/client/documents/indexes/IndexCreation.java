@@ -3,7 +3,7 @@ package net.ravendb.client.documents.indexes;
 import net.ravendb.client.documents.IDocumentStore;
 import net.ravendb.client.documents.conventions.DocumentConventions;
 import net.ravendb.client.documents.operations.indexes.PutIndexesOperation;
-import net.ravendb.client.primitives.Lang;
+import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
@@ -40,7 +40,7 @@ public class IndexCreation {
                     x.setConventions(conventions);
                     IndexDefinition definition = x.createIndexDefinition();
                     definition.setName(x.getIndexName());
-                    definition.setPriority(Lang.coalesce(x.getPriority(), IndexPriority.NORMAL));
+                    definition.setPriority(ObjectUtils.firstNonNull(x.getPriority(), IndexPriority.NORMAL));
                     return definition;
                 }).toArray(IndexDefinition[]::new);
     }

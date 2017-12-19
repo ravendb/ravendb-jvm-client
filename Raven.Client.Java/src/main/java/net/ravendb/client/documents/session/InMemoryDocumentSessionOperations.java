@@ -27,6 +27,7 @@ import net.ravendb.client.json.MetadataAsDictionary;
 import net.ravendb.client.primitives.*;
 import net.ravendb.client.util.IdentityHashSet;
 import org.apache.commons.lang3.NotImplementedException;
+import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.StringUtils;
 
 import java.util.*;
@@ -507,7 +508,7 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
 
         knownMissingIds.add(id);
         changeVector = isUseOptimisticConcurrency() ? changeVector : null;
-        defer(new DeleteCommandData(id, Lang.coalesce(expectedChangeVector, changeVector)));
+        defer(new DeleteCommandData(id, ObjectUtils.firstNonNull(expectedChangeVector, changeVector)));
     }
 
     /**
@@ -540,7 +541,7 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
 
         DocumentInfo value = documentsByEntity.get(entity);
         if (value != null) {
-            value.setChangeVector(Lang.coalesce(changeVector, value.getChangeVector()));
+            value.setChangeVector(ObjectUtils.firstNonNull(changeVector, value.getChangeVector()));
             value.setConcurrencyCheckMode(forceConcurrencyCheck);
             return;
         }
@@ -748,7 +749,7 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
             if (useOptimisticConcurrency) {
                 if (entity.getValue().getConcurrencyCheckMode() != ConcurrencyCheckMode.DISABLED) {
                     // if the user didn't provide a change vector, we'll test for an empty one
-                    changeVector = Lang.coalesce(entity.getValue().getChangeVector(), "");
+                    changeVector = ObjectUtils.firstNonNull(entity.getValue().getChangeVector(), "");
                 } else {
                     changeVector = null;
                 }

@@ -3,7 +3,7 @@ package net.ravendb.client.documents.indexes;
 import net.ravendb.client.documents.conventions.DocumentConventions;
 import net.ravendb.client.documents.indexes.spatial.SpatialOptions;
 import net.ravendb.client.exceptions.documents.compilation.IndexCompilationException;
-import net.ravendb.client.primitives.Lang;
+import org.apache.commons.lang3.ObjectUtils;
 
 import java.util.HashMap;
 import java.util.HashSet;
@@ -35,7 +35,7 @@ public class IndexDefinitionBuilder {
     }
 
     public IndexDefinitionBuilder(String indexName) {
-        _indexName = Lang.coalesce(indexName, getClass().getSimpleName());
+        _indexName = ObjectUtils.firstNonNull(indexName, getClass().getSimpleName());
         storesStrings = new HashMap<>();
         indexesStrings = new HashMap<>();
         suggestionsOptions = new HashSet<>();

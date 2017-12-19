@@ -9,6 +9,7 @@ import net.ravendb.client.documents.session.SessionOptions;
 import net.ravendb.client.http.AggressiveCacheOptions;
 import net.ravendb.client.http.RequestExecutor;
 import net.ravendb.client.primitives.*;
+import org.apache.commons.lang3.ObjectUtils;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -137,8 +138,8 @@ public class DocumentStore extends DocumentStoreBase {
         ensureNotClosed();
 
         UUID sessionId = UUID.randomUUID();
-        String databaseName = Lang.coalesce(options.getDatabase(), getDatabase());
-        RequestExecutor requestExecutor = Lang.coalesce(options.getRequestExecutor(), getRequestExecutor(databaseName));
+        String databaseName = ObjectUtils.firstNonNull(options.getDatabase(), getDatabase());
+        RequestExecutor requestExecutor = ObjectUtils.firstNonNull(options.getRequestExecutor(), getRequestExecutor(databaseName));
 
         DocumentSession session = new DocumentSession(databaseName, this, sessionId, requestExecutor);
         registerEvents(session);
@@ -235,7 +236,7 @@ public class DocumentStore extends DocumentStoreBase {
      */
     public CleanCloseable disableAggressiveCaching(String databaseName) {
         assertInitialized();
-        RequestExecutor re = getRequestExecutor(Lang.coalesce(database, getDatabase()));
+        RequestExecutor re = getRequestExecutor(ObjectUtils.firstNonNull(database, getDatabase()));
         AggressiveCacheOptions old = re.AggressiveCaching.get();
         re.AggressiveCaching.set(null);
 
