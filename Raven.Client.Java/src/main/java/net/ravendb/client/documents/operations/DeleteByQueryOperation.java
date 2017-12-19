@@ -13,6 +13,7 @@ import net.ravendb.client.json.ContentProviderHttpEntity;
 import net.ravendb.client.primitives.HttpDeleteWithEntity;
 import net.ravendb.client.primitives.Reference;
 import net.ravendb.client.util.TimeUtils;
+import org.apache.commons.lang3.ObjectUtils;
 import org.apache.http.client.methods.HttpRequestBase;
 import org.apache.http.entity.ContentType;
 
@@ -49,7 +50,7 @@ public class DeleteByQueryOperation implements IOperation<OperationIdResult> {
             super(OperationIdResult.class);
             _conventions = conventions;
             _queryToDelete = queryToDelete;
-            _options = options;
+            _options = ObjectUtils.firstNonNull(options, new QueryOperationOptions());
         }
 
         @Override
@@ -58,12 +59,17 @@ public class DeleteByQueryOperation implements IOperation<OperationIdResult> {
                     .append("/databases/")
                     .append(node.getDatabase())
                     .append("/queries")
-                    .append("&allowStale=")
-                    .append(_options.isAllowStale())
-                    .append("&maxOpsPerSec=")
-                    .append(_options.getMaxOpsPerSecond())
-                    .append("&details=")
-                    .append(_options.isRetrieveDetails());
+                    .append("?allowStale=")
+                    .append(ObjectUtils.firstNonNull(_options.isAllowStale(), ""));
+
+            if (_options.getMaxOpsPerSecond() != null) {
+                path.append("&maxOpsPerSec=")
+                        .append(_options.getMaxOpsPerSecond());
+            }
+
+            path
+                .append("&details=")
+                .append(ObjectUtils.firstNonNull(_options.isRetrieveDetails(), ""));
 
             if (_options.getStaleTimeout() != null) {
                 path.append("&staleTimeout=")
