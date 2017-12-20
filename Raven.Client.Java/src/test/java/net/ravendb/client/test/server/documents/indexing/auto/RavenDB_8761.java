@@ -27,7 +27,7 @@ public class RavenDB_8761 extends RemoteTestBase {
                 List<ProductCount> productCounts1 = session.advanced().rawQuery(ProductCount.class, "from Orders group by lines[].product\n" +
                         "  order by count()\n" +
                         "  select key() as productName, count() as count")
-                        .waitForNonStaleResults(null)
+                        .waitForNonStaleResults()
                         .toList();
 
                 List<ProductCount> productCounts2 = session.advanced().documentQuery(Order.class)
@@ -165,7 +165,7 @@ public class RavenDB_8761 extends RemoteTestBase {
                 List<ProductCount> productCounts1 = session.advanced().rawQuery(ProductCount.class, "from Orders group by array(lines[].product)\n" +
                         " order by count()\n" +
                         " select key() as products, count() as count")
-                        .waitForNonStaleResults(null)
+                        .waitForNonStaleResults()
                         .toList();
 
                 List<ProductCount> productCounts2 = session
@@ -203,7 +203,7 @@ public class RavenDB_8761 extends RemoteTestBase {
                         " group by array(lines[].product), shipTo.country\n" +
                         " order by count()\n" +
                         " select lines[].product as products, shipTo.country as country, count() as count")
-                        .waitForNonStaleResults(null)
+                        .waitForNonStaleResults()
                         .toList();
 
                 List<ProductCount> productCounts2 = session
@@ -241,7 +241,7 @@ public class RavenDB_8761 extends RemoteTestBase {
                         " group by array(lines[].product), array(lines[].quantity)\n" +
                         " order by lines[].quantity\n" +
                         " select lines[].product as products, lines[].quantity as quantities, count() as count")
-                        .waitForNonStaleResults(null)
+                        .waitForNonStaleResults()
                         .toList();
 
                 List<ProductCount> productCounts2 = session

@@ -235,17 +235,6 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
         }
     }
 
-    public void _rawQuery(String query) {
-        if (!selectTokens.isEmpty() ||
-                !whereTokens.isEmpty() ||
-                !orderByTokens.isEmpty() ||
-                !groupByTokens.isEmpty()) {
-            throw new IllegalStateException("You can only use rawQuery on a new query, without applying any operations (such as where, select, orderBy, groupBy, etc)");
-        }
-
-        queryRaw = query;
-    }
-
     public void _addParameter(String name, Object value) {
         if (queryParameters.containsKey(name)) {
             throw new IllegalStateException("The parameter " + name + " was already added");
@@ -257,7 +246,7 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
     @Override
     public void _groupBy(String fieldName, String... fieldNames) {
         GroupBy[] mapping = Arrays.stream(fieldNames)
-                .map(x -> GroupBy.field (x))
+                .map(x -> GroupBy.field(x))
                 .toArray(GroupBy[]::new);
 
         _groupBy(GroupBy.field(fieldName), mapping);

@@ -26,6 +26,7 @@ import net.ravendb.client.json.JsonOperation;
 import net.ravendb.client.json.MetadataAsDictionary;
 import net.ravendb.client.primitives.*;
 import net.ravendb.client.util.IdentityHashSet;
+import org.apache.commons.beanutils.BeanUtils;
 import org.apache.commons.lang3.NotImplementedException;
 import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -1053,20 +1054,11 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
 
         documentInfo.setEntity(convertToEntity(entity.getClass(), documentInfo.getId(), document));
 
-        /* TODO
-
-        var type = entity.GetType();
-        foreach (var property in ReflectionUtil.GetPropertiesAndFieldsFor(type, BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic))
-        {
-            var prop = property;
-            if (prop.DeclaringType != type && prop.DeclaringType != null)
-                prop = prop.DeclaringType.GetProperty(prop.Name, BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic) ?? property;
-
-            if (!prop.CanWrite() || !prop.CanRead() || prop.GetIndexParameters().Length != 0)
-                continue;
-            prop.SetValue(entity, prop.GetValue(documentInfo.Entity));
+        try {
+            BeanUtils.copyProperties(entity, documentInfo.getEntity());
+        } catch (ReflectiveOperationException e) {
+            throw new RuntimeException("Unable to refresh entity: " + e.getMessage(), e);
         }
-         */
     }
 
     /*TODO

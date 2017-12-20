@@ -10,9 +10,34 @@ import org.junit.jupiter.api.Test;
 import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.in;
 
 public class StoreTest extends RemoteTestBase {
 
+    @Test
+    public void refreshTest() throws Exception {
+        try (IDocumentStore store = getDocumentStore()) {
+
+            try (IDocumentSession session = store.openSession()) {
+                User user = new User();
+                user.setName("RavenDB");
+                session.store(user, "users/1");
+                session.saveChanges();
+
+
+                try (IDocumentSession innerSession = store.openSession()) {
+                    User innerUser = innerSession.load(User.class, "users/1");
+                    innerUser.setName("RavenDB 4.0");
+                    innerSession.saveChanges();
+                }
+
+                session.advanced().refresh(user);
+
+                assertThat(user.getName())
+                        .isEqualTo("RavenDB 4.0");
+            }
+        }
+    }
 
     @Test
     public void storeDocument() throws Exception {

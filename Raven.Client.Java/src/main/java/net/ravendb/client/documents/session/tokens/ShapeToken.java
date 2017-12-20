@@ -11,17 +11,17 @@ public class ShapeToken extends QueryToken {
 
     public static ShapeToken circle(String radiusParameterName, String latitudeParameterName, String longitudeParameterName, SpatialUnits radiusUnits) {
         if (radiusUnits == null) {
-            return new ShapeToken("spatial.circle(" + radiusParameterName + ", " + latitudeParameterName + ", " + longitudeParameterName + ")");
+            return new ShapeToken("spatial.circle($" + radiusParameterName + ", $" + latitudeParameterName + ", $" + longitudeParameterName + ")");
         }
 
         if (radiusUnits == SpatialUnits.KILOMETERS) {
-            return new ShapeToken("spatial.circle(" + radiusParameterName + ", " + latitudeParameterName + ", " + longitudeParameterName + ", 'Kilometers')");
+            return new ShapeToken("spatial.circle($" + radiusParameterName + ", $" + latitudeParameterName + ", $" + longitudeParameterName + ", 'Kilometers')");
         }
-        return new ShapeToken("spatial.circle(" + radiusParameterName + ", " + latitudeParameterName + ", " + longitudeParameterName + ", 'Miles')");
+        return new ShapeToken("spatial.circle($" + radiusParameterName + ", $" + latitudeParameterName + ", $" + longitudeParameterName + ", 'Miles')");
     }
 
     public static ShapeToken wkt(String shapeWktParameterName) {
-        return new ShapeToken("spatial.wkt(" + shapeWktParameterName + ")");
+        return new ShapeToken("spatial.wkt($" + shapeWktParameterName + ")");
     }
 
     @Override

@@ -475,6 +475,45 @@ public class QueryTest extends RemoteTestBase {
     }
 
     @Test
+    public void rawQuerySkipTake() throws Exception {
+        try (IDocumentStore store = getDocumentStore()) {
+            addUsers(store);
+
+            try (DocumentSession session = (DocumentSession) store.openSession()) {
+                List<User> users = session.rawQuery(User.class, "from users")
+                        .skip(2)
+                        .take(1)
+                        .toList();
+
+                assertThat(users)
+                        .hasSize(1);
+
+                assertThat(users.get(0).getName())
+                        .isEqualTo("Tarzan");
+            }
+        }
+    }
+
+    @Test
+    public void parametersInRawQuery() throws Exception {
+        try (IDocumentStore store = getDocumentStore()) {
+            addUsers(store);
+
+            try (DocumentSession session = (DocumentSession) store.openSession()) {
+                List<User> users = session.rawQuery(User.class, "from users where age == $p0")
+                        .addParameter("p0", 5)
+                        .toList();
+
+                assertThat(users)
+                        .hasSize(1);
+
+                assertThat(users.get(0).getName())
+                        .isEqualTo("John");
+            }
+        }
+    }
+
+    @Test
     public void queryLucene() throws Exception {
         try (IDocumentStore store = getDocumentStore()) {
             addUsers(store);

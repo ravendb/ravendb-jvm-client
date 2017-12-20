@@ -1,5 +1,6 @@
 package net.ravendb.client.documents.session;
 
+import net.ravendb.client.documents.indexes.AbstractIndexCreationTask;
 import net.ravendb.client.documents.queries.Query;
 import net.ravendb.client.documents.session.loaders.ILoaderWithInclude;
 import net.ravendb.client.primitives.CleanCloseable;
@@ -94,4 +95,7 @@ public interface IDocumentSession extends CleanCloseable {
     <T> IDocumentQuery<T> query(Class<T> clazz);
 
     <T> IDocumentQuery<T> query(Class<T> clazz, Query collectionOrIndexName);
+
+    <T, TIndex extends AbstractIndexCreationTask> IDocumentQuery<T> query(Class<T> clazz, Class<TIndex> indexClazz);
+
 }

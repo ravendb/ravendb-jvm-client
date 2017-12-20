@@ -821,7 +821,7 @@ this.Value = another.Value;
             try (IDocumentSession session = store.openSession()) {
                 session
                         .advanced().documentQuery(CustomType.class, "TestIndex", null, false)
-                        .waitForNonStaleResults(null)
+                        .waitForNonStaleResults()
                         .toList();
             }
 

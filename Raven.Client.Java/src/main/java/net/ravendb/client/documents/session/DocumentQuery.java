@@ -90,6 +90,12 @@ public class DocumentQuery<T> extends AbstractDocumentQuery<T, DocumentQuery<T>>
     }
 
     @Override
+    public IDocumentQuery<T> waitForNonStaleResults() {
+        _waitForNonStaleResults(null);
+        return this;
+    }
+
+    @Override
     public IDocumentQuery<T> waitForNonStaleResults(Duration waitTimeout) {
         _waitForNonStaleResults(waitTimeout);
         return this;

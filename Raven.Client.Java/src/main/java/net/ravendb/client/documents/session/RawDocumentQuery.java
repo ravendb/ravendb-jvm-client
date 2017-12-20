@@ -27,6 +27,12 @@ public class RawDocumentQuery<T> extends AbstractDocumentQuery<T, RawDocumentQue
     }
 
     @Override
+    public IRawDocumentQuery<T> waitForNonStaleResults() {
+        _waitForNonStaleResults(null);
+        return this;
+    }
+
+    @Override
     public IRawDocumentQuery<T> waitForNonStaleResults(Duration waitTimeout) {
         _waitForNonStaleResults(waitTimeout);
         return this;

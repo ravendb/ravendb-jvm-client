@@ -67,6 +67,12 @@ public interface IQueryBase<T, TSelf extends IQueryBase<T, TSelf>> {
      * EXPERT ONLY: Instructs the query to wait for non stale results for the specified wait timeout.
      * This shouldn't be used outside of unit tests unless you are well aware of the implications
      */
+    TSelf waitForNonStaleResults();
+
+    /**
+     * EXPERT ONLY: Instructs the query to wait for non stale results for the specified wait timeout.
+     * This shouldn't be used outside of unit tests unless you are well aware of the implications
+     */
     TSelf waitForNonStaleResults(Duration waitTimeout);
 
     /**

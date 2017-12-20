@@ -259,6 +259,7 @@ public class DocumentSession extends InMemoryDocumentSessionOperations implement
     //TBD public void Patch<T, U>(string id, Expression<Func<T, IEnumerable<U>>> path, Expression<Func<JavaScriptArray<U>, object>> arrayAdder)
     //TBD private bool TryMergePatches(string id, PatchRequest patchRequest)
 
+    @Override
     public <T, TIndex extends AbstractIndexCreationTask> IDocumentQuery<T> documentQuery(Class<T> clazz, Class<TIndex> indexClazz) {
         try {
             TIndex index = indexClazz.newInstance();
@@ -307,6 +308,11 @@ public class DocumentSession extends InMemoryDocumentSessionOperations implement
         }
 
         return documentQuery(clazz, collectionOrIndexName.getIndexName(), null, false);
+    }
+
+    @Override
+    public <T, TIndex extends AbstractIndexCreationTask> IDocumentQuery<T> query(Class<T> clazz, Class<TIndex> indexClazz) {
+        return documentQuery(clazz, indexClazz);
     }
 
     //TBD public IEnumerator<StreamResult<T>> Stream<T>(IQueryable<T> query)
