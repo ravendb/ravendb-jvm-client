@@ -1524,7 +1524,7 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
         if (field == null) {
             throw new IllegalArgumentException("Field cannot be null");
         }
-        _orderByDistance(field.toField(this::ensureValidFieldName), latitude, longitude);
+        _orderByDistance("'" + field.toField(this::ensureValidFieldName) + "'", latitude, longitude);
     }
 
     @Override
@@ -1537,7 +1537,7 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
         if (field == null) {
             throw new IllegalArgumentException("Field cannot be null");
         }
-        _orderByDistance(field.toField(this::ensureValidFieldName), shapeWkt);
+        _orderByDistance("'" + field.toField(this::ensureValidFieldName) + "'", shapeWkt);
     }
 
     @Override
@@ -1550,7 +1550,7 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
         if (field == null) {
             throw new IllegalArgumentException("Field cannot be null");
         }
-        _orderByDistanceDescending(field.toField(this::ensureValidFieldName), latitude, longitude);
+        _orderByDistanceDescending("'" + field.toField(this::ensureValidFieldName) + "'", latitude, longitude);
     }
 
     @Override
@@ -1563,7 +1563,7 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
         if (field == null) {
             throw new IllegalArgumentException("Field cannot be null");
         }
-        _orderByDistanceDescending(field.toField(this::ensureValidFieldName), shapeWkt);
+        _orderByDistanceDescending("'" + field.toField(this::ensureValidFieldName) + "'", shapeWkt);
     }
 
     @Override
