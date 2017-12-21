@@ -1,6 +1,7 @@
 package net.ravendb.client.documents.commands;
 
 import com.fasterxml.jackson.core.JsonGenerator;
+import com.fasterxml.jackson.databind.JsonNode;
 import net.ravendb.client.documents.conventions.DocumentConventions;
 import net.ravendb.client.documents.queries.IndexQuery;
 import net.ravendb.client.extensions.JsonExtensions;
@@ -58,7 +59,7 @@ public class ExplainQueryCommand extends RavenCommand<ExplainQueryCommand.Explai
     public HttpRequestBase createRequest(ServerNode node, Reference<String> url) {
         String path = node.getUrl() + "/databases/" +
                 node.getDatabase() +
-                "queries?debug=explain";
+                "/queries?debug=explain";
 
         HttpPost request = new HttpPost();
 
@@ -81,7 +82,14 @@ public class ExplainQueryCommand extends RavenCommand<ExplainQueryCommand.Explai
             return;
         }
 
-        result = mapper.readValue(response, resultClass);
+        JsonNode jsonNode = mapper.readTree(response);
+        JsonNode results = jsonNode.get("Results");
+        if (results == null || results.isNull()) {
+            throwInvalidResponse();
+            return;
+        }
+
+        result = mapper.treeToValue(results, resultClass);
     }
 
     @Override

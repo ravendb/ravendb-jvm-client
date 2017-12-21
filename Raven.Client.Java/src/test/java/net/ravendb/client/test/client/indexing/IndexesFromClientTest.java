@@ -2,18 +2,23 @@ package net.ravendb.client.test.client.indexing;
 
 import net.ravendb.client.RemoteTestBase;
 import net.ravendb.client.documents.IDocumentStore;
+import net.ravendb.client.documents.commands.ExplainQueryCommand;
 import net.ravendb.client.documents.commands.GetStatisticsCommand;
 import net.ravendb.client.documents.indexes.AbstractIndexCreationTask;
 import net.ravendb.client.documents.operations.DatabaseStatistics;
 import net.ravendb.client.documents.operations.indexes.DeleteIndexOperation;
 import net.ravendb.client.documents.operations.indexes.GetIndexNamesOperation;
 import net.ravendb.client.documents.operations.indexes.ResetIndexOperation;
+import net.ravendb.client.documents.queries.IndexQuery;
 import net.ravendb.client.documents.session.IDocumentSession;
+import net.ravendb.client.documents.session.QueryStatistics;
 import net.ravendb.client.infrastructure.entities.User;
+import net.ravendb.client.primitives.Reference;
 import org.junit.jupiter.api.Test;
 
 import java.util.Collections;
 import java.util.Date;
+import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -445,48 +450,51 @@ public class IndexesFromClientTest extends RemoteTestBase {
                 Assert.Contains(indexName, indexNames);
             }
         }
+*/
 
-        [Fact]
-        public async Task CanExplain()
-        {
-            using (var store = GetDocumentStore())
-            {
-                using (var session = store.OpenAsyncSession())
-                {
-                    await session.StoreAsync(new User { Name = "Fitzchak" });
-                    await session.StoreAsync(new User { Name = "Arek" });
+    @Test
+    public void canExplain() throws Exception {
+        try (IDocumentStore store = getDocumentStore()) {
+            User user1 = new User();
+            user1.setName("Fitzchak");
 
-                    await session.SaveChangesAsync();
-                }
+            User user2 = new User();
+            user2.setName("Arek");
 
-                using (var session = store.OpenSession())
-                {
-                    QueryStatistics stats;
-                    var users = session.Query<User>()
-                        .Statistics(out stats)
-                        .Where(x => x.Name == "Arek")
-                        .ToList();
-
-                    users = session.Query<User>()
-                        .Statistics(out stats)
-                        .Where(x => x.Age > 10)
-                        .ToList();
-                }
-
-                using (var commands = store.Commands())
-                {
-                    var command = new ExplainQueryCommand(store.Conventions, new IndexQuery { Query = "FROM Users" });
-
-                    await commands.RequestExecutor.ExecuteAsync(command, commands.Context);
-
-                    var explanations = command.Result;
-
-                    Assert.Equal(1, explanations.Length);
-                    Assert.NotNull(explanations[0].Index);
-                    Assert.NotNull(explanations[0].Reason);
-                }
+            try (IDocumentSession session = store.openSession()) {
+                session.store(user1);
+                session.store(user2);
+                session.saveChanges();
             }
+
+            try (IDocumentSession session = store.openSession()) {
+                Reference<QueryStatistics> statsRef = new Reference<>();
+                List<User> users = session.query(User.class)
+                        .statistics(statsRef)
+                        .whereEquals("name", "Arek")
+                        .toList();
+
+                users = session.query(User.class)
+                        .statistics(statsRef)
+                        .whereGreaterThan("age", 10)
+                        .toList();
+            }
+
+            IndexQuery indexQuery = new IndexQuery("from users");
+            ExplainQueryCommand command = new ExplainQueryCommand(store.getConventions(), indexQuery);
+
+            store.getRequestExecutor().execute(command);
+
+            ExplainQueryCommand.ExplainQueryResult[] explanations = command.getResult();
+            assertThat(explanations)
+                    .hasSize(1);
+            assertThat(explanations[0].getIndex())
+                    .isNotNull();
+            assertThat(explanations[0].getReason())
+                    .isNotNull();
         }
+    }
+    /* TODO
 
         [Fact]
         public async Task MoreLikeThis()

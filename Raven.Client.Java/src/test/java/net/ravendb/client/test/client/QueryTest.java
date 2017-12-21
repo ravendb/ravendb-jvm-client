@@ -3,6 +3,8 @@ package net.ravendb.client.test.client;
 import net.ravendb.client.RemoteTestBase;
 import net.ravendb.client.documents.IDocumentStore;
 import net.ravendb.client.documents.indexes.AbstractIndexCreationTask;
+import net.ravendb.client.documents.operations.CollectionStatistics;
+import net.ravendb.client.documents.operations.GetCollectionStatisticsOperation;
 import net.ravendb.client.documents.queries.Query;
 import net.ravendb.client.documents.queries.SearchOperator;
 import net.ravendb.client.documents.session.*;
@@ -44,6 +46,32 @@ public class QueryTest extends RemoteTestBase {
                 assertThat(queryResult)
                         .hasSize(3);
             }
+        }
+    }
+
+    @Test
+    public void collectionsStats() throws Exception {
+        try (IDocumentStore store = getDocumentStore()) {
+            try (IDocumentSession session = store.openSession()) {
+
+                User user1 = new User();
+                user1.setName("John");
+
+                User user2 = new User();
+                user2.setName("Jane");
+
+                session.store(user1, "users/1");
+                session.store(user2, "users/2");
+                session.saveChanges();
+            }
+
+            CollectionStatistics stats = store.maintenance().send(new GetCollectionStatisticsOperation());
+
+            assertThat(stats.getCountOfDocuments())
+                    .isEqualTo(2);
+
+            assertThat(stats.getCollections().get("Users"))
+                    .isEqualTo(2);
         }
     }
 

@@ -1,5 +1,7 @@
 package net.ravendb.client.documents.operations;
 
+import com.fasterxml.jackson.databind.JavaType;
+import com.fasterxml.jackson.databind.type.TypeFactory;
 import net.ravendb.client.http.RavenCommand;
 import net.ravendb.client.http.ServerNode;
 import net.ravendb.client.primitives.Reference;
@@ -10,18 +12,6 @@ import java.io.IOException;
 import java.util.Map;
 
 public class GetIdentitiesCommand extends RavenCommand<Map<String, Long>> {
-
-    public static class Result {
-        private Map<String, Long> identities;
-
-        public Map<String, Long> getIdentities() {
-            return identities;
-        }
-
-        public void setIdentities(Map<String, Long> identities) {
-            this.identities = identities;
-        }
-    }
 
     @SuppressWarnings("unchecked")
     public GetIdentitiesCommand() {
@@ -42,7 +32,7 @@ public class GetIdentitiesCommand extends RavenCommand<Map<String, Long>> {
 
     @Override
     public void setResponse(String response, boolean fromCache) throws IOException {
-        result = mapper.readValue(response, Result.class).getIdentities();
+        result = mapper.readValue(response, TypeFactory.defaultInstance().constructMapType(Map.class, String.class, Long.class));
     }
 
 }

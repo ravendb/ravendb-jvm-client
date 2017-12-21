@@ -1,6 +1,10 @@
 package net.ravendb.client.serverwide.operations;
 
 import net.ravendb.client.documents.DocumentStoreBase;
+import net.ravendb.client.documents.operations.IMaintenanceOperation;
+import net.ravendb.client.documents.operations.Operation;
+import net.ravendb.client.documents.operations.OperationIdResult;
+import net.ravendb.client.documents.operations.ServerWideOperation;
 import net.ravendb.client.http.ClusterRequestExecutor;
 import net.ravendb.client.http.RavenCommand;
 import net.ravendb.client.http.VoidRavenCommand;
@@ -27,5 +31,13 @@ public class ServerOperationExecutor {
         requestExecutor.execute(command);
 
         return command.getResult();
+    }
+
+    public Operation sendAsync(IServerOperation<OperationIdResult> operation) {
+        RavenCommand<OperationIdResult> command = operation.getCommand(requestExecutor.getConventions());
+
+        requestExecutor.execute(command);
+        return new ServerWideOperation(requestExecutor, requestExecutor.getConventions(), command.getResult().getOperationId());
+        //TBD pass changes as well
     }
 }

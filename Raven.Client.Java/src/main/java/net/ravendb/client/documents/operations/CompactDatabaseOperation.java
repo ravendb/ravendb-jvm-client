@@ -3,6 +3,7 @@ package net.ravendb.client.documents.operations;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import net.ravendb.client.documents.conventions.DocumentConventions;
+import net.ravendb.client.extensions.JsonExtensions;
 import net.ravendb.client.http.RavenCommand;
 import net.ravendb.client.http.ServerNode;
 import net.ravendb.client.json.ContentProviderHttpEntity;
@@ -56,7 +57,7 @@ public class CompactDatabaseOperation implements IServerOperation<OperationIdRes
             HttpPost request = new HttpPost();
 
             request.setEntity(new ContentProviderHttpEntity(outputStream -> {
-                try (JsonGenerator generator = mapper.getFactory().createGenerator(outputStream)) {
+                try (JsonGenerator generator = JsonExtensions.getDefaultMapper().getFactory().createGenerator(outputStream)) {
                     generator.writeTree(_compactSettings);
                 } catch (IOException e) {
                     throw new RuntimeException(e);
