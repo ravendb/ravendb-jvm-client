@@ -24,7 +24,7 @@ public class RemoteTestBase extends RavenTestDriver {
 
         @Override
         public String[] getCommandArguments() {
-            return new String[] { "--Security.Certificate.Path=\"" + getServerCertificatePath() + "\""};
+            return new String[] { "--Security.Certificate.Path=" + getServerCertificatePath()};
         }
 
         @Override

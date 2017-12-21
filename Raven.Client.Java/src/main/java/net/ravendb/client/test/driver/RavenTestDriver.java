@@ -169,18 +169,22 @@ public abstract class RavenTestDriver implements CleanCloseable {
         Stopwatch startupDuration = Stopwatch.createStarted();
         BufferedReader reader = new BufferedReader(new InputStreamReader(stdout));
 
+        List<String> readLines = new ArrayList<>();
+
         while (true) {
 
             //TODO: handle timeout!
             String line = reader.readLine();
+            readLines.add(line);
 
             if (line == null) {
-                throw new RuntimeException(IOUtils.toString(getGlobalProcess(secured).getErrorStream(), "UTF-8"));
+                throw new RuntimeException(readLines.stream().collect(Collectors.joining(System.lineSeparator())) +  IOUtils.toString(getGlobalProcess(secured).getInputStream(), "UTF-8"));
             }
 
             if (startupDuration.elapsed(TimeUnit.MINUTES) >= 1) {
                 break;
             }
+
             String prefix = "Server available on: ";
             if (line.startsWith(prefix)) {
                 url = line.substring(prefix.length());
@@ -414,6 +418,7 @@ public abstract class RavenTestDriver implements CleanCloseable {
     }
 
     private static void reportInfo(String message) {
+System.out.println(message);
         /* TODO:
          if (Debug == false)
                 return;
