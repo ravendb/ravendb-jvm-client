@@ -29,7 +29,6 @@ import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.impl.client.StandardHttpRequestRetryHandler;
 import org.apache.http.ssl.SSLContexts;
-import sun.plugin.dom.exception.InvalidStateException;
 
 import javax.net.ssl.SSLContext;
 import javax.xml.bind.DatatypeConverter;
@@ -503,7 +502,7 @@ public class RequestExecutor implements CleanCloseable {
             if (certificate != null) {
                 throw new IllegalStateException("The url " + url + " is using HTTP, but a certificate is specified, which require us to use HTTPS");
             }
-            throw new InvalidStateException("The url " + url + " is using HTTP, but other urls are using HTTPS, and mixing of HTTP and HTTPS is not allowed.");
+            throw new IllegalStateException("The url " + url + " is using HTTP, but other urls are using HTTPS, and mixing of HTTP and HTTPS is not allowed.");
         }
 
         return cleanUrls;

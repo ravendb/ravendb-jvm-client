@@ -15,7 +15,6 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.http.client.methods.HttpPut;
 import org.apache.http.client.methods.HttpRequestBase;
 import org.apache.http.entity.ContentType;
-import sun.plugin.dom.exception.InvalidStateException;
 
 import java.io.IOException;
 import java.util.HashMap;
@@ -53,7 +52,7 @@ public class PutCompareExchangeValueOperation<T> implements IOperation<CmpXchgRe
             }
 
             if (index < 0) {
-                throw new InvalidStateException("Index must be a non-negative number");
+                throw new IllegalStateException("Index must be a non-negative number");
             }
 
             _key = key;
