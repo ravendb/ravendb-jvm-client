@@ -6,9 +6,7 @@ import net.ravendb.client.primitives.CleanCloseable;
 import net.ravendb.client.primitives.Reference;
 
 import java.time.Duration;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.Date;
 
 public class HttpCache implements CleanCloseable {
 

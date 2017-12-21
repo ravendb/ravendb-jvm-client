@@ -71,6 +71,7 @@ public class ListCompareExchangeValuesOperation implements IOperation<List<ListC
         private final Integer _page;
         private final Integer _size;
 
+        @SuppressWarnings("unchecked")
         public ListCompareExchangeValuesCommand(String keyPrefix, Integer page, Integer size) {
             super((Class<List<CompareExchangeItem>>)(Class<?>)List.class);
             _keyPrefix = keyPrefix;

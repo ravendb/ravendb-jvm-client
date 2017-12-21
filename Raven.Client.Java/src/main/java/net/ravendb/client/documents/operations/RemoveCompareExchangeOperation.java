@@ -34,6 +34,7 @@ public class RemoveCompareExchangeOperation<T> implements IOperation<CmpXchgResu
         private final String _key;
         private final long _index;
 
+        @SuppressWarnings("unchecked")
         public RemoveCompareExchangeCommand(Class<T> clazz, String key, long index) {
             super((Class<CmpXchgResult<T>>) (Class<?>)CmpXchgResult.class);
 

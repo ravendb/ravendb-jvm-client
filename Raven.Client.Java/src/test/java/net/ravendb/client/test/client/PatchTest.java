@@ -5,13 +5,8 @@ import net.ravendb.client.documents.IDocumentStore;
 import net.ravendb.client.documents.operations.*;
 import net.ravendb.client.documents.session.IDocumentSession;
 import net.ravendb.client.exceptions.documents.patching.JavaScriptException;
-import net.ravendb.client.infrastructure.entities.GeekPerson;
 import net.ravendb.client.infrastructure.entities.User;
 import org.junit.jupiter.api.Test;
-
-import java.util.*;
-import java.util.function.Consumer;
-import java.util.stream.Collectors;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;

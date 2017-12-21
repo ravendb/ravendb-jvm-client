@@ -7,9 +7,7 @@ import net.ravendb.client.documents.queries.Query;
 import net.ravendb.client.documents.queries.SearchOperator;
 import net.ravendb.client.documents.session.*;
 import net.ravendb.client.infrastructure.entities.User;
-import net.ravendb.client.primitives.Reference;
 import org.apache.commons.lang3.StringUtils;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import java.util.Arrays;

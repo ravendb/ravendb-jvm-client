@@ -516,6 +516,7 @@ public class DocumentQuery<T> extends AbstractDocumentQuery<T, DocumentQuery<T>>
         return createDocumentQueryInternal(resultClass, null);
     }
 
+    @SuppressWarnings("unchecked")
     private <TResult> DocumentQuery<TResult> createDocumentQueryInternal(Class<TResult> resultClass, QueryData queryData) {
         FieldsToFetchToken newFieldsToFetch = queryData != null && queryData.getFields().length > 0
                 ? FieldsToFetchToken.create(queryData.getFields(), queryData.getProjections(), queryData.isCustomFunction())

@@ -129,7 +129,7 @@ public class SpatialSearchTest extends RemoteTestBase {
     }
 
     @Test
-    public void can_do_spatial_search_with_client_api_addorder() throws Exception {
+    public void can_do_spatial_search_with_client_api_add_order() throws Exception {
         try (IDocumentStore store = getDocumentStore()) {
             new SpatialIdx().execute(store);
 

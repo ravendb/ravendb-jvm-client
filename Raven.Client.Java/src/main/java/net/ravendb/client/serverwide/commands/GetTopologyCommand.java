@@ -5,7 +5,6 @@ import net.ravendb.client.http.ServerNode;
 import net.ravendb.client.http.Topology;
 import net.ravendb.client.primitives.Reference;
 import net.ravendb.client.util.UrlUtils;
-import org.apache.commons.lang3.StringUtils;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpRequestBase;
 

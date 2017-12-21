@@ -5,7 +5,6 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import net.ravendb.client.Constants;
 import net.ravendb.client.documents.conventions.DocumentConventions;
 import net.ravendb.client.extensions.JsonExtensions;
-import org.apache.commons.lang3.StringUtils;
 
 import java.lang.reflect.Field;
 import java.util.Map;

@@ -9,7 +9,6 @@ import net.ravendb.client.extensions.JsonExtensions;
 import net.ravendb.client.http.RavenCommand;
 import net.ravendb.client.http.RequestExecutor;
 import net.ravendb.client.primitives.OperationCancelledException;
-import org.apache.commons.lang3.NotImplementedException;
 
 public class Operation {
 

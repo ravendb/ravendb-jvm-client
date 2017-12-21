@@ -4,7 +4,6 @@ import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import net.ravendb.client.documents.IDocumentStore;
 import net.ravendb.client.documents.conventions.DocumentConventions;
-import net.ravendb.client.documents.session.EntityToJson;
 import net.ravendb.client.extensions.JsonExtensions;
 import net.ravendb.client.http.HttpCache;
 import net.ravendb.client.http.RavenCommand;
@@ -45,6 +44,7 @@ public class PutCompareExchangeValueOperation<T> implements IOperation<CmpXchgRe
         private final long _index;
         private final DocumentConventions _conventions;
 
+        @SuppressWarnings("unchecked")
         public PutCompareExchangeValueCommand(String key, T value, long index, DocumentConventions conventions) {
             super((Class<CmpXchgResult<T>>) (Class<?>)CmpXchgResult.class);
 
@@ -87,6 +87,7 @@ public class PutCompareExchangeValueOperation<T> implements IOperation<CmpXchgRe
             return httpPut;
         }
 
+        @SuppressWarnings("unchecked")
         @Override
         public void setResponse(String response, boolean fromCache) throws IOException {
             result = (CmpXchgResult<T>) CmpXchgResult.parseFromString(_value.getClass(), response);

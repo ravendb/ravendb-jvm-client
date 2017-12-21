@@ -1,13 +1,11 @@
 package net.ravendb.client.documents.operations;
 
-import com.google.common.base.Defaults;
 import net.ravendb.client.documents.IDocumentStore;
 import net.ravendb.client.documents.conventions.DocumentConventions;
 import net.ravendb.client.http.HttpCache;
 import net.ravendb.client.http.RavenCommand;
 import net.ravendb.client.http.ServerNode;
 import net.ravendb.client.primitives.Reference;
-import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpRequestBase;
@@ -33,6 +31,7 @@ public class GetCompareExchangeValueOperation<T> implements IOperation<CmpXchgRe
         private final String _key;
         private final Class<T> _clazz;
 
+        @SuppressWarnings("unchecked")
         public GetCompareExchangeValueCommand(Class<T> clazz, String key) {
             super((Class<CmpXchgResult<T>>) (Class<?>)CmpXchgResult.class);
             if (StringUtils.isEmpty(key)) {

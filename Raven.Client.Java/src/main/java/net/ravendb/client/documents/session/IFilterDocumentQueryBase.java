@@ -7,7 +7,6 @@ import net.ravendb.client.documents.queries.spatial.DynamicSpatialField;
 import net.ravendb.client.documents.queries.spatial.SpatialCriteria;
 import net.ravendb.client.documents.queries.spatial.SpatialCriteriaFactory;
 
-import java.lang.reflect.Method;
 import java.util.Collection;
 import java.util.function.Function;
 
