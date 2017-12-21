@@ -3,12 +3,15 @@ package net.ravendb.client.extensions;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.PropertyNamingStrategy;
 import com.fasterxml.jackson.databind.cfg.MapperConfig;
 import com.fasterxml.jackson.databind.introspect.AnnotatedField;
 import com.fasterxml.jackson.databind.introspect.AnnotatedMethod;
 import com.fasterxml.jackson.databind.introspect.AnnotatedParameter;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+import net.ravendb.client.Constants;
 import net.ravendb.client.documents.conventions.DocumentConventions;
 import net.ravendb.client.documents.queries.IndexQuery;
 import net.ravendb.client.documents.session.EntityToJson;
@@ -129,4 +132,11 @@ public class JsonExtensions {
         generator.writeEndObject();
     }
 
+    public static boolean tryGetConflict(JsonNode metadata) {
+        if (metadata.has(Constants.Documents.Metadata.CONFLICT)) {
+            return metadata.get(Constants.Documents.Metadata.CONFLICT).asBoolean();
+        }
+
+        return false;
+    }
 }

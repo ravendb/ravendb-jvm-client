@@ -931,11 +931,9 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
             ObjectNode json = (ObjectNode) fieldValue;
 
             DocumentInfo newDocumentInfo = DocumentInfo.getNewDocumentInfo(json);
-            /* TODO
-
-            if (newDocumentInfo.Metadata.TryGetConflict(out var conflict) && conflict)
+            if (JsonExtensions.tryGetConflict(newDocumentInfo.getMetadata())) {
                 continue;
-             */
+            }
 
             includedDocumentsById.put(newDocumentInfo.getId(), newDocumentInfo);
         }
@@ -965,11 +963,9 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
                     if (document != null) {
                         JsonNode metadata = document.get(Constants.Documents.Metadata.KEY);
 
-                        /* TODO:
-                         var metadata = document.GetMetadata();
-                            if (metadata.TryGetConflict(out var conflict) && conflict)
-                                return;
-                         */
+                        if (JsonExtensions.tryGetConflict(metadata)) {
+                            return;
+                        }
                     }
 
                     registerMissing(id);
