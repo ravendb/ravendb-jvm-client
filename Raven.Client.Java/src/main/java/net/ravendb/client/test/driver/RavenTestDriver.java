@@ -418,7 +418,7 @@ public abstract class RavenTestDriver implements CleanCloseable {
     }
 
     private static void reportInfo(String message) {
-System.out.println(message);
+        System.out.println(message);
         /* TODO:
          if (Debug == false)
                 return;
