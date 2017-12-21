@@ -86,6 +86,10 @@ public abstract class RavenTestDriver implements CleanCloseable {
         return getDocumentStore(database, false, null);
     }
 
+    protected void customizeDbRecord(DatabaseRecord dbRecord) {
+
+    }
+
     public DocumentStore getDocumentStore(String database, boolean secured, Duration waitForIndexingTimeout) throws Exception {
         String name = database + "_" + index.incrementAndGet();
         reportInfo("getDocumentStore for db " + database + ".");
@@ -101,6 +105,9 @@ public abstract class RavenTestDriver implements CleanCloseable {
         IDocumentStore documentStore = getGlobalServer(secured);
         DatabaseRecord databaseRecord = new DatabaseRecord();
         databaseRecord.setDatabaseName(name);
+
+        customizeDbRecord(databaseRecord);
+
         CreateDatabaseOperation createDatabaseOperation = new CreateDatabaseOperation(databaseRecord);
         documentStore.maintenance().server().send(createDatabaseOperation);
 

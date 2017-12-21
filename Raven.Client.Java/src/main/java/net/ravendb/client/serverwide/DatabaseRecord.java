@@ -8,6 +8,7 @@ public class DatabaseRecord {
     private boolean disabled;
     private String dataDirectory;
     private Map<String, String> settings = new HashMap<>();
+    private ConflictSolver conflictSolverConfig;
 
     public String getDatabaseName() {
         return databaseName;
@@ -39,5 +40,13 @@ public class DatabaseRecord {
 
     public void setSettings(Map<String, String> settings) {
         this.settings = settings;
+    }
+
+    public ConflictSolver getConflictSolverConfig() {
+        return conflictSolverConfig;
+    }
+
+    public void setConflictSolverConfig(ConflictSolver conflictSolverConfig) {
+        this.conflictSolverConfig = conflictSolverConfig;
     }
 }
