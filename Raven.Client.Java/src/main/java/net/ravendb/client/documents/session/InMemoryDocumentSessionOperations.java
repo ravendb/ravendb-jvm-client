@@ -110,7 +110,7 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
     }
 
     //Entities whose id we already know do not exists, because they are a missing include, or a missing load, etc.
-    protected final Set<String> knownMissingIds = new TreeSet<>(String.CASE_INSENSITIVE_ORDER); //TODO: do we need this this requires select token syntax in IncludesUtils
+    protected final Set<String> knownMissingIds = new TreeSet<>(String.CASE_INSENSITIVE_ORDER);
 
     private Map<String, Object> externalState;
 
@@ -1061,34 +1061,8 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
         }
     }
 
-    /*TODO
+    //TBD protected static T GetOperationResult<T>(object result)
 
-    protected static T GetOperationResult<T>(object result)
-    {
-        if (result == null)
-            return default(T);
-
-        if (result is T)
-        return (T)result;
-
-        var resultsArray = result as T[];
-        if (resultsArray != null && resultsArray.Length > 0)
-            return resultsArray[0];
-
-        var resultsDictionary = result as Dictionary<string, T>;
-        if (resultsDictionary != null)
-        {
-            if (resultsDictionary.Count == 0)
-                return default(T);
-
-            if (resultsDictionary.Count == 1)
-                return resultsDictionary.Values.FirstOrDefault();
-        }
-
-        throw new InvalidCastException($"Unable to cast {result.GetType().Name} to {typeof(T).Name}");
-    }
-
-*/
     public void onAfterStoreInvoke(AfterStoreEventArgs afterStoreEventArgs) {
         EventHelper.invoke(onAfterStore, this, afterStoreEventArgs);
     }

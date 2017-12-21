@@ -839,46 +839,6 @@ this.Value = another.Value;
 
     /* TODO
 
-        [Fact]
-        public async Task PreventRecursion()
-        {
-            using (var store = GetDocumentStore())
-            {
-                using (var session = store.OpenAsyncSession())
-                {
-                    await session.StoreAsync(new CustomType
-                    {
-                        Id = "Item/1",
-                        Value = 1
-                    });
-                    await session.SaveChangesAsync();
-                }
-
-                await store.Operations.SendAsync(new PatchOperation("Item/1", null, new PatchRequest
-                {
-                    Script = @"
-var a = {};
-var b = {};
-b.a = a;
-a.b = b;
-this.Test = this;
-this.Else = a;
-",
-                }));
-
-                using (var commands = store.Commands())
-                {
-                    dynamic resultDoc = await commands.GetAsync("Item/1");
-                    Assert.Equal("1", resultDoc.Value<string>("Value"));
-
-                    var patchedField = resultDoc.Test;
-                    Assert.Equal("1", patchedField.Value.ToString());
-
-                    patchedField = patchedField.Test;
-                    Assert.True(patchedField == null);
-                }
-            }
-        }
 
         [Fact]
         public async Task CanPerformAdvancedPatching()

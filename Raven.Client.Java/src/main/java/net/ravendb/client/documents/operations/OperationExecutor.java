@@ -40,8 +40,8 @@ public class OperationExecutor {
         requestExecutor.execute(command, sessionInfo);
     }
 
-    public <TResult> void send(IOperation<TResult> operation) {
-        send(operation, null);
+    public <TResult> TResult send(IOperation<TResult> operation) {
+        return send(operation, null);
     }
 
     public <TResult> TResult send(IOperation<TResult> operation, SessionInfo sessionInfo) {
