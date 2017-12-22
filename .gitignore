@@ -1,2 +1,3 @@
 .idea/
-/ravendb-parent.iml
+/ravendb.iml
+target/
