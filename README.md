@@ -1,13 +1,13 @@
 # RavenDB Java Client
 
-Offical RavenDB Java Client
+Official RavenDB Java Client
 
 Simply put ravendb dependency to your pom:
 
 ```
 <dependency>
   <groupId>net.ravendb</groupId>
-  <artifactId>ravendb-client</artifactId>
+  <artifactId>ravendb</artifactId>
   <version>4.0.0-rc1</version>
 </dependency>
 ```
