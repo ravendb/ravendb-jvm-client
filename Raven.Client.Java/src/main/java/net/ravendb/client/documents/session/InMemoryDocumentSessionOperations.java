@@ -62,6 +62,7 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
 
     /**
      * The session id
+     * @return session id
      */
     public UUID getId() {
         return id;
@@ -165,6 +166,7 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
 
     /**
      * The document store associated with this session
+     * @return Document store
      */
     public IDocumentStore getDocumentStore() {
         return _documentStore;
@@ -182,6 +184,7 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
 
     /**
      * Gets the number of entities held in memory to manage Unit of Work
+     * @return number of entities held in memory
      */
     public int getNumberOfEntitiesInUnitOfWork() {
         return documentsByEntity.size();
@@ -190,6 +193,7 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
     /**
      * Gets the store identifier for this session.
      * The store identifier is the identifier for the particular RavenDB instance.
+     * @return store identifier
      */
     public String storeIdentifier() {
         return _documentStore.getIdentifier() + ";" + databaseName;
@@ -199,6 +203,7 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
      * Gets the conventions used by this session
      * This instance is shared among all sessions, changes to the DocumentConventions should be done
      * via the IDocumentSTore instance, not on a single session.
+     * @return document conventions
      */
     public DocumentConventions getConventions() {
         return _requestExecutor.getConventions();
@@ -209,6 +214,7 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
     /**
      * Gets the max number of requests per session.
      * If the NumberOfRequests rise above MaxNumberOfRequestsPerSession, an exception will be thrown.
+     * @return maximum number of requests per session
      */
     public int getMaxNumberOfRequestsPerSession() {
         return maxNumberOfRequestsPerSession;
@@ -217,6 +223,7 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
     /**
      * Sets the max number of requests per session.
      * If the NumberOfRequests rise above MaxNumberOfRequestsPerSession, an exception will be thrown.
+     * @param maxNumberOfRequestsPerSession sets the value
      */
     public void setMaxNumberOfRequestsPerSession(int maxNumberOfRequestsPerSession) {
         this.maxNumberOfRequestsPerSession = maxNumberOfRequestsPerSession;
@@ -228,6 +235,7 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
      * Gets value indicating whether the session should use optimistic concurrency.
      * When set to true, a check is made so that a change made behind the session back would fail
      * and raise ConcurrencyException
+     * @return true if optimistic concurrency should be used
      */
     public boolean isUseOptimisticConcurrency() {
         return useOptimisticConcurrency;
@@ -237,6 +245,7 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
      * Sets value indicating whether the session should use optimistic concurrency.
      * When set to true, a check is made so that a change made behind the session back would fail
      * and raise ConcurrencyException
+     * @param useOptimisticConcurrency sets the value
      */
     public void setUseOptimisticConcurrency(boolean useOptimisticConcurrency) {
         this.useOptimisticConcurrency = useOptimisticConcurrency;
@@ -264,6 +273,10 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
 
     /**
      * Initializes a new instance of the InMemoryDocumentSessionOperations class.
+     * @param databaseName Database name
+     * @param documentStore Document store
+     * @param requestExecutor Request executor
+     * @param id Identifier
      */
     protected InMemoryDocumentSessionOperations(String databaseName, DocumentStoreBase documentStore, RequestExecutor requestExecutor, UUID id) {
         this.id = id;
@@ -281,6 +294,9 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
 
     /**
      * Gets the metadata for the specified entity.
+     * @param <T> instance class
+     * @param instance Instance to get metadata from
+     * @return document metadata
      */
     public <T> IMetadataDictionary getMetadataFor(T instance) {
         if (instance == null) {
@@ -302,6 +318,9 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
      * Gets the Change Vector for the specified entity.
      * If the entity is transient, it will load the change vector from the store
      * and associate the current state of the entity with the change vector from the server.
+     * @param <T> instance class
+     * @param instance Instance to get change vector from
+     * @return change vector
      */
     public <T> String getChangeVectorFor(T instance) {
         if (instance == null) {
@@ -336,6 +355,8 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
     /**
      * Returns whether a document with the specified id is loaded in the
      * current session
+     * @param id Document id to check
+     * @return true is document is loaded
      */
     public boolean isLoaded(String id) {
         return isLoadedOrDeleted(id);
@@ -349,6 +370,8 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
     /**
      * Returns whether a document with the specified id is deleted
      * or known to be missing
+     * @param id Document id to check
+     * @return true is document is deleted
      */
     public boolean isDeleted(String id) {
         return knownMissingIds.contains(id);
@@ -356,6 +379,8 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
 
     /**
      * Gets the document id.
+     * @param instance instance to get document id from
+     * @return document id
      */
     public String getDocumentId(Object instance) {
         if (instance == null) {
@@ -377,6 +402,10 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
 
     /**
      * Tracks the entity inside the unit of work
+     * @param <T> entity class
+     * @param clazz entity class
+     * @param documentFound Document info
+     * @return tracked entity
      */
     @SuppressWarnings("unchecked")
     public <T> T trackEntity(Class<T> clazz, DocumentInfo documentFound) {
@@ -385,6 +414,12 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
 
     /**
      * Tracks the entity.
+     * @param entityType Entity class
+     * @param id Id of document
+     * @param document raw entity
+     * @param metadata raw document metadata
+     * @param noTracking no tracking
+     * @return entity
      */
     public Object trackEntity(Class entityType, String id, ObjectNode document, ObjectNode metadata, boolean noTracking) {
         if (StringUtils.isEmpty(id)) {
@@ -447,6 +482,10 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
 
     /**
      * Converts the json document to an entity.
+     * @param entityType Entity type
+     * @param id Entity identifier
+     * @param documentFound Raw entity
+     * @return converted entity
      */
     public Object convertToEntity(Class entityType, String id, ObjectNode documentFound) {
         return entityToJson.convertToEntity(entityType, id, documentFound);
@@ -454,6 +493,8 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
 
     /**
      * Gets the default value of the specified type.
+     * @param clazz Class
+     * @return Default value to given class
      */
     @SuppressWarnings("unchecked")
     public static Object getDefaultValue(Class clazz) {
@@ -462,6 +503,8 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
 
     /**
      * Marks the specified entity for deletion. The entity will be deleted when SaveChanges is called.
+     * @param <T> entity class
+     * @param entity Entity to delete
      */
     public <T> void delete(T entity) {
         if (entity == null) {
@@ -481,6 +524,7 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
     /**
      * Marks the specified entity for deletion. The entity will be deleted when IDocumentSession.SaveChanges is called.
      * WARNING: This method will not call beforeDelete listener!
+     * @param id Id of document
      */
     public void delete(String id) {
         delete(id, null);
@@ -514,6 +558,7 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
 
     /**
      * Stores the specified entity in the session. The entity will be saved when SaveChanges is called.
+     * @param entity Entity to store
      */
     public void store(Object entity) {
         Reference<String> stringReference = new Reference<>();
@@ -523,6 +568,8 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
 
     /**
      * Stores the specified entity in the session, explicitly specifying its Id. The entity will be saved when SaveChanges is called.
+     * @param entity Entity to store
+     * @param id Entity identifier
      */
     public void store(Object entity, String id) {
         storeInternal(entity, null, id, ConcurrencyCheckMode.AUTO);
@@ -530,6 +577,9 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
 
     /**
      * Stores the specified entity in the session, explicitly specifying its Id. The entity will be saved when SaveChanges is called.
+     * @param entity Entity to store
+     * @param changeVector Change vector
+     * @param id Entity identifier
      */
     public void store(Object entity, String changeVector, String id) {
         storeInternal(entity, changeVector, id, changeVector == null ? ConcurrencyCheckMode.DISABLED : ConcurrencyCheckMode.FORCED);
@@ -790,6 +840,7 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
 
     /**
      * Gets a value indicating whether any of the entities tracked by the session has changes.
+     * @return true if session has changes
      */
     public boolean hasChanges() {
         for (Map.Entry<Object, DocumentInfo> entity : documentsByEntity.entrySet()) {
@@ -804,6 +855,8 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
 
     /**
      * Determines whether the specified entity has changed.
+     * @param entity Entity to check
+     * @return true if entity has changed
      */
     public boolean hasChanged(Object entity) {
         DocumentInfo documentInfo = documentsByEntity.get(entity);
@@ -830,6 +883,7 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
     /**
      * Mark the entity as one that should be ignore for change tracking purposes,
      * it still takes part in the session, but is ignored for SaveChanges.
+     * @param entity entity
      */
     public void ignoreChangesFor(Object entity) {
         getDocumentInfo(entity).setIgnoreChanges(true);
@@ -838,6 +892,8 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
     /**
      * Evicts the specified entity from the session.
      * Remove the entity from the delete queue and stops tracking changes for this entity.
+     * @param <T> entity class
+     * @param entity Entity to evict
      */
     public <T> void evict(T entity) {
         DocumentInfo documentInfo = documentsByEntity.get(entity);
@@ -863,6 +919,8 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
 
     /**
      * Defer commands to be executed on saveChanges()
+     * @param command Command to defer
+     * @param commands More commands to defer
      */
     public void defer(ICommandData command, ICommandData... commands) {
         deferredCommands.add(command);
@@ -874,6 +932,7 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
 
     /**
      * Defer commands to be executed on saveChanges()
+     * @param commands Commands to defer
      */
     public void defer(ICommandData[] commands) {
         deferredCommands.addAll(Arrays.asList(commands));

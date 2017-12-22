@@ -24,6 +24,7 @@ public interface IDocumentSession extends CleanCloseable {
 
     /**
      * Marks the specified entity for deletion. The entity will be deleted when IDocumentSession.saveChanges is called.
+     * @param <T> entity class
      * @param entity instance of entity to delete
      */
     <T> void delete(T entity);
@@ -50,12 +51,16 @@ public interface IDocumentSession extends CleanCloseable {
 
     /**
      * Stores entity in session with given id and forces concurrency check with given Etag.
+     * @param entity Entity to store
+     * @param changeVector Change vector
+     * @param id Document id
      */
     void store(Object entity, String changeVector, String id);
 
     /**
      * Stores entity in session, extracts Id from entity using Conventions or generates new one if it is not available.
      * Forces concurrency check if the Id is not available during extraction.
+     * @param entity Entity to store
      */
     void store(Object entity);
 
@@ -69,6 +74,8 @@ public interface IDocumentSession extends CleanCloseable {
     /**
      * Begin a load while including the specified path
      * Path in documents in which server should look for a 'referenced' documents.
+     * @param path Path to include
+     * @return Loader with includes
      */
     ILoaderWithInclude include(String path);
 
@@ -77,19 +84,28 @@ public interface IDocumentSession extends CleanCloseable {
 
     /**
      *  Loads the specified entity with the specified id.
+     *  @param <T> entity class
      *  @param clazz Object class
      *  @param id Identifier of a entity that will be loaded.
+     *  @return Loaded entity
      */
     <T> T load(Class<T> clazz, String id);
 
     /**
      *  Loads the specified entities with the specified ids.
+     *  @param <TResult> result class
+     *  @param clazz result class
+     *  @param ids Document ids to load
+     *  @return Map: id to loaded document
      */
     <TResult> Map<String, TResult> load(Class<TResult> clazz, String... ids);
 
-
     /**
      *  Loads the specified entities with the specified ids.
+     *  @param <TResult> result class
+     *  @param clazz result class
+     *  @param ids Document ids to load
+     *  @return Map: id -&gt; loaded document
      */
     <TResult> Map<String, TResult> load(Class<TResult> clazz, Collection<String> ids);
 

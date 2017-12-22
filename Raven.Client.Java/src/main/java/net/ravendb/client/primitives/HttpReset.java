@@ -18,6 +18,7 @@ public class HttpReset extends HttpRequestBase {
     }
 
     /**
+     * @param uri Request uri
      * @throws IllegalArgumentException if the uri is invalid.
      */
     public HttpReset(final String uri) {

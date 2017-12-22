@@ -111,6 +111,7 @@ public interface IAdvancedDocumentSessionOperations {
     /**
      * Evicts the specified entity from the session.
      * Remove the entity from the delete queue and stops tracking changes for this entity.
+     * @param <T> entity class
      * @param entity Entity to evict
      */
     <T> void evict(T entity);
@@ -118,7 +119,7 @@ public interface IAdvancedDocumentSessionOperations {
     /**
      * Gets the document id for the specified entity.
      *
-     *  This function may return <c>null</c> if the entity isn't tracked by the session, or if the entity is
+     *  This function may return null if the entity isn't tracked by the session, or if the entity is
      *   a new entity with an ID that should be generated on the server.
      * @param entity Entity to get id from
      * @return document id
@@ -129,6 +130,7 @@ public interface IAdvancedDocumentSessionOperations {
      * Gets the metadata for the specified entity.
      * If the entity is transient, it will load the metadata from the store
      * and associate the current state of the entity with the metadata from the server.
+     * @param <T> class of instance
      * @param instance instance to get metadata from
      * @return Entity metadata
      */
@@ -138,6 +140,7 @@ public interface IAdvancedDocumentSessionOperations {
      * Gets change vector for the specified entity.
      * If the entity is transient, it will load the metadata from the store
      * and associate the current state of the entity with the metadata from the server.
+     * @param <T> Class of instance
      * @param instance Instance to get metadata from
      * @return Change vector
      */

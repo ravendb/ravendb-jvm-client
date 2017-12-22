@@ -43,6 +43,10 @@ public class DocumentSession extends InMemoryDocumentSessionOperations implement
 
     /**
      * Initializes new DocumentSession
+     * @param dbName Database name
+     * @param documentStore Parent document store
+     * @param id Identifier
+     * @param requestExecutor Request executor to use
      */
     public DocumentSession(String dbName, DocumentStore documentStore, UUID id, RequestExecutor requestExecutor) {
         super(dbName, documentStore, requestExecutor, id);

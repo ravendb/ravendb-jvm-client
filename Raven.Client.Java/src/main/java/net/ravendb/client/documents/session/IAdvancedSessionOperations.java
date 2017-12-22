@@ -120,6 +120,7 @@ public interface IAdvancedSessionOperations extends IAdvancedDocumentSessionOper
 
     /**
      * Query the specified index
+     * @param <T> Class of query result
      * @param clazz The result of the query
      * @param indexName Name of the index (mutually exclusive with collectionName)
      * @param collectionName Name of the collection (mutually exclusive with indexName)
@@ -130,6 +131,7 @@ public interface IAdvancedSessionOperations extends IAdvancedDocumentSessionOper
 
     /**
      * Query the specified index
+     * @param <T> Class of query result
      * @param clazz The result of the query
      * @return Document query
      */

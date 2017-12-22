@@ -8,6 +8,9 @@ public class EnumerableUtils {
 
     /**
      * Extracts list from iterable
+     * @param <T> item class
+     * @param iterator Iterator to use
+     * @return Extracted list
      */
     public static <T> List<T> toList(Iterator<T> iterator) {
         List<T> result = new ArrayList<>();

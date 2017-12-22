@@ -31,6 +31,7 @@ public class QueryStatistics {
 
     /**
      * Whether the query returned potentially stale results
+     * @return true is query result is stale
      */
     public boolean isStale() {
         return isStale;
@@ -38,6 +39,7 @@ public class QueryStatistics {
 
     /**
      * Whether the query returned potentially stale results
+     * @param stale sets the value
      */
     public void setStale(boolean stale) {
         isStale = stale;
@@ -45,6 +47,7 @@ public class QueryStatistics {
 
     /**
      * The duration of the query _server side_
+     * @return duration of the query
      */
     public long getDurationInMs() {
         return durationInMs;
@@ -52,6 +55,7 @@ public class QueryStatistics {
 
     /**
      * The duration of the query _server side_
+     * @param durationInMs Sets the value
      */
     public void setDurationInMs(long durationInMs) {
         this.durationInMs = durationInMs;
@@ -59,6 +63,7 @@ public class QueryStatistics {
 
     /**
      * What was the total count of the results that matched the query
+     * @return total results
      */
     public int getTotalResults() {
         return totalResults;
@@ -66,6 +71,7 @@ public class QueryStatistics {
 
     /**
      * What was the total count of the results that matched the query
+     * @param totalResults Sets the value
      */
     public void setTotalResults(int totalResults) {
         this.totalResults = totalResults;
@@ -73,6 +79,7 @@ public class QueryStatistics {
 
     /**
      * Gets the skipped results
+     * @return amount of skipped results
      */
     public int getSkippedResults() {
         return skippedResults;
@@ -80,6 +87,7 @@ public class QueryStatistics {
 
     /**
      * Sets the skipped results
+     * @param skippedResults Sets the value
      */
     public void setSkippedResults(int skippedResults) {
         this.skippedResults = skippedResults;
@@ -87,6 +95,7 @@ public class QueryStatistics {
 
     /**
      * The time when the query results were non stale.
+     * @return Query timestamp
      */
     public Date getTimestamp() {
         return timestamp;
@@ -94,6 +103,7 @@ public class QueryStatistics {
 
     /**
      * The time when the query results were non stale.
+     * @param timestamp Sets the value
      */
     public void setTimestamp(Date timestamp) {
         this.timestamp = timestamp;
@@ -101,6 +111,7 @@ public class QueryStatistics {
 
     /**
      * The name of the index queried
+     * @return index name used for query
      */
     public String getIndexName() {
         return indexName;
@@ -108,6 +119,7 @@ public class QueryStatistics {
 
     /**
      * The name of the index queried
+     * @param indexName Sets the value
      */
     public void setIndexName(String indexName) {
         this.indexName = indexName;
@@ -115,6 +127,7 @@ public class QueryStatistics {
 
     /**
      * The timestamp of the queried index
+     * @return the index timestamp
      */
     public Date getIndexTimestamp() {
         return indexTimestamp;
@@ -122,6 +135,7 @@ public class QueryStatistics {
 
     /**
      * The timestamp of the queried index
+     * @param indexTimestamp Sets the value
      */
     public void setIndexTimestamp(Date indexTimestamp) {
         this.indexTimestamp = indexTimestamp;
@@ -129,6 +143,7 @@ public class QueryStatistics {
 
     /**
      * The timestamp of the last time the index was queried
+     * @return last query time
      */
     public Date getLastQueryTime() {
         return lastQueryTime;
@@ -136,6 +151,7 @@ public class QueryStatistics {
 
     /**
      * The timestamp of the last time the index was queried
+     * @param lastQueryTime Sets the query time
      */
     public void setLastQueryTime(Date lastQueryTime) {
         this.lastQueryTime = lastQueryTime;
@@ -143,6 +159,7 @@ public class QueryStatistics {
 
     /**
      * Detailed timings for various parts of a query (Lucene search, loading documents, transforming results)
+     * @return query timings in milliseconds
      */
     public Map<String, Double> getTimingsInMs() {
         return timingsInMs;
@@ -150,6 +167,7 @@ public class QueryStatistics {
 
     /**
      * Detailed timings for various parts of a query (Lucene search, loading documents, transforming results)
+     * @param timingsInMs Sets the value
      */
     public void setTimingsInMs(Map<String, Double> timingsInMs) {
         this.timingsInMs = timingsInMs;
@@ -165,6 +183,7 @@ public class QueryStatistics {
 
     /**
      * The size of the request which were sent from the server.
+     * @return result size
      */
     public long getResultSize() {
         return resultSize;
@@ -172,6 +191,7 @@ public class QueryStatistics {
 
     /**
      * The size of the request which were sent from the server.
+     * @param resultSize Sets the value
      */
     public void setResultSize(long resultSize) {
         this.resultSize = resultSize;

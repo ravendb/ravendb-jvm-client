@@ -17,6 +17,7 @@ public class HttpDeleteWithEntity extends HttpEntityEnclosingRequestBase {
     }
 
     /**
+     * @param uri Request uri
      * @throws IllegalArgumentException if the uri is invalid.
      */
     public HttpDeleteWithEntity(final String uri) {

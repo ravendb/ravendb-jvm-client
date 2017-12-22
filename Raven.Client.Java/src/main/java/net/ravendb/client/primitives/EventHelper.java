@@ -8,6 +8,10 @@ public class EventHelper {
 
     /**
      * Helper used for invoking event on list of delegates
+     * @param <T> event class
+     * @param delegates Event delegates
+     * @param sender Event sender
+     * @param event Event to send
      */
     public static <T extends EventArgs> void invoke(List<EventHandler<T>> delegates, Object sender, T event) {
         for (EventHandler<T> delegate : delegates) {

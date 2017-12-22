@@ -3,7 +3,7 @@ package net.ravendb.client.primitives;
 /**
  * Models out parameters
  *
- * @param <T>
+ * @param <T> Reference class
  */
 public class Reference<T> {
     /**

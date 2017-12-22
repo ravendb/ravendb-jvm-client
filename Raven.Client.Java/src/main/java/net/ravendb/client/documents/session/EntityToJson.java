@@ -16,6 +16,7 @@ public class EntityToJson {
 
     /**
      * All the listeners for this session
+     * @param _session Session to use
      */
     public EntityToJson(InMemoryDocumentSessionOperations _session) {
         this._session = _session;
@@ -96,6 +97,10 @@ public class EntityToJson {
 
     /**
      * Converts a json object to an entity.
+     * @param entityType Class of entity
+     * @param id Id of entity
+     * @param document Raw entity
+     * @return Entity instance
      */
     @SuppressWarnings("unchecked")
     public Object convertToEntity(Class entityType, String id, ObjectNode document) {

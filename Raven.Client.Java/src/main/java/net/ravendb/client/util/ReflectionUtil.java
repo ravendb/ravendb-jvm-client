@@ -12,6 +12,8 @@ public class ReflectionUtil {
 
     /**
      * Note: we can't fetch generic types information in Java - hence we are limited to simple getName on class object
+     * @param entityType Entity class
+     * @return full name without version info
      */
     public static String getFullNameWithoutVersionInformation(Class<?> entityType) {
         if (fullNameCache.containsKey(entityType)) {

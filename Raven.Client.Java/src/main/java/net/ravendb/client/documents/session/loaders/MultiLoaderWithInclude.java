@@ -18,6 +18,8 @@ public class MultiLoaderWithInclude implements ILoaderWithInclude {
 
     /**
      * Includes the specified path.
+     * @param path Path to include
+     * @return loader with includes
      */
     @Override
     public ILoaderWithInclude include(String path) {
@@ -27,6 +29,10 @@ public class MultiLoaderWithInclude implements ILoaderWithInclude {
 
     /**
      * Loads the specified ids.
+     * @param <TResult> Result class
+     * @param clazz Result class
+     * @param ids Ids to load
+     * @return Map: id to entity
      */
     @Override
     public <TResult> Map<String, TResult> load(Class<TResult> clazz, String... ids) {
@@ -35,6 +41,10 @@ public class MultiLoaderWithInclude implements ILoaderWithInclude {
 
     /**
      * Loads the specified ids.
+     * @param <TResult> Result class
+     * @param clazz Result class
+     * @param ids Ids to load
+     * @return Map: id to entity
      */
     @Override
     public <TResult> Map<String, TResult> load(Class<TResult> clazz, Collection<String> ids) {
@@ -43,6 +53,10 @@ public class MultiLoaderWithInclude implements ILoaderWithInclude {
 
     /**
      * Loads the specified id.
+     * @param <TResult> Result class
+     * @param clazz Result class
+     * @param id Id to load
+     * @return Loaded entity
      */
     @Override
     public <TResult> TResult load(Class<TResult> clazz, String id) {
@@ -52,6 +66,7 @@ public class MultiLoaderWithInclude implements ILoaderWithInclude {
 
     /**
      * Initializes a new instance of the MultiLoaderWithInclude class
+     * @param session Session
      */
     public MultiLoaderWithInclude(IDocumentSessionImpl session) {
         _session = session;
