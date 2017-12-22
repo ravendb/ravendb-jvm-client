@@ -78,6 +78,7 @@ public abstract class AbstractIndexCreationTask {
 
     /**
      * Gets a value indicating whether this instance is map reduce index definition
+     * @return if index is of type: Map/Reduce
      */
     public boolean isMapReduce() {
         return reduce != null;
@@ -85,6 +86,7 @@ public abstract class AbstractIndexCreationTask {
 
     /**
      * Generates index name from type name replacing all _ with /
+     * @return index name
      */
     public String getIndexName() {
         return getClass().getSimpleName().replaceAll("_", "/");
@@ -92,6 +94,7 @@ public abstract class AbstractIndexCreationTask {
 
     /**
      * Gets the conventions that should be used when index definition is created.
+     * @return document conventions
      */
     public DocumentConventions getConventions() {
         return conventions;
@@ -99,6 +102,7 @@ public abstract class AbstractIndexCreationTask {
 
     /**
      * Sets the conventions that should be used when index definition is created.
+     * @param conventions Conventions to set
      */
     public void setConventions(DocumentConventions conventions) {
         this.conventions = conventions;
@@ -122,6 +126,7 @@ public abstract class AbstractIndexCreationTask {
 
     /**
      * Executes the index creation against the specified document store.
+     * @param store target document store
      */
     public void execute(IDocumentStore store) {
         store.executeIndex(this);
@@ -129,6 +134,8 @@ public abstract class AbstractIndexCreationTask {
 
     /**
      * Executes the index creation against the specified document database using the specified conventions
+     * @param store target document store
+     * @param conventions Document conventions to use
      */
     public void execute(IDocumentStore store, DocumentConventions conventions) {
         execute(store, conventions, null);
@@ -136,6 +143,8 @@ public abstract class AbstractIndexCreationTask {
 
     /**
      * Executes the index creation against the specified document database using the specified conventions
+     * @param store target document store
+     * @param conventions Document conventions to use
      */
     public void execute(IDocumentStore store, DocumentConventions conventions, String database) {
         putIndex(store, conventions, database);
@@ -187,6 +196,8 @@ public abstract class AbstractIndexCreationTask {
 
     /**
      * Register a field to be stored
+     * @param field Field name
+     * @param storage Field storage value to use
      */
     protected void store(String field, FieldStorage storage) {
         storesStrings.put(field, storage);
@@ -194,6 +205,8 @@ public abstract class AbstractIndexCreationTask {
 
     /**
      * Register a field to be analyzed
+     * @param field Field name
+     * @param analyzer analyzer to use
      */
     protected void analyze(String field, String analyzer) {
         analyzersStrings.put(field, analyzer);
@@ -201,6 +214,8 @@ public abstract class AbstractIndexCreationTask {
 
     /**
      * Register a field to have term vectors
+     * @param field Field name
+     * @param termVector TermVector type
      */
     protected void termVector(String field, FieldTermVector termVector) {
         termVectorsStrings.put(field, termVector);

@@ -61,6 +61,7 @@ public interface IDocumentStore extends IDisposalNotification {
 
     /**
      * Sets the identifier for this store.
+     * @param identifier Identifier to set
      */
     void setIdentifier(String identifier);
 
@@ -77,32 +78,51 @@ public interface IDocumentStore extends IDisposalNotification {
 
     /**
      * Opens the session for a particular database
+     * @param database Database to use
      */
     IDocumentSession openSession(String database);
 
     /**
      * Opens the session with the specified options.
+     * @param sessionOptions Session options to use
      */
     IDocumentSession openSession(SessionOptions sessionOptions);
 
     /**
      * Executes the index creation
+     * @param task Index Creation task to use
      */
     void executeIndex(AbstractIndexCreationTask task);
 
+    /**
+     * Executes the index creation
+     * @param task Index Creation task to use
+     * @param database Target database
+     */
     void executeIndex(AbstractIndexCreationTask task, String database);
 
+    /**
+     * Executes the index creation
+     * @param tasks Index Creation tasks to use
+     */
     void executeIndexes(List<AbstractIndexCreationTask> tasks);
 
+    /**
+     * Executes the index creation
+     * @param tasks Index Creation tasks to use
+     * @param database Target database
+     */
     void executeIndexes(List<AbstractIndexCreationTask> tasks, String database);
 
     /**
      * Gets the conventions
+     * @return Document conventions
      */
     DocumentConventions getConventions();
 
     /**
      * Gets the URL's
+     * @return Store urls
      */
     String[] getUrls();
 

@@ -17,11 +17,13 @@ public interface IAdvancedDocumentSessionOperations {
 
     /**
      * The document store associated with this session
+     * @return Document store
      */
     IDocumentStore getDocumentStore();
 
     /**
      * Allow extensions to provide additional state per session
+     * @return External state
      */
     Map<String, Object> getExternalState();
 
@@ -43,26 +45,31 @@ public interface IAdvancedDocumentSessionOperations {
 
     /**
      * Gets a value indicating whether any of the entities tracked by the session has changes.
+     * @return true if any entity associated with session has changes
      */
     boolean hasChanges();
 
     /**
      * Gets the max number of requests per session.
+     * @return maximum number of requests per session
      */
     int getMaxNumberOfRequestsPerSession();
 
     /**
      * Sets the max number of requests per session.
+     * @param maxRequests Sets the maximum requests
      */
     void setMaxNumberOfRequestsPerSession(int maxRequests);
 
     /**
      * Gets the number of requests for this session
+     * @return Number of requests issued on this session
      */
     int getNumberOfRequests();
     /**
      * Gets the store identifier for this session.
      * The store identifier is the identifier for the particular RavenDB instance.
+     * @return Store identifier
      */
     String storeIdentifier();
 
@@ -70,6 +77,7 @@ public interface IAdvancedDocumentSessionOperations {
      * Gets value indicating whether the session should use optimistic concurrency.
      * When set to true, a check is made so that a change made behind the session back would fail
      * and raise ConcurrencyException
+     * @return true if optimistic concurrency should be used
      */
     boolean isUseOptimisticConcurrency();
 
@@ -77,6 +85,7 @@ public interface IAdvancedDocumentSessionOperations {
      * Sets value indicating whether the session should use optimistic concurrency.
      * When set to true, a check is made so that a change made behind the session back would fail
      * and raise ConcurrencyException
+     * @param useOptimisticConcurrency Sets the optimistic concurrency
      */
     void setUseOptimisticConcurrency(boolean useOptimisticConcurrency);
 
@@ -88,17 +97,21 @@ public interface IAdvancedDocumentSessionOperations {
 
     /**
      * Defer commands to be executed on saveChanges()
+     * @param command command
+     * @param commands more commands to defer
      */
     void defer(ICommandData command, ICommandData... commands);
 
     /**
      * Defer commands to be executed on saveChanges()
+     * @param commands Commands to defer
      */
     void defer(ICommandData[] commands);
 
     /**
      * Evicts the specified entity from the session.
      * Remove the entity from the delete queue and stops tracking changes for this entity.
+     * @param entity Entity to evict
      */
     <T> void evict(T entity);
 
@@ -107,6 +120,8 @@ public interface IAdvancedDocumentSessionOperations {
      *
      *  This function may return <c>null</c> if the entity isn't tracked by the session, or if the entity is
      *   a new entity with an ID that should be generated on the server.
+     * @param entity Entity to get id from
+     * @return document id
      */
     String getDocumentId(Object entity);
 
@@ -114,6 +129,8 @@ public interface IAdvancedDocumentSessionOperations {
      * Gets the metadata for the specified entity.
      * If the entity is transient, it will load the metadata from the store
      * and associate the current state of the entity with the metadata from the server.
+     * @param instance instance to get metadata from
+     * @return Entity metadata
      */
     <T> IMetadataDictionary getMetadataFor(T instance);
 
@@ -121,28 +138,36 @@ public interface IAdvancedDocumentSessionOperations {
      * Gets change vector for the specified entity.
      * If the entity is transient, it will load the metadata from the store
      * and associate the current state of the entity with the metadata from the server.
+     * @param instance Instance to get metadata from
+     * @return Change vector
      */
     <T> String getChangeVectorFor(T instance);
 
     /**
      * Determines whether the specified entity has changed.
+     * @param entity Entity to check
+     * @return true if entity has changed
      */
     boolean hasChanged(Object entity);
 
     /**
      * Returns whether a document with the specified id is loaded in the
      * current session
+     * @param id Id of document
+     * @return true is entity is loaded in session
      */
     boolean isLoaded(String id);
 
     /**
      * Mark the entity as one that should be ignore for change tracking purposes,
      * it still takes part in the session, but is ignored for SaveChanges.
+     * @param entity Entity for which changed should be ignored
      */
     void ignoreChangesFor(Object entity);
 
     /**
      * Returns all changes for each entity stored within session. Including name of the field/property that changed, its old and new value and change type.
+     * @return Document changes
      */
     Map<String, List<DocumentsChanges>> whatChanged();
 
@@ -151,6 +176,10 @@ public interface IAdvancedDocumentSessionOperations {
 
     /**
      * Convert json to entity
+     * @param entityType Entity class
+     * @param id Entity id
+     * @param documentFound Raw document
+     * @return Converted document
      */
     Object convertToEntity(Class entityType, String id, ObjectNode documentFound);
 
