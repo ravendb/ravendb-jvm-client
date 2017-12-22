@@ -1,6 +1,5 @@
 package net.ravendb.client.documents.operations;
 
-import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.type.TypeFactory;
 import net.ravendb.client.http.RavenCommand;
 import net.ravendb.client.http.ServerNode;

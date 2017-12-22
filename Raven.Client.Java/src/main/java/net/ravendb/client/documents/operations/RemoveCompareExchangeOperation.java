@@ -26,7 +26,7 @@ public class RemoveCompareExchangeOperation<T> implements IOperation<CmpXchgResu
 
     @Override
     public RavenCommand<CmpXchgResult<T>> getCommand(IDocumentStore store, DocumentConventions conventions, HttpCache cache) {
-        return new RemoveCompareExchangeCommand<T>(_clazz, _key, _index);
+        return new RemoveCompareExchangeCommand<>(_clazz, _key, _index);
     }
 
     private static class RemoveCompareExchangeCommand<T> extends RavenCommand<CmpXchgResult<T>> {

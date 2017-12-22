@@ -20,9 +20,9 @@ import java.util.List;
 public class ListCompareExchangeValuesOperation implements IOperation<List<ListCompareExchangeValuesOperation.CompareExchangeItem>> {
 
     public static class CompareExchangeItem {
-        private String key;
-        private long index;
-        private JsonNode value;
+        private final String key;
+        private final long index;
+        private final JsonNode value;
 
         public CompareExchangeItem(String key, long index, JsonNode value) {
             this.key = key;
