@@ -22,21 +22,25 @@ public interface IAbstractDocumentQuery<T> {
 
     /**
      * Gets the document convention from the query session
+     * @return document conventions
      */
     DocumentConventions getConventions();
 
     /**
      * Determines if it is a dynamic map-reduce query
+     * @return true if it is dynamic query
      */
     boolean isDynamicMapReduce();
 
     /**
      * Instruct the query to wait for non stale result for the specified wait timeout.
+     * @param waitTimeout Wait timeout
      */
     void _waitForNonStaleResults(Duration waitTimeout);
 
     /**
      * Gets the fields for projection
+     * @return list of projection fields
      */
     List<String> getProjectionFields();
 
@@ -48,6 +52,7 @@ public interface IAbstractDocumentQuery<T> {
     /**
      * Order the search results randomly using the specified seed
      * this is useful if you want to have repeatable random queries
+     * @param seed Seed to use
      */
     void _randomOrdering(String seed);
 
@@ -57,6 +62,7 @@ public interface IAbstractDocumentQuery<T> {
 
     /**
      * Includes the specified path in the query, loading the document specified in that path
+     * @param path include path
      */
     void _include(String path);
 
@@ -64,61 +70,85 @@ public interface IAbstractDocumentQuery<T> {
 
     /**
      * Takes the specified count.
+     * @param count Items to take
      */
     void _take(int count);
 
     /**
      * Skips the specified count.
+     * @param count Items to skip
      */
     void _skip(int count);
 
     /**
      * Matches value
+     * @param fieldName Field name
+     * @param value Value to match
      */
     void _whereEquals(String fieldName, Object value);
 
     /**
      * Matches value
+     * @param fieldName Field name
+     * @param value Value to match
+     * @param exact Use exact matcher
      */
     void _whereEquals(String fieldName, Object value, boolean exact);
 
     /**
      * Matches value
+     * @param fieldName Field name
+     * @param method Method call to use
      */
     void _whereEquals(String fieldName, MethodCall method);
 
     /**
      * Matches value
+     * @param fieldName Field name
+     * @param method Method call to use
+     * @param exact Use exact matcher
      */
     void _whereEquals(String fieldName, MethodCall method, boolean exact);
 
     /**
      * Matches value
+     * @param whereParams Where parameters
      */
     void _whereEquals(WhereParams whereParams);
 
     /**
      * Not matches value
+     * @param fieldName Field name
+     * @param value Value to match
      */
     void _whereNotEquals(String fieldName, Object value);
 
     /**
      * Not matches value
+     * @param fieldName Field name
+     * @param value Value to match
+     * @param exact Use exact matcher
      */
     void _whereNotEquals(String fieldName, Object value, boolean exact);
 
     /**
      * Not matches value
+     * @param fieldName Field name
+     * @param method Method call to use
      */
     void _whereNotEquals(String fieldName, MethodCall method);
 
     /**
      * Not matches value
+     * @param fieldName Field name
+     * @param method Method call to use
+     * @param exact Use exact matcher
      */
     void _whereNotEquals(String fieldName, MethodCall method, boolean exact);
 
     /**
      * Not matches value
+     * @param whereParams Where parameters
      */
     void _whereNotEquals(WhereParams whereParams);
 
@@ -139,71 +169,107 @@ public interface IAbstractDocumentQuery<T> {
 
     /**
      * Check that the field has one of the specified value
+     * @param fieldName Field name
+     * @param values Values to match
      */
     void _whereIn(String fieldName, Collection<Object> values);
 
     /**
      * Check that the field has one of the specified value
+     * @param fieldName Field name
+     * @param values Values to match
+     * @param exact Use exact matcher
      */
     void _whereIn(String fieldName, Collection<Object> values, boolean exact);
 
     /**
      * Matches fields which starts with the specified value.
+     * @param fieldName Field name
+     * @param value to match
      */
     void _whereStartsWith(String fieldName, Object value);
 
     /**
      * Matches fields which ends with the specified value.
+     * @param fieldName Field name
+     * @param value Value to match
      */
     void _whereEndsWith(String fieldName, Object value);
 
     /**
      * Matches fields where the value is between the specified start and end, exclusive
+     * @param fieldName Field name
+     * @param start Range start
+     * @param end Range end
      */
     void _whereBetween(String fieldName, Object start, Object end);
 
     /**
      * Matches fields where the value is between the specified start and end, exclusive
+     * @param fieldName Field name
+     * @param start Range start
+     * @param end Range end
+     * @param exact Use exact matcher
      */
     void _whereBetween(String fieldName, Object start, Object end, boolean exact);
 
     /**
      * Matches fields where the value is greater than the specified value
+     * @param fieldName Field name
+     * @param value Value to match
      */
     void _whereGreaterThan(String fieldName, Object value);
 
     /**
      * Matches fields where the value is greater than the specified value
+     * @param fieldName Field name
+     * @param value Value to match
+     * @param exact Use exact matcher
      */
     void _whereGreaterThan(String fieldName, Object value, boolean exact);
 
     /**
      * Matches fields where the value is greater than or equal to the specified value
+     * @param fieldName Field name
+     * @param value Value to match
      */
     void _whereGreaterThanOrEqual(String fieldName, Object value);
 
     /**
      * Matches fields where the value is greater than or equal to the specified value
+     * @param fieldName Field name
+     * @param value Value to match
+     * @param exact Use exact matcher
      */
     void _whereGreaterThanOrEqual(String fieldName, Object value, boolean exact);
 
     /**
      * Matches fields where the value is less than the specified value
+     * @param fieldName Field name
+     * @param value Value to match
      */
     void _whereLessThan(String fieldName, Object value);
 
     /**
      * Matches fields where the value is less than the specified value
+     * @param fieldName Field name
+     * @param value Value to match
+     * @param exact Use exact matcher
      */
     void _whereLessThan(String fieldName, Object value, boolean exact);
 
     /**
      * Matches fields where the value is less than or equal to the specified value
+     * @param fieldName Field name
+     * @param value Value to match
      */
     void _whereLessThanOrEqual(String fieldName, Object value);
 
     /**
      * Matches fields where the value is less than or equal to the specified value
+     * @param fieldName Field name
+     * @param value Value to match
+     * @param exact Use exact matcher
      */
     void _whereLessThanOrEqual(String fieldName, Object value, boolean exact);
 
@@ -228,6 +294,7 @@ public interface IAbstractDocumentQuery<T> {
      * boosting factor where 1.0 is default, less than 1.0 is lower weight, greater than 1.0 is higher weight
      *
      * http://lucene.apache.org/java/2_4_0/queryparsersyntax.html#Boosting%20a%20Term
+     * @param boost Boost value
      */
     void _boost(double boost);
 
@@ -237,6 +304,8 @@ public interface IAbstractDocumentQuery<T> {
      * 0.0 to 1.0 where 1.0 means closer match
      *
      * http://lucene.apache.org/java/2_4_0/queryparsersyntax.html#Fuzzy%20Searches
+     *
+     * @param fuzzy Fuzzy value
      */
     void _fuzzy(double fuzzy);
 
@@ -244,18 +313,22 @@ public interface IAbstractDocumentQuery<T> {
      * Specifies a proximity distance for the phrase in the last where clause
      *
      * http://lucene.apache.org/java/2_4_0/queryparsersyntax.html#Proximity%20Searches
+     * @param proximity Proximity value
      */
     void _proximity(int proximity);
 
     /**
      * Order the results by the specified fields
      * The field is the name of the field to sort, defaulting to sorting by ascending.
+     * @param field Field to use
      */
     void _orderBy(String field);
 
     /**
      * Order the results by the specified fields
      * The field is the name of the field to sort, defaulting to sorting by ascending.
+     * @param field Field to use
+     * @param ordering Ordering type
      */
     void _orderBy(String field, OrderingType ordering);
 
@@ -277,12 +350,17 @@ public interface IAbstractDocumentQuery<T> {
     /**
      * Perform a search for documents which fields that match the searchTerms.
      * If there is more than a single term, each of them will be checked independently.
+     * @param fieldName Field name
+     * @param searchTerms Search terms
      */
     void _search(String fieldName, String searchTerms);
 
     /**
      * Perform a search for documents which fields that match the searchTerms.
      * If there is more than a single term, each of them will be checked independently.
+     * @param fieldName Field name
+     * @param searchTerms Search terms
+     * @param operator Operator
      */
     void _search(String fieldName, String searchTerms, SearchOperator operator);
 
@@ -296,11 +374,15 @@ public interface IAbstractDocumentQuery<T> {
 
     /**
      * Performs a query matching ANY of the provided values against the given field (OR)
+     * @param fieldName Field name
+     * @param values Values to match
      */
     void _containsAny(String fieldName, Collection<Object> values);
 
     /**
      * Performs a query matching ALL of the provided values against the given field (AND)
+     * @param fieldName Field name
+     * @param values Values to match
      */
     void _containsAll(String fieldName, Collection<Object> values);
 

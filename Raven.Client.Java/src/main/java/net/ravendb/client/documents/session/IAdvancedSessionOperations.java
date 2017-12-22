@@ -13,16 +13,24 @@ public interface IAdvancedSessionOperations extends IAdvancedDocumentSessionOper
 
     /**
      * Updates entity with latest changes from server
+     * @param <T> entity class
+     * @param entity Entity to refresh
      */
     <T> void refresh(T entity);
 
     /**
      * Query the specified index using provided raw query
+     * @param <T> result class
+     * @param clazz result class
+     * @param query Query
+     * @return Raw document query
      */
-    <T>IRawDocumentQuery<T> rawQuery(Class<T> clazz, String query);
+    <T> IRawDocumentQuery<T> rawQuery(Class<T> clazz, String query);
 
     /**
      * Check if document exists
+     * @param id document id to check
+     * @return true if document exists
      */
     boolean exists(String id);
 
@@ -31,6 +39,7 @@ public interface IAdvancedSessionOperations extends IAdvancedDocumentSessionOper
      * @param clazz entity class
      * @param idPrefix prefix for which documents should be returned e.g. "products/"
      * @param <T> entity class
+     * @return Matched entities
      */
     <T> T[] loadStartingWith(Class<T> clazz, String idPrefix);
 
@@ -40,6 +49,7 @@ public interface IAdvancedSessionOperations extends IAdvancedDocumentSessionOper
      * @param idPrefix prefix for which documents should be returned e.g. "products/"
      * @param matches  pipe ('|') separated values for which document IDs (after 'idPrefix') should be matched ('?' any single character, '*' any characters)
      * @param <T> entity class
+     * @return Matched entities
      */
     <T> T[] loadStartingWith(Class<T> clazz, String idPrefix, String matches);
 
@@ -50,6 +60,7 @@ public interface IAdvancedSessionOperations extends IAdvancedDocumentSessionOper
      * @param matches  pipe ('|') separated values for which document IDs (after 'idPrefix') should be matched ('?' any single character, '*' any characters)
      * @param start number of documents that should be skipped. By default: 0.
      * @param <T> entity class
+     * @return Matched entities
      */
     <T> T[] loadStartingWith(Class<T> clazz, String idPrefix, String matches, int start);
 
@@ -61,6 +72,7 @@ public interface IAdvancedSessionOperations extends IAdvancedDocumentSessionOper
      * @param start number of documents that should be skipped. By default: 0.
      * @param pageSize maximum number of documents that will be retrieved. By default: 25.
      * @param <T> entity class
+     * @return Matched entities
      */
     <T> T[] loadStartingWith(Class<T> clazz, String idPrefix, String matches, int start, int pageSize);
 
@@ -73,6 +85,7 @@ public interface IAdvancedSessionOperations extends IAdvancedDocumentSessionOper
      * @param pageSize maximum number of documents that will be retrieved. By default: 25.
      * @param exclude pipe ('|') separated values for which document IDs (after 'idPrefix') should not be matched ('?' any single character, '*' any characters)
      * @param <T> entity class
+     * @return Matched entities
      */
     <T> T[] loadStartingWith(Class<T> clazz, String idPrefix, String matches, int start, int pageSize, String exclude);
 
@@ -86,6 +99,7 @@ public interface IAdvancedSessionOperations extends IAdvancedDocumentSessionOper
      * @param exclude pipe ('|') separated values for which document IDs (after 'idPrefix') should not be matched ('?' any single character, '*' any characters)
      * @param startAfter skip document fetching until given ID is found and return documents after that ID (default: null)
      * @param <T> entity class
+     * @return Matched entities
      */
     <T> T[] loadStartingWith(Class<T> clazz, String idPrefix, String matches, int start, int pageSize, String exclude, String startAfter);
 
@@ -110,12 +124,14 @@ public interface IAdvancedSessionOperations extends IAdvancedDocumentSessionOper
      * @param indexName Name of the index (mutually exclusive with collectionName)
      * @param collectionName Name of the collection (mutually exclusive with indexName)
      * @param isMapReduce Whether we are querying a map/reduce index (modify how we treat identifier properties)
+     * @return Document query
      */
     <T> IDocumentQuery<T> documentQuery(Class<T> clazz, String indexName, String collectionName, boolean isMapReduce);
 
     /**
      * Query the specified index
      * @param clazz The result of the query
+     * @return Document query
      */
     <T> IDocumentQuery<T> documentQuery(Class<T> clazz);
 

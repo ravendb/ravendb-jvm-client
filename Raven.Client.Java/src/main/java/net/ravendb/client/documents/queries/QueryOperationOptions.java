@@ -17,6 +17,7 @@ public class QueryOperationOptions {
 
     /**
      * Indicates whether operations are allowed on stale indexes.
+     * @return true if stale result can be accepted
      */
     public boolean isAllowStale() {
         return allowStale;
@@ -24,6 +25,7 @@ public class QueryOperationOptions {
 
     /**
      * Indicates whether operations are allowed on stale indexes.
+     * @param allowStale sets the value
      */
     public void setAllowStale(boolean allowStale) {
         this.allowStale = allowStale;
@@ -31,6 +33,7 @@ public class QueryOperationOptions {
 
     /**
      * If AllowStale is set to false and index is stale, then this is the maximum timeout to wait for index to become non-stale. If timeout is exceeded then exception is thrown.
+     * @return max time server can wait for stale results
      */
     public Duration getStaleTimeout() {
         return staleTimeout;
@@ -38,6 +41,7 @@ public class QueryOperationOptions {
 
     /**
      * If AllowStale is set to false and index is stale, then this is the maximum timeout to wait for index to become non-stale. If timeout is exceeded then exception is thrown.
+     * @param staleTimeout Sets the value
      */
     public void setStaleTimeout(Duration staleTimeout) {
         this.staleTimeout = staleTimeout;
@@ -45,6 +49,7 @@ public class QueryOperationOptions {
 
     /**
      * Limits the amount of base operation per second allowed.
+     * @return maximum operations per seconds
      */
     public Integer getMaxOpsPerSecond() {
         return _maxOpsPerSecond;
@@ -52,6 +57,7 @@ public class QueryOperationOptions {
 
     /**
      * Limits the amount of base operation per second allowed.
+     * @param maxOpsPerSecond sets the value
      */
     public void setMaxOpsPerSecond(Integer maxOpsPerSecond) {
         if (maxOpsPerSecond != null && maxOpsPerSecond <= 0) {
@@ -62,6 +68,7 @@ public class QueryOperationOptions {
 
     /**
      * Determines whether operation details about each document should be returned by server.
+     * @return true if operation details should be returned
      */
     public boolean isRetrieveDetails() {
         return retrieveDetails;
@@ -69,6 +76,7 @@ public class QueryOperationOptions {
 
     /**
      * Determines whether operation details about each document should be returned by server.
+     * @param retrieveDetails Sets the value
      */
     public void setRetrieveDetails(boolean retrieveDetails) {
         this.retrieveDetails = retrieveDetails;

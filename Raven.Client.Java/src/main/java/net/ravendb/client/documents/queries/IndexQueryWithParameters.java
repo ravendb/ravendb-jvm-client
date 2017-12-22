@@ -10,6 +10,7 @@ public abstract class IndexQueryWithParameters<T> extends IndexQueryBase<T> {
 
     /**
      * Allow to skip duplicate checking during queries
+     * @return true if server can skip duplicate checking
      */
     public boolean isSkipDuplicateChecking() {
         return skipDuplicateChecking;
@@ -17,6 +18,7 @@ public abstract class IndexQueryWithParameters<T> extends IndexQueryBase<T> {
 
     /**
      * Allow to skip duplicate checking during queries
+     * @param skipDuplicateChecking sets the value
      */
     public void setSkipDuplicateChecking(boolean skipDuplicateChecking) {
         this.skipDuplicateChecking = skipDuplicateChecking;

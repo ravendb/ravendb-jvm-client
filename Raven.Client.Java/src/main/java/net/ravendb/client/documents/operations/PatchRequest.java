@@ -14,6 +14,7 @@ public class PatchRequest {
 
     /**
      * JavaScript function to use to patch a document
+     * @return Patch script
      */
     public String getScript() {
         return script;
@@ -21,6 +22,7 @@ public class PatchRequest {
 
     /**
      * JavaScript function to use to patch a document
+     * @param script Sets the value
      */
     public void setScript(String script) {
         this.script = script;
@@ -28,6 +30,7 @@ public class PatchRequest {
 
     /**
      * Additional arguments passed to JavaScript function from Script.
+     * @return additional arguments
      */
     public Map<String, Object> getValues() {
         return values;
@@ -35,6 +38,7 @@ public class PatchRequest {
 
     /**
      * Additional arguments passed to JavaScript function from Script.
+     * @param values Sets patch arguments
      */
     public void setValues(Map<String, Object> values) {
         this.values = values;

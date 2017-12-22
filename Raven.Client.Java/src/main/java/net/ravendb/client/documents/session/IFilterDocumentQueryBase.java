@@ -14,21 +14,27 @@ public interface IFilterDocumentQueryBase<T, TSelf extends IDocumentQueryBase<T,
 
     /**
      * Negate the next operation
+     * @return Query instance
      */
     TSelf not();
 
     /**
      *  Add an AND to the query
+     *  @return Query instance
      */
     TSelf andAlso();
 
     /**
      * Simplified method for closing a clause within the query
+     * @return Query instance
      */
     TSelf closeSubclause();
 
     /**
      * Performs a query matching ALL of the provided values against the given field (AND)
+     * @param fieldName Field name
+     * @param values values to match
+     * @return Query instance
      */
     TSelf containsAll(String fieldName, Collection<Object> values);
 
@@ -36,6 +42,9 @@ public interface IFilterDocumentQueryBase<T, TSelf extends IDocumentQueryBase<T,
 
     /**
      * Performs a query matching ANY of the provided values against the given field (OR)
+     * @param fieldName Field name
+     * @param values values to match
+     * @return Query instance
      */
     TSelf containsAny(String fieldName, Collection<Object> values);
 
@@ -48,11 +57,13 @@ public interface IFilterDocumentQueryBase<T, TSelf extends IDocumentQueryBase<T,
 
     /**
      *  Simplified method for opening a new clause within the query
+     *  @return Query instance
      */
     TSelf openSubclause();
 
     /**
      * Add an OR to the query
+     * @return Query instance
      */
     TSelf orElse();
 
@@ -62,6 +73,9 @@ public interface IFilterDocumentQueryBase<T, TSelf extends IDocumentQueryBase<T,
      *
      * Space separated terms e.g. 'John Adam' means that we will look in selected field for 'John'
      * or 'Adam'.
+     * @param fieldName Field name
+     * @param searchTerms Search terms
+     * @return Query instance
      */
     TSelf search(String fieldName, String searchTerms);
 
@@ -71,6 +85,10 @@ public interface IFilterDocumentQueryBase<T, TSelf extends IDocumentQueryBase<T,
      *
      * Space separated terms e.g. 'John Adam' means that we will look in selected field for 'John'
      * or 'Adam'.
+     * @param fieldName Field name
+     * @param searchTerms Search terms
+     * @param operator Search operator
+     * @return Query instance
      */
     TSelf search(String fieldName, String searchTerms, SearchOperator operator);
 
@@ -78,16 +96,28 @@ public interface IFilterDocumentQueryBase<T, TSelf extends IDocumentQueryBase<T,
 
     /**
      * Filter the results from the index using the specified where clause.
+     * @param fieldName Field name
+     * @param whereClause Where clause
+     * @return Query instance
      */
     TSelf whereLucene(String fieldName, String whereClause);
 
     /**
      * Matches fields where the value is between the specified start and end, exclusive
+     * @param fieldName Field name
+     * @param start Range start
+     * @param end Range end
+     * @return Query instance
      */
     TSelf whereBetween(String fieldName, Object start, Object end);
 
     /**
      * Matches fields where the value is between the specified start and end, exclusive
+     * @param fieldName Field name
+     * @param start Range start
+     * @param end Range end
+     * @param exact Use exact matcher
+     * @return Query instance
      */
     TSelf whereBetween(String fieldName, Object start, Object end, boolean exact);
 
@@ -95,6 +125,9 @@ public interface IFilterDocumentQueryBase<T, TSelf extends IDocumentQueryBase<T,
 
     /**
      * Matches fields which ends with the specified value.
+     * @param fieldName Field name
+     * @param value Value to use
+     * @return Query instance
      */
     TSelf whereEndsWith(String fieldName, Object value);
 
@@ -102,21 +135,35 @@ public interface IFilterDocumentQueryBase<T, TSelf extends IDocumentQueryBase<T,
 
     /**
      * Matches value
+     * @param fieldName Field name
+     * @param value Value to use
+     * @return Query instance
      */
     TSelf whereEquals(String fieldName, Object value);
 
     /**
      * Matches value
+     * @param fieldName Field name
+     * @param value Value to use
+     * @param exact Use exact matcher
+     * @return Query instance
      */
     TSelf whereEquals(String fieldName, Object value, boolean exact);
 
     /**
      * Matches value
+     * @param fieldName Field name
+     * @param method Method call
+     * @return Query instance
      */
     TSelf whereEquals(String fieldName, MethodCall method);
 
     /**
      * Matches value
+     * @param fieldName Field name
+     * @param method Method call
+     * @param exact Use exact matcher
+     * @return Query instance
      */
     TSelf whereEquals(String fieldName, MethodCall method, boolean exact);
 
@@ -125,26 +172,42 @@ public interface IFilterDocumentQueryBase<T, TSelf extends IDocumentQueryBase<T,
 
     /**
      * Matches value
+     * @param whereParams Where params
+     * @return Query instance
      */
     TSelf whereEquals(WhereParams whereParams);
 
     /**
      * Not matches value
+     * @param fieldName Field name
+     * @param value Value to use
+     * @return Query instance
      */
     TSelf whereNotEquals(String fieldName, Object value);
 
     /**
      * Not matches value
+     * @param fieldName Field name
+     * @param value Value to use
+     * @param exact Use exact matcher
+     * @return Query instance
      */
     TSelf whereNotEquals(String fieldName, Object value, boolean exact);
 
     /**
      * Not matches value
+     * @param fieldName Field name
+     * @param method Method call
+     * @return Query instance
      */
     TSelf whereNotEquals(String fieldName, MethodCall method);
 
     /**
      * Not matches value
+     * @param fieldName Field name
+     * @param method Method call
+     * @param exact Use exact matcher
+     * @return Query instance
      */
     TSelf whereNotEquals(String fieldName, MethodCall method, boolean exact);
 
@@ -153,16 +216,25 @@ public interface IFilterDocumentQueryBase<T, TSelf extends IDocumentQueryBase<T,
 
     /**
      * Not matches value
+     * @param whereParams Where params
+     * @return Query instance
      */
     TSelf whereNotEquals(WhereParams whereParams);
 
     /**
      * Matches fields where the value is greater than the specified value
+     * @param fieldName Field name
+     * @param value Value to use
+     * @return Query instance
      */
     TSelf whereGreaterThan(String fieldName, Object value);
 
     /**
      * Matches fields where the value is greater than the specified value
+     * @param fieldName Field name
+     * @param value Value to use
+     * @param exact Use exact matcher
+     * @return Query instance
      */
     TSelf whereGreaterThan(String fieldName, Object value, boolean exact);
 
@@ -170,11 +242,18 @@ public interface IFilterDocumentQueryBase<T, TSelf extends IDocumentQueryBase<T,
 
     /**
      * Matches fields where the value is greater than or equal to the specified value
+     * @param fieldName Field name
+     * @param value Value to use
+     * @return Query instance
      */
     TSelf whereGreaterThanOrEqual(String fieldName, Object value);
 
     /**
      * Matches fields where the value is greater than or equal to the specified value
+     * @param fieldName Field name
+     * @param value Value to use
+     * @param exact Use exact matcher
+     * @return Query instance
      */
     TSelf whereGreaterThanOrEqual(String fieldName, Object value, boolean exact);
 
@@ -182,11 +261,18 @@ public interface IFilterDocumentQueryBase<T, TSelf extends IDocumentQueryBase<T,
 
     /**
      * Check that the field has one of the specified values
+     * @param fieldName Field name
+     * @param values Values to use
+     * @return Query instance
      */
     TSelf whereIn(String fieldName, Collection<Object> values);
 
     /**
      * Check that the field has one of the specified values
+     * @param fieldName Field name
+     * @param values Values to use
+     * @param exact Use exact matcher
+     * @return Query instance
      */
     TSelf whereIn(String fieldName, Collection<Object> values, boolean exact);
 
@@ -194,11 +280,18 @@ public interface IFilterDocumentQueryBase<T, TSelf extends IDocumentQueryBase<T,
 
     /**
      * Matches fields where the value is less than the specified value
+     * @param fieldName Field name
+     * @param value Value to use
+     * @return Query instance
      */
     TSelf whereLessThan(String fieldName, Object value);
 
     /**
      * Matches fields where the value is less than the specified value
+     * @param fieldName Field name
+     * @param value Value to use
+     * @param exact Use exact matcher
+     * @return Query instance
      */
     TSelf whereLessThan(String fieldName, Object value, boolean exact);
 
@@ -206,11 +299,18 @@ public interface IFilterDocumentQueryBase<T, TSelf extends IDocumentQueryBase<T,
 
     /**
      *  Matches fields where the value is less than or equal to the specified value
+     *  @param fieldName Field name
+     *  @param value Value to use
+     *  @return Query instance
      */
     TSelf whereLessThanOrEqual(String fieldName, Object value);
 
     /**
      *  Matches fields where the value is less than or equal to the specified value
+     *  @param fieldName Field name
+     *  @param value Value to use
+     *  @param exact Use exact matcher
+     *  @return Query instance
      */
     TSelf whereLessThanOrEqual(String fieldName, Object value, boolean exact);
 
@@ -220,6 +320,7 @@ public interface IFilterDocumentQueryBase<T, TSelf extends IDocumentQueryBase<T,
      * Matches fields which starts with the specified value.
      * @param fieldName Name of the field.
      * @param value The value.
+     * @return Query instance
      */
     TSelf whereStartsWith(String fieldName, Object value);
 
@@ -229,6 +330,8 @@ public interface IFilterDocumentQueryBase<T, TSelf extends IDocumentQueryBase<T,
 
     /**
      * Check if the given field exists
+     * @param fieldName Field name
+     * @return Query instance
      */
     TSelf whereExists(String fieldName);
 
@@ -236,6 +339,9 @@ public interface IFilterDocumentQueryBase<T, TSelf extends IDocumentQueryBase<T,
 
     /**
      * Checks value of a given field against supplied regular expression pattern
+     * @param fieldName Field name
+     * @param pattern Regexp pattern
+     * @return Query instance
      */
     TSelf whereRegex(String fieldName, String pattern);
 
@@ -247,6 +353,7 @@ public interface IFilterDocumentQueryBase<T, TSelf extends IDocumentQueryBase<T,
      * @param radius Radius (measured in units passed to radiusUnits parameter) in which matches should be found.
      * @param latitude Latitude pointing to a circle center.
      * @param longitude Longitude pointing to a circle center.
+     * @return Query instance
      */
     TSelf withinRadiusOf(String fieldName, double radius, double latitude, double longitude);
 
@@ -257,6 +364,7 @@ public interface IFilterDocumentQueryBase<T, TSelf extends IDocumentQueryBase<T,
      * @param latitude Latitude pointing to a circle center.
      * @param longitude Longitude pointing to a circle center.
      * @param radiusUnits Units that will be used to measure distances (Kilometers, Miles).
+     * @return Query instance
      */
     TSelf withinRadiusOf(String fieldName, double radius, double latitude, double longitude, SpatialUnits radiusUnits);
 
@@ -267,6 +375,8 @@ public interface IFilterDocumentQueryBase<T, TSelf extends IDocumentQueryBase<T,
      * @param latitude Latitude pointing to a circle center.
      * @param longitude Longitude pointing to a circle center.
      * @param radiusUnits Units that will be used to measure distances (Kilometers, Miles).
+     * @param distanceErrorPct Distance error percent
+     * @return Query instance
      */
     TSelf withinRadiusOf(String fieldName, double radius, double latitude, double longitude, SpatialUnits radiusUnits, double distanceErrorPct);
 
@@ -279,6 +389,7 @@ public interface IFilterDocumentQueryBase<T, TSelf extends IDocumentQueryBase<T,
      * @param fieldName Spatial field name.
      * @param shapeWkt WKT formatted shape
      * @param relation Spatial relation to check (Within, Contains, Disjoint, Intersects, Nearby)
+     * @return Query instance
      */
     TSelf relatesToShape(String fieldName, String shapeWkt, SpatialRelation relation);
 
@@ -289,6 +400,7 @@ public interface IFilterDocumentQueryBase<T, TSelf extends IDocumentQueryBase<T,
      * @param shapeWkt WKT formatted shape
      * @param relation Spatial relation to check (Within, Contains, Disjoint, Intersects, Nearby)
      * @param distanceErrorPct The allowed error percentage. By default: 0.025
+     * @return Query instance
      */
     TSelf relatesToShape(String fieldName, String shapeWkt, SpatialRelation relation, double distanceErrorPct);
 
@@ -296,6 +408,9 @@ public interface IFilterDocumentQueryBase<T, TSelf extends IDocumentQueryBase<T,
 
     /**
      * Ability to use one factory to determine spatial shape that will be used in query.
+     * @param fieldName Field name
+     * @param clause Spatial criteria factory
+     * @return Query instance
      */
     IDocumentQuery<T> spatial(String fieldName, Function<SpatialCriteriaFactory, SpatialCriteria> clause);
 

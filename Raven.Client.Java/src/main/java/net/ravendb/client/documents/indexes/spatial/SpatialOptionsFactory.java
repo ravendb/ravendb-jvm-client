@@ -20,6 +20,8 @@ public class SpatialOptionsFactory {
 
         /**
          * Defines a Geohash Prefix Tree index using a default Max Tree Level {@link SpatialOptions}
+         * @param circleRadiusUnits Units to set
+         * @return Spatial options
          */
         public SpatialOptions defaultOptions(SpatialUnits circleRadiusUnits) {
             return geohashPrefixTreeIndex(0, circleRadiusUnits);

@@ -117,6 +117,7 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
 
     /**
      * Gets the session associated with this document query
+     * @return session
      */
     public IDocumentSession getSession() {
         return (IDocumentSession) theSession;
@@ -169,6 +170,7 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
     /**
      * Instruct the query to wait for non stale result for the specified wait timeout.
      * This shouldn't be used outside of unit tests unless you are well aware of the implications
+     * @param waitTimeout Wait timeout
      */
     @Override
     public void _waitForNonStaleResults(Duration waitTimeout) {
@@ -191,6 +193,7 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
 
     /**
      * Gets the fields for projection
+     * @return list of projected fields
      */
     @Override
     public List<String> getProjectionFields() {
@@ -209,6 +212,7 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
     /**
      * Order the search results randomly using the specified seed
      * this is useful if you want to have repeatable random queries
+     * @param seed Seed to use
      */
     @Override
     public void _randomOrdering(String seed) {
@@ -349,6 +353,7 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
 
     /**
      * Includes the specified path in the query, loading the document specified in that path
+     * @param path Path to include
      */
     @Override
     public void _include(String path) {
@@ -369,6 +374,8 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
 
     /**
      * Filter the results from the index using the specified where clause.
+     * @param fieldName Field name
+     * @param whereClause Where clause
      */
     public void _whereLucene(String fieldName, String whereClause) {
         fieldName = ensureValidFieldName(fieldName, false);
@@ -529,6 +536,8 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
 
     /**
      * Check that the field has one of the specified value
+     * @param fieldName Field name to use
+     * @param values Values to find
      */
     @Override
     public void _whereIn(String fieldName, Collection<Object> values) {
@@ -537,6 +546,9 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
 
     /**
      * Check that the field has one of the specified value
+     * @param fieldName Field name to use
+     * @param values Values to find
+     * @param exact Use exact matcher
      */
     @Override
     public void _whereIn(String fieldName, Collection<Object> values, boolean exact) {
@@ -571,6 +583,8 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
 
     /**
      * Matches fields which ends with the specified value.
+     * @param fieldName Field name to use
+     * @param value Values to find
      */
     @SuppressWarnings("unchecked")
     public void _whereEndsWith(String fieldName, Object value) {
@@ -598,6 +612,10 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
 
     /**
      * Matches fields where the value is between the specified start and end, exclusive
+     * @param fieldName Field name to use
+     * @param start Range start
+     * @param end Range end
+     * @param exact Use exact matcher
      */
     @Override
     public void _whereBetween(String fieldName, Object start, Object end, boolean exact) {
@@ -628,6 +646,9 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
 
     /**
      * Matches fields where the value is greater than the specified value
+     * @param fieldName Field name to use
+     * @param value Value to compare
+     * @param exact Use exact matcher
      */
     public void _whereGreaterThan(String fieldName, Object value, boolean exact) {
         fieldName = ensureValidFieldName(fieldName, false);
@@ -650,6 +671,9 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
 
     /**
      * Matches fields where the value is greater than or equal to the specified value
+     * @param fieldName Field name to use
+     * @param value Value to compare
+     * @param exact Use exact matcher
      */
     public void _whereGreaterThanOrEqual(String fieldName, Object value, boolean exact) {
         fieldName = ensureValidFieldName(fieldName, false);
@@ -706,6 +730,8 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
 
     /**
      * Matches fields where Regex.IsMatch(filedName, pattern)
+     * @param fieldName Field name to use
+     * @param pattern Regexp pattern
      */
     @Override
     public void _whereRegex(String fieldName, String pattern) {
@@ -759,6 +785,8 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
      * boosting factor where 1.0 is default, less than 1.0 is lower weight, greater than 1.0 is higher weight
      * <p>
      * http://lucene.apache.org/java/2_4_0/queryparsersyntax.html#Boosting%20a%20Term
+     *
+     * @param boost Boost value
      */
     @Override
     public void _boost(double boost) {
@@ -789,6 +817,7 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
      * 0.0 to 1.0 where 1.0 means closer match
      * <p>
      * http://lucene.apache.org/java/2_4_0/queryparsersyntax.html#Fuzzy%20Searches
+     * @param fuzzy Fuzzy value
      */
     @Override
     public void _fuzzy(double fuzzy) {
@@ -813,6 +842,7 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
      * Specifies a proximity distance for the phrase in the last where clause
      * <p>
      * http://lucene.apache.org/java/2_4_0/queryparsersyntax.html#Proximity%20Searches
+     * @param proximity Proximity value
      */
     @Override
     public void _proximity(int proximity) {
@@ -837,6 +867,7 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
      * Order the results by the specified fields
      * The fields are the names of the fields to sort, defaulting to sorting by ascending.
      * You can prefix a field name with '-' to indicate sorting by descending or '+' to sort by ascending
+     * @param field field to use in order
      */
     public void _orderBy(String field) {
         _orderBy(field, OrderingType.STRING);
@@ -846,6 +877,8 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
      * Order the results by the specified fields
      * The fields are the names of the fields to sort, defaulting to sorting by ascending.
      * You can prefix a field name with '-' to indicate sorting by descending or '+' to sort by ascending
+     * @param field field to use in order
+     * @param ordering Ordering type
      */
     public void _orderBy(String field, OrderingType ordering) {
         assertNoRawQuery();
@@ -857,6 +890,7 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
      * Order the results by the specified fields
      * The fields are the names of the fields to sort, defaulting to sorting by descending.
      * You can prefix a field name with '-' to indicate sorting by descending or '+' to sort by ascending
+     * @param field Field to use
      */
     public void _orderByDescending(String field) {
         _orderByDescending(field, OrderingType.STRING);
@@ -866,6 +900,8 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
      * Order the results by the specified fields
      * The fields are the names of the fields to sort, defaulting to sorting by descending.
      * You can prefix a field name with '-' to indicate sorting by descending or '+' to sort by ascending
+     * @param field Field to use
+     * @param ordering Ordering type
      */
     public void _orderByDescending(String field, OrderingType ordering) {
         assertNoRawQuery();
@@ -886,6 +922,7 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
 
     /**
      * Provide statistics about the query, such as total count of matching records
+     * @param stats Output parameter for query statistics
      */
     public void _statistics(Reference<QueryStatistics> stats) {
         stats.value = queryStats;
@@ -893,6 +930,7 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
 
     /**
      * Called externally to raise the after query executed callback
+     * @param result Query result
      */
     public void invokeAfterQueryExecuted(QueryResult result) {
         for (Consumer<QueryResult> consumer : afterQueryExecutedCallback) {
@@ -910,6 +948,8 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
 
     /**
      * Generates the index query.
+     * @param query Query
+     * @return Index query
      */
     protected IndexQuery generateIndexQuery(String query) {
         IndexQuery indexQuery = new IndexQuery();
@@ -931,6 +971,8 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
     /**
      * Perform a search for documents which fields that match the searchTerms.
      * If there is more than a single term, each of them will be checked independently.
+     * @param fieldName Field name
+     * @param searchTerms Search terms
      */
     @Override
     public void _search(String fieldName, String searchTerms) {
@@ -940,6 +982,9 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
     /**
      * Perform a search for documents which fields that match the searchTerms.
      * If there is more than a single term, each of them will be checked independently.
+     * @param fieldName Field name
+     * @param searchTerms Search terms
+     * @param operator Search operator
      */
     @Override
     public void _search(String fieldName, String searchTerms, SearchOperator operator) {

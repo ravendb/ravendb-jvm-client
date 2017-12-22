@@ -9,6 +9,7 @@ public class QueryResult extends GenericQueryResult<ArrayNode, ObjectNode> {
 
     /**
      * Creates a snapshot of the query results
+     * @return returns snapshot of query result
      */
     public QueryResult createSnapshot() {
         QueryResult queryResult = new QueryResult();

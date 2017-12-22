@@ -193,6 +193,7 @@ public abstract class DocumentStoreBase implements IDocumentStore {
 
     /**
      * Sets the default database
+     * @param database Sets the value
      */
     public void setDatabase(String database) {
         this.database = database;
@@ -200,6 +201,7 @@ public abstract class DocumentStoreBase implements IDocumentStore {
 
     /**
      * The client certificate to use for authentication
+     * @return Certificate to use
      */
     public KeyStore getCertificate() {
         return _certificate;
@@ -207,6 +209,7 @@ public abstract class DocumentStoreBase implements IDocumentStore {
 
     /**
      * The client certificate to use for authentication
+     * @param certificate Certificate to use
      */
     public void setCertificate(KeyStore certificate) {
         if (initialized) {

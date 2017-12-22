@@ -322,6 +322,7 @@ public class DocumentConventions {
      * Generates the document id.
      * @param databaseName Database name
      * @param entity Entity
+     * @return document id
      */
     @SuppressWarnings("unchecked")
     public String generateDocumentId(String databaseName, Object entity) {
@@ -339,8 +340,10 @@ public class DocumentConventions {
     /**
      * Register an id convention for a single type (and all of its derived types.
      * Note that you can still fall back to the DocumentIdGenerator if you want.
+     * @param <TEntity> Entity class
      * @param clazz Class
      * @param function Function to use
+     * @return document conventions
      */
     @SuppressWarnings("unchecked")
     public <TEntity> DocumentConventions registerIdConvention(Class<TEntity> clazz, BiFunction<String, TEntity, String> function) {
@@ -366,6 +369,8 @@ public class DocumentConventions {
 
     /**
      * Get the java class (if exists) from the document
+     * @param id document id
+     * @param document document to get java class from
      * @return java class
      */
     public String getJavaClass(String id, ObjectNode document) {
@@ -374,6 +379,7 @@ public class DocumentConventions {
 
     /**
      * Get the Java class name to be stored in the entity metadata
+     * @param entityType Entity type
      * @return java class name
      */
     public String getJavaClassName(Class entityType) {
@@ -408,6 +414,8 @@ public class DocumentConventions {
 
     /**
      *  Gets the identity property.
+     *  @param clazz Class of entity
+     *  @return Identity property (field)
      */
     public Field getIdentityProperty(Class clazz) {
         Field info = _idPropertyCache.get(clazz);

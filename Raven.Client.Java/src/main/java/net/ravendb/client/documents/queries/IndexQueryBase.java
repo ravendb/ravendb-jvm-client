@@ -14,20 +14,23 @@ public class IndexQueryBase<T> implements IIndexQuery {
 
     /**
      * Whether the page size was explicitly set or still at its default value
+     * @return true if page size is set
      */
     public boolean isPageSizeSet() {
         return pageSizeSet;
     }
 
     /**
-     * Actual query that will be performed (Lucene syntax).
+     * Actual query that will be performed (RQL syntax)
+     * @return Index query
      */
     public String getQuery() {
         return query;
     }
 
     /**
-     * Actual query that will be performed (Lucene syntax).
+     * Actual query that will be performed (RQL syntax)
+     * @param query Sets the value
      */
     public void setQuery(String query) {
         this.query = query;
@@ -43,6 +46,7 @@ public class IndexQueryBase<T> implements IIndexQuery {
 
     /**
      * Number of records that should be skipped.
+     * @return items to skip
      */
     public int getStart() {
         return start;
@@ -50,6 +54,7 @@ public class IndexQueryBase<T> implements IIndexQuery {
 
     /**
      * Number of records that should be skipped.
+     * @param start Sets amount of items to skip
      */
     public void setStart(int start) {
         this.start = start;
@@ -57,6 +62,7 @@ public class IndexQueryBase<T> implements IIndexQuery {
 
     /**
      * Maximum number of records that will be retrieved.
+     * @return page size
      */
     public int getPageSize() {
         return _pageSize;
@@ -64,6 +70,7 @@ public class IndexQueryBase<T> implements IIndexQuery {
 
     /**
      * Maximum number of records that will be retrieved.
+     * @param pageSize Sets the value
      */
     public void setPageSize(int pageSize) {
         _pageSize = pageSize;
@@ -72,6 +79,7 @@ public class IndexQueryBase<T> implements IIndexQuery {
 
     /**
      * When set to true server side will wait until result are non stale or until timeout
+     * @return true if server should wait for non stale results
      */
     public boolean isWaitForNonStaleResults() {
         return waitForNonStaleResults;
@@ -79,6 +87,7 @@ public class IndexQueryBase<T> implements IIndexQuery {
 
     /**
      * When set to true server side will wait until result are non stale or until timeout
+     * @param waitForNonStaleResults Sets the valueQer
      */
     public void setWaitForNonStaleResults(boolean waitForNonStaleResults) {
         this.waitForNonStaleResults = waitForNonStaleResults;

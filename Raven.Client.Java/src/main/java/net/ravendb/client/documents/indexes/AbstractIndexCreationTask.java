@@ -55,6 +55,7 @@ public abstract class AbstractIndexCreationTask {
 
     /**
      * Creates the index definition.
+     * @return Index definition
      */
     public IndexDefinition createIndexDefinition() {
         if (conventions == null) {
@@ -145,6 +146,7 @@ public abstract class AbstractIndexCreationTask {
      * Executes the index creation against the specified document database using the specified conventions
      * @param store target document store
      * @param conventions Document conventions to use
+     * @param database Target database
      */
     public void execute(IDocumentStore store, DocumentConventions conventions, String database) {
         putIndex(store, conventions, database);
@@ -176,6 +178,8 @@ public abstract class AbstractIndexCreationTask {
 
     /**
      * Register a field to be indexed
+     * @param field Field
+     * @param indexing Desired field indexing type
      */
     protected void index(String field, FieldIndexing indexing) {
         indexesStrings.put(field, indexing);
@@ -183,6 +187,8 @@ public abstract class AbstractIndexCreationTask {
 
     /**
      * Register a field to be spatially indexed
+     * @param field Field
+     * @param indexing factory for spatial options
      */
     protected void spatial(String field, Function<SpatialOptionsFactory, SpatialOptions> indexing) {
         spatialOptionsStrings.put(field, indexing.apply(new SpatialOptionsFactory()));

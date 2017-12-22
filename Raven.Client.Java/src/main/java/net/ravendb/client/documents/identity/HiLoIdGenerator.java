@@ -59,6 +59,8 @@ public class HiLoIdGenerator {
 
     /**
      * Generates the document ID.
+     * @param entity Entity
+     * @return document id
      */
     public String generateDocumentId(Object entity) {
         return getDocumentIdFromId(nextId());

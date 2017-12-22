@@ -21,6 +21,7 @@ public class IndexQuery extends IndexQueryWithParameters<Parameters> {
 
     /**
      * Indicates if query results should be read from cache (if cached previously) or added to cache (if there were no cached items prior)
+     * @return true if caching was disabled
      */
     public boolean isDisableCaching() {
         return disableCaching;
@@ -28,6 +29,7 @@ public class IndexQuery extends IndexQueryWithParameters<Parameters> {
 
     /**
      * Indicates if query results should be read from cache (if cached previously) or added to cache (if there were no cached items prior)
+     * @param disableCaching sets the value
      */
     public void setDisableCaching(boolean disableCaching) {
         this.disableCaching = disableCaching;

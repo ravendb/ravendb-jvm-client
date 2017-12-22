@@ -18,6 +18,7 @@ public interface IDocumentSession extends CleanCloseable {
      *
      * Those operations are rarely needed, and have been moved to a separate
      * property to avoid cluttering the API
+     * @return Advanced session operations
      */
     IAdvancedSessionOperations advanced();
 

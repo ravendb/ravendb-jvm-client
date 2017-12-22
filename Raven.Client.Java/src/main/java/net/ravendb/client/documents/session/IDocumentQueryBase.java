@@ -9,6 +9,9 @@ public interface IDocumentQueryBase<T, TSelf extends IDocumentQueryBase<T, TSelf
 
     /**
      * Adds an ordering for a specific field to the query
+     * @param fieldName Field name
+     * @param descending use descending order
+     * @return Query instance
      */
     TSelf addOrder(String fieldName, boolean descending);
 

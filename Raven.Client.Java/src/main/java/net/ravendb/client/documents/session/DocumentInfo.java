@@ -28,6 +28,7 @@ public class DocumentInfo {
 
     /**
      * Gets the id
+     * @return Document id
      */
     public String getId() {
         return id;
@@ -35,13 +36,15 @@ public class DocumentInfo {
 
     /**
      * Sets the id
+     * @param id Sets the value
      */
     public void setId(String id) {
         this.id = id;
     }
 
     /**
-     * Gets  the ChangeVector.
+     * Gets the ChangeVector.
+     * @return change vector
      */
     public String getChangeVector() {
         return changeVector;
@@ -49,6 +52,7 @@ public class DocumentInfo {
 
     /**
      * Sets the ChangeVector.
+     * @param changeVector Sets the value
      */
     public void setChangeVector(String changeVector) {
         this.changeVector = changeVector;
@@ -57,6 +61,7 @@ public class DocumentInfo {
     /**
      * If set to true, the session will ignore this document
      * when saveChanges() is called, and won't perform and change tracking
+     * @return true is changes should be ignored
      */
     public boolean isIgnoreChanges() {
         return ignoreChanges;
@@ -65,6 +70,7 @@ public class DocumentInfo {
     /**
      * If set to true, the session will ignore this document
      * when saveChanges() is called, and won't perform and change tracking
+     * @param ignoreChanges sets the value
      */
     public void setIgnoreChanges(boolean ignoreChanges) {
         this.ignoreChanges = ignoreChanges;
@@ -121,6 +127,7 @@ public class DocumentInfo {
     /**
      * A concurrency check will be forced on this entity
      * even if UseOptimisticConcurrency is set to false
+     * @return concurrency check mode
      */
     public InMemoryDocumentSessionOperations.ConcurrencyCheckMode getConcurrencyCheckMode() {
         return concurrencyCheckMode;
@@ -129,6 +136,7 @@ public class DocumentInfo {
     /**
      * A concurrency check will be forced on this entity
      * even if UseOptimisticConcurrency is set to false
+     * @param concurrencyCheckMode sets the value
      */
     public void setConcurrencyCheckMode(InMemoryDocumentSessionOperations.ConcurrencyCheckMode concurrencyCheckMode) {
         this.concurrencyCheckMode = concurrencyCheckMode;

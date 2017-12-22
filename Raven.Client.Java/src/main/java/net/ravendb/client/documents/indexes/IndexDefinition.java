@@ -30,6 +30,7 @@ public class IndexDefinition {
 
     /**
      * This is the means by which the outside world refers to this index definition
+     * @return index name
      */
     public String getName() {
         return name;
@@ -37,6 +38,7 @@ public class IndexDefinition {
 
     /**
      * This is the means by which the outside world refers to this index definition
+     * @param name sets the value
      */
     public void setName(String name) {
         this.name = name;
@@ -44,6 +46,7 @@ public class IndexDefinition {
 
     /**
      * Priority of an index
+     * @return index priority
      */
     public IndexPriority getPriority() {
         return priority;
@@ -51,6 +54,7 @@ public class IndexDefinition {
 
     /**
      * Priority of an index
+     * @param priority Sets the value
      */
     public void setPriority(IndexPriority priority) {
         this.priority = priority;
@@ -61,6 +65,7 @@ public class IndexDefinition {
      * - Unlock - all index definition changes acceptable
      * - LockedIgnore - all index definition changes will be ignored, only log entry will be created
      * - LockedError - all index definition changes will raise exception
+     * @return index lock mode
      */
     public IndexLockMode getLockMode() {
         return lockMode;
@@ -71,6 +76,7 @@ public class IndexDefinition {
      * - Unlock - all index definition changes acceptable
      * - LockedIgnore - all index definition changes will be ignored, only log entry will be created
      * - LockedError - all index definition changes will raise exception
+     * @param lockMode sets the value
      */
     public void setLockMode(IndexLockMode lockMode) {
         this.lockMode = lockMode;
@@ -78,6 +84,7 @@ public class IndexDefinition {
 
     /**
      * Additional code files to be compiled with this index.
+     * @return additional sources
      */
     public Map<String, String> getAdditionalSources() {
         if (additionalSources == null) {
@@ -88,6 +95,7 @@ public class IndexDefinition {
 
     /**
      * Additional code files to be compiled with this index.
+     * @param additionalSources Sets the value
      */
     public void setAdditionalSources(Map<String, String> additionalSources) {
         this.additionalSources = additionalSources;
@@ -95,6 +103,7 @@ public class IndexDefinition {
 
     /**
      * All the map functions for this index
+     * @return index maps
      */
     public Set<String> getMaps() {
         if (maps == null) {
@@ -105,6 +114,7 @@ public class IndexDefinition {
 
     /**
      * All the map functions for this index
+     * @param maps Sets the value
      */
     public void setMaps(Set<String> maps) {
         this.maps = maps;
@@ -112,6 +122,7 @@ public class IndexDefinition {
 
     /**
      * Index reduce function
+     * @return reduce function
      */
     public String getReduce() {
         return reduce;
@@ -119,6 +130,7 @@ public class IndexDefinition {
 
     /**
      * Index reduce function
+     * @param reduce Sets the reduce function
      */
     public void setReduce(String reduce) {
         this.reduce = reduce;
@@ -176,6 +188,7 @@ public class IndexDefinition {
 
     /**
      * If not null than each reduce result will be created as a document in the specified collection name.
+     * @return true if index outputs should be saved to collection
      */
     public String getOutputReduceToCollection() {
         return outputReduceToCollection;
@@ -183,6 +196,7 @@ public class IndexDefinition {
 
     /**
      * If not null than each reduce result will be created as a document in the specified collection name.
+     * @param outputReduceToCollection Sets the value
      */
     public void setOutputReduceToCollection(String outputReduceToCollection) {
         this.outputReduceToCollection = outputReduceToCollection;

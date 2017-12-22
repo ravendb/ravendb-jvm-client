@@ -23,6 +23,9 @@ public class GenerateEntityIdOnTheClient {
 
     /**
      * Attempts to get the document key from an instance
+     * @param entity Entity to get id from
+     * @param idHolder output parameter which holds document id
+     * @return true if id was read from entity
      */
     public boolean tryGetIdFromInstance(Object entity, Reference<String> idHolder) {
         if (entity == null) {
@@ -46,6 +49,8 @@ public class GenerateEntityIdOnTheClient {
 
     /**
      * Tries to get the identity.
+     * @param entity Entity
+     * @return Document id
      */
     public String getOrGenerateDocumentId(Object entity) {
         Reference<String> idHolder = new Reference<>();
@@ -70,6 +75,8 @@ public class GenerateEntityIdOnTheClient {
 
     /**
      * Tries to set the identity property
+     * @param entity Entity
+     * @param id Id to set
      */
     public void trySetIdentity(Object entity, String id) {
         Class<?> entityType = entity.getClass();

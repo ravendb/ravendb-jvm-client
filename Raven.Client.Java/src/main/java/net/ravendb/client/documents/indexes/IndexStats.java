@@ -32,6 +32,7 @@ public class IndexStats {
 
     /**
      * Index name.
+     * @return Index name
      */
     public String getName() {
         return name;
@@ -43,6 +44,7 @@ public class IndexStats {
 
     /**
      * Indicates how many times database tried to index documents (map) using this index.
+     * @return map attempts
      */
     public int getMapAttempts() {
         return mapAttempts;
@@ -50,6 +52,7 @@ public class IndexStats {
 
     /**
      * Indicates how many times database tried to index documents (map) using this index.
+     * @param mapAttempts Sets the value
      */
     public void setMapAttempts(int mapAttempts) {
         this.mapAttempts = mapAttempts;
@@ -57,6 +60,7 @@ public class IndexStats {
 
     /**
      * Indicates how many indexing attempts succeeded.
+     * @return  map successes
      */
     public int getMapSuccesses() {
         return mapSuccesses;
@@ -64,6 +68,7 @@ public class IndexStats {
 
     /**
      * Indicates how many indexing attempts succeeded.
+     * @param mapSuccesses Sets the value
      */
     public void setMapSuccesses(int mapSuccesses) {
         this.mapSuccesses = mapSuccesses;
@@ -71,6 +76,7 @@ public class IndexStats {
 
     /**
      * Indicates how many indexing attempts failed.
+     * @return map errors
      */
     public int getMapErrors() {
         return mapErrors;
@@ -78,6 +84,7 @@ public class IndexStats {
 
     /**
      * Indicates how many indexing attempts failed.
+     * @param mapErrors sets the value
      */
     public void setMapErrors(int mapErrors) {
         this.mapErrors = mapErrors;
@@ -85,6 +92,7 @@ public class IndexStats {
 
     /**
      * Indicates how many times database tried to index documents (reduce) using this index.
+     * @return reduce attempts
      */
     public Integer getReduceAttempts() {
         return reduceAttempts;
@@ -92,6 +100,7 @@ public class IndexStats {
 
     /**
      * Indicates how many times database tried to index documents (reduce) using this index.
+     * @param reduceAttempts sets the value
      */
     public void setReduceAttempts(Integer reduceAttempts) {
         this.reduceAttempts = reduceAttempts;
@@ -99,6 +108,7 @@ public class IndexStats {
 
     /**
      * Indicates how many reducing attempts succeeded.
+     * @return reduce successess
      */
     public Integer getReduceSuccesses() {
         return reduceSuccesses;
@@ -106,6 +116,7 @@ public class IndexStats {
 
     /**
      * Indicates how many reducing attempts succeeded.
+     * @param reduceSuccesses sets the value
      */
     public void setReduceSuccesses(Integer reduceSuccesses) {
         this.reduceSuccesses = reduceSuccesses;
@@ -113,6 +124,7 @@ public class IndexStats {
 
     /**
      * Indicates how many reducing attempts failed.
+     * @return reduce errors
      */
     public Integer getReduceErrors() {
         return reduceErrors;
@@ -120,6 +132,7 @@ public class IndexStats {
 
     /**
      * Indicates how many reducing attempts failed.
+     * @param reduceErrors Sets the value
      */
     public void setReduceErrors(Integer reduceErrors) {
         this.reduceErrors = reduceErrors;
@@ -127,6 +140,7 @@ public class IndexStats {
 
     /**
      * The value of docs/sec rate for the index over the last minute
+     * @return amount of documents mapped/second
      */
     public double getMappedPerSecondRate() {
         return mappedPerSecondRate;
@@ -134,6 +148,7 @@ public class IndexStats {
 
     /**
      * The value of docs/sec rate for the index over the last minute
+     * @param mappedPerSecondRate sets the value
      */
     public void setMappedPerSecondRate(double mappedPerSecondRate) {
         this.mappedPerSecondRate = mappedPerSecondRate;
@@ -141,6 +156,7 @@ public class IndexStats {
 
     /**
      * The value of reduces/sec rate for the index over the last minute
+     * @return amount of documents reduced per second
      */
     public double getReducedPerSecondRate() {
         return reducedPerSecondRate;
@@ -148,6 +164,7 @@ public class IndexStats {
 
     /**
      * The value of reduces/sec rate for the index over the last minute
+     * @param reducedPerSecondRate Sets the value
      */
     public void setReducedPerSecondRate(double reducedPerSecondRate) {
         this.reducedPerSecondRate = reducedPerSecondRate;
@@ -155,6 +172,7 @@ public class IndexStats {
 
     /**
      * Indicates the maximum number of produced indexing outputs from a single document
+     * @return maximum number of outputs per document
      */
     public int getMaxNumberOfOutputsPerDocument() {
         return maxNumberOfOutputsPerDocument;
@@ -162,6 +180,7 @@ public class IndexStats {
 
     /**
      * Indicates the maximum number of produced indexing outputs from a single document
+     * @param maxNumberOfOutputsPerDocument sets the value
      */
     public void setMaxNumberOfOutputsPerDocument(int maxNumberOfOutputsPerDocument) {
         this.maxNumberOfOutputsPerDocument = maxNumberOfOutputsPerDocument;
@@ -177,6 +196,7 @@ public class IndexStats {
 
     /**
      * Time of last query for this index.
+     * @return Last query time for this index
      */
     public Date getLastQueryingTime() {
         return lastQueryingTime;
@@ -184,6 +204,7 @@ public class IndexStats {
 
     /**
      * Time of last query for this index.
+     * @param lastQueryingTime Sets the value
      */
     public void setLastQueryingTime(Date lastQueryingTime) {
         this.lastQueryingTime = lastQueryingTime;
@@ -191,6 +212,7 @@ public class IndexStats {
 
     /**
      * Index state (Normal, Disabled, Idle, Abandoned, Error)
+     * @return index state
      */
     public IndexState getState() {
         return state;
@@ -198,6 +220,7 @@ public class IndexStats {
 
     /**
      * Index state (Normal, Disabled, Idle, Abandoned, Error)
+     * @param state Sets the value
      */
     public void setState(IndexState state) {
         this.state = state;
@@ -205,6 +228,7 @@ public class IndexStats {
 
     /**
      * Index priority (Low, Normal, High)
+     * @return index priority
      */
     public IndexPriority getPriority() {
         return priority;
@@ -212,6 +236,7 @@ public class IndexStats {
 
     /**
      * Index priority (Low, Normal, High)param priority
+     * @param priority sets the value
      */
     public void setPriority(IndexPriority priority) {
         this.priority = priority;
@@ -219,6 +244,7 @@ public class IndexStats {
 
     /**
      * Date of index creation.
+     * @return Date of index creation
      */
     public Date getCreatedTimestamp() {
         return createdTimestamp;
@@ -226,6 +252,7 @@ public class IndexStats {
 
     /**
      * Date of index creation.
+     * @param createdTimestamp Sets the value
      */
     public void setCreatedTimestamp(Date createdTimestamp) {
         this.createdTimestamp = createdTimestamp;
@@ -233,6 +260,7 @@ public class IndexStats {
 
     /**
      * Time of last indexing (map or reduce) for this index.
+     * @return Time of last indexing
      */
     public Date getLastIndexingTime() {
         return lastIndexingTime;
@@ -240,6 +268,7 @@ public class IndexStats {
 
     /**
      * Time of last indexing (map or reduce) for this index.
+     * @param lastIndexingTime Sets the value
      */
     public void setLastIndexingTime(Date lastIndexingTime) {
         this.lastIndexingTime = lastIndexingTime;
@@ -258,6 +287,7 @@ public class IndexStats {
      * - Unlock - all index definition changes acceptable
      * - LockedIgnore - all index definition changes will be ignored, only log entry will be created
      * - LockedError - all index definition changes will raise exception
+     * @return index lock mode
      */
     public IndexLockMode getLockMode() {
         return lockMode;
@@ -268,6 +298,7 @@ public class IndexStats {
      * - Unlock - all index definition changes acceptable
      * - LockedIgnore - all index definition changes will be ignored, only log entry will be created
      * - LockedError - all index definition changes will raise exception
+     * @param lockMode Sets the value
      */
     public void setLockMode(IndexLockMode lockMode) {
         this.lockMode = lockMode;
@@ -275,6 +306,7 @@ public class IndexStats {
 
     /**
      * Indicates index type.
+     * @return index type
      */
     public IndexType getType() {
         return type;
@@ -282,6 +314,7 @@ public class IndexStats {
 
     /**
      * Indicates index type.
+     * @param type Sets the value
      */
     public void setType(IndexType type) {
         this.type = type;
@@ -297,6 +330,7 @@ public class IndexStats {
 
     /**
      * Total number of entries in this index.
+     * @return index entries count
      */
     public int getEntriesCount() {
         return entriesCount;
@@ -304,6 +338,7 @@ public class IndexStats {
 
     /**
      * Total number of entries in this index.
+     * @param entriesCount sets the value
      */
     public void setEntriesCount(int entriesCount) {
         this.entriesCount = entriesCount;
@@ -319,6 +354,7 @@ public class IndexStats {
 
     /**
      * Indicates if this is a test index (works on a limited data set - for testing purposes only)
+     * @return true if test index
      */
     public boolean isTestIndex() {
         return isTestIndex;
@@ -326,6 +362,7 @@ public class IndexStats {
 
     /**
      * Indicates if this is a test index (works on a limited data set - for testing purposes only)
+     * @param testIndex Sets the value
      */
     public void setTestIndex(boolean testIndex) {
         isTestIndex = testIndex;
