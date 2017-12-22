@@ -104,6 +104,7 @@ public class DocumentConventions {
         this._readBalanceBehavior = _readBalanceBehavior;
     }
 
+    @SuppressWarnings("unchecked")
     public Object deserializeEntityFromJson(Class documentType, ObjectNode document) {
         try {
             return JsonExtensions.getDefaultMapper().treeToValue(document, documentType);
