@@ -6,10 +6,9 @@
     <artifactId>ravendb</artifactId>
     <version>4.0.0-SNAPSHOT</version>
 
-    <name>RavenDB</name>
+    <name>RavenDB Java Client</name>
     <description>RavenDB Java Client</description>
     <url>http://ravendb.net</url>
-    <name>RavenDB Java Client</name>
     <packaging>jar</packaging>
 
     <scm>
