@@ -50,7 +50,7 @@ public interface IDocumentSession extends CleanCloseable {
     void saveChanges();
 
     /**
-     * Stores entity in session with given id and forces concurrency check with given Etag.
+     * Stores entity in session with given id and forces concurrency check with given change-vector.
      * @param entity Entity to store
      * @param changeVector Change vector
      * @param id Document id

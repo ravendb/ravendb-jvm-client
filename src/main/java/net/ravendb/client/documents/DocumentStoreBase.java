@@ -26,7 +26,7 @@ import java.util.List;
 public abstract class DocumentStoreBase implements IDocumentStore {
 
     private final List<EventHandler<BeforeStoreEventArgs>> onBeforeStore = new ArrayList<>();
-    private final List<EventHandler<AfterStoreEventArgs>> onAfterStore = new ArrayList<>();
+    private final List<EventHandler<AfterSaveChangesEventArgs>> onAfterSaveChanges = new ArrayList<>();
     private final List<EventHandler<BeforeDeleteEventArgs>> onBeforeDelete = new ArrayList<>();
     private final List<EventHandler<BeforeQueryExecutedEventArgs>> onBeforeQueryExecuted = new ArrayList<>();
 
@@ -159,12 +159,12 @@ public abstract class DocumentStoreBase implements IDocumentStore {
         this.onBeforeStore.remove(handler);
     }
 
-    public void addAfterStoreListener(EventHandler<AfterStoreEventArgs> handler) {
-        this.onAfterStore.add(handler);
+    public void addAfterSaveChangesListener(EventHandler<AfterSaveChangesEventArgs> handler) {
+        this.onAfterSaveChanges.add(handler);
     }
 
-    public void removeAfterStoreListener(EventHandler<AfterStoreEventArgs> handler) {
-        this.onAfterStore.remove(handler);
+    public void removeAfterSaveChangesListener(EventHandler<AfterSaveChangesEventArgs> handler) {
+        this.onAfterSaveChanges.remove(handler);
     }
 
     public void addBeforeDeleteListener(EventHandler<BeforeDeleteEventArgs> handler) {
@@ -229,8 +229,8 @@ public abstract class DocumentStoreBase implements IDocumentStore {
             session.addBeforeStoreListener(handler);
         }
 
-        for (EventHandler<AfterStoreEventArgs> handler : onAfterStore) {
-            session.addAfterStoreListener(handler);
+        for (EventHandler<AfterSaveChangesEventArgs> handler : onAfterSaveChanges) {
+            session.addAfterSaveChangesListener(handler);
         }
 
         for (EventHandler<BeforeDeleteEventArgs> handler : onBeforeDelete) {

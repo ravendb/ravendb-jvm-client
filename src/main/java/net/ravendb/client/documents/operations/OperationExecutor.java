@@ -46,7 +46,7 @@ public class OperationExecutor {
 
     public <TResult> TResult send(IOperation<TResult> operation, SessionInfo sessionInfo) {
         RavenCommand<TResult> command = operation.getCommand(store, requestExecutor.getConventions(), requestExecutor.getCache());
-        requestExecutor.execute(command);
+        requestExecutor.execute(command, sessionInfo);
 
         return command.getResult();
     }
@@ -63,10 +63,10 @@ public class OperationExecutor {
         return new Operation(requestExecutor, requestExecutor.getConventions(), command.getResult().getOperationId());
     }
 
-    public PatchStatus send(PatchOperation operation) {
+    public PatchStatus send(PatchOperation operation, SessionInfo sessionInfo) {
         RavenCommand<PatchResult> command = operation.getCommand(store, requestExecutor.getConventions(), requestExecutor.getCache());
 
-        requestExecutor.execute(command);
+        requestExecutor.execute(command, sessionInfo);
 
         if (command.getStatusCode() == HttpStatus.SC_NOT_MODIFIED) {
             return PatchStatus.NOT_MODIFIED;
@@ -80,10 +80,10 @@ public class OperationExecutor {
     }
 
     @SuppressWarnings("unchecked")
-    public <TEntity> PatchOperation.Result<TEntity> send(Class<TEntity> entityClass, PatchOperation operation) {
+    public <TEntity> PatchOperation.Result<TEntity> send(Class<TEntity> entityClass, PatchOperation operation, SessionInfo sessionInfo) {
         RavenCommand<PatchResult> command = operation.getCommand(store, requestExecutor.getConventions(), requestExecutor.getCache());
 
-        requestExecutor.execute(command);
+        requestExecutor.execute(command, sessionInfo);
 
         PatchOperation.Result<TEntity> result = new PatchOperation.Result<>();
 

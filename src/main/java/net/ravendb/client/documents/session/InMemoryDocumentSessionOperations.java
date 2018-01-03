@@ -74,7 +74,7 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
     protected final Set<Object> deletedEntities = new IdentityHashSet<>();
 
     private final List<EventHandler<BeforeStoreEventArgs>> onBeforeStore = new ArrayList<>();
-    private final List<EventHandler<AfterStoreEventArgs>> onAfterStore = new ArrayList<>();
+    private final List<EventHandler<AfterSaveChangesEventArgs>> onAfterSaveChanges = new ArrayList<>();
     private final List<EventHandler<BeforeDeleteEventArgs>> onBeforeDelete = new ArrayList<>();
     private final List<EventHandler<BeforeQueryExecutedEventArgs>> onBeforeQueryExecuted = new ArrayList<>();
 
@@ -86,12 +86,12 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
         this.onBeforeStore.remove(handler);
     }
 
-    public void addAfterStoreListener(EventHandler<AfterStoreEventArgs> handler) {
-        this.onAfterStore.add(handler);
+    public void addAfterSaveChangesListener(EventHandler<AfterSaveChangesEventArgs> handler) {
+        this.onAfterSaveChanges.add(handler);
     }
 
-    public void removeAfterStoreListener(EventHandler<AfterStoreEventArgs> handler) {
-        this.onAfterStore.remove(handler);
+    public void removeAfterSaveChangesListener(EventHandler<AfterSaveChangesEventArgs> handler) {
+        this.onAfterSaveChanges.remove(handler);
     }
 
     public void addBeforeDeleteListener(EventHandler<BeforeDeleteEventArgs> handler) {
@@ -331,6 +331,19 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
         JsonNode changeVector = documentInfo.getMetadata().get(Constants.Documents.Metadata.CHANGE_VECTOR);
         if (changeVector != null) {
             return changeVector.asText();
+        }
+        return null;
+    }
+
+    public <T> Date getLastModifiedFor(T instance) {
+        if (instance == null) {
+            throw new IllegalArgumentException("Instance cannot be null");
+        }
+
+        DocumentInfo documentInfo = getDocumentInfo(instance);
+        JsonNode lastModified = documentInfo.getMetadata().get(Constants.Documents.Metadata.LAST_MODIFIED);
+        if (lastModified != null && !lastModified.isNull()) {
+            return mapper.convertValue(lastModified, Date.class);
         }
         return null;
     }
@@ -735,9 +748,6 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
                     changeVector = documentInfo.getChangeVector();
 
                     if (documentInfo.getEntity() != null) {
-                        AfterStoreEventArgs afterStoreEventArgs = new AfterStoreEventArgs(this, documentInfo.getId(), documentInfo.getEntity());
-                        EventHelper.invoke(onAfterStore, this, afterStoreEventArgs);
-
                         documentsByEntity.remove(documentInfo.getEntity());
                         result.getEntities().add(documentInfo.getEntity());
                     }
@@ -1118,8 +1128,8 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
 
     //TBD protected static T GetOperationResult<T>(object result)
 
-    public void onAfterStoreInvoke(AfterStoreEventArgs afterStoreEventArgs) {
-        EventHelper.invoke(onAfterStore, this, afterStoreEventArgs);
+    public void onAfterSaveChangesInvoke(AfterSaveChangesEventArgs afterSaveChangesEventArgs) {
+        EventHelper.invoke(onAfterSaveChanges, this, afterSaveChangesEventArgs);
     }
 
     public void onBeforeQueryExecutedInvoke(BeforeQueryExecutedEventArgs beforeQueryExecutedEventArgs) {

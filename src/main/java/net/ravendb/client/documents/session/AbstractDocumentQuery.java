@@ -240,6 +240,7 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
     }
 
     public void _addParameter(String name, Object value) {
+        name = StringUtils.stripStart(name, "$");
         if (queryParameters.containsKey(name)) {
             throw new IllegalStateException("The parameter " + name + " was already added");
         }
@@ -1631,7 +1632,7 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
     private void executeActualQuery() {
         try (CleanCloseable context = queryOperation.enterQueryContext()) {
             QueryCommand command = queryOperation.createRequest();
-            theSession.getRequestExecutor().execute(command);
+            theSession.getRequestExecutor().execute(command, theSession.sessionInfo);
             queryOperation.setResult(command.getResult());
         }
         invokeAfterQueryExecuted(queryOperation.getCurrentQueryResults());

@@ -21,6 +21,7 @@ import java.beans.Introspector;
 import java.beans.PropertyDescriptor;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Modifier;
 import java.util.*;
 import java.util.function.BiFunction;
 import java.util.function.Function;
@@ -282,6 +283,16 @@ public class DocumentConventions {
         String result = _cachedDefaultTypeCollectionNames.get(clazz);
         if (result != null) {
             return result;
+        }
+
+        // we want to reject queries and other operations on abstract types, because you usually
+        // want to use them for polymorphic queries, and that require the conventions to be
+        // applied properly, so we reject the behavior and hint to the user explicitly
+        if (clazz.isInterface()) {
+            throw new IllegalStateException("Cannot find collection name for interface " + clazz.getName() + ", only concrete classes are supported. Did you forget to customize conventions.findCollectionName?");
+        }
+        if (Modifier.isAbstract(clazz.getModifiers())) {
+            throw new IllegalStateException("Cannot find collection name for abstract class " + clazz.getName() + ", only concrete class are supported. Did you forget to customize conventions.findCollectionName?");
         }
 
         result = Inflector.pluralize(clazz.getSimpleName());

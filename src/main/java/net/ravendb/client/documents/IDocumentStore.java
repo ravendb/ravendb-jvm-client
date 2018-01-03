@@ -23,8 +23,8 @@ public interface IDocumentStore extends IDisposalNotification {
     void addBeforeStoreListener(EventHandler<BeforeStoreEventArgs> handler);
     void removeBeforeStoreListener(EventHandler<BeforeStoreEventArgs> handler);
 
-    void addAfterStoreListener(EventHandler<AfterStoreEventArgs> handler);
-    void removeAfterStoreListener(EventHandler<AfterStoreEventArgs> handler);
+    void addAfterSaveChangesListener(EventHandler<AfterSaveChangesEventArgs> handler);
+    void removeAfterSaveChangesListener(EventHandler<AfterSaveChangesEventArgs> handler);
 
     void addBeforeDeleteListener(EventHandler<BeforeDeleteEventArgs> handler);
     void removeBeforeDeleteListener(EventHandler<BeforeDeleteEventArgs> handler);

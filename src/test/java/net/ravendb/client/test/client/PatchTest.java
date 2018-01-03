@@ -26,8 +26,8 @@ public class PatchTest extends RemoteTestBase {
 
             PatchOperation patchOperation = new PatchOperation("users/1", null,
                     PatchRequest.forScript("this.name = \"Patched\""));
-            PatchStatus status = store.operations().send(patchOperation);
-            assertThat(status)
+            PatchResult status = store.operations().send(patchOperation);
+            assertThat(status.getStatus())
                     .isEqualTo(PatchStatus.PATCHED);
 
             try (IDocumentSession session = store.openSession()) {
@@ -51,7 +51,6 @@ public class PatchTest extends RemoteTestBase {
                 session.saveChanges();
             }
 
-
             PatchByQueryOperation operation = new PatchByQueryOperation("from Users update {  this.name= \"Patched\"  }");
 
             Operation op = store.operations().sendAsync(operation);
@@ -64,7 +63,6 @@ public class PatchTest extends RemoteTestBase {
                 assertThat(loadedUser.getName())
                         .isEqualTo("Patched");
             }
-
         }
     }
 

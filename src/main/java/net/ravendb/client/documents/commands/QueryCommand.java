@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.JsonGenerator;
 import net.ravendb.client.documents.conventions.DocumentConventions;
 import net.ravendb.client.documents.queries.IndexQuery;
 import net.ravendb.client.documents.queries.QueryResult;
+import net.ravendb.client.documents.session.InMemoryDocumentSessionOperations;
 import net.ravendb.client.extensions.JsonExtensions;
 import net.ravendb.client.http.RavenCommand;
 import net.ravendb.client.http.ServerNode;
@@ -24,15 +25,12 @@ public class QueryCommand extends RavenCommand<QueryResult> {
     public QueryCommand(DocumentConventions conventions, IndexQuery indexQuery, boolean metadataOnly, boolean indexEntriesOnly) {
         super(QueryResult.class);
 
-        if (conventions == null) {
-            throw new IllegalArgumentException("conventions cannot be null");
-        }
+        _conventions = conventions;
 
         if (indexQuery == null) {
             throw new IllegalArgumentException("indexQuery cannot be null");
         }
 
-        _conventions = conventions;
         _indexQuery = indexQuery;
         _metadataOnly = metadataOnly;
         _indexEntriesOnly = indexEntriesOnly;

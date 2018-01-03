@@ -7,6 +7,7 @@ import net.ravendb.client.http.RequestExecutor;
 import net.ravendb.client.http.ServerNode;
 import net.ravendb.client.primitives.EventHandler;
 
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
@@ -34,8 +35,8 @@ public interface IAdvancedDocumentSessionOperations {
     void addBeforeStoreListener(EventHandler<BeforeStoreEventArgs> handler);
     void removeBeforeStoreListener(EventHandler<BeforeStoreEventArgs> handler);
 
-    void addAfterStoreListener(EventHandler<AfterStoreEventArgs> handler);
-    void removeAfterStoreListener(EventHandler<AfterStoreEventArgs> handler);
+    void addAfterSaveChangesListener(EventHandler<AfterSaveChangesEventArgs> handler);
+    void removeAfterSaveChangesListener(EventHandler<AfterSaveChangesEventArgs> handler);
 
     void addBeforeDeleteListener(EventHandler<BeforeDeleteEventArgs> handler);
     void removeBeforeDeleteListener(EventHandler<BeforeDeleteEventArgs> handler);
@@ -145,6 +146,16 @@ public interface IAdvancedDocumentSessionOperations {
      * @return Change vector
      */
     <T> String getChangeVectorFor(T instance);
+
+    /**
+     * Gets last modified date for the specified entity.
+     * If the entity is transient, it will load the metadata from the store
+     * and associate the current state of the entity with the metadata from the server.
+     * @param instance Instance to get last modified date from
+     * @param <T> Class of instance
+     * @return Last modified date
+     */
+    <T> Date getLastModifiedFor(T instance);
 
     /**
      * Determines whether the specified entity has changed.

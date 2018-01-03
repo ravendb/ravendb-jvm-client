@@ -429,7 +429,7 @@ public interface IAbstractDocumentQuery<T> {
     //TBD IAggregationDocumentQuery<T> AggregateBy(Action<IFacetBuilder<T>> builder);
     //TBD void AggregateUsing(string facetSetupDocumentId);
     //TBD void AddFromAliasToWhereTokens(string fromAlias);
-    //TBD string LoadParameter(object id);
+    //TBD string ProjectionParameter(object id);
     //TBD void SuggestUsing(SuggestionBase suggestion);
 
     Iterator<T> iterator();

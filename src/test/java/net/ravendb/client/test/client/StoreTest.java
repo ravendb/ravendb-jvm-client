@@ -85,11 +85,11 @@ public class StoreTest extends RemoteTestBase {
             final IMetadataDictionary[] storeLevelCallBack = new IMetadataDictionary[1];
             final IMetadataDictionary[] sessionLevelCallback = new IMetadataDictionary[1];
 
-            store.addAfterStoreListener(((sender, event) -> storeLevelCallBack[0] = event.getDocumentMetadata()));
+            store.addAfterSaveChangesListener(((sender, event) -> storeLevelCallBack[0] = event.getDocumentMetadata()));
 
             try (IDocumentSession session = store.openSession()) {
 
-                session.advanced().addAfterStoreListener(((sender, event) ->
+                session.advanced().addAfterSaveChangesListener(((sender, event) ->
                         sessionLevelCallback[0] = event.getDocumentMetadata()));
 
                 User user1 = new User();

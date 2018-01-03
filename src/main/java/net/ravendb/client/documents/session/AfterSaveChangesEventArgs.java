@@ -2,7 +2,7 @@ package net.ravendb.client.documents.session;
 
 import net.ravendb.client.primitives.EventArgs;
 
-public class AfterStoreEventArgs extends EventArgs {
+public class AfterSaveChangesEventArgs extends EventArgs {
 
     private IMetadataDictionary _documentMetadata;
 
@@ -10,7 +10,7 @@ public class AfterStoreEventArgs extends EventArgs {
     private final String documentId;
     private final Object entity;
 
-    public AfterStoreEventArgs(InMemoryDocumentSessionOperations session, String documentId, Object entity) {
+    public AfterSaveChangesEventArgs(InMemoryDocumentSessionOperations session, String documentId, Object entity) {
         this.session = session;
         this.documentId = documentId;
         this.entity = entity;

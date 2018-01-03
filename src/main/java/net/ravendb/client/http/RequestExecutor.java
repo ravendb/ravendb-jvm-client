@@ -79,7 +79,7 @@ public class RequestExecutor implements CleanCloseable {
 
     private final HttpCache cache;
 
-    private ServerNode topologyTakenFromNode;
+    private ServerNode _topologyTakenFromNode;
 
     public HttpCache getCache() {
         return cache;
@@ -424,7 +424,7 @@ public class RequestExecutor implements CleanCloseable {
 
                     initializeUpdateTopologyTimer();
 
-                    topologyTakenFromNode = serverNode;
+                    _topologyTakenFromNode = serverNode;
                     return;
                 } catch (DatabaseDoesNotExistException e) {
                     // Will happen on all node in the cluster,
@@ -656,12 +656,12 @@ public class RequestExecutor implements CleanCloseable {
 
         message += Optional.ofNullable(_nodeSelector).map(x -> x.getTopology().getNodes().stream().map(ServerNode::getUrl).collect(Collectors.joining(", "))).orElse("");
 
-        if (topologyTakenFromNode != null) {
+        if (_topologyTakenFromNode != null) {
             String nodes = Optional.ofNullable(_nodeSelector).map(x ->
                     x.getTopology().getNodes().stream().map(n
                             -> "( url: " + n.getUrl() + ", clusterTag: " + n.getClusterTag() + ", serverRole: " + n.getServerRole()  + ")").collect(Collectors.joining(", "))).orElse("");
 
-            message += System.lineSeparator() + "I was able to fetch " + topologyTakenFromNode.getDatabase() + " topology from " + topologyTakenFromNode.getUrl() + "." + System.lineSeparator()
+            message += System.lineSeparator() + "I was able to fetch " + _topologyTakenFromNode.getDatabase() + " topology from " + _topologyTakenFromNode.getUrl() + "." + System.lineSeparator()
                     + "Fetched topology: " + nodes;
         }
 
