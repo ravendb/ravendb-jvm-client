@@ -15,6 +15,17 @@ import static org.assertj.core.api.Assertions.assertThat;
 public class UniqueValuesTest extends RemoteTestBase {
 
     @Test
+    public void canReadNotExistingKey() throws Exception {
+        try (IDocumentStore store = getDocumentStore()) {
+            try (DocumentSession session = (DocumentSession) store.openSession()) {
+                CmpXchgResult<Integer> res = store.operations().send(new GetCompareExchangeValueOperation<>(Integer.class, "test"));
+                assertThat(res.getValue())
+                        .isNull();
+            }
+        }
+    }
+
+    @Test
     public void canPutUniqueString() throws Exception {
         try (IDocumentStore store = getDocumentStore()) {
             try (DocumentSession session = (DocumentSession) store.openSession()) {

@@ -45,11 +45,11 @@ public class CmpXchgResult<T> {
 
         int index = response.get("Index").asInt();
         boolean successful = response.get("Successful").asBoolean();
-        ObjectNode raw = (ObjectNode) response.get("Value");
+        JsonNode raw = response.get("Value");
 
         T result;
         Object val = null;
-        if (raw != null) {
+        if (raw != null && !raw.isNull()) {
             val = raw.get("Object");
         }
 
