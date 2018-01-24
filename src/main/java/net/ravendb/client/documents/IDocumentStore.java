@@ -29,8 +29,8 @@ public interface IDocumentStore extends IDisposalNotification {
     void addBeforeDeleteListener(EventHandler<BeforeDeleteEventArgs> handler);
     void removeBeforeDeleteListener(EventHandler<BeforeDeleteEventArgs> handler);
 
-    void addBeforeQueryExecutedListener(EventHandler<BeforeQueryExecutedEventArgs> handler);
-    void removeBeforeQueryExecutedListener(EventHandler<BeforeQueryExecutedEventArgs> handler);
+    void addBeforeQueryListener(EventHandler<BeforeQueryEventArgs> handler);
+    void removeBeforeQueryListener(EventHandler<BeforeQueryEventArgs> handler);
 
     //TBD: IDatabaseChanges Changes(string database = null);
     //TBD: IDisposable AggressivelyCacheFor(TimeSpan cacheDuration, string database = null);

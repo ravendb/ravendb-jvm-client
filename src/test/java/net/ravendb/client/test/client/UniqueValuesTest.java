@@ -9,6 +9,7 @@ import net.ravendb.client.infrastructure.entities.User;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -17,11 +18,9 @@ public class UniqueValuesTest extends RemoteTestBase {
     @Test
     public void canReadNotExistingKey() throws Exception {
         try (IDocumentStore store = getDocumentStore()) {
-            try (DocumentSession session = (DocumentSession) store.openSession()) {
-                CmpXchgResult<Integer> res = store.operations().send(new GetCompareExchangeValueOperation<>(Integer.class, "test"));
-                assertThat(res.getValue())
+                CompareExchangeValue<Integer> res = store.operations().send(new GetCompareExchangeValueOperation<>(Integer.class, "test"));
+                assertThat(res)
                         .isNull();
-            }
         }
     }
 
@@ -30,11 +29,9 @@ public class UniqueValuesTest extends RemoteTestBase {
         try (IDocumentStore store = getDocumentStore()) {
             try (DocumentSession session = (DocumentSession) store.openSession()) {
                 store.operations().send(new PutCompareExchangeValueOperation<>("test", "Karmel", 0));
-                CmpXchgResult<String> res = store.operations().send(new GetCompareExchangeValueOperation<>(String.class, "test"));
+                CompareExchangeValue<String> res = store.operations().send(new GetCompareExchangeValueOperation<>(String.class, "test"));
                 assertThat(res.getValue())
                         .isEqualTo("Karmel");
-                assertThat(res.isSuccessful())
-                        .isTrue();
             }
         }
     }
@@ -45,12 +42,12 @@ public class UniqueValuesTest extends RemoteTestBase {
             User user1 = new User();
             user1.setName("Karmel");
 
-            CmpXchgResult<User> res = store.operations().send(new PutCompareExchangeValueOperation<>("test", user1, 0));
+            CompareExchangeResult<User> res = store.operations().send(new PutCompareExchangeValueOperation<>("test", user1, 0));
 
             User user2 = new User();
             user2.setName("Karmel");
 
-            CmpXchgResult<User> res2 = store.operations().send(new PutCompareExchangeValueOperation<>("test2", user2, 0));
+            CompareExchangeResult<User> res2 = store.operations().send(new PutCompareExchangeValueOperation<>("test2", user2, 0));
 
 
             assertThat(res.getValue().getName())
@@ -70,28 +67,32 @@ public class UniqueValuesTest extends RemoteTestBase {
         try (IDocumentStore store = getDocumentStore()) {
             User user1 = new User();
             user1.setName("Karmel");
-            store.operations().send(new PutCompareExchangeValueOperation<>("test", user1, 0));
+            CompareExchangeResult<User> res1 = store.operations().send(new PutCompareExchangeValueOperation<>("test", user1, 0));
 
             User user2 = new User();
             user2.setName("Karmel");
-            store.operations().send(new PutCompareExchangeValueOperation<>("test2", user2, 0));
+            CompareExchangeResult<User> res2 = store.operations().send(new PutCompareExchangeValueOperation<>("test2", user2, 0));
 
-            List<ListCompareExchangeValuesOperation.CompareExchangeItem> list =
-                    store.operations().send(new ListCompareExchangeValuesOperation("test"));
-
-            assertThat(list)
-                    .hasSize(2);
-
-            assertThat(list.get(0).getKey())
-                    .isEqualTo("test");
-
-            assertThat(JsonExtensions.getDefaultEntityMapper().convertValue(list.get(0).getValue(), User.class).getName())
+            assertThat(res1.getValue().getName())
                     .isEqualTo("Karmel");
 
-            assertThat(list.get(1).getKey())
-                    .isEqualTo("test2");
+            assertThat(res1.isSuccessful())
+                    .isTrue();
 
-            assertThat(JsonExtensions.getDefaultEntityMapper().convertValue(list.get(1).getValue(), User.class).getName())
+            assertThat(res2.getValue().getName())
+                    .isEqualTo("Karmel");
+
+            assertThat(res2.isSuccessful())
+                    .isTrue();
+
+            Map<String, CompareExchangeValue<User>> values = store.operations().send(new GetCompareExchangeValuesOperation<>(User.class, "test"));
+            assertThat(values)
+                    .hasSize(2);
+
+            assertThat(values.get("test").getValue().getName())
+                    .isEqualTo("Karmel");
+
+            assertThat(values.get("test2").getValue().getName())
                     .isEqualTo("Karmel");
         }
     }
@@ -99,7 +100,7 @@ public class UniqueValuesTest extends RemoteTestBase {
     @Test
     public void canRemoveUnique() throws Exception {
         try (IDocumentStore store = getDocumentStore()) {
-            CmpXchgResult<String> res = store.operations().send(new PutCompareExchangeValueOperation<>("test", "Karmel", 0));
+            CompareExchangeResult<String> res = store.operations().send(new PutCompareExchangeValueOperation<>("test", "Karmel", 0));
 
             assertThat(res.getValue())
                     .isEqualTo("Karmel");
@@ -107,7 +108,7 @@ public class UniqueValuesTest extends RemoteTestBase {
             assertThat(res.isSuccessful())
                     .isTrue();
 
-            res = store.operations().send(new RemoveCompareExchangeOperation<>(String.class,"test", res.getIndex()));
+            res = store.operations().send(new DeleteCompareExchangeValueOperation<>(String.class,"test", res.getIndex()));
             assertThat(res.isSuccessful())
                     .isTrue();
 
@@ -117,23 +118,20 @@ public class UniqueValuesTest extends RemoteTestBase {
     @Test
     public void removeUniqueFailed() throws Exception {
         try (IDocumentStore store = getDocumentStore()) {
-            CmpXchgResult<String> res = store.operations().send(new PutCompareExchangeValueOperation<>("test", "Karmel", 0));
+            CompareExchangeResult<String> res = store.operations().send(new PutCompareExchangeValueOperation<>("test", "Karmel", 0));
             assertThat(res.getValue())
                     .isEqualTo("Karmel");
 
             assertThat(res.isSuccessful())
                     .isTrue();
 
-            res = store.operations().send(new RemoveCompareExchangeOperation<>(String.class, "test", 0));
+            res = store.operations().send(new DeleteCompareExchangeValueOperation<>(String.class, "test", 0));
             assertThat(res.isSuccessful())
                     .isFalse();
 
-            res = store.operations().send(new GetCompareExchangeValueOperation<>(String.class, "test"));
-            assertThat(res.getValue())
+            CompareExchangeValue<String> readValue = store.operations().send(new GetCompareExchangeValueOperation<>(String.class, "test"));
+            assertThat(readValue.getValue())
                     .isEqualTo("Karmel");
-
-            assertThat(res.isSuccessful())
-                    .isTrue();
         }
     }
 
@@ -146,8 +144,8 @@ public class UniqueValuesTest extends RemoteTestBase {
             User user2 = new User();
             user2.setName("Karmel2");
 
-            CmpXchgResult<User> res = store.operations().send(new PutCompareExchangeValueOperation<>("test", user, 0));
-            CmpXchgResult<User> res2 = store.operations().send(new PutCompareExchangeValueOperation<>("test", user2, 0));
+            CompareExchangeResult<User> res = store.operations().send(new PutCompareExchangeValueOperation<>("test", user, 0));
+            CompareExchangeResult<User> res2 = store.operations().send(new PutCompareExchangeValueOperation<>("test", user2, 0));
 
             assertThat(res.isSuccessful())
                     .isTrue();
@@ -177,17 +175,15 @@ public class UniqueValuesTest extends RemoteTestBase {
             user.setName("Karmel");
 
             store.operations().send(new PutCompareExchangeValueOperation<>("test", user, 0));
-            CmpXchgResult<User> res = store.operations().send(new GetCompareExchangeValueOperation<>(User.class, "test"));
+            CompareExchangeValue<User> res = store.operations().send(new GetCompareExchangeValueOperation<>(User.class, "test"));
 
             assertThat(res.getValue().getName())
                     .isEqualTo("Karmel");
-            assertThat(res.isSuccessful())
-                    .isTrue();
 
             User user2 = new User();
             user2.setName("Karmel2");
 
-            CmpXchgResult<User> res2 = store.operations().send(new PutCompareExchangeValueOperation<>("test", user2, res.getIndex()));
+            CompareExchangeResult<User> res2 = store.operations().send(new PutCompareExchangeValueOperation<>("test", user2, res.getIndex()));
             assertThat(res2.isSuccessful())
                     .isTrue();
 

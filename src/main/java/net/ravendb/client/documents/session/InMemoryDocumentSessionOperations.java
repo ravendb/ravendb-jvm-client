@@ -76,7 +76,7 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
     private final List<EventHandler<BeforeStoreEventArgs>> onBeforeStore = new ArrayList<>();
     private final List<EventHandler<AfterSaveChangesEventArgs>> onAfterSaveChanges = new ArrayList<>();
     private final List<EventHandler<BeforeDeleteEventArgs>> onBeforeDelete = new ArrayList<>();
-    private final List<EventHandler<BeforeQueryExecutedEventArgs>> onBeforeQueryExecuted = new ArrayList<>();
+    private final List<EventHandler<BeforeQueryEventArgs>> onBeforeQuery = new ArrayList<>();
 
     public void addBeforeStoreListener(EventHandler<BeforeStoreEventArgs> handler) {
         this.onBeforeStore.add(handler);
@@ -102,16 +102,16 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
         this.onBeforeDelete.remove(handler);
     }
 
-    public void addBeforeQueryExecutedListener(EventHandler<BeforeQueryExecutedEventArgs> handler) {
-        this.onBeforeQueryExecuted.add(handler);
+    public void addBeforeQueryListener(EventHandler<BeforeQueryEventArgs> handler) {
+        this.onBeforeQuery.add(handler);
     }
 
-    public void removeBeforeQueryExecutedListener(EventHandler<BeforeQueryExecutedEventArgs> handler) {
-        this.onBeforeQueryExecuted.remove(handler);
+    public void removeBeforeQueryListener(EventHandler<BeforeQueryEventArgs> handler) {
+        this.onBeforeQuery.remove(handler);
     }
 
     //Entities whose id we already know do not exists, because they are a missing include, or a missing load, etc.
-    protected final Set<String> knownMissingIds = new TreeSet<>(String.CASE_INSENSITIVE_ORDER);
+    private final Set<String> _knownMissingIds = new TreeSet<>(String.CASE_INSENSITIVE_ORDER);
 
     private Map<String, Object> externalState;
 
@@ -387,7 +387,7 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
      * @return true is document is deleted
      */
     public boolean isDeleted(String id) {
-        return knownMissingIds.contains(id);
+        return _knownMissingIds.contains(id);
     }
 
     /**
@@ -531,7 +531,7 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
 
         deletedEntities.add(entity);
         includedDocumentsById.remove(value.getId());
-        knownMissingIds.add(value.getId());
+        _knownMissingIds.add(value.getId());
     }
 
     /**
@@ -564,7 +564,7 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
             changeVector = documentInfo.getChangeVector();
         }
 
-        knownMissingIds.add(id);
+        _knownMissingIds.add(id);
         changeVector = isUseOptimisticConcurrency() ? changeVector : null;
         defer(new DeleteCommandData(id, ObjectUtils.firstNonNull(expectedChangeVector, changeVector)));
     }
@@ -650,7 +650,7 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
         }
 
         if (id != null) {
-            knownMissingIds.remove(id);
+            _knownMissingIds.remove(id);
         }
 
         storeEntityInUnitOfWork(id, entity, changeVector, metadata, forceConcurrencyCheck);
@@ -666,7 +666,7 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
         deletedEntities.remove(entity);
 
         if (id != null) {
-            knownMissingIds.remove(id);
+            _knownMissingIds.remove(id);
         }
 
         DocumentInfo documentInfo = new DocumentInfo();
@@ -923,7 +923,7 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
         documentsByEntity.clear();
         deletedEntities.clear();
         documentsById.clear();
-        knownMissingIds.clear();
+        _knownMissingIds.clear();
         includedDocumentsById.clear();
     }
 
@@ -978,11 +978,11 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
     }
 
     public void registerMissing(String id) {
-        knownMissingIds.add(id);
+        _knownMissingIds.add(id);
     }
 
     public void unregisterMissing(String id) {
-        knownMissingIds.remove(id);
+        _knownMissingIds.remove(id);
     }
 
     public void registerIncludes(ObjectNode includes) {
@@ -1062,7 +1062,7 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
 
     public boolean checkIfIdAlreadyIncluded(String[] ids, Collection<String> includes) {
         for (String id : ids) {
-            if (knownMissingIds.contains(id)) {
+            if (_knownMissingIds.contains(id)) {
                 continue;
             }
 
@@ -1132,8 +1132,8 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
         EventHelper.invoke(onAfterSaveChanges, this, afterSaveChangesEventArgs);
     }
 
-    public void onBeforeQueryExecutedInvoke(BeforeQueryExecutedEventArgs beforeQueryExecutedEventArgs) {
-        EventHelper.invoke(onBeforeQueryExecuted, this, beforeQueryExecutedEventArgs);
+    public void onBeforeQueryInvoke(BeforeQueryEventArgs beforeQueryEventArgs) {
+        EventHelper.invoke(onBeforeQuery, this, beforeQueryEventArgs);
     }
 
     protected Tuple<String, String> processQueryParameters(Class clazz, String indexName, String collectionName, DocumentConventions conventions) {
@@ -1162,23 +1162,6 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
 
     //TBD public void DeleteAttachment(object entity, string name) --> attachments
     //TBD public void DeleteAttachment(string documentId, string name) --> attachments
-
-    public enum ConcurrencyCheckMode {
-        /**
-         * Automatic optimistic concurrency check depending on UseOptimisticConcurrency setting or provided Change Vector
-         */
-        AUTO,
-
-        /**
-         * Force optimistic concurrency check even if UseOptimisticConcurrency is not set
-         */
-        FORCED,
-
-        /**
-         * Disable optimistic concurrency check even if UseOptimisticConcurrency is set
-         */
-        DISABLED
-    }
 
     public static class SaveChangesData {
         private final List<ICommandData> deferredCommands;

@@ -1,4 +1,4 @@
-package net.ravendb.client.documents.commands;
+package net.ravendb.client.documents.operations;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import net.ravendb.client.documents.conventions.DocumentConventions;
@@ -58,5 +58,4 @@ public class GetOperationStateOperation implements IMaintenanceOperation<ObjectN
             result = node;
         }
     }
-
 }

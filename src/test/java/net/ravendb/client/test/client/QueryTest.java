@@ -711,7 +711,7 @@ public class QueryTest extends RemoteTestBase {
                         .orElse()
                         .whereEquals("name", "John")
                         .boost(2)
-                        .orderByScoreDescending()
+                        .orderByScore()
                         .toList();
 
                 assertThat(users)
@@ -727,7 +727,7 @@ public class QueryTest extends RemoteTestBase {
                         .orElse()
                         .whereEquals("name", "John")
                         .boost(5)
-                        .orderByScoreDescending()
+                        .orderByScore()
                         .toList();
 
                 assertThat(users)

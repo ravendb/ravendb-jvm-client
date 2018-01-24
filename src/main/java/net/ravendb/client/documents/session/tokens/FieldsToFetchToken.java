@@ -28,7 +28,6 @@ public class FieldsToFetchToken extends QueryToken {
     public void writeTo(StringBuilder writer) {
         for (int i = 0; i < fieldsToFetch.length; i++) {
             String fieldToFetch = this.fieldsToFetch[i];
-            String projection = projections != null ? projections[i] : null;
 
             if (i > 0) {
                 writer.append(", ");
@@ -36,7 +35,13 @@ public class FieldsToFetchToken extends QueryToken {
 
             writeField(writer, fieldToFetch);
 
-            if (customFunction || projection == null || projection.equals(fieldToFetch)) {
+            if (customFunction) {
+                continue;
+            }
+
+            String projection = projections != null ? projections[i] : null;
+
+            if (projection == null || projection.equals(fieldToFetch)) {
                 continue;
             }
 

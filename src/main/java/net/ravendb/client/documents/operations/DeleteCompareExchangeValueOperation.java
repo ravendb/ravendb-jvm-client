@@ -12,31 +12,32 @@ import org.apache.http.client.methods.HttpRequestBase;
 
 import java.io.IOException;
 
-public class RemoveCompareExchangeOperation<T> implements IOperation<CmpXchgResult<T>> {
+public class DeleteCompareExchangeValueOperation<T> implements IOperation<CompareExchangeResult<T>> {
 
     private final Class<T> _clazz;
     private final String _key;
     private final long _index;
 
-    public RemoveCompareExchangeOperation(Class<T> clazz, String key, long index) {
+    public DeleteCompareExchangeValueOperation(Class<T> clazz, String key, long index) {
         _key = key;
         _index = index;
         _clazz = clazz;
     }
 
     @Override
-    public RavenCommand<CmpXchgResult<T>> getCommand(IDocumentStore store, DocumentConventions conventions, HttpCache cache) {
-        return new RemoveCompareExchangeCommand<>(_clazz, _key, _index);
+    public RavenCommand<CompareExchangeResult<T>> getCommand(IDocumentStore store, DocumentConventions conventions, HttpCache cache) {
+        return new RemoveCompareExchangeCommand<>(_clazz, _key, _index, conventions);
     }
 
-    private static class RemoveCompareExchangeCommand<T> extends RavenCommand<CmpXchgResult<T>> {
+    private static class RemoveCompareExchangeCommand<T> extends RavenCommand<CompareExchangeResult<T>> {
         private final Class<T> _clazz;
         private final String _key;
         private final long _index;
+        private final DocumentConventions _conventions;
 
         @SuppressWarnings("unchecked")
-        public RemoveCompareExchangeCommand(Class<T> clazz, String key, long index) {
-            super((Class<CmpXchgResult<T>>) (Class<?>)CmpXchgResult.class);
+        public RemoveCompareExchangeCommand(Class<T> clazz, String key, long index, DocumentConventions conventions) {
+            super((Class<CompareExchangeResult<T>>) (Class<?>)CompareExchangeResult.class);
 
             if (StringUtils.isEmpty(key)) {
                 throw new IllegalArgumentException("The kye argument must have value");
@@ -45,6 +46,7 @@ public class RemoveCompareExchangeOperation<T> implements IOperation<CmpXchgResu
             _clazz = clazz;
             _key = key;
             _index = index;
+            _conventions = conventions;
         }
 
         @Override
@@ -61,7 +63,7 @@ public class RemoveCompareExchangeOperation<T> implements IOperation<CmpXchgResu
 
         @Override
         public void setResponse(String response, boolean fromCache) throws IOException {
-            result = CmpXchgResult.parseFromString(_clazz, response);
+            result = CompareExchangeResult.parseFromString(_clazz, response, _conventions);
         }
     }
 }

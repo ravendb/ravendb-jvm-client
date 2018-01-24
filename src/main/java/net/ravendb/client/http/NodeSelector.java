@@ -3,6 +3,7 @@ package net.ravendb.client.http;
 import net.ravendb.client.exceptions.AllTopologyNodesDownException;
 import net.ravendb.client.primitives.CleanCloseable;
 import net.ravendb.client.primitives.Timer;
+import org.apache.commons.lang3.StringUtils;
 
 import java.time.Duration;
 import java.util.Arrays;
@@ -57,7 +58,7 @@ public class NodeSelector implements CleanCloseable {
         List<ServerNode> serverNodes = state.nodes;
         int len = Math.min(serverNodes.size(), stateFailures.length);
         for (int i = 0; i < len; i++) {
-            if (stateFailures[i].get() == 0) {
+            if (stateFailures[i].get() == 0 && StringUtils.isNotEmpty(serverNodes.get(i).getUrl())) {
                 return new CurrentIndexAndNode(i, serverNodes.get(i));
             }
         }

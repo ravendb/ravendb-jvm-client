@@ -2,8 +2,8 @@ package net.ravendb.client.http;
 
 import com.google.common.base.Stopwatch;
 import net.ravendb.client.Constants;
-import net.ravendb.client.documents.commands.GetStatisticsCommand;
 import net.ravendb.client.documents.conventions.DocumentConventions;
+import net.ravendb.client.documents.operations.GetStatisticsOperation;
 import net.ravendb.client.documents.operations.configuration.GetClientConfigurationOperation;
 import net.ravendb.client.documents.session.SessionInfo;
 import net.ravendb.client.exceptions.AllTopologyNodesDownException;
@@ -918,7 +918,7 @@ public class RequestExecutor implements CleanCloseable {
     }
 
     protected void performHealthCheck(ServerNode serverNode, int nodeIndex) {
-        execute(serverNode, nodeIndex, new GetStatisticsCommand("failure=check"), false, null);
+        execute(serverNode, nodeIndex, new GetStatisticsOperation.GetStatisticsCommand("failure=check"), false, null);
     }
 
     private static <TResult> void addFailedResponseToCommand(ServerNode chosenNode, RavenCommand<TResult> command, HttpRequestBase request, CloseableHttpResponse response, Exception e) {

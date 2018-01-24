@@ -4,7 +4,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import net.ravendb.client.documents.conventions.DocumentConventions;
 import net.ravendb.client.http.RavenCommand;
 import net.ravendb.client.http.RequestExecutor;
-import net.ravendb.client.serverwide.operations.GetServerWideOperationStateCommand;
+import net.ravendb.client.serverwide.operations.GetServerWideOperationStateOperation;
 
 public class ServerWideOperation extends Operation {
 
@@ -14,6 +14,6 @@ public class ServerWideOperation extends Operation {
 
     @Override
     protected RavenCommand<ObjectNode> getOperationStateCommand(DocumentConventions conventions, long id) {
-        return new GetServerWideOperationStateCommand(conventions, id);
+        return new GetServerWideOperationStateOperation.GetServerWideOperationStateCommand(conventions, id);
     }
 }

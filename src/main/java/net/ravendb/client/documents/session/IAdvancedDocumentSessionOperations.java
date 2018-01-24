@@ -41,8 +41,8 @@ public interface IAdvancedDocumentSessionOperations {
     void addBeforeDeleteListener(EventHandler<BeforeDeleteEventArgs> handler);
     void removeBeforeDeleteListener(EventHandler<BeforeDeleteEventArgs> handler);
 
-    void addBeforeQueryExecutedListener(EventHandler<BeforeQueryExecutedEventArgs> handler);
-    void removeBeforeQueryExecutedListener(EventHandler<BeforeQueryExecutedEventArgs> handler);
+    void addBeforeQueryListener(EventHandler<BeforeQueryEventArgs> handler);
+    void removeBeforeQueryListener(EventHandler<BeforeQueryEventArgs> handler);
 
     /**
      * Gets a value indicating whether any of the entities tracked by the session has changes.
@@ -187,15 +187,6 @@ public interface IAdvancedDocumentSessionOperations {
 
     //TBD void WaitForReplicationAfterSaveChanges(TimeSpan? timeout = null, bool throwOnTimeout = true, int replicas = 1, bool majority = false);
     //TBD void WaitForIndexesAfterSaveChanges(TimeSpan? timeout = null, bool throwOnTimeout = true, string[] indexes = null);
-
-    /**
-     * Convert json to entity
-     * @param entityType Entity class
-     * @param id Entity id
-     * @param documentFound Raw document
-     * @return Converted document
-     */
-    Object convertToEntity(Class entityType, String id, ObjectNode documentFound);
 
     EntityToJson getEntityToJson();
 }

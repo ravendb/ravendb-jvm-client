@@ -28,7 +28,7 @@ public abstract class DocumentStoreBase implements IDocumentStore {
     private final List<EventHandler<BeforeStoreEventArgs>> onBeforeStore = new ArrayList<>();
     private final List<EventHandler<AfterSaveChangesEventArgs>> onAfterSaveChanges = new ArrayList<>();
     private final List<EventHandler<BeforeDeleteEventArgs>> onBeforeDelete = new ArrayList<>();
-    private final List<EventHandler<BeforeQueryExecutedEventArgs>> onBeforeQueryExecuted = new ArrayList<>();
+    private final List<EventHandler<BeforeQueryEventArgs>> onBeforeQuery = new ArrayList<>();
 
     protected DocumentStoreBase() {
         //TBD: Subscriptions = new DocumentSubscriptions(this);
@@ -174,11 +174,11 @@ public abstract class DocumentStoreBase implements IDocumentStore {
         this.onBeforeDelete.remove(handler);
     }
 
-    public void addBeforeQueryExecutedListener(EventHandler<BeforeQueryExecutedEventArgs> handler) {
-        this.onBeforeQueryExecuted.add(handler);
+    public void addBeforeQueryListener(EventHandler<BeforeQueryEventArgs> handler) {
+        this.onBeforeQuery.add(handler);
     }
-    public void removeBeforeQueryExecutedListener(EventHandler<BeforeQueryExecutedEventArgs> handler) {
-        this.onBeforeQueryExecuted.remove(handler);
+    public void removeBeforeQueryListener(EventHandler<BeforeQueryEventArgs> handler) {
+        this.onBeforeQuery.remove(handler);
     }
 
     protected String database;
@@ -237,8 +237,8 @@ public abstract class DocumentStoreBase implements IDocumentStore {
             session.addBeforeDeleteListener(handler);
         }
 
-        for (EventHandler<BeforeQueryExecutedEventArgs> handler : onBeforeQueryExecuted) {
-            session.addBeforeQueryExecutedListener(handler);
+        for (EventHandler<BeforeQueryEventArgs> handler : onBeforeQuery) {
+            session.addBeforeQueryListener(handler);
         }
 
     }

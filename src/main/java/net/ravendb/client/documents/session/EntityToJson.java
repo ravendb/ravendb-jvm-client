@@ -22,10 +22,10 @@ public class EntityToJson {
         this._session = _session;
     }
 
-    private final Map<Object, Map<String, Object>> missingDictionary = new TreeMap<>((o1, o2) -> o1 == o2 ? 0 : 1);
+        private final Map<Object, Map<String, Object>> _missingDictionary = new TreeMap<>((o1, o2) -> o1 == o2 ? 0 : 1);
 
     public Map<Object, Map<String, Object>> getMissingDictionary() {
-        return missingDictionary;
+        return _missingDictionary;
     }
 
     public ObjectNode convertEntityToJson(Object entity, DocumentInfo documentInfo) {

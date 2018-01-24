@@ -13,7 +13,7 @@ public class DocumentInfo {
 
     private String changeVector;
 
-    private InMemoryDocumentSessionOperations.ConcurrencyCheckMode concurrencyCheckMode;
+    private ConcurrencyCheckMode concurrencyCheckMode;
 
     private boolean ignoreChanges;
 
@@ -129,7 +129,7 @@ public class DocumentInfo {
      * even if UseOptimisticConcurrency is set to false
      * @return concurrency check mode
      */
-    public InMemoryDocumentSessionOperations.ConcurrencyCheckMode getConcurrencyCheckMode() {
+    public ConcurrencyCheckMode getConcurrencyCheckMode() {
         return concurrencyCheckMode;
     }
 
@@ -138,7 +138,7 @@ public class DocumentInfo {
      * even if UseOptimisticConcurrency is set to false
      * @param concurrencyCheckMode sets the value
      */
-    public void setConcurrencyCheckMode(InMemoryDocumentSessionOperations.ConcurrencyCheckMode concurrencyCheckMode) {
+    public void setConcurrencyCheckMode(ConcurrencyCheckMode concurrencyCheckMode) {
         this.concurrencyCheckMode = concurrencyCheckMode;
     }
 

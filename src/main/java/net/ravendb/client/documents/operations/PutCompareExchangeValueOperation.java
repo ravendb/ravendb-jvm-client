@@ -20,7 +20,7 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
-public class PutCompareExchangeValueOperation<T> implements IOperation<CmpXchgResult<T>> {
+public class PutCompareExchangeValueOperation<T> implements IOperation<CompareExchangeResult<T>> {
 
     private final String _key;
     private final T _value;
@@ -33,11 +33,11 @@ public class PutCompareExchangeValueOperation<T> implements IOperation<CmpXchgRe
     }
 
     @Override
-    public RavenCommand<CmpXchgResult<T>> getCommand(IDocumentStore store, DocumentConventions conventions, HttpCache cache) {
+    public RavenCommand<CompareExchangeResult<T>> getCommand(IDocumentStore store, DocumentConventions conventions, HttpCache cache) {
         return new PutCompareExchangeValueCommand<>(_key, _value, _index, conventions);
     }
 
-    private static class PutCompareExchangeValueCommand<T> extends RavenCommand<CmpXchgResult<T>> {
+    private static class PutCompareExchangeValueCommand<T> extends RavenCommand<CompareExchangeResult<T>> {
         private final String _key;
         private final T _value;
         private final long _index;
@@ -45,7 +45,7 @@ public class PutCompareExchangeValueOperation<T> implements IOperation<CmpXchgRe
 
         @SuppressWarnings("unchecked")
         public PutCompareExchangeValueCommand(String key, T value, long index, DocumentConventions conventions) {
-            super((Class<CmpXchgResult<T>>) (Class<?>)CmpXchgResult.class);
+            super((Class<CompareExchangeResult<T>>) (Class<?>)CompareExchangeResult.class);
 
             if (StringUtils.isEmpty(key)) {
                 throw new IllegalArgumentException("The key argument must have value");
@@ -89,7 +89,7 @@ public class PutCompareExchangeValueOperation<T> implements IOperation<CmpXchgRe
         @SuppressWarnings("unchecked")
         @Override
         public void setResponse(String response, boolean fromCache) throws IOException {
-            result = (CmpXchgResult<T>) CmpXchgResult.parseFromString(_value.getClass(), response);
+            result = (CompareExchangeResult<T>) CompareExchangeResult.parseFromString(_value.getClass(), response, _conventions);
         }
     }
 }

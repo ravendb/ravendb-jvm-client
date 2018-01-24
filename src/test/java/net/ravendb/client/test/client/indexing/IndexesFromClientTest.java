@@ -3,9 +3,9 @@ package net.ravendb.client.test.client.indexing;
 import net.ravendb.client.RemoteTestBase;
 import net.ravendb.client.documents.IDocumentStore;
 import net.ravendb.client.documents.commands.ExplainQueryCommand;
-import net.ravendb.client.documents.commands.GetStatisticsCommand;
 import net.ravendb.client.documents.indexes.AbstractIndexCreationTask;
 import net.ravendb.client.documents.operations.DatabaseStatistics;
+import net.ravendb.client.documents.operations.GetStatisticsOperation;
 import net.ravendb.client.documents.operations.indexes.DeleteIndexOperation;
 import net.ravendb.client.documents.operations.indexes.GetIndexNamesOperation;
 import net.ravendb.client.documents.operations.indexes.ResetIndexOperation;
@@ -39,7 +39,7 @@ public class IndexesFromClientTest extends RemoteTestBase {
 
             waitForIndexing(store);
 
-            GetStatisticsCommand command = new GetStatisticsCommand();
+            GetStatisticsOperation.GetStatisticsCommand command = new GetStatisticsOperation.GetStatisticsCommand();
             store.getRequestExecutor().execute(command);
 
             DatabaseStatistics statistics = command.getResult();
@@ -54,7 +54,7 @@ public class IndexesFromClientTest extends RemoteTestBase {
             store.maintenance().send(new ResetIndexOperation(indexName));
             waitForIndexing(store);
 
-            command = new GetStatisticsCommand();
+            command = new GetStatisticsOperation.GetStatisticsCommand();
             store.getRequestExecutor().execute(command);
 
             statistics = command.getResult();
@@ -91,7 +91,7 @@ public class IndexesFromClientTest extends RemoteTestBase {
 
             store.maintenance().send(new DeleteIndexOperation(new UsersIndex().getIndexName()));
 
-            GetStatisticsCommand command = new GetStatisticsCommand();
+            GetStatisticsOperation.GetStatisticsCommand command = new GetStatisticsOperation.GetStatisticsCommand();
             store.getRequestExecutor().execute(command);
 
             DatabaseStatistics statistics = command.getResult();

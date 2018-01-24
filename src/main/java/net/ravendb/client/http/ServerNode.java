@@ -2,7 +2,6 @@ package net.ravendb.client.http;
 
 import net.ravendb.client.primitives.UseSharpEnum;
 
-//TBD SLA part was omitted
 public class ServerNode {
 
     @UseSharpEnum

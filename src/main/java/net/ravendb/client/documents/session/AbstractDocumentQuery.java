@@ -1362,6 +1362,11 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
             return "";
         }
 
+        /* TBD
+            if (_conventions.TryConvertValueForQuery(whereParams.FieldName, whereParams.Value, forRange, out var strVal))
+                return strVal;
+         */
+
         Class<?> clazz = whereParams.getValue().getClass();
         if (Date.class.equals(clazz)) {
             return whereParams.getValue();
@@ -1401,10 +1406,6 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
             return whereParams.getValue();
         }
 
-        /* TBD
-            if (_conventions.TryConvertValueForQuery(whereParams.FieldName, whereParams.Value, forRange, out var strVal))
-                return strVal;
-         */
         return whereParams.getValue();
 
     }
@@ -1622,8 +1623,8 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
             return;
         }
 
-        BeforeQueryExecutedEventArgs beforeQueryExecutedEventArgs = new BeforeQueryExecutedEventArgs(theSession);
-        theSession.onBeforeQueryExecutedInvoke(beforeQueryExecutedEventArgs);
+        BeforeQueryEventArgs beforeQueryEventArgs = new BeforeQueryEventArgs(theSession);
+        theSession.onBeforeQueryInvoke(beforeQueryEventArgs);
 
         queryOperation = initializeQueryOperation();
         executeActualQuery();

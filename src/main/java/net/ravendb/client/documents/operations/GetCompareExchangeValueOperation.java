@@ -12,7 +12,7 @@ import org.apache.http.client.methods.HttpRequestBase;
 
 import java.io.IOException;
 
-public class GetCompareExchangeValueOperation<T> implements IOperation<CmpXchgResult<T>> {
+public class GetCompareExchangeValueOperation<T> implements IOperation<CompareExchangeValue<T>> {
 
     private final String _key;
     private final Class<T> _clazz;
@@ -23,23 +23,25 @@ public class GetCompareExchangeValueOperation<T> implements IOperation<CmpXchgRe
     }
 
     @Override
-    public RavenCommand<CmpXchgResult<T>> getCommand(IDocumentStore store, DocumentConventions conventions, HttpCache cache) {
-        return new GetCompareExchangeValueCommand<>(_clazz, _key);
+    public RavenCommand<CompareExchangeValue<T>> getCommand(IDocumentStore store, DocumentConventions conventions, HttpCache cache) {
+        return new GetCompareExchangeValueCommand<>(_clazz, _key, conventions);
     }
 
-    private static class GetCompareExchangeValueCommand<T> extends RavenCommand<CmpXchgResult<T>> {
+    private static class GetCompareExchangeValueCommand<T> extends RavenCommand<CompareExchangeValue<T>> {
         private final String _key;
         private final Class<T> _clazz;
+        private final DocumentConventions _conventions;
 
         @SuppressWarnings("unchecked")
-        public GetCompareExchangeValueCommand(Class<T> clazz, String key) {
-            super((Class<CmpXchgResult<T>>) (Class<?>)CmpXchgResult.class);
+        public GetCompareExchangeValueCommand(Class<T> clazz, String key, DocumentConventions conventions) {
+            super((Class<CompareExchangeValue<T>>) (Class<?>)CompareExchangeValue.class);
             if (StringUtils.isEmpty(key)) {
                 throw new IllegalArgumentException("The key argument must have value");
             }
 
             _key = key;
             _clazz = clazz;
+            _conventions = conventions;
         }
 
         @Override
@@ -49,13 +51,13 @@ public class GetCompareExchangeValueOperation<T> implements IOperation<CmpXchgRe
 
         @Override
         public HttpRequestBase createRequest(ServerNode node, Reference<String> url) {
-            url.value = node.getUrl() + "/databases/" + node.getDatabase() + "/cmpxchg?key=" + _key;
+            url.value = node.getUrl() + "/databases/" + node.getDatabase() + "/cmpxchg?key=" + urlEncode(_key);
             return new HttpGet();
         }
 
         @Override
         public void setResponse(String response, boolean fromCache) throws IOException {
-            result = CmpXchgResult.parseFromString(_clazz, response);
+            result = CompareExchangeValueResultParser.getValue(_clazz, response, _conventions);
         }
     }
 }

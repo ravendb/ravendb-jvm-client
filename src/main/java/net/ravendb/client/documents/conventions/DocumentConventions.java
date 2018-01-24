@@ -30,6 +30,10 @@ public class DocumentConventions {
 
     public static final DocumentConventions defaultConventions = new DocumentConventions();
 
+    static {
+        defaultConventions.freeze();
+    }
+
     private static final Map<Class, String> _cachedDefaultTypeCollectionNames = new HashMap<>();
 
     //TBD: private readonly List<(Type Type, TryConvertValueForQueryDelegate<object> Convert)> _listOfQueryValueConverters = new List<(Type, TryConvertValueForQueryDelegate<object>)>();
@@ -47,7 +51,7 @@ public class DocumentConventions {
 
     private Function<String, String> _transformClassCollectionNameToDocumentIdPrefix;
     private BiFunction<String, Object, String> _documentIdGenerator;
-    private Function<String, String> _findIdentityPropertyNameFromEntityName;
+    private Function<String, String> _findIdentityPropertyNameFromCollectionName;
 
     private Function<Class, String> _findCollectionName;
 
@@ -66,7 +70,7 @@ public class DocumentConventions {
         _readBalanceBehavior = ReadBalanceBehavior.NONE;
         _findIdentityProperty = q -> q.getName().equals("id");
         _identityPartsSeparator = "/";
-        _findIdentityPropertyNameFromEntityName = entityName -> "Id";
+        _findIdentityPropertyNameFromCollectionName = entityName -> "Id";
         _findJavaClass = (String id, ObjectNode doc) -> {
             JsonNode metadata = doc.get(Constants.Documents.Metadata.KEY);
             if (metadata != null) {
@@ -196,13 +200,13 @@ public class DocumentConventions {
         this._findCollectionName = _findCollectionName;
     }
 
-    public Function<String, String> getFindIdentityPropertyNameFromEntityName() {
-        return _findIdentityPropertyNameFromEntityName;
+    public Function<String, String> getFindIdentityPropertyNameFromCollectionName() {
+        return _findIdentityPropertyNameFromCollectionName;
     }
 
-    public void setFindIdentityPropertyNameFromEntityName(Function<String, String> findIdentityPropertyNameFromEntityName) {
+    public void setFindIdentityPropertyNameFromCollectionName(Function<String, String> findIdentityPropertyNameFromCollectionName) {
         assertNotFrozen();
-        this._findIdentityPropertyNameFromEntityName = findIdentityPropertyNameFromEntityName;
+        this._findIdentityPropertyNameFromCollectionName = findIdentityPropertyNameFromCollectionName;
     }
 
     public BiFunction<String, Object, String> getDocumentIdGenerator() {

@@ -3,6 +3,7 @@ package net.ravendb.client.documents.queries;
 import net.ravendb.client.documents.session.tokens.DeclareToken;
 import net.ravendb.client.documents.session.tokens.LoadToken;
 
+import java.util.Collections;
 import java.util.List;
 
 public class QueryData {
@@ -74,6 +75,10 @@ public class QueryData {
         this.declareToken = declareToken;
         this.loadTokens = loadTokens;
         this.isCustomFunction = isCustomFunction;
+    }
+
+    public static QueryData customFunction(String alias, String func) {
+        return new QueryData(new String[]{ func }, new String[0], alias, null, null, false);
     }
 
 }
