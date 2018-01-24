@@ -84,7 +84,7 @@ public class GetRevisionOperation {
             }
         }
 
-        T entity = (T)_session.convertToEntity(clazz, id, document);
+        T entity = (T)_session.getEntityToJson().convertToEntity(clazz, id, document);
         DocumentInfo documentInfo = new DocumentInfo();
         documentInfo.setId(id);
         documentInfo.setChangeVector(changeVector);

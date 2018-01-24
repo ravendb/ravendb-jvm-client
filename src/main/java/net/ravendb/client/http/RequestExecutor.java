@@ -53,6 +53,7 @@ public class RequestExecutor implements CleanCloseable {
 
     public static final Consumer<HttpClientBuilder> configureHttpClient = null;
 
+    private static final GetStatisticsOperation failureCheckOperation = new GetStatisticsOperation("failure=check");
     /**
      * Extension point to plug - in request post processing like adding proxy etc.
      */
@@ -918,7 +919,7 @@ public class RequestExecutor implements CleanCloseable {
     }
 
     protected void performHealthCheck(ServerNode serverNode, int nodeIndex) {
-        execute(serverNode, nodeIndex, new GetStatisticsOperation.GetStatisticsCommand("failure=check"), false, null);
+        execute(serverNode, nodeIndex, failureCheckOperation.getCommand(conventions), false, null);
     }
 
     private static <TResult> void addFailedResponseToCommand(ServerNode chosenNode, RavenCommand<TResult> command, HttpRequestBase request, CloseableHttpResponse response, Exception e) {

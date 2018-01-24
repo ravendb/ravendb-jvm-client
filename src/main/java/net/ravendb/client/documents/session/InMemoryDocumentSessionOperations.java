@@ -445,7 +445,7 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
             // instance, and return that, ignoring anything new.
 
             if (docInfo.getEntity() == null) {
-                docInfo.setEntity(convertToEntity(entityType, id, document));
+                docInfo.setEntity(entityToJson.convertToEntity(entityType, id, document));
             }
 
             if (!noTracking) {
@@ -459,7 +459,7 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
         docInfo = includedDocumentsById.get(id);
         if (docInfo != null) {
             if (docInfo.getEntity() == null) {
-                docInfo.setEntity(convertToEntity(entityType, id, document));
+                docInfo.setEntity(entityToJson.convertToEntity(entityType, id, document));
             }
 
             if (!noTracking) {
@@ -471,7 +471,7 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
             return docInfo.getEntity();
         }
 
-        Object entity = convertToEntity(entityType, id, document);
+        Object entity = entityToJson.convertToEntity(entityType, id, document);
 
         String changeVector = metadata.get(Constants.Documents.Metadata.CHANGE_VECTOR).asText();
         if (changeVector == null) {
@@ -491,17 +491,6 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
         }
 
         return entity;
-    }
-
-    /**
-     * Converts the json document to an entity.
-     * @param entityType Entity type
-     * @param id Entity identifier
-     * @param documentFound Raw entity
-     * @return converted entity
-     */
-    public Object convertToEntity(Class entityType, String id, ObjectNode documentFound) {
-        return entityToJson.convertToEntity(entityType, id, documentFound);
     }
 
     /**
@@ -635,13 +624,13 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
         // to detect if they generate duplicates.
         assertNoNonUniqueInstance(entity, id);
 
-        String tag = _requestExecutor.getConventions().getCollectionName(entity);
+        String collectionName = _requestExecutor.getConventions().getCollectionName(entity);
 
         ObjectMapper mapper = JsonExtensions.getDefaultMapper();
         ObjectNode metadata = mapper.createObjectNode();
 
-        if (tag != null) {
-            metadata.set(Constants.Documents.Metadata.COLLECTION, mapper.convertValue(tag, JsonNode.class));
+        if (collectionName != null) {
+            metadata.set(Constants.Documents.Metadata.COLLECTION, mapper.convertValue(collectionName, JsonNode.class));
         }
 
         String javaType = _requestExecutor.getConventions().getJavaClassName(entity.getClass());
@@ -1117,7 +1106,7 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
 
         documentInfo.setDocument(document);
 
-        documentInfo.setEntity(convertToEntity(entity.getClass(), documentInfo.getId(), document));
+        documentInfo.setEntity(entityToJson.convertToEntity(entity.getClass(), documentInfo.getId(), document));
 
         try {
             BeanUtils.copyProperties(entity, documentInfo.getEntity());

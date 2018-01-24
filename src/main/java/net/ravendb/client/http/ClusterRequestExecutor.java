@@ -3,6 +3,7 @@ package net.ravendb.client.http;
 import net.ravendb.client.documents.conventions.DocumentConventions;
 import net.ravendb.client.serverwide.commands.GetClusterTopologyCommand;
 import net.ravendb.client.serverwide.commands.GetTcpInfoCommand;
+import org.apache.commons.lang3.ObjectUtils;
 
 import java.security.KeyStore;
 import java.util.Collections;
@@ -36,9 +37,13 @@ public class ClusterRequestExecutor extends RequestExecutor {
     }
 
     public static ClusterRequestExecutor createForSingleNode(String url, KeyStore certificate) {
+        return createForSingleNode(url, certificate, null);
+    }
+
+    public static ClusterRequestExecutor createForSingleNode(String url, KeyStore certificate, DocumentConventions conventions) {
         url = validateUrls(new String[]{url}, certificate)[0];
 
-        ClusterRequestExecutor executor = new ClusterRequestExecutor(certificate, DocumentConventions.defaultConventions);
+        ClusterRequestExecutor executor = new ClusterRequestExecutor(certificate, ObjectUtils.firstNonNull(conventions, DocumentConventions.defaultConventions));
 
         ServerNode serverNode = new ServerNode();
         serverNode.setUrl(url);
