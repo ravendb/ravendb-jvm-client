@@ -111,6 +111,9 @@ public class ExceptionDispatcher {
 
 
     private static Class<?> getType(String typeAsString) {
+        if ("System.TimeoutException".equals(typeAsString)) {
+            return TimeoutException.class;
+        }
         String prefix = "Raven.Client.Exceptions.";
         if (typeAsString.startsWith(prefix)) {
             String exceptionName = typeAsString.substring(prefix.length());

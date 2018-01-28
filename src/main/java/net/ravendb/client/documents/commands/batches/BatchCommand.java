@@ -125,7 +125,7 @@ public class BatchCommand extends RavenCommand<JsonArrayResult> implements Clean
 
         if (_options.isWaitForReplicas()) {
             sb.append("&waitForReplicasTimeout=")
-                    .append(TimeUtils.durationToTimeSpan(_options.getWaitForIndexesTimeout()));
+                    .append(TimeUtils.durationToTimeSpan(_options.getWaitForReplicasTimeout()));
 
             if (_options.isThrowOnTimeoutInWaitForReplicas()) {
                 sb.append("&throwOnTimeoutInWaitForReplicas=true");

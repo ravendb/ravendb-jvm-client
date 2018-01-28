@@ -12,9 +12,10 @@
     <packaging>jar</packaging>
 
     <scm>
-        <connection>scm:git:https://github.com/ravendb/jvm-client.git</connection>
-        <developerConnection>scm:git:git@github.com:ravendb/jvm-client.git</developerConnection>
-        <url>https://github.com/ravendb/jvm-client</url>
+
+        <connection>scm:git:https://github.com/ravendb/ravendb-jvm-client.git</connection>
+        <developerConnection>scm:git:git@github.com:ravendb/ravendb-jvm-client.git</developerConnection>
+        <url>https://github.com/ravendb/ravendb-jvm-client.git</url>
         <tag>HEAD</tag>
     </scm>
 
