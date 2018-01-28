@@ -3,6 +3,7 @@ package net.ravendb.client.http;
 import net.ravendb.client.exceptions.AllTopologyNodesDownException;
 import net.ravendb.client.primitives.CleanCloseable;
 import net.ravendb.client.primitives.Timer;
+import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.StringUtils;
 
 import java.time.Duration;
@@ -41,7 +42,10 @@ public class NodeSelector implements CleanCloseable {
             return false;
         }
 
-        if (_state.topology.getEtag() >= topology.getEtag() && !forceUpdate) {
+        Long stateEtag = ObjectUtils.firstNonNull(_state.topology.getEtag(), 0L);
+        Long topologyEtag = ObjectUtils.firstNonNull(topology.getEtag(), 0L);
+
+        if (stateEtag >= topologyEtag && !forceUpdate) {
             return false;
         }
 
