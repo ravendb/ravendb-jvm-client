@@ -10,7 +10,6 @@ import net.ravendb.client.exceptions.documents.DocumentConflictException;
 import net.ravendb.client.infrastructure.entities.User;
 import net.ravendb.client.serverwide.ConflictSolver;
 import net.ravendb.client.serverwide.DatabaseRecord;
-import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 import java.util.Collections;

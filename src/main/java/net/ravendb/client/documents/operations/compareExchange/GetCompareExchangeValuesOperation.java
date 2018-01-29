@@ -54,6 +54,7 @@ public class GetCompareExchangeValuesOperation<T> implements IOperation<Map<Stri
 
     }
 
+    @SuppressWarnings("unchecked")
     @Override
     public RavenCommand<Map<String, CompareExchangeValue<T>>> getCommand(IDocumentStore store, DocumentConventions conventions, HttpCache cache) {
         return new GetCompareExchangeValuesCommand(this, conventions);
@@ -63,6 +64,7 @@ public class GetCompareExchangeValuesOperation<T> implements IOperation<Map<Stri
         private final GetCompareExchangeValuesOperation<T> _operation;
         private final DocumentConventions _conventions;
 
+        @SuppressWarnings("unchecked")
         public GetCompareExchangeValuesCommand(GetCompareExchangeValuesOperation<T> operation, DocumentConventions conventions) {
             super((Class<Map<String, CompareExchangeValue<T>>>) (Class<?>)Map.class);
             _operation = operation;

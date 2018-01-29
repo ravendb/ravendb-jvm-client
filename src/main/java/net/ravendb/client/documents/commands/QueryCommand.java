@@ -4,7 +4,6 @@ import com.fasterxml.jackson.core.JsonGenerator;
 import net.ravendb.client.documents.conventions.DocumentConventions;
 import net.ravendb.client.documents.queries.IndexQuery;
 import net.ravendb.client.documents.queries.QueryResult;
-import net.ravendb.client.documents.session.InMemoryDocumentSessionOperations;
 import net.ravendb.client.extensions.JsonExtensions;
 import net.ravendb.client.http.RavenCommand;
 import net.ravendb.client.http.ServerNode;

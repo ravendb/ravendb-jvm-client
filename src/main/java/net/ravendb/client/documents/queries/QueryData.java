@@ -3,7 +3,6 @@ package net.ravendb.client.documents.queries;
 import net.ravendb.client.documents.session.tokens.DeclareToken;
 import net.ravendb.client.documents.session.tokens.LoadToken;
 
-import java.util.Collections;
 import java.util.List;
 
 public class QueryData {
