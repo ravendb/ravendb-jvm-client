@@ -382,7 +382,7 @@ public class RequestExecutor implements CleanCloseable {
 
     private void updateTopologyCallback() {
         Date time = new Date();
-        if (time.getTime() - _lastReturnedResponse.getTime() <= Duration.ofMinutes(5).toMillis()) {
+        if (time.getTime() - _lastReturnedResponse.getTime() <= Duration.ofMinutes(1).toMillis()) {
             return;
         }
 
@@ -519,7 +519,7 @@ public class RequestExecutor implements CleanCloseable {
                 return;
             }
 
-            _updateTopologyTimer = new Timer(this::updateTopologyCallback, Duration.ofMinutes(5), Duration.ofMinutes(5));
+            _updateTopologyTimer = new Timer(this::updateTopologyCallback, Duration.ofMinutes(1), Duration.ofMinutes(1));
         }
     }
 

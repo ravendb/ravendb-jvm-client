@@ -1,10 +1,10 @@
-package net.ravendb.client.documents.operations;
+package net.ravendb.client.serverwide.operations;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import net.ravendb.client.documents.conventions.DocumentConventions;
+import net.ravendb.client.documents.operations.Operation;
 import net.ravendb.client.http.RavenCommand;
 import net.ravendb.client.http.RequestExecutor;
-import net.ravendb.client.serverwide.operations.GetServerWideOperationStateOperation;
 
 public class ServerWideOperation extends Operation {
 

@@ -1,10 +1,8 @@
 package net.ravendb.client.serverwide.operations;
 
 import net.ravendb.client.documents.DocumentStoreBase;
-import net.ravendb.client.documents.operations.IMaintenanceOperation;
 import net.ravendb.client.documents.operations.Operation;
 import net.ravendb.client.documents.operations.OperationIdResult;
-import net.ravendb.client.documents.operations.ServerWideOperation;
 import net.ravendb.client.http.ClusterRequestExecutor;
 import net.ravendb.client.http.RavenCommand;
 import net.ravendb.client.http.VoidRavenCommand;

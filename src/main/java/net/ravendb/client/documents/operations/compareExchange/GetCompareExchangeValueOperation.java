@@ -1,7 +1,10 @@
-package net.ravendb.client.documents.operations;
+package net.ravendb.client.documents.operations.compareExchange;
 
 import net.ravendb.client.documents.IDocumentStore;
 import net.ravendb.client.documents.conventions.DocumentConventions;
+import net.ravendb.client.documents.operations.IOperation;
+import net.ravendb.client.documents.operations.compareExchange.CompareExchangeValue;
+import net.ravendb.client.documents.operations.compareExchange.CompareExchangeValueResultParser;
 import net.ravendb.client.http.HttpCache;
 import net.ravendb.client.http.RavenCommand;
 import net.ravendb.client.http.ServerNode;

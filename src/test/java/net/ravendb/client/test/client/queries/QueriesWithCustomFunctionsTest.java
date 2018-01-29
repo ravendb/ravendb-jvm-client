@@ -2,7 +2,7 @@ package net.ravendb.client.test.client.queries;
 
 import net.ravendb.client.RemoteTestBase;
 import net.ravendb.client.documents.IDocumentStore;
-import net.ravendb.client.documents.operations.PutCompareExchangeValueOperation;
+import net.ravendb.client.documents.operations.compareExchange.PutCompareExchangeValueOperation;
 import net.ravendb.client.documents.session.CmpXchg;
 import net.ravendb.client.documents.session.IDocumentQuery;
 import net.ravendb.client.documents.session.IDocumentSession;

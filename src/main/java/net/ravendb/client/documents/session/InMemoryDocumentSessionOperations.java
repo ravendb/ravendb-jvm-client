@@ -695,6 +695,18 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
         prepareForEntitiesDeletion(result, null);
         prepareForEntitiesPuts(result);
 
+        if (!deferredCommands.isEmpty()) {
+            // this allow OnBeforeStore to call Defer during the call to include
+            // additional values during the same SaveChanges call
+            result.deferredCommands.addAll(deferredCommands);
+            for (Map.Entry<IdTypeAndName, ICommandData> item : deferredCommandsMap.entrySet()) {
+                result.deferredCommandsMap.put(item.getKey(), item.getValue());
+            }
+
+            deferredCommands.clear();
+            deferredCommandsMap.clear();
+        }
+
         return result;
     }
 

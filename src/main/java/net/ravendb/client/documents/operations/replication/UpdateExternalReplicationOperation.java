@@ -1,4 +1,4 @@
-package net.ravendb.client.serverwide.operations;
+package net.ravendb.client.documents.operations.replication;
 
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -9,7 +9,7 @@ import net.ravendb.client.http.RavenCommand;
 import net.ravendb.client.http.ServerNode;
 import net.ravendb.client.json.ContentProviderHttpEntity;
 import net.ravendb.client.primitives.Reference;
-import net.ravendb.client.serverwide.ExternalReplication;
+import net.ravendb.client.serverwide.operations.ModifyOngoingTaskResult;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpRequestBase;
 import org.apache.http.entity.ContentType;

@@ -2,12 +2,12 @@ package net.ravendb.client;
 
 import com.google.common.base.Stopwatch;
 import net.ravendb.client.documents.IDocumentStore;
+import net.ravendb.client.documents.operations.connectionStrings.PutConnectionStringOperation;
+import net.ravendb.client.documents.operations.replication.ExternalReplication;
+import net.ravendb.client.documents.operations.replication.UpdateExternalReplicationOperation;
 import net.ravendb.client.documents.replication.ReplicationNode;
 import net.ravendb.client.documents.session.IDocumentSession;
-import net.ravendb.client.serverwide.ExternalReplication;
 import net.ravendb.client.serverwide.etl.RavenConnectionString;
-import net.ravendb.client.serverwide.operations.UpdateExternalReplicationOperation;
-import net.ravendb.client.serverwide.operations.connectionStrings.PutConnectionStringOperation;
 
 import java.util.concurrent.TimeUnit;
 

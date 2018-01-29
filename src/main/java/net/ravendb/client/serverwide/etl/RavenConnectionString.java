@@ -1,6 +1,6 @@
 package net.ravendb.client.serverwide.etl;
 
-import net.ravendb.client.serverwide.ConnectionString;
+import net.ravendb.client.documents.operations.connectionStrings.ConnectionString;
 import net.ravendb.client.serverwide.ConnectionStringType;
 
 public class RavenConnectionString extends ConnectionString {

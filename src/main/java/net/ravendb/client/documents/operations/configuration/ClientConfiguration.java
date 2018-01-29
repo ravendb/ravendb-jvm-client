@@ -1,4 +1,4 @@
-package net.ravendb.client.serverwide;
+package net.ravendb.client.documents.operations.configuration;
 
 import net.ravendb.client.http.ReadBalanceBehavior;
 

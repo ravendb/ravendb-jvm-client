@@ -1,4 +1,4 @@
-package net.ravendb.client.documents.operations;
+package net.ravendb.client.documents.operations.compareExchange;
 
 public class CompareExchangeValue<T> {
     private String key;

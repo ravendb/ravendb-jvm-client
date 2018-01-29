@@ -1,4 +1,4 @@
-package net.ravendb.client.serverwide;
+package net.ravendb.client.documents.operations.replication;
 
 import net.ravendb.client.documents.replication.ReplicationNode;
 

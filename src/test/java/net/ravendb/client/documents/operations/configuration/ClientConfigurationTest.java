@@ -3,7 +3,6 @@ package net.ravendb.client.documents.operations.configuration;
 import net.ravendb.client.RemoteTestBase;
 import net.ravendb.client.documents.IDocumentStore;
 import net.ravendb.client.http.ReadBalanceBehavior;
-import net.ravendb.client.serverwide.ClientConfiguration;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;

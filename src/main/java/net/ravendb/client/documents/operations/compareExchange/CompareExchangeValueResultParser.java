@@ -1,10 +1,9 @@
-package net.ravendb.client.documents.operations;
+package net.ravendb.client.documents.operations.compareExchange;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.google.common.base.Defaults;
 import net.ravendb.client.documents.conventions.DocumentConventions;
-import net.ravendb.client.documents.session.EntityToJson;
+import net.ravendb.client.documents.operations.compareExchange.CompareExchangeValue;
 import net.ravendb.client.extensions.JsonExtensions;
 
 import java.io.IOException;

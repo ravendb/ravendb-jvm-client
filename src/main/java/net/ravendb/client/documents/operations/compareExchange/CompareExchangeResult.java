@@ -1,4 +1,4 @@
-package net.ravendb.client.documents.operations;
+package net.ravendb.client.documents.operations.compareExchange;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.google.common.base.Defaults;

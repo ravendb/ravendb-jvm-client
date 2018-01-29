@@ -2,13 +2,11 @@ package net.ravendb.client.test.client;
 
 import net.ravendb.client.RemoteTestBase;
 import net.ravendb.client.documents.IDocumentStore;
-import net.ravendb.client.documents.operations.*;
+import net.ravendb.client.documents.operations.compareExchange.*;
 import net.ravendb.client.documents.session.DocumentSession;
-import net.ravendb.client.extensions.JsonExtensions;
 import net.ravendb.client.infrastructure.entities.User;
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
 import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -21,6 +19,24 @@ public class UniqueValuesTest extends RemoteTestBase {
                 CompareExchangeValue<Integer> res = store.operations().send(new GetCompareExchangeValueOperation<>(Integer.class, "test"));
                 assertThat(res)
                         .isNull();
+        }
+    }
+
+    @Test
+    public void canWorkWithPrimitiveTypes() throws Exception {
+        try (IDocumentStore store = getDocumentStore()) {
+            CompareExchangeValue<Integer> res = store.operations().send(new GetCompareExchangeValueOperation<>(Integer.class, "test"));
+            assertThat(res)
+                    .isNull();
+
+            store.operations().send(new PutCompareExchangeValueOperation<>("test", 5, 0));
+
+            res = store.operations().send(new GetCompareExchangeValueOperation<>(Integer.class, "test"));
+
+            assertThat(res)
+                    .isNotNull();
+            assertThat(res.getValue())
+                    .isEqualTo(5);
         }
     }
 

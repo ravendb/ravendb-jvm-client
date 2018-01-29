@@ -7,7 +7,6 @@ import net.ravendb.client.http.ServerNode;
 import net.ravendb.client.http.VoidRavenCommand;
 import net.ravendb.client.primitives.ExceptionsUtils;
 import net.ravendb.client.primitives.Reference;
-import net.ravendb.client.serverwide.ClientConfiguration;
 import org.apache.http.client.methods.HttpPut;
 import org.apache.http.client.methods.HttpRequestBase;
 import org.apache.http.entity.ContentType;

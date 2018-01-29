@@ -1,4 +1,6 @@
-package net.ravendb.client.serverwide;
+package net.ravendb.client.documents.operations.connectionStrings;
+
+import net.ravendb.client.serverwide.ConnectionStringType;
 
 public abstract class ConnectionString {
     private String name;
