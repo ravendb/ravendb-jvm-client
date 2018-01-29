@@ -41,6 +41,7 @@ public class DeleteByQueryOperation implements IOperation<OperationIdResult> {
         return new DeleteByIndexCommand(conventions, _queryToDelete, _options);
     }
 
+    @SuppressWarnings("unchecked")
     private static class DeleteByIndexCommand extends RavenCommand<OperationIdResult> {
         private final DocumentConventions _conventions;
         private final IndexQuery _queryToDelete;
