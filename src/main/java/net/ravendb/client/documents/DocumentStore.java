@@ -77,6 +77,7 @@ public class DocumentStore extends DocumentStoreBase {
     }
 
     public void close() {
+        EventHelper.invoke(beforeClose, this, EventArgs.EMPTY);
         /* TBD
 
             foreach (var observeChangesAndEvictItemsFromCacheForDatabase in _observeChangesAndEvictItemsFromCacheForDatabases)
@@ -106,7 +107,7 @@ public class DocumentStore extends DocumentStoreBase {
         //TBD: Subscriptions?.Dispose();
 
         disposed = true;
-        EventHelper.invoke(afterDispose, this, EventArgs.EMPTY);
+        EventHelper.invoke(afterClose, this, EventArgs.EMPTY);
 
         for (Map.Entry<String, RequestExecutor> kvp : requestExecutors.entrySet()) {
             kvp.getValue().close();
@@ -248,15 +249,26 @@ public class DocumentStore extends DocumentStoreBase {
     //TBD public override IDisposable AggressivelyCacheFor(TimeSpan cacheDuration, string database = null)
     //TBD private void ListenToChangesAndUpdateTheCache(string database)
 
-    private final List<EventHandler<VoidArgs>> afterDispose = new ArrayList<>();
+    private final List<EventHandler<VoidArgs>> afterClose = new ArrayList<>();
+
+    private final List<EventHandler<VoidArgs>> beforeClose = new ArrayList<>();
+
+    public void addBeforeCloseListener(EventHandler<VoidArgs> event) {
+        this.beforeClose.add(event);
+    }
+
+    @Override
+    public void removeBeforeCloseListener(EventHandler<VoidArgs> event) {
+        this.beforeClose.remove(event);
+    }
 
     public void addAfterCloseListener(EventHandler<VoidArgs> event) {
-        this.afterDispose.add(event);
+        this.afterClose.add(event);
     }
 
     @Override
     public void removeAfterCloseListener(EventHandler<VoidArgs> event) {
-        this.afterDispose.remove(event);
+        this.afterClose.remove(event);
     }
 
     @Override

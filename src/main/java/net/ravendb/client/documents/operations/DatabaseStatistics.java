@@ -25,6 +25,7 @@ public class DatabaseStatistics {
     private String pager;
     private Date lastIndexingTime;
     private Size sizeOnDisk;
+    private int numberOfTransactionMergerQueueOperations;
 
     public IndexInformation[] getStaleIndexes() {
         return Arrays.stream(indexes)
@@ -159,5 +160,13 @@ public class DatabaseStatistics {
 
     public void setSizeOnDisk(Size sizeOnDisk) {
         this.sizeOnDisk = sizeOnDisk;
+    }
+
+    public int getNumberOfTransactionMergerQueueOperations() {
+        return numberOfTransactionMergerQueueOperations;
+    }
+
+    public void setNumberOfTransactionMergerQueueOperations(int numberOfTransactionMergerQueueOperations) {
+        this.numberOfTransactionMergerQueueOperations = numberOfTransactionMergerQueueOperations;
     }
 }

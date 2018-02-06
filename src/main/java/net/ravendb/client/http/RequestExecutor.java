@@ -14,7 +14,7 @@ import net.ravendb.client.extensions.HttpExtensions;
 import net.ravendb.client.extensions.JsonExtensions;
 import net.ravendb.client.primitives.*;
 import net.ravendb.client.primitives.Timer;
-import net.ravendb.client.serverwide.commands.GetTopologyCommand;
+import net.ravendb.client.serverwide.commands.GetDatabaseTopologyCommand;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
@@ -63,7 +63,7 @@ public class RequestExecutor implements CleanCloseable {
 
     private static final ConcurrentMap<String, CloseableHttpClient> globalHttpClient = new ConcurrentHashMap<>();
 
-    private final Semaphore _updateTopologySemaphore = new Semaphore(1);
+    private final Semaphore _updateDatabaseTopologySemaphore = new Semaphore(1);
 
     private final Semaphore _updateClientConfigurationSemaphore = new Semaphore(1);
 
@@ -147,7 +147,7 @@ public class RequestExecutor implements CleanCloseable {
         return certificate;
     }
 
-    protected RequestExecutor(String databaseName, KeyStore certificate, DocumentConventions conventions) {
+    protected RequestExecutor(String databaseName, KeyStore certificate, DocumentConventions conventions, String[] initialUrls) {
         cache = new HttpCache(conventions.getMaxHttpCacheSize());
         _readBalanceBehavior = conventions.getReadBalanceBehavior();
         _databaseName = databaseName;
@@ -183,9 +183,9 @@ public class RequestExecutor implements CleanCloseable {
         }
     }
 
-    public static RequestExecutor create(String[] urls, String databaseName, KeyStore certificate, DocumentConventions conventions) {
-        RequestExecutor executor = new RequestExecutor(databaseName, certificate, conventions);
-        executor._firstTopologyUpdate = executor.firstTopologyUpdate(urls);
+    public static RequestExecutor create(String[] intialUrls, String databaseName, KeyStore certificate, DocumentConventions conventions) {
+        RequestExecutor executor = new RequestExecutor(databaseName, certificate, conventions, intialUrls);
+        executor._firstTopologyUpdate = executor.firstTopologyUpdate(intialUrls);
         return executor;
     }
 
@@ -198,7 +198,7 @@ public class RequestExecutor implements CleanCloseable {
     public static RequestExecutor createForSingleNodeWithoutConfigurationUpdates(String url, String databaseName, KeyStore certificate, DocumentConventions conventions) {
         final String[] initialUrls = validateUrls(new String[]{url}, certificate);
 
-        RequestExecutor executor = new RequestExecutor(databaseName, certificate, conventions);
+        RequestExecutor executor = new RequestExecutor(databaseName, certificate, conventions, initialUrls);
 
         Topology topology = new Topology();
         topology.setEtag(-1L);
@@ -269,7 +269,7 @@ public class RequestExecutor implements CleanCloseable {
             //prevent double topology updates if execution takes too much time
             // --> in cases with transient issues
             try {
-                boolean lockTaken = _updateTopologySemaphore.tryAcquire(timeout, TimeUnit.MILLISECONDS);
+                boolean lockTaken = _updateDatabaseTopologySemaphore.tryAcquire(timeout, TimeUnit.MILLISECONDS);
                 if (!lockTaken) {
                     return false;
                 }
@@ -283,7 +283,7 @@ public class RequestExecutor implements CleanCloseable {
                     return false;
                 }
 
-                GetTopologyCommand command = new GetTopologyCommand();
+                GetDatabaseTopologyCommand command = new GetDatabaseTopologyCommand();
                 execute(node, null, command, false, null);
 
                 if (_nodeSelector == null) {
@@ -302,7 +302,7 @@ public class RequestExecutor implements CleanCloseable {
                 topologyEtag = _nodeSelector.getTopology().getEtag();
 
             } finally {
-                _updateTopologySemaphore.release();
+                _updateDatabaseTopologySemaphore.release();
             }
 
             return true;
@@ -965,7 +965,7 @@ public class RequestExecutor implements CleanCloseable {
         }
 
         try {
-            _updateTopologySemaphore.acquire();
+            _updateDatabaseTopologySemaphore.acquire();
         } catch (InterruptedException ignored) {
         }
 

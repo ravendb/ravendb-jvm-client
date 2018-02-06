@@ -13,7 +13,7 @@ public class GetTopologyTest extends RemoteTestBase {
     public void canGetTopology() throws Exception {
         try (IDocumentStore store = getDocumentStore()) {
 
-            GetTopologyCommand command = new GetTopologyCommand();
+            GetDatabaseTopologyCommand command = new GetDatabaseTopologyCommand();
 
             store.getRequestExecutor().execute(command);
 

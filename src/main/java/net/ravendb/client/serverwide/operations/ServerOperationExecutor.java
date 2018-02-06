@@ -6,8 +6,9 @@ import net.ravendb.client.documents.operations.OperationIdResult;
 import net.ravendb.client.http.ClusterRequestExecutor;
 import net.ravendb.client.http.RavenCommand;
 import net.ravendb.client.http.VoidRavenCommand;
+import net.ravendb.client.primitives.CleanCloseable;
 
-public class ServerOperationExecutor {
+public class ServerOperationExecutor implements CleanCloseable {
 
     private final DocumentStoreBase store;
     private final ClusterRequestExecutor requestExecutor;
@@ -17,6 +18,8 @@ public class ServerOperationExecutor {
         requestExecutor = store.getConventions().isDisableTopologyUpdates() ?
                 ClusterRequestExecutor.createForSingleNode(store.getUrls()[0], store.getCertificate()) :
                 ClusterRequestExecutor.create(store.getUrls(), store.getCertificate());
+
+        store.addAfterCloseListener((sender, event) -> requestExecutor.close());
     }
 
     public void send(IVoidServerOperation operation) {
@@ -36,6 +39,10 @@ public class ServerOperationExecutor {
 
         requestExecutor.execute(command);
         return new ServerWideOperation(requestExecutor, requestExecutor.getConventions(), command.getResult().getOperationId());
-        //TBD pass changes as well
+    }
+
+    @Override
+    public void close() {
+        requestExecutor.close();
     }
 }

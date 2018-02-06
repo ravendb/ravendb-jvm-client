@@ -36,6 +36,10 @@ public abstract class DocumentStoreBase implements IDocumentStore {
 
     public abstract void close();
 
+    public abstract void addBeforeCloseListener(EventHandler<VoidArgs> event);
+
+    public abstract void removeBeforeCloseListener(EventHandler<VoidArgs> event);
+
     public abstract void addAfterCloseListener(EventHandler<VoidArgs> event);
 
     public abstract void removeAfterCloseListener(EventHandler<VoidArgs> event);

@@ -10,9 +10,9 @@ import org.apache.http.client.methods.HttpRequestBase;
 
 import java.io.IOException;
 
-public class GetTopologyCommand extends RavenCommand<Topology> {
+public class GetDatabaseTopologyCommand extends RavenCommand<Topology> {
 
-    public GetTopologyCommand() {
+    public GetDatabaseTopologyCommand() {
         super(Topology.class);
     }
 
