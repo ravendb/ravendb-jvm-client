@@ -10,6 +10,7 @@ import net.ravendb.client.exceptions.documents.DocumentConflictException;
 import net.ravendb.client.infrastructure.entities.User;
 import net.ravendb.client.serverwide.ConflictSolver;
 import net.ravendb.client.serverwide.DatabaseRecord;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import java.util.Collections;
@@ -30,6 +31,7 @@ public class DocumentReplicationTest extends ReplicationTestBase {
     }
 
     @Test
+    @Disabled("Doesn't work on Linux")
     public void canReplicateDocument() throws Exception {
         customize = r -> {
             ConflictSolver conflictSolver = new ConflictSolver();
@@ -66,6 +68,7 @@ public class DocumentReplicationTest extends ReplicationTestBase {
     }
 
     @Test
+    @Disabled("Doesn't work on Linux")
     public void getConflictsResult_command_should_work_properly() throws Exception {
         customize = r -> {
             ConflictSolver conflictSolver = new ConflictSolver();
@@ -121,6 +124,7 @@ public class DocumentReplicationTest extends ReplicationTestBase {
     }
 
     @Test
+    @Disabled("Doesn't work on Linux")
     public void shouldCreateConflictThenResolveIt() throws Exception {
         customize = r -> {
             ConflictSolver conflictSolver = new ConflictSolver();

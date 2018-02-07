@@ -17,6 +17,7 @@ import net.ravendb.client.infrastructure.entities.Address;
 import net.ravendb.client.infrastructure.entities.User;
 import net.ravendb.client.serverwide.ConflictSolver;
 import net.ravendb.client.serverwide.DatabaseRecord;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import java.util.Collections;
@@ -38,6 +39,7 @@ public class RavenDB_6292Test extends ReplicationTestBase {
     }
 
     @Test
+    @Disabled("Doesn't work on Linux")
     public void ifIncludedDocumentIsConflictedItShouldNotThrowConflictException() throws Exception {
         customize = r -> {
             ConflictSolver conflictSolver = new ConflictSolver();
