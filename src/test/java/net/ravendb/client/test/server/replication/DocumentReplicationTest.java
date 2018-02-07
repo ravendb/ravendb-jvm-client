@@ -53,7 +53,7 @@ public class DocumentReplicationTest extends ReplicationTestBase {
                     id = user.getId();
                 }
 
-                User fetchedUser = waitForDocumentToReplicate(destination, User.class, id, 2_000);
+                User fetchedUser = waitForDocumentToReplicate(destination, User.class, id, 10_000);
                 assertThat(fetchedUser)
                         .isNotNull();
 

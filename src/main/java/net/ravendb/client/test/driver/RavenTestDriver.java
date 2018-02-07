@@ -122,10 +122,6 @@ public abstract class RavenTestDriver implements CleanCloseable {
 
         store.initialize();
 
-        // this this to make sure ServerOperationExecutor is initialized to avoid
-        // ConcurrentModificationException in dispose callback
-        store.maintenance().server();
-
         store.addAfterCloseListener(((sender, event) -> {
             if (!documentStores.contains(store)) {
                 return;
@@ -250,6 +246,7 @@ public abstract class RavenTestDriver implements CleanCloseable {
         DocumentStore store = new DocumentStore();
         store.setUrls(new String[]{url});
         store.setDatabase("test.manager");
+        store.getConventions().setDisableTopologyUpdates(true);
 
         if (secured) {
             globalSecuredServer = store;

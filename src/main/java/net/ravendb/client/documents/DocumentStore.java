@@ -107,7 +107,8 @@ public class DocumentStore extends DocumentStoreBase {
         //TBD: Subscriptions?.Dispose();
 
         disposed = true;
-        EventHelper.invoke(afterClose, this, EventArgs.EMPTY);
+
+        EventHelper.invoke(new ArrayList<>(afterClose), this, EventArgs.EMPTY);
 
         for (Map.Entry<String, RequestExecutor> kvp : requestExecutors.entrySet()) {
             kvp.getValue().close();
