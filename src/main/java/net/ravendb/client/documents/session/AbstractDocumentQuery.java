@@ -1392,7 +1392,9 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
             return whereParams.getValue();
         }
 
-        //TBD timespan - duration ?
+        if (Duration.class.equals(clazz)) {
+            return ((Duration) whereParams.getValue()).toNanos() / 100;
+        }
 
         if (String.class.equals(clazz)) {
             return whereParams.getValue();

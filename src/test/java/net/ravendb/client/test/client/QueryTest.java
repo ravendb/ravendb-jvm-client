@@ -8,14 +8,21 @@ import net.ravendb.client.documents.operations.GetCollectionStatisticsOperation;
 import net.ravendb.client.documents.queries.Query;
 import net.ravendb.client.documents.queries.SearchOperator;
 import net.ravendb.client.documents.session.*;
+import net.ravendb.client.infrastructure.entities.Order;
 import net.ravendb.client.infrastructure.entities.User;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.time.DateUtils;
 import org.junit.jupiter.api.Test;
 
+import java.time.Duration;
+import java.time.LocalDate;
 import java.util.Arrays;
+import java.util.Date;
 import java.util.List;
+import java.util.Set;
 
 import static java.util.stream.Collectors.toList;
+import static java.util.stream.Collectors.toSet;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
@@ -612,6 +619,86 @@ public class QueryTest extends RemoteTestBase {
                         .toList())
                         .hasSize(2);
             }
+        }
+    }
+
+    public static class OrderTime extends AbstractIndexCreationTask {
+        public static class Result {
+            private long delay;
+
+            public long getDelay() {
+                return delay;
+            }
+
+            public void setDelay(long delay) {
+                this.delay = delay;
+            }
+        }
+
+        public OrderTime() {
+            map = "from order in docs.Orders " +
+                    "select new { " +
+                    "  delay = order.shippedAt - ((DateTime?)order.orderedAt) " +
+                    "}";
+        }
+    }
+
+    @Test
+    public void queryWithDuration() throws Exception {
+        try (IDocumentStore store = getDocumentStore()) {
+
+            Date now = new Date();
+
+            store.executeIndex(new OrderTime());
+
+            try (DocumentSession session = (DocumentSession) store.openSession()) {
+                Order order1 = new Order();
+                order1.setCompany("hours");
+                order1.setOrderedAt(DateUtils.addHours(now, -2));
+                order1.setShippedAt(now);
+                session.store(order1);
+
+                Order order2 = new Order();
+                order2.setCompany("days");
+                order2.setOrderedAt(DateUtils.addDays(now, -2));
+                order2.setShippedAt(now);
+                session.store(order2);
+
+                Order order3 = new Order();
+                order3.setCompany("minutes");
+                order3.setOrderedAt(DateUtils.addMinutes(now, -2));
+                order3.setShippedAt(now);
+                session.store(order3);
+
+                session.saveChanges();
+            }
+
+            waitForIndexing(store);
+
+            try (DocumentSession session = (DocumentSession) store.openSession()) {
+                Set<String> delay = session.query(Order.class, OrderTime.class)
+                        .whereLessThan("delay", Duration.ofHours(3))
+                        .toList()
+                        .stream()
+                        .map(x -> x.getCompany())
+                        .collect(toSet());
+
+                assertThat(delay)
+                        .containsExactly("hours", "minutes");
+
+                Set<String> delay2 = session.query(Order.class, OrderTime.class)
+                        .whereGreaterThan("delay", Duration.ofHours(3))
+                        .toList()
+                        .stream()
+                        .map(x -> x.getCompany())
+                        .collect(toSet());
+
+                assertThat(delay2)
+                        .containsExactly("days");
+
+
+            }
+
         }
     }
 
