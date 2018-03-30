@@ -903,7 +903,7 @@ public class RequestExecutor implements CleanCloseable {
 
             status = _failedNodesTimers.get(nodeStatus.node);
             if (status != null) {
-                _failedNodesTimers.remove(status);
+                _failedNodesTimers.remove(nodeStatus.node);
                 status.close();
             }
 
