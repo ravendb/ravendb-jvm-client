@@ -17,10 +17,6 @@ public abstract class RavenServerLocator {
         return path;
     }
 
-    public boolean withHttps() {
-        return false;
-    }
-
     public String getCommand() {
         return getServerPath();
     }

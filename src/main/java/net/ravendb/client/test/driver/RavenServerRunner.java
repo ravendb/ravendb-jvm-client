@@ -30,7 +30,6 @@ public abstract class RavenServerRunner {
         }
 
         String[] commandArguments = new String[] {
-                locator.withHttps() ? "--ServerUrl=https://127.0.0.1:8085" : "--ServerUrl=http://127.0.0.1:0",
                 "--RunInMemory=true",
                 "--License.Eula.Accepted=true",
                 "--Setup.Mode=None",

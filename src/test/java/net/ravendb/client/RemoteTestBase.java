@@ -11,20 +11,33 @@ import org.apache.http.client.config.RequestConfig;
 public class RemoteTestBase extends RavenTestDriver {
 
     private static class TestServiceLocator extends RavenServerLocator {
+
+        @Override
+        public String[] getCommandArguments() {
+            return new String[] { "--ServerUrl=http://127.0.0.1:0" };
+        }
     }
 
     private static class TestSecuredServiceLocator extends RavenServerLocator {
 
         public static final String ENV_CERTIFICATE_PATH = "RAVENDB_JAVA_TEST_CERTIFICATE_PATH";
 
-        @Override
-        public boolean withHttps() {
-            return true;
-        }
+        public static final String ENV_HTTPS_SERVER_URL = "RAVENDB_JAVA_TEST_HTTPS_SERVER_URL";
 
         @Override
         public String[] getCommandArguments() {
-            return new String[] { "--Security.Certificate.Path=" + getServerCertificatePath()};
+            return new String[] { "--Security.Certificate.Path=" + getServerCertificatePath(), "--ServerUrl=" + getHttpsServerUrl()};
+        }
+
+        private String getHttpsServerUrl() {
+            String httpsServerUrl = System.getenv(ENV_HTTPS_SERVER_URL);
+            if (StringUtils.isBlank(httpsServerUrl)) {
+                throw new IllegalStateException("Unable to find RavenDB https server url. " +
+                        "Please make sure " + ENV_HTTPS_SERVER_URL + " environment variable is set and is valid " +
+                        "(current value = " + httpsServerUrl + ")");
+            }
+
+            return httpsServerUrl;
         }
 
         @Override
