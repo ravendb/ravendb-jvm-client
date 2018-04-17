@@ -61,7 +61,8 @@ public class RequestExecutor implements CleanCloseable {
 
     public static final String CLIENT_VERSION = "4.0.0";
 
-    private static final ConcurrentMap<String, CloseableHttpClient> globalHttpClient = new ConcurrentHashMap<>();
+    private static final ConcurrentMap<String, CloseableHttpClient> globalHttpClientWithCompression = new ConcurrentHashMap<>();
+    private static final ConcurrentMap<String, CloseableHttpClient> globalHttpClientWithoutCompression = new ConcurrentHashMap<>();
 
     private final Semaphore _updateDatabaseTopologySemaphore = new Semaphore(1);
 
@@ -161,7 +162,8 @@ public class RequestExecutor implements CleanCloseable {
             thumbprint = extractThumbprintFromCertificate(certificate);
         }
 
-        httpClient = globalHttpClient.computeIfAbsent(thumbprint, (thumb) -> createClient());
+        ConcurrentMap<String, CloseableHttpClient> clientCache = conventions.isUseCompression() ? globalHttpClientWithCompression : globalHttpClientWithoutCompression;
+        httpClient = clientCache.computeIfAbsent(thumbprint, (thumb) -> createClient());
     }
 
     private String extractThumbprintFromCertificate(KeyStore certificate) {
@@ -985,8 +987,13 @@ public class RequestExecutor implements CleanCloseable {
     private CloseableHttpClient createClient() {
         HttpClientBuilder httpClientBuilder = HttpClients
                 .custom()
-                .setMaxConnPerRoute(10)
-                .disableContentCompression()
+                .setMaxConnPerRoute(10);
+
+        if (conventions.hasExplicitlySetCompressionUsage() && !conventions.isUseCompression()) {
+            httpClientBuilder.disableContentCompression();
+        }
+
+        httpClientBuilder
                 .setRetryHandler(new StandardHttpRequestRetryHandler(0, false))
                 .setDefaultSocketConfig(SocketConfig.custom().setTcpNoDelay(true).build());
 

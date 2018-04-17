@@ -90,6 +90,10 @@ public abstract class RavenTestDriver implements CleanCloseable {
 
     }
 
+    protected void customizeStore(DocumentStore store) {
+
+    }
+
     public DocumentStore getDocumentStore(String database, boolean secured, Duration waitForIndexingTimeout) throws Exception {
         String name = database + "_" + index.incrementAndGet();
         reportInfo("getDocumentStore for db " + database + ".");
@@ -119,6 +123,8 @@ public abstract class RavenTestDriver implements CleanCloseable {
         if (secured) {
             store.setCertificate(getTestClientCertificate());
         }
+
+        customizeStore(store);
 
         store.initialize();
 

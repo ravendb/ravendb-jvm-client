@@ -65,6 +65,7 @@ public class DocumentConventions {
     private ReadBalanceBehavior _readBalanceBehavior;
     private int _maxHttpCacheSize;
     private ObjectMapper _entityMapper;
+    private Boolean _useCompression;
 
     public DocumentConventions() {
         _readBalanceBehavior = ReadBalanceBehavior.NONE;
@@ -91,6 +92,22 @@ public class DocumentConventions {
         _maxHttpCacheSize = 128 * 1024 * 1024;
 
         _entityMapper = JsonExtensions.getDefaultEntityMapper();
+    }
+
+    public boolean hasExplicitlySetCompressionUsage() {
+        return _useCompression != null;
+    }
+
+    public Boolean isUseCompression() {
+        if (_useCompression == null) {
+            return true;
+        }
+        return _useCompression;
+    }
+
+    public void setUseCompression(Boolean useCompression) {
+        assertNotFrozen();
+        _useCompression = useCompression;
     }
 
     public ObjectMapper getEntityMapper() {
@@ -410,6 +427,9 @@ public class DocumentConventions {
         DocumentConventions cloned = new DocumentConventions();
         try {
             BeanUtils.copyProperties(cloned, this);
+
+            cloned._useCompression = _useCompression;
+
         } catch (IllegalAccessException | InvocationTargetException e) {
             throw new RuntimeException(e);
         }
