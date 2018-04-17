@@ -10,14 +10,12 @@ import net.ravendb.client.primitives.CleanCloseable;
 
 public class ServerOperationExecutor implements CleanCloseable {
 
-    private final DocumentStoreBase store;
     private final ClusterRequestExecutor requestExecutor;
 
     public ServerOperationExecutor(DocumentStoreBase store) {
-        this.store = store;
         requestExecutor = store.getConventions().isDisableTopologyUpdates() ?
-                ClusterRequestExecutor.createForSingleNode(store.getUrls()[0], store.getCertificate()) :
-                ClusterRequestExecutor.create(store.getUrls(), store.getCertificate());
+                ClusterRequestExecutor.createForSingleNode(store.getUrls()[0], store.getCertificate(), store.getConventions()) :
+                ClusterRequestExecutor.create(store.getUrls(), store.getCertificate(), store.getConventions());
 
         store.addAfterCloseListener((sender, event) -> requestExecutor.close());
     }

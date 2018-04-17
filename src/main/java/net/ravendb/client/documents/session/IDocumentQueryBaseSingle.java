@@ -28,6 +28,13 @@ public interface IDocumentQueryBaseSingle<T> {
      */
     T singleOrDefault();
 
+
+    /**
+     * Checks if the given query matches any records
+     * @return true if the given query matches any records
+     */
+    boolean any();
+
     /**
      * Gets the total count of records for this query
      * @return total count of records

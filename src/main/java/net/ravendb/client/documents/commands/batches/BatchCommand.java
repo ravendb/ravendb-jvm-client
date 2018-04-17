@@ -137,10 +137,12 @@ public class BatchCommand extends RavenCommand<JsonArrayResult> implements Clean
 
         if (_options.isWaitForIndexes()) {
             sb.append("&waitForIndexesTimeout=")
-                        .append(TimeUtils.durationToTimeSpan(_options.getWaitForIndexesTimeout()));
+                    .append(TimeUtils.durationToTimeSpan(_options.getWaitForIndexesTimeout()));
 
             if (_options.isThrowOnTimeoutInWaitForIndexes()) {
                 sb.append("&waitForIndexThrow=true");
+            } else {
+                sb.append("&waitForIndexThrow=false");
             }
 
             if (_options.getWaitForSpecificIndexes() != null) {

@@ -809,8 +809,7 @@ public class RequestExecutor implements CleanCloseable {
                 case HttpStatus.SC_REQUEST_TIMEOUT:
                 case HttpStatus.SC_BAD_GATEWAY:
                 case HttpStatus.SC_SERVICE_UNAVAILABLE:
-                    handleServerDown(url, chosenNode, nodeIndex, command, request, response, null, sessionInfo);
-                    break;
+                    return handleServerDown(url, chosenNode, nodeIndex, command, request, response, null, sessionInfo);
                 case HttpStatus.SC_CONFLICT:
                     handleConflict(response);
                     break;

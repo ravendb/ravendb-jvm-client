@@ -1643,9 +1643,7 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
 
     @Override
     public Iterator<T> iterator() {
-        initSync();
-
-        return queryOperation.complete(clazz).iterator();
+        return executeQueryOperation(null).iterator();
     }
 
     public List<T> toList() {
@@ -1693,8 +1691,19 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
         return queryResult.getTotalResults();
     }
 
-    private Collection<T> executeQueryOperation(int take) {
-        if (pageSize == null || pageSize > take) {
+    public boolean any() {
+        if (isDistinct()) {
+            // for distinct it is cheaper to do count 1
+            return executeQueryOperation(1).iterator().hasNext();
+        }
+
+        _take(0);
+        QueryResult queryResult = getQueryResult();
+        return queryResult.getTotalResults() > 0;
+    }
+
+    private Collection<T> executeQueryOperation(Integer take) {
+        if (take != null && (pageSize == null || pageSize > take)) {
             _take(take);
         }
 

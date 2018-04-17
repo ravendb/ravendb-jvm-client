@@ -40,8 +40,6 @@ public class DocumentQuery<T> extends AbstractDocumentQuery<T, DocumentQuery<T>>
     public <TProjection> IDocumentQuery<TProjection> selectFields(Class<TProjection> projectionClass) {
 
         try {
-            Field identityProperty = getConventions().getIdentityProperty(projectionClass);
-
             PropertyDescriptor[] propertyDescriptors = Introspector.getBeanInfo(projectionClass).getPropertyDescriptors();
 
             String[] projections = Arrays.stream(propertyDescriptors)
@@ -49,7 +47,7 @@ public class DocumentQuery<T> extends AbstractDocumentQuery<T, DocumentQuery<T>>
                     .toArray(String[]::new);
 
             String[] fields = Arrays.stream(propertyDescriptors)
-                    .map(p -> p.getName().equals(identityProperty.getName()) ? Constants.Documents.Indexing.Fields.DOCUMENT_ID_FIELD_NAME : p.getName())
+                    .map(x -> x.getName())
                     .toArray(String[]::new);
 
             return selectFields(projectionClass, new QueryData(fields, projections));
@@ -518,9 +516,23 @@ public class DocumentQuery<T> extends AbstractDocumentQuery<T, DocumentQuery<T>>
 
     @SuppressWarnings("unchecked")
     private <TResult> DocumentQuery<TResult> createDocumentQueryInternal(Class<TResult> resultClass, QueryData queryData) {
-        FieldsToFetchToken newFieldsToFetch = queryData != null && queryData.getFields().length > 0
-                ? FieldsToFetchToken.create(queryData.getFields(), queryData.getProjections(), queryData.isCustomFunction())
-                : null;
+        FieldsToFetchToken newFieldsToFetch;
+
+        if (queryData != null && queryData.getFields().length > 0) {
+            String[] fields = queryData.getFields();
+
+            Field identityProperty = getConventions().getIdentityProperty(resultClass);
+
+            if (identityProperty != null) {
+                fields = Arrays.stream(queryData.getFields())
+                        .map(p -> p.equals(identityProperty.getName()) ? Constants.Documents.Indexing.Fields.DOCUMENT_ID_FIELD_NAME : p)
+                        .toArray(String[]::new);
+            }
+
+            newFieldsToFetch = FieldsToFetchToken.create(fields, queryData.getProjections(), queryData.isCustomFunction());
+        } else {
+            newFieldsToFetch = null;
+        }
 
         if (newFieldsToFetch != null) {
             updateFieldsToFetchToken(newFieldsToFetch);

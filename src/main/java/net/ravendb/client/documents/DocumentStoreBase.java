@@ -200,6 +200,9 @@ public abstract class DocumentStoreBase implements IDocumentStore {
      * @param database Sets the value
      */
     public void setDatabase(String database) {
+        if (initialized) {
+            throw new IllegalStateException("You cannot change the default database name after the document store has been initialized");
+        }
         this.database = database;
     }
 
@@ -217,7 +220,7 @@ public abstract class DocumentStoreBase implements IDocumentStore {
      */
     public void setCertificate(KeyStore certificate) {
         if (initialized) {
-            throw new IllegalStateException("You cannot change the certificate after the document store was initialized");
+            throw new IllegalStateException("You cannot change the certificate after the document store has been initialized");
         }
         _certificate = certificate;
     }

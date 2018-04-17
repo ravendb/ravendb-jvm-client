@@ -8,8 +8,13 @@ import java.util.*;
 
 public class MetadataAsDictionary implements IMetadataDictionary {
 
+    private IMetadataDictionary _parent;
+    private String _parentKey;
+
     private Map<String, Object> _metadata;
     private final ObjectNode _source;
+
+    private boolean dirty = false;
 
     public MetadataAsDictionary(ObjectNode metadata) {
         this._source = metadata;
@@ -24,16 +29,40 @@ public class MetadataAsDictionary implements IMetadataDictionary {
         _source = null;
     }
 
+    public MetadataAsDictionary(ObjectNode metadata, IMetadataDictionary parent, String parentKey) {
+        this(metadata);
+
+        if (parent == null) {
+            throw new IllegalArgumentException("Parent cannot be null");
+        }
+
+        if (parentKey == null) {
+            throw new IllegalArgumentException("ParentKey cannot be null");
+        }
+
+        _parent = parent;
+        _parentKey = parentKey;
+    }
+
+    public boolean isDirty() {
+        return dirty;
+    }
+
     private void init() {
+        dirty = true;
         _metadata = new HashMap<>();
         Iterator<String> fields = _source.fieldNames();
         while (fields.hasNext()) {
             String fieldName = fields.next();
-            _metadata.put(fieldName, convertValue(_source.get(fieldName)));
+            _metadata.put(fieldName, convertValue(fieldName, _source.get(fieldName)));
+        }
+
+        if (_parent != null) {
+            _parent.put(_parentKey, this);
         }
     }
 
-    private static Object convertValue(Object value) {
+    private Object convertValue(String key, Object value) {
         if (value == null) {
             return null;
         }
@@ -63,14 +92,14 @@ public class MetadataAsDictionary implements IMetadataDictionary {
         }
 
         if (value instanceof ObjectNode) {
-            return new MetadataAsDictionary((ObjectNode)value);
+            return new MetadataAsDictionary((ObjectNode)value, this, key);
         }
 
         if (value instanceof ArrayNode) {
             ArrayNode array = (ArrayNode) value;
             Object[] result = new Object[array.size()];
             for (int i = 0; i < array.size(); i++) {
-                result[i] = convertValue(array.get(i));
+                result[i] = convertValue(key, array.get(i));
             }
             return result;
         }
@@ -92,6 +121,7 @@ public class MetadataAsDictionary implements IMetadataDictionary {
         if (_metadata == null) {
             init();
         }
+        dirty = true;
 
         return _metadata.put(key, value);
     }
@@ -102,7 +132,7 @@ public class MetadataAsDictionary implements IMetadataDictionary {
             return _metadata.get(key);
         }
 
-        return convertValue(_source.get((String) key));
+        return convertValue((String) key, _source.get((String) key));
     }
 
     @Override
@@ -115,6 +145,7 @@ public class MetadataAsDictionary implements IMetadataDictionary {
         if (_metadata == null) {
             init();
         }
+        dirty = true;
 
         _metadata.putAll(m);
     }
@@ -124,6 +155,7 @@ public class MetadataAsDictionary implements IMetadataDictionary {
         if (_metadata == null) {
             init();
         }
+        dirty = true;
 
         _metadata.clear();
     }
@@ -151,6 +183,7 @@ public class MetadataAsDictionary implements IMetadataDictionary {
         if (_metadata == null) {
             init();
         }
+        dirty = true;
 
         return _metadata.remove(key);
     }

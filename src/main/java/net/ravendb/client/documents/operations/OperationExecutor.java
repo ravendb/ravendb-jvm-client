@@ -20,7 +20,11 @@ public class OperationExecutor {
     public OperationExecutor(DocumentStoreBase store, String databaseName) {
         this.store = store;
         this.databaseName = databaseName != null ? databaseName : store.getDatabase();
-        this.requestExecutor = store.getRequestExecutor(databaseName);
+        if (this.databaseName != null) {
+            this.requestExecutor = store.getRequestExecutor(databaseName);
+        } else {
+            throw new IllegalStateException("Cannot use operations without a database defined, did you forget to call forDatabase?");
+        }
     }
 
     public OperationExecutor forDatabase(String databaseName) {

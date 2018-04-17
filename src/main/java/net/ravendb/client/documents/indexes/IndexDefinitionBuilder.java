@@ -36,6 +36,9 @@ public class IndexDefinitionBuilder {
 
     public IndexDefinitionBuilder(String indexName) {
         _indexName = ObjectUtils.firstNonNull(indexName, getClass().getSimpleName());
+        if (_indexName.length() > 256) {
+            throw new IllegalArgumentException("The index name is limited to 256 characters, but was: " + _indexName);
+        }
         storesStrings = new HashMap<>();
         indexesStrings = new HashMap<>();
         suggestionsOptions = new HashSet<>();

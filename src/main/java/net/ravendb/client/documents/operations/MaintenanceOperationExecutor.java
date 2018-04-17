@@ -5,6 +5,7 @@ import net.ravendb.client.http.RavenCommand;
 import net.ravendb.client.http.RequestExecutor;
 import net.ravendb.client.http.VoidRavenCommand;
 import net.ravendb.client.serverwide.operations.ServerOperationExecutor;
+import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.StringUtils;
 
 public class MaintenanceOperationExecutor {
@@ -20,8 +21,9 @@ public class MaintenanceOperationExecutor {
 
     public MaintenanceOperationExecutor(DocumentStoreBase store, String databaseName) {
         this.store = store;
-        this.databaseName = databaseName;
-        this.requestExecutor = store.getRequestExecutor(databaseName);
+        this.databaseName = ObjectUtils.firstNonNull(databaseName, store.getDatabase());
+
+        this.requestExecutor = this.databaseName != null ? store.getRequestExecutor(this.databaseName) : null;
     }
 
     public ServerOperationExecutor server() {
@@ -42,21 +44,30 @@ public class MaintenanceOperationExecutor {
     }
 
     public void send(IVoidMaintenanceOperation operation) {
+        assertDatabaseNameSet();
         VoidRavenCommand command = operation.getCommand(requestExecutor.getConventions());
         requestExecutor.execute(command);
     }
 
     public <TResult> TResult send(IMaintenanceOperation<TResult> operation) {
+        assertDatabaseNameSet();
         RavenCommand<TResult> command = operation.getCommand(requestExecutor.getConventions());
         requestExecutor.execute(command);
         return command.getResult();
     }
 
     public Operation sendAsync(IMaintenanceOperation<OperationIdResult> operation) {
+        assertDatabaseNameSet();
         RavenCommand<OperationIdResult> command = operation.getCommand(requestExecutor.getConventions());
 
         requestExecutor.execute(command);
         return new Operation(requestExecutor, requestExecutor.getConventions(), command.getResult().getOperationId());
         //TBD pass changes as well
+    }
+
+    private void assertDatabaseNameSet() {
+        if (databaseName == null) {
+            throw new IllegalStateException("Cannot use maintenance without a database defined, did you forget to call forDatabase?");
+        }
     }
 }

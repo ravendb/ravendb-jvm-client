@@ -15,6 +15,7 @@ import net.ravendb.client.documents.commands.GetDocumentsResult;
 import net.ravendb.client.documents.commands.batches.*;
 import net.ravendb.client.documents.conventions.DocumentConventions;
 import net.ravendb.client.documents.identity.GenerateEntityIdOnTheClient;
+import net.ravendb.client.documents.operations.OperationExecutor;
 import net.ravendb.client.documents.session.operations.lazy.ILazyOperation;
 import net.ravendb.client.exceptions.documents.session.NonUniqueObjectException;
 import net.ravendb.client.extensions.JsonExtensions;
@@ -43,6 +44,8 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
     protected final int _clientSessionId = _clientSessionIdCounter.incrementAndGet();
 
     protected final RequestExecutor _requestExecutor;
+
+    private OperationExecutor _operationExecutor;
 
     protected final List<ILazyOperation> pendingLazyOperations = new ArrayList<>();
     protected final Map<ILazyOperation, Consumer<Object>> onEvaluateLazy = new HashMap<>();
@@ -174,6 +177,14 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
 
     public RequestExecutor getRequestExecutor() {
         return _requestExecutor;
+    }
+
+    public OperationExecutor getOperations() {
+        if (_operationExecutor == null) {
+            _operationExecutor = getDocumentStore().operations().forDatabase(getDatabaseName());
+        }
+
+        return _operationExecutor;
     }
 
     private int numberOfRequests;
@@ -710,15 +721,23 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
         return result;
     }
 
-    private static void updateMetadataModifications(DocumentInfo documentInfo) {
+    private static boolean updateMetadataModifications(DocumentInfo documentInfo) {
+        boolean dirty = false;
         ObjectMapper mapper = JsonExtensions.getDefaultMapper();
         if (documentInfo.getMetadataInstance() != null) {
+            if (documentInfo.getMetadataInstance().isDirty()) {
+                dirty = true;
+            }
             for (String prop : documentInfo.getMetadataInstance().keySet()) {
-                documentInfo.getMetadata().set(prop, mapper.convertValue(documentInfo.getMetadataInstance().get(prop), JsonNode.class));
+                Object propValue = documentInfo.getMetadataInstance().get(prop);
+                if (propValue == null || propValue instanceof MetadataAsDictionary && (((MetadataAsDictionary) propValue).isDirty())) {
+                    dirty = true;
+                }
+                documentInfo.getMetadata().set(prop, mapper.convertValue(propValue, JsonNode.class));
             }
         }
+        return dirty;
     }
-
 
     private void prepareForEntitiesDeletion(SaveChangesData result, Map<String, List<DocumentsChanges>> changes) {
         for (Object deletedEntity : deletedEntities) {
@@ -771,11 +790,11 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
 
     private void prepareForEntitiesPuts(SaveChangesData result) {
         for (Map.Entry<Object, DocumentInfo> entity : documentsByEntity.entrySet()) {
-            updateMetadataModifications(entity.getValue());
+            boolean dirtyMetadata = updateMetadataModifications(entity.getValue());
 
             ObjectNode document = entityToJson.convertEntityToJson(entity.getKey(), entity.getValue());
 
-            if (entity.getValue().isIgnoreChanges() || !entityChanged(document, entity.getValue(), null)) {
+            if (entity.getValue().isIgnoreChanges() || (!entityChanged(document, entity.getValue(), null)) && !dirtyMetadata) {
                 continue;
             }
 
@@ -956,8 +975,8 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
         deferredCommandsMap.put(IdTypeAndName.create(command.getId(), command.getType(), command.getName()), command);
         deferredCommandsMap.put(IdTypeAndName.create(command.getId(), CommandType.CLIENT_ANY_COMMAND, null), command);
 
-        if (!CommandType.ATTACHMENT_PUT.equals(command.getType())) {
-            deferredCommandsMap.put(IdTypeAndName.create(command.getId(), CommandType.CLIENT_NOT_ATTACHMENT_PUT, null), command);
+        if (!CommandType.ATTACHMENT_PUT.equals(command.getType()) && !CommandType.ATTACHMENT_DELETE.equals(command.getType())) {
+            deferredCommandsMap.put(IdTypeAndName.create(command.getId(), CommandType.CLIENT_NOT_ATTACHMENT, null), command);
         }
     }
 
