@@ -15,6 +15,7 @@ import net.ravendb.client.util.Inflector;
 import net.ravendb.client.util.ReflectionUtil;
 import org.apache.commons.beanutils.BeanUtils;
 import org.apache.commons.lang3.ObjectUtils;
+import org.omg.CORBA.COMM_FAILURE;
 
 import java.beans.IntrospectionException;
 import java.beans.Introspector;
@@ -38,7 +39,7 @@ public class DocumentConventions {
 
     //TBD: private readonly List<(Type Type, TryConvertValueForQueryDelegate<object> Convert)> _listOfQueryValueConverters = new List<(Type, TryConvertValueForQueryDelegate<object>)>();
 
-    private final List<Tuple<Class, BiFunction<String, Object, String>>> _listOfRegisteredIdConventions = new ArrayList<>();
+    private List<Tuple<Class, BiFunction<String, Object, String>>> _listOfRegisteredIdConventions = new ArrayList<>();
 
     private boolean _frozen;
     private ClientConfiguration _originalConfiguration;
@@ -147,8 +148,8 @@ public class DocumentConventions {
         return _maxNumberOfRequestsPerSession;
     }
 
-    public void setMaxNumberOfRequestsPerSession(int _maxNumberOfRequestsPerSession) {
-        this._maxNumberOfRequestsPerSession = _maxNumberOfRequestsPerSession;
+    public void setMaxNumberOfRequestsPerSession(int maxNumberOfRequestsPerSession) {
+        _maxNumberOfRequestsPerSession = maxNumberOfRequestsPerSession;
     }
 
     /**
@@ -203,18 +204,18 @@ public class DocumentConventions {
         return _findJavaClassName;
     }
 
-    public void setFindJavaClassName(Function<Class, String> _findJavaClassName) {
+    public void setFindJavaClassName(Function<Class, String> findJavaClassName) {
         assertNotFrozen();
-        this._findJavaClassName = _findJavaClassName;
+        _findJavaClassName = findJavaClassName;
     }
 
     public Function<Class, String> getFindCollectionName() {
         return _findCollectionName;
     }
 
-    public void setFindCollectionName(Function<Class, String> _findCollectionName) {
+    public void setFindCollectionName(Function<Class, String> findCollectionName) {
         assertNotFrozen();
-        this._findCollectionName = _findCollectionName;
+        _findCollectionName = findCollectionName;
     }
 
     public Function<String, String> getFindIdentityPropertyNameFromCollectionName() {
@@ -230,9 +231,9 @@ public class DocumentConventions {
         return _documentIdGenerator;
     }
 
-    public void setDocumentIdGenerator(BiFunction<String, Object, String> _documentIdGenerator) {
+    public void setDocumentIdGenerator(BiFunction<String, Object, String> documentIdGenerator) {
         assertNotFrozen();
-        this._documentIdGenerator = _documentIdGenerator;
+        _documentIdGenerator = documentIdGenerator;
     }
 
 
@@ -265,17 +266,17 @@ public class DocumentConventions {
         return _disableTopologyUpdates;
     }
 
-    public void setDisableTopologyUpdates(boolean _disableTopologyUpdates) {
+    public void setDisableTopologyUpdates(boolean disableTopologyUpdates) {
         assertNotFrozen();
-        this._disableTopologyUpdates = _disableTopologyUpdates;
+        _disableTopologyUpdates = disableTopologyUpdates;
     }
 
     public String getIdentityPartsSeparator() {
         return _identityPartsSeparator;
     }
 
-    public void setIdentityPartsSeparator(String _identityPartsSeparator) {
-        this._identityPartsSeparator = _identityPartsSeparator;
+    public void setIdentityPartsSeparator(String identityPartsSeparator) {
+        _identityPartsSeparator = identityPartsSeparator;
     }
 
     /**
@@ -425,14 +426,26 @@ public class DocumentConventions {
     @SuppressWarnings("MethodDoesntCallSuperMethod")
     public DocumentConventions clone() {
         DocumentConventions cloned = new DocumentConventions();
-        try {
-            BeanUtils.copyProperties(cloned, this);
-
-            cloned._useCompression = _useCompression;
-
-        } catch (IllegalAccessException | InvocationTargetException e) {
-            throw new RuntimeException(e);
-        }
+        cloned._listOfRegisteredIdConventions = new ArrayList<>(_listOfRegisteredIdConventions);
+        cloned._frozen = _frozen;
+        cloned._originalConfiguration = _originalConfiguration;
+        cloned._saveEnumsAsIntegers = _saveEnumsAsIntegers;
+        cloned._identityPartsSeparator = _identityPartsSeparator;
+        cloned._disableTopologyUpdates = _disableTopologyUpdates;
+        cloned._findIdentityProperty = _findIdentityProperty;
+        cloned._transformClassCollectionNameToDocumentIdPrefix = _transformClassCollectionNameToDocumentIdPrefix;
+        cloned._documentIdGenerator = _documentIdGenerator;
+        cloned._findIdentityPropertyNameFromCollectionName = _findIdentityPropertyNameFromCollectionName;
+        cloned._findCollectionName = _findCollectionName;
+        cloned._findJavaClassName = _findJavaClassName;
+        cloned._findJavaClass = _findJavaClass;
+        cloned._useOptimisticConcurrency = _useOptimisticConcurrency;
+        cloned._throwIfQueryPageSizeIsNotSet = _throwIfQueryPageSizeIsNotSet;
+        cloned._maxNumberOfRequestsPerSession = _maxNumberOfRequestsPerSession;
+        cloned._readBalanceBehavior = _readBalanceBehavior;
+        cloned._maxHttpCacheSize = _maxHttpCacheSize;
+        cloned._entityMapper = _entityMapper;
+        cloned._useCompression = _useCompression;
         return cloned;
     }
 
