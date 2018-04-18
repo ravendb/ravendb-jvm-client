@@ -124,6 +124,7 @@ public class DocumentConventions {
     }
 
     public void setReadBalanceBehavior(ReadBalanceBehavior _readBalanceBehavior) {
+        assertNotFrozen();
         this._readBalanceBehavior = _readBalanceBehavior;
     }
 
@@ -141,6 +142,7 @@ public class DocumentConventions {
     }
 
     public void setMaxHttpCacheSize(int maxHttpCacheSize) {
+        assertNotFrozen();
         this._maxHttpCacheSize = maxHttpCacheSize;
     }
 
@@ -149,6 +151,7 @@ public class DocumentConventions {
     }
 
     public void setMaxNumberOfRequestsPerSession(int maxNumberOfRequestsPerSession) {
+        assertNotFrozen();
         _maxNumberOfRequestsPerSession = maxNumberOfRequestsPerSession;
     }
 
@@ -188,6 +191,7 @@ public class DocumentConventions {
      * @param useOptimisticConcurrency value to set
      */
     public void setUseOptimisticConcurrency(boolean useOptimisticConcurrency) {
+        assertNotFrozen();
         this._useOptimisticConcurrency = useOptimisticConcurrency;
     }
 
@@ -259,6 +263,7 @@ public class DocumentConventions {
     }
 
     public void setFindIdentityProperty(Function<PropertyDescriptor, Boolean> findIdentityProperty) {
+        assertNotFrozen();
         this._findIdentityProperty = findIdentityProperty;
     }
 
@@ -276,6 +281,7 @@ public class DocumentConventions {
     }
 
     public void setIdentityPartsSeparator(String identityPartsSeparator) {
+        assertNotFrozen();
         _identityPartsSeparator = identityPartsSeparator;
     }
 
