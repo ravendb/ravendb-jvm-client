@@ -39,11 +39,11 @@ public class RequestExecutorTest extends RemoteTestBase {
 
                 assertThat(errorsCount).isEqualTo(40);
 
-                GetDatabaseNamesOperation databaseNamesOperation = new GetDatabaseNamesOperation(0, 20);
-                RavenCommand<String[]> command = databaseNamesOperation.getCommand(conventions);
-                executor.execute(command);
-
-                assertThat(command.getResult()).doesNotContainNull();
+                assertThatThrownBy(() -> {
+                    GetDatabaseNamesOperation databaseNamesOperation = new GetDatabaseNamesOperation(0, 20);
+                    RavenCommand<String[]> command = databaseNamesOperation.getCommand(conventions);
+                    executor.execute(command);
+                }).isExactlyInstanceOf(DatabaseDoesNotExistException.class);
             }
         }
     }

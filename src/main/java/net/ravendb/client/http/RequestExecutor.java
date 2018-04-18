@@ -429,12 +429,13 @@ public class RequestExecutor implements CleanCloseable {
 
                     _topologyTakenFromNode = serverNode;
                     return;
-                } catch (DatabaseDoesNotExistException e) {
-                    // Will happen on all node in the cluster,
-                    // so errors immediately
-                    _lastKnownUrls = initialUrls;
-                    throw e;
                 } catch (Exception e) {
+                    if (e instanceof ExecutionException && e.getCause() instanceof DatabaseDoesNotExistException) {
+                        // Will happen on all node in the cluster,
+                        // so errors immediately
+                        _lastKnownUrls = initialUrls;
+                        throw (DatabaseDoesNotExistException) e.getCause();
+                    }
                     if (initialUrls.length == 0) {
                         _lastKnownUrls = initialUrls;
                         throw new IllegalStateException("Cannot get topology from server: " + url, e);
