@@ -13,7 +13,7 @@ public class CompareExchangeResult<T> {
     private boolean successful;
 
     public static <T> CompareExchangeResult<T> parseFromString(Class<T> clazz, String responseString, DocumentConventions conventions) throws IOException {
-        JsonNode response = JsonExtensions.getDefaultEntityMapper().readTree(responseString);
+        JsonNode response = conventions.getEntityMapper().readTree(responseString);
 
         JsonNode indexJson = response.get("Index");
         if (indexJson == null || indexJson.isNull()) {
@@ -40,7 +40,7 @@ public class CompareExchangeResult<T> {
             return exchangeResult;
         }
 
-        result = JsonExtensions.getDefaultEntityMapper().convertValue(val, clazz);
+        result = conventions.getEntityMapper().convertValue(val, clazz);
 
         CompareExchangeResult<T> exchangeResult = new CompareExchangeResult<>();
         exchangeResult.index = index;

@@ -57,7 +57,7 @@ public class BasicDocumentsTest extends RemoteTestBase {
     @Test
     public void get() throws Exception {
         try (IDocumentStore store = getDocumentStore()) {
-            ObjectNode dummy = JsonExtensions.getDefaultEntityMapper().valueToTree(new User());
+            ObjectNode dummy = store.getConventions().getEntityMapper().valueToTree(new User());
             dummy.remove("id");
 
             try (IDocumentSession session = store.openSession()) {

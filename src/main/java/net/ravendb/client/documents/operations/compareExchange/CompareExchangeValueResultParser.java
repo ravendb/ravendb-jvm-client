@@ -13,7 +13,7 @@ import java.util.Map;
 public class CompareExchangeValueResultParser<T> {
 
     public static <T> Map<String, CompareExchangeValue<T>> getValues(Class<T> clazz, String response, DocumentConventions conventions) throws IOException {
-        JsonNode jsonResponse = JsonExtensions.getDefaultEntityMapper().readTree(response);
+        JsonNode jsonResponse = conventions.getEntityMapper().readTree(response);
 
         Map<String, CompareExchangeValue<T>> results = new HashMap<>();
 
@@ -47,7 +47,7 @@ public class CompareExchangeValueResultParser<T> {
                 // simple
                 T value = Defaults.defaultValue(clazz);
                 JsonNode rawValue = raw.get("Object");
-                value = JsonExtensions.getDefaultEntityMapper().convertValue(rawValue, clazz);
+                value = conventions.getEntityMapper().convertValue(rawValue, clazz);
                 CompareExchangeValue<T> cmpValue = new CompareExchangeValue<>(key.textValue(), index.asLong(), value);
                 results.put(key.textValue(), cmpValue);
             } else {
@@ -56,7 +56,7 @@ public class CompareExchangeValueResultParser<T> {
                 if (object == null || object.isNull()) {
                     results.put(key.textValue(), new CompareExchangeValue<T>(key.textValue(), index.asLong(), Defaults.defaultValue(clazz)));
                 } else {
-                    T converted = JsonExtensions.getDefaultEntityMapper().convertValue(object, clazz);
+                    T converted = conventions.getEntityMapper().convertValue(object, clazz);
                     results.put(key.textValue(), new CompareExchangeValue<>(key.textValue(), index.asLong(), converted));
                 }
             }

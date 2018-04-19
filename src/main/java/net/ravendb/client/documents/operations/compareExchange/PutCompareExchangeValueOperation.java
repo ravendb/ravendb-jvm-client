@@ -74,7 +74,7 @@ public class PutCompareExchangeValueOperation<T> implements IOperation<CompareEx
             Map<String, T> tuple = new HashMap<>();
             tuple.put("Object", _value);
 
-            ObjectNode json = JsonExtensions.getDefaultEntityMapper().valueToTree(tuple);
+            ObjectNode json = _conventions.getEntityMapper().valueToTree(tuple);
 
             HttpPut httpPut = new HttpPut();
             httpPut.setEntity(new ContentProviderHttpEntity(outputStream -> {

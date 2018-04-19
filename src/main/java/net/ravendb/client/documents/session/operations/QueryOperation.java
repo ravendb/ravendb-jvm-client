@@ -146,7 +146,7 @@ public class QueryOperation {
                 String projectField = fieldsToFetch.projections[0];
                 JsonNode jsonNode = document.get(projectField);
                 if (jsonNode != null && jsonNode instanceof ValueNode) {
-                    return ObjectUtils.firstNonNull(JsonExtensions.getDefaultEntityMapper().convertValue(jsonNode, clazz), Defaults.defaultValue(clazz));
+                    return ObjectUtils.firstNonNull((T) session.getConventions().deserializeEntityFromJson(clazz, jsonNode), Defaults.defaultValue(clazz));
                 }
             }
 

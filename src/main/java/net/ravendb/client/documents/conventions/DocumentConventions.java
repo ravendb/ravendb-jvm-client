@@ -1,6 +1,7 @@
 package net.ravendb.client.documents.conventions;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.TreeNode;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -129,7 +130,7 @@ public class DocumentConventions {
     }
 
     @SuppressWarnings("unchecked")
-    public Object deserializeEntityFromJson(Class documentType, ObjectNode document) {
+    public Object deserializeEntityFromJson(Class documentType, TreeNode document) {
         try {
             return JsonExtensions.getDefaultMapper().treeToValue(document, documentType);
         } catch (JsonProcessingException e) {

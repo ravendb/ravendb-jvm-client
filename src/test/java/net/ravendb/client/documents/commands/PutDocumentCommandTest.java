@@ -1,5 +1,6 @@
 package net.ravendb.client.documents.commands;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import net.ravendb.client.RemoteTestBase;
 import net.ravendb.client.documents.IDocumentStore;
@@ -21,7 +22,7 @@ public class PutDocumentCommandTest extends RemoteTestBase {
             user.setName("Marcin");
             user.setAge(30);
 
-            ObjectNode node = JsonExtensions.getDefaultEntityMapper().valueToTree(user);
+            ObjectNode node = store.getConventions().getEntityMapper().valueToTree(user);
 
             PutDocumentCommand command = new PutDocumentCommand("users/1", null, node);
             store.getRequestExecutor().execute(command);
