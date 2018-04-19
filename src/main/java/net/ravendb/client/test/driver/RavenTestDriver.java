@@ -269,9 +269,13 @@ public abstract class RavenTestDriver implements CleanCloseable {
         if (secured) {
             p = RavenTestDriver.globalSecuredServerProcess;
             globalSecuredServerProcess = null;
+            globalSecuredServer.close();
+            globalSecuredServer = null;
         } else {
             p = RavenTestDriver.globalServerProcess;
             globalServerProcess = null;
+            globalServer.close();
+            globalServer = null;
         }
 
         if (p != null && p.isAlive()) {
