@@ -144,17 +144,17 @@ public class DocumentInfo {
 
     public static DocumentInfo getNewDocumentInfo(ObjectNode document) {
         JsonNode metadata = document.get(Constants.Documents.Metadata.KEY);
-        JsonNode id = metadata.get(Constants.Documents.Metadata.ID);
-        JsonNode changeVector = metadata.get(Constants.Documents.Metadata.CHANGE_VECTOR);
 
         if (metadata == null || !metadata.isObject()) {
             throw new IllegalStateException("Document must have a metadata");
         }
 
+        JsonNode id = metadata.get(Constants.Documents.Metadata.ID);
         if (id == null || !id.isTextual()) {
             throw new IllegalStateException("Document must have an id");
         }
 
+        JsonNode changeVector = metadata.get(Constants.Documents.Metadata.CHANGE_VECTOR);
         if (changeVector == null || !changeVector.isTextual()) {
             throw new IllegalStateException("Document " + id.asText() + " must have a Change Vector");
         }

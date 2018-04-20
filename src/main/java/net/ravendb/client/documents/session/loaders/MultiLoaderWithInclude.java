@@ -61,7 +61,7 @@ public class MultiLoaderWithInclude implements ILoaderWithInclude {
     @Override
     public <TResult> TResult load(Class<TResult> clazz, String id) {
         Map<String, TResult> stringObjectMap = _session.loadInternal(clazz, new String[]{ id }, _includes.toArray(new String[0]));
-        return stringObjectMap.values().stream().findFirst().orElse(null);
+        return stringObjectMap.values().stream().filter(x -> x != null).findFirst().orElse(null);
     }
 
     /**

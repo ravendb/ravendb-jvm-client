@@ -1625,7 +1625,7 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
             return;
         }
 
-        BeforeQueryEventArgs beforeQueryEventArgs = new BeforeQueryEventArgs(theSession);
+        BeforeQueryEventArgs beforeQueryEventArgs = new BeforeQueryEventArgs(theSession, new DocumentQueryCustomizationDelegate(this));
         theSession.onBeforeQueryInvoke(beforeQueryEventArgs);
 
         queryOperation = initializeQueryOperation();
