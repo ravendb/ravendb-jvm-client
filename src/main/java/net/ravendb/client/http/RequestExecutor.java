@@ -51,7 +51,7 @@ import java.util.stream.Collectors;
 
 public class RequestExecutor implements CleanCloseable {
 
-    public static final Consumer<HttpClientBuilder> configureHttpClient = null;
+    public static Consumer<HttpClientBuilder> configureHttpClient = null;
 
     private static final GetStatisticsOperation failureCheckOperation = new GetStatisticsOperation("failure=check");
     /**
