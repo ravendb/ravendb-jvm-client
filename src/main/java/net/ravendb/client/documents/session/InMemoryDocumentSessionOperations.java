@@ -388,7 +388,7 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
 
     public boolean isLoadedOrDeleted(String id) {
         DocumentInfo documentInfo = documentsById.getValue(id);
-        return (documentInfo != null && documentInfo.getDocument() != null) || isDeleted(id) || includedDocumentsById.containsKey(id);
+        return (documentInfo != null && (documentInfo.getDocument() != null || documentInfo.getEntity() != null)) || isDeleted(id) || includedDocumentsById.containsKey(id);
     }
 
     /**
@@ -790,11 +790,15 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
 
     private void prepareForEntitiesPuts(SaveChangesData result) {
         for (Map.Entry<Object, DocumentInfo> entity : documentsByEntity.entrySet()) {
+
+            if (entity.getValue().isIgnoreChanges())
+                continue;
+
             boolean dirtyMetadata = updateMetadataModifications(entity.getValue());
 
             ObjectNode document = entityToJson.convertEntityToJson(entity.getKey(), entity.getValue());
 
-            if (entity.getValue().isIgnoreChanges() || (!entityChanged(document, entity.getValue(), null)) && !dirtyMetadata) {
+            if ((!entityChanged(document, entity.getValue(), null)) && !dirtyMetadata) {
                 continue;
             }
 

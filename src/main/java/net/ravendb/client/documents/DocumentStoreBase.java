@@ -10,6 +10,7 @@ import net.ravendb.client.documents.operations.indexes.PutIndexesOperation;
 import net.ravendb.client.documents.session.*;
 import net.ravendb.client.http.RequestExecutor;
 import net.ravendb.client.primitives.EventHandler;
+import net.ravendb.client.primitives.EventHelper;
 import net.ravendb.client.primitives.VoidArgs;
 import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -29,6 +30,7 @@ public abstract class DocumentStoreBase implements IDocumentStore {
     private final List<EventHandler<AfterSaveChangesEventArgs>> onAfterSaveChanges = new ArrayList<>();
     private final List<EventHandler<BeforeDeleteEventArgs>> onBeforeDelete = new ArrayList<>();
     private final List<EventHandler<BeforeQueryEventArgs>> onBeforeQuery = new ArrayList<>();
+    private final List<EventHandler<SessionCreatedEventArgs>> onSessionCreated = new ArrayList<>();
 
     protected DocumentStoreBase() {
         //TBD: Subscriptions = new DocumentSubscriptions(this);
@@ -247,7 +249,10 @@ public abstract class DocumentStoreBase implements IDocumentStore {
         for (EventHandler<BeforeQueryEventArgs> handler : onBeforeQuery) {
             session.addBeforeQueryListener(handler);
         }
+    }
 
+    protected void afterSessionCreated(InMemoryDocumentSessionOperations session) {
+        EventHelper.invoke(onSessionCreated, this, new SessionCreatedEventArgs(session));
     }
 
     public abstract MaintenanceOperationExecutor maintenance();

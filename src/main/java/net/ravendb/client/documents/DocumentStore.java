@@ -24,7 +24,6 @@ import java.util.concurrent.ConcurrentSkipListMap;
 public class DocumentStore extends DocumentStoreBase {
     //TBD:private readonly AtomicDictionary<IDatabaseChanges> _databaseChanges = new AtomicDictionary<IDatabaseChanges>(StringComparer.OrdinalIgnoreCase);
     //TBD: private ConcurrentDictionary<string, Lazy<EvictItemsFromCacheBasedOnChanges>> _aggressiveCacheChanges = new ConcurrentDictionary<string, Lazy<EvictItemsFromCacheBasedOnChanges>>();
-    //TBD: private readonly ConcurrentDictionary<string, EvictItemsFromCacheBasedOnChanges> _observeChangesAndEvictItemsFromCacheForDatabases = new ConcurrentDictionary<string, EvictItemsFromCacheBasedOnChanges>();
 
     private final ConcurrentMap<String, RequestExecutor> requestExecutors = new ConcurrentSkipListMap<>(String.CASE_INSENSITIVE_ORDER);
 
@@ -80,8 +79,13 @@ public class DocumentStore extends DocumentStoreBase {
         EventHelper.invoke(beforeClose, this, EventArgs.EMPTY);
         /* TBD
 
-            foreach (var observeChangesAndEvictItemsFromCacheForDatabase in _observeChangesAndEvictItemsFromCacheForDatabases)
-                observeChangesAndEvictItemsFromCacheForDatabase.Value.Dispose();
+            foreach (var value in _aggressiveCacheChanges.Values)
+            {
+                if (value.IsValueCreated == false)
+                    continue;
+
+                value.Value.Dispose();
+            }
 
             var tasks = new List<Task>();
             foreach (var changes in _databaseChanges)
@@ -145,7 +149,7 @@ public class DocumentStore extends DocumentStoreBase {
 
         DocumentSession session = new DocumentSession(databaseName, this, sessionId, requestExecutor);
         registerEvents(session);
-        // AfterSessionCreated(session);
+        afterSessionCreated(session);
         return session;
 
     }
