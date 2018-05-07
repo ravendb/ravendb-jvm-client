@@ -22,7 +22,7 @@ public abstract class AbstractIndexCreationTask {
     protected String map;
     protected String reduce;
 
-    private DocumentConventions conventions;
+    protected DocumentConventions conventions;
     protected Map<String, String> additionalSources;
     protected IndexPriority priority;
     protected IndexLockMode lockMode;
