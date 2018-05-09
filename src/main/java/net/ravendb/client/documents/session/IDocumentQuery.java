@@ -3,6 +3,12 @@ package net.ravendb.client.documents.session;
 import net.ravendb.client.documents.queries.GroupBy;
 import net.ravendb.client.documents.queries.QueryData;
 import net.ravendb.client.documents.queries.QueryResult;
+import net.ravendb.client.documents.queries.facets.Facet;
+import net.ravendb.client.documents.queries.facets.FacetBase;
+import net.ravendb.client.documents.queries.facets.IAggregationDocumentQuery;
+import net.ravendb.client.documents.queries.facets.IFacetBuilder;
+
+import java.util.function.Consumer;
 
 /**
  * A query against a Raven index
@@ -65,6 +71,15 @@ public interface IDocumentQuery<T> extends IDocumentQueryBase<T, IDocumentQuery<
     IGroupByDocumentQuery<T> groupBy(GroupBy field, GroupBy... fields);
 
     //TBD MoreLikeThis
+
+    IAggregationDocumentQuery<T> aggregateBy(Consumer<IFacetBuilder<T>> builder);
+
+    IAggregationDocumentQuery<T> aggregateBy(FacetBase facet);
+
+    IAggregationDocumentQuery<T> aggregateBy(Facet... facet);
+
+    IAggregationDocumentQuery<T> aggregateUsing(String facetSetupDocumentId);
+
     //TBD AggregateBy
     //TBD SuggestUsing
 

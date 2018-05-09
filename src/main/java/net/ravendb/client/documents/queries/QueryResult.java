@@ -17,7 +17,7 @@ public class QueryResult extends GenericQueryResult<ArrayNode, ObjectNode> {
         queryResult.setIncludes(getIncludes());
         queryResult.setIndexName(getIndexName());
         queryResult.setIndexTimestamp(getIndexTimestamp());
-        queryResult.setIncludedPaths(queryResult.getIncludedPaths());
+        queryResult.setIncludedPaths(getIncludedPaths());
         queryResult.setStale(isStale());
         queryResult.setSkippedResults(getSkippedResults());
         queryResult.setTotalResults(getTotalResults());

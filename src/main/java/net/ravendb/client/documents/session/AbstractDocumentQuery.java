@@ -8,6 +8,7 @@ import net.ravendb.client.documents.conventions.DocumentConventions;
 import net.ravendb.client.documents.indexes.spatial.SpatialRelation;
 import net.ravendb.client.documents.indexes.spatial.SpatialUnits;
 import net.ravendb.client.documents.queries.*;
+import net.ravendb.client.documents.queries.facets.FacetBase;
 import net.ravendb.client.documents.queries.spatial.SpatialCriteria;
 import net.ravendb.client.documents.queries.spatial.DynamicSpatialField;
 import net.ravendb.client.documents.session.operations.QueryOperation;
@@ -1710,5 +1711,21 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
         initSync();
 
         return queryOperation.complete(clazz);
+    }
+
+    public void _aggregateBy(FacetBase facet) {
+        for (QueryToken token : selectTokens) {
+            if (token instanceof FacetToken) {
+                continue;
+            }
+
+            throw new IllegalStateException("Aggregation query can select only facets while it got " + token.getClass().getSimpleName() + " token");
+        }
+
+        selectTokens.add(FacetToken.create(facet, this::addQueryParameter));
+    }
+
+    public void _aggregateUsing(String facetSetupDocumentId) {
+        selectTokens.add(FacetToken.create(facetSetupDocumentId));
     }
 }

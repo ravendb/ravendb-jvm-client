@@ -5,6 +5,7 @@ import net.ravendb.client.Constants;
 import net.ravendb.client.documents.indexes.spatial.SpatialRelation;
 import net.ravendb.client.documents.indexes.spatial.SpatialUnits;
 import net.ravendb.client.documents.queries.*;
+import net.ravendb.client.documents.queries.facets.*;
 import net.ravendb.client.documents.queries.spatial.DynamicSpatialField;
 import net.ravendb.client.documents.queries.spatial.SpatialCriteria;
 import net.ravendb.client.documents.queries.spatial.SpatialCriteriaFactory;
@@ -580,10 +581,37 @@ public class DocumentQuery<T> extends AbstractDocumentQuery<T, DocumentQuery<T>>
         return query;
     }
 
-    //TBD public FacetedQueryResult GetFacets(string facetSetupDoc, int facetStart, int? facetPageSize)
-    //TBD public FacetedQueryResult GetFacets(List<Facet> facets, int facetStart, int? facetPageSize)
-    //TBD public Lazy<FacetedQueryResult> GetFacetsLazy(string facetSetupDoc, int facetStart, int? facetPageSize)
-    //TBD public Lazy<FacetedQueryResult> GetFacetsLazy(List<Facet> facets, int facetStart, int? facetPageSize)
+    @Override
+    public IAggregationDocumentQuery<T> aggregateBy(Consumer<IFacetBuilder<T>> builder) {
+        FacetBuilder ff = new FacetBuilder<>();
+        builder.accept(ff);
+
+        return aggregateBy(ff.getFacet());
+    }
+
+    @Override
+    public IAggregationDocumentQuery<T> aggregateBy(FacetBase facet) {
+        _aggregateBy(facet);
+
+        return new AggregationDocumentQuery<T>(this);
+    }
+
+    @Override
+    public IAggregationDocumentQuery<T> aggregateBy(Facet... facets) {
+        for (Facet facet : facets) {
+            _aggregateBy(facet);
+        }
+
+        return new AggregationDocumentQuery<T>(this);
+    }
+
+    @Override
+    public IAggregationDocumentQuery<T> aggregateUsing(String facetSetupDocumentId) {
+        _aggregateUsing(facetSetupDocumentId);
+
+        return new AggregationDocumentQuery<T>(this);
+    }
+
     //TBD IDocumentQuery<T> IDocumentQueryBase<T, IDocumentQuery<T>>.Highlight(string fieldName, int fragmentLength, int fragmentCount, string fragmentsField)
     //TBD IDocumentQuery<T> IDocumentQueryBase<T, IDocumentQuery<T>>.Highlight(string fieldName, int fragmentLength, int fragmentCount, out FieldHighlightings highlightings)
     //TBD IDocumentQuery<T> IDocumentQueryBase<T, IDocumentQuery<T>>.Highlight(string fieldName,string fieldKeyName, int fragmentLength,int fragmentCount,out FieldHighlightings highlightings)
