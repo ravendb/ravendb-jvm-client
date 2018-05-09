@@ -8,6 +8,11 @@ public interface IAdvancedSessionOperations extends IAdvancedDocumentSessionOper
 
     //TBD ILazySessionOperations lazily();
 
+    /**
+     * @return Access the attachments operations
+     */
+    IAttachmentsSessionOperations attachments();
+
     //TBD IAttachmentsSessionOperations Attachments { get; }
     //TBD IRevisionsSessionOperations Revisions { get; }
 

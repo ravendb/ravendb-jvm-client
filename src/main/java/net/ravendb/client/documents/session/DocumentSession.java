@@ -38,7 +38,13 @@ public class DocumentSession extends InMemoryDocumentSessionOperations implement
 
     //TBD public IEagerSessionOperations eagerly() {
 
-    //TBD public IAttachmentsSessionOperations Attachments { get; }
+    private IAttachmentsSessionOperations _attachments;
+
+    @Override
+    public IAttachmentsSessionOperations attachments() {
+        return _attachments;
+    }
+
     //TBD public IRevisionsSessionOperations Revisions { get; }
 
     /**
@@ -51,7 +57,8 @@ public class DocumentSession extends InMemoryDocumentSessionOperations implement
     public DocumentSession(String dbName, DocumentStore documentStore, UUID id, RequestExecutor requestExecutor) {
         super(dbName, documentStore, requestExecutor, id);
 
-        //TBD Attachments = new DocumentSessionAttachments(this);
+        _attachments = new DocumentSessionAttachments(this);
+
         //TBD Revisions = new DocumentSessionRevisions(this);
     }
 

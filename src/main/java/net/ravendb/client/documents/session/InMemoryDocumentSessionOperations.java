@@ -264,7 +264,7 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
 
     protected final List<ICommandData> deferredCommands = new ArrayList<>();
 
-    protected final Map<IdTypeAndName, ICommandData> deferredCommandsMap = new HashMap<>();
+    final Map<IdTypeAndName, ICommandData> deferredCommandsMap = new HashMap<>();
 
     public int getDeferredCommandsCount() {
         return deferredCommands.size();
@@ -802,7 +802,7 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
                 continue;
             }
 
-            ICommandData command = result.deferredCommandsMap.get(IdTypeAndName.create(entity.getValue().getId(), CommandType.CLIENT_ANY_COMMAND, null));
+            ICommandData command = result.deferredCommandsMap.get(IdTypeAndName.create(entity.getValue().getId(), CommandType.CLIENT_NOT_ATTACHMENT, null));
             if (command != null) {
                 throwInvalidModifiedDocumentWithDeferredCommand(command);
             }
@@ -850,7 +850,7 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
 
     private static void throwInvalidModifiedDocumentWithDeferredCommand(ICommandData resultCommand) {
         throw new IllegalStateException("Cannot perform save because document " + resultCommand.getId()
-                + " has been deleted by the session and is also taking part in deferred " + resultCommand.getType() + " command");
+                + " has been modified by the session and is also taking part in deferred " + resultCommand.getType() + " command");
     }
 
     private static void throwInvalidDeletedDocumentWithDeferredCommand(ICommandData resultCommand) {
