@@ -1,24 +1,30 @@
 package net.ravendb.client.documents.operations.attachments;
 
+import org.apache.commons.io.IOUtils;
+import org.apache.http.client.methods.CloseableHttpResponse;
+
+import java.io.IOException;
 import java.io.InputStream;
 
-public class AttachmentResult {
-    private InputStream data;
+public class AttachmentResult implements AutoCloseable {
     private AttachmentDetails details;
+    private CloseableHttpResponse response;
 
-    public InputStream getData() {
-        return data;
+    public AttachmentResult(CloseableHttpResponse response, AttachmentDetails details) {
+        this.details = details;
+        this.response = response;
     }
 
-    public void setData(InputStream data) {
-        this.data = data;
+    public InputStream getData() throws IOException {
+        return response.getEntity().getContent();
     }
 
     public AttachmentDetails getDetails() {
         return details;
     }
 
-    public void setDetails(AttachmentDetails details) {
-        this.details = details;
+    @Override
+    public void close() {
+        IOUtils.closeQuietly(response);
     }
 }

@@ -3,6 +3,9 @@ package net.ravendb.client.documents.session;
 import net.ravendb.client.documents.conventions.DocumentConventions;
 import net.ravendb.client.documents.queries.GroupBy;
 import net.ravendb.client.documents.queries.SearchOperator;
+import net.ravendb.client.documents.queries.facets.FacetBase;
+import net.ravendb.client.documents.queries.facets.IAggregationDocumentQuery;
+import net.ravendb.client.documents.queries.facets.IFacetBuilder;
 import net.ravendb.client.documents.queries.spatial.DynamicSpatialField;
 import net.ravendb.client.documents.queries.spatial.SpatialCriteria;
 
@@ -10,6 +13,7 @@ import java.time.Duration;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
+import java.util.function.Consumer;
 
 /**
  * Mostly used by the linq provider
@@ -424,10 +428,11 @@ public interface IAbstractDocumentQuery<T> {
 
     void _orderByDistanceDescending(String fieldName, String shapeWkt);
 
+    void _aggregateBy(FacetBase facet);
+
+    void _aggregateUsing(String facetSetupDocumentId);
+
     //TBD: MoreLikeThisScope MoreLikeThis();
-    //TBD void AggregateBy(FacetBase facet);
-    //TBD IAggregationDocumentQuery<T> AggregateBy(Action<IFacetBuilder<T>> builder);
-    //TBD void AggregateUsing(string facetSetupDocumentId);
     //TBD void AddFromAliasToWhereTokens(string fromAlias);
     //TBD string ProjectionParameter(object id);
     //TBD void SuggestUsing(SuggestionBase suggestion);

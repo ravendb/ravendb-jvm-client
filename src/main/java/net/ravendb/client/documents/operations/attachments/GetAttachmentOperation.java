@@ -118,13 +118,7 @@ public class GetAttachmentOperation implements IOperation<AttachmentResult> {
             attachmentDetails.setChangeVector(changeVector);
             attachmentDetails.setDocumentId(_documentId);
 
-            try {
-                result = new AttachmentResult();
-                result.setDetails(attachmentDetails);
-                result.setData(response.getEntity().getContent());
-            } catch (IOException e) {
-                throw new RavenException("Unable to read attachment: " + _name + e.getMessage(), e);
-            }
+            result = new AttachmentResult(response, attachmentDetails);
 
             return ResponseDisposeHandling.MANUALLY;
         }

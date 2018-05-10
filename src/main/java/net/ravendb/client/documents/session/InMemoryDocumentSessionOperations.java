@@ -1072,9 +1072,6 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
         return _hash;
     }
 
-    //TBD internal void HandleInternalMetadata(BlittableJsonReaderObject result)
-    //TBD internal void HandleInternalMetadata(BlittableJsonReaderArray values)
-
     private Object deserializeFromTransformer(Class clazz, String id, ObjectNode document) {
         //TBD handleInternalMetadata(document);
         return entityToJson.convertToEntity(clazz, id, document);
@@ -1174,18 +1171,6 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
 
         return Tuple.create(indexName, collectionName);
     }
-
-    //TBD public AttachmentName[] GetAttachmentNames(object entity) --> attachments
-    //TBD public void StoreAttachment(string documentId, string name, Stream stream, string contentType = null) --> attachments
-    //TBD public void StoreAttachment(object entity, string name, Stream stream, string contentType = null) --> attachments
-
-    protected void throwEntityNotInSession(Object entity) {
-        throw new IllegalArgumentException(entity + " is not associated with the session, cannot add attachment to it. " +
-        "Use documentId instead or track the entity in the session.");
-    }
-
-    //TBD public void DeleteAttachment(object entity, string name) --> attachments
-    //TBD public void DeleteAttachment(string documentId, string name) --> attachments
 
     public static class SaveChangesData {
         private final List<ICommandData> deferredCommands;

@@ -13,7 +13,6 @@ public interface IAdvancedSessionOperations extends IAdvancedDocumentSessionOper
      */
     IAttachmentsSessionOperations attachments();
 
-    //TBD IAttachmentsSessionOperations Attachments { get; }
     //TBD IRevisionsSessionOperations Revisions { get; }
 
     /**

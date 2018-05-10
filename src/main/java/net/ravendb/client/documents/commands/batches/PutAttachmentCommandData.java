@@ -31,8 +31,6 @@ public class PutAttachmentCommandData implements ICommandData {
         this.stream = stream;
         this.contentType = contentType;
         this.changeVector = changeVector;
-
-        //TODO: PutAttachmentCommandHelper.ValidateStream(stream);? do we need this in java?
     }
 
     @Override
