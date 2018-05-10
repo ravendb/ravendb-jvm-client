@@ -194,8 +194,6 @@ public abstract class AbstractIndexCreationTask {
         spatialOptionsStrings.put(field, indexing.apply(new SpatialOptionsFactory()));
     }
 
-    //TBD protected void Store(Expression<Func<TReduceResult, object>> field, FieldStorage storage)
-
     protected void storeAllFields(FieldStorage storage) {
         storesStrings.put(Constants.Documents.Indexing.Fields.ALL_FIELDS, storage);
     }

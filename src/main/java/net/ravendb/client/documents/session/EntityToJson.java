@@ -57,7 +57,7 @@ public class EntityToJson {
             return (ObjectNode) entity;
         }
 
-        ObjectMapper mapper = JsonExtensions.getDefaultMapper();
+        ObjectMapper mapper = JsonExtensions.getDefaultEntityMapper();
 
         ObjectNode jsonNode = mapper.valueToTree(entity);
 
@@ -82,6 +82,11 @@ public class EntityToJson {
             documentInfo.getMetadata().fieldNames().forEachRemaining(property -> {
                 metadataNode.set(property, documentInfo.getMetadata().get(property).deepCopy());
             });
+        } else if (documentInfo.getMetadataInstance() != null) {
+            setMetadata = true;
+            for (Map.Entry<String, Object> entry : documentInfo.getMetadataInstance().entrySet()) {
+                metadataNode.set(entry.getKey(), mapper.valueToTree(entry.getValue()));
+            }
         }
 
         if (documentInfo.getCollection() != null) {

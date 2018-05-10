@@ -142,7 +142,10 @@ public abstract class DocumentStoreBase implements IDocumentStore {
 
     private KeyStore _certificate;
 
-    //TBD: public abstract BulkInsertOperation BulkInsert(string database = null);
+    public abstract BulkInsertOperation bulkInsert();
+
+    public abstract BulkInsertOperation bulkInsert(String database);
+
     //TBD: public IReliableSubscriptions Subscriptions { get; }
 
     protected void ensureNotClosed() {

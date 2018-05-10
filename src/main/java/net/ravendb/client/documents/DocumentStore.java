@@ -296,5 +296,15 @@ public class DocumentStore extends DocumentStoreBase {
         return operationExecutor;
     }
 
-    // TBD public override BulkInsertOperation BulkInsert(string database = null)
+    @Override
+    public BulkInsertOperation bulkInsert() {
+        return bulkInsert(null);
+    }
+
+    @Override
+    public BulkInsertOperation bulkInsert(String database) {
+        assertInitialized();
+
+        return new BulkInsertOperation(ObjectUtils.firstNonNull(database, getDatabase()), this);
+    }
 }

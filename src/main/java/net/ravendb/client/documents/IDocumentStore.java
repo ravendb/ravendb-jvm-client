@@ -133,7 +133,10 @@ public interface IDocumentStore extends IDisposalNotification {
      */
     String[] getUrls();
 
-    //TBD: BulkInsertOperation BulkInsert(string database = null);
+    BulkInsertOperation bulkInsert();
+
+    BulkInsertOperation bulkInsert(String database);
+
     //TBD: IReliableSubscriptions Subscriptions { get; }
 
     String getDatabase();
