@@ -33,7 +33,6 @@ import org.apache.http.client.methods.HttpRequestBase;
 import org.apache.http.entity.AbstractHttpEntity;
 import org.apache.http.entity.ContentType;
 import org.apache.http.impl.client.CloseableHttpClient;
-import sun.plugin.dom.exception.InvalidStateException;
 
 import java.io.*;
 import java.util.concurrent.CompletableFuture;
@@ -207,7 +206,7 @@ public class BulkInsertOperation implements CleanCloseable {
 
     public void store(Object entity, String id, IMetadataDictionary metadata) {
         if (!_concurrentCheck.compareAndSet(0, 1)) {
-            throw new InvalidStateException("Bulk Insert store methods cannot be executed concurrently.");
+            throw new IllegalStateException("Bulk Insert store methods cannot be executed concurrently.");
         }
 
         try {
