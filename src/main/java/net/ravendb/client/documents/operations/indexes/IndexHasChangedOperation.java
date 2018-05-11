@@ -40,7 +40,7 @@ public class IndexHasChangedOperation implements IMaintenanceOperation<Boolean> 
         public IndexHasChangedCommand(DocumentConventions conventions, IndexDefinition definition) {
             super(Boolean.class);
 
-            _definition = EntityToJson.convertEntityToJson(definition, conventions);
+            _definition = mapper.valueToTree(definition);
         }
 
         @Override

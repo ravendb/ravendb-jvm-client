@@ -25,7 +25,7 @@ public class IndexDefinition {
     private Map<String, IndexFieldOptions> fields;
     private IndexConfiguration configuration;
     private IndexType indexType;
-    //TBD private boolean testIndex;
+    //TBD 4.1 private boolean testIndex;
     private String outputReduceToCollection;
 
     /**
@@ -182,9 +182,9 @@ public class IndexDefinition {
         return IndexType.MAP_REDUCE;
     }
 
-    //TBD public boolean isTestIndex()
+    //TBD 4.1 public boolean isTestIndex()
 
-    //TBD public void setTestIndex(boolean testIndex)
+    //TBD 4.1 public void setTestIndex(boolean testIndex)
 
     /**
      * If not null than each reduce result will be created as a document in the specified collection name.

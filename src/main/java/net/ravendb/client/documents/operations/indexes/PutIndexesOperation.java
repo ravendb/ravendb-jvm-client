@@ -55,7 +55,7 @@ public class PutIndexesOperation implements IMaintenanceOperation<PutIndexResult
                 if (indexesToAdd[i].getName() == null) {
                     throw new IllegalArgumentException("Index name cannot be null");
                 }
-                _indexToAdd[i] = EntityToJson.convertEntityToJson(indexesToAdd[i], conventions);
+                _indexToAdd[i] = mapper.valueToTree(indexesToAdd[i]);
             }
         }
 

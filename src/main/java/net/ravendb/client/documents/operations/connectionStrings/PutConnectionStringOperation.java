@@ -49,7 +49,7 @@ public class PutConnectionStringOperation<T extends ConnectionString> implements
             HttpPut request = new HttpPut();
             request.setEntity(new ContentProviderHttpEntity(outputStream -> {
                 try (JsonGenerator generator = mapper.getFactory().createGenerator(outputStream)) {
-                    ObjectNode config = EntityToJson.convertEntityToJson(_connectionString, DocumentConventions.defaultConventions);
+                    ObjectNode config = mapper.valueToTree(_connectionString);
                     generator.writeTree(config);
                 } catch (IOException e) {
                     throw new RuntimeException(e);

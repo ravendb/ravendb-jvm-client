@@ -60,7 +60,7 @@ public class SetIndexesLockOperation implements IVoidMaintenanceOperation {
                 throw new IllegalArgumentException("Parameters cannot be null");
             }
 
-            _parameters = EntityToJson.convertEntityToJson(parameters, conventions);
+            _parameters = mapper.valueToTree(parameters);
         }
 
         @Override

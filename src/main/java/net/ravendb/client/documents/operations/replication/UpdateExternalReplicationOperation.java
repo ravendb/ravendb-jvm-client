@@ -48,7 +48,7 @@ public class UpdateExternalReplicationOperation implements IMaintenanceOperation
                     generator.writeStartObject();
                     generator.writeFieldName("Watcher");
 
-                    ObjectNode tree = EntityToJson.convertEntityToJson(_newWatcher, DocumentConventions.defaultConventions);
+                    ObjectNode tree = mapper.valueToTree(_newWatcher);
 
                     generator.writeTree(tree);
 
