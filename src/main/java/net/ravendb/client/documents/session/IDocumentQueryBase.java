@@ -56,17 +56,17 @@ public interface IDocumentQueryBase<T, TSelf extends IDocumentQueryBase<T, TSelf
      */
     TSelf fuzzy(double fuzzy);
 
-    //TBD TSelf Highlight(string fieldName, int fragmentLength, int fragmentCount, string fragmentsField);
+    //TBD 4.1 TSelf Highlight(string fieldName, int fragmentLength, int fragmentCount, string fragmentsField);
 
-    //TBD TSelf Highlight(string fieldName, int fragmentLength, int fragmentCount, out FieldHighlightings highlightings);
+    //TBD 4.1 TSelf Highlight(string fieldName, int fragmentLength, int fragmentCount, out FieldHighlightings highlightings);
 
-    //TBD TSelf Highlight(string fieldName, string fieldKeyName, int fragmentLength, int fragmentCount, out FieldHighlightings highlightings);
+    //TBD 4.1 TSelf Highlight(string fieldName, string fieldKeyName, int fragmentLength, int fragmentCount, out FieldHighlightings highlightings);
 
-    //TBD TSelf Highlight<TValue>(Expression<Func<T, TValue>> propertySelector, int fragmentLength, int fragmentCount, Expression<Func<T, IEnumerable>> fragmentsPropertySelector);
+    //TBD 4.1 TSelf Highlight<TValue>(Expression<Func<T, TValue>> propertySelector, int fragmentLength, int fragmentCount, Expression<Func<T, IEnumerable>> fragmentsPropertySelector);
 
-    //TBD TSelf Highlight<TValue>(Expression<Func<T, TValue>> propertySelector, int fragmentLength, int fragmentCount, out FieldHighlightings highlightings);
+    //TBD 4.1 TSelf Highlight<TValue>(Expression<Func<T, TValue>> propertySelector, int fragmentLength, int fragmentCount, out FieldHighlightings highlightings);
 
-    //TBD TSelf Highlight<TValue>(Expression<Func<T, TValue>> propertySelector, Expression<Func<T, TValue>> keyPropertySelector, int fragmentLength, int fragmentCount, out FieldHighlightings highlightings);
+    //TBD 4.1 TSelf Highlight<TValue>(Expression<Func<T, TValue>> propertySelector, Expression<Func<T, TValue>> keyPropertySelector, int fragmentLength, int fragmentCount, out FieldHighlightings highlightings);
 
     /**
      * Includes the specified path in the query, loading the document specified in that path
@@ -158,8 +158,8 @@ public interface IDocumentQueryBase<T, TSelf extends IDocumentQueryBase<T, TSelf
 
     //TBD TSelf customSortUsing(String typeName, boolean descending);
 
-    //TBD TSelf SetHighlighterTags(string preTag, string postTag);
-    //TBD TSelf SetHighlighterTags(string[] preTags, string[] postTags);
+    //TBD 4.1 TSelf SetHighlighterTags(string preTag, string postTag);
+    //TBD 4.1 TSelf SetHighlighterTags(string[] preTags, string[] postTags);
 
 
     /**

@@ -22,7 +22,7 @@ public class QueryResult extends GenericQueryResult<ArrayNode, ObjectNode> {
         queryResult.setSkippedResults(getSkippedResults());
         queryResult.setTotalResults(getTotalResults());
 
-        /* TBD
+        /* TBD 4.1
         Map<String, Map<String, List<String>>> highlightings = getHighlightings();
 
         if (highlightings != null) {

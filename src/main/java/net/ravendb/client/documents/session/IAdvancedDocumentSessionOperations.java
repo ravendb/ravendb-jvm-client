@@ -9,6 +9,7 @@ import net.ravendb.client.primitives.EventHandler;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Consumer;
 
 /**
     Advanced session operations
@@ -184,7 +185,12 @@ public interface IAdvancedDocumentSessionOperations {
      */
     Map<String, List<DocumentsChanges>> whatChanged();
 
-    //TBD void WaitForReplicationAfterSaveChanges(TimeSpan? timeout = null, bool throwOnTimeout = true, int replicas = 1, bool majority = false);
+    /**
+     * SaveChanges will wait for the changes made to be replicates to `replicas` nodes
+     * @param options Configuration options
+     */
+    void waitForReplicationAfterSaveChanges(Consumer<InMemoryDocumentSessionOperations.ReplicationWaitOptsBuilder> options);
+
     //TBD void WaitForIndexesAfterSaveChanges(TimeSpan? timeout = null, bool throwOnTimeout = true, string[] indexes = null);
 
     EntityToJson getEntityToJson();

@@ -80,7 +80,6 @@ public interface IDocumentQuery<T> extends IDocumentQueryBase<T, IDocumentQuery<
 
     IAggregationDocumentQuery<T> aggregateUsing(String facetSetupDocumentId);
 
-    //TBD AggregateBy
     //TBD SuggestUsing
 
 }

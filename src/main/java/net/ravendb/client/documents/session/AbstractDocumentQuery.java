@@ -35,8 +35,6 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
 
     protected QueryOperator defaultOperator = QueryOperator.AND;
 
-    //TBD: private readonly LinqPathProvider _linqPathProvider;
-
     protected Set<Class> rootTypes = new HashSet<>();
 
     /**
@@ -123,8 +121,6 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
     public IDocumentSession getSession() {
         return (IDocumentSession) theSession;
     }
-
-    //TBD public IAsyncDocumentSession AsyncSession => (IAsyncDocumentSession)TheSession;
 
     @Override
     public boolean isDynamicMapReduce() {
@@ -1137,7 +1133,7 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
 
     private void updateStatsAndHighlightings(QueryResult queryResult) {
         queryStats.updateQueryStats(queryResult);
-        //TBD: Highlightings.Update(queryResult);
+        //TBD 4.1 Highlightings.Update(queryResult);
     }
 
     private void buildSelect(StringBuilder writer) {
@@ -1497,16 +1493,16 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
     }
 
     //TBD public void _showTimings()
-    //TBD protected List<HighlightedField> HighlightedFields = new List<HighlightedField>();
-    //TBD protected string[] HighlighterPreTags = new string[0];
-    //TBD protected string[] HighlighterPostTags = new string[0];
-    //TBD protected string HighlighterKeyName;
-    //TBD protected QueryHighlightings Highlightings = new QueryHighlightings();
-    //TBD public void SetHighlighterTags(string preTag, string postTag)
-    //TBD public void Highlight(string fieldName, int fragmentLength, int fragmentCount, string fragmentsField)
-    //TBD public void Highlight(string fieldName, int fragmentLength, int fragmentCount, out FieldHighlightings fieldHighlightings)
-    //TBD public void Highlight(string fieldName, string fieldKeyName, int fragmentLength, int fragmentCount, out FieldHighlightings fieldHighlightings)
-    //TBD public void SetHighlighterTags(string[] preTags, string[] postTags)
+    //TBD 4.1 protected List<HighlightedField> HighlightedFields = new List<HighlightedField>();
+    //TBD 4.1 protected string[] HighlighterPreTags = new string[0];
+    //TBD 4.1 protected string[] HighlighterPostTags = new string[0];
+    //TBD 4.1 protected string HighlighterKeyName;
+    //TBD 4.1 protected QueryHighlightings Highlightings = new QueryHighlightings();
+    //TBD 4.1 public void SetHighlighterTags(string preTag, string postTag)
+    //TBD 4.1 public void Highlight(string fieldName, int fragmentLength, int fragmentCount, string fragmentsField)
+    //TBD 4.1 public void Highlight(string fieldName, int fragmentLength, int fragmentCount, out FieldHighlightings fieldHighlightings)
+    //TBD 4.1 public void Highlight(string fieldName, string fieldKeyName, int fragmentLength, int fragmentCount, out FieldHighlightings fieldHighlightings)
+    //TBD 4.1 public void SetHighlighterTags(string[] preTags, string[] postTags)
 
     protected void _withinRadiusOf(String fieldName, double radius, double latitude, double longitude, SpatialUnits radiusUnits, double distErrorPercent) {
         fieldName = ensureValidFieldName(fieldName, false);

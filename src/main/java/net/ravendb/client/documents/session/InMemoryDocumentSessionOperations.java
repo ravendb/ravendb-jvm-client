@@ -32,6 +32,7 @@ import org.apache.commons.lang3.NotImplementedException;
 import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.StringUtils;
 
+import java.time.Duration;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
@@ -55,7 +56,7 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
     private final int _hash = _instancesCounter.incrementAndGet();
     protected final boolean generateDocumentKeysOnStore = true;
     protected final SessionInfo sessionInfo;
-    private BatchOptions _saveChangesOptions;
+    BatchOptions _saveChangesOptions;
 
     private boolean _isDisposed;
 
@@ -903,7 +904,19 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
         return entityChanged(document, documentInfo, null);
     }
 
-    //TBD public void WaitForReplicationAfterSaveChanges(TimeSpan? timeout = null, bool throwOnTimeout = true, int replicas = 1, bool majority = false)
+    public void waitForReplicationAfterSaveChanges(Consumer<ReplicationWaitOptsBuilder> options) {
+        ReplicationWaitOptsBuilder builder = new ReplicationWaitOptsBuilder();
+        options.accept(builder);
+
+        BatchOptions builderOptions = builder.getOptions();
+
+        if (builderOptions.getWaitForReplicasTimeout() == null) {
+            builderOptions.setWaitForReplicasTimeout(Duration.ofSeconds(15));
+        }
+
+        builderOptions.setWaitForReplicas(true);
+    }
+
     //TBD public void WaitForIndexesAfterSaveChanges(TimeSpan? timeout = null, bool throwOnTimeout = false, string[] indexes = null)
 
     private void getAllEntitiesChanges(Map<String, List<DocumentsChanges>> changes) {
@@ -1203,6 +1216,37 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
 
         public Map<IdTypeAndName, ICommandData> getDeferredCommandsMap() {
             return deferredCommandsMap;
+        }
+    }
+
+
+    public class ReplicationWaitOptsBuilder {
+
+        private BatchOptions getOptions() {
+            if (InMemoryDocumentSessionOperations.this._saveChangesOptions == null) {
+                InMemoryDocumentSessionOperations.this._saveChangesOptions = new BatchOptions();
+            }
+            return InMemoryDocumentSessionOperations.this._saveChangesOptions;
+        }
+
+        public ReplicationWaitOptsBuilder withTimeout(Duration timeout) {
+            getOptions().setWaitForReplicasTimeout(timeout);
+            return this;
+        }
+
+        public ReplicationWaitOptsBuilder throwOnTimeout(boolean shouldThrow) {
+            getOptions().setThrowOnTimeoutInWaitForReplicas(shouldThrow);
+            return this;
+        }
+
+        public ReplicationWaitOptsBuilder numberOfReplicas(int replicas) {
+            getOptions().setNumberOfReplicasToWaitFor(replicas);
+            return this;
+        }
+
+        public ReplicationWaitOptsBuilder majority(boolean waitForMajority) {
+            getOptions().setMajority(waitForMajority);
+            return this;
         }
     }
 
