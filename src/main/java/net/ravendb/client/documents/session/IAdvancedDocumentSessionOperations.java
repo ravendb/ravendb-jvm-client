@@ -191,7 +191,11 @@ public interface IAdvancedDocumentSessionOperations {
      */
     void waitForReplicationAfterSaveChanges(Consumer<InMemoryDocumentSessionOperations.ReplicationWaitOptsBuilder> options);
 
-    //TBD void WaitForIndexesAfterSaveChanges(TimeSpan? timeout = null, bool throwOnTimeout = true, string[] indexes = null);
+    /**
+     * SaveChanges will wait for the indexes to catch up with the saved changes
+     * @param options Configuration options
+     */
+    void waitForIndexesAfterSaveChanges(Consumer<InMemoryDocumentSessionOperations.IndexesWaitOptsBuilder> options);
 
     EntityToJson getEntityToJson();
 }

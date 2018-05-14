@@ -917,7 +917,18 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
         builderOptions.setWaitForReplicas(true);
     }
 
-    //TBD public void WaitForIndexesAfterSaveChanges(TimeSpan? timeout = null, bool throwOnTimeout = false, string[] indexes = null)
+    public void waitForIndexesAfterSaveChanges(Consumer<InMemoryDocumentSessionOperations.IndexesWaitOptsBuilder> options) {
+        IndexesWaitOptsBuilder builder = new IndexesWaitOptsBuilder();
+        options.accept(builder);
+
+        BatchOptions builderOptions = builder.getOptions();
+
+        if (builderOptions.getWaitForIndexesTimeout() == null) {
+            builderOptions.setWaitForIndexesTimeout(Duration.ofSeconds(15));
+        }
+
+        builderOptions.setWaitForIndexes(true);
+    }
 
     private void getAllEntitiesChanges(Map<String, List<DocumentsChanges>> changes) {
         for (Map.Entry<String, DocumentInfo> pair : documentsById) {
@@ -1246,6 +1257,31 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
 
         public ReplicationWaitOptsBuilder majority(boolean waitForMajority) {
             getOptions().setMajority(waitForMajority);
+            return this;
+        }
+    }
+
+    public class IndexesWaitOptsBuilder {
+
+        private BatchOptions getOptions() {
+            if (InMemoryDocumentSessionOperations.this._saveChangesOptions == null) {
+                InMemoryDocumentSessionOperations.this._saveChangesOptions = new BatchOptions();
+            }
+            return InMemoryDocumentSessionOperations.this._saveChangesOptions;
+        }
+
+        public IndexesWaitOptsBuilder withTimeout(Duration timeout) {
+            getOptions().setWaitForReplicasTimeout(timeout);
+            return this;
+        }
+
+        public IndexesWaitOptsBuilder throwOnTimeout(boolean shouldThrow) {
+            getOptions().setThrowOnTimeoutInWaitForReplicas(shouldThrow);
+            return this;
+        }
+
+        public IndexesWaitOptsBuilder waitForIndexes(String... indexes) {
+            getOptions().setWaitForSpecificIndexes(indexes);
             return this;
         }
     }
