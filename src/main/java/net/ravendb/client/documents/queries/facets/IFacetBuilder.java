@@ -8,6 +8,6 @@ public interface IFacetBuilder<T> {
 
     IFacetOperations<T> allResults();
 
-    //TBD IFacetOperations<T> ByField(Expression<Func<T, object>> path);
-    //TBD IFacetOperations<T> ByRanges(Expression<Func<T, bool>> path, params Expression<Func<T, bool>>[] paths);
+    //TBD expr IFacetOperations<T> ByField(Expression<Func<T, object>> path);
+    //TBD expr IFacetOperations<T> ByRanges(Expression<Func<T, bool>> path, params Expression<Func<T, bool>>[] paths);
 }

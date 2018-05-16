@@ -1,5 +1,6 @@
 package net.ravendb.client.documents;
 
+import net.ravendb.client.documents.changes.IDatabaseChanges;
 import net.ravendb.client.documents.conventions.DocumentConventions;
 import net.ravendb.client.documents.indexes.AbstractIndexCreationTask;
 import net.ravendb.client.documents.indexes.IndexCreation;
@@ -54,7 +55,9 @@ public abstract class DocumentStoreBase implements IDocumentStore {
 
     //TBD: public abstract IDisposable AggressivelyCacheFor(TimeSpan cacheDuration, string database = null);
 
-    //TBD: public abstract IDatabaseChanges Changes(string database = null);
+    public abstract IDatabaseChanges changes();
+
+    public abstract IDatabaseChanges changes(String database);
 
     //TBD: public abstract IDisposable DisableAggressiveCaching(string database = null);
 

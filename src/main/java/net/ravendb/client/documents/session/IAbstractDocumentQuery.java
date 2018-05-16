@@ -344,11 +344,11 @@ public interface IAbstractDocumentQuery<T> {
 
     void _orderByScoreDescending();
 
-    //TBD void Highlight(string fieldName, int fragmentLength, int fragmentCount, string fragmentsField);
-    //TBD void Highlight(string fieldName, int fragmentLength, int fragmentCount, out FieldHighlightings highlightings);
-    //TBD void Highlight(string fieldName, string fieldKeyName, int fragmentLength, int fragmentCount, out FieldHighlightings highlightings);
-    //TBD void SetHighlighterTags(string preTag, string postTag);
-    //TBD void SetHighlighterTags(string[] preTags, string[] postTags);
+    //TBD 4.1 void Highlight(string fieldName, int fragmentLength, int fragmentCount, string fragmentsField);
+    //TBD 4.1 void Highlight(string fieldName, int fragmentLength, int fragmentCount, out FieldHighlightings highlightings);
+    //TBD 4.1 void Highlight(string fieldName, string fieldKeyName, int fragmentLength, int fragmentCount, out FieldHighlightings highlightings);
+    //TBD 4.1 void SetHighlighterTags(string preTag, string postTag);
+    //TBD 4.1 void SetHighlighterTags(string[] preTags, string[] postTags);
 
 
     /**

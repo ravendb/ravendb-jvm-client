@@ -11,5 +11,5 @@ public interface IFacetOperations<T> {
     IFacetOperations<T> maxOn(String path);
     IFacetOperations<T> averageOn(String path);
 
-    //TBD overloads with expression
+    //TBD expr overloads with expression
 }

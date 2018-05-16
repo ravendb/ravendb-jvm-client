@@ -2,12 +2,15 @@ package net.ravendb.client.documents.operations;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import net.ravendb.client.documents.changes.IDatabaseChanges;
 import net.ravendb.client.documents.conventions.DocumentConventions;
 import net.ravendb.client.exceptions.ExceptionDispatcher;
 import net.ravendb.client.extensions.JsonExtensions;
 import net.ravendb.client.http.RavenCommand;
 import net.ravendb.client.http.RequestExecutor;
 import net.ravendb.client.primitives.OperationCancelledException;
+
+import java.util.function.Supplier;
 
 public class Operation {
 
@@ -23,7 +26,7 @@ public class Operation {
         return _id;
     }
 
-    public Operation(RequestExecutor requestExecutor, DocumentConventions conventions, long id) {
+    public Operation(RequestExecutor requestExecutor, Supplier<IDatabaseChanges> changes, DocumentConventions conventions, long id) {
         _requestExecutor = requestExecutor;
         //TBD _changes = changes;
         _conventions = conventions;

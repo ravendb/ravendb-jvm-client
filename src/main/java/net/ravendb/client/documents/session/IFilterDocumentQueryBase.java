@@ -38,7 +38,7 @@ public interface IFilterDocumentQueryBase<T, TSelf extends IDocumentQueryBase<T,
      */
     TSelf containsAll(String fieldName, Collection<Object> values);
 
-    //TBD TSelf ContainsAll<TValue>(Expression<Func<T, TValue>> propertySelector, IEnumerable<TValue> values);
+    //TBD expr TSelf ContainsAll<TValue>(Expression<Func<T, TValue>> propertySelector, IEnumerable<TValue> values);
 
     /**
      * Performs a query matching ANY of the provided values against the given field (OR)
@@ -48,7 +48,7 @@ public interface IFilterDocumentQueryBase<T, TSelf extends IDocumentQueryBase<T,
      */
     TSelf containsAny(String fieldName, Collection<Object> values);
 
-    //TBD TSelf ContainsAny<TValue>(Expression<Func<T, TValue>> propertySelector, IEnumerable<TValue> values);
+    //TBD expr TSelf ContainsAny<TValue>(Expression<Func<T, TValue>> propertySelector, IEnumerable<TValue> values);
 
     /**
      * Negate the next operation
@@ -92,7 +92,7 @@ public interface IFilterDocumentQueryBase<T, TSelf extends IDocumentQueryBase<T,
      */
     TSelf search(String fieldName, String searchTerms, SearchOperator operator);
 
-    //TBD TSelf Search<TValue>(Expression<Func<T, TValue>> propertySelector, string searchTerms, SearchOperator @operator = SearchOperator.Or);
+    //TBD expr TSelf Search<TValue>(Expression<Func<T, TValue>> propertySelector, string searchTerms, SearchOperator @operator = SearchOperator.Or);
 
     /**
      * Filter the results from the index using the specified where clause.
@@ -121,7 +121,7 @@ public interface IFilterDocumentQueryBase<T, TSelf extends IDocumentQueryBase<T,
      */
     TSelf whereBetween(String fieldName, Object start, Object end, boolean exact);
 
-    //TBD TSelf WhereBetween<TValue>(Expression<Func<T, TValue>> propertySelector, TValue start, TValue end, bool exact = false);
+    //TBD expr TSelf WhereBetween<TValue>(Expression<Func<T, TValue>> propertySelector, TValue start, TValue end, bool exact = false);
 
     /**
      * Matches fields which ends with the specified value.
@@ -131,7 +131,7 @@ public interface IFilterDocumentQueryBase<T, TSelf extends IDocumentQueryBase<T,
      */
     TSelf whereEndsWith(String fieldName, Object value);
 
-    //TBD TSelf WhereEndsWith<TValue>(Expression<Func<T, TValue>> propertySelector, TValue value);
+    //TBD expr TSelf WhereEndsWith<TValue>(Expression<Func<T, TValue>> propertySelector, TValue value);
 
     /**
      * Matches value
@@ -167,8 +167,8 @@ public interface IFilterDocumentQueryBase<T, TSelf extends IDocumentQueryBase<T,
      */
     TSelf whereEquals(String fieldName, MethodCall method, boolean exact);
 
-    //TBD TSelf WhereEquals<TValue>(Expression<Func<T, TValue>> propertySelector, TValue value, bool exact = false);
-    //TBD TSelf WhereEquals<TValue>(Expression<Func<T, TValue>> propertySelector, MethodCall value, bool exact = false);
+    //TBD expr TSelf WhereEquals<TValue>(Expression<Func<T, TValue>> propertySelector, TValue value, bool exact = false);
+    //TBD expr TSelf WhereEquals<TValue>(Expression<Func<T, TValue>> propertySelector, MethodCall value, bool exact = false);
 
     /**
      * Matches value
@@ -211,8 +211,8 @@ public interface IFilterDocumentQueryBase<T, TSelf extends IDocumentQueryBase<T,
      */
     TSelf whereNotEquals(String fieldName, MethodCall method, boolean exact);
 
-    //TBD TSelf WhereNotEquals<TValue>(Expression<Func<T, TValue>> propertySelector, TValue value, bool exact = false);
-    //TBD TSelf WhereNotEquals<TValue>(Expression<Func<T, TValue>> propertySelector, MethodCall value, bool exact = false);
+    //TBD expr TSelf WhereNotEquals<TValue>(Expression<Func<T, TValue>> propertySelector, TValue value, bool exact = false);
+    //TBD expr TSelf WhereNotEquals<TValue>(Expression<Func<T, TValue>> propertySelector, MethodCall value, bool exact = false);
 
     /**
      * Not matches value
@@ -238,7 +238,7 @@ public interface IFilterDocumentQueryBase<T, TSelf extends IDocumentQueryBase<T,
      */
     TSelf whereGreaterThan(String fieldName, Object value, boolean exact);
 
-    //TBD  TSelf WhereGreaterThan<TValue>(Expression<Func<T, TValue>> propertySelector, TValue value, bool exact = false);
+    //TBD expr TSelf WhereGreaterThan<TValue>(Expression<Func<T, TValue>> propertySelector, TValue value, bool exact = false);
 
     /**
      * Matches fields where the value is greater than or equal to the specified value
@@ -257,7 +257,7 @@ public interface IFilterDocumentQueryBase<T, TSelf extends IDocumentQueryBase<T,
      */
     TSelf whereGreaterThanOrEqual(String fieldName, Object value, boolean exact);
 
-    //TBD TSelf WhereGreaterThanOrEqual<TValue>(Expression<Func<T, TValue>> propertySelector, TValue value, bool exact = false);
+    //TBD expr TSelf WhereGreaterThanOrEqual<TValue>(Expression<Func<T, TValue>> propertySelector, TValue value, bool exact = false);
 
     /**
      * Check that the field has one of the specified values
@@ -276,7 +276,7 @@ public interface IFilterDocumentQueryBase<T, TSelf extends IDocumentQueryBase<T,
      */
     TSelf whereIn(String fieldName, Collection<Object> values, boolean exact);
 
-    //TBD TSelf WhereIn<TValue>(Expression<Func<T, TValue>> propertySelector, IEnumerable<TValue> values, bool exact = false);
+    //TBD expr TSelf WhereIn<TValue>(Expression<Func<T, TValue>> propertySelector, IEnumerable<TValue> values, bool exact = false);
 
     /**
      * Matches fields where the value is less than the specified value
@@ -295,7 +295,7 @@ public interface IFilterDocumentQueryBase<T, TSelf extends IDocumentQueryBase<T,
      */
     TSelf whereLessThan(String fieldName, Object value, boolean exact);
 
-    //TBD TSelf WhereLessThan<TValue>(Expression<Func<T, TValue>> propertySelector, TValue value, bool exact = false);
+    //TBD expr TSelf WhereLessThan<TValue>(Expression<Func<T, TValue>> propertySelector, TValue value, bool exact = false);
 
     /**
      *  Matches fields where the value is less than or equal to the specified value
@@ -314,7 +314,7 @@ public interface IFilterDocumentQueryBase<T, TSelf extends IDocumentQueryBase<T,
      */
     TSelf whereLessThanOrEqual(String fieldName, Object value, boolean exact);
 
-    //TBD TSelf WhereLessThanOrEqual<TValue>(Expression<Func<T, TValue>> propertySelector, TValue value, bool exact = false);
+    //TBD expr TSelf WhereLessThanOrEqual<TValue>(Expression<Func<T, TValue>> propertySelector, TValue value, bool exact = false);
 
     /**
      * Matches fields which starts with the specified value.
@@ -324,9 +324,9 @@ public interface IFilterDocumentQueryBase<T, TSelf extends IDocumentQueryBase<T,
      */
     TSelf whereStartsWith(String fieldName, Object value);
 
-    //TBD TSelf WhereStartsWith<TValue>(Expression<Func<T, TValue>> propertySelector, TValue value);
+    //TBD expr TSelf WhereStartsWith<TValue>(Expression<Func<T, TValue>> propertySelector, TValue value);
 
-    //TBD TSelf WhereExists<TValue>(Expression<Func<T, TValue>> propertySelector);
+    //TBD expr TSelf WhereExists<TValue>(Expression<Func<T, TValue>> propertySelector);
 
     /**
      * Check if the given field exists
@@ -335,7 +335,7 @@ public interface IFilterDocumentQueryBase<T, TSelf extends IDocumentQueryBase<T,
      */
     TSelf whereExists(String fieldName);
 
-    //TBD TSelf WhereRegex<TValue>(Expression<Func<T, TValue>> propertySelector, string pattern);
+    //TBD expr TSelf WhereRegex<TValue>(Expression<Func<T, TValue>> propertySelector, string pattern);
 
     /**
      * Checks value of a given field against supplied regular expression pattern
@@ -345,7 +345,7 @@ public interface IFilterDocumentQueryBase<T, TSelf extends IDocumentQueryBase<T,
      */
     TSelf whereRegex(String fieldName, String pattern);
 
-    //TBD TSelf WithinRadiusOf<TValue>(Expression<Func<T, TValue>> propertySelector, double radius, double latitude, double longitude, SpatialUnits? radiusUnits = null, double distanceErrorPct = Constants.Documents.Indexing.Spatial.DefaultDistanceErrorPct);
+    //TBD expr TSelf WithinRadiusOf<TValue>(Expression<Func<T, TValue>> propertySelector, double radius, double latitude, double longitude, SpatialUnits? radiusUnits = null, double distanceErrorPct = Constants.Documents.Indexing.Spatial.DefaultDistanceErrorPct);
 
     /**
      * Filter matches to be inside the specified radius
@@ -381,7 +381,7 @@ public interface IFilterDocumentQueryBase<T, TSelf extends IDocumentQueryBase<T,
     TSelf withinRadiusOf(String fieldName, double radius, double latitude, double longitude, SpatialUnits radiusUnits, double distanceErrorPct);
 
 
-    //TBD TSelf RelatesToShape<TValue>(Expression<Func<T, TValue>> propertySelector, string shapeWkt, SpatialRelation relation, double distanceErrorPct = Constants.Documents.Indexing.Spatial.DefaultDistanceErrorPct);
+    //TBD expr TSelf RelatesToShape<TValue>(Expression<Func<T, TValue>> propertySelector, string shapeWkt, SpatialRelation relation, double distanceErrorPct = Constants.Documents.Indexing.Spatial.DefaultDistanceErrorPct);
 
     /**
      * Filter matches based on a given shape - only documents with the shape defined in fieldName that
@@ -404,7 +404,7 @@ public interface IFilterDocumentQueryBase<T, TSelf extends IDocumentQueryBase<T,
      */
     TSelf relatesToShape(String fieldName, String shapeWkt, SpatialRelation relation, double distanceErrorPct);
 
-    //TBD IDocumentQuery<T> Spatial(Expression<Func<T, object>> path, Func<SpatialCriteriaFactory, SpatialCriteria> clause);
+    //TBD expr IDocumentQuery<T> Spatial(Expression<Func<T, object>> path, Func<SpatialCriteriaFactory, SpatialCriteria> clause);
 
     /**
      * Ability to use one factory to determine spatial shape that will be used in query.

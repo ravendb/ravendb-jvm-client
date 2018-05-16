@@ -6,8 +6,8 @@ package net.ravendb.client.documents.session.operations.lazy;
 public interface ILazySessionOperations {
 
     //TBD ILazyLoaderWithInclude<object> Include(string path);
-    //TBD ILazyLoaderWithInclude<TResult> Include<TResult>(Expression<Func<TResult, string>> path);
-    //TBD ILazyLoaderWithInclude<TResult> Include<TResult>(Expression<Func<TResult, IEnumerable<string>>> path);
+    //TBD expr ILazyLoaderWithInclude<TResult> Include<TResult>(Expression<Func<TResult, string>> path);
+    //TBD expr ILazyLoaderWithInclude<TResult> Include<TResult>(Expression<Func<TResult, IEnumerable<string>>> path);
     //TBD Lazy<Dictionary<string, TResult>> Load<TResult>(IEnumerable<string> ids);
     //TBD Lazy<Dictionary<string, TResult>> Load<TResult>(IEnumerable<string> ids, Action<Dictionary<string, TResult>> onEval);
     //TBD Lazy<TResult> Load<TResult>(string id);

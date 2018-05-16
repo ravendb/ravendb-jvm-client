@@ -61,8 +61,7 @@ public class MaintenanceOperationExecutor {
         RavenCommand<OperationIdResult> command = operation.getCommand(requestExecutor.getConventions());
 
         requestExecutor.execute(command);
-        return new Operation(requestExecutor, requestExecutor.getConventions(), command.getResult().getOperationId());
-        //TBD pass changes as well
+        return new Operation(requestExecutor, () -> store.changes(), requestExecutor.getConventions(), command.getResult().getOperationId());
     }
 
     private void assertDatabaseNameSet() {
