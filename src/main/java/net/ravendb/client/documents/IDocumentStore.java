@@ -1,5 +1,6 @@
 package net.ravendb.client.documents;
 
+import net.ravendb.client.documents.changes.IDatabaseChanges;
 import net.ravendb.client.documents.conventions.DocumentConventions;
 import net.ravendb.client.documents.indexes.AbstractIndexCreationTask;
 import net.ravendb.client.documents.operations.MaintenanceOperationExecutor;
@@ -32,7 +33,9 @@ public interface IDocumentStore extends IDisposalNotification {
     void addBeforeQueryListener(EventHandler<BeforeQueryEventArgs> handler);
     void removeBeforeQueryListener(EventHandler<BeforeQueryEventArgs> handler);
 
-    //TBD: IDatabaseChanges Changes(string database = null);
+    IDatabaseChanges changes();
+    IDatabaseChanges changes(String database);
+
     //TBD: IDisposable AggressivelyCacheFor(TimeSpan cacheDuration, string database = null);
     //TBD IDisposable AggressivelyCache(string database = null);
 

@@ -1,5 +1,7 @@
 package net.ravendb.client.documents;
 
+import net.ravendb.client.documents.changes.DatabaseChanges;
+import net.ravendb.client.documents.changes.IDatabaseChanges;
 import net.ravendb.client.documents.identity.MultiDatabaseHiLoIdGenerator;
 import net.ravendb.client.documents.operations.MaintenanceOperationExecutor;
 import net.ravendb.client.documents.operations.OperationExecutor;
@@ -22,7 +24,8 @@ import java.util.concurrent.ConcurrentSkipListMap;
  * Manages access to RavenDB and open sessions to work with RavenDB.
  */
 public class DocumentStore extends DocumentStoreBase {
-    //TBD:private readonly AtomicDictionary<IDatabaseChanges> _databaseChanges = new AtomicDictionary<IDatabaseChanges>(StringComparer.OrdinalIgnoreCase);
+    private final ConcurrentMap<String, IDatabaseChanges> _databaseChanges = new ConcurrentSkipListMap<>(String::compareToIgnoreCase);
+
     //TBD: private ConcurrentDictionary<string, Lazy<EvictItemsFromCacheBasedOnChanges>> _aggressiveCacheChanges = new ConcurrentDictionary<string, Lazy<EvictItemsFromCacheBasedOnChanges>>();
 
     private final ConcurrentMap<String, RequestExecutor> requestExecutors = new ConcurrentSkipListMap<>(String.CASE_INSENSITIVE_ORDER);
@@ -36,7 +39,7 @@ public class DocumentStore extends DocumentStoreBase {
     private boolean _aggressiveCachingUsed;
 
     public DocumentStore(String url, String database) {
-        this.setUrls(new String[]{ url });
+        this.setUrls(new String[]{url});
         this.setDatabase(database);
     }
 
@@ -88,12 +91,14 @@ public class DocumentStore extends DocumentStoreBase {
             }
 
             var tasks = new List<Task>();
-            foreach (var changes in _databaseChanges)
-            {
-                using (changes.Value)
-                { }
-            }
+            */
 
+        for (IDatabaseChanges changes : _databaseChanges.values()) {
+            try (CleanCloseable value = changes) {
+            }
+        }
+
+        /*TODO
             // try to wait until all the async disposables are completed
             Task.WaitAll(tasks.ToArray(), TimeSpan.FromSeconds(3));
             // if this is still going, we continue with disposal, it is for graceful shutdown only, anyway
@@ -103,7 +108,7 @@ public class DocumentStore extends DocumentStoreBase {
         if (_multiDbHiLo != null) {
             try {
                 _multiDbHiLo.returnUnusedRange();
-            } catch (Exception e ){
+            } catch (Exception e) {
                 // ignore
             }
         }
@@ -224,7 +229,7 @@ public class DocumentStore extends DocumentStoreBase {
 
     /**
      * Setup the context for no aggressive caching
-     *
+     * <p>
      * This is mainly useful for internal use inside RavenDB, when we are executing
      * queries that have been marked with WaitForNonStaleResults, we temporarily disable
      * aggressive caching.
@@ -235,7 +240,7 @@ public class DocumentStore extends DocumentStoreBase {
 
     /**
      * Setup the context for no aggressive caching
-     *
+     * <p>
      * This is mainly useful for internal use inside RavenDB, when we are executing
      * queries that have been marked with WaitForNonStaleResults, we temporarily disable
      * aggressive caching.
@@ -249,8 +254,36 @@ public class DocumentStore extends DocumentStoreBase {
         return () -> re.AggressiveCaching.set(old);
     }
 
-    //TBD public override IDatabaseChanges Changes(string database = null)
-    //TBD protected virtual IDatabaseChanges CreateDatabaseChanges(string database)
+    @Override
+    public IDatabaseChanges changes() {
+        return changes(null);
+    }
+
+    @Override
+    public IDatabaseChanges changes(String database) {
+        assertInitialized();
+
+        return _databaseChanges.computeIfAbsent(ObjectUtils.firstNonNull(database, getDatabase()), this::createDatabaseChanges);
+    }
+
+    protected IDatabaseChanges createDatabaseChanges(String database) {
+        return new DatabaseChanges(getRequestExecutor(database), database, () -> _databaseChanges.remove(database));
+    }
+
+    public Exception getLastDatabaseChangesStateException() {
+        return getLastDatabaseChangesStateException(null);
+    }
+
+    public Exception getLastDatabaseChangesStateException(String database) {
+        DatabaseChanges databaseChanges = (DatabaseChanges) _databaseChanges.get(ObjectUtils.firstNonNull(database, getDatabase()));
+
+        if (databaseChanges != null) {
+            return databaseChanges.getLastConnectionStateException();
+        }
+
+        return null;
+    }
+
     //TBD public override IDisposable AggressivelyCacheFor(TimeSpan cacheDuration, string database = null)
     //TBD private void ListenToChangesAndUpdateTheCache(string database)
 
