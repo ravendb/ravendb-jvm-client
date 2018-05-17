@@ -36,7 +36,7 @@ public class Constants {
                 public static final String REDUCE_KEY_KEY_VALUE_FIELD_NAME = "key()";
                 public static final String ALL_FIELDS = "__all_fields";
                 public static final String SPATIAL_SHAPE_FIELD_NAME = "spatial(shape)";
-                //TBD public static final String CUSTOM_SORT_FIELD_NAME = "__customSort";
+                //TBD 4.1 public static final String CUSTOM_SORT_FIELD_NAME = "__customSort";
             }
 
             public static class Spatial {

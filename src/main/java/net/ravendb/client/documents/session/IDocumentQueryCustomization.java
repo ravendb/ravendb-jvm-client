@@ -71,8 +71,8 @@ public interface IDocumentQueryCustomization {
      */
     IDocumentQueryCustomization randomOrdering(String seed);
 
-    //TBD IDocumentQueryCustomization CustomSortUsing(string typeName);
-    //TBD IDocumentQueryCustomization CustomSortUsing(string typeName, bool descending);
+    //TBD 4.1 IDocumentQueryCustomization CustomSortUsing(string typeName);
+    //TBD 4.1 IDocumentQueryCustomization CustomSortUsing(string typeName, bool descending);
     //TBD IDocumentQueryCustomization ShowTimings();
 
     /**

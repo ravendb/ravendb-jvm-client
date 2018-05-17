@@ -41,8 +41,8 @@ public class IndexQuery extends IndexQueryWithParameters<Parameters> {
             hasher.write(getQuery());
             hasher.write(isWaitForNonStaleResults());
             hasher.write(isSkipDuplicateChecking());
-            //TBD hasher.write(isShowTimings());
-            //TBD hasher.write(isExplainScores());
+            //TBD 4.1 hasher.write(isShowTimings());
+            //TBD 4.1 hasher.write(isExplainScores());
             hasher.write(Optional.ofNullable(getWaitForNonStaleResultsTimeout()).map(x -> x.toMillis()).orElse(0L));
             hasher.write(getStart());
             hasher.write(getPageSize());

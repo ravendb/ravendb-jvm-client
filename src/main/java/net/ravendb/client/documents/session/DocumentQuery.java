@@ -77,7 +77,7 @@ public class DocumentQuery<T> extends AbstractDocumentQuery<T, DocumentQuery<T>>
         return this;
     }
 
-    //TBD public IDocumentQuery<T> explainScores() {
+    //TBD 4.1 public IDocumentQuery<T> explainScores() {
 
     @Override
     public <TProjection> IDocumentQuery<TProjection> selectFields(Class<TProjection> projectionClass, String... fields) {
@@ -212,7 +212,7 @@ public class DocumentQuery<T> extends AbstractDocumentQuery<T, DocumentQuery<T>>
         return this;
     }
 
-    //TBD  public IDocumentQuery<T> showTimings()
+    //TBD 4.1 public IDocumentQuery<T> showTimings()
 
     @Override
     public IDocumentQuery<T> include(String path) {
@@ -452,7 +452,7 @@ public class DocumentQuery<T> extends AbstractDocumentQuery<T, DocumentQuery<T>>
         return this;
     }
 
-    //TBD public IDocumentQuery<T> customSortUsing(String typeName, boolean descending)
+    //TBD 4.1 public IDocumentQuery<T> customSortUsing(String typeName, boolean descending)
 
     @Override
     public IGroupByDocumentQuery<T> groupBy(String fieldName, String... fieldNames) {
@@ -493,7 +493,7 @@ public class DocumentQuery<T> extends AbstractDocumentQuery<T, DocumentQuery<T>>
         return this;
     }
 
-    //TBD public IDocumentQuery<T> OrderByDescending<TValue>(params Expression<Func<T, TValue>>[] propertySelectors)
+    //TBD expr public IDocumentQuery<T> OrderByDescending<TValue>(params Expression<Func<T, TValue>>[] propertySelectors)
 
     @Override
     public IDocumentQuery<T> addBeforeQueryExecutedListener(Consumer<IndexQuery> action) {
@@ -569,8 +569,8 @@ public class DocumentQuery<T> extends AbstractDocumentQuery<T, DocumentQuery<T>>
         */
         query.disableEntitiesTracking = disableEntitiesTracking;
         query.disableCaching = disableCaching;
-        //TBD ShowQueryTimings = ShowQueryTimings,
-        //TBD query.shouldExplainScores = shouldExplainScores;
+        //TBD 4.1 ShowQueryTimings = ShowQueryTimings,
+        //TBD 4.1 query.shouldExplainScores = shouldExplainScores;
         query.isIntersect = isIntersect;
         query.defaultOperator = defaultOperator;
 

@@ -1024,9 +1024,6 @@ public class RequestExecutor implements CleanCloseable {
         return httpClientBuilder.build();
     }
 
-
-    //TBD: ValidateClientKeyUsages
-
     public static class NodeStatus implements CleanCloseable {
 
         private Duration _timerPeriod;

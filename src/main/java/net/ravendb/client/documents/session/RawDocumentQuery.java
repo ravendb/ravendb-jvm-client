@@ -38,7 +38,7 @@ public class RawDocumentQuery<T> extends AbstractDocumentQuery<T, RawDocumentQue
         return this;
     }
 
-    //TBD public IRawDocumentQuery<T> showTimings() {
+    //TBD 4.1 public IRawDocumentQuery<T> showTimings() {
 
     @Override
     public IRawDocumentQuery<T> noTracking() {

@@ -44,7 +44,7 @@ public interface IDocumentQueryBase<T, TSelf extends IDocumentQueryBase<T, TSelf
      */
     TSelf distinct();
 
-    //TBD TSelf explainScores();
+    //TBD 4.1 TSelf explainScores();
 
     /**
      * Specifies a fuzziness factor to the single word term in the last where clause
@@ -156,7 +156,7 @@ public interface IDocumentQueryBase<T, TSelf extends IDocumentQueryBase<T, TSelf
      */
     TSelf randomOrdering(String seed);
 
-    //TBD TSelf customSortUsing(String typeName, boolean descending);
+    //TBD 4.1 TSelf customSortUsing(String typeName, boolean descending);
 
     //TBD 4.1 TSelf SetHighlighterTags(string preTag, string postTag);
     //TBD 4.1 TSelf SetHighlighterTags(string[] preTags, string[] postTags);

@@ -60,9 +60,9 @@ public interface IAbstractDocumentQuery<T> {
      */
     void _randomOrdering(String seed);
 
-    //TBD void _customSortUsing(String typeName);
+    //TBD 4.1 void _customSortUsing(String typeName);
 
-    //TBD void _customSortUsing(String typeName, boolean descending);
+    //TBD 4.1 void _customSortUsing(String typeName, boolean descending);
 
     /**
      * Includes the specified path in the query, loading the document specified in that path
@@ -70,7 +70,7 @@ public interface IAbstractDocumentQuery<T> {
      */
     void _include(String path);
 
-    // TBD linq void Include(Expression<Func<T, object>> path);
+    // TBD expr linq void Include(Expression<Func<T, object>> path);
 
     /**
      * Takes the specified count.

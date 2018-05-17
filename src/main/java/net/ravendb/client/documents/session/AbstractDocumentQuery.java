@@ -100,9 +100,9 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
 
     protected boolean disableCaching;
 
-    //TBD protected boolean showQueryTimings;
+    //TBD 4.1 protected boolean showQueryTimings;
 
-    //TBD protected boolean shouldExplainScores;
+    //TBD 4.1 protected boolean shouldExplainScores;
 
     public boolean isDistinct() {
         return !selectTokens.isEmpty() && selectTokens.get(0) instanceof DistinctToken;
@@ -155,7 +155,6 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
         theSession = session;
         _addAfterQueryExecutedListener(this::updateStatsAndHighlightings);
         _conventions = session == null ? new DocumentConventions() : session.getConventions();
-        //TBD _linqPathProvider = new LinqPathProvider(_conventions);
     }
 
     public void _usingDefaultOperator(QueryOperator operator) {
@@ -225,8 +224,8 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
         orderByTokens.add(OrderByToken.createRandom(seed));
     }
 
-    //TBD public void _customSortUsing(String typeName)
-    //TBD public void _customSortUsing(String typeName, boolean descending)
+    //TBD 4.1 public void _customSortUsing(String typeName)
+    //TBD 4.1 public void _customSortUsing(String typeName, boolean descending)
 
     protected void addGroupByAlias(String fieldName, String projectedName) {
         _aliasToGroupByFieldName.put(projectedName, fieldName);
@@ -959,8 +958,8 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
         indexQuery.setWaitForNonStaleResultsTimeout(timeout);
         indexQuery.setQueryParameters(queryParameters);
         indexQuery.setDisableCaching(disableCaching);
-        //TBD indexQuery.setShowTimings(showQueryTimings);
-        //TBD indexQuery.setExplainScores(shouldExplainScores);
+        //TBD 4.1 indexQuery.setShowTimings(showQueryTimings);
+        //TBD 4.1 indexQuery.setExplainScores(shouldExplainScores);
 
         if (pageSize != null) {
             indexQuery.setPageSize(pageSize);
@@ -1116,8 +1115,8 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
         rootTypes.add(clazz);
     }
 
-    //TBD public string GetMemberQueryPathForOrderBy(Expression expression)
-    //TBD public string GetMemberQueryPath(Expression expression)
+    //TBD expr public string GetMemberQueryPathForOrderBy(Expression expression)
+    //TBD expr public string GetMemberQueryPath(Expression expression)
 
 
     @Override
@@ -1494,7 +1493,7 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
         disableCaching = true;
     }
 
-    //TBD public void _showTimings()
+    //TBD 4.1 public void _showTimings()
     //TBD 4.1 protected List<HighlightedField> HighlightedFields = new List<HighlightedField>();
     //TBD 4.1 protected string[] HighlighterPreTags = new string[0];
     //TBD 4.1 protected string[] HighlighterPostTags = new string[0];

@@ -8,7 +8,6 @@ public class HttpCacheItem {
     public String payload;
     public LocalDateTime lastServerUpdate;
 
-    //TBD public int generation;
     public HttpCache cache;
 
     public HttpCacheItem() {

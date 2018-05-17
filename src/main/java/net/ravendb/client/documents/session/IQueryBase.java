@@ -44,7 +44,7 @@ public interface IQueryBase<T, TSelf extends IQueryBase<T, TSelf>> {
      */
     TSelf noTracking();
 
-    //TBD TSelf showTimings();
+    //TBD 4.1 TSelf showTimings();
 
     /**
      * Skips the specified count.
