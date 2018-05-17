@@ -2,6 +2,7 @@ package net.ravendb.client.test.client;
 
 import net.ravendb.client.RemoteTestBase;
 import net.ravendb.client.documents.IDocumentStore;
+import net.ravendb.client.documents.Lazy;
 import net.ravendb.client.documents.indexes.AbstractIndexCreationTask;
 import net.ravendb.client.documents.operations.CollectionStatistics;
 import net.ravendb.client.documents.operations.GetCollectionStatisticsOperation;
@@ -52,6 +53,39 @@ public class QueryTest extends RemoteTestBase {
 
                 assertThat(queryResult)
                         .hasSize(3);
+            }
+        }
+    }
+
+    @Test
+    public void queryLazily() throws Exception {
+        try (IDocumentStore store = getDocumentStore()) {
+            try (IDocumentSession session = store.openSession()) {
+
+                User user1 = new User();
+                user1.setName("John");
+
+                User user2 = new User();
+                user2.setName("Jane");
+
+                User user3 = new User();
+                user3.setName("Tarzan");
+
+                session.store(user1, "users/1");
+                session.store(user2, "users/2");
+                session.store(user3, "users/3");
+                session.saveChanges();
+
+                Lazy<List<User>> lazyQuery = session.query(User.class)
+                        .lazily();
+
+                List<User> queryResult = lazyQuery.getValue();
+
+                assertThat(queryResult)
+                        .hasSize(3);
+
+                assertThat(queryResult.get(0).getName())
+                        .isEqualTo("John");
             }
         }
     }

@@ -64,7 +64,7 @@ public class OperationExecutor {
 
         requestExecutor.execute(command, sessionInfo);
 
-        return new Operation(requestExecutor, requestExecutor.getConventions(), command.getResult().getOperationId());
+        return new Operation(requestExecutor, () -> store.changes(), requestExecutor.getConventions(), command.getResult().getOperationId());
     }
 
     public PatchStatus send(PatchOperation operation, SessionInfo sessionInfo) {

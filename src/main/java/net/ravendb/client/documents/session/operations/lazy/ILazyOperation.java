@@ -1,10 +1,13 @@
 package net.ravendb.client.documents.session.operations.lazy;
 
-public interface ILazyOperation {
+import net.ravendb.client.documents.commands.multiGet.GetRequest;
+import net.ravendb.client.documents.commands.multiGet.GetResponse;
+import net.ravendb.client.documents.queries.QueryResult;
 
-    //TBD GetRequest CreateRequest(JsonOperationContext ctx);
-    //TBD object Result { get; }
-    //TBD QueryResult QueryResult { get; }
-    //TBD bool RequiresRetry { get; }
-    //TBD void HandleResponse(GetResponse response);
+public interface ILazyOperation {
+    GetRequest createRequest();
+    Object getResult();
+    QueryResult getQueryResult();
+    boolean isRequiresRetry();
+    void handleResponse(GetResponse response);
 }

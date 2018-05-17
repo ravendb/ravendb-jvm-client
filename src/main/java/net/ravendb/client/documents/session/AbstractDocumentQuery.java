@@ -3,6 +3,7 @@ package net.ravendb.client.documents.session;
 import com.google.common.base.Defaults;
 import net.ravendb.client.Constants;
 import net.ravendb.client.Parameters;
+import net.ravendb.client.documents.Lazy;
 import net.ravendb.client.documents.commands.QueryCommand;
 import net.ravendb.client.documents.conventions.DocumentConventions;
 import net.ravendb.client.documents.indexes.spatial.SpatialRelation;
@@ -12,6 +13,7 @@ import net.ravendb.client.documents.queries.facets.FacetBase;
 import net.ravendb.client.documents.queries.spatial.SpatialCriteria;
 import net.ravendb.client.documents.queries.spatial.DynamicSpatialField;
 import net.ravendb.client.documents.session.operations.QueryOperation;
+import net.ravendb.client.documents.session.operations.lazy.LazyQueryOperation;
 import net.ravendb.client.documents.session.tokens.*;
 import net.ravendb.client.primitives.CleanCloseable;
 import net.ravendb.client.primitives.Reference;
@@ -1723,5 +1725,28 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
 
     public void _aggregateUsing(String facetSetupDocumentId) {
         selectTokens.add(FacetToken.create(facetSetupDocumentId));
+    }
+
+    public Lazy<List<T>> lazily() {
+        return lazily(null);
+    }
+
+    public Lazy<List<T>> lazily(Consumer<List<T>> onEval) {
+        if (getQueryOperation() == null) {
+            queryOperation = initializeQueryOperation();
+        }
+
+        LazyQueryOperation<T> lazyQueryOperation = new LazyQueryOperation<>(clazz, theSession.getConventions(), queryOperation, afterQueryExecutedCallback);
+        return ((DocumentSession)theSession).addLazyOperation((Class<List<T>>) (Class<?>)List.class, lazyQueryOperation, onEval);
+    }
+
+    public Lazy<Integer> countLazily() {
+        if (queryOperation == null) {
+            _take(0);
+            queryOperation = initializeQueryOperation();
+        }
+
+        LazyQueryOperation<T> lazyQueryOperation = new LazyQueryOperation<T>(clazz, theSession.getConventions(), queryOperation, afterQueryExecutedCallback);
+        return ((DocumentSession)theSession).addLazyCountOperation(lazyQueryOperation);
     }
 }

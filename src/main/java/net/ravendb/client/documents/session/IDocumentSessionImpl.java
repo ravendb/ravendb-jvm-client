@@ -1,16 +1,18 @@
 package net.ravendb.client.documents.session;
 
+import net.ravendb.client.documents.Lazy;
 import net.ravendb.client.documents.conventions.DocumentConventions;
 import net.ravendb.client.documents.session.operations.lazy.IEagerSessionOperations;
 import net.ravendb.client.documents.session.operations.lazy.ILazySessionOperations;
 
 import java.util.Map;
+import java.util.function.Consumer;
 
-public interface IDocumentSessionImpl extends IDocumentSession, ILazySessionOperations, IEagerSessionOperations {
+public interface IDocumentSessionImpl extends IDocumentSession, IEagerSessionOperations {
 
     DocumentConventions getConventions();
 
     <T> Map<String, T> loadInternal(Class<T> clazz, String[] ids, String[] includes);
 
-    //TBD: Lazy<Dictionary<string, T>> LazyLoadInternal<T>(string[] ids, string[] includes, Action<Dictionary<string, T>> onEval);
+    <T> Lazy<Map<String, T>> lazyLoadInternal(Class<T> clazz, String[] ids, String[] includes, Consumer<Map<String, T>> onEval);
 }

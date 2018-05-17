@@ -1,12 +1,20 @@
 package net.ravendb.client.documents.session;
 
 import net.ravendb.client.documents.indexes.AbstractIndexCreationTask;
+import net.ravendb.client.documents.session.operations.lazy.IEagerSessionOperations;
+import net.ravendb.client.documents.session.operations.lazy.ILazySessionOperations;
 
 public interface IAdvancedSessionOperations extends IAdvancedDocumentSessionOperations {
 
-    //TBD IEagerSessionOperations eagerly();
+    /**
+     * Access the eager operations
+     */
+    IEagerSessionOperations eagerly();
 
-    //TBD ILazySessionOperations lazily();
+    /**
+     * Access the lazy operations
+     */
+    ILazySessionOperations lazily();
 
     /**
      * @return Access the attachments operations

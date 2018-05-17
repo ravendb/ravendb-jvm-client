@@ -1171,7 +1171,26 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
         }
     }
 
-    //TBD protected static T GetOperationResult<T>(object result)
+    protected static <T> T getOperationResult(Class<T> clazz, Object result) {
+        if (result == null) {
+            return Defaults.defaultValue(clazz);
+        }
+
+        if (clazz.isAssignableFrom(result.getClass())) {
+            return (T) result;
+        }
+
+        if (result instanceof Map) {
+            Map map = (Map) result;
+            if (map.isEmpty()) {
+                return null;
+            } else {
+                return (T) map.values().iterator().next();
+            }
+        }
+
+        throw new IllegalStateException("Unable to cast " + result.getClass().getSimpleName() + " to " + clazz.getSimpleName());
+    }
 
     public void onAfterSaveChangesInvoke(AfterSaveChangesEventArgs afterSaveChangesEventArgs) {
         EventHelper.invoke(onAfterSaveChanges, this, afterSaveChangesEventArgs);

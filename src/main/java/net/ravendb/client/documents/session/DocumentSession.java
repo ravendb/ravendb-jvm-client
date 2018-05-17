@@ -1,10 +1,16 @@
 package net.ravendb.client.documents.session;
 
 import com.google.common.base.Defaults;
+import com.google.common.base.Stopwatch;
+import net.ravendb.client.Constants;
 import net.ravendb.client.documents.DocumentStore;
+import net.ravendb.client.documents.Lazy;
 import net.ravendb.client.documents.commands.GetDocumentsCommand;
 import net.ravendb.client.documents.commands.HeadDocumentCommand;
 import net.ravendb.client.documents.commands.batches.BatchCommand;
+import net.ravendb.client.documents.commands.multiGet.GetRequest;
+import net.ravendb.client.documents.commands.multiGet.GetResponse;
+import net.ravendb.client.documents.commands.multiGet.MultiGetCommand;
 import net.ravendb.client.documents.indexes.AbstractIndexCreationTask;
 import net.ravendb.client.documents.linq.IDocumentQueryGenerator;
 import net.ravendb.client.documents.queries.Query;
@@ -13,13 +19,17 @@ import net.ravendb.client.documents.session.loaders.MultiLoaderWithInclude;
 import net.ravendb.client.documents.session.operations.BatchOperation;
 import net.ravendb.client.documents.session.operations.LoadOperation;
 import net.ravendb.client.documents.session.operations.LoadStartingWithOperation;
+import net.ravendb.client.documents.session.operations.MultiGetOperation;
+import net.ravendb.client.documents.session.operations.lazy.*;
 import net.ravendb.client.http.RequestExecutor;
+import net.ravendb.client.primitives.Reference;
 import net.ravendb.client.primitives.Tuple;
 import org.apache.commons.lang3.StringUtils;
 
-import java.util.Collection;
-import java.util.Map;
-import java.util.UUID;
+import java.time.Duration;
+import java.util.*;
+import java.util.concurrent.TimeUnit;
+import java.util.function.Consumer;
 
 public class DocumentSession extends InMemoryDocumentSessionOperations implements IAdvancedSessionOperations, IDocumentSessionImpl, IDocumentQueryGenerator {
 
@@ -34,9 +44,15 @@ public class DocumentSession extends InMemoryDocumentSessionOperations implement
         return this;
     }
 
-    //TBD public ILazySessionOperations lazily() {
+    @Override
+    public ILazySessionOperations lazily() {
+        return new LazySessionOperations(this);
+    }
 
-    //TBD public IEagerSessionOperations eagerly() {
+    @Override
+    public IEagerSessionOperations eagerly() {
+        return this;
+    }
 
     private IAttachmentsSessionOperations _attachments;
 
@@ -123,8 +139,84 @@ public class DocumentSession extends InMemoryDocumentSessionOperations implement
         return getConventions().generateDocumentId(getDatabaseName(), entity);
     }
 
-    //TBD public ResponseTimeInformation ExecuteAllPendingLazyOperations()
-    //TBD private bool ExecuteLazyOperationsSingleStep(ResponseTimeInformation responseTimeInformation)
+    public ResponseTimeInformation executeAllPendingLazyOperations() {
+        ArrayList<GetRequest> requests = new ArrayList<>();
+        for (int i = 0; i < pendingLazyOperations.size(); i++) {
+            GetRequest req = pendingLazyOperations.get(i).createRequest();
+            if (req == null) {
+                pendingLazyOperations.remove(i);
+                i++; // so we'll recheck this index
+                continue;
+            }
+            requests.add(req);
+        }
+
+        if (requests.isEmpty()) {
+            return new ResponseTimeInformation();
+        }
+
+        try  {
+            Stopwatch sw = Stopwatch.createStarted();
+
+            incrementRequestCount();
+
+            ResponseTimeInformation responseTimeDuration = new ResponseTimeInformation();
+
+            while (executeLazyOperationsSingleStep(responseTimeDuration, requests)) {
+                Thread.sleep(100);
+            }
+
+            responseTimeDuration.computeServerTotal();
+
+            for (ILazyOperation pendingLazyOperation : pendingLazyOperations) {
+                Consumer<Object> value = onEvaluateLazy.get(pendingLazyOperation);
+                if (value != null) {
+                    value.accept(pendingLazyOperation.getResult());
+                }
+            }
+
+            responseTimeDuration.setTotalClientDuration(Duration.ofMillis(sw.elapsed(TimeUnit.MILLISECONDS)));
+            return responseTimeDuration;
+        } catch (InterruptedException e) {
+            throw new RuntimeException("Unable to execute pending operations: "  + e.getMessage(), e);
+        } finally {
+            pendingLazyOperations.clear();
+        }
+    }
+
+    private boolean executeLazyOperationsSingleStep(ResponseTimeInformation responseTimeInformation, List<GetRequest> requests) {
+
+        MultiGetOperation multiGetOperation = new MultiGetOperation(this);
+        MultiGetCommand multiGetCommand = multiGetOperation.createRequest(requests);
+        getRequestExecutor().execute(multiGetCommand, sessionInfo);
+
+        List<GetResponse> responses = multiGetCommand.getResult();
+
+        for (int i = 0; i < pendingLazyOperations.size(); i++) {
+            long totalTime;
+            String tempReqTime;
+            GetResponse response = responses.get(i);
+
+            tempReqTime = response.getHeaders().get(Constants.Headers.REQUEST_TIME);
+            totalTime = tempReqTime != null ? Long.valueOf(tempReqTime) : 0;
+
+            ResponseTimeInformation.ResponseTimeItem timeItem = new ResponseTimeInformation.ResponseTimeItem();
+            timeItem.setUrl(requests.get(i).getUrlAndQuery());
+            timeItem.setDuration(Duration.ofMillis(totalTime));
+
+            responseTimeInformation.getDurationBreakdown().add(timeItem);
+
+            if (response.requestHasErrors()) {
+                throw new IllegalStateException("Got an error from server, status code: " + response.getStatusCode() + System.lineSeparator() + response.getResult());
+            }
+
+            pendingLazyOperations.get(i).handleResponse(response);
+            if (pendingLazyOperations.get(i).isRequiresRetry()) {
+                return true;
+            }
+        }
+        return false;
+    }
 
     /**
      * Begin a load while including the specified path
@@ -133,18 +225,44 @@ public class DocumentSession extends InMemoryDocumentSessionOperations implement
         return new MultiLoaderWithInclude(this).include(path);
     }
 
-    //TBD expr ILazyLoaderWithInclude<T> ILazySessionOperations.Include<T>(Expression<Func<T, string>> path)
-    //TBD expr ILazyLoaderWithInclude<T> ILazySessionOperations.Include<T>(Expression<Func<T, IEnumerable<string>>> path)
-    //TBD Lazy<Dictionary<string, T>> ILazySessionOperations.Load<T>(IEnumerable<string> ids)
-    //TBD Lazy<Dictionary<string, T>> ILazySessionOperations.Load<T>(IEnumerable<string> ids, Action<Dictionary<string, T>> onEval)
-    //TBD Lazy<T> ILazySessionOperations.Load<T>(string id)
-    //TBD Lazy<T> ILazySessionOperations.Load<T>(string id, Action<T> onEval)
-    //TBD internal Lazy<T> AddLazyOperation<T>(ILazyOperation operation, Action<T> onEval)
-    //TBD Lazy<Dictionary<string, TResult>> ILazySessionOperations.LoadStartingWith<TResult>(string idPrefix, string matches, int start, int pageSize, string exclude, string startAfter)
-    //TBD Lazy<List<TResult>> ILazySessionOperations.MoreLikeThis<TResult>(MoreLikeThisQuery query)
-    //TBD ILazyLoaderWithInclude<object> ILazySessionOperations.Include(string path)
-    //TBD public Lazy<Dictionary<string, T>> LazyLoadInternal<T>(string[] ids, string[] includes, Action<Dictionary<string, T>> onEval)
-    //TBD internal Lazy<int> AddLazyCountOperation(ILazyOperation operation)
+    public <T> Lazy<T> addLazyOperation(Class<T> clazz, ILazyOperation operation, Consumer<T> onEval) {
+        pendingLazyOperations.add(operation);
+        Lazy<T> lazyValue = new Lazy<T>(() -> {
+            executeAllPendingLazyOperations();
+            return getOperationResult(clazz, operation.getResult());
+        });
+
+        if (onEval != null) {
+            onEvaluateLazy.put(operation, theResult -> onEval.accept(getOperationResult(clazz, theResult)));
+        }
+
+        return lazyValue;
+    }
+
+    protected Lazy<Integer> addLazyCountOperation(ILazyOperation operation) {
+        pendingLazyOperations.add(operation);
+
+        return new Lazy<>(() -> {
+            executeAllPendingLazyOperations();
+            return operation.getQueryResult().getTotalResults();
+        });
+    }
+
+    @Override
+    public <T> Lazy<Map<String, T>> lazyLoadInternal(Class<T> clazz, String[] ids, String[] includes, Consumer<Map<String, T>> onEval) {
+        if (checkIfIdAlreadyIncluded(ids, Arrays.asList(includes))) {
+            return new Lazy<>(() -> load(clazz, ids));
+        }
+
+        LoadOperation loadOperation = new LoadOperation(this)
+                .byIds(ids)
+                .withIncludes(includes);
+
+        LazyLoadOperation<T> lazyOp = new LazyLoadOperation<>(clazz, this, loadOperation)
+                .byIds(ids).withIncludes(includes);
+
+        return addLazyOperation((Class<Map<String, T>>)(Class<?>)Map.class, lazyOp, onEval);
+    }
 
     @Override
     public <T> T load(Class<T> clazz, String id) {

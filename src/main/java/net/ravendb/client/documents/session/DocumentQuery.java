@@ -2,6 +2,7 @@ package net.ravendb.client.documents.session;
 
 import com.google.common.collect.Sets;
 import net.ravendb.client.Constants;
+import net.ravendb.client.documents.Lazy;
 import net.ravendb.client.documents.indexes.spatial.SpatialRelation;
 import net.ravendb.client.documents.indexes.spatial.SpatialUnits;
 import net.ravendb.client.documents.queries.*;
@@ -9,6 +10,7 @@ import net.ravendb.client.documents.queries.facets.*;
 import net.ravendb.client.documents.queries.spatial.DynamicSpatialField;
 import net.ravendb.client.documents.queries.spatial.SpatialCriteria;
 import net.ravendb.client.documents.queries.spatial.SpatialCriteriaFactory;
+import net.ravendb.client.documents.session.operations.lazy.LazyQueryOperation;
 import net.ravendb.client.documents.session.tokens.DeclareToken;
 import net.ravendb.client.documents.session.tokens.FieldsToFetchToken;
 import net.ravendb.client.documents.session.tokens.LoadToken;
@@ -504,12 +506,6 @@ public class DocumentQuery<T> extends AbstractDocumentQuery<T, DocumentQuery<T>>
         _removeBeforeQueryExecutedListener(action);
         return this;
     }
-
-    //TBD public Lazy<IEnumerable<T>> Lazily()
-
-    //TBD public Lazy<int> CountLazily()
-
-    //TBD public Lazy<IEnumerable<T>> Lazily(Action<IEnumerable<T>> onEval)
 
     private <TResult> DocumentQuery<TResult> createDocumentQueryInternal(Class<TResult> resultClass) {
         return createDocumentQueryInternal(resultClass, null);

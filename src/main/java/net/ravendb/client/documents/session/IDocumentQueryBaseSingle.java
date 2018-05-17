@@ -1,7 +1,16 @@
 package net.ravendb.client.documents.session;
 
+import net.ravendb.client.documents.Lazy;
+
+import java.util.List;
+import java.util.function.Consumer;
+
 public interface IDocumentQueryBaseSingle<T> {
-    //TBD  Lazy<int> CountLazily();
+    /**
+     * Register the query as a lazy-count query in the session and return a lazy
+     * instance that will evaluate the query only when needed.
+     */
+    Lazy<Integer> countLazily();
 
     /**
      * Returns first element or throws if sequence is empty.
@@ -40,6 +49,16 @@ public interface IDocumentQueryBaseSingle<T> {
      * @return total count of records
      */
     int count();
+    /**
+     * Register the query as a lazy query in the session and return a lazy
+     * instance that will evaluate the query only when needed.
+     */
+    Lazy<List<T>> lazily();
 
-    //TBD Lazy<IEnumerable<T>> Lazily(Action<IEnumerable<T>> onEval);
+    /**
+     * Register the query as a lazy query in the session and return a lazy
+     * instance that will evaluate the query only when needed.
+     * Also provide a function to execute when the value is evaluated
+     */
+    Lazy<List<T>> lazily(Consumer<List<T>> onEval);
 }

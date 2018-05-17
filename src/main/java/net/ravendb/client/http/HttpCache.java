@@ -26,6 +26,10 @@ public class HttpCache implements CleanCloseable {
         items = null;
     }
 
+    public long getNumberOfItems() {
+        return items.size();
+    }
+
     public void set(String url, String changeVector, String result) {
         HttpCacheItem httpCacheItem = new HttpCacheItem();
         httpCacheItem.changeVector = changeVector;

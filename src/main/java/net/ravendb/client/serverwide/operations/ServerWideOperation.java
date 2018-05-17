@@ -9,7 +9,7 @@ import net.ravendb.client.http.RequestExecutor;
 public class ServerWideOperation extends Operation {
 
     public ServerWideOperation(RequestExecutor requestExecutor, DocumentConventions conventions, long id) {
-        super(requestExecutor, conventions, id);
+        super(requestExecutor, null, conventions, id);
     }
 
     @Override

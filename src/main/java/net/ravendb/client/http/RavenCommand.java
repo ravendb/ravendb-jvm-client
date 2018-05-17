@@ -171,6 +171,10 @@ public abstract class RavenCommand<TResult> {
         throw new IllegalStateException("Response is invalid");
     }
 
+    protected static void throwInvalidResponse(Exception cause) {
+        throw new IllegalStateException("Response is invalid: " + cause.getMessage(), cause);
+    }
+
     @SuppressWarnings("unused")
     protected void addChangeVectorIfNotNull(String changeVector, HttpRequestBase request) {
         if (changeVector != null) {
