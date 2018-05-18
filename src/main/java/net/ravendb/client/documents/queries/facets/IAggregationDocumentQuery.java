@@ -1,5 +1,7 @@
 package net.ravendb.client.documents.queries.facets;
 
+import net.ravendb.client.documents.Lazy;
+
 import java.util.Map;
 import java.util.function.Consumer;
 
@@ -11,5 +13,7 @@ public interface IAggregationDocumentQuery<T> {
 
     Map<String, FacetResult> execute();
 
-    //TBD Lazy<Dictionary<string, FacetResult>> ExecuteLazy(Action<Dictionary<string, FacetResult>> onEval = null);
+    Lazy<Map<String, FacetResult>> executeLazy();
+
+    Lazy<Map<String, FacetResult>> executeLazy(Consumer<Map<String, FacetResult>> onEval);
 }

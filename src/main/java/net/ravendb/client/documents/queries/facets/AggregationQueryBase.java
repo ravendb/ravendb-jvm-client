@@ -2,16 +2,20 @@ package net.ravendb.client.documents.queries.facets;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.google.common.base.Stopwatch;
+import net.ravendb.client.documents.Lazy;
 import net.ravendb.client.documents.commands.QueryCommand;
 import net.ravendb.client.documents.conventions.DocumentConventions;
 import net.ravendb.client.documents.queries.IndexQuery;
 import net.ravendb.client.documents.queries.QueryResult;
+import net.ravendb.client.documents.session.DocumentSession;
 import net.ravendb.client.documents.session.InMemoryDocumentSessionOperations;
 import net.ravendb.client.documents.session.operations.QueryOperation;
+import net.ravendb.client.documents.session.operations.lazy.LazyAggregationQueryOperation;
 import net.ravendb.client.extensions.JsonExtensions;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.function.Consumer;
 
 public abstract class AggregationQueryBase {
 
@@ -34,7 +38,15 @@ public abstract class AggregationQueryBase {
         return processResults(command.getResult(), _session.getConventions());
     }
 
-    //TBD public Lazy<Dictionary<string, FacetResult>> ExecuteLazy(Action<Dictionary<string, FacetResult>> onEval = null)
+    public Lazy<Map<String, FacetResult>> executeLazy() {
+        return executeLazy(null);
+    }
+
+    public Lazy<Map<String, FacetResult>> executeLazy(Consumer<Map<String, FacetResult>> onEval) {
+        _query = getIndexQuery();
+        return ((DocumentSession)_session).addLazyOperation((Class<Map<String, FacetResult>>)(Class<?>)Map.class,
+                new LazyAggregationQueryOperation( _session.getConventions(), _query, result -> invokeAfterQueryExecuted(result), this::processResults), onEval);
+    }
 
     protected abstract IndexQuery getIndexQuery();
 
