@@ -120,7 +120,7 @@ public interface IDocumentQueryBase<T, TSelf extends IDocumentQueryBase<T, TSelf
      */
     TSelf orderByDescending(String field, OrderingType ordering);
 
-    //TBD TSelf OrderByDescending<TValue>(params Expression<Func<T, TValue>>[] propertySelectors);
+    //TBD expr TSelf OrderByDescending<TValue>(params Expression<Func<T, TValue>>[] propertySelectors);
 
     /**
      * Adds an ordering by score for a specific field to the query
@@ -171,11 +171,11 @@ public interface IDocumentQueryBase<T, TSelf extends IDocumentQueryBase<T, TSelf
      */
     TSelf orderByDistance(DynamicSpatialField field, double latitude, double longitude);
 
-    //TBD TSelf OrderByDistance(Func<DynamicSpatialFieldFactory<T>, DynamicSpatialField> field, double latitude, double longitude);
+    //TBD expr TSelf OrderByDistance(Func<DynamicSpatialFieldFactory<T>, DynamicSpatialField> field, double latitude, double longitude);
 
     TSelf orderByDistance(DynamicSpatialField field, String shapeWkt);
 
-    //TBD TSelf OrderByDistance(Func<DynamicSpatialFieldFactory<T>, DynamicSpatialField> field, string shapeWkt);
+    //TBD expr TSelf OrderByDistance(Func<DynamicSpatialFieldFactory<T>, DynamicSpatialField> field, string shapeWkt);
 
     //TBD expr  TSelf OrderByDistance<TValue>(Expression<Func<T, TValue>> propertySelector, double latitude, double longitude);
 
@@ -207,11 +207,11 @@ public interface IDocumentQueryBase<T, TSelf extends IDocumentQueryBase<T, TSelf
      */
     TSelf orderByDistanceDescending(DynamicSpatialField field, double latitude, double longitude);
 
-    //TBD TSelf OrderByDistanceDescending(Func<DynamicSpatialFieldFactory<T>, DynamicSpatialField> field, double latitude, double longitude);
+    //TBD expr TSelf OrderByDistanceDescending(Func<DynamicSpatialFieldFactory<T>, DynamicSpatialField> field, double latitude, double longitude);
 
     TSelf orderByDistanceDescending(DynamicSpatialField field, String shapeWkt);
 
-    //TBD TSelf OrderByDistanceDescending(Func<DynamicSpatialFieldFactory<T>, DynamicSpatialField> field, string shapeWkt);
+    //TBD expr TSelf OrderByDistanceDescending(Func<DynamicSpatialFieldFactory<T>, DynamicSpatialField> field, string shapeWkt);
 
     //TBD expr TSelf OrderByDistanceDescending<TValue>(Expression<Func<T, TValue>> propertySelector, double latitude, double longitude);
 

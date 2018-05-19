@@ -1,5 +1,6 @@
 package net.ravendb.client.documents.session;
 
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import net.ravendb.client.documents.queries.IndexQuery;
 import net.ravendb.client.documents.queries.QueryResult;
 import net.ravendb.client.documents.session.operations.QueryOperation;
@@ -42,7 +43,20 @@ public interface IDocumentQueryCustomization {
      */
     IDocumentQueryCustomization removeAfterQueryExecutedListener(Consumer<QueryResult> action);
 
-    //TBD IDocumentQueryCustomization AfterStreamExecutedCallback
+
+    /**
+     * Callback to get the raw objects streamed by the query
+     * @param action action to call
+     * @return customization object
+     */
+    IDocumentQueryCustomization addAfterStreamExecutedCallback(Consumer<ObjectNode> action);
+
+    /**
+     * Callback to get the raw objects streamed by the query
+     * @param action action to call
+     * @return customization object
+     */
+    IDocumentQueryCustomization removeAfterStreamExecutedCallback(Consumer<ObjectNode> action);
 
     /**
      * Disables caching for query results.
@@ -73,7 +87,7 @@ public interface IDocumentQueryCustomization {
 
     //TBD 4.1 IDocumentQueryCustomization CustomSortUsing(string typeName);
     //TBD 4.1 IDocumentQueryCustomization CustomSortUsing(string typeName, bool descending);
-    //TBD IDocumentQueryCustomization ShowTimings();
+    //TBD 4.1 IDocumentQueryCustomization ShowTimings();
 
     /**
      * Instruct the query to wait for non stale results.

@@ -1,5 +1,6 @@
 package net.ravendb.client.documents.session;
 
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.collect.Sets;
 import net.ravendb.client.Constants;
 import net.ravendb.client.documents.Lazy;
@@ -138,8 +139,17 @@ public class DocumentQuery<T> extends AbstractDocumentQuery<T, DocumentQuery<T>>
         return this;
     }
 
-    //TBD void IQueryBase<T, IDocumentQuery<T>>.AfterStreamExecuted(Action<BlittableJsonReaderObject> action)
-    //TBD void IQueryBase<T, IRawDocumentQuery<T>>.AfterStreamExecuted(Action<BlittableJsonReaderObject> action)
+    @Override
+    public IDocumentQuery<T> addAfterStreamExecutedListener(Consumer<ObjectNode> action) {
+        _addAfterStreamExecutedListener(action);
+        return this;
+    }
+
+    @Override
+    public IDocumentQuery<T> removeAfterStreamExecutedListener(Consumer<ObjectNode> action) {
+        _removeAfterStreamExecutedListener(action);
+        return this;
+    }
 
     public IDocumentQuery<T> openSubclause() {
         _openSubclause();
@@ -562,7 +572,8 @@ public class DocumentQuery<T> extends AbstractDocumentQuery<T, DocumentQuery<T>>
         query.rootTypes = Sets.newHashSet(clazz);
         query.beforeQueryExecutedCallback = beforeQueryExecutedCallback;
         query.afterQueryExecutedCallback = afterQueryExecutedCallback;
-        /* TBD AfterStreamExecutedCallback = AfterStreamExecutedCallback,
+        query.afterStreamExecutedCallback = afterStreamExecutedCallback;
+        /* TBD 4.1
         query.HighlightedFields = new List<HighlightedField>(HighlightedFields),
         query.HighlighterPreTags = HighlighterPreTags,
         query.HighlighterPostTags = HighlighterPostTags,
@@ -632,7 +643,7 @@ public class DocumentQuery<T> extends AbstractDocumentQuery<T, DocumentQuery<T>>
         return this;
     }
 
-    //TBD public IDocumentQuery<T> Spatial(Func<SpatialDynamicFieldFactory<T>, DynamicSpatialField> field, Func<SpatialCriteriaFactory, SpatialCriteria> clause)
+    //TBD expr public IDocumentQuery<T> Spatial(Func<SpatialDynamicFieldFactory<T>, DynamicSpatialField> field, Func<SpatialCriteriaFactory, SpatialCriteria> clause)
     //TBD expr IDocumentQuery<T> IDocumentQueryBase<T, IDocumentQuery<T>>.WithinRadiusOf<TValue>(Expression<Func<T, TValue>> propertySelector, double radius, double latitude, double longitude, SpatialUnits? radiusUnits, double distanceErrorPct)
 
     @Override
@@ -670,7 +681,7 @@ public class DocumentQuery<T> extends AbstractDocumentQuery<T, DocumentQuery<T>>
         return this;
     }
 
-    //TBD IDocumentQuery<T> IDocumentQueryBase<T, IDocumentQuery<T>>.OrderByDistance(Func<DynamicSpatialFieldFactory<T>, DynamicSpatialField> field, double latitude, double longitude)
+    //TBD expr IDocumentQuery<T> IDocumentQueryBase<T, IDocumentQuery<T>>.OrderByDistance(Func<DynamicSpatialFieldFactory<T>, DynamicSpatialField> field, double latitude, double longitude)
 
     @Override
     public IDocumentQuery<T> orderByDistance(DynamicSpatialField field, String shapeWkt) {
@@ -678,7 +689,7 @@ public class DocumentQuery<T> extends AbstractDocumentQuery<T, DocumentQuery<T>>
         return this;
     }
 
-    //TBD IDocumentQuery<T> IDocumentQueryBase<T, IDocumentQuery<T>>.OrderByDistance(Func<DynamicSpatialFieldFactory<T>, DynamicSpatialField> field, string shapeWkt)
+    //TBD expr IDocumentQuery<T> IDocumentQueryBase<T, IDocumentQuery<T>>.OrderByDistance(Func<DynamicSpatialFieldFactory<T>, DynamicSpatialField> field, string shapeWkt)
 
 
     //TBD expr IDocumentQuery<T> IDocumentQueryBase<T, IDocumentQuery<T>>.OrderByDistance<TValue>(Expression<Func<T, TValue>> propertySelector, double latitude, double longitude)
@@ -703,7 +714,7 @@ public class DocumentQuery<T> extends AbstractDocumentQuery<T, DocumentQuery<T>>
         return this;
     }
 
-    //TBD IDocumentQuery<T> IDocumentQueryBase<T, IDocumentQuery<T>>.OrderByDistanceDescending(Func<DynamicSpatialFieldFactory<T>, DynamicSpatialField> field, double latitude, double longitude)
+    //TBD expr IDocumentQuery<T> IDocumentQueryBase<T, IDocumentQuery<T>>.OrderByDistanceDescending(Func<DynamicSpatialFieldFactory<T>, DynamicSpatialField> field, double latitude, double longitude)
 
     @Override
     public IDocumentQuery<T> orderByDistanceDescending(DynamicSpatialField field, String shapeWkt) {
@@ -711,7 +722,7 @@ public class DocumentQuery<T> extends AbstractDocumentQuery<T, DocumentQuery<T>>
         return this;
     }
 
-    //TBD IDocumentQuery<T> IDocumentQueryBase<T, IDocumentQuery<T>>.OrderByDistanceDescending(Func<DynamicSpatialFieldFactory<T>, DynamicSpatialField> field, string shapeWkt)
+    //TBD expr IDocumentQuery<T> IDocumentQueryBase<T, IDocumentQuery<T>>.OrderByDistanceDescending(Func<DynamicSpatialFieldFactory<T>, DynamicSpatialField> field, string shapeWkt)
 
     //TBD expr IDocumentQuery<T> IDocumentQueryBase<T, IDocumentQuery<T>>.OrderByDistanceDescending<TValue>(Expression<Func<T, TValue>> propertySelector, double latitude, double longitude)
 

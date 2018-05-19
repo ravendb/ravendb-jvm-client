@@ -134,7 +134,7 @@ public class QueryOperation {
     }
 
     @SuppressWarnings("unchecked")
-    static <T> T deserialize(Class<T> clazz, String id, ObjectNode document, ObjectNode metadata, FieldsToFetchToken fieldsToFetch, boolean disableEntitiesTracking, InMemoryDocumentSessionOperations session) throws JsonProcessingException {
+    public static <T> T deserialize(Class<T> clazz, String id, ObjectNode document, ObjectNode metadata, FieldsToFetchToken fieldsToFetch, boolean disableEntitiesTracking, InMemoryDocumentSessionOperations session) throws JsonProcessingException {
 
         JsonNode projection = metadata.get("@projection");
         if (projection == null || !projection.asBoolean()) {

@@ -17,6 +17,8 @@ public interface IDocumentQuery<T> extends IDocumentQueryBase<T, IDocumentQuery<
 
     String getIndexName();
 
+    Class<T> getQueryClass();
+
     /**
      * Whether we should apply distinct operation to the query on the server side
      * @return true if server should return distinct results

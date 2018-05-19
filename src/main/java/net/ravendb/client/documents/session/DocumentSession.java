@@ -1,12 +1,14 @@
 package net.ravendb.client.documents.session;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.base.Defaults;
 import com.google.common.base.Stopwatch;
 import net.ravendb.client.Constants;
+import net.ravendb.client.documents.CloseableIterator;
 import net.ravendb.client.documents.DocumentStore;
 import net.ravendb.client.documents.Lazy;
-import net.ravendb.client.documents.commands.GetDocumentsCommand;
-import net.ravendb.client.documents.commands.HeadDocumentCommand;
+import net.ravendb.client.documents.commands.*;
 import net.ravendb.client.documents.commands.batches.BatchCommand;
 import net.ravendb.client.documents.commands.multiGet.GetRequest;
 import net.ravendb.client.documents.commands.multiGet.GetResponse;
@@ -16,16 +18,20 @@ import net.ravendb.client.documents.linq.IDocumentQueryGenerator;
 import net.ravendb.client.documents.queries.Query;
 import net.ravendb.client.documents.session.loaders.ILoaderWithInclude;
 import net.ravendb.client.documents.session.loaders.MultiLoaderWithInclude;
-import net.ravendb.client.documents.session.operations.BatchOperation;
-import net.ravendb.client.documents.session.operations.LoadOperation;
-import net.ravendb.client.documents.session.operations.LoadStartingWithOperation;
-import net.ravendb.client.documents.session.operations.MultiGetOperation;
+import net.ravendb.client.documents.session.operations.*;
 import net.ravendb.client.documents.session.operations.lazy.*;
+import net.ravendb.client.documents.session.tokens.FieldsToFetchToken;
+import net.ravendb.client.extensions.JsonExtensions;
 import net.ravendb.client.http.RequestExecutor;
+import net.ravendb.client.json.MetadataAsDictionary;
 import net.ravendb.client.primitives.Reference;
 import net.ravendb.client.primitives.Tuple;
+import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.http.util.EntityUtils;
 
+import java.io.IOException;
+import java.io.OutputStream;
 import java.time.Duration;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
@@ -286,34 +292,36 @@ public class DocumentSession extends InMemoryDocumentSessionOperations implement
 
     public <T> Map<String, T> load(Class<T> clazz, String... ids) {
         LoadOperation loadOperation = new LoadOperation(this);
-        loadInternal(ids, loadOperation);
+        loadInternal(ids, loadOperation, null);
         return loadOperation.getDocuments(clazz);
     }
-
 
     /**
      * Loads the specified entities with the specified ids.
      */
     public <T> Map<String, T> load(Class<T> clazz, Collection<String> ids) {
         LoadOperation loadOperation = new LoadOperation(this);
-        loadInternal(ids.toArray(new String[0]), loadOperation);
+        loadInternal(ids.toArray(new String[0]), loadOperation, null);
         return loadOperation.getDocuments(clazz);
     }
 
-    private <T> void loadInternal(String[] ids, LoadOperation operation) { //TBD optional stream parameter
+    private <T> void loadInternal(String[] ids, LoadOperation operation, OutputStream stream) {
         operation.byIds(ids);
 
         GetDocumentsCommand command = operation.createRequest();
         if (command != null) {
             _requestExecutor.execute(command, sessionInfo);
-            /* TBD
-             if(stream!=null)
-                    Context.Write(stream, command.Result.Results.Parent);
-                else
-                    operation.SetResult(command.Result);
-             */
 
-            operation.setResult(command.getResult()); //TBD: delete me after impl stream
+            if (stream != null) {
+                try {
+                    GetDocumentsResult result = command.getResult();
+                    JsonExtensions.getDefaultMapper().writeValue(stream, result);
+                } catch (IOException e) {
+                    throw new RuntimeException("Unable to serialize returned value into stream" + e.getMessage(), e);
+                }
+            } else {
+                operation.setResult(command.getResult());
+            }
         }
 
     }
@@ -354,13 +362,41 @@ public class DocumentSession extends InMemoryDocumentSessionOperations implement
 
     public <T> T[] loadStartingWith(Class<T> clazz, String idPrefix, String matches, int start, int pageSize, String exclude, String startAfter) {
         LoadStartingWithOperation loadStartingWithOperation = new LoadStartingWithOperation(this);
-        loadStartingWithInternal(idPrefix, loadStartingWithOperation, matches, start, pageSize, exclude, startAfter);
+        loadStartingWithInternal(idPrefix, loadStartingWithOperation, null, matches, start, pageSize, exclude, startAfter);
         return loadStartingWithOperation.getDocuments(clazz);
     }
 
-    //TBD public void LoadStartingWithIntoStream(string idPrefix, Stream output, string matches = null, int start = 0, int pageSize = 25, string exclude = null, string startAfter = null)
+    @Override
+    public void loadStartingWithIntoStream(String idPrefix, OutputStream output) {
+        loadStartingWithIntoStream(idPrefix, output, null, 0, 25, null, null);
+    }
 
-    private GetDocumentsCommand loadStartingWithInternal(String idPrefix, LoadStartingWithOperation operation,
+    @Override
+    public void loadStartingWithIntoStream(String idPrefix, OutputStream output, String matches) {
+        loadStartingWithIntoStream(idPrefix, output, matches, 0, 25, null, null);
+    }
+
+    @Override
+    public void loadStartingWithIntoStream(String idPrefix, OutputStream output, String matches, int start) {
+        loadStartingWithIntoStream(idPrefix, output, matches, start, 25, null, null);
+    }
+
+    @Override
+    public void loadStartingWithIntoStream(String idPrefix, OutputStream output, String matches, int start, int pageSize) {
+        loadStartingWithIntoStream(idPrefix, output, matches, start, pageSize, null, null);
+    }
+
+    @Override
+    public void loadStartingWithIntoStream(String idPrefix, OutputStream output, String matches, int start, int pageSize, String exclude) {
+        loadStartingWithIntoStream(idPrefix, output, matches, start, pageSize, exclude, null);
+    }
+
+    @Override
+    public void loadStartingWithIntoStream(String idPrefix, OutputStream output, String matches, int start, int pageSize, String exclude, String startAfter) {
+        loadStartingWithInternal(idPrefix, new LoadStartingWithOperation(this), output, matches, start, pageSize, exclude, startAfter);
+    }
+
+    private GetDocumentsCommand loadStartingWithInternal(String idPrefix, LoadStartingWithOperation operation, OutputStream stream,
                                                          String matches, int start, int pageSize, String exclude, String startAfter) {
         operation.withStartWith(idPrefix, matches, start, pageSize, exclude, startAfter);
 
@@ -368,13 +404,25 @@ public class DocumentSession extends InMemoryDocumentSessionOperations implement
         if (command != null) {
             _requestExecutor.execute(command, sessionInfo);
 
-            operation.setResult(command.getResult());
-            //TBD handle stream
+            if (stream != null) {
+                try {
+                    GetDocumentsResult result = command.getResult();
+                    JsonExtensions.getDefaultMapper().writeValue(stream, result);
+                } catch (IOException e) {
+                    throw new RuntimeException("Unable to serialize returned value into stream" + e.getMessage(), e);
+                }
+            } else {
+                operation.setResult(command.getResult());
+            }
         }
         return command;
     }
 
-    //TBD public void LoadIntoStream(IEnumerable<string> ids, Stream output)
+    @Override
+    public void loadIntoStream(Collection<String> ids, OutputStream output) {
+        loadInternal(ids.toArray(new String[0]), new LoadOperation(this), output);
+    }
+
     //TBD public List<T> MoreLikeThis<T, TIndexCreator>(string documentId) where TIndexCreator : AbstractIndexCreationTask, new()
     //TBD public List<T> MoreLikeThis<T, TIndexCreator>(MoreLikeThisQuery query) where TIndexCreator : AbstractIndexCreationTask, new()
     //TBD public List<T> MoreLikeThis<T>(string index, string documentId)
@@ -394,7 +442,7 @@ public class DocumentSession extends InMemoryDocumentSessionOperations implement
             TIndex index = indexClazz.newInstance();
             return documentQuery(clazz, index.getIndexName(), null, index.isMapReduce());
         } catch (IllegalAccessException | IllegalStateException | InstantiationException e) {
-            throw new RuntimeException(e);
+            throw new RuntimeException("Unable to query index: " + indexClazz.getSimpleName() + e.getMessage(), e);
         }
     }
 
@@ -444,17 +492,183 @@ public class DocumentSession extends InMemoryDocumentSessionOperations implement
         return documentQuery(clazz, indexClazz);
     }
 
-    //TBD public IEnumerator<StreamResult<T>> Stream<T>(IQueryable<T> query)
-    //TBD public IEnumerator<StreamResult<T>> Stream<T>(IQueryable<T> query, out StreamQueryStatistics streamQueryStats)
-    //TBD public IEnumerator<StreamResult<T>> Stream<T>(IDocumentQuery<T> query)
-    //TBD public IEnumerator<StreamResult<T>> Stream<T>(IRawDocumentQuery<T> query)
-    //TBD public IEnumerator<StreamResult<T>> Stream<T>(IRawDocumentQuery<T> query, out StreamQueryStatistics streamQueryStats)
-    //TBD public IEnumerator<StreamResult<T>> Stream<T>(IDocumentQuery<T> query, out StreamQueryStatistics streamQueryStats)
-    //TBD private IEnumerator<StreamResult<T>> YieldResults<T>(IDocumentQuery<T> query, IEnumerator<BlittableJsonReaderObject> enumerator)
-    //TBD public void StreamInto<T>(IRawDocumentQuery<T> query, Stream output)
-    //TBD public void StreamInto<T>(IDocumentQuery<T> query, Stream output)
-    //TBD private StreamResult<T> CreateStreamResult<T>(BlittableJsonReaderObject json, string[] projectionFields)
-    //TBD public IEnumerator<StreamResult<T>> Stream<T>(string startsWith, string matches = null, int start = 0, int pageSize = int.MaxValue, string startAfter = null)
+    @Override
+    public <T> CloseableIterator<StreamResult<T>> stream(IDocumentQuery<T> query) {
+        StreamOperation streamOperation = new StreamOperation(this);
+        QueryStreamCommand command = streamOperation.createRequest(query.getIndexQuery());
+
+        getRequestExecutor().execute(command, sessionInfo);
+
+        CloseableIterator<ObjectNode> result = streamOperation.setResult(command.getResult());
+        return yieldResults((AbstractDocumentQuery) query, result);
+    }
+
+    @Override
+    public <T> CloseableIterator<StreamResult<T>> stream(IDocumentQuery<T> query, Reference<StreamQueryStatistics> streamQueryStats) {
+        StreamQueryStatistics stats = new StreamQueryStatistics();
+        StreamOperation streamOperation = new StreamOperation(this, stats);
+        QueryStreamCommand command = streamOperation.createRequest(query.getIndexQuery());
+
+        getRequestExecutor().execute(command, sessionInfo);
+
+        CloseableIterator<ObjectNode> result = streamOperation.setResult(command.getResult());
+        streamQueryStats.value = stats;
+
+        return yieldResults((AbstractDocumentQuery)query, result);
+    }
+
+    @Override
+    public <T> CloseableIterator<StreamResult<T>> stream(IRawDocumentQuery<T> query) {
+        StreamOperation streamOperation = new StreamOperation(this);
+        QueryStreamCommand command = streamOperation.createRequest(query.getIndexQuery());
+
+        getRequestExecutor().execute(command, sessionInfo);
+
+        CloseableIterator<ObjectNode> result = streamOperation.setResult(command.getResult());
+        return yieldResults((AbstractDocumentQuery) query, result);
+    }
+
+    @Override
+    public <T> CloseableIterator<StreamResult<T>> stream(IRawDocumentQuery<T> query, Reference<StreamQueryStatistics> streamQueryStats) {
+        StreamQueryStatistics stats = new StreamQueryStatistics();
+        StreamOperation streamOperation = new StreamOperation(this, stats);
+        QueryStreamCommand command = streamOperation.createRequest(query.getIndexQuery());
+
+        getRequestExecutor().execute(command, sessionInfo);
+
+        CloseableIterator<ObjectNode> result = streamOperation.setResult(command.getResult());
+        streamQueryStats.value = stats;
+
+        return yieldResults((AbstractDocumentQuery) query, result);
+    }
+
+    private <T> CloseableIterator<StreamResult<T>> yieldResults(AbstractDocumentQuery query, CloseableIterator<ObjectNode> enumerator) {
+        return new StreamIterator<>(query.getQueryClass(), enumerator, query.fieldsToFetchToken, query::invokeAfterStreamExecuted);
+    }
+
+    @Override
+    public <T> void streamInto(IRawDocumentQuery<T> query, OutputStream output) {
+        StreamOperation streamOperation = new StreamOperation(this);
+        QueryStreamCommand command = streamOperation.createRequest(query.getIndexQuery());
+
+        getRequestExecutor().execute(command, sessionInfo);
+
+        try {
+            IOUtils.copy(command.getResult().getStream(), output);
+        } catch (IOException e) {
+            throw new RuntimeException("Unable to stream results into OutputStream: " + e.getMessage(), e);
+        } finally {
+            EntityUtils.consumeQuietly(command.getResult().getResponse().getEntity());
+        }
+    }
+
+    @Override
+    public <T> void streamInto(IDocumentQuery<T> query, OutputStream output) {
+        StreamOperation streamOperation = new StreamOperation(this);
+        QueryStreamCommand command = streamOperation.createRequest(query.getIndexQuery());
+
+        getRequestExecutor().execute(command, sessionInfo);
+
+        try {
+            IOUtils.copy(command.getResult().getStream(), output);
+        } catch (IOException e) {
+            throw new RuntimeException("Unable to stream results into OutputStream: " + e.getMessage(), e);
+        } finally {
+            EntityUtils.consumeQuietly(command.getResult().getResponse().getEntity());
+        }
+    }
+
+    private <T> StreamResult<T> createStreamResult(Class<T> clazz, ObjectNode json, FieldsToFetchToken fieldsToFetch) throws IOException {
+
+        ObjectNode metadata = (ObjectNode) json.get(Constants.Documents.Metadata.KEY);
+        String changeVector = metadata.get(Constants.Documents.Metadata.CHANGE_VECTOR).asText();
+        // MapReduce indexes return reduce results that don't have @id property
+        String id = null;
+        JsonNode idJson = metadata.get(Constants.Documents.Metadata.ID);
+        if (idJson != null && !idJson.isNull()) {
+            id = idJson.asText();
+        }
+
+
+        T entity = QueryOperation.deserialize(clazz, id, json, metadata, fieldsToFetch, true, this);
+
+        StreamResult<T> streamResult = new StreamResult<>();
+        streamResult.setChangeVector(changeVector);
+        streamResult.setId(id);
+        streamResult.setDocument(entity);
+        streamResult.setMetadata(new MetadataAsDictionary(metadata));
+
+        return streamResult;
+    }
+
+    @Override
+    public <T> CloseableIterator<StreamResult<T>> stream(Class<T> clazz, String startsWith) {
+        return stream(clazz, startsWith, null, 0, Integer.MAX_VALUE, null);
+    }
+
+    @Override
+    public <T> CloseableIterator<StreamResult<T>> stream(Class<T> clazz, String startsWith, String matches) {
+        return stream(clazz, startsWith, matches, 0, Integer.MAX_VALUE, null);
+    }
+
+    @Override
+    public <T> CloseableIterator<StreamResult<T>> stream(Class<T> clazz, String startsWith, String matches, int start) {
+        return stream(clazz, startsWith, matches, start, Integer.MAX_VALUE, null);
+    }
+
+    @Override
+    public <T> CloseableIterator<StreamResult<T>> stream(Class<T> clazz, String startsWith, String matches, int start, int pageSize) {
+        return stream(clazz, startsWith, matches, start, pageSize, null);
+    }
+
+    @Override
+    public <T> CloseableIterator<StreamResult<T>> stream(Class<T> clazz, String startsWith, String matches, int start, int pageSize, String startAfter) {
+        StreamOperation streamOperation = new StreamOperation(this);
+
+        StreamCommand command = streamOperation.createRequest(startsWith, matches, start, pageSize, null, startAfter);
+        getRequestExecutor().execute(command, sessionInfo);
+
+        CloseableIterator<ObjectNode> result = streamOperation.setResult(command.getResult());
+        return new StreamIterator<>(clazz, result, null, null);
+    }
+
+    private class StreamIterator<T> implements CloseableIterator<StreamResult<T>> {
+
+        private final Class<T> _clazz;
+        private final CloseableIterator<ObjectNode> _innerIterator;
+        private final FieldsToFetchToken _fieldsToFetchToken;
+        private final Consumer<ObjectNode> _onNextItem;
+
+        public StreamIterator(Class<T> clazz, CloseableIterator<ObjectNode> innerIterator, FieldsToFetchToken fieldsToFetchToken, Consumer<ObjectNode> onNextItem) {
+            _clazz = clazz;
+            _innerIterator = innerIterator;
+            _fieldsToFetchToken = fieldsToFetchToken;
+            _onNextItem = onNextItem;
+        }
+
+        @Override
+        public boolean hasNext() {
+            return _innerIterator.hasNext();
+        }
+
+        @Override
+        public StreamResult<T> next() {
+            ObjectNode nextValue = _innerIterator.next();
+            try {
+                if (_onNextItem != null) {
+                    _onNextItem.accept(nextValue);
+                }
+                return createStreamResult(_clazz, nextValue, _fieldsToFetchToken);
+            } catch (IOException e) {
+                throw new RuntimeException("Unable to parse stream result: " + e.getMessage(), e);
+            }
+        }
+
+        @Override
+        public void close() {
+            _innerIterator.close();
+        }
+    }
 
     /* TBD move to revisions
     public <T> List<T> getRevisionsFor(Class<T> clazz, String id) {

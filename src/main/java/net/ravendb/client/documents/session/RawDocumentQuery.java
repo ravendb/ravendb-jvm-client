@@ -1,5 +1,6 @@
 package net.ravendb.client.documents.session;
 
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import net.ravendb.client.documents.queries.IndexQuery;
 import net.ravendb.client.documents.queries.QueryOperator;
 import net.ravendb.client.documents.queries.QueryResult;
@@ -85,6 +86,18 @@ public class RawDocumentQuery<T> extends AbstractDocumentQuery<T, RawDocumentQue
     @Override
     public IRawDocumentQuery<T> removeBeforeQueryExecutedListener(Consumer<IndexQuery> action) {
         _removeBeforeQueryExecutedListener(action);
+        return this;
+    }
+
+    @Override
+    public IRawDocumentQuery<T> addAfterStreamExecutedListener(Consumer<ObjectNode> action) {
+        _addAfterStreamExecutedListener(action);
+        return this;
+    }
+
+    @Override
+    public IRawDocumentQuery<T> removeAfterStreamExecutedListener(Consumer<ObjectNode> action) {
+        _removeAfterStreamExecutedListener(action);
         return this;
     }
 

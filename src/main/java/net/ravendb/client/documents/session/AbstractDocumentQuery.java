@@ -1,5 +1,6 @@
 package net.ravendb.client.documents.session;
 
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.base.Defaults;
 import net.ravendb.client.Constants;
 import net.ravendb.client.Parameters;
@@ -16,6 +17,7 @@ import net.ravendb.client.documents.session.operations.QueryOperation;
 import net.ravendb.client.documents.session.operations.lazy.LazyQueryOperation;
 import net.ravendb.client.documents.session.tokens.*;
 import net.ravendb.client.primitives.CleanCloseable;
+import net.ravendb.client.primitives.EventHelper;
 import net.ravendb.client.primitives.Reference;
 import org.apache.commons.lang3.NotImplementedException;
 import org.apache.commons.lang3.ObjectUtils;
@@ -73,7 +75,7 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
     protected final FromToken fromToken;
     protected final DeclareToken declareToken;
     protected final List<LoadToken> loadTokens;
-    protected FieldsToFetchToken fieldsToFetchToken;
+    public FieldsToFetchToken fieldsToFetchToken;
 
     protected List<QueryToken> whereTokens = new LinkedList<>();
 
@@ -155,6 +157,10 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
         theSession = session;
         _addAfterQueryExecutedListener(this::updateStatsAndHighlightings);
         _conventions = session == null ? new DocumentConventions() : session.getConventions();
+    }
+
+    public Class<T> getQueryClass() {
+        return clazz;
     }
 
     public void _usingDefaultOperator(QueryOperator operator) {
@@ -337,7 +343,7 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
         tokens.add(TrueToken.INSTANCE);
     }
 
-    /* TBD
+    /* TBD morelikethis
      public MoreLikeThisScope _moreLikeThis()
         {
             AppendOperatorIfNeeded(WhereTokens);
@@ -932,18 +938,16 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
      * @param result Query result
      */
     public void invokeAfterQueryExecuted(QueryResult result) {
-        for (Consumer<QueryResult> consumer : afterQueryExecutedCallback) {
-            consumer.accept(result);
-        }
+        EventHelper.invoke(afterQueryExecutedCallback, result);
     }
 
     public void invokeBeforeQueryExecuted(IndexQuery query) {
-        for (Consumer<IndexQuery> consumer : beforeQueryExecutedCallback) {
-            consumer.accept(query);
-        }
+        EventHelper.invoke(beforeQueryExecutedCallback, query);
     }
 
-    //TBD public void InvokeAfterStreamExecuted(BlittableJsonReaderObject result)
+    public void invokeAfterStreamExecuted(ObjectNode result) {
+        EventHelper.invoke(afterStreamExecutedCallback, result);
+    }
 
     /**
      * Generates the index query.
@@ -1360,7 +1364,7 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
             return "";
         }
 
-        /* TBD
+        /* TBD tryConvertValueForQuery
             if (_conventions.TryConvertValueForQuery(whereParams.FieldName, whereParams.Value, forRange, out var strVal))
                 return strVal;
          */
@@ -1425,7 +1429,7 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
             throw new IllegalStateException("Cannot get MoreLikeThisToken because there are no where token specified.");
         }
 
-        /* TBD
+        /* TBD more like this
           var moreLikeThisToken = WhereTokens.Last.Value as MoreLikeThisToken;
 
             if (moreLikeThisToken == null)
@@ -1459,7 +1463,7 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
 
     protected List<Consumer<QueryResult>> afterQueryExecutedCallback = new ArrayList<>();
 
-    //TBD protected Action<BlittableJsonReaderObject> AfterStreamExecutedCallback;
+    protected List<Consumer<ObjectNode>> afterStreamExecutedCallback = new ArrayList<>();
 
     protected QueryOperation queryOperation;
 
@@ -1483,7 +1487,13 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
         afterQueryExecutedCallback.remove(action);
     }
 
-    //TBD public IDocumentQueryCustomization AfterStreamExecuted(Action<BlittableJsonReaderObject> action)
+    public void _addAfterStreamExecutedListener(Consumer<ObjectNode> action) {
+        afterStreamExecutedCallback.add(action);
+    }
+
+    public void _removeAfterStreamExecutedListener(Consumer<ObjectNode> action) {
+        afterStreamExecutedCallback.remove(action);
+    }
 
     public void _noTracking() {
         disableEntitiesTracking = true;

@@ -1,5 +1,6 @@
 package net.ravendb.client.documents.session;
 
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import net.ravendb.client.documents.conventions.DocumentConventions;
 import net.ravendb.client.documents.queries.IndexQuery;
 import net.ravendb.client.documents.queries.QueryOperator;
@@ -25,11 +26,13 @@ public interface IQueryBase<T, TSelf extends IQueryBase<T, TSelf>> {
 
     TSelf removeAfterQueryExecutedListener(Consumer<QueryResult> action);
 
-    //TBD void AfterStreamExecuted(Action<BlittableJsonReaderObject> action);
+    TSelf addAfterStreamExecutedListener(Consumer<ObjectNode> action);
+
+    TSelf removeAfterStreamExecutedListener(Consumer<ObjectNode> action);
 
     void invokeAfterQueryExecuted(QueryResult result);
 
-    //TBD void InvokeAfterStreamExecuted(BlittableJsonReaderObject result);
+    void invokeAfterStreamExecuted(ObjectNode result);
 
     /**
      * Disables caching for query results.

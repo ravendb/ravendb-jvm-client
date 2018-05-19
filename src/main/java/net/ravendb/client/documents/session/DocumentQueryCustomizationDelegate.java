@@ -1,5 +1,6 @@
 package net.ravendb.client.documents.session;
 
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import net.ravendb.client.documents.queries.IndexQuery;
 import net.ravendb.client.documents.queries.QueryResult;
 import net.ravendb.client.documents.session.operations.QueryOperation;
@@ -40,6 +41,18 @@ public class DocumentQueryCustomizationDelegate implements IDocumentQueryCustomi
     @Override
     public IDocumentQueryCustomization removeAfterQueryExecutedListener(Consumer<QueryResult> action) {
         query._removeAfterQueryExecutedListener(action);
+        return this;
+    }
+
+    @Override
+    public IDocumentQueryCustomization addAfterStreamExecutedCallback(Consumer<ObjectNode> action) {
+        query._addAfterStreamExecutedListener(action);
+        return this;
+    }
+
+    @Override
+    public IDocumentQueryCustomization removeAfterStreamExecutedCallback(Consumer<ObjectNode> action) {
+        query._removeAfterStreamExecutedListener(action);
         return this;
     }
 

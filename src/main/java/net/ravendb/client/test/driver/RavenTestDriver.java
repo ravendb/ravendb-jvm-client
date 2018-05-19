@@ -21,9 +21,14 @@ import net.ravendb.client.serverwide.operations.CreateDatabaseOperation;
 import net.ravendb.client.serverwide.operations.DeleteDatabasesOperation;
 import net.ravendb.client.util.UrlUtils;
 import org.apache.commons.io.IOUtils;
+import org.apache.http.conn.ClientConnectionManager;
+import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.http.impl.conn.PoolingHttpClientConnectionManager;
+import org.apache.http.pool.AbstractConnPool;
 
 import java.awt.*;
 import java.io.*;
+import java.lang.reflect.Field;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.security.*;
@@ -126,6 +131,7 @@ public abstract class RavenTestDriver implements CleanCloseable {
 
         customizeStore(store);
 
+        hookLeakedConnectionCheck(store);
         store.initialize();
 
         store.addAfterCloseListener(((sender, event) -> {
@@ -151,6 +157,41 @@ public abstract class RavenTestDriver implements CleanCloseable {
 
         documentStores.add(store);
         return store;
+    }
+
+    private void hookLeakedConnectionCheck(DocumentStore store) {
+        store.addBeforeCloseListener((sender, event) -> {
+            try {
+                CloseableHttpClient httpClient = store.getRequestExecutor().getHttpClient();
+
+                Field connManager = httpClient.getClass().getDeclaredField("connManager");
+                connManager.setAccessible(true);
+                PoolingHttpClientConnectionManager connectionManager = (PoolingHttpClientConnectionManager) connManager.get(httpClient);
+
+                int leased = connectionManager.getTotalStats().getLeased();
+                if (leased > 0 ) {
+                    Thread.sleep(100);
+
+                    // give another try
+                    leased = connectionManager.getTotalStats().getLeased();
+
+                    if (leased > 0) {
+                        throw new IllegalStateException("Looks like you have leaked " + leased + " connections!");
+                    }
+
+                    /*  debug code to find actual connections
+                    Field poolField = connectionManager.getClass().getDeclaredField("pool");
+                    poolField.setAccessible(true);
+                    AbstractConnPool pool = (AbstractConnPool) poolField.get(connectionManager);
+                    Field leasedField = pool.getClass().getSuperclass().getDeclaredField("leased");
+                    leasedField.setAccessible(true);
+                    Set leasedConnections = (Set) leasedField.get(pool);*/
+                }
+            } catch (NoSuchFieldException | IllegalAccessException | InterruptedException e) {
+                throw new IllegalStateException("Unable to check for leaked connections", e);
+            }
+
+        });
     }
 
 

@@ -1,8 +1,14 @@
 package net.ravendb.client.documents.session;
 
+import net.ravendb.client.documents.CloseableIterator;
+import net.ravendb.client.documents.commands.StreamResult;
 import net.ravendb.client.documents.indexes.AbstractIndexCreationTask;
 import net.ravendb.client.documents.session.operations.lazy.IEagerSessionOperations;
 import net.ravendb.client.documents.session.operations.lazy.ILazySessionOperations;
+import net.ravendb.client.primitives.Reference;
+
+import java.io.OutputStream;
+import java.util.Collection;
 
 public interface IAdvancedSessionOperations extends IAdvancedDocumentSessionOperations {
 
@@ -115,8 +121,70 @@ public interface IAdvancedSessionOperations extends IAdvancedDocumentSessionOper
      */
     <T> T[] loadStartingWith(Class<T> clazz, String idPrefix, String matches, int start, int pageSize, String exclude, String startAfter);
 
-    //TBD void LoadStartingWithIntoStream(string idPrefix, Stream output, string matches = null, int start = 0, int pageSize = 25, string exclude = null, string startAfter = null);
-    //TBD void LoadIntoStream(IEnumerable<string> ids, Stream output);
+    /**
+     * Loads multiple entities that contain common prefix into a given stream.
+     * @param idPrefix prefix for which documents should be returned e.g. "products/"
+     * @param output the stream that will contain the load results
+     */
+    void loadStartingWithIntoStream(String idPrefix, OutputStream output);
+
+    /**
+     * Loads multiple entities that contain common prefix into a given stream.
+     * @param idPrefix prefix for which documents should be returned e.g. "products/"
+     * @param output the stream that will contain the load results
+     * @param matches pipe ('|') separated values for which document IDs (after 'idPrefix') should be matched ('?' any single character, '*' any characters)
+     */
+    void loadStartingWithIntoStream(String idPrefix, OutputStream output, String matches);
+
+    /**
+     * Loads multiple entities that contain common prefix into a given stream.
+     * @param idPrefix prefix for which documents should be returned e.g. "products/"
+     * @param output the stream that will contain the load results
+     * @param matches pipe ('|') separated values for which document IDs (after 'idPrefix') should be matched ('?' any single character, '*' any characters)
+     * @param start number of documents that should be skipped. By default: 0.
+     */
+    void loadStartingWithIntoStream(String idPrefix, OutputStream output, String matches, int start);
+
+    /**
+     * Loads multiple entities that contain common prefix into a given stream.
+     * @param idPrefix prefix for which documents should be returned e.g. "products/"
+     * @param output the stream that will contain the load results
+     * @param matches pipe ('|') separated values for which document IDs (after 'idPrefix') should be matched ('?' any single character, '*' any characters)
+     * @param start number of documents that should be skipped. By default: 0.
+     * @param pageSize maximum number of documents that will be retrieved. By default: 25.
+     */
+    void loadStartingWithIntoStream(String idPrefix, OutputStream output, String matches, int start, int pageSize);
+
+    /**
+     * Loads multiple entities that contain common prefix into a given stream.
+     * @param idPrefix prefix for which documents should be returned e.g. "products/"
+     * @param output the stream that will contain the load results
+     * @param matches pipe ('|') separated values for which document IDs (after 'idPrefix') should be matched ('?' any single character, '*' any characters)
+     * @param start number of documents that should be skipped. By default: 0.
+     * @param pageSize maximum number of documents that will be retrieved. By default: 25.
+     * @param exclude pipe ('|') separated values for which document IDs (after 'idPrefix') should not be matched ('?' any single character, '*' any characters)
+     */
+    void loadStartingWithIntoStream(String idPrefix, OutputStream output, String matches, int start, int pageSize, String exclude);
+
+    /**
+     * Loads multiple entities that contain common prefix into a given stream.
+     * @param idPrefix prefix for which documents should be returned e.g. "products/"
+     * @param output the stream that will contain the load results
+     * @param matches pipe ('|') separated values for which document IDs (after 'idPrefix') should be matched ('?' any single character, '*' any characters)
+     * @param start number of documents that should be skipped. By default: 0.
+     * @param pageSize maximum number of documents that will be retrieved. By default: 25.
+     * @param exclude pipe ('|') separated values for which document IDs (after 'idPrefix') should not be matched ('?' any single character, '*' any characters)
+     * @param startAfter skip document fetching until given ID is found and return documents after that ID (default: null)
+     */
+    void loadStartingWithIntoStream(String idPrefix, OutputStream output, String matches, int start, int pageSize, String exclude, String startAfter);
+
+    /**
+     * Loads the specified entities with the specified ids directly into a given stream.
+     * @param ids Collection of the Ids of the documents that should be loaded
+     * @param output the stream that will contain the load results
+     */
+    void loadIntoStream(Collection<String> ids, OutputStream output);
+
     //TBD List<T> MoreLikeThis<T, TIndexCreator>(string documentId) where TIndexCreator : AbstractIndexCreationTask, new();
     //TBD List<T> MoreLikeThis<T, TIndexCreator>(MoreLikeThisQuery query) where TIndexCreator : AbstractIndexCreationTask, new();
     //TBD List<T> MoreLikeThis<T>(string index, string documentId);
@@ -149,15 +217,114 @@ public interface IAdvancedSessionOperations extends IAdvancedDocumentSessionOper
      */
     <T> IDocumentQuery<T> documentQuery(Class<T> clazz);
 
+    /**
+     * Stream the results on the query to the client, converting them to
+     * Java types along the way.
+     *
+     * Does NOT track the entities in the session, and will not includes changes there when saveChanges() is called
+     * @param query Query to stream results for
+     * @param <T> Result class
+     * @return results iterator
+     */
+    <T> CloseableIterator<StreamResult<T>> stream(IDocumentQuery<T> query);
 
-    // TBD stream IEnumerator<StreamResult<T>> Stream<T>(IQueryable<T> query);
-    // TBD stream IEnumerator<StreamResult<T>> Stream<T>(IQueryable<T> query, out StreamQueryStatistics streamQueryStats);
-    // TBD stream IEnumerator<StreamResult<T>> Stream<T>(IDocumentQuery<T> query);
-    // TBD stream IEnumerator<StreamResult<T>> Stream<T>(IRawDocumentQuery<T> query);
-    // TBD stream IEnumerator<StreamResult<T>> Stream<T>(IRawDocumentQuery<T> query, out StreamQueryStatistics streamQueryStats);
-    // TBD stream IEnumerator<StreamResult<T>> Stream<T>(IDocumentQuery<T> query, out StreamQueryStatistics streamQueryStats);
-    // TBD stream IEnumerator<StreamResult<T>> Stream<T>(string startsWith, string matches = null, int start = 0, int pageSize = int.MaxValue, string startAfter = null);
-    // TBD stream void StreamInto<T>(IDocumentQuery<T> query, Stream output);
-    // TBD stream void StreamInto<T>(IRawDocumentQuery<T> query, Stream output);
+    /**
+     * Stream the results on the query to the client, converting them to
+     * Java types along the way.
+     *
+     * Does NOT track the entities in the session, and will not includes changes there when saveChanges() is called
+     * @param query Query to stream results for
+     * @param streamQueryStats Information about the performed query
+     * @param <T> Result class
+     * @return results iterator
+     */
+    <T> CloseableIterator<StreamResult<T>> stream(IDocumentQuery<T> query, Reference<StreamQueryStatistics> streamQueryStats);
 
+    /**
+     * Stream the results on the query to the client, converting them to
+     * Java types along the way.
+     *
+     * Does NOT track the entities in the session, and will not includes changes there when saveChanges() is called
+     * @param query Query to stream results for
+     * @param <T> Result class
+     * @return results iterator
+     */
+    <T> CloseableIterator<StreamResult<T>> stream(IRawDocumentQuery<T> query);
+
+    /**
+     * Stream the results on the query to the client, converting them to
+     * Java types along the way.
+     *
+     * Does NOT track the entities in the session, and will not includes changes there when saveChanges() is called
+     * @param query Query to stream results for
+     * @param streamQueryStats Information about the performed query
+     * @param <T> Result class
+     * @return results iterator
+     */
+    <T> CloseableIterator<StreamResult<T>> stream(IRawDocumentQuery<T> query, Reference<StreamQueryStatistics> streamQueryStats);
+
+    /**
+     * Stream the results of documents search to the client, converting them to CLR types along the way.
+     * Does NOT track the entities in the session, and will not includes changes there when saveChanges() is called
+     * @param startsWith prefix for which documents should be returned e.g. "products/"
+     * @param <T> Result class
+     * @return results iterator
+     */
+    <T> CloseableIterator<StreamResult<T>> stream(Class<T> clazz, String startsWith);
+
+    /**
+     * Stream the results of documents search to the client, converting them to CLR types along the way.
+     * Does NOT track the entities in the session, and will not includes changes there when saveChanges() is called
+     * @param startsWith prefix for which documents should be returned e.g. "products/"
+     * @param matches pipe ('|') separated values for which document ID (after 'idPrefix') should be matched ('?' any single character, '*' any characters)
+     * @param <T> Result class
+     * @return results iterator
+     */
+    <T> CloseableIterator<StreamResult<T>> stream(Class<T> clazz, String startsWith, String matches);
+
+    /**
+     * Stream the results of documents search to the client, converting them to CLR types along the way.
+     * Does NOT track the entities in the session, and will not includes changes there when saveChanges() is called
+     * @param startsWith prefix for which documents should be returned e.g. "products/"
+     * @param matches pipe ('|') separated values for which document ID (after 'idPrefix') should be matched ('?' any single character, '*' any characters)
+     * @param start number of documents that should be skipped
+     * @param <T> Result class
+     * @return results iterator
+     */
+    <T> CloseableIterator<StreamResult<T>> stream(Class<T> clazz, String startsWith, String matches, int start);
+
+    /**
+     * Stream the results of documents search to the client, converting them to CLR types along the way.
+     * Does NOT track the entities in the session, and will not includes changes there when saveChanges() is called
+     * @param startsWith prefix for which documents should be returned e.g. "products/"
+     * @param matches pipe ('|') separated values for which document ID (after 'idPrefix') should be matched ('?' any single character, '*' any characters)
+     * @param start number of documents that should be skipped
+     * @param pageSize maximum number of documents that will be retrieved
+     * @param <T> Result class
+     * @return results iterator
+     */
+    <T> CloseableIterator<StreamResult<T>> stream(Class<T> clazz, String startsWith, String matches, int start, int pageSize);
+
+    /**
+     * Stream the results of documents search to the client, converting them to CLR types along the way.
+     * Does NOT track the entities in the session, and will not includes changes there when saveChanges() is called
+     * @param startsWith prefix for which documents should be returned e.g. "products/"
+     * @param matches pipe ('|') separated values for which document ID (after 'idPrefix') should be matched ('?' any single character, '*' any characters)
+     * @param start number of documents that should be skipped
+     * @param pageSize maximum number of documents that will be retrieved
+     * @param startAfter skip document fetching until given ID is found and return documents after that ID (default: null)
+     * @param <T> Result class
+     * @return results iterator
+     */
+    <T> CloseableIterator<StreamResult<T>> stream(Class<T> clazz, String startsWith, String matches, int start, int pageSize, String startAfter);
+
+    /**
+     *  Returns the results of a query directly into stream
+     */
+    <T> void streamInto(IDocumentQuery<T> query, OutputStream output);
+
+    /**
+     * Returns the results of a query directly into stream
+     */
+    <T> void streamInto(IRawDocumentQuery<T> query, OutputStream output);
 }
