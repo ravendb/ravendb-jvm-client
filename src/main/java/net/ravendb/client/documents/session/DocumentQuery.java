@@ -3,15 +3,14 @@ package net.ravendb.client.documents.session;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.collect.Sets;
 import net.ravendb.client.Constants;
-import net.ravendb.client.documents.Lazy;
 import net.ravendb.client.documents.indexes.spatial.SpatialRelation;
 import net.ravendb.client.documents.indexes.spatial.SpatialUnits;
 import net.ravendb.client.documents.queries.*;
 import net.ravendb.client.documents.queries.facets.*;
+import net.ravendb.client.documents.queries.moreLikeThis.*;
 import net.ravendb.client.documents.queries.spatial.DynamicSpatialField;
 import net.ravendb.client.documents.queries.spatial.SpatialCriteria;
 import net.ravendb.client.documents.queries.spatial.SpatialCriteriaFactory;
-import net.ravendb.client.documents.session.operations.lazy.LazyQueryOperation;
 import net.ravendb.client.documents.session.tokens.DeclareToken;
 import net.ravendb.client.documents.session.tokens.FieldsToFetchToken;
 import net.ravendb.client.documents.session.tokens.LoadToken;
@@ -737,6 +736,37 @@ public class DocumentQuery<T> extends AbstractDocumentQuery<T, DocumentQuery<T>>
     @Override
     public IDocumentQuery<T> orderByDistanceDescending(String fieldName, String shapeWkt) {
         _orderByDistanceDescending(fieldName, shapeWkt);
+        return this;
+    }
+
+    @Override
+    public IDocumentQuery<T> moreLikeThis(MoreLikeThisBase moreLikeThis) {
+        try (MoreLikeThisScope mlt = _moreLikeThis()) {
+            mlt.withOptions(moreLikeThis.getOptions());
+
+            if (moreLikeThis instanceof MoreLikeThisUsingDocument) {
+                mlt.withDocument(((MoreLikeThisUsingDocument) moreLikeThis).getDocumentJson());
+            }
+        }
+
+        return this;
+    }
+
+    @Override
+    public IDocumentQuery<T> moreLikeThis(Consumer<IMoreLikeThisBuilderForDocumentQuery<T>> builder) {
+        MoreLikeThisBuilder<T> f = new MoreLikeThisBuilder<>();
+        builder.accept(f);
+
+        try (MoreLikeThisScope moreLikeThis = _moreLikeThis()) {
+            moreLikeThis.withOptions(f.getMoreLikeThis().getOptions());
+
+            if (f.getMoreLikeThis() instanceof MoreLikeThisUsingDocument) {
+                moreLikeThis.withDocument(((MoreLikeThisUsingDocument) f.getMoreLikeThis()).getDocumentJson());
+            } else if (f.getMoreLikeThis() instanceof MoreLikeThisUsingDocumentForDocumentQuery) {
+                ((MoreLikeThisUsingDocumentForDocumentQuery) f.getMoreLikeThis()).getForDocumentQuery().accept(this);
+            }
+        }
+
         return this;
     }
 }

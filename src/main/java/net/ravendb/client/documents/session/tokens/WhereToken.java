@@ -7,7 +7,7 @@ import org.apache.commons.lang3.ObjectUtils;
 
 public class WhereToken extends QueryToken {
 
-    private WhereToken() {
+    protected WhereToken() {
     }
 
     @UseSharpEnum

@@ -158,7 +158,7 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
     /**
      * hold the data required to manage the data for RavenDB's Unit of Work
      */
-    public final Map<Object, DocumentInfo> documentsByEntity = new TreeMap<>((o1, o2) -> o1 == o2 ? 0 : 1);
+    public final Map<Object, DocumentInfo> documentsByEntity = new LinkedHashMap<>();
 
     protected final DocumentStoreBase _documentStore;
 

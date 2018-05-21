@@ -9,6 +9,7 @@ import net.ravendb.client.primitives.Reference;
 
 import java.io.OutputStream;
 import java.util.Collection;
+import java.util.List;
 
 public interface IAdvancedSessionOperations extends IAdvancedDocumentSessionOperations {
 
@@ -185,10 +186,6 @@ public interface IAdvancedSessionOperations extends IAdvancedDocumentSessionOper
      */
     void loadIntoStream(Collection<String> ids, OutputStream output);
 
-    //TBD List<T> MoreLikeThis<T, TIndexCreator>(string documentId) where TIndexCreator : AbstractIndexCreationTask, new();
-    //TBD List<T> MoreLikeThis<T, TIndexCreator>(MoreLikeThisQuery query) where TIndexCreator : AbstractIndexCreationTask, new();
-    //TBD List<T> MoreLikeThis<T>(string index, string documentId);
-    //TBD List<T> MoreLikeThis<T>(MoreLikeThisQuery query);
     //TBD patch API void Increment<T, U>(T entity, Expression<Func<T, U>> path, U valToAdd);
     //TBD patch API void Increment<T, U>(string id, Expression<Func<T, U>> path, U valToAdd);
     //TBD patch API void Patch<T, U>(string id, Expression<Func<T, U>> path, U value);

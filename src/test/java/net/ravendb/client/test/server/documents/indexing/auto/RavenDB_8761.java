@@ -37,7 +37,6 @@ public class RavenDB_8761 extends RemoteTestBase {
                         .ofType(ProductCount.class)
                         .toList();
 
-
                 for (List<ProductCount> products : Arrays.asList(productCounts1, productCounts2)) {
                     assertThat(products)
                             .hasSize(2);

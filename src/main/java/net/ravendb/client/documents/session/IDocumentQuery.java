@@ -7,6 +7,7 @@ import net.ravendb.client.documents.queries.facets.Facet;
 import net.ravendb.client.documents.queries.facets.FacetBase;
 import net.ravendb.client.documents.queries.facets.IAggregationDocumentQuery;
 import net.ravendb.client.documents.queries.facets.IFacetBuilder;
+import net.ravendb.client.documents.queries.moreLikeThis.IMoreLikeThisBuilderForDocumentQuery;
 
 import java.util.function.Consumer;
 
@@ -72,7 +73,7 @@ public interface IDocumentQuery<T> extends IDocumentQueryBase<T, IDocumentQuery<
 
     IGroupByDocumentQuery<T> groupBy(GroupBy field, GroupBy... fields);
 
-    //TBD MoreLikeThis
+    IDocumentQuery<T> moreLikeThis(Consumer<IMoreLikeThisBuilderForDocumentQuery<T>> builder);
 
     IAggregationDocumentQuery<T> aggregateBy(Consumer<IFacetBuilder<T>> builder);
 

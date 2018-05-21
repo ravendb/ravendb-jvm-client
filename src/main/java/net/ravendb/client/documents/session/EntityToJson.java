@@ -7,6 +7,7 @@ import net.ravendb.client.documents.conventions.DocumentConventions;
 import net.ravendb.client.extensions.JsonExtensions;
 
 import java.lang.reflect.Field;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.TreeMap;
 
@@ -22,7 +23,7 @@ public class EntityToJson {
         this._session = _session;
     }
 
-        private final Map<Object, Map<String, Object>> _missingDictionary = new TreeMap<>((o1, o2) -> o1 == o2 ? 0 : 1);
+        private final Map<Object, Map<String, Object>> _missingDictionary = new HashMap<>();
 
     public Map<Object, Map<String, Object>> getMissingDictionary() {
         return _missingDictionary;

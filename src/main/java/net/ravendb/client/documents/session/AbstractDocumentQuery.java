@@ -11,6 +11,7 @@ import net.ravendb.client.documents.indexes.spatial.SpatialRelation;
 import net.ravendb.client.documents.indexes.spatial.SpatialUnits;
 import net.ravendb.client.documents.queries.*;
 import net.ravendb.client.documents.queries.facets.FacetBase;
+import net.ravendb.client.documents.queries.moreLikeThis.MoreLikeThisScope;
 import net.ravendb.client.documents.queries.spatial.SpatialCriteria;
 import net.ravendb.client.documents.queries.spatial.DynamicSpatialField;
 import net.ravendb.client.documents.session.operations.QueryOperation;
@@ -343,18 +344,16 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
         tokens.add(TrueToken.INSTANCE);
     }
 
-    /* TBD morelikethis
-     public MoreLikeThisScope _moreLikeThis()
-        {
-            AppendOperatorIfNeeded(WhereTokens);
 
-            var token = new MoreLikeThisToken();
-            WhereTokens.AddLast(token);
+    public MoreLikeThisScope _moreLikeThis() {
+        appendOperatorIfNeeded(whereTokens);
 
-            _isInMoreLikeThis = true;
-            return new MoreLikeThisScope(token, AddQueryParameter, () => _isInMoreLikeThis = false);
-        }
-     */
+        MoreLikeThisToken token = new MoreLikeThisToken();
+        whereTokens.add(token);
+
+        _isInMoreLikeThis = true;
+        return new MoreLikeThisScope(token, this::addQueryParameter, () -> _isInMoreLikeThis = false);
+    }
 
     /**
      * Includes the specified path in the query, loading the document specified in that path
@@ -1429,15 +1428,14 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
             throw new IllegalStateException("Cannot get MoreLikeThisToken because there are no where token specified.");
         }
 
-        /* TBD more like this
-          var moreLikeThisToken = WhereTokens.Last.Value as MoreLikeThisToken;
+        QueryToken lastToken = whereTokens.get(whereTokens.size() - 1);
 
-            if (moreLikeThisToken == null)
-                throw new InvalidOperationException($"Last token is not '{nameof(MoreLikeThisToken)}'.");
-
-            return moreLikeThisToken.WhereTokens;
-         */
-        throw new NotImplementedException("More like this");
+        if (lastToken instanceof MoreLikeThisToken) {
+            MoreLikeThisToken moreLikeThisToken = (MoreLikeThisToken) lastToken;
+            return moreLikeThisToken.whereTokens;
+        } else {
+            throw new IllegalStateException("Last token is not MoreLikeThisToken");
+        }
     }
 
     protected void updateFieldsToFetchToken(FieldsToFetchToken fieldsToFetch) {

@@ -13,7 +13,6 @@ import net.ravendb.client.documents.session.StreamQueryStatistics;
 import net.ravendb.client.extensions.JsonExtensions;
 import net.ravendb.client.primitives.NetISO8601Utils;
 import net.ravendb.client.util.UrlUtils;
-import sun.plugin.dom.exception.InvalidStateException;
 
 import java.io.IOException;
 
@@ -105,31 +104,31 @@ public class StreamOperation {
 
     private static void handleStreamQueryStats(JsonParser parser, StreamQueryStatistics streamQueryStatistics) throws IOException {
         if (!"ResultEtag".equals(parser.nextFieldName())) {
-            throw new InvalidStateException("Expected ResultETag field");
+            throw new IllegalStateException("Expected ResultETag field");
         }
 
         long resultEtag = parser.nextLongValue(0);
 
         if (!"IsStale".equals(parser.nextFieldName())) {
-            throw new InvalidStateException("Expected IsStale field");
+            throw new IllegalStateException("Expected IsStale field");
         }
 
         boolean isStale = parser.nextBooleanValue();
 
         if (!"IndexName".equals(parser.nextFieldName())) {
-            throw new InvalidStateException("Expected IndexName field");
+            throw new IllegalStateException("Expected IndexName field");
         }
 
         String indexName = parser.nextTextValue();
 
         if (!"TotalResults".equals(parser.nextFieldName())) {
-            throw new InvalidStateException("Expected TotalResults field");
+            throw new IllegalStateException("Expected TotalResults field");
         }
 
         int totalResults = (int) parser.nextLongValue(0);
 
         if (!"IndexTimestamp".equals(parser.nextFieldName())) {
-            throw new InvalidStateException("Expected IndexTimestamp field");
+            throw new IllegalStateException("Expected IndexTimestamp field");
         }
 
         String indexTimestamp = parser.nextTextValue();

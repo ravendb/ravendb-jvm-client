@@ -3,6 +3,7 @@ package net.ravendb.client.documents.session;
 import net.ravendb.client.documents.indexes.spatial.SpatialRelation;
 import net.ravendb.client.documents.indexes.spatial.SpatialUnits;
 import net.ravendb.client.documents.queries.SearchOperator;
+import net.ravendb.client.documents.queries.moreLikeThis.MoreLikeThisBase;
 import net.ravendb.client.documents.queries.spatial.DynamicSpatialField;
 import net.ravendb.client.documents.queries.spatial.SpatialCriteria;
 import net.ravendb.client.documents.queries.spatial.SpatialCriteriaFactory;
@@ -417,5 +418,7 @@ public interface IFilterDocumentQueryBase<T, TSelf extends IDocumentQueryBase<T,
     IDocumentQuery<T> spatial(DynamicSpatialField field, Function<SpatialCriteriaFactory, SpatialCriteria> clause);
 
     //TBD expr IDocumentQuery<T> spatial(Function<SpatialDynamicFieldFactory<T>, DynamicSpatialField> field, Function<SpatialCriteriaFactory, SpatialCriteria> clause);
+
+    IDocumentQuery<T> moreLikeThis(MoreLikeThisBase moreLikeThis);
 
 }

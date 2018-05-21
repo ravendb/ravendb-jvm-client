@@ -6,6 +6,7 @@ import net.ravendb.client.documents.queries.SearchOperator;
 import net.ravendb.client.documents.queries.facets.FacetBase;
 import net.ravendb.client.documents.queries.facets.IAggregationDocumentQuery;
 import net.ravendb.client.documents.queries.facets.IFacetBuilder;
+import net.ravendb.client.documents.queries.moreLikeThis.MoreLikeThisScope;
 import net.ravendb.client.documents.queries.spatial.DynamicSpatialField;
 import net.ravendb.client.documents.queries.spatial.SpatialCriteria;
 
@@ -432,7 +433,8 @@ public interface IAbstractDocumentQuery<T> {
 
     void _aggregateUsing(String facetSetupDocumentId);
 
-    //TBD: MoreLikeThisScope MoreLikeThis();
+    MoreLikeThisScope _moreLikeThis();
+
     //TBD void AddFromAliasToWhereTokens(string fromAlias);
     //TBD string ProjectionParameter(object id);
     //TBD void SuggestUsing(SuggestionBase suggestion);
