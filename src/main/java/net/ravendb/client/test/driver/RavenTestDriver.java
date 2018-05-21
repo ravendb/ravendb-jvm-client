@@ -1,16 +1,19 @@
 package net.ravendb.client.test.driver;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.google.common.base.Function;
 import com.google.common.base.Stopwatch;
 import com.google.common.collect.Sets;
 import net.ravendb.client.Constants;
 import net.ravendb.client.documents.DocumentStore;
 import net.ravendb.client.documents.IDocumentStore;
+import net.ravendb.client.documents.indexes.IndexErrors;
 import net.ravendb.client.documents.indexes.IndexState;
 import net.ravendb.client.documents.operations.MaintenanceOperationExecutor;
 import net.ravendb.client.documents.operations.DatabaseStatistics;
 import net.ravendb.client.documents.operations.GetStatisticsOperation;
 import net.ravendb.client.documents.operations.IndexInformation;
+import net.ravendb.client.documents.operations.indexes.GetIndexErrorsOperation;
 import net.ravendb.client.documents.session.IDocumentSession;
 import net.ravendb.client.exceptions.TimeoutException;
 import net.ravendb.client.exceptions.cluster.NoLeaderException;
@@ -150,10 +153,9 @@ public abstract class RavenTestDriver implements CleanCloseable {
 
         setupDatabase(store);
 
-        /* TODO
-         if (waitForIndexingTimeout.HasValue)
-                WaitForIndexing(store, name, waitForIndexingTimeout);
-         */
+        if (waitForIndexingTimeout != null) {
+            waitForIndexing(store, name, waitForIndexingTimeout);
+        }
 
         documentStores.add(store);
         return store;
@@ -219,8 +221,6 @@ public abstract class RavenTestDriver implements CleanCloseable {
         List<String> readLines = new ArrayList<>();
 
         while (true) {
-
-            //TODO: handle timeout!
             String line = reader.readLine();
             readLines.add(line);
 
@@ -237,44 +237,6 @@ public abstract class RavenTestDriver implements CleanCloseable {
                 url = line.substring(prefix.length());
                 break;
             }
-
-            /*TODO
-             Task<string> readLineTask = null;
-            while (true)
-            {
-                if (readLineTask == null)
-                    readLineTask = output.ReadLineAsync();
-
-                var task = Task.WhenAny(readLineTask, Task.Delay(TimeSpan.FromSeconds(5))).Result;
-
-                if (startupDuration.Elapsed > TimeSpan.FromMinutes(1))
-                    break;
-
-                if (task != readLineTask)
-                    continue;
-
-                var line = readLineTask.Result;
-
-                readLineTask = null;
-
-                sb.AppendLine(line);
-
-                if (line == null)
-                {
-                    try
-                    {
-                        process.Kill();
-                    }
-                    catch (Exception e)
-                    {
-                        ReportError(e);
-                    }
-
-                    throw new InvalidOperationException("Unable to start server, log is: " + Environment.NewLine + sb);
-                }
-
-            }
-             */
         }
 
         if (url == null) {
@@ -386,28 +348,18 @@ public abstract class RavenTestDriver implements CleanCloseable {
             }
         }
 
-        throw new TimeoutException(); //TODO:
-        /* TODO
-            var errors = admin.Send(new GetIndexErrorsOperation());
 
-            string allIndexErrorsText = string.Empty;
-            if (errors != null && errors.Length > 0)
-            {
-                var allIndexErrorsListText = string.Join("\r\n",
-                    errors.Select(FormatIndexErrors));
-                allIndexErrorsText = $"Indexing errors:\r\n{ allIndexErrorsListText }";
-
-                string FormatIndexErrors(IndexErrors indexErrors)
-                {
-                    var errorsListText = string.Join("\r\n",
-                        indexErrors.Errors.Select(x => $"- {x}"));
-                    return $"Index '{indexErrors.Name}' ({indexErrors.Errors.Length} errors):\r\n{errorsListText}";
-                }
-            }
-
-            throw new TimeoutException($"The indexes stayed stale for more than {timeout.Value}.{ allIndexErrorsText }");
+        IndexErrors[] errors = admin.send(new GetIndexErrorsOperation());
+        String allIndexErrorsText = "";
+        Function<IndexErrors, String> formatIndexErrors = indexErrors -> {
+            String errorsListText = Arrays.stream(indexErrors.getErrors()).map(x -> "-" + x).collect(Collectors.joining(System.lineSeparator()));
+            return "Index " + indexErrors.getName() + " (" + indexErrors.getErrors().length + " errors): "+ System.lineSeparator() + errorsListText;
+        };
+        if (errors != null && errors.length > 0) {
+            allIndexErrorsText = Arrays.stream(errors).map(x -> formatIndexErrors.apply(x)).collect(Collectors.joining(System.lineSeparator()));
         }
-         */
+
+        throw new TimeoutException("The indexes stayed stale for more than " + timeout + "." + allIndexErrorsText);
     }
 
 
@@ -460,27 +412,9 @@ public abstract class RavenTestDriver implements CleanCloseable {
         if (e == null) {
             throw new IllegalArgumentException("Exception can not be null");
         }
-
-
-        /* TODO:
-        var msg = $"{DateTime.Now}: {e}\r\n";
-            File.AppendAllText("raven_testdriver.log", msg);
-            Console.WriteLine(msg);
-         */
     }
 
     private static void reportInfo(String message) {
-        /* TODO:
-         if (Debug == false)
-                return;
-
-            if (string.IsNullOrWhiteSpace(message))
-                throw new ArgumentNullException(nameof(message));
-
-            var msg = $"{DateTime.Now}: {message}\r\n";
-            File.AppendAllText("raven_testdriver.log", msg);
-            Console.WriteLine(msg);
-         */
     }
 
     @Override
