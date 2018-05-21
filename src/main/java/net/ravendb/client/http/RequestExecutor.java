@@ -796,7 +796,7 @@ public class RequestExecutor implements CleanCloseable {
                     }
                     return true;
 
-                case HttpStatus.SC_FORBIDDEN: //TBD: include info about certificates
+                case HttpStatus.SC_FORBIDDEN:
                     throw new AuthorizationException("Forbidden access to " + chosenNode.getDatabase() + "@" + chosenNode.getUrl() + ", " + request.getMethod() + " " + request.getURI());
                 case HttpStatus.SC_GONE: // request not relevant for the chosen node - the database has been moved to a different one
                     if (!shouldRetry) {
