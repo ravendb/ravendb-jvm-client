@@ -95,9 +95,10 @@ public class PatchOperation implements IOperation<PatchResult> {
     }
 
     public static class PatchCommand extends RavenCommand<PatchResult> {
+        private final DocumentConventions _conventions;
         private final String _id;
         private final String _changeVector;
-        private final ObjectNode _patch;
+        private final Payload _patch;
         private final boolean _skipPatchIfChangeVectorMismatch;
         private final boolean _returnDebugInformation;
         private final boolean _test;
@@ -106,6 +107,8 @@ public class PatchOperation implements IOperation<PatchResult> {
                             PatchRequest patch, PatchRequest patchIfMissing, boolean skipPatchIfChangeVectorMismatch,
                             boolean returnDebugInformation, boolean test) {
             super(PatchResult.class);
+
+            _conventions = conventions;
 
             if (conventions == null) {
                 throw new IllegalArgumentException("Conventions cannot be null");
@@ -129,7 +132,7 @@ public class PatchOperation implements IOperation<PatchResult> {
 
             _id = id;
             _changeVector = changeVector;
-            _patch = mapper.valueToTree(new Payload(patch, patchIfMissing));
+            _patch = new Payload(patch, patchIfMissing);
             _skipPatchIfChangeVectorMismatch = skipPatchIfChangeVectorMismatch;
             _returnDebugInformation = returnDebugInformation;
             _test = test;
@@ -159,7 +162,24 @@ public class PatchOperation implements IOperation<PatchResult> {
             HttpPatch request = new HttpPatch();
             request.setEntity(new ContentProviderHttpEntity(outputStream -> {
                 try (JsonGenerator generator = mapper.getFactory().createGenerator(outputStream)) {
-                    generator.writeTree(_patch);
+                    generator.writeStartObject();
+
+                    generator.writeFieldName("Patch");
+                    if (_patch.getPatch() != null) {
+                        _patch.getPatch().serialize(generator, _conventions.getEntityMapper());
+                    } else {
+                        generator.writeNull();
+                    }
+
+                    generator.writeFieldName("PatchIfMissing");
+
+                    if (_patch.getPatchIfMissing() != null) {
+                        _patch.getPatchIfMissing().serialize(generator, _conventions.getEntityMapper());
+                    } else {
+                        generator.writeNull();
+                    }
+
+                    generator.writeEndObject();
                 } catch (IOException e) {
                     throw new RuntimeException(e);
                 }

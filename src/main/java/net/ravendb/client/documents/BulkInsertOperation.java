@@ -164,7 +164,7 @@ public class BulkInsertOperation implements CleanCloseable {
     public BulkInsertOperation(String database, IDocumentStore store) {
         _conventions = store.getConventions();
         _requestExecutor = store.getRequestExecutor(database);
-        objectMapper = JsonExtensions.getDefaultEntityMapper();
+        objectMapper = store.getConventions().getEntityMapper();
 
         _currentWriterBacking = new ByteArrayOutputStream();
         _currentWriter = new OutputStreamWriter(_currentWriterBacking);

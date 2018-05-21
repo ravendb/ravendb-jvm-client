@@ -10,6 +10,7 @@ import net.ravendb.client.primitives.Reference;
 import java.io.OutputStream;
 import java.util.Collection;
 import java.util.List;
+import java.util.function.Consumer;
 
 public interface IAdvancedSessionOperations extends IAdvancedDocumentSessionOperations {
 
@@ -186,12 +187,17 @@ public interface IAdvancedSessionOperations extends IAdvancedDocumentSessionOper
      */
     void loadIntoStream(Collection<String> ids, OutputStream output);
 
-    //TBD patch API void Increment<T, U>(T entity, Expression<Func<T, U>> path, U valToAdd);
-    //TBD patch API void Increment<T, U>(string id, Expression<Func<T, U>> path, U valToAdd);
-    //TBD patch API void Patch<T, U>(string id, Expression<Func<T, U>> path, U value);
-    //TBD patch API void Patch<T, U>(T entity, Expression<Func<T, U>> path, U value);
-    //TBD patch API void Patch<T, U>(T entity, Expression<Func<T, IEnumerable<U>>> path, Expression<Func<JavaScriptArray<U>, object>> arrayAdder);
-    //TBD patch API void Patch<T, U>(string id, Expression<Func<T, IEnumerable<U>>> path, Expression<Func<JavaScriptArray<U>, object>> arrayAdder);
+    <T, U> void increment(String id, String path, U valueToAdd);
+
+    <T, U> void increment(T entity, String path, U valueToAdd);
+
+    <T, U> void patch(String id, String path, U value);
+
+    <T, U> void patch(T entity, String path, U value);
+
+    <T, U> void patch(T entity, String pathToArray, Consumer<JavaScriptArray<U>> arrayAdder);
+
+    <T, U> void patch(String id, String pathToArray, Consumer<JavaScriptArray<U>> arrayAdder);
 
     <T, TIndex extends AbstractIndexCreationTask> IDocumentQuery<T> documentQuery(Class<T> clazz, Class<TIndex> indexClazz);
 

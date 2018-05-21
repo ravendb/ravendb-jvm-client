@@ -32,6 +32,7 @@ import java.util.Set;
 
 public class BatchCommand extends RavenCommand<JsonArrayResult> implements CleanCloseable {
 
+    private DocumentConventions _conventions;
     private final List<ICommandData> _commands;
     private Set<InputStream> _attachmentStreams;
     private final BatchOptions _options;
@@ -44,6 +45,7 @@ public class BatchCommand extends RavenCommand<JsonArrayResult> implements Clean
         super(JsonArrayResult.class);
         this._commands = commands;
         this._options = options;
+        this._conventions = conventions;
 
         if (conventions == null) {
             throw new IllegalArgumentException("conventions cannot be null");
@@ -84,7 +86,7 @@ public class BatchCommand extends RavenCommand<JsonArrayResult> implements Clean
                 generator.writeStartArray();
 
                 for (ICommandData command : _commands) {
-                    command.serialize(generator, mapper.getSerializerProviderInstance());
+                    command.serialize(generator, _conventions);
                 }
 
                 generator.writeEndArray();

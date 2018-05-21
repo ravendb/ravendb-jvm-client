@@ -58,7 +58,7 @@ public class EntityToJson {
             return (ObjectNode) entity;
         }
 
-        ObjectMapper mapper = JsonExtensions.getDefaultEntityMapper();
+        ObjectMapper mapper = conventions.getEntityMapper();
 
         ObjectNode jsonNode = mapper.valueToTree(entity);
 

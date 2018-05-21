@@ -1,5 +1,9 @@
 package net.ravendb.client.documents.operations;
 
+import com.fasterxml.jackson.core.JsonGenerator;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -54,5 +58,13 @@ public class PatchRequest {
                 .setScript(script);
 
         return request;
+    }
+
+    public void serialize(JsonGenerator generator, ObjectMapper entityMapper) throws IOException {
+        generator.writeStartObject();
+        generator.writeStringField("Script", script);
+        generator.writeFieldName("Values");
+        entityMapper.writeValue(generator, values);
+        generator.writeEndObject();
     }
 }

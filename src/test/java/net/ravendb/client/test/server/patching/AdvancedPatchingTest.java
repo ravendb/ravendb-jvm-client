@@ -7,10 +7,13 @@ import net.ravendb.client.documents.IDocumentStore;
 import net.ravendb.client.documents.indexes.IndexDefinition;
 import net.ravendb.client.documents.operations.Operation;
 import net.ravendb.client.documents.operations.PatchByQueryOperation;
+import net.ravendb.client.documents.operations.PatchOperation;
+import net.ravendb.client.documents.operations.PatchRequest;
 import net.ravendb.client.documents.operations.indexes.PutIndexesOperation;
 import net.ravendb.client.documents.session.IDocumentSession;
 import org.junit.jupiter.api.Test;
 
+import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 
@@ -66,7 +69,30 @@ public class AdvancedPatchingTest extends RemoteTestBase {
         }
     }
 
-    //TBD  another patch tests
+    @Test
+    public void testWithVariables() throws Exception {
+        try (IDocumentStore store = getDocumentStore()) {
+            try (IDocumentSession session = store.openSession()) {
+                CustomType customType = new CustomType();
+                customType.setOwner("me");
+                session.store(customType, "customTypes/1");
+                session.saveChanges();
+            }
+
+            PatchRequest patchRequest = new PatchRequest();
+            patchRequest.setScript("this.owner = args.v1");
+            patchRequest.setValues(Collections.singletonMap("v1", "not-me"));
+
+            PatchOperation patchOperation = new PatchOperation("customTypes/1", null, patchRequest);
+            store.operations().send(patchOperation);
+
+            try (IDocumentSession session = store.openSession()) {
+                CustomType loaded = session.load(CustomType.class, "customTypes/1");
+                assertThat(loaded.getOwner())
+                        .isEqualTo("not-me");
+            }
+        }
+    }
 
     @Test
     public void canCreateDocumentsIfPatchingAppliedByIndex() throws Exception {

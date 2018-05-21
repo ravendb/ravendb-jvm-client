@@ -7,14 +7,19 @@ import com.google.common.base.Stopwatch;
 import net.ravendb.client.Constants;
 import net.ravendb.client.documents.CloseableIterator;
 import net.ravendb.client.documents.DocumentStore;
+import net.ravendb.client.documents.IdTypeAndName;
 import net.ravendb.client.documents.Lazy;
 import net.ravendb.client.documents.commands.*;
 import net.ravendb.client.documents.commands.batches.BatchCommand;
+import net.ravendb.client.documents.commands.batches.CommandType;
+import net.ravendb.client.documents.commands.batches.ICommandData;
+import net.ravendb.client.documents.commands.batches.PatchCommandData;
 import net.ravendb.client.documents.commands.multiGet.GetRequest;
 import net.ravendb.client.documents.commands.multiGet.GetResponse;
 import net.ravendb.client.documents.commands.multiGet.MultiGetCommand;
 import net.ravendb.client.documents.indexes.AbstractIndexCreationTask;
 import net.ravendb.client.documents.linq.IDocumentQueryGenerator;
+import net.ravendb.client.documents.operations.PatchRequest;
 import net.ravendb.client.documents.queries.Query;
 import net.ravendb.client.documents.session.loaders.ILoaderWithInclude;
 import net.ravendb.client.documents.session.loaders.MultiLoaderWithInclude;
@@ -423,18 +428,99 @@ public class DocumentSession extends InMemoryDocumentSessionOperations implement
         loadInternal(ids.toArray(new String[0]), new LoadOperation(this), output);
     }
 
-    //TBD public List<T> MoreLikeThis<T, TIndexCreator>(string documentId) where TIndexCreator : AbstractIndexCreationTask, new()
-    //TBD public List<T> MoreLikeThis<T, TIndexCreator>(MoreLikeThisQuery query) where TIndexCreator : AbstractIndexCreationTask, new()
-    //TBD public List<T> MoreLikeThis<T>(string index, string documentId)
-    //TBD public List<T> MoreLikeThis<T>(MoreLikeThisQuery query)
+    @Override
+    public <T, U> void increment(T entity, String path, U valueToAdd) {
+        IMetadataDictionary metadata = getMetadataFor(entity);
+        String id = (String) metadata.get(Constants.Documents.Metadata.ID);
+        increment(id, path, valueToAdd);
+    }
 
-    //TBD public void Increment<T, U>(T entity, Expression<Func<T, U>> path, U valToAdd)
-    //TBD public void Increment<T, U>(string id, Expression<Func<T, U>> path, U valToAdd)
-    //TBD public void Patch<T, U>(T entity, Expression<Func<T, U>> path, U value)
-    //TBD public void Patch<T, U>(string id, Expression<Func<T, U>> path, U value)
-    //TBD public void Patch<T, U>(T entity, Expression<Func<T, IEnumerable<U>>> path, Expression<Func<JavaScriptArray<U>, object>> arrayAdder)
-    //TBD public void Patch<T, U>(string id, Expression<Func<T, IEnumerable<U>>> path, Expression<Func<JavaScriptArray<U>, object>> arrayAdder)
-    //TBD private bool TryMergePatches(string id, PatchRequest patchRequest)
+    private int _valsCount;
+    private int _customCount;
+
+    @Override
+    public <T, U> void increment(String id, String path, U valueToAdd) {
+        PatchRequest patchRequest = new PatchRequest();
+
+        patchRequest.setScript("this." + path + " += args.val_" + _valsCount + ";");
+        patchRequest.setValues(Collections.singletonMap("val_" + _valsCount, valueToAdd));
+
+        _valsCount++;
+
+        if (!tryMergePatches(id, patchRequest)) {
+            defer(new PatchCommandData(id, null, patchRequest, null));
+        }
+    }
+
+    @Override
+    public <T, U> void patch(T entity, String path, U value) {
+        IMetadataDictionary metadata = getMetadataFor(entity);
+        String id = (String) metadata.get(Constants.Documents.Metadata.ID);
+        patch(id, path, value);
+    }
+
+    @Override
+    public <T, U> void patch(String id, String path, U value) {
+
+        PatchRequest patchRequest = new PatchRequest();
+        patchRequest.setScript("this." + path + " = args.val_" + _valsCount + ";");
+        patchRequest.setValues(Collections.singletonMap("val_" + _valsCount, value));
+
+        _valsCount++;
+
+        if (!tryMergePatches(id, patchRequest)) {
+            defer(new PatchCommandData(id, null, patchRequest, null));
+        }
+    }
+
+    @Override
+    public <T, U> void patch(T entity, String pathToArray, Consumer<JavaScriptArray<U>> arrayAdder) {
+        IMetadataDictionary metadata = getMetadataFor(entity);
+        String id = (String) metadata.get(Constants.Documents.Metadata.ID);
+        patch(id, pathToArray, arrayAdder);
+    }
+
+    @Override
+    public <T, U> void patch(String id, String pathToArray, Consumer<JavaScriptArray<U>> arrayAdder) {
+        JavaScriptArray<U> scriptArray = new JavaScriptArray<>(_customCount++, pathToArray);
+
+        arrayAdder.accept(scriptArray);
+
+        PatchRequest patchRequest = new PatchRequest();
+        patchRequest.setScript(scriptArray.getScript());
+        patchRequest.setValues(scriptArray.getParameters());
+
+        if (!tryMergePatches(id, patchRequest)) {
+            defer(new PatchCommandData(id, null, patchRequest, null));
+        }
+    }
+
+    private boolean tryMergePatches(String id, PatchRequest patchRequest) {
+        ICommandData command = deferredCommandsMap.get(IdTypeAndName.create(id, CommandType.PATCH, null));
+        if (command == null) {
+            return false;
+        }
+
+        deferredCommands.remove(command);
+        // We'll overwrite the deferredCommandsMap when calling Defer
+        // No need to call deferredCommandsMap.remove((id, CommandType.PATCH, null));
+
+        PatchCommandData oldPatch = (PatchCommandData) command;
+        String newScript = oldPatch.getPatch().getScript() + "\n" + patchRequest.getScript();
+        Map<String, Object> newVals = new HashMap<>(oldPatch.getPatch().getValues());
+
+        for (Map.Entry<String, Object> kvp : patchRequest.getValues().entrySet()) {
+            newVals.put(kvp.getKey(), kvp.getValue());
+        }
+
+        PatchRequest newPatchRequest = new PatchRequest();
+        newPatchRequest.setScript(newScript);
+        newPatchRequest.setValues(newVals);
+
+        defer(new PatchCommandData(id, null, newPatchRequest, null));
+
+        return true;
+    }
 
     @Override
     public <T, TIndex extends AbstractIndexCreationTask> IDocumentQuery<T> documentQuery(Class<T> clazz, Class<TIndex> indexClazz) {

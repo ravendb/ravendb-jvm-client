@@ -3,6 +3,7 @@ package net.ravendb.client.documents.commands.batches;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.SerializerProvider;
+import net.ravendb.client.documents.conventions.DocumentConventions;
 
 import java.io.IOException;
 
@@ -50,13 +51,13 @@ public class PutCommandDataBase<T extends JsonNode> implements ICommandData {
     }
 
     @Override
-    public void serialize(JsonGenerator generator, SerializerProvider serializerProvider) throws IOException {
+    public void serialize(JsonGenerator generator, DocumentConventions conventions) throws IOException {
         generator.writeStartObject();
         generator.writeStringField("Id", id);
         generator.writeStringField("ChangeVector", changeVector);
 
         generator.writeFieldName("Document");
-        document.serialize(generator, serializerProvider);
+        generator.writeTree(document);
 
         generator.writeStringField("Type", type.toString());
 
