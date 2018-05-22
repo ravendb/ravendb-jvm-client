@@ -1,23 +1,26 @@
 package net.ravendb.client.documents.operations.attachments;
 
+import com.fasterxml.jackson.core.JsonGenerator;
 import net.ravendb.client.documents.IDocumentStore;
 import net.ravendb.client.documents.attachments.AttachmentType;
 import net.ravendb.client.documents.conventions.DocumentConventions;
 import net.ravendb.client.documents.operations.IOperation;
-import net.ravendb.client.exceptions.RavenException;
 import net.ravendb.client.extensions.HttpExtensions;
 import net.ravendb.client.http.*;
+import net.ravendb.client.json.ContentProviderHttpEntity;
 import net.ravendb.client.primitives.Reference;
 import net.ravendb.client.util.UrlUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.Header;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
+import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpRequestBase;
+import org.apache.http.entity.ContentType;
 
 import java.io.IOException;
 
-public class GetAttachmentOperation implements IOperation<AttachmentResult> {
+public class GetAttachmentOperation implements IOperation<CloseableAttachmentResult> {
 
     private final String _documentId;
     private final String _name;
@@ -32,18 +35,18 @@ public class GetAttachmentOperation implements IOperation<AttachmentResult> {
     }
 
     @Override
-    public RavenCommand<AttachmentResult> getCommand(IDocumentStore store, DocumentConventions conventions, HttpCache cache) {
+    public RavenCommand<CloseableAttachmentResult> getCommand(IDocumentStore store, DocumentConventions conventions, HttpCache cache) {
         return new GetAttachmentCommand(_documentId, _name, _type, _changeVector);
     }
 
-    private static class GetAttachmentCommand extends RavenCommand<AttachmentResult> {
+    private static class GetAttachmentCommand extends RavenCommand<CloseableAttachmentResult> {
         private final String _documentId;
         private final String _name;
         private final AttachmentType _type;
         private final String _changeVector;
 
         public GetAttachmentCommand(String documentId, String name, AttachmentType type, String changeVector) {
-            super(AttachmentResult.class);
+            super(CloseableAttachmentResult.class);
 
             if (StringUtils.isWhitespace(documentId)) {
                 throw new IllegalArgumentException("DocumentId cannot be null or empty");
@@ -70,32 +73,24 @@ public class GetAttachmentOperation implements IOperation<AttachmentResult> {
             url.value = node.getUrl() + "/databases/" + node.getDatabase() + "/attachments?id="
                     + UrlUtils.escapeDataString(_documentId) + "&name=" + UrlUtils.escapeDataString(_name);
 
-            HttpGet request = new HttpGet();
+            if (_type == AttachmentType.REVISION) {
+                HttpPost request = new HttpPost();
 
-            if (_type != AttachmentType.DOCUMENT) {
-                /* TODO
-                 request.Method = HttpMethod.Post;
+                request.setEntity(new ContentProviderHttpEntity(outputStream -> {
+                    try (JsonGenerator generator = mapper.getFactory().createGenerator(outputStream)) {
+                        generator.writeStartObject();
+                        generator.writeStringField("Type", "Revision");
+                        generator.writeStringField("ChangeVector", _changeVector);
+                        generator.writeEndObject();
+                    } catch (IOException e) {
+                        throw new RuntimeException(e);
+                    }
+                }, ContentType.APPLICATION_JSON));
 
-                    request.Content = new BlittableJsonContent(stream =>
-                    {
-                        using (var writer = new BlittableJsonTextWriter(_context, stream))
-                        {
-                            writer.WriteStartObject();
-
-                            writer.WritePropertyName("Type");
-                            writer.WriteString(_type.ToString());
-                            writer.WriteComma();
-
-                            writer.WritePropertyName("ChangeVector");
-                            writer.WriteString(_changeVector);
-
-                            writer.WriteEndObject();
-                        }
-                    });
-                 */
+                return request;
+            } else {
+                return new HttpGet();
             }
-
-            return request;
         }
 
         @Override
@@ -118,7 +113,7 @@ public class GetAttachmentOperation implements IOperation<AttachmentResult> {
             attachmentDetails.setChangeVector(changeVector);
             attachmentDetails.setDocumentId(_documentId);
 
-            result = new AttachmentResult(response, attachmentDetails);
+            result = new CloseableAttachmentResult(response, attachmentDetails);
 
             return ResponseDisposeHandling.MANUALLY;
         }

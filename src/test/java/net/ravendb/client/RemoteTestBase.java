@@ -1,5 +1,9 @@
 package net.ravendb.client;
 
+import net.ravendb.client.documents.IDocumentStore;
+import net.ravendb.client.documents.operations.revisions.ConfigureRevisionsOperation;
+import net.ravendb.client.documents.operations.revisions.RevisionsCollectionConfiguration;
+import net.ravendb.client.documents.operations.revisions.RevisionsConfiguration;
 import net.ravendb.client.http.RequestExecutor;
 import net.ravendb.client.primitives.CleanCloseable;
 import net.ravendb.client.test.driver.RavenServerLocator;
@@ -7,6 +11,8 @@ import net.ravendb.client.test.driver.RavenTestDriver;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.HttpHost;
 import org.apache.http.client.config.RequestConfig;
+
+import java.time.Duration;
 
 public class RemoteTestBase extends RavenTestDriver {
 
@@ -70,6 +76,18 @@ public class RemoteTestBase extends RavenTestDriver {
         };
 
         return () -> RequestExecutor.requestPostProcessor = null;
+    }
+
+    protected ConfigureRevisionsOperation.ConfigureRevisionsOperationResult setupRevisions(IDocumentStore store, boolean purgeOnDelete, long minimumRevisionsToKeep) {
+        RevisionsConfiguration revisionsConfiguration = new RevisionsConfiguration();
+        RevisionsCollectionConfiguration defaultCollection = new RevisionsCollectionConfiguration();
+        defaultCollection.setPurgeOnDelete(purgeOnDelete);
+        defaultCollection.setMinimumRevisionsToKeep(minimumRevisionsToKeep);
+
+        revisionsConfiguration.setDefaultConfig(defaultCollection);
+        ConfigureRevisionsOperation operation = new ConfigureRevisionsOperation(revisionsConfiguration);
+
+        return store.maintenance().send(operation);
     }
 
 }

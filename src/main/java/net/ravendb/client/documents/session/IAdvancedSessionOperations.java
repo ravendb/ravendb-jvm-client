@@ -29,7 +29,11 @@ public interface IAdvancedSessionOperations extends IAdvancedDocumentSessionOper
      */
     IAttachmentsSessionOperations attachments();
 
-    //TBD IRevisionsSessionOperations Revisions { get; }
+
+    /**
+     * @return Access the revisions operations
+     */
+    IRevisionsSessionOperations revisions();
 
     /**
      * Updates entity with latest changes from server

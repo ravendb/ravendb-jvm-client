@@ -136,6 +136,20 @@ public class MetadataAsDictionary implements IMetadataDictionary {
     }
 
     @Override
+    public IMetadataDictionary[] getObjects(String key) {
+        Object[] obj = (Object[]) get(key);
+        if (obj == null) {
+            return null;
+        }
+        IMetadataDictionary[] list = new IMetadataDictionary[obj.length];
+        for (int i = 0; i < obj.length; i++) {
+            list[i] = (IMetadataDictionary) obj[i];
+        }
+
+        return list;
+    }
+
+    @Override
     public boolean isEmpty() {
         return size() == 0;
     }

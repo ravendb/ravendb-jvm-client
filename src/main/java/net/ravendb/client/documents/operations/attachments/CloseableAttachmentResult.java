@@ -6,11 +6,11 @@ import org.apache.http.client.methods.CloseableHttpResponse;
 import java.io.IOException;
 import java.io.InputStream;
 
-public class AttachmentResult implements AutoCloseable {
+public class CloseableAttachmentResult implements AutoCloseable {
     private AttachmentDetails details;
     private CloseableHttpResponse response;
 
-    public AttachmentResult(CloseableHttpResponse response, AttachmentDetails details) {
+    public CloseableAttachmentResult(CloseableHttpResponse response, AttachmentDetails details) {
         this.details = details;
         this.response = response;
     }

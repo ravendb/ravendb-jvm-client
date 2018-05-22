@@ -2,7 +2,7 @@ package net.ravendb.client.documents.session;
 
 import net.ravendb.client.documents.attachments.AttachmentType;
 import net.ravendb.client.documents.commands.HeadAttachmentCommand;
-import net.ravendb.client.documents.operations.attachments.AttachmentResult;
+import net.ravendb.client.documents.operations.attachments.CloseableAttachmentResult;
 import net.ravendb.client.documents.operations.attachments.GetAttachmentOperation;
 
 /**
@@ -22,13 +22,13 @@ public class DocumentSessionAttachments extends DocumentSessionAttachmentsBase i
     }
 
     @Override
-    public AttachmentResult get(String documentId, String name) {
+    public CloseableAttachmentResult get(String documentId, String name) {
         GetAttachmentOperation operation = new GetAttachmentOperation(documentId, name, AttachmentType.DOCUMENT, null);
         return session.getOperations().send(operation, sessionInfo);
     }
 
     @Override
-    public AttachmentResult get(Object entity, String name) {
+    public CloseableAttachmentResult get(Object entity, String name) {
         DocumentInfo document = documentsByEntity.get(entity);
         if (document == null) {
             throwEntityNotInSession(entity);
@@ -38,5 +38,9 @@ public class DocumentSessionAttachments extends DocumentSessionAttachmentsBase i
         return session.getOperations().send(operation, sessionInfo);
     }
 
-    //TBD public AttachmentResult GetRevision(string documentId, string name, string changeVector)
+    @Override
+    public CloseableAttachmentResult getRevision(String documentId, String name, String changeVector) {
+        GetAttachmentOperation operation = new GetAttachmentOperation(documentId, name, AttachmentType.REVISION, changeVector);
+        return session.getOperations().send(operation, sessionInfo);
+    }
 }

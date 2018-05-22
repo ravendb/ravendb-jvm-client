@@ -72,7 +72,12 @@ public class DocumentSession extends InMemoryDocumentSessionOperations implement
         return _attachments;
     }
 
-    //TBD public IRevisionsSessionOperations Revisions { get; }
+    private IRevisionsSessionOperations _revisions;
+
+    @Override
+    public IRevisionsSessionOperations revisions() {
+        return _revisions;
+    }
 
     /**
      * Initializes new DocumentSession
@@ -85,8 +90,7 @@ public class DocumentSession extends InMemoryDocumentSessionOperations implement
         super(dbName, documentStore, requestExecutor, id);
 
         _attachments = new DocumentSessionAttachments(this);
-
-        //TBD Revisions = new DocumentSessionRevisions(this);
+        _revisions = new DocumentSessionRevisions(this);
     }
 
     /**
@@ -755,23 +759,4 @@ public class DocumentSession extends InMemoryDocumentSessionOperations implement
             _innerIterator.close();
         }
     }
-
-    /* TBD move to revisions
-    public <T> List<T> getRevisionsFor(Class<T> clazz, String id) {
-        return getRevisionsFor(clazz, id, 0, 25);
-    }
-
-    public <T> List<T> getRevisionsFor(Class<T> clazz, String id, int start) {
-        return getRevisionsFor(clazz, id, start, 25);
-    }
-
-    public <T> List<T> getRevisionsFor(Class<T> clazz, String id, int start, int pageSize) {
-        GetRevisionOperation operation = new GetRevisionOperation(this, id, start, pageSize);
-
-        GetRevisionsCommand command = operation.createRequest();
-        getRequestExecutor().execute(command, sessionInfo);
-        operation.setResult(command.getResult());
-        return operation.complete(clazz);
-    }*/
-
 }

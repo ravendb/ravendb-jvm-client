@@ -1,7 +1,7 @@
 package net.ravendb.client.documents.session;
 
 import net.ravendb.client.documents.operations.attachments.AttachmentName;
-import net.ravendb.client.documents.operations.attachments.AttachmentResult;
+import net.ravendb.client.documents.operations.attachments.CloseableAttachmentResult;
 
 import java.io.InputStream;
 
@@ -31,7 +31,7 @@ public interface IAttachmentsSessionOperations {
      * @param name Name of attachment
      * @return Attachment
      */
-    AttachmentResult get(String documentId, String name);
+    CloseableAttachmentResult get(String documentId, String name);
 
     /**
      * Returns the attachment by the entity and attachment name.
@@ -39,9 +39,12 @@ public interface IAttachmentsSessionOperations {
      * @param name Name of attachment
      * @return Attachment
      */
-    AttachmentResult get(Object entity, String name);
+    CloseableAttachmentResult get(Object entity, String name);
 
-    //TBD AttachmentResult GetRevision(string documentId, string name, string changeVector);
+    /**
+     * Returns the revision attachment by the document id and attachment name.
+     */
+    CloseableAttachmentResult getRevision(String documentId, String name, String changeVector);
 
     /**
      * Stores attachment to be sent in the session.

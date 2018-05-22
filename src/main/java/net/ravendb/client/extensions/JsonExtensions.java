@@ -38,6 +38,9 @@ public class JsonExtensions {
         return _defaultMapper;
     }
 
+
+    //TODO: support for Duration serialization (as 00:05:00.324324)
+
     public static ObjectMapper createDefaultJsonSerializer() {
         ObjectMapper objectMapper = new ObjectMapper();
         objectMapper.setPropertyNamingStrategy(new DotNetNamingStrategy());

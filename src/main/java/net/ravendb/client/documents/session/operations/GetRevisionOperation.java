@@ -8,6 +8,7 @@ import net.ravendb.client.Constants;
 import net.ravendb.client.documents.commands.GetRevisionsCommand;
 import net.ravendb.client.documents.session.DocumentInfo;
 import net.ravendb.client.documents.session.InMemoryDocumentSessionOperations;
+import net.ravendb.client.json.JsonArrayResult;
 import net.ravendb.client.json.MetadataAsDictionary;
 
 import java.util.ArrayList;
@@ -18,7 +19,7 @@ import java.util.TreeMap;
 public class GetRevisionOperation {
     private final InMemoryDocumentSessionOperations _session;
 
-    private ArrayNode _result;
+    private JsonArrayResult _result;
     private final GetRevisionsCommand _command;
 
     public GetRevisionOperation(InMemoryDocumentSessionOperations session, String id, Integer start, Integer pageSize) {
@@ -56,7 +57,7 @@ public class GetRevisionOperation {
         return _command;
     }
 
-    public void setResult(ArrayNode result) {
+    public void setResult(JsonArrayResult result) {
         _result = result;
     }
 
@@ -89,6 +90,7 @@ public class GetRevisionOperation {
         documentInfo.setId(id);
         documentInfo.setChangeVector(changeVector);
         documentInfo.setDocument(document);
+        documentInfo.setMetadata(metadata);
         documentInfo.setEntity(entity);
         _session.documentsByEntity.put(entity, documentInfo);
 
@@ -96,10 +98,10 @@ public class GetRevisionOperation {
     }
 
     public <T> List<T> getRevisionsFor(Class<T> clazz) {
-        int resultsCount = _result.get("Results").size();
+        int resultsCount = _result.getResults().size();
         ArrayList<T> results = new ArrayList<>(resultsCount);
         for (int i = 0; i < resultsCount; i++) {
-            ObjectNode document = (ObjectNode) _result.get("Results").get(i);
+            ObjectNode document = (ObjectNode) _result.getResults().get(i);
             results.add(getRevision(clazz, document));
         }
 
@@ -107,10 +109,10 @@ public class GetRevisionOperation {
     }
 
     public List<MetadataAsDictionary> getRevisionsMetadataFor() {
-        int resultsCount = _result.get("Results").size();
+        int resultsCount = _result.getResults().size();
         ArrayList<MetadataAsDictionary> results = new ArrayList<>(resultsCount);
         for (int i = 0; i < resultsCount; i++) {
-            ObjectNode document = (ObjectNode) _result.get("Results").get(i);
+            ObjectNode document = (ObjectNode) _result.getResults().get(i);
 
             ObjectNode metadata = null;
             if (document.has(Constants.Documents.Metadata.KEY)) {
@@ -128,7 +130,7 @@ public class GetRevisionOperation {
             return Defaults.defaultValue(clazz);
         }
 
-        ObjectNode document = (ObjectNode) _result.get("Results").get(0);
+        ObjectNode document = (ObjectNode) _result.getResults().get(0);
         return getRevision(clazz, document);
     }
 
@@ -141,7 +143,7 @@ public class GetRevisionOperation {
                 continue;
             }
 
-            results.put(changeVector, getRevision(clazz, (ObjectNode) _result.get(i)));
+            results.put(changeVector, getRevision(clazz, (ObjectNode) _result.getResults().get(i)));
         }
 
         return results;

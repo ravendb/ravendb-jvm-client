@@ -5,7 +5,8 @@ import net.ravendb.client.RemoteTestBase;
 import net.ravendb.client.documents.IDocumentStore;
 import net.ravendb.client.documents.commands.batches.DeleteCommandData;
 import net.ravendb.client.documents.operations.attachments.AttachmentName;
-import net.ravendb.client.documents.operations.attachments.AttachmentResult;
+import net.ravendb.client.documents.operations.attachments.CloseableAttachmentResult;
+import net.ravendb.client.documents.operations.attachments.DeleteAttachmentOperation;
 import net.ravendb.client.documents.session.IDocumentSession;
 import net.ravendb.client.documents.session.IMetadataDictionary;
 import net.ravendb.client.infrastructure.entities.User;
@@ -152,6 +153,12 @@ public class AttachmentsSessionTest extends RemoteTestBase {
             try (IDocumentSession session = store.openSession()) {
                 User user = session.load(User.class, "users/1");
 
+                // test get attachment by its name
+                try (CloseableAttachmentResult attachmentResult = session.advanced().attachments().get("users/1", "file2")) {
+                    assertThat(attachmentResult.getDetails().getName())
+                            .isEqualTo("file2");
+                }
+
                 session.advanced().attachments().delete("users/1", "file2");
                 session.advanced().attachments().delete(user, "file4");
                 session.saveChanges();
@@ -168,7 +175,46 @@ public class AttachmentsSessionTest extends RemoteTestBase {
                 assertThat(attachments)
                         .hasSize(2);
 
-                AttachmentResult result = session.advanced().attachments().get("users/1", "file1");
+                CloseableAttachmentResult result = session.advanced().attachments().get("users/1", "file1");
+                byte[] file1Bytes = IOUtils.toByteArray(result.getData());
+                assertThat(file1Bytes)
+                        .hasSize(3);
+
+            }
+        }
+    }
+
+    @Test
+    public void deleteAttachmentsUsingCommand() throws Exception {
+        try (IDocumentStore store = getDocumentStore()) {
+            try (IDocumentSession session = store.openSession()) {
+                User user = new User();
+                user.setName("Fitzchak");
+                session.store(user, "users/1");
+
+                ByteArrayInputStream stream1 = new ByteArrayInputStream(new byte[]{1, 2, 3});
+                ByteArrayInputStream stream2 = new ByteArrayInputStream(new byte[]{1, 2, 3, 4, 5, 6});
+
+                session.advanced().attachments().store(user, "file1", stream1, "image/png");
+                session.advanced().attachments().store(user, "file2", stream2, "image/png");
+
+                session.saveChanges();
+            }
+
+            store.operations().send(new DeleteAttachmentOperation("users/1", "file2"));
+
+            try (IDocumentSession session = store.openSession()) {
+                User user = session.load(User.class, "users/1");
+                IMetadataDictionary metadata = session.advanced().getMetadataFor(user);
+                assertThat(metadata.get(Constants.Documents.Metadata.FLAGS).toString())
+                        .isEqualTo("HasAttachments");
+
+                Object[] attachments = (Object[]) metadata.get(Constants.Documents.Metadata.ATTACHMENTS);
+
+                assertThat(attachments)
+                        .hasSize(1);
+
+                CloseableAttachmentResult result = session.advanced().attachments().get("users/1", "file1");
                 byte[] file1Bytes = IOUtils.toByteArray(result.getData());
                 assertThat(file1Bytes)
                         .hasSize(3);
@@ -198,7 +244,7 @@ public class AttachmentsSessionTest extends RemoteTestBase {
 
             for (int i = 0; i < count; i++) {
                 try (IDocumentSession session = store.openSession()) {
-                    try (AttachmentResult result = session.advanced().attachments().get("users/1", "file" + i))
+                    try (CloseableAttachmentResult result = session.advanced().attachments().get("users/1", "file" + i))
                     {
                         // don't read data as it marks entity as consumed
                     }

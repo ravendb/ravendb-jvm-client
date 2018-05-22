@@ -12,7 +12,10 @@ public class ContentProviderHttpEntity extends AbstractHttpEntity {
 
     public ContentProviderHttpEntity(Consumer<OutputStream> contentProvider, ContentType contentType) {
         this.contentProvider = contentProvider;
-        setContentType(contentType.toString());
+
+        if (contentType != null) {
+            setContentType(contentType.toString());
+        }
     }
 
     @Override

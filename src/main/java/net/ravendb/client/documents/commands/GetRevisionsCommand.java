@@ -3,6 +3,7 @@ package net.ravendb.client.documents.commands;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import net.ravendb.client.http.RavenCommand;
 import net.ravendb.client.http.ServerNode;
+import net.ravendb.client.json.JsonArrayResult;
 import net.ravendb.client.primitives.Reference;
 import net.ravendb.client.util.UrlUtils;
 import org.apache.http.client.methods.HttpGet;
@@ -10,7 +11,7 @@ import org.apache.http.client.methods.HttpRequestBase;
 
 import java.io.IOException;
 
-public class GetRevisionsCommand extends RavenCommand<ArrayNode> {
+public class GetRevisionsCommand extends RavenCommand<JsonArrayResult> {
 
     private String _id;
     private Integer _start;
@@ -24,7 +25,7 @@ public class GetRevisionsCommand extends RavenCommand<ArrayNode> {
     }
 
     public GetRevisionsCommand(String changeVector, boolean metadataOnly) {
-        super(ArrayNode.class);
+        super(JsonArrayResult.class);
         _changeVector = changeVector;
         _metadataOnly = metadataOnly;
     }
@@ -34,7 +35,7 @@ public class GetRevisionsCommand extends RavenCommand<ArrayNode> {
     }
 
     public GetRevisionsCommand(String[] changeVectors, boolean metadataOnly) {
-        super(ArrayNode.class);
+        super(JsonArrayResult.class);
         _changeVectors = changeVectors;
         _metadataOnly = metadataOnly;
     }
@@ -44,7 +45,7 @@ public class GetRevisionsCommand extends RavenCommand<ArrayNode> {
     }
 
     public GetRevisionsCommand(String id, Integer start, Integer pageSize, boolean metadataOnly) {
-        super(ArrayNode.class);
+        super(JsonArrayResult.class);
         if (id == null) {
             throw new IllegalArgumentException("Id cannot be null");
         }
@@ -100,7 +101,7 @@ public class GetRevisionsCommand extends RavenCommand<ArrayNode> {
             result = null;
         }
 
-        result = (ArrayNode) mapper.readTree(response);
+        result = mapper.readValue(response, JsonArrayResult.class);
     }
 
     @Override

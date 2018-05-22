@@ -2,6 +2,7 @@ package net.ravendb.client.test.client.moreLikeThis;
 
 import net.ravendb.client.RemoteTestBase;
 import net.ravendb.client.documents.IDocumentStore;
+import net.ravendb.client.documents.Lazy;
 import net.ravendb.client.documents.indexes.AbstractIndexCreationTask;
 import net.ravendb.client.documents.indexes.FieldIndexing;
 import net.ravendb.client.documents.indexes.FieldStorage;
@@ -68,6 +69,37 @@ public class MoreLikeThisTest extends RemoteTestBase {
             }
 
             assertMoreLikeThisHasMatchesFor(Data.class, DataIndex.class, store, id);
+        }
+    }
+
+    @Test
+    public void canGetResultsUsingTermVectorsLazy() throws Exception {
+        try (IDocumentStore store = getDocumentStore()) {
+            String id;
+            try (IDocumentSession session = store.openSession()) {
+
+                new DataIndex(true, false).execute(store);
+
+                List<Data> list = getDataList();
+                list.forEach(session::store);
+                session.saveChanges();
+
+                id = session.advanced().getDocumentId(list.get(0));
+                waitForIndexing(store);
+            }
+
+            try (IDocumentSession session = store.openSession()) {
+                MoreLikeThisOptions options = new MoreLikeThisOptions();
+                options.setFields(new String[]{ "body" });
+                Lazy<List<Data>> lazyLst = session.query(Data.class, DataIndex.class)
+                        .moreLikeThis(f -> f.usingDocument(b -> b.whereEquals("id()", id)).withOptions(options))
+                        .lazily();
+
+                List<Data> list = lazyLst.getValue();
+
+                assertThat(list)
+                        .isNotEmpty();
+            }
         }
     }
 
