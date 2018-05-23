@@ -11,6 +11,7 @@ import net.ravendb.client.documents.operations.configuration.ClientConfiguration
 import net.ravendb.client.exceptions.RavenException;
 import net.ravendb.client.extensions.JsonExtensions;
 import net.ravendb.client.http.ReadBalanceBehavior;
+import net.ravendb.client.primitives.Reference;
 import net.ravendb.client.primitives.Tuple;
 import net.ravendb.client.util.Inflector;
 import net.ravendb.client.util.ReflectionUtil;
@@ -38,7 +39,7 @@ public class DocumentConventions {
 
     private static final Map<Class, String> _cachedDefaultTypeCollectionNames = new HashMap<>();
 
-    //TBD: private readonly List<(Type Type, TryConvertValueForQueryDelegate<object> Convert)> _listOfQueryValueConverters = new List<(Type, TryConvertValueForQueryDelegate<object>)>();
+    private final List<Tuple<Class, IValueForQueryConverter<Object>>> _listOfQueryValueConverters = new ArrayList<>();
 
     private List<Tuple<Class, BiFunction<String, Object, String>>> _listOfRegisteredIdConventions = new ArrayList<>();
 
@@ -538,8 +539,38 @@ public class DocumentConventions {
         return collectionName;
     }
 
-    //TBD public void RegisterQueryValueConverter<T>(TryConvertValueForQueryDelegate<T> converter)
-    //TBD public bool TryConvertValueForQuery(string fieldName, object value, bool forRange, out string strValue)
+    public <T> void registerQueryValueConverter(Class<T> clazz, IValueForQueryConverter<T> converter) {
+        assertNotFrozen();
+
+        int index;
+        for (index = 0; index < _listOfQueryValueConverters.size(); index++) {
+            Tuple<Class, IValueForQueryConverter<Object>> entry = _listOfQueryValueConverters.get(index);
+            if (entry.first.isAssignableFrom(clazz)) {
+                break;
+            }
+        }
+
+        _listOfQueryValueConverters.add(index, Tuple.create(clazz, (fieldName, value, forRange, stringValue) -> {
+            if (clazz.isInstance(value)) {
+                return converter.tryConvertValueForQuery(fieldName, (T) value, forRange, stringValue);
+            }
+            stringValue.value = null;
+            return false;
+        }));
+    }
+
+    public boolean tryConvertValueForQuery(String fieldName, Object value, boolean forRange, Reference<String> stringValue) {
+        for (Tuple<Class, IValueForQueryConverter<Object>> queryValueConverter : _listOfQueryValueConverters) {
+            if (!queryValueConverter.first.isInstance(value)) {
+                continue;
+            }
+
+            return queryValueConverter.second.tryConvertValueForQuery(fieldName, value, forRange, stringValue);
+        }
+
+        stringValue.value = null;
+        return false;
+    }
 
     public void freeze() {
         _frozen = true;
