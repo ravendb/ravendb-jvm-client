@@ -7,6 +7,7 @@ public class HttpCacheItem {
     public String changeVector;
     public String payload;
     public LocalDateTime lastServerUpdate;
+    public int generation;
 
     public HttpCache cache;
 

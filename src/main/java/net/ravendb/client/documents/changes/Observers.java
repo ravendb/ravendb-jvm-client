@@ -28,10 +28,5 @@ public class Observers {
         public void onCompleted() {
             //empty
         }
-
-        @Override
-        public int compareTo(Object o) {
-            return this == o ? 0 : -1;
-        }
     }
 }

@@ -10,6 +10,7 @@ import net.ravendb.client.documents.operations.OperationExecutor;
 import net.ravendb.client.documents.operations.indexes.PutIndexesOperation;
 import net.ravendb.client.documents.session.*;
 import net.ravendb.client.http.RequestExecutor;
+import net.ravendb.client.primitives.CleanCloseable;
 import net.ravendb.client.primitives.EventHandler;
 import net.ravendb.client.primitives.EventHelper;
 import net.ravendb.client.primitives.VoidArgs;
@@ -19,6 +20,7 @@ import org.apache.commons.lang3.StringUtils;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.security.KeyStore;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -53,13 +55,21 @@ public abstract class DocumentStoreBase implements IDocumentStore {
         return disposed;
     }
 
-    //TBD: public abstract IDisposable AggressivelyCacheFor(TimeSpan cacheDuration, string database = null);
+    @Override
+    public abstract CleanCloseable aggressivelyCacheFor(Duration cacheDuration);
+
+    @Override
+    public abstract CleanCloseable aggressivelyCacheFor(Duration cacheDuration, String database);
 
     public abstract IDatabaseChanges changes();
 
     public abstract IDatabaseChanges changes(String database);
 
-    //TBD: public abstract IDisposable DisableAggressiveCaching(string database = null);
+    @Override
+    public abstract CleanCloseable disableAggressiveCaching();
+
+    @Override
+    public abstract CleanCloseable disableAggressiveCaching(String database);
 
     public abstract String getIdentifier();
 
@@ -237,7 +247,15 @@ public abstract class DocumentStoreBase implements IDocumentStore {
 
     public abstract RequestExecutor getRequestExecutor(String databaseName);
 
-    //TBD public IDisposable AggressivelyCache(string database = null)
+    @Override
+    public CleanCloseable aggressivelyCache() {
+        return aggressivelyCache(null);
+    }
+
+    @Override
+    public CleanCloseable aggressivelyCache(String database) {
+        return aggressivelyCacheFor(Duration.ofDays(1), database);
+    }
 
     protected void registerEvents(InMemoryDocumentSessionOperations session) {
         for (EventHandler<BeforeStoreEventArgs> handler : onBeforeStore) {

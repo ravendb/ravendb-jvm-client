@@ -87,7 +87,7 @@ public class RequestExecutor implements CleanCloseable {
         return cache;
     }
 
-    public final ThreadLocal<AggressiveCacheOptions> AggressiveCaching = new ThreadLocal<>();
+    public final ThreadLocal<AggressiveCacheOptions> aggressiveCaching = new ThreadLocal<>();
 
     public Topology getTopology() {
         return _nodeSelector != null ? _nodeSelector.getTopology() : null;
@@ -535,7 +535,7 @@ public class RequestExecutor implements CleanCloseable {
 
         try (HttpCache.ReleaseCacheItem cachedItem = getFromCache(command, urlRef.value, cachedChangeVector, cachedValue)) {
             if (cachedChangeVector.value != null) {
-                AggressiveCacheOptions aggressiveCacheOptions = AggressiveCaching.get();
+                AggressiveCacheOptions aggressiveCacheOptions = aggressiveCaching.get();
                 if (aggressiveCacheOptions != null &&
                         cachedItem.getAge().compareTo(aggressiveCacheOptions.getDuration()) < 0 &&
                         !cachedItem.getMightHaveBeenModified() &&

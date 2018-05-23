@@ -43,7 +43,6 @@ public class EntityToJson {
 
         Class<?> clazz = entity.getClass();
         tryRemoveIdentityProperty(jsonNode, clazz, _session.getConventions());
-        //TBD: TrySimplifyJson(reader);
 
         return jsonNode;
     }
@@ -66,7 +65,6 @@ public class EntityToJson {
 
         Class<?> clazz = entity.getClass();
         tryRemoveIdentityProperty(jsonNode, clazz, conventions);
-        //TBD: TrySimplifyJson(reader);
 
         return jsonNode;
     }

@@ -1,6 +1,7 @@
 package net.ravendb.client.documents;
 
 import net.ravendb.client.documents.changes.DatabaseChanges;
+import net.ravendb.client.documents.changes.EvictItemsFromCacheBasedOnChanges;
 import net.ravendb.client.documents.changes.IDatabaseChanges;
 import net.ravendb.client.documents.identity.MultiDatabaseHiLoIdGenerator;
 import net.ravendb.client.documents.operations.MaintenanceOperationExecutor;
@@ -13,10 +14,12 @@ import net.ravendb.client.http.RequestExecutor;
 import net.ravendb.client.primitives.*;
 import org.apache.commons.lang3.ObjectUtils;
 
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ConcurrentSkipListMap;
 
@@ -26,7 +29,7 @@ import java.util.concurrent.ConcurrentSkipListMap;
 public class DocumentStore extends DocumentStoreBase {
     private final ConcurrentMap<String, IDatabaseChanges> _databaseChanges = new ConcurrentSkipListMap<>(String::compareToIgnoreCase);
 
-    //TBD: private ConcurrentDictionary<string, Lazy<EvictItemsFromCacheBasedOnChanges>> _aggressiveCacheChanges = new ConcurrentDictionary<string, Lazy<EvictItemsFromCacheBasedOnChanges>>();
+    private ConcurrentMap<String, Lazy<EvictItemsFromCacheBasedOnChanges>> _aggressiveCacheChanges = new ConcurrentHashMap<>();
 
     private final ConcurrentMap<String, RequestExecutor> requestExecutors = new ConcurrentSkipListMap<>(String.CASE_INSENSITIVE_ORDER);
 
@@ -80,30 +83,20 @@ public class DocumentStore extends DocumentStoreBase {
 
     public void close() {
         EventHelper.invoke(beforeClose, this, EventArgs.EMPTY);
-        /* TBD
 
-            foreach (var value in _aggressiveCacheChanges.Values)
-            {
-                if (value.IsValueCreated == false)
-                    continue;
-
-                value.Value.Dispose();
+        for (Lazy<EvictItemsFromCacheBasedOnChanges> value : _aggressiveCacheChanges.values()) {
+            if (!value.isValueCreated()) {
+                continue;
             }
 
-            var tasks = new List<Task>();
-            */
+            value.getValue().close();
+        }
 
         for (IDatabaseChanges changes : _databaseChanges.values()) {
             try (CleanCloseable value = changes) {
+                // try will close all values
             }
         }
-
-        /*TODO
-            // try to wait until all the async disposables are completed
-            Task.WaitAll(tasks.ToArray(), TimeSpan.FromSeconds(3));
-            // if this is still going, we continue with disposal, it is for graceful shutdown only, anyway
-
-*/
 
         if (_multiDbHiLo != null) {
             try {
@@ -248,10 +241,10 @@ public class DocumentStore extends DocumentStoreBase {
     public CleanCloseable disableAggressiveCaching(String databaseName) {
         assertInitialized();
         RequestExecutor re = getRequestExecutor(ObjectUtils.firstNonNull(database, getDatabase()));
-        AggressiveCacheOptions old = re.AggressiveCaching.get();
-        re.AggressiveCaching.set(null);
+        AggressiveCacheOptions old = re.aggressiveCaching.get();
+        re.aggressiveCaching.set(null);
 
-        return () -> re.AggressiveCaching.set(old);
+        return () -> re.aggressiveCaching.set(old);
     }
 
     @Override
@@ -284,8 +277,50 @@ public class DocumentStore extends DocumentStoreBase {
         return null;
     }
 
-    //TBD public override IDisposable AggressivelyCacheFor(TimeSpan cacheDuration, string database = null)
-    //TBD private void ListenToChangesAndUpdateTheCache(string database)
+    @Override
+    public CleanCloseable aggressivelyCacheFor(Duration cacheDuration) {
+        return aggressivelyCacheFor(cacheDuration, null);
+    }
+
+    @Override
+    public CleanCloseable aggressivelyCacheFor(Duration cacheDuration, String database) {
+        assertInitialized();
+
+        database = ObjectUtils.firstNonNull(database, getDatabase());
+
+        if (database == null) {
+            throw new IllegalStateException("Cannot use aggressivelyCache and aggressivelyCacheFor without a default database defined " +
+                    "unless 'database' parameter is provided. Did you forget to pass 'database' parameter?");
+        }
+
+        if (!_aggressiveCachingUsed) {
+            listenToChangesAndUpdateTheCache(database);
+        }
+
+        RequestExecutor re = getRequestExecutor(database);
+        AggressiveCacheOptions old = re.aggressiveCaching.get();
+
+        re.aggressiveCaching.set(new AggressiveCacheOptions(cacheDuration));
+
+        return () -> re.aggressiveCaching.set(old);
+    }
+
+    private void listenToChangesAndUpdateTheCache(String database) {
+
+        // this is intentionally racy, most cases, we'll already
+        // have this set once, so we won't need to do it again
+
+        _aggressiveCachingUsed = true;
+        Lazy<EvictItemsFromCacheBasedOnChanges> lazy = _aggressiveCacheChanges.get(database);
+
+        if (lazy == null) {
+            lazy = _aggressiveCacheChanges.computeIfAbsent(database, db -> {
+                return new Lazy<>(() -> new EvictItemsFromCacheBasedOnChanges(this, database));
+            });
+        }
+
+        lazy.getValue(); // force evaluation
+    }
 
     private final List<EventHandler<VoidArgs>> afterClose = new ArrayList<>();
 

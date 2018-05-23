@@ -3,6 +3,7 @@ package net.ravendb.client.documents.changes;
 import net.ravendb.client.primitives.CleanCloseable;
 
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentSkipListSet;
 import java.util.function.Function;
 
@@ -10,7 +11,7 @@ public class ChangesObservable<T, TConnectionState extends IChangesConnectionSta
 
     private final TConnectionState _connectionState;
     private final Function<T, Boolean> _filter;
-    private final ConcurrentSkipListSet<IObserver<T>> _subscribers = new ConcurrentSkipListSet<IObserver<T>>();
+    private final ConcurrentHashMap<IObserver<T>, Boolean> _subscribers = new ConcurrentHashMap<>();
 
 
     ChangesObservable(TConnectionState connectionState, Function<T, Boolean> filter) {
@@ -20,7 +21,7 @@ public class ChangesObservable<T, TConnectionState extends IChangesConnectionSta
 
     public CleanCloseable subscribe(IObserver<T> observer) {
         _connectionState.inc();
-        _subscribers.add(observer);
+        _subscribers.put(observer, true);
 
         return () -> {
             _connectionState.dec();
@@ -38,13 +39,13 @@ public class ChangesObservable<T, TConnectionState extends IChangesConnectionSta
             return;
         }
 
-        for (IObserver<T> subscriber : _subscribers) {
+        for (IObserver<T> subscriber : _subscribers.keySet()) {
             subscriber.onNext(msg);
         }
     }
 
     public void error(Exception e) {
-        for (IObserver<T> subscriber : _subscribers) {
+        for (IObserver<T> subscriber : _subscribers.keySet()) {
             subscriber.onError(e);
         }
     }

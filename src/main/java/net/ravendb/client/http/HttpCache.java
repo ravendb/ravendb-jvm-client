@@ -7,6 +7,7 @@ import net.ravendb.client.primitives.Reference;
 
 import java.time.Duration;
 import java.time.LocalDateTime;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class HttpCache implements CleanCloseable {
 
@@ -26,6 +27,8 @@ public class HttpCache implements CleanCloseable {
         items = null;
     }
 
+    public AtomicInteger generation = new AtomicInteger();
+
     public long getNumberOfItems() {
         return items.size();
     }
@@ -35,6 +38,7 @@ public class HttpCache implements CleanCloseable {
         httpCacheItem.changeVector = changeVector;
         httpCacheItem.payload = result;
         httpCacheItem.cache = this;
+        httpCacheItem.generation = generation.get();
 
         items.put(url, httpCacheItem);
     }
@@ -57,6 +61,7 @@ public class HttpCache implements CleanCloseable {
         HttpCacheItem httpCacheItem = new HttpCacheItem();
         httpCacheItem.changeVector = "404 response";
         httpCacheItem.cache = this;
+        httpCacheItem.generation = generation.get();
 
         items.put(url, httpCacheItem);
     }
@@ -82,7 +87,7 @@ public class HttpCache implements CleanCloseable {
         }
 
         public boolean getMightHaveBeenModified() {
-            return false; //TBD
+            return item.generation != item.cache.generation.get();
         }
 
         @Override

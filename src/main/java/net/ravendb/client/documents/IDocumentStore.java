@@ -12,6 +12,7 @@ import net.ravendb.client.primitives.EventHandler;
 import net.ravendb.client.util.IDisposalNotification;
 
 import java.security.KeyStore;
+import java.time.Duration;
 import java.util.List;
 
 /**
@@ -33,11 +34,60 @@ public interface IDocumentStore extends IDisposalNotification {
     void addBeforeQueryListener(EventHandler<BeforeQueryEventArgs> handler);
     void removeBeforeQueryListener(EventHandler<BeforeQueryEventArgs> handler);
 
+    /**
+     *  Subscribe to change notifications from the server
+     */
     IDatabaseChanges changes();
+
+    /**
+     *  Subscribe to change notifications from the server
+     */
     IDatabaseChanges changes(String database);
 
-    //TBD: IDisposable AggressivelyCacheFor(TimeSpan cacheDuration, string database = null);
-    //TBD IDisposable AggressivelyCache(string database = null);
+    /**
+     * Setup the context for aggressive caching.
+     *
+     * Aggressive caching means that we will not check the server to see whether the response
+     * we provide is current or not, but will serve the information directly from the local cache
+     * without touching the server.
+     *
+     * @param cacheDuration Specify the aggressive cache duration
+     */
+    CleanCloseable aggressivelyCacheFor(Duration cacheDuration);
+
+    /**
+     * Setup the context for aggressive caching.
+     *
+     * Aggressive caching means that we will not check the server to see whether the response
+     * we provide is current or not, but will serve the information directly from the local cache
+     * without touching the server.
+     *
+     * @param cacheDuration Specify the aggressive cache duration
+     * @param database The database to cache, if not specified, the default database will be used
+     */
+    CleanCloseable aggressivelyCacheFor(Duration cacheDuration, String database);
+
+
+    /**
+     * Setup the context for aggressive caching.
+     *
+     * Aggressive caching means that we will not check the server to see whether the response
+     * we provide is current or not, but will serve the information directly from the local cache
+     * without touching the server.
+     *
+     */
+    CleanCloseable aggressivelyCache();
+
+    /**
+     * Setup the context for aggressive caching.
+     *
+     * Aggressive caching means that we will not check the server to see whether the response
+     * we provide is current or not, but will serve the information directly from the local cache
+     * without touching the server.
+     *
+     * @param database The database to cache, if not specified, the default database will be used
+     */
+    CleanCloseable aggressivelyCache(String database);
 
     /**
      * Setup the context for no aggressive caching
