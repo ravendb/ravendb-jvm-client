@@ -351,7 +351,6 @@ public interface IAbstractDocumentQuery<T> {
     //TBD 4.1 void SetHighlighterTags(string preTag, string postTag);
     //TBD 4.1 void SetHighlighterTags(string[] preTags, string[] postTags);
 
-
     /**
      * Perform a search for documents which fields that match the searchTerms.
      * If there is more than a single term, each of them will be checked independently.
@@ -435,8 +434,6 @@ public interface IAbstractDocumentQuery<T> {
 
     MoreLikeThisScope _moreLikeThis();
 
-    //TBD void AddFromAliasToWhereTokens(string fromAlias);
-    //TBD string ProjectionParameter(object id);
     //TBD void SuggestUsing(SuggestionBase suggestion);
 
     Iterator<T> iterator();

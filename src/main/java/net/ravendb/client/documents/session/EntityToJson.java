@@ -138,8 +138,6 @@ public class EntityToJson {
         }
     }
 
-    //TBD public static object ConvertToEntity(Type entityType, string id, BlittableJsonReaderObject document, DocumentConventions conventions)
-
     private static boolean tryRemoveIdentityProperty(ObjectNode document, Class entityType, DocumentConventions conventions) {
         Field identityProperty = conventions.getIdentityProperty(entityType);
 
