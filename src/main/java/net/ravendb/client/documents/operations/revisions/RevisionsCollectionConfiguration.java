@@ -5,7 +5,7 @@ import java.time.Duration;
 public class RevisionsCollectionConfiguration {
     private Long minimumRevisionsToKeep;
 
-    private Duration minimumRevisionAgeToKeep; //TODO: test serialization!
+    private Duration minimumRevisionAgeToKeep;
 
     private boolean disabled;
 

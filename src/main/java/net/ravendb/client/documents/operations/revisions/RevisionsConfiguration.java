@@ -6,7 +6,6 @@ import java.util.Map;
 
 public class RevisionsConfiguration {
 
-    //TODO: test serialization!
     @JsonProperty("Default")
     private RevisionsCollectionConfiguration defaultConfig;
 

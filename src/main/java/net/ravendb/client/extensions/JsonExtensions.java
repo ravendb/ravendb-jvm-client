@@ -1,15 +1,17 @@
 package net.ravendb.client.extensions;
 
 import com.fasterxml.jackson.core.JsonGenerator;
+import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.core.JsonParser;
-import com.fasterxml.jackson.databind.DeserializationFeature;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.PropertyNamingStrategy;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.*;
 import com.fasterxml.jackson.databind.cfg.MapperConfig;
+import com.fasterxml.jackson.databind.deser.std.StdDeserializer;
 import com.fasterxml.jackson.databind.introspect.AnnotatedField;
 import com.fasterxml.jackson.databind.introspect.AnnotatedMethod;
 import com.fasterxml.jackson.databind.introspect.AnnotatedParameter;
+import com.fasterxml.jackson.databind.module.SimpleModule;
+import com.fasterxml.jackson.databind.ser.std.StdSerializer;
 import net.ravendb.client.Constants;
 import net.ravendb.client.documents.conventions.DocumentConventions;
 import net.ravendb.client.documents.queries.IndexQuery;
@@ -20,6 +22,7 @@ import net.ravendb.client.util.TimeUtils;
 import org.apache.commons.lang3.StringUtils;
 
 import java.io.IOException;
+import java.time.Duration;
 
 
 public class JsonExtensions {
@@ -38,8 +41,67 @@ public class JsonExtensions {
         return _defaultMapper;
     }
 
+    public static class DurationSerializer extends StdSerializer<Duration> {
+        public DurationSerializer() {
+            super(Duration.class);
+        }
 
-    //TODO: support for Duration serialization (as 00:05:00.324324)
+        @Override
+        public void serialize(Duration value, JsonGenerator gen, SerializerProvider provider) throws IOException {
+            if (value == null) {
+                gen.writeNull();
+            } else {
+                gen.writeString(TimeUtils.durationToTimeSpan(value));
+            }
+        }
+    }
+
+    public static class DurationDeserializer extends StdDeserializer<Duration> {
+        public DurationDeserializer() {
+            super(Duration.class);
+        }
+
+
+        private Duration parseMiddlePart(String input) {
+            String[] tokens = input.split(":");
+            int hours = Integer.valueOf(tokens[0]);
+            int minutes = Integer.valueOf(tokens[1]);
+            int seconds = Integer.valueOf(tokens[2]);
+
+            return Duration.ofHours(hours).plusMinutes(minutes).plusSeconds(seconds);
+        }
+
+        @Override
+        public Duration deserialize(JsonParser p, DeserializationContext ctxt) throws IOException {
+            String text = p.getText();
+
+            boolean hasDays = text.matches("^\\d+\\..*");
+            boolean hasMillis = text.matches(".*\\.\\d+");
+
+            if (hasDays && hasMillis) {
+                String[] tokens = text.split("\\.");
+
+                int days = Integer.parseInt(tokens[0]);
+                int millis = Integer.parseInt(tokens[2]);
+                return parseMiddlePart(tokens[1]).plusDays(days).plusMillis(millis);
+            } else if (hasDays) {
+                String[] tokens = text.split("\\.");
+                int days = Integer.parseInt(tokens[0]);
+                return parseMiddlePart(tokens[1]).plusDays(days);
+            } else if (hasMillis) {
+                String[] tokens = text.split("\\.");
+                String fractionString = tokens[1];
+                fractionString = StringUtils.rightPad(fractionString, 7, '0');
+                long value = Long.parseLong(fractionString);
+
+                value *= 100;
+
+                return parseMiddlePart(tokens[0]).plusNanos(value);
+            } else {
+                throw new JsonParseException(p, "Unexpected Duration format:" + text);
+            }
+        }
+    }
 
     public static ObjectMapper createDefaultJsonSerializer() {
         ObjectMapper objectMapper = new ObjectMapper();
@@ -49,6 +111,13 @@ public class JsonExtensions {
         objectMapper.setConfig(objectMapper.getSerializationConfig().with(new NetDateFormat()));
         objectMapper.setConfig(objectMapper.getDeserializationConfig().with(new NetDateFormat()));
         objectMapper.setAnnotationIntrospector(new SharpAwareJacksonAnnotationIntrospector());
+
+        SimpleModule durationModule = new SimpleModule();
+        durationModule.addSerializer(new DurationSerializer());
+        durationModule.addDeserializer(Duration.class, new DurationDeserializer());
+
+        objectMapper.registerModule(durationModule);
+
         return objectMapper;
     }
 
