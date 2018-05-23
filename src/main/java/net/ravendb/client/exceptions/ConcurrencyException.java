@@ -5,6 +5,26 @@ public class ConcurrencyException extends ConflictException {
 
     private long actualETag;
 
+    private String expectedChangeVector;
+
+    private String actualChangeVector;
+
+    public String getExpectedChangeVector() {
+        return expectedChangeVector;
+    }
+
+    public void setExpectedChangeVector(String expectedChangeVector) {
+        this.expectedChangeVector = expectedChangeVector;
+    }
+
+    public String getActualChangeVector() {
+        return actualChangeVector;
+    }
+
+    public void setActualChangeVector(String actualChangeVector) {
+        this.actualChangeVector = actualChangeVector;
+    }
+
     public long getExpectedETag() {
         return expectedETag;
     }

@@ -7,7 +7,7 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 
-public class DatabaseConnectionState implements IChangesConnectionState {
+public class DatabaseConnectionState implements IChangesConnectionState<DatabaseChange> {
 
     private List<Consumer<Exception>> onError = new ArrayList<>();
 
@@ -45,6 +45,10 @@ public class DatabaseConnectionState implements IChangesConnectionState {
 
     @Override
     public void close() {
+        onDocumentChangeNotification.clear();
+        onIndexChangeNotification.clear();
+        onOperationStatusChangeNotification.clear();
+        onError.clear();
     }
 
     public DatabaseConnectionState(Runnable onConnect, Runnable onDisconnect) {
@@ -53,35 +57,44 @@ public class DatabaseConnectionState implements IChangesConnectionState {
         _value.set(0);
     }
 
+
+    public void addOnChangeNotification(ChangesType type, Consumer<DatabaseChange> handler) {
+        switch (type) {
+            case DOCUMENT:
+                this.onDocumentChangeNotification.add((Consumer<DocumentChange>)(Consumer<?>) handler);
+                break;
+            case INDEX:
+                this.onIndexChangeNotification.add((Consumer<IndexChange>)(Consumer<?>) handler);
+                break;
+            case OPERATION:
+                this.onOperationStatusChangeNotification.add((Consumer<OperationStatusChange>)(Consumer<?>) handler);
+                break;
+            default:
+                throw new IllegalStateException("ChangeType: " + type + " is not supported");
+        }
+    }
+
+    public void removeOnChangeNotification(ChangesType type, Consumer<DatabaseChange> handler) {
+        switch (type) {
+            case DOCUMENT:
+                this.onDocumentChangeNotification.remove(handler);
+                break;
+            case INDEX:
+                this.onIndexChangeNotification.remove(handler);
+                break;
+            case OPERATION:
+                this.onOperationStatusChangeNotification.remove(handler);
+                break;
+            default:
+                throw new IllegalStateException("ChangeType: " + type + " is not supported");
+        }
+    }
+
     private List<Consumer<DocumentChange>> onDocumentChangeNotification = new ArrayList<>();
 
     private List<Consumer<IndexChange>> onIndexChangeNotification = new ArrayList<>();
 
     private List<Consumer<OperationStatusChange>> onOperationStatusChangeNotification = new ArrayList<>();
-
-    public void addOnDocumentChangeNotification(Consumer<DocumentChange> handler) {
-        this.onDocumentChangeNotification.add(handler);
-    }
-
-    public void removeOnDocumentChangeNotification(Consumer<DocumentChange> handler) {
-        this.onDocumentChangeNotification.remove(handler);
-    }
-
-    public void addOnIndexChangeNotification(Consumer<IndexChange> handler) {
-        this.onIndexChangeNotification.add(handler);
-    }
-
-    public void removeOnIndexChangeNotification(Consumer<IndexChange> handler) {
-        this.onIndexChangeNotification.remove(handler);
-    }
-
-    public void addOnOperationStatusChangeNotification(Consumer<OperationStatusChange> handler) {
-        this.onOperationStatusChangeNotification.add(handler);
-    }
-
-    public void removeOnOperationStatusChangeNotification(Consumer<OperationStatusChange> handler) {
-        this.onOperationStatusChangeNotification.remove(handler);
-    }
 
     public void send(DocumentChange documentChange) {
         EventHelper.invoke(onDocumentChangeNotification, documentChange);

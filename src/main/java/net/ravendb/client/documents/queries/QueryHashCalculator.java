@@ -27,36 +27,39 @@ public class QueryHashCalculator {
     }
 
     public void write(Long l) throws IOException {
-        if (l == null) {
-            return;
+        if (l != null) {
+            write(l.longValue());
+        } else {
+            write("null-long");
         }
-        write(l.longValue());
     }
 
     public void write(Float f) throws IOException {
         if (f == null) {
-            return;
+            write("null-float");
+        } else {
+            write(f.floatValue());
         }
-        write(f.floatValue());
     }
 
     public void write(Integer i) throws IOException {
         if (i == null) {
-            return;
+            write("null-int");
+        } else {
+            write(i.intValue());
         }
-        write(i.intValue());
     }
 
     public void write(int i) throws IOException {
         _buffer.write(ByteBuffer.allocate(Integer.BYTES).putInt(i).array());
     }
 
-    public void write(Boolean b) {
+    public void write(Boolean b) throws IOException {
         if (b == null) {
-            return;
+            write("null-bool");
+        } else {
+            write(b.booleanValue());
         }
-
-        write(b.booleanValue());
     }
 
     public void write(boolean b) {
@@ -65,28 +68,31 @@ public class QueryHashCalculator {
 
     public void write(String s) throws IOException {
         if (s == null) {
-            return;
+            write("null-string");
+        } else {
+            _buffer.write(s.getBytes());
         }
-
-        _buffer.write(s.getBytes());
     }
 
     public void write(String[] s) throws IOException {
         if (s == null) {
-            return;
-        }
-        for (String value : s) {
-            write(value);
+            write("null-str-array");
+        } else {
+            write(s.length);
+            for (String value : s) {
+                write(value);
+            }
         }
     }
 
     public void write(List<String> s) throws IOException {
         if (s == null) {
-            return;
-        }
-
-        for (String value : s) {
-            write(value);
+            write("null-list-str");
+        } else {
+            write(s.size());
+            for (String value : s) {
+                write(value);
+            }
         }
     }
 
@@ -94,12 +100,13 @@ public class QueryHashCalculator {
 
     public void write(Parameters qp) throws IOException {
         if (qp == null) {
-            return;
-        }
-
-        for (Map.Entry<String, Object> kvp : qp.entrySet()) {
-            write(kvp.getKey());
-            writeParameterValue(kvp.getValue());
+            write("null-params");
+        } else {
+            write(qp.size());
+            for (Map.Entry<String, Object> kvp : qp.entrySet()) {
+                write(kvp.getKey());
+                writeParameterValue(kvp.getValue());
+            }
         }
     }
 
@@ -113,10 +120,14 @@ public class QueryHashCalculator {
         } else if (value instanceof Boolean) {
             write((Boolean) value);
         } else if (value == null) {
-            // write nothing
+            write(0);
         } else if (value instanceof Collection) {
-            for (Object o : ((Collection) value)) {
-                writeParameterValue(o);
+            if (((Collection) value).isEmpty()) {
+                write("empty-enumerator");
+            } else {
+                for (Object o : ((Collection) value)) {
+                    writeParameterValue(o);
+                }
             }
         } else {
             write(value.toString());
@@ -125,12 +136,13 @@ public class QueryHashCalculator {
 
     public void write(Map<String, String> qp) throws IOException {
         if (qp == null) {
-            return;
-        }
-
-        for (Map.Entry<String, String> kvp : qp.entrySet()) {
-            write(kvp.getKey());
-            write(kvp.getValue());
+            write("null-dic<string,string>");
+        } else {
+            write(qp.size());
+            for (Map.Entry<String, String> kvp : qp.entrySet()) {
+                write(kvp.getKey());
+                write(kvp.getValue());
+            }
         }
     }
 }

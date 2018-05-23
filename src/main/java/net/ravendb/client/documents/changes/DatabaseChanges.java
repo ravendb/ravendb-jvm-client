@@ -145,10 +145,7 @@ public class DatabaseChanges implements IDatabaseChanges {
         DatabaseConnectionState counter = getOrAddConnectionState("indexes/" + indexName, "watch-index", "unwatch-index", indexName);
 
         ChangesObservable taskedObservable = new ChangesObservable<IndexChange, DatabaseConnectionState>(
-                counter, notification -> StringUtils.equalsIgnoreCase(notification.getName(), indexName));
-
-        counter.addOnIndexChangeNotification(notification -> taskedObservable.send(notification));
-        counter.addOnError(error -> taskedObservable.error(error));
+                ChangesType.INDEX, counter, notification -> StringUtils.equalsIgnoreCase(notification.getName(), indexName));
 
         return taskedObservable;
     }
@@ -169,11 +166,8 @@ public class DatabaseChanges implements IDatabaseChanges {
     public IChangesObservable<DocumentChange> forDocument(String docId) {
         DatabaseConnectionState counter = getOrAddConnectionState("docs/" + docId, "watch-doc", "unwatch-doc", docId);
 
-        ChangesObservable<DocumentChange, DatabaseConnectionState> taskedObservable = new ChangesObservable<>(counter,
+        ChangesObservable<DocumentChange, DatabaseConnectionState> taskedObservable = new ChangesObservable<>(ChangesType.DOCUMENT, counter,
                 notification -> StringUtils.equalsIgnoreCase(notification.getId(), docId));
-
-        counter.addOnDocumentChangeNotification(notification -> taskedObservable.send(notification));
-        counter.addOnError(error -> taskedObservable.error(error));
 
         return taskedObservable;
     }
@@ -181,11 +175,8 @@ public class DatabaseChanges implements IDatabaseChanges {
     @Override
     public IChangesObservable<DocumentChange> forAllDocuments() {
         DatabaseConnectionState counter = getOrAddConnectionState("all-docs", "watch-docs", "unwatch-docs", null);
-        ChangesObservable<DocumentChange, DatabaseConnectionState> taskedObservable = new ChangesObservable<>(counter,
+        ChangesObservable<DocumentChange, DatabaseConnectionState> taskedObservable = new ChangesObservable<>(ChangesType.DOCUMENT, counter,
                 notification -> true);
-
-        counter.addOnDocumentChangeNotification(notification -> taskedObservable.send(notification));
-        counter.addOnError(error -> taskedObservable.error(error));
 
         return taskedObservable;
     }
@@ -195,10 +186,7 @@ public class DatabaseChanges implements IDatabaseChanges {
         DatabaseConnectionState counter = getOrAddConnectionState("operations/" + operationId, "watch-operation", "unwatch-operation", String.valueOf(operationId));
 
         ChangesObservable<OperationStatusChange, DatabaseConnectionState> taskedObservable
-                = new ChangesObservable<>(counter, notification -> notification.getOperationId() == operationId);
-
-        counter.addOnOperationStatusChangeNotification(notification -> taskedObservable.send(notification));
-        counter.addOnError(error -> taskedObservable.error(error));
+                = new ChangesObservable<>(ChangesType.OPERATION, counter, notification -> notification.getOperationId() == operationId);
 
         return taskedObservable;
     }
@@ -207,11 +195,8 @@ public class DatabaseChanges implements IDatabaseChanges {
     public IChangesObservable<OperationStatusChange> forAllOperations() {
         DatabaseConnectionState counter = getOrAddConnectionState("all-operations", "watch-operations", "unwatch-operations", null);
 
-        ChangesObservable<OperationStatusChange, DatabaseConnectionState> taskedObservable = new ChangesObservable<>(counter,
+        ChangesObservable<OperationStatusChange, DatabaseConnectionState> taskedObservable = new ChangesObservable<>(ChangesType.OPERATION, counter,
                 notification -> true);
-
-        counter.addOnOperationStatusChangeNotification(notification -> taskedObservable.send(notification));
-        counter.addOnError(error -> taskedObservable.error(error));
 
         return taskedObservable;
     }
@@ -220,10 +205,7 @@ public class DatabaseChanges implements IDatabaseChanges {
     public IChangesObservable<IndexChange> forAllIndexes() {
         DatabaseConnectionState counter = getOrAddConnectionState("all-indexes", "watch-indexes", "unwatch-indexes", null);
 
-        ChangesObservable<IndexChange, DatabaseConnectionState> taskedObservable = new ChangesObservable<>(counter, notification -> true);
-
-        counter.addOnIndexChangeNotification(notification -> taskedObservable.send(notification));
-        counter.addOnError(error -> taskedObservable.error(error));
+        ChangesObservable<IndexChange, DatabaseConnectionState> taskedObservable = new ChangesObservable<>(ChangesType.INDEX, counter, notification -> true);
 
         return taskedObservable;
     }
@@ -231,11 +213,8 @@ public class DatabaseChanges implements IDatabaseChanges {
     @Override
     public IChangesObservable<DocumentChange> forDocumentsStartingWith(String docIdPrefix) {
         DatabaseConnectionState counter = getOrAddConnectionState("prefixes/" + docIdPrefix, "watch-prefix", "unwatch-prefix", docIdPrefix);
-        ChangesObservable<DocumentChange, DatabaseConnectionState> taskedObservable = new ChangesObservable<>(counter,
+        ChangesObservable<DocumentChange, DatabaseConnectionState> taskedObservable = new ChangesObservable<>(ChangesType.DOCUMENT, counter,
                 notification -> notification.getId() != null && StringUtils.startsWithIgnoreCase(notification.getId(), docIdPrefix));
-
-        counter.addOnDocumentChangeNotification(notification -> taskedObservable.send(notification));
-        counter.addOnError(error -> taskedObservable.error(error));
 
         return taskedObservable;
     }
@@ -248,11 +227,8 @@ public class DatabaseChanges implements IDatabaseChanges {
 
         DatabaseConnectionState counter = getOrAddConnectionState("collections/" + collectionName, "watch-collection", "unwatch-collection", collectionName);
 
-        ChangesObservable<DocumentChange, DatabaseConnectionState> taskedObservable = new ChangesObservable<>(counter,
+        ChangesObservable<DocumentChange, DatabaseConnectionState> taskedObservable = new ChangesObservable<>(ChangesType.DOCUMENT, counter,
                 notification -> StringUtils.equalsIgnoreCase(collectionName, notification.getCollectionName()));
-
-        counter.addOnDocumentChangeNotification(notification -> taskedObservable.send(notification));
-        counter.addOnError(error -> taskedObservable.error(error));
 
         return taskedObservable;
     }
@@ -273,11 +249,8 @@ public class DatabaseChanges implements IDatabaseChanges {
 
         DatabaseConnectionState counter = getOrAddConnectionState("types/" + typeName, "watch-type", "unwatch-type", encodedTypeName);
 
-        ChangesObservable<DocumentChange, DatabaseConnectionState> taskedObservable = new ChangesObservable<>(counter,
+        ChangesObservable<DocumentChange, DatabaseConnectionState> taskedObservable = new ChangesObservable<>(ChangesType.DOCUMENT, counter,
                 notification -> StringUtils.equalsIgnoreCase(typeName, notification.getTypeName()));
-
-        counter.addOnDocumentChangeNotification(notification -> taskedObservable.send(notification));
-        counter.addOnError(error -> taskedObservable.error(error));
 
         return taskedObservable;
     }
@@ -572,6 +545,10 @@ public class DatabaseChanges implements IDatabaseChanges {
     }
 
     private void notifyAboutError(Exception e) {
+        if (_cts.getToken().isCancellationRequested()) {
+            return;
+        }
+
         EventHelper.invoke(onError, e);
 
         for (DatabaseConnectionState state : _counters.values()) {

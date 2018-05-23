@@ -44,15 +44,15 @@ public class PatchByQueryOperation implements IOperation<OperationIdResult> {
 
     @Override
     public RavenCommand<OperationIdResult> getCommand(IDocumentStore store, DocumentConventions conventions, HttpCache cache) {
-        return new PatchByIndexCommand(conventions, _queryToUpdate, _options);
+        return new PatchByQueryCommand(conventions, _queryToUpdate, _options);
     }
 
-    private static class PatchByIndexCommand extends RavenCommand<OperationIdResult> {
+    private static class PatchByQueryCommand extends RavenCommand<OperationIdResult> {
         private final DocumentConventions _conventions;
         private final IndexQuery _queryToUpdate;
         private final QueryOperationOptions _options;
 
-        public PatchByIndexCommand(DocumentConventions conventions, IndexQuery queryToUpdate, QueryOperationOptions options) {
+        public PatchByQueryCommand(DocumentConventions conventions, IndexQuery queryToUpdate, QueryOperationOptions options) {
             super(OperationIdResult.class);
             _conventions = conventions;
             _queryToUpdate = queryToUpdate;

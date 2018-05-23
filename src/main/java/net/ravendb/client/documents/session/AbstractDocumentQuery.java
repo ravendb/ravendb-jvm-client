@@ -381,14 +381,15 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
      * @param fieldName Field name
      * @param whereClause Where clause
      */
-    public void _whereLucene(String fieldName, String whereClause) {
+    public void _whereLucene(String fieldName, String whereClause, boolean exact) {
         fieldName = ensureValidFieldName(fieldName, false);
 
         List<QueryToken> tokens = getCurrentWhereTokens();
         appendOperatorIfNeeded(tokens);
         negateIfNeeded(tokens, fieldName);
 
-        WhereToken whereToken = WhereToken.create(WhereOperator.LUCENE, fieldName, addQueryParameter(whereClause));
+        WhereToken.WhereOptions options = exact ? new WhereToken.WhereOptions(exact) : null;
+        WhereToken whereToken = WhereToken.create(WhereOperator.LUCENE, fieldName, addQueryParameter(whereClause), options);
         tokens.add(whereToken);
     }
 

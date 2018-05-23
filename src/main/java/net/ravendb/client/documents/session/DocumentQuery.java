@@ -249,7 +249,13 @@ public class DocumentQuery<T> extends AbstractDocumentQuery<T, DocumentQuery<T>>
 
     @Override
     public IDocumentQuery<T> whereLucene(String fieldName, String whereClause) {
-        _whereLucene(fieldName, whereClause);
+        _whereLucene(fieldName, whereClause, false);
+        return this;
+    }
+
+    @Override
+    public IDocumentQuery<T> whereLucene(String fieldName, String whereClause, boolean exact) {
+        _whereLucene(fieldName, whereClause, exact);
         return this;
     }
 

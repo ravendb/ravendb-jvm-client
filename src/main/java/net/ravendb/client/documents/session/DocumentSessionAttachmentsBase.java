@@ -24,7 +24,7 @@ public abstract class DocumentSessionAttachmentsBase extends AdvancedSessionExte
 
         DocumentInfo document = documentsByEntity.get(entity);
         if (document == null) {
-            return new AttachmentName[0];
+            throwEntityNotInSession(entity);
         }
 
         JsonNode attachments = document.getMetadata().get(Constants.Documents.Metadata.ATTACHMENTS);
@@ -87,7 +87,7 @@ public abstract class DocumentSessionAttachmentsBase extends AdvancedSessionExte
     }
 
     protected void throwEntityNotInSession(Object entity) {
-        throw new IllegalArgumentException(entity + " is not associated with the session, cannot add attachment to it. Use documentId instead or track the entity in session");
+        throw new IllegalArgumentException(entity + " is not associated with the session. Use documentId instead or track the entity in the session.");
     }
 
 

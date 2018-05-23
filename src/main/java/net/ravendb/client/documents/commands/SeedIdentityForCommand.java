@@ -13,8 +13,13 @@ public class SeedIdentityForCommand extends RavenCommand<Long> {
 
     private final String _id;
     private final long _value;
+    private final boolean _forced;
 
     public SeedIdentityForCommand(String id, Long value) {
+        this(id, value, false);
+    }
+
+    public SeedIdentityForCommand(String id, Long value, boolean forced) {
         super(Long.class);
         if (id == null) {
             throw new IllegalArgumentException("Id cannot be null");
@@ -22,6 +27,7 @@ public class SeedIdentityForCommand extends RavenCommand<Long> {
 
         _id = id;
         _value = value;
+        _forced = forced;
     }
 
     @Override
@@ -34,6 +40,10 @@ public class SeedIdentityForCommand extends RavenCommand<Long> {
         ensureIsNotNullOrString(_id, "id");
 
         url.value = node.getUrl() + "/databases/" + node.getDatabase() + "/identity/seed?name=" + urlEncode(_id) + "&value=" + _value;
+
+        if (_forced) {
+            url.value += "&force=true";
+        }
 
         return new HttpPost();
     }

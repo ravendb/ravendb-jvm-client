@@ -104,6 +104,15 @@ public interface IFilterDocumentQueryBase<T, TSelf extends IDocumentQueryBase<T,
     TSelf whereLucene(String fieldName, String whereClause);
 
     /**
+     * Filter the results from the index using the specified where clause.
+     * @param fieldName Field name
+     * @param whereClause Where clause
+     * @param exact Use exact matcher
+     * @return Query instance
+     */
+    TSelf whereLucene(String fieldName, String whereClause, boolean exact);
+
+    /**
      * Matches fields where the value is between the specified start and end, exclusive
      * @param fieldName Field name
      * @param start Range start
