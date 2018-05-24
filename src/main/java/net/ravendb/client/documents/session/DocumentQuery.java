@@ -11,6 +11,7 @@ import net.ravendb.client.documents.queries.moreLikeThis.*;
 import net.ravendb.client.documents.queries.spatial.DynamicSpatialField;
 import net.ravendb.client.documents.queries.spatial.SpatialCriteria;
 import net.ravendb.client.documents.queries.spatial.SpatialCriteriaFactory;
+import net.ravendb.client.documents.queries.suggestions.*;
 import net.ravendb.client.documents.session.tokens.DeclareToken;
 import net.ravendb.client.documents.session.tokens.FieldsToFetchToken;
 import net.ravendb.client.documents.session.tokens.LoadToken;
@@ -774,5 +775,20 @@ public class DocumentQuery<T> extends AbstractDocumentQuery<T, DocumentQuery<T>>
         }
 
         return this;
+    }
+
+    @Override
+    public ISuggestionDocumentQuery<T> suggestUsing(SuggestionBase suggestion) {
+        _suggestUsing(suggestion);
+        return new SuggestionDocumentQuery<>(this);
+    }
+
+    @Override
+    public ISuggestionDocumentQuery<T> suggestUsing(Consumer<ISuggestionBuilder<T>> builder) {
+        SuggestionBuilder<T> f = new SuggestionBuilder<>();
+        builder.accept(f);
+
+        suggestUsing(f.getSuggestion());
+        return new SuggestionDocumentQuery<>(this);
     }
 }

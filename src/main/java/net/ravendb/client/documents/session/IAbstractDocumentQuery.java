@@ -9,6 +9,7 @@ import net.ravendb.client.documents.queries.facets.IFacetBuilder;
 import net.ravendb.client.documents.queries.moreLikeThis.MoreLikeThisScope;
 import net.ravendb.client.documents.queries.spatial.DynamicSpatialField;
 import net.ravendb.client.documents.queries.spatial.SpatialCriteria;
+import net.ravendb.client.documents.queries.suggestions.SuggestionBase;
 
 import java.time.Duration;
 import java.util.Collection;
@@ -434,7 +435,7 @@ public interface IAbstractDocumentQuery<T> {
 
     MoreLikeThisScope _moreLikeThis();
 
-    //TBD void SuggestUsing(SuggestionBase suggestion);
+    void _suggestUsing(SuggestionBase suggestion);
 
     Iterator<T> iterator();
 }

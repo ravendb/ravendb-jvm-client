@@ -14,6 +14,10 @@ import net.ravendb.client.documents.queries.facets.FacetBase;
 import net.ravendb.client.documents.queries.moreLikeThis.MoreLikeThisScope;
 import net.ravendb.client.documents.queries.spatial.SpatialCriteria;
 import net.ravendb.client.documents.queries.spatial.DynamicSpatialField;
+import net.ravendb.client.documents.queries.suggestions.SuggestionBase;
+import net.ravendb.client.documents.queries.suggestions.SuggestionOptions;
+import net.ravendb.client.documents.queries.suggestions.SuggestionWithTerm;
+import net.ravendb.client.documents.queries.suggestions.SuggestionWithTerms;
 import net.ravendb.client.documents.session.operations.QueryOperation;
 import net.ravendb.client.documents.session.operations.lazy.LazyQueryOperation;
 import net.ravendb.client.documents.session.tokens.*;
@@ -1756,5 +1760,51 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
 
         LazyQueryOperation<T> lazyQueryOperation = new LazyQueryOperation<T>(clazz, theSession.getConventions(), queryOperation, afterQueryExecutedCallback);
         return ((DocumentSession)theSession).addLazyCountOperation(lazyQueryOperation);
+    }
+
+    @Override
+    public void _suggestUsing(SuggestionBase suggestion) {
+        if (suggestion == null) {
+            throw new IllegalArgumentException("suggestion cannot be null");
+        }
+
+        assertCanSuggest();
+
+        SuggestToken token;
+
+        if (suggestion instanceof SuggestionWithTerm) {
+            SuggestionWithTerm term = (SuggestionWithTerm) suggestion;
+            token = SuggestToken.create(term.getField(), addQueryParameter(term.getTerm()), getOptionsParameterName(term.getOptions()));
+        } else if (suggestion instanceof SuggestionWithTerms) {
+            SuggestionWithTerms terms = (SuggestionWithTerms) suggestion;
+            token = SuggestToken.create(terms.getField(), addQueryParameter(terms.getTerms()), getOptionsParameterName(terms.getOptions()));
+        } else {
+            throw new UnsupportedOperationException("Unknown type of suggestion: " + suggestion.getClass());
+        }
+
+        selectTokens.add(token);
+    }
+
+    private String getOptionsParameterName(SuggestionOptions options) {
+        String optionsParameterName = null;
+        if (options != null && options != SuggestionOptions.defaultOptions) {
+            optionsParameterName = addQueryParameter(options);
+        }
+
+        return optionsParameterName;
+    }
+
+    private void assertCanSuggest() {
+        if (!whereTokens.isEmpty()) {
+            throw new IllegalStateException("Cannot add suggest when WHERE statements are present.");
+        }
+
+        if (!selectTokens.isEmpty()) {
+            throw new IllegalStateException("Cannot add suggest when SELECT statements are present.");
+        }
+
+        if (!orderByTokens.isEmpty()) {
+            throw new IllegalStateException("Cannot add suggest when ORDER BY statements are present.");
+        }
     }
 }

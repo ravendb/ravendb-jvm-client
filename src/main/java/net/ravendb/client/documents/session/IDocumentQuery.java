@@ -8,6 +8,9 @@ import net.ravendb.client.documents.queries.facets.FacetBase;
 import net.ravendb.client.documents.queries.facets.IAggregationDocumentQuery;
 import net.ravendb.client.documents.queries.facets.IFacetBuilder;
 import net.ravendb.client.documents.queries.moreLikeThis.IMoreLikeThisBuilderForDocumentQuery;
+import net.ravendb.client.documents.queries.suggestions.ISuggestionBuilder;
+import net.ravendb.client.documents.queries.suggestions.ISuggestionDocumentQuery;
+import net.ravendb.client.documents.queries.suggestions.SuggestionBase;
 
 import java.util.function.Consumer;
 
@@ -83,6 +86,7 @@ public interface IDocumentQuery<T> extends IDocumentQueryBase<T, IDocumentQuery<
 
     IAggregationDocumentQuery<T> aggregateUsing(String facetSetupDocumentId);
 
-    //TBD SuggestUsing
+    ISuggestionDocumentQuery<T> suggestUsing(SuggestionBase suggestion);
 
+    ISuggestionDocumentQuery<T> suggestUsing(Consumer<ISuggestionBuilder<T>> builder);
 }
