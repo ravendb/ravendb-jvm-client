@@ -136,6 +136,18 @@ public class JsonOperation {
     }
 
     private static boolean compareValues(ValueNode oldProp, ValueNode newProp) {
+        if ((newProp.isLong() || newProp.isInt()) && oldProp.isNumber()) {
+            long longValue = newProp.asLong();
+            double doubleValue = oldProp.asDouble();
+            return doubleValue % 1 == 0 && longValue == (long)doubleValue;
+        }
+
+        if ((oldProp.isLong() || oldProp.isInt()) && newProp.isNumber()) {
+            long longValue = oldProp.asLong();
+            double doubleValue = newProp.asDouble();
+            return doubleValue % 1 == 0 && longValue == (long)doubleValue;
+        }
+
         if (!oldProp.getNodeType().equals(newProp.getNodeType())) {
             return true;
         }

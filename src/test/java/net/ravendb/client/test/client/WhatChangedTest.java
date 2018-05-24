@@ -2,8 +2,10 @@ package net.ravendb.client.test.client;
 
 import net.ravendb.client.RemoteTestBase;
 import net.ravendb.client.documents.IDocumentStore;
+import net.ravendb.client.documents.changes.DocumentChange;
 import net.ravendb.client.documents.session.DocumentsChanges;
 import net.ravendb.client.documents.session.IDocumentSession;
+import net.ravendb.client.infrastructure.entities.User;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -149,9 +151,163 @@ public class WhatChangedTest extends RemoteTestBase {
         }
     }
 
-    //TBD public void What_Changed_Array_Value_Added()
-    //TBD public void What_Changed_Array_Value_Removed()
-    //TBD public void RavenDB_8169()
+    @Test
+    public void what_Changed_Array_Value_Added() throws Exception {
+        try (IDocumentStore store = getDocumentStore()) {
+            try (IDocumentSession newSession = store.openSession()) {
+                Arr arr = new Arr();
+                arr.setArray(new Object[] { "a", 1, "b"});
+                newSession.store(arr, "arr/1");
+                newSession.saveChanges();
+            }
+
+            try (IDocumentSession newSession = store.openSession()) {
+                Arr arr = newSession.load(Arr.class, "arr/1");
+                arr.setArray(new Object[]{ "a", 1, "b", "c", 2 });
+
+                Map<String, List<DocumentsChanges>> changes = newSession.advanced().whatChanged();
+
+                assertThat(changes.size())
+                        .isEqualTo(1);
+                assertThat(changes.get("arr/1"))
+                        .hasSize(2);
+
+                assertThat(changes.get("arr/1").get(0).getChange())
+                        .isEqualTo(DocumentsChanges.ChangeType.ARRAY_VALUE_ADDED);
+
+                assertThat(changes.get("arr/1").get(0).getFieldNewValue().toString())
+                        .isEqualTo("\"c\"");
+                assertThat(changes.get("arr/1").get(0).getFieldOldValue())
+                        .isNull();
+
+                assertThat(changes.get("arr/1").get(1).getChange())
+                        .isEqualTo(DocumentsChanges.ChangeType.ARRAY_VALUE_ADDED);
+
+                assertThat(changes.get("arr/1").get(1).getFieldNewValue())
+                        .isEqualTo(2);
+
+                assertThat(changes.get("arr/1").get(1).getFieldOldValue())
+                        .isNull();
+            }
+        }
+    }
+
+    @Test
+    public void what_Changed_Array_Value_Removed() throws Exception {
+        try (IDocumentStore store = getDocumentStore()) {
+            try (IDocumentSession newSession = store.openSession()) {
+                Arr arr = new Arr();
+                arr.setArray(new Object[] { "a", 1, "b"});
+                newSession.store(arr, "arr/1");
+                newSession.saveChanges();
+            }
+
+            try (IDocumentSession newSession = store.openSession()) {
+                Arr arr = newSession.load(Arr.class, "arr/1");
+
+                arr.setArray(new Object[] { "a" });
+
+                Map<String, List<DocumentsChanges>> changes = newSession.advanced().whatChanged();
+                assertThat(changes.size())
+                        .isEqualTo(1);
+                assertThat(changes.get("arr/1"))
+                        .hasSize(2);
+
+                assertThat(changes.get("arr/1").get(0).getChange())
+                        .isEqualTo(DocumentsChanges.ChangeType.ARRAY_VALUE_REMOVED);
+                assertThat(changes.get("arr/1").get(0).getFieldOldValue())
+                        .isEqualTo(1);
+                assertThat(changes.get("arr/1").get(0).getFieldNewValue())
+                        .isNull();
+
+                assertThat(changes.get("arr/1").get(1).getChange())
+                        .isEqualTo(DocumentsChanges.ChangeType.ARRAY_VALUE_REMOVED);
+                assertThat(changes.get("arr/1").get(1).getFieldOldValue().toString())
+                        .isEqualTo("\"b\"");
+                assertThat(changes.get("arr/1").get(1).getFieldNewValue())
+                        .isNull();
+            }
+        }
+    }
+
+    @Test
+    public void ravenDB_8169() throws Exception {
+        //Test that when old and new values are of different type
+        //but have the same value, we consider them unchanged
+
+        try (IDocumentStore store = getDocumentStore()) {
+
+            try (IDocumentSession newSession = store.openSession()) {
+                Int anInt = new Int();
+                anInt.setNumber(1);
+
+                newSession.store(anInt, "num/1");
+
+                Double aDouble = new Double();
+                aDouble.setNumber(2.0);
+                newSession.store(aDouble, "num/2");
+
+                newSession.saveChanges();
+            }
+
+            try (IDocumentSession newSession = store.openSession()) {
+                newSession.load(Double.class, "num/1");
+                Map<String, List<DocumentsChanges>> changes = newSession.advanced().whatChanged();
+                assertThat(changes)
+                        .hasSize(0);
+            }
+
+            try (IDocumentSession newSession = store.openSession()) {
+                newSession.load(Int.class, "num/2");
+
+                Map<String, List<DocumentsChanges>> changes = newSession.advanced().whatChanged();
+                assertThat(changes)
+                        .hasSize(0);
+            }
+
+        }
+    }
+
+    @Test
+    public void whatChanged_should_be_idempotent_operation() throws Exception {
+        //RavenDB-9150
+
+        try (IDocumentStore store = getDocumentStore()) {
+            try (IDocumentSession session = store.openSession()) {
+                User user1 = new User();
+                user1.setName("user1");
+
+                User user2 = new User();
+                user2.setName("user2");
+                user2.setAge(1);
+
+                User user3 = new User();
+                user3.setName("user3");
+                user3.setAge(1);
+
+                session.store(user1, "users/1");
+                session.store(user2, "users/2");
+                session.store(user3, "users/3");
+
+
+                assertThat(session.advanced().whatChanged())
+                        .hasSize(3);
+
+                session.saveChanges();
+
+                user1 = session.load(User.class, "users/1");
+                user2 = session.load(User.class, "users/2");
+
+                user1.setAge(10);
+                session.delete(user2);
+
+                assertThat(session.advanced().whatChanged())
+                        .hasSize(2);
+                assertThat(session.advanced().whatChanged())
+                        .hasSize(2);
+            }
+        }
+    }
 
     public static class BasicName {
         private String name;
