@@ -1097,7 +1097,6 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
     }
 
     private Object deserializeFromTransformer(Class clazz, String id, ObjectNode document) {
-        //TBD handleInternalMetadata(document);
         return entityToJson.convertToEntity(clazz, id, document);
     }
 

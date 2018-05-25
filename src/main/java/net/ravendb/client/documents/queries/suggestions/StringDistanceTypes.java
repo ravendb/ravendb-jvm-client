@@ -31,6 +31,6 @@ public enum StringDistanceTypes {
     /**
      * NGram distance algorithm
      */
-    N_GRAM //TODO: test serialization!
+    N_GRAM
 
 }
