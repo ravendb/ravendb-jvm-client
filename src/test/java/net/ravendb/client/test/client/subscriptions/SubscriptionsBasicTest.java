@@ -52,7 +52,7 @@ public class SubscriptionsBasicTest extends RemoteTestBase {
     }
 
     @Test
-    public void shouldThrowWhenOpeningNoExisingSubscription() throws Exception {
+    public void shouldThrowWhenOpeningNoExistingSubscription() throws Exception {
         try (IDocumentStore store = getDocumentStore()) {
             SubscriptionWorker<ObjectNode> subscription = store.subscriptions().getSubscriptionWorker(new SubscriptionWorkerOptions("1"));
             assertThatThrownBy(() -> subscription.run(x -> {}).get())

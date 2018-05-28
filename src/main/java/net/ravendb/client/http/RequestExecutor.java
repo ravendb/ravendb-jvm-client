@@ -186,9 +186,9 @@ public class RequestExecutor implements CleanCloseable {
         }
     }
 
-    public static RequestExecutor create(String[] intialUrls, String databaseName, KeyStore certificate, DocumentConventions conventions) {
-        RequestExecutor executor = new RequestExecutor(databaseName, certificate, conventions, intialUrls);
-        executor._firstTopologyUpdate = executor.firstTopologyUpdate(intialUrls);
+    public static RequestExecutor create(String[] initialUrls, String databaseName, KeyStore certificate, DocumentConventions conventions) {
+        RequestExecutor executor = new RequestExecutor(databaseName, certificate, conventions, initialUrls);
+        executor._firstTopologyUpdate = executor.firstTopologyUpdate(initialUrls);
         return executor;
     }
 
@@ -526,7 +526,7 @@ public class RequestExecutor implements CleanCloseable {
         }
     }
 
-    @SuppressWarnings("ThrowFromFinallyBlock")
+    @SuppressWarnings({"ThrowFromFinallyBlock", "ConstantConditions"})
     public <TResult> void execute(ServerNode chosenNode, Integer nodeIndex, RavenCommand<TResult> command, boolean shouldRetry, SessionInfo sessionInfo) {
         Reference<String> urlRef = new Reference<>();
         HttpRequestBase request = createRequest(chosenNode, command, urlRef);

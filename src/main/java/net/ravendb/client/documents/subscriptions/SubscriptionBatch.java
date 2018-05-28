@@ -85,6 +85,7 @@ public class SubscriptionBatch<T> {
         }
     }
 
+    @SuppressWarnings("ConstantConditions")
     public int getNumberOfItemsInBatch() {
         return _items != null ? _items.size() : 0;
     }

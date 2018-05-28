@@ -88,14 +88,14 @@ public class SubscriptionWorkerOptions {
     }
 
     /**
-     * @return Max amount that the server will try to retriev and send to client. Default: 4096
+     * @return Max amount that the server will try to retrieve and send to client. Default: 4096
      */
     public int getMaxDocsPerBatch() {
         return maxDocsPerBatch;
     }
 
     /**
-     * @param maxDocsPerBatch Max amount that the server will try to retriev and send to client. Default: 4096
+     * @param maxDocsPerBatch Max amount that the server will try to retrieve and send to client. Default: 4096
      */
     public void setMaxDocsPerBatch(int maxDocsPerBatch) {
         this.maxDocsPerBatch = maxDocsPerBatch;
@@ -117,7 +117,7 @@ public class SubscriptionWorkerOptions {
 
     /**
      * Will continue the subscription work until the server have no more new documents to send.
-     * That's a useful practice for ad-hoc, one-time, persistant data processing.
+     * That's a useful practice for ad-hoc, one-time, persistent data processing.
      */
     public boolean isCloseWhenNoDocsLeft() {
         return closeWhenNoDocsLeft;
@@ -125,7 +125,7 @@ public class SubscriptionWorkerOptions {
 
     /**
      * Will continue the subscription work until the server have no more new documents to send.
-     * That's a useful practice for ad-hoc, one-time, persistant data processing.
+     * That's a useful practice for ad-hoc, one-time, persistent data processing.
      */
     public void setCloseWhenNoDocsLeft(boolean closeWhenNoDocsLeft) {
         this.closeWhenNoDocsLeft = closeWhenNoDocsLeft;
