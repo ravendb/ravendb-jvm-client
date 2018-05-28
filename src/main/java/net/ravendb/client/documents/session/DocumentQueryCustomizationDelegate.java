@@ -10,7 +10,7 @@ import java.util.function.Consumer;
 
 public class DocumentQueryCustomizationDelegate implements IDocumentQueryCustomization {
 
-    private AbstractDocumentQuery query;
+    private final AbstractDocumentQuery query;
 
     public DocumentQueryCustomizationDelegate(AbstractDocumentQuery query) {
         this.query = query;

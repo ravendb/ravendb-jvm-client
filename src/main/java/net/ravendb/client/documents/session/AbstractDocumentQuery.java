@@ -1742,6 +1742,7 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
         return lazily(null);
     }
 
+    @SuppressWarnings("unchecked")
     public Lazy<List<T>> lazily(Consumer<List<T>> onEval) {
         if (getQueryOperation() == null) {
             queryOperation = initializeQueryOperation();
@@ -1757,7 +1758,7 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
             queryOperation = initializeQueryOperation();
         }
 
-        LazyQueryOperation<T> lazyQueryOperation = new LazyQueryOperation<T>(clazz, theSession.getConventions(), queryOperation, afterQueryExecutedCallback);
+        LazyQueryOperation<T> lazyQueryOperation = new LazyQueryOperation<>(clazz, theSession.getConventions(), queryOperation, afterQueryExecutedCallback);
         return ((DocumentSession)theSession).addLazyCountOperation(lazyQueryOperation);
     }
 

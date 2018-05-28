@@ -42,6 +42,7 @@ public abstract class AggregationQueryBase {
         return executeLazy(null);
     }
 
+    @SuppressWarnings("unchecked")
     public Lazy<Map<String, FacetResult>> executeLazy(Consumer<Map<String, FacetResult>> onEval) {
         _query = getIndexQuery();
         return ((DocumentSession)_session).addLazyOperation((Class<Map<String, FacetResult>>)(Class<?>)Map.class,

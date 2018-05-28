@@ -14,7 +14,7 @@ public class PutAttachmentCommandData implements ICommandData {
     private InputStream stream;
     private String changeVector;
     private String contentType;
-    private CommandType type = CommandType.ATTACHMENT_PUT;
+    private final CommandType type = CommandType.ATTACHMENT_PUT;
 
 
     public PutAttachmentCommandData(String documentId, String name, InputStream stream, String contentType, String changeVector) {

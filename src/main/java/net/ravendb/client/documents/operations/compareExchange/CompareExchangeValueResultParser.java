@@ -53,7 +53,7 @@ public class CompareExchangeValueResultParser<T> {
 
                 JsonNode object = raw.get("Object");
                 if (object == null || object.isNull()) {
-                    results.put(key.textValue(), new CompareExchangeValue<T>(key.textValue(), index.asLong(), Defaults.defaultValue(clazz)));
+                    results.put(key.textValue(), new CompareExchangeValue<>(key.textValue(), index.asLong(), Defaults.defaultValue(clazz)));
                 } else {
                     T converted = conventions.getEntityMapper().convertValue(object, clazz);
                     results.put(key.textValue(), new CompareExchangeValue<>(key.textValue(), index.asLong(), converted));

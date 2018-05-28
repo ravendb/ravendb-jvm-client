@@ -606,7 +606,7 @@ public class DocumentQuery<T> extends AbstractDocumentQuery<T, DocumentQuery<T>>
     public IAggregationDocumentQuery<T> aggregateBy(FacetBase facet) {
         _aggregateBy(facet);
 
-        return new AggregationDocumentQuery<T>(this);
+        return new AggregationDocumentQuery<>(this);
     }
 
     @Override
@@ -615,14 +615,14 @@ public class DocumentQuery<T> extends AbstractDocumentQuery<T, DocumentQuery<T>>
             _aggregateBy(facet);
         }
 
-        return new AggregationDocumentQuery<T>(this);
+        return new AggregationDocumentQuery<>(this);
     }
 
     @Override
     public IAggregationDocumentQuery<T> aggregateUsing(String facetSetupDocumentId) {
         _aggregateUsing(facetSetupDocumentId);
 
-        return new AggregationDocumentQuery<T>(this);
+        return new AggregationDocumentQuery<>(this);
     }
 
     //TBD 4.1 IDocumentQuery<T> IDocumentQueryBase<T, IDocumentQuery<T>>.Highlight(string fieldName, int fragmentLength, int fragmentCount, string fragmentsField)

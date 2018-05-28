@@ -144,7 +144,7 @@ public class QueryOperation {
             if (String.class.equals(clazz) || ClassUtils.isPrimitiveOrWrapper(clazz) || clazz.isEnum()) {
                 String projectField = fieldsToFetch.projections[0];
                 JsonNode jsonNode = document.get(projectField);
-                if (jsonNode != null && jsonNode instanceof ValueNode) {
+                if (jsonNode instanceof ValueNode) {
                     return ObjectUtils.firstNonNull((T) session.getConventions().deserializeEntityFromJson(clazz, jsonNode), Defaults.defaultValue(clazz));
                 }
             }

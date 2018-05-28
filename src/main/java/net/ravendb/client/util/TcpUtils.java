@@ -4,17 +4,14 @@ import org.apache.commons.codec.binary.Base64;
 import org.apache.http.ssl.SSLContexts;
 
 import javax.net.ssl.SSLContext;
-import javax.net.ssl.SSLSocket;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.net.MalformedURLException;
 import java.net.Socket;
 import java.net.URL;
 import java.security.GeneralSecurityException;
 import java.security.KeyStore;
 import java.security.cert.Certificate;
 import java.security.cert.CertificateFactory;
-import java.security.cert.X509Certificate;
 
 public class TcpUtils {
 

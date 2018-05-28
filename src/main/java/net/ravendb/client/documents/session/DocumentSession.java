@@ -499,6 +499,7 @@ public class DocumentSession extends InMemoryDocumentSessionOperations implement
         }
     }
 
+    @SuppressWarnings("BooleanMethodIsAlwaysInverted")
     private boolean tryMergePatches(String id, PatchRequest patchRequest) {
         ICommandData command = deferredCommandsMap.get(IdTypeAndName.create(id, CommandType.PATCH, null));
         if (command == null) {

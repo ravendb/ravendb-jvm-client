@@ -1170,6 +1170,7 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
         }
     }
 
+    @SuppressWarnings("unchecked")
     protected static <T> T getOperationResult(Class<T> clazz, Object result) {
         if (result == null) {
             return Defaults.defaultValue(clazz);

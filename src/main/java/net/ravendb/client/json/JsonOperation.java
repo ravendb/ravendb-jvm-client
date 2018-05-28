@@ -90,7 +90,7 @@ public class JsonOperation {
                     newChange(prop, null, oldProp, docChanges, DocumentsChanges.ChangeType.FIELD_CHANGED);
                     break;
                 case ARRAY:
-                    if (oldProp == null || !(oldProp instanceof ArrayNode)) {
+                    if (!(oldProp instanceof ArrayNode)) {
                         if (changes == null) {
                             return true;
                         }

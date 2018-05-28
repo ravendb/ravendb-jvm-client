@@ -34,6 +34,7 @@ import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 
+@SuppressWarnings("UnnecessaryLocalVariable")
 public class DatabaseChanges implements IDatabaseChanges {
 
     private int _commandId;

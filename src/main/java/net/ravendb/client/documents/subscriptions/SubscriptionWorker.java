@@ -251,6 +251,7 @@ public class SubscriptionWorker<T> implements CleanCloseable {
                 throw new SubscriptionDoesNotExistException("Subscription with id " + _options.getSubscriptionName() + " cannot be opened, because it does not exist. " + connectionStatus.getException());
             case REDIRECT:
                 ObjectNode data = connectionStatus.getData();
+
                 /* TODO
                 var appropriateNode = connectionStatus.Data?[nameof(SubscriptionConnectionServerMessage.SubscriptionRedirectData.RedirectedTag)]?.ToString();
                     throw new SubscriptionDoesNotBelongToNodeException(

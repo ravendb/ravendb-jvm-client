@@ -3,7 +3,6 @@ package net.ravendb.client.test.client.subscriptions;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import net.ravendb.client.RemoteTestBase;
 import net.ravendb.client.documents.BulkInsertOperation;
-import net.ravendb.client.documents.DocumentStore;
 import net.ravendb.client.documents.IDocumentStore;
 import net.ravendb.client.documents.session.IDocumentSession;
 import net.ravendb.client.documents.subscriptions.*;
@@ -159,7 +158,7 @@ public class SubscriptionsBasicTest extends RemoteTestBase {
             String id = store.subscriptions().create(User.class);
 
             try (SubscriptionWorker<ObjectNode> subscription = store.subscriptions().getSubscriptionWorker(new SubscriptionWorkerOptions(id))) {
-                ArrayBlockingQueue<String> names = new ArrayBlockingQueue<String>(20);
+                ArrayBlockingQueue<String> names = new ArrayBlockingQueue<>(20);
 
                 try (IDocumentSession session = store.openSession()) {
                     User user = new User();
@@ -471,7 +470,7 @@ public class SubscriptionsBasicTest extends RemoteTestBase {
                     session.saveChanges();
                 }
 
-                ArrayBlockingQueue<User> docs = new ArrayBlockingQueue<User>(20);
+                ArrayBlockingQueue<User> docs = new ArrayBlockingQueue<>(20);
                 CompletableFuture<Void> subscribe = subscription.run(x -> x.getItems().forEach(i -> docs.add(i.getResult())));
 
                 assertThat(docs.poll(_reasonableWaitTime, TimeUnit.SECONDS))
@@ -514,7 +513,7 @@ public class SubscriptionsBasicTest extends RemoteTestBase {
         try (IDocumentStore store = getDocumentStore()) {
             String id = store.subscriptions().create(User.class, new SubscriptionCreationOptions());
             try (SubscriptionWorker<User> subscription = store.subscriptions().getSubscriptionWorker(User.class, id)) {
-                ArrayBlockingQueue<User> users = new ArrayBlockingQueue<User>(20);
+                ArrayBlockingQueue<User> users = new ArrayBlockingQueue<>(20);
 
                 try (IDocumentSession session = store.openSession()) {
                     User user1 = new User();
@@ -583,7 +582,7 @@ public class SubscriptionsBasicTest extends RemoteTestBase {
             subscription1.run(x -> x.getItems().forEach(i -> items1.add(i.getResult())));
 
             subscription2 = store.subscriptions().getSubscriptionWorker(User.class, id2);
-            ArrayBlockingQueue<User> items2 = new ArrayBlockingQueue<User>(10);
+            ArrayBlockingQueue<User> items2 = new ArrayBlockingQueue<>(10);
             subscription2.run(x -> x.getItems().forEach(i -> items2.add(i.getResult())));
 
             User user = items1.poll(_reasonableWaitTime, TimeUnit.SECONDS);

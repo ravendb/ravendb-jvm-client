@@ -1,7 +1,6 @@
 package net.ravendb.client.test.driver;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.google.common.base.Function;
 import com.google.common.base.Stopwatch;
 import com.google.common.collect.Sets;
 import net.ravendb.client.Constants;
@@ -9,10 +8,10 @@ import net.ravendb.client.documents.DocumentStore;
 import net.ravendb.client.documents.IDocumentStore;
 import net.ravendb.client.documents.indexes.IndexErrors;
 import net.ravendb.client.documents.indexes.IndexState;
-import net.ravendb.client.documents.operations.MaintenanceOperationExecutor;
 import net.ravendb.client.documents.operations.DatabaseStatistics;
 import net.ravendb.client.documents.operations.GetStatisticsOperation;
 import net.ravendb.client.documents.operations.IndexInformation;
+import net.ravendb.client.documents.operations.MaintenanceOperationExecutor;
 import net.ravendb.client.documents.operations.indexes.GetIndexErrorsOperation;
 import net.ravendb.client.documents.session.IDocumentSession;
 import net.ravendb.client.exceptions.TimeoutException;
@@ -32,7 +31,8 @@ import java.io.*;
 import java.lang.reflect.Field;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.security.*;
+import java.security.GeneralSecurityException;
+import java.security.KeyStore;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -40,6 +40,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 public abstract class RavenTestDriver implements CleanCloseable {

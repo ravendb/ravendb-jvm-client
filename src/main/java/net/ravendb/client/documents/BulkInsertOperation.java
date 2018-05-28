@@ -357,6 +357,7 @@ public class BulkInsertOperation implements CleanCloseable {
     private ByteArrayOutputStream _backgroundWriterBacking;
     private Writer _backgroundWriter;
     private CompletableFuture<Void> _asyncWrite = CompletableFuture.completedFuture(null);
+    @SuppressWarnings("FieldCanBeLocal")
     private final int _maxSizeInBuffer = 1024 * 1024;
 
     private void ensureStream() {

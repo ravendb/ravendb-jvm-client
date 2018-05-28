@@ -2,28 +2,18 @@ package net.ravendb.client.test.client.subscriptions;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import net.ravendb.client.RemoteTestBase;
-import net.ravendb.client.documents.BulkInsertOperation;
 import net.ravendb.client.documents.IDocumentStore;
 import net.ravendb.client.documents.session.IDocumentSession;
-import net.ravendb.client.documents.subscriptions.*;
-import net.ravendb.client.exceptions.documents.subscriptions.SubscriberErrorException;
-import net.ravendb.client.exceptions.documents.subscriptions.SubscriptionClosedException;
-import net.ravendb.client.exceptions.documents.subscriptions.SubscriptionDoesNotExistException;
-import net.ravendb.client.exceptions.documents.subscriptions.SubscriptionInUseException;
-import net.ravendb.client.infrastructure.entities.Company;
+import net.ravendb.client.documents.subscriptions.SubscriptionWorker;
+import net.ravendb.client.documents.subscriptions.SubscriptionWorkerOptions;
 import net.ravendb.client.infrastructure.entities.User;
-import net.ravendb.client.primitives.ExceptionsUtils;
-import org.apache.commons.io.IOUtils;
 import org.eclipse.jetty.util.BlockingArrayQueue;
 import org.junit.jupiter.api.Test;
 
-import java.time.Duration;
-import java.util.List;
-import java.util.concurrent.*;
-import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 public class SecuredSubscriptionsBasicTest extends RemoteTestBase {
     private final int _reasonableWaitTime = 5;

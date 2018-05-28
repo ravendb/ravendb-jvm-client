@@ -45,6 +45,7 @@ public class LazyMultiLoaderWithInclude implements ILazyLoaderWithInclude {
     /**
      * Loads the specified id.
      */
+    @SuppressWarnings("unchecked")
     @Override
     public <TResult> Lazy<TResult> load(Class<TResult> clazz, String id) {
         Lazy<Map<String, TResult>> results = _session.lazyLoadInternal(clazz, new String[]{id}, _includes.toArray(new String[0]), null);

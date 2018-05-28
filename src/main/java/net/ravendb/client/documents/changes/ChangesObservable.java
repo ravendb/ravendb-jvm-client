@@ -20,6 +20,7 @@ public class ChangesObservable<T, TConnectionState extends IChangesConnectionSta
         _filter = filter;
     }
 
+    @SuppressWarnings("unchecked")
     public CleanCloseable subscribe(IObserver<T> observer) {
         final Consumer<T> consumer = payload -> this.send(payload);
         final Consumer<Exception> onErrorHandle = ex -> this.error(ex);

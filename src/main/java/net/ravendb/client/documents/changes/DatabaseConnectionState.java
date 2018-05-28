@@ -9,7 +9,7 @@ import java.util.function.Consumer;
 
 public class DatabaseConnectionState implements IChangesConnectionState<DatabaseChange> {
 
-    private List<Consumer<Exception>> onError = new ArrayList<>();
+    private final List<Consumer<Exception>> onError = new ArrayList<>();
 
     public void addOnError(Consumer<Exception> handler) {
         this.onError.add(handler);
@@ -90,11 +90,11 @@ public class DatabaseConnectionState implements IChangesConnectionState<Database
         }
     }
 
-    private List<Consumer<DocumentChange>> onDocumentChangeNotification = new ArrayList<>();
+    private final List<Consumer<DocumentChange>> onDocumentChangeNotification = new ArrayList<>();
 
-    private List<Consumer<IndexChange>> onIndexChangeNotification = new ArrayList<>();
+    private final List<Consumer<IndexChange>> onIndexChangeNotification = new ArrayList<>();
 
-    private List<Consumer<OperationStatusChange>> onOperationStatusChangeNotification = new ArrayList<>();
+    private final List<Consumer<OperationStatusChange>> onOperationStatusChangeNotification = new ArrayList<>();
 
     public void send(DocumentChange documentChange) {
         EventHelper.invoke(onDocumentChangeNotification, documentChange);
