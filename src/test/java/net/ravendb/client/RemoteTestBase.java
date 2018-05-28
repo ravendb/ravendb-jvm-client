@@ -12,8 +12,6 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.http.HttpHost;
 import org.apache.http.client.config.RequestConfig;
 
-import java.time.Duration;
-
 public class RemoteTestBase extends RavenTestDriver {
 
     private static class TestServiceLocator extends RavenServerLocator {

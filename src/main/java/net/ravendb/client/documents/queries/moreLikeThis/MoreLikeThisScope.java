@@ -4,7 +4,6 @@ import com.fasterxml.jackson.databind.JsonNode;
 import net.ravendb.client.documents.session.tokens.MoreLikeThisToken;
 import net.ravendb.client.extensions.JsonExtensions;
 
-import java.io.IOException;
 import java.util.function.Function;
 
 public class MoreLikeThisScope implements AutoCloseable {

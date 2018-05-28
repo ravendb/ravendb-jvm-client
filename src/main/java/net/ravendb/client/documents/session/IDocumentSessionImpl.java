@@ -3,7 +3,6 @@ package net.ravendb.client.documents.session;
 import net.ravendb.client.documents.Lazy;
 import net.ravendb.client.documents.conventions.DocumentConventions;
 import net.ravendb.client.documents.session.operations.lazy.IEagerSessionOperations;
-import net.ravendb.client.documents.session.operations.lazy.ILazySessionOperations;
 
 import java.util.Map;
 import java.util.function.Consumer;

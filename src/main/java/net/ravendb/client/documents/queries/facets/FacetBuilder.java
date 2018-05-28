@@ -1,6 +1,5 @@
 package net.ravendb.client.documents.queries.facets;
 
-import java.util.HashSet;
 import java.util.Set;
 import java.util.TreeSet;
 

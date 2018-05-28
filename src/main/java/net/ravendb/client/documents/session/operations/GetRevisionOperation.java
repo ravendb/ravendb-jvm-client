@@ -1,7 +1,6 @@
 package net.ravendb.client.documents.session.operations;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.base.Defaults;
 import net.ravendb.client.Constants;

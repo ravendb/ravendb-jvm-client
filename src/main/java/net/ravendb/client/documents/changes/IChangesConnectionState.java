@@ -2,7 +2,6 @@ package net.ravendb.client.documents.changes;
 
 import net.ravendb.client.primitives.CleanCloseable;
 
-import java.util.concurrent.CompletableFuture;
 import java.util.function.Consumer;
 
 public interface IChangesConnectionState<T> extends CleanCloseable {

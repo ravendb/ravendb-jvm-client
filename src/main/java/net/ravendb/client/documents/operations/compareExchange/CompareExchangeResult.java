@@ -3,7 +3,6 @@ package net.ravendb.client.documents.operations.compareExchange;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.google.common.base.Defaults;
 import net.ravendb.client.documents.conventions.DocumentConventions;
-import net.ravendb.client.extensions.JsonExtensions;
 
 import java.io.IOException;
 

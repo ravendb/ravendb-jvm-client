@@ -8,7 +8,6 @@ import net.ravendb.client.documents.indexes.IndexDefinition;
 import net.ravendb.client.documents.indexes.PutIndexResult;
 import net.ravendb.client.documents.operations.IMaintenanceOperation;
 import net.ravendb.client.documents.operations.PutIndexesResponse;
-import net.ravendb.client.documents.session.EntityToJson;
 import net.ravendb.client.extensions.JsonExtensions;
 import net.ravendb.client.http.RavenCommand;
 import net.ravendb.client.http.ServerNode;

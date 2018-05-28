@@ -1,10 +1,7 @@
 package net.ravendb.client.documents.queries.facets;
 
-import net.ravendb.client.primitives.NetDateFormat;
-import net.ravendb.client.primitives.NetISO8601Utils;
 import org.apache.commons.lang3.ObjectUtils;
 
-import java.util.Date;
 import java.util.function.Function;
 
 public class RangeBuilder<T> {

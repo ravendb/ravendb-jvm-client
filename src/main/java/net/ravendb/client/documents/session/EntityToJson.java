@@ -4,12 +4,10 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import net.ravendb.client.Constants;
 import net.ravendb.client.documents.conventions.DocumentConventions;
-import net.ravendb.client.extensions.JsonExtensions;
 
 import java.lang.reflect.Field;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.TreeMap;
 
 public class EntityToJson {
 
@@ -148,5 +146,29 @@ public class EntityToJson {
         document.remove(identityProperty.getName());
 
         return true;
+    }
+
+    public static Object convertToEntity(Class<?> entityClass, String id, ObjectNode document, DocumentConventions conventions) {
+        try {
+            Object defaultValue = InMemoryDocumentSessionOperations.getDefaultValue(entityClass);
+
+            Object entity = defaultValue;
+
+            String documentType = conventions.getJavaClass(id, document);
+            if (documentType != null) {
+                Class<?> clazz = Class.forName(documentType);
+                if (clazz != null && entityClass.isAssignableFrom(clazz)) {
+                    entity = conventions.getEntityMapper().treeToValue(document, clazz);
+                }
+            }
+
+            if (entity == null) {
+                entity = conventions.getEntityMapper().treeToValue(document, entityClass);
+            }
+
+            return entity;
+        } catch (Exception e) {
+            throw new IllegalStateException("Could not convert document " + id + " to entity of type " + entityClass);
+        }
     }
 }

@@ -3,7 +3,6 @@ package net.ravendb.client.documents.commands;
 import org.apache.http.client.methods.CloseableHttpResponse;
 
 import java.io.InputStream;
-import java.io.OutputStream;
 
 public class StreamResultResponse {
     private CloseableHttpResponse response;

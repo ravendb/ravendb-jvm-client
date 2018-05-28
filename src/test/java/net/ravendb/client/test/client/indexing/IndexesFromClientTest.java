@@ -14,7 +14,6 @@ import net.ravendb.client.documents.session.QueryStatistics;
 import net.ravendb.client.infrastructure.entities.Post;
 import net.ravendb.client.infrastructure.entities.User;
 import net.ravendb.client.primitives.Reference;
-import net.ravendb.client.test.core.streaming.QueryStreaming;
 import org.junit.jupiter.api.Test;
 
 import java.util.Collections;
@@ -22,7 +21,6 @@ import java.util.Date;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.setMaxLengthForSingleLineDescription;
 
 public class IndexesFromClientTest extends RemoteTestBase {
 

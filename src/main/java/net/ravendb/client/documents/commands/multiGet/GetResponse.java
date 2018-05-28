@@ -1,6 +1,5 @@
 package net.ravendb.client.documents.commands.multiGet;
 
-import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.apache.http.HttpStatus;
 
 import java.util.Map;

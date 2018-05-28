@@ -1,9 +1,7 @@
 package net.ravendb.client.documents.session;
 
-import com.fasterxml.jackson.databind.type.CollectionType;
 import net.ravendb.client.json.MetadataAsDictionary;
 
-import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 

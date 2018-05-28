@@ -2,9 +2,7 @@ package net.ravendb.client.documents.changes;
 
 import net.ravendb.client.primitives.CleanCloseable;
 
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentSkipListSet;
 import java.util.function.Consumer;
 import java.util.function.Function;
 

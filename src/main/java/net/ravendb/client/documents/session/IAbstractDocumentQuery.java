@@ -4,8 +4,6 @@ import net.ravendb.client.documents.conventions.DocumentConventions;
 import net.ravendb.client.documents.queries.GroupBy;
 import net.ravendb.client.documents.queries.SearchOperator;
 import net.ravendb.client.documents.queries.facets.FacetBase;
-import net.ravendb.client.documents.queries.facets.IAggregationDocumentQuery;
-import net.ravendb.client.documents.queries.facets.IFacetBuilder;
 import net.ravendb.client.documents.queries.moreLikeThis.MoreLikeThisScope;
 import net.ravendb.client.documents.queries.spatial.DynamicSpatialField;
 import net.ravendb.client.documents.queries.spatial.SpatialCriteria;
@@ -15,7 +13,6 @@ import java.time.Duration;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
-import java.util.function.Consumer;
 
 /**
  * Mostly used by the linq provider

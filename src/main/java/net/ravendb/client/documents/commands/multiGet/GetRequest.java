@@ -3,7 +3,6 @@ package net.ravendb.client.documents.commands.multiGet;
 import com.fasterxml.jackson.core.JsonGenerator;
 
 import java.io.IOException;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.TreeMap;
 

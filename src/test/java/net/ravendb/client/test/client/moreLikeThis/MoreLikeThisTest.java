@@ -10,7 +10,6 @@ import net.ravendb.client.documents.indexes.FieldTermVector;
 import net.ravendb.client.documents.queries.moreLikeThis.MoreLikeThisOptions;
 import net.ravendb.client.documents.queries.moreLikeThis.MoreLikeThisStopWords;
 import net.ravendb.client.documents.session.IDocumentSession;
-import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;

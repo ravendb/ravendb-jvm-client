@@ -106,7 +106,9 @@ public class DocumentStore extends DocumentStoreBase {
             }
         }
 
-        //TBD: Subscriptions?.Dispose();
+        if (subscriptions() != null) {
+            subscriptions().close();
+        }
 
         disposed = true;
 

@@ -1,6 +1,5 @@
 package net.ravendb.client.documents.session.operations.lazy;
 
-import net.ravendb.client.documents.commands.GetDocumentsResult;
 import net.ravendb.client.documents.commands.multiGet.GetRequest;
 import net.ravendb.client.documents.commands.multiGet.GetResponse;
 import net.ravendb.client.documents.conventions.DocumentConventions;

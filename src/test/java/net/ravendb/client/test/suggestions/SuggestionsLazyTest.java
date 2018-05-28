@@ -10,7 +10,6 @@ import net.ravendb.client.documents.queries.Query;
 import net.ravendb.client.documents.queries.suggestions.SuggestionResult;
 import net.ravendb.client.documents.session.IDocumentSession;
 import net.ravendb.client.infrastructure.entities.User;
-import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 import java.util.Collections;

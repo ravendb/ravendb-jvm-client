@@ -1,7 +1,5 @@
 package net.ravendb.client.exceptions;
 
-//TBD: rewrite subscriptions exceptions
-
 public class RavenException extends RuntimeException {
 
     private boolean reachedLeader;

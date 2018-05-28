@@ -9,7 +9,6 @@ import net.ravendb.client.primitives.Reference;
 
 import java.io.OutputStream;
 import java.util.Collection;
-import java.util.List;
 import java.util.function.Consumer;
 
 public interface IAdvancedSessionOperations extends IAdvancedDocumentSessionOperations {

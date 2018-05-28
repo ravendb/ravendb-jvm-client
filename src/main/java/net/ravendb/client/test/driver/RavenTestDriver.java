@@ -24,10 +24,8 @@ import net.ravendb.client.serverwide.operations.CreateDatabaseOperation;
 import net.ravendb.client.serverwide.operations.DeleteDatabasesOperation;
 import net.ravendb.client.util.UrlUtils;
 import org.apache.commons.io.IOUtils;
-import org.apache.http.conn.ClientConnectionManager;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.conn.PoolingHttpClientConnectionManager;
-import org.apache.http.pool.AbstractConnPool;
 
 import java.awt.*;
 import java.io.*;

@@ -6,6 +6,7 @@ import net.ravendb.client.documents.indexes.AbstractIndexCreationTask;
 import net.ravendb.client.documents.operations.MaintenanceOperationExecutor;
 import net.ravendb.client.documents.operations.OperationExecutor;
 import net.ravendb.client.documents.session.*;
+import net.ravendb.client.documents.subscriptions.DocumentSubscriptions;
 import net.ravendb.client.http.RequestExecutor;
 import net.ravendb.client.primitives.CleanCloseable;
 import net.ravendb.client.primitives.EventHandler;
@@ -190,7 +191,7 @@ public interface IDocumentStore extends IDisposalNotification {
 
     BulkInsertOperation bulkInsert(String database);
 
-    //TBD: IReliableSubscriptions Subscriptions { get; }
+    DocumentSubscriptions subscriptions();
 
     String getDatabase();
 

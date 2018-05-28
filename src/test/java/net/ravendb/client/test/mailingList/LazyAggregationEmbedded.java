@@ -5,18 +5,14 @@ import net.ravendb.client.documents.IDocumentStore;
 import net.ravendb.client.documents.Lazy;
 import net.ravendb.client.documents.indexes.AbstractIndexCreationTask;
 import net.ravendb.client.documents.queries.facets.FacetResult;
-import net.ravendb.client.documents.queries.facets.FacetValue;
 import net.ravendb.client.documents.queries.facets.IAggregationDocumentQuery;
 import net.ravendb.client.documents.session.IDocumentSession;
-import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 public class LazyAggregationEmbedded extends RemoteTestBase {
 

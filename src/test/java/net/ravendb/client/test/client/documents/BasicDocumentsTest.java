@@ -8,7 +8,6 @@ import net.ravendb.client.documents.commands.GetDocumentsCommand;
 import net.ravendb.client.documents.commands.GetDocumentsResult;
 import net.ravendb.client.documents.session.DocumentSession;
 import net.ravendb.client.documents.session.IDocumentSession;
-import net.ravendb.client.extensions.JsonExtensions;
 import net.ravendb.client.http.RequestExecutor;
 import net.ravendb.client.infrastructure.entities.Person;
 import net.ravendb.client.infrastructure.entities.User;

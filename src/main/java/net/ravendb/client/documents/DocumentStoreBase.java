@@ -9,6 +9,7 @@ import net.ravendb.client.documents.operations.MaintenanceOperationExecutor;
 import net.ravendb.client.documents.operations.OperationExecutor;
 import net.ravendb.client.documents.operations.indexes.PutIndexesOperation;
 import net.ravendb.client.documents.session.*;
+import net.ravendb.client.documents.subscriptions.DocumentSubscriptions;
 import net.ravendb.client.http.RequestExecutor;
 import net.ravendb.client.primitives.CleanCloseable;
 import net.ravendb.client.primitives.EventHandler;
@@ -36,7 +37,7 @@ public abstract class DocumentStoreBase implements IDocumentStore {
     private final List<EventHandler<SessionCreatedEventArgs>> onSessionCreated = new ArrayList<>();
 
     protected DocumentStoreBase() {
-        //TBD: Subscriptions = new DocumentSubscriptions(this);
+        _subscriptions = new DocumentSubscriptions(this);
     }
 
     public abstract void close();
@@ -159,7 +160,11 @@ public abstract class DocumentStoreBase implements IDocumentStore {
 
     public abstract BulkInsertOperation bulkInsert(String database);
 
-    //TBD: public IReliableSubscriptions Subscriptions { get; }
+    private DocumentSubscriptions _subscriptions;
+
+    public DocumentSubscriptions subscriptions() {
+        return _subscriptions;
+    }
 
     protected void ensureNotClosed() {
         if (disposed) {
