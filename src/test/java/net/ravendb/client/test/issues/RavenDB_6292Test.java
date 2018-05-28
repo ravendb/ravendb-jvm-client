@@ -40,7 +40,6 @@ public class RavenDB_6292Test extends ReplicationTestBase {
     }
 
     @Test
-    @Disabled("Doesn't work on Linux")
     public void ifIncludedDocumentIsConflictedItShouldNotThrowConflictException() throws Exception {
         customize = r -> {
             ConflictSolver conflictSolver = new ConflictSolver();

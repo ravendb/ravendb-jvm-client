@@ -31,7 +31,6 @@ public class DocumentReplicationTest extends ReplicationTestBase {
     }
 
     @Test
-    @Disabled("Doesn't work on Linux")
     public void canReplicateDocument() throws Exception {
         customize = r -> {
             ConflictSolver conflictSolver = new ConflictSolver();
@@ -68,7 +67,6 @@ public class DocumentReplicationTest extends ReplicationTestBase {
     }
 
     @Test
-    @Disabled("Doesn't work on Linux")
     public void getConflictsResult_command_should_work_properly() throws Exception {
         customize = r -> {
             ConflictSolver conflictSolver = new ConflictSolver();
@@ -124,7 +122,6 @@ public class DocumentReplicationTest extends ReplicationTestBase {
     }
 
     @Test
-    @Disabled("Doesn't work on Linux")
     public void shouldCreateConflictThenResolveIt() throws Exception {
         customize = r -> {
             ConflictSolver conflictSolver = new ConflictSolver();

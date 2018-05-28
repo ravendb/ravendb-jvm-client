@@ -12,6 +12,9 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.http.HttpHost;
 import org.apache.http.client.config.RequestConfig;
 
+import java.net.MalformedURLException;
+import java.net.URL;
+
 @SuppressWarnings("SameParameterValue")
 public class RemoteTestBase extends RavenTestDriver {
 
@@ -19,7 +22,7 @@ public class RemoteTestBase extends RavenTestDriver {
 
         @Override
         public String[] getCommandArguments() {
-            return new String[] { "--ServerUrl=http://127.0.0.1:0" };
+            return new String[] { "--ServerUrl=http://127.0.0.1:0", "--ServerUrl.Tcp=tcp://127.0.0.1:38881" };
         }
     }
 
@@ -31,7 +34,21 @@ public class RemoteTestBase extends RavenTestDriver {
 
         @Override
         public String[] getCommandArguments() {
-            return new String[] { "--Security.Certificate.Path=" + getServerCertificatePath(), "--ServerUrl=" + getHttpsServerUrl()};
+            String httpsServerUrl = getHttpsServerUrl();
+
+            try {
+                URL url = new URL(httpsServerUrl);
+                String host = url.getHost();
+                String tcpServerUrl = "tcp://" + host + ":38882";
+
+                return new String[]{
+                        "--Security.Certificate.Path=" + getServerCertificatePath(),
+                        "--ServerUrl=" + httpsServerUrl,
+                        "--ServerUrl.Tcp=" + tcpServerUrl
+                };
+            } catch (MalformedURLException e) {
+                throw new RuntimeException(e);
+            }
         }
 
         private String getHttpsServerUrl() {
