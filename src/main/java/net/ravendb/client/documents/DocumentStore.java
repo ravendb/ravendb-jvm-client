@@ -174,9 +174,9 @@ public class DocumentStore extends DocumentStoreBase {
         }
 
         if (!getConventions().isDisableTopologyUpdates()) {
-            executor = RequestExecutor.create(getUrls(), getDatabase(), getCertificate(), getConventions());
+            executor = RequestExecutor.create(getUrls(), database, getCertificate(), getConventions());
         } else {
-            executor = RequestExecutor.createForSingleNodeWithConfigurationUpdates(getUrls()[0], getDatabase(), getCertificate(), getConventions());
+            executor = RequestExecutor.createForSingleNodeWithConfigurationUpdates(getUrls()[0], database, getCertificate(), getConventions());
         }
 
         requestExecutors.put(database, executor);

@@ -262,14 +262,14 @@ public class ChangesTest extends RemoteTestBase {
     public void notificationOnWrongDatabase_ShouldNotCrashServer() throws Exception {
         try (IDocumentStore store = getDocumentStore()) {
 
-            Semaphore semaphore = new Semaphore(1);
-            semaphore.tryAcquire();
+            Semaphore semaphore = new Semaphore(0);
 
             IDatabaseChanges changes = store.changes("no_such_db");
 
             changes.addOnError(e -> semaphore.release());
 
-            semaphore.tryAcquire(15, TimeUnit.SECONDS);
+            assertThat(semaphore.tryAcquire(15, TimeUnit.SECONDS))
+                    .isTrue();
 
             store.maintenance().send(new GetStatisticsOperation());
         }
