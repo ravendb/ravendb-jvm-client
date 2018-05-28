@@ -378,8 +378,6 @@ public class SubscriptionsBasicTest extends RemoteTestBase {
             session.saveChanges();
         }
     }
-    //TODO: test subscription with server restart
-
 
     @Test
     public void shouldPullDocumentsAfterBulkInsert() throws Exception {

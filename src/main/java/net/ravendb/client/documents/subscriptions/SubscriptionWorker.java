@@ -24,6 +24,7 @@ import org.apache.commons.logging.LogFactory;
 
 import java.io.IOException;
 import java.net.Socket;
+import java.security.GeneralSecurityException;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -150,7 +151,7 @@ public class SubscriptionWorker<T> implements CleanCloseable {
     }
 
 
-    private Socket connectToServer() throws IOException {
+    private Socket connectToServer() throws IOException, GeneralSecurityException {
         GetTcpInfoCommand command = new GetTcpInfoCommand("Subscription/" + _dbName, _dbName);
 
         RequestExecutor requestExecutor = _store.getRequestExecutor(_dbName);
@@ -170,11 +171,10 @@ public class SubscriptionWorker<T> implements CleanCloseable {
             requestExecutor.execute(command);
         }
 
-        _tcpClient = TcpUtils.connect(command.getResult().getUrl()); //TODO: pass cert + timeout?
+        _tcpClient = TcpUtils.connect(command.getResult().getUrl(), command.getResult().getCertificate(), _store.getCertificate());
         _tcpClient.setTcpNoDelay(true);
         _tcpClient.setSendBufferSize(32 * 1024);
         _tcpClient.setReceiveBufferSize(4096);
-        //TODO: _stream = await TcpUtils.WrapStreamWithSslAsync(_tcpClient, command.Result, _store.Certificate, requestExecutor.DefaultTimeout).ConfigureAwait(false);
 
         String databaseName = ObjectUtils.firstNonNull(_dbName, _store.getDatabase());
 
