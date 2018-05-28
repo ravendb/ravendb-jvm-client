@@ -28,6 +28,7 @@ public class LazySessionOperations implements ILazySessionOperations {
         return load(clazz, id, null);
     }
 
+    @SuppressWarnings("unchecked")
     @Override
     public <TResult> Lazy<TResult> load(Class<TResult> clazz, String id, Consumer<TResult> onEval) {
         if (delegate.isLoaded(id)) {
@@ -63,9 +64,10 @@ public class LazySessionOperations implements ILazySessionOperations {
         return loadStartingWith(clazz, idPrefix, matches, start, pageSize, exclude, null);
     }
 
+    @SuppressWarnings("unchecked")
     @Override
     public <TResult> Lazy<Map<String, TResult>> loadStartingWith(Class<TResult> clazz, String idPrefix, String matches, int start, int pageSize, String exclude, String startAfter) {
-        LazyStartsWithOperation operation = new LazyStartsWithOperation<TResult>(clazz, idPrefix, matches, exclude, start, pageSize, delegate, startAfter);
+        LazyStartsWithOperation operation = new LazyStartsWithOperation<>(clazz, idPrefix, matches, exclude, start, pageSize, delegate, startAfter);
 
         return delegate.addLazyOperation((Class<Map<String, TResult>>)(Class<?>)Map.class, operation, null);
     }

@@ -536,6 +536,7 @@ public class DocumentConventions {
         return collectionName;
     }
 
+    @SuppressWarnings("unchecked")
     public <T> void registerQueryValueConverter(Class<T> clazz, IValueForQueryConverter<T> converter) {
         assertNotFrozen();
 

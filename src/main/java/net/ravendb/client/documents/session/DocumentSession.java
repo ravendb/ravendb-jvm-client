@@ -242,7 +242,7 @@ public class DocumentSession extends InMemoryDocumentSessionOperations implement
 
     public <T> Lazy<T> addLazyOperation(Class<T> clazz, ILazyOperation operation, Consumer<T> onEval) {
         pendingLazyOperations.add(operation);
-        Lazy<T> lazyValue = new Lazy<T>(() -> {
+        Lazy<T> lazyValue = new Lazy<>(() -> {
             executeAllPendingLazyOperations();
             return getOperationResult(clazz, operation.getResult());
         });

@@ -174,9 +174,7 @@ public class NetISO8601Utils {
             calendar.set(Calendar.MILLISECOND, milliseconds);
 
             return calendar.getTime();
-        } catch (IndexOutOfBoundsException e) {
-            throw new IllegalArgumentException("Failed to parse date " + date, e);
-        } catch (NumberFormatException e) {
+        } catch (IndexOutOfBoundsException | NumberFormatException e) {
             throw new IllegalArgumentException("Failed to parse date " + date, e);
         } catch (IllegalArgumentException e) {
             throw new IllegalArgumentException("Failed to parse date " + date, e);

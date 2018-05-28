@@ -207,9 +207,7 @@ public class FirstClassPatchTest extends RemoteTestBase {
                 loaded.getNumbers()[0] = 1;
                 session.advanced().patch(loaded, "numbers[0]", 2);
 
-                assertThatThrownBy(() -> {
-                    session.saveChanges();
-                }).isExactlyInstanceOf(IllegalStateException.class);
+                assertThatThrownBy(() -> session.saveChanges()).isExactlyInstanceOf(IllegalStateException.class);
             }
         }
     }

@@ -306,9 +306,7 @@ public class SubscriptionsBasicTest extends RemoteTestBase {
                         }
                     });
 
-                    filteredUsersSubscription.run(x -> {
-                        usersDocsSemaphore.release();
-                    });
+                    filteredUsersSubscription.run(x -> usersDocsSemaphore.release());
 
                     assertThat(allSemaphore.tryAcquire(_reasonableWaitTime, TimeUnit.SECONDS))
                             .isTrue();
@@ -345,9 +343,7 @@ public class SubscriptionsBasicTest extends RemoteTestBase {
 
             CompletableFuture<Void> subscriptionTask = throwingSubscriptionWorker.run(x -> { });
 
-            assertThatThrownBy(() -> {
-                subscriptionTask.get();
-            }).matches(x -> {
+            assertThatThrownBy(() -> subscriptionTask.get()).matches(x -> {
                 RuntimeException exception = ExceptionsUtils.unwrapException(x);
                 return exception instanceof SubscriptionInUseException;
             }, "expected SubscriptionInUseException");
@@ -356,9 +352,7 @@ public class SubscriptionsBasicTest extends RemoteTestBase {
 
             notThrowingSubscriptionWorker = store.subscriptions().getSubscriptionWorker(new SubscriptionWorkerOptions(id));
 
-            t = notThrowingSubscriptionWorker.run(x -> {
-                mre.release();
-            });
+            t = notThrowingSubscriptionWorker.run(x -> mre.release());
 
             putUserDoc(store);
 
@@ -384,7 +378,7 @@ public class SubscriptionsBasicTest extends RemoteTestBase {
             String id = store.subscriptions().create(User.class, new SubscriptionCreationOptions());
 
             try (SubscriptionWorker<User> subscription = store.subscriptions().getSubscriptionWorker(User.class, new SubscriptionWorkerOptions(id))) {
-                BlockingQueue<User> docs = new ArrayBlockingQueue<User>(10);
+                BlockingQueue<User> docs = new ArrayBlockingQueue<>(10);
 
                 try (BulkInsertOperation bulk = store.bulkInsert()) {
                     bulk.store(new User());

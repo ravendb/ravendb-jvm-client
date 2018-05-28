@@ -1130,9 +1130,7 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
             for (String include : includes) {
                 final boolean[] hasAll = {true}; //using fake array here to force final keyword on variable
 
-                IncludesUtil.include(documentInfo.getDocument(), include, s -> {
-                    hasAll[0] &= isLoaded(s);
-                });
+                IncludesUtil.include(documentInfo.getDocument(), include, s -> hasAll[0] &= isLoaded(s));
 
                 if (!hasAll[0]) {
                     return false;

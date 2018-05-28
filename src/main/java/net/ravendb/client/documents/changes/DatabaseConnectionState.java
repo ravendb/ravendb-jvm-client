@@ -22,7 +22,7 @@ public class DatabaseConnectionState implements IChangesConnectionState<Database
     private final Runnable _onDisconnect;
     public final Runnable onConnect;
 
-    private AtomicInteger _value = new AtomicInteger();
+    private final AtomicInteger _value = new AtomicInteger();
     public Exception lastException;
 
     @Override
@@ -58,6 +58,7 @@ public class DatabaseConnectionState implements IChangesConnectionState<Database
     }
 
 
+    @SuppressWarnings("unchecked")
     public void addOnChangeNotification(ChangesType type, Consumer<DatabaseChange> handler) {
         switch (type) {
             case DOCUMENT:

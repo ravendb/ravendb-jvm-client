@@ -85,7 +85,7 @@ public class SecuredSubscriptionsBasicTest extends RemoteTestBase {
             String id = store.subscriptions().create(User.class);
 
             try (SubscriptionWorker<ObjectNode> subscription = store.subscriptions().getSubscriptionWorker(new SubscriptionWorkerOptions(id))) {
-                ArrayBlockingQueue<String> names = new ArrayBlockingQueue<String>(20);
+                ArrayBlockingQueue<String> names = new ArrayBlockingQueue<>(20);
 
                 try (IDocumentSession session = store.openSession()) {
                     User user = new User();

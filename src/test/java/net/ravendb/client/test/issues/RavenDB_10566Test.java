@@ -14,13 +14,11 @@ import static org.assertj.core.api.Assertions.assertThat;
 public class RavenDB_10566Test extends RemoteTestBase {
 
     @Test
-    public void shouldBeAvailable() throws Exception {
+    public void shouldBeAvailable() throws Exception {a
         try (IDocumentStore store = getDocumentStore()) {
 
             AtomicReference<String> name = new AtomicReference<>();
-            store.addAfterSaveChangesListener(((sender, event) -> {
-                name.set((String) event.getDocumentMetadata().get("Name"));
-            }));
+            store.addAfterSaveChangesListener(((sender, event) -> name.set((String) event.getDocumentMetadata().get("Name"))));
 
 
             try (IDocumentSession session = store.openSession()) {

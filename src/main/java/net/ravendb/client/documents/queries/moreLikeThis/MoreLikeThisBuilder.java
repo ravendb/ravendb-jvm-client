@@ -28,6 +28,7 @@ public class MoreLikeThisBuilder<T> implements IMoreLikeThisOperations<T>, IMore
         return this;
     }
 
+    @SuppressWarnings("unchecked")
     @Override
     public IMoreLikeThisOperations<T> usingDocument(Consumer<IFilterDocumentQueryBase<T, IDocumentQuery<T>>> builder) {
         moreLikeThis = new MoreLikeThisUsingDocumentForDocumentQuery();

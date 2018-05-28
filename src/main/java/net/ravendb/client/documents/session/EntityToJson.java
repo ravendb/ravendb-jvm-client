@@ -76,9 +76,7 @@ public class EntityToJson {
 
         if (documentInfo.getMetadata() != null && documentInfo.getMetadata().size() > 0) {
             setMetadata = true;
-            documentInfo.getMetadata().fieldNames().forEachRemaining(property -> {
-                metadataNode.set(property, documentInfo.getMetadata().get(property).deepCopy());
-            });
+            documentInfo.getMetadata().fieldNames().forEachRemaining(property -> metadataNode.set(property, documentInfo.getMetadata().get(property).deepCopy()));
         } else if (documentInfo.getMetadataInstance() != null) {
             setMetadata = true;
             for (Map.Entry<String, Object> entry : documentInfo.getMetadataInstance().entrySet()) {

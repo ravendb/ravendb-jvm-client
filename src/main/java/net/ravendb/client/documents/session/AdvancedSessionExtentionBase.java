@@ -10,15 +10,15 @@ import java.util.Set;
 
 public abstract class AdvancedSessionExtentionBase {
 
-    protected InMemoryDocumentSessionOperations session;
-    protected Map<Object, DocumentInfo> documentsByEntity;
-    protected RequestExecutor requestExecutor;
-    protected SessionInfo sessionInfo;
-    protected IDocumentStore documentStore;
-    protected Map<IdTypeAndName, ICommandData> deferredCommandsMap;
+    protected final InMemoryDocumentSessionOperations session;
+    protected final Map<Object, DocumentInfo> documentsByEntity;
+    protected final RequestExecutor requestExecutor;
+    protected final SessionInfo sessionInfo;
+    protected final IDocumentStore documentStore;
+    protected final Map<IdTypeAndName, ICommandData> deferredCommandsMap;
 
-    protected Set<Object> deletedEntities;
-    protected DocumentsById documentsById;
+    protected final Set<Object> deletedEntities;
+    protected final DocumentsById documentsById;
 
     protected AdvancedSessionExtentionBase(InMemoryDocumentSessionOperations session) {
         this.session = session;

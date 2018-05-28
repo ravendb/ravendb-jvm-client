@@ -60,6 +60,7 @@ public abstract class SuggestionQueryBase {
         return executeLazy(null);
     }
 
+    @SuppressWarnings("unchecked")
     public Lazy<Map<String, SuggestionResult>> executeLazy(Consumer<Map<String, SuggestionResult>> onEval) {
         _query = getIndexQuery();
 

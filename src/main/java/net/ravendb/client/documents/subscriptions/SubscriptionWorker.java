@@ -65,6 +65,7 @@ public class SubscriptionWorker<T> implements CleanCloseable {
         onSubscriptionConnectionRetry.remove(handler);
     }
 
+    @SuppressWarnings("unchecked")
     SubscriptionWorker(Class<?> clazz, SubscriptionWorkerOptions options, boolean withRevisions, IDocumentStore documentStore, String dbName) {
         _clazz = (Class<T>) clazz;
         _options = options;

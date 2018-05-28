@@ -88,9 +88,7 @@ public class BulkInsertsTest extends RemoteTestBase {
     public void shouldNotAcceptIdsEndingWithPipeLine() throws Exception {
         try (IDocumentStore store = getDocumentStore()) {
             try (BulkInsertOperation bulkInsert = store.bulkInsert()) {
-                assertThatThrownBy(() -> {
-                    bulkInsert.store(new FooBar(), "foobars|");
-                }).isExactlyInstanceOf(UnsupportedOperationException.class)
+                assertThatThrownBy(() -> bulkInsert.store(new FooBar(), "foobars|")).isExactlyInstanceOf(UnsupportedOperationException.class)
                     .hasMessageContaining("Document ids cannot end with '|', but was called with foobars|");
             }
         }

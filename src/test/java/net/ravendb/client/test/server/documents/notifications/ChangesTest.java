@@ -267,9 +267,7 @@ public class ChangesTest extends RemoteTestBase {
 
             IDatabaseChanges changes = store.changes("no_such_db");
 
-            changes.addOnError(e -> {
-                semaphore.release();
-            });
+            changes.addOnError(e -> semaphore.release());
 
             semaphore.tryAcquire(15, TimeUnit.SECONDS);
 

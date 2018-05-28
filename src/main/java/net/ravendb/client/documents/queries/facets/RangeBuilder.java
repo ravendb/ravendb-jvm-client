@@ -20,7 +20,7 @@ public class RangeBuilder<T> {
     }
 
     public static <T> RangeBuilder<T> forPath(String path) {
-        return new RangeBuilder<T>(path);
+        return new RangeBuilder<>(path);
     }
 
     private RangeBuilder<T> createClone() {

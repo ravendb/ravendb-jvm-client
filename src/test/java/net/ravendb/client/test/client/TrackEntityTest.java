@@ -16,9 +16,7 @@ public class TrackEntityTest extends RemoteTestBase {
         try (IDocumentStore store = getDocumentStore()) {
 
             try (IDocumentSession session = store.openSession()) {
-                assertThatThrownBy(() -> {
-                    session.delete(new User());
-                })
+                assertThatThrownBy(() -> session.delete(new User()))
                 .isExactlyInstanceOf(IllegalStateException.class)
                 .hasMessageEndingWith("is not associated with the session, cannot delete unknown entity instance");
             }

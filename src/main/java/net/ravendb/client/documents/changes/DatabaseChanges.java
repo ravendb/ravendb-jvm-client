@@ -59,7 +59,7 @@ public class DatabaseChanges implements IDatabaseChanges {
 
     private final ConcurrentMap<String, DatabaseConnectionState> _counters = new ConcurrentSkipListMap<>(String::compareToIgnoreCase);
 
-    private AtomicInteger _immediateConnection = new AtomicInteger();
+    private final AtomicInteger _immediateConnection = new AtomicInteger();
 
     public DatabaseChanges(RequestExecutor requestExecutor, String databaseName, Runnable onDispose) {
         _requestExecutor = requestExecutor;
@@ -130,9 +130,9 @@ public class DatabaseChanges implements IDatabaseChanges {
             throw ExceptionsUtils.unwrapException(e);
         }
     }
-    private List<EventHandler<VoidArgs>> _connectionStatusChanged = new ArrayList<>();
+    private final List<EventHandler<VoidArgs>> _connectionStatusChanged = new ArrayList<>();
 
-    private EventHandler<VoidArgs> _connectionStatusEventHandler = (sender, event) -> onConnectionStatusChanged(sender, event);
+    private final EventHandler<VoidArgs> _connectionStatusEventHandler = (sender, event) -> onConnectionStatusChanged(sender, event);
     public void addConnectionStatusChanged(EventHandler<VoidArgs> handler) {
         _connectionStatusChanged.add(handler);
     }
@@ -141,6 +141,7 @@ public class DatabaseChanges implements IDatabaseChanges {
         _connectionStatusChanged.remove(handler);
     }
 
+    @SuppressWarnings("unchecked")
     @Override
     public IChangesObservable<IndexChange> forIndex(String indexName) {
         DatabaseConnectionState counter = getOrAddConnectionState("indexes/" + indexName, "watch-index", "unwatch-index", indexName);
@@ -333,9 +334,7 @@ public class DatabaseChanges implements IDatabaseChanges {
                 state.close();
             };
 
-            Runnable onConnect = () -> {
-                send(watchCommand, value);
-            };
+            Runnable onConnect = () -> send(watchCommand, value);
 
             newValue.value = true;
             return new DatabaseConnectionState(onConnect, onDisconnect);
@@ -450,7 +449,7 @@ public class DatabaseChanges implements IDatabaseChanges {
             try {
                 // wait before next retry
                 Thread.sleep(1000);
-            } catch (InterruptedException e) {
+            } catch (InterruptedException ignored) {
             }
         }
 

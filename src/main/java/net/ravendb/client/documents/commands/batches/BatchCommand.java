@@ -29,7 +29,7 @@ import java.util.Set;
 
 public class BatchCommand extends RavenCommand<JsonArrayResult> implements CleanCloseable {
 
-    private DocumentConventions _conventions;
+    private final DocumentConventions _conventions;
     private final List<ICommandData> _commands;
     private Set<InputStream> _attachmentStreams;
     private final BatchOptions _options;
@@ -38,6 +38,7 @@ public class BatchCommand extends RavenCommand<JsonArrayResult> implements Clean
         this(conventions, commands, null);
     }
 
+    @SuppressWarnings("ForLoopReplaceableByForEach")
     public BatchCommand(DocumentConventions conventions, List<ICommandData> commands, BatchOptions options) {
         super(JsonArrayResult.class);
         this._commands = commands;

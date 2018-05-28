@@ -87,9 +87,7 @@ public class RavenDB_6292Test extends ReplicationTestBase {
                     assertThat(user.getName())
                             .isEqualTo("John");
 
-                    assertThatThrownBy(() -> {
-                        session.load(Address.class, user.getAddressId());
-                    }).isExactlyInstanceOf(DocumentConflictException.class);
+                    assertThatThrownBy(() -> session.load(Address.class, user.getAddressId())).isExactlyInstanceOf(DocumentConflictException.class);
 
                     QueryCommand queryCommand = new QueryCommand(DocumentConventions.defaultConventions, iq, false, false);
 

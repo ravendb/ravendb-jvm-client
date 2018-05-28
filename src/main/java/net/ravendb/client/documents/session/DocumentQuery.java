@@ -594,6 +594,7 @@ public class DocumentQuery<T> extends AbstractDocumentQuery<T, DocumentQuery<T>>
         return query;
     }
 
+    @SuppressWarnings("unchecked")
     @Override
     public IAggregationDocumentQuery<T> aggregateBy(Consumer<IFacetBuilder<T>> builder) {
         FacetBuilder ff = new FacetBuilder<>();
@@ -759,6 +760,7 @@ public class DocumentQuery<T> extends AbstractDocumentQuery<T, DocumentQuery<T>>
         return this;
     }
 
+    @SuppressWarnings("unchecked")
     @Override
     public IDocumentQuery<T> moreLikeThis(Consumer<IMoreLikeThisBuilderForDocumentQuery<T>> builder) {
         MoreLikeThisBuilder<T> f = new MoreLikeThisBuilder<>();

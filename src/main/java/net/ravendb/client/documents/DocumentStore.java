@@ -81,6 +81,7 @@ public class DocumentStore extends DocumentStoreBase {
         this.identifier = identifier;
     }
 
+    @SuppressWarnings("EmptyTryBlock")
     public void close() {
         EventHelper.invoke(beforeClose, this, EventArgs.EMPTY);
 
@@ -316,9 +317,7 @@ public class DocumentStore extends DocumentStoreBase {
         Lazy<EvictItemsFromCacheBasedOnChanges> lazy = _aggressiveCacheChanges.get(database);
 
         if (lazy == null) {
-            lazy = _aggressiveCacheChanges.computeIfAbsent(database, db -> {
-                return new Lazy<>(() -> new EvictItemsFromCacheBasedOnChanges(this, database));
-            });
+            lazy = _aggressiveCacheChanges.computeIfAbsent(database, db -> new Lazy<>(() -> new EvictItemsFromCacheBasedOnChanges(this, database)));
         }
 
         lazy.getValue(); // force evaluation

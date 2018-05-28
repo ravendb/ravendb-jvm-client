@@ -121,6 +121,7 @@ public class SubscriptionBatch<T> {
         _generateEntityIdOnTheClient = new GenerateEntityIdOnTheClient(_requestExecutor.getConventions(), entity -> { throw new IllegalStateException("Shouldn't be generating new ids here"); });
     }
 
+    @SuppressWarnings("unchecked")
     String initialize(List<SubscriptionConnectionServerMessage> batch) {
         _items.clear();
         String lastReceivedChangeVector = null;

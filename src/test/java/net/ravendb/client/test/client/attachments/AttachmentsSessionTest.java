@@ -81,9 +81,7 @@ public class AttachmentsSessionTest extends RemoteTestBase {
                 session.advanced().attachments().store(user, "profile", stream, "image/png");
                 session.advanced().attachments().store(user, "other", stream);
 
-                assertThatThrownBy(() -> {
-                    session.saveChanges();
-                }).isExactlyInstanceOf(IllegalStateException.class);
+                assertThatThrownBy(() -> session.saveChanges()).isExactlyInstanceOf(IllegalStateException.class);
             }
         }
     }

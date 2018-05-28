@@ -143,9 +143,7 @@ public abstract class RavenTestDriver implements CleanCloseable {
 
             try {
                 store.maintenance().server().send(new DeleteDatabasesOperation(store.getDatabase(), true));
-            } catch (DatabaseDoesNotExistException e) {
-                // ignore
-            } catch (NoLeaderException e) {
+            } catch (DatabaseDoesNotExistException | NoLeaderException e) {
                 // ignore
             }
         }));

@@ -26,6 +26,7 @@ public class RavenDB_10641Test extends RemoteTestBase {
     }
 
 
+    @SuppressWarnings("unchecked")
     @Test
     public void canEditObjectsInMetadata() throws Exception {
         try (IDocumentStore store = getDocumentStore()) {

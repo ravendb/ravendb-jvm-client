@@ -313,9 +313,7 @@ public class RequestExecutor implements CleanCloseable {
     }
 
     protected void disposeAllFailedNodesTimers() {
-        _failedNodesTimers.forEach((node, status) -> {
-            status.close();
-        });
+        _failedNodesTimers.forEach((node, status) -> status.close());
         _failedNodesTimers.clear();
     }
 
@@ -526,6 +524,7 @@ public class RequestExecutor implements CleanCloseable {
         }
     }
 
+    @SuppressWarnings("ThrowFromFinallyBlock")
     public <TResult> void execute(ServerNode chosenNode, Integer nodeIndex, RavenCommand<TResult> command, boolean shouldRetry, SessionInfo sessionInfo) {
         Reference<String> urlRef = new Reference<>();
         HttpRequestBase request = createRequest(chosenNode, command, urlRef);
@@ -717,9 +716,7 @@ public class RequestExecutor implements CleanCloseable {
             if (nodes.get(i).getClusterTag().equals(chosenNode.getClusterTag())) {
                 preferredTask = task;
             } else {
-                task.thenAcceptAsync(result -> {
-                    IOUtils.closeQuietly(result.response);
-                });
+                task.thenAcceptAsync(result -> IOUtils.closeQuietly(result.response));
             }
 
             tasks.set(i, task);

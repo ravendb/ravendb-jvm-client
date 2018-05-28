@@ -43,9 +43,10 @@ public class BulkInsertOperation implements CleanCloseable {
 
     private static class StreamExposerContent extends AbstractHttpEntity {
 
-        public CompletableFuture<OutputStream> outputStream;
+        public final CompletableFuture<OutputStream> outputStream;
         private final CompletableFuture<Void> _done;
 
+        @SuppressWarnings("unchecked")
         public StreamExposerContent() {
             setContentType(ContentType.APPLICATION_JSON.toString());
             outputStream = new CompletableFuture<>();
@@ -148,7 +149,7 @@ public class BulkInsertOperation implements CleanCloseable {
 
     private final RequestExecutor _requestExecutor;
     private CompletableFuture<Void> _bulkInsertExecuteTask;
-    private ObjectMapper objectMapper;
+    private final ObjectMapper objectMapper;
 
     private OutputStream _stream;
     private final StreamExposerContent _streamExposerContent;
@@ -158,7 +159,7 @@ public class BulkInsertOperation implements CleanCloseable {
 
     private boolean useCompression = false;
 
-    private AtomicInteger _concurrentCheck = new AtomicInteger();
+    private final AtomicInteger _concurrentCheck = new AtomicInteger();
 
     public BulkInsertOperation(String database, IDocumentStore store) {
         _conventions = store.getConventions();

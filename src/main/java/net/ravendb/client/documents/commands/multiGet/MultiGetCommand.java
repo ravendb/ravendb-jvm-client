@@ -35,6 +35,7 @@ public class MultiGetCommand extends RavenCommand<List<GetResponse>> {
 
     private String _baseUrl;
 
+    @SuppressWarnings("unchecked")
     public MultiGetCommand(HttpCache cache, List<GetRequest> commands) {
         super((Class<List<GetResponse>>)(Class<?>)List.class);
         _cache = cache;
@@ -218,9 +219,7 @@ public class MultiGetCommand extends RavenCommand<List<GetResponse>> {
                     }
 
                     ObjectNode headersMap = mapper.readTree(parser);
-                    headersMap.fieldNames().forEachRemaining(field -> {
-                        getResponse.getHeaders().put(field, headersMap.get(field).asText());
-                    });
+                    headersMap.fieldNames().forEachRemaining(field -> getResponse.getHeaders().put(field, headersMap.get(field).asText()));
                     continue;
                 case "StatusCode":
                     int statusCode = parser.nextIntValue(-1);
