@@ -11,6 +11,7 @@ import net.ravendb.client.documents.session.IDocumentSession;
 import net.ravendb.client.infrastructure.entities.User;
 import net.ravendb.client.primitives.CleanCloseable;
 import org.eclipse.jetty.util.BlockingArrayQueue;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import java.util.concurrent.BlockingQueue;
@@ -259,10 +260,11 @@ public class ChangesTest extends RemoteTestBase {
     }
 
     @Test
+    @Disabled("Waiting for RavenDB-11233")
     public void notificationOnWrongDatabase_ShouldNotCrashServer() throws Exception {
         try (IDocumentStore store = getDocumentStore()) {
 
-            Semaphore semaphore = new Semaphore(0);
+            final Semaphore semaphore = new Semaphore(0);
 
             IDatabaseChanges changes = store.changes("no_such_db");
 

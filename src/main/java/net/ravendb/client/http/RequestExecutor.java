@@ -1096,7 +1096,7 @@ public class RequestExecutor implements CleanCloseable {
         if (_nodeSelector == null) {
             Topology topology = new Topology();
 
-            topology.setNodes(getTopologyNodes());
+            topology.setNodes(new ArrayList<>(getTopologyNodes()));
             topology.setEtag(topologyEtag);
 
             _nodeSelector = new NodeSelector(topology);

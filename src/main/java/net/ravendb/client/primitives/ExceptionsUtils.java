@@ -23,6 +23,6 @@ public class ExceptionsUtils {
             return (RuntimeException)e;
         }
 
-        return new RuntimeException(e);
+        return new RuntimeException(e.getMessage(), e);
     }
 }
