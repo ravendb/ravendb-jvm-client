@@ -5,7 +5,7 @@ import org.apache.commons.lang3.ObjectUtils;
 import java.util.function.Function;
 
 public class RangeBuilder<T> {
-    private String path;
+    private final String path;
 
     private T lessBound;
     private T greaterBound;

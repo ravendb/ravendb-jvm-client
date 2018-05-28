@@ -146,14 +146,15 @@ public class StreamOperation {
 
     private class YieldStreamResults implements CloseableIterator<ObjectNode> {
 
-        private StreamResultResponse response;
-        private JsonParser parser;
+        private final StreamResultResponse response;
+        private final JsonParser parser;
 
         public YieldStreamResults(StreamResultResponse response, JsonParser parser) {
             this.response = response;
             this.parser = parser;
         }
 
+        @SuppressWarnings("UnnecessaryLocalVariable")
         @Override
         public ObjectNode next() {
             try {

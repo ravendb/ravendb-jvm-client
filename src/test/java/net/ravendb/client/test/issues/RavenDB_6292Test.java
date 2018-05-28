@@ -27,6 +27,7 @@ import java.util.function.Consumer;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@SuppressWarnings("SameParameterValue")
 public class RavenDB_6292Test extends ReplicationTestBase {
 
     private Consumer<DatabaseRecord> customize = null;

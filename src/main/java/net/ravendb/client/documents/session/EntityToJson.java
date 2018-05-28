@@ -146,6 +146,7 @@ public class EntityToJson {
         return true;
     }
 
+    @SuppressWarnings("UnnecessaryLocalVariable")
     public static Object convertToEntity(Class<?> entityClass, String id, ObjectNode document, DocumentConventions conventions) {
         try {
             Object defaultValue = InMemoryDocumentSessionOperations.getDefaultValue(entityClass);

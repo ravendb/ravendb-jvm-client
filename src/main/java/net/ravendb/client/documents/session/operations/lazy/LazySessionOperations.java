@@ -12,7 +12,7 @@ import java.util.function.Consumer;
 
 public class LazySessionOperations implements ILazySessionOperations {
 
-    protected DocumentSession delegate;
+    protected final DocumentSession delegate;
 
     public LazySessionOperations(DocumentSession delegate) {
         this.delegate = delegate;

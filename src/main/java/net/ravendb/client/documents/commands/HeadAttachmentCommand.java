@@ -69,7 +69,7 @@ public class HeadAttachmentCommand extends RavenCommand<String> {
     }
 
     @Override
-    public void setResponse(String response, boolean fromCache) throws IOException {
+    public void setResponse(String response, boolean fromCache) {
         if (response != null) {
             throwInvalidResponse();
         }

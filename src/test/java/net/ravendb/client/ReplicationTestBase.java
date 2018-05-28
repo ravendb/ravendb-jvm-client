@@ -11,6 +11,7 @@ import net.ravendb.client.serverwide.etl.RavenConnectionString;
 
 import java.util.concurrent.TimeUnit;
 
+@SuppressWarnings("SameParameterValue")
 public class ReplicationTestBase extends RemoteTestBase {
     protected void modifyReplicationDestination(ReplicationNode replicationNode) {
         // empty by design

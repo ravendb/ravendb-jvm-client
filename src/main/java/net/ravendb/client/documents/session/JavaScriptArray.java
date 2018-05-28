@@ -5,13 +5,13 @@ import java.util.stream.Collectors;
 
 public class JavaScriptArray<U> {
 
-    private int suffix;
+    private final int suffix;
     private int argCounter = 0;
 
     private final String pathToArray;
 
-    private List<String> scriptLines = new ArrayList<>();
-    private Map<String, Object> parameters = new HashMap<>();
+    private final List<String> scriptLines = new ArrayList<>();
+    private final Map<String, Object> parameters = new HashMap<>();
 
     public JavaScriptArray(int suffix, String pathToArray) {
         this.suffix = suffix;

@@ -47,7 +47,7 @@ public class DatabaseChanges implements IDatabaseChanges {
 
     private final Runnable _onDispose;
 
-    private WebSocketClient _client;
+    private final WebSocketClient _client;
     private Session _clientSession;
     private WebSocketChangesProcessor _processor;
 
@@ -66,7 +66,7 @@ public class DatabaseChanges implements IDatabaseChanges {
         _conventions = requestExecutor.getConventions();
         _database = databaseName;
 
-        _tcs = new CompletableFuture();
+        _tcs = new CompletableFuture<>();
         _cts = new CancellationTokenSource();
 
         _client = createWebSocketClient(_requestExecutor);

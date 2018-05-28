@@ -49,9 +49,10 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
+@SuppressWarnings("SameParameterValue")
 public class RequestExecutor implements CleanCloseable {
 
-    public static Consumer<HttpClientBuilder> configureHttpClient = null;
+    public static final Consumer<HttpClientBuilder> configureHttpClient = null;
 
     private static final GetStatisticsOperation failureCheckOperation = new GetStatisticsOperation("failure=check");
     /**

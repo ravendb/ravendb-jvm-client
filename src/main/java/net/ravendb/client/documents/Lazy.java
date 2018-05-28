@@ -3,7 +3,7 @@ package net.ravendb.client.documents;
 import java.util.function.Supplier;
 
 public class Lazy<T> {
-    private Supplier<T> valueFactory;
+    private final Supplier<T> valueFactory;
     private volatile boolean valueCreated = false;
     private T value;
 

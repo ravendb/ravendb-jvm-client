@@ -47,6 +47,7 @@ public class GetOperationStateOperation implements IMaintenanceOperation<ObjectN
             return new HttpGet();
         }
 
+        @SuppressWarnings("UnnecessaryLocalVariable")
         @Override
         public void setResponse(String response, boolean fromCache) throws IOException {
             if (response == null) {

@@ -8,6 +8,7 @@ import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
 
 
+@SuppressWarnings("SameParameterValue")
 public class UrlUtils {
 
     @SuppressWarnings("boxing")
@@ -51,6 +52,7 @@ public class UrlUtils {
     private final static short c_MaxUTF_8BytesPerUnicodeChar = 4;
     private final static short c_EncodedCharsPerByte = 3;
 
+    @SuppressWarnings("UnnecessaryLocalVariable")
     private static char[] escapeString(String input, int start, int end, char[] dest,
                                        Reference<Integer> destPos, boolean isUriString) {
 

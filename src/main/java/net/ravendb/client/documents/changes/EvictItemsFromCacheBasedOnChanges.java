@@ -6,11 +6,12 @@ import net.ravendb.client.primitives.CleanCloseable;
 
 public class EvictItemsFromCacheBasedOnChanges implements CleanCloseable, IObserver<DatabaseChange> {
 
+    @SuppressWarnings("FieldCanBeLocal")
     private final String _databaseName;
     private final IDatabaseChanges _changes;
     private final CleanCloseable _documentsSubscription;
     private final CleanCloseable _indexesSubscription;
-    private RequestExecutor _requestExecutor;
+    private final RequestExecutor _requestExecutor;
 
     @SuppressWarnings("unchecked")
     public EvictItemsFromCacheBasedOnChanges(DocumentStore store, String databaseName) {

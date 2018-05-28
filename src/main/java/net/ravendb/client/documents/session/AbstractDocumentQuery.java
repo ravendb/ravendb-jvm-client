@@ -293,6 +293,7 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
         _groupByKey(fieldName, null);
     }
 
+    @SuppressWarnings("UnnecessaryLocalVariable")
     @Override
     public void _groupByKey(String fieldName, String projectedName) {
         assertNoRawQuery();

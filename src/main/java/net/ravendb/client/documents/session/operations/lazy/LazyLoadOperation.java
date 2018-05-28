@@ -16,7 +16,7 @@ import java.util.stream.Collectors;
 
 public class LazyLoadOperation<T> implements ILazyOperation {
 
-    private Class<T> _clazz;
+    private final Class<T> _clazz;
     private final InMemoryDocumentSessionOperations _session;
     private final LoadOperation _loadOperation;
     private String[] _ids;

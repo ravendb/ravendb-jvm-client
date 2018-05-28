@@ -37,6 +37,7 @@ public class NodeSelector implements CleanCloseable {
         return onUpdateTopology(topology, false);
     }
 
+    @SuppressWarnings("UnnecessaryLocalVariable")
     public boolean onUpdateTopology(Topology topology, boolean forceUpdate) {
         if (topology == null) {
             return false;

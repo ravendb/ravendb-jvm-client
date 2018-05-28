@@ -7,7 +7,7 @@ import java.io.IOException;
 import java.io.InputStream;
 
 public class CloseableAttachmentResult implements AutoCloseable {
-    private AttachmentDetails details;
+    private final AttachmentDetails details;
     private CloseableHttpResponse response;
 
     public CloseableAttachmentResult(CloseableHttpResponse response, AttachmentDetails details) {

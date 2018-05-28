@@ -15,7 +15,7 @@ import static org.assertj.core.api.Assertions.*;
 
 public class FirstClassPatchTest extends RemoteTestBase {
 
-    private String _docId = "users/1-A";
+    private final String _docId = "users/1-A";
 
     public static class User {
         private Stuff[] stuff;

@@ -160,7 +160,7 @@ public abstract class DocumentStoreBase implements IDocumentStore {
 
     public abstract BulkInsertOperation bulkInsert(String database);
 
-    private DocumentSubscriptions _subscriptions;
+    private final DocumentSubscriptions _subscriptions;
 
     public DocumentSubscriptions subscriptions() {
         return _subscriptions;

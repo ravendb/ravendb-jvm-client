@@ -17,6 +17,7 @@ import java.util.function.Function;
 /**
  * Base class for creating indexes
  */
+@SuppressWarnings("SameParameterValue")
 public abstract class AbstractIndexCreationTask {
 
     protected String map;

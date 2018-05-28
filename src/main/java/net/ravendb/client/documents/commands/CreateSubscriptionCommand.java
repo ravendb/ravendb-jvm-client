@@ -16,6 +16,7 @@ import java.io.IOException;
 
 public class CreateSubscriptionCommand extends RavenCommand<CreateSubscriptionResult> {
 
+    @SuppressWarnings("FieldCanBeLocal")
     private final DocumentConventions _conventions;
     private final SubscriptionCreationOptions _options;
     private final String _id;

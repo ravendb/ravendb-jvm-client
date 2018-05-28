@@ -40,6 +40,7 @@ public class ClusterRequestExecutor extends RequestExecutor {
         return createForSingleNode(url, certificate, null);
     }
 
+    @SuppressWarnings("UnnecessaryLocalVariable")
     public static ClusterRequestExecutor createForSingleNode(String url, KeyStore certificate, DocumentConventions conventions) {
         String[] initialUrls = {url};
         url = validateUrls(initialUrls, certificate)[0];

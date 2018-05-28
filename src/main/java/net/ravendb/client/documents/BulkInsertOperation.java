@@ -132,7 +132,7 @@ public class BulkInsertOperation implements CleanCloseable {
         }
 
         @Override
-        public void setResponse(String response, boolean fromCache) throws IOException {
+        public void setResponse(String response, boolean fromCache) {
             throw new NotImplementedException("Not implemented");
         }
 

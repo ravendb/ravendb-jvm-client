@@ -18,6 +18,7 @@ import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@SuppressWarnings("SameParameterValue")
 public class SpatialSortingTest extends RemoteTestBase {
 
     private final static double FILTERED_LAT = 44.419575;

@@ -65,7 +65,7 @@ public class DocumentSession extends InMemoryDocumentSessionOperations implement
         return this;
     }
 
-    private IAttachmentsSessionOperations _attachments;
+    private final IAttachmentsSessionOperations _attachments;
 
     @Override
     public IAttachmentsSessionOperations attachments() {
@@ -263,6 +263,7 @@ public class DocumentSession extends InMemoryDocumentSessionOperations implement
         });
     }
 
+    @SuppressWarnings("unchecked")
     @Override
     public <T> Lazy<Map<String, T>> lazyLoadInternal(Class<T> clazz, String[] ids, String[] includes, Consumer<Map<String, T>> onEval) {
         if (checkIfIdAlreadyIncluded(ids, Arrays.asList(includes))) {
@@ -633,6 +634,7 @@ public class DocumentSession extends InMemoryDocumentSessionOperations implement
         return yieldResults((AbstractDocumentQuery) query, result);
     }
 
+    @SuppressWarnings("unchecked")
     private <T> CloseableIterator<StreamResult<T>> yieldResults(AbstractDocumentQuery query, CloseableIterator<ObjectNode> enumerator) {
         return new StreamIterator<>(query.getQueryClass(), enumerator, query.fieldsToFetchToken, query::invokeAfterStreamExecuted);
     }

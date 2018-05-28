@@ -10,6 +10,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+@SuppressWarnings("SameParameterValue")
 public abstract class RavenServerRunner {
 
     public static Process run(RavenServerLocator locator) throws IOException {

@@ -11,7 +11,7 @@ public class DeleteAttachmentCommandData implements ICommandData {
     private String id;
     private String name;
     private String changeVector;
-    private CommandType type = CommandType.ATTACHMENT_DELETE;
+    private final CommandType type = CommandType.ATTACHMENT_DELETE;
 
     @Override
     public String getId() {

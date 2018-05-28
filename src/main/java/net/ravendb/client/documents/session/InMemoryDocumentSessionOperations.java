@@ -38,6 +38,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
+@SuppressWarnings("SameParameterValue")
 public abstract class InMemoryDocumentSessionOperations implements CleanCloseable {
 
     private static final AtomicInteger _clientSessionIdCounter = new AtomicInteger();

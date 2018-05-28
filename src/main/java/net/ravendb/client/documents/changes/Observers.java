@@ -8,7 +8,7 @@ public class Observers {
     }
 
     public static class ActionBasedObserver<T> implements IObserver<T> {
-        private Consumer<T> action;
+        private final Consumer<T> action;
 
         public ActionBasedObserver(Consumer<T> action) {
             super();

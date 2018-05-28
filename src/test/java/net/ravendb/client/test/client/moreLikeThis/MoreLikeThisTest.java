@@ -20,6 +20,7 @@ import java.util.function.Consumer;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@SuppressWarnings("SameParameterValue")
 public class MoreLikeThisTest extends RemoteTestBase {
 
     private static String getLorem(int numWords) {

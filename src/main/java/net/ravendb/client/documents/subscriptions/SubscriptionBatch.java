@@ -97,7 +97,7 @@ public class SubscriptionBatch<T> {
     private final Log _logger;
     private final GenerateEntityIdOnTheClient _generateEntityIdOnTheClient;
 
-    private List<Item<T>> _items = new ArrayList<>();
+    private final List<Item<T>> _items = new ArrayList<>();
 
     public List<Item<T>> getItems() {
         return _items;
