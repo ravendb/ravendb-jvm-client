@@ -57,7 +57,7 @@ public class GetAttachmentOperation implements IOperation<CloseableAttachmentRes
             }
 
             if (type != AttachmentType.DOCUMENT && changeVector == null) {
-                throw new IllegalArgumentException("Change vector cannot be null for attachemnt type " + type);
+                throw new IllegalArgumentException("Change vector cannot be null for attachment type " + type);
             }
 
             _documentId = documentId;

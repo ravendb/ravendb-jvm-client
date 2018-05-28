@@ -38,7 +38,7 @@ public class SubscriptionWorker<T> implements CleanCloseable {
     private final Log _logger;
     private final IDocumentStore _store;
     private final String _dbName;
-    private CancellationTokenSource _processingCts = new CancellationTokenSource();
+    private final CancellationTokenSource _processingCts = new CancellationTokenSource();
     private final SubscriptionWorkerOptions _options;
     private Consumer<SubscriptionBatch<T>> _subscriber;
     private Socket _tcpClient;
@@ -270,6 +270,7 @@ public class SubscriptionWorker<T> implements CleanCloseable {
 
     }
 
+    @SuppressWarnings("ConstantConditions")
     private void processSubscription() throws Exception {
         try {
             _processingCts.getToken().throwIfCancellationRequested();

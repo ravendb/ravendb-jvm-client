@@ -15,6 +15,7 @@ import org.apache.http.entity.ContentType;
 
 import java.io.IOException;
 
+@SuppressWarnings("ALL")
 public class QueryCommand extends RavenCommand<QueryResult> {
     private final DocumentConventions _conventions;
     private final IndexQuery _indexQuery;
@@ -85,6 +86,7 @@ public class QueryCommand extends RavenCommand<QueryResult> {
         }
     }
 
+    @SuppressWarnings("SameReturnValue")
     @Override
     public boolean isReadRequest() {
         return true;

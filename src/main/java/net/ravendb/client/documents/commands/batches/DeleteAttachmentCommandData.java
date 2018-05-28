@@ -39,7 +39,7 @@ public class DeleteAttachmentCommandData implements ICommandData {
         }
 
         if (StringUtils.isWhitespace(name)) {
-            throw new IllegalArgumentException("Namem cannot be null");
+            throw new IllegalArgumentException("Name cannot be null");
         }
 
         this.id = documentId;

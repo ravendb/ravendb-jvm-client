@@ -41,6 +41,6 @@ public class NetDateFormat extends DateFormat {
   @SuppressWarnings("MethodDoesntCallSuperMethod")
   @Override
   public Object clone() {
-      return this;    // jackson calls clone everytime. We are threadsafe so just returns the instance
+      return this;    // jackson calls clone every time. We are threadsafe so just returns the instance
   }
 }

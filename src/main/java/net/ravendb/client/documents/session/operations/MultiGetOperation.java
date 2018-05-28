@@ -18,6 +18,7 @@ public class MultiGetOperation {
         return new MultiGetCommand(_session.getRequestExecutor().getCache(), requests);
     }
 
+    @SuppressWarnings("EmptyMethod")
     public void setResult(ObjectNode result) {
 
     }

@@ -9,7 +9,7 @@ public interface IDatabaseChanges extends IConnectableChanges<IDatabaseChanges> 
 
     /**
      * Subscribe to changes for specified document only.
-     * @param docId
+     * @param docId Document identifier
      */
     IChangesObservable<DocumentChange> forDocument(String docId);
 

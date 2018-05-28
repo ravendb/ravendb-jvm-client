@@ -220,7 +220,7 @@ public class CachingOfDocumentInclude extends RemoteTestBase {
                 storeUser.accept("Additional");
                 storeUser.accept("Ayende");
                 storeUser.accept("Michael");
-                storeUser.accept("Fitzhak");
+                storeUser.accept("Fitzchak");
                 storeUser.accept("Maxim");
 
                 User withPartner = new User();

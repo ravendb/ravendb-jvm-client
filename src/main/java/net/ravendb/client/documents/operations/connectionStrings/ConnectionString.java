@@ -13,5 +13,6 @@ public abstract class ConnectionString {
         this.name = name;
     }
 
+    @SuppressWarnings("SameReturnValue")
     public abstract ConnectionStringType getType();
 }

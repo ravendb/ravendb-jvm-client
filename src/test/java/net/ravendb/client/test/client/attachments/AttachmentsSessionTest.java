@@ -86,6 +86,7 @@ public class AttachmentsSessionTest extends RemoteTestBase {
         }
     }
 
+    @SuppressWarnings("CodeBlock2Expr")
     @Test
     public void throwWhenTwoAttachmentsWithTheSameNameInSession() throws Exception {
         try (IDocumentStore store = getDocumentStore()) {
@@ -221,6 +222,7 @@ public class AttachmentsSessionTest extends RemoteTestBase {
         }
     }
 
+    @SuppressWarnings("EmptyTryBlock")
     @Test
     public void getAttachmentReleasesResources() throws Exception {
         int count = 30;

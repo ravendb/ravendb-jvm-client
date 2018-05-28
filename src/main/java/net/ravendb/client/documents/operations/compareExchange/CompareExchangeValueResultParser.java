@@ -44,7 +44,7 @@ public class CompareExchangeValueResultParser<T> {
 
             if (clazz.isPrimitive() || String.class.equals(clazz)) {
                 // simple
-                T value = Defaults.defaultValue(clazz);
+                T value;
                 JsonNode rawValue = raw.get("Object");
                 value = conventions.getEntityMapper().convertValue(rawValue, clazz);
                 CompareExchangeValue<T> cmpValue = new CompareExchangeValue<>(key.textValue(), index.asLong(), value);

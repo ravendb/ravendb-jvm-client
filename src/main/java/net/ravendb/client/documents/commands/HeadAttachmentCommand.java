@@ -13,8 +13,6 @@ import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpHead;
 import org.apache.http.client.methods.HttpRequestBase;
 
-import java.io.IOException;
-
 public class HeadAttachmentCommand extends RavenCommand<String> {
 
     private final String _documentId;

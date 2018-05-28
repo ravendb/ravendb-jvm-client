@@ -27,6 +27,7 @@ public class DocumentSessionAttachments extends DocumentSessionAttachmentsBase i
         return session.getOperations().send(operation, sessionInfo);
     }
 
+    @SuppressWarnings("ConstantConditions")
     @Override
     public CloseableAttachmentResult get(Object entity, String name) {
         DocumentInfo document = documentsByEntity.get(entity);

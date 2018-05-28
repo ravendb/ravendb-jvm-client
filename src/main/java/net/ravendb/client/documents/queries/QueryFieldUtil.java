@@ -4,6 +4,7 @@ import net.ravendb.client.Constants;
 import org.apache.commons.lang3.StringUtils;
 
 public class QueryFieldUtil {
+    @SuppressWarnings("ConstantConditions")
     public static String escapeIfNecessary(String name) {
         if (StringUtils.isEmpty(name) ||
                 Constants.Documents.Indexing.Fields.DOCUMENT_ID_FIELD_NAME.equals(name) ||

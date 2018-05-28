@@ -61,7 +61,7 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
 
     private boolean _isDisposed;
 
-    protected ObjectMapper mapper = JsonExtensions.getDefaultMapper();
+    protected final ObjectMapper mapper = JsonExtensions.getDefaultMapper();
 
     private final UUID id;
 
@@ -741,6 +741,7 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
         return dirty;
     }
 
+    @SuppressWarnings("ConstantConditions")
     private void prepareForEntitiesDeletion(SaveChangesData result, Map<String, List<DocumentsChanges>> changes) {
         for (Object deletedEntity : deletedEntities) {
             DocumentInfo documentInfo = documentsByEntity.get(deletedEntity);
@@ -790,6 +791,7 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
 
     }
 
+    @SuppressWarnings("ConstantConditions")
     private void prepareForEntitiesPuts(SaveChangesData result) {
         for (Map.Entry<Object, DocumentInfo> entity : documentsByEntity.entrySet()) {
 

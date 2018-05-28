@@ -25,6 +25,7 @@ public class ServerOperationExecutor implements CleanCloseable {
         requestExecutor.execute(command);
     }
 
+    @SuppressWarnings("UnusedReturnValue")
     public <TResult> TResult send(IServerOperation<TResult> operation) {
         RavenCommand<TResult> command = operation.getCommand(requestExecutor.getConventions());
         requestExecutor.execute(command);

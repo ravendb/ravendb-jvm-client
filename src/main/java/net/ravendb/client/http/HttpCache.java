@@ -27,7 +27,7 @@ public class HttpCache implements CleanCloseable {
         items = null;
     }
 
-    public AtomicInteger generation = new AtomicInteger();
+    public final AtomicInteger generation = new AtomicInteger();
 
     public long getNumberOfItems() {
         return items.size();
@@ -90,6 +90,7 @@ public class HttpCache implements CleanCloseable {
             return item.generation != item.cache.generation.get();
         }
 
+        @SuppressWarnings("EmptyMethod")
         @Override
         public void close() {
         }

@@ -194,6 +194,7 @@ public class AttachmentsRevisionsTest extends RemoteTestBase {
         return names;
     }
 
+    @SuppressWarnings("SameParameterValue")
     private static void assertRevisions(DocumentStore store, String[] names, BiConsumer<IDocumentSession, List<User>> assertAction, long expectedCountOfAttachments) {
         assertRevisions(store, names, assertAction,expectedCountOfAttachments , 1, 3);
     }

@@ -14,7 +14,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 public class RavenDB_10566Test extends RemoteTestBase {
 
     @Test
-    public void shouldBeAvailable() throws Exception {a
+    public void shouldBeAvailable() throws Exception {
         try (IDocumentStore store = getDocumentStore()) {
 
             AtomicReference<String> name = new AtomicReference<>();

@@ -48,6 +48,7 @@ public class MetadataAsDictionary implements IMetadataDictionary {
         return dirty;
     }
 
+    @SuppressWarnings("ConstantConditions")
     private void init() {
         dirty = true;
         _metadata = new HashMap<>();
@@ -107,6 +108,7 @@ public class MetadataAsDictionary implements IMetadataDictionary {
         throw new NotImplementedException("Implement support for numbers and more");
     }
 
+    @SuppressWarnings("ConstantConditions")
     @Override
     public int size() {
         if (_metadata != null) {
@@ -126,6 +128,7 @@ public class MetadataAsDictionary implements IMetadataDictionary {
         return _metadata.put(key, value);
     }
 
+    @SuppressWarnings("ConstantConditions")
     @Override
     public Object get(Object key) {
         if (_metadata != null) {
@@ -174,6 +177,7 @@ public class MetadataAsDictionary implements IMetadataDictionary {
         _metadata.clear();
     }
 
+    @SuppressWarnings("ConstantConditions")
     @Override
     public boolean containsKey(Object key) {
         if (_metadata != null) {

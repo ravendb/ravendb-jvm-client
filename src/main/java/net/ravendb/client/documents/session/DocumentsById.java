@@ -22,6 +22,7 @@ public class DocumentsById implements Iterable<Map.Entry<String, DocumentInfo>> 
         _inner.put(info.getId(), info);
     }
 
+    @SuppressWarnings("UnusedReturnValue")
     public boolean remove(String id) {
         return _inner.remove(id) != null;
     }

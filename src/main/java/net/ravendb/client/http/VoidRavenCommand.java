@@ -8,6 +8,7 @@ public abstract class VoidRavenCommand extends RavenCommand<Void> {
         responseType = RavenCommandResponseType.EMPTY;
     }
 
+    @SuppressWarnings("SameReturnValue")
     @Override
     public boolean isReadRequest() {
         return false;

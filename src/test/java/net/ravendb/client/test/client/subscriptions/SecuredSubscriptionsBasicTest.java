@@ -15,6 +15,7 @@ import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@SuppressWarnings("ConstantConditions")
 public class SecuredSubscriptionsBasicTest extends RemoteTestBase {
     private final int _reasonableWaitTime = 5;
 

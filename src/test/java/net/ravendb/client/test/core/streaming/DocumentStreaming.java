@@ -40,6 +40,7 @@ public class DocumentStreaming extends RemoteTestBase {
         }
     }
 
+    @SuppressWarnings({"SpellCheckingInspection", "EmptyTryBlock"})
     @Test
     public void streamWithoutIterationDoesntLeakConnection() throws Exception {
         try (IDocumentStore store = getDocumentStore()) {

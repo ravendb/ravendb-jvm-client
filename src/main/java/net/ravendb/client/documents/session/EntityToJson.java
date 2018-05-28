@@ -134,6 +134,7 @@ public class EntityToJson {
         }
     }
 
+    @SuppressWarnings("UnusedReturnValue")
     private static boolean tryRemoveIdentityProperty(ObjectNode document, Class entityType, DocumentConventions conventions) {
         Field identityProperty = conventions.getIdentityProperty(entityType);
 

@@ -27,6 +27,7 @@ public class JavaScriptArray<U> {
         return this;
     }
 
+    @SuppressWarnings("unchecked")
     public JavaScriptArray<U> add(U... u) {
         String args = Arrays.stream(u).map(value -> {
             String argumentName = getNextArgumentName();

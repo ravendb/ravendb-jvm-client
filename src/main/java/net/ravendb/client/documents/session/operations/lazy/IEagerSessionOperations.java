@@ -10,5 +10,6 @@ public interface IEagerSessionOperations {
     /**
      * Execute all the lazy requests pending within this session
      */
+    @SuppressWarnings("UnusedReturnValue")
     ResponseTimeInformation executeAllPendingLazyOperations();
 }

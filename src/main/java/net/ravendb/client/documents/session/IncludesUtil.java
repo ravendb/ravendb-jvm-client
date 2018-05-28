@@ -7,6 +7,7 @@ import java.util.function.Consumer;
 
 public class IncludesUtil {
 
+    @SuppressWarnings("UnnecessaryReturnStatement")
     public static void include(ObjectNode document, String include, Consumer<String> loadId) {
         if (StringUtils.isEmpty(include) || document == null){
             return;

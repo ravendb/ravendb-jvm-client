@@ -199,6 +199,7 @@ public abstract class RavenTestDriver implements CleanCloseable {
         // empty by design
     }
 
+    @SuppressWarnings("UnusedReturnValue")
     private IDocumentStore runServer(boolean secured) throws Exception {
         Process process = RavenServerRunner.run(secured ? this.securedLocator : this.locator);
         setGlobalServerProcess(secured, process);
@@ -209,8 +210,6 @@ public abstract class RavenTestDriver implements CleanCloseable {
 
         String url = null;
         InputStream stdout = getGlobalProcess(secured).getInputStream();
-
-        StringBuilder sb = new StringBuilder();
 
         Stopwatch startupDuration = Stopwatch.createStarted();
         BufferedReader reader = new BufferedReader(new InputStreamReader(stdout));
@@ -237,8 +236,7 @@ public abstract class RavenTestDriver implements CleanCloseable {
         }
 
         if (url == null) {
-            String log = sb.toString();
-            reportInfo(log);
+            reportInfo("Url is null");
 
             try {
                 process.destroyForcibly();
@@ -246,7 +244,7 @@ public abstract class RavenTestDriver implements CleanCloseable {
                 reportError(e);
             }
 
-            throw new IllegalStateException("Unable to start server, log is: " + log);
+            throw new IllegalStateException("Unable to start server");
         }
 
         DocumentStore store = new DocumentStore();
@@ -353,7 +351,7 @@ public abstract class RavenTestDriver implements CleanCloseable {
             return "Index " + indexErrors.getName() + " (" + indexErrors.getErrors().length + " errors): "+ System.lineSeparator() + errorsListText;
         };
         if (errors != null && errors.length > 0) {
-            allIndexErrorsText = Arrays.stream(errors).map(x -> formatIndexErrors.apply(x)).collect(Collectors.joining(System.lineSeparator()));
+            allIndexErrorsText = Arrays.stream(errors).map(formatIndexErrors).collect(Collectors.joining(System.lineSeparator()));
         }
 
         throw new TimeoutException("The indexes stayed stale for more than " + timeout + "." + allIndexErrorsText);
@@ -411,6 +409,7 @@ public abstract class RavenTestDriver implements CleanCloseable {
         }
     }
 
+    @SuppressWarnings("EmptyMethod")
     private static void reportInfo(String message) {
     }
 

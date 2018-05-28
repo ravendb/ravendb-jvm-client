@@ -58,17 +58,20 @@ public class BulkInsertOperation implements CleanCloseable {
             throw new UnsupportedEncodingException();
         }
 
+        @SuppressWarnings("SameReturnValue")
         @Override
         public boolean isStreaming() {
             return false;
         }
 
 
+        @SuppressWarnings("SameReturnValue")
         @Override
         public boolean isChunked() {
             return true;
         }
 
+        @SuppressWarnings("SameReturnValue")
         @Override
         public boolean isRepeatable() {
             return false;
@@ -113,7 +116,7 @@ public class BulkInsertOperation implements CleanCloseable {
 
         private final long _id;
 
-        private boolean useCompression;
+        private final boolean useCompression;
 
         public BulkInsertCommand(long id, StreamExposerContent stream, boolean useCompression) {
             super(CloseableHttpResponse.class);
@@ -311,6 +314,7 @@ public class BulkInsertOperation implements CleanCloseable {
 
     }
 
+    @SuppressWarnings("UnusedReturnValue")
     public String store(Object entity) {
         return store(entity, (IMetadataDictionary) null);
     }

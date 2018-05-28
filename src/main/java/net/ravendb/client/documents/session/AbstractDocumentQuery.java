@@ -385,6 +385,7 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
      * @param fieldName Field name
      * @param whereClause Where clause
      */
+    @SuppressWarnings("ConstantConditions")
     public void _whereLucene(String fieldName, String whereClause, boolean exact) {
         fieldName = ensureValidFieldName(fieldName, false);
 

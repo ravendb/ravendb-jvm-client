@@ -77,6 +77,7 @@ public class RemoteTestBase extends RavenTestDriver {
         return () -> RequestExecutor.requestPostProcessor = null;
     }
 
+    @SuppressWarnings("UnusedReturnValue")
     protected ConfigureRevisionsOperation.ConfigureRevisionsOperationResult setupRevisions(IDocumentStore store, boolean purgeOnDelete, long minimumRevisionsToKeep) {
         RevisionsConfiguration revisionsConfiguration = new RevisionsConfiguration();
         RevisionsCollectionConfiguration defaultCollection = new RevisionsCollectionConfiguration();

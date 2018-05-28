@@ -22,6 +22,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@SuppressWarnings("SpellCheckingInspection")
 public class IndexesFromClientTest extends RemoteTestBase {
 
     @Test
@@ -298,6 +299,7 @@ public class IndexesFromClientTest extends RemoteTestBase {
         }
     }
 
+    @SuppressWarnings("UnusedAssignment")
     @Test
     public void canExplain() throws Exception {
         try (IDocumentStore store = getDocumentStore()) {

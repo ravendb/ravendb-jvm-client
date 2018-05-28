@@ -108,7 +108,7 @@ public class IndexStats {
 
     /**
      * Indicates how many reducing attempts succeeded.
-     * @return reduce successess
+     * @return reduce success count
      */
     public Integer getReduceSuccesses() {
         return reduceSuccesses;

@@ -37,6 +37,7 @@ public class GetIndexErrorsOperation implements IMaintenanceOperation<IndexError
             _indexNames = indexNames;
         }
 
+        @SuppressWarnings("StringConcatenationInLoop")
         @Override
         public HttpRequestBase createRequest(ServerNode node, Reference<String> url) {
             url.value = node.getUrl() + "/databases/" + node.getDatabase() + "/indexes/errors";

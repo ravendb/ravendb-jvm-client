@@ -8,7 +8,7 @@ import java.io.InputStream;
 
 public class CloseableAttachmentResult implements AutoCloseable {
     private final AttachmentDetails details;
-    private CloseableHttpResponse response;
+    private final CloseableHttpResponse response;
 
     public CloseableAttachmentResult(CloseableHttpResponse response, AttachmentDetails details) {
         this.details = details;

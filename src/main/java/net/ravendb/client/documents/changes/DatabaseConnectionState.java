@@ -75,6 +75,7 @@ public class DatabaseConnectionState implements IChangesConnectionState<Database
         }
     }
 
+    @SuppressWarnings("SuspiciousMethodCalls")
     public void removeOnChangeNotification(ChangesType type, Consumer<DatabaseChange> handler) {
         switch (type) {
             case DOCUMENT:

@@ -148,6 +148,7 @@ public class MultiGetCommand extends RavenCommand<List<GetResponse>> {
         }
     }
 
+    @SuppressWarnings("ConditionalBreakInInfiniteLoop")
     private static List<GetResponse> readResponses(ObjectMapper mapper, JsonParser parser) throws IOException {
         if (parser.nextToken() != JsonToken.START_ARRAY) {
             throwInvalidResponse();

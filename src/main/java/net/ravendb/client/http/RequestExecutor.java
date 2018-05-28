@@ -322,6 +322,7 @@ public class RequestExecutor implements CleanCloseable {
         execute(command, null);
     }
 
+    @SuppressWarnings("UnnecessaryReturnStatement")
     public <TResult> void execute(RavenCommand<TResult> command, SessionInfo sessionInfo) {
         CompletableFuture<Void> topologyUpdate = _firstTopologyUpdate;
         if (topologyUpdate != null && topologyUpdate.isDone() || _disableTopologyUpdates) {
@@ -408,7 +409,7 @@ public class RequestExecutor implements CleanCloseable {
                 });
     }
 
-    @SuppressWarnings("unchecked")
+    @SuppressWarnings({"unchecked", "ConstantConditions"})
     protected CompletableFuture<Void> firstTopologyUpdate(String[] inputUrls) {
         final String[] initialUrls = validateUrls(inputUrls, certificate);
 
@@ -690,6 +691,7 @@ public class RequestExecutor implements CleanCloseable {
                 chosenNode != null;
     }
 
+    @SuppressWarnings("ConstantConditions")
     private <TResult> CloseableHttpResponse executeOnAllToFigureOutTheFastest(ServerNode chosenNode, RavenCommand<TResult> command) {
         AtomicInteger numberOfFailedTasks = new AtomicInteger();
 
@@ -983,6 +985,7 @@ public class RequestExecutor implements CleanCloseable {
         disposeAllFailedNodesTimers();
     }
 
+    @SuppressWarnings("ConstantConditions")
     private CloseableHttpClient createClient() {
         HttpClientBuilder httpClientBuilder = HttpClients
                 .custom()

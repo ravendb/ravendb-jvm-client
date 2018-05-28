@@ -7,5 +7,6 @@ public class EventArgs {
     //empty by design
 
 
+    @SuppressWarnings("StaticInitializerReferencesSubClass")
     public final static VoidArgs EMPTY = new VoidArgs();
 }

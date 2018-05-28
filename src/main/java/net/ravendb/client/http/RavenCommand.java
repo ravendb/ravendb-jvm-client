@@ -182,7 +182,7 @@ public abstract class RavenCommand<TResult> {
         }
     }
 
-    @SuppressWarnings("unused")
+    @SuppressWarnings({"unused", "EmptyMethod"})
     public void onResponseFailure(CloseableHttpResponse response) {
 
     }

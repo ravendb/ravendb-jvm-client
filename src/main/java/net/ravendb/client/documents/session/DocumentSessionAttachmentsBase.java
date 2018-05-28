@@ -17,6 +17,7 @@ public abstract class DocumentSessionAttachmentsBase extends AdvancedSessionExte
         super(session);
     }
 
+    @SuppressWarnings("ConstantConditions")
     public AttachmentName[] getNames(Object entity) {
         if (entity == null) {
             return new AttachmentName[0];
@@ -77,6 +78,7 @@ public abstract class DocumentSessionAttachmentsBase extends AdvancedSessionExte
         store(entity, name, stream, null);
     }
 
+    @SuppressWarnings("ConstantConditions")
     public void store(Object entity, String name, InputStream stream, String contentType) {
         DocumentInfo document = documentsByEntity.get(entity);
         if (document == null) {
@@ -91,6 +93,7 @@ public abstract class DocumentSessionAttachmentsBase extends AdvancedSessionExte
     }
 
 
+    @SuppressWarnings("ConstantConditions")
     public void delete(Object entity, String name) {
         DocumentInfo document = documentsByEntity.get(entity);
 

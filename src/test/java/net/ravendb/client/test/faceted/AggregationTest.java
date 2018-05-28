@@ -10,13 +10,11 @@ import net.ravendb.client.documents.session.IDocumentSession;
 import org.apache.commons.lang3.time.DateUtils;
 import org.junit.jupiter.api.Test;
 
-import java.util.Arrays;
-import java.util.Date;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@SuppressWarnings("ConstantConditions")
 public class AggregationTest extends RemoteTestBase {
 
     public static class Orders_All extends AbstractIndexCreationTask {
@@ -381,7 +379,7 @@ public class AggregationTest extends RemoteTestBase {
                 item3.setAt(new Date());
 
                 ItemsOrder item4 = new ItemsOrder();
-                item4.setItems(Arrays.asList("first"));
+                item4.setItems(Collections.singletonList("first"));
                 item4.setAt(new Date());
 
                 session.store(item1);
@@ -391,7 +389,7 @@ public class AggregationTest extends RemoteTestBase {
                 session.saveChanges();
             }
 
-            List<Object> items = Arrays.asList("second");
+            List<Object> items = Collections.singletonList("second");
 
             Date minValue = DateUtils.setYears(new Date(), 1980);
 

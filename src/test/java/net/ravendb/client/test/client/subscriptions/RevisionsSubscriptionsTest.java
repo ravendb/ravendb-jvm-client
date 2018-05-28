@@ -35,7 +35,7 @@ public class RevisionsSubscriptionsTest extends RemoteTestBase {
 
             RevisionsCollectionConfiguration defaultCollection = new RevisionsCollectionConfiguration();
             defaultCollection.setDisabled(false);
-            defaultCollection.setMinimumRevisionsToKeep(5l);
+            defaultCollection.setMinimumRevisionsToKeep(5L);
 
             RevisionsCollectionConfiguration usersConfig = new RevisionsCollectionConfiguration();
             usersConfig.setDisabled(false);
@@ -102,7 +102,7 @@ public class RevisionsSubscriptionsTest extends RemoteTestBase {
 
             RevisionsCollectionConfiguration defaultCollection = new RevisionsCollectionConfiguration();
             defaultCollection.setDisabled(false);
-            defaultCollection.setMinimumRevisionsToKeep(5l);
+            defaultCollection.setMinimumRevisionsToKeep(5L);
 
             RevisionsCollectionConfiguration usersConfig = new RevisionsCollectionConfiguration();
             usersConfig.setDisabled(false);

@@ -52,7 +52,7 @@ public class UrlUtils {
     private final static short c_MaxUTF_8BytesPerUnicodeChar = 4;
     private final static short c_EncodedCharsPerByte = 3;
 
-    @SuppressWarnings("UnnecessaryLocalVariable")
+    @SuppressWarnings({"UnnecessaryLocalVariable", "StatementWithEmptyBody"})
     private static char[] escapeString(String input, int start, int end, char[] dest,
                                        Reference<Integer> destPos, boolean isUriString) {
 
@@ -154,7 +154,8 @@ public class UrlUtils {
             return true;
         } else if (c < '!') {
             return true;
-        } else return c == '>' || c == '<' || c == '%' || c == '"' || c == '`';
+        } else //noinspection ConstantConditions
+            return c == '>' || c == '<' || c == '%' || c == '"' || c == '`';
     }
 
     private static boolean isNotUnreserved(char c) {

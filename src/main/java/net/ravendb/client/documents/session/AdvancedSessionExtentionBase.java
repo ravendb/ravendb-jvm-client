@@ -8,6 +8,7 @@ import net.ravendb.client.http.RequestExecutor;
 import java.util.Map;
 import java.util.Set;
 
+@SuppressWarnings("SpellCheckingInspection")
 public abstract class AdvancedSessionExtentionBase {
 
     protected final InMemoryDocumentSessionOperations session;

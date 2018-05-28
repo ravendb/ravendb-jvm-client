@@ -72,7 +72,7 @@ public class DocumentSession extends InMemoryDocumentSessionOperations implement
         return _attachments;
     }
 
-    private IRevisionsSessionOperations _revisions;
+    private final IRevisionsSessionOperations _revisions;
 
     @Override
     public IRevisionsSessionOperations revisions() {
@@ -406,6 +406,7 @@ public class DocumentSession extends InMemoryDocumentSessionOperations implement
         loadStartingWithInternal(idPrefix, new LoadStartingWithOperation(this), output, matches, start, pageSize, exclude, startAfter);
     }
 
+    @SuppressWarnings("UnusedReturnValue")
     private GetDocumentsCommand loadStartingWithInternal(String idPrefix, LoadStartingWithOperation operation, OutputStream stream,
                                                          String matches, int start, int pageSize, String exclude, String startAfter) {
         operation.withStartWith(idPrefix, matches, start, pageSize, exclude, startAfter);

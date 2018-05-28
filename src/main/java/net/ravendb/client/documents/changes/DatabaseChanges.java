@@ -267,7 +267,7 @@ public class DatabaseChanges implements IDatabaseChanges {
         return forDocumentsOfType(className);
     }
 
-    private List<Consumer<Exception>> onError = new ArrayList<>();
+    private final List<Consumer<Exception>> onError = new ArrayList<>();
 
     @Override
     public void addOnError(Consumer<Exception> handler) {
@@ -349,7 +349,7 @@ public class DatabaseChanges implements IDatabaseChanges {
 
     private void send(String command, String value) {
         CompletableFuture<Void> taskCompletionSource = new CompletableFuture<>();
-        int currentCommandId = 0;
+        int currentCommandId;
 
         try {
             _semaphore.acquire();
@@ -468,7 +468,7 @@ public class DatabaseChanges implements IDatabaseChanges {
 
     @WebSocket
     public class WebSocketChangesProcessor {
-        public CompletableFuture<Void> processing = new CompletableFuture<>();
+        public final CompletableFuture<Void> processing = new CompletableFuture<>();
 
         @OnWebSocketError
         public void onError(Session session, Throwable error) {

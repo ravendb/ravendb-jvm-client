@@ -8,7 +8,7 @@ import java.util.List;
 
 public class AbstractMultiMapIndexCreationTask extends AbstractIndexCreationTask {
 
-    private List<String> maps = new ArrayList<>();
+    private final List<String> maps = new ArrayList<>();
 
     protected void addMap(String map) {
         maps.add(map);

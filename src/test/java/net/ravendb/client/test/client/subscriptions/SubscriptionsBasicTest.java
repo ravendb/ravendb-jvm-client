@@ -25,6 +25,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@SuppressWarnings("ConstantConditions")
 public class SubscriptionsBasicTest extends RemoteTestBase {
     private final int _reasonableWaitTime = 60;
 
@@ -318,6 +319,7 @@ public class SubscriptionsBasicTest extends RemoteTestBase {
         }
     }
 
+    @SuppressWarnings("UnusedAssignment")
     @Test
     public void canReleaseSubscription() throws Exception {
         SubscriptionWorker<ObjectNode> subscriptionWorker = null;
@@ -556,6 +558,7 @@ public class SubscriptionsBasicTest extends RemoteTestBase {
         }
     }
 
+    @SuppressWarnings("TryFinallyCanBeTryWithResources")
     @Test
     public void disposingOneSubscriptionShouldNotAffectOnNotificationsOfOthers() throws Exception {
         SubscriptionWorker<User> subscription1 = null;

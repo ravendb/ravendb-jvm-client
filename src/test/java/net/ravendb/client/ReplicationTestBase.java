@@ -13,6 +13,7 @@ import java.util.concurrent.TimeUnit;
 
 @SuppressWarnings("SameParameterValue")
 public class ReplicationTestBase extends RemoteTestBase {
+    @SuppressWarnings("EmptyMethod")
     protected void modifyReplicationDestination(ReplicationNode replicationNode) {
         // empty by design
     }
