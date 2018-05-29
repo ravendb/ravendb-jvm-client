@@ -7,6 +7,8 @@ import net.ravendb.client.http.RequestExecutor;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.HttpStatus;
 
+import java.io.IOException;
+
 public class OperationExecutor {
 
     private final DocumentStoreBase store;
@@ -67,6 +69,10 @@ public class OperationExecutor {
         return new Operation(requestExecutor, () -> store.changes(), requestExecutor.getConventions(), command.getResult().getOperationId());
     }
 
+    public PatchStatus send(PatchOperation operation) {
+        return send(operation, null);
+    }
+
     public PatchStatus send(PatchOperation operation, SessionInfo sessionInfo) {
         RavenCommand<PatchResult> command = operation.getCommand(store, requestExecutor.getConventions(), requestExecutor.getCache());
 
@@ -81,6 +87,10 @@ public class OperationExecutor {
         }
 
         return command.getResult().getStatus();
+    }
+
+    public <TEntity> PatchOperation.Result<TEntity> send(Class<TEntity> entityClass, PatchOperation operation) {
+        return send(entityClass, operation, null);
     }
 
     @SuppressWarnings("unchecked")
@@ -101,8 +111,12 @@ public class OperationExecutor {
             return result;
         }
 
-        result.setStatus(command.getResult().getStatus());
-        result.setDocument((TEntity) requestExecutor.getConventions().deserializeEntityFromJson(entityClass, command.getResult().getModifiedDocument()));
-        return result;
+        try {
+            result.setStatus(command.getResult().getStatus());
+            result.setDocument(requestExecutor.getConventions().getEntityMapper().treeToValue(command.getResult().getModifiedDocument(), entityClass));
+            return result;
+        } catch (IOException e) {
+            throw new RuntimeException("Unable to read patch result: " + e.getMessage(), e);
+        }
     }
 }

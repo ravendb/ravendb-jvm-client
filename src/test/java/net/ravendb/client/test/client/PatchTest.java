@@ -29,8 +29,8 @@ public class PatchTest extends RemoteTestBase {
 
             PatchOperation patchOperation = new PatchOperation("users/1", null,
                     PatchRequest.forScript("this.name = \"Patched\""));
-            PatchResult status = store.operations().send(patchOperation);
-            assertThat(status.getStatus())
+            PatchStatus status = store.operations().send(patchOperation);
+            assertThat(status)
                     .isEqualTo(PatchStatus.PATCHED);
 
             try (IDocumentSession session = store.openSession()) {

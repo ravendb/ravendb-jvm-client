@@ -5,14 +5,12 @@ import com.google.common.collect.Sets;
 import net.ravendb.client.RemoteTestBase;
 import net.ravendb.client.documents.IDocumentStore;
 import net.ravendb.client.documents.indexes.IndexDefinition;
-import net.ravendb.client.documents.operations.Operation;
-import net.ravendb.client.documents.operations.PatchByQueryOperation;
-import net.ravendb.client.documents.operations.PatchOperation;
-import net.ravendb.client.documents.operations.PatchRequest;
+import net.ravendb.client.documents.operations.*;
 import net.ravendb.client.documents.operations.indexes.PutIndexesOperation;
 import net.ravendb.client.documents.session.IDocumentSession;
 import org.junit.jupiter.api.Test;
 
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
@@ -135,6 +133,78 @@ public class AdvancedPatchingTest extends RemoteTestBase {
                 assertThat(jsonDocument.get("copiedValue").asText())
                         .isEqualTo("1");
             }
+        }
+    }
+
+    private final String SAMPLE_SCRIPT = "this.comments.splice(2, 1);\n" +
+            "    this.owner = 'Something new';\n" +
+            "    this.value++;\n" +
+            "    this.newValue = \"err!!\";\n" +
+            "    this.comments = this.comments.map(function(comment) {\n" +
+            "        return (comment == \"one\") ? comment + \" test\" : comment;\n" +
+            "    });";
+
+    @Test
+    public void canApplyBasicScriptAsPatch() throws Exception {
+        try (IDocumentStore store = getDocumentStore()) {
+            try (IDocumentSession session = store.openSession()) {
+
+                CustomType test = new CustomType();
+                test.setId("someId");
+                test.setOwner("bob");
+                test.setValue(12143);
+                test.setComments(Arrays.asList("one", "two", "seven"));
+
+                session.store(test);
+                session.saveChanges();
+            }
+
+            store.operations().send(new PatchOperation("someId", null, PatchRequest.forScript(SAMPLE_SCRIPT)));
+
+            try (IDocumentSession session = store.openSession()) {
+                CustomType result = session.load(CustomType.class, "someId");
+
+                assertThat(result.getOwner())
+                        .isEqualTo("Something new");
+                assertThat(result.getComments())
+                        .hasSize(2);
+                assertThat(result.getComments().get(0))
+                        .isEqualTo("one test");
+                assertThat(result.getComments().get(1))
+                        .isEqualTo("two");
+                assertThat(result.getValue())
+                        .isEqualTo(12144);
+            }
+        }
+    }
+
+    @Test
+    public void canDeserializeModifiedDocument() throws Exception {
+        try (IDocumentStore store = getDocumentStore()) {
+            CustomType customType = new CustomType();
+            customType.setOwner("somebody@somewhere.com");
+            try (IDocumentSession session = store.openSession()) {
+                session.store(customType, "doc");
+                session.saveChanges();
+            }
+
+            PatchOperation patch1 = new PatchOperation("doc", null, PatchRequest.forScript("this.owner = '123';"));
+
+            PatchOperation.Result<CustomType> result = store.operations().send(CustomType.class, patch1);
+
+            assertThat(result.getStatus())
+                    .isEqualTo(PatchStatus.PATCHED);
+            assertThat(result.getDocument().getOwner())
+                    .isEqualTo("123");
+
+            PatchOperation patch2 = new PatchOperation("doc", null, PatchRequest.forScript("this.owner = '123';"));
+
+            result = store.operations().send(CustomType.class, patch2);
+
+            assertThat(result.getStatus())
+                    .isEqualTo(PatchStatus.NOT_MODIFIED);
+            assertThat(result.getDocument().getOwner())
+                    .isEqualTo("123");
         }
     }
 }

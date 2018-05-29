@@ -127,15 +127,6 @@ public class DocumentConventions {
         this._readBalanceBehavior = _readBalanceBehavior;
     }
 
-    @SuppressWarnings("unchecked")
-    public Object deserializeEntityFromJson(Class documentType, TreeNode document) {
-        try {
-            return JsonExtensions.getDefaultMapper().treeToValue(document, documentType);
-        } catch (JsonProcessingException e) {
-            throw new RavenException("Cannot deserialize entity", e);
-        }
-    }
-
     public int getMaxHttpCacheSize() {
         return _maxHttpCacheSize;
     }
