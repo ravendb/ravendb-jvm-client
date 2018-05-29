@@ -6,7 +6,6 @@ import net.ravendb.client.documents.indexes.AbstractMultiMapIndexCreationTask;
 import net.ravendb.client.documents.indexes.IndexDefinition;
 import net.ravendb.client.documents.operations.indexes.GetIndexOperation;
 import net.ravendb.client.documents.session.IDocumentSession;
-import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 import java.time.Duration;

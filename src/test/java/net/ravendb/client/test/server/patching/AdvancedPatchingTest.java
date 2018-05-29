@@ -136,6 +136,7 @@ public class AdvancedPatchingTest extends RemoteTestBase {
         }
     }
 
+    @SuppressWarnings("FieldCanBeLocal")
     private final String SAMPLE_SCRIPT = "this.comments.splice(2, 1);\n" +
             "    this.owner = 'Something new';\n" +
             "    this.value++;\n" +

@@ -17,7 +17,6 @@ import net.ravendb.client.infrastructure.entities.Address;
 import net.ravendb.client.infrastructure.entities.User;
 import net.ravendb.client.serverwide.ConflictSolver;
 import net.ravendb.client.serverwide.DatabaseRecord;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import java.util.Collections;

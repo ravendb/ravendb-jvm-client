@@ -3,7 +3,6 @@ package net.ravendb.client.documents.queries.facets;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import net.ravendb.client.documents.session.tokens.FacetToken;
 
-import javax.annotation.Resource;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Function;

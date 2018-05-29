@@ -7,15 +7,12 @@ import net.ravendb.client.documents.queries.Query;
 import net.ravendb.client.documents.queries.facets.*;
 import net.ravendb.client.documents.session.IDocumentSession;
 import net.ravendb.client.test.FacetTestBase;
-import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 import java.util.*;
 import java.util.stream.Collectors;
-import java.util.stream.StreamSupport;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.in;
 
 public class FacetPagingTest extends FacetTestBase {
 

@@ -9,7 +9,6 @@ import net.ravendb.client.documents.changes.OperationStatusChange;
 import net.ravendb.client.documents.queries.IndexQuery;
 import net.ravendb.client.documents.session.IDocumentSession;
 import net.ravendb.client.infrastructure.entities.User;
-import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 import java.util.concurrent.Semaphore;
@@ -70,9 +69,7 @@ public class DeleteByQueryTest extends RemoteTestBase {
                 changes.ensureConnectedNow();
 
                 IChangesObservable<OperationStatusChange> allOperationChanges = changes.forAllOperations();
-                allOperationChanges.subscribe(Observers.create(x -> {
-                    semaphore.release();
-                }));
+                allOperationChanges.subscribe(Observers.create(x -> semaphore.release()));
 
                 IndexQuery indexQuery = new IndexQuery();
                 indexQuery.setQuery("from users where age == 5");

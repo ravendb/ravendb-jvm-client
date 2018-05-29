@@ -1,6 +1,5 @@
 package net.ravendb.client.documents.commands;
 
-import com.fasterxml.jackson.databind.node.ArrayNode;
 import net.ravendb.client.http.RavenCommand;
 import net.ravendb.client.http.ServerNode;
 import net.ravendb.client.json.JsonArrayResult;

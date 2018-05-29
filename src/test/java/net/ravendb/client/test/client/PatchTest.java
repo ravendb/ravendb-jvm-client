@@ -1,6 +1,5 @@
 package net.ravendb.client.test.client;
 
-import com.google.common.base.Stopwatch;
 import net.ravendb.client.RemoteTestBase;
 import net.ravendb.client.documents.IDocumentStore;
 import net.ravendb.client.documents.operations.*;
@@ -8,7 +7,6 @@ import net.ravendb.client.documents.session.IDocumentSession;
 import net.ravendb.client.exceptions.documents.patching.JavaScriptException;
 import net.ravendb.client.infrastructure.entities.User;
 import net.ravendb.client.test.client.indexing.IndexesFromClientTest;
-import org.apache.commons.lang3.time.StopWatch;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;

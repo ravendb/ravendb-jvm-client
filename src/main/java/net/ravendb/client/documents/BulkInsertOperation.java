@@ -347,7 +347,7 @@ public class BulkInsertOperation implements CleanCloseable {
         GetOperationStateOperation.GetOperationStateCommand stateRequest = new GetOperationStateOperation.GetOperationStateCommand(_requestExecutor.getConventions(), _operationId);
         _requestExecutor.execute(stateRequest);
 
-        if (!"Faulted".equals(stateRequest.getResult().get("Status"))) {
+        if (!"Faulted".equals(stateRequest.getResult().get("Status").asText())) {
             return null;
         }
 

@@ -86,11 +86,12 @@ public abstract class FacetTestBase extends RemoteTestBase {
 
     private static final Random RANDOM = new Random(1337);
 
+    @SuppressWarnings({"deprecation", "SameParameterValue"})
     protected static List<Camera> getCameras(int numCameras) {
         ArrayList<Camera> cameraList = new ArrayList<>(numCameras);
         for (int i = 1; i <= numCameras; i++) {
             Camera camera = new Camera();
-            camera.setDateOfListing(new Date(1980 + RANDOM.nextInt(30), RANDOM.nextInt(12), RANDOM.nextInt(27)));
+            camera.setDateOfListing(new Date(80 + RANDOM.nextInt(30), RANDOM.nextInt(12), RANDOM.nextInt(27)));
             camera.setManufacturer(MANUFACTURERS.get(RANDOM.nextInt(MANUFACTURERS.size())));
             camera.setModel(MODELS.get(RANDOM.nextInt(MODELS.size())));
             camera.setCost(RANDOM.nextDouble() * 900 + 100);
