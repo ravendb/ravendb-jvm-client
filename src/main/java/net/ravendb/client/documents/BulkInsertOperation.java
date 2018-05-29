@@ -347,6 +347,10 @@ public class BulkInsertOperation implements CleanCloseable {
         GetOperationStateOperation.GetOperationStateCommand stateRequest = new GetOperationStateOperation.GetOperationStateCommand(_requestExecutor.getConventions(), _operationId);
         _requestExecutor.execute(stateRequest);
 
+        if (!"Faulted".equals(stateRequest.getResult().get("Status"))) {
+            return null;
+        }
+
         JsonNode result = stateRequest.getResult().get("Result");
 
         if (result.get("$type").asText().startsWith("Raven.Client.Documents.Operations.OperationExceptionResult")) {
