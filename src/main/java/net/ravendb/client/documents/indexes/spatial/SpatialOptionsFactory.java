@@ -4,11 +4,11 @@ import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 
 public class SpatialOptionsFactory {
-    public GeographySpatialOptionsFactory getGeography() {
+    public GeographySpatialOptionsFactory geography() {
         return new GeographySpatialOptionsFactory();
     }
 
-    public CartesianSpatialOptionsFactory getCartesian() {
+    public CartesianSpatialOptionsFactory cartesian() {
         return new CartesianSpatialOptionsFactory();
     }
 
