@@ -7,6 +7,7 @@ import net.ravendb.client.documents.commands.GetConflictsResult;
 import net.ravendb.client.documents.commands.PutDocumentCommand;
 import net.ravendb.client.documents.session.IDocumentSession;
 import net.ravendb.client.exceptions.documents.DocumentConflictException;
+import net.ravendb.client.infrastructure.DisabledOnPullRequest;
 import net.ravendb.client.infrastructure.entities.User;
 import net.ravendb.client.serverwide.ConflictSolver;
 import net.ravendb.client.serverwide.DatabaseRecord;
@@ -31,6 +32,7 @@ public class DocumentReplicationTest extends ReplicationTestBase {
     }
 
     @Test
+    @DisabledOnPullRequest
     public void canReplicateDocument() throws Exception {
         customize = r -> {
             ConflictSolver conflictSolver = new ConflictSolver();
@@ -67,6 +69,7 @@ public class DocumentReplicationTest extends ReplicationTestBase {
     }
 
     @Test
+    @DisabledOnPullRequest
     public void getConflictsResult_command_should_work_properly() throws Exception {
         customize = r -> {
             ConflictSolver conflictSolver = new ConflictSolver();
@@ -122,6 +125,7 @@ public class DocumentReplicationTest extends ReplicationTestBase {
     }
 
     @Test
+    @DisabledOnPullRequest
     public void shouldCreateConflictThenResolveIt() throws Exception {
         customize = r -> {
             ConflictSolver conflictSolver = new ConflictSolver();
