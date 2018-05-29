@@ -1,11 +1,13 @@
 package net.ravendb.client.documents.queries.facets;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import net.ravendb.client.documents.session.tokens.FacetToken;
 
 import java.util.function.Function;
 
 public class Facet extends FacetBase {
 
+    @JsonProperty("FieldName")
     private String fieldName;
 
     public String getFieldName() {

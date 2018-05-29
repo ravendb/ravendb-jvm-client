@@ -303,15 +303,15 @@ public abstract class RavenTestDriver implements CleanCloseable {
         }
     }
 
-    public void waitForIndexing(IDocumentStore store) {
+    public static void waitForIndexing(IDocumentStore store) {
         waitForIndexing(store, null, null);
     }
 
-    public void waitForIndexing(IDocumentStore store, String database) {
+    public static void waitForIndexing(IDocumentStore store, String database) {
         waitForIndexing(store, database, null);
     }
 
-    public void waitForIndexing(IDocumentStore store, String database, Duration timeout) {
+    public static void waitForIndexing(IDocumentStore store, String database, Duration timeout) {
         MaintenanceOperationExecutor admin = store.maintenance().forDatabase(database);
 
         if (timeout == null) {

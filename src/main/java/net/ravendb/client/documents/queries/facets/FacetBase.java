@@ -1,5 +1,6 @@
 package net.ravendb.client.documents.queries.facets;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import net.ravendb.client.documents.session.tokens.FacetToken;
 
 import java.util.HashMap;
@@ -7,8 +8,13 @@ import java.util.Map;
 import java.util.function.Function;
 
 public abstract class FacetBase {
+    @JsonProperty("DisplayFieldName")
     private String displayFieldName;
+
+    @JsonProperty("Options")
     private FacetOptions options;
+
+    @JsonProperty("Aggregations")
     private Map<FacetAggregation, String> aggregations;
 
     public FacetBase() {
