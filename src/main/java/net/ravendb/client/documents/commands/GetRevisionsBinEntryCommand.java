@@ -3,19 +3,20 @@ package net.ravendb.client.documents.commands;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import net.ravendb.client.http.RavenCommand;
 import net.ravendb.client.http.ServerNode;
+import net.ravendb.client.json.JsonArrayResult;
 import net.ravendb.client.primitives.Reference;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpRequestBase;
 
 import java.io.IOException;
 
-public class GetRevisionsBinEntryCommand extends RavenCommand<ArrayNode> {
+public class GetRevisionsBinEntryCommand extends RavenCommand<JsonArrayResult> {
 
     private final long _etag;
     private final Integer _pageSize;
 
     public GetRevisionsBinEntryCommand(long etag, Integer pageSize) {
-        super(ArrayNode.class);
+        super(JsonArrayResult.class);
         _etag = etag;
         _pageSize = pageSize;
     }
@@ -47,7 +48,7 @@ public class GetRevisionsBinEntryCommand extends RavenCommand<ArrayNode> {
             throwInvalidResponse();
         }
 
-        result = (ArrayNode) mapper.readTree(response);
+        result = mapper.readValue(response, JsonArrayResult.class);
     }
 
     @Override

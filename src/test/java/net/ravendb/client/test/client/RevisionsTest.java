@@ -1,10 +1,14 @@
 package net.ravendb.client.test.client;
 
+import com.fasterxml.jackson.databind.node.ArrayNode;
 import net.ravendb.client.Constants;
 import net.ravendb.client.RemoteTestBase;
 import net.ravendb.client.documents.DocumentStore;
+import net.ravendb.client.documents.IDocumentStore;
+import net.ravendb.client.documents.commands.GetRevisionsBinEntryCommand;
 import net.ravendb.client.documents.session.IDocumentSession;
 import net.ravendb.client.infrastructure.entities.User;
+import net.ravendb.client.json.JsonArrayResult;
 import net.ravendb.client.json.MetadataAsDictionary;
 import org.junit.jupiter.api.Test;
 
@@ -65,6 +69,35 @@ public class RevisionsTest extends RemoteTestBase {
                 assertThat(user.getName())
                         .isEqualTo("user3");
             }
+        }
+    }
+
+    @Test
+    public void canListRevisionsBin() throws Exception {
+        try (IDocumentStore store = getDocumentStore()) {
+            setupRevisions(store, false, 4);
+
+            try (IDocumentSession session = store.openSession()) {
+                User user = new User();
+                user.setName("user1");
+                session.store(user, "users/1");
+                session.saveChanges();
+            }
+
+            try (IDocumentSession session = store.openSession()) {
+                session.delete("users/1");
+                session.saveChanges();
+            }
+
+            GetRevisionsBinEntryCommand revisionsBinEntryCommand = new GetRevisionsBinEntryCommand(Long.MAX_VALUE, 20);
+            store.getRequestExecutor().execute(revisionsBinEntryCommand);
+
+            JsonArrayResult result = revisionsBinEntryCommand.getResult();
+            assertThat(result.getResults())
+                    .hasSize(1);
+
+            assertThat(result.getResults().get(0).get("@metadata").get("@id").asText())
+                    .isEqualTo("users/1");
         }
     }
 }

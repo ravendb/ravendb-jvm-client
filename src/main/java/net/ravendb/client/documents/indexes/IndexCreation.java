@@ -12,11 +12,11 @@ import java.util.Collection;
 public class IndexCreation {
     private static final Log logger = LogFactory.getLog(IndexCreation.class);
 
-    public static void createIndexes(Collection<AbstractIndexCreationTask> indexes, IDocumentStore store) {
+    public static void createIndexes(Collection<? extends AbstractIndexCreationTask> indexes, IDocumentStore store) {
         createIndexes(indexes, store, null);
     }
 
-    public static void createIndexes(Collection<AbstractIndexCreationTask> indexes, IDocumentStore store, DocumentConventions conventions) {
+    public static void createIndexes(Collection<? extends AbstractIndexCreationTask> indexes, IDocumentStore store, DocumentConventions conventions) {
 
         if (conventions == null) {
             conventions = store.getConventions();
@@ -34,7 +34,7 @@ public class IndexCreation {
         }
     }
 
-    public static IndexDefinition[] createIndexesToAdd(Collection<AbstractIndexCreationTask> indexCreationTasks, DocumentConventions conventions) {
+    public static IndexDefinition[] createIndexesToAdd(Collection<? extends AbstractIndexCreationTask> indexCreationTasks, DocumentConventions conventions) {
         return indexCreationTasks.stream()
                 .map(x -> {
                     x.setConventions(conventions);

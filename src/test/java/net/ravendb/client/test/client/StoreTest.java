@@ -103,6 +103,9 @@ public class StoreTest extends RemoteTestBase {
 
                 assertThat(session.advanced().getChangeVectorFor(user1))
                         .isNotNull();
+
+                assertThat(session.advanced().getLastModifiedFor(user1))
+                        .isNotNull();
             }
 
             assertThat(storeLevelCallBack[0])

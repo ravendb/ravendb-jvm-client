@@ -16,6 +16,7 @@ import net.ravendb.client.infrastructure.entities.User;
 import net.ravendb.client.primitives.Reference;
 import org.junit.jupiter.api.Test;
 
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
@@ -24,6 +25,30 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 @SuppressWarnings("SpellCheckingInspection")
 public class IndexesFromClientTest extends RemoteTestBase {
+
+    @Test
+    public void canCreateIndexesUsingIndexCreation() throws Exception {
+        try (IDocumentStore store = getDocumentStore()) {
+            IndexCreation.createIndexes(Arrays.asList(new Users_ByName()), store);
+
+            try (IDocumentSession session = store.openSession()) {
+                User user1 = new User();
+                user1.setName("Marcin");
+                session.store(user1, "users/1");
+                session.saveChanges();
+            }
+
+            waitForIndexing(store);
+
+            try (IDocumentSession session = store.openSession()) {
+                List<User> users = session.query(User.class, Users_ByName.class)
+                        .toList();
+
+                assertThat(users)
+                        .hasSize(1);
+            }
+        }
+    }
 
     @Test
     public void canReset() throws Exception {

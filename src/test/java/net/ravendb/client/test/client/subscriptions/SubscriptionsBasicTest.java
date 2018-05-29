@@ -41,6 +41,12 @@ public class SubscriptionsBasicTest extends RemoteTestBase {
             assertThat(subscriptions)
                     .hasSize(2);
 
+            // test getSubscriptionState as well
+            SubscriptionState subscriptionState = store.subscriptions().getSubscriptionState(id1);
+            assertThat(subscriptionState.getChangeVectorForNextBatchStartingPoint())
+                    .isNull();
+
+
             store.subscriptions().delete(id1);
             store.subscriptions().delete(id2);
 

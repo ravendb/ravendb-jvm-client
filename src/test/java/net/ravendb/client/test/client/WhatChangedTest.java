@@ -308,6 +308,48 @@ public class WhatChangedTest extends RemoteTestBase {
         }
     }
 
+    @Test
+    public void hasChanges() throws Exception {
+        try (IDocumentStore store = getDocumentStore()) {
+            try (IDocumentSession session = store.openSession()) {
+                User user1 = new User();
+                user1.setName("user1");
+
+                User user2 = new User();
+                user2.setName("user2");
+                user2.setAge(1);
+
+                session.store(user1, "users/1");
+                session.store(user2, "users/2");
+                session.saveChanges();
+            }
+
+
+            try (IDocumentSession session = store.openSession()) {
+                assertThat(session.advanced().hasChanges())
+                        .isFalse();
+
+                User u1 = session.load(User.class, "users/1");
+                User u2 = session.load(User.class, "users/2");
+
+                assertThat(session.advanced().hasChanged(u1))
+                        .isFalse();
+                assertThat(session.advanced().hasChanged(u2))
+                        .isFalse();
+
+                u1.setName("new name");
+
+                assertThat(session.advanced().hasChanged(u1))
+                        .isTrue();
+                assertThat(session.advanced().hasChanged(u2))
+                        .isFalse();
+                assertThat(session.advanced().hasChanges())
+                        .isTrue();
+
+            }
+        }
+    }
+
     public static class BasicName {
         private String name;
 
