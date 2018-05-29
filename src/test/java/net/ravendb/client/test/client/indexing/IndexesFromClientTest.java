@@ -170,6 +170,9 @@ public class IndexesFromClientTest extends RemoteTestBase {
     @Test
     public void setLockModeAndSetPriority() throws Exception {
         try (IDocumentStore store = getDocumentStore()) {
+
+            new Users_ByName().execute(store);
+
             try (IDocumentSession session = store.openSession()) {
                 User user1 = new User();
                 user1.setName("Fitzchak");
@@ -184,7 +187,7 @@ public class IndexesFromClientTest extends RemoteTestBase {
 
             try (IDocumentSession session = store.openSession()) {
                 List<User> users = session
-                        .query(User.class)
+                        .query(User.class, Users_ByName.class)
                         .waitForNonStaleResults()
                         .whereEquals("name", "Arek")
                         .toList();
