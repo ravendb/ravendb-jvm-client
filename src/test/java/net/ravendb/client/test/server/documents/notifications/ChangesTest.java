@@ -276,38 +276,4 @@ public class ChangesTest extends RemoteTestBase {
             store.maintenance().send(new GetStatisticsOperation());
         }
     }
-
-    @Test
-    public void resourcesCleanup() throws Exception {
-        try (IDocumentStore store = getDocumentStore()) {
-
-            store.executeIndex(new UsersByName());
-
-            // repeat this few times and watch deadlocks
-            for (int i= 0; i < 100; i++) {
-                BlockingQueue<DocumentChange> changesList = new BlockingArrayQueue<>();
-
-                try (IDatabaseChanges changes = store.changes()) {
-
-                    changes.ensureConnectedNow();
-
-                    IChangesObservable<DocumentChange> observable = changes.forDocument("users/" + i);
-
-                    try (CleanCloseable subscription = observable.subscribe(Observers.create(changesList::add))) {
-                        try (IDocumentSession session = store.openSession()) {
-                            User user = new User();
-                            user.setName("sample user");
-                            session.store(user, "users/" + i);
-                            session.saveChanges();
-                        }
-
-                        DocumentChange documentChange = changesList.poll(10, TimeUnit.SECONDS);
-
-                        assertThat(documentChange)
-                                .isNotNull();
-                    }
-                }
-            }
-        }
-    }
 }
