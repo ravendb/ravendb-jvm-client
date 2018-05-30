@@ -12,6 +12,7 @@ public interface IDocumentQueryCustomization {
 
     /**
      * Get the raw query operation that will be sent to the server
+     * @return Query operation
      */
     QueryOperation getQueryOperation();
 
@@ -81,6 +82,7 @@ public interface IDocumentQueryCustomization {
     /**
      *  Order the search results randomly using the specified seed
      *  this is useful if you want to have repeatable random queries
+     * @param seed Random seed
      * @return customization object
      */
     IDocumentQueryCustomization randomOrdering(String seed);

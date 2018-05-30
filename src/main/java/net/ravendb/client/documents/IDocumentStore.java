@@ -36,12 +36,15 @@ public interface IDocumentStore extends IDisposalNotification {
     void removeBeforeQueryListener(EventHandler<BeforeQueryEventArgs> handler);
 
     /**
-     *  Subscribe to change notifications from the server
+     * Subscribe to change notifications from the server
+     * @return Database changes object
      */
     IDatabaseChanges changes();
 
     /**
-     *  Subscribe to change notifications from the server
+     * Subscribe to change notifications from the server
+     * @param database Database to use
+     * @return Database changes object
      */
     IDatabaseChanges changes(String database);
 
@@ -53,6 +56,7 @@ public interface IDocumentStore extends IDisposalNotification {
      * without touching the server.
      *
      * @param cacheDuration Specify the aggressive cache duration
+     * @return Context for aggressive caching
      */
     CleanCloseable aggressivelyCacheFor(Duration cacheDuration);
 
@@ -65,6 +69,7 @@ public interface IDocumentStore extends IDisposalNotification {
      *
      * @param cacheDuration Specify the aggressive cache duration
      * @param database The database to cache, if not specified, the default database will be used
+     * @return Context for aggressive caching
      */
     CleanCloseable aggressivelyCacheFor(Duration cacheDuration, String database);
 
@@ -75,7 +80,7 @@ public interface IDocumentStore extends IDisposalNotification {
      * Aggressive caching means that we will not check the server to see whether the response
      * we provide is current or not, but will serve the information directly from the local cache
      * without touching the server.
-     *
+     * @return Context for aggressive caching
      */
     CleanCloseable aggressivelyCache();
 
@@ -87,6 +92,7 @@ public interface IDocumentStore extends IDisposalNotification {
      * without touching the server.
      *
      * @param database The database to cache, if not specified, the default database will be used
+     * @return Context for aggressive caching
      */
     CleanCloseable aggressivelyCache(String database);
 
@@ -96,7 +102,7 @@ public interface IDocumentStore extends IDisposalNotification {
      * This is mainly useful for internal use inside RavenDB, when we are executing
      * queries that have been marked with WaitForNonStaleResults, we temporarily disable
      * aggressive caching.
-     * @return Self closing context
+     * @return Context for aggressive caching
      */
     CleanCloseable disableAggressiveCaching();
 
@@ -107,7 +113,7 @@ public interface IDocumentStore extends IDisposalNotification {
      * queries that have been marked with WaitForNonStaleResults, we temporarily disable
      * aggressive caching.
      * @param database Database name
-     * @return Self closing context
+     * @return Context for aggressive caching
      */
     CleanCloseable disableAggressiveCaching(String database);
 

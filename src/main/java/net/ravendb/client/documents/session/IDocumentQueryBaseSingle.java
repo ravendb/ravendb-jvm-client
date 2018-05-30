@@ -9,6 +9,7 @@ public interface IDocumentQueryBaseSingle<T> {
     /**
      * Register the query as a lazy-count query in the session and return a lazy
      * instance that will evaluate the query only when needed.
+     * @return Lazy count for query
      */
     Lazy<Integer> countLazily();
 
@@ -52,6 +53,7 @@ public interface IDocumentQueryBaseSingle<T> {
     /**
      * Register the query as a lazy query in the session and return a lazy
      * instance that will evaluate the query only when needed.
+     * @return Lazy query result
      */
     Lazy<List<T>> lazily();
 
@@ -59,6 +61,8 @@ public interface IDocumentQueryBaseSingle<T> {
      * Register the query as a lazy query in the session and return a lazy
      * instance that will evaluate the query only when needed.
      * Also provide a function to execute when the value is evaluated
+     * @param onEval Action to be executed on evaluation.
+     * @return Lazy query result
      */
     Lazy<List<T>> lazily(Consumer<List<T>> onEval);
 }

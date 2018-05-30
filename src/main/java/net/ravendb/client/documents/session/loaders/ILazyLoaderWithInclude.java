@@ -12,6 +12,7 @@ public interface ILazyLoaderWithInclude {
     /**
      * Begin a load while including the specified path
      * @param path Path in documents in which server should look for a 'referenced' documents.
+     * @return Lazy loader with includes support
      */
     ILazyLoaderWithInclude include(String path);
 
@@ -20,6 +21,7 @@ public interface ILazyLoaderWithInclude {
      * @param clazz Result class
      * @param ids  Ids that should be loaded
      * @param <T> Result class
+     * @return Lazy Map: id to entity
      */
     <T> Lazy<Map<String, T>> load(Class<T> clazz, String... ids);
 
@@ -37,6 +39,7 @@ public interface ILazyLoaderWithInclude {
      * @param clazz Result class
      * @param id Identifier of document
      * @param <TResult> Result class
+     * @return Lazy result
      */
     <TResult> Lazy<TResult> load(Class<TResult> clazz, String id);
 }

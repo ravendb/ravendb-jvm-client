@@ -43,6 +43,10 @@ public interface IAttachmentsSessionOperations {
 
     /**
      * Returns the revision attachment by the document id and attachment name.
+     * @param documentId Document Id
+     * @param name Name of attachment
+     * @param changeVector Change vector
+     * @return Attachment
      */
     CloseableAttachmentResult getRevision(String documentId, String name, String changeVector);
 

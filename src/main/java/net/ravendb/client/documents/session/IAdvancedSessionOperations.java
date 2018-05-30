@@ -15,11 +15,13 @@ public interface IAdvancedSessionOperations extends IAdvancedDocumentSessionOper
 
     /**
      * Access the eager operations
+     * @return Eager session operations
      */
     IEagerSessionOperations eagerly();
 
     /**
      * Access the lazy operations
+     * @return Lazy session operations
      */
     ILazySessionOperations lazily();
 
@@ -272,8 +274,9 @@ public interface IAdvancedSessionOperations extends IAdvancedDocumentSessionOper
     /**
      * Stream the results of documents search to the client, converting them to CLR types along the way.
      * Does NOT track the entities in the session, and will not includes changes there when saveChanges() is called
-     * @param startsWith prefix for which documents should be returned e.g. "products/"
      * @param <T> Result class
+     * @param clazz Entity class
+     * @param startsWith prefix for which documents should be returned e.g. "products/"
      * @return results iterator
      */
     <T> CloseableIterator<StreamResult<T>> stream(Class<T> clazz, String startsWith);
@@ -281,6 +284,7 @@ public interface IAdvancedSessionOperations extends IAdvancedDocumentSessionOper
     /**
      * Stream the results of documents search to the client, converting them to CLR types along the way.
      * Does NOT track the entities in the session, and will not includes changes there when saveChanges() is called
+     * @param clazz Result class
      * @param startsWith prefix for which documents should be returned e.g. "products/"
      * @param matches pipe ('|') separated values for which document ID (after 'idPrefix') should be matched ('?' any single character, '*' any characters)
      * @param <T> Result class
@@ -291,6 +295,7 @@ public interface IAdvancedSessionOperations extends IAdvancedDocumentSessionOper
     /**
      * Stream the results of documents search to the client, converting them to CLR types along the way.
      * Does NOT track the entities in the session, and will not includes changes there when saveChanges() is called
+     * @param clazz Entity class
      * @param startsWith prefix for which documents should be returned e.g. "products/"
      * @param matches pipe ('|') separated values for which document ID (after 'idPrefix') should be matched ('?' any single character, '*' any characters)
      * @param start number of documents that should be skipped
@@ -302,6 +307,7 @@ public interface IAdvancedSessionOperations extends IAdvancedDocumentSessionOper
     /**
      * Stream the results of documents search to the client, converting them to CLR types along the way.
      * Does NOT track the entities in the session, and will not includes changes there when saveChanges() is called
+     * @param clazz Entity class
      * @param startsWith prefix for which documents should be returned e.g. "products/"
      * @param matches pipe ('|') separated values for which document ID (after 'idPrefix') should be matched ('?' any single character, '*' any characters)
      * @param start number of documents that should be skipped
@@ -314,6 +320,7 @@ public interface IAdvancedSessionOperations extends IAdvancedDocumentSessionOper
     /**
      * Stream the results of documents search to the client, converting them to CLR types along the way.
      * Does NOT track the entities in the session, and will not includes changes there when saveChanges() is called
+     * @param clazz Entity class
      * @param startsWith prefix for which documents should be returned e.g. "products/"
      * @param matches pipe ('|') separated values for which document ID (after 'idPrefix') should be matched ('?' any single character, '*' any characters)
      * @param start number of documents that should be skipped
@@ -325,12 +332,18 @@ public interface IAdvancedSessionOperations extends IAdvancedDocumentSessionOper
     <T> CloseableIterator<StreamResult<T>> stream(Class<T> clazz, String startsWith, String matches, int start, int pageSize, String startAfter);
 
     /**
-     *  Returns the results of a query directly into stream
+     * Returns the results of a query directly into stream
+     * @param query Query to use
+     * @param output Target output stream
+     * @param <T> Result class
      */
     <T> void streamInto(IDocumentQuery<T> query, OutputStream output);
 
     /**
      * Returns the results of a query directly into stream
+     * @param query  Query to use
+     * @param output Target output stream
+     * @param <T> Result class
      */
     <T> void streamInto(IRawDocumentQuery<T> query, OutputStream output);
 }

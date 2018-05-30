@@ -40,6 +40,7 @@ public class SubscriptionWorkerOptions {
 
     /**
      * Subscription name as received from CreateSubscription
+     * @return Subscription name
      */
     public String getSubscriptionName() {
         return subscriptionName;
@@ -118,6 +119,7 @@ public class SubscriptionWorkerOptions {
     /**
      * Will continue the subscription work until the server have no more new documents to send.
      * That's a useful practice for ad-hoc, one-time, persistent data processing.
+     * @return true, if subscription should be closed after processing all documents
      */
     public boolean isCloseWhenNoDocsLeft() {
         return closeWhenNoDocsLeft;
@@ -126,6 +128,7 @@ public class SubscriptionWorkerOptions {
     /**
      * Will continue the subscription work until the server have no more new documents to send.
      * That's a useful practice for ad-hoc, one-time, persistent data processing.
+     * @param closeWhenNoDocsLeft true, if subscription should be closed after processing all documents
      */
     public void setCloseWhenNoDocsLeft(boolean closeWhenNoDocsLeft) {
         this.closeWhenNoDocsLeft = closeWhenNoDocsLeft;

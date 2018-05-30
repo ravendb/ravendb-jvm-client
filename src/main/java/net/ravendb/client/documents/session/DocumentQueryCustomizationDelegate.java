@@ -8,6 +8,7 @@ import net.ravendb.client.documents.session.operations.QueryOperation;
 import java.time.Duration;
 import java.util.function.Consumer;
 
+@SuppressWarnings("unchecked")
 public class DocumentQueryCustomizationDelegate implements IDocumentQueryCustomization {
 
     private final AbstractDocumentQuery query;

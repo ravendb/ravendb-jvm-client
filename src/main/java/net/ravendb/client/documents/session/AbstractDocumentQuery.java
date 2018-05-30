@@ -384,6 +384,7 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
      * Filter the results from the index using the specified where clause.
      * @param fieldName Field name
      * @param whereClause Where clause
+     * @param exact Use exact matcher
      */
     @SuppressWarnings("ConstantConditions")
     public void _whereLucene(String fieldName, String whereClause, boolean exact) {

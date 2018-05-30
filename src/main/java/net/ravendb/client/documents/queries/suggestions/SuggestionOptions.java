@@ -43,21 +43,21 @@ public class SuggestionOptions {
     }
 
     /**
-     * String distance algorithm to use. If null then default algorithm is used (Levenshtein).
+     * @param distance String distance algorithm to use. If null then default algorithm is used (Levenshtein).
      */
     public void setDistance(StringDistanceTypes distance) {
         this.distance = distance;
     }
 
     /**
-     * @return Suggestion accuracy. If <c>null</c> then default accuracy is used (0.5f).
+     * @return Suggestion accuracy. If null then default accuracy is used (0.5f).
      */
     public Float getAccuracy() {
         return accuracy;
     }
 
     /**
-     * Suggestion accuracy. If <c>null</c> then default accuracy is used (0.5f).
+     * @param accuracy Suggestion accuracy. If null then default accuracy is used (0.5f).
      */
     public void setAccuracy(Float accuracy) {
         this.accuracy = accuracy;
@@ -71,7 +71,7 @@ public class SuggestionOptions {
     }
 
     /**
-     * Whether to return the terms in order of popularity
+     * @param sortMode Whether to return the terms in order of popularity
      */
     public void setSortMode(SuggestionSortMode sortMode) {
         this.sortMode = sortMode;

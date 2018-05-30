@@ -210,6 +210,7 @@ public class DocumentSubscriptions implements AutoCloseable {
      * There can be only a single client that is connected to a subscription.
      * @param clazz Entity class
      * @param options Subscription options
+     * @param <T> Entity class
      * @return Subscription object that allows to add/remove subscription handlers.
      */
     public <T> SubscriptionWorker<T> getSubscriptionWorker(Class<T> clazz, SubscriptionWorkerOptions options) {
@@ -225,6 +226,7 @@ public class DocumentSubscriptions implements AutoCloseable {
      * @param clazz Entity class
      * @param options Subscription options
      * @param database Target database
+     * @param <T> Entity class
      * @return Subscription object that allows to add/remove subscription handlers.
      */
     public <T> SubscriptionWorker<T> getSubscriptionWorker(Class<T> clazz, SubscriptionWorkerOptions options, String database) {
@@ -248,6 +250,7 @@ public class DocumentSubscriptions implements AutoCloseable {
      * There can be only a single client that is connected to a subscription.
      * @param clazz Entity class
      * @param subscriptionName The name of subscription
+     * @param <T> Entity class
      * @return Subscription object that allows to add/remove subscription handlers.
      */
     public <T> SubscriptionWorker<T> getSubscriptionWorker(Class<T> clazz, String subscriptionName) {
@@ -263,6 +266,7 @@ public class DocumentSubscriptions implements AutoCloseable {
      * @param clazz Entity class
      * @param subscriptionName The name of subscription
      * @param database Target database
+     * @param <T> Entity class
      * @return Subscription object that allows to add/remove subscription handlers.
      */
     public <T> SubscriptionWorker<T> getSubscriptionWorker(Class<T> clazz, String subscriptionName, String database) {
@@ -277,6 +281,7 @@ public class DocumentSubscriptions implements AutoCloseable {
      * There can be only a single client that is connected to a subscription.
      * @param clazz Entity class
      * @param options Subscription options
+     * @param <T> Entity class
      * @return Subscription object that allows to add/remove subscription handlers.
      */
     public <T> SubscriptionWorker<Revision<T>> getSubscriptionWorkerForRevisions(Class<T> clazz, SubscriptionWorkerOptions options) {
@@ -292,6 +297,7 @@ public class DocumentSubscriptions implements AutoCloseable {
      * @param clazz Entity class
      * @param options Subscription options
      * @param database Target database
+     * @param <T> Entity class
      * @return Subscription object that allows to add/remove subscription handlers.
      */
     public <T> SubscriptionWorker<Revision<T>> getSubscriptionWorkerForRevisions(Class<T> clazz, SubscriptionWorkerOptions options, String database) {
@@ -311,6 +317,7 @@ public class DocumentSubscriptions implements AutoCloseable {
      * There can be only a single client that is connected to a subscription.
      * @param clazz Entity class
      * @param subscriptionName The name of subscription
+     * @param <T> Entity class
      * @return Subscription object that allows to add/remove subscription handlers.
      */
     public <T> SubscriptionWorker<Revision<T>> getSubscriptionWorkerForRevisions(Class<T> clazz, String subscriptionName) {
@@ -326,6 +333,7 @@ public class DocumentSubscriptions implements AutoCloseable {
      * @param clazz Entity class
      * @param database Target database
      * @param subscriptionName The name of subscription
+     * @param <T> Entity class
      * @return Subscription object that allows to add/remove subscription handlers.
      */
     public <T> SubscriptionWorker<Revision<T>> getSubscriptionWorkerForRevisions(Class<T> clazz, String subscriptionName, String database) {
@@ -334,6 +342,9 @@ public class DocumentSubscriptions implements AutoCloseable {
 
     /**
      * It downloads a list of all existing subscriptions in a database.
+     * @param start Range start
+     * @param take Maximum number of items that will be retrieved
+     * @return Subscriptions list
      */
     public List<SubscriptionState> getSubscriptions(int start, int take) {
         return getSubscriptions(start, take, null);
@@ -341,6 +352,11 @@ public class DocumentSubscriptions implements AutoCloseable {
 
     /**
      * It downloads a list of all existing subscriptions in a database.
+     *
+     * @param start Range start
+     * @param take Maximum number of items that will be retrieved
+     * @param database Database to use
+     * @return List of subscriptions state
      */
     public List<SubscriptionState> getSubscriptions(int start, int take, String database) {
         RequestExecutor requestExecutor = _store.getRequestExecutor(ObjectUtils.firstNonNull(database, _store.getDatabase()));
@@ -353,6 +369,7 @@ public class DocumentSubscriptions implements AutoCloseable {
 
     /**
      * Delete a subscription.
+     * @param name Subscription name
      */
     public void delete(String name) {
         delete(name, null);
@@ -360,6 +377,9 @@ public class DocumentSubscriptions implements AutoCloseable {
 
     /**
      * Delete a subscription.
+     *
+     * @param name Subscription name
+     * @param database Database to use
      */
     public void delete(String name, String database) {
         RequestExecutor requestExecutor = _store.getRequestExecutor(ObjectUtils.firstNonNull(database, _store.getDatabase()));
@@ -371,6 +391,7 @@ public class DocumentSubscriptions implements AutoCloseable {
     /**
      * Returns subscription definition and it's current state
      * @param subscriptionName Subscription name as received from the server
+     * @return Subscription state
      */
     public SubscriptionState getSubscriptionState(String subscriptionName) {
         return getSubscriptionState(subscriptionName, null);
@@ -379,7 +400,8 @@ public class DocumentSubscriptions implements AutoCloseable {
     /**
      * Returns subscription definition and it's current state
      * @param subscriptionName Subscription name as received from the server
-     * @param database Database where the subscription resides
+     * @param database Database to use
+     * @return Subscription states
      */
     public SubscriptionState getSubscriptionState(String subscriptionName, String database) {
         if (StringUtils.isEmpty(subscriptionName)) {
@@ -406,6 +428,7 @@ public class DocumentSubscriptions implements AutoCloseable {
 
     /**
      * Force server to close current client subscription connection to the server
+     * @param name Subscription name
      */
     public void dropConnection(String name) {
         dropConnection(name, null);
@@ -413,6 +436,8 @@ public class DocumentSubscriptions implements AutoCloseable {
 
     /**
      * Force server to close current client subscription connection to the server
+     * @param name Subscription name
+     * @param database Database to use
      */
     public void dropConnection(String name, String database) {
         RequestExecutor requestExecutor = _store.getRequestExecutor(ObjectUtils.firstNonNull(database, _store.getDatabase()));
