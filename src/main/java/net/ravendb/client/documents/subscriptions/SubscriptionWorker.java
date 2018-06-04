@@ -252,16 +252,11 @@ public class SubscriptionWorker<T> implements CleanCloseable {
                 throw new SubscriptionDoesNotExistException("Subscription with id " + _options.getSubscriptionName() + " cannot be opened, because it does not exist. " + connectionStatus.getException());
             case REDIRECT:
                 ObjectNode data = connectionStatus.getData();
-
-                /* TODO
-                var appropriateNode = connectionStatus.Data?[nameof(SubscriptionConnectionServerMessage.SubscriptionRedirectData.RedirectedTag)]?.ToString();
-                    throw new SubscriptionDoesNotBelongToNodeException(
-                        $"Subscription With Id '{_options.SubscriptionName}' cannot be processed by current node, it will be redirected to {appropriateNode}"
-                    )
-                    {
-                        AppropriateNode = appropriateNode
-                    };
-                 */
+                String appropriateNode = data.get("RedirectedTag").asText();
+                SubscriptionDoesNotBelongToNodeException notBelongToNodeException =
+                        new SubscriptionDoesNotBelongToNodeException("Subscription with id " + _options.getSubscriptionName() + " cannot be processed by current node, it will be redirected to " + appropriateNode);
+                notBelongToNodeException.setAppropriateNode(appropriateNode);
+                throw notBelongToNodeException;
             case CONCURRENCY_RECONNECT:
                 throw new SubscriptionChangeVectorUpdateConcurrencyException(connectionStatus.getMessage());
             default:

@@ -187,9 +187,19 @@ public interface IAdvancedDocumentSessionOperations {
 
     /**
      * SaveChanges will wait for the changes made to be replicates to `replicas` nodes
+     */
+    void waitForReplicationAfterSaveChanges();
+
+    /**
+     * SaveChanges will wait for the changes made to be replicates to `replicas` nodes
      * @param options Configuration options
      */
     void waitForReplicationAfterSaveChanges(Consumer<InMemoryDocumentSessionOperations.ReplicationWaitOptsBuilder> options);
+
+    /**
+     * SaveChanges will wait for the indexes to catch up with the saved changes
+     */
+    void waitForIndexesAfterSaveChanges();
 
     /**
      * SaveChanges will wait for the indexes to catch up with the saved changes

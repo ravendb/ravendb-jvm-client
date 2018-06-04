@@ -907,6 +907,10 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
         return entityChanged(document, documentInfo, null);
     }
 
+    public void waitForReplicationAfterSaveChanges() {
+        waitForReplicationAfterSaveChanges(options -> {});
+    }
+
     public void waitForReplicationAfterSaveChanges(Consumer<ReplicationWaitOptsBuilder> options) {
         ReplicationWaitOptsBuilder builder = new ReplicationWaitOptsBuilder();
         options.accept(builder);
@@ -918,6 +922,10 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
         }
 
         builderOptions.setWaitForReplicas(true);
+    }
+
+    public void waitForIndexesAfterSaveChanges() {
+        waitForReplicationAfterSaveChanges(options -> {});
     }
 
     public void waitForIndexesAfterSaveChanges(Consumer<InMemoryDocumentSessionOperations.IndexesWaitOptsBuilder> options) {

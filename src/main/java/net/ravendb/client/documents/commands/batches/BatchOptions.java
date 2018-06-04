@@ -8,7 +8,7 @@ public class BatchOptions {
     private int numberOfReplicasToWaitFor;
     private Duration waitForReplicasTimeout;
     private boolean majority;
-    private boolean throwOnTimeoutInWaitForReplicas;
+    private boolean throwOnTimeoutInWaitForReplicas = true;
 
     private boolean waitForIndexes;
     private Duration waitForIndexesTimeout;
