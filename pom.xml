@@ -3,7 +3,7 @@
 
     <groupId>net.ravendb</groupId>
     <artifactId>ravendb</artifactId>
-    <version>4.0.1</version>
+    <version>4.0.2-SNAPSHOT</version>
 
     <name>RavenDB Java Client</name>
     <description>RavenDB Java Client</description>
@@ -15,7 +15,7 @@
         <connection>scm:git:https://github.com/ravendb/ravendb-jvm-client.git</connection>
         <developerConnection>scm:git:git@github.com:ravendb/ravendb-jvm-client.git</developerConnection>
         <url>https://github.com/ravendb/ravendb-jvm-client.git</url>
-        <tag>v4.0.1</tag>
+        <tag>HEAD</tag>
     </scm>
 
     <licenses>
