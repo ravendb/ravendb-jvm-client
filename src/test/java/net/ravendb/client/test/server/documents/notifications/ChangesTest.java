@@ -7,7 +7,9 @@ import net.ravendb.client.documents.indexes.AbstractIndexCreationTask;
 import net.ravendb.client.documents.indexes.IndexPriority;
 import net.ravendb.client.documents.operations.GetStatisticsOperation;
 import net.ravendb.client.documents.operations.indexes.SetIndexesPriorityOperation;
+import net.ravendb.client.documents.session.DocumentsChanges;
 import net.ravendb.client.documents.session.IDocumentSession;
+import net.ravendb.client.infrastructure.entities.Order;
 import net.ravendb.client.infrastructure.entities.User;
 import net.ravendb.client.primitives.CleanCloseable;
 import org.eclipse.jetty.util.BlockingArrayQueue;
@@ -254,6 +256,98 @@ public class ChangesTest extends RemoteTestBase {
 
                     assertThat(indexChange.getName())
                             .isEqualTo(new UsersByName().getIndexName());
+                }
+            }
+        }
+    }
+
+    @Test
+    public void canCanNotificationAboutDocumentsStartingWith() throws Exception {
+        try (IDocumentStore store = getDocumentStore()) {
+            BlockingQueue<DocumentChange> changesList = new BlockingArrayQueue<>();
+
+            try (IDatabaseChanges changes = store.changes()) {
+                changes.ensureConnectedNow();
+
+                IChangesObservable<DocumentChange> observable = changes.forDocumentsStartingWith("users/");
+
+                try (CleanCloseable subscription = observable.subscribe(Observers.create(changesList::add))) {
+                    try (IDocumentSession session = store.openSession()) {
+                        session.store(new User(), "users/1");
+                        session.saveChanges();
+                    }
+
+                    try (IDocumentSession session = store.openSession()) {
+                        session.store(new User(), "differentDocumentPrefix/1");
+                        session.saveChanges();
+                    }
+
+                    try (IDocumentSession session = store.openSession()) {
+                        session.store(new User(), "users/2");
+                        session.saveChanges();
+                    }
+
+                    DocumentChange documentChange = changesList.poll(2, TimeUnit.SECONDS);
+
+                    assertThat(documentChange)
+                            .isNotNull();
+
+                    assertThat(documentChange.getId())
+                            .isEqualTo("users/1");
+
+                    documentChange = changesList.poll(2, TimeUnit.SECONDS);
+
+                    assertThat(documentChange)
+                            .isNotNull();
+
+                    assertThat(documentChange.getId())
+                            .isEqualTo("users/2");
+                }
+            }
+        }
+    }
+
+    @Test
+    public void canCanNotificationAboutDocumentsFromCollection() throws Exception {
+        try (IDocumentStore store = getDocumentStore()) {
+            BlockingQueue<DocumentChange> changesList = new BlockingArrayQueue<>();
+
+            try (IDatabaseChanges changes = store.changes()) {
+                changes.ensureConnectedNow();
+
+                IChangesObservable<DocumentChange> observable = changes.forDocumentsInCollection("users");
+
+                try (CleanCloseable subscription = observable.subscribe(Observers.create(changesList::add))) {
+                    try (IDocumentSession session = store.openSession()) {
+                        session.store(new User(), "users/1");
+                        session.saveChanges();
+                    }
+
+                    try (IDocumentSession session = store.openSession()) {
+                        session.store(new Order(), "orders/1");
+                        session.saveChanges();
+                    }
+
+                    try (IDocumentSession session = store.openSession()) {
+                        session.store(new User(), "users/2");
+                        session.saveChanges();
+                    }
+
+                    DocumentChange documentChange = changesList.poll(2, TimeUnit.SECONDS);
+
+                    assertThat(documentChange)
+                            .isNotNull();
+
+                    assertThat(documentChange.getId())
+                            .isEqualTo("users/1");
+
+                    documentChange = changesList.poll(2, TimeUnit.SECONDS);
+
+                    assertThat(documentChange)
+                            .isNotNull();
+
+                    assertThat(documentChange.getId())
+                            .isEqualTo("users/2");
                 }
             }
         }

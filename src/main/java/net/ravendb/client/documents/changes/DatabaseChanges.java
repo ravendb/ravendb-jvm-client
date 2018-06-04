@@ -241,32 +241,6 @@ public class DatabaseChanges implements IDatabaseChanges {
         return forDocumentsInCollection(collectionName);
     }
 
-    @Override
-    public IChangesObservable<DocumentChange> forDocumentsOfType(String typeName) {
-        if (typeName == null) {
-            throw new IllegalArgumentException("TypeName cannot be null");
-        }
-
-        String encodedTypeName = UrlUtils.escapeDataString(typeName);
-
-        DatabaseConnectionState counter = getOrAddConnectionState("types/" + typeName, "watch-type", "unwatch-type", encodedTypeName);
-
-        ChangesObservable<DocumentChange, DatabaseConnectionState> taskedObservable = new ChangesObservable<>(ChangesType.DOCUMENT, counter,
-                notification -> StringUtils.equalsIgnoreCase(typeName, notification.getTypeName()));
-
-        return taskedObservable;
-    }
-
-    @Override
-    public IChangesObservable<DocumentChange> forDocumentsOfType(Class<?> clazz) {
-        if (clazz == null) {
-            throw new IllegalArgumentException("Clazz cannot be null");
-        }
-
-        String className = _conventions.getFindJavaClassName().apply(clazz);
-        return forDocumentsOfType(className);
-    }
-
     private final List<Consumer<Exception>> onError = new ArrayList<>();
 
     @Override

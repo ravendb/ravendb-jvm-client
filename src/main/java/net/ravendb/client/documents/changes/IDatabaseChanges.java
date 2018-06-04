@@ -62,17 +62,4 @@ public interface IDatabaseChanges extends IConnectableChanges<IDatabaseChanges> 
      */
     IChangesObservable<DocumentChange> forDocumentsInCollection(Class<?> clazz);
 
-    /**
-     * Subscribe to changes for all documents that belong to specified type (Raven-Java-Type).
-     * @param typeName Java class name
-     * @return Changes observable
-     */
-    IChangesObservable<DocumentChange> forDocumentsOfType(String typeName);
-
-    /**
-     * Subscribe to changes for all documents that belong to specified type (Raven-Java-Type).
-     * @param clazz Java class
-     * @return Changes observable
-     */
-    IChangesObservable<DocumentChange> forDocumentsOfType(Class<?> clazz);
 }
