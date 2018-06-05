@@ -2,19 +2,22 @@ package net.ravendb.client.primitives;
 
 import java.time.Duration;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
 public class Timer implements CleanCloseable {
+    private final ExecutorService executorService;
     private final Runnable action;
     private ScheduledFuture<Void> scheduledFuture;
     private Duration period;
 
-    public Timer(Runnable action, Duration dueTime) {
-        this(action, dueTime, null);
+    public Timer(Runnable action, Duration dueTime, ExecutorService executorService) {
+        this(action, dueTime, null, executorService);
     }
 
-    public Timer(Runnable action, Duration dueTime, Duration period) {
+    public Timer(Runnable action, Duration dueTime, Duration period, ExecutorService executorService) {
+        this.executorService = executorService;
         this.action = action;
         this.period = period;
         schedule(dueTime);
@@ -37,7 +40,7 @@ public class Timer implements CleanCloseable {
                     schedule(period);
                 }
                 this.action.run();
-            });
+            }, executorService);
             return null;
         }, dueTime.toMillis(), TimeUnit.MILLISECONDS);
     }

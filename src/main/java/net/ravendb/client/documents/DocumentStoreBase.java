@@ -37,7 +37,7 @@ public abstract class DocumentStoreBase implements IDocumentStore {
     private final List<EventHandler<SessionCreatedEventArgs>> onSessionCreated = new ArrayList<>();
 
     protected DocumentStoreBase() {
-        _subscriptions = new DocumentSubscriptions(this);
+        _subscriptions = new DocumentSubscriptions((DocumentStore)this);
     }
 
     public abstract void close();

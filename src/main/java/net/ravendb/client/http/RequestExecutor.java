@@ -80,6 +80,8 @@ public class RequestExecutor implements CleanCloseable {
     private Date _lastReturnedResponse;
     protected final ReadBalanceBehavior _readBalanceBehavior;
 
+    protected final ExecutorService _executorService;
+
     private final HttpCache cache;
 
     private ServerNode _topologyTakenFromNode;
@@ -149,8 +151,9 @@ public class RequestExecutor implements CleanCloseable {
         return certificate;
     }
 
-    protected RequestExecutor(String databaseName, KeyStore certificate, DocumentConventions conventions, String[] initialUrls) {
+    protected RequestExecutor(String databaseName, KeyStore certificate, DocumentConventions conventions, ExecutorService executorService, String[] initialUrls) {
         cache = new HttpCache(conventions.getMaxHttpCacheSize());
+        _executorService = executorService;
         _readBalanceBehavior = conventions.getReadBalanceBehavior();
         _databaseName = databaseName;
         this.certificate = certificate;
@@ -186,22 +189,22 @@ public class RequestExecutor implements CleanCloseable {
         }
     }
 
-    public static RequestExecutor create(String[] initialUrls, String databaseName, KeyStore certificate, DocumentConventions conventions) {
-        RequestExecutor executor = new RequestExecutor(databaseName, certificate, conventions, initialUrls);
+    public static RequestExecutor create(String[] initialUrls, String databaseName, KeyStore certificate, ExecutorService executorService, DocumentConventions conventions) {
+        RequestExecutor executor = new RequestExecutor(databaseName, certificate, conventions, executorService, initialUrls);
         executor._firstTopologyUpdate = executor.firstTopologyUpdate(initialUrls);
         return executor;
     }
 
-    public static RequestExecutor createForSingleNodeWithConfigurationUpdates(String url, String databaseName, KeyStore certificate, DocumentConventions conventions) {
-        RequestExecutor executor = createForSingleNodeWithoutConfigurationUpdates(url, databaseName, certificate, conventions);
+    public static RequestExecutor createForSingleNodeWithConfigurationUpdates(String url, String databaseName, KeyStore certificate, ExecutorService executorService, DocumentConventions conventions) {
+        RequestExecutor executor = createForSingleNodeWithoutConfigurationUpdates(url, databaseName, certificate, executorService, conventions);
         executor._disableClientConfigurationUpdates = false;
         return executor;
     }
 
-    public static RequestExecutor createForSingleNodeWithoutConfigurationUpdates(String url, String databaseName, KeyStore certificate, DocumentConventions conventions) {
+    public static RequestExecutor createForSingleNodeWithoutConfigurationUpdates(String url, String databaseName, KeyStore certificate, ExecutorService executorService, DocumentConventions conventions) {
         final String[] initialUrls = validateUrls(new String[]{url}, certificate);
 
-        RequestExecutor executor = new RequestExecutor(databaseName, certificate, conventions, initialUrls);
+        RequestExecutor executor = new RequestExecutor(databaseName, certificate, conventions, executorService, initialUrls);
 
         Topology topology = new Topology();
         topology.setEtag(-1L);
@@ -211,7 +214,7 @@ public class RequestExecutor implements CleanCloseable {
         serverNode.setUrl(initialUrls[0]);
         topology.setNodes(Collections.singletonList(serverNode));
 
-        executor._nodeSelector = new NodeSelector(topology);
+        executor._nodeSelector = new NodeSelector(topology, executorService);
         executor.topologyEtag = -2;
         executor._disableTopologyUpdates = true;
         executor._disableClientConfigurationUpdates = true;
@@ -255,7 +258,7 @@ public class RequestExecutor implements CleanCloseable {
                 _disableClientConfigurationUpdates = oldDisableClientConfigurationUpdates;
                 _updateClientConfigurationSemaphore.release();
             }
-        });
+        }, _executorService);
     }
 
     public CompletableFuture<Boolean> updateTopologyAsync(ServerNode node, int timeout) {
@@ -290,7 +293,7 @@ public class RequestExecutor implements CleanCloseable {
                 execute(node, null, command, false, null);
 
                 if (_nodeSelector == null) {
-                    _nodeSelector = new NodeSelector(command.getResult());
+                    _nodeSelector = new NodeSelector(command.getResult(), _executorService);
 
                     if (_readBalanceBehavior == ReadBalanceBehavior.FASTEST_NODE) {
                         _nodeSelector.scheduleSpeedTest();
@@ -309,7 +312,7 @@ public class RequestExecutor implements CleanCloseable {
             }
 
             return true;
-        });
+        }, _executorService);
 
     }
 
@@ -423,7 +426,7 @@ public class RequestExecutor implements CleanCloseable {
                     serverNode.setUrl(url);
                     serverNode.setDatabase(_databaseName);
 
-                    updateTopologyAsync(serverNode, Integer.MAX_VALUE).get();
+                    updateTopologyAsync(serverNode, Integer.MAX_VALUE, false).get();
 
                     initializeUpdateTopologyTimer();
 
@@ -462,7 +465,7 @@ public class RequestExecutor implements CleanCloseable {
 
             topology.setNodes(topologyNodes);
 
-            _nodeSelector = new NodeSelector(topology);
+            _nodeSelector = new NodeSelector(topology, _executorService);
 
             if (initialUrls != null && initialUrls.length > 0) {
                 initializeUpdateTopologyTimer();
@@ -472,7 +475,7 @@ public class RequestExecutor implements CleanCloseable {
             _lastKnownUrls = initialUrls;
             String details = list.stream().map(x -> x.first + " -> " + Optional.ofNullable(x.second).map(m -> m.getMessage()).orElse("")).collect(Collectors.joining(", "));
             throwExceptions(details);
-        });
+        }, _executorService);
     }
 
     protected void throwExceptions(String details) {
@@ -522,7 +525,7 @@ public class RequestExecutor implements CleanCloseable {
                 return;
             }
 
-            _updateTopologyTimer = new Timer(this::updateTopologyCallback, Duration.ofMinutes(1), Duration.ofMinutes(1));
+            _updateTopologyTimer = new Timer(this::updateTopologyCallback, Duration.ofMinutes(1), Duration.ofMinutes(1), _executorService);
         }
     }
 
@@ -714,7 +717,7 @@ public class RequestExecutor implements CleanCloseable {
                     tasks.set(taskNumber, null);
                     throw new RuntimeException("Request execution failed", e);
                 }
-            });
+            }, _executorService);
 
             if (nodes.get(i).getClusterTag().equals(chosenNode.getClusterTag())) {
                 preferredTask = task;
@@ -1051,7 +1054,7 @@ public class RequestExecutor implements CleanCloseable {
         }
 
         public void startTimer() {
-            _timer = new Timer(this::timerCallback, _timerPeriod);
+            _timer = new Timer(this::timerCallback, _timerPeriod, _requestExecutor._executorService);
         }
 
         public void updateTimer() {
@@ -1099,7 +1102,7 @@ public class RequestExecutor implements CleanCloseable {
             topology.setNodes(new ArrayList<>(getTopologyNodes()));
             topology.setEtag(topologyEtag);
 
-            _nodeSelector = new NodeSelector(topology);
+            _nodeSelector = new NodeSelector(topology, _executorService);
         }
     }
 

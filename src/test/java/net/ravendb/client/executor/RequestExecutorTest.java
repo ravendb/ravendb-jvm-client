@@ -1,6 +1,7 @@
 package net.ravendb.client.executor;
 
 import net.ravendb.client.RemoteTestBase;
+import net.ravendb.client.documents.DocumentStore;
 import net.ravendb.client.documents.IDocumentStore;
 import net.ravendb.client.documents.commands.GetNextOperationIdCommand;
 import net.ravendb.client.documents.conventions.DocumentConventions;
@@ -24,8 +25,8 @@ public class RequestExecutorTest extends RemoteTestBase {
     public void failuresDoesNotBlockConnectionPool() throws Exception {
         DocumentConventions conventions = new DocumentConventions();
 
-        try (IDocumentStore store = getDocumentStore()) {
-            try (RequestExecutor executor = RequestExecutor.create(store.getUrls(), "no_such_db", null, conventions)) {
+        try (DocumentStore store = getDocumentStore()) {
+            try (RequestExecutor executor = RequestExecutor.create(store.getUrls(), "no_such_db", null, store.getExecutorService(), conventions)) {
                 int errorsCount = 0;
 
                 for (int i = 0; i < 40; i++) {
@@ -53,8 +54,8 @@ public class RequestExecutorTest extends RemoteTestBase {
     public void canIssueManyRequests() throws Exception {
         DocumentConventions conventions = new DocumentConventions();
 
-        try (IDocumentStore store = getDocumentStore()) {
-            try (RequestExecutor executor = RequestExecutor.create(store.getUrls(), store.getDatabase(), null, conventions)) {
+        try (DocumentStore store = getDocumentStore()) {
+            try (RequestExecutor executor = RequestExecutor.create(store.getUrls(), store.getDatabase(), null, store.getExecutorService(), conventions)) {
                 for (int i = 0; i < 50; i++) {
                     GetDatabaseNamesOperation databaseNamesOperation = new GetDatabaseNamesOperation(0, 20);
                     RavenCommand<String[]> command = databaseNamesOperation.getCommand(conventions);
@@ -68,8 +69,8 @@ public class RequestExecutorTest extends RemoteTestBase {
     public void canFetchDatabasesNames() throws Exception {
         DocumentConventions conventions = new DocumentConventions();
 
-        try (IDocumentStore store = getDocumentStore()) {
-            try (RequestExecutor executor = RequestExecutor.create(store.getUrls(), store.getDatabase(), null, conventions)) {
+        try (DocumentStore store = getDocumentStore()) {
+            try (RequestExecutor executor = RequestExecutor.create(store.getUrls(), store.getDatabase(), null, store.getExecutorService(), conventions)) {
                 GetDatabaseNamesOperation databaseNamesOperation = new GetDatabaseNamesOperation(0, 20);
                 RavenCommand<String[]> command = databaseNamesOperation.getCommand(conventions);
                 executor.execute(command);
@@ -85,8 +86,8 @@ public class RequestExecutorTest extends RemoteTestBase {
     public void throwsWhenUpdatingTopologyOfNotExistingDb() throws Exception {
         DocumentConventions conventions = new DocumentConventions();
 
-        try (IDocumentStore store = getDocumentStore()) {
-            try (RequestExecutor executor = RequestExecutor.create(store.getUrls(), "no_such_db", null, conventions)) {
+        try (DocumentStore store = getDocumentStore()) {
+            try (RequestExecutor executor = RequestExecutor.create(store.getUrls(), "no_such_db", null, store.getExecutorService(), conventions)) {
 
                 ServerNode serverNode = new ServerNode();
                 serverNode.setUrl(store.getUrls()[0]);
@@ -104,8 +105,8 @@ public class RequestExecutorTest extends RemoteTestBase {
     public void throwsWhenDatabaseDoesNotExist() throws Exception {
         DocumentConventions conventions = new DocumentConventions();
 
-        try (IDocumentStore store = getDocumentStore()) {
-            try (RequestExecutor executor = RequestExecutor.create(store.getUrls(), "no_such_db", null, conventions)) {
+        try (DocumentStore store = getDocumentStore()) {
+            try (RequestExecutor executor = RequestExecutor.create(store.getUrls(), "no_such_db", null, store.getExecutorService(), conventions)) {
 
                 GetNextOperationIdCommand command = new GetNextOperationIdCommand();
 
@@ -119,8 +120,8 @@ public class RequestExecutorTest extends RemoteTestBase {
     @Test
     public void canCreateSingleNodeRequestExecutor() throws Exception {
         DocumentConventions documentConventions = new DocumentConventions();
-        try (IDocumentStore store = getDocumentStore()) {
-            try (RequestExecutor executor = RequestExecutor.createForSingleNodeWithoutConfigurationUpdates(store.getUrls()[0], store.getDatabase(), null, documentConventions)) {
+        try (DocumentStore store = getDocumentStore()) {
+            try (RequestExecutor executor = RequestExecutor.createForSingleNodeWithoutConfigurationUpdates(store.getUrls()[0], store.getDatabase(), null, store.getExecutorService(), documentConventions)) {
 
                 List<ServerNode> nodes = executor.getTopologyNodes();
 
@@ -143,11 +144,11 @@ public class RequestExecutorTest extends RemoteTestBase {
     public void canChooseOnlineNode() throws Exception {
         DocumentConventions documentConventions = new DocumentConventions();
 
-        try (IDocumentStore store = getDocumentStore()) {
+        try (DocumentStore store = getDocumentStore()) {
             String url = store.getUrls()[0];
             String dbName = store.getDatabase();
 
-            try (RequestExecutor executor = RequestExecutor.create(new String[]{"http://no_such_host:8080", "http://another_offlilne:8080", url}, dbName, null, documentConventions)) {
+            try (RequestExecutor executor = RequestExecutor.create(new String[]{"http://no_such_host:8080", "http://another_offlilne:8080", url}, dbName, null, store.getExecutorService(), documentConventions)) {
                 GetNextOperationIdCommand command = new GetNextOperationIdCommand();
                 executor.execute(command);
 
@@ -167,17 +168,20 @@ public class RequestExecutorTest extends RemoteTestBase {
     }
 
     @Test
-    public void failsWhenServerIsOffline() {
+    public void failsWhenServerIsOffline() throws Exception {
         DocumentConventions documentConventions = new DocumentConventions();
 
-        assertThatThrownBy(() -> {
-            // don't even start server
-            try (RequestExecutor executor = RequestExecutor.create(new String[]{"http://no_such_host:8081"}, "db1", null, documentConventions)) {
-                GetNextOperationIdCommand command = new GetNextOperationIdCommand();
+        try (DocumentStore store = getDocumentStore()) {
 
-                executor.execute(command);
-            }
-        }).isExactlyInstanceOf(AllTopologyNodesDownException.class);
+            assertThatThrownBy(() -> {
+                // don't even start server
+                try (RequestExecutor executor = RequestExecutor.create(new String[]{"http://no_such_host:8081"}, "db1", null, store.getExecutorService(), documentConventions)) {
+                    GetNextOperationIdCommand command = new GetNextOperationIdCommand();
+
+                    executor.execute(command);
+                }
+            }).isExactlyInstanceOf(AllTopologyNodesDownException.class);
+        }
     }
 
 }

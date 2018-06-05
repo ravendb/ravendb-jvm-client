@@ -1,6 +1,7 @@
 package net.ravendb.client.documents.subscriptions;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import net.ravendb.client.documents.DocumentStore;
 import net.ravendb.client.documents.IDocumentStore;
 import net.ravendb.client.documents.commands.*;
 import net.ravendb.client.http.RequestExecutor;
@@ -14,10 +15,10 @@ import java.util.concurrent.ConcurrentHashMap;
 
 public class DocumentSubscriptions implements AutoCloseable {
 
-    private final IDocumentStore _store;
+    private final DocumentStore _store;
     private final ConcurrentHashMap<CleanCloseable, Boolean> _subscriptions = new ConcurrentHashMap<>();
 
-    public DocumentSubscriptions(IDocumentStore store) {
+    public DocumentSubscriptions(DocumentStore store) {
         _store = store;
     }
 

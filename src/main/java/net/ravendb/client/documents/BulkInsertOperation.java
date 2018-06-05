@@ -35,6 +35,7 @@ import org.apache.http.impl.client.CloseableHttpClient;
 
 import java.io.*;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class BulkInsertOperation implements CleanCloseable {
@@ -150,6 +151,7 @@ public class BulkInsertOperation implements CleanCloseable {
         }
     }
 
+    private ExecutorService _executorService;
     private final RequestExecutor _requestExecutor;
     private CompletableFuture<Void> _bulkInsertExecuteTask;
     private final ObjectMapper objectMapper;
@@ -164,7 +166,8 @@ public class BulkInsertOperation implements CleanCloseable {
 
     private final AtomicInteger _concurrentCheck = new AtomicInteger();
 
-    public BulkInsertOperation(String database, IDocumentStore store) {
+    public BulkInsertOperation(String database, DocumentStore store) {
+        _executorService = store.getExecutorService();
         _conventions = store.getConventions();
         _requestExecutor = store.getRequestExecutor(database);
         objectMapper = store.getConventions().getEntityMapper();
@@ -298,7 +301,7 @@ public class BulkInsertOperation implements CleanCloseable {
                             throw new RuntimeException(e);
                         }
                         return null;
-                    });
+                    }, _executorService);
                 }
             } catch (Exception e) {
                 RuntimeException error = getExceptionFromOperation();
@@ -376,7 +379,7 @@ public class BulkInsertOperation implements CleanCloseable {
             _bulkInsertExecuteTask = CompletableFuture.supplyAsync(() -> {
                 _requestExecutor.execute(bulkCommand);
                 return null;
-            });
+            }, _executorService);
 
             _stream = _streamExposerContent.outputStream.get();
 

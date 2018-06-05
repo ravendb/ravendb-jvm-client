@@ -9,10 +9,12 @@ import org.apache.commons.lang3.StringUtils;
 import java.time.Duration;
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class NodeSelector implements CleanCloseable {
 
+    private final ExecutorService executorService;
     private Timer _updateFastestNodeTimer;
     private NodeSelectorState _state;
 
@@ -20,8 +22,9 @@ public class NodeSelector implements CleanCloseable {
         return _state.topology;
     }
 
-    public NodeSelector(Topology topology) {
+    public NodeSelector(Topology topology, ExecutorService executorService) {
         _state = new NodeSelectorState(0, topology);
+        this.executorService = executorService;
     }
 
     public void onFailedRequest(int nodeIndex) {
@@ -194,7 +197,7 @@ public class NodeSelector implements CleanCloseable {
         if (_updateFastestNodeTimer != null) {
             _updateFastestNodeTimer.change(Duration.ofMinutes(1));
         } else {
-            _updateFastestNodeTimer = new Timer(this::switchToSpeedTestPhase, Duration.ofMinutes(1));
+            _updateFastestNodeTimer = new Timer(this::switchToSpeedTestPhase, Duration.ofMinutes(1), executorService);
         }
     }
 

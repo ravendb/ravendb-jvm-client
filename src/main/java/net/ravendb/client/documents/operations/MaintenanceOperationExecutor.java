@@ -1,5 +1,6 @@
 package net.ravendb.client.documents.operations;
 
+import net.ravendb.client.documents.DocumentStore;
 import net.ravendb.client.documents.DocumentStoreBase;
 import net.ravendb.client.http.RavenCommand;
 import net.ravendb.client.http.RequestExecutor;
@@ -10,16 +11,16 @@ import org.apache.commons.lang3.StringUtils;
 
 public class MaintenanceOperationExecutor {
 
-    private final DocumentStoreBase store;
+    private final DocumentStore store;
     private final String databaseName;
     private final RequestExecutor requestExecutor;
     private ServerOperationExecutor serverOperationExecutor;
 
-    public MaintenanceOperationExecutor(DocumentStoreBase store) {
+    public MaintenanceOperationExecutor(DocumentStore store) {
         this(store, null);
     }
 
-    public MaintenanceOperationExecutor(DocumentStoreBase store, String databaseName) {
+    public MaintenanceOperationExecutor(DocumentStore store, String databaseName) {
         this.store = store;
         this.databaseName = ObjectUtils.firstNonNull(databaseName, store.getDatabase());
 

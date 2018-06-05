@@ -19,14 +19,15 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.ConcurrentSkipListMap;
+import java.util.concurrent.*;
 
 /**
  * Manages access to RavenDB and open sessions to work with RavenDB.
  */
 public class DocumentStore extends DocumentStoreBase {
+
+    private ExecutorService executorService = Executors.newCachedThreadPool();
+
     private final ConcurrentMap<String, IDatabaseChanges> _databaseChanges = new ConcurrentSkipListMap<>(String::compareToIgnoreCase);
 
     private final ConcurrentMap<String, Lazy<EvictItemsFromCacheBasedOnChanges>> _aggressiveCacheChanges = new ConcurrentHashMap<>();
@@ -53,6 +54,10 @@ public class DocumentStore extends DocumentStoreBase {
 
     public DocumentStore() {
 
+    }
+
+    public ExecutorService getExecutorService() {
+        return executorService;
     }
 
     /**
@@ -118,6 +123,8 @@ public class DocumentStore extends DocumentStoreBase {
         for (Map.Entry<String, RequestExecutor> kvp : requestExecutors.entrySet()) {
             kvp.getValue().close();
         }
+
+        executorService.shutdown();
     }
 
     /**
@@ -174,9 +181,9 @@ public class DocumentStore extends DocumentStoreBase {
         }
 
         if (!getConventions().isDisableTopologyUpdates()) {
-            executor = RequestExecutor.create(getUrls(), database, getCertificate(), getConventions());
+            executor = RequestExecutor.create(getUrls(), database, getCertificate(), executorService, getConventions());
         } else {
-            executor = RequestExecutor.createForSingleNodeWithConfigurationUpdates(getUrls()[0], database, getCertificate(), getConventions());
+            executor = RequestExecutor.createForSingleNodeWithConfigurationUpdates(getUrls()[0], database, getCertificate(), executorService, getConventions());
         }
 
         requestExecutors.put(database, executor);
@@ -263,7 +270,7 @@ public class DocumentStore extends DocumentStoreBase {
     }
 
     protected IDatabaseChanges createDatabaseChanges(String database) {
-        return new DatabaseChanges(getRequestExecutor(database), database, () -> _databaseChanges.remove(database));
+        return new DatabaseChanges(getRequestExecutor(database), database, executorService, () -> _databaseChanges.remove(database));
     }
 
     public Exception getLastDatabaseChangesStateException() {

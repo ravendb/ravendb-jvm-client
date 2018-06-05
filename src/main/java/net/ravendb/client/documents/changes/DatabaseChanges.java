@@ -41,6 +41,7 @@ public class DatabaseChanges implements IDatabaseChanges {
 
     private final Semaphore _semaphore = new Semaphore(1);
 
+    private final ExecutorService _executorService;
     private final RequestExecutor _requestExecutor;
     private final DocumentConventions _conventions;
     private final String _database;
@@ -61,7 +62,8 @@ public class DatabaseChanges implements IDatabaseChanges {
 
     private final AtomicInteger _immediateConnection = new AtomicInteger();
 
-    public DatabaseChanges(RequestExecutor requestExecutor, String databaseName, Runnable onDispose) {
+    public DatabaseChanges(RequestExecutor requestExecutor, String databaseName, ExecutorService executorService, Runnable onDispose) {
+        _executorService = executorService;
         _requestExecutor = requestExecutor;
         _conventions = requestExecutor.getConventions();
         _database = databaseName;
@@ -73,7 +75,7 @@ public class DatabaseChanges implements IDatabaseChanges {
         _onDispose = onDispose;
         addConnectionStatusChanged(_connectionStatusEventHandler);
 
-        _task = CompletableFuture.runAsync(() -> doWork());
+        _task = CompletableFuture.runAsync(() -> doWork(), executorService);
     }
 
     public static WebSocketClient createWebSocketClient(RequestExecutor requestExecutor) {

@@ -1,5 +1,6 @@
 package net.ravendb.client.serverwide.operations;
 
+import net.ravendb.client.documents.DocumentStore;
 import net.ravendb.client.documents.DocumentStoreBase;
 import net.ravendb.client.documents.operations.Operation;
 import net.ravendb.client.documents.operations.OperationIdResult;
@@ -12,10 +13,10 @@ public class ServerOperationExecutor implements CleanCloseable {
 
     private final ClusterRequestExecutor requestExecutor;
 
-    public ServerOperationExecutor(DocumentStoreBase store) {
+    public ServerOperationExecutor(DocumentStore store) {
         requestExecutor = store.getConventions().isDisableTopologyUpdates() ?
-                ClusterRequestExecutor.createForSingleNode(store.getUrls()[0], store.getCertificate(), store.getConventions()) :
-                ClusterRequestExecutor.create(store.getUrls(), store.getCertificate(), store.getConventions());
+                ClusterRequestExecutor.createForSingleNode(store.getUrls()[0], store.getCertificate(), store.getExecutorService(), store.getConventions()) :
+                ClusterRequestExecutor.create(store.getUrls(), store.getCertificate(), store.getExecutorService(), store.getConventions());
 
         store.addAfterCloseListener((sender, event) -> requestExecutor.close());
     }

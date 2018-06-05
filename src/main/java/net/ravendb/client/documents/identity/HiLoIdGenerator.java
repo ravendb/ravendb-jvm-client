@@ -78,8 +78,8 @@ public class HiLoIdGenerator {
 
             //local range is exhausted , need to get a new range
             synchronized (generatorLock) {
-                id = range.Current.get();
-                if (id <= range.Max) {
+                id = _range.Current.get();
+                if (id <= _range.Max) {
                     return id;
                 }
 

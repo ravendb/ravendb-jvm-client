@@ -9,6 +9,7 @@ import java.security.KeyStore;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
@@ -17,8 +18,8 @@ public class ClusterRequestExecutor extends RequestExecutor {
 
     private final Semaphore clusterTopologySemaphore = new Semaphore(1);
 
-    protected ClusterRequestExecutor(KeyStore certificate, DocumentConventions conventions, String[] initialUrls) {
-        super(null, certificate, conventions, initialUrls);
+    protected ClusterRequestExecutor(KeyStore certificate, DocumentConventions conventions, ExecutorService executorService, String[] initialUrls) {
+        super(null, certificate, conventions, executorService, initialUrls);
     }
 
     @SuppressWarnings("unused")
@@ -36,16 +37,17 @@ public class ClusterRequestExecutor extends RequestExecutor {
         throw new UnsupportedOperationException();
     }
 
-    public static ClusterRequestExecutor createForSingleNode(String url, KeyStore certificate) {
-        return createForSingleNode(url, certificate, null);
+    public static ClusterRequestExecutor createForSingleNode(String url, KeyStore certificate, ExecutorService executorService) {
+        return createForSingleNode(url, certificate, executorService, null);
     }
 
     @SuppressWarnings("UnnecessaryLocalVariable")
-    public static ClusterRequestExecutor createForSingleNode(String url, KeyStore certificate, DocumentConventions conventions) {
+    public static ClusterRequestExecutor createForSingleNode(String url, KeyStore certificate, ExecutorService executorService, DocumentConventions conventions) {
         String[] initialUrls = {url};
         url = validateUrls(initialUrls, certificate)[0];
 
-        ClusterRequestExecutor executor = new ClusterRequestExecutor(certificate, ObjectUtils.firstNonNull(conventions, DocumentConventions.defaultConventions), initialUrls);
+        ClusterRequestExecutor executor = new ClusterRequestExecutor(certificate,
+                ObjectUtils.firstNonNull(conventions, DocumentConventions.defaultConventions), executorService, initialUrls);
 
         ServerNode serverNode = new ServerNode();
         serverNode.setUrl(url);
@@ -54,7 +56,7 @@ public class ClusterRequestExecutor extends RequestExecutor {
         topology.setEtag(-1L);
         topology.setNodes(Collections.singletonList(serverNode));
 
-        NodeSelector nodeSelector = new NodeSelector(topology);
+        NodeSelector nodeSelector = new NodeSelector(topology, executorService);
 
         executor._nodeSelector = nodeSelector;
         executor.topologyEtag = -2L;
@@ -64,12 +66,13 @@ public class ClusterRequestExecutor extends RequestExecutor {
         return executor;
     }
 
-    public static ClusterRequestExecutor create(String[] initialUrls, KeyStore certificate) {
-        return create(initialUrls, certificate, null);
+    public static ClusterRequestExecutor create(String[] initialUrls, KeyStore certificate, ExecutorService executorService) {
+        return create(initialUrls, certificate, executorService, null);
     }
 
-    public static ClusterRequestExecutor create(String[] initialUrls, KeyStore certificate, DocumentConventions conventions) {
-        ClusterRequestExecutor executor = new ClusterRequestExecutor(certificate, conventions != null ? conventions : DocumentConventions.defaultConventions, initialUrls);
+    public static ClusterRequestExecutor create(String[] initialUrls, KeyStore certificate, ExecutorService executorService, DocumentConventions conventions) {
+        ClusterRequestExecutor executor = new ClusterRequestExecutor(certificate,
+                conventions != null ? conventions : DocumentConventions.defaultConventions, executorService, initialUrls);
 
         executor._disableClientConfigurationUpdates = true;
         executor._firstTopologyUpdate = executor.firstTopologyUpdate(initialUrls);
@@ -123,7 +126,7 @@ public class ClusterRequestExecutor extends RequestExecutor {
                 newTopology.setNodes(nodes);
 
                 if (_nodeSelector == null) {
-                    _nodeSelector = new NodeSelector(newTopology);
+                    _nodeSelector = new NodeSelector(newTopology, _executorService);
 
                     if (_readBalanceBehavior == ReadBalanceBehavior.FASTEST_NODE) {
                         _nodeSelector.scheduleSpeedTest();
@@ -140,7 +143,7 @@ public class ClusterRequestExecutor extends RequestExecutor {
             }
 
             return true;
-        });
+        }, _executorService);
     }
 
     @Override

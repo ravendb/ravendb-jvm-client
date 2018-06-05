@@ -3,6 +3,7 @@ package net.ravendb.client.documents.subscriptions;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.TreeNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import net.ravendb.client.documents.DocumentStore;
 import net.ravendb.client.documents.IDocumentStore;
 import net.ravendb.client.exceptions.AllTopologyNodesDownException;
 import net.ravendb.client.exceptions.database.DatabaseDoesNotExistException;
@@ -29,6 +30,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutorService;
 import java.util.function.Consumer;
 
 public class SubscriptionWorker<T> implements CleanCloseable {
@@ -36,7 +38,7 @@ public class SubscriptionWorker<T> implements CleanCloseable {
     private final Class<T> _clazz;
     private final boolean _revisions;
     private final Log _logger;
-    private final IDocumentStore _store;
+    private final DocumentStore _store;
     private final String _dbName;
     private final CancellationTokenSource _processingCts = new CancellationTokenSource();
     private final SubscriptionWorkerOptions _options;
@@ -66,7 +68,7 @@ public class SubscriptionWorker<T> implements CleanCloseable {
     }
 
     @SuppressWarnings("unchecked")
-    SubscriptionWorker(Class<?> clazz, SubscriptionWorkerOptions options, boolean withRevisions, IDocumentStore documentStore, String dbName) {
+    SubscriptionWorker(Class<?> clazz, SubscriptionWorkerOptions options, boolean withRevisions, DocumentStore documentStore, String dbName) {
         _clazz = (Class<T>) clazz;
         _options = options;
         _revisions = withRevisions;
@@ -223,7 +225,11 @@ public class SubscriptionWorker<T> implements CleanCloseable {
         if (_subscriptionLocalRequestExecutor != null) {
             _subscriptionLocalRequestExecutor.close();
         }
-        _subscriptionLocalRequestExecutor = RequestExecutor.createForSingleNodeWithoutConfigurationUpdates(command.getRequestedNode().getUrl(), _dbName, requestExecutor.getCertificate(), _store.getConventions());
+        _subscriptionLocalRequestExecutor = RequestExecutor.createForSingleNodeWithoutConfigurationUpdates(
+                command.getRequestedNode().getUrl(),
+                _dbName, requestExecutor.getCertificate(),
+                _store.getExecutorService(),
+                _store.getConventions());
 
         return _tcpClient;
     }
@@ -303,7 +309,7 @@ public class SubscriptionWorker<T> implements CleanCloseable {
                                 } catch (IOException e) {
                                     throw new RuntimeException(e);
                                 }
-                            });
+                            }, _store.getExecutorService());
 
                     try {
                         notifiedSubscriber.get();
@@ -344,7 +350,7 @@ public class SubscriptionWorker<T> implements CleanCloseable {
                         } catch (Exception e) {
                             throw new RuntimeException(e);
                         }
-                    });
+                    }, _store.getExecutorService());
                 }
             }
 
@@ -463,7 +469,7 @@ public class SubscriptionWorker<T> implements CleanCloseable {
                     }
                 }
             }
-        });
+        }, _store.getExecutorService());
     }
 
     private Date lastConnectionFailure;
