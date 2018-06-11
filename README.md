@@ -16,3 +16,5 @@ Simply put ravendb dependency to your pom:
 
 
 Issue tracker: [http://issues.hibernatingrhinos.com/issues/RDBC](http://issues.hibernatingrhinos.com/issues/RDBC)
+
+Documentation: [https://ravendb.net/docs/article-page/4.0/java](https://ravendb.net/docs/article-page/4.0/java)
