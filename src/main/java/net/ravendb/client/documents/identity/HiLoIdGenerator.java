@@ -91,7 +91,7 @@ public class HiLoIdGenerator {
     private void getNextRange() {
         NextHiLoCommand hiloCommand = new NextHiLoCommand(_tag, _lastBatchSize, _lastRangeDate, _identityPartsSeparator, _range.Max);
 
-        RequestExecutor re = _store.getRequestExecutor();
+        RequestExecutor re = _store.getRequestExecutor(_dbName);
         re.execute(hiloCommand);
 
         prefix = hiloCommand.getResult().getPrefix();
