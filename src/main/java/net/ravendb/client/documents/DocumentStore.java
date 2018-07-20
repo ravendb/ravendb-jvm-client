@@ -250,7 +250,7 @@ public class DocumentStore extends DocumentStoreBase {
      */
     public CleanCloseable disableAggressiveCaching(String databaseName) {
         assertInitialized();
-        RequestExecutor re = getRequestExecutor(ObjectUtils.firstNonNull(database, getDatabase()));
+        RequestExecutor re = getRequestExecutor(ObjectUtils.firstNonNull(databaseName, getDatabase()));
         AggressiveCacheOptions old = re.aggressiveCaching.get();
         re.aggressiveCaching.set(null);
 
