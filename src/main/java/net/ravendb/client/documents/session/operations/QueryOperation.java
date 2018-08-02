@@ -142,8 +142,14 @@ public class QueryOperation {
 
         if (fieldsToFetch != null && fieldsToFetch.projections != null && fieldsToFetch.projections.length == 1) { // we only select a single field
             if (String.class.equals(clazz) || ClassUtils.isPrimitiveOrWrapper(clazz) || clazz.isEnum()) {
-                String projectField = fieldsToFetch.projections[0];
-                JsonNode jsonNode = document.get(projectField);
+                String projectionField = fieldsToFetch.projections[0];
+
+                if (fieldsToFetch.sourceAlias != null) {
+                    // remove source-alias from projection name
+                    projectionField = projectionField.substring(fieldsToFetch.sourceAlias.length() + 1);
+                }
+
+                JsonNode jsonNode = document.get(projectionField);
                 if (jsonNode instanceof ValueNode) {
                     return ObjectUtils.firstNonNull(session.getConventions().getEntityMapper().treeToValue(jsonNode, clazz), Defaults.defaultValue(clazz));
                 }

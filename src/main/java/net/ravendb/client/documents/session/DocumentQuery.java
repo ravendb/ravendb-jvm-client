@@ -542,7 +542,9 @@ public class DocumentQuery<T> extends AbstractDocumentQuery<T, DocumentQuery<T>>
                         .toArray(String[]::new);
             }
 
-            newFieldsToFetch = FieldsToFetchToken.create(fields, queryData.getProjections(), queryData.isCustomFunction());
+            Reference<String> sourceAliasReference = new Reference<>();
+            getSourceAliasIfExists(resultClass, queryData, fields, sourceAliasReference);
+            newFieldsToFetch = FieldsToFetchToken.create(fields, queryData.getProjections(), queryData.isCustomFunction(), sourceAliasReference.value);
         } else {
             newFieldsToFetch = null;
         }

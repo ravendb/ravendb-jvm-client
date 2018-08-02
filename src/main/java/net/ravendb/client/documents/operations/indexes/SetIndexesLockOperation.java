@@ -14,6 +14,7 @@ import org.apache.http.client.methods.HttpRequestBase;
 import org.apache.http.entity.ContentType;
 
 import java.io.IOException;
+import java.util.Arrays;
 
 public class SetIndexesLockOperation implements IVoidMaintenanceOperation {
 
@@ -27,6 +28,8 @@ public class SetIndexesLockOperation implements IVoidMaintenanceOperation {
         _parameters = new Parameters();
         _parameters.setMode(mode);
         _parameters.setIndexNames(new String[]{ indexName });
+
+        filterAutoIndexes();
     }
 
     public SetIndexesLockOperation(Parameters parameters) {
@@ -39,6 +42,15 @@ public class SetIndexesLockOperation implements IVoidMaintenanceOperation {
         }
 
         _parameters = parameters;
+        filterAutoIndexes();
+    }
+
+    private void filterAutoIndexes() {
+        // Check for auto-indexes - we do not set lock for auto-indexes
+
+        if (Arrays.stream(_parameters.getIndexNames()).anyMatch(indexName -> indexName.toLowerCase().startsWith("auto/"))) {
+            throw new IllegalArgumentException("Indexes list contains Auto-Indexes. Lock Mode is not set for Auto-Indexes.");
+        }
     }
 
     @Override

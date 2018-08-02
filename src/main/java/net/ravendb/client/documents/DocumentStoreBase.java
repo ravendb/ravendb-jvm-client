@@ -122,6 +122,7 @@ public abstract class DocumentStoreBase implements IDocumentStore {
     }
 
     public void setConventions(DocumentConventions conventions) {
+        assertNotInitialized("conventions");
         this.conventions = conventions;
     }
 
@@ -132,6 +133,8 @@ public abstract class DocumentStoreBase implements IDocumentStore {
     }
 
     public void setUrls(String[] value) {
+        assertNotInitialized("urls");
+
         if (value == null) {
             throw new IllegalArgumentException("value is null");
         }
@@ -172,9 +175,15 @@ public abstract class DocumentStoreBase implements IDocumentStore {
         }
     }
 
-    protected void assertInitialized() {
+    public void assertInitialized() {
         if (!initialized) {
             throw new IllegalStateException("You cannot open a session or access the database commands before initializing the document store. Did you forget calling initialize()?");
+        }
+    }
+
+    private void assertNotInitialized(String property) {
+        if (initialized) {
+            throw new IllegalStateException("You cannot set '" + property + "' after the document store has been initialized.");
         }
     }
 
@@ -223,9 +232,7 @@ public abstract class DocumentStoreBase implements IDocumentStore {
      * @param database Sets the value
      */
     public void setDatabase(String database) {
-        if (initialized) {
-            throw new IllegalStateException("You cannot change the default database name after the document store has been initialized");
-        }
+        assertNotInitialized("database");
         this.database = database;
     }
 
@@ -242,9 +249,7 @@ public abstract class DocumentStoreBase implements IDocumentStore {
      * @param certificate Certificate to use
      */
     public void setCertificate(KeyStore certificate) {
-        if (initialized) {
-            throw new IllegalStateException("You cannot change the certificate after the document store has been initialized");
-        }
+        assertNotInitialized("certificate");
         _certificate = certificate;
     }
 

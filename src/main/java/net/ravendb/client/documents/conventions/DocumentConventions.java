@@ -33,7 +33,7 @@ public class DocumentConventions {
 
     private static final Map<Class, String> _cachedDefaultTypeCollectionNames = new HashMap<>();
 
-    private final List<Tuple<Class, IValueForQueryConverter<Object>>> _listOfQueryValueConverters = new ArrayList<>();
+    private final List<Tuple<Class, IValueForQueryConverter<Object>>> _listOfQueryValueToObjectConverters = new ArrayList<>();
 
     private List<Tuple<Class, BiFunction<String, Object, String>>> _listOfRegisteredIdConventions = new ArrayList<>();
 
@@ -529,14 +529,14 @@ public class DocumentConventions {
         assertNotFrozen();
 
         int index;
-        for (index = 0; index < _listOfQueryValueConverters.size(); index++) {
-            Tuple<Class, IValueForQueryConverter<Object>> entry = _listOfQueryValueConverters.get(index);
+        for (index = 0; index < _listOfQueryValueToObjectConverters.size(); index++) {
+            Tuple<Class, IValueForQueryConverter<Object>> entry = _listOfQueryValueToObjectConverters.get(index);
             if (entry.first.isAssignableFrom(clazz)) {
                 break;
             }
         }
 
-        _listOfQueryValueConverters.add(index, Tuple.create(clazz, (fieldName, value, forRange, stringValue) -> {
+        _listOfQueryValueToObjectConverters.add(index, Tuple.create(clazz, (fieldName, value, forRange, stringValue) -> {
             if (clazz.isInstance(value)) {
                 return converter.tryConvertValueForQuery(fieldName, (T) value, forRange, stringValue);
             }
@@ -545,16 +545,16 @@ public class DocumentConventions {
         }));
     }
 
-    public boolean tryConvertValueForQuery(String fieldName, Object value, boolean forRange, Reference<String> stringValue) {
-        for (Tuple<Class, IValueForQueryConverter<Object>> queryValueConverter : _listOfQueryValueConverters) {
+    public boolean tryConvertValueForQuery(String fieldName, Object value, boolean forRange, Reference<Object> strValue) {
+        for (Tuple<Class, IValueForQueryConverter<Object>> queryValueConverter : _listOfQueryValueToObjectConverters) {
             if (!queryValueConverter.first.isInstance(value)) {
                 continue;
             }
 
-            return queryValueConverter.second.tryConvertValueForQuery(fieldName, value, forRange, stringValue);
+            return queryValueConverter.second.tryConvertValueForQuery(fieldName, value, forRange, strValue);
         }
 
-        stringValue.value = null;
+        strValue.value = null;
         return false;
     }
 

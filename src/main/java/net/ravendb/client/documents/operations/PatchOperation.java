@@ -93,6 +93,10 @@ public class PatchOperation implements IOperation<PatchResult> {
         return new PatchCommand(conventions, _id, _changeVector, _patch, _patchIfMissing, _skipPatchIfChangeVectorMismatch, false, false);
     }
 
+    public RavenCommand<PatchResult> getCommand(IDocumentStore store, DocumentConventions conventions, HttpCache cache, boolean returnDebugInformation, boolean test) {
+        return new PatchCommand(conventions, _id, _changeVector, _patch, _patchIfMissing, _skipPatchIfChangeVectorMismatch, returnDebugInformation, test);
+    }
+
     public static class PatchCommand extends RavenCommand<PatchResult> {
         private final DocumentConventions _conventions;
         private final String _id;

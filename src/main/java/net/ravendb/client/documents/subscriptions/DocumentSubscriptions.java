@@ -231,6 +231,7 @@ public class DocumentSubscriptions implements AutoCloseable {
      * @return Subscription object that allows to add/remove subscription handlers.
      */
     public <T> SubscriptionWorker<T> getSubscriptionWorker(Class<T> clazz, SubscriptionWorkerOptions options, String database) {
+        _store.assertInitialized();
         if (options == null) {
             throw new IllegalStateException("Cannot open a subscription if options are null");
         }

@@ -200,7 +200,7 @@ public interface IAbstractDocumentQuery<T> {
     void _whereEndsWith(String fieldName, Object value);
 
     /**
-     * Matches fields where the value is between the specified start and end, exclusive
+     * Matches fields where the value is between the specified start and end, inclusive
      * @param fieldName Field name
      * @param start Range start
      * @param end Range end
@@ -208,7 +208,7 @@ public interface IAbstractDocumentQuery<T> {
     void _whereBetween(String fieldName, Object start, Object end);
 
     /**
-     * Matches fields where the value is between the specified start and end, exclusive
+     * Matches fields where the value is between the specified start and end, inclusive
      * @param fieldName Field name
      * @param start Range start
      * @param end Range end

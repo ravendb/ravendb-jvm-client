@@ -23,7 +23,7 @@ public class NodeSelector implements CleanCloseable {
     }
 
     public NodeSelector(Topology topology, ExecutorService executorService) {
-        _state = new NodeSelectorState(0, topology);
+        _state = new NodeSelectorState(topology);
         this.executorService = executorService;
     }
 
@@ -53,7 +53,7 @@ public class NodeSelector implements CleanCloseable {
             return false;
         }
 
-        NodeSelectorState state = new NodeSelectorState(0, topology);
+        NodeSelectorState state = new NodeSelectorState(topology);
 
         _state = state;
 
@@ -118,8 +118,8 @@ public class NodeSelector implements CleanCloseable {
 
     public void restoreNodeIndex(int nodeIndex) {
         NodeSelectorState state = _state;
-        if (state.currentNodeIndex < nodeIndex) {
-            return; // nothing to do
+        if (state.failures.length < nodeIndex) {
+            return; // the state was changed and we no longer have it?
         }
 
         state.failures[nodeIndex].set(0);
@@ -214,16 +214,14 @@ public class NodeSelector implements CleanCloseable {
 
     private static class NodeSelectorState {
         public final Topology topology;
-        public final int currentNodeIndex;
         public final List<ServerNode> nodes;
         public final AtomicInteger[] failures;
         public final int[] fastestRecords;
         public int fastest;
         public final AtomicInteger speedTestMode = new AtomicInteger(0);
 
-        public NodeSelectorState(int currentNodeIndex, Topology topology) {
+        public NodeSelectorState(Topology topology) {
             this.topology = topology;
-            this.currentNodeIndex = currentNodeIndex;
             this.nodes = topology.getNodes();
             this.failures = new AtomicInteger[topology.getNodes().size()];
             for (int i = 0; i < this.failures.length; i++) {

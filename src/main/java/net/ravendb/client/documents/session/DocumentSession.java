@@ -118,6 +118,10 @@ public class DocumentSession extends InMemoryDocumentSessionOperations implement
             throw new IllegalArgumentException("id cannot be null");
         }
 
+        if (_knownMissingIds.contains(id)) {
+            return false;
+        }
+
         if (documentsById.getValue(id) != null) {
             return true;
         }
@@ -301,6 +305,9 @@ public class DocumentSession extends InMemoryDocumentSessionOperations implement
     }
 
     public <T> Map<String, T> load(Class<T> clazz, String... ids) {
+        if (ids == null) {
+            throw new IllegalArgumentException("Ids cannot be null");
+        }
         LoadOperation loadOperation = new LoadOperation(this);
         loadInternal(ids, loadOperation, null);
         return loadOperation.getDocuments(clazz);
@@ -333,10 +340,13 @@ public class DocumentSession extends InMemoryDocumentSessionOperations implement
                 operation.setResult(command.getResult());
             }
         }
-
     }
 
     public <TResult> Map<String, TResult> loadInternal(Class<TResult> clazz, String[] ids, String[] includes) {
+        if (ids == null) {
+            throw new IllegalArgumentException("Ids cannot be null");
+        }
+
         LoadOperation loadOperation = new LoadOperation(this);
         loadOperation.byIds(ids);
         loadOperation.withIncludes(includes);
@@ -403,6 +413,12 @@ public class DocumentSession extends InMemoryDocumentSessionOperations implement
 
     @Override
     public void loadStartingWithIntoStream(String idPrefix, OutputStream output, String matches, int start, int pageSize, String exclude, String startAfter) {
+        if (output == null) {
+            throw new IllegalArgumentException("Output cannot be null");
+        }
+        if (idPrefix == null) {
+            throw new IllegalArgumentException("idPrefix cannot be null");
+        }
         loadStartingWithInternal(idPrefix, new LoadStartingWithOperation(this), output, matches, start, pageSize, exclude, startAfter);
     }
 
@@ -431,6 +447,10 @@ public class DocumentSession extends InMemoryDocumentSessionOperations implement
 
     @Override
     public void loadIntoStream(Collection<String> ids, OutputStream output) {
+        if (ids == null) {
+            throw new IllegalArgumentException("Ids cannot be null");
+        }
+
         loadInternal(ids.toArray(new String[0]), new LoadOperation(this), output);
     }
 

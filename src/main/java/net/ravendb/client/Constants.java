@@ -61,6 +61,8 @@ public class Constants {
 
         public static final String REFRESH_CLIENT_CONFIGURATION = "Refresh-Client-Configuration";
 
+        public static final String CLIENT_VERSION = "Raven-Client-Version";
+
         public static final String ETAG = "ETag";
 
         public static final String IF_NONE_MATCH = "If-None-Match";

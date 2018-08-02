@@ -5,14 +5,20 @@ public class FieldsToFetchToken extends QueryToken {
     public final String[] fieldsToFetch;
     public final String[] projections;
     public final boolean customFunction;
+    public final String sourceAlias;
 
-    private FieldsToFetchToken(String[] fieldsToFetch, String[] projections, boolean customFunction) {
+    private FieldsToFetchToken(String[] fieldsToFetch, String[] projections, boolean customFunction, String sourceAlias) {
         this.fieldsToFetch = fieldsToFetch;
         this.projections = projections;
         this.customFunction = customFunction;
+        this.sourceAlias = sourceAlias;
     }
 
     public static FieldsToFetchToken create(String[] fieldsToFetch, String[] projections, boolean customFunction) {
+        return create(fieldsToFetch, projections, customFunction, null);
+    }
+
+    public static FieldsToFetchToken create(String[] fieldsToFetch, String[] projections, boolean customFunction, String sourceAlias) {
         if (fieldsToFetch == null || fieldsToFetch.length == 0) {
             throw new IllegalArgumentException("fieldToFetch cannot be null");
         }
@@ -21,7 +27,7 @@ public class FieldsToFetchToken extends QueryToken {
             throw new IllegalArgumentException("Length of projections must be the same as length of field to fetch");
         }
 
-        return new FieldsToFetchToken(fieldsToFetch, projections, customFunction);
+        return new FieldsToFetchToken(fieldsToFetch, projections, customFunction, sourceAlias);
     }
 
     @Override

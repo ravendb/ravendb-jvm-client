@@ -138,6 +138,10 @@ public class ClusterRequestExecutor extends RequestExecutor {
                         _nodeSelector.scheduleSpeedTest();
                     }
                 }
+            } catch (Exception e) {
+                if (!_disposed) {
+                    throw e;
+                }
             } finally {
                 clusterTopologySemaphore.release();
             }
@@ -155,13 +159,4 @@ public class ClusterRequestExecutor extends RequestExecutor {
         throw new IllegalStateException("Failed to retrieve cluster topology from all known nodes" + System.lineSeparator() + details);
     }
 
-    @Override
-    public void close() {
-        try {
-            clusterTopologySemaphore.acquire();
-        } catch (InterruptedException ignored) {
-        }
-
-        super.close();
-    }
 }

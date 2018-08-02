@@ -307,6 +307,10 @@ public class RequestExecutor implements CleanCloseable {
 
                 topologyEtag = _nodeSelector.getTopology().getEtag();
 
+            } catch (Exception e) {
+                if (!_disposed) {
+                    throw e;
+                }
             } finally {
                 _updateDatabaseTopologySemaphore.release();
             }
@@ -394,7 +398,11 @@ public class RequestExecutor implements CleanCloseable {
         ServerNode serverNode;
 
         try {
-            CurrentIndexAndNode preferredNode = _nodeSelector.getPreferredNode();
+            NodeSelector selector = _nodeSelector;
+            if (selector == null) {
+                return;
+            }
+            CurrentIndexAndNode preferredNode = selector.getPreferredNode();
             serverNode = preferredNode.currentNode;
         } catch (Exception e) {
             if (logger.isInfoEnabled()) {
@@ -662,7 +670,7 @@ public class RequestExecutor implements CleanCloseable {
         String message = "Tried to send " + command.resultClass.getName() + " request via " + request.getMethod() + " " + request.getURI() + " to all configured nodes in the topology, " +
                 "all of them seem to be down or not responding. I've tried to access the following nodes: ";
 
-        message += Optional.ofNullable(_nodeSelector).map(x -> x.getTopology().getNodes().stream().map(ServerNode::getUrl).collect(Collectors.joining(", "))).orElse("");
+        message += Optional.ofNullable(_nodeSelector).map(x -> x.getTopology()).map(x -> x.getNodes().stream().map(ServerNode::getUrl).collect(Collectors.joining(", "))).orElse("");
 
         if (_topologyTakenFromNode != null) {
             String nodes = Optional.ofNullable(_nodeSelector).map(x ->
@@ -768,8 +776,8 @@ public class RequestExecutor implements CleanCloseable {
             HttpRequestBase request = command.createRequest(node, url);
             request.setURI(new URI(url.value));
 
-            if (!request.containsHeader("Raven-Client-Version")) {
-                request.addHeader("Raven-Client-Version", CLIENT_VERSION);
+            if (!request.containsHeader(Constants.Headers.CLIENT_VERSION)) {
+                request.addHeader(Constants.Headers.CLIENT_VERSION, CLIENT_VERSION);
             }
 
             if (requestPostProcessor != null) {
@@ -871,6 +879,7 @@ public class RequestExecutor implements CleanCloseable {
 
     private void spawnHealthChecks(ServerNode chosenNode, int nodeIndex) {
         NodeStatus nodeStatus = new NodeStatus(this, nodeIndex, chosenNode);
+
         if (_failedNodesTimers.putIfAbsent(chosenNode, nodeStatus) == null) {
             nodeStatus.startTimer();
         }
@@ -900,7 +909,7 @@ public class RequestExecutor implements CleanCloseable {
 
                 status = _failedNodesTimers.get(nodeStatus.node);
                 if (status != null) {
-                    nodeStatus.updateTimer();
+                    status.updateTimer();
                 }
 
                 return; // will wait for the next timer call
@@ -965,15 +974,6 @@ public class RequestExecutor implements CleanCloseable {
 
     @Override
     public void close() {
-        if (_disposed) {
-            return;
-        }
-
-        try {
-            _updateDatabaseTopologySemaphore.acquire();
-        } catch (InterruptedException ignored) {
-        }
-
         if (_disposed) {
             return;
         }

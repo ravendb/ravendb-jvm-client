@@ -113,7 +113,7 @@ public interface IFilterDocumentQueryBase<T, TSelf extends IDocumentQueryBase<T,
     TSelf whereLucene(String fieldName, String whereClause, boolean exact);
 
     /**
-     * Matches fields where the value is between the specified start and end, exclusive
+     * Matches fields where the value is between the specified start and end, inclusive
      * @param fieldName Field name
      * @param start Range start
      * @param end Range end
@@ -122,7 +122,7 @@ public interface IFilterDocumentQueryBase<T, TSelf extends IDocumentQueryBase<T,
     TSelf whereBetween(String fieldName, Object start, Object end);
 
     /**
-     * Matches fields where the value is between the specified start and end, exclusive
+     * Matches fields where the value is between the specified start and end, inclusive
      * @param fieldName Field name
      * @param start Range start
      * @param end Range end

@@ -24,6 +24,7 @@ import net.ravendb.client.documents.session.tokens.*;
 import net.ravendb.client.primitives.CleanCloseable;
 import net.ravendb.client.primitives.EventHelper;
 import net.ravendb.client.primitives.Reference;
+import org.apache.commons.lang3.ClassUtils;
 import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.StringUtils;
 
@@ -214,6 +215,8 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
     @Override
     public void _randomOrdering() {
         assertNoRawQuery();
+
+        _noCaching();
         orderByTokens.add(OrderByToken.random);
     }
 
@@ -231,6 +234,7 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
             return;
         }
 
+        _noCaching();
         orderByTokens.add(OrderByToken.createRandom(seed));
     }
 
@@ -622,7 +626,7 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
     }
 
     /**
-     * Matches fields where the value is between the specified start and end, exclusive
+     * Matches fields where the value is between the specified start and end, inclusive
      * @param fieldName Field name to use
      * @param start Range start
      * @param end Range end
@@ -1370,9 +1374,9 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
             return "";
         }
 
-        Reference<String> stringValueReference = new Reference<>();
-        if (_conventions.tryConvertValueForQuery(whereParams.getFieldName(), whereParams.getValue(), forRange, stringValueReference)) {
-            return stringValueReference.value;
+        Reference<Object> objValueReference = new Reference<>();
+        if (_conventions.tryConvertValueForQuery(whereParams.getFieldName(), whereParams.getValue(), forRange, objValueReference)) {
+            return objValueReference.value;
         }
 
         Class<?> clazz = whereParams.getValue().getClass();
@@ -1417,7 +1421,6 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
         }
 
         return whereParams.getValue();
-
     }
 
     private String addQueryParameter(Object value) {
@@ -1462,6 +1465,39 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
                 selectTokens.add(fieldsToFetch);
             }
         }
+    }
+
+    protected static <T> void getSourceAliasIfExists(Class<T> clazz, QueryData queryData, String[] fields, Reference<String> sourceAlias) {
+        sourceAlias.value = null;
+
+        if (fields.length != 1) {
+            return;
+        }
+
+        if (!String.class.equals(clazz) && !ClassUtils.isPrimitiveOrWrapper(clazz) && !clazz.isEnum()) {
+            return;
+        }
+
+        int indexOf = fields[0].indexOf(".");
+        if (indexOf == -1) {
+            return;
+        }
+
+        String possibleAlias = fields[0].substring(0, indexOf);
+        if (queryData.getFromAlias() != null && queryData.getFromAlias().equals(possibleAlias)) {
+            sourceAlias.value = possibleAlias;
+            return;
+        }
+
+        if (queryData.getLoadTokens() == null || queryData.getLoadTokens().size() == 0) {
+            return;
+        }
+
+        if (queryData.getLoadTokens().stream().anyMatch(x -> !x.alias.equals(possibleAlias))) {
+            return;
+        }
+
+        sourceAlias.value = possibleAlias;
     }
 
     protected List<Consumer<IndexQuery>> beforeQueryExecutedCallback = new ArrayList<>();
@@ -1563,6 +1599,8 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
 
     @Override
     public void _spatial(DynamicSpatialField dynamicField, SpatialCriteria criteria) {
+        assertIsDynamicQuery(dynamicField, "spatial");
+
         List<QueryToken> tokens = getCurrentWhereTokens();
         appendOperatorIfNeeded(tokens);
         negateIfNeeded(tokens, null);
@@ -1586,6 +1624,8 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
         if (field == null) {
             throw new IllegalArgumentException("Field cannot be null");
         }
+        assertIsDynamicQuery(field, "orderByDistance");
+
         _orderByDistance("'" + field.toField(this::ensureValidFieldName) + "'", latitude, longitude);
     }
 
@@ -1599,6 +1639,8 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
         if (field == null) {
             throw new IllegalArgumentException("Field cannot be null");
         }
+        assertIsDynamicQuery(field, "orderByDistance");
+
         _orderByDistance("'" + field.toField(this::ensureValidFieldName) + "'", shapeWkt);
     }
 
@@ -1612,6 +1654,7 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
         if (field == null) {
             throw new IllegalArgumentException("Field cannot be null");
         }
+        assertIsDynamicQuery(field, "orderByDistanceDescending");
         _orderByDistanceDescending("'" + field.toField(this::ensureValidFieldName) + "'", latitude, longitude);
     }
 
@@ -1625,12 +1668,22 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
         if (field == null) {
             throw new IllegalArgumentException("Field cannot be null");
         }
+        assertIsDynamicQuery(field, "orderByDistanceDescending");
         _orderByDistanceDescending("'" + field.toField(this::ensureValidFieldName) + "'", shapeWkt);
     }
 
     @Override
     public void _orderByDistanceDescending(String fieldName, String shapeWkt) {
         orderByTokens.add(OrderByToken.createDistanceDescending(fieldName, addQueryParameter(shapeWkt)));
+    }
+
+    private void assertIsDynamicQuery(DynamicSpatialField dynamicField, String methodName) {
+        if (!fromToken.isDynamic()) {
+            throw new IllegalStateException("Cannot execute query method '" + methodName + "'. Field '"
+                    + dynamicField.toField(this::ensureValidFieldName) + "' cannot be used when static index '" + fromToken.getIndexName()
+                    + "' is queried. Dynamic spatial fields can only be used with dynamic queries, " +
+                    "for static index queries please use valid spatial fields defined in index definition.");
+        }
     }
 
     protected void initSync() {

@@ -12,7 +12,8 @@ public class TcpConnectionHeaderMessage {
         REPLICATION,
         CLUSTER,
         HEARTBEATS,
-        PING
+        PING,
+        TEST_CONNECTION
     }
 
     private String databaseName;

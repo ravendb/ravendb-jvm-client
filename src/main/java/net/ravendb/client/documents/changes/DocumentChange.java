@@ -7,8 +7,6 @@ public class DocumentChange extends DatabaseChange {
 
     private String collectionName;
 
-    private String typeName;
-
     private String changeVector;
 
     /**
@@ -51,20 +49,6 @@ public class DocumentChange extends DatabaseChange {
      */
     public void setCollectionName(String collectionName) {
         this.collectionName = collectionName;
-    }
-
-    /**
-     * @return Document type name.
-     */
-    public String getTypeName() {
-        return typeName;
-    }
-
-    /**
-     * @param typeName Document type name.
-     */
-    public void setTypeName(String typeName) {
-        this.typeName = typeName;
     }
 
     /**
