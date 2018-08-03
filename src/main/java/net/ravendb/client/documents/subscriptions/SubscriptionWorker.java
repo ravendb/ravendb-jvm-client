@@ -16,6 +16,8 @@ import net.ravendb.client.primitives.*;
 import net.ravendb.client.serverwide.commands.GetTcpInfoCommand;
 import net.ravendb.client.serverwide.tcp.TcpConnectionHeaderMessage;
 import net.ravendb.client.serverwide.tcp.TcpConnectionHeaderResponse;
+import net.ravendb.client.serverwide.tcp.TcpNegotiateParameters;
+import net.ravendb.client.serverwide.tcp.TcpNegotiation;
 import net.ravendb.client.util.TcpUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.ObjectUtils;
@@ -159,7 +161,6 @@ public class SubscriptionWorker<T> implements CleanCloseable {
 
         RequestExecutor requestExecutor = _store.getRequestExecutor(_dbName);
 
-
         if (_redirectNode != null) {
             try {
                 requestExecutor.execute(_redirectNode, null, command, false, null);
@@ -181,43 +182,21 @@ public class SubscriptionWorker<T> implements CleanCloseable {
 
         String databaseName = ObjectUtils.firstNonNull(_dbName, _store.getDatabase());
 
-        TcpConnectionHeaderMessage tcpHeaderMsg = new TcpConnectionHeaderMessage();
-        tcpHeaderMsg.setOperation(TcpConnectionHeaderMessage.OperationTypes.SUBSCRIPTION);
-        tcpHeaderMsg.setDatabaseName(databaseName);
-        tcpHeaderMsg.setOperationVersion(TcpConnectionHeaderMessage.SUBSCRIPTION_TCP_VERSION);
+        TcpNegotiateParameters parameters = new TcpNegotiateParameters();
+        parameters.setDatabase(databaseName);
+        parameters.setOperation(TcpConnectionHeaderMessage.OperationTypes.SUBSCRIPTION);
+        parameters.setVersion(TcpConnectionHeaderMessage.SUBSCRIPTION_TCP_VERSION);
+        parameters.setReadResponseAndGetVersionCallback(this::readServerResponseAndGetVersion);
+        parameters.setDestinationNodeTag(getCurrentNodeTag());
+        parameters.setDestinationUrl(command.getResult().getUrl());
 
-        byte[] header = JsonExtensions.getDefaultMapper().writeValueAsBytes(tcpHeaderMsg);
+        _supportedFeatures = TcpNegotiation.negotiateProtocolVersion(_tcpClient.getOutputStream(), parameters);
+
+        if (_supportedFeatures.protocolVersion <= 0) {
+            throw new IllegalStateException(_options.getSubscriptionName() + " : TCP negotiation resulted with an invalid protocol version: " + _supportedFeatures.protocolVersion);
+        }
 
         byte[] options = JsonExtensions.getDefaultMapper().writeValueAsBytes(_options);
-
-        _tcpClient.getOutputStream().write(header);
-        _tcpClient.getOutputStream().flush();
-
-        _parser = JsonExtensions.getDefaultMapper().getFactory().createParser(_tcpClient.getInputStream());
-        _parser.configure(JsonParser.Feature.AUTO_CLOSE_SOURCE, false);
-
-        TcpConnectionHeaderResponse reply;
-        //Reading reply from server
-        TreeNode response = _parser.readValueAsTree();
-        reply = JsonExtensions.getDefaultMapper().treeToValue(response, TcpConnectionHeaderResponse.class);
-
-        switch (reply.getStatus()) {
-            case OK:
-                break;
-            case AUTHORIZATION_FAILED:
-                throw new AuthorizationException("Cannot access database " + databaseName + " because " + reply.getMessage());
-            case TCP_VERSION_MISMATCH:
-                //Kindly request the server to drop the connection
-                TcpConnectionHeaderMessage dropMsg = new TcpConnectionHeaderMessage();
-                dropMsg.setOperation(TcpConnectionHeaderMessage.OperationTypes.DROP);
-                dropMsg.setDatabaseName(databaseName);
-                dropMsg.setOperationVersion(TcpConnectionHeaderMessage.SUBSCRIPTION_TCP_VERSION);
-                dropMsg.setInfo("Couldn't agree on subscription tcp version ours: " + TcpConnectionHeaderMessage.SUBSCRIPTION_TCP_VERSION + " theirs: " + reply.getVersion());
-                header = JsonExtensions.getDefaultMapper().writeValueAsBytes(dropMsg);
-                _tcpClient.getOutputStream().write(header);
-                _tcpClient.getOutputStream().flush();
-                throw new IllegalStateException("Can't connect to database " + databaseName + " because: " + reply.getMessage());
-        }
 
         _tcpClient.getOutputStream().write(options);
         _tcpClient.getOutputStream().flush();
@@ -232,6 +211,50 @@ public class SubscriptionWorker<T> implements CleanCloseable {
                 _store.getConventions());
 
         return _tcpClient;
+    }
+
+    private void ensureParser() throws IOException {
+        if (_parser == null) {
+            _parser = JsonExtensions.getDefaultMapper().getFactory().createParser(_tcpClient.getInputStream());
+            _parser.configure(JsonParser.Feature.AUTO_CLOSE_SOURCE, false);
+        }
+    }
+
+    private int readServerResponseAndGetVersion(String url) {
+        try {
+            //Reading reply from server
+            ensureParser();
+            TreeNode response = _parser.readValueAsTree();
+            TcpConnectionHeaderResponse reply = JsonExtensions.getDefaultMapper().treeToValue(response, TcpConnectionHeaderResponse.class);
+
+            switch (reply.getStatus()) {
+                case OK:
+                    return reply.getVersion();
+                case AUTHORIZATION_FAILED:
+                    throw new AuthorizationException("Cannot access database " + _dbName + " because " + reply.getMessage());
+                case TCP_VERSION_MISMATCH:
+                    if (reply.getVersion() != TcpNegotiation.OUT_OF_RANGE_STATUS) {
+                        return reply.getVersion();
+                    }
+                    //Kindly request the server to drop the connection
+                    sendDropMessage(reply);
+                    throw new IllegalStateException("Can't connect to database " + _dbName + " because: " + reply.getMessage());
+            }
+            return reply.getVersion();
+        } catch (IOException e) {
+            throw ExceptionsUtils.unwrapException(e);
+        }
+    }
+
+    private void sendDropMessage(TcpConnectionHeaderResponse reply) throws IOException {
+        TcpConnectionHeaderMessage dropMsg = new TcpConnectionHeaderMessage();
+        dropMsg.setOperation(TcpConnectionHeaderMessage.OperationTypes.DROP);
+        dropMsg.setDatabaseName(_dbName);
+        dropMsg.setOperationVersion(TcpConnectionHeaderMessage.SUBSCRIPTION_TCP_VERSION);
+        dropMsg.setInfo("Couldn't agree on subscription tcp version ours: " + TcpConnectionHeaderMessage.SUBSCRIPTION_TCP_VERSION + " theirs: " + reply.getVersion());
+        byte[] header = JsonExtensions.getDefaultMapper().writeValueAsBytes(dropMsg);
+        _tcpClient.getOutputStream().write(header);
+        _tcpClient.getOutputStream().flush();
     }
 
     private void assertConnectionState(SubscriptionConnectionServerMessage connectionStatus) {
@@ -473,6 +496,7 @@ public class SubscriptionWorker<T> implements CleanCloseable {
     }
 
     private Date lastConnectionFailure;
+    private TcpConnectionHeaderMessage.SupportedFeatures _supportedFeatures;
 
     private void assertLastConnectionFailure() {
         if (lastConnectionFailure == null) {
