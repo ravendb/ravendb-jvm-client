@@ -15,6 +15,7 @@ public class DatabaseStatistics {
     private long countOfTombstones;
     private long countOfConflicts;
     private long countOfAttachments;
+    private long countOfCounters;
     private long countOfUniqueAttachments;
 
     private IndexInformation[] indexes;
@@ -176,5 +177,13 @@ public class DatabaseStatistics {
 
     public void setNumberOfTransactionMergerQueueOperations(int numberOfTransactionMergerQueueOperations) {
         this.numberOfTransactionMergerQueueOperations = numberOfTransactionMergerQueueOperations;
+    }
+
+    public long getCountOfCounters() {
+        return countOfCounters;
+    }
+
+    public void setCountOfCounters(long countOfCounters) {
+        this.countOfCounters = countOfCounters;
     }
 }

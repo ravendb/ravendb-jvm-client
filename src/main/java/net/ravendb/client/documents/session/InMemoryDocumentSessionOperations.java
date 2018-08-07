@@ -23,6 +23,7 @@ import net.ravendb.client.http.CurrentIndexAndNode;
 import net.ravendb.client.http.RavenCommand;
 import net.ravendb.client.http.RequestExecutor;
 import net.ravendb.client.http.ServerNode;
+import net.ravendb.client.json.BatchCommandResult;
 import net.ravendb.client.json.JsonOperation;
 import net.ravendb.client.json.MetadataAsDictionary;
 import net.ravendb.client.primitives.*;
@@ -37,6 +38,7 @@ import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 @SuppressWarnings("SameParameterValue")
 public abstract class InMemoryDocumentSessionOperations implements CleanCloseable {
@@ -59,6 +61,8 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
     protected final SessionInfo sessionInfo;
     BatchOptions _saveChangesOptions;
 
+    private TransactionMode transactionMode;
+
     private boolean _isDisposed;
 
     protected final ObjectMapper mapper = JsonExtensions.getDefaultMapper();
@@ -77,7 +81,7 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
     /**
      * The entities waiting to be deleted
      */
-    protected final Set<Object> deletedEntities = new IdentityHashSet<>();
+    public final Set<Object> deletedEntities = new IdentityHashSet<>();
 
     private final List<EventHandler<BeforeStoreEventArgs>> onBeforeStore = new ArrayList<>();
     private final List<EventHandler<AfterSaveChangesEventArgs>> onAfterSaveChanges = new ArrayList<>();
@@ -161,6 +165,18 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
      * hold the data required to manage the data for RavenDB's Unit of Work
      */
     public final Map<Object, DocumentInfo> documentsByEntity = new LinkedHashMap<>();
+
+    /**
+     * @return map which holds the data required to manage Counters tracking for RavenDB's Unit of Work
+     */
+    public Map<String, Tuple<Boolean, Map<String, Long>>> getCountersByDocId() {
+        if (_countersByDocId == null) {
+            _countersByDocId = new TreeMap<>(String::compareToIgnoreCase);
+        }
+        return _countersByDocId;
+    }
+
+    private Map<String, Tuple<Boolean, Map<String, Long>>> _countersByDocId;
 
     protected final DocumentStoreBase _documentStore;
 
@@ -277,6 +293,8 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
 
     final Map<IdTypeAndName, ICommandData> deferredCommandsMap = new HashMap<>();
 
+    public final boolean noTracking;
+
     public int getDeferredCommandsCount() {
         return deferredCommands.size();
     }
@@ -296,23 +314,24 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
     /**
      * Initializes a new instance of the InMemoryDocumentSessionOperations class.
      *
-     * @param databaseName    Database name
      * @param documentStore   Document store
-     * @param requestExecutor Request executor
      * @param id              Identifier
      */
-    protected InMemoryDocumentSessionOperations(String databaseName, DocumentStoreBase documentStore, RequestExecutor requestExecutor, UUID id) {
+    protected InMemoryDocumentSessionOperations(DocumentStoreBase documentStore, UUID id, SessionOptions options) {
         this.id = id;
-        this.databaseName = databaseName;
+        this.databaseName = ObjectUtils.firstNonNull(options.getDatabase(), documentStore.getDatabase());
         this._documentStore = documentStore;
-        this._requestExecutor = requestExecutor;
+        this._requestExecutor = ObjectUtils.firstNonNull(options.getRequestExecutor(), documentStore.getRequestExecutor(databaseName));
 
-        this.useOptimisticConcurrency = requestExecutor.getConventions().isUseOptimisticConcurrency();
-        this.maxNumberOfRequestsPerSession = requestExecutor.getConventions().getMaxNumberOfRequestsPerSession();
+        noTracking = options.isNoTracking();
+
+        this.useOptimisticConcurrency = _requestExecutor.getConventions().isUseOptimisticConcurrency();
+        this.maxNumberOfRequestsPerSession = _requestExecutor.getConventions().getMaxNumberOfRequestsPerSession();
         this.generateEntityIdOnTheClient = new GenerateEntityIdOnTheClient(_requestExecutor.getConventions(), this::generateId);
         this.entityToJson = new EntityToJson(this);
 
-        sessionInfo = new SessionInfo(_clientSessionId);
+        sessionInfo = new SessionInfo(_clientSessionId, _documentStore.getLastTransactionIndex(databaseName), options.isNoCaching());
+        transactionMode = options.getTransactionMode();
     }
 
     /**
@@ -336,6 +355,29 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
         MetadataAsDictionary metadata = new MetadataAsDictionary(metadataAsJson);
         documentInfo.setMetadataInstance(metadata);
         return metadata;
+    }
+
+    /**
+     * Gets all counter names for the specified entity.
+     * @param instance Instance
+     * @param <T> Instance class
+     * @return All counters names
+     */
+    public <T> List<String> getCountersFor(T instance) {
+        if (instance == null) {
+            throw new IllegalArgumentException("Instance cannot be null");
+        }
+
+        DocumentInfo documentInfo = getDocumentInfo(instance);
+
+        ArrayNode countersArray = (ArrayNode) documentInfo.getMetadata().get(Constants.Documents.Metadata.COUNTERS);
+        if (countersArray == null) {
+            return null;
+        }
+
+        return IntStream.range(0, countersArray.size())
+                .mapToObj(i -> countersArray.get(i).asText())
+                .collect(Collectors.toList());
     }
 
     /**
@@ -451,7 +493,36 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
      */
     @SuppressWarnings("unchecked")
     public <T> T trackEntity(Class<T> clazz, DocumentInfo documentFound) {
-        return (T) trackEntity(clazz, documentFound.getId(), documentFound.getDocument(), documentFound.getMetadata(), false);
+        return (T) trackEntity(clazz, documentFound.getId(), documentFound.getDocument(), documentFound.getMetadata(), noTracking);
+    }
+
+    public void registerExternalLoadedIntoTheSession(DocumentInfo info) {
+        if (noTracking) {
+            return;
+        }
+
+        DocumentInfo existing = documentsById.getValue(info.getId());
+        if (existing != null) {
+            if (existing.getEntity() == info.getEntity()) {
+                return;
+            }
+
+            throw new IllegalStateException("The document " + info.getId() + " is already in the session with a different entity instance.");
+        }
+
+        DocumentInfo existingEntity = documentsByEntity.get(info.getEntity());
+        if (existingEntity != null) {
+            if (existingEntity.getId().equalsIgnoreCase(info.getId())) {
+                return;
+            }
+
+            throw new IllegalStateException("Attempted to load an entity with id " + info.getId() + ", but the entity instance already exists in the session with id: " + existing.getId());
+        }
+
+        documentsByEntity.put(info.getEntity(), info);
+        documentsById.add(info);
+        includedDocumentsById.remove(info.getId());
+
     }
 
     /**
@@ -465,6 +536,9 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
      * @return entity
      */
     public Object trackEntity(Class entityType, String id, ObjectNode document, ObjectNode metadata, boolean noTracking) {
+
+        noTracking = this.noTracking || noTracking;  // if noTracking is session-wide then we want to override the passed argument
+
         if (StringUtils.isEmpty(id)) {
             return deserializeFromTransformer(entityType, null, document);
         }
@@ -552,6 +626,9 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
 
         deletedEntities.add(entity);
         includedDocumentsById.remove(value.getId());
+        if (_countersByDocId != null) {
+            _countersByDocId.remove(value.getId());
+        }
         _knownMissingIds.add(value.getId());
     }
 
@@ -588,6 +665,9 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
 
         _knownMissingIds.add(id);
         changeVector = isUseOptimisticConcurrency() ? changeVector : null;
+        if (_countersByDocId != null) {
+            _countersByDocId.remove(id);
+        }
         defer(new DeleteCommandData(id, ObjectUtils.firstNonNull(expectedChangeVector, changeVector)));
     }
 
@@ -624,7 +704,10 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
     }
 
     private void storeInternal(Object entity, String changeVector, String id, ConcurrencyCheckMode forceConcurrencyCheck) {
-        if (null == entity) {
+        if (noTracking) {
+            throw new IllegalStateException("Cannot store entity. Entity tracking is disabled in this session.");
+        }
+        if (entity == null) {
             throw new IllegalArgumentException("Entity cannot be null");
         }
 
@@ -731,6 +814,8 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
         prepareForEntitiesDeletion(result, null);
         prepareForEntitiesPuts(result);
 
+        prepareCompareExchangeEntities(result);
+
         if (!deferredCommands.isEmpty()) {
             // this allow OnBeforeStore to call Defer during the call to include
             // additional values during the same SaveChanges call
@@ -743,8 +828,66 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
             deferredCommandsMap.clear();
         }
 
+        for (ICommandData deferredCommand : result.getDeferredCommands()) {
+            deferredCommand.onBeforeSaveChanges(this);
+        }
+
         return result;
     }
+
+    public void validateClusterTransaction(SaveChangesData result) {
+        if (transactionMode != TransactionMode.CLUSTER_WIDE) {
+            return;
+        }
+
+        for (ICommandData commandData : result.getSessionCommands()) {
+
+            switch (commandData.getType()) {
+                case PUT:
+                case DELETE:
+                case COMPARE_EXCHANGE_DELETE:
+                case COMPARE_EXCHANGE_PUT:
+                    break;
+                default:
+                    throw new IllegalStateException("The command '" + commandData.getType() + "' is not supported in a cluster session.");
+            }
+        }
+
+    }
+
+    private void prepareCompareExchangeEntities(SaveChangesData result) {
+        ClusterTransactionOperationsBase clusterTransactionOperations = getClusterSession();
+
+        if (clusterTransactionOperations == null || !clusterTransactionOperations.hasCommands()) {
+            return;
+        }
+
+        if (transactionMode != TransactionMode.CLUSTER_WIDE) {
+            throw new IllegalStateException("Performing cluster transaction operation require the TransactionMode to be set to CLUSTER_WIDE");
+        }
+
+        if (clusterTransactionOperations.getStoreCompareExchange() != null) {
+            for (Map.Entry<String, ClusterTransactionOperationsBase.StoredCompareExchange> item : clusterTransactionOperations.getStoreCompareExchange().entrySet()) {
+
+                ObjectMapper mapper = getConventions().getEntityMapper();
+                JsonNode entityAsTree = mapper.valueToTree(item.getValue().entity);
+                ObjectNode rootNode = mapper.createObjectNode();
+                rootNode.set("Object", entityAsTree);
+
+                result.getSessionCommands().add(new PutCompareExchangeCommandData(item.getKey(), rootNode, item.getValue().index));
+            }
+        }
+
+        if (clusterTransactionOperations.getDeleteCompareExchange() != null) {
+            for (Map.Entry<String, Long> item : clusterTransactionOperations.getDeleteCompareExchange().entrySet()) {
+                result.getSessionCommands().add(new DeleteCompareExchangeCommandData(item.getKey(), item.getValue()));
+            }
+        }
+
+        clusterTransactionOperations.clear();
+    }
+
+    protected abstract ClusterTransactionOperationsBase getClusterSession();
 
     private static boolean updateMetadataModifications(DocumentInfo documentInfo) {
         boolean dirty = false;
@@ -829,7 +972,7 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
                 continue;
             }
 
-            ICommandData command = result.deferredCommandsMap.get(IdTypeAndName.create(entity.getValue().getId(), CommandType.CLIENT_NOT_ATTACHMENT, null));
+            ICommandData command = result.deferredCommandsMap.get(IdTypeAndName.create(entity.getValue().getId(), CommandType.CLIENT_MODIFY_DOCUMENT_COMMAND, null));
             if (command != null) {
                 throwInvalidModifiedDocumentWithDeferredCommand(command);
             }
@@ -942,12 +1085,16 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
         options.accept(builder);
 
         BatchOptions builderOptions = builder.getOptions();
-
-        if (builderOptions.getWaitForReplicasTimeout() == null) {
-            builderOptions.setWaitForReplicasTimeout(Duration.ofSeconds(15));
+        ReplicationBatchOptions replicationOptions = builderOptions.getReplicationOptions();
+        if (replicationOptions == null) {
+            builderOptions.setReplicationOptions(replicationOptions = new ReplicationBatchOptions());
         }
 
-        builderOptions.setWaitForReplicas(true);
+        if (replicationOptions.getWaitForReplicasTimeout() == null) {
+            replicationOptions.setWaitForReplicasTimeout(Duration.ofSeconds(15));
+        }
+
+        replicationOptions.setWaitForReplicas(true);
     }
 
     public void waitForIndexesAfterSaveChanges() {
@@ -960,12 +1107,17 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
         options.accept(builder);
 
         BatchOptions builderOptions = builder.getOptions();
+        IndexBatchOptions indexOptions = builderOptions.getIndexOptions();
 
-        if (builderOptions.getWaitForIndexesTimeout() == null) {
-            builderOptions.setWaitForIndexesTimeout(Duration.ofSeconds(15));
+        if (indexOptions == null) {
+            builderOptions.setIndexOptions(indexOptions = new IndexBatchOptions());
         }
 
-        builderOptions.setWaitForIndexes(true);
+        if (indexOptions.getWaitForIndexesTimeout() == null) {
+            indexOptions.setWaitForIndexesTimeout(Duration.ofSeconds(15));
+        }
+
+        indexOptions.setWaitForIndexes(true);
     }
 
     private void getAllEntitiesChanges(Map<String, List<DocumentsChanges>> changes) {
@@ -1001,6 +1153,9 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
         }
 
         deletedEntities.remove(entity);
+        if (_countersByDocId != null) {
+            _countersByDocId.remove(documentInfo.getId());
+        }
     }
 
     /**
@@ -1012,7 +1167,9 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
         deletedEntities.clear();
         documentsById.clear();
         _knownMissingIds.clear();
-        includedDocumentsById.clear();
+        if (_countersByDocId != null) {
+            _countersByDocId.clear();
+        }
     }
 
     /**
@@ -1045,8 +1202,12 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
         deferredCommandsMap.put(IdTypeAndName.create(command.getId(), command.getType(), command.getName()), command);
         deferredCommandsMap.put(IdTypeAndName.create(command.getId(), CommandType.CLIENT_ANY_COMMAND, null), command);
 
-        if (!CommandType.ATTACHMENT_PUT.equals(command.getType()) && !CommandType.ATTACHMENT_DELETE.equals(command.getType())) {
-            deferredCommandsMap.put(IdTypeAndName.create(command.getId(), CommandType.CLIENT_NOT_ATTACHMENT, null), command);
+        if (!CommandType.ATTACHMENT_PUT.equals(command.getType()) &&
+                !CommandType.ATTACHMENT_DELETE.equals(command.getType()) &&
+                !CommandType.ATTACHMENT_COPY.equals(command.getType()) &&
+                !CommandType.ATTACHMENT_MOVE.equals(command.getType()) &&
+                !CommandType.COUNTERS.equals(command.getType())) {
+            deferredCommandsMap.put(IdTypeAndName.create(command.getId(), CommandType.CLIENT_MODIFY_DOCUMENT_COMMAND, null), command);
         }
     }
 
@@ -1068,14 +1229,17 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
     }
 
     public void registerMissing(String id) {
+        if (noTracking) {
+            return;
+        }
         _knownMissingIds.add(id);
     }
 
-    public void unregisterMissing(String id) {
-        _knownMissingIds.remove(id);
-    }
-
     public void registerIncludes(ObjectNode includes) {
+        if (noTracking) {
+            return;
+        }
+
         if (includes == null) {
             return;
         }
@@ -1099,6 +1263,11 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
     }
 
     public void registerMissingIncludes(ArrayNode results, ObjectNode includes, String[] includePaths) {
+
+        if (noTracking) {
+            return;
+        }
+
         if (includePaths == null || includePaths.length == 0) {
             return;
         }
@@ -1129,6 +1298,148 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
 
                     registerMissing(id);
                 });
+            }
+        }
+    }
+
+    public void registerCounters(ObjectNode resultCounters, String[] ids, String[] countersToInclude, boolean gotAll) {
+        if (noTracking) {
+            return;
+        }
+
+        if (resultCounters == null || resultCounters.size() == 0) {
+            if (gotAll) {
+                for (String id : ids) {
+                    setGotAllCountersForDocument(id);
+                }
+
+                return;
+            }
+        } else {
+            registerCountersInternal(resultCounters, null, false, gotAll);
+        }
+
+        registerMissingCounters(ids, countersToInclude);
+    }
+
+    public void registerCounters(ObjectNode resultCounters, Map<String, String[]> countersToInclude) {
+        if (noTracking) {
+            return;
+        }
+
+        if (resultCounters == null || resultCounters.size() == 0) {
+            setGotAllInCacheIfNeeded(countersToInclude);
+        } else {
+            registerCountersInternal(resultCounters, countersToInclude, true, false);
+        }
+
+        registerMissingCounters(countersToInclude);
+    }
+
+    private void registerCountersInternal(ObjectNode resultCounters, Map<String, String[]> countersToInclude, boolean fromQueryResult, boolean gotAll) {
+
+        Iterator<Map.Entry<String, JsonNode>> fieldsIterator = resultCounters.fields();
+
+        while (fieldsIterator.hasNext()) {
+            Map.Entry<String, JsonNode> fieldAndValue = fieldsIterator.next();
+
+            if (fieldAndValue.getValue() == null || fieldAndValue.getValue().isNull()) {
+                continue;
+            }
+
+            if (fromQueryResult) {
+                String[] counters = countersToInclude.get(fieldAndValue.getKey());
+                gotAll = counters != null && counters.length == 0;
+            }
+
+            if (fieldAndValue.getValue().size() == 0 && !gotAll) {
+                continue;
+            }
+
+            registerCountersForDocument(fieldAndValue.getKey(), gotAll, (ArrayNode) fieldAndValue.getValue());
+        }
+    }
+
+    private void registerCountersForDocument(String id, boolean gotAll, ArrayNode counters) {
+        Tuple<Boolean, Map<String, Long>> cache = getCountersByDocId().get(id);
+        if (cache == null) {
+            cache = Tuple.create(gotAll, new TreeMap<>(String::compareToIgnoreCase));
+        }
+
+        for (JsonNode counterJson : counters) {
+            JsonNode counterName = counterJson.get("CounterName");
+            JsonNode totalValue = counterJson.get("TotalValue");
+
+            if (counterName != null && !counterName.isNull() && totalValue != null && !totalValue.isNull()) {
+                cache.second.put(counterName.asText(), totalValue.longValue());
+            }
+        }
+
+        cache.first = gotAll;
+        getCountersByDocId().put(id, cache);
+    }
+
+    private void setGotAllInCacheIfNeeded(Map<String, String[]> countersToInclude) {
+        for (Map.Entry<String, String[]> kvp : countersToInclude.entrySet()) {
+            if (kvp.getValue().length > 0) {
+                continue;
+            }
+
+            setGotAllCountersForDocument(kvp.getKey());
+        }
+    }
+
+    private void setGotAllCountersForDocument(String id) {
+        Tuple<Boolean, Map<String, Long>> cache = getCountersByDocId().get(id);
+
+        if (cache == null) {
+            cache = Tuple.create(false, new TreeMap<>(String::compareToIgnoreCase));
+        }
+
+        cache.first = true;
+        getCountersByDocId().put(id, cache);
+    }
+
+    private void registerMissingCounters(Map<String, String[]> countersToInclude) {
+        if (countersToInclude == null) {
+            return;
+        }
+
+        for (Map.Entry<String, String[]> kvp : countersToInclude.entrySet()) {
+            Tuple<Boolean, Map<String, Long>> cache = getCountersByDocId().get(kvp.getKey());
+            if (cache == null) {
+                cache = Tuple.create(false, new TreeMap<>(String::compareToIgnoreCase));
+                getCountersByDocId().put(kvp.getKey(), cache);
+            }
+
+            for (String counter : kvp.getValue()) {
+                if (cache.second.containsKey(counter)) {
+                    continue;
+                }
+
+                cache.second.put(counter, null);
+            }
+        }
+    }
+
+    private void registerMissingCounters(String[] ids, String[] countersToInclude) {
+        if (countersToInclude == null) {
+            return;
+        }
+
+        for (String counter : countersToInclude) {
+            for (String id : ids) {
+                Tuple<Boolean, Map<String, Long>> cache = getCountersByDocId().get(id);
+                if (cache == null) {
+                    cache = Tuple.create(false, new TreeMap<>(String::compareToIgnoreCase));
+                    getCountersByDocId().put(id, cache);
+                }
+
+                if (cache.second.containsKey(counter)) {
+                    continue;
+                }
+
+                cache.second.put(counter, null);
             }
         }
     }
@@ -1232,6 +1543,12 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
         throw new IllegalStateException("Unable to cast " + result.getClass().getSimpleName() + " to " + clazz.getSimpleName());
     }
 
+    protected void updateSessionAfterSaveChanges(BatchCommandResult result) {
+        Long returnedTransactionIndex = result.getTransactionIndex();
+        _documentStore.setLastTransactionIndex(getDatabaseName(), returnedTransactionIndex);
+        sessionInfo.setLastClusterTransactionIndex(returnedTransactionIndex);
+    }
+
     public void onAfterSaveChangesInvoke(AfterSaveChangesEventArgs afterSaveChangesEventArgs) {
         EventHelper.invoke(onAfterSaveChanges, this, afterSaveChangesEventArgs);
     }
@@ -1296,26 +1613,31 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
             if (InMemoryDocumentSessionOperations.this._saveChangesOptions == null) {
                 InMemoryDocumentSessionOperations.this._saveChangesOptions = new BatchOptions();
             }
+
+            if (InMemoryDocumentSessionOperations.this._saveChangesOptions.getReplicationOptions() == null) {
+                InMemoryDocumentSessionOperations.this._saveChangesOptions.setReplicationOptions(new ReplicationBatchOptions());
+            }
+
             return InMemoryDocumentSessionOperations.this._saveChangesOptions;
         }
 
         public ReplicationWaitOptsBuilder withTimeout(Duration timeout) {
-            getOptions().setWaitForReplicasTimeout(timeout);
+            getOptions().getReplicationOptions().setWaitForReplicasTimeout(timeout);
             return this;
         }
 
         public ReplicationWaitOptsBuilder throwOnTimeout(boolean shouldThrow) {
-            getOptions().setThrowOnTimeoutInWaitForReplicas(shouldThrow);
+            getOptions().getReplicationOptions().setThrowOnTimeoutInWaitForReplicas(shouldThrow);
             return this;
         }
 
         public ReplicationWaitOptsBuilder numberOfReplicas(int replicas) {
-            getOptions().setNumberOfReplicasToWaitFor(replicas);
+            getOptions().getReplicationOptions().setNumberOfReplicasToWaitFor(replicas);
             return this;
         }
 
         public ReplicationWaitOptsBuilder majority(boolean waitForMajority) {
-            getOptions().setMajority(waitForMajority);
+            getOptions().getReplicationOptions().setMajority(waitForMajority);
             return this;
         }
     }
@@ -1326,23 +1648,35 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
             if (InMemoryDocumentSessionOperations.this._saveChangesOptions == null) {
                 InMemoryDocumentSessionOperations.this._saveChangesOptions = new BatchOptions();
             }
+
+            if (InMemoryDocumentSessionOperations.this._saveChangesOptions.getIndexOptions() == null) {
+                InMemoryDocumentSessionOperations.this._saveChangesOptions.setIndexOptions(new IndexBatchOptions());
+            }
+
             return InMemoryDocumentSessionOperations.this._saveChangesOptions;
         }
 
         public IndexesWaitOptsBuilder withTimeout(Duration timeout) {
-            getOptions().setWaitForReplicasTimeout(timeout);
+            getOptions().getIndexOptions().setWaitForIndexesTimeout(timeout);
             return this;
         }
 
         public IndexesWaitOptsBuilder throwOnTimeout(boolean shouldThrow) {
-            getOptions().setThrowOnTimeoutInWaitForReplicas(shouldThrow);
+            getOptions().getIndexOptions().setThrowOnTimeoutInWaitForIndexes(shouldThrow);
             return this;
         }
 
         public IndexesWaitOptsBuilder waitForIndexes(String... indexes) {
-            getOptions().setWaitForSpecificIndexes(indexes);
+            getOptions().getIndexOptions().setWaitForSpecificIndexes(indexes);
             return this;
         }
     }
 
+    public TransactionMode getTransactionMode() {
+        return transactionMode;
+    }
+
+    public void setTransactionMode(TransactionMode transactionMode) {
+        this.transactionMode = transactionMode;
+    }
 }

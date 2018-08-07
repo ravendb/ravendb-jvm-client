@@ -19,7 +19,10 @@ public class LoadOperation {
 
     private String[] _ids;
     private String[] _includes;
+    private String[] countersToInclude;
+    private boolean includeAllCounters;
     private final List<String> _idsToCheckOnServer = new ArrayList<>();
+    private GetDocumentsResult _currentLoadResults;
 
     public LoadOperation(InMemoryDocumentSessionOperations _session) {
         this._session = _session;
@@ -40,7 +43,13 @@ public class LoadOperation {
             logger.info("Requesting the following ids " + String.join(",", _idsToCheckOnServer) + " from " + _session.storeIdentifier());
         }
 
-        return new GetDocumentsCommand(_idsToCheckOnServer.toArray(new String[0]), _includes, false);
+        if (includeAllCounters) {
+            return new GetDocumentsCommand(_idsToCheckOnServer.toArray(new String[0]), _includes, true, false);
+        }
+
+        return countersToInclude != null
+                ? new GetDocumentsCommand(_idsToCheckOnServer.toArray(new String[0]), _includes, countersToInclude, false)
+                : new GetDocumentsCommand(_idsToCheckOnServer.toArray(new String[0]), _includes, false);
     }
 
     public LoadOperation byId(String id) {
@@ -62,6 +71,18 @@ public class LoadOperation {
 
     public LoadOperation withIncludes(String[] includes) {
         _includes = includes;
+        return this;
+    }
+
+    public LoadOperation withCounters(String[] counters) {
+        if (counters != null) {
+            countersToInclude = counters;
+        }
+        return this;
+    }
+
+    public LoadOperation withAllCounters() {
+        includeAllCounters = true;
         return this;
     }
 
@@ -87,6 +108,21 @@ public class LoadOperation {
     }
 
     public <T> T getDocument(Class<T> clazz) {
+
+        if (_session.noTracking) {
+            if (_currentLoadResults == null) {
+                throw new IllegalStateException("Cannot execute getDocument before operation execution.");
+            }
+
+            ObjectNode document = (ObjectNode) _currentLoadResults.getResults().get(0);
+            if (document == null) {
+                return null;
+            }
+
+            DocumentInfo documentInfo = DocumentInfo.getNewDocumentInfo(document);
+            return _session.trackEntity(clazz, documentInfo);
+        }
+
         return getDocument(clazz, _ids[0]);
     }
 
@@ -116,6 +152,31 @@ public class LoadOperation {
     public <T> Map<String, T> getDocuments(Class<T> clazz) {
         Map<String, T> finalResults = new TreeMap<>(String::compareToIgnoreCase);
 
+        if (_session.noTracking) {
+            if (_currentLoadResults == null) {
+                throw new IllegalStateException("Cannot execute 'getDocuments' before operation execution.");
+            }
+
+            for (String id : _ids) {
+                if (id == null) {
+                    continue;
+                }
+
+                finalResults.put(id, null);
+            }
+
+            for (JsonNode document : _currentLoadResults.getResults()) {
+                if (document == null || document.isNull()) {
+                    continue;
+                }
+
+                DocumentInfo newDocumentInfo = DocumentInfo.getNewDocumentInfo((ObjectNode) document);
+                finalResults.put(newDocumentInfo.getId(), _session.trackEntity(clazz, newDocumentInfo));
+            }
+
+            return finalResults;
+        }
+
         for (String id : _ids) {
             if (id == null) {
                 continue;
@@ -132,7 +193,16 @@ public class LoadOperation {
             return;
         }
 
+        if (_session.noTracking) {
+            _currentLoadResults = result;
+            return;
+        }
+
         _session.registerIncludes(result.getIncludes());
+
+        if (includeAllCounters || countersToInclude != null) {
+            _session.registerCounters(result.getCounterIncludes(), _ids, countersToInclude, includeAllCounters);
+        }
 
         for (JsonNode document : result.getResults()) {
             if (document == null || document.isNull()) {

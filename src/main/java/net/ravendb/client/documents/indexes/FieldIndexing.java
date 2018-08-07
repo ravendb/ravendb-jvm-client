@@ -20,6 +20,12 @@ public enum FieldIndexing {
     EXACT,
 
     /**
+     * Index the tokens produced by running the field's value through an Analyzer (same as Search),
+     * store them in index and track term vector positions and offsets. This is mandatory when highlighting is used.
+     */
+    HIGHLIGHTING,
+
+    /**
      *  Index this field using the default internal analyzer: LowerCaseKeywordAnalyzer
      */
     DEFAULT

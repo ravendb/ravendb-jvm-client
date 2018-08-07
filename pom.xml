@@ -3,7 +3,7 @@
 
     <groupId>net.ravendb</groupId>
     <artifactId>ravendb</artifactId>
-    <version>4.0.3-SNAPSHOT</version>
+    <version>4.1.0-SNAPSHOT</version>
 
     <name>RavenDB Java Client</name>
     <description>RavenDB Java Client</description>

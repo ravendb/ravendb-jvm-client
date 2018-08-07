@@ -21,29 +21,15 @@ public class QueryResult extends GenericQueryResult<ArrayNode, ObjectNode> {
         queryResult.setStale(isStale());
         queryResult.setSkippedResults(getSkippedResults());
         queryResult.setTotalResults(getTotalResults());
-
-        /* TBD 4.1
-        Map<String, Map<String, List<String>>> highlightings = getHighlightings();
-
-        if (highlightings != null) {
-            Map<String, Map<String, List<String>>> newHighlights = new HashMap<>();
-            for (Map.Entry<String, Map<String, List<String>>> hightlightEntry : getHighlightings().entrySet()) {
-                newHighlights.put(hightlightEntry.getKey(), new HashMap<>(hightlightEntry.getValue()));
-            }
-            queryResult.setHighlightings(highlightings);
-        }*/
-
-        if (getScoreExplanations() != null) {
-            queryResult.setScoreExplanations(new HashMap<>(getScoreExplanations()));
-        }
-
-        if (getTimingsInMs() != null) {
-            queryResult.setTimingsInMs(new HashMap<>(getTimingsInMs()));
-        }
-
+        queryResult.setHighlightings(getHighlightings() != null ? new HashMap<>(getHighlightings()) : null);
+        queryResult.setExplanations(getExplanations() != null ? new HashMap<>(getExplanations()) : null);
+        queryResult.setTimings(getTimings());
         queryResult.setLastQueryTime(getLastQueryTime());
         queryResult.setDurationInMs(getDurationInMs());
         queryResult.setResultEtag(getResultEtag());
+        queryResult.setNodeTag(getNodeTag());
+        queryResult.setCounterIncludes(getCounterIncludes());
+        queryResult.setIncludedCounterNames(getIncludedCounterNames());
         return queryResult;
     }
 }

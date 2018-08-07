@@ -2,6 +2,7 @@ package net.ravendb.client.documents.commands.batches;
 
 import com.fasterxml.jackson.core.JsonGenerator;
 import net.ravendb.client.documents.conventions.DocumentConventions;
+import net.ravendb.client.documents.session.InMemoryDocumentSessionOperations;
 import org.apache.commons.lang3.StringUtils;
 
 import java.io.IOException;
@@ -70,5 +71,10 @@ public class PutAttachmentCommandData implements ICommandData {
         generator.writeStringField("ChangeVector", changeVector);
         generator.writeStringField("Type", "AttachmentPUT");
         generator.writeEndObject();
+    }
+
+    @Override
+    public void onBeforeSaveChanges(InMemoryDocumentSessionOperations session) {
+
     }
 }

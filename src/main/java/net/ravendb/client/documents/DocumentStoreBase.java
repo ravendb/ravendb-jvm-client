@@ -24,6 +24,9 @@ import java.security.KeyStore;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.ConcurrentSkipListMap;
 
 /**
  *  Contains implementation of some IDocumentStore operations shared by DocumentStore implementations
@@ -167,6 +170,30 @@ public abstract class DocumentStoreBase implements IDocumentStore {
 
     public DocumentSubscriptions subscriptions() {
         return _subscriptions;
+    }
+
+    private ConcurrentMap<String, Long> _lastRaftIndexPerDatabase = new ConcurrentSkipListMap<>(String::compareToIgnoreCase);
+
+    public Long getLastTransactionIndex(String database) {
+        Long index = _lastRaftIndexPerDatabase.get(database);
+        if (index == null || index == 0) {
+            return null;
+        }
+
+        return index;
+    }
+
+    public void setLastTransactionIndex(String database, Long index) {
+        if (index == null) {
+            return;
+        }
+
+        _lastRaftIndexPerDatabase.compute(database, (__, initialValue) -> {
+            if (initialValue == null) {
+                return index;
+            }
+            return Math.max(initialValue, index);
+        });
     }
 
     protected void ensureNotClosed() {

@@ -1,6 +1,16 @@
 package net.ravendb.client.documents.session;
 
+import net.ravendb.client.documents.queries.explanation.ExplanationOptions;
+import net.ravendb.client.documents.queries.explanation.Explanations;
+import net.ravendb.client.documents.queries.highlighting.HighlightingOptions;
+import net.ravendb.client.documents.queries.highlighting.Highlightings;
 import net.ravendb.client.documents.queries.spatial.DynamicSpatialField;
+import net.ravendb.client.documents.session.loaders.IIncludeBuilder;
+import net.ravendb.client.documents.session.loaders.IQueryIncludeBuilder;
+import net.ravendb.client.documents.session.loaders.IncludeBuilder;
+import net.ravendb.client.primitives.Reference;
+
+import java.util.function.Consumer;
 
 /**
  *  A query against a Raven index
@@ -44,7 +54,20 @@ public interface IDocumentQueryBase<T, TSelf extends IDocumentQueryBase<T, TSelf
      */
     TSelf distinct();
 
-    //TBD 4.1 TSelf explainScores();
+    /**
+     * Adds explanations of scores calculated for queried documents to the query result
+     * @param explanations Output parameter
+     * @return Query instance
+     */
+    TSelf includeExplanations(Reference<Explanations> explanations);
+
+    /**
+     * Adds explanations of scores calculated for queried documents to the query result
+     * @param options Options
+     * @param explanations Output parameter
+     * @return Query instance
+     */
+    TSelf includeExplanations(ExplanationOptions options, Reference<Explanations> explanations);
 
     /**
      * Specifies a fuzziness factor to the single word term in the last where clause
@@ -56,17 +79,10 @@ public interface IDocumentQueryBase<T, TSelf extends IDocumentQueryBase<T, TSelf
      */
     TSelf fuzzy(double fuzzy);
 
-    //TBD 4.1 TSelf Highlight(string fieldName, int fragmentLength, int fragmentCount, string fragmentsField);
-
-    //TBD 4.1 TSelf Highlight(string fieldName, int fragmentLength, int fragmentCount, out FieldHighlightings highlightings);
-
-    //TBD 4.1 TSelf Highlight(string fieldName, string fieldKeyName, int fragmentLength, int fragmentCount, out FieldHighlightings highlightings);
-
-    //TBD 4.1 TSelf Highlight<TValue>(Expression<Func<T, TValue>> propertySelector, int fragmentLength, int fragmentCount, Expression<Func<T, IEnumerable>> fragmentsPropertySelector);
-
-    //TBD 4.1 TSelf Highlight<TValue>(Expression<Func<T, TValue>> propertySelector, int fragmentLength, int fragmentCount, out FieldHighlightings highlightings);
-
-    //TBD 4.1 TSelf Highlight<TValue>(Expression<Func<T, TValue>> propertySelector, Expression<Func<T, TValue>> keyPropertySelector, int fragmentLength, int fragmentCount, out FieldHighlightings highlightings);
+    TSelf highlight(String fieldName, int fragmentLength, int fragmentCount, Reference<Highlightings> highlightings);
+    TSelf highlight(String fieldName, int fragmentLength, int fragmentCount, HighlightingOptions options, Reference<Highlightings> highlightings);
+    //TBD expr TSelf Highlight(Expression<Func<T, object>> path, int fragmentLength, int fragmentCount, out Highlightings highlightings);
+    //TBD expr TSelf Highlight(Expression<Func<T, object>> path, int fragmentLength, int fragmentCount, HighlightingOptions options, out Highlightings highlightings);
 
     /**
      * Includes the specified path in the query, loading the document specified in that path
@@ -74,6 +90,8 @@ public interface IDocumentQueryBase<T, TSelf extends IDocumentQueryBase<T, TSelf
      * @return Query instance
      */
     TSelf include(String path);
+
+    TSelf include(Consumer<IQueryIncludeBuilder> includes);
 
     //TBD expr TSelf Include(Expression<Func<T, object>> path);
 
@@ -157,10 +175,6 @@ public interface IDocumentQueryBase<T, TSelf extends IDocumentQueryBase<T, TSelf
     TSelf randomOrdering(String seed);
 
     //TBD 4.1 TSelf customSortUsing(String typeName, boolean descending);
-
-    //TBD 4.1 TSelf SetHighlighterTags(string preTag, string postTag);
-    //TBD 4.1 TSelf SetHighlighterTags(string[] preTags, string[] postTags);
-
 
     /**
      * Sorts the query results by distance.

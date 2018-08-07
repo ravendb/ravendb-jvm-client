@@ -11,6 +11,7 @@ class SubscriptionConnectionServerMessage {
         CONNECTION_STATUS,
         END_OF_BATCH,
         DATA,
+        INCLUDES,
         CONFIRM,
         ERROR
     }
@@ -53,6 +54,7 @@ class SubscriptionConnectionServerMessage {
     private MessageType type;
     private ConnectionStatus status;
     private ObjectNode data;
+    private ObjectNode includes;
     private String exception;
     private String message;
 
@@ -78,6 +80,14 @@ class SubscriptionConnectionServerMessage {
 
     public void setData(ObjectNode data) {
         this.data = data;
+    }
+
+    public ObjectNode getIncludes() {
+        return includes;
+    }
+
+    public void setIncludes(ObjectNode includes) {
+        this.includes = includes;
     }
 
     public String getException() {

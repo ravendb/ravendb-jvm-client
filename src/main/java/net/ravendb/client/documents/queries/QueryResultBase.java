@@ -1,12 +1,20 @@
 package net.ravendb.client.documents.queries;
 
+import com.fasterxml.jackson.databind.node.ObjectNode;
+import net.ravendb.client.documents.queries.timings.QueryTimings;
+
 import java.util.Date;
+import java.util.Map;
 
 public abstract class QueryResultBase<TResult, TInclude> {
 
     private TResult results;
 
     private TInclude includes;
+
+    private ObjectNode counterIncludes;
+
+    private Map<String, String[]> includedCounterNames;
 
     private String[] includedPaths;
 
@@ -19,6 +27,10 @@ public abstract class QueryResultBase<TResult, TInclude> {
     private Long resultEtag;
 
     private Date lastQueryTime;
+
+    private String nodeTag;
+
+    private QueryTimings timings;
 
     /**
      * Gets the document resulting from this query.
@@ -50,6 +62,34 @@ public abstract class QueryResultBase<TResult, TInclude> {
      */
     public void setIncludes(TInclude includes) {
         this.includes = includes;
+    }
+
+    /**
+     * @return Gets the Counters included in the result.
+     */
+    public ObjectNode getCounterIncludes() {
+        return counterIncludes;
+    }
+
+    /**
+     * @param counterIncludes Sets the Counters included in the result.
+     */
+    public void setCounterIncludes(ObjectNode counterIncludes) {
+        this.counterIncludes = counterIncludes;
+    }
+
+    /**
+     * @return The names of all the counters that the server was asked to include in the result, by document id.
+     */
+    public Map<String, String[]> getIncludedCounterNames() {
+        return includedCounterNames;
+    }
+
+    /**
+     * @param includedCounterNames The names of all the counters that the server was asked to include in the result, by document id.
+     */
+    public void setIncludedCounterNames(Map<String, String[]> includedCounterNames) {
+        this.includedCounterNames = includedCounterNames;
     }
 
     /**
@@ -150,5 +190,33 @@ public abstract class QueryResultBase<TResult, TInclude> {
      */
     public void setLastQueryTime(Date lastQueryTime) {
         this.lastQueryTime = lastQueryTime;
+    }
+
+    /**
+     * @return Tag of a cluster node which responded to the query
+     */
+    public String getNodeTag() {
+        return nodeTag;
+    }
+
+    /**
+     * @param nodeTag Tag of a cluster node which responded to the query
+     */
+    public void setNodeTag(String nodeTag) {
+        this.nodeTag = nodeTag;
+    }
+
+    /**
+     * @return Detailed timings for various parts of a query (Lucene search, loading documents, transforming results) - if requested.
+     */
+    public QueryTimings getTimings() {
+        return timings;
+    }
+
+    /**
+     * @param timings Detailed timings for various parts of a query (Lucene search, loading documents, transforming results) - if requested.
+     */
+    public void setTimings(QueryTimings timings) {
+        this.timings = timings;
     }
 }

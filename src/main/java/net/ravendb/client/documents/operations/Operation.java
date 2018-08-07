@@ -15,12 +15,8 @@ import java.util.function.Supplier;
 public class Operation {
 
     private final RequestExecutor _requestExecutor;
-    //TBD private readonly Func<IDatabaseChanges> _changes;
     private final DocumentConventions _conventions;
     private final long _id;
-
-    //TBD public Action<IOperationProgress> OnProgressChanged;
-    //TBD private IDisposable _subscription;
 
     public long getId() {
         return _id;
@@ -28,12 +24,9 @@ public class Operation {
 
     public Operation(RequestExecutor requestExecutor, Supplier<IDatabaseChanges> changes, DocumentConventions conventions, long id) {
         _requestExecutor = requestExecutor;
-        //TBD _changes = changes;
         _conventions = conventions;
         _id = id;
     }
-
-    //TBD currently we simply pull for status - implement this using changes API
 
     private ObjectNode fetchOperationsStatus() {
         RavenCommand<ObjectNode> command = getOperationStateCommand(_conventions, _id);

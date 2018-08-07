@@ -83,6 +83,11 @@ public class QueryCommand extends RavenCommand<QueryResult> {
         result = mapper.readValue(response, QueryResult.class);
         if (fromCache) {
             result.setDurationInMs(-1);
+
+            if (result.getTimings() != null) {
+                result.getTimings().setDurationInMs(-1);
+                result.setTimings(null);
+            }
         }
     }
 

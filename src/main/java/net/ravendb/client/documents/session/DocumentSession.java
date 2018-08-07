@@ -21,7 +21,9 @@ import net.ravendb.client.documents.indexes.AbstractIndexCreationTask;
 import net.ravendb.client.documents.linq.IDocumentQueryGenerator;
 import net.ravendb.client.documents.operations.PatchRequest;
 import net.ravendb.client.documents.queries.Query;
+import net.ravendb.client.documents.session.loaders.IIncludeBuilder;
 import net.ravendb.client.documents.session.loaders.ILoaderWithInclude;
+import net.ravendb.client.documents.session.loaders.IncludeBuilder;
 import net.ravendb.client.documents.session.loaders.MultiLoaderWithInclude;
 import net.ravendb.client.documents.session.operations.*;
 import net.ravendb.client.documents.session.operations.lazy.*;
@@ -65,32 +67,49 @@ public class DocumentSession extends InMemoryDocumentSessionOperations implement
         return this;
     }
 
-    private final IAttachmentsSessionOperations _attachments;
+    private IAttachmentsSessionOperations _attachments;
 
     @Override
     public IAttachmentsSessionOperations attachments() {
+        if (_attachments == null) {
+            _attachments = new DocumentSessionAttachments(this);
+        }
         return _attachments;
     }
 
-    private final IRevisionsSessionOperations _revisions;
+    private IRevisionsSessionOperations _revisions;
 
     @Override
     public IRevisionsSessionOperations revisions() {
+        if (_revisions == null) {
+            _revisions = new DocumentSessionRevisions(this);
+        }
         return _revisions;
+    }
+
+    private IClusterTransactionOperations _clusterTransaction;
+
+    @Override
+    public IClusterTransactionOperations clusterTransaction() {
+        if (_clusterTransaction == null) {
+            _clusterTransaction = new ClusterTransactionOperations(this);
+        }
+        return _clusterTransaction;
+    }
+
+    @Override
+    protected ClusterTransactionOperationsBase getClusterSession() {
+        return (ClusterTransactionOperationsBase) _clusterTransaction;
     }
 
     /**
      * Initializes new DocumentSession
-     * @param dbName Database name
      * @param documentStore Parent document store
      * @param id Identifier
-     * @param requestExecutor Request executor to use
+     * @param options SessionOptions
      */
-    public DocumentSession(String dbName, DocumentStore documentStore, UUID id, RequestExecutor requestExecutor) {
-        super(dbName, documentStore, requestExecutor, id);
-
-        _attachments = new DocumentSessionAttachments(this);
-        _revisions = new DocumentSessionRevisions(this);
+    public DocumentSession(DocumentStore documentStore, UUID id, SessionOptions options) {
+        super(documentStore, id, options);
     }
 
     /**
@@ -105,7 +124,12 @@ public class DocumentSession extends InMemoryDocumentSessionOperations implement
                 return;
             }
 
+            if (noTracking) {
+                throw new IllegalStateException("Cannot execute saveChanges when entity tracking is disabled in session.");
+            }
+
             _requestExecutor.execute(command, sessionInfo);
+            updateSessionAfterSaveChanges(command.getResult());
             saveChangeOperation.setResult(command.getResult());
         }
     }
@@ -342,7 +366,45 @@ public class DocumentSession extends InMemoryDocumentSessionOperations implement
         }
     }
 
+    @Override
+    public <T> T load(Class<T> clazz, String id, Consumer<IIncludeBuilder> includes) {
+        if (id == null) {
+            return null;
+        }
+
+        Collection<T> values = load(clazz, Arrays.asList(id), includes).values();
+        return values.isEmpty() ? null : values.iterator().next();
+    }
+
+    @Override
+    public <TResult> Map<String, TResult> load(Class<TResult> clazz, Collection<String> ids, Consumer<IIncludeBuilder> includes) {
+        if (ids == null) {
+            throw new IllegalArgumentException("ids cannot be null");
+        }
+
+        if (includes == null) {
+            return load(clazz, ids);
+        }
+
+        IncludeBuilder includeBuilder = new IncludeBuilder(getConventions());
+        includes.accept(includeBuilder);
+
+        return loadInternal(clazz,
+                ids.toArray(new String[0]),
+                includeBuilder.documentsToInclude != null ? includeBuilder.documentsToInclude.toArray(new String[0]) : null,
+                includeBuilder.getCountersToInclude() != null ? includeBuilder.getCountersToInclude().toArray(new String[0]) : null,
+                includeBuilder.isAllCounters());
+    }
+
     public <TResult> Map<String, TResult> loadInternal(Class<TResult> clazz, String[] ids, String[] includes) {
+        return loadInternal(clazz, ids, includes, null, false);
+    }
+
+    public <TResult> Map<String, TResult> loadInternal(Class<TResult> clazz, String[] ids, String[] includes, String[] counterIncludes) {
+        return loadInternal(clazz, ids, includes, counterIncludes, false);
+    }
+
+    public <TResult> Map<String, TResult> loadInternal(Class<TResult> clazz, String[] ids, String[] includes, String[] counterIncludes, boolean includeAllCounters) {
         if (ids == null) {
             throw new IllegalArgumentException("Ids cannot be null");
         }
@@ -350,6 +412,12 @@ public class DocumentSession extends InMemoryDocumentSessionOperations implement
         LoadOperation loadOperation = new LoadOperation(this);
         loadOperation.byIds(ids);
         loadOperation.withIncludes(includes);
+
+        if (includeAllCounters) {
+            loadOperation.withAllCounters();
+        } else {
+            loadOperation.withCounters(counterIncludes);
+        }
 
         GetDocumentsCommand command = loadOperation.createRequest();
         if (command != null) {
@@ -783,4 +851,15 @@ public class DocumentSession extends InMemoryDocumentSessionOperations implement
             _innerIterator.close();
         }
     }
+
+    @Override
+    public ISessionDocumentCounters countersFor(String documentId) {
+        return new SessionDocumentCounters(this, documentId);
+    }
+
+    @Override
+    public ISessionDocumentCounters countersFor(Object entity) {
+        return new SessionDocumentCounters(this, entity);
+    }
+
 }

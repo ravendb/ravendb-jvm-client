@@ -10,7 +10,12 @@ import net.ravendb.client.documents.conventions.DocumentConventions;
 import net.ravendb.client.documents.indexes.spatial.SpatialRelation;
 import net.ravendb.client.documents.indexes.spatial.SpatialUnits;
 import net.ravendb.client.documents.queries.*;
+import net.ravendb.client.documents.queries.explanation.ExplanationOptions;
+import net.ravendb.client.documents.queries.explanation.Explanations;
 import net.ravendb.client.documents.queries.facets.FacetBase;
+import net.ravendb.client.documents.queries.highlighting.HighlightingOptions;
+import net.ravendb.client.documents.queries.highlighting.Highlightings;
+import net.ravendb.client.documents.queries.highlighting.QueryHighlightings;
 import net.ravendb.client.documents.queries.moreLikeThis.MoreLikeThisScope;
 import net.ravendb.client.documents.queries.spatial.SpatialCriteria;
 import net.ravendb.client.documents.queries.spatial.DynamicSpatialField;
@@ -18,12 +23,16 @@ import net.ravendb.client.documents.queries.suggestions.SuggestionBase;
 import net.ravendb.client.documents.queries.suggestions.SuggestionOptions;
 import net.ravendb.client.documents.queries.suggestions.SuggestionWithTerm;
 import net.ravendb.client.documents.queries.suggestions.SuggestionWithTerms;
+import net.ravendb.client.documents.queries.timings.QueryTimings;
+import net.ravendb.client.documents.session.loaders.IncludeBuilder;
 import net.ravendb.client.documents.session.operations.QueryOperation;
 import net.ravendb.client.documents.session.operations.lazy.LazyQueryOperation;
 import net.ravendb.client.documents.session.tokens.*;
+import net.ravendb.client.extensions.JsonExtensions;
 import net.ravendb.client.primitives.CleanCloseable;
 import net.ravendb.client.primitives.EventHelper;
 import net.ravendb.client.primitives.Reference;
+import net.ravendb.client.primitives.Tuple;
 import org.apache.commons.lang3.ClassUtils;
 import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -96,7 +105,7 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
 
     protected boolean theWaitForNonStaleResults;
 
-    protected Set<String> includes = new HashSet<>();
+    protected Set<String> documentIncludes = new HashSet<>();
 
     /**
      * Holds the query stats
@@ -106,10 +115,6 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
     protected boolean disableEntitiesTracking;
 
     protected boolean disableCaching;
-
-    //TBD 4.1 protected boolean showQueryTimings;
-
-    //TBD 4.1 protected boolean shouldExplainScores;
 
     public boolean isDistinct() {
         return !selectTokens.isEmpty() && selectTokens.get(0) instanceof DistinctToken;
@@ -138,6 +143,8 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
 
     private boolean _isInMoreLikeThis;
 
+    private String _includesAlias;
+
     private static Duration getDefaultTimeout() {
         return Duration.ofSeconds(15);
     }
@@ -160,7 +167,7 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
         this.declareToken = declareToken;
         this.loadTokens = loadTokens;
         theSession = session;
-        _addAfterQueryExecutedListener(this::updateStatsAndHighlightings);
+        _addAfterQueryExecutedListener(this::updateStatsHighlightingsAndExplanations);
         _conventions = session == null ? new DocumentConventions() : session.getConventions();
     }
 
@@ -369,10 +376,24 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
      */
     @Override
     public void _include(String path) {
-        includes.add(path);
+        documentIncludes.add(path);
     }
 
     //TBD expr public void Include(Expression<Func<T, object>> path)
+
+    public void _include(IncludeBuilder includes) {
+        if (includes == null) {
+            return;
+        }
+
+        if (includes.documentsToInclude != null) {
+            for (String doc : includes.documentsToInclude) {
+                documentIncludes.add(doc);
+            }
+        }
+
+        _includeCounters(includes.alias, includes.countersToIncludeBySourcePath);
+    }
 
     @Override
     public void _take(int count) {
@@ -972,8 +993,6 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
         indexQuery.setWaitForNonStaleResultsTimeout(timeout);
         indexQuery.setQueryParameters(queryParameters);
         indexQuery.setDisableCaching(disableCaching);
-        //TBD 4.1 indexQuery.setShowTimings(showQueryTimings);
-        //TBD 4.1 indexQuery.setExplainScores(shouldExplainScores);
 
         if (pageSize != null) {
             indexQuery.setPageSize(pageSize);
@@ -1022,6 +1041,7 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
         }
 
         StringBuilder queryText = new StringBuilder();
+
         buildDeclare(queryText);
         buildFrom(queryText);
         buildGroupBy(queryText);
@@ -1036,13 +1056,17 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
     }
 
     private void buildInclude(StringBuilder queryText) {
-        if (includes == null || includes.isEmpty()) {
+        if (documentIncludes.isEmpty()
+                && highlightingTokens.isEmpty()
+                && explanationToken == null
+                && queryTimings == null
+                && counterIncludesTokens == null) {
             return;
         }
 
         queryText.append(" include ");
         boolean first = true;
-        for (String include : includes) {
+        for (String include : documentIncludes) {
             if (!first) {
                 queryText.append(",");
             }
@@ -1063,6 +1087,45 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
             } else {
                 queryText.append(include);
             }
+        }
+
+        if (counterIncludesTokens != null) {
+            for (CounterIncludesToken counterIncludesToken : counterIncludesTokens) {
+                if (!first) {
+                    queryText.append(",");
+                }
+                first = false;
+
+                counterIncludesToken.writeTo(queryText);
+            }
+        }
+
+        for (HighlightingToken token : highlightingTokens) {
+            if (!first) {
+                queryText.append(",");
+            }
+            first = false;
+
+            token.writeTo(queryText);
+        }
+
+        if (explanationToken != null) {
+            if (!first) {
+                queryText.append(",");
+            }
+
+            first = false;
+            explanationToken.writeTo(queryText);
+        }
+
+        if (queryTimings != null) {
+            if (!first) {
+                queryText.append(",");
+            }
+            first = false;
+
+
+            TimingsToken.INSTANCE.writeTo(queryText);
         }
     }
 
@@ -1146,9 +1209,15 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
         }
     }
 
-    private void updateStatsAndHighlightings(QueryResult queryResult) {
+    private void updateStatsHighlightingsAndExplanations(QueryResult queryResult) {
         queryStats.updateQueryStats(queryResult);
-        //TBD 4.1 Highlightings.Update(queryResult);
+        queryHighlightings.update(queryResult);
+        if (explanations != null) {
+            explanations.update(queryResult);
+        }
+        if (queryTimings != null) {
+            queryTimings.update(queryResult);
+        }
     }
 
     private void buildSelect(StringBuilder writer) {
@@ -1467,14 +1536,40 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
         }
     }
 
+    public void addFromAliasToWhereTokens(String fromAlias) {
+        if (StringUtils.isEmpty(fromAlias)) {
+            throw new IllegalArgumentException("Alias cannot be null or empty");
+        }
+
+        List<QueryToken> tokens = getCurrentWhereTokens();
+        for (QueryToken token : tokens) {
+            if (token instanceof WhereToken) {
+                ((WhereToken) token).addAlias(fromAlias);
+            }
+        }
+    }
+
+    public String addAliasToCounterIncludesTokens(String fromAlias) {
+        if (_includesAlias == null) {
+            return fromAlias;
+        }
+
+        if (fromAlias == null) {
+            fromAlias = _includesAlias;
+            addFromAliasToWhereTokens(fromAlias);
+        }
+
+        for (CounterIncludesToken counterIncludesToken : counterIncludesTokens) {
+            counterIncludesToken.addAliasToPath(fromAlias);
+        }
+
+        return fromAlias;
+    }
+
     protected static <T> void getSourceAliasIfExists(Class<T> clazz, QueryData queryData, String[] fields, Reference<String> sourceAlias) {
         sourceAlias.value = null;
 
         if (fields.length != 1) {
-            return;
-        }
-
-        if (!String.class.equals(clazz) && !ClassUtils.isPrimitiveOrWrapper(clazz) && !clazz.isEnum()) {
             return;
         }
 
@@ -1544,17 +1639,27 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
         disableCaching = true;
     }
 
-    //TBD 4.1 public void _showTimings()
-    //TBD 4.1 protected List<HighlightedField> HighlightedFields = new List<HighlightedField>();
-    //TBD 4.1 protected string[] HighlighterPreTags = new string[0];
-    //TBD 4.1 protected string[] HighlighterPostTags = new string[0];
-    //TBD 4.1 protected string HighlighterKeyName;
-    //TBD 4.1 protected QueryHighlightings Highlightings = new QueryHighlightings();
-    //TBD 4.1 public void SetHighlighterTags(string preTag, string postTag)
-    //TBD 4.1 public void Highlight(string fieldName, int fragmentLength, int fragmentCount, string fragmentsField)
-    //TBD 4.1 public void Highlight(string fieldName, int fragmentLength, int fragmentCount, out FieldHighlightings fieldHighlightings)
-    //TBD 4.1 public void Highlight(string fieldName, string fieldKeyName, int fragmentLength, int fragmentCount, out FieldHighlightings fieldHighlightings)
-    //TBD 4.1 public void SetHighlighterTags(string[] preTags, string[] postTags)
+    protected QueryTimings queryTimings;
+
+    public void _includeTimings(Reference<QueryTimings> timingsReference) {
+        if (queryTimings != null) {
+            timingsReference.value = queryTimings;
+            return;
+        }
+
+        queryTimings = timingsReference.value = new QueryTimings();
+    }
+
+    protected List<HighlightingToken> highlightingTokens = new ArrayList<>();
+
+    protected QueryHighlightings queryHighlightings = new QueryHighlightings();
+
+    public void _highlight(String fieldName, int fragmentLength, int fragmentCount, HighlightingOptions options, Reference<Highlightings> highlightingsReference) {
+        highlightingsReference.value = queryHighlightings.add(fieldName);
+
+        String optionsParameterName = options != null ? addQueryParameter(JsonExtensions.getDefaultMapper().valueToTree(options)) : null;
+        highlightingTokens.add(HighlightingToken.create(fieldName, fragmentLength, fragmentCount, optionsParameterName));
+    }
 
     protected void _withinRadiusOf(String fieldName, double radius, double latitude, double longitude, SpatialUnits radiusUnits, double distErrorPercent) {
         fieldName = ensureValidFieldName(fieldName, false);
@@ -1567,14 +1672,14 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
         tokens.add(whereToken);
     }
 
-    protected void _spatial(String fieldName, String shapeWkt, SpatialRelation relation, double distErrorPercent) {
+    protected void _spatial(String fieldName, String shapeWkt, SpatialRelation relation, SpatialUnits units, double distErrorPercent) {
         fieldName = ensureValidFieldName(fieldName, false);
 
         List<QueryToken> tokens = getCurrentWhereTokens();
         appendOperatorIfNeeded(tokens);
         negateIfNeeded(tokens, fieldName);
 
-        ShapeToken wktToken = ShapeToken.wkt(addQueryParameter(shapeWkt));
+        ShapeToken wktToken = ShapeToken.wkt(addQueryParameter(shapeWkt), units);
 
         WhereOperator whereOperator;
         switch (relation) {
@@ -1861,6 +1966,47 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
 
         if (!orderByTokens.isEmpty()) {
             throw new IllegalStateException("Cannot add suggest when ORDER BY statements are present.");
+        }
+    }
+
+    protected Explanations explanations;
+
+    protected ExplanationToken explanationToken;
+
+    public void _includeExplanations(ExplanationOptions options, Reference<Explanations> explanationsReference) {
+        if (explanationToken != null) {
+            throw new IllegalStateException("Duplicate IncludeExplanations method calls are forbidden.");
+        }
+
+        String optionsParameterName = options != null ? addQueryParameter(options) : null;
+        explanationToken = ExplanationToken.create(optionsParameterName);
+        this.explanations = explanationsReference.value = new Explanations();
+    }
+
+    protected List<CounterIncludesToken> counterIncludesTokens;
+
+    protected void _includeCounters(String alias, Map<String, Tuple<Boolean, Set<String>>> counterToIncludeByDocId) {
+        if (counterToIncludeByDocId == null || counterToIncludeByDocId.isEmpty()) {
+            return;
+        }
+
+        counterIncludesTokens = new ArrayList<>();
+        _includesAlias = alias;
+
+        for (Map.Entry<String, Tuple<Boolean, Set<String>>> kvp : counterToIncludeByDocId.entrySet()) {
+            if (kvp.getValue().first) {
+                counterIncludesTokens.add(CounterIncludesToken.all(kvp.getKey()));
+                continue;
+            }
+
+            if (kvp.getValue().second == null || kvp.getValue().second.isEmpty()) {
+                continue;
+            }
+
+            counterIncludesTokens.add(CounterIncludesToken.create(kvp.getKey(),
+                    kvp.getValue().second.size() == 1
+                        ? addQueryParameter(kvp.getValue().second.iterator().next())
+                        : addQueryParameter(kvp.getValue().second)));
         }
     }
 }

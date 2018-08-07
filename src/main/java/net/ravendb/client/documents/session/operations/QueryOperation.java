@@ -35,7 +35,8 @@ public class QueryOperation {
     private QueryResult _currentQueryResults;
     private final FieldsToFetchToken _fieldsToFetch;
     private Stopwatch _sp;
-    private boolean _disableEntitiesTracking;
+    private boolean _noTracking;
+
     private static final Log logger = LogFactory.getLog(QueryOperation.class);
 
     public QueryOperation(InMemoryDocumentSessionOperations session, String indexName, IndexQuery indexQuery,
@@ -44,7 +45,7 @@ public class QueryOperation {
         _indexName = indexName;
         _indexQuery = indexQuery;
         _fieldsToFetch = fieldsToFetch;
-        _disableEntitiesTracking = disableEntitiesTracking;
+        _noTracking = disableEntitiesTracking;
         _metadataOnly = metadataOnly;
         _indexEntriesOnly = indexEntriesOnly;
 
@@ -103,7 +104,7 @@ public class QueryOperation {
     public <T> List<T> complete(Class<T> clazz) {
         QueryResult queryResult = _currentQueryResults.createSnapshot();
 
-        if (!_disableEntitiesTracking) {
+        if (!_noTracking) {
             _session.registerIncludes(queryResult.getIncludes());
         }
 
@@ -119,14 +120,18 @@ public class QueryOperation {
                     id = idNode.asText();
                 }
 
-                list.add(deserialize(clazz, id, (ObjectNode) document, metadata, _fieldsToFetch, _disableEntitiesTracking, _session));
+                list.add(deserialize(clazz, id, (ObjectNode) document, metadata, _fieldsToFetch, _noTracking, _session));
             }
         } catch (JsonProcessingException e) {
             throw new RuntimeException("Unable to read json: " + e.getMessage(), e);
         }
 
-        if (!_disableEntitiesTracking) {
+        if (!_noTracking) {
             _session.registerMissingIncludes(queryResult.getResults(), queryResult.getIncludes(), queryResult.getIncludedPaths());
+
+            if (queryResult.getCounterIncludes() != null) {
+                _session.registerCounters(queryResult.getCounterIncludes(), queryResult.getIncludedCounterNames());
+            }
         }
 
         return list;
@@ -185,12 +190,22 @@ public class QueryOperation {
         return result;
     }
 
-    public boolean isDisableEntitiesTracking() {
-        return _disableEntitiesTracking;
+    public boolean isNoTracking() {
+        return _noTracking;
     }
 
+    public void setNoTracking(boolean noTracking) {
+        _noTracking = noTracking;
+    }
+
+    @Deprecated
+    public boolean isDisableEntitiesTracking() {
+        return _noTracking;
+    }
+
+    @Deprecated
     public void setDisableEntitiesTracking(boolean disableEntitiesTracking) {
-        this._disableEntitiesTracking = disableEntitiesTracking;
+        this._noTracking = disableEntitiesTracking;
     }
 
     public void ensureIsAcceptableAndSaveResult(QueryResult result) {

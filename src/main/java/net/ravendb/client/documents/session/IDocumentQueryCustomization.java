@@ -3,7 +3,9 @@ package net.ravendb.client.documents.session;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import net.ravendb.client.documents.queries.IndexQuery;
 import net.ravendb.client.documents.queries.QueryResult;
+import net.ravendb.client.documents.queries.timings.QueryTimings;
 import net.ravendb.client.documents.session.operations.QueryOperation;
+import net.ravendb.client.primitives.Reference;
 
 import java.time.Duration;
 import java.util.function.Consumer;
@@ -89,7 +91,8 @@ public interface IDocumentQueryCustomization {
 
     //TBD 4.1 IDocumentQueryCustomization CustomSortUsing(string typeName);
     //TBD 4.1 IDocumentQueryCustomization CustomSortUsing(string typeName, bool descending);
-    //TBD 4.1 IDocumentQueryCustomization ShowTimings();
+
+    IDocumentQueryCustomization timings(Reference<QueryTimings> timings);
 
     /**
      * Instruct the query to wait for non stale results.

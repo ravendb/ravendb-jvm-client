@@ -20,8 +20,15 @@ public class ShapeToken extends QueryToken {
         return new ShapeToken("spatial.circle($" + radiusParameterName + ", $" + latitudeParameterName + ", $" + longitudeParameterName + ", 'Miles')");
     }
 
-    public static ShapeToken wkt(String shapeWktParameterName) {
-        return new ShapeToken("spatial.wkt($" + shapeWktParameterName + ")");
+    public static ShapeToken wkt(String shapeWktParameterName, SpatialUnits units) {
+        if (units == null) {
+            return new ShapeToken("spatial.wkt($" + shapeWktParameterName + ")");
+        }
+
+        if (units == SpatialUnits.KILOMETERS) {
+            return new ShapeToken("spatial.wkt($" + shapeWktParameterName + ", 'Kilometers')");
+        }
+        return new ShapeToken("spatial.wkt($" + shapeWktParameterName + ", 'Miles')");
     }
 
     @Override

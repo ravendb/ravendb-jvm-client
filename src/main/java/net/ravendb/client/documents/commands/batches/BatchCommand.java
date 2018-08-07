@@ -2,9 +2,11 @@ package net.ravendb.client.documents.commands.batches;
 
 import com.fasterxml.jackson.core.JsonGenerator;
 import net.ravendb.client.documents.conventions.DocumentConventions;
+import net.ravendb.client.documents.session.TransactionMode;
 import net.ravendb.client.exceptions.RavenException;
 import net.ravendb.client.http.RavenCommand;
 import net.ravendb.client.http.ServerNode;
+import net.ravendb.client.json.BatchCommandResult;
 import net.ravendb.client.json.ContentProviderHttpEntity;
 import net.ravendb.client.json.JsonArrayResult;
 import net.ravendb.client.primitives.CleanCloseable;
@@ -27,23 +29,25 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 
-public class BatchCommand extends RavenCommand<JsonArrayResult> implements CleanCloseable {
+public class BatchCommand extends RavenCommand<BatchCommandResult> implements CleanCloseable {
 
     private final DocumentConventions _conventions;
     private final List<ICommandData> _commands;
     private Set<InputStream> _attachmentStreams;
     private final BatchOptions _options;
+    private final TransactionMode _mode;
 
     public BatchCommand(DocumentConventions conventions, List<ICommandData> commands) {
-        this(conventions, commands, null);
+        this(conventions, commands, null, TransactionMode.SINGLE_NODE);
     }
 
     @SuppressWarnings("ForLoopReplaceableByForEach")
-    public BatchCommand(DocumentConventions conventions, List<ICommandData> commands, BatchOptions options) {
-        super(JsonArrayResult.class);
+    public BatchCommand(DocumentConventions conventions, List<ICommandData> commands, BatchOptions options, TransactionMode mode) {
+        super(BatchCommandResult.class);
         this._commands = commands;
         this._options = options;
         this._conventions = conventions;
+        this._mode = mode;
 
         if (conventions == null) {
             throw new IllegalArgumentException("conventions cannot be null");
@@ -82,6 +86,10 @@ public class BatchCommand extends RavenCommand<JsonArrayResult> implements Clean
                 generator.writeStartObject();
                 generator.writeFieldName("Commands");
                 generator.writeStartArray();
+
+                if (_mode == TransactionMode.CLUSTER_WIDE) {
+                    generator.writeStringField("TransactionMode", "ClusterWide");
+                }
 
                 for (ICommandData command : _commands) {
                     command.serialize(generator, _conventions);
@@ -134,7 +142,7 @@ public class BatchCommand extends RavenCommand<JsonArrayResult> implements Clean
             throw new IllegalStateException("Got null response from the server after doing a batch, something is very wrong. Probably a garbled response.");
         }
 
-        result = mapper.readValue(response, JsonArrayResult.class);
+        result = mapper.readValue(response, BatchCommandResult.class);
     }
 
     private void appendOptions(StringBuilder sb) {
@@ -144,30 +152,32 @@ public class BatchCommand extends RavenCommand<JsonArrayResult> implements Clean
 
         sb.append("?");
 
-        if (_options.isWaitForReplicas()) {
+        ReplicationBatchOptions replicationOptions = _options.getReplicationOptions();
+        if (replicationOptions != null) {
             sb.append("&waitForReplicasTimeout=")
-                    .append(TimeUtils.durationToTimeSpan(_options.getWaitForReplicasTimeout()));
+                    .append(TimeUtils.durationToTimeSpan(replicationOptions.getWaitForReplicasTimeout()));
 
-            if (_options.isThrowOnTimeoutInWaitForReplicas()) {
+            if (replicationOptions.isThrowOnTimeoutInWaitForReplicas()) {
                 sb.append("&throwOnTimeoutInWaitForReplicas=true");
             }
 
             sb.append("&numberOfReplicasToWaitFor=");
-            sb.append(_options.isMajority() ? "majority" : _options.getNumberOfReplicasToWaitFor());
+            sb.append(replicationOptions.isMajority() ? "majority" : replicationOptions.getNumberOfReplicasToWaitFor());
         }
 
-        if (_options.isWaitForIndexes()) {
+        IndexBatchOptions indexOptions = _options.getIndexOptions();
+        if (indexOptions != null) {
             sb.append("&waitForIndexesTimeout=")
-                    .append(TimeUtils.durationToTimeSpan(_options.getWaitForIndexesTimeout()));
+                    .append(TimeUtils.durationToTimeSpan(indexOptions.getWaitForIndexesTimeout()));
 
-            if (_options.isThrowOnTimeoutInWaitForIndexes()) {
+            if (indexOptions.isThrowOnTimeoutInWaitForIndexes()) {
                 sb.append("&waitForIndexThrow=true");
             } else {
                 sb.append("&waitForIndexThrow=false");
             }
 
-            if (_options.getWaitForSpecificIndexes() != null) {
-                for (String specificIndex : _options.getWaitForSpecificIndexes()) {
+            if (indexOptions.getWaitForSpecificIndexes() != null) {
+                for (String specificIndex : indexOptions.getWaitForSpecificIndexes()) {
                     sb.append("&waitForSpecificIndex=").append(specificIndex);
                 }
             }

@@ -9,5 +9,6 @@ public enum DocumentChangeTypes {
     PUT,
     DELETE,
     CONFLICT,
-    COMMON
+    COMMON,
+    COUNTER
 }

@@ -20,14 +20,9 @@ public class QueryStatistics {
     private String indexName;
     private Date indexTimestamp;
     private Date lastQueryTime;
-    private Map<String, Double> timingsInMs;
     private Long resultEtag;
     private long resultSize;
-    private Map<String, String> scoreExplanations;
-
-    public QueryStatistics() {
-        timingsInMs = new HashMap<>();
-    }
+    private String nodeTag;
 
     /**
      * Whether the query returned potentially stale results
@@ -157,22 +152,6 @@ public class QueryStatistics {
         this.lastQueryTime = lastQueryTime;
     }
 
-    /**
-     * Detailed timings for various parts of a query (Lucene search, loading documents, transforming results)
-     * @return query timings in milliseconds
-     */
-    public Map<String, Double> getTimingsInMs() {
-        return timingsInMs;
-    }
-
-    /**
-     * Detailed timings for various parts of a query (Lucene search, loading documents, transforming results)
-     * @param timingsInMs Sets the value
-     */
-    public void setTimingsInMs(Map<String, Double> timingsInMs) {
-        this.timingsInMs = timingsInMs;
-    }
-
     public Long getResultEtag() {
         return resultEtag;
     }
@@ -197,6 +176,14 @@ public class QueryStatistics {
         this.resultSize = resultSize;
     }
 
+    public String getNodeTag() {
+        return nodeTag;
+    }
+
+    public void setNodeTag(String nodeTag) {
+        this.nodeTag = nodeTag;
+    }
+
     public void updateQueryStats(QueryResult qr) {
         isStale = qr.isStale();
         durationInMs = qr.getDurationInMs();
@@ -205,18 +192,10 @@ public class QueryStatistics {
         timestamp = qr.getIndexTimestamp();
         indexName = qr.getIndexName();
         indexTimestamp = qr.getIndexTimestamp();
-        timingsInMs = qr.getTimingsInMs();
         lastQueryTime = qr.getLastQueryTime();
         resultSize = qr.getResultSize();
         resultEtag = qr.getResultEtag();
-        scoreExplanations = qr.getScoreExplanations();
+        nodeTag = qr.getNodeTag();
     }
 
-    public Map<String, String> getScoreExplanations() {
-        return scoreExplanations;
-    }
-
-    public void setScoreExplanations(Map<String, String> scoreExplanations) {
-        this.scoreExplanations = scoreExplanations;
-    }
 }

@@ -2,11 +2,13 @@ package net.ravendb.client.documents.session;
 
 import net.ravendb.client.documents.indexes.AbstractIndexCreationTask;
 import net.ravendb.client.documents.queries.Query;
+import net.ravendb.client.documents.session.loaders.IIncludeBuilder;
 import net.ravendb.client.documents.session.loaders.ILoaderWithInclude;
 import net.ravendb.client.primitives.CleanCloseable;
 
 import java.util.Collection;
 import java.util.Map;
+import java.util.function.Consumer;
 
 /**
  * Interface for document session
@@ -109,10 +111,35 @@ public interface IDocumentSession extends CleanCloseable {
      */
     <TResult> Map<String, TResult> load(Class<TResult> clazz, Collection<String> ids);
 
+    /**
+     * Loads the specified entities with the specified ids,
+     * and includes other Documents and/or Counters.
+     * @param clazz entity class
+     * @param id Document id to load
+     * @param includes Specify which documents/counters to include
+     * @param <T> entity class
+     * @return Map: Id to loaded document
+     */
+    <T> T load(Class<T> clazz, String id, Consumer<IIncludeBuilder> includes);
+
+    /**
+     * Loads the specified entities with the specified ids,
+     * and includes other Documents and/or Counters.
+     * @param clazz entity class
+     * @param ids Document ids to load
+     * @param includes Specify which documents/counters to include
+     * @param <TResult> entity class
+     * @return Map: Id to loaded document
+     */
+    <TResult> Map<String, TResult> load(Class<TResult> clazz, Collection<String> ids, Consumer<IIncludeBuilder> includes);
+
     <T> IDocumentQuery<T> query(Class<T> clazz);
 
     <T> IDocumentQuery<T> query(Class<T> clazz, Query collectionOrIndexName);
 
     <T, TIndex extends AbstractIndexCreationTask> IDocumentQuery<T> query(Class<T> clazz, Class<TIndex> indexClazz);
 
+    ISessionDocumentCounters countersFor(String documentId);
+
+    ISessionDocumentCounters countersFor(Object entity);
 }

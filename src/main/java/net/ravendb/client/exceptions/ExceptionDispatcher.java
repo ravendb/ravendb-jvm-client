@@ -106,7 +106,7 @@ public class ExceptionDispatcher {
         if (schema.getType().contains("DocumentConflictException")) {
             throw DocumentConflictException.fromJson(json);
         }
-        throw new ConcurrencyException(schema.getMessage());
+        throw new ConcurrencyException(schema.getError());
     }
 
 

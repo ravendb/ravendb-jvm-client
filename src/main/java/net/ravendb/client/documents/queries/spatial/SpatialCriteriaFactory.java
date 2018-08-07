@@ -3,6 +3,7 @@ package net.ravendb.client.documents.queries.spatial;
 import net.ravendb.client.Constants;
 import net.ravendb.client.documents.indexes.spatial.SpatialRelation;
 import net.ravendb.client.documents.indexes.spatial.SpatialUnits;
+import org.apache.commons.collections4.SplitMapUtils;
 
 public class SpatialCriteriaFactory {
 
@@ -15,7 +16,11 @@ public class SpatialCriteriaFactory {
     }
 
     public SpatialCriteria relatesToShape(String shapeWkt, SpatialRelation relation, double distErrorPercent) {
-        return new WktCriteria(shapeWkt, relation, distErrorPercent);
+        return new WktCriteria(shapeWkt, relation, null, distErrorPercent);
+    }
+
+    public SpatialCriteria relatesToShape(String shapeWkt, SpatialRelation relation, SpatialUnits units, double distErrorPercent) {
+        return new WktCriteria(shapeWkt, relation, units, distErrorPercent);
     }
 
     public SpatialCriteria intersects(String shapeWkt) {
@@ -26,12 +31,28 @@ public class SpatialCriteriaFactory {
         return relatesToShape(shapeWkt, SpatialRelation.INTERSECTS, distErrorPercent);
     }
 
+    public SpatialCriteria intersects(String shapeWkt, SpatialUnits units) {
+        return intersects(shapeWkt, units, Constants.Documents.Indexing.Spatial.DEFAULT_DISTANCE_ERROR_PCT);
+    }
+
+    public SpatialCriteria intersects(String shapeWkt, SpatialUnits units, double distErrorPercent) {
+        return relatesToShape(shapeWkt, SpatialRelation.INTERSECTS, units, distErrorPercent);
+    }
+
     public SpatialCriteria contains(String shapeWkt) {
         return contains(shapeWkt, Constants.Documents.Indexing.Spatial.DEFAULT_DISTANCE_ERROR_PCT);
     }
 
     public SpatialCriteria contains(String shapeWkt, double distErrorPercent) {
         return relatesToShape(shapeWkt, SpatialRelation.CONTAINS, distErrorPercent);
+    }
+
+    public SpatialCriteria contains(String shapeWkt, SpatialUnits units) {
+        return contains(shapeWkt, units, Constants.Documents.Indexing.Spatial.DEFAULT_DISTANCE_ERROR_PCT);
+    }
+
+    public SpatialCriteria contains(String shapeWkt, SpatialUnits units, double distErrorPercent) {
+        return relatesToShape(shapeWkt, SpatialRelation.CONTAINS, units, distErrorPercent);
     }
 
     public SpatialCriteria disjoint(String shapeWkt) {
@@ -42,12 +63,28 @@ public class SpatialCriteriaFactory {
         return relatesToShape(shapeWkt, SpatialRelation.DISJOINT, distErrorPercent);
     }
 
+    public SpatialCriteria disjoint(String shapeWkt, SpatialUnits units) {
+        return disjoint(shapeWkt, units, Constants.Documents.Indexing.Spatial.DEFAULT_DISTANCE_ERROR_PCT);
+    }
+
+    public SpatialCriteria disjoint(String shapeWkt, SpatialUnits units, double distErrorPercent) {
+        return relatesToShape(shapeWkt, SpatialRelation.DISJOINT, units, distErrorPercent);
+    }
+
     public SpatialCriteria within(String shapeWkt) {
         return within(shapeWkt, Constants.Documents.Indexing.Spatial.DEFAULT_DISTANCE_ERROR_PCT);
     }
 
     public SpatialCriteria within(String shapeWkt, double distErrorPercent) {
         return relatesToShape(shapeWkt, SpatialRelation.WITHIN, distErrorPercent);
+    }
+
+    public SpatialCriteria within(String shapeWkt, SpatialUnits units) {
+        return within(shapeWkt, units, Constants.Documents.Indexing.Spatial.DEFAULT_DISTANCE_ERROR_PCT);
+    }
+
+    public SpatialCriteria within(String shapeWkt, SpatialUnits units, double distErrorPercent) {
+        return relatesToShape(shapeWkt, SpatialRelation.WITHIN, units, distErrorPercent);
     }
 
     public SpatialCriteria withinRadius(double radius, double latitude, double longitude) {

@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import net.ravendb.client.Constants;
 import net.ravendb.client.documents.conventions.DocumentConventions;
 
+import java.io.IOException;
 import java.lang.reflect.Field;
 import java.util.HashMap;
 import java.util.Map;
@@ -132,6 +133,28 @@ public class EntityToJson {
         } catch (Exception e) {
             throw new IllegalStateException("Could not convert document " + id + " to entity of type " + entityType.getName(), e);
         }
+    }
+
+    public void populateEntity(Object entity, String id, ObjectNode document) {
+        if (entity == null) {
+            throw new IllegalArgumentException("Entity cannot be null");
+        }
+
+        if (id == null) {
+            throw new IllegalArgumentException("Id cannot be null");
+        }
+
+        if (document == null) {
+            throw new IllegalArgumentException("Document cannot be null");
+        }
+
+        try {
+            _session.getConventions().getEntityMapper().updateValue(entity, document);
+            _session.getGenerateEntityIdOnTheClient().trySetIdentity(entity, id);
+        } catch (IOException e) {
+            throw new IllegalStateException("Could not populate entity");
+        }
+
     }
 
     @SuppressWarnings("UnusedReturnValue")
