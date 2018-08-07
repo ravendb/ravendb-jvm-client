@@ -7,6 +7,7 @@ public class GetDocumentsResult {
 
     private ObjectNode includes;
     private ArrayNode results;
+    private ObjectNode counterIncludes;
     private int nextPageStart;
 
     public ObjectNode getIncludes() {
@@ -31,5 +32,13 @@ public class GetDocumentsResult {
 
     public void setNextPageStart(int nextPageStart) {
         this.nextPageStart = nextPageStart;
+    }
+
+    public ObjectNode getCounterIncludes() {
+        return counterIncludes;
+    }
+
+    public void setCounterIncludes(ObjectNode counterIncludes) {
+        this.counterIncludes = counterIncludes;
     }
 }

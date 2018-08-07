@@ -6,12 +6,17 @@ import net.ravendb.client.Constants;
 import net.ravendb.client.documents.indexes.spatial.SpatialRelation;
 import net.ravendb.client.documents.indexes.spatial.SpatialUnits;
 import net.ravendb.client.documents.queries.*;
+import net.ravendb.client.documents.queries.explanation.ExplanationOptions;
+import net.ravendb.client.documents.queries.explanation.Explanations;
 import net.ravendb.client.documents.queries.facets.*;
+import net.ravendb.client.documents.queries.highlighting.HighlightingOptions;
+import net.ravendb.client.documents.queries.highlighting.Highlightings;
 import net.ravendb.client.documents.queries.moreLikeThis.*;
 import net.ravendb.client.documents.queries.spatial.DynamicSpatialField;
 import net.ravendb.client.documents.queries.spatial.SpatialCriteria;
 import net.ravendb.client.documents.queries.spatial.SpatialCriteriaFactory;
 import net.ravendb.client.documents.queries.suggestions.*;
+import net.ravendb.client.documents.queries.timings.QueryTimings;
 import net.ravendb.client.documents.session.tokens.DeclareToken;
 import net.ravendb.client.documents.session.tokens.FieldsToFetchToken;
 import net.ravendb.client.documents.session.tokens.LoadToken;
@@ -78,7 +83,23 @@ public class DocumentQuery<T> extends AbstractDocumentQuery<T, DocumentQuery<T>>
         return this;
     }
 
-    //TBD 4.1 public IDocumentQuery<T> explainScores() {
+    @Override
+    public IDocumentQuery<T> includeExplanations(Reference<Explanations> explanations) {
+        _includeExplanations(null, explanations);
+        return this;
+    }
+
+    @Override
+    public IDocumentQuery<T> includeExplanations(ExplanationOptions options, Reference<Explanations> explanations) {
+        _includeExplanations(options, explanations);
+        return this;
+    }
+
+    @Override
+    public IDocumentQuery<T> timings(Reference<QueryTimings> timings) {
+        _includeTimings(timings);
+        return this;
+    }
 
     @Override
     public <TProjection> IDocumentQuery<TProjection> selectFields(Class<TProjection> projectionClass, String... fields) {
@@ -576,20 +597,19 @@ public class DocumentQuery<T> extends AbstractDocumentQuery<T, DocumentQuery<T>>
         query.theWaitForNonStaleResults = theWaitForNonStaleResults;
         query.negate = negate;
         //noinspection unchecked
-        query.includes = new HashSet(includes);
+        query.documentIncludes = new HashSet(documentIncludes);
+        query.counterIncludesTokens = counterIncludesTokens;
         query.rootTypes = Sets.newHashSet(clazz);
         query.beforeQueryExecutedCallback = beforeQueryExecutedCallback;
         query.afterQueryExecutedCallback = afterQueryExecutedCallback;
         query.afterStreamExecutedCallback = afterStreamExecutedCallback;
-        /* TBD 4.1
-        query.HighlightedFields = new List<HighlightedField>(HighlightedFields),
-        query.HighlighterPreTags = HighlighterPreTags,
-        query.HighlighterPostTags = HighlighterPostTags,
-        */
+        query.highlightingTokens = highlightingTokens;
+        query.queryHighlightings = queryHighlightings;
         query.disableEntitiesTracking = disableEntitiesTracking;
         query.disableCaching = disableCaching;
-        //TBD 4.1 ShowQueryTimings = ShowQueryTimings,
-        //TBD 4.1 query.shouldExplainScores = shouldExplainScores;
+        query.queryTimings = queryTimings;
+        query.explanations = explanations;
+        query.explanationToken = explanationToken;
         query.isIntersect = isIntersect;
         query.defaultOperator = defaultOperator;
 
@@ -628,14 +648,20 @@ public class DocumentQuery<T> extends AbstractDocumentQuery<T, DocumentQuery<T>>
         return new AggregationDocumentQuery<>(this);
     }
 
-    //TBD 4.1 IDocumentQuery<T> IDocumentQueryBase<T, IDocumentQuery<T>>.Highlight(string fieldName, int fragmentLength, int fragmentCount, string fragmentsField)
-    //TBD 4.1 IDocumentQuery<T> IDocumentQueryBase<T, IDocumentQuery<T>>.Highlight(string fieldName, int fragmentLength, int fragmentCount, out FieldHighlightings highlightings)
-    //TBD 4.1 IDocumentQuery<T> IDocumentQueryBase<T, IDocumentQuery<T>>.Highlight(string fieldName,string fieldKeyName, int fragmentLength,int fragmentCount,out FieldHighlightings highlightings)
-    //TBD 4.1 IDocumentQuery<T> IDocumentQueryBase<T, IDocumentQuery<T>>.Highlight<TValue>(Expression<Func<T, TValue>> propertySelector, int fragmentLength, int fragmentCount, Expression<Func<T, IEnumerable>> fragmentsPropertySelector)
-    //TBD 4.1 IDocumentQuery<T> IDocumentQueryBase<T, IDocumentQuery<T>>.Highlight<TValue>(Expression<Func<T, TValue>> propertySelector, int fragmentLength, int fragmentCount, out FieldHighlightings fieldHighlightings)
-    //TBD 4.1 IDocumentQuery<T> IDocumentQueryBase<T, IDocumentQuery<T>>.Highlight<TValue>(Expression<Func<T, TValue>> propertySelector, Expression<Func<T, TValue>> keyPropertySelector, int fragmentLength, int fragmentCount, out FieldHighlightings fieldHighlightings)
-    //TBD 4.1 IDocumentQuery<T> IDocumentQueryBase<T, IDocumentQuery<T>>.SetHighlighterTags(string preTag, string postTag)
-    //TBD 4.1 IDocumentQuery<T> IDocumentQueryBase<T, IDocumentQuery<T>>.SetHighlighterTags(string[] preTags, string[] postTags)
+    @Override
+    public IDocumentQuery<T> highlight(String fieldName, int fragmentLength, int fragmentCount, Reference<Highlightings> highlightings) {
+        _highlight(fieldName, fragmentLength, fragmentCount, null, highlightings);
+        return this;
+    }
+
+    @Override
+    public IDocumentQuery<T> highlight(String fieldName, int fragmentLength, int fragmentCount, HighlightingOptions options, Reference<Highlightings> highlightings) {
+        _highlight(fieldName, fragmentLength, fragmentCount, options, highlightings);
+        return this;
+    }
+
+    //TBD expr IDocumentQuery<T> IDocumentQueryBase<T, IDocumentQuery<T>>.Highlight(Expression<Func<T, object>> path, int fragmentLength, int fragmentCount, out Highlightings highlightings)
+    //TBD expr IDocumentQuery<T> IDocumentQueryBase<T, IDocumentQuery<T>>.Highlight(Expression<Func<T, object>> path, int fragmentLength, int fragmentCount, HighlightingOptions options, out Highlightings highlightings)
     //TBD expr public IDocumentQuery<T> Spatial(Expression<Func<T, object>> path, Func<SpatialCriteriaFactory, SpatialCriteria> clause)
 
     @Override
@@ -680,7 +706,13 @@ public class DocumentQuery<T> extends AbstractDocumentQuery<T, DocumentQuery<T>>
 
     @Override
     public IDocumentQuery<T> relatesToShape(String fieldName, String shapeWkt, SpatialRelation relation, double distanceErrorPct) {
-        _spatial(fieldName, shapeWkt, relation, distanceErrorPct);
+        _spatial(fieldName, shapeWkt, relation, null, distanceErrorPct);
+        return this;
+    }
+
+    @Override
+    public IDocumentQuery<T> relatesToShape(String fieldName, String shapeWkt, SpatialRelation relation, SpatialUnits units, double distanceErrorPct) {
+        _spatial(fieldName, shapeWkt, relation, units, distanceErrorPct);
         return this;
     }
 

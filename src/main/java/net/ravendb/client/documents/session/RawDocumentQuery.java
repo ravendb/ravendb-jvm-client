@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import net.ravendb.client.documents.queries.IndexQuery;
 import net.ravendb.client.documents.queries.QueryOperator;
 import net.ravendb.client.documents.queries.QueryResult;
+import net.ravendb.client.documents.queries.timings.QueryTimings;
 import net.ravendb.client.primitives.Reference;
 
 import java.time.Duration;
@@ -39,7 +40,11 @@ public class RawDocumentQuery<T> extends AbstractDocumentQuery<T, RawDocumentQue
         return this;
     }
 
-    //TBD 4.1 public IRawDocumentQuery<T> showTimings() {
+    @Override
+    public IRawDocumentQuery<T> timings(Reference<QueryTimings> timings) {
+        _includeTimings(timings);
+        return this;
+    }
 
     @Override
     public IRawDocumentQuery<T> noTracking() {

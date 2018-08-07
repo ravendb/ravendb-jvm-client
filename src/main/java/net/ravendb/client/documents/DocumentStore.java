@@ -152,14 +152,10 @@ public class DocumentStore extends DocumentStoreBase {
         ensureNotClosed();
 
         UUID sessionId = UUID.randomUUID();
-        String databaseName = ObjectUtils.firstNonNull(options.getDatabase(), getDatabase());
-        RequestExecutor requestExecutor = ObjectUtils.firstNonNull(options.getRequestExecutor(), getRequestExecutor(databaseName));
-
-        DocumentSession session = new DocumentSession(databaseName, this, sessionId, requestExecutor);
+        DocumentSession session = new DocumentSession(this, sessionId, options);
         registerEvents(session);
         afterSessionCreated(session);
         return session;
-
     }
 
     @Override

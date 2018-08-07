@@ -176,6 +176,8 @@ public class IndexDefinition {
     }
 
     private IndexType detectStaticIndexType() {
+
+        //TODO: sync with c# -> detect JS indexes as well!
         if (reduce == null || StringUtils.isBlank(reduce)){
             return IndexType.MAP;
         }

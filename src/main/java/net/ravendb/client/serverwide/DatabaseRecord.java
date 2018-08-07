@@ -9,6 +9,7 @@ public class DatabaseRecord {
     private String dataDirectory;
     private Map<String, String> settings = new HashMap<>();
     private ConflictSolver conflictSolverConfig;
+    private long truncatedClusterTransactionIndex;
 
     public String getDatabaseName() {
         return databaseName;
@@ -48,5 +49,13 @@ public class DatabaseRecord {
 
     public void setConflictSolverConfig(ConflictSolver conflictSolverConfig) {
         this.conflictSolverConfig = conflictSolverConfig;
+    }
+
+    public long getTruncatedClusterTransactionIndex() {
+        return truncatedClusterTransactionIndex;
+    }
+
+    public void setTruncatedClusterTransactionIndex(long truncatedClusterTransactionIndex) {
+        this.truncatedClusterTransactionIndex = truncatedClusterTransactionIndex;
     }
 }

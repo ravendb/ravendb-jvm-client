@@ -2,12 +2,16 @@ package net.ravendb.client.documents.operations;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
+import java.util.Date;
+
 public class PatchResult {
 
     private PatchStatus status;
     private ObjectNode modifiedDocument;
     private ObjectNode originalDocument;
     private ObjectNode debug;
+
+    private Date lastModified;
 
     private String changeVector;
     private String collection;
@@ -58,5 +62,13 @@ public class PatchResult {
 
     public void setCollection(String collection) {
         this.collection = collection;
+    }
+
+    public Date getLastModified() {
+        return lastModified;
+    }
+
+    public void setLastModified(Date lastModified) {
+        this.lastModified = lastModified;
     }
 }

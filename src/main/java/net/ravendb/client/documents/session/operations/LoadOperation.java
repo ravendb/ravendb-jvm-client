@@ -19,7 +19,10 @@ public class LoadOperation {
 
     private String[] _ids;
     private String[] _includes;
+    private String[] countersToInclude;
+    private boolean includeAllCounters;
     private final List<String> _idsToCheckOnServer = new ArrayList<>();
+    private GetDocumentsResult _currentLoadResults;
 
     public LoadOperation(InMemoryDocumentSessionOperations _session) {
         this._session = _session;
@@ -40,7 +43,13 @@ public class LoadOperation {
             logger.info("Requesting the following ids " + String.join(",", _idsToCheckOnServer) + " from " + _session.storeIdentifier());
         }
 
-        return new GetDocumentsCommand(_idsToCheckOnServer.toArray(new String[0]), _includes, false);
+        if (includeAllCounters) {
+            return new GetDocumentsCommand(_idsToCheckOnServer.toArray(new String[0]), _includes, true, false);
+        }
+
+        return countersToInclude != null
+                ? new GetDocumentsCommand(_idsToCheckOnServer.toArray(new String[0]), _includes, countersToInclude, false)
+                : new GetDocumentsCommand(_idsToCheckOnServer.toArray(new String[0]), _includes, false);
     }
 
     public LoadOperation byId(String id) {
@@ -62,6 +71,18 @@ public class LoadOperation {
 
     public LoadOperation withIncludes(String[] includes) {
         _includes = includes;
+        return this;
+    }
+
+    public LoadOperation withCounters(String[] counters) {
+        if (counters != null) {
+            countersToInclude = counters;
+        }
+        return this;
+    }
+
+    public LoadOperation withAllCounters() {
+        includeAllCounters = true;
         return this;
     }
 
@@ -87,6 +108,22 @@ public class LoadOperation {
     }
 
     public <T> T getDocument(Class<T> clazz) {
+
+        if (_session.noTracking) {
+            /* TODO
+             if (_currentLoadResults == null)
++                    throw new InvalidOperationException($"Cannot execute '{nameof(GetDocument)}' before operation execution.");
++
++                var document = _currentLoadResults.Results[0] as BlittableJsonReaderObject;
++                if (document == null)
++                    return default;
++
++                var documentInfo = DocumentInfo.GetNewDocumentInfo(document);
++
++                return _session.TrackEntity<T>(documentInfo);
+             */
+        }
+
         return getDocument(clazz, _ids[0]);
     }
 
@@ -116,6 +153,27 @@ public class LoadOperation {
     public <T> Map<String, T> getDocuments(Class<T> clazz) {
         Map<String, T> finalResults = new TreeMap<>(String::compareToIgnoreCase);
 
+        /* TODO
+        if (_session.NoTracking)
++            {
++                if (_currentLoadResults == null)
++                    throw new InvalidOperationException($"Cannot execute '{nameof(GetDocuments)}' before operation execution.");
++
++                foreach (var id in _ids)
++                {
++                    if (id == null)
++                        continue;
++
++                    finalResults[id] = default;
++                }
++
++                foreach (var document in GetDocumentsFromResult(_currentLoadResults))
++                    finalResults[document.Id] = _session.TrackEntity<T>(document);
++
++                return finalResults;
++            }
+         */
+
         for (String id : _ids) {
             if (id == null) {
                 continue;
@@ -132,7 +190,19 @@ public class LoadOperation {
             return;
         }
 
+        if (_session.noTracking) {
+            _currentLoadResults = result;
+            return;
+        }
+
         _session.registerIncludes(result.getIncludes());
+
+        /* TODO
+         if (_includeAllCounters || _countersToInclude != null)
+            {
+                _session.RegisterCounters(result.CounterIncludes, _ids, _countersToInclude, _includeAllCounters);
+            }
+         */
 
         for (JsonNode document : result.getResults()) {
             if (document == null || document.isNull()) {

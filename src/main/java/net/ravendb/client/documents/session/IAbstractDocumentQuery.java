@@ -4,10 +4,14 @@ import net.ravendb.client.documents.conventions.DocumentConventions;
 import net.ravendb.client.documents.queries.GroupBy;
 import net.ravendb.client.documents.queries.SearchOperator;
 import net.ravendb.client.documents.queries.facets.FacetBase;
+import net.ravendb.client.documents.queries.highlighting.HighlightingOptions;
+import net.ravendb.client.documents.queries.highlighting.Highlightings;
 import net.ravendb.client.documents.queries.moreLikeThis.MoreLikeThisScope;
 import net.ravendb.client.documents.queries.spatial.DynamicSpatialField;
 import net.ravendb.client.documents.queries.spatial.SpatialCriteria;
 import net.ravendb.client.documents.queries.suggestions.SuggestionBase;
+import net.ravendb.client.documents.session.loaders.IncludeBuilder;
+import net.ravendb.client.primitives.Reference;
 
 import java.time.Duration;
 import java.util.Collection;
@@ -68,6 +72,12 @@ public interface IAbstractDocumentQuery<T> {
      * @param path include path
      */
     void _include(String path);
+
+    /**
+     * Includes the specified documents and/or counters in the query, specified by IncludeBuilder
+     * @param includes builder
+     */
+    void _include(IncludeBuilder includes);
 
     // TBD expr linq void Include(Expression<Func<T, object>> path);
 
@@ -343,11 +353,7 @@ public interface IAbstractDocumentQuery<T> {
 
     void _orderByScoreDescending();
 
-    //TBD 4.1 void Highlight(string fieldName, int fragmentLength, int fragmentCount, string fragmentsField);
-    //TBD 4.1 void Highlight(string fieldName, int fragmentLength, int fragmentCount, out FieldHighlightings highlightings);
-    //TBD 4.1 void Highlight(string fieldName, string fieldKeyName, int fragmentLength, int fragmentCount, out FieldHighlightings highlightings);
-    //TBD 4.1 void SetHighlighterTags(string preTag, string postTag);
-    //TBD 4.1 void SetHighlighterTags(string[] preTags, string[] postTags);
+    void _highlight(String fieldName, int fragmentLength, int fragmentCount, HighlightingOptions options, Reference<Highlightings> highlightings);
 
     /**
      * Perform a search for documents which fields that match the searchTerms.
@@ -431,6 +437,8 @@ public interface IAbstractDocumentQuery<T> {
     void _aggregateUsing(String facetSetupDocumentId);
 
     MoreLikeThisScope _moreLikeThis();
+
+    String addAliasToCounterIncludesTokens(String fromAlias);
 
     void _suggestUsing(SuggestionBase suggestion);
 

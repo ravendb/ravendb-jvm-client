@@ -1,14 +1,14 @@
 package net.ravendb.client.documents.queries;
 
+import java.util.List;
 import java.util.Map;
 
 public class GenericQueryResult<TResult, TIncludes> extends QueryResultBase<TResult, TIncludes> {
     private int totalResults;
     private int skippedResults;
-    //TBD 4.1 private Map<String, Map<String, List<String>>> highlightings;
+    private Map<String, Map<String, String[]>> highlightings;
+    private Map<String, String[]> explanations;
     private long durationInMs;
-    private Map<String, String> scoreExplanations;
-    private Map<String, Double> timingsInMs;
     private long resultSize;
 
     /**
@@ -43,8 +43,33 @@ public class GenericQueryResult<TResult, TIncludes> extends QueryResultBase<TRes
         this.skippedResults = skippedResults;
     }
 
-    //TBD 4.1 public Map<String, Map<String, List<String>>> getHighlightings()
-    //TBD 4.1 public void setHighlightings(Map<String, Map<String, List<String>>> highlightings) {
+    /**
+     * @return Highlighter results (if requested).
+     */
+    public Map<String, Map<String, String[]>> getHighlightings() {
+        return highlightings;
+    }
+
+    /**
+     * @param highlightings Highlighter results (if requested).
+     */
+    public void setHighlightings(Map<String, Map<String, String[]>> highlightings) {
+        this.highlightings = highlightings;
+    }
+
+    /**
+     * @return Explanations (if requested).
+     */
+    public Map<String, String[]> getExplanations() {
+        return explanations;
+    }
+
+    /**
+     * @param explanations Explanations (if requested).
+     */
+    public void setExplanations(Map<String, String[]> explanations) {
+        this.explanations = explanations;
+    }
 
     /**
      * The duration of actually executing the query server side
@@ -60,38 +85,6 @@ public class GenericQueryResult<TResult, TIncludes> extends QueryResultBase<TRes
      */
     public void setDurationInMs(long durationInMs) {
         this.durationInMs = durationInMs;
-    }
-
-    /**
-     * Explanations of document scores (if requested).
-     * @return Query score explanations
-     */
-    public Map<String, String> getScoreExplanations() {
-        return scoreExplanations;
-    }
-
-    /**
-     * Explanations of document scores (if requested).
-     * @param scoreExplanations Sets the score explanations
-     */
-    public void setScoreExplanations(Map<String, String> scoreExplanations) {
-        this.scoreExplanations = scoreExplanations;
-    }
-
-    /**
-     * Detailed timings for various parts of a query (Lucene search, loading documents, transforming results) - if requested.
-     * @return Query timings in milliseconds
-     */
-    public Map<String, Double> getTimingsInMs() {
-        return timingsInMs;
-    }
-
-    /**
-     * Detailed timings for various parts of a query (Lucene search, loading documents, transforming results) - if requested.
-     * @param timingsInMs Sets the query timings
-     */
-    public void setTimingsInMs(Map<String, Double> timingsInMs) {
-        this.timingsInMs = timingsInMs;
     }
 
     /**

@@ -26,6 +26,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import java.io.IOException;
+import java.lang.reflect.Array;
 import java.net.Socket;
 import java.security.GeneralSecurityException;
 import java.util.ArrayList;
@@ -325,7 +326,7 @@ public class SubscriptionWorker<T> implements CleanCloseable {
 
                 while (!_processingCts.getToken().isCancellationRequested()) {
                     // start the read from the server
-                    CompletableFuture<List<SubscriptionConnectionServerMessage>> readFromServer =
+                    CompletableFuture<BatchFromServer> readFromServer =
                             CompletableFuture.supplyAsync(() -> {
                                 try {
                                     return readSingleSubscriptionBatchFromServer(tcpClientCopy, batch);
@@ -347,7 +348,7 @@ public class SubscriptionWorker<T> implements CleanCloseable {
                         throw e;
                     }
 
-                    List<SubscriptionConnectionServerMessage> incomingBatch = readFromServer.get();
+                    BatchFromServer incomingBatch = readFromServer.get();
 
                     _processingCts.getToken().throwIfCancellationRequested();
 
@@ -388,8 +389,9 @@ public class SubscriptionWorker<T> implements CleanCloseable {
         }
     }
 
-    private List<SubscriptionConnectionServerMessage> readSingleSubscriptionBatchFromServer(Socket socket, SubscriptionBatch<T> batch) throws IOException {
+    private BatchFromServer readSingleSubscriptionBatchFromServer(Socket socket, SubscriptionBatch<T> batch) throws IOException {
         List<SubscriptionConnectionServerMessage> incomingBatch = new ArrayList<>();
+        List<ObjectNode> includes = new ArrayList<>();
         boolean endOfBatch = false;
         while (!endOfBatch && !_processingCts.getToken().isCancellationRequested()) {
             SubscriptionConnectionServerMessage receivedMessage = readNextObject(socket);
@@ -400,6 +402,9 @@ public class SubscriptionWorker<T> implements CleanCloseable {
             switch (receivedMessage.getType()) {
                 case DATA:
                     incomingBatch.add(receivedMessage);
+                    break;
+                case INCLUDES:
+                    includes.add(receivedMessage.getIncludes());
                     break;
                 case END_OF_BATCH:
                     endOfBatch = true;
@@ -422,7 +427,10 @@ public class SubscriptionWorker<T> implements CleanCloseable {
             }
         }
 
-        return incomingBatch;
+        BatchFromServer batchFromServer = new BatchFromServer();
+        batchFromServer.setMessages(incomingBatch);
+        batchFromServer.setIncludes(includes);
+        return batchFromServer;
     }
 
     private static void throwInvalidServerResponse(SubscriptionConnectionServerMessage receivedMessage) {

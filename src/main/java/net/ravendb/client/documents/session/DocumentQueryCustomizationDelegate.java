@@ -3,7 +3,9 @@ package net.ravendb.client.documents.session;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import net.ravendb.client.documents.queries.IndexQuery;
 import net.ravendb.client.documents.queries.QueryResult;
+import net.ravendb.client.documents.queries.timings.QueryTimings;
 import net.ravendb.client.documents.session.operations.QueryOperation;
+import net.ravendb.client.primitives.Reference;
 
 import java.time.Duration;
 import java.util.function.Consumer;
@@ -66,6 +68,12 @@ public class DocumentQueryCustomizationDelegate implements IDocumentQueryCustomi
     @Override
     public IDocumentQueryCustomization noTracking() {
         query._noTracking();
+        return this;
+    }
+
+    @Override
+    public IDocumentQueryCustomization timings(Reference<QueryTimings> timings) {
+        query._includeTimings(timings);
         return this;
     }
 

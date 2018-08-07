@@ -22,6 +22,12 @@ public class QueryResult extends GenericQueryResult<ArrayNode, ObjectNode> {
         queryResult.setSkippedResults(getSkippedResults());
         queryResult.setTotalResults(getTotalResults());
 
+
+        /* TODO
+          Highlightings = Highlightings?.ToDictionary(pair => pair.Key, x => new Dictionary<string, string[]>(x.Value)),
+                Explanations = Explanations?.ToDictionary(x => x.Key, x => x.Value),
+                Timings = Timings?.Clone(),
+         */
         /* TBD 4.1
         Map<String, Map<String, List<String>>> highlightings = getHighlightings();
 
@@ -33,17 +39,13 @@ public class QueryResult extends GenericQueryResult<ArrayNode, ObjectNode> {
             queryResult.setHighlightings(highlightings);
         }*/
 
-        if (getScoreExplanations() != null) {
-            queryResult.setScoreExplanations(new HashMap<>(getScoreExplanations()));
-        }
-
-        if (getTimingsInMs() != null) {
-            queryResult.setTimingsInMs(new HashMap<>(getTimingsInMs()));
-        }
 
         queryResult.setLastQueryTime(getLastQueryTime());
         queryResult.setDurationInMs(getDurationInMs());
         queryResult.setResultEtag(getResultEtag());
+        queryResult.setNodeTag(getNodeTag());
+        queryResult.setCounterIncludes(getCounterIncludes());
+        queryResult.setIncludedCounterNames(getIncludedCounterNames());
         return queryResult;
     }
 }

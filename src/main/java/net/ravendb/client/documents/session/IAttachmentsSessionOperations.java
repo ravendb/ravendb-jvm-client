@@ -8,14 +8,7 @@ import java.io.InputStream;
 /**
  * Attachments advanced synchronous session operations
  */
-public interface IAttachmentsSessionOperations {
-
-    /**
-     * Returns the attachments info of a document.
-     * @param entity Entity to use
-     * @return attachments names
-     */
-    AttachmentName[] getNames(Object entity);
+public interface IAttachmentsSessionOperations extends IAttachmentsSessionOperationsBase {
 
     /**
      * Check if attachment exists
@@ -50,54 +43,5 @@ public interface IAttachmentsSessionOperations {
      */
     CloseableAttachmentResult getRevision(String documentId, String name, String changeVector);
 
-    /**
-     * Stores attachment to be sent in the session.
-     * @param documentId Document Id
-     * @param name Name of attachment
-     * @param stream Attachment stream
-     */
-    void store(String documentId, String name, InputStream stream);
 
-    /**
-     * Stores attachment to be sent in the session.
-     * @param documentId Document Id
-     * @param name Name of attachment
-     * @param stream Attachment stream
-     * @param contentType Content type
-     */
-    void store(String documentId, String name, InputStream stream, String contentType);
-
-
-    /**
-     * Stores attachment to be sent in the session.
-     * @param entity Entity
-     * @param name Name of attachment
-     * @param stream Attachment stream
-     */
-    void store(Object entity, String name, InputStream stream);
-
-    /**
-     * Stores attachment to be sent in the session.
-     * @param entity Entity
-     * @param name Name of attachment
-     * @param stream Attachment stream
-     * @param contentType Content type
-     */
-    void store(Object entity, String name, InputStream stream, String contentType);
-
-    /**
-     * Marks the specified document's attachment for deletion. The attachment will be deleted when
-     * saveChanges is called.
-     * @param documentId the document which holds the attachment
-     * @param name the attachment name
-     */
-    void delete(String documentId, String name);
-
-    /**
-     * Marks the specified document's attachment for deletion. The attachment will be deleted when
-     * saveChanges is called.
-     * @param entity instance of entity of the document which holds the attachment
-     * @param name the attachment name
-     */
-    void delete(Object entity, String name);
 }

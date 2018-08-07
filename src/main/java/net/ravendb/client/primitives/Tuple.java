@@ -1,8 +1,8 @@
 package net.ravendb.client.primitives;
 
 public class Tuple<A,B> {
-    public final A first;
-    public final B second;
+    public A first;
+    public B second;
 
     private Tuple(A first, B second) {
         this.first = first;

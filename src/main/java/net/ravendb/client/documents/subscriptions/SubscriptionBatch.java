@@ -5,10 +5,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import net.ravendb.client.Constants;
 import net.ravendb.client.documents.IDocumentStore;
 import net.ravendb.client.documents.identity.GenerateEntityIdOnTheClient;
-import net.ravendb.client.documents.session.EntityToJson;
-import net.ravendb.client.documents.session.IDocumentSession;
-import net.ravendb.client.documents.session.IMetadataDictionary;
-import net.ravendb.client.documents.session.SessionOptions;
+import net.ravendb.client.documents.session.*;
 import net.ravendb.client.http.RequestExecutor;
 import net.ravendb.client.json.MetadataAsDictionary;
 import org.apache.commons.lang3.StringUtils;
@@ -99,6 +96,7 @@ public class SubscriptionBatch<T> {
     private final GenerateEntityIdOnTheClient _generateEntityIdOnTheClient;
 
     private final List<Item<T>> _items = new ArrayList<>();
+    private List<ObjectNode> _includes;
 
     public List<Item<T>> getItems() {
         return _items;
@@ -108,7 +106,64 @@ public class SubscriptionBatch<T> {
         SessionOptions sessionOptions = new SessionOptions();
         sessionOptions.setDatabase(_dbName);
         sessionOptions.setRequestExecutor(_requestExecutor);
-        return _store.openSession(sessionOptions);
+        return openSessionInternal(sessionOptions);
+    }
+
+    public IDocumentSession openSession(SessionOptions options) {
+        validateSessionOptions(options);
+
+        options.setDatabase(_dbName);
+        options.setRequestExecutor(_requestExecutor);
+
+        return openSessionInternal(options);
+    }
+
+    private IDocumentSession openSessionInternal(SessionOptions options) {
+        IDocumentSession s = _store.openSession(options);
+
+        loadDataToSession((InMemoryDocumentSessionOperations) s);
+        return s;
+    }
+
+    private static void validateSessionOptions(SessionOptions options) {
+        if (options.getDatabase() != null) {
+            throw new IllegalStateException("Cannot set Database when session is opened in subscription.");
+        }
+
+        if (options.getRequestExecutor() != null) {
+            throw new IllegalStateException("Cannot set RequestExecutor when session is opened in subscription.");
+        }
+
+        if (options.getTransactionMode() != TransactionMode.SINGLE_NODE) {
+            throw new IllegalStateException("Cannot set TransactionMode when session is opened in subscription. Only SINGLE_NODE is supported.");
+        }
+    }
+
+    private void loadDataToSession(InMemoryDocumentSessionOperations s) {
+        if (s.noTracking) {
+            return;
+        }
+
+        if (_includes == null) {
+            return;
+        }
+
+        for (ObjectNode item : _includes) {
+            s.registerIncludes(item);
+        }
+
+
+        for (Item<T> item : getItems()) {
+            DocumentInfo documentInfo = new DocumentInfo();
+            documentInfo.setId(item.getId());
+            documentInfo.setDocument(item.getRawResult());
+            documentInfo.setMetadata(item.getRawMetadata());
+            documentInfo.setChangeVector(item.getChangeVector());
+            documentInfo.setEntity(item.getResult());
+            documentInfo.setNewDocument(false);
+            s.registerExternalLoadedIntoTheSession(documentInfo);
+        }
+
     }
 
     public SubscriptionBatch(Class<T> clazz, boolean revisions, RequestExecutor requestExecutor, IDocumentStore store, String dbName, Log logger) {
@@ -123,11 +178,13 @@ public class SubscriptionBatch<T> {
     }
 
     @SuppressWarnings("unchecked")
-    String initialize(List<SubscriptionConnectionServerMessage> batch) {
+    String initialize(BatchFromServer batch) {
         _items.clear();
         String lastReceivedChangeVector = null;
 
-        for (SubscriptionConnectionServerMessage item : batch) {
+        _includes = batch.getIncludes();
+
+        for (SubscriptionConnectionServerMessage item : batch.getMessages()) {
             ObjectNode metadata;
             ObjectNode curDoc = item.getData();
 

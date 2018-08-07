@@ -9,5 +9,7 @@ public enum IndexType {
     AUTO_MAP_REDUCE,
     MAP,
     MAP_REDUCE,
-    FAULTY
+    FAULTY,
+    JAVA_SCRIPT_MAP,
+    JAVA_SCRIPT_MAP_REDUCE
 }

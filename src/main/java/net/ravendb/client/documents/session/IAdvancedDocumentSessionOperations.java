@@ -148,6 +148,14 @@ public interface IAdvancedDocumentSessionOperations {
     <T> String getChangeVectorFor(T instance);
 
     /**
+     * Gets all the counter names for the specified entity.
+     * @param instance The instance
+     * @param <T> Class of instance
+     * @return List of counter names
+     */
+    <T> List<String> getCountersFor(T instance);
+
+    /**
      * Gets last modified date for the specified entity.
      * If the entity is transient, it will load the metadata from the store
      * and associate the current state of the entity with the metadata from the server.
@@ -206,6 +214,12 @@ public interface IAdvancedDocumentSessionOperations {
      * @param options Configuration options
      */
     void waitForIndexesAfterSaveChanges(Consumer<InMemoryDocumentSessionOperations.IndexesWaitOptsBuilder> options);
+
+    /**
+     * Overwrite the existing transaction mode for the current session.
+     * @param mode Transaction mode
+     */
+    void setTransactionMode(TransactionMode mode);
 
     EntityToJson getEntityToJson();
 }

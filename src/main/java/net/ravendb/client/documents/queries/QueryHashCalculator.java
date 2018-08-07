@@ -96,8 +96,6 @@ public class QueryHashCalculator {
         }
     }
 
-    //TBD 4.1 public void Write(HighlightedField[] highlightedFields)
-
     public void write(Parameters qp) throws IOException {
         if (qp == null) {
             write("null-params");

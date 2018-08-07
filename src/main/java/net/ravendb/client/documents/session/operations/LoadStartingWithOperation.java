@@ -27,6 +27,7 @@ public class LoadStartingWithOperation {
     private String _startAfter;
 
     private final List<String> _returnedIds = new ArrayList<>();
+    private GetDocumentsResult _currentLoadResults;
 
     public LoadStartingWithOperation(InMemoryDocumentSessionOperations session) {
         _session = session;
@@ -70,7 +71,15 @@ public class LoadStartingWithOperation {
     }
 
     public void setResult(GetDocumentsResult result) {
+        if (_session.noTracking) {
+            _currentLoadResults = result;
+            return;
+        }
+
         for (JsonNode document : result.getResults()) {
+            if (document == null || document.isNull()) {
+                continue;
+            }
             DocumentInfo newDocumentInfo = DocumentInfo.getNewDocumentInfo((ObjectNode) document);
             _session.documentsById.add(newDocumentInfo);
             _returnedIds.add(newDocumentInfo.getId());
@@ -80,9 +89,23 @@ public class LoadStartingWithOperation {
     @SuppressWarnings("unchecked")
     public <T> T[] getDocuments(Class<T> clazz) {
         int i = 0;
-        T[] finalResults = (T[]) Array.newInstance(clazz, _returnedIds.size());
-        for (String id : _returnedIds) {
-            finalResults[i++] = getDocument(clazz, id);
+        T[] finalResults;
+
+        if (_session.noTracking) {
+            if (_currentLoadResults == null) {
+                throw new IllegalStateException("Cannot execute getDocuments before operation execution");
+            }
+
+            finalResults = (T[]) Array.newInstance(clazz, _currentLoadResults.getResults().size());
+            for (JsonNode document : _currentLoadResults.getResults()) {
+                DocumentInfo newDocumentInfo = DocumentInfo.getNewDocumentInfo((ObjectNode) document);
+                finalResults[i++] = _session.trackEntity(clazz, newDocumentInfo);
+            }
+        } else {
+            finalResults = (T[]) Array.newInstance(clazz, _returnedIds.size());
+            for (String id : _returnedIds) {
+                finalResults[i++] = getDocument(clazz, id);
+            }
         }
 
         return finalResults;
@@ -104,4 +127,5 @@ public class LoadStartingWithOperation {
 
         return Defaults.defaultValue(clazz);
     }
+
 }

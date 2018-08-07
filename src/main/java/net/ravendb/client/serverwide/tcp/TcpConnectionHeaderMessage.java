@@ -114,11 +114,6 @@ public class TcpConnectionHeaderMessage {
             public boolean baseLine = true;
         }
 
-        public static class ReplicationFeatures {
-            public boolean baseLine = true;
-            public boolean missingAttachments;
-        }
-
         public PingFeatures ping;
         public NoneFeatures none;
         public DropFeatures drop;

@@ -134,6 +134,36 @@ public class EntityToJson {
         }
     }
 
+    /* TODO
+    internal void PopulateEntity(object entity, LazyStringValue id, BlittableJsonReaderObject document, JsonSerializer serializer)
+        {
+            if (entity == null)
+                throw new ArgumentNullException(nameof(entity));
+            if (id == null)
+                throw new ArgumentNullException(nameof(id));
+            if (document == null)
+                throw new ArgumentNullException(nameof(document));
+            if (serializer == null)
+                throw new ArgumentNullException(nameof(serializer));
+
+            try
+            {
+                using (var reader = new BlittableJsonReader())
+                {
+                    reader.Init(document);
+
+                    serializer.Populate(reader, entity);
+
+                    _session.GenerateEntityIdOnTheClient.TrySetIdentity(entity, id);
+                }
+            }
+            catch (Exception ex)
+            {
+                throw new InvalidOperationException($"Could not populate entity {id}", ex);
+            }
+        }
+     */
+
     @SuppressWarnings("UnusedReturnValue")
     private static boolean tryRemoveIdentityProperty(ObjectNode document, Class entityType, DocumentConventions conventions) {
         Field identityProperty = conventions.getIdentityProperty(entityType);

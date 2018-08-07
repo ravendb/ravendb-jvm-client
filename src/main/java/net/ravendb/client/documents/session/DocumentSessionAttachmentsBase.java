@@ -3,9 +3,7 @@ package net.ravendb.client.documents.session;
 import com.fasterxml.jackson.databind.JsonNode;
 import net.ravendb.client.Constants;
 import net.ravendb.client.documents.IdTypeAndName;
-import net.ravendb.client.documents.commands.batches.CommandType;
-import net.ravendb.client.documents.commands.batches.DeleteAttachmentCommandData;
-import net.ravendb.client.documents.commands.batches.PutAttachmentCommandData;
+import net.ravendb.client.documents.commands.batches.*;
 import net.ravendb.client.documents.operations.attachments.AttachmentName;
 import net.ravendb.client.extensions.JsonExtensions;
 import org.apache.commons.lang3.StringUtils;
@@ -55,20 +53,24 @@ public abstract class DocumentSessionAttachmentsBase extends AdvancedSessionExte
         }
 
         if (deferredCommandsMap.containsKey(IdTypeAndName.create(documentId, CommandType.DELETE, null))) {
-            throw new IllegalStateException("Cannot store attachment" + name + " of document " + documentId + ", there is a deferred command registered for this document to be deleted");
+            throwOtherDeferredCommandException(documentId, name, "store", "delete");
         }
 
         if (deferredCommandsMap.containsKey(IdTypeAndName.create(documentId, CommandType.ATTACHMENT_PUT, name))) {
-            throw new IllegalStateException("Cannot store attachment" + name + " of document " + documentId + ", there is a deferred command registered to create an attachment with the same name.");
+            throwOtherDeferredCommandException(documentId, name, "store", "create");
         }
 
         if (deferredCommandsMap.containsKey(IdTypeAndName.create(documentId, CommandType.ATTACHMENT_DELETE, name))) {
-            throw new IllegalStateException("Cannot store attachment" + name + " of document " + documentId + ", there is a deferred command registered to delete an attachment with the same name.");
+            throwOtherDeferredCommandException(documentId, name, "store", "delete");
+        }
+
+        if (deferredCommandsMap.containsKey(IdTypeAndName.create(documentId, CommandType.ATTACHMENT_MOVE, name))) {
+            throwOtherDeferredCommandException(documentId, name, "store", "rename");
         }
 
         DocumentInfo documentInfo = documentsById.getValue(documentId);
         if (documentInfo != null && deletedEntities.contains(documentInfo.getEntity())) {
-            throw new IllegalStateException("Cannot store attachment " + name + " of document " + documentId + ", the document was already deleted in this session.");
+            throwDocumentAlreadyDeleted(documentId, name, "store", null, documentId);
         }
 
         defer(new PutAttachmentCommandData(documentId, name, stream, contentType, null));
@@ -124,10 +126,178 @@ public abstract class DocumentSessionAttachmentsBase extends AdvancedSessionExte
         }
 
         if (deferredCommandsMap.containsKey(IdTypeAndName.create(documentId, CommandType.ATTACHMENT_PUT, name))) {
-            throw new IllegalStateException("Cannot delete attachment " + name + " of document " + documentId + ", there is a deferred command registered to create an attachment with the same name.");
+            throwOtherDeferredCommandException(documentId, name, "delete", "create");
+        }
+
+        if (deferredCommandsMap.containsKey(IdTypeAndName.create(documentId, CommandType.ATTACHMENT_MOVE, name))) {
+            throwOtherDeferredCommandException(documentId, name, "delete", "rename");
         }
 
         defer(new DeleteAttachmentCommandData(documentId, name, null));
+    }
+
+    public void rename(String documentId, String name, String newName) {
+        move(documentId, name, documentId, newName);
+    }
+
+    public void rename(Object entity, String name, String newName) {
+        move(entity, name, entity, newName);
+    }
+
+    public void move(Object sourceEntity, String sourceName, Object destinationEntity, String destinationName) {
+        if (sourceEntity == null) {
+            throw new IllegalArgumentException("SourceEntity cannot be null");
+        }
+
+        if (destinationEntity == null) {
+            throw new IllegalArgumentException("DestinationEntity cannot be null");
+        }
+
+        DocumentInfo sourceDocument = documentsByEntity.get(sourceEntity);
+        if (sourceDocument == null) {
+            throwEntityNotInSession(sourceEntity);
+        }
+
+        DocumentInfo destinationDocument = documentsByEntity.get(destinationEntity);
+        if (destinationDocument == null) {
+            throwEntityNotInSession(destinationEntity);
+        }
+
+        move(sourceDocument.getId(), sourceName, destinationDocument.getId(), destinationName);
+    }
+
+    public void move(String sourceDocumentId, String sourceName, String destinationDocumentId, String destinationName) {
+        if (StringUtils.isWhitespace(sourceDocumentId)) {
+            throw new IllegalArgumentException("SourceDocumentId is required");
+        }
+
+        if (StringUtils.isWhitespace(sourceName)) {
+            throw new IllegalArgumentException("SourceName is required");
+        }
+
+        if (StringUtils.isWhitespace(destinationDocumentId)) {
+            throw new IllegalArgumentException("DestinationDocumentId is required");
+        }
+
+        if (StringUtils.isWhitespace(destinationName)) {
+            throw new IllegalArgumentException("DestinationName is required");
+        }
+
+        if (sourceDocumentId.equalsIgnoreCase(destinationDocumentId) && sourceName.equals(destinationName)) {
+            return; // no-op
+        }
+
+        DocumentInfo sourceDocument = documentsById.getValue(sourceDocumentId);
+        if (sourceDocument != null && deletedEntities.contains(sourceDocument.getEntity())) {
+            throwDocumentAlreadyDeleted(sourceDocumentId, sourceName, "move", destinationDocumentId, sourceDocumentId);
+        }
+
+        DocumentInfo destinationDocument = documentsById.getValue(destinationDocumentId);
+        if (destinationDocument != null && deletedEntities.contains(destinationDocument.getEntity())) {
+            throwDocumentAlreadyDeleted(sourceDocumentId, sourceName, "move", destinationDocumentId, destinationDocumentId);
+        }
+
+        if (deferredCommandsMap.containsKey(IdTypeAndName.create(sourceDocumentId, CommandType.ATTACHMENT_DELETE, sourceName))) {
+            throwOtherDeferredCommandException(sourceDocumentId, sourceName, "rename", "delete");
+        }
+
+        if (deferredCommandsMap.containsKey(IdTypeAndName.create(sourceDocumentId, CommandType.ATTACHMENT_MOVE, sourceName))) {
+            throwOtherDeferredCommandException(sourceDocumentId, sourceName, "rename", "rename");
+        }
+
+        if (deferredCommandsMap.containsKey(IdTypeAndName.create(destinationDocumentId, CommandType.ATTACHMENT_DELETE, destinationName))) {
+            throwOtherDeferredCommandException(sourceDocumentId, destinationName, "rename", "delete");
+        }
+
+        if (deferredCommandsMap.containsKey(IdTypeAndName.create(destinationDocumentId, CommandType.ATTACHMENT_MOVE, destinationName))) {
+            throwOtherDeferredCommandException(sourceDocumentId, destinationName, "rename", "rename");
+        }
+
+        defer(new MoveAttachmentCommandData(sourceDocumentId, sourceName, destinationDocumentId, destinationName, null));
+    }
+
+    public void copy(Object sourceEntity, String sourceName, Object destinationEntity, String destinationName) {
+        if (sourceEntity == null) {
+            throw new IllegalArgumentException("SourceEntity is null");
+        }
+
+        if (destinationEntity == null) {
+            throw new IllegalArgumentException("DestinationEntity is null");
+        }
+
+        DocumentInfo sourceDocument = documentsByEntity.get(sourceEntity);
+        if (sourceDocument == null) {
+            throwEntityNotInSession(sourceEntity);
+        }
+
+        DocumentInfo destinationDocument = documentsByEntity.get(destinationEntity);
+        if (destinationDocument == null) {
+            throwEntityNotInSession(destinationEntity);
+        }
+
+        copy(sourceDocument.getId(), sourceName, destinationDocument.getId(), destinationName);
+    }
+
+    public void copy(String sourceDocumentId, String sourceName, String destinationDocumentId, String destinationName) {
+        if (StringUtils.isWhitespace(sourceDocumentId)) {
+            throw new IllegalArgumentException("SourceDocumentId is required");
+        }
+
+        if (StringUtils.isWhitespace(sourceName)) {
+            throw new IllegalArgumentException("SourceName is required");
+        }
+
+        if (StringUtils.isWhitespace(destinationDocumentId)) {
+            throw new IllegalArgumentException("DestinationDocumentId is required");
+        }
+
+        if (StringUtils.isWhitespace(destinationName)) {
+            throw new IllegalArgumentException("DestinationName is required");
+        }
+
+
+        if (sourceDocumentId.equalsIgnoreCase(destinationDocumentId) && sourceName.equals(destinationName)) {
+            return; // no-op
+        }
+
+        DocumentInfo sourceDocument = documentsById.getValue(sourceDocumentId);
+        if (sourceDocument != null && deletedEntities.contains(sourceDocument.getEntity())) {
+            throwDocumentAlreadyDeleted(sourceDocumentId, sourceName, "copy", destinationDocumentId, sourceDocumentId);
+        }
+
+        DocumentInfo destinationDocument = documentsById.getValue(destinationDocumentId);
+        if (destinationDocument != null && deletedEntities.contains(destinationDocument.getEntity())) {
+            throwDocumentAlreadyDeleted(sourceDocumentId, sourceName, "copy", destinationDocumentId, destinationDocumentId);
+        }
+
+        if (deferredCommandsMap.containsKey(IdTypeAndName.create(sourceDocumentId, CommandType.ATTACHMENT_DELETE, sourceName))) {
+            throwOtherDeferredCommandException(sourceDocumentId, sourceName, "copy", "delete");
+        }
+
+        if (deferredCommandsMap.containsKey(IdTypeAndName.create(sourceDocumentId, CommandType.ATTACHMENT_MOVE, sourceName))) {
+            throwOtherDeferredCommandException(sourceDocumentId, sourceName, "copy", "rename");
+        }
+
+        if (deferredCommandsMap.containsKey(IdTypeAndName.create(destinationDocumentId, CommandType.ATTACHMENT_DELETE, destinationName))) {
+            throwOtherDeferredCommandException(destinationDocumentId, destinationName, "copy", "delete");
+        }
+
+        if (deferredCommandsMap.containsKey(IdTypeAndName.create(destinationDocumentId, CommandType.ATTACHMENT_MOVE, destinationName))) {
+            throwOtherDeferredCommandException(destinationDocumentId, destinationName, "copy", "rename");
+        }
+
+        defer(new CopyAttachmentCommandData(sourceDocumentId, sourceName, destinationDocumentId, destinationName, null));
+    }
+
+    private static void throwDocumentAlreadyDeleted(String documentId, String name, String operation, String destinationDocumentId, String deletedDocumentId) {
+        throw new IllegalStateException("Can't " + operation + " attachment '" + name + "' of document '" + documentId + "' " +
+                (destinationDocumentId != null ? " to '" + destinationDocumentId + "'" : "") +
+                ", the document '" + deletedDocumentId + "' was already deleted in this session");
+    }
+
+    private static void throwOtherDeferredCommandException(String documentId, String name, String operation, String previousOperation) {
+        throw new IllegalStateException("Can't " + operation + " attachment '" + name + "' of document '"
+                + documentId + "', there is a deferred command registered to " + previousOperation + " an attachment with '" + name + "' name.");
     }
 
 }

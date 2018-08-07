@@ -17,6 +17,7 @@ public class DatabaseTopology {
     private int replicationFactor;
     private boolean dynamicNodesDistribution;
     private LeaderStamp stamp;
+    private String databaseTopologyIdBase64;
 
     public List<String> getMembers() {
         return members;
@@ -88,5 +89,13 @@ public class DatabaseTopology {
 
     public void setStamp(LeaderStamp stamp) {
         this.stamp = stamp;
+    }
+
+    public String getDatabaseTopologyIdBase64() {
+        return databaseTopologyIdBase64;
+    }
+
+    public void setDatabaseTopologyIdBase64(String databaseTopologyIdBase64) {
+        this.databaseTopologyIdBase64 = databaseTopologyIdBase64;
     }
 }

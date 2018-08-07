@@ -414,6 +414,18 @@ public interface IFilterDocumentQueryBase<T, TSelf extends IDocumentQueryBase<T,
      */
     TSelf relatesToShape(String fieldName, String shapeWkt, SpatialRelation relation, double distanceErrorPct);
 
+    /**
+     * Filter matches based on a given shape - only documents with the shape defined in fieldName that
+     * have a relation rel with the given shapeWkt will be returned
+     * @param fieldName Spatial field name.
+     * @param shapeWkt WKT formatted shape
+     * @param relation Spatial relation to check (Within, Contains, Disjoint, Intersects, Nearby)
+     * @param units SpatialUnits
+     * @param distanceErrorPct The allowed error percentage. By default: 0.025
+     * @return Query instance
+     */
+    TSelf relatesToShape(String fieldName, String shapeWkt, SpatialRelation relation, SpatialUnits units, double distanceErrorPct);
+
     //TBD expr IDocumentQuery<T> Spatial(Expression<Func<T, object>> path, Func<SpatialCriteriaFactory, SpatialCriteria> clause);
 
     /**

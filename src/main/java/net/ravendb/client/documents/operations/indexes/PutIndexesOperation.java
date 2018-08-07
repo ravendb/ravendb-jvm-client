@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import net.ravendb.client.documents.conventions.DocumentConventions;
 import net.ravendb.client.documents.indexes.IndexDefinition;
+import net.ravendb.client.documents.indexes.IndexTypeExtensions;
 import net.ravendb.client.documents.indexes.PutIndexResult;
 import net.ravendb.client.documents.operations.IMaintenanceOperation;
 import net.ravendb.client.documents.operations.PutIndexesResponse;
@@ -22,6 +23,7 @@ import java.io.IOException;
 public class PutIndexesOperation implements IMaintenanceOperation<PutIndexResult[]> {
 
     private final IndexDefinition[] _indexToAdd;
+    private boolean _allJavaScriptIndexes;
 
     public PutIndexesOperation(IndexDefinition... indexToAdd) {
         if (indexToAdd == null || indexToAdd.length == 0) {
@@ -50,7 +52,15 @@ public class PutIndexesOperation implements IMaintenanceOperation<PutIndexResult
             }
 
             _indexToAdd = new ObjectNode[indexesToAdd.length];
+            _allJavaScriptIndexes = true;
+
             for (int i = 0; i < indexesToAdd.length; i++) {
+                //We validate on the server that it is indeed a javascript index.
+
+                if (!IndexTypeExtensions.isJavaScript(indexesToAdd[i].getType())) {
+                    _allJavaScriptIndexes = false;
+                }
+
                 if (indexesToAdd[i].getName() == null) {
                     throw new IllegalArgumentException("Index name cannot be null");
                 }
@@ -60,7 +70,7 @@ public class PutIndexesOperation implements IMaintenanceOperation<PutIndexResult
 
         @Override
         public HttpRequestBase createRequest(ServerNode node, Reference<String> url) {
-            url.value = node.getUrl() + "/databases/" + node.getDatabase() + "/admin/indexes";
+            url.value = node.getUrl() + "/databases/" + node.getDatabase() + (_allJavaScriptIndexes ? "/indexes" : "/admin/indexes");
 
             HttpPut httpPut = new HttpPut();
 

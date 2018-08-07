@@ -3,6 +3,7 @@ package net.ravendb.client.documents.commands.batches;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.databind.JsonNode;
 import net.ravendb.client.documents.conventions.DocumentConventions;
+import net.ravendb.client.documents.session.InMemoryDocumentSessionOperations;
 
 import java.io.IOException;
 
@@ -58,8 +59,12 @@ public class PutCommandDataBase<T extends JsonNode> implements ICommandData {
         generator.writeFieldName("Document");
         generator.writeTree(document);
 
-        generator.writeStringField("Type", type.toString());
+        generator.writeStringField("Type", "PUT");
 
         generator.writeEndObject();
+    }
+
+    @Override
+    public void onBeforeSaveChanges(InMemoryDocumentSessionOperations session) {
     }
 }

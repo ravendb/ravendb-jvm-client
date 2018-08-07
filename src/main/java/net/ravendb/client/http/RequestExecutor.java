@@ -7,6 +7,7 @@ import net.ravendb.client.documents.operations.GetStatisticsOperation;
 import net.ravendb.client.documents.operations.configuration.GetClientConfigurationOperation;
 import net.ravendb.client.documents.session.SessionInfo;
 import net.ravendb.client.exceptions.AllTopologyNodesDownException;
+import net.ravendb.client.exceptions.ClientVersionMismatchException;
 import net.ravendb.client.exceptions.ExceptionDispatcher;
 import net.ravendb.client.exceptions.database.DatabaseDoesNotExistException;
 import net.ravendb.client.exceptions.security.AuthorizationException;
@@ -60,7 +61,7 @@ public class RequestExecutor implements CleanCloseable {
      */
     public static Consumer<HttpRequestBase> requestPostProcessor = null;
 
-    public static final String CLIENT_VERSION = "4.0.0";
+    public static final String CLIENT_VERSION = "4.1.0";
 
     private static final ConcurrentMap<String, CloseableHttpClient> globalHttpClientWithCompression = new ConcurrentHashMap<>();
     private static final ConcurrentMap<String, CloseableHttpClient> globalHttpClientWithoutCompression = new ConcurrentHashMap<>();
@@ -541,11 +542,12 @@ public class RequestExecutor implements CleanCloseable {
     public <TResult> void execute(ServerNode chosenNode, Integer nodeIndex, RavenCommand<TResult> command, boolean shouldRetry, SessionInfo sessionInfo) {
         Reference<String> urlRef = new Reference<>();
         HttpRequestBase request = createRequest(chosenNode, command, urlRef);
+        boolean noCaching = sessionInfo != null ? sessionInfo.isNoCaching() : false;
 
         Reference<String> cachedChangeVector = new Reference<>();
         Reference<String> cachedValue = new Reference<>();
 
-        try (HttpCache.ReleaseCacheItem cachedItem = getFromCache(command, urlRef.value, cachedChangeVector, cachedValue)) {
+        try (HttpCache.ReleaseCacheItem cachedItem = getFromCache(command, !noCaching, urlRef.value, cachedChangeVector, cachedValue)) {
             if (cachedChangeVector.value != null) {
                 AggressiveCacheOptions aggressiveCacheOptions = aggressiveCaching.get();
                 if (aggressiveCacheOptions != null &&
@@ -567,6 +569,10 @@ public class RequestExecutor implements CleanCloseable {
                 request.addHeader(Constants.Headers.CLIENT_CONFIGURATION_ETAG, "\"" + clientConfigurationEtag + "\"");
             }
 
+            if (sessionInfo != null && sessionInfo.getLastClusterTransactionIndex() != null) {
+                request.addHeader(Constants.Headers.LAST_KNOWN_CLUSTER_TRANSACTION_INDEX, sessionInfo.getLastClusterTransactionIndex().toString());
+            }
+
             if (!_disableTopologyUpdates) {
                 request.addHeader(Constants.Headers.TOPOLOGY_ETAG, "\"" + topologyEtag + "\"");
             }
@@ -582,6 +588,18 @@ public class RequestExecutor implements CleanCloseable {
                     response = executeOnAllToFigureOutTheFastest(chosenNode, command);
                 } else {
                     response = command.send(httpClient, request);
+                }
+
+                if (sessionInfo != null && sessionInfo.getLastClusterTransactionIndex() != null) {
+                    // if we reach here it means that sometime a cluster transaction has occurred against this database.
+                    // Since the current executed command can be dependent on that, we have to wait for the cluster transaction.
+                    // But we can't do that if the server is an old one.
+
+                    Header version = response.getFirstHeader(Constants.Headers.SERVER_VERSION);
+                    if (version != null && "4.1".equalsIgnoreCase(version.getValue())) {
+                        throw new ClientVersionMismatchException("The server on " + chosenNode.getUrl() + " has an old version and can't perform " +
+                                "the command since this command dependent on a cluster transaction which this node doesn't support.");
+                    }
                 }
 
                 sp.stop();
@@ -761,8 +779,8 @@ public class RequestExecutor implements CleanCloseable {
         }
     }
 
-    private <TResult> HttpCache.ReleaseCacheItem getFromCache(RavenCommand<TResult> command, String url, Reference<String> cachedChangeVector, Reference<String> cachedValue) {
-        if (command.canCache() && command.isReadRequest() && command.getResponseType() == RavenCommandResponseType.OBJECT) {
+    private <TResult> HttpCache.ReleaseCacheItem getFromCache(RavenCommand<TResult> command, boolean useCache, String url, Reference<String> cachedChangeVector, Reference<String> cachedValue) {
+        if (useCache && command.canCache() && command.isReadRequest() && command.getResponseType() == RavenCommandResponseType.OBJECT) {
             return cache.get(url, cachedChangeVector, cachedValue);
         }
 

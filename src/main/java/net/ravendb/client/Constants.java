@@ -16,6 +16,8 @@ public class Constants {
             public static final String ID_PROPERTY = "Id";
             public static final String FLAGS = "@flags";
             public static final String ATTACHMENTS = "@attachments";
+            public static final String COUNTERS = "@counters";
+            public static final String REVISION_COUNTERS = "@counters-snapshot";
             public static final String INDEX_SCORE = "@index-score";
             public static final String LAST_MODIFIED = "@last-modified";
             public static final String RAVEN_JAVA_TYPE = "Raven-Java-Type";
@@ -57,11 +59,14 @@ public class Constants {
 
         public static final String TOPOLOGY_ETAG = "Topology-Etag";
 
+        public static final String LAST_KNOWN_CLUSTER_TRANSACTION_INDEX = "Known-Raft-Index";
+
         public static final String CLIENT_CONFIGURATION_ETAG = "Client-Configuration-Etag";
 
         public static final String REFRESH_CLIENT_CONFIGURATION = "Refresh-Client-Configuration";
 
         public static final String CLIENT_VERSION = "Raven-Client-Version";
+        public static final String SERVER_VERSION = "Raven-Server-Version";
 
         public static final String ETAG = "ETag";
 
@@ -70,5 +75,9 @@ public class Constants {
         public static final String CONTENT_ENCODING = "Content-Encoding";
         public static final String CONTENT_LENGTH = "Content-Length";
 
+    }
+
+    public static class Counters {
+        public static final String ALL = "@all_counters";
     }
 }

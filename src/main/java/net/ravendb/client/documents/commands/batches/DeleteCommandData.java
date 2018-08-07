@@ -2,6 +2,7 @@ package net.ravendb.client.documents.commands.batches;
 
 import com.fasterxml.jackson.core.JsonGenerator;
 import net.ravendb.client.documents.conventions.DocumentConventions;
+import net.ravendb.client.documents.session.InMemoryDocumentSessionOperations;
 
 import java.io.IOException;
 
@@ -46,7 +47,7 @@ public class DeleteCommandData implements ICommandData {
 
         generator.writeStringField("Id", id);
         generator.writeStringField("ChangeVector", changeVector);
-        generator.writeObjectField("Type", type);
+        generator.writeObjectField("Type", "DELETE");
 
         serializeExtraFields(generator);
 
@@ -55,5 +56,9 @@ public class DeleteCommandData implements ICommandData {
 
     protected void serializeExtraFields(JsonGenerator generator) throws IOException {
         // empty by design
+    }
+
+    @Override
+    public void onBeforeSaveChanges(InMemoryDocumentSessionOperations session) {
     }
 }
