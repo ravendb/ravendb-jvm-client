@@ -22,7 +22,7 @@ public class RemoteTestBase extends RavenTestDriver {
 
         @Override
         public String[] getCommandArguments() {
-            return new String[] { "--ServerUrl=http://127.0.0.1:0", "--ServerUrl.Tcp=tcp://127.0.0.1:38881" };
+            return new String[] { "--ServerUrl=http://127.0.0.1:0", "--ServerUrl.Tcp=tcp://127.0.0.1:38881", "--Features.Availability=Experimental" };
         }
     }
 
