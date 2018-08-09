@@ -20,6 +20,7 @@ import net.ravendb.client.documents.queries.timings.QueryTimings;
 import net.ravendb.client.documents.session.loaders.IIncludeBuilder;
 import net.ravendb.client.documents.session.loaders.IQueryIncludeBuilder;
 import net.ravendb.client.documents.session.loaders.IncludeBuilder;
+import net.ravendb.client.documents.session.loaders.QueryIncludeBuilder;
 import net.ravendb.client.documents.session.tokens.DeclareToken;
 import net.ravendb.client.documents.session.tokens.FieldsToFetchToken;
 import net.ravendb.client.documents.session.tokens.LoadToken;
@@ -254,7 +255,7 @@ public class DocumentQuery<T> extends AbstractDocumentQuery<T, DocumentQuery<T>>
 
     @Override
     public IDocumentQuery<T> include(Consumer<IQueryIncludeBuilder> includes) {
-        IncludeBuilder includeBuilder = new IncludeBuilder(getConventions());
+        QueryIncludeBuilder includeBuilder = new QueryIncludeBuilder(getConventions());
         includes.accept(includeBuilder);
         _include(includeBuilder);
         return this;

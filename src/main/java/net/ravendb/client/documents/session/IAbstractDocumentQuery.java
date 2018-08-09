@@ -11,6 +11,7 @@ import net.ravendb.client.documents.queries.spatial.DynamicSpatialField;
 import net.ravendb.client.documents.queries.spatial.SpatialCriteria;
 import net.ravendb.client.documents.queries.suggestions.SuggestionBase;
 import net.ravendb.client.documents.session.loaders.IncludeBuilder;
+import net.ravendb.client.documents.session.loaders.IncludeBuilderBase;
 import net.ravendb.client.primitives.Reference;
 
 import java.time.Duration;
@@ -77,7 +78,7 @@ public interface IAbstractDocumentQuery<T> {
      * Includes the specified documents and/or counters in the query, specified by IncludeBuilder
      * @param includes builder
      */
-    void _include(IncludeBuilder includes);
+    void _include(IncludeBuilderBase includes);
 
     // TBD expr linq void Include(Expression<Func<T, object>> path);
 

@@ -5,11 +5,12 @@ import net.ravendb.client.documents.IDocumentStore;
 import net.ravendb.client.documents.operations.counters.CounterDetail;
 import net.ravendb.client.documents.operations.counters.GetCountersOperation;
 import net.ravendb.client.documents.session.IDocumentSession;
+import net.ravendb.client.infrastructure.entities.Company;
+import net.ravendb.client.infrastructure.entities.Order;
 import net.ravendb.client.infrastructure.entities.User;
 import net.ravendb.client.serverwide.DatabaseRecord;
 import net.ravendb.client.serverwide.operations.CreateDatabaseOperation;
 import net.ravendb.client.serverwide.operations.DeleteDatabasesOperation;
-import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 import java.util.Arrays;
@@ -923,74 +924,75 @@ public class SessionCountersTest extends RemoteTestBase {
                 }
             }
         }
+*/
+    @Test
+    public void sessionIncludeSingleCounter() throws Exception {
+        try (IDocumentStore store = getDocumentStore()) {
+            try (IDocumentSession session = store.openSession()) {
+                User user = new User();
+                user.setName("Aviv");
+                session.store(user, "users/1-A");
 
-        [Fact]
-        public void SessionIncludeSingleCounter()
-        {
-            using (var store = GetDocumentStore())
-            {
-                using (var session = store.OpenSession())
-                {
-                    session.Store(new User { Name = "Aviv" }, "users/1-A");
-                    session.CountersFor("users/1-A").Increment("likes", 100);
-                    session.CountersFor("users/1-A").Increment("dislikes", 200);
+                session.countersFor("users/1-A").increment("likes", 100);
+                session.countersFor("users/1-A").increment("dislikes", 200);
 
-                    session.SaveChanges();
-                }
+                session.saveChanges();
+            }
 
-                using (var session = store.OpenSession())
-                {
-                    var user = session.Load<User>(
-                        "users/1-A",
-                        i => i.IncludeCounter("likes"));
+            try (IDocumentSession session = store.openSession()) {
+                User user = session.load(User.class, "users/1-A", i -> i.includeCounter("likes"));
+                assertThat(session.advanced().getNumberOfRequests())
+                        .isEqualTo(1);
 
-                    Assert.Equal(1, session.Advanced.NumberOfRequests);
+                Long counter = session.countersFor(user).get("likes");
+                assertThat(counter)
+                        .isEqualTo(100);
 
-                    var counter = session.CountersFor(user).Get("likes"); // should not go to server
-
-                    Assert.Equal(100, counter);
-                    Assert.Equal(1, session.Advanced.NumberOfRequests);
-
-                }
+                assertThat(session.advanced().getNumberOfRequests())
+                        .isEqualTo(1);
             }
         }
+    }
 
-        [Fact]
-        public void SessionChainedIncludeCounter()
-        {
-            using (var store = GetDocumentStore())
-            {
-                using (var session = store.OpenSession())
-                {
-                    session.Store(new Company { Name = "HR" }, "companies/1-A");
-                    session.Store(new Order { Company = "companies/1-A" }, "orders/1-A");
+    @Test
+    public void sessionChainedIncludeCounter() throws Exception {
+        try (IDocumentStore store = getDocumentStore()) {
+            try (IDocumentSession session = store.openSession()) {
+                Company company = new Company();
+                company.setName("HR");
+                session.store(company, "companies/1-A");
 
-                    session.CountersFor("orders/1-A").Increment("likes", 100);
-                    session.CountersFor("orders/1-A").Increment("dislikes", 200);
+                Order order = new Order();
+                order.setCompany("companies/1-A");
+                session.store(order, "orders/1-A");
 
-                    session.SaveChanges();
-                }
+                session.countersFor("orders/1-A").increment("likes", 100);
+                session.countersFor("orders/1-A").increment("dislikes", 200);
 
-                using (var session = store.OpenSession())
-                {
-                    var order = session.Load<Order>(
-                        "orders/1-A",
-                        i => i.IncludeCounter("likes")
-                            .IncludeCounter("dislikes"));
+                session.saveChanges();
+            }
 
-                    Assert.Equal(1, session.Advanced.NumberOfRequests);
+            try (IDocumentSession session = store.openSession()) {
+                Order order = session.load(Order.class, "orders/1-A", i -> i.includeCounter("likes").includeCounter("dislikes"));
 
-                    var counter = session.CountersFor(order).Get("likes"); // should not go to server
-                    Assert.Equal(100, counter);
+                assertThat(session.advanced().getNumberOfRequests())
+                        .isEqualTo(1);
 
-                    counter = session.CountersFor(order).Get("dislikes"); // should not go to server
-                    Assert.Equal(200, counter);
+                Long counter = session.countersFor(order).get("likes");
+                assertThat(counter)
+                        .isEqualTo(100);
 
-                    Assert.Equal(1, session.Advanced.NumberOfRequests);
+                counter = session.countersFor(order).get("dislikes");
+                assertThat(counter)
+                        .isEqualTo(200);
 
-                }
+                assertThat(session.advanced().getNumberOfRequests())
+                        .isEqualTo(1);
             }
         }
+    }
+
+    /* TODO
 
         [Fact]
         public void SessionChainedIncludeAndIncludeCounter()

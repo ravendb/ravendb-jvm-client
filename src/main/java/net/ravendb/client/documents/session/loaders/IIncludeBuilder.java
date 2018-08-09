@@ -1,14 +1,14 @@
 package net.ravendb.client.documents.session.loaders;
 
-public interface IIncludeBuilder<TSelf> {
+public interface IIncludeBuilder {
 
-    TSelf includeCounter(String name);
+    IIncludeBuilder includeCounter(String name);
 
-    TSelf includeCounters(String[] names);
+    IIncludeBuilder includeCounters(String[] names);
 
-    TSelf includeAllCounters();
+    IIncludeBuilder includeAllCounters();
 
-    TSelf includeDocuments(String path);
+    IIncludeBuilder includeDocuments(String path);
 
     //TBD expr TBuilder IncludeDocuments(Expression<Func<T, string>> path);
     //TBD expr TBuilder IncludeDocuments(Expression<Func<T, IEnumerable<string>>> path);

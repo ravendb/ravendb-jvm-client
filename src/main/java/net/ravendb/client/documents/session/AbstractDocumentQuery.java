@@ -25,6 +25,7 @@ import net.ravendb.client.documents.queries.suggestions.SuggestionWithTerm;
 import net.ravendb.client.documents.queries.suggestions.SuggestionWithTerms;
 import net.ravendb.client.documents.queries.timings.QueryTimings;
 import net.ravendb.client.documents.session.loaders.IncludeBuilder;
+import net.ravendb.client.documents.session.loaders.IncludeBuilderBase;
 import net.ravendb.client.documents.session.operations.QueryOperation;
 import net.ravendb.client.documents.session.operations.lazy.LazyQueryOperation;
 import net.ravendb.client.documents.session.tokens.*;
@@ -381,7 +382,7 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
 
     //TBD expr public void Include(Expression<Func<T, object>> path)
 
-    public void _include(IncludeBuilder includes) {
+    public void _include(IncludeBuilderBase includes) {
         if (includes == null) {
             return;
         }
