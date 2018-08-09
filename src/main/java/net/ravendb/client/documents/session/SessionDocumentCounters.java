@@ -137,6 +137,7 @@ public class SessionDocumentCounters extends SessionCountersBase implements ISes
         Map<String, Long> result = new HashMap<>();
 
         for (String counter : counters) {
+            boolean hasCounter = cache.second.containsKey(counter);
             Long val = cache.second.get(counter);
             boolean notInMetadata = true;
 
@@ -147,7 +148,7 @@ public class SessionDocumentCounters extends SessionCountersBase implements ISes
                     }
                 }
             }
-            if (val != null || cache.first || (document != null && notInMetadata)) {
+            if (hasCounter || cache.first || (document != null && notInMetadata)) {
                 // we either have value in cache,
                 // or we have the metadata and the counter is not there,
                 // or GotAll

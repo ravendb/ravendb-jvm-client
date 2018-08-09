@@ -32,7 +32,7 @@ public class CountersSingleNodeTest extends RemoteTestBase {
             documentCountersOperation.setOperations(Arrays.asList(CounterOperation.create("likes", CounterOperationType.INCREMENT, 0)));
 
             CounterBatch counterBatch = new CounterBatch();
-            counterBatch.setDocument(Arrays.asList(documentCountersOperation));
+            counterBatch.setDocuments(Arrays.asList(documentCountersOperation));
 
             store.operations().send(new CounterBatchOperation(counterBatch));
 
@@ -48,7 +48,7 @@ public class CountersSingleNodeTest extends RemoteTestBase {
             documentCountersOperation.setOperations(Arrays.asList(CounterOperation.create("likes", CounterOperationType.INCREMENT, 10)));
 
             counterBatch = new CounterBatch();
-            counterBatch.setDocument(Arrays.asList(documentCountersOperation));
+            counterBatch.setDocuments(Arrays.asList(documentCountersOperation));
 
             store.operations().send(new CounterBatchOperation(counterBatch));
 
@@ -63,7 +63,7 @@ public class CountersSingleNodeTest extends RemoteTestBase {
             documentCountersOperation.setOperations(Arrays.asList(CounterOperation.create("likes", CounterOperationType.INCREMENT, -3)));
 
             counterBatch = new CounterBatch();
-            counterBatch.setDocument(Arrays.asList(documentCountersOperation));
+            counterBatch.setDocuments(Arrays.asList(documentCountersOperation));
 
             store.operations().send(new CounterBatchOperation(counterBatch));
 
@@ -90,7 +90,7 @@ public class CountersSingleNodeTest extends RemoteTestBase {
             documentCountersOperation.setOperations(Arrays.asList(CounterOperation.create("likes", CounterOperationType.INCREMENT, 5)));
 
             CounterBatch counterBatch = new CounterBatch();
-            counterBatch.setDocument(Arrays.asList(documentCountersOperation));
+            counterBatch.setDocuments(Arrays.asList(documentCountersOperation));
 
             CountersDetail a = store.operations().send(new CounterBatchOperation(counterBatch));
 
@@ -100,7 +100,7 @@ public class CountersSingleNodeTest extends RemoteTestBase {
             documentCountersOperation.setOperations(Arrays.asList(CounterOperation.create("likes", CounterOperationType.INCREMENT, 10)));
 
             counterBatch = new CounterBatch();
-            counterBatch.setDocument(Arrays.asList(documentCountersOperation));
+            counterBatch.setDocuments(Arrays.asList(documentCountersOperation));
 
             CountersDetail b = store.operations().send(new CounterBatchOperation(counterBatch));
 
@@ -139,7 +139,7 @@ public class CountersSingleNodeTest extends RemoteTestBase {
             documentCountersOperation2.setOperations(Arrays.asList(CounterOperation.create("likes", CounterOperationType.INCREMENT, 20)));
 
             CounterBatch counterBatch = new CounterBatch();
-            counterBatch.setDocument(Arrays.asList(documentCountersOperation1, documentCountersOperation2));
+            counterBatch.setDocuments(Arrays.asList(documentCountersOperation1, documentCountersOperation2));
 
             store.operations().send(new CounterBatchOperation(counterBatch));
 
@@ -148,7 +148,7 @@ public class CountersSingleNodeTest extends RemoteTestBase {
             deleteCounter.setOperations(Arrays.asList(CounterOperation.create("likes", CounterOperationType.DELETE)));
 
             counterBatch = new CounterBatch();
-            counterBatch.setDocument(Arrays.asList(deleteCounter));
+            counterBatch.setDocuments(Arrays.asList(deleteCounter));
 
             store.operations().send(new CounterBatchOperation(counterBatch));
 
@@ -161,7 +161,7 @@ public class CountersSingleNodeTest extends RemoteTestBase {
             deleteCounter.setOperations(Arrays.asList(CounterOperation.create("likes", CounterOperationType.DELETE)));
 
             counterBatch = new CounterBatch();
-            counterBatch.setDocument(Arrays.asList(deleteCounter));
+            counterBatch.setDocuments(Arrays.asList(deleteCounter));
 
             store.operations().send(new CounterBatchOperation(counterBatch));
 
@@ -189,7 +189,7 @@ public class CountersSingleNodeTest extends RemoteTestBase {
             ));
 
             CounterBatch counterBatch = new CounterBatch();
-            counterBatch.setDocument(Arrays.asList(documentCountersOperation1));
+            counterBatch.setDocuments(Arrays.asList(documentCountersOperation1));
 
             store.operations().send(new CounterBatchOperation(counterBatch));
 
@@ -237,7 +237,7 @@ public class CountersSingleNodeTest extends RemoteTestBase {
             ));
 
             CounterBatch setBatch = new CounterBatch();
-            setBatch.setDocument(Arrays.asList(documentCountersOperation1, documentCountersOperation2));
+            setBatch.setDocuments(Arrays.asList(documentCountersOperation1, documentCountersOperation2));
 
             store.operations().send(new CounterBatchOperation(setBatch));
 
@@ -256,7 +256,7 @@ public class CountersSingleNodeTest extends RemoteTestBase {
             ));
 
             CounterBatch getBatch = new CounterBatch();
-            getBatch.setDocument(Arrays.asList(documentCountersOperation1, documentCountersOperation2));
+            getBatch.setDocuments(Arrays.asList(documentCountersOperation1, documentCountersOperation2));
 
             CountersDetail countersDetail = store.operations().send(new CounterBatchOperation(getBatch));
 
@@ -304,7 +304,7 @@ public class CountersSingleNodeTest extends RemoteTestBase {
             ));
 
             CounterBatch batch = new CounterBatch();
-            batch.setDocument(Arrays.asList(documentCountersOperation1));
+            batch.setDocuments(Arrays.asList(documentCountersOperation1));
             store.operations().send(new CounterBatchOperation(batch));
 
             assertThat(store.operations().send(new GetCountersOperation("users/1-A", new String[]{"likes"}))
@@ -320,7 +320,7 @@ public class CountersSingleNodeTest extends RemoteTestBase {
             ));
 
             batch = new CounterBatch();
-            batch.setDocument(Arrays.asList(documentCountersOperation1));
+            batch.setDocuments(Arrays.asList(documentCountersOperation1));
             store.operations().send(new CounterBatchOperation(batch));
 
             assertThat(store.operations().send(new GetCountersOperation("users/1-A", new String[]{"likes"}))
@@ -334,7 +334,7 @@ public class CountersSingleNodeTest extends RemoteTestBase {
             ));
 
             batch = new CounterBatch();
-            batch.setDocument(Arrays.asList(documentCountersOperation1));
+            batch.setDocuments(Arrays.asList(documentCountersOperation1));
             store.operations().send(new CounterBatchOperation(batch));
 
             assertThat(store.operations().send(new GetCountersOperation("users/1-A", new String[]{"likes"}))
@@ -350,7 +350,7 @@ public class CountersSingleNodeTest extends RemoteTestBase {
             ));
 
             batch = new CounterBatch();
-            batch.setDocument(Arrays.asList(documentCountersOperation1));
+            batch.setDocuments(Arrays.asList(documentCountersOperation1));
             store.operations().send(new CounterBatchOperation(batch));
 
             assertThat(store.operations().send(new GetCountersOperation("users/1-A", new String[]{"likes"}))
@@ -377,7 +377,7 @@ public class CountersSingleNodeTest extends RemoteTestBase {
             ));
 
             CounterBatch batch = new CounterBatch();
-            batch.setDocument(Arrays.asList(documentCountersOperation1));
+            batch.setDocuments(Arrays.asList(documentCountersOperation1));
             store.operations().send(new CounterBatchOperation(batch));
 
             try (IDocumentSession session = store.openSession()) {
@@ -398,7 +398,7 @@ public class CountersSingleNodeTest extends RemoteTestBase {
             ));
 
             batch = new CounterBatch();
-            batch.setDocument(Arrays.asList(documentCountersOperation1));
+            batch.setDocuments(Arrays.asList(documentCountersOperation1));
             store.operations().send(new CounterBatchOperation(batch));
 
             try (IDocumentSession session = store.openSession()) {
@@ -419,7 +419,7 @@ public class CountersSingleNodeTest extends RemoteTestBase {
             ));
 
             batch = new CounterBatch();
-            batch.setDocument(Arrays.asList(documentCountersOperation1));
+            batch.setDocuments(Arrays.asList(documentCountersOperation1));
             store.operations().send(new CounterBatchOperation(batch));
 
             try (IDocumentSession session = store.openSession()) {
@@ -439,7 +439,7 @@ public class CountersSingleNodeTest extends RemoteTestBase {
             ));
 
             batch = new CounterBatch();
-            batch.setDocument(Arrays.asList(documentCountersOperation1));
+            batch.setDocuments(Arrays.asList(documentCountersOperation1));
             store.operations().send(new CounterBatchOperation(batch));
 
             try (IDocumentSession session = store.openSession()) {

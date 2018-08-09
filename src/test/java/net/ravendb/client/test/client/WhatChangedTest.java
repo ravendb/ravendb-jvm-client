@@ -4,6 +4,7 @@ import net.ravendb.client.RemoteTestBase;
 import net.ravendb.client.documents.IDocumentStore;
 import net.ravendb.client.documents.session.DocumentsChanges;
 import net.ravendb.client.documents.session.IDocumentSession;
+import net.ravendb.client.documents.session.IMetadataDictionary;
 import net.ravendb.client.infrastructure.entities.User;
 import org.junit.jupiter.api.Test;
 

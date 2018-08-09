@@ -66,7 +66,7 @@ public class RavenDB_11166Test extends RemoteTestBase {
             }
 
             SubscriptionCreationOptions options = new SubscriptionCreationOptions();
-            options.setQuery("from Dogs include Owner");
+            options.setQuery("from Dogs include owner");
             String id = store.subscriptions().create(options);
 
             try (SubscriptionWorker<Dog> sub = store.subscriptions().getSubscriptionWorker(Dog.class, id)) {

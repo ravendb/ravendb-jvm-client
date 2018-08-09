@@ -238,7 +238,7 @@ public class RavenDB_8761 extends RemoteTestBase {
             try (IDocumentSession session = store.openSession()) {
                 List<ProductCount> productCounts1 = session.advanced().rawQuery(ProductCount.class, "from Orders\n" +
                         " group by array(lines[].product), array(lines[].quantity)\n" +
-                        " order by lines[].quantity\n" +
+                        " order by count()\n" +
                         " select lines[].product as products, lines[].quantity as quantities, count() as count")
                         .waitForNonStaleResults()
                         .toList();

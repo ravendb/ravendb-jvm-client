@@ -87,15 +87,16 @@ public class BatchCommand extends RavenCommand<BatchCommandResult> implements Cl
                 generator.writeFieldName("Commands");
                 generator.writeStartArray();
 
-                if (_mode == TransactionMode.CLUSTER_WIDE) {
-                    generator.writeStringField("TransactionMode", "ClusterWide");
-                }
-
                 for (ICommandData command : _commands) {
                     command.serialize(generator, _conventions);
                 }
 
                 generator.writeEndArray();
+
+                if (_mode == TransactionMode.CLUSTER_WIDE) {
+                    generator.writeStringField("TransactionMode", "ClusterWide");
+                }
+
                 generator.writeEndObject();
             } catch (IOException e) {
                 throw new RuntimeException(e);

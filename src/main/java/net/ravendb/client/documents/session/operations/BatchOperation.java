@@ -215,7 +215,7 @@ public class BatchOperation {
         String name = getStringField(batchResult, type, attachmentNameFieldName);
 
         ArrayNode attachments = JsonExtensions.getDefaultMapper().createArrayNode();
-        documentInfo.getMetadata().put(Constants.Documents.Metadata.ATTACHMENTS, attachmentNameFieldName);
+        documentInfo.getMetadata().put(Constants.Documents.Metadata.ATTACHMENTS, attachments);
 
         for (int i = 0; i < attachmentsJson.size(); i++) {
             ObjectNode attachment = (ObjectNode) attachmentsJson.get(i);
