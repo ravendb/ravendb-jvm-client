@@ -81,7 +81,7 @@ public class SessionDocumentCounters extends SessionCountersBase implements ISes
         Tuple<Boolean, Map<String, Long>> cache = session.getCountersByDocId().get(docId);
         if (cache != null) {
             value = cache.second.get(counter);
-            if (value != null) {
+            if (cache.second.containsKey(counter)) {
                 return value;
             }
         } else {
