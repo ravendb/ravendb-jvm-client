@@ -7,11 +7,13 @@ import net.ravendb.client.documents.operations.counters.*;
 import net.ravendb.client.documents.session.IDocumentSession;
 import net.ravendb.client.documents.session.IMetadataDictionary;
 import net.ravendb.client.infrastructure.entities.User;
+import org.apache.commons.lang3.StringUtils;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -72,6 +74,36 @@ public class CountersSingleNodeTest extends RemoteTestBase {
 
             assertThat(val)
                     .isEqualTo(7);
+        }
+    }
+
+    @Test
+    public void getCounterValueUsingPOST() throws Exception {
+        try (IDocumentStore store = getDocumentStore()) {
+            try (IDocumentSession session = store.openSession()) {
+                User user = new User();
+                user.setName("Aviv");
+                session.store(user, "users/1-A");
+                session.saveChanges();
+            }
+
+            String longCounterName = StringUtils.repeat('a', 1500);
+
+            DocumentCountersOperation documentCountersOperation = new DocumentCountersOperation();
+            documentCountersOperation.setDocumentId("users/1-A");
+            documentCountersOperation.setOperations(Arrays.asList(CounterOperation.create(longCounterName, CounterOperationType.INCREMENT, 5)));
+
+            CounterBatch counterBatch = new CounterBatch();
+            counterBatch.setDocuments(Arrays.asList(documentCountersOperation));
+
+            store.operations().send(new CounterBatchOperation(counterBatch));
+
+            try (IDocumentSession session = store.openSession()) {
+                Map<String, Long> dic = session.countersFor("users/1-A").get(Arrays.asList(longCounterName, "no_such"));
+                assertThat(dic)
+                        .hasSize(1)
+                        .containsEntry(longCounterName, 5L);
+            }
         }
     }
 

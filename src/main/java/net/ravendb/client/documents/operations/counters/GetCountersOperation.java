@@ -118,34 +118,34 @@ public class GetCountersOperation implements IOperation<CountersDetail> {
                     if (uniqueName != null) {
                         pathBuilder.append("&counter=")
                                 .append(UrlUtils.escapeDataString(uniqueName));
-                    } else {
-                        HttpPost postRequest = new HttpPost();
-                        request = postRequest;
-
-                        DocumentCountersOperation docOps = new DocumentCountersOperation();
-                        docOps.setDocumentId(_docId);
-                        docOps.setOperations(new ArrayList<>());
-
-                        for (String counter : _counters) {
-                            CounterOperation counterOperation = new CounterOperation();
-                            counterOperation.setType(CounterOperationType.GET);
-                            counterOperation.setCounterName(counter);
-
-                            docOps.getOperations().add(counterOperation);
-                        }
-
-                        CounterBatch batch = new CounterBatch();
-                        batch.setDocuments(Arrays.asList(docOps));
-
-                        postRequest.setEntity(new ContentProviderHttpEntity(outputStream -> {
-                            try (JsonGenerator generator = mapper.getFactory().createGenerator(outputStream)) {
-                                batch.serialize(generator, _conventions);
-                            } catch (IOException e) {
-                                throw new RuntimeException(e);
-                            }
-                        }, ContentType.APPLICATION_JSON));
                     }
                 }
+            } else {
+                HttpPost postRequest = new HttpPost();
+                request = postRequest;
+
+                DocumentCountersOperation docOps = new DocumentCountersOperation();
+                docOps.setDocumentId(_docId);
+                docOps.setOperations(new ArrayList<>());
+
+                for (String counter : _counters) {
+                    CounterOperation counterOperation = new CounterOperation();
+                    counterOperation.setType(CounterOperationType.GET);
+                    counterOperation.setCounterName(counter);
+
+                    docOps.getOperations().add(counterOperation);
+                }
+
+                CounterBatch batch = new CounterBatch();
+                batch.setDocuments(Arrays.asList(docOps));
+
+                postRequest.setEntity(new ContentProviderHttpEntity(outputStream -> {
+                    try (JsonGenerator generator = mapper.getFactory().createGenerator(outputStream)) {
+                        batch.serialize(generator, _conventions);
+                    } catch (IOException e) {
+                        throw new RuntimeException(e);
+                    }
+                }, ContentType.APPLICATION_JSON));
             }
 
             return request;

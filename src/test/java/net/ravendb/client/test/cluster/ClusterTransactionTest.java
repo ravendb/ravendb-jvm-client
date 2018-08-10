@@ -48,6 +48,51 @@ public class ClusterTransactionTest extends RemoteTestBase {
     }
 
     @Test
+    public void canDeleteCompareExchangeValue() throws Exception {
+        try (IDocumentStore store = getDocumentStore()) {
+            User user1 = new User();
+            user1.setName("Karmel");
+
+            User user3 = new User();
+            user3.setName("Indych");
+
+            SessionOptions sessionOptions = new SessionOptions();
+            sessionOptions.setTransactionMode(TransactionMode.CLUSTER_WIDE);
+
+            try (IDocumentSession session = store.openSession(sessionOptions)) {
+                session.advanced().clusterTransaction().createCompareExchangeValue("usernames/ayende", user1);
+                session.advanced().clusterTransaction().createCompareExchangeValue("usernames/marcin", user3);
+                session.saveChanges();
+            }
+
+            try (IDocumentSession session = store.openSession(sessionOptions)) {
+                CompareExchangeValue<User> compareExchangeValue = session.advanced().clusterTransaction().getCompareExchangeValue(User.class, "usernames/ayende");
+                assertThat(compareExchangeValue)
+                        .isNotNull();
+                session.advanced().clusterTransaction().deleteCompareExchangeValue(compareExchangeValue);
+
+                CompareExchangeValue<User> compareExchangeValue2 = session.advanced().clusterTransaction().getCompareExchangeValue(User.class, "usernames/marcin");
+                assertThat(compareExchangeValue2)
+                        .isNotNull();
+                session.advanced().clusterTransaction().deleteCompareExchangeValue("usernames/marcin", compareExchangeValue2.getIndex());
+
+                session.saveChanges();
+            }
+
+            try (IDocumentSession session = store.openSession(sessionOptions)) {
+                CompareExchangeValue<User> compareExchangeValue = session.advanced().clusterTransaction().getCompareExchangeValue(User.class, "usernames/ayende");
+                CompareExchangeValue<User> compareExchangeValue2 = session.advanced().clusterTransaction().getCompareExchangeValue(User.class, "usernames/marcin");
+
+
+                assertThat(compareExchangeValue)
+                        .isNull();
+                assertThat(compareExchangeValue2)
+                        .isNull();
+            }
+        }
+    }
+
+    @Test
     public void testSessionSequance() throws Exception {
         try (IDocumentStore store = getDocumentStore()) {
             User user1 = new User();
