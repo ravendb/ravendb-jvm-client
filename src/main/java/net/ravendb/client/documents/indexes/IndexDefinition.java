@@ -6,6 +6,8 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * A definition of a RavenIndex
@@ -176,11 +178,29 @@ public class IndexDefinition {
 
     private IndexType detectStaticIndexType() {
 
-        //TODO: sync with c# -> detect JS indexes as well!
-        if (reduce == null || StringUtils.isBlank(reduce)){
-            return IndexType.MAP;
+        if (maps.isEmpty()) {
+            throw new IllegalArgumentException("Index definitions contains no Maps");
         }
-        return IndexType.MAP_REDUCE;
+
+        String firstMap = maps.iterator().next();
+
+        firstMap = firstMap.replaceAll("(?:/\\*(?:[^*]|(?:\\*+[^*/]))*\\*+/)|(?://.*)","");
+        firstMap = firstMap.trim();
+
+        if (firstMap.startsWith("from") || firstMap.startsWith("docs")) {
+            // C# indexes must start with "from" for query synatx or
+            // "docs" for method syntax
+            if (reduce == null || StringUtils.isBlank(reduce)){
+                return IndexType.MAP;
+            }
+            return IndexType.MAP_REDUCE;
+        }
+
+        if (getReduce() == null || StringUtils.isWhitespace(getReduce())) {
+            return IndexType.JAVA_SCRIPT_MAP;
+        }
+
+        return IndexType.JAVA_SCRIPT_MAP_REDUCE;
     }
 
     /**

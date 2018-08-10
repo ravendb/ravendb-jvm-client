@@ -146,21 +146,28 @@ public class QueryOperation {
         }
 
         if (fieldsToFetch != null && fieldsToFetch.projections != null && fieldsToFetch.projections.length == 1) { // we only select a single field
-            if (String.class.equals(clazz) || ClassUtils.isPrimitiveOrWrapper(clazz) || clazz.isEnum()) {
-                String projectionField = fieldsToFetch.projections[0];
+            String projectionField = fieldsToFetch.projections[0];
 
-                if (fieldsToFetch.sourceAlias != null) {
+            if (fieldsToFetch.sourceAlias != null) {
+
+                if (projectionField.startsWith(fieldsToFetch.sourceAlias)) {
                     // remove source-alias from projection name
                     projectionField = projectionField.substring(fieldsToFetch.sourceAlias.length() + 1);
                 }
 
+                if (projectionField.startsWith("'")) {
+                    projectionField = projectionField.substring(1, projectionField.length() - 1);
+                }
+            }
+
+            if (String.class.equals(clazz) || ClassUtils.isPrimitiveOrWrapper(clazz) || clazz.isEnum()) {
                 JsonNode jsonNode = document.get(projectionField);
                 if (jsonNode instanceof ValueNode) {
                     return ObjectUtils.firstNonNull(session.getConventions().getEntityMapper().treeToValue(jsonNode, clazz), Defaults.defaultValue(clazz));
                 }
             }
 
-            JsonNode inner = document.get(fieldsToFetch.projections[0]);
+            JsonNode inner = document.get(projectionField);
             if (inner == null) {
                 return Defaults.defaultValue(clazz);
             }
