@@ -1,17 +1,13 @@
 package net.ravendb.client.documents.session;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.node.ArrayNode;
 import net.ravendb.client.Constants;
 import net.ravendb.client.documents.operations.counters.CounterDetail;
 import net.ravendb.client.documents.operations.counters.CountersDetail;
 import net.ravendb.client.documents.operations.counters.GetCountersOperation;
 import net.ravendb.client.primitives.Tuple;
 
-import java.lang.reflect.Array;
 import java.util.*;
-import java.util.stream.Stream;
-import java.util.stream.StreamSupport;
 
 public class SessionDocumentCounters extends SessionCountersBase implements ISessionDocumentCounters {
 

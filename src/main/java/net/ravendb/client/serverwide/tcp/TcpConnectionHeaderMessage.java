@@ -3,10 +3,7 @@ package net.ravendb.client.serverwide.tcp;
 import net.ravendb.client.primitives.Reference;
 import net.ravendb.client.primitives.UseSharpEnum;
 
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class TcpConnectionHeaderMessage {
 
@@ -126,12 +123,12 @@ public class TcpConnectionHeaderMessage {
     private static final Map<OperationTypes, Map<Integer, SupportedFeatures>> supportedFeaturesByProtocol = new HashMap<>();
 
     static {
-        operationsToSupportedProtocolVersions.put(OperationTypes.PING, Arrays.asList(PING_BASE_LINE));
-        operationsToSupportedProtocolVersions.put(OperationTypes.NONE, Arrays.asList(NONE_BASE_LINE));
-        operationsToSupportedProtocolVersions.put(OperationTypes.DROP, Arrays.asList(DROP_BASE_LINE));
-        operationsToSupportedProtocolVersions.put(OperationTypes.SUBSCRIPTION, Arrays.asList(SUBSCRIPTION_BASE_LINE));
-        operationsToSupportedProtocolVersions.put(OperationTypes.HEARTBEATS, Arrays.asList(HEARTBEATS_BASE_LINE));
-        operationsToSupportedProtocolVersions.put(OperationTypes.TEST_CONNECTION, Arrays.asList(TEST_CONNECTION_BASE_LINE));
+        operationsToSupportedProtocolVersions.put(OperationTypes.PING, Collections.singletonList(PING_BASE_LINE));
+        operationsToSupportedProtocolVersions.put(OperationTypes.NONE, Collections.singletonList(NONE_BASE_LINE));
+        operationsToSupportedProtocolVersions.put(OperationTypes.DROP, Collections.singletonList(DROP_BASE_LINE));
+        operationsToSupportedProtocolVersions.put(OperationTypes.SUBSCRIPTION, Collections.singletonList(SUBSCRIPTION_BASE_LINE));
+        operationsToSupportedProtocolVersions.put(OperationTypes.HEARTBEATS, Collections.singletonList(HEARTBEATS_BASE_LINE));
+        operationsToSupportedProtocolVersions.put(OperationTypes.TEST_CONNECTION, Collections.singletonList(TEST_CONNECTION_BASE_LINE));
 
         Map<Integer, SupportedFeatures> pingFeaturesMap = new HashMap<>();
         supportedFeaturesByProtocol.put(OperationTypes.PING, pingFeaturesMap);

@@ -1,9 +1,6 @@
 package net.ravendb.client.documents.session;
 
-import net.ravendb.client.documents.operations.attachments.AttachmentName;
 import net.ravendb.client.documents.operations.attachments.CloseableAttachmentResult;
-
-import java.io.InputStream;
 
 /**
  * Attachments advanced synchronous session operations

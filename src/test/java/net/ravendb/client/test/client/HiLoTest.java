@@ -15,11 +15,9 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executors;
-import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
-import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -190,6 +188,7 @@ public class HiLoTest extends RemoteTestBase {
         }
     }
 
+    @SuppressWarnings("unchecked")
     @Test
     public void doesNotGetAnotherRangeWhenDoingParallelRequests() throws Exception {
         try (IDocumentStore store = getDocumentStore()) {

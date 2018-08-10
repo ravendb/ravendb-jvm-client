@@ -2,7 +2,6 @@ package net.ravendb.client.documents.subscriptions;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import net.ravendb.client.documents.DocumentStore;
-import net.ravendb.client.documents.IDocumentStore;
 import net.ravendb.client.documents.commands.*;
 import net.ravendb.client.http.RequestExecutor;
 import net.ravendb.client.primitives.CleanCloseable;

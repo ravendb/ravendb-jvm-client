@@ -10,7 +10,6 @@ import net.ravendb.client.documents.queries.moreLikeThis.MoreLikeThisScope;
 import net.ravendb.client.documents.queries.spatial.DynamicSpatialField;
 import net.ravendb.client.documents.queries.spatial.SpatialCriteria;
 import net.ravendb.client.documents.queries.suggestions.SuggestionBase;
-import net.ravendb.client.documents.session.loaders.IncludeBuilder;
 import net.ravendb.client.documents.session.loaders.IncludeBuilderBase;
 import net.ravendb.client.primitives.Reference;
 

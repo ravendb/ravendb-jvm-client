@@ -12,7 +12,6 @@ import net.ravendb.client.extensions.JsonExtensions;
 import net.ravendb.client.extensions.StringExtensions;
 import net.ravendb.client.http.RequestExecutor;
 import net.ravendb.client.primitives.*;
-import net.ravendb.client.util.UrlUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.eclipse.jetty.util.ssl.SslContextFactory;
 import org.eclipse.jetty.websocket.api.Session;

@@ -2,7 +2,6 @@ package net.ravendb.client.documents;
 
 import net.ravendb.client.documents.changes.IDatabaseChanges;
 import net.ravendb.client.documents.conventions.DocumentConventions;
-import net.ravendb.client.documents.indexes.AbstractIndexCreationTask;
 import net.ravendb.client.documents.indexes.AbstractIndexCreationTaskBase;
 import net.ravendb.client.documents.operations.MaintenanceOperationExecutor;
 import net.ravendb.client.documents.operations.OperationExecutor;

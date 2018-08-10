@@ -6,7 +6,6 @@ import net.ravendb.client.documents.commands.batches.*;
 import net.ravendb.client.documents.operations.PatchRequest;
 import net.ravendb.client.documents.session.IDocumentSession;
 import net.ravendb.client.infrastructure.entities.Company;
-import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 import java.io.ByteArrayInputStream;

@@ -10,7 +10,6 @@ import net.ravendb.client.documents.session.InMemoryDocumentSessionOperations;
 import org.apache.commons.lang3.StringUtils;
 
 import java.io.IOException;
-import java.util.Arrays;
 import java.util.List;
 
 public class CountersBatchCommandData implements ICommandData {

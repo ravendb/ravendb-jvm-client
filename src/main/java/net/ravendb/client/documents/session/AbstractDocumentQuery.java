@@ -24,7 +24,6 @@ import net.ravendb.client.documents.queries.suggestions.SuggestionOptions;
 import net.ravendb.client.documents.queries.suggestions.SuggestionWithTerm;
 import net.ravendb.client.documents.queries.suggestions.SuggestionWithTerms;
 import net.ravendb.client.documents.queries.timings.QueryTimings;
-import net.ravendb.client.documents.session.loaders.IncludeBuilder;
 import net.ravendb.client.documents.session.loaders.IncludeBuilderBase;
 import net.ravendb.client.documents.session.operations.QueryOperation;
 import net.ravendb.client.documents.session.operations.lazy.LazyQueryOperation;
@@ -34,7 +33,6 @@ import net.ravendb.client.primitives.CleanCloseable;
 import net.ravendb.client.primitives.EventHelper;
 import net.ravendb.client.primitives.Reference;
 import net.ravendb.client.primitives.Tuple;
-import org.apache.commons.lang3.ClassUtils;
 import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.StringUtils;
 

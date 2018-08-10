@@ -1,6 +1,5 @@
 package net.ravendb.client.counters;
 
-import com.google.common.collect.Maps;
 import net.ravendb.client.RemoteTestBase;
 import net.ravendb.client.documents.IDocumentStore;
 import net.ravendb.client.documents.operations.PatchOperation;

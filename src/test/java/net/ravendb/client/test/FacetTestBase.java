@@ -98,7 +98,7 @@ public abstract class FacetTestBase extends RemoteTestBase {
             camera.setZoom((int)(RANDOM.nextDouble() * 10 + 1.0));
             camera.setMegapixels(RANDOM.nextDouble() * 10 + 1.0);
             camera.setImageStabilizer(RANDOM.nextDouble() > 0.6);
-            camera.setAdvancedFeatures(Arrays.asList("??"));
+            camera.setAdvancedFeatures(Collections.singletonList("??"));
 
             cameraList.add(camera);
         }

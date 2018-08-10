@@ -15,11 +15,11 @@ import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpRequestBase;
 import org.apache.http.entity.ContentType;
-import org.w3c.dom.css.Counter;
 
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashSet;
 
 public class GetCountersOperation implements IOperation<CountersDetail> {
@@ -137,7 +137,7 @@ public class GetCountersOperation implements IOperation<CountersDetail> {
                 }
 
                 CounterBatch batch = new CounterBatch();
-                batch.setDocuments(Arrays.asList(docOps));
+                batch.setDocuments(Collections.singletonList(docOps));
 
                 postRequest.setEntity(new ContentProviderHttpEntity(outputStream -> {
                     try (JsonGenerator generator = mapper.getFactory().createGenerator(outputStream)) {

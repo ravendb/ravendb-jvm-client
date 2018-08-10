@@ -34,7 +34,7 @@ public class FacetPagingTest extends FacetTestBase {
         facet.setFieldName("manufacturer");
         facet.setOptions(facetOptions);
 
-        List<Facet> facets = Arrays.asList(facet);
+        List<Facet> facets = Collections.singletonList(facet);
 
         try (IDocumentStore store = getDocumentStore()) {
             setup(store);

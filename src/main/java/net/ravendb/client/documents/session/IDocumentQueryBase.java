@@ -5,9 +5,7 @@ import net.ravendb.client.documents.queries.explanation.Explanations;
 import net.ravendb.client.documents.queries.highlighting.HighlightingOptions;
 import net.ravendb.client.documents.queries.highlighting.Highlightings;
 import net.ravendb.client.documents.queries.spatial.DynamicSpatialField;
-import net.ravendb.client.documents.session.loaders.IIncludeBuilder;
 import net.ravendb.client.documents.session.loaders.IQueryIncludeBuilder;
-import net.ravendb.client.documents.session.loaders.IncludeBuilder;
 import net.ravendb.client.primitives.Reference;
 
 import java.util.function.Consumer;

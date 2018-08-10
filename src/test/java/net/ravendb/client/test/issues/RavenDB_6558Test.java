@@ -11,8 +11,6 @@ import net.ravendb.client.documents.queries.highlighting.HighlightingOptions;
 import net.ravendb.client.documents.queries.highlighting.Highlightings;
 import net.ravendb.client.documents.session.IDocumentSession;
 import net.ravendb.client.primitives.Reference;
-import net.ravendb.client.test.querying.HighlightesTest;
-import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;

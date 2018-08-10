@@ -10,7 +10,6 @@ import net.ravendb.client.documents.operations.compareExchange.PutCompareExchang
 import net.ravendb.client.documents.session.IDocumentSession;
 import net.ravendb.client.infrastructure.entities.Person;
 import net.ravendb.client.infrastructure.entities.User;
-import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;

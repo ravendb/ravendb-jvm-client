@@ -29,7 +29,6 @@ import net.ravendb.client.documents.session.operations.*;
 import net.ravendb.client.documents.session.operations.lazy.*;
 import net.ravendb.client.documents.session.tokens.FieldsToFetchToken;
 import net.ravendb.client.extensions.JsonExtensions;
-import net.ravendb.client.http.RequestExecutor;
 import net.ravendb.client.json.MetadataAsDictionary;
 import net.ravendb.client.primitives.Reference;
 import net.ravendb.client.primitives.Tuple;
@@ -372,7 +371,7 @@ public class DocumentSession extends InMemoryDocumentSessionOperations implement
             return null;
         }
 
-        Collection<T> values = load(clazz, Arrays.asList(id), includes).values();
+        Collection<T> values = load(clazz, Collections.singletonList(id), includes).values();
         return values.isEmpty() ? null : values.iterator().next();
     }
 

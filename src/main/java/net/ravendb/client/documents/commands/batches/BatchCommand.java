@@ -8,7 +8,6 @@ import net.ravendb.client.http.RavenCommand;
 import net.ravendb.client.http.ServerNode;
 import net.ravendb.client.json.BatchCommandResult;
 import net.ravendb.client.json.ContentProviderHttpEntity;
-import net.ravendb.client.json.JsonArrayResult;
 import net.ravendb.client.primitives.CleanCloseable;
 import net.ravendb.client.primitives.Reference;
 import net.ravendb.client.util.TimeUtils;

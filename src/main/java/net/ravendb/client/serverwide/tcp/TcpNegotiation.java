@@ -1,9 +1,7 @@
 package net.ravendb.client.serverwide.tcp;
 
 import com.fasterxml.jackson.core.JsonGenerator;
-import com.fasterxml.jackson.core.JsonParser;
 import net.ravendb.client.extensions.JsonExtensions;
-import net.ravendb.client.primitives.OperationCancelledException;
 import net.ravendb.client.primitives.Reference;
 import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.logging.Log;

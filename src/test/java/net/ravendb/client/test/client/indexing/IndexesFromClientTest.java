@@ -29,7 +29,7 @@ public class IndexesFromClientTest extends RemoteTestBase {
     @Test
     public void canCreateIndexesUsingIndexCreation() throws Exception {
         try (IDocumentStore store = getDocumentStore()) {
-            IndexCreation.createIndexes(Arrays.asList(new Users_ByName()), store);
+            IndexCreation.createIndexes(Collections.singletonList(new Users_ByName()), store);
 
             try (IDocumentSession session = store.openSession()) {
                 User user1 = new User();

@@ -1,7 +1,6 @@
 package net.ravendb.client.serverwide.operations;
 
 import net.ravendb.client.documents.DocumentStore;
-import net.ravendb.client.documents.DocumentStoreBase;
 import net.ravendb.client.documents.operations.Operation;
 import net.ravendb.client.documents.operations.OperationIdResult;
 import net.ravendb.client.http.ClusterRequestExecutor;

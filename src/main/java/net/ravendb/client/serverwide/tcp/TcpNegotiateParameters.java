@@ -1,7 +1,5 @@
 package net.ravendb.client.serverwide.tcp;
 
-import net.ravendb.client.primitives.CancellationTokenSource;
-
 import java.util.function.Function;
 
 public class TcpNegotiateParameters {

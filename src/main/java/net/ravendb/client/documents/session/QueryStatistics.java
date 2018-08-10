@@ -3,8 +3,6 @@ package net.ravendb.client.documents.session;
 import net.ravendb.client.documents.queries.QueryResult;
 
 import java.util.Date;
-import java.util.HashMap;
-import java.util.Map;
 
 /**
  * Statistics about a raven query.

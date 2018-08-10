@@ -14,10 +14,7 @@ import net.ravendb.client.serverwide.operations.CreateDatabaseOperation;
 import net.ravendb.client.serverwide.operations.DeleteDatabasesOperation;
 import org.junit.jupiter.api.Test;
 
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -168,7 +165,7 @@ public class SessionCountersTest extends RemoteTestBase {
             }
 
             try (IDocumentSession session = store.openSession()) {
-                Map<String, Long> dic = session.countersFor("users/1-A").get(Arrays.asList("likes"));
+                Map<String, Long> dic = session.countersFor("users/1-A").get(Collections.singletonList("likes"));
                 assertThat(dic)
                         .hasSize(1)
                         .containsEntry("likes", 100L);
@@ -772,10 +769,10 @@ public class SessionCountersTest extends RemoteTestBase {
 
                 DocumentCountersOperation operation = new DocumentCountersOperation();
                 operation.setDocumentId("users/1-A");
-                operation.setOperations(Arrays.asList(CounterOperation.create("likes", CounterOperationType.INCREMENT, 400)));
+                operation.setOperations(Collections.singletonList(CounterOperation.create("likes", CounterOperationType.INCREMENT, 400)));
 
                 CounterBatch counterBatch = new CounterBatch();
-                counterBatch.setDocuments(Arrays.asList(operation));
+                counterBatch.setDocuments(Collections.singletonList(operation));
 
                 store.operations().send(new CounterBatchOperation(counterBatch));
 

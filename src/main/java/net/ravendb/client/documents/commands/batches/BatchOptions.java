@@ -1,7 +1,5 @@
 package net.ravendb.client.documents.commands.batches;
 
-import java.time.Duration;
-
 public class BatchOptions {
 
     private ReplicationBatchOptions replicationOptions;

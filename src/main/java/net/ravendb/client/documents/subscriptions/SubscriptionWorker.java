@@ -4,7 +4,6 @@ import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.TreeNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import net.ravendb.client.documents.DocumentStore;
-import net.ravendb.client.documents.IDocumentStore;
 import net.ravendb.client.exceptions.AllTopologyNodesDownException;
 import net.ravendb.client.exceptions.database.DatabaseDoesNotExistException;
 import net.ravendb.client.exceptions.documents.subscriptions.*;
@@ -26,14 +25,12 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import java.io.IOException;
-import java.lang.reflect.Array;
 import java.net.Socket;
 import java.security.GeneralSecurityException;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutorService;
 import java.util.function.Consumer;
 
 public class SubscriptionWorker<T> implements CleanCloseable {

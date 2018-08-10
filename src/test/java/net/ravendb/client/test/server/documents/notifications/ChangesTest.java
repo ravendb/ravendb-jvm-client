@@ -7,7 +7,6 @@ import net.ravendb.client.documents.indexes.AbstractIndexCreationTask;
 import net.ravendb.client.documents.indexes.IndexPriority;
 import net.ravendb.client.documents.operations.GetStatisticsOperation;
 import net.ravendb.client.documents.operations.indexes.SetIndexesPriorityOperation;
-import net.ravendb.client.documents.session.DocumentsChanges;
 import net.ravendb.client.documents.session.IDocumentSession;
 import net.ravendb.client.infrastructure.entities.Order;
 import net.ravendb.client.infrastructure.entities.User;

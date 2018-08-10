@@ -2,10 +2,6 @@ package net.ravendb.client.test.issues;
 
 import net.ravendb.client.RemoteTestBase;
 import net.ravendb.client.documents.IDocumentStore;
-import net.ravendb.client.documents.indexes.AbstractIndexCreationTask;
-import net.ravendb.client.documents.indexes.FieldStorage;
-import net.ravendb.client.documents.queries.explanation.ExplanationOptions;
-import net.ravendb.client.documents.queries.explanation.Explanations;
 import net.ravendb.client.documents.queries.timings.QueryTimings;
 import net.ravendb.client.documents.session.IDocumentSession;
 import net.ravendb.client.infrastructure.entities.Company;

@@ -532,7 +532,7 @@ public class QueryOnCountersTest extends RemoteTestBase {
                         .isEqualTo(1);
 
                 // included documents should be in cache
-                session.load(User.class, new String[] { "companies/1-A", "companies/2-A", "companies/3-A"});
+                session.load(User.class, "companies/1-A", "companies/2-A", "companies/3-A");
                 assertThat(session.advanced().getNumberOfRequests())
                         .isEqualTo(1);
 

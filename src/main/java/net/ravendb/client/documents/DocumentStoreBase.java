@@ -2,7 +2,6 @@ package net.ravendb.client.documents;
 
 import net.ravendb.client.documents.changes.IDatabaseChanges;
 import net.ravendb.client.documents.conventions.DocumentConventions;
-import net.ravendb.client.documents.indexes.AbstractIndexCreationTask;
 import net.ravendb.client.documents.indexes.AbstractIndexCreationTaskBase;
 import net.ravendb.client.documents.indexes.IndexCreation;
 import net.ravendb.client.documents.indexes.IndexDefinition;
@@ -25,7 +24,6 @@ import java.security.KeyStore;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ConcurrentSkipListMap;
 

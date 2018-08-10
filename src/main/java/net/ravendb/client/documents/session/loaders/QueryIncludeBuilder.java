@@ -1,10 +1,6 @@
 package net.ravendb.client.documents.session.loaders;
 
 import net.ravendb.client.documents.conventions.DocumentConventions;
-import net.ravendb.client.primitives.Tuple;
-import org.apache.commons.lang3.StringUtils;
-
-import java.util.*;
 
 public class QueryIncludeBuilder extends IncludeBuilderBase implements IQueryIncludeBuilder {
 

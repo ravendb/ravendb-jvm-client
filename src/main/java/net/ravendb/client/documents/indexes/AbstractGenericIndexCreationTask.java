@@ -1,12 +1,8 @@
 package net.ravendb.client.documents.indexes;
 
 import net.ravendb.client.Constants;
-import net.ravendb.client.documents.IDocumentStore;
-import net.ravendb.client.documents.conventions.DocumentConventions;
 import net.ravendb.client.documents.indexes.spatial.SpatialOptions;
 import net.ravendb.client.documents.indexes.spatial.SpatialOptionsFactory;
-import net.ravendb.client.documents.operations.indexes.PutIndexesOperation;
-import org.apache.commons.lang3.ObjectUtils;
 
 import java.util.HashMap;
 import java.util.HashSet;

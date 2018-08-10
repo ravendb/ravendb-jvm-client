@@ -3,7 +3,6 @@ package net.ravendb.client.documents.queries.spatial;
 import net.ravendb.client.Constants;
 import net.ravendb.client.documents.indexes.spatial.SpatialRelation;
 import net.ravendb.client.documents.indexes.spatial.SpatialUnits;
-import org.apache.commons.collections4.SplitMapUtils;
 
 public class SpatialCriteriaFactory {
 

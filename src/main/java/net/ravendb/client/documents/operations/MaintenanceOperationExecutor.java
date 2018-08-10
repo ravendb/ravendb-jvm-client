@@ -1,7 +1,6 @@
 package net.ravendb.client.documents.operations;
 
 import net.ravendb.client.documents.DocumentStore;
-import net.ravendb.client.documents.DocumentStoreBase;
 import net.ravendb.client.http.RavenCommand;
 import net.ravendb.client.http.RequestExecutor;
 import net.ravendb.client.http.VoidRavenCommand;
