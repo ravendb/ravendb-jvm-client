@@ -4,7 +4,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
-public class AbstractJavaScriptIndexCreationTask extends AbstractIndexCreationTask {
+public class AbstractJavaScriptIndexCreationTask extends AbstractIndexCreationTaskBase {
 
     private final IndexDefinition _definition = new IndexDefinition();
 

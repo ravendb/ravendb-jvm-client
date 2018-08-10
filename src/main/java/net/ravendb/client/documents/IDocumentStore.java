@@ -3,6 +3,7 @@ package net.ravendb.client.documents;
 import net.ravendb.client.documents.changes.IDatabaseChanges;
 import net.ravendb.client.documents.conventions.DocumentConventions;
 import net.ravendb.client.documents.indexes.AbstractIndexCreationTask;
+import net.ravendb.client.documents.indexes.AbstractIndexCreationTaskBase;
 import net.ravendb.client.documents.operations.MaintenanceOperationExecutor;
 import net.ravendb.client.documents.operations.OperationExecutor;
 import net.ravendb.client.documents.session.*;
@@ -159,27 +160,27 @@ public interface IDocumentStore extends IDisposalNotification {
      * Executes the index creation
      * @param task Index Creation task to use
      */
-    void executeIndex(AbstractIndexCreationTask task);
+    void executeIndex(AbstractIndexCreationTaskBase task);
 
     /**
      * Executes the index creation
      * @param task Index Creation task to use
      * @param database Target database
      */
-    void executeIndex(AbstractIndexCreationTask task, String database);
+    void executeIndex(AbstractIndexCreationTaskBase task, String database);
 
     /**
      * Executes the index creation
      * @param tasks Index Creation tasks to use
      */
-    void executeIndexes(List<AbstractIndexCreationTask> tasks);
+    void executeIndexes(List<AbstractIndexCreationTaskBase> tasks);
 
     /**
      * Executes the index creation
      * @param tasks Index Creation tasks to use
      * @param database Target database
      */
-    void executeIndexes(List<AbstractIndexCreationTask> tasks, String database);
+    void executeIndexes(List<AbstractIndexCreationTaskBase> tasks, String database);
 
     /**
      * Gets the conventions

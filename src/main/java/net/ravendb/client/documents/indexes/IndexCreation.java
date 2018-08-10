@@ -34,7 +34,7 @@ public class IndexCreation {
         }
     }
 
-    public static IndexDefinition[] createIndexesToAdd(Collection<? extends AbstractIndexCreationTask> indexCreationTasks, DocumentConventions conventions) {
+    public static IndexDefinition[] createIndexesToAdd(Collection<? extends AbstractIndexCreationTaskBase> indexCreationTasks, DocumentConventions conventions) {
         return indexCreationTasks.stream()
                 .map(x -> {
                     x.setConventions(conventions);
