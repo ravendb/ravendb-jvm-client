@@ -2,6 +2,7 @@ package net.ravendb.client.documents.linq;
 
 import net.ravendb.client.documents.conventions.DocumentConventions;
 import net.ravendb.client.documents.session.IDocumentQuery;
+import net.ravendb.client.documents.session.InMemoryDocumentSessionOperations;
 
 /**
  * Generate a new document query
@@ -13,6 +14,7 @@ public interface IDocumentQueryGenerator {
      */
     DocumentConventions getConventions();
 
+    InMemoryDocumentSessionOperations getSession();
 
     /**
      * Create a new query for T

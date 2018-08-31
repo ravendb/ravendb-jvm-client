@@ -7,6 +7,7 @@ import net.ravendb.client.Constants;
 import net.ravendb.client.documents.session.DocumentInfo;
 import net.ravendb.client.documents.session.DocumentsChanges;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -19,19 +20,19 @@ public class JsonOperation {
         List<DocumentsChanges> docChanges = changes != null ? new ArrayList<>() : null;
 
         if (!documentInfo.isNewDocument() && documentInfo.getDocument() != null) {
-            return compareJson(documentInfo.getId(), documentInfo.getDocument(), newObj, changes, docChanges);
+            return compareJson("", documentInfo.getId(), documentInfo.getDocument(), newObj, changes, docChanges);
         }
 
         if (changes == null) {
             return true;
         }
 
-        newChange(null, null, null, docChanges, DocumentsChanges.ChangeType.DOCUMENT_ADDED);
+        newChange(null,null, null, null, docChanges, DocumentsChanges.ChangeType.DOCUMENT_ADDED);
         changes.put(documentInfo.getId(), docChanges);
         return true;
     }
 
-    private static boolean compareJson(String id, ObjectNode originalJson, ObjectNode newJson, Map<String, List<DocumentsChanges>> changes, List<DocumentsChanges> docChanges) {
+    private static boolean compareJson(String fieldPath, String id, ObjectNode originalJson, ObjectNode newJson, Map<String, List<DocumentsChanges>> changes, List<DocumentsChanges> docChanges) {
         ArrayList<String> newJsonProps = Lists.newArrayList(newJson.fieldNames());
         ArrayList<String> oldJsonProps = Lists.newArrayList(originalJson.fieldNames());
 
@@ -42,7 +43,7 @@ public class JsonOperation {
             if (changes == null) {
                 return true;
             }
-            newChange(field, null, null, docChanges, DocumentsChanges.ChangeType.REMOVED_FIELD);
+            newChange(fieldPath, field, null, null, docChanges, DocumentsChanges.ChangeType.REMOVED_FIELD);
         }
 
         for (String prop : newJsonProps) {
@@ -59,7 +60,7 @@ public class JsonOperation {
                     return true;
                 }
 
-                newChange(prop, newJson.get(prop), null, docChanges, DocumentsChanges.ChangeType.NEW_FIELD);
+                newChange(fieldPath, prop, newJson.get(prop), null, docChanges, DocumentsChanges.ChangeType.NEW_FIELD);
                 continue;
             }
 
@@ -77,7 +78,7 @@ public class JsonOperation {
                         return true;
                     }
 
-                    newChange(prop, newProp, oldProp, docChanges, DocumentsChanges.ChangeType.FIELD_CHANGED);
+                    newChange(fieldPath, prop, newProp, oldProp, docChanges, DocumentsChanges.ChangeType.FIELD_CHANGED);
                     break;
                 case NULL:
                     if (oldProp.isNull()) {
@@ -87,7 +88,7 @@ public class JsonOperation {
                         return true;
                     }
 
-                    newChange(prop, null, oldProp, docChanges, DocumentsChanges.ChangeType.FIELD_CHANGED);
+                    newChange(fieldPath, prop, null, oldProp, docChanges, DocumentsChanges.ChangeType.FIELD_CHANGED);
                     break;
                 case ARRAY:
                     if (!(oldProp instanceof ArrayNode)) {
@@ -95,11 +96,11 @@ public class JsonOperation {
                             return true;
                         }
 
-                        newChange(prop, newProp, oldProp, docChanges, DocumentsChanges.ChangeType.FIELD_CHANGED);
+                        newChange(fieldPath, prop, newProp, oldProp, docChanges, DocumentsChanges.ChangeType.FIELD_CHANGED);
                         break;
                     }
 
-                    boolean changed = compareJsonArray(id, (ArrayNode) oldProp, (ArrayNode) newProp, changes, docChanges, prop);
+                    boolean changed = compareJsonArray(fieldPathCombine(fieldPath, prop), id, (ArrayNode) oldProp, (ArrayNode) newProp, changes, docChanges, prop);
                     if (changes == null && changed) {
                         return true;
                     }
@@ -111,11 +112,11 @@ public class JsonOperation {
                             return true;
                         }
 
-                        newChange(prop, newProp, null, docChanges, DocumentsChanges.ChangeType.FIELD_CHANGED);
+                        newChange(fieldPath, prop, newProp, null, docChanges, DocumentsChanges.ChangeType.FIELD_CHANGED);
                         break;
                     }
 
-                    changed = compareJson(id, (ObjectNode) oldProp, (ObjectNode) newProp, changes, docChanges);
+                    changed = compareJson(fieldPathCombine(fieldPath, prop), id, (ObjectNode) oldProp, (ObjectNode) newProp, changes, docChanges);
 
                     if (changes == null && changed) {
                         return true;
@@ -135,6 +136,10 @@ public class JsonOperation {
         return true;
     }
 
+    private static String fieldPathCombine(String path1, String path2) {
+        return StringUtils.isEmpty(path1) ? path2 : path1 + "." + path2;
+    }
+
     private static boolean compareValues(ValueNode oldProp, ValueNode newProp) {
         if ((newProp.isLong() || newProp.isInt()) && oldProp.isNumber()) {
             long longValue = newProp.asLong();
@@ -149,13 +154,13 @@ public class JsonOperation {
         }
 
         if (!oldProp.getNodeType().equals(newProp.getNodeType())) {
-            return true;
+            return false;
         }
 
         return oldProp.asText().equals(newProp.asText());
     }
 
-    private static boolean compareJsonArray(String id, ArrayNode oldArray, ArrayNode newArray, Map<String, List<DocumentsChanges>> changes, List<DocumentsChanges> docChanges, String propName) {
+    private static boolean compareJsonArray(String fieldPath, String id, ArrayNode oldArray, ArrayNode newArray, Map<String, List<DocumentsChanges>> changes, List<DocumentsChanges> docChanges, String propName) {
         // if we don't care about the changes
         if (oldArray.size() != newArray.size() && changes == null) {
             return true;
@@ -168,22 +173,22 @@ public class JsonOperation {
             switch (oldArray.get(position).getNodeType()) {
                 case OBJECT:
                     if (JsonNodeType.OBJECT.equals(newArray.get(position).getNodeType())) {
-                        changed |= compareJson(id, (ObjectNode) oldArray.get(position), (ObjectNode) newArray.get(position), changes, docChanges);
+                        changed |= compareJson(addIndexFieldPath(fieldPath, position), id, (ObjectNode) oldArray.get(position), (ObjectNode) newArray.get(position), changes, docChanges);
                     } else {
                         changed = true;
                         if (changes != null) {
-                            newChange(propName, newArray.get(position), oldArray.get(position), docChanges, DocumentsChanges.ChangeType.ARRAY_VALUE_ADDED);
+                            newChange(addIndexFieldPath(fieldPath, position), propName, newArray.get(position), oldArray.get(position), docChanges, DocumentsChanges.ChangeType.ARRAY_VALUE_ADDED);
                         }
                     }
 
                     break;
                 case ARRAY:
                     if (JsonNodeType.ARRAY.equals(newArray.get(position).getNodeType())) {
-                        changed |= compareJsonArray(id, (ArrayNode) oldArray.get(position), (ArrayNode) newArray.get(position), changes, docChanges, propName);
+                        changed |= compareJsonArray(addIndexFieldPath(fieldPath, position), id, (ArrayNode) oldArray.get(position), (ArrayNode) newArray.get(position), changes, docChanges, propName);
                     } else {
                         changed = true;
                         if (changes != null) {
-                            newChange(propName, newArray.get(position), oldArray.get(position), docChanges, DocumentsChanges.ChangeType.ARRAY_VALUE_CHANGED);
+                            newChange(addIndexFieldPath(fieldPath, position), propName, newArray.get(position), oldArray.get(position), docChanges, DocumentsChanges.ChangeType.ARRAY_VALUE_CHANGED);
                         }
                     }
                     break;
@@ -191,7 +196,7 @@ public class JsonOperation {
                     if (newArray.get(position) != null && !newArray.get(position).isNull()) {
                         changed = true;
                         if (changes != null) {
-                            newChange(propName, newArray.get(position), oldArray.get(position), docChanges, DocumentsChanges.ChangeType.ARRAY_VALUE_ADDED);
+                            newChange(addIndexFieldPath(fieldPath, position), propName, newArray.get(position), oldArray.get(position), docChanges, DocumentsChanges.ChangeType.ARRAY_VALUE_ADDED);
                         }
                     }
                     break;
@@ -199,7 +204,7 @@ public class JsonOperation {
                 default:
                     if (!oldArray.get(position).asText().equals(newArray.get(position).asText())) {
                         if (changes != null) {
-                            newChange(propName, newArray.get(position), oldArray.get(position), docChanges, DocumentsChanges.ChangeType.ARRAY_VALUE_CHANGED);
+                            newChange(addIndexFieldPath(fieldPath, position), propName, newArray.get(position), oldArray.get(position), docChanges, DocumentsChanges.ChangeType.ARRAY_VALUE_CHANGED);
                         }
                         changed = true;
                     }
@@ -214,19 +219,23 @@ public class JsonOperation {
 
         // if one of the arrays is larger than the other
         while (position < oldArray.size()) {
-            newChange(propName, null, oldArray.get(position), docChanges, DocumentsChanges.ChangeType.ARRAY_VALUE_REMOVED);
+            newChange(fieldPath, propName, null, oldArray.get(position), docChanges, DocumentsChanges.ChangeType.ARRAY_VALUE_REMOVED);
             position++;
         }
 
         while (position < newArray.size()) {
-            newChange(propName, newArray.get(position), null, docChanges, DocumentsChanges.ChangeType.ARRAY_VALUE_ADDED);
+            newChange(fieldPath, propName, newArray.get(position), null, docChanges, DocumentsChanges.ChangeType.ARRAY_VALUE_ADDED);
             position++;
         }
 
         return changed;
     }
 
-    private static void newChange(String name, Object newValue, Object oldValue, List<DocumentsChanges> docChanges, DocumentsChanges.ChangeType change) {
+    private static String addIndexFieldPath(String fieldPath, int position) {
+        return fieldPath + "[" + position + "]";
+    }
+
+    private static void newChange(String fieldPath, String name, Object newValue, Object oldValue, List<DocumentsChanges> docChanges, DocumentsChanges.ChangeType change) {
         if (newValue instanceof NumericNode) {
             NumericNode node = (NumericNode) newValue;
             newValue = node.numberValue();
@@ -243,6 +252,7 @@ public class JsonOperation {
         documentsChanges.setFieldNewValue(newValue);
         documentsChanges.setFieldOldValue(oldValue);
         documentsChanges.setChange(change);
+        documentsChanges.setFieldPath(fieldPath);
         docChanges.add(documentsChanges);
     }
 }

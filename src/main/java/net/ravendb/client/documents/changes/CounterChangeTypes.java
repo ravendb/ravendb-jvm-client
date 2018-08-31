@@ -3,11 +3,9 @@ package net.ravendb.client.documents.changes;
 import net.ravendb.client.primitives.UseSharpEnum;
 
 @UseSharpEnum
-public enum DocumentChangeTypes {
+public enum CounterChangeTypes {
     NONE,
-
     PUT,
     DELETE,
-    CONFLICT,
-    COMMON
+    INCREMENT
 }

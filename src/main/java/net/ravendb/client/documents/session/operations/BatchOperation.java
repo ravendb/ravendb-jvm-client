@@ -42,13 +42,15 @@ public class BatchOperation {
         InMemoryDocumentSessionOperations.SaveChangesData result = _session.prepareForSaveChanges();
         _sessionCommandsCount = result.getSessionCommands().size();
         result.getSessionCommands().addAll(result.getDeferredCommands());
+
+        _session.validateClusterTransaction(result);
+
         _allCommandsCount = result.getSessionCommands().size();
 
         if (_allCommandsCount == 0) {
             return null;
         }
 
-        _session.validateClusterTransaction(result);
         _session.incrementRequestCount();
 
         _entities = result.getEntities();

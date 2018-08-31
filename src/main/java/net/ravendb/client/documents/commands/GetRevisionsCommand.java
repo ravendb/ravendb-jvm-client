@@ -3,12 +3,14 @@ package net.ravendb.client.documents.commands;
 import net.ravendb.client.http.RavenCommand;
 import net.ravendb.client.http.ServerNode;
 import net.ravendb.client.json.JsonArrayResult;
+import net.ravendb.client.primitives.NetISO8601Utils;
 import net.ravendb.client.primitives.Reference;
 import net.ravendb.client.util.UrlUtils;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpRequestBase;
 
 import java.io.IOException;
+import java.util.Date;
 
 public class GetRevisionsCommand extends RavenCommand<JsonArrayResult> {
 
@@ -16,6 +18,7 @@ public class GetRevisionsCommand extends RavenCommand<JsonArrayResult> {
     private Integer _start;
     private Integer _pageSize;
     private boolean _metadataOnly;
+    private Date _before;
     private String _changeVector;
     private String[] _changeVectors;
 
@@ -37,6 +40,15 @@ public class GetRevisionsCommand extends RavenCommand<JsonArrayResult> {
         super(JsonArrayResult.class);
         _changeVectors = changeVectors;
         _metadataOnly = metadataOnly;
+    }
+
+    public GetRevisionsCommand(String id, Date before) {
+        super(JsonArrayResult.class);
+        if (id == null) {
+            throw new IllegalArgumentException("Id cannot be null");
+        }
+        _id = id;
+        _before = before;
     }
 
     public GetRevisionsCommand(String id, Integer start, Integer pageSize) {
@@ -76,6 +88,10 @@ public class GetRevisionsCommand extends RavenCommand<JsonArrayResult> {
             for (String changeVector : _changeVectors) {
                 pathBuilder.append("&changeVector=").append(UrlUtils.escapeDataString(changeVector));
             }
+        }
+
+        if (_before != null) {
+            pathBuilder.append("&before=").append(NetISO8601Utils.format(_before, true));
         }
 
         if (_start != null) {

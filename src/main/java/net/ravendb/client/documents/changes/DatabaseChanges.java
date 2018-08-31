@@ -145,6 +145,10 @@ public class DatabaseChanges implements IDatabaseChanges {
     @SuppressWarnings("unchecked")
     @Override
     public IChangesObservable<IndexChange> forIndex(String indexName) {
+        if (StringUtils.isWhitespace(indexName)) {
+            throw new IllegalArgumentException("IndexName cannot be null or whitespace");
+        }
+
         DatabaseConnectionState counter = getOrAddConnectionState("indexes/" + indexName, "watch-index", "unwatch-index", indexName);
 
         ChangesObservable taskedObservable = new ChangesObservable<IndexChange, DatabaseConnectionState>(
@@ -167,6 +171,9 @@ public class DatabaseChanges implements IDatabaseChanges {
 
     @Override
     public IChangesObservable<DocumentChange> forDocument(String docId) {
+        if (StringUtils.isWhitespace(docId)) {
+            throw new IllegalArgumentException("DocumentId cannot be null or whitespace");
+        }
         DatabaseConnectionState counter = getOrAddConnectionState("docs/" + docId, "watch-doc", "unwatch-doc", docId);
 
         ChangesObservable<DocumentChange, DatabaseConnectionState> taskedObservable = new ChangesObservable<>(ChangesType.DOCUMENT, counter,
@@ -215,6 +222,9 @@ public class DatabaseChanges implements IDatabaseChanges {
 
     @Override
     public IChangesObservable<DocumentChange> forDocumentsStartingWith(String docIdPrefix) {
+        if (StringUtils.isWhitespace(docIdPrefix)) {
+            throw new IllegalArgumentException("DocumentIdPrefix cannot be null or whitespace");
+        }
         DatabaseConnectionState counter = getOrAddConnectionState("prefixes/" + docIdPrefix, "watch-prefix", "unwatch-prefix", docIdPrefix);
         ChangesObservable<DocumentChange, DatabaseConnectionState> taskedObservable = new ChangesObservable<>(ChangesType.DOCUMENT, counter,
                 notification -> notification.getId() != null && StringUtils.startsWithIgnoreCase(notification.getId(), docIdPrefix));
@@ -224,8 +234,8 @@ public class DatabaseChanges implements IDatabaseChanges {
 
     @Override
     public IChangesObservable<DocumentChange> forDocumentsInCollection(String collectionName) {
-        if (collectionName == null) {
-            throw new IllegalArgumentException("CollectionName cannot be null");
+        if (StringUtils.isWhitespace(collectionName)) {
+            throw new IllegalArgumentException("CollectionName cannot be null or whitespace");
         }
 
         DatabaseConnectionState counter = getOrAddConnectionState("collections/" + collectionName, "watch-collection", "unwatch-collection", collectionName);
@@ -240,6 +250,58 @@ public class DatabaseChanges implements IDatabaseChanges {
     public IChangesObservable<DocumentChange> forDocumentsInCollection(Class<?> clazz) {
         String collectionName = _conventions.getCollectionName(clazz);
         return forDocumentsInCollection(collectionName);
+    }
+
+    @Override
+    public IChangesObservable<CounterChange> forAllCounters() {
+        DatabaseConnectionState counter = getOrAddConnectionState("all-counters", "watch-counters", "unwatch-counters", null);
+
+        ChangesObservable<CounterChange, DatabaseConnectionState> taskedObservable = new ChangesObservable<>(ChangesType.COUNTER, counter,
+                notification -> true);
+
+        return taskedObservable;
+    }
+
+    @Override
+    public IChangesObservable<CounterChange> forCounter(String counterName) {
+        if (StringUtils.isWhitespace(counterName)) {
+            throw new IllegalArgumentException("CounterName cannot be null or whitespace");
+        }
+
+        DatabaseConnectionState counter = getOrAddConnectionState("counter/" + counterName, "watch-counter", "unwatch-counter", counterName);
+        ChangesObservable<CounterChange, DatabaseConnectionState> taskedObservable = new ChangesObservable<>(ChangesType.COUNTER, counter,
+                notification -> StringUtils.equalsIgnoreCase(counterName, notification.getName()));
+
+        return taskedObservable;
+    }
+
+    @Override
+    public IChangesObservable<CounterChange> forCounterOfDocument(String documentId, String counterName) {
+        if (StringUtils.isWhitespace(documentId)) {
+            throw new IllegalArgumentException("DocumentId cannot be null or whitespace.");
+        }
+        if (StringUtils.isWhitespace(counterName)) {
+            throw new IllegalArgumentException("CounterName cannot be null or whitespace.");
+        }
+
+        DatabaseConnectionState counter = getOrAddConnectionState("document/" + documentId + "/counter/" + counterName, "watch-document-counter", "unwatch-document-counter", null, new String[]{documentId, counterName});
+        ChangesObservable<CounterChange, DatabaseConnectionState> taskedObservable = new ChangesObservable<>(ChangesType.COUNTER, counter,
+                notification -> StringUtils.equalsIgnoreCase(documentId, notification.getDocumentId()) && StringUtils.equalsIgnoreCase(counterName, notification.getName()));
+
+        return taskedObservable;
+    }
+
+    @Override
+    public IChangesObservable<CounterChange> forCountersOfDocument(String documentId) {
+        if (StringUtils.isWhitespace(documentId)) {
+            throw new IllegalArgumentException("DocumentId cannot be null or whitespace");
+        }
+
+        DatabaseConnectionState counter = getOrAddConnectionState("document/" + documentId + "/counter", "watch-document-counters", "unwatch-document-counters", documentId);
+        ChangesObservable<CounterChange, DatabaseConnectionState> taskedObservable = new ChangesObservable<>(ChangesType.COUNTER, counter,
+                notification -> StringUtils.equalsIgnoreCase(documentId, notification.getDocumentId()));
+
+        return taskedObservable;
     }
 
     private final List<Consumer<Exception>> onError = new ArrayList<>();
@@ -290,6 +352,10 @@ public class DatabaseChanges implements IDatabaseChanges {
     }
 
     private DatabaseConnectionState getOrAddConnectionState(String name, String watchCommand, String unwatchCommand, String value) {
+        return getOrAddConnectionState(name, watchCommand, unwatchCommand, value, null);
+    }
+
+    private DatabaseConnectionState getOrAddConnectionState(String name, String watchCommand, String unwatchCommand, String value, String[] values) {
         Reference<Boolean> newValue = new Reference<>();
 
         DatabaseConnectionState counter = _counters.computeIfAbsent(name, s -> {
@@ -297,7 +363,7 @@ public class DatabaseChanges implements IDatabaseChanges {
             Runnable onDisconnect = () -> {
                 try {
                     if (isConnected()) {
-                        send(unwatchCommand, value);
+                        send(unwatchCommand, value, values);
                     }
                 } catch (Exception e) {
                     // if we are not connected then we unsubscribed already
@@ -309,7 +375,7 @@ public class DatabaseChanges implements IDatabaseChanges {
                 state.close();
             };
 
-            Runnable onConnect = () -> send(watchCommand, value);
+            Runnable onConnect = () -> send(watchCommand, value, values);
 
             newValue.value = true;
             return new DatabaseConnectionState(onConnect, onDisconnect);
@@ -322,7 +388,7 @@ public class DatabaseChanges implements IDatabaseChanges {
         return counter;
     }
 
-    private void send(String command, String value) {
+    private void send(String command, String value, String[] values) {
         CompletableFuture<Void> taskCompletionSource = new CompletableFuture<>();
         int currentCommandId;
 
@@ -337,6 +403,15 @@ public class DatabaseChanges implements IDatabaseChanges {
                 generator.writeNumberField("CommandId", currentCommandId);
                 generator.writeStringField("Command", command);
                 generator.writeStringField("Param", value);
+
+                if (values != null && values.length > 0) {
+                    generator.writeFieldName("Params");
+                    generator.writeStartArray();
+                    for (String param : values) {
+                        generator.writeString(param);
+                    }
+                    generator.writeEndArray();
+                }
 
                 generator.writeEndObject();
             }
@@ -500,6 +575,12 @@ public class DatabaseChanges implements IDatabaseChanges {
                 DocumentChange documentChange = JsonExtensions.getDefaultMapper().treeToValue(value, DocumentChange.class);
                 for (DatabaseConnectionState state : states) {
                     state.send(documentChange);
+                }
+                break;
+            case "CounterChange":
+                CounterChange counterChange = JsonExtensions.getDefaultMapper().treeToValue(value, CounterChange.class);
+                for (DatabaseConnectionState state : states) {
+                    state.send(counterChange);
                 }
                 break;
             case "IndexChange":

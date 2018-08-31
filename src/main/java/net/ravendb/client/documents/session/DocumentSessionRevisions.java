@@ -4,6 +4,7 @@ import net.ravendb.client.documents.commands.GetRevisionsCommand;
 import net.ravendb.client.documents.session.operations.GetRevisionOperation;
 import net.ravendb.client.json.MetadataAsDictionary;
 
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
@@ -70,5 +71,14 @@ public class DocumentSessionRevisions extends AdvancedSessionExtentionBase imple
         requestExecutor.execute(command, sessionInfo);
         operation.setResult(command.getResult());
         return operation.getRevisions(clazz);
+    }
+
+    @Override
+    public <T> T get(Class<T> clazz, String id, Date date) {
+        GetRevisionOperation operation = new GetRevisionOperation(session, id, date);
+        GetRevisionsCommand command = operation.createRequest();
+        requestExecutor.execute(command, sessionInfo);
+        operation.setResult(command.getResult());
+        return operation.getRevision(clazz);
     }
 }

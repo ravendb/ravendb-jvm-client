@@ -1541,6 +1541,7 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
         }
 
         List<QueryToken> tokens = getCurrentWhereTokens();
+
         for (QueryToken token : tokens) {
             if (token instanceof WhereToken) {
                 ((WhereToken) token).addAlias(fromAlias);

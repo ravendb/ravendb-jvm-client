@@ -981,9 +981,9 @@ public class RequestExecutor implements CleanCloseable {
         ExceptionDispatcher.ExceptionSchema exceptionSchema = new ExceptionDispatcher.ExceptionSchema();
         exceptionSchema.setUrl(request.getURI().toString());
         exceptionSchema.setMessage(e.getMessage());
-        exceptionSchema.setError(e.toString());
+        exceptionSchema.setError("An exception occurred while contacting " + request.getURI() + "." + System.lineSeparator() + e.toString());
         exceptionSchema.setType(e.getClass().getCanonicalName());
-        command.getFailedNodes().put(chosenNode, ExceptionDispatcher.get(exceptionSchema, HttpStatus.SC_INTERNAL_SERVER_ERROR));
+        command.getFailedNodes().put(chosenNode, ExceptionDispatcher.get(exceptionSchema, HttpStatus.SC_SERVICE_UNAVAILABLE));
     }
 
     protected boolean _disposed;

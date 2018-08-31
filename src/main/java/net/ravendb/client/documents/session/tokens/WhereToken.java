@@ -204,11 +204,18 @@ public class WhereToken extends QueryToken {
         this.options = options;
     }
 
-    public void addAlias(String alias) {
+    public WhereToken addAlias(String alias) {
         if ("id()".equals(fieldName)) {
-            return;
+            return this;
         }
-        fieldName = alias + "." + fieldName;
+
+        WhereToken whereToken = new WhereToken();
+        whereToken.setFieldName(alias + "." + fieldName);
+        whereToken.setParameterName(parameterName);
+        whereToken.setWhereOperator(whereOperator);
+        whereToken.setOptions(options);
+
+        return whereToken;
     }
 
     private boolean writeMethod(StringBuilder writer) {

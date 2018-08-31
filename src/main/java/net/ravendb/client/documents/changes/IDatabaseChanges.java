@@ -62,4 +62,32 @@ public interface IDatabaseChanges extends IConnectableChanges<IDatabaseChanges> 
      */
     IChangesObservable<DocumentChange> forDocumentsInCollection(Class<?> clazz);
 
+    /**
+     * Subscribe for changes for all counters.
+     * @return Changes observable
+     */
+    IChangesObservable<CounterChange> forAllCounters();
+
+    /**
+     * Subscribe to changes for all counters with a given name.
+     * @param counterName Counter name
+     * @return Changes observable
+     */
+    IChangesObservable<CounterChange> forCounter(String counterName);
+
+    /**
+     * Subscribe to changes for counter from a given document and with given name.
+     * @param documentId Document identifier
+     * @param counterName Counter name
+     * @return Changes observable
+     */
+    IChangesObservable<CounterChange> forCounterOfDocument(String documentId, String counterName);
+
+    /**
+     * Subscribe to changes for all counters from a given document.
+     * @param documentId Document identifier
+     * @return Changes observable
+     */
+    IChangesObservable<CounterChange> forCountersOfDocument(String documentId);
+
 }

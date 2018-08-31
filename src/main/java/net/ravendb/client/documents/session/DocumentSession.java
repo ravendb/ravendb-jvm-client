@@ -649,6 +649,11 @@ public class DocumentSession extends InMemoryDocumentSessionOperations implement
         return new DocumentQuery<>(clazz, this, indexName, collectionName, isMapReduce);
     }
 
+    @Override
+    public InMemoryDocumentSessionOperations getSession() {
+        return this;
+    }
+
     public <T> IRawDocumentQuery<T> rawQuery(Class<T> clazz, String query) {
         return new RawDocumentQuery<>(clazz, this, query);
     }

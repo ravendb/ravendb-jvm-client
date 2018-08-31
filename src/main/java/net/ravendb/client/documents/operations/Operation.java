@@ -51,7 +51,12 @@ public class Operation {
                 case "Faulted":
                     JsonNode result = status.get("Result");
                     OperationExceptionResult exceptionResult = JsonExtensions.getDefaultMapper().convertValue(result, OperationExceptionResult.class);
-                    throw ExceptionDispatcher.get(exceptionResult.getMessage(), exceptionResult.getError(), exceptionResult.getType(), exceptionResult.getStatusCode());
+                    ExceptionDispatcher.ExceptionSchema schema = new ExceptionDispatcher.ExceptionSchema();
+                    schema.setUrl(_requestExecutor.getUrl());
+                    schema.setError(exceptionResult.getError());
+                    schema.setMessage(exceptionResult.getMessage());
+                    schema.setType(exceptionResult.getType());
+                    throw ExceptionDispatcher.get(schema, exceptionResult.getStatusCode());
             }
 
             try {

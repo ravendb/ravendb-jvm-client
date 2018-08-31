@@ -1,6 +1,7 @@
 package net.ravendb.client.documents.operations;
 
 import net.ravendb.client.documents.DocumentStoreBase;
+import net.ravendb.client.documents.IDocumentStore;
 import net.ravendb.client.documents.session.SessionInfo;
 import net.ravendb.client.http.RavenCommand;
 import net.ravendb.client.http.RequestExecutor;
@@ -11,15 +12,19 @@ import java.io.IOException;
 
 public class OperationExecutor {
 
-    private final DocumentStoreBase store;
+    private final IDocumentStore store;
     private final String databaseName;
     private final RequestExecutor requestExecutor;
 
     public OperationExecutor(DocumentStoreBase store) {
-        this(store, null);
+        this((IDocumentStore) store, null);
     }
 
     public OperationExecutor(DocumentStoreBase store, String databaseName) {
+        this((IDocumentStore) store, databaseName);
+    }
+
+    protected OperationExecutor(IDocumentStore store, String databaseName) {
         this.store = store;
         this.databaseName = databaseName != null ? databaseName : store.getDatabase();
         if (this.databaseName != null) {

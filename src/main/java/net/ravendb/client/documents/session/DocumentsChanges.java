@@ -2,6 +2,7 @@ package net.ravendb.client.documents.session;
 
 
 import com.fasterxml.jackson.databind.node.JsonNodeType;
+import org.apache.commons.lang3.StringUtils;
 
 public class DocumentsChanges {
 
@@ -16,6 +17,8 @@ public class DocumentsChanges {
     private ChangeType change;
 
     private String fieldName;
+
+    private String fieldPath;
 
     public Object getFieldOldValue() {
         return fieldOldValue;
@@ -65,32 +68,22 @@ public class DocumentsChanges {
         this.fieldName = fieldName;
     }
 
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-
-        DocumentsChanges that = (DocumentsChanges) o;
-
-        if (fieldOldValue != null ? !fieldOldValue.equals(that.fieldOldValue) : that.fieldOldValue != null)
-            return false;
-        if (fieldNewValue != null ? !fieldNewValue.equals(that.fieldNewValue) : that.fieldNewValue != null)
-            return false;
-        if (fieldOldType != that.fieldOldType) return false;
-        if (fieldNewType != that.fieldNewType) return false;
-        if (change != that.change) return false;
-        return fieldName != null ? fieldName.equals(that.fieldName) : that.fieldName == null;
+    public String getFieldFullName() {
+        return StringUtils.isEmpty(fieldPath) ? fieldName : fieldPath + "." + fieldName;
     }
 
-    @Override
-    public int hashCode() {
-        int result = fieldOldValue != null ? fieldOldValue.hashCode() : 0;
-        result = 31 * result + (fieldNewValue != null ? fieldNewValue.hashCode() : 0);
-        result = 31 * result + (fieldOldType != null ? fieldOldType.hashCode() : 0);
-        result = 31 * result + (fieldNewType != null ? fieldNewType.hashCode() : 0);
-        result = 31 * result + (change != null ? change.hashCode() : 0);
-        result = 31 * result + (fieldName != null ? fieldName.hashCode() : 0);
-        return result;
+    /**
+     * @return Path of field on which the change occurred.
+     */
+    public String getFieldPath() {
+        return fieldPath;
+    }
+
+    /**
+     * @param fieldPath Path of field on which the change occurred.
+     */
+    public void setFieldPath(String fieldPath) {
+        this.fieldPath = fieldPath;
     }
 
     public enum ChangeType {

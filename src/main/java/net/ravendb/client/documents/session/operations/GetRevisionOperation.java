@@ -10,10 +10,7 @@ import net.ravendb.client.documents.session.InMemoryDocumentSessionOperations;
 import net.ravendb.client.json.JsonArrayResult;
 import net.ravendb.client.json.MetadataAsDictionary;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.TreeMap;
+import java.util.*;
 
 public class GetRevisionOperation {
     private final InMemoryDocumentSessionOperations _session;
@@ -35,6 +32,15 @@ public class GetRevisionOperation {
         _session = session;
         _command = new GetRevisionsCommand(id, start, pageSize, metadataOnly);
     }
+
+    public GetRevisionOperation(InMemoryDocumentSessionOperations session, String id, Date before) {
+        if (session == null) {
+            throw new IllegalArgumentException("Session cannot be null");
+        }
+        _session = session;
+        _command = new GetRevisionsCommand(id, before);
+    }
+
 
     public GetRevisionOperation(InMemoryDocumentSessionOperations session, String changeVector) {
         if (session == null) {

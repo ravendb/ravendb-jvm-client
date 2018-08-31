@@ -16,6 +16,7 @@ import net.ravendb.client.documents.commands.batches.*;
 import net.ravendb.client.documents.conventions.DocumentConventions;
 import net.ravendb.client.documents.identity.GenerateEntityIdOnTheClient;
 import net.ravendb.client.documents.operations.OperationExecutor;
+import net.ravendb.client.documents.operations.SessionOperationExecutor;
 import net.ravendb.client.documents.session.operations.lazy.ILazyOperation;
 import net.ravendb.client.exceptions.documents.session.NonUniqueObjectException;
 import net.ravendb.client.extensions.JsonExtensions;
@@ -201,7 +202,7 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
 
     public OperationExecutor getOperations() {
         if (_operationExecutor == null) {
-            _operationExecutor = getDocumentStore().operations().forDatabase(getDatabaseName());
+            _operationExecutor = new SessionOperationExecutor(this);
         }
 
         return _operationExecutor;
@@ -320,6 +321,11 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
     protected InMemoryDocumentSessionOperations(DocumentStoreBase documentStore, UUID id, SessionOptions options) {
         this.id = id;
         this.databaseName = ObjectUtils.firstNonNull(options.getDatabase(), documentStore.getDatabase());
+
+        if (StringUtils.isWhitespace(databaseName)) {
+            throwNoDatabase();
+        }
+
         this._documentStore = documentStore;
         this._requestExecutor = ObjectUtils.firstNonNull(options.getRequestExecutor(), documentStore.getRequestExecutor(databaseName));
 
@@ -840,11 +846,19 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
             return;
         }
 
+        if (isUseOptimisticConcurrency()) {
+            throw new IllegalStateException("useOptimisticConcurrency is not supported with TransactionMode set to " + TransactionMode.CLUSTER_WIDE);
+        }
+
         for (ICommandData commandData : result.getSessionCommands()) {
 
             switch (commandData.getType()) {
                 case PUT:
                 case DELETE:
+                    if (commandData.getChangeVector() != null) {
+                        throw new IllegalStateException("Optimistic concurrency for " + commandData.getId() + " is not supported when using a cluster transaction");
+                    }
+                    break;
                 case COMPARE_EXCHANGE_DELETE:
                 case COMPARE_EXCHANGE_PUT:
                     break;
@@ -1026,6 +1040,12 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
     private static void throwInvalidDeletedDocumentWithDeferredCommand(ICommandData resultCommand) {
         throw new IllegalStateException("Cannot perform save because document " + resultCommand.getId()
                 + " has been deleted by the session and is also taking part in deferred " + resultCommand.getType() + " command");
+    }
+
+    private static void throwNoDatabase() {
+        throw new IllegalStateException("Cannot open a Session without specifying a name of a database " +
+                "to operate on. Database name can be passed as an argument when Session is" +
+                " being opened or default database can be defined using 'DocumentStore.setDatabase()' method");
     }
 
     protected boolean entityChanged(ObjectNode newObj, DocumentInfo documentInfo, Map<String, List<DocumentsChanges>> changes) {

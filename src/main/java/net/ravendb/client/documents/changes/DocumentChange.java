@@ -5,8 +5,6 @@ public class DocumentChange extends DatabaseChange {
 
     private String id;
 
-    private String counterName;
-
     private String collectionName;
 
     private String changeVector;
@@ -65,20 +63,6 @@ public class DocumentChange extends DatabaseChange {
      */
     public void setChangeVector(String changeVector) {
         this.changeVector = changeVector;
-    }
-
-    /**
-     * @return The name of the counter  being modified
-     */
-    public String getCounterName() {
-        return counterName;
-    }
-
-    /**
-     * @param counterName The name of the counter  being modified
-     */
-    public void setCounterName(String counterName) {
-        this.counterName = counterName;
     }
 
     @Override

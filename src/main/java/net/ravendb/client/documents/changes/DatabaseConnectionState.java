@@ -48,6 +48,7 @@ public class DatabaseConnectionState implements IChangesConnectionState<Database
         onDocumentChangeNotification.clear();
         onIndexChangeNotification.clear();
         onOperationStatusChangeNotification.clear();
+        onCounterChangeNotification.clear();
         onError.clear();
     }
 
@@ -70,6 +71,9 @@ public class DatabaseConnectionState implements IChangesConnectionState<Database
             case OPERATION:
                 this.onOperationStatusChangeNotification.add((Consumer<OperationStatusChange>)(Consumer<?>) handler);
                 break;
+            case COUNTER:
+                this.onCounterChangeNotification.add((Consumer<CounterChange>)(Consumer<?>) handler);
+                break;
             default:
                 throw new IllegalStateException("ChangeType: " + type + " is not supported");
         }
@@ -87,6 +91,9 @@ public class DatabaseConnectionState implements IChangesConnectionState<Database
             case OPERATION:
                 this.onOperationStatusChangeNotification.remove(handler);
                 break;
+            case COUNTER:
+                this.onCounterChangeNotification.remove(handler);
+                break;
             default:
                 throw new IllegalStateException("ChangeType: " + type + " is not supported");
         }
@@ -98,6 +105,8 @@ public class DatabaseConnectionState implements IChangesConnectionState<Database
 
     private final List<Consumer<OperationStatusChange>> onOperationStatusChangeNotification = new ArrayList<>();
 
+    private final List<Consumer<CounterChange>> onCounterChangeNotification = new ArrayList<>();
+
     public void send(DocumentChange documentChange) {
         EventHelper.invoke(onDocumentChangeNotification, documentChange);
     }
@@ -108,5 +117,9 @@ public class DatabaseConnectionState implements IChangesConnectionState<Database
 
     public void send(OperationStatusChange operationStatusChange) {
         EventHelper.invoke(onOperationStatusChangeNotification, operationStatusChange);
+    }
+
+    public void send(CounterChange counterChange) {
+        EventHelper.invoke(onCounterChangeNotification, counterChange);
     }
 }

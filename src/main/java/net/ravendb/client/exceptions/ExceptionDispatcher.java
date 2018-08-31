@@ -15,16 +15,17 @@ import java.io.InputStream;
 public class ExceptionDispatcher {
 
     public static RavenException get(ExceptionSchema schema, int code) {
-        return get(schema.getMessage(), schema.getError(), schema.getType(), code);
-    }
+        String message = schema.getMessage();
+        String typeAsString = schema.getType();
 
-    public static RavenException get(String message, String error, String typeAsString, int code) {
         if (code == HttpStatus.SC_CONFLICT) {
             if (typeAsString.contains("DocumentConflictException")) {
                 return DocumentConflictException.fromMessage(message);
             }
             return new ConcurrencyException(message);
         }
+
+        String error = schema.getError() + System.lineSeparator() + "The server at " + schema.getUrl() + " responded with status code: " + code;
 
         Class<?> type = getType(typeAsString);
         if (type == null) {
