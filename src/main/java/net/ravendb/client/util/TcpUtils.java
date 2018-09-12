@@ -29,10 +29,10 @@ public class TcpUtils {
 
             ByteArrayInputStream certificateInputStream = new ByteArrayInputStream(Base64.decodeBase64(serverCertificate));
             Certificate certificate = x509.generateCertificate(certificateInputStream);
-            trustStore.setCertificateEntry("serverCert", certificate);
+            trustStore.setCertificateEntry("server-cert", certificate);
 
             SSLContext context = SSLContexts.custom()
-                    .useProtocol("TLSv1.2")
+                    .setProtocol("TLSv1.2")
                     .loadKeyMaterial(clientCertificate, "".toCharArray())
                     .loadTrustMaterial(trustStore, (chain, authType) -> chain[0].equals(certificate))
                     .build();

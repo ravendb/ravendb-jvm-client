@@ -19,7 +19,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 public class SecuredSubscriptionsBasicTest extends RemoteTestBase {
     private final int _reasonableWaitTime = 5;
 
-
     @Test
     public void shouldStreamAllDocumentsAfterSubscriptionCreation() throws Exception {
         try (IDocumentStore store = getSecuredDocumentStore()) {

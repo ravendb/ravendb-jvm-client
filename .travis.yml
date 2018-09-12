@@ -4,6 +4,7 @@ env:
     - RAVEN_Security_Certificate_Password=
       RAVENDB_JAVA_TEST_SERVER_PATH=./RavenDB/Server/Raven.Server
       RAVENDB_JAVA_TEST_CERTIFICATE_PATH=$TRAVIS_BUILD_DIR/certs/server.pfx
+      RAVENDB_JAVA_TEST_CA_PATH=$TRAVIS_BUILD_DIR/certs/ca.crt
       RAVENDB_JAVA_TEST_HTTPS_SERVER_URL=https://a.javatest11.development.run:8085
 before_install:
   - sudo apt-get -qq update

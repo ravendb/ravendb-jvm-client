@@ -30,6 +30,8 @@ public class RemoteTestBase extends RavenTestDriver {
 
         public static final String ENV_CERTIFICATE_PATH = "RAVENDB_JAVA_TEST_CERTIFICATE_PATH";
 
+        public static final String ENV_TEST_CA_PATH = "RAVENDB_JAVA_TEST_CA_PATH";
+
         public static final String ENV_HTTPS_SERVER_URL = "RAVENDB_JAVA_TEST_HTTPS_SERVER_URL";
 
         @Override
@@ -72,6 +74,12 @@ public class RemoteTestBase extends RavenTestDriver {
             }
 
             return certificatePath;
+        }
+
+
+        @Override
+        public String getServerCaPath() {
+            return System.getenv(ENV_TEST_CA_PATH);
         }
     }
 
