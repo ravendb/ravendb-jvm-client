@@ -160,6 +160,7 @@ public abstract class DocumentStoreBase implements IDocumentStore {
     protected boolean initialized;
 
     private KeyStore _certificate;
+    private KeyStore _trustStore;
 
     public abstract BulkInsertOperation bulkInsert();
 
@@ -277,6 +278,14 @@ public abstract class DocumentStoreBase implements IDocumentStore {
     public void setCertificate(KeyStore certificate) {
         assertNotInitialized("certificate");
         _certificate = certificate;
+    }
+
+    public KeyStore getTrustStore() {
+        return _trustStore;
+    }
+
+    public void setTrustStore(KeyStore trustStore) {
+        this._trustStore = trustStore;
     }
 
     public abstract RequestExecutor getRequestExecutor();

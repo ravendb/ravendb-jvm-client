@@ -25,7 +25,7 @@ public class RequestExecutorTest extends RemoteTestBase {
         DocumentConventions conventions = new DocumentConventions();
 
         try (DocumentStore store = getDocumentStore()) {
-            try (RequestExecutor executor = RequestExecutor.create(store.getUrls(), "no_such_db", null, store.getExecutorService(), conventions)) {
+            try (RequestExecutor executor = RequestExecutor.create(store.getUrls(), "no_such_db", null, null, store.getExecutorService(), conventions)) {
                 int errorsCount = 0;
 
                 for (int i = 0; i < 40; i++) {
@@ -54,7 +54,7 @@ public class RequestExecutorTest extends RemoteTestBase {
         DocumentConventions conventions = new DocumentConventions();
 
         try (DocumentStore store = getDocumentStore()) {
-            try (RequestExecutor executor = RequestExecutor.create(store.getUrls(), store.getDatabase(), null, store.getExecutorService(), conventions)) {
+            try (RequestExecutor executor = RequestExecutor.create(store.getUrls(), store.getDatabase(), null, null, store.getExecutorService(), conventions)) {
                 for (int i = 0; i < 50; i++) {
                     GetDatabaseNamesOperation databaseNamesOperation = new GetDatabaseNamesOperation(0, 20);
                     RavenCommand<String[]> command = databaseNamesOperation.getCommand(conventions);
@@ -69,7 +69,7 @@ public class RequestExecutorTest extends RemoteTestBase {
         DocumentConventions conventions = new DocumentConventions();
 
         try (DocumentStore store = getDocumentStore()) {
-            try (RequestExecutor executor = RequestExecutor.create(store.getUrls(), store.getDatabase(), null, store.getExecutorService(), conventions)) {
+            try (RequestExecutor executor = RequestExecutor.create(store.getUrls(), store.getDatabase(), null, null, store.getExecutorService(), conventions)) {
                 GetDatabaseNamesOperation databaseNamesOperation = new GetDatabaseNamesOperation(0, 20);
                 RavenCommand<String[]> command = databaseNamesOperation.getCommand(conventions);
                 executor.execute(command);
@@ -86,7 +86,7 @@ public class RequestExecutorTest extends RemoteTestBase {
         DocumentConventions conventions = new DocumentConventions();
 
         try (DocumentStore store = getDocumentStore()) {
-            try (RequestExecutor executor = RequestExecutor.create(store.getUrls(), "no_such_db", null, store.getExecutorService(), conventions)) {
+            try (RequestExecutor executor = RequestExecutor.create(store.getUrls(), "no_such_db", null, null, store.getExecutorService(), conventions)) {
 
                 ServerNode serverNode = new ServerNode();
                 serverNode.setUrl(store.getUrls()[0]);
@@ -105,7 +105,7 @@ public class RequestExecutorTest extends RemoteTestBase {
         DocumentConventions conventions = new DocumentConventions();
 
         try (DocumentStore store = getDocumentStore()) {
-            try (RequestExecutor executor = RequestExecutor.create(store.getUrls(), "no_such_db", null, store.getExecutorService(), conventions)) {
+            try (RequestExecutor executor = RequestExecutor.create(store.getUrls(), "no_such_db", null, null, store.getExecutorService(), conventions)) {
 
                 GetNextOperationIdCommand command = new GetNextOperationIdCommand();
 
@@ -120,7 +120,7 @@ public class RequestExecutorTest extends RemoteTestBase {
     public void canCreateSingleNodeRequestExecutor() throws Exception {
         DocumentConventions documentConventions = new DocumentConventions();
         try (DocumentStore store = getDocumentStore()) {
-            try (RequestExecutor executor = RequestExecutor.createForSingleNodeWithoutConfigurationUpdates(store.getUrls()[0], store.getDatabase(), null, store.getExecutorService(), documentConventions)) {
+            try (RequestExecutor executor = RequestExecutor.createForSingleNodeWithoutConfigurationUpdates(store.getUrls()[0], store.getDatabase(), null, null, store.getExecutorService(), documentConventions)) {
 
                 List<ServerNode> nodes = executor.getTopologyNodes();
 
@@ -147,7 +147,7 @@ public class RequestExecutorTest extends RemoteTestBase {
             String url = store.getUrls()[0];
             String dbName = store.getDatabase();
 
-            try (RequestExecutor executor = RequestExecutor.create(new String[]{"http://no_such_host:8080", "http://another_offlilne:8080", url}, dbName, null, store.getExecutorService(), documentConventions)) {
+            try (RequestExecutor executor = RequestExecutor.create(new String[]{"http://no_such_host:8080", "http://another_offlilne:8080", url}, dbName, null, null, store.getExecutorService(), documentConventions)) {
                 GetNextOperationIdCommand command = new GetNextOperationIdCommand();
                 executor.execute(command);
 
@@ -174,7 +174,7 @@ public class RequestExecutorTest extends RemoteTestBase {
 
             assertThatThrownBy(() -> {
                 // don't even start server
-                try (RequestExecutor executor = RequestExecutor.create(new String[]{"http://no_such_host:8081"}, "db1", null, store.getExecutorService(), documentConventions)) {
+                try (RequestExecutor executor = RequestExecutor.create(new String[]{"http://no_such_host:8081"}, "db1", null, null, store.getExecutorService(), documentConventions)) {
                     GetNextOperationIdCommand command = new GetNextOperationIdCommand();
 
                     executor.execute(command);

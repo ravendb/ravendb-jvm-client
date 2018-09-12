@@ -13,6 +13,7 @@ import net.ravendb.client.extensions.StringExtensions;
 import net.ravendb.client.http.RequestExecutor;
 import net.ravendb.client.primitives.*;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.http.ssl.SSLContexts;
 import org.eclipse.jetty.util.ssl.SslContextFactory;
 import org.eclipse.jetty.websocket.api.Session;
 import org.eclipse.jetty.websocket.api.annotations.OnWebSocketClose;
@@ -22,6 +23,7 @@ import org.eclipse.jetty.websocket.api.annotations.WebSocket;
 import org.eclipse.jetty.websocket.client.ClientUpgradeRequest;
 import org.eclipse.jetty.websocket.client.WebSocketClient;
 
+import javax.net.ssl.SSLContext;
 import java.io.IOException;
 import java.io.StringWriter;
 import java.net.URI;
@@ -78,19 +80,18 @@ public class DatabaseChanges implements IDatabaseChanges {
     }
 
     public static WebSocketClient createWebSocketClient(RequestExecutor requestExecutor) {
-
         WebSocketClient client;
 
-        if (requestExecutor.getCertificate() != null) {
-            SslContextFactory contextFactory = new SslContextFactory();
-            contextFactory.setKeyStore(requestExecutor.getCertificate());
-            contextFactory.setKeyStorePassword("");
-            client = new WebSocketClient(contextFactory);
-        } else{
-            client = new WebSocketClient();
-        }
-
         try {
+            if (requestExecutor.getCertificate() != null) {
+                SSLContext sslContext = requestExecutor.createSSLContext();
+                SslContextFactory factory = new SslContextFactory();
+                factory.setSslContext(sslContext);
+                client = new WebSocketClient(factory);
+            } else {
+                client = new WebSocketClient();
+            }
+
             client.start();
         } catch (Exception e) {
             throw ExceptionsUtils.unwrapException(e);

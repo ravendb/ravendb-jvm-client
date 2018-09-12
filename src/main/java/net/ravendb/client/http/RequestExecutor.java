@@ -25,14 +25,19 @@ import org.apache.http.HttpStatus;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpRequestBase;
 import org.apache.http.config.SocketConfig;
+import org.apache.http.conn.ssl.TrustAllStrategy;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.impl.client.StandardHttpRequestRetryHandler;
+import org.apache.http.ssl.SSLContextBuilder;
 import org.apache.http.ssl.SSLContexts;
+import org.apache.http.ssl.TrustStrategy;
 
 import javax.net.ssl.SSLContext;
 import javax.xml.bind.DatatypeConverter;
+import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.MalformedURLException;
@@ -42,6 +47,8 @@ import java.net.URL;
 import java.security.*;
 import java.security.cert.Certificate;
 import java.security.cert.CertificateEncodingException;
+import java.security.cert.CertificateException;
+import java.security.cert.X509Certificate;
 import java.time.Duration;
 import java.util.*;
 import java.util.concurrent.*;
@@ -73,6 +80,7 @@ public class RequestExecutor implements CleanCloseable {
     private final ConcurrentMap<ServerNode, NodeStatus> _failedNodesTimers = new ConcurrentHashMap<>();
 
     private final KeyStore certificate;
+    private final KeyStore trustStore;
 
     private final String _databaseName;
 
@@ -152,12 +160,17 @@ public class RequestExecutor implements CleanCloseable {
         return certificate;
     }
 
-    protected RequestExecutor(String databaseName, KeyStore certificate, DocumentConventions conventions, ExecutorService executorService, String[] initialUrls) {
+    public KeyStore getTrustStore() {
+        return trustStore;
+    }
+
+    protected RequestExecutor(String databaseName, KeyStore certificate, KeyStore trustStore, DocumentConventions conventions, ExecutorService executorService, String[] initialUrls) {
         cache = new HttpCache(conventions.getMaxHttpCacheSize());
         _executorService = executorService;
         _readBalanceBehavior = conventions.getReadBalanceBehavior();
         _databaseName = databaseName;
         this.certificate = certificate;
+        this.trustStore = trustStore;
 
         _lastReturnedResponse = new Date();
         this.conventions = conventions.clone();
@@ -190,22 +203,22 @@ public class RequestExecutor implements CleanCloseable {
         }
     }
 
-    public static RequestExecutor create(String[] initialUrls, String databaseName, KeyStore certificate, ExecutorService executorService, DocumentConventions conventions) {
-        RequestExecutor executor = new RequestExecutor(databaseName, certificate, conventions, executorService, initialUrls);
+    public static RequestExecutor create(String[] initialUrls, String databaseName, KeyStore certificate, KeyStore trustStore, ExecutorService executorService, DocumentConventions conventions) {
+        RequestExecutor executor = new RequestExecutor(databaseName, certificate, trustStore, conventions, executorService, initialUrls);
         executor._firstTopologyUpdate = executor.firstTopologyUpdate(initialUrls);
         return executor;
     }
 
-    public static RequestExecutor createForSingleNodeWithConfigurationUpdates(String url, String databaseName, KeyStore certificate, ExecutorService executorService, DocumentConventions conventions) {
-        RequestExecutor executor = createForSingleNodeWithoutConfigurationUpdates(url, databaseName, certificate, executorService, conventions);
+    public static RequestExecutor createForSingleNodeWithConfigurationUpdates(String url, String databaseName, KeyStore certificate, KeyStore trustStore, ExecutorService executorService, DocumentConventions conventions) {
+        RequestExecutor executor = createForSingleNodeWithoutConfigurationUpdates(url, databaseName, certificate, trustStore, executorService, conventions);
         executor._disableClientConfigurationUpdates = false;
         return executor;
     }
 
-    public static RequestExecutor createForSingleNodeWithoutConfigurationUpdates(String url, String databaseName, KeyStore certificate, ExecutorService executorService, DocumentConventions conventions) {
+    public static RequestExecutor createForSingleNodeWithoutConfigurationUpdates(String url, String databaseName, KeyStore certificate, KeyStore trustStore, ExecutorService executorService, DocumentConventions conventions) {
         final String[] initialUrls = validateUrls(new String[]{url}, certificate);
 
-        RequestExecutor executor = new RequestExecutor(databaseName, certificate, conventions, executorService, initialUrls);
+        RequestExecutor executor = new RequestExecutor(databaseName, certificate, trustStore, conventions, executorService, initialUrls);
 
         Topology topology = new Topology();
         topology.setEtag(-1L);
@@ -1030,11 +1043,8 @@ public class RequestExecutor implements CleanCloseable {
                     return true;
                 });
 
-                SSLContext context = SSLContexts.custom()
-                        .loadKeyMaterial(certificate, "".toCharArray())
-                        .build();
-                httpClientBuilder.setSSLContext(context);
-            } catch (KeyStoreException | UnrecoverableKeyException | NoSuchAlgorithmException | KeyManagementException e) {
+                httpClientBuilder.setSSLContext(createSSLContext());
+            } catch ( Exception e) {
                 throw new IllegalStateException("Unable to configure ssl context: " + e.getMessage(), e);
             }
         }
@@ -1044,6 +1054,17 @@ public class RequestExecutor implements CleanCloseable {
         }
 
         return httpClientBuilder.build();
+    }
+
+    public SSLContext createSSLContext() throws UnrecoverableKeyException, NoSuchAlgorithmException, KeyStoreException, KeyManagementException {
+        SSLContextBuilder sslContextBuilder = SSLContexts.custom()
+                .loadKeyMaterial(certificate, "".toCharArray());
+
+        if (this.trustStore != null) {
+            sslContextBuilder.loadTrustMaterial(trustStore, null);
+        }
+
+        return sslContextBuilder.build();
     }
 
     public static class NodeStatus implements CleanCloseable {

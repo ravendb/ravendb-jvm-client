@@ -204,7 +204,7 @@ public class SubscriptionWorker<T> implements CleanCloseable {
         }
         _subscriptionLocalRequestExecutor = RequestExecutor.createForSingleNodeWithoutConfigurationUpdates(
                 command.getRequestedNode().getUrl(),
-                _dbName, requestExecutor.getCertificate(),
+                _dbName, requestExecutor.getCertificate(), requestExecutor.getTrustStore(),
                 _store.getExecutorService(),
                 _store.getConventions());
 

@@ -22,6 +22,7 @@ import net.ravendb.client.serverwide.DatabaseRecord;
 import net.ravendb.client.serverwide.operations.CreateDatabaseOperation;
 import net.ravendb.client.serverwide.operations.DeleteDatabasesOperation;
 import net.ravendb.client.util.UrlUtils;
+import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.io.IOUtils;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.conn.PoolingHttpClientConnectionManager;
@@ -33,6 +34,8 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.security.GeneralSecurityException;
 import java.security.KeyStore;
+import java.security.cert.Certificate;
+import java.security.cert.CertificateFactory;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -79,6 +82,24 @@ public abstract class RavenTestDriver implements CleanCloseable {
         KeyStore clientStore = KeyStore.getInstance("PKCS12");
         clientStore.load(new FileInputStream(securedLocator.getServerCertificatePath()), "".toCharArray());
         return clientStore;
+    }
+
+    public KeyStore getTestCaCertificate() throws IOException, GeneralSecurityException {
+        String caPath = securedLocator.getServerCaPath();
+        if (caPath != null) {
+            KeyStore trustStore = KeyStore.getInstance("PKCS12");
+            trustStore.load(null, null);
+
+            CertificateFactory x509 = CertificateFactory.getInstance("X509");
+
+            try (InputStream source = new FileInputStream(new File(caPath))) {
+                Certificate certificate = x509.generateCertificate(source);
+                trustStore.setCertificateEntry("ca-cert", certificate);
+                return trustStore;
+            }
+        }
+
+        return null;
     }
 
     public DocumentStore getDocumentStore() throws Exception {
@@ -129,6 +150,7 @@ public abstract class RavenTestDriver implements CleanCloseable {
 
         if (secured) {
             store.setCertificate(getTestClientCertificate());
+            store.setTrustStore(getTestClientCertificate());
         }
 
         customizeStore(store);
@@ -256,6 +278,7 @@ public abstract class RavenTestDriver implements CleanCloseable {
             globalSecuredServer = store;
             KeyStore clientCert = getTestClientCertificate();
             store.setCertificate(clientCert);
+            store.setTrustStore(getTestCaCertificate());
         } else {
             globalServer = store;
         }

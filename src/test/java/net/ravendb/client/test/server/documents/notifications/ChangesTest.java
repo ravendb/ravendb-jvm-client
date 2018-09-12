@@ -71,7 +71,6 @@ public class ChangesTest extends RemoteTestBase {
             DocumentChange thirdPoll = changesList.poll(1, TimeUnit.SECONDS);
             assertThat(thirdPoll)
                     .isNull();
-
         }
     }
 
@@ -107,7 +106,6 @@ public class ChangesTest extends RemoteTestBase {
                 assertThat(secondPoll)
                         .isNull();
             }
-
 
             // at this point we should be unsubscribed from changes on 'users/1'
 
@@ -353,7 +351,6 @@ public class ChangesTest extends RemoteTestBase {
     }
 
     @Test
-    @Disabled("Waiting for RavenDB-11233")
     public void notificationOnWrongDatabase_ShouldNotCrashServer() throws Exception {
         try (IDocumentStore store = getDocumentStore()) {
 

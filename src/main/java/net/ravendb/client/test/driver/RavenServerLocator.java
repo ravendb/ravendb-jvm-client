@@ -29,4 +29,6 @@ public abstract class RavenServerLocator {
         throw new UnsupportedOperationException();
     }
 
+    public String getServerCaPath() { throw new UnsupportedOperationException(); }
+
 }
