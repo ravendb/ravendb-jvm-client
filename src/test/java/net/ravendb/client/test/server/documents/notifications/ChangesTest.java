@@ -8,6 +8,7 @@ import net.ravendb.client.documents.indexes.IndexPriority;
 import net.ravendb.client.documents.operations.GetStatisticsOperation;
 import net.ravendb.client.documents.operations.indexes.SetIndexesPriorityOperation;
 import net.ravendb.client.documents.session.IDocumentSession;
+import net.ravendb.client.exceptions.database.DatabaseDoesNotExistException;
 import net.ravendb.client.infrastructure.entities.Order;
 import net.ravendb.client.infrastructure.entities.User;
 import net.ravendb.client.primitives.CleanCloseable;
@@ -20,6 +21,7 @@ import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 public class ChangesTest extends RemoteTestBase {
 
@@ -354,14 +356,10 @@ public class ChangesTest extends RemoteTestBase {
     public void notificationOnWrongDatabase_ShouldNotCrashServer() throws Exception {
         try (IDocumentStore store = getDocumentStore()) {
 
-            final Semaphore semaphore = new Semaphore(0);
-
             IDatabaseChanges changes = store.changes("no_such_db");
 
-            changes.addOnError(e -> semaphore.release());
-
-            assertThat(semaphore.tryAcquire(15, TimeUnit.SECONDS))
-                    .isTrue();
+            assertThatThrownBy(() -> changes.ensureConnectedNow())
+                    .isExactlyInstanceOf(DatabaseDoesNotExistException.class);
 
             store.maintenance().send(new GetStatisticsOperation());
         }
