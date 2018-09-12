@@ -1113,7 +1113,7 @@ public class RequestExecutor implements CleanCloseable {
     }
 
     private void ensureNodeSelector() {
-        if (_firstTopologyUpdate != null && !_firstTopologyUpdate.isDone()) {
+        if (_firstTopologyUpdate != null && (!_firstTopologyUpdate.isDone() || _firstTopologyUpdate.isCompletedExceptionally())) {
             ExceptionsUtils.accept(() -> _firstTopologyUpdate.get());
         }
 

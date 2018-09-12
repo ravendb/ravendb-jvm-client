@@ -368,6 +368,7 @@ public class DatabaseChanges implements IDatabaseChanges {
         } catch (Exception e) {
             EventHelper.invoke(_connectionStatusChanged, this, EventArgs.EMPTY);
             notifyAboutError(e);
+            _tcs.completeExceptionally(e);
             return;
         }
 
