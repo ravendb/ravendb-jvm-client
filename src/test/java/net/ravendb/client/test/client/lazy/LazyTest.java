@@ -169,4 +169,50 @@ public class LazyTest extends RemoteTestBase {
             }
         }
     }
+
+    @Test
+    public void dontLazyLoadAlreadyLoadedValues() throws Exception {
+        try (IDocumentStore store = getDocumentStore()) {
+            try (IDocumentSession session = store.openSession()) {
+                User user = new User();
+                user.setLastName("Oren");
+                session.store(user, "users/1");
+
+                User user2 = new User();
+                user2.setLastName("Marcin");
+                session.store(user2, "users/2");
+
+                User user3 = new User();
+                user3.setLastName("John");
+                session.store(user3, "users/3");
+
+                session.saveChanges();
+            }
+
+            try (IDocumentSession session = store.openSession()) {
+
+                Lazy<Map<String, User>> lazyLoad = session.advanced().lazily().load(User.class, Arrays.asList("users/2", "users/3"));
+                session.advanced().lazily().load(User.class, Arrays.asList("users/1", "users/3"));
+
+                session.load(User.class, "users/2");
+                session.load(User.class, "users/3");
+
+                session.advanced().eagerly().executeAllPendingLazyOperations();
+
+                assertThat(session.advanced().isLoaded("users/1"))
+                        .isTrue();
+
+                Map<String, User> users = lazyLoad.getValue();
+                assertThat(users)
+                        .hasSize(2);
+
+                int oldRequestCount = session.advanced().getNumberOfRequests();
+                lazyLoad = session.advanced().lazily().load(User.class, Arrays.asList("users/3"));
+                session.advanced().eagerly().executeAllPendingLazyOperations();
+
+                assertThat(session.advanced().getNumberOfRequests())
+                        .isEqualTo(oldRequestCount);
+            }
+        }
+    }
 }
