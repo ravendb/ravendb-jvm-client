@@ -164,7 +164,7 @@ public class DocumentSession extends InMemoryDocumentSessionOperations implement
             GetRequest req = pendingLazyOperations.get(i).createRequest();
             if (req == null) {
                 pendingLazyOperations.remove(i);
-                i++; // so we'll recheck this index
+                i--; // so we'll recheck this index
                 continue;
             }
             requests.add(req);
