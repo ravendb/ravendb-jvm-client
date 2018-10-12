@@ -16,6 +16,7 @@ import net.ravendb.client.extensions.JsonExtensions;
 import net.ravendb.client.primitives.*;
 import net.ravendb.client.primitives.Timer;
 import net.ravendb.client.serverwide.commands.GetDatabaseTopologyCommand;
+import net.ravendb.client.util.CertificateUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
@@ -25,19 +26,14 @@ import org.apache.http.HttpStatus;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpRequestBase;
 import org.apache.http.config.SocketConfig;
-import org.apache.http.conn.ssl.TrustAllStrategy;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.impl.client.StandardHttpRequestRetryHandler;
 import org.apache.http.ssl.SSLContextBuilder;
 import org.apache.http.ssl.SSLContexts;
-import org.apache.http.ssl.TrustStrategy;
 
 import javax.net.ssl.SSLContext;
-import javax.xml.bind.DatatypeConverter;
-import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.MalformedURLException;
@@ -45,10 +41,6 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.security.*;
-import java.security.cert.Certificate;
-import java.security.cert.CertificateEncodingException;
-import java.security.cert.CertificateException;
-import java.security.cert.X509Certificate;
 import java.time.Duration;
 import java.util.*;
 import java.util.concurrent.*;
@@ -60,7 +52,7 @@ import java.util.stream.Collectors;
 @SuppressWarnings("SameParameterValue")
 public class RequestExecutor implements CleanCloseable {
 
-    public static final Consumer<HttpClientBuilder> configureHttpClient = null;
+    public static Consumer<HttpClientBuilder> configureHttpClient = null;
 
     private static final GetStatisticsOperation failureCheckOperation = new GetStatisticsOperation("failure=check");
     /**
@@ -177,30 +169,11 @@ public class RequestExecutor implements CleanCloseable {
 
         String thumbprint = "";
         if (certificate != null) {
-            thumbprint = extractThumbprintFromCertificate(certificate);
+            thumbprint = CertificateUtils.extractThumbprintFromCertificate(certificate);
         }
 
         ConcurrentMap<String, CloseableHttpClient> clientCache = conventions.isUseCompression() ? globalHttpClientWithCompression : globalHttpClientWithoutCompression;
         httpClient = clientCache.computeIfAbsent(thumbprint, (thumb) -> createClient());
-    }
-
-    private String extractThumbprintFromCertificate(KeyStore certificate) {
-        try {
-            ArrayList<String> aliases = Collections.list(certificate.aliases());
-
-            if (aliases.size() != 1) {
-                throw new IllegalStateException("Expected single certificate in keystore.");
-            }
-
-            String alias = aliases.get(0);
-            Certificate clientCertificate = certificate.getCertificate(alias);
-
-            byte[] sha1 = MessageDigest.getInstance("SHA-1").digest(clientCertificate.getEncoded());
-            return DatatypeConverter.printHexBinary(sha1);
-
-        } catch (KeyStoreException | NoSuchAlgorithmException | CertificateEncodingException e) {
-            throw new IllegalStateException("Unable to extract certificate thumbprint " + e.getMessage(), e);
-        }
     }
 
     public static RequestExecutor create(String[] initialUrls, String databaseName, KeyStore certificate, KeyStore trustStore, ExecutorService executorService, DocumentConventions conventions) {
@@ -346,7 +319,9 @@ public class RequestExecutor implements CleanCloseable {
     @SuppressWarnings("UnnecessaryReturnStatement")
     public <TResult> void execute(RavenCommand<TResult> command, SessionInfo sessionInfo) {
         CompletableFuture<Void> topologyUpdate = _firstTopologyUpdate;
-        if (topologyUpdate != null && topologyUpdate.isDone() || _disableTopologyUpdates) {
+        if (topologyUpdate != null &&
+                (topologyUpdate.isDone() && !topologyUpdate.isCompletedExceptionally() && !topologyUpdate.isCancelled())
+                || _disableTopologyUpdates) {
             CurrentIndexAndNode currentIndexAndNode = chooseNodeForRequest(command, sessionInfo);
             execute(currentIndexAndNode.currentNode, currentIndexAndNode.currentIndex, command, true, sessionInfo);
             return;

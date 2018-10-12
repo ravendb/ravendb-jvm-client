@@ -12,7 +12,7 @@ public class MaintenanceOperationExecutor {
 
     private final DocumentStore store;
     private final String databaseName;
-    private final RequestExecutor requestExecutor;
+    private RequestExecutor requestExecutor;
     private ServerOperationExecutor serverOperationExecutor;
 
     public MaintenanceOperationExecutor(DocumentStore store) {
@@ -22,8 +22,15 @@ public class MaintenanceOperationExecutor {
     public MaintenanceOperationExecutor(DocumentStore store, String databaseName) {
         this.store = store;
         this.databaseName = ObjectUtils.firstNonNull(databaseName, store.getDatabase());
+    }
 
-        this.requestExecutor = this.databaseName != null ? store.getRequestExecutor(this.databaseName) : null;
+    private RequestExecutor getRequestExecutor() {
+        if (requestExecutor != null) {
+            return requestExecutor;
+        }
+
+        requestExecutor = this.databaseName != null ? store.getRequestExecutor(this.databaseName) : null;
+        return requestExecutor;
     }
 
     public ServerOperationExecutor server() {
@@ -45,23 +52,23 @@ public class MaintenanceOperationExecutor {
 
     public void send(IVoidMaintenanceOperation operation) {
         assertDatabaseNameSet();
-        VoidRavenCommand command = operation.getCommand(requestExecutor.getConventions());
-        requestExecutor.execute(command);
+        VoidRavenCommand command = operation.getCommand(getRequestExecutor().getConventions());
+        getRequestExecutor().execute(command);
     }
 
     public <TResult> TResult send(IMaintenanceOperation<TResult> operation) {
         assertDatabaseNameSet();
-        RavenCommand<TResult> command = operation.getCommand(requestExecutor.getConventions());
-        requestExecutor.execute(command);
+        RavenCommand<TResult> command = operation.getCommand(getRequestExecutor().getConventions());
+        getRequestExecutor().execute(command);
         return command.getResult();
     }
 
     public Operation sendAsync(IMaintenanceOperation<OperationIdResult> operation) {
         assertDatabaseNameSet();
-        RavenCommand<OperationIdResult> command = operation.getCommand(requestExecutor.getConventions());
+        RavenCommand<OperationIdResult> command = operation.getCommand(getRequestExecutor().getConventions());
 
-        requestExecutor.execute(command);
-        return new Operation(requestExecutor, () -> store.changes(), requestExecutor.getConventions(), command.getResult().getOperationId());
+        getRequestExecutor().execute(command);
+        return new Operation(getRequestExecutor(), () -> store.changes(), getRequestExecutor().getConventions(), command.getResult().getOperationId());
     }
 
     private void assertDatabaseNameSet() {
