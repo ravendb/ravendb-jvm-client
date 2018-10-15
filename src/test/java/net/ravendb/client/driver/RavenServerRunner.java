@@ -1,4 +1,4 @@
-package net.ravendb.client.test.driver;
+package net.ravendb.client.driver;
 
 import org.apache.commons.lang3.ArrayUtils;
 

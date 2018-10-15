@@ -1,4 +1,4 @@
-package net.ravendb.client.test.driver;
+package net.ravendb.client.driver;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.base.Stopwatch;
@@ -22,7 +22,6 @@ import net.ravendb.client.serverwide.DatabaseRecord;
 import net.ravendb.client.serverwide.operations.CreateDatabaseOperation;
 import net.ravendb.client.serverwide.operations.DeleteDatabasesOperation;
 import net.ravendb.client.util.UrlUtils;
-import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.io.IOUtils;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.conn.PoolingHttpClientConnectionManager;

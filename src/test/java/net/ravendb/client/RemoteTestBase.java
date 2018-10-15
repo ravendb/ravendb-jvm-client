@@ -6,8 +6,8 @@ import net.ravendb.client.documents.operations.revisions.RevisionsCollectionConf
 import net.ravendb.client.documents.operations.revisions.RevisionsConfiguration;
 import net.ravendb.client.http.RequestExecutor;
 import net.ravendb.client.primitives.CleanCloseable;
-import net.ravendb.client.test.driver.RavenServerLocator;
-import net.ravendb.client.test.driver.RavenTestDriver;
+import net.ravendb.client.driver.RavenServerLocator;
+import net.ravendb.client.driver.RavenTestDriver;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.HttpHost;
 import org.apache.http.client.config.RequestConfig;
