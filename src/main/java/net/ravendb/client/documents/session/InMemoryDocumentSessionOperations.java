@@ -317,6 +317,7 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
      *
      * @param documentStore   Document store
      * @param id              Identifier
+     * @param options         Session options
      */
     protected InMemoryDocumentSessionOperations(DocumentStoreBase documentStore, UUID id, SessionOptions options) {
         this.id = id;

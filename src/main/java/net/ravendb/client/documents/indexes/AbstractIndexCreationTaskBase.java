@@ -10,7 +10,8 @@ import java.util.Map;
 public abstract class AbstractIndexCreationTaskBase {
 
     /**
-     *  Creates the index definition.
+     * Creates the index definition.
+     * @return Index definition
      */
     public abstract IndexDefinition createIndexDefinition();
 
