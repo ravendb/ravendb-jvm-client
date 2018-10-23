@@ -42,6 +42,9 @@ public class GetDocumentsCommand extends RavenCommand<GetDocumentsResult> {
 
     public GetDocumentsCommand(String id, String[] includes, boolean metadataOnly) {
         super(GetDocumentsResult.class);
+        if (id == null) {
+            throw new IllegalArgumentException("id cannot be null");
+        }
         _id = id;
         _includes = includes;
         _metadataOnly = metadataOnly;
