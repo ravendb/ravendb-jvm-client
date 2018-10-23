@@ -6,6 +6,9 @@ env:
       RAVENDB_JAVA_TEST_CERTIFICATE_PATH=$TRAVIS_BUILD_DIR/certs/server.pfx
       RAVENDB_JAVA_TEST_CA_PATH=$TRAVIS_BUILD_DIR/certs/ca.crt
       RAVENDB_JAVA_TEST_HTTPS_SERVER_URL=https://a.javatest11.development.run:8085
+  matrix:
+    - RAVENDB_SERVER_VERSION="4.0"
+    - RAVENDB_SERVER_VERSION="4.1"
 before_install:
   - sudo apt-get -qq update
   - sudo apt-get install -y libunwind8 wget libicu52 libssl-dev curl unzip gettext libcurl4-openssl-dev zlib1g uuid-dev bzip2 openssl
@@ -20,7 +23,7 @@ before_install:
   - sudo cp ca.crt /usr/local/share/ca-certificates/ca.crt
   - sudo update-ca-certificates
   - popd  
-  - wget -O RavenDB.tar.bz2 "https://hibernatingrhinos.com/downloads/RavenDB%20for%20Linux%20x64/latest?buildType=nightly&version=4.0"
+  - wget -O RavenDB.tar.bz2 "https://hibernatingrhinos.com/downloads/RavenDB%20for%20Linux%20x64/latest?buildType=stable&version=$RAVENDB_SERVER_VERSION"
   - tar xvjf RavenDB.tar.bz2
   - sleep 2
 script: mvn test
