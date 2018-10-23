@@ -10,6 +10,7 @@ import net.ravendb.client.exceptions.documents.subscriptions.SubscriberErrorExce
 import net.ravendb.client.exceptions.documents.subscriptions.SubscriptionClosedException;
 import net.ravendb.client.exceptions.documents.subscriptions.SubscriptionDoesNotExistException;
 import net.ravendb.client.exceptions.documents.subscriptions.SubscriptionInUseException;
+import net.ravendb.client.infrastructure.DisabledOn41Server;
 import net.ravendb.client.infrastructure.entities.Company;
 import net.ravendb.client.infrastructure.entities.User;
 import net.ravendb.client.primitives.ExceptionsUtils;
@@ -29,6 +30,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 public class SubscriptionsBasicTest extends RemoteTestBase {
     private final int _reasonableWaitTime = 60;
 
+    @DisabledOn41Server
     @Test
     public void canDeleteSubscription() throws Exception {
         try (IDocumentStore store = getDocumentStore()) {
@@ -58,6 +60,7 @@ public class SubscriptionsBasicTest extends RemoteTestBase {
     }
 
     @Test
+    @DisabledOn41Server
     public void shouldThrowWhenOpeningNoExistingSubscription() throws Exception {
         try (IDocumentStore store = getDocumentStore()) {
             SubscriptionWorker<ObjectNode> subscription = store.subscriptions().getSubscriptionWorker(new SubscriptionWorkerOptions("1"));
@@ -71,6 +74,7 @@ public class SubscriptionsBasicTest extends RemoteTestBase {
     }
 
     @Test
+    @DisabledOn41Server
     public void shouldThrowOnAttemptToOpenAlreadyOpenedSubscription() throws Exception {
         try (IDocumentStore store = getDocumentStore()) {
             String id = store.subscriptions().create(User.class);
@@ -100,6 +104,7 @@ public class SubscriptionsBasicTest extends RemoteTestBase {
     }
 
     @Test
+    @DisabledOn41Server
     public void shouldStreamAllDocumentsAfterSubscriptionCreation() throws Exception {
         try (IDocumentStore store = getDocumentStore()) {
             try (IDocumentSession session = store.openSession()) {
@@ -160,6 +165,7 @@ public class SubscriptionsBasicTest extends RemoteTestBase {
     }
 
     @Test
+    @DisabledOn41Server
     public void shouldSendAllNewAndModifiedDocs() throws Exception {
         try (IDocumentStore store = getDocumentStore()) {
             String id = store.subscriptions().create(User.class);
@@ -209,6 +215,7 @@ public class SubscriptionsBasicTest extends RemoteTestBase {
 
 
     @Test
+    @DisabledOn41Server
     public void shouldRespectMaxDocCountInBatch() throws Exception {
         try (IDocumentStore store = getDocumentStore()) {
             try (IDocumentSession session = store.openSession()) {
@@ -245,6 +252,7 @@ public class SubscriptionsBasicTest extends RemoteTestBase {
     }
 
     @Test
+    @DisabledOn41Server
     public void shouldRespectCollectionCriteria() throws Exception {
         try (IDocumentStore store = getDocumentStore()) {
             try (IDocumentSession session = store.openSession()) {
@@ -279,6 +287,7 @@ public class SubscriptionsBasicTest extends RemoteTestBase {
     }
 
     @Test
+    @DisabledOn41Server
     public void willAcknowledgeEmptyBatches() throws Exception {
         try (IDocumentStore store = getDocumentStore()) {
             List<SubscriptionState> subscriptionDocuments = store.subscriptions().getSubscriptions(0, 10);
@@ -327,6 +336,7 @@ public class SubscriptionsBasicTest extends RemoteTestBase {
 
     @SuppressWarnings("UnusedAssignment")
     @Test
+    @DisabledOn41Server
     public void canReleaseSubscription() throws Exception {
         SubscriptionWorker<ObjectNode> subscriptionWorker = null;
         SubscriptionWorker<ObjectNode> throwingSubscriptionWorker = null;
@@ -381,6 +391,7 @@ public class SubscriptionsBasicTest extends RemoteTestBase {
     }
 
     @Test
+    @DisabledOn41Server
     public void shouldPullDocumentsAfterBulkInsert() throws Exception {
         try (IDocumentStore store = getDocumentStore()) {
             String id = store.subscriptions().create(User.class, new SubscriptionCreationOptions());
@@ -406,6 +417,7 @@ public class SubscriptionsBasicTest extends RemoteTestBase {
     }
 
     @Test
+    @DisabledOn41Server
     public void shouldStopPullingDocsAndCloseSubscriptionOnSubscriberErrorByDefault() throws Exception {
         try (IDocumentStore store = getDocumentStore()) {
             String id = store.subscriptions().create(User.class, new SubscriptionCreationOptions());
@@ -430,6 +442,7 @@ public class SubscriptionsBasicTest extends RemoteTestBase {
     }
 
     @Test
+    @DisabledOn41Server
     public void canSetToIgnoreSubscriberErrors() throws Exception {
         try (IDocumentStore store = getDocumentStore()) {
             String id = store.subscriptions().create(User.class, new SubscriptionCreationOptions());
@@ -459,6 +472,7 @@ public class SubscriptionsBasicTest extends RemoteTestBase {
     }
 
     @Test
+    @DisabledOn41Server
     public void ravenDB_3452_ShouldStopPullingDocsIfReleased() throws Exception {
         try (IDocumentStore store = getDocumentStore()) {
             String id = store.subscriptions().create(User.class);
@@ -511,6 +525,7 @@ public class SubscriptionsBasicTest extends RemoteTestBase {
     }
 
     @Test
+    @DisabledOn41Server
     public void ravenDB_3453_ShouldDeserializeTheWholeDocumentsAfterTypedSubscription() throws Exception {
         try (IDocumentStore store = getDocumentStore()) {
             String id = store.subscriptions().create(User.class, new SubscriptionCreationOptions());
@@ -566,6 +581,7 @@ public class SubscriptionsBasicTest extends RemoteTestBase {
 
     @SuppressWarnings("TryFinallyCanBeTryWithResources")
     @Test
+    @DisabledOn41Server
     public void disposingOneSubscriptionShouldNotAffectOnNotificationsOfOthers() throws Exception {
         SubscriptionWorker<User> subscription1 = null;
         SubscriptionWorker<User> subscription2 = null;
