@@ -256,9 +256,9 @@ public class BulkInsertOperation implements CleanCloseable {
 
                 _first = false;
 
-                _currentWriter.write("{'Id':'");
-                _currentWriter.write(id);
-                _currentWriter.write("','Type':'PUT','Document':");
+                _currentWriter.write("{\"Id\":\"");
+                writeId(_currentWriter, id);
+                _currentWriter.write("\",\"Type\":\"PUT\",\"Document\":");
 
                 DocumentInfo documentInfo = new DocumentInfo();
                 documentInfo.setMetadataInstance(metadata);
@@ -314,7 +314,19 @@ public class BulkInsertOperation implements CleanCloseable {
         } finally {
             _concurrentCheck.set(0);
         }
+    }
 
+    private void writeId(Writer writer, String input) throws IOException {
+        for (int i = 0; i < input.length(); i++) {
+            char c = input.charAt(i);
+            if ('"' == c) {
+                if (i == 0 || input.charAt(i - 1) != '\\') {
+                    writer.write("\\");
+                }
+            }
+
+            writer.write(c);
+        }
     }
 
     @SuppressWarnings("UnusedReturnValue")

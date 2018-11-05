@@ -468,7 +468,12 @@ public class DocumentSession extends InMemoryDocumentSessionOperations implement
     public <T, U> void increment(String id, String path, U valueToAdd) {
         PatchRequest patchRequest = new PatchRequest();
 
-        patchRequest.setScript("this." + path + " += args.val_" + _valsCount + ";");
+        String variable = "this." + path;
+        String value = "args.val_" + _valsCount;
+
+        patchRequest.setScript(variable + " = " + variable
+                + " ? " + variable + " + " + value
+                + " : " + value + ";");
         patchRequest.setValues(Collections.singletonMap("val_" + _valsCount, valueToAdd));
 
         _valsCount++;

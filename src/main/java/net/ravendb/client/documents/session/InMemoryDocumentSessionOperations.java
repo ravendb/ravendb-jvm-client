@@ -1249,7 +1249,9 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
         }
 
         if (!isIndex && !isCollection) {
-            collectionName = conventions.getCollectionName(clazz);
+            collectionName = ObjectUtils.firstNonNull(
+                    conventions.getCollectionName(clazz),
+                    Constants.Documents.Metadata.ALL_DOCUMENTS_COLLECTION);
         }
 
         return Tuple.create(indexName, collectionName);

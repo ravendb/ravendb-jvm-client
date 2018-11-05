@@ -25,16 +25,14 @@ public class ConfigureRevisionsOperation implements IMaintenanceOperation<Config
 
     @Override
     public RavenCommand<ConfigureRevisionsOperationResult> getCommand(DocumentConventions conventions) {
-        return new ConfigureRevisionsCommand(conventions, _configuration);
+        return new ConfigureRevisionsCommand(_configuration);
     }
 
     private static class ConfigureRevisionsCommand extends RavenCommand<ConfigureRevisionsOperationResult> {
-        private final DocumentConventions _conventions;
         private final RevisionsConfiguration _configuration;
 
-        public ConfigureRevisionsCommand(DocumentConventions conventions, RevisionsConfiguration configuration) {
+        public ConfigureRevisionsCommand(RevisionsConfiguration configuration) {
             super(ConfigureRevisionsOperationResult.class);
-            _conventions = conventions;
             _configuration = configuration;
         }
 
@@ -71,15 +69,14 @@ public class ConfigureRevisionsOperation implements IMaintenanceOperation<Config
     }
 
     public static class ConfigureRevisionsOperationResult {
-        @JsonProperty("ETag")
-        private Long etag;
+        private Long raftCommandIndex;
 
-        public Long getEtag() {
-            return etag;
+        public Long getRaftCommandIndex() {
+            return raftCommandIndex;
         }
 
-        public void setEtag(Long etag) {
-            this.etag = etag;
+        public void setRaftCommandIndex(Long raftCommandIndex) {
+            this.raftCommandIndex = raftCommandIndex;
         }
     }
 }
