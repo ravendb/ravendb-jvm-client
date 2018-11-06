@@ -74,11 +74,12 @@ public class TcpConnectionHeaderMessage {
     public static final int HEARTBEATS_BASE_LINE = 20;
     public static final int HEARTBEATS_41200 = 41_200;
     public static final int SUBSCRIPTION_BASE_LINE = 40;
+    public static final int SUBSCRIPTION_INCLUDES = 41_400;
     public static final int TEST_CONNECTION_BASE_LINE = 50;
 
 
     public static final int HEARTBEATS_TCP_VERSION = HEARTBEATS_41200;
-    public static final int SUBSCRIPTION_TCP_VERSION = SUBSCRIPTION_BASE_LINE;
+    public static final int SUBSCRIPTION_TCP_VERSION = SUBSCRIPTION_INCLUDES;
     public static final int TEST_CONNECTION_TCP_VERSION = TEST_CONNECTION_BASE_LINE;
 
     public static class SupportedFeatures {
@@ -102,6 +103,7 @@ public class TcpConnectionHeaderMessage {
 
         public static class SubscriptionFeatures {
             public boolean baseLine = true;
+            public boolean includes;
         }
 
         public static class HeartbeatsFeatures {
@@ -128,7 +130,7 @@ public class TcpConnectionHeaderMessage {
         operationsToSupportedProtocolVersions.put(OperationTypes.PING, Collections.singletonList(PING_BASE_LINE));
         operationsToSupportedProtocolVersions.put(OperationTypes.NONE, Collections.singletonList(NONE_BASE_LINE));
         operationsToSupportedProtocolVersions.put(OperationTypes.DROP, Collections.singletonList(DROP_BASE_LINE));
-        operationsToSupportedProtocolVersions.put(OperationTypes.SUBSCRIPTION, Collections.singletonList(SUBSCRIPTION_BASE_LINE));
+        operationsToSupportedProtocolVersions.put(OperationTypes.SUBSCRIPTION, Arrays.asList(SUBSCRIPTION_INCLUDES, SUBSCRIPTION_BASE_LINE));
         operationsToSupportedProtocolVersions.put(OperationTypes.HEARTBEATS, Arrays.asList(HEARTBEATS_41200, HEARTBEATS_BASE_LINE));
         operationsToSupportedProtocolVersions.put(OperationTypes.TEST_CONNECTION, Collections.singletonList(TEST_CONNECTION_BASE_LINE));
 
@@ -155,6 +157,11 @@ public class TcpConnectionHeaderMessage {
         SupportedFeatures subscriptionFeatures = new SupportedFeatures(SUBSCRIPTION_BASE_LINE);
         subscriptionFeatures.subscription = new SupportedFeatures.SubscriptionFeatures();
         subscriptionFeaturesMap.put(SUBSCRIPTION_BASE_LINE, subscriptionFeatures);
+
+        SupportedFeatures subscriptions41400Features = new SupportedFeatures(SUBSCRIPTION_INCLUDES);
+        subscriptions41400Features.subscription = new SupportedFeatures.SubscriptionFeatures();
+        subscriptions41400Features.subscription.includes = true;
+        subscriptionFeaturesMap.put(SUBSCRIPTION_INCLUDES, subscriptions41400Features);
 
         Map<Integer, SupportedFeatures> heartbeatsFeaturesMap = new HashMap<>();
         supportedFeaturesByProtocol.put(OperationTypes.HEARTBEATS, heartbeatsFeaturesMap);
