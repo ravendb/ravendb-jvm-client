@@ -6,7 +6,6 @@ import net.ravendb.client.documents.IDocumentStore;
 import net.ravendb.client.documents.session.IDocumentSession;
 import net.ravendb.client.documents.subscriptions.SubscriptionWorker;
 import net.ravendb.client.documents.subscriptions.SubscriptionWorkerOptions;
-import net.ravendb.client.infrastructure.DisabledOn41Server;
 import net.ravendb.client.infrastructure.entities.User;
 import org.eclipse.jetty.util.BlockingArrayQueue;
 import org.junit.jupiter.api.Test;
@@ -21,7 +20,6 @@ public class SecuredSubscriptionsBasicTest extends RemoteTestBase {
     private final int _reasonableWaitTime = 5;
 
     @Test
-    @DisabledOn41Server
     public void shouldStreamAllDocumentsAfterSubscriptionCreation() throws Exception {
         try (IDocumentStore store = getSecuredDocumentStore()) {
             try (IDocumentSession session = store.openSession()) {
@@ -82,7 +80,6 @@ public class SecuredSubscriptionsBasicTest extends RemoteTestBase {
     }
 
     @Test
-    @DisabledOn41Server
     public void shouldSendAllNewAndModifiedDocs() throws Exception {
         try (IDocumentStore store = getSecuredDocumentStore()) {
             String id = store.subscriptions().create(User.class);

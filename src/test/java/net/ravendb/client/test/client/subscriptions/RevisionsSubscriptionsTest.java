@@ -10,7 +10,6 @@ import net.ravendb.client.documents.subscriptions.Revision;
 import net.ravendb.client.documents.subscriptions.SubscriptionBatch;
 import net.ravendb.client.documents.subscriptions.SubscriptionWorker;
 import net.ravendb.client.documents.subscriptions.SubscriptionWorkerOptions;
-import net.ravendb.client.infrastructure.DisabledOn41Server;
 import net.ravendb.client.infrastructure.entities.Company;
 import net.ravendb.client.infrastructure.entities.User;
 import org.junit.jupiter.api.Test;
@@ -30,7 +29,6 @@ public class RevisionsSubscriptionsTest extends RemoteTestBase {
     private final int _reasonableWaitTime = 15;
 
     @Test
-    @DisabledOn41Server
     public void plainRevisionsSubscriptions() throws Exception {
         try (IDocumentStore store = getDocumentStore()) {
             String subscriptionId = store.subscriptions().createForRevisions(User.class);
@@ -98,7 +96,6 @@ public class RevisionsSubscriptionsTest extends RemoteTestBase {
     }
 
     @Test
-    @DisabledOn41Server
     public void plainRevisionsSubscriptionsCompareDocs() throws Exception {
         try (IDocumentStore store = getDocumentStore()) {
             String subscriptionId = store.subscriptions().createForRevisions(User.class);
