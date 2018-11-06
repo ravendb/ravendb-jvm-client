@@ -23,7 +23,7 @@ before_install:
   - sudo cp ca.crt /usr/local/share/ca-certificates/ca.crt
   - sudo update-ca-certificates
   - popd  
-  - wget -O RavenDB.tar.bz2 "https://hibernatingrhinos.com/downloads/RavenDB%20for%20Linux%20x64/latest?buildType=stable&version=$RAVENDB_SERVER_VERSION"
+  - wget -O RavenDB.tar.bz2 "https://hibernatingrhinos.com/downloads/RavenDB%20for%20Linux%20x64/latest?buildType=nightly&version=$RAVENDB_SERVER_VERSION"
   - tar xvjf RavenDB.tar.bz2
   - sleep 2
 script: mvn test
