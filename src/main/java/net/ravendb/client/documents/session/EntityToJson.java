@@ -47,10 +47,11 @@ public class EntityToJson {
     }
 
     public static ObjectNode convertEntityToJson(Object entity, DocumentConventions conventions) {
-        return convertEntityToJson(entity, conventions, null);
+        return convertEntityToJson(entity, conventions, null, true);
     }
 
-    public static ObjectNode convertEntityToJson(Object entity, DocumentConventions conventions, DocumentInfo documentInfo) {
+    public static ObjectNode convertEntityToJson(Object entity, DocumentConventions conventions,
+                                                 DocumentInfo documentInfo, boolean removeIdentityProperty ) {
         // maybe we don't need to do anything?
         if (entity instanceof ObjectNode) {
             return (ObjectNode) entity;
@@ -63,7 +64,10 @@ public class EntityToJson {
         writeMetadata(mapper, jsonNode, documentInfo);
 
         Class<?> clazz = entity.getClass();
-        tryRemoveIdentityProperty(jsonNode, clazz, conventions);
+
+        if (removeIdentityProperty) {
+            tryRemoveIdentityProperty(jsonNode, clazz, conventions);
+        }
 
         return jsonNode;
     }

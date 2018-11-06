@@ -72,11 +72,12 @@ public class TcpConnectionHeaderMessage {
     public static final int NONE_BASE_LINE = -1;
     public static final int DROP_BASE_LINE = -2;
     public static final int HEARTBEATS_BASE_LINE = 20;
+    public static final int HEARTBEATS_41200 = 41_200;
     public static final int SUBSCRIPTION_BASE_LINE = 40;
     public static final int TEST_CONNECTION_BASE_LINE = 50;
 
 
-    public static final int HEARTBEATS_TCP_VERSION = HEARTBEATS_BASE_LINE;
+    public static final int HEARTBEATS_TCP_VERSION = HEARTBEATS_41200;
     public static final int SUBSCRIPTION_TCP_VERSION = SUBSCRIPTION_BASE_LINE;
     public static final int TEST_CONNECTION_TCP_VERSION = TEST_CONNECTION_BASE_LINE;
 
@@ -105,6 +106,7 @@ public class TcpConnectionHeaderMessage {
 
         public static class HeartbeatsFeatures {
             public boolean baseLine = true;
+            public boolean sendChangesOnly;
         }
 
         public static class TestConnectionFeatures {
@@ -127,7 +129,7 @@ public class TcpConnectionHeaderMessage {
         operationsToSupportedProtocolVersions.put(OperationTypes.NONE, Collections.singletonList(NONE_BASE_LINE));
         operationsToSupportedProtocolVersions.put(OperationTypes.DROP, Collections.singletonList(DROP_BASE_LINE));
         operationsToSupportedProtocolVersions.put(OperationTypes.SUBSCRIPTION, Collections.singletonList(SUBSCRIPTION_BASE_LINE));
-        operationsToSupportedProtocolVersions.put(OperationTypes.HEARTBEATS, Collections.singletonList(HEARTBEATS_BASE_LINE));
+        operationsToSupportedProtocolVersions.put(OperationTypes.HEARTBEATS, Arrays.asList(HEARTBEATS_41200, HEARTBEATS_BASE_LINE));
         operationsToSupportedProtocolVersions.put(OperationTypes.TEST_CONNECTION, Collections.singletonList(TEST_CONNECTION_BASE_LINE));
 
         Map<Integer, SupportedFeatures> pingFeaturesMap = new HashMap<>();
@@ -159,6 +161,11 @@ public class TcpConnectionHeaderMessage {
         SupportedFeatures heartbeatsFeatures = new SupportedFeatures(HEARTBEATS_BASE_LINE);
         heartbeatsFeatures.heartbeats = new SupportedFeatures.HeartbeatsFeatures();
         heartbeatsFeaturesMap.put(HEARTBEATS_BASE_LINE, heartbeatsFeatures);
+
+        SupportedFeatures heartbeats41200Features = new SupportedFeatures(HEARTBEATS_41200);
+        heartbeats41200Features.heartbeats = new SupportedFeatures.HeartbeatsFeatures();
+        heartbeats41200Features.heartbeats.sendChangesOnly = true;
+        heartbeatsFeaturesMap.put(HEARTBEATS_41200, heartbeats41200Features);
 
         Map<Integer, SupportedFeatures> testConnectionFeaturesMap = new HashMap<>();
         supportedFeaturesByProtocol.put(OperationTypes.TEST_CONNECTION, testConnectionFeaturesMap);

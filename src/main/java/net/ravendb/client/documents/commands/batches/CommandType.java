@@ -17,6 +17,8 @@ public enum CommandType {
 
     COUNTERS,
 
+    BATCH_PATCH,
+
     CLIENT_ANY_COMMAND,
     CLIENT_MODIFY_DOCUMENT_COMMAND;
 
@@ -44,6 +46,8 @@ public enum CommandType {
                 return COMPARE_EXCHANGE_DELETE;
             case "Counters":
                 return COUNTERS;
+            case "BatchPATCH":
+                return BATCH_PATCH;
             default:
                 throw new IllegalArgumentException("Unable to parse type: " + input);
         }

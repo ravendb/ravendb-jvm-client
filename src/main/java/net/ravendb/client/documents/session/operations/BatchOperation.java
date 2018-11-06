@@ -144,6 +144,8 @@ public class BatchOperation {
                 case COUNTERS:
                     handleCounters(batchResult);
                     break;
+                case BATCH_PATCH:
+                    break;
                 default:
                     throw new IllegalStateException("Command " + type + " is not supported");
             }

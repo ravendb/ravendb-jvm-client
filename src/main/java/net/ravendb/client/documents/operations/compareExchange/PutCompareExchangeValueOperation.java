@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import net.ravendb.client.documents.IDocumentStore;
 import net.ravendb.client.documents.conventions.DocumentConventions;
 import net.ravendb.client.documents.operations.IOperation;
+import net.ravendb.client.documents.session.EntityToJson;
 import net.ravendb.client.http.HttpCache;
 import net.ravendb.client.http.RavenCommand;
 import net.ravendb.client.http.ServerNode;
@@ -73,7 +74,7 @@ public class PutCompareExchangeValueOperation<T> implements IOperation<CompareEx
             Map<String, T> tuple = new HashMap<>();
             tuple.put("Object", _value);
 
-            ObjectNode json = _conventions.getEntityMapper().valueToTree(tuple);
+            ObjectNode json = EntityToJson.convertEntityToJson(tuple, _conventions, null, false);
 
             HttpPut httpPut = new HttpPut();
             httpPut.setEntity(new ContentProviderHttpEntity(outputStream -> {

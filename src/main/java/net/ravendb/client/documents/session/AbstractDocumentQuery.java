@@ -858,12 +858,16 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
     public void _fuzzy(double fuzzy) {
         List<QueryToken> tokens = getCurrentWhereTokens();
         if (tokens.isEmpty()) {
-            throw new IllegalStateException("Missing where clause");
+            throw new IllegalStateException("Fuzzy can only be used right after where clause");
         }
 
         QueryToken whereToken = tokens.get(tokens.size() - 1);
         if (!(whereToken instanceof WhereToken)) {
-            throw new IllegalStateException("Missing where clause");
+            throw new IllegalStateException("Fuzzy can only be used right after where clause");
+        }
+
+        if (((WhereToken) whereToken).getWhereOperator() != WhereOperator.EQUALS) {
+            throw new IllegalStateException("Fuzzy can only be used right after where clause with equals operator");
         }
 
         if (fuzzy < 0.0 || fuzzy > 1.0) {
@@ -874,7 +878,7 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
     }
 
     /**
-     * Specifies a proximity distance for the phrase in the last where clause
+     * Specifies a proximity distance for the phrase in the last search clause
      * <p>
      * http://lucene.apache.org/java/2_4_0/queryparsersyntax.html#Proximity%20Searches
      * @param proximity Proximity value
@@ -883,12 +887,16 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
     public void _proximity(int proximity) {
         List<QueryToken> tokens = getCurrentWhereTokens();
         if (tokens.isEmpty()) {
-            throw new IllegalStateException("Missing where clause");
+            throw new IllegalStateException("Proximity can only be used right after search clause");
         }
 
         QueryToken whereToken = tokens.get(tokens.size() - 1);
         if (!(whereToken instanceof WhereToken)) {
-            throw new IllegalStateException("Missing where clause");
+            throw new IllegalStateException("Proximity can only be used right after search clause");
+        }
+
+        if (((WhereToken) whereToken).getWhereOperator() != WhereOperator.SEARCH) {
+            throw new IllegalStateException("Proximity can only be used right after search clause");
         }
 
         if (proximity < 1) {

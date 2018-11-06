@@ -885,7 +885,7 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
             for (Map.Entry<String, ClusterTransactionOperationsBase.StoredCompareExchange> item : clusterTransactionOperations.getStoreCompareExchange().entrySet()) {
 
                 ObjectMapper mapper = getConventions().getEntityMapper();
-                JsonNode entityAsTree = mapper.valueToTree(item.getValue().entity);
+                JsonNode entityAsTree = EntityToJson.convertEntityToJson(item.getValue().entity, getConventions(), null, false);
                 ObjectNode rootNode = mapper.createObjectNode();
                 rootNode.set("Object", entityAsTree);
 
@@ -1219,16 +1219,29 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
         }
     }
 
-    private void deferInternal(ICommandData command) {
-        deferredCommandsMap.put(IdTypeAndName.create(command.getId(), command.getType(), command.getName()), command);
-        deferredCommandsMap.put(IdTypeAndName.create(command.getId(), CommandType.CLIENT_ANY_COMMAND, null), command);
+    private void deferInternal(final ICommandData command) {
+
+        if (command.getType() == CommandType.BATCH_PATCH) {
+            BatchPatchCommandData batchPatchCommand = (BatchPatchCommandData) command;
+            for (BatchPatchCommandData.IdAndChangeVector kvp : batchPatchCommand.getIds()) {
+                addCommand(command, kvp.getId(), CommandType.PATCH, command.getName());
+            }
+            return;
+        }
+
+        addCommand(command, command.getId(), command.getType(), command.getName());
+    }
+
+    private void addCommand(ICommandData command, String id, CommandType commandType, String commandName) {
+        deferredCommandsMap.put(IdTypeAndName.create(id, commandType, commandName), command);
+        deferredCommandsMap.put(IdTypeAndName.create(id, CommandType.CLIENT_ANY_COMMAND, null), command);
 
         if (!CommandType.ATTACHMENT_PUT.equals(command.getType()) &&
                 !CommandType.ATTACHMENT_DELETE.equals(command.getType()) &&
                 !CommandType.ATTACHMENT_COPY.equals(command.getType()) &&
                 !CommandType.ATTACHMENT_MOVE.equals(command.getType()) &&
                 !CommandType.COUNTERS.equals(command.getType())) {
-            deferredCommandsMap.put(IdTypeAndName.create(command.getId(), CommandType.CLIENT_MODIFY_DOCUMENT_COMMAND, null), command);
+            deferredCommandsMap.put(IdTypeAndName.create(id, CommandType.CLIENT_MODIFY_DOCUMENT_COMMAND, null), command);
         }
     }
 
@@ -1587,7 +1600,9 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
         }
 
         if (!isIndex && !isCollection) {
-            collectionName = conventions.getCollectionName(clazz);
+            collectionName = ObjectUtils.firstNonNull(
+                    conventions.getCollectionName(clazz),
+                    Constants.Documents.Metadata.ALL_DOCUMENTS_COLLECTION);
         }
 
         return Tuple.create(indexName, collectionName);
