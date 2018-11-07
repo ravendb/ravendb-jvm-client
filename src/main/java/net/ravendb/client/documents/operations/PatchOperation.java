@@ -72,11 +72,11 @@ public class PatchOperation implements IOperation<PatchResult> {
             throw new IllegalArgumentException("Patch cannot be null");
         }
 
-        if (StringUtils.isWhitespace(patch.getScript())) {
+        if (StringUtils.isBlank(patch.getScript())) {
             throw new IllegalArgumentException("Patch script cannot be null");
         }
 
-        if (patchIfMissing != null && StringUtils.isWhitespace(patchIfMissing.getScript())) {
+        if (patchIfMissing != null && StringUtils.isBlank(patchIfMissing.getScript())) {
             throw new IllegalArgumentException("PatchIfMissing script cannot be null");
         }
 
@@ -121,11 +121,11 @@ public class PatchOperation implements IOperation<PatchResult> {
                 throw new IllegalArgumentException("Patch cannot be null");
             }
 
-            if (StringUtils.isWhitespace(patch.getScript())) {
+            if (StringUtils.isBlank(patch.getScript())) {
                 throw new IllegalArgumentException("Patch.Script cannot be null");
             }
 
-            if (patchIfMissing != null && StringUtils.isWhitespace(patchIfMissing.getScript())) {
+            if (patchIfMissing != null && StringUtils.isBlank(patchIfMissing.getScript())) {
                 throw new IllegalArgumentException("PatchIfMissing.Script cannot be null");
             }
 

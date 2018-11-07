@@ -146,7 +146,7 @@ public class DatabaseChanges implements IDatabaseChanges {
     @SuppressWarnings("unchecked")
     @Override
     public IChangesObservable<IndexChange> forIndex(String indexName) {
-        if (StringUtils.isWhitespace(indexName)) {
+        if (StringUtils.isBlank(indexName)) {
             throw new IllegalArgumentException("IndexName cannot be null or whitespace");
         }
 
@@ -172,7 +172,7 @@ public class DatabaseChanges implements IDatabaseChanges {
 
     @Override
     public IChangesObservable<DocumentChange> forDocument(String docId) {
-        if (StringUtils.isWhitespace(docId)) {
+        if (StringUtils.isBlank(docId)) {
             throw new IllegalArgumentException("DocumentId cannot be null or whitespace");
         }
         DatabaseConnectionState counter = getOrAddConnectionState("docs/" + docId, "watch-doc", "unwatch-doc", docId);
@@ -223,7 +223,7 @@ public class DatabaseChanges implements IDatabaseChanges {
 
     @Override
     public IChangesObservable<DocumentChange> forDocumentsStartingWith(String docIdPrefix) {
-        if (StringUtils.isWhitespace(docIdPrefix)) {
+        if (StringUtils.isBlank(docIdPrefix)) {
             throw new IllegalArgumentException("DocumentIdPrefix cannot be null or whitespace");
         }
         DatabaseConnectionState counter = getOrAddConnectionState("prefixes/" + docIdPrefix, "watch-prefix", "unwatch-prefix", docIdPrefix);
@@ -235,7 +235,7 @@ public class DatabaseChanges implements IDatabaseChanges {
 
     @Override
     public IChangesObservable<DocumentChange> forDocumentsInCollection(String collectionName) {
-        if (StringUtils.isWhitespace(collectionName)) {
+        if (StringUtils.isBlank(collectionName)) {
             throw new IllegalArgumentException("CollectionName cannot be null or whitespace");
         }
 
@@ -265,7 +265,7 @@ public class DatabaseChanges implements IDatabaseChanges {
 
     @Override
     public IChangesObservable<CounterChange> forCounter(String counterName) {
-        if (StringUtils.isWhitespace(counterName)) {
+        if (StringUtils.isBlank(counterName)) {
             throw new IllegalArgumentException("CounterName cannot be null or whitespace");
         }
 
@@ -278,10 +278,10 @@ public class DatabaseChanges implements IDatabaseChanges {
 
     @Override
     public IChangesObservable<CounterChange> forCounterOfDocument(String documentId, String counterName) {
-        if (StringUtils.isWhitespace(documentId)) {
+        if (StringUtils.isBlank(documentId)) {
             throw new IllegalArgumentException("DocumentId cannot be null or whitespace.");
         }
-        if (StringUtils.isWhitespace(counterName)) {
+        if (StringUtils.isBlank(counterName)) {
             throw new IllegalArgumentException("CounterName cannot be null or whitespace.");
         }
 
@@ -294,7 +294,7 @@ public class DatabaseChanges implements IDatabaseChanges {
 
     @Override
     public IChangesObservable<CounterChange> forCountersOfDocument(String documentId) {
-        if (StringUtils.isWhitespace(documentId)) {
+        if (StringUtils.isBlank(documentId)) {
             throw new IllegalArgumentException("DocumentId cannot be null or whitespace");
         }
 

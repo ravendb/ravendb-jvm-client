@@ -196,7 +196,7 @@ public class IndexDefinition {
             return IndexType.MAP_REDUCE;
         }
 
-        if (getReduce() == null || StringUtils.isWhitespace(getReduce())) {
+        if (StringUtils.isBlank(getReduce())) {
             return IndexType.JAVA_SCRIPT_MAP;
         }
 

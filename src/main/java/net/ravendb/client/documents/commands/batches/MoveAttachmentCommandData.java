@@ -16,19 +16,19 @@ public class MoveAttachmentCommandData implements ICommandData {
     private String changeVector;
 
     public MoveAttachmentCommandData(String documentId, String name, String destinationDocumentId, String destinationName, String changeVector) {
-        if (StringUtils.isWhitespace(documentId)) {
+        if (StringUtils.isBlank(documentId)) {
             throw new IllegalArgumentException("DocumentId is required");
         }
 
-        if (StringUtils.isWhitespace(name)) {
+        if (StringUtils.isBlank(name)) {
             throw new IllegalArgumentException("Name is required");
         }
 
-        if (StringUtils.isWhitespace(destinationDocumentId)) {
+        if (StringUtils.isBlank(destinationDocumentId)) {
             throw new IllegalArgumentException("DestinationDocumentId is required");
         }
 
-        if (StringUtils.isWhitespace(destinationName)) {
+        if (StringUtils.isBlank(destinationName)) {
             throw new IllegalArgumentException("DestinationName is required");
         }
 

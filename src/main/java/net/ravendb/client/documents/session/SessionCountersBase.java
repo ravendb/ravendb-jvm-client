@@ -45,7 +45,7 @@ public abstract class SessionCountersBase {
     }
 
     public void increment(String counter, long delta) {
-        if (StringUtils.isWhitespace(counter)) {
+        if (StringUtils.isBlank(counter)) {
             throw new IllegalArgumentException("Counter cannot be empty");
         }
 
@@ -73,7 +73,7 @@ public abstract class SessionCountersBase {
     }
 
     public void delete(String counter) {
-        if (StringUtils.isWhitespace(counter)) {
+        if (StringUtils.isBlank(counter)) {
             throw new IllegalArgumentException("Counter is required");
         }
 

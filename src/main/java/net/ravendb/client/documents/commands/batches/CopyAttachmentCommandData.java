@@ -17,19 +17,19 @@ public class CopyAttachmentCommandData implements ICommandData {
 
 
     public CopyAttachmentCommandData(String sourceDocumentId, String sourceName, String destinationDocumentId, String destinationName, String changeVector) {
-        if (StringUtils.isWhitespace(sourceDocumentId)) {
+        if (StringUtils.isBlank(sourceDocumentId)) {
             throw new IllegalArgumentException("SourceDocumentId is required");
         }
 
-        if (StringUtils.isWhitespace(sourceName)) {
+        if (StringUtils.isBlank(sourceName)) {
             throw new IllegalArgumentException("SourceName is required");
         }
 
-        if (StringUtils.isWhitespace(destinationDocumentId)) {
+        if (StringUtils.isBlank(destinationDocumentId)) {
             throw new IllegalArgumentException("DestinationDocumentId is required");
         }
 
-        if (StringUtils.isWhitespace(destinationName)) {
+        if (StringUtils.isBlank(destinationName)) {
             throw new IllegalArgumentException("DestinationName is required");
         }
 

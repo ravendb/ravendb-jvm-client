@@ -39,11 +39,11 @@ public class DeleteAttachmentOperation implements IVoidOperation {
         private final String _changeVector;
 
         public DeleteAttachmentCommand(String documentId, String name, String changeVector) {
-            if (StringUtils.isWhitespace(documentId)) {
+            if (StringUtils.isBlank(documentId)) {
                 throw new IllegalArgumentException("documentId cannot be null");
             }
 
-            if (StringUtils.isWhitespace(name)) {
+            if (StringUtils.isBlank(name)) {
                 throw new IllegalArgumentException("name cannot be null");
             }
 

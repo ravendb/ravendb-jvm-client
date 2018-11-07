@@ -74,7 +74,7 @@ public class IncludeBuilderBase {
         assertNotAllAndAddNewEntryIfNeeded(path);
 
         for (String name : names) {
-            if (StringUtils.isWhitespace(name)) {
+            if (StringUtils.isBlank(name)) {
                 throw new IllegalArgumentException("Counters(String[] names): 'names' should not contain null or whitespace elements");
             }
 

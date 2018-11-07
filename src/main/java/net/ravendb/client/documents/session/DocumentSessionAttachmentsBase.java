@@ -44,11 +44,11 @@ public abstract class DocumentSessionAttachmentsBase extends AdvancedSessionExte
     }
 
     public void store(String documentId, String name, InputStream stream, String contentType) {
-        if (StringUtils.isWhitespace(documentId)) {
+        if (StringUtils.isBlank(documentId)) {
             throw new IllegalArgumentException("DocumentId cannot be null");
         }
 
-        if (StringUtils.isWhitespace(name)) {
+        if (StringUtils.isBlank(name)) {
             throw new IllegalArgumentException("Name cannot be null");
         }
 
@@ -107,11 +107,11 @@ public abstract class DocumentSessionAttachmentsBase extends AdvancedSessionExte
     }
 
     public void delete(String documentId, String name) {
-        if (StringUtils.isWhitespace(documentId)) {
+        if (StringUtils.isBlank(documentId)) {
             throw new IllegalArgumentException("DocumentId cannot be null");
         }
 
-        if (StringUtils.isWhitespace(name)) {
+        if (StringUtils.isBlank(name)) {
             throw new IllegalArgumentException("Name cannot be null");
         }
 
@@ -167,19 +167,19 @@ public abstract class DocumentSessionAttachmentsBase extends AdvancedSessionExte
     }
 
     public void move(String sourceDocumentId, String sourceName, String destinationDocumentId, String destinationName) {
-        if (StringUtils.isWhitespace(sourceDocumentId)) {
+        if (StringUtils.isBlank(sourceDocumentId)) {
             throw new IllegalArgumentException("SourceDocumentId is required");
         }
 
-        if (StringUtils.isWhitespace(sourceName)) {
+        if (StringUtils.isBlank(sourceName)) {
             throw new IllegalArgumentException("SourceName is required");
         }
 
-        if (StringUtils.isWhitespace(destinationDocumentId)) {
+        if (StringUtils.isBlank(destinationDocumentId)) {
             throw new IllegalArgumentException("DestinationDocumentId is required");
         }
 
-        if (StringUtils.isWhitespace(destinationName)) {
+        if (StringUtils.isBlank(destinationName)) {
             throw new IllegalArgumentException("DestinationName is required");
         }
 
@@ -239,19 +239,19 @@ public abstract class DocumentSessionAttachmentsBase extends AdvancedSessionExte
     }
 
     public void copy(String sourceDocumentId, String sourceName, String destinationDocumentId, String destinationName) {
-        if (StringUtils.isWhitespace(sourceDocumentId)) {
+        if (StringUtils.isBlank(sourceDocumentId)) {
             throw new IllegalArgumentException("SourceDocumentId is required");
         }
 
-        if (StringUtils.isWhitespace(sourceName)) {
+        if (StringUtils.isBlank(sourceName)) {
             throw new IllegalArgumentException("SourceName is required");
         }
 
-        if (StringUtils.isWhitespace(destinationDocumentId)) {
+        if (StringUtils.isBlank(destinationDocumentId)) {
             throw new IllegalArgumentException("DestinationDocumentId is required");
         }
 
-        if (StringUtils.isWhitespace(destinationName)) {
+        if (StringUtils.isBlank(destinationName)) {
             throw new IllegalArgumentException("DestinationName is required");
         }
 

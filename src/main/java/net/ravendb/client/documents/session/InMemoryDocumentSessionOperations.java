@@ -323,7 +323,7 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
         this.id = id;
         this.databaseName = ObjectUtils.firstNonNull(options.getDatabase(), documentStore.getDatabase());
 
-        if (StringUtils.isWhitespace(databaseName)) {
+        if (StringUtils.isBlank(databaseName)) {
             throwNoDatabase();
         }
 

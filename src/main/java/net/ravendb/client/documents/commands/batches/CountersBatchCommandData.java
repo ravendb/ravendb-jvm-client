@@ -30,7 +30,7 @@ public class CountersBatchCommandData implements ICommandData {
     }
 
     public CountersBatchCommandData(String documentId, List<CounterOperation> counterOperations) {
-        if (StringUtils.isWhitespace(documentId)) {
+        if (StringUtils.isBlank(documentId)) {
             throw new IllegalArgumentException("DocumentId cannot be null");
         }
 
