@@ -17,11 +17,13 @@ import net.ravendb.client.documents.queries.IndexQuery;
 import net.ravendb.client.documents.session.EntityToJson;
 import net.ravendb.client.primitives.NetDateFormat;
 import net.ravendb.client.primitives.SharpAwareJacksonAnnotationIntrospector;
+import net.ravendb.client.primitives.SharpEnum;
 import net.ravendb.client.util.TimeUtils;
 import org.apache.commons.lang3.StringUtils;
 
 import java.io.IOException;
 import java.time.Duration;
+import java.util.EnumSet;
 
 
 public class JsonExtensions {
@@ -38,6 +40,29 @@ public class JsonExtensions {
         }
 
         return _defaultMapper;
+    }
+
+    public static class SharpEnumSetSerializer extends StdSerializer<EnumSet<?>> {
+        public SharpEnumSetSerializer() {
+            super((Class<EnumSet<?>>)(Class<?>)EnumSet.class);
+        }
+
+        @Override
+        public void serialize(EnumSet<?> value, JsonGenerator gen, SerializerProvider provider) throws IOException {
+            StringBuilder sb = new StringBuilder();
+
+            boolean first = true;
+            for (Enum<?> anEnum : value) {
+                if (!first) {
+                    sb.append(",");
+                }
+                sb.append(SharpEnum.value(anEnum));
+
+                first = false;
+            }
+
+            gen.writeString(sb.toString());
+        }
     }
 
     public static class DurationSerializer extends StdSerializer<Duration> {

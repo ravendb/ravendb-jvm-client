@@ -9,6 +9,7 @@ import net.ravendb.client.documents.operations.OperationExecutor;
 import net.ravendb.client.documents.session.DocumentSession;
 import net.ravendb.client.documents.session.IDocumentSession;
 import net.ravendb.client.documents.session.SessionOptions;
+import net.ravendb.client.documents.smuggler.DatabaseSmuggler;
 import net.ravendb.client.http.AggressiveCacheOptions;
 import net.ravendb.client.http.RequestExecutor;
 import net.ravendb.client.primitives.*;
@@ -38,6 +39,8 @@ public class DocumentStore extends DocumentStoreBase {
 
     private MaintenanceOperationExecutor maintenanceOperationExecutor;
     private OperationExecutor operationExecutor;
+
+    private DatabaseSmuggler _smuggler;
 
     private String identifier;
     private boolean _aggressiveCachingUsed;
@@ -346,6 +349,15 @@ public class DocumentStore extends DocumentStoreBase {
     @Override
     public void removeAfterCloseListener(EventHandler<VoidArgs> event) {
         this.afterClose.remove(event);
+    }
+
+    @Override
+    public DatabaseSmuggler smuggler() {
+        if (_smuggler == null) {
+            _smuggler = new DatabaseSmuggler(this);
+        }
+
+        return _smuggler;
     }
 
     @Override

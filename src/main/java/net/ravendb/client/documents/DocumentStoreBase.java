@@ -9,6 +9,7 @@ import net.ravendb.client.documents.operations.MaintenanceOperationExecutor;
 import net.ravendb.client.documents.operations.OperationExecutor;
 import net.ravendb.client.documents.operations.indexes.PutIndexesOperation;
 import net.ravendb.client.documents.session.*;
+import net.ravendb.client.documents.smuggler.DatabaseSmuggler;
 import net.ravendb.client.documents.subscriptions.DocumentSubscriptions;
 import net.ravendb.client.http.RequestExecutor;
 import net.ravendb.client.primitives.CleanCloseable;
@@ -287,6 +288,8 @@ public abstract class DocumentStoreBase implements IDocumentStore {
     public void setTrustStore(KeyStore trustStore) {
         this._trustStore = trustStore;
     }
+
+    public abstract DatabaseSmuggler smuggler();
 
     public abstract RequestExecutor getRequestExecutor();
 

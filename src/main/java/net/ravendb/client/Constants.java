@@ -48,6 +48,19 @@ public class Constants {
                 public static final double DEFAULT_DISTANCE_ERROR_PCT = 0.025d;
             }
         }
+
+        public static class PeriodicBackup {
+
+            public static final String FULL_BACKUP_EXTENSION = "ravendb-full-backup";
+            public static final String SNAPSHOT_EXTENSION = "ravendb-snapshot";
+            public static final String INCREMENTAL_BACKUP_EXTENSION = "ravendb-incremental-backup";
+
+            public static class Folders {
+                public static final String INDEXES = "Indexes";
+                public static final String DOCUMENTS = "Documents";
+                public static final String CONFIGURATION = "Configuration";
+            }
+        }
     }
 
     public static class Headers {

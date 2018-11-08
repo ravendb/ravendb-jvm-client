@@ -6,6 +6,7 @@ import net.ravendb.client.documents.indexes.AbstractIndexCreationTaskBase;
 import net.ravendb.client.documents.operations.MaintenanceOperationExecutor;
 import net.ravendb.client.documents.operations.OperationExecutor;
 import net.ravendb.client.documents.session.*;
+import net.ravendb.client.documents.smuggler.DatabaseSmuggler;
 import net.ravendb.client.documents.subscriptions.DocumentSubscriptions;
 import net.ravendb.client.http.RequestExecutor;
 import net.ravendb.client.primitives.CleanCloseable;
@@ -209,4 +210,5 @@ public interface IDocumentStore extends IDisposalNotification {
 
     OperationExecutor operations();
 
+    DatabaseSmuggler smuggler();
 }
