@@ -1837,7 +1837,10 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
 
     public T first() {
         Collection<T> result = executeQueryOperation(1);
-        return result.isEmpty() ? null : result.stream().findFirst().get();
+        if (result.isEmpty()) {
+            throw new IllegalStateException("Expected at least one result");
+        }
+        return result.stream().findFirst().get();
     }
 
     public T firstOrDefault() {
@@ -1850,7 +1853,6 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
         if (result.size() != 1) {
             throw new IllegalStateException("Expected single result, got: " + result.size());
         }
-
         return result.stream().findFirst().get();
     }
 
