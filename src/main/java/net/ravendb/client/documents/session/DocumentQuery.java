@@ -53,10 +53,12 @@ public class DocumentQuery<T> extends AbstractDocumentQuery<T, DocumentQuery<T>>
             PropertyDescriptor[] propertyDescriptors = Introspector.getBeanInfo(projectionClass).getPropertyDescriptors();
 
             String[] projections = Arrays.stream(propertyDescriptors)
+                    .filter(x -> !Object.class.equals(x.getReadMethod().getDeclaringClass())) // ignore class field etc,
                     .map(x -> x.getName())
                     .toArray(String[]::new);
 
             String[] fields = Arrays.stream(propertyDescriptors)
+                    .filter(x -> !Object.class.equals(x.getReadMethod().getDeclaringClass())) // ignore class field etc,
                     .map(x -> x.getName())
                     .toArray(String[]::new);
 
