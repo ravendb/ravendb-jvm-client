@@ -1847,10 +1847,11 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
 
     public T single() {
         Collection<T> result = executeQueryOperation(2);
-        if (result.size() > 1) {
+        if (result.size() != 1) {
             throw new IllegalStateException("Expected single result, got: " + result.size());
         }
-        return result.stream().findFirst().orElse(null);
+
+        return result.stream().findFirst().get();
     }
 
     public T singleOrDefault() {

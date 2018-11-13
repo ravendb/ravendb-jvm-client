@@ -114,7 +114,7 @@ public class JavaScriptIndexTest extends RemoteTestBase {
                 waitForIndexing(store);
 
                 session.query(User.class, index("UsersByNameAndAnalyzedName"))
-                        .ofType(UsersByNameAndAnalyzedName.Result.class)
+                        .selectFields(UsersByNameAndAnalyzedName.Result.class)
                         .search("analyzedName", "Brendan")
                         .single();
             }
@@ -362,8 +362,8 @@ public class JavaScriptIndexTest extends RemoteTestBase {
         public UsersByNameAndAnalyzedName() {
             setMaps(Sets.newSet("map('Users', function (u){\n" +
                     "                                    return {\n" +
-                    "                                        Name: u.Name,\n" +
-                    "                                        _: {$value: u.Name, $name:'AnalyzedName', $options:{index: true, store: true}}\n" +
+                    "                                        name: u.name,\n" +
+                    "                                        _: {$value: u.name, $name:'analyzedName', $options: { indexing: 'Search', storage: true}}\n" +
                     "                                    };\n" +
                     "                                })"));
 
