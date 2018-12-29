@@ -48,11 +48,11 @@ public class GetAttachmentOperation implements IOperation<CloseableAttachmentRes
         public GetAttachmentCommand(String documentId, String name, AttachmentType type, String changeVector) {
             super(CloseableAttachmentResult.class);
 
-            if (StringUtils.isWhitespace(documentId)) {
+            if (StringUtils.isBlank(documentId)) {
                 throw new IllegalArgumentException("DocumentId cannot be null or empty");
             }
 
-            if (StringUtils.isWhitespace(name)) {
+            if (StringUtils.isBlank(name)) {
                 throw new IllegalArgumentException("Name cannot be null or empty");
             }
 

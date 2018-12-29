@@ -22,10 +22,10 @@ public class HeadAttachmentCommand extends RavenCommand<String> {
     public HeadAttachmentCommand(String documentId, String name, String changeVector) {
         super(String.class);
 
-        if (StringUtils.isWhitespace(documentId)) {
+        if (StringUtils.isBlank(documentId)) {
             throw new IllegalArgumentException("DocumentId cannot be null or empty");
         }
-        if (StringUtils.isWhitespace(name)) {
+        if (StringUtils.isBlank(name)) {
             throw new IllegalArgumentException("Name cannot be null or empty");
         }
 

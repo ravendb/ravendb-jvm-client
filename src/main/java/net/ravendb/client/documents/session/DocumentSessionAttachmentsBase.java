@@ -46,11 +46,11 @@ public abstract class DocumentSessionAttachmentsBase extends AdvancedSessionExte
     }
 
     public void store(String documentId, String name, InputStream stream, String contentType) {
-        if (StringUtils.isWhitespace(documentId)) {
+        if (StringUtils.isBlank(documentId)) {
             throw new IllegalArgumentException("DocumentId cannot be null");
         }
 
-        if (StringUtils.isWhitespace(name)) {
+        if (StringUtils.isBlank(name)) {
             throw new IllegalArgumentException("Name cannot be null");
         }
 
@@ -105,11 +105,11 @@ public abstract class DocumentSessionAttachmentsBase extends AdvancedSessionExte
     }
 
     public void delete(String documentId, String name) {
-        if (StringUtils.isWhitespace(documentId)) {
+        if (StringUtils.isBlank(documentId)) {
             throw new IllegalArgumentException("DocumentId cannot be null");
         }
 
-        if (StringUtils.isWhitespace(name)) {
+        if (StringUtils.isBlank(name)) {
             throw new IllegalArgumentException("Name cannot be null");
         }
 

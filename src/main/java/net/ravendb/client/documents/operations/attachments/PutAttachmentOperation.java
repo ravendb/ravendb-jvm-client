@@ -55,11 +55,11 @@ public class PutAttachmentOperation implements IOperation<AttachmentDetails> {
         public PutAttachmentCommand(String documentId, String name, InputStream stream, String contentType, String changeVector) {
             super(AttachmentDetails.class);
 
-            if (StringUtils.isWhitespace(documentId)) {
+            if (StringUtils.isBlank(documentId)) {
                 throw new IllegalArgumentException("documentId cannot be null");
             }
 
-            if (StringUtils.isWhitespace(name)) {
+            if (StringUtils.isBlank(name)) {
                 throw new IllegalArgumentException("name cannot be null");
             }
 

@@ -34,11 +34,11 @@ public class DeleteAttachmentCommandData implements ICommandData {
     }
 
     public DeleteAttachmentCommandData(String documentId, String name, String changeVector) {
-        if (StringUtils.isWhitespace(documentId)) {
+        if (StringUtils.isBlank(documentId)) {
             throw new IllegalArgumentException("DocumentId cannot be null");
         }
 
-        if (StringUtils.isWhitespace(name)) {
+        if (StringUtils.isBlank(name)) {
             throw new IllegalArgumentException("Name cannot be null");
         }
 

@@ -37,7 +37,7 @@ public class FacetToken extends QueryToken {
     }
 
     public static FacetToken create(String facetSetupDocumentId) {
-        if (StringUtils.isWhitespace(facetSetupDocumentId)) {
+        if (StringUtils.isBlank(facetSetupDocumentId)) {
             throw new IllegalArgumentException("facetSetupDocumentId cannot be null");
         }
 
@@ -211,28 +211,28 @@ public class FacetToken extends QueryToken {
         }
 
         public static FacetAggregationToken max(String fieldName) {
-            if (StringUtils.isWhitespace(fieldName)) {
+            if (StringUtils.isBlank(fieldName)) {
                 throw new IllegalArgumentException("FieldName can not be null");
             }
             return new FacetAggregationToken(fieldName, FacetAggregation.MAX);
         }
 
         public static FacetAggregationToken min(String fieldName) {
-            if (StringUtils.isWhitespace(fieldName)) {
+            if (StringUtils.isBlank(fieldName)) {
                 throw new IllegalArgumentException("FieldName can not be null");
             }
             return new FacetAggregationToken(fieldName, FacetAggregation.MIN);
         }
 
         public static FacetAggregationToken average(String fieldName) {
-            if (StringUtils.isWhitespace(fieldName)) {
+            if (StringUtils.isBlank(fieldName)) {
                 throw new IllegalArgumentException("FieldName can not be null");
             }
             return new FacetAggregationToken(fieldName, FacetAggregation.AVERAGE);
         }
 
         public static FacetAggregationToken sum(String fieldName) {
-            if (StringUtils.isWhitespace(fieldName)) {
+            if (StringUtils.isBlank(fieldName)) {
                 throw new IllegalArgumentException("FieldName can not be null");
             }
             return new FacetAggregationToken(fieldName, FacetAggregation.SUM);
