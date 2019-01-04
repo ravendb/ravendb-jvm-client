@@ -18,5 +18,6 @@ public enum DatabaseItemType {
     LEGACY_ATTACHMENT_DELETIONS,
     DATABASE_RECORD,
     UNKNOWN,
-    COUNTERS
+    COUNTERS,
+    ATTACHMENTS
 }

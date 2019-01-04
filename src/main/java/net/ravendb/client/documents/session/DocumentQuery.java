@@ -565,12 +565,14 @@ public class DocumentQuery<T> extends AbstractDocumentQuery<T, DocumentQuery<T>>
         if (queryData != null && queryData.getFields().length > 0) {
             String[] fields = queryData.getFields();
 
-            Field identityProperty = getConventions().getIdentityProperty(resultClass);
+            if (!isGroupBy) {
+                Field identityProperty = getConventions().getIdentityProperty(resultClass);
 
-            if (identityProperty != null) {
-                fields = Arrays.stream(queryData.getFields())
-                        .map(p -> p.equals(identityProperty.getName()) ? Constants.Documents.Indexing.Fields.DOCUMENT_ID_FIELD_NAME : p)
-                        .toArray(String[]::new);
+                if (identityProperty != null) {
+                    fields = Arrays.stream(queryData.getFields())
+                            .map(p -> p.equals(identityProperty.getName()) ? Constants.Documents.Indexing.Fields.DOCUMENT_ID_FIELD_NAME : p)
+                            .toArray(String[]::new);
+                }
             }
 
             Reference<String> sourceAliasReference = new Reference<>();

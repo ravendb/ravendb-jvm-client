@@ -9,7 +9,7 @@ public class DatabaseSmugglerOptions implements IDatabaseSmugglerOptions {
 
     public final EnumSet<DatabaseItemType> DEFAULT_OPERATE_ON_TYPES = EnumSet.of(DatabaseItemType.INDEXES, DatabaseItemType.DOCUMENTS,
             DatabaseItemType.REVISION_DOCUMENTS, DatabaseItemType.CONFLICTS, DatabaseItemType.DATABASE_RECORD, DatabaseItemType.IDENTITIES,
-            DatabaseItemType.COMPARE_EXCHANGE, DatabaseItemType.COUNTERS);
+            DatabaseItemType.COMPARE_EXCHANGE, DatabaseItemType.ATTACHMENTS, DatabaseItemType.COUNTERS);
 
     private final int DEFAULT_MAX_STEPS_FOR_TRANSFORM_SCRIPT = 10 * 1000;
 

@@ -24,6 +24,7 @@ public class SubscriptionBatch<T> {
         private String exceptionMessage;
         private String id;
         private String changeVector;
+        private boolean projection;
 
         private void throwItemProcessException() {
             throw new IllegalStateException("Failed to process document " + id + " with Change Vector " + changeVector + " because: " + System.lineSeparator() + exceptionMessage);
@@ -39,6 +40,10 @@ public class SubscriptionBatch<T> {
 
         public String getChangeVector() {
             return changeVector;
+        }
+
+        public boolean isProjection() {
+            return projection;
         }
 
         public T getResult() {
@@ -152,8 +157,11 @@ public class SubscriptionBatch<T> {
             s.registerIncludes(item);
         }
 
-
         for (Item<T> item : getItems()) {
+            if (item.projection) {
+                continue;
+            }
+
             DocumentInfo documentInfo = new DocumentInfo();
             documentInfo.setId(item.getId());
             documentInfo.setDocument(item.getRawResult());
@@ -208,11 +216,16 @@ public class SubscriptionBatch<T> {
                 changeVector = lastReceivedChangeVector = changeVectorNode.asText();
             }
 
+            boolean projection = false;
+
+            JsonNode projectionNode = metadata.get(Constants.Documents.Metadata.PROJECTION);
+            if (projectionNode != null && projectionNode.isBoolean()) {
+                projection = projectionNode.asBoolean();
+            }
+
             if (_logger.isDebugEnabled()) {
                 _logger.debug("Got " + id + " (change vector: [" + lastReceivedChangeVector + "], size: " + curDoc.size() + ")");
             }
-
-
 
             T instance = null;
 
@@ -249,6 +262,7 @@ public class SubscriptionBatch<T> {
             itemToAdd.rawMetadata = metadata;
             itemToAdd._result = instance;
             itemToAdd.exceptionMessage = item.getException();
+            itemToAdd.projection = projection;
 
             _items.add(itemToAdd);
         }

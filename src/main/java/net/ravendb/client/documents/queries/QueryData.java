@@ -13,6 +13,15 @@ public class QueryData {
     private DeclareToken declareToken;
     private List<LoadToken> loadTokens;
     private boolean isCustomFunction;
+    private boolean mapReduce;
+
+    public boolean isMapReduce() {
+        return mapReduce;
+    }
+
+    public void setMapReduce(boolean mapReduce) {
+        this.mapReduce = mapReduce;
+    }
 
     public String[] getFields() {
         return fields;
