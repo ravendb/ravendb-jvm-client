@@ -10,7 +10,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
-public class QueryHashCalculator {
+public class HashCalculator {
 
     private final ByteArrayOutputStream _buffer = new ByteArrayOutputStream();
 

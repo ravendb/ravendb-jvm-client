@@ -2,6 +2,7 @@ package net.ravendb.client.documents.commands;
 
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import net.ravendb.client.documents.queries.HashCalculator;
 import net.ravendb.client.extensions.JsonExtensions;
 import net.ravendb.client.http.RavenCommand;
 import net.ravendb.client.http.ServerNode;
@@ -157,6 +158,14 @@ public class GetDocumentsCommand extends RavenCommand<GetDocumentsResult> {
         } else {
             HttpPost httpPost = new HttpPost();
 
+            try {
+                String calculateHash = calculateHash(uniqueIds);
+                pathBuilder.append("&loadHash=");
+                pathBuilder.append(calculateHash);
+            } catch (IOException e) {
+                throw new RuntimeException("Unable to compute query hash:" + e.getMessage(), e);
+            }
+
             ObjectMapper mapper = JsonExtensions.getDefaultMapper();
 
             httpPost.setEntity(new ContentProviderHttpEntity(outputStream -> {
@@ -179,6 +188,16 @@ public class GetDocumentsCommand extends RavenCommand<GetDocumentsResult> {
 
             return httpPost;
         }
+    }
+
+    private static String calculateHash(Set<String> uniqueIds) throws IOException {
+        HashCalculator hasher = new HashCalculator();
+
+        for (String x : uniqueIds) {
+            hasher.write(x);
+        }
+
+        return hasher.getHash();
     }
 
     @Override

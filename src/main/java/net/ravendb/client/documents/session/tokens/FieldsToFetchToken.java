@@ -39,7 +39,11 @@ public class FieldsToFetchToken extends QueryToken {
                 writer.append(", ");
             }
 
-            writeField(writer, fieldToFetch);
+            if (fieldToFetch == null) {
+                writer.append("null");
+            } else {
+                writeField(writer, fieldToFetch);
+            }
 
             if (customFunction) {
                 continue;
