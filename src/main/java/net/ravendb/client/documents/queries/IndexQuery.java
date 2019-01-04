@@ -36,7 +36,7 @@ public class IndexQuery extends IndexQueryWithParameters<Parameters> {
     }
 
     public String getQueryHash() {
-        QueryHashCalculator hasher = new QueryHashCalculator();
+        HashCalculator hasher = new HashCalculator();
         try {
             hasher.write(getQuery());
             hasher.write(isWaitForNonStaleResults());

@@ -108,6 +108,10 @@ public class SubscriptionWorker<T> implements CleanCloseable {
                     // just need to wait for it to end
                 }
             }
+
+            if (_subscriptionLocalRequestExecutor != null) {
+                _subscriptionLocalRequestExecutor.close();
+            }
         } catch (Exception ex) {
             if (_logger.isDebugEnabled()) {
                 _logger.debug("Error during close of subscription: " + ex.getMessage(), ex);

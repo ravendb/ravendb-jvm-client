@@ -1577,7 +1577,7 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
     protected static <T> void getSourceAliasIfExists(Class<T> clazz, QueryData queryData, String[] fields, Reference<String> sourceAlias) {
         sourceAlias.value = null;
 
-        if (fields.length != 1) {
+        if (fields.length != 1 || fields[0] == null) {
             return;
         }
 
