@@ -10,7 +10,7 @@ Simply put ravendb dependency to your pom:
 <dependency>
   <groupId>net.ravendb</groupId>
   <artifactId>ravendb</artifactId>
-  <version>4.1.2</version>
+  <version>4.1.3</version>
 </dependency>
 ```
 
