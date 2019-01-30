@@ -463,7 +463,12 @@ public class DatabaseChanges implements IDatabaseChanges {
                     for (int i = 0; i < msgArray.size(); i++) {
                         ObjectNode msgNode = (ObjectNode) msgArray.get(i);
 
-                        String type = msgNode.get("Type").asText();
+                        JsonNode typeAsJson = msgNode.get("Type");
+                        if (typeAsJson == null) {
+                            continue;
+                        }
+
+                        String type = typeAsJson.asText();
                         switch (type) {
                             case "Error":
                                 String exceptionAsString = msgNode.get("Exception").asText();
