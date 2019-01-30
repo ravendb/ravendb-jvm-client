@@ -185,7 +185,7 @@ public class BatchOperation {
             _modifications.put(id, modifiedDocumentInfo = documentInfo);
         }
 
-        return documentInfo;
+        return modifiedDocumentInfo;
     }
 
     private void handleAttachmentCopy(ObjectNode batchResult) {
