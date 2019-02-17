@@ -195,7 +195,7 @@ public class EntityToJson {
 
             return entity;
         } catch (Exception e) {
-            throw new IllegalStateException("Could not convert document " + id + " to entity of type " + entityClass);
+            throw new IllegalStateException("Could not convert document " + id + " to entity of type " + entityClass, e);
         }
     }
 }
