@@ -74,12 +74,17 @@ public class LazyQueryOperation<T> implements ILazyOperation {
             return;
         }
 
-        try {
-            QueryResult queryResult = JsonExtensions.getDefaultMapper().readValue(response.getResult(), QueryResult.class);
-            handleResponse(queryResult);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
+        QueryResult queryResult = null;
+
+        if (response.getResult() != null) {
+            try {
+                queryResult = JsonExtensions.getDefaultMapper().readValue(response.getResult(), QueryResult.class);
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
         }
+
+        handleResponse(queryResult);
     }
 
     private void handleResponse(QueryResult queryResult) {

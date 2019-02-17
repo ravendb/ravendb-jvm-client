@@ -14,11 +14,15 @@ import java.io.InputStream;
 
 public class ExceptionDispatcher {
 
-    public static RavenException get(ExceptionSchema schema, int code) {
-        return get(schema.getMessage(), schema.getError(), schema.getType(), code);
+    public static RavenException get(ExceptionSchema schema, int code, Exception inner) {
+        return get(schema.getMessage(), schema.getError(), schema.getType(), code, inner);
     }
 
     public static RavenException get(String message, String error, String typeAsString, int code) {
+        return get(message, error, typeAsString, code, null);
+    }
+
+    public static RavenException get(String message, String error, String typeAsString, int code, Exception inner) {
         if (code == HttpStatus.SC_CONFLICT) {
             if (typeAsString.contains("DocumentConflictException")) {
                 return DocumentConflictException.fromMessage(message);
@@ -28,14 +32,14 @@ public class ExceptionDispatcher {
 
         Class<?> type = getType(typeAsString);
         if (type == null) {
-            return new RavenException(error);
+            return new RavenException(error, inner);
         }
 
         RavenException exception;
         try {
             exception = (RavenException) type.getConstructor(String.class).newInstance(error);
         } catch (Exception e) {
-            return new RavenException(error);
+            return new RavenException(error, inner);
         }
 
         if (!RavenException.class.isAssignableFrom(type)) {
