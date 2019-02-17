@@ -649,7 +649,7 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
         endParams.setFieldName(fieldName);
 
         String fromParameterName = addQueryParameter(start == null ? "*" : transformValue(startParams, true));
-        String toParameterName = addQueryParameter(start == null ? "NULL" : transformValue(endParams, true));
+        String toParameterName = addQueryParameter(end == null ? "NULL" : transformValue(endParams, true));
 
         WhereToken whereToken = WhereToken.create(WhereOperator.BETWEEN, fieldName, null, new WhereToken.WhereOptions(exact, fromParameterName, toParameterName));
         tokens.add(whereToken);
