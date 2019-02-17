@@ -948,7 +948,7 @@ public class RequestExecutor implements CleanCloseable {
             try {
                 responseJson = IOUtils.toString(response.getEntity().getContent(), "UTF-8");
 
-                Exception readException = ExceptionDispatcher.get(JsonExtensions.getDefaultMapper().readValue(responseJson, ExceptionDispatcher.ExceptionSchema.class), response.getStatusLine().getStatusCode());
+                Exception readException = ExceptionDispatcher.get(JsonExtensions.getDefaultMapper().readValue(responseJson, ExceptionDispatcher.ExceptionSchema.class), response.getStatusLine().getStatusCode(), e);
                 command.getFailedNodes().put(chosenNode, readException);
             } catch (Exception __) {
                 ExceptionDispatcher.ExceptionSchema exceptionSchema = new ExceptionDispatcher.ExceptionSchema();
@@ -957,7 +957,7 @@ public class RequestExecutor implements CleanCloseable {
                 exceptionSchema.setError(responseJson);
                 exceptionSchema.setType("Unparsable Server Response");
 
-                Exception exceptionToUse = ExceptionDispatcher.get(exceptionSchema, response.getStatusLine().getStatusCode());
+                Exception exceptionToUse = ExceptionDispatcher.get(exceptionSchema, response.getStatusLine().getStatusCode(), e);
 
                 command.getFailedNodes().put(chosenNode, exceptionToUse);
             }
@@ -971,7 +971,7 @@ public class RequestExecutor implements CleanCloseable {
         exceptionSchema.setMessage(e.getMessage());
         exceptionSchema.setError("An exception occurred while contacting " + request.getURI() + "." + System.lineSeparator() + e.toString());
         exceptionSchema.setType(e.getClass().getCanonicalName());
-        command.getFailedNodes().put(chosenNode, ExceptionDispatcher.get(exceptionSchema, HttpStatus.SC_SERVICE_UNAVAILABLE));
+        command.getFailedNodes().put(chosenNode, ExceptionDispatcher.get(exceptionSchema, HttpStatus.SC_SERVICE_UNAVAILABLE, e));
     }
 
     protected boolean _disposed;

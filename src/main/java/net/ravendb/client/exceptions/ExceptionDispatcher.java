@@ -15,6 +15,10 @@ import java.io.InputStream;
 public class ExceptionDispatcher {
 
     public static RavenException get(ExceptionSchema schema, int code) {
+        return get(schema, code, null);
+    }
+
+    public static RavenException get(ExceptionSchema schema, int code, Exception inner) {
         String message = schema.getMessage();
         String typeAsString = schema.getType();
 
@@ -29,14 +33,14 @@ public class ExceptionDispatcher {
 
         Class<?> type = getType(typeAsString);
         if (type == null) {
-            return new RavenException(error);
+            return new RavenException(error, inner);
         }
 
         RavenException exception;
         try {
             exception = (RavenException) type.getConstructor(String.class).newInstance(error);
         } catch (Exception e) {
-            return new RavenException(error);
+            return new RavenException(error, inner);
         }
 
         if (!RavenException.class.isAssignableFrom(type)) {
