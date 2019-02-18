@@ -89,8 +89,10 @@ public class GenericQueryResult<TResult, TIncludes> extends QueryResultBase<TRes
     /**
      * The size of the request which were sent from the server.
      * This value is the _uncompressed_ size.
+     * @deprecated ResultSize is not supported anymore. Will be removed in next major version of the product.
      * @return uncompressed result size
      */
+    @Deprecated
     public long getResultSize() {
         return resultSize;
     }
@@ -98,8 +100,10 @@ public class GenericQueryResult<TResult, TIncludes> extends QueryResultBase<TRes
     /**
      * The size of the request which were sent from the server.
      * This value is the _uncompressed_ size.
+     * @deprecated ResultSize is not supported anymore. Will be removed in next major version of the product.
      * @param resultSize Sets the result size
      */
+    @Deprecated
     public void setResultSize(long resultSize) {
         this.resultSize = resultSize;
     }

@@ -19,6 +19,7 @@ import net.ravendb.client.serverwide.commands.GetDatabaseTopologyCommand;
 import net.ravendb.client.util.CertificateUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.http.Header;
@@ -253,6 +254,10 @@ public class RequestExecutor implements CleanCloseable {
     }
 
     public CompletableFuture<Boolean> updateTopologyAsync(ServerNode node, int timeout, boolean forceUpdate) {
+        return updateTopologyAsync(node, timeout, forceUpdate, null);
+    }
+
+    public CompletableFuture<Boolean> updateTopologyAsync(ServerNode node, int timeout, boolean forceUpdate, String debugTag) {
         if (_disposed) {
             return CompletableFuture.completedFuture(false);
         }
@@ -276,7 +281,7 @@ public class RequestExecutor implements CleanCloseable {
                     return false;
                 }
 
-                GetDatabaseTopologyCommand command = new GetDatabaseTopologyCommand();
+                GetDatabaseTopologyCommand command = new GetDatabaseTopologyCommand(debugTag);
                 execute(node, null, command, false, null);
 
                 if (_nodeSelector == null) {
@@ -400,7 +405,7 @@ public class RequestExecutor implements CleanCloseable {
             return;
         }
 
-        updateTopologyAsync(serverNode, 0)
+        updateTopologyAsync(serverNode, 0, false, "timer-callback")
                 .exceptionally(ex -> {
                     if (logger.isInfoEnabled()) {
                         logger.info("Couldn't update topology from _updateTopologyTimer", ex);
@@ -423,7 +428,7 @@ public class RequestExecutor implements CleanCloseable {
                     serverNode.setUrl(url);
                     serverNode.setDatabase(_databaseName);
 
-                    updateTopologyAsync(serverNode, Integer.MAX_VALUE, false).get();
+                    updateTopologyAsync(serverNode, Integer.MAX_VALUE, false, "first-topology-update").get();
 
                     initializeUpdateTopologyTimer();
 
@@ -820,7 +825,7 @@ public class RequestExecutor implements CleanCloseable {
                         return false;
                     }
 
-                    updateTopologyAsync(chosenNode, Integer.MAX_VALUE, true).get();
+                    updateTopologyAsync(chosenNode, Integer.MAX_VALUE, true, "handle-unsuccessful-response").get();
 
                     CurrentIndexAndNode currentIndexAndNode = chooseNodeForRequest(command, sessionInfo);
                     execute(currentIndexAndNode.currentNode, currentIndexAndNode.currentIndex, command, false, sessionInfo);
@@ -881,6 +886,22 @@ public class RequestExecutor implements CleanCloseable {
         execute(currentIndexAndNode.currentNode, currentIndexAndNode.currentIndex, command, false, sessionInfo);
 
         return true;
+    }
+
+    public ServerNode handleServerNotResponsive(String url, ServerNode chosenNode, int nodeIndex, Exception e) {
+
+        spawnHealthChecks(chosenNode, nodeIndex);
+        if (_nodeSelector != null) {
+            _nodeSelector.onFailedRequest(nodeIndex);
+        }
+        CurrentIndexAndNode preferredNode = getPreferredNode();
+        try {
+            updateTopologyAsync(preferredNode.currentNode, 0, true, "handle-server-not-responsive").get();
+        } catch (InterruptedException | ExecutionException ee) {
+            throw ExceptionsUtils.unwrapException(e);
+        }
+
+        return preferredNode.currentNode;
     }
 
     private void spawnHealthChecks(ServerNode chosenNode, int nodeIndex) {
@@ -998,7 +1019,7 @@ public class RequestExecutor implements CleanCloseable {
     private CloseableHttpClient createClient() {
         HttpClientBuilder httpClientBuilder = HttpClients
                 .custom()
-                .setMaxConnPerRoute(10);
+                .setMaxConnPerRoute(30);
 
         if (conventions.hasExplicitlySetCompressionUsage() && !conventions.isUseCompression()) {
             httpClientBuilder.disableContentCompression();

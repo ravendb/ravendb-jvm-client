@@ -12,13 +12,29 @@ import java.io.IOException;
 
 public class GetDatabaseTopologyCommand extends RavenCommand<Topology> {
 
+    private final String _debugTag;
+
     public GetDatabaseTopologyCommand() {
         super(Topology.class);
+
+        canCacheAggressively = false;
+        _debugTag = null;
+    }
+
+    public GetDatabaseTopologyCommand(String debugTag) {
+        super(Topology.class);
+        _debugTag = debugTag;
+        canCacheAggressively = false;
     }
 
     @Override
     public HttpRequestBase createRequest(ServerNode node, Reference<String> url) {
         url.value = node.getUrl() + "/topology?name=" + node.getDatabase();
+
+        if (_debugTag != null) {
+            url.value += "&" + _debugTag;
+        }
+
         if (node.getUrl().toLowerCase().contains(".fiddler")) {
             // we want to keep the '.fiddler' stuff there so we'll keep tracking request
             // so we are going to ask the server to respect it

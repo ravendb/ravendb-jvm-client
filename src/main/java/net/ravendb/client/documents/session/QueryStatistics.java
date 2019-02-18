@@ -160,8 +160,10 @@ public class QueryStatistics {
 
     /**
      * The size of the request which were sent from the server.
+     * @deprecated ResultSize is not supported anymore. Will be removed in next major version of the product.
      * @return result size
      */
+    @Deprecated
     public long getResultSize() {
         return resultSize;
     }
@@ -169,7 +171,9 @@ public class QueryStatistics {
     /**
      * The size of the request which were sent from the server.
      * @param resultSize Sets the value
+     * @deprecated ResultSize is not supported anymore. Will be removed in next major version of the product.
      */
+    @Deprecated
     public void setResultSize(long resultSize) {
         this.resultSize = resultSize;
     }
@@ -191,7 +195,6 @@ public class QueryStatistics {
         indexName = qr.getIndexName();
         indexTimestamp = qr.getIndexTimestamp();
         lastQueryTime = qr.getLastQueryTime();
-        resultSize = qr.getResultSize();
         resultEtag = qr.getResultEtag();
         nodeTag = qr.getNodeTag();
     }

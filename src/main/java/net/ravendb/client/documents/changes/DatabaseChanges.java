@@ -10,7 +10,9 @@ import net.ravendb.client.exceptions.TimeoutException;
 import net.ravendb.client.exceptions.changes.ChangeProcessingException;
 import net.ravendb.client.extensions.JsonExtensions;
 import net.ravendb.client.extensions.StringExtensions;
+import net.ravendb.client.http.CurrentIndexAndNode;
 import net.ravendb.client.http.RequestExecutor;
+import net.ravendb.client.http.ServerNode;
 import net.ravendb.client.primitives.*;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.ssl.SSLContexts;
@@ -62,6 +64,15 @@ public class DatabaseChanges implements IDatabaseChanges {
     private final ConcurrentMap<String, DatabaseConnectionState> _counters = new ConcurrentSkipListMap<>(String::compareToIgnoreCase);
 
     private final AtomicInteger _immediateConnection = new AtomicInteger();
+
+    private ServerNode _serverNode;
+    private int _nodeIndex;
+    private String _url;
+
+    @Override
+    protected Object clone() throws CloneNotSupportedException {
+        return super.clone();
+    }
 
     public DatabaseChanges(RequestExecutor requestExecutor, String databaseName, ExecutorService executorService, Runnable onDispose) {
         _executorService = executorService;
@@ -341,7 +352,12 @@ public class DatabaseChanges implements IDatabaseChanges {
 
             _counters.clear();
 
-            _task.get();
+            try {
+                _task.get();
+            } catch (Exception e) {
+                //we're disposing the document store
+                // nothing we can do here
+            }
 
             EventHelper.invoke(_connectionStatusChanged, this, EventArgs.EMPTY);
             removeConnectionStatusChanged(_connectionStatusEventHandler);
@@ -437,8 +453,9 @@ public class DatabaseChanges implements IDatabaseChanges {
     }
 
     private void doWork() {
+        CurrentIndexAndNode preferredNode;
         try {
-            _requestExecutor.getPreferredNode();
+            preferredNode = _requestExecutor.getPreferredNode();
         } catch (Exception e) {
             EventHelper.invoke(_connectionStatusChanged, this, EventArgs.EMPTY);
             notifyAboutError(e);
@@ -446,17 +463,18 @@ public class DatabaseChanges implements IDatabaseChanges {
             return;
         }
 
-        String urlString = _requestExecutor.getUrl() + "/databases/" + _database + "/changes";
-        URI url;
-        try {
-            url = new URI(StringExtensions.toWebSocketPath(urlString));
-        } catch (URISyntaxException e) {
-            throw new RuntimeException(e);
-        }
-
         while (!_cts.getToken().isCancellationRequested()) {
             try {
                 if (!isConnected()) {
+                    String urlString = preferredNode.currentNode.getUrl() + "/databases/" + _database + "/changes";
+                    URI url;
+                    try {
+                        url = new URI(StringExtensions.toWebSocketPath(urlString.toLowerCase()));
+                    } catch (URISyntaxException e) {
+                        throw new RuntimeException(e);
+                    }
+
+
                     _processor = new WebSocketChangesProcessor();
                     ClientUpgradeRequest request = new ClientUpgradeRequest();
                     _clientSession = _client.connect(_processor, url, request).get();
@@ -479,6 +497,8 @@ public class DatabaseChanges implements IDatabaseChanges {
 
                 try {
                     EventHelper.invoke(_connectionStatusChanged, this, EventArgs.EMPTY);
+
+                    _serverNode = _requestExecutor.handleServerNotResponsive(_url, _serverNode, _nodeIndex, e);
 
                     if (!reconnectClient()) {
                         return;
@@ -536,6 +556,13 @@ public class DatabaseChanges implements IDatabaseChanges {
 
                     for (int i = 0; i < msgArray.size(); i++) {
                         ObjectNode msgNode = (ObjectNode) msgArray.get(i);
+
+                        JsonNode topologyChange = msgNode.get("TopologyChange");
+                        if (topologyChange != null && topologyChange.isBoolean() && topologyChange.asBoolean()) {
+                            getOrAddConnectionState("Topology", "watch-topology-change", "", "");
+                            _requestExecutor.updateTopologyAsync(_serverNode, 0, true, "watch-topology-change").get();
+                            continue;
+                        }
 
                         JsonNode typeAsJson = msgNode.get("Type");
                         if (typeAsJson == null) {
@@ -600,6 +627,16 @@ public class DatabaseChanges implements IDatabaseChanges {
                 OperationStatusChange operationStatusChange = JsonExtensions.getDefaultMapper().treeToValue(value, OperationStatusChange.class);
                 for (DatabaseConnectionState state : states) {
                     state.send(operationStatusChange);
+                }
+                break;
+
+            case "TopologyChange":
+                TopologyChange topologyChange = JsonExtensions.getDefaultMapper().treeToValue(value, TopologyChange.class);
+                if (_requestExecutor != null) {
+                    ServerNode serverNode = new ServerNode();
+                    serverNode.setUrl(topologyChange.getUrl());
+                    serverNode.setDatabase(topologyChange.getDatabase());
+                    _requestExecutor.updateTopologyAsync(serverNode, 0, true, "topology-change-notification");
                 }
                 break;
             default:
