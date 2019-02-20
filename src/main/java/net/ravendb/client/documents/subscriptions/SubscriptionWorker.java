@@ -179,8 +179,8 @@ public class SubscriptionWorker<T> implements CleanCloseable {
 
         _tcpClient = TcpUtils.connect(command.getResult().getUrl(), command.getResult().getCertificate(), _store.getCertificate());
         _tcpClient.setTcpNoDelay(true);
-        _tcpClient.setSendBufferSize(32 * 1024);
-        _tcpClient.setReceiveBufferSize(4096);
+        _tcpClient.setSendBufferSize(_options.getSendBufferSize());
+        _tcpClient.setReceiveBufferSize(_options.getSendBufferSize());
 
         String databaseName = ObjectUtils.firstNonNull(_dbName, _store.getDatabase());
 

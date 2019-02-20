@@ -2,6 +2,7 @@ package net.ravendb.client.documents.subscriptions;
 
 import org.apache.commons.lang3.StringUtils;
 
+import java.net.Socket;
 import java.time.Duration;
 
 /**
@@ -16,12 +17,16 @@ public class SubscriptionWorkerOptions {
     private int maxDocsPerBatch;
     private Duration maxErroneousPeriod;
     private boolean closeWhenNoDocsLeft;
+    private int receiveBufferSize;
+    private int sendBufferSize;
 
     private SubscriptionWorkerOptions() {
         strategy = SubscriptionOpeningStrategy.OPEN_IF_FREE;
         maxDocsPerBatch = 4096;
         timeToWaitBeforeConnectionRetry = Duration.ofSeconds(5);
         maxErroneousPeriod = Duration.ofMinutes(5);
+        receiveBufferSize = 32 * 1024;
+        sendBufferSize = 32 * 1024;
     }
 
     /**
@@ -132,5 +137,37 @@ public class SubscriptionWorkerOptions {
      */
     public void setCloseWhenNoDocsLeft(boolean closeWhenNoDocsLeft) {
         this.closeWhenNoDocsLeft = closeWhenNoDocsLeft;
+    }
+
+    /**
+     * @return Receive buffer size for the underlying {@link Socket}. Default: 32 kB
+     */
+    public int getReceiveBufferSize() {
+        return receiveBufferSize;
+    }
+
+    /**
+     * Set receive buffer size for the underlying {@link Socket}. See {@link Socket#setReceiveBufferSize(int)}.
+     * Optimal size is a trade-off between memory and (size of the link in B/s) x (round trip delay in seconds)
+     * @param receiveBufferSize receive buffer size for the underlying {@link Socket}. Default: 32 kB
+     */
+    public void setReceiveBufferSize(int receiveBufferSize) {
+        this.receiveBufferSize = receiveBufferSize;
+    }
+
+    /**
+     * @return Send buffer size for the underlying {@link Socket}. Default: 32 kB
+     */
+    public int getSendBufferSize() {
+        return sendBufferSize;
+    }
+
+    /**
+     * Set send buffer size for the underlying {@link Socket}. See {@link Socket#setSendBufferSize(int)}.
+     * Optimal size is a trade-off between memory and (size of the link in B/s) x (round trip delay in seconds)
+     * @param sendBufferSize receive buffer size for the underlying {@link Socket}. Default: 32 kB
+     */
+    public void setSendBufferSize(int sendBufferSize) {
+        this.sendBufferSize = sendBufferSize;
     }
 }
