@@ -84,8 +84,16 @@ public class ClusterRequestExecutor extends RequestExecutor {
         execute(serverNode, nodeIndex, new GetTcpInfoCommand("health-check"), false, null);
     }
 
-    @Override
+    public CompletableFuture<Boolean> updateTopologyAsync(ServerNode node, int timeout) {
+        return updateTopologyAsync(node, timeout, false, null);
+    }
+
     public CompletableFuture<Boolean> updateTopologyAsync(ServerNode node, int timeout, boolean forceUpdate) {
+        return updateTopologyAsync(node, timeout, forceUpdate, null);
+    }
+
+    @Override
+    public CompletableFuture<Boolean> updateTopologyAsync(ServerNode node, int timeout, boolean forceUpdate, String debugTag) {
         if (_disposed) {
             return CompletableFuture.completedFuture(false);
         }
@@ -105,7 +113,7 @@ public class ClusterRequestExecutor extends RequestExecutor {
                     return false;
                 }
 
-                GetClusterTopologyCommand command = new GetClusterTopologyCommand();
+                GetClusterTopologyCommand command = new GetClusterTopologyCommand(debugTag);
                 execute(node, null, command, false, null);
 
                 ClusterTopologyResponse results = command.getResult();

@@ -18,10 +18,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.http.ssl.SSLContexts;
 import org.eclipse.jetty.util.ssl.SslContextFactory;
 import org.eclipse.jetty.websocket.api.Session;
-import org.eclipse.jetty.websocket.api.annotations.OnWebSocketClose;
-import org.eclipse.jetty.websocket.api.annotations.OnWebSocketError;
-import org.eclipse.jetty.websocket.api.annotations.OnWebSocketMessage;
-import org.eclipse.jetty.websocket.api.annotations.WebSocket;
+import org.eclipse.jetty.websocket.api.annotations.*;
 import org.eclipse.jetty.websocket.client.ClientUpgradeRequest;
 import org.eclipse.jetty.websocket.client.WebSocketClient;
 
@@ -456,6 +453,8 @@ public class DatabaseChanges implements IDatabaseChanges {
         CurrentIndexAndNode preferredNode;
         try {
             preferredNode = _requestExecutor.getPreferredNode();
+            _nodeIndex = preferredNode.currentIndex;
+            _serverNode = preferredNode.currentNode;
         } catch (Exception e) {
             EventHelper.invoke(_connectionStatusChanged, this, EventArgs.EMPTY);
             notifyAboutError(e);
@@ -559,8 +558,11 @@ public class DatabaseChanges implements IDatabaseChanges {
 
                         JsonNode topologyChange = msgNode.get("TopologyChange");
                         if (topologyChange != null && topologyChange.isBoolean() && topologyChange.asBoolean()) {
-                            getOrAddConnectionState("Topology", "watch-topology-change", "", "");
-                            _requestExecutor.updateTopologyAsync(_serverNode, 0, true, "watch-topology-change").get();
+                            // process this in async way, as getOrAddConnectionStats waits for confirmation, so we can't block this thread
+                            CompletableFuture.runAsync(() -> {
+                                getOrAddConnectionState("Topology", "watch-topology-change", "", "");
+                                _requestExecutor.updateTopologyAsync(_serverNode, 0, true, "watch-topology-change");
+                            }, _executorService);
                             continue;
                         }
 

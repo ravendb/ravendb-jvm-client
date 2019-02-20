@@ -15,10 +15,7 @@ public class GetDatabaseTopologyCommand extends RavenCommand<Topology> {
     private final String _debugTag;
 
     public GetDatabaseTopologyCommand() {
-        super(Topology.class);
-
-        canCacheAggressively = false;
-        _debugTag = null;
+        this(null);
     }
 
     public GetDatabaseTopologyCommand(String debugTag) {
