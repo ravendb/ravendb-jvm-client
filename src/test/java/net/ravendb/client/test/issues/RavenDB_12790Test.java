@@ -39,9 +39,6 @@ public class RavenDB_12790Test extends RemoteTestBase {
                         .isExactlyInstanceOf(IndexDoesNotExistException.class);
             }
 
-
-            withFiddler(); //TODO: remove me!
-
             try (IDocumentSession session = store.openSession()) {
                 Lazy<List<Document>> lazyQuery = session.query(Document.class, DocumentIndex.class)
                         .lazily();
