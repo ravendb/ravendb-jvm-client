@@ -883,7 +883,7 @@ public class RequestExecutor implements CleanCloseable {
             return false; //we tried all the nodes...nothing left to do
         }
 
-        execute(currentIndexAndNode.currentNode, currentIndexAndNode.currentIndex, command, false, sessionInfo);
+        execute(currentIndexAndNode.currentNode, currentIndexAndNode.currentIndex, command, true, sessionInfo);
 
         return true;
     }
