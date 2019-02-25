@@ -1,4 +1,8 @@
 language: java
+jdk:
+  - oraclejdk8
+  - openjdk8
+  - oraclejdk11
 env:
   global:
     - RAVEN_Security_Certificate_Password=
