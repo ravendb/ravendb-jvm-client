@@ -1,6 +1,7 @@
 package net.ravendb.client.util;
 
-import javax.xml.bind.DatatypeConverter;
+import org.apache.commons.codec.binary.Hex;
+
 import java.security.KeyStore;
 import java.security.KeyStoreException;
 import java.security.MessageDigest;
@@ -23,7 +24,7 @@ public class CertificateUtils {
             Certificate clientCertificate = certificate.getCertificate(alias);
 
             byte[] sha1 = MessageDigest.getInstance("SHA-1").digest(clientCertificate.getEncoded());
-            return DatatypeConverter.printHexBinary(sha1);
+            return Hex.encodeHexString(sha1);
 
         } catch (KeyStoreException | NoSuchAlgorithmException | CertificateEncodingException e) {
             throw new IllegalStateException("Unable to extract certificate thumbprint " + e.getMessage(), e);
