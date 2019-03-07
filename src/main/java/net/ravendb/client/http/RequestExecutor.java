@@ -112,7 +112,7 @@ public class RequestExecutor implements CleanCloseable {
                 .orElse(null);
     }
 
-    private Timer _updateTopologyTimer;
+    private volatile Timer _updateTopologyTimer;
 
     protected NodeSelector _nodeSelector;
 

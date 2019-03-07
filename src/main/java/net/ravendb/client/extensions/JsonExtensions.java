@@ -28,7 +28,7 @@ import java.util.EnumSet;
 
 public class JsonExtensions {
 
-    private static ObjectMapper _defaultMapper;
+    private static volatile ObjectMapper _defaultMapper;
 
     public static ObjectMapper getDefaultMapper() {
         if (_defaultMapper == null) {
