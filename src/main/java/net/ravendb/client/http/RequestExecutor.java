@@ -9,6 +9,7 @@ import net.ravendb.client.documents.session.SessionInfo;
 import net.ravendb.client.exceptions.AllTopologyNodesDownException;
 import net.ravendb.client.exceptions.ClientVersionMismatchException;
 import net.ravendb.client.exceptions.ExceptionDispatcher;
+import net.ravendb.client.exceptions.UnsuccessfulRequestException;
 import net.ravendb.client.exceptions.database.DatabaseDoesNotExistException;
 import net.ravendb.client.exceptions.security.AuthorizationException;
 import net.ravendb.client.extensions.HttpExtensions;
@@ -825,10 +826,35 @@ public class RequestExecutor implements CleanCloseable {
                         return false;
                     }
 
-                    updateTopologyAsync(chosenNode, Integer.MAX_VALUE, true, "handle-unsuccessful-response").get();
+                    if (nodeIndex != null) {
+                        _nodeSelector.onFailedRequest(nodeIndex);
+                    }
 
-                    CurrentIndexAndNode currentIndexAndNode = chooseNodeForRequest(command, sessionInfo);
-                    execute(currentIndexAndNode.currentNode, currentIndexAndNode.currentIndex, command, false, sessionInfo);
+                    if (command.getFailedNodes() == null) {
+                        command.setFailedNodes(new HashMap<>());
+                    }
+
+                    if (!command.isFailedWithNode(chosenNode)) {
+                        command.getFailedNodes().put(chosenNode, new UnsuccessfulRequestException("Request to " + request.getURI() + " (" + request.getMethod() + ") is not relevant for this node anymore."));
+                    }
+
+                    CurrentIndexAndNode indexAndNode = chooseNodeForRequest(command, sessionInfo);
+
+                    if (command.getFailedNodes().containsKey(indexAndNode)) {
+                        // we tried all the nodes, let's try to update topology and retry one more time
+                        Boolean success = updateTopologyAsync(chosenNode, 60 * 1000, true, "handle-unsuccessful-response").get();
+                        if (!success) {
+                            return false;
+                        }
+
+                        command.getFailedNodes().clear(); // we just update the topology
+                        indexAndNode = chooseNodeForRequest(command, sessionInfo);
+
+                        execute(indexAndNode.currentNode, indexAndNode.currentIndex, command, false, sessionInfo);
+                        return true;
+                    }
+
+                    execute(indexAndNode.currentNode, indexAndNode.currentIndex, command, false, sessionInfo);
                     return true;
                 case HttpStatus.SC_GATEWAY_TIMEOUT:
                 case HttpStatus.SC_REQUEST_TIMEOUT:

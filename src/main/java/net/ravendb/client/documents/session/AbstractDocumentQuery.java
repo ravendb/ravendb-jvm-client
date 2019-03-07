@@ -839,7 +839,7 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
             throw new IllegalStateException("Missing where clause");
         }
 
-        if (boost <= 0.0) {
+        if (boost < 0.0) {
             throw new IllegalArgumentException("Boost factor must be a positive number");
         }
 

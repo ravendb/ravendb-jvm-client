@@ -462,6 +462,7 @@ public class DatabaseChanges implements IDatabaseChanges {
             return;
         }
 
+        boolean wasConnected = false;
         while (!_cts.getToken().isCancellationRequested()) {
             try {
                 if (!isConnected()) {
@@ -473,10 +474,10 @@ public class DatabaseChanges implements IDatabaseChanges {
                         throw new RuntimeException(e);
                     }
 
-
                     _processor = new WebSocketChangesProcessor();
                     ClientUpgradeRequest request = new ClientUpgradeRequest();
                     _clientSession = _client.connect(_processor, url, request).get();
+                    wasConnected = true;
 
                     _immediateConnection.set(1);
 
@@ -495,9 +496,16 @@ public class DatabaseChanges implements IDatabaseChanges {
                 }
 
                 try {
-                    EventHelper.invoke(_connectionStatusChanged, this, EventArgs.EMPTY);
+                    if (wasConnected) {
+                        EventHelper.invoke(_connectionStatusChanged, this, EventArgs.EMPTY);
+                    }
+                    wasConnected = false;
 
-                    _serverNode = _requestExecutor.handleServerNotResponsive(_url, _serverNode, _nodeIndex, e);
+                    try {
+                        _serverNode = _requestExecutor.handleServerNotResponsive(_url, _serverNode, _nodeIndex, e);
+                    } catch (Exception ee) {
+                        //We don't want to stop observe for changes if server down. we will wait for one to be up
+                    }
 
                     if (!reconnectClient()) {
                         return;
@@ -532,8 +540,6 @@ public class DatabaseChanges implements IDatabaseChanges {
         }
 
         _immediateConnection.set(0);
-
-        EventHelper.invoke(_connectionStatusChanged, this, EventArgs.EMPTY);
         return true;
     }
 

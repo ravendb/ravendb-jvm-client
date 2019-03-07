@@ -68,7 +68,7 @@ public class BatchCommand extends RavenCommand<BatchCommandResult> implements Cl
 
                 InputStream stream = putAttachmentCommandData.getStream();
                 if (!_attachmentStreams.add(stream)) {
-                    PutAttachmentCommandHelper.throwStreamAlready();
+                    PutAttachmentCommandHelper.throwStreamWasAlreadyUsed();
                 }
             }
 
