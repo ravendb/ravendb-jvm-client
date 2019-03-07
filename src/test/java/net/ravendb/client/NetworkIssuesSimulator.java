@@ -1,5 +1,7 @@
 package net.ravendb.client;
 
+import org.apache.commons.io.IOUtils;
+
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -164,7 +166,11 @@ public class NetworkIssuesSimulator {
         System.out.println("EXEC: " + command);
         try {
             Process exec = Runtime.getRuntime().exec(command);
-            exec.waitFor();
+            int i = exec.waitFor();
+            if (i != 0) {
+                System.out.println("EXIT CODE = " + i);
+                IOUtils.copy(exec.getErrorStream(), System.out);
+            }
         } catch (IOException e) {
             e.printStackTrace();
         } catch (InterruptedException e) {
