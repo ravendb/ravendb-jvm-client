@@ -9,7 +9,7 @@ import java.util.List;
 import java.util.Random;
 
 // to execute:
-// exec:java -Dexec.mainClass="net.ravendb.client.NetworkIssuesSimulator" -Dexec.classpathScope="test"
+// mvn exec:java -Dexec.mainClass="net.ravendb.client.NetworkIssuesSimulator" -Dexec.classpathScope="test"
 public class NetworkIssuesSimulator {
 
     private String localAddress;
@@ -97,22 +97,22 @@ public class NetworkIssuesSimulator {
             for (String b: groupB) {
                 // block outgoing traffic from A (any port) -> B (http port)
                 String cmd = null;
-                cmd = "iptables -A OUTPUT -j DROP -s " + a + " -d " + b + " --dport " + httpPort;
+                cmd = "iptables -A OUTPUT -j DROP -s " + a + " -d " + b + " -p TCP --dport " + httpPort;
                 executeShell(cmd);
                 revert.add(cmd);
 
                 // block outgoing traffic from A (any port) -> B (tcp port)
-                cmd = "iptables -A OUTPUT -j DROP -s " + a + " -d " + b + " --dport " + tcpPort;
+                cmd = "iptables -A OUTPUT -j DROP -s " + a + " -d " + b + " -p TCP --dport " + tcpPort;
                 executeShell(cmd);
                 revert.add(cmd);
 
                 // block incoming traffic from B (any port) -> A (http port)
-                cmd = "iptables -A INPUT -j DROP -s " + b + " -d " + a + " --dport " + httpPort;
+                cmd = "iptables -A INPUT -j DROP -s " + b + " -d " + a + " -p TCP --dport " + httpPort;
                 executeShell(cmd);
                 revert.add(cmd);
 
                 // block incoming traffic from B (any port) -> A (tcp port)
-                cmd = "iptables -A INPUT -j DROP -s " + b + " -d " + a + " --dport " + tcpPort;
+                cmd = "iptables -A INPUT -j DROP -s " + b + " -d " + a + " -p TCP --dport " + tcpPort;
                 executeShell(cmd);
                 revert.add(cmd);
             }
@@ -137,7 +137,7 @@ public class NetworkIssuesSimulator {
         String cmd = null;
         // group B should have 3 nodes
         for (String nodeToReject : groupB) {
-            cmd = "iptables -A OUTPUT -j DROP -s " + localAddress + " -d " + nodeToReject + " --dport " + httpPort;
+            cmd = "iptables -A OUTPUT -j DROP -s " + localAddress + " -d " + nodeToReject + " -p TCP --dport " + httpPort;
             executeShell(cmd);
             revert.add(cmd);
         }
