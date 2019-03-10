@@ -1,6 +1,7 @@
 package net.ravendb.client.documents.operations.etl.sql;
 
 import net.ravendb.client.documents.operations.etl.EtlConfiguration;
+import net.ravendb.client.documents.operations.etl.EtlType;
 
 import java.util.List;
 
@@ -10,6 +11,10 @@ public class SqlEtlConfiguration extends EtlConfiguration<SqlConnectionString> {
     private boolean quoteTables;
     private Integer commandTimeout;
     private List<SqlEtlTable> sqlTables;
+
+    public EtlType getEtlType() {
+        return EtlType.SQL;
+    }
 
     public boolean isParameterizeDeletes() {
         return parameterizeDeletes;

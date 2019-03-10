@@ -1,9 +1,10 @@
-package net.ravendb.client.documents.operations.connectionStrings;
+package net.ravendb.client.documents.operations.etl;
 
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import net.ravendb.client.documents.conventions.DocumentConventions;
 import net.ravendb.client.documents.operations.IMaintenanceOperation;
+import net.ravendb.client.documents.operations.connectionStrings.ConnectionString;
 import net.ravendb.client.http.RavenCommand;
 import net.ravendb.client.http.ServerNode;
 import net.ravendb.client.json.ContentProviderHttpEntity;
@@ -14,25 +15,27 @@ import org.apache.http.entity.ContentType;
 
 import java.io.IOException;
 
-public class PutConnectionStringOperation<T extends ConnectionString> implements IMaintenanceOperation<PutConnectionStringResult> {
+public class AddEtlOperation<T extends ConnectionString> implements IMaintenanceOperation<AddEtlOperationResult> {
 
-    private final T _connectionString;
+    private final EtlConfiguration<T> _configuration;
 
-    public PutConnectionStringOperation(T connectionString) {
-        _connectionString = connectionString;
+    public AddEtlOperation(EtlConfiguration<T> configuration) {
+        _configuration = configuration;
     }
 
     @Override
-    public RavenCommand<PutConnectionStringResult> getCommand(DocumentConventions conventions) {
-        return new PutConnectionStringCommand<>(_connectionString);
+    public RavenCommand<AddEtlOperationResult> getCommand(DocumentConventions conventions) {
+        return new AddEtlCommand(conventions, _configuration);
     }
 
-    public static class PutConnectionStringCommand<T> extends RavenCommand<PutConnectionStringResult> {
-        private final T _connectionString;
+    private static class AddEtlCommand<T extends ConnectionString> extends RavenCommand<AddEtlOperationResult> {
+        private final DocumentConventions _conventions;
+        private final EtlConfiguration<T> _configuration;
 
-        public PutConnectionStringCommand(T connectionString) {
-            super(PutConnectionStringResult.class);
-            _connectionString = connectionString;
+        public AddEtlCommand(DocumentConventions conventions, EtlConfiguration<T> configuration) {
+            super(AddEtlOperationResult.class);
+            _conventions = conventions;
+            _configuration = configuration;
         }
 
         @Override
@@ -42,12 +45,12 @@ public class PutConnectionStringOperation<T extends ConnectionString> implements
 
         @Override
         public HttpRequestBase createRequest(ServerNode node, Reference<String> url) {
-            url.value = node.getUrl() + "/databases/" + node.getDatabase() + "/admin/connection-strings";
+            url.value = node.getUrl() + "/databases/" + node.getDatabase() + "/admin/etl";
 
             HttpPut request = new HttpPut();
             request.setEntity(new ContentProviderHttpEntity(outputStream -> {
                 try (JsonGenerator generator = mapper.getFactory().createGenerator(outputStream)) {
-                    ObjectNode config = mapper.valueToTree(_connectionString);
+                    ObjectNode config = mapper.valueToTree(_configuration);
                     generator.writeTree(config);
                 } catch (IOException e) {
                     throw new RuntimeException(e);

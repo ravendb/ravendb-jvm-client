@@ -1,4 +1,4 @@
-package net.ravendb.client.serverwide.operations.connectionStrings;
+package net.ravendb.client.documents.operations.connectionStrings;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 

@@ -171,9 +171,7 @@ public class NetworkIssuesSimulator {
                 System.out.println("EXIT CODE = " + i);
                 IOUtils.copy(exec.getErrorStream(), System.out);
             }
-        } catch (IOException e) {
-            e.printStackTrace();
-        } catch (InterruptedException e) {
+        } catch (IOException | InterruptedException e) {
             e.printStackTrace();
         }
     }

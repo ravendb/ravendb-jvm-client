@@ -14,7 +14,7 @@ import net.ravendb.client.documents.operations.replication.PullReplicationAsSink
 import net.ravendb.client.documents.operations.replication.PullReplicationDefinition;
 import net.ravendb.client.documents.operations.revisions.RevisionsConfiguration;
 import net.ravendb.client.documents.queries.sorting.SorterDefinition;
-import net.ravendb.client.serverwide.etl.RavenConnectionString;
+import net.ravendb.client.documents.operations.etl.RavenConnectionString;
 
 import java.util.ArrayList;
 import java.util.HashMap;

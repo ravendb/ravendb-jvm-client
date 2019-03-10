@@ -1,7 +1,7 @@
 package net.ravendb.client.documents.operations.connectionStrings;
 
 import net.ravendb.client.documents.operations.etl.sql.SqlConnectionString;
-import net.ravendb.client.serverwide.etl.RavenConnectionString;
+import net.ravendb.client.documents.operations.etl.RavenConnectionString;
 
 import java.util.Map;
 

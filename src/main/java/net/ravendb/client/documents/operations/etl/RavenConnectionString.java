@@ -1,4 +1,4 @@
-package net.ravendb.client.serverwide.etl;
+package net.ravendb.client.documents.operations.etl;
 
 import net.ravendb.client.documents.operations.connectionStrings.ConnectionString;
 import net.ravendb.client.serverwide.ConnectionStringType;

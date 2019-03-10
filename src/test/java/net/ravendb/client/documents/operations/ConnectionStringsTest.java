@@ -1,23 +1,15 @@
 package net.ravendb.client.documents.operations;
 
-import com.google.common.collect.Sets;
 import net.ravendb.client.RemoteTestBase;
 import net.ravendb.client.documents.IDocumentStore;
-import net.ravendb.client.documents.indexes.*;
 import net.ravendb.client.documents.operations.connectionStrings.GetConnectionStringsOperation;
 import net.ravendb.client.documents.operations.connectionStrings.GetConnectionStringsResult;
 import net.ravendb.client.documents.operations.connectionStrings.PutConnectionStringOperation;
 import net.ravendb.client.documents.operations.connectionStrings.RemoveConnectionStringOperation;
 import net.ravendb.client.documents.operations.etl.sql.SqlConnectionString;
-import net.ravendb.client.documents.operations.indexes.*;
-import net.ravendb.client.documents.session.IDocumentSession;
-import net.ravendb.client.infrastructure.entities.User;
 import net.ravendb.client.serverwide.ConnectionStringType;
-import net.ravendb.client.serverwide.etl.RavenConnectionString;
-import net.ravendb.client.test.client.indexing.IndexesFromClientTest;
+import net.ravendb.client.documents.operations.etl.RavenConnectionString;
 import org.junit.jupiter.api.Test;
-
-import java.util.Collections;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
