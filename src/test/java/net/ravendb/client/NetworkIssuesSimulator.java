@@ -92,14 +92,14 @@ public class NetworkIssuesSimulator {
         final List<String> revert = new ArrayList<>();
 
         for (String nodeTag: groupB) {
-            // block outgoing traffic to B (http port)
+            // reject outgoing traffic to B (http port)
             String cmd = null;
-            cmd = "iptables -A OUTPUT -j DROP -d " + nodeTag + " -p TCP --dport " + httpPort;
+            cmd = "iptables -A OUTPUT -j REJECT -d " + nodeTag + " -p TCP --dport " + httpPort;
             executeShell(cmd);
             revert.add(cmd);
 
-            // block outgoing traffic to B (tcp port)
-            cmd = "iptables -A OUTPUT -j DROP -d " + nodeTag + " -p TCP --dport " + tcpPort;
+            // reject outgoing traffic to B (tcp port)
+            cmd = "iptables -A OUTPUT -j REJECT -d " + nodeTag + " -p TCP --dport " + tcpPort;
             executeShell(cmd);
             revert.add(cmd);
         }
