@@ -15,7 +15,7 @@ public class NetworkIssuesSimulator {
     private String localAddress;
 
     private enum State {
-        OK, INTER_BREAK, TWO_NODES_DOWN
+        OK, TWO_NODES_DOWN, THREE_NODES_DOWN
     }
 
     private String[] nodes = new String[] { "127.0.1.1", "127.0.1.2", "127.0.1.3", "127.0.1.4", "127.0.1.5" };
@@ -49,12 +49,10 @@ public class NetworkIssuesSimulator {
 
             switch (currentState) {
                 case OK:
-                    nextState = random.nextDouble() > 0.5 ? State.INTER_BREAK : State.TWO_NODES_DOWN;
-                    break;
-                case INTER_BREAK:
-                    nextState = State.OK;
+                    nextState = random.nextDouble() > 0.5 ? State.THREE_NODES_DOWN : State.TWO_NODES_DOWN;
                     break;
                 case TWO_NODES_DOWN:
+                case THREE_NODES_DOWN:
                     nextState = State.OK;
                     break;
             }
@@ -65,11 +63,11 @@ public class NetworkIssuesSimulator {
                 case OK:
                     healCluster(currentState);
                     break;
-                case INTER_BREAK:
-                    startInterBreak(currentState);
-                    break;
                 case TWO_NODES_DOWN:
-                    disconnectTreeNodes(currentState);
+                    disconnect2Nodes(currentState);
+                    break;
+                case THREE_NODES_DOWN:
+                    disconnect3Nodes(currentState);
                     break;
             }
 
@@ -84,8 +82,8 @@ public class NetworkIssuesSimulator {
         healCluster = null;
     }
 
-    private void startInterBreak(State previousState) {
-        System.out.println("Start inter break");
+    private void disconnect2Nodes(State previousState) {
+        System.out.println("2 nodes not reachable");
 
         List<String> groupA = new ArrayList<>();
         List<String> groupB = new ArrayList<>();
@@ -93,29 +91,17 @@ public class NetworkIssuesSimulator {
 
         final List<String> revert = new ArrayList<>();
 
-        for (String a: groupA) {
-            for (String b: groupB) {
-                // block outgoing traffic from A (any port) -> B (http port)
-                String cmd = null;
-                cmd = "iptables -A OUTPUT -j DROP -s " + a + " -d " + b + " -p TCP --dport " + httpPort;
-                executeShell(cmd);
-                revert.add(cmd);
+        for (String nodeTag: groupB) {
+            // block outgoing traffic to B (http port)
+            String cmd = null;
+            cmd = "iptables -A OUTPUT -j DROP -d " + nodeTag + " -p TCP --dport " + httpPort;
+            executeShell(cmd);
+            revert.add(cmd);
 
-                // block outgoing traffic from A (any port) -> B (tcp port)
-                cmd = "iptables -A OUTPUT -j DROP -s " + a + " -d " + b + " -p TCP --dport " + tcpPort;
-                executeShell(cmd);
-                revert.add(cmd);
-
-                // block incoming traffic from B (any port) -> A (http port)
-                cmd = "iptables -A INPUT -j DROP -s " + b + " -d " + a + " -p TCP --dport " + httpPort;
-                executeShell(cmd);
-                revert.add(cmd);
-
-                // block incoming traffic from B (any port) -> A (tcp port)
-                cmd = "iptables -A INPUT -j DROP -s " + b + " -d " + a + " -p TCP --dport " + tcpPort;
-                executeShell(cmd);
-                revert.add(cmd);
-            }
+            // block outgoing traffic to B (tcp port)
+            cmd = "iptables -A OUTPUT -j DROP -d " + nodeTag + " -p TCP --dport " + tcpPort;
+            executeShell(cmd);
+            revert.add(cmd);
         }
 
         healCluster = () -> {
@@ -125,26 +111,31 @@ public class NetworkIssuesSimulator {
         };
     }
 
-    private void disconnectTreeNodes(State previousState) {
-        System.out.println("disconnect 3 nodes");
+    private void disconnect3Nodes(State previousState) {
+        System.out.println("3 nodes not reachable");
 
         List<String> groupA = new ArrayList<>();
         List<String> groupB = new ArrayList<>();
         divideNodes(groupA, groupB);
 
-
         final List<String> revert = new ArrayList<>();
-        String cmd = null;
-        // group B should have 3 nodes
-        for (String nodeToReject : groupB) {
-            cmd = "iptables -A OUTPUT -j DROP -s " + localAddress + " -d " + nodeToReject + " -p TCP --dport " + httpPort;
+
+        for (String nodeTag: groupA) {
+            // block outgoing traffic to B (http port)
+            String cmd = null;
+            cmd = "iptables -A OUTPUT -j DROP -d " + nodeTag + " -p TCP --dport " + httpPort;
+            executeShell(cmd);
+            revert.add(cmd);
+
+            // block outgoing traffic to B (tcp port)
+            cmd = "iptables -A OUTPUT -j DROP -d " + nodeTag + " -p TCP --dport " + tcpPort;
             executeShell(cmd);
             revert.add(cmd);
         }
 
         healCluster = () -> {
-            for (String c : revert) {
-                executeShell(c.replaceAll("-A", "-D"));
+            for (String cmd : revert) {
+                executeShell(cmd.replaceAll("-A", "-D"));
             }
         };
     }
