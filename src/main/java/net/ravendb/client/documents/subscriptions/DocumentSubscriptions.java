@@ -84,11 +84,8 @@ public class DocumentSubscriptions implements AutoCloseable {
      */
     public <T> String create(Class<T> clazz, SubscriptionCreationOptions options, String database) {
         options = ObjectUtils.firstNonNull(options, new SubscriptionCreationOptions());
-        SubscriptionCreationOptions creationOptions = new SubscriptionCreationOptions();
-        creationOptions.setName(options.getName());
-        creationOptions.setChangeVector(options.getChangeVector());
 
-        return create(ensureCriteria(creationOptions, clazz, false), database);
+        return create(ensureCriteria(options, clazz, false), database);
     }
 
     /**
@@ -122,11 +119,7 @@ public class DocumentSubscriptions implements AutoCloseable {
      */
     public <T> String createForRevisions(Class<T> clazz, SubscriptionCreationOptions options, String database) {
         options = ObjectUtils.firstNonNull(options, new SubscriptionCreationOptions());
-        SubscriptionCreationOptions creationOptions = new SubscriptionCreationOptions();
-        creationOptions.setName(options.getName());
-        creationOptions.setChangeVector(options.getChangeVector());
-
-        return create(ensureCriteria(creationOptions, clazz, true), database);
+        return create(ensureCriteria(options, clazz, true), database);
     }
 
     private <T> SubscriptionCreationOptions ensureCriteria(SubscriptionCreationOptions criteria, Class<T> clazz, boolean revisions) {
