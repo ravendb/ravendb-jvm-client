@@ -51,6 +51,11 @@ public class ReplicationTestBase extends RemoteTestBase {
                     return doc;
                 }
             }
+
+            try {
+                Thread.sleep(100);
+            } catch (InterruptedException e) {
+            }
         }
 
         return null;
