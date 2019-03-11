@@ -466,7 +466,7 @@ public class DatabaseChanges implements IDatabaseChanges {
         while (!_cts.getToken().isCancellationRequested()) {
             try {
                 if (!isConnected()) {
-                    String urlString = preferredNode.currentNode.getUrl() + "/databases/" + _database + "/changes";
+                    String urlString = _serverNode.getUrl() + "/databases/" + _database + "/changes";
                     URI url;
                     try {
                         url = new URI(StringExtensions.toWebSocketPath(urlString.toLowerCase()));
