@@ -161,11 +161,15 @@ public class LazyTest extends RemoteTestBase {
 
             try (IDocumentSession session = store.openSession()) {
                 session.advanced().lazily().load(User.class, "users/1").getValue();
-            }
-            try (IDocumentSession session = store.openSession()) {
+
+                int oldRequestCount = session.advanced().getNumberOfRequests();
+
                 User user = session.advanced().lazily().load(User.class, "users/1").getValue();
                 assertThat(user.getLastName())
                         .isEqualTo("Oren");
+
+                assertThat(session.advanced().getNumberOfRequests())
+                        .isEqualTo(oldRequestCount);
             }
         }
     }
