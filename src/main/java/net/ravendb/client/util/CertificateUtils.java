@@ -23,6 +23,13 @@ public class CertificateUtils {
             String alias = aliases.get(0);
             Certificate clientCertificate = certificate.getCertificate(alias);
 
+            if (clientCertificate == null) {
+                throw new IllegalStateException("Unable to find certificate for alias: '" + alias
+                        + "'. If you generated certificate using RavenDB server, then it might be related to: " +
+                        "https://github.com/dotnet/corefx/issues/30946. " +
+                        "Please try to create Keystore using *.crt and *.key files instead of *.pfx.");
+            }
+
             byte[] sha1 = MessageDigest.getInstance("SHA-1").digest(clientCertificate.getEncoded());
             return Hex.encodeHexString(sha1);
 
