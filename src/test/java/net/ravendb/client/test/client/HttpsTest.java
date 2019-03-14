@@ -9,16 +9,12 @@ import net.ravendb.client.infrastructure.entities.User;
 import net.ravendb.client.serverwide.operations.certificates.*;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.io.IOUtils;
-import org.assertj.core.api.Assertions;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import java.io.ByteArrayInputStream;
-import java.io.IOException;
 import java.security.KeyStore;
-import java.security.KeyStoreException;
-import java.security.NoSuchAlgorithmException;
 import java.security.cert.Certificate;
-import java.security.cert.CertificateException;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
@@ -44,6 +40,7 @@ public class HttpsTest extends RemoteTestBase {
     }
 
     @Test
+    @Disabled //TODO:
     public void canCrudCertificates() throws Exception {
         try (IDocumentStore store = getSecuredDocumentStore()) {
 
@@ -169,7 +166,6 @@ public class HttpsTest extends RemoteTestBase {
                     KeyStore keyStore = KeyStore.getInstance("PKCS12");
                     keyStore.load(new ByteArrayInputStream(pkcs12Bytes), "".toCharArray());
 
-
                     try (DocumentStore storeWithOutCert = new DocumentStore(store.getUrls(), store.getDatabase())) {
                         storeWithOutCert.setTrustStore(store.getTrustStore());
                         storeWithOutCert.setCertificate(keyStore); // using this certificate user won't have an access to current db
@@ -180,6 +176,34 @@ public class HttpsTest extends RemoteTestBase {
                                 User user = session.load(User.class, "users/1");
                             }
                         }).isExactlyInstanceOf(AuthorizationException.class);
+                    }
+                }
+            }
+        }
+    }
+
+    @Test
+    public void canUseServerGeneratedCertificate() throws Exception {
+        try (DocumentStore store = getSecuredDocumentStore()) {
+            CertificateRawData certificateRawData = store.maintenance().server().send(
+                    new CreateClientCertificateOperation("user-auth-test", new HashMap<>(), SecurityClearance.OPERATOR));
+
+            try (ZipInputStream zipInputStream = new ZipInputStream(new ByteArrayInputStream(certificateRawData.getRawData()))) {
+                ZipEntry zipEntry = zipInputStream.getNextEntry();
+
+                if (zipEntry != null) {
+                    byte[] pkcs12Bytes = IOUtils.toByteArray(zipInputStream);
+                    KeyStore keyStore = KeyStore.getInstance("PKCS12");
+                    keyStore.load(new ByteArrayInputStream(pkcs12Bytes), "".toCharArray());
+
+                    try (DocumentStore storeWithOutCert = new DocumentStore(store.getUrls(), store.getDatabase())) {
+                        storeWithOutCert.setTrustStore(store.getTrustStore());
+                        storeWithOutCert.setCertificate(keyStore); // using this certificate user won't have an access to current db
+                        storeWithOutCert.initialize();
+
+                        try (IDocumentSession session = storeWithOutCert.openSession()) {
+                            User user = session.load(User.class, "users/1");
+                        }
                     }
                 }
             }
