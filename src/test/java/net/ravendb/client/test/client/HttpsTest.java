@@ -9,12 +9,20 @@ import net.ravendb.client.infrastructure.entities.User;
 import net.ravendb.client.serverwide.operations.certificates.*;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.io.IOUtils;
-import org.junit.jupiter.api.Disabled;
+import org.bouncycastle.openssl.PEMEncryptedKeyPair;
+import org.bouncycastle.openssl.PEMKeyPair;
+import org.bouncycastle.openssl.PEMParser;
+import org.bouncycastle.openssl.bc.BcPEMDecryptorProvider;
 import org.junit.jupiter.api.Test;
 
 import java.io.ByteArrayInputStream;
+import java.io.StringReader;
+import java.security.KeyFactory;
 import java.security.KeyStore;
+import java.security.PrivateKey;
 import java.security.cert.Certificate;
+import java.security.cert.CertificateFactory;
+import java.security.spec.PKCS8EncodedKeySpec;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
@@ -40,7 +48,6 @@ public class HttpsTest extends RemoteTestBase {
     }
 
     @Test
-    @Disabled //TODO:
     public void canCrudCertificates() throws Exception {
         try (IDocumentStore store = getSecuredDocumentStore()) {
 
@@ -133,23 +140,11 @@ public class HttpsTest extends RemoteTestBase {
     }
 
     private String extractCertificate(CertificateRawData certificateRawData) throws Exception {
-        try (ZipInputStream zipInputStream = new ZipInputStream(new ByteArrayInputStream(certificateRawData.getRawData()))) {
-            ZipEntry zipEntry = zipInputStream.getNextEntry();
+        KeyStore keyStore = readKeyStore(certificateRawData);
 
-            if (zipEntry != null) {
-                byte[] pkcs12Bytes = IOUtils.toByteArray(zipInputStream);
-                KeyStore keyStore = KeyStore.getInstance("PKCS12");
-                keyStore.load(new ByteArrayInputStream(pkcs12Bytes), "".toCharArray());
-
-
-                String certAlias = keyStore.aliases().nextElement();
-                Certificate certificate = keyStore.getCertificate(certAlias);
-
-                return Base64.encodeBase64String(certificate.getEncoded());
-            }
-        }
-
-        return null;
+        String alias = keyStore.aliases().nextElement();
+        Certificate certificate = keyStore.getCertificate(alias);
+        return Base64.encodeBase64String(certificate.getEncoded());
     }
 
     @Test
@@ -158,27 +153,77 @@ public class HttpsTest extends RemoteTestBase {
             CertificateRawData certificateRawData = store.maintenance().server().send(
                     new CreateClientCertificateOperation("user-auth-test", Collections.singletonMap("db1", DatabaseAccess.READ_WRITE), SecurityClearance.VALID_USER));
 
-            try (ZipInputStream zipInputStream = new ZipInputStream(new ByteArrayInputStream(certificateRawData.getRawData()))) {
-                ZipEntry zipEntry = zipInputStream.getNextEntry();
+            KeyStore keyStore = readKeyStore(certificateRawData);
 
-                if (zipEntry != null) {
-                    byte[] pkcs12Bytes = IOUtils.toByteArray(zipInputStream);
-                    KeyStore keyStore = KeyStore.getInstance("PKCS12");
-                    keyStore.load(new ByteArrayInputStream(pkcs12Bytes), "".toCharArray());
+            try (DocumentStore storeWithOutCert = new DocumentStore(store.getUrls(), store.getDatabase())) {
+                storeWithOutCert.setTrustStore(store.getTrustStore());
+                storeWithOutCert.setCertificate(keyStore); // using this certificate user won't have an access to current db
+                storeWithOutCert.initialize();
 
-                    try (DocumentStore storeWithOutCert = new DocumentStore(store.getUrls(), store.getDatabase())) {
-                        storeWithOutCert.setTrustStore(store.getTrustStore());
-                        storeWithOutCert.setCertificate(keyStore); // using this certificate user won't have an access to current db
-                        storeWithOutCert.initialize();
-
-                        assertThatThrownBy(() -> {
-                            try (IDocumentSession session = storeWithOutCert.openSession()) {
-                                User user = session.load(User.class, "users/1");
-                            }
-                        }).isExactlyInstanceOf(AuthorizationException.class);
+                assertThatThrownBy(() -> {
+                    try (IDocumentSession session = storeWithOutCert.openSession()) {
+                        User user = session.load(User.class, "users/1");
                     }
-                }
+                }).isExactlyInstanceOf(AuthorizationException.class);
             }
+        }
+    }
+
+    // please notice we are reading from crt, pem files instead of pfx
+    // due to https://github.com/dotnet/corefx/issues/30946
+    // reading such file generated on linux server with SUN SPI returns null for certificate
+    // reading using BouncyCastle throws attempt to add existing attribute with different value
+    private KeyStore readKeyStore(CertificateRawData rawData) throws Exception {
+        try (ZipInputStream zipInputStream = new ZipInputStream(new ByteArrayInputStream(rawData.getRawData()))) {
+
+            byte[] certBytes = null;
+            String keyString = null;
+
+            ZipEntry zipEntry = zipInputStream.getNextEntry();
+            while (zipEntry != null) {
+                if (zipEntry.getName().endsWith(".crt")) {
+                    certBytes = IOUtils.toByteArray(zipInputStream);
+                }
+                if (zipEntry.getName().endsWith(".key")) {
+                    keyString = IOUtils.toString(zipInputStream, "UTF-8");
+                }
+
+                zipEntry = zipInputStream.getNextEntry();
+            }
+
+            if (certBytes == null) {
+                throw new IllegalStateException("Unable to find certificate file!");
+            }
+
+            if (keyString == null) {
+                throw new IllegalStateException("Unable to find private key file!");
+            }
+
+            KeyStore keyStore = KeyStore.getInstance("PKCS12");
+            keyStore.load(null, null);
+
+
+            KeyFactory kf = KeyFactory.getInstance("RSA");
+
+            PEMParser pemParser = new PEMParser(new StringReader(keyString));
+            Object readObject = pemParser.readObject();
+            PEMKeyPair bcKeyPair = null;
+            if (readObject instanceof PEMEncryptedKeyPair) {
+                bcKeyPair = ((PEMEncryptedKeyPair)readObject).decryptKeyPair(new BcPEMDecryptorProvider("".toCharArray()));
+            } else {
+                bcKeyPair = (PEMKeyPair) readObject;
+            }
+
+            PKCS8EncodedKeySpec keySpec = new PKCS8EncodedKeySpec(bcKeyPair.getPrivateKeyInfo().getEncoded());
+            PrivateKey key = kf.generatePrivate(keySpec);
+
+            CertificateFactory instance = CertificateFactory.getInstance("X.509");
+            Certificate generateCertificate = instance.generateCertificate(new ByteArrayInputStream(certBytes));
+
+            Certificate[] certificates = new Certificate[] { generateCertificate };
+            keyStore.setKeyEntry("key", key, "".toCharArray(), certificates);
+
+            return keyStore;
         }
     }
 
@@ -188,23 +233,15 @@ public class HttpsTest extends RemoteTestBase {
             CertificateRawData certificateRawData = store.maintenance().server().send(
                     new CreateClientCertificateOperation("user-auth-test", new HashMap<>(), SecurityClearance.OPERATOR));
 
-            try (ZipInputStream zipInputStream = new ZipInputStream(new ByteArrayInputStream(certificateRawData.getRawData()))) {
-                ZipEntry zipEntry = zipInputStream.getNextEntry();
+            KeyStore keyStore = readKeyStore(certificateRawData);
 
-                if (zipEntry != null) {
-                    byte[] pkcs12Bytes = IOUtils.toByteArray(zipInputStream);
-                    KeyStore keyStore = KeyStore.getInstance("PKCS12");
-                    keyStore.load(new ByteArrayInputStream(pkcs12Bytes), "".toCharArray());
+            try (DocumentStore storeWithOutCert = new DocumentStore(store.getUrls(), store.getDatabase())) {
+                storeWithOutCert.setTrustStore(store.getTrustStore());
+                storeWithOutCert.setCertificate(keyStore); // using this certificate user won't have an access to current db
+                storeWithOutCert.initialize();
 
-                    try (DocumentStore storeWithOutCert = new DocumentStore(store.getUrls(), store.getDatabase())) {
-                        storeWithOutCert.setTrustStore(store.getTrustStore());
-                        storeWithOutCert.setCertificate(keyStore); // using this certificate user won't have an access to current db
-                        storeWithOutCert.initialize();
-
-                        try (IDocumentSession session = storeWithOutCert.openSession()) {
-                            User user = session.load(User.class, "users/1");
-                        }
-                    }
+                try (IDocumentSession session = storeWithOutCert.openSession()) {
+                    User user = session.load(User.class, "users/1");
                 }
             }
         }
