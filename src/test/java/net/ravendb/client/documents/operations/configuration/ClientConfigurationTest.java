@@ -3,6 +3,8 @@ package net.ravendb.client.documents.operations.configuration;
 import net.ravendb.client.RemoteTestBase;
 import net.ravendb.client.documents.IDocumentStore;
 import net.ravendb.client.http.ReadBalanceBehavior;
+import net.ravendb.client.serverwide.operations.configuration.GetServerWideClientConfigurationOperation;
+import net.ravendb.client.serverwide.operations.configuration.PutServerWideClientConfigurationOperation;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -10,13 +12,40 @@ import static org.assertj.core.api.Assertions.assertThat;
 public class ClientConfigurationTest extends RemoteTestBase {
 
     @Test
+    public void canSaveAndReadServerWideClientConfiguration() throws Exception {
+        try (IDocumentStore store = getDocumentStore()) {
+
+            ClientConfiguration configurationToSave = new ClientConfiguration();
+            configurationToSave.setMaxNumberOfRequestsPerSession(80);
+            configurationToSave.setReadBalanceBehavior(ReadBalanceBehavior.FASTEST_NODE);
+            configurationToSave.setDisabled(true);
+
+            PutServerWideClientConfigurationOperation saveOperation = new PutServerWideClientConfigurationOperation(configurationToSave);
+
+            store.maintenance().server().send(saveOperation);
+
+            GetServerWideClientConfigurationOperation operation = new GetServerWideClientConfigurationOperation();
+            ClientConfiguration newConfiguration = store.maintenance().server().send(operation);
+
+            assertThat(newConfiguration)
+                    .isNotNull();
+
+            assertThat(newConfiguration.isDisabled())
+                    .isTrue();
+
+            assertThat(newConfiguration.getMaxNumberOfRequestsPerSession())
+                    .isEqualTo(80);
+
+            assertThat(newConfiguration.getReadBalanceBehavior())
+                    .isEqualTo(ReadBalanceBehavior.FASTEST_NODE);
+        }
+    }
+
+    @Test
     public void canHandleNoConfiguration() throws Exception {
         try (IDocumentStore store = getDocumentStore()) {
             GetClientConfigurationOperation operation = new GetClientConfigurationOperation();
             GetClientConfigurationOperation.Result result = store.maintenance().send(operation);
-
-            assertThat(result.getConfiguration())
-                    .isNull();
 
             assertThat(result.getEtag())
                     .isNotNull();
@@ -47,9 +76,6 @@ public class ClientConfigurationTest extends RemoteTestBase {
 
             assertThat(newConfiguration)
                     .isNotNull();
-
-            assertThat(newConfiguration.getEtag())
-                    .isGreaterThan(configurationToSave.getEtag());
 
             assertThat(newConfiguration.isDisabled())
                     .isTrue();

@@ -48,6 +48,17 @@ public class HttpsTest extends RemoteTestBase {
     }
 
     @Test
+    public void canReplaceCertificate() throws Exception {
+        try (IDocumentStore store = getSecuredDocumentStore()) {
+            // we are sending some garbage as we don't want to modify shared server certificate!
+
+            assertThatThrownBy(() -> {
+                store.maintenance().server().send(new ReplaceClusterCertificateOperation(new byte[] { 1, 2, 3, 4}, true));
+            }).hasMessageContaining("Unable to load the provided certificate");
+        }
+    }
+
+    @Test
     public void canCrudCertificates() throws Exception {
         try (IDocumentStore store = getSecuredDocumentStore()) {
 

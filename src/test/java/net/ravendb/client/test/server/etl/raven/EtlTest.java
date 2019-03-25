@@ -5,8 +5,11 @@ import net.ravendb.client.documents.IDocumentStore;
 import net.ravendb.client.documents.operations.connectionStrings.PutConnectionStringOperation;
 import net.ravendb.client.documents.operations.connectionStrings.PutConnectionStringResult;
 import net.ravendb.client.documents.operations.etl.*;
+import net.ravendb.client.documents.operations.ongoingTasks.DeleteOngoingTaskOperation;
+import net.ravendb.client.documents.operations.ongoingTasks.OngoingTaskType;
 import net.ravendb.client.documents.session.IDocumentSession;
 import net.ravendb.client.infrastructure.entities.User;
+import net.ravendb.client.serverwide.operations.ModifyOngoingTaskResult;
 import org.junit.jupiter.api.Test;
 
 import java.util.Collections;
@@ -48,6 +51,12 @@ public class EtlTest extends ReplicationTestBase {
                         .isPositive();
 
                 waitForDocumentToReplicate(dst, User.class, "users/1", 10* 1000);
+
+                ModifyOngoingTaskResult deleteResult = src.maintenance()
+                        .send(new DeleteOngoingTaskOperation(etlResult.getTaskId(), OngoingTaskType.RAVEN_ETL));
+
+                assertThat(deleteResult.getTaskId())
+                        .isEqualTo(etlResult.getTaskId());
             }
         }
     }
