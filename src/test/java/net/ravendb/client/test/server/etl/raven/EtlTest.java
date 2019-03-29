@@ -2,14 +2,18 @@ package net.ravendb.client.test.server.etl.raven;
 
 import net.ravendb.client.ReplicationTestBase;
 import net.ravendb.client.documents.IDocumentStore;
+import net.ravendb.client.documents.operations.GetOngoingTaskInfoOperation;
 import net.ravendb.client.documents.operations.connectionStrings.PutConnectionStringOperation;
 import net.ravendb.client.documents.operations.connectionStrings.PutConnectionStringResult;
 import net.ravendb.client.documents.operations.etl.*;
 import net.ravendb.client.documents.operations.ongoingTasks.DeleteOngoingTaskOperation;
+import net.ravendb.client.documents.operations.ongoingTasks.OngoingTask;
+import net.ravendb.client.documents.operations.ongoingTasks.OngoingTaskRavenEtlDetails;
 import net.ravendb.client.documents.operations.ongoingTasks.OngoingTaskType;
 import net.ravendb.client.documents.session.IDocumentSession;
 import net.ravendb.client.infrastructure.entities.User;
 import net.ravendb.client.serverwide.operations.ModifyOngoingTaskResult;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import java.util.Collections;
@@ -59,6 +63,12 @@ public class EtlTest extends ReplicationTestBase {
                         .isEqualTo(etlResult.getTaskId());
             }
         }
+    }
+
+    @Test
+    @Disabled(value =  "Waiting for RavenDB-13309")
+    public void canGetTaskInfo() {
+        //TODO: I think we should write test case for getting info for each type of ongoing task + query by task id and by name.
     }
 
     @Test

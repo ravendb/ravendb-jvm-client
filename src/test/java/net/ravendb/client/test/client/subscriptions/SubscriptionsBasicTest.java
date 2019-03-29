@@ -4,6 +4,10 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import net.ravendb.client.RemoteTestBase;
 import net.ravendb.client.documents.BulkInsertOperation;
 import net.ravendb.client.documents.IDocumentStore;
+import net.ravendb.client.documents.operations.GetOngoingTaskInfoOperation;
+import net.ravendb.client.documents.operations.ongoingTasks.OngoingTask;
+import net.ravendb.client.documents.operations.ongoingTasks.OngoingTaskSubscription;
+import net.ravendb.client.documents.operations.ongoingTasks.OngoingTaskType;
 import net.ravendb.client.documents.session.IDocumentSession;
 import net.ravendb.client.documents.subscriptions.*;
 import net.ravendb.client.exceptions.documents.subscriptions.SubscriberErrorException;
@@ -15,6 +19,7 @@ import net.ravendb.client.infrastructure.entities.User;
 import net.ravendb.client.primitives.ExceptionsUtils;
 import org.apache.commons.io.IOUtils;
 import org.eclipse.jetty.util.BlockingArrayQueue;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import java.time.Duration;
@@ -275,6 +280,32 @@ public class SubscriptionsBasicTest extends RemoteTestBase {
                 assertThat(semaphore.tryAcquire(_reasonableWaitTime, TimeUnit.SECONDS))
                         .isTrue();
             }
+        }
+    }
+
+    @Test
+    @Disabled(value = "Waiting for RavenDB-13309")
+    public void canDisableSubscription() throws Exception {
+        try (IDocumentStore store = getDocumentStore()) {
+            try (IDocumentSession session = store.openSession()) {
+                for (int i = 0; i < 10; i++) {
+                    session.store(new Company());
+                    session.store(new User());
+                }
+
+                session.saveChanges();
+            }
+
+            String id = store.subscriptions().create(User.class);
+
+            OngoingTaskSubscription subscriptionTask
+                    = (OngoingTaskSubscription) store.maintenance().send(new GetOngoingTaskInfoOperation(id, OngoingTaskType.SUBSCRIPTION));
+            assertThat(subscriptionTask)
+                    .isNotNull();
+
+            //TODO: disable subscription and fetch info again
+
+            //TODO: use and test ToggleOngoingTaskStateOperation
         }
     }
 
