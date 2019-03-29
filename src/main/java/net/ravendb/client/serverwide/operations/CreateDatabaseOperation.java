@@ -1,6 +1,7 @@
 package net.ravendb.client.serverwide.operations;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import net.ravendb.client.Constants;
 import net.ravendb.client.documents.conventions.DocumentConventions;
 import net.ravendb.client.http.RavenCommand;
 import net.ravendb.client.http.ServerNode;
@@ -34,17 +35,23 @@ public class CreateDatabaseOperation implements IServerOperation<DatabasePutResu
         return new CreateDatabaseCommand(conventions, databaseRecord, replicationFactor);
     }
 
-    private static class CreateDatabaseCommand extends RavenCommand<DatabasePutResult> {
+    public static class CreateDatabaseCommand extends RavenCommand<DatabasePutResult> {
         private final DocumentConventions conventions;
         private final DatabaseRecord databaseRecord;
         private final int replicationFactor;
+        private final Long etag;
         private final String databaseName;
 
         public CreateDatabaseCommand(DocumentConventions conventions, DatabaseRecord databaseRecord, int replicationFactor) {
+            this(conventions, databaseRecord, replicationFactor, null);
+        }
+
+        public CreateDatabaseCommand(DocumentConventions conventions, DatabaseRecord databaseRecord, int replicationFactor, Long etag) {
             super(DatabasePutResult.class);
             this.conventions = conventions;
             this.databaseRecord = databaseRecord;
             this.replicationFactor = replicationFactor;
+            this.etag = etag;
             this.databaseName = Optional.ofNullable(databaseRecord).map(x -> x.getDatabaseName()).orElseThrow(() -> new IllegalArgumentException("Database name is required"));
         }
 
@@ -58,6 +65,12 @@ public class CreateDatabaseOperation implements IServerOperation<DatabasePutResu
                 String databaseDocument = mapper.writeValueAsString(databaseRecord);
                 HttpPut request = new HttpPut();
                 request.setEntity(new StringEntity(databaseDocument, ContentType.APPLICATION_JSON));
+
+
+                if (etag != null) {
+                    request.addHeader(Constants.Headers.ETAG,"\"" + etag + "\"");
+                }
+
                 return request;
             } catch (JsonProcessingException e) {
                 throw ExceptionsUtils.unwrapException(e);
