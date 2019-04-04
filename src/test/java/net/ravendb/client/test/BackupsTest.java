@@ -53,8 +53,11 @@ public class BackupsTest extends RemoteTestBase {
                 assertThat(backupStatus.getStatus().getLastFullBackup())
                         .isNotNull();
             } finally {
-                assertThat(backup.toAbsolutePath().toFile().delete())
-                        .isTrue();
+                backup.toAbsolutePath().toFile().deleteOnExit();
+
+                // make sure backup was finished
+                Thread.sleep(500);
+                backup.toAbsolutePath().toFile().delete();
             }
         }
 
