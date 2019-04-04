@@ -5,7 +5,6 @@ import net.ravendb.client.RemoteTestBase;
 import net.ravendb.client.documents.BulkInsertOperation;
 import net.ravendb.client.documents.IDocumentStore;
 import net.ravendb.client.documents.operations.GetOngoingTaskInfoOperation;
-import net.ravendb.client.documents.operations.ongoingTasks.OngoingTask;
 import net.ravendb.client.documents.operations.ongoingTasks.OngoingTaskSubscription;
 import net.ravendb.client.documents.operations.ongoingTasks.OngoingTaskType;
 import net.ravendb.client.documents.session.IDocumentSession;
