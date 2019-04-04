@@ -190,7 +190,7 @@ public abstract class RavenTestDriver implements CleanCloseable {
 
                 int leased = connectionManager.getTotalStats().getLeased();
                 if (leased > 0 ) {
-                    Thread.sleep(100);
+                    Thread.sleep(500);
 
                     // give another try
                     leased = connectionManager.getTotalStats().getLeased();
