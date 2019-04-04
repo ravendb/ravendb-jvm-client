@@ -87,7 +87,7 @@ public class CountersSingleNodeTest extends RemoteTestBase {
                 session.saveChanges();
             }
 
-            String longCounterName = StringUtils.repeat('a', 1500);
+            String longCounterName = StringUtils.repeat('a', 500);
 
             DocumentCountersOperation documentCountersOperation = new DocumentCountersOperation();
             documentCountersOperation.setDocumentId("users/1-A");
