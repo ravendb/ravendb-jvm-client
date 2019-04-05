@@ -3,20 +3,12 @@ package net.ravendb.client.test;
 import com.google.common.base.Stopwatch;
 import net.ravendb.client.RemoteTestBase;
 import net.ravendb.client.documents.IDocumentStore;
-import net.ravendb.client.documents.operations.Operation;
 import net.ravendb.client.documents.operations.backups.*;
-import net.ravendb.client.documents.session.IDocumentSession;
-import net.ravendb.client.exceptions.ConflictException;
-import org.apache.commons.io.FileUtils;
-import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
 
-import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.concurrent.TimeUnit;
-
-import static org.assertj.core.api.Assertions.assertThat;
 
 public class BackupsTest extends RemoteTestBase {
 
@@ -43,15 +35,7 @@ public class BackupsTest extends RemoteTestBase {
                 int backupOperation = send.getOperationId();
 
                 waitForBackup(backup);
-
-                GetPeriodicBackupStatusOperationResult backupStatus = store.maintenance()
-                        .send(new GetPeriodicBackupStatusOperation(backupOperationResult.getTaskId()));
-
-                assertThat(backupStatus)
-                        .isNotNull();
-
-                assertThat(backupStatus.getStatus().getLastFullBackup())
-                        .isNotNull();
+                waitForBackupStatus(store, backupOperationResult.getTaskId());
             } finally {
                 backup.toAbsolutePath().toFile().deleteOnExit();
 
@@ -73,5 +57,26 @@ public class BackupsTest extends RemoteTestBase {
 
             Thread.sleep(200);
         }
+
+        throw new IllegalStateException("Unable to find backup files in: " + backup.toAbsolutePath());
+    }
+
+    private void waitForBackupStatus(IDocumentStore store, long taskId) throws Exception {
+        Stopwatch sw = Stopwatch.createStarted();
+
+        while (sw.elapsed(TimeUnit.MILLISECONDS) < 10_000) {
+            GetPeriodicBackupStatusOperationResult backupStatus = store.maintenance()
+                    .send(new GetPeriodicBackupStatusOperation(taskId));
+
+            if (backupStatus != null
+                    && backupStatus.getStatus() != null
+                    && backupStatus.getStatus().getLastFullBackup() != null) {
+                return;
+            }
+
+            Thread.sleep(200);
+        }
+
+        throw new IllegalStateException("Unable to get expected backup status");
     }
 }
