@@ -50,6 +50,7 @@ public class LogsConfigurationTest extends RemoteTestBase {
                 SetLogsConfigurationOperation.Parameters parameters = new SetLogsConfigurationOperation.Parameters();
                 parameters.setMode(LogMode.OPERATIONS);
                 SetLogsConfigurationOperation setOperation = new SetLogsConfigurationOperation(parameters);
+                store.maintenance().server().send(setOperation);
             }
         }
     }
