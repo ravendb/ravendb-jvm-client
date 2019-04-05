@@ -6,6 +6,7 @@ import net.ravendb.client.documents.IDocumentStore;
 import net.ravendb.client.documents.operations.transactionsRecording.StartTransactionsRecordingOperation;
 import net.ravendb.client.documents.operations.transactionsRecording.StopTransactionsRecordingOperation;
 import net.ravendb.client.documents.session.IDocumentSession;
+import net.ravendb.client.infrastructure.CreateSampleDataOperation;
 import net.ravendb.client.infrastructure.entities.User;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -25,10 +26,7 @@ public class RecordingTransactionOperationsMergerTest extends RemoteTestBase {
             store.maintenance().send(new StartTransactionsRecordingOperation(targetFile.getAbsolutePath()));
 
             try {
-                try (IDocumentSession session = store.openSession()) {
-                    session.store(new User());
-                    session.saveChanges();
-                }
+                store.maintenance().send(new CreateSampleDataOperation());
             } finally {
                 store.maintenance().send(new StopTransactionsRecordingOperation());
             }
