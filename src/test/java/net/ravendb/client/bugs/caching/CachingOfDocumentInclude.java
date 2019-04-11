@@ -4,13 +4,18 @@ import net.ravendb.client.RemoteTestBase;
 import net.ravendb.client.documents.IDocumentStore;
 import net.ravendb.client.documents.Lazy;
 import net.ravendb.client.documents.session.IDocumentSession;
+import net.ravendb.client.infrastructure.entities.Order;
+import net.ravendb.client.infrastructure.entities.OrderLine;
 import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.atIndex;
 
 public class CachingOfDocumentInclude extends RemoteTestBase {
 
@@ -253,6 +258,89 @@ public class CachingOfDocumentInclude extends RemoteTestBase {
                         .isEqualTo(old);
 
             }
+        }
+    }
+
+    @Test
+    public void can_include_nested_paths() throws Exception {
+        try (IDocumentStore store = getDocumentStore()) {
+            Order order = new Order();
+
+            OrderLine orderLine1 = new OrderLine();
+            orderLine1.setProduct("products/1-A");
+            orderLine1.setProductName("phone");
+
+            OrderLine orderLine2 = new OrderLine();
+            orderLine1.setProduct("products/2-A");
+            orderLine1.setProductName("mouse");
+
+            order.setLines(Arrays.asList(orderLine1, orderLine2));
+
+            Product product1 = new Product();
+            product1.setId("products/1-A");
+            product1.setName("phone");
+
+            Product product2 = new Product();
+            product2.setId("products/2-A");
+            product2.setName("mouse");
+
+            try (IDocumentSession session = store.openSession()) {
+                session.store(order, "orders/1-A");
+                session.store(product1);
+                session.store(product2);
+                session.saveChanges();
+            }
+
+            try (IDocumentSession session = store.openSession()) {
+                assertThat(session.advanced().getNumberOfRequests())
+                        .isZero();
+                List<Order> orders = session.query(Order.class)
+                        .include(x -> x.includeDocuments("lines[].product"))
+                        .toList();
+
+                assertThat(session.advanced().getNumberOfRequests())
+                        .isOne();
+
+                Product product = session.load(Product.class, orders.get(0).getLines().get(0).getProduct());
+                assertThat(session.advanced().getNumberOfRequests())
+                        .isOne();
+            }
+
+            try (IDocumentSession session = store.openSession()) {
+                assertThat(session.advanced().getNumberOfRequests())
+                        .isZero();
+                List<Order> orders = session.query(Order.class)
+                        .include(x -> x.includeDocuments("lines.product"))
+                        .toList();
+
+                assertThat(session.advanced().getNumberOfRequests())
+                        .isOne();
+
+                Product product = session.load(Product.class, orders.get(0).getLines().get(0).getProduct());
+                assertThat(session.advanced().getNumberOfRequests())
+                        .isOne();
+            }
+        }
+    }
+
+    public static class Product {
+        private String id;
+        private String name;
+
+        public String getId() {
+            return id;
+        }
+
+        public void setId(String id) {
+            this.id = id;
+        }
+
+        public String getName() {
+            return name;
+        }
+
+        public void setName(String name) {
+            this.name = name;
         }
     }
 }
