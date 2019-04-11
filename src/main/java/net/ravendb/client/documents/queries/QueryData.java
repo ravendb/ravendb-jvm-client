@@ -86,7 +86,7 @@ public class QueryData {
     }
 
     public static QueryData customFunction(String alias, String func) {
-        return new QueryData(new String[]{ func }, new String[0], alias, null, null, false);
+        return new QueryData(new String[]{ func }, new String[0], alias, null, null, true);
     }
 
 }
