@@ -17,7 +17,7 @@ public class IndexTypeExtensions {
         return type == IndexType.AUTO_MAP || type == IndexType.AUTO_MAP_REDUCE;
     }
 
-    public static boolean isState(IndexType type) {
+    public static boolean isStale(IndexType type) {
         return type == IndexType.MAP || type == IndexType.MAP_REDUCE || type == IndexType.JAVA_SCRIPT_MAP || type == IndexType.JAVA_SCRIPT_MAP_REDUCE;
     }
 
