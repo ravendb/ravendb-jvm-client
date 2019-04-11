@@ -372,13 +372,23 @@ public class DocumentQuery<T> extends AbstractDocumentQuery<T, DocumentQuery<T>>
 
     @Override
     public IDocumentQuery<T> whereStartsWith(String fieldName, Object value) {
-        _whereStartsWith(fieldName, value);
+        return whereStartsWith(fieldName, value, false);
+    }
+
+    @Override
+    public IDocumentQuery<T> whereStartsWith(String fieldName, Object value, boolean exact) {
+        _whereStartsWith(fieldName, value, exact);
         return this;
     }
 
     @Override
     public IDocumentQuery<T> whereEndsWith(String fieldName, Object value) {
-        _whereEndsWith(fieldName, value);
+        return whereEndsWith(fieldName, value, false);
+    }
+
+    @Override
+    public IDocumentQuery<T> whereEndsWith(String fieldName, Object value, boolean exact) {
+        _whereEndsWith(fieldName, value, exact);
         return this;
     }
 

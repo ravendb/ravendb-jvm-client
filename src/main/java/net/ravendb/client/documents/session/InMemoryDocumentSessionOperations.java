@@ -815,24 +815,24 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
     public SaveChangesData prepareForSaveChanges() {
         SaveChangesData result = new SaveChangesData(this);
 
-        deferredCommands.clear();
-        deferredCommandsMap.clear();
+        int deferredCommandsCount = deferredCommands.size();
 
         prepareForEntitiesDeletion(result, null);
         prepareForEntitiesPuts(result);
 
         prepareCompareExchangeEntities(result);
 
-        if (!deferredCommands.isEmpty()) {
+        if (deferredCommands.size() > deferredCommandsCount) {
             // this allow OnBeforeStore to call Defer during the call to include
             // additional values during the same SaveChanges call
-            result.deferredCommands.addAll(deferredCommands);
+
+            for (int i = deferredCommandsCount; i < deferredCommands.size(); i++) {
+                result.deferredCommands.add(deferredCommands.get(i));
+            }
+
             for (Map.Entry<IdTypeAndName, ICommandData> item : deferredCommandsMap.entrySet()) {
                 result.deferredCommandsMap.put(item.getKey(), item.getValue());
             }
-
-            deferredCommands.clear();
-            deferredCommandsMap.clear();
         }
 
         for (ICommandData deferredCommand : result.getDeferredCommands()) {
@@ -899,7 +899,7 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
             }
         }
 
-        clusterTransactionOperations.clear();
+        result.onSuccess.clearClusterTransactionOperations(clusterTransactionOperations);
     }
 
     protected abstract ClusterTransactionOperationsBase getClusterSession();
@@ -952,11 +952,11 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
                     changeVector = documentInfo.getChangeVector();
 
                     if (documentInfo.getEntity() != null) {
-                        documentsByEntity.remove(documentInfo.getEntity());
+                        result.onSuccess.removeDocumentByEntity(documentInfo.getEntity());
                         result.getEntities().add(documentInfo.getEntity());
                     }
 
-                    documentsById.remove(documentInfo.getId());
+                    result.onSuccess.removeDocumentByEntity(documentInfo.getId());
                 }
 
                 changeVector = useOptimisticConcurrency ? changeVector : null;
@@ -966,7 +966,7 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
             }
 
             if (changes == null) {
-                deletedEntities.clear();
+                result.onSuccess.clearDeletedEntities();
             }
         }
 
@@ -978,6 +978,10 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
 
             if (entity.getValue().isIgnoreChanges())
                 continue;
+
+            if (isDeleted(entity.getValue().getId())) {
+                continue;
+            }
 
             boolean dirtyMetadata = updateMetadataModifications(entity.getValue());
 
@@ -1006,14 +1010,13 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
                 }
             }
 
-            entity.getValue().setNewDocument(false);
             result.getEntities().add(entity.getKey());
 
             if (entity.getValue().getId() != null) {
-                documentsById.remove(entity.getValue().getId());
+                result.onSuccess.removeDocumentById(entity.getValue().getId());
             }
 
-            entity.getValue().setDocument(document);
+            result.onSuccess.updateEntityDocumentInfo(entity.getValue(), document);
 
             String changeVector;
             if (useOptimisticConcurrency) {
@@ -1614,11 +1617,17 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
         private final List<ICommandData> sessionCommands = new ArrayList<>();
         private final List<Object> entities = new ArrayList<>();
         private final BatchOptions options;
+        private final ActionsToRunOnSuccess onSuccess;
 
         public SaveChangesData(InMemoryDocumentSessionOperations session) {
             deferredCommands = new ArrayList<>(session.deferredCommands);
             deferredCommandsMap = new HashMap<>(session.deferredCommandsMap);
             options = session._saveChangesOptions;
+            onSuccess = new ActionsToRunOnSuccess(session);
+        }
+
+        public ActionsToRunOnSuccess getOnSuccess() {
+            return onSuccess;
         }
 
         public List<ICommandData> getDeferredCommands() {
@@ -1639,6 +1648,69 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
 
         public Map<IdTypeAndName, ICommandData> getDeferredCommandsMap() {
             return deferredCommandsMap;
+        }
+
+        public static class ActionsToRunOnSuccess {
+
+            private final InMemoryDocumentSessionOperations _session;
+            private final List<String> _documentsByIdToRemove = new ArrayList<>();
+            private final List<Object> _documentsByEntityToRemove = new ArrayList<>();
+            private final List<Tuple<DocumentInfo, ObjectNode>> _documentInfosToUpdate = new ArrayList<>();
+
+            private ClusterTransactionOperationsBase _clusterTransactionOperations;
+            private boolean _clearDeletedEntities;
+
+            public ActionsToRunOnSuccess(InMemoryDocumentSessionOperations _session) {
+                this._session = _session;
+            }
+
+            public void removeDocumentById(String id) {
+                _documentsByIdToRemove.add(id);
+            }
+
+            public void removeDocumentByEntity(Object entity) {
+                _documentsByEntityToRemove.add(entity);
+            }
+
+            public void clearClusterTransactionOperations(ClusterTransactionOperationsBase clusterTransactionOperations) {
+                _clusterTransactionOperations = clusterTransactionOperations;
+            }
+
+            public void updateEntityDocumentInfo(DocumentInfo documentInfo, ObjectNode document) {
+                _documentInfosToUpdate.add(Tuple.create(documentInfo, document));
+            }
+
+            public void clearSessionStateAfterSuccessfulSaveChanges() {
+                for (String id : _documentsByIdToRemove) {
+                    _session.documentsById.remove(id);
+                }
+
+                for (Object entity : _documentsByEntityToRemove) {
+                    _session.documentsByEntity.remove(entity);
+                }
+
+                for (Tuple<DocumentInfo, ObjectNode> documentInfoObjectNodeTuple : _documentInfosToUpdate) {
+                    DocumentInfo info = documentInfoObjectNodeTuple.first;
+                    ObjectNode document = documentInfoObjectNodeTuple.second;
+                    info.setNewDocument(false);
+                    info.setDocument(document);
+                }
+
+                if (_clearDeletedEntities) {
+                    _session.deletedEntities.clear();
+                }
+
+                if (_clusterTransactionOperations != null) {
+                    _clusterTransactionOperations.clear();
+                }
+
+                _session.deferredCommands.clear();
+                _session.deferredCommandsMap.clear();
+            }
+
+            public void clearDeletedEntities() {
+                _clearDeletedEntities = true;
+            }
         }
     }
 

@@ -35,11 +35,13 @@ public class BatchOperation {
     private List<Object> _entities;
     private int _sessionCommandsCount;
     private int _allCommandsCount;
+    private InMemoryDocumentSessionOperations.SaveChangesData.ActionsToRunOnSuccess _onSuccessfulRequest;
 
     private Map<String, DocumentInfo> _modifications;
 
     public BatchCommand createRequest() {
         InMemoryDocumentSessionOperations.SaveChangesData result = _session.prepareForSaveChanges();
+        _onSuccessfulRequest = result.getOnSuccess();
         _sessionCommandsCount = result.getSessionCommands().size();
         result.getSessionCommands().addAll(result.getDeferredCommands());
 
@@ -77,6 +79,8 @@ public class BatchOperation {
             throwOnNullResults();
             return;
         }
+
+        _onSuccessfulRequest.clearSessionStateAfterSuccessfulSaveChanges();
 
         if (_session.getTransactionMode() == TransactionMode.CLUSTER_WIDE) {
             if (result.getTransactionIndex() <= 0) {

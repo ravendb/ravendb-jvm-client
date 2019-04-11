@@ -597,8 +597,11 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
         tokens.add(whereToken);
     }
 
-    @SuppressWarnings("unchecked")
     public void _whereStartsWith(String fieldName, Object value) {
+        _whereStartsWith(fieldName, value, false);
+    }
+
+    public void _whereStartsWith(String fieldName, Object value, boolean exact) {
         WhereParams whereParams = new WhereParams();
         whereParams.setFieldName(fieldName);
         whereParams.setValue(value);
@@ -612,8 +615,12 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
         whereParams.setFieldName(ensureValidFieldName(whereParams.getFieldName(), whereParams.isNestedPath()));
         negateIfNeeded(tokens, whereParams.getFieldName());
 
-        WhereToken whereToken = WhereToken.create(WhereOperator.STARTS_WITH, whereParams.getFieldName(), addQueryParameter(transformToEqualValue));
+        WhereToken whereToken = WhereToken.create(WhereOperator.STARTS_WITH, whereParams.getFieldName(), addQueryParameter(transformToEqualValue), new WhereToken.WhereOptions(exact));
         tokens.add(whereToken);
+    }
+
+    public void _whereEndsWith(String fieldName, Object value) {
+        _whereEndsWith(fieldName, value, false);
     }
 
     /**
@@ -621,8 +628,7 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
      * @param fieldName Field name to use
      * @param value Values to find
      */
-    @SuppressWarnings("unchecked")
-    public void _whereEndsWith(String fieldName, Object value) {
+    public void _whereEndsWith(String fieldName, Object value, boolean exact) {
         WhereParams whereParams = new WhereParams();
         whereParams.setFieldName(fieldName);
         whereParams.setValue(value);
@@ -636,7 +642,7 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
         whereParams.setFieldName(ensureValidFieldName(whereParams.getFieldName(), whereParams.isNestedPath()));
         negateIfNeeded(tokens, whereParams.getFieldName());
 
-        WhereToken whereToken = WhereToken.create(WhereOperator.ENDS_WITH, whereParams.getFieldName(), addQueryParameter(transformToEqualValue));
+        WhereToken whereToken = WhereToken.create(WhereOperator.ENDS_WITH, whereParams.getFieldName(), addQueryParameter(transformToEqualValue), new WhereToken.WhereOptions(exact));
         tokens.add(whereToken);
     }
 
@@ -840,7 +846,7 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
         }
 
         if (boost < 0.0) {
-            throw new IllegalArgumentException("Boost factor must be a positive number");
+            throw new IllegalArgumentException("Boost factor must be a non-negative number");
         }
 
         ((WhereToken) whereToken).getOptions().setBoost(boost);

@@ -141,6 +141,15 @@ public interface IFilterDocumentQueryBase<T, TSelf extends IDocumentQueryBase<T,
      */
     TSelf whereEndsWith(String fieldName, Object value);
 
+    /**
+     * Matches fields which ends with the specified value.
+     * @param fieldName Field name
+     * @param value Value to use
+     * @param exact Use exact matcher
+     * @return Query instance
+     */
+    TSelf whereEndsWith(String fieldName, Object value, boolean exact);
+
     //TBD expr TSelf WhereEndsWith<TValue>(Expression<Func<T, TValue>> propertySelector, TValue value);
 
     /**
@@ -333,6 +342,15 @@ public interface IFilterDocumentQueryBase<T, TSelf extends IDocumentQueryBase<T,
      * @return Query instance
      */
     TSelf whereStartsWith(String fieldName, Object value);
+
+    /**
+     * Matches fields which starts with the specified value.
+     * @param fieldName Name of the field.
+     * @param value The value.
+     * @param exact Use exact matcher
+     * @return Query instance
+     */
+    TSelf whereStartsWith(String fieldName, Object value, boolean exact);
 
     //TBD expr TSelf WhereStartsWith<TValue>(Expression<Func<T, TValue>> propertySelector, TValue value);
 

@@ -263,6 +263,10 @@ public class RequestExecutor implements CleanCloseable {
             return CompletableFuture.completedFuture(false);
         }
 
+        if (_disableTopologyUpdates) {
+            return CompletableFuture.completedFuture(false);
+        }
+
         return CompletableFuture.supplyAsync(() -> {
 
             //prevent double topology updates if execution takes too much time
@@ -612,7 +616,7 @@ public class RequestExecutor implements CleanCloseable {
                 }
                 sp.stop();
 
-                if (!handleServerDown(urlRef.value, chosenNode, nodeIndex, command, request, response, e, sessionInfo)) {
+                if (!handleServerDown(urlRef.value, chosenNode, nodeIndex, command, request, response, e, sessionInfo, shouldRetry)) {
                     throwFailedToContactAllNodes(command, request, e, null);
                 }
                 return;
@@ -869,7 +873,7 @@ public class RequestExecutor implements CleanCloseable {
                 case HttpStatus.SC_REQUEST_TIMEOUT:
                 case HttpStatus.SC_BAD_GATEWAY:
                 case HttpStatus.SC_SERVICE_UNAVAILABLE:
-                    return handleServerDown(url, chosenNode, nodeIndex, command, request, response, null, sessionInfo);
+                    return handleServerDown(url, chosenNode, nodeIndex, command, request, response, null, sessionInfo, shouldRetry);
                 case HttpStatus.SC_CONFLICT:
                     handleConflict(response);
                     break;
@@ -893,7 +897,10 @@ public class RequestExecutor implements CleanCloseable {
         return response.getEntity().getContent();
     }
 
-    private <TResult> boolean handleServerDown(String url, ServerNode chosenNode, Integer nodeIndex, RavenCommand<TResult> command, HttpRequestBase request, CloseableHttpResponse response, Exception e, SessionInfo sessionInfo) {
+    private <TResult> boolean handleServerDown(String url, ServerNode chosenNode, Integer nodeIndex,
+                                               RavenCommand<TResult> command, HttpRequestBase request,
+                                               CloseableHttpResponse response, Exception e,
+                                               SessionInfo sessionInfo, boolean shouldRetry) {
         if (command.getFailedNodes() == null) {
             command.setFailedNodes(new HashMap<>());
         }
@@ -918,7 +925,7 @@ public class RequestExecutor implements CleanCloseable {
             return false; //we tried all the nodes...nothing left to do
         }
 
-        execute(currentIndexAndNode.currentNode, currentIndexAndNode.currentIndex, command, true, sessionInfo);
+        execute(currentIndexAndNode.currentNode, currentIndexAndNode.currentIndex, command, shouldRetry, sessionInfo);
 
         return true;
     }

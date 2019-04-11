@@ -7,6 +7,7 @@ import net.ravendb.client.documents.IDocumentStore;
 import net.ravendb.client.documents.operations.GetOngoingTaskInfoOperation;
 import net.ravendb.client.documents.operations.ongoingTasks.OngoingTaskSubscription;
 import net.ravendb.client.documents.operations.ongoingTasks.OngoingTaskType;
+import net.ravendb.client.documents.operations.ongoingTasks.ToggleOngoingTaskStateOperation;
 import net.ravendb.client.documents.session.IDocumentSession;
 import net.ravendb.client.documents.subscriptions.*;
 import net.ravendb.client.exceptions.documents.subscriptions.SubscriberErrorException;
@@ -283,7 +284,7 @@ public class SubscriptionsBasicTest extends RemoteTestBase {
     }
 
     @Test
-    @Disabled(value = "Waiting for RavenDB-13309")
+    @Disabled("waiting for: RavenDB-13380")
     public void canDisableSubscription() throws Exception {
         try (IDocumentStore store = getDocumentStore()) {
             try (IDocumentSession session = store.openSession()) {
@@ -302,9 +303,15 @@ public class SubscriptionsBasicTest extends RemoteTestBase {
             assertThat(subscriptionTask)
                     .isNotNull();
 
-            //TODO: disable subscription and fetch info again
+            store.maintenance().send(
+                    new ToggleOngoingTaskStateOperation(subscriptionTask.getTaskId(), OngoingTaskType.SUBSCRIPTION, true));
 
-            //TODO: use and test ToggleOngoingTaskStateOperation
+            subscriptionTask
+                    = (OngoingTaskSubscription) store.maintenance().send(new GetOngoingTaskInfoOperation(id, OngoingTaskType.SUBSCRIPTION));
+            assertThat(subscriptionTask)
+                    .isNotNull();
+            assertThat(subscriptionTask.isDisabled())
+                    .isTrue();
         }
     }
 

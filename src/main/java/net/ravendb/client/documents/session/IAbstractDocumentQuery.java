@@ -203,11 +203,27 @@ public interface IAbstractDocumentQuery<T> {
     void _whereStartsWith(String fieldName, Object value);
 
     /**
+     * Matches fields which starts with the specified value.
+     * @param fieldName Field name
+     * @param value to match
+     * @param exact Use exact matcher
+     */
+    void _whereStartsWith(String fieldName, Object value, boolean exact);
+
+    /**
      * Matches fields which ends with the specified value.
      * @param fieldName Field name
      * @param value Value to match
      */
     void _whereEndsWith(String fieldName, Object value);
+
+    /**
+     * Matches fields which ends with the specified value.
+     * @param fieldName Field name
+     * @param value Value to match
+     * @param exact Use exact matcher
+     */
+    void _whereEndsWith(String fieldName, Object value, boolean exact);
 
     /**
      * Matches fields where the value is between the specified start and end, inclusive

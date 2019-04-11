@@ -11,6 +11,7 @@ import net.ravendb.client.http.RavenCommand;
 import net.ravendb.client.http.ServerNode;
 import net.ravendb.client.json.ContentProviderHttpEntity;
 import net.ravendb.client.primitives.Reference;
+import net.ravendb.client.util.UrlUtils;
 import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.client.methods.HttpPut;
@@ -69,7 +70,7 @@ public class PutCompareExchangeValueOperation<T> implements IOperation<CompareEx
 
         @Override
         public HttpRequestBase createRequest(ServerNode node, Reference<String> url) {
-            url.value = node.getUrl() + "/databases/" + node.getDatabase() + "/cmpxchg?key="  + _key + "&index=" + _index;
+            url.value = node.getUrl() + "/databases/" + node.getDatabase() + "/cmpxchg?key="  + UrlUtils.escapeDataString(_key) + "&index=" + _index;
 
             Map<String, T> tuple = new HashMap<>();
             tuple.put("Object", _value);

@@ -67,10 +67,12 @@ public class DatabaseSmugglerOptions implements IDatabaseSmugglerOptions {
         this.maxStepsForTransformScript = maxStepsForTransformScript;
     }
 
+    @Deprecated
     public boolean isSkipRevisionCreation() {
         return skipRevisionCreation;
     }
 
+    @Deprecated
     public void setSkipRevisionCreation(boolean skipRevisionCreation) {
         this.skipRevisionCreation = skipRevisionCreation;
     }
