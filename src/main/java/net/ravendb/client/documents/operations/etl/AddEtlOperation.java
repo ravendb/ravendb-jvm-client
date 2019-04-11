@@ -25,7 +25,7 @@ public class AddEtlOperation<T extends ConnectionString> implements IMaintenance
 
     @Override
     public RavenCommand<AddEtlOperationResult> getCommand(DocumentConventions conventions) {
-        return new AddEtlCommand(conventions, _configuration);
+        return new AddEtlCommand<>(conventions, _configuration);
     }
 
     private static class AddEtlCommand<T extends ConnectionString> extends RavenCommand<AddEtlOperationResult> {

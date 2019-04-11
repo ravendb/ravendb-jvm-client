@@ -620,6 +620,7 @@ public class DocumentSession extends InMemoryDocumentSessionOperations implement
         return true;
     }
 
+    @SuppressWarnings("deprecation")
     @Override
     public <T, TIndex extends AbstractIndexCreationTask> IDocumentQuery<T> documentQuery(Class<T> clazz, Class<TIndex> indexClazz) {
         try {

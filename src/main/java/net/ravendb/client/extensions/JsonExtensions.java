@@ -43,6 +43,7 @@ public class JsonExtensions {
     }
 
     public static class SharpEnumSetSerializer extends StdSerializer<EnumSet<?>> {
+        @SuppressWarnings("unchecked")
         public SharpEnumSetSerializer() {
             super((Class<EnumSet<?>>)(Class<?>)EnumSet.class);
         }

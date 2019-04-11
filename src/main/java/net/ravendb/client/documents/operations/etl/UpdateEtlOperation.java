@@ -27,7 +27,7 @@ public class UpdateEtlOperation<T extends ConnectionString> implements IMaintena
 
     @Override
     public RavenCommand<UpdateEtlOperationResult> getCommand(DocumentConventions conventions) {
-        return new UpdateEtlCommand(conventions, _taskId, _configuration);
+        return new UpdateEtlCommand<>(conventions, _taskId, _configuration);
     }
 
     private static class UpdateEtlCommand<T extends ConnectionString> extends RavenCommand<UpdateEtlOperationResult> {
