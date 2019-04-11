@@ -233,6 +233,11 @@ public class IndexOperationsTest extends RemoteTestBase {
 
             assertThat(perIndexErrors)
                     .hasSize(1);
+
+            assertThat(indexErrors[0].getErrors())
+                    .hasSize(1);
+            assertThat(perIndexErrors[0].getErrors())
+                    .hasSize(1);
         }
     }
 
