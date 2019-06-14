@@ -16,13 +16,14 @@ public class EntityToJson {
 
     /**
      * All the listeners for this session
+     *
      * @param _session Session to use
      */
     public EntityToJson(InMemoryDocumentSessionOperations _session) {
         this._session = _session;
     }
 
-        private final Map<Object, Map<String, Object>> _missingDictionary = new HashMap<>();
+    private final Map<Object, Map<String, Object>> _missingDictionary = new HashMap<>();
 
     public Map<Object, Map<String, Object>> getMissingDictionary() {
         return _missingDictionary;
@@ -51,7 +52,7 @@ public class EntityToJson {
     }
 
     public static ObjectNode convertEntityToJson(Object entity, DocumentConventions conventions,
-                                                 DocumentInfo documentInfo, boolean removeIdentityProperty ) {
+                                                 DocumentInfo documentInfo, boolean removeIdentityProperty) {
         // maybe we don't need to do anything?
         if (entity instanceof ObjectNode) {
             return (ObjectNode) entity;
@@ -102,9 +103,10 @@ public class EntityToJson {
 
     /**
      * Converts a json object to an entity.
+     *
      * @param entityType Class of entity
-     * @param id Id of entity
-     * @param document Raw entity
+     * @param id         Id of entity
+     * @param document   Raw entity
      * @return Entity instance
      */
     @SuppressWarnings("unchecked")
@@ -117,12 +119,9 @@ public class EntityToJson {
             Object defaultValue = InMemoryDocumentSessionOperations.getDefaultValue(entityType);
             Object entity = defaultValue;
 
-            String documentType =_session.getConventions().getJavaClass(id, document);
-            if (documentType != null) {
-                Class type = Class.forName(documentType);
-                if (entityType.isAssignableFrom(type)) {
-                    entity = _session.getConventions().getEntityMapper().treeToValue(document, type);
-                }
+            Class type = _session.getConventions().getJavaClass(id, document);
+            if (entityType.isAssignableFrom(type)) {
+                entity = _session.getConventions().getEntityMapper().treeToValue(document, type);
             }
 
             if (entity == defaultValue) {
@@ -181,12 +180,9 @@ public class EntityToJson {
 
             Object entity = defaultValue;
 
-            String documentType = conventions.getJavaClass(id, document);
-            if (documentType != null) {
-                Class<?> clazz = Class.forName(documentType);
-                if (clazz != null && entityClass.isAssignableFrom(clazz)) {
-                    entity = conventions.getEntityMapper().treeToValue(document, clazz);
-                }
+            Class clazz = conventions.getJavaClass(id, document);
+            if (clazz != null && entityClass.isAssignableFrom(clazz)) {
+                entity = conventions.getEntityMapper().treeToValue(document, clazz);
             }
 
             if (entity == null) {

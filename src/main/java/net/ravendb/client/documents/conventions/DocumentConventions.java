@@ -53,7 +53,7 @@ public class DocumentConventions {
     private Function<Class, String> _findCollectionName;
 
     private Function<Class, String> _findJavaClassName;
-    private BiFunction<String, ObjectNode, String> _findJavaClass;
+    private BiFunction<String, ObjectNode, Class> _findJavaClass;
 
     private boolean _useOptimisticConcurrency;
     private boolean _throwIfQueryPageSizeIsNotSet;
@@ -74,7 +74,11 @@ public class DocumentConventions {
             if (metadata != null) {
                 TextNode javaType = (TextNode) metadata.get(Constants.Documents.Metadata.RAVEN_JAVA_TYPE);
                 if (javaType != null) {
-                    return javaType.asText();
+                    try {
+                        return Class.forName(javaType.asText());
+                    } catch (ClassNotFoundException e) {
+                        throw new IllegalStateException("Could not find class", e);
+                    }
                 }
             }
 
@@ -147,6 +151,7 @@ public class DocumentConventions {
      * without explicit page size set.
      * This can be useful for development purposes to pinpoint all the possible performance bottlenecks
      * since from 4.0 there is no limitation for number of results returned from server.
+     *
      * @return true if should we throw if page size is not set
      */
     public boolean isThrowIfQueryPageSizeIsNotSet() {
@@ -158,6 +163,7 @@ public class DocumentConventions {
      * without explicit page size set.
      * This can be useful for development purposes to pinpoint all the possible performance bottlenecks
      * since from 4.0 there is no limitation for number of results returned from server.
+     *
      * @param throwIfQueryPageSizeIsNotSet value to set
      */
     public void setThrowIfQueryPageSizeIsNotSet(boolean throwIfQueryPageSizeIsNotSet) {
@@ -167,6 +173,7 @@ public class DocumentConventions {
 
     /**
      * Whether UseOptimisticConcurrency is set to true by default for all opened sessions
+     *
      * @return true if optimistic concurrency is enabled
      */
     public boolean isUseOptimisticConcurrency() {
@@ -175,6 +182,7 @@ public class DocumentConventions {
 
     /**
      * Whether UseOptimisticConcurrency is set to true by default for all opened sessions
+     *
      * @param useOptimisticConcurrency value to set
      */
     public void setUseOptimisticConcurrency(boolean useOptimisticConcurrency) {
@@ -182,11 +190,11 @@ public class DocumentConventions {
         this._useOptimisticConcurrency = useOptimisticConcurrency;
     }
 
-    public BiFunction<String, ObjectNode, String> getFindJavaClass() {
+    public BiFunction<String, ObjectNode, Class> getFindJavaClass() {
         return _findJavaClass;
     }
 
-    public void setFindJavaClass(BiFunction<String, ObjectNode, String> _findJavaClass) {
+    public void setFindJavaClass(BiFunction<String, ObjectNode, Class> _findJavaClass) {
         assertNotFrozen();
         this._findJavaClass = _findJavaClass;
     }
@@ -229,16 +237,18 @@ public class DocumentConventions {
 
 
     /**
-     *  Translates the types collection name to the document id prefix
-     *  @return translation function
+     * Translates the types collection name to the document id prefix
+     *
+     * @return translation function
      */
     public Function<String, String> getTransformClassCollectionNameToDocumentIdPrefix() {
         return _transformClassCollectionNameToDocumentIdPrefix;
     }
 
     /**
-     *  Translates the types collection name to the document id prefix
-     *  @param transformClassCollectionNameToDocumentIdPrefix value to set
+     * Translates the types collection name to the document id prefix
+     *
+     * @param transformClassCollectionNameToDocumentIdPrefix value to set
      */
     public void setTransformClassCollectionNameToDocumentIdPrefix(Function<String, String> transformClassCollectionNameToDocumentIdPrefix) {
         assertNotFrozen();
@@ -274,6 +284,7 @@ public class DocumentConventions {
 
     /**
      * Saves Enums as integers and instruct the Linq provider to query enums as integer values.
+     *
      * @return true if we should save enums as integers
      */
     public boolean isSaveEnumsAsIntegers() {
@@ -282,6 +293,7 @@ public class DocumentConventions {
 
     /**
      * Saves Enums as integers and instruct the Linq provider to query enums as integer values.
+     *
      * @param saveEnumsAsIntegers value to set
      */
     public void setSaveEnumsAsIntegers(boolean saveEnumsAsIntegers) {
@@ -290,9 +302,10 @@ public class DocumentConventions {
     }
 
     /**
-     *  Default method used when finding a collection name for a type
-     *  @param clazz Class
-     *  @return default collection name for class
+     * Default method used when finding a collection name for a type
+     *
+     * @param clazz Class
+     * @return default collection name for class
      */
     public static String defaultGetCollectionName(Class clazz) {
         String result = _cachedDefaultTypeCollectionNames.get(clazz);
@@ -319,6 +332,7 @@ public class DocumentConventions {
 
     /**
      * Gets the collection name for a given type.
+     *
      * @param clazz Class
      * @return collection name
      */
@@ -334,6 +348,7 @@ public class DocumentConventions {
 
     /**
      * Gets the collection name for a given type.
+     *
      * @param entity entity to get collection name
      * @return collection name
      */
@@ -347,8 +362,9 @@ public class DocumentConventions {
 
     /**
      * Generates the document id.
+     *
      * @param databaseName Database name
-     * @param entity Entity
+     * @param entity       Entity
      * @return document id
      */
     @SuppressWarnings("unchecked")
@@ -367,9 +383,10 @@ public class DocumentConventions {
     /**
      * Register an id convention for a single type (and all of its derived types.
      * Note that you can still fall back to the DocumentIdGenerator if you want.
+     *
      * @param <TEntity> Entity class
-     * @param clazz Class
-     * @param function Function to use
+     * @param clazz     Class
+     * @param function  Function to use
      * @return document conventions
      */
     @SuppressWarnings("unchecked")
@@ -396,16 +413,18 @@ public class DocumentConventions {
 
     /**
      * Get the java class (if exists) from the document
-     * @param id document id
+     *
+     * @param id       document id
      * @param document document to get java class from
      * @return java class
      */
-    public String getJavaClass(String id, ObjectNode document) {
+    public Class getJavaClass(String id, ObjectNode document) {
         return _findJavaClass.apply(id, document);
     }
 
     /**
      * Get the Java class name to be stored in the entity metadata
+     *
      * @param entityType Entity type
      * @return java class name
      */
@@ -455,9 +474,10 @@ public class DocumentConventions {
     }
 
     /**
-     *  Gets the identity property.
-     *  @param clazz Class of entity
-     *  @return Identity property (field)
+     * Gets the identity property.
+     *
+     * @param clazz Class of entity
+     * @return Identity property (field)
      */
     public Field getIdentityProperty(Class clazz) {
         Field info = _idPropertyCache.get(clazz);
