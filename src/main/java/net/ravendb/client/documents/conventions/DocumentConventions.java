@@ -20,6 +20,7 @@ import java.beans.PropertyDescriptor;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 
@@ -31,7 +32,8 @@ public class DocumentConventions {
         defaultConventions.freeze();
     }
 
-    private static final Map<Class, String> _cachedDefaultTypeCollectionNames = new HashMap<>();
+    private static final Map<Class, String> _cachedDefaultTypeCollectionNames = new ConcurrentHashMap<>();
+    private static final Map<String, Class> _cachedDocumentJavaClasses = new ConcurrentHashMap<>();
 
     private final List<Tuple<Class, IValueForQueryConverter<Object>>> _listOfQueryValueToObjectConverters = new ArrayList<>();
 
@@ -74,11 +76,13 @@ public class DocumentConventions {
             if (metadata != null) {
                 TextNode javaType = (TextNode) metadata.get(Constants.Documents.Metadata.RAVEN_JAVA_TYPE);
                 if (javaType != null) {
-                    try {
-                        return Class.forName(javaType.asText());
-                    } catch (ClassNotFoundException e) {
-                        throw new IllegalStateException("Could not find class", e);
-                    }
+                    return _cachedDocumentJavaClasses.computeIfAbsent(javaType.asText(), c -> {
+                        try {
+                            return Class.forName(c);
+                        } catch (ClassNotFoundException e) {
+                            throw new IllegalStateException("Could not find class: " + c, e);
+                        }
+                    });
                 }
             }
 
