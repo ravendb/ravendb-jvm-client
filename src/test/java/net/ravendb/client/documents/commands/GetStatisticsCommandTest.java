@@ -36,7 +36,7 @@ public class GetStatisticsCommandTest extends RemoteTestBase {
                     .isGreaterThan(0);
 
             assertThat(stats.getCountOfIndexes())
-                    .isEqualTo(3);
+                    .isGreaterThanOrEqualTo(3);
 
             assertThat(stats.getCountOfDocuments())
                     .isEqualTo(1059);
