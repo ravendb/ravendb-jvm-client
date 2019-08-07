@@ -15,7 +15,7 @@ env:
     - RAVENDB_SERVER_VERSION="4.2"
 before_install:
   - sudo apt-get -qq update
-  - sudo apt-get install -y libunwind8 wget libicu52 libssl-dev curl unzip gettext libcurl4-openssl-dev zlib1g uuid-dev bzip2 openssl
+  - sudo apt-get install -y libunwind8 wget libssl-dev curl unzip gettext libcurl4-openssl-dev zlib1g uuid-dev bzip2 openssl
   - mkdir ./certs; pushd certs
   - openssl genrsa -out ca.key 2048
   - openssl req -new -x509 -key ca.key -out ca.crt -subj "/C=US/ST=Arizona/L=Nevada/O=RavenDB Test CA/OU=RavenDB test CA/CN=a.javatest11.development.run/emailAddress=ravendbca@example.com"
