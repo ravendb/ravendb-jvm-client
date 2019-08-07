@@ -46,7 +46,7 @@ public class Operation {
             switch (operationStatus) {
                 case "Completed":
                     return ;
-                case "Cancelled":
+                case "Canceled":
                     throw new OperationCancelledException();
                 case "Faulted":
                     JsonNode result = status.get("Result");
