@@ -119,7 +119,7 @@ public class EntityToJson {
 
             String documentType =_session.getConventions().getJavaClass(id, document);
             if (documentType != null) {
-                Class type = Class.forName(documentType);
+                Class type = _session.getConventions().getJavaClassByName(documentType);
                 if (entityType.isAssignableFrom(type)) {
                     entity = _session.getConventions().getEntityMapper().treeToValue(document, type);
                 }

@@ -6,6 +6,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.databind.node.TextNode;
 import net.ravendb.client.Constants;
 import net.ravendb.client.documents.operations.configuration.ClientConfiguration;
+import net.ravendb.client.exceptions.RavenException;
 import net.ravendb.client.extensions.JsonExtensions;
 import net.ravendb.client.http.AggressiveCacheMode;
 import net.ravendb.client.http.AggressiveCacheOptions;
@@ -57,6 +58,7 @@ public class DocumentConventions {
 
     private Function<Class, String> _findJavaClassName;
     private BiFunction<String, ObjectNode, String> _findJavaClass;
+    private Function<String, Class> _findJavaClassByName;
 
     private boolean _useOptimisticConcurrency;
     private boolean _throwIfQueryPageSizeIsNotSet;
@@ -116,6 +118,13 @@ public class DocumentConventions {
             return null;
         };
         _findJavaClassName = type -> ReflectionUtil.getFullNameWithoutVersionInformation(type);
+        _findJavaClassByName = name -> {
+            try {
+                return Class.forName(name);
+            } catch (ClassNotFoundException e) {
+                throw new RavenException("Unable to find class by name = " + name, e);
+            }
+        };
         _transformClassCollectionNameToDocumentIdPrefix = collectionName -> defaultTransformCollectionNameToDocumentIdPrefix(collectionName);
 
         _findCollectionName = type -> defaultGetCollectionName(type);
@@ -239,6 +248,14 @@ public class DocumentConventions {
 
     public Function<Class, String> getFindCollectionName() {
         return _findCollectionName;
+    }
+
+    public Function<String, Class> getFindJavaClassByName() {
+        return _findJavaClassByName;
+    }
+
+    public void setFindJavaClassByName(Function<String, Class> findJavaClassByName) {
+        _findJavaClassByName = findJavaClassByName;
     }
 
     public void setFindCollectionName(Function<Class, String> findCollectionName) {
@@ -442,6 +459,15 @@ public class DocumentConventions {
     }
 
     /**
+     * Get the class instance by it's name
+     * @param name class name
+     * @return java class
+     */
+    public Class getJavaClassByName(String name) {
+        return _findJavaClassByName.apply(name);
+    }
+
+    /**
      * Get the Java class name to be stored in the entity metadata
      * @param entityType Entity type
      * @return java class name
@@ -469,6 +495,7 @@ public class DocumentConventions {
         cloned._findCollectionName = _findCollectionName;
         cloned._findJavaClassName = _findJavaClassName;
         cloned._findJavaClass = _findJavaClass;
+        cloned._findJavaClassByName = _findJavaClassByName;
         cloned._useOptimisticConcurrency = _useOptimisticConcurrency;
         cloned._throwIfQueryPageSizeIsNotSet = _throwIfQueryPageSizeIsNotSet;
         cloned._maxNumberOfRequestsPerSession = _maxNumberOfRequestsPerSession;
