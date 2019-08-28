@@ -601,7 +601,7 @@ public class RequestExecutor implements CleanCloseable {
                     // But we can't do that if the server is an old one.
 
                     Header version = response.getFirstHeader(Constants.Headers.SERVER_VERSION);
-                    if (version != null && "4.1".equalsIgnoreCase(version.getValue())) {
+                    if (version != null && "4.1".compareToIgnoreCase(version.getValue()) > 0) {
                         throw new ClientVersionMismatchException("The server on " + chosenNode.getUrl() + " has an old version and can't perform " +
                                 "the command since this command dependent on a cluster transaction which this node doesn't support.");
                     }
