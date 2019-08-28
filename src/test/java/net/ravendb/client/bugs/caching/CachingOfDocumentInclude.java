@@ -271,8 +271,8 @@ public class CachingOfDocumentInclude extends RemoteTestBase {
             orderLine1.setProductName("phone");
 
             OrderLine orderLine2 = new OrderLine();
-            orderLine1.setProduct("products/2-A");
-            orderLine1.setProductName("mouse");
+            orderLine2.setProduct("products/2-A");
+            orderLine2.setProductName("mouse");
 
             order.setLines(Arrays.asList(orderLine1, orderLine2));
 
