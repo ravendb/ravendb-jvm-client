@@ -1602,7 +1602,7 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
             return;
         }
 
-        if (queryData.getLoadTokens().stream().anyMatch(x -> !x.alias.equals(possibleAlias))) {
+        if (queryData.getLoadTokens().stream().noneMatch(x -> x.alias.equals(possibleAlias))) {
             return;
         }
 
