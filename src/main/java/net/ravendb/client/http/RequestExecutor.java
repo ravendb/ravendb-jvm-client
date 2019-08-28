@@ -851,7 +851,7 @@ public class RequestExecutor implements CleanCloseable {
 
                     CurrentIndexAndNode indexAndNode = chooseNodeForRequest(command, sessionInfo);
 
-                    if (command.getFailedNodes().containsKey(indexAndNode)) {
+                    if (command.getFailedNodes().containsKey(indexAndNode.currentNode)) {
                         // we tried all the nodes, let's try to update topology and retry one more time
                         Boolean success = updateTopologyAsync(chosenNode, 60 * 1000, true, "handle-unsuccessful-response").get();
                         if (!success) {
