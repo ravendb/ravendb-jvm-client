@@ -203,6 +203,10 @@ public class JavaScriptIndexTest extends RemoteTestBase {
 
                 assertThat(res2.size())
                         .isEqualTo(res.size());
+                assertThat(res2.size())
+                        .isPositive();
+                assertThat(res.size())
+                        .isPositive();
             }
         }
     }
@@ -430,10 +434,10 @@ public class JavaScriptIndexTest extends RemoteTestBase {
         }
 
         public Products_ByCategory() {
-            setMaps(Sets.newSet("map('products', function(p){\n" +
+            setMaps(Sets.newSet("map('product2s', function(p){\n" +
                     "                        return {\n" +
                     "                            category:\n" +
-                    "                            load(p.category, 'Categories').name,\n" +
+                    "                            load(p.category, 'categories').name,\n" +
                     "                            count:\n" +
                     "                            1\n" +
                     "                        }\n" +
