@@ -582,7 +582,6 @@ public class RequestExecutor implements CleanCloseable {
                 request.addHeader(Constants.Headers.TOPOLOGY_ETAG, "\"" + topologyEtag + "\"");
             }
 
-            Stopwatch sp = Stopwatch.createStarted();
             CloseableHttpResponse response = null;
             ResponseDisposeHandling responseDispose = ResponseDisposeHandling.AUTOMATIC;
 
@@ -606,13 +605,10 @@ public class RequestExecutor implements CleanCloseable {
                                 "the command since this command dependent on a cluster transaction which this node doesn't support.");
                     }
                 }
-
-                sp.stop();
             } catch (IOException e) {
                 if (!shouldRetry) {
                     throw ExceptionsUtils.unwrapException(e);
                 }
-                sp.stop();
 
                 if (!handleServerDown(urlRef.value, chosenNode, nodeIndex, command, request, response, e, sessionInfo, shouldRetry)) {
                     throwFailedToContactAllNodes(command, request, e, null);
