@@ -1122,7 +1122,7 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
     }
 
     public void waitForIndexesAfterSaveChanges() {
-        waitForReplicationAfterSaveChanges(options -> {
+        waitForIndexesAfterSaveChanges(options -> {
         });
     }
 
