@@ -136,13 +136,13 @@ public class ClusterRequestExecutor extends RequestExecutor {
                 if (_nodeSelector == null) {
                     _nodeSelector = new NodeSelector(newTopology, _executorService);
 
-                    if (_readBalanceBehavior == ReadBalanceBehavior.FASTEST_NODE) {
+                    if (getConventions().getReadBalanceBehavior() == ReadBalanceBehavior.FASTEST_NODE) {
                         _nodeSelector.scheduleSpeedTest();
                     }
                 } else if (_nodeSelector.onUpdateTopology(newTopology, forceUpdate)) {
                     disposeAllFailedNodesTimers();
 
-                    if (_readBalanceBehavior == ReadBalanceBehavior.FASTEST_NODE) {
+                    if (getConventions().getReadBalanceBehavior() == ReadBalanceBehavior.FASTEST_NODE) {
                         _nodeSelector.scheduleSpeedTest();
                     }
                 }

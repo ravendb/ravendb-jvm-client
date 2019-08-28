@@ -135,7 +135,7 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
 
     public ServerNode getCurrentSessionNode() {
         CurrentIndexAndNode result;
-        switch (_documentStore.getConventions().getReadBalanceBehavior()) {
+        switch (_requestExecutor.getConventions().getReadBalanceBehavior()) {
             case NONE:
                 result = _requestExecutor.getPreferredNode();
                 break;
@@ -146,7 +146,7 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
                 result = _requestExecutor.getFastestNode();
                 break;
             default:
-                throw new IllegalArgumentException(_documentStore.getConventions().getReadBalanceBehavior().toString());
+                throw new IllegalArgumentException(_requestExecutor.getConventions().getReadBalanceBehavior().toString());
         }
 
         return result.currentNode;
@@ -1059,8 +1059,8 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
     public Map<String, List<DocumentsChanges>> whatChanged() {
         HashMap<String, List<DocumentsChanges>> changes = new HashMap<>();
 
-        prepareForEntitiesDeletion(null, changes);
         getAllEntitiesChanges(changes);
+        prepareForEntitiesDeletion(null, changes);
 
         return changes;
     }
@@ -1194,6 +1194,12 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
         if (_countersByDocId != null) {
             _countersByDocId.clear();
         }
+        deferredCommands.clear();
+        deferredCommandsMap.clear();
+        if (getClusterSession() != null) {
+            getClusterSession().clear();
+        }
+        pendingLazyOperations.clear();
     }
 
     /**

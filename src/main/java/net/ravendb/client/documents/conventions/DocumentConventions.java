@@ -7,6 +7,8 @@ import com.fasterxml.jackson.databind.node.TextNode;
 import net.ravendb.client.Constants;
 import net.ravendb.client.documents.operations.configuration.ClientConfiguration;
 import net.ravendb.client.extensions.JsonExtensions;
+import net.ravendb.client.http.AggressiveCacheMode;
+import net.ravendb.client.http.AggressiveCacheOptions;
 import net.ravendb.client.http.ReadBalanceBehavior;
 import net.ravendb.client.primitives.Reference;
 import net.ravendb.client.primitives.Tuple;
@@ -19,6 +21,7 @@ import java.beans.Introspector;
 import java.beans.PropertyDescriptor;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
+import java.time.Duration;
 import java.util.*;
 import java.util.function.BiFunction;
 import java.util.function.Function;
@@ -64,6 +67,38 @@ public class DocumentConventions {
     private ObjectMapper _entityMapper;
     private Boolean _useCompression;
 
+    private AggressiveCacheConventions _aggressiveCache;
+
+    public AggressiveCacheConventions aggressiveCache() {
+        return _aggressiveCache;
+    }
+
+    public static class AggressiveCacheConventions {
+        private final DocumentConventions _conventions;
+        private final AggressiveCacheOptions _aggressiveCacheOptions;
+
+        public AggressiveCacheConventions(DocumentConventions conventions) {
+            _conventions = conventions;
+            _aggressiveCacheOptions = new AggressiveCacheOptions(Duration.ofDays(1), AggressiveCacheMode.TRACK_CHANGES);
+        }
+
+        public Duration getDuration() {
+            return _aggressiveCacheOptions.getDuration();
+        }
+
+        public void setDuration(Duration duration) {
+            _aggressiveCacheOptions.setDuration(duration);
+        }
+
+        public AggressiveCacheMode getMode() {
+            return _aggressiveCacheOptions.getMode();
+        }
+
+        public void setMode(AggressiveCacheMode mode) {
+            _aggressiveCacheOptions.setMode(mode);
+        }
+    }
+
     public DocumentConventions() {
         _readBalanceBehavior = ReadBalanceBehavior.NONE;
         _findIdentityProperty = q -> q.getName().equals("id");
@@ -89,6 +124,8 @@ public class DocumentConventions {
         _maxHttpCacheSize = 128 * 1024 * 1024;
 
         _entityMapper = JsonExtensions.getDefaultEntityMapper();
+
+        _aggressiveCache = new AggressiveCacheConventions(this);
     }
 
     public boolean hasExplicitlySetCompressionUsage() {

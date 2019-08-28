@@ -104,7 +104,8 @@ public abstract class AbstractIndexCreationTaskBase {
     public void execute(IDocumentStore store, DocumentConventions conventions, String database) {
         DocumentConventions oldConventions = getConventions();
         try {
-            setConventions(ObjectUtils.firstNonNull(conventions, getConventions(), store.getConventions()));
+            String databaseForConventions = ObjectUtils.firstNonNull(database, store.getDatabase());
+            setConventions(ObjectUtils.firstNonNull(conventions, getConventions(), store.getRequestExecutor(databaseForConventions).getConventions()));
 
             IndexDefinition indexDefinition = createIndexDefinition();
             indexDefinition.setName(getIndexName());

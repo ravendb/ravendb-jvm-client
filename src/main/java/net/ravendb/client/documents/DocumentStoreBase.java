@@ -11,6 +11,7 @@ import net.ravendb.client.documents.operations.indexes.PutIndexesOperation;
 import net.ravendb.client.documents.session.*;
 import net.ravendb.client.documents.smuggler.DatabaseSmuggler;
 import net.ravendb.client.documents.subscriptions.DocumentSubscriptions;
+import net.ravendb.client.http.AggressiveCacheMode;
 import net.ravendb.client.http.RequestExecutor;
 import net.ravendb.client.primitives.CleanCloseable;
 import net.ravendb.client.primitives.EventHandler;
@@ -64,6 +65,12 @@ public abstract class DocumentStoreBase implements IDocumentStore {
 
     @Override
     public abstract CleanCloseable aggressivelyCacheFor(Duration cacheDuration, String database);
+
+    @Override
+    public abstract CleanCloseable aggressivelyCacheFor(Duration cacheDuration, AggressiveCacheMode mode);
+
+    @Override
+    public abstract CleanCloseable aggressivelyCacheFor(Duration cacheDuration, AggressiveCacheMode mode, String database);
 
     public abstract IDatabaseChanges changes();
 
@@ -302,7 +309,7 @@ public abstract class DocumentStoreBase implements IDocumentStore {
 
     @Override
     public CleanCloseable aggressivelyCache(String database) {
-        return aggressivelyCacheFor(Duration.ofDays(1), database);
+        return aggressivelyCacheFor(conventions.aggressiveCache().getDuration(), database);
     }
 
     protected void registerEvents(InMemoryDocumentSessionOperations session) {

@@ -1,9 +1,12 @@
 package net.ravendb.client.http;
 
+import java.util.Map;
+
 public class ClusterTopologyResponse {
     private String leader;
     private String nodeTag;
     private ClusterTopology topology;
+    private Map<String, NodeStatus> status;
 
     public String getLeader() {
         return leader;
@@ -27,5 +30,13 @@ public class ClusterTopologyResponse {
 
     public void setTopology(ClusterTopology topology) {
         this.topology = topology;
+    }
+
+    public Map<String, NodeStatus> getStatus() {
+        return status;
+    }
+
+    public void setStatus(Map<String, NodeStatus> status) {
+        this.status = status;
     }
 }

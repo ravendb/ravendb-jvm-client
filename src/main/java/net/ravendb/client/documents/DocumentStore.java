@@ -10,6 +10,7 @@ import net.ravendb.client.documents.session.DocumentSession;
 import net.ravendb.client.documents.session.IDocumentSession;
 import net.ravendb.client.documents.session.SessionOptions;
 import net.ravendb.client.documents.smuggler.DatabaseSmuggler;
+import net.ravendb.client.http.AggressiveCacheMode;
 import net.ravendb.client.http.AggressiveCacheOptions;
 import net.ravendb.client.http.RequestExecutor;
 import net.ravendb.client.primitives.*;
@@ -43,7 +44,6 @@ public class DocumentStore extends DocumentStoreBase {
     private DatabaseSmuggler _smuggler;
 
     private String identifier;
-    private boolean _aggressiveCachingUsed;
 
     public DocumentStore(String url, String database) {
         this.setUrls(new String[]{url});
@@ -288,11 +288,21 @@ public class DocumentStore extends DocumentStoreBase {
 
     @Override
     public CleanCloseable aggressivelyCacheFor(Duration cacheDuration) {
-        return aggressivelyCacheFor(cacheDuration, null);
+        return aggressivelyCacheFor(cacheDuration, getConventions().aggressiveCache().getMode(), null);
     }
 
     @Override
     public CleanCloseable aggressivelyCacheFor(Duration cacheDuration, String database) {
+        return aggressivelyCacheFor(cacheDuration, getConventions().aggressiveCache().getMode(), database);
+    }
+
+    @Override
+    public CleanCloseable aggressivelyCacheFor(Duration cacheDuration, AggressiveCacheMode mode) {
+        return aggressivelyCacheFor(cacheDuration, mode, null);
+    }
+
+    @Override
+    public CleanCloseable aggressivelyCacheFor(Duration cacheDuration, AggressiveCacheMode mode, String database) {
         assertInitialized();
 
         database = ObjectUtils.firstNonNull(database, getDatabase());
@@ -302,24 +312,20 @@ public class DocumentStore extends DocumentStoreBase {
                     "unless 'database' parameter is provided. Did you forget to pass 'database' parameter?");
         }
 
-        if (!_aggressiveCachingUsed) {
+        if (mode != AggressiveCacheMode.DO_NOT_TRACK_CHANGES) {
             listenToChangesAndUpdateTheCache(database);
         }
 
         RequestExecutor re = getRequestExecutor(database);
         AggressiveCacheOptions old = re.aggressiveCaching.get();
 
-        re.aggressiveCaching.set(new AggressiveCacheOptions(cacheDuration));
+        AggressiveCacheOptions newOptions = new AggressiveCacheOptions(cacheDuration, mode);
+        re.aggressiveCaching.set(newOptions);
 
         return () -> re.aggressiveCaching.set(old);
     }
 
     private void listenToChangesAndUpdateTheCache(String database) {
-
-        // this is intentionally racy, most cases, we'll already
-        // have this set once, so we won't need to do it again
-
-        _aggressiveCachingUsed = true;
         Lazy<EvictItemsFromCacheBasedOnChanges> lazy = _aggressiveCacheChanges.get(database);
 
         if (lazy == null) {

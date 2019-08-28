@@ -25,6 +25,7 @@ public class SubscriptionBatch<T> {
         private String id;
         private String changeVector;
         private boolean projection;
+        private boolean revision;
 
         private void throwItemProcessException() {
             throw new IllegalStateException("Failed to process document " + id + " with Change Vector " + changeVector + " because: " + System.lineSeparator() + exceptionMessage);
@@ -44,6 +45,10 @@ public class SubscriptionBatch<T> {
 
         public boolean isProjection() {
             return projection;
+        }
+
+        public boolean isRevision() {
+            return revision;
         }
 
         public T getResult() {
@@ -158,7 +163,7 @@ public class SubscriptionBatch<T> {
         }
 
         for (Item<T> item : getItems()) {
-            if (item.projection) {
+            if (item.projection || item.revision) {
                 continue;
             }
 
@@ -187,10 +192,10 @@ public class SubscriptionBatch<T> {
 
     @SuppressWarnings("unchecked")
     String initialize(BatchFromServer batch) {
+        _includes = batch.getIncludes();
+
         _items.clear();
         String lastReceivedChangeVector = null;
-
-        _includes = batch.getIncludes();
 
         for (SubscriptionConnectionServerMessage item : batch.getMessages()) {
             ObjectNode metadata;
@@ -263,6 +268,7 @@ public class SubscriptionBatch<T> {
             itemToAdd._result = instance;
             itemToAdd.exceptionMessage = item.getException();
             itemToAdd.projection = projection;
+            itemToAdd.revision = _revisions;
 
             _items.add(itemToAdd);
         }

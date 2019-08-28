@@ -81,7 +81,6 @@ public class RequestExecutor implements CleanCloseable {
     private static final Log logger = LogFactory.getLog(RequestExecutor.class);
 
     private Date _lastReturnedResponse;
-    protected final ReadBalanceBehavior _readBalanceBehavior;
 
     protected final ExecutorService _executorService;
 
@@ -161,7 +160,6 @@ public class RequestExecutor implements CleanCloseable {
     protected RequestExecutor(String databaseName, KeyStore certificate, KeyStore trustStore, DocumentConventions conventions, ExecutorService executorService, String[] initialUrls) {
         cache = new HttpCache(conventions.getMaxHttpCacheSize());
         _executorService = executorService;
-        _readBalanceBehavior = conventions.getReadBalanceBehavior();
         _databaseName = databaseName;
         this.certificate = certificate;
         this.trustStore = trustStore;
@@ -292,12 +290,12 @@ public class RequestExecutor implements CleanCloseable {
                 if (_nodeSelector == null) {
                     _nodeSelector = new NodeSelector(command.getResult(), _executorService);
 
-                    if (_readBalanceBehavior == ReadBalanceBehavior.FASTEST_NODE) {
+                    if (conventions.getReadBalanceBehavior() == ReadBalanceBehavior.FASTEST_NODE) {
                         _nodeSelector.scheduleSpeedTest();
                     }
                 } else if (_nodeSelector.onUpdateTopology(command.getResult(), forceUpdate)) {
                     disposeAllFailedNodesTimers();
-                    if (_readBalanceBehavior == ReadBalanceBehavior.FASTEST_NODE) {
+                    if (conventions.getReadBalanceBehavior() == ReadBalanceBehavior.FASTEST_NODE) {
                         _nodeSelector.scheduleSpeedTest();
                     }
                 }
@@ -345,7 +343,7 @@ public class RequestExecutor implements CleanCloseable {
             return _nodeSelector.getPreferredNode();
         }
 
-        switch (_readBalanceBehavior) {
+        switch (conventions.getReadBalanceBehavior()) {
             case NONE:
                 return _nodeSelector.getPreferredNode();
             case ROUND_ROBIN:
@@ -559,7 +557,7 @@ public class RequestExecutor implements CleanCloseable {
                 AggressiveCacheOptions aggressiveCacheOptions = aggressiveCaching.get();
                 if (aggressiveCacheOptions != null &&
                         cachedItem.getAge().compareTo(aggressiveCacheOptions.getDuration()) < 0 &&
-                        !cachedItem.getMightHaveBeenModified() &&
+                        (!cachedItem.getMightHaveBeenModified() || aggressiveCacheOptions.getMode() != AggressiveCacheMode.TRACK_CHANGES) &&
                         command.canCacheAggressively()) {
                     try {
                         command.setResponse(cachedValue.value, true);
@@ -714,7 +712,7 @@ public class RequestExecutor implements CleanCloseable {
     }
 
     private <TResult> boolean shouldExecuteOnAll(ServerNode chosenNode, RavenCommand<TResult> command) {
-        return _readBalanceBehavior == ReadBalanceBehavior.FASTEST_NODE &&
+        return conventions.getReadBalanceBehavior() == ReadBalanceBehavior.FASTEST_NODE &&
                 _nodeSelector != null &&
                 _nodeSelector.inSpeedTestPhase() &&
                 Optional.ofNullable(_nodeSelector)
@@ -793,7 +791,7 @@ public class RequestExecutor implements CleanCloseable {
 
         cachedChangeVector.value = null;
         cachedValue.value = null;
-        return new HttpCache.ReleaseCacheItem(null);
+        return new HttpCache.ReleaseCacheItem();
     }
 
     private <TResult> HttpRequestBase createRequest(ServerNode node, RavenCommand<TResult> command, Reference<String> url) {

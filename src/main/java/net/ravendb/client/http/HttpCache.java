@@ -54,7 +54,7 @@ public class HttpCache implements CleanCloseable {
 
         changeVectorRef.value = null;
         responseRef.value = null;
-        return new ReleaseCacheItem(null);
+        return new ReleaseCacheItem();
     }
 
     public void setNotFound(String url) {
@@ -68,14 +68,22 @@ public class HttpCache implements CleanCloseable {
 
     public static class ReleaseCacheItem implements CleanCloseable {
         public final HttpCacheItem item;
+        private final int _cacheGeneration;
+
+        public ReleaseCacheItem() {
+            item = null;
+            _cacheGeneration = 0;
+        }
 
         public ReleaseCacheItem(HttpCacheItem item) {
             this.item = item;
+            this._cacheGeneration = item.cache.generation.get();
         }
 
         public void notModified() {
             if (item != null) {
                 item.lastServerUpdate = LocalDateTime.now();
+                item.generation = _cacheGeneration;
             }
         }
 
@@ -87,7 +95,7 @@ public class HttpCache implements CleanCloseable {
         }
 
         public boolean getMightHaveBeenModified() {
-            return item.generation != item.cache.generation.get();
+            return item.generation != _cacheGeneration;
         }
 
         @SuppressWarnings("EmptyMethod")

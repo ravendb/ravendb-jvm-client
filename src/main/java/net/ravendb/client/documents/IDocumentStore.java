@@ -8,6 +8,7 @@ import net.ravendb.client.documents.operations.OperationExecutor;
 import net.ravendb.client.documents.session.*;
 import net.ravendb.client.documents.smuggler.DatabaseSmuggler;
 import net.ravendb.client.documents.subscriptions.DocumentSubscriptions;
+import net.ravendb.client.http.AggressiveCacheMode;
 import net.ravendb.client.http.RequestExecutor;
 import net.ravendb.client.primitives.CleanCloseable;
 import net.ravendb.client.primitives.EventHandler;
@@ -74,6 +75,32 @@ public interface IDocumentStore extends IDisposalNotification {
      */
     CleanCloseable aggressivelyCacheFor(Duration cacheDuration, String database);
 
+    /**
+     * Setup the context for aggressive caching.
+     *
+     * Aggressive caching means that we will not check the server to see whether the response
+     * we provide is current or not, but will serve the information directly from the local cache
+     * without touching the server.
+     *
+     * @param cacheDuration Specify the aggressive cache duration
+     * @param mode Aggressive caching mode, if not specified, TrackChanges mode will be used
+     * @return Context for aggressive caching
+     */
+    CleanCloseable aggressivelyCacheFor(Duration cacheDuration, AggressiveCacheMode mode);
+
+    /**
+     * Setup the context for aggressive caching.
+     *
+     * Aggressive caching means that we will not check the server to see whether the response
+     * we provide is current or not, but will serve the information directly from the local cache
+     * without touching the server.
+     *
+     * @param cacheDuration Specify the aggressive cache duration
+     * @param mode Aggressive caching mode, if not specified, TrackChanges mode will be used
+     * @param database The database to cache, if not specified, the default database will be used
+     * @return Context for aggressive caching
+     */
+    CleanCloseable aggressivelyCacheFor(Duration cacheDuration, AggressiveCacheMode mode, String database);
 
     /**
      * Setup the context for aggressive caching.
