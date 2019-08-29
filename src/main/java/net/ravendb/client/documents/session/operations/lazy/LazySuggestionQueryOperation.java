@@ -76,10 +76,6 @@ public class LazySuggestionQueryOperation implements ILazyOperation {
     }
 
     private void handleResponse(QueryResult queryResult) {
-        if (_invokeAfterQueryExecuted != null) {
-            _invokeAfterQueryExecuted.accept(queryResult);
-        }
-
         result = _processResults.apply(queryResult, _conventions);
         this.queryResult = queryResult;
     }

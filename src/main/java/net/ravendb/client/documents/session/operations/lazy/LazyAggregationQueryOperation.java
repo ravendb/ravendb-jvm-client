@@ -84,7 +84,6 @@ public class LazyAggregationQueryOperation implements ILazyOperation {
     }
 
     private void handleResponse(QueryResult queryResult) {
-        _invokeAfterQueryExecuted.accept(queryResult);
         result = _processResults.apply(queryResult, _conventions);
         this.queryResult = queryResult;
     }

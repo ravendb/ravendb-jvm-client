@@ -1,6 +1,5 @@
 package net.ravendb.client.http;
 
-import com.google.common.base.Stopwatch;
 import net.ravendb.client.Constants;
 import net.ravendb.client.documents.conventions.DocumentConventions;
 import net.ravendb.client.documents.operations.GetStatisticsOperation;
