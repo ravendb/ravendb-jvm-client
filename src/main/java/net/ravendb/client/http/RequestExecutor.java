@@ -452,11 +452,6 @@ public class RequestExecutor implements CleanCloseable {
                         throw (DatabaseDoesNotExistException) e.getCause();
                     }
 
-                    if (initialUrls.length == 0) {
-                        _lastKnownUrls = initialUrls;
-                        throw new IllegalStateException("Cannot get topology from server: " + url, e);
-                    }
-
                     list.add(Tuple.create(url, e));
                 }
             }
