@@ -756,6 +756,8 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
     }
 
     public void _whereLessThanOrEqual(String fieldName, Object value, boolean exact) {
+        fieldName = ensureValidFieldName(fieldName, false);
+
         List<QueryToken> tokens = getCurrentWhereTokens();
         appendOperatorIfNeeded(tokens);
         negateIfNeeded(tokens, fieldName);
@@ -776,6 +778,8 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
      */
     @Override
     public void _whereRegex(String fieldName, String pattern) {
+        fieldName = ensureValidFieldName(fieldName, false);
+
         List<QueryToken> tokens = getCurrentWhereTokens();
         appendOperatorIfNeeded(tokens);
         negateIfNeeded(tokens, fieldName);
