@@ -29,6 +29,7 @@ import net.ravendb.client.json.JsonOperation;
 import net.ravendb.client.json.MetadataAsDictionary;
 import net.ravendb.client.primitives.*;
 import net.ravendb.client.util.IdentityHashSet;
+import net.ravendb.client.util.IdentityLinkedHashMap;
 import org.apache.commons.beanutils.BeanUtils;
 import org.apache.commons.lang3.NotImplementedException;
 import org.apache.commons.lang3.ObjectUtils;
@@ -165,7 +166,7 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
     /**
      * hold the data required to manage the data for RavenDB's Unit of Work
      */
-    public final Map<Object, DocumentInfo> documentsByEntity = new LinkedHashMap<>();
+    public final Map<Object, DocumentInfo> documentsByEntity = new IdentityLinkedHashMap<>();
 
     /**
      * @return map which holds the data required to manage Counters tracking for RavenDB's Unit of Work
