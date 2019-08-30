@@ -118,7 +118,7 @@ public class NodeSelector implements CleanCloseable {
 
     public void restoreNodeIndex(int nodeIndex) {
         NodeSelectorState state = _state;
-        if (state.failures.length < nodeIndex) {
+        if (state.failures.length <= nodeIndex) {
             return; // the state was changed and we no longer have it?
         }
 
