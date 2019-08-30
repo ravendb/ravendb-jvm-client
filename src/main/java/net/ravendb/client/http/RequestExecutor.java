@@ -24,6 +24,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.http.Header;
 import org.apache.http.HttpStatus;
+import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpRequestBase;
 import org.apache.http.config.SocketConfig;
@@ -1049,7 +1050,13 @@ public class RequestExecutor implements CleanCloseable {
     private CloseableHttpClient createClient() {
         HttpClientBuilder httpClientBuilder = HttpClients
                 .custom()
-                .setMaxConnPerRoute(30);
+                .setMaxConnPerRoute(30)
+                .setMaxConnTotal(40)
+                .setDefaultRequestConfig(
+                        RequestConfig.custom()
+                                .setConnectionRequestTimeout(3000)
+                                .build()
+                );
 
         if (conventions.hasExplicitlySetCompressionUsage() && !conventions.isUseCompression()) {
             httpClientBuilder.disableContentCompression();

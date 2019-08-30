@@ -34,7 +34,7 @@ public class DocumentStore extends DocumentStoreBase {
 
     private final ConcurrentMap<String, Lazy<EvictItemsFromCacheBasedOnChanges>> _aggressiveCacheChanges = new ConcurrentHashMap<>();
 
-    private final ConcurrentMap<String, RequestExecutor> requestExecutors = new ConcurrentSkipListMap<>(String.CASE_INSENSITIVE_ORDER);
+    private final ConcurrentMap<String, Lazy<RequestExecutor>> requestExecutors = new ConcurrentSkipListMap<>(String.CASE_INSENSITIVE_ORDER);
 
     private MultiDatabaseHiLoIdGenerator _multiDbHiLo;
 
@@ -123,8 +123,12 @@ public class DocumentStore extends DocumentStoreBase {
 
         EventHelper.invoke(new ArrayList<>(afterClose), this, EventArgs.EMPTY);
 
-        for (Map.Entry<String, RequestExecutor> kvp : requestExecutors.entrySet()) {
-            kvp.getValue().close();
+        for (Map.Entry<String, Lazy<RequestExecutor>> kvp : requestExecutors.entrySet()) {
+            if (!kvp.getValue().isValueCreated()) {
+                continue;
+            }
+
+            kvp.getValue().getValue().close();
         }
 
         executorService.shutdown();
@@ -174,20 +178,22 @@ public class DocumentStore extends DocumentStoreBase {
             database = getDatabase();
         }
 
-        RequestExecutor executor = requestExecutors.get(database);
+        Lazy<RequestExecutor> executor = requestExecutors.get(database);
         if (executor != null) {
-            return executor;
+            return executor.getValue();
         }
 
+        final String effectiveDatabase = database;
+
         if (!getConventions().isDisableTopologyUpdates()) {
-            executor = RequestExecutor.create(getUrls(), database, getCertificate(), getTrustStore(), executorService, getConventions());
+            executor = new Lazy<>(() -> RequestExecutor.create(getUrls(), effectiveDatabase, getCertificate(), getTrustStore(), executorService, getConventions()));
         } else {
-            executor = RequestExecutor.createForSingleNodeWithConfigurationUpdates(getUrls()[0], database, getCertificate(), getTrustStore(), executorService, getConventions());
+            executor = new Lazy<>(() -> RequestExecutor.createForSingleNodeWithConfigurationUpdates(getUrls()[0], effectiveDatabase, getCertificate(), getTrustStore(), executorService, getConventions()));
         }
 
         requestExecutors.put(database, executor);
 
-        return executor;
+        return executor.getValue();
     }
 
     /**
