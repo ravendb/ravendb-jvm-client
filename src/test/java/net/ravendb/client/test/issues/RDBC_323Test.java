@@ -8,6 +8,7 @@ import net.ravendb.client.documents.session.IDocumentSession;
 import net.ravendb.client.infrastructure.entities.User;
 import org.apache.http.conn.ConnectionPoolTimeoutException;
 import org.assertj.core.api.Assertions;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
@@ -21,6 +22,7 @@ public class RDBC_323Test extends RemoteTestBase {
     private final int streamsToOpen = 40;
 
     @Test
+    @Disabled("slow test - with leaks simulation")
     public void throwsOnConnectionPoolStarvation() throws Exception {
         try (IDocumentStore store = getDocumentStore()) {
 

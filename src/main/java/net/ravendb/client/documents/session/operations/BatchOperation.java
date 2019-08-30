@@ -171,8 +171,14 @@ public class BatchOperation {
     }
 
     private void applyMetadataModifications(String id, DocumentInfo documentInfo) {
-        MetadataAsDictionary metadata = new MetadataAsDictionary(documentInfo.getMetadata());
-        documentInfo.setMetadataInstance(metadata);
+        documentInfo.setMetadataInstance(null);
+
+        documentInfo.setMetadata(documentInfo.getMetadata().deepCopy());
+
+        ObjectNode documentCopy = documentInfo.getDocument().deepCopy();
+        documentCopy.set(Constants.Documents.Metadata.KEY, documentInfo.getMetadata());
+
+        documentInfo.setDocument(documentCopy);
     }
 
     private DocumentInfo getOrAddModifications(String id, DocumentInfo documentInfo, boolean applyModifications) {
@@ -358,6 +364,19 @@ public class BatchOperation {
             entity = documentInfo.getEntity();
         }
 
+        handleMetadataModifications(documentInfo, batchResult, id, changeVector);
+
+        _session.documentsById.add(documentInfo);
+
+        if (entity != null) {
+            _session.getGenerateEntityIdOnTheClient().trySetIdentity(entity, id);
+        }
+
+        AfterSaveChangesEventArgs afterSaveChangesEventArgs = new AfterSaveChangesEventArgs(_session, documentInfo.getId(), documentInfo.getEntity());
+        _session.onAfterSaveChangesInvoke(afterSaveChangesEventArgs);
+    }
+
+    private void handleMetadataModifications(DocumentInfo documentInfo, ObjectNode batchResult, String id, String changeVector) {
         Iterator<String> fieldsIterator = batchResult.fieldNames();
 
         while (fieldsIterator.hasNext()) {
@@ -374,15 +393,6 @@ public class BatchOperation {
         documentInfo.setChangeVector(changeVector);
 
         applyMetadataModifications(id, documentInfo);
-
-        _session.documentsById.add(documentInfo);
-
-        if (entity != null) {
-            _session.getGenerateEntityIdOnTheClient().trySetIdentity(entity, id);
-        }
-
-        AfterSaveChangesEventArgs afterSaveChangesEventArgs = new AfterSaveChangesEventArgs(_session, documentInfo.getId(), documentInfo.getEntity());
-        _session.onAfterSaveChangesInvoke(afterSaveChangesEventArgs);
     }
 
     private void handleCounters(ObjectNode batchResult) {

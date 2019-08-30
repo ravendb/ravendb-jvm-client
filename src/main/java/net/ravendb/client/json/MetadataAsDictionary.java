@@ -58,7 +58,7 @@ public class MetadataAsDictionary implements IMetadataDictionary {
             _metadata.put(fieldName, convertValue(fieldName, _source.get(fieldName)));
         }
 
-        if (_parent != null) {
+        if (_parent != null) { // mark parent as dirty
             _parent.put(_parentKey, this);
         }
     }
