@@ -262,7 +262,7 @@ public class BulkInsertOperation implements CleanCloseable {
 
                 DocumentInfo documentInfo = new DocumentInfo();
                 documentInfo.setMetadataInstance(metadata);
-                ObjectNode json = EntityToJson.convertEntityToJson(entity, _conventions, documentInfo, false);
+                ObjectNode json = EntityToJson.convertEntityToJson(entity, _conventions, documentInfo, true);
 
                 _currentWriter.flush();
 
