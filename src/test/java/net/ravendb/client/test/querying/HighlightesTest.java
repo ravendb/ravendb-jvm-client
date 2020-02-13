@@ -1,5 +1,6 @@
 package net.ravendb.client.test.querying;
 
+import net.ravendb.client.Constants;
 import net.ravendb.client.RemoteTestBase;
 import net.ravendb.client.documents.IDocumentStore;
 import net.ravendb.client.documents.indexes.AbstractMultiMapIndexCreationTask;
@@ -11,11 +12,14 @@ import net.ravendb.client.documents.queries.highlighting.HighlightingOptions;
 import net.ravendb.client.documents.queries.highlighting.Highlightings;
 import net.ravendb.client.documents.session.IDocumentSession;
 import net.ravendb.client.primitives.Reference;
+import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+
+import static org.assertj.core.api.Assertions.assertThat;
 
 public class HighlightesTest extends RemoteTestBase {
 
@@ -191,6 +195,18 @@ public class HighlightesTest extends RemoteTestBase {
                     searchResults.setTitle(title);
                     orderedResults.add(searchResults);
                 }
+                
+                assertThat(orderedResults)
+                        .hasSize(1);
+                assertThat(orderedResults.get(0).getHighlights())
+                        .hasSize(1);
+
+                String firstHighlight = orderedResults.get(0).getHighlights().get(0);
+                assertThat(firstHighlight)
+                        .contains(">session<");
+
+                assertThat(orderedResults.get(0).getResult().getTitle())
+                        .isEqualTo("RavenDB indexes explained");
             }
         }
     }
