@@ -15,7 +15,7 @@ import java.security.cert.CertificateFactory;
 
 public class TcpUtils {
 
-    public static Socket connect(String urlString, String serverCertificate, KeyStore clientCertificate) throws IOException, GeneralSecurityException {
+    public static Socket connect(String urlString, String serverCertificate, KeyStore clientCertificate, char[] privateKeyPassword) throws IOException, GeneralSecurityException {
         URL url = new URL(urlString.replace("tcp://", "http://"));
         String host = url.getHost();
         int port = url.getPort();
@@ -33,7 +33,7 @@ public class TcpUtils {
 
             SSLContext context = SSLContexts.custom()
                     .setProtocol("TLSv1.2")
-                    .loadKeyMaterial(clientCertificate, "".toCharArray())
+                    .loadKeyMaterial(clientCertificate, privateKeyPassword)
                     .loadTrustMaterial(trustStore, (chain, authType) -> chain[0].equals(certificate))
                     .build();
 

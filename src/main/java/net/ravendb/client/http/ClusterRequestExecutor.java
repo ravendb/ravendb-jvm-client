@@ -18,35 +18,35 @@ public class ClusterRequestExecutor extends RequestExecutor {
 
     private final Semaphore clusterTopologySemaphore = new Semaphore(1);
 
-    protected ClusterRequestExecutor(KeyStore certificate, KeyStore trustStore, DocumentConventions conventions, ExecutorService executorService, String[] initialUrls) {
-        super(null, certificate, trustStore, conventions, executorService, initialUrls);
+    protected ClusterRequestExecutor(KeyStore certificate, char[] keyPassword, KeyStore trustStore, DocumentConventions conventions, ExecutorService executorService, String[] initialUrls) {
+        super(null, certificate, keyPassword, trustStore, conventions, executorService, initialUrls);
     }
 
     @SuppressWarnings("unused")
-    public static ClusterRequestExecutor create(String[] urls, String databaseName, KeyStore certificate, DocumentConventions conventions) {
+    public static ClusterRequestExecutor create(String[] urls, String databaseName, KeyStore certificate, char[] keyPassword, DocumentConventions conventions) {
         throw new UnsupportedOperationException();
     }
 
     @SuppressWarnings("unused")
-    public static ClusterRequestExecutor createForSingleNodeWithConfigurationUpdates(String url, String databaseName, KeyStore certificate, DocumentConventions conventions) {
+    public static ClusterRequestExecutor createForSingleNodeWithConfigurationUpdates(String url, String databaseName, KeyStore certificate, char[] keyPassword, DocumentConventions conventions) {
         throw new UnsupportedOperationException();
     }
 
     @SuppressWarnings("unused")
-    public static ClusterRequestExecutor createForSingleNodeWithoutConfigurationUpdates(String url, String databaseName, KeyStore certificate, DocumentConventions conventions) {
+    public static ClusterRequestExecutor createForSingleNodeWithoutConfigurationUpdates(String url, String databaseName, KeyStore certificate, char[] keyPassword, DocumentConventions conventions) {
         throw new UnsupportedOperationException();
     }
 
-    public static ClusterRequestExecutor createForSingleNode(String url, KeyStore certificate, KeyStore trustStore, ExecutorService executorService) {
-        return createForSingleNode(url, certificate, trustStore, executorService, null);
+    public static ClusterRequestExecutor createForSingleNode(String url, KeyStore certificate, char[] keyPassword, KeyStore trustStore, ExecutorService executorService) {
+        return createForSingleNode(url, certificate, keyPassword, trustStore, executorService, null);
     }
 
     @SuppressWarnings("UnnecessaryLocalVariable")
-    public static ClusterRequestExecutor createForSingleNode(String url, KeyStore certificate, KeyStore trustStore, ExecutorService executorService, DocumentConventions conventions) {
+    public static ClusterRequestExecutor createForSingleNode(String url, KeyStore certificate, char[] keyPassword, KeyStore trustStore, ExecutorService executorService, DocumentConventions conventions) {
         String[] initialUrls = {url};
         url = validateUrls(initialUrls, certificate)[0];
 
-        ClusterRequestExecutor executor = new ClusterRequestExecutor(certificate, trustStore,
+        ClusterRequestExecutor executor = new ClusterRequestExecutor(certificate, keyPassword, trustStore,
                 ObjectUtils.firstNonNull(conventions, DocumentConventions.defaultConventions), executorService, initialUrls);
 
         ServerNode serverNode = new ServerNode();
@@ -66,12 +66,12 @@ public class ClusterRequestExecutor extends RequestExecutor {
         return executor;
     }
 
-    public static ClusterRequestExecutor create(String[] initialUrls, KeyStore certificate, KeyStore trustStore, ExecutorService executorService) {
-        return create(initialUrls, certificate, trustStore, executorService, null);
+    public static ClusterRequestExecutor create(String[] initialUrls, KeyStore certificate, char[] keyPassword, KeyStore trustStore, ExecutorService executorService) {
+        return create(initialUrls, certificate, keyPassword, trustStore, executorService, null);
     }
 
-    public static ClusterRequestExecutor create(String[] initialUrls, KeyStore certificate, KeyStore trustStore, ExecutorService executorService, DocumentConventions conventions) {
-        ClusterRequestExecutor executor = new ClusterRequestExecutor(certificate, trustStore,
+    public static ClusterRequestExecutor create(String[] initialUrls, KeyStore certificate, char[] keyPassword, KeyStore trustStore, ExecutorService executorService, DocumentConventions conventions) {
+        ClusterRequestExecutor executor = new ClusterRequestExecutor(certificate, keyPassword, trustStore,
                 conventions != null ? conventions : DocumentConventions.defaultConventions, executorService, initialUrls);
 
         executor._disableClientConfigurationUpdates = true;

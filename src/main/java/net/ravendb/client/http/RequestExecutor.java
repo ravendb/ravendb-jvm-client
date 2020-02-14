@@ -74,6 +74,7 @@ public class RequestExecutor implements CleanCloseable {
     private final ConcurrentMap<ServerNode, NodeStatus> _failedNodesTimers = new ConcurrentHashMap<>();
 
     private final KeyStore certificate;
+    private final char[] keyPassword;
     private final KeyStore trustStore;
 
     private final String _databaseName;
@@ -153,15 +154,20 @@ public class RequestExecutor implements CleanCloseable {
         return certificate;
     }
 
+    public char[] getKeyPassword() {
+        return keyPassword;
+    }
+
     public KeyStore getTrustStore() {
         return trustStore;
     }
 
-    protected RequestExecutor(String databaseName, KeyStore certificate, KeyStore trustStore, DocumentConventions conventions, ExecutorService executorService, String[] initialUrls) {
+    protected RequestExecutor(String databaseName, KeyStore certificate, char[] keyPassword, KeyStore trustStore, DocumentConventions conventions, ExecutorService executorService, String[] initialUrls) {
         cache = new HttpCache(conventions.getMaxHttpCacheSize());
         _executorService = executorService;
         _databaseName = databaseName;
         this.certificate = certificate;
+        this.keyPassword = keyPassword;
         this.trustStore = trustStore;
 
         _lastReturnedResponse = new Date();
@@ -176,22 +182,22 @@ public class RequestExecutor implements CleanCloseable {
         httpClient = clientCache.computeIfAbsent(thumbprint, (thumb) -> createClient());
     }
 
-    public static RequestExecutor create(String[] initialUrls, String databaseName, KeyStore certificate, KeyStore trustStore, ExecutorService executorService, DocumentConventions conventions) {
-        RequestExecutor executor = new RequestExecutor(databaseName, certificate, trustStore, conventions, executorService, initialUrls);
+    public static RequestExecutor create(String[] initialUrls, String databaseName, KeyStore certificate, char[] keyPassword, KeyStore trustStore, ExecutorService executorService, DocumentConventions conventions) {
+        RequestExecutor executor = new RequestExecutor(databaseName, certificate, keyPassword, trustStore, conventions, executorService, initialUrls);
         executor._firstTopologyUpdate = executor.firstTopologyUpdate(initialUrls);
         return executor;
     }
 
-    public static RequestExecutor createForSingleNodeWithConfigurationUpdates(String url, String databaseName, KeyStore certificate, KeyStore trustStore, ExecutorService executorService, DocumentConventions conventions) {
-        RequestExecutor executor = createForSingleNodeWithoutConfigurationUpdates(url, databaseName, certificate, trustStore, executorService, conventions);
+    public static RequestExecutor createForSingleNodeWithConfigurationUpdates(String url, String databaseName, KeyStore certificate, char[] keyPassword, KeyStore trustStore, ExecutorService executorService, DocumentConventions conventions) {
+        RequestExecutor executor = createForSingleNodeWithoutConfigurationUpdates(url, databaseName, certificate, keyPassword, trustStore, executorService, conventions);
         executor._disableClientConfigurationUpdates = false;
         return executor;
     }
 
-    public static RequestExecutor createForSingleNodeWithoutConfigurationUpdates(String url, String databaseName, KeyStore certificate, KeyStore trustStore, ExecutorService executorService, DocumentConventions conventions) {
+    public static RequestExecutor createForSingleNodeWithoutConfigurationUpdates(String url, String databaseName, KeyStore certificate, char[] keyPassword, KeyStore trustStore, ExecutorService executorService, DocumentConventions conventions) {
         final String[] initialUrls = validateUrls(new String[]{url}, certificate);
 
-        RequestExecutor executor = new RequestExecutor(databaseName, certificate, trustStore, conventions, executorService, initialUrls);
+        RequestExecutor executor = new RequestExecutor(databaseName, certificate, keyPassword, trustStore, conventions, executorService, initialUrls);
 
         Topology topology = new Topology();
         topology.setEtag(-1L);
@@ -1091,7 +1097,7 @@ public class RequestExecutor implements CleanCloseable {
 
     public SSLContext createSSLContext() throws UnrecoverableKeyException, NoSuchAlgorithmException, KeyStoreException, KeyManagementException {
         SSLContextBuilder sslContextBuilder = SSLContexts.custom()
-                .loadKeyMaterial(certificate, "".toCharArray());
+                .loadKeyMaterial(certificate, keyPassword);
 
         if (this.trustStore != null) {
             sslContextBuilder.loadTrustMaterial(trustStore, null);
