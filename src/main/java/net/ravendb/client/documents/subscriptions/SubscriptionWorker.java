@@ -177,7 +177,7 @@ public class SubscriptionWorker<T> implements CleanCloseable {
             requestExecutor.execute(command);
         }
 
-        _tcpClient = TcpUtils.connect(command.getResult().getUrl(), command.getResult().getCertificate(), _store.getCertificate(), _store.getPrivateKeyPassword());
+        _tcpClient = TcpUtils.connect(command.getResult().getUrl(), command.getResult().getCertificate(), _store.getCertificate(), _store.getCertificatePrivateKeyPassword());
         _tcpClient.setTcpNoDelay(true);
         _tcpClient.setSendBufferSize(_options.getSendBufferSize());
         _tcpClient.setReceiveBufferSize(_options.getSendBufferSize());

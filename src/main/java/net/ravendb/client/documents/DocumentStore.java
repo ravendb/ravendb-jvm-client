@@ -186,9 +186,9 @@ public class DocumentStore extends DocumentStoreBase {
         final String effectiveDatabase = database;
 
         if (!getConventions().isDisableTopologyUpdates()) {
-            executor = new Lazy<>(() -> RequestExecutor.create(getUrls(), effectiveDatabase, getCertificate(), getPrivateKeyPassword(), getTrustStore(), executorService, getConventions()));
+            executor = new Lazy<>(() -> RequestExecutor.create(getUrls(), effectiveDatabase, getCertificate(), getCertificatePrivateKeyPassword(), getTrustStore(), executorService, getConventions()));
         } else {
-            executor = new Lazy<>(() -> RequestExecutor.createForSingleNodeWithConfigurationUpdates(getUrls()[0], effectiveDatabase, getCertificate(), getPrivateKeyPassword(), getTrustStore(), executorService, getConventions()));
+            executor = new Lazy<>(() -> RequestExecutor.createForSingleNodeWithConfigurationUpdates(getUrls()[0], effectiveDatabase, getCertificate(), getCertificatePrivateKeyPassword(), getTrustStore(), executorService, getConventions()));
         }
 
         requestExecutors.put(database, executor);

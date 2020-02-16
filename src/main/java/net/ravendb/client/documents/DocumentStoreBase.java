@@ -168,7 +168,7 @@ public abstract class DocumentStoreBase implements IDocumentStore {
     protected boolean initialized;
 
     private KeyStore _certificate;
-    private char[] _privateKeyPassword = "".toCharArray();
+    private char[] _certificatePrivateKeyPassword = "".toCharArray();
     private KeyStore _trustStore;
 
     public abstract BulkInsertOperation bulkInsert();
@@ -293,17 +293,17 @@ public abstract class DocumentStoreBase implements IDocumentStore {
      * Password used for private key encryption
      * @return Private key password
      */
-    public char[] getPrivateKeyPassword() {
-        return _privateKeyPassword;
+    public char[] getCertificatePrivateKeyPassword() {
+        return _certificatePrivateKeyPassword;
     }
 
     /**
      * If private key is inside certificate is encrypted, you can specify password
-     * @param privateKeyPassword Private key password
+     * @param certificatePrivateKeyPassword Private key password
      */
-    public void setPrivateKeyPassword(char[] privateKeyPassword) {
-        assertNotInitialized("privateKeyPassword");
-        _privateKeyPassword = privateKeyPassword;
+    public void setCertificatePrivateKeyPassword(char[] certificatePrivateKeyPassword) {
+        assertNotInitialized("certificatePrivateKeyPassword");
+        _certificatePrivateKeyPassword = certificatePrivateKeyPassword;
     }
 
     public KeyStore getTrustStore() {
