@@ -3,8 +3,14 @@ package net.ravendb.client.documents.subscriptions;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import net.ravendb.client.documents.DocumentStore;
 import net.ravendb.client.documents.commands.*;
+import net.ravendb.client.documents.operations.ongoingTasks.OngoingTaskType;
+import net.ravendb.client.documents.operations.ongoingTasks.ToggleOngoingTaskStateOperation;
+import net.ravendb.client.documents.session.IncludesUtil;
+import net.ravendb.client.documents.session.loaders.IncludeBuilder;
+import net.ravendb.client.documents.session.loaders.SubscriptionIncludeBuilder;
 import net.ravendb.client.http.RequestExecutor;
 import net.ravendb.client.primitives.CleanCloseable;
+import net.ravendb.client.primitives.Reference;
 import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.StringUtils;
 
@@ -438,5 +444,23 @@ public class DocumentSubscriptions implements AutoCloseable {
 
         DropSubscriptionConnectionCommand command = new DropSubscriptionConnectionCommand(name);
         requestExecutor.execute(command);
+    }
+
+    public void enable(String name) {
+        enable(name, null);
+    }
+
+    public void enable(String name, String database) {
+        ToggleOngoingTaskStateOperation operation = new ToggleOngoingTaskStateOperation(name, OngoingTaskType.SUBSCRIPTION, false);
+        _store.maintenance().forDatabase(ObjectUtils.firstNonNull(database, _store.getDatabase())).send(operation);
+    }
+
+    public void disable(String name) {
+        disable(name, null);
+    }
+
+    public void disable(String name, String database) {
+        ToggleOngoingTaskStateOperation operation = new ToggleOngoingTaskStateOperation(name, OngoingTaskType.SUBSCRIPTION, true);
+        _store.maintenance().forDatabase(ObjectUtils.firstNonNull(database, _store.getDatabase())).send(operation);
     }
 }

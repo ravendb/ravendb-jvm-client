@@ -5,6 +5,8 @@ import net.ravendb.client.documents.queries.QueryResult;
 import net.ravendb.client.documents.session.DocumentQuery;
 import net.ravendb.client.documents.session.InMemoryDocumentSessionOperations;
 
+import java.util.function.Consumer;
+
 public class SuggestionDocumentQuery<T> extends SuggestionQueryBase implements ISuggestionDocumentQuery<T> {
 
     private final DocumentQuery<T> _source;
@@ -17,6 +19,11 @@ public class SuggestionDocumentQuery<T> extends SuggestionQueryBase implements I
 
     @Override
     protected IndexQuery getIndexQuery() {
+        return getIndexQuery(true);
+    }
+
+    @Override
+    protected IndexQuery getIndexQuery(boolean updateAfterQueryExecuted) {
         return _source.getIndexQuery();
     }
 

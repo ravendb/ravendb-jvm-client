@@ -6,6 +6,7 @@ public class ClusterTopologyResponse {
     private String leader;
     private String nodeTag;
     private ClusterTopology topology;
+    private long etag;
     private Map<String, NodeStatus> status;
 
     public String getLeader() {
@@ -38,5 +39,13 @@ public class ClusterTopologyResponse {
 
     public void setStatus(Map<String, NodeStatus> status) {
         this.status = status;
+    }
+
+    public long getEtag() {
+        return etag;
+    }
+
+    public void setEtag(long etag) {
+        this.etag = etag;
     }
 }

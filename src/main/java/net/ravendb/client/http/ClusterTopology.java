@@ -7,6 +7,7 @@ public class ClusterTopology {
 
     private String lastNodeId;
     private String topologyId;
+    private long etag;
 
     private Map<String, String> members;
     private Map<String, String> promotables;
@@ -106,5 +107,11 @@ public class ClusterTopology {
         this.watchers = watchers;
     }
 
+    public long getEtag() {
+        return etag;
+    }
 
+    public void setEtag(long etag) {
+        this.etag = etag;
+    }
 }

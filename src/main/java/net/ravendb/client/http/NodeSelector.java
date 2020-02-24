@@ -1,6 +1,7 @@
 package net.ravendb.client.http;
 
 import net.ravendb.client.exceptions.AllTopologyNodesDownException;
+import net.ravendb.client.exceptions.RequestedNodeUnavailableException;
 import net.ravendb.client.primitives.CleanCloseable;
 import net.ravendb.client.primitives.Timer;
 import org.apache.commons.lang3.ObjectUtils;
@@ -60,8 +61,32 @@ public class NodeSelector implements CleanCloseable {
         return true;
     }
 
+    public CurrentIndexAndNode getRequestedNode(String nodeTag) {
+        NodeSelectorState state = _state;
+        AtomicInteger[] stateFailures = state.failures;
+        List<ServerNode> serverNodes = state.nodes;
+        int len = Math.min(serverNodes.size(), stateFailures.length);
+        for (int i = 0; i < len; i++) {
+            if (serverNodes.get(i).getClusterTag().equals(nodeTag)) {
+                if (stateFailures[i].get() == 0 && StringUtils.isNotEmpty(serverNodes.get(i).getUrl())) {
+                    return new CurrentIndexAndNode(i, serverNodes.get(i));
+                }
+                throw new RequestedNodeUnavailableException("Requested node " + nodeTag + " current unavailable, please try again later.");
+            }
+        }
+
+        if (state.nodes.size() == 0) {
+            throw new AllTopologyNodesDownException("There are no nodes in the topology at all");
+        }
+        throw new RequestedNodeUnavailableException("Could not find requested node " + nodeTag);
+    }
+
     public CurrentIndexAndNode getPreferredNode() {
         NodeSelectorState state = _state;
+        return getPreferredNodeInternal(state);
+    }
+
+    public static CurrentIndexAndNode getPreferredNodeInternal(NodeSelectorState state) {
         AtomicInteger[] stateFailures = state.failures;
         List<ServerNode> serverNodes = state.nodes;
         int len = Math.min(serverNodes.size(), stateFailures.length);
@@ -70,7 +95,15 @@ public class NodeSelector implements CleanCloseable {
                 return new CurrentIndexAndNode(i, serverNodes.get(i));
             }
         }
+
         return unlikelyEveryoneFaultedChoice(state);
+    }
+
+    public CurrentIndexAndNodeAndEtag getPreferredNodeWithTopology() {
+        NodeSelectorState state = _state;
+        CurrentIndexAndNode preferredNode = getPreferredNodeInternal(state);
+        long etag = state.topology != null ? ObjectUtils.firstNonNull(state.topology.getEtag(), -2L) : -2;
+        return new CurrentIndexAndNodeAndEtag(preferredNode.currentIndex, preferredNode.currentNode, etag);
     }
 
     private static CurrentIndexAndNode unlikelyEveryoneFaultedChoice(NodeSelectorState state) {
@@ -85,6 +118,11 @@ public class NodeSelector implements CleanCloseable {
 
     public CurrentIndexAndNode getNodeBySessionId(int sessionId) {
         NodeSelectorState state = _state;
+
+        if (state.topology.getNodes().size() == 0) {
+            throw new AllTopologyNodesDownException("There are no nodes in the topology at all");
+        }
+
         int index = sessionId % state.topology.getNodes().size();
 
         for (int i = index; i < state.failures.length; i++) {

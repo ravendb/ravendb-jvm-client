@@ -47,6 +47,7 @@ public class SubscriptionWorker<T> implements CleanCloseable {
     private JsonParser _parser;
     private boolean _disposed;
     private CompletableFuture<Void> _subscriptionTask;
+    private int _forcedTopologyUpdateAttempts = 0;
 
     private List<Consumer<SubscriptionBatch<T>>> afterAcknowledgment;
     private List<Consumer<Exception>> onSubscriptionConnectionRetry;
@@ -180,7 +181,7 @@ public class SubscriptionWorker<T> implements CleanCloseable {
         _tcpClient = TcpUtils.connect(command.getResult().getUrl(), command.getResult().getCertificate(), _store.getCertificate(), _store.getCertificatePrivateKeyPassword());
         _tcpClient.setTcpNoDelay(true);
         _tcpClient.setSendBufferSize(_options.getSendBufferSize());
-        _tcpClient.setReceiveBufferSize(_options.getSendBufferSize());
+        _tcpClient.setReceiveBufferSize(_options.getReceiveBufferSize());
 
         String databaseName = ObjectUtils.firstNonNull(_dbName, _store.getDatabase());
 
