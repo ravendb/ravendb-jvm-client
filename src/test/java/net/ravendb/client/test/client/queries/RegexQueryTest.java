@@ -35,7 +35,7 @@ public class RegexQueryTest extends RemoteTestBase {
                 IndexQuery iq = query.getIndexQuery();
 
                 assertThat(iq.getQuery())
-                        .isEqualTo("from RegexMes where regex(text, $p0)");
+                        .isEqualTo("from 'RegexMes' where regex(text, $p0)");
 
                 assertThat(iq.getQueryParameters().get("p0"))
                         .isEqualTo("^[a-z ]{2,4}love");

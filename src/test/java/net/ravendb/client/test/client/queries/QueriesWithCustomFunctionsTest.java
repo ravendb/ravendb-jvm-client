@@ -44,7 +44,7 @@ public class QueriesWithCustomFunctionsTest extends RemoteTestBase {
                         .whereEquals("lastName", CmpXchg.value("Tom"));
 
                 assertThat(q.getIndexQuery().getQuery())
-                        .isEqualTo("from Users where name = cmpxchg($p0) and lastName = cmpxchg($p1)");
+                        .isEqualTo("from 'Users' where name = cmpxchg($p0) and lastName = cmpxchg($p1)");
 
                 List<User> queryResult = q.toList();
                 assertThat(queryResult)

@@ -49,7 +49,7 @@ public class SuggestToken extends QueryToken {
         writer
                 .append(")");
 
-        if (StringUtils.isWhitespace(_alias) || getFieldName().equals(_alias)) {
+        if (StringUtils.isBlank(_alias) || getFieldName().equals(_alias)) {
             return;
         }
 

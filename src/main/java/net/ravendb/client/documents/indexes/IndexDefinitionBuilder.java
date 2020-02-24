@@ -27,7 +27,9 @@ public class IndexDefinitionBuilder {
     private IndexLockMode lockMode;
     private IndexPriority priority;
     private String outputReduceToCollection;
+    private String patternForOutputReduceToCollectionReferences;
     private Map<String, String> additionalSources;
+    private IndexConfiguration configuration;
 
 
     public IndexDefinitionBuilder() {
@@ -45,6 +47,7 @@ public class IndexDefinitionBuilder {
         analyzersStrings = new HashMap<>();
         termVectorsStrings = new HashMap<>();
         spatialIndexesStrings = new HashMap<>();
+        configuration = new IndexConfiguration();
     }
 
     public IndexDefinition toIndexDefinition(DocumentConventions conventions) {
@@ -63,6 +66,7 @@ public class IndexDefinitionBuilder {
             indexDefinition.setLockMode(lockMode);
             indexDefinition.setPriority(priority);
             indexDefinition.setOutputReduceToCollection(outputReduceToCollection);
+            indexDefinition.setPatternForOutputReduceToCollectionReferences(patternForOutputReduceToCollectionReferences);
 
             Map<String, Boolean> suggestions = new HashMap<>();
             for (String suggestionsOption : suggestionsOptions) {
@@ -81,6 +85,7 @@ public class IndexDefinitionBuilder {
             }
 
             indexDefinition.setAdditionalSources(additionalSources);
+            indexDefinition.setConfiguration(configuration);
             return indexDefinition;
         } catch (Exception e) {
             throw new IndexCompilationException("Failed to create index " + _indexName, e);
@@ -182,11 +187,27 @@ public class IndexDefinitionBuilder {
         this.outputReduceToCollection = outputReduceToCollection;
     }
 
+    public String getPatternForOutputReduceToCollectionReferences() {
+        return patternForOutputReduceToCollectionReferences;
+    }
+
+    public void setPatternForOutputReduceToCollectionReferences(String patternForOutputReduceToCollectionReferences) {
+        this.patternForOutputReduceToCollectionReferences = patternForOutputReduceToCollectionReferences;
+    }
+
     public Map<String, String> getAdditionalSources() {
         return additionalSources;
     }
 
     public void setAdditionalSources(Map<String, String> additionalSources) {
         this.additionalSources = additionalSources;
+    }
+
+    public IndexConfiguration getConfiguration() {
+        return configuration;
+    }
+
+    public void setConfiguration(IndexConfiguration configuration) {
+        this.configuration = configuration;
     }
 }

@@ -8,13 +8,19 @@ public class PeriodicBackupConfiguration {
     private String mentorNode;
     private BackupType backupType;
     private BackupEncryptionSettings backupEncryptionSettings;
-    private String fullBackupFrequency;
-    private String incrementalBackupFrequency;
+    private RetentionPolicy retentionPolicy;
+    private SnapshotSettings snapshotSettings;
+
     private LocalSettings localSettings;
     private S3Settings s3Settings;
     private GlacierSettings glacierSettings;
     private AzureSettings azureSettings;
     private FtpSettings ftpSettings;
+    private GoogleCloudSettings googleCloudSettings;
+
+    private String fullBackupFrequency;
+    private String incrementalBackupFrequency;
+
 
     public long getTaskId() {
         return taskId;
@@ -118,5 +124,29 @@ public class PeriodicBackupConfiguration {
 
     public void setFtpSettings(FtpSettings ftpSettings) {
         this.ftpSettings = ftpSettings;
+    }
+
+    public GoogleCloudSettings getGoogleCloudSettings() {
+        return googleCloudSettings;
+    }
+
+    public void setGoogleCloudSettings(GoogleCloudSettings googleCloudSettings) {
+        this.googleCloudSettings = googleCloudSettings;
+    }
+
+    public RetentionPolicy getRetentionPolicy() {
+        return retentionPolicy;
+    }
+
+    public void setRetentionPolicy(RetentionPolicy retentionPolicy) {
+        this.retentionPolicy = retentionPolicy;
+    }
+
+    public SnapshotSettings getSnapshotSettings() {
+        return snapshotSettings;
+    }
+
+    public void setSnapshotSettings(SnapshotSettings snapshotSettings) {
+        this.snapshotSettings = snapshotSettings;
     }
 }

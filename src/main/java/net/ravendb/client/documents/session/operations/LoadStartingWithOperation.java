@@ -50,9 +50,11 @@ public class LoadStartingWithOperation {
     public void withStartWith(String idPrefix, String matches) {
         withStartWith(idPrefix, matches, 0);
     }
+
     public void withStartWith(String idPrefix, String matches, int start) {
         withStartWith(idPrefix, matches, start, 25);
     }
+
     public void withStartWith(String idPrefix, String matches, int start, int pageSize) {
         withStartWith(idPrefix, matches, start, pageSize, null);
     }

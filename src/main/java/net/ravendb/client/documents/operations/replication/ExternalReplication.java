@@ -1,50 +1,23 @@
 package net.ravendb.client.documents.operations.replication;
 
-import net.ravendb.client.documents.replication.ReplicationNode;
+import java.time.Duration;
 
-public class ExternalReplication extends ReplicationNode {
-    private long taskId;
-    private String name;
-    private String connectionStringName;
-    private String mentorName;
+public class ExternalReplication extends ExternalReplicationBase {
+
+    private Duration delayReplicationFor;
 
     public ExternalReplication() {
     }
 
     public ExternalReplication(String database, String connectionStringName) {
-        setDatabase(database);
-        setConnectionStringName(connectionStringName);
+        super(database, connectionStringName);
     }
 
-    public long getTaskId() {
-        return taskId;
+    public Duration getDelayReplicationFor() {
+        return delayReplicationFor;
     }
 
-    public void setTaskId(long taskId) {
-        this.taskId = taskId;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    public String getConnectionStringName() {
-        return connectionStringName;
-    }
-
-    public void setConnectionStringName(String connectionStringName) {
-        this.connectionStringName = connectionStringName;
-    }
-
-    public String getMentorName() {
-        return mentorName;
-    }
-
-    public void setMentorName(String mentorName) {
-        this.mentorName = mentorName;
+    public void setDelayReplicationFor(Duration delayReplicationFor) {
+        this.delayReplicationFor = delayReplicationFor;
     }
 }

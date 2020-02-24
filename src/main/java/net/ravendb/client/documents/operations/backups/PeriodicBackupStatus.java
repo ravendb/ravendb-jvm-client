@@ -19,9 +19,11 @@ public class PeriodicBackupStatus implements IDatabaseTaskStatus {
     private UploadToS3 uploadToS3;
     private UploadToGlacier uploadToGlacier;
     private UploadToAzure uploadToAzure;
+    private UpdateToGoogleCloud updateToGoogleCloud;
     private UploadToFtp uploadToFtp;
 
     private Long lastEtag;
+    private String lastDatabaseChangeVector;
     private LastRaftIndex lastRaftIndex;
     private String folderName;
     private Long durationInMs;
@@ -125,6 +127,14 @@ public class PeriodicBackupStatus implements IDatabaseTaskStatus {
         this.uploadToAzure = uploadToAzure;
     }
 
+    public UpdateToGoogleCloud getUpdateToGoogleCloud() {
+        return updateToGoogleCloud;
+    }
+
+    public void setUpdateToGoogleCloud(UpdateToGoogleCloud updateToGoogleCloud) {
+        this.updateToGoogleCloud = updateToGoogleCloud;
+    }
+
     public UploadToFtp getUploadToFtp() {
         return uploadToFtp;
     }
@@ -139,6 +149,14 @@ public class PeriodicBackupStatus implements IDatabaseTaskStatus {
 
     public void setLastEtag(Long lastEtag) {
         this.lastEtag = lastEtag;
+    }
+
+    public String getLastDatabaseChangeVector() {
+        return lastDatabaseChangeVector;
+    }
+
+    public void setLastDatabaseChangeVector(String lastDatabaseChangeVector) {
+        this.lastDatabaseChangeVector = lastDatabaseChangeVector;
     }
 
     public LastRaftIndex getLastRaftIndex() {

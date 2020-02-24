@@ -17,8 +17,14 @@ public abstract class AbstractIndexCreationTaskBase {
 
     protected DocumentConventions conventions;
     protected Map<String, String> additionalSources;
+    protected IndexConfiguration configuration;
+
     protected IndexPriority priority;
     protected IndexLockMode lockMode;
+
+    public AbstractIndexCreationTaskBase() {
+        configuration = new IndexConfiguration();
+    }
 
     public Map<String, String> getAdditionalSources() {
         return additionalSources;
@@ -26,6 +32,14 @@ public abstract class AbstractIndexCreationTaskBase {
 
     public void setAdditionalSources(Map<String, String> additionalSources) {
         this.additionalSources = additionalSources;
+    }
+
+    public IndexConfiguration getConfiguration() {
+        return configuration;
+    }
+
+    public void setConfiguration(IndexConfiguration configuration) {
+        this.configuration = configuration;
     }
 
     /**

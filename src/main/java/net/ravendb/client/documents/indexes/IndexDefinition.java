@@ -28,6 +28,8 @@ public class IndexDefinition {
     private IndexConfiguration configuration;
     private IndexType indexType;
     private String outputReduceToCollection;
+    private Long reduceOutputIndex;
+    private String patternForOutputReduceToCollectionReferences;
 
     /**
      * This is the means by which the outside world refers to this index definition
@@ -176,31 +178,14 @@ public class IndexDefinition {
         this.indexType = indexType;
     }
 
-    private IndexType detectStaticIndexType() {
-
-        if (maps.isEmpty()) {
-            throw new IllegalArgumentException("Index definitions contains no Maps");
-        }
-
+    public IndexType detectStaticIndexType() {
         String firstMap = maps.iterator().next();
 
-        firstMap = firstMap.replaceAll("(?:/\\*(?:[^*]|(?:\\*+[^*/]))*\\*+/)|(?://.*)","");
-        firstMap = firstMap.trim();
-
-        if (firstMap.startsWith("from") || firstMap.startsWith("docs")) {
-            // C# indexes must start with "from" for query synatx or
-            // "docs" for method syntax
-            if (reduce == null || StringUtils.isBlank(reduce)){
-                return IndexType.MAP;
-            }
-            return IndexType.MAP_REDUCE;
+        if (firstMap == null) {
+            throw new IllegalArgumentException("Index  definitions contains no Maps");
         }
 
-        if (StringUtils.isBlank(getReduce())) {
-            return IndexType.JAVA_SCRIPT_MAP;
-        }
-
-        return IndexType.JAVA_SCRIPT_MAP_REDUCE;
+        return IndexDefinitionHelper.detectStaticIndexType(firstMap, getReduce());
     }
 
     /**
@@ -217,5 +202,37 @@ public class IndexDefinition {
      */
     public void setOutputReduceToCollection(String outputReduceToCollection) {
         this.outputReduceToCollection = outputReduceToCollection;
+    }
+
+    /**
+     * If not null then this number will be part of identifier of a created document being output of reduce function
+     * @return output index
+     */
+    public Long getReduceOutputIndex() {
+        return reduceOutputIndex;
+    }
+
+    /**
+     * If not null then this number will be part of identifier of a created document being output of reduce function
+     * @param reduceOutputIndex output index
+     */
+    public void setReduceOutputIndex(Long reduceOutputIndex) {
+        this.reduceOutputIndex = reduceOutputIndex;
+    }
+
+    /**
+     * Defines pattern for identifiers of documents which reference IDs of reduce outputs documents
+     * @return pattern
+     */
+    public String getPatternForOutputReduceToCollectionReferences() {
+        return patternForOutputReduceToCollectionReferences;
+    }
+
+    /**
+     * Defines pattern for identifiers of documents which reference IDs of reduce outputs documents
+     * @param patternForOutputReduceToCollectionReferences pattern
+     */
+    public void setPatternForOutputReduceToCollectionReferences(String patternForOutputReduceToCollectionReferences) {
+        this.patternForOutputReduceToCollectionReferences = patternForOutputReduceToCollectionReferences;
     }
 }

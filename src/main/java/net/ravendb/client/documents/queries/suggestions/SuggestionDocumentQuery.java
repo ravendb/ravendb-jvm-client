@@ -24,4 +24,19 @@ public class SuggestionDocumentQuery<T> extends SuggestionQueryBase implements I
     protected void invokeAfterQueryExecuted(QueryResult result) {
         _source.invokeAfterQueryExecuted(result);
     }
+
+    @Override
+    public ISuggestionDocumentQuery<T> andSuggestUsing(SuggestionBase suggestion) {
+        _source.suggestUsing(suggestion);
+        return this;
+    }
+
+    @Override
+    public ISuggestionDocumentQuery<T> andSuggestUsing(Consumer<ISuggestionBuilder<T>> builder) {
+        SuggestionBuilder<T> f = new SuggestionBuilder<>();
+        builder.accept(f);
+
+        _source.suggestUsing(f.getSuggestion());
+        return this;
+    }
 }

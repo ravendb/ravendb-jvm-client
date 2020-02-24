@@ -39,14 +39,14 @@ public class RavenDB_8328Test extends RemoteTestBase {
 
                 IndexQuery iq = q.getIndexQuery();
                 assertThat(iq.getQuery())
-                        .isEqualTo("from Items where spatial.within(spatial.point(latitude, longitude), spatial.circle($p0, $p1, $p2))");
+                        .isEqualTo("from 'Items' where spatial.within(spatial.point(latitude, longitude), spatial.circle($p0, $p1, $p2))");
 
                 q = session.query(Item.class)
                         .spatial(new WktField("shapeWkt"), f -> f.withinRadius(10, 10, 20));
 
                 iq = q.getIndexQuery();
                 assertThat(iq.getQuery())
-                        .isEqualTo("from Items where spatial.within(spatial.wkt(shapeWkt), spatial.circle($p0, $p1, $p2))");
+                        .isEqualTo("from 'Items' where spatial.within(spatial.wkt(shapeWkt), spatial.circle($p0, $p1, $p2))");
             }
 
             try (IDocumentSession session = store.openSession()) {

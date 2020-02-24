@@ -6,6 +6,13 @@ public class SuggestionBuilder<T> implements ISuggestionBuilder<T>, ISuggestionO
     private SuggestionWithTerms _terms;
 
     @Override
+    public ISuggestionOperations<T> withDisplayName(String displayName) {
+        getSuggestion().setDisplayField(displayName);
+
+        return this;
+    }
+
+    @Override
     public ISuggestionOperations<T> byField(String fieldName, String term) {
         if (fieldName == null) {
             throw new IllegalArgumentException("fieldName cannot be null");

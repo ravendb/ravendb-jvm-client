@@ -2,6 +2,7 @@ package net.ravendb.client.documents.commands.multiGet;
 
 import org.apache.http.HttpStatus;
 
+import java.time.Duration;
 import java.util.Map;
 import java.util.TreeMap;
 
@@ -11,10 +12,19 @@ public class GetResponse {
         headers = new TreeMap<>(String::compareToIgnoreCase);
     }
 
+    private Duration elapsed;
     private String result;
     private Map<String, String> headers;
     private int statusCode;
     private boolean forceRetry;
+
+    public Duration getElapsed() {
+        return elapsed;
+    }
+
+    public void setElapsed(Duration elapsed) {
+        this.elapsed = elapsed;
+    }
 
     /**
      * @return Response result as JSON.

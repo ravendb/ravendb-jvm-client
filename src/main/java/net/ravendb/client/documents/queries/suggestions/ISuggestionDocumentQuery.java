@@ -12,4 +12,8 @@ public interface ISuggestionDocumentQuery<T> {
     Lazy<Map<String, SuggestionResult>> executeLazy();
 
     Lazy<Map<String, SuggestionResult>> executeLazy(Consumer<Map<String, SuggestionResult>> onEval);
+
+    ISuggestionDocumentQuery<T> andSuggestUsing(SuggestionBase suggestion);
+
+    ISuggestionDocumentQuery<T> andSuggestUsing(Consumer<ISuggestionBuilder<T>> builder);
 }
