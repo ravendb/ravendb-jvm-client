@@ -3,6 +3,8 @@ package net.ravendb.client.documents.subscriptions;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import net.ravendb.client.primitives.UseSharpEnum;
 
+import java.util.Map;
+
 class SubscriptionConnectionServerMessage {
 
     @UseSharpEnum
@@ -33,6 +35,7 @@ class SubscriptionConnectionServerMessage {
     public static class SubscriptionRedirectData {
         private String currentTag;
         private String redirectedTag;
+        private Map<String, String> reasons;
 
         public String getCurrentTag() {
             return currentTag;
@@ -48,6 +51,14 @@ class SubscriptionConnectionServerMessage {
 
         public void setRedirectedTag(String redirectedTag) {
             this.redirectedTag = redirectedTag;
+        }
+
+        public Map<String, String> getReasons() {
+            return reasons;
+        }
+
+        public void setReasons(Map<String, String> reasons) {
+            this.reasons = reasons;
         }
     }
 

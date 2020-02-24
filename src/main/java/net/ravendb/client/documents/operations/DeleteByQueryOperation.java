@@ -24,6 +24,10 @@ public class DeleteByQueryOperation implements IOperation<OperationIdResult> {
     protected IndexQuery _queryToDelete;
     private final QueryOperationOptions _options;
 
+    public DeleteByQueryOperation(String queryToDelete) {
+        this(new IndexQuery(queryToDelete));
+    }
+
     public DeleteByQueryOperation(IndexQuery queryToDelete) {
         this(queryToDelete, null);
     }

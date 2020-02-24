@@ -295,7 +295,7 @@ public class QueryOnCountersTest extends RemoteTestBase {
                         .include(i -> i.includeCounter("downloads"));
 
                 assertThat(query.toString())
-                        .isEqualTo("from Orders include counters($p0)");
+                        .isEqualTo("from 'Orders' include counters('downloads')");
 
                 List<Order> queryResult = query.toList();
                 assertThat(session.advanced().getNumberOfRequests())
@@ -360,7 +360,7 @@ public class QueryOnCountersTest extends RemoteTestBase {
                         .include(i -> i.includeCounters(new String[]{"downloads", "likes"}));
 
                 assertThat(query.toString())
-                        .isEqualTo("from Orders include counters($p0)");
+                        .isEqualTo("from 'Orders' include counters('downloads'),counters('likes')");
 
                 List<Order> queryResult = query.toList();
                 assertThat(session.advanced().getNumberOfRequests())
@@ -440,7 +440,7 @@ public class QueryOnCountersTest extends RemoteTestBase {
                         .include(i -> i.includeAllCounters());
 
                 assertThat(query.toString())
-                        .isEqualTo("from Orders include counters()");
+                        .isEqualTo("from 'Orders' include counters()");
 
                 List<Order> queryResult = query.toList();
                 assertThat(session.advanced().getNumberOfRequests())
@@ -525,7 +525,7 @@ public class QueryOnCountersTest extends RemoteTestBase {
                                 .includeDocuments("company"));
 
                 assertThat(query.toString())
-                        .isEqualTo("from Orders include company,counters($p0)");
+                        .isEqualTo("from 'Orders' include company,counters('downloads')");
 
                 List<Order> queryResult = query.toList();
                 assertThat(session.advanced().getNumberOfRequests())
@@ -604,7 +604,7 @@ public class QueryOnCountersTest extends RemoteTestBase {
                         .include(i -> i.includeCounter("employee", "downloads"));
 
                 assertThat(query.toString())
-                        .isEqualTo("from Orders include counters(employee, $p0)");
+                        .isEqualTo("from 'Orders' include counters(employee, 'downloads')");
 
                 List<Order> results = query.toList();
                 assertThat(session.advanced().getNumberOfRequests())
@@ -672,7 +672,7 @@ public class QueryOnCountersTest extends RemoteTestBase {
                         .include(i -> i.includeCounters("employee", new String[]{"downloads", "likes"}));
 
                 assertThat(query.toString())
-                        .isEqualTo("from Orders include counters(employee, $p0)");
+                        .isEqualTo("from 'Orders' include counters(employee, 'downloads'),counters(employee, 'likes')");
 
                 List<Order> results = query.toList();
                 assertThat(session.advanced().getNumberOfRequests())
@@ -746,7 +746,7 @@ public class QueryOnCountersTest extends RemoteTestBase {
                         .include(i -> i.includeCounter("likes").includeCounter("employee", "downloads"));
 
                 assertThat(query.toString())
-                        .isEqualTo("from Orders include counters($p0),counters(employee, $p1)");
+                        .isEqualTo("from 'Orders' include counters('likes'),counters(employee, 'downloads')");
 
                 List<Order> orders = query.toList();
                 assertThat(session.advanced().getNumberOfRequests())
@@ -844,7 +844,7 @@ public class QueryOnCountersTest extends RemoteTestBase {
                                 .includeAllCounters("employee"));
 
                 assertThat(query.toString())
-                        .isEqualTo("from Orders include counters(),counters(employee)");
+                        .isEqualTo("from 'Orders' include counters(),counters(employee)");
 
                 List<Order> orders = query.toList();
                 assertThat(session.advanced().getNumberOfRequests())

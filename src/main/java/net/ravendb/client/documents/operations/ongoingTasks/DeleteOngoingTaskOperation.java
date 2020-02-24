@@ -2,11 +2,13 @@ package net.ravendb.client.documents.operations.ongoingTasks;
 
 import net.ravendb.client.documents.conventions.DocumentConventions;
 import net.ravendb.client.documents.operations.IMaintenanceOperation;
+import net.ravendb.client.http.IRaftCommand;
 import net.ravendb.client.http.RavenCommand;
 import net.ravendb.client.http.ServerNode;
 import net.ravendb.client.primitives.Reference;
 import net.ravendb.client.primitives.SharpEnum;
 import net.ravendb.client.serverwide.operations.ModifyOngoingTaskResult;
+import net.ravendb.client.util.RaftIdGenerator;
 import org.apache.http.client.methods.HttpDelete;
 import org.apache.http.client.methods.HttpRequestBase;
 
@@ -26,7 +28,7 @@ public class DeleteOngoingTaskOperation implements IMaintenanceOperation<ModifyO
         return new DeleteOngoingTaskCommand(_taskId, _taskType);
     }
 
-    private static class DeleteOngoingTaskCommand extends RavenCommand<ModifyOngoingTaskResult> {
+    private static class DeleteOngoingTaskCommand extends RavenCommand<ModifyOngoingTaskResult> implements IRaftCommand {
         private final long _taskId;
         private final OngoingTaskType _taskType;
 
@@ -56,6 +58,11 @@ public class DeleteOngoingTaskOperation implements IMaintenanceOperation<ModifyO
         @Override
         public boolean isReadRequest() {
             return false;
+        }
+
+        @Override
+        public String getRaftUniqueRequestId() {
+            return RaftIdGenerator.newId();
         }
     }
 }

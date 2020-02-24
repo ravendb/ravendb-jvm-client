@@ -8,5 +8,7 @@ public enum OngoingTaskType {
     RAVEN_ETL,
     SQL_ETL,
     BACKUP,
-    SUBSCRIPTION
+    SUBSCRIPTION,
+    PULL_REPLICATION_AS_HUB,
+    PULL_REPLICATION_AS_SINK
 }

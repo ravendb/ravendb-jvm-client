@@ -14,6 +14,7 @@ public class QueryData {
     private List<LoadToken> loadTokens;
     private boolean isCustomFunction;
     private boolean mapReduce;
+    private boolean isProjectInto;
 
     public boolean isMapReduce() {
         return mapReduce;
@@ -89,4 +90,11 @@ public class QueryData {
         return new QueryData(new String[]{ func }, new String[0], alias, null, null, true);
     }
 
+    public boolean isProjectInto() {
+        return isProjectInto;
+    }
+
+    public void setProjectInto(boolean projectInto) {
+        isProjectInto = projectInto;
+    }
 }

@@ -29,7 +29,9 @@ public class AbstractMultiMapIndexCreationTask extends AbstractIndexCreationTask
         indexDefinitionBuilder.setTermVectorsStrings(termVectorsStrings);
         indexDefinitionBuilder.setSpatialIndexesStrings(spatialOptionsStrings);
         indexDefinitionBuilder.setOutputReduceToCollection(outputReduceToCollection);
+        indexDefinitionBuilder.setPatternForOutputReduceToCollectionReferences(patternForOutputReduceToCollectionReferences);
         indexDefinitionBuilder.setAdditionalSources(getAdditionalSources());
+        indexDefinitionBuilder.setConfiguration(configuration);
 
         IndexDefinition indexDefinition = indexDefinitionBuilder.toIndexDefinition(conventions, false);
         indexDefinition.setMaps(new HashSet<>(maps));

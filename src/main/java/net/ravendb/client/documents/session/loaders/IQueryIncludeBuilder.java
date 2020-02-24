@@ -1,15 +1,6 @@
 package net.ravendb.client.documents.session.loaders;
 
-public interface IQueryIncludeBuilder {
-
-    IQueryIncludeBuilder includeCounter(String name);
-
-    IQueryIncludeBuilder includeCounters(String[] names);
-
-    IQueryIncludeBuilder includeAllCounters();
-
-    IQueryIncludeBuilder includeDocuments(String path);
-
+public interface IQueryIncludeBuilder extends IGenericIncludeBuilder<IQueryIncludeBuilder> {
     IQueryIncludeBuilder includeCounter(String path, String name);
 
     IQueryIncludeBuilder includeCounters(String path, String[] names);

@@ -3,12 +3,14 @@ package net.ravendb.client.serverwide.operations;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import net.ravendb.client.documents.conventions.DocumentConventions;
+import net.ravendb.client.http.IRaftCommand;
 import net.ravendb.client.http.RavenCommand;
 import net.ravendb.client.http.ServerNode;
 import net.ravendb.client.json.ContentProviderHttpEntity;
 import net.ravendb.client.primitives.Reference;
 import net.ravendb.client.serverwide.ConflictSolver;
 import net.ravendb.client.serverwide.ScriptResolver;
+import net.ravendb.client.util.RaftIdGenerator;
 import net.ravendb.client.util.UrlUtils;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpRequestBase;
@@ -41,7 +43,7 @@ public class ModifyConflictSolverOperation implements IServerOperation<ModifySol
         return new ModifyConflictSolverCommand(conventions, _database, this);
     }
 
-    private static class ModifyConflictSolverCommand extends RavenCommand<ModifySolverResult> {
+    private static class ModifyConflictSolverCommand extends RavenCommand<ModifySolverResult> implements IRaftCommand {
         private final ModifyConflictSolverOperation _solver;
         private final DocumentConventions _conventions;
         private final String _databaseName;
@@ -94,6 +96,11 @@ public class ModifyConflictSolverOperation implements IServerOperation<ModifySol
         @Override
         public boolean isReadRequest() {
             return false;
+        }
+
+        @Override
+        public String getRaftUniqueRequestId() {
+            return RaftIdGenerator.newId();
         }
     }
 }

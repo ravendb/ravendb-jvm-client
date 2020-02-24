@@ -27,7 +27,9 @@ public abstract class AbstractIndexCreationTask extends AbstractGenericIndexCrea
         indexDefinitionBuilder.setTermVectorsStrings(termVectorsStrings);
         indexDefinitionBuilder.setSpatialIndexesStrings(spatialOptionsStrings);
         indexDefinitionBuilder.setOutputReduceToCollection(outputReduceToCollection);
+        indexDefinitionBuilder.setPatternForOutputReduceToCollectionReferences(patternForOutputReduceToCollectionReferences);
         indexDefinitionBuilder.setAdditionalSources(getAdditionalSources());
+        indexDefinitionBuilder.setConfiguration(configuration);
 
         return indexDefinitionBuilder.toIndexDefinition(conventions);
     }

@@ -10,10 +10,12 @@ import net.ravendb.client.documents.indexes.PutIndexResult;
 import net.ravendb.client.documents.operations.IMaintenanceOperation;
 import net.ravendb.client.documents.operations.PutIndexesResponse;
 import net.ravendb.client.extensions.JsonExtensions;
+import net.ravendb.client.http.IRaftCommand;
 import net.ravendb.client.http.RavenCommand;
 import net.ravendb.client.http.ServerNode;
 import net.ravendb.client.json.ContentProviderHttpEntity;
 import net.ravendb.client.primitives.Reference;
+import net.ravendb.client.util.RaftIdGenerator;
 import org.apache.http.client.methods.HttpPut;
 import org.apache.http.client.methods.HttpRequestBase;
 import org.apache.http.entity.ContentType;
@@ -37,7 +39,7 @@ public class PutIndexesOperation implements IMaintenanceOperation<PutIndexResult
         return new PutIndexesCommand(conventions, _indexToAdd);
     }
 
-    private class PutIndexesCommand extends RavenCommand<PutIndexResult[]> {
+    private class PutIndexesCommand extends RavenCommand<PutIndexResult[]> implements IRaftCommand {
         private final ObjectNode[] _indexToAdd;
 
         public PutIndexesCommand(DocumentConventions conventions, IndexDefinition[] indexesToAdd) {
@@ -104,6 +106,11 @@ public class PutIndexesOperation implements IMaintenanceOperation<PutIndexResult
         @Override
         public boolean isReadRequest() {
             return false;
+        }
+
+        @Override
+        public String getRaftUniqueRequestId() {
+            return RaftIdGenerator.newId();
         }
     }
 

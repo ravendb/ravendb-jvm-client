@@ -7,7 +7,7 @@ public class AutoIndexFieldOptions {
     private AutoFieldIndexing indexing;
     private AggregationOperation aggregation;
     private AutoSpatialOptions spatial;
-    private GrouByArrayBehavior grouByArrayBehavior;
+    private GroupByArrayBehavior groupByArrayBehavior;
     private Boolean suggestions;
     private boolean isNameQuoted;
 
@@ -43,12 +43,12 @@ public class AutoIndexFieldOptions {
         this.spatial = spatial;
     }
 
-    public GrouByArrayBehavior getGrouByArrayBehavior() {
-        return grouByArrayBehavior;
+    public GroupByArrayBehavior getGroupByArrayBehavior() {
+        return groupByArrayBehavior;
     }
 
-    public void setGrouByArrayBehavior(GrouByArrayBehavior grouByArrayBehavior) {
-        this.grouByArrayBehavior = grouByArrayBehavior;
+    public void setGroupByArrayBehavior(GroupByArrayBehavior groupByArrayBehavior) {
+        this.groupByArrayBehavior = groupByArrayBehavior;
     }
 
     public Boolean getSuggestions() {

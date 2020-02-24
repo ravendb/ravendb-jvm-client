@@ -9,6 +9,7 @@ import net.ravendb.client.extensions.JsonExtensions;
 import net.ravendb.client.primitives.EventHelper;
 
 import java.io.IOException;
+import java.time.Duration;
 import java.util.List;
 import java.util.function.Consumer;
 
@@ -84,11 +85,11 @@ public class LazyQueryOperation<T> implements ILazyOperation {
             }
         }
 
-        handleResponse(queryResult);
+        handleResponse(queryResult, response.getElapsed());
     }
 
-    private void handleResponse(QueryResult queryResult) {
-        _queryOperation.ensureIsAcceptableAndSaveResult(queryResult);
+    private void handleResponse(QueryResult queryResult, Duration duration) {
+        _queryOperation.ensureIsAcceptableAndSaveResult(queryResult, duration);
 
         EventHelper.invoke(_afterQueryExecuted, queryResult);
         result = _queryOperation.complete(_clazz);

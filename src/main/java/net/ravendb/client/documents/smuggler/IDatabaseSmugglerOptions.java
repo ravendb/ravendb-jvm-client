@@ -3,6 +3,10 @@ package net.ravendb.client.documents.smuggler;
 import java.util.EnumSet;
 
 public interface IDatabaseSmugglerOptions {
+    EnumSet<DatabaseRecordItemType> getOperateOnDatabaseRecordType();
+
+    void setOperateOnDatabaseRecordType(EnumSet<DatabaseRecordItemType> operateOnDatabaseRecordType);
+
     EnumSet<DatabaseItemType> getOperateOnTypes();
 
     void setOperateOnTypes(EnumSet<DatabaseItemType> operateOnTypes);

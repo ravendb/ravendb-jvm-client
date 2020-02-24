@@ -2,11 +2,13 @@ package net.ravendb.client.serverwide.operations.certificates;
 
 import com.fasterxml.jackson.core.JsonGenerator;
 import net.ravendb.client.documents.conventions.DocumentConventions;
+import net.ravendb.client.http.IRaftCommand;
 import net.ravendb.client.http.ServerNode;
 import net.ravendb.client.http.VoidRavenCommand;
 import net.ravendb.client.json.ContentProviderHttpEntity;
 import net.ravendb.client.primitives.Reference;
 import net.ravendb.client.serverwide.operations.IVoidServerOperation;
+import net.ravendb.client.util.RaftIdGenerator;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpRequestBase;
@@ -33,7 +35,7 @@ public class ReplaceClusterCertificateOperation implements IVoidServerOperation 
         return new ReplaceClusterCertificateCommand(_certBytes, _replaceImmediately);
     }
 
-    private static class ReplaceClusterCertificateCommand extends VoidRavenCommand {
+    private static class ReplaceClusterCertificateCommand extends VoidRavenCommand implements IRaftCommand {
         private final byte[] _certBytes;
         private final boolean _replaceImmediately;
 
@@ -67,6 +69,11 @@ public class ReplaceClusterCertificateOperation implements IVoidServerOperation 
                 }
             }, ContentType.APPLICATION_JSON));
             return request;
+        }
+
+        @Override
+        public String getRaftUniqueRequestId() {
+            return RaftIdGenerator.newId();
         }
     }
 }

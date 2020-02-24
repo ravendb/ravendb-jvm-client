@@ -5,10 +5,12 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import net.ravendb.client.documents.conventions.DocumentConventions;
 import net.ravendb.client.documents.operations.IMaintenanceOperation;
 import net.ravendb.client.documents.operations.connectionStrings.ConnectionString;
+import net.ravendb.client.http.IRaftCommand;
 import net.ravendb.client.http.RavenCommand;
 import net.ravendb.client.http.ServerNode;
 import net.ravendb.client.json.ContentProviderHttpEntity;
 import net.ravendb.client.primitives.Reference;
+import net.ravendb.client.util.RaftIdGenerator;
 import org.apache.http.client.methods.HttpPut;
 import org.apache.http.client.methods.HttpRequestBase;
 import org.apache.http.entity.ContentType;
@@ -28,7 +30,7 @@ public class AddEtlOperation<T extends ConnectionString> implements IMaintenance
         return new AddEtlCommand<>(conventions, _configuration);
     }
 
-    private static class AddEtlCommand<T extends ConnectionString> extends RavenCommand<AddEtlOperationResult> {
+    private static class AddEtlCommand<T extends ConnectionString> extends RavenCommand<AddEtlOperationResult> implements IRaftCommand {
         private final DocumentConventions _conventions;
         private final EtlConfiguration<T> _configuration;
 
@@ -66,6 +68,11 @@ public class AddEtlOperation<T extends ConnectionString> implements IMaintenance
             }
 
             result = mapper.readValue(response, resultClass);
+        }
+
+        @Override
+        public String getRaftUniqueRequestId() {
+            return RaftIdGenerator.newId();
         }
     }
 }

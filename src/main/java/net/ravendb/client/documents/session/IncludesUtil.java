@@ -1,6 +1,7 @@
 package net.ravendb.client.documents.session;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import net.ravendb.client.primitives.Reference;
 import org.apache.commons.lang3.StringUtils;
 
 import java.util.function.Consumer;
@@ -36,4 +37,17 @@ public class IncludesUtil {
             }
         }
      */
+
+    public static boolean requiresQuotes(String include, Reference<String> escapedInclude) {
+        for (int i = 0; i < include.length(); i++) {
+            char ch = include.charAt(i);
+            if (!Character.isLetterOrDigit(ch) && ch != '_' && ch != '.') {
+                escapedInclude.value = include.replaceAll("'", "\\'");
+                return true;
+            }
+        }
+
+        escapedInclude.value = null;
+        return false;
+    }
 }

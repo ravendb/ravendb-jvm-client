@@ -50,18 +50,9 @@ public class FromToken extends QueryToken {
         }
 
         if (dynamic) {
-            writer.append("from ");
-
-            if (collectionName.chars().anyMatch(x -> WHITE_SPACE_CHARS.contains((char) x))) {
-                if (collectionName.contains("\"")) {
-                    throwInvalidCollectionName();
-                }
-
-                writer.append('"').append(collectionName).append('"');
-            } else {
-                writeField(writer, collectionName);
-            }
-
+            writer.append("from '");
+            writer.append(collectionName.replaceAll("'", "\\'"));
+            writer.append("'");
         } else {
             writer
                     .append("from index '")
@@ -72,9 +63,5 @@ public class FromToken extends QueryToken {
         if (alias != null) {
             writer.append(" as ").append(alias);
         }
-    }
-
-    private void throwInvalidCollectionName() {
-        throw new IllegalArgumentException("Collection name cannot contain a quote, but was: " + collectionName);
     }
 }

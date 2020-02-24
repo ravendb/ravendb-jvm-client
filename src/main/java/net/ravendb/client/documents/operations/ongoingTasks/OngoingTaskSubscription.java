@@ -10,7 +10,6 @@ public class OngoingTaskSubscription extends OngoingTask {
     private String query;
     private String subscriptionName;
     private long subscriptionId;
-    private String mentorNode;
     private String ChangeVectorForNextBatchStartingPoint;
     private Date lastBatchAckTime;
     private boolean disabled;
@@ -38,14 +37,6 @@ public class OngoingTaskSubscription extends OngoingTask {
 
     public void setSubscriptionId(long subscriptionId) {
         this.subscriptionId = subscriptionId;
-    }
-
-    public String getMentorNode() {
-        return mentorNode;
-    }
-
-    public void setMentorNode(String mentorNode) {
-        this.mentorNode = mentorNode;
     }
 
     public String getChangeVectorForNextBatchStartingPoint() {

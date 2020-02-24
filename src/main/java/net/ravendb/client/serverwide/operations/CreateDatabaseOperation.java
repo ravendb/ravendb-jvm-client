@@ -3,11 +3,13 @@ package net.ravendb.client.serverwide.operations;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import net.ravendb.client.Constants;
 import net.ravendb.client.documents.conventions.DocumentConventions;
+import net.ravendb.client.http.IRaftCommand;
 import net.ravendb.client.http.RavenCommand;
 import net.ravendb.client.http.ServerNode;
 import net.ravendb.client.primitives.ExceptionsUtils;
 import net.ravendb.client.primitives.Reference;
 import net.ravendb.client.serverwide.DatabaseRecord;
+import net.ravendb.client.util.RaftIdGenerator;
 import org.apache.http.client.methods.HttpPut;
 import org.apache.http.client.methods.HttpRequestBase;
 import org.apache.http.entity.ContentType;
@@ -35,7 +37,7 @@ public class CreateDatabaseOperation implements IServerOperation<DatabasePutResu
         return new CreateDatabaseCommand(conventions, databaseRecord, replicationFactor);
     }
 
-    public static class CreateDatabaseCommand extends RavenCommand<DatabasePutResult> {
+    public static class CreateDatabaseCommand extends RavenCommand<DatabasePutResult> implements IRaftCommand {
         private final DocumentConventions conventions;
         private final DatabaseRecord databaseRecord;
         private final int replicationFactor;
@@ -89,6 +91,11 @@ public class CreateDatabaseOperation implements IServerOperation<DatabasePutResu
         @Override
         public boolean isReadRequest() {
             return false;
+        }
+
+        @Override
+        public String getRaftUniqueRequestId() {
+            return RaftIdGenerator.newId();
         }
     }
 }

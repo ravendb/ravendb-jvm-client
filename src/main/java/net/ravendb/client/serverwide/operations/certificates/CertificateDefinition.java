@@ -9,6 +9,7 @@ public class CertificateDefinition {
     private String password;
     private SecurityClearance securityClearance;
     private String thumbprint;
+    private String PublicKeyPinningHash;
     private Date notAfter;
     private Map<String, DatabaseAccess> permissions = new TreeMap<>(String::compareToIgnoreCase);
     private String collectionPrimaryKey = "";
@@ -84,5 +85,13 @@ public class CertificateDefinition {
 
     public void setCollectionSecondaryKeys(List<String> collectionSecondaryKeys) {
         this.collectionSecondaryKeys = collectionSecondaryKeys;
+    }
+
+    public String getPublicKeyPinningHash() {
+        return PublicKeyPinningHash;
+    }
+
+    public void setPublicKeyPinningHash(String publicKeyPinningHash) {
+        PublicKeyPinningHash = publicKeyPinningHash;
     }
 }

@@ -4,6 +4,7 @@ public class TcpConnectionInfo {
     private int port;
     private String url;
     private String certificate;
+    private String[] urls;
 
     public int getPort() {
         return port;
@@ -27,5 +28,13 @@ public class TcpConnectionInfo {
 
     public void setCertificate(String certificate) {
         this.certificate = certificate;
+    }
+
+    public String[] getUrls() {
+        return urls;
+    }
+
+    public void setUrls(String[] urls) {
+        this.urls = urls;
     }
 }

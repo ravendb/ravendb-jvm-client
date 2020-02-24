@@ -9,6 +9,12 @@ public class IncludeBuilder extends IncludeBuilderBase implements IIncludeBuilde
     }
 
     @Override
+    public IncludeBuilder includeDocuments(String path) {
+        _includeDocuments(path);
+        return this;
+    }
+
+    @Override
     public IIncludeBuilder includeCounter(String name) {
         _includeCounter("", name);
         return this;
@@ -25,11 +31,4 @@ public class IncludeBuilder extends IncludeBuilderBase implements IIncludeBuilde
         _includeAllCounters("");
         return this;
     }
-
-    @Override
-    public IIncludeBuilder includeDocuments(String path) {
-        _includeDocuments(path);
-        return this;
-    }
-
 }

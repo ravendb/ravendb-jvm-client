@@ -53,7 +53,10 @@ public class Constants {
 
             public static final String FULL_BACKUP_EXTENSION = "ravendb-full-backup";
             public static final String SNAPSHOT_EXTENSION = "ravendb-snapshot";
+            public static final String ENCRYPTED_FULL_BACKUP_EXTENSION = ".ravendb-encrypted-full-backup";
+            public static final String ENCRYPTED_SNAPSHOT_EXTENSION = ".ravendb-encrypted-snapshot";
             public static final String INCREMENTAL_BACKUP_EXTENSION = "ravendb-incremental-backup";
+            public static final String ENCRYPTED_INCREMENTAL_BACKUP_EXTENSION = ".ravendb-encrypted-incremental-backup";
 
             public static class Folders {
                 public static final String INDEXES = "Indexes";

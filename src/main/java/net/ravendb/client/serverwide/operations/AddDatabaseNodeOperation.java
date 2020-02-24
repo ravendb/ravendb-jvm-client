@@ -1,9 +1,11 @@
 package net.ravendb.client.serverwide.operations;
 
 import net.ravendb.client.documents.conventions.DocumentConventions;
+import net.ravendb.client.http.IRaftCommand;
 import net.ravendb.client.http.RavenCommand;
 import net.ravendb.client.http.ServerNode;
 import net.ravendb.client.primitives.Reference;
+import net.ravendb.client.util.RaftIdGenerator;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.client.methods.HttpPut;
 import org.apache.http.client.methods.HttpRequestBase;
@@ -28,8 +30,7 @@ public class AddDatabaseNodeOperation implements IServerOperation<DatabasePutRes
         return new AddDatabaseNodeCommand(_databaseName, _node);
     }
 
-    private static class AddDatabaseNodeCommand extends RavenCommand<DatabasePutResult>
-    {
+    private static class AddDatabaseNodeCommand extends RavenCommand<DatabasePutResult> implements IRaftCommand {
         private final String _databaseName;
         private final String _node;
 
@@ -67,6 +68,11 @@ public class AddDatabaseNodeOperation implements IServerOperation<DatabasePutRes
         @Override
         public boolean isReadRequest() {
             return false;
+        }
+
+        @Override
+        public String getRaftUniqueRequestId() {
+            return RaftIdGenerator.newId();
         }
     }
 

@@ -7,6 +7,7 @@ public class DatabaseSmugglerImportOptions extends DatabaseSmugglerOptions imple
 
     public DatabaseSmugglerImportOptions(DatabaseSmugglerOptions options) {
         setIncludeExpired(options.isIncludeExpired());
+        setIncludeArtificial(options.isIncludeArtificial());
         setMaxStepsForTransformScript(options.getMaxStepsForTransformScript());
         setOperateOnTypes(options.getOperateOnTypes().clone());
         setRemoveAnalyzers(options.isRemoveAnalyzers());

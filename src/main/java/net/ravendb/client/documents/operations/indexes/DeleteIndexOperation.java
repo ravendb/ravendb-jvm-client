@@ -2,9 +2,11 @@ package net.ravendb.client.documents.operations.indexes;
 
 import net.ravendb.client.documents.conventions.DocumentConventions;
 import net.ravendb.client.documents.operations.IVoidMaintenanceOperation;
+import net.ravendb.client.http.IRaftCommand;
 import net.ravendb.client.http.ServerNode;
 import net.ravendb.client.http.VoidRavenCommand;
 import net.ravendb.client.primitives.Reference;
+import net.ravendb.client.util.RaftIdGenerator;
 import net.ravendb.client.util.UrlUtils;
 import org.apache.http.client.methods.HttpDelete;
 import org.apache.http.client.methods.HttpRequestBase;
@@ -24,7 +26,7 @@ public class DeleteIndexOperation implements IVoidMaintenanceOperation {
         return new DeleteIndexOperation.DeleteIndexCommand(_indexName);
     }
 
-    private static class DeleteIndexCommand extends VoidRavenCommand {
+    private static class DeleteIndexCommand extends VoidRavenCommand implements IRaftCommand {
         private final String _indexName;
 
         public DeleteIndexCommand(String indexName) {
@@ -40,6 +42,11 @@ public class DeleteIndexOperation implements IVoidMaintenanceOperation {
             url.value = node.getUrl() + "/databases/" + node.getDatabase() + "/indexes?name=" + UrlUtils.escapeDataString(_indexName);
 
             return new HttpDelete();
+        }
+
+        @Override
+        public String getRaftUniqueRequestId() {
+            return RaftIdGenerator.newId();
         }
     }
 

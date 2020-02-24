@@ -5,17 +5,17 @@ import org.apache.commons.lang3.StringUtils;
 public class CounterIncludesToken extends QueryToken {
 
     private String _sourcePath;
-    private final String _parameterName;
+    private final String _counterName;
     private final boolean _all;
 
-    private CounterIncludesToken(String sourcePath, String parameterName, boolean all) {
-        _parameterName = parameterName;
+    private CounterIncludesToken(String sourcePath, String counterName, boolean all) {
+        _counterName = counterName;
         _all = all;
         _sourcePath = sourcePath;
     }
 
-    public static CounterIncludesToken create(String sourcePath, String parameterName) {
-        return new CounterIncludesToken(sourcePath, parameterName, false);
+    public static CounterIncludesToken create(String sourcePath, String counterName) {
+        return new CounterIncludesToken(sourcePath, counterName, false);
     }
 
     public static CounterIncludesToken all(String sourcePath) {
@@ -31,11 +31,11 @@ public class CounterIncludesToken extends QueryToken {
     @Override
     public void writeTo(StringBuilder writer) {
         writer
-                .append("counters(");
+            .append("counters(");
 
         if (StringUtils.isNotEmpty(_sourcePath)) {
             writer
-                    .append(_sourcePath);
+                .append(_sourcePath);
 
             if (!_all) {
                 writer.append(", ");
@@ -44,11 +44,12 @@ public class CounterIncludesToken extends QueryToken {
 
         if (!_all) {
             writer
-                    .append("$")
-                    .append(_parameterName);
+                .append("'")
+                .append(_counterName)
+                .append("'");
         }
 
         writer
-                .append(")");
+            .append(")");
     }
 }

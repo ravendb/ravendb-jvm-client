@@ -2,6 +2,7 @@ package net.ravendb.client.serverwide.operations.certificates;
 
 import com.fasterxml.jackson.core.JsonGenerator;
 import net.ravendb.client.documents.conventions.DocumentConventions;
+import net.ravendb.client.http.IRaftCommand;
 import net.ravendb.client.http.RavenCommand;
 import net.ravendb.client.http.RavenCommandResponseType;
 import net.ravendb.client.http.ServerNode;
@@ -9,6 +10,7 @@ import net.ravendb.client.json.ContentProviderHttpEntity;
 import net.ravendb.client.primitives.Reference;
 import net.ravendb.client.primitives.SharpEnum;
 import net.ravendb.client.serverwide.operations.IServerOperation;
+import net.ravendb.client.util.RaftIdGenerator;
 import org.apache.commons.io.IOUtils;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpPost;
@@ -50,7 +52,7 @@ public class CreateClientCertificateOperation implements IServerOperation<Certif
         return new CreateClientCertificateCommand(_name, _permissions, _clearance, _password);
     }
 
-    private static class CreateClientCertificateCommand extends RavenCommand<CertificateRawData> {
+    private static class CreateClientCertificateCommand extends RavenCommand<CertificateRawData> implements IRaftCommand {
         private final String _name;
         private final Map<String, DatabaseAccess> _permissions;
         private final SecurityClearance _clearance;
@@ -122,6 +124,11 @@ public class CreateClientCertificateOperation implements IServerOperation<Certif
             } catch (IOException e) {
                 throwInvalidResponse(e);
             }
+        }
+
+        @Override
+        public String getRaftUniqueRequestId() {
+            return RaftIdGenerator.newId();
         }
     }
 }

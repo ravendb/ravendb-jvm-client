@@ -4,6 +4,13 @@ public class PullReplicationDefinition extends FeatureTaskDefinition {
     private String delayReplicationFor;
     private String mentorNode;
 
+    public PullReplicationDefinition() {
+    }
+
+    public PullReplicationDefinition(String name) {
+        setName(name);
+    }
+
     public String getDelayReplicationFor() {
         return delayReplicationFor;
     }

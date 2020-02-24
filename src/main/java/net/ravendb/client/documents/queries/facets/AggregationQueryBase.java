@@ -51,6 +51,8 @@ public abstract class AggregationQueryBase {
 
     protected abstract IndexQuery getIndexQuery();
 
+    protected abstract IndexQuery getIndexQuery(boolean updateAfterQueryExecuted);
+
     protected abstract void invokeAfterQueryExecuted(QueryResult result);
 
     private Map<String, FacetResult> processResults(QueryResult queryResult, DocumentConventions conventions) {
@@ -74,6 +76,6 @@ public abstract class AggregationQueryBase {
 
     @Override
     public String toString() {
-        return getIndexQuery().toString();
+        return getIndexQuery(false).toString();
     }
 }

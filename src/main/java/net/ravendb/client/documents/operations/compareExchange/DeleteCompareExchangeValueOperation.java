@@ -4,9 +4,11 @@ import net.ravendb.client.documents.IDocumentStore;
 import net.ravendb.client.documents.conventions.DocumentConventions;
 import net.ravendb.client.documents.operations.IOperation;
 import net.ravendb.client.http.HttpCache;
+import net.ravendb.client.http.IRaftCommand;
 import net.ravendb.client.http.RavenCommand;
 import net.ravendb.client.http.ServerNode;
 import net.ravendb.client.primitives.Reference;
+import net.ravendb.client.util.RaftIdGenerator;
 import net.ravendb.client.util.UrlUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.client.methods.HttpDelete;
@@ -31,7 +33,7 @@ public class DeleteCompareExchangeValueOperation<T> implements IOperation<Compar
         return new RemoveCompareExchangeCommand<>(_clazz, _key, _index, conventions);
     }
 
-    private static class RemoveCompareExchangeCommand<T> extends RavenCommand<CompareExchangeResult<T>> {
+    private static class RemoveCompareExchangeCommand<T> extends RavenCommand<CompareExchangeResult<T>> implements IRaftCommand {
         private final Class<T> _clazz;
         private final String _key;
         private final long _index;
@@ -66,6 +68,11 @@ public class DeleteCompareExchangeValueOperation<T> implements IOperation<Compar
         @Override
         public void setResponse(String response, boolean fromCache) throws IOException {
             result = CompareExchangeResult.parseFromString(_clazz, response, _conventions);
+        }
+
+        @Override
+        public String getRaftUniqueRequestId() {
+            return RaftIdGenerator.newId();
         }
     }
 }

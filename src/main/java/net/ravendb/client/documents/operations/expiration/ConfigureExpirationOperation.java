@@ -4,10 +4,12 @@ import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import net.ravendb.client.documents.conventions.DocumentConventions;
 import net.ravendb.client.documents.operations.IMaintenanceOperation;
+import net.ravendb.client.http.IRaftCommand;
 import net.ravendb.client.http.RavenCommand;
 import net.ravendb.client.http.ServerNode;
 import net.ravendb.client.json.ContentProviderHttpEntity;
 import net.ravendb.client.primitives.Reference;
+import net.ravendb.client.util.RaftIdGenerator;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpRequestBase;
 import org.apache.http.entity.ContentType;
@@ -27,7 +29,7 @@ public class ConfigureExpirationOperation implements IMaintenanceOperation<Confi
         return new ConfigureExpirationCommand(_configuration);
     }
 
-    private static class ConfigureExpirationCommand extends RavenCommand<ConfigureExpirationOperationResult> {
+    private static class ConfigureExpirationCommand extends RavenCommand<ConfigureExpirationOperationResult> implements IRaftCommand {
         private final ExpirationConfiguration _configuration;
 
         public ConfigureExpirationCommand(ExpirationConfiguration configuration) {
@@ -65,6 +67,11 @@ public class ConfigureExpirationOperation implements IMaintenanceOperation<Confi
             }
 
             result = mapper.readValue(response, resultClass);
+        }
+
+        @Override
+        public String getRaftUniqueRequestId() {
+            return RaftIdGenerator.newId();
         }
     }
 }

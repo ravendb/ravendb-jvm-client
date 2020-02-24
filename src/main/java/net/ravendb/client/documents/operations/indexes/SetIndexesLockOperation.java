@@ -5,10 +5,12 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import net.ravendb.client.documents.conventions.DocumentConventions;
 import net.ravendb.client.documents.indexes.IndexLockMode;
 import net.ravendb.client.documents.operations.IVoidMaintenanceOperation;
+import net.ravendb.client.http.IRaftCommand;
 import net.ravendb.client.http.ServerNode;
 import net.ravendb.client.http.VoidRavenCommand;
 import net.ravendb.client.json.ContentProviderHttpEntity;
 import net.ravendb.client.primitives.Reference;
+import net.ravendb.client.util.RaftIdGenerator;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpRequestBase;
 import org.apache.http.entity.ContentType;
@@ -58,7 +60,7 @@ public class SetIndexesLockOperation implements IVoidMaintenanceOperation {
         return new SetIndexLockCommand(conventions, _parameters);
     }
 
-    private static class SetIndexLockCommand extends VoidRavenCommand {
+    private static class SetIndexLockCommand extends VoidRavenCommand implements IRaftCommand {
 
         private ObjectNode _parameters;
 
@@ -89,6 +91,11 @@ public class SetIndexesLockOperation implements IVoidMaintenanceOperation {
             }, ContentType.APPLICATION_JSON));
 
             return request;
+        }
+
+        @Override
+        public String getRaftUniqueRequestId() {
+            return RaftIdGenerator.newId();
         }
     }
 

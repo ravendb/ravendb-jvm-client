@@ -11,6 +11,7 @@ public abstract class OngoingTask {
     private OngoingTaskConnectionStatus taskConnectionStatus;
     private String taskName;
     private String error;
+    private String mentorNode;
 
     public long getTaskId() {
         return taskId;
@@ -66,5 +67,13 @@ public abstract class OngoingTask {
 
     public void setError(String error) {
         this.error = error;
+    }
+
+    public String getMentorNode() {
+        return mentorNode;
+    }
+
+    public void setMentorNode(String mentorNode) {
+        this.mentorNode = mentorNode;
     }
 }

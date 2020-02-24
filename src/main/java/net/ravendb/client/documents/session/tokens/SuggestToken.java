@@ -1,12 +1,15 @@
 package net.ravendb.client.documents.session.tokens;
 
+import org.apache.commons.lang3.StringUtils;
+
 public class SuggestToken extends QueryToken {
 
     private final String _fieldName;
+    private final String _alias;
     private final String _termParameterName;
     private final String _optionsParameterName;
 
-    private SuggestToken(String fieldName, String termParameterName, String optionsParameterName) {
+    private SuggestToken(String fieldName, String alias, String termParameterName, String optionsParameterName) {
         if (fieldName == null) {
             throw new IllegalArgumentException("fieldName cannot be null");
         }
@@ -16,12 +19,17 @@ public class SuggestToken extends QueryToken {
         }
 
         _fieldName = fieldName;
+        _alias = alias;
         _termParameterName = termParameterName;
         _optionsParameterName = optionsParameterName;
     }
 
-    public static SuggestToken create(String fieldName, String termParameterName, String optionsParameterName) {
-        return new SuggestToken(fieldName, termParameterName, optionsParameterName);
+    public static SuggestToken create(String fieldName, String alias, String termParameterName, String optionsParameterName) {
+        return new SuggestToken(fieldName, alias, termParameterName, optionsParameterName);
+    }
+
+    public String getFieldName() {
+        return _fieldName;
     }
 
     @Override
@@ -40,6 +48,13 @@ public class SuggestToken extends QueryToken {
 
         writer
                 .append(")");
-    }
 
+        if (StringUtils.isWhitespace(_alias) || getFieldName().equals(_alias)) {
+            return;
+        }
+
+        writer
+                .append(" as ")
+                .append(_alias);
+    }
 }

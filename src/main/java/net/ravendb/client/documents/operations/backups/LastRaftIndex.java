@@ -1,13 +1,13 @@
 package net.ravendb.client.documents.operations.backups;
 
 public class LastRaftIndex {
-    private long lastEtag;
+    private Long lastEtag;
 
-    public long getLastEtag() {
+    public Long getLastEtag() {
         return lastEtag;
     }
 
-    public void setLastEtag(long lastEtag) {
+    public void setLastEtag(Long lastEtag) {
         this.lastEtag = lastEtag;
     }
 }

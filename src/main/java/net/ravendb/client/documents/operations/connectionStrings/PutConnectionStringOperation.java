@@ -4,10 +4,12 @@ import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import net.ravendb.client.documents.conventions.DocumentConventions;
 import net.ravendb.client.documents.operations.IMaintenanceOperation;
+import net.ravendb.client.http.IRaftCommand;
 import net.ravendb.client.http.RavenCommand;
 import net.ravendb.client.http.ServerNode;
 import net.ravendb.client.json.ContentProviderHttpEntity;
 import net.ravendb.client.primitives.Reference;
+import net.ravendb.client.util.RaftIdGenerator;
 import org.apache.http.client.methods.HttpPut;
 import org.apache.http.client.methods.HttpRequestBase;
 import org.apache.http.entity.ContentType;
@@ -27,7 +29,7 @@ public class PutConnectionStringOperation<T extends ConnectionString> implements
         return new PutConnectionStringCommand<>(_connectionString);
     }
 
-    public static class PutConnectionStringCommand<T> extends RavenCommand<PutConnectionStringResult> {
+    public static class PutConnectionStringCommand<T> extends RavenCommand<PutConnectionStringResult> implements IRaftCommand {
         private final T _connectionString;
 
         public PutConnectionStringCommand(T connectionString) {
@@ -63,6 +65,11 @@ public class PutConnectionStringOperation<T extends ConnectionString> implements
             }
 
             result = mapper.readValue(response, resultClass);
+        }
+
+        @Override
+        public String getRaftUniqueRequestId() {
+            return RaftIdGenerator.newId();
         }
     }
 }

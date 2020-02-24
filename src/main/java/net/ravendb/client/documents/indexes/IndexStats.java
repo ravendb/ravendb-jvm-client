@@ -9,9 +9,14 @@ public class IndexStats {
     private int mapAttempts;
     private int mapSuccesses;
     private int mapErrors;
+    private Integer mapReferenceAttempts;
+    private Integer mapReferenceSuccesses;
+    private Integer mapReferenceErrors;
     private Integer reduceAttempts;
     private Integer reduceSuccesses;
     private Integer reduceErrors;
+    private String reduceOutputCollection;
+    private String reduceOutputReferencePattern;
     private double mappedPerSecondRate;
     private double reducedPerSecondRate;
     private int maxNumberOfOutputsPerDocument;
@@ -43,7 +48,7 @@ public class IndexStats {
     }
 
     /**
-     * Indicates how many times database tried to index documents (map) using this index.
+     * Indicates how many times the database tried to index documents (map) using this index.
      * @return map attempts
      */
     public int getMapAttempts() {
@@ -51,7 +56,7 @@ public class IndexStats {
     }
 
     /**
-     * Indicates how many times database tried to index documents (map) using this index.
+     * Indicates how many times the database tried to index documents (map) using this index.
      * @param mapAttempts Sets the value
      */
     public void setMapAttempts(int mapAttempts) {
@@ -88,6 +93,54 @@ public class IndexStats {
      */
     public void setMapErrors(int mapErrors) {
         this.mapErrors = mapErrors;
+    }
+
+    /**
+     * Indicates how many times the database tried to index referenced documents (map) using this index.
+     * @return map reference attempts
+     */
+    public Integer getMapReferenceAttempts() {
+        return mapReferenceAttempts;
+    }
+
+    /**
+     * Indicates how many times the database tried to index referenced documents (map) using this index.
+     * @param mapReferenceAttempts attempts
+     */
+    public void setMapReferenceAttempts(Integer mapReferenceAttempts) {
+        this.mapReferenceAttempts = mapReferenceAttempts;
+    }
+
+    /**
+     * Indicates how many indexing attempts of referenced documents succeeded.
+     * @return map reference success
+     */
+    public Integer getMapReferenceSuccesses() {
+        return mapReferenceSuccesses;
+    }
+
+    /**
+     * Indicates how many indexing attempts of referenced documents succeeded.
+     * @param mapReferenceSuccesses map reference success
+     */
+    public void setMapReferenceSuccesses(Integer mapReferenceSuccesses) {
+        this.mapReferenceSuccesses = mapReferenceSuccesses;
+    }
+
+    /**
+     * Indicates how many indexing attempts of referenced documents failed.
+     * @return map reference errors
+     */
+    public Integer getMapReferenceErrors() {
+        return mapReferenceErrors;
+    }
+
+    /**
+     * Indicates how many indexing attempts of referenced documents failed.
+     * @param mapReferenceErrors map reference errors
+     */
+    public void setMapReferenceErrors(Integer mapReferenceErrors) {
+        this.mapReferenceErrors = mapReferenceErrors;
     }
 
     /**
@@ -136,6 +189,38 @@ public class IndexStats {
      */
     public void setReduceErrors(Integer reduceErrors) {
         this.reduceErrors = reduceErrors;
+    }
+
+    /**
+     * The reduce output collection.
+     * @return reduce output collection
+     */
+    public String getReduceOutputCollection() {
+        return reduceOutputCollection;
+    }
+
+    /**
+     * The reduce output collection.
+     * @param reduceOutputCollection reduce output
+     */
+    public void setReduceOutputCollection(String reduceOutputCollection) {
+        this.reduceOutputCollection = reduceOutputCollection;
+    }
+
+    /**
+     * Pattern for creating IDs for the reduce output reference-collection
+     * @return output pattern
+     */
+    public String getReduceOutputReferencePattern() {
+        return reduceOutputReferencePattern;
+    }
+
+    /**
+     * Pattern for creating IDs for the reduce output reference-collection
+     * @param reduceOutputReferencePattern reference pattern
+     */
+    public void setReduceOutputReferencePattern(String reduceOutputReferencePattern) {
+        this.reduceOutputReferencePattern = reduceOutputReferencePattern;
     }
 
     /**

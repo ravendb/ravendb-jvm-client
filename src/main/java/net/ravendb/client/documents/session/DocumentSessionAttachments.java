@@ -30,9 +30,9 @@ public class DocumentSessionAttachments extends DocumentSessionAttachmentsBase i
     @SuppressWarnings("ConstantConditions")
     @Override
     public CloseableAttachmentResult get(Object entity, String name) {
-        DocumentInfo document = documentsByEntity.get(entity);
+        DocumentInfo document = session.documentsByEntity.get(entity);
         if (document == null) {
-            throwEntityNotInSession(entity);
+            throwEntityNotInSessionOrMissingId(entity);
         }
 
         GetAttachmentOperation operation = new GetAttachmentOperation(document.getId(), name, AttachmentType.DOCUMENT, null);

@@ -1,10 +1,18 @@
 package net.ravendb.client.documents.operations.replication;
 
-public class PullReplicationAsSink extends ExternalReplication {
+public class PullReplicationAsSink extends ExternalReplicationBase {
 
     private String certificateWithPrivateKey;
     private String certificatePassword;
     private String hubDefinitionName;
+
+    public PullReplicationAsSink() {
+    }
+
+    public PullReplicationAsSink(String database, String connectionStringName, String hubDefinitionName) {
+        super(database, connectionStringName);
+        this.hubDefinitionName = hubDefinitionName;
+    }
 
     public String getCertificateWithPrivateKey() {
         return certificateWithPrivateKey;

@@ -2,12 +2,14 @@ package net.ravendb.client.serverwide.operations.certificates;
 
 import com.fasterxml.jackson.core.JsonGenerator;
 import net.ravendb.client.documents.conventions.DocumentConventions;
+import net.ravendb.client.http.IRaftCommand;
 import net.ravendb.client.http.ServerNode;
 import net.ravendb.client.http.VoidRavenCommand;
 import net.ravendb.client.json.ContentProviderHttpEntity;
 import net.ravendb.client.primitives.Reference;
 import net.ravendb.client.primitives.SharpEnum;
 import net.ravendb.client.serverwide.operations.IVoidServerOperation;
+import net.ravendb.client.util.RaftIdGenerator;
 import org.apache.http.client.methods.HttpPut;
 import org.apache.http.client.methods.HttpRequestBase;
 import org.apache.http.entity.ContentType;
@@ -42,7 +44,7 @@ public class PutClientCertificateOperation implements IVoidServerOperation {
         return new PutClientCertificateCommand(_name, _certificate, _permissions, _clearance);
     }
 
-    private static class PutClientCertificateCommand extends VoidRavenCommand {
+    private static class PutClientCertificateCommand extends VoidRavenCommand implements IRaftCommand {
         private final String _certificate;
         private final Map<String, DatabaseAccess> _permissions;
         private final String _name;
@@ -95,7 +97,11 @@ public class PutClientCertificateOperation implements IVoidServerOperation {
                 }
             }, ContentType.APPLICATION_JSON));
             return request;
+        }
 
+        @Override
+        public String getRaftUniqueRequestId() {
+            return RaftIdGenerator.newId();
         }
     }
 

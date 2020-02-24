@@ -70,6 +70,8 @@ public abstract class SuggestionQueryBase {
 
     protected abstract IndexQuery getIndexQuery();
 
+    protected abstract IndexQuery getIndexQuery(boolean updateAfterQueryExecuted);
+
     protected abstract void invokeAfterQueryExecuted(QueryResult result);
 
     private QueryCommand getCommand() {
@@ -81,6 +83,6 @@ public abstract class SuggestionQueryBase {
 
     @Override
     public String toString() {
-        return getIndexQuery().toString();
+        return getIndexQuery(false).toString();
     }
 }

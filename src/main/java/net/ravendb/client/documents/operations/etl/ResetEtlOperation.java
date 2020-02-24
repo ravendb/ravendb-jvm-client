@@ -4,12 +4,14 @@ import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import net.ravendb.client.documents.conventions.DocumentConventions;
 import net.ravendb.client.documents.operations.IVoidMaintenanceOperation;
+import net.ravendb.client.http.IRaftCommand;
 import net.ravendb.client.http.ServerNode;
 import net.ravendb.client.http.VoidRavenCommand;
 import net.ravendb.client.json.ContentProviderHttpEntity;
 import net.ravendb.client.primitives.HttpReset;
 import net.ravendb.client.primitives.HttpResetWithEntity;
 import net.ravendb.client.primitives.Reference;
+import net.ravendb.client.util.RaftIdGenerator;
 import net.ravendb.client.util.UrlUtils;
 import org.apache.http.client.methods.HttpRequestBase;
 import org.apache.http.entity.ContentType;
@@ -31,7 +33,7 @@ public class ResetEtlOperation implements IVoidMaintenanceOperation {
         return new ResetEtlCommand(_configurationName, _transformationName);
     }
 
-    private static class ResetEtlCommand extends VoidRavenCommand {
+    private static class ResetEtlCommand extends VoidRavenCommand implements IRaftCommand {
         private final String _configurationName;
         private final String _transformationName;
 
@@ -60,6 +62,11 @@ public class ResetEtlOperation implements IVoidMaintenanceOperation {
                 }
             }, ContentType.APPLICATION_JSON));
             return request;
+        }
+
+        @Override
+        public String getRaftUniqueRequestId() {
+            return RaftIdGenerator.newId();
         }
     }
 }

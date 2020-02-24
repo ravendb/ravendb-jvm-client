@@ -45,14 +45,14 @@ public class GetConnectionStringsOperation implements IMaintenanceOperation<GetC
 
         @Override
         public boolean isReadRequest() {
-            return false;
+            return true;
         }
 
         @Override
         public HttpRequestBase createRequest(ServerNode node, Reference<String> url) {
-            url.value = node.getUrl() + "/databases/" + node.getDatabase() + "/admin/connection-strings?";
+            url.value = node.getUrl() + "/databases/" + node.getDatabase() + "/admin/connection-strings";
             if (_connectionStringName != null) {
-                url.value += "&connectionStringName=" + UrlUtils.escapeDataString(_connectionStringName) + "&type=" + SharpEnum.value(_type);
+                url.value += "?connectionStringName=" + UrlUtils.escapeDataString(_connectionStringName) + "&type=" + SharpEnum.value(_type);
             }
 
             return new HttpGet();

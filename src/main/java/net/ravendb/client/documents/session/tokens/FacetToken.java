@@ -1,5 +1,6 @@
 package net.ravendb.client.documents.session.tokens;
 
+import net.ravendb.client.documents.queries.QueryFieldUtil;
 import net.ravendb.client.documents.queries.facets.*;
 import org.apache.commons.lang3.NotImplementedException;
 import org.apache.commons.lang3.ObjectUtils;
@@ -46,7 +47,7 @@ public class FacetToken extends QueryToken {
 
     public static FacetToken create(Facet facet, Function<Object, String> addQueryParameter) {
         String optionsParameterName = getOptionsParameterName(facet, addQueryParameter);
-        FacetToken token = new FacetToken(facet.getFieldName(), facet.getDisplayFieldName(), null, optionsParameterName);
+        FacetToken token = new FacetToken(QueryFieldUtil.escapeIfNecessary(facet.getFieldName()), QueryFieldUtil.escapeIfNecessary(facet.getDisplayFieldName()), null, optionsParameterName);
 
         applyAggregations(facet, token);
 
@@ -56,7 +57,7 @@ public class FacetToken extends QueryToken {
     public static FacetToken create(RangeFacet facet, Function<Object, String> addQueryParameter) {
         String optionsParameterName = getOptionsParameterName(facet, addQueryParameter);
 
-        FacetToken token = new FacetToken(null, facet.getDisplayFieldName(), facet.getRanges(), optionsParameterName);
+        FacetToken token = new FacetToken(null, QueryFieldUtil.escapeIfNecessary(facet.getDisplayFieldName()), facet.getRanges(), optionsParameterName);
 
         applyAggregations(facet, token);
 
@@ -71,7 +72,7 @@ public class FacetToken extends QueryToken {
             ranges.add(GenericRangeFacet.parse(rangeBuilder, addQueryParameter));
         }
 
-        FacetToken token = new FacetToken(null, facet.getDisplayFieldName(), ranges, optionsParameterName);
+        FacetToken token = new FacetToken(null, QueryFieldUtil.escapeIfNecessary(facet.getDisplayFieldName()), ranges, optionsParameterName);
 
         applyAggregations(facet, token);
         return token;

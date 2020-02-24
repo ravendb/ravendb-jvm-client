@@ -5,11 +5,13 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import net.ravendb.client.documents.conventions.DocumentConventions;
+import net.ravendb.client.http.IRaftCommand;
 import net.ravendb.client.http.RavenCommand;
 import net.ravendb.client.http.ServerNode;
 import net.ravendb.client.json.ContentProviderHttpEntity;
 import net.ravendb.client.primitives.Reference;
 import net.ravendb.client.serverwide.operations.IServerOperation;
+import net.ravendb.client.util.RaftIdGenerator;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpRequestBase;
 import org.apache.http.entity.ContentType;
@@ -53,7 +55,7 @@ public class ToggleDatabasesStateOperation implements IServerOperation<DisableDa
         return new ToggleDatabaseStateCommand(conventions, _parameters, _disable);
     }
 
-    private static class ToggleDatabaseStateCommand extends RavenCommand<DisableDatabaseToggleResult> {
+    private static class ToggleDatabaseStateCommand extends RavenCommand<DisableDatabaseToggleResult> implements IRaftCommand {
         private final boolean _disable;
         private final Parameters _parameters;
 
@@ -108,6 +110,11 @@ public class ToggleDatabasesStateOperation implements IServerOperation<DisableDa
         @Override
         public boolean isReadRequest() {
             return false;
+        }
+
+        @Override
+        public String getRaftUniqueRequestId() {
+            return RaftIdGenerator.newId();
         }
     }
 

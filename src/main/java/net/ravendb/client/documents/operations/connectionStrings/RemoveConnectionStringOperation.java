@@ -2,10 +2,12 @@ package net.ravendb.client.documents.operations.connectionStrings;
 
 import net.ravendb.client.documents.conventions.DocumentConventions;
 import net.ravendb.client.documents.operations.IMaintenanceOperation;
+import net.ravendb.client.http.IRaftCommand;
 import net.ravendb.client.http.RavenCommand;
 import net.ravendb.client.http.ServerNode;
 import net.ravendb.client.primitives.Reference;
 import net.ravendb.client.primitives.SharpEnum;
+import net.ravendb.client.util.RaftIdGenerator;
 import net.ravendb.client.util.UrlUtils;
 import org.apache.http.client.methods.HttpDelete;
 import org.apache.http.client.methods.HttpRequestBase;
@@ -24,7 +26,7 @@ public class RemoveConnectionStringOperation<T extends ConnectionString> impleme
         return new RemoveConnectionStringCommand<>(_connectionString);
     }
 
-    private static class RemoveConnectionStringCommand<T extends ConnectionString> extends RavenCommand<RemoveConnectionStringResult> {
+    private static class RemoveConnectionStringCommand<T extends ConnectionString> extends RavenCommand<RemoveConnectionStringResult> implements IRaftCommand {
         private final T _connectionString;
 
         public RemoveConnectionStringCommand(T connectionString) {
@@ -43,6 +45,11 @@ public class RemoveConnectionStringOperation<T extends ConnectionString> impleme
                     + UrlUtils.escapeDataString(_connectionString.getName()) + "&type=" + SharpEnum.value(_connectionString.getType());
 
             return new HttpDelete();
+        }
+
+        @Override
+        public String getRaftUniqueRequestId() {
+            return RaftIdGenerator.newId();
         }
 
         @Override

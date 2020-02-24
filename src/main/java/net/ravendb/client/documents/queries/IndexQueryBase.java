@@ -46,6 +46,7 @@ public class IndexQueryBase<T> implements IIndexQuery {
 
     /**
      * Number of records that should be skipped.
+     * @deprecated use OFFSET in RQL instead
      * @return items to skip
      */
     public int getStart() {
@@ -54,6 +55,7 @@ public class IndexQueryBase<T> implements IIndexQuery {
 
     /**
      * Number of records that should be skipped.
+     * @deprecated use OFFSET in RQL instead
      * @param start Sets amount of items to skip
      */
     public void setStart(int start) {
@@ -62,6 +64,7 @@ public class IndexQueryBase<T> implements IIndexQuery {
 
     /**
      * Maximum number of records that will be retrieved.
+     * @deprecated use LIMIT in RQL instead
      * @return page size
      */
     public int getPageSize() {
@@ -70,6 +73,7 @@ public class IndexQueryBase<T> implements IIndexQuery {
 
     /**
      * Maximum number of records that will be retrieved.
+     * @deprecated use LIMIT in RQL instead
      * @param pageSize Sets the value
      */
     public void setPageSize(int pageSize) {

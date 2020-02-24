@@ -3,10 +3,12 @@ package net.ravendb.client.documents.operations.configuration;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import net.ravendb.client.documents.conventions.DocumentConventions;
 import net.ravendb.client.documents.operations.IVoidMaintenanceOperation;
+import net.ravendb.client.http.IRaftCommand;
 import net.ravendb.client.http.ServerNode;
 import net.ravendb.client.http.VoidRavenCommand;
 import net.ravendb.client.primitives.ExceptionsUtils;
 import net.ravendb.client.primitives.Reference;
+import net.ravendb.client.util.RaftIdGenerator;
 import org.apache.http.client.methods.HttpPut;
 import org.apache.http.client.methods.HttpRequestBase;
 import org.apache.http.entity.ContentType;
@@ -29,7 +31,7 @@ public class PutClientConfigurationOperation implements IVoidMaintenanceOperatio
         return new PutClientConfigurationCommand(conventions, this.configuration);
     }
 
-    private static class PutClientConfigurationCommand extends VoidRavenCommand {
+    private static class PutClientConfigurationCommand extends VoidRavenCommand implements IRaftCommand {
         private final String configuration;
 
         public PutClientConfigurationCommand(DocumentConventions conventions, ClientConfiguration configuration) {
@@ -55,6 +57,11 @@ public class PutClientConfigurationOperation implements IVoidMaintenanceOperatio
             HttpPut httpPut = new HttpPut();
             httpPut.setEntity(new StringEntity(this.configuration, ContentType.APPLICATION_JSON));
             return httpPut;
+        }
+
+        @Override
+        public String getRaftUniqueRequestId() {
+            return RaftIdGenerator.newId();
         }
     }
 }

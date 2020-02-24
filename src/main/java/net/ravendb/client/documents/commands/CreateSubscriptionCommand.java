@@ -4,17 +4,19 @@ import com.fasterxml.jackson.core.JsonGenerator;
 import net.ravendb.client.documents.conventions.DocumentConventions;
 import net.ravendb.client.documents.subscriptions.CreateSubscriptionResult;
 import net.ravendb.client.documents.subscriptions.SubscriptionCreationOptions;
+import net.ravendb.client.http.IRaftCommand;
 import net.ravendb.client.http.RavenCommand;
 import net.ravendb.client.http.ServerNode;
 import net.ravendb.client.json.ContentProviderHttpEntity;
 import net.ravendb.client.primitives.Reference;
+import net.ravendb.client.util.RaftIdGenerator;
 import org.apache.http.client.methods.HttpPut;
 import org.apache.http.client.methods.HttpRequestBase;
 import org.apache.http.entity.ContentType;
 
 import java.io.IOException;
 
-public class CreateSubscriptionCommand extends RavenCommand<CreateSubscriptionResult> {
+public class CreateSubscriptionCommand extends RavenCommand<CreateSubscriptionResult> implements IRaftCommand {
 
     @SuppressWarnings("FieldCanBeLocal")
     private final DocumentConventions _conventions;
@@ -60,5 +62,10 @@ public class CreateSubscriptionCommand extends RavenCommand<CreateSubscriptionRe
     @Override
     public boolean isReadRequest() {
         return false;
+    }
+
+    @Override
+    public String getRaftUniqueRequestId() {
+        return RaftIdGenerator.newId();
     }
 }

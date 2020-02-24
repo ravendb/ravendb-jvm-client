@@ -9,5 +9,8 @@ public enum  DatabasePromotionStatus {
     INDEX_NOT_UP_TO_DATE,
     CHANGE_VECTOR_NOT_MERGED,
     WAITING_FOR_RESPONSE,
-    OK
+    OK,
+    OUT_OF_CPU_CREDITS,
+    EARLY_OUT_OF_MEMORY,
+    HIGH_DIRTY_MEMORY
 }

@@ -9,7 +9,6 @@ public class OngoingTaskReplication extends OngoingTask {
     private String destinationUrl;
     private String[] topologyDiscoveryUrls;
     private String destinationDatabase;
-    private String mentorNode;
     private String connectionStringName;
     private String delayReplicationFor;
 
@@ -35,14 +34,6 @@ public class OngoingTaskReplication extends OngoingTask {
 
     public void setDestinationDatabase(String destinationDatabase) {
         this.destinationDatabase = destinationDatabase;
-    }
-
-    public String getMentorNode() {
-        return mentorNode;
-    }
-
-    public void setMentorNode(String mentorNode) {
-        this.mentorNode = mentorNode;
     }
 
     public String getConnectionStringName() {

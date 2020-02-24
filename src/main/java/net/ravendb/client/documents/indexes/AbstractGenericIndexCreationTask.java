@@ -27,6 +27,7 @@ public abstract class AbstractGenericIndexCreationTask extends AbstractIndexCrea
     protected final Map<String, SpatialOptions> spatialOptionsStrings;
 
     protected String outputReduceToCollection;
+    protected String patternForOutputReduceToCollectionReferences;
 
     public AbstractGenericIndexCreationTask() {
         storesStrings = new HashMap<>();

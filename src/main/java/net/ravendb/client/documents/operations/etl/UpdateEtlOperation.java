@@ -5,10 +5,12 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import net.ravendb.client.documents.conventions.DocumentConventions;
 import net.ravendb.client.documents.operations.IMaintenanceOperation;
 import net.ravendb.client.documents.operations.connectionStrings.ConnectionString;
+import net.ravendb.client.http.IRaftCommand;
 import net.ravendb.client.http.RavenCommand;
 import net.ravendb.client.http.ServerNode;
 import net.ravendb.client.json.ContentProviderHttpEntity;
 import net.ravendb.client.primitives.Reference;
+import net.ravendb.client.util.RaftIdGenerator;
 import org.apache.http.client.methods.HttpPut;
 import org.apache.http.client.methods.HttpRequestBase;
 import org.apache.http.entity.ContentType;
@@ -30,7 +32,7 @@ public class UpdateEtlOperation<T extends ConnectionString> implements IMaintena
         return new UpdateEtlCommand<>(conventions, _taskId, _configuration);
     }
 
-    private static class UpdateEtlCommand<T extends ConnectionString> extends RavenCommand<UpdateEtlOperationResult> {
+    private static class UpdateEtlCommand<T extends ConnectionString> extends RavenCommand<UpdateEtlOperationResult> implements IRaftCommand {
         private final DocumentConventions _conventions;
         private final long _taskId;
         private final EtlConfiguration<T> _configuration;
@@ -70,6 +72,11 @@ public class UpdateEtlOperation<T extends ConnectionString> implements IMaintena
             }
 
             result = mapper.readValue(response, resultClass);
+        }
+
+        @Override
+        public String getRaftUniqueRequestId() {
+            return RaftIdGenerator.newId();
         }
     }
 }

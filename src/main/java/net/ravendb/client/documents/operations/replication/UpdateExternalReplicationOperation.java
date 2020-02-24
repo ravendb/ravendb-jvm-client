@@ -4,11 +4,13 @@ import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import net.ravendb.client.documents.conventions.DocumentConventions;
 import net.ravendb.client.documents.operations.IMaintenanceOperation;
+import net.ravendb.client.http.IRaftCommand;
 import net.ravendb.client.http.RavenCommand;
 import net.ravendb.client.http.ServerNode;
 import net.ravendb.client.json.ContentProviderHttpEntity;
 import net.ravendb.client.primitives.Reference;
 import net.ravendb.client.serverwide.operations.ModifyOngoingTaskResult;
+import net.ravendb.client.util.RaftIdGenerator;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpRequestBase;
 import org.apache.http.entity.ContentType;
@@ -28,7 +30,7 @@ public class UpdateExternalReplicationOperation implements IMaintenanceOperation
         return new UpdateExternalReplication(_newWatcher);
     }
 
-    private static class UpdateExternalReplication extends RavenCommand<ModifyOngoingTaskResult> {
+    private static class UpdateExternalReplication extends RavenCommand<ModifyOngoingTaskResult> implements IRaftCommand {
         private final ExternalReplication _newWatcher;
 
         public UpdateExternalReplication(ExternalReplication newWatcher) {
@@ -72,6 +74,11 @@ public class UpdateExternalReplicationOperation implements IMaintenanceOperation
             }
 
             result = mapper.readValue(response, resultClass);
+        }
+
+        @Override
+        public String getRaftUniqueRequestId() {
+            return RaftIdGenerator.newId();
         }
     }
 }

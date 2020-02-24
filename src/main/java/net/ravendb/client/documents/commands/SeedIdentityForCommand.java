@@ -1,15 +1,17 @@
 package net.ravendb.client.documents.commands;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import net.ravendb.client.http.IRaftCommand;
 import net.ravendb.client.http.RavenCommand;
 import net.ravendb.client.http.ServerNode;
 import net.ravendb.client.primitives.Reference;
+import net.ravendb.client.util.RaftIdGenerator;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpRequestBase;
 
 import java.io.IOException;
 
-public class SeedIdentityForCommand extends RavenCommand<Long> {
+public class SeedIdentityForCommand extends RavenCommand<Long> implements IRaftCommand {
 
     private final String _id;
     private final long _value;
@@ -54,7 +56,6 @@ public class SeedIdentityForCommand extends RavenCommand<Long> {
             throwInvalidResponse();
         }
 
-
         JsonNode jsonNode = mapper.readTree(response);
         if (!jsonNode.has("NewSeedValue")) {
             throwInvalidResponse();
@@ -63,4 +64,8 @@ public class SeedIdentityForCommand extends RavenCommand<Long> {
         result = jsonNode.get("NewSeedValue").asLong();
     }
 
+    @Override
+    public String getRaftUniqueRequestId() {
+        return RaftIdGenerator.newId();
+    }
 }

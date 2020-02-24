@@ -16,12 +16,26 @@ public final class BackupUtils {
     public final static String[] BACKUP_FILE_SUFFIXES = new String[] {
             LEGACY_INCREMENTAL_BACKUP_EXTENSION, LEGACY_FULL_BACKUP_EXTENSION,
             Constants.Documents.PeriodicBackup.INCREMENTAL_BACKUP_EXTENSION,
-            Constants.Documents.PeriodicBackup.FULL_BACKUP_EXTENSION
+            Constants.Documents.PeriodicBackup.ENCRYPTED_INCREMENTAL_BACKUP_EXTENSION,
+            Constants.Documents.PeriodicBackup.FULL_BACKUP_EXTENSION,
+            Constants.Documents.PeriodicBackup.ENCRYPTED_FULL_BACKUP_EXTENSION
     };
 
+    static boolean isFullBackupOrSnapshot(String extension) {
+        return isSnapshot(extension)
+                || Constants.Documents.PeriodicBackup.FULL_BACKUP_EXTENSION.equalsIgnoreCase(extension)
+                || Constants.Documents.PeriodicBackup.ENCRYPTED_FULL_BACKUP_EXTENSION.equalsIgnoreCase(extension);
+    }
+
+    static boolean isSnapshot(String extension) {
+        return Constants.Documents.PeriodicBackup.SNAPSHOT_EXTENSION.equalsIgnoreCase(extension)
+                || Constants.Documents.PeriodicBackup.ENCRYPTED_SNAPSHOT_EXTENSION.equalsIgnoreCase(extension);
+    }
+
     static boolean isIncrementalBackupFile(String extension) {
-        return Constants.Documents.PeriodicBackup.INCREMENTAL_BACKUP_EXTENSION.equalsIgnoreCase(extension) ||
-                LEGACY_INCREMENTAL_BACKUP_EXTENSION.equalsIgnoreCase(extension);
+        return Constants.Documents.PeriodicBackup.INCREMENTAL_BACKUP_EXTENSION.equalsIgnoreCase(extension)
+                || Constants.Documents.PeriodicBackup.ENCRYPTED_INCREMENTAL_BACKUP_EXTENSION.equalsIgnoreCase(extension)
+                || LEGACY_INCREMENTAL_BACKUP_EXTENSION.equalsIgnoreCase(extension);
     }
 
     public static final Comparator<File> COMPARATOR = (o1, o2) -> {

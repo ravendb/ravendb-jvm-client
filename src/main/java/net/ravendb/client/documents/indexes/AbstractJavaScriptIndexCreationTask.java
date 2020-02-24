@@ -37,14 +37,6 @@ public class AbstractJavaScriptIndexCreationTask extends AbstractIndexCreationTa
         _definition.setReduce(reduce);
     }
 
-    public IndexConfiguration getConfiguration() {
-        return _definition.getConfiguration();
-    }
-
-    public void setConfiguration(IndexConfiguration configuration) {
-        _definition.setConfiguration(configuration);
-    }
-
     @Override
     public boolean isMapReduce() {
         return getReduce() != null;

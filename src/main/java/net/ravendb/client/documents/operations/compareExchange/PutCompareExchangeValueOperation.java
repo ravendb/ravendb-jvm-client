@@ -7,10 +7,12 @@ import net.ravendb.client.documents.conventions.DocumentConventions;
 import net.ravendb.client.documents.operations.IOperation;
 import net.ravendb.client.documents.session.EntityToJson;
 import net.ravendb.client.http.HttpCache;
+import net.ravendb.client.http.IRaftCommand;
 import net.ravendb.client.http.RavenCommand;
 import net.ravendb.client.http.ServerNode;
 import net.ravendb.client.json.ContentProviderHttpEntity;
 import net.ravendb.client.primitives.Reference;
+import net.ravendb.client.util.RaftIdGenerator;
 import net.ravendb.client.util.UrlUtils;
 import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -39,7 +41,7 @@ public class PutCompareExchangeValueOperation<T> implements IOperation<CompareEx
         return new PutCompareExchangeValueCommand<>(_key, _value, _index, conventions);
     }
 
-    private static class PutCompareExchangeValueCommand<T> extends RavenCommand<CompareExchangeResult<T>> {
+    private static class PutCompareExchangeValueCommand<T> extends RavenCommand<CompareExchangeResult<T>> implements IRaftCommand {
         private final String _key;
         private final T _value;
         private final long _index;
@@ -92,6 +94,11 @@ public class PutCompareExchangeValueOperation<T> implements IOperation<CompareEx
         @Override
         public void setResponse(String response, boolean fromCache) throws IOException {
             result = (CompareExchangeResult<T>) CompareExchangeResult.parseFromString(_value.getClass(), response, _conventions);
+        }
+
+        @Override
+        public String getRaftUniqueRequestId() {
+            return RaftIdGenerator.newId();
         }
     }
 }

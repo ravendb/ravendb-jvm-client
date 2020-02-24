@@ -18,6 +18,7 @@ public class DatabaseTopology {
     private boolean dynamicNodesDistribution;
     private LeaderStamp stamp;
     private String databaseTopologyIdBase64;
+    private List<String> priorityOrder;
 
     public List<String> getMembers() {
         return members;
@@ -97,5 +98,13 @@ public class DatabaseTopology {
 
     public void setDatabaseTopologyIdBase64(String databaseTopologyIdBase64) {
         this.databaseTopologyIdBase64 = databaseTopologyIdBase64;
+    }
+
+    public List<String> getPriorityOrder() {
+        return priorityOrder;
+    }
+
+    public void setPriorityOrder(List<String> priorityOrder) {
+        this.priorityOrder = priorityOrder;
     }
 }

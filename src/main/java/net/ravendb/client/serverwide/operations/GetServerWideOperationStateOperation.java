@@ -29,10 +29,15 @@ public class GetServerWideOperationStateOperation implements IServerOperation<Ob
         private final DocumentConventions _conventions;
 
         public GetServerWideOperationStateCommand(DocumentConventions conventions, long id) {
+            this(conventions, id, null);
+        }
+
+        public GetServerWideOperationStateCommand(DocumentConventions conventions, long id, String nodeTag) {
             super(ObjectNode.class);
 
             this._conventions = conventions;
             this._id = id;
+            selectedNodeTag = nodeTag;
         }
 
         @Override
