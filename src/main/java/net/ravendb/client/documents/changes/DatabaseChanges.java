@@ -58,7 +58,7 @@ public class DatabaseChanges implements IDatabaseChanges {
 
     private final ConcurrentMap<Integer, CompletableFuture<Void>> _confirmations = new ConcurrentHashMap<>();
 
-    private final ConcurrentMap<String, DatabaseConnectionState> _counters = new ConcurrentSkipListMap<>(String::compareToIgnoreCase);
+    private final ConcurrentMap<DatabaseChangesOptions, DatabaseConnectionState> _counters = new ConcurrentHashMap<>();
 
     private final AtomicInteger _immediateConnection = new AtomicInteger();
 
@@ -71,7 +71,7 @@ public class DatabaseChanges implements IDatabaseChanges {
         return super.clone();
     }
 
-    public DatabaseChanges(RequestExecutor requestExecutor, String databaseName, ExecutorService executorService, Runnable onDispose) {
+    public DatabaseChanges(RequestExecutor requestExecutor, String databaseName, ExecutorService executorService, Runnable onDispose, String nodeTag) {
         _executorService = executorService;
         _requestExecutor = requestExecutor;
         _conventions = requestExecutor.getConventions();
@@ -84,7 +84,7 @@ public class DatabaseChanges implements IDatabaseChanges {
         _onDispose = onDispose;
         addConnectionStatusChanged(_connectionStatusEventHandler);
 
-        _task = CompletableFuture.runAsync(() -> doWork(), executorService);
+        _task = CompletableFuture.runAsync(() -> doWork(nodeTag), executorService);
     }
 
     public static WebSocketClient createWebSocketClient(RequestExecutor requestExecutor) {
@@ -372,7 +372,7 @@ public class DatabaseChanges implements IDatabaseChanges {
     private DatabaseConnectionState getOrAddConnectionState(String name, String watchCommand, String unwatchCommand, String value, String[] values) {
         Reference<Boolean> newValue = new Reference<>();
 
-        DatabaseConnectionState counter = _counters.computeIfAbsent(name, s -> {
+        DatabaseConnectionState counter = _counters.computeIfAbsent(new DatabaseChangesOptions(name, null), s -> {
 
             Runnable onDisconnect = () -> {
                 try {
@@ -449,10 +449,12 @@ public class DatabaseChanges implements IDatabaseChanges {
         }
     }
 
-    private void doWork() {
+    private void doWork(String nodeTag) {
         CurrentIndexAndNode preferredNode;
         try {
-            preferredNode = _requestExecutor.getPreferredNode();
+            preferredNode = nodeTag == null ?
+                    _requestExecutor.getPreferredNode() :
+                    _requestExecutor.getRequestedNode(nodeTag);
             _nodeIndex = preferredNode.currentIndex;
             _serverNode = preferredNode.currentNode;
         } catch (Exception e) {

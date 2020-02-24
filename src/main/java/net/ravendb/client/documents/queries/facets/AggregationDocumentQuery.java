@@ -34,6 +34,11 @@ public class AggregationDocumentQuery<T> extends AggregationQueryBase implements
 
     @Override
     protected IndexQuery getIndexQuery() {
+        return getIndexQuery(true);
+    }
+
+    @Override
+    protected IndexQuery getIndexQuery(boolean updateAfterQueryExecuted) {
         return _source.getIndexQuery();
     }
 

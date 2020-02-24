@@ -1,6 +1,8 @@
 package net.ravendb.client.documents.operations.ongoingTasks;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import net.ravendb.client.documents.operations.backups.BackupType;
+import net.ravendb.client.documents.operations.backups.RetentionPolicy;
 
 import java.util.Date;
 import java.util.List;
@@ -17,6 +19,10 @@ public class OngoingTaskBackup extends OngoingTask {
     private Date lastIncrementalBackup;
     private RunningBackup onGoingBackup;
     private NextBackup nextBackup;
+    private RetentionPolicy retentionPolicy;
+
+    @JsonProperty("IsEncrypted")
+    private boolean encrypted;
 
     public BackupType getBackupType() {
         return backupType;
@@ -64,5 +70,21 @@ public class OngoingTaskBackup extends OngoingTask {
 
     public void setNextBackup(NextBackup nextBackup) {
         this.nextBackup = nextBackup;
+    }
+
+    public RetentionPolicy getRetentionPolicy() {
+        return retentionPolicy;
+    }
+
+    public void setRetentionPolicy(RetentionPolicy retentionPolicy) {
+        this.retentionPolicy = retentionPolicy;
+    }
+
+    public boolean isEncrypted() {
+        return encrypted;
+    }
+
+    public void setEncrypted(boolean encrypted) {
+        this.encrypted = encrypted;
     }
 }

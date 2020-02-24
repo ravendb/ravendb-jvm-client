@@ -14,14 +14,21 @@ import java.io.IOException;
 public class GetOperationStateOperation implements IMaintenanceOperation<ObjectNode> {
 
     private final long _id;
+    private final String _nodeTag;
 
     public GetOperationStateOperation(long id) {
         _id = id;
+        _nodeTag = null;
+    }
+
+    public GetOperationStateOperation(long id, String nodeTag) {
+        _id = id;
+        _nodeTag = nodeTag;
     }
 
     @Override
     public RavenCommand<ObjectNode> getCommand(DocumentConventions conventions) {
-        return new GetOperationStateCommand(DocumentConventions.defaultConventions, _id);
+        return new GetOperationStateCommand(DocumentConventions.defaultConventions, _id, _nodeTag);
     }
 
     public static class GetOperationStateCommand extends RavenCommand<ObjectNode> {
@@ -34,9 +41,14 @@ public class GetOperationStateOperation implements IMaintenanceOperation<ObjectN
         private final long _id;
 
         public GetOperationStateCommand(DocumentConventions conventions, long id) {
+            this(conventions, id, null);
+        }
+
+        public GetOperationStateCommand(DocumentConventions conventions, long id, String nodeTag) {
             super(ObjectNode.class);
             _conventions = conventions;
             _id = id;
+            selectedNodeTag = nodeTag;
         }
 
         @Override

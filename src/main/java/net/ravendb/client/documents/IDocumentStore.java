@@ -51,6 +51,14 @@ public interface IDocumentStore extends IDisposalNotification {
     IDatabaseChanges changes(String database);
 
     /**
+     * Subscribe to change notifications from the server
+     * @param database Database to use
+     * @param nodeTag The node tag of selected server
+     * @return Database changes object
+     */
+    IDatabaseChanges changes(String database, String nodeTag);
+
+    /**
      * Setup the context for aggressive caching.
      *
      * Aggressive caching means that we will not check the server to see whether the response

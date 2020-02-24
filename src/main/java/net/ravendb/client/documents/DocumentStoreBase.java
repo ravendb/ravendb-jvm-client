@@ -60,6 +60,12 @@ public abstract class DocumentStoreBase implements IDocumentStore {
         return disposed;
     }
 
+    public abstract IDatabaseChanges changes();
+
+    public abstract IDatabaseChanges changes(String database);
+
+    public abstract IDatabaseChanges changes(String database, String nodeTag);
+
     @Override
     public abstract CleanCloseable aggressivelyCacheFor(Duration cacheDuration);
 
@@ -71,10 +77,6 @@ public abstract class DocumentStoreBase implements IDocumentStore {
 
     @Override
     public abstract CleanCloseable aggressivelyCacheFor(Duration cacheDuration, AggressiveCacheMode mode, String database);
-
-    public abstract IDatabaseChanges changes();
-
-    public abstract IDatabaseChanges changes(String database);
 
     @Override
     public abstract CleanCloseable disableAggressiveCaching();
