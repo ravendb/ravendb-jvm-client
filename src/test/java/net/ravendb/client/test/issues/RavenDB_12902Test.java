@@ -171,6 +171,45 @@ public class RavenDB_12902Test extends RemoteTestBase {
         }
     }
 
+    @Test
+    public void canGetValidStatisticsInAggregationQuery() throws Exception {
+        try (IDocumentStore store = getDocumentStore()) {
+            store.executeIndex(new UsersByName());
+
+            try (IDocumentSession session = store.openSession()) {
+                Reference<QueryStatistics> stats = new Reference<>();
+                session
+                        .query(User.class, UsersByName.class)
+                        .statistics(stats)
+                        .whereEquals("name", "Doe")
+                        .aggregateBy(x -> x.byField("name").sumOn("count"))
+                        .execute();
+
+                assertThat(stats.value.getIndexName())
+                        .isNotNull();
+            }
+        }
+    }
+
+    @Test
+    public void canGetValidStatisticsInSuggestionQuery() throws Exception {
+        try (IDocumentStore store = getDocumentStore()) {
+            store.executeIndex(new UsersByName());
+
+            try (IDocumentSession session = store.openSession()) {
+                Reference<QueryStatistics> stats = new Reference<>();
+                session
+                        .query(User.class, UsersByName.class)
+                        .statistics(stats)
+                        .suggestUsing(x -> x.byField("name", "Orin"))
+                        .execute();
+
+                assertThat(stats.value.getIndexName())
+                        .isNotNull();
+            }
+        }
+    }
+
     public static class UsersByName extends AbstractIndexCreationTask {
         public UsersByName() {
             map = "from u in docs.Users select new " +

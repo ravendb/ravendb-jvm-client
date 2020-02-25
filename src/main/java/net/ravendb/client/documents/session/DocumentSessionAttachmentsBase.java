@@ -261,12 +261,12 @@ public abstract class DocumentSessionAttachmentsBase extends AdvancedSessionExte
         }
 
         DocumentInfo sourceDocument = documentsById.getValue(sourceDocumentId);
-        if (sourceDocument != null && deletedEntities.contains(sourceDocument.getEntity())) {
+        if (sourceDocument != null && session.deletedEntities.contains(sourceDocument.getEntity())) {
             throwDocumentAlreadyDeleted(sourceDocumentId, sourceName, "copy", destinationDocumentId, sourceDocumentId);
         }
 
         DocumentInfo destinationDocument = documentsById.getValue(destinationDocumentId);
-        if (destinationDocument != null && deletedEntities.contains(destinationDocument.getEntity())) {
+        if (destinationDocument != null && session.deletedEntities.contains(destinationDocument.getEntity())) {
             throwDocumentAlreadyDeleted(sourceDocumentId, sourceName, "copy", destinationDocumentId, destinationDocumentId);
         }
 

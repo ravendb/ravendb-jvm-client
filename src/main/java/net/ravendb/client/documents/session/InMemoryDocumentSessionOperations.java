@@ -6,6 +6,7 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.databind.node.TextNode;
 import com.google.common.base.Defaults;
+import com.google.common.collect.Iterators;
 import com.google.common.collect.Lists;
 import net.ravendb.client.Constants;
 import net.ravendb.client.documents.DocumentStoreBase;
@@ -80,15 +81,15 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
         return id;
     }
 
-    /**
-     * The entities waiting to be deleted
-     */
-    public final Set<Object> deletedEntities = new IdentityHashSet<>();
-
     private final List<EventHandler<BeforeStoreEventArgs>> onBeforeStore = new ArrayList<>();
     private final List<EventHandler<AfterSaveChangesEventArgs>> onAfterSaveChanges = new ArrayList<>();
     private final List<EventHandler<BeforeDeleteEventArgs>> onBeforeDelete = new ArrayList<>();
     private final List<EventHandler<BeforeQueryEventArgs>> onBeforeQuery = new ArrayList<>();
+
+    private final List<EventHandler<BeforeConversionToDocumentEventArgs>> onBeforeConversionToDocument = new ArrayList<>();
+    private final List<EventHandler<AfterConversionToDocumentEventArgs>> onAfterConversionToDocument = new ArrayList<>();
+    private final List<EventHandler<BeforeConversionToEntityEventArgs>> onBeforeConversionToEntity = new ArrayList<>();
+    private final List<EventHandler<AfterConversionToEntityEventArgs>> onAfterConversionToEntity = new ArrayList<>();
 
     public void addBeforeStoreListener(EventHandler<BeforeStoreEventArgs> handler) {
         this.onBeforeStore.add(handler);
@@ -120,6 +121,38 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
 
     public void removeBeforeQueryListener(EventHandler<BeforeQueryEventArgs> handler) {
         this.onBeforeQuery.remove(handler);
+    }
+
+    public void addBeforeConversionToDocumentListener(EventHandler<BeforeConversionToDocumentEventArgs> handler) {
+        this.onBeforeConversionToDocument.add(handler);
+    }
+
+    public void removeBeforeConversionToDocumentListener(EventHandler<BeforeConversionToDocumentEventArgs> handler) {
+        this.onBeforeConversionToDocument.remove(handler);
+    }
+
+    public void addAfterConversionToDocumentListener(EventHandler<AfterConversionToDocumentEventArgs> handler) {
+        this.onAfterConversionToDocument.add(handler);
+    }
+
+    public void removeAfterConversionToDocumentListener(EventHandler<AfterConversionToDocumentEventArgs> handler) {
+        this.onAfterConversionToDocument.remove(handler);
+    }
+
+    public void addBeforeConversionToEntityListener(EventHandler<BeforeConversionToEntityEventArgs> handler) {
+        this.onBeforeConversionToEntity.add(handler);
+    }
+
+    public void removeBeforeConversionToEntityListener(EventHandler<BeforeConversionToEntityEventArgs> handler) {
+        this.onBeforeConversionToEntity.remove(handler);
+    }
+
+    public void addAfterConversionToEntityListener(EventHandler<AfterConversionToEntityEventArgs> handler) {
+        this.onAfterConversionToEntity.add(handler);
+    }
+
+    public void removeAfterConversionToEntityListener(EventHandler<AfterConversionToEntityEventArgs> handler) {
+        this.onAfterConversionToEntity.remove(handler);
     }
 
     //Entities whose id we already know do not exists, because they are a missing include, or a missing load, etc.
@@ -166,7 +199,12 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
     /**
      * hold the data required to manage the data for RavenDB's Unit of Work
      */
-    public final Map<Object, DocumentInfo> documentsByEntity = new IdentityLinkedHashMap<>();
+    public final DocumentsByEntityHolder documentsByEntity = new DocumentsByEntityHolder();
+
+    /**
+     * The entities waiting to be deleted
+     */
+    public final DeletedEntitiesHolder deletedEntities = new DeletedEntitiesHolder();
 
     /**
      * @return map which holds the data required to manage Counters tracking for RavenDB's Unit of Work
@@ -296,6 +334,8 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
     final Map<IdTypeAndName, ICommandData> deferredCommandsMap = new HashMap<>();
 
     public final boolean noTracking;
+
+    public Map<String, ForceRevisionStrategy> idsForCreatingForcedRevisions = new TreeMap<>(String::compareToIgnoreCase);
 
     public int getDeferredCommandsCount() {
         return deferredCommands.size();
@@ -548,7 +588,7 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
         noTracking = this.noTracking || noTracking;  // if noTracking is session-wide then we want to override the passed argument
 
         if (StringUtils.isEmpty(id)) {
-            return deserializeFromTransformer(entityType, null, document);
+            return deserializeFromTransformer(entityType, null, document, false);
         }
 
         DocumentInfo docInfo = documentsById.getValue(id);
@@ -557,7 +597,7 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
             // instance, and return that, ignoring anything new.
 
             if (docInfo.getEntity() == null) {
-                docInfo.setEntity(entityToJson.convertToEntity(entityType, id, document));
+                docInfo.setEntity(entityToJson.convertToEntity(entityType, id, document, !noTracking));
             }
 
             if (!noTracking) {
@@ -571,7 +611,7 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
         docInfo = includedDocumentsById.get(id);
         if (docInfo != null) {
             if (docInfo.getEntity() == null) {
-                docInfo.setEntity(entityToJson.convertToEntity(entityType, id, document));
+                docInfo.setEntity(entityToJson.convertToEntity(entityType, id, document, !noTracking));
             }
 
             if (!noTracking) {
@@ -583,7 +623,7 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
             return docInfo.getEntity();
         }
 
-        Object entity = entityToJson.convertToEntity(entityType, id, document);
+        Object entity = entityToJson.convertToEntity(entityType, id, document, !noTracking);
 
         String changeVector = metadata.get(Constants.Documents.Metadata.CHANGE_VECTOR).asText();
         if (changeVector == null) {
@@ -742,7 +782,7 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
         }
 
         if (deletedEntities.contains(entity)) {
-            throw new IllegalStateException("Can't store object, it was already deleted in this session.  Document id: " + id);
+            throw new IllegalStateException("Can't store object, it was already deleted in this session. Document id: " + id);
         }
 
 
@@ -779,8 +819,6 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
     }
 
     protected void storeEntityInUnitOfWork(String id, Object entity, String changeVector, ObjectNode metadata, ConcurrencyCheckMode forceConcurrencyCheck) {
-        deletedEntities.remove(entity);
-
         if (id != null) {
             _knownMissingIds.remove(id);
         }
@@ -821,6 +859,7 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
         prepareForEntitiesDeletion(result, null);
         prepareForEntitiesPuts(result);
 
+        prepareForCreatingRevisionsFromIds(result);
         prepareCompareExchangeEntities(result);
 
         if (deferredCommands.size() > deferredCommandsCount) {
@@ -923,117 +962,143 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
         return dirty;
     }
 
-    @SuppressWarnings("ConstantConditions")
-    private void prepareForEntitiesDeletion(SaveChangesData result, Map<String, List<DocumentsChanges>> changes) {
-        for (Object deletedEntity : deletedEntities) {
-            DocumentInfo documentInfo = documentsByEntity.get(deletedEntity);
-            if (documentInfo == null) {
-                continue;
-            }
+    private void prepareForCreatingRevisionsFromIds(SaveChangesData result) {
+        // Note: here there is no point checking 'Before' or 'After' because if there were changes then forced revision is done from the PUT command....
 
-            if (changes != null) {
-                List<DocumentsChanges> docChanges = new ArrayList<>();
-                DocumentsChanges change = new DocumentsChanges();
-                change.setFieldNewValue("");
-                change.setFieldOldValue("");
-                change.setChange(DocumentsChanges.ChangeType.DOCUMENT_DELETED);
-
-                docChanges.add(change);
-                changes.put(documentInfo.getId(), docChanges);
-            } else {
-                ICommandData command = result.getDeferredCommandsMap().get(IdTypeAndName.create(documentInfo.getId(), CommandType.CLIENT_ANY_COMMAND, null));
-                if (command != null) {
-                    throwInvalidDeletedDocumentWithDeferredCommand(command);
-                }
-
-                String changeVector = null;
-                documentInfo = documentsById.getValue(documentInfo.getId());
-
-                if (documentInfo != null) {
-                    changeVector = documentInfo.getChangeVector();
-
-                    if (documentInfo.getEntity() != null) {
-                        result.onSuccess.removeDocumentByEntity(documentInfo.getEntity());
-                        result.getEntities().add(documentInfo.getEntity());
-                    }
-
-                    result.onSuccess.removeDocumentByEntity(documentInfo.getId());
-                }
-
-                changeVector = useOptimisticConcurrency ? changeVector : null;
-                BeforeDeleteEventArgs beforeDeleteEventArgs = new BeforeDeleteEventArgs(this, documentInfo.getId(), documentInfo.getEntity());
-                EventHelper.invoke(onBeforeDelete, this, beforeDeleteEventArgs);
-                result.getSessionCommands().add(new DeleteCommandData(documentInfo.getId(), changeVector));
-            }
-
-            if (changes == null) {
-                result.onSuccess.clearDeletedEntities();
-            }
+        for (String idEntry : idsForCreatingForcedRevisions.keySet()) {
+            result.getSessionCommands().add(new ForceRevisionCommandData(idEntry));
         }
 
+        idsForCreatingForcedRevisions.clear();
+    }
+
+    @SuppressWarnings("ConstantConditions")
+    private void prepareForEntitiesDeletion(SaveChangesData result, Map<String, List<DocumentsChanges>> changes) {
+        try (CleanCloseable deletes = deletedEntities.prepareEntitiesDeletes()) {
+
+            for (DeletedEntitiesHolder.DeletedEntitiesEnumeratorResult deletedEntity : deletedEntities) {
+                DocumentInfo documentInfo = documentsByEntity.get(deletedEntity.entity);
+                if (documentInfo == null) {
+                    continue;
+                }
+
+                if (changes != null) {
+                    List<DocumentsChanges> docChanges = new ArrayList<>();
+                    DocumentsChanges change = new DocumentsChanges();
+                    change.setFieldNewValue("");
+                    change.setFieldOldValue("");
+                    change.setChange(DocumentsChanges.ChangeType.DOCUMENT_DELETED);
+
+                    docChanges.add(change);
+                    changes.put(documentInfo.getId(), docChanges);
+                } else {
+                    ICommandData command = result.getDeferredCommandsMap().get(IdTypeAndName.create(documentInfo.getId(), CommandType.CLIENT_ANY_COMMAND, null));
+                    if (command != null) {
+                        throwInvalidDeletedDocumentWithDeferredCommand(command);
+                    }
+
+                    String changeVector = null;
+                    documentInfo = documentsById.getValue(documentInfo.getId());
+
+                    if (documentInfo != null) {
+                        changeVector = documentInfo.getChangeVector();
+
+                        if (documentInfo.getEntity() != null) {
+                            result.onSuccess.removeDocumentByEntity(documentInfo.getEntity());
+                            result.getEntities().add(documentInfo.getEntity());
+                        }
+
+                        result.onSuccess.removeDocumentByEntity(documentInfo.getId());
+                    }
+
+                    changeVector = useOptimisticConcurrency ? changeVector : null;
+                    BeforeDeleteEventArgs beforeDeleteEventArgs = new BeforeDeleteEventArgs(this, documentInfo.getId(), documentInfo.getEntity());
+                    EventHelper.invoke(onBeforeDelete, this, beforeDeleteEventArgs);
+                    result.getSessionCommands().add(new DeleteCommandData(documentInfo.getId(), changeVector));
+                }
+
+                if (changes == null) {
+                    result.onSuccess.clearDeletedEntities();
+                }
+            }
+        }
     }
 
     @SuppressWarnings("ConstantConditions")
     private void prepareForEntitiesPuts(SaveChangesData result) {
-        for (Map.Entry<Object, DocumentInfo> entity : documentsByEntity.entrySet()) {
+        try (CleanCloseable putsContext = documentsByEntity.prepareEntitiesPuts()) {
 
-            if (entity.getValue().isIgnoreChanges())
-                continue;
+            for (DocumentsByEntityHolder.DocumentsByEntityEnumeratorResult entity : documentsByEntity) {
 
-            if (isDeleted(entity.getValue().getId())) {
-                continue;
-            }
+                if (entity.getValue().isIgnoreChanges())
+                    continue;
 
-            boolean dirtyMetadata = updateMetadataModifications(entity.getValue());
-
-            ObjectNode document = entityToJson.convertEntityToJson(entity.getKey(), entity.getValue());
-
-            if ((!entityChanged(document, entity.getValue(), null)) && !dirtyMetadata) {
-                continue;
-            }
-
-            ICommandData command = result.deferredCommandsMap.get(IdTypeAndName.create(entity.getValue().getId(), CommandType.CLIENT_MODIFY_DOCUMENT_COMMAND, null));
-            if (command != null) {
-                throwInvalidModifiedDocumentWithDeferredCommand(command);
-            }
-
-            List<EventHandler<BeforeStoreEventArgs>> onBeforeStore = this.onBeforeStore;
-            if (onBeforeStore != null && !onBeforeStore.isEmpty()) {
-                BeforeStoreEventArgs beforeStoreEventArgs = new BeforeStoreEventArgs(this, entity.getValue().getId(), entity.getKey());
-                EventHelper.invoke(onBeforeStore, this, beforeStoreEventArgs);
-
-                if (beforeStoreEventArgs.isMetadataAccessed()) {
-                    updateMetadataModifications(entity.getValue());
+                if (isDeleted(entity.getValue().getId())) {
+                    continue;
                 }
 
-                if (beforeStoreEventArgs.isMetadataAccessed() || entityChanged(document, entity.getValue(), null)) {
-                    document = entityToJson.convertEntityToJson(entity.getKey(), entity.getValue());
+                boolean dirtyMetadata = updateMetadataModifications(entity.getValue());
+
+                ObjectNode document = entityToJson.convertEntityToJson(entity.getKey(), entity.getValue());
+
+                if ((!entityChanged(document, entity.getValue(), null)) && !dirtyMetadata) {
+                    continue;
                 }
-            }
 
-            result.getEntities().add(entity.getKey());
+                ICommandData command = result.deferredCommandsMap.get(IdTypeAndName.create(entity.getValue().getId(), CommandType.CLIENT_MODIFY_DOCUMENT_COMMAND, null));
+                if (command != null) {
+                    throwInvalidModifiedDocumentWithDeferredCommand(command);
+                }
 
-            if (entity.getValue().getId() != null) {
-                result.onSuccess.removeDocumentById(entity.getValue().getId());
-            }
+                List<EventHandler<BeforeStoreEventArgs>> onBeforeStore = this.onBeforeStore;
+                if (onBeforeStore != null && !onBeforeStore.isEmpty() && entity.executeOnBeforeStore) {
+                    BeforeStoreEventArgs beforeStoreEventArgs = new BeforeStoreEventArgs(this, entity.getValue().getId(), entity.getKey());
+                    EventHelper.invoke(onBeforeStore, this, beforeStoreEventArgs);
 
-            result.onSuccess.updateEntityDocumentInfo(entity.getValue(), document);
+                    if (beforeStoreEventArgs.isMetadataAccessed()) {
+                        updateMetadataModifications(entity.getValue());
+                    }
 
-            String changeVector;
-            if (useOptimisticConcurrency) {
-                if (entity.getValue().getConcurrencyCheckMode() != ConcurrencyCheckMode.DISABLED) {
-                    // if the user didn't provide a change vector, we'll test for an empty one
-                    changeVector = ObjectUtils.firstNonNull(entity.getValue().getChangeVector(), "");
+                    if (beforeStoreEventArgs.isMetadataAccessed() || entityChanged(document, entity.getValue(), null)) {
+                        document = entityToJson.convertEntityToJson(entity.getKey(), entity.getValue());
+                    }
+                }
+
+                result.getEntities().add(entity.getKey());
+
+                if (entity.getValue().getId() != null) {
+                    result.onSuccess.removeDocumentById(entity.getValue().getId());
+                }
+
+                result.onSuccess.updateEntityDocumentInfo(entity.getValue(), document);
+
+                String changeVector;
+                if (useOptimisticConcurrency) {
+                    if (entity.getValue().getConcurrencyCheckMode() != ConcurrencyCheckMode.DISABLED) {
+                        // if the user didn't provide a change vector, we'll test for an empty one
+                        changeVector = ObjectUtils.firstNonNull(entity.getValue().getChangeVector(), "");
+                    } else {
+                        changeVector = null;
+                    }
+                } else if (entity.getValue().getConcurrencyCheckMode() == ConcurrencyCheckMode.FORCED) {
+                    changeVector = entity.getValue().getChangeVector();
                 } else {
                     changeVector = null;
                 }
-            } else if (entity.getValue().getConcurrencyCheckMode() == ConcurrencyCheckMode.FORCED) {
-                changeVector = entity.getValue().getChangeVector();
-            } else {
-                changeVector = null;
-            }
 
-            result.getSessionCommands().add(new PutCommandDataWithJson(entity.getValue().getId(), changeVector, document));
+                ForceRevisionStrategy forceRevisionCreationStrategy = ForceRevisionStrategy.NONE;
+
+                if (entity.getValue().getId() != null) {
+                    // Check if user wants to Force a Revision
+                    ForceRevisionStrategy creationStrategy = idsForCreatingForcedRevisions.get(entity.getValue().getId());
+                    if (creationStrategy != null) {
+                        idsForCreatingForcedRevisions.remove(entity.getValue().getId());
+                        forceRevisionCreationStrategy = creationStrategy;
+                    }
+                }
+
+                result.getSessionCommands().add(new PutCommandDataWithJson(entity.getValue().getId(), changeVector, document, forceRevisionCreationStrategy));
+            }
         }
     }
 
@@ -1073,7 +1138,7 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
      * @return true if session has changes
      */
     public boolean hasChanges() {
-        for (Map.Entry<Object, DocumentInfo> entity : documentsByEntity.entrySet()) {
+        for (DocumentsByEntityHolder.DocumentsByEntityEnumeratorResult entity : documentsByEntity) {
             ObjectNode document = entityToJson.convertEntityToJson(entity.getKey(), entity.getValue());
             if (entityChanged(document, entity.getValue(), null)) {
                 return true;
@@ -1173,14 +1238,15 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
     public <T> void evict(T entity) {
         DocumentInfo documentInfo = documentsByEntity.get(entity);
         if (documentInfo != null) {
-            documentsByEntity.remove(entity);
+            documentsByEntity.evict(entity);
             documentsById.remove(documentInfo.getId());
+            if (_countersByDocId != null) {
+                _countersByDocId.remove(documentInfo.getId());
+            }
         }
 
-        deletedEntities.remove(entity);
-        if (_countersByDocId != null) {
-            _countersByDocId.remove(documentInfo.getId());
-        }
+        deletedEntities.evict(entity);
+        entityToJson.removeFromMissing(entity);
     }
 
     /**
@@ -1201,6 +1267,7 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
             getClusterSession().clear();
         }
         pendingLazyOperations.clear();
+        entityToJson.clear();
     }
 
     /**
@@ -1493,8 +1560,8 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
         return _hash;
     }
 
-    private Object deserializeFromTransformer(Class clazz, String id, ObjectNode document) {
-        return entityToJson.convertToEntity(clazz, id, document);
+    private Object deserializeFromTransformer(Class clazz, String id, ObjectNode document, boolean trackEntity) {
+        return entityToJson.convertToEntity(clazz, id, document, trackEntity);
     }
 
     public boolean checkIfIdAlreadyIncluded(String[] ids, Map.Entry<String, Class>[] includes) {
@@ -1516,7 +1583,7 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
                 }
             }
 
-            if (documentInfo.getEntity() == null) {
+            if (documentInfo.getEntity() == null && documentInfo.getDocument() == null) {
                 return false;
             }
 
@@ -1556,7 +1623,7 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
 
         documentInfo.setDocument(document);
 
-        documentInfo.setEntity(entityToJson.convertToEntity(entity.getClass(), documentInfo.getId(), document));
+        documentInfo.setEntity(entityToJson.convertToEntity(entity.getClass(), documentInfo.getId(), document, !noTracking));
 
         try {
             BeanUtils.copyProperties(entity, documentInfo.getEntity());
@@ -1593,12 +1660,43 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
         sessionInfo.setLastClusterTransactionIndex(returnedTransactionIndex);
     }
 
-    public void onAfterSaveChangesInvoke(AfterSaveChangesEventArgs afterSaveChangesEventArgs) {
-        EventHelper.invoke(onAfterSaveChanges, this, afterSaveChangesEventArgs);
+    public void onAfterSaveChangesInvoke(AfterSaveChangesEventArgs eventArgs) {
+        EventHelper.invoke(onAfterSaveChanges, this, eventArgs);
     }
 
-    public void onBeforeQueryInvoke(BeforeQueryEventArgs beforeQueryEventArgs) {
-        EventHelper.invoke(onBeforeQuery, this, beforeQueryEventArgs);
+    public void onBeforeQueryInvoke(BeforeQueryEventArgs eventArgs) {
+        EventHelper.invoke(onBeforeQuery, this, eventArgs);
+    }
+
+    public void onBeforeConversionToDocumentInvoke(String id, Object entity) {
+        EventHelper.invoke(onBeforeConversionToDocument, this, new BeforeConversionToDocumentEventArgs(this, id, entity));
+    }
+
+    public void onAfterConversionToDocumentInvoke(String id, Object entity, Reference<ObjectNode> document) {
+        if (!onAfterConversionToDocument.isEmpty()) {
+            AfterConversionToDocumentEventArgs eventArgs = new AfterConversionToDocumentEventArgs(this, id, entity, document);
+            EventHelper.invoke(onAfterConversionToDocument, this, eventArgs);
+
+            if (eventArgs.getDocument().value != null && eventArgs.getDocument().value != document.value) {
+                document.value = eventArgs.getDocument().value;
+            }
+        }
+    }
+
+    public void onBeforeConversionToEntityInvoke(String id, Class clazz, Reference<ObjectNode> document) {
+        if (!onBeforeConversionToEntity.isEmpty()) {
+            BeforeConversionToEntityEventArgs eventArgs = new BeforeConversionToEntityEventArgs(this, id, clazz, document);
+            EventHelper.invoke(onBeforeConversionToEntity, this, eventArgs);
+
+            if (eventArgs.getDocument() != null && eventArgs.getDocument().value != document.value) {
+                document.value = eventArgs.getDocument().value;
+            }
+        }
+    }
+
+    public void onAfterConversionToEntityInvoke(String id, ObjectNode document, Object entity) {
+        AfterConversionToEntityEventArgs eventArgs = new AfterConversionToEntityEventArgs(this, id, document, entity);
+        EventHelper.invoke(onAfterConversionToEntity, this, eventArgs);
     }
 
     protected Tuple<String, String> processQueryParameters(Class clazz, String indexName, String collectionName, DocumentConventions conventions) {
@@ -1793,5 +1891,233 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
 
     public void setTransactionMode(TransactionMode transactionMode) {
         this.transactionMode = transactionMode;
+    }
+
+    public static class DocumentsByEntityHolder implements Iterable<DocumentsByEntityHolder.DocumentsByEntityEnumeratorResult> {
+        private final Map<Object, DocumentInfo> _documentsByEntity = new IdentityLinkedHashMap<>();
+
+        private Map<Object, DocumentInfo> _onBeforeStoreDocumentsByEntity;
+
+        private boolean _prepareEntitiesPuts;
+
+        public int size() {
+            return _documentsByEntity.size() + (_onBeforeStoreDocumentsByEntity != null ? _onBeforeStoreDocumentsByEntity.size() : 0);
+        }
+
+        public void remove(Object entity) {
+            _documentsByEntity.remove(entity);
+            if (_onBeforeStoreDocumentsByEntity != null) {
+                _onBeforeStoreDocumentsByEntity.remove(entity);
+            }
+        }
+
+        public void evict(Object entity) {
+            if (_prepareEntitiesPuts) {
+                throw new IllegalStateException("Cannot Evict entity during OnBeforeStore");
+            }
+
+            _documentsByEntity.remove(entity);
+        }
+
+        public void put(Object entity, DocumentInfo documentInfo) {
+            if (!_prepareEntitiesPuts) {
+                _documentsByEntity.put(entity, documentInfo);
+                return;
+            }
+
+            createOnBeforeStoreDocumentsByEntityIfNeeded();
+            _onBeforeStoreDocumentsByEntity.put(entity, documentInfo);
+        }
+
+        private void createOnBeforeStoreDocumentsByEntityIfNeeded() {
+            if (_onBeforeStoreDocumentsByEntity != null) {
+                return ;
+            }
+
+            _onBeforeStoreDocumentsByEntity = new IdentityLinkedHashMap<>();
+        }
+
+        public void clear() {
+            _documentsByEntity.clear();
+            if (_onBeforeStoreDocumentsByEntity != null) {
+                _onBeforeStoreDocumentsByEntity.clear();
+            }
+        }
+
+        public DocumentInfo get(Object entity) {
+            DocumentInfo documentInfo = _documentsByEntity.get(entity);
+            if (documentInfo != null) {
+                return documentInfo;
+            }
+
+            if (_onBeforeStoreDocumentsByEntity != null) {
+                return _onBeforeStoreDocumentsByEntity.get(entity);
+            }
+
+            return null;
+        }
+
+        @Override
+        public Iterator<DocumentsByEntityEnumeratorResult> iterator() {
+            Iterator<DocumentsByEntityEnumeratorResult> firstIterator
+                    = Iterators.transform(_documentsByEntity.entrySet().iterator(),
+                        x -> new DocumentsByEntityEnumeratorResult(x.getKey(), x.getValue(), true));
+
+            if (_onBeforeStoreDocumentsByEntity == null) {
+                return firstIterator;
+            }
+
+            Iterator<DocumentsByEntityEnumeratorResult> secondIterator
+                    = Iterators.transform(_onBeforeStoreDocumentsByEntity.entrySet().iterator(),
+                        x -> new DocumentsByEntityEnumeratorResult(x.getKey(), x.getValue(), false));
+
+            return Iterators.concat(firstIterator, secondIterator);
+        }
+
+        @Override
+        public Spliterator<DocumentsByEntityEnumeratorResult> spliterator() {
+            return Spliterators.spliterator(iterator(), size(), Spliterator.ORDERED);
+        }
+
+        public CleanCloseable prepareEntitiesPuts() {
+            _prepareEntitiesPuts = true;
+
+            return () -> _prepareEntitiesPuts = false;
+        }
+
+        public static class DocumentsByEntityEnumeratorResult {
+            private Object key;
+            private DocumentInfo value;
+            private boolean executeOnBeforeStore;
+
+            public DocumentsByEntityEnumeratorResult(Object key, DocumentInfo value, boolean executeOnBeforeStore) {
+                this.key = key;
+                this.value = value;
+                this.executeOnBeforeStore = executeOnBeforeStore;
+            }
+
+            public Object getKey() {
+                return key;
+            }
+
+            public DocumentInfo getValue() {
+                return value;
+            }
+
+            public boolean isExecuteOnBeforeStore() {
+                return executeOnBeforeStore;
+            }
+
+        }
+
+    }
+
+    public static class DeletedEntitiesHolder implements Iterable<DeletedEntitiesHolder.DeletedEntitiesEnumeratorResult> {
+        private final Set<Object> _deletedEntities = new IdentityHashSet<>();
+
+        private Set<Object> _onBeforeDeletedEntities;
+
+        private boolean _prepareEntitiesDeletes;
+
+        public boolean isEmpty() {
+            return size() == 0;
+        }
+
+        public int size() {
+            return _deletedEntities.size() + (_onBeforeDeletedEntities != null ? _onBeforeDeletedEntities.size() : 0);
+        }
+
+        public void add(Object entity) {
+            if (_prepareEntitiesDeletes) {
+                if (_onBeforeDeletedEntities == null) {
+                    _onBeforeDeletedEntities = new IdentityHashSet<>();
+                }
+
+                _onBeforeDeletedEntities.add(entity);
+                return;
+            }
+
+            _deletedEntities.add(entity);
+        }
+
+        public void remove(Object entity) {
+            _deletedEntities.remove(entity);
+            if (_onBeforeDeletedEntities != null) {
+                _onBeforeDeletedEntities.remove(entity);
+            }
+        }
+
+        public void evict(Object entity) {
+            if (_prepareEntitiesDeletes) {
+                throw new IllegalStateException("Cannot Evict entity during OnBeforeDelete");
+            }
+
+            _deletedEntities.remove(entity);
+        }
+
+        public boolean contains(Object entity) {
+            if (_deletedEntities.contains(entity)) {
+                return true;
+            }
+
+            if (_onBeforeDeletedEntities == null) {
+                return false;
+            }
+
+            return _onBeforeDeletedEntities.contains(entity);
+        }
+
+        public void clear() {
+            _deletedEntities.clear();
+            if (_onBeforeDeletedEntities != null) {
+                _onBeforeDeletedEntities.clear();
+            }
+        }
+
+        @Override
+        public Iterator<DeletedEntitiesEnumeratorResult> iterator() {
+            Iterator<Object> deletedIterator = _deletedEntities.iterator();
+            Iterator<DeletedEntitiesEnumeratorResult> deletedTransformedIterator
+                    = Iterators.transform(deletedIterator, x -> new DeletedEntitiesEnumeratorResult(x, true));
+
+            if (_onBeforeDeletedEntities == null) {
+                return deletedTransformedIterator;
+            }
+
+            Iterator<DeletedEntitiesEnumeratorResult> onBeforeDeletedIterator
+                    = Iterators.transform(_deletedEntities.iterator(), x -> new DeletedEntitiesEnumeratorResult(x, false));
+
+            return Iterators.concat(deletedTransformedIterator, onBeforeDeletedIterator);
+        }
+
+        @Override
+        public Spliterator<DeletedEntitiesEnumeratorResult> spliterator() {
+            return Spliterators.spliterator(iterator(), size(), Spliterator.ORDERED);
+        }
+
+        public CleanCloseable prepareEntitiesDeletes() {
+            _prepareEntitiesDeletes = true;
+
+            return () -> _prepareEntitiesDeletes = false;
+        }
+
+        public static class DeletedEntitiesEnumeratorResult {
+            private Object entity;
+            private boolean executeOnBeforeDelete;
+
+            public DeletedEntitiesEnumeratorResult(Object entity, boolean executeOnBeforeDelete) {
+                this.entity = entity;
+                this.executeOnBeforeDelete = executeOnBeforeDelete;
+            }
+
+            public Object getEntity() {
+                return entity;
+            }
+
+            public boolean isExecuteOnBeforeDelete() {
+                return executeOnBeforeDelete;
+            }
+
+        }
     }
 }

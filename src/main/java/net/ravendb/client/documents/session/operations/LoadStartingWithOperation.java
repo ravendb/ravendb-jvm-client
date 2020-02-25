@@ -27,7 +27,8 @@ public class LoadStartingWithOperation {
     private String _startAfter;
 
     private final List<String> _returnedIds = new ArrayList<>();
-    private GetDocumentsResult _currentLoadResults;
+    private boolean _resultsSet;
+    private GetDocumentsResult _results;
 
     public LoadStartingWithOperation(InMemoryDocumentSessionOperations session) {
         _session = session;
@@ -73,8 +74,10 @@ public class LoadStartingWithOperation {
     }
 
     public void setResult(GetDocumentsResult result) {
+        _resultsSet = true;
+
         if (_session.noTracking) {
-            _currentLoadResults = result;
+            _results = result;
             return;
         }
 
@@ -94,12 +97,16 @@ public class LoadStartingWithOperation {
         T[] finalResults;
 
         if (_session.noTracking) {
-            if (_currentLoadResults == null) {
+            if (_results == null) {
                 throw new IllegalStateException("Cannot execute getDocuments before operation execution");
             }
 
-            finalResults = (T[]) Array.newInstance(clazz, _currentLoadResults.getResults().size());
-            for (JsonNode document : _currentLoadResults.getResults()) {
+            if (_results == null || _results.getResults() == null || _results.getResults().size() == 0) {
+                return (T[]) Array.newInstance(clazz, 0);
+            }
+
+            finalResults = (T[]) Array.newInstance(clazz, _results.getResults().size());
+            for (JsonNode document : _results.getResults()) {
                 DocumentInfo newDocumentInfo = DocumentInfo.getNewDocumentInfo((ObjectNode) document);
                 finalResults[i++] = _session.trackEntity(clazz, newDocumentInfo);
             }

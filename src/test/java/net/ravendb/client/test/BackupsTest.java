@@ -3,12 +3,20 @@ package net.ravendb.client.test;
 import com.google.common.base.Stopwatch;
 import net.ravendb.client.RemoteTestBase;
 import net.ravendb.client.documents.IDocumentStore;
+import net.ravendb.client.documents.operations.GetOngoingTaskInfoOperation;
 import net.ravendb.client.documents.operations.backups.*;
+import net.ravendb.client.documents.operations.ongoingTasks.OngoingTask;
+import net.ravendb.client.documents.operations.ongoingTasks.OngoingTaskBackup;
+import net.ravendb.client.documents.operations.ongoingTasks.OngoingTaskType;
+import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.Duration;
 import java.util.concurrent.TimeUnit;
+
+import static org.assertj.core.api.Assertions.assertThat;
 
 public class BackupsTest extends RemoteTestBase {
 
@@ -44,7 +52,39 @@ public class BackupsTest extends RemoteTestBase {
                 backup.toAbsolutePath().toFile().delete();
             }
         }
+    }
 
+    @Test
+    public void canSetupRetentionPolicy() throws Exception {
+        try (IDocumentStore store = getDocumentStore()) {
+            PeriodicBackupConfiguration backupConfiguration = new PeriodicBackupConfiguration();
+            backupConfiguration.setName("myBackup");
+            backupConfiguration.setDisabled(true);
+            backupConfiguration.setBackupType(BackupType.SNAPSHOT);
+            backupConfiguration.setFullBackupFrequency("20 * * * *");
+            BackupEncryptionSettings encryptionSettings = new BackupEncryptionSettings();
+
+            encryptionSettings.setEncryptionMode(EncryptionMode.USE_PROVIDED_KEY);
+            encryptionSettings.setKey("QV2jJkHCPGwjbOiXuZDCNmyyj/GE4OH8OZlkg5jQPRI=");
+
+            backupConfiguration.setBackupEncryptionSettings(encryptionSettings);
+
+            RetentionPolicy retentionPolicy = new RetentionPolicy();
+            retentionPolicy.setDisabled(false);
+            retentionPolicy.setMinimumBackupAgeToKeep(Duration.ofDays(1).plusHours(3).plusMinutes(2));
+
+            backupConfiguration.setRetentionPolicy(retentionPolicy);
+
+            UpdatePeriodicBackupOperation operation = new UpdatePeriodicBackupOperation(backupConfiguration);
+            store.maintenance().send(operation);
+
+            OngoingTaskBackup myBackup = (OngoingTaskBackup) store.maintenance().send(new GetOngoingTaskInfoOperation("myBackup", OngoingTaskType.BACKUP));
+
+            assertThat(myBackup.getRetentionPolicy().getMinimumBackupAgeToKeep().toString())
+                    .isEqualTo("PT27H2M");
+            assertThat(myBackup.isEncrypted())
+                    .isTrue();
+        }
     }
 
     private void waitForBackup(Path backup) throws Exception {

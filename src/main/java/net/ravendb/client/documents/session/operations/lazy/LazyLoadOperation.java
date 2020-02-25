@@ -8,6 +8,7 @@ import net.ravendb.client.documents.session.InMemoryDocumentSessionOperations;
 import net.ravendb.client.documents.session.operations.LoadOperation;
 import net.ravendb.client.extensions.JsonExtensions;
 import net.ravendb.client.util.UrlUtils;
+import org.apache.commons.lang3.StringUtils;
 
 import java.io.IOException;
 import java.util.Arrays;
@@ -58,7 +59,7 @@ public class LazyLoadOperation<T> implements ILazyOperation {
     }
 
     public LazyLoadOperation<T> byId(String id) {
-        if (id == null) {
+        if (StringUtils.isBlank(id)) {
             return this;
         }
 
@@ -70,7 +71,10 @@ public class LazyLoadOperation<T> implements ILazyOperation {
     }
 
     public LazyLoadOperation<T> byIds(String[] ids) {
-        _ids = ids;
+        _ids = Arrays.stream(ids)
+                .filter(x -> !StringUtils.isBlank(x))
+                .distinct()
+                .toArray(String[]::new);
 
         return this;
     }

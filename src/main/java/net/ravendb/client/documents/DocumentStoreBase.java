@@ -40,6 +40,10 @@ public abstract class DocumentStoreBase implements IDocumentStore {
     private final List<EventHandler<BeforeQueryEventArgs>> onBeforeQuery = new ArrayList<>();
     private final List<EventHandler<SessionCreatedEventArgs>> onSessionCreated = new ArrayList<>();
 
+    private final List<EventHandler<BeforeConversionToDocumentEventArgs>> onBeforeConversionToDocument = new ArrayList<>();
+    private final List<EventHandler<AfterConversionToDocumentEventArgs>> onAfterConversionToDocument = new ArrayList<>();
+    private final List<EventHandler<BeforeConversionToEntityEventArgs>> onBeforeConversionToEntity = new ArrayList<>();
+    private final List<EventHandler<AfterConversionToEntityEventArgs>> onAfterConversionToEntity = new ArrayList<>();
     protected DocumentStoreBase() {
         _subscriptions = new DocumentSubscriptions((DocumentStore)this);
     }
@@ -255,6 +259,38 @@ public abstract class DocumentStoreBase implements IDocumentStore {
         this.onBeforeQuery.remove(handler);
     }
 
+
+    public void addBeforeConversionToDocumentListener(EventHandler<BeforeConversionToDocumentEventArgs> handler) {
+        this.onBeforeConversionToDocument.add(handler);
+    }
+
+    public void removeBeforeConversionToDocumentListener(EventHandler<BeforeConversionToDocumentEventArgs> handler) {
+        this.onBeforeConversionToDocument.remove(handler);
+    }
+
+    public void addAfterConversionToDocumentListener(EventHandler<AfterConversionToDocumentEventArgs> handler) {
+        this.onAfterConversionToDocument.add(handler);
+    }
+
+    public void removeAfterConversionToDocumentListener(EventHandler<AfterConversionToDocumentEventArgs> handler) {
+        this.onAfterConversionToDocument.remove(handler);
+    }
+
+    public void addBeforeConversionToEntityListener(EventHandler<BeforeConversionToEntityEventArgs> handler) {
+        this.onBeforeConversionToEntity.add(handler);
+    }
+
+    public void removeBeforeConversionToEntityListener(EventHandler<BeforeConversionToEntityEventArgs> handler) {
+        this.onBeforeConversionToEntity.remove(handler);
+    }
+
+    public void addAfterConversionToEntityListener(EventHandler<AfterConversionToEntityEventArgs> handler) {
+        this.onAfterConversionToEntity.add(handler);
+    }
+
+    public void removeAfterConversionToEntityListener(EventHandler<AfterConversionToEntityEventArgs> handler) {
+        this.onAfterConversionToEntity.remove(handler);
+    }
     protected String database;
 
     /**
@@ -348,6 +384,23 @@ public abstract class DocumentStoreBase implements IDocumentStore {
         for (EventHandler<BeforeQueryEventArgs> handler : onBeforeQuery) {
             session.addBeforeQueryListener(handler);
         }
+
+        for (EventHandler<BeforeConversionToDocumentEventArgs> handler : onBeforeConversionToDocument) {
+            session.addBeforeConversionToDocumentListener(handler);
+        }
+
+        for (EventHandler<AfterConversionToDocumentEventArgs> handler : onAfterConversionToDocument) {
+            session.addAfterConversionToDocumentListener(handler);
+        }
+
+        for (EventHandler<BeforeConversionToEntityEventArgs> handler : onBeforeConversionToEntity) {
+            session.addBeforeConversionToEntityListener(handler);
+        }
+
+        for (EventHandler<AfterConversionToEntityEventArgs> handler : onAfterConversionToEntity) {
+            session.addAfterConversionToEntityListener(handler);
+        }
+    }
     }
 
     protected void afterSessionCreated(InMemoryDocumentSessionOperations session) {

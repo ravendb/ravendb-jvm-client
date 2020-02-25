@@ -35,6 +35,24 @@ public class SubscriptionsBasicTest extends RemoteTestBase {
     private final int _reasonableWaitTime = 60;
 
     @Test
+    public void canDisableSubscriptionViaApi() throws Exception {
+        try (IDocumentStore store = getDocumentStore()) {
+            String subscription = store.subscriptions().create(User.class);
+
+            store.subscriptions().disable(subscription);
+
+            List<SubscriptionState> subscriptions = store.subscriptions().getSubscriptions(0, 10);
+            assertThat(subscriptions.get(0).isDisabled())
+                    .isTrue();
+
+            store.subscriptions().enable(subscription);
+            subscriptions = store.subscriptions().getSubscriptions(0, 10);
+            assertThat(subscriptions.get(0).isDisabled())
+                    .isFalse();
+        }
+    }
+
+    @Test
     public void canDeleteSubscription() throws Exception {
         try (IDocumentStore store = getDocumentStore()) {
             String id1 = store.subscriptions().create(User.class);
@@ -284,7 +302,6 @@ public class SubscriptionsBasicTest extends RemoteTestBase {
     }
 
     @Test
-    @Disabled("waiting for: RavenDB-13380")
     public void canDisableSubscription() throws Exception {
         try (IDocumentStore store = getDocumentStore()) {
             try (IDocumentSession session = store.openSession()) {

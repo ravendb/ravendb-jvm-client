@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import net.ravendb.client.Constants;
 import net.ravendb.client.documents.conventions.DocumentConventions;
+import net.ravendb.client.primitives.Reference;
 
 import java.io.IOException;
 import java.lang.reflect.Field;
@@ -34,24 +35,52 @@ public class EntityToJson {
             return (ObjectNode) entity;
         }
 
-        ObjectMapper mapper = _session.getConventions().getEntityMapper();
+        if (documentInfo != null) {
+            _session.onBeforeConversionToDocumentInvoke(documentInfo.getId(), entity);
+        }
+
+        ObjectNode document = convertEntityToJsonInternal(entity, _session.getConventions(), documentInfo);
+
+        if (documentInfo != null) {
+            Reference<ObjectNode> documentReference = new Reference<>(document);
+            _session.onAfterConversionToDocumentInvoke(documentInfo.getId(), entity, documentReference);
+            document = documentReference.value;
+        }
+
+        return document;
+    }
+
+    //TODO: fill missing properies?
+
+    //TODO: internal static object ConvertToBlittableForCompareExchangeIfNeeded(
+
+    public static ObjectNode convertEntityToJson(Object entity, DocumentConventions conventions, DocumentInfo documentInfo) {
+        return convertEntityToJsonInternal(entity, conventions, documentInfo);
+    }
+
+    private static ObjectNode convertEntityToJsonInternal(Object entity, DocumentConventions conventions, DocumentInfo documentInfo) {
+        return convertEntityToJsonInternal(entity, conventions, documentInfo, true);
+    }
+
+    private static ObjectNode convertEntityToJsonInternal(Object entity, DocumentConventions conventions, DocumentInfo documentInfo, boolean removeIdentityProperty) {
+        ObjectMapper mapper = conventions.getEntityMapper();
 
         ObjectNode jsonNode = mapper.valueToTree(entity);
 
         writeMetadata(mapper, jsonNode, documentInfo);
 
         Class<?> clazz = entity.getClass();
-        tryRemoveIdentityProperty(jsonNode, clazz, _session.getConventions());
+        if (removeIdentityProperty) {
+            tryRemoveIdentityProperty(jsonNode, clazz, conventions);
+        }
 
         return jsonNode;
     }
 
-    public static ObjectNode convertEntityToJson(Object entity, DocumentConventions conventions) {
-        return convertEntityToJson(entity, conventions, null, true);
-    }
+    //TODO: private void RegisterMissingProperties(object o, string id, object value)
 
     public static ObjectNode convertEntityToJson(Object entity, DocumentConventions conventions,
-                                                 DocumentInfo documentInfo, boolean removeIdentityProperty ) {
+                                                 DocumentInfo documentInfo, boolean removeIdentityProperty) {
         // maybe we don't need to do anything?
         if (entity instanceof ObjectNode) {
             return (ObjectNode) entity;
@@ -101,6 +130,17 @@ public class EntityToJson {
     }
 
     /**
+     * @deprecated Use different ConvertToEntity overload
+     * @param entityType Class of entity
+     * @param id Id of entity
+     * @param document Raw entity
+     * @return Entity instance
+     */
+    public Object convertToEntity(Class entityType, String id, ObjectNode document) {
+        return convertToEntity(entityType, id, document, true);
+    }
+
+    /**
      * Converts a json object to an entity.
      * @param entityType Class of entity
      * @param id Id of entity
@@ -108,14 +148,20 @@ public class EntityToJson {
      * @return Entity instance
      */
     @SuppressWarnings("unchecked")
-    public Object convertToEntity(Class entityType, String id, ObjectNode document) {
+    public Object convertToEntity(Class entityType, String id, ObjectNode document, boolean trackEntity) {
         try {
             if (ObjectNode.class.equals(entityType)) {
                 return document;
             }
 
+            Reference<ObjectNode> documentRef = new Reference<>(document);
+            _session.onBeforeConversionToEntityInvoke(id, entityType, documentRef);
+            document = documentRef.value;
+
             Object defaultValue = InMemoryDocumentSessionOperations.getDefaultValue(entityType);
             Object entity = defaultValue;
+
+            //TODO: if track!
 
             String documentType =_session.getConventions().getJavaClass(id, document);
             if (documentType != null) {
@@ -132,6 +178,8 @@ public class EntityToJson {
             if (id != null) {
                 _session.getGenerateEntityIdOnTheClient().trySetIdentity(entity, id);
             }
+
+            _session.onAfterConversionToEntityInvoke(id, document, entity);
 
             return entity;
         } catch (Exception e) {
@@ -177,6 +225,7 @@ public class EntityToJson {
     @SuppressWarnings("UnnecessaryLocalVariable")
     public static Object convertToEntity(Class<?> entityClass, String id, ObjectNode document, DocumentConventions conventions) {
         try {
+
             Object defaultValue = InMemoryDocumentSessionOperations.getDefaultValue(entityClass);
 
             Object entity = defaultValue;
@@ -198,4 +247,13 @@ public class EntityToJson {
             throw new IllegalStateException("Could not convert document " + id + " to entity of type " + entityClass, e);
         }
     }
+
+    public void removeFromMissing(Object entity) {
+        _missingDictionary.remove(entity);
+    }
+
+    public void clear() {
+        _missingDictionary.clear();
+    }
+
 }

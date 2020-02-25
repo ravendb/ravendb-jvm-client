@@ -15,6 +15,7 @@ import net.ravendb.client.documents.session.tokens.FieldsToFetchToken;
 import net.ravendb.client.exceptions.TimeoutException;
 import net.ravendb.client.exceptions.documents.indexes.IndexDoesNotExistException;
 import net.ravendb.client.primitives.CleanCloseable;
+import net.ravendb.client.primitives.Reference;
 import org.apache.commons.lang3.ClassUtils;
 import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -22,9 +23,11 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import java.lang.reflect.Field;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Function;
 
 public class QueryOperation {
     private final InMemoryDocumentSessionOperations _session;
@@ -32,6 +35,7 @@ public class QueryOperation {
     private final IndexQuery _indexQuery;
     private final boolean _metadataOnly;
     private final boolean _indexEntriesOnly;
+    private final boolean _isProjectInto;
     private QueryResult _currentQueryResults;
     private final FieldsToFetchToken _fieldsToFetch;
     private Stopwatch _sp;
@@ -40,7 +44,8 @@ public class QueryOperation {
     private static final Log logger = LogFactory.getLog(QueryOperation.class);
 
     public QueryOperation(InMemoryDocumentSessionOperations session, String indexName, IndexQuery indexQuery,
-                          FieldsToFetchToken fieldsToFetch, boolean disableEntitiesTracking, boolean metadataOnly, boolean indexEntriesOnly) {
+                          FieldsToFetchToken fieldsToFetch, boolean disableEntitiesTracking, boolean metadataOnly, boolean indexEntriesOnly,
+                          boolean isProjectInto) {
         _session = session;
         _indexName = indexName;
         _indexQuery = indexQuery;
@@ -48,6 +53,7 @@ public class QueryOperation {
         _noTracking = disableEntitiesTracking;
         _metadataOnly = metadataOnly;
         _indexEntriesOnly = indexEntriesOnly;
+        _isProjectInto = isProjectInto;
 
         assertPageSizeSet();
     }
@@ -104,11 +110,17 @@ public class QueryOperation {
     public <T> List<T> complete(Class<T> clazz) {
         QueryResult queryResult = _currentQueryResults.createSnapshot();
 
+        List<T> result = new ArrayList<>(queryResult.getResults().size());
+
+        completeInternal(clazz, queryResult, result::add);
+
+        return result;
+    }
+
+    private <T> void completeInternal(Class<T> clazz, QueryResult queryResult, Function<T, Boolean> addToResult) {
         if (!_noTracking) {
             _session.registerIncludes(queryResult.getIncludes());
         }
-
-        ArrayList<T> list = new ArrayList<>();
 
         try {
             for (JsonNode document : queryResult.getResults()) {
@@ -120,7 +132,7 @@ public class QueryOperation {
                     id = idNode.asText();
                 }
 
-                list.add(deserialize(clazz, id, (ObjectNode) document, metadata, _fieldsToFetch, _noTracking, _session));
+                addToResult.apply(deserialize(clazz, id, (ObjectNode) document, metadata, _fieldsToFetch, _noTracking, _session, _isProjectInto));
             }
         } catch (JsonProcessingException e) {
             throw new RuntimeException("Unable to read json: " + e.getMessage(), e);
@@ -133,13 +145,10 @@ public class QueryOperation {
                 _session.registerCounters(queryResult.getCounterIncludes(), queryResult.getIncludedCounterNames());
             }
         }
-
-        return list;
     }
 
     @SuppressWarnings("unchecked")
-    public static <T> T deserialize(Class<T> clazz, String id, ObjectNode document, ObjectNode metadata, FieldsToFetchToken fieldsToFetch, boolean disableEntitiesTracking, InMemoryDocumentSessionOperations session) throws JsonProcessingException {
-
+    public static <T> T deserialize(Class<T> clazz, String id, ObjectNode document, ObjectNode metadata, FieldsToFetchToken fieldsToFetch, boolean disableEntitiesTracking, InMemoryDocumentSessionOperations session, boolean isProjectInto) throws JsonProcessingException {
         JsonNode projection = metadata.get("@projection");
         if (projection == null || !projection.asBoolean()) {
             return (T)session.trackEntity(clazz, id, document, metadata, disableEntitiesTracking);
@@ -179,6 +188,14 @@ public class QueryOperation {
             }
         }
 
+        if (ObjectNode.class.equals(clazz)) {
+            return (T)document;
+        }
+
+        Reference<ObjectNode> documentRef = new Reference<>(document);
+        session.onBeforeConversionToEntityInvoke(id, clazz, documentRef);
+        document = documentRef.value;
+
         T result = session.getConventions().getEntityMapper().treeToValue(document, clazz);
 
         if (StringUtils.isNotEmpty(id)) {
@@ -193,6 +210,8 @@ public class QueryOperation {
                 }
             }
         }
+
+        session.onAfterConversionToEntityInvoke(id, document, result);
 
         return result;
     }
@@ -216,12 +235,25 @@ public class QueryOperation {
     }
 
     public void ensureIsAcceptableAndSaveResult(QueryResult result) {
+        if (_sp == null) {
+            ensureIsAcceptableAndSaveResult(result, null);
+        } else {
+            _sp.stop();
+            ensureIsAcceptableAndSaveResult(result, _sp.elapsed());
+        }
+    }
+
+    public void ensureIsAcceptableAndSaveResult(QueryResult result, Duration duration) {
         if (result == null) {
             throw new IndexDoesNotExistException("Could not find index " + _indexName);
         }
 
-        ensureIsAcceptable(result, _indexQuery.isWaitForNonStaleResults(), _sp, _session);
+        ensureIsAcceptable(result, _indexQuery.isWaitForNonStaleResults(), duration, _session);
 
+        saveQueryResult(result);
+    }
+
+    private void saveQueryResult(QueryResult result) {
         _currentQueryResults = result;
 
         if (logger.isInfoEnabled()) {
@@ -253,15 +285,21 @@ public class QueryOperation {
     }
 
     public static void ensureIsAcceptable(QueryResult result, boolean waitForNonStaleResults, Stopwatch duration, InMemoryDocumentSessionOperations session) {
-        if (waitForNonStaleResults && result.isStale()) {
+        if (duration == null) {
+            ensureIsAcceptable(result, waitForNonStaleResults, (Duration)null, session);
+        } else {
             duration.stop();
-
-            String msg = "Waited for " + duration.toString() + " for the query to return non stale result.";
-            throw new TimeoutException(msg);
-
+            ensureIsAcceptable(result, waitForNonStaleResults, duration.elapsed(), session);
         }
     }
 
+    public static void ensureIsAcceptable(QueryResult result, boolean waitForNonStaleResults, Duration duration, InMemoryDocumentSessionOperations session) {
+        if (waitForNonStaleResults && result.isStale()) {
+            String elapsed = duration == null ? "" : " " + duration.toMillis() + " ms";
+            String msg = "Waited" + elapsed + " for the query to return non stale result.";
+            throw new TimeoutException(msg);
+        }
+    }
 
     public IndexQuery getIndexQuery() {
         return _indexQuery;
