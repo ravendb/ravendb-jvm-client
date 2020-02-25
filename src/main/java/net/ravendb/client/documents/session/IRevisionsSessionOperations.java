@@ -95,4 +95,51 @@ public interface IRevisionsSessionOperations {
      * @return Revision changed before specified date
      */
     <T> T get(Class<T> clazz, String id, Date date);
+
+
+    /**
+     * Make the session create a revision for the specified entity.
+     * Can be used with tracked entities only.
+     * Revision will be created Even If:
+     *
+     * 1. Revisions configuration is Not set for the collection
+     * 2. Document was Not modified
+     * @param entity Entity to create revision for
+     * @param <T> Entity class
+     */
+    <T> void forceRevisionCreationFor(T entity);
+
+    /**
+     * Make the session create a revision for the specified entity.
+     * Can be used with tracked entities only.
+     * Revision will be created Even If:
+     *
+     * 1. Revisions configuration is Not set for the collection
+     * 2. Document was Not modified
+     * @param entity Entity to create revision for
+     * @param strategy Strategy to use
+     * @param <T> Entity class
+     */
+    <T> void forceRevisionCreationFor(T entity, ForceRevisionStrategy strategy);
+
+    /**
+     * Make the session create a revision for the specified document id.
+     * Revision will be created Even If:
+     *
+     * 1. Revisions configuration is Not set for the collection
+     * 2. Document was Not modified
+     * @param id Document id to use
+     */
+    void forceRevisionCreationFor(String id);
+
+    /**
+     * Make the session create a revision for the specified document id.
+     * Revision will be created Even If:
+     *
+     * 1. Revisions configuration is Not set for the collection
+     * 2. Document was Not modified
+     * @param id Document id to use
+     * @param strategy Strategy to use
+     */
+    void forceRevisionCreationFor(String id, ForceRevisionStrategy strategy);
 }

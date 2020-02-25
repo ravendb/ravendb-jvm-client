@@ -858,7 +858,6 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
 
         prepareForEntitiesDeletion(result, null);
         prepareForEntitiesPuts(result);
-
         prepareForCreatingRevisionsFromIds(result);
         prepareCompareExchangeEntities(result);
 

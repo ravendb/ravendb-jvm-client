@@ -10,7 +10,6 @@ import net.ravendb.client.documents.session.IDocumentSession;
 import net.ravendb.client.documents.session.IMetadataDictionary;
 import net.ravendb.client.exceptions.RavenException;
 import net.ravendb.client.infrastructure.entities.Company;
-import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 import java.util.Collections;
@@ -114,6 +113,12 @@ public class ForceRevisionCreation extends RemoteTestBase {
 
                 int revisionsCount = session.advanced().revisions().getFor(Company.class, company.getId()).size();
                 assertThat(revisionsCount)
+                        .isZero();
+
+                session.saveChanges();
+
+                revisionsCount = session.advanced().revisions().getFor(Company.class, company.getId()).size();
+                assertThat(revisionsCount)
                         .isOne();
             }
         }
@@ -133,7 +138,7 @@ public class ForceRevisionCreation extends RemoteTestBase {
                     session.saveChanges();
                 })
                         .isInstanceOf(RavenException.class)
-                        .hasMessage("Can't force revision creation - the document was not saved on the server yet");
+                        .hasMessageContaining("Can't force revision creation - the document was not saved on the server yet");
 
                 int revisionsCount = session.advanced().revisions().getFor(Company.class, company.getId()).size();
                 assertThat(revisionsCount)

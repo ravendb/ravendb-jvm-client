@@ -137,9 +137,34 @@ public class DocumentSubscriptions implements AutoCloseable {
         if (criteria.getQuery() == null) {
 
             if (revisions) {
-                criteria.setQuery("from " + collectionName + " (Revisions = true) as doc");
+                criteria.setQuery("from '" + collectionName.replaceAll("'", "\\'") + "' (Revisions = true) as doc");
             } else {
-                criteria.setQuery("from " + collectionName + " as doc");
+                criteria.setQuery("from '" + collectionName.replaceAll("'", "\\'") + "' as doc");
+            }
+        }
+
+        if (criteria.getIncludes() != null) {
+            SubscriptionIncludeBuilder builder = new SubscriptionIncludeBuilder(_store.getConventions());
+            criteria.getIncludes().accept(builder);
+
+            if (builder.documentsToInclude != null && !builder.documentsToInclude.isEmpty()) {
+                criteria.setQuery(criteria.getQuery() + System.lineSeparator() + "include ");
+
+                boolean first = true;
+                for (String inc : builder.documentsToInclude) {
+                    String include = "doc." + inc;
+                    if (!first) {
+                        criteria.setQuery(criteria.getQuery() + ",");
+                    }
+                    first = false;
+
+                    Reference<String> escapedInclude = new Reference<>();
+                    if (IncludesUtil.requiresQuotes(include, escapedInclude)) {
+                        criteria.setQuery(criteria.getQuery() + "'" + escapedInclude + "'");
+                    } else {
+                        criteria.setQuery(criteria.getQuery() + include);
+                    }
+                }
             }
         }
 

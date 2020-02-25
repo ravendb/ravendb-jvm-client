@@ -210,7 +210,7 @@ public class JsonExtensions {
 
         generator.writeFieldName("QueryParameters");
         if (query.getQueryParameters() != null) {
-            generator.writeObject(EntityToJson.convertEntityToJson(query.getQueryParameters(), conventions));
+            generator.writeObject(EntityToJson.convertEntityToJson(query.getQueryParameters(), conventions, null));
         } else {
             generator.writeNull();
         }

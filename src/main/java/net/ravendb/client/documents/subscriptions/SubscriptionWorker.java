@@ -213,6 +213,8 @@ public class SubscriptionWorker<T> implements CleanCloseable {
                 _store.getExecutorService(),
                 _store.getConventions());
 
+        _store.registerEvents(_subscriptionLocalRequestExecutor);
+
         return _tcpClient;
     }
 

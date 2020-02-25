@@ -16,7 +16,7 @@ public class PutCommandDataBase<T extends JsonNode> implements ICommandData {
     private String changeVector;
     private T document;
     private final CommandType type = CommandType.PUT;
-    private ForceRevisionStrategy forceRevisionStrategy;
+    private ForceRevisionStrategy forceRevisionCreationStrategy;
 
     protected PutCommandDataBase(String id, String changeVector, T document) {
         this(id, changeVector, document, ForceRevisionStrategy.NONE);
@@ -30,7 +30,7 @@ public class PutCommandDataBase<T extends JsonNode> implements ICommandData {
         this.id = id;
         this.changeVector = changeVector;
         this.document = document;
-        this.forceRevisionStrategy = strategy;
+        this.forceRevisionCreationStrategy = strategy;
     }
 
     @Override
@@ -57,8 +57,8 @@ public class PutCommandDataBase<T extends JsonNode> implements ICommandData {
         return type;
     }
 
-    public ForceRevisionStrategy getForceRevisionStrategy() {
-        return forceRevisionStrategy;
+    public ForceRevisionStrategy getForceRevisionCreationStrategy() {
+        return forceRevisionCreationStrategy;
     }
 
     @Override
@@ -72,8 +72,8 @@ public class PutCommandDataBase<T extends JsonNode> implements ICommandData {
 
         generator.writeStringField("Type", "PUT");
 
-        if (forceRevisionStrategy != ForceRevisionStrategy.NONE) {
-            generator.writeStringField("ForceRevisionStrategy", SharpEnum.value(forceRevisionStrategy));
+        if (forceRevisionCreationStrategy != ForceRevisionStrategy.NONE) {
+            generator.writeStringField("ForceRevisionCreationStrategy", SharpEnum.value(forceRevisionCreationStrategy));
         }
         generator.writeEndObject();
     }
