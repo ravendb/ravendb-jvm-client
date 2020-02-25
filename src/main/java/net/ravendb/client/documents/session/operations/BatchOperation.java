@@ -5,8 +5,9 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import net.ravendb.client.Constants;
-import net.ravendb.client.documents.commands.batches.BatchCommand;
+import net.ravendb.client.documents.commands.batches.ClusterWideBatchCommand;
 import net.ravendb.client.documents.commands.batches.CommandType;
+import net.ravendb.client.documents.commands.batches.SingleNodeBatchCommand;
 import net.ravendb.client.documents.operations.PatchStatus;
 import net.ravendb.client.documents.session.AfterSaveChangesEventArgs;
 import net.ravendb.client.documents.session.DocumentInfo;
@@ -15,7 +16,6 @@ import net.ravendb.client.documents.session.TransactionMode;
 import net.ravendb.client.exceptions.ClientVersionMismatchException;
 import net.ravendb.client.extensions.JsonExtensions;
 import net.ravendb.client.json.BatchCommandResult;
-import net.ravendb.client.json.MetadataAsDictionary;
 import net.ravendb.client.primitives.Tuple;
 
 import java.util.Iterator;
@@ -39,7 +39,7 @@ public class BatchOperation {
 
     private Map<String, DocumentInfo> _modifications;
 
-    public BatchCommand createRequest() {
+    public SingleNodeBatchCommand createRequest() {
         InMemoryDocumentSessionOperations.SaveChangesData result = _session.prepareForSaveChanges();
         _onSuccessfulRequest = result.getOnSuccess();
         _sessionCommandsCount = result.getSessionCommands().size();
@@ -57,7 +57,11 @@ public class BatchOperation {
 
         _entities = result.getEntities();
 
-        return new BatchCommand(_session.getConventions(), result.getSessionCommands(), result.getOptions(), _session.getTransactionMode());
+        if (_session.getTransactionMode() == TransactionMode.CLUSTER_WIDE) {
+            return new ClusterWideBatchCommand(_session.getConventions(), result.getSessionCommands(), result.getOptions());
+        }
+
+        return new SingleNodeBatchCommand(_session.getConventions(), result.getSessionCommands(), result.getOptions());
     }
 
     public void setResult(BatchCommandResult result) {
@@ -100,6 +104,9 @@ public class BatchOperation {
             switch (type) {
                 case PUT:
                     handlePut(i, batchResult, false);
+                    break;
+                case FORCE_REVISION_CREATION:
+                    handleForceRevisionCreation(batchResult);
                     break;
                 case DELETE:
                     handleDelete(batchResult);
@@ -144,6 +151,7 @@ public class BatchOperation {
                     break;
                 case COMPARE_EXCHANGE_PUT:
                 case COMPARE_EXCHANGE_DELETE:
+                case FORCE_REVISION_CREATION:
                     break;
                 case COUNTERS:
                     handleCounters(batchResult);
@@ -199,19 +207,19 @@ public class BatchOperation {
     }
 
     private void handleAttachmentCopy(ObjectNode batchResult) {
-        handleAttachmentPutInternal(batchResult, CommandType.ATTACHMENT_COPY, "Id", "Name");
+        handleAttachmentPutInternal(batchResult, CommandType.ATTACHMENT_COPY, "Id", "Name", "DocumentChangeVector");
     }
 
     private void handleAttachmentMove(ObjectNode batchResult) {
-        handleAttachmentDeleteInternal(batchResult, CommandType.ATTACHMENT_MOVE, "Id", "Name");
-        handleAttachmentPutInternal(batchResult, CommandType.ATTACHMENT_MOVE, "DestinationId", "DestinationName");
+        handleAttachmentDeleteInternal(batchResult, CommandType.ATTACHMENT_MOVE, "Id", "Name", "DocumentChangeVector");
+        handleAttachmentPutInternal(batchResult, CommandType.ATTACHMENT_MOVE, "DestinationId", "DestinationName", "DocumentChangeVector");
     }
 
     private void handleAttachmentDelete(ObjectNode batchResult) {
-        handleAttachmentDeleteInternal(batchResult, CommandType.ATTACHMENT_DELETE, Constants.Documents.Metadata.ID, "Name");
+        handleAttachmentDeleteInternal(batchResult, CommandType.ATTACHMENT_DELETE, Constants.Documents.Metadata.ID, "Name", "DocumentChangeVector");
     }
 
-    private void handleAttachmentDeleteInternal(ObjectNode batchResult, CommandType type, String idFieldName, String attachmentNameFieldName) {
+    private void handleAttachmentDeleteInternal(ObjectNode batchResult, CommandType type, String idFieldName, String attachmentNameFieldName, String documentChangeVectorFieldName) {
         String id = getStringField(batchResult, type, idFieldName);
 
         DocumentInfo sessionDocumentInfo = _session.documentsById.getValue(id);
@@ -220,6 +228,11 @@ public class BatchOperation {
         }
 
         DocumentInfo documentInfo = getOrAddModifications(id, sessionDocumentInfo, true);
+
+        String documentChangeVector = getStringField(batchResult, type, documentChangeVectorFieldName, false);
+        if (documentChangeVector != null) {
+            documentInfo.setChangeVector(documentChangeVector);
+        }
 
         JsonNode attachmentsJson = documentInfo.getMetadata().get(Constants.Documents.Metadata.ATTACHMENTS);
         if (attachmentsJson == null || attachmentsJson.isNull() || attachmentsJson.size() == 0) {
@@ -243,10 +256,10 @@ public class BatchOperation {
     }
 
     private void handleAttachmentPut(ObjectNode batchResult) {
-        handleAttachmentPutInternal(batchResult, CommandType.ATTACHMENT_PUT, "Id", "Name");
+        handleAttachmentPutInternal(batchResult, CommandType.ATTACHMENT_PUT, "Id", "Name", "DocumentChangeVector");
     }
 
-    private void handleAttachmentPutInternal(ObjectNode batchResult, CommandType type, String idFieldName, String attachmentNameFieldName) {
+    private void handleAttachmentPutInternal(ObjectNode batchResult, CommandType type, String idFieldName, String attachmentNameFieldName, String documentChangeVectorFieldName) {
         String id = getStringField(batchResult, type, idFieldName);
 
         DocumentInfo sessionDocumentInfo = _session.documentsById.getValue(id);
@@ -255,6 +268,11 @@ public class BatchOperation {
         }
 
         DocumentInfo documentInfo = getOrAddModifications(id, sessionDocumentInfo, false);
+
+        String documentChangeVector = getStringField(batchResult, type, documentChangeVectorFieldName, false);
+        if (documentChangeVector != null) {
+            documentInfo.setChangeVector(documentChangeVector);
+        }
 
         ObjectMapper mapper = JsonExtensions.getDefaultMapper();
         ArrayNode attachments = (ArrayNode) documentInfo.getMetadata().get(Constants.Documents.Metadata.ATTACHMENTS);
@@ -312,6 +330,8 @@ public class BatchOperation {
 
                 if (documentInfo.getEntity() != null) {
                     _session.getEntityToJson().populateEntity(documentInfo.getEntity(), id, documentInfo.getDocument());
+                    AfterSaveChangesEventArgs afterSaveChangesEventArgs = new AfterSaveChangesEventArgs(_session, documentInfo.getId(), documentInfo.getEntity());
+                    _session.onAfterSaveChangesInvoke(afterSaveChangesEventArgs);
                 }
 
                 break;
@@ -339,9 +359,35 @@ public class BatchOperation {
         }
     }
 
+    private void handleForceRevisionCreation(ObjectNode batchResult) {
+        // When forcing a revision for a document that does Not have any revisions yet then the HasRevisions flag is added to the document.
+        // In this case we need to update the tracked entities in the session with the document new change-vector.
+
+        if (!getBooleanField(batchResult, CommandType.FORCE_REVISION_CREATION, "RevisionCreated")) {
+            // no forced revision was created...nothing to update.
+            return;
+        }
+
+        String id = getStringField(batchResult, CommandType.FORCE_REVISION_CREATION, Constants.Documents.Metadata.ID);
+        String changeVector = getStringField(batchResult, CommandType.FORCE_REVISION_CREATION, Constants.Documents.Metadata.CHANGE_VECTOR);
+
+        DocumentInfo documentInfo = _session.documentsById.getValue(id);
+        if (documentInfo == null) {
+            return;
+        }
+
+        documentInfo.setChangeVector(changeVector);
+
+        handleMetadataModifications(documentInfo, batchResult, id, changeVector);
+
+        AfterSaveChangesEventArgs afterSaveChangesEventArgs = new AfterSaveChangesEventArgs(_session, documentInfo.getId(), documentInfo.getEntity());
+        _session.onAfterSaveChangesInvoke(afterSaveChangesEventArgs);
+    }
+
     private void handlePut(int index, ObjectNode batchResult, boolean isDeferred) {
         Object entity = null;
         DocumentInfo documentInfo = null;
+
         if (!isDeferred) {
             entity = _entities.get(index);
 
@@ -415,6 +461,14 @@ public class BatchOperation {
             _session.getCountersByDocId().put(docId, cache);
         }
 
+        String changeVector = getStringField(batchResult, CommandType.COUNTERS, "DocumentChangeVector", false);
+        if (changeVector != null) {
+            DocumentInfo documentInfo = _session.documentsById.getValue(docId);
+            if (documentInfo != null) {
+                documentInfo.setChangeVector(changeVector);
+            }
+        }
+
         for (JsonNode counter : counters) {
             JsonNode name = counter.get("CounterName");
             JsonNode value = counter.get("TotalValue");
@@ -426,8 +480,12 @@ public class BatchOperation {
     }
 
     private static String getStringField(ObjectNode json, CommandType type, String fieldName) {
+        return getStringField(json, type, fieldName, true);
+    }
+
+    private static String getStringField(ObjectNode json, CommandType type, String fieldName, boolean throwOnMissing) {
         JsonNode jsonNode = json.get(fieldName);
-        if (jsonNode == null || jsonNode.isNull()) {
+        if ((jsonNode == null || jsonNode.isNull()) && throwOnMissing) {
             throwMissingField(type, fieldName);
         }
 
@@ -442,6 +500,16 @@ public class BatchOperation {
 
         return jsonNode.asLong();
     }
+
+    private static boolean getBooleanField(ObjectNode json, CommandType type, String fieldName) {
+        JsonNode jsonNode = json.get(fieldName);
+        if (jsonNode == null || !jsonNode.isBoolean()) {
+            throwMissingField(type, fieldName);
+        }
+
+        return jsonNode.asBoolean();
+    }
+
 
     private static void throwMissingField(CommandType type, String fieldName) {
         throw new IllegalStateException(type + " response is invalid. Field '" + fieldName + "' is missing.");

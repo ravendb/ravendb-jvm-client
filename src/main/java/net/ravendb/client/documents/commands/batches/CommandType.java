@@ -50,6 +50,8 @@ public enum CommandType {
                 return COUNTERS;
             case "BatchPATCH":
                 return BATCH_PATCH;
+            case "ForceRevisionCreation":
+                return FORCE_REVISION_CREATION;
             default:
                 throw new IllegalArgumentException("Unable to parse type: " + input);
         }
