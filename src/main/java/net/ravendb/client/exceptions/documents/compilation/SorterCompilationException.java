@@ -1,4 +1,6 @@
-package net.ravendb.client.exceptions.compilation;
+package net.ravendb.client.exceptions.documents.compilation;
+
+import net.ravendb.client.exceptions.compilation.CompilationException;
 
 public class SorterCompilationException extends CompilationException {
     public SorterCompilationException() {

@@ -534,12 +534,25 @@ public class DocumentQuery<T> extends AbstractDocumentQuery<T, DocumentQuery<T>>
         return orderBy(field, OrderingType.STRING);
     }
 
+    @Override
+    public IDocumentQuery<T> orderBy(String field, String sorterName) {
+        _orderBy(field, sorterName);
+        return this;
+    }
+
     public IDocumentQuery<T> orderBy(String field, OrderingType ordering) {
         _orderBy(field, ordering);
         return this;
     }
 
     //TBD expr public IDocumentQuery<T> OrderBy<TValue>(params Expression<Func<T, TValue>>[] propertySelectors)
+
+
+    @Override
+    public IDocumentQuery<T> orderByDescending(String field, String sorterName) {
+        _orderByDescending(field, sorterName);
+        return this;
+    }
 
     public IDocumentQuery<T> orderByDescending(String field) {
         return orderByDescending(field, OrderingType.STRING);

@@ -102,6 +102,16 @@ public interface IDocumentQueryBase<T, TSelf extends IDocumentQueryBase<T, TSelf
 
     /**
      * Order the results by the specified fields
+     * The field is the name of the field to sort using sorterName
+     *
+     * @param field field Field to use in order by
+     * @param sorterName Sorter to use
+     * @return Query instance
+     */
+    TSelf orderBy(String field, String sorterName);
+
+    /**
+     * Order the results by the specified fields
      * The field is the name of the field to sort, defaulting to sorting by ascending.
      * @param field Field to use in order by
      * @return Query instance
@@ -118,6 +128,7 @@ public interface IDocumentQueryBase<T, TSelf extends IDocumentQueryBase<T, TSelf
     TSelf orderBy(String field, OrderingType ordering);
 
     //TBD expr TSelf OrderBy<TValue>(params Expression<Func<T, TValue>>[] propertySelectors);
+    //TBD expr TSelf OrderBy<TValue>(Expression<Func<T, TValue>> propertySelector, string sorterName);
 
     /**
      * Order the results by the specified fields
@@ -129,6 +140,15 @@ public interface IDocumentQueryBase<T, TSelf extends IDocumentQueryBase<T, TSelf
 
     /**
      * Order the results by the specified fields
+     * The field is the name of the field to sort using sorterName
+     * @param field Field to use in order by
+     * @param sorterName Sorter to use
+     * @return Query instance
+     */
+    TSelf orderByDescending(String field, String sorterName);
+
+    /**
+     * Order the results by the specified fields
      * The field is the name of the field to sort, defaulting to sorting by descending.
      * @param field Field to use in order by
      * @param ordering Ordering type
@@ -137,6 +157,7 @@ public interface IDocumentQueryBase<T, TSelf extends IDocumentQueryBase<T, TSelf
     TSelf orderByDescending(String field, OrderingType ordering);
 
     //TBD expr TSelf OrderByDescending<TValue>(params Expression<Func<T, TValue>>[] propertySelectors);
+    //TBD expr TSelf OrderByDescending<TValue>(Expression<Func<T, TValue>> propertySelector, string sorterName);
 
     /**
      * Adds an ordering by score for a specific field to the query

@@ -916,6 +916,16 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
         ((WhereToken) whereToken).getOptions().setProximity(proximity);
     }
 
+    public void _orderBy(String field, String sorterName) {
+        if (StringUtils.isBlank(sorterName)) {
+            throw new IllegalArgumentException("SorterName cannot be null or whitespace.");
+        }
+
+        assertNoRawQuery();
+        String f = ensureValidFieldName(field, false);
+        orderByTokens.add(OrderByToken.createAscending(f, sorterName));
+    }
+
     /**
      * Order the results by the specified fields
      * The fields are the names of the fields to sort, defaulting to sorting by ascending.
@@ -937,6 +947,16 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
         assertNoRawQuery();
         String f = ensureValidFieldName(field, false);
         orderByTokens.add(OrderByToken.createAscending(f, ordering));
+    }
+
+    public void _orderByDescending(String field, String sorterName) {
+        if (StringUtils.isBlank(sorterName)) {
+            throw new IllegalArgumentException("SorterName cannot be null or whitespace.");
+        }
+
+        assertNoRawQuery();
+        String f = ensureValidFieldName(field, false);
+        orderByTokens.add(OrderByToken.createDescending(f, sorterName));
     }
 
     /**
@@ -1047,8 +1067,7 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
         tokens.add(whereToken);
     }
 
-    @Override
-    public String toString() {
+    private String toString(boolean compatibilityMode) {
         if (queryRaw != null) {
             return queryRaw;
         }
@@ -1895,13 +1914,17 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
     }
 
     private Collection<T> executeQueryOperation(Integer take) {
+        executeQueryOperationInternal(take);
+
+        return queryOperation.complete(clazz);
+    }
+
+    private void executeQueryOperationInternal(Integer take) {
         if (take != null && (pageSize == null || pageSize > take)) {
             _take(take);
         }
 
         initSync();
-
-        return queryOperation.complete(clazz);
     }
 
     public void _aggregateBy(FacetBase facet) {

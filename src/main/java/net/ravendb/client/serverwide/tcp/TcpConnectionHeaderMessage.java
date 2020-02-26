@@ -131,7 +131,7 @@ public class TcpConnectionHeaderMessage {
         operationsToSupportedProtocolVersions.put(OperationTypes.NONE, Collections.singletonList(NONE_BASE_LINE));
         operationsToSupportedProtocolVersions.put(OperationTypes.DROP, Collections.singletonList(DROP_BASE_LINE));
         operationsToSupportedProtocolVersions.put(OperationTypes.SUBSCRIPTION, Arrays.asList(SUBSCRIPTION_INCLUDES, SUBSCRIPTION_BASE_LINE));
-        operationsToSupportedProtocolVersions.put(OperationTypes.HEARTBEATS, Arrays.asList(HEARTBEATS_41200, HEARTBEATS_BASE_LINE));
+        operationsToSupportedProtocolVersions.put(OperationTypes.HEARTBEATS, Arrays.asList(HEARTBEATS_42000, HEARTBEATS_41200, HEARTBEATS_BASE_LINE));
         operationsToSupportedProtocolVersions.put(OperationTypes.TEST_CONNECTION, Collections.singletonList(TEST_CONNECTION_BASE_LINE));
 
         Map<Integer, SupportedFeatures> pingFeaturesMap = new HashMap<>();
