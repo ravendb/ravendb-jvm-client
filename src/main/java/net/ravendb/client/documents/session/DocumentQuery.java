@@ -577,12 +577,12 @@ public class DocumentQuery<T> extends AbstractDocumentQuery<T, DocumentQuery<T>>
         return this;
     }
 
-    private <TResult> DocumentQuery<TResult> createDocumentQueryInternal(Class<TResult> resultClass) {
+    public <TResult> DocumentQuery<TResult> createDocumentQueryInternal(Class<TResult> resultClass) {
         return createDocumentQueryInternal(resultClass, null);
     }
 
     @SuppressWarnings("unchecked")
-    private <TResult> DocumentQuery<TResult> createDocumentQueryInternal(Class<TResult> resultClass, QueryData queryData) {
+    public <TResult> DocumentQuery<TResult> createDocumentQueryInternal(Class<TResult> resultClass, QueryData queryData) {
         FieldsToFetchToken newFieldsToFetch;
 
         if (queryData != null && queryData.getFields().length > 0) {
@@ -620,19 +620,18 @@ public class DocumentQuery<T> extends AbstractDocumentQuery<T, DocumentQuery<T>>
 
         query.queryRaw = queryRaw;
         query.pageSize = pageSize;
-        query.selectTokens = new LinkedList(selectTokens);
+        query.selectTokens = new LinkedList<>(selectTokens);
         query.fieldsToFetchToken = fieldsToFetchToken;
-        query.whereTokens = new LinkedList(whereTokens);
-        query.orderByTokens = new LinkedList(orderByTokens);
-        query.groupByTokens = new LinkedList(groupByTokens);
+        query.whereTokens = new LinkedList<>(whereTokens);
+        query.orderByTokens = new LinkedList<>(orderByTokens);
+        query.groupByTokens = new LinkedList<>(groupByTokens);
         query.queryParameters = new Parameters(queryParameters);
         query.start = start;
         query.timeout = timeout;
         query.queryStats = queryStats;
         query.theWaitForNonStaleResults = theWaitForNonStaleResults;
         query.negate = negate;
-        //noinspection unchecked
-        query.documentIncludes = new HashSet(documentIncludes);
+        query.documentIncludes = new HashSet<>(documentIncludes);
         query.counterIncludesTokens = counterIncludesTokens;
         query.rootTypes = Sets.newHashSet(clazz);
         query.beforeQueryExecutedCallback = beforeQueryExecutedCallback;
@@ -651,10 +650,9 @@ public class DocumentQuery<T> extends AbstractDocumentQuery<T, DocumentQuery<T>>
         return query;
     }
 
-    @SuppressWarnings("unchecked")
     @Override
     public IAggregationDocumentQuery<T> aggregateBy(Consumer<IFacetBuilder<T>> builder) {
-        FacetBuilder ff = new FacetBuilder<>();
+        FacetBuilder<T> ff = new FacetBuilder<>();
         builder.accept(ff);
 
         return aggregateBy(ff.getFacet());
@@ -772,7 +770,13 @@ public class DocumentQuery<T> extends AbstractDocumentQuery<T, DocumentQuery<T>>
 
     @Override
     public IDocumentQuery<T> orderByDistance(String fieldName, double latitude, double longitude) {
-        _orderByDistance(fieldName, latitude, longitude);
+        orderByDistance(fieldName, latitude, longitude, 0);
+        return this;
+    }
+
+    @Override
+    public IDocumentQuery<T> orderByDistance(String fieldName, double latitude, double longitude, double roundFactor) {
+        _orderByDistance(fieldName, latitude, longitude, roundFactor);
         return this;
     }
 
@@ -804,7 +808,12 @@ public class DocumentQuery<T> extends AbstractDocumentQuery<T, DocumentQuery<T>>
 
     @Override
     public IDocumentQuery<T> orderByDistanceDescending(String fieldName, double latitude, double longitude) {
-        _orderByDistanceDescending(fieldName, latitude, longitude);
+        return orderByDistanceDescending(fieldName, latitude, longitude, 0);
+    }
+
+    @Override
+    public IDocumentQuery<T> orderByDistanceDescending(String fieldName, double latitude, double longitude, double roundFactor) {
+        _orderByDistanceDescending(fieldName, latitude, longitude, roundFactor);
         return this;
     }
 

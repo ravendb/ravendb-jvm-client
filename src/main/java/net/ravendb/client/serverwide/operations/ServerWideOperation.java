@@ -9,11 +9,21 @@ import net.ravendb.client.http.RequestExecutor;
 public class ServerWideOperation extends Operation {
 
     public ServerWideOperation(RequestExecutor requestExecutor, DocumentConventions conventions, long id) {
+        this(requestExecutor, conventions, id, null);
+    }
+
+    public ServerWideOperation(RequestExecutor requestExecutor, DocumentConventions conventions, long id, String nodeTag) {
         super(requestExecutor, null, conventions, id);
+        setNodeTag(nodeTag);
     }
 
     @Override
     protected RavenCommand<ObjectNode> getOperationStateCommand(DocumentConventions conventions, long id) {
-        return new GetServerWideOperationStateOperation.GetServerWideOperationStateCommand(conventions, id);
+        return getOperationStateCommand(conventions, id, null);
+    }
+
+    @Override
+    protected RavenCommand<ObjectNode> getOperationStateCommand(DocumentConventions conventions, long id, String nodeTag) {
+        return new GetServerWideOperationStateOperation.GetServerWideOperationStateCommand(conventions, id, nodeTag);
     }
 }

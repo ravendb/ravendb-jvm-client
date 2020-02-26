@@ -1768,12 +1768,18 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
         }
         assertIsDynamicQuery(field, "orderByDistance");
 
-        _orderByDistance("'" + field.toField(this::ensureValidFieldName) + "'", latitude, longitude);
+        _orderByDistance("'" + field.toField(this::ensureValidFieldName) + "'", latitude, longitude, field.getRoundFactor());
     }
 
     @Override
     public void _orderByDistance(String fieldName, double latitude, double longitude) {
-        orderByTokens.add(OrderByToken.createDistanceAscending(fieldName, addQueryParameter(latitude), addQueryParameter(longitude)));
+        _orderByDistance(fieldName, latitude, longitude, 0);
+    }
+
+    @Override
+    public void _orderByDistance(String fieldName, double latitude, double longitude, double roundFactor) {
+        String roundFactorParameterName = roundFactor == 0 ? null : addQueryParameter(roundFactor);
+        orderByTokens.add(OrderByToken.createDistanceAscending(fieldName, addQueryParameter(latitude), addQueryParameter(longitude), roundFactorParameterName));
     }
 
     @Override
@@ -1783,12 +1789,18 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
         }
         assertIsDynamicQuery(field, "orderByDistance");
 
-        _orderByDistance("'" + field.toField(this::ensureValidFieldName) + "'", shapeWkt);
+        _orderByDistance("'" + field.toField(this::ensureValidFieldName) + "'", shapeWkt, field.getRoundFactor());
     }
 
     @Override
     public void _orderByDistance(String fieldName, String shapeWkt) {
-        orderByTokens.add(OrderByToken.createDistanceAscending(fieldName, addQueryParameter(shapeWkt)));
+        _orderByDistance(fieldName, shapeWkt, 0);
+    }
+
+    @Override
+    public void _orderByDistance(String fieldName, String shapeWkt, double roundFactor) {
+        String roundFactorParameterName = roundFactor == 0 ? null : addQueryParameter(roundFactor);
+        orderByTokens.add(OrderByToken.createDistanceAscending(fieldName, addQueryParameter(shapeWkt), roundFactorParameterName));
     }
 
     @Override
@@ -1797,12 +1809,18 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
             throw new IllegalArgumentException("Field cannot be null");
         }
         assertIsDynamicQuery(field, "orderByDistanceDescending");
-        _orderByDistanceDescending("'" + field.toField(this::ensureValidFieldName) + "'", latitude, longitude);
+        _orderByDistanceDescending("'" + field.toField(this::ensureValidFieldName) + "'", latitude, longitude, field.getRoundFactor());
     }
 
     @Override
     public void _orderByDistanceDescending(String fieldName, double latitude, double longitude) {
-        orderByTokens.add(OrderByToken.createDistanceDescending(fieldName, addQueryParameter(latitude), addQueryParameter(longitude)));
+        _orderByDistanceDescending(fieldName, latitude, longitude, 0);
+    }
+
+    @Override
+    public void _orderByDistanceDescending(String fieldName, double latitude, double longitude, double roundFactor) {
+        String roundFactorParameterName = roundFactor == 0 ? null : addQueryParameter(roundFactor);
+        orderByTokens.add(OrderByToken.createDistanceDescending(fieldName, addQueryParameter(latitude), addQueryParameter(longitude), roundFactorParameterName));
     }
 
     @Override
@@ -1811,12 +1829,18 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
             throw new IllegalArgumentException("Field cannot be null");
         }
         assertIsDynamicQuery(field, "orderByDistanceDescending");
-        _orderByDistanceDescending("'" + field.toField(this::ensureValidFieldName) + "'", shapeWkt);
+        _orderByDistanceDescending("'" + field.toField(this::ensureValidFieldName) + "'", shapeWkt, field.getRoundFactor());
     }
 
     @Override
     public void _orderByDistanceDescending(String fieldName, String shapeWkt) {
-        orderByTokens.add(OrderByToken.createDistanceDescending(fieldName, addQueryParameter(shapeWkt)));
+        _orderByDistanceDescending(fieldName, shapeWkt, 0);
+    }
+
+    @Override
+    public void _orderByDistanceDescending(String fieldName, String shapeWkt, double roundFactor) {
+        String factorParamName = roundFactor == 0 ? null : addQueryParameter(roundFactor);
+        orderByTokens.add(OrderByToken.createDistanceDescending(fieldName, addQueryParameter(shapeWkt), factorParamName));
     }
 
     private void assertIsDynamicQuery(DynamicSpatialField dynamicField, String methodName) {

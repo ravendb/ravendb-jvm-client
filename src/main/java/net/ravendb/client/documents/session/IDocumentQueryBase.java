@@ -221,6 +221,17 @@ public interface IDocumentQueryBase<T, TSelf extends IDocumentQueryBase<T, TSelf
      */
     TSelf orderByDistance(String fieldName, double latitude, double longitude);
 
+    /**
+     * Sorts the query results by distance.
+     * @param fieldName Field name to use in order by
+     * @param latitude Latitude
+     * @param longitude Longitude
+     * @param roundFactor Round factor
+     * @return Query instance
+     */
+    TSelf orderByDistance(String fieldName, double latitude, double longitude, double roundFactor);
+
+
     //TBD expr TSelf OrderByDistance<TValue>(Expression<Func<T, TValue>> propertySelector, string shapeWkt);
 
     /**
@@ -256,6 +267,16 @@ public interface IDocumentQueryBase<T, TSelf extends IDocumentQueryBase<T, TSelf
      * @return Query instance
      */
     TSelf orderByDistanceDescending(String fieldName, double latitude, double longitude);
+
+    /**
+     * Sorts the query results by distance.
+     * @param fieldName Field name to use in order by
+     * @param latitude Latitude
+     * @param longitude Longitude
+     * @param roundFactor Round factor
+     * @return Query instance
+     */
+    TSelf orderByDistanceDescending(String fieldName, double latitude, double longitude, double roundFactor);
 
     //TBD expr TSelf OrderByDistanceDescending<TValue>(Expression<Func<T, TValue>> propertySelector, string shapeWkt);
 

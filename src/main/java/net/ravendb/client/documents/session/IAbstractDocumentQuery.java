@@ -355,6 +355,13 @@ public interface IAbstractDocumentQuery<T> {
 
     /**
      * Order the results by the specified fields
+     * The field is the name of the field to sort using sorterName.
+     * @param field Field to use
+     */
+    void _orderBy(String field, String sorterName);
+
+    /**
+     * Order the results by the specified fields
      * The field is the name of the field to sort, defaulting to sorting by ascending.
      * @param field Field to use
      * @param ordering Ordering type
@@ -362,6 +369,8 @@ public interface IAbstractDocumentQuery<T> {
     void _orderBy(String field, OrderingType ordering);
 
     void _orderByDescending(String field);
+
+    void _orderByDescending(String field, String sorterName);
 
     void _orderByDescending(String field, OrderingType ordering);
 
@@ -436,17 +445,25 @@ public interface IAbstractDocumentQuery<T> {
 
     void _orderByDistance(String fieldName, double latitude, double longitude);
 
+    void _orderByDistance(String fieldName, double latitude, double longitude, double roundFactor);
+
     void _orderByDistance(DynamicSpatialField field, String shapeWkt);
 
     void _orderByDistance(String fieldName, String shapeWkt);
+
+    void _orderByDistance(String fieldName, String shapeWkt, double roundFactor);
 
     void _orderByDistanceDescending(DynamicSpatialField field, double latitude, double longitude);
 
     void _orderByDistanceDescending(String fieldName, double latitude, double longitude);
 
+    void _orderByDistanceDescending(String fieldName, double latitude, double longitude, double roundFactor);
+
     void _orderByDistanceDescending(DynamicSpatialField field, String shapeWkt);
 
     void _orderByDistanceDescending(String fieldName, String shapeWkt);
+
+    void _orderByDistanceDescending(String fieldName, String shapeWkt, double roundFactor);
 
     void _aggregateBy(FacetBase facet);
 
