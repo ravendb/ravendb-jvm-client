@@ -132,6 +132,9 @@ public class ClusterRequestExecutor extends RequestExecutor {
 
                 Topology newTopology = new Topology();
                 newTopology.setNodes(nodes);
+                newTopology.setEtag(results.getEtag());
+
+                topologyEtag = results.getEtag();
 
                 if (_nodeSelector == null) {
                     _nodeSelector = new NodeSelector(newTopology, _executorService);

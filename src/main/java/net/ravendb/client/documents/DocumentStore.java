@@ -1,6 +1,7 @@
 package net.ravendb.client.documents;
 
 import net.ravendb.client.documents.changes.DatabaseChanges;
+import net.ravendb.client.documents.changes.DatabaseChangesOptions;
 import net.ravendb.client.documents.changes.EvictItemsFromCacheBasedOnChanges;
 import net.ravendb.client.documents.changes.IDatabaseChanges;
 import net.ravendb.client.documents.identity.MultiDatabaseHiLoIdGenerator;
@@ -22,6 +23,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.*;
+import java.util.function.Supplier;
 
 /**
  * Manages access to RavenDB and open sessions to work with RavenDB.
@@ -30,7 +32,7 @@ public class DocumentStore extends DocumentStoreBase {
 
     private ExecutorService executorService = Executors.newCachedThreadPool();
 
-    private final ConcurrentMap<String, IDatabaseChanges> _databaseChanges = new ConcurrentSkipListMap<>(String::compareToIgnoreCase);
+    private final ConcurrentMap<DatabaseChangesOptions, IDatabaseChanges> _databaseChanges = new ConcurrentHashMap<>();
 
     private final ConcurrentMap<String, Lazy<EvictItemsFromCacheBasedOnChanges>> _aggressiveCacheChanges = new ConcurrentHashMap<>();
 
@@ -185,10 +187,24 @@ public class DocumentStore extends DocumentStoreBase {
 
         final String effectiveDatabase = database;
 
+        Supplier<RequestExecutor> createRequestExecutor = () -> {
+            RequestExecutor requestExecutor = RequestExecutor.create(getUrls(), effectiveDatabase, getCertificate(), getCertificatePrivateKeyPassword(), getTrustStore(), executorService, getConventions());
+            registerEvents(requestExecutor);
+
+            return requestExecutor;
+        };
+
+        Supplier<RequestExecutor> createRequestExecutorForSingleNode = () -> {
+            RequestExecutor forSingleNode = RequestExecutor.createForSingleNodeWithConfigurationUpdates(getUrls()[0], effectiveDatabase, getCertificate(), getCertificatePrivateKeyPassword(), getTrustStore(), executorService, getConventions());
+            registerEvents(forSingleNode);
+
+            return forSingleNode;
+        };
+
         if (!getConventions().isDisableTopologyUpdates()) {
-            executor = new Lazy<>(() -> RequestExecutor.create(getUrls(), effectiveDatabase, getCertificate(), getCertificatePrivateKeyPassword(), getTrustStore(), executorService, getConventions()));
+            executor = new Lazy<>(createRequestExecutor);
         } else {
-            executor = new Lazy<>(() -> RequestExecutor.createForSingleNodeWithConfigurationUpdates(getUrls()[0], effectiveDatabase, getCertificate(), getCertificatePrivateKeyPassword(), getTrustStore(), executorService, getConventions()));
+            executor = new Lazy<>(createRequestExecutorForSingleNode);
         }
 
         requestExecutors.put(database, executor);
@@ -264,26 +280,40 @@ public class DocumentStore extends DocumentStoreBase {
 
     @Override
     public IDatabaseChanges changes() {
-        return changes(null);
+        return changes(null, null);
     }
 
     @Override
     public IDatabaseChanges changes(String database) {
-        assertInitialized();
-
-        return _databaseChanges.computeIfAbsent(ObjectUtils.firstNonNull(database, getDatabase()), this::createDatabaseChanges);
+        return changes(database, null);
     }
 
-    protected IDatabaseChanges createDatabaseChanges(String database) {
-        return new DatabaseChanges(getRequestExecutor(database), database, executorService, () -> _databaseChanges.remove(database));
+    @Override
+    public IDatabaseChanges changes(String database, String nodeTag) {
+        assertInitialized();
+
+        DatabaseChangesOptions changesOptions = new DatabaseChangesOptions(ObjectUtils.firstNonNull(database, getDatabase()), nodeTag);
+
+        return _databaseChanges.computeIfAbsent(changesOptions, this::createDatabaseChanges);
+    }
+
+    protected IDatabaseChanges createDatabaseChanges(DatabaseChangesOptions node) {
+        return new DatabaseChanges(getRequestExecutor(database), node.getDatabaseName(), executorService, () -> _databaseChanges.remove(node), node.getNodeTag());
     }
 
     public Exception getLastDatabaseChangesStateException() {
-        return getLastDatabaseChangesStateException(null);
+        return getLastDatabaseChangesStateException(null, null);
     }
 
     public Exception getLastDatabaseChangesStateException(String database) {
-        DatabaseChanges databaseChanges = (DatabaseChanges) _databaseChanges.get(ObjectUtils.firstNonNull(database, getDatabase()));
+        return getLastDatabaseChangesStateException(database, null);
+    }
+
+    public Exception getLastDatabaseChangesStateException(String database, String nodeTag) {
+
+        DatabaseChangesOptions node = new DatabaseChangesOptions(ObjectUtils.firstNonNull(database, getDatabase()), nodeTag);
+
+        DatabaseChanges databaseChanges = (DatabaseChanges) _databaseChanges.get(node);
 
         if (databaseChanges != null) {
             return databaseChanges.getLastConnectionStateException();

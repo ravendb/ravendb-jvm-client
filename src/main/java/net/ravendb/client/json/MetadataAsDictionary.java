@@ -93,7 +93,9 @@ public class MetadataAsDictionary implements IMetadataDictionary {
         }
 
         if (value instanceof ObjectNode) {
-            return new MetadataAsDictionary((ObjectNode)value, this, key);
+            MetadataAsDictionary dictionary = new MetadataAsDictionary((ObjectNode) value, this, key);
+            dictionary.init();
+            return dictionary;
         }
 
         if (value instanceof ArrayNode) {
@@ -231,5 +233,63 @@ public class MetadataAsDictionary implements IMetadataDictionary {
         }
 
         return _metadata.keySet();
+    }
+
+    @Override
+    public String getString(String key) {
+        Object obj = get(key);
+        return obj != null ? obj.toString() : null;
+    }
+
+    @Override
+    public long getLong(String key) {
+        Object obj = get(key);
+        if (obj == null) {
+            return 0L;
+        }
+
+        if (obj instanceof Long) {
+            return (Long) obj;
+        }
+
+        return Long.parseLong(obj.toString());
+    }
+
+    @Override
+    public boolean getBoolean(String key) {
+        Object obj = get(key);
+        if (obj == null) {
+            return false;
+        }
+
+        if (obj instanceof Boolean) {
+            return (boolean) obj;
+        }
+
+        return Boolean.parseBoolean(obj.toString());
+    }
+
+    @Override
+    public double getDouble(String key) {
+        Object obj = get(key);
+        if (obj == null) {
+            return 0;
+        }
+
+        if (obj instanceof Double) {
+            return (Double) obj;
+        }
+
+        return Double.parseDouble(obj.toString());
+    }
+
+    @Override
+    public IMetadataDictionary getObject(String key) {
+        Object obj = get(key);
+        if (obj == null) {
+            return null;
+        }
+
+        return (IMetadataDictionary) obj;
     }
 }
