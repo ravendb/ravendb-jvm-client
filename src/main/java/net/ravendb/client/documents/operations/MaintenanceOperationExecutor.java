@@ -68,7 +68,10 @@ public class MaintenanceOperationExecutor {
         RavenCommand<OperationIdResult> command = operation.getCommand(getRequestExecutor().getConventions());
 
         getRequestExecutor().execute(command);
-        return new Operation(getRequestExecutor(), () -> store.changes(), getRequestExecutor().getConventions(), command.getResult().getOperationId());
+        return new Operation(getRequestExecutor(),
+                () -> store.changes(), getRequestExecutor().getConventions(),
+                command.getResult().getOperationId(),
+                ObjectUtils.firstNonNull(command.getSelectedNodeTag(), command.getResult().getOperationNodeTag()));
     }
 
     private void assertDatabaseNameSet() {

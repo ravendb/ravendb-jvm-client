@@ -44,6 +44,9 @@ public abstract class DocumentStoreBase implements IDocumentStore {
     private final List<EventHandler<AfterConversionToDocumentEventArgs>> onAfterConversionToDocument = new ArrayList<>();
     private final List<EventHandler<BeforeConversionToEntityEventArgs>> onBeforeConversionToEntity = new ArrayList<>();
     private final List<EventHandler<AfterConversionToEntityEventArgs>> onAfterConversionToEntity = new ArrayList<>();
+
+    private final List<EventHandler<FailedRequestEventArgs>> onFailedRequest = new ArrayList<>();
+
     protected DocumentStoreBase() {
         _subscriptions = new DocumentSubscriptions((DocumentStore)this);
     }
@@ -291,6 +294,17 @@ public abstract class DocumentStoreBase implements IDocumentStore {
     public void removeAfterConversionToEntityListener(EventHandler<AfterConversionToEntityEventArgs> handler) {
         this.onAfterConversionToEntity.remove(handler);
     }
+
+    public void addFailedRequestListener(EventHandler<FailedRequestEventArgs> handler) {
+        assertNotInitialized("onFailedRequest");
+        this.onFailedRequest.add(handler);
+    }
+
+    public void removeFailedRequestListener(EventHandler<FailedRequestEventArgs> handler) {
+        assertNotInitialized("onFailedRequest");
+        this.onFailedRequest.remove(handler);
+    }
+
     protected String database;
 
     /**

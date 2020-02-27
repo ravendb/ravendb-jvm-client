@@ -38,12 +38,17 @@ import java.util.function.Function;
 public class DocumentQuery<T> extends AbstractDocumentQuery<T, DocumentQuery<T>> implements IDocumentQuery<T> {
 
     public DocumentQuery(Class<T> clazz, InMemoryDocumentSessionOperations session, String indexName, String collectionName, boolean isGroupBy) {
-        this(clazz, session, indexName, collectionName, isGroupBy, null, null, null);
+        this(clazz, session, indexName, collectionName, isGroupBy, null, null, null, null);
     }
 
     public DocumentQuery(Class<T> clazz, InMemoryDocumentSessionOperations session, String indexName, String collectionName, boolean isGroupBy,
                          DeclareToken declareToken, List<LoadToken> loadTokens, String fromAlias) {
-        super(clazz, session, indexName, collectionName, isGroupBy, declareToken, loadTokens, fromAlias);
+        this(clazz, session, indexName, collectionName, isGroupBy, declareToken, loadTokens, fromAlias, null);
+    }
+
+    public DocumentQuery(Class<T> clazz, InMemoryDocumentSessionOperations session, String indexName, String collectionName, boolean isGroupBy,
+                         DeclareToken declareToken, List<LoadToken> loadTokens, String fromAlias, Boolean isProjectInto) {
+        super(clazz, session, indexName, collectionName, isGroupBy, declareToken, loadTokens, fromAlias, isProjectInto);
     }
 
     @Override
@@ -62,7 +67,10 @@ public class DocumentQuery<T> extends AbstractDocumentQuery<T, DocumentQuery<T>>
                     .map(x -> x.getName())
                     .toArray(String[]::new);
 
-            return selectFields(projectionClass, new QueryData(fields, projections));
+
+            QueryData queryData = new QueryData(fields, projections);
+            queryData.setProjectInto(true);
+            return selectFields(projectionClass, queryData);
         } catch (IntrospectionException e) {
             throw new RuntimeException("Unable to project to class: " + projectionClass.getName() + e.getMessage(), e);
         }

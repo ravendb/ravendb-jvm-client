@@ -475,5 +475,9 @@ public interface IAbstractDocumentQuery<T> {
 
     void _suggestUsing(SuggestionBase suggestion);
 
+    String getParameterPrefix();
+
+    void setParameterPrefix(String prefix);
+
     Iterator<T> iterator();
 }

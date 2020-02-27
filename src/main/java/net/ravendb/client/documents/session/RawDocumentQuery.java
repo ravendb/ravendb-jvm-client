@@ -13,7 +13,7 @@ import java.util.function.Consumer;
 public class RawDocumentQuery<T> extends AbstractDocumentQuery<T, RawDocumentQuery<T>> implements IRawDocumentQuery<T> {
 
     public RawDocumentQuery(Class<T> clazz, InMemoryDocumentSessionOperations session, String rawQuery) {
-        super(clazz, session, null, null, false, null, null, null);
+        super(clazz, session, null, null, false, null, null);
         this.queryRaw = rawQuery;
     }
 

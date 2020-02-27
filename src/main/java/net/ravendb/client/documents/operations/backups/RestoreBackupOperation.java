@@ -17,25 +17,39 @@ import java.io.IOException;
 
 public class RestoreBackupOperation implements IServerOperation<OperationIdResult> {
 
-    private final RestoreBackupConfiguration _restoreConfiguration;
+    private final RestoreBackupConfigurationBase _restoreConfiguration;
+    private final String _nodeTag;
 
-    public RestoreBackupOperation(RestoreBackupConfiguration restoreConfiguration) {
+    public RestoreBackupOperation(RestoreBackupConfigurationBase restoreConfiguration) {
         _restoreConfiguration = restoreConfiguration;
+        _nodeTag = null;
+    }
+
+    public RestoreBackupOperation(RestoreBackupConfigurationBase restoreConfiguration, String nodeTag) {
+        _restoreConfiguration = restoreConfiguration;
+        _nodeTag = nodeTag;
     }
 
     @Override
     public RavenCommand<OperationIdResult> getCommand(DocumentConventions conventions) {
-        return new RestoreBackupCommand(conventions, _restoreConfiguration);
+        return new RestoreBackupCommand(conventions, _restoreConfiguration, _nodeTag);
+    }
+
+    public String getNodeTag() {
+        return _nodeTag;
     }
 
     private static class RestoreBackupCommand extends RavenCommand<OperationIdResult> {
-        private final DocumentConventions _conventions;
-        private final RestoreBackupConfiguration _restoreConfiguration;
+        private final RestoreBackupConfigurationBase _restoreConfiguration;
 
-        public RestoreBackupCommand(DocumentConventions conventions, RestoreBackupConfiguration restoreConfiguration) {
+        public RestoreBackupCommand(DocumentConventions conventions, RestoreBackupConfigurationBase restoreConfiguration) {
+            this(conventions, restoreConfiguration, null);
+        }
+
+        public RestoreBackupCommand(DocumentConventions conventions, RestoreBackupConfigurationBase restoreConfiguration, String nodeTag) {
             super(OperationIdResult.class);
-            _conventions = conventions;
             _restoreConfiguration = restoreConfiguration;
+            selectedNodeTag = nodeTag;
         }
 
         @Override

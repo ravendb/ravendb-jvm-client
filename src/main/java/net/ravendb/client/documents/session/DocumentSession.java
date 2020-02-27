@@ -112,7 +112,7 @@ public class DocumentSession extends InMemoryDocumentSessionOperations implement
     public void saveChanges() {
         BatchOperation saveChangeOperation = new BatchOperation(this);
 
-        try (BatchCommand command = saveChangeOperation.createRequest()) {
+        try (SingleNodeBatchCommand command = saveChangeOperation.createRequest()) {
             if (command == null) {
                 return;
             }
@@ -198,7 +198,7 @@ public class DocumentSession extends InMemoryDocumentSessionOperations implement
 
             ResponseTimeInformation responseTimeDuration = new ResponseTimeInformation();
 
-            while (executeLazyOperationsSingleStep(responseTimeDuration, requests)) {
+            while (executeLazyOperationsSingleStep(responseTimeDuration, requests, sw)) {
                 Thread.sleep(100);
             }
 
@@ -211,6 +211,7 @@ public class DocumentSession extends InMemoryDocumentSessionOperations implement
                 }
             }
 
+            sw.stop();
             responseTimeDuration.setTotalClientDuration(Duration.ofMillis(sw.elapsed(TimeUnit.MILLISECONDS)));
             return responseTimeDuration;
         } catch (InterruptedException e) {
@@ -220,8 +221,7 @@ public class DocumentSession extends InMemoryDocumentSessionOperations implement
         }
     }
 
-    private boolean executeLazyOperationsSingleStep(ResponseTimeInformation responseTimeInformation, List<GetRequest> requests) {
-
+    private boolean executeLazyOperationsSingleStep(ResponseTimeInformation responseTimeInformation, List<GetRequest> requests, Stopwatch sw) {
         MultiGetOperation multiGetOperation = new MultiGetOperation(this);
         MultiGetCommand multiGetCommand = multiGetOperation.createRequest(requests);
         getRequestExecutor().execute(multiGetCommand, sessionInfo);
@@ -234,6 +234,7 @@ public class DocumentSession extends InMemoryDocumentSessionOperations implement
             GetResponse response = responses.get(i);
 
             tempReqTime = response.getHeaders().get(Constants.Headers.REQUEST_TIME);
+            response.setElapsed(sw.elapsed());
             totalTime = tempReqTime != null ? Long.valueOf(tempReqTime) : 0;
 
             ResponseTimeInformation.ResponseTimeItem timeItem = new ResponseTimeInformation.ResponseTimeItem();
@@ -763,7 +764,7 @@ public class DocumentSession extends InMemoryDocumentSessionOperations implement
         }
     }
 
-    private <T> StreamResult<T> createStreamResult(Class<T> clazz, ObjectNode json, FieldsToFetchToken fieldsToFetch) throws IOException {
+    private <T> StreamResult<T> createStreamResult(Class<T> clazz, ObjectNode json, FieldsToFetchToken fieldsToFetch, boolean isProjectInto) throws IOException {
 
         ObjectNode metadata = (ObjectNode) json.get(Constants.Documents.Metadata.KEY);
         String changeVector = metadata.get(Constants.Documents.Metadata.CHANGE_VECTOR).asText();
@@ -775,7 +776,7 @@ public class DocumentSession extends InMemoryDocumentSessionOperations implement
         }
 
 
-        T entity = QueryOperation.deserialize(clazz, id, json, metadata, fieldsToFetch, true, this);
+        T entity = QueryOperation.deserialize(clazz, id, json, metadata, fieldsToFetch, true, this, isProjectInto);
 
         StreamResult<T> streamResult = new StreamResult<>();
         streamResult.setChangeVector(changeVector);
@@ -843,7 +844,7 @@ public class DocumentSession extends InMemoryDocumentSessionOperations implement
                 if (_onNextItem != null) {
                     _onNextItem.accept(nextValue);
                 }
-                return createStreamResult(_clazz, nextValue, _fieldsToFetchToken);
+                return createStreamResult(_clazz, nextValue, _fieldsToFetchToken, false);
             } catch (IOException e) {
                 throw new RuntimeException("Unable to parse stream result: " + e.getMessage(), e);
             }
