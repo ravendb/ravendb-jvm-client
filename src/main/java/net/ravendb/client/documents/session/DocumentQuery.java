@@ -115,11 +115,15 @@ public class DocumentQuery<T> extends AbstractDocumentQuery<T, DocumentQuery<T>>
     @Override
     public <TProjection> IDocumentQuery<TProjection> selectFields(Class<TProjection> projectionClass, String... fields) {
         QueryData queryData = new QueryData(fields, fields);
-        return selectFields(projectionClass, queryData);
+        queryData.setProjectInto(true);
+
+        IDocumentQuery<TProjection> selectFields = selectFields(projectionClass, queryData);
+        return selectFields;
     }
 
     @Override
     public <TProjection> IDocumentQuery<TProjection> selectFields(Class<TProjection> projectionClass, QueryData queryData) {
+        queryData.setProjectInto(true);
         return createDocumentQueryInternal(projectionClass, queryData);
     }
 
@@ -624,7 +628,8 @@ public class DocumentQuery<T> extends AbstractDocumentQuery<T, DocumentQuery<T>>
                 isGroupBy,
                 queryData != null ? queryData.getDeclareToken() : null,
                 queryData != null ? queryData.getLoadTokens() : null,
-                queryData != null ? queryData.getFromAlias() : null);
+                queryData != null ? queryData.getFromAlias() : null,
+                queryData != null ? queryData.isProjectInto() : null);
 
         query.queryRaw = queryRaw;
         query.pageSize = pageSize;

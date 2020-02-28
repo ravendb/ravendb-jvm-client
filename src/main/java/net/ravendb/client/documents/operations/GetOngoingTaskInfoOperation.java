@@ -20,15 +20,21 @@ public class GetOngoingTaskInfoOperation implements IMaintenanceOperation<Ongoin
     private final OngoingTaskType _type;
 
     public GetOngoingTaskInfoOperation(long taskId, OngoingTaskType type) {
-        _taskId = taskId;
-        _type = type;
-        _taskName = null;
+        this(null, taskId, type);
     }
 
     public GetOngoingTaskInfoOperation(String taskName, OngoingTaskType type) {
+        this(taskName, 0, type);
+    }
+
+    private GetOngoingTaskInfoOperation(String taskName, long taskId, OngoingTaskType type) {
         _taskName = taskName;
         _type = type;
-        _taskId = 0;
+        _taskId = taskId;
+
+        if (type == OngoingTaskType.PULL_REPLICATION_AS_HUB) {
+            throw new IllegalArgumentException(OngoingTaskType.PULL_REPLICATION_AS_HUB + " type is not supported. Please use GetPullReplicationTasksInfoOperation instead.");
+        }
     }
 
     @Override
@@ -92,6 +98,9 @@ public class GetOngoingTaskInfoOperation implements IMaintenanceOperation<Ongoin
                         break;
                     case SUBSCRIPTION:
                         result = mapper.readValue(response, OngoingTaskSubscription.class);
+                        break;
+                    case PULL_REPLICATION_AS_SINK:
+                        result = mapper.readValue(response, OngoingTaskPullReplicationAsSink.class);
                         break;
                     default:
                         throw new IllegalStateException();

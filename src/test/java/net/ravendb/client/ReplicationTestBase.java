@@ -4,12 +4,16 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.base.Stopwatch;
 import net.ravendb.client.documents.DocumentStore;
 import net.ravendb.client.documents.IDocumentStore;
+import net.ravendb.client.documents.operations.IMaintenanceOperation;
 import net.ravendb.client.documents.operations.connectionStrings.PutConnectionStringOperation;
-import net.ravendb.client.documents.operations.replication.ExternalReplication;
-import net.ravendb.client.documents.operations.replication.UpdateExternalReplicationOperation;
+import net.ravendb.client.documents.operations.ongoingTasks.DeleteOngoingTaskOperation;
+import net.ravendb.client.documents.operations.ongoingTasks.OngoingTaskType;
+import net.ravendb.client.documents.operations.replication.*;
 import net.ravendb.client.documents.replication.ReplicationNode;
 import net.ravendb.client.documents.session.IDocumentSession;
 import net.ravendb.client.documents.operations.etl.RavenConnectionString;
+import net.ravendb.client.serverwide.operations.ModifyOngoingTaskResult;
+import org.apache.commons.lang3.ObjectUtils;
 import org.assertj.core.api.Assertions;
 
 import java.util.UUID;
@@ -58,17 +62,31 @@ public class ReplicationTestBase extends RemoteTestBase {
         }
     }
 
-    private void addWatcherToReplicationTopology(IDocumentStore store, ExternalReplication watcher) {
+    protected ModifyOngoingTaskResult addWatcherToReplicationTopology(IDocumentStore store, ExternalReplicationBase watcher, String... urls) {
 
         RavenConnectionString connectionString = new RavenConnectionString();
         connectionString.setName(watcher.getConnectionStringName());
         connectionString.setDatabase(watcher.getDatabase());
-        connectionString.setTopologyDiscoveryUrls(store.getUrls());
+        connectionString.setTopologyDiscoveryUrls(ObjectUtils.firstNonNull(urls, store.getUrls()));
 
         store.maintenance().send(new PutConnectionStringOperation<>(connectionString));
 
-        UpdateExternalReplicationOperation op = new UpdateExternalReplicationOperation(watcher);
-        store.maintenance().send(op);
+        IMaintenanceOperation<ModifyOngoingTaskResult> op;
+
+        if (watcher instanceof PullReplicationAsSink) {
+            op = new UpdatePullReplicationAsSinkOperation((PullReplicationAsSink) watcher);
+        } else if (watcher instanceof ExternalReplication) {
+            op = new UpdateExternalReplicationOperation((ExternalReplication) watcher);
+        } else {
+            throw new IllegalArgumentException("Unrecognized type: " + watcher.getClass());
+        }
+
+        return store.maintenance().send(op);
+    }
+
+    protected static ModifyOngoingTaskResult deleteOngoingTask(DocumentStore store, long taskId, OngoingTaskType taskType) {
+        DeleteOngoingTaskOperation op = new DeleteOngoingTaskOperation(taskId, taskType);
+        return store.maintenance().send(op);
     }
 
     protected <T> T waitForDocumentToReplicate(IDocumentStore store, Class<T> clazz, String id, int timeout) {

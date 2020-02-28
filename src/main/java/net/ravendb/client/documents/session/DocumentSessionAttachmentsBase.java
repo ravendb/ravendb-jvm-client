@@ -10,7 +10,7 @@ import org.apache.commons.lang3.StringUtils;
 
 import java.io.InputStream;
 
-public abstract class DocumentSessionAttachmentsBase extends AdvancedSessionExtentionBase {
+public abstract class DocumentSessionAttachmentsBase extends AdvancedSessionExtensionBase {
     protected DocumentSessionAttachmentsBase(InMemoryDocumentSessionOperations session) {
         super(session);
     }
@@ -21,7 +21,11 @@ public abstract class DocumentSessionAttachmentsBase extends AdvancedSessionExte
             return new AttachmentName[0];
         }
 
-        DocumentInfo document = documentsByEntity.get(entity);
+        if (entity instanceof String) {
+            throw new IllegalArgumentException("getNames requires a tracked entity object, other types such as documentId are not valid.");
+        }
+
+        DocumentInfo document = session.documentsByEntity.get(entity);
         if (document == null) {
             throwEntityNotInSession(entity);
         }
@@ -69,7 +73,7 @@ public abstract class DocumentSessionAttachmentsBase extends AdvancedSessionExte
         }
 
         DocumentInfo documentInfo = documentsById.getValue(documentId);
-        if (documentInfo != null && deletedEntities.contains(documentInfo.getEntity())) {
+        if (documentInfo != null && session.deletedEntities.contains(documentInfo.getEntity())) {
             throwDocumentAlreadyDeleted(documentId, name, "store", null, documentId);
         }
 
@@ -82,25 +86,28 @@ public abstract class DocumentSessionAttachmentsBase extends AdvancedSessionExte
 
     @SuppressWarnings("ConstantConditions")
     public void store(Object entity, String name, InputStream stream, String contentType) {
-        DocumentInfo document = documentsByEntity.get(entity);
+        DocumentInfo document = session.documentsByEntity.get(entity);
         if (document == null) {
-            throwEntityNotInSession(entity);
+            throwEntityNotInSessionOrMissingId(entity);
         }
 
         store(document.getId(), name, stream, contentType);
     }
 
-    protected void throwEntityNotInSession(Object entity) {
+    protected void throwEntityNotInSessionOrMissingId(Object entity) {
         throw new IllegalArgumentException(entity + " is not associated with the session. Use documentId instead or track the entity in the session.");
     }
 
+    protected void throwEntityNotInSession(Object entity) {
+        throw new IllegalArgumentException(entity + " is not associated with the session. You need to track the entity in the session.");
+    }
 
     @SuppressWarnings("ConstantConditions")
     public void delete(Object entity, String name) {
-        DocumentInfo document = documentsByEntity.get(entity);
+        DocumentInfo document = session.documentsByEntity.get(entity);
 
         if (document == null) {
-            throwEntityNotInSession(entity);
+            throwEntityNotInSessionOrMissingId(entity);
         }
 
         delete(document.getId(), name);
@@ -121,7 +128,7 @@ public abstract class DocumentSessionAttachmentsBase extends AdvancedSessionExte
         }
 
         DocumentInfo documentInfo = documentsById.getValue(documentId);
-        if (documentInfo != null && deletedEntities.contains(documentInfo.getEntity())) {
+        if (documentInfo != null && session.deletedEntities.contains(documentInfo.getEntity())) {
             return;  //no-op
         }
 
@@ -153,14 +160,14 @@ public abstract class DocumentSessionAttachmentsBase extends AdvancedSessionExte
             throw new IllegalArgumentException("DestinationEntity cannot be null");
         }
 
-        DocumentInfo sourceDocument = documentsByEntity.get(sourceEntity);
+        DocumentInfo sourceDocument = session.documentsByEntity.get(sourceEntity);
         if (sourceDocument == null) {
-            throwEntityNotInSession(sourceEntity);
+            throwEntityNotInSessionOrMissingId(sourceEntity);
         }
 
-        DocumentInfo destinationDocument = documentsByEntity.get(destinationEntity);
+        DocumentInfo destinationDocument = session.documentsByEntity.get(destinationEntity);
         if (destinationDocument == null) {
-            throwEntityNotInSession(destinationEntity);
+            throwEntityNotInSessionOrMissingId(destinationEntity);
         }
 
         move(sourceDocument.getId(), sourceName, destinationDocument.getId(), destinationName);
@@ -188,12 +195,12 @@ public abstract class DocumentSessionAttachmentsBase extends AdvancedSessionExte
         }
 
         DocumentInfo sourceDocument = documentsById.getValue(sourceDocumentId);
-        if (sourceDocument != null && deletedEntities.contains(sourceDocument.getEntity())) {
+        if (sourceDocument != null && session.deletedEntities.contains(sourceDocument.getEntity())) {
             throwDocumentAlreadyDeleted(sourceDocumentId, sourceName, "move", destinationDocumentId, sourceDocumentId);
         }
 
         DocumentInfo destinationDocument = documentsById.getValue(destinationDocumentId);
-        if (destinationDocument != null && deletedEntities.contains(destinationDocument.getEntity())) {
+        if (destinationDocument != null && session.deletedEntities.contains(destinationDocument.getEntity())) {
             throwDocumentAlreadyDeleted(sourceDocumentId, sourceName, "move", destinationDocumentId, destinationDocumentId);
         }
 
@@ -225,14 +232,14 @@ public abstract class DocumentSessionAttachmentsBase extends AdvancedSessionExte
             throw new IllegalArgumentException("DestinationEntity is null");
         }
 
-        DocumentInfo sourceDocument = documentsByEntity.get(sourceEntity);
+        DocumentInfo sourceDocument = session.documentsByEntity.get(sourceEntity);
         if (sourceDocument == null) {
-            throwEntityNotInSession(sourceEntity);
+            throwEntityNotInSessionOrMissingId(sourceEntity);
         }
 
-        DocumentInfo destinationDocument = documentsByEntity.get(destinationEntity);
+        DocumentInfo destinationDocument = session.documentsByEntity.get(destinationEntity);
         if (destinationDocument == null) {
-            throwEntityNotInSession(destinationEntity);
+            throwEntityNotInSessionOrMissingId(destinationEntity);
         }
 
         copy(sourceDocument.getId(), sourceName, destinationDocument.getId(), destinationName);

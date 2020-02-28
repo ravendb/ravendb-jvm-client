@@ -729,7 +729,7 @@ public class DocumentSession extends InMemoryDocumentSessionOperations implement
 
     @SuppressWarnings("unchecked")
     private <T> CloseableIterator<StreamResult<T>> yieldResults(AbstractDocumentQuery query, CloseableIterator<ObjectNode> enumerator) {
-        return new StreamIterator<>(query.getQueryClass(), enumerator, query.fieldsToFetchToken, query::invokeAfterStreamExecuted);
+        return new StreamIterator<T>(query.getQueryClass(), enumerator, query.fieldsToFetchToken, query.isProjectInto, query::invokeAfterStreamExecuted);
     }
 
     @Override
@@ -815,7 +815,7 @@ public class DocumentSession extends InMemoryDocumentSessionOperations implement
         getRequestExecutor().execute(command, sessionInfo);
 
         CloseableIterator<ObjectNode> result = streamOperation.setResult(command.getResult());
-        return new StreamIterator<>(clazz, result, null, null);
+        return new StreamIterator<>(clazz, result, null, false, null);
     }
 
     private class StreamIterator<T> implements CloseableIterator<StreamResult<T>> {
@@ -823,12 +823,14 @@ public class DocumentSession extends InMemoryDocumentSessionOperations implement
         private final Class<T> _clazz;
         private final CloseableIterator<ObjectNode> _innerIterator;
         private final FieldsToFetchToken _fieldsToFetchToken;
+        private final boolean _isProjectInto;
         private final Consumer<ObjectNode> _onNextItem;
 
-        public StreamIterator(Class<T> clazz, CloseableIterator<ObjectNode> innerIterator, FieldsToFetchToken fieldsToFetchToken, Consumer<ObjectNode> onNextItem) {
+        public StreamIterator(Class<T> clazz, CloseableIterator<ObjectNode> innerIterator, FieldsToFetchToken fieldsToFetch, boolean isProjectInto, Consumer<ObjectNode> onNextItem) {
             _clazz = clazz;
             _innerIterator = innerIterator;
-            _fieldsToFetchToken = fieldsToFetchToken;
+            _fieldsToFetchToken = fieldsToFetch;
+            _isProjectInto = isProjectInto;
             _onNextItem = onNextItem;
         }
 
@@ -844,7 +846,7 @@ public class DocumentSession extends InMemoryDocumentSessionOperations implement
                 if (_onNextItem != null) {
                     _onNextItem.accept(nextValue);
                 }
-                return createStreamResult(_clazz, nextValue, _fieldsToFetchToken, false);
+                return createStreamResult(_clazz, nextValue, _fieldsToFetchToken, _isProjectInto);
             } catch (IOException e) {
                 throw new RuntimeException("Unable to parse stream result: " + e.getMessage(), e);
             }

@@ -176,14 +176,16 @@ public class QueryOperation {
                 }
             }
 
-            JsonNode inner = document.get(projectionField);
-            if (inner == null) {
-                return Defaults.defaultValue(clazz);
-            }
+            if (!isProjectInto) {
+                JsonNode inner = document.get(projectionField);
+                if (inner == null) {
+                    return Defaults.defaultValue(clazz);
+                }
 
-            if (fieldsToFetch.fieldsToFetch != null && fieldsToFetch.fieldsToFetch[0].equals(fieldsToFetch.projections[0])) {
-                if (inner instanceof ObjectNode) { //extraction from original type
-                    document = (ObjectNode) inner;
+                if (fieldsToFetch.fieldsToFetch != null && fieldsToFetch.fieldsToFetch[0].equals(fieldsToFetch.projections[0])) {
+                    if (inner instanceof ObjectNode) { //extraction from original type
+                        document = (ObjectNode) inner;
+                    }
                 }
             }
         }

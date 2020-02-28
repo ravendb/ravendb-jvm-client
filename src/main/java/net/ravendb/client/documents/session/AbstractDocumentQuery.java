@@ -1997,16 +1997,16 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
             throw new IllegalArgumentException("suggestion cannot be null");
         }
 
-        assertCanSuggest();
+        assertCanSuggest(suggestion);
 
         SuggestToken token;
 
         if (suggestion instanceof SuggestionWithTerm) {
             SuggestionWithTerm term = (SuggestionWithTerm) suggestion;
-            token = SuggestToken.create(term.getField(), addQueryParameter(term.getTerm()), getOptionsParameterName(term.getOptions()));
+            token = SuggestToken.create(term.getField(), term.getDisplayField(), addQueryParameter(term.getTerm()), getOptionsParameterName(term.getOptions()));
         } else if (suggestion instanceof SuggestionWithTerms) {
             SuggestionWithTerms terms = (SuggestionWithTerms) suggestion;
-            token = SuggestToken.create(terms.getField(), addQueryParameter(terms.getTerms()), getOptionsParameterName(terms.getOptions()));
+            token = SuggestToken.create(terms.getField(), terms.getDisplayField(), addQueryParameter(terms.getTerms()), getOptionsParameterName(terms.getOptions()));
         } else {
             throw new UnsupportedOperationException("Unknown type of suggestion: " + suggestion.getClass());
         }
@@ -2023,13 +2023,21 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
         return optionsParameterName;
     }
 
-    private void assertCanSuggest() {
+    private void assertCanSuggest(SuggestionBase suggestion) {
         if (!whereTokens.isEmpty()) {
             throw new IllegalStateException("Cannot add suggest when WHERE statements are present.");
         }
 
         if (!selectTokens.isEmpty()) {
-            throw new IllegalStateException("Cannot add suggest when SELECT statements are present.");
+            QueryToken lastToken = selectTokens.get(selectTokens.size() - 1);
+            if (lastToken instanceof SuggestToken) {
+                SuggestToken st = (SuggestToken) lastToken;
+                if (st.getFieldName().equals(suggestion.getField())) {
+                    throw new IllegalStateException("Cannot add suggest for the same field again.");
+                }
+            } else {
+                throw new IllegalStateException("Cannot add suggest when SELECT statements are present.");
+            }
         }
 
         if (!orderByTokens.isEmpty()) {

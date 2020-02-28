@@ -1,7 +1,9 @@
 package net.ravendb.client.documents.operations.replication;
 
+import java.time.Duration;
+
 public class PullReplicationDefinition extends FeatureTaskDefinition {
-    private String delayReplicationFor;
+    private Duration delayReplicationFor;
     private String mentorNode;
 
     public PullReplicationDefinition() {
@@ -11,11 +13,11 @@ public class PullReplicationDefinition extends FeatureTaskDefinition {
         setName(name);
     }
 
-    public String getDelayReplicationFor() {
+    public Duration getDelayReplicationFor() {
         return delayReplicationFor;
     }
 
-    public void setDelayReplicationFor(String delayReplicationFor) {
+    public void setDelayReplicationFor(Duration delayReplicationFor) {
         this.delayReplicationFor = delayReplicationFor;
     }
 
