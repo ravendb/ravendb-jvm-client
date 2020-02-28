@@ -67,7 +67,10 @@ public class ReplicationTestBase extends RemoteTestBase {
         RavenConnectionString connectionString = new RavenConnectionString();
         connectionString.setName(watcher.getConnectionStringName());
         connectionString.setDatabase(watcher.getDatabase());
-        connectionString.setTopologyDiscoveryUrls(ObjectUtils.firstNonNull(urls, store.getUrls()));
+
+        String[] urlsToUse = urls != null && urls.length > 0 ? urls : store.getUrls();
+
+        connectionString.setTopologyDiscoveryUrls(urlsToUse);
 
         store.maintenance().send(new PutConnectionStringOperation<>(connectionString));
 

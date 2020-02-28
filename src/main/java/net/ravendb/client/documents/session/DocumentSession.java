@@ -616,7 +616,6 @@ public class DocumentSession extends InMemoryDocumentSessionOperations implement
     }
 
     @SuppressWarnings("deprecation")
-    @Override
     public <T, TIndex extends AbstractIndexCreationTask> IDocumentQuery<T> documentQuery(Class<T> clazz, Class<TIndex> indexClazz) {
         try {
             TIndex index = indexClazz.newInstance();
@@ -868,4 +867,9 @@ public class DocumentSession extends InMemoryDocumentSessionOperations implement
         return new SessionDocumentCounters(this, entity);
     }
 
+    @Override
+    public <T> IGraphDocumentQuery<T> graphQuery(Class<T> clazz, String query) {
+        GraphDocumentQuery<T> graphQuery = new GraphDocumentQuery<T>(clazz, this, query);
+        return graphQuery;
+    }
 }

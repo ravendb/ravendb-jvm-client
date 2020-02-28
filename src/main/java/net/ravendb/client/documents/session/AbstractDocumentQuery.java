@@ -90,11 +90,17 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
     protected final List<LoadToken> loadTokens;
     public FieldsToFetchToken fieldsToFetchToken;
 
+    protected final boolean isProjectInto;
+
     protected List<QueryToken> whereTokens = new LinkedList<>();
 
     protected List<QueryToken> groupByTokens = new LinkedList<>();
 
     protected List<QueryToken> orderByTokens = new LinkedList<>();
+
+    protected List<QueryToken> withTokens = new LinkedList<>();
+
+    protected QueryToken graphRawQuery;
 
     protected int start;
 
@@ -114,6 +120,8 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
     protected boolean disableEntitiesTracking;
 
     protected boolean disableCaching;
+
+    private String parameterPrefix = "p";
 
     public boolean isDistinct() {
         return !selectTokens.isEmpty() && selectTokens.get(0) instanceof DistinctToken;
@@ -151,12 +159,12 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
     protected AbstractDocumentQuery(Class<T> clazz, InMemoryDocumentSessionOperations session, String indexName,
                                     String collectionName, boolean isGroupBy, DeclareToken declareToken,
                                     List<LoadToken> loadTokens) {
-        this(clazz, session, indexName, collectionName, isGroupBy, declareToken, loadTokens, null);
+        this(clazz, session, indexName, collectionName, isGroupBy, declareToken, loadTokens, null, false);
     }
 
     protected AbstractDocumentQuery(Class<T> clazz, InMemoryDocumentSessionOperations session, String indexName,
                                     String collectionName, boolean isGroupBy, DeclareToken declareToken,
-                                    List<LoadToken> loadTokens, String fromAlias) {
+                                    List<LoadToken> loadTokens, String fromAlias, Boolean isProjectInto) {
         this.clazz = clazz;
         rootTypes.add(clazz);
         this.isGroupBy = isGroupBy;
@@ -168,10 +176,15 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
         theSession = session;
         _addAfterQueryExecutedListener(this::updateStatsHighlightingsAndExplanations);
         _conventions = session == null ? new DocumentConventions() : session.getConventions();
+        this.isProjectInto = isProjectInto != null ? isProjectInto : false;
     }
 
     public Class<T> getQueryClass() {
         return clazz;
+    }
+
+    public QueryToken getGraphRawQuery() {
+        return graphRawQuery;
     }
 
     public void _usingDefaultOperator(QueryOperator operator) {
@@ -189,6 +202,14 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
      */
     @Override
     public void _waitForNonStaleResults(Duration waitTimeout) {
+        //Graph queries may set this property multiple times
+        if (theWaitForNonStaleResults) {
+            if (timeout == null || waitTimeout != null && timeout.getSeconds() < waitTimeout.getSeconds()) {
+                timeout = waitTimeout;
+            }
+            return;
+        }
+
         theWaitForNonStaleResults = true;
         timeout = ObjectUtils.firstNonNull(waitTimeout, getDefaultTimeout());
     }
@@ -196,11 +217,18 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
     protected QueryOperation initializeQueryOperation() {
         IndexQuery indexQuery = getIndexQuery();
 
-        return new QueryOperation(theSession, indexName, indexQuery, fieldsToFetchToken, disableEntitiesTracking, false, false);
+        return new QueryOperation(theSession, indexName, indexQuery, fieldsToFetchToken, disableEntitiesTracking, false, false, isProjectInto);
     }
 
     public IndexQuery getIndexQuery() {
-        String query = toString();
+        String serverVersion = null;
+        if (theSession != null && theSession.getRequestExecutor() != null) {
+            serverVersion = theSession.getRequestExecutor().getLastServerVersion();
+        }
+
+        boolean compatibilityMode = serverVersion != null && serverVersion.compareTo("4.2") < 0;
+
+        String query = toString(compatibilityMode);
         IndexQuery indexQuery = generateIndexQuery(query);
         invokeBeforeQueryExecuted(indexQuery);
         return indexQuery;
@@ -255,6 +283,10 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
         if (queryRaw != null) {
             throw new IllegalStateException("RawQuery was called, cannot modify this query by calling on operations that would modify the query (such as Where, Select, OrderBy, GroupBy, etc)");
         }
+    }
+
+    public void _graphQuery(String query) {
+        graphRawQuery = new GraphQueryToken(query);
     }
 
     public void _addParameter(String name, Object value) {
@@ -575,7 +607,7 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
      * @param values Values to find
      */
     @Override
-    public void _whereIn(String fieldName, Collection<Object> values) {
+    public void _whereIn(String fieldName, Collection<?> values) {
         _whereIn(fieldName, values, false);
     }
 
@@ -586,7 +618,7 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
      * @param exact Use exact matcher
      */
     @Override
-    public void _whereIn(String fieldName, Collection<Object> values, boolean exact) {
+    public void _whereIn(String fieldName, Collection<?> values, boolean exact) {
         fieldName = ensureValidFieldName(fieldName, false);
 
         List<QueryToken> tokens = getCurrentWhereTokens();
@@ -1079,7 +1111,12 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
         StringBuilder queryText = new StringBuilder();
 
         buildDeclare(queryText);
-        buildFrom(queryText);
+        if (graphRawQuery != null) {
+            buildWith(queryText);
+            buildGraphQuery(queryText);
+        } else {
+            buildFrom(queryText);
+        }
         buildGroupBy(queryText);
         buildWhere(queryText);
         buildOrderBy(queryText);
@@ -1088,7 +1125,38 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
         buildSelect(queryText);
         buildInclude(queryText);
 
+        if (!compatibilityMode) {
+            buildPagination(queryText);
+        }
+
         return queryText.toString();
+    }
+
+    private void buildGraphQuery(StringBuilder queryText) {
+        graphRawQuery.writeTo(queryText);
+    }
+
+    private void buildWith(StringBuilder queryText) {
+        //TODO: need to aggragate with parameters into this instance parameter list, assert and strip parameters from with clauses
+        for (QueryToken with : withTokens) {
+            with.writeTo(queryText);
+            queryText.append(System.lineSeparator());
+        }
+    }
+
+    @Override
+    public String toString() {
+        return toString(false);
+    }
+
+    private void buildPagination(StringBuilder queryText) {
+        if (start > 0 || pageSize != null) {
+            queryText
+                    .append(" limit $")
+                    .append(addQueryParameter(start))
+                    .append(", $")
+                    .append(addQueryParameter(pageSize));
+        }
     }
 
     private void buildInclude(StringBuilder queryText) {
@@ -1108,18 +1176,13 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
             }
             first = false;
 
-            boolean requiredQuotes = false;
+            Reference<String> escapedIncludeRef = new Reference<>();
 
-            for (int i = 0; i < include.length(); i++) {
-                char ch = include.charAt(i);
-                if (!Character.isLetterOrDigit(ch) && ch != '_' && ch != '.') {
-                    requiredQuotes = true;
-                    break;
-                }
-            }
-
-            if (requiredQuotes) {
-                queryText.append("'").append(include.replaceAll("'", "\\'")).append("'");
+            if (IncludesUtil.requiresQuotes(include, escapedIncludeRef)) {
+                queryText
+                        .append("'")
+                        .append(escapedIncludeRef.value)
+                        .append("'");
             } else {
                 queryText.append(include);
             }
@@ -1186,33 +1249,33 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
 
         List<QueryToken> tokens = getCurrentWhereTokens();
         appendOperatorIfNeeded(tokens);
-        negateIfNeeded(tokens, fieldName);
+        negateIfNeeded(tokens, null);
 
         tokens.add(WhereToken.create(WhereOperator.EXISTS, fieldName, null));
     }
 
     @Override
-    public void _containsAny(String fieldName, Collection<Object> values) {
+    public void _containsAny(String fieldName, Collection<?> values) {
         fieldName = ensureValidFieldName(fieldName, false);
 
         List<QueryToken> tokens = getCurrentWhereTokens();
         appendOperatorIfNeeded(tokens);
         negateIfNeeded(tokens, fieldName);
 
-        Collection<Object> array = transformCollection(fieldName, unpackCollection(values));
+        Collection<?> array = transformCollection(fieldName, unpackCollection(values));
         WhereToken whereToken = WhereToken.create(WhereOperator.IN, fieldName, addQueryParameter(array), new WhereToken.WhereOptions(false));
         tokens.add(whereToken);
     }
 
     @Override
-    public void _containsAll(String fieldName, Collection<Object> values) {
+    public void _containsAll(String fieldName, Collection<?> values) {
         fieldName = ensureValidFieldName(fieldName, false);
 
         List<QueryToken> tokens = getCurrentWhereTokens();
         appendOperatorIfNeeded(tokens);
         negateIfNeeded(tokens, fieldName);
 
-        Collection<Object> array = transformCollection(fieldName, unpackCollection(values));
+        Collection<?> array = transformCollection(fieldName, unpackCollection(values));
 
         if (array.isEmpty()) {
             tokens.add(TrueToken.INSTANCE);
@@ -1400,12 +1463,11 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
         tokens.add(token);
     }
 
-    @SuppressWarnings("unchecked")
-    private Collection<Object> transformCollection(String fieldName, Collection<Object> values) {
+    private Collection<?> transformCollection(String fieldName, Collection<?> values) {
         List<Object> result = new ArrayList<>();
         for (Object value : values) {
             if (value instanceof Collection) {
-                result.addAll(transformCollection(fieldName, (Collection) value));
+                result.addAll(transformCollection(fieldName, (Collection<?>) value));
             } else {
                 WhereParams nestedWhereParams = new WhereParams();
                 nestedWhereParams.setAllowWildcards(true);
@@ -1437,12 +1499,12 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
         tokens.add(NegateToken.INSTANCE);
     }
 
-    private static Collection<Object> unpackCollection(Collection items) {
+    private static Collection<?> unpackCollection(Collection<?> items) {
         List<Object> results = new ArrayList<>();
 
         for (Object item : items) {
             if (item instanceof Collection) {
-                results.addAll(unpackCollection((Collection) item));
+                results.addAll(unpackCollection((Collection<?>) item));
             } else {
                 results.add(item);
             }
@@ -1529,7 +1591,7 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
     }
 
     private String addQueryParameter(Object value) {
-        String parameterName = "p" + queryParameters.size();
+        String parameterName = getParameterPrefix() + queryParameters.size();
         queryParameters.put(parameterName, value);
         return parameterName;
     }
@@ -2079,10 +2141,19 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
                 continue;
             }
 
-            counterIncludesTokens.add(CounterIncludesToken.create(kvp.getKey(),
-                    kvp.getValue().second.size() == 1
-                        ? addQueryParameter(kvp.getValue().second.iterator().next())
-                        : addQueryParameter(kvp.getValue().second)));
+            for (String name : kvp.getValue().second) {
+                counterIncludesTokens.add(CounterIncludesToken.create(kvp.getKey(), name));
+            }
         }
+    }
+
+    @Override
+    public String getParameterPrefix() {
+        return parameterPrefix;
+    }
+
+    @Override
+    public void setParameterPrefix(String parameterPrefix) {
+        this.parameterPrefix = parameterPrefix;
     }
 }

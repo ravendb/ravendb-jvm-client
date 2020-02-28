@@ -22,6 +22,7 @@ import net.ravendb.client.util.TimeUtils;
 import org.apache.commons.lang3.StringUtils;
 
 import java.io.IOException;
+import java.sql.Time;
 import java.time.Duration;
 import java.util.EnumSet;
 
@@ -87,42 +88,14 @@ public class JsonExtensions {
         }
 
 
-        private Duration parseMiddlePart(String input) {
-            String[] tokens = input.split(":");
-            int hours = Integer.valueOf(tokens[0]);
-            int minutes = Integer.valueOf(tokens[1]);
-            int seconds = Integer.valueOf(tokens[2]);
-
-            return Duration.ofHours(hours).plusMinutes(minutes).plusSeconds(seconds);
-        }
 
         @Override
         public Duration deserialize(JsonParser p, DeserializationContext ctxt) throws IOException {
             String text = p.getText();
 
-            boolean hasDays = text.matches("^\\d+\\..*");
-            boolean hasMillis = text.matches(".*\\.\\d+");
-
-            if (hasDays && hasMillis) {
-                String[] tokens = text.split("\\.");
-
-                int days = Integer.parseInt(tokens[0]);
-                int millis = Integer.parseInt(tokens[2]);
-                return parseMiddlePart(tokens[1]).plusDays(days).plusMillis(millis);
-            } else if (hasDays) {
-                String[] tokens = text.split("\\.");
-                int days = Integer.parseInt(tokens[0]);
-                return parseMiddlePart(tokens[1]).plusDays(days);
-            } else if (hasMillis) {
-                String[] tokens = text.split("\\.");
-                String fractionString = tokens[1];
-                fractionString = StringUtils.rightPad(fractionString, 7, '0');
-                long value = Long.parseLong(fractionString);
-
-                value *= 100;
-
-                return parseMiddlePart(tokens[0]).plusNanos(value);
-            } else {
+            try {
+                return TimeUtils.timeSpanToDuration(text);
+            } catch (IllegalArgumentException e) {
                 throw new JsonParseException(p, "Unexpected Duration format:" + text);
             }
         }

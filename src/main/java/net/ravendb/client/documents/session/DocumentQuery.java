@@ -219,7 +219,7 @@ public class DocumentQuery<T> extends AbstractDocumentQuery<T, DocumentQuery<T>>
     }
 
     @Override
-    public IDocumentQuery<T> containsAny(String fieldName, Collection<Object> values) {
+    public IDocumentQuery<T> containsAny(String fieldName, Collection<?> values) {
         _containsAny(fieldName, values);
         return this;
     }
@@ -227,7 +227,7 @@ public class DocumentQuery<T> extends AbstractDocumentQuery<T, DocumentQuery<T>>
     //TBD expr public IDocumentQuery<T> ContainsAny<TValue>(Expression<Func<T, TValue>> propertySelector, IEnumerable<TValue> values)
 
     @Override
-    public IDocumentQuery<T> containsAll(String fieldName, Collection<Object> values) {
+    public IDocumentQuery<T> containsAll(String fieldName, Collection<?> values) {
         _containsAll(fieldName, values);
         return this;
     }
@@ -370,12 +370,12 @@ public class DocumentQuery<T> extends AbstractDocumentQuery<T, DocumentQuery<T>>
     }
 
     @Override
-    public IDocumentQuery<T> whereIn(String fieldName, Collection<Object> values) {
+    public IDocumentQuery<T> whereIn(String fieldName, Collection<?> values) {
         return whereIn(fieldName, values, false);
     }
 
     @Override
-    public IDocumentQuery<T> whereIn(String fieldName, Collection<Object> values, boolean exact) {
+    public IDocumentQuery<T> whereIn(String fieldName, Collection<?> values, boolean exact) {
         _whereIn(fieldName, values, exact);
         return this;
     }

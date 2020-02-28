@@ -185,7 +185,7 @@ public interface IAbstractDocumentQuery<T> {
      * @param fieldName Field name
      * @param values Values to match
      */
-    void _whereIn(String fieldName, Collection<Object> values);
+    void _whereIn(String fieldName, Collection<?> values);
 
     /**
      * Check that the field has one of the specified value
@@ -193,7 +193,7 @@ public interface IAbstractDocumentQuery<T> {
      * @param values Values to match
      * @param exact Use exact matcher
      */
-    void _whereIn(String fieldName, Collection<Object> values, boolean exact);
+    void _whereIn(String fieldName, Collection<?> values, boolean exact);
 
     /**
      * Matches fields which starts with the specified value.
@@ -410,14 +410,14 @@ public interface IAbstractDocumentQuery<T> {
      * @param fieldName Field name
      * @param values Values to match
      */
-    void _containsAny(String fieldName, Collection<Object> values);
+    void _containsAny(String fieldName, Collection<?> values);
 
     /**
      * Performs a query matching ALL of the provided values against the given field (AND)
      * @param fieldName Field name
      * @param values Values to match
      */
-    void _containsAll(String fieldName, Collection<Object> values);
+    void _containsAll(String fieldName, Collection<?> values);
 
     void _groupBy(String fieldName, String... fieldNames);
 

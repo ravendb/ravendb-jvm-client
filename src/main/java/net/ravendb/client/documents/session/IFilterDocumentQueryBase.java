@@ -37,7 +37,7 @@ public interface IFilterDocumentQueryBase<T, TSelf extends IDocumentQueryBase<T,
      * @param values values to match
      * @return Query instance
      */
-    TSelf containsAll(String fieldName, Collection<Object> values);
+    TSelf containsAll(String fieldName, Collection<?> values);
 
     //TBD expr TSelf ContainsAll<TValue>(Expression<Func<T, TValue>> propertySelector, IEnumerable<TValue> values);
 
@@ -47,7 +47,7 @@ public interface IFilterDocumentQueryBase<T, TSelf extends IDocumentQueryBase<T,
      * @param values values to match
      * @return Query instance
      */
-    TSelf containsAny(String fieldName, Collection<Object> values);
+    TSelf containsAny(String fieldName, Collection<?> values);
 
     //TBD expr TSelf ContainsAny<TValue>(Expression<Func<T, TValue>> propertySelector, IEnumerable<TValue> values);
 
@@ -284,7 +284,7 @@ public interface IFilterDocumentQueryBase<T, TSelf extends IDocumentQueryBase<T,
      * @param values Values to use
      * @return Query instance
      */
-    TSelf whereIn(String fieldName, Collection<Object> values);
+    TSelf whereIn(String fieldName, Collection<?> values);
 
     /**
      * Check that the field has one of the specified values
@@ -293,7 +293,7 @@ public interface IFilterDocumentQueryBase<T, TSelf extends IDocumentQueryBase<T,
      * @param exact Use exact matcher
      * @return Query instance
      */
-    TSelf whereIn(String fieldName, Collection<Object> values, boolean exact);
+    TSelf whereIn(String fieldName, Collection<?> values, boolean exact);
 
     //TBD expr TSelf WhereIn<TValue>(Expression<Func<T, TValue>> propertySelector, IEnumerable<TValue> values, bool exact = false);
 
