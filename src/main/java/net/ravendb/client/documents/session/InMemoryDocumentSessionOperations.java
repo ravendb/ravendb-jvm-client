@@ -1457,24 +1457,43 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
                 continue;
             }
 
+            String[] counters = new String[0];
+
             if (fromQueryResult) {
-                String[] counters = countersToInclude.get(fieldAndValue.getKey());
+                counters = countersToInclude.get(fieldAndValue.getKey());
                 gotAll = counters != null && counters.length == 0;
             }
 
             if (fieldAndValue.getValue().size() == 0 && !gotAll) {
+                Tuple<Boolean, Map<String, Long>> cache =
+                        _countersByDocId.get(fieldAndValue.getKey());
+                if (cache == null) {
+                    continue;
+                }
+
+                for (String counter : counters) {
+                    cache.second.remove(counter);
+                }
+
+                _countersByDocId.put(fieldAndValue.getKey(), cache);
                 continue;
             }
 
-            registerCountersForDocument(fieldAndValue.getKey(), gotAll, (ArrayNode) fieldAndValue.getValue());
+            registerCountersForDocument(fieldAndValue.getKey(), gotAll, (ArrayNode) fieldAndValue.getValue(), countersToInclude);
         }
     }
 
-    private void registerCountersForDocument(String id, boolean gotAll, ArrayNode counters) {
+    private void registerCountersForDocument(String id, boolean gotAll, ArrayNode counters, Map<String, String[]> countersToInclude) {
         Tuple<Boolean, Map<String, Long>> cache = getCountersByDocId().get(id);
         if (cache == null) {
             cache = Tuple.create(gotAll, new TreeMap<>(String::compareToIgnoreCase));
         }
+
+        Set<String> deletedCounters = cache.second.isEmpty()
+                ? new HashSet<>()
+                : (countersToInclude.get(id).length == 0
+                    ? new HashSet<>(cache.second.keySet())
+                    : new HashSet<>(Arrays.asList(countersToInclude.get(id))));
 
         for (JsonNode counterJson : counters) {
             JsonNode counterName = counterJson.get("CounterName");
@@ -1482,6 +1501,13 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
 
             if (counterName != null && !counterName.isNull() && totalValue != null && !totalValue.isNull()) {
                 cache.second.put(counterName.asText(), totalValue.longValue());
+                deletedCounters.remove(counterName.asText());
+            }
+        }
+
+        if (!deletedCounters.isEmpty()) {
+            for (String name : deletedCounters) {
+                cache.second.remove(name);
             }
         }
 
@@ -1620,9 +1646,12 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
             documentInfo.setChangeVector(changeVector.asText());
         }
 
-        documentInfo.setDocument(document);
+        if (documentInfo.getEntity() != null && !noTracking) {
+            entityToJson.removeFromMissing(documentInfo.getEntity());
+        }
 
         documentInfo.setEntity(entityToJson.convertToEntity(entity.getClass(), documentInfo.getId(), document, !noTracking));
+        documentInfo.setDocument(document);
 
         try {
             BeanUtils.copyProperties(entity, documentInfo.getEntity());

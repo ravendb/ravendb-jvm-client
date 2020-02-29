@@ -9,17 +9,17 @@ import net.ravendb.client.documents.operations.etl.RavenEtlConfiguration;
 import net.ravendb.client.documents.operations.etl.sql.SqlConnectionString;
 import net.ravendb.client.documents.operations.etl.sql.SqlEtlConfiguration;
 import net.ravendb.client.documents.operations.expiration.ExpirationConfiguration;
+import net.ravendb.client.documents.operations.refresh.RefreshConfiguration;
 import net.ravendb.client.documents.operations.replication.ExternalReplication;
 import net.ravendb.client.documents.operations.replication.PullReplicationAsSink;
 import net.ravendb.client.documents.operations.replication.PullReplicationDefinition;
+import net.ravendb.client.documents.operations.revisions.RevisionsCollectionConfiguration;
 import net.ravendb.client.documents.operations.revisions.RevisionsConfiguration;
 import net.ravendb.client.documents.queries.sorting.SorterDefinition;
 import net.ravendb.client.documents.operations.etl.RavenConnectionString;
+import net.ravendb.client.primitives.UseSharpEnum;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class DatabaseRecord {
     private String databaseName;
@@ -27,14 +27,18 @@ public class DatabaseRecord {
     private boolean encrypted;
     private long etagForBackup;
     private Map<String, DeletionInProgressStatus> deletionInProgress;
+    private DatabaseStateStatus databaseStatus;
     private DatabaseTopology topology;
     private ConflictSolver conflictSolverConfig;
     private Map<String, SorterDefinition> sorters = new HashMap<>();
     private Map<String, IndexDefinition> indexes;
+    private Map<String, List<IndexHistoryEntry>> indexesHistory;
     private Map<String, AutoIndexDefinition> autoIndexes;
     private Map<String, String> settings = new HashMap<>();
     private RevisionsConfiguration revisions;
+    private RevisionsCollectionConfiguration revisionsForConflicts;
     private ExpirationConfiguration expiration;
+    private RefreshConfiguration refresh;
     private List<PeriodicBackupConfiguration> periodicBackups = new ArrayList<>();
     private List<ExternalReplication> externalReplications = new ArrayList<>();
     private List<PullReplicationAsSink> sinkPullReplications = new ArrayList<>();
@@ -46,6 +50,7 @@ public class DatabaseRecord {
     private ClientConfiguration client;
     private StudioConfiguration studio;
     private long truncatedClusterTransactionCommandsCount;
+    private Set<String> unusedDatabaseIds = new HashSet<>();
 
     public DatabaseRecord() {
     }
@@ -244,5 +249,81 @@ public class DatabaseRecord {
 
     public void setTruncatedClusterTransactionCommandsCount(long truncatedClusterTransactionCommandsCount) {
         this.truncatedClusterTransactionCommandsCount = truncatedClusterTransactionCommandsCount;
+    }
+
+    public DatabaseStateStatus getDatabaseStatus() {
+        return databaseStatus;
+    }
+
+    public void setDatabaseStatus(DatabaseStateStatus databaseStatus) {
+        this.databaseStatus = databaseStatus;
+    }
+
+    public Map<String, List<IndexHistoryEntry>> getIndexesHistory() {
+        return indexesHistory;
+    }
+
+    public void setIndexesHistory(Map<String, List<IndexHistoryEntry>> indexesHistory) {
+        this.indexesHistory = indexesHistory;
+    }
+
+    public RevisionsCollectionConfiguration getRevisionsForConflicts() {
+        return revisionsForConflicts;
+    }
+
+    public void setRevisionsForConflicts(RevisionsCollectionConfiguration revisionsForConflicts) {
+        this.revisionsForConflicts = revisionsForConflicts;
+    }
+
+    public RefreshConfiguration getRefresh() {
+        return refresh;
+    }
+
+    public void setRefresh(RefreshConfiguration refresh) {
+        this.refresh = refresh;
+    }
+
+    public Set<String> getUnusedDatabaseIds() {
+        return unusedDatabaseIds;
+    }
+
+    public void setUnusedDatabaseIds(Set<String> unusedDatabaseIds) {
+        this.unusedDatabaseIds = unusedDatabaseIds;
+    }
+
+    public static class IndexHistoryEntry {
+        private IndexDefinition definition;
+        private String source;
+        private Date createdAt;
+
+        public IndexDefinition getDefinition() {
+            return definition;
+        }
+
+        public void setDefinition(IndexDefinition definition) {
+            this.definition = definition;
+        }
+
+        public String getSource() {
+            return source;
+        }
+
+        public void setSource(String source) {
+            this.source = source;
+        }
+
+        public Date getCreatedAt() {
+            return createdAt;
+        }
+
+        public void setCreatedAt(Date createdAt) {
+            this.createdAt = createdAt;
+        }
+    }
+
+    @UseSharpEnum
+    public enum DatabaseStateStatus {
+        NORMAL,
+        RESTORE_IN_PROGRESS
     }
 }

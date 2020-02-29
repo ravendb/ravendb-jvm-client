@@ -63,6 +63,12 @@ public class DatabaseSmuggler {
     }
 
     public Operation exportAsync(DatabaseSmugglerExportOptions options, String toFile) throws IOException {
+
+        File directoryInfo = new File(toFile).getParentFile();
+        if (directoryInfo != null && !directoryInfo.exists()) {
+            directoryInfo.mkdirs();
+        }
+
         try (FileOutputStream fos = new FileOutputStream(toFile)) {
             return exportAsync(options, response -> {
                 try {
@@ -135,14 +141,13 @@ public class DatabaseSmuggler {
 
     public static EnumSet<DatabaseItemType> configureOptionsFromIncrementalImport(DatabaseSmugglerOptions options) {
         options.getOperateOnTypes().add(DatabaseItemType.TOMBSTONES);
+        options.getOperateOnTypes().add(DatabaseItemType.COMPARE_EXCHANGE_TOMBSTONES);
 
-        // we import the indexes and identities from the last file only,
-        // as the previous files can hold indexes and identities which were deleted and shouldn't be imported
+        // we import the indexes and Subscriptions from the last file only,
         EnumSet<DatabaseItemType> oldOperateOnTypes = options.getOperateOnTypes().clone();
 
         options.getOperateOnTypes().remove(DatabaseItemType.INDEXES);
-        options.getOperateOnTypes().remove(DatabaseItemType.COMPARE_EXCHANGE);
-        options.getOperateOnTypes().remove(DatabaseItemType.IDENTITIES);
+        options.getOperateOnTypes().remove(DatabaseItemType.SUBSCRIPTIONS);
 
         return oldOperateOnTypes;
     }

@@ -27,6 +27,7 @@ public abstract class RavenCommand<TResult> {
     protected RavenCommandResponseType responseType;
     protected boolean canCache;
     protected boolean canCacheAggressively;
+    protected String selectedNodeTag;
     protected final ObjectMapper mapper = JsonExtensions.getDefaultMapper();
 
     public abstract boolean isReadRequest();
@@ -59,11 +60,23 @@ public abstract class RavenCommand<TResult> {
         return canCacheAggressively;
     }
 
+    public String getSelectedNodeTag() {
+        return selectedNodeTag;
+    }
+
     protected RavenCommand(Class<TResult> resultClass) {
         this.resultClass = resultClass;
         responseType = RavenCommandResponseType.OBJECT;
         this.canCache = true;
         this.canCacheAggressively = true;
+    }
+
+    protected RavenCommand(RavenCommand<TResult> copy) {
+        this.resultClass = copy.resultClass;
+        this.canCache = copy.canCache;
+        this.canCacheAggressively = copy.canCacheAggressively;
+        this.selectedNodeTag = copy.selectedNodeTag;
+        this.responseType = copy.responseType;
     }
 
     public abstract HttpRequestBase createRequest(ServerNode node, Reference<String> url);

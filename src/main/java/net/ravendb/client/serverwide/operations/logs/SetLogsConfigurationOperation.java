@@ -13,6 +13,7 @@ import org.apache.http.client.methods.HttpRequestBase;
 import org.apache.http.entity.ContentType;
 
 import java.io.IOException;
+import java.time.Duration;
 
 public class SetLogsConfigurationOperation implements IVoidServerOperation {
 
@@ -61,6 +62,33 @@ public class SetLogsConfigurationOperation implements IVoidServerOperation {
 
     public static class Parameters {
         private LogMode mode;
+        private Duration retentionTime;
+        private Long retentionSize;
+        private boolean compress;
+
+        public Duration getRetentionTime() {
+            return retentionTime;
+        }
+
+        public void setRetentionTime(Duration retentionTime) {
+            this.retentionTime = retentionTime;
+        }
+
+        public Long getRetentionSize() {
+            return retentionSize;
+        }
+
+        public void setRetentionSize(Long retentionSize) {
+            this.retentionSize = retentionSize;
+        }
+
+        public boolean isCompress() {
+            return compress;
+        }
+
+        public void setCompress(boolean compress) {
+            this.compress = compress;
+        }
 
         public LogMode getMode() {
             return mode;

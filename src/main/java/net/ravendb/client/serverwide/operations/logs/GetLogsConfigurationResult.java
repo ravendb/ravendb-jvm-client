@@ -1,10 +1,13 @@
 package net.ravendb.client.serverwide.operations.logs;
 
+import java.time.Duration;
+
 public class GetLogsConfigurationResult {
     private LogMode currentMode;
     private LogMode mode;
     private String path;
     private boolean useUtcTime;
+    private Duration retentionTime;
 
     /**
      * @return Current mode that is active
@@ -60,5 +63,13 @@ public class GetLogsConfigurationResult {
      */
     public void setUseUtcTime(boolean useUtcTime) {
         this.useUtcTime = useUtcTime;
+    }
+
+    public Duration getRetentionTime() {
+        return retentionTime;
+    }
+
+    public void setRetentionTime(Duration retentionTime) {
+        this.retentionTime = retentionTime;
     }
 }

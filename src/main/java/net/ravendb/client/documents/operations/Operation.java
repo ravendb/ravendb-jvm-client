@@ -17,27 +17,46 @@ public class Operation {
     private final RequestExecutor _requestExecutor;
     private final DocumentConventions _conventions;
     private final long _id;
+    private String _nodeTag;
 
     public long getId() {
         return _id;
     }
 
     public Operation(RequestExecutor requestExecutor, Supplier<IDatabaseChanges> changes, DocumentConventions conventions, long id) {
+        this(requestExecutor, changes, conventions, id, null);
+    }
+
+    public Operation(RequestExecutor requestExecutor, Supplier<IDatabaseChanges> changes, DocumentConventions conventions, long id, String nodeTag) {
         _requestExecutor = requestExecutor;
         _conventions = conventions;
         _id = id;
+        _nodeTag = nodeTag;
     }
 
     private ObjectNode fetchOperationsStatus() {
-        RavenCommand<ObjectNode> command = getOperationStateCommand(_conventions, _id);
+        RavenCommand<ObjectNode> command = getOperationStateCommand(_conventions, _id, _nodeTag);
         _requestExecutor.execute(command);
 
         return command.getResult();
     }
 
     protected RavenCommand<ObjectNode> getOperationStateCommand(DocumentConventions conventions, long id) {
-        return new GetOperationStateOperation.GetOperationStateCommand(_conventions, _id);
+        return getOperationStateCommand(conventions, id, null);
     }
+
+    protected RavenCommand<ObjectNode> getOperationStateCommand(DocumentConventions conventions, long id, String nodeTag) {
+        return new GetOperationStateOperation.GetOperationStateCommand(_conventions, _id, nodeTag);
+    }
+
+    public String getNodeTag() {
+        return _nodeTag;
+    }
+
+    public void setNodeTag(String nodeTag) {
+        _nodeTag = nodeTag;
+    }
+
     public void waitForCompletion() {
         while (true) {
             ObjectNode status = fetchOperationsStatus();

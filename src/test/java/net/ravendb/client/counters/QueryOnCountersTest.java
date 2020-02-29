@@ -1,5 +1,6 @@
 package net.ravendb.client.counters;
 
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import net.ravendb.client.RemoteTestBase;
 import net.ravendb.client.documents.IDocumentStore;
 import net.ravendb.client.documents.session.IDocumentQuery;
@@ -12,8 +13,10 @@ import org.junit.jupiter.api.Test;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Consumer;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.setRemoveAssertJRelatedElementsFromStackTrace;
 
 public class QueryOnCountersTest extends RemoteTestBase {
 
@@ -899,6 +902,190 @@ public class QueryOnCountersTest extends RemoteTestBase {
 
                 assertThat(session.advanced().getNumberOfRequests())
                         .isEqualTo(1);
+            }
+        }
+    }
+
+    @Test
+    public void countersShouldBeCachedOnCollection() throws Exception {
+        try (IDocumentStore store = getDocumentStore()) {
+            try (IDocumentSession session = store.openSession()) {
+                Order order = new Order();
+                order.setCompany("companies/1-A");
+                session.store(order, "orders/1-A");
+                session.countersFor("orders/1-A").increment("downloads", 100);
+                session.saveChanges();
+            }
+
+            try (IDocumentSession session = store.openSession()) {
+                session.query(Order.class)
+                        .include(i -> i.includeCounter("downloads"))
+                        .toList();
+
+                Long counterValue = session.countersFor("orders/1-A")
+                        .get("downloads");
+                assertThat(counterValue)
+                        .isEqualTo(100);
+
+                session.countersFor("orders/1-A").increment("downloads", 200);
+                session.saveChanges();
+
+                session.query(Order.class)
+                        .include(i -> i.includeCounters(new String[] { "downloads" }))
+                        .toList();
+
+                counterValue = session.countersFor("orders/1-A").get("downloads");
+                assertThat(counterValue)
+                        .isEqualTo(300);
+
+                session.countersFor("orders/1-A").increment("downloads", 200);
+                session.saveChanges();
+
+                session.query(Order.class)
+                        .include(i -> i.includeCounter("downloads"))
+                        .toList();
+
+                counterValue = session.countersFor("orders/1-A").get("downloads");
+                assertThat(counterValue)
+                        .isEqualTo(500);
+            }
+
+            try (IDocumentSession session = store.openSession()) {
+                session.load(Order.class, "orders/1-A", i -> i.includeCounter("downloads"));
+                Long counterValue = session.countersFor("orders/1-A").get("downloads");
+                assertThat(counterValue)
+                        .isEqualTo(500);
+
+                session.countersFor("orders/1-A").increment("downloads", 200);
+                session.saveChanges();
+
+                session.load(Order.class, "order/1-A", i -> i.includeCounter("downloads"));
+                counterValue = session.countersFor("orders/1-A").get("downloads");
+                assertThat(counterValue)
+                        .isEqualTo(700);
+            }
+        }
+    }
+
+    @Test
+    public void countersShouldBeCachedOnAllDocsCollection() throws Exception {
+        try (IDocumentStore store = getDocumentStore()) {
+            try (IDocumentSession session = store.openSession()) {
+                Order order = new Order();
+                order.setCompany("companies/1-A");
+                session.store(order, "orders/1-A");
+                session.countersFor("orders/1-A").increment("downloads", 100);
+                session.saveChanges();
+            }
+
+            try (IDocumentSession session = store.openSession()) {
+                session.advanced()
+                        .rawQuery(ObjectNode.class, "from @all_docs include counters($p0)")
+                        .addParameter("p0", new String[] { "downloads" })
+                        .toList();
+
+                Long counterValue = session.countersFor("orders/1-A").get("downloads");
+                assertThat(counterValue)
+                        .isEqualTo(100);
+
+                session.countersFor("orders/1-A").increment("downloads", 200);
+                session.saveChanges();
+
+                session.advanced().rawQuery(ObjectNode.class, "from @all_docs include counters()")
+                        .toList();
+                counterValue = session.countersFor("orders/1-A").get("downloads");
+                assertThat(counterValue)
+                        .isEqualTo(300);
+
+                session.countersFor("orders/1-A").increment("downloads", 200);
+                session.saveChanges();
+
+                session
+                        .advanced()
+                        .rawQuery(ObjectNode.class, "from @all_docs include counters($p0)")
+                        .addParameter("p0", new String[] { "downloads" })
+                        .toList();
+
+                counterValue = session.countersFor("orders/1-A").get("downloads");
+                assertThat(counterValue)
+                        .isEqualTo(500);
+            }
+        }
+    }
+
+    @Test
+    public void countersCachingShouldHandleDeletion_includeCounterDownload() throws Exception {
+        countersCachingShouldHandleDeletion(session -> {
+            session.query(Order.class).include(i -> i.includeCounter("downloads")).toList();
+        }, null);
+    }
+
+    @Test
+    public void countersCachingShouldHandleDeletion_includeCounterUpload() throws Exception {
+        countersCachingShouldHandleDeletion(session -> {
+            session.query(Order.class).include(i -> i.includeCounter("uploads")).toList();
+        }, 300L);
+    }
+
+    @Test
+    public void countersCachingShouldHandleDeletion_includeCounters() throws Exception {
+        countersCachingShouldHandleDeletion(session -> {
+            session.query(Order.class).include(i -> i.includeCounters(new String[] { "downloads", "uploads", "bugs" })).toList();
+        }, null);
+    }
+
+    @Test
+    public void countersCachingShouldHandleDeletion_includeAllCounters() throws Exception {
+        countersCachingShouldHandleDeletion(session -> {
+            session.query(Order.class).include(i -> i.includeAllCounters()).toList();
+        }, null);
+    }
+
+    private void countersCachingShouldHandleDeletion(Consumer<IDocumentSession> sessionConsumer, Long expectedCounterValue) throws Exception {
+        try (IDocumentStore store = getDocumentStore()) {
+            try (IDocumentSession session = store.openSession()) {
+                Order order = new Order();
+                order.setCompany("companies/1-A");
+                session.store(order, "orders/1-A");
+
+                session.countersFor("orders/1-A").increment("downloads", 100);
+                session.countersFor("orders/1-A").increment("uploads", 123);
+                session.countersFor("orders/1-A").increment("bugs", 0xDEAD);
+                session.saveChanges();
+            }
+
+            try (IDocumentSession session = store.openSession()) {
+                session.query(Order.class)
+                        .include(i -> i.includeCounter("downloads"))
+                        .toList();
+
+                Long counterValue = session.countersFor("orders/1-A").get("downloads");
+                assertThat(counterValue)
+                        .isEqualTo(100);
+
+                try (IDocumentSession writeSession = store.openSession()) {
+                    writeSession.countersFor("orders/1-A").increment("downloads", 200);
+                    writeSession.saveChanges();
+                }
+
+                session.query(Order.class).include(i -> i.includeCounter("downloads")).toList();
+
+                counterValue = session.countersFor("orders/1-A").get("downloads");
+                assertThat(counterValue)
+                        .isEqualTo(300);
+                session.saveChanges();
+
+                try (IDocumentSession writeSession = store.openSession()) {
+                    writeSession.countersFor("orders/1-A").delete("downloads");
+                    writeSession.saveChanges();
+                }
+
+                sessionConsumer.accept(session);
+
+                counterValue = session.countersFor("orders/1-A").get("downloads");
+
+                assertThat(counterValue)
+                        .isEqualTo(expectedCounterValue);
             }
         }
     }
