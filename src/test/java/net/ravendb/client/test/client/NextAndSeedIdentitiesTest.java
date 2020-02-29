@@ -5,6 +5,8 @@ import net.ravendb.client.documents.IDocumentStore;
 import net.ravendb.client.documents.commands.NextIdentityForCommand;
 import net.ravendb.client.documents.commands.SeedIdentityForCommand;
 import net.ravendb.client.documents.operations.identities.GetIdentitiesOperation;
+import net.ravendb.client.documents.operations.identities.NextIdentityForOperation;
+import net.ravendb.client.documents.operations.identities.SeedIdentityForOperation;
 import net.ravendb.client.documents.session.IDocumentSession;
 import net.ravendb.client.infrastructure.entities.User;
 import org.junit.jupiter.api.Test;
@@ -28,8 +30,7 @@ public class NextAndSeedIdentitiesTest extends RemoteTestBase {
                 session.saveChanges();
             }
 
-            NextIdentityForCommand command = new NextIdentityForCommand("users");
-            store.getRequestExecutor().execute(command);
+            store.maintenance().send(new NextIdentityForOperation("users"));
 
             try (IDocumentSession session = store.openSession()) {
                 User user = new User();
@@ -73,10 +74,8 @@ public class NextAndSeedIdentitiesTest extends RemoteTestBase {
                 session.saveChanges();
             }
 
-            SeedIdentityForCommand command = new SeedIdentityForCommand("users", 1990L);
-            store.getRequestExecutor().execute(command);
-            Long result = command.getResult();
-            assertThat(result)
+            Long result1 = store.maintenance().send(new SeedIdentityForOperation("users", 1990L));
+            assertThat(result1)
                     .isEqualTo(1990L);
 
             try (IDocumentSession session = store.openSession()) {
@@ -110,16 +109,25 @@ public class NextAndSeedIdentitiesTest extends RemoteTestBase {
                         .isEqualTo("Avivi");
             }
 
-            command = new SeedIdentityForCommand("users", 1975L);
-            store.getRequestExecutor().execute(command);
-            assertThat(command.getResult())
+            Long result2 = store.maintenance().send(new SeedIdentityForOperation("users", 1975L));
+            assertThat(result2)
                     .isEqualTo(1991L);
 
+            Long result3 = store.maintenance().send(new SeedIdentityForOperation("users", 1975L, true));
+            assertThat(result3)
+                    .isEqualTo(1975L);
+        }
+    }
 
-            Map<String, Long> identities = store.maintenance().send(new GetIdentitiesOperation());
+    @Test
+    public void nextIdentityForOperationShouldCreateANewIdentityIfThereIsNone() throws Exception {
+        try (IDocumentStore store = getDocumentStore()) {
+            try (IDocumentSession session = store.openSession()) {
+                Long result = store.maintenance().send(new NextIdentityForOperation("person|"));
 
-            assertThat(identities.get("users|"))
-                    .isEqualTo(1991);
+                assertThat(result)
+                        .isEqualTo(1L);
+            }
         }
     }
 }

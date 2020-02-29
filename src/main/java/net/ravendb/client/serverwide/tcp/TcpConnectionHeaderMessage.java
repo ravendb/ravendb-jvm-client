@@ -1,8 +1,12 @@
 package net.ravendb.client.serverwide.tcp;
 
+import com.fasterxml.jackson.core.JsonGenerator;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import net.ravendb.client.primitives.Reference;
+import net.ravendb.client.primitives.SharpEnum;
 import net.ravendb.client.primitives.UseSharpEnum;
 
+import java.io.IOException;
 import java.util.*;
 
 public class TcpConnectionHeaderMessage {
@@ -24,6 +28,15 @@ public class TcpConnectionHeaderMessage {
     private OperationTypes operation;
     private int operationVersion;
     private String info;
+    private AuthorizationInfo authorizeInfo;
+
+    public AuthorizationInfo getAuthorizeInfo() {
+        return authorizeInfo;
+    }
+
+    public void setAuthorizeInfo(AuthorizationInfo authorizeInfo) {
+        this.authorizeInfo = authorizeInfo;
+    }
 
     public String getDatabaseName() {
         return databaseName;
@@ -73,12 +86,13 @@ public class TcpConnectionHeaderMessage {
     public static final int DROP_BASE_LINE = -2;
     public static final int HEARTBEATS_BASE_LINE = 20;
     public static final int HEARTBEATS_41200 = 41_200;
+    public static final int HEARTBEATS_42000 = 42_000;
     public static final int SUBSCRIPTION_BASE_LINE = 40;
     public static final int SUBSCRIPTION_INCLUDES = 41_400;
     public static final int TEST_CONNECTION_BASE_LINE = 50;
 
 
-    public static final int HEARTBEATS_TCP_VERSION = HEARTBEATS_41200;
+    public static final int HEARTBEATS_TCP_VERSION = HEARTBEATS_42000;
     public static final int SUBSCRIPTION_TCP_VERSION = SUBSCRIPTION_INCLUDES;
     public static final int TEST_CONNECTION_TCP_VERSION = TEST_CONNECTION_BASE_LINE;
 
@@ -109,6 +123,7 @@ public class TcpConnectionHeaderMessage {
         public static class HeartbeatsFeatures {
             public boolean baseLine = true;
             public boolean sendChangesOnly;
+            public boolean includeServerInfo;
         }
 
         public static class TestConnectionFeatures {
@@ -173,6 +188,12 @@ public class TcpConnectionHeaderMessage {
         heartbeats41200Features.heartbeats = new SupportedFeatures.HeartbeatsFeatures();
         heartbeats41200Features.heartbeats.sendChangesOnly = true;
         heartbeatsFeaturesMap.put(HEARTBEATS_41200, heartbeats41200Features);
+
+        SupportedFeatures heartbeats42000Features = new SupportedFeatures(HEARTBEATS_42000);
+        heartbeats42000Features.heartbeats = new SupportedFeatures.HeartbeatsFeatures();
+        heartbeats42000Features.heartbeats.sendChangesOnly = true;
+        heartbeats42000Features.heartbeats.includeServerInfo = true;
+        heartbeatsFeaturesMap.put(HEARTBEATS_42000, heartbeats42000Features);
 
         Map<Integer, SupportedFeatures> testConnectionFeaturesMap = new HashMap<>();
         supportedFeaturesByProtocol.put(OperationTypes.TEST_CONNECTION, testConnectionFeaturesMap);
@@ -246,5 +267,24 @@ public class TcpConnectionHeaderMessage {
             throw new IllegalArgumentException(type + " in protocol " + protocolVersion + " was not found in the features set");
         }
         return features;
+    }
+
+    public static class AuthorizationInfo {
+        @UseSharpEnum
+        public enum AuthorizeMethod {
+            SERVER,
+            PULL_REPLICATION
+        }
+
+        public AuthorizeMethod authorizeAs;
+        public String authorizationFor;
+
+        public void toJson(JsonGenerator generator) throws IOException {
+            generator.writeStartObject();
+            generator.writeStringField("AuthorizeAs", SharpEnum.value(authorizeAs));
+            generator.writeStringField("AuthorizationFor", authorizationFor);
+            generator.writeEndObject();
+        }
+
     }
 }

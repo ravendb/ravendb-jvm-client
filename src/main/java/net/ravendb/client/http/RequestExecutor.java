@@ -146,6 +146,12 @@ public class RequestExecutor implements CleanCloseable {
 
     protected boolean _disableClientConfigurationUpdates;
 
+    protected String lastServerVersion;
+
+    public String getLastServerVersion() {
+        return lastServerVersion;
+    }
+
     public DocumentConventions getConventions() {
         return conventions;
     }
@@ -907,9 +913,8 @@ public class RequestExecutor implements CleanCloseable {
             return false;
         }
 
-        spawnHealthChecks(chosenNode, nodeIndex);
-
         if (_nodeSelector == null) {
+            spawnHealthChecks(chosenNode, nodeIndex);
             return false;
         }
 
@@ -1149,6 +1154,12 @@ public class RequestExecutor implements CleanCloseable {
         public void close() {
             _timer.close();
         }
+    }
+
+    public CurrentIndexAndNode getRequestedNode(String nodeTag) {
+        ensureNodeSelector();
+
+        return _nodeSelector.getRequestedNode(nodeTag);
     }
 
     public CurrentIndexAndNode getPreferredNode() {

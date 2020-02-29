@@ -5,6 +5,7 @@ import java.util.function.Function;
 public class TcpNegotiateParameters {
 
     private TcpConnectionHeaderMessage.OperationTypes operation;
+    private TcpConnectionHeaderMessage.AuthorizationInfo authorizeInfo;
     private int version;
     private String database;
     private String sourceNodeTag;
@@ -19,6 +20,14 @@ public class TcpNegotiateParameters {
 
     public void setOperation(TcpConnectionHeaderMessage.OperationTypes operation) {
         this.operation = operation;
+    }
+
+    public TcpConnectionHeaderMessage.AuthorizationInfo getAuthorizeInfo() {
+        return authorizeInfo;
+    }
+
+    public void setAuthorizeInfo(TcpConnectionHeaderMessage.AuthorizationInfo authorizeInfo) {
+        this.authorizeInfo = authorizeInfo;
     }
 
     public int getVersion() {

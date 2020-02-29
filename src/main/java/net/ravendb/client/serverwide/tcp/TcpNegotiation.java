@@ -72,6 +72,12 @@ public class TcpNegotiation {
             generator.writeObjectField("Operation", parameters.getOperation());
             generator.writeStringField("SourceNodeTag", parameters.getSourceNodeTag());
             generator.writeNumberField("OperationVersion", currentVersion);
+            generator.writeFieldName("AuthorizeInfo");
+            if (parameters.getAuthorizeInfo() != null) {
+                parameters.getAuthorizeInfo().toJson(generator);
+            } else {
+                generator.writeNull();
+            }
             generator.writeEndObject();
         }
         stream.flush();
