@@ -415,6 +415,10 @@ public abstract class DocumentStoreBase implements IDocumentStore {
             session.addAfterConversionToEntityListener(handler);
         }
     }
+
+    public void registerEvents(RequestExecutor requestExecutor) {
+        for (EventHandler<FailedRequestEventArgs> handler : onFailedRequest) {
+        }
     }
 
     protected void afterSessionCreated(InMemoryDocumentSessionOperations session) {

@@ -1,17 +1,22 @@
 package net.ravendb.client.documents.commands;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import net.ravendb.client.documents.conventions.DocumentConventions;
+import net.ravendb.client.http.IBroadcast;
+import net.ravendb.client.http.IRaftCommand;
 import net.ravendb.client.http.RavenCommand;
 import net.ravendb.client.http.ServerNode;
 import net.ravendb.client.primitives.Reference;
+import net.ravendb.client.util.RaftIdGenerator;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpRequestBase;
 
 import java.io.IOException;
 
-public class NextIdentityForCommand extends RavenCommand<Long> {
+public class NextIdentityForCommand extends RavenCommand<Long> implements IRaftCommand, IBroadcast {
 
     private final String _id;
+    private String _raftUniqueRequestId = RaftIdGenerator.newId();
 
     public NextIdentityForCommand(String id) {
         super(Long.class);
@@ -49,5 +54,22 @@ public class NextIdentityForCommand extends RavenCommand<Long> {
         }
 
         result = jsonNode.get("NewIdentityValue").asLong();
+    }
+
+    @Override
+    public String getRaftUniqueRequestId() {
+        return _raftUniqueRequestId;
+    }
+
+    @Override
+    public IBroadcast prepareToBroadcast(DocumentConventions conventions) {
+        return new NextIdentityForCommand(this);
+    }
+
+    private NextIdentityForCommand(NextIdentityForCommand copy) {
+        super(copy);
+
+        _raftUniqueRequestId = copy._raftUniqueRequestId;
+        _id = copy._id;
     }
 }
