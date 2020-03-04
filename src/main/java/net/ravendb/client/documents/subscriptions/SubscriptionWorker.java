@@ -2,9 +2,14 @@ package net.ravendb.client.documents.subscriptions;
 
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.TreeNode;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import net.ravendb.client.documents.DocumentStore;
+import net.ravendb.client.documents.commands.GetTcpInfoForRemoteTaskCommand;
 import net.ravendb.client.exceptions.AllTopologyNodesDownException;
+import net.ravendb.client.exceptions.ClientVersionMismatchException;
+import net.ravendb.client.exceptions.cluster.NodeIsPassiveException;
 import net.ravendb.client.exceptions.database.DatabaseDoesNotExistException;
 import net.ravendb.client.exceptions.documents.subscriptions.*;
 import net.ravendb.client.exceptions.security.AuthorizationException;
@@ -13,6 +18,7 @@ import net.ravendb.client.http.RequestExecutor;
 import net.ravendb.client.http.ServerNode;
 import net.ravendb.client.primitives.*;
 import net.ravendb.client.serverwide.commands.GetTcpInfoCommand;
+import net.ravendb.client.serverwide.commands.TcpConnectionInfo;
 import net.ravendb.client.serverwide.tcp.TcpConnectionHeaderMessage;
 import net.ravendb.client.serverwide.tcp.TcpConnectionHeaderResponse;
 import net.ravendb.client.serverwide.tcp.TcpNegotiateParameters;
@@ -27,11 +33,10 @@ import org.apache.commons.logging.LogFactory;
 import java.io.IOException;
 import java.net.Socket;
 import java.security.GeneralSecurityException;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
 
 public class SubscriptionWorker<T> implements CleanCloseable {
 
@@ -158,15 +163,23 @@ public class SubscriptionWorker<T> implements CleanCloseable {
         return null;
     }
 
-
     private Socket connectToServer() throws IOException, GeneralSecurityException {
-        GetTcpInfoCommand command = new GetTcpInfoCommand("Subscription/" + _dbName, _dbName);
+        GetTcpInfoForRemoteTaskCommand command = new GetTcpInfoForRemoteTaskCommand(
+                "Subscription/" + _dbName,
+                _dbName,
+                _options != null ? _options.getSubscriptionName() : null,
+                true);
 
         RequestExecutor requestExecutor = _store.getRequestExecutor(_dbName);
+
+        TcpConnectionInfo tcpInfo;
 
         if (_redirectNode != null) {
             try {
                 requestExecutor.execute(_redirectNode, null, command, false, null);
+                tcpInfo = command.getResult();
+            } catch (ClientVersionMismatchException e) {
+                tcpInfo = legacyTryGetTcpInfo(requestExecutor, _redirectNode);
             } catch (Exception e) {
                 // if we failed to talk to a node, we'll forget about it and let the topology to
                 // redirect us to the current node
@@ -175,10 +188,25 @@ public class SubscriptionWorker<T> implements CleanCloseable {
                 throw new RuntimeException(e);
             }
         } else {
-            requestExecutor.execute(command);
+            try {
+                requestExecutor.execute(command);
+                tcpInfo = command.getResult();
+
+                final List<String> tcpInfoUrls = Arrays.stream(tcpInfo.getUrls()).collect(Collectors.toList());
+
+                _redirectNode = requestExecutor.getTopology().getNodes()
+                        .stream()
+                        .filter(x -> tcpInfoUrls.contains(x.getUrl()))
+                        .findFirst()
+                        .orElse(null);
+            } catch (ClientVersionMismatchException e) {
+                tcpInfo = legacyTryGetTcpInfo(requestExecutor);
+            }
         }
 
-        _tcpClient = TcpUtils.connect(command.getResult().getUrl(), command.getResult().getCertificate(), _store.getCertificate(), _store.getCertificatePrivateKeyPassword());
+        Tuple<Socket, String> socketStringTuple = TcpUtils.connectWithPriority(tcpInfo, command.getResult().getCertificate(), _store.getCertificate(), _store.getCertificatePrivateKeyPassword());
+        _tcpClient = socketStringTuple.first;
+        String chosenUrl = socketStringTuple.second;
         _tcpClient.setTcpNoDelay(true);
         _tcpClient.setSendBufferSize(_options.getSendBufferSize());
         _tcpClient.setReceiveBufferSize(_options.getReceiveBufferSize());
@@ -191,7 +219,7 @@ public class SubscriptionWorker<T> implements CleanCloseable {
         parameters.setVersion(TcpConnectionHeaderMessage.SUBSCRIPTION_TCP_VERSION);
         parameters.setReadResponseAndGetVersionCallback(this::readServerResponseAndGetVersion);
         parameters.setDestinationNodeTag(getCurrentNodeTag());
-        parameters.setDestinationUrl(command.getResult().getUrl());
+        parameters.setDestinationUrl(chosenUrl);
 
         _supportedFeatures = TcpNegotiation.negotiateProtocolVersion(_tcpClient.getOutputStream(), parameters);
 
@@ -216,6 +244,31 @@ public class SubscriptionWorker<T> implements CleanCloseable {
         _store.registerEvents(_subscriptionLocalRequestExecutor);
 
         return _tcpClient;
+    }
+
+    private TcpConnectionInfo legacyTryGetTcpInfo(RequestExecutor requestExecutor) {
+        GetTcpInfoCommand tcpCommand = new GetTcpInfoCommand("Subscription/" + _dbName, _dbName);
+        try {
+            requestExecutor.execute(tcpCommand, null);
+        } catch (Exception e) {
+            _redirectNode = null;
+            throw e;
+        }
+
+        return tcpCommand.getResult();
+    }
+
+    private TcpConnectionInfo legacyTryGetTcpInfo(RequestExecutor requestExecutor, ServerNode node) {
+        GetTcpInfoCommand tcpCommand = new GetTcpInfoCommand("Subscription/" + _dbName, _dbName);
+
+        try {
+            requestExecutor.execute(node, null, tcpCommand, false, null);
+        } catch (Exception e) {
+            _redirectNode = null;
+            throw e;
+        }
+
+        return tcpCommand.getResult();
     }
 
     private void ensureParser() throws IOException {
@@ -287,9 +340,34 @@ public class SubscriptionWorker<T> implements CleanCloseable {
             case REDIRECT:
                 ObjectNode data = connectionStatus.getData();
                 String appropriateNode = data.get("RedirectedTag").asText();
+                JsonNode rawReasons = data.get("Reasons");
+                Map<String, String> reasonsDictionary = new HashMap<>();
+                if (rawReasons instanceof ArrayNode) {
+                    ArrayNode rawReasonsArray = (ArrayNode) rawReasons;
+                    for (JsonNode item : rawReasonsArray) {
+                        if (item instanceof ObjectNode) {
+                            ObjectNode itemAsBlittable = (ObjectNode) item;
+
+                            if (itemAsBlittable.size() == 1) {
+                                String tagName = itemAsBlittable.fieldNames().next();
+                                reasonsDictionary.put(tagName, itemAsBlittable.get(tagName).asText());
+                            }
+                        }
+                    }
+                }
+
+                String reasonsJoined = reasonsDictionary
+                        .entrySet()
+                        .stream()
+                        .map(x -> x.getKey() + ":" + x.getValue())
+                        .collect(Collectors.joining());
+
                 SubscriptionDoesNotBelongToNodeException notBelongToNodeException =
-                        new SubscriptionDoesNotBelongToNodeException("Subscription with id " + _options.getSubscriptionName() + " cannot be processed by current node, it will be redirected to " + appropriateNode);
+                        new SubscriptionDoesNotBelongToNodeException(
+                                "Subscription with id " + _options.getSubscriptionName() + " cannot be processed by current node, " +
+                                        "it will be redirected to " + appropriateNode + System.lineSeparator() + reasonsJoined);
                 notBelongToNodeException.setAppropriateNode(appropriateNode);
+                notBelongToNodeException.setReasons(reasonsDictionary);
                 throw notBelongToNodeException;
             case CONCURRENCY_RECONNECT:
                 throw new SubscriptionChangeVectorUpdateConcurrencyException(connectionStatus.getMessage());
@@ -319,7 +397,7 @@ public class SubscriptionWorker<T> implements CleanCloseable {
                     assertConnectionState(connectionStatus);
                 }
 
-                lastConnectionFailure = null;
+                _lastConnectionFailure = null;
                 if (_processingCts.getToken().isCancellationRequested()) {
                     return;
                 }
@@ -492,6 +570,17 @@ public class SubscriptionWorker<T> implements CleanCloseable {
 
                         if (shouldTryToReconnect(ex)) {
                             Thread.sleep(_options.getTimeToWaitBeforeConnectionRetry().toMillis());
+
+                            if (_redirectNode == null) {
+                                RequestExecutor reqEx = _store.getRequestExecutor(_dbName);
+                                List<ServerNode> curTopology = reqEx.getTopologyNodes();
+                                int nextNodeIndex = (_forcedTopologyUpdateAttempts++) % curTopology.size();
+                                _redirectNode = curTopology.get(nextNodeIndex);
+                                if (_logger.isInfoEnabled()) {
+                                    _logger.info("Subscription '" + _options.getSubscriptionName() + "'. Will modify redirect node from null to " + _redirectNode.getClusterTag(), ex);
+                                }
+                            }
+
                             EventHelper.invoke(onSubscriptionConnectionRetry, ex);
                         } else {
                             if (_logger.isErrorEnabled()) {
@@ -507,16 +596,16 @@ public class SubscriptionWorker<T> implements CleanCloseable {
         }, _store.getExecutorService());
     }
 
-    private Date lastConnectionFailure;
+    private Date _lastConnectionFailure;
     private TcpConnectionHeaderMessage.SupportedFeatures _supportedFeatures;
 
     private void assertLastConnectionFailure() {
-        if (lastConnectionFailure == null) {
-            lastConnectionFailure = new Date();
+        if (_lastConnectionFailure == null) {
+            _lastConnectionFailure = new Date();
             return;
         }
 
-        if (new Date().getTime() - lastConnectionFailure.getTime() > _options.getMaxErroneousPeriod().toMillis()) {
+        if (new Date().getTime() - _lastConnectionFailure.getTime() > _options.getMaxErroneousPeriod().toMillis()) {
             throw new SubscriptionInvalidStateException("Subscription connection was in invalid state for more than "
                     + _options.getMaxErroneousPeriod() + " and therefore will be terminated");
         }
@@ -531,6 +620,7 @@ public class SubscriptionWorker<T> implements CleanCloseable {
             RequestExecutor requestExecutor = _store.getRequestExecutor(_dbName);
 
             if (se.getAppropriateNode() == null) {
+                _redirectNode = null;
                 return true;
             }
 
@@ -545,6 +635,11 @@ public class SubscriptionWorker<T> implements CleanCloseable {
             }
 
             _redirectNode = nodeToRedirectTo;
+            return true;
+        } else if (ex instanceof NodeIsPassiveException) {
+            // if we failed to talk to a node, we'll forget about it and let the topology to
+            // redirect us to the current node
+            _redirectNode = null;
             return true;
         } else if (ex instanceof SubscriptionChangeVectorUpdateConcurrencyException) {
             return true;

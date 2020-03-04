@@ -1137,7 +1137,6 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
     }
 
     private void buildWith(StringBuilder queryText) {
-        //TODO: need to aggragate with parameters into this instance parameter list, assert and strip parameters from with clauses
         for (QueryToken with : withTokens) {
             with.writeTo(queryText);
             queryText.append(System.lineSeparator());

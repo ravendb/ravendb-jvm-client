@@ -295,12 +295,12 @@ public abstract class DocumentStoreBase implements IDocumentStore {
         this.onAfterConversionToEntity.remove(handler);
     }
 
-    public void addFailedRequestListener(EventHandler<FailedRequestEventArgs> handler) {
+    public void addOnFailedRequestListener(EventHandler<FailedRequestEventArgs> handler) {
         assertNotInitialized("onFailedRequest");
         this.onFailedRequest.add(handler);
     }
 
-    public void removeFailedRequestListener(EventHandler<FailedRequestEventArgs> handler) {
+    public void removeOnFailedRequestListener(EventHandler<FailedRequestEventArgs> handler) {
         assertNotInitialized("onFailedRequest");
         this.onFailedRequest.remove(handler);
     }
@@ -418,6 +418,7 @@ public abstract class DocumentStoreBase implements IDocumentStore {
 
     public void registerEvents(RequestExecutor requestExecutor) {
         for (EventHandler<FailedRequestEventArgs> handler : onFailedRequest) {
+            requestExecutor.addOnFailedRequestListener(handler);
         }
     }
 
@@ -428,4 +429,9 @@ public abstract class DocumentStoreBase implements IDocumentStore {
     public abstract MaintenanceOperationExecutor maintenance();
 
     public abstract OperationExecutor operations();
+
+    public abstract CleanCloseable setRequestTimeout(Duration timeout);
+
+    public abstract CleanCloseable setRequestTimeout(Duration timeout, String database);
+
 }

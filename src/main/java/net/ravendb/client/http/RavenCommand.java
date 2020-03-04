@@ -17,6 +17,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
+import java.time.Duration;
 import java.util.Map;
 
 public abstract class RavenCommand<TResult> {
@@ -25,15 +26,26 @@ public abstract class RavenCommand<TResult> {
     protected TResult result;
     protected int statusCode;
     protected RavenCommandResponseType responseType;
+    protected Duration timeout;
     protected boolean canCache;
     protected boolean canCacheAggressively;
     protected String selectedNodeTag;
     protected final ObjectMapper mapper = JsonExtensions.getDefaultMapper();
 
+    public long failoverTopologyEtag = -2;
+
     public abstract boolean isReadRequest();
 
     public RavenCommandResponseType getResponseType() {
         return responseType;
+    }
+
+    public Duration getTimeout() {
+        return timeout;
+    }
+
+    public void setTimeout(Duration timeout) {
+        this.timeout = timeout;
     }
 
     public int getStatusCode() {

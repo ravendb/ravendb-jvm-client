@@ -4,6 +4,7 @@ import net.ravendb.client.Constants;
 import net.ravendb.client.documents.conventions.DocumentConventions;
 import net.ravendb.client.documents.operations.GetStatisticsOperation;
 import net.ravendb.client.documents.operations.configuration.GetClientConfigurationOperation;
+import net.ravendb.client.documents.session.FailedRequestEventArgs;
 import net.ravendb.client.documents.session.SessionInfo;
 import net.ravendb.client.exceptions.AllTopologyNodesDownException;
 import net.ravendb.client.exceptions.ClientVersionMismatchException;
@@ -17,12 +18,14 @@ import net.ravendb.client.primitives.*;
 import net.ravendb.client.primitives.Timer;
 import net.ravendb.client.serverwide.commands.GetDatabaseTopologyCommand;
 import net.ravendb.client.util.CertificateUtils;
+import net.ravendb.client.util.TimeUtils;
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.http.Header;
+import org.apache.http.HttpRequest;
 import org.apache.http.HttpStatus;
 import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.methods.CloseableHttpResponse;
@@ -42,6 +45,7 @@ import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.security.*;
 import java.time.Duration;
 import java.util.*;
@@ -53,6 +57,8 @@ import java.util.stream.Collectors;
 
 @SuppressWarnings("SameParameterValue")
 public class RequestExecutor implements CleanCloseable {
+
+    private static final int INITIAL_TOPOLOGY_ETAG = -2;
 
     public static Consumer<HttpClientBuilder> configureHttpClient = null;
 
@@ -80,7 +86,6 @@ public class RequestExecutor implements CleanCloseable {
     private final String _databaseName;
 
     private static final Log logger = LogFactory.getLog(RequestExecutor.class);
-
     private Date _lastReturnedResponse;
 
     protected final ExecutorService _executorService;
@@ -99,10 +104,15 @@ public class RequestExecutor implements CleanCloseable {
         return _nodeSelector != null ? _nodeSelector.getTopology() : null;
     }
 
-    private final CloseableHttpClient httpClient;
+    private CloseableHttpClient _httpClient;
 
     public CloseableHttpClient getHttpClient() {
-        return httpClient;
+        CloseableHttpClient httpClient = _httpClient;
+        if (httpClient != null) {
+            return httpClient;
+        }
+
+        return _httpClient = createHttpClient();
     }
 
     public List<ServerNode> getTopologyNodes() {
@@ -115,6 +125,8 @@ public class RequestExecutor implements CleanCloseable {
     private volatile Timer _updateTopologyTimer;
 
     protected NodeSelector _nodeSelector;
+
+    private Duration _defaultTimeout;
 
     public final AtomicLong numberOfServerRequests = new AtomicLong(0);
 
@@ -152,6 +164,87 @@ public class RequestExecutor implements CleanCloseable {
         return lastServerVersion;
     }
 
+    public Duration getDefaultTimeout() {
+        return _defaultTimeout;
+    }
+
+    public void setDefaultTimeout(Duration timeout) {
+        _defaultTimeout = timeout;
+    }
+
+    private Duration _secondBroadcastAttemptTimeout;
+
+    public Duration getSecondBroadcastAttemptTimeout() {
+        return _secondBroadcastAttemptTimeout;
+    }
+
+    public void setSecondBroadcastAttemptTimeout(Duration secondBroadcastAttemptTimeout) {
+        _secondBroadcastAttemptTimeout = secondBroadcastAttemptTimeout;
+    }
+
+    private Duration _firstBroadcastAttemptTimeout;
+
+    public Duration getFirstBroadcastAttemptTimeout() {
+        return _firstBroadcastAttemptTimeout;
+    }
+
+    public void setFirstBroadcastAttemptTimeout(Duration firstBroadcastAttemptTimeout) {
+        _firstBroadcastAttemptTimeout = firstBroadcastAttemptTimeout;
+    }
+
+    private final List<EventHandler<FailedRequestEventArgs>> _onFailedRequest = new ArrayList<>();
+
+    public void addOnFailedRequestListener(EventHandler<FailedRequestEventArgs> handler) {
+        this._onFailedRequest.add(handler);
+    }
+
+    public void removeOnFailedRequestListener(EventHandler<FailedRequestEventArgs> handler) {
+        this._onFailedRequest.remove(handler);
+    }
+
+    private final List<Consumer<Topology>> _topologyUpdated = new ArrayList<>();
+
+    public void addTopologyUpdatedListener(Consumer<Topology> handler) {
+        _topologyUpdated.add(handler);
+    }
+
+    public void removeTopologyUpdatedListener(Consumer<Topology> handler) {
+        _topologyUpdated.remove(handler);
+    }
+
+    private void onFailedRequestInvoke(String url, Exception e) {
+        EventHelper.invoke(_onFailedRequest, this, new FailedRequestEventArgs(_databaseName, url, e));
+    }
+
+    private CloseableHttpClient createHttpClient() {
+        ConcurrentMap<String, CloseableHttpClient> httpClientCache = getHttpClientCache();
+
+        String name = getHttpClientName();
+
+        return httpClientCache.computeIfAbsent(name, n -> createClient());
+    }
+
+    private void removeHttpClient() {
+        ConcurrentMap<String, CloseableHttpClient> httpClientCache = getHttpClientCache();
+
+        String name = getHttpClientName();
+
+        httpClientCache.remove(name);
+
+        _httpClient = null;
+    }
+
+    private String getHttpClientName() {
+        if (certificate != null) {
+            return CertificateUtils.extractThumbprintFromCertificate(certificate);
+        }
+        return "";
+    }
+
+    private ConcurrentMap<String, CloseableHttpClient> getHttpClientCache() {
+        return conventions.isUseCompression() ? globalHttpClientWithCompression : globalHttpClientWithoutCompression;
+    }
+
     public DocumentConventions getConventions() {
         return conventions;
     }
@@ -178,14 +271,9 @@ public class RequestExecutor implements CleanCloseable {
 
         _lastReturnedResponse = new Date();
         this.conventions = conventions.clone();
-
-        String thumbprint = "";
-        if (certificate != null) {
-            thumbprint = CertificateUtils.extractThumbprintFromCertificate(certificate);
-        }
-
-        ConcurrentMap<String, CloseableHttpClient> clientCache = conventions.isUseCompression() ? globalHttpClientWithCompression : globalHttpClientWithoutCompression;
-        httpClient = clientCache.computeIfAbsent(thumbprint, (thumb) -> createClient());
+        this._defaultTimeout = conventions.getRequestTimeout();
+        this._secondBroadcastAttemptTimeout = conventions.getSecondBroadcastAttemptTimeout();
+        this._firstBroadcastAttemptTimeout = conventions.getFirstBroadcastAttemptTimeout();
     }
 
     public static RequestExecutor create(String[] initialUrls, String databaseName, KeyStore certificate, char[] keyPassword, KeyStore trustStore, ExecutorService executorService, DocumentConventions conventions) {
@@ -214,7 +302,7 @@ public class RequestExecutor implements CleanCloseable {
         topology.setNodes(Collections.singletonList(serverNode));
 
         executor._nodeSelector = new NodeSelector(topology, executorService);
-        executor.topologyEtag = -2;
+        executor.topologyEtag = INITIAL_TOPOLOGY_ETAG;
         executor._disableTopologyUpdates = true;
         executor._disableClientConfigurationUpdates = true;
 
@@ -252,7 +340,6 @@ public class RequestExecutor implements CleanCloseable {
 
                 conventions.updateFrom(result.getConfiguration());
                 clientConfigurationEtag = result.getEtag();
-
             } finally {
                 _disableClientConfigurationUpdates = oldDisableClientConfigurationUpdates;
                 _updateClientConfigurationSemaphore.release();
@@ -269,11 +356,11 @@ public class RequestExecutor implements CleanCloseable {
     }
 
     public CompletableFuture<Boolean> updateTopologyAsync(ServerNode node, int timeout, boolean forceUpdate, String debugTag) {
-        if (_disposed) {
+        if (_disableTopologyUpdates) {
             return CompletableFuture.completedFuture(false);
         }
 
-        if (_disableTopologyUpdates) {
+        if (_disposed) {
             return CompletableFuture.completedFuture(false);
         }
 
@@ -298,14 +385,15 @@ public class RequestExecutor implements CleanCloseable {
 
                 GetDatabaseTopologyCommand command = new GetDatabaseTopologyCommand(debugTag);
                 execute(node, null, command, false, null);
+                Topology topology = command.getResult();
 
                 if (_nodeSelector == null) {
-                    _nodeSelector = new NodeSelector(command.getResult(), _executorService);
+                    _nodeSelector = new NodeSelector(topology, _executorService);
 
                     if (conventions.getReadBalanceBehavior() == ReadBalanceBehavior.FASTEST_NODE) {
                         _nodeSelector.scheduleSpeedTest();
                     }
-                } else if (_nodeSelector.onUpdateTopology(command.getResult(), forceUpdate)) {
+                } else if (_nodeSelector.onUpdateTopology(topology, forceUpdate)) {
                     disposeAllFailedNodesTimers();
                     if (conventions.getReadBalanceBehavior() == ReadBalanceBehavior.FASTEST_NODE) {
                         _nodeSelector.scheduleSpeedTest();
@@ -314,6 +402,7 @@ public class RequestExecutor implements CleanCloseable {
 
                 topologyEtag = _nodeSelector.getTopology().getEtag();
 
+                onTopologyUpdated(topology);
             } catch (Exception e) {
                 if (!_disposed) {
                     throw e;
@@ -336,7 +425,6 @@ public class RequestExecutor implements CleanCloseable {
         execute(command, null);
     }
 
-    @SuppressWarnings("UnnecessaryReturnStatement")
     public <TResult> void execute(RavenCommand<TResult> command, SessionInfo sessionInfo) {
         CompletableFuture<Void> topologyUpdate = _firstTopologyUpdate;
         if (topologyUpdate != null &&
@@ -344,13 +432,21 @@ public class RequestExecutor implements CleanCloseable {
                 || _disableTopologyUpdates) {
             CurrentIndexAndNode currentIndexAndNode = chooseNodeForRequest(command, sessionInfo);
             execute(currentIndexAndNode.currentNode, currentIndexAndNode.currentIndex, command, true, sessionInfo);
-            return;
         } else {
             unlikelyExecute(command, topologyUpdate, sessionInfo);
         }
     }
 
     public <TResult> CurrentIndexAndNode chooseNodeForRequest(RavenCommand<TResult> cmd, SessionInfo sessionInfo) {
+        if (!_disableTopologyUpdates) {
+            // when we disable topology updates we cannot rely on the node tag,
+            // because the initial topology will not have them
+
+            if (StringUtils.isNotBlank(cmd.getSelectedNodeTag())) {
+                return _nodeSelector.getRequestedNode(cmd.getSelectedNodeTag());
+            }
+        }
+
         if (!cmd.isReadRequest()) {
             return _nodeSelector.getPreferredNode();
         }
@@ -369,13 +465,12 @@ public class RequestExecutor implements CleanCloseable {
 
     private <TResult> void unlikelyExecute(RavenCommand<TResult> command, CompletableFuture<Void> topologyUpdate, SessionInfo sessionInfo) {
         try {
-            if (topologyUpdate == null) {
+            if (topologyUpdate == null || topologyUpdate.isCompletedExceptionally()) {
                 synchronized (this) {
-                    if (_firstTopologyUpdate == null) {
+                    if (_firstTopologyUpdate == null || topologyUpdate == _firstTopologyUpdate) {
                         if (_lastKnownUrls == null) {
                             throw new IllegalStateException("No known topology and no previously known one, cannot proceed, likely a bug");
                         }
-
                         _firstTopologyUpdate = firstTopologyUpdate(_lastKnownUrls);
                     }
 
@@ -400,7 +495,7 @@ public class RequestExecutor implements CleanCloseable {
 
     private void updateTopologyCallback() {
         Date time = new Date();
-        if (time.getTime() - _lastReturnedResponse.getTime() <= Duration.ofMinutes(1).toMillis()) {
+        if (time.getTime() - _lastReturnedResponse.getTime() <= Duration.ofMinutes(5).toMillis()) {
             return;
         }
 
@@ -429,7 +524,7 @@ public class RequestExecutor implements CleanCloseable {
                 });
     }
 
-    @SuppressWarnings({"unchecked", "ConstantConditions"})
+    @SuppressWarnings({"ConstantConditions"})
     protected CompletableFuture<Void> firstTopologyUpdate(String[] inputUrls) {
         final String[] initialUrls = validateUrls(inputUrls, certificate);
 
@@ -494,7 +589,7 @@ public class RequestExecutor implements CleanCloseable {
             }
 
             _lastKnownUrls = initialUrls;
-            String details = list.stream().map(x -> x.first + " -> " + Optional.ofNullable(x.second).map(m -> m.getMessage()).orElse("")).collect(Collectors.joining(", "));
+            String details = list.stream().map(x -> x.first + " -> " + Optional.ofNullable(x.second).map(Throwable::getMessage).orElse("")).collect(Collectors.joining(", "));
             throwExceptions(details);
         }, _executorService);
     }
@@ -550,83 +645,55 @@ public class RequestExecutor implements CleanCloseable {
         }
     }
 
-    @SuppressWarnings({"ThrowFromFinallyBlock", "ConstantConditions"})
     public <TResult> void execute(ServerNode chosenNode, Integer nodeIndex, RavenCommand<TResult> command, boolean shouldRetry, SessionInfo sessionInfo) {
+        execute(chosenNode, nodeIndex, command, shouldRetry, sessionInfo, null);
+    }
+
+    @SuppressWarnings({"ConstantConditions"})
+    public <TResult> void execute(ServerNode chosenNode, Integer nodeIndex, RavenCommand<TResult> command, boolean shouldRetry, SessionInfo sessionInfo, Reference<HttpRequestBase> requestRef) {
+        if (command.failoverTopologyEtag == INITIAL_TOPOLOGY_ETAG) {
+            command.failoverTopologyEtag = INITIAL_TOPOLOGY_ETAG;
+            if (_nodeSelector != null && _nodeSelector.getTopology() != null) {
+                Topology topology = _nodeSelector.getTopology();
+                if (topology.getEtag() != null) {
+                    command.failoverTopologyEtag = topology.getEtag();
+                }
+            }
+        }
+
         Reference<String> urlRef = new Reference<>();
         HttpRequestBase request = createRequest(chosenNode, command, urlRef);
+
+        if (requestRef != null) {
+            requestRef.value = request;
+        }
+
+        //noinspection SimplifiableConditionalExpression
         boolean noCaching = sessionInfo != null ? sessionInfo.isNoCaching() : false;
 
-        Reference<String> cachedChangeVector = new Reference<>();
+        Reference<String> cachedChangeVectorRef = new Reference<>();
         Reference<String> cachedValue = new Reference<>();
 
-        try (HttpCache.ReleaseCacheItem cachedItem = getFromCache(command, !noCaching, urlRef.value, cachedChangeVector, cachedValue)) {
-            if (cachedChangeVector.value != null) {
-                AggressiveCacheOptions aggressiveCacheOptions = aggressiveCaching.get();
-                if (aggressiveCacheOptions != null &&
-                        cachedItem.getAge().compareTo(aggressiveCacheOptions.getDuration()) < 0 &&
-                        (!cachedItem.getMightHaveBeenModified() || aggressiveCacheOptions.getMode() != AggressiveCacheMode.TRACK_CHANGES) &&
-                        command.canCacheAggressively()) {
-                    try {
-                        command.setResponse(cachedValue.value, true);
-                    } catch (IOException e) {
-                        throw new RuntimeException(e);
-                    }
+        try (HttpCache.ReleaseCacheItem cachedItem = getFromCache(command, !noCaching, urlRef.value, cachedChangeVectorRef, cachedValue)) {
+            if (cachedChangeVectorRef.value != null) {
+                if (tryGetFromCache(command, cachedItem, cachedValue.value)) {
                     return;
                 }
-
-                request.addHeader("If-None-Match", "\"" + cachedChangeVector.value + "\"");
             }
 
-            if (!_disableClientConfigurationUpdates) {
-                request.addHeader(Constants.Headers.CLIENT_CONFIGURATION_ETAG, "\"" + clientConfigurationEtag + "\"");
-            }
+            setRequestHeaders(sessionInfo, cachedChangeVectorRef.value, request);
 
-            if (sessionInfo != null && sessionInfo.getLastClusterTransactionIndex() != null) {
-                request.addHeader(Constants.Headers.LAST_KNOWN_CLUSTER_TRANSACTION_INDEX, sessionInfo.getLastClusterTransactionIndex().toString());
-            }
+            CloseableHttpResponse response = sendRequestToServer(chosenNode, nodeIndex, command, shouldRetry, sessionInfo, request, urlRef.value);
 
-            if (!_disableTopologyUpdates) {
-                request.addHeader(Constants.Headers.TOPOLOGY_ETAG, "\"" + topologyEtag + "\"");
-            }
-
-            CloseableHttpResponse response = null;
-            ResponseDisposeHandling responseDispose = ResponseDisposeHandling.AUTOMATIC;
-
-            try {
-                numberOfServerRequests.incrementAndGet();
-
-                if (shouldExecuteOnAll(chosenNode, command)) {
-                    response = executeOnAllToFigureOutTheFastest(chosenNode, command);
-                } else {
-                    response = command.send(httpClient, request);
-                }
-
-                if (sessionInfo != null && sessionInfo.getLastClusterTransactionIndex() != null) {
-                    // if we reach here it means that sometime a cluster transaction has occurred against this database.
-                    // Since the current executed command can be dependent on that, we have to wait for the cluster transaction.
-                    // But we can't do that if the server is an old one.
-
-                    Header version = response.getFirstHeader(Constants.Headers.SERVER_VERSION);
-                    if (version != null && "4.1".compareToIgnoreCase(version.getValue()) > 0) {
-                        throw new ClientVersionMismatchException("The server on " + chosenNode.getUrl() + " has an old version and can't perform " +
-                                "the command since this command dependent on a cluster transaction which this node doesn't support.");
-                    }
-                }
-            } catch (IOException e) {
-                if (!shouldRetry) {
-                    throw ExceptionsUtils.unwrapException(e);
-                }
-
-                if (!handleServerDown(urlRef.value, chosenNode, nodeIndex, command, request, response, e, sessionInfo, shouldRetry)) {
-                    throwFailedToContactAllNodes(command, request, e, null);
-                }
+            if (response == null) {
                 return;
             }
 
+            CompletableFuture<Void> refreshTask = refreshIfNeeded(chosenNode, response);
+
             command.statusCode = response.getStatusLine().getStatusCode();
 
-            Boolean refreshTopology = Optional.ofNullable(HttpExtensions.getBooleanHeader(response, Constants.Headers.REFRESH_TOPOLOGY)).orElse(false);
-            Boolean refreshClientConfiguration = Optional.ofNullable(HttpExtensions.getBooleanHeader(response, Constants.Headers.REFRESH_CLIENT_CONFIGURATION)).orElse(false);
+            ResponseDisposeHandling responseDispose = ResponseDisposeHandling.AUTOMATIC;
 
             try {
                 if (response.getStatusLine().getStatusCode() == HttpStatus.SC_NOT_MODIFIED) {
@@ -650,18 +717,7 @@ public class RequestExecutor implements CleanCloseable {
                             throw new DatabaseDoesNotExistException(dbMissingHeader.getValue());
                         }
 
-                        if (command.getFailedNodes().size() == 0) { //precaution, should never happen at this point
-                            throw new IllegalStateException("Received unsuccessful response and couldn't recover from it. Also, no record of exceptions per failed nodes. This is weird and should not happen.");
-                        }
-
-                        if (command.getFailedNodes().size() == 1) {
-                            Collection<Exception> values = command.getFailedNodes().values();
-                            values.stream().findFirst().ifPresent(v -> {
-                                throw new RuntimeException(v);
-                            });
-                        }
-
-                        throw new AllTopologyNodesDownException("Received unsuccessful response from all servers and couldn't recover from it.");
+                        throwFailedToContactAllNodes(command, request);
                     }
                     return; // we either handled this already in the unsuccessful response or we are throwing
                 }
@@ -673,45 +729,226 @@ public class RequestExecutor implements CleanCloseable {
                     IOUtils.closeQuietly(response);
                 }
 
-                if (refreshTopology || refreshClientConfiguration) {
-
-                    ServerNode serverNode = new ServerNode();
-                    serverNode.setUrl(chosenNode.getUrl());
-                    serverNode.setDatabase(_databaseName);
-
-                    CompletableFuture<Boolean> topologyTask = refreshTopology ? updateTopologyAsync(serverNode, 0) : CompletableFuture.completedFuture(false);
-                    CompletableFuture<Void> clientConfiguration = refreshClientConfiguration ? updateClientConfigurationAsync() : CompletableFuture.completedFuture(null);
-
-                    try {
-                        CompletableFuture.allOf(topologyTask, clientConfiguration).get();
-                    } catch (Exception e) {
-                        throw ExceptionsUtils.unwrapException(e);
-                    }
+                try {
+                    refreshTask.get();
+                } catch (Exception e) {
+                    //noinspection ThrowFromFinallyBlock
+                    throw ExceptionsUtils.unwrapException(e);
                 }
             }
         }
     }
 
-    private <TResult> void throwFailedToContactAllNodes(RavenCommand<TResult> command, HttpRequestBase request, Exception e, Exception timeoutException) {
-        String message = "Tried to send " + command.resultClass.getName() + " request via " + request.getMethod() + " " + request.getURI() + " to all configured nodes in the topology, " +
-                "all of them seem to be down or not responding. I've tried to access the following nodes: ";
+    private CompletableFuture<Void> refreshIfNeeded(ServerNode chosenNode, CloseableHttpResponse response) {
+        Boolean refreshTopology = Optional.ofNullable(HttpExtensions.getBooleanHeader(response, Constants.Headers.REFRESH_TOPOLOGY)).orElse(false);
+        Boolean refreshClientConfiguration = Optional.ofNullable(HttpExtensions.getBooleanHeader(response, Constants.Headers.REFRESH_CLIENT_CONFIGURATION)).orElse(false);
 
-        message += Optional.ofNullable(_nodeSelector).map(x -> x.getTopology()).map(x -> x.getNodes().stream().map(ServerNode::getUrl).collect(Collectors.joining(", "))).orElse("");
+        if (refreshTopology || refreshClientConfiguration) {
+            ServerNode serverNode = new ServerNode();
+            serverNode.setUrl(chosenNode.getUrl());
+            serverNode.setDatabase(_databaseName);
 
-        if (_topologyTakenFromNode != null) {
-            String nodes = Optional.ofNullable(_nodeSelector).map(x ->
-                    x.getTopology().getNodes().stream().map(n
-                            -> "( url: " + n.getUrl() + ", clusterTag: " + n.getClusterTag() + ", serverRole: " + n.getServerRole()  + ")").collect(Collectors.joining(", "))).orElse("");
+            CompletableFuture<Boolean> topologyTask = refreshTopology ? updateTopologyAsync(serverNode, 0) : CompletableFuture.completedFuture(false);
+            CompletableFuture<Void> clientConfiguration = refreshClientConfiguration ? updateClientConfigurationAsync() : CompletableFuture.completedFuture(null);
 
-            message += System.lineSeparator() + "I was able to fetch " + _topologyTakenFromNode.getDatabase() + " topology from " + _topologyTakenFromNode.getUrl() + "." + System.lineSeparator()
-                    + "Fetched topology: " + nodes;
+            return CompletableFuture.allOf(topologyTask, clientConfiguration);
         }
 
-        throw new AllTopologyNodesDownException(message, timeoutException != null ? timeoutException : e);
+        return CompletableFuture.allOf();
+    }
+
+    private <TResult> CloseableHttpResponse sendRequestToServer(ServerNode chosenNode, Integer nodeIndex, RavenCommand<TResult> command,
+                                                                boolean shouldRetry, SessionInfo sessionInfo, HttpRequestBase request, String url) {
+        try {
+            numberOfServerRequests.incrementAndGet();
+
+            Duration timeout = ObjectUtils.firstNonNull(command.getTimeout(), _defaultTimeout);
+            if (timeout != null) {
+                AggressiveCacheOptions callingTheadAggressiveCaching = aggressiveCaching.get();
+
+                CompletableFuture<Void> sendTask = CompletableFuture.runAsync(() -> {
+                    AggressiveCacheOptions aggressiveCacheOptionsToRestore = aggressiveCaching.get();
+
+                    try {
+                        aggressiveCaching.set(callingTheadAggressiveCaching);
+                        send(chosenNode, command, sessionInfo, request);
+                    } catch (IOException e) {
+                        throw ExceptionsUtils.unwrapException(e);
+                    } finally {
+                        aggressiveCaching.set(aggressiveCacheOptionsToRestore);
+                    }
+                }, _executorService);
+
+                try {
+                    sendTask.get(timeout.toMillis(), TimeUnit.MILLISECONDS);
+                    return null;
+                } catch (TimeoutException e) {
+                    request.abort();
+
+                    net.ravendb.client.exceptions.TimeoutException timeoutException = new net.ravendb.client.exceptions.TimeoutException("The request for " + request.getURI() + " failed with timeout after " + TimeUtils.durationToTimeSpan(timeout), e);
+                    if (!shouldRetry) {
+                        if (command.getFailedNodes() == null) {
+                            command.setFailedNodes(new HashMap<>());
+                        }
+
+                        command.getFailedNodes().put(chosenNode, timeoutException);
+                        throw timeoutException;
+                    }
+
+                    if (!handleServerDown(url, chosenNode, nodeIndex, command, request, null, timeoutException, sessionInfo, shouldRetry)) {
+                        throwFailedToContactAllNodes(command, request);
+                    }
+
+                    return null;
+                }
+            } else {
+                return send(chosenNode, command, sessionInfo, request);
+            }
+        } catch (Exception e) {
+            if (!shouldRetry) {
+                throw ExceptionsUtils.unwrapException(e);
+            }
+
+            if (!handleServerDown(url, chosenNode, nodeIndex, command, request, null, e, sessionInfo, shouldRetry)) {
+                throwFailedToContactAllNodes(command, request);
+            }
+
+            return null;
+        }
+    }
+
+    private <TResult> CloseableHttpResponse send(ServerNode chosenNode, RavenCommand<TResult> command, SessionInfo sessionInfo, HttpRequestBase request) throws IOException {
+        CloseableHttpResponse response = null;
+
+        if (shouldExecuteOnAll(chosenNode, command)) {
+            response = executeOnAllToFigureOutTheFastest(chosenNode, command);
+        } else {
+            response = command.send(getHttpClient(), request);
+        }
+
+        String serverVersion = tryGetServerVersion(response);
+        if (serverVersion != null) {
+            lastServerVersion = serverVersion;
+        }
+
+        if (sessionInfo != null && sessionInfo.getLastClusterTransactionIndex() != null) {
+            // if we reach here it means that sometime a cluster transaction has occurred against this database.
+            // Since the current executed command can be dependent on that, we have to wait for the cluster transaction.
+            // But we can't do that if the server is an old one.
+
+            Header version = response.getFirstHeader(Constants.Headers.SERVER_VERSION);
+            if (version != null && "4.1".compareToIgnoreCase(version.getValue()) > 0) {
+                throw new ClientVersionMismatchException("The server on " + chosenNode.getUrl() + " has an old version and can't perform " +
+                        "the command since this command dependent on a cluster transaction which this node doesn't support.");
+            }
+        }
+
+        return response;
+    }
+
+    private void setRequestHeaders(SessionInfo sessionInfo, String cachedChangeVector, HttpRequest request) {
+        if (cachedChangeVector != null) {
+            request.addHeader("If-None-Match", "\"" + cachedChangeVector + "\"");
+        }
+
+        if (!_disableClientConfigurationUpdates) {
+            request.addHeader(Constants.Headers.CLIENT_CONFIGURATION_ETAG, "\"" + clientConfigurationEtag + "\"");
+        }
+
+        if (sessionInfo != null && sessionInfo.getLastClusterTransactionIndex() != null) {
+            request.addHeader(Constants.Headers.LAST_KNOWN_CLUSTER_TRANSACTION_INDEX, sessionInfo.getLastClusterTransactionIndex().toString());
+        }
+
+        if (!_disableTopologyUpdates) {
+            request.addHeader(Constants.Headers.TOPOLOGY_ETAG, "\"" + topologyEtag + "\"");
+        }
+
+        if (request.getFirstHeader(Constants.Headers.CLIENT_VERSION) == null) {
+            request.addHeader(Constants.Headers.CLIENT_VERSION, RequestExecutor.CLIENT_VERSION);
+        }
+    }
+
+    private <TResult> boolean tryGetFromCache(RavenCommand<TResult> command, HttpCache.ReleaseCacheItem cachedItem, String cachedValue) {
+        AggressiveCacheOptions aggressiveCacheOptions = aggressiveCaching.get();
+        if (aggressiveCacheOptions != null &&
+                cachedItem.getAge().compareTo(aggressiveCacheOptions.getDuration()) < 0 &&
+                (!cachedItem.getMightHaveBeenModified() || aggressiveCacheOptions.getMode() != AggressiveCacheMode.TRACK_CHANGES) &&
+                command.canCacheAggressively()) {
+            try {
+                if (cachedItem.item.flags.contains(ItemFlags.NOT_FOUND)) {
+                    // if this is a cached delete, we only respect it if it _came_ from an aggressively cached
+                    // block, otherwise, we'll run the request again
+
+                    if (cachedItem.item.flags.contains(ItemFlags.AGGRESSIVELY_CACHED)) {
+                        command.setResponse(cachedValue, true);
+                        return true;
+                    }
+                } else {
+                    command.setResponse(cachedValue, true);
+                    return true;
+                }
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        }
+        return false;
+    }
+
+    private static String tryGetServerVersion(CloseableHttpResponse response) {
+        Header serverVersionHeader = response.getFirstHeader(Constants.Headers.SERVER_VERSION);
+
+        if (serverVersionHeader != null) {
+            return serverVersionHeader.getValue();
+        }
+
+        return null;
+    }
+
+
+    private <TResult> void throwFailedToContactAllNodes(RavenCommand<TResult> command, HttpRequestBase request) {
+        if (command.getFailedNodes() == null || command.getFailedNodes().size() == 0) { //precaution, should never happen at this point
+            throw new IllegalStateException("Received unsuccessful response and couldn't recover from it. " +
+                    "Also, no record of exceptions per failed nodes. This is weird and should not happen.");
+        }
+
+        if (command.getFailedNodes().size() == 1) {
+            throw ExceptionsUtils.unwrapException(command.getFailedNodes().values().iterator().next());
+        }
+
+        String message = "Tried to send " + command.resultClass.getName() + " request via " + request.getMethod()
+                + " " + request.getURI() + " to all configured nodes in the topology, none of the attempt succeeded." + System.lineSeparator();
+
+        if (_topologyTakenFromNode != null) {
+            message += "I was able to fetch " + _topologyTakenFromNode.getDatabase()
+                    + " topology from " + _topologyTakenFromNode.getUrl() + "." + System.lineSeparator();
+        }
+
+        List<ServerNode> nodes = null;
+        if (_nodeSelector != null && _nodeSelector.getTopology() != null) {
+            nodes = _nodeSelector.getTopology().getNodes();
+        }
+
+        if (nodes == null) {
+            message += "Topology is empty.";
+        } else {
+            message += "Topology: ";
+
+            for (ServerNode node : nodes) {
+                Exception exception = command.getFailedNodes().get(node);
+                message += System.lineSeparator() +
+                        "[Url: " + node.getUrl() + ", " +
+                        "ClusterTag: " + node.getClusterTag() + ", " +
+                        "ServerRole: " + node.getServerRole() + ", " +
+                        "Exception: " + (exception != null ? exception.getMessage() : "No exception") + "]";
+
+            }
+        }
+
+        throw new AllTopologyNodesDownException(message);
     }
 
     public boolean inSpeedTestPhase() {
-        return Optional.ofNullable(_nodeSelector).map(x -> x.inSpeedTestPhase()).orElse(false);
+        return Optional.ofNullable(_nodeSelector).map(NodeSelector::inSpeedTestPhase).orElse(false);
     }
 
     private <TResult> boolean shouldExecuteOnAll(ServerNode chosenNode, RavenCommand<TResult> command) {
@@ -720,12 +957,13 @@ public class RequestExecutor implements CleanCloseable {
                 _nodeSelector.inSpeedTestPhase() &&
                 Optional.ofNullable(_nodeSelector)
                         .map(NodeSelector::getTopology)
-                        .map(x -> x.getNodes())
+                        .map(Topology::getNodes)
                         .map(x -> x.size() > 1)
                         .orElse(false) &&
                 command.isReadRequest() &&
                 command.getResponseType() == RavenCommandResponseType.OBJECT &&
-                chosenNode != null;
+                chosenNode != null &&
+                !(command instanceof IBroadcast);
     }
 
     @SuppressWarnings("ConstantConditions")
@@ -741,11 +979,12 @@ public class RequestExecutor implements CleanCloseable {
             final int taskNumber = i;
             numberOfServerRequests.incrementAndGet();
 
-            CompletableFuture<IndexAndResponse> task =  CompletableFuture.supplyAsync(() -> {
+            CompletableFuture<IndexAndResponse> task = CompletableFuture.supplyAsync(() -> {
                 try {
                     Reference<String> strRef = new Reference<>();
                     HttpRequestBase request = createRequest(nodes.get(taskNumber), command, strRef);
-                    return new IndexAndResponse(taskNumber, command.send(httpClient, request));
+                    setRequestHeaders(null, null, request);
+                    return new IndexAndResponse(taskNumber, command.send(getHttpClient(), request));
                 } catch (Exception e){
                     numberOfFailedTasks.incrementAndGet();
                     tasks.set(taskNumber, null);
@@ -764,7 +1003,10 @@ public class RequestExecutor implements CleanCloseable {
 
         while (numberOfFailedTasks.get() < tasks.size()) {
             try {
-                IndexAndResponse fastest = (IndexAndResponse) CompletableFuture.anyOf(tasks.stream().filter(x -> x != null).toArray(CompletableFuture[]::new)).get();
+                IndexAndResponse fastest = (IndexAndResponse) CompletableFuture
+                        .anyOf(tasks.stream().filter(Objects::nonNull)
+                        .toArray(CompletableFuture[]::new))
+                        .get();
                 _nodeSelector.recordFastest(fastest.index, nodes.get(fastest.index));
                 break;
             } catch (InterruptedException | ExecutionException e) {
@@ -800,15 +1042,25 @@ public class RequestExecutor implements CleanCloseable {
     private <TResult> HttpRequestBase createRequest(ServerNode node, RavenCommand<TResult> command, Reference<String> url) {
         try {
             HttpRequestBase request = command.createRequest(node, url);
-            request.setURI(new URI(url.value));
-
-            if (!request.containsHeader(Constants.Headers.CLIENT_VERSION)) {
-                request.addHeader(Constants.Headers.CLIENT_VERSION, CLIENT_VERSION);
-            }
+            URI builder = new URI(url.value);
 
             if (requestPostProcessor != null) {
                 requestPostProcessor.accept(request);
             }
+
+            if (command instanceof IRaftCommand) {
+                IRaftCommand raftCommand = (IRaftCommand) command;
+
+                String raftRequestString = "raft-request-id=" + raftCommand.getRaftUniqueRequestId();
+
+                builder = new URI(builder.getQuery() != null ? builder.toString() + "&" + raftRequestString : builder.toString() + "?" + raftRequestString);
+            }
+
+            if (shouldBroadcast(command)) {
+                command.setTimeout(ObjectUtils.firstNonNull(command.getTimeout(), _firstBroadcastAttemptTimeout));
+            }
+
+            request.setURI(builder);
 
             return request;
         } catch (URISyntaxException e) {
@@ -820,7 +1072,7 @@ public class RequestExecutor implements CleanCloseable {
         try {
             switch (response.getStatusLine().getStatusCode()) {
                 case HttpStatus.SC_NOT_FOUND:
-                    cache.setNotFound(url);
+                    cache.setNotFound(url, aggressiveCaching.get() != null);
                     switch (command.getResponseType()) {
                         case EMPTY:
                             return true;
@@ -834,7 +1086,12 @@ public class RequestExecutor implements CleanCloseable {
                     return true;
 
                 case HttpStatus.SC_FORBIDDEN:
-                    throw new AuthorizationException("Forbidden access to " + chosenNode.getDatabase() + "@" + chosenNode.getUrl() + ", " + request.getMethod() + " " + request.getURI());
+                    String msg = tryGetResponseOfError(response);
+
+                    throw new AuthorizationException("Forbidden access to " + chosenNode.getDatabase() + "@" + chosenNode.getUrl() + ", " +
+                            (certificate == null ? "a certificate is required. " : "certificate does not have permission to access it or is unknown. ") +
+                            " Method: " + request.getMethod() + ", Request: " + request.getURI().toString() + System.lineSeparator() + msg);
+
                 case HttpStatus.SC_GONE: // request not relevant for the chosen node - the database has been moved to a different one
                     if (!shouldRetry) {
                         return false;
@@ -890,6 +1147,14 @@ public class RequestExecutor implements CleanCloseable {
         return false;
     }
 
+    private static String tryGetResponseOfError(CloseableHttpResponse response) {
+        try {
+            return IOUtils.toString(response.getEntity().getContent(), StandardCharsets.UTF_8);
+        } catch (Exception e) {
+            return "Could not read request: " + e.getMessage();
+        }
+    }
+
     private static void handleConflict(CloseableHttpResponse response) {
         ExceptionDispatcher.throwException(response);
     }
@@ -906,7 +1171,7 @@ public class RequestExecutor implements CleanCloseable {
             command.setFailedNodes(new HashMap<>());
         }
 
-        addFailedResponseToCommand(chosenNode, command, request, response, e);
+        command.getFailedNodes().put(chosenNode, readExceptionFromServer(request, response, e));
 
         if (nodeIndex == null) {
             //We executed request over a node not in the topology. This means no failover...
@@ -920,18 +1185,173 @@ public class RequestExecutor implements CleanCloseable {
 
         _nodeSelector.onFailedRequest(nodeIndex);
 
-        CurrentIndexAndNode currentIndexAndNode = _nodeSelector.getPreferredNode();
-        if (command.getFailedNodes().containsKey(currentIndexAndNode.currentNode)) {
-            return false; //we tried all the nodes...nothing left to do
+        if (shouldBroadcast(command)) {
+            command.setResult(broadcast(command, sessionInfo));
+            return true;
         }
 
-        execute(currentIndexAndNode.currentNode, currentIndexAndNode.currentIndex, command, shouldRetry, sessionInfo);
+        spawnHealthChecks(chosenNode, nodeIndex);
+
+        CurrentIndexAndNodeAndEtag indexAndNodeAndEtag = _nodeSelector.getPreferredNodeWithTopology();
+        if (command.failoverTopologyEtag != topologyEtag) {
+            command.getFailedNodes().clear();
+            command.failoverTopologyEtag = topologyEtag;
+        }
+
+        if (command.getFailedNodes().containsKey(indexAndNodeAndEtag.currentNode)) {
+            return false;
+        }
+
+        onFailedRequestInvoke(url, e);
+
+        execute(indexAndNodeAndEtag.currentNode, indexAndNodeAndEtag.currentIndex, command, shouldRetry, sessionInfo);
 
         return true;
     }
 
-    public ServerNode handleServerNotResponsive(String url, ServerNode chosenNode, int nodeIndex, Exception e) {
+    private <TResult> boolean shouldBroadcast(RavenCommand<TResult> command) {
+        if (!(command instanceof IBroadcast)) {
+            return false;
+        }
 
+        List<ServerNode> topologyNodes = getTopologyNodes();
+
+        if (topologyNodes == null || topologyNodes.size() < 2) {
+            return false;
+        }
+
+        return true;
+    }
+
+
+    public static class BroadcastState<TResult> {
+        private RavenCommand<TResult> command;
+        private int index;
+        private ServerNode node;
+        private HttpRequestBase request;
+
+        public RavenCommand<TResult> getCommand() {
+            return command;
+        }
+
+        public void setCommand(RavenCommand<TResult> command) {
+            this.command = command;
+        }
+
+        public int getIndex() {
+            return index;
+        }
+
+        public void setIndex(int index) {
+            this.index = index;
+        }
+
+        public ServerNode getNode() {
+            return node;
+        }
+
+        public void setNode(ServerNode node) {
+            this.node = node;
+        }
+
+        public HttpRequestBase getRequest() {
+            return request;
+        }
+
+        public void setRequest(HttpRequestBase request) {
+            this.request = request;
+        }
+    }
+
+    private <TResult> TResult broadcast(RavenCommand<TResult> command, SessionInfo sessionInfo) {
+        if (!(command instanceof IBroadcast)) {
+            throw new IllegalStateException("You can broadcast only commands that implement 'IBroadcast'.");
+        }
+
+        IBroadcast broadcastCommand = (IBroadcast) command;
+
+        command.setFailedNodes(new HashMap<>()); // clean the current failures
+        Map<CompletableFuture<Void>, BroadcastState<TResult>> broadcastTasks = new HashMap<>();
+
+        sendToAllNodes(broadcastTasks, sessionInfo, broadcastCommand);
+
+        return waitForBroadcastResult(command, broadcastTasks);
+    }
+
+    private <TResult> TResult waitForBroadcastResult(RavenCommand<TResult> command, Map<CompletableFuture<Void>, BroadcastState<TResult>> tasks) {
+        while (!tasks.isEmpty()) {
+            try {
+                CompletableFuture.anyOf(tasks.keySet().toArray(new CompletableFuture[0])).get();
+            } catch (InterruptedException | ExecutionException e) {
+                CompletableFuture<Void> completed = tasks
+                        .keySet()
+                        .stream()
+                        .filter(CompletableFuture::isDone)
+                        .findFirst()
+                        .orElse(null);
+
+                BroadcastState<TResult> failed = tasks.get(completed);
+                ServerNode node = _nodeSelector.getTopology().getNodes().get(failed.index);
+
+                command.getFailedNodes().put(node, e.getCause() != null ? (Exception) e.getCause() : e);
+
+                _nodeSelector.onFailedRequest(failed.getIndex());
+
+                tasks.remove(completed);
+                continue;
+            }
+
+            for (BroadcastState<TResult> state : tasks.values()) {
+                HttpRequestBase request = state.getRequest();
+                if (request != null) {
+                    request.abort();
+                }
+            }
+
+            _nodeSelector.restoreNodeIndex(tasks.get(command).getIndex());
+            return tasks.get(command).getCommand().getResult();
+        }
+
+        String exceptions = command
+                .getFailedNodes()
+                .entrySet()
+                .stream()
+                .map(x -> new UnsuccessfulRequestException(x.getKey().getUrl(), x.getValue()))
+                .map(Throwable::toString)
+                .collect(Collectors.joining(", "));
+
+        throw new AllTopologyNodesDownException("Broadcasting " + command.getClass().getSimpleName() + " failed: " + exceptions);
+    }
+
+    @SuppressWarnings("unchecked")
+    private <TResult> void sendToAllNodes(Map<CompletableFuture<Void>, BroadcastState<TResult>> tasks, SessionInfo sessionInfo, IBroadcast command) {
+        for (int index = 0; index < _nodeSelector.getTopology().getNodes().size(); index++) {
+            BroadcastState<TResult> state = new BroadcastState<>();
+            state.setCommand((RavenCommand<TResult>)command.prepareToBroadcast(getConventions()));
+            state.setIndex(index);
+            state.setNode(_nodeSelector.getTopology().getNodes().get(index));
+
+            state.getCommand().setTimeout(_secondBroadcastAttemptTimeout);
+
+            AggressiveCacheOptions callingTheadAggressiveCaching = aggressiveCaching.get();
+
+            CompletableFuture<Void> task = CompletableFuture.runAsync(() -> {
+                AggressiveCacheOptions aggressiveCacheOptionsToRestore = aggressiveCaching.get();
+
+                aggressiveCaching.set(callingTheadAggressiveCaching);
+                try {
+                    Reference<HttpRequestBase> requestRef = new Reference<>();
+                    execute(state.getNode(), null, state.getCommand(), false, sessionInfo, requestRef);
+                    state.setRequest(requestRef.value);
+                } finally {
+                    aggressiveCaching.set(aggressiveCacheOptionsToRestore);
+                }
+            }, _executorService);
+            tasks.put(task, state);
+        }
+    }
+
+    public ServerNode handleServerNotResponsive(String url, ServerNode chosenNode, int nodeIndex, Exception e) {
         spawnHealthChecks(chosenNode, nodeIndex);
         if (_nodeSelector != null) {
             _nodeSelector.onFailedRequest(nodeIndex);
@@ -942,6 +1362,8 @@ public class RequestExecutor implements CleanCloseable {
         } catch (InterruptedException | ExecutionException ee) {
             throw ExceptionsUtils.unwrapException(e);
         }
+
+        onFailedRequestInvoke(url, e);
 
         return preferredNode.currentNode;
     }
@@ -1005,14 +1427,13 @@ public class RequestExecutor implements CleanCloseable {
         execute(serverNode, nodeIndex, failureCheckOperation.getCommand(conventions), false, null);
     }
 
-    private static <TResult> void addFailedResponseToCommand(ServerNode chosenNode, RavenCommand<TResult> command, HttpRequestBase request, CloseableHttpResponse response, Exception e) {
+    private static <TResult> Exception readExceptionFromServer(HttpRequestBase request, CloseableHttpResponse response, Exception e) {
         if (response != null && response.getEntity() != null) {
             String responseJson = null;
             try {
-                responseJson = IOUtils.toString(response.getEntity().getContent(), "UTF-8");
+                responseJson = IOUtils.toString(response.getEntity().getContent(), StandardCharsets.UTF_8);
 
-                Exception readException = ExceptionDispatcher.get(JsonExtensions.getDefaultMapper().readValue(responseJson, ExceptionDispatcher.ExceptionSchema.class), response.getStatusLine().getStatusCode(), e);
-                command.getFailedNodes().put(chosenNode, readException);
+                return ExceptionDispatcher.get(JsonExtensions.getDefaultMapper().readValue(responseJson, ExceptionDispatcher.ExceptionSchema.class), response.getStatusLine().getStatusCode(), e);
             } catch (Exception __) {
                 ExceptionDispatcher.ExceptionSchema exceptionSchema = new ExceptionDispatcher.ExceptionSchema();
                 exceptionSchema.setUrl(request.getURI().toString());
@@ -1020,12 +1441,8 @@ public class RequestExecutor implements CleanCloseable {
                 exceptionSchema.setError(responseJson);
                 exceptionSchema.setType("Unparsable Server Response");
 
-                Exception exceptionToUse = ExceptionDispatcher.get(exceptionSchema, response.getStatusLine().getStatusCode(), e);
-
-                command.getFailedNodes().put(chosenNode, exceptionToUse);
+                return ExceptionDispatcher.get(exceptionSchema, response.getStatusLine().getStatusCode(), e);
             }
-
-            return;
         }
 
         // this would be connections that didn't have response, such as "couldn't connect to remote server"
@@ -1034,12 +1451,13 @@ public class RequestExecutor implements CleanCloseable {
         exceptionSchema.setMessage(e.getMessage());
         exceptionSchema.setError("An exception occurred while contacting " + request.getURI() + "." + System.lineSeparator() + e.toString());
         exceptionSchema.setType(e.getClass().getCanonicalName());
-        command.getFailedNodes().put(chosenNode, ExceptionDispatcher.get(exceptionSchema, HttpStatus.SC_SERVICE_UNAVAILABLE, e));
+
+        return ExceptionDispatcher.get(exceptionSchema, HttpStatus.SC_SERVICE_UNAVAILABLE, e);
     }
 
-    protected boolean _disposed;
     protected CompletableFuture<Void> _firstTopologyUpdate;
     protected String[] _lastKnownUrls;
+    protected boolean _disposed;
 
     @Override
     public void close() {
@@ -1057,7 +1475,6 @@ public class RequestExecutor implements CleanCloseable {
         disposeAllFailedNodesTimers();
     }
 
-    @SuppressWarnings("ConstantConditions")
     private CloseableHttpClient createClient() {
         HttpClientBuilder httpClientBuilder = HttpClients
                 .custom()
@@ -1140,14 +1557,17 @@ public class RequestExecutor implements CleanCloseable {
             _timer = new Timer(this::timerCallback, _timerPeriod, _requestExecutor._executorService);
         }
 
-        public void updateTimer() {
-            _timer.change(nextTimerPeriod());
+        private void timerCallback() {
+            if (_requestExecutor._disposed) {
+                close();
+                return;
+            }
+
+            _requestExecutor.checkNodeStatusCallback(this);
         }
 
-        private void timerCallback() {
-            if (!_requestExecutor._disposed) {
-                _requestExecutor.checkNodeStatusCallback(this);
-            }
+        public void updateTimer() {
+            _timer.change(nextTimerPeriod());
         }
 
         @Override
@@ -1193,6 +1613,10 @@ public class RequestExecutor implements CleanCloseable {
 
             _nodeSelector = new NodeSelector(topology, _executorService);
         }
+    }
+
+    protected void onTopologyUpdated(Topology newTopology) {
+        EventHelper.invoke(_topologyUpdated, newTopology);
     }
 
     public static class IndexAndResponse {

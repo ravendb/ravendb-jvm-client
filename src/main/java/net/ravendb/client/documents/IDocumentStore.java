@@ -246,4 +246,8 @@ public interface IDocumentStore extends IDisposalNotification {
     OperationExecutor operations();
 
     DatabaseSmuggler smuggler();
+
+    CleanCloseable setRequestTimeout(Duration timeout);
+
+    CleanCloseable setRequestTimeout(Duration timeout, String database);
 }

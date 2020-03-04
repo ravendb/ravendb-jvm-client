@@ -50,7 +50,7 @@ public class EntityToJson {
         return document;
     }
 
-    //TODO: fill missing properies?
+    //TODO: fill missing properties?
 
     //TODO: internal static object ConvertToBlittableForCompareExchangeIfNeeded(
 
@@ -161,7 +161,7 @@ public class EntityToJson {
             Object defaultValue = InMemoryDocumentSessionOperations.getDefaultValue(entityType);
             Object entity = defaultValue;
 
-            //TODO: if track!
+            //TODO: if track! -> RegisterMissingProperties
 
             String documentType =_session.getConventions().getJavaClass(id, document);
             if (documentType != null) {

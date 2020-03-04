@@ -66,12 +66,6 @@ public class EtlTest extends ReplicationTestBase {
     }
 
     @Test
-    @Disabled(value =  "Waiting for RavenDB-13309")
-    public void canGetTaskInfo() {
-        //TODO: I think we should write test case for getting info for each type of ongoing task + query by task id and by name.
-    }
-
-    @Test
     public void canAddEtlWithScript() throws Exception {
         try (IDocumentStore src = getDocumentStore()) {
             try (IDocumentStore dst = getDocumentStore()) {

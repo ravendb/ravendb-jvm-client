@@ -13,6 +13,7 @@ import net.ravendb.client.primitives.ExceptionsUtils;
 import net.ravendb.client.serverwide.operations.GetDatabaseNamesOperation;
 import org.junit.jupiter.api.Test;
 
+import java.net.UnknownHostException;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -179,8 +180,7 @@ public class RequestExecutorTest extends RemoteTestBase {
 
                     executor.execute(command);
                 }
-            }).isExactlyInstanceOf(AllTopologyNodesDownException.class);
+            }).hasCauseInstanceOf(UnknownHostException.class);
         }
     }
-
 }

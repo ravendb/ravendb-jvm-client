@@ -1,5 +1,7 @@
 package net.ravendb.client.util;
 
+import net.ravendb.client.primitives.Tuple;
+import net.ravendb.client.serverwide.commands.TcpConnectionInfo;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.http.ssl.SSLContexts;
 
@@ -41,5 +43,27 @@ public class TcpUtils {
         } else {
             return new Socket(host, port);
         }
+    }
+
+    public static Tuple<Socket, String> connectWithPriority(
+            TcpConnectionInfo info,
+            String serverCertificate,
+            KeyStore clientCertificate,
+            char[] certificatePrivateKeyPassword) throws IOException, GeneralSecurityException {
+        Socket socket;
+        if (info.getUrls() != null) {
+            for (String url : info.getUrls()) {
+                try {
+                    socket = connect(url, serverCertificate, clientCertificate, certificatePrivateKeyPassword);
+                    return Tuple.create(socket, url);
+                } catch (Exception e) {
+                    // ignored
+                }
+            }
+        }
+
+        socket = connect(info.getUrl(), serverCertificate, clientCertificate, certificatePrivateKeyPassword);
+
+        return Tuple.create(socket, info.getUrl());
     }
 }

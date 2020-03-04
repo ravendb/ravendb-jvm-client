@@ -64,6 +64,10 @@ public class DocumentConventions {
     private boolean _throwIfQueryPageSizeIsNotSet;
     private int _maxNumberOfRequestsPerSession;
 
+    private Duration _requestTimeout;
+    private Duration _firstBroadcastAttemptTimeout;
+    private Duration _secondBroadcastAttemptTimeout;
+
     private ReadBalanceBehavior _readBalanceBehavior;
     private int _maxHttpCacheSize;
     private ObjectMapper _entityMapper;
@@ -135,10 +139,67 @@ public class DocumentConventions {
         _entityMapper = JsonExtensions.getDefaultEntityMapper();
 
         _aggressiveCache = new AggressiveCacheConventions(this);
+        _firstBroadcastAttemptTimeout = Duration.ofSeconds(5);
+        _secondBroadcastAttemptTimeout = Duration.ofSeconds(30);
     }
 
     public boolean hasExplicitlySetCompressionUsage() {
         return _useCompression != null;
+    }
+
+    public Duration getRequestTimeout() {
+        return _requestTimeout;
+    }
+
+    public void setRequestTimeout(Duration requestTimeout) {
+        assertNotFrozen();
+        _requestTimeout = requestTimeout;
+    }
+
+    /**
+     * Get the timeout for the second broadcast attempt.
+     * Default: 30 seconds
+     *
+     * Upon failure of the first attempt the request executor will resend the command to all nodes simultaneously.
+     * @return broadcast timeout
+     */
+    public Duration getSecondBroadcastAttemptTimeout() {
+        return _secondBroadcastAttemptTimeout;
+    }
+
+    /**
+     * Set the timeout for the second broadcast attempt.
+     * Default: 30 seconds
+     *
+     * Upon failure of the first attempt the request executor will resend the command to all nodes simultaneously.
+     * @param secondBroadcastAttemptTimeout broadcast timeout
+     */
+    public void setSecondBroadcastAttemptTimeout(Duration secondBroadcastAttemptTimeout) {
+        assertNotFrozen();
+        _secondBroadcastAttemptTimeout = secondBroadcastAttemptTimeout;
+    }
+
+    /**
+     * Get the timeout for the first broadcast attempt.
+     * Default: 5 seconds
+     *
+     * First attempt will send a single request to a selected node.
+     * @return broadcast timeout
+     */
+    public Duration getFirstBroadcastAttemptTimeout() {
+        return _firstBroadcastAttemptTimeout;
+    }
+
+    /**
+     * Set the timeout for the first broadcast attempt.
+     * Default: 5 seconds
+     *
+     * First attempt will send a single request to a selected node.
+     * @param firstBroadcastAttemptTimeout broadcast timeout
+     */
+    public void setFirstBroadcastAttemptTimeout(Duration firstBroadcastAttemptTimeout) {
+        assertNotFrozen();
+        _firstBroadcastAttemptTimeout = firstBroadcastAttemptTimeout;
     }
 
     public Boolean isUseCompression() {

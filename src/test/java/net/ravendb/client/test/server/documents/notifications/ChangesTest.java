@@ -355,7 +355,6 @@ public class ChangesTest extends RemoteTestBase {
     @Test
     public void notificationOnWrongDatabase_ShouldNotCrashServer() throws Exception {
         try (IDocumentStore store = getDocumentStore()) {
-
             IDatabaseChanges changes = store.changes("no_such_db");
 
             assertThatThrownBy(() -> changes.ensureConnectedNow())

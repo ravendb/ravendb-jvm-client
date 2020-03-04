@@ -113,7 +113,6 @@ public class DatabaseChanges implements IDatabaseChanges {
         try {
             _semaphore.acquire();
 
-
             if (isConnected()) {
                 _tcs.complete(this);
                 return;

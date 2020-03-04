@@ -20,7 +20,8 @@ public class RavenDB_10929Test extends RemoteTestBase {
     @Test
     public void canUpdateDatabaseRecord() throws Exception {
         try (IDocumentStore store = getDocumentStore()) {
-            DatabaseRecordWithEtag record = store.maintenance().server().send(new GetDatabaseRecordOperation(store.getDatabase()));
+            DatabaseRecordWithEtag record = store.maintenance().server()
+                    .send(new GetDatabaseRecordOperation(store.getDatabase()));
 
             long etag = record.getEtag();
             assertThat(record)
@@ -50,9 +51,15 @@ public class RavenDB_10929Test extends RemoteTestBase {
             assertThatThrownBy(() -> {
                 try (IDocumentSession session = store.openSession()) {
                     session.store(new Company());
+                }
+            }).isInstanceOf(DatabaseDisabledException.class);
+
+            assertThatThrownBy(() -> {
+                try (IDocumentSession session = store.openSession()) {
+                    session.store(new Company(), "id");
                     session.saveChanges();
                 }
-            }).hasCauseExactlyInstanceOf(DatabaseDisabledException.class);
+            }).isInstanceOf(DatabaseDisabledException.class);
         }
     }
 }

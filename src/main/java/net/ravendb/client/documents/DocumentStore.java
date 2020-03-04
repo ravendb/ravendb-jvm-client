@@ -212,6 +212,29 @@ public class DocumentStore extends DocumentStoreBase {
         return executor.getValue();
     }
 
+    @Override
+    public CleanCloseable setRequestTimeout(Duration timeout) {
+        return setRequestTimeout(timeout, null);
+    }
+
+    @Override
+    public CleanCloseable setRequestTimeout(Duration timeout, String database) {
+        assertInitialized();
+
+        database = ObjectUtils.firstNonNull(database, getDatabase());
+
+        if (database == null) {
+            throw new IllegalStateException("Cannot use setRequestTimeout without a default database defined "
+            + "unless 'database' parameter is provided. Did you forget to pass 'database' parameter?");
+        }
+
+        RequestExecutor requestExecutor = getRequestExecutor(database);
+        Duration oldTimeout = requestExecutor.getDefaultTimeout();
+        requestExecutor.setDefaultTimeout(timeout);
+
+        return () -> requestExecutor.setDefaultTimeout(oldTimeout);
+    }
+
     /**
      * Initializes this instance.
      */
@@ -298,7 +321,7 @@ public class DocumentStore extends DocumentStoreBase {
     }
 
     protected IDatabaseChanges createDatabaseChanges(DatabaseChangesOptions node) {
-        return new DatabaseChanges(getRequestExecutor(database), node.getDatabaseName(), executorService, () -> _databaseChanges.remove(node), node.getNodeTag());
+        return new DatabaseChanges(getRequestExecutor(node.getDatabaseName()), node.getDatabaseName(), executorService, () -> _databaseChanges.remove(node), node.getNodeTag());
     }
 
     public Exception getLastDatabaseChangesStateException() {

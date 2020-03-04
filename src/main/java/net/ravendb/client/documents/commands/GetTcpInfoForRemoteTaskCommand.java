@@ -15,6 +15,7 @@ public class GetTcpInfoForRemoteTaskCommand extends RavenCommand<TcpConnectionIn
     private final String _remoteTask;
     private final String _tag;
     private boolean _verifyDatabase;
+    private ServerNode _requestedNode;
 
     public GetTcpInfoForRemoteTaskCommand(String tag, String remoteDatabase, String remoteTask) {
         this(tag, remoteDatabase, remoteTask, false);
@@ -49,6 +50,8 @@ public class GetTcpInfoForRemoteTaskCommand extends RavenCommand<TcpConnectionIn
             url.value += "&verify-database=true";
         }
 
+        _requestedNode = node;
+
         return new HttpGet();
     }
 
@@ -59,6 +62,10 @@ public class GetTcpInfoForRemoteTaskCommand extends RavenCommand<TcpConnectionIn
         }
 
         result = mapper.readValue(response, TcpConnectionInfo.class);
+    }
+
+    public ServerNode getRequestedNode() {
+        return _requestedNode;
     }
 
     @Override
