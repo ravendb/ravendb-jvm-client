@@ -71,6 +71,7 @@ public class AggressiveCachingTest extends RemoteTestBase {
             RequestExecutor requestExecutor = store.getRequestExecutor();
 
             long oldNumOfRequests = requestExecutor.numberOfServerRequests.get();
+
             for (int i = 0; i < 5; i++) {
                 try (IDocumentSession session = store.openSession()) {
                     try (CleanCloseable context = session.advanced().getDocumentStore().aggressivelyCacheFor(Duration.ofMinutes(5))) {
@@ -80,7 +81,7 @@ public class AggressiveCachingTest extends RemoteTestBase {
             }
 
             assertThat(requestExecutor.numberOfServerRequests.get())
-                    .isEqualTo(1 + oldNumOfRequests);
+                    .isBetween(1 + oldNumOfRequests, 2 + oldNumOfRequests);
         }
     }
 
