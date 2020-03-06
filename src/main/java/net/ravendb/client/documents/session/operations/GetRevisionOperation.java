@@ -147,8 +147,9 @@ public class GetRevisionOperation {
             if (changeVector == null) {
                 continue;
             }
-
-            results.put(changeVector, getRevision(clazz, (ObjectNode) _result.getResults().get(i)));
+            JsonNode jsonNode = _result.getResults().get(i);
+            ObjectNode objectNode = jsonNode.isNull() ? null : (ObjectNode) jsonNode;
+            results.put(changeVector, getRevision(clazz, objectNode));
         }
 
         return results;

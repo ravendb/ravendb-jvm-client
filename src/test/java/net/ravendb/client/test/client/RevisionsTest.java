@@ -6,12 +6,14 @@ import net.ravendb.client.documents.DocumentStore;
 import net.ravendb.client.documents.IDocumentStore;
 import net.ravendb.client.documents.commands.GetRevisionsBinEntryCommand;
 import net.ravendb.client.documents.session.IDocumentSession;
+import net.ravendb.client.infrastructure.entities.Company;
 import net.ravendb.client.infrastructure.entities.User;
 import net.ravendb.client.json.JsonArrayResult;
 import net.ravendb.client.json.MetadataAsDictionary;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -97,6 +99,49 @@ public class RevisionsTest extends RemoteTestBase {
 
             assertThat(result.getResults().get(0).get("@metadata").get("@id").asText())
                     .isEqualTo("users/1");
+        }
+    }
+
+    @Test
+    public void canGetRevisionsByChangeVectors() throws Exception {
+        try (IDocumentStore store = getDocumentStore()) {
+            String id = "users/1";
+
+            setupRevisions(store, false, 100);
+
+            try (IDocumentSession session = store.openSession()) {
+                User user = new User();
+                user.setName("Fitzchak");
+                session.store(user, id);
+                session.saveChanges();
+            }
+
+            for (int i = 0; i < 10; i++) {
+                try (IDocumentSession session = store.openSession()) {
+                    Company user = session.load(Company.class, id);
+                    user.setName("Fitzchak" + i);
+                    session.saveChanges();
+                }
+            }
+
+            try (IDocumentSession session = store.openSession()) {
+                List<MetadataAsDictionary> revisionsMetadata = session.advanced().revisions().getMetadataFor(id);
+                assertThat(revisionsMetadata)
+                        .hasSize(11);
+
+                List<String> changeVectors = revisionsMetadata
+                        .stream()
+                        .map(x -> x.getString(Constants.Documents.Metadata.CHANGE_VECTOR))
+                        .collect(Collectors.toList());
+                changeVectors.add("NotExistsChangeVector");
+
+                Map<String, User> revisions = session.advanced().revisions().get(User.class, changeVectors.toArray(new String[0]));
+                assertThat(revisions.get("NotExistsChangeVector"))
+                        .isNull();
+
+                assertThat(session.advanced().revisions().get(User.class, "NotExistsChangeVector"))
+                        .isNull();
+            }
         }
     }
 }

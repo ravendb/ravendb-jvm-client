@@ -114,6 +114,7 @@ public class GetRevisionsCommand extends RavenCommand<JsonArrayResult> {
     public void setResponse(String response, boolean fromCache) throws IOException {
         if (response == null) {
             result = null;
+            return;
         }
 
         result = mapper.readValue(response, JsonArrayResult.class);
