@@ -1,13 +1,13 @@
 package net.ravendb.client.documents.indexes;
 
 public class PutIndexResult {
-    private String indexName;
+    private String index;
 
-    public String getIndexName() {
-        return indexName;
+    public String getIndex() {
+        return index;
     }
 
-    public void setIndexName(String indexName) {
-        this.indexName = indexName;
+    public void setIndex(String index) {
+        this.index = index;
     }
 }

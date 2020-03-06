@@ -3,7 +3,7 @@ package net.ravendb.client.documents.indexes;
 import java.util.Map;
 
 public class AutoIndexDefinition {
-    private IndexType indexType;
+    private IndexType type;
     private String name;
     private IndexPriority priority;
     private IndexState state;
@@ -11,12 +11,12 @@ public class AutoIndexDefinition {
     private Map<String, AutoIndexFieldOptions> mapFields;
     private Map<String, AutoIndexFieldOptions> groupByFields;
 
-    public IndexType getIndexType() {
-        return indexType;
+    public IndexType getType() {
+        return type;
     }
 
-    public void setIndexType(IndexType indexType) {
-        this.indexType = indexType;
+    public void setType(IndexType type) {
+        this.type = type;
     }
 
     public String getName() {

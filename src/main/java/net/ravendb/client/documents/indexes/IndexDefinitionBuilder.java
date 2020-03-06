@@ -68,6 +68,7 @@ public class IndexDefinitionBuilder {
             indexDefinition.setPriority(priority);
             indexDefinition.setOutputReduceToCollection(outputReduceToCollection);
             indexDefinition.setPatternForOutputReduceToCollectionReferences(patternForOutputReduceToCollectionReferences);
+            indexDefinition.setPatternReferencesCollectionName(patternReferencesCollectionName);
 
             Map<String, Boolean> suggestions = new HashMap<>();
             for (String suggestionsOption : suggestionsOptions) {

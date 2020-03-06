@@ -43,7 +43,7 @@ public class RavenDB_9584Test extends RemoteTestBase {
         assertThat(results)
                 .hasSize(1);
 
-        assertThat(results[0].getIndexName())
+        assertThat(results[0].getIndex())
                 .isEqualTo(indexDefinition.getName());
 
         try (IDocumentSession session = store.openSession()) {
