@@ -1,17 +1,18 @@
 package net.ravendb.client.documents.operations.ongoingTasks;
 
+import java.time.Duration;
 import java.util.Date;
 
 public class NextBackup {
-    private String timeSpan;
+    private Duration timeSpan;
     private Date dateTime;
     private boolean isFull;
 
-    public String getTimeSpan() {
+    public Duration getTimeSpan() {
         return timeSpan;
     }
 
-    public void setTimeSpan(String timeSpan) {
+    public void setTimeSpan(Duration timeSpan) {
         this.timeSpan = timeSpan;
     }
 

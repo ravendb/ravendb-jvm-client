@@ -40,6 +40,12 @@ public class NextAndSeedIdentitiesTest extends RemoteTestBase {
                 session.saveChanges();
             }
 
+            Map<String, Long> identities = store.maintenance().send(new GetIdentitiesOperation());
+
+            assertThat(identities)
+                    .hasSize(1)
+                    .containsEntry("users|", 3L);
+
             try (IDocumentSession session = store.openSession()) {
                 User entityWithId1 = session.load(User.class, "users/1");
                 User entityWithId2 = session.load(User.class, "users/2");

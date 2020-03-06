@@ -5,6 +5,7 @@ import net.ravendb.client.RemoteTestBase;
 import net.ravendb.client.documents.IDocumentStore;
 import net.ravendb.client.documents.operations.GetOngoingTaskInfoOperation;
 import net.ravendb.client.documents.operations.backups.*;
+import net.ravendb.client.documents.operations.ongoingTasks.NextBackup;
 import net.ravendb.client.documents.operations.ongoingTasks.OngoingTask;
 import net.ravendb.client.documents.operations.ongoingTasks.OngoingTaskBackup;
 import net.ravendb.client.documents.operations.ongoingTasks.OngoingTaskType;
@@ -41,9 +42,23 @@ public class BackupsTest extends RemoteTestBase {
                 StartBackupOperation startBackupOperation = new StartBackupOperation(true, backupOperationResult.getTaskId());
                 StartBackupOperationResult send = store.maintenance().send(startBackupOperation);
                 int backupOperation = send.getOperationId();
+                assertThat(backupOperation)
+                        .isPositive();
 
                 waitForBackup(backup);
                 waitForBackupStatus(store, backupOperationResult.getTaskId());
+
+                OngoingTaskBackup myBackup = (OngoingTaskBackup) store.maintenance().send(new GetOngoingTaskInfoOperation("myBackup", OngoingTaskType.BACKUP));
+
+                assertThat(myBackup)
+                        .isNotNull();
+                NextBackup nextBackup = myBackup.getNextBackup();
+                assertThat(nextBackup)
+                        .isNotNull();
+                assertThat(nextBackup.getDateTime())
+                        .isInTheFuture();
+                assertThat(nextBackup.getTimeSpan())
+                        .isGreaterThan(Duration.ZERO);
             } finally {
                 backup.toAbsolutePath().toFile().deleteOnExit();
 
