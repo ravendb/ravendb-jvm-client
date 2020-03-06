@@ -73,9 +73,11 @@ public class GetTermsOperation implements IMaintenanceOperation<String[]> {
 
         @Override
         public HttpRequestBase createRequest(ServerNode node, Reference<String> url) {
-            url.value = node.getUrl() + "/databases/" + node.getDatabase() + "/indexes/terms?name=" +
-                    UrlUtils.escapeDataString(_indexName) + "&field=" + UrlUtils.escapeDataString(_field) +
-                    "&fromValue=" + ObjectUtils.firstNonNull(_fromValue, "") + "&pageSize=" + ObjectUtils.firstNonNull(_pageSize, "");
+            url.value = node.getUrl() + "/databases/" + node.getDatabase()
+                    + "/indexes/terms?name=" + UrlUtils.escapeDataString(_indexName)
+                    + "&field=" + UrlUtils.escapeDataString(_field)
+                    + "&fromValue=" + ObjectUtils.firstNonNull(_fromValue, "")
+                    + "&pageSize=" + ObjectUtils.firstNonNull(_pageSize, "");
 
             return new HttpGet();
         }

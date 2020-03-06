@@ -258,10 +258,10 @@ public abstract class DocumentStoreBase implements IDocumentStore {
     public void addBeforeQueryListener(EventHandler<BeforeQueryEventArgs> handler) {
         this.onBeforeQuery.add(handler);
     }
+
     public void removeBeforeQueryListener(EventHandler<BeforeQueryEventArgs> handler) {
         this.onBeforeQuery.remove(handler);
     }
-
 
     public void addBeforeConversionToDocumentListener(EventHandler<BeforeConversionToDocumentEventArgs> handler) {
         this.onBeforeConversionToDocument.add(handler);

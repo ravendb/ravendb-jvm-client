@@ -181,7 +181,7 @@ public class SingleNodeBatchCommand extends RavenCommand<BatchCommandResult> imp
 
             if (indexOptions.getWaitForSpecificIndexes() != null) {
                 for (String specificIndex : indexOptions.getWaitForSpecificIndexes()) {
-                    sb.append("&waitForSpecificIndex=").append(specificIndex);
+                    sb.append("&waitForSpecificIndex=").append(urlEncode(specificIndex));
                 }
             }
         }

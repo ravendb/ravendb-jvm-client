@@ -25,7 +25,9 @@ public class GetSubscriptionStateCommand extends RavenCommand<SubscriptionState>
 
     @Override
     public HttpRequestBase createRequest(ServerNode node, Reference<String> url) {
-        url.value = node.getUrl() + "/databases/" + node.getDatabase() + "/subscriptions/state?name=" + _subscriptionName;
+        url.value = node.getUrl() + "/databases/"
+                + node.getDatabase() + "/subscriptions/state?name="
+                + urlEncode(_subscriptionName);
 
         return new HttpGet();
     }

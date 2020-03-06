@@ -37,6 +37,21 @@ public interface IDocumentStore extends IDisposalNotification {
     void addBeforeQueryListener(EventHandler<BeforeQueryEventArgs> handler);
     void removeBeforeQueryListener(EventHandler<BeforeQueryEventArgs> handler);
 
+    void addBeforeConversionToDocumentListener(EventHandler<BeforeConversionToDocumentEventArgs> handler);
+    void removeBeforeConversionToDocumentListener(EventHandler<BeforeConversionToDocumentEventArgs> handler);
+
+    void addAfterConversionToDocumentListener(EventHandler<AfterConversionToDocumentEventArgs> handler);
+    void removeAfterConversionToDocumentListener(EventHandler<AfterConversionToDocumentEventArgs> handler);
+
+    void addBeforeConversionToEntityListener(EventHandler<BeforeConversionToEntityEventArgs> handler);
+    void removeBeforeConversionToEntityListener(EventHandler<BeforeConversionToEntityEventArgs> handler);
+
+    void addAfterConversionToEntityListener(EventHandler<AfterConversionToEntityEventArgs> handler);
+    void removeAfterConversionToEntityListener(EventHandler<AfterConversionToEntityEventArgs> handler);
+
+    void addOnFailedRequestListener(EventHandler<FailedRequestEventArgs> handler);
+    void removeOnFailedRequestListener(EventHandler<FailedRequestEventArgs> handler);
+
     /**
      * Subscribe to change notifications from the server
      * @return Database changes object

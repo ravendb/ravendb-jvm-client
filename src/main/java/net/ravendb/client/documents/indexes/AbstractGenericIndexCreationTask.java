@@ -28,6 +28,7 @@ public abstract class AbstractGenericIndexCreationTask extends AbstractIndexCrea
 
     protected String outputReduceToCollection;
     protected String patternForOutputReduceToCollectionReferences;
+    protected String patternReferencesCollectionName;
 
     public AbstractGenericIndexCreationTask() {
         storesStrings = new HashMap<>();

@@ -28,6 +28,7 @@ public class IndexDefinitionBuilder {
     private IndexPriority priority;
     private String outputReduceToCollection;
     private String patternForOutputReduceToCollectionReferences;
+    private String patternReferencesCollectionName;
     private Map<String, String> additionalSources;
     private IndexConfiguration configuration;
 
@@ -193,6 +194,14 @@ public class IndexDefinitionBuilder {
 
     public void setPatternForOutputReduceToCollectionReferences(String patternForOutputReduceToCollectionReferences) {
         this.patternForOutputReduceToCollectionReferences = patternForOutputReduceToCollectionReferences;
+    }
+
+    public String getPatternReferencesCollectionName() {
+        return patternReferencesCollectionName;
+    }
+
+    public void setPatternReferencesCollectionName(String patternReferencesCollectionName) {
+        this.patternReferencesCollectionName = patternReferencesCollectionName;
     }
 
     public Map<String, String> getAdditionalSources() {

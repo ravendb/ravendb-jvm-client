@@ -40,7 +40,11 @@ public class NextHiLoCommand extends RavenCommand<HiLoResult> {
     @Override
     public HttpRequestBase createRequest(ServerNode node, Reference<String> url) {
         String date = _lastRangeAt != null ? NetISO8601Utils.format(_lastRangeAt, true) : "";
-        String path = "/hilo/next?tag=" + _tag + "&lastBatchSize=" + _lastBatchSize + "&lastRangeAt=" + date + "&identityPartsSeparator=" + _identityPartsSeparator + "&lastMax=" + _lastRangeMax;
+        String path = "/hilo/next?tag=" + urlEncode(_tag)
+                + "&lastBatchSize=" + _lastBatchSize
+                + "&lastRangeAt=" + date
+                + "&identityPartsSeparator=" + urlEncode(_identityPartsSeparator)
+                + "&lastMax=" + _lastRangeMax;
 
         url.value = node.getUrl() + "/databases/" + node.getDatabase() + path;
 

@@ -1,31 +1,61 @@
 package net.ravendb.client;
 
+import com.google.common.collect.Sets;
+import net.ravendb.client.documents.DocumentStore;
 import net.ravendb.client.documents.IDocumentStore;
-import net.ravendb.client.documents.operations.revisions.ConfigureRevisionsOperation;
-import net.ravendb.client.documents.operations.revisions.RevisionsCollectionConfiguration;
-import net.ravendb.client.documents.operations.revisions.RevisionsConfiguration;
-import net.ravendb.client.documents.session.IDocumentSession;
-import net.ravendb.client.http.RequestExecutor;
-import net.ravendb.client.infrastructure.graph.*;
-import net.ravendb.client.primitives.CleanCloseable;
 import net.ravendb.client.driver.RavenServerLocator;
 import net.ravendb.client.driver.RavenTestDriver;
+import net.ravendb.client.exceptions.cluster.NoLeaderException;
+import net.ravendb.client.exceptions.database.DatabaseDoesNotExistException;
+import net.ravendb.client.primitives.CleanCloseable;
+import net.ravendb.client.primitives.ExceptionsUtils;
+import net.ravendb.client.primitives.Reference;
+import net.ravendb.client.serverwide.DatabaseRecord;
+import net.ravendb.client.serverwide.operations.CreateDatabaseOperation;
+import net.ravendb.client.serverwide.operations.DeleteDatabasesOperation;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.http.HttpHost;
-import org.apache.http.client.config.RequestConfig;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.util.Arrays;
+import java.security.GeneralSecurityException;
+import java.security.KeyStore;
+import java.security.cert.Certificate;
+import java.security.cert.CertificateFactory;
+import java.time.Duration;
+import java.util.ArrayList;
+import java.util.Set;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Collectors;
 
 @SuppressWarnings("SameParameterValue")
-public class RemoteTestBase extends RavenTestDriver {
+public class RemoteTestBase extends RavenTestDriver implements CleanCloseable {
+
+    private final RavenServerLocator locator;
+    private final RavenServerLocator securedLocator;
+
+    private static IDocumentStore globalServer;
+    private static Process globalServerProcess;
+
+    private static IDocumentStore globalSecuredServer;
+    private static Process globalSecuredServerProcess;
+
+    private final Set<DocumentStore> documentStores = Sets.newConcurrentHashSet();
+
+    private static final AtomicInteger index = new AtomicInteger();
 
     private static class TestServiceLocator extends RavenServerLocator {
 
         @Override
         public String[] getCommandArguments() {
-            return new String[] { "--ServerUrl=http://127.0.0.1:0", "--ServerUrl.Tcp=tcp://127.0.0.1:38881", "--Features.Availability=Experimental" };
+            return new String[] {
+                    "--ServerUrl=http://127.0.0.1:0",
+                    "--ServerUrl.Tcp=tcp://127.0.0.1:38881",
+                    "--Features.Availability=Experimental"
+            };
         }
     }
 
@@ -87,194 +117,204 @@ public class RemoteTestBase extends RavenTestDriver {
     }
 
     public RemoteTestBase() {
-        super(new TestServiceLocator(), new TestSecuredServiceLocator());
+        this.locator = new TestServiceLocator();
+        this.securedLocator = new TestSecuredServiceLocator();
     }
 
+    protected void customizeDbRecord(DatabaseRecord dbRecord) {
 
-    public CleanCloseable withFiddler() {
-        RequestExecutor.requestPostProcessor = request -> {
-            HttpHost proxy = new HttpHost("127.0.0.1", 8888, "http");
-            RequestConfig requestConfig = request.getConfig();
-            if (requestConfig == null) {
-                requestConfig = RequestConfig.DEFAULT;
+    }
+
+    protected void customizeStore(DocumentStore store) {
+
+    }
+
+    public DocumentStore getSecuredDocumentStore() throws Exception {
+        return getDocumentStore("test_db", true, null);
+    }
+
+    public KeyStore getTestClientCertificate() throws IOException, GeneralSecurityException {
+        KeyStore clientStore = KeyStore.getInstance("PKCS12");
+        clientStore.load(new FileInputStream(securedLocator.getServerCertificatePath()), "".toCharArray());
+        return clientStore;
+    }
+
+    public KeyStore getTestCaCertificate() throws IOException, GeneralSecurityException {
+        String caPath = securedLocator.getServerCaPath();
+        if (caPath != null) {
+            KeyStore trustStore = KeyStore.getInstance("PKCS12");
+            trustStore.load(null, null);
+
+            CertificateFactory x509 = CertificateFactory.getInstance("X509");
+
+            try (InputStream source = new FileInputStream(new File(caPath))) {
+                Certificate certificate = x509.generateCertificate(source);
+                trustStore.setCertificateEntry("ca-cert", certificate);
+                return trustStore;
             }
-            requestConfig = RequestConfig.copy(requestConfig).setProxy(proxy).build();
-            request.setConfig(requestConfig);
-        };
+        }
 
-        return () -> RequestExecutor.requestPostProcessor = null;
+        return null;
     }
 
     @SuppressWarnings("UnusedReturnValue")
-    protected ConfigureRevisionsOperation.ConfigureRevisionsOperationResult setupRevisions(IDocumentStore store, boolean purgeOnDelete, long minimumRevisionsToKeep) {
-        RevisionsConfiguration revisionsConfiguration = new RevisionsConfiguration();
-        RevisionsCollectionConfiguration defaultCollection = new RevisionsCollectionConfiguration();
-        defaultCollection.setPurgeOnDelete(purgeOnDelete);
-        defaultCollection.setMinimumRevisionsToKeep(minimumRevisionsToKeep);
+    private IDocumentStore runServer(boolean secured) throws Exception {
+        Reference<Process> processReference = new Reference<>();
+        IDocumentStore store = runServerInternal(getLocator(secured), processReference, s -> {
+            if (secured) {
+                try {
+                    KeyStore clientCert = getTestClientCertificate();
+                    s.setCertificate(clientCert);
+                    s.setTrustStore(getTestCaCertificate());
+                } catch (Exception e) {
+                    throw ExceptionsUtils.unwrapException(e);
+                }
+            }
+        });
+        setGlobalServerProcess(secured, processReference.value);
 
-        revisionsConfiguration.setDefaultConfig(defaultCollection);
-        ConfigureRevisionsOperation operation = new ConfigureRevisionsOperation(revisionsConfiguration);
+        if (secured) {
+            globalSecuredServer = store;
+        } else {
+            globalServer = store;
+        }
 
-        return store.maintenance().send(operation);
+        Runtime.getRuntime().addShutdownHook(new Thread(() -> killGlobalServerProcess(secured)));
+        return store;
     }
 
-    protected void createSimpleData(IDocumentStore store) {
-        try (IDocumentSession session = store.openSession()) {
-            Entity entityA = new Entity();
-            entityA.setId("entity/1");
-            entityA.setName("A");
+    private RavenServerLocator getLocator(boolean secured) {
+        return secured ? securedLocator : locator;
+    }
 
-            Entity entityB = new Entity();
-            entityB.setId("entity/2");
-            entityB.setName("B");
+    private static IDocumentStore getGlobalServer(boolean secured) {
+        return secured ? globalSecuredServer : globalServer;
+    }
 
-            Entity entityC = new Entity();
-            entityC.setId("entity/3");
-            entityC.setName("C");
+    private static Process getGlobalProcess(boolean secured) {
+        return secured ? globalSecuredServerProcess : globalServerProcess;
+    }
 
-            session.store(entityA);
-            session.store(entityB);
-            session.store(entityC);
-
-            entityA.setReferences(entityB.getId());
-            entityB.setReferences(entityC.getId());
-            entityC.setReferences(entityA.getId());
-
-            session.saveChanges();
+    private static void setGlobalServerProcess(boolean secured, Process p) {
+        if (secured) {
+            globalSecuredServerProcess = p;
+        } else {
+            globalServerProcess = p;
         }
     }
 
-    protected void createDogDataWithoutEdges(IDocumentStore store) {
-        try (IDocumentSession session = store.openSession()) {
-            Dog arava = new Dog();
-            arava.setName("Arava");
-
-            Dog oscar = new Dog();
-            oscar.setName("Oscar");
-
-            Dog pheobe = new Dog();
-            pheobe.setName("Pheobe");
-
-            session.store(arava);
-            session.store(oscar);
-            session.store(pheobe);
-
-            session.saveChanges();
+    private static void killGlobalServerProcess(boolean secured) {
+        Process p;
+        if (secured) {
+            p = globalSecuredServerProcess;
+            globalSecuredServerProcess = null;
+            globalSecuredServer.close();
+            globalSecuredServer = null;
+        } else {
+            p = globalServerProcess;
+            globalServerProcess = null;
+            globalServer.close();
+            globalServer = null;
         }
+
+        killProcess(p);
     }
 
-    protected void createDataWithMultipleEdgesOfTheSameType(IDocumentStore store) {
-        try (IDocumentSession session = store.openSession()) {
-            Dog arava = new Dog();
-            arava.setName("Arava");
-
-            Dog oscar = new Dog();
-            oscar.setName("Oscar");
-
-            Dog pheobe = new Dog();
-            pheobe.setName("Pheobe");
-
-            session.store(arava);
-            session.store(oscar);
-            session.store(pheobe);
-
-            //dogs/1 => dogs/2
-            arava.setLikes(new String[] { oscar.getId() });
-            arava.setDislikes(new String[] { pheobe.getId() });
-
-            //dogs/2 => dogs/2,dogs/3 (cycle!)
-            oscar.setLikes(new String[] { oscar.getId(), pheobe.getId() });
-            oscar.setDislikes(new String[0]);
-
-            //dogs/3 => dogs/2
-            pheobe.setLikes(new String[] { oscar.getId() });
-            pheobe.setDislikes(new String[] { arava.getId() });
-
-            session.saveChanges();
-        }
+    public DocumentStore getDocumentStore() throws Exception {
+        return getDocumentStore("test_db");
     }
 
-    protected void createMoviesData(IDocumentStore store) {
-        try (IDocumentSession session = store.openSession()) {
-            Genre scifi = new Genre();
-            scifi.setName("genres/1");
-            scifi.setId("genres/1");
+    public DocumentStore getSecuredDocumentStore(String database) throws Exception {
+        return getDocumentStore(database, true, null);
+    }
 
-            Genre fantasy = new Genre();
-            fantasy.setId("genres/2");
-            fantasy.setName("Fantasy");
+    public DocumentStore getDocumentStore(String database) throws Exception {
+        return getDocumentStore(database, false, null);
+    }
 
-            Genre adventure = new Genre();
-            adventure.setId("genres/3");
-            adventure.setName("Adventure");
+    public DocumentStore getDocumentStore(String database, boolean secured, Duration waitForIndexingTimeout) throws Exception {
+        String name = database + "_" + index.incrementAndGet();
+        reportInfo("getDocumentStore for db " + database + ".");
 
-            session.store(scifi);
-            session.store(fantasy);
-            session.store(adventure);
+        if (getGlobalServer(secured) == null) {
+            synchronized (RavenTestDriver.class) {
+                if (getGlobalServer(secured) == null) {
+                    runServer(secured);
+                }
+            }
+        }
 
-            Movie starwars = new Movie();
-            starwars.setId("movies/1");
-            starwars.setName("Star Wars Ep.1");
-            starwars.setGenres(Arrays.asList("genres/1", "genres/2"));
+        IDocumentStore documentStore = getGlobalServer(secured);
+        DatabaseRecord databaseRecord = new DatabaseRecord();
+        databaseRecord.setDatabaseName(name);
 
-            Movie firefly = new Movie();
-            firefly.setId("movies/2");
-            firefly.setName("Firefly Serenity");
-            firefly.setGenres(Arrays.asList("genres/2", "genres/3"));
+        customizeDbRecord(databaseRecord);
 
-            Movie indianaJones = new Movie();
-            indianaJones.setId("movies/3");
-            indianaJones.setName("Indiana Jones and the Temple Of Doom");
-            indianaJones.setGenres(Arrays.asList("genres/3"));
+        CreateDatabaseOperation createDatabaseOperation = new CreateDatabaseOperation(databaseRecord);
+        documentStore.maintenance().server().send(createDatabaseOperation);
 
-            session.store(starwars);
-            session.store(firefly);
-            session.store(indianaJones);
 
-            User user1 = new User();
-            user1.setId("users/1");
-            user1.setName("Jack");
+        DocumentStore store = new DocumentStore();
+        store.setUrls(documentStore.getUrls());
+        store.setDatabase(name);
 
-            User.Rating rating11 = new User.Rating();
-            rating11.setMovie("movies/1");
-            rating11.setScore(5);
+        if (secured) {
+            store.setCertificate(getTestClientCertificate());
+            store.setTrustStore(getTestClientCertificate());
+        }
 
-            User.Rating rating12 = new User.Rating();
-            rating12.setMovie("movies/2");
-            rating12.setScore(7);
+        customizeStore(store);
 
-            user1.setHasRated(Arrays.asList(rating11, rating12));
-            session.store(user1);
+        hookLeakedConnectionCheck(store);
+        store.initialize();
 
-            User user2 = new User();
-            user2.setId("users/2");
-            user2.setName("Jill");
+        store.addAfterCloseListener(((sender, event) -> {
+            if (!documentStores.contains(store)) {
+                return;
+            }
 
-            User.Rating rating21 = new User.Rating();
-            rating21.setMovie("movies/2");
-            rating21.setScore(7);
+            try {
+                store.maintenance().server().send(new DeleteDatabasesOperation(store.getDatabase(), true));
+            } catch (DatabaseDoesNotExistException | NoLeaderException e) {
+                // ignore
+            }
+        }));
 
-            User.Rating rating22 = new User.Rating();
-            rating22.setMovie("movies/3");
-            rating22.setScore(9);
+        setupDatabase(store);
 
-            user2.setHasRated(Arrays.asList(rating11, rating22));
+        if (waitForIndexingTimeout != null) {
+            waitForIndexing(store, name, waitForIndexingTimeout);
+        }
 
-            session.store(user2);
+        documentStores.add(store);
+        return store;
+    }
 
-            User user3 = new User();
-            user3.setId("users/3");
-            user3.setName("Bob");
 
-            User.Rating rating31 = new User.Rating();
-            rating31.setMovie("movies/3");
-            rating31.setScore(5);
 
-            user3.setHasRated(Arrays.asList(rating31));
+    @Override
+    public void close() {
+        if (disposed) {
+            return;
+        }
 
-            session.store(user3);
+        ArrayList<Exception> exceptions = new ArrayList<>();
 
-            session.saveChanges();
+        for (DocumentStore documentStore : documentStores) {
+            try {
+                documentStore.close();
+            } catch (Exception e) {
+                exceptions.add(e);
+            }
+        }
+
+        disposed = true;
+
+        if (exceptions.size() > 0) {
+            throw new RuntimeException(exceptions
+                    .stream()
+                    .map(x -> x.toString())
+                    .collect(Collectors.joining(", ")));
         }
     }
 }

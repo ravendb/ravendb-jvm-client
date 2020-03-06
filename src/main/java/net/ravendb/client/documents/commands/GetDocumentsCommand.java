@@ -119,12 +119,12 @@ public class GetDocumentsCommand extends RavenCommand<GetDocumentsResult> {
 
             if (_matches != null) {
                 pathBuilder.append("&matches=");
-                pathBuilder.append(_matches);
+                pathBuilder.append(urlEncode(_matches));
             }
 
             if (_exclude != null) {
                 pathBuilder.append("&exclude=");
-                pathBuilder.append(_exclude);
+                pathBuilder.append(urlEncode(_exclude));
             }
 
             if (_startAfter != null) {
@@ -136,17 +136,17 @@ public class GetDocumentsCommand extends RavenCommand<GetDocumentsResult> {
         if (_includes != null) {
             for (String include : _includes) {
                 pathBuilder.append("&include=");
-                pathBuilder.append(include);
+                pathBuilder.append(urlEncode(include));
             }
         }
 
         if (_includeAllCounters) {
             pathBuilder
                     .append("&counter=")
-                    .append(Constants.Counters.ALL);
+                    .append(urlEncode(Constants.Counters.ALL));
         } else if (_counters != null && _counters.length > 0) {
             for (String counter : _counters) {
-                pathBuilder.append("&counter=").append(counter);
+                pathBuilder.append("&counter=").append(urlEncode(counter));
             }
         }
 

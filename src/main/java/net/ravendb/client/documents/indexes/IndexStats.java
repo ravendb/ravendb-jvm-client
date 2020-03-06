@@ -17,6 +17,7 @@ public class IndexStats {
     private Integer reduceErrors;
     private String reduceOutputCollection;
     private String reduceOutputReferencePattern;
+    private String patternReferencesCollectionName;
     private double mappedPerSecondRate;
     private double reducedPerSecondRate;
     private int maxNumberOfOutputsPerDocument;
@@ -221,6 +222,20 @@ public class IndexStats {
      */
     public void setReduceOutputReferencePattern(String reduceOutputReferencePattern) {
         this.reduceOutputReferencePattern = reduceOutputReferencePattern;
+    }
+
+    /**
+     * @return Collection name for reduce output reference-collection
+     */
+    public String getPatternReferencesCollectionName() {
+        return patternReferencesCollectionName;
+    }
+
+    /**
+     * @param patternReferencesCollectionName Collection name for reduce output reference-collection
+     */
+    public void setPatternReferencesCollectionName(String patternReferencesCollectionName) {
+        this.patternReferencesCollectionName = patternReferencesCollectionName;
     }
 
     /**

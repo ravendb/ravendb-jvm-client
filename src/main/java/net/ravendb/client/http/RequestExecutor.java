@@ -224,16 +224,6 @@ public class RequestExecutor implements CleanCloseable {
         return httpClientCache.computeIfAbsent(name, n -> createClient());
     }
 
-    private void removeHttpClient() {
-        ConcurrentMap<String, CloseableHttpClient> httpClientCache = getHttpClientCache();
-
-        String name = getHttpClientName();
-
-        httpClientCache.remove(name);
-
-        _httpClient = null;
-    }
-
     private String getHttpClientName() {
         if (certificate != null) {
             return CertificateUtils.extractThumbprintFromCertificate(certificate);
@@ -766,12 +756,12 @@ public class RequestExecutor implements CleanCloseable {
             if (timeout != null) {
                 AggressiveCacheOptions callingTheadAggressiveCaching = aggressiveCaching.get();
 
-                CompletableFuture<Void> sendTask = CompletableFuture.runAsync(() -> {
+                CompletableFuture<CloseableHttpResponse> sendTask = CompletableFuture.supplyAsync(() -> {
                     AggressiveCacheOptions aggressiveCacheOptionsToRestore = aggressiveCaching.get();
 
                     try {
                         aggressiveCaching.set(callingTheadAggressiveCaching);
-                        send(chosenNode, command, sessionInfo, request);
+                        return send(chosenNode, command, sessionInfo, request);
                     } catch (IOException e) {
                         throw ExceptionsUtils.unwrapException(e);
                     } finally {
@@ -780,8 +770,9 @@ public class RequestExecutor implements CleanCloseable {
                 }, _executorService);
 
                 try {
-                    sendTask.get(timeout.toMillis(), TimeUnit.MILLISECONDS);
-                    return null;
+                    return sendTask.get(timeout.toMillis(), TimeUnit.MILLISECONDS);
+                } catch (InterruptedException e) {
+                    throw ExceptionsUtils.unwrapException(e);
                 } catch (TimeoutException e) {
                     request.abort();
 
@@ -800,11 +791,18 @@ public class RequestExecutor implements CleanCloseable {
                     }
 
                     return null;
+                } catch (ExecutionException e) {
+                    Throwable rootCause = ExceptionUtils.getRootCause(e);
+                    if (rootCause instanceof IOException) {
+                        throw (IOException) rootCause;
+                    }
+
+                    throw ExceptionsUtils.unwrapException(e);
                 }
             } else {
                 return send(chosenNode, command, sessionInfo, request);
             }
-        } catch (Exception e) {
+        } catch (IOException e) {
             if (!shouldRetry) {
                 throw ExceptionsUtils.unwrapException(e);
             }
@@ -1223,7 +1221,6 @@ public class RequestExecutor implements CleanCloseable {
         return true;
     }
 
-
     public static class BroadcastState<TResult> {
         private RavenCommand<TResult> command;
         private int index;
@@ -1280,20 +1277,25 @@ public class RequestExecutor implements CleanCloseable {
 
     private <TResult> TResult waitForBroadcastResult(RavenCommand<TResult> command, Map<CompletableFuture<Void>, BroadcastState<TResult>> tasks) {
         while (!tasks.isEmpty()) {
+            Exception error = null;
             try {
                 CompletableFuture.anyOf(tasks.keySet().toArray(new CompletableFuture[0])).get();
             } catch (InterruptedException | ExecutionException e) {
-                CompletableFuture<Void> completed = tasks
-                        .keySet()
-                        .stream()
-                        .filter(CompletableFuture::isDone)
-                        .findFirst()
-                        .orElse(null);
+                error = e;
+            }
 
+            CompletableFuture<Void> completed = tasks
+                    .keySet()
+                    .stream()
+                    .filter(CompletableFuture::isDone)
+                    .findFirst()
+                    .orElse(null);
+
+            if (error != null) {
                 BroadcastState<TResult> failed = tasks.get(completed);
                 ServerNode node = _nodeSelector.getTopology().getNodes().get(failed.index);
 
-                command.getFailedNodes().put(node, e.getCause() != null ? (Exception) e.getCause() : e);
+                command.getFailedNodes().put(node, error.getCause() != null ? (Exception) error.getCause() : error);
 
                 _nodeSelector.onFailedRequest(failed.getIndex());
 
@@ -1308,8 +1310,8 @@ public class RequestExecutor implements CleanCloseable {
                 }
             }
 
-            _nodeSelector.restoreNodeIndex(tasks.get(command).getIndex());
-            return tasks.get(command).getCommand().getResult();
+            _nodeSelector.restoreNodeIndex(tasks.get(completed).getIndex());
+            return tasks.get(completed).getCommand().getResult();
         }
 
         String exceptions = command

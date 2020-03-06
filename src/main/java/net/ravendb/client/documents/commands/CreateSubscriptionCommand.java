@@ -39,7 +39,7 @@ public class CreateSubscriptionCommand extends RavenCommand<CreateSubscriptionRe
         url.value = node.getUrl() + "/databases/" + node.getDatabase() + "/subscriptions";
 
         if (_id != null) {
-            url.value += "?id=" + _id;
+            url.value += "?id=" + urlEncode(_id);
         }
 
         HttpPut request = new HttpPut();

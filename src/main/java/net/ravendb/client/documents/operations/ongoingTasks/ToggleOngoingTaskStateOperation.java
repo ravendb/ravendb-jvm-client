@@ -61,8 +61,10 @@ public class ToggleOngoingTaskStateOperation implements IMaintenanceOperation<Mo
 
         @Override
         public HttpRequestBase createRequest(ServerNode node, Reference<String> url) {
-            url.value = node.getUrl() + "/databases/" + node.getDatabase() + "/admin/tasks/state?key="
-                    + _taskId + "&type=" + SharpEnum.value(_type) + "&disable=" + (_disable ? "true": "false");
+            url.value = node.getUrl() + "/databases/"
+                    + node.getDatabase() + "/admin/tasks/state?key="
+                    + _taskId + "&type=" + SharpEnum.value(_type)
+                    + "&disable=" + (_disable ? "true": "false");
 
             if (_taskName != null) {
                 url.value += "&taskName=" + urlEncode(_taskName);

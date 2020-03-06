@@ -28,6 +28,7 @@ public abstract class AbstractIndexCreationTask extends AbstractGenericIndexCrea
         indexDefinitionBuilder.setSpatialIndexesStrings(spatialOptionsStrings);
         indexDefinitionBuilder.setOutputReduceToCollection(outputReduceToCollection);
         indexDefinitionBuilder.setPatternForOutputReduceToCollectionReferences(patternForOutputReduceToCollectionReferences);
+        indexDefinitionBuilder.setPatternReferencesCollectionName(patternReferencesCollectionName);
         indexDefinitionBuilder.setAdditionalSources(getAdditionalSources());
         indexDefinitionBuilder.setConfiguration(configuration);
 

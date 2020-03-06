@@ -30,6 +30,7 @@ public class IndexDefinition {
     private String outputReduceToCollection;
     private Long reduceOutputIndex;
     private String patternForOutputReduceToCollectionReferences;
+    private String patternReferencesCollectionName;
 
     /**
      * This is the means by which the outside world refers to this index definition
@@ -234,5 +235,19 @@ public class IndexDefinition {
      */
     public void setPatternForOutputReduceToCollectionReferences(String patternForOutputReduceToCollectionReferences) {
         this.patternForOutputReduceToCollectionReferences = patternForOutputReduceToCollectionReferences;
+    }
+
+    /**
+     * @return Defines a collection name for reference documents created based on provided pattern
+     */
+    public String getPatternReferencesCollectionName() {
+        return patternReferencesCollectionName;
+    }
+
+    /**
+     * @param patternReferencesCollectionName Defines a collection name for reference documents created based on provided pattern
+     */
+    public void setPatternReferencesCollectionName(String patternReferencesCollectionName) {
+        this.patternReferencesCollectionName = patternReferencesCollectionName;
     }
 }

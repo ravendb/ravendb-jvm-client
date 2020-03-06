@@ -46,7 +46,7 @@ public class GetIndexErrorsOperation implements IMaintenanceOperation<IndexError
                 url.value += "?";
 
                 for (String indexName : _indexNames) {
-                    url.value += "&name=" + indexName;
+                    url.value += "&name=" + urlEncode(indexName);
                 }
             }
 

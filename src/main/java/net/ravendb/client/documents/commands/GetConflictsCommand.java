@@ -24,7 +24,9 @@ public class GetConflictsCommand extends RavenCommand<GetConflictsResult> {
 
     @Override
     public HttpRequestBase createRequest(ServerNode node, Reference<String> url) {
-        url.value = node.getUrl() + "/databases/" + node.getDatabase() + "/replication/conflicts?docId=" + _id;
+        url.value = node.getUrl() + "/databases/"
+                + node.getDatabase() + "/replication/conflicts?docId="
+                + urlEncode(_id);
 
         return new HttpGet();
     }
