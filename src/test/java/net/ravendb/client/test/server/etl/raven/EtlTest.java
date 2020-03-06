@@ -6,10 +6,8 @@ import net.ravendb.client.documents.operations.GetOngoingTaskInfoOperation;
 import net.ravendb.client.documents.operations.connectionStrings.PutConnectionStringOperation;
 import net.ravendb.client.documents.operations.connectionStrings.PutConnectionStringResult;
 import net.ravendb.client.documents.operations.etl.*;
-import net.ravendb.client.documents.operations.ongoingTasks.DeleteOngoingTaskOperation;
-import net.ravendb.client.documents.operations.ongoingTasks.OngoingTask;
-import net.ravendb.client.documents.operations.ongoingTasks.OngoingTaskRavenEtlDetails;
-import net.ravendb.client.documents.operations.ongoingTasks.OngoingTaskType;
+import net.ravendb.client.documents.operations.etl.sql.SqlEtlConfiguration;
+import net.ravendb.client.documents.operations.ongoingTasks.*;
 import net.ravendb.client.documents.session.IDocumentSession;
 import net.ravendb.client.infrastructure.entities.User;
 import net.ravendb.client.serverwide.operations.ModifyOngoingTaskResult;
@@ -17,6 +15,7 @@ import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import java.util.Collections;
+import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -55,6 +54,23 @@ public class EtlTest extends ReplicationTestBase {
                         .isPositive();
 
                 waitForDocumentToReplicate(dst, User.class, "users/1", 10* 1000);
+
+                OngoingTaskRavenEtlDetails ongoingTask = (OngoingTaskRavenEtlDetails) src.maintenance()
+                        .send(new GetOngoingTaskInfoOperation(etlResult.getTaskId(), OngoingTaskType.RAVEN_ETL));
+
+                assertThat(ongoingTask)
+                        .isNotNull();
+
+                assertThat(ongoingTask.getTaskId())
+                        .isEqualTo(etlResult.getTaskId());
+                assertThat(ongoingTask.getTaskType())
+                        .isEqualTo(OngoingTaskType.RAVEN_ETL);
+                assertThat(ongoingTask.getResponsibleNode())
+                        .isNotNull();
+                assertThat(ongoingTask.getTaskState())
+                        .isEqualTo(OngoingTaskState.ENABLED);
+                assertThat(ongoingTask.getTaskName())
+                        .isEqualTo("etlToDst");
 
                 ModifyOngoingTaskResult deleteResult = src.maintenance()
                         .send(new DeleteOngoingTaskOperation(etlResult.getTaskId(), OngoingTaskType.RAVEN_ETL));

@@ -1,5 +1,7 @@
 package net.ravendb.client.documents.operations.ongoingTasks;
 
+import java.time.Duration;
+
 public class OngoingTaskReplication extends OngoingTask {
 
     public OngoingTaskReplication() {
@@ -10,7 +12,7 @@ public class OngoingTaskReplication extends OngoingTask {
     private String[] topologyDiscoveryUrls;
     private String destinationDatabase;
     private String connectionStringName;
-    private String delayReplicationFor;
+    private Duration delayReplicationFor;
 
     public String getDestinationUrl() {
         return destinationUrl;
@@ -44,11 +46,11 @@ public class OngoingTaskReplication extends OngoingTask {
         this.connectionStringName = connectionStringName;
     }
 
-    public String getDelayReplicationFor() {
+    public Duration getDelayReplicationFor() {
         return delayReplicationFor;
     }
 
-    public void setDelayReplicationFor(String delayReplicationFor) {
+    public void setDelayReplicationFor(Duration delayReplicationFor) {
         this.delayReplicationFor = delayReplicationFor;
     }
 }

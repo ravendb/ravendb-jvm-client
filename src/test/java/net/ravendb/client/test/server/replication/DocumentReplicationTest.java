@@ -5,15 +5,20 @@ import net.ravendb.client.documents.IDocumentStore;
 import net.ravendb.client.documents.commands.GetConflictsCommand;
 import net.ravendb.client.documents.commands.GetConflictsResult;
 import net.ravendb.client.documents.commands.PutDocumentCommand;
+import net.ravendb.client.documents.operations.GetOngoingTaskInfoOperation;
+import net.ravendb.client.documents.operations.ongoingTasks.*;
 import net.ravendb.client.documents.session.IDocumentSession;
 import net.ravendb.client.exceptions.documents.DocumentConflictException;
 import net.ravendb.client.infrastructure.DisabledOnPullRequest;
 import net.ravendb.client.infrastructure.entities.User;
 import net.ravendb.client.serverwide.ConflictSolver;
 import net.ravendb.client.serverwide.DatabaseRecord;
+import net.ravendb.client.serverwide.operations.ModifyOngoingTaskResult;
 import org.junit.jupiter.api.Test;
 
+import java.time.Duration;
 import java.util.Collections;
+import java.util.List;
 import java.util.function.Consumer;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -191,6 +196,36 @@ public class DocumentReplicationTest extends ReplicationTestBase {
                     assertThat(loadedUser.getName())
                             .isEqualTo(conflicts.getResults()[0].getDoc().get("name").asText());
                 }
+            }
+        } finally {
+            customize = null;
+        }
+    }
+
+    @Test
+    @DisabledOnPullRequest
+    public void canGetInfoAboutReplicationTask() throws Exception {
+        try (IDocumentStore source = getDocumentStore()) {
+            try (IDocumentStore destination = getDocumentStore()) {
+                List<ModifyOngoingTaskResult> taskResults = setupReplication(source, destination);
+
+                long taskId = taskResults.get(0).getTaskId();
+                assertThat(taskId)
+                        .isPositive();
+
+                OngoingTaskReplication ongoingTask = (OngoingTaskReplication) source.maintenance()
+                        .send(new GetOngoingTaskInfoOperation(taskId, OngoingTaskType.REPLICATION));
+
+                assertThat(ongoingTask)
+                        .isNotNull();
+                assertThat(ongoingTask.getDestinationDatabase())
+                        .isEqualTo(destination.getDatabase());
+                assertThat(ongoingTask.getDelayReplicationFor())
+                        .isEqualTo(Duration.ZERO);
+                assertThat(ongoingTask.getTaskState())
+                        .isEqualTo(OngoingTaskState.ENABLED);
+                assertThat(ongoingTask.getTaskConnectionStatus())
+                        .isEqualTo(OngoingTaskConnectionStatus.ACTIVE);
             }
         } finally {
             customize = null;
