@@ -5,6 +5,7 @@ import net.ravendb.client.RemoteTestBase;
 import net.ravendb.client.documents.IDocumentStore;
 import net.ravendb.client.documents.indexes.IndexDefinition;
 import net.ravendb.client.documents.indexes.IndexFieldOptions;
+import net.ravendb.client.documents.indexes.PutIndexResult;
 import net.ravendb.client.documents.operations.indexes.PutIndexesOperation;
 import net.ravendb.client.documents.queries.Query;
 import net.ravendb.client.documents.queries.suggestions.SuggestionResult;
@@ -38,7 +39,12 @@ public class RavenDB_9584Test extends RemoteTestBase {
 
         PutIndexesOperation putIndexesOperation = new PutIndexesOperation(indexDefinition);
 
-        store.maintenance().send(putIndexesOperation);
+        PutIndexResult[] results = store.maintenance().send(putIndexesOperation);
+        assertThat(results)
+                .hasSize(1);
+
+        assertThat(results[0].getIndexName())
+                .isEqualTo(indexDefinition.getName());
 
         try (IDocumentSession session = store.openSession()) {
             User ayende = new User();

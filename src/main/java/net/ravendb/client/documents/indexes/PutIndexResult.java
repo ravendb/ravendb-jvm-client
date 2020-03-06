@@ -10,5 +10,4 @@ public class PutIndexResult {
     public void setIndexName(String indexName) {
         this.indexName = indexName;
     }
-
 }
