@@ -15,7 +15,7 @@ import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-public class RavenDB_14272 extends RemoteTestBase {
+public class RavenDB_14272Test extends RemoteTestBase {
 
     @Test
     public void select_Fields1() throws Exception {

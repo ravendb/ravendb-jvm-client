@@ -17,7 +17,7 @@ import java.util.function.Consumer;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.atIndex;
 
-public class CachingOfDocumentInclude extends RemoteTestBase {
+public class CachingOfDocumentIncludeTest extends RemoteTestBase {
 
     public static class User {
         private String id;

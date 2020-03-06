@@ -10,7 +10,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-public class DocumentStreaming extends RemoteTestBase {
+public class DocumentStreamingTest extends RemoteTestBase {
     @Test
     public void canStreamDocumentsStartingWith() throws Exception {
         try (IDocumentStore store = getDocumentStore()) {

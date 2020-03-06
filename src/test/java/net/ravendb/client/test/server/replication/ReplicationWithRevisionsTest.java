@@ -12,7 +12,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-public class ReplicationWithRevisions extends ReplicationTestBase {
+public class ReplicationWithRevisionsTest extends ReplicationTestBase {
 
     @Test
     public void canDisableRevisionsConflict() throws Exception {

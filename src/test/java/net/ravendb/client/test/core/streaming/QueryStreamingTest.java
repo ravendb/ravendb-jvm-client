@@ -23,7 +23,7 @@ import java.util.Date;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-public class QueryStreaming extends RemoteTestBase {
+public class QueryStreamingTest extends RemoteTestBase {
 
     @Test
     public void canStreamQueryResults() throws Exception {

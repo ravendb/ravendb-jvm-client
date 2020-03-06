@@ -16,6 +16,8 @@ import net.ravendb.client.serverwide.operations.ModifyOngoingTaskResult;
 import org.apache.commons.lang3.ObjectUtils;
 import org.assertj.core.api.Assertions;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
@@ -52,14 +54,17 @@ public class ReplicationTestBase extends RemoteTestBase {
             .isNotNull();
     }
 
-    protected void setupReplication(IDocumentStore fromStore, IDocumentStore... destinations) {
+    protected List<ModifyOngoingTaskResult> setupReplication(IDocumentStore fromStore, IDocumentStore... destinations) {
+        List<ModifyOngoingTaskResult> result = new ArrayList<>();
 
         for (IDocumentStore store : destinations) {
             ExternalReplication databaseWatcher = new ExternalReplication(store.getDatabase(), "ConnectionString-" + store.getIdentifier());
             modifyReplicationDestination(databaseWatcher);
 
-            addWatcherToReplicationTopology(fromStore, databaseWatcher);
+            result.add(addWatcherToReplicationTopology(fromStore, databaseWatcher));
         }
+
+        return result;
     }
 
     protected ModifyOngoingTaskResult addWatcherToReplicationTopology(IDocumentStore store, ExternalReplicationBase watcher, String... urls) {

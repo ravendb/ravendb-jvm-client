@@ -13,7 +13,7 @@ import java.time.Duration;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-public class AggressiveCaching extends RemoteTestBase {
+public class AggressiveCachingTest extends RemoteTestBase {
 
     public DocumentStore initAggressiveCaching() throws Exception {
         DocumentStore store = getDocumentStore();

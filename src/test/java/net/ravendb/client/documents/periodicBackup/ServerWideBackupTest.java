@@ -18,7 +18,7 @@ import java.util.stream.Collectors;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-public class ServerWideBackup extends RemoteTestBase {
+public class ServerWideBackupTest extends RemoteTestBase {
 
     @Test
     public void canCrudServerWideBackup() throws Exception {

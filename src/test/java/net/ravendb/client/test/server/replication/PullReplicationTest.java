@@ -20,7 +20,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-public class PullReplicationTests extends ReplicationTestBase {
+public class PullReplicationTest extends ReplicationTestBase {
 
     @Test
     public void canDefinePullReplication() throws Exception {

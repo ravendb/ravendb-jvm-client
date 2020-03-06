@@ -16,7 +16,7 @@ import static net.ravendb.client.documents.queries.GroupBy.array;
 import static net.ravendb.client.documents.queries.GroupBy.field;
 import static org.assertj.core.api.Assertions.assertThat;
 
-public class RavenDB_8761 extends RemoteTestBase {
+public class RavenDB_8761Test extends RemoteTestBase {
     @Test
     public void can_group_by_array_values() throws Exception {
         try (IDocumentStore store = getDocumentStore()) {

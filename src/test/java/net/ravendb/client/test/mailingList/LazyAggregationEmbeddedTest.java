@@ -14,7 +14,7 @@ import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-public class LazyAggregationEmbedded extends RemoteTestBase {
+public class LazyAggregationEmbeddedTest extends RemoteTestBase {
 
     @Test
     public void test() throws Exception {

@@ -11,7 +11,7 @@ import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-public class LoadAllStartingWith extends RemoteTestBase {
+public class LoadAllStartingWithTest extends RemoteTestBase {
 
     public static class Abc {
         private String id;

@@ -17,7 +17,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.*;
 
-public class ForceRevisionCreation extends RemoteTestBase {
+public class ForceRevisionCreationTest extends RemoteTestBase {
 
     @Test
     public void forceRevisionCreationForSingleUnTrackedEntityByID() throws Exception {
