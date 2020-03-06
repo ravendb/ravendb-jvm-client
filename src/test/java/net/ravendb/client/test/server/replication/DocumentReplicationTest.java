@@ -224,8 +224,6 @@ public class DocumentReplicationTest extends ReplicationTestBase {
                         .isEqualTo(Duration.ZERO);
                 assertThat(ongoingTask.getTaskState())
                         .isEqualTo(OngoingTaskState.ENABLED);
-                assertThat(ongoingTask.getTaskConnectionStatus())
-                        .isEqualTo(OngoingTaskConnectionStatus.ACTIVE);
             }
         } finally {
             customize = null;
