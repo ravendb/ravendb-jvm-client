@@ -27,6 +27,7 @@ public class ChangesTest extends RemoteTestBase {
 
     @Test
     public void singleDocumentChanges() throws Exception {
+        System.out.println("singleDocumentChanges");
         try (IDocumentStore store = getDocumentStore()) {
 
             BlockingQueue<DocumentChange> changesList = new BlockingArrayQueue<>();
@@ -78,6 +79,7 @@ public class ChangesTest extends RemoteTestBase {
 
     @Test
     public void changesWithHttps() throws Exception {
+        System.out.println("changesWithHttps");
         try (IDocumentStore store = getSecuredDocumentStore()) {
 
             BlockingQueue<DocumentChange> changesList = new BlockingArrayQueue<>();
@@ -133,6 +135,7 @@ public class ChangesTest extends RemoteTestBase {
 
     @Test
     public void allDocumentsChanges() throws Exception {
+        System.out.println("allDocumentsChanges");
         try (IDocumentStore store = getDocumentStore()) {
 
             BlockingQueue<DocumentChange> changesList = new BlockingArrayQueue<>();
@@ -204,6 +207,7 @@ public class ChangesTest extends RemoteTestBase {
 
     @Test
     public void singleIndexChanges() throws Exception {
+        System.out.println("singleIndexChanges");
         try (IDocumentStore store = getDocumentStore()) {
 
             store.executeIndex(new UsersByName());
@@ -236,6 +240,7 @@ public class ChangesTest extends RemoteTestBase {
 
     @Test
     public void allIndexChanges() throws Exception {
+        System.out.println("allIndexChanges");
         try (IDocumentStore store = getDocumentStore()) {
 
             store.executeIndex(new UsersByName());
