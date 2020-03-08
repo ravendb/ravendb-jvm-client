@@ -33,6 +33,8 @@ import java.util.List;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @SuppressWarnings("UnnecessaryLocalVariable")
 public class DatabaseChanges implements IDatabaseChanges {
@@ -367,7 +369,9 @@ public class DatabaseChanges implements IDatabaseChanges {
             try {
                 System.out.println("dispose:: get task + _task.isDone()" + _task.isDone());
 
-                Thread.getAllStackTraces().forEach((k, v) -> System.out.println(k.getName() + " -> " + v));
+                Thread.getAllStackTraces().forEach((k, v) ->
+                        System.out.println(k.getName() + " -> "
+                                + Stream.of(v).map(x -> x.toString()).collect(Collectors.joining(System.lineSeparator() + "\t"))));
 
                 _task.get();
             } catch (Exception e) {
