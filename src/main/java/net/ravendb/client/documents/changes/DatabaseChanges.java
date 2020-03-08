@@ -37,6 +37,8 @@ import java.util.function.Consumer;
 @SuppressWarnings("UnnecessaryLocalVariable")
 public class DatabaseChanges implements IDatabaseChanges {
 
+    private AtomicInteger integer = new AtomicInteger(0);
+
     private int _commandId;
 
     private final Semaphore _semaphore = new Semaphore(1);
@@ -85,6 +87,8 @@ public class DatabaseChanges implements IDatabaseChanges {
         addConnectionStatusChanged(_connectionStatusEventHandler);
 
         _task = CompletableFuture.runAsync(() -> doWork(nodeTag), executorService);
+
+        System.out.println("opening: " + integer.incrementAndGet());
     }
 
     public static WebSocketClient createWebSocketClient(RequestExecutor requestExecutor) {
@@ -333,6 +337,8 @@ public class DatabaseChanges implements IDatabaseChanges {
 
     @Override
     public void close() {
+        System.out.println("closing - " + integer.decrementAndGet());
+
         try {
             for (CompletableFuture<Void> confirmation : _confirmations.values()) {
                 confirmation.cancel(false);
