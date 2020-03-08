@@ -134,7 +134,9 @@ public class DatabaseChanges implements IDatabaseChanges {
     @Override
     public void ensureConnectedNow() {
         try {
+            System.out.println("ensure connected now - get");
             _tcs.get();
+            System.out.println("ensure connected now - done");
         } catch (Exception e) {
             throw ExceptionsUtils.unwrapException(e);
         }

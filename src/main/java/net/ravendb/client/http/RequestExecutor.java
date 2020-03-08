@@ -55,6 +55,7 @@ import java.util.stream.Collectors;
 
 @SuppressWarnings("SameParameterValue")
 public class RequestExecutor implements CleanCloseable {
+    //TODO: AttachmentFailover
 
     private static final int INITIAL_TOPOLOGY_ETAG = -2;
 

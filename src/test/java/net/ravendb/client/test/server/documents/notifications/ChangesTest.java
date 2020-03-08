@@ -83,6 +83,7 @@ public class ChangesTest extends RemoteTestBase {
             BlockingQueue<DocumentChange> changesList = new BlockingArrayQueue<>();
 
             IDatabaseChanges changes = store.changes();
+            changes.addOnError(e -> e.printStackTrace());
             changes.ensureConnectedNow();
 
             IChangesObservable<DocumentChange> observable = changes.forDocument("users/1");
