@@ -344,8 +344,10 @@ public class DatabaseChanges implements IDatabaseChanges {
                 confirmation.cancel(false);
             }
 
+            System.out.println("dispose:: sempahone acquite");
             _semaphore.acquire();
             try {
+                System.out.println("dispose:: close client session");
                 if (_clientSession != null) {
                     _clientSession.close();
                 }
@@ -356,12 +358,14 @@ public class DatabaseChanges implements IDatabaseChanges {
             _cts.cancel();
 
             if (_client != null) {
+                System.out.println("dispose client stop");
                 _client.stop();
             }
 
             _counters.clear();
 
             try {
+                System.out.println("dispose:: get task");
                 _task.get();
             } catch (Exception e) {
                 //we're disposing the document store
