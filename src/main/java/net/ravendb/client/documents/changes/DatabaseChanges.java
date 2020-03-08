@@ -119,7 +119,7 @@ public class DatabaseChanges implements IDatabaseChanges {
 
     private void onConnectionStatusChanged(Object sender, EventArgs eventArgs) {
         try {
-            System.out.println("on connection status changed, connected = " + isConnected() + " " + " tcs.isDone() = " + _tcs.isDone());
+            System.out.println("on connection status changed, connected = " + isConnected() + " " + " tcs.isDone() = " + _tcs.isDone() + " tcs.haserror = " + _tcs.isCompletedExceptionally());
             _semaphore.acquire();
 
             if (isConnected()) {
@@ -470,6 +470,7 @@ public class DatabaseChanges implements IDatabaseChanges {
             _nodeIndex = preferredNode.currentIndex;
             _serverNode = preferredNode.currentNode;
         } catch (Exception e) {
+            System.out.println("exception in initial doWork: " + e.getMessage());
             EventHelper.invoke(_connectionStatusChanged, this, EventArgs.EMPTY);
             notifyAboutError(e);
             _tcs.completeExceptionally(e);
@@ -669,6 +670,7 @@ public class DatabaseChanges implements IDatabaseChanges {
         if (_cts.getToken().isCancellationRequested()) {
             return;
         }
+
 
         EventHelper.invoke(onError, e);
 
