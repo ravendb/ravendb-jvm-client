@@ -90,6 +90,8 @@ public class DatabaseChanges implements IDatabaseChanges {
     public static WebSocketClient createWebSocketClient(RequestExecutor requestExecutor) {
         WebSocketClient client;
 
+        System.out.println("Create web socket");
+
         try {
             if (requestExecutor.getCertificate() != null) {
                 SSLContext sslContext = requestExecutor.createSSLContext();
@@ -105,12 +107,15 @@ public class DatabaseChanges implements IDatabaseChanges {
             throw ExceptionsUtils.unwrapException(e);
         }
 
+
+        System.out.println("Created web socket");
         return client;
 
     }
 
     private void onConnectionStatusChanged(Object sender, EventArgs eventArgs) {
         try {
+            System.out.println("on connection status changed, connected = " + isConnected() + " " + " tcs.isDone() = " + _tcs.isDone());
             _semaphore.acquire();
 
             if (isConnected()) {

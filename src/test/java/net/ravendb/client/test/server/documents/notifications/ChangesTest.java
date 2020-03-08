@@ -82,9 +82,13 @@ public class ChangesTest extends RemoteTestBase {
 
             BlockingQueue<DocumentChange> changesList = new BlockingArrayQueue<>();
 
+            System.out.println("https store changes");
             IDatabaseChanges changes = store.changes();
             changes.addOnError(e -> e.printStackTrace());
+            System.out.println("https store changes - ensure connected");
             changes.ensureConnectedNow();
+
+            System.out.println("https store changes - for document");
 
             IChangesObservable<DocumentChange> observable = changes.forDocument("users/1");
             try (CleanCloseable subscription = observable.subscribe(Observers.create(changesList::add))) {
