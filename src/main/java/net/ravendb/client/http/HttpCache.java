@@ -28,6 +28,10 @@ public class HttpCache implements CleanCloseable {
         items = null;
     }
 
+    public void clear() {
+        items.invalidateAll();
+    }
+
     public final AtomicInteger generation = new AtomicInteger();
 
     public long getNumberOfItems() {

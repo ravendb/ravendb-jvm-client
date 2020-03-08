@@ -1,9 +1,13 @@
 package net.ravendb.client;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.google.common.base.Stopwatch;
+import com.google.common.io.Closeables;
 import net.ravendb.client.documents.DocumentStore;
 import net.ravendb.client.documents.IDocumentStore;
 import net.ravendb.client.documents.conventions.DocumentConventions;
+import net.ravendb.client.documents.session.DocumentSession;
+import net.ravendb.client.documents.session.IDocumentSession;
 import net.ravendb.client.driver.RavenServerLocator;
 import net.ravendb.client.driver.RavenTestDriver;
 import net.ravendb.client.http.ClusterRequestExecutor;
@@ -16,16 +20,23 @@ import net.ravendb.client.serverwide.DatabaseRecord;
 import net.ravendb.client.serverwide.commands.GetClusterTopologyCommand;
 import net.ravendb.client.serverwide.operations.CreateDatabaseOperation;
 import net.ravendb.client.serverwide.operations.DatabasePutResult;
+import org.apache.commons.lang3.ObjectUtils;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpRequestBase;
 import org.apache.http.impl.client.CloseableHttpClient;
 
+import javax.swing.plaf.synth.SynthRadioButtonMenuItemUI;
+import java.io.Closeable;
 import java.net.URI;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Function;
 
-public abstract class ClusterTestBase extends RavenTestDriver {
+public abstract class ClusterTestBase extends RavenTestDriver implements CleanCloseable {
+
+    private List<Closeable> _toDispose = new ArrayList<>();
 
     private static class TestCloudServiceLocator extends RavenServerLocator {
         @Override
@@ -190,6 +201,78 @@ public abstract class ClusterTestBase extends RavenTestDriver {
             }
         }
     }
+
+    protected <T> boolean waitForDocumentInCluster(Class<T> clazz, DocumentSession session, String docId,
+                                                   Function<T, Boolean> predicate, Duration timeout) {
+        List<ServerNode> nodes = session.getRequestExecutor().getTopologyNodes();
+        List<DocumentStore> stores = getDocumentStores(nodes, true);
+
+        return waitForDocumentInClusterInternal(clazz, docId, predicate, timeout, stores);
+    }
+
+    private <T> boolean waitForDocumentInClusterInternal(Class<T> clazz, String docId, Function<T, Boolean> predicate,
+                                                         Duration timeout, List<DocumentStore> stores) {
+        //tasks.Add(Task.Run(() => WaitForDocument(store, docId, predicate, (int)timeout.TotalMilliseconds)));
+        for (DocumentStore store : stores) {
+            waitForDocument(clazz, store, docId, predicate, timeout.toMillis());
+        }
+
+        return true;
+    }
+
+    protected <T> boolean waitForDocument(Class<T> clazz, IDocumentStore store, String docId,
+                                          Function<T, Boolean> predicate, long timeout) {
+        Stopwatch sw = Stopwatch.createStarted();
+        Exception ex = null;
+        while (sw.elapsed().toMillis() < timeout) {
+            try (IDocumentSession session = store.openSession(store.getDatabase())) {
+                try {
+                    T doc = session.load(clazz, docId);
+                    if (doc != null) {
+                        if (predicate == null || predicate.apply(doc)) {
+                            return true;
+                        }
+                    }
+                } catch (Exception e) {
+                    ex = e;
+                }
+            }
+
+            try {
+                Thread.sleep(100);
+            } catch (InterruptedException e) {
+                // empty
+            }
+        }
+        return false;
+    }
+
+    private List<DocumentStore> getDocumentStores(List<ServerNode> nodes, boolean disableTopologyUpdates) {
+        List<DocumentStore> stores = new ArrayList<>();
+        for (ServerNode node : nodes) {
+            DocumentStore store = new DocumentStore(node.getUrl(), node.getDatabase());
+            store.getConventions().setDisableTopologyUpdates(disableTopologyUpdates);
+
+            store.initialize();
+            stores.add(store);
+
+            _toDispose.add(store);
+        }
+
+        return stores;
+    }
+
+    @Override
+    public void close() {
+        for (Closeable closeable : _toDispose) {
+            try {
+                Closeables.close(closeable, true);
+            } catch (Exception e) {
+                // empty
+            }
+        }
+    }
+
 
     public static class ClusterNode {
         private String nodeTag;
