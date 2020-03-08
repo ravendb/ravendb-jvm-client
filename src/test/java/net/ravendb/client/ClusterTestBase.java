@@ -2,6 +2,7 @@ package net.ravendb.client;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.google.common.base.Stopwatch;
+import com.google.common.collect.Streams;
 import com.google.common.io.Closeables;
 import net.ravendb.client.documents.DocumentStore;
 import net.ravendb.client.documents.IDocumentStore;
@@ -20,6 +21,7 @@ import net.ravendb.client.serverwide.DatabaseRecord;
 import net.ravendb.client.serverwide.commands.GetClusterTopologyCommand;
 import net.ravendb.client.serverwide.operations.CreateDatabaseOperation;
 import net.ravendb.client.serverwide.operations.DatabasePutResult;
+import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.ObjectUtils;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpRequestBase;
@@ -30,21 +32,41 @@ import java.io.Closeable;
 import java.net.URI;
 import java.time.Duration;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
 public abstract class ClusterTestBase extends RavenTestDriver implements CleanCloseable {
 
     private List<Closeable> _toDispose = new ArrayList<>();
 
     private static class TestCloudServiceLocator extends RavenServerLocator {
+
+        private static Map<String, String> _defaultParams = new HashMap<>();
+        private Map<String, String> _extraParams = new HashMap<>();
+
+        static {
+            _defaultParams.put("ServerUrl", "http://127.0.0.1:0");
+            _defaultParams.put("Features.Availability", "Experimental");
+        }
+
+        public TestCloudServiceLocator() {
+        }
+
+        public TestCloudServiceLocator(Map<String, String> extraParams) {
+            _extraParams = extraParams;
+        }
+
         @Override
         public String[] getCommandArguments() {
-            return new String[] {
-                    "--ServerUrl=http://127.0.0.1:0",
-                    "--Features.Availability=Experimental"
-            };
+            return Streams.concat(_defaultParams.entrySet().stream(), _extraParams.entrySet().stream())
+                    .map(x -> "--" + x.getKey() + "=" + x.getValue())
+                    .collect(Collectors.toList())
+                    .toArray(new String[0]);
+
         }
     }
 
@@ -54,10 +76,11 @@ public abstract class ClusterTestBase extends RavenTestDriver implements CleanCl
         return "db_" + dbCounter.incrementAndGet();
     }
 
-    private RavenServerLocator locator = new TestCloudServiceLocator();
-
     protected ClusterController createRaftCluster(int numberOfNodes) throws Exception {
+        return createRaftCluster(numberOfNodes, new HashMap<>());
+    }
 
+    protected ClusterController createRaftCluster(int numberOfNodes, Map<String, String> customSettings) throws Exception {
         ClusterController cluster = new ClusterController();
         cluster.nodes = new ArrayList<>();
 
@@ -68,7 +91,7 @@ public abstract class ClusterTestBase extends RavenTestDriver implements CleanCl
 
         for (int i = 0; i < numberOfNodes; i++) {
             Reference<Process> processReference = new Reference<>();
-            IDocumentStore store = runServerInternal(locator, processReference, null);
+            IDocumentStore store = runServerInternal(new TestCloudServiceLocator(customSettings), processReference, null);
 
             Runtime.getRuntime().addShutdownHook(new Thread(() -> killProcess(processReference.value)));
 
@@ -147,6 +170,22 @@ public abstract class ClusterTestBase extends RavenTestDriver implements CleanCl
             }
         }
 
+        public ClusterNode getNodeByUrl(String url) {
+            return nodes
+                    .stream()
+                    .filter(x -> url.equals(x.url))
+                    .findFirst()
+                    .orElseThrow(() -> new IllegalArgumentException("Unable to find node with url: " + url));
+        }
+
+        public ClusterNode getWorkingServer() {
+            return nodes
+                    .stream()
+                    .filter(x -> !x.disposed)
+                    .findFirst()
+                    .orElseThrow(() -> new IllegalArgumentException("Unable to find working server"));
+        }
+
         public ClusterNode getNodeByTag(String nodeTag) {
             return nodes
                     .stream()
@@ -164,6 +203,7 @@ public abstract class ClusterTestBase extends RavenTestDriver implements CleanCl
 
         public void disposeServer(String nodeTag) {
             try {
+                getNodeByTag(nodeTag).setDisposed(true);
                 executeJsScriptRaw(nodeTag, "server.Dispose()");
             } catch (Exception e) {
                 // we likely throw as server won't be able to respond
@@ -176,6 +216,10 @@ public abstract class ClusterTestBase extends RavenTestDriver implements CleanCl
                     .filter(x -> x.leader)
                     .findFirst()
                     .orElse(null);
+        }
+
+        public void createDatabase(String databaseName, int replicationFactor, String leaderUrl) {
+            createDatabase(new DatabaseRecord(databaseName), replicationFactor, leaderUrl);
         }
 
         public void createDatabase(DatabaseRecord databaseRecord, int replicationFactor, String leaderUrl) {
@@ -218,6 +262,10 @@ public abstract class ClusterTestBase extends RavenTestDriver implements CleanCl
         }
 
         return true;
+    }
+
+    protected <T> boolean waitForDocument(Class<T> clazz, IDocumentStore store, String docId) {
+        return waitForDocument(clazz, store, docId, null, 10_000);
     }
 
     protected <T> boolean waitForDocument(Class<T> clazz, IDocumentStore store, String docId,
@@ -280,6 +328,15 @@ public abstract class ClusterTestBase extends RavenTestDriver implements CleanCl
         private boolean leader;
         private IDocumentStore store;
         private Process serverProcess;
+        private boolean disposed;
+
+        public boolean isDisposed() {
+            return disposed;
+        }
+
+        public void setDisposed(boolean disposed) {
+            this.disposed = disposed;
+        }
 
         public String getNodeTag() {
             return nodeTag;

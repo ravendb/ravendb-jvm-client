@@ -42,6 +42,7 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 public abstract class RavenTestDriver {
@@ -232,6 +233,33 @@ public abstract class RavenTestDriver {
         }
 
         throw new TimeoutException("The indexes stayed stale for more than " + timeout + "." + allIndexErrorsText);
+    }
+
+    protected <T> T waitForValue(Supplier<T> act, T expectedValue) throws InterruptedException {
+        return waitForValue(act, expectedValue, Duration.ofSeconds(15));
+    }
+
+    protected <T> T waitForValue(Supplier<T> act, T expectedValue, Duration timeout) throws InterruptedException {
+        Stopwatch sw = Stopwatch.createStarted();
+
+        do {
+            try {
+                T currentVal = act.get();
+                if (expectedValue.equals(currentVal)) {
+                    return currentVal;
+                }
+
+                if (sw.elapsed().compareTo(timeout) > 0) {
+                    return currentVal;
+                }
+            } catch (Exception e) {
+                if (sw.elapsed().compareTo(timeout) > 0) {
+                    throw new RuntimeException(e);
+                }
+            }
+
+            Thread.sleep(16);
+        } while (true);
     }
 
     protected static void killProcess(Process p) {

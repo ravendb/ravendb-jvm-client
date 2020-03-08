@@ -491,7 +491,6 @@ public class DatabaseChanges implements IDatabaseChanges {
 
                 _processor.processing.get();
             } catch (Exception e) {
-
                 if (e instanceof ExecutionException && e.getCause() instanceof ChangeProcessingException) {
                     continue;
                 }
