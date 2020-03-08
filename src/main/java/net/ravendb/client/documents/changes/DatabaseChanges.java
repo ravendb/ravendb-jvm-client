@@ -365,9 +365,13 @@ public class DatabaseChanges implements IDatabaseChanges {
             _counters.clear();
 
             try {
-                System.out.println("dispose:: get task");
+                System.out.println("dispose:: get task + _task.isDone()" + _task.isDone());
+
+                Thread.getAllStackTraces().forEach((k, v) -> System.out.println(k.getName() + " -> " + v));
+
                 _task.get();
             } catch (Exception e) {
+                System.out.println("in task get catch: " + e.getMessage());
                 //we're disposing the document store
                 // nothing we can do here
             }
