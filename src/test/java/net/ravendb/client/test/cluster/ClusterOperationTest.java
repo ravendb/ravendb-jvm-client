@@ -39,6 +39,7 @@ public class ClusterOperationTest extends ClusterTestBase {
 
     @Test
     public void nextIdentityForOperationShouldBroadcast() throws Exception {
+        System.out.println("nextIdentityForOperationShouldBroadcast");
         try (ClusterController cluster = createRaftCluster(3)) {
 
             String database = getDatabaseName();
@@ -80,6 +81,7 @@ public class ClusterOperationTest extends ClusterTestBase {
 
     @Test
     public void nextIdentityForOperationShouldBroadcastAndFail() throws Exception {
+        System.out.println("nextIdentityForOperationShouldBroadcastAndFail");
         try (ClusterController cluster = createRaftCluster(3)) {
 
             String database = getDatabaseName();
@@ -124,6 +126,7 @@ public class ClusterOperationTest extends ClusterTestBase {
 
     @Test
     public void changesApiFailOver() throws Exception {
+        System.out.println("changesApiFailOver");
         String db = "Test";
 
         DatabaseTopology topology = new DatabaseTopology();
@@ -201,6 +204,7 @@ public class ClusterOperationTest extends ClusterTestBase {
     @Test
     public void changesApiReorderDatabaseNodes() throws Exception {
         String db = "ReorderDatabaseNodes";
+        System.out.println("changesApiReorderDatabaseNodes");
 
         try (ClusterController cluster = createRaftCluster(2)) {
             cluster.createDatabase(db, 2, cluster.getInitialLeader().getUrl());
