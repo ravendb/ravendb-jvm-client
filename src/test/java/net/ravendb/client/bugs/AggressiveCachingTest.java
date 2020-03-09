@@ -42,7 +42,7 @@ public class AggressiveCachingTest extends RemoteTestBase {
             }
 
             assertThat(requestExecutor.numberOfServerRequests.get())
-                    .isBetween(1 + oldNumOfRequests, 2 + oldNumOfRequests);
+                    .isBetween(1 + oldNumOfRequests, 3 + oldNumOfRequests);
         }
     }
 
