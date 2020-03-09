@@ -331,19 +331,14 @@ public class DatabaseChanges implements IDatabaseChanges {
                 confirmation.cancel(false);
             }
 
-            _semaphore.acquire();
-            try {
-                if (_clientSession != null) {
-                    _clientSession.close();
-                }
-            } finally {
-                _semaphore.release();
-            }
-
             _cts.cancel();
 
             if (_client != null) {
                 _client.stop();
+            }
+
+            if (_clientSession != null) {
+                _clientSession.close();
             }
 
             _counters.clear();
