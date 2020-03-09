@@ -102,6 +102,7 @@ public abstract class RavenCommand<TResult> {
     }
 
     public CloseableHttpResponse send(CloseableHttpClient client, HttpRequestBase request) throws IOException {
+        System.out.println("Sending request = " + request.getMethod() + " -> " + request.getURI());
         return client.execute(request);
     }
 

@@ -48,6 +48,7 @@ public class AggressiveCachingTest extends RemoteTestBase {
 
     @Test
     public void canAggressivelyCacheLoads() throws Exception {
+        System.out.println("canAggressivelyCacheLoads - start");
         try (IDocumentStore store = initAggressiveCaching()) {
             RequestExecutor requestExecutor = store.getRequestExecutor();
 
@@ -63,6 +64,7 @@ public class AggressiveCachingTest extends RemoteTestBase {
             assertThat(requestExecutor.numberOfServerRequests.get())
                     .isBetween(1 + oldNumOfRequests, 2 + oldNumOfRequests);
         }
+        System.out.println("canAggressivelyCacheLoads - end");
     }
 
     @Test
