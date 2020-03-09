@@ -515,7 +515,9 @@ public class DatabaseChanges implements IDatabaseChanges {
                     EventHelper.invoke(_connectionStatusChanged, this, EventArgs.EMPTY);
                 }
 
+                System.out.println(" _processor.processing.get();");
                 _processor.processing.get();
+                System.out.println(" _processor.processing.get() - done");
             } catch (Exception e) {
                 if (e instanceof ExecutionException && e.getCause() instanceof ChangeProcessingException) {
                     continue;
