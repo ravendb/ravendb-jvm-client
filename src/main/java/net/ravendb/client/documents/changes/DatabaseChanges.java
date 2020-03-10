@@ -333,6 +333,10 @@ public class DatabaseChanges implements IDatabaseChanges {
 
             _cts.cancel();
 
+            if (_clientSession != null) {
+                _clientSession.close();
+            }
+
             if (_client != null) {
                 _client.stop();
             }
