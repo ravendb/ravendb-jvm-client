@@ -5,7 +5,6 @@ import net.ravendb.client.documents.IDocumentStore;
 import net.ravendb.client.documents.operations.expiration.ConfigureExpirationOperation;
 import net.ravendb.client.documents.operations.expiration.ConfigureExpirationOperationResult;
 import net.ravendb.client.documents.operations.expiration.ExpirationConfiguration;
-import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;

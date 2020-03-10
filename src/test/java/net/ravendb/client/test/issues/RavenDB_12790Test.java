@@ -4,20 +4,12 @@ import net.ravendb.client.RemoteTestBase;
 import net.ravendb.client.documents.IDocumentStore;
 import net.ravendb.client.documents.Lazy;
 import net.ravendb.client.documents.indexes.AbstractIndexCreationTask;
-import net.ravendb.client.documents.queries.IndexQuery;
-import net.ravendb.client.documents.queries.spatial.PointField;
-import net.ravendb.client.documents.queries.spatial.WktField;
-import net.ravendb.client.documents.session.IDocumentQuery;
 import net.ravendb.client.documents.session.IDocumentSession;
-import net.ravendb.client.documents.session.QueryStatistics;
 import net.ravendb.client.exceptions.documents.indexes.IndexDoesNotExistException;
-import net.ravendb.client.primitives.Reference;
 import org.junit.jupiter.api.Test;
 
-import javax.print.Doc;
 import java.util.List;
 
-import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 public class RavenDB_12790Test extends RemoteTestBase {

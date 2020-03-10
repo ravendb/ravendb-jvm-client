@@ -13,9 +13,6 @@ import net.ravendb.client.documents.smuggler.DatabaseSmugglerExportOptions;
 import net.ravendb.client.documents.smuggler.DatabaseSmugglerImportOptions;
 import net.ravendb.client.infrastructure.entities.User;
 import net.ravendb.client.test.client.QueryTest;
-import org.apache.commons.io.FileUtils;
-import org.apache.commons.io.IOCase;
-import org.apache.commons.io.filefilter.SuffixFileFilter;
 import org.junit.jupiter.api.Test;
 
 import java.io.File;
@@ -24,7 +21,6 @@ import java.util.EnumSet;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import static net.ravendb.client.documents.smuggler.BackupUtils.BACKUP_FILE_SUFFIXES;
 import static org.assertj.core.api.Assertions.assertThat;
 
 public class SmugglerTest extends RemoteTestBase {

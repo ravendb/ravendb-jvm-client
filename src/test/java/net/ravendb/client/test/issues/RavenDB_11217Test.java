@@ -9,7 +9,6 @@ import net.ravendb.client.documents.session.SessionOptions;
 import net.ravendb.client.infrastructure.orders.Product;
 import net.ravendb.client.infrastructure.orders.Supplier;
 import net.ravendb.client.primitives.Reference;
-import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;

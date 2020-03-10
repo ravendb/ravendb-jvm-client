@@ -17,6 +17,7 @@ import org.junit.jupiter.api.Test;
 
 import java.io.ByteArrayInputStream;
 import java.io.StringReader;
+import java.nio.charset.StandardCharsets;
 import java.security.KeyFactory;
 import java.security.KeyStore;
 import java.security.PrivateKey;
@@ -196,7 +197,7 @@ public class HttpsTest extends RemoteTestBase {
                     certBytes = IOUtils.toByteArray(zipInputStream);
                 }
                 if (zipEntry.getName().endsWith(".key")) {
-                    keyString = IOUtils.toString(zipInputStream, "UTF-8");
+                    keyString = IOUtils.toString(zipInputStream, StandardCharsets.UTF_8);
                 }
 
                 zipEntry = zipInputStream.getNextEntry();

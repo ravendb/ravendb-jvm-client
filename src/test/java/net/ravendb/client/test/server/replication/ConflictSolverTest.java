@@ -4,22 +4,16 @@ import net.ravendb.client.ReplicationTestBase;
 import net.ravendb.client.documents.IDocumentStore;
 import net.ravendb.client.documents.commands.GetConflictsCommand;
 import net.ravendb.client.documents.commands.GetConflictsResult;
-import net.ravendb.client.documents.commands.PutDocumentCommand;
 import net.ravendb.client.documents.session.IDocumentSession;
-import net.ravendb.client.exceptions.documents.DocumentConflictException;
 import net.ravendb.client.infrastructure.DisabledOnPullRequest;
 import net.ravendb.client.infrastructure.entities.User;
-import net.ravendb.client.serverwide.ConflictSolver;
-import net.ravendb.client.serverwide.DatabaseRecord;
 import net.ravendb.client.serverwide.operations.ModifyConflictSolverOperation;
 import net.ravendb.client.serverwide.operations.ModifySolverResult;
 import org.junit.jupiter.api.Test;
 
 import java.util.Collections;
-import java.util.function.Consumer;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 public class ConflictSolverTest extends ReplicationTestBase {
 

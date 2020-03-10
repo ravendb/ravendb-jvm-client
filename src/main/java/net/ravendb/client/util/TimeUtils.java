@@ -1,6 +1,5 @@
 package net.ravendb.client.util;
 
-import com.fasterxml.jackson.core.JsonParseException;
 import org.apache.commons.lang3.StringUtils;
 
 import java.time.Duration;

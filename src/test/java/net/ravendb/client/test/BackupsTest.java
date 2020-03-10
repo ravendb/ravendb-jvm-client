@@ -6,10 +6,8 @@ import net.ravendb.client.documents.IDocumentStore;
 import net.ravendb.client.documents.operations.GetOngoingTaskInfoOperation;
 import net.ravendb.client.documents.operations.backups.*;
 import net.ravendb.client.documents.operations.ongoingTasks.NextBackup;
-import net.ravendb.client.documents.operations.ongoingTasks.OngoingTask;
 import net.ravendb.client.documents.operations.ongoingTasks.OngoingTaskBackup;
 import net.ravendb.client.documents.operations.ongoingTasks.OngoingTaskType;
-import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 import java.nio.file.Files;

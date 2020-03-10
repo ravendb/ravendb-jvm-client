@@ -6,7 +6,6 @@ import net.ravendb.client.documents.commands.batches.ICommandData;
 import net.ravendb.client.http.RequestExecutor;
 
 import java.util.Map;
-import java.util.Set;
 
 public abstract class AdvancedSessionExtensionBase {
 

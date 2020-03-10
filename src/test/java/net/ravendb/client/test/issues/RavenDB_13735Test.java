@@ -2,10 +2,8 @@ package net.ravendb.client.test.issues;
 
 import com.google.common.base.Stopwatch;
 import net.ravendb.client.RemoteTestBase;
-import net.ravendb.client.documents.DocumentStore;
 import net.ravendb.client.documents.IDocumentStore;
 import net.ravendb.client.documents.operations.refresh.ConfigureRefreshOperation;
-import net.ravendb.client.documents.operations.refresh.ConfigureRefreshOperationResult;
 import net.ravendb.client.documents.operations.refresh.RefreshConfiguration;
 import net.ravendb.client.documents.session.IDocumentSession;
 import net.ravendb.client.exceptions.TimeoutException;

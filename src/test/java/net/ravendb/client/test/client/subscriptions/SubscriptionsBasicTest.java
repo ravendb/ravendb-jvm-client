@@ -19,7 +19,6 @@ import net.ravendb.client.infrastructure.entities.User;
 import net.ravendb.client.primitives.ExceptionsUtils;
 import org.apache.commons.io.IOUtils;
 import org.eclipse.jetty.util.BlockingArrayQueue;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import java.time.Duration;
@@ -618,7 +617,6 @@ public class SubscriptionsBasicTest extends RemoteTestBase {
         }
     }
 
-    @SuppressWarnings("TryFinallyCanBeTryWithResources")
     @Test
     public void disposingOneSubscriptionShouldNotAffectOnNotificationsOfOthers() throws Exception {
         SubscriptionWorker<User> subscription1 = null;

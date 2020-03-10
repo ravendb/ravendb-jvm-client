@@ -3,17 +3,10 @@ package net.ravendb.client.test.issues;
 import net.ravendb.client.RemoteTestBase;
 import net.ravendb.client.documents.IDocumentStore;
 import net.ravendb.client.documents.commands.batches.BatchPatchCommandData;
-import net.ravendb.client.documents.operations.DetailedDatabaseStatistics;
-import net.ravendb.client.documents.operations.GetDetailedStatisticsOperation;
 import net.ravendb.client.documents.operations.PatchRequest;
-import net.ravendb.client.documents.operations.compareExchange.CompareExchangeResult;
-import net.ravendb.client.documents.operations.compareExchange.DeleteCompareExchangeValueOperation;
-import net.ravendb.client.documents.operations.compareExchange.PutCompareExchangeValueOperation;
 import net.ravendb.client.documents.session.IDocumentSession;
 import net.ravendb.client.exceptions.ConcurrencyException;
 import net.ravendb.client.infrastructure.entities.Company;
-import net.ravendb.client.infrastructure.entities.Person;
-import net.ravendb.client.infrastructure.entities.User;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;

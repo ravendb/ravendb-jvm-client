@@ -3,12 +3,10 @@ package net.ravendb.client.documents.session;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import net.ravendb.client.documents.indexes.AbstractIndexCreationTask;
 import net.ravendb.client.documents.queries.*;
-import net.ravendb.client.documents.queries.spatial.DynamicSpatialField;
 import net.ravendb.client.documents.queries.timings.QueryTimings;
 import net.ravendb.client.documents.session.tokens.WithEdgesToken;
 import net.ravendb.client.documents.session.tokens.WithToken;
 import net.ravendb.client.primitives.Reference;
-import org.apache.commons.lang3.StringUtils;
 
 import java.time.Duration;
 import java.util.Map;

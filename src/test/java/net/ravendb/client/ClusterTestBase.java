@@ -2,8 +2,6 @@ package net.ravendb.client;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.google.common.base.Stopwatch;
-import com.google.common.collect.Streams;
-import com.google.common.io.Closeables;
 import net.ravendb.client.documents.DocumentStore;
 import net.ravendb.client.documents.IDocumentStore;
 import net.ravendb.client.documents.conventions.DocumentConventions;
@@ -20,6 +18,7 @@ import net.ravendb.client.serverwide.DatabaseRecord;
 import net.ravendb.client.serverwide.commands.GetClusterTopologyCommand;
 import net.ravendb.client.serverwide.operations.CreateDatabaseOperation;
 import net.ravendb.client.serverwide.operations.DatabasePutResult;
+import org.apache.commons.io.IOUtils;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpRequestBase;
 import org.apache.http.impl.client.CloseableHttpClient;
@@ -33,7 +32,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
-import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public abstract class ClusterTestBase extends RavenTestDriver implements CleanCloseable {
 
@@ -58,10 +57,9 @@ public abstract class ClusterTestBase extends RavenTestDriver implements CleanCl
 
         @Override
         public String[] getCommandArguments() {
-            return Streams.concat(_defaultParams.entrySet().stream(), _extraParams.entrySet().stream())
+            return Stream.concat(_defaultParams.entrySet().stream(), _extraParams.entrySet().stream())
                     .map(x -> "--" + x.getKey() + "=" + x.getValue())
-                    .collect(Collectors.toList())
-                    .toArray(new String[0]);
+                    .toArray(String[]::new);
 
         }
     }
@@ -311,11 +309,7 @@ public abstract class ClusterTestBase extends RavenTestDriver implements CleanCl
     @Override
     public void close() {
         for (Closeable closeable : _toDispose) {
-            try {
-                Closeables.close(closeable, true);
-            } catch (Exception e) {
-                // empty
-            }
+            IOUtils.closeQuietly(closeable);
         }
     }
 

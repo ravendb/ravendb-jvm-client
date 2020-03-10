@@ -1,7 +1,6 @@
 package net.ravendb.client.serverwide.operations;
 
 import net.ravendb.client.documents.DocumentStore;
-import net.ravendb.client.documents.DocumentStoreBase;
 import net.ravendb.client.documents.operations.Operation;
 import net.ravendb.client.documents.operations.OperationIdResult;
 import net.ravendb.client.http.*;
@@ -10,7 +9,6 @@ import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.StringUtils;
 
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ConcurrentSkipListMap;
 import java.util.stream.Collectors;

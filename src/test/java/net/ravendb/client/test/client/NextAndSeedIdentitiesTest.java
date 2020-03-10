@@ -2,8 +2,6 @@ package net.ravendb.client.test.client;
 
 import net.ravendb.client.RemoteTestBase;
 import net.ravendb.client.documents.IDocumentStore;
-import net.ravendb.client.documents.commands.NextIdentityForCommand;
-import net.ravendb.client.documents.commands.SeedIdentityForCommand;
 import net.ravendb.client.documents.operations.identities.GetIdentitiesOperation;
 import net.ravendb.client.documents.operations.identities.NextIdentityForOperation;
 import net.ravendb.client.documents.operations.identities.SeedIdentityForOperation;

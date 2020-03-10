@@ -2,20 +2,15 @@ package net.ravendb.client.test.issues;
 
 import net.ravendb.client.RemoteTestBase;
 import net.ravendb.client.documents.IDocumentStore;
-import net.ravendb.client.documents.commands.batches.BatchPatchCommandData;
-import net.ravendb.client.documents.operations.PatchRequest;
 import net.ravendb.client.documents.operations.compareExchange.CompareExchangeResult;
 import net.ravendb.client.documents.operations.compareExchange.PutCompareExchangeValueOperation;
 import net.ravendb.client.documents.session.IDocumentSession;
 import net.ravendb.client.documents.session.SessionOptions;
 import net.ravendb.client.documents.session.TransactionMode;
-import net.ravendb.client.exceptions.ConcurrencyException;
-import net.ravendb.client.infrastructure.entities.Company;
 import net.ravendb.client.infrastructure.entities.User;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 public class RavenDB_12132Test extends RemoteTestBase {
 

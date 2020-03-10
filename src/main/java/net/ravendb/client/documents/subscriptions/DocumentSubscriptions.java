@@ -6,7 +6,6 @@ import net.ravendb.client.documents.commands.*;
 import net.ravendb.client.documents.operations.ongoingTasks.OngoingTaskType;
 import net.ravendb.client.documents.operations.ongoingTasks.ToggleOngoingTaskStateOperation;
 import net.ravendb.client.documents.session.IncludesUtil;
-import net.ravendb.client.documents.session.loaders.IncludeBuilder;
 import net.ravendb.client.documents.session.loaders.SubscriptionIncludeBuilder;
 import net.ravendb.client.http.RequestExecutor;
 import net.ravendb.client.primitives.CleanCloseable;

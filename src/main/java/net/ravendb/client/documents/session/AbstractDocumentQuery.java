@@ -504,7 +504,6 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
         _whereEquals(fieldName, (Object) method, exact);
     }
 
-    @SuppressWarnings("unchecked")
     public void _whereEquals(WhereParams whereParams) {
         if (negate) {
             negate = false;
@@ -574,7 +573,6 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
         _whereNotEquals(fieldName, (Object) method, exact);
     }
 
-    @SuppressWarnings("unchecked")
     public void _whereNotEquals(WhereParams whereParams) {
         if (negate) {
             negate = false;
@@ -1054,6 +1052,7 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
      * @param query Query
      * @return Index query
      */
+    @SuppressWarnings("deprecation")
     protected IndexQuery generateIndexQuery(String query) {
         IndexQuery indexQuery = new IndexQuery();
         indexQuery.setQuery(query);

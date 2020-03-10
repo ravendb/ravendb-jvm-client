@@ -1,15 +1,6 @@
 package net.ravendb.client.documents.session;
 
-import net.ravendb.client.documents.CloseableIterator;
-import net.ravendb.client.documents.commands.StreamResult;
 import net.ravendb.client.documents.indexes.AbstractIndexCreationTask;
-import net.ravendb.client.documents.session.operations.lazy.IEagerSessionOperations;
-import net.ravendb.client.documents.session.operations.lazy.ILazySessionOperations;
-import net.ravendb.client.primitives.Reference;
-
-import java.io.OutputStream;
-import java.util.Collection;
-import java.util.function.Consumer;
 
 public interface IDocumentQueryBuilder {
 

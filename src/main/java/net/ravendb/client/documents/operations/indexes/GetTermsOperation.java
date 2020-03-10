@@ -44,7 +44,6 @@ public class GetTermsOperation implements IMaintenanceOperation<String[]> {
         return new GetTermsCommand(_indexName, _field, _fromValue, _pageSize);
     }
 
-    @SuppressWarnings("unchecked")
     private static class GetTermsCommand extends RavenCommand<String[]> {
         private final String _indexName;
         private final String _field;

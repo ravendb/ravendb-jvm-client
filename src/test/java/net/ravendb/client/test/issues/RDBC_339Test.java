@@ -1,21 +1,12 @@
 package net.ravendb.client.test.issues;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ObjectNode;
 import net.ravendb.client.RemoteTestBase;
 import net.ravendb.client.documents.IDocumentStore;
 import net.ravendb.client.documents.session.IDocumentSession;
-import net.ravendb.client.extensions.JsonExtensions;
 import net.ravendb.client.infrastructure.entities.User;
-import net.ravendb.client.json.MetadataAsDictionary;
 import org.junit.jupiter.api.Test;
 
 import java.io.ByteArrayInputStream;
-import java.util.Map;
-import java.util.Set;
-
-import static org.assertj.core.api.Assertions.assertThat;
 
 public class RDBC_339Test extends RemoteTestBase {
 

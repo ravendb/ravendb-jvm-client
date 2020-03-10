@@ -1,14 +1,12 @@
 package net.ravendb.client.documents.operations.etl;
 
 import com.fasterxml.jackson.core.JsonGenerator;
-import com.fasterxml.jackson.databind.node.ObjectNode;
 import net.ravendb.client.documents.conventions.DocumentConventions;
 import net.ravendb.client.documents.operations.IVoidMaintenanceOperation;
 import net.ravendb.client.http.IRaftCommand;
 import net.ravendb.client.http.ServerNode;
 import net.ravendb.client.http.VoidRavenCommand;
 import net.ravendb.client.json.ContentProviderHttpEntity;
-import net.ravendb.client.primitives.HttpReset;
 import net.ravendb.client.primitives.HttpResetWithEntity;
 import net.ravendb.client.primitives.Reference;
 import net.ravendb.client.util.RaftIdGenerator;

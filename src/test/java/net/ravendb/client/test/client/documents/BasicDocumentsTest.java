@@ -53,6 +53,7 @@ public class BasicDocumentsTest extends RemoteTestBase {
         }
     }
 
+    @SuppressWarnings("deprecation")
     @Test
     public void get() throws Exception {
         try (IDocumentStore store = getDocumentStore()) {

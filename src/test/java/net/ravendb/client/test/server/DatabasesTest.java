@@ -5,9 +5,7 @@ import net.ravendb.client.documents.IDocumentStore;
 import net.ravendb.client.documents.indexes.*;
 import net.ravendb.client.documents.operations.DisableDatabaseToggleResult;
 import net.ravendb.client.documents.operations.ToggleDatabasesStateOperation;
-import net.ravendb.client.documents.queries.Query;
 import net.ravendb.client.documents.session.IDocumentSession;
-import net.ravendb.client.infrastructure.entities.User;
 import net.ravendb.client.infrastructure.graph.Genre;
 import net.ravendb.client.serverwide.DatabaseRecord;
 import net.ravendb.client.serverwide.DatabaseRecordWithEtag;
@@ -15,10 +13,7 @@ import net.ravendb.client.serverwide.operations.AddDatabaseNodeOperation;
 import net.ravendb.client.serverwide.operations.CreateDatabaseOperation;
 import net.ravendb.client.serverwide.operations.DatabasePutResult;
 import net.ravendb.client.serverwide.operations.GetDatabaseRecordOperation;
-import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
-
-import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;

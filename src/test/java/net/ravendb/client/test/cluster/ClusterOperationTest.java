@@ -23,7 +23,6 @@ import net.ravendb.client.serverwide.DatabaseTopology;
 import net.ravendb.client.serverwide.commands.GetDatabaseTopologyCommand;
 import net.ravendb.client.serverwide.operations.GetDatabaseRecordOperation;
 import net.ravendb.client.serverwide.operations.ReorderDatabaseMembersOperation;
-import org.apache.commons.collections4.CollectionUtils;
 import org.junit.jupiter.api.Test;
 
 import java.time.Duration;

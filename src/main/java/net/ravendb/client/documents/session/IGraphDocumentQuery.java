@@ -1,7 +1,5 @@
 package net.ravendb.client.documents.session;
 
-import net.ravendb.client.documents.queries.QueryData;
-
 import java.util.function.Function;
 
 public interface IGraphDocumentQuery<T> extends IQueryBase<T, IGraphDocumentQuery<T>>, IDocumentQueryBaseSingle<T>, IEnumerableQuery<T> {

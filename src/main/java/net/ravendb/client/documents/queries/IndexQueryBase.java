@@ -49,6 +49,7 @@ public class IndexQueryBase<T> implements IIndexQuery {
      * @deprecated use OFFSET in RQL instead
      * @return items to skip
      */
+    @SuppressWarnings("DeprecatedIsStillUsed")
     public int getStart() {
         return start;
     }
@@ -58,6 +59,7 @@ public class IndexQueryBase<T> implements IIndexQuery {
      * @deprecated use OFFSET in RQL instead
      * @param start Sets amount of items to skip
      */
+    @SuppressWarnings("DeprecatedIsStillUsed")
     public void setStart(int start) {
         this.start = start;
     }

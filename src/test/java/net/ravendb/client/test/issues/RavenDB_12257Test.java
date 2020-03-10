@@ -1,6 +1,5 @@
 package net.ravendb.client.test.issues;
 
-import com.fasterxml.jackson.databind.node.ObjectNode;
 import net.ravendb.client.RemoteTestBase;
 import net.ravendb.client.documents.IDocumentStore;
 import net.ravendb.client.documents.session.IDocumentSession;
@@ -11,7 +10,6 @@ import net.ravendb.client.documents.subscriptions.SubscriptionWorkerOptions;
 import net.ravendb.client.infrastructure.orders.Category;
 import net.ravendb.client.infrastructure.orders.Product;
 import net.ravendb.client.infrastructure.orders.Supplier;
-import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 import java.util.concurrent.CompletableFuture;

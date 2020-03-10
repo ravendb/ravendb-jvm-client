@@ -16,7 +16,6 @@ import net.ravendb.client.http.ServerNode;
 import net.ravendb.client.primitives.*;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.http.ssl.SSLContexts;
 import org.eclipse.jetty.util.ssl.SslContextFactory;
 import org.eclipse.jetty.websocket.api.Session;
 import org.eclipse.jetty.websocket.api.annotations.*;
@@ -88,6 +87,7 @@ public class DatabaseChanges implements IDatabaseChanges {
         _task = CompletableFuture.runAsync(() -> doWork(nodeTag), executorService);
     }
 
+    @SuppressWarnings("deprecation")
     public static WebSocketClient createWebSocketClient(RequestExecutor requestExecutor) {
         WebSocketClient client;
 

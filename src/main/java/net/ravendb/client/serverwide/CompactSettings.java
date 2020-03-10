@@ -3,7 +3,7 @@ package net.ravendb.client.serverwide;
 public class CompactSettings {
     private String databaseName;
     private boolean documents;
-    private String indexes[];
+    private String[] indexes;
 
     public String getDatabaseName() {
         return databaseName;

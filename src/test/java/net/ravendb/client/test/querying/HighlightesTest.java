@@ -1,6 +1,5 @@
 package net.ravendb.client.test.querying;
 
-import net.ravendb.client.Constants;
 import net.ravendb.client.RemoteTestBase;
 import net.ravendb.client.documents.IDocumentStore;
 import net.ravendb.client.documents.indexes.AbstractMultiMapIndexCreationTask;
@@ -12,7 +11,6 @@ import net.ravendb.client.documents.queries.highlighting.HighlightingOptions;
 import net.ravendb.client.documents.queries.highlighting.Highlightings;
 import net.ravendb.client.documents.session.IDocumentSession;
 import net.ravendb.client.primitives.Reference;
-import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;

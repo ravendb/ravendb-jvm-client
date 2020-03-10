@@ -22,7 +22,6 @@ import net.ravendb.client.util.TimeUtils;
 import org.apache.commons.lang3.StringUtils;
 
 import java.io.IOException;
-import java.sql.Time;
 import java.time.Duration;
 import java.util.EnumSet;
 
@@ -152,6 +151,7 @@ public class JsonExtensions {
         }
     }
 
+    @SuppressWarnings("deprecation")
     public static void writeIndexQuery(JsonGenerator generator, DocumentConventions conventions, IndexQuery query) throws IOException {
         generator.writeStartObject();
 

@@ -13,8 +13,6 @@ import net.ravendb.client.documents.replication.ReplicationNode;
 import net.ravendb.client.documents.session.IDocumentSession;
 import net.ravendb.client.documents.operations.etl.RavenConnectionString;
 import net.ravendb.client.serverwide.operations.ModifyOngoingTaskResult;
-import org.apache.commons.lang3.ObjectUtils;
-import org.assertj.core.api.Assertions;
 
 import java.util.ArrayList;
 import java.util.List;

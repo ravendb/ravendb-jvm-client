@@ -1,14 +1,10 @@
 package net.ravendb.client.test.server;
 
-import net.ravendb.client.Constants;
 import net.ravendb.client.RemoteTestBase;
 import net.ravendb.client.documents.IDocumentStore;
 import net.ravendb.client.documents.operations.transactionsRecording.StartTransactionsRecordingOperation;
 import net.ravendb.client.documents.operations.transactionsRecording.StopTransactionsRecordingOperation;
-import net.ravendb.client.documents.session.IDocumentSession;
 import net.ravendb.client.infrastructure.CreateSampleDataOperation;
-import net.ravendb.client.infrastructure.entities.User;
-import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 import java.io.File;

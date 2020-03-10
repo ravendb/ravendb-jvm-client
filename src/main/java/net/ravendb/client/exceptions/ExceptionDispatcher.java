@@ -11,6 +11,7 @@ import org.apache.http.client.methods.CloseableHttpResponse;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 
 public class ExceptionDispatcher {
 
@@ -57,7 +58,7 @@ public class ExceptionDispatcher {
 
         try {
             InputStream stream = RequestExecutor.readAsStream(response);
-            String json = IOUtils.toString(stream, "UTF-8");
+            String json = IOUtils.toString(stream, StandardCharsets.UTF_8);
             ExceptionSchema schema = JsonExtensions.getDefaultMapper().readValue(json, ExceptionSchema.class);
 
             if (response.getStatusLine().getStatusCode() == HttpStatus.SC_CONFLICT) {

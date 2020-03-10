@@ -1,7 +1,6 @@
 package net.ravendb.client.serverwide.tcp;
 
 import com.fasterxml.jackson.core.JsonGenerator;
-import com.fasterxml.jackson.databind.node.ObjectNode;
 import net.ravendb.client.primitives.Reference;
 import net.ravendb.client.primitives.SharpEnum;
 import net.ravendb.client.primitives.UseSharpEnum;

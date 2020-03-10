@@ -3,6 +3,7 @@ package net.ravendb.client.documents.queries;
 import net.ravendb.client.Parameters;
 
 import java.io.IOException;
+import java.time.Duration;
 import java.util.Optional;
 
 /**
@@ -35,13 +36,14 @@ public class IndexQuery extends IndexQueryWithParameters<Parameters> {
         this.disableCaching = disableCaching;
     }
 
+    @SuppressWarnings("deprecation")
     public String getQueryHash() {
         HashCalculator hasher = new HashCalculator();
         try {
             hasher.write(getQuery());
             hasher.write(isWaitForNonStaleResults());
             hasher.write(isSkipDuplicateChecking());
-            hasher.write(Optional.ofNullable(getWaitForNonStaleResultsTimeout()).map(x -> x.toMillis()).orElse(0L));
+            hasher.write(Optional.ofNullable(getWaitForNonStaleResultsTimeout()).map(Duration::toMillis).orElse(0L));
             hasher.write(getStart());
             hasher.write(getPageSize());
             hasher.write(getQueryParameters());

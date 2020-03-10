@@ -17,7 +17,6 @@ public class CancellationTokenSource {
 
         }
 
-        @SuppressWarnings("boxing")
         public boolean isCancellationRequested() {
             return cancelled || (cancelAfterDate != null && new Date().getTime() > cancelAfterDate);
         }

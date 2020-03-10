@@ -16,7 +16,6 @@ import net.ravendb.client.infrastructure.entities.User;
 import net.ravendb.client.primitives.Reference;
 import org.junit.jupiter.api.Test;
 
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;

@@ -5,12 +5,10 @@ import net.ravendb.client.http.RavenCommand;
 import net.ravendb.client.http.ServerNode;
 import net.ravendb.client.primitives.Reference;
 import net.ravendb.client.serverwide.operations.IServerOperation;
-import net.ravendb.client.util.UrlUtils;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpRequestBase;
 
 import java.io.IOException;
-import java.util.List;
 
 public class GetCertificatesOperation implements IServerOperation<CertificateDefinition[]> {
 

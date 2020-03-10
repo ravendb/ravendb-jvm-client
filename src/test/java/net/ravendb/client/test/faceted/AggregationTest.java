@@ -14,7 +14,6 @@ import java.util.*;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@SuppressWarnings("ConstantConditions")
 public class AggregationTest extends RemoteTestBase {
 
     public static class Orders_All extends AbstractIndexCreationTask {
