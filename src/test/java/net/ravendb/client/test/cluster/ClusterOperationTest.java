@@ -24,6 +24,7 @@ import net.ravendb.client.serverwide.commands.GetDatabaseTopologyCommand;
 import net.ravendb.client.serverwide.operations.GetDatabaseRecordOperation;
 import net.ravendb.client.serverwide.operations.ReorderDatabaseMembersOperation;
 import org.apache.commons.collections4.CollectionUtils;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import java.time.Duration;
@@ -38,6 +39,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 public class ClusterOperationTest extends ClusterTestBase {
 
     @Test
+    @Disabled
     public void nextIdentityForOperationShouldBroadcast() throws Exception {
         System.out.println("nextIdentityForOperationShouldBroadcast");
         try (ClusterController cluster = createRaftCluster(3)) {
@@ -80,6 +82,7 @@ public class ClusterOperationTest extends ClusterTestBase {
     }
 
     @Test
+    @Disabled
     public void nextIdentityForOperationShouldBroadcastAndFail() throws Exception {
         System.out.println("nextIdentityForOperationShouldBroadcastAndFail");
         try (ClusterController cluster = createRaftCluster(3)) {
@@ -125,6 +128,7 @@ public class ClusterOperationTest extends ClusterTestBase {
     }
 
     @Test
+    @Disabled
     public void changesApiFailOver() throws Exception {
         System.out.println("changesApiFailOver");
         String db = "Test";
@@ -213,6 +217,7 @@ public class ClusterOperationTest extends ClusterTestBase {
     }
 
     @Test
+    @Disabled
     public void changesApiReorderDatabaseNodes() throws Exception {
         String db = "ReorderDatabaseNodes";
         System.out.println("changesApiReorderDatabaseNodes");
