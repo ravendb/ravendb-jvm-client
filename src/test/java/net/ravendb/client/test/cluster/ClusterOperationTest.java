@@ -39,7 +39,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 public class ClusterOperationTest extends ClusterTestBase {
 
     @Test
-    @Disabled
     public void nextIdentityForOperationShouldBroadcast() throws Exception {
         System.out.println("nextIdentityForOperationShouldBroadcast");
         try (ClusterController cluster = createRaftCluster(3)) {
@@ -82,7 +81,6 @@ public class ClusterOperationTest extends ClusterTestBase {
     }
 
     @Test
-    @Disabled
     public void nextIdentityForOperationShouldBroadcastAndFail() throws Exception {
         System.out.println("nextIdentityForOperationShouldBroadcastAndFail");
         try (ClusterController cluster = createRaftCluster(3)) {
@@ -217,7 +215,6 @@ public class ClusterOperationTest extends ClusterTestBase {
     }
 
     @Test
-    @Disabled
     public void changesApiReorderDatabaseNodes() throws Exception {
         String db = "ReorderDatabaseNodes";
         System.out.println("changesApiReorderDatabaseNodes");
