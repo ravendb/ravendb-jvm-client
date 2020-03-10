@@ -202,6 +202,8 @@ public class ClusterOperationTest extends ClusterTestBase {
                     session.saveChanges();
                 }
 
+                System.out.println("waitForValue(() -> list.size(), 3)");
+
                 value = waitForValue(() -> list.size(), 3);
                 assertThat(value)
                         .isEqualTo(3);
