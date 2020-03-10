@@ -166,10 +166,13 @@ public class ClusterOperationTest extends ClusterTestBase {
                         .isEqualTo(1);
 
                 String currentUrl = store.getRequestExecutor().getUrl();
+                System.out.println("dispoising = " + currentUrl);
                 cluster.disposeServer(cluster.getNodeByUrl(currentUrl).getNodeTag());
 
+                System.out.println("ensureConnectedNow");
                 taskObservable.ensureConnectedNow();
 
+                System.out.println("waitForTopologyStabilization");
                 waitForTopologyStabilization(db, cluster.getWorkingServer().getUrl(), 1, 2);
 
                 try (IDocumentSession session = store.openSession()) {
@@ -177,16 +180,21 @@ public class ClusterOperationTest extends ClusterTestBase {
                     session.saveChanges();
                 }
 
+                System.out.println("waitForValue(() -> list.size(), 2);");
+
                 value = waitForValue(() -> list.size(), 2);
                 assertThat(value)
                         .isEqualTo(2);
 
                 currentUrl = store.getRequestExecutor().getUrl();
 
+                System.out.println("dispoisin g2  = " + currentUrl);
                 cluster.disposeServer(cluster.getNodeByUrl(currentUrl).getNodeTag());
 
+                System.out.println("ensureConnectedNow 2");
                 taskObservable.ensureConnectedNow();
 
+                System.out.println("waitForTopologyStabilization 2");
                 waitForTopologyStabilization(db, cluster.getWorkingServer().getUrl(), 2, 1);
 
                 try (IDocumentSession session = store.openSession()) {
@@ -197,6 +205,7 @@ public class ClusterOperationTest extends ClusterTestBase {
                 value = waitForValue(() -> list.size(), 3);
                 assertThat(value)
                         .isEqualTo(3);
+                System.out.println("before dispose");
             }
         }
     }

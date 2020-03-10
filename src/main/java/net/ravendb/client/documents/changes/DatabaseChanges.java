@@ -14,6 +14,7 @@ import net.ravendb.client.http.CurrentIndexAndNode;
 import net.ravendb.client.http.RequestExecutor;
 import net.ravendb.client.http.ServerNode;
 import net.ravendb.client.primitives.*;
+import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.ssl.SSLContexts;
 import org.eclipse.jetty.util.ssl.SslContextFactory;
@@ -334,7 +335,7 @@ public class DatabaseChanges implements IDatabaseChanges {
             _cts.cancel();
 
             if (_clientSession != null) {
-                _clientSession.close();
+                IOUtils.closeQuietly(_clientSession);
             }
 
             if (_client != null) {
@@ -342,7 +343,7 @@ public class DatabaseChanges implements IDatabaseChanges {
             }
 
             if (_clientSession != null) {
-                _clientSession.close();
+                IOUtils.closeQuietly(_clientSession);
             }
 
             _counters.clear();
