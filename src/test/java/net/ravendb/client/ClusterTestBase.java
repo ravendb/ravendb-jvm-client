@@ -11,7 +11,6 @@ import net.ravendb.client.documents.session.DocumentSession;
 import net.ravendb.client.documents.session.IDocumentSession;
 import net.ravendb.client.driver.RavenServerLocator;
 import net.ravendb.client.driver.RavenTestDriver;
-import net.ravendb.client.http.ClusterRequestExecutor;
 import net.ravendb.client.http.RavenCommand;
 import net.ravendb.client.http.ServerNode;
 import net.ravendb.client.infrastructure.AdminJsConsoleOperation;
@@ -21,13 +20,10 @@ import net.ravendb.client.serverwide.DatabaseRecord;
 import net.ravendb.client.serverwide.commands.GetClusterTopologyCommand;
 import net.ravendb.client.serverwide.operations.CreateDatabaseOperation;
 import net.ravendb.client.serverwide.operations.DatabasePutResult;
-import org.apache.commons.lang3.ArrayUtils;
-import org.apache.commons.lang3.ObjectUtils;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpRequestBase;
 import org.apache.http.impl.client.CloseableHttpClient;
 
-import javax.swing.plaf.synth.SynthRadioButtonMenuItemUI;
 import java.io.Closeable;
 import java.net.URI;
 import java.time.Duration;
@@ -222,7 +218,7 @@ public abstract class ClusterTestBase extends RavenTestDriver implements CleanCl
             createDatabase(new DatabaseRecord(databaseName), replicationFactor, leaderUrl);
         }
 
-        public void createDatabase(DatabaseRecord databaseRecord, int replicationFactor, String leaderUrl) {
+        public DatabasePutResult createDatabase(DatabaseRecord databaseRecord, int replicationFactor, String leaderUrl) {
             try (IDocumentStore store = new DocumentStore(leaderUrl, databaseRecord.getDatabaseName())) {
                 store.initialize();
 
@@ -231,6 +227,8 @@ public abstract class ClusterTestBase extends RavenTestDriver implements CleanCl
                 for (ClusterNode node : nodes) {
                     executeJsScript(node.nodeTag, "server.ServerStore.Cluster.WaitForIndexNotification(\"" + putResult.getRaftCommandIndex() + "\").Wait()");
                 }
+
+                return putResult;
             }
         }
 
