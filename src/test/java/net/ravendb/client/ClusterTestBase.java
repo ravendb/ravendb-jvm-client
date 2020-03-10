@@ -222,7 +222,7 @@ public abstract class ClusterTestBase extends RavenTestDriver implements CleanCl
             createDatabase(new DatabaseRecord(databaseName), replicationFactor, leaderUrl);
         }
 
-        public void createDatabase(DatabaseRecord databaseRecord, int replicationFactor, String leaderUrl) {
+        public DatabasePutResult createDatabase(DatabaseRecord databaseRecord, int replicationFactor, String leaderUrl) {
             try (IDocumentStore store = new DocumentStore(leaderUrl, databaseRecord.getDatabaseName())) {
                 store.initialize();
 
@@ -231,6 +231,8 @@ public abstract class ClusterTestBase extends RavenTestDriver implements CleanCl
                 for (ClusterNode node : nodes) {
                     executeJsScript(node.nodeTag, "server.ServerStore.Cluster.WaitForIndexNotification(\"" + putResult.getRaftCommandIndex() + "\").Wait()");
                 }
+
+                return putResult;
             }
         }
 

@@ -21,6 +21,7 @@ import net.ravendb.client.serverwide.DatabaseRecord;
 import net.ravendb.client.serverwide.DatabaseRecordWithEtag;
 import net.ravendb.client.serverwide.DatabaseTopology;
 import net.ravendb.client.serverwide.commands.GetDatabaseTopologyCommand;
+import net.ravendb.client.serverwide.operations.DatabasePutResult;
 import net.ravendb.client.serverwide.operations.GetDatabaseRecordOperation;
 import net.ravendb.client.serverwide.operations.ReorderDatabaseMembersOperation;
 import org.apache.commons.collections4.CollectionUtils;
@@ -31,6 +32,7 @@ import java.time.Duration;
 import java.util.*;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
+import java.util.stream.Collectors;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -126,7 +128,6 @@ public class ClusterOperationTest extends ClusterTestBase {
     }
 
     @Test
-    @Disabled
     public void changesApiFailOver() throws Exception {
         System.out.println("changesApiFailOver");
         String db = "Test";
@@ -144,7 +145,9 @@ public class ClusterOperationTest extends ClusterTestBase {
             DatabaseRecord databaseRecord = new DatabaseRecord();
             databaseRecord.setDatabaseName(db);
             databaseRecord.setTopology(topology);
-            cluster.createDatabase(databaseRecord, 2, cluster.getInitialLeader().getUrl());
+            DatabasePutResult putResult = cluster.createDatabase(databaseRecord, 2, cluster.getInitialLeader().getUrl());
+            System.out.println("created database on nodes = " + putResult.getNodesAddedTo());
+            System.out.println("Cluster info = " + cluster.nodes.stream().map(x -> x.getNodeTag() + " -> " + x.getUrl()).collect(Collectors.joining(", ")));
 
             try (IDocumentStore store = new DocumentStore(cluster.getInitialLeader().getUrl(), db)) {
                 store.initialize();
