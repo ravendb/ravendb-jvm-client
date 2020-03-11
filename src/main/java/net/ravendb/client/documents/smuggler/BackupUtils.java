@@ -56,6 +56,6 @@ public final class BackupUtils {
         long lastModified1 = o1.lastModified();
         long lastModified2 = o2.lastModified();
 
-        return Long.valueOf(lastModified1).compareTo(lastModified2);
+        return Long.compare(lastModified1, lastModified2);
     };
 }

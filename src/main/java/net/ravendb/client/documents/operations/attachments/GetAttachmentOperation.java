@@ -102,7 +102,7 @@ public class GetAttachmentOperation implements IOperation<CloseableAttachmentRes
 
             Header sizeHeader = response.getFirstHeader("Attachment-Size");
             if (sizeHeader != null) {
-                size = Long.valueOf(sizeHeader.getValue());
+                size = Long.parseLong(sizeHeader.getValue());
             }
 
             AttachmentDetails attachmentDetails = new AttachmentDetails();

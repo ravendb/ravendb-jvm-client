@@ -235,7 +235,7 @@ public class DocumentSession extends InMemoryDocumentSessionOperations implement
 
             tempReqTime = response.getHeaders().get(Constants.Headers.REQUEST_TIME);
             response.setElapsed(sw.elapsed());
-            totalTime = tempReqTime != null ? Long.valueOf(tempReqTime) : 0;
+            totalTime = tempReqTime != null ? Long.parseLong(tempReqTime) : 0;
 
             ResponseTimeInformation.ResponseTimeItem timeItem = new ResponseTimeInformation.ResponseTimeItem();
             timeItem.setUrl(requests.get(i).getUrlAndQuery());

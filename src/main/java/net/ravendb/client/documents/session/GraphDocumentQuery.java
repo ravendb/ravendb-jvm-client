@@ -122,6 +122,7 @@ public class GraphDocumentQuery<T> extends AbstractDocumentQuery<T, GraphDocumen
         return withInternal(clazz, alias, (AbstractDocumentQuery<TOther, ?>) getSession().advanced().rawQuery(clazz, rawQuery));
     }
 
+    @SuppressWarnings("unchecked")
     @Override
     public <TOther> IGraphDocumentQuery<T> with(String alias, IDocumentQuery<TOther> query) {
         //TODO: ParameterPrefix = $"w{WithTokens.Count}p
@@ -168,6 +169,7 @@ public class GraphDocumentQuery<T> extends AbstractDocumentQuery<T, GraphDocumen
         }
     }
 
+    @SuppressWarnings("unused")
     private <TOther> IGraphDocumentQuery<T> withInternal(Class<TOther> clazz, String alias, AbstractDocumentQuery<TOther, ?> docQuery) {
         if (docQuery.selectTokens != null && !docQuery.selectTokens.isEmpty()) {
             throw new UnsupportedOperationException("Select is not permitted in a 'with' clause in query: " + docQuery);

@@ -133,7 +133,7 @@ public class CustomSerializationTest extends RemoteTestBase {
         public Money deserialize(JsonParser p, DeserializationContext ctxt) throws IOException {
             String s = p.getText();
             String[] split = s.split(" ");
-            return new Money(Integer.valueOf(split[0]), split[1]);
+            return new Money(Integer.parseInt(split[0]), split[1]);
         }
     }
 

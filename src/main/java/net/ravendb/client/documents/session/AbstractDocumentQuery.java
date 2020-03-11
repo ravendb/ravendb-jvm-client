@@ -44,6 +44,7 @@ import java.util.function.Consumer;
 /**
  * A query against a Raven index
  */
+@SuppressWarnings("rawtypes")
 public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQuery<T, TSelf>> implements IAbstractDocumentQuery<T> {
 
     protected final Class<T> clazz;
@@ -275,6 +276,7 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
     //TBD 4.1 public void _customSortUsing(String typeName)
     //TBD 4.1 public void _customSortUsing(String typeName, boolean descending)
 
+    @SuppressWarnings("unused")
     protected void addGroupByAlias(String fieldName, String projectedName) {
         _aliasToGroupByFieldName.put(projectedName, fieldName);
     }
@@ -301,7 +303,7 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
     @Override
     public void _groupBy(String fieldName, String... fieldNames) {
         GroupBy[] mapping = Arrays.stream(fieldNames)
-                .map(x -> GroupBy.field(x))
+                .map(GroupBy::field)
                 .toArray(GroupBy[]::new);
 
         _groupBy(GroupBy.field(fieldName), mapping);
@@ -418,9 +420,7 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
         }
 
         if (includes.documentsToInclude != null) {
-            for (String doc : includes.documentsToInclude) {
-                documentIncludes.add(doc);
-            }
+            documentIncludes.addAll(includes.documentsToInclude);
         }
 
         _includeCounters(includes.alias, includes.countersToIncludeBySourcePath);
@@ -1157,6 +1157,7 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
         }
     }
 
+    @SuppressWarnings("UnusedAssignment")
     private void buildInclude(StringBuilder queryText) {
         if (documentIncludes.isEmpty()
                 && highlightingTokens.isEmpty()
@@ -1573,10 +1574,6 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
             return ((Duration) whereParams.getValue()).toNanos() / 100;
         }
 
-        if (String.class.equals(clazz)) {
-            return whereParams.getValue();
-        }
-
         if (Boolean.class.equals(clazz)) {
             return whereParams.getValue();
         }
@@ -1663,6 +1660,7 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
         return fromAlias;
     }
 
+    @SuppressWarnings("unused")
     protected static <T> void getSourceAliasIfExists(Class<T> clazz, QueryData queryData, String[] fields, Reference<String> sourceAlias) {
         sourceAlias.value = null;
 
@@ -1924,6 +1922,7 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
         executeActualQuery();
     }
 
+    @SuppressWarnings("unused")
     private void executeActualQuery() {
         try (CleanCloseable context = queryOperation.enterQueryContext()) {
             QueryCommand command = queryOperation.createRequest();
