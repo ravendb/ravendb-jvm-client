@@ -75,7 +75,7 @@ public class ClusterRequestExecutor extends RequestExecutor {
                 conventions != null ? conventions : DocumentConventions.defaultConventions, executorService, initialUrls);
 
         executor._disableClientConfigurationUpdates = true;
-        executor._firstTopologyUpdate = executor.firstTopologyUpdate(initialUrls);
+        executor._firstTopologyUpdate = executor.firstTopologyUpdate(initialUrls, null);
         return executor;
     }
 
@@ -84,23 +84,19 @@ public class ClusterRequestExecutor extends RequestExecutor {
         execute(serverNode, nodeIndex, new GetTcpInfoCommand("health-check"), false, null);
     }
 
-    public CompletableFuture<Boolean> updateTopologyAsync(ServerNode node, int timeout) {
-        return updateTopologyAsync(node, timeout, false, null);
-    }
-
-    public CompletableFuture<Boolean> updateTopologyAsync(ServerNode node, int timeout, boolean forceUpdate) {
-        return updateTopologyAsync(node, timeout, forceUpdate, null);
-    }
-
     @Override
-    public CompletableFuture<Boolean> updateTopologyAsync(ServerNode node, int timeout, boolean forceUpdate, String debugTag) {
+    public CompletableFuture<Boolean> updateTopologyAsync(UpdateTopologyParameters parameters) {
+        if (parameters == null) {
+            throw new IllegalArgumentException("Parameters cannot be null");
+        }
+
         if (_disposed) {
             return CompletableFuture.completedFuture(false);
         }
 
         return CompletableFuture.supplyAsync(() -> {
             try {
-                boolean lockTaken = clusterTopologySemaphore.tryAcquire(timeout, TimeUnit.MILLISECONDS);
+                boolean lockTaken = clusterTopologySemaphore.tryAcquire(parameters.getTimeoutInMs(), TimeUnit.MILLISECONDS);
                 if (!lockTaken) {
                     return false;
                 }
@@ -113,8 +109,8 @@ public class ClusterRequestExecutor extends RequestExecutor {
                     return false;
                 }
 
-                GetClusterTopologyCommand command = new GetClusterTopologyCommand(debugTag);
-                execute(node, null, command, false, null);
+                GetClusterTopologyCommand command = new GetClusterTopologyCommand(parameters.getDebugTag());
+                execute(parameters.getNode(), null, command, false, null);
 
                 ClusterTopologyResponse results = command.getResult();
                 List<ServerNode> nodes = results
@@ -142,13 +138,15 @@ public class ClusterRequestExecutor extends RequestExecutor {
                     if (getConventions().getReadBalanceBehavior() == ReadBalanceBehavior.FASTEST_NODE) {
                         _nodeSelector.scheduleSpeedTest();
                     }
-                } else if (_nodeSelector.onUpdateTopology(newTopology, forceUpdate)) {
+                } else if (_nodeSelector.onUpdateTopology(newTopology, parameters.isForceUpdate())) {
                     disposeAllFailedNodesTimers();
 
                     if (getConventions().getReadBalanceBehavior() == ReadBalanceBehavior.FASTEST_NODE) {
                         _nodeSelector.scheduleSpeedTest();
                     }
                 }
+
+                onTopologyUpdatedInvoke(newTopology);
             } catch (Exception e) {
                 if (!_disposed) {
                     throw e;

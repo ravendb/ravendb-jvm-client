@@ -2,12 +2,16 @@ package net.ravendb.client.serverwide.operations.logs;
 
 import java.time.Duration;
 
+//TODO: make sure we have test with get/setter
+
 public class GetLogsConfigurationResult {
     private LogMode currentMode;
     private LogMode mode;
     private String path;
     private boolean useUtcTime;
     private Duration retentionTime;
+    private Long retentionSize;
+    private boolean compress;
 
     /**
      * @return Current mode that is active
@@ -71,5 +75,33 @@ public class GetLogsConfigurationResult {
 
     public void setRetentionTime(Duration retentionTime) {
         this.retentionTime = retentionTime;
+    }
+
+    /**
+     * @return Logs retention size
+     */
+    public Long getRetentionSize() {
+        return retentionSize;
+    }
+
+    /**
+     * @param retentionSize Retention size
+     */
+    public void setRetentionSize(Long retentionSize) {
+        this.retentionSize = retentionSize;
+    }
+
+    /**
+     * @return Are logs compressed
+     */
+    public boolean isCompress() {
+        return compress;
+    }
+
+    /**
+     * @param compress Are logs compressed
+     */
+    public void setCompress(boolean compress) {
+        this.compress = compress;
     }
 }

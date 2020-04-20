@@ -246,6 +246,8 @@ public class DocumentStore extends DocumentStoreBase {
 
         assertValidConfiguration();
 
+        RequestExecutor.validateUrls(urls, getCertificate());
+
         try {
             if (getConventions().getDocumentIdGenerator() == null) { // don't overwrite what the user is doing
                 MultiDatabaseHiLoIdGenerator generator = new MultiDatabaseHiLoIdGenerator(this, getConventions());

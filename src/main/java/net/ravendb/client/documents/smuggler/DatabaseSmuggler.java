@@ -188,7 +188,7 @@ public class DatabaseSmuggler {
         ImportCommand command = new ImportCommand(_requestExecutor.getConventions(), options, stream, operationId);
         _requestExecutor.execute(command);
 
-        return new Operation(_requestExecutor, () -> _store.changes(_databaseName), _requestExecutor.getConventions(), operationId);
+        return new Operation(_requestExecutor, () -> _store.changes(_databaseName), _requestExecutor.getConventions(), operationId, null);
     }
 
     private static class ExportCommand extends VoidRavenCommand {
@@ -217,13 +217,15 @@ public class DatabaseSmuggler {
             url.value = node.getUrl() + "/databases/" + node.getDatabase() + "/smuggler/export?operationId=" + _operationId;
 
             HttpPost request = new HttpPost();
-            request.setEntity(new ContentProviderHttpEntity(outputStream -> {
+            ContentProviderHttpEntity entity = new ContentProviderHttpEntity(outputStream -> {
                 try (JsonGenerator generator = mapper.getFactory().createGenerator(outputStream)) {
                     generator.getCodec().writeValue(generator, _options);
                 } catch (IOException e) {
                     throw new RuntimeException(e);
                 }
-            }, ContentType.APPLICATION_JSON));
+            }, ContentType.APPLICATION_JSON);
+            entity.setChunked(true);
+            request.setEntity(entity);
 
             return request;
         }

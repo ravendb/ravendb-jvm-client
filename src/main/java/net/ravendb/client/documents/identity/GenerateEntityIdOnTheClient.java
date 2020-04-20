@@ -1,6 +1,7 @@
 package net.ravendb.client.documents.identity;
 
 import net.ravendb.client.documents.conventions.DocumentConventions;
+import net.ravendb.client.exceptions.RavenException;
 import net.ravendb.client.primitives.Reference;
 import org.apache.commons.lang3.reflect.FieldUtils;
 
@@ -73,17 +74,34 @@ public class GenerateEntityIdOnTheClient {
         return id;
     }
 
+    public void trySetIdentity(Object entity, String id) {
+        trySetIdentity(entity, id, false);
+    }
+
     /**
      * Tries to set the identity property
      * @param entity Entity
      * @param id Id to set
      */
-    public void trySetIdentity(Object entity, String id) {
+    public void trySetIdentity(Object entity, String id, boolean isProjection) {
+        trySetIdentityInternal(entity, id, isProjection);
+    }
+
+    private void trySetIdentityInternal(Object entity, String id, boolean isProjection) {
         Class<?> entityType = entity.getClass();
         Field identityProperty = _conventions.getIdentityProperty(entityType);
 
         if (identityProperty == null) {
             return;
+        }
+
+        try {
+            if (isProjection && FieldUtils.readField(identityProperty, entity) != null) {
+                // identity property was already set
+                return;
+            }
+        } catch (IllegalAccessException e) {
+            throw new RavenException("Unable to read identity field: " + e.getMessage(), e);
         }
 
         setPropertyOrField(identityProperty.getType(), entity, identityProperty, id);

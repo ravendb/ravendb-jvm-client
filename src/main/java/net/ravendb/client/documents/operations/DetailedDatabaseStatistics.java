@@ -4,6 +4,7 @@ public class DetailedDatabaseStatistics extends DatabaseStatistics {
 
     private long countOfIdentities;
     private long countOfCompareExchange;
+    private long countOfCompareExchangeTombstones;
 
     /**
      * @return Total number of identities in database.
@@ -31,5 +32,19 @@ public class DetailedDatabaseStatistics extends DatabaseStatistics {
      */
     public void setCountOfCompareExchange(long countOfCompareExchange) {
         this.countOfCompareExchange = countOfCompareExchange;
+    }
+
+    /**
+     * @return Total number of compare-exchange tombstones values in database.
+     */
+    public long getCountOfCompareExchangeTombstones() {
+        return countOfCompareExchangeTombstones;
+    }
+
+    /**
+     * @param countOfCompareExchangeTombstones Total number of compare-exchange tombstones values in database.
+     */
+    public void setCountOfCompareExchangeTombstones(long countOfCompareExchangeTombstones) {
+        this.countOfCompareExchangeTombstones = countOfCompareExchangeTombstones;
     }
 }

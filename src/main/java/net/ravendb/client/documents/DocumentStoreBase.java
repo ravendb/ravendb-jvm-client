@@ -46,6 +46,7 @@ public abstract class DocumentStoreBase implements IDocumentStore {
     private final List<EventHandler<AfterConversionToEntityEventArgs>> onAfterConversionToEntity = new ArrayList<>();
 
     private final List<EventHandler<FailedRequestEventArgs>> onFailedRequest = new ArrayList<>();
+    private final List<EventHandler<TopologyUpdatedEventArgs>> onTopologyUpdated = new ArrayList<>();
 
     protected DocumentStoreBase() {
         _subscriptions = new DocumentSubscriptions((DocumentStore)this);
@@ -305,6 +306,16 @@ public abstract class DocumentStoreBase implements IDocumentStore {
         this.onFailedRequest.remove(handler);
     }
 
+    public void addOnTopologyUpdatedListener(EventHandler<TopologyUpdatedEventArgs> handler) {
+        assertNotInitialized("onTopologyUpdated");
+        this.onTopologyUpdated.add(handler);
+    }
+
+    public void removeOnTopologyUpdatedListener(EventHandler<TopologyUpdatedEventArgs> handler) {
+        assertNotInitialized("onTopologyUpdated");
+        this.onTopologyUpdated.remove(handler);
+    }
+
     protected String database;
 
     /**
@@ -419,6 +430,10 @@ public abstract class DocumentStoreBase implements IDocumentStore {
     public void registerEvents(RequestExecutor requestExecutor) {
         for (EventHandler<FailedRequestEventArgs> handler : onFailedRequest) {
             requestExecutor.addOnFailedRequestListener(handler);
+        }
+
+        for (EventHandler<TopologyUpdatedEventArgs> handler : onTopologyUpdated) {
+            requestExecutor.addOnTopologyUpdatedListener(handler);
         }
     }
 

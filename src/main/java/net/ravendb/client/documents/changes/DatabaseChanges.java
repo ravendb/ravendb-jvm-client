@@ -13,6 +13,7 @@ import net.ravendb.client.extensions.StringExtensions;
 import net.ravendb.client.http.CurrentIndexAndNode;
 import net.ravendb.client.http.RequestExecutor;
 import net.ravendb.client.http.ServerNode;
+import net.ravendb.client.http.UpdateTopologyParameters;
 import net.ravendb.client.primitives.*;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -567,7 +568,11 @@ public class DatabaseChanges implements IDatabaseChanges {
                             // process this in async way, as getOrAddConnectionStats waits for confirmation, so we can't block this thread
                             CompletableFuture.runAsync(() -> {
                                 getOrAddConnectionState("Topology", "watch-topology-change", "", "");
-                                _requestExecutor.updateTopologyAsync(_serverNode, 0, true, "watch-topology-change");
+                                UpdateTopologyParameters updateParameters = new UpdateTopologyParameters(_serverNode);
+                                updateParameters.setTimeoutInMs(0);
+                                updateParameters.setForceUpdate(true);
+                                updateParameters.setDebugTag("watch-topology-change");
+                                _requestExecutor.updateTopologyAsync(updateParameters);
                             }, _executorService);
                             continue;
                         }
@@ -640,11 +645,19 @@ public class DatabaseChanges implements IDatabaseChanges {
 
             case "TopologyChange":
                 TopologyChange topologyChange = JsonExtensions.getDefaultMapper().treeToValue(value, TopologyChange.class);
-                if (_requestExecutor != null) {
-                    ServerNode serverNode = new ServerNode();
-                    serverNode.setUrl(topologyChange.getUrl());
-                    serverNode.setDatabase(topologyChange.getDatabase());
-                    _requestExecutor.updateTopologyAsync(serverNode, 0, true, "topology-change-notification");
+
+                RequestExecutor requestExecutor = _requestExecutor;
+                if (requestExecutor != null) {
+                    ServerNode node = new ServerNode();
+                    node.setUrl(topologyChange.getUrl());
+                    node.setDatabase(topologyChange.getDatabase());
+
+                    UpdateTopologyParameters updateParameters = new UpdateTopologyParameters(node);
+                    updateParameters.setTimeoutInMs(0);
+                    updateParameters.setForceUpdate(true);
+                    updateParameters.setDebugTag("topology-change-notification");
+
+                    requestExecutor.updateTopologyAsync(updateParameters);
                 }
                 break;
             default:

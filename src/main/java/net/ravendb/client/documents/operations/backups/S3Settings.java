@@ -3,7 +3,7 @@ package net.ravendb.client.documents.operations.backups;
 public class S3Settings extends AmazonSettings {
 
     private String bucketName;
-    private String remoteFolderName;
+    private String customServerUrl;
 
     public String getBucketName() {
         return bucketName;
@@ -13,11 +13,11 @@ public class S3Settings extends AmazonSettings {
         this.bucketName = bucketName;
     }
 
-    public String getRemoteFolderName() {
-        return remoteFolderName;
+    public String getCustomServerUrl() {
+        return customServerUrl;
     }
 
-    public void setRemoteFolderName(String remoteFolderName) {
-        this.remoteFolderName = remoteFolderName;
+    public void setCustomServerUrl(String customServerUrl) {
+        this.customServerUrl = customServerUrl;
     }
 }

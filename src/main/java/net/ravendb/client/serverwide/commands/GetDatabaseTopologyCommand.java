@@ -9,19 +9,22 @@ import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpRequestBase;
 
 import java.io.IOException;
+import java.util.UUID;
 
 public class GetDatabaseTopologyCommand extends RavenCommand<Topology> {
 
+    private final UUID _applicationIdentifier;
     private final String _debugTag;
 
     public GetDatabaseTopologyCommand() {
-        this(null);
+        this(null, null);
     }
 
-    public GetDatabaseTopologyCommand(String debugTag) {
+    public GetDatabaseTopologyCommand(String debugTag, UUID applicationIdentifier) {
         super(Topology.class);
         _debugTag = debugTag;
         canCacheAggressively = false;
+        _applicationIdentifier = applicationIdentifier;
     }
 
     @Override
@@ -30,6 +33,10 @@ public class GetDatabaseTopologyCommand extends RavenCommand<Topology> {
 
         if (_debugTag != null) {
             url.value += "&" + _debugTag;
+        }
+
+        if (_applicationIdentifier != null) {
+            url.value += "&applicationIdentifier=" + urlEncode(_applicationIdentifier.toString());
         }
 
         if (node.getUrl().toLowerCase().contains(".fiddler")) {

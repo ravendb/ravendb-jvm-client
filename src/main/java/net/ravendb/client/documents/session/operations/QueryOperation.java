@@ -200,19 +200,6 @@ public class QueryOperation {
 
         T result = session.getConventions().getEntityMapper().treeToValue(document, clazz);
 
-        if (StringUtils.isNotEmpty(id)) {
-            // we need to make an additional check, since it is possible that a value was explicitly stated
-            // for the identity property, in which case we don't want to override it.
-            Field identityProperty = session.getConventions().getIdentityProperty(clazz);
-            if (identityProperty != null) {
-                JsonNode value = document.get(identityProperty.getName());
-
-                if (value == null) {
-                    session.getGenerateEntityIdOnTheClient().trySetIdentity(result, id);
-                }
-            }
-        }
-
         session.onAfterConversionToEntityInvoke(id, document, result);
 
         return result;

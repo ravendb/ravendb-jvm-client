@@ -8,6 +8,7 @@ import java.util.Date;
 public class DatabaseStatistics {
 
     private Long lastDocEtag;
+    private Long lastDatabaseEtag;
     private int countOfIndexes;
     private long countOfDocuments;
     private long countOfRevisionDocuments;
@@ -49,6 +50,14 @@ public class DatabaseStatistics {
 
     public void setLastDocEtag(Long lastDocEtag) {
         this.lastDocEtag = lastDocEtag;
+    }
+
+    public Long getLastDatabaseEtag() {
+        return lastDatabaseEtag;
+    }
+
+    public void setLastDatabaseEtag(Long lastDatabaseEtag) {
+        this.lastDatabaseEtag = lastDatabaseEtag;
     }
 
     public int getCountOfIndexes() {

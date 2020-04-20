@@ -6,6 +6,7 @@ import net.ravendb.client.documents.operations.GetStatisticsOperation;
 import net.ravendb.client.documents.operations.configuration.GetClientConfigurationOperation;
 import net.ravendb.client.documents.session.FailedRequestEventArgs;
 import net.ravendb.client.documents.session.SessionInfo;
+import net.ravendb.client.documents.session.TopologyUpdatedEventArgs;
 import net.ravendb.client.exceptions.AllTopologyNodesDownException;
 import net.ravendb.client.exceptions.ClientVersionMismatchException;
 import net.ravendb.client.exceptions.ExceptionDispatcher;
@@ -55,6 +56,8 @@ import java.util.stream.Collectors;
 
 @SuppressWarnings("SameParameterValue")
 public class RequestExecutor implements CleanCloseable {
+
+    private static UUID GLOBAL_APPLICATION_IDENTIFIER = UUID.randomUUID();
 
     private static final int INITIAL_TOPOLOGY_ETAG = -2;
 
@@ -200,12 +203,30 @@ public class RequestExecutor implements CleanCloseable {
         this._onFailedRequest.remove(handler);
     }
 
+    private final List<EventHandler<TopologyUpdatedEventArgs>> _onTopologyUpdated = new ArrayList<>();
+
+    public void addOnTopologyUpdatedListener(EventHandler<TopologyUpdatedEventArgs> handler) {
+        _onTopologyUpdated.add(handler);
+    }
+
+    public void removeOnTopologyUpdatedListener(EventHandler<TopologyUpdatedEventArgs> handler) {
+        _onTopologyUpdated.remove(handler);
+    }
+
     private final List<Consumer<Topology>> _topologyUpdated = new ArrayList<>();
 
+    /**
+     * @deprecated This method is not supported anymore. Will be removed in next major version of the product. Use OnTopologyUpdated instead.
+     * @param handler handler to add
+     */
     public void addTopologyUpdatedListener(Consumer<Topology> handler) {
         _topologyUpdated.add(handler);
     }
 
+    /**
+     * @deprecated This method is not supported anymore. Will be removed in next major version of the product. Use OnTopologyUpdated instead.
+     * @param handler handler to remove
+     */
     public void removeTopologyUpdatedListener(Consumer<Topology> handler) {
         _topologyUpdated.remove(handler);
     }
@@ -266,7 +287,7 @@ public class RequestExecutor implements CleanCloseable {
 
     public static RequestExecutor create(String[] initialUrls, String databaseName, KeyStore certificate, char[] keyPassword, KeyStore trustStore, ExecutorService executorService, DocumentConventions conventions) {
         RequestExecutor executor = new RequestExecutor(databaseName, certificate, keyPassword, trustStore, conventions, executorService, initialUrls);
-        executor._firstTopologyUpdate = executor.firstTopologyUpdate(initialUrls);
+        executor._firstTopologyUpdate = executor.firstTopologyUpdate(initialUrls, GLOBAL_APPLICATION_IDENTIFIER);
         return executor;
     }
 
@@ -335,15 +356,50 @@ public class RequestExecutor implements CleanCloseable {
         }, _executorService);
     }
 
+    /**
+     * @deprecated This method is not supported anymore. Will be removed in next major version of the product.
+     * @param node server node
+     * @param timeout timeout
+     * @return future with operation status
+     */
     public CompletableFuture<Boolean> updateTopologyAsync(ServerNode node, int timeout) {
         return updateTopologyAsync(node, timeout, false);
     }
 
+    /**
+     * @deprecated This method is not supported anymore. Will be removed in next major version of the product.
+     * @param node server node
+     * @param timeout timeout
+     * @param forceUpdate should update be forced
+     * @return future with operation status
+     */
     public CompletableFuture<Boolean> updateTopologyAsync(ServerNode node, int timeout, boolean forceUpdate) {
         return updateTopologyAsync(node, timeout, forceUpdate, null);
     }
 
+    /**
+     * @deprecated This method is not supported anymore. Will be removed in next major version of the product.
+     * @param node server node
+     * @param timeout timeout
+     * @param forceUpdate should update be forced
+     * @param debugTag debug tag
+     * @return future with operation status
+     */
     public CompletableFuture<Boolean> updateTopologyAsync(ServerNode node, int timeout, boolean forceUpdate, String debugTag) {
+        UpdateTopologyParameters topologyParameters = new UpdateTopologyParameters(node);
+        topologyParameters.setTimeoutInMs(timeout);
+        topologyParameters.setForceUpdate(forceUpdate);
+        topologyParameters.setDebugTag(debugTag);
+        topologyParameters.setApplicationIdentifier(null);
+
+        return updateTopologyAsync(topologyParameters);
+    }
+
+    public CompletableFuture<Boolean> updateTopologyAsync(UpdateTopologyParameters parameters) {
+        if (parameters == null) {
+            throw new IllegalArgumentException("Parameters cannot be null");
+        }
+
         if (_disableTopologyUpdates) {
             return CompletableFuture.completedFuture(false);
         }
@@ -357,7 +413,7 @@ public class RequestExecutor implements CleanCloseable {
             //prevent double topology updates if execution takes too much time
             // --> in cases with transient issues
             try {
-                boolean lockTaken = _updateDatabaseTopologySemaphore.tryAcquire(timeout, TimeUnit.MILLISECONDS);
+                boolean lockTaken = _updateDatabaseTopologySemaphore.tryAcquire(parameters.getTimeoutInMs(), TimeUnit.MILLISECONDS);
                 if (!lockTaken) {
                     return false;
                 }
@@ -371,8 +427,9 @@ public class RequestExecutor implements CleanCloseable {
                     return false;
                 }
 
-                GetDatabaseTopologyCommand command = new GetDatabaseTopologyCommand(debugTag);
-                execute(node, null, command, false, null);
+                GetDatabaseTopologyCommand command = new GetDatabaseTopologyCommand(parameters.getDebugTag(),
+                        getConventions().isSendApplicationIdentifier() ? parameters.getApplicationIdentifier() : null);
+                execute(parameters.getNode(), null, command, false, null);
                 Topology topology = command.getResult();
 
                 if (_nodeSelector == null) {
@@ -381,7 +438,7 @@ public class RequestExecutor implements CleanCloseable {
                     if (conventions.getReadBalanceBehavior() == ReadBalanceBehavior.FASTEST_NODE) {
                         _nodeSelector.scheduleSpeedTest();
                     }
-                } else if (_nodeSelector.onUpdateTopology(topology, forceUpdate)) {
+                } else if (_nodeSelector.onUpdateTopology(topology, parameters.isForceUpdate())) {
                     disposeAllFailedNodesTimers();
                     if (conventions.getReadBalanceBehavior() == ReadBalanceBehavior.FASTEST_NODE) {
                         _nodeSelector.scheduleSpeedTest();
@@ -390,7 +447,7 @@ public class RequestExecutor implements CleanCloseable {
 
                 topologyEtag = _nodeSelector.getTopology().getEtag();
 
-                onTopologyUpdated(topology);
+                onTopologyUpdatedInvoke(topology);
             } catch (Exception e) {
                 if (!_disposed) {
                     throw e;
@@ -452,14 +509,22 @@ public class RequestExecutor implements CleanCloseable {
     }
 
     private <TResult> void unlikelyExecute(RavenCommand<TResult> command, CompletableFuture<Void> topologyUpdate, SessionInfo sessionInfo) {
+        waitForTopologyUpdate(topologyUpdate);
+
+        CurrentIndexAndNode currentIndexAndNode = chooseNodeForRequest(command, sessionInfo);
+        execute(currentIndexAndNode.currentNode, currentIndexAndNode.currentIndex, command, true, sessionInfo);
+    }
+
+    private void waitForTopologyUpdate(CompletableFuture<Void> topologyUpdate) {
         try {
             if (topologyUpdate == null || topologyUpdate.isCompletedExceptionally()) {
                 synchronized (this) {
                     if (_firstTopologyUpdate == null || topologyUpdate == _firstTopologyUpdate) {
                         if (_lastKnownUrls == null) {
+                            // shouldn't happen
                             throw new IllegalStateException("No known topology and no previously known one, cannot proceed, likely a bug");
                         }
-                        _firstTopologyUpdate = firstTopologyUpdate(_lastKnownUrls);
+                        _firstTopologyUpdate = firstTopologyUpdate(_lastKnownUrls, null);
                     }
 
                     topologyUpdate = _firstTopologyUpdate;
@@ -476,9 +541,6 @@ public class RequestExecutor implements CleanCloseable {
 
             throw ExceptionsUtils.unwrapException(e);
         }
-
-        CurrentIndexAndNode currentIndexAndNode = chooseNodeForRequest(command, sessionInfo);
-        execute(currentIndexAndNode.currentNode, currentIndexAndNode.currentIndex, command, true, sessionInfo);
     }
 
     private void updateTopologyCallback() {
@@ -503,7 +565,11 @@ public class RequestExecutor implements CleanCloseable {
             return;
         }
 
-        updateTopologyAsync(serverNode, 0, false, "timer-callback")
+        UpdateTopologyParameters updateParameters = new UpdateTopologyParameters(serverNode);
+        updateParameters.setTimeoutInMs(0);
+        updateParameters.setDebugTag("timer-callback");
+
+        updateTopologyAsync(updateParameters)
                 .exceptionally(ex -> {
                     if (logger.isInfoEnabled()) {
                         logger.info("Couldn't update topology from _updateTopologyTimer", ex);
@@ -512,8 +578,12 @@ public class RequestExecutor implements CleanCloseable {
                 });
     }
 
-    @SuppressWarnings({"ConstantConditions"})
     protected CompletableFuture<Void> firstTopologyUpdate(String[] inputUrls) {
+        return firstTopologyUpdate(inputUrls, null);
+    }
+
+    @SuppressWarnings({"ConstantConditions"})
+    protected CompletableFuture<Void> firstTopologyUpdate(String[] inputUrls, UUID applicationIdentifier) {
         final String[] initialUrls = validateUrls(inputUrls, certificate);
 
         ArrayList<Tuple<String, Exception>> list = new ArrayList<>();
@@ -526,7 +596,12 @@ public class RequestExecutor implements CleanCloseable {
                     serverNode.setUrl(url);
                     serverNode.setDatabase(_databaseName);
 
-                    updateTopologyAsync(serverNode, Integer.MAX_VALUE, false, "first-topology-update").get();
+                    UpdateTopologyParameters updateParameters = new UpdateTopologyParameters(serverNode);
+                    updateParameters.setTimeoutInMs(Integer.MAX_VALUE);
+                    updateParameters.setDebugTag("first-topology-update");
+                    updateParameters.setApplicationIdentifier(applicationIdentifier);
+
+                    updateTopologyAsync(updateParameters).get();
 
                     initializeUpdateTopologyTimer();
 
@@ -586,7 +661,7 @@ public class RequestExecutor implements CleanCloseable {
         throw new IllegalStateException("Failed to retrieve database topology from all known nodes" + System.lineSeparator() + details);
     }
 
-    protected static String[] validateUrls(String[] initialUrls, KeyStore certificate) {
+    public static String[] validateUrls(String[] initialUrls, KeyStore certificate) {
         String[] cleanUrls = new String[initialUrls.length];
         boolean requireHttps = certificate != null;
         for (int index = 0; index < initialUrls.length; index++) {
@@ -594,7 +669,7 @@ public class RequestExecutor implements CleanCloseable {
             try {
                 new URL(url);
             } catch (MalformedURLException e) {
-                throw new IllegalArgumentException("The url '" + url + "' is not valid");
+                throw new IllegalArgumentException("'" + url + "' is not a valid url");
             }
 
             cleanUrls[index] = StringUtils.stripEnd(url, "/");
@@ -736,7 +811,11 @@ public class RequestExecutor implements CleanCloseable {
             serverNode.setUrl(chosenNode.getUrl());
             serverNode.setDatabase(_databaseName);
 
-            CompletableFuture<Boolean> topologyTask = refreshTopology ? updateTopologyAsync(serverNode, 0) : CompletableFuture.completedFuture(false);
+            UpdateTopologyParameters updateParameters = new UpdateTopologyParameters(serverNode);
+            updateParameters.setTimeoutInMs(0);
+            updateParameters.setDebugTag(refreshTopology ? "refresh-topology-header" : refreshClientConfiguration ? "refresh-client-configuration-header" : null);
+
+            CompletableFuture<Boolean> topologyTask = refreshTopology ? updateTopologyAsync(updateParameters) : CompletableFuture.completedFuture(false);
             CompletableFuture<Void> clientConfiguration = refreshClientConfiguration ? updateClientConfigurationAsync() : CompletableFuture.completedFuture(null);
 
             return CompletableFuture.allOf(topologyTask, clientConfiguration);
@@ -1109,7 +1188,11 @@ public class RequestExecutor implements CleanCloseable {
 
                     if (command.getFailedNodes().containsKey(indexAndNode.currentNode)) {
                         // we tried all the nodes, let's try to update topology and retry one more time
-                        Boolean success = updateTopologyAsync(chosenNode, 60 * 1000, true, "handle-unsuccessful-response").get();
+                        UpdateTopologyParameters updateParameters = new UpdateTopologyParameters(chosenNode);
+                        updateParameters.setTimeoutInMs(60_000);
+                        updateParameters.setForceUpdate(true);
+                        updateParameters.setDebugTag("handle-unsuccessful-response");
+                        Boolean success = updateTopologyAsync(updateParameters).get();
                         if (!success) {
                             return false;
                         }
@@ -1264,13 +1347,31 @@ public class RequestExecutor implements CleanCloseable {
         }
 
         IBroadcast broadcastCommand = (IBroadcast) command;
+        final Map<ServerNode, Exception> failedNodes = command.getFailedNodes();
 
         command.setFailedNodes(new HashMap<>()); // clean the current failures
         Map<CompletableFuture<Void>, BroadcastState<TResult>> broadcastTasks = new HashMap<>();
 
-        sendToAllNodes(broadcastTasks, sessionInfo, broadcastCommand);
+        try {
+            sendToAllNodes(broadcastTasks, sessionInfo, broadcastCommand);
 
-        return waitForBroadcastResult(command, broadcastTasks);
+            return waitForBroadcastResult(command, broadcastTasks);
+        } finally {
+            for (Map.Entry<CompletableFuture<Void>, BroadcastState<TResult>> broadcastState : broadcastTasks.entrySet()) {
+                CompletableFuture<Void> task = broadcastState.getKey();
+                if (task != null) {
+                    task.exceptionally(throwable -> {
+                        int index = broadcastState.getValue().getIndex();
+                        ServerNode node = _nodeSelector.getTopology().getNodes().get(index);
+                        if (failedNodes.containsKey(node)) {
+                            // if other node succeed in broadcast we need to send health checks to the original failed node
+                            spawnHealthChecks(node, index);
+                        }
+                        return null;
+                    });
+                }
+            }
+        }
     }
 
     private <TResult> TResult waitForBroadcastResult(RavenCommand<TResult> command, Map<CompletableFuture<Void>, BroadcastState<TResult>> tasks) {
@@ -1296,6 +1397,7 @@ public class RequestExecutor implements CleanCloseable {
                 command.getFailedNodes().put(node, error.getCause() != null ? (Exception) error.getCause() : error);
 
                 _nodeSelector.onFailedRequest(failed.getIndex());
+                spawnHealthChecks(node, failed.getIndex());
 
                 tasks.remove(completed);
                 continue;
@@ -1358,7 +1460,11 @@ public class RequestExecutor implements CleanCloseable {
         }
         CurrentIndexAndNode preferredNode = getPreferredNode();
         try {
-            updateTopologyAsync(preferredNode.currentNode, 0, true, "handle-server-not-responsive").get();
+            UpdateTopologyParameters updateParameters = new UpdateTopologyParameters(preferredNode.currentNode);
+            updateParameters.setTimeoutInMs(0);
+            updateParameters.setForceUpdate(true);
+            updateParameters.setDebugTag("handle-server-not-responsive");
+            updateTopologyAsync(updateParameters).get();
         } catch (InterruptedException | ExecutionException ee) {
             throw ExceptionsUtils.unwrapException(e);
         }
@@ -1615,8 +1721,9 @@ public class RequestExecutor implements CleanCloseable {
         }
     }
 
-    protected void onTopologyUpdated(Topology newTopology) {
+    protected void onTopologyUpdatedInvoke(Topology newTopology) {
         EventHelper.invoke(_topologyUpdated, newTopology);
+        EventHelper.invoke(_onTopologyUpdated, this, new TopologyUpdatedEventArgs(newTopology));
     }
 
     public static class IndexAndResponse {

@@ -1,5 +1,6 @@
 package net.ravendb.client.documents.session;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import net.ravendb.client.Constants;
@@ -175,8 +176,11 @@ public class EntityToJson {
                 entity = _session.getConventions().getEntityMapper().treeToValue(document, entityType);
             }
 
+            JsonNode projectionNode = document.get(Constants.Documents.Metadata.PROJECTION);
+            boolean isProjection = projectionNode != null && projectionNode.isBoolean() && projectionNode.asBoolean();
+
             if (id != null) {
-                _session.getGenerateEntityIdOnTheClient().trySetIdentity(entity, id);
+                _session.getGenerateEntityIdOnTheClient().trySetIdentity(entity, id, isProjection);
             }
 
             _session.onAfterConversionToEntityInvoke(id, document, entity);

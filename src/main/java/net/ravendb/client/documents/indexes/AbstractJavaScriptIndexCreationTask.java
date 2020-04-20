@@ -42,12 +42,46 @@ public class AbstractJavaScriptIndexCreationTask extends AbstractIndexCreationTa
         return getReduce() != null;
     }
 
+    /**
+     * @return If not null than each reduce result will be created as a document in the specified collection name.
+     */
     protected String getOutputReduceToCollection() {
         return _definition.getOutputReduceToCollection();
     }
 
+    /**
+     * @param outputReduceToCollection If not null than each reduce result will be created as a document in the specified collection name.
+     */
     protected void setOutputReduceToCollection(String outputReduceToCollection) {
         _definition.setOutputReduceToCollection(outputReduceToCollection);
+    }
+
+    /**
+     * @return Defines a collection name for reference documents created based on provided pattern
+     */
+    protected String getPatternReferencesCollectionName() {
+        return _definition.getPatternReferencesCollectionName();
+    }
+
+    /**
+     * @param patternReferencesCollectionName Defines a collection name for reference documents created based on provided pattern
+     */
+    protected void setPatternReferencesCollectionName(String patternReferencesCollectionName) {
+        _definition.setPatternReferencesCollectionName(patternReferencesCollectionName);
+    }
+
+    /**
+     * @return Defines a collection name for reference documents created based on provided pattern
+     */
+    protected String getPatternForOutputReduceToCollectionReferences() {
+        return _definition.getPatternForOutputReduceToCollectionReferences();
+    }
+
+    /**
+     * @param patternForOutputReduceToCollectionReferences Defines a collection name for reference documents created based on provided pattern
+     */
+    protected void setPatternForOutputReduceToCollectionReferences(String patternForOutputReduceToCollectionReferences) {
+        _definition.setPatternForOutputReduceToCollectionReferences(patternForOutputReduceToCollectionReferences);
     }
 
     @Override

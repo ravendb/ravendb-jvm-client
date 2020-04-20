@@ -52,6 +52,9 @@ public interface IDocumentStore extends IDisposalNotification {
     void addOnFailedRequestListener(EventHandler<FailedRequestEventArgs> handler);
     void removeOnFailedRequestListener(EventHandler<FailedRequestEventArgs> handler);
 
+    void addOnTopologyUpdatedListener(EventHandler<TopologyUpdatedEventArgs> handler);
+    void removeOnTopologyUpdatedListener(EventHandler<TopologyUpdatedEventArgs> handler);
+
     /**
      * Subscribe to change notifications from the server
      * @return Database changes object

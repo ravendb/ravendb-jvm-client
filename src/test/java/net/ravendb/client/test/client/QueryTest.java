@@ -263,7 +263,7 @@ public class QueryTest extends RemoteTestBase {
             try (IDocumentSession session = store.openSession()) {
 
                 List<User> usersAge = session.query(User.class)
-                        .selectFields(User.class, "age")
+                        .selectFields(User.class, "age", "id")
                         .toList();
 
                 for (User user : usersAge) {
@@ -446,7 +446,7 @@ public class QueryTest extends RemoteTestBase {
             try (IDocumentSession session = store.openSession()) {
 
                 List<UserProjection> projections = session.query(User.class)
-                        .selectFields(UserProjection.class, "lastName")
+                        .selectFields(UserProjection.class, "lastName", "id")
                         .toList();
 
                 assertThat(projections)

@@ -23,6 +23,7 @@ import net.ravendb.client.serverwide.DatabaseTopology;
 import net.ravendb.client.serverwide.commands.GetDatabaseTopologyCommand;
 import net.ravendb.client.serverwide.operations.GetDatabaseRecordOperation;
 import net.ravendb.client.serverwide.operations.ReorderDatabaseMembersOperation;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import java.time.Duration;
@@ -78,6 +79,7 @@ public class ClusterOperationTest extends ClusterTestBase {
     }
 
     @Test
+    @Disabled
     public void nextIdentityForOperationShouldBroadcastAndFail() throws Exception {
         try (ClusterController cluster = createRaftCluster(3)) {
 

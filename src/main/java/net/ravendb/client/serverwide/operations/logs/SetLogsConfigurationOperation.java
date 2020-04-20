@@ -66,6 +66,16 @@ public class SetLogsConfigurationOperation implements IVoidServerOperation {
         private Long retentionSize;
         private boolean compress;
 
+        public Parameters(GetLogsConfigurationResult getLogs) {
+            mode = getLogs.getMode();
+            retentionTime = getLogs.getRetentionTime();
+            retentionSize = getLogs.getRetentionSize();
+            compress = getLogs.isCompress();
+        }
+
+        public Parameters() {
+        }
+
         public Duration getRetentionTime() {
             return retentionTime;
         }

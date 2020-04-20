@@ -30,9 +30,12 @@ import java.util.function.Function;
 public class DocumentConventions {
 
     public static final DocumentConventions defaultConventions = new DocumentConventions();
+    public static final DocumentConventions defaultForServerConventions = new DocumentConventions();
 
     static {
         defaultConventions.freeze();
+        defaultForServerConventions._sendApplicationIdentifier = false;
+        defaultForServerConventions.freeze();
     }
 
     private static final Map<Class, String> _cachedDefaultTypeCollectionNames = new HashMap<>();
@@ -72,6 +75,7 @@ public class DocumentConventions {
     private int _maxHttpCacheSize;
     private ObjectMapper _entityMapper;
     private Boolean _useCompression;
+    private boolean _sendApplicationIdentifier;
 
     private AggressiveCacheConventions _aggressiveCache;
 
@@ -141,6 +145,8 @@ public class DocumentConventions {
         _aggressiveCache = new AggressiveCacheConventions(this);
         _firstBroadcastAttemptTimeout = Duration.ofSeconds(5);
         _secondBroadcastAttemptTimeout = Duration.ofSeconds(30);
+
+        _sendApplicationIdentifier = true;
     }
 
     public boolean hasExplicitlySetCompressionUsage() {
@@ -154,6 +160,25 @@ public class DocumentConventions {
     public void setRequestTimeout(Duration requestTimeout) {
         assertNotFrozen();
         _requestTimeout = requestTimeout;
+    }
+
+    /**
+     * Enables sending a unique application identifier to the RavenDB Server that is used for Client API usage tracking.
+     * It allows RavenDB Server to issue performance hint notifications e.g. during robust topology update requests which could indicate Client API misuse impacting the overall performance
+     * @return if option is enabled
+     */
+    public boolean isSendApplicationIdentifier() {
+        return _sendApplicationIdentifier;
+    }
+
+    /**
+     * Enables sending a unique application identifier to the RavenDB Server that is used for Client API usage tracking.
+     * It allows RavenDB Server to issue performance hint notifications e.g. during robust topology update requests which could indicate Client API misuse impacting the overall performance
+     * @param sendApplicationIdentifier if option should be enabled
+     */
+    public void setSendApplicationIdentifier(boolean sendApplicationIdentifier) {
+        assertNotFrozen();
+        _sendApplicationIdentifier = sendApplicationIdentifier;
     }
 
     /**
