@@ -4,12 +4,21 @@ import org.apache.commons.lang3.StringUtils;
 
 public class FacetValue {
 
+    private String name;
     private String range;
     private int count;
     private Double sum;
     private Double max;
     private Double min;
     private Double average;
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
 
     public String getRange() {
         return range;
@@ -73,6 +82,9 @@ public class FacetValue {
         }
         if (average != null) {
             msg += "Average: " + average + ",";
+        }
+        if (name != null) {
+            msg += "Name: " + name + ",";
         }
 
         return StringUtils.removeEnd(msg, ";");

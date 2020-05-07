@@ -25,21 +25,19 @@ public class CounterBatchOperation implements IOperation<CountersDetail> {
 
     @Override
     public RavenCommand<CountersDetail> getCommand(IDocumentStore store, DocumentConventions conventions, HttpCache cache) {
-        return new CounterBatchCommand(_counterBatch, conventions);
+        return new CounterBatchCommand(_counterBatch);
     }
 
-    public static class CounterBatchCommand extends RavenCommand<CountersDetail> {
-        private final DocumentConventions _conventions;
+    private static class CounterBatchCommand extends RavenCommand<CountersDetail> {
         private final CounterBatch _counterBatch;
 
-        public CounterBatchCommand(CounterBatch counterBatch, DocumentConventions conventions) {
+        public CounterBatchCommand(CounterBatch counterBatch) {
             super(CountersDetail.class);
 
             if (counterBatch == null) {
                 throw new IllegalArgumentException("CounterBatch cannot be null");
             }
             _counterBatch = counterBatch;
-            _conventions = conventions;
         }
 
         @Override
@@ -50,7 +48,7 @@ public class CounterBatchOperation implements IOperation<CountersDetail> {
 
             request.setEntity(new ContentProviderHttpEntity(outputStream -> {
                 try (JsonGenerator generator = mapper.getFactory().createGenerator(outputStream)) {
-                    _counterBatch.serialize(generator, _conventions);
+                    _counterBatch.serialize(generator);
                 } catch (IOException e) {
                     throw new RuntimeException(e);
                 }

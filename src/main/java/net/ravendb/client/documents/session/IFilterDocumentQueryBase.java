@@ -54,7 +54,7 @@ public interface IFilterDocumentQueryBase<T, TSelf extends IDocumentQueryBase<T,
     /**
      * Negate the next operation
      */
-    void negateNext();
+    TSelf negateNext();
 
     /**
      *  Simplified method for opening a new clause within the query

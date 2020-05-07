@@ -4,6 +4,9 @@ import net.ravendb.client.documents.DocumentStore;
 import net.ravendb.client.documents.conventions.DocumentConventions;
 import org.apache.commons.lang3.StringUtils;
 
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
@@ -17,14 +20,21 @@ public class MultiTypeHiLoIdGenerator {
     protected final DocumentStore store;
     protected final String dbName;
     protected final DocumentConventions conventions;
+    private char _identityPartsSeparator;
 
-    public MultiTypeHiLoIdGenerator(DocumentStore store, String dbName, DocumentConventions conventions) {
+    public MultiTypeHiLoIdGenerator(DocumentStore store, String dbName) {
         this.store = store;
         this.dbName = dbName;
-        this.conventions = conventions;
+        this.conventions = store.getRequestExecutor(dbName).getConventions();
+        _identityPartsSeparator = conventions.getIdentityPartsSeparator();
     }
 
     public String generateDocumentId(Object entity) {
+        char identityPartsSeparator = conventions.getIdentityPartsSeparator();
+        if (_identityPartsSeparator != identityPartsSeparator) {
+            maybeRefresh(identityPartsSeparator);
+        }
+
         String typeTagName = conventions.getCollectionName(entity);
 
         if (StringUtils.isEmpty(typeTagName)) {
@@ -52,12 +62,39 @@ public class MultiTypeHiLoIdGenerator {
         return value.generateDocumentId(entity);
     }
 
+    private void maybeRefresh(char identityPartsSeparator) {
+        List<HiLoIdGenerator> idGenerators = null;
+
+        synchronized (_generatorLock) {
+            if (_identityPartsSeparator == identityPartsSeparator) {
+                return;
+            }
+
+            idGenerators = new ArrayList<>(_idGeneratorsByTag.values());
+
+            _idGeneratorsByTag.clear();
+            _identityPartsSeparator = identityPartsSeparator;
+        }
+
+        if (idGenerators != null) {
+            try {
+                returnUnusedRange(idGenerators);
+            } catch (Exception e) {
+                // ignored
+            }
+        }
+    }
+
     protected HiLoIdGenerator createGeneratorFor(String tag) {
-        return new HiLoIdGenerator(tag, store, dbName, conventions.getIdentityPartsSeparator());
+        return new HiLoIdGenerator(tag, store, dbName, _identityPartsSeparator);
     }
 
     public void returnUnusedRange() {
-        for (HiLoIdGenerator generator : _idGeneratorsByTag.values()) {
+        returnUnusedRange(_idGeneratorsByTag.values());
+    }
+
+    private static void returnUnusedRange(Collection<HiLoIdGenerator> generators) {
+        for (HiLoIdGenerator generator : generators) {
             generator.returnUnusedRange();
         }
     }

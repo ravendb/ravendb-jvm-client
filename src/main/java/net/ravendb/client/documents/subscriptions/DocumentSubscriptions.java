@@ -146,16 +146,16 @@ public class DocumentSubscriptions implements AutoCloseable {
             SubscriptionIncludeBuilder builder = new SubscriptionIncludeBuilder(_store.getConventions());
             criteria.getIncludes().accept(builder);
 
+            int numberOfIncludesAdded = 0;
+
             if (builder.documentsToInclude != null && !builder.documentsToInclude.isEmpty()) {
                 criteria.setQuery(criteria.getQuery() + System.lineSeparator() + "include ");
 
-                boolean first = true;
                 for (String inc : builder.documentsToInclude) {
                     String include = "doc." + inc;
-                    if (!first) {
+                    if (numberOfIncludesAdded > 0) {
                         criteria.setQuery(criteria.getQuery() + ",");
                     }
-                    first = false;
 
                     Reference<String> escapedInclude = new Reference<>();
                     if (IncludesUtil.requiresQuotes(include, escapedInclude)) {
@@ -163,6 +163,35 @@ public class DocumentSubscriptions implements AutoCloseable {
                     } else {
                         criteria.setQuery(criteria.getQuery() + include);
                     }
+                    numberOfIncludesAdded++;
+                }
+            }
+
+            if (builder.isAllCounters()) {
+                if (numberOfIncludesAdded == 0) {
+                    criteria.setQuery(criteria.getQuery() + System.lineSeparator() + "include ");
+                }
+
+                criteria.setQuery(criteria.getQuery() + "counters()");
+                numberOfIncludesAdded++;
+            } else if (builder.getCountersToInclude() != null && !builder.getCountersToInclude().isEmpty()) {
+                if (numberOfIncludesAdded == 0) {
+                    criteria.setQuery(criteria.getQuery() + System.lineSeparator() + "include ");
+                }
+
+                for (String counterName : builder.getCountersToInclude()) {
+                    if (numberOfIncludesAdded > 0) {
+                        criteria.setQuery(criteria.getQuery() + ",");
+                    }
+
+                    Reference<String> escapedCounterNameRef = new Reference<>();
+                    if (IncludesUtil.requiresQuotes(counterName, escapedCounterNameRef)) {
+                        criteria.setQuery(criteria.getQuery() + "counters(" + escapedCounterNameRef.value + ")");
+                    }  else {
+                        criteria.setQuery(criteria.getQuery() + "counters(" + counterName + ")");
+                    }
+
+                    numberOfIncludesAdded++;
                 }
             }
         }

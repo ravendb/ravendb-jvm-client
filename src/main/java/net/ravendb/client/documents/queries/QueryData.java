@@ -10,7 +10,7 @@ public class QueryData {
     private String[] fields;
     private String[] projections;
     private String fromAlias;
-    private DeclareToken declareToken;
+    private List<DeclareToken> declareTokens;
     private List<LoadToken> loadTokens;
     private boolean isCustomFunction;
     private boolean mapReduce;
@@ -48,12 +48,12 @@ public class QueryData {
         this.fromAlias = fromAlias;
     }
 
-    public DeclareToken getDeclareToken() {
-        return declareToken;
+    public List<DeclareToken> getDeclareTokens() {
+        return declareTokens;
     }
 
-    public void setDeclareToken(DeclareToken declareToken) {
-        this.declareToken = declareToken;
+    public void setDeclareTokens(List<DeclareToken> declareTokens) {
+        this.declareTokens = declareTokens;
     }
 
     public List<LoadToken> getLoadTokens() {
@@ -77,11 +77,11 @@ public class QueryData {
         this(fields, projections, null, null, null, false);
     }
 
-    public QueryData(String[] fields, String[] projections, String fromAlias, DeclareToken declareToken, List<LoadToken> loadTokens, boolean isCustomFunction) {
+    public QueryData(String[] fields, String[] projections, String fromAlias, List<DeclareToken> declareTokens, List<LoadToken> loadTokens, boolean isCustomFunction) {
         this.fields = fields;
         this.projections = projections;
         this.fromAlias = fromAlias;
-        this.declareToken = declareToken;
+        this.declareTokens = declareTokens;
         this.loadTokens = loadTokens;
         this.isCustomFunction = isCustomFunction;
     }

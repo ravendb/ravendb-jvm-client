@@ -22,11 +22,14 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import java.lang.reflect.Array;
 import java.lang.reflect.Field;
 import java.time.Duration;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.function.BiConsumer;
 import java.util.function.Function;
 
 public class QueryOperation {
@@ -107,6 +110,15 @@ public class QueryOperation {
         return _session.getDocumentStore().disableAggressiveCaching(_session.getDatabaseName());
     }
 
+    public <T> T[] completeAsArray(Class<T> clazz) {
+        QueryResult queryResult = _currentQueryResults.createSnapshot();
+
+        T[] result = (T[]) Array.newInstance(clazz, queryResult.getResults().size());
+        completeInternal(clazz, queryResult, (idx, item) -> result[idx] = item);
+
+        return result;
+    }
+
     public <T> List<T> complete(Class<T> clazz) {
         QueryResult queryResult = _currentQueryResults.createSnapshot();
 
@@ -117,13 +129,14 @@ public class QueryOperation {
         return result;
     }
 
-    private <T> void completeInternal(Class<T> clazz, QueryResult queryResult, Function<T, Boolean> addToResult) {
+    private <T> void completeInternal(Class<T> clazz, QueryResult queryResult, BiConsumer<Integer, T> addToResult) {
         if (!_noTracking) {
             _session.registerIncludes(queryResult.getIncludes());
         }
 
         try {
-            for (JsonNode document : queryResult.getResults()) {
+            for (int i = 0; i < queryResult.getResults().size(); i++) {
+                JsonNode document = queryResult.getResults().get(i);
                 ObjectNode metadata = (ObjectNode) document.get(Constants.Documents.Metadata.KEY);
                 JsonNode idNode = metadata.get(Constants.Documents.Metadata.ID);
 
@@ -132,7 +145,7 @@ public class QueryOperation {
                     id = idNode.asText();
                 }
 
-                addToResult.apply(deserialize(clazz, id, (ObjectNode) document, metadata, _fieldsToFetch, _noTracking, _session, _isProjectInto));
+                addToResult.accept(i, deserialize(clazz, id, (ObjectNode) document, metadata, _fieldsToFetch, _noTracking, _session, _isProjectInto));
             }
         } catch (JsonProcessingException e) {
             throw new RuntimeException("Unable to read json: " + e.getMessage(), e);
@@ -143,6 +156,12 @@ public class QueryOperation {
 
             if (queryResult.getCounterIncludes() != null) {
                 _session.registerCounters(queryResult.getCounterIncludes(), queryResult.getIncludedCounterNames());
+            }
+            if (queryResult.getTimeSeriesIncludes() != null) {
+                _session.registerTimeSeries(queryResult.getTimeSeriesIncludes());
+            }
+            if (queryResult.getCompareExchangeValueIncludes() != null) {
+                _session.getClusterSession().registerCompareExchangeValues(queryResult.getCompareExchangeValueIncludes());
             }
         }
     }
@@ -176,13 +195,15 @@ public class QueryOperation {
                 }
             }
 
-            if (!isProjectInto) {
+            boolean isTimeSeriesField = fieldsToFetch.projections[0].startsWith(Constants.TimeSeries.QUERY_FUNCTION);
+
+            if (!isProjectInto || isTimeSeriesField) {
                 JsonNode inner = document.get(projectionField);
                 if (inner == null) {
                     return Defaults.defaultValue(clazz);
                 }
 
-                if (fieldsToFetch.fieldsToFetch != null && fieldsToFetch.fieldsToFetch[0].equals(fieldsToFetch.projections[0])) {
+                if (isTimeSeriesField || fieldsToFetch.fieldsToFetch != null && fieldsToFetch.fieldsToFetch[0].equals(fieldsToFetch.projections[0])) {
                     if (inner instanceof ObjectNode) { //extraction from original type
                         document = (ObjectNode) inner;
                     }
@@ -211,16 +232,6 @@ public class QueryOperation {
 
     public void setNoTracking(boolean noTracking) {
         _noTracking = noTracking;
-    }
-
-    @Deprecated
-    public boolean isDisableEntitiesTracking() {
-        return _noTracking;
-    }
-
-    @Deprecated
-    public void setDisableEntitiesTracking(boolean disableEntitiesTracking) {
-        this._noTracking = disableEntitiesTracking;
     }
 
     public void ensureIsAcceptableAndSaveResult(QueryResult result) {

@@ -1,6 +1,6 @@
 package net.ravendb.client.documents.operations.compareExchange;
 
-public class CompareExchangeValue<T> {
+public class CompareExchangeValue<T> implements ICompareExchangeValue {
     private String key;
     private long index;
     private T value;

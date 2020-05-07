@@ -3,6 +3,7 @@ package net.ravendb.client.documents.subscriptions;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import net.ravendb.client.primitives.UseSharpEnum;
 
+import java.util.List;
 import java.util.Map;
 
 class SubscriptionConnectionServerMessage {
@@ -14,6 +15,7 @@ class SubscriptionConnectionServerMessage {
         END_OF_BATCH,
         DATA,
         INCLUDES,
+        COUNTER_INCLUDES,
         CONFIRM,
         ERROR
     }
@@ -66,6 +68,8 @@ class SubscriptionConnectionServerMessage {
     private ConnectionStatus status;
     private ObjectNode data;
     private ObjectNode includes;
+    private ObjectNode counterIncludes;
+    private Map<String, String[]> includedCounterNames;
     private String exception;
     private String message;
 
@@ -99,6 +103,22 @@ class SubscriptionConnectionServerMessage {
 
     public void setIncludes(ObjectNode includes) {
         this.includes = includes;
+    }
+
+    public ObjectNode getCounterIncludes() {
+        return counterIncludes;
+    }
+
+    public void setCounterIncludes(ObjectNode counterIncludes) {
+        this.counterIncludes = counterIncludes;
+    }
+
+    public Map<String, String[]> getIncludedCounterNames() {
+        return includedCounterNames;
+    }
+
+    public void setIncludedCounterNames(Map<String, String[]> includedCounterNames) {
+        this.includedCounterNames = includedCounterNames;
     }
 
     public String getException() {

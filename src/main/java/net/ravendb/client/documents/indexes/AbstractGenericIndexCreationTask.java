@@ -14,9 +14,8 @@ import java.util.function.Function;
  * Base class for creating indexes
  */
 @SuppressWarnings("SameParameterValue")
-public abstract class AbstractGenericIndexCreationTask extends AbstractIndexCreationTaskBase {
+public abstract class AbstractGenericIndexCreationTask extends AbstractIndexCreationTaskBase<IndexDefinition> {
 
-    protected String map;
     protected String reduce;
 
     protected final Map<String, FieldStorage> storesStrings;

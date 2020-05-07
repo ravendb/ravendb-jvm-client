@@ -21,11 +21,11 @@ public class HiLoIdGenerator {
     private long _lastBatchSize;
     private Date _lastRangeDate;
     private final String _dbName;
-    private final String _identityPartsSeparator;
+    private final char _identityPartsSeparator;
     private volatile RangeValue _range;
     protected String serverTag;
 
-    public HiLoIdGenerator(String tag, IDocumentStore store, String dbName, String identityPartsSeparator) {
+    public HiLoIdGenerator(String tag, IDocumentStore store, String dbName, char identityPartsSeparator) {
         _store = store;
         _tag = tag;
         _dbName = dbName;

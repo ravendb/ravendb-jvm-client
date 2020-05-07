@@ -6,9 +6,7 @@ import org.apache.commons.lang3.NotImplementedException;
 import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.StringUtils;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.function.Function;
 
 public class FacetToken extends QueryToken {
@@ -142,26 +140,29 @@ public class FacetToken extends QueryToken {
     }
 
     private static void applyAggregations(FacetBase facet, FacetToken token) {
-        for (Map.Entry<FacetAggregation, String> aggregation : facet.getAggregations().entrySet()) {
-            FacetAggregationToken aggregationToken;
-            switch (aggregation.getKey()) {
-                case MAX:
-                    aggregationToken = FacetAggregationToken.max(aggregation.getValue());
-                    break;
-                case MIN:
-                    aggregationToken = FacetAggregationToken.min(aggregation.getValue());
-                    break;
-                case AVERAGE:
-                    aggregationToken = FacetAggregationToken.average(aggregation.getValue());
-                    break;
-                case SUM:
-                    aggregationToken = FacetAggregationToken.sum(aggregation.getValue());
-                    break;
-                default :
-                    throw new NotImplementedException("Unsupported aggregation method: " + aggregation.getKey());
-            }
+        for (Map.Entry<FacetAggregation, Set<FacetAggregationField>> aggregation : facet.getAggregations().entrySet()) {
 
-            token._aggregations.add(aggregationToken);
+            for (FacetAggregationField value : aggregation.getValue()) {
+                FacetAggregationToken aggregationToken;
+                switch (aggregation.getKey()) {
+                    case MAX:
+                        aggregationToken = FacetAggregationToken.max(value.getName(), value.getDisplayName());
+                        break;
+                    case MIN:
+                        aggregationToken = FacetAggregationToken.min(value.getName(), value.getDisplayName());
+                        break;
+                    case AVERAGE:
+                        aggregationToken = FacetAggregationToken.average(value.getName(), value.getDisplayName());
+                        break;
+                    case SUM:
+                        aggregationToken = FacetAggregationToken.sum(value.getName(), value.getDisplayName());
+                        break;
+                    default :
+                        throw new NotImplementedException("Unsupported aggregation method: " + aggregation.getKey());
+                }
+
+                token._aggregations.add(aggregationToken);
+            }
         }
     }
 
@@ -172,10 +173,12 @@ public class FacetToken extends QueryToken {
 
     private static class FacetAggregationToken extends QueryToken {
         private final String _fieldName;
+        private final String _fieldDisplayName;
         private final FacetAggregation _aggregation;
 
-        private FacetAggregationToken(String fieldName, FacetAggregation aggregation) {
+        private FacetAggregationToken(String fieldName, String fieldDisplayName, FacetAggregation aggregation) {
             _fieldName = fieldName;
+            _fieldDisplayName = fieldDisplayName;
             _aggregation = aggregation;
         }
 
@@ -209,34 +212,57 @@ public class FacetToken extends QueryToken {
                 default:
                     throw new IllegalArgumentException("Invalid aggregation mode: " + _aggregation);
             }
+
+            if (StringUtils.isBlank(_fieldDisplayName)) {
+                return;
+            }
+
+            writer.append(" as ");
+            writeField(writer, _fieldDisplayName);
         }
 
         public static FacetAggregationToken max(String fieldName) {
+            return max(fieldName, null);
+        }
+
+        public static FacetAggregationToken max(String fieldName, String fieldDisplayName) {
             if (StringUtils.isBlank(fieldName)) {
                 throw new IllegalArgumentException("FieldName can not be null");
             }
-            return new FacetAggregationToken(fieldName, FacetAggregation.MAX);
+            return new FacetAggregationToken(fieldName, fieldDisplayName, FacetAggregation.MAX);
         }
 
         public static FacetAggregationToken min(String fieldName) {
+            return min(fieldName, null);
+        }
+
+        public static FacetAggregationToken min(String fieldName, String fieldDisplayName) {
             if (StringUtils.isBlank(fieldName)) {
                 throw new IllegalArgumentException("FieldName can not be null");
             }
-            return new FacetAggregationToken(fieldName, FacetAggregation.MIN);
+            return new FacetAggregationToken(fieldName, fieldDisplayName, FacetAggregation.MIN);
         }
 
         public static FacetAggregationToken average(String fieldName) {
+            return average(fieldName, null);
+        }
+
+        public static FacetAggregationToken average(String fieldName, String fieldDisplayName) {
             if (StringUtils.isBlank(fieldName)) {
                 throw new IllegalArgumentException("FieldName can not be null");
             }
-            return new FacetAggregationToken(fieldName, FacetAggregation.AVERAGE);
+            return new FacetAggregationToken(fieldName, fieldDisplayName, FacetAggregation.AVERAGE);
         }
 
         public static FacetAggregationToken sum(String fieldName) {
+            return sum(fieldName, null);
+        }
+
+        public static FacetAggregationToken sum(String fieldName, String fieldDisplayName) {
             if (StringUtils.isBlank(fieldName)) {
                 throw new IllegalArgumentException("FieldName can not be null");
             }
-            return new FacetAggregationToken(fieldName, FacetAggregation.SUM);
+            return new FacetAggregationToken(fieldName, fieldDisplayName, FacetAggregation.SUM);
         }
     }
 }

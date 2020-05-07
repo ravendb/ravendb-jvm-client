@@ -3,11 +3,13 @@ package net.ravendb.client.documents.commands;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import net.ravendb.client.Constants;
+import net.ravendb.client.documents.operations.timeSeries.TimeSeriesRange;
 import net.ravendb.client.documents.queries.HashCalculator;
 import net.ravendb.client.extensions.JsonExtensions;
 import net.ravendb.client.http.RavenCommand;
 import net.ravendb.client.http.ServerNode;
 import net.ravendb.client.json.ContentProviderHttpEntity;
+import net.ravendb.client.primitives.NetISO8601Utils;
 import net.ravendb.client.primitives.Reference;
 import net.ravendb.client.util.UrlUtils;
 import org.apache.http.client.methods.HttpGet;
@@ -18,6 +20,7 @@ import org.apache.http.entity.ContentType;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Set;
 
 public class GetDocumentsCommand extends RavenCommand<GetDocumentsResult> {
@@ -28,6 +31,9 @@ public class GetDocumentsCommand extends RavenCommand<GetDocumentsResult> {
     private String[] _includes;
     private String[] _counters;
     private boolean _includeAllCounters;
+
+    private List<TimeSeriesRange> _timeSeriesIncludes;
+    private String[] _compareExchangeValueIncludes;
 
     private boolean _metadataOnly;
 
@@ -65,19 +71,24 @@ public class GetDocumentsCommand extends RavenCommand<GetDocumentsResult> {
         _metadataOnly = metadataOnly;
     }
 
-    public GetDocumentsCommand(String[] ids, String[] includes, String[] counterIncludes, boolean metadataOnly) {
+    public GetDocumentsCommand(String[] ids, String[] includes, String[] counterIncludes,
+                               List<TimeSeriesRange> timeSeriesIncludes, String[] compareExchangeValueIncludes,
+                               boolean metadataOnly) {
         this(ids, includes, metadataOnly);
-
-        if (counterIncludes == null) {
-            throw new IllegalArgumentException("CounterIncludes cannot be null");
-        }
 
         _counters = counterIncludes;
+        _timeSeriesIncludes = timeSeriesIncludes;
+        _compareExchangeValueIncludes = compareExchangeValueIncludes;
     }
 
-    public GetDocumentsCommand(String[] ids, String[] includes, boolean includeAllCounters, boolean metadataOnly) {
+    public GetDocumentsCommand(String[] ids, String[] includes, boolean includeAllCounters,
+                               List<TimeSeriesRange> timeSeriesIncludes, String[] compareExchangeValueIncludes,
+                               boolean metadataOnly) {
         this(ids, includes, metadataOnly);
+
         _includeAllCounters = includeAllCounters;
+        _timeSeriesIncludes = timeSeriesIncludes;
+        _compareExchangeValueIncludes = compareExchangeValueIncludes;
     }
 
     public GetDocumentsCommand(String startWith, String startAfter, String matches, String exclude, int start, int pageSize, boolean metadataOnly) {
@@ -147,6 +158,25 @@ public class GetDocumentsCommand extends RavenCommand<GetDocumentsResult> {
         } else if (_counters != null && _counters.length > 0) {
             for (String counter : _counters) {
                 pathBuilder.append("&counter=").append(urlEncode(counter));
+            }
+        }
+
+        if (_timeSeriesIncludes != null) {
+            for (TimeSeriesRange range : _timeSeriesIncludes) {
+                pathBuilder.append("&timeseries=")
+                        .append(urlEncode(range.getName()))
+                        .append("&from=")
+                        .append(range.getFrom() == null ? NetISO8601Utils.MIN_DATE_AS_STRING : NetISO8601Utils.format(range.getFrom())) //TODO: support null
+                        .append("&to=")
+                        .append(range.getTo() == null ? NetISO8601Utils.MAX_DATE_AS_STRING : NetISO8601Utils.format(range.getTo())); //TODO: support null?
+            }
+        }
+
+        if (_compareExchangeValueIncludes != null) {
+            for (String compareExchangeValue : _compareExchangeValueIncludes) {
+                pathBuilder
+                        .append("&cmpxchg=")
+                        .append(urlEncode(compareExchangeValue));
             }
         }
 

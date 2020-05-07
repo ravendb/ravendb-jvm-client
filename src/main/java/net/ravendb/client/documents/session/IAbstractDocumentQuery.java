@@ -178,7 +178,7 @@ public interface IAbstractDocumentQuery<T> {
     /**
      * Negate the next operation
      */
-    void negateNext();
+    void _negateNext();
 
     /**
      * Check that the field has one of the specified value
@@ -471,7 +471,7 @@ public interface IAbstractDocumentQuery<T> {
 
     MoreLikeThisScope _moreLikeThis();
 
-    String addAliasToCounterIncludesTokens(String fromAlias);
+    String addAliasToIncludesTokens(String fromAlias);
 
     void _suggestUsing(SuggestionBase suggestion);
 

@@ -22,6 +22,7 @@ public class IndexDefinition {
     private String reduce;
     private Map<String, IndexFieldOptions> fields;
     private IndexConfiguration configuration;
+    private IndexSourceType indexSourceType;
     private IndexType indexType;
     private String outputReduceToCollection;
     private Long reduceOutputIndex;
@@ -163,6 +164,17 @@ public class IndexDefinition {
         this.configuration = configuration;
     }
 
+    public IndexSourceType getSourceType() {
+        if (indexSourceType == null || indexSourceType == IndexSourceType.NONE) {
+            indexSourceType = detectStaticIndexSourceType();
+        }
+        return indexSourceType;
+    }
+
+    public void setSourceType(IndexSourceType sourceType) {
+        this.indexSourceType = sourceType;
+    }
+
     public IndexType getType() {
         if (indexType == null || indexType == IndexType.NONE) {
             indexType = detectStaticIndexType();
@@ -173,6 +185,12 @@ public class IndexDefinition {
 
     public void setType(IndexType indexType) {
         this.indexType = indexType;
+    }
+
+    public IndexSourceType detectStaticIndexSourceType() {
+        String firstMap = maps.stream().findFirst().orElseThrow(() -> new IllegalArgumentException("Index definitions contains no maps"));
+
+        return IndexDefinitionHelper.detectStaticIndexSourceType(firstMap);
     }
 
     public IndexType detectStaticIndexType() {

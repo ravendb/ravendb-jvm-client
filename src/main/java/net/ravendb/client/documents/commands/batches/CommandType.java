@@ -18,6 +18,7 @@ public enum CommandType {
     FORCE_REVISION_CREATION,
 
     COUNTERS,
+    TIME_SERIES,
 
     BATCH_PATCH,
 
@@ -52,6 +53,8 @@ public enum CommandType {
                 return BATCH_PATCH;
             case "ForceRevisionCreation":
                 return FORCE_REVISION_CREATION;
+            case "TimeSeries":
+                return TIME_SERIES;
             default:
                 throw new IllegalArgumentException("Unable to parse type: " + input);
         }

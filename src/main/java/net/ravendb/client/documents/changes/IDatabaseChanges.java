@@ -90,4 +90,31 @@ public interface IDatabaseChanges extends IConnectableChanges<IDatabaseChanges> 
      */
     IChangesObservable<CounterChange> forCountersOfDocument(String documentId);
 
+    /**
+     * Subscribe to changes for all timeseries.
+     * @return Changes observable
+     */
+    IChangesObservable<TimeSeriesChange> forAllTimeSeries();
+
+    /**
+     * Subscribe to changes for all timeseries with a given name.
+     * @param timeSeriesName Time series name
+     * @return Changes observable
+     */
+    IChangesObservable<TimeSeriesChange> forTimeSeries(String timeSeriesName);
+
+    /**
+     * Subscribe to changes for timeseries from a given document and with given name.
+     * @param documentId Document identifier
+     * @param timeSeriesName Time series name
+     * @return Changes observable
+     */
+    IChangesObservable<TimeSeriesChange> forTimeSeriesOfDocument(String documentId, String timeSeriesName);
+
+    /**
+     * Subscribe to changes for timeseries from a given document and with given name.
+     * @param documentId Document identifier
+     * @return Changes observable
+     */
+    IChangesObservable<TimeSeriesChange> forTimeSeriesOfDocument(String documentId);
 }

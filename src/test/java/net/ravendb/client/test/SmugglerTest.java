@@ -17,6 +17,7 @@ import org.junit.jupiter.api.Test;
 
 import java.io.File;
 import java.util.Arrays;
+import java.util.Date;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -67,6 +68,10 @@ public class SmugglerTest extends RemoteTestBase {
                     .isEqualTo(1);
             assertThat(stats.getCountOfDocuments())
                     .isEqualTo(3);
+            assertThat(stats.getCountOfTimeSeriesSegments())
+                    .isEqualTo(1);
+            assertThat(stats.getCountOfCounterEntries())
+                    .isEqualTo(1);
         }
     }
 
@@ -130,6 +135,13 @@ public class SmugglerTest extends RemoteTestBase {
             session.store(user1, "users/1");
             session.store(user2, "users/2");
             session.store(user3, "users/3");
+
+            session.countersFor("users/1")
+                    .increment("stars");
+
+            session.timeSeriesFor("users/1", "Stars")
+                    .append(new Date(), 5);
+
             session.saveChanges();
         }
 

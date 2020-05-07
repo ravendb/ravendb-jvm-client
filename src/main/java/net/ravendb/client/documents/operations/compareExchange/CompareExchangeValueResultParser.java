@@ -1,20 +1,24 @@
 package net.ravendb.client.documents.operations.compareExchange;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.base.Defaults;
+import net.ravendb.client.Constants;
 import net.ravendb.client.documents.conventions.DocumentConventions;
-import net.ravendb.client.documents.operations.compareExchange.CompareExchangeValue;
 
 import java.io.IOException;
-import java.util.HashMap;
 import java.util.Map;
+import java.util.TreeMap;
 
 public class CompareExchangeValueResultParser<T> {
 
     public static <T> Map<String, CompareExchangeValue<T>> getValues(Class<T> clazz, String response, DocumentConventions conventions) throws IOException {
-        JsonNode jsonResponse = conventions.getEntityMapper().readTree(response);
+        Map<String, CompareExchangeValue<T>> results = new TreeMap<>(String::compareToIgnoreCase);
+        if (response == null) { // 404
+            return results;
+        }
 
-        Map<String, CompareExchangeValue<T>> results = new HashMap<>();
+        JsonNode jsonResponse = conventions.getEntityMapper().readTree(response);
 
         JsonNode items = jsonResponse.get("Results");
         if (items == null || items.isNull()) {
@@ -26,39 +30,8 @@ public class CompareExchangeValueResultParser<T> {
                 throw new IllegalStateException("Response is invalid. Item is null");
             }
 
-            JsonNode key = item.get("Key");
-
-            if (key == null || key.isNull()) {
-                throw new IllegalStateException("Response is invalid. Key is missing.");
-            }
-
-            JsonNode index = item.get("Index");
-            if (index == null || index.isNull()) {
-                throw new IllegalStateException("Response is invalid. Index is missing");
-            }
-
-            JsonNode raw = item.get("Value");
-            if (raw == null || raw.isNull()) {
-                throw new IllegalStateException("Response is invalid. Value is missing.");
-            }
-
-            if (clazz.isPrimitive() || String.class.equals(clazz)) {
-                // simple
-                T value;
-                JsonNode rawValue = raw.get("Object");
-                value = conventions.getEntityMapper().convertValue(rawValue, clazz);
-                CompareExchangeValue<T> cmpValue = new CompareExchangeValue<>(key.textValue(), index.asLong(), value);
-                results.put(key.textValue(), cmpValue);
-            } else {
-
-                JsonNode object = raw.get("Object");
-                if (object == null || object.isNull()) {
-                    results.put(key.textValue(), new CompareExchangeValue<>(key.textValue(), index.asLong(), Defaults.defaultValue(clazz)));
-                } else {
-                    T converted = conventions.getEntityMapper().convertValue(object, clazz);
-                    results.put(key.textValue(), new CompareExchangeValue<>(key.textValue(), index.asLong(), converted));
-                }
-            }
+            CompareExchangeValue<T> value = getSingleValue(clazz, (ObjectNode) item, conventions);
+            results.put(value.getKey(), value);
         }
 
         return results;
@@ -74,5 +47,64 @@ public class CompareExchangeValueResultParser<T> {
             return null;
         }
         return values.values().iterator().next();
+    }
+
+    public static <T> CompareExchangeValue<T> getSingleValue(Class<T> clazz, ObjectNode item, DocumentConventions conventions) {
+        if (item == null || item.isNull()) {
+            return null;
+        }
+
+        JsonNode keyNode = item.get("Key");
+
+        if (keyNode == null || keyNode.isNull()) {
+            throw new IllegalStateException("Response is invalid. Key is missing.");
+        }
+
+        JsonNode indexNode = item.get("Index");
+        if (indexNode == null || indexNode.isNull()) {
+            throw new IllegalStateException("Response is invalid. Index is missing");
+        }
+
+        JsonNode rawJsonNode = item.get("Value");
+        if (rawJsonNode == null) {
+            throw new IllegalStateException("Response is invalid. Value is missing.");
+        }
+        ObjectNode raw = rawJsonNode.isObject() ? (ObjectNode) rawJsonNode : null;
+
+        String key = keyNode.asText();
+        long index = indexNode.asLong();
+
+        if (clazz.isPrimitive() || String.class.equals(clazz)) {
+            // simple
+            T value = null;
+
+            if (raw != null) {
+                JsonNode rawValue = raw.get("Object");
+                value = conventions.getEntityMapper().convertValue(rawValue, clazz);
+            }
+
+            return new CompareExchangeValue<>(key, index, value);
+        } else if (ObjectNode.class.equals(clazz)) {
+            if (raw == null || !raw.has(Constants.CompareExchange.OBJECT_FIELD_NAME)) {
+                return new CompareExchangeValue<>(key, index, null);
+            }
+
+            Object rawValue = raw.get(Constants.CompareExchange.OBJECT_FIELD_NAME);
+            if (rawValue == null) {
+                return new CompareExchangeValue<>(key, index, null);
+            } else if (rawValue instanceof ObjectNode) {
+                return new CompareExchangeValue<>(key, index, (T) rawValue);
+            } else {
+                return new CompareExchangeValue<>(key, index, (T) raw);
+            }
+        } else {
+            JsonNode object = raw.get("Object");
+            if (object == null || object.isNull()) {
+                return new CompareExchangeValue<>(key, index, Defaults.defaultValue(clazz));
+            } else {
+                T converted = conventions.getEntityMapper().convertValue(object, clazz);
+                return new CompareExchangeValue<>(key, index, converted);
+            }
+        }
     }
 }

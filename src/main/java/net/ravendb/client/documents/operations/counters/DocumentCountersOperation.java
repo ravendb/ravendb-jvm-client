@@ -11,14 +11,14 @@ public class DocumentCountersOperation {
     private List<CounterOperation> operations;
     private String documentId;
 
-    public void serialize(JsonGenerator generator, DocumentConventions conventions) throws IOException {
+    public void serialize(JsonGenerator generator) throws IOException {
         generator.writeStartObject();
         generator.writeStringField("DocumentId", documentId);
 
         generator.writeFieldName("Operations");
         generator.writeStartArray();
         for (CounterOperation operation : operations) {
-            operation.serialize(generator, conventions);
+            operation.serialize(generator);
         }
         generator.writeEndArray();
 

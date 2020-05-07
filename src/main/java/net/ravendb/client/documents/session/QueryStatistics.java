@@ -19,7 +19,6 @@ public class QueryStatistics {
     private Date indexTimestamp;
     private Date lastQueryTime;
     private Long resultEtag;
-    private long resultSize;
     private String nodeTag;
 
     /**
@@ -156,26 +155,6 @@ public class QueryStatistics {
 
     public void setResultEtag(Long resultEtag) {
         this.resultEtag = resultEtag;
-    }
-
-    /**
-     * The size of the request which were sent from the server.
-     * @deprecated ResultSize is not supported anymore. Will be removed in next major version of the product.
-     * @return result size
-     */
-    @Deprecated
-    public long getResultSize() {
-        return resultSize;
-    }
-
-    /**
-     * The size of the request which were sent from the server.
-     * @param resultSize Sets the value
-     * @deprecated ResultSize is not supported anymore. Will be removed in next major version of the product.
-     */
-    @Deprecated
-    public void setResultSize(long resultSize) {
-        this.resultSize = resultSize;
     }
 
     public String getNodeTag() {

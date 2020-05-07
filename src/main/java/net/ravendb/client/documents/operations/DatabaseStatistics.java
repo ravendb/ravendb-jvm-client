@@ -16,8 +16,9 @@ public class DatabaseStatistics {
     private long countOfTombstones;
     private long countOfConflicts;
     private long countOfAttachments;
-    private long countOfCounters;
     private long countOfUniqueAttachments;
+    private long countOfCounterEntries;
+    private long countOfTimeSeriesSegments;
 
     private IndexInformation[] indexes;
 
@@ -124,6 +125,22 @@ public class DatabaseStatistics {
         this.countOfUniqueAttachments = countOfUniqueAttachments;
     }
 
+    public long getCountOfCounterEntries() {
+        return countOfCounterEntries;
+    }
+
+    public void setCountOfCounterEntries(long countOfCounterEntries) {
+        this.countOfCounterEntries = countOfCounterEntries;
+    }
+
+    public long getCountOfTimeSeriesSegments() {
+        return countOfTimeSeriesSegments;
+    }
+
+    public void setCountOfTimeSeriesSegments(long countOfTimeSeriesSegments) {
+        this.countOfTimeSeriesSegments = countOfTimeSeriesSegments;
+    }
+
     public String getDatabaseChangeVector() {
         return databaseChangeVector;
     }
@@ -188,11 +205,4 @@ public class DatabaseStatistics {
         this.numberOfTransactionMergerQueueOperations = numberOfTransactionMergerQueueOperations;
     }
 
-    public long getCountOfCounters() {
-        return countOfCounters;
-    }
-
-    public void setCountOfCounters(long countOfCounters) {
-        this.countOfCounters = countOfCounters;
-    }
 }

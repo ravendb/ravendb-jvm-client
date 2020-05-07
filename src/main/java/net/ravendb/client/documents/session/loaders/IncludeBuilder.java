@@ -2,6 +2,8 @@ package net.ravendb.client.documents.session.loaders;
 
 import net.ravendb.client.documents.conventions.DocumentConventions;
 
+import java.util.Date;
+
 public class IncludeBuilder extends IncludeBuilderBase implements IIncludeBuilder {
 
     public IncludeBuilder(DocumentConventions conventions) {
@@ -29,6 +31,18 @@ public class IncludeBuilder extends IncludeBuilderBase implements IIncludeBuilde
     @Override
     public IIncludeBuilder includeAllCounters() {
         _includeAllCounters("");
+        return this;
+    }
+
+    @Override
+    public IIncludeBuilder includeTimeSeries(String name, Date from, Date to) {
+        _includeTimeSeries("", name, from, to);
+        return this;
+    }
+
+    @Override
+    public IIncludeBuilder includeCompareExchangeValue(String path) {
+        _includeCompareExchangeValue(path);
         return this;
     }
 }

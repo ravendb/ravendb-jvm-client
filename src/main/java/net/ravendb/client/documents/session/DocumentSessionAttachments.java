@@ -2,8 +2,9 @@ package net.ravendb.client.documents.session;
 
 import net.ravendb.client.documents.attachments.AttachmentType;
 import net.ravendb.client.documents.commands.HeadAttachmentCommand;
-import net.ravendb.client.documents.operations.attachments.CloseableAttachmentResult;
-import net.ravendb.client.documents.operations.attachments.GetAttachmentOperation;
+import net.ravendb.client.documents.operations.attachments.*;
+
+import java.util.List;
 
 /**
  * Implements Unit of Work for accessing the RavenDB server
@@ -36,6 +37,12 @@ public class DocumentSessionAttachments extends DocumentSessionAttachmentsBase i
         }
 
         GetAttachmentOperation operation = new GetAttachmentOperation(document.getId(), name, AttachmentType.DOCUMENT, null);
+        return session.getOperations().send(operation, sessionInfo);
+    }
+
+    @Override
+    public CloseableAttachmentsResult get(List<AttachmentRequest> attachments) {
+        GetAttachmentsOperation operation = new GetAttachmentsOperation(attachments, AttachmentType.DOCUMENT);
         return session.getOperations().send(operation, sessionInfo);
     }
 

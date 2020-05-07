@@ -9,7 +9,8 @@ public class DatabaseSmugglerOptions implements IDatabaseSmugglerOptions {
 
     public final EnumSet<DatabaseItemType> DEFAULT_OPERATE_ON_TYPES = EnumSet.of(DatabaseItemType.INDEXES, DatabaseItemType.DOCUMENTS,
             DatabaseItemType.REVISION_DOCUMENTS, DatabaseItemType.CONFLICTS, DatabaseItemType.DATABASE_RECORD, DatabaseItemType.IDENTITIES,
-            DatabaseItemType.COMPARE_EXCHANGE, DatabaseItemType.ATTACHMENTS, DatabaseItemType.COUNTER_GROUPS, DatabaseItemType.SUBSCRIPTIONS);
+            DatabaseItemType.COMPARE_EXCHANGE, DatabaseItemType.ATTACHMENTS, DatabaseItemType.COUNTER_GROUPS, DatabaseItemType.SUBSCRIPTIONS,
+            DatabaseItemType.TIME_SERIES);
 
     public final EnumSet<DatabaseRecordItemType> DEFAULT_OPERATE_ON_DATABASE_RECORD_TYPES = EnumSet.of(
             DatabaseRecordItemType.CLIENT,
@@ -103,12 +104,10 @@ public class DatabaseSmugglerOptions implements IDatabaseSmugglerOptions {
         this.maxStepsForTransformScript = maxStepsForTransformScript;
     }
 
-    @Deprecated
     public boolean isSkipRevisionCreation() {
         return skipRevisionCreation;
     }
 
-    @Deprecated
     public void setSkipRevisionCreation(boolean skipRevisionCreation) {
         this.skipRevisionCreation = skipRevisionCreation;
     }

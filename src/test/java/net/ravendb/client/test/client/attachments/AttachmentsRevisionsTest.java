@@ -131,7 +131,8 @@ public class AttachmentsRevisionsTest extends RemoteTestBase {
                 List<User> revisions = session.advanced().revisions().getFor(User.class, "users/1");
 
                 String changeVector = session.advanced().getChangeVectorFor(revisions.get(1));
-                try (CloseableAttachmentResult revision = session.advanced().attachments().getRevision("users/1", "profile.png", changeVector)) {
+                try (CloseableAttachmentResult revision = session.advanced().attachments()
+                        .getRevision("users/1", "profile.png", changeVector)) {
                     byte[] bytes = IOUtils.toByteArray(revision.getData());
                     assertThat(bytes)
                             .hasSize(3)

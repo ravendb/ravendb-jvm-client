@@ -178,7 +178,6 @@ public class AttachmentsSessionTest extends RemoteTestBase {
                 byte[] file1Bytes = IOUtils.toByteArray(result.getData());
                 assertThat(file1Bytes)
                         .hasSize(3);
-
             }
         }
     }

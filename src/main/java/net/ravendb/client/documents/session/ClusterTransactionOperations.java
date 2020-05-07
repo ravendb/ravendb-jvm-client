@@ -1,12 +1,19 @@
 package net.ravendb.client.documents.session;
 
+import net.ravendb.client.documents.Lazy;
 import net.ravendb.client.documents.operations.compareExchange.CompareExchangeValue;
+import net.ravendb.client.documents.session.operations.lazy.LazyClusterTransactionOperations;
 
 import java.util.Map;
 
 public class ClusterTransactionOperations extends ClusterTransactionOperationsBase implements IClusterTransactionOperations {
-    public ClusterTransactionOperations(InMemoryDocumentSessionOperations session) {
+    public ClusterTransactionOperations(DocumentSession session) {
         super(session);
+    }
+
+    @Override
+    public ILazyClusterTransactionOperations lazily() {
+        return new LazyClusterTransactionOperations(session);
     }
 
     @Override

@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.base.Defaults;
 import net.ravendb.client.documents.commands.GetDocumentsCommand;
 import net.ravendb.client.documents.commands.GetDocumentsResult;
+import net.ravendb.client.documents.operations.timeSeries.TimeSeriesRange;
 import net.ravendb.client.documents.session.DocumentInfo;
 import net.ravendb.client.documents.session.InMemoryDocumentSessionOperations;
 import org.apache.commons.lang3.StringUtils;
@@ -20,8 +21,10 @@ public class LoadOperation {
 
     private String[] _ids;
     private String[] _includes;
-    private String[] countersToInclude;
-    private boolean includeAllCounters;
+    private String[] _countersToInclude;
+    private String[] _compareExchangeValuesToInclude;
+    private boolean _includeAllCounters;
+    private List<TimeSeriesRange> _timeSeriesToInclude;
 
     private boolean _resultsSet;
     private GetDocumentsResult _results;
@@ -41,13 +44,11 @@ public class LoadOperation {
             logger.info("Requesting the following ids " + String.join(",", _ids) + " from " + _session.storeIdentifier());
         }
 
-        if (includeAllCounters) {
-            return new GetDocumentsCommand(_ids, _includes, true, false);
+        if (_includeAllCounters) {
+            return new GetDocumentsCommand(_ids, _includes, true, _timeSeriesToInclude, _compareExchangeValuesToInclude, false);
         }
 
-        return countersToInclude != null
-                ? new GetDocumentsCommand(_ids, _includes, countersToInclude, false)
-                : new GetDocumentsCommand(_ids, _includes, false);
+        return new GetDocumentsCommand(_ids, _includes, _countersToInclude, _timeSeriesToInclude, _compareExchangeValuesToInclude, false);
     }
 
     public LoadOperation byId(String id) {
@@ -67,15 +68,27 @@ public class LoadOperation {
         return this;
     }
 
+    public LoadOperation withCompareExchange(String[] compareExchangeValues) {
+        _compareExchangeValuesToInclude = compareExchangeValues;
+        return this;
+    }
+
     public LoadOperation withCounters(String[] counters) {
         if (counters != null) {
-            countersToInclude = counters;
+            _countersToInclude = counters;
         }
         return this;
     }
 
     public LoadOperation withAllCounters() {
-        includeAllCounters = true;
+        _includeAllCounters = true;
+        return this;
+    }
+
+    public LoadOperation withTimeSeries(List<TimeSeriesRange> timeSeries) {
+        if (timeSeries != null) {
+            _timeSeriesToInclude = timeSeries;
+        }
         return this;
     }
 
@@ -199,8 +212,16 @@ public class LoadOperation {
 
         _session.registerIncludes(result.getIncludes());
 
-        if (includeAllCounters || countersToInclude != null) {
-            _session.registerCounters(result.getCounterIncludes(), _ids, countersToInclude, includeAllCounters);
+        if (_includeAllCounters || _countersToInclude != null) {
+            _session.registerCounters(result.getCounterIncludes(), _ids, _countersToInclude, _includeAllCounters);
+        }
+
+        if (_timeSeriesToInclude != null) {
+            _session.registerTimeSeries(result.getTimeSeriesIncludes());
+        }
+
+        if (_compareExchangeValuesToInclude != null) {
+            _session.getClusterSession().registerCompareExchangeValues(result.getCompareExchangeValueIncludes());
         }
 
         for (JsonNode document : result.getResults()) {

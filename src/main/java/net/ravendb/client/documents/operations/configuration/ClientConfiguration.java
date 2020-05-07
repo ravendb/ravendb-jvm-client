@@ -4,6 +4,7 @@ import net.ravendb.client.http.ReadBalanceBehavior;
 
 public class ClientConfiguration {
 
+    private Character identityPartsSeparator;
     private long etag;
     private boolean disabled;
     private Integer maxNumberOfRequestsPerSession;
@@ -39,5 +40,16 @@ public class ClientConfiguration {
 
     public void setReadBalanceBehavior(ReadBalanceBehavior readBalanceBehavior) {
         this.readBalanceBehavior = readBalanceBehavior;
+    }
+
+    public Character getIdentityPartsSeparator() {
+        return identityPartsSeparator;
+    }
+
+    public void setIdentityPartsSeparator(Character identityPartsSeparator) {
+        if (identityPartsSeparator != null && '|' == identityPartsSeparator) {
+            throw new IllegalArgumentException("Cannot set identity parts separator to '|'");
+        }
+        this.identityPartsSeparator = identityPartsSeparator;
     }
 }

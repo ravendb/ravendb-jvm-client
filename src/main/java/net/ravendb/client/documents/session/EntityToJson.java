@@ -24,7 +24,7 @@ public class EntityToJson {
         this._session = _session;
     }
 
-        private final Map<Object, Map<String, Object>> _missingDictionary = new HashMap<>();
+    private final Map<Object, Map<String, Object>> _missingDictionary = new HashMap<>();
 
     public Map<Object, Map<String, Object>> getMissingDictionary() {
         return _missingDictionary;
@@ -131,17 +131,6 @@ public class EntityToJson {
     }
 
     /**
-     * @deprecated Use different ConvertToEntity overload
-     * @param entityType Class of entity
-     * @param id Id of entity
-     * @param document Raw entity
-     * @return Entity instance
-     */
-    public Object convertToEntity(Class entityType, String id, ObjectNode document) {
-        return convertToEntity(entityType, id, document, true);
-    }
-
-    /**
      * Converts a json object to an entity.
      * @param entityType Class of entity
      * @param id Id of entity
@@ -192,25 +181,31 @@ public class EntityToJson {
     }
 
     public void populateEntity(Object entity, String id, ObjectNode document) {
-        if (entity == null) {
-            throw new IllegalArgumentException("Entity cannot be null");
-        }
-
         if (id == null) {
             throw new IllegalArgumentException("Id cannot be null");
         }
 
+        populateEntity(entity, document, _session.getConventions().getEntityMapper());
+
+        _session.getGenerateEntityIdOnTheClient().trySetIdentity(entity, id);
+    }
+
+    public static void populateEntity(Object entity, ObjectNode document, ObjectMapper objectMapper) {
+        if (entity == null) {
+            throw new IllegalArgumentException("Entity cannot be null");
+        }
         if (document == null) {
             throw new IllegalArgumentException("Document cannot be null");
         }
+        if (objectMapper == null) {
+            throw new IllegalArgumentException("ObjectMapper cannot be null");
+        }
 
         try {
-            _session.getConventions().getEntityMapper().updateValue(entity, document);
-            _session.getGenerateEntityIdOnTheClient().trySetIdentity(entity, id);
+            objectMapper.updateValue(entity, document);
         } catch (IOException e) {
             throw new IllegalStateException("Could not populate entity");
         }
-
     }
 
     @SuppressWarnings("UnusedReturnValue")

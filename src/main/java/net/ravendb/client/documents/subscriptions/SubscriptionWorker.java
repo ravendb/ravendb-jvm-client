@@ -474,6 +474,7 @@ public class SubscriptionWorker<T> implements CleanCloseable {
     private BatchFromServer readSingleSubscriptionBatchFromServer(Socket socket, SubscriptionBatch<T> batch) throws IOException {
         List<SubscriptionConnectionServerMessage> incomingBatch = new ArrayList<>();
         List<ObjectNode> includes = new ArrayList<>();
+        List<BatchFromServer.CounterIncludeItem> counterIncludes = new ArrayList<>();
         boolean endOfBatch = false;
         while (!endOfBatch && !_processingCts.getToken().isCancellationRequested()) {
             SubscriptionConnectionServerMessage receivedMessage = readNextObject(socket);
@@ -487,6 +488,9 @@ public class SubscriptionWorker<T> implements CleanCloseable {
                     break;
                 case INCLUDES:
                     includes.add(receivedMessage.getIncludes());
+                    break;
+                case COUNTER_INCLUDES:
+                    counterIncludes.add(new BatchFromServer.CounterIncludeItem(receivedMessage.getCounterIncludes(), receivedMessage.getIncludedCounterNames()));
                     break;
                 case END_OF_BATCH:
                     endOfBatch = true;
@@ -512,6 +516,7 @@ public class SubscriptionWorker<T> implements CleanCloseable {
         BatchFromServer batchFromServer = new BatchFromServer();
         batchFromServer.setMessages(incomingBatch);
         batchFromServer.setIncludes(includes);
+        batchFromServer.setCounterIncludes(counterIncludes);
         return batchFromServer;
     }
 

@@ -107,8 +107,8 @@ public class BasicDocumentsTest extends RemoteTestBase {
                     .isEqualTo(dummy.size() + 1); // +1 for @metadata
 
             try (DocumentSession session = (DocumentSession) store.openSession()) {
-                User user1 = (User) session.getEntityToJson().convertToEntity(User.class, "users/1", doc1);
-                User user2 = (User) session.getEntityToJson().convertToEntity(User.class, "users/2", doc2);
+                User user1 = (User) session.getEntityToJson().convertToEntity(User.class, "users/1", doc1, false);
+                User user2 = (User) session.getEntityToJson().convertToEntity(User.class, "users/2", doc2, false);
 
                 assertThat(user1.getName())
                         .isEqualTo("Fitzchak");

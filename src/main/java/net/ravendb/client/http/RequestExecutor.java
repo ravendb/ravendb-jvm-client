@@ -69,7 +69,7 @@ public class RequestExecutor implements CleanCloseable {
      */
     public static Consumer<HttpRequestBase> requestPostProcessor = null;
 
-    public static final String CLIENT_VERSION = "4.2.0";
+    public static final String CLIENT_VERSION = "5.0.0";
 
     private static final ConcurrentMap<String, CloseableHttpClient> globalHttpClientWithCompression = new ConcurrentHashMap<>();
     private static final ConcurrentMap<String, CloseableHttpClient> globalHttpClientWithoutCompression = new ConcurrentHashMap<>();
@@ -213,24 +213,6 @@ public class RequestExecutor implements CleanCloseable {
         _onTopologyUpdated.remove(handler);
     }
 
-    private final List<Consumer<Topology>> _topologyUpdated = new ArrayList<>();
-
-    /**
-     * @deprecated This method is not supported anymore. Will be removed in next major version of the product. Use OnTopologyUpdated instead.
-     * @param handler handler to add
-     */
-    public void addTopologyUpdatedListener(Consumer<Topology> handler) {
-        _topologyUpdated.add(handler);
-    }
-
-    /**
-     * @deprecated This method is not supported anymore. Will be removed in next major version of the product. Use OnTopologyUpdated instead.
-     * @param handler handler to remove
-     */
-    public void removeTopologyUpdatedListener(Consumer<Topology> handler) {
-        _topologyUpdated.remove(handler);
-    }
-
     private void onFailedRequestInvoke(String url, Exception e) {
         EventHelper.invoke(_onFailedRequest, this, new FailedRequestEventArgs(_databaseName, url, e));
     }
@@ -354,45 +336,6 @@ public class RequestExecutor implements CleanCloseable {
                 _updateClientConfigurationSemaphore.release();
             }
         }, _executorService);
-    }
-
-    /**
-     * @deprecated This method is not supported anymore. Will be removed in next major version of the product.
-     * @param node server node
-     * @param timeout timeout
-     * @return future with operation status
-     */
-    public CompletableFuture<Boolean> updateTopologyAsync(ServerNode node, int timeout) {
-        return updateTopologyAsync(node, timeout, false);
-    }
-
-    /**
-     * @deprecated This method is not supported anymore. Will be removed in next major version of the product.
-     * @param node server node
-     * @param timeout timeout
-     * @param forceUpdate should update be forced
-     * @return future with operation status
-     */
-    public CompletableFuture<Boolean> updateTopologyAsync(ServerNode node, int timeout, boolean forceUpdate) {
-        return updateTopologyAsync(node, timeout, forceUpdate, null);
-    }
-
-    /**
-     * @deprecated This method is not supported anymore. Will be removed in next major version of the product.
-     * @param node server node
-     * @param timeout timeout
-     * @param forceUpdate should update be forced
-     * @param debugTag debug tag
-     * @return future with operation status
-     */
-    public CompletableFuture<Boolean> updateTopologyAsync(ServerNode node, int timeout, boolean forceUpdate, String debugTag) {
-        UpdateTopologyParameters topologyParameters = new UpdateTopologyParameters(node);
-        topologyParameters.setTimeoutInMs(timeout);
-        topologyParameters.setForceUpdate(forceUpdate);
-        topologyParameters.setDebugTag(debugTag);
-        topologyParameters.setApplicationIdentifier(null);
-
-        return updateTopologyAsync(topologyParameters);
     }
 
     public CompletableFuture<Boolean> updateTopologyAsync(UpdateTopologyParameters parameters) {
@@ -1722,7 +1665,6 @@ public class RequestExecutor implements CleanCloseable {
     }
 
     protected void onTopologyUpdatedInvoke(Topology newTopology) {
-        EventHelper.invoke(_topologyUpdated, newTopology);
         EventHelper.invoke(_onTopologyUpdated, this, new TopologyUpdatedEventArgs(newTopology));
     }
 

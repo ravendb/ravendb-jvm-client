@@ -2,6 +2,7 @@ package net.ravendb.client.documents.operations.compareExchange;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.google.common.base.Defaults;
+import net.ravendb.client.Constants;
 import net.ravendb.client.documents.conventions.DocumentConventions;
 
 import java.io.IOException;
@@ -28,7 +29,7 @@ public class CompareExchangeResult<T> {
         Object val = null;
 
         if (raw != null && !raw.isNull()) {
-            val = raw.get("Object");
+            val = raw.get(Constants.CompareExchange.OBJECT_FIELD_NAME);
         }
 
         if (val == null) {

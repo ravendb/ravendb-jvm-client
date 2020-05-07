@@ -12,4 +12,22 @@ public class SubscriptionIncludeBuilder extends IncludeBuilderBase implements IS
         _includeDocuments(path);
         return this;
     }
+
+    @Override
+    public ISubscriptionIncludeBuilder includeCounter(String name) {
+        _includeCounter("", name);
+        return this;
+    }
+
+    @Override
+    public ISubscriptionIncludeBuilder includeCounters(String[] names) {
+        _includeCounters("", names);
+        return this;
+    }
+
+    @Override
+    public ISubscriptionIncludeBuilder includeAllCounters() {
+        _includeAllCounters("");
+        return this;
+    }
 }

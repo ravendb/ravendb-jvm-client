@@ -49,6 +49,9 @@ public class ChangesTest extends RemoteTestBase {
                 assertThat(documentChange.getId())
                         .isEqualTo("users/1");
 
+                assertThat(documentChange.getCollectionName())
+                        .isEqualTo("Users");
+
                 assertThat(documentChange.getType())
                         .isEqualTo(DocumentChangeTypes.PUT);
 

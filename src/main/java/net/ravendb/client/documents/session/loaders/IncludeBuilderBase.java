@@ -1,8 +1,10 @@
 package net.ravendb.client.documents.session.loaders;
 
 import net.ravendb.client.documents.conventions.DocumentConventions;
+import net.ravendb.client.documents.operations.timeSeries.TimeSeriesRange;
 import net.ravendb.client.primitives.Tuple;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.builder.CompareToBuilder;
 
 import java.util.*;
 
@@ -12,8 +14,19 @@ public class IncludeBuilderBase {
 
     protected final DocumentConventions _conventions;
     public Set<String> documentsToInclude;
+
     public String alias;
     public Map<String, Tuple<Boolean, Set<String>>> countersToIncludeBySourcePath;
+    public Map<String, Set<TimeSeriesRange>> timeSeriesToIncludeBySourceAlias;
+    public Set<String> compareExchangeValuesToInclude;
+
+    public Set<TimeSeriesRange> getTimeSeriesToInclude() {
+        if (timeSeriesToIncludeBySourceAlias == null) {
+            return null;
+        }
+
+        return timeSeriesToIncludeBySourceAlias.get("");
+    }
 
     public Set<String> getCountersToInclude() {
         if (countersToIncludeBySourcePath == null) {
@@ -36,6 +49,14 @@ public class IncludeBuilderBase {
 
     public IncludeBuilderBase(DocumentConventions conventions) {
         _conventions = conventions;
+    }
+
+    protected void _includeCompareExchangeValue(String path) {
+        if (compareExchangeValuesToInclude == null) {
+            compareExchangeValuesToInclude = new HashSet<>();
+        }
+
+        compareExchangeValuesToInclude.add(path);
     }
 
     protected void _includeCounterWithAlias(String path, String name) {
@@ -121,6 +142,46 @@ public class IncludeBuilderBase {
     protected void _withAlias() {
         if (alias == null) {
             alias = "a_" + (nextParameterId++);
+        }
+    }
+
+    protected void _includeTimeSeries(String alias, String name, Date from, Date to) {
+        if (StringUtils.isBlank(name)) {
+            throw new IllegalArgumentException("Name cannot be empty");
+        }
+
+        if (timeSeriesToIncludeBySourceAlias == null) {
+            timeSeriesToIncludeBySourceAlias = new HashMap<>();
+        }
+
+        Set<TimeSeriesRange> hashSet = timeSeriesToIncludeBySourceAlias.computeIfAbsent(alias, (key) -> new TreeSet<>(TimeSeriesRangeComparer.INSTANCE));
+
+        TimeSeriesRange range = new TimeSeriesRange();
+        range.setName(name);
+        range.setFrom(from);
+        range.setTo(to);
+
+        hashSet.add(range);
+    }
+
+    public Set<String> getCompareExchangeValuesToInclude() {
+        return compareExchangeValuesToInclude;
+    }
+
+    public static class TimeSeriesRangeComparer implements Comparator<TimeSeriesRange> {
+        public final static TimeSeriesRangeComparer INSTANCE = new TimeSeriesRangeComparer();
+
+        private TimeSeriesRangeComparer() {
+        }
+
+        @Override
+        public int compare(TimeSeriesRange x, TimeSeriesRange y) {
+            String xName = x != null ? x.getName() : null;
+            String yName = y != null ? y.getName() : null;
+
+            return new CompareToBuilder()
+                    .append(xName, yName)
+                    .toComparison();
         }
     }
 }

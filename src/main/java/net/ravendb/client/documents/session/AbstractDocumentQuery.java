@@ -9,6 +9,7 @@ import net.ravendb.client.documents.commands.QueryCommand;
 import net.ravendb.client.documents.conventions.DocumentConventions;
 import net.ravendb.client.documents.indexes.spatial.SpatialRelation;
 import net.ravendb.client.documents.indexes.spatial.SpatialUnits;
+import net.ravendb.client.documents.operations.timeSeries.TimeSeriesRange;
 import net.ravendb.client.documents.queries.*;
 import net.ravendb.client.documents.queries.explanation.ExplanationOptions;
 import net.ravendb.client.documents.queries.explanation.Explanations;
@@ -23,6 +24,8 @@ import net.ravendb.client.documents.queries.suggestions.SuggestionBase;
 import net.ravendb.client.documents.queries.suggestions.SuggestionOptions;
 import net.ravendb.client.documents.queries.suggestions.SuggestionWithTerm;
 import net.ravendb.client.documents.queries.suggestions.SuggestionWithTerms;
+import net.ravendb.client.documents.queries.timeSeries.ITimeSeriesQueryBuilder;
+import net.ravendb.client.documents.queries.timeSeries.TimeSeriesQueryBuilder;
 import net.ravendb.client.documents.queries.timings.QueryTimings;
 import net.ravendb.client.documents.session.loaders.IncludeBuilderBase;
 import net.ravendb.client.documents.session.operations.QueryOperation;
@@ -87,7 +90,7 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
     protected List<QueryToken> selectTokens = new LinkedList<>();
 
     protected final FromToken fromToken;
-    protected final DeclareToken declareToken;
+    protected final List<DeclareToken> declareTokens;
     protected final List<LoadToken> loadTokens;
     public FieldsToFetchToken fieldsToFetchToken;
 
@@ -158,13 +161,13 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
     }
 
     protected AbstractDocumentQuery(Class<T> clazz, InMemoryDocumentSessionOperations session, String indexName,
-                                    String collectionName, boolean isGroupBy, DeclareToken declareToken,
+                                    String collectionName, boolean isGroupBy, List<DeclareToken> declareTokens,
                                     List<LoadToken> loadTokens) {
-        this(clazz, session, indexName, collectionName, isGroupBy, declareToken, loadTokens, null, false);
+        this(clazz, session, indexName, collectionName, isGroupBy, declareTokens, loadTokens, null, false);
     }
 
     protected AbstractDocumentQuery(Class<T> clazz, InMemoryDocumentSessionOperations session, String indexName,
-                                    String collectionName, boolean isGroupBy, DeclareToken declareToken,
+                                    String collectionName, boolean isGroupBy, List<DeclareToken> declareTokens,
                                     List<LoadToken> loadTokens, String fromAlias, Boolean isProjectInto) {
         this.clazz = clazz;
         rootTypes.add(clazz);
@@ -172,7 +175,7 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
         this.indexName = indexName;
         this.collectionName = collectionName;
         this.fromToken = FromToken.create(indexName, collectionName, fromAlias);
-        this.declareToken = declareToken;
+        this.declareTokens = declareTokens;
         this.loadTokens = loadTokens;
         theSession = session;
         _addAfterQueryExecutedListener(this::updateStatsHighlightingsAndExplanations);
@@ -424,6 +427,17 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
         }
 
         _includeCounters(includes.alias, includes.countersToIncludeBySourcePath);
+        if (includes.timeSeriesToIncludeBySourceAlias != null) {
+            _includeTimeSeries(includes.alias, includes.timeSeriesToIncludeBySourceAlias);
+        }
+
+        if (includes.compareExchangeValuesToInclude != null) {
+            compareExchangeValueIncludesTokens = new ArrayList<>();
+
+            for (String compareExchangeValue : includes.compareExchangeValuesToInclude) {
+                compareExchangeValueIncludesTokens.add(CompareExchangeValueIncludesToken.create(compareExchangeValue));
+            }
+        }
     }
 
     @Override
@@ -595,7 +609,8 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
         tokens.add(whereToken);
     }
 
-    public void negateNext() {
+    @Override
+    public void _negateNext() {
         negate = !negate;
     }
 
@@ -1159,21 +1174,23 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
 
     @SuppressWarnings("UnusedAssignment")
     private void buildInclude(StringBuilder queryText) {
-        if (documentIncludes.isEmpty()
-                && highlightingTokens.isEmpty()
-                && explanationToken == null
-                && queryTimings == null
-                && counterIncludesTokens == null) {
+        if (documentIncludes.isEmpty() &&
+                highlightingTokens.isEmpty() &&
+                explanationToken == null &&
+                queryTimings == null &&
+                counterIncludesTokens == null &&
+                timeSeriesIncludesTokens == null &&
+                compareExchangeValueIncludesTokens == null) {
             return;
         }
 
         queryText.append(" include ");
-        boolean first = true;
+        Reference<Boolean> firstRef = new Reference<>(true);
         for (String include : documentIncludes) {
-            if (!first) {
+            if (!firstRef.value) {
                 queryText.append(",");
             }
-            first = false;
+            firstRef.value = false;
 
             Reference<String> escapedIncludeRef = new Reference<>();
 
@@ -1187,43 +1204,43 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
             }
         }
 
-        if (counterIncludesTokens != null) {
-            for (CounterIncludesToken counterIncludesToken : counterIncludesTokens) {
-                if (!first) {
-                    queryText.append(",");
-                }
-                first = false;
-
-                counterIncludesToken.writeTo(queryText);
-            }
-        }
-
-        for (HighlightingToken token : highlightingTokens) {
-            if (!first) {
-                queryText.append(",");
-            }
-            first = false;
-
-            token.writeTo(queryText);
-        }
+        writeIncludeTokens(counterIncludesTokens, firstRef, queryText);
+        writeIncludeTokens(timeSeriesIncludesTokens, firstRef, queryText);
+        writeIncludeTokens(compareExchangeValueIncludesTokens, firstRef, queryText);
+        writeIncludeTokens(highlightingTokens, firstRef, queryText);
 
         if (explanationToken != null) {
-            if (!first) {
+            if (!firstRef.value) {
                 queryText.append(",");
             }
 
-            first = false;
+            firstRef.value = false;
             explanationToken.writeTo(queryText);
         }
 
         if (queryTimings != null) {
-            if (!first) {
+            if (!firstRef.value) {
                 queryText.append(",");
             }
-            first = false;
+            firstRef.value = false;
 
 
             TimingsToken.INSTANCE.writeTo(queryText);
+        }
+    }
+
+    <TToken extends QueryToken> void writeIncludeTokens(Collection<TToken> tokens, Reference<Boolean> firstRef, StringBuilder queryText) {
+        if (tokens == null) {
+            return;
+        }
+
+        for (TToken token : tokens) {
+            if (!firstRef.value) {
+                queryText.append(",");
+            }
+            firstRef.value = false;
+
+            token.writeTo(queryText);
         }
     }
 
@@ -1348,8 +1365,12 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
     }
 
     private void buildDeclare(StringBuilder writer) {
-        if (declareToken != null) {
-            declareToken.writeTo(writer);
+        if (declareTokens == null) {
+            return;
+        }
+
+        for (DeclareToken token : declareTokens) {
+            token.writeTo(writer);
         }
     }
 
@@ -1541,7 +1562,7 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
         }
 
         Reference<Object> objValueReference = new Reference<>();
-        if (_conventions.tryConvertValueForQuery(whereParams.getFieldName(), whereParams.getValue(), forRange, objValueReference)) {
+        if (_conventions.tryConvertValueToObjectForQuery(whereParams.getFieldName(), whereParams.getValue(), forRange, objValueReference)) {
             return objValueReference.value;
         }
 
@@ -1643,7 +1664,7 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
         }
     }
 
-    public String addAliasToCounterIncludesTokens(String fromAlias) {
+    public String addAliasToIncludesTokens(String fromAlias) {
         if (_includesAlias == null) {
             return fromAlias;
         }
@@ -1653,8 +1674,16 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
             addFromAliasToWhereTokens(fromAlias);
         }
 
-        for (CounterIncludesToken counterIncludesToken : counterIncludesTokens) {
-            counterIncludesToken.addAliasToPath(fromAlias);
+        if (counterIncludesTokens != null) {
+            for (CounterIncludesToken counterIncludesToken : counterIncludesTokens) {
+                counterIncludesToken.addAliasToPath(fromAlias);
+            }
+        }
+
+        if (timeSeriesIncludesTokens != null) {
+            for (TimeSeriesIncludesToken token : timeSeriesIncludesTokens) {
+                token.addAliasToPath(fromAlias);
+            }
         }
 
         return fromAlias;
@@ -1688,6 +1717,15 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
         }
 
         sourceAlias.value = possibleAlias;
+    }
+
+    protected QueryData createTimeSeriesQueryData(Consumer<ITimeSeriesQueryBuilder> timeSeriesQuery) {
+        TimeSeriesQueryBuilder builder = new TimeSeriesQueryBuilder();
+        timeSeriesQuery.accept(builder);
+
+        String[] fields = new String[] { Constants.TimeSeries.SELECT_FIELD_NAME + "(" + builder.getQueryText() + ")" };
+        String[] projections = new String[] { Constants.TimeSeries.QUERY_FUNCTION } ;
+        return new QueryData(fields, projections);
     }
 
     protected List<Consumer<IndexQuery>> beforeQueryExecutedCallback = new ArrayList<>();
@@ -1938,7 +1976,11 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
     }
 
     public List<T> toList() {
-        return EnumerableUtils.toList(iterator());
+        return executeQueryOperation(null);
+    }
+
+    public T[] toArray() {
+        return executeQueryOperationAsArray(null);
     }
 
     public QueryResult getQueryResult() {
@@ -1996,10 +2038,16 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
         return queryResult.getTotalResults() > 0;
     }
 
-    private Collection<T> executeQueryOperation(Integer take) {
+    private List<T> executeQueryOperation(Integer take) {
         executeQueryOperationInternal(take);
 
         return queryOperation.complete(clazz);
+    }
+
+    private T[] executeQueryOperationAsArray(Integer take) {
+        executeQueryOperationInternal(take);
+
+        return queryOperation.completeAsArray(clazz);
     }
 
     private void executeQueryOperationInternal(Integer take) {
@@ -2118,7 +2166,11 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
         this.explanations = explanationsReference.value = new Explanations();
     }
 
+    protected List<TimeSeriesIncludesToken> timeSeriesIncludesTokens;
+
     protected List<CounterIncludesToken> counterIncludesTokens;
+
+    protected List<CompareExchangeValueIncludesToken> compareExchangeValueIncludesTokens;
 
     protected void _includeCounters(String alias, Map<String, Tuple<Boolean, Set<String>>> counterToIncludeByDocId) {
         if (counterToIncludeByDocId == null || counterToIncludeByDocId.isEmpty()) {
@@ -2140,6 +2192,23 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
 
             for (String name : kvp.getValue().second) {
                 counterIncludesTokens.add(CounterIncludesToken.create(kvp.getKey(), name));
+            }
+        }
+    }
+
+    private void _includeTimeSeries(String alias, Map<String, Set<TimeSeriesRange>> timeSeriesToInclude) {
+        if (timeSeriesToInclude == null || timeSeriesToInclude.isEmpty()) {
+            return;
+        }
+
+        timeSeriesIncludesTokens = new ArrayList<>();
+        if (_includesAlias == null) {
+            _includesAlias = alias;
+        }
+
+        for (Map.Entry<String, Set<TimeSeriesRange>> kvp : timeSeriesToInclude.entrySet()) {
+            for (TimeSeriesRange range : kvp.getValue()) {
+                timeSeriesIncludesTokens.add(TimeSeriesIncludesToken.create(kvp.getKey(), range));
             }
         }
     }

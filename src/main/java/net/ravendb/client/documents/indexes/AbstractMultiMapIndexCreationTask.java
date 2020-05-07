@@ -6,11 +6,14 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 
-public class AbstractMultiMapIndexCreationTask extends AbstractIndexCreationTask {
+public class AbstractMultiMapIndexCreationTask extends AbstractGenericIndexCreationTask {
 
     private final List<String> maps = new ArrayList<>();
 
     protected void addMap(String map) {
+        if (map == null) {
+            throw new IllegalArgumentException("Map cannot be null");
+        }
         maps.add(map);
     }
 
@@ -32,7 +35,7 @@ public class AbstractMultiMapIndexCreationTask extends AbstractIndexCreationTask
         indexDefinitionBuilder.setPatternForOutputReduceToCollectionReferences(patternForOutputReduceToCollectionReferences);
         indexDefinitionBuilder.setPatternReferencesCollectionName(patternReferencesCollectionName);
         indexDefinitionBuilder.setAdditionalSources(getAdditionalSources());
-        indexDefinitionBuilder.setConfiguration(configuration);
+        indexDefinitionBuilder.setConfiguration(getConfiguration());
 
         IndexDefinition indexDefinition = indexDefinitionBuilder.toIndexDefinition(conventions, false);
         indexDefinition.setMaps(new HashSet<>(maps));

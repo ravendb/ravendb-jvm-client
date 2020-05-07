@@ -1,5 +1,7 @@
 package net.ravendb.client.documents.queries.facets;
 
+import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
 
@@ -81,25 +83,77 @@ public class FacetBuilder<T> implements IFacetBuilder<T>, IFacetOperations<T> {
 
     @Override
     public IFacetOperations<T> sumOn(String path) {
-        getFacet().getAggregations().put(FacetAggregation.SUM, path);
+        return sumOn(path, null);
+    }
+
+    @Override
+    public IFacetOperations<T> sumOn(String path, String displayName) {
+        Map<FacetAggregation, Set<FacetAggregationField>> aggregationsMap = getFacet().getAggregations();
+        Set<FacetAggregationField> aggregations = aggregationsMap.computeIfAbsent(FacetAggregation.SUM, key -> new HashSet<>());
+
+        FacetAggregationField aggregationField = new FacetAggregationField();
+        aggregationField.setName(path);
+        aggregationField.setDisplayName(displayName);
+
+        aggregations.add(aggregationField);
+
         return this;
     }
 
     @Override
     public IFacetOperations<T> minOn(String path) {
-        getFacet().getAggregations().put(FacetAggregation.MIN, path);
+        return minOn(path, null);
+    }
+
+    @Override
+    public IFacetOperations<T> minOn(String path, String displayName) {
+        Map<FacetAggregation, Set<FacetAggregationField>> aggregationsMap = getFacet().getAggregations();
+        Set<FacetAggregationField> aggregations = aggregationsMap.computeIfAbsent(FacetAggregation.MIN, key -> new HashSet<>());
+
+        FacetAggregationField aggregationField = new FacetAggregationField();
+        aggregationField.setName(path);
+        aggregationField.setDisplayName(displayName);
+
+        aggregations.add(aggregationField);
+
         return this;
     }
 
     @Override
     public IFacetOperations<T> maxOn(String path) {
-        getFacet().getAggregations().put(FacetAggregation.MAX, path);
+        return maxOn(path, null);
+    }
+
+    @Override
+    public IFacetOperations<T> maxOn(String path, String displayName) {
+        Map<FacetAggregation, Set<FacetAggregationField>> aggregationsMap = getFacet().getAggregations();
+        Set<FacetAggregationField> aggregations = aggregationsMap.computeIfAbsent(FacetAggregation.MAX, key -> new HashSet<>());
+
+        FacetAggregationField aggregationField = new FacetAggregationField();
+        aggregationField.setName(path);
+        aggregationField.setDisplayName(displayName);
+
+        aggregations.add(aggregationField);
+
         return this;
     }
 
     @Override
     public IFacetOperations<T> averageOn(String path) {
-        getFacet().getAggregations().put(FacetAggregation.AVERAGE, path);
+        return averageOn(path, null);
+    }
+
+    @Override
+    public IFacetOperations<T> averageOn(String path, String displayName) {
+        Map<FacetAggregation, Set<FacetAggregationField>> aggregationsMap = getFacet().getAggregations();
+        Set<FacetAggregationField> aggregations = aggregationsMap.computeIfAbsent(FacetAggregation.AVERAGE, key -> new HashSet<>());
+
+        FacetAggregationField aggregationField = new FacetAggregationField();
+        aggregationField.setName(path);
+        aggregationField.setDisplayName(displayName);
+
+        aggregations.add(aggregationField);
+
         return this;
     }
 

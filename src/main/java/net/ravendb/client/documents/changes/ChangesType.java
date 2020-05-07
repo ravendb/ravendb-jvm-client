@@ -4,5 +4,6 @@ public enum ChangesType {
     DOCUMENT,
     INDEX,
     OPERATION,
-    COUNTER
+    COUNTER,
+    TIME_SERIES
 }

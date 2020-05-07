@@ -2,36 +2,46 @@ package net.ravendb.client.documents.session.tokens;
 
 public class DeclareToken extends QueryToken {
 
-    private final String name;
-    private final String parameters;
-    private final String body;
+    private final String _name;
+    private final String _parameters;
+    private final String _body;
+    private final boolean _timeSeries;
 
-    private DeclareToken(String name, String body, String parameters) {
-        this.name = name;
-        this.body = body;
-        this.parameters = parameters;
+    private DeclareToken(String name, String body, String parameters, boolean timeSeries) {
+        _name = name;
+        _body = body;
+        _parameters = parameters;
+        _timeSeries = timeSeries;
     }
 
-    public static DeclareToken create(String name, String body) {
-        return create(name, body, null);
+    public static DeclareToken createFunction(String name, String body) {
+        return createFunction(name, body, null);
     }
 
-    public static DeclareToken create(String name, String body, String parameters) {
-        return new DeclareToken(name, body, parameters);
+    public static DeclareToken createFunction(String name, String body, String parameters) {
+        return new DeclareToken(name, body, parameters, false);
+    }
+
+    public static DeclareToken createTimeSeries(String name, String body) {
+        return createTimeSeries(name, body, null);
+    }
+
+    public static DeclareToken createTimeSeries(String name, String body, String parameters) {
+        return new DeclareToken(name, body, parameters, true);
     }
 
     @Override
     public void writeTo(StringBuilder writer) {
         writer
                 .append("declare ")
-                .append("function ")
-                .append(name)
+                .append(_timeSeries ? "timeseries " : "function ")
+                .append(_name)
                 .append("(")
-                .append(parameters)
+                .append(_parameters)
                 .append(") ")
                 .append("{")
                 .append(System.lineSeparator())
-                .append(body)
+                .append(_body)
                 .append(System.lineSeparator())
                 .append("}")
                 .append(System.lineSeparator());

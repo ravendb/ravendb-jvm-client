@@ -3,16 +3,15 @@ package net.ravendb.client.documents.session.operations;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.NumericNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.fasterxml.jackson.databind.node.TextNode;
 import net.ravendb.client.Constants;
 import net.ravendb.client.documents.commands.batches.ClusterWideBatchCommand;
 import net.ravendb.client.documents.commands.batches.CommandType;
 import net.ravendb.client.documents.commands.batches.SingleNodeBatchCommand;
 import net.ravendb.client.documents.operations.PatchStatus;
-import net.ravendb.client.documents.session.AfterSaveChangesEventArgs;
-import net.ravendb.client.documents.session.DocumentInfo;
-import net.ravendb.client.documents.session.InMemoryDocumentSessionOperations;
-import net.ravendb.client.documents.session.TransactionMode;
+import net.ravendb.client.documents.session.*;
 import net.ravendb.client.exceptions.ClientVersionMismatchException;
 import net.ravendb.client.extensions.JsonExtensions;
 import net.ravendb.client.json.BatchCommandResult;
@@ -112,7 +111,10 @@ public class BatchOperation {
                     handleDelete(batchResult);
                     break;
                 case COMPARE_EXCHANGE_PUT:
+                    handleCompareExchangePut(batchResult);
+                    break;
                 case COMPARE_EXCHANGE_DELETE:
+                    handleCompareExchangeDelete(batchResult);
                     break;
                 default:
                     throw new IllegalStateException("Command " + type + " is not supported");
@@ -155,6 +157,9 @@ public class BatchOperation {
                     break;
                 case COUNTERS:
                     handleCounters(batchResult);
+                    break;
+                case TIME_SERIES:
+                    //TODO: RavenDB-13474 add to time series cache
                     break;
                 case BATCH_PATCH:
                     break;
@@ -204,6 +209,29 @@ public class BatchOperation {
         }
 
         return modifiedDocumentInfo;
+    }
+
+    private void handleCompareExchangePut(ObjectNode batchResult) {
+        handleCompareExchangeInternal(CommandType.COMPARE_EXCHANGE_PUT, batchResult);
+    }
+
+    private void handleCompareExchangeDelete(ObjectNode batchResult) {
+        handleCompareExchangeInternal(CommandType.COMPARE_EXCHANGE_DELETE, batchResult);
+    }
+
+    private void handleCompareExchangeInternal(CommandType commandType, ObjectNode batchResult) {
+        TextNode key = (TextNode) batchResult.get("Key");
+        if (key == null || key.isNull()) {
+            throwMissingField(commandType, "Key");
+        }
+
+        NumericNode index = (NumericNode) batchResult.get("Index");
+        if (index == null || index.isNull()) {
+            throwMissingField(commandType, "Index");
+        }
+
+        ClusterTransactionOperationsBase clusterSession = _session.getClusterSession();
+        clusterSession.updateState(key.asText(), index.asLong());
     }
 
     private void handleAttachmentCopy(ObjectNode batchResult) {
@@ -343,7 +371,6 @@ public class BatchOperation {
     }
 
     private void handleDeleteInternal(ObjectNode batchResult, CommandType type) {
-
         String id = getStringField(batchResult, type, "Id");
 
         DocumentInfo documentInfo = _session.documentsById.getValue(id);

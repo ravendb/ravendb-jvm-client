@@ -2,6 +2,7 @@ package net.ravendb.client.documents.operations.compareExchange;
 
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import net.ravendb.client.Constants;
 import net.ravendb.client.documents.IDocumentStore;
 import net.ravendb.client.documents.conventions.DocumentConventions;
 import net.ravendb.client.documents.operations.IOperation;
@@ -75,8 +76,9 @@ public class PutCompareExchangeValueOperation<T> implements IOperation<CompareEx
             url.value = node.getUrl() + "/databases/" + node.getDatabase() + "/cmpxchg?key="  + UrlUtils.escapeDataString(_key) + "&index=" + _index;
 
             Map<String, T> tuple = new HashMap<>();
-            tuple.put("Object", _value);
+            tuple.put(Constants.CompareExchange.OBJECT_FIELD_NAME, _value);
 
+            //TODO: ConvertToBlittableForCompareExchangeIfNeeded?
             ObjectNode json = EntityToJson.convertEntityToJson(tuple, _conventions, null, false);
 
             HttpPut httpPut = new HttpPut();

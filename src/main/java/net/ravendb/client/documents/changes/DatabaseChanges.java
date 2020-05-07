@@ -314,6 +314,68 @@ public class DatabaseChanges implements IDatabaseChanges {
         return taskedObservable;
     }
 
+    @Override
+    public IChangesObservable<TimeSeriesChange> forAllTimeSeries() {
+        DatabaseConnectionState counter = getOrAddConnectionState("all-timeseries",
+                "watch-all-timeseries", "unwatch-all-timeseries", null);
+
+        ChangesObservable<TimeSeriesChange, DatabaseConnectionState> taskedObservable = new ChangesObservable<>(
+                ChangesType.TIME_SERIES, counter, notification -> true);
+
+        return taskedObservable;
+    }
+
+    @Override
+    public IChangesObservable<TimeSeriesChange> forTimeSeries(String timeSeriesName) {
+        if (StringUtils.isBlank(timeSeriesName)) {
+            throw new IllegalArgumentException("TimeSeriesName cannot be null or whitespace.");
+        }
+
+        DatabaseConnectionState counter = getOrAddConnectionState("timeseries/" + timeSeriesName,
+                "watch-timeseries", "unwatch-timeseries", timeSeriesName);
+
+        ChangesObservable<TimeSeriesChange, DatabaseConnectionState> taskedObservable = new ChangesObservable<>(ChangesType.TIME_SERIES, counter,
+                notification -> StringUtils.equalsIgnoreCase(timeSeriesName, notification.getName()));
+
+        return taskedObservable;
+    }
+
+
+
+    @Override
+    public IChangesObservable<TimeSeriesChange> forTimeSeriesOfDocument(String documentId, String timeSeriesName) {
+        if (StringUtils.isBlank(documentId)) {
+            throw new IllegalArgumentException("DocumentId cannot be null or whitespace.");
+        }
+        if (StringUtils.isBlank(timeSeriesName)) {
+            throw new IllegalArgumentException("TimeSeriesName cannot be null or whitespace.");
+        }
+
+        DatabaseConnectionState counter = getOrAddConnectionState("document/" + documentId + "/timeseries/" + timeSeriesName,
+                "watch-document-timeseries", "unwatch-document-timeseries", null, new String[]{documentId, timeSeriesName});
+
+        ChangesObservable<TimeSeriesChange, DatabaseConnectionState> taskedObservable = new ChangesObservable<>(ChangesType.TIME_SERIES, counter,
+                notification -> StringUtils.equalsIgnoreCase(timeSeriesName, notification.getName()) && StringUtils.equalsIgnoreCase(documentId, notification.getDocumentId()));
+
+        return taskedObservable;
+    }
+
+    @Override
+    public IChangesObservable<TimeSeriesChange> forTimeSeriesOfDocument(String documentId) {
+        if (StringUtils.isBlank(documentId)) {
+            throw new IllegalArgumentException("DocumentId cannot be null or whitespace.");
+        }
+
+        DatabaseConnectionState counter = getOrAddConnectionState("document/" + documentId + "/timeseries",
+                "watch-all-document-timeseries", "unwatch-all-document-timeseries", documentId);
+
+        ChangesObservable<TimeSeriesChange, DatabaseConnectionState> taskedObservable = new ChangesObservable<>(
+                ChangesType.TIME_SERIES, counter, notification -> StringUtils.equalsIgnoreCase(documentId, notification.getDocumentId())
+        );
+
+        return taskedObservable;
+    }
+
     private final List<Consumer<Exception>> onError = new ArrayList<>();
 
     @Override
@@ -628,6 +690,12 @@ public class DatabaseChanges implements IDatabaseChanges {
                 CounterChange counterChange = JsonExtensions.getDefaultMapper().treeToValue(value, CounterChange.class);
                 for (DatabaseConnectionState state : states) {
                     state.send(counterChange);
+                }
+                break;
+            case "TimeSeriesChange":
+                TimeSeriesChange timeSeriesChange = JsonExtensions.getDefaultMapper().treeToValue(value, TimeSeriesChange.class);
+                for (DatabaseConnectionState state : states) {
+                    state.send(timeSeriesChange);
                 }
                 break;
             case "IndexChange":

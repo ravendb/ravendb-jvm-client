@@ -37,7 +37,7 @@ public class CounterBatch {
         this.fromEtl = fromEtl;
     }
 
-    public void serialize(JsonGenerator generator, DocumentConventions conventions) throws IOException {
+    public void serialize(JsonGenerator generator) throws IOException {
         generator.writeStartObject();
 
         generator.writeBooleanField("ReplyWithAllNodesValues", replyWithAllNodesValues);
@@ -45,7 +45,7 @@ public class CounterBatch {
         generator.writeStartArray();
 
         for (DocumentCountersOperation documentCountersOperation : documents) {
-            documentCountersOperation.serialize(generator, conventions);
+            documentCountersOperation.serialize(generator);
         }
 
         generator.writeEndArray();

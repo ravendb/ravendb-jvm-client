@@ -9,24 +9,22 @@ import java.util.concurrent.ConcurrentMap;
 public class MultiDatabaseHiLoIdGenerator {
 
     protected final DocumentStore store;
-    protected final DocumentConventions conventions;
 
     private final ConcurrentMap<String, MultiTypeHiLoIdGenerator> _generators = new ConcurrentHashMap<>();
 
-    public MultiDatabaseHiLoIdGenerator(DocumentStore store, DocumentConventions conventions) {
+    public MultiDatabaseHiLoIdGenerator(DocumentStore store) {
         this.store = store;
-        this.conventions = conventions;
     }
 
-    public String generateDocumentId(String dbName, Object entity) {
-        String db = dbName != null ? dbName : store.getDatabase();
+    public String generateDocumentId(String database, Object entity) {
+        String db = database != null ? database : store.getDatabase();
 
         MultiTypeHiLoIdGenerator generator = _generators.computeIfAbsent(db, x -> generateMultiTypeHiLoFunc(x));
         return generator.generateDocumentId(entity);
     }
 
-    public MultiTypeHiLoIdGenerator generateMultiTypeHiLoFunc(String dbName) {
-        return new MultiTypeHiLoIdGenerator(store, dbName, conventions);
+    public MultiTypeHiLoIdGenerator generateMultiTypeHiLoFunc(String database) {
+        return new MultiTypeHiLoIdGenerator(store, database);
     }
 
     public void returnUnusedRange() {

@@ -2,6 +2,8 @@ package net.ravendb.client.documents.session.loaders;
 
 import net.ravendb.client.documents.conventions.DocumentConventions;
 
+import java.util.Date;
+
 public class QueryIncludeBuilder extends IncludeBuilderBase implements IQueryIncludeBuilder {
 
     public QueryIncludeBuilder(DocumentConventions conventions) {
@@ -47,6 +49,25 @@ public class QueryIncludeBuilder extends IncludeBuilderBase implements IQueryInc
     @Override
     public IQueryIncludeBuilder includeDocuments(String path) {
         _includeDocuments(path);
+        return this;
+    }
+
+    @Override
+    public IQueryIncludeBuilder includeTimeSeries(String name, Date from, Date to) {
+        _includeTimeSeries("", name, from, to);
+        return this;
+    }
+
+    @Override
+    public IQueryIncludeBuilder includeTimeSeries(String path, String name, Date from, Date to) {
+        _withAlias(); //TODO: check me!
+        _includeTimeSeries(path, name, from, to);
+        return this;
+    }
+
+    @Override
+    public IQueryIncludeBuilder includeCompareExchangeValue(String path) {
+        _includeCompareExchangeValue(path);
         return this;
     }
 }

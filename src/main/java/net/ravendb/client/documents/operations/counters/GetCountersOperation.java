@@ -140,7 +140,7 @@ public class GetCountersOperation implements IOperation<CountersDetail> {
 
                 postRequest.setEntity(new ContentProviderHttpEntity(outputStream -> {
                     try (JsonGenerator generator = mapper.getFactory().createGenerator(outputStream)) {
-                        batch.serialize(generator, _conventions);
+                        batch.serialize(generator);
                     } catch (IOException e) {
                         throw new RuntimeException(e);
                     }

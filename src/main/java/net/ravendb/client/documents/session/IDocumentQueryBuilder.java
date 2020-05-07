@@ -1,10 +1,11 @@
 package net.ravendb.client.documents.session;
 
+import net.ravendb.client.documents.indexes.AbstractCommonApiForIndexes;
 import net.ravendb.client.documents.indexes.AbstractIndexCreationTask;
 
 public interface IDocumentQueryBuilder {
 
-    <T, TIndex extends AbstractIndexCreationTask> IDocumentQuery<T> documentQuery(Class<T> clazz, Class<TIndex> indexClazz);
+    <T, TIndex extends AbstractCommonApiForIndexes> IDocumentQuery<T> documentQuery(Class<T> clazz, Class<TIndex> indexClazz);
 
     /**
      * Query the specified index

@@ -9,4 +9,10 @@ public interface IEnumerableQuery<T> {
      * @return results as list
      */
     List<T> toList();
+
+    /**
+     * Materialize query, executes request and returns with results
+     * @return results as Array
+     */
+    T[] toArray();
 }

@@ -48,7 +48,7 @@ public class DocumentConventions {
     private ClientConfiguration _originalConfiguration;
     private final Map<Class, Field> _idPropertyCache = new HashMap<>();
     private boolean _saveEnumsAsIntegers;
-    private String _identityPartsSeparator;
+    private char _identityPartsSeparator;
     private boolean _disableTopologyUpdates;
 
     private Function<PropertyDescriptor, Boolean> _findIdentityProperty;
@@ -112,7 +112,7 @@ public class DocumentConventions {
     public DocumentConventions() {
         _readBalanceBehavior = ReadBalanceBehavior.NONE;
         _findIdentityProperty = q -> q.getName().equals("id");
-        _identityPartsSeparator = "/";
+        _identityPartsSeparator = '/';
         _findIdentityPropertyNameFromCollectionName = entityName -> "Id";
         _findJavaClass = (String id, ObjectNode doc) -> {
             JsonNode metadata = doc.get(Constants.Documents.Metadata.KEY);
@@ -403,12 +403,17 @@ public class DocumentConventions {
         _disableTopologyUpdates = disableTopologyUpdates;
     }
 
-    public String getIdentityPartsSeparator() {
+    public char getIdentityPartsSeparator() {
         return _identityPartsSeparator;
     }
 
-    public void setIdentityPartsSeparator(String identityPartsSeparator) {
+    public void setIdentityPartsSeparator(char identityPartsSeparator) {
         assertNotFrozen();
+
+        if (identityPartsSeparator == '|') {
+            throw new IllegalArgumentException("Cannot set identity parts separator to '|'");
+        }
+
         _identityPartsSeparator = identityPartsSeparator;
     }
 
@@ -643,6 +648,7 @@ public class DocumentConventions {
             if (configuration.isDisabled() && _originalConfiguration != null) { // need to revert to original values
                 _maxNumberOfRequestsPerSession = _originalConfiguration.getMaxNumberOfRequestsPerSession();
                 _readBalanceBehavior = _originalConfiguration.getReadBalanceBehavior();
+                _identityPartsSeparator = _originalConfiguration.getIdentityPartsSeparator();
 
                 _originalConfiguration = null;
                 return;
@@ -653,10 +659,14 @@ public class DocumentConventions {
                 _originalConfiguration.setEtag(-1);
                 _originalConfiguration.setMaxNumberOfRequestsPerSession(_maxNumberOfRequestsPerSession);
                 _originalConfiguration.setReadBalanceBehavior(_readBalanceBehavior);
+                _originalConfiguration.setIdentityPartsSeparator(_identityPartsSeparator);
             }
 
             _maxNumberOfRequestsPerSession = ObjectUtils.firstNonNull(configuration.getMaxNumberOfRequestsPerSession(), _originalConfiguration.getMaxNumberOfRequestsPerSession());
             _readBalanceBehavior = ObjectUtils.firstNonNull(configuration.getReadBalanceBehavior(), _originalConfiguration.getReadBalanceBehavior());
+            _identityPartsSeparator = configuration.getIdentityPartsSeparator() != null
+                    ? configuration.getIdentityPartsSeparator()
+                    : _originalConfiguration.getIdentityPartsSeparator().charValue();
         }
     }
 
@@ -695,7 +705,7 @@ public class DocumentConventions {
         }));
     }
 
-    public boolean tryConvertValueForQuery(String fieldName, Object value, boolean forRange, Reference<Object> strValue) {
+    public boolean tryConvertValueToObjectForQuery(String fieldName, Object value, boolean forRange, Reference<Object> strValue) {
         for (Tuple<Class, IValueForQueryConverter<Object>> queryValueConverter : _listOfQueryValueToObjectConverters) {
             if (!queryValueConverter.first.isInstance(value)) {
                 continue;

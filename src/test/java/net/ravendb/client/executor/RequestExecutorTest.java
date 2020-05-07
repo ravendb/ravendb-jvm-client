@@ -8,6 +8,7 @@ import net.ravendb.client.exceptions.database.DatabaseDoesNotExistException;
 import net.ravendb.client.http.RavenCommand;
 import net.ravendb.client.http.RequestExecutor;
 import net.ravendb.client.http.ServerNode;
+import net.ravendb.client.http.UpdateTopologyParameters;
 import net.ravendb.client.primitives.ExceptionsUtils;
 import net.ravendb.client.serverwide.operations.GetDatabaseNamesOperation;
 import org.junit.jupiter.api.Test;
@@ -92,9 +93,12 @@ public class RequestExecutorTest extends RemoteTestBase {
                 serverNode.setUrl(store.getUrls()[0]);
                 serverNode.setDatabase("no_such");
 
+                UpdateTopologyParameters updateTopologyParameters = new UpdateTopologyParameters(serverNode);
+                updateTopologyParameters.setTimeoutInMs(5000);
+
                 assertThatThrownBy(() ->
                         ExceptionsUtils.accept(() ->
-                                executor.updateTopologyAsync(serverNode, 5000).get()))
+                                executor.updateTopologyAsync(updateTopologyParameters).get()))
                         .isExactlyInstanceOf(DatabaseDoesNotExistException.class);
             }
         }

@@ -99,7 +99,7 @@ public class CountersBatchCommandData implements ICommandData {
 
         generator.writeStringField("Id", id);
         generator.writeFieldName("Counters");
-        counters.serialize(generator, conventions);
+        counters.serialize(generator);
         generator.writeObjectField("Type", "Counters");
 
         if (fromEtl != null) {

@@ -49,6 +49,7 @@ public class DatabaseConnectionState implements IChangesConnectionState<Database
         onIndexChangeNotification.clear();
         onOperationStatusChangeNotification.clear();
         onCounterChangeNotification.clear();
+        onTimeSeriesChangeNotification.clear();
         onError.clear();
     }
 
@@ -74,6 +75,9 @@ public class DatabaseConnectionState implements IChangesConnectionState<Database
             case COUNTER:
                 this.onCounterChangeNotification.add((Consumer<CounterChange>)(Consumer<?>) handler);
                 break;
+            case TIME_SERIES:
+                this.onTimeSeriesChangeNotification.add((Consumer<TimeSeriesChange>)(Consumer<?>) handler);
+                break;
             default:
                 throw new IllegalStateException("ChangeType: " + type + " is not supported");
         }
@@ -93,6 +97,9 @@ public class DatabaseConnectionState implements IChangesConnectionState<Database
             case COUNTER:
                 this.onCounterChangeNotification.remove(handler);
                 break;
+            case TIME_SERIES:
+                this.onTimeSeriesChangeNotification.remove(handler);
+                break;
             default:
                 throw new IllegalStateException("ChangeType: " + type + " is not supported");
         }
@@ -105,6 +112,8 @@ public class DatabaseConnectionState implements IChangesConnectionState<Database
     private final List<Consumer<OperationStatusChange>> onOperationStatusChangeNotification = new ArrayList<>();
 
     private final List<Consumer<CounterChange>> onCounterChangeNotification = new ArrayList<>();
+
+    private final List<Consumer<TimeSeriesChange>> onTimeSeriesChangeNotification = new ArrayList<>();
 
     public void send(DocumentChange documentChange) {
         EventHelper.invoke(onDocumentChangeNotification, documentChange);
@@ -120,5 +129,9 @@ public class DatabaseConnectionState implements IChangesConnectionState<Database
 
     public void send(CounterChange counterChange) {
         EventHelper.invoke(onCounterChangeNotification, counterChange);
+    }
+
+    public void send(TimeSeriesChange timeSeriesChange) {
+        EventHelper.invoke(onTimeSeriesChangeNotification, timeSeriesChange);
     }
 }

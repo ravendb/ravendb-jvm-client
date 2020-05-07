@@ -14,7 +14,7 @@ public class CounterOperation {
 
     protected String changeVector;
 
-    public void serialize(JsonGenerator generator, DocumentConventions conventions) throws IOException {
+    public void serialize(JsonGenerator generator) throws IOException {
         generator.writeStartObject();
         generator.writeObjectField("Type", SharpEnum.value(type));
         generator.writeStringField("CounterName", counterName);

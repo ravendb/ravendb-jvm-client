@@ -7,58 +7,26 @@ import org.apache.commons.lang3.ObjectUtils;
 
 import java.util.Map;
 
-public abstract class AbstractIndexCreationTaskBase {
+/**
+ * Base class for creating indexes
+ *
+ * The naming convention is that underscores in the inherited class names are replaced by slashed
+ * For example: Posts_ByName will be saved to Posts/ByName
+ * @param <TIndexDefinition> Index definition
+ */
+public abstract class AbstractIndexCreationTaskBase<TIndexDefinition extends IndexDefinition>
+        extends AbstractCommonApiForIndexes {
 
     /**
      * Creates the index definition.
      * @return Index definition
      */
-    public abstract IndexDefinition createIndexDefinition();
+    public abstract TIndexDefinition createIndexDefinition();
 
     protected DocumentConventions conventions;
-    protected Map<String, String> additionalSources;
-    protected IndexConfiguration configuration;
 
     protected IndexPriority priority;
     protected IndexLockMode lockMode;
-
-    public AbstractIndexCreationTaskBase() {
-        configuration = new IndexConfiguration();
-    }
-
-    public Map<String, String> getAdditionalSources() {
-        return additionalSources;
-    }
-
-    public void setAdditionalSources(Map<String, String> additionalSources) {
-        this.additionalSources = additionalSources;
-    }
-
-    public IndexConfiguration getConfiguration() {
-        return configuration;
-    }
-
-    public void setConfiguration(IndexConfiguration configuration) {
-        this.configuration = configuration;
-    }
-
-    /**
-     * Gets a value indicating whether this instance is map reduce index definition
-     * @return true if index is map reduce
-     */
-    public boolean isMapReduce() {
-        return false;
-    }
-
-    /**
-     * Generates index name from type name replacing all _ with /
-     * @return index name
-     */
-    public String getIndexName() {
-        return getClass().getSimpleName().replaceAll("_", "/");
-    }
-
-
 
     /**
      * Gets the conventions that should be used when index definition is created.
@@ -97,7 +65,7 @@ public abstract class AbstractIndexCreationTaskBase {
      * @param store target document store
      */
     public void execute(IDocumentStore store) {
-        store.executeIndex(this);
+        execute(store, null);
     }
 
     /**

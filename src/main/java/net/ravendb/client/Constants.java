@@ -17,7 +17,9 @@ public class Constants {
             public static final String FLAGS = "@flags";
             public static final String ATTACHMENTS = "@attachments";
             public static final String COUNTERS = "@counters";
+            public static final String TIME_SERIES = "@timeseries";
             public static final String REVISION_COUNTERS = "@counters-snapshot";
+            public static final String REVISION_TIME_SERIES = "@timeseries-snapshot";
             public static final String INDEX_SCORE = "@index-score";
             public static final String LAST_MODIFIED = "@last-modified";
             public static final String RAVEN_JAVA_TYPE = "Raven-Java-Type";
@@ -35,8 +37,10 @@ public class Constants {
                 private Fields() {}
 
                 public static final String DOCUMENT_ID_FIELD_NAME = "id()";
+                public static final String SOURCE_DOCUMENT_ID_FIELD_NAME = "sourceDocId()";
                 public static final String REDUCE_KEY_HASH_FIELD_NAME = "hash(key())";
                 public static final String REDUCE_KEY_KEY_VALUE_FIELD_NAME = "key()";
+                public static final String VALUE_FIELD_NAME = "value()";
                 public static final String ALL_FIELDS = "__all_fields";
                 public static final String SPATIAL_SHAPE_FIELD_NAME = "spatial(shape)";
                 //TBD 4.1 public static final String CUSTOM_SORT_FIELD_NAME = "__customSort";
@@ -96,5 +100,16 @@ public class Constants {
 
     public static class Counters {
         public static final String ALL = "@all_counters";
+    }
+
+    public static class TimeSeries {
+        public static final String SELECT_FIELD_NAME = "timeseries";
+        public static final String QUERY_FUNCTION = "__timeSeriesQueryFunction";
+
+        public static final String ALL = "@all_timeseries";
+    }
+
+    public static class CompareExchange {
+        public static final String OBJECT_FIELD_NAME = "Object";
     }
 }

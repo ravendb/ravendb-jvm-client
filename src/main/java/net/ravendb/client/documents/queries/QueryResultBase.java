@@ -16,6 +16,10 @@ public abstract class QueryResultBase<TResult, TInclude> {
 
     private Map<String, String[]> includedCounterNames;
 
+    private ObjectNode timeSeriesIncludes;
+
+    private ObjectNode compareExchangeValueIncludes;
+
     private String[] includedPaths;
 
     private boolean isStale;
@@ -90,6 +94,34 @@ public abstract class QueryResultBase<TResult, TInclude> {
      */
     public void setIncludedCounterNames(Map<String, String[]> includedCounterNames) {
         this.includedCounterNames = includedCounterNames;
+    }
+
+    /**
+     * @return Gets the TimeSeries included in the result.
+     */
+    public ObjectNode getTimeSeriesIncludes() {
+        return timeSeriesIncludes;
+    }
+
+    /**
+     * @param timeSeriesIncludes Sets the TimeSeries included in the result.
+     */
+    public void setTimeSeriesIncludes(ObjectNode timeSeriesIncludes) {
+        this.timeSeriesIncludes = timeSeriesIncludes;
+    }
+
+    /**
+     * @return Gets the Compare Exchange Values included in the result.
+     */
+    public ObjectNode getCompareExchangeValueIncludes() {
+        return compareExchangeValueIncludes;
+    }
+
+    /**
+     * @param compareExchangeValueIncludes Sets the Compare Exchange Values included in the result.
+     */
+    public void setCompareExchangeValueIncludes(ObjectNode compareExchangeValueIncludes) {
+        this.compareExchangeValueIncludes = compareExchangeValueIncludes;
     }
 
     /**

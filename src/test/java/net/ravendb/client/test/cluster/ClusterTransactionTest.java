@@ -108,7 +108,8 @@ public class ClusterTransactionTest extends RemoteTestBase {
                 session.store(user1, "users/1");
                 session.saveChanges();
 
-                session.advanced().clusterTransaction().updateCompareExchangeValue(new CompareExchangeValue<User>("usernames/ayende", ((DocumentStore) store).getLastTransactionIndex(store.getDatabase()), user2));
+                CompareExchangeValue<User> value = session.advanced().clusterTransaction().getCompareExchangeValue(User.class, "usernames/ayende");
+                value.setValue(user2);
 
                 session.store(user2, "users/2");
                 user1.setAge(10);
@@ -143,10 +144,6 @@ public class ClusterTransactionTest extends RemoteTestBase {
             try (IDocumentSession session = store.openSession()) {
                 assertThatThrownBy(() -> {
                     session.advanced().clusterTransaction().createCompareExchangeValue("usernames/ayende", user1);
-                }).isExactlyInstanceOf(IllegalStateException.class);
-
-                assertThatThrownBy(() -> {
-                    session.advanced().clusterTransaction().updateCompareExchangeValue(new CompareExchangeValue<>("test", 0, "test"));
                 }).isExactlyInstanceOf(IllegalStateException.class);
 
                 assertThatThrownBy(() -> {

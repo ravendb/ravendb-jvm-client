@@ -234,6 +234,24 @@ public abstract class RavenTestDriver {
         throw new TimeoutException("The indexes stayed stale for more than " + timeout + "." + allIndexErrorsText);
     }
 
+    public static IndexErrors[] waitForIndexingErrors(IDocumentStore store, Duration timeout, String... indexNames) throws InterruptedException {
+        Stopwatch sw = Stopwatch.createStarted();
+
+        while (sw.elapsed().compareTo(timeout) < 0) {
+            IndexErrors[] indexes = store.maintenance().send(new GetIndexErrorsOperation(indexNames));
+
+            for (IndexErrors index : indexes) {
+                if (index.getErrors() != null && index.getErrors().length > 0) {
+                    return indexes;
+                }
+            }
+
+            Thread.sleep(32);
+        }
+
+        throw new TimeoutException("Got no index error for more than " + timeout.toString());
+    }
+
     protected <T> T waitForValue(Supplier<T> act, T expectedValue) throws InterruptedException {
         return waitForValue(act, expectedValue, Duration.ofSeconds(15));
     }

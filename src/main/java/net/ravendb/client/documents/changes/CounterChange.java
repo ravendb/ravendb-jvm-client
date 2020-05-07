@@ -4,6 +4,7 @@ public class CounterChange extends DatabaseChange {
     private String name;
     private long value;
     private String documentId;
+    private String collectionName;
     private String changeVector;
     private CounterChangeTypes type;
 
@@ -47,6 +48,20 @@ public class CounterChange extends DatabaseChange {
      */
     public void setDocumentId(String documentId) {
         this.documentId = documentId;
+    }
+
+    /**
+     * @return Document collection name.
+     */
+    public String getCollectionName() {
+        return collectionName;
+    }
+
+    /**
+     * @param collectionName Document collection name.
+     */
+    public void setCollectionName(String collectionName) {
+        this.collectionName = collectionName;
     }
 
     /**

@@ -10,21 +10,6 @@ public class SessionOperationExecutor extends OperationExecutor {
 
     private final InMemoryDocumentSessionOperations _session;
 
-    /**
-     * This constructor should not be used
-     * @param store DocumentStore
-     */
-    @Deprecated
-    public SessionOperationExecutor(DocumentStoreBase store) {
-        super(store);
-        _session = null;
-    }
-
-    public SessionOperationExecutor(DocumentStoreBase store, String databaseName) {
-        super(store, databaseName);
-        _session = null;
-    }
-
     public SessionOperationExecutor(InMemoryDocumentSessionOperations session) {
         super(session.getDocumentStore(), session.getDatabaseName());
 

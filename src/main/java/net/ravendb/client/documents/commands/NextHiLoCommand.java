@@ -16,18 +16,14 @@ public class NextHiLoCommand extends RavenCommand<HiLoResult> {
     private final String _tag;
     private final long _lastBatchSize;
     private final Date _lastRangeAt;
-    private final String _identityPartsSeparator;
+    private final char _identityPartsSeparator;
     private final long _lastRangeMax;
 
-    public NextHiLoCommand(String tag, long lastBatchSize, Date lastRangeAt, String identityPartsSeparator, long lastRangeMax) {
+    public NextHiLoCommand(String tag, long lastBatchSize, Date lastRangeAt, char identityPartsSeparator, long lastRangeMax) {
         super(HiLoResult.class);
 
         if (tag == null) {
             throw new IllegalArgumentException("tag cannot be null");
-        }
-
-        if (identityPartsSeparator == null) {
-            throw new IllegalArgumentException("identityPartsSeparator cannot be null");
         }
 
         _tag = tag;
@@ -43,7 +39,7 @@ public class NextHiLoCommand extends RavenCommand<HiLoResult> {
         String path = "/hilo/next?tag=" + urlEncode(_tag)
                 + "&lastBatchSize=" + _lastBatchSize
                 + "&lastRangeAt=" + date
-                + "&identityPartsSeparator=" + urlEncode(_identityPartsSeparator)
+                + "&identityPartsSeparator=" + urlEncode(String.valueOf(_identityPartsSeparator))
                 + "&lastMax=" + _lastRangeMax;
 
         url.value = node.getUrl() + "/databases/" + node.getDatabase() + path;

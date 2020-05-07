@@ -1,6 +1,7 @@
 package net.ravendb.client.documents.session;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import net.ravendb.client.documents.indexes.AbstractCommonApiForIndexes;
 import net.ravendb.client.documents.indexes.AbstractIndexCreationTask;
 import net.ravendb.client.documents.queries.*;
 import net.ravendb.client.documents.queries.timings.QueryTimings;
@@ -162,7 +163,7 @@ public class GraphDocumentQuery<T> extends AbstractDocumentQuery<T, GraphDocumen
             return query;
         }
 
-        public <T, TIndex extends AbstractIndexCreationTask> IDocumentQuery<T> query(Class<T> clazz, Class<TIndex> indexClazz) {
+        public <T, TIndex extends AbstractCommonApiForIndexes> IDocumentQuery<T> query(Class<T> clazz, Class<TIndex> indexClazz) {
             DocumentQuery<T> query = (DocumentQuery<T>) _session.query(clazz, indexClazz);
             query.setParameterPrefix(_parameterPrefix);
             return query;

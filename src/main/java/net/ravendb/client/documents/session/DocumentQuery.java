@@ -17,6 +17,7 @@ import net.ravendb.client.documents.queries.spatial.DynamicSpatialField;
 import net.ravendb.client.documents.queries.spatial.SpatialCriteria;
 import net.ravendb.client.documents.queries.spatial.SpatialCriteriaFactory;
 import net.ravendb.client.documents.queries.suggestions.*;
+import net.ravendb.client.documents.queries.timeSeries.ITimeSeriesQueryBuilder;
 import net.ravendb.client.documents.queries.timings.QueryTimings;
 import net.ravendb.client.documents.session.loaders.IQueryIncludeBuilder;
 import net.ravendb.client.documents.session.loaders.QueryIncludeBuilder;
@@ -36,18 +37,21 @@ import java.util.function.Function;
 
 public class DocumentQuery<T> extends AbstractDocumentQuery<T, DocumentQuery<T>> implements IDocumentQuery<T> {
 
-    public DocumentQuery(Class<T> clazz, InMemoryDocumentSessionOperations session, String indexName, String collectionName, boolean isGroupBy) {
+    public DocumentQuery(Class<T> clazz, InMemoryDocumentSessionOperations session, String indexName,
+                         String collectionName, boolean isGroupBy) {
         this(clazz, session, indexName, collectionName, isGroupBy, null, null, null, null);
     }
 
-    public DocumentQuery(Class<T> clazz, InMemoryDocumentSessionOperations session, String indexName, String collectionName, boolean isGroupBy,
-                         DeclareToken declareToken, List<LoadToken> loadTokens, String fromAlias) {
-        this(clazz, session, indexName, collectionName, isGroupBy, declareToken, loadTokens, fromAlias, null);
+    public DocumentQuery(Class<T> clazz, InMemoryDocumentSessionOperations session, String indexName,
+                         String collectionName, boolean isGroupBy,
+                         List<DeclareToken> declareTokens, List<LoadToken> loadTokens, String fromAlias) {
+        this(clazz, session, indexName, collectionName, isGroupBy, declareTokens, loadTokens, fromAlias, null);
     }
 
-    public DocumentQuery(Class<T> clazz, InMemoryDocumentSessionOperations session, String indexName, String collectionName, boolean isGroupBy,
-                         DeclareToken declareToken, List<LoadToken> loadTokens, String fromAlias, Boolean isProjectInto) {
-        super(clazz, session, indexName, collectionName, isGroupBy, declareToken, loadTokens, fromAlias, isProjectInto);
+    public DocumentQuery(Class<T> clazz, InMemoryDocumentSessionOperations session, String indexName,
+                         String collectionName, boolean isGroupBy, List<DeclareToken> declareTokens,
+                         List<LoadToken> loadTokens, String fromAlias, Boolean isProjectInto) {
+        super(clazz, session, indexName, collectionName, isGroupBy, declareTokens, loadTokens, fromAlias, isProjectInto);
     }
 
     @Override
@@ -73,6 +77,12 @@ public class DocumentQuery<T> extends AbstractDocumentQuery<T, DocumentQuery<T>>
         } catch (IntrospectionException e) {
             throw new RuntimeException("Unable to project to class: " + projectionClass.getName() + e.getMessage(), e);
         }
+    }
+
+    @Override
+    public <TTimeSeries> IDocumentQuery<TTimeSeries> selectTimeSeries(Class<TTimeSeries> clazz, Consumer<ITimeSeriesQueryBuilder> timeSeriesQuery) {
+        QueryData queryData = createTimeSeriesQueryData(timeSeriesQuery);
+        return selectFields(clazz, queryData);
     }
 
     @Override
@@ -194,6 +204,12 @@ public class DocumentQuery<T> extends AbstractDocumentQuery<T, DocumentQuery<T>>
     @Override
     public IDocumentQuery<T> closeSubclause() {
         _closeSubclause();
+        return this;
+    }
+
+    @Override
+    public IDocumentQuery<T> negateNext() {
+        _negateNext();
         return this;
     }
 
@@ -625,7 +641,7 @@ public class DocumentQuery<T> extends AbstractDocumentQuery<T, DocumentQuery<T>>
                 getIndexName(),
                 getCollectionName(),
                 isGroupBy,
-                queryData != null ? queryData.getDeclareToken() : null,
+                queryData != null ? queryData.getDeclareTokens() : null,
                 queryData != null ? queryData.getLoadTokens() : null,
                 queryData != null ? queryData.getFromAlias() : null,
                 queryData != null ? queryData.isProjectInto() : null);
@@ -645,6 +661,8 @@ public class DocumentQuery<T> extends AbstractDocumentQuery<T, DocumentQuery<T>>
         query.negate = negate;
         query.documentIncludes = new HashSet<>(documentIncludes);
         query.counterIncludesTokens = counterIncludesTokens;
+        query.timeSeriesIncludesTokens = timeSeriesIncludesTokens;
+        query.compareExchangeValueIncludesTokens = compareExchangeValueIncludesTokens;
         query.rootTypes = Sets.newHashSet(clazz);
         query.beforeQueryExecutedCallback = beforeQueryExecutedCallback;
         query.afterQueryExecutedCallback = afterQueryExecutedCallback;

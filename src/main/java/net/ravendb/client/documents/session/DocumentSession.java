@@ -14,9 +14,11 @@ import net.ravendb.client.documents.commands.batches.*;
 import net.ravendb.client.documents.commands.multiGet.GetRequest;
 import net.ravendb.client.documents.commands.multiGet.GetResponse;
 import net.ravendb.client.documents.commands.multiGet.MultiGetCommand;
+import net.ravendb.client.documents.indexes.AbstractCommonApiForIndexes;
 import net.ravendb.client.documents.indexes.AbstractIndexCreationTask;
 import net.ravendb.client.documents.linq.IDocumentQueryGenerator;
 import net.ravendb.client.documents.operations.PatchRequest;
+import net.ravendb.client.documents.operations.timeSeries.TimeSeriesRange;
 import net.ravendb.client.documents.queries.Query;
 import net.ravendb.client.documents.session.loaders.*;
 import net.ravendb.client.documents.session.operations.*;
@@ -91,7 +93,24 @@ public class DocumentSession extends InMemoryDocumentSessionOperations implement
     }
 
     @Override
-    protected ClusterTransactionOperationsBase getClusterSession() {
+    protected boolean hasClusterSession() {
+        return _clusterTransaction != null;
+    }
+
+    @Override
+    protected void clearClusterSession() {
+        if (!hasClusterSession()) {
+            return;
+        }
+
+        getClusterSession().clear();
+    }
+
+    @Override
+    public ClusterTransactionOperationsBase getClusterSession() {
+        if (_clusterTransaction == null) {
+            _clusterTransaction = new ClusterTransactionOperations(this);
+        }
         return (ClusterTransactionOperationsBase) _clusterTransaction;
     }
 
@@ -383,22 +402,49 @@ public class DocumentSession extends InMemoryDocumentSessionOperations implement
         IncludeBuilder includeBuilder = new IncludeBuilder(getConventions());
         includes.accept(includeBuilder);
 
+        List<TimeSeriesRange> timeSeriesIncludes = includeBuilder.getTimeSeriesToInclude() != null
+                ? new ArrayList<>(includeBuilder.getTimeSeriesToInclude())
+                : null;
+
+        String[] compareExchangeValuesToInclude = includeBuilder.getCompareExchangeValuesToInclude() != null
+                ? includeBuilder.getCompareExchangeValuesToInclude().toArray(new String[0])
+                : null;
+
         return loadInternal(clazz,
                 ids.toArray(new String[0]),
                 includeBuilder.documentsToInclude != null ? includeBuilder.documentsToInclude.toArray(new String[0]) : null,
                 includeBuilder.getCountersToInclude() != null ? includeBuilder.getCountersToInclude().toArray(new String[0]) : null,
-                includeBuilder.isAllCounters());
+                includeBuilder.isAllCounters(),
+                timeSeriesIncludes,
+                compareExchangeValuesToInclude);
     }
 
     public <TResult> Map<String, TResult> loadInternal(Class<TResult> clazz, String[] ids, String[] includes) {
         return loadInternal(clazz, ids, includes, null, false);
     }
 
-    public <TResult> Map<String, TResult> loadInternal(Class<TResult> clazz, String[] ids, String[] includes, String[] counterIncludes) {
+    public <TResult> Map<String, TResult> loadInternal(Class<TResult> clazz, String[] ids, String[] includes,
+                                                       String[] counterIncludes) {
         return loadInternal(clazz, ids, includes, counterIncludes, false);
     }
 
-    public <TResult> Map<String, TResult> loadInternal(Class<TResult> clazz, String[] ids, String[] includes, String[] counterIncludes, boolean includeAllCounters) {
+    @Override
+    public <TResult> Map<String, TResult> loadInternal(Class<TResult> clazz, String[] ids, String[] includes,
+                                                       String[] counterIncludes, boolean includeAllCounters) {
+        return loadInternal(clazz, ids, includes, counterIncludes, includeAllCounters, null, null);
+    }
+
+    @Override
+    public <TResult> Map<String, TResult> loadInternal(Class<TResult> clazz, String[] ids, String[] includes,
+                                                       String[] counterIncludes, boolean includeAllCounters,
+                                                       List<TimeSeriesRange> timeSeriesIncludes) {
+        return loadInternal(clazz, ids, includes, counterIncludes, includeAllCounters, timeSeriesIncludes, null);
+    }
+
+    public <TResult> Map<String, TResult> loadInternal(Class<TResult> clazz, String[] ids, String[] includes,
+                                                       String[] counterIncludes, boolean includeAllCounters,
+                                                       List<TimeSeriesRange> timeSeriesIncludes,
+                                                       String[] compareExchangeValueIncludes) {
         if (ids == null) {
             throw new IllegalArgumentException("Ids cannot be null");
         }
@@ -412,6 +458,9 @@ public class DocumentSession extends InMemoryDocumentSessionOperations implement
         } else {
             loadOperation.withCounters(counterIncludes);
         }
+
+        loadOperation.withTimeSeries(timeSeriesIncludes);
+        loadOperation.withCompareExchange(compareExchangeValueIncludes);
 
         GetDocumentsCommand command = loadOperation.createRequest();
         if (command != null) {
@@ -616,7 +665,7 @@ public class DocumentSession extends InMemoryDocumentSessionOperations implement
     }
 
     @SuppressWarnings("deprecation")
-    public <T, TIndex extends AbstractIndexCreationTask> IDocumentQuery<T> documentQuery(Class<T> clazz, Class<TIndex> indexClazz) {
+    public <T, TIndex extends AbstractCommonApiForIndexes> IDocumentQuery<T> documentQuery(Class<T> clazz, Class<TIndex> indexClazz) {
         try {
             TIndex index = indexClazz.newInstance();
             return documentQuery(clazz, index.getIndexName(), null, index.isMapReduce());
@@ -672,7 +721,7 @@ public class DocumentSession extends InMemoryDocumentSessionOperations implement
     }
 
     @Override
-    public <T, TIndex extends AbstractIndexCreationTask> IDocumentQuery<T> query(Class<T> clazz, Class<TIndex> indexClazz) {
+    public <T, TIndex extends AbstractCommonApiForIndexes> IDocumentQuery<T> query(Class<T> clazz, Class<TIndex> indexClazz) {
         return documentQuery(clazz, indexClazz);
     }
 
@@ -872,4 +921,15 @@ public class DocumentSession extends InMemoryDocumentSessionOperations implement
         GraphDocumentQuery<T> graphQuery = new GraphDocumentQuery<T>(clazz, this, query);
         return graphQuery;
     }
+
+    @Override
+    public ISessionDocumentTimeSeries timeSeriesFor(String documentId, String name) {
+        return new SessionDocumentTimeSeries(this, documentId, name);
+    }
+
+    @Override
+    public ISessionDocumentTimeSeries timeSeriesFor(Object entity, String name) {
+        return new SessionDocumentTimeSeries(this, entity, name);
+    }
+    
 }

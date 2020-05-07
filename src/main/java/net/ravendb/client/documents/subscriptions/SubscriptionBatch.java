@@ -107,6 +107,7 @@ public class SubscriptionBatch<T> {
 
     private final List<Item<T>> _items = new ArrayList<>();
     private List<ObjectNode> _includes;
+    private List<BatchFromServer.CounterIncludeItem> _counterIncludes;
 
     public List<Item<T>> getItems() {
         return _items;
@@ -154,12 +155,16 @@ public class SubscriptionBatch<T> {
             return;
         }
 
-        if (_includes == null) {
-            return;
+        if (_includes != null && !_includes.isEmpty()) {
+            for (ObjectNode item : _includes) {
+                s.registerIncludes(item);
+            }
         }
 
-        for (ObjectNode item : _includes) {
-            s.registerIncludes(item);
+        if (_counterIncludes != null && !_counterIncludes.isEmpty()) {
+            for (BatchFromServer.CounterIncludeItem item : _counterIncludes) {
+                s.registerCounters(item.getIncludes(), item.getCounterIncludes());
+            }
         }
 
         for (Item<T> item : getItems()) {
@@ -193,6 +198,7 @@ public class SubscriptionBatch<T> {
     @SuppressWarnings("unchecked")
     String initialize(BatchFromServer batch) {
         _includes = batch.getIncludes();
+        _counterIncludes = batch.getCounterIncludes();
 
         _items.clear();
         String lastReceivedChangeVector = null;

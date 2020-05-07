@@ -14,7 +14,7 @@ env:
       RAVENDB_JAVA_TEST_CA_PATH=$TRAVIS_BUILD_DIR/certs/ca.crt
       RAVENDB_JAVA_TEST_HTTPS_SERVER_URL=https://a.javatest11.development.run:8085
   matrix:
-    - RAVENDB_SERVER_VERSION="4.2"
+    - RAVENDB_SERVER_VERSION="5.0"
 before_install:
   - sudo apt-get -qq update
   - sudo apt-get install -y libunwind8 wget libssl-dev curl unzip gettext libcurl4-openssl-dev zlib1g uuid-dev bzip2 openssl

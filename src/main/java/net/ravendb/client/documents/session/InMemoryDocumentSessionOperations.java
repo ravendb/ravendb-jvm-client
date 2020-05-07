@@ -18,6 +18,7 @@ import net.ravendb.client.documents.conventions.DocumentConventions;
 import net.ravendb.client.documents.identity.GenerateEntityIdOnTheClient;
 import net.ravendb.client.documents.operations.OperationExecutor;
 import net.ravendb.client.documents.operations.SessionOperationExecutor;
+import net.ravendb.client.documents.operations.timeSeries.TimeSeriesRangeResult;
 import net.ravendb.client.documents.session.operations.lazy.ILazyOperation;
 import net.ravendb.client.exceptions.documents.session.NonUniqueObjectException;
 import net.ravendb.client.extensions.JsonExtensions;
@@ -217,6 +218,16 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
     }
 
     private Map<String, Tuple<Boolean, Map<String, Long>>> _countersByDocId;
+
+    private Map<String, Map<String, List<TimeSeriesRangeResult>>> _timeSeriesByDocId;
+
+    public Map<String, Map<String, List<TimeSeriesRangeResult>>> getTimeSeriesByDocId() {
+        if (_timeSeriesByDocId == null) {
+            _timeSeriesByDocId = new TreeMap<>(String::compareToIgnoreCase);
+        }
+
+        return _timeSeriesByDocId;
+    }
 
     protected final DocumentStoreBase _documentStore;
 
@@ -426,6 +437,35 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
         return IntStream.range(0, countersArray.size())
                 .mapToObj(i -> countersArray.get(i).asText())
                 .collect(Collectors.toList());
+    }
+
+    /**
+     * Gets all time series names for the specified entity.
+     * @param instance Entity
+     * @param <T> Entity class
+     * @return time series names
+     */
+    public <T> List<String> getTimeSeriesFor(T instance) {
+        if (instance == null) {
+            throw new IllegalArgumentException("Instance cannot be null");
+        }
+
+        DocumentInfo documentInfo = getDocumentInfo(instance);
+
+        JsonNode array = documentInfo.getMetadata().get(Constants.Documents.Metadata.TIME_SERIES);
+        if (array == null) {
+            return null; //TODO: or return empty list? RavenDB-14942
+        }
+
+        ArrayNode bjra = (ArrayNode) array;
+
+        List<String> tsList = new ArrayList<>(bjra.size());
+
+        for (JsonNode jsonNode : bjra) {
+            tsList.add(jsonNode.asText());
+        }
+
+        return tsList;
     }
 
     /**
@@ -840,7 +880,9 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
     }
 
     protected void assertNoNonUniqueInstance(Object entity, String id) {
-        if (StringUtils.isEmpty(id) || id.charAt(id.length() - 1) == '|' || id.charAt(id.length() - 1) == '/') {
+        if (StringUtils.isEmpty(id)
+                || id.charAt(id.length() - 1) == '|'
+                || id.charAt(id.length() - 1) == getConventions().getIdentityPartsSeparator()) {
             return;
         }
         DocumentInfo info = documentsById.getValue(id);
@@ -910,9 +952,12 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
     }
 
     private void prepareCompareExchangeEntities(SaveChangesData result) {
-        ClusterTransactionOperationsBase clusterTransactionOperations = getClusterSession();
+        if (!hasClusterSession()) {
+            return;
+        }
 
-        if (clusterTransactionOperations == null || !clusterTransactionOperations.hasCommands()) {
+        ClusterTransactionOperationsBase clusterTransactionOperations = getClusterSession();
+        if (clusterTransactionOperations.getNumberOfTrackedCompareExchangeValues() == 0) {
             return;
         }
 
@@ -920,28 +965,14 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
             throw new IllegalStateException("Performing cluster transaction operation require the TransactionMode to be set to CLUSTER_WIDE");
         }
 
-        if (clusterTransactionOperations.getStoreCompareExchange() != null) {
-            for (Map.Entry<String, ClusterTransactionOperationsBase.StoredCompareExchange> item : clusterTransactionOperations.getStoreCompareExchange().entrySet()) {
-
-                ObjectMapper mapper = getConventions().getEntityMapper();
-                JsonNode entityAsTree = EntityToJson.convertEntityToJson(item.getValue().entity, getConventions(), null, false);
-                ObjectNode rootNode = mapper.createObjectNode();
-                rootNode.set("Object", entityAsTree);
-
-                result.getSessionCommands().add(new PutCompareExchangeCommandData(item.getKey(), rootNode, item.getValue().index));
-            }
-        }
-
-        if (clusterTransactionOperations.getDeleteCompareExchange() != null) {
-            for (Map.Entry<String, Long> item : clusterTransactionOperations.getDeleteCompareExchange().entrySet()) {
-                result.getSessionCommands().add(new DeleteCompareExchangeCommandData(item.getKey(), item.getValue()));
-            }
-        }
-
-        result.onSuccess.clearClusterTransactionOperations(clusterTransactionOperations);
+        getClusterSession().prepareCompareExchangeEntities(result);
     }
 
-    protected abstract ClusterTransactionOperationsBase getClusterSession();
+    protected abstract boolean hasClusterSession();
+
+    protected abstract void clearClusterSession();
+
+    public abstract ClusterTransactionOperationsBase getClusterSession();
 
     private static boolean updateMetadataModifications(DocumentInfo documentInfo) {
         boolean dirty = false;
@@ -1262,9 +1293,7 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
         }
         deferredCommands.clear();
         deferredCommandsMap.clear();
-        if (getClusterSession() != null) {
-            getClusterSession().clear();
-        }
+        clearClusterSession();
         pendingLazyOperations.clear();
         entityToJson.clear();
     }
@@ -1316,7 +1345,8 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
                 !CommandType.ATTACHMENT_DELETE.equals(command.getType()) &&
                 !CommandType.ATTACHMENT_COPY.equals(command.getType()) &&
                 !CommandType.ATTACHMENT_MOVE.equals(command.getType()) &&
-                !CommandType.COUNTERS.equals(command.getType())) {
+                !CommandType.COUNTERS.equals(command.getType()) &&
+                !CommandType.TIME_SERIES.equals(command.getType())) {
             deferredCommandsMap.put(IdTypeAndName.create(id, CommandType.CLIENT_MODIFY_DOCUMENT_COMMAND, null), command);
         }
     }
@@ -1580,6 +1610,47 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
         }
     }
 
+    public void registerTimeSeries(ObjectNode resultTimeSeries) {
+        if (noTracking || resultTimeSeries == null) {
+            return;
+        }
+
+        Iterator<Map.Entry<String, JsonNode>> fields = resultTimeSeries.fields();
+        while (fields.hasNext()) {
+            Map.Entry<String, JsonNode> field = fields.next();
+            if (field.getValue() == null || field.getValue().isNull()) {
+                continue;
+            }
+
+            String id = field.getKey();
+
+            Map<String, List<TimeSeriesRangeResult>> cache = getTimeSeriesByDocId().computeIfAbsent(id, x -> new TreeMap<>(String::compareToIgnoreCase));
+
+            if (!field.getValue().isObject()) {
+                throw new IllegalStateException("Unable to read time series range results on document: '" + id + "'.");
+            }
+
+            Iterator<Map.Entry<String, JsonNode>> innerFields = field.getValue().fields();
+
+            while (innerFields.hasNext()) {
+                Map.Entry<String, JsonNode> innerField = innerFields.next();
+
+                if (innerField.getValue() == null || innerField.getValue().isNull()) {
+                    continue;
+                }
+
+                String name = innerField.getKey();
+
+                if (!innerField.getValue().isArray()) {
+                    throw new IllegalStateException("Unable to read time series range results on document: '" + id + "', time series: '" + name + "'.");
+                }
+
+                for (JsonNode jsonRange : innerField.getValue()) {
+                    TimeSeriesRangeResult newRange = parseTimeSeriesRangeResult((ObjectNode) jsonRange, id, name);
+                    addToCache(cache, newRange, name);
+                }
+            }
+        }
     @Override
     public int hashCode() {
         return _hash;
@@ -1790,7 +1861,6 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
             private final List<Object> _documentsByEntityToRemove = new ArrayList<>();
             private final List<Tuple<DocumentInfo, ObjectNode>> _documentInfosToUpdate = new ArrayList<>();
 
-            private ClusterTransactionOperationsBase _clusterTransactionOperations;
             private boolean _clearDeletedEntities;
 
             public ActionsToRunOnSuccess(InMemoryDocumentSessionOperations _session) {
@@ -1803,10 +1873,6 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
 
             public void removeDocumentByEntity(Object entity) {
                 _documentsByEntityToRemove.add(entity);
-            }
-
-            public void clearClusterTransactionOperations(ClusterTransactionOperationsBase clusterTransactionOperations) {
-                _clusterTransactionOperations = clusterTransactionOperations;
             }
 
             public void updateEntityDocumentInfo(DocumentInfo documentInfo, ObjectNode document) {
@@ -1831,10 +1897,6 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
 
                 if (_clearDeletedEntities) {
                     _session.deletedEntities.clear();
-                }
-
-                if (_clusterTransactionOperations != null) {
-                    _clusterTransactionOperations.clear();
                 }
 
                 _session.deferredCommands.clear();

@@ -10,10 +10,6 @@ public class DocumentsChanges {
 
     private Object fieldNewValue;
 
-    private JsonNodeType fieldOldType;
-
-    private JsonNodeType fieldNewType;
-
     private ChangeType change;
 
     private String fieldName;
@@ -34,42 +30,6 @@ public class DocumentsChanges {
 
     public void setFieldNewValue(Object fieldNewValue) {
         this.fieldNewValue = fieldNewValue;
-    }
-
-    /**
-     * FieldOldType is not supported anymore. Will be removed in next major version of the product.
-     * @return old field type
-     */
-    @Deprecated
-    public JsonNodeType getFieldOldType() {
-        return fieldOldType;
-    }
-
-    /**
-     * FieldOldType is not supported anymore. Will be removed in next major version of the product.
-     * @param fieldOldType old field type
-     */
-    @Deprecated
-    public void setFieldOldType(JsonNodeType fieldOldType) {
-        this.fieldOldType = fieldOldType;
-    }
-
-    /**
-     * FieldNewType is not supported anymore. Will be removed in next major version of the product.
-     * @return new field type
-     */
-    @Deprecated
-    public JsonNodeType getFieldNewType() {
-        return fieldNewType;
-    }
-
-    /**
-     * FieldNewType is not supported anymore. Will be removed in next major version of the product.
-     * @param fieldNewType new field type
-     */
-    @Deprecated
-    public void setFieldNewType(JsonNodeType fieldNewType) {
-        this.fieldNewType = fieldNewType;
     }
 
     public ChangeType getChange() {
@@ -114,8 +74,6 @@ public class DocumentsChanges {
         REMOVED_FIELD,
         ARRAY_VALUE_CHANGED,
         ARRAY_VALUE_ADDED,
-        ARRAY_VALUE_REMOVED,
-        FIELD_TYPE_CHANGED,
-        ENTITY_TYPE_CHANGED
+        ARRAY_VALUE_REMOVED
     }
 }

@@ -44,6 +44,8 @@ public class RavenDB_11703Test extends RemoteTestBase {
 
                 assertThat(counterChange.getDocumentId())
                         .isEqualTo("users/1");
+                assertThat(counterChange.getCollectionName())
+                        .isEqualTo("Users");
                 assertThat(counterChange.getType())
                         .isEqualTo(CounterChangeTypes.PUT);
                 assertThat(counterChange.getName())

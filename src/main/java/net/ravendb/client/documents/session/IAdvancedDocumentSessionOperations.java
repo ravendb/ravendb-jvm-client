@@ -156,6 +156,14 @@ public interface IAdvancedDocumentSessionOperations {
     <T> List<String> getCountersFor(T instance);
 
     /**
+     * Gets all time series names for the specified entity.
+     * @param instance The instance
+     * @param <T> Class of instance
+     * @return List of time series names
+     */
+    <T> List<String> getTimeSeriesFor(T instance);
+
+    /**
      * Gets last modified date for the specified entity.
      * If the entity is transient, it will load the metadata from the store
      * and associate the current state of the entity with the metadata from the server.
