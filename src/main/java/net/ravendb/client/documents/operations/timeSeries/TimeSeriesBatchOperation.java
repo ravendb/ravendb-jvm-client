@@ -50,8 +50,7 @@ public class TimeSeriesBatchOperation implements IVoidOperation {
 
         @Override
         public HttpRequestBase createRequest(ServerNode node, Reference<String> url) {
-            url.value = node.getUrl() + "/databases/" + node.getDatabase() + "/timeseries?id=" + urlEncode(_documentId);
-            //TODO: make sure we escape that in c#!
+            url.value = node.getUrl() + "/databases/" + node.getDatabase() + "/timeseries?docId=" + urlEncode(_documentId);
 
             HttpPost request = new HttpPost();
 

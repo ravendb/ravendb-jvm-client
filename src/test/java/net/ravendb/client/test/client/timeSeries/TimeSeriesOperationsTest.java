@@ -49,17 +49,13 @@ public class TimeSeriesOperationsTest extends RemoteTestBase {
 
             store.operations().send(timeSeriesBatch);
 
-            TimeSeriesDetails timeSeriesDetails = store.operations()
-                    .send(new GetTimeSeriesOperation(documentId, "Heartrate", null, null));
+            TimeSeriesRangeResult timeSeriesRangeResult = store.operations()
+                    .send(new GetTimeSeriesOperation(documentId, "Heartrate"));
 
-            assertThat(timeSeriesDetails.getId())
-                    .isEqualTo(documentId);
-            assertThat(timeSeriesDetails.getValues())
+            assertThat(timeSeriesRangeResult.getEntries())
                     .hasSize(1);
-            assertThat(timeSeriesDetails.getValues().get("Heartrate").get(0).getEntries().size())
-                    .isOne();
 
-            TimeSeriesEntry value = timeSeriesDetails.getValues().get("Heartrate").get(0).getEntries().get(0);
+            TimeSeriesEntry value = timeSeriesRangeResult.getEntries().get(0);
             assertThat(value.getValues()[0])
                     .isEqualTo(59, Offset.offset(0.001));
             assertThat(value.getTag())
@@ -92,17 +88,13 @@ public class TimeSeriesOperationsTest extends RemoteTestBase {
 
             store.operations().send(timeSeriesBatch);
 
-            TimeSeriesDetails timeSeriesDetails = store.operations()
-                    .send(new GetTimeSeriesOperation(documentId, "Heartrate", null, null));
+            TimeSeriesRangeResult timeSeriesRangeResult = store.operations()
+                    .send(new GetTimeSeriesOperation(documentId, "Heartrate"));
 
-            assertThat(timeSeriesDetails.getId())
-                    .isEqualTo(documentId);
-            assertThat(timeSeriesDetails.getValues())
-                    .hasSize(1);
-            assertThat(timeSeriesDetails.getValues().get("Heartrate").get(0).getEntries())
+            assertThat(timeSeriesRangeResult.getEntries())
                     .hasSize(3);
 
-            TimeSeriesEntry value = timeSeriesDetails.getValues().get("Heartrate").get(0).getEntries().get(0);
+            TimeSeriesEntry value = timeSeriesRangeResult.getEntries().get(0);
 
             assertThat(value.getValues()[0])
                     .isEqualTo(59, Offset.offset(0.01));
@@ -111,7 +103,7 @@ public class TimeSeriesOperationsTest extends RemoteTestBase {
             assertThat(value.getTimestamp())
                     .isEqualTo(DateUtils.addSeconds(baseLine, 1));
 
-            value = timeSeriesDetails.getValues().get("Heartrate").get(0).getEntries().get(1);
+            value = timeSeriesRangeResult.getEntries().get(1);
 
             assertThat(value.getValues()[0])
                     .isEqualTo(61, Offset.offset(0.01));
@@ -120,7 +112,7 @@ public class TimeSeriesOperationsTest extends RemoteTestBase {
             assertThat(value.getTimestamp())
                     .isEqualTo(DateUtils.addSeconds(baseLine, 2));
 
-            value = timeSeriesDetails.getValues().get("Heartrate").get(0).getEntries().get(2);
+            value = timeSeriesRangeResult.getEntries().get(2);
 
             assertThat(value.getValues()[0])
                     .isEqualTo(60, Offset.offset(0.01));
@@ -157,13 +149,9 @@ public class TimeSeriesOperationsTest extends RemoteTestBase {
 
             store.operations().send(timeSeriesBatch);
 
-            TimeSeriesDetails timeSeriesDetails = store.operations().send(new GetTimeSeriesOperation(documentId, "Heartrate", null, null));
+            TimeSeriesRangeResult timeSeriesRangeResult = store.operations().send(new GetTimeSeriesOperation(documentId, "Heartrate", null, null));
 
-            assertThat(timeSeriesDetails.getId())
-                    .isEqualTo(documentId);
-            assertThat(timeSeriesDetails.getValues())
-                    .hasSize(1);
-            assertThat(timeSeriesDetails.getValues().get("Heartrate").get(0).getEntries())
+            assertThat(timeSeriesRangeResult.getEntries())
                     .hasSize(5);
 
             timeSeriesOp = new TimeSeriesOperation("Heartrate", null, Collections.singletonList(
@@ -173,28 +161,24 @@ public class TimeSeriesOperationsTest extends RemoteTestBase {
 
             store.operations().send(timeSeriesBatch);
 
-            timeSeriesDetails = store.operations().send(new GetTimeSeriesOperation(documentId, "Heartrate", null, null));
+            timeSeriesRangeResult = store.operations().send(new GetTimeSeriesOperation(documentId, "Heartrate", null, null));
 
-            assertThat(timeSeriesDetails.getId())
-                    .isEqualTo(documentId);
-            assertThat(timeSeriesDetails.getValues())
-                    .hasSize(1);
-            assertThat(timeSeriesDetails.getValues().get("Heartrate").get(0).getEntries())
+            assertThat(timeSeriesRangeResult.getEntries())
                     .hasSize(3);
 
-            TimeSeriesEntry value = timeSeriesDetails.getValues().get("Heartrate").get(0).getEntries().get(0);
+            TimeSeriesEntry value = timeSeriesRangeResult.getEntries().get(0);
             assertThat(value.getValues()[0])
                     .isEqualTo(59);
             assertThat(value.getTimestamp())
                     .isEqualTo(DateUtils.addSeconds(baseLine, 1));
 
-            value = timeSeriesDetails.getValues().get("Heartrate").get(0).getEntries().get(1);
+            value = timeSeriesRangeResult.getEntries().get(1);
             assertThat(value.getValues()[0])
                     .isEqualTo(62.5);
             assertThat(value.getTimestamp())
                     .isEqualTo(DateUtils.addSeconds(baseLine, 4));
 
-            value = timeSeriesDetails.getValues().get("Heartrate").get(0).getEntries().get(2);
+            value = timeSeriesRangeResult.getEntries().get(2);
             assertThat(value.getValues()[0])
                     .isEqualTo(62);
             assertThat(value.getTimestamp())
@@ -409,13 +393,9 @@ public class TimeSeriesOperationsTest extends RemoteTestBase {
 
             store.operations().send(timeSeriesBatch);
 
-            TimeSeriesDetails timeSeriesDetails = store.operations().send(new GetTimeSeriesOperation(documentId, "Heartrate", null, null));
+            TimeSeriesRangeResult timeSeriesRangeResult = store.operations().send(new GetTimeSeriesOperation(documentId, "Heartrate", null, null));
 
-            assertThat(timeSeriesDetails.getId())
-                    .isEqualTo(documentId);
-            assertThat(timeSeriesDetails.getValues())
-                    .hasSize(1);
-            assertThat(timeSeriesDetails.getValues().get("Heartrate").get(0).getEntries())
+            assertThat(timeSeriesRangeResult.getEntries())
                     .hasSize(3);
 
             timeSeriesOp = new TimeSeriesOperation("Heartrate",
@@ -432,34 +412,30 @@ public class TimeSeriesOperationsTest extends RemoteTestBase {
 
             store.operations().send(timeSeriesBatch);
 
-            timeSeriesDetails = store.operations().send(new GetTimeSeriesOperation(documentId, "Heartrate", null, null));
+            timeSeriesRangeResult = store.operations().send(new GetTimeSeriesOperation(documentId, "Heartrate", null, null));
 
-            assertThat(timeSeriesDetails.getId())
-                    .isEqualTo(documentId);
-            assertThat(timeSeriesDetails.getValues())
-                    .hasSize(1);
-            assertThat(timeSeriesDetails.getValues().get("Heartrate").get(0).getEntries())
+            assertThat(timeSeriesRangeResult.getEntries())
                     .hasSize(4);
 
-            TimeSeriesEntry value = timeSeriesDetails.getValues().get("Heartrate").get(0).getEntries().get(0);
+            TimeSeriesEntry value = timeSeriesRangeResult.getEntries().get(0);
             assertThat(value.getValues()[0])
                     .isEqualTo(59);
             assertThat(value.getTimestamp())
                     .isEqualTo(DateUtils.addSeconds(baseline, 1));
 
-            value = timeSeriesDetails.getValues().get("Heartrate").get(0).getEntries().get(1);
+            value = timeSeriesRangeResult.getEntries().get(1);
             assertThat(value.getValues()[0])
                     .isEqualTo(60);
             assertThat(value.getTimestamp())
                     .isEqualTo(DateUtils.addSeconds(baseline, 4));
 
-            value = timeSeriesDetails.getValues().get("Heartrate").get(0).getEntries().get(2);
+            value = timeSeriesRangeResult.getEntries().get(2);
             assertThat(value.getValues()[0])
                     .isEqualTo(62.5);
             assertThat(value.getTimestamp())
                     .isEqualTo(DateUtils.addSeconds(baseline, 5));
 
-            value = timeSeriesDetails.getValues().get("Heartrate").get(0).getEntries().get(3);
+            value = timeSeriesRangeResult.getEntries().get(3);
             assertThat(value.getValues()[0])
                     .isEqualTo(62);
             assertThat(value.getTimestamp())
@@ -509,7 +485,7 @@ public class TimeSeriesOperationsTest extends RemoteTestBase {
             TimeSeriesBatchOperation timeSeriesBatch = new TimeSeriesBatchOperation(documentId, timeSeriesOp);
             store.operations().send(timeSeriesBatch);
 
-            TimeSeriesDetails timeSeriesDetails = store.operations().send(new GetTimeSeriesOperation(documentId,
+            TimeSeriesDetails timeSeriesDetails = store.operations().send(new GetMultipleTimeSeriesOperation(documentId,
                     Arrays.asList(
                             new TimeSeriesRange("Heartrate", DateUtils.addMinutes(baseline, 5), DateUtils.addMinutes(baseline, 10)),
                             new TimeSeriesRange("Heartrate", DateUtils.addMinutes(baseline, 15), DateUtils.addMinutes(baseline, 30)),
@@ -625,7 +601,7 @@ public class TimeSeriesOperationsTest extends RemoteTestBase {
 
             // get ranges from multiple time series in a single request
 
-            TimeSeriesDetails timeSeriesDetails = store.operations().send(new GetTimeSeriesOperation(documentId,
+            TimeSeriesDetails timeSeriesDetails = store.operations().send(new GetMultipleTimeSeriesOperation(documentId,
                     Arrays.asList(
                             new TimeSeriesRange("Heartrate", baseline, DateUtils.addMinutes(baseline, 15)),
                             new TimeSeriesRange("Heartrate", DateUtils.addMinutes(baseline, 30), DateUtils.addMinutes(baseline, 45)),
@@ -794,7 +770,7 @@ public class TimeSeriesOperationsTest extends RemoteTestBase {
             store.operations().send(timeSeriesBatch);
 
             assertThatThrownBy(() -> {
-                store.operations().send(new GetTimeSeriesOperation("users/ayende",
+                store.operations().send(new GetMultipleTimeSeriesOperation("users/ayende",
                         Arrays.asList(
                                 new TimeSeriesRange(null, baseline, null)
                         )));

@@ -317,8 +317,8 @@ public class FirstClassPatchTest extends RemoteTestBase {
 
             try (IDocumentSession session = store.openSession()) {
                 //push
-                session.advanced().patch(_docId, "numbers", roles -> roles.add(3));
-                session.advanced().patch(_docId, "stuff", roles -> {
+                session.advanced().patchArray(_docId, "numbers", roles -> roles.add(3));
+                session.advanced().patchArray(_docId, "stuff", roles -> {
                     Stuff stuff1 = new Stuff();
                     stuff1.setKey(75);
                     roles.add(stuff1);
@@ -336,8 +336,8 @@ public class FirstClassPatchTest extends RemoteTestBase {
 
                 //concat
 
-                session.advanced().patch(loaded, "numbers", roles -> roles.add(101, 102, 103));
-                session.advanced().patch(loaded, "stuff", roles -> {
+                session.advanced().patchArray(loaded, "numbers", roles -> roles.add(101, 102, 103));
+                session.advanced().patchArray(loaded, "stuff", roles -> {
                     Stuff s1 = new Stuff();
                     s1.setKey(102);
 
@@ -361,7 +361,7 @@ public class FirstClassPatchTest extends RemoteTestBase {
                 assertThat(loaded.getStuff()[3].getPhone())
                         .isEqualTo("123456");
 
-                session.advanced().patch(loaded, "numbers", roles -> roles.add(Arrays.asList(201, 202, 203)));
+                session.advanced().patchArray(loaded, "numbers", roles -> roles.add(Arrays.asList(201, 202, 203)));
                 session.saveChanges();
             }
 
@@ -396,8 +396,8 @@ public class FirstClassPatchTest extends RemoteTestBase {
             }
 
             try (IDocumentSession session = store.openSession()) {
-                session.advanced().patch(_docId, "numbers", roles -> roles.removeAt(1));
-                session.advanced().patch(_docId, "stuff", roles -> roles.removeAt(0));
+                session.advanced().patchArray(_docId, "numbers", roles -> roles.removeAt(1));
+                session.advanced().patchArray(_docId, "stuff", roles -> roles.removeAt(0));
                 session.saveChanges();
             }
 
@@ -507,15 +507,15 @@ public class FirstClassPatchTest extends RemoteTestBase {
                 assertThat(((InMemoryDocumentSessionOperations)session).getDeferredCommandsCount())
                         .isEqualTo(1);
 
-                session.advanced().patch(_docId, "numbers", r -> r.add(77));
+                session.advanced().patchArray(_docId, "numbers", r -> r.add(77));
                 assertThat(((InMemoryDocumentSessionOperations)session).getDeferredCommandsCount())
                         .isEqualTo(1);
 
-                session.advanced().patch(_docId, "numbers", r-> r.add(88));
+                session.advanced().patchArray(_docId, "numbers", r-> r.add(88));
                 assertThat(((InMemoryDocumentSessionOperations)session).getDeferredCommandsCount())
                         .isEqualTo(1);
 
-                session.advanced().patch(_docId, "numbers", r -> r.removeAt(1));
+                session.advanced().patchArray(_docId, "numbers", r -> r.removeAt(1));
                 assertThat(((InMemoryDocumentSessionOperations)session).getDeferredCommandsCount())
                         .isEqualTo(1);
 

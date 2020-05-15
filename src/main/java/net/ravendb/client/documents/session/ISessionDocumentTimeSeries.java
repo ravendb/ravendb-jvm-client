@@ -10,6 +10,12 @@ import java.util.List;
  */
 public interface ISessionDocumentTimeSeries extends ISessionDocumentTimeSeriesBase {
     /**
+     * Return all time series values
+     * @return time series values
+     */
+    List<TimeSeriesEntry> get();
+
+    /**
      * Return the time series values for the provided range
      * @param from range start
      * @param to range end

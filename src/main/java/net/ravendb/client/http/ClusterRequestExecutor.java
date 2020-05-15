@@ -160,7 +160,7 @@ public class ClusterRequestExecutor extends RequestExecutor {
     }
 
     @Override
-    protected CompletableFuture<Void> updateClientConfigurationAsync() {
+    protected CompletableFuture<Void> updateClientConfigurationAsync(ServerNode serverNode) {
         return CompletableFuture.completedFuture(null);
     }
 

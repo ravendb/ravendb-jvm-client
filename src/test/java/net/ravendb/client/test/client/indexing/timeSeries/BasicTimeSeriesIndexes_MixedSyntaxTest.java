@@ -21,7 +21,6 @@ public class BasicTimeSeriesIndexes_MixedSyntaxTest extends RemoteTestBase {
     public void basicMapIndex() throws Exception {
         try (IDocumentStore store = getDocumentStore()) {
             Date now1 = new Date();
-            Date now2 = DateUtils.addSeconds(now1, 1);
 
             try (IDocumentSession session = store.openSession()) {
                 Company company = new Company();
@@ -46,7 +45,7 @@ public class BasicTimeSeriesIndexes_MixedSyntaxTest extends RemoteTestBase {
 
             waitForIndexing(store);
 
-            String[] terms = store.maintenance().send(new GetTermsOperation("MyTsIndex", "HeartBeat", null));
+            String[] terms = store.maintenance().send(new GetTermsOperation("MyTsIndex", "heartBeat", null));
             assertThat(terms)
                     .hasSize(1);
             assertThat(terms)

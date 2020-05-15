@@ -40,16 +40,26 @@ public class TimeSeriesIncludesToken extends QueryToken {
                 .append("'")
                 .append(", ");
 
-        writer
-                .append("'")
-                .append(NetISO8601Utils.format(_range.getFrom())) //TODO: test me! //TODO: support null?
-                .append("'")
-                .append(", ");
+        if (_range.getFrom() != null) {
+            writer
+                    .append("'")
+                    .append(NetISO8601Utils.format(_range.getFrom()))
+                    .append("'")
+                    .append(", ");
+        } else {
+            writer
+                    .append("null,");
+        }
 
-        writer
-                .append("'")
-                .append(NetISO8601Utils.format(_range.getTo())) //TODO: support null?
-                .append("'");
+        if (_range.getTo() != null) {
+            writer
+                    .append("'")
+                    .append(NetISO8601Utils.format(_range.getTo()))
+                    .append("'");
+        } else {
+            writer
+                    .append("null");
+        }
 
         writer
                 .append(")");

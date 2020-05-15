@@ -7,6 +7,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import net.ravendb.client.Constants;
 import net.ravendb.client.documents.commands.GetNextOperationIdCommand;
 import net.ravendb.client.documents.commands.KillOperationCommand;
+import net.ravendb.client.documents.commands.batches.CommandType;
 import net.ravendb.client.documents.conventions.DocumentConventions;
 import net.ravendb.client.documents.identity.GenerateEntityIdOnTheClient;
 import net.ravendb.client.documents.operations.GetOperationStateOperation;
@@ -34,9 +35,15 @@ import org.apache.http.entity.ContentType;
 import org.apache.http.impl.client.CloseableHttpClient;
 
 import java.io.*;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Date;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Collectors;
+import java.util.stream.DoubleStream;
 
 public class BulkInsertOperation implements CleanCloseable {
 
@@ -160,9 +167,13 @@ public class BulkInsertOperation implements CleanCloseable {
     private final StreamExposerContent _streamExposerContent;
 
     private boolean _first = true;
+    private CommandType _inProgressCommand;
+    private final CountersBulkInsertOperation _countersOperation;
+    private final AttachmentsBulkInsertOperation _attachmentsOperation;
     private long _operationId = -1;
 
     private boolean useCompression = false;
+    private final int _timeSeriesBatchSize;
 
     private final AtomicInteger _concurrentCheck = new AtomicInteger();
 
@@ -177,6 +188,10 @@ public class BulkInsertOperation implements CleanCloseable {
         _backgroundWriterBacking = new ByteArrayOutputStream();
         _backgroundWriter = new OutputStreamWriter(_backgroundWriterBacking);
         _streamExposerContent = new StreamExposerContent();
+        _countersOperation = new CountersBulkInsertOperation(this);
+        _attachmentsOperation = new AttachmentsBulkInsertOperation(this);
+
+        _timeSeriesBatchSize = _conventions.bulkInsert().getTimeSeriesBatchSize();
 
         _generateEntityIdOnTheClient = new GenerateEntityIdOnTheClient(_requestExecutor.getConventions(),
                 entity -> _requestExecutor.getConventions().generateDocumentId(database, entity));
@@ -206,30 +221,34 @@ public class BulkInsertOperation implements CleanCloseable {
         _operationId = bulkInsertGetIdRequest.getResult();
     }
 
+    @SuppressWarnings("UnusedReturnValue")
+    public String store(Object entity) {
+        return store(entity, (IMetadataDictionary) null);
+    }
+
+
+    public String store(Object entity, IMetadataDictionary metadata) {
+        String id;
+        if (metadata == null || !metadata.containsKey(Constants.Documents.Metadata.ID)) {
+            id = getId(entity);
+        } else {
+            id = (String) metadata.get(Constants.Documents.Metadata.ID);
+        }
+
+        store(entity, id, metadata);
+
+        return id;
+    }
+
     public void store(Object entity, String id)  {
         store(entity, id, null);
     }
 
     public void store(Object entity, String id, IMetadataDictionary metadata) {
-        if (!_concurrentCheck.compareAndSet(0, 1)) {
-            throw new IllegalStateException("Bulk Insert store methods cannot be executed concurrently.");
-        }
-
-        try {
+        try (CleanCloseable check = concurrencyCheck()) {
             verifyValidId(id);
 
-            if (_stream == null) {
-                waitForId();
-                ensureStream();
-            }
-
-            if (_bulkInsertExecuteTask.isCompletedExceptionally()) {
-                try {
-                    _bulkInsertExecuteTask.get();
-                } catch (Exception e) {
-                    throwBulkInsertAborted(e, null);
-                }
-            }
+            executeBeforeStore();
 
             if (metadata == null) {
                 metadata = new MetadataAsDictionary();
@@ -250,23 +269,24 @@ public class BulkInsertOperation implements CleanCloseable {
             }
 
             try {
+                endPreviousCommandIfNeeded();
+
                 if (!_first) {
-                    _currentWriter.write(",");
+                    writeComma();
                 }
 
                 _first = false;
+                _inProgressCommand = CommandType.NONE;
 
                 _currentWriter.write("{\"Id\":\"");
-                writeId(_currentWriter, id);
+                writeString(id);
                 _currentWriter.write("\",\"Type\":\"PUT\",\"Document\":");
 
-                _currentWriter.flush();
+                flushIfNeeded();
 
                 DocumentInfo documentInfo = new DocumentInfo();
                 documentInfo.setMetadataInstance(metadata);
                 ObjectNode json = EntityToJson.convertEntityToJson(entity, _conventions, documentInfo, true);
-
-                _currentWriter.flush();
 
                 try (JsonGenerator generator =
                         objectMapper.getFactory().createGenerator(_currentWriter)) {
@@ -276,77 +296,100 @@ public class BulkInsertOperation implements CleanCloseable {
                 }
 
                 _currentWriter.write("}");
-                _currentWriter.flush();
-
-                if (_currentWriterBacking.size() > _maxSizeInBuffer || _asyncWrite.isDone()) {
-
-                    _asyncWrite.get();
-
-                    Writer tmp = _currentWriter;
-                    _currentWriter = _backgroundWriter;
-                    _backgroundWriter = tmp;
-
-                    ByteArrayOutputStream tmpBaos = _currentWriterBacking;
-                    _currentWriterBacking = _backgroundWriterBacking;
-                    _backgroundWriterBacking = tmpBaos;
-
-                    _currentWriterBacking.reset();
-
-                    final byte[] buffer = _backgroundWriterBacking.toByteArray();
-                    _asyncWrite = CompletableFuture.supplyAsync(() -> {
-                        try {
-                            _requestBodyStream.write(buffer);
-
-                            // send this chunk
-                            _requestBodyStream.flush();
-                        } catch (IOException e) {
-                            throw new RuntimeException(e);
-                        }
-                        return null;
-                    }, _executorService);
-                }
             } catch (Exception e) {
-                RuntimeException error = getExceptionFromOperation();
-                if (error != null) {
-                    throw error;
-                }
-
-                throwOnUnavailableStream(id, e);
+                handleErrors(id, e);
             }
         } finally {
             _concurrentCheck.set(0);
         }
     }
 
-    private void writeId(Writer writer, String input) throws IOException {
+    private void handleErrors(String documentId, Exception e) {
+        BulkInsertAbortedException error = getExceptionFromOperation();
+        if (error != null) {
+            throw error;
+        }
+
+        throwOnUnavailableStream(documentId, e);
+    }
+
+    private CleanCloseable concurrencyCheck() {
+        if (!_concurrentCheck.compareAndSet(0, 1)) {
+            throw new IllegalStateException("Bulk Insert store methods cannot be executed concurrently.");
+        }
+
+        return () -> _concurrentCheck.compareAndSet(1, 0);
+    }
+
+    private void flushIfNeeded() throws IOException, ExecutionException, InterruptedException {
+        _currentWriter.flush();
+
+        if (_currentWriterBacking.size() > _maxSizeInBuffer || _asyncWrite.isDone()) {
+
+            _asyncWrite.get();
+
+            Writer tmp = _currentWriter;
+            _currentWriter = _backgroundWriter;
+            _backgroundWriter = tmp;
+
+            ByteArrayOutputStream tmpBaos = _currentWriterBacking;
+            _currentWriterBacking = _backgroundWriterBacking;
+            _backgroundWriterBacking = tmpBaos;
+
+            _currentWriterBacking.reset();
+
+            final byte[] buffer = _backgroundWriterBacking.toByteArray();
+            _asyncWrite = CompletableFuture.supplyAsync(() -> {
+                try {
+                    _requestBodyStream.write(buffer);
+
+                    // send this chunk
+                    _requestBodyStream.flush();
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
+                return null;
+            }, _executorService);
+        }
+    }
+
+    private void endPreviousCommandIfNeeded() {
+        if (_inProgressCommand == CommandType.COUNTERS) {
+            _countersOperation.endPreviousCommandIfNeeded();
+        } else if (_inProgressCommand == CommandType.TIME_SERIES) {
+            TimeSeriesBulkInsert.throwAlreadyRunningTimeSeries();
+        }
+    }
+
+    private void writeString(String input) throws IOException {
         for (int i = 0; i < input.length(); i++) {
             char c = input.charAt(i);
             if ('"' == c) {
                 if (i == 0 || input.charAt(i - 1) != '\\') {
-                    writer.write("\\");
+                    _currentWriter.write("\\");
                 }
             }
-            writer.write(c);
+            _currentWriter.write(c);
         }
     }
 
-    @SuppressWarnings("UnusedReturnValue")
-    public String store(Object entity) {
-        return store(entity, (IMetadataDictionary) null);
+    private void writeComma() throws IOException {
+        _currentWriter.write(",");
     }
 
-
-    public String store(Object entity, IMetadataDictionary metadata) {
-        String id;
-        if (metadata == null || !metadata.containsKey(Constants.Documents.Metadata.ID)) {
-            id = getId(entity);
-        } else {
-            id = (String) metadata.get(Constants.Documents.Metadata.ID);
+    private void executeBeforeStore() {
+        if (_stream == null) {
+            waitForId();
+            ensureStream();
         }
 
-        store(entity, id, metadata);
-
-        return id;
+        if (_bulkInsertExecuteTask.isCompletedExceptionally()) {
+            try {
+                _bulkInsertExecuteTask.get();
+            } catch (ExecutionException | InterruptedException e) {
+                throwBulkInsertAborted(e, null);
+            }
+        }
     }
 
     private static void verifyValidId(String id) {
@@ -430,6 +473,8 @@ public class BulkInsertOperation implements CleanCloseable {
 
     @Override
     public void close() {
+        endPreviousCommandIfNeeded();
+
         Exception flushEx = null;
 
         if (_stream != null) {
@@ -475,6 +520,272 @@ public class BulkInsertOperation implements CleanCloseable {
 
         _generateEntityIdOnTheClient.trySetIdentity(entity, idRef.value); // set id property if it was null
         return idRef.value;
+    }
+
+    public AttachmentsBulkInsert attachmentsFor(String id) {
+        if (StringUtils.isEmpty(id)) {
+            throw new IllegalArgumentException("Document id cannot be null or empty");
+        }
+
+        return new AttachmentsBulkInsert(this, id);
+    }
+
+    public CountersBulkInsert countersFor(String id) {
+        if (StringUtils.isEmpty(id)) {
+            throw new IllegalArgumentException("Document id cannot be null or empty");
+        }
+
+        return new CountersBulkInsert(this, id);
+    }
+
+    public TimeSeriesBulkInsert timeSeriesFor(String id, String name) {
+        if (StringUtils.isEmpty(id)) {
+            throw new IllegalArgumentException("Document id cannot be null or empty");
+        }
+
+        if (StringUtils.isEmpty(name)) {
+            throw new IllegalArgumentException("Time series name cannot be null or empty");
+        }
+
+        return new TimeSeriesBulkInsert(this, id, name);
+    }
+
+    public static class CountersBulkInsert {
+        private final BulkInsertOperation _operation;
+        private final String _id;
+
+        public CountersBulkInsert(BulkInsertOperation operation, String id) {
+            _operation = operation;
+            _id = id;
+        }
+
+        public void increment(String name) {
+            increment(name, 1L);
+        }
+
+        public void increment(String name, long delta) {
+            _operation._countersOperation.increment(_id, name, delta);
+        }
+    }
+
+    private static class CountersBulkInsertOperation {
+        private final BulkInsertOperation _operation;
+        private String _id;
+        private boolean _first = true;
+        private static final int MAX_COUNTERS_IN_BATCH = 1024;
+        private int _countersInBatch = 0;
+
+        public CountersBulkInsertOperation(BulkInsertOperation bulkInsertOperation) {
+            _operation = bulkInsertOperation;
+        }
+
+        public void increment(String id, String name) {
+            increment(id, name, 1L);
+        }
+
+        public void increment(String id, String name, long delta) {
+            try (CleanCloseable check = _operation.concurrencyCheck()) {
+                _operation.executeBeforeStore();
+
+                if (_operation._inProgressCommand == CommandType.TIME_SERIES) {
+                    TimeSeriesBulkInsert.throwAlreadyRunningTimeSeries();
+                }
+
+
+                try {
+
+                    boolean isFirst = _id == null;
+
+                    if (isFirst || !_id.equalsIgnoreCase(id)) {
+                        if (!isFirst) {
+                            //we need to end the command for the previous document id
+                            _operation._currentWriter.write("]}},");
+                        } else if (!_operation._first) {
+                            _operation.writeComma();
+                        }
+
+                        _operation._first = false;
+
+                        _id = id;
+                        _operation._inProgressCommand = CommandType.COUNTERS;
+
+                        writePrefixForNewCommand();
+                    }
+
+                    if (_countersInBatch >= MAX_COUNTERS_IN_BATCH) {
+                        _operation._currentWriter.write("]}},");
+
+                        writePrefixForNewCommand();
+                    }
+
+                    _countersInBatch++;
+
+                    if (!_first) {
+                        _operation.writeComma();
+                    }
+
+                    _first = false;
+
+                    _operation._currentWriter.write("{\"Type\":\"Increment\",\"CounterName\":\"");
+                    _operation.writeString(name);
+                    _operation._currentWriter.write("\",\"Delta\":");
+                    _operation._currentWriter.write(String.valueOf(delta));
+                    _operation._currentWriter.write("}");
+
+                    _operation.flushIfNeeded();
+                } catch (Exception e) {
+                    _operation.handleErrors(_id, e);
+                }
+            }
+        }
+
+        public void endPreviousCommandIfNeeded() {
+            if (_id == null) {
+                return;
+            }
+
+            try {
+                _operation._currentWriter.write("]}}");
+                _id = null;
+            } catch (IOException e) {
+                throw new RavenException("Unable to write to stream", e);
+            }
+        }
+
+        private void writePrefixForNewCommand() throws IOException {
+            _first = true;
+            _countersInBatch = 0;
+
+            _operation._currentWriter.write("{\"Id\":\"");
+            _operation.writeString(_id);
+            _operation._currentWriter.write("\",\"Type\":\"Counters\",\"Counters\":{\"DocumentId\":\"");
+            _operation.writeString(_id);
+            _operation._currentWriter.write("\",\"Operations\":[");
+        }
+    }
+
+    public static class TimeSeriesBulkInsert implements Closeable {
+        private final BulkInsertOperation _operation;
+        private final String _id;
+        private final String _name;
+        private boolean _first = true;
+        private int _timeSeriesInBatch = 0;
+
+        public TimeSeriesBulkInsert(BulkInsertOperation operation, String id, String name) {
+            operation.endPreviousCommandIfNeeded();
+
+            _operation = operation;
+            _id = id;
+            _name = name;
+
+            _operation._inProgressCommand = CommandType.TIME_SERIES;
+        }
+
+        public void append(Date timestamp, double value) {
+            append(timestamp, value, null);
+        }
+
+        public void append(Date timestamp, double value, String tag) {
+            appendInternal(timestamp, Collections.singletonList(value), tag);
+        }
+
+        public void append(Date timestamp, double[] values) {
+            append(timestamp, values, null);
+        }
+
+        public void append(Date timestamp, double[] values, String tag) {
+            appendInternal(timestamp, DoubleStream.of(values).boxed().collect(Collectors.toList()), tag);
+        }
+
+        public void append(Date timestamp, Collection<Double> values) {
+            append(timestamp, values, null);
+        }
+
+        public void append(Date timestamp, Collection<Double> values, String tag) {
+            appendInternal(timestamp, values, tag);
+        }
+
+        private void appendInternal(Date timestamp, Collection<Double> values, String tag) {
+            try (CleanCloseable check = _operation.concurrencyCheck()) {
+                _operation.executeBeforeStore();
+
+                try {
+                    if (_first) {
+                        if (!_operation._first) {
+                            _operation.writeComma();
+                        }
+
+                        writePrefixForNewCommand();
+                    } else if (_timeSeriesInBatch >= _operation._timeSeriesBatchSize) {
+                        _operation._currentWriter.write("]}},");
+                        writePrefixForNewCommand();
+                    }
+
+                    _timeSeriesInBatch++;
+
+                    if (!_first) {
+                        _operation.writeComma();
+                    }
+
+                    _first = false;
+
+                    _operation._currentWriter.write("[");
+
+                    _operation._currentWriter.write(String.valueOf(timestamp.getTime()));
+                    _operation.writeComma();
+
+                    _operation._currentWriter.write(String.valueOf(values.size()));
+                    _operation.writeComma();
+
+                    boolean firstValue = true;
+
+                    for (Double value : values) {
+                        if (!firstValue) {
+                            _operation.writeComma();
+                        }
+
+                        firstValue = false;
+                        _operation._currentWriter.write(String.valueOf(value));
+                    }
+
+                    if (tag != null) {
+                        _operation._currentWriter.write(",\"");
+                        _operation.writeString(tag);
+                        _operation._currentWriter.write("\"");
+                    }
+
+                    _operation._currentWriter.write("]");
+
+                    _operation.flushIfNeeded();
+                } catch (Exception e) {
+                    _operation.handleErrors(_id, e);
+                }
+            }
+        }
+
+        private void writePrefixForNewCommand() throws IOException {
+            _first = true;
+            _timeSeriesInBatch = 0;
+
+            _operation._currentWriter.write("{\"Id\":\"");
+            _operation.writeString(_id);
+            _operation._currentWriter.write("\",\"Type\":\"TimeSeriesBulkInsert\",\"TimeSeries\":{\"Name\":\"");
+            _operation.writeString(_name);
+            _operation._currentWriter.write("\",\"TimeFormat\":\"UnixTimeInMs\",\"Appends\":[");
+        }
+
+        static void throwAlreadyRunningTimeSeries() {
+            throw new IllegalStateException("There is an already running time series operation, did you forget to close it?");
+        }
+
+        @Override
+        public void close() throws IOException {
+            _operation._inProgressCommand = CommandType.NONE;
+
+            if (!_first) {
+                _operation._currentWriter.write("]}}");
+            }
+        }
     }
 
 }

@@ -1,5 +1,6 @@
 package net.ravendb.client.test.client.indexing.timeSeries;
 
+import net.ravendb.client.RavenTestHelper;
 import net.ravendb.client.RemoteTestBase;
 import net.ravendb.client.documents.IDocumentStore;
 import net.ravendb.client.documents.indexes.timeSeries.AbstractMultiMapTimeSeriesIndexCreationTask;
@@ -11,6 +12,7 @@ import net.ravendb.client.infrastructure.entities.User;
 import org.apache.commons.lang3.time.DateUtils;
 import org.junit.jupiter.api.Test;
 
+import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 
@@ -21,8 +23,7 @@ public class BasicTimeSeriesIndexes_StrongSyntaxTest extends RemoteTestBase {
     @Test
     public void basicMapIndex() throws Exception {
         try (IDocumentStore store = getDocumentStore()) {
-            Date now1 = new Date();
-            Date now2 = DateUtils.addSeconds(now1, 1);
+            Date now1 = RavenTestHelper.utcToday();
 
             try (IDocumentSession session = store.openSession()) {
                 Company company = new Company();
@@ -53,7 +54,7 @@ public class BasicTimeSeriesIndexes_StrongSyntaxTest extends RemoteTestBase {
                 MyMultiMapTsIndex.Result result = results.get(0);
 
                 assertThat(result.getDate())
-                        .isEqualTo(now1); //TODO: truncate to day!
+                        .isEqualTo(now1);
                 assertThat(result.getUser())
                         .isNotNull();
                 assertThat(result.getHeartBeat())
@@ -64,7 +65,7 @@ public class BasicTimeSeriesIndexes_StrongSyntaxTest extends RemoteTestBase {
 
     @Test
     public void basicMultiMapIndex() throws Exception {
-        Date now = new Date();
+        Date now = RavenTestHelper.utcToday();
 
         try (IDocumentStore store = getDocumentStore()) {
             MyMultiMapTsIndex timeSeriesIndex = new MyMultiMapTsIndex();
@@ -99,7 +100,7 @@ public class BasicTimeSeriesIndexes_StrongSyntaxTest extends RemoteTestBase {
                 MyMultiMapTsIndex.Result result = results.get(0);
 
                 assertThat(result.getDate())
-                        .isEqualTo(now); //TODO: truncate to day!
+                        .isEqualTo(now);
                 assertThat(result.getUser())
                         .isNotNull();
                 assertThat(result.getHeartBeat())

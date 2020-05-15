@@ -1273,6 +1273,9 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
             if (_countersByDocId != null) {
                 _countersByDocId.remove(documentInfo.getId());
             }
+            if (_timeSeriesByDocId != null) {
+                _timeSeriesByDocId.remove(documentInfo.getId());
+            }
         }
 
         deletedEntities.evict(entity);

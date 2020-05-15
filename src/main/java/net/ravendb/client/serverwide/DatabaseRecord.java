@@ -15,6 +15,7 @@ import net.ravendb.client.documents.operations.replication.PullReplicationAsSink
 import net.ravendb.client.documents.operations.replication.PullReplicationDefinition;
 import net.ravendb.client.documents.operations.revisions.RevisionsCollectionConfiguration;
 import net.ravendb.client.documents.operations.revisions.RevisionsConfiguration;
+import net.ravendb.client.documents.operations.timeSeries.TimeSeriesConfiguration;
 import net.ravendb.client.documents.queries.sorting.SorterDefinition;
 import net.ravendb.client.documents.operations.etl.RavenConnectionString;
 import net.ravendb.client.primitives.UseSharpEnum;
@@ -30,12 +31,14 @@ public class DatabaseRecord {
     private DatabaseStateStatus databaseStatus;
     private DatabaseTopology topology;
     private ConflictSolver conflictSolverConfig;
+    private DocumentsCompressionConfiguration documentsCompression;
     private Map<String, SorterDefinition> sorters = new HashMap<>();
     private Map<String, IndexDefinition> indexes;
     private Map<String, List<IndexHistoryEntry>> indexesHistory;
     private Map<String, AutoIndexDefinition> autoIndexes;
     private Map<String, String> settings = new HashMap<>();
     private RevisionsConfiguration revisions;
+    private TimeSeriesConfiguration timeSeries;
     private RevisionsCollectionConfiguration revisionsForConflicts;
     private ExpirationConfiguration expiration;
     private RefreshConfiguration refresh;
@@ -89,6 +92,14 @@ public class DatabaseRecord {
 
     public void setConflictSolverConfig(ConflictSolver conflictSolverConfig) {
         this.conflictSolverConfig = conflictSolverConfig;
+    }
+
+    public DocumentsCompressionConfiguration getDocumentsCompression() {
+        return documentsCompression;
+    }
+
+    public void setDocumentsCompression(DocumentsCompressionConfiguration documentsCompression) {
+        this.documentsCompression = documentsCompression;
     }
 
     public boolean isEncrypted() {
@@ -153,6 +164,14 @@ public class DatabaseRecord {
 
     public void setRevisions(RevisionsConfiguration revisions) {
         this.revisions = revisions;
+    }
+
+    public TimeSeriesConfiguration getTimeSeries() {
+        return timeSeries;
+    }
+
+    public void setTimeSeries(TimeSeriesConfiguration timeSeries) {
+        this.timeSeries = timeSeries;
     }
 
     public ExpirationConfiguration getExpiration() {

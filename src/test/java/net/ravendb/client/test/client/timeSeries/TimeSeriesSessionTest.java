@@ -246,14 +246,14 @@ public class TimeSeriesSessionTest extends RemoteTestBase {
                 assertThat(vals.get(0).getTag())
                         .isEqualTo("watches/apple");
                 assertThat(vals.get(0).getTimestamp())
-                        .isEqualTo(DateUtils.addMinutes(baseLine, 2));
+                        .isEqualTo(DateUtils.addMinutes(baseLine, 1));
 
                 assertThat(vals.get(1).getValues())
                         .isEqualTo(new double[] { 59 });
                 assertThat(vals.get(1).getTag())
                         .isEqualTo("watches/fitbit");
                 assertThat(vals.get(1).getTimestamp())
-                        .isEqualTo(DateUtils.addMinutes(baseLine, 1));
+                        .isEqualTo(DateUtils.addMinutes(baseLine, 2));
 
                 assertThat(vals.get(2).getValues())
                         .isEqualTo(new double[] { 69 });

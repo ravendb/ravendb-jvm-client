@@ -204,7 +204,7 @@ public class EntityToJson {
         try {
             objectMapper.updateValue(entity, document);
         } catch (IOException e) {
-            throw new IllegalStateException("Could not populate entity");
+            throw new IllegalStateException("Could not populate entity", e);
         }
     }
 

@@ -5,7 +5,18 @@ import net.ravendb.client.documents.indexes.IndexErrors;
 import net.ravendb.client.documents.indexes.IndexingError;
 import net.ravendb.client.documents.operations.indexes.GetIndexErrorsOperation;
 
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
+import java.util.Date;
+
 public class RavenTestHelper {
+
+    public static Date utcToday() {
+        Instant today = Instant.now()
+                .truncatedTo(ChronoUnit.DAYS);
+
+        return Date.from(today);
+    }
 
     public static void assertNoIndexErrors(IDocumentStore store) {
         assertNoIndexErrors(store, null);

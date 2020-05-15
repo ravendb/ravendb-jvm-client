@@ -4,8 +4,8 @@ import java.util.Date;
 
 public class TimeSeriesRange {
     private String name;
-    private Date from; //TODO: support for null in c#?
-    private Date to; //TODO: support for null in c#
+    private Date from;
+    private Date to;
 
     public TimeSeriesRange() {
     }

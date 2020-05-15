@@ -126,7 +126,7 @@ public class GraphDocumentQuery<T> extends AbstractDocumentQuery<T, GraphDocumen
     @SuppressWarnings("unchecked")
     @Override
     public <TOther> IGraphDocumentQuery<T> with(String alias, IDocumentQuery<TOther> query) {
-        //TODO: ParameterPrefix = $"w{WithTokens.Count}p
+        setParameterPrefix("w" + withTokens.size() + "p");
         return withInternal(query.getQueryClass(), alias, (AbstractDocumentQuery<TOther, ?>) query);
     }
 

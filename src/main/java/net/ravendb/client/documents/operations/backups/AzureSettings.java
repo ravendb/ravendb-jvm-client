@@ -5,6 +5,7 @@ public class AzureSettings extends BackupSettings {
     private String remoteFolderName;
     private String accountName;
     private String accountKey;
+    private String sasToken;
 
     public String getStorageContainer() {
         return storageContainer;
@@ -36,5 +37,13 @@ public class AzureSettings extends BackupSettings {
 
     public void setAccountKey(String accountKey) {
         this.accountKey = accountKey;
+    }
+
+    public String getSasToken() {
+        return sasToken;
+    }
+
+    public void setSasToken(String sasToken) {
+        this.sasToken = sasToken;
     }
 }

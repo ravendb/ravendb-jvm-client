@@ -3,12 +3,12 @@ package net.ravendb.client.documents.operations.timeSeries;
 import java.util.ArrayList;
 import java.util.List;
 
-public class TimeSeriesStats {
+public class TimeSeriesStatistics {
 
     private String documentId;
     private List<TimeSeriesItemDetail> timeSeries;
 
-    public TimeSeriesStats() {
+    public TimeSeriesStatistics() {
         timeSeries = new ArrayList<>();
     }
 
