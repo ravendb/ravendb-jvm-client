@@ -96,7 +96,7 @@ public class BulkInsertsTest extends RemoteTestBase {
 
     @Test
     public void canModifyMetadataWithBulkInsert() throws Exception {
-        String expirationDate = NetISO8601Utils.format(DateUtils.addYears(new Date(), 1));
+        String expirationDate = NetISO8601Utils.format(DateUtils.addYears(new Date(), 1), true);
 
         try (IDocumentStore store = getDocumentStore()) {
             try (BulkInsertOperation bulkInsert = store.bulkInsert()) {

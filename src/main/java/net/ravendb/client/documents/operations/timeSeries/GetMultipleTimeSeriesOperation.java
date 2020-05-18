@@ -14,78 +14,71 @@ import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpRequestBase;
 
 import java.io.IOException;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Date;
 import java.util.List;
 
-public class GetTimeSeriesOperation implements IOperation<TimeSeriesRangeResult> {
+public class GetMultipleTimeSeriesOperation implements IOperation<TimeSeriesDetails> {
+
     private final String _docId;
-    private final String _name;
+    private List<TimeSeriesRange> _ranges;
     private final int _start;
     private final int _pageSize;
-    private final Date _from;
-    private final Date _to;
 
-    public GetTimeSeriesOperation(String docId, String timeseries) {
-        this(docId, timeseries, null, null, 0, Integer.MAX_VALUE);
+    public GetMultipleTimeSeriesOperation(String docId, List<TimeSeriesRange> ranges) {
+        this(docId, ranges, 0, Integer.MAX_VALUE);
     }
 
-    public GetTimeSeriesOperation(String docId, String timeseries, Date from, Date to) {
-        this(docId, timeseries, from, to, 0, Integer.MAX_VALUE);
+    public GetMultipleTimeSeriesOperation(String docId, List<TimeSeriesRange> ranges, int start, int pageSize) {
+        this(docId, start, pageSize);
+
+        if (ranges == null) {
+            throw new IllegalArgumentException("Ranges cannot be null");
+        }
+
+        _ranges = ranges;
     }
 
-    public GetTimeSeriesOperation(String docId, String timeseries, Date from, Date to, int start) {
-        this(docId, timeseries, from, to, start, Integer.MAX_VALUE);
-    }
-
-    public GetTimeSeriesOperation(String docId, String timeseries, Date from, Date to, int start, int pageSize) {
+    private GetMultipleTimeSeriesOperation(String docId, int start, int pageSize) {
         if (StringUtils.isEmpty(docId)) {
             throw new IllegalArgumentException("DocId cannot be null or empty");
-        }
-        if (StringUtils.isEmpty(timeseries)) {
-            throw new IllegalArgumentException("Timeseries cannot be null or empty");
         }
 
         _docId = docId;
         _start = start;
         _pageSize = pageSize;
-        _name = timeseries;
-        _from = from;
-        _to = to;
     }
 
     @Override
-    public RavenCommand<TimeSeriesRangeResult> getCommand(IDocumentStore store, DocumentConventions conventions, HttpCache cache) {
-        return new GetTimeSeriesCommand(_docId, _name, _from, _to, _start, _pageSize);
+    public RavenCommand<TimeSeriesDetails> getCommand(IDocumentStore store, DocumentConventions conventions, HttpCache cache) {
+        return new GetMultipleTimeSeriesCommand(_docId, _ranges, _start, _pageSize);
     }
 
-    private static class GetTimeSeriesCommand extends RavenCommand<TimeSeriesRangeResult> {
+    public static class GetMultipleTimeSeriesCommand extends RavenCommand<TimeSeriesDetails> {
         private final String _docId;
-        private final String _name;
+        private final List<TimeSeriesRange> _ranges;
         private final int _start;
         private final int _pageSize;
-        private final Date _from;
-        private final Date _to;
 
-        public GetTimeSeriesCommand(String docId, String name, Date from, Date to, int start, int pageSize) {
-            super(TimeSeriesRangeResult.class);
+        public GetMultipleTimeSeriesCommand(String docId, List<TimeSeriesRange> ranges, int start, int pageSize) {
+            super(TimeSeriesDetails.class);
+
+            if (docId == null) {
+                throw new IllegalArgumentException("DocId cannot be null");
+            }
 
             _docId = docId;
-            _name = name;
+            _ranges = ranges;
             _start = start;
             _pageSize = pageSize;
-            _from = from;
-            _to = to;
         }
 
         @Override
         public HttpRequestBase createRequest(ServerNode node, Reference<String> url) {
             StringBuilder pathBuilder = new StringBuilder(node.getUrl());
+
             pathBuilder
                     .append("/databases/")
                     .append(node.getDatabase())
-                    .append("/timeseries")
+                    .append("/timeseries/ranges")
                     .append("?docId=")
                     .append(urlEncode(_docId));
 
@@ -101,20 +94,23 @@ public class GetTimeSeriesOperation implements IOperation<TimeSeriesRangeResult>
                         .append(_pageSize);
             }
 
-            pathBuilder
-                    .append("&name=")
-                    .append(urlEncode(_name));
-
-            if (_from != null) {
-                pathBuilder
-                        .append("&from=")
-                        .append(NetISO8601Utils.format(_from, true));
+            if (_ranges.isEmpty()) {
+                throw new IllegalArgumentException("Ranges cannot be null or empty");
             }
 
-            if (_to != null) {
+            for (TimeSeriesRange range : _ranges) {
+                if (StringUtils.isEmpty(range.getName())) {
+                    throw new IllegalArgumentException("Missing name argument in TimeSeriesRange. Name cannot be null or empty");
+                }
+
+                //TODO: avoid min/max values here?
                 pathBuilder
+                        .append("&name=")
+                        .append(ObjectUtils.firstNonNull(range.getName(), ""))
+                        .append("&from=")
+                        .append(range.getFrom() == null ? NetISO8601Utils.MIN_DATE_AS_STRING : NetISO8601Utils.format(range.getFrom(), true))
                         .append("&to=")
-                        .append(NetISO8601Utils.format(_to, true));
+                        .append(range.getTo() == null ? NetISO8601Utils.MAX_DATE_AS_STRING : NetISO8601Utils.format(range.getTo(), true));
             }
 
             url.value = pathBuilder.toString();

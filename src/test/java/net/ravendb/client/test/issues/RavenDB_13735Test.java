@@ -39,7 +39,7 @@ public class RavenDB_13735Test extends RemoteTestBase {
                 session.store(user, "users/1-A");
 
                 Date hourAgo = DateUtils.addHours(new Date(), -1);
-                session.advanced().getMetadataFor(user).put("@refresh", NetISO8601Utils.format(hourAgo));
+                session.advanced().getMetadataFor(user).put("@refresh", NetISO8601Utils.format(hourAgo, true));
 
                 session.saveChanges();
 

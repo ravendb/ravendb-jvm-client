@@ -35,6 +35,11 @@ public class IncludeBuilder extends IncludeBuilderBase implements IIncludeBuilde
     }
 
     @Override
+    public IIncludeBuilder includeTimeSeries(String name) {
+        return includeTimeSeries(name, null, null);
+    }
+
+    @Override
     public IIncludeBuilder includeTimeSeries(String name, Date from, Date to) {
         _includeTimeSeries("", name, from, to);
         return this;

@@ -77,7 +77,9 @@ public class DocumentConventions {
     private Boolean _useCompression;
     private boolean _sendApplicationIdentifier;
 
-    private AggressiveCacheConventions _aggressiveCache;
+    private final BulkInsertConventions _bulkInsert;
+
+    private final AggressiveCacheConventions _aggressiveCache;
 
     public AggressiveCacheConventions aggressiveCache() {
         return _aggressiveCache;
@@ -109,6 +111,34 @@ public class DocumentConventions {
         }
     }
 
+    public BulkInsertConventions bulkInsert() {
+        return _bulkInsert;
+    }
+
+    public static class BulkInsertConventions {
+        private final DocumentConventions _conventions;
+        private int _timeSeriesBatchSize;
+
+        public BulkInsertConventions(DocumentConventions conventions) {
+            _conventions = conventions;
+            _timeSeriesBatchSize = 1024;
+        }
+
+        public int getTimeSeriesBatchSize() {
+            return _timeSeriesBatchSize;
+        }
+
+        public void setTimeSeriesBatchSize(int batchSize) {
+            _conventions.assertNotFrozen();
+
+            if (batchSize <= 0) {
+                throw new IllegalArgumentException("BatchSize must be positive");
+            }
+            _timeSeriesBatchSize = batchSize;
+        }
+
+    }
+
     public DocumentConventions() {
         _readBalanceBehavior = ReadBalanceBehavior.NONE;
         _findIdentityProperty = q -> q.getName().equals("id");
@@ -138,6 +168,7 @@ public class DocumentConventions {
         _findCollectionName = type -> defaultGetCollectionName(type);
 
         _maxNumberOfRequestsPerSession = 30;
+        _bulkInsert = new BulkInsertConventions(this);
         _maxHttpCacheSize = 128 * 1024 * 1024;
 
         _entityMapper = JsonExtensions.getDefaultEntityMapper();

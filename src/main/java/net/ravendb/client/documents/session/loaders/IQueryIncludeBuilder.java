@@ -9,5 +9,7 @@ public interface IQueryIncludeBuilder extends IGenericIncludeBuilder<IQueryInclu
 
     IQueryIncludeBuilder includeAllCounters(String path);
 
+    IQueryIncludeBuilder includeTimeSeries(String path, String name);
+
     IQueryIncludeBuilder includeTimeSeries(String path, String name, Date from, Date to);
 }

@@ -602,7 +602,6 @@ public class DocumentSession extends InMemoryDocumentSessionOperations implement
 
     @Override
     public <T, U> void patch(String id, String path, U value) {
-
         PatchRequest patchRequest = new PatchRequest();
         patchRequest.setScript("this." + path + " = args.val_" + _valsCount + ";");
         patchRequest.setValues(Collections.singletonMap("val_" + _valsCount, value));
@@ -615,14 +614,14 @@ public class DocumentSession extends InMemoryDocumentSessionOperations implement
     }
 
     @Override
-    public <T, U> void patch(T entity, String pathToArray, Consumer<JavaScriptArray<U>> arrayAdder) {
+    public <T, U> void patchArray(T entity, String pathToArray, Consumer<JavaScriptArray<U>> arrayAdder) {
         IMetadataDictionary metadata = getMetadataFor(entity);
         String id = (String) metadata.get(Constants.Documents.Metadata.ID);
-        patch(id, pathToArray, arrayAdder);
+        patchArray(id, pathToArray, arrayAdder);
     }
 
     @Override
-    public <T, U> void patch(String id, String pathToArray, Consumer<JavaScriptArray<U>> arrayAdder) {
+    public <T, U> void patchArray(String id, String pathToArray, Consumer<JavaScriptArray<U>> arrayAdder) {
         JavaScriptArray<U> scriptArray = new JavaScriptArray<>(_customCount++, pathToArray);
 
         arrayAdder.accept(scriptArray);

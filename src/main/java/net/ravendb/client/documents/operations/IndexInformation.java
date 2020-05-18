@@ -1,10 +1,7 @@
 package net.ravendb.client.documents.operations;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import net.ravendb.client.documents.indexes.IndexLockMode;
-import net.ravendb.client.documents.indexes.IndexPriority;
-import net.ravendb.client.documents.indexes.IndexState;
-import net.ravendb.client.documents.indexes.IndexType;
+import net.ravendb.client.documents.indexes.*;
 
 import java.util.Date;
 
@@ -18,6 +15,7 @@ public class IndexInformation {
     private IndexPriority priority;
     private IndexType type;
     private Date lastIndexingTime;
+    private IndexSourceType sourceType;
 
     public String getName() {
         return name;
@@ -73,5 +71,13 @@ public class IndexInformation {
 
     public void setLastIndexingTime(Date lastIndexingTime) {
         this.lastIndexingTime = lastIndexingTime;
+    }
+
+    public IndexSourceType getSourceType() {
+        return sourceType;
+    }
+
+    public void setSourceType(IndexSourceType sourceType) {
+        this.sourceType = sourceType;
     }
 }

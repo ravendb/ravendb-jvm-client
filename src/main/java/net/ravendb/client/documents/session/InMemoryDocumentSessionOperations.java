@@ -20,6 +20,7 @@ import net.ravendb.client.documents.operations.OperationExecutor;
 import net.ravendb.client.documents.operations.SessionOperationExecutor;
 import net.ravendb.client.documents.operations.timeSeries.TimeSeriesRangeResult;
 import net.ravendb.client.documents.session.operations.lazy.ILazyOperation;
+import net.ravendb.client.documents.session.timeSeries.TimeSeriesEntry;
 import net.ravendb.client.exceptions.documents.session.NonUniqueObjectException;
 import net.ravendb.client.extensions.JsonExtensions;
 import net.ravendb.client.http.CurrentIndexAndNode;
@@ -33,6 +34,7 @@ import net.ravendb.client.primitives.*;
 import net.ravendb.client.util.IdentityHashSet;
 import net.ravendb.client.util.IdentityLinkedHashMap;
 import org.apache.commons.beanutils.BeanUtils;
+import org.apache.commons.collections.ListUtils;
 import org.apache.commons.lang3.NotImplementedException;
 import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -454,7 +456,7 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
 
         JsonNode array = documentInfo.getMetadata().get(Constants.Documents.Metadata.TIME_SERIES);
         if (array == null) {
-            return null; //TODO: or return empty list? RavenDB-14942
+            return Collections.emptyList();
         }
 
         ArrayNode bjra = (ArrayNode) array;
@@ -1654,6 +1656,104 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
                 }
             }
         }
+
+    private static void addToCache(Map<String, List<TimeSeriesRangeResult>> cache,
+                                   TimeSeriesRangeResult newRange,
+                                   String name) {
+        List<TimeSeriesRangeResult> localRanges = cache.get(name);
+        if (localRanges == null || localRanges.isEmpty()) {
+            // no local ranges in cache for this series
+
+            cache.put(name, Arrays.asList(newRange));
+            return;
+        }
+
+        if (localRanges.get(0).getFrom().getTime() > newRange.getTo().getTime() || localRanges.get(localRanges.size() - 1).getTo().getTime() < newRange.getFrom().getTime()) {
+            // the entire range [from, to] is out of cache bounds
+
+            int index = localRanges.get(0).getFrom().getTime() > newRange.getTo().getTime() ? 0 : localRanges.size();
+            localRanges.add(index, newRange);
+            return;
+        }
+
+        int toRangeIndex;
+        int fromRangeIndex = -1;
+        boolean rangeAlreadyInCache = false;
+
+        for (toRangeIndex = 0; toRangeIndex < localRanges.size(); toRangeIndex++) {
+            if (localRanges.get(toRangeIndex).getFrom().getTime() <= newRange.getFrom().getTime()) {
+                if (localRanges.get(toRangeIndex).getTo().getTime() >= newRange.getTo().getTime()) {
+                    rangeAlreadyInCache = true;
+                    break;
+                }
+
+                fromRangeIndex = toRangeIndex;
+                continue;
+            }
+
+            if (localRanges.get(toRangeIndex).getTo().getTime() >= newRange.getTo().getTime()) {
+                break;
+            }
+        }
+
+        if (rangeAlreadyInCache) {
+            updateExistingRange(localRanges.get(toRangeIndex), newRange);
+            return;
+        }
+
+        List<TimeSeriesEntry> mergedValues = mergeRanges(fromRangeIndex, toRangeIndex, localRanges, newRange);
+        SessionDocumentTimeSeries.addToCache(name, newRange.getFrom(), newRange.getTo(), fromRangeIndex, toRangeIndex, localRanges, cache, mergedValues);
+    }
+    private static List<TimeSeriesEntry> mergeRanges(int fromRangeIndex, int toRangeIndex, List<TimeSeriesRangeResult> localRanges, TimeSeriesRangeResult newRange) {
+        List<TimeSeriesEntry> mergedValues = new ArrayList<>();
+
+        if (fromRangeIndex != -1 && localRanges.get(fromRangeIndex).getTo().getTime() >= newRange.getFrom().getTime()) {
+            for (TimeSeriesEntry val : localRanges.get(fromRangeIndex).getEntries()) {
+                if (val.getTimestamp().getTime() >= newRange.getFrom().getTime()) {
+                    break;
+                }
+                mergedValues.add(val);
+            }
+        }
+
+        mergedValues.addAll(newRange.getEntries());
+
+        if (toRangeIndex < localRanges.size() && localRanges.get(toRangeIndex).getFrom().getTime() <= newRange.getTo().getTime()) {
+            for (TimeSeriesEntry val : localRanges.get(toRangeIndex).getEntries()) {
+                if (val.getTimestamp().getTime() <= newRange.getTo().getTime()) {
+                    continue;
+                }
+                mergedValues.add(val);
+            }
+        }
+
+        return mergedValues;
+    }
+
+    private static void updateExistingRange(TimeSeriesRangeResult localRange, TimeSeriesRangeResult newRange) {
+        List<TimeSeriesEntry> newValues = new ArrayList<>();
+        int index;
+        for (index = 0; index < localRange.getEntries().size(); index++) {
+            if (localRange.getEntries().get(index).getTimestamp().getTime() >= newRange.getFrom().getTime()) {
+                break;
+            }
+
+            newValues.add(localRange.getEntries().get(index));
+        }
+
+        newValues.addAll(newRange.getEntries());
+
+        for (int j = 0; j < localRange.getEntries().size(); j++) {
+            if (localRange.getEntries().get(j).getTimestamp().getTime() <= newRange.getTo().getTime()) {
+                continue;
+            }
+
+            newValues.add(localRange.getEntries().get(j));
+        }
+
+        localRange.setEntries(newValues);
+    }
+
     @Override
     public int hashCode() {
         return _hash;

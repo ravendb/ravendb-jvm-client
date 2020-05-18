@@ -43,7 +43,7 @@ public class TimeSeriesIncludesToken extends QueryToken {
         if (_range.getFrom() != null) {
             writer
                     .append("'")
-                    .append(NetISO8601Utils.format(_range.getFrom()))
+                    .append(NetISO8601Utils.format(_range.getFrom(), true))
                     .append("'")
                     .append(", ");
         } else {
@@ -54,7 +54,7 @@ public class TimeSeriesIncludesToken extends QueryToken {
         if (_range.getTo() != null) {
             writer
                     .append("'")
-                    .append(NetISO8601Utils.format(_range.getTo()))
+                    .append(NetISO8601Utils.format(_range.getTo(), true))
                     .append("'");
         } else {
             writer

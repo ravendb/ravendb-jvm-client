@@ -166,9 +166,9 @@ public class GetDocumentsCommand extends RavenCommand<GetDocumentsResult> {
                 pathBuilder.append("&timeseries=")
                         .append(urlEncode(range.getName()))
                         .append("&from=")
-                        .append(range.getFrom() != null ? NetISO8601Utils.format(range.getFrom()) : "")
+                        .append(range.getFrom() != null ? NetISO8601Utils.format(range.getFrom(), true) : "")
                         .append("&to=")
-                        .append(range.getTo() != null ? NetISO8601Utils.format(range.getTo()) : "");
+                        .append(range.getTo() != null ? NetISO8601Utils.format(range.getTo(), true) : "");
             }
         }
 

@@ -122,7 +122,7 @@ public class TimeSeriesOperation {
 
         public void serialize(JsonGenerator generator, DocumentConventions conventions) throws IOException {
             generator.writeStartObject();
-            generator.writeStringField("Timestamp", NetISO8601Utils.format(timestamp));
+            generator.writeStringField("Timestamp", NetISO8601Utils.format(timestamp, true));
             generator.writeFieldName("Values");
             generator.writeStartArray();
 
@@ -170,8 +170,8 @@ public class TimeSeriesOperation {
         public void serialize(JsonGenerator generator, DocumentConventions conventions) throws IOException {
             generator.writeStartObject();
 
-            generator.writeStringField("From", from == null ? NetISO8601Utils.MIN_DATE_AS_STRING : NetISO8601Utils.format(from)); //TODO: update me!
-            generator.writeStringField("To", to == null ? NetISO8601Utils.MAX_DATE_AS_STRING : NetISO8601Utils.format(to)); //TODO: upate me!
+            generator.writeStringField("From", from == null ? NetISO8601Utils.MIN_DATE_AS_STRING : NetISO8601Utils.format(from, true)); //TODO: update me!
+            generator.writeStringField("To", to == null ? NetISO8601Utils.MAX_DATE_AS_STRING : NetISO8601Utils.format(to, true)); //TODO: update me!
             generator.writeEndObject();
         }
     }

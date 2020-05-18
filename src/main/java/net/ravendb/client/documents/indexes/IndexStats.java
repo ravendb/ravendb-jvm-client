@@ -33,6 +33,7 @@ public class IndexStats {
     private IndexRunningStatus status;
     private int entriesCount;
     private int errorsCount;
+    private IndexSourceType sourceType;
     private boolean isTestIndex;
 
 
@@ -466,6 +467,14 @@ public class IndexStats {
      */
     public void setTestIndex(boolean testIndex) {
         isTestIndex = testIndex;
+    }
+
+    public IndexSourceType getSourceType() {
+        return sourceType;
+    }
+
+    public void setSourceType(IndexSourceType sourceType) {
+        this.sourceType = sourceType;
     }
 
     public static class CollectionStats {
