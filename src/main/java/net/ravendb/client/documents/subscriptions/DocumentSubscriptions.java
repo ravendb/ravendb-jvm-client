@@ -516,4 +516,24 @@ public class DocumentSubscriptions implements AutoCloseable {
         ToggleOngoingTaskStateOperation operation = new ToggleOngoingTaskStateOperation(name, OngoingTaskType.SUBSCRIPTION, true);
         _store.maintenance().forDatabase(ObjectUtils.firstNonNull(database, _store.getDatabase())).send(operation);
     }
+
+    public String update(SubscriptionUpdateOptions options) {
+        return update(options, null);
+    }
+
+    public String update(SubscriptionUpdateOptions options, String database) {
+        if (options == null) {
+            throw new IllegalArgumentException("Cannot update a subscription if options is null");
+        }
+
+        if (StringUtils.isEmpty(options.getName()) && options.getId() == null) {
+            throw new IllegalArgumentException("Cannot update a subscription if both options.name and options.id are null");
+        }
+
+        RequestExecutor requestExecutor = _store.getRequestExecutor(database);
+        UpdateSubscriptionCommand command = new UpdateSubscriptionCommand(options);
+        requestExecutor.execute(command, null);
+
+        return command.getResult().getName();
+    }
 }

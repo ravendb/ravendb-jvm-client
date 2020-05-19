@@ -691,4 +691,155 @@ public class SubscriptionsBasicTest extends RemoteTestBase {
             subscription2.close();
         }
     }
+
+    @Test
+    public void canUpdateSubscriptionByName() throws Exception {
+        try (IDocumentStore store = getDocumentStore()) {
+            SubscriptionCreationOptions subscriptionCreationOptions = new SubscriptionCreationOptions();
+            subscriptionCreationOptions.setQuery("from Users");
+            subscriptionCreationOptions.setName("Created");
+
+            String subsId = store.subscriptions().create(subscriptionCreationOptions);
+
+            List<SubscriptionState> subscriptions = store.subscriptions().getSubscriptions(0, 5);
+
+            SubscriptionState state = subscriptions.get(0);
+
+            assertThat(subscriptions)
+                    .hasSize(1);
+            assertThat(state.getSubscriptionName())
+                    .isEqualTo("Created");
+            assertThat(state.getQuery())
+                    .isEqualTo("from Users");
+
+            String newQuery = "from Users where age > 18";
+
+            SubscriptionUpdateOptions subscriptionUpdateOptions = new SubscriptionUpdateOptions();
+            subscriptionUpdateOptions.setName(subsId);
+            subscriptionUpdateOptions.setQuery(newQuery);
+            store.subscriptions().update(subscriptionUpdateOptions);
+
+            List<SubscriptionState> newSubscriptions = store.subscriptions().getSubscriptions(0, 5);
+            SubscriptionState newState = newSubscriptions.get(0);
+            assertThat(newSubscriptions)
+                    .hasSize(1);
+            assertThat(newState.getSubscriptionName())
+                    .isEqualTo(state.getSubscriptionName());
+            assertThat(newState.getQuery())
+                    .isEqualTo(newQuery);
+            assertThat(newState.getSubscriptionId())
+                    .isEqualTo(state.getSubscriptionId());
+        }
+    }
+
+    @Test
+    public void canUpdateSubscriptionById() throws Exception {
+        try (IDocumentStore store = getDocumentStore()) {
+            SubscriptionCreationOptions subscriptionCreationOptions = new SubscriptionCreationOptions();
+            subscriptionCreationOptions.setQuery("from Users");
+            subscriptionCreationOptions.setName("Created");
+
+            store.subscriptions().create(subscriptionCreationOptions);
+
+            List<SubscriptionState> subscriptions = store.subscriptions().getSubscriptions(0, 5);
+
+            SubscriptionState state = subscriptions.get(0);
+
+            assertThat(subscriptions)
+                    .hasSize(1);
+            assertThat(state.getSubscriptionName())
+                    .isEqualTo("Created");
+            assertThat(state.getQuery())
+                    .isEqualTo("from Users");
+
+            String newQuery = "from Users where age > 18";
+
+            SubscriptionUpdateOptions subscriptionUpdateOptions = new SubscriptionUpdateOptions();
+            subscriptionUpdateOptions.setId(state.getSubscriptionId());
+            subscriptionUpdateOptions.setQuery(newQuery);
+            store.subscriptions().update(subscriptionUpdateOptions);
+
+            List<SubscriptionState> newSubscriptions = store.subscriptions().getSubscriptions(0, 5);
+            SubscriptionState newState = newSubscriptions.get(0);
+            assertThat(newSubscriptions)
+                    .hasSize(1);
+            assertThat(newState.getSubscriptionName())
+                    .isEqualTo(state.getSubscriptionName());
+            assertThat(newState.getQuery())
+                    .isEqualTo(newQuery);
+            assertThat(newState.getSubscriptionId())
+                    .isEqualTo(state.getSubscriptionId());
+        }
+    }
+
+    @Test
+    public void updateNonExistentSubscriptionShouldThrow() throws Exception {
+        try (IDocumentStore store = getDocumentStore()) {
+            String name = "Update";
+            long id = 322;
+
+            assertThatThrownBy(() -> {
+                SubscriptionUpdateOptions subscriptionUpdateOptions = new SubscriptionUpdateOptions();
+                subscriptionUpdateOptions.setName(name);
+                store.subscriptions().update(subscriptionUpdateOptions);
+            })
+                    .isInstanceOf(SubscriptionDoesNotExistException.class);
+
+            assertThatThrownBy(() -> {
+                SubscriptionUpdateOptions subscriptionUpdateOptions = new SubscriptionUpdateOptions();
+                subscriptionUpdateOptions.setName(name);
+                subscriptionUpdateOptions.setId(id);
+                store.subscriptions().update(subscriptionUpdateOptions);
+            })
+                    .isInstanceOf(SubscriptionDoesNotExistException.class);
+
+            SubscriptionCreationOptions subscriptionCreationOptions = new SubscriptionCreationOptions();
+            subscriptionCreationOptions.setQuery("from Users");
+            subscriptionCreationOptions.setName("Created");
+            String subsId = store.subscriptions().create(subscriptionCreationOptions);
+
+            assertThatThrownBy(() -> {
+                SubscriptionUpdateOptions subscriptionUpdateOptions = new SubscriptionUpdateOptions();
+                subscriptionUpdateOptions.setName(subsId);
+                subscriptionUpdateOptions.setId(id);
+                store.subscriptions().update(subscriptionUpdateOptions);
+            }).isInstanceOf(SubscriptionDoesNotExistException.class);
+        }
+    }
+
+    @Test
+    public void updateSubscriptionShouldReturnNotModified() throws Exception {
+        try (IDocumentStore store = getDocumentStore()) {
+            SubscriptionUpdateOptions updateOptions = new SubscriptionUpdateOptions();
+            updateOptions.setQuery("from Users");
+            updateOptions.setName("Created");
+
+            store.subscriptions().create(updateOptions);
+
+            List<SubscriptionState> subscriptions = store.subscriptions().getSubscriptions(0, 5);
+
+            SubscriptionState state = subscriptions.get(0);
+
+            assertThat(subscriptions)
+                    .hasSize(1);
+            assertThat(state.getSubscriptionName())
+                    .isEqualTo("Created");
+            assertThat(state.getQuery())
+                    .isEqualTo("from Users");
+
+            store.subscriptions().update(updateOptions);
+
+            List<SubscriptionState> newSubscriptions = store.subscriptions().getSubscriptions(0, 5);
+            SubscriptionState newState = newSubscriptions.get(0);
+            assertThat(newSubscriptions)
+                    .hasSize(1);
+            assertThat(newState.getSubscriptionName())
+                    .isEqualTo(state.getSubscriptionName());
+            assertThat(newState.getQuery())
+                    .isEqualTo(state.getQuery());
+            assertThat(newState.getSubscriptionId())
+                    .isEqualTo(state.getSubscriptionId());
+        }
+    }
+
 }
