@@ -1,5 +1,7 @@
 package net.ravendb.client.test.issues;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import net.ravendb.client.RemoteTestBase;
 import net.ravendb.client.documents.IDocumentStore;
 import net.ravendb.client.documents.session.IDocumentSession;
@@ -7,6 +9,7 @@ import net.ravendb.client.exceptions.ConcurrencyException;
 import net.ravendb.client.exceptions.database.DatabaseDisabledException;
 import net.ravendb.client.infrastructure.entities.Company;
 import net.ravendb.client.serverwide.DatabaseRecordWithEtag;
+import net.ravendb.client.serverwide.DocumentsCompressionConfiguration;
 import net.ravendb.client.serverwide.operations.CreateDatabaseOperation;
 import net.ravendb.client.serverwide.operations.GetDatabaseRecordOperation;
 import net.ravendb.client.serverwide.operations.UpdateDatabaseOperation;
@@ -60,6 +63,39 @@ public class RavenDB_10929Test extends RemoteTestBase {
                     session.saveChanges();
                 }
             }).isInstanceOf(DatabaseDisabledException.class);
+        }
+    }
+
+    @Test
+    public void canUpdateCompressionViaUpdateDatabaseRecord() throws Exception {
+        try (IDocumentStore store = getDocumentStore()) {
+            DatabaseRecordWithEtag record = store.maintenance().server()
+                    .send(new GetDatabaseRecordOperation(store.getDatabase()));
+
+            long etag = record.getEtag();
+            assertThat(record)
+                    .isNotNull();
+            assertThat(etag)
+                    .isPositive();
+            assertThat(record.isDisabled())
+                    .isFalse();
+
+            DocumentsCompressionConfiguration documentsCompressionConfiguration = new DocumentsCompressionConfiguration();
+            documentsCompressionConfiguration.setCollections(new String[] { "Users" });
+            documentsCompressionConfiguration.setCompressRevisions(true);
+            record.setDocumentsCompression(documentsCompressionConfiguration);
+
+            store.maintenance().server().send(new UpdateDatabaseOperation(record, etag));
+
+            record = store.maintenance().server().send(new GetDatabaseRecordOperation(store.getDatabase()));
+            assertThat(record)
+                    .isNotNull();
+            assertThat(record.getEtag())
+                    .isGreaterThan(etag);
+            assertThat(record.getDocumentsCompression().getCollections())
+                    .isEqualTo(new String[] { "Users" });
+            assertThat(record.getDocumentsCompression().isCompressRevisions())
+                    .isTrue();
         }
     }
 }
