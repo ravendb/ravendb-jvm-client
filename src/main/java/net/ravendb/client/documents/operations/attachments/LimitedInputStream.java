@@ -83,8 +83,9 @@ public class LimitedInputStream extends InputStream {
             return;
         }
 
-        while (available() > 0) {
-            this.skip(_max - _pos);
+        long toSkip = _max - _pos;
+        while (toSkip > 0) {
+            toSkip -= this.skip(toSkip);
         }
 
         _closed = true;

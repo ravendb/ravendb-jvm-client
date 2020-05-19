@@ -8,6 +8,7 @@ import net.ravendb.client.Constants;
 import net.ravendb.client.documents.commands.GetNextOperationIdCommand;
 import net.ravendb.client.documents.commands.KillOperationCommand;
 import net.ravendb.client.documents.commands.batches.CommandType;
+import net.ravendb.client.documents.commands.batches.PutAttachmentCommandHelper;
 import net.ravendb.client.documents.conventions.DocumentConventions;
 import net.ravendb.client.documents.identity.GenerateEntityIdOnTheClient;
 import net.ravendb.client.documents.operations.GetOperationStateOperation;
@@ -208,7 +209,8 @@ public class BulkInsertOperation implements CleanCloseable {
     private void throwBulkInsertAborted(Exception e, Exception flushEx) {
         Exception error = getExceptionFromOperation();
 
-        throw new BulkInsertAbortedException("Failed to execute bulk insert", ObjectUtils.firstNonNull(error, e, flushEx));
+        throw new BulkInsertAbortedException("Failed to execute bulk insert",
+                ObjectUtils.firstNonNull(error, e, flushEx));
     }
 
     private void waitForId() {
@@ -268,9 +270,9 @@ public class BulkInsertOperation implements CleanCloseable {
                 }
             }
 
-            try {
-                endPreviousCommandIfNeeded();
+            endPreviousCommandIfNeeded();
 
+            try {
                 if (!_first) {
                     writeComma();
                 }
@@ -788,4 +790,72 @@ public class BulkInsertOperation implements CleanCloseable {
         }
     }
 
+    public static class AttachmentsBulkInsert {
+        private final BulkInsertOperation _operation;
+        private final String _id;
+
+        public AttachmentsBulkInsert(BulkInsertOperation operation, String id) {
+            _operation = operation;
+            _id = id;
+        }
+
+        public void store(String name, byte[] bytes) {
+            store(name, bytes, null);
+        }
+
+        public void store(String name, byte[] bytes, String contentType) {
+            _operation._attachmentsOperation.store(_id, name, bytes, contentType);
+        }
+    }
+
+    private static class AttachmentsBulkInsertOperation {
+        private final BulkInsertOperation _operation;
+
+        public AttachmentsBulkInsertOperation(BulkInsertOperation operation) {
+            _operation = operation;
+        }
+
+        public void store(String id, String name, byte[] bytes) {
+            store(id, name, bytes, null);
+        }
+
+        public void store(String id, String name, byte[] bytes, String contentType) {
+            try (CleanCloseable check = _operation.concurrencyCheck()) {
+                _operation.endPreviousCommandIfNeeded();
+
+                _operation.executeBeforeStore();
+
+                try {
+                    if (!_operation._first) {
+                        _operation.writeComma();
+                    }
+
+                    _operation._currentWriter.write("{\"Id\":\"");
+                    _operation.writeString(id);
+                    _operation._currentWriter.write("\",\"Type\":\"AttachmentPUT\",\"Name\":\"");
+                    _operation.writeString(name);
+
+                    if (contentType != null) {
+                        _operation._currentWriter.write("\",\"ContentType\":\"");
+                        _operation.writeString(contentType);
+                    }
+
+                    _operation._currentWriter.write("\",\"ContentLength\":");
+                    _operation._currentWriter.write(String.valueOf(bytes.length));
+                    _operation._currentWriter.write("}");
+
+                    _operation.flushIfNeeded();
+
+                    _operation._currentWriter.flush();
+                    _operation._currentWriterBacking.write(bytes);
+
+                    _operation._currentWriterBacking.flush();
+
+                    _operation.flushIfNeeded();
+                } catch (Exception e) {
+                    _operation.handleErrors(id, e);
+                }
+            }
+        }
+    }
 }

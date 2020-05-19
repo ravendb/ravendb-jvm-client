@@ -376,7 +376,7 @@ public class AttachmentsStreamTest extends RemoteTestBase {
         rnd.nextBytes(b);
 
         String id = "users/1";
-        String attachmentName = "Typisal attachment name";
+        String attachmentName = "Typical attachment name";
 
         try (IDocumentStore store = getDocumentStore()) {
             try (IDocumentSession session = store.openSession()) {
