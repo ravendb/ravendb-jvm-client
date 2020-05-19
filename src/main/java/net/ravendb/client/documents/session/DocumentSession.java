@@ -15,7 +15,6 @@ import net.ravendb.client.documents.commands.multiGet.GetRequest;
 import net.ravendb.client.documents.commands.multiGet.GetResponse;
 import net.ravendb.client.documents.commands.multiGet.MultiGetCommand;
 import net.ravendb.client.documents.indexes.AbstractCommonApiForIndexes;
-import net.ravendb.client.documents.indexes.AbstractIndexCreationTask;
 import net.ravendb.client.documents.linq.IDocumentQueryGenerator;
 import net.ravendb.client.documents.operations.PatchRequest;
 import net.ravendb.client.documents.operations.timeSeries.TimeSeriesRange;
@@ -629,6 +628,28 @@ public class DocumentSession extends InMemoryDocumentSessionOperations implement
         PatchRequest patchRequest = new PatchRequest();
         patchRequest.setScript(scriptArray.getScript());
         patchRequest.setValues(scriptArray.getParameters());
+
+        if (!tryMergePatches(id, patchRequest)) {
+            defer(new PatchCommandData(id, null, patchRequest, null));
+        }
+    }
+
+    @Override
+    public <T, TKey, TValue> void patchObject(T entity, String pathToObject, Consumer<JavaScriptMap<TKey, TValue>> mapAdder) {
+        IMetadataDictionary metadata = getMetadataFor(entity);
+        String id = (String) metadata.get(Constants.Documents.Metadata.ID);
+        patchObject(id, pathToObject, mapAdder);
+    }
+
+    @Override
+    public <T, TKey, TValue> void patchObject(String id, String pathToObject, Consumer<JavaScriptMap<TKey, TValue>> mapAdder) {
+        JavaScriptMap<TKey, TValue> scriptMap = new JavaScriptMap<>(_customCount++, pathToObject);
+
+        mapAdder.accept(scriptMap);
+
+        PatchRequest patchRequest = new PatchRequest();
+        patchRequest.setScript(scriptMap.getScript());
+        patchRequest.setValues(scriptMap.getParameters());
 
         if (!tryMergePatches(id, patchRequest)) {
             defer(new PatchCommandData(id, null, patchRequest, null));

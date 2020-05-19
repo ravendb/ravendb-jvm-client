@@ -215,9 +215,13 @@ public interface IAdvancedSessionOperations extends IAdvancedDocumentSessionOper
 
     <T, U> void patch(T entity, String path, U value);
 
-    <T, U> void patch(T entity, String pathToArray, Consumer<JavaScriptArray<U>> arrayAdder);
+    <T, U> void patchArray(T entity, String pathToArray, Consumer<JavaScriptArray<U>> arrayAdder);
 
-    <T, U> void patch(String id, String pathToArray, Consumer<JavaScriptArray<U>> arrayAdder);
+    <T, U> void patchArray(String id, String pathToArray, Consumer<JavaScriptArray<U>> arrayAdder);
+
+    <T, TKey, TValue> void patchObject(T entity, String pathToObject, Consumer<JavaScriptMap<TKey, TValue>> dictionaryAdder);
+
+    <T, TKey, TValue> void patchObject(String id, String pathToObject, Consumer<JavaScriptMap<TKey, TValue>> dictionaryAdder);
 
 
     /**
