@@ -647,12 +647,12 @@ public class TimeSeriesSessionTest extends RemoteTestBase {
                 List<TimeSeriesEntry> vals = session.timeSeriesFor(id, "Heartrate")
                         .get(null, null);
                 assertThat(vals)
-                        .isEmpty();
+                        .isNull();
 
                 vals = session.timeSeriesFor(id, "Heartrate2")
                         .get(null, null);
                 assertThat(vals)
-                        .isEmpty();
+                        .isNull();
             }
         }
     }

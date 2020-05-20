@@ -7,8 +7,6 @@ import java.util.*;
  */
 public class NetISO8601Utils {
 
-    public final static String MIN_DATE_AS_STRING = "0001-01-01T00:00:00.0000000"; //TODO: delete me!
-
     public final static String MAX_DATE_AS_STRING = "9999-12-31T23:59:59.9999999"; //TODO: delete m!
 
     public final static Date MIN_DATE = new Date(0);

@@ -1656,6 +1656,7 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
                 }
             }
         }
+    }
 
     private static void addToCache(Map<String, List<TimeSeriesRangeResult>> cache,
                                    TimeSeriesRangeResult newRange,

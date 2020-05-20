@@ -300,6 +300,7 @@ public class FirstClassPatchTest extends RemoteTestBase {
 
     @Test
     public void canAddToArray() throws Exception {
+
         Stuff[] stuff = new Stuff[1];
 
         stuff[0] = new Stuff();

@@ -170,8 +170,8 @@ public class TimeSeriesOperation {
         public void serialize(JsonGenerator generator, DocumentConventions conventions) throws IOException {
             generator.writeStartObject();
 
-            generator.writeStringField("From", from == null ? NetISO8601Utils.MIN_DATE_AS_STRING : NetISO8601Utils.format(from, true)); //TODO: update me!
-            generator.writeStringField("To", to == null ? NetISO8601Utils.MAX_DATE_AS_STRING : NetISO8601Utils.format(to, true)); //TODO: update me!
+            generator.writeStringField("From", from != null ? NetISO8601Utils.format(from, true) : null);
+            generator.writeStringField("To", to != null ? NetISO8601Utils.format(to, true) : null);
             generator.writeEndObject();
         }
     }

@@ -103,14 +103,13 @@ public class GetMultipleTimeSeriesOperation implements IOperation<TimeSeriesDeta
                     throw new IllegalArgumentException("Missing name argument in TimeSeriesRange. Name cannot be null or empty");
                 }
 
-                //TODO: avoid min/max values here?
                 pathBuilder
                         .append("&name=")
                         .append(ObjectUtils.firstNonNull(range.getName(), ""))
                         .append("&from=")
-                        .append(range.getFrom() == null ? NetISO8601Utils.MIN_DATE_AS_STRING : NetISO8601Utils.format(range.getFrom(), true))
+                        .append(range.getFrom() == null ? "" : NetISO8601Utils.format(range.getFrom(), true))
                         .append("&to=")
-                        .append(range.getTo() == null ? NetISO8601Utils.MAX_DATE_AS_STRING : NetISO8601Utils.format(range.getTo(), true));
+                        .append(range.getTo() == null ? "" : NetISO8601Utils.format(range.getTo(), true));
             }
 
             url.value = pathBuilder.toString();

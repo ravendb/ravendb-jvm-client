@@ -70,7 +70,10 @@ public class RavenDB_6967Test extends RemoteTestBase {
                 session.saveChanges();
             }
 
-            waitForIndexingErrors(store, Duration.ofMinutes(1), "Index1", "Index2", "Index3");
+            waitForIndexingErrors(store, Duration.ofMinutes(1), "Index1");
+            waitForIndexingErrors(store, Duration.ofMinutes(1), "Index2");
+            waitForIndexingErrors(store, Duration.ofMinutes(1), "Index3");
+
 
             IndexErrors[] indexErrors1 = store.maintenance().send(new GetIndexErrorsOperation(new String[]{"Index1"}));
             IndexErrors[] indexErrors2 = store.maintenance().send(new GetIndexErrorsOperation(new String[]{"Index2"}));
@@ -105,7 +108,6 @@ public class RavenDB_6967Test extends RemoteTestBase {
             indexErrors1 = store.maintenance().send(new GetIndexErrorsOperation(new String[]{"Index1"}));
             indexErrors2 = store.maintenance().send(new GetIndexErrorsOperation(new String[]{"Index2"}));
             indexErrors3 = store.maintenance().send(new GetIndexErrorsOperation(new String[]{"Index3"}));
-
 
             assertThat(Arrays.stream(indexErrors1).flatMap(x -> Arrays.stream(x.getErrors())).count())
                     .isZero();

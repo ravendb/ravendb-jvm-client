@@ -273,7 +273,9 @@ public class TimeValue implements Comparable<TimeValue> {
 
     @Override
     public int hashCode() {
-        //TODO: this is buggy, see: https://issues.hibernatingrhinos.com/issue/RavenDB-14994#focus=streamItem-67-47465.0-0
+        if (_value == 0 || _value == Integer.MIN_VALUE || _value == Integer.MAX_VALUE) {
+            return Objects.hash(_value);
+        }
         return Objects.hash(_value, _unit);
     }
 }

@@ -753,78 +753,82 @@ public class TimeSeriesRangesCacheTest extends RemoteTestBase {
             }
         }
     }
-    /* TODO
 
-        [Fact]
-        public void CanHandleRangesWithNoValues()
-        {
-            using (var store = GetDocumentStore())
-            {
-                var baseline = DateTime.Today;
+    @Test
+    public void canHandleRangesWithNoValues() throws Exception {
+        try (IDocumentStore store = getDocumentStore()) {
 
-                using (var session = store.OpenSession())
-                {
-                    session.Store(new { Name = "Oren" }, "users/ayende");
-                    session.SaveChanges();
+            Date baseLine = DateUtils.truncate(new Date(), Calendar.DAY_OF_MONTH);
+
+            try (IDocumentSession session = store.openSession()) {
+                User user = new User();
+                user.setName("Oren");
+                session.store(user, "users/ayende");
+                session.saveChanges();
+            }
+
+            try (IDocumentSession session = store.openSession()) {
+                ISessionDocumentTimeSeries tsf = session.timeSeriesFor("users/ayende", "Heartrate");
+
+                for (int i = 0; i < 360; i++) {
+                    tsf.append(DateUtils.addSeconds(baseLine, i * 10), 60, "watches/fitbit");
                 }
 
-                using (var session = store.OpenSession())
-                {
-                    var tsf = session.TimeSeriesFor("users/ayende", "Heartrate");
-                    for (int i = 0; i < 360; i++)
-                    {
-                        tsf.Append(baseline.AddSeconds(i * 10), new[] { 60d }, "watches/fitbit");
-                    }
+                session.saveChanges();
+            }
 
-                    session.SaveChanges();
-                }
+            try (IDocumentSession session = store.openSession()) {
+                List<TimeSeriesEntry> vals = session.timeSeriesFor("users/ayende", "Heartrate")
+                        .get(DateUtils.addHours(baseLine, -2), DateUtils.addHours(baseLine, -1));
 
-                using (var session = store.OpenSession())
-                {
-                    var vals = session.TimeSeriesFor("users/ayende", "Heartrate")
-                        .Get(baseline.AddHours(-2), baseline.AddHours(-1))
-                        .ToList();
+                assertThat(vals)
+                        .isEmpty();
+                assertThat(session.advanced().getNumberOfRequests())
+                        .isEqualTo(1);
 
-                    Assert.Equal(0, vals.Count);
-                    Assert.Equal(1, session.Advanced.NumberOfRequests);
+                // should not go to server
+                vals = session.timeSeriesFor("users/ayende", "Heartrate")
+                        .get(DateUtils.addHours(baseLine, -2), DateUtils.addHours(baseLine, -1));
 
-                    // should not go to server
-                    vals = session.TimeSeriesFor("users/ayende", "Heartrate")
-                        .Get(baseline.AddHours(-2), baseline.AddHours(-1))
-                        .ToList();
+                assertThat(vals)
+                        .isEmpty();
+                assertThat(session.advanced().getNumberOfRequests())
+                        .isEqualTo(1);
 
-                    Assert.Equal(0, vals.Count);
-                    Assert.Equal(1, session.Advanced.NumberOfRequests);
+                // should not go to server
+                vals = session.timeSeriesFor("users/ayende", "Heartrate")
+                        .get(DateUtils.addMinutes(baseLine, -90), DateUtils.addMinutes(baseLine, -70));
 
-                    // should not go to server
-                    vals = session.TimeSeriesFor("users/ayende", "Heartrate")
-                        .Get(baseline.AddMinutes(-90), baseline.AddMinutes(-70))
-                        .ToList();
+                assertThat(vals)
+                        .isEmpty();
+                assertThat(session.advanced().getNumberOfRequests())
+                        .isEqualTo(1);
 
-                    Assert.Equal(0, vals.Count);
-                    Assert.Equal(1, session.Advanced.NumberOfRequests);
+                // should go to server to get [-60, 1] and merge with [-120, -60]
+                vals = session.timeSeriesFor("users/ayende", "Heartrate")
+                        .get(DateUtils.addHours(baseLine, -1), DateUtils.addMinutes(baseLine, 1));
 
-                    // should go to server to get [-60, 1] and merge with [-120, -60]
+                assertThat(vals)
+                        .hasSize(7);
+                assertThat(vals.get(0).getTimestamp())
+                        .isEqualTo(baseLine);
+                assertThat(vals.get(6).getTimestamp())
+                        .isEqualTo(DateUtils.addMinutes(baseLine, 1));
+                assertThat(session.advanced().getNumberOfRequests())
+                        .isEqualTo(2);
 
-                    vals = session.TimeSeriesFor("users/ayende", "Heartrate")
-                        .Get(baseline.AddHours(-1), baseline.AddMinutes(1))
-                        .ToList();
+                Map<String, List<TimeSeriesRangeResult>> cache = ((InMemoryDocumentSessionOperations) session).getTimeSeriesByDocId().get("users/ayende");
+                List<TimeSeriesRangeResult> ranges = cache.get("Heartrate");
 
-                    Assert.Equal(7, vals.Count);
-                    Assert.Equal(baseline, vals[0].Timestamp);
-                    Assert.Equal(baseline.AddMinutes(1), vals[6].Timestamp);
+                assertThat(ranges)
+                        .isNotNull()
+                        .hasSize(1);
 
-                    Assert.Equal(2, session.Advanced.NumberOfRequests);
-
-                    Assert.True(((InMemoryDocumentSessionOperations)session).TimeSeriesByDocId.TryGetValue("users/ayende", out var cache));
-                    Assert.True(cache.TryGetValue("Heartrate", out var ranges));
-                    Assert.Equal(1, ranges.Count);
-
-                    Assert.Equal(baseline.AddHours(-2), ranges[0].From);
-                    Assert.Equal(baseline.AddMinutes(1), ranges[0].To);
-
-                }
+                assertThat(ranges.get(0).getFrom())
+                        .isEqualTo(DateUtils.addHours(baseLine, -2));
+                assertThat(ranges.get(0).getTo())
+                        .isEqualTo(DateUtils.addMinutes(baseLine, 1));
             }
         }
-     */
+    }
 }

@@ -661,12 +661,12 @@ public class TimeSeriesBulkInsertTest extends RemoteTestBase {
                 List<TimeSeriesEntry> vals = session.timeSeriesFor(documentId, "Heartrate")
                         .get(null, null);
                 assertThat(vals)
-                        .isEmpty();
+                        .isNull();
 
                 vals = session.timeSeriesFor(documentId, "Heartrate2")
                         .get(null, null);
                 assertThat(vals)
-                        .isEmpty();
+                        .isNull();
             }
         }
     }
