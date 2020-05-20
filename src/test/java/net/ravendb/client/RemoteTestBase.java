@@ -236,15 +236,17 @@ public class RemoteTestBase extends RavenTestDriver implements CleanCloseable {
         String name = database + "_" + index.incrementAndGet();
         reportInfo("getDocumentStore for db " + database + ".");
 
+        /*
         if (getGlobalServer(secured) == null) {
             synchronized (RavenTestDriver.class) {
                 if (getGlobalServer(secured) == null) {
                     runServer(secured);
                 }
             }
-        }
+        }*/
 
-        IDocumentStore documentStore = getGlobalServer(secured);
+        IDocumentStore documentStore = new DocumentStore("http://127.0.0.1:8080", null);
+        documentStore.initialize();
         DatabaseRecord databaseRecord = new DatabaseRecord();
         databaseRecord.setDatabaseName(name);
 

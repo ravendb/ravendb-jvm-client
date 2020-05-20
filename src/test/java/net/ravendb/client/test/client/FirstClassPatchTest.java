@@ -309,7 +309,6 @@ public class FirstClassPatchTest extends RemoteTestBase {
 
     @Test
     public void canAddToArray() throws Exception {
-
         Stuff[] stuff = new Stuff[1];
 
         stuff[0] = new Stuff();
@@ -424,22 +423,36 @@ public class FirstClassPatchTest extends RemoteTestBase {
                         .isEqualTo("123456");
             }
         }
+    }
 
+    @Override
+    protected void customizeStore(DocumentStore store) {
+        store.getConventions().setDisableTopologyUpdates(true);
     }
 
     @Test
     public void canIncrement() throws Exception {
-        Stuff[] s = new Stuff[3];
-        s[0] = new Stuff();
-        s[0].setKey(6);
+        try (IDocumentStore store = getDocumentStore()) {
+            CreateSampleDataOperation sampleData = new CreateSampleDataOperation();
+            store.maintenance().send(sampleData);
+
+            waitForIndexing(store, store.getDatabase(), null);
+        }
+
+
+        for (int i = 0; i < 4; i++) {
+            try (IDocumentStore store = getDocumentStore()) {
+            }
+        }
+
 
         User user = new User();
         user.setNumbers(new int[] { 66 });
-        user.setStuff(s);
 
-        try (IDocumentStore store = getDocumentStore()) {
+        try (IDocumentStore store = getDocumentStore("test_db_11")) {
+
             try (IDocumentSession session = store.openSession()) {
-                session.store(user);
+                session.store(user, _docId);
                 session.saveChanges();
             }
 
@@ -449,19 +462,11 @@ public class FirstClassPatchTest extends RemoteTestBase {
             }
 
             try (IDocumentSession session = store.openSession()) {
-                User loaded = session.load(User.class, _docId);
-                assertThat(loaded.getNumbers()[0])
-                        .isEqualTo(67);
-
-                session.advanced().increment(loaded, "stuff[0].key", -3);
-                session.saveChanges();
+                ObjectNode objectNode = session.load(ObjectNode.class, "users/1-A");
+                assertThat(objectNode.get("numbers").get(0).isInt())
+                        .isTrue();
             }
 
-            try (IDocumentSession session = store.openSession()) {
-                User loaded = session.load(User.class, _docId);
-                assertThat(loaded.getStuff()[0].getKey())
-                        .isEqualTo(3);
-            }
         }
     }
 
