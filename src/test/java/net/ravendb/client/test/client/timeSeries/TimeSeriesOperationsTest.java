@@ -745,8 +745,11 @@ public class TimeSeriesOperationsTest extends RemoteTestBase {
         }
     }
 
+
+    //TODO: CanGetNonExistedRange
+
     @Test
-    public void shouldThrowOnMissingName() throws Exception {
+    public void getMultipleTimeSeriesShouldThrowOnMissingNameFromRange() throws Exception {
         try (IDocumentStore store = getDocumentStore()) {
             String documentId = "users/ayende";
 
@@ -775,7 +778,67 @@ public class TimeSeriesOperationsTest extends RemoteTestBase {
                                 new TimeSeriesRange(null, baseline, null)
                         )));
             })
-                    .isInstanceOf(RavenException.class);
+                    .isInstanceOf(IllegalArgumentException.class)
+                    .hasMessageContaining("Name cannot be null or empty");
         }
     }
+
+    //TODO: GetTimeSeriesShouldThrowOnMissingName
+
+    @Test
+    public void getTimeSeriesStatistics() throws Exception {
+        try (IDocumentStore store = getDocumentStore()) {
+            String documentId = "users/ayende";
+            Date baseline = DateUtils.truncate(new Date(), Calendar.DAY_OF_MONTH);
+
+            try (IDocumentSession session = store.openSession()) {
+                User user = new User();
+                session.store(user, documentId);
+
+                ISessionDocumentTimeSeries ts = session.timeSeriesFor(documentId, "heartrate");
+                for (int i = 0; i <= 10; i++) {
+                    ts.append(DateUtils.addMinutes(baseline, i * 10), 72, "watches/fitbit");
+                }
+
+                ts = session.timeSeriesFor(documentId, "pressure");
+                for (int i = 10; i <= 20; i++) {
+                    ts.append(DateUtils.addMinutes(baseline, i * 10), 72, "watches/fitbit");
+                }
+
+                session.saveChanges();
+            }
+
+            TimeSeriesStatistics op = store.operations().send(new GetTimeSeriesStatisticsOperation(documentId));
+
+            assertThat(op.getDocumentId())
+                    .isEqualTo(documentId);
+            assertThat(op.getTimeSeries())
+                    .hasSize(2);
+
+            TimeSeriesItemDetail ts1 = op.getTimeSeries().get(0);
+            TimeSeriesItemDetail ts2 = op.getTimeSeries().get(1);
+
+            assertThat(ts1.getName())
+                    .isEqualTo("heartrate");
+            assertThat(ts2.getName())
+                    .isEqualTo("pressure");
+
+            assertThat(ts1.getNumberOfEntries())
+                    .isEqualTo(11);
+            assertThat(ts2.getNumberOfEntries())
+                    .isEqualTo(11);
+
+            assertThat(ts1.getStartDate())
+                    .isEqualTo(baseline);
+            assertThat(ts1.getEndDate())
+                    .isEqualTo(DateUtils.addMinutes(baseline, 10 * 10));
+
+            assertThat(ts2.getStartDate())
+                    .isEqualTo(DateUtils.addMinutes(baseline, 10 * 10));
+            assertThat(ts2.getEndDate())
+                    .isEqualTo(DateUtils.addMinutes(baseline, 20 * 10));
+        }
+    }
+
+    //TODO: CanDeleteWithoutProvidingFromAndToDates
 }

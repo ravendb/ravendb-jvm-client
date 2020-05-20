@@ -692,4 +692,10 @@ public class TimeSeriesSessionTest extends RemoteTestBase {
             }
         }
     }
+
+    //TODO: public void ShouldEvictTimeSeriesUponEntityEviction()
+    //TODO: GetAllTimeSeriesNamesWhenNoTimeSeries
+    //TODO: GetSingleTimeSeriesWhenNoTimeSeries
+
+    //TODO: CanDeleteWithoutProvidingFromAndToDates
 }

@@ -1705,6 +1705,60 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
         List<TimeSeriesEntry> mergedValues = mergeRanges(fromRangeIndex, toRangeIndex, localRanges, newRange);
         SessionDocumentTimeSeries.addToCache(name, newRange.getFrom(), newRange.getTo(), fromRangeIndex, toRangeIndex, localRanges, cache, mergedValues);
     }
+
+    private static TimeSeriesRangeResult parseTimeSeriesRangeResult(ObjectNode jsonRange, String id, String databaseName) {
+        /* TODO
+        if (blittableRange.TryGet(nameof(TimeSeriesRangeResult.From), out DateTime from) == false ||
+                blittableRange.TryGet(nameof(TimeSeriesRangeResult.To), out DateTime to) == false)
+                throw new InvalidDataException($"Unable to read time series range result on document : '{id}', timeseries : '{name}'." +
+                                               $"Missing '{nameof(TimeSeriesRangeResult.From)}' and/or '{nameof(TimeSeriesRangeResult.To)}' properties");
+
+            if (blittableRange.TryGet(nameof(TimeSeriesRangeResult.Entries), out BlittableJsonReaderArray valuesBlittable) == false)
+                throw new InvalidDataException($"Unable to read time series range result on document : '{id}', timeseries : '{name}'." +
+                                               $"Missing '{nameof(TimeSeriesRangeResult.Entries)}' property");
+
+            var result = new TimeSeriesRangeResult
+            {
+                From = from,
+                To = to
+            };
+
+            if (valuesBlittable != null)
+            {
+                var valuesArray = new TimeSeriesEntry[valuesBlittable.Length];
+
+                for (int j = 0; j < valuesBlittable.Length; j++)
+                {
+                    var timeSeriesValueBlittable = valuesBlittable.GetByIndex<BlittableJsonReaderObject>(j);
+
+                    if (timeSeriesValueBlittable.TryGet(nameof(TimeSeriesEntry.Timestamp), out DateTime timestamp) == false)
+                        throw new InvalidDataException($"Unable to read time series value on document : '{id}', timeseries : '{name}'. " +
+                                                       $"The time series value is missing '{nameof(TimeSeriesEntry.Timestamp)}' property");
+
+                    if (timeSeriesValueBlittable.TryGet(nameof(TimeSeriesEntry.Values), out BlittableJsonReaderArray values) == false)
+                        throw new InvalidDataException($"Unable to read time series value on document: '{id}', timeseries: '{name}'. " +
+                                                       $"The time series value is missing '{nameof(TimeSeriesEntry.Values)}' property");
+
+                    timeSeriesValueBlittable.TryGet(nameof(TimeSeriesEntry.Tag), out string tag); // tag is optional
+
+                    valuesArray[j] = new TimeSeriesEntry
+                    {
+                        Tag = tag,
+                        Timestamp = timestamp,
+                        Values = values.Select(x => x is LazyNumberValue val
+                            ? val.ToDouble(CultureInfo.InvariantCulture)
+                            : (long)x).ToArray()
+                    };
+                }
+
+                result.Entries = valuesArray;
+            }
+
+            return result;
+         */
+        throw new UnsupportedOperationException();
+    }
+
     private static List<TimeSeriesEntry> mergeRanges(int fromRangeIndex, int toRangeIndex, List<TimeSeriesRangeResult> localRanges, TimeSeriesRangeResult newRange) {
         List<TimeSeriesEntry> mergedValues = new ArrayList<>();
 
