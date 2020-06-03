@@ -7,5 +7,5 @@ public interface IClusterTransactionOperationsBase {
 
     <T> void deleteCompareExchangeValue(CompareExchangeValue<T> item);
 
-    <T> void createCompareExchangeValue(String key, T value);
+    <T> CompareExchangeValue<T> createCompareExchangeValue(String key, T value);
 }

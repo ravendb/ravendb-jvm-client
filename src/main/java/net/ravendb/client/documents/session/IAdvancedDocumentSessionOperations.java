@@ -32,6 +32,8 @@ public interface IAdvancedDocumentSessionOperations {
 
     RequestExecutor getRequestExecutor();
 
+    SessionInfo getSessionInfo();
+
     void addBeforeStoreListener(EventHandler<BeforeStoreEventArgs> handler);
     void removeBeforeStoreListener(EventHandler<BeforeStoreEventArgs> handler);
 

@@ -35,10 +35,10 @@ public abstract class SuggestionQueryBase {
         _session.incrementRequestCount();
         _session.getRequestExecutor().execute(command);
 
-        return processResults(command.getResult(), _session.getConventions());
+        return processResults(command.getResult());
     }
 
-    private Map<String, SuggestionResult> processResults(QueryResult queryResult, DocumentConventions conventions) {
+    private Map<String, SuggestionResult> processResults(QueryResult queryResult) {
         invokeAfterQueryExecuted(queryResult);
 
         try {

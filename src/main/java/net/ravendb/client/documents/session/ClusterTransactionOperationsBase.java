@@ -29,7 +29,7 @@ public abstract class ClusterTransactionOperationsBase {
         return tryGetCompareExchangeValueFromSession(key, ref);
     }
 
-    public <T> void createCompareExchangeValue(String key, T item) {
+    public <T> CompareExchangeValue<T> createCompareExchangeValue(String key, T item) {
         if (key == null) {
             throw new IllegalArgumentException("Key cannot be null");
         }
@@ -40,7 +40,7 @@ public abstract class ClusterTransactionOperationsBase {
             _state.put(key, sessionValueRef.value);
         }
 
-        sessionValueRef.value.create(item);
+        return sessionValueRef.value.create(item);
     }
 
     public <T> void deleteCompareExchangeValue(CompareExchangeValue<T> item) {
@@ -84,7 +84,8 @@ public abstract class ClusterTransactionOperationsBase {
 
         session.incrementRequestCount();
 
-        CompareExchangeValue<ObjectNode> value = session.getOperations().send(new GetCompareExchangeValueOperation<>(ObjectNode.class, key), session.sessionInfo);
+        CompareExchangeValue<ObjectNode> value = session.getOperations().send(
+                new GetCompareExchangeValueOperation<>(ObjectNode.class, key, false), session.sessionInfo);
         if (value == null) {
             registerMissingCompareExchangeValue(key);
             return null;
@@ -183,7 +184,7 @@ public abstract class ClusterTransactionOperationsBase {
 
                 registerCompareExchangeValue(
                         CompareExchangeValueResultParser.getSingleValue(
-                                ObjectNode.class, (ObjectNode) propertyDetails.getValue(), session.getConventions()));
+                                ObjectNode.class, (ObjectNode) propertyDetails.getValue(), false, session.getConventions()));
             }
         }
     }

@@ -5,6 +5,7 @@ import net.ravendb.client.documents.indexes.AbstractIndexCreationTask;
 import net.ravendb.client.documents.queries.Query;
 import net.ravendb.client.documents.session.loaders.IIncludeBuilder;
 import net.ravendb.client.documents.session.loaders.ILoaderWithInclude;
+import net.ravendb.client.documents.session.timeSeries.TimeSeriesEntry;
 import net.ravendb.client.primitives.CleanCloseable;
 
 import java.util.Collection;
@@ -147,4 +148,21 @@ public interface IDocumentSession extends CleanCloseable {
     ISessionDocumentTimeSeries timeSeriesFor(String documentId, String name);
 
     ISessionDocumentTimeSeries timeSeriesFor(Object entity, String name);
+
+    <T> ISessionDocumentTypedTimeSeries<T> timeSeriesFor(Class<T> clazz, String documentId);
+
+    <T> ISessionDocumentTypedTimeSeries<T> timeSeriesFor(Class<T> clazz, String documentId, String name);
+
+    <T> ISessionDocumentTypedTimeSeries<T> timeSeriesFor(Class<T> clazz, Object entity);
+
+    <T> ISessionDocumentTypedTimeSeries<T> timeSeriesFor(Class<T> clazz, Object entity, String name);
+
+    <T> ISessionDocumentRollupTypedTimeSeries<T> timeSeriesRollupFor(Class<T> clazz, Object entity, String policy);
+
+    <T> ISessionDocumentRollupTypedTimeSeries<T> timeSeriesRollupFor(Class<T> clazz, Object entity, String policy, String raw);
+
+    <T> ISessionDocumentRollupTypedTimeSeries<T> timeSeriesRollupFor(Class<T> clazz, String documentId, String policy);
+
+    <T> ISessionDocumentRollupTypedTimeSeries<T> timeSeriesRollupFor(Class<T> clazz, String documentId, String policy, String raw);
+
 }

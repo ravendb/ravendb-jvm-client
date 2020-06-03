@@ -1,7 +1,12 @@
 package net.ravendb.client.util;
 
-import java.util.HashMap;
-import java.util.Map;
+import net.ravendb.client.exceptions.RavenException;
+
+import java.beans.IntrospectionException;
+import java.beans.Introspector;
+import java.lang.reflect.Field;
+import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * Helper class for reflection operations
@@ -23,5 +28,28 @@ public class ReflectionUtil {
         String fullName = entityType.getName();
         fullNameCache.put(entityType, fullName);
         return fullName;
+    }
+
+    public static List<Field> getFieldsFor(Class<?> clazz) {
+        try {
+            return Arrays.stream(Introspector.getBeanInfo(clazz).getPropertyDescriptors())
+                    .map(x -> getField(clazz, x.getName()))
+                    .filter(Objects::nonNull)
+                    .collect(Collectors.toList());
+        } catch (IntrospectionException e) {
+            throw new RavenException("Unable to find fields for: " + clazz, e);
+        }
+    }
+
+    private static Field getField(Class<?> clazz, String name) {
+        Field field = null;
+        while (clazz != null && field == null) {
+            try {
+                field = clazz.getDeclaredField(name);
+            } catch (Exception ignored) {
+            }
+            clazz = clazz.getSuperclass();
+        }
+        return field;
     }
 }

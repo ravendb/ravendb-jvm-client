@@ -49,10 +49,10 @@ public class MetadataAsDictionary implements IMetadataDictionary {
     }
 
     @SuppressWarnings("ConstantConditions")
-    private void init() {
+    private void initialize(ObjectNode metadata) {
         dirty = true;
         _metadata = new HashMap<>();
-        Iterator<String> fields = _source.fieldNames();
+        Iterator<String> fields = metadata.fieldNames();
         while (fields.hasNext()) {
             String fieldName = fields.next();
             _metadata.put(fieldName, convertValue(fieldName, _source.get(fieldName)));
@@ -94,7 +94,7 @@ public class MetadataAsDictionary implements IMetadataDictionary {
 
         if (value instanceof ObjectNode) {
             MetadataAsDictionary dictionary = new MetadataAsDictionary((ObjectNode) value, this, key);
-            dictionary.init();
+            dictionary.initialize((ObjectNode) value);
             return dictionary;
         }
 
@@ -123,7 +123,7 @@ public class MetadataAsDictionary implements IMetadataDictionary {
     @Override
     public Object put(String key, Object value) {
         if (_metadata == null) {
-            init();
+            initialize(_source);
         }
         dirty = true;
 
@@ -138,6 +138,13 @@ public class MetadataAsDictionary implements IMetadataDictionary {
         }
 
         return convertValue((String) key, _source.get((String) key));
+    }
+
+    public static MetadataAsDictionary materializeFromJson(ObjectNode metadata) {
+        MetadataAsDictionary result = new MetadataAsDictionary((Map<String, Object>) null);
+        result.initialize(metadata);
+
+        return result;
     }
 
     @Override
@@ -162,7 +169,7 @@ public class MetadataAsDictionary implements IMetadataDictionary {
     @Override
     public void putAll(Map<? extends String, ?> m) {
         if (_metadata == null) {
-            init();
+            initialize(_source);
         }
         dirty = true;
 
@@ -172,7 +179,7 @@ public class MetadataAsDictionary implements IMetadataDictionary {
     @Override
     public void clear() {
         if (_metadata == null) {
-            init();
+            initialize(_source);
         }
         dirty = true;
 
@@ -192,7 +199,7 @@ public class MetadataAsDictionary implements IMetadataDictionary {
     @Override
     public Set<Entry<String, Object>> entrySet() {
         if (_metadata == null) {
-            init();
+            initialize(_source);
         }
 
         return _metadata.entrySet();
@@ -201,7 +208,7 @@ public class MetadataAsDictionary implements IMetadataDictionary {
     @Override
     public Object remove(Object key) {
         if (_metadata == null) {
-            init();
+            initialize(_source);
         }
         dirty = true;
 
@@ -211,7 +218,7 @@ public class MetadataAsDictionary implements IMetadataDictionary {
     @Override
     public boolean containsValue(Object value) {
         if (_metadata == null) {
-            init();
+            initialize(_source);
         }
 
         return _metadata.containsValue(value);
@@ -220,7 +227,7 @@ public class MetadataAsDictionary implements IMetadataDictionary {
     @Override
     public Collection<Object> values() {
         if (_metadata == null) {
-            init();
+            initialize(_source);
         }
 
         return _metadata.values();
@@ -229,7 +236,7 @@ public class MetadataAsDictionary implements IMetadataDictionary {
     @Override
     public Set<String> keySet() {
         if (_metadata == null) {
-            init();
+            initialize(_source);
         }
 
         return _metadata.keySet();

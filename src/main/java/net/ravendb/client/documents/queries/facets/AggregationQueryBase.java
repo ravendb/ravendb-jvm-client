@@ -4,7 +4,6 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.google.common.base.Stopwatch;
 import net.ravendb.client.documents.Lazy;
 import net.ravendb.client.documents.commands.QueryCommand;
-import net.ravendb.client.documents.conventions.DocumentConventions;
 import net.ravendb.client.documents.queries.IndexQuery;
 import net.ravendb.client.documents.queries.QueryResult;
 import net.ravendb.client.documents.session.DocumentSession;
@@ -35,7 +34,7 @@ public abstract class AggregationQueryBase {
         _session.incrementRequestCount();
         _session.getRequestExecutor().execute(command);
 
-        return processResults(command.getResult(), _session.getConventions());
+        return processResults(command.getResult());
     }
 
     public Lazy<Map<String, FacetResult>> executeLazy() {
@@ -55,7 +54,7 @@ public abstract class AggregationQueryBase {
 
     protected abstract void invokeAfterQueryExecuted(QueryResult result);
 
-    private Map<String, FacetResult> processResults(QueryResult queryResult, DocumentConventions conventions) {
+    private Map<String, FacetResult> processResults(QueryResult queryResult) {
         invokeAfterQueryExecuted(queryResult);
 
         Map<String, FacetResult> results = new HashMap<>();

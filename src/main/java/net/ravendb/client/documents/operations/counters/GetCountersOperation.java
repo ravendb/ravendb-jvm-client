@@ -11,15 +11,14 @@ import net.ravendb.client.http.ServerNode;
 import net.ravendb.client.json.ContentProviderHttpEntity;
 import net.ravendb.client.primitives.Reference;
 import net.ravendb.client.util.UrlUtils;
+import org.apache.commons.lang3.ObjectUtils;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpRequestBase;
 import org.apache.http.entity.ContentType;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashSet;
+import java.util.*;
 
 public class GetCountersOperation implements IOperation<CountersDetail> {
 
@@ -110,13 +109,17 @@ public class GetCountersOperation implements IOperation<CountersDetail> {
         }
 
         private HttpRequestBase prepareRequestWithMultipleCounters(StringBuilder pathBuilder, HttpRequestBase request) {
-            HashSet<String> uniqueNames = Sets.newHashSet(_counters);
+            Set<String> uniqueNames = Sets.newHashSet(_counters);
 
-            if (uniqueNames.stream().map(x -> x.length()).reduce((a, b) -> a + b).get() < 1024) {
+            if (uniqueNames.stream()
+                    .filter(Objects::nonNull)
+                    .map(String::length)
+                    .reduce(Integer::sum)
+                    .get() < 1024) {
                 for (String uniqueName : uniqueNames) {
                     if (uniqueName != null) {
                         pathBuilder.append("&counter=")
-                                .append(UrlUtils.escapeDataString(uniqueName));
+                                .append(UrlUtils.escapeDataString(ObjectUtils.firstNonNull(uniqueName, "")));
                     }
                 }
             } else {
@@ -127,7 +130,7 @@ public class GetCountersOperation implements IOperation<CountersDetail> {
                 docOps.setDocumentId(_docId);
                 docOps.setOperations(new ArrayList<>());
 
-                for (String counter : _counters) {
+                for (String counter : uniqueNames) {
                     CounterOperation counterOperation = new CounterOperation();
                     counterOperation.setType(CounterOperationType.GET);
                     counterOperation.setCounterName(counter);

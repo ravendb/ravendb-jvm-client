@@ -10,6 +10,7 @@ import net.ravendb.client.exceptions.RavenException;
 import net.ravendb.client.extensions.JsonExtensions;
 import net.ravendb.client.http.AggressiveCacheMode;
 import net.ravendb.client.http.AggressiveCacheOptions;
+import net.ravendb.client.http.LoadBalanceBehavior;
 import net.ravendb.client.http.ReadBalanceBehavior;
 import net.ravendb.client.primitives.Reference;
 import net.ravendb.client.primitives.Tuple;
@@ -56,6 +57,7 @@ public class DocumentConventions {
     private Function<String, String> _transformClassCollectionNameToDocumentIdPrefix;
     private BiFunction<String, Object, String> _documentIdGenerator;
     private Function<String, String> _findIdentityPropertyNameFromCollectionName;
+    private Function<String, String> _loadBalancerPerSessionContextSelector;
 
     private Function<Class, String> _findCollectionName;
 
@@ -71,6 +73,8 @@ public class DocumentConventions {
     private Duration _firstBroadcastAttemptTimeout;
     private Duration _secondBroadcastAttemptTimeout;
 
+    private int _loadBalancerContextSeed;
+    private LoadBalanceBehavior _loadBalanceBehavior;
     private ReadBalanceBehavior _readBalanceBehavior;
     private int _maxHttpCacheSize;
     private ObjectMapper _entityMapper;
@@ -282,10 +286,34 @@ public class DocumentConventions {
         return _readBalanceBehavior;
     }
 
-    public void setReadBalanceBehavior(ReadBalanceBehavior _readBalanceBehavior) {
+    public void setReadBalanceBehavior(ReadBalanceBehavior readBalanceBehavior) {
         assertNotFrozen();
-        this._readBalanceBehavior = _readBalanceBehavior;
+        _readBalanceBehavior = readBalanceBehavior;
     }
+
+    public int getLoadBalancerContextSeed() {
+        return _loadBalancerContextSeed;
+    }
+
+    public void setLoadBalancerContextSeed(int seed) {
+        assertNotFrozen();
+        _loadBalancerContextSeed = seed;
+    }
+
+    /**
+     * We have to make this check so if admin activated this, but client code did not provide the selector,
+     * it is still disabled. Relevant if we have multiple clients / versions at once.
+     * @return load balance behavior
+     */
+    public LoadBalanceBehavior getLoadBalanceBehavior() {
+        return _loadBalanceBehavior;
+    }
+
+    public void setLoadBalanceBehavior(LoadBalanceBehavior loadBalanceBehavior) {
+        assertNotFrozen();
+        _loadBalanceBehavior = loadBalanceBehavior;
+    }
+
 
     public int getMaxHttpCacheSize() {
         return _maxHttpCacheSize;
@@ -343,6 +371,25 @@ public class DocumentConventions {
     public void setUseOptimisticConcurrency(boolean useOptimisticConcurrency) {
         assertNotFrozen();
         this._useOptimisticConcurrency = useOptimisticConcurrency;
+    }
+
+    /**
+     * @return Gets the function that allow to specialize the topology
+     *  selection for a particular session. Used in load balancing
+     *  scenarios
+     */
+    public Function<String, String> getLoadBalancerPerSessionContextSelector() {
+        return _loadBalancerPerSessionContextSelector;
+    }
+
+    /**
+     * Sets the function that allow to specialize the topology
+     *  selection for a particular session. Used in load balancing
+     *  scenarios
+     * @param loadBalancerPerSessionContextSelector selector to use
+     */
+    public void setLoadBalancerPerSessionContextSelector(Function<String, String> loadBalancerPerSessionContextSelector) {
+        _loadBalancerPerSessionContextSelector = loadBalancerPerSessionContextSelector;
     }
 
     public BiFunction<String, ObjectNode, String> getFindJavaClass() {
@@ -622,6 +669,7 @@ public class DocumentConventions {
         cloned._throwIfQueryPageSizeIsNotSet = _throwIfQueryPageSizeIsNotSet;
         cloned._maxNumberOfRequestsPerSession = _maxNumberOfRequestsPerSession;
         cloned._readBalanceBehavior = _readBalanceBehavior;
+        cloned._loadBalanceBehavior = _loadBalanceBehavior;
         cloned._maxHttpCacheSize = _maxHttpCacheSize;
         cloned._entityMapper = _entityMapper;
         cloned._useCompression = _useCompression;
@@ -677,9 +725,10 @@ public class DocumentConventions {
             }
 
             if (configuration.isDisabled() && _originalConfiguration != null) { // need to revert to original values
-                _maxNumberOfRequestsPerSession = _originalConfiguration.getMaxNumberOfRequestsPerSession();
-                _readBalanceBehavior = _originalConfiguration.getReadBalanceBehavior();
-                _identityPartsSeparator = _originalConfiguration.getIdentityPartsSeparator();
+                _maxNumberOfRequestsPerSession = ObjectUtils.firstNonNull(_originalConfiguration.getMaxNumberOfRequestsPerSession(), _maxNumberOfRequestsPerSession);
+                _readBalanceBehavior = ObjectUtils.firstNonNull(_originalConfiguration.getReadBalanceBehavior(), _readBalanceBehavior);
+                _identityPartsSeparator = ObjectUtils.firstNonNull(_originalConfiguration.getIdentityPartsSeparator(), _identityPartsSeparator);
+                _loadBalanceBehavior = ObjectUtils.firstNonNull(_originalConfiguration.getLoadBalanceBehavior(), _loadBalanceBehavior);
 
                 _originalConfiguration = null;
                 return;
@@ -691,13 +740,27 @@ public class DocumentConventions {
                 _originalConfiguration.setMaxNumberOfRequestsPerSession(_maxNumberOfRequestsPerSession);
                 _originalConfiguration.setReadBalanceBehavior(_readBalanceBehavior);
                 _originalConfiguration.setIdentityPartsSeparator(_identityPartsSeparator);
+                _originalConfiguration.setLoadBalanceBehavior(_loadBalanceBehavior);
             }
 
-            _maxNumberOfRequestsPerSession = ObjectUtils.firstNonNull(configuration.getMaxNumberOfRequestsPerSession(), _originalConfiguration.getMaxNumberOfRequestsPerSession());
-            _readBalanceBehavior = ObjectUtils.firstNonNull(configuration.getReadBalanceBehavior(), _originalConfiguration.getReadBalanceBehavior());
-            _identityPartsSeparator = configuration.getIdentityPartsSeparator() != null
-                    ? configuration.getIdentityPartsSeparator()
-                    : _originalConfiguration.getIdentityPartsSeparator().charValue();
+            _maxNumberOfRequestsPerSession = ObjectUtils.firstNonNull(
+                    configuration.getMaxNumberOfRequestsPerSession(),
+                    _originalConfiguration.getMaxNumberOfRequestsPerSession(),
+                    _maxNumberOfRequestsPerSession);
+            _readBalanceBehavior = ObjectUtils.firstNonNull(
+                    configuration.getReadBalanceBehavior(),
+                    _originalConfiguration.getReadBalanceBehavior(),
+                    _readBalanceBehavior
+            );
+            _loadBalanceBehavior = ObjectUtils.firstNonNull(
+                    configuration.getLoadBalanceBehavior(),
+                    _originalConfiguration.getLoadBalanceBehavior(),
+                    _loadBalanceBehavior
+            );
+            _identityPartsSeparator = ObjectUtils.firstNonNull(
+                    configuration.getIdentityPartsSeparator(),
+                    _originalConfiguration.getIdentityPartsSeparator(),
+                    _identityPartsSeparator);
         }
     }
 
@@ -750,6 +813,9 @@ public class DocumentConventions {
     }
 
     public void freeze() {
+        if (_loadBalanceBehavior == LoadBalanceBehavior.USE_SESSION_CONTEXT && _loadBalancerPerSessionContextSelector == null) {
+            throw new IllegalStateException("Cannot set LoadBalanceBehavior to USE_SESSION_CONTEXT without also providing a value for LoadBalancerPerSessionContextSelector");
+        }
         _frozen = true;
     }
 

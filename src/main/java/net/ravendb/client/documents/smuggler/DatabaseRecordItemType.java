@@ -18,5 +18,6 @@ public enum DatabaseRecordItemType {
     CLIENT,
     SORTERS,
     SINK_PULL_REPLICATIONS,
-    HUB_PULL_REPLICATIONS
+    HUB_PULL_REPLICATIONS,
+    TIME_SERIES
 }

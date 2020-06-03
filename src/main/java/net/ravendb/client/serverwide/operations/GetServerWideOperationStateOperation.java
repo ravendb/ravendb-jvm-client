@@ -21,21 +21,19 @@ public class GetServerWideOperationStateOperation implements IServerOperation<Ob
 
     @Override
     public RavenCommand<ObjectNode> getCommand(DocumentConventions conventions) {
-        return new GetServerWideOperationStateCommand(DocumentConventions.defaultConventions, _id);
+        return new GetServerWideOperationStateCommand(_id);
     }
 
     public static class GetServerWideOperationStateCommand extends RavenCommand<ObjectNode> {
         private final long _id;
-        private final DocumentConventions _conventions;
 
-        public GetServerWideOperationStateCommand(DocumentConventions conventions, long id) {
-            this(conventions, id, null);
+        public GetServerWideOperationStateCommand(long id) {
+            this(id, null);
         }
 
-        public GetServerWideOperationStateCommand(DocumentConventions conventions, long id, String nodeTag) {
+        public GetServerWideOperationStateCommand(long id, String nodeTag) {
             super(ObjectNode.class);
 
-            this._conventions = conventions;
             this._id = id;
             selectedNodeTag = nodeTag;
         }

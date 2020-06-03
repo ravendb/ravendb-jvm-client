@@ -302,7 +302,6 @@ public class AttachmentsStreamTest extends RemoteTestBase {
     }
 
     @Test
-    //TODO: this test is flacky!!!
     public void canGetListOfAttachmentsAndReadPartially4() throws Exception {
         canGetListOfAttachmentsAndReadPartially(100, 3);
     }

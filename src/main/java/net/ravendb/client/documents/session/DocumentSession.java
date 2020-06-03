@@ -17,17 +17,22 @@ import net.ravendb.client.documents.commands.multiGet.MultiGetCommand;
 import net.ravendb.client.documents.indexes.AbstractCommonApiForIndexes;
 import net.ravendb.client.documents.linq.IDocumentQueryGenerator;
 import net.ravendb.client.documents.operations.PatchRequest;
+import net.ravendb.client.documents.operations.timeSeries.TimeSeriesConfiguration;
+import net.ravendb.client.documents.operations.timeSeries.TimeSeriesOperation;
 import net.ravendb.client.documents.operations.timeSeries.TimeSeriesRange;
 import net.ravendb.client.documents.queries.Query;
 import net.ravendb.client.documents.session.loaders.*;
 import net.ravendb.client.documents.session.operations.*;
 import net.ravendb.client.documents.session.operations.lazy.*;
+import net.ravendb.client.documents.session.timeSeries.TimeSeriesEntry;
 import net.ravendb.client.documents.session.tokens.FieldsToFetchToken;
+import net.ravendb.client.documents.timeSeries.TimeSeriesOperations;
 import net.ravendb.client.extensions.JsonExtensions;
 import net.ravendb.client.json.MetadataAsDictionary;
 import net.ravendb.client.primitives.Reference;
 import net.ravendb.client.primitives.Tuple;
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.util.EntityUtils;
 
@@ -38,7 +43,8 @@ import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 
-public class DocumentSession extends InMemoryDocumentSessionOperations implements IAdvancedSessionOperations, IDocumentSessionImpl, IDocumentQueryGenerator {
+public class DocumentSession extends InMemoryDocumentSessionOperations
+        implements IAdvancedSessionOperations, IDocumentSessionImpl, IDocumentQueryGenerator {
 
     /**
      * Get the accessor for advanced operations
@@ -951,5 +957,48 @@ public class DocumentSession extends InMemoryDocumentSessionOperations implement
     public ISessionDocumentTimeSeries timeSeriesFor(Object entity, String name) {
         return new SessionDocumentTimeSeries(this, entity, name);
     }
-    
+
+    @Override
+    public <T> ISessionDocumentTypedTimeSeries<T> timeSeriesFor(Class<T> clazz, Object entity) {
+        return timeSeriesFor(clazz, entity, null);
+    }
+
+    @Override
+    public <T> ISessionDocumentTypedTimeSeries<T> timeSeriesFor(Class<T> clazz, Object entity, String name) {
+        String tsName = ObjectUtils.firstNonNull(name, TimeSeriesOperations.getTimeSeriesName(clazz));
+        return new SessionDocumentTypedTimeSeries<T>(clazz, this, entity, tsName);
+    }
+
+    @Override
+    public <T> ISessionDocumentTypedTimeSeries<T> timeSeriesFor(Class<T> clazz, String documentId) {
+        return timeSeriesFor(clazz, documentId, null);
+    }
+
+    @Override
+    public <T> ISessionDocumentTypedTimeSeries<T> timeSeriesFor(Class<T> clazz, String documentId, String name) {
+        String tsName = ObjectUtils.firstNonNull(name, TimeSeriesOperations.getTimeSeriesName(clazz));
+        return new SessionDocumentTypedTimeSeries<>(clazz, this, documentId, tsName);
+    }
+
+    @Override
+    public <T> ISessionDocumentRollupTypedTimeSeries<T> timeSeriesRollupFor(Class<T> clazz, Object entity, String policy) {
+        return timeSeriesRollupFor(clazz, entity, policy, null);
+    }
+
+    @Override
+    public <T> ISessionDocumentRollupTypedTimeSeries<T> timeSeriesRollupFor(Class<T> clazz, Object entity, String policy, String raw) {
+        String tsName = ObjectUtils.firstNonNull(raw, TimeSeriesOperations.getTimeSeriesName(clazz));
+        return new SessionDocumentRollupTypedTimeSeries<T>(clazz, this, entity, tsName + TimeSeriesConfiguration.TIME_SERIES_ROLLUP_SEPARATOR + policy);
+    }
+
+    @Override
+    public <T> ISessionDocumentRollupTypedTimeSeries<T> timeSeriesRollupFor(Class<T> clazz, String documentId, String policy) {
+        return timeSeriesRollupFor(clazz, documentId, policy, null);
+    }
+
+    @Override
+    public <T> ISessionDocumentRollupTypedTimeSeries<T> timeSeriesRollupFor(Class<T> clazz, String documentId, String policy, String raw) {
+        String tsName = ObjectUtils.firstNonNull(raw, TimeSeriesOperations.getTimeSeriesName(clazz));
+        return new SessionDocumentRollupTypedTimeSeries<T>(clazz, this, documentId, tsName + TimeSeriesConfiguration.TIME_SERIES_ROLLUP_SEPARATOR + policy);
+    }
 }

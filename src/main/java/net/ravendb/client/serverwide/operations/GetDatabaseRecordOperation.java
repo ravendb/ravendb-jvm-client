@@ -18,12 +18,11 @@ public class GetDatabaseRecordOperation implements IServerOperation<DatabaseReco
     }
 
     public RavenCommand<DatabaseRecordWithEtag> getCommand(DocumentConventions conventions) {
-        return new GetDatabaseRecordCommand(conventions, _database);
+        return new GetDatabaseRecordCommand(_database);
     }
 
 
     private static class GetDatabaseRecordCommand extends RavenCommand<DatabaseRecordWithEtag> {
-        private final DocumentConventions _conventions;
         private final String _database;
 
         @Override
@@ -31,9 +30,8 @@ public class GetDatabaseRecordOperation implements IServerOperation<DatabaseReco
             return false;
         }
 
-        public GetDatabaseRecordCommand(DocumentConventions conventions, String database) {
+        public GetDatabaseRecordCommand(String database) {
             super(DatabaseRecordWithEtag.class);
-            _conventions = conventions;
             _database = database;
         }
 

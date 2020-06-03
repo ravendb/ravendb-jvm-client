@@ -16,9 +16,9 @@ public class UniqueValuesTest extends RemoteTestBase {
     @Test
     public void canReadNotExistingKey() throws Exception {
         try (IDocumentStore store = getDocumentStore()) {
-                CompareExchangeValue<Integer> res = store.operations().send(new GetCompareExchangeValueOperation<>(Integer.class, "test"));
-                assertThat(res)
-                        .isNull();
+            CompareExchangeValue<Integer> res = store.operations().send(new GetCompareExchangeValueOperation<>(Integer.class, "test"));
+            assertThat(res)
+                    .isNull();
         }
     }
 
