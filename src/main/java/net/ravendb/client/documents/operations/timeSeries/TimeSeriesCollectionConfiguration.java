@@ -51,4 +51,8 @@ public class TimeSeriesCollectionConfiguration {
     public void setRawPolicy(RawTimeSeriesPolicy rawPolicy) {
         this.rawPolicy = rawPolicy;
     }
+
+    public static boolean isRaw(TimeSeriesPolicy policy) {
+        return RawTimeSeriesPolicy.DEFAULT_POLICY.equals(policy.getName());
+    }
 }

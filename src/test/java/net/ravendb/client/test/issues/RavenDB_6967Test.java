@@ -5,9 +5,7 @@ import net.ravendb.client.RemoteTestBase;
 import net.ravendb.client.documents.IDocumentStore;
 import net.ravendb.client.documents.indexes.IndexDefinition;
 import net.ravendb.client.documents.indexes.IndexErrors;
-import net.ravendb.client.documents.operations.indexes.DeleteIndexErrorsOperation;
-import net.ravendb.client.documents.operations.indexes.GetIndexErrorsOperation;
-import net.ravendb.client.documents.operations.indexes.PutIndexesOperation;
+import net.ravendb.client.documents.operations.indexes.*;
 import net.ravendb.client.documents.session.IDocumentSession;
 import net.ravendb.client.exceptions.documents.indexes.IndexDoesNotExistException;
 import net.ravendb.client.infrastructure.entities.Company;
@@ -74,6 +72,7 @@ public class RavenDB_6967Test extends RemoteTestBase {
             waitForIndexingErrors(store, Duration.ofMinutes(1), "Index2");
             waitForIndexingErrors(store, Duration.ofMinutes(1), "Index3");
 
+            store.maintenance().send(new StopIndexingOperation());
 
             IndexErrors[] indexErrors1 = store.maintenance().send(new GetIndexErrorsOperation(new String[]{"Index1"}));
             IndexErrors[] indexErrors2 = store.maintenance().send(new GetIndexErrorsOperation(new String[]{"Index2"}));

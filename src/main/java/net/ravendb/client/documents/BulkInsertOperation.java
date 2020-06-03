@@ -405,7 +405,8 @@ public class BulkInsertOperation implements CleanCloseable {
     }
 
     private BulkInsertAbortedException getExceptionFromOperation() {
-        GetOperationStateOperation.GetOperationStateCommand stateRequest = new GetOperationStateOperation.GetOperationStateCommand(_requestExecutor.getConventions(), _operationId);
+        GetOperationStateOperation.GetOperationStateCommand stateRequest =
+                new GetOperationStateOperation.GetOperationStateCommand(_operationId);
         _requestExecutor.execute(stateRequest);
 
         if (!"Faulted".equals(stateRequest.getResult().get("Status").asText())) {

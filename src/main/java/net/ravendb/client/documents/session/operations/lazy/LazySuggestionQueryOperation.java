@@ -12,6 +12,7 @@ import java.io.IOException;
 import java.util.Map;
 import java.util.function.BiFunction;
 import java.util.function.Consumer;
+import java.util.function.Function;
 
 public class LazySuggestionQueryOperation implements ILazyOperation {
 
@@ -22,10 +23,10 @@ public class LazySuggestionQueryOperation implements ILazyOperation {
     private final DocumentConventions _conventions;
     private final IndexQuery _indexQuery;
     private final Consumer<QueryResult> _invokeAfterQueryExecuted;
-    private final BiFunction<QueryResult, DocumentConventions, Map<String, SuggestionResult>> _processResults;
+    private final Function<QueryResult, Map<String, SuggestionResult>> _processResults;
 
     public LazySuggestionQueryOperation(DocumentConventions conventions, IndexQuery indexQuery, Consumer<QueryResult> invokeAfterQueryExecuted,
-                                        BiFunction<QueryResult, DocumentConventions, Map<String, SuggestionResult>> processResults) {
+                                        Function<QueryResult, Map<String, SuggestionResult>> processResults) {
         _conventions = conventions;
         _indexQuery = indexQuery;
         _invokeAfterQueryExecuted = invokeAfterQueryExecuted;
@@ -76,7 +77,7 @@ public class LazySuggestionQueryOperation implements ILazyOperation {
     }
 
     private void handleResponse(QueryResult queryResult) {
-        result = _processResults.apply(queryResult, _conventions);
+        result = _processResults.apply(queryResult);
         this.queryResult = queryResult;
     }
 }

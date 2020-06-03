@@ -28,7 +28,7 @@ public class GetOperationStateOperation implements IMaintenanceOperation<ObjectN
 
     @Override
     public RavenCommand<ObjectNode> getCommand(DocumentConventions conventions) {
-        return new GetOperationStateCommand(DocumentConventions.defaultConventions, _id, _nodeTag);
+        return new GetOperationStateCommand(_id, _nodeTag);
     }
 
     public static class GetOperationStateCommand extends RavenCommand<ObjectNode> {
@@ -37,16 +37,14 @@ public class GetOperationStateOperation implements IMaintenanceOperation<ObjectN
             return true;
         }
 
-        private final DocumentConventions _conventions;
         private final long _id;
 
-        public GetOperationStateCommand(DocumentConventions conventions, long id) {
-            this(conventions, id, null);
+        public GetOperationStateCommand(long id) {
+            this(id, null);
         }
 
-        public GetOperationStateCommand(DocumentConventions conventions, long id, String nodeTag) {
+        public GetOperationStateCommand(long id, String nodeTag) {
             super(ObjectNode.class);
-            _conventions = conventions;
             _id = id;
             selectedNodeTag = nodeTag;
         }

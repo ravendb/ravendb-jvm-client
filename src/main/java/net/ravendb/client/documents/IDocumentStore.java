@@ -7,9 +7,11 @@ import net.ravendb.client.documents.indexes.AbstractIndexCreationTaskBase;
 import net.ravendb.client.documents.indexes.IndexDefinition;
 import net.ravendb.client.documents.operations.MaintenanceOperationExecutor;
 import net.ravendb.client.documents.operations.OperationExecutor;
+import net.ravendb.client.documents.operations.timeSeries.TimeSeriesOperation;
 import net.ravendb.client.documents.session.*;
 import net.ravendb.client.documents.smuggler.DatabaseSmuggler;
 import net.ravendb.client.documents.subscriptions.DocumentSubscriptions;
+import net.ravendb.client.documents.timeSeries.TimeSeriesOperations;
 import net.ravendb.client.http.AggressiveCacheMode;
 import net.ravendb.client.http.RequestExecutor;
 import net.ravendb.client.primitives.CleanCloseable;
@@ -236,6 +238,8 @@ public interface IDocumentStore extends IDisposalNotification {
      * @param database Target database
      */
     void executeIndexes(List<AbstractIndexCreationTaskBase<IndexDefinition>> tasks, String database);
+
+    TimeSeriesOperations timeSeries();
 
     /**
      * Gets the conventions

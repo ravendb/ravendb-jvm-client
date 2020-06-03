@@ -12,20 +12,12 @@ import java.io.IOException;
 public class GetDetailedCollectionStatisticsOperation implements IMaintenanceOperation<DetailedCollectionStatistics> {
     @Override
     public RavenCommand<DetailedCollectionStatistics> getCommand(DocumentConventions conventions) {
-        return new GetDetailedCollectionStatisticsCommand(conventions);
+        return new GetDetailedCollectionStatisticsCommand();
     }
 
     private static class GetDetailedCollectionStatisticsCommand extends RavenCommand<DetailedCollectionStatistics> {
-        private final DocumentConventions _conventions;
-
-        public GetDetailedCollectionStatisticsCommand(DocumentConventions conventions) {
+        public GetDetailedCollectionStatisticsCommand() {
             super(DetailedCollectionStatistics.class);
-
-            if (conventions == null) {
-                throw new IllegalArgumentException("Conventions cannot be null");
-            }
-
-            _conventions = conventions;
         }
 
         @Override

@@ -93,7 +93,7 @@ public class DatabaseSmuggler {
         _requestExecutor.execute(getNextOperationIdCommand);
         Long operationId = getNextOperationIdCommand.getResult();
 
-        ExportCommand command = new ExportCommand(_requestExecutor.getConventions(), options, handleStreamResponse, operationId);
+        ExportCommand command = new ExportCommand(options, handleStreamResponse, operationId);
         _requestExecutor.execute(command);
 
         return new Operation(_requestExecutor, () -> _store.changes(_databaseName), _requestExecutor.getConventions(), operationId);
@@ -185,7 +185,7 @@ public class DatabaseSmuggler {
         _requestExecutor.execute(getNextOperationIdCommand);
         Long operationId = getNextOperationIdCommand.getResult();
 
-        ImportCommand command = new ImportCommand(_requestExecutor.getConventions(), options, stream, operationId);
+        ImportCommand command = new ImportCommand(options, stream, operationId);
         _requestExecutor.execute(command);
 
         return new Operation(_requestExecutor, () -> _store.changes(_databaseName), _requestExecutor.getConventions(), operationId, null);
@@ -196,11 +196,8 @@ public class DatabaseSmuggler {
         private final Consumer<InputStream> _handleStreamResponse;
         private final long _operationId;
 
-        public ExportCommand(DocumentConventions conventions, DatabaseSmugglerExportOptions options,
+        public ExportCommand(DatabaseSmugglerExportOptions options,
                              Consumer<InputStream> handleStreamResponse, long operationId) {
-            if (conventions == null) {
-                throw new IllegalArgumentException("Conventions cannot be null");
-            }
             if (options == null) {
                 throw new IllegalArgumentException("Options cannot be null");
             }
@@ -252,12 +249,9 @@ public class DatabaseSmuggler {
             return false;
         }
 
-        public ImportCommand(DocumentConventions conventions, DatabaseSmugglerImportOptions options, InputStream stream, long operationId) {
+        public ImportCommand(DatabaseSmugglerImportOptions options, InputStream stream, long operationId) {
             if (stream == null) {
                 throw new IllegalArgumentException("Stream cannot be null");
-            }
-            if (conventions == null) {
-                throw new IllegalArgumentException("Conventions cannot be null");
             }
             if (options == null) {
                 throw new IllegalArgumentException("Options cannot be null");

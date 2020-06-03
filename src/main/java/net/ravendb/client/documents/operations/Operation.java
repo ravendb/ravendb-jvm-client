@@ -46,7 +46,7 @@ public class Operation {
     }
 
     protected RavenCommand<ObjectNode> getOperationStateCommand(DocumentConventions conventions, long id, String nodeTag) {
-        return new GetOperationStateOperation.GetOperationStateCommand(_conventions, _id, nodeTag);
+        return new GetOperationStateOperation.GetOperationStateCommand(_id, nodeTag);
     }
 
     public String getNodeTag() {

@@ -71,7 +71,7 @@ public class LazyGetCompareExchangeValueOperation<T> implements ILazyOperation {
         GetRequest request = new GetRequest();
         request.setUrl("/cmpxchg");
         request.setMethod("GET");
-        String queryBuilder = "?key=" + UrlUtils.escapeDataString(_key);//TODO: check if we escape this in c#
+        String queryBuilder = "?key=" + UrlUtils.escapeDataString(_key);
         request.setQuery(queryBuilder);
 
         return request;
@@ -87,7 +87,8 @@ public class LazyGetCompareExchangeValueOperation<T> implements ILazyOperation {
 
         try {
             if (response.getResult() != null) {
-                CompareExchangeValue<ObjectNode> value = CompareExchangeValueResultParser.getValue(ObjectNode.class, response.getResult(), _conventions);
+                CompareExchangeValue<ObjectNode> value =
+                        CompareExchangeValueResultParser.getValue(ObjectNode.class, response.getResult(), false, _conventions);
                 if (value != null) {
                     _clusterSession.registerCompareExchangeValue(value);
                 }

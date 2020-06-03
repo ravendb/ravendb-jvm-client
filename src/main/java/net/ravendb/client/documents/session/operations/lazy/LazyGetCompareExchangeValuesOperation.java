@@ -98,7 +98,8 @@ public class LazyGetCompareExchangeValuesOperation<T> implements ILazyOperation 
 
         try {
             if (response.getResult() != null) {
-                for (Map.Entry<String, CompareExchangeValue<ObjectNode>> kvp : CompareExchangeValueResultParser.getValues(ObjectNode.class, response.getResult(), _conventions).entrySet()) {
+                for (Map.Entry<String, CompareExchangeValue<ObjectNode>> kvp :
+                        CompareExchangeValueResultParser.getValues(ObjectNode.class, response.getResult(), false, _conventions).entrySet()) {
                     if (kvp.getValue() == null) {
                         continue;
                     }

@@ -25,7 +25,8 @@ public class DatabaseSmugglerOptions implements IDatabaseSmugglerOptions {
             DatabaseRecordItemType.SORTERS,
             DatabaseRecordItemType.SQL_ETLS,
             DatabaseRecordItemType.HUB_PULL_REPLICATIONS,
-            DatabaseRecordItemType.SINK_PULL_REPLICATIONS);
+            DatabaseRecordItemType.SINK_PULL_REPLICATIONS,
+            DatabaseRecordItemType.TIME_SERIES);
 
     private final int DEFAULT_MAX_STEPS_FOR_TRANSFORM_SCRIPT = 10 * 1000;
 

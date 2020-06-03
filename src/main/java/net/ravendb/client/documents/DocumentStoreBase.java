@@ -12,6 +12,7 @@ import net.ravendb.client.documents.operations.indexes.PutIndexesOperation;
 import net.ravendb.client.documents.session.*;
 import net.ravendb.client.documents.smuggler.DatabaseSmuggler;
 import net.ravendb.client.documents.subscriptions.DocumentSubscriptions;
+import net.ravendb.client.documents.timeSeries.TimeSeriesOperations;
 import net.ravendb.client.http.AggressiveCacheMode;
 import net.ravendb.client.http.RequestExecutor;
 import net.ravendb.client.primitives.CleanCloseable;
@@ -127,6 +128,16 @@ public abstract class DocumentStoreBase implements IDocumentStore {
         maintenance()
                 .forDatabase(ObjectUtils.firstNonNull(database, getDatabase()))
                 .send(new PutIndexesOperation(indexesToAdd));
+    }
+
+    private TimeSeriesOperations _timeSeriesOperation;
+
+    public TimeSeriesOperations timeSeries() {
+        if (_timeSeriesOperation == null) {
+            _timeSeriesOperation = new TimeSeriesOperations(this);
+        }
+
+        return _timeSeriesOperation;
     }
 
     private DocumentConventions conventions;

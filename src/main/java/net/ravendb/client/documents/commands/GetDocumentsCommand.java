@@ -12,16 +12,14 @@ import net.ravendb.client.json.ContentProviderHttpEntity;
 import net.ravendb.client.primitives.NetISO8601Utils;
 import net.ravendb.client.primitives.Reference;
 import net.ravendb.client.util.UrlUtils;
+import org.apache.commons.lang3.ObjectUtils;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpRequestBase;
 import org.apache.http.entity.ContentType;
 
 import java.io.IOException;
-import java.util.Collections;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 public class GetDocumentsCommand extends RavenCommand<GetDocumentsResult> {
 
@@ -200,15 +198,18 @@ public class GetDocumentsCommand extends RavenCommand<GetDocumentsResult> {
         // if it is too big, we drop to POST (note that means that we can't use the HTTP cache any longer)
         // we are fine with that, requests to load > 1024 items are going to be rare
         boolean isGet = uniqueIds.stream()
+                .filter(Objects::nonNull)
                 .map(String::length)
-                .reduce((prev, current) -> prev + current)
+                .reduce(Integer::sum)
                 .orElse(0) < 1024;
 
         if (isGet) {
             uniqueIds.forEach(x -> {
                 if (x != null) {
                     pathBuilder.append("&id=");
-                    pathBuilder.append(UrlUtils.escapeDataString(x));
+                    pathBuilder.append(
+                            UrlUtils.escapeDataString(
+                                    ObjectUtils.firstNonNull(x, "")));
                 }
             });
 
