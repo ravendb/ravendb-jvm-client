@@ -1,7 +1,9 @@
 package net.ravendb.client.documents.queries.timeSeries;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import net.ravendb.client.documents.session.timeSeries.TimeSeriesValuesHelper;
 
+import java.util.Arrays;
 import java.util.Date;
 
 public class TimeSeriesRangeAggregation {
@@ -9,19 +11,19 @@ public class TimeSeriesRangeAggregation {
     private long[] count;
 
     @JsonProperty("Max")
-    private Double[] max;
+    private double[] max;
 
     @JsonProperty("Min")
-    private Double[] min;
+    private double[] min;
 
     @JsonProperty("Last")
-    private Double[] last;
+    private double[] last;
 
     @JsonProperty("First")
-    private Double[] first;
+    private double[] first;
 
     @JsonProperty("Average")
-    private Double[] average;
+    private double[] average;
 
     @JsonProperty("To")
     private Date to;
@@ -37,43 +39,43 @@ public class TimeSeriesRangeAggregation {
         this.count = count;
     }
 
-    public Double[] getMax() {
+    public double[] getMax() {
         return max;
     }
 
-    public void setMax(Double[] max) {
+    public void setMax(double[] max) {
         this.max = max;
     }
 
-    public Double[] getMin() {
+    public double[] getMin() {
         return min;
     }
 
-    public void setMin(Double[] min) {
+    public void setMin(double[] min) {
         this.min = min;
     }
 
-    public Double[] getLast() {
+    public double[] getLast() {
         return last;
     }
 
-    public void setLast(Double[] last) {
+    public void setLast(double[] last) {
         this.last = last;
     }
 
-    public Double[] getFirst() {
+    public double[] getFirst() {
         return first;
     }
 
-    public void setFirst(Double[] first) {
+    public void setFirst(double[] first) {
         this.first = first;
     }
 
-    public Double[] getAverage() {
+    public double[] getAverage() {
         return average;
     }
 
-    public void setAverage(Double[] average) {
+    public void setAverage(double[] average) {
         this.average = average;
     }
 
@@ -91,5 +93,21 @@ public class TimeSeriesRangeAggregation {
 
     public void setFrom(Date from) {
         this.from = from;
+    }
+
+    public <T> TypedTimeSeriesRangeAggregation<T> asTypedEntry(Class<T> clazz) {
+        TypedTimeSeriesRangeAggregation<T> typedEntry = new TypedTimeSeriesRangeAggregation<>();
+
+        typedEntry.setFrom(from);
+        typedEntry.setTo(to);
+        typedEntry.setMin(min != null ? TimeSeriesValuesHelper.setFields(clazz, min, true) : null);
+        typedEntry.setMax(max != null ? TimeSeriesValuesHelper.setFields(clazz, max, true) : null);
+        typedEntry.setFirst(first != null ? TimeSeriesValuesHelper.setFields(clazz, first, true) : null);
+        typedEntry.setLast(last != null ? TimeSeriesValuesHelper.setFields(clazz, last, true) : null);
+        double[] counts = Arrays.stream(count).asDoubleStream().toArray();
+        typedEntry.setCount(count != null ? TimeSeriesValuesHelper.setFields(clazz, counts, true) : null);
+        typedEntry.setAverage(average != null ? TimeSeriesValuesHelper.setFields(clazz, average, true) : null);
+
+        return typedEntry;
     }
 }

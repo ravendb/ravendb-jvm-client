@@ -46,7 +46,7 @@ public class CompareExchangeSessionValue {
                 }
 
                 if (_value != null) {
-                    throw new IllegalStateException("TODO ppekrol");
+                    throw new IllegalStateException("Value cannot be null");
                 }
 
                 T entity = null;

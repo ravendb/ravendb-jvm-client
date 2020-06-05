@@ -123,7 +123,7 @@ public class NodeSelector implements CleanCloseable {
             throw new AllTopologyNodesDownException("There are no nodes in the topology at all");
         }
 
-        int index = sessionId % state.topology.getNodes().size();
+        int index = Math.abs(sessionId % state.topology.getNodes().size());
 
         for (int i = index; i < state.failures.length; i++) {
             if (state.failures[i].get() == 0 && state.nodes.get(i).getServerRole() == ServerNode.Role.MEMBER) {

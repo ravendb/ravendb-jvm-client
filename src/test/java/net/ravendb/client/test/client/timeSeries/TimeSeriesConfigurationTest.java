@@ -246,4 +246,6 @@ public class TimeSeriesConfigurationTest extends RemoteTestBase {
             }
         }
     }
+    //TODO: CanConfigureTimeSeries2
+    //TODO: CanConfigureTimeSeries3
 }

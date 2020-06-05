@@ -8,7 +8,7 @@ import java.util.List;
 /**
  * Time series synchronous session operations
  */
-public interface ISessionDocumentTimeSeries extends ISessionDocumentTimeSeriesBase {
+public interface ISessionDocumentTimeSeries extends ISessionDocumentAppendTimeSeriesBase, ISessionDocumentRemoveTimeSeriesBase {
     /**
      * Return all time series values
      * @return time series values
