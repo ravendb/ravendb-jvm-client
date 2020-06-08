@@ -2,8 +2,13 @@ package net.ravendb.client.test.client;
 
 import net.ravendb.client.RemoteTestBase;
 import net.ravendb.client.documents.IDocumentStore;
+import net.ravendb.client.documents.operations.DetailedDatabaseStatistics;
+import net.ravendb.client.documents.operations.GetDetailedStatisticsOperation;
 import net.ravendb.client.documents.operations.compareExchange.*;
 import net.ravendb.client.documents.session.DocumentSession;
+import net.ravendb.client.documents.session.IDocumentSession;
+import net.ravendb.client.documents.session.SessionOptions;
+import net.ravendb.client.documents.session.TransactionMode;
 import net.ravendb.client.infrastructure.entities.User;
 import org.junit.jupiter.api.Test;
 
@@ -208,5 +213,36 @@ public class UniqueValuesTest extends RemoteTestBase {
         }
     }
 
-    //TODO: CanAddMetadataToSimpleCompareExchange
+    @Test
+    public void canAddMetadataToSimpleCompareExchange() throws Exception {
+        try (IDocumentStore store = getDocumentStore()) {
+            String str = "Test";
+            double num = 123.456;
+            String key = "egr/test/cmp/x/change/simple";
+
+            SessionOptions sessionOptions = new SessionOptions();
+            sessionOptions.setTransactionMode(TransactionMode.CLUSTER_WIDE);
+
+            try (IDocumentSession session = store.openSession(sessionOptions)) {
+                CompareExchangeValue<Integer> result = session.advanced().clusterTransaction().createCompareExchangeValue(key, 322);
+                result.getMetadata().put("TestString", str);
+                result.getMetadata().put("TestNumber", num);
+                session.saveChanges();
+            }
+
+            CompareExchangeValue<Integer> res = store.operations().send(new GetCompareExchangeValueOperation<Integer>(Integer.class, key));
+            assertThat(res.getMetadata())
+                    .isNotNull();
+            assertThat(res.getValue())
+                    .isEqualTo(322);
+            assertThat(res.getMetadata().get("TestString"))
+                    .isEqualTo(str);
+            assertThat(res.getMetadata().get("TestNumber"))
+                    .isEqualTo(num);
+
+            DetailedDatabaseStatistics stats = store.maintenance().send(new GetDetailedStatisticsOperation());
+            assertThat(stats.getCountOfCompareExchange())
+                    .isEqualTo(1);
+        }
+    }
 }

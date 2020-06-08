@@ -117,10 +117,8 @@ public class GetCountersOperation implements IOperation<CountersDetail> {
                     .reduce(Integer::sum)
                     .get() < 1024) {
                 for (String uniqueName : uniqueNames) {
-                    if (uniqueName != null) {
-                        pathBuilder.append("&counter=")
-                                .append(UrlUtils.escapeDataString(ObjectUtils.firstNonNull(uniqueName, "")));
-                    }
+                    pathBuilder.append("&counter=")
+                            .append(UrlUtils.escapeDataString(ObjectUtils.firstNonNull(uniqueName, "")));
                 }
             } else {
                 HttpPost postRequest = new HttpPost();

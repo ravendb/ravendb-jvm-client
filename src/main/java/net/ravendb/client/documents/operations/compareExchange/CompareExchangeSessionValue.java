@@ -115,8 +115,7 @@ public class CompareExchangeSessionValue {
                     return null;
                 }
 
-                Object entity = EntityToJson.convertEntityToJson(_value.getValue(), conventions, null);
-                //TODO: var entity = CompareExchangeValueBlittableJsonConverter.ConvertToBlittable(_value.Value, conventions, context, jsonSerializer);
+                Object entity = CompareExchangeValueJsonConverter.convertToJson(_value.getValue(), conventions);
 
                 ObjectNode entityJson = entity instanceof ObjectNode ? (ObjectNode) entity : null;
                 ObjectNode metadata = null;

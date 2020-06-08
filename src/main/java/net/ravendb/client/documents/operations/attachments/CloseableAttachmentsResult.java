@@ -53,7 +53,6 @@ public class CloseableAttachmentsResult implements AutoCloseable, Iterator<Attac
     @Override
     public void close() throws Exception {
         if (previousStream != null) {
-            //TODO: pass info to avoid skip?
             previousStream.close();
         }
         _stream.close();

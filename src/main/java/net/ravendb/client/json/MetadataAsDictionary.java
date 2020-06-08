@@ -55,7 +55,7 @@ public class MetadataAsDictionary implements IMetadataDictionary {
         Iterator<String> fields = metadata.fieldNames();
         while (fields.hasNext()) {
             String fieldName = fields.next();
-            _metadata.put(fieldName, convertValue(fieldName, _source.get(fieldName)));
+            _metadata.put(fieldName, convertValue(fieldName, metadata.get(fieldName)));
         }
 
         if (_parent != null) { // mark parent as dirty

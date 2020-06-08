@@ -13,33 +13,6 @@ import java.util.TreeMap;
 
 public class CompareExchangeValueResultParser<T> {
 
-
-    /* TODO do we want that?
-    public static object ConvertToBlittable(object value, DocumentConventions conventions, JsonOperationContext context)
-+        {
-+            return ConvertToBlittable(value, conventions, context, conventions.Serialization.CreateSerializer());
-+        }
-+
-+        public static object ConvertToBlittable(object value, DocumentConventions conventions, JsonOperationContext context, IJsonSerializer jsonSerializer)
-+        {
-+            if (value == null)
-+                return null;
-+
-+            if (value is ValueType ||
-+                value is string ||
-+                value is BlittableJsonReaderArray)
-+                return value;
-+
-+            if (value is IEnumerable enumerable && !(enumerable is IDictionary))
-+            {
-+                return enumerable.Cast<object>()
-+                    .Select(v => ConvertToBlittable(v, conventions, context, jsonSerializer));
-+            }
-+
-+            return conventions.Serialization.DefaultConverter.ToBlittable(value, context);
-+        }
-     */
-
     public static <T> Map<String, CompareExchangeValue<T>> getValues(Class<T> clazz, String response,
                                                                      boolean materializeMetadata,
                                                                      DocumentConventions conventions) throws IOException {
@@ -112,15 +85,10 @@ public class CompareExchangeValueResultParser<T> {
         }
 
         MetadataAsDictionary metadata = null;
-        /* TODO
-            if (raw.TryGet(Constants.Documents.Metadata.Key, out BlittableJsonReaderObject bjro) && bjro != null)
-            {
-                metadata = materializeMetadata == false
-                    ? new MetadataAsDictionary(bjro)
-                    : MetadataAsDictionary.MaterializeFromBlittable(bjro);
-            }
-         */
-
+        JsonNode bjro = raw.get(Constants.Documents.Metadata.KEY);
+        if (bjro != null && bjro.isObject()) {
+            metadata = !materializeMetadata ? new MetadataAsDictionary((ObjectNode) bjro) : MetadataAsDictionary.materializeFromJson((ObjectNode) bjro);
+        }
 
         if (clazz.isPrimitive() || String.class.equals(clazz)) {
             // simple

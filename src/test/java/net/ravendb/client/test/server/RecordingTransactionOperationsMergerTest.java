@@ -5,6 +5,7 @@ import net.ravendb.client.documents.IDocumentStore;
 import net.ravendb.client.documents.operations.transactionsRecording.StartTransactionsRecordingOperation;
 import net.ravendb.client.documents.operations.transactionsRecording.StopTransactionsRecordingOperation;
 import net.ravendb.client.infrastructure.CreateSampleDataOperation;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import java.io.File;
@@ -14,6 +15,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 public class RecordingTransactionOperationsMergerTest extends RemoteTestBase {
 
     @Test
+    @Disabled("waiting for RavenDB-15106")
     public void canRecordTransactions() throws Exception {
         File targetFile = File.createTempFile("transactions", "log");
         targetFile.deleteOnExit();
