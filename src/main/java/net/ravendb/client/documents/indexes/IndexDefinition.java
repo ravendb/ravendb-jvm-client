@@ -191,6 +191,26 @@ public class IndexDefinition {
         String firstMap = maps.stream().findFirst().orElseThrow(() -> new IllegalArgumentException("Index definitions contains no maps"));
 
         return IndexDefinitionHelper.detectStaticIndexSourceType(firstMap);
+        /* TODO
+        if (Maps == null || Maps.Count == 0)
+                throw new ArgumentNullException("Index definition contains no Maps");
+
+            var sourceType = IndexSourceType.None;
+            foreach (var map in Maps)
+            {
+                var mapSourceType = IndexDefinitionHelper.DetectStaticIndexSourceType(map);
+                if (sourceType == IndexSourceType.None)
+                {
+                    sourceType = mapSourceType;
+                    continue;
+                }
+
+                if (sourceType != mapSourceType)
+                    throw new InvalidOperationException("Index definition cannot contain Maps with different source types.");
+            }
+
+            return sourceType;
+         */
     }
 
     public IndexType detectStaticIndexType() {

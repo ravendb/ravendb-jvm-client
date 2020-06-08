@@ -7,6 +7,7 @@ import net.ravendb.client.documents.IDocumentStore;
 import net.ravendb.client.documents.conventions.DocumentConventions;
 import net.ravendb.client.documents.operations.IOperation;
 import net.ravendb.client.documents.session.EntityToJson;
+import net.ravendb.client.documents.session.IMetadataDictionary;
 import net.ravendb.client.http.HttpCache;
 import net.ravendb.client.http.IRaftCommand;
 import net.ravendb.client.http.RavenCommand;
@@ -30,16 +31,22 @@ public class PutCompareExchangeValueOperation<T> implements IOperation<CompareEx
     private final String _key;
     private final T _value;
     private final long _index;
+    private final IMetadataDictionary _metadata;
 
     public PutCompareExchangeValueOperation(String key, T value, long index) {
+        this(key, value, index, null);
+    }
+
+    public PutCompareExchangeValueOperation(String key, T value, long index, IMetadataDictionary metadata) {
         _key = key;
         _value = value;
         _index = index;
+        _metadata = metadata;
     }
 
     @Override
     public RavenCommand<CompareExchangeResult<T>> getCommand(IDocumentStore store, DocumentConventions conventions, HttpCache cache) {
-        return new PutCompareExchangeValueCommand<>(_key, _value, _index, conventions);
+        return new PutCompareExchangeValueCommand<>(_key, _value, _index, _metadata, conventions);
     }
 
     private static class PutCompareExchangeValueCommand<T> extends RavenCommand<CompareExchangeResult<T>> implements IRaftCommand {
@@ -47,9 +54,10 @@ public class PutCompareExchangeValueOperation<T> implements IOperation<CompareEx
         private final T _value;
         private final long _index;
         private final DocumentConventions _conventions;
+        private final IMetadataDictionary _metadata;
 
         @SuppressWarnings("unchecked")
-        public PutCompareExchangeValueCommand(String key, T value, long index, DocumentConventions conventions) {
+        public PutCompareExchangeValueCommand(String key, T value, long index, IMetadataDictionary metadata, DocumentConventions conventions) {
             super((Class<CompareExchangeResult<T>>) (Class<?>)CompareExchangeResult.class);
 
             if (StringUtils.isEmpty(key)) {
@@ -63,6 +71,7 @@ public class PutCompareExchangeValueOperation<T> implements IOperation<CompareEx
             _key = key;
             _value = value;
             _index = index;
+            _metadata = metadata;
             _conventions = ObjectUtils.firstNonNull(conventions, DocumentConventions.defaultConventions);
         }
 
@@ -78,8 +87,13 @@ public class PutCompareExchangeValueOperation<T> implements IOperation<CompareEx
             Map<String, T> tuple = new HashMap<>();
             tuple.put(Constants.CompareExchange.OBJECT_FIELD_NAME, _value);
 
-            //TODO: ConvertToBlittableForCompareExchangeIfNeeded?
             ObjectNode json = EntityToJson.convertEntityToJson(tuple, _conventions, null, false);
+            //TODO: [Constants.CompareExchange.ObjectFieldName] = CompareExchangeValueBlittableJsonConverter.ConvertToBlittable(_value, _conventions, ctx)?
+
+            if (_metadata != null) {
+                //TODO: var metadata = ClusterTransactionOperationsBase.CompareExchangeSessionValue.PrepareMetadataForPut(_key, _metadata, _conventions, ctx);
+                //+                    djv[Constants.Documents.Metadata.Key] = metadata;
+            }
 
             HttpPut httpPut = new HttpPut();
             httpPut.setEntity(new ContentProviderHttpEntity(outputStream -> {

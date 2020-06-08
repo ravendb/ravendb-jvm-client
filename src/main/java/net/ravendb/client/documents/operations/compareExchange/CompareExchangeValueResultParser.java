@@ -3,8 +3,10 @@ package net.ravendb.client.documents.operations.compareExchange;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.base.Defaults;
+import com.sun.xml.internal.bind.v2.runtime.reflect.opt.Const;
 import net.ravendb.client.Constants;
 import net.ravendb.client.documents.conventions.DocumentConventions;
+import net.ravendb.client.json.MetadataAsDictionary;
 
 import java.io.IOException;
 import java.util.Map;
@@ -12,7 +14,36 @@ import java.util.TreeMap;
 
 public class CompareExchangeValueResultParser<T> {
 
-    public static <T> Map<String, CompareExchangeValue<T>> getValues(Class<T> clazz, String response, DocumentConventions conventions) throws IOException {
+
+    /* TODO do we want that?
+    public static object ConvertToBlittable(object value, DocumentConventions conventions, JsonOperationContext context)
++        {
++            return ConvertToBlittable(value, conventions, context, conventions.Serialization.CreateSerializer());
++        }
++
++        public static object ConvertToBlittable(object value, DocumentConventions conventions, JsonOperationContext context, IJsonSerializer jsonSerializer)
++        {
++            if (value == null)
++                return null;
++
++            if (value is ValueType ||
++                value is string ||
++                value is BlittableJsonReaderArray)
++                return value;
++
++            if (value is IEnumerable enumerable && !(enumerable is IDictionary))
++            {
++                return enumerable.Cast<object>()
++                    .Select(v => ConvertToBlittable(v, conventions, context, jsonSerializer));
++            }
++
++            return conventions.Serialization.DefaultConverter.ToBlittable(value, context);
++        }
+     */
+
+    public static <T> Map<String, CompareExchangeValue<T>> getValues(Class<T> clazz, String response,
+                                                                     boolean materializeMetadata,
+                                                                     DocumentConventions conventions) throws IOException {
         Map<String, CompareExchangeValue<T>> results = new TreeMap<>(String::compareToIgnoreCase);
         if (response == null) { // 404
             return results;
@@ -30,26 +61,28 @@ public class CompareExchangeValueResultParser<T> {
                 throw new IllegalStateException("Response is invalid. Item is null");
             }
 
-            CompareExchangeValue<T> value = getSingleValue(clazz, (ObjectNode) item, conventions);
+            CompareExchangeValue<T> value = getSingleValue(clazz, (ObjectNode) item, materializeMetadata, conventions);
             results.put(value.getKey(), value);
         }
 
         return results;
     }
 
-    public static <T> CompareExchangeValue<T> getValue(Class<T> clazz, String response, DocumentConventions conventions) throws IOException {
+    public static <T> CompareExchangeValue<T> getValue(Class<T> clazz, String response,
+                                                       boolean materializeMetadata,
+                                                       DocumentConventions conventions) throws IOException {
         if (response == null) {
             return null;
         }
 
-        Map<String, CompareExchangeValue<T>> values = getValues(clazz, response, conventions);
+        Map<String, CompareExchangeValue<T>> values = getValues(clazz, response, materializeMetadata, conventions);
         if (values.isEmpty()) {
             return null;
         }
         return values.values().iterator().next();
     }
 
-    public static <T> CompareExchangeValue<T> getSingleValue(Class<T> clazz, ObjectNode item, DocumentConventions conventions) {
+    public static <T> CompareExchangeValue<T> getSingleValue(Class<T> clazz, ObjectNode item, boolean materializeMetadata, DocumentConventions conventions) {
         if (item == null || item.isNull()) {
             return null;
         }
@@ -69,10 +102,26 @@ public class CompareExchangeValueResultParser<T> {
         if (rawJsonNode == null) {
             throw new IllegalStateException("Response is invalid. Value is missing.");
         }
+
         ObjectNode raw = rawJsonNode.isObject() ? (ObjectNode) rawJsonNode : null;
 
         String key = keyNode.asText();
         long index = indexNode.asLong();
+
+        if (raw == null) {
+            return new CompareExchangeValue<>(key, index, null);
+        }
+
+        MetadataAsDictionary metadata = null;
+        /* TODO
+            if (raw.TryGet(Constants.Documents.Metadata.Key, out BlittableJsonReaderObject bjro) && bjro != null)
+            {
+                metadata = materializeMetadata == false
+                    ? new MetadataAsDictionary(bjro)
+                    : MetadataAsDictionary.MaterializeFromBlittable(bjro);
+            }
+         */
+
 
         if (clazz.isPrimitive() || String.class.equals(clazz)) {
             // simple
