@@ -245,4 +245,29 @@ public class UniqueValuesTest extends RemoteTestBase {
                     .isEqualTo(1);
         }
     }
+
+    @Test
+    public void canAddMetadataToSimpleCompareExchange_array() throws Exception {
+        try (IDocumentStore store = getDocumentStore()) {
+            String str = "Test";
+            String key = "egr/test/cmp/x/change/simple";
+
+            SessionOptions sessionOptions = new SessionOptions();
+            sessionOptions.setTransactionMode(TransactionMode.CLUSTER_WIDE);
+
+            try (IDocumentSession session = store.openSession(sessionOptions)) {
+                CompareExchangeValue<String[]> result = session.advanced().clusterTransaction().createCompareExchangeValue(key, new String[] { "a", "b", "c" });
+                result.getMetadata().put("TestString", str);
+                session.saveChanges();
+            }
+
+            CompareExchangeValue<String[]> res = store.operations().send(new GetCompareExchangeValueOperation<>(String[].class, key));
+            assertThat(res.getMetadata())
+                    .isNotNull();
+            assertThat(res.getValue())
+                    .containsExactly("a", "b", "c");
+            assertThat(res.getMetadata().get("TestString"))
+                    .isEqualTo(str);
+        }
+    }
 }

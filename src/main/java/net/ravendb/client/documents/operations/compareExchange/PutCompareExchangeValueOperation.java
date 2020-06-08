@@ -6,6 +6,7 @@ import net.ravendb.client.Constants;
 import net.ravendb.client.documents.IDocumentStore;
 import net.ravendb.client.documents.conventions.DocumentConventions;
 import net.ravendb.client.documents.operations.IOperation;
+import net.ravendb.client.documents.session.ClusterTransactionOperationsBase;
 import net.ravendb.client.documents.session.EntityToJson;
 import net.ravendb.client.documents.session.IMetadataDictionary;
 import net.ravendb.client.http.HttpCache;
@@ -88,11 +89,10 @@ public class PutCompareExchangeValueOperation<T> implements IOperation<CompareEx
             tuple.put(Constants.CompareExchange.OBJECT_FIELD_NAME, _value);
 
             ObjectNode json = EntityToJson.convertEntityToJson(tuple, _conventions, null, false);
-            //TODO: [Constants.CompareExchange.ObjectFieldName] = CompareExchangeValueBlittableJsonConverter.ConvertToBlittable(_value, _conventions, ctx)?
 
             if (_metadata != null) {
-                //TODO: var metadata = ClusterTransactionOperationsBase.CompareExchangeSessionValue.PrepareMetadataForPut(_key, _metadata, _conventions, ctx);
-                //+                    djv[Constants.Documents.Metadata.Key] = metadata;
+                ObjectNode metadata = CompareExchangeSessionValue.prepareMetadataForPut(_key, _metadata, _conventions);
+                json.set(Constants.Documents.Metadata.KEY, metadata);
             }
 
             HttpPut httpPut = new HttpPut();

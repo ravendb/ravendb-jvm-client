@@ -9,6 +9,7 @@ import net.ravendb.client.documents.commands.batches.PutCompareExchangeCommandDa
 import net.ravendb.client.documents.conventions.DocumentConventions;
 import net.ravendb.client.documents.session.EntityToJson;
 import net.ravendb.client.documents.session.IMetadataDictionary;
+import org.apache.commons.lang3.ClassUtils;
 
 import java.util.Date;
 
@@ -54,9 +55,8 @@ public class CompareExchangeSessionValue {
 
                 T entity = null;
                 if (_originalValue != null && _originalValue.getValue() != null) {
-                    if (clazz.isPrimitive() || String.class.equals(clazz)) {
+                    if (ClassUtils.isPrimitiveOrWrapper(clazz) || String.class.equals(clazz)) {
                         entity = (T) _originalValue.getValue().get(Constants.CompareExchange.OBJECT_FIELD_NAME);
-                        //TODO: test primitives + strings!
                     } else {
                         entity = (T) EntityToJson.convertToEntity(clazz, _key, _originalValue.getValue(), conventions);
                     }

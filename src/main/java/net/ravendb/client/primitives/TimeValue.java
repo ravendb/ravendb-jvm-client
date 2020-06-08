@@ -260,7 +260,7 @@ public class TimeValue implements Comparable<TimeValue> {
             return Integer.MIN_VALUE;
         }
 
-        return (int) result; //TODO: check if it really trims value!
+        return (int) result;
     }
 
     @Override

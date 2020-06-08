@@ -7,13 +7,10 @@ import net.ravendb.client.documents.IDocumentStore;
 import net.ravendb.client.documents.session.IDocumentSession;
 import org.junit.jupiter.api.Test;
 
-import java.util.Arrays;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.setAllowComparingPrivateFields;
 
 public class RavenDB_13452Test extends RemoteTestBase {
 
@@ -107,45 +104,6 @@ public class RavenDB_13452Test extends RemoteTestBase {
                         .asText())
                         .isEqualTo("Value3");
             }
-
         }
     }
-
-
-    /* TODO
-
-
-
-
-        [Fact]
-        public void CanModifyDictionaryWithPatch_Remove()
-        {
-            using (var store = GetDocumentStore())
-            {
-
-                using (var session = store.OpenSession())
-                {
-                    var item = session.Load<Item>("items/1");
-                    session.Advanced.Patch(item, x => x.Values, dict => dict.Remove("Key2"));
-                    session.SaveChanges();
-                }
-                using (var commands = store.Commands())
-                {
-                    var item = commands.Get("items/1").BlittableJson;
-                    Assert.True(item.TryGet(nameof(Item.Values), out BlittableJsonReaderObject values));
-                    Assert.Equal(2, values.Count);
-
-                    Assert.True(values.TryGet("Key1", out string value));
-                    Assert.Equal("Value1", value);
-                    Assert.True(values.TryGet("Key3", out value));
-                    Assert.Equal("Value3", value);
-                }
-            }
-        }
-
-
-
-
-
-     */
 }

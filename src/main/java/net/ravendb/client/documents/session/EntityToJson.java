@@ -53,8 +53,6 @@ public class EntityToJson {
 
     //TODO: fill missing properties?
 
-    //TODO: internal static object ConvertToBlittableForCompareExchangeIfNeeded(
-
     public static ObjectNode convertEntityToJson(Object entity, DocumentConventions conventions, DocumentInfo documentInfo) {
         return convertEntityToJsonInternal(entity, conventions, documentInfo);
     }
