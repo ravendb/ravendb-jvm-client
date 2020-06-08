@@ -3,7 +3,6 @@ package net.ravendb.client.documents.queries.timeSeries;
 import java.util.Date;
 
 public class TypedTimeSeriesRangeAggregation<T> {
-    private T count;
 
     private T max;
 
@@ -14,6 +13,8 @@ public class TypedTimeSeriesRangeAggregation<T> {
     private T first;
 
     private T average;
+
+    private T count;
 
     private Date to;
 

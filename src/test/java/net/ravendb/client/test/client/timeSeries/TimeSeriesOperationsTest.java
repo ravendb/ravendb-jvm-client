@@ -5,22 +5,25 @@ import net.ravendb.client.documents.IDocumentStore;
 import net.ravendb.client.documents.operations.timeSeries.*;
 import net.ravendb.client.documents.queries.timeSeries.TimeSeriesAggregationResult;
 import net.ravendb.client.documents.queries.timeSeries.TimeSeriesRangeAggregation;
-import net.ravendb.client.documents.session.IDocumentSession;
-import net.ravendb.client.documents.session.IRawDocumentQuery;
-import net.ravendb.client.documents.session.ISessionDocumentTimeSeries;
-import net.ravendb.client.documents.session.SessionOptions;
+import net.ravendb.client.documents.queries.timeSeries.TimeSeriesRawResult;
+import net.ravendb.client.documents.queries.timeSeries.TypedTimeSeriesRawResult;
+import net.ravendb.client.documents.session.*;
 import net.ravendb.client.documents.session.timeSeries.TimeSeriesEntry;
+import net.ravendb.client.documents.session.timeSeries.TypedTimeSeriesEntry;
 import net.ravendb.client.exceptions.RavenException;
 import net.ravendb.client.exceptions.documents.DocumentDoesNotExistException;
 import net.ravendb.client.infrastructure.entities.User;
+import net.ravendb.client.primitives.TimeValue;
+import org.apache.commons.collections.ArrayStack;
 import org.apache.commons.lang3.time.DateUtils;
 import org.assertj.core.data.Offset;
 import org.junit.jupiter.api.Test;
 
+import java.time.Duration;
+import java.time.temporal.ChronoUnit;
 import java.util.*;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.Assertions.*;
 
 public class TimeSeriesOperationsTest extends RemoteTestBase {
 
@@ -62,6 +65,35 @@ public class TimeSeriesOperationsTest extends RemoteTestBase {
                     .isEqualTo("watches/fitbit");
             assertThat(value.getTimestamp())
                     .isEqualTo(DateUtils.addSeconds(baseLine, 1));
+        }
+    }
+
+    @Test
+    public void canGetNonExistedRange() throws Exception {
+        try (IDocumentStore store = getDocumentStore()) {
+            try (IDocumentSession session = store.openSession()) {
+                User user = new User();
+                session.store(user, "users/ayende");
+                session.saveChanges();
+            }
+
+            Date baseLine = DateUtils.truncate(new Date(), Calendar.DAY_OF_MONTH);
+
+            TimeSeriesOperation.AppendOperation appendOperation = new TimeSeriesOperation.AppendOperation(DateUtils.addSeconds(baseLine, 1), new double[]{59}, "watches/fitbit");
+
+            TimeSeriesOperation timeSeriesOp = new TimeSeriesOperation();
+            timeSeriesOp.setName("Heartrate");
+            timeSeriesOp.setAppends(Arrays.asList(appendOperation));
+
+            TimeSeriesBatchOperation timeSeriesBatch = new TimeSeriesBatchOperation("users/ayende", timeSeriesOp);
+            store.operations().send(timeSeriesBatch);
+
+            TimeSeriesRangeResult timeSeriesRangeResult = store.operations().send(
+                    new GetTimeSeriesOperation("users/ayende", "Heartrate",
+                            DateUtils.addMonths(baseLine, -2), DateUtils.addMonths(baseLine, -1)));
+
+            assertThat(timeSeriesRangeResult.getEntries())
+                    .isEmpty();
         }
     }
 
@@ -715,7 +747,7 @@ public class TimeSeriesOperationsTest extends RemoteTestBase {
     }
 
     @Test
-    public void shouldThrowOnNullRanges() throws Exception {
+    public void shouldThrowOnNullOrEmptyRanges() throws Exception {
         try (IDocumentStore store = getDocumentStore()) {
             String documentId = "users/ayende";
 
@@ -742,11 +774,13 @@ public class TimeSeriesOperationsTest extends RemoteTestBase {
                 store.operations().send(new GetTimeSeriesOperation("users/ayende", null));
             })
                     .isInstanceOf(IllegalArgumentException.class);
+
+            assertThatThrownBy(() -> {
+                store.operations().send(new GetMultipleTimeSeriesOperation("users/ayende", new ArrayList<>()));
+            })
+                    .isInstanceOf(IllegalArgumentException.class);
         }
     }
-
-
-    //TODO: CanGetNonExistedRange
 
     @Test
     public void getMultipleTimeSeriesShouldThrowOnMissingNameFromRange() throws Exception {
@@ -783,7 +817,36 @@ public class TimeSeriesOperationsTest extends RemoteTestBase {
         }
     }
 
-    //TODO: GetTimeSeriesShouldThrowOnMissingName
+    @Test
+    public void getTimeSeriesShouldThrowOnMissingName() throws Exception {
+        try (IDocumentStore store = getDocumentStore()) {
+            String documentId = "users/ayende";
+
+            try (IDocumentSession session = store.openSession()) {
+                session.store(new User(), documentId);
+                session.saveChanges();
+            }
+
+            Date baseline = DateUtils.truncate(new Date(), Calendar.DAY_OF_MONTH);
+
+            TimeSeriesOperation timeSeriesOp = new TimeSeriesOperation("Heartrate", new ArrayList<>(), null);
+
+            for (int i = 0; i <= 10; i++) {
+                timeSeriesOp.getAppends().add(
+                        new TimeSeriesOperation.AppendOperation(
+                                DateUtils.addMinutes(baseline, i * 10), new double[]{72}, "watches/fitbit"));
+            }
+
+            TimeSeriesBatchOperation timeSeriesBatch = new TimeSeriesBatchOperation(documentId, timeSeriesOp);
+
+            store.operations().send(timeSeriesBatch);
+
+            assertThatThrownBy(() -> {
+                store.operations().send(new GetTimeSeriesOperation("users/ayende", "", baseline, DateUtils.addYears(baseline, 10)));
+            })
+                    .hasMessageContaining("Timeseries cannot be null or empty");
+        }
+    }
 
     @Test
     public void getTimeSeriesStatistics() throws Exception {
@@ -840,8 +903,159 @@ public class TimeSeriesOperationsTest extends RemoteTestBase {
         }
     }
 
-    //TODO: CanDeleteWithoutProvidingFromAndToDates
+    @Test
+    public void canDeleteWithoutProvidingFromAndToDates() throws Exception {
+        try (IDocumentStore store = getDocumentStore()) {
+            Date baseLine = DateUtils.truncate(new Date(), Calendar.DAY_OF_MONTH);
 
-    //TODO: GetOperationShouldIncludeValuesFromRollUpsInResult
-    //TODO: GetMultipleRangesOperationShouldIncludeValuesFromRollUpsInResult
+            String docId = "users/ayende";
+
+            try (IDocumentSession session = store.openSession()) {
+                session.store(new User(), docId);
+
+                ISessionDocumentTimeSeries tsf = session.timeSeriesFor(docId, "HeartRate");
+                ISessionDocumentTimeSeries tsf2 = session.timeSeriesFor(docId, "BloodPressure");
+                ISessionDocumentTimeSeries tsf3 = session.timeSeriesFor(docId, "BodyTemperature");
+
+                for (int j = 0; j < 100; j++) {
+                    tsf.append(DateUtils.addMinutes(baseLine, j), j);
+                    tsf2.append(DateUtils.addMinutes(baseLine, j), j);
+                    tsf3.append(DateUtils.addMinutes(baseLine, j), j);
+                }
+
+                session.saveChanges();
+            }
+
+            TimeSeriesRangeResult get = store.operations().send(new GetTimeSeriesOperation(docId, "HeartRate"));
+            assertThat(get.getEntries())
+                    .hasSize(100);
+
+            // null From, To
+
+            TimeSeriesOperation deleteOp = new TimeSeriesOperation();
+            deleteOp.setName("Heartrate");
+            deleteOp.setRemovals(Collections.singletonList(new TimeSeriesOperation.RemoveOperation()));
+
+            store.operations().send(new TimeSeriesBatchOperation(docId, deleteOp));
+
+            get = store.operations().send(new GetTimeSeriesOperation(docId, "HeartRate"));
+
+            assertThat(get)
+                    .isNull();
+
+            get = store.operations().send(new GetTimeSeriesOperation(docId, "BloodPressure"));
+            assertThat(get.getEntries())
+                    .hasSize(100);
+
+            // null to
+
+            deleteOp = new TimeSeriesOperation();
+            deleteOp.setName("BloodPressure");
+            deleteOp.setRemovals(
+                    Collections.singletonList(
+                        new TimeSeriesOperation.RemoveOperation(DateUtils.addMinutes(baseLine, 50), null)));
+
+            store.operations().send(new TimeSeriesBatchOperation(docId, deleteOp));
+
+            get = store.operations().send(new GetTimeSeriesOperation(docId, "BloodPressure"));
+            assertThat(get.getEntries())
+                    .hasSize(50);
+
+            get = store.operations().send(new GetTimeSeriesOperation(docId, "BodyTemperature"));
+            assertThat(get.getEntries())
+                    .hasSize(100);
+
+            // null From
+            deleteOp = new TimeSeriesOperation();
+            deleteOp.setName("BodyTemperature");
+            deleteOp.setRemovals(
+                    Collections.singletonList(
+                            new TimeSeriesOperation.RemoveOperation(null, DateUtils.addMinutes(baseLine, 19))));
+
+            store.operations().send(new TimeSeriesBatchOperation(docId, deleteOp));
+
+            get = store.operations().send(new GetTimeSeriesOperation(docId, "BodyTemperature"));
+            assertThat(get.getEntries())
+                    .hasSize(80);
+        }
+    }
+
+    @Test
+    public void getOperationShouldIncludeValuesFromRollUpsInResult() throws Exception {
+        try (IDocumentStore store = getDocumentStore()) {
+            RawTimeSeriesPolicy raw = new RawTimeSeriesPolicy(TimeValue.ofHours(24));
+
+            int rawRetentionSeconds = raw.getRetentionTime().getValue();
+
+            TimeSeriesPolicy p1 = new TimeSeriesPolicy("By6Hours", TimeValue.ofHours(6), TimeValue.ofSeconds(rawRetentionSeconds * 4));
+            TimeSeriesPolicy p2 = new TimeSeriesPolicy("By1Day", TimeValue.ofDays(1), TimeValue.ofSeconds(rawRetentionSeconds * 5));
+            TimeSeriesPolicy p3 = new TimeSeriesPolicy("By30Minutes", TimeValue.ofMinutes(30), TimeValue.ofSeconds(rawRetentionSeconds * 2));
+            TimeSeriesPolicy p4 = new TimeSeriesPolicy("By1Hour", TimeValue.ofMinutes(60), TimeValue.ofSeconds(rawRetentionSeconds * 3));
+
+            TimeSeriesConfiguration config = new TimeSeriesConfiguration();
+            Map<String, TimeSeriesCollectionConfiguration> collections = new HashMap<>();
+            config.setCollections(collections);
+
+            TimeSeriesCollectionConfiguration usersConfig = new TimeSeriesCollectionConfiguration();
+            usersConfig.setRawPolicy(raw);
+            usersConfig.setPolicies(Arrays.asList(p1, p2, p3, p4));
+
+            collections.put("Users", usersConfig);
+
+            config.setPolicyCheckFrequency(Duration.ofSeconds(1));
+            store.maintenance().send(new ConfigureTimeSeriesOperation(config));
+
+            // please notice we don't modify server time here!
+
+            Date now = new Date();
+            Date baseline = DateUtils.addDays(now, -12);
+
+            int total = (int) Duration.ofDays(12).get(ChronoUnit.SECONDS) / 60;
+
+            try (IDocumentSession session = store.openSession()) {
+                User user = new User();
+                user.setName("Karmel");
+                session.store(user, "users/karmel");
+
+                for (int i = 0; i <= total; i++) {
+                    session.timeSeriesFor("users/karmel", "Heartrate")
+                            .append(DateUtils.addMinutes(baseline, i), i, "watches/fitbit");
+                }
+
+                session.saveChanges();
+            }
+
+            Thread.sleep(1500); // wait for rollup
+
+            try (IDocumentSession session = store.openSession()) {
+                IRawDocumentQuery<TimeSeriesRawResult> query = session.advanced().rawQuery(TimeSeriesRawResult.class, "declare timeseries out()\n" +
+                        "{\n" +
+                        "    from Heartrate\n" +
+                        "    between $start and $end\n" +
+                        "}\n" +
+                        "from Users as u\n" +
+                        "select out()")
+                        .addParameter("start", DateUtils.addDays(baseline, -1))
+                        .addParameter("end", DateUtils.addDays(now, 1));
+
+                TimeSeriesRawResult result = query.single();
+
+                assertThat(result.getResults().length)
+                        .isPositive();
+
+                for (TimeSeriesEntry res : result.getResults()) {
+
+                    if (res.isRollup()) {
+                        assertThat(res.getValues().length)
+                                .isPositive();
+                        assertThat(res.getValues()[0])
+                                .isPositive();
+                    } else {
+                        assertThat(res.getValues())
+                                .hasSize(1);
+                    }
+                }
+            }
+        }
+    }
 }

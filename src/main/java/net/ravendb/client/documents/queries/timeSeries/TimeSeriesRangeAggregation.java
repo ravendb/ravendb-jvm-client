@@ -25,6 +25,9 @@ public class TimeSeriesRangeAggregation {
     @JsonProperty("Average")
     private double[] average;
 
+    @JsonProperty("Sum")
+    private double[] sum;
+
     @JsonProperty("To")
     private Date to;
 
@@ -79,6 +82,14 @@ public class TimeSeriesRangeAggregation {
         this.average = average;
     }
 
+    public double[] getSum() {
+        return sum;
+    }
+
+    public void setSum(double[] sum) {
+        this.sum = sum;
+    }
+
     public Date getTo() {
         return to;
     }
@@ -97,6 +108,8 @@ public class TimeSeriesRangeAggregation {
 
     public <T> TypedTimeSeriesRangeAggregation<T> asTypedEntry(Class<T> clazz) {
         TypedTimeSeriesRangeAggregation<T> typedEntry = new TypedTimeSeriesRangeAggregation<>();
+
+        //TODO: what about sum?
 
         typedEntry.setFrom(from);
         typedEntry.setTo(to);

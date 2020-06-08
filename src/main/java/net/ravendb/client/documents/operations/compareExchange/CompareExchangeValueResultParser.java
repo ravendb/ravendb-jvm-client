@@ -83,27 +83,27 @@ public class CompareExchangeValueResultParser<T> {
                 value = conventions.getEntityMapper().convertValue(rawValue, clazz);
             }
 
-            return new CompareExchangeValue<>(key, index, value);
+            return new CompareExchangeValue<>(key, index, value, metadata);
         } else if (ObjectNode.class.equals(clazz)) {
             if (raw == null || !raw.has(Constants.CompareExchange.OBJECT_FIELD_NAME)) {
-                return new CompareExchangeValue<>(key, index, null);
+                return new CompareExchangeValue<>(key, index, null, metadata);
             }
 
             Object rawValue = raw.get(Constants.CompareExchange.OBJECT_FIELD_NAME);
             if (rawValue == null) {
-                return new CompareExchangeValue<>(key, index, null);
+                return new CompareExchangeValue<>(key, index, null, metadata);
             } else if (rawValue instanceof ObjectNode) {
-                return new CompareExchangeValue<>(key, index, (T) rawValue);
+                return new CompareExchangeValue<>(key, index, (T) rawValue, metadata);
             } else {
-                return new CompareExchangeValue<>(key, index, (T) raw);
+                return new CompareExchangeValue<>(key, index, (T) raw, metadata);
             }
         } else {
-            JsonNode object = raw.get("Object");
+            JsonNode object = raw.get(Constants.CompareExchange.OBJECT_FIELD_NAME);
             if (object == null || object.isNull()) {
-                return new CompareExchangeValue<>(key, index, Defaults.defaultValue(clazz));
+                return new CompareExchangeValue<>(key, index, Defaults.defaultValue(clazz), metadata);
             } else {
                 T converted = conventions.getEntityMapper().convertValue(object, clazz);
-                return new CompareExchangeValue<>(key, index, converted);
+                return new CompareExchangeValue<>(key, index, converted, metadata);
             }
         }
     }

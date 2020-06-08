@@ -8,6 +8,9 @@ import net.ravendb.client.documents.commands.batches.ICommandData;
 import net.ravendb.client.documents.commands.batches.PutCompareExchangeCommandData;
 import net.ravendb.client.documents.conventions.DocumentConventions;
 import net.ravendb.client.documents.session.EntityToJson;
+import net.ravendb.client.documents.session.IMetadataDictionary;
+
+import java.util.Date;
 
 public class CompareExchangeSessionValue {
 
@@ -71,7 +74,7 @@ public class CompareExchangeSessionValue {
         }
     }
 
-    public <T> void create(T item) {
+    public <T> CompareExchangeValue<T> create(T item) {
         assertState();
 
         if (_value != null) {
@@ -79,8 +82,10 @@ public class CompareExchangeSessionValue {
         }
 
         _index = 0;
-        _value = new CompareExchangeValue<>(_key, _index, item);
+        CompareExchangeValue<T> value = new CompareExchangeValue<>(_key, _index, item);
+        _value = value;
         _state = CompareExchangeValueState.CREATED;
+        return value;
     }
 
     public void delete(long index) {
@@ -111,12 +116,16 @@ public class CompareExchangeSessionValue {
                 }
 
                 Object entity = EntityToJson.convertEntityToJson(_value.getValue(), conventions, null);
-                //TODO: EntityToBlittable.ConvertToBlittableForCompareExchangeIfNeeded(_value.Value, conventions, context, jsonSerializer, documentInfo: null, removeIdentityProperty: false);
+                //TODO: var entity = CompareExchangeValueBlittableJsonConverter.ConvertToBlittable(_value.Value, conventions, context, jsonSerializer);
 
                 ObjectNode entityJson = entity instanceof ObjectNode ? (ObjectNode) entity : null;
+                ObjectNode metadata = null;
+                if (_value.hasMetadata() && _value.getMetadata().size() != 0) {
+                    metadata = prepareMetadataForPut(_key, _value.getMetadata(), conventions);
+                }
                 ObjectNode entityToInsert = null;
                 if (entityJson == null) {
-                    entityJson = entityToInsert = convertEntity(_key, entity, conventions.getEntityMapper());
+                    entityJson = entityToInsert = convertEntity(_key, entity, conventions.getEntityMapper(), metadata);
                 }
 
                 CompareExchangeValue<ObjectNode> newValue = new CompareExchangeValue<>(_key, _index, entityJson);
@@ -128,7 +137,7 @@ public class CompareExchangeSessionValue {
                 }
 
                 if (entityToInsert == null) {
-                    entityToInsert = convertEntity(_key, entity, conventions.getEntityMapper());
+                    entityToInsert = convertEntity(_key, entity, conventions.getEntityMapper(), metadata);
                 }
 
                 return new PutCompareExchangeCommandData(newValue.getKey(), entityToInsert, newValue.getIndex());
@@ -141,9 +150,13 @@ public class CompareExchangeSessionValue {
         }
     }
 
-    private ObjectNode convertEntity(String key, Object entity, ObjectMapper objectMapper) {
+
+    private ObjectNode convertEntity(String key, Object entity, ObjectMapper objectMapper, ObjectNode metadata) {
         ObjectNode objectNode = objectMapper.createObjectNode();
         objectNode.set(Constants.CompareExchange.OBJECT_FIELD_NAME, objectMapper.valueToTree(entity));
+        if (metadata != null) {
+            objectNode.set(Constants.Documents.Metadata.KEY, metadata);
+        }
         return objectNode;
     }
 
@@ -153,7 +166,7 @@ public class CompareExchangeSessionValue {
         }
 
         if (!originalValue.getKey().equalsIgnoreCase(newValue.getKey())) {
-            throw new IllegalStateException("TODO ppekrol");
+            throw new IllegalStateException("Keys do not match. Expected '" + originalValue.getKey() + " but was: " + newValue.getKey());
         }
 
         if (originalValue.getIndex() != newValue.getIndex()) {
@@ -189,5 +202,23 @@ public class CompareExchangeSessionValue {
                 EntityToJson.populateEntity(_value.getValue(), value.getValue(), mapper);
             }
         }
+    }
+
+    public static ObjectNode prepareMetadataForPut(String key, IMetadataDictionary metadataDictionary, DocumentConventions conventions) {
+        if (metadataDictionary.containsKey(Constants.Documents.Metadata.EXPIRES)) {
+            Object obj = metadataDictionary.get(Constants.Documents.Metadata.EXPIRES);
+            if (obj == null) {
+                throwInvalidExpiresMetadata("The values of " + Constants.Documents.Metadata.EXPIRES + " metadata for compare exchange '" + key + " is null.");
+            }
+            if (!(obj instanceof Date) && !(obj instanceof String)) {
+                throwInvalidExpiresMetadata("The class of " + Constants.Documents.Metadata.EXPIRES + " metadata for compare exchange '" + key + " is not valid. Use the following type: Date or string.");
+            }
+        }
+
+        return conventions.getEntityMapper().convertValue(metadataDictionary, ObjectNode.class);
+    }
+
+    private static void throwInvalidExpiresMetadata(String message) {
+        throw new IllegalArgumentException(message);
     }
 }

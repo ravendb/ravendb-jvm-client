@@ -5,7 +5,5 @@ import net.ravendb.client.documents.session.timeSeries.TypedTimeSeriesRollupEntr
 import java.util.Date;
 
 public interface ISessionDocumentRollupTypedAppendTimeSeriesBase<T> {
-    void append(Date timestamp, T entry);
-    void append(Date timestamp, T entry, String tag);
     void append(TypedTimeSeriesRollupEntry<T> entry);
 }

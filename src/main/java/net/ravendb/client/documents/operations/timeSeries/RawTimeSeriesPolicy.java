@@ -4,7 +4,7 @@ import net.ravendb.client.primitives.TimeValue;
 
 public class RawTimeSeriesPolicy extends TimeSeriesPolicy {
 
-    private final static String POLICY_STRING = "rawpolicy"; // must be lower case
+    public final static String POLICY_STRING = "rawpolicy"; // must be lower case
 
     public static final RawTimeSeriesPolicy DEFAULT_POLICY = new RawTimeSeriesPolicy();
 

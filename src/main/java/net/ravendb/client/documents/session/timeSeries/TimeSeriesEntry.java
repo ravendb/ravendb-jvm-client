@@ -78,5 +78,4 @@ public class TimeSeriesEntry {
         entry.setValue(TimeSeriesValuesHelper.setFields(clazz, values, rollup));
         return entry;
     }
-
 }

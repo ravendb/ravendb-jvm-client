@@ -11,6 +11,5 @@ public interface ISessionDocumentRollupTypedTimeSeries<TValues>
     List<TypedTimeSeriesRollupEntry<TValues>> get();
     List<TypedTimeSeriesRollupEntry<TValues>> get(Date from, Date to);
     List<TypedTimeSeriesRollupEntry<TValues>> get(Date from, Date to, int start);
-
     List<TypedTimeSeriesRollupEntry<TValues>> get(Date from, Date to, int start, int pageSize);
 }

@@ -43,15 +43,12 @@ import java.time.Duration;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 @SuppressWarnings("SameParameterValue")
 public abstract class InMemoryDocumentSessionOperations implements CleanCloseable {
-
-    private static final AtomicInteger _clientSessionIdCounter = new AtomicInteger();
-
-    protected final int _clientSessionId = _clientSessionIdCounter.incrementAndGet();
 
     protected final RequestExecutor _requestExecutor;
 
@@ -171,22 +168,7 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
     }
 
     public ServerNode getCurrentSessionNode() {
-        CurrentIndexAndNode result;
-        switch (_requestExecutor.getConventions().getReadBalanceBehavior()) {
-            case NONE:
-                result = _requestExecutor.getPreferredNode();
-                break;
-            case ROUND_ROBIN:
-                result = _requestExecutor.getNodeBySessionId(_clientSessionId);
-                break;
-            case FASTEST_NODE:
-                result = _requestExecutor.getFastestNode();
-                break;
-            default:
-                throw new IllegalArgumentException(_requestExecutor.getConventions().getReadBalanceBehavior().toString());
-        }
-
-        return result.currentNode;
+        return getSessionInfo().getCurrentSessionNode(_requestExecutor);
     }
 
     /**
@@ -250,6 +232,10 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
 
     public RequestExecutor getRequestExecutor() {
         return _requestExecutor;
+    }
+
+    public SessionInfo getSessionInfo() {
+        return sessionInfo;
     }
 
     public OperationExecutor getOperations() {
@@ -381,6 +367,9 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
             throwNoDatabase();
         }
 
+        Function<String, String> contextSelector = documentStore.getConventions().getLoadBalancerPerSessionContextSelector();
+        String sessionKey = contextSelector != null ? contextSelector.apply(databaseName) : null;
+
         this._documentStore = documentStore;
         this._requestExecutor = ObjectUtils.firstNonNull(options.getRequestExecutor(), documentStore.getRequestExecutor(databaseName));
 
@@ -391,7 +380,8 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
         this.generateEntityIdOnTheClient = new GenerateEntityIdOnTheClient(_requestExecutor.getConventions(), this::generateId);
         this.entityToJson = new EntityToJson(this);
 
-        sessionInfo = new SessionInfo(_clientSessionId, _documentStore.getLastTransactionIndex(databaseName), options.isNoCaching());
+        sessionInfo = new SessionInfo(sessionKey, documentStore.getConventions().getLoadBalancerContextSeed(),
+                documentStore.getLastTransactionIndex(getDatabaseName()), options.isNoCaching());
         transactionMode = options.getTransactionMode();
     }
 
@@ -1629,7 +1619,8 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
 
             String id = field.getKey();
 
-            Map<String, List<TimeSeriesRangeResult>> cache = getTimeSeriesByDocId().computeIfAbsent(id, x -> new TreeMap<>(String::compareToIgnoreCase));
+            Map<String, List<TimeSeriesRangeResult>> cache =
+                    getTimeSeriesByDocId().computeIfAbsent(id, x -> new TreeMap<>(String::compareToIgnoreCase));
 
             if (!field.getValue().isObject()) {
                 throw new IllegalStateException("Unable to read time series range results on document: '" + id + "'.");
@@ -1651,7 +1642,7 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
                 }
 
                 for (JsonNode jsonRange : innerField.getValue()) {
-                    TimeSeriesRangeResult newRange = parseTimeSeriesRangeResult((ObjectNode) jsonRange, id, name);
+                    TimeSeriesRangeResult newRange = parseTimeSeriesRangeResult(mapper, (ObjectNode) jsonRange, id, name);
                     addToCache(cache, newRange, name);
                 }
             }
@@ -1703,60 +1694,199 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
         }
 
         List<TimeSeriesEntry> mergedValues = mergeRanges(fromRangeIndex, toRangeIndex, localRanges, newRange);
-        SessionDocumentTimeSeries.addToCache(name, newRange.getFrom(), newRange.getTo(), fromRangeIndex, toRangeIndex, localRanges, cache, mergedValues);
+        addToCache(name, newRange.getFrom(), newRange.getTo(), fromRangeIndex, toRangeIndex, localRanges, cache, mergedValues);
     }
 
-    private static TimeSeriesRangeResult parseTimeSeriesRangeResult(ObjectNode jsonRange, String id, String databaseName) {
-        /* TODO
-        if (blittableRange.TryGet(nameof(TimeSeriesRangeResult.From), out DateTime from) == false ||
-                blittableRange.TryGet(nameof(TimeSeriesRangeResult.To), out DateTime to) == false)
-                throw new InvalidDataException($"Unable to read time series range result on document : '{id}', timeseries : '{name}'." +
-                                               $"Missing '{nameof(TimeSeriesRangeResult.From)}' and/or '{nameof(TimeSeriesRangeResult.To)}' properties");
+    static void addToCache(String timeseries, Date from, Date to, int fromRangeIndex, int toRangeIndex,
+                           List<TimeSeriesRangeResult> ranges, Map<String, List<TimeSeriesRangeResult>> cache,
+                           List<TimeSeriesEntry> values) {
+        if (fromRangeIndex == -1) {
+            // didn't find a 'fromRange' => all ranges in cache start after 'from'
 
-            if (blittableRange.TryGet(nameof(TimeSeriesRangeResult.Entries), out BlittableJsonReaderArray valuesBlittable) == false)
-                throw new InvalidDataException($"Unable to read time series range result on document : '{id}', timeseries : '{name}'." +
-                                               $"Missing '{nameof(TimeSeriesRangeResult.Entries)}' property");
+            if (toRangeIndex == ranges.size()) {
+                // the requested range [from, to] contains all the ranges that are in cache
 
-            var result = new TimeSeriesRangeResult
-            {
-                From = from,
-                To = to
-            };
+                // e.g. if cache is : [[2,3], [4,5], [7, 10]]
+                // and the requested range is : [1, 15]
+                // after this action cache will be : [[1, 15]]
 
-            if (valuesBlittable != null)
-            {
-                var valuesArray = new TimeSeriesEntry[valuesBlittable.Length];
+                TimeSeriesRangeResult timeSeriesRangeResult = new TimeSeriesRangeResult();
+                timeSeriesRangeResult.setFrom(from);
+                timeSeriesRangeResult.setTo(to);
+                timeSeriesRangeResult.setEntries(values);
 
-                for (int j = 0; j < valuesBlittable.Length; j++)
-                {
-                    var timeSeriesValueBlittable = valuesBlittable.GetByIndex<BlittableJsonReaderObject>(j);
+                List<TimeSeriesRangeResult> result = new ArrayList<>();
+                result.add(timeSeriesRangeResult);
+                cache.put(timeseries, result);
 
-                    if (timeSeriesValueBlittable.TryGet(nameof(TimeSeriesEntry.Timestamp), out DateTime timestamp) == false)
-                        throw new InvalidDataException($"Unable to read time series value on document : '{id}', timeseries : '{name}'. " +
-                                                       $"The time series value is missing '{nameof(TimeSeriesEntry.Timestamp)}' property");
-
-                    if (timeSeriesValueBlittable.TryGet(nameof(TimeSeriesEntry.Values), out BlittableJsonReaderArray values) == false)
-                        throw new InvalidDataException($"Unable to read time series value on document: '{id}', timeseries: '{name}'. " +
-                                                       $"The time series value is missing '{nameof(TimeSeriesEntry.Values)}' property");
-
-                    timeSeriesValueBlittable.TryGet(nameof(TimeSeriesEntry.Tag), out string tag); // tag is optional
-
-                    valuesArray[j] = new TimeSeriesEntry
-                    {
-                        Tag = tag,
-                        Timestamp = timestamp,
-                        Values = values.Select(x => x is LazyNumberValue val
-                            ? val.ToDouble(CultureInfo.InvariantCulture)
-                            : (long)x).ToArray()
-                    };
-                }
-
-                result.Entries = valuesArray;
+                return;
             }
 
-            return result;
-         */
-        throw new UnsupportedOperationException();
+            if (ranges.get(toRangeIndex).getFrom().getTime() > to.getTime()) {
+                // requested range ends before 'toRange' starts
+                // remove all ranges that come before 'toRange' from cache
+                // add the new range at the beginning of the list
+
+                // e.g. if cache is : [[2,3], [4,5], [7,10]]
+                // and the requested range is : [1,6]
+                // after this action cache will be : [[1,6], [7,10]]
+
+                ranges.subList(0, toRangeIndex).clear();
+                TimeSeriesRangeResult timeSeriesRangeResult = new TimeSeriesRangeResult();
+                timeSeriesRangeResult.setFrom(from);
+                timeSeriesRangeResult.setTo(to);
+                timeSeriesRangeResult.setEntries(values);
+
+                ranges.add(0, timeSeriesRangeResult);
+
+                return;
+            }
+
+            // the requested range ends inside 'toRange'
+            // merge the result from server into 'toRange'
+            // remove all ranges that come before 'toRange' from cache
+
+            // e.g. if cache is : [[2,3], [4,5], [7,10]]
+            // and the requested range is : [1,8]
+            // after this action cache will be : [[1,10]]
+
+            ranges.get(toRangeIndex).setFrom(from);
+            ranges.get(toRangeIndex).setEntries(values);
+            ranges.subList(0, toRangeIndex).clear();
+
+            return;
+        }
+
+        // found a 'fromRange'
+
+        if (toRangeIndex == ranges.size()) {
+            // didn't find a 'toRange' => all the ranges in cache end before 'to'
+
+            if (ranges.get(fromRangeIndex).getTo().getTime() < from.getTime()) {
+                // requested range starts after 'fromRange' ends,
+                // so it needs to be placed right after it
+                // remove all the ranges that come after 'fromRange' from cache
+                // add the merged values as a new range at the end of the list
+
+                // e.g. if cache is : [[2,3], [5,6], [7,10]]
+                // and the requested range is : [4,12]
+                // then 'fromRange' is : [2,3]
+                // after this action cache will be : [[2,3], [4,12]]
+
+
+                ranges.subList(fromRangeIndex + 1, ranges.size()).clear();
+                TimeSeriesRangeResult timeSeriesRangeResult = new TimeSeriesRangeResult();
+                timeSeriesRangeResult.setFrom(from);
+                timeSeriesRangeResult.setTo(to);
+                timeSeriesRangeResult.setEntries(values);
+
+                ranges.add(timeSeriesRangeResult);
+
+                return;
+            }
+
+            // the requested range starts inside 'fromRange'
+            // merge result into 'fromRange'
+            // remove all the ranges from cache that come after 'fromRange'
+
+            // e.g. if cache is : [[2,3], [4,6], [7,10]]
+            // and the requested range is : [5,12]
+            // then 'fromRange' is [4,6]
+            // after this action cache will be : [[2,3], [4,12]]
+
+            ranges.get(fromRangeIndex).setTo(to);
+            ranges.get(fromRangeIndex).setEntries(values);
+            ranges.subList(fromRangeIndex + 1, ranges.size()).clear();
+
+            return;
+        }
+
+        // found both 'fromRange' and 'toRange'
+        // the requested range is inside cache bounds
+
+        if (ranges.get(fromRangeIndex).getTo().getTime() < from.getTime()) {
+            // requested range starts after 'fromRange' ends
+
+            if (ranges.get(toRangeIndex).getFrom().getTime() > to.getTime())
+            {
+                // requested range ends before 'toRange' starts
+
+                // remove all ranges in between 'fromRange' and 'toRange'
+                // place new range in between 'fromRange' and 'toRange'
+
+                // e.g. if cache is : [[2,3], [5,6], [7,8], [10,12]]
+                // and the requested range is : [4,9]
+                // then 'fromRange' is [2,3] and 'toRange' is [10,12]
+                // after this action cache will be : [[2,3], [4,9], [10,12]]
+
+                ranges.subList(fromRangeIndex + 1, toRangeIndex).clear();
+
+                TimeSeriesRangeResult timeSeriesRangeResult = new TimeSeriesRangeResult();
+                timeSeriesRangeResult.setFrom(from);
+                timeSeriesRangeResult.setTo(to);
+                timeSeriesRangeResult.setEntries(values);
+
+                ranges.add(fromRangeIndex + 1, timeSeriesRangeResult);
+
+                return;
+            }
+
+            // requested range ends inside 'toRange'
+
+            // merge the new range into 'toRange'
+            // remove all ranges in between 'fromRange' and 'toRange'
+
+            // e.g. if cache is : [[2,3], [5,6], [7,10]]
+            // and the requested range is : [4,9]
+            // then 'fromRange' is [2,3] and 'toRange' is [7,10]
+            // after this action cache will be : [[2,3], [4,10]]
+
+            ranges.subList(fromRangeIndex + 1, toRangeIndex).clear();
+            ranges.get(toRangeIndex).setFrom(from);
+            ranges.get(toRangeIndex).setEntries(values);
+
+            return;
+        }
+
+        // the requested range starts inside 'fromRange'
+
+        if (ranges.get(toRangeIndex).getFrom().getTime() > to.getTime())
+        {
+            // requested range ends before 'toRange' starts
+
+            // remove all ranges in between 'fromRange' and 'toRange'
+            // merge new range into 'fromRange'
+
+            // e.g. if cache is : [[2,4], [5,6], [8,10]]
+            // and the requested range is : [3,7]
+            // then 'fromRange' is [2,4] and 'toRange' is [8,10]
+            // after this action cache will be : [[2,7], [8,10]]
+
+            ranges.get(fromRangeIndex).setTo(to);
+            ranges.get(fromRangeIndex).setEntries(values);
+            ranges.subList(fromRangeIndex + 1, toRangeIndex).clear();
+
+            return;
+        }
+
+        // the requested range starts inside 'fromRange'
+        // and ends inside 'toRange'
+
+        // merge all ranges in between 'fromRange' and 'toRange'
+        // into a single range [fromRange.From, toRange.To]
+
+        // e.g. if cache is : [[2,4], [5,6], [8,10]]
+        // and the requested range is : [3,9]
+        // then 'fromRange' is [2,4] and 'toRange' is [8,10]
+        // after this action cache will be : [[2,10]]
+
+        ranges.get(fromRangeIndex).setTo(ranges.get(toRangeIndex).getTo());
+        ranges.get(fromRangeIndex).setEntries(values);
+        ranges.subList(fromRangeIndex + 1, toRangeIndex + 1).clear();
+    }
+
+    private static TimeSeriesRangeResult parseTimeSeriesRangeResult(ObjectMapper mapper, ObjectNode jsonRange, String id, String databaseName) {
+        return mapper.convertValue(jsonRange, TimeSeriesRangeResult.class);
     }
 
     private static List<TimeSeriesEntry> mergeRanges(int fromRangeIndex, int toRangeIndex, List<TimeSeriesRangeResult> localRanges, TimeSeriesRangeResult newRange) {
@@ -1814,11 +1944,11 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
         return _hash;
     }
 
-    private Object deserializeFromTransformer(Class clazz, String id, ObjectNode document, boolean trackEntity) {
+    private Object deserializeFromTransformer(Class<?> clazz, String id, ObjectNode document, boolean trackEntity) {
         return entityToJson.convertToEntity(clazz, id, document, trackEntity);
     }
 
-    public boolean checkIfIdAlreadyIncluded(String[] ids, Map.Entry<String, Class>[] includes) {
+    public boolean checkIfIdAlreadyIncluded(String[] ids, Map.Entry<String, Class<?>>[] includes) {
         return checkIfIdAlreadyIncluded(ids, Arrays.stream(includes).map(Map.Entry::getKey).collect(Collectors.toList()));
     }
 

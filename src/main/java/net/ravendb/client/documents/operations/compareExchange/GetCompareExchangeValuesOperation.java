@@ -24,11 +24,18 @@ public class GetCompareExchangeValuesOperation<T> implements IOperation<Map<Stri
     private final Integer _start;
     private final Integer _pageSize;
 
+    private final boolean _materializeMetadata;
+
     public GetCompareExchangeValuesOperation(Class<T> clazz, String[] keys) {
+        this(clazz, keys, true);
+    }
+
+    public GetCompareExchangeValuesOperation(Class<T> clazz, String[] keys, boolean materializeMetadata) {
         if (keys == null || keys.length == 0) {
             throw new IllegalArgumentException("Keys cannot be null or empty array");
         }
         _keys = keys;
+        _materializeMetadata = materializeMetadata;
         _clazz = clazz;
 
         _start = null;
@@ -49,6 +56,7 @@ public class GetCompareExchangeValuesOperation<T> implements IOperation<Map<Stri
         _start = start;
         _pageSize = pageSize;
         _clazz = clazz;
+        _materializeMetadata = true;
 
         _keys = null;
 
@@ -57,17 +65,19 @@ public class GetCompareExchangeValuesOperation<T> implements IOperation<Map<Stri
     @SuppressWarnings("unchecked")
     @Override
     public RavenCommand<Map<String, CompareExchangeValue<T>>> getCommand(IDocumentStore store, DocumentConventions conventions, HttpCache cache) {
-        return new GetCompareExchangeValuesCommand(this, conventions);
+        return new GetCompareExchangeValuesCommand(this, _materializeMetadata, conventions);
     }
 
     private static class GetCompareExchangeValuesCommand<T> extends RavenCommand<Map<String, CompareExchangeValue<T>>> {
         private final GetCompareExchangeValuesOperation<T> _operation;
+        private final boolean _materializeMetadata;
         private final DocumentConventions _conventions;
 
         @SuppressWarnings("unchecked")
-        public GetCompareExchangeValuesCommand(GetCompareExchangeValuesOperation<T> operation, DocumentConventions conventions) {
+        public GetCompareExchangeValuesCommand(GetCompareExchangeValuesOperation<T> operation, boolean materializeMetadata, DocumentConventions conventions) {
             super((Class<Map<String, CompareExchangeValue<T>>>) (Class<?>)Map.class);
             _operation = operation;
+            _materializeMetadata = materializeMetadata;
             _conventions = conventions;
         }
 
@@ -112,7 +122,7 @@ public class GetCompareExchangeValuesOperation<T> implements IOperation<Map<Stri
 
         @Override
         public void setResponse(String response, boolean fromCache) throws IOException {
-            result = CompareExchangeValueResultParser.getValues(_operation._clazz, response, _conventions);
+            result = CompareExchangeValueResultParser.getValues(_operation._clazz, response, _materializeMetadata, _conventions);
         }
     }
 }

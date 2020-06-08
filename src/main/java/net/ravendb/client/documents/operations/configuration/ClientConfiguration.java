@@ -1,5 +1,6 @@
 package net.ravendb.client.documents.operations.configuration;
 
+import net.ravendb.client.http.LoadBalanceBehavior;
 import net.ravendb.client.http.ReadBalanceBehavior;
 
 public class ClientConfiguration {
@@ -9,6 +10,7 @@ public class ClientConfiguration {
     private boolean disabled;
     private Integer maxNumberOfRequestsPerSession;
     private ReadBalanceBehavior readBalanceBehavior;
+    private LoadBalanceBehavior loadBalanceBehavior;
 
     public long getEtag() {
         return etag;
@@ -40,6 +42,14 @@ public class ClientConfiguration {
 
     public void setReadBalanceBehavior(ReadBalanceBehavior readBalanceBehavior) {
         this.readBalanceBehavior = readBalanceBehavior;
+    }
+
+    public LoadBalanceBehavior getLoadBalanceBehavior() {
+        return loadBalanceBehavior;
+    }
+
+    public void setLoadBalanceBehavior(LoadBalanceBehavior loadBalanceBehavior) {
+        this.loadBalanceBehavior = loadBalanceBehavior;
     }
 
     public Character getIdentityPartsSeparator() {
