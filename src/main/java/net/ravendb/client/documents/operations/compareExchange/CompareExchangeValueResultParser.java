@@ -3,7 +3,6 @@ package net.ravendb.client.documents.operations.compareExchange;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.base.Defaults;
-import com.sun.xml.internal.bind.v2.runtime.reflect.opt.Const;
 import net.ravendb.client.Constants;
 import net.ravendb.client.documents.conventions.DocumentConventions;
 import net.ravendb.client.json.MetadataAsDictionary;
