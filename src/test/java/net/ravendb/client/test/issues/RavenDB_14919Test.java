@@ -119,7 +119,7 @@ public class RavenDB_14919Test extends RemoteTestBase {
             String[] ids = new String[1024];
 
             try (IDocumentSession session = store.openSession()) {
-                for (int i = 0; i < 100; i++) {
+                for (int i = 0; i < 1000; i++) {
                     String id = "users/" + i;
                     ids[i] = id;
                     session.store(new User(), id);

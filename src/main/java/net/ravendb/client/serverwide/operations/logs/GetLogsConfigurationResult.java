@@ -2,8 +2,6 @@ package net.ravendb.client.serverwide.operations.logs;
 
 import java.time.Duration;
 
-//TODO: make sure we have test with get/setter
-
 public class GetLogsConfigurationResult {
     private LogMode currentMode;
     private LogMode mode;

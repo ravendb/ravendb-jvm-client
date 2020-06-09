@@ -205,12 +205,10 @@ public class GetDocumentsCommand extends RavenCommand<GetDocumentsResult> {
 
         if (isGet) {
             uniqueIds.forEach(x -> {
-                if (x != null) {
-                    pathBuilder.append("&id=");
-                    pathBuilder.append(
-                            UrlUtils.escapeDataString(
-                                    ObjectUtils.firstNonNull(x, "")));
-                }
+                pathBuilder.append("&id=");
+                pathBuilder.append(
+                        UrlUtils.escapeDataString(
+                                ObjectUtils.firstNonNull(x, "")));
             });
 
             return new HttpGet();

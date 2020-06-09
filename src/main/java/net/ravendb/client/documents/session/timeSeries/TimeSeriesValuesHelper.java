@@ -93,7 +93,7 @@ public class TimeSeriesValuesHelper {
                     index *= 6;
                 }
                 Field field = kvp.getValue().first;
-                FieldUtils.writeField(field, obj, values[index]);
+                FieldUtils.writeField(field, obj, values[index], true);
             }
 
             return obj;

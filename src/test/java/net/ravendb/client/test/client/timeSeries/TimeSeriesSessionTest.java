@@ -2,16 +2,19 @@ package net.ravendb.client.test.client.timeSeries;
 
 import net.ravendb.client.RemoteTestBase;
 import net.ravendb.client.documents.IDocumentStore;
+import net.ravendb.client.documents.operations.timeSeries.*;
 import net.ravendb.client.documents.session.IDocumentSession;
 import net.ravendb.client.documents.session.ISessionDocumentTimeSeries;
+import net.ravendb.client.documents.session.InMemoryDocumentSessionOperations;
 import net.ravendb.client.documents.session.timeSeries.TimeSeriesEntry;
 import net.ravendb.client.infrastructure.entities.User;
+import net.ravendb.client.primitives.NetISO8601Utils;
+import net.ravendb.client.primitives.TimeValue;
 import org.apache.commons.lang3.time.DateUtils;
 import org.junit.jupiter.api.Test;
 
-import java.util.Calendar;
-import java.util.Date;
-import java.util.List;
+import java.time.Duration;
+import java.util.*;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -434,6 +437,59 @@ public class TimeSeriesSessionTest extends RemoteTestBase {
     }
 
     @Test
+    public void sessionGetShouldIncludeValuesFromRollUpsInResult() throws Exception {
+        try (IDocumentStore store = getDocumentStore()) {
+            RawTimeSeriesPolicy raw = new RawTimeSeriesPolicy(TimeValue.ofHours(24));
+
+            TimeSeriesPolicy p1 = new TimeSeriesPolicy("By6Hours", TimeValue.ofHours(6), TimeValue.ofSeconds(raw.getRetentionTime().getValue() * 4));
+            TimeSeriesPolicy p2 = new TimeSeriesPolicy("By1Day", TimeValue.ofDays(1), TimeValue.ofSeconds(raw.getRetentionTime().getValue() * 5));
+            TimeSeriesPolicy p3 = new TimeSeriesPolicy("By30Minutes", TimeValue.ofMinutes(30), TimeValue.ofSeconds(raw.getRetentionTime().getValue() * 2));
+            TimeSeriesPolicy p4 = new TimeSeriesPolicy("By1Hour", TimeValue.ofMinutes(60), TimeValue.ofSeconds(raw.getRetentionTime().getValue() * 3));
+
+            TimeSeriesCollectionConfiguration seriesCollectionConfiguration = new TimeSeriesCollectionConfiguration();
+            seriesCollectionConfiguration.setRawPolicy(raw);
+            seriesCollectionConfiguration.setPolicies(Arrays.asList(p1, p2, p3, p4));
+
+            Map<String, TimeSeriesCollectionConfiguration> collectionsConfig = new HashMap<>();
+            collectionsConfig.put("Users", seriesCollectionConfiguration);
+
+            TimeSeriesConfiguration config = new TimeSeriesConfiguration();
+            config.setCollections(collectionsConfig);
+            config.setPolicyCheckFrequency(Duration.ofSeconds(1));
+
+            store.maintenance().send(new ConfigureTimeSeriesOperation(config));
+
+
+            Date now = DateUtils.truncate(new Date(), Calendar.DAY_OF_MONTH);
+            Date baseline = DateUtils.addDays(now, -12);
+
+            long total = Duration.ofDays(12).getSeconds() / 60;
+
+            try (IDocumentSession session = store.openSession()) {
+                User user = new User();
+                user.setName("Karmel");
+                session.store(user, "users/karmel");
+
+                for (long i = 0; i <= total; i++) {
+                    session.timeSeriesFor("users/karmel", "Heartrate")
+                            .append(DateUtils.addMinutes(baseline, (int)i), i, "watches/fitbit");
+                }
+
+                session.saveChanges();
+            }
+
+
+            try (IDocumentSession session = store.openSession()) {
+                List<TimeSeriesEntry> result = session.timeSeriesFor("users/karmel", "Heartrate")
+                        .get();
+
+                assertThat(result.size())
+                        .isPositive();
+            }
+        }
+    }
+
+    @Test
     public void canRequestNonExistingTimeSeriesRange() throws Exception {
         try (IDocumentStore store = getDocumentStore()) {
             Date baseLine = DateUtils.truncate(new Date(), Calendar.DAY_OF_MONTH);
@@ -693,9 +749,217 @@ public class TimeSeriesSessionTest extends RemoteTestBase {
         }
     }
 
-    //TODO: public void ShouldEvictTimeSeriesUponEntityEviction()
-    //TODO: GetAllTimeSeriesNamesWhenNoTimeSeries
-    //TODO: GetSingleTimeSeriesWhenNoTimeSeries
-    //TODO: CanDeleteWithoutProvidingFromAndToDates
-    //TODO: SessionGetShouldIncludeValuesFromRollUpsInResult
+    @Test
+    public void shouldEvictTimeSeriesUponEntityEviction() throws Exception {
+        try (IDocumentStore store = getDocumentStore()) {
+            Date baseLine = DateUtils.truncate(new Date(), Calendar.DAY_OF_MONTH);
+
+            String documentId = "users/ayende";
+
+            try (IDocumentSession session = store.openSession()) {
+                User user = new User();
+                user.setName("Oren");
+
+                session.store(user, documentId);
+
+                ISessionDocumentTimeSeries tsf = session.timeSeriesFor(documentId, "Heartrate");
+
+                for (int i = 0; i < 60; i++) {
+                    tsf.append(DateUtils.addMinutes(baseLine, i), 100 + i, "watches/fitbit");
+                }
+
+                tsf = session.timeSeriesFor(documentId, "BloodPressure");
+
+                for (int i = 0; i < 10; i++) {
+                    tsf.append(DateUtils.addMinutes(baseLine, i), new double[] { 120 - i, 80 + i}, "watches/apple");
+                }
+
+                session.saveChanges();
+            }
+
+            try (IDocumentSession session = store.openSession()) {
+                User user = session.load(User.class, documentId);
+
+                ISessionDocumentTimeSeries tsf = session.timeSeriesFor(user, "Heartrate");
+
+                List<TimeSeriesEntry> vals = tsf.get(baseLine, DateUtils.addMinutes(baseLine, 10));
+
+                assertThat(vals)
+                        .hasSize(11);
+
+                vals = tsf.get(DateUtils.addMinutes(baseLine, 20), DateUtils.addMinutes(baseLine, 50));
+
+                assertThat(vals)
+                        .hasSize(31);
+
+                tsf = session.timeSeriesFor(user, "BloodPressure");
+
+                vals = tsf.get();
+
+                assertThat(vals)
+                        .hasSize(10);
+
+                InMemoryDocumentSessionOperations sessionOperations = (InMemoryDocumentSessionOperations) session;
+
+                assertThat(sessionOperations.getTimeSeriesByDocId())
+                        .hasSize(1);
+                Map<String, List<TimeSeriesRangeResult>> cache = sessionOperations.getTimeSeriesByDocId().get(documentId);
+                assertThat(cache)
+                        .hasSize(2);
+                List<TimeSeriesRangeResult> ranges = cache.get("Heartrate");
+                assertThat(ranges)
+                        .hasSize(2);
+
+                assertThat(ranges.get(0).getFrom())
+                        .isEqualTo(baseLine);
+                assertThat(ranges.get(0).getTo())
+                        .isEqualTo(DateUtils.addMinutes(baseLine, 10));
+                assertThat(ranges.get(0).getEntries())
+                        .hasSize(11);
+                assertThat(ranges.get(1).getFrom())
+                        .isEqualTo(DateUtils.addMinutes(baseLine, 20));
+                assertThat(ranges.get(1).getTo())
+                        .isEqualTo(DateUtils.addMinutes(baseLine, 50));
+
+                assertThat(ranges.get(1).getEntries())
+                        .hasSize(31);
+                ranges = cache.get("BloodPressure");
+                assertThat(ranges)
+                        .hasSize(1);
+                assertThat(ranges.get(0).getFrom())
+                        .isEqualTo(NetISO8601Utils.MIN_DATE);
+                assertThat(ranges.get(0).getTo())
+                        .isEqualTo(NetISO8601Utils.MAX_DATE);
+                assertThat(ranges.get(0).getEntries())
+                        .hasSize(10);
+
+                session.advanced().evict(user);
+
+                cache = sessionOperations.getTimeSeriesByDocId().get(documentId);
+                assertThat(cache)
+                        .isNull();
+                assertThat(sessionOperations.getTimeSeriesByDocId())
+                        .isEmpty();
+            }
+        }
+    }
+
+    @Test
+    public void getAllTimeSeriesNamesWhenNoTimeSeries() throws Exception {
+        try (IDocumentStore store = getDocumentStore()) {
+            try (IDocumentSession session = store.openSession()) {
+                User user = new User();
+                session.store(user, "users/karmel");
+                session.saveChanges();
+            }
+
+            try (IDocumentSession session = store.openSession()) {
+                User user = session.load(User.class, "users/karmel");
+                List<String> tsNames = session.advanced().getTimeSeriesFor(user);
+                assertThat(tsNames)
+                        .isEmpty();
+            }
+        }
+    }
+
+    @Test
+    public void getSingleTimeSeriesWhenNoTimeSeries() throws Exception {
+        try (IDocumentStore store = getDocumentStore()) {
+            try (IDocumentSession session = store.openSession()) {
+                User user = new User();
+                session.store(user, "users/karmel");
+                session.saveChanges();
+            }
+
+            try (IDocumentSession session = store.openSession()) {
+                User user = session.load(User.class, "users/karmel");
+                List<TimeSeriesEntry> ts = session.timeSeriesFor(user, "unicorns")
+                        .get();
+                assertThat(ts)
+                        .isNull();
+            }
+        }
+    }
+
+    @Test
+    public void canDeleteWithoutProvidingFromAndToDates() throws Exception {
+        try (IDocumentStore store = getDocumentStore()) {
+            Date baseLine = DateUtils.truncate(new Date(), Calendar.DAY_OF_MONTH);
+
+            String docId = "users/ayende";
+
+            try (IDocumentSession session = store.openSession()) {
+                session.store(new User(), docId);
+
+                ISessionDocumentTimeSeries tsf = session.timeSeriesFor(docId, "HeartRate");
+                ISessionDocumentTimeSeries tsf2 = session.timeSeriesFor(docId, "BloodPressure");
+                ISessionDocumentTimeSeries tsf3 = session.timeSeriesFor(docId, "BodyTemperature");
+
+                for (int j = 0; j < 100; j++) {
+                    tsf.append(DateUtils.addMinutes(baseLine, j), j);
+                    tsf2.append(DateUtils.addMinutes(baseLine, j), j);
+                    tsf3.append(DateUtils.addMinutes(baseLine, j), j);
+                }
+
+                session.saveChanges();
+            }
+
+            try (IDocumentSession session = store.openSession()) {
+                ISessionDocumentTimeSeries tsf = session.timeSeriesFor(docId, "Heartrate");
+
+                List<TimeSeriesEntry> entries = tsf.get();
+                assertThat(entries)
+                        .hasSize(100);
+
+                // null From, To
+                tsf.remove();
+                session.saveChanges();
+            }
+
+            try (IDocumentSession session = store.openSession()) {
+                List<TimeSeriesEntry> entries = session.timeSeriesFor(docId, "Heartrate").get();
+                assertThat(entries)
+                        .isNull();
+            }
+
+            try (IDocumentSession session = store.openSession()) {
+                ISessionDocumentTimeSeries tsf = session.timeSeriesFor(docId, "BloodPressure");
+
+                List<TimeSeriesEntry> entries = tsf.get();
+                assertThat(entries)
+                        .hasSize(100);
+
+                // null to
+                tsf.remove(DateUtils.addMinutes(baseLine, 50), null);
+                session.saveChanges();
+            }
+
+            try (IDocumentSession session = store.openSession()) {
+                List<TimeSeriesEntry> entries = session.timeSeriesFor(docId, "BloodPressure")
+                        .get();
+                assertThat(entries)
+                        .hasSize(50);
+            }
+
+            try (IDocumentSession session = store.openSession()) {
+                ISessionDocumentTimeSeries tsf = session.timeSeriesFor(docId, "BodyTemperature");
+
+                List<TimeSeriesEntry> entries = tsf.get();
+                assertThat(entries)
+                        .hasSize(100);
+
+                // null from
+                tsf.remove(null, DateUtils.addMinutes(baseLine, 19));
+                session.saveChanges();
+            }
+
+            try (IDocumentSession session = store.openSession()) {
+                List<TimeSeriesEntry> entries = session.timeSeriesFor(docId, "BodyTemperature")
+                        .get();
+
+                assertThat(entries)
+                        .hasSize(80);
+            }
+        }
+    }
 }

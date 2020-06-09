@@ -234,7 +234,10 @@ public class TimeSeriesTypedSessionTest extends RemoteTestBase {
                 assertThat(val)
                         .hasSize(2);
 
-                //TODO: assert on heart rate value  (>= 59? )
+                assertThat(val.get(0).getValue().getHeartRate())
+                        .isEqualTo(59);
+                assertThat(val.get(1).getValue().getHeartRate())
+                        .isEqualTo(61);
             }
         }
     }
