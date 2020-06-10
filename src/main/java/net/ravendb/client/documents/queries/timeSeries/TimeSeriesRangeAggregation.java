@@ -109,14 +109,13 @@ public class TimeSeriesRangeAggregation {
     public <T> TypedTimeSeriesRangeAggregation<T> asTypedEntry(Class<T> clazz) {
         TypedTimeSeriesRangeAggregation<T> typedEntry = new TypedTimeSeriesRangeAggregation<>();
 
-        //TODO: what about sum?
-
         typedEntry.setFrom(from);
         typedEntry.setTo(to);
         typedEntry.setMin(min != null ? TimeSeriesValuesHelper.setFields(clazz, min, true) : null);
         typedEntry.setMax(max != null ? TimeSeriesValuesHelper.setFields(clazz, max, true) : null);
         typedEntry.setFirst(first != null ? TimeSeriesValuesHelper.setFields(clazz, first, true) : null);
         typedEntry.setLast(last != null ? TimeSeriesValuesHelper.setFields(clazz, last, true) : null);
+        typedEntry.setSum(sum != null ? TimeSeriesValuesHelper.setFields(clazz, sum, true) : null);
         double[] counts = Arrays.stream(count).asDoubleStream().toArray();
         typedEntry.setCount(count != null ? TimeSeriesValuesHelper.setFields(clazz, counts, true) : null);
         typedEntry.setAverage(average != null ? TimeSeriesValuesHelper.setFields(clazz, average, true) : null);

@@ -3,6 +3,7 @@ package net.ravendb.client.documents;
 import net.ravendb.client.documents.changes.IDatabaseChanges;
 import net.ravendb.client.documents.conventions.DocumentConventions;
 import net.ravendb.client.documents.indexes.AbstractIndexCreationTaskBase;
+import net.ravendb.client.documents.indexes.IAbstractIndexCreationTask;
 import net.ravendb.client.documents.indexes.IndexCreation;
 import net.ravendb.client.documents.indexes.IndexDefinition;
 import net.ravendb.client.documents.operations.MaintenanceOperationExecutor;
@@ -105,22 +106,22 @@ public abstract class DocumentStoreBase implements IDocumentStore {
 
     public abstract IDocumentSession openSession(SessionOptions sessionOptions);
 
-    public void executeIndex(AbstractIndexCreationTaskBase<IndexDefinition> task) {
+    public void executeIndex(IAbstractIndexCreationTask task) {
         executeIndex(task, null);
     }
 
-    public void executeIndex(AbstractIndexCreationTaskBase<IndexDefinition> task, String database) {
+    public void executeIndex(IAbstractIndexCreationTask task, String database) {
         assertInitialized();
         task.execute(this, conventions, database);
     }
 
     @Override
-    public void executeIndexes(List<AbstractIndexCreationTaskBase<IndexDefinition>> tasks) {
+    public void executeIndexes(List<IAbstractIndexCreationTask> tasks) {
         executeIndexes(tasks, null);
     }
 
     @Override
-    public void executeIndexes(List<AbstractIndexCreationTaskBase<IndexDefinition>> tasks, String database) {
+    public void executeIndexes(List<IAbstractIndexCreationTask> tasks, String database) {
         assertInitialized();
         IndexDefinition[] indexesToAdd = IndexCreation.createIndexesToAdd(tasks, conventions);
 

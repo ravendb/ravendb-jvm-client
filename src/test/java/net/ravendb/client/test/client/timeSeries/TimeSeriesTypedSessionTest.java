@@ -8,6 +8,7 @@ import net.ravendb.client.documents.session.*;
 import net.ravendb.client.documents.session.timeSeries.TimeSeriesValue;
 import net.ravendb.client.documents.session.timeSeries.TypedTimeSeriesEntry;
 import net.ravendb.client.documents.session.timeSeries.TypedTimeSeriesRollupEntry;
+import net.ravendb.client.infrastructure.entities.Company;
 import net.ravendb.client.infrastructure.entities.User;
 import net.ravendb.client.primitives.TimeValue;
 import net.ravendb.client.serverwide.operations.GetDatabaseRecordOperation;
@@ -19,6 +20,7 @@ import java.time.temporal.ChronoUnit;
 import java.util.*;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 public class TimeSeriesTypedSessionTest extends RemoteTestBase {
 
@@ -32,6 +34,59 @@ public class TimeSeriesTypedSessionTest extends RemoteTestBase {
         @TimeSeriesValue(idx = 3)
         private double low;
         @TimeSeriesValue(idx = 4)
+        private double volume;
+
+        public double getOpen() {
+            return open;
+        }
+
+        public void setOpen(double open) {
+            this.open = open;
+        }
+
+        public double getClose() {
+            return close;
+        }
+
+        public void setClose(double close) {
+            this.close = close;
+        }
+
+        public double getHigh() {
+            return high;
+        }
+
+        public void setHigh(double high) {
+            this.high = high;
+        }
+
+        public double getLow() {
+            return low;
+        }
+
+        public void setLow(double low) {
+            this.low = low;
+        }
+
+        public double getVolume() {
+            return volume;
+        }
+
+        public void setVolume(double volume) {
+            this.volume = volume;
+        }
+    }
+
+    public static class StockPriceWithBadAttributes {
+        @TimeSeriesValue(idx = 1)
+        private double open;
+        @TimeSeriesValue(idx = 2)
+        private double close;
+        @TimeSeriesValue(idx = 3)
+        private double high;
+        @TimeSeriesValue(idx = 4)
+        private double low;
+        @TimeSeriesValue(idx = 5)
         private double volume;
 
         public double getOpen() {
@@ -633,6 +688,16 @@ public class TimeSeriesTypedSessionTest extends RemoteTestBase {
                 assertThat(res.get(0).getMax().getClose())
                         .isEqualTo(1);
             }
+        }
+    }
+
+    @Test
+    public void mappingNeedsToContainConsecutiveValuesStartingFromZero() throws Exception {
+        try (IDocumentStore store = getDocumentStore()) {
+            assertThatThrownBy(() -> {
+                store.timeSeries().register(Company.class, StockPriceWithBadAttributes.class);
+            })
+                    .hasMessageContaining("must contain consecutive values starting from 0");
         }
     }
 }

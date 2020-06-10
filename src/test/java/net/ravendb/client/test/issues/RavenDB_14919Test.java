@@ -9,10 +9,12 @@ import net.ravendb.client.documents.session.IDocumentSession;
 import net.ravendb.client.documents.session.ISessionDocumentCounters;
 import net.ravendb.client.http.RequestExecutor;
 import net.ravendb.client.infrastructure.entities.User;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@Disabled
 public class RavenDB_14919Test extends RemoteTestBase {
 
     @Test

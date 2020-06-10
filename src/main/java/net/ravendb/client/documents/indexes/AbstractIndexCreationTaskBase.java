@@ -13,7 +13,7 @@ import org.apache.commons.lang3.ObjectUtils;
  * @param <TIndexDefinition> Index definition
  */
 public abstract class AbstractIndexCreationTaskBase<TIndexDefinition extends IndexDefinition>
-        extends AbstractCommonApiForIndexes {
+        extends AbstractCommonApiForIndexes implements IAbstractIndexCreationTask {
 
     /**
      * Creates the index definition.

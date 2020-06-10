@@ -39,8 +39,6 @@ public class CloseableAttachmentsResult implements AutoCloseable, Iterator<Attac
             throw new NoSuchElementException();
         }
 
-        //TODO: do we want to introduce buffer here?
-
         AttachmentDetails currentAttachment = _attachmentsMetadata.get(idx);
         long attachmentSize = currentAttachment.getSize();
         previousStream = new LimitedInputStream(_stream, attachmentSize);
