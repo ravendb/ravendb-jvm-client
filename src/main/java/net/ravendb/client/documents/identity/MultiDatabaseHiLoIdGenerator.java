@@ -1,7 +1,6 @@
 package net.ravendb.client.documents.identity;
 
 import net.ravendb.client.documents.DocumentStore;
-import net.ravendb.client.documents.conventions.DocumentConventions;
 
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;

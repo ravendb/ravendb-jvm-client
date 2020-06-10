@@ -1,7 +1,6 @@
 package net.ravendb.client.documents.operations.counters;
 
 import com.fasterxml.jackson.core.JsonGenerator;
-import net.ravendb.client.documents.conventions.DocumentConventions;
 import net.ravendb.client.primitives.SharpEnum;
 
 import java.io.IOException;

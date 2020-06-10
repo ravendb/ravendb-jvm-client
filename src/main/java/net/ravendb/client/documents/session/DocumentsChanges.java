@@ -1,7 +1,6 @@
 package net.ravendb.client.documents.session;
 
 
-import com.fasterxml.jackson.databind.node.JsonNodeType;
 import org.apache.commons.lang3.StringUtils;
 
 public class DocumentsChanges {

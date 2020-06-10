@@ -1,16 +1,8 @@
 package net.ravendb.client.documents.session;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.node.ArrayNode;
-import net.ravendb.client.Constants;
-import net.ravendb.client.documents.operations.timeSeries.*;
 import net.ravendb.client.documents.session.timeSeries.TimeSeriesEntry;
-import net.ravendb.client.primitives.NetISO8601Utils;
-import net.ravendb.client.primitives.Reference;
-import org.apache.commons.lang3.ObjectUtils;
 
 import java.util.*;
-import java.util.stream.Collectors;
 
 public class SessionDocumentTimeSeries extends SessionTimeSeriesBase
         implements ISessionDocumentTimeSeries {

@@ -14,7 +14,6 @@ import net.ravendb.client.documents.queries.suggestions.SuggestionBase;
 import net.ravendb.client.documents.queries.timeSeries.ITimeSeriesQueryBuilder;
 
 import java.util.function.Consumer;
-import java.util.function.Function;
 
 /**
  * A query against a Raven index

@@ -3,7 +3,6 @@ package net.ravendb.client.documents.session;
 import net.ravendb.client.documents.session.timeSeries.TypedTimeSeriesRollupEntry;
 
 import java.util.Date;
-import java.util.List;
 
 public interface ISessionDocumentRollupTypedTimeSeries<TValues>
         extends ISessionDocumentRollupTypedAppendTimeSeriesBase<TValues>,

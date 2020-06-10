@@ -1,10 +1,8 @@
 package net.ravendb.client.documents.session;
 
-import net.ravendb.client.documents.session.timeSeries.TimeSeriesEntry;
 import net.ravendb.client.documents.session.timeSeries.TypedTimeSeriesEntry;
 
 import java.util.Date;
-import java.util.List;
 
 public interface ISessionDocumentTypedTimeSeries<TValues> extends
         ISessionDocumentTypedAppendTimeSeriesBase<TValues>,

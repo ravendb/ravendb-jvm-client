@@ -1,7 +1,6 @@
 package net.ravendb.client.documents.session;
 
 import net.ravendb.client.documents.indexes.AbstractCommonApiForIndexes;
-import net.ravendb.client.documents.indexes.AbstractIndexCreationTask;
 
 public interface IDocumentQueryBuilder {
 

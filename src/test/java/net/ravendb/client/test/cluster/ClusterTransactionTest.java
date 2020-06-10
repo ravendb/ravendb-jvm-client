@@ -1,7 +1,6 @@
 package net.ravendb.client.test.cluster;
 
 import net.ravendb.client.RemoteTestBase;
-import net.ravendb.client.documents.DocumentStore;
 import net.ravendb.client.documents.IDocumentStore;
 import net.ravendb.client.documents.operations.compareExchange.CompareExchangeValue;
 import net.ravendb.client.documents.session.IDocumentSession;

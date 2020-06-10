@@ -8,7 +8,6 @@ import net.ravendb.client.documents.session.timeSeries.TimeSeriesValue;
 import net.ravendb.client.documents.session.timeSeries.TimeSeriesValuesHelper;
 import net.ravendb.client.primitives.TimeValue;
 import net.ravendb.client.primitives.Tuple;
-import org.apache.commons.collections4.map.LinkedMap;
 
 import java.lang.reflect.Field;
 import java.util.SortedMap;

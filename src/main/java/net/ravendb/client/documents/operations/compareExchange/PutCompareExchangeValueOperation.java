@@ -6,7 +6,6 @@ import net.ravendb.client.Constants;
 import net.ravendb.client.documents.IDocumentStore;
 import net.ravendb.client.documents.conventions.DocumentConventions;
 import net.ravendb.client.documents.operations.IOperation;
-import net.ravendb.client.documents.session.ClusterTransactionOperationsBase;
 import net.ravendb.client.documents.session.EntityToJson;
 import net.ravendb.client.documents.session.IMetadataDictionary;
 import net.ravendb.client.http.HttpCache;

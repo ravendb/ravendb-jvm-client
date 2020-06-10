@@ -1,14 +1,10 @@
 package net.ravendb.client.documents.session;
 
 import net.ravendb.client.documents.session.timeSeries.TimeSeriesEntry;
-import net.ravendb.client.documents.session.timeSeries.TimeSeriesValuesHelper;
-import net.ravendb.client.documents.session.timeSeries.TypedTimeSeriesEntry;
 import net.ravendb.client.documents.session.timeSeries.TypedTimeSeriesRollupEntry;
 
 import java.util.Arrays;
 import java.util.Date;
-import java.util.List;
-import java.util.stream.Collectors;
 
 public class SessionDocumentRollupTypedTimeSeries<T> extends SessionTimeSeriesBase
     implements ISessionDocumentRollupTypedTimeSeries<T> {

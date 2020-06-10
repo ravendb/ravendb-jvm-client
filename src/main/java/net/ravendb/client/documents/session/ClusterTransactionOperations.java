@@ -1,6 +1,5 @@
 package net.ravendb.client.documents.session;
 
-import net.ravendb.client.documents.Lazy;
 import net.ravendb.client.documents.operations.compareExchange.CompareExchangeValue;
 import net.ravendb.client.documents.session.operations.lazy.LazyClusterTransactionOperations;
 

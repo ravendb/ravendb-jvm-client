@@ -5,8 +5,6 @@ import net.ravendb.client.documents.conventions.DocumentConventions;
 import net.ravendb.client.documents.operations.indexes.PutIndexesOperation;
 import org.apache.commons.lang3.ObjectUtils;
 
-import java.util.Map;
-
 /**
  * Base class for creating indexes
  *

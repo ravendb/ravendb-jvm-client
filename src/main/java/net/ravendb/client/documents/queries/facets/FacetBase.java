@@ -1,7 +1,6 @@
 package net.ravendb.client.documents.queries.facets;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.databind.node.ObjectNode;
 import net.ravendb.client.documents.session.tokens.FacetToken;
 
 import java.util.HashMap;

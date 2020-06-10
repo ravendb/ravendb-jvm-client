@@ -1,6 +1,5 @@
 package net.ravendb.client.documents.operations;
 
-import net.ravendb.client.documents.DocumentStoreBase;
 import net.ravendb.client.documents.session.InMemoryDocumentSessionOperations;
 
 /**

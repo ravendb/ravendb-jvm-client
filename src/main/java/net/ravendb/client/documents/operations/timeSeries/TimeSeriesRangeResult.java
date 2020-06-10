@@ -3,7 +3,6 @@ package net.ravendb.client.documents.operations.timeSeries;
 import net.ravendb.client.documents.session.timeSeries.TimeSeriesEntry;
 
 import java.util.Date;
-import java.util.List;
 
 public class TimeSeriesRangeResult {
     private Date from; //TODO: make nullable on server side - Karmel says we don't have min/max here - we trim to stored values!

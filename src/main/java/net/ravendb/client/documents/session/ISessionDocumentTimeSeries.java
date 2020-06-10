@@ -3,7 +3,6 @@ package net.ravendb.client.documents.session;
 import net.ravendb.client.documents.session.timeSeries.TimeSeriesEntry;
 
 import java.util.Date;
-import java.util.List;
 
 /**
  * Time series synchronous session operations

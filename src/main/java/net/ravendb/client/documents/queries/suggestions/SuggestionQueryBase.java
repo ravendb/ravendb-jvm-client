@@ -4,7 +4,6 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.google.common.base.Stopwatch;
 import net.ravendb.client.documents.Lazy;
 import net.ravendb.client.documents.commands.QueryCommand;
-import net.ravendb.client.documents.conventions.DocumentConventions;
 import net.ravendb.client.documents.queries.IndexQuery;
 import net.ravendb.client.documents.queries.QueryResult;
 import net.ravendb.client.documents.session.DocumentSession;

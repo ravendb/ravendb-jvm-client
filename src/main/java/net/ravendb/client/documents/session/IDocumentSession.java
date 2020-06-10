@@ -1,11 +1,9 @@
 package net.ravendb.client.documents.session;
 
 import net.ravendb.client.documents.indexes.AbstractCommonApiForIndexes;
-import net.ravendb.client.documents.indexes.AbstractIndexCreationTask;
 import net.ravendb.client.documents.queries.Query;
 import net.ravendb.client.documents.session.loaders.IIncludeBuilder;
 import net.ravendb.client.documents.session.loaders.ILoaderWithInclude;
-import net.ravendb.client.documents.session.timeSeries.TimeSeriesEntry;
 import net.ravendb.client.primitives.CleanCloseable;
 
 import java.util.Collection;

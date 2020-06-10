@@ -2,12 +2,9 @@ package net.ravendb.client.documents.session;
 
 import net.ravendb.client.documents.session.timeSeries.TimeSeriesValuesHelper;
 import net.ravendb.client.documents.session.timeSeries.TypedTimeSeriesEntry;
-import net.ravendb.client.exceptions.RavenException;
 
 import java.util.Arrays;
 import java.util.Date;
-import java.util.List;
-import java.util.stream.Collectors;
 
 public class SessionDocumentTypedTimeSeries<T> extends SessionTimeSeriesBase implements ISessionDocumentTypedTimeSeries<T> {
 

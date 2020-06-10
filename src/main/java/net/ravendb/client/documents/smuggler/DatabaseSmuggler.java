@@ -5,7 +5,6 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import net.ravendb.client.documents.IDocumentStore;
 import net.ravendb.client.documents.commands.GetNextOperationIdCommand;
-import net.ravendb.client.documents.conventions.DocumentConventions;
 import net.ravendb.client.documents.operations.Operation;
 import net.ravendb.client.exceptions.RavenException;
 import net.ravendb.client.http.*;

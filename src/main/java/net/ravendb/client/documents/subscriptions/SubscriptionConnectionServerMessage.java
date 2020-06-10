@@ -3,7 +3,6 @@ package net.ravendb.client.documents.subscriptions;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import net.ravendb.client.primitives.UseSharpEnum;
 
-import java.util.List;
 import java.util.Map;
 
 class SubscriptionConnectionServerMessage {
