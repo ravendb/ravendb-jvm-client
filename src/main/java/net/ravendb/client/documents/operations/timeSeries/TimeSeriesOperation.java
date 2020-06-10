@@ -5,30 +5,13 @@ import net.ravendb.client.documents.conventions.DocumentConventions;
 import net.ravendb.client.primitives.NetISO8601Utils;
 
 import java.io.IOException;
-import java.util.Date;
-import java.util.List;
+import java.util.*;
 
 public class TimeSeriesOperation {
 
-    private List<AppendOperation> appends;
-    private List<RemoveOperation> removals;
+    private TreeSet<AppendOperation> _appends;
+    private List<RemoveOperation> _removals;
     private String name;
-
-    public List<AppendOperation> getAppends() {
-        return appends;
-    }
-
-    public void setAppends(List<AppendOperation> appends) {
-        this.appends = appends;
-    }
-
-    public List<RemoveOperation> getRemovals() {
-        return removals;
-    }
-
-    public void setRemovals(List<RemoveOperation> removals) {
-        this.removals = removals;
-    }
 
     public String getName() {
         return name;
@@ -45,19 +28,13 @@ public class TimeSeriesOperation {
         this.name = name;
     }
 
-    public TimeSeriesOperation(String name, List<AppendOperation> appends, List<RemoveOperation> removals) {
-        this.appends = appends;
-        this.removals = removals;
-        this.name = name;
-    }
-
     public void serialize(JsonGenerator generator, DocumentConventions conventions) throws IOException {
         generator.writeStartObject();
         generator.writeStringField("Name", name);
         generator.writeFieldName("Appends");
-        if (appends != null) {
+        if (_appends != null) {
             generator.writeStartArray();
-            for (AppendOperation append : appends) {
+            for (AppendOperation append : _appends) {
                 append.serialize(generator, conventions);
             }
             generator.writeEndArray();
@@ -65,9 +42,9 @@ public class TimeSeriesOperation {
             generator.writeNull();
         }
         generator.writeFieldName("Removals");
-        if (removals != null) {
+        if (_removals != null) {
             generator.writeStartArray();
-            for (RemoveOperation removal : removals) {
+            for (RemoveOperation removal : _removals) {
                 removal.serialize(generator, conventions);
             }
             generator.writeEndArray();
@@ -75,6 +52,30 @@ public class TimeSeriesOperation {
             generator.writeNull();
         }
         generator.writeEndObject();
+    }
+
+    public void append(AppendOperation appendOperation) {
+        if (_appends == null) {
+            _appends = new TreeSet<>(Comparator.comparing(x -> x.getTimestamp().getTime()));
+        }
+        boolean added = _appends.add(appendOperation);
+        if (!added) {
+            // element with given timestamp already exists - remove and retry add operation
+            _appends
+                    .stream()
+                    .filter(x -> x.getTimestamp().getTime() == appendOperation.getTimestamp().getTime())
+                    .findFirst()
+                    .ifPresent(toDelete -> _appends.remove(toDelete));
+
+            _appends.add(appendOperation);
+        }
+    }
+
+    public void remove(RemoveOperation removeOperation) {
+        if (_removals == null) {
+            _removals = new ArrayList<>();
+        }
+        _removals.add(removeOperation);
     }
 
     public static class AppendOperation {

@@ -105,19 +105,19 @@ public class TimeSeriesTypedSessionTest extends RemoteTestBase {
     public void canRegisterTimeSeries() throws Exception {
         try (IDocumentStore store = getDocumentStore()) {
             store.timeSeries().register(User.class, StockPrice.class);
-            store.timeSeries().register("Users", "HeartRateMeasure", new String[] { "heartRate" });
+            store.timeSeries().register("Users", "HeartRateMeasures", new String[] { "heartRate" });
 
             TimeSeriesConfiguration updated = store.maintenance().server().send(
                     new GetDatabaseRecordOperation(store.getDatabase())).getTimeSeries();
 
             // this method is case insensitive
-            String[] heartRate = updated.getNames("users", "HeartRateMeasure");
+            String[] heartRate = updated.getNames("users", "HeartRateMeasures");
             assertThat(heartRate)
                     .hasSize(1);
             assertThat(heartRate[0])
                     .isEqualTo("heartRate");
 
-            String[] stock = updated.getNames("users", "StockPrice");
+            String[] stock = updated.getNames("users", "StockPrices");
             assertThat(stock)
                     .hasSize(5)
                     .containsExactly("open", "close", "high", "low", "volume");
@@ -160,8 +160,7 @@ public class TimeSeriesTypedSessionTest extends RemoteTestBase {
 
             try (IDocumentSession session = store.openSession()) {
                 TypedTimeSeriesEntry<HeartRateMeasure> val = session.timeSeriesFor(HeartRateMeasure.class, "users/ayende")
-                        .get()
-                        .get(0);
+                        .get()[0];
 
                 assertThat(val.getValue().getHeartRate())
                         .isEqualTo(59);
@@ -198,8 +197,7 @@ public class TimeSeriesTypedSessionTest extends RemoteTestBase {
 
             try (IDocumentSession session = store.openSession()) {
                 TypedTimeSeriesEntry<HeartRateMeasure> val = session.timeSeriesFor(HeartRateMeasure.class, "users/ayende")
-                        .get()
-                        .get(0);
+                        .get()[0];
 
                 assertThat(val.getValue().getHeartRate())
                         .isEqualTo(59);
@@ -220,7 +218,7 @@ public class TimeSeriesTypedSessionTest extends RemoteTestBase {
                 User user = new User();
                 session.store(user, "users/ayende");
 
-                ISessionDocumentTimeSeries tsf = session.timeSeriesFor("users/ayende", "HeartRateMeasure");
+                ISessionDocumentTimeSeries tsf = session.timeSeriesFor("users/ayende", "HeartRateMeasures");
                 tsf.append(DateUtils.addMinutes(baseLine, 1), 59, "watches/fitbit");
                 tsf.append(DateUtils.addMinutes(baseLine, 2), 60, "watches/fitbit");
                 tsf.append(DateUtils.addMinutes(baseLine, 2), 61, "watches/fitbit");
@@ -229,8 +227,8 @@ public class TimeSeriesTypedSessionTest extends RemoteTestBase {
             }
 
             try (IDocumentSession session = store.openSession()) {
-                List<TypedTimeSeriesEntry<HeartRateMeasure>> val = session.timeSeriesFor(HeartRateMeasure.class, "users/ayende")
-                        .get();
+                List<TypedTimeSeriesEntry<HeartRateMeasure>> val = Arrays.asList(session.timeSeriesFor(HeartRateMeasure.class, "users/ayende")
+                        .get());
                 assertThat(val)
                         .hasSize(2);
 
@@ -251,7 +249,7 @@ public class TimeSeriesTypedSessionTest extends RemoteTestBase {
                 User user = new User();
                 session.store(user, "users/ayende");
 
-                ISessionDocumentTimeSeries tsf = session.timeSeriesFor("users/ayende", "HeartRateMeasure");
+                ISessionDocumentTimeSeries tsf = session.timeSeriesFor("users/ayende", "HeartRateMeasures");
                 tsf.append(baseLine, 58, "watches/fitbit");
                 tsf.append(DateUtils.addMinutes(baseLine, 10), 60, "watches/fitbit");
 
@@ -259,14 +257,14 @@ public class TimeSeriesTypedSessionTest extends RemoteTestBase {
             }
 
             try (IDocumentSession session = store.openSession()) {
-                List<TypedTimeSeriesEntry<HeartRateMeasure>> vals = session.timeSeriesFor(HeartRateMeasure.class, "users/ayende")
-                        .get(DateUtils.addMinutes(baseLine, -10), DateUtils.addMinutes(baseLine, -5));
+                List<TypedTimeSeriesEntry<HeartRateMeasure>> vals = Arrays.asList(session.timeSeriesFor(HeartRateMeasure.class, "users/ayende")
+                        .get(DateUtils.addMinutes(baseLine, -10), DateUtils.addMinutes(baseLine, -5)));
 
                 assertThat(vals)
                         .isEmpty();
 
-                vals = session.timeSeriesFor(HeartRateMeasure.class, "users/ayende")
-                        .get(DateUtils.addMinutes(baseLine, 5), DateUtils.addMinutes(baseLine, 9));
+                vals = Arrays.asList(session.timeSeriesFor(HeartRateMeasure.class, "users/ayende")
+                        .get(DateUtils.addMinutes(baseLine, 5), DateUtils.addMinutes(baseLine, 9)));
 
                 assertThat(vals)
                         .isEmpty();
@@ -304,19 +302,17 @@ public class TimeSeriesTypedSessionTest extends RemoteTestBase {
 
                 // should be sorted
                 assertThat(tsNames.get(0))
-                        .isEqualTo("HeartRateMeasure");
+                        .isEqualTo("HeartRateMeasures");
                 assertThat(tsNames.get(1))
-                        .isEqualTo("StockPrice");
+                        .isEqualTo("StockPrices");
 
                 TypedTimeSeriesEntry<HeartRateMeasure> heartRateMeasures = session.timeSeriesFor(HeartRateMeasure.class, user)
-                        .get()
-                        .get(0);
+                        .get()[0];
                 assertThat(heartRateMeasures.getValue().getHeartRate())
                         .isEqualTo(66);
 
                 TypedTimeSeriesEntry<StockPrice> stockPriceEntry = session.timeSeriesFor(StockPrice.class, user)
-                        .get()
-                        .get(0);
+                        .get()[0];
                 assertThat(stockPriceEntry.getValue().getOpen())
                         .isEqualTo(66);
                 assertThat(stockPriceEntry.getValue().getClose())
@@ -361,7 +357,7 @@ public class TimeSeriesTypedSessionTest extends RemoteTestBase {
                         session.advanced().rawQuery(TimeSeriesAggregationResult.class,
                                 "declare timeseries out(u)\n" +
                         "    {\n" +
-                        "        from u.HeartRateMeasure between $start and $end\n" +
+                        "        from u.HeartRateMeasures between $start and $end\n" +
                         "        group by 1h\n" +
                         "        select min(), max(), first(), last()\n" +
                         "    }\n" +
@@ -440,7 +436,7 @@ public class TimeSeriesTypedSessionTest extends RemoteTestBase {
             try (IDocumentSession session = store.openSession()) {
                 IRawDocumentQuery<TimeSeriesRawResult> query = session.advanced().rawQuery(TimeSeriesRawResult.class, "declare timeseries out(x)\n" +
                         "{\n" +
-                        "    from x.HeartRateMeasure between $start and $end\n" +
+                        "    from x.HeartRateMeasures between $start and $end\n" +
                         "}\n" +
                         "from Users as doc\n" +
                         "where doc.age > 49\n" +
@@ -588,7 +584,7 @@ public class TimeSeriesTypedSessionTest extends RemoteTestBase {
             try (IDocumentSession session = store.openSession()) {
                 IRawDocumentQuery<TimeSeriesRawResult> query = session.advanced().rawQuery(TimeSeriesRawResult.class, "declare timeseries out()\n" +
                         "{\n" +
-                        "    from StockPrice\n" +
+                        "    from StockPrices\n" +
                         "    between $start and $end\n" +
                         "}\n" +
                         "from Users as u\n" +
@@ -631,7 +627,7 @@ public class TimeSeriesTypedSessionTest extends RemoteTestBase {
             try (IDocumentSession session = store.openSession()) {
                 ISessionDocumentRollupTypedTimeSeries<StockPrice> ts = session.timeSeriesRollupFor(StockPrice.class, "users/karmel", p1.getName());
 
-                List<TypedTimeSeriesRollupEntry<StockPrice>> res = ts.get(DateUtils.addMilliseconds(now, -1), DateUtils.addDays(now, 1));
+                List<TypedTimeSeriesRollupEntry<StockPrice>> res = Arrays.asList(ts.get(DateUtils.addMilliseconds(now, -1), DateUtils.addDays(now, 1)));
                 assertThat(res)
                         .hasSize(1);
                 assertThat(res.get(0).getMax().getClose())

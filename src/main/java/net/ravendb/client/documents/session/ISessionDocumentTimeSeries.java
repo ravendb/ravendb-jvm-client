@@ -13,7 +13,7 @@ public interface ISessionDocumentTimeSeries extends ISessionDocumentAppendTimeSe
      * Return all time series values
      * @return time series values
      */
-    List<TimeSeriesEntry> get();
+    TimeSeriesEntry[] get();
 
     /**
      * Return the time series values for the provided range
@@ -21,7 +21,7 @@ public interface ISessionDocumentTimeSeries extends ISessionDocumentAppendTimeSe
      * @param to range end
      * @return time series values
      */
-    List<TimeSeriesEntry> get(Date from, Date to);
+    TimeSeriesEntry[] get(Date from, Date to);
 
     /**
      * Return the time series values for the provided range
@@ -30,7 +30,7 @@ public interface ISessionDocumentTimeSeries extends ISessionDocumentAppendTimeSe
      * @param start start
      * @return time series values
      */
-    List<TimeSeriesEntry> get(Date from, Date to, int start);
+    TimeSeriesEntry[] get(Date from, Date to, int start);
 
     /**
      * Return the time series values for the provided range
@@ -40,5 +40,5 @@ public interface ISessionDocumentTimeSeries extends ISessionDocumentAppendTimeSe
      * @param pageSize page size
      * @return time series values
      */
-    List<TimeSeriesEntry> get(Date from, Date to, int start, int pageSize);
+    TimeSeriesEntry[] get(Date from, Date to, int start, int pageSize);
 }

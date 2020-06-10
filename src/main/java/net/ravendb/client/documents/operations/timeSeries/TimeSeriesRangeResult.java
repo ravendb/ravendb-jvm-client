@@ -8,7 +8,7 @@ import java.util.List;
 public class TimeSeriesRangeResult {
     private Date from; //TODO: make nullable on server side - Karmel says we don't have min/max here - we trim to stored values!
     private Date to; // TODO make nullable on server side - Karmel says we don't have min/max here - we trim to stored values!
-    private List<TimeSeriesEntry> entries;
+    private TimeSeriesEntry[] entries;
     private Long totalResults;
 
     public Date getFrom() {
@@ -27,11 +27,11 @@ public class TimeSeriesRangeResult {
         this.to = to;
     }
 
-    public List<TimeSeriesEntry> getEntries() {
+    public TimeSeriesEntry[] getEntries() {
         return entries;
     }
 
-    public void setEntries(List<TimeSeriesEntry> entries) {
+    public void setEntries(TimeSeriesEntry[] entries) {
         this.entries = entries;
     }
 

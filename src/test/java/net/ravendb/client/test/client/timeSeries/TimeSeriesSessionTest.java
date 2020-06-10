@@ -39,8 +39,7 @@ public class TimeSeriesSessionTest extends RemoteTestBase {
 
             try (IDocumentSession session = store.openSession()) {
                 TimeSeriesEntry val = session.timeSeriesFor("users/ayende", "Heartrate")
-                        .get(null, null)
-                        .get(0);
+                        .get(null, null)[0];
 
                 assertThat(val.getValues())
                         .isEqualTo(new double[] { 59 });
@@ -71,8 +70,8 @@ public class TimeSeriesSessionTest extends RemoteTestBase {
             }
 
             try (IDocumentSession session = store.openSession()) {
-                List<TimeSeriesEntry> val = session.timeSeriesFor("users/ayende", "Heartrate")
-                        .get(null, null);
+                List<TimeSeriesEntry> val = Arrays.asList(session.timeSeriesFor("users/ayende", "Heartrate")
+                        .get(null, null));
                 assertThat(val)
                         .hasSize(3);
             }
@@ -108,8 +107,8 @@ public class TimeSeriesSessionTest extends RemoteTestBase {
             }
 
             try (IDocumentSession session = store.openSession()) {
-                List<TimeSeriesEntry> vals = session.timeSeriesFor("users/ayende", "Heartrate")
-                        .get(null, null);
+                List<TimeSeriesEntry> vals = Arrays.asList(session.timeSeriesFor("users/ayende", "Heartrate")
+                        .get(null, null));
 
                 assertThat(vals)
                         .hasSize(2);
@@ -149,8 +148,8 @@ public class TimeSeriesSessionTest extends RemoteTestBase {
             }
 
             try (IDocumentSession session = store.openSession()) {
-                List<TimeSeriesEntry> vals = session.timeSeriesFor("users/ayende", "Heartrate")
-                        .get(null, null);
+                List<TimeSeriesEntry> vals = Arrays.asList(session.timeSeriesFor("users/ayende", "Heartrate")
+                        .get(null, null));
 
                 assertThat(vals)
                         .hasSize(2);
@@ -190,8 +189,8 @@ public class TimeSeriesSessionTest extends RemoteTestBase {
             }
 
             try (IDocumentSession session = store.openSession()) {
-                List<TimeSeriesEntry> vals = session.timeSeriesFor("users/ayende", "Heartrate")
-                        .get(null, null);
+                List<TimeSeriesEntry> vals = Arrays.asList(session.timeSeriesFor("users/ayende", "Heartrate")
+                        .get(null, null));
 
                 assertThat(vals)
                         .hasSize(3);
@@ -238,8 +237,8 @@ public class TimeSeriesSessionTest extends RemoteTestBase {
             }
 
             try (IDocumentSession session = store.openSession()) {
-                List<TimeSeriesEntry> vals = session.timeSeriesFor("users/ayende", "Heartrate")
-                        .get(null, null);
+                List<TimeSeriesEntry> vals = Arrays.asList(session.timeSeriesFor("users/ayende", "Heartrate")
+                        .get(null, null));
 
                 assertThat(vals)
                         .hasSize(3);
@@ -293,8 +292,8 @@ public class TimeSeriesSessionTest extends RemoteTestBase {
             }
 
             try (IDocumentSession session = store.openSession()) {
-                List<TimeSeriesEntry> vals = session.timeSeriesFor("users/ayende", "Heartrate")
-                        .get(null, null);
+                List<TimeSeriesEntry> vals = Arrays.asList(session.timeSeriesFor("users/ayende", "Heartrate")
+                        .get(null, null));
 
                 assertThat(vals)
                         .hasSize(3);
@@ -349,8 +348,8 @@ public class TimeSeriesSessionTest extends RemoteTestBase {
             }
 
             try (IDocumentSession session = store.openSession()) {
-                List<TimeSeriesEntry> vals = session.timeSeriesFor("users/ayende", "Heartrate")
-                        .get(null, null);
+                List<TimeSeriesEntry> vals = Arrays.asList(session.timeSeriesFor("users/ayende", "Heartrate")
+                        .get(null, null));
                 assertThat(vals)
                         .hasSize(10_000);
 
@@ -396,7 +395,7 @@ public class TimeSeriesSessionTest extends RemoteTestBase {
 
             try (IDocumentSession session = store.openSession()) {
                 ISessionDocumentTimeSeries tsf = session.timeSeriesFor("users/ayende", "Heartrate");
-                List<TimeSeriesEntry> vals = tsf.get(null, null);
+                List<TimeSeriesEntry> vals = Arrays.asList(tsf.get(null, null));
                 assertThat(vals)
                         .hasSize(retries);
 
@@ -409,8 +408,8 @@ public class TimeSeriesSessionTest extends RemoteTestBase {
             }
 
             try (IDocumentSession session = store.openSession()) {
-                List<TimeSeriesEntry> vals = session.timeSeriesFor("users/ayende", "Heartrate")
-                        .get(null, null);
+                List<TimeSeriesEntry> vals = Arrays.asList(session.timeSeriesFor("users/ayende", "Heartrate")
+                        .get(null, null));
 
                 assertThat(vals)
                         .hasSize(2 * retries);
@@ -480,8 +479,8 @@ public class TimeSeriesSessionTest extends RemoteTestBase {
 
 
             try (IDocumentSession session = store.openSession()) {
-                List<TimeSeriesEntry> result = session.timeSeriesFor("users/karmel", "Heartrate")
-                        .get();
+                List<TimeSeriesEntry> result = Arrays.asList(session.timeSeriesFor("users/karmel", "Heartrate")
+                        .get());
 
                 assertThat(result.size())
                         .isPositive();
@@ -505,14 +504,14 @@ public class TimeSeriesSessionTest extends RemoteTestBase {
             }
 
             try (IDocumentSession session = store.openSession()) {
-                List<TimeSeriesEntry> vals = session.timeSeriesFor("users/ayende", "Heartrate")
-                        .get(DateUtils.addMinutes(baseLine, -10), DateUtils.addMinutes(baseLine, -5));
+                List<TimeSeriesEntry> vals = Arrays.asList(session.timeSeriesFor("users/ayende", "Heartrate")
+                        .get(DateUtils.addMinutes(baseLine, -10), DateUtils.addMinutes(baseLine, -5)));
 
                 assertThat(vals)
                         .isEmpty();
 
-                vals = session.timeSeriesFor("users/ayende", "Heartrate")
-                        .get(DateUtils.addMinutes(baseLine, 5), DateUtils.addMinutes(baseLine, 9));
+                vals = Arrays.asList(session.timeSeriesFor("users/ayende", "Heartrate")
+                        .get(DateUtils.addMinutes(baseLine, 5), DateUtils.addMinutes(baseLine, 9)));
 
                 assertThat(vals)
                         .isEmpty();
@@ -630,8 +629,8 @@ public class TimeSeriesSessionTest extends RemoteTestBase {
             }
 
             try (IDocumentSession session = store.openSession()) {
-                List<TimeSeriesEntry> vals = session.timeSeriesFor("users/ayende", "Heartrate")
-                        .get(null, null);
+                List<TimeSeriesEntry> vals = Arrays.asList(session.timeSeriesFor("users/ayende", "Heartrate")
+                        .get(null, null));
 
                 assertThat(vals)
                         .hasSize(100_000);
@@ -645,8 +644,8 @@ public class TimeSeriesSessionTest extends RemoteTestBase {
             }
 
             try (IDocumentSession session = store.openSession()) {
-                List<TimeSeriesEntry> vals = session.timeSeriesFor("users/ayende", "Pulse")
-                        .get(null, null);
+                List<TimeSeriesEntry> vals = Arrays.asList(session.timeSeriesFor("users/ayende", "Pulse")
+                        .get(null, null));
                 assertThat(vals)
                         .hasSize(100_000);
 
@@ -700,7 +699,7 @@ public class TimeSeriesSessionTest extends RemoteTestBase {
             }
 
             try (IDocumentSession session = store.openSession()) {
-                List<TimeSeriesEntry> vals = session.timeSeriesFor(id, "Heartrate")
+                TimeSeriesEntry[] vals = session.timeSeriesFor(id, "Heartrate")
                         .get(null, null);
                 assertThat(vals)
                         .isNull();
@@ -733,8 +732,8 @@ public class TimeSeriesSessionTest extends RemoteTestBase {
             }
 
             try (IDocumentSession session = store.openSession()) {
-                List<TimeSeriesEntry> vals = session.timeSeriesFor("users/ayende", "Heartrate")
-                        .get(null, null, 5, 20);
+                List<TimeSeriesEntry> vals = Arrays.asList(session.timeSeriesFor("users/ayende", "Heartrate")
+                        .get(null, null, 5, 20));
 
                 assertThat(vals)
                         .hasSize(20);
@@ -782,19 +781,19 @@ public class TimeSeriesSessionTest extends RemoteTestBase {
 
                 ISessionDocumentTimeSeries tsf = session.timeSeriesFor(user, "Heartrate");
 
-                List<TimeSeriesEntry> vals = tsf.get(baseLine, DateUtils.addMinutes(baseLine, 10));
+                List<TimeSeriesEntry> vals = Arrays.asList(tsf.get(baseLine, DateUtils.addMinutes(baseLine, 10)));
 
                 assertThat(vals)
                         .hasSize(11);
 
-                vals = tsf.get(DateUtils.addMinutes(baseLine, 20), DateUtils.addMinutes(baseLine, 50));
+                vals = Arrays.asList(tsf.get(DateUtils.addMinutes(baseLine, 20), DateUtils.addMinutes(baseLine, 50)));
 
                 assertThat(vals)
                         .hasSize(31);
 
                 tsf = session.timeSeriesFor(user, "BloodPressure");
 
-                vals = tsf.get();
+                vals = Arrays.asList(tsf.get());
 
                 assertThat(vals)
                         .hasSize(10);
@@ -873,7 +872,7 @@ public class TimeSeriesSessionTest extends RemoteTestBase {
 
             try (IDocumentSession session = store.openSession()) {
                 User user = session.load(User.class, "users/karmel");
-                List<TimeSeriesEntry> ts = session.timeSeriesFor(user, "unicorns")
+                TimeSeriesEntry[] ts = session.timeSeriesFor(user, "unicorns")
                         .get();
                 assertThat(ts)
                         .isNull();
@@ -907,7 +906,7 @@ public class TimeSeriesSessionTest extends RemoteTestBase {
             try (IDocumentSession session = store.openSession()) {
                 ISessionDocumentTimeSeries tsf = session.timeSeriesFor(docId, "Heartrate");
 
-                List<TimeSeriesEntry> entries = tsf.get();
+                List<TimeSeriesEntry> entries = Arrays.asList(tsf.get());
                 assertThat(entries)
                         .hasSize(100);
 
@@ -917,7 +916,7 @@ public class TimeSeriesSessionTest extends RemoteTestBase {
             }
 
             try (IDocumentSession session = store.openSession()) {
-                List<TimeSeriesEntry> entries = session.timeSeriesFor(docId, "Heartrate").get();
+                TimeSeriesEntry[] entries = session.timeSeriesFor(docId, "Heartrate").get();
                 assertThat(entries)
                         .isNull();
             }
@@ -925,7 +924,7 @@ public class TimeSeriesSessionTest extends RemoteTestBase {
             try (IDocumentSession session = store.openSession()) {
                 ISessionDocumentTimeSeries tsf = session.timeSeriesFor(docId, "BloodPressure");
 
-                List<TimeSeriesEntry> entries = tsf.get();
+                List<TimeSeriesEntry> entries = Arrays.asList(tsf.get());
                 assertThat(entries)
                         .hasSize(100);
 
@@ -935,8 +934,8 @@ public class TimeSeriesSessionTest extends RemoteTestBase {
             }
 
             try (IDocumentSession session = store.openSession()) {
-                List<TimeSeriesEntry> entries = session.timeSeriesFor(docId, "BloodPressure")
-                        .get();
+                List<TimeSeriesEntry> entries = Arrays.asList(session.timeSeriesFor(docId, "BloodPressure")
+                        .get());
                 assertThat(entries)
                         .hasSize(50);
             }
@@ -944,7 +943,7 @@ public class TimeSeriesSessionTest extends RemoteTestBase {
             try (IDocumentSession session = store.openSession()) {
                 ISessionDocumentTimeSeries tsf = session.timeSeriesFor(docId, "BodyTemperature");
 
-                List<TimeSeriesEntry> entries = tsf.get();
+                List<TimeSeriesEntry> entries = Arrays.asList(tsf.get());
                 assertThat(entries)
                         .hasSize(100);
 
@@ -954,8 +953,8 @@ public class TimeSeriesSessionTest extends RemoteTestBase {
             }
 
             try (IDocumentSession session = store.openSession()) {
-                List<TimeSeriesEntry> entries = session.timeSeriesFor(docId, "BodyTemperature")
-                        .get();
+                List<TimeSeriesEntry> entries = Arrays.asList(session.timeSeriesFor(docId, "BodyTemperature")
+                        .get());
 
                 assertThat(entries)
                         .hasSize(80);

@@ -11,6 +11,7 @@ import net.ravendb.client.infrastructure.entities.User;
 import org.apache.commons.lang3.time.DateUtils;
 import org.junit.jupiter.api.Test;
 
+import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
@@ -63,8 +64,8 @@ public class RavenDB_14994Test extends RemoteTestBase {
                     .isEmpty();
 
             try (IDocumentSession session = store.openSession()) {
-                List<TimeSeriesEntry> result = session.timeSeriesFor(documentId, "HeartRate")
-                        .get(DateUtils.addMonths(baseLine, -2), DateUtils.addMonths(baseLine, -1));
+                List<TimeSeriesEntry> result = Arrays.asList(session.timeSeriesFor(documentId, "HeartRate")
+                        .get(DateUtils.addMonths(baseLine, -2), DateUtils.addMonths(baseLine, -1)));
                 assertThat(result)
                         .isEmpty();
             }

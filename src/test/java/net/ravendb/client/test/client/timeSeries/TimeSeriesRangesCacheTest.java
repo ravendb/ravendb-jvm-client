@@ -11,10 +11,7 @@ import net.ravendb.client.infrastructure.entities.User;
 import org.apache.commons.lang3.time.DateUtils;
 import org.junit.jupiter.api.Test;
 
-import java.util.Calendar;
-import java.util.Date;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -36,8 +33,7 @@ public class TimeSeriesRangesCacheTest extends RemoteTestBase {
 
             try (IDocumentSession session = store.openSession()) {
                 TimeSeriesEntry val = session.timeSeriesFor("users/ayende", "Heartrate")
-                        .get()
-                        .get(0);
+                        .get()[0];
 
                 assertThat(val.getValues())
                         .isEqualTo(new double[] { 59 });
@@ -51,8 +47,7 @@ public class TimeSeriesRangesCacheTest extends RemoteTestBase {
 
                 // should load from cache
                 val = session.timeSeriesFor("users/ayende", "Heartrate")
-                        .get()
-                        .get(0);
+                        .get()[0];
 
                 assertThat(val.getValues())
                         .isEqualTo(new double[] { 59 });
@@ -83,8 +78,7 @@ public class TimeSeriesRangesCacheTest extends RemoteTestBase {
 
             try (IDocumentSession session = store.openSession()) {
                 TimeSeriesEntry val = session.timeSeriesFor("users/ayende", "Heartrate")
-                        .get()
-                        .get(0);
+                        .get()[0];
 
                 assertThat(val.getValues())
                         .isEqualTo(new double[]{59});
@@ -98,8 +92,7 @@ public class TimeSeriesRangesCacheTest extends RemoteTestBase {
 
                 // should load from cache
                 val = session.timeSeriesFor("users/ayende", "Heartrate")
-                        .get(baseLine, DateUtils.addDays(baseLine, 1))
-                        .get(0);
+                        .get(baseLine, DateUtils.addDays(baseLine, 1))[0];
 
                 assertThat(val.getValues())
                         .isEqualTo(new double[]{59});
@@ -147,8 +140,8 @@ public class TimeSeriesRangesCacheTest extends RemoteTestBase {
             }
 
             try (IDocumentSession session = store.openSession()) {
-                List<TimeSeriesEntry> vals = session.timeSeriesFor("users/ayende", "Heartrate")
-                        .get(DateUtils.addMinutes(baseLine, 2), DateUtils.addMinutes(baseLine, 10));
+                List<TimeSeriesEntry> vals = Arrays.asList(session.timeSeriesFor("users/ayende", "Heartrate")
+                        .get(DateUtils.addMinutes(baseLine, 2), DateUtils.addMinutes(baseLine, 10)));
 
                 assertThat(session.advanced().getNumberOfRequests())
                         .isEqualTo(1);
@@ -162,8 +155,8 @@ public class TimeSeriesRangesCacheTest extends RemoteTestBase {
                         .isEqualTo(DateUtils.addMinutes(baseLine, 10));
 
                 // should load partial range from cache
-                vals = session.timeSeriesFor("users/ayende", "Heartrate")
-                        .get(DateUtils.addMinutes(baseLine, 5), DateUtils.addMinutes(baseLine, 7));
+                vals = Arrays.asList(session.timeSeriesFor("users/ayende", "Heartrate")
+                        .get(DateUtils.addMinutes(baseLine, 5), DateUtils.addMinutes(baseLine, 7)));
 
                 assertThat(session.advanced().getNumberOfRequests())
                         .isEqualTo(1);
@@ -178,8 +171,8 @@ public class TimeSeriesRangesCacheTest extends RemoteTestBase {
 
                 // should go to server
 
-                vals = session.timeSeriesFor("users/ayende", "Heartrate")
-                        .get(DateUtils.addMinutes(baseLine, 40), DateUtils.addMinutes(baseLine, 50));
+                vals = Arrays.asList(session.timeSeriesFor("users/ayende", "Heartrate")
+                        .get(DateUtils.addMinutes(baseLine, 40), DateUtils.addMinutes(baseLine, 50)));
 
                 assertThat(session.advanced().getNumberOfRequests())
                         .isEqualTo(2);
@@ -210,8 +203,8 @@ public class TimeSeriesRangesCacheTest extends RemoteTestBase {
                         .isEqualTo(DateUtils.addMinutes(baseLine, 50));
 
                 // should go to server to get [0, 2] and merge it into existing [2, 10]
-                vals = session.timeSeriesFor("users/ayende", "Heartrate")
-                        .get(baseLine, DateUtils.addMinutes(baseLine, 5));
+                vals = Arrays.asList(session.timeSeriesFor("users/ayende", "Heartrate")
+                        .get(baseLine, DateUtils.addMinutes(baseLine, 5)));
 
                 assertThat(session.advanced().getNumberOfRequests())
                         .isEqualTo(3);
@@ -237,8 +230,8 @@ public class TimeSeriesRangesCacheTest extends RemoteTestBase {
                         .isEqualTo(DateUtils.addMinutes(baseLine, 50));
 
                 // should go to server to get [10, 16] and merge it into existing [0, 10]
-                vals = session.timeSeriesFor("users/ayende", "Heartrate")
-                        .get(DateUtils.addMinutes(baseLine, 8), DateUtils.addMinutes(baseLine, 16));
+                vals = Arrays.asList(session.timeSeriesFor("users/ayende", "Heartrate")
+                        .get(DateUtils.addMinutes(baseLine, 8), DateUtils.addMinutes(baseLine, 16)));
 
                 assertThat(session.advanced().getNumberOfRequests())
                         .isEqualTo(4);
@@ -265,8 +258,8 @@ public class TimeSeriesRangesCacheTest extends RemoteTestBase {
                 // should go to server to get range [17, 19]
                 // and add it to cache in between [10, 16] and [40, 50]
 
-                vals = session.timeSeriesFor("users/ayende", "Heartrate")
-                        .get(DateUtils.addMinutes(baseLine, 17), DateUtils.addMinutes(baseLine, 19));
+                vals = Arrays.asList(session.timeSeriesFor("users/ayende", "Heartrate")
+                        .get(DateUtils.addMinutes(baseLine, 17), DateUtils.addMinutes(baseLine, 19)));
 
                 assertThat(session.advanced().getNumberOfRequests())
                         .isEqualTo(5);
@@ -295,8 +288,8 @@ public class TimeSeriesRangesCacheTest extends RemoteTestBase {
                 // and merge the result with existing ranges [17, 19] and [40, 50]
                 // into single range [17, 50]
 
-                vals = session.timeSeriesFor("users/ayende", "Heartrate")
-                        .get(DateUtils.addMinutes(baseLine, 18), DateUtils.addMinutes(baseLine, 48));
+                vals = Arrays.asList(session.timeSeriesFor("users/ayende", "Heartrate")
+                        .get(DateUtils.addMinutes(baseLine, 18), DateUtils.addMinutes(baseLine, 48)));
 
                 assertThat(session.advanced().getNumberOfRequests())
                         .isEqualTo(6);
@@ -324,8 +317,8 @@ public class TimeSeriesRangesCacheTest extends RemoteTestBase {
                 // and merge the result with existing ranges [0, 16] and [17, 50]
                 // into single range [0, 50]
 
-                vals = session.timeSeriesFor("users/ayende", "Heartrate")
-                        .get(DateUtils.addMinutes(baseLine, 12), DateUtils.addMinutes(baseLine, 22));
+                vals = Arrays.asList(session.timeSeriesFor("users/ayende", "Heartrate")
+                        .get(DateUtils.addMinutes(baseLine, 12), DateUtils.addMinutes(baseLine, 22)));
 
                 assertThat(session.advanced().getNumberOfRequests())
                         .isEqualTo(7);
@@ -376,8 +369,8 @@ public class TimeSeriesRangesCacheTest extends RemoteTestBase {
             }
 
             try (IDocumentSession session = store.openSession()) {
-                List<TimeSeriesEntry> vals = session.timeSeriesFor("users/ayende", "Heartrate")
-                        .get(DateUtils.addMinutes(baseLine, 2), DateUtils.addMinutes(baseLine, 10));
+                List<TimeSeriesEntry> vals = Arrays.asList(session.timeSeriesFor("users/ayende", "Heartrate")
+                        .get(DateUtils.addMinutes(baseLine, 2), DateUtils.addMinutes(baseLine, 10)));
 
                 assertThat(session.advanced().getNumberOfRequests())
                         .isEqualTo(1);
@@ -390,8 +383,8 @@ public class TimeSeriesRangesCacheTest extends RemoteTestBase {
                         .isEqualTo(DateUtils.addMinutes(baseLine, 10));
 
                 // should go the server
-                vals = session.timeSeriesFor("users/ayende", "Heartrate")
-                        .get(DateUtils.addMinutes(baseLine, 22), DateUtils.addMinutes(baseLine, 32));
+                vals = Arrays.asList(session.timeSeriesFor("users/ayende", "Heartrate")
+                        .get(DateUtils.addMinutes(baseLine, 22), DateUtils.addMinutes(baseLine, 32)));
 
                 assertThat(session.advanced().getNumberOfRequests())
                         .isEqualTo(2);
@@ -404,8 +397,8 @@ public class TimeSeriesRangesCacheTest extends RemoteTestBase {
                         .isEqualTo(DateUtils.addMinutes(baseLine, 32));
 
                 // should go to server
-                vals = session.timeSeriesFor("users/ayende", "Heartrate")
-                        .get(DateUtils.addMinutes(baseLine, 1), DateUtils.addMinutes(baseLine, 11));
+                vals = Arrays.asList(session.timeSeriesFor("users/ayende", "Heartrate")
+                        .get(DateUtils.addMinutes(baseLine, 1), DateUtils.addMinutes(baseLine, 11)));
 
                 assertThat(session.advanced().getNumberOfRequests())
                         .isEqualTo(3);
@@ -435,8 +428,8 @@ public class TimeSeriesRangesCacheTest extends RemoteTestBase {
                         .isEqualTo(DateUtils.addMinutes(baseLine, 32));
 
                 // should go to server to get [32, 35] and merge with [22, 32]
-                vals = session.timeSeriesFor("users/ayende", "Heartrate")
-                        .get(DateUtils.addMinutes(baseLine, 25), DateUtils.addMinutes(baseLine, 35));
+                vals = Arrays.asList(session.timeSeriesFor("users/ayende", "Heartrate")
+                        .get(DateUtils.addMinutes(baseLine, 25), DateUtils.addMinutes(baseLine, 35)));
 
                 assertThat(session.advanced().getNumberOfRequests())
                         .isEqualTo(4);
@@ -462,8 +455,8 @@ public class TimeSeriesRangesCacheTest extends RemoteTestBase {
 
                 // should go to server to get [20, 22] and [35, 40]
                 // and merge them with [22, 35] into a single range [20, 40]
-                vals = session.timeSeriesFor("users/ayende", "Heartrate")
-                        .get(DateUtils.addMinutes(baseLine, 20), DateUtils.addMinutes(baseLine, 40));
+                vals = Arrays.asList(session.timeSeriesFor("users/ayende", "Heartrate")
+                        .get(DateUtils.addMinutes(baseLine, 20), DateUtils.addMinutes(baseLine, 40)));
 
                 assertThat(session.advanced().getNumberOfRequests())
                         .isEqualTo(5);
@@ -488,8 +481,8 @@ public class TimeSeriesRangesCacheTest extends RemoteTestBase {
                         .isEqualTo(DateUtils.addMinutes(baseLine, 40));
 
                 // should go to server to get [15, 20] and merge with [20, 40]
-                vals = session.timeSeriesFor("users/ayende", "Heartrate")
-                        .get(DateUtils.addMinutes(baseLine, 15), DateUtils.addMinutes(baseLine, 35));
+                vals = Arrays.asList(session.timeSeriesFor("users/ayende", "Heartrate")
+                        .get(DateUtils.addMinutes(baseLine, 15), DateUtils.addMinutes(baseLine, 35)));
 
                 assertThat(session.advanced().getNumberOfRequests())
                         .isEqualTo(6);
@@ -514,8 +507,8 @@ public class TimeSeriesRangesCacheTest extends RemoteTestBase {
                         .isEqualTo(DateUtils.addMinutes(baseLine, 40));
 
                 // should go to server and add new cache entry for Heartrate2
-                vals = session.timeSeriesFor("users/ayende", "Heartrate2")
-                        .get(baseLine, DateUtils.addHours(baseLine, 2));
+                vals = Arrays.asList(session.timeSeriesFor("users/ayende", "Heartrate2")
+                        .get(baseLine, DateUtils.addHours(baseLine, 2)));
 
                 assertThat(session.advanced().getNumberOfRequests())
                         .isEqualTo(7);
@@ -536,8 +529,8 @@ public class TimeSeriesRangesCacheTest extends RemoteTestBase {
                         .isEqualTo(DateUtils.addHours(baseLine, 2));
 
                 // should not go to server
-                vals = session.timeSeriesFor("users/ayende", "Heartrate2")
-                        .get(DateUtils.addMinutes(baseLine, 30), DateUtils.addMinutes(baseLine, 100));
+                vals = Arrays.asList(session.timeSeriesFor("users/ayende", "Heartrate2")
+                        .get(DateUtils.addMinutes(baseLine, 30), DateUtils.addMinutes(baseLine, 100)));
 
                 assertThat(session.advanced().getNumberOfRequests())
                         .isEqualTo(7);
@@ -550,8 +543,8 @@ public class TimeSeriesRangesCacheTest extends RemoteTestBase {
                         .isEqualTo(DateUtils.addMinutes(baseLine, 90));
 
                 // should go to server
-                vals = session.timeSeriesFor("users/ayende", "Heartrate")
-                        .get(DateUtils.addMinutes(baseLine, 42), DateUtils.addMinutes(baseLine, 43));
+                vals = Arrays.asList(session.timeSeriesFor("users/ayende", "Heartrate")
+                        .get(DateUtils.addMinutes(baseLine, 42), DateUtils.addMinutes(baseLine, 43)));
 
                 assertThat(session.advanced().getNumberOfRequests())
                         .isEqualTo(8);
@@ -582,8 +575,8 @@ public class TimeSeriesRangesCacheTest extends RemoteTestBase {
 
                 // should go to server and to get the missing parts and merge all ranges into [0, 45]
 
-                vals = session.timeSeriesFor("users/ayende", "Heartrate")
-                        .get(baseLine, DateUtils.addMinutes(baseLine, 45));
+                vals = Arrays.asList(session.timeSeriesFor("users/ayende", "Heartrate")
+                        .get(baseLine, DateUtils.addMinutes(baseLine, 45)));
 
                 assertThat(session.advanced().getNumberOfRequests())
                         .isEqualTo(9);
@@ -637,8 +630,8 @@ public class TimeSeriesRangesCacheTest extends RemoteTestBase {
             }
 
             try (IDocumentSession session = store.openSession()) {
-                List<TimeSeriesEntry> vals = session.timeSeriesFor("users/ayende", "Heartrate")
-                        .get(DateUtils.addMinutes(baseLine, 1), DateUtils.addMinutes(baseLine, 2));
+                List<TimeSeriesEntry> vals = Arrays.asList(session.timeSeriesFor("users/ayende", "Heartrate")
+                        .get(DateUtils.addMinutes(baseLine, 1), DateUtils.addMinutes(baseLine, 2)));
 
                 assertThat(vals)
                         .hasSize(7);
@@ -647,8 +640,8 @@ public class TimeSeriesRangesCacheTest extends RemoteTestBase {
                 assertThat(vals.get(6).getTimestamp())
                         .isEqualTo(DateUtils.addMinutes(baseLine, 2));
 
-                vals = session.timeSeriesFor("users/ayende", "Heartrate")
-                        .get(DateUtils.addMinutes(baseLine, 5), DateUtils.addMinutes(baseLine, 6));
+                vals = Arrays.asList(session.timeSeriesFor("users/ayende", "Heartrate")
+                        .get(DateUtils.addMinutes(baseLine, 5), DateUtils.addMinutes(baseLine, 6)));
 
                 assertThat(session.advanced().getNumberOfRequests())
                         .isEqualTo(2);
@@ -677,8 +670,8 @@ public class TimeSeriesRangesCacheTest extends RemoteTestBase {
 
                 // should go to server to get [2, 3] and merge with [1, 2]
 
-                vals = session.timeSeriesFor("users/ayende", "Heartrate")
-                        .get(DateUtils.addMinutes(baseLine, 2), DateUtils.addMinutes(baseLine, 3));
+                vals = Arrays.asList(session.timeSeriesFor("users/ayende", "Heartrate")
+                        .get(DateUtils.addMinutes(baseLine, 2), DateUtils.addMinutes(baseLine, 3)));
 
                 assertThat(session.advanced().getNumberOfRequests())
                         .isEqualTo(3);
@@ -703,8 +696,8 @@ public class TimeSeriesRangesCacheTest extends RemoteTestBase {
                         .isEqualTo(DateUtils.addMinutes(baseLine, 6));
 
                 // should go to server to get [4, 5] and merge with [5, 6]
-                vals = session.timeSeriesFor("users/ayende", "Heartrate")
-                        .get(DateUtils.addMinutes(baseLine, 4), DateUtils.addMinutes(baseLine, 5));
+                vals = Arrays.asList(session.timeSeriesFor("users/ayende", "Heartrate")
+                        .get(DateUtils.addMinutes(baseLine, 4), DateUtils.addMinutes(baseLine, 5)));
 
                 assertThat(session.advanced().getNumberOfRequests())
                         .isEqualTo(4);
@@ -730,8 +723,8 @@ public class TimeSeriesRangesCacheTest extends RemoteTestBase {
 
                 // should go to server to get [3, 4] and merge all ranges into [1, 6]
 
-                vals = session.timeSeriesFor("users/ayende", "Heartrate")
-                        .get(DateUtils.addMinutes(baseLine, 3), DateUtils.addMinutes(baseLine, 4));
+                vals = Arrays.asList(session.timeSeriesFor("users/ayende", "Heartrate")
+                        .get(DateUtils.addMinutes(baseLine, 3), DateUtils.addMinutes(baseLine, 4)));
 
                 assertThat(session.advanced().getNumberOfRequests())
                         .isEqualTo(5);
@@ -778,8 +771,8 @@ public class TimeSeriesRangesCacheTest extends RemoteTestBase {
             }
 
             try (IDocumentSession session = store.openSession()) {
-                List<TimeSeriesEntry> vals = session.timeSeriesFor("users/ayende", "Heartrate")
-                        .get(DateUtils.addHours(baseLine, -2), DateUtils.addHours(baseLine, -1));
+                List<TimeSeriesEntry> vals = Arrays.asList(session.timeSeriesFor("users/ayende", "Heartrate")
+                        .get(DateUtils.addHours(baseLine, -2), DateUtils.addHours(baseLine, -1)));
 
                 assertThat(vals)
                         .isEmpty();
@@ -787,8 +780,8 @@ public class TimeSeriesRangesCacheTest extends RemoteTestBase {
                         .isEqualTo(1);
 
                 // should not go to server
-                vals = session.timeSeriesFor("users/ayende", "Heartrate")
-                        .get(DateUtils.addHours(baseLine, -2), DateUtils.addHours(baseLine, -1));
+                vals = Arrays.asList(session.timeSeriesFor("users/ayende", "Heartrate")
+                        .get(DateUtils.addHours(baseLine, -2), DateUtils.addHours(baseLine, -1)));
 
                 assertThat(vals)
                         .isEmpty();
@@ -796,8 +789,8 @@ public class TimeSeriesRangesCacheTest extends RemoteTestBase {
                         .isEqualTo(1);
 
                 // should not go to server
-                vals = session.timeSeriesFor("users/ayende", "Heartrate")
-                        .get(DateUtils.addMinutes(baseLine, -90), DateUtils.addMinutes(baseLine, -70));
+                vals = Arrays.asList(session.timeSeriesFor("users/ayende", "Heartrate")
+                        .get(DateUtils.addMinutes(baseLine, -90), DateUtils.addMinutes(baseLine, -70)));
 
                 assertThat(vals)
                         .isEmpty();
@@ -805,8 +798,8 @@ public class TimeSeriesRangesCacheTest extends RemoteTestBase {
                         .isEqualTo(1);
 
                 // should go to server to get [-60, 1] and merge with [-120, -60]
-                vals = session.timeSeriesFor("users/ayende", "Heartrate")
-                        .get(DateUtils.addHours(baseLine, -1), DateUtils.addMinutes(baseLine, 1));
+                vals = Arrays.asList(session.timeSeriesFor("users/ayende", "Heartrate")
+                        .get(DateUtils.addHours(baseLine, -1), DateUtils.addMinutes(baseLine, 1)));
 
                 assertThat(vals)
                         .hasSize(7);

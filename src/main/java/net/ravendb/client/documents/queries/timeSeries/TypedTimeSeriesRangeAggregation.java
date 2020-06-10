@@ -14,6 +14,8 @@ public class TypedTimeSeriesRangeAggregation<T> {
 
     private T average;
 
+    private T sum;
+
     private T count;
 
     private Date to;
@@ -66,6 +68,14 @@ public class TypedTimeSeriesRangeAggregation<T> {
 
     public void setAverage(T average) {
         this.average = average;
+    }
+
+    public T getSum() {
+        return sum;
+    }
+
+    public void setSum(T sum) {
+        this.sum = sum;
     }
 
     public Date getTo() {

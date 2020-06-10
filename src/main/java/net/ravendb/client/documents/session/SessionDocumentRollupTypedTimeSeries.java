@@ -5,6 +5,7 @@ import net.ravendb.client.documents.session.timeSeries.TimeSeriesValuesHelper;
 import net.ravendb.client.documents.session.timeSeries.TypedTimeSeriesEntry;
 import net.ravendb.client.documents.session.timeSeries.TypedTimeSeriesRollupEntry;
 
+import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -25,28 +26,27 @@ public class SessionDocumentRollupTypedTimeSeries<T> extends SessionTimeSeriesBa
     }
 
     @Override
-    public List<TypedTimeSeriesRollupEntry<T>> get() {
+    public TypedTimeSeriesRollupEntry<T>[] get() {
         return get(null, null, 0, Integer.MAX_VALUE);
     }
 
     @Override
-    public List<TypedTimeSeriesRollupEntry<T>> get(Date from, Date to) {
+    public TypedTimeSeriesRollupEntry<T>[] get(Date from, Date to) {
         return get(from, to, 0, Integer.MAX_VALUE);
     }
 
     @Override
-    public List<TypedTimeSeriesRollupEntry<T>> get(Date from, Date to, int start) {
+    public TypedTimeSeriesRollupEntry<T>[] get(Date from, Date to, int start) {
         return get(from, to, start, Integer.MAX_VALUE);
     }
 
     @Override
-    public List<TypedTimeSeriesRollupEntry<T>> get(Date from, Date to, int start, int pageSize) {
-        List<TimeSeriesEntry> results = getInternal(from, to, start, pageSize);
+    public TypedTimeSeriesRollupEntry<T>[] get(Date from, Date to, int start, int pageSize) {
+        TimeSeriesEntry[] results = getInternal(from, to, start, pageSize);
 
-        return results
-                .stream()
+        return Arrays.stream(results)
                 .map(x -> TypedTimeSeriesRollupEntry.fromEntry(_clazz, x))
-                .collect(Collectors.toList());
+                .toArray(TypedTimeSeriesRollupEntry[]::new);
     }
 
     @Override

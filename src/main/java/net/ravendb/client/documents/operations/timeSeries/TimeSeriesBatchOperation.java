@@ -35,17 +35,19 @@ public class TimeSeriesBatchOperation implements IVoidOperation {
 
     @Override
     public VoidRavenCommand getCommand(IDocumentStore store, DocumentConventions conventions, HttpCache cache) {
-        return new TimeSeriesBatchCommand(_documentId, _operation);
+        return new TimeSeriesBatchCommand(_documentId, _operation, conventions);
     }
 
     private static class TimeSeriesBatchCommand extends VoidRavenCommand {
         private final String _documentId;
         private final TimeSeriesOperation _operation;
+        private final DocumentConventions _conventions;
 
-        public TimeSeriesBatchCommand(String documentId, TimeSeriesOperation operation) {
+        public TimeSeriesBatchCommand(String documentId, TimeSeriesOperation operation, DocumentConventions conventions) {
             super();
             _documentId = documentId;
             _operation = operation;
+            _conventions = conventions;
         }
 
         @Override
@@ -56,8 +58,7 @@ public class TimeSeriesBatchOperation implements IVoidOperation {
 
             request.setEntity(new ContentProviderHttpEntity(outputStream -> {
                 try (JsonGenerator generator = JsonExtensions.getDefaultMapper().getFactory().createGenerator(outputStream)) {
-                    ObjectNode config = mapper.valueToTree(_operation);
-                    generator.writeTree(config);
+                    _operation.serialize(generator, _conventions);
                 } catch (IOException e) {
                     throw new RuntimeException(e);
                 }

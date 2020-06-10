@@ -46,7 +46,8 @@ public class TimeSeriesOperationsTest extends RemoteTestBase {
             append1.setTimestamp(DateUtils.addSeconds(baseLine, 1));
             append1.setValues(new double[] { 59 });
 
-            TimeSeriesOperation timeSeriesOp = new TimeSeriesOperation("Heartrate", Collections.singletonList(append1), null);
+            TimeSeriesOperation timeSeriesOp = new TimeSeriesOperation("Heartrate");
+            timeSeriesOp.append(append1);
 
             TimeSeriesBatchOperation timeSeriesBatch = new TimeSeriesBatchOperation(documentId, timeSeriesOp);
 
@@ -58,7 +59,7 @@ public class TimeSeriesOperationsTest extends RemoteTestBase {
             assertThat(timeSeriesRangeResult.getEntries())
                     .hasSize(1);
 
-            TimeSeriesEntry value = timeSeriesRangeResult.getEntries().get(0);
+            TimeSeriesEntry value = timeSeriesRangeResult.getEntries()[0];
             assertThat(value.getValues()[0])
                     .isEqualTo(59, Offset.offset(0.001));
             assertThat(value.getTag())
@@ -79,11 +80,10 @@ public class TimeSeriesOperationsTest extends RemoteTestBase {
 
             Date baseLine = DateUtils.truncate(new Date(), Calendar.DAY_OF_MONTH);
 
-            TimeSeriesOperation.AppendOperation appendOperation = new TimeSeriesOperation.AppendOperation(DateUtils.addSeconds(baseLine, 1), new double[]{59}, "watches/fitbit");
-
             TimeSeriesOperation timeSeriesOp = new TimeSeriesOperation();
             timeSeriesOp.setName("Heartrate");
-            timeSeriesOp.setAppends(Arrays.asList(appendOperation));
+            timeSeriesOp.append(new TimeSeriesOperation.AppendOperation(
+                    DateUtils.addSeconds(baseLine, 1), new double[]{59}, "watches/fitbit"));
 
             TimeSeriesBatchOperation timeSeriesBatch = new TimeSeriesBatchOperation("users/ayende", timeSeriesOp);
             store.operations().send(timeSeriesBatch);
@@ -110,11 +110,15 @@ public class TimeSeriesOperationsTest extends RemoteTestBase {
             Date baseLine = DateUtils.truncate(new Date(), Calendar.DAY_OF_MONTH);
 
             TimeSeriesOperation timeSeriesOp = new TimeSeriesOperation("Heartrate");
-            timeSeriesOp.setAppends(Arrays.asList(
-                    new TimeSeriesOperation.AppendOperation(DateUtils.addSeconds(baseLine, 1), new double[]{59}, "watches/fitbit"),
-                    new TimeSeriesOperation.AppendOperation(DateUtils.addSeconds(baseLine, 2), new double[]{61}, "watches/fitbit"),
-                    new TimeSeriesOperation.AppendOperation(DateUtils.addSeconds(baseLine, 5), new double[]{60}, "watches/apple-watch")
-            ));
+            timeSeriesOp.append(
+                    new TimeSeriesOperation.AppendOperation(
+                            DateUtils.addSeconds(baseLine, 1), new double[]{59}, "watches/fitbit"));
+            timeSeriesOp.append(
+                    new TimeSeriesOperation.AppendOperation(
+                            DateUtils.addSeconds(baseLine, 2), new double[]{61}, "watches/fitbit"));
+            timeSeriesOp.append(
+                    new TimeSeriesOperation.AppendOperation(
+                            DateUtils.addSeconds(baseLine, 5), new double[]{60}, "watches/apple-watch"));
 
             TimeSeriesBatchOperation timeSeriesBatch = new TimeSeriesBatchOperation(documentId, timeSeriesOp);
 
@@ -126,7 +130,7 @@ public class TimeSeriesOperationsTest extends RemoteTestBase {
             assertThat(timeSeriesRangeResult.getEntries())
                     .hasSize(3);
 
-            TimeSeriesEntry value = timeSeriesRangeResult.getEntries().get(0);
+            TimeSeriesEntry value = timeSeriesRangeResult.getEntries()[0];
 
             assertThat(value.getValues()[0])
                     .isEqualTo(59, Offset.offset(0.01));
@@ -135,7 +139,7 @@ public class TimeSeriesOperationsTest extends RemoteTestBase {
             assertThat(value.getTimestamp())
                     .isEqualTo(DateUtils.addSeconds(baseLine, 1));
 
-            value = timeSeriesRangeResult.getEntries().get(1);
+            value = timeSeriesRangeResult.getEntries()[1];
 
             assertThat(value.getValues()[0])
                     .isEqualTo(61, Offset.offset(0.01));
@@ -144,7 +148,7 @@ public class TimeSeriesOperationsTest extends RemoteTestBase {
             assertThat(value.getTimestamp())
                     .isEqualTo(DateUtils.addSeconds(baseLine, 2));
 
-            value = timeSeriesRangeResult.getEntries().get(2);
+            value = timeSeriesRangeResult.getEntries()[2];
 
             assertThat(value.getValues()[0])
                     .isEqualTo(60, Offset.offset(0.01));
@@ -167,15 +171,13 @@ public class TimeSeriesOperationsTest extends RemoteTestBase {
 
             Date baseLine = DateUtils.truncate(new Date(), Calendar.DAY_OF_MONTH);
 
-            List<TimeSeriesOperation.AppendOperation> appends = Arrays.asList(
-                    new TimeSeriesOperation.AppendOperation(DateUtils.addSeconds(baseLine, 1), new double[] { 59 }, "watches/fitbit"),
-                    new TimeSeriesOperation.AppendOperation(DateUtils.addSeconds(baseLine, 2), new double[] { 61 }, "watches/fitbit"),
-                    new TimeSeriesOperation.AppendOperation(DateUtils.addSeconds(baseLine, 3), new double[] { 60 }, "watches/fitbit"),
-                    new TimeSeriesOperation.AppendOperation(DateUtils.addSeconds(baseLine, 4), new double[] { 62.5 }, "watches/fitbit"),
-                    new TimeSeriesOperation.AppendOperation(DateUtils.addSeconds(baseLine, 5), new double[] { 62 }, "watches/fitbit")
-            );
+            TimeSeriesOperation timeSeriesOp = new TimeSeriesOperation("Heartrate");
 
-            TimeSeriesOperation timeSeriesOp = new TimeSeriesOperation("Heartrate", appends, null);
+            timeSeriesOp.append(new TimeSeriesOperation.AppendOperation(DateUtils.addSeconds(baseLine, 1), new double[] { 59 }, "watches/fitbit"));
+            timeSeriesOp.append(new TimeSeriesOperation.AppendOperation(DateUtils.addSeconds(baseLine, 2), new double[] { 61 }, "watches/fitbit"));
+            timeSeriesOp.append(new TimeSeriesOperation.AppendOperation(DateUtils.addSeconds(baseLine, 3), new double[] { 60 }, "watches/fitbit"));
+            timeSeriesOp.append(new TimeSeriesOperation.AppendOperation(DateUtils.addSeconds(baseLine, 4), new double[] { 62.5 }, "watches/fitbit"));
+            timeSeriesOp.append(new TimeSeriesOperation.AppendOperation(DateUtils.addSeconds(baseLine, 5), new double[] { 62 }, "watches/fitbit"));
 
             TimeSeriesBatchOperation timeSeriesBatch = new TimeSeriesBatchOperation(documentId, timeSeriesOp);
 
@@ -186,8 +188,8 @@ public class TimeSeriesOperationsTest extends RemoteTestBase {
             assertThat(timeSeriesRangeResult.getEntries())
                     .hasSize(5);
 
-            timeSeriesOp = new TimeSeriesOperation("Heartrate", null, Collections.singletonList(
-                    new TimeSeriesOperation.RemoveOperation(DateUtils.addSeconds(baseLine, 2), DateUtils.addSeconds(baseLine, 3))));
+            timeSeriesOp = new TimeSeriesOperation("Heartrate");
+            timeSeriesOp.remove(new TimeSeriesOperation.RemoveOperation(DateUtils.addSeconds(baseLine, 2), DateUtils.addSeconds(baseLine, 3)));
 
             timeSeriesBatch = new TimeSeriesBatchOperation(documentId, timeSeriesOp);
 
@@ -198,19 +200,19 @@ public class TimeSeriesOperationsTest extends RemoteTestBase {
             assertThat(timeSeriesRangeResult.getEntries())
                     .hasSize(3);
 
-            TimeSeriesEntry value = timeSeriesRangeResult.getEntries().get(0);
+            TimeSeriesEntry value = timeSeriesRangeResult.getEntries()[0];
             assertThat(value.getValues()[0])
                     .isEqualTo(59);
             assertThat(value.getTimestamp())
                     .isEqualTo(DateUtils.addSeconds(baseLine, 1));
 
-            value = timeSeriesRangeResult.getEntries().get(1);
+            value = timeSeriesRangeResult.getEntries()[1];
             assertThat(value.getValues()[0])
                     .isEqualTo(62.5);
             assertThat(value.getTimestamp())
                     .isEqualTo(DateUtils.addSeconds(baseLine, 4));
 
-            value = timeSeriesRangeResult.getEntries().get(2);
+            value = timeSeriesRangeResult.getEntries()[2];
             assertThat(value.getValues()[0])
                     .isEqualTo(62);
             assertThat(value.getTimestamp())
@@ -246,8 +248,8 @@ public class TimeSeriesOperationsTest extends RemoteTestBase {
             }
 
             try (IDocumentSession session = store.openSession()) {
-                List<TimeSeriesEntry> vals = session.timeSeriesFor(documentId, "Heartrate")
-                        .get(null, null);
+                List<TimeSeriesEntry> vals = Arrays.asList(session.timeSeriesFor(documentId, "Heartrate")
+                        .get(null, null));
 
                 assertThat(vals)
                         .hasSize(2);
@@ -414,12 +416,10 @@ public class TimeSeriesOperationsTest extends RemoteTestBase {
 
             Date baseline = DateUtils.truncate(new Date(), Calendar.DAY_OF_MONTH);
 
-            TimeSeriesOperation timeSeriesOp = new TimeSeriesOperation("Heartrate",
-                    Arrays.asList(
-                            new TimeSeriesOperation.AppendOperation(DateUtils.addSeconds(baseline, 1), new double[]{59}, "watches/fitbit"),
-                            new TimeSeriesOperation.AppendOperation(DateUtils.addSeconds(baseline, 2), new double[]{61}, "watches/fitbit"),
-                            new TimeSeriesOperation.AppendOperation(DateUtils.addSeconds(baseline, 3), new double[]{61.5}, "watches/fitbit")
-                    ), null);
+            TimeSeriesOperation timeSeriesOp = new TimeSeriesOperation("Heartrate");
+            timeSeriesOp.append(new TimeSeriesOperation.AppendOperation(DateUtils.addSeconds(baseline, 1), new double[]{59}, "watches/fitbit"));
+            timeSeriesOp.append(new TimeSeriesOperation.AppendOperation(DateUtils.addSeconds(baseline, 2), new double[]{61}, "watches/fitbit"));
+            timeSeriesOp.append(new TimeSeriesOperation.AppendOperation(DateUtils.addSeconds(baseline, 3), new double[]{61.5}, "watches/fitbit"));
 
             TimeSeriesBatchOperation timeSeriesBatch = new TimeSeriesBatchOperation(documentId, timeSeriesOp);
 
@@ -430,15 +430,12 @@ public class TimeSeriesOperationsTest extends RemoteTestBase {
             assertThat(timeSeriesRangeResult.getEntries())
                     .hasSize(3);
 
-            timeSeriesOp = new TimeSeriesOperation("Heartrate",
-                    Arrays.asList(
-                            new TimeSeriesOperation.AppendOperation(DateUtils.addSeconds(baseline, 4), new double[] { 60 }, "watches/fitbit"),
-                            new TimeSeriesOperation.AppendOperation(DateUtils.addSeconds(baseline, 5), new double[] { 62.5 }, "watches/fitbit"),
-                            new TimeSeriesOperation.AppendOperation(DateUtils.addSeconds(baseline, 6), new double[] { 62 }, "watches/fitbit")
-                    ),
-                    Arrays.asList(
-                            new TimeSeriesOperation.RemoveOperation(DateUtils.addSeconds(baseline, 2), DateUtils.addSeconds(baseline, 3))
-                    ));
+            timeSeriesOp = new TimeSeriesOperation("Heartrate");
+            timeSeriesOp.append(new TimeSeriesOperation.AppendOperation(DateUtils.addSeconds(baseline, 4), new double[] { 60 }, "watches/fitbit"));
+            timeSeriesOp.append(new TimeSeriesOperation.AppendOperation(DateUtils.addSeconds(baseline, 5), new double[] { 62.5 }, "watches/fitbit"));
+            timeSeriesOp.append(new TimeSeriesOperation.AppendOperation(DateUtils.addSeconds(baseline, 6), new double[] { 62 }, "watches/fitbit"));
+
+            timeSeriesOp.remove(new TimeSeriesOperation.RemoveOperation(DateUtils.addSeconds(baseline, 2), DateUtils.addSeconds(baseline, 3)));
 
             timeSeriesBatch = new TimeSeriesBatchOperation(documentId, timeSeriesOp);
 
@@ -449,25 +446,25 @@ public class TimeSeriesOperationsTest extends RemoteTestBase {
             assertThat(timeSeriesRangeResult.getEntries())
                     .hasSize(4);
 
-            TimeSeriesEntry value = timeSeriesRangeResult.getEntries().get(0);
+            TimeSeriesEntry value = timeSeriesRangeResult.getEntries()[0];
             assertThat(value.getValues()[0])
                     .isEqualTo(59);
             assertThat(value.getTimestamp())
                     .isEqualTo(DateUtils.addSeconds(baseline, 1));
 
-            value = timeSeriesRangeResult.getEntries().get(1);
+            value = timeSeriesRangeResult.getEntries()[1];
             assertThat(value.getValues()[0])
                     .isEqualTo(60);
             assertThat(value.getTimestamp())
                     .isEqualTo(DateUtils.addSeconds(baseline, 4));
 
-            value = timeSeriesRangeResult.getEntries().get(2);
+            value = timeSeriesRangeResult.getEntries()[2];
             assertThat(value.getValues()[0])
                     .isEqualTo(62.5);
             assertThat(value.getTimestamp())
                     .isEqualTo(DateUtils.addSeconds(baseline, 5));
 
-            value = timeSeriesRangeResult.getEntries().get(3);
+            value = timeSeriesRangeResult.getEntries()[3];
             assertThat(value.getValues()[0])
                     .isEqualTo(62);
             assertThat(value.getTimestamp())
@@ -480,10 +477,8 @@ public class TimeSeriesOperationsTest extends RemoteTestBase {
         try (IDocumentStore store = getDocumentStore()) {
             Date baseline = DateUtils.truncate(new Date(), Calendar.DAY_OF_MONTH);
 
-            TimeSeriesOperation timeSeriesOp = new TimeSeriesOperation("Heartrate",
-                    Arrays.asList(
-                            new TimeSeriesOperation.AppendOperation(DateUtils.addSeconds(baseline, 1), new double[]{59}, "watches/fitbit")
-                    ), null);
+            TimeSeriesOperation timeSeriesOp = new TimeSeriesOperation("Heartrate");
+            timeSeriesOp.append(new TimeSeriesOperation.AppendOperation(DateUtils.addSeconds(baseline, 1), new double[]{59}, "watches/fitbit"));
 
             TimeSeriesBatchOperation timeSeriesBatch = new TimeSeriesBatchOperation("users/ayende", timeSeriesOp);
             assertThatThrownBy(() -> {
@@ -506,10 +501,10 @@ public class TimeSeriesOperationsTest extends RemoteTestBase {
 
             Date baseline = DateUtils.truncate(new Date(), Calendar.DAY_OF_MONTH);
 
-            TimeSeriesOperation timeSeriesOp = new TimeSeriesOperation("Heartrate", new ArrayList<>(), null);
+            TimeSeriesOperation timeSeriesOp = new TimeSeriesOperation("Heartrate");
 
             for (int i = 0; i <= 360; i++) {
-                timeSeriesOp.getAppends().add(
+                timeSeriesOp.append(
                         new TimeSeriesOperation.AppendOperation(DateUtils.addSeconds(baseline, i * 10), new double[] { 59 }, "watches/fitbit")
                 );
             }
@@ -540,9 +535,9 @@ public class TimeSeriesOperationsTest extends RemoteTestBase {
 
             assertThat(range.getEntries())
                     .hasSize(31);
-            assertThat(range.getEntries().get(0).getTimestamp())
+            assertThat(range.getEntries()[0].getTimestamp())
                     .isEqualTo(DateUtils.addMinutes(baseline, 5));
-            assertThat(range.getEntries().get(30).getTimestamp())
+            assertThat(range.getEntries()[30].getTimestamp())
                     .isEqualTo(DateUtils.addMinutes(baseline, 10));
 
             range = timeSeriesDetails.getValues().get("Heartrate").get(1);
@@ -554,9 +549,9 @@ public class TimeSeriesOperationsTest extends RemoteTestBase {
 
             assertThat(range.getEntries())
                     .hasSize(91);
-            assertThat(range.getEntries().get(0).getTimestamp())
+            assertThat(range.getEntries()[0].getTimestamp())
                     .isEqualTo(DateUtils.addMinutes(baseline, 15));
-            assertThat(range.getEntries().get(90).getTimestamp())
+            assertThat(range.getEntries()[90].getTimestamp())
                     .isEqualTo(DateUtils.addMinutes(baseline, 30));
 
             range = timeSeriesDetails.getValues().get("Heartrate").get(2);
@@ -568,9 +563,9 @@ public class TimeSeriesOperationsTest extends RemoteTestBase {
 
             assertThat(range.getEntries())
                     .hasSize(121);
-            assertThat(range.getEntries().get(0).getTimestamp())
+            assertThat(range.getEntries()[0].getTimestamp())
                     .isEqualTo(DateUtils.addMinutes(baseline, 40));
-            assertThat(range.getEntries().get(120).getTimestamp())
+            assertThat(range.getEntries()[120].getTimestamp())
                     .isEqualTo(DateUtils.addMinutes(baseline, 60));
         }
     }
@@ -589,10 +584,10 @@ public class TimeSeriesOperationsTest extends RemoteTestBase {
 
             Date baseline = DateUtils.truncate(new Date(), Calendar.DAY_OF_MONTH);
 
-            TimeSeriesOperation timeSeriesOp = new TimeSeriesOperation("Heartrate", new ArrayList<>(), null);
+            TimeSeriesOperation timeSeriesOp = new TimeSeriesOperation("Heartrate");
 
             for (int i = 0; i <= 10; i++) {
-                timeSeriesOp.getAppends().add(
+                timeSeriesOp.append(
                         new TimeSeriesOperation.AppendOperation(
                                 DateUtils.addMinutes(baseline, i * 10), new double[] { 72 }, "watches/fitbit"));
             }
@@ -601,10 +596,10 @@ public class TimeSeriesOperationsTest extends RemoteTestBase {
 
             store.operations().send(timeSeriesBatch);
 
-            timeSeriesOp = new TimeSeriesOperation("BloodPressure", new ArrayList<>(), null);
+            timeSeriesOp = new TimeSeriesOperation("BloodPressure");
 
             for (int i = 0; i <= 10; i++) {
-                timeSeriesOp.getAppends().add(
+                timeSeriesOp.append(
                         new TimeSeriesOperation.AppendOperation(
                                 DateUtils.addMinutes(baseline, i * 10),
                                 new double[] { 80 }
@@ -616,10 +611,10 @@ public class TimeSeriesOperationsTest extends RemoteTestBase {
 
             store.operations().send(timeSeriesBatch);
 
-            timeSeriesOp = new TimeSeriesOperation("Temperature", new ArrayList<>(), null);
+            timeSeriesOp = new TimeSeriesOperation("Temperature");
 
             for (int i = 0; i <= 10; i++) {
-                timeSeriesOp.getAppends().add(
+                timeSeriesOp.append(
                         new TimeSeriesOperation.AppendOperation(
                                 DateUtils.addMinutes(baseline, i * 10),
                                 new double[] { 37 + i * 0.15 }
@@ -659,9 +654,9 @@ public class TimeSeriesOperationsTest extends RemoteTestBase {
             assertThat(range.getEntries())
                     .hasSize(2);
 
-            assertThat(range.getEntries().get(0).getTimestamp())
+            assertThat(range.getEntries()[0].getTimestamp())
                     .isEqualTo(baseline);
-            assertThat(range.getEntries().get(1).getTimestamp())
+            assertThat(range.getEntries()[1].getTimestamp())
                     .isEqualTo(DateUtils.addMinutes(baseline, 10));
 
             assertThat(range.getTotalResults())
@@ -676,9 +671,9 @@ public class TimeSeriesOperationsTest extends RemoteTestBase {
 
             assertThat(range.getEntries())
                     .hasSize(2);
-            assertThat(range.getEntries().get(0).getTimestamp())
+            assertThat(range.getEntries()[0].getTimestamp())
                     .isEqualTo(DateUtils.addMinutes(baseline, 30));
-            assertThat(range.getEntries().get(1).getTimestamp())
+            assertThat(range.getEntries()[1].getTimestamp())
                     .isEqualTo(DateUtils.addMinutes(baseline, 40));
 
             assertThat(range.getTotalResults())
@@ -697,9 +692,9 @@ public class TimeSeriesOperationsTest extends RemoteTestBase {
             assertThat(range.getEntries())
                     .hasSize(4);
 
-            assertThat(range.getEntries().get(0).getTimestamp())
+            assertThat(range.getEntries()[0].getTimestamp())
                     .isEqualTo(baseline);
-            assertThat(range.getEntries().get(3).getTimestamp())
+            assertThat(range.getEntries()[3].getTimestamp())
                     .isEqualTo(DateUtils.addMinutes(baseline, 30));
 
             assertThat(range.getTotalResults())
@@ -715,9 +710,9 @@ public class TimeSeriesOperationsTest extends RemoteTestBase {
             assertThat(range.getEntries())
                     .hasSize(4);
 
-            assertThat(range.getEntries().get(0).getTimestamp())
+            assertThat(range.getEntries()[0].getTimestamp())
                     .isEqualTo(DateUtils.addMinutes(baseline, 60));
-            assertThat(range.getEntries().get(3).getTimestamp())
+            assertThat(range.getEntries()[3].getTimestamp())
                     .isEqualTo(DateUtils.addMinutes(baseline, 90));
 
             assertThat(range.getTotalResults())
@@ -736,9 +731,9 @@ public class TimeSeriesOperationsTest extends RemoteTestBase {
             assertThat(range.getEntries())
                     .hasSize(11);
 
-            assertThat(range.getEntries().get(0).getTimestamp())
+            assertThat(range.getEntries()[0].getTimestamp())
                     .isEqualTo(baseline);
-            assertThat(range.getEntries().get(10).getTimestamp())
+            assertThat(range.getEntries()[10].getTimestamp())
                     .isEqualTo(DateUtils.addMinutes(baseline, 100));
 
             assertThat(range.getTotalResults())
@@ -758,10 +753,10 @@ public class TimeSeriesOperationsTest extends RemoteTestBase {
 
             Date baseline = DateUtils.truncate(new Date(), Calendar.DAY_OF_MONTH);
 
-            TimeSeriesOperation timeSeriesOp = new TimeSeriesOperation("Heartrate", new ArrayList<>(), null);
+            TimeSeriesOperation timeSeriesOp = new TimeSeriesOperation("Heartrate");
 
             for (int i = 0; i <= 10; i++) {
-                timeSeriesOp.getAppends().add(
+                timeSeriesOp.append(
                         new TimeSeriesOperation.AppendOperation(
                                 DateUtils.addMinutes(baseline, i * 10), new double[] { 72 }, "watches/fitbit"));
             }
@@ -794,10 +789,10 @@ public class TimeSeriesOperationsTest extends RemoteTestBase {
 
             Date baseline = DateUtils.truncate(new Date(), Calendar.DAY_OF_MONTH);
 
-            TimeSeriesOperation timeSeriesOp = new TimeSeriesOperation("Heartrate", new ArrayList<>(), null);
+            TimeSeriesOperation timeSeriesOp = new TimeSeriesOperation("Heartrate");
 
             for (int i = 0; i <= 10; i++) {
-                timeSeriesOp.getAppends().add(
+                timeSeriesOp.append(
                         new TimeSeriesOperation.AppendOperation(
                                 DateUtils.addMinutes(baseline, i * 10), new double[]{72}, "watches/fitbit"));
             }
@@ -808,7 +803,7 @@ public class TimeSeriesOperationsTest extends RemoteTestBase {
 
             assertThatThrownBy(() -> {
                 store.operations().send(new GetMultipleTimeSeriesOperation("users/ayende",
-                        Arrays.asList(
+                        Collections.singletonList(
                                 new TimeSeriesRange(null, baseline, null)
                         )));
             })
@@ -829,10 +824,10 @@ public class TimeSeriesOperationsTest extends RemoteTestBase {
 
             Date baseline = DateUtils.truncate(new Date(), Calendar.DAY_OF_MONTH);
 
-            TimeSeriesOperation timeSeriesOp = new TimeSeriesOperation("Heartrate", new ArrayList<>(), null);
+            TimeSeriesOperation timeSeriesOp = new TimeSeriesOperation("Heartrate");
 
             for (int i = 0; i <= 10; i++) {
-                timeSeriesOp.getAppends().add(
+                timeSeriesOp.append(
                         new TimeSeriesOperation.AppendOperation(
                                 DateUtils.addMinutes(baseline, i * 10), new double[]{72}, "watches/fitbit"));
             }
@@ -934,7 +929,7 @@ public class TimeSeriesOperationsTest extends RemoteTestBase {
 
             TimeSeriesOperation deleteOp = new TimeSeriesOperation();
             deleteOp.setName("Heartrate");
-            deleteOp.setRemovals(Collections.singletonList(new TimeSeriesOperation.RemoveOperation()));
+            deleteOp.remove(new TimeSeriesOperation.RemoveOperation());
 
             store.operations().send(new TimeSeriesBatchOperation(docId, deleteOp));
 
@@ -951,9 +946,7 @@ public class TimeSeriesOperationsTest extends RemoteTestBase {
 
             deleteOp = new TimeSeriesOperation();
             deleteOp.setName("BloodPressure");
-            deleteOp.setRemovals(
-                    Collections.singletonList(
-                        new TimeSeriesOperation.RemoveOperation(DateUtils.addMinutes(baseLine, 50), null)));
+            deleteOp.remove(new TimeSeriesOperation.RemoveOperation(DateUtils.addMinutes(baseLine, 50), null));
 
             store.operations().send(new TimeSeriesBatchOperation(docId, deleteOp));
 
@@ -968,9 +961,7 @@ public class TimeSeriesOperationsTest extends RemoteTestBase {
             // null From
             deleteOp = new TimeSeriesOperation();
             deleteOp.setName("BodyTemperature");
-            deleteOp.setRemovals(
-                    Collections.singletonList(
-                            new TimeSeriesOperation.RemoveOperation(null, DateUtils.addMinutes(baseLine, 19))));
+            deleteOp.remove(new TimeSeriesOperation.RemoveOperation(null, DateUtils.addMinutes(baseLine, 19)));
 
             store.operations().send(new TimeSeriesBatchOperation(docId, deleteOp));
 

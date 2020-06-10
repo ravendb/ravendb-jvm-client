@@ -57,7 +57,7 @@ public class ConfigureTimeSeriesPolicyOperation implements IMaintenanceOperation
 
         @Override
         public HttpRequestBase createRequest(ServerNode node, Reference<String> url) {
-            url.value = node.getUrl() + "/databases/" + node.getDatabase() + "/admin/timeseries/policy?collection=" + _collection;
+            url.value = node.getUrl() + "/databases/" + node.getDatabase() + "/admin/timeseries/policy?collection=" + urlEncode(_collection);
 
             HttpPut request = new HttpPut();
 

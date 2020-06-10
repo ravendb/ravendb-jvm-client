@@ -1693,13 +1693,13 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
             return;
         }
 
-        List<TimeSeriesEntry> mergedValues = mergeRanges(fromRangeIndex, toRangeIndex, localRanges, newRange);
+        TimeSeriesEntry[] mergedValues = mergeRanges(fromRangeIndex, toRangeIndex, localRanges, newRange);
         addToCache(name, newRange.getFrom(), newRange.getTo(), fromRangeIndex, toRangeIndex, localRanges, cache, mergedValues);
     }
 
     static void addToCache(String timeseries, Date from, Date to, int fromRangeIndex, int toRangeIndex,
                            List<TimeSeriesRangeResult> ranges, Map<String, List<TimeSeriesRangeResult>> cache,
-                           List<TimeSeriesEntry> values) {
+                           TimeSeriesEntry[] values) {
         if (fromRangeIndex == -1) {
             // didn't find a 'fromRange' => all ranges in cache start after 'from'
 
@@ -1889,7 +1889,7 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
         return mapper.convertValue(jsonRange, TimeSeriesRangeResult.class);
     }
 
-    private static List<TimeSeriesEntry> mergeRanges(int fromRangeIndex, int toRangeIndex, List<TimeSeriesRangeResult> localRanges, TimeSeriesRangeResult newRange) {
+    private static TimeSeriesEntry[] mergeRanges(int fromRangeIndex, int toRangeIndex, List<TimeSeriesRangeResult> localRanges, TimeSeriesRangeResult newRange) {
         List<TimeSeriesEntry> mergedValues = new ArrayList<>();
 
         if (fromRangeIndex != -1 && localRanges.get(fromRangeIndex).getTo().getTime() >= newRange.getFrom().getTime()) {
@@ -1901,7 +1901,7 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
             }
         }
 
-        mergedValues.addAll(newRange.getEntries());
+        mergedValues.addAll(Arrays.asList(newRange.getEntries()));
 
         if (toRangeIndex < localRanges.size() && localRanges.get(toRangeIndex).getFrom().getTime() <= newRange.getTo().getTime()) {
             for (TimeSeriesEntry val : localRanges.get(toRangeIndex).getEntries()) {
@@ -1912,31 +1912,31 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
             }
         }
 
-        return mergedValues;
+        return mergedValues.toArray(new TimeSeriesEntry[0]);
     }
 
     private static void updateExistingRange(TimeSeriesRangeResult localRange, TimeSeriesRangeResult newRange) {
         List<TimeSeriesEntry> newValues = new ArrayList<>();
         int index;
-        for (index = 0; index < localRange.getEntries().size(); index++) {
-            if (localRange.getEntries().get(index).getTimestamp().getTime() >= newRange.getFrom().getTime()) {
+        for (index = 0; index < localRange.getEntries().length; index++) {
+            if (localRange.getEntries()[index].getTimestamp().getTime() >= newRange.getFrom().getTime()) {
                 break;
             }
 
-            newValues.add(localRange.getEntries().get(index));
+            newValues.add(localRange.getEntries()[index]);
         }
 
-        newValues.addAll(newRange.getEntries());
+        newValues.addAll(Arrays.asList(newRange.getEntries()));
 
-        for (int j = 0; j < localRange.getEntries().size(); j++) {
-            if (localRange.getEntries().get(j).getTimestamp().getTime() <= newRange.getTo().getTime()) {
+        for (int j = 0; j < localRange.getEntries().length; j++) {
+            if (localRange.getEntries()[j].getTimestamp().getTime() <= newRange.getTo().getTime()) {
                 continue;
             }
 
-            newValues.add(localRange.getEntries().get(j));
+            newValues.add(localRange.getEntries()[j]);
         }
 
-        localRange.setEntries(newValues);
+        localRange.setEntries(newValues.toArray(new TimeSeriesEntry[0]));
     }
 
     @Override

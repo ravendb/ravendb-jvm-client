@@ -9,10 +9,8 @@ import net.ravendb.client.documents.indexes.timeSeries.TimeSeriesIndexDefinition
 import net.ravendb.client.documents.session.IDocumentSession;
 import net.ravendb.client.infrastructure.entities.Company;
 import net.ravendb.client.infrastructure.entities.User;
-import org.apache.commons.lang3.time.DateUtils;
 import org.junit.jupiter.api.Test;
 
-import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 

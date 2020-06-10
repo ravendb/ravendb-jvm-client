@@ -1,6 +1,7 @@
 package net.ravendb.client.documents.timeSeries;
 
 import net.ravendb.client.documents.IDocumentStore;
+import net.ravendb.client.documents.conventions.DocumentConventions;
 import net.ravendb.client.documents.operations.MaintenanceOperationExecutor;
 import net.ravendb.client.documents.operations.timeSeries.*;
 import net.ravendb.client.documents.session.timeSeries.TimeSeriesValue;
@@ -51,12 +52,12 @@ public class TimeSeriesOperations {
      */
     public <TCollection, TTimeSeriesEntry> void register(Class<TCollection> collectionClass, Class<TTimeSeriesEntry> timeSeriesEntryClass, String name) {
         if (name == null) {
-            name = getTimeSeriesName(timeSeriesEntryClass);
+            name = getTimeSeriesName(timeSeriesEntryClass, _store.getConventions());
         }
 
         SortedMap<Byte, Tuple<Field, String>> mapping = TimeSeriesValuesHelper.getFieldsMapping(timeSeriesEntryClass);
         if (mapping == null) {
-            throw new IllegalStateException(getTimeSeriesName(timeSeriesEntryClass) + " must contain " + TimeSeriesValue.class.getSimpleName());
+            throw new IllegalStateException(getTimeSeriesName(timeSeriesEntryClass, _store.getConventions()) + " must contain " + TimeSeriesValue.class.getSimpleName());
         }
 
         String collection = _store.getConventions().getFindCollectionName().apply(collectionClass);
@@ -163,8 +164,8 @@ public class TimeSeriesOperations {
         removePolicy(collection, name);
     }
 
-    public static <TTimeSeriesEntry> String getTimeSeriesName(Class<TTimeSeriesEntry> clazz) {
-        return clazz.getSimpleName();
+    public static <TTimeSeriesEntry> String getTimeSeriesName(Class<TTimeSeriesEntry> clazz, DocumentConventions conventions) {
+        return conventions.getFindCollectionName().apply(clazz);
     }
 
     public TimeSeriesOperations forDatabase(String database) {

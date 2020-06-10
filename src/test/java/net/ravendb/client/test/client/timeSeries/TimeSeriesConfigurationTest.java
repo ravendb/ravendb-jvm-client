@@ -219,25 +219,25 @@ public class TimeSeriesConfigurationTest extends RemoteTestBase {
             Thread.sleep(1200);
 
             try (IDocumentSession session = store.openSession()) {
-                List<TimeSeriesEntry> ts = session.timeSeriesFor("users/karmel", "Heartrate")
-                        .get();
+                List<TimeSeriesEntry> ts = Arrays.asList(session.timeSeriesFor("users/karmel", "Heartrate")
+                        .get());
 
                 long tsMillis = ts.get(ts.size() - 1).getTimestamp().getTime() - ts.get(0).getTimestamp().getTime();
 
-                List<TimeSeriesEntry> ts1 = session.timeSeriesFor("users/karmel", p1.getTimeSeriesName("Heartrate"))
-                        .get();
+                List<TimeSeriesEntry> ts1 = Arrays.asList(session.timeSeriesFor("users/karmel", p1.getTimeSeriesName("Heartrate"))
+                        .get());
                 long ts1Millis = ts1.get(ts1.size() - 1).getTimestamp().getTime() - ts1.get(0).getTimestamp().getTime();
 
                 assertThat(ts1Millis)
                         .isEqualTo(tsMillis - 700);
 
-                List<TimeSeriesEntry> ts2 = session.timeSeriesFor("users/karmel", p2.getTimeSeriesName("Heartrate"))
-                        .get();
+                List<TimeSeriesEntry> ts2 = Arrays.asList(session.timeSeriesFor("users/karmel", p2.getTimeSeriesName("Heartrate"))
+                        .get());
                 assertThat(ts2)
                         .hasSize(ts1.size() / 2);
 
-                List<TimeSeriesEntry> ts3 = session.timeSeriesFor("users/karmel", p3.getTimeSeriesName("Heartrate"))
-                        .get();
+                List<TimeSeriesEntry> ts3 = Arrays.asList(session.timeSeriesFor("users/karmel", p3.getTimeSeriesName("Heartrate"))
+                        .get());
                 assertThat(ts3)
                         .hasSize(ts1.size() / 3);
             }

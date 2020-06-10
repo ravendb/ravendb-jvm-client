@@ -26,6 +26,10 @@ public class TimeSeriesValuesHelper {
                     continue;
                 }
 
+                if (!Double.class.equals(field.getType()) && !Double.TYPE.equals(field.getType())) {
+                    throw new IllegalStateException("Cannot create a mapping for '" + clazz.getSimpleName() + "' class, because field '" + field.getName() + "' is not a double.");
+                }
+
                 byte i = annotation.idx();
                 if (mapping == null) {
                     mapping = new TreeMap<>();

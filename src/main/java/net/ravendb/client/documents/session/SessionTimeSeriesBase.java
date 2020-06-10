@@ -81,11 +81,7 @@ public class SessionTimeSeriesBase {
         if (command != null) {
             TimeSeriesBatchCommandData tsCmd = (TimeSeriesBatchCommandData) command;
 
-            if (tsCmd.getTimeSeries().getAppends() == null) {
-                tsCmd.getTimeSeries().setAppends(new ArrayList<>());
-            }
-
-            tsCmd.getTimeSeries().getAppends().add(op);
+            tsCmd.getTimeSeries().append(op);
         } else {
             List<TimeSeriesOperation.AppendOperation> appends = new ArrayList<>();
             appends.add(op);
@@ -113,11 +109,7 @@ public class SessionTimeSeriesBase {
         if (command != null) {
             TimeSeriesBatchCommandData tsCmd = (TimeSeriesBatchCommandData) command;
 
-            if (tsCmd.getTimeSeries().getRemovals() == null) {
-                tsCmd.getTimeSeries().setRemovals(new ArrayList<>());
-            }
-
-            tsCmd.getTimeSeries().getRemovals().add(op);
+            tsCmd.getTimeSeries().remove(op);
         } else {
             List<TimeSeriesOperation.RemoveOperation> removals = new ArrayList<>();
             removals.add(op);
@@ -134,7 +126,7 @@ public class SessionTimeSeriesBase {
                 "Use documentId instead or track the entity in the session.");
     }
 
-    public List<TimeSeriesEntry> getInternal(Date from, Date to, int start, int pageSize) {
+    public TimeSeriesEntry[] getInternal(Date from, Date to, int start, int pageSize) {
         TimeSeriesRangeResult rangeResult;
         //TODO: ?? - remove and use custom comparator!
         if (from == null) {
@@ -182,7 +174,7 @@ public class SessionTimeSeriesBase {
                             entryInfo.fromRangeIndex, entryInfo.toRangeIndex, ranges, cache, entryInfo.mergedValues);
                 }
 
-                return entryInfo.resultToUser;
+                return entryInfo.resultToUser.toArray(new TimeSeriesEntry[0]);
             }
         }
 
@@ -194,7 +186,7 @@ public class SessionTimeSeriesBase {
                 String[] timeSeries = session.mapper.convertValue(metadataTimeSeries, String[].class);
                 if (!ArrayUtils.contains(timeSeries, name)) {
                     // the document is loaded in the session, but the metadata says that there is no such timeseries
-                    return Collections.emptyList();
+                    return new TimeSeriesEntry[0];
                 }
             }
         }
@@ -315,13 +307,13 @@ public class SessionTimeSeriesBase {
         // with all the ranges in cache that are between 'fromRange' and 'toRange'
 
         Reference<List<TimeSeriesEntry>> resultToUserRef = new Reference<>();
-        List<TimeSeriesEntry> mergedValues = mergeRangesWithResults(from, to, ranges, fromRangeIndex, toRangeIndex, details.getValues().get(name), resultToUserRef);
+        TimeSeriesEntry[] mergedValues = mergeRangesWithResults(from, to, ranges, fromRangeIndex, toRangeIndex, details.getValues().get(name), resultToUserRef);
         resultToUser = resultToUserRef.value;
 
         return new SessionTimeSeriesBase.CachedEntryInfo(false, resultToUser, mergedValues, fromRangeIndex, toRangeIndex);
     }
 
-    private static List<TimeSeriesEntry> mergeRangesWithResults(Date from, Date to, List<TimeSeriesRangeResult> ranges,
+    private static TimeSeriesEntry[] mergeRangesWithResults(Date from, Date to, List<TimeSeriesRangeResult> ranges,
                                                                 int fromRangeIndex, int toRangeIndex,
                                                                 List<TimeSeriesRangeResult> resultFromServer,
                                                                 Reference<List<TimeSeriesEntry>> resultToUserRef) {
@@ -360,9 +352,8 @@ public class SessionTimeSeriesBase {
                 // add current result from server to the merged list
                 // in order to avoid duplication, skip first item in range
                 // (unless this is the first time we're adding to the merged list)
-                List<TimeSeriesEntry> toAdd = resultFromServer.get(currentResultIndex++)
-                        .getEntries()
-                        .stream()
+                List<TimeSeriesEntry> toAdd = Arrays.stream(resultFromServer.get(currentResultIndex++)
+                        .getEntries())
                         .skip(mergedValues.size() == 0 ? 0 : 1)
                         .collect(Collectors.toList());
                 mergedValues.addAll(toAdd);
@@ -374,9 +365,9 @@ public class SessionTimeSeriesBase {
                     // so we might need to trim a part of it when we return the
                     // result to the user (i.e. trim [to, toRange.to])
 
-                    for (int index = mergedValues.size() == 0 ? 0 : 1; index < ranges.get(i).getEntries().size(); index++) {
-                        mergedValues.add(ranges.get(i).getEntries().get(index));
-                        if (ranges.get(i).getEntries().get(index).getTimestamp().getTime() > to.getTime()) {
+                    for (int index = mergedValues.size() == 0 ? 0 : 1; index < ranges.get(i).getEntries().length; index++) {
+                        mergedValues.add(ranges.get(i).getEntries()[index]);
+                        if (ranges.get(i).getEntries()[index].getTimestamp().getTime() > to.getTime()) {
                             trim++;
                         }
                     }
@@ -387,9 +378,8 @@ public class SessionTimeSeriesBase {
 
             // add current range from cache to the merged list.
             // in order to avoid duplication, skip first item in range if needed
-            List<TimeSeriesEntry> toAdd = ranges.get(i)
-                    .getEntries()
-                    .stream()
+            List<TimeSeriesEntry> toAdd = Arrays.stream(ranges.get(i)
+                    .getEntries())
                     .skip(mergedValues.size() == 0 ? 0 : 1)
                     .collect(Collectors.toList());
 
@@ -401,9 +391,8 @@ public class SessionTimeSeriesBase {
             // so the last missing part is from server
             // add last missing part to the merged list
 
-            List<TimeSeriesEntry> toAdd = resultFromServer.get(currentResultIndex++)
-                    .getEntries()
-                    .stream()
+            List<TimeSeriesEntry> toAdd = Arrays.stream(resultFromServer.get(currentResultIndex++)
+                    .getEntries())
                     .skip(mergedValues.size() == 0 ? 0 : 1)
                     .collect(Collectors.toList());
             mergedValues.addAll(toAdd);
@@ -414,7 +403,7 @@ public class SessionTimeSeriesBase {
                 toRangeIndex == ranges.size() ? null : ranges.get(toRangeIndex),
                 mergedValues, skip, trim);
 
-        return mergedValues;
+        return mergedValues.toArray(new TimeSeriesEntry[0]);
     }
 
     private static List<TimeSeriesEntry> chopRelevantRange(TimeSeriesRangeResult range, Date from, Date to) {
@@ -439,11 +428,11 @@ public class SessionTimeSeriesBase {
     private static class CachedEntryInfo {
         public boolean servedFromCache;
         public List<TimeSeriesEntry> resultToUser;
-        public List<TimeSeriesEntry> mergedValues;
+        public TimeSeriesEntry[] mergedValues;
         public int fromRangeIndex;
         public int toRangeIndex;
 
-        public CachedEntryInfo(boolean servedFromCache, List<TimeSeriesEntry> resultToUser, List<TimeSeriesEntry> mergedValues, int fromRangeIndex, int toRangeIndex) {
+        public CachedEntryInfo(boolean servedFromCache, List<TimeSeriesEntry> resultToUser, TimeSeriesEntry[] mergedValues, int fromRangeIndex, int toRangeIndex) {
             this.servedFromCache = servedFromCache;
             this.resultToUser = resultToUser;
             this.mergedValues = mergedValues;

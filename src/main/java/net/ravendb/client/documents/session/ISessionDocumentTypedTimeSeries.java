@@ -14,7 +14,7 @@ public interface ISessionDocumentTypedTimeSeries<TValues> extends
      * Return the time series values for the provided range
      * @return time series values
      */
-    List<TypedTimeSeriesEntry<TValues>> get();
+    TypedTimeSeriesEntry<TValues>[] get();
 
     /**
      * Return the time series values for the provided range
@@ -22,7 +22,7 @@ public interface ISessionDocumentTypedTimeSeries<TValues> extends
      * @param to range end
      * @return time series values
      */
-    List<TypedTimeSeriesEntry<TValues>> get(Date from, Date to);
+    TypedTimeSeriesEntry<TValues>[] get(Date from, Date to);
 
     /**
      * Return the time series values for the provided range
@@ -31,7 +31,7 @@ public interface ISessionDocumentTypedTimeSeries<TValues> extends
      * @param start start
      * @return time series values
      */
-    List<TypedTimeSeriesEntry<TValues>> get(Date from, Date to, int start);
+    TypedTimeSeriesEntry<TValues>[] get(Date from, Date to, int start);
 
     /**
      * Return the time series values for the provided range
@@ -41,5 +41,5 @@ public interface ISessionDocumentTypedTimeSeries<TValues> extends
      * @param pageSize page size
      * @return time series values
      */
-    List<TypedTimeSeriesEntry<TValues>> get(Date from, Date to, int start, int pageSize);
+    TypedTimeSeriesEntry<TValues>[] get(Date from, Date to, int start, int pageSize);
 }

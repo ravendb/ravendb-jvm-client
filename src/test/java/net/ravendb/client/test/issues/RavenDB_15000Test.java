@@ -8,6 +8,7 @@ import net.ravendb.client.infrastructure.entities.Company;
 import net.ravendb.client.infrastructure.entities.Order;
 import org.junit.jupiter.api.Test;
 
+import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 
@@ -46,8 +47,8 @@ public class RavenDB_15000Test extends RemoteTestBase {
                         .isEqualTo("HR");
 
                 // should not go to server
-                List<TimeSeriesEntry> vals = session.timeSeriesFor(order, "Heartrate")
-                        .get();
+                List<TimeSeriesEntry> vals = Arrays.asList(session.timeSeriesFor(order, "Heartrate")
+                        .get());
 
                 assertThat(session.advanced().getNumberOfRequests())
                         .isEqualTo(1);
@@ -89,8 +90,8 @@ public class RavenDB_15000Test extends RemoteTestBase {
                         .isEqualTo("HR");
 
                 // should not go to server
-                List<TimeSeriesEntry> vals = session.timeSeriesFor(order, "Heartrate")
-                        .get();
+                List<TimeSeriesEntry> vals = Arrays.asList(session.timeSeriesFor(order, "Heartrate")
+                        .get());
 
                 assertThat(session.advanced().getNumberOfRequests())
                         .isEqualTo(1);

@@ -53,8 +53,8 @@ public class TimeSeriesIncludesTest extends RemoteTestBase {
                         .isEqualTo("HR");
 
                 // should not go to server
-                List<TimeSeriesEntry> values = session.timeSeriesFor(order, "Heartrate")
-                        .get(null, null);
+                List<TimeSeriesEntry> values = Arrays.asList(session.timeSeriesFor(order, "Heartrate")
+                        .get(null, null));
 
                 assertThat(values)
                         .hasSize(3);
@@ -116,8 +116,8 @@ public class TimeSeriesIncludesTest extends RemoteTestBase {
             }
 
             try (IDocumentSession session = store.openSession()) {
-                List<TimeSeriesEntry> vals = session.timeSeriesFor(documentId, "Heartrate")
-                        .get(DateUtils.addMinutes(baseLine, 2), DateUtils.addMinutes(baseLine, 10));
+                List<TimeSeriesEntry> vals = Arrays.asList(session.timeSeriesFor(documentId, "Heartrate")
+                        .get(DateUtils.addMinutes(baseLine, 2), DateUtils.addMinutes(baseLine, 10)));
 
                 assertThat(session.advanced().getNumberOfRequests())
                         .isEqualTo(1);
@@ -141,8 +141,8 @@ public class TimeSeriesIncludesTest extends RemoteTestBase {
 
                 // should not go to server
 
-                vals = session.timeSeriesFor(documentId, "Heartrate")
-                        .get(DateUtils.addMinutes(baseLine, 40), DateUtils.addMinutes(baseLine, 50));
+                vals = Arrays.asList(session.timeSeriesFor(documentId, "Heartrate")
+                        .get(DateUtils.addMinutes(baseLine, 40), DateUtils.addMinutes(baseLine, 50)));
 
                 assertThat(session.advanced().getNumberOfRequests())
                         .isEqualTo(2);
@@ -188,8 +188,8 @@ public class TimeSeriesIncludesTest extends RemoteTestBase {
 
                 // should not go to server
 
-                vals = session.timeSeriesFor(documentId, "Heartrate")
-                        .get(baseLine, DateUtils.addMinutes(baseLine, 2));
+                vals = Arrays.asList(session.timeSeriesFor(documentId, "Heartrate")
+                        .get(baseLine, DateUtils.addMinutes(baseLine, 2)));
 
                 assertThat(session.advanced().getNumberOfRequests())
                         .isEqualTo(3);
@@ -224,8 +224,8 @@ public class TimeSeriesIncludesTest extends RemoteTestBase {
                         .isEqualTo(4);
 
                 // should not go to server
-                vals = session.timeSeriesFor(documentId, "Heartrate")
-                        .get(DateUtils.addMinutes(baseLine, 10), DateUtils.addMinutes(baseLine, 16));
+                vals = Arrays.asList(session.timeSeriesFor(documentId, "Heartrate")
+                        .get(DateUtils.addMinutes(baseLine, 10), DateUtils.addMinutes(baseLine, 16)));
 
                 assertThat(session.advanced().getNumberOfRequests())
                         .isEqualTo(4);
@@ -265,8 +265,8 @@ public class TimeSeriesIncludesTest extends RemoteTestBase {
 
                 // should not go to server
 
-                vals = session.timeSeriesFor(documentId, "Heartrate")
-                        .get(DateUtils.addMinutes(baseLine, 17), DateUtils.addMinutes(baseLine, 19));
+                vals = Arrays.asList(session.timeSeriesFor(documentId, "Heartrate")
+                        .get(DateUtils.addMinutes(baseLine, 17), DateUtils.addMinutes(baseLine, 19)));
 
                 assertThat(session.advanced().getNumberOfRequests())
                         .isEqualTo(5);
@@ -310,8 +310,8 @@ public class TimeSeriesIncludesTest extends RemoteTestBase {
 
                 // should not go to server
 
-                vals = session.timeSeriesFor(documentId, "Heartrate")
-                        .get(DateUtils.addMinutes(baseLine, 18), DateUtils.addMinutes(baseLine, 48));
+                vals = Arrays.asList(session.timeSeriesFor(documentId, "Heartrate")
+                        .get(DateUtils.addMinutes(baseLine, 18), DateUtils.addMinutes(baseLine, 48)));
 
                 assertThat(session.advanced().getNumberOfRequests())
                         .isEqualTo(6);
@@ -350,8 +350,8 @@ public class TimeSeriesIncludesTest extends RemoteTestBase {
 
                 // should not go to server
 
-                vals = session.timeSeriesFor(documentId, "Heartrate")
-                        .get(DateUtils.addMinutes(baseLine, 12), DateUtils.addMinutes(baseLine, 22));
+                vals = Arrays.asList(session.timeSeriesFor(documentId, "Heartrate")
+                        .get(DateUtils.addMinutes(baseLine, 12), DateUtils.addMinutes(baseLine, 22)));
 
                 assertThat(session.advanced().getNumberOfRequests())
                         .isEqualTo(7);
@@ -397,8 +397,8 @@ public class TimeSeriesIncludesTest extends RemoteTestBase {
             }
 
             try (IDocumentSession session = store.openSession()) {
-                List<TimeSeriesEntry> vals = session.timeSeriesFor("users/ayende", "Heartrate")
-                        .get(DateUtils.addMinutes(baseLine, 2), DateUtils.addMinutes(baseLine, 10));
+                List<TimeSeriesEntry> vals = Arrays.asList(session.timeSeriesFor("users/ayende", "Heartrate")
+                        .get(DateUtils.addMinutes(baseLine, 2), DateUtils.addMinutes(baseLine, 10)));
 
                 assertThat(session.advanced().getNumberOfRequests())
                         .isEqualTo(1);
@@ -426,8 +426,8 @@ public class TimeSeriesIncludesTest extends RemoteTestBase {
 
                 // should not go to server
 
-                vals = session.timeSeriesFor("users/ayende", "Heartrate")
-                        .get(DateUtils.addMinutes(baseLine, 3), DateUtils.addMinutes(baseLine, 5));
+                vals = Arrays.asList(session.timeSeriesFor("users/ayende", "Heartrate")
+                        .get(DateUtils.addMinutes(baseLine, 3), DateUtils.addMinutes(baseLine, 5)));
 
                 assertThat(session.advanced().getNumberOfRequests())
                         .isEqualTo(3);
@@ -486,8 +486,8 @@ public class TimeSeriesIncludesTest extends RemoteTestBase {
 
                 // should not go to server
 
-                List<TimeSeriesEntry> vals = session.timeSeriesFor("users/ayende", "Heartrate")
-                        .get(DateUtils.addMinutes(baseLine, 3), DateUtils.addMinutes(baseLine, 5));
+                List<TimeSeriesEntry> vals = Arrays.asList(session.timeSeriesFor("users/ayende", "Heartrate")
+                        .get(DateUtils.addMinutes(baseLine, 3), DateUtils.addMinutes(baseLine, 5)));
 
                 assertThat(session.advanced().getNumberOfRequests())
                         .isEqualTo(1);
@@ -502,8 +502,8 @@ public class TimeSeriesIncludesTest extends RemoteTestBase {
 
                 // should not go to server
 
-                vals = session.timeSeriesFor("users/ayende", "BloodPressure")
-                        .get(DateUtils.addMinutes(baseLine, 42), DateUtils.addMinutes(baseLine, 43));
+                vals = Arrays.asList(session.timeSeriesFor("users/ayende", "BloodPressure")
+                        .get(DateUtils.addMinutes(baseLine, 42), DateUtils.addMinutes(baseLine, 43)));
 
                 assertThat(session.advanced().getNumberOfRequests())
                         .isEqualTo(1);
@@ -518,8 +518,8 @@ public class TimeSeriesIncludesTest extends RemoteTestBase {
 
                 // should not go to server
 
-                vals = session.timeSeriesFor("users/ayende", "BloodPressure")
-                        .get(DateUtils.addMinutes(baseLine, 40), DateUtils.addMinutes(baseLine, 45));
+                vals = Arrays.asList(session.timeSeriesFor("users/ayende", "BloodPressure")
+                        .get(DateUtils.addMinutes(baseLine, 40), DateUtils.addMinutes(baseLine, 45)));
 
                 assertThat(session.advanced().getNumberOfRequests())
                         .isEqualTo(1);
@@ -534,8 +534,8 @@ public class TimeSeriesIncludesTest extends RemoteTestBase {
 
                 // should not go to server
 
-                vals = session.timeSeriesFor("users/ayende", "Nasdaq")
-                        .get(DateUtils.addMinutes(baseLine, 15), DateUtils.addMinutes(baseLine, 25));
+                vals = Arrays.asList(session.timeSeriesFor("users/ayende", "Nasdaq")
+                        .get(DateUtils.addMinutes(baseLine, 15), DateUtils.addMinutes(baseLine, 25)));
 
                 assertThat(session.advanced().getNumberOfRequests())
                         .isEqualTo(1);
@@ -583,8 +583,8 @@ public class TimeSeriesIncludesTest extends RemoteTestBase {
 
                 // should not go to server
 
-                List<TimeSeriesEntry> vals = session.timeSeriesFor("users/ayende", "Heartrate")
-                        .get(DateUtils.addMinutes(baseLine, -30), DateUtils.addMinutes(baseLine, -10));
+                List<TimeSeriesEntry> vals = Arrays.asList(session.timeSeriesFor("users/ayende", "Heartrate")
+                        .get(DateUtils.addMinutes(baseLine, -30), DateUtils.addMinutes(baseLine, -10)));
 
                 assertThat(session.advanced().getNumberOfRequests())
                         .isEqualTo(1);
@@ -608,8 +608,8 @@ public class TimeSeriesIncludesTest extends RemoteTestBase {
 
                 // should not go to server
 
-                vals = session.timeSeriesFor("users/ayende", "Heartrate")
-                        .get(DateUtils.addMinutes(baseLine, -25), DateUtils.addMinutes(baseLine, -15));
+                vals = Arrays.asList(session.timeSeriesFor("users/ayende", "Heartrate")
+                        .get(DateUtils.addMinutes(baseLine, -25), DateUtils.addMinutes(baseLine, -15)));
 
                 assertThat(session.advanced().getNumberOfRequests())
                         .isEqualTo(1);
@@ -628,8 +628,8 @@ public class TimeSeriesIncludesTest extends RemoteTestBase {
 
                 // should not go to server
 
-                vals = session.timeSeriesFor("users/ayende", "BloodPressure")
-                        .get(DateUtils.addMinutes(baseLine, 10), DateUtils.addMinutes(baseLine, 30));
+                vals = Arrays.asList(session.timeSeriesFor("users/ayende", "BloodPressure")
+                        .get(DateUtils.addMinutes(baseLine, 10), DateUtils.addMinutes(baseLine, 30)));
 
                 assertThat(session.advanced().getNumberOfRequests())
                         .isEqualTo(2);
@@ -700,8 +700,8 @@ public class TimeSeriesIncludesTest extends RemoteTestBase {
 
                 // should not go to server
 
-                List<TimeSeriesEntry> vals = session.timeSeriesFor("users/ayende", "Heartrate")
-                        .get(baseLine, DateUtils.addMinutes(baseLine, 30));
+                List<TimeSeriesEntry> vals = Arrays.asList(session.timeSeriesFor("users/ayende", "Heartrate")
+                        .get(baseLine, DateUtils.addMinutes(baseLine, 30)));
 
                 assertThat(session.advanced().getNumberOfRequests())
                         .isEqualTo(1);
@@ -716,8 +716,8 @@ public class TimeSeriesIncludesTest extends RemoteTestBase {
 
                 // should not go to server
 
-                vals = session.timeSeriesFor("users/ppekrol", "Heartrate")
-                        .get(baseLine, DateUtils.addMinutes(baseLine, 30));
+                vals = Arrays.asList(session.timeSeriesFor("users/ppekrol", "Heartrate")
+                        .get(baseLine, DateUtils.addMinutes(baseLine, 30)));
 
                 assertThat(session.advanced().getNumberOfRequests())
                         .isEqualTo(1);
@@ -787,8 +787,8 @@ public class TimeSeriesIncludesTest extends RemoteTestBase {
                         .isEqualTo("HR");
 
                 // should not go to server
-                List<TimeSeriesEntry> vals = session.timeSeriesFor("users/ayende", "Heartrate")
-                        .get(baseLine, DateUtils.addMinutes(baseLine, 30));
+                List<TimeSeriesEntry> vals = Arrays.asList(session.timeSeriesFor("users/ayende", "Heartrate")
+                        .get(baseLine, DateUtils.addMinutes(baseLine, 30)));
 
                 assertThat(session.advanced().getNumberOfRequests())
                         .isEqualTo(1);
@@ -860,8 +860,8 @@ public class TimeSeriesIncludesTest extends RemoteTestBase {
 
                 // should not go to server
 
-                List<TimeSeriesEntry> vals = session.timeSeriesFor("users/ayende", "Heartrate")
-                        .get(baseLine, DateUtils.addMinutes(baseLine, 30));
+                List<TimeSeriesEntry> vals = Arrays.asList(session.timeSeriesFor("users/ayende", "Heartrate")
+                        .get(baseLine, DateUtils.addMinutes(baseLine, 30)));
 
                 assertThat(session.advanced().getNumberOfRequests())
                         .isEqualTo(1);

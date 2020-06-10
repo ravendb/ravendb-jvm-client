@@ -8,8 +8,8 @@ import java.util.List;
 public interface ISessionDocumentRollupTypedTimeSeries<TValues>
         extends ISessionDocumentRollupTypedAppendTimeSeriesBase<TValues>,
         ISessionDocumentRemoveTimeSeriesBase {
-    List<TypedTimeSeriesRollupEntry<TValues>> get();
-    List<TypedTimeSeriesRollupEntry<TValues>> get(Date from, Date to);
-    List<TypedTimeSeriesRollupEntry<TValues>> get(Date from, Date to, int start);
-    List<TypedTimeSeriesRollupEntry<TValues>> get(Date from, Date to, int start, int pageSize);
+    TypedTimeSeriesRollupEntry<TValues>[] get();
+    TypedTimeSeriesRollupEntry<TValues>[] get(Date from, Date to);
+    TypedTimeSeriesRollupEntry<TValues>[] get(Date from, Date to, int start);
+    TypedTimeSeriesRollupEntry<TValues>[] get(Date from, Date to, int start, int pageSize);
 }

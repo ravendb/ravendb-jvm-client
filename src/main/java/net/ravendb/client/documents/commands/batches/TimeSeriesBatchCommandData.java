@@ -27,12 +27,20 @@ public class TimeSeriesBatchCommandData implements ICommandData {
         this.id = documentId;
         this.name = name;
 
-        TimeSeriesOperation operation = new TimeSeriesOperation();
-        operation.setName(name);
-        operation.setAppends(appends);
-        operation.setRemovals(removals);
+        this.timeSeries = new TimeSeriesOperation();
+        this.timeSeries.setName(name);
 
-        this.timeSeries = operation;
+        if (appends != null) {
+            for (TimeSeriesOperation.AppendOperation appendOperation : appends) {
+                timeSeries.append(appendOperation);
+            }
+        }
+
+        if (removals != null) {
+            for (TimeSeriesOperation.RemoveOperation removeOperation : removals) {
+                timeSeries.remove(removeOperation);
+            }
+        }
     }
 
     @Override
