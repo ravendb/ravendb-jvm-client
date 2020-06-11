@@ -4,6 +4,7 @@ import net.ravendb.client.exceptions.RavenException;
 
 import java.util.Date;
 
+//TODO: write test for this - coverage - RavenDB-15153
 public class TypedTimeSeriesRollupEntry<TValues> {
     private Class<TValues> _clazz;
 
@@ -105,6 +106,30 @@ public class TypedTimeSeriesRollupEntry<TValues> {
         return _sum;
     }
 
+    public TValues getAverage() {
+        if (_average != null) {
+            return _average;
+        }
+
+        int valuesCount = TimeSeriesValuesHelper.getFieldsMapping(_clazz).size();
+
+        double[] sums = TimeSeriesValuesHelper.getValues(_clazz, _sum);
+        double[] counts = TimeSeriesValuesHelper.getValues(_clazz, _count);
+        double[] averages = new double[valuesCount];
+
+        for (int i = 0; i < valuesCount; i++) {
+            if (counts[i] < Double.MIN_NORMAL) {
+                averages[i] = Double.NaN;
+            } else {
+                averages[i] = sums[i] / counts[i];
+            }
+        }
+
+        _average = TimeSeriesValuesHelper.setFields(_clazz, averages);
+
+        return _average;
+    }
+
     public double[] getValuesFromMembers() {
         int valuesCount = TimeSeriesValuesHelper.getFieldsMapping(_clazz).size();
 
@@ -159,45 +184,4 @@ public class TypedTimeSeriesRollupEntry<TValues> {
 
         return result;
     }
-
-    //TODO: getAverage()!
-
-
-    /* TODO
-
-
-        // taken from dotnet/runtime since it is supported only in 2.1 and up
-        // https://github.com/dotnet/runtime/blob/abfdb542e8dfd72ab2715222edf527952e9fda10/src/libraries/System.Private.CoreLib/src/System/Double.cs#L121
-        private static bool IsNormal(double d)
-        {
-            long bits = BitConverter.DoubleToInt64Bits(d);
-            bits &= 0x7FFFFFFFFFFFFFFF;
-            return (bits < 0x7FF0000000000000) && (bits != 0) && ((bits & 0x7FF0000000000000) != 0);
-        }
-
-        private bool _innerArrayInitialized;
-        private void Build2DArray()
-        {
-            if (IsRollup == false)
-                throw new InvalidOperationException("Not a rollup entry.");
-
-            if (_innerArrayInitialized)
-                return;
-
-            _dim = Values.Length / 6;
-            _innerValues = new double[6][];
-            for (int i = 0; i < 6; i++)
-            {
-                _innerValues[i] = new double[_dim];
-                for (int j = 0; j < _dim; j++)
-                {
-                    _innerValues[i][j] = Values[j * 6 + i];
-                }
-            }
-
-            _innerArrayInitialized = true;
-        }
-
-
-     */
 }
