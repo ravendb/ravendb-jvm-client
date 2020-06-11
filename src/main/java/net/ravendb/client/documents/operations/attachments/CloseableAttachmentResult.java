@@ -25,6 +25,6 @@ public class CloseableAttachmentResult implements AutoCloseable {
 
     @Override
     public void close() {
-        IOUtils.closeQuietly(response);
+        IOUtils.closeQuietly(response, null);
     }
 }

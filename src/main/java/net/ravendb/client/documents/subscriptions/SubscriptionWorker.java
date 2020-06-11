@@ -668,12 +668,12 @@ public class SubscriptionWorker<T> implements CleanCloseable {
 
     private void closeTcpClient() {
         if (_parser != null) {
-            IOUtils.closeQuietly(_parser);
+            IOUtils.closeQuietly(_parser, null);
             _parser = null;
         }
 
         if (_tcpClient != null) {
-            IOUtils.closeQuietly(_tcpClient);
+            IOUtils.closeQuietly(_tcpClient, null);
             _tcpClient = null;
         }
     }

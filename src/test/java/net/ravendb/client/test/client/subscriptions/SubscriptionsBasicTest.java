@@ -420,9 +420,9 @@ public class SubscriptionsBasicTest extends RemoteTestBase {
             assertThat(mre.tryAcquire(_reasonableWaitTime, TimeUnit.SECONDS))
                     .isTrue();
         } finally {
-            IOUtils.closeQuietly(subscriptionWorker);
-            IOUtils.closeQuietly(throwingSubscriptionWorker);
-            IOUtils.closeQuietly(notThrowingSubscriptionWorker);
+            IOUtils.closeQuietly(subscriptionWorker, null);
+            IOUtils.closeQuietly(throwingSubscriptionWorker, null);
+            IOUtils.closeQuietly(notThrowingSubscriptionWorker, null);
         }
     }
 

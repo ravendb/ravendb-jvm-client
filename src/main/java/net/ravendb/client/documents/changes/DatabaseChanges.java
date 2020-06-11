@@ -398,7 +398,7 @@ public class DatabaseChanges implements IDatabaseChanges {
             _cts.cancel();
 
             if (_clientSession != null) {
-                IOUtils.closeQuietly(_clientSession);
+                IOUtils.closeQuietly(_clientSession, null);
             }
 
             if (_client != null) {
@@ -406,7 +406,7 @@ public class DatabaseChanges implements IDatabaseChanges {
             }
 
             if (_clientSession != null) {
-                IOUtils.closeQuietly(_clientSession);
+                IOUtils.closeQuietly(_clientSession, null);
             }
 
             _counters.clear();

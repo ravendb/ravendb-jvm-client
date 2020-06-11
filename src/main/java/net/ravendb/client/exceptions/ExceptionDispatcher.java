@@ -103,7 +103,7 @@ public class ExceptionDispatcher {
         } catch (IOException e) {
             throw new RavenException(e.getMessage(), e);
         } finally {
-            IOUtils.closeQuietly(response);
+            IOUtils.closeQuietly(response, null);
         }
     }
 

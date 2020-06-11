@@ -309,7 +309,7 @@ public abstract class ClusterTestBase extends RavenTestDriver implements CleanCl
     @Override
     public void close() {
         for (Closeable closeable : _toDispose) {
-            IOUtils.closeQuietly(closeable);
+            IOUtils.closeQuietly(closeable, null);
         }
     }
 
