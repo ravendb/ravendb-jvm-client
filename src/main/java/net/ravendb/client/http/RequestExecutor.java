@@ -738,7 +738,7 @@ public class RequestExecutor implements CleanCloseable {
                 _lastReturnedResponse = new Date();
             } finally {
                 if (responseDispose == ResponseDisposeHandling.AUTOMATIC) {
-                    IOUtils.closeQuietly(response);
+                    IOUtils.closeQuietly(response, null);
                 }
 
                 try {
@@ -1019,7 +1019,7 @@ public class RequestExecutor implements CleanCloseable {
             if (nodes.get(i).getClusterTag().equals(chosenNode.getClusterTag())) {
                 preferredTask = task;
             } else {
-                task.thenAcceptAsync(result -> IOUtils.closeQuietly(result.response));
+                task.thenAcceptAsync(result -> IOUtils.closeQuietly(result.response, null));
             }
 
             tasks.set(i, task);
