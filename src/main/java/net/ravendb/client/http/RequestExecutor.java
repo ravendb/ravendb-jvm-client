@@ -318,7 +318,7 @@ public class RequestExecutor implements CleanCloseable {
         return executor;
     }
 
-    protected CompletableFuture<Void> updateClientConfigurationAsync() {
+    protected CompletableFuture<Void> updateClientConfigurationAsync(ServerNode serverNode) {
         if (_disposed) {
             return CompletableFuture.completedFuture(null);
         }
@@ -339,8 +339,7 @@ public class RequestExecutor implements CleanCloseable {
                 }
 
                 GetClientConfigurationOperation.GetClientConfigurationCommand command = new GetClientConfigurationOperation.GetClientConfigurationCommand();
-                CurrentIndexAndNode currentIndexAndNode = chooseNodeForRequest(command, null);
-                execute(currentIndexAndNode.currentNode, currentIndexAndNode.currentIndex, command, false, null);
+                execute(serverNode, null, command, false, null);
 
                 GetClientConfigurationOperation.Result result = command.getResult();
                 if (result == null) {
@@ -813,10 +812,10 @@ public class RequestExecutor implements CleanCloseable {
 
             UpdateTopologyParameters updateParameters = new UpdateTopologyParameters(serverNode);
             updateParameters.setTimeoutInMs(0);
-            updateParameters.setDebugTag(refreshTopology ? "refresh-topology-header" : refreshClientConfiguration ? "refresh-client-configuration-header" : null);
+            updateParameters.setDebugTag("refresh-topology-header");
 
             CompletableFuture<Boolean> topologyTask = refreshTopology ? updateTopologyAsync(updateParameters) : CompletableFuture.completedFuture(false);
-            CompletableFuture<Void> clientConfiguration = refreshClientConfiguration ? updateClientConfigurationAsync() : CompletableFuture.completedFuture(null);
+            CompletableFuture<Void> clientConfiguration = refreshClientConfiguration ? updateClientConfigurationAsync(serverNode) : CompletableFuture.completedFuture(null);
 
             return CompletableFuture.allOf(topologyTask, clientConfiguration);
         }

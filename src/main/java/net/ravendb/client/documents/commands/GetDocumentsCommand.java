@@ -10,6 +10,7 @@ import net.ravendb.client.http.ServerNode;
 import net.ravendb.client.json.ContentProviderHttpEntity;
 import net.ravendb.client.primitives.Reference;
 import net.ravendb.client.util.UrlUtils;
+import org.apache.commons.lang3.ObjectUtils;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpRequestBase;
@@ -176,10 +177,10 @@ public class GetDocumentsCommand extends RavenCommand<GetDocumentsResult> {
 
         if (isGet) {
             uniqueIds.forEach(x -> {
-                if (x != null) {
-                    pathBuilder.append("&id=");
-                    pathBuilder.append(UrlUtils.escapeDataString(x));
-                }
+                pathBuilder.append("&id=");
+                pathBuilder.append(
+                        UrlUtils.escapeDataString(
+                                ObjectUtils.firstNonNull(x, "")));
             });
 
             return new HttpGet();

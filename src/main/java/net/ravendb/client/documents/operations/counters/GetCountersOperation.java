@@ -11,6 +11,7 @@ import net.ravendb.client.http.ServerNode;
 import net.ravendb.client.json.ContentProviderHttpEntity;
 import net.ravendb.client.primitives.Reference;
 import net.ravendb.client.util.UrlUtils;
+import org.apache.commons.lang3.ObjectUtils;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpRequestBase;
@@ -114,10 +115,8 @@ public class GetCountersOperation implements IOperation<CountersDetail> {
 
             if (uniqueNames.stream().map(x -> x.length()).reduce((a, b) -> a + b).get() < 1024) {
                 for (String uniqueName : uniqueNames) {
-                    if (uniqueName != null) {
-                        pathBuilder.append("&counter=")
-                                .append(UrlUtils.escapeDataString(uniqueName));
-                    }
+                    pathBuilder.append("&counter=")
+                            .append(UrlUtils.escapeDataString(ObjectUtils.firstNonNull(uniqueName, "")));
                 }
             } else {
                 HttpPost postRequest = new HttpPost();
