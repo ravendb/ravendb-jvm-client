@@ -826,9 +826,9 @@ public class TimeSeriesSessionTest extends RemoteTestBase {
                 assertThat(ranges)
                         .hasSize(1);
                 assertThat(ranges.get(0).getFrom())
-                        .isEqualTo(NetISO8601Utils.MIN_DATE);
+                        .isNull();
                 assertThat(ranges.get(0).getTo())
-                        .isEqualTo(NetISO8601Utils.MAX_DATE);
+                        .isNull();
                 assertThat(ranges.get(0).getEntries())
                         .hasSize(10);
 

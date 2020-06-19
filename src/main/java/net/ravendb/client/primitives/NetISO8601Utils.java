@@ -7,11 +7,6 @@ import java.util.*;
  */
 public class NetISO8601Utils {
 
-    public final static String MAX_DATE_AS_STRING = "9999-12-31T23:59:59.9999999"; //TODO: delete m!
-
-    public final static Date MIN_DATE = new Date(0);
-    public final static Date MAX_DATE = parse(MAX_DATE_AS_STRING);
-
     /**
      * ID to represent the 'GMT' string
      */
@@ -248,4 +243,5 @@ public class NetISO8601Utils {
         }
         buffer.append(strValue);
     }
+
 }

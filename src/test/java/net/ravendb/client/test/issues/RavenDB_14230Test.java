@@ -162,6 +162,8 @@ public class RavenDB_14230Test extends RemoteTestBase {
                 TimeSeriesChange timeSeriesChange = changesList.poll(1, TimeUnit.SECONDS);
                 assertThat(timeSeriesChange)
                         .isNotNull();
+                assertThat(timeSeriesChange.getCollectionName())
+                        .isNotNull();
             }
 
             observable = changes.forTimeSeries("Likes");

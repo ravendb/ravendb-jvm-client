@@ -9,6 +9,7 @@ import net.ravendb.client.documents.commands.batches.ICommandData;
 import net.ravendb.client.documents.commands.batches.TimeSeriesBatchCommandData;
 import net.ravendb.client.documents.operations.timeSeries.*;
 import net.ravendb.client.documents.session.timeSeries.TimeSeriesEntry;
+import net.ravendb.client.primitives.DatesComparator;
 import net.ravendb.client.primitives.NetISO8601Utils;
 import net.ravendb.client.primitives.Reference;
 import org.apache.commons.lang3.ArrayUtils;
@@ -17,6 +18,8 @@ import org.apache.commons.lang3.StringUtils;
 
 import java.util.*;
 import java.util.stream.Collectors;
+
+import static net.ravendb.client.primitives.DatesComparator.*;
 
 /**
  * Abstract implementation for in memory session operations
@@ -128,19 +131,13 @@ public class SessionTimeSeriesBase {
 
     public TimeSeriesEntry[] getInternal(Date from, Date to, int start, int pageSize) {
         TimeSeriesRangeResult rangeResult;
-        //TODO: ?? - remove and use custom comparator!
-        if (from == null) {
-            from = NetISO8601Utils.MIN_DATE;
-        }
-        if (to == null) {
-            to = NetISO8601Utils.MAX_DATE;
-        }
 
         Map<String, List<TimeSeriesRangeResult>> cache = session.getTimeSeriesByDocId().get(docId);
         if (cache != null) {
             List<TimeSeriesRangeResult> ranges = cache.get(name);
             if (ranges != null && !ranges.isEmpty()) {
-                if (ranges.get(0).getFrom().compareTo(to) > 0 || ranges.get(ranges.size() - 1).getTo().compareTo(from) < 0) {
+                if (DatesComparator.compare(leftDate(ranges.get(0).getFrom()), DatesComparator.rightDate(to)) > 0
+                        || DatesComparator.compare(rightDate(ranges.get(ranges.size() - 1).getTo()), leftDate(from)) < 0) {
                     // the entire range [from, to] is out of cache bounds
 
                     // e.g. if cache is : [[2,3], [4,6], [8,9]]
@@ -158,7 +155,7 @@ public class SessionTimeSeriesBase {
                     }
 
                     if (!session.noTracking) {
-                        int index = ranges.get(0).getFrom().compareTo(to) > 0 ? 0 : ranges.size();
+                        int index = DatesComparator.compare(leftDate(ranges.get(0).getFrom()), rightDate(to)) > 0 ? 0 : ranges.size();
                         ranges.add(index, rangeResult);
                     }
 
@@ -166,11 +163,10 @@ public class SessionTimeSeriesBase {
                 }
 
                 SessionTimeSeriesBase.CachedEntryInfo entryInfo = serveFromCacheOrGetMissingPartsFromServerAndMerge(
-                        ObjectUtils.firstNonNull(from, NetISO8601Utils.MIN_DATE), ObjectUtils.firstNonNull(to, NetISO8601Utils.MAX_DATE),
-                        ranges, start, pageSize);
+                        from, to, ranges, start, pageSize);
 
                 if (!entryInfo.servedFromCache && !session.noTracking) {
-                    InMemoryDocumentSessionOperations.addToCache(name, ObjectUtils.firstNonNull(from, NetISO8601Utils.MIN_DATE), ObjectUtils.firstNonNull(to, NetISO8601Utils.MAX_DATE),
+                    InMemoryDocumentSessionOperations.addToCache(name, from, to,
                             entryInfo.fromRangeIndex, entryInfo.toRangeIndex, ranges, cache, entryInfo.mergedValues);
                 }
 
@@ -214,9 +210,9 @@ public class SessionTimeSeriesBase {
     private static List<TimeSeriesEntry> skipAndTrimRangeIfNeeded(Date from, Date to, TimeSeriesRangeResult fromRange,
                                                                   TimeSeriesRangeResult toRange, List<TimeSeriesEntry> values,
                                                                   int skip, int trim) {
-        if (fromRange != null && fromRange.getTo().getTime() >= from.getTime()) {
+        if (fromRange != null && DatesComparator.compare(rightDate(fromRange.getTo()), leftDate(from)) >= 0) {
             // need to skip a part of the first range
-            if (toRange != null && toRange.getFrom().getTime() <= to.getTime()) {
+            if (toRange != null && DatesComparator.compare(leftDate(toRange.getFrom()), rightDate(to)) <= 0) {
                 // also need to trim a part of the last range
                 return values.stream().skip(skip).limit(values.size() - skip - trim).collect(Collectors.toList());
             }
@@ -224,7 +220,7 @@ public class SessionTimeSeriesBase {
             return values.stream().skip(skip).collect(Collectors.toList());
         }
 
-        if (toRange != null && toRange.getFrom().getTime() <= to.getTime()) {
+        if (toRange != null && DatesComparator.compare(leftDate(toRange.getFrom()), rightDate(to)) <= 0) {
             // trim a part of the last range
 
             return values.stream().limit(values.size() - trim).collect(Collectors.toList());
@@ -233,9 +229,9 @@ public class SessionTimeSeriesBase {
         return values;
     }
 
+    //TODO: compare
     private SessionTimeSeriesBase.CachedEntryInfo serveFromCacheOrGetMissingPartsFromServerAndMerge(Date from, Date to, List<TimeSeriesRangeResult> ranges,
                                                                                                         int start, int pageSize) {
-
         // try to find a range in cache that contains [from, to]
         // if found, chop just the relevant part from it and return to the user.
 
@@ -251,8 +247,8 @@ public class SessionTimeSeriesBase {
         List<TimeSeriesEntry> resultToUser;
 
         for (toRangeIndex = 0; toRangeIndex < ranges.size(); toRangeIndex++) {
-            if (ranges.get(toRangeIndex).getFrom().getTime() <= from.getTime()) {
-                if (ranges.get(toRangeIndex).getTo().getTime() >= to.getTime()) {
+            if (DatesComparator.compare(leftDate(ranges.get(toRangeIndex).getFrom()), leftDate(from)) <= 0) {
+                if (DatesComparator.compare(rightDate(ranges.get(toRangeIndex).getTo()), rightDate(to)) >= 0) {
                     // we have the entire range in cache
 
                     resultToUser = chopRelevantRange(ranges.get(toRangeIndex), from, to);
@@ -271,16 +267,16 @@ public class SessionTimeSeriesBase {
             // add the missing part [f, t] between current range start (or 'from')
             // and previous range end (or 'to') to the list of ranges we need to get from server
 
-            Date fromToUse = toRangeIndex == 0 || ranges.get(toRangeIndex - 1).getTo().getTime() < from.getTime()
+            Date fromToUse = toRangeIndex == 0 || DatesComparator.compare(rightDate(ranges.get(toRangeIndex - 1).getTo()), leftDate(from)) < 0
                     ? from
                     : ranges.get(toRangeIndex - 1).getTo();
-            Date toToUse = ranges.get(toRangeIndex).getFrom().getTime() <= to.getTime()
+            Date toToUse = DatesComparator.compare(leftDate(ranges.get(toRangeIndex).getFrom()), rightDate(to)) <= 0
                     ? ranges.get(toRangeIndex).getFrom()
                     : to;
 
             rangesToGetFromServer.add(new TimeSeriesRange(name, fromToUse, toToUse));
 
-            if (ranges.get(toRangeIndex).getTo().getTime() >= to.getTime()) {
+            if (DatesComparator.compare(rightDate(ranges.get(toRangeIndex).getTo()), rightDate(to)) >= 0) {
                 break;
             }
         }
@@ -327,7 +323,8 @@ public class SessionTimeSeriesBase {
 
         for (int i = start; i <= end; i++) {
             if (i == fromRangeIndex) {
-                if (ranges.get(i).getFrom().getTime() <= from.getTime() && from.getTime() <= ranges.get(i).getTo().getTime()) {
+                if (DatesComparator.compare(leftDate(ranges.get(i).getFrom()), leftDate(from)) <= 0 &&
+                        DatesComparator.compare(leftDate(from), rightDate(ranges.get(i).getTo())) <= 0) {
                     // requested range [from, to] starts inside 'fromRange'
                     // i.e fromRange.From <= from <= fromRange.To
                     // so we might need to skip a part of it when we return the
@@ -336,7 +333,7 @@ public class SessionTimeSeriesBase {
                     if (ranges.get(i).getEntries() != null) {
                         for (TimeSeriesEntry v : ranges.get(i).getEntries()) {
                             mergedValues.add(v);
-                            if (v.getTimestamp().getTime() < from.getTime()) {
+                            if (DatesComparator.compare(definedDate(v.getTimestamp()), leftDate(from)) < 0) {
                                 skip++;
                             }
 
@@ -348,7 +345,7 @@ public class SessionTimeSeriesBase {
             }
 
             if (currentResultIndex < resultFromServer.size()
-                    && resultFromServer.get(currentResultIndex).getFrom().getTime() < ranges.get(i).getFrom().getTime()) {
+                    && DatesComparator.compare(leftDate(resultFromServer.get(currentResultIndex).getFrom()), leftDate(ranges.get(i).getFrom())) < 0) {
                 // add current result from server to the merged list
                 // in order to avoid duplication, skip first item in range
                 // (unless this is the first time we're adding to the merged list)
@@ -360,14 +357,14 @@ public class SessionTimeSeriesBase {
             }
 
             if (i == toRangeIndex) {
-                if (ranges.get(i).getFrom().getTime() <= to.getTime()) {
+                if (DatesComparator.compare(leftDate(ranges.get(i).getFrom()), rightDate(to)) <= 0) {
                     // requested range [from, to] ends inside 'toRange'
                     // so we might need to trim a part of it when we return the
                     // result to the user (i.e. trim [to, toRange.to])
 
                     for (int index = mergedValues.size() == 0 ? 0 : 1; index < ranges.get(i).getEntries().length; index++) {
                         mergedValues.add(ranges.get(i).getEntries()[index]);
-                        if (ranges.get(i).getEntries()[index].getTimestamp().getTime() > to.getTime()) {
+                        if (DatesComparator.compare(definedDate(ranges.get(i).getEntries()[index].getTimestamp()), rightDate(to)) > 0) {
                             trim++;
                         }
                     }
@@ -413,10 +410,10 @@ public class SessionTimeSeriesBase {
 
         List<TimeSeriesEntry> result = new ArrayList<>();
         for (TimeSeriesEntry value : range.getEntries()) {
-            if (value.getTimestamp().getTime() > to.getTime()) {
+            if (DatesComparator.compare(definedDate(value.getTimestamp()), rightDate(to)) > 0) {
                 break;
             }
-            if (value.getTimestamp().getTime() < from.getTime()) {
+            if (DatesComparator.compare(definedDate(value.getTimestamp()), leftDate(from)) < 0) {
                 continue;
             }
             result.add(value);
