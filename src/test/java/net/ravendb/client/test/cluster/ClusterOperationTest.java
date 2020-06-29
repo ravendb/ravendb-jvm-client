@@ -39,7 +39,6 @@ public class ClusterOperationTest extends ClusterTestBase {
 
     @Test
     public void nextIdentityForOperationShouldBroadcast() throws Exception {
-        System.out.println("nextIdentityForOperationShouldBroadcast");
         try (ClusterController cluster = createRaftCluster(3)) {
 
             String database = getDatabaseName();
@@ -82,7 +81,6 @@ public class ClusterOperationTest extends ClusterTestBase {
     @Test
     @Disabled
     public void nextIdentityForOperationShouldBroadcastAndFail() throws Exception {
-        System.out.println("nextIdentityForOperationShouldBroadcastAndFail");
         try (ClusterController cluster = createRaftCluster(3)) {
 
             String database = getDatabaseName();
@@ -127,7 +125,6 @@ public class ClusterOperationTest extends ClusterTestBase {
 
     @Test
     public void changesApiFailOver() throws Exception {
-        System.out.println("changes api fail over");
         String db = "Test";
 
         DatabaseTopology topology = new DatabaseTopology();
@@ -203,13 +200,12 @@ public class ClusterOperationTest extends ClusterTestBase {
     }
 
     @Test
+    @Disabled
     public void changesApiReorderDatabaseNodes() throws Exception {
-        System.out.println("changesApiReorderDatabaseNodes");
         String db = "ReorderDatabaseNodes";
 
         try (ClusterController cluster = createRaftCluster(2)) {
             cluster.createDatabase(db, 2, cluster.getInitialLeader().getUrl());
-
 
             ClusterNode leader = cluster.getInitialLeader();
             try (IDocumentStore store = new DocumentStore(leader.getUrl(), db)) {
@@ -221,7 +217,6 @@ public class ClusterOperationTest extends ClusterTestBase {
 
                 IChangesObservable<DocumentChange> observable = taskObservable.forDocument("users/1");
                 observable.subscribe(Observers.create(list::add));
-
 
                 try (IDocumentSession session = store.openSession()) {
                     session.store(new User(), "users/1");
