@@ -35,6 +35,8 @@ public class RavenDB_11770Test extends RemoteTestBase {
                     user.setName("Fitzchak " + i);
                     session.saveChanges();
                 }
+
+                Thread.sleep(5);
             }
 
             Date snd = new Date();
