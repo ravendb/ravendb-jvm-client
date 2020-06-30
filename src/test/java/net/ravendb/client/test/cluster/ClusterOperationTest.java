@@ -34,8 +34,6 @@ import java.util.concurrent.BlockingQueue;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-
-@Disabled
 public class ClusterOperationTest extends ClusterTestBase {
 
     @Test
@@ -80,8 +78,8 @@ public class ClusterOperationTest extends ClusterTestBase {
     }
 
     @Test
-    @Disabled
     public void nextIdentityForOperationShouldBroadcastAndFail() throws Exception {
+        System.out.println("nextIdentityForOperationShouldBroadcastAndFail");
         try (ClusterController cluster = createRaftCluster(3)) {
 
             String database = getDatabaseName();
@@ -104,11 +102,14 @@ public class ClusterOperationTest extends ClusterTestBase {
                         .orElse(null);
 
                 String leaderNodeTag = cluster.getCurrentLeader(store);
+                System.out.println("Leader node tag = " + leaderNodeTag);
+                System.out.println("node.getnodetag = " + node.getNodeTag());
 
                 cluster.executeJsScript(node.getNodeTag(),
                         "server.ServerStore.InitializationCompleted.Reset(true);\n" +
                                 " server.ServerStore.Initialized = false;");
 
+                System.out.println("disposing server = " + leaderNodeTag);
                 cluster.disposeServer(leaderNodeTag);
 
                 Stopwatch sw = Stopwatch.createStarted();
@@ -201,7 +202,6 @@ public class ClusterOperationTest extends ClusterTestBase {
     }
 
     @Test
-    @Disabled
     public void changesApiReorderDatabaseNodes() throws Exception {
         String db = "ReorderDatabaseNodes";
 
