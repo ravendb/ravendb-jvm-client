@@ -168,7 +168,9 @@ public class ClusterOperationTest extends ClusterTestBase {
                         .isEqualTo(1);
 
                 String currentUrl = store.getRequestExecutor().getUrl();
-                cluster.disposeServer(cluster.getNodeByUrl(currentUrl).getNodeTag());
+                String d1 = cluster.getNodeByUrl(currentUrl).getNodeTag();
+                System.out.println("disping = " + d1);
+                cluster.disposeServer(d1);
 
                 taskObservable.ensureConnectedNow();
 
@@ -185,7 +187,9 @@ public class ClusterOperationTest extends ClusterTestBase {
 
                 currentUrl = store.getRequestExecutor().getUrl();
 
-                cluster.disposeServer(cluster.getNodeByUrl(currentUrl).getNodeTag());
+                String d2 = cluster.getNodeByUrl(currentUrl).getNodeTag();
+                System.out.println(d2);
+                cluster.disposeServer(d2);
 
                 taskObservable.ensureConnectedNow();
 
