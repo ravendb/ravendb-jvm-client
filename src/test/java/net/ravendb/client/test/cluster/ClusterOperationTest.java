@@ -127,6 +127,7 @@ public class ClusterOperationTest extends ClusterTestBase {
     }
 
     @Test
+    @Disabled
     public void changesApiFailOver() throws Exception {
         System.out.println("changesApiFailOver");
         String db = "Test";
