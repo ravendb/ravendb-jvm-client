@@ -12,7 +12,7 @@ jobs:
 
     env:
       RAVENDB_JAVA_TEST_SERVER_PATH: ./RavenDB/Server/Raven.Server
-      RAVENDB_JAVA_TEST_CERTIFICATE_PATH: ../../certs/server.pfx
+      RAVENDB_JAVA_TEST_CERTIFICATE_PATH: certs/server.pfx
       RAVENDB_JAVA_TEST_CA_PATH: /usr/local/share/ca-certificates/ca.crt
       RAVENDB_JAVA_TEST_HTTPS_SERVER_URL: https://localhost:7325
       RAVENDB_BUILD_TYPE: stable
@@ -50,7 +50,7 @@ jobs:
       run: tar xjf RavenDB.tar.bz2
 
     - name: Deploy server certificate
-      run: cp certs/server.pfx RavenDB/Server/
+      run: mkdir RavenDB/Server/certs && cp certs/server.pfx RavenDB/Server/certs/
 
     - name: Run Maven Tests
       run: mvn clean test
