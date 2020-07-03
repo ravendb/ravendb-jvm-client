@@ -1,0 +1,53 @@
+name: tests/java
+ 
+on:
+  push:
+    branches: [ v4.2 ]
+  pull_request:
+    branches: [ v4.2 ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    env:
+      RAVENDB_JAVA_TEST_SERVER_PATH: ./RavenDB/Server/Raven.Server
+      RAVENDB_JAVA_TEST_CERTIFICATE_PATH: ./certs/server.pfx
+      RAVENDB_JAVA_TEST_CA_PATH: /usr/local/share/ca-certificates/ca.crt
+      RAVENDB_JAVA_TEST_HTTPS_SERVER_URL: https://localhost:8989
+      RAVENDB_BUILD_TYPE: stable
+      RAVEN_License: ${{ secrets.RAVEN_LICENSE }}
+    
+    strategy:
+      matrix:
+        java-version: [1.8] # TODO different java version! (jdk + openjdk?)
+        serverVersion: ["4.2"]
+      fail-fast: false
+
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: Set up JDK 1.8
+      uses: actions/setup-java@v1
+      with:
+        java-version: ${{ matrix.java-version }}
+      
+    - name: Download RavenDB Server
+      run: wget -O RavenDB.tar.bz2 "https://hibernatingrhinos.com/downloads/RavenDB%20for%20Linux%20x64/latest?buildType=${{ env.RAVENDB_BUILD_TYPE }}&version=${{ matrix.serverVersion }}"
+
+    - run: mkdir certs
+    - run: openssl genrsa -out certs/ca.key 2048
+    - run: openssl req -new -x509 -key certs/ca.key -out certs/ca.crt -subj "/C=US/ST=Arizona/L=Nevada/O=RavenDB Test CA/OU=RavenDB test CA/CN=localhost/emailAddress=ravendbca@example.com"
+    - run: openssl genrsa -out certs/localhost.key 2048
+    - run: openssl req -new  -key certs/localhost.key -out certs/localhost.csr -subj "/C=US/ST=Arizona/L=Nevada/O=RavenDB Test/OU=RavenDB test/CN=localhost/emailAddress=ravendb@example.com"
+    - run: openssl x509 -req -extensions ext -extfile src/test/cert/test_cert.conf -in certs/localhost.csr -CA certs/ca.crt -CAkey certs/ca.key -CAcreateserial -out certs/localhost.crt
+    - run: cat certs/localhost.key certs/localhost.crt > certs/java.pem
+    - run: openssl pkcs12 -passout pass:"" -export -out certs/server.pfx -inkey certs/localhost.key -in certs/localhost.crt
+    - run: sudo cp certs/ca.crt /usr/local/share/ca-certificates/ca.crt
+    - run: sudo update-ca-certificates
+    
+    - name: Extract RavenDB Server
+      run: tar xjf RavenDB.tar.bz2
+
+    - name: Run Maven Tests
+      run: mvn clean test
