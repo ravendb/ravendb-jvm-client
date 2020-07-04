@@ -1,7 +1,5 @@
 # RavenDB Java Client
 
-[![build status](https://travis-ci.org/ravendb/ravendb-jvm-client.svg?branch=v4.1)](https://travis-ci.org/ravendb/ravendb-jvm-client)
-
 Official RavenDB Java Client
 
 Simply put RavenDB dependency to your pom:
