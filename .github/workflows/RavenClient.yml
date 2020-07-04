@@ -20,14 +20,14 @@ jobs:
     
     strategy:
       matrix:
-        java-version: [1.8] # TODO different java version! (jdk + openjdk?)
+        java-version: [8, 10, 11, 14]
         serverVersion: ["4.2"]
       fail-fast: false
 
     steps:
     - uses: actions/checkout@v2
 
-    - name: Set up JDK 1.8
+    - name: Set up JDK ${{ matrix.java-version }}
       uses: actions/setup-java@v1
       with:
         java-version: ${{ matrix.java-version }}
