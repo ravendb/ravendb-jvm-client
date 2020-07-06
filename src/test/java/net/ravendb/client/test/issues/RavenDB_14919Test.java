@@ -14,6 +14,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+//TODO: review disabled tests
 @Disabled
 public class RavenDB_14919Test extends RemoteTestBase {
 
@@ -41,14 +42,26 @@ public class RavenDB_14919Test extends RemoteTestBase {
             assertThat(vals.getCounters())
                     .hasSize(101);
 
-            //TODO: reported in c#
-
             for (int i = 0; i < 100; i++) {
                 assertThat(vals.getCounters().get(i).getTotalValue())
                         .isEqualTo(1);
             }
 
             assertThat(vals.getCounters().get(vals.getCounters().size() - 1))
+                    .isNull();
+
+            // test with returnFullResults = true
+
+            vals = store.operations().send(new GetCountersOperation(docId, counterNames, true));
+            assertThat(vals.getCounters())
+                    .hasSize(101);
+
+            for (int i = 0; i < 100; i++) {
+                assertThat(vals.getCounters().get(i).getCounterValues())
+                        .hasSize(1);
+            }
+
+            assertThat(vals.getCounters().get(101))
                     .isNull();
         }
     }
@@ -83,6 +96,20 @@ public class RavenDB_14919Test extends RemoteTestBase {
             }
 
             assertThat(vals.getCounters().get(vals.getCounters().size() - 1))
+                    .isNull();
+
+            // test with returnFullResults = true
+
+            vals = store.operations().send(new GetCountersOperation(docId, counterNames, true));
+            assertThat(vals.getCounters())
+                    .hasSize(1001);
+
+            for (int i = 0; i < 1000; i++) {
+                assertThat(vals.getCounters().get(i).getCounterValues())
+                        .hasSize(1);
+            }
+
+            assertThat(vals.getCounters().get(1001))
                     .isNull();
         }
     }

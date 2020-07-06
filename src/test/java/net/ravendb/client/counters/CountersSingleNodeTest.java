@@ -78,36 +78,6 @@ public class CountersSingleNodeTest extends RemoteTestBase {
     }
 
     @Test
-    public void getCounterValueUsingPOST() throws Exception {
-        try (IDocumentStore store = getDocumentStore()) {
-            try (IDocumentSession session = store.openSession()) {
-                User user = new User();
-                user.setName("Aviv");
-                session.store(user, "users/1-A");
-                session.saveChanges();
-            }
-
-            String longCounterName = StringUtils.repeat('a', 500);
-
-            DocumentCountersOperation documentCountersOperation = new DocumentCountersOperation();
-            documentCountersOperation.setDocumentId("users/1-A");
-            documentCountersOperation.setOperations(Collections.singletonList(CounterOperation.create(longCounterName, CounterOperationType.INCREMENT, 5)));
-
-            CounterBatch counterBatch = new CounterBatch();
-            counterBatch.setDocuments(Collections.singletonList(documentCountersOperation));
-
-            store.operations().send(new CounterBatchOperation(counterBatch));
-
-            try (IDocumentSession session = store.openSession()) {
-                Map<String, Long> dic = session.countersFor("users/1-A").get(Arrays.asList(longCounterName, "no_such"));
-                assertThat(dic)
-                        .hasSize(1)
-                        .containsEntry(longCounterName, 5L);
-            }
-        }
-    }
-
-    @Test
     public void getCounterValue() throws Exception {
         try (IDocumentStore store = getDocumentStore()) {
             try (IDocumentSession session = store.openSession()) {
@@ -184,9 +154,11 @@ public class CountersSingleNodeTest extends RemoteTestBase {
 
             store.operations().send(new CounterBatchOperation(counterBatch));
 
-            assertThat(store.operations().send(new GetCountersOperation("users/1-A", new String[]{"likes"}))
-                    .getCounters().size())
-                    .isEqualTo(0);
+            CountersDetail countersDetail = store.operations().send(new GetCountersOperation("users/1-A", new String[]{"likes"}));
+            assertThat(countersDetail.getCounters())
+                    .hasSize(1);
+            assertThat(countersDetail.getCounters().get(0))
+                    .isNull();
 
             deleteCounter = new DocumentCountersOperation();
             deleteCounter.setDocumentId("users/2-A");
@@ -197,9 +169,11 @@ public class CountersSingleNodeTest extends RemoteTestBase {
 
             store.operations().send(new CounterBatchOperation(counterBatch));
 
-            assertThat(store.operations().send(new GetCountersOperation("users/2-A", new String[]{"likes"}))
-                    .getCounters().size())
-                    .isEqualTo(0);
+            countersDetail = store.operations().send(new GetCountersOperation("users/2-A", new String[]{"likes"}));
+            assertThat(countersDetail.getCounters())
+                    .hasSize(1);
+            assertThat(countersDetail.getCounters().get(0))
+                    .isNull();
         }
     }
 
@@ -355,9 +329,13 @@ public class CountersSingleNodeTest extends RemoteTestBase {
             batch.setDocuments(Collections.singletonList(documentCountersOperation1));
             store.operations().send(new CounterBatchOperation(batch));
 
-            assertThat(store.operations().send(new GetCountersOperation("users/1-A", new String[]{"likes"}))
-                    .getCounters())
-                    .hasSize(0);
+            CountersDetail countersDetail = store.operations()
+                    .send(new GetCountersOperation("users/1-A", new String[]{"likes"}));
+
+            assertThat(countersDetail.getCounters())
+                    .hasSize(1);
+            assertThat(countersDetail.getCounters().get(0))
+                    .isNull();
 
             documentCountersOperation1 = new DocumentCountersOperation();
             documentCountersOperation1.setDocumentId("users/1-A");
@@ -385,9 +363,12 @@ public class CountersSingleNodeTest extends RemoteTestBase {
             batch.setDocuments(Collections.singletonList(documentCountersOperation1));
             store.operations().send(new CounterBatchOperation(batch));
 
-            assertThat(store.operations().send(new GetCountersOperation("users/1-A", new String[]{"likes"}))
-                    .getCounters())
-                    .hasSize(0);
+
+            countersDetail = store.operations().send(new GetCountersOperation("users/1-A", new String[]{"likes"}));
+            assertThat(countersDetail.getCounters())
+                    .hasSize(1);
+            assertThat(countersDetail.getCounters().get(0))
+                    .isNull();
         }
     }
 

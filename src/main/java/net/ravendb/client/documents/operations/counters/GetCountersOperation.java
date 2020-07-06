@@ -90,10 +90,6 @@ public class GetCountersOperation implements IOperation<CountersDetail> {
                     .append("/counters?docId=")
                     .append(UrlUtils.escapeDataString(_docId));
 
-            if (_returnFullResults) {
-                pathBuilder.append("&full=true");
-            }
-
             HttpRequestBase request = new HttpGet();
 
             if (_counters.length > 0) {
@@ -105,6 +101,10 @@ public class GetCountersOperation implements IOperation<CountersDetail> {
                 }
             }
 
+            if (_returnFullResults && request instanceof HttpGet) { // if we dropped to Post, _returnFullResults is part of the request content
+                pathBuilder.append("&full=true");
+            }
+
             url.value = pathBuilder.toString();
 
             return request;
@@ -113,7 +113,7 @@ public class GetCountersOperation implements IOperation<CountersDetail> {
         private HttpRequestBase prepareRequestWithMultipleCounters(StringBuilder pathBuilder, HttpRequestBase request) {
             HashSet<String> uniqueNames = Sets.newHashSet(_counters);
 
-            if (uniqueNames.stream().map(x -> x.length()).reduce((a, b) -> a + b).get() < 1024) {
+            if (uniqueNames.stream().map(x -> x != null ? x.length() : 0).reduce(Integer::sum).get() < 1024) {
                 for (String uniqueName : uniqueNames) {
                     pathBuilder.append("&counter=")
                             .append(UrlUtils.escapeDataString(ObjectUtils.firstNonNull(uniqueName, "")));
@@ -136,6 +136,7 @@ public class GetCountersOperation implements IOperation<CountersDetail> {
 
                 CounterBatch batch = new CounterBatch();
                 batch.setDocuments(Collections.singletonList(docOps));
+                batch.setReplyWithAllNodesValues(_returnFullResults);
 
                 postRequest.setEntity(new ContentProviderHttpEntity(outputStream -> {
                     try (JsonGenerator generator = mapper.getFactory().createGenerator(outputStream)) {

@@ -105,19 +105,23 @@ public class SessionCountersTest extends RemoteTestBase {
                 session.saveChanges();
             }
 
-            counters = store.operations()
-                    .send(new GetCountersOperation("users/1-A", new String[]{"likes", "downloads"}))
-                    .getCounters();
+            CountersDetail countersDetail = store.operations()
+                    .send(new GetCountersOperation("users/1-A", new String[]{"likes", "downloads"}));
 
-            assertThat(counters)
-                    .hasSize(0);
+            assertThat(countersDetail.getCounters())
+                    .hasSize(2);
 
-            counters = store.operations()
-                    .send(new GetCountersOperation("users/2-A", new String[]{"votes"}))
-                    .getCounters();
+            assertThat(countersDetail.getCounters().get(0))
+                    .isNull();
+            assertThat(countersDetail.getCounters().get(1))
+                    .isNull();
 
-            assertThat(counters)
-                    .hasSize(0);
+            countersDetail = store.operations()
+                    .send(new GetCountersOperation("users/2-A", new String[] { "votes" }));
+            assertThat(countersDetail.getCounters())
+                    .hasSize(1);
+            assertThat(countersDetail.getCounters().get(0))
+                    .isNull();
         }
     }
 
