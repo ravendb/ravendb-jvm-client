@@ -7,6 +7,7 @@ import net.ravendb.client.documents.operations.counters.GetCountersOperation;
 import net.ravendb.client.documents.session.IDocumentSession;
 import net.ravendb.client.documents.session.ISessionDocumentCounters;
 import net.ravendb.client.infrastructure.entities.User;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -14,6 +15,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 public class RavenDB_15134Test extends RemoteTestBase {
 
     @Test
+    @Disabled("Waiting for RavenDB-15313")
     public void getCountersOperationShouldReturnNullForNonExistingCounter() throws Exception {
         try (IDocumentStore store = getDocumentStore()) {
             String docId = "users/1";
