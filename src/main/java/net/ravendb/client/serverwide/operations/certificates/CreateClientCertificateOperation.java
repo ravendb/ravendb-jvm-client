@@ -78,7 +78,7 @@ public class CreateClientCertificateOperation implements IServerOperation<Certif
 
         @Override
         public boolean isReadRequest() {
-            return true;
+            return false;
         }
 
         @Override
