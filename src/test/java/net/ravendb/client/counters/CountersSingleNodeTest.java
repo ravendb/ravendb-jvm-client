@@ -8,6 +8,7 @@ import net.ravendb.client.documents.session.IDocumentSession;
 import net.ravendb.client.documents.session.IMetadataDictionary;
 import net.ravendb.client.infrastructure.entities.User;
 import org.apache.commons.lang3.StringUtils;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import java.util.Arrays;
@@ -78,6 +79,7 @@ public class CountersSingleNodeTest extends RemoteTestBase {
     }
 
     @Test
+    @Disabled("waiting for RavenDB-15440")
     public void getCounterValueUsingPOST() throws Exception {
         try (IDocumentStore store = getDocumentStore()) {
             try (IDocumentSession session = store.openSession()) {
@@ -184,9 +186,11 @@ public class CountersSingleNodeTest extends RemoteTestBase {
 
             store.operations().send(new CounterBatchOperation(counterBatch));
 
-            assertThat(store.operations().send(new GetCountersOperation("users/1-A", new String[]{"likes"}))
-                    .getCounters().size())
-                    .isEqualTo(0);
+            CountersDetail countersDetail = store.operations().send(new GetCountersOperation("users/1-A", new String[]{"likes"}));
+            assertThat(countersDetail.getCounters())
+                    .hasSize(1);
+            assertThat(countersDetail.getCounters().get(0))
+                    .isNull();
 
             deleteCounter = new DocumentCountersOperation();
             deleteCounter.setDocumentId("users/2-A");
@@ -197,9 +201,11 @@ public class CountersSingleNodeTest extends RemoteTestBase {
 
             store.operations().send(new CounterBatchOperation(counterBatch));
 
-            assertThat(store.operations().send(new GetCountersOperation("users/2-A", new String[]{"likes"}))
-                    .getCounters().size())
-                    .isEqualTo(0);
+            countersDetail = store.operations().send(new GetCountersOperation("users/2-A", new String[]{"likes"}));
+            assertThat(countersDetail.getCounters())
+                    .hasSize(1);
+            assertThat(countersDetail.getCounters().get(0))
+                    .isNull();
         }
     }
 
@@ -355,9 +361,11 @@ public class CountersSingleNodeTest extends RemoteTestBase {
             batch.setDocuments(Collections.singletonList(documentCountersOperation1));
             store.operations().send(new CounterBatchOperation(batch));
 
-            assertThat(store.operations().send(new GetCountersOperation("users/1-A", new String[]{"likes"}))
-                    .getCounters())
-                    .hasSize(0);
+            CountersDetail countersDetail = store.operations().send(new GetCountersOperation("users/1-A", new String[]{"likes"}));
+            assertThat(countersDetail.getCounters())
+                    .hasSize(1);
+            assertThat(countersDetail.getCounters().get(0))
+                    .isNull();
 
             documentCountersOperation1 = new DocumentCountersOperation();
             documentCountersOperation1.setDocumentId("users/1-A");
@@ -385,9 +393,12 @@ public class CountersSingleNodeTest extends RemoteTestBase {
             batch.setDocuments(Collections.singletonList(documentCountersOperation1));
             store.operations().send(new CounterBatchOperation(batch));
 
-            assertThat(store.operations().send(new GetCountersOperation("users/1-A", new String[]{"likes"}))
-                    .getCounters())
-                    .hasSize(0);
+            countersDetail = store.operations().send(
+                    new GetCountersOperation("users/1-A", new String[]{ "likes" }));
+            assertThat(countersDetail.getCounters())
+                    .hasSize(1);
+            assertThat(countersDetail.getCounters().get(0))
+                    .isNull();
         }
     }
 

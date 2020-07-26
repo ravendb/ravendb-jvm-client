@@ -7,7 +7,7 @@ import java.util.Date;
 /**
  * Time series synchronous session operations
  */
-public interface ISessionDocumentTimeSeries extends ISessionDocumentAppendTimeSeriesBase, ISessionDocumentRemoveTimeSeriesBase {
+public interface ISessionDocumentTimeSeries extends ISessionDocumentAppendTimeSeriesBase, ISessionDocumentDeleteTimeSeriesBase {
     /**
      * Return all time series values
      * @return time series values

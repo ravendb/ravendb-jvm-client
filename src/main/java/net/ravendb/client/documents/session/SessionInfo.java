@@ -1,49 +1,65 @@
 package net.ravendb.client.documents.session;
 
+import net.ravendb.client.documents.DocumentStoreBase;
 import net.ravendb.client.http.CurrentIndexAndNode;
 import net.ravendb.client.http.LoadBalanceBehavior;
 import net.ravendb.client.http.RequestExecutor;
 import net.ravendb.client.http.ServerNode;
 import org.apache.commons.codec.digest.DigestUtils;
+import org.apache.commons.lang3.StringUtils;
 
 import java.nio.ByteBuffer;
+import java.util.function.Function;
 
 public class SessionInfo {
 
     private static final ThreadLocal<Integer> _clientSessionIdCounter = ThreadLocal.withInitial(() -> 0);
 
-    private int _clientSessionId;
+    private Integer _sessionId;
     private boolean _sessionIdUsed;
     private final int _loadBalancerContextSeed;
+    private boolean _canUseLoadBalanceBehavior;
+    private final InMemoryDocumentSessionOperations _session;
 
     private Long lastClusterTransactionIndex;
     private boolean noCaching;
 
-    public SessionInfo(String sessionKey, int loadBalancerContextSeed) {
-        this(sessionKey, loadBalancerContextSeed, null, false);
-    }
+    public SessionInfo(InMemoryDocumentSessionOperations session, SessionOptions options, DocumentStoreBase documentStore) {
+        if (documentStore == null) {
+            throw new IllegalArgumentException("DocumentStore cannot be null");
+        }
 
-    public SessionInfo(String sessionKey, int loadBalancerContextSeed, Long lastClusterTransactionIndex, boolean noCaching) {
-        setContext(sessionKey, loadBalancerContextSeed);
+        if (session == null) {
+            throw new IllegalArgumentException("Session cannot be null");
+        }
 
-        _loadBalancerContextSeed = loadBalancerContextSeed;
+        this._session = session;
+        _loadBalancerContextSeed = session._requestExecutor.getConventions().getLoadBalancerContextSeed();
+        _canUseLoadBalanceBehavior = session.getConventions().getLoadBalanceBehavior() == LoadBalanceBehavior.USE_SESSION_CONTEXT
+                && session.getConventions().getLoadBalancerPerSessionContextSelector() != null;
 
-        this.lastClusterTransactionIndex = lastClusterTransactionIndex;
-        this.noCaching = noCaching;
+        setLastClusterTransactionIndex(documentStore.getLastTransactionIndex(session.getDatabaseName()));
+        this.noCaching = options.isNoCaching();
     }
 
     public void setContext(String sessionKey) {
-        setContext(sessionKey, _loadBalancerContextSeed);
+        if (StringUtils.isBlank(sessionKey)) {
+            throw new IllegalArgumentException("Session key cannot be null or whitespace.");
+        }
+
+        setContextInternal(sessionKey);
+
+        _canUseLoadBalanceBehavior = _canUseLoadBalanceBehavior || _session.getConventions().getLoadBalanceBehavior() == LoadBalanceBehavior.USE_SESSION_CONTEXT;
     }
 
-    private void setContext(String sessionKey, int loadBalancerContextSeed) {
+    private void setContextInternal(String sessionKey) {
         if (_sessionIdUsed) {
             throw new IllegalStateException("Unable to set the session context after it has already been used. The session context can only be modified before it is utilized.");
         }
 
         if (sessionKey == null) {
             Integer v = _clientSessionIdCounter.get();
-            _clientSessionId = ++v;
+            _sessionId = ++v;
             _clientSessionIdCounter.set(v);
         } else {
 
@@ -51,10 +67,10 @@ public class SessionInfo {
             byte[] bytesToHash = ByteBuffer
                     .allocate(sessionKeyBytes.length + 4)
                     .put(sessionKeyBytes)
-                    .putInt(loadBalancerContextSeed)
+                    .putInt(_loadBalancerContextSeed)
                     .array();
             byte[] md5Bytes = DigestUtils.md5(bytesToHash);
-            _clientSessionId = ByteBuffer.wrap(md5Bytes)
+            _sessionId = ByteBuffer.wrap(md5Bytes)
                     .getInt();
         }
     }
@@ -63,8 +79,10 @@ public class SessionInfo {
         CurrentIndexAndNode result;
 
         if (requestExecutor.getConventions().getLoadBalanceBehavior() == LoadBalanceBehavior.USE_SESSION_CONTEXT) {
-            result = requestExecutor.getNodeBySessionId(_clientSessionId);
-            return result.currentNode;
+            if (_canUseLoadBalanceBehavior) {
+                result = requestExecutor.getNodeBySessionId(getSessionId());
+                return result.currentNode;
+            }
         }
 
         switch (requestExecutor.getConventions().getReadBalanceBehavior()) {
@@ -72,7 +90,7 @@ public class SessionInfo {
                 result = requestExecutor.getPreferredNode();
                 break;
             case ROUND_ROBIN:
-                result = requestExecutor.getNodeBySessionId(_clientSessionId);
+                result = requestExecutor.getNodeBySessionId(getSessionId());
                 break;
             case FASTEST_NODE:
                 result = requestExecutor.getFastestNode();
@@ -85,8 +103,21 @@ public class SessionInfo {
     }
 
     public Integer getSessionId() {
+        if (_sessionId == null) {
+            String context = null;
+            Function<String, String> selector =
+                    _session.getConventions().getLoadBalancerPerSessionContextSelector();
+            if (selector != null) {
+                context = selector.apply(_session.getDatabaseName());
+            }
+            setContextInternal(context);
+        }
         _sessionIdUsed = true;
-        return _clientSessionId;
+        return _sessionId;
+    }
+
+    public boolean canUseLoadBalanceBehavior() {
+        return this._canUseLoadBalanceBehavior;
     }
 
     public Long getLastClusterTransactionIndex() {

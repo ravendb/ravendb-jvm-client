@@ -15,7 +15,7 @@ public class TimeSeriesBatchCommandData implements ICommandData {
     private TimeSeriesOperation timeSeries;
 
     public TimeSeriesBatchCommandData(String documentId, String name, List<TimeSeriesOperation.AppendOperation> appends,
-                                      List<TimeSeriesOperation.RemoveOperation> removals) {
+                                      List<TimeSeriesOperation.DeleteOperation> deletes) {
         if (documentId == null) {
             throw new IllegalArgumentException("DocumentId cannot be null");
         }
@@ -36,9 +36,9 @@ public class TimeSeriesBatchCommandData implements ICommandData {
             }
         }
 
-        if (removals != null) {
-            for (TimeSeriesOperation.RemoveOperation removeOperation : removals) {
-                timeSeries.remove(removeOperation);
+        if (deletes != null) {
+            for (TimeSeriesOperation.DeleteOperation deleteOperation : deletes) {
+                timeSeries.delete(deleteOperation);
             }
         }
     }

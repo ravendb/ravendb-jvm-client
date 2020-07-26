@@ -88,10 +88,6 @@ public class GetCountersOperation implements IOperation<CountersDetail> {
                     .append("/counters?docId=")
                     .append(UrlUtils.escapeDataString(_docId));
 
-            if (_returnFullResults) {
-                pathBuilder.append("&full=true");
-            }
-
             HttpRequestBase request = new HttpGet();
 
             if (_counters.length > 0) {
@@ -101,6 +97,10 @@ public class GetCountersOperation implements IOperation<CountersDetail> {
                     pathBuilder.append("&counter=")
                             .append(UrlUtils.escapeDataString(_counters[0]));
                 }
+            }
+
+            if (_returnFullResults && request instanceof HttpGet) { // if we dropped to Post, _returnFullResults is part of the request content
+                pathBuilder.append("&full=true");
             }
 
             url.value = pathBuilder.toString();
@@ -138,6 +138,7 @@ public class GetCountersOperation implements IOperation<CountersDetail> {
 
                 CounterBatch batch = new CounterBatch();
                 batch.setDocuments(Collections.singletonList(docOps));
+                batch.setReplyWithAllNodesValues(_returnFullResults);
 
                 postRequest.setEntity(new ContentProviderHttpEntity(outputStream -> {
                     try (JsonGenerator generator = mapper.getFactory().createGenerator(outputStream)) {

@@ -11,6 +11,7 @@ public class ClientConfiguration {
     private Integer maxNumberOfRequestsPerSession;
     private ReadBalanceBehavior readBalanceBehavior;
     private LoadBalanceBehavior loadBalanceBehavior;
+    private Integer loadBalancerContextSeed;
 
     public long getEtag() {
         return etag;
@@ -61,5 +62,13 @@ public class ClientConfiguration {
             throw new IllegalArgumentException("Cannot set identity parts separator to '|'");
         }
         this.identityPartsSeparator = identityPartsSeparator;
+    }
+
+    public Integer getLoadBalancerContextSeed() {
+        return loadBalancerContextSeed;
+    }
+
+    public void setLoadBalancerContextSeed(Integer loadBalancerContextSeed) {
+        this.loadBalancerContextSeed = loadBalancerContextSeed;
     }
 }

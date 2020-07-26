@@ -314,6 +314,24 @@ public class DocumentConventions {
         _loadBalanceBehavior = loadBalanceBehavior;
     }
 
+    /**
+     * @return Gets the function that allow to specialize the topology
+     *  selection for a particular session. Used in load balancing
+     *  scenarios
+     */
+    public Function<String, String> getLoadBalancerPerSessionContextSelector() {
+        return _loadBalancerPerSessionContextSelector;
+    }
+
+    /**
+     * Sets the function that allow to specialize the topology
+     *  selection for a particular session. Used in load balancing
+     *  scenarios
+     * @param loadBalancerPerSessionContextSelector selector to use
+     */
+    public void setLoadBalancerPerSessionContextSelector(Function<String, String> loadBalancerPerSessionContextSelector) {
+        _loadBalancerPerSessionContextSelector = loadBalancerPerSessionContextSelector;
+    }
 
     public int getMaxHttpCacheSize() {
         return _maxHttpCacheSize;
@@ -371,25 +389,6 @@ public class DocumentConventions {
     public void setUseOptimisticConcurrency(boolean useOptimisticConcurrency) {
         assertNotFrozen();
         this._useOptimisticConcurrency = useOptimisticConcurrency;
-    }
-
-    /**
-     * @return Gets the function that allow to specialize the topology
-     *  selection for a particular session. Used in load balancing
-     *  scenarios
-     */
-    public Function<String, String> getLoadBalancerPerSessionContextSelector() {
-        return _loadBalancerPerSessionContextSelector;
-    }
-
-    /**
-     * Sets the function that allow to specialize the topology
-     *  selection for a particular session. Used in load balancing
-     *  scenarios
-     * @param loadBalancerPerSessionContextSelector selector to use
-     */
-    public void setLoadBalancerPerSessionContextSelector(Function<String, String> loadBalancerPerSessionContextSelector) {
-        _loadBalancerPerSessionContextSelector = loadBalancerPerSessionContextSelector;
     }
 
     public BiFunction<String, ObjectNode, String> getFindJavaClass() {
@@ -729,6 +728,7 @@ public class DocumentConventions {
                 _readBalanceBehavior = ObjectUtils.firstNonNull(_originalConfiguration.getReadBalanceBehavior(), _readBalanceBehavior);
                 _identityPartsSeparator = ObjectUtils.firstNonNull(_originalConfiguration.getIdentityPartsSeparator(), _identityPartsSeparator);
                 _loadBalanceBehavior = ObjectUtils.firstNonNull(_originalConfiguration.getLoadBalanceBehavior(), _loadBalanceBehavior);
+                _loadBalancerContextSeed = ObjectUtils.firstNonNull(_originalConfiguration.getLoadBalancerContextSeed(), _loadBalancerContextSeed);
 
                 _originalConfiguration = null;
                 return;
@@ -741,6 +741,7 @@ public class DocumentConventions {
                 _originalConfiguration.setReadBalanceBehavior(_readBalanceBehavior);
                 _originalConfiguration.setIdentityPartsSeparator(_identityPartsSeparator);
                 _originalConfiguration.setLoadBalanceBehavior(_loadBalanceBehavior);
+                _originalConfiguration.setLoadBalancerContextSeed(_loadBalancerContextSeed);
             }
 
             _maxNumberOfRequestsPerSession = ObjectUtils.firstNonNull(
@@ -756,6 +757,11 @@ public class DocumentConventions {
                     configuration.getLoadBalanceBehavior(),
                     _originalConfiguration.getLoadBalanceBehavior(),
                     _loadBalanceBehavior
+            );
+            _loadBalancerContextSeed = ObjectUtils.firstNonNull(
+                    configuration.getLoadBalancerContextSeed(),
+                    _originalConfiguration.getLoadBalancerContextSeed(),
+                    _loadBalancerContextSeed
             );
             _identityPartsSeparator = ObjectUtils.firstNonNull(
                     configuration.getIdentityPartsSeparator(),
@@ -813,9 +819,6 @@ public class DocumentConventions {
     }
 
     public void freeze() {
-        if (_loadBalanceBehavior == LoadBalanceBehavior.USE_SESSION_CONTEXT && _loadBalancerPerSessionContextSelector == null) {
-            throw new IllegalStateException("Cannot set LoadBalanceBehavior to USE_SESSION_CONTEXT without also providing a value for LoadBalancerPerSessionContextSelector");
-        }
         _frozen = true;
     }
 

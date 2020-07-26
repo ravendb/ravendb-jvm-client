@@ -10,7 +10,7 @@ import java.util.*;
 public class TimeSeriesOperation {
 
     private TreeSet<AppendOperation> _appends;
-    private List<RemoveOperation> _removals;
+    private List<DeleteOperation> _deletes;
     private String name;
 
     public String getName() {
@@ -41,11 +41,11 @@ public class TimeSeriesOperation {
         } else {
             generator.writeNull();
         }
-        generator.writeFieldName("Removals");
-        if (_removals != null) {
+        generator.writeFieldName("Deletes");
+        if (_deletes != null) {
             generator.writeStartArray();
-            for (RemoveOperation removal : _removals) {
-                removal.serialize(generator, conventions);
+            for (DeleteOperation delete : _deletes) {
+                delete.serialize(generator, conventions);
             }
             generator.writeEndArray();
         } else {
@@ -71,11 +71,11 @@ public class TimeSeriesOperation {
         }
     }
 
-    public void remove(RemoveOperation removeOperation) {
-        if (_removals == null) {
-            _removals = new ArrayList<>();
+    public void delete(DeleteOperation deleteOperation) {
+        if (_deletes == null) {
+            _deletes = new ArrayList<>();
         }
-        _removals.add(removeOperation);
+        _deletes.add(deleteOperation);
     }
 
     public static class AppendOperation {
@@ -140,14 +140,14 @@ public class TimeSeriesOperation {
         }
     }
 
-    public static class RemoveOperation {
+    public static class DeleteOperation {
         private Date from;
         private Date to;
 
-        public RemoveOperation() {
+        public DeleteOperation() {
         }
 
-        public RemoveOperation(Date from, Date to) {
+        public DeleteOperation(Date from, Date to) {
             this.from = from;
             this.to = to;
         }

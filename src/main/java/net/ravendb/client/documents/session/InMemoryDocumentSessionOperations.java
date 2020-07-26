@@ -366,7 +366,6 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
         }
 
         Function<String, String> contextSelector = documentStore.getConventions().getLoadBalancerPerSessionContextSelector();
-        String sessionKey = contextSelector != null ? contextSelector.apply(databaseName) : null;
 
         this._documentStore = documentStore;
         this._requestExecutor = ObjectUtils.firstNonNull(options.getRequestExecutor(), documentStore.getRequestExecutor(databaseName));
@@ -378,8 +377,7 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
         this.generateEntityIdOnTheClient = new GenerateEntityIdOnTheClient(_requestExecutor.getConventions(), this::generateId);
         this.entityToJson = new EntityToJson(this);
 
-        sessionInfo = new SessionInfo(sessionKey, documentStore.getConventions().getLoadBalancerContextSeed(),
-                documentStore.getLastTransactionIndex(getDatabaseName()), options.isNoCaching());
+        sessionInfo = new SessionInfo(this, options, _documentStore);
         transactionMode = options.getTransactionMode();
     }
 

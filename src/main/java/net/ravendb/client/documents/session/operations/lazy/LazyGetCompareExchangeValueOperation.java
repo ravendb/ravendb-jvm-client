@@ -89,6 +89,17 @@ public class LazyGetCompareExchangeValueOperation<T> implements ILazyOperation {
             if (response.getResult() != null) {
                 CompareExchangeValue<ObjectNode> value =
                         CompareExchangeValueResultParser.getValue(ObjectNode.class, response.getResult(), false, _conventions);
+
+                if (_clusterSession.getSession().noTracking) {
+                    if (value == null) {
+                        result = _clusterSession.registerMissingCompareExchangeValue(_key).getValue(_clazz, _conventions);
+                        return;
+                    }
+
+                    result = _clusterSession.registerCompareExchangeValue(value).getValue(_clazz, _conventions);
+                    return;
+                }
+
                 if (value != null) {
                     _clusterSession.registerCompareExchangeValue(value);
                 }

@@ -34,9 +34,4 @@ public class SessionDocumentTimeSeries extends SessionTimeSeriesBase
     public TimeSeriesEntry[] get(Date from, Date to, int start, int pageSize) {
         return getInternal(from, to, start, pageSize);
     }
-
-
-
-
-
 }

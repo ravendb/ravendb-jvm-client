@@ -224,7 +224,7 @@ public class ClusterModesForRequestExecutorTest extends ClusterTestBase {
                             for (int sessionId = 0; sessionId < 5; sessionId++) {
                                 requestExecutor.getCache().clear(); // make sure we do not use request cache
                                 RavenCommand<DatabaseStatistics> command = new GetStatisticsOperation().getCommand(new DocumentConventions());
-                                requestExecutor.execute(command, new SessionInfo(null, 0));
+                                requestExecutor.execute(command);
                             }
                         }
                     }

@@ -2,6 +2,7 @@ package net.ravendb.client.documents.operations.configuration;
 
 import net.ravendb.client.RemoteTestBase;
 import net.ravendb.client.documents.IDocumentStore;
+import net.ravendb.client.http.LoadBalanceBehavior;
 import net.ravendb.client.http.ReadBalanceBehavior;
 import net.ravendb.client.serverwide.operations.configuration.GetServerWideClientConfigurationOperation;
 import net.ravendb.client.serverwide.operations.configuration.PutServerWideClientConfigurationOperation;
@@ -19,6 +20,8 @@ public class ClientConfigurationTest extends RemoteTestBase {
             configurationToSave.setMaxNumberOfRequestsPerSession(80);
             configurationToSave.setReadBalanceBehavior(ReadBalanceBehavior.FASTEST_NODE);
             configurationToSave.setDisabled(true);
+            configurationToSave.setLoadBalanceBehavior(LoadBalanceBehavior.NONE);
+            configurationToSave.setLoadBalancerContextSeed(0);
 
             PutServerWideClientConfigurationOperation saveOperation = new PutServerWideClientConfigurationOperation(configurationToSave);
 
@@ -35,6 +38,12 @@ public class ClientConfigurationTest extends RemoteTestBase {
 
             assertThat(newConfiguration.getMaxNumberOfRequestsPerSession())
                     .isEqualTo(80);
+
+            assertThat(newConfiguration.getLoadBalancerContextSeed())
+                    .isEqualTo(0);
+
+            assertThat(newConfiguration.getLoadBalanceBehavior())
+                    .isEqualTo(LoadBalanceBehavior.NONE);
 
             assertThat(newConfiguration.getReadBalanceBehavior())
                     .isEqualTo(ReadBalanceBehavior.FASTEST_NODE);

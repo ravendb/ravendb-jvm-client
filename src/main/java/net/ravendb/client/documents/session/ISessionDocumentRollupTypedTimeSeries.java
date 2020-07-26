@@ -6,7 +6,7 @@ import java.util.Date;
 
 public interface ISessionDocumentRollupTypedTimeSeries<TValues>
         extends ISessionDocumentRollupTypedAppendTimeSeriesBase<TValues>,
-        ISessionDocumentRemoveTimeSeriesBase {
+        ISessionDocumentDeleteTimeSeriesBase {
     TypedTimeSeriesRollupEntry<TValues>[] get();
     TypedTimeSeriesRollupEntry<TValues>[] get(Date from, Date to);
     TypedTimeSeriesRollupEntry<TValues>[] get(Date from, Date to, int start);

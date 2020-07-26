@@ -178,7 +178,8 @@ public class TimeSeriesConfigurationTest extends RemoteTestBase {
                             new TimeSeriesPolicy("By364DaysFor5Years", TimeValue.ofDays(364), TimeValue.ofYears(5))
                     ));
 
-            store.maintenance().send(new ConfigureTimeSeriesOperation(config3));
+            assertThatThrownBy(() -> store.maintenance().send(new ConfigureTimeSeriesOperation(config3)))
+                    .hasMessageContaining("The aggregation time of the policy 'By364DaysFor5Years' (364 days) must be divided by the aggregation time of 'By27DaysFor1Year' (27 days) without a remainder");
         }
     }
 
@@ -187,7 +188,7 @@ public class TimeSeriesConfigurationTest extends RemoteTestBase {
         try (IDocumentStore store = getDocumentStore()) {
             TimeSeriesPolicy p1 = new TimeSeriesPolicy("BySecond", TimeValue.ofSeconds(1));
             TimeSeriesPolicy p2 = new TimeSeriesPolicy("By2Seconds", TimeValue.ofSeconds(2));
-            TimeSeriesPolicy p3 = new TimeSeriesPolicy("By3Seconds", TimeValue.ofSeconds(3));
+            TimeSeriesPolicy p3 = new TimeSeriesPolicy("By4Seconds", TimeValue.ofSeconds(4));
 
             TimeSeriesCollectionConfiguration collectionConfig = new TimeSeriesCollectionConfiguration();
             collectionConfig.setPolicies(Arrays.asList(p1, p2, p3));
@@ -209,7 +210,7 @@ public class TimeSeriesConfigurationTest extends RemoteTestBase {
 
                 for (int i = 0; i < 100; i++) {
                     session.timeSeriesFor("users/karmel", "Heartrate")
-                            .append(DateUtils.addMilliseconds(baseLine, 300 * i), 29.0 * i, "watches/fitbit");
+                            .append(DateUtils.addMilliseconds(baseLine, 400 * i), 29.0 * i, "watches/fitbit");
                 }
 
                 session.saveChanges();
@@ -229,7 +230,7 @@ public class TimeSeriesConfigurationTest extends RemoteTestBase {
                 long ts1Millis = ts1.get(ts1.size() - 1).getTimestamp().getTime() - ts1.get(0).getTimestamp().getTime();
 
                 assertThat(ts1Millis)
-                        .isEqualTo(tsMillis - 700);
+                        .isEqualTo(tsMillis - 600);
 
                 List<TimeSeriesEntry> ts2 = Arrays.asList(session.timeSeriesFor("users/karmel", p2.getTimeSeriesName("Heartrate"))
                         .get());
@@ -239,7 +240,7 @@ public class TimeSeriesConfigurationTest extends RemoteTestBase {
                 List<TimeSeriesEntry> ts3 = Arrays.asList(session.timeSeriesFor("users/karmel", p3.getTimeSeriesName("Heartrate"))
                         .get());
                 assertThat(ts3)
-                        .hasSize(ts1.size() / 3);
+                        .hasSize(ts1.size() / 4);
             }
         }
     }

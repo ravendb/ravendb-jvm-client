@@ -8,6 +8,7 @@ import net.ravendb.client.documents.indexes.IndexDefinition;
 import net.ravendb.client.documents.operations.*;
 import net.ravendb.client.documents.operations.indexes.PutIndexesOperation;
 import net.ravendb.client.documents.session.IDocumentSession;
+import org.assertj.core.data.Offset;
 import org.junit.jupiter.api.Test;
 
 import java.util.Arrays;
@@ -130,8 +131,8 @@ public class AdvancedPatchingTest extends RemoteTestBase {
 
             try (IDocumentSession session = store.openSession()) {
                 ObjectNode jsonDocument = session.load(ObjectNode.class, "NewItem/3");
-                assertThat(jsonDocument.get("copiedValue").asText())
-                        .isEqualTo("1");
+                assertThat(jsonDocument.get("copiedValue").doubleValue())
+                        .isEqualTo(1.0, Offset.offset(0.0001));
             }
         }
     }

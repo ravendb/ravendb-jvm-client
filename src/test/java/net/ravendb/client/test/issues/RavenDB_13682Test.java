@@ -8,11 +8,13 @@ import net.ravendb.client.documents.queries.spatial.PointField;
 import net.ravendb.client.documents.session.IDocumentQuery;
 import net.ravendb.client.documents.session.IDocumentSession;
 import net.ravendb.client.documents.session.IMetadataDictionary;
+import net.ravendb.client.documents.smuggler.DatabaseItemType;
 import net.ravendb.client.infrastructure.CreateSampleDataOperation;
 import net.ravendb.client.infrastructure.entities.Order;
 import org.assertj.core.data.Offset;
 import org.junit.jupiter.api.Test;
 
+import java.util.EnumSet;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -151,7 +153,7 @@ public class RavenDB_13682Test extends RemoteTestBase {
     @Test
     public void canUseDynamicQueryOrderBySpatial_WithAlias() throws Exception {
         try (IDocumentStore store = getDocumentStore()) {
-            store.maintenance().send(new CreateSampleDataOperation());
+            store.maintenance().send(new CreateSampleDataOperation(EnumSet.of(DatabaseItemType.DOCUMENTS, DatabaseItemType.INDEXES)));
 
             try (IDocumentSession s = store.openSession()) {
                 Order d = s.advanced().rawQuery(Order.class, "from Orders  as a\n" +

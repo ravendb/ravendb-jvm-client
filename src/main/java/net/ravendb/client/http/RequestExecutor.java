@@ -435,9 +435,8 @@ public class RequestExecutor implements CleanCloseable {
         }
 
         if (conventions.getLoadBalanceBehavior() == LoadBalanceBehavior.USE_SESSION_CONTEXT) {
-            Integer id = sessionInfo != null ? sessionInfo.getSessionId() : null;
-            if (id != null) {
-                return _nodeSelector.getNodeBySessionId(id);
+            if (sessionInfo != null && sessionInfo.canUseLoadBalanceBehavior()) {
+                return _nodeSelector.getNodeBySessionId(sessionInfo.getSessionId());
             }
         }
 

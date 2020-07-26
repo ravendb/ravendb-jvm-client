@@ -8,7 +8,6 @@ import net.ravendb.client.documents.session.ISessionDocumentTimeSeries;
 import net.ravendb.client.documents.session.InMemoryDocumentSessionOperations;
 import net.ravendb.client.documents.session.timeSeries.TimeSeriesEntry;
 import net.ravendb.client.infrastructure.entities.User;
-import net.ravendb.client.primitives.NetISO8601Utils;
 import net.ravendb.client.primitives.TimeValue;
 import org.apache.commons.lang3.time.DateUtils;
 import org.junit.jupiter.api.Test;
@@ -79,6 +78,86 @@ public class TimeSeriesSessionTest extends RemoteTestBase {
     }
 
     @Test
+    public void timeSeriesShouldBeCaseInsensitiveAndKeepOriginalCasing() throws Exception {
+        try (IDocumentStore store = getDocumentStore()) {
+            Date baseLine = DateUtils.truncate(new Date(), Calendar.DAY_OF_MONTH);
+
+            try (IDocumentSession session = store.openSession()) {
+                User user = new User();
+                user.setName("Oren");
+                session.store(user, "users/ayende");
+
+                session.timeSeriesFor("users/ayende", "Heartrate")
+                        .append(DateUtils.addMinutes(baseLine, 1), 59, "watches/fitbit");
+
+                session.saveChanges();
+            }
+
+            try (IDocumentSession session = store.openSession()) {
+                session.timeSeriesFor("users/ayende", "HeartRate")
+                        .append(DateUtils.addMinutes(baseLine, 2), 60, "watches/fitbit");
+
+                session.saveChanges();
+            }
+
+            try (IDocumentSession session = store.openSession()) {
+                User user = session.load(User.class, "users/ayende");
+                TimeSeriesEntry[] val = session.timeSeriesFor("users/ayende", "heartrate")
+                        .get();
+
+                assertThat(val[0].getValues())
+                        .isEqualTo(new double[] { 59 });
+                assertThat(val[0].getTag())
+                        .isEqualTo("watches/fitbit");
+                assertThat(val[0].getTimestamp())
+                        .isEqualTo(DateUtils.addMinutes(baseLine, 1));
+
+                assertThat(val[1].getValues())
+                        .isEqualTo(new double[] { 60 });
+                assertThat(val[1].getTag())
+                        .isEqualTo("watches/fitbit");
+                assertThat(val[1].getTimestamp())
+                        .isEqualTo(DateUtils.addMinutes(baseLine, 2));
+
+                assertThat(session.advanced().getTimeSeriesFor(user))
+                        .containsOnly("Heartrate");
+            }
+
+            try (IDocumentSession session = store.openSession()) {
+                session.timeSeriesFor("users/ayende", "HeartRatE")
+                        .delete();
+                session.saveChanges();
+            }
+
+            try (IDocumentSession session = store.openSession()) {
+                session.timeSeriesFor("users/ayende", "HeArtRate")
+                        .append(DateUtils.addMinutes(baseLine, 3), 61, "watches/fitbit");
+                session.saveChanges();
+            }
+
+            try (IDocumentSession session = store.openSession()) {
+                User user = session.load(User.class, "users/ayende");
+                TimeSeriesEntry[] vals = session.timeSeriesFor("users/ayende", "heartrate")
+                        .get();
+                assertThat(vals)
+                        .hasSize(1);
+
+                TimeSeriesEntry val = vals[0];
+
+                assertThat(val.getValues())
+                        .isEqualTo(new double[] { 61 });
+                assertThat(val.getTag())
+                        .isEqualTo("watches/fitbit");
+                assertThat(val.getTimestamp())
+                        .isEqualTo(DateUtils.addMinutes(baseLine, 3));
+
+                assertThat(session.advanced().getTimeSeriesFor(user))
+                        .containsOnly("HeArtRate");
+            }
+        }
+    }
+
+    @Test
     public void canDeleteTimestamp() throws Exception {
         try (IDocumentStore store = getDocumentStore()) {
             Date baseLine = DateUtils.truncate(new Date(), Calendar.DAY_OF_MONTH);
@@ -101,7 +180,7 @@ public class TimeSeriesSessionTest extends RemoteTestBase {
                 user.setName("Oren");
                 session.store(user, "users/ayende");
                 session.timeSeriesFor("users/ayende", "Heartrate")
-                        .remove(DateUtils.addMinutes(baseLine, 2));
+                        .delete(DateUtils.addMinutes(baseLine, 2));
 
                 session.saveChanges();
             }
@@ -431,59 +510,6 @@ public class TimeSeriesSessionTest extends RemoteTestBase {
 
                     offset += 4;
                 }
-            }
-        }
-    }
-
-    @Test
-    public void sessionGetShouldIncludeValuesFromRollUpsInResult() throws Exception {
-        try (IDocumentStore store = getDocumentStore()) {
-            RawTimeSeriesPolicy raw = new RawTimeSeriesPolicy(TimeValue.ofHours(24));
-
-            TimeSeriesPolicy p1 = new TimeSeriesPolicy("By6Hours", TimeValue.ofHours(6), TimeValue.ofSeconds(raw.getRetentionTime().getValue() * 4));
-            TimeSeriesPolicy p2 = new TimeSeriesPolicy("By1Day", TimeValue.ofDays(1), TimeValue.ofSeconds(raw.getRetentionTime().getValue() * 5));
-            TimeSeriesPolicy p3 = new TimeSeriesPolicy("By30Minutes", TimeValue.ofMinutes(30), TimeValue.ofSeconds(raw.getRetentionTime().getValue() * 2));
-            TimeSeriesPolicy p4 = new TimeSeriesPolicy("By1Hour", TimeValue.ofMinutes(60), TimeValue.ofSeconds(raw.getRetentionTime().getValue() * 3));
-
-            TimeSeriesCollectionConfiguration seriesCollectionConfiguration = new TimeSeriesCollectionConfiguration();
-            seriesCollectionConfiguration.setRawPolicy(raw);
-            seriesCollectionConfiguration.setPolicies(Arrays.asList(p1, p2, p3, p4));
-
-            Map<String, TimeSeriesCollectionConfiguration> collectionsConfig = new HashMap<>();
-            collectionsConfig.put("Users", seriesCollectionConfiguration);
-
-            TimeSeriesConfiguration config = new TimeSeriesConfiguration();
-            config.setCollections(collectionsConfig);
-            config.setPolicyCheckFrequency(Duration.ofSeconds(1));
-
-            store.maintenance().send(new ConfigureTimeSeriesOperation(config));
-
-
-            Date now = DateUtils.truncate(new Date(), Calendar.DAY_OF_MONTH);
-            Date baseline = DateUtils.addDays(now, -12);
-
-            long total = Duration.ofDays(12).getSeconds() / 60;
-
-            try (IDocumentSession session = store.openSession()) {
-                User user = new User();
-                user.setName("Karmel");
-                session.store(user, "users/karmel");
-
-                for (long i = 0; i <= total; i++) {
-                    session.timeSeriesFor("users/karmel", "Heartrate")
-                            .append(DateUtils.addMinutes(baseline, (int)i), i, "watches/fitbit");
-                }
-
-                session.saveChanges();
-            }
-
-
-            try (IDocumentSession session = store.openSession()) {
-                List<TimeSeriesEntry> result = Arrays.asList(session.timeSeriesFor("users/karmel", "Heartrate")
-                        .get());
-
-                assertThat(result.size())
-                        .isPositive();
             }
         }
     }
@@ -911,7 +937,7 @@ public class TimeSeriesSessionTest extends RemoteTestBase {
                         .hasSize(100);
 
                 // null From, To
-                tsf.remove();
+                tsf.delete();
                 session.saveChanges();
             }
 
@@ -929,7 +955,7 @@ public class TimeSeriesSessionTest extends RemoteTestBase {
                         .hasSize(100);
 
                 // null to
-                tsf.remove(DateUtils.addMinutes(baseLine, 50), null);
+                tsf.delete(DateUtils.addMinutes(baseLine, 50), null);
                 session.saveChanges();
             }
 
@@ -948,7 +974,7 @@ public class TimeSeriesSessionTest extends RemoteTestBase {
                         .hasSize(100);
 
                 // null from
-                tsf.remove(null, DateUtils.addMinutes(baseLine, 19));
+                tsf.delete(null, DateUtils.addMinutes(baseLine, 19));
                 session.saveChanges();
             }
 

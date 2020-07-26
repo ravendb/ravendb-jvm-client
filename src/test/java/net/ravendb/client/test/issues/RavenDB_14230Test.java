@@ -6,6 +6,7 @@ import net.ravendb.client.documents.changes.*;
 import net.ravendb.client.documents.session.IDocumentSession;
 import net.ravendb.client.infrastructure.entities.User;
 import net.ravendb.client.primitives.CleanCloseable;
+import org.apache.commons.lang3.time.DateUtils;
 import org.eclipse.jetty.util.BlockingArrayQueue;
 import org.junit.jupiter.api.Test;
 
@@ -13,6 +14,7 @@ import java.util.Date;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.TimeUnit;
 
+import static org.assertj.core.api.Assertions.as;
 import static org.assertj.core.api.Assertions.assertThat;
 
 public class RavenDB_14230Test extends RemoteTestBase {
@@ -35,9 +37,11 @@ public class RavenDB_14230Test extends RemoteTestBase {
                     session.saveChanges();
                 }
 
+                Date date = new Date();
+
                 try (IDocumentSession session = store.openSession()) {
                     session.timeSeriesFor("users/1", "Likes")
-                            .append(new Date(), 33);
+                            .append(date, 33);
                     session.saveChanges();
                 }
 
@@ -51,12 +55,18 @@ public class RavenDB_14230Test extends RemoteTestBase {
                         .isEqualTo(TimeSeriesChangeTypes.PUT);
                 assertThat(timeSeriesChange.getName())
                         .isEqualTo("Likes");
+                assertThat(timeSeriesChange.getFrom())
+                        .isEqualTo(date);
+                assertThat(timeSeriesChange.getTo())
+                        .isEqualTo(date);
                 assertThat(timeSeriesChange.getChangeVector())
                         .isNotNull();
 
+                date = new Date();
+
                 try (IDocumentSession session = store.openSession()) {
                     session.timeSeriesFor("users/1", "Likes")
-                            .append(new Date(), 22);
+                            .append(date, 22);
                     session.saveChanges();
                 }
 
@@ -72,6 +82,10 @@ public class RavenDB_14230Test extends RemoteTestBase {
                         .isEqualTo("Likes");
                 assertThat(timeSeriesChange.getChangeVector())
                         .isNotNull();
+                assertThat(timeSeriesChange.getFrom())
+                        .isEqualTo(date);
+                assertThat(timeSeriesChange.getTo())
+                        .isEqualTo(date);
             }
         }
     }
@@ -94,13 +108,17 @@ public class RavenDB_14230Test extends RemoteTestBase {
                     session.saveChanges();
                 }
 
+                Date date = new Date();
+
                 try (IDocumentSession session = store.openSession()) {
                     session.timeSeriesFor("users/1", "Likes")
-                            .append(new Date(), 33);
+                            .append(date, 33);
+                    session.timeSeriesFor("users/1", "Likes")
+                            .append(DateUtils.addMinutes(date, 1), 22);
                     session.saveChanges();
                 }
 
-                TimeSeriesChange timeSeriesChange = changesList.poll(1, TimeUnit.SECONDS);
+                TimeSeriesChange timeSeriesChange = changesList.poll(3, TimeUnit.SECONDS);
                 assertThat(timeSeriesChange)
                         .isNotNull();
 
@@ -112,14 +130,18 @@ public class RavenDB_14230Test extends RemoteTestBase {
                         .isEqualTo("Likes");
                 assertThat(timeSeriesChange.getChangeVector())
                         .isNotNull();
+                assertThat(timeSeriesChange.getFrom())
+                        .isEqualTo(date);
+                assertThat(timeSeriesChange.getTo())
+                        .isEqualTo(DateUtils.addMinutes(date, 1));
 
                 try (IDocumentSession session = store.openSession()) {
                     session.timeSeriesFor("users/1", "Likes")
-                            .remove(null, null);
+                            .delete(date, date);
                     session.saveChanges();
                 }
 
-                timeSeriesChange = changesList.poll(1, TimeUnit.SECONDS);
+                timeSeriesChange = changesList.poll(3, TimeUnit.SECONDS);
                 assertThat(timeSeriesChange)
                         .isNotNull();
 
@@ -131,6 +153,33 @@ public class RavenDB_14230Test extends RemoteTestBase {
                         .isEqualTo("Likes");
                 assertThat(timeSeriesChange.getChangeVector())
                         .isNotNull();
+                assertThat(timeSeriesChange.getFrom())
+                        .isEqualTo(date);
+                assertThat(timeSeriesChange.getTo())
+                        .isEqualTo(date);
+
+                try (IDocumentSession session = store.openSession()) {
+                    session.timeSeriesFor("users/1", "Likes")
+                            .delete();
+                    session.saveChanges();
+                }
+
+                timeSeriesChange = changesList.poll(3, TimeUnit.SECONDS);
+                assertThat(timeSeriesChange)
+                        .isNotNull();
+
+                assertThat(timeSeriesChange.getDocumentId())
+                        .isEqualTo("users/1");
+                assertThat(timeSeriesChange.getType())
+                        .isEqualTo(TimeSeriesChangeTypes.DELETE);
+                assertThat(timeSeriesChange.getName())
+                        .isEqualTo("Likes");
+                assertThat(timeSeriesChange.getChangeVector())
+                        .isNotNull();
+                assertThat(timeSeriesChange.getFrom())
+                        .isNull();
+                assertThat(timeSeriesChange.getTo())
+                        .isNull();
             }
         }
     }

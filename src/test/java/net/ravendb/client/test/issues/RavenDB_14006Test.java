@@ -12,11 +12,10 @@ import net.ravendb.client.infrastructure.orders.Address;
 import net.ravendb.client.infrastructure.orders.Company;
 import net.ravendb.client.infrastructure.orders.Employee;
 import net.ravendb.client.primitives.Reference;
+import org.checkerframework.checker.units.qual.A;
 import org.junit.jupiter.api.Test;
 
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -162,6 +161,123 @@ public class RavenDB_14006Test extends RemoteTestBase {
 
                 assertThat(session.advanced().getNumberOfRequests())
                         .isEqualTo(numberOfRequests + 4);
+            }
+        }
+    }
+
+    @Test
+    public void compareExchangeValueTrackingInSession_NoTracking() throws Exception {
+        try (IDocumentStore store = getDocumentStore()) {
+            Company company = new Company();
+            company.setId("companies/1");
+            company.setExternalId("companies/cf");
+            company.setName("CF");
+
+            SessionOptions sessionOptions = new SessionOptions();
+            sessionOptions.setTransactionMode(TransactionMode.CLUSTER_WIDE);
+
+            try (IDocumentSession session = store.openSession(sessionOptions)) {
+                session.store(company);
+
+                Address address = new Address();
+                address.setCity("Torun");
+                session.advanced().clusterTransaction().createCompareExchangeValue(company.getExternalId(), address);
+                session.saveChanges();
+            }
+
+            SessionOptions sessionOptionsNoTracking = new SessionOptions();
+            sessionOptionsNoTracking.setNoTracking(true);
+            sessionOptionsNoTracking.setTransactionMode(TransactionMode.CLUSTER_WIDE);
+
+            try (IDocumentSession session = store.openSession(sessionOptionsNoTracking)) {
+                int numberOfRequests = session.advanced().getNumberOfRequests();
+                CompareExchangeValue<Address> value1 =
+                        session.advanced().clusterTransaction().getCompareExchangeValue(
+                                Address.class, company.getExternalId());
+
+                assertThat(session.advanced().getNumberOfRequests())
+                        .isEqualTo(numberOfRequests + 1);
+
+                CompareExchangeValue<Address> value2 =
+                        session.advanced().clusterTransaction().getCompareExchangeValue(
+                                Address.class, company.getExternalId());
+
+                assertThat(session.advanced().getNumberOfRequests())
+                        .isEqualTo(numberOfRequests + 2);
+
+                assertThat(value2)
+                        .isNotSameAs(value1);
+
+                CompareExchangeValue<Address> value3 =
+                        session.advanced().clusterTransaction().getCompareExchangeValue(
+                                Address.class, company.getExternalId());
+
+                assertThat(session.advanced().getNumberOfRequests())
+                        .isEqualTo(numberOfRequests + 3);
+                assertThat(value3)
+                        .isNotSameAs(value2);
+            }
+
+            try (IDocumentSession session = store.openSession(sessionOptionsNoTracking)) {
+                int numberOfRequests = session.advanced().getNumberOfRequests();
+
+                Map<String, CompareExchangeValue<Address>> value1 =
+                        session.advanced().clusterTransaction()
+                                .getCompareExchangeValues(Address.class, company.getExternalId());
+
+                assertThat(session.advanced().getNumberOfRequests())
+                        .isEqualTo(numberOfRequests + 1);
+
+                Map<String, CompareExchangeValue<Address>> value2 =
+                        session.advanced().clusterTransaction()
+                                .getCompareExchangeValues(Address.class, company.getExternalId());
+
+                assertThat(session.advanced().getNumberOfRequests())
+                        .isEqualTo(numberOfRequests + 2);
+
+                assertThat(value2.get(company.getExternalId()))
+                        .isNotSameAs(value1.get(company.getExternalId()));
+
+                Map<String, CompareExchangeValue<Address>> value3 =
+                        session.advanced().clusterTransaction()
+                                .getCompareExchangeValues(Address.class, company.getExternalId());
+
+                assertThat(session.advanced().getNumberOfRequests())
+                        .isEqualTo(numberOfRequests + 3);
+
+                assertThat(value3.get(company.getExternalId()))
+                        .isNotSameAs(value2.get(company.getExternalId()));
+            }
+
+            try (IDocumentSession session = store.openSession(sessionOptionsNoTracking)) {
+                int numberOfRequests = session.advanced().getNumberOfRequests();
+
+                Map<String, CompareExchangeValue<Address>> value1 =
+                        session.advanced().clusterTransaction()
+                                .getCompareExchangeValues(Address.class, new String[] { company.getExternalId() });
+
+                assertThat(session.advanced().getNumberOfRequests())
+                        .isEqualTo(numberOfRequests + 1);
+
+                Map<String, CompareExchangeValue<Address>> value2 =
+                        session.advanced().clusterTransaction()
+                                .getCompareExchangeValues(Address.class, new String[] { company.getExternalId() });
+
+                assertThat(session.advanced().getNumberOfRequests())
+                        .isEqualTo(numberOfRequests + 2);
+
+                assertThat(value2.get(company.getExternalId()))
+                        .isNotSameAs(value1.get(company.getExternalId()));
+
+                Map<String, CompareExchangeValue<Address>> value3 =
+                        session.advanced().clusterTransaction()
+                                .getCompareExchangeValues(Address.class, new String[] { company.getExternalId() });
+
+                assertThat(session.advanced().getNumberOfRequests())
+                        .isEqualTo(numberOfRequests + 3);
+
+                assertThat(value3.get(company.getExternalId()))
+                        .isNotSameAs(value2.get(company.getExternalId()));
             }
         }
     }
@@ -647,6 +763,59 @@ public class RavenDB_14006Test extends RemoteTestBase {
                 value1 = session.advanced().clusterTransaction().getCompareExchangeValue(Address.class, companies.get(0).getExternalId());
                 assertThat(value1.getValue().getCity())
                         .isEqualTo("Bydgoszcz");
+            }
+        }
+    }
+
+    @Test
+    public void compareExchangeValueTrackingInSessionStartsWith() throws Exception {
+        try (IDocumentStore store = getDocumentStore()) {
+            List<String> allCompanies = new ArrayList<>();
+
+            SessionOptions sessionOptions = new SessionOptions();
+            sessionOptions.setTransactionMode(TransactionMode.CLUSTER_WIDE);
+
+            try (IDocumentSession session = store.openSession(sessionOptions)) {
+                for (int i = 0; i < 10; i++) {
+                    Company company = new Company();
+                    company.setId("companies/" + i);
+                    company.setExternalId("companies/hr");
+                    company.setName("HR");
+
+                    allCompanies.add(company.getId());
+                    session.advanced().clusterTransaction().createCompareExchangeValue(company.getId(), company);
+                }
+
+                session.saveChanges();
+            }
+
+            try (IDocumentSession session = store.openSession(sessionOptions)) {
+                Map<String, CompareExchangeValue<Company>> results =
+                        session.advanced().clusterTransaction().getCompareExchangeValues(Company.class, "comp");
+
+                assertThat(results)
+                        .hasSize(10);
+                assertThat(results.values().stream().allMatch(Objects::nonNull))
+                        .isTrue();
+                assertThat(session.advanced().getNumberOfRequests())
+                        .isEqualTo(1);
+
+                results = session.advanced().clusterTransaction().getCompareExchangeValues(Company.class, allCompanies.toArray(new String[0]));
+
+                assertThat(results)
+                        .hasSize(10);
+                assertThat(results.values().stream().allMatch(Objects::nonNull));
+                assertThat(session.advanced().getNumberOfRequests())
+                        .isEqualTo(1);
+
+                for (String companyId : allCompanies) {
+                    CompareExchangeValue<Company> result =
+                            session.advanced().clusterTransaction().getCompareExchangeValue(Company.class, companyId);
+                    assertThat(result.getValue())
+                            .isNotNull();
+                    assertThat(session.advanced().getNumberOfRequests())
+                            .isEqualTo(1);
+                }
             }
         }
     }

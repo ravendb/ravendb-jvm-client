@@ -10,10 +10,9 @@ import net.ravendb.client.documents.commands.batches.TimeSeriesBatchCommandData;
 import net.ravendb.client.documents.operations.timeSeries.*;
 import net.ravendb.client.documents.session.timeSeries.TimeSeriesEntry;
 import net.ravendb.client.primitives.DatesComparator;
-import net.ravendb.client.primitives.NetISO8601Utils;
 import net.ravendb.client.primitives.Reference;
+import org.apache.commons.collections4.ListUtils;
 import org.apache.commons.lang3.ArrayUtils;
-import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.StringUtils;
 
 import java.util.*;
@@ -92,31 +91,31 @@ public class SessionTimeSeriesBase {
         }
     }
 
-    public void remove() {
-        remove(null, null);
+    public void delete() {
+        delete(null, null);
     }
 
-    public void remove(Date at) {
-        remove(at, at);
+    public void delete(Date at) {
+        delete(at, at);
     }
 
-    public void remove(Date from, Date to) {
+    public void delete(Date from, Date to) {
         DocumentInfo documentInfo = session.documentsById.getValue(docId);
         if (documentInfo != null && session.deletedEntities.contains(documentInfo.getEntity())) {
             throwDocumentAlreadyDeletedInSession(docId, name);
         }
 
-        TimeSeriesOperation.RemoveOperation op = new TimeSeriesOperation.RemoveOperation(from, to);
+        TimeSeriesOperation.DeleteOperation op = new TimeSeriesOperation.DeleteOperation(from, to);
 
         ICommandData command = session.deferredCommandsMap.get(IdTypeAndName.create(docId, CommandType.TIME_SERIES, name));
         if (command != null) {
             TimeSeriesBatchCommandData tsCmd = (TimeSeriesBatchCommandData) command;
 
-            tsCmd.getTimeSeries().remove(op);
+            tsCmd.getTimeSeries().delete(op);
         } else {
-            List<TimeSeriesOperation.RemoveOperation> removals = new ArrayList<>();
-            removals.add(op);
-            session.defer(new TimeSeriesBatchCommandData(docId, name, null, removals));
+            List<TimeSeriesOperation.DeleteOperation> deletes = new ArrayList<>();
+            deletes.add(op);
+            session.defer(new TimeSeriesBatchCommandData(docId, name, null, deletes));
         }
     }
 
@@ -179,8 +178,9 @@ public class SessionTimeSeriesBase {
             JsonNode metadataTimeSeriesRaw = document.getMetadata().get(Constants.Documents.Metadata.TIME_SERIES);
             if (metadataTimeSeriesRaw != null && metadataTimeSeriesRaw.isArray()) {
                 ArrayNode metadataTimeSeries = (ArrayNode) metadataTimeSeriesRaw;
-                String[] timeSeries = session.mapper.convertValue(metadataTimeSeries, String[].class);
-                if (!ArrayUtils.contains(timeSeries, name)) {
+                List<String> timeSeries = session.mapper.convertValue(metadataTimeSeries,
+                        session.mapper.getTypeFactory().constructCollectionType(List.class, String.class));
+                if (timeSeries.stream().noneMatch(name::equalsIgnoreCase)) {
                     // the document is loaded in the session, but the metadata says that there is no such timeseries
                     return new TimeSeriesEntry[0];
                 }

@@ -5,11 +5,13 @@ import net.ravendb.client.RemoteTestBase;
 import net.ravendb.client.documents.IDocumentStore;
 import net.ravendb.client.documents.session.IDocumentSession;
 import net.ravendb.client.documents.session.IRawDocumentQuery;
+import net.ravendb.client.documents.smuggler.DatabaseItemType;
 import net.ravendb.client.infrastructure.CreateSampleDataOperation;
 import net.ravendb.client.infrastructure.graph.Movie;
 import org.junit.jupiter.api.Test;
 
 import java.time.Duration;
+import java.util.EnumSet;
 import java.util.List;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
@@ -62,7 +64,8 @@ public class BasicGraphQueriesTest extends RemoteTestBase {
         }
 
         try (IDocumentStore store = getDocumentStore()) {
-            store.maintenance().send(new CreateSampleDataOperation());
+            store.maintenance().send(
+                    new CreateSampleDataOperation(EnumSet.of(DatabaseItemType.DOCUMENTS, DatabaseItemType.INDEXES)));
 
             if (mutate != null) {
                 mutate.accept(store);

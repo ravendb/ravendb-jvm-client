@@ -6,7 +6,7 @@ import java.util.Date;
 
 public interface ISessionDocumentTypedTimeSeries<TValues> extends
         ISessionDocumentTypedAppendTimeSeriesBase<TValues>,
-        ISessionDocumentRemoveTimeSeriesBase {
+        ISessionDocumentDeleteTimeSeriesBase {
 
     /**
      * Return the time series values for the provided range

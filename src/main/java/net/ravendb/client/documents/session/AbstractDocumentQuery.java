@@ -1535,7 +1535,7 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
 
     private String ensureValidFieldName(String fieldName, boolean isNestedPath) {
         if (theSession == null || theSession.getConventions() == null || isNestedPath || isGroupBy) {
-            return QueryFieldUtil.escapeIfNecessary(fieldName);
+            return QueryFieldUtil.escapeIfNecessary(fieldName, isNestedPath);
         }
 
         for (Class rootType : rootTypes) {

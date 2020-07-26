@@ -24,4 +24,19 @@ public class ClusterTransactionOperations extends ClusterTransactionOperationsBa
     public <T> Map<String, CompareExchangeValue<T>> getCompareExchangeValues(Class<T> clazz, String[] keys) {
         return getCompareExchangeValuesInternal(clazz, keys);
     }
+
+    @Override
+    public <T> Map<String, CompareExchangeValue<T>> getCompareExchangeValues(Class<T> clazz, String startsWith) {
+        return getCompareExchangeValues(clazz, startsWith, 0, 25);
+    }
+
+    @Override
+    public <T> Map<String, CompareExchangeValue<T>> getCompareExchangeValues(Class<T> clazz, String startsWith, int start) {
+        return getCompareExchangeValues(clazz, startsWith, start, 25);
+    }
+
+    @Override
+    public <T> Map<String, CompareExchangeValue<T>> getCompareExchangeValues(Class<T> clazz, String startsWith, int start, int pageSize) {
+        return getCompareExchangeValuesInternal(clazz, startsWith, start, pageSize);
+    }
 }

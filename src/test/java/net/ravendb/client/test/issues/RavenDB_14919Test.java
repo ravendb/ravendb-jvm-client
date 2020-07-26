@@ -50,6 +50,20 @@ public class RavenDB_14919Test extends RemoteTestBase {
 
             assertThat(vals.getCounters().get(vals.getCounters().size() - 1))
                     .isNull();
+
+            // test with returnFullResults = true
+            vals = store.operations().send(new GetCountersOperation(docId, counterNames, true));
+
+            assertThat(vals.getCounters())
+                    .hasSize(101);
+
+            for (int i = 0; i < 100; i++) {
+                assertThat(vals.getCounters().get(i).getCounterValues())
+                        .hasSize(1);
+            }
+
+            assertThat(vals.getCounters().get(vals.getCounters().size() - 1))
+                    .isNull();
         }
     }
 
@@ -80,6 +94,19 @@ public class RavenDB_14919Test extends RemoteTestBase {
             for (int i = 0; i < 1000; i++) {
                 assertThat(vals.getCounters().get(i).getTotalValue())
                         .isEqualTo(1);
+            }
+
+            assertThat(vals.getCounters().get(vals.getCounters().size() - 1))
+                    .isNull();
+
+            // test with returnFullResults = true
+            vals = store.operations().send(new GetCountersOperation(docId, counterNames, true));
+            assertThat(vals.getCounters())
+                    .hasSize(1001);
+
+            for (int i = 0; i < 1000; i++) {
+                assertThat(vals.getCounters().get(i).getCounterValues())
+                        .hasSize(1);
             }
 
             assertThat(vals.getCounters().get(vals.getCounters().size() - 1))

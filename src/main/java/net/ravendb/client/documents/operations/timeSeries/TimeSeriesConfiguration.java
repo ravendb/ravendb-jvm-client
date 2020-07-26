@@ -73,6 +73,24 @@ public class TimeSeriesConfiguration {
     }
 
     private void internalPostJsonDeserialization() {
+        populateNamedValues();
+        populatePolicies();
+    }
+
+    private void populatePolicies() {
+        if (collections == null) {
+            return;
+        }
+
+        TreeMap<String, TimeSeriesCollectionConfiguration> dic = new TreeMap<>(String::compareToIgnoreCase);
+        for (Map.Entry<String, TimeSeriesCollectionConfiguration> kvp : collections.entrySet()) {
+            dic.put(kvp.getKey(), kvp.getValue());
+        }
+
+        collections = dic;
+    }
+
+    private void populateNamedValues() {
         if (namedValues == null) {
             return;
         }

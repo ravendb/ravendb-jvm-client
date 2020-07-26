@@ -105,7 +105,7 @@ public class TimeSeriesBulkInsertTest extends RemoteTestBase {
                 session.store(user, documentId);
 
                 session.timeSeriesFor(documentId, "Heartrate")
-                        .remove(DateUtils.addMinutes(baseLine, 2));
+                        .delete(DateUtils.addMinutes(baseLine, 2));
                 session.saveChanges();
             }
 

@@ -24,6 +24,10 @@ public abstract class ClusterTransactionOperationsBase {
         this.session = session;
     }
 
+    public DocumentSession getSession() {
+        return session;
+    }
+
     public boolean isTracked(String key) {
         Reference<CompareExchangeSessionValue> ref = new Reference<>();
         return tryGetCompareExchangeValueFromSession(key, ref);
@@ -127,6 +131,32 @@ public abstract class ClusterTransactionOperationsBase {
         return results;
     }
 
+    protected <T> Map<String, CompareExchangeValue<T>> getCompareExchangeValuesInternal(Class<T> clazz, String startsWith, int start, int pageSize) {
+        session.incrementRequestCount();
+
+        Map<String, CompareExchangeValue<ObjectNode>> values = session.getOperations().send(
+                new GetCompareExchangeValuesOperation<ObjectNode>(ObjectNode.class, startsWith, start, pageSize), session.getSessionInfo());
+
+        Map<String, CompareExchangeValue<T>> results = new HashMap<>();
+
+        for (Map.Entry<String, CompareExchangeValue<ObjectNode>> keyValue : values.entrySet()) {
+
+            String key = keyValue.getKey();
+            CompareExchangeValue<ObjectNode> value = keyValue.getValue();
+
+            if (value == null) {
+                registerMissingCompareExchangeValue(key);
+                results.put(key, null);
+                continue;
+            }
+
+            CompareExchangeSessionValue sessionValue = registerCompareExchangeValue(value);
+            results.put(key, sessionValue.getValue(clazz, session.getConventions()));
+        }
+
+        return results;
+    }
+
     public <T> CompareExchangeValue<T> getCompareExchangeValueFromSessionInternal(Class<T> clazz, String key, Reference<Boolean> notTracked) {
         Reference<CompareExchangeSessionValue> sessionValueReference = new Reference<>();
         if (tryGetCompareExchangeValueFromSession(key, sessionValueReference)) {
@@ -164,12 +194,14 @@ public abstract class ClusterTransactionOperationsBase {
         return results;
     }
 
-    public void registerMissingCompareExchangeValue(String key) {
+    public CompareExchangeSessionValue registerMissingCompareExchangeValue(String key) {
+        CompareExchangeSessionValue value = new CompareExchangeSessionValue(key, -1, CompareExchangeValueState.MISSING);
         if (session.noTracking) {
-            return;
+            return value;
         }
 
-        _state.put(key, new CompareExchangeSessionValue(key, -1, CompareExchangeValueState.MISSING));
+        _state.put(key, value);
+        return value;
     }
 
     public void registerCompareExchangeValues(ObjectNode values) {
@@ -190,6 +222,10 @@ public abstract class ClusterTransactionOperationsBase {
     }
 
     public CompareExchangeSessionValue registerCompareExchangeValue(CompareExchangeValue<ObjectNode> value) {
+        if (session.noTracking) {
+            return new CompareExchangeSessionValue(value);
+        }
+
         CompareExchangeSessionValue sessionValue = _state.get(value.getKey());
 
         if (sessionValue == null) {

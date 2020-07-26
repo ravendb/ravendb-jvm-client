@@ -5,18 +5,24 @@ import net.ravendb.client.RemoteTestBase;
 import net.ravendb.client.documents.DocumentStore;
 import net.ravendb.client.documents.IDocumentStore;
 import net.ravendb.client.documents.commands.GetRevisionsBinEntryCommand;
+import net.ravendb.client.documents.operations.revisions.ConfigureRevisionsOperation;
+import net.ravendb.client.documents.operations.revisions.RevisionsCollectionConfiguration;
+import net.ravendb.client.documents.operations.revisions.RevisionsConfiguration;
 import net.ravendb.client.documents.session.IDocumentSession;
+import net.ravendb.client.exceptions.RavenException;
 import net.ravendb.client.infrastructure.entities.Company;
 import net.ravendb.client.infrastructure.entities.User;
 import net.ravendb.client.json.JsonArrayResult;
 import net.ravendb.client.json.MetadataAsDictionary;
 import org.junit.jupiter.api.Test;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 public class RevisionsTest extends RemoteTestBase {
     @Test
@@ -142,6 +148,102 @@ public class RevisionsTest extends RemoteTestBase {
                 assertThat(session.advanced().revisions().get(User.class, "NotExistsChangeVector"))
                         .isNull();
             }
+        }
+    }
+
+    @Test
+    public void collectionCaseSensitiveTest1() throws Exception {
+        try (IDocumentStore store = getDocumentStore()) {
+            String id = "user/1";
+            RevisionsConfiguration configuration = new RevisionsConfiguration();
+
+            RevisionsCollectionConfiguration collectionConfiguration = new RevisionsCollectionConfiguration();
+            collectionConfiguration.setDisabled(false);
+
+            configuration.setCollections(new HashMap<>());
+            configuration.getCollections().put("uSErs", collectionConfiguration);
+
+            store.maintenance().send(new ConfigureRevisionsOperation(configuration));
+
+            try (IDocumentSession session = store.openSession()) {
+                User user = new User();
+                user.setName("raven");
+                session.store(user, id);
+                session.saveChanges();
+            }
+
+            for (int i = 0; i < 10; i++) {
+                try (IDocumentSession session = store.openSession()) {
+                    Company user = session.load(Company.class, id);
+                    user.setName("raven " + i);
+                    session.saveChanges();
+                }
+            }
+
+            try (IDocumentSession session = store.openSession()) {
+                List<MetadataAsDictionary> revisionsMetadata = session.advanced().revisions().getMetadataFor(id);
+                assertThat(revisionsMetadata)
+                        .hasSize(11);
+            }
+        }
+    }
+
+    @Test
+    public void collectionCaseSensitiveTest2() throws Exception {
+        try (IDocumentStore store = getDocumentStore()) {
+            String id = "uSEr/1";
+            RevisionsConfiguration configuration = new RevisionsConfiguration();
+
+            RevisionsCollectionConfiguration collectionConfiguration = new RevisionsCollectionConfiguration();
+            collectionConfiguration.setDisabled(false);
+
+            configuration.setCollections(new HashMap<>());
+            configuration.getCollections().put("users", collectionConfiguration);
+
+            store.maintenance().send(new ConfigureRevisionsOperation(configuration));
+
+            try (IDocumentSession session = store.openSession()) {
+                User user = new User();
+                user.setName("raven");
+                session.store(user, id);
+                session.saveChanges();
+            }
+
+            for (int i = 0; i < 10; i++) {
+                try (IDocumentSession session = store.openSession()) {
+                    Company user = session.load(Company.class, id);
+                    user.setName("raven " + i);
+                    session.saveChanges();
+                }
+            }
+
+            try (IDocumentSession session = store.openSession()) {
+                List<MetadataAsDictionary> revisionsMetadata = session.advanced().revisions().getMetadataFor(id);
+                assertThat(revisionsMetadata)
+                        .hasSize(11);
+            }
+        }
+    }
+
+    @Test
+    public void collectionCaseSensitiveTest3() throws Exception {
+        try (IDocumentStore store = getDocumentStore()) {
+            RevisionsConfiguration configuration = new RevisionsConfiguration();
+
+            RevisionsCollectionConfiguration c1 = new RevisionsCollectionConfiguration();
+            c1.setDisabled(false);
+
+            RevisionsCollectionConfiguration c2 = new RevisionsCollectionConfiguration();
+            c2.setDisabled(false);
+
+            configuration.setCollections(new HashMap<>());
+            configuration.getCollections().put("users", c1);
+            configuration.getCollections().put("USERS", c2);
+
+            assertThatThrownBy(() -> {
+                store.maintenance().send(new ConfigureRevisionsOperation(configuration));
+            })
+                    .isInstanceOf(RavenException.class);
         }
     }
 }

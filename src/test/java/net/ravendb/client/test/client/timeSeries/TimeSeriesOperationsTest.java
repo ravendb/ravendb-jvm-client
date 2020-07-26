@@ -185,7 +185,7 @@ public class TimeSeriesOperationsTest extends RemoteTestBase {
                     .hasSize(5);
 
             timeSeriesOp = new TimeSeriesOperation("Heartrate");
-            timeSeriesOp.remove(new TimeSeriesOperation.RemoveOperation(DateUtils.addSeconds(baseLine, 2), DateUtils.addSeconds(baseLine, 3)));
+            timeSeriesOp.delete(new TimeSeriesOperation.DeleteOperation(DateUtils.addSeconds(baseLine, 2), DateUtils.addSeconds(baseLine, 3)));
 
             timeSeriesBatch = new TimeSeriesBatchOperation(documentId, timeSeriesOp);
 
@@ -238,7 +238,7 @@ public class TimeSeriesOperationsTest extends RemoteTestBase {
                 user.setName("Oren");
                 session.store(user, documentId);
                 session.timeSeriesFor(documentId, "Heartrate")
-                        .remove(DateUtils.addMinutes(baseLine, 2));
+                        .delete(DateUtils.addMinutes(baseLine, 2));
 
                 session.saveChanges();
             }
@@ -339,7 +339,7 @@ public class TimeSeriesOperationsTest extends RemoteTestBase {
 
             try (IDocumentSession session = store.openSession()) {
                 ISessionDocumentTimeSeries tsf = session.timeSeriesFor("foo/bar", "BloodPressure");
-                tsf.remove(DateUtils.addSeconds(baseLine, 3600), DateUtils.addSeconds(baseLine, 3600 * 10)); // remove 9 hours
+                tsf.delete(DateUtils.addSeconds(baseLine, 3600), DateUtils.addSeconds(baseLine, 3600 * 10)); // remove 9 hours
                 session.saveChanges();
             }
 
@@ -431,7 +431,7 @@ public class TimeSeriesOperationsTest extends RemoteTestBase {
             timeSeriesOp.append(new TimeSeriesOperation.AppendOperation(DateUtils.addSeconds(baseline, 5), new double[] { 62.5 }, "watches/fitbit"));
             timeSeriesOp.append(new TimeSeriesOperation.AppendOperation(DateUtils.addSeconds(baseline, 6), new double[] { 62 }, "watches/fitbit"));
 
-            timeSeriesOp.remove(new TimeSeriesOperation.RemoveOperation(DateUtils.addSeconds(baseline, 2), DateUtils.addSeconds(baseline, 3)));
+            timeSeriesOp.delete(new TimeSeriesOperation.DeleteOperation(DateUtils.addSeconds(baseline, 2), DateUtils.addSeconds(baseline, 3)));
 
             timeSeriesBatch = new TimeSeriesBatchOperation(documentId, timeSeriesOp);
 
@@ -925,7 +925,7 @@ public class TimeSeriesOperationsTest extends RemoteTestBase {
 
             TimeSeriesOperation deleteOp = new TimeSeriesOperation();
             deleteOp.setName("Heartrate");
-            deleteOp.remove(new TimeSeriesOperation.RemoveOperation());
+            deleteOp.delete(new TimeSeriesOperation.DeleteOperation());
 
             store.operations().send(new TimeSeriesBatchOperation(docId, deleteOp));
 
@@ -942,7 +942,7 @@ public class TimeSeriesOperationsTest extends RemoteTestBase {
 
             deleteOp = new TimeSeriesOperation();
             deleteOp.setName("BloodPressure");
-            deleteOp.remove(new TimeSeriesOperation.RemoveOperation(DateUtils.addMinutes(baseLine, 50), null));
+            deleteOp.delete(new TimeSeriesOperation.DeleteOperation(DateUtils.addMinutes(baseLine, 50), null));
 
             store.operations().send(new TimeSeriesBatchOperation(docId, deleteOp));
 
@@ -957,92 +957,13 @@ public class TimeSeriesOperationsTest extends RemoteTestBase {
             // null From
             deleteOp = new TimeSeriesOperation();
             deleteOp.setName("BodyTemperature");
-            deleteOp.remove(new TimeSeriesOperation.RemoveOperation(null, DateUtils.addMinutes(baseLine, 19)));
+            deleteOp.delete(new TimeSeriesOperation.DeleteOperation(null, DateUtils.addMinutes(baseLine, 19)));
 
             store.operations().send(new TimeSeriesBatchOperation(docId, deleteOp));
 
             get = store.operations().send(new GetTimeSeriesOperation(docId, "BodyTemperature"));
             assertThat(get.getEntries())
                     .hasSize(80);
-        }
-    }
-
-    @Test
-    public void getOperationShouldIncludeValuesFromRollUpsInResult() throws Exception {
-        try (IDocumentStore store = getDocumentStore()) {
-            RawTimeSeriesPolicy raw = new RawTimeSeriesPolicy(TimeValue.ofHours(24));
-
-            int rawRetentionSeconds = raw.getRetentionTime().getValue();
-
-            TimeSeriesPolicy p1 = new TimeSeriesPolicy("By6Hours", TimeValue.ofHours(6), TimeValue.ofSeconds(rawRetentionSeconds * 4));
-            TimeSeriesPolicy p2 = new TimeSeriesPolicy("By1Day", TimeValue.ofDays(1), TimeValue.ofSeconds(rawRetentionSeconds * 5));
-            TimeSeriesPolicy p3 = new TimeSeriesPolicy("By30Minutes", TimeValue.ofMinutes(30), TimeValue.ofSeconds(rawRetentionSeconds * 2));
-            TimeSeriesPolicy p4 = new TimeSeriesPolicy("By1Hour", TimeValue.ofMinutes(60), TimeValue.ofSeconds(rawRetentionSeconds * 3));
-
-            TimeSeriesConfiguration config = new TimeSeriesConfiguration();
-            Map<String, TimeSeriesCollectionConfiguration> collections = new HashMap<>();
-            config.setCollections(collections);
-
-            TimeSeriesCollectionConfiguration usersConfig = new TimeSeriesCollectionConfiguration();
-            usersConfig.setRawPolicy(raw);
-            usersConfig.setPolicies(Arrays.asList(p1, p2, p3, p4));
-
-            collections.put("Users", usersConfig);
-
-            config.setPolicyCheckFrequency(Duration.ofSeconds(1));
-            store.maintenance().send(new ConfigureTimeSeriesOperation(config));
-
-            // please notice we don't modify server time here!
-
-            Date now = new Date();
-            Date baseline = DateUtils.addDays(now, -12);
-
-            int total = (int) Duration.ofDays(12).get(ChronoUnit.SECONDS) / 60;
-
-            try (IDocumentSession session = store.openSession()) {
-                User user = new User();
-                user.setName("Karmel");
-                session.store(user, "users/karmel");
-
-                for (int i = 0; i <= total; i++) {
-                    session.timeSeriesFor("users/karmel", "Heartrate")
-                            .append(DateUtils.addMinutes(baseline, i), i, "watches/fitbit");
-                }
-
-                session.saveChanges();
-            }
-
-            Thread.sleep(1500); // wait for rollup
-
-            try (IDocumentSession session = store.openSession()) {
-                IRawDocumentQuery<TimeSeriesRawResult> query = session.advanced().rawQuery(TimeSeriesRawResult.class, "declare timeseries out()\n" +
-                        "{\n" +
-                        "    from Heartrate\n" +
-                        "    between $start and $end\n" +
-                        "}\n" +
-                        "from Users as u\n" +
-                        "select out()")
-                        .addParameter("start", DateUtils.addDays(baseline, -1))
-                        .addParameter("end", DateUtils.addDays(now, 1));
-
-                TimeSeriesRawResult result = query.single();
-
-                assertThat(result.getResults().length)
-                        .isPositive();
-
-                for (TimeSeriesEntry res : result.getResults()) {
-
-                    if (res.isRollup()) {
-                        assertThat(res.getValues().length)
-                                .isPositive();
-                        assertThat(res.getValues()[0])
-                                .isPositive();
-                    } else {
-                        assertThat(res.getValues())
-                                .hasSize(1);
-                    }
-                }
-            }
         }
     }
 }
