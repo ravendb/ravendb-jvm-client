@@ -7,6 +7,7 @@ import net.ravendb.client.documents.operations.GetStatisticsOperation;
 import net.ravendb.client.documents.operations.IndexInformation;
 import net.ravendb.client.documents.session.IDocumentSession;
 import net.ravendb.client.documents.session.ISessionDocumentTimeSeries;
+import net.ravendb.client.documents.smuggler.DatabaseItemType;
 import net.ravendb.client.http.RequestExecutor;
 import net.ravendb.client.infrastructure.CreateSampleDataOperation;
 import net.ravendb.client.infrastructure.entities.User;
@@ -14,6 +15,7 @@ import org.apache.commons.lang3.time.DateUtils;
 import org.junit.jupiter.api.Test;
 
 import java.util.Date;
+import java.util.EnumSet;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -25,7 +27,14 @@ public class GetStatisticsCommandTest extends RemoteTestBase {
 
             RequestExecutor executor = store.getRequestExecutor();
 
-            CreateSampleDataOperation sampleData = new CreateSampleDataOperation();
+            CreateSampleDataOperation sampleData =
+                    new CreateSampleDataOperation(
+                            EnumSet.of(
+                                    DatabaseItemType.DOCUMENTS,
+                                    DatabaseItemType.INDEXES,
+                                    DatabaseItemType.ATTACHMENTS,
+                                    DatabaseItemType.REVISION_DOCUMENTS
+                            ));
             store.maintenance().send(sampleData);
 
             waitForIndexing(store, store.getDatabase(), null);

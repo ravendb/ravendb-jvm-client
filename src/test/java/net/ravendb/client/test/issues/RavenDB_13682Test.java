@@ -176,7 +176,8 @@ public class RavenDB_13682Test extends RemoteTestBase {
     @Test
     public void canGetDistanceFromSpatialQuery() throws Exception {
         try (IDocumentStore store = getDocumentStore()) {
-            store.maintenance().send(new CreateSampleDataOperation());
+            store.maintenance().send(new CreateSampleDataOperation(
+                    EnumSet.of(DatabaseItemType.DOCUMENTS, DatabaseItemType.INDEXES)));
 
             waitForIndexing(store);
 
