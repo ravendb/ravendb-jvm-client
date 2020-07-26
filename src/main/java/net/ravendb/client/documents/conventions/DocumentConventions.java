@@ -667,6 +667,7 @@ public class DocumentConventions {
         cloned._useOptimisticConcurrency = _useOptimisticConcurrency;
         cloned._throwIfQueryPageSizeIsNotSet = _throwIfQueryPageSizeIsNotSet;
         cloned._maxNumberOfRequestsPerSession = _maxNumberOfRequestsPerSession;
+        cloned._loadBalancerPerSessionContextSelector = _loadBalancerPerSessionContextSelector;
         cloned._readBalanceBehavior = _readBalanceBehavior;
         cloned._loadBalanceBehavior = _loadBalanceBehavior;
         cloned._maxHttpCacheSize = _maxHttpCacheSize;

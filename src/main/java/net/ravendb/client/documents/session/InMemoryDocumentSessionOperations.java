@@ -365,8 +365,6 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
             throwNoDatabase();
         }
 
-        Function<String, String> contextSelector = documentStore.getConventions().getLoadBalancerPerSessionContextSelector();
-
         this._documentStore = documentStore;
         this._requestExecutor = ObjectUtils.firstNonNull(options.getRequestExecutor(), documentStore.getRequestExecutor(databaseName));
 
