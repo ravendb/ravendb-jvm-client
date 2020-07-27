@@ -75,12 +75,11 @@ public class GetTermsOperation implements IMaintenanceOperation<String[]> {
             url.value = node.getUrl() + "/databases/" + node.getDatabase()
                     + "/indexes/terms?name=" + UrlUtils.escapeDataString(_indexName)
                     + "&field=" + UrlUtils.escapeDataString(_field)
-                    + "&fromValue=" + ObjectUtils.firstNonNull(_fromValue, "")
-                    + "&pageSize=" + ObjectUtils.firstNonNull(_pageSize, "");
+                    + "&fromValue=" + (_fromValue != null ? _fromValue : "")
+                    + "&pageSize=" + (_pageSize != null ? _pageSize : "");
 
             return new HttpGet();
         }
-
 
         @Override
         public void setResponse(String response, boolean fromCache) throws IOException {

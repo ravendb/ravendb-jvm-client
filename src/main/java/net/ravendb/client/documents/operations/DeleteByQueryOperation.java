@@ -64,7 +64,7 @@ public class DeleteByQueryOperation implements IOperation<OperationIdResult> {
                     .append(node.getDatabase())
                     .append("/queries")
                     .append("?allowStale=")
-                    .append(ObjectUtils.firstNonNull(_options.isAllowStale(), ""));
+                    .append(_options.isAllowStale());
 
             if (_options.getMaxOpsPerSecond() != null) {
                 path.append("&maxOpsPerSec=")
@@ -73,7 +73,7 @@ public class DeleteByQueryOperation implements IOperation<OperationIdResult> {
 
             path
                 .append("&details=")
-                .append(ObjectUtils.firstNonNull(_options.isRetrieveDetails(), ""));
+                .append(_options.isRetrieveDetails());
 
             if (_options.getStaleTimeout() != null) {
                 path.append("&staleTimeout=")

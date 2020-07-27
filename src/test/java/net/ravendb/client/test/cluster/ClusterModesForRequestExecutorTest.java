@@ -64,7 +64,11 @@ public class ClusterModesForRequestExecutorTest extends ClusterTestBase {
                         serverNode.setClusterTag("A");
                         serverNode.setDatabase(databaseName);
                         serverNode.setUrl(initialLeader.getUrl());
-                        leaderRequestExecutor.updateTopologyAsync(serverNode, 5000, true).get();
+
+                        UpdateTopologyParameters updateTopologyParameters = new UpdateTopologyParameters(serverNode);
+                        updateTopologyParameters.setTimeoutInMs(5000);
+                        updateTopologyParameters.setForceUpdate(true);
+                        leaderRequestExecutor.updateTopologyAsync(updateTopologyParameters).get();
 
                         //wait until all nodes in database cluster are members (and not promotables)
                         //GetDatabaseTopologyCommand -> does not retrieve promotables
@@ -160,7 +164,10 @@ public class ClusterModesForRequestExecutorTest extends ClusterTestBase {
                         serverNode.setClusterTag("A");
                         serverNode.setDatabase(databaseName);
                         serverNode.setUrl(initialLeader.getUrl());
-                        leaderRequestExecutor.updateTopologyAsync(serverNode, 5000, true).get();
+                        UpdateTopologyParameters updateTopologyParameters = new UpdateTopologyParameters(serverNode);
+                        updateTopologyParameters.setTimeoutInMs(5000);
+                        updateTopologyParameters.setForceUpdate(true);
+                        leaderRequestExecutor.updateTopologyAsync(updateTopologyParameters).get();
 
                         //wait until all nodes in database cluster are members (and not promotables)
                         //GetDatabaseTopologyCommand -> does not retrieve promotables

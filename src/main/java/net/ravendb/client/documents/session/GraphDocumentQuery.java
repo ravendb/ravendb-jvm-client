@@ -116,9 +116,9 @@ public class GraphDocumentQuery<T> extends AbstractDocumentQuery<T, GraphDocumen
         return this;
     }
 
+    @SuppressWarnings("unchecked")
     @Override
     public <TOther> IGraphDocumentQuery<T> with(Class<TOther> clazz, String alias, String rawQuery) {
-        //noinspection unchecked
         return withInternal(clazz, alias, (AbstractDocumentQuery<TOther, ?>) getSession().advanced().rawQuery(clazz, rawQuery));
     }
 
