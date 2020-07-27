@@ -9,6 +9,7 @@ import net.ravendb.client.documents.session.ILazyClusterTransactionOperations;
 import java.util.Map;
 import java.util.function.Consumer;
 
+@SuppressWarnings("unchecked")
 public class LazyClusterTransactionOperations extends ClusterTransactionOperationsBase implements ILazyClusterTransactionOperations {
 
     public LazyClusterTransactionOperations(DocumentSession session) {

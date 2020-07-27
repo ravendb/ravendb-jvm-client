@@ -54,6 +54,7 @@ public class CompareExchangeValueResultParser<T> {
         return values.values().iterator().next();
     }
 
+    @SuppressWarnings("unchecked")
     public static <T> CompareExchangeValue<T> getSingleValue(Class<T> clazz, ObjectNode item, boolean materializeMetadata, DocumentConventions conventions) {
         if (item == null || item.isNull()) {
             return null;

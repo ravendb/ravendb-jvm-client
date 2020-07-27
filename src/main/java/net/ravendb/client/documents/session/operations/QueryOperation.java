@@ -106,6 +106,7 @@ public class QueryOperation {
         return _session.getDocumentStore().disableAggressiveCaching(_session.getDatabaseName());
     }
 
+    @SuppressWarnings("unchecked")
     public <T> T[] completeAsArray(Class<T> clazz) {
         QueryResult queryResult = _currentQueryResults.createSnapshot();
 

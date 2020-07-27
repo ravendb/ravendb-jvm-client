@@ -16,6 +16,7 @@ public class TimeSeriesAggregationResult extends TimeSeriesQueryResult {
         this.results = results;
     }
 
+    @SuppressWarnings("unchecked")
     public <T> TypedTimeSeriesAggregationResult<T> asTypedResult(Class<T> clazz) {
         TypedTimeSeriesAggregationResult<T> result = new TypedTimeSeriesAggregationResult<>();
         result.setCount(getCount());

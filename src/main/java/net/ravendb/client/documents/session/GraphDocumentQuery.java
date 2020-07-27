@@ -13,6 +13,7 @@ import java.util.Map;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
+@SuppressWarnings("unchecked")
 public class GraphDocumentQuery<T> extends AbstractDocumentQuery<T, GraphDocumentQuery<T>> implements IGraphDocumentQuery<T> {
 
     public GraphDocumentQuery(Class<T> clazz, InMemoryDocumentSessionOperations session, String graphQuery) {

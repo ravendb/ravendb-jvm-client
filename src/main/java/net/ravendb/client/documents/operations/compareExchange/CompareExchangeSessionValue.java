@@ -40,13 +40,13 @@ public class CompareExchangeSessionValue {
         }
     }
 
+    @SuppressWarnings("unchecked")
     public <T> CompareExchangeValue<T> getValue(Class<T> clazz, DocumentConventions conventions) {
         switch (_state) {
             case NONE:
             case CREATED:
                 if (_value instanceof CompareExchangeValue) {
-                    CompareExchangeValue<T> v = (CompareExchangeValue<T>) _value;
-                    return v;
+                    return (CompareExchangeValue<T>) _value;
                 }
 
                 if (_value != null) {

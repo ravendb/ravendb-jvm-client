@@ -18,6 +18,7 @@ public class TimeSeriesRawResult extends TimeSeriesQueryResult {
         this.results = results;
     }
 
+    @SuppressWarnings("unchecked")
     public <T> TypedTimeSeriesRawResult<T> asTypedResult(Class<T> clazz) {
         TypedTimeSeriesRawResult<T> result = new TypedTimeSeriesRawResult<>();
         result.setCount(getCount());

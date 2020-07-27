@@ -35,6 +35,7 @@ public class SessionDocumentTypedTimeSeries<T> extends SessionTimeSeriesBase imp
         return get(from, to, start, Integer.MAX_VALUE);
     }
 
+    @SuppressWarnings("unchecked")
     @Override
     public TypedTimeSeriesEntry<T>[] get(Date from, Date to, int start, int pageSize) {
         return Arrays.stream(getInternal(from, to, start, pageSize))
@@ -47,6 +48,7 @@ public class SessionDocumentTypedTimeSeries<T> extends SessionTimeSeriesBase imp
         append(timestamp, entry, null);
     }
 
+    @SuppressWarnings("unchecked")
     @Override
     public void append(Date timestamp, T entry, String tag) {
         double[] values = TimeSeriesValuesHelper.getValues((Class<T>)entry.getClass(), entry);

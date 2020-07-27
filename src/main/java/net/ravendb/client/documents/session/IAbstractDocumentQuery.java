@@ -357,6 +357,7 @@ public interface IAbstractDocumentQuery<T> {
      * Order the results by the specified fields
      * The field is the name of the field to sort using sorterName.
      * @param field Field to use
+     * @param sorterName Sorter name
      */
     void _orderBy(String field, String sorterName);
 

@@ -82,6 +82,7 @@ public class GenerateEntityIdOnTheClient {
      * Tries to set the identity property
      * @param entity Entity
      * @param id Id to set
+     * @param isProjection Is projection
      */
     public void trySetIdentity(Object entity, String id, boolean isProjection) {
         trySetIdentityInternal(entity, id, isProjection);

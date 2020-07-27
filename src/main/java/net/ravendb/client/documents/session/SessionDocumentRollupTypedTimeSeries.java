@@ -36,6 +36,7 @@ public class SessionDocumentRollupTypedTimeSeries<T> extends SessionTimeSeriesBa
         return get(from, to, start, Integer.MAX_VALUE);
     }
 
+    @SuppressWarnings("unchecked")
     @Override
     public TypedTimeSeriesRollupEntry<T>[] get(Date from, Date to, int start, int pageSize) {
         TimeSeriesEntry[] results = getInternal(from, to, start, pageSize);

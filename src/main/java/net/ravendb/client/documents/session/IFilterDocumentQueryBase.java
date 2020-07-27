@@ -53,6 +53,7 @@ public interface IFilterDocumentQueryBase<T, TSelf extends IDocumentQueryBase<T,
 
     /**
      * Negate the next operation
+     * @return Query instance
      */
     TSelf negateNext();
 
