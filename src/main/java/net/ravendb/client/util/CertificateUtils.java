@@ -44,6 +44,11 @@ public final class CertificateUtils {
      * and PKCS8 (files with: -----BEGIN PRIVATE KEY-----)
      *
      * Type is autodetected.
+     *
+     * @param keyFilePath key file path
+     * @return Private key
+     * @throws GeneralSecurityException Security Exception
+     * @throws IOException IO exception
      */
     public static PrivateKey readPrivateKey(String keyFilePath) throws GeneralSecurityException, IOException {
         byte[] bytes = IOUtils.toByteArray(new FileInputStream(keyFilePath));
@@ -69,6 +74,8 @@ public final class CertificateUtils {
 
     /**
      * Create a PrivateKey instance from raw PKCS#8 bytes.
+     * @param pkcs8Bytes private key bytes
+     * @throws GeneralSecurityException Security exception
      */
     private static PrivateKey readPkcs8PrivateKey(byte[] pkcs8Bytes) throws GeneralSecurityException {
         KeyFactory keyFactory = KeyFactory.getInstance("RSA");

@@ -146,6 +146,7 @@ public class EntityToJson {
      * @param entityType Class of entity
      * @param id Id of entity
      * @param document Raw entity
+     * @param trackEntity Track entity
      * @return Entity instance
      */
     @SuppressWarnings("unchecked")
