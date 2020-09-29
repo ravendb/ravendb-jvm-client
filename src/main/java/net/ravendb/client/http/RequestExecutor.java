@@ -4,9 +4,7 @@ import net.ravendb.client.Constants;
 import net.ravendb.client.documents.conventions.DocumentConventions;
 import net.ravendb.client.documents.operations.GetStatisticsOperation;
 import net.ravendb.client.documents.operations.configuration.GetClientConfigurationOperation;
-import net.ravendb.client.documents.session.FailedRequestEventArgs;
-import net.ravendb.client.documents.session.SessionInfo;
-import net.ravendb.client.documents.session.TopologyUpdatedEventArgs;
+import net.ravendb.client.documents.session.*;
 import net.ravendb.client.exceptions.AllTopologyNodesDownException;
 import net.ravendb.client.exceptions.ClientVersionMismatchException;
 import net.ravendb.client.exceptions.ExceptionDispatcher;
@@ -201,6 +199,26 @@ public class RequestExecutor implements CleanCloseable {
 
     public void removeOnFailedRequestListener(EventHandler<FailedRequestEventArgs> handler) {
         this._onFailedRequest.remove(handler);
+    }
+
+    private final List<EventHandler<BeforeRequestEventArgs>> _onBeforeRequest = new ArrayList<>();
+
+    public void addOnBeforeRequestListener(EventHandler<BeforeRequestEventArgs> handler) {
+        this._onBeforeRequest.add(handler);
+    }
+
+    public void removeOnBeforeRequestListener(EventHandler<BeforeRequestEventArgs> handler) {
+        this._onBeforeRequest.remove(handler);
+    }
+
+    private final List<EventHandler<SucceedRequestEventArgs>> _onSucceedRequest = new ArrayList<>();
+
+    public void addOnSucceedRequestListener(EventHandler<SucceedRequestEventArgs> handler) {
+        this._onSucceedRequest.add(handler);
+    }
+
+    public void removeOnSucceedRequestListener(EventHandler<SucceedRequestEventArgs> handler) {
+        this._onSucceedRequest.remove(handler);
     }
 
     private final List<EventHandler<TopologyUpdatedEventArgs>> _onTopologyUpdated = new ArrayList<>();
@@ -745,6 +763,10 @@ public class RequestExecutor implements CleanCloseable {
 
             setRequestHeaders(sessionInfo, cachedChangeVectorRef.value, request);
 
+            command.numberOfAttempts = command.numberOfAttempts + 1;
+            int attemptNum = command.numberOfAttempts;
+            EventHelper.invoke(_onBeforeRequest, this, new BeforeRequestEventArgs(_databaseName, urlRef.value, request, attemptNum));
+
             CloseableHttpResponse response = sendRequestToServer(chosenNode, nodeIndex, command, shouldRetry, sessionInfo, request, urlRef.value);
 
             if (response == null) {
@@ -759,6 +781,8 @@ public class RequestExecutor implements CleanCloseable {
 
             try {
                 if (response.getStatusLine().getStatusCode() == HttpStatus.SC_NOT_MODIFIED) {
+                    EventHelper.invoke(_onSucceedRequest, this, new SucceedRequestEventArgs(_databaseName, urlRef.value, response, request, attemptNum));
+
                     cachedItem.notModified();
 
                     try {
@@ -783,6 +807,8 @@ public class RequestExecutor implements CleanCloseable {
                     }
                     return; // we either handled this already in the unsuccessful response or we are throwing
                 }
+
+                EventHelper.invoke(_onSucceedRequest, this, new SucceedRequestEventArgs(_databaseName, urlRef.value, response, request, attemptNum));
 
                 responseDispose = command.processResponse(cache, response, urlRef.value);
                 _lastReturnedResponse = new Date();

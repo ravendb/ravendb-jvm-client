@@ -183,6 +183,9 @@ public class BatchOperation {
 
         documentInfo.setMetadata(documentInfo.getMetadata().deepCopy());
 
+        documentInfo.getMetadata().set(Constants.Documents.Metadata.CHANGE_VECTOR,
+                documentInfo.getMetadata().textNode(documentInfo.getChangeVector()));
+
         ObjectNode documentCopy = documentInfo.getDocument().deepCopy();
         documentCopy.set(Constants.Documents.Metadata.KEY, documentInfo.getMetadata());
 

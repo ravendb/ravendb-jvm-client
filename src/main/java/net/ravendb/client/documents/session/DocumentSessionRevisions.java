@@ -9,7 +9,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
-public class DocumentSessionRevisions extends AdvancedSessionExtensionBase implements IRevisionsSessionOperations {
+public class DocumentSessionRevisions extends DocumentSessionRevisionsBase implements IRevisionsSessionOperations {
 
     public DocumentSessionRevisions(InMemoryDocumentSessionOperations session) {
         super(session);
@@ -81,52 +81,5 @@ public class DocumentSessionRevisions extends AdvancedSessionExtensionBase imple
         requestExecutor.execute(command, sessionInfo);
         operation.setResult(command.getResult());
         return operation.getRevision(clazz);
-    }
-
-    @Override
-    public <T> void forceRevisionCreationFor(T entity) {
-        forceRevisionCreationFor(entity, ForceRevisionStrategy.BEFORE);
-    }
-
-    @Override
-    public <T> void forceRevisionCreationFor(T entity, ForceRevisionStrategy strategy) {
-        if (entity == null) {
-            throw new IllegalArgumentException("Entity cannot be null");
-        }
-
-        DocumentInfo documentInfo = session.documentsByEntity.get(entity);
-        if (documentInfo == null) {
-            throw new IllegalStateException("Cannot create a revision for the requested entity because it is Not tracked by the session");
-        }
-
-        addIdToList(documentInfo.getId(), strategy);
-    }
-
-    @Override
-    public void forceRevisionCreationFor(String id) {
-        forceRevisionCreationFor(id, ForceRevisionStrategy.BEFORE);
-    }
-
-    @Override
-    public void forceRevisionCreationFor(String id, ForceRevisionStrategy strategy) {
-        addIdToList(id, strategy);
-    }
-
-    private void addIdToList(String id, ForceRevisionStrategy requestedStrategy) {
-        if (StringUtils.isEmpty(id)) {
-            throw new IllegalArgumentException("Id cannot be null or empty");
-        }
-
-        ForceRevisionStrategy existingStrategy = session.idsForCreatingForcedRevisions.get(id);
-        boolean idAlreadyAdded = existingStrategy != null;
-        if (idAlreadyAdded && existingStrategy != requestedStrategy) {
-            throw new IllegalStateException("A request for creating a revision was already made for document "
-                    + id + " in the current session but with a different force strategy." + "New strategy requested: "
-                    + requestedStrategy + ". Previous strategy: " + existingStrategy + " .");
-        }
-
-        if (!idAlreadyAdded) {
-            session.idsForCreatingForcedRevisions.put(id, requestedStrategy);
-        }
     }
 }

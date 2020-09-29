@@ -9,8 +9,6 @@ public class AbstractJavaScriptIndexCreationTask extends AbstractIndexCreationTa
     private final IndexDefinition _definition = new IndexDefinition();
 
     protected AbstractJavaScriptIndexCreationTask() {
-        _definition.setLockMode(IndexLockMode.UNLOCK);
-        _definition.setPriority(IndexPriority.NORMAL);
     }
 
     public Set<String> getMaps() {
@@ -86,12 +84,16 @@ public class AbstractJavaScriptIndexCreationTask extends AbstractIndexCreationTa
 
     @Override
     public IndexDefinition createIndexDefinition() {
+        _definition.setName(getIndexName());
         _definition.setType(isMapReduce() ? IndexType.JAVA_SCRIPT_MAP_REDUCE : IndexType.JAVA_SCRIPT_MAP);
         if (getAdditionalSources() != null) {
             _definition.setAdditionalSources(getAdditionalSources());
         } else {
             _definition.setAdditionalSources(new HashMap<>());
         }
+        _definition.setConfiguration(configuration);
+        _definition.setLockMode(lockMode);
+        _definition.setPriority(priority);
         return _definition;
     }
 }

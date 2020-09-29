@@ -75,6 +75,10 @@ public abstract class ClusterTestBase extends RavenTestDriver implements CleanCl
     }
 
     protected ClusterController createRaftCluster(int numberOfNodes, Map<String, String> customSettings) throws Exception {
+        if (!customSettings.containsKey("Cluster.ElectionTimeoutInMs")) {
+            customSettings.put("Cluster.ElectionTimeoutInMs", "3000");
+        }
+
         ClusterController cluster = new ClusterController();
         cluster.nodes = new ArrayList<>();
 

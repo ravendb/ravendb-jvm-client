@@ -332,7 +332,12 @@ public class SubscriptionWorker<T> implements CleanCloseable {
             case IN_USE:
                 throw new SubscriptionInUseException("Subscription with id " + _options.getSubscriptionName() + " cannot be opened, because it's in use and the connection strategy is " + _options.getStrategy());
             case CLOSED:
-                throw new SubscriptionClosedException("Subscription with id " + _options.getSubscriptionName() + " was closed. " + connectionStatus.getException());
+                boolean canReconnect = false;
+                JsonNode canReconnectNode = connectionStatus.getData().get("CanReconnect");
+                if (canReconnectNode != null && canReconnectNode.isBoolean() && canReconnectNode.asBoolean()) {
+                    canReconnect = true;
+                }
+                throw new SubscriptionClosedException("Subscription with id " + _options.getSubscriptionName() + " was closed. " + connectionStatus.getException(), canReconnect);
             case INVALID:
                 throw new SubscriptionInvalidStateException("Subscription with id " + _options.getSubscriptionName() + " cannot be opened, because it is in invalid state. " + connectionStatus.getException());
             case NOT_FOUND:
@@ -643,12 +648,18 @@ public class SubscriptionWorker<T> implements CleanCloseable {
             return true;
         } else if (ex instanceof SubscriptionChangeVectorUpdateConcurrencyException) {
             return true;
+        } else if (ex instanceof SubscriptionClosedException) {
+            SubscriptionClosedException sce = (SubscriptionClosedException) ex;
+            if (sce.isCanReconnect()) {
+                return true;
+            }
+
+            _processingCts.cancel();
+            return false;
         }
 
         if (ex instanceof SubscriptionInUseException
                 || ex instanceof SubscriptionDoesNotExistException
-                || ex instanceof SubscriptionClosedException
-                || ex instanceof SubscriptionInvalidStateException
                 || ex instanceof DatabaseDoesNotExistException
                 || ex instanceof AuthorizationException
                 || ex instanceof AllTopologyNodesDownException

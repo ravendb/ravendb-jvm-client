@@ -1345,6 +1345,16 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
         _knownMissingIds.add(id);
     }
 
+    public void registerMissing(String[] ids) {
+        if (noTracking) {
+            return;
+        }
+
+        for (String s : ids) {
+            _knownMissingIds.add(s);
+        }
+    }
+
     public void registerIncludes(ObjectNode includes) {
         if (noTracking) {
             return;
@@ -1657,6 +1667,12 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
             BeanUtils.copyProperties(entity, documentInfo.getEntity());
         } catch (ReflectiveOperationException e) {
             throw new RuntimeException("Unable to refresh entity: " + e.getMessage(), e);
+        }
+
+        DocumentInfo documentInfoById = documentsById.getValue(documentInfo.getId());
+
+        if (documentInfoById != null) {
+            documentInfoById.setEntity(entity);
         }
     }
 

@@ -406,7 +406,7 @@ public abstract class RavenTestDriver {
     protected static void createMoviesData(IDocumentStore store) {
         try (IDocumentSession session = store.openSession()) {
             Genre scifi = new Genre();
-            scifi.setName("genres/1");
+            scifi.setName("Sci-Fi");
             scifi.setId("genres/1");
 
             Genre fantasy = new Genre();
@@ -467,7 +467,7 @@ public abstract class RavenTestDriver {
             rating22.setMovie("movies/3");
             rating22.setScore(9);
 
-            user2.setHasRated(Arrays.asList(rating11, rating22));
+            user2.setHasRated(Arrays.asList(rating21, rating22));
 
             session.store(user2);
 

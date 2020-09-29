@@ -7,6 +7,7 @@ import net.ravendb.client.documents.operations.ongoingTasks.OngoingTaskType;
 import net.ravendb.client.documents.operations.ongoingTasks.ToggleOngoingTaskStateOperation;
 import net.ravendb.client.documents.session.IncludesUtil;
 import net.ravendb.client.documents.session.loaders.SubscriptionIncludeBuilder;
+import net.ravendb.client.extensions.StringExtensions;
 import net.ravendb.client.http.RequestExecutor;
 import net.ravendb.client.primitives.CleanCloseable;
 import net.ravendb.client.primitives.Reference;
@@ -135,11 +136,16 @@ public class DocumentSubscriptions implements AutoCloseable {
         String collectionName = _store.getConventions().getCollectionName(clazz);
         if (criteria.getQuery() == null) {
 
+            StringBuilder builder = new StringBuilder("from '");
+            StringExtensions.escapeString(builder, collectionName);
+            builder.append('\'');
+
             if (revisions) {
-                criteria.setQuery("from '" + collectionName.replaceAll("'", "\\'") + "' (Revisions = true) as doc");
-            } else {
-                criteria.setQuery("from '" + collectionName.replaceAll("'", "\\'") + "' as doc");
+                builder.append(" (Revisions = true)");
             }
+            builder.append(" as doc");
+
+            criteria.setQuery(builder.toString());
         }
 
         if (criteria.getIncludes() != null) {

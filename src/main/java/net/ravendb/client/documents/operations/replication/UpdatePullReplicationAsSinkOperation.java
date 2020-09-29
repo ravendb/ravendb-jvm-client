@@ -29,11 +29,11 @@ public class UpdatePullReplicationAsSinkOperation implements IMaintenanceOperati
     }
 
     private static class UpdatePullEdgeReplication extends RavenCommand<ModifyOngoingTaskResult> implements IRaftCommand {
-        private final PullReplicationAsSink _pullReplicaton;
+        private final PullReplicationAsSink _pullReplication;
 
         public UpdatePullEdgeReplication(PullReplicationAsSink pullReplication) {
             super(ModifyOngoingTaskResult.class);
-            _pullReplicaton = pullReplication;
+            _pullReplication = pullReplication;
         }
 
         @Override
@@ -45,7 +45,7 @@ public class UpdatePullReplicationAsSinkOperation implements IMaintenanceOperati
                 try (JsonGenerator generator = mapper.getFactory().createGenerator(outputStream)) {
                     generator.writeStartObject();
                     generator.writeFieldName("PullReplicationAsSink");
-                    generator.getCodec().writeValue(generator, _pullReplicaton);
+                    generator.getCodec().writeValue(generator, _pullReplication);
                     generator.writeEndObject();
                 } catch (IOException e) {
                     throw new RuntimeException(e);
