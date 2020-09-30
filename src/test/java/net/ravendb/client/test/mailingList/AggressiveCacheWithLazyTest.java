@@ -77,7 +77,7 @@ public class AggressiveCacheWithLazyTest extends RemoteTestBase {
 
             // should force a call here
             assertThat(requestExecutor.numberOfServerRequests.get())
-                    .isEqualTo(requests + 1);
+                    .isBetween(requests + 1, requests + 2);
         }
     }
 
