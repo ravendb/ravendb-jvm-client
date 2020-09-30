@@ -92,7 +92,7 @@ public class RavenDB_11552Test extends RemoteTestBase {
                 assertThat(company)
                         .isNull();
                 assertThat(session.advanced().isLoaded("companies/1"))
-                        .isFalse();
+                        .isTrue();
                 assertThat(session.advanced().getNumberOfRequests())
                         .isEqualTo(3);
 

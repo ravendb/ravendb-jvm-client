@@ -46,6 +46,8 @@ public abstract class DocumentStoreBase implements IDocumentStore {
     private final List<EventHandler<AfterConversionToDocumentEventArgs>> onAfterConversionToDocument = new ArrayList<>();
     private final List<EventHandler<BeforeConversionToEntityEventArgs>> onBeforeConversionToEntity = new ArrayList<>();
     private final List<EventHandler<AfterConversionToEntityEventArgs>> onAfterConversionToEntity = new ArrayList<>();
+    private final List<EventHandler<BeforeRequestEventArgs>> onBeforeRequest = new ArrayList<>();
+    private final List<EventHandler<SucceedRequestEventArgs>> onSucceedRequest = new ArrayList<>();
 
     private final List<EventHandler<FailedRequestEventArgs>> onFailedRequest = new ArrayList<>();
     private final List<EventHandler<TopologyUpdatedEventArgs>> onTopologyUpdated = new ArrayList<>();
@@ -308,6 +310,26 @@ public abstract class DocumentStoreBase implements IDocumentStore {
         this.onAfterConversionToEntity.remove(handler);
     }
 
+    public void addOnBeforeRequestListener(EventHandler<BeforeRequestEventArgs> handler) {
+        assertNotInitialized("onSucceedRequest");
+        this.onBeforeRequest.add(handler);
+    }
+
+    public void removeOnBeforeRequestListener(EventHandler<BeforeRequestEventArgs> handler) {
+        assertNotInitialized("onSucceedRequest");
+        this.onBeforeRequest.remove(handler);
+    }
+
+    public void addOnSucceedRequestListener(EventHandler<SucceedRequestEventArgs> handler) {
+        assertNotInitialized("onSucceedRequest");
+        this.onSucceedRequest.add(handler);
+    }
+
+    public void removeOnSucceedRequestListener(EventHandler<SucceedRequestEventArgs> handler) {
+        assertNotInitialized("onSucceedRequest");
+        this.onSucceedRequest.remove(handler);
+    }
+
     public void addOnFailedRequestListener(EventHandler<FailedRequestEventArgs> handler) {
         assertNotInitialized("onFailedRequest");
         this.onFailedRequest.add(handler);
@@ -446,6 +468,14 @@ public abstract class DocumentStoreBase implements IDocumentStore {
 
         for (EventHandler<TopologyUpdatedEventArgs> handler : onTopologyUpdated) {
             requestExecutor.addOnTopologyUpdatedListener(handler);
+        }
+
+        for (EventHandler<BeforeRequestEventArgs> handler : onBeforeRequest) {
+            requestExecutor.addOnBeforeRequestListener(handler);
+        }
+
+        for (EventHandler<SucceedRequestEventArgs> handler : onSucceedRequest) {
+            requestExecutor.addOnSucceedRequestListener(handler);
         }
     }
 

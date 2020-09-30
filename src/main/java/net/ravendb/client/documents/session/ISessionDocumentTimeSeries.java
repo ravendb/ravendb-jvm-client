@@ -15,6 +15,15 @@ public interface ISessionDocumentTimeSeries extends ISessionDocumentAppendTimeSe
     TimeSeriesEntry[] get();
 
     /**
+     * Return all time series values with paging
+     * @param start start
+     * @param pageSize page size
+     * @return time series values
+     */
+    TimeSeriesEntry[] get(int start, int pageSize);
+
+
+    /**
      * Return the time series values for the provided range
      * @param from range start
      * @param to range end

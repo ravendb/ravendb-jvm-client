@@ -11,6 +11,15 @@ public class GetRequest {
     private Map<String, String> headers;
     private String query;
     private String method;
+    private boolean canCacheAggressively = true;
+
+    public boolean isCanCacheAggressively() {
+        return canCacheAggressively;
+    }
+
+    public void setCanCacheAggressively(boolean canCacheAggressively) {
+        this.canCacheAggressively = canCacheAggressively;
+    }
 
     /**
      * @return Concatenated Url and Query.

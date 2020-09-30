@@ -160,9 +160,8 @@ public class SingleNodeBatchCommand extends RavenCommand<BatchCommandResult> imp
             sb.append("&waitForReplicasTimeout=")
                     .append(TimeUtils.durationToTimeSpan(replicationOptions.getWaitForReplicasTimeout()));
 
-            if (replicationOptions.isThrowOnTimeoutInWaitForReplicas()) {
-                sb.append("&throwOnTimeoutInWaitForReplicas=true");
-            }
+            sb.append("&throwOnTimeoutInWaitForReplicas=")
+                    .append(replicationOptions.isThrowOnTimeoutInWaitForReplicas() ? "true" : "false");
 
             sb.append("&numberOfReplicasToWaitFor=");
             sb.append(replicationOptions.isMajority() ? "majority" : replicationOptions.getNumberOfReplicasToWaitFor());

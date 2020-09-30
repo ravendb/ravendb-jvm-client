@@ -19,15 +19,13 @@ public class TimeSeriesOperations {
     private final MaintenanceOperationExecutor _executor;
 
     public TimeSeriesOperations(IDocumentStore store) {
-        _store = store;
-        _database = store.getDatabase();
-        _executor = store.maintenance().forDatabase(_database);
+        this(store, store.getDatabase());
     }
 
     private TimeSeriesOperations(IDocumentStore store, String database) {
         _store = store;
         _database = database;
-        _executor = null;
+        _executor = _store.maintenance().forDatabase(database);
     }
 
     /**

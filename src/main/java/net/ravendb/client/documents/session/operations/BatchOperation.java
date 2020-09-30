@@ -161,6 +161,8 @@ public class BatchOperation {
                 case TIME_SERIES:
                     //TODO: RavenDB-13474 add to time series cache
                     break;
+                case TIME_SERIES_COPY:
+                    break;
                 case BATCH_PATCH:
                     break;
                 default:
@@ -187,6 +189,9 @@ public class BatchOperation {
         documentInfo.setMetadataInstance(null);
 
         documentInfo.setMetadata(documentInfo.getMetadata().deepCopy());
+
+        documentInfo.getMetadata().set(Constants.Documents.Metadata.CHANGE_VECTOR,
+                documentInfo.getMetadata().textNode(documentInfo.getChangeVector()));
 
         ObjectNode documentCopy = documentInfo.getDocument().deepCopy();
         documentCopy.set(Constants.Documents.Metadata.KEY, documentInfo.getMetadata());

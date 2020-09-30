@@ -3,17 +3,22 @@ package net.ravendb.client.test.client.timeSeries;
 import net.ravendb.client.RemoteTestBase;
 import net.ravendb.client.documents.BulkInsertOperation;
 import net.ravendb.client.documents.IDocumentStore;
+import net.ravendb.client.documents.operations.attachments.AttachmentIteratorResult;
+import net.ravendb.client.documents.operations.attachments.AttachmentRequest;
+import net.ravendb.client.documents.operations.attachments.CloseableAttachmentsResult;
+import net.ravendb.client.documents.operations.counters.CountersDetail;
+import net.ravendb.client.documents.operations.counters.GetCountersOperation;
 import net.ravendb.client.documents.session.IDocumentSession;
 import net.ravendb.client.documents.session.timeSeries.TimeSeriesEntry;
 import net.ravendb.client.infrastructure.entities.User;
+import net.ravendb.client.test.client.attachments.AttachmentsStreamTest;
 import org.apache.commons.lang3.time.DateUtils;
 import org.junit.jupiter.api.Test;
 
-import java.util.Arrays;
-import java.util.Calendar;
-import java.util.Date;
-import java.util.List;
+import java.io.ByteArrayInputStream;
+import java.util.*;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -888,4 +893,91 @@ public class TimeSeriesBulkInsertTest extends RemoteTestBase {
             }
         }
     }
+
+    @Test
+    public void canHaveBulkInsertWithDocumentsAndAttachmentAndCountersAndTimeSeries() throws Exception {
+        int count = 100;
+        int size = 64 * 1024;
+
+        try (IDocumentStore store = getDocumentStore()) {
+            Date baseLine = DateUtils.truncate(new Date(), Calendar.DAY_OF_MONTH);
+            Map<String, Map<String, byte[]>> streams = new HashMap<>();
+            Map<String, String> counters = new HashMap<>();
+            Map<String, BulkInsertOperation.AttachmentsBulkInsert> bulks = new HashMap<>();
+
+            try (BulkInsertOperation bulkInsert = store.bulkInsert()) {
+                for (int i = 0; i < count; i++) {
+                    String id = "name/" + i;
+                    streams.put(id, new HashMap<>());
+
+                    //insert documents
+                    User user = new User();
+                    user.setName("Name_" + i);
+                    bulkInsert.store(user, id);
+
+                    bulks.put(id, bulkInsert.attachmentsFor(id));
+                }
+
+                for (Map.Entry<String, BulkInsertOperation.AttachmentsBulkInsert> bulk : bulks.entrySet()) {
+                    Random rnd = new Random();
+                    byte[] bArr = new byte[size];
+                    rnd.nextBytes(bArr);
+                    String name = bulk.getKey() + "_" + rnd.nextInt(100);
+
+                    // insert Attachments
+                    bulk.getValue().store(name, bArr);
+
+                    streams.get(bulk.getKey()).put(name, bArr);
+
+                    // insert Counters
+                    bulkInsert.countersFor(bulk.getKey()).increment(name);
+                    counters.put(bulk.getKey(), name);
+
+                    // insert Time Series
+                    try (BulkInsertOperation.TimeSeriesBulkInsert timeSeriesBulkInsert
+                                 = bulkInsert.timeSeriesFor(bulk.getKey(), "HeartRate")) {
+                        timeSeriesBulkInsert.append(DateUtils.addMinutes(baseLine, 1), 59.0, "watches/fitBit");
+                    }
+                }
+            }
+
+            for (String id : streams.keySet()) {
+                try (IDocumentSession session = store.openSession()) {
+                    TimeSeriesEntry timeSeriesVal = session.timeSeriesFor(id, "HeartRate")
+                            .get()[0];
+
+                    assertThat(timeSeriesVal.getValues())
+                            .isEqualTo(new double[] { 59 });
+                    assertThat(timeSeriesVal.getTag())
+                            .isEqualTo("watches/fitBit");
+                    assertThat(timeSeriesVal.getTimestamp())
+                            .isEqualTo(DateUtils.addMinutes(baseLine, 1));
+
+                    List<AttachmentRequest> attachmentNames = streams
+                            .keySet()
+                            .stream()
+                            .map(x -> new AttachmentRequest(id, x))
+                            .collect(Collectors.toList());
+                    try (CloseableAttachmentsResult closeableAttachmentsResult
+                                 = session.advanced().attachments().get(attachmentNames)) {
+                        while (closeableAttachmentsResult.hasNext()) {
+                            AttachmentIteratorResult item = closeableAttachmentsResult.next();
+                            assertThat(item)
+                                    .isNotNull();
+                            assertThat(AttachmentsStreamTest.compareStreams(
+                                    item.getStream(),
+                                    new ByteArrayInputStream(streams.get(id).get(item.getDetails().getName()))));
+                        }
+                    }
+                }
+
+                long val = store.operations()
+                        .send(new GetCountersOperation(id, new String[]{counters.get(id)}))
+                        .getCounters().get(0).getTotalValue();
+                assertThat(val)
+                        .isEqualTo(1);
+            }
+        }
+    }
+
 }

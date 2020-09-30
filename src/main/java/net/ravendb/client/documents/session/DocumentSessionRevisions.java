@@ -9,7 +9,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
-public class DocumentSessionRevisions extends AdvancedSessionExtensionBase implements IRevisionsSessionOperations {
+public class DocumentSessionRevisions extends DocumentSessionRevisionsBase implements IRevisionsSessionOperations {
 
     public DocumentSessionRevisions(InMemoryDocumentSessionOperations session) {
         super(session);

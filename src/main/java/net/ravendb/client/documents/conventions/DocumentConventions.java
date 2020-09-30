@@ -52,6 +52,7 @@ public class DocumentConventions {
     private char _identityPartsSeparator;
     private boolean _disableTopologyUpdates;
 
+    private IShouldIgnoreEntityChanges _shouldIgnoreEntityChanges;
     private Function<PropertyDescriptor, Boolean> _findIdentityProperty;
 
     private Function<String, String> _transformClassCollectionNameToDocumentIdPrefix;
@@ -471,6 +472,15 @@ public class DocumentConventions {
         this._findIdentityProperty = findIdentityProperty;
     }
 
+    public IShouldIgnoreEntityChanges getShouldIgnoreEntityChanges() {
+        return _shouldIgnoreEntityChanges;
+    }
+
+    public void setShouldIgnoreEntityChanges(IShouldIgnoreEntityChanges shouldIgnoreEntityChanges) {
+        assertNotFrozen();
+        _shouldIgnoreEntityChanges = shouldIgnoreEntityChanges;
+    }
+
     public boolean isDisableTopologyUpdates() {
         return _disableTopologyUpdates;
     }
@@ -652,6 +662,7 @@ public class DocumentConventions {
         DocumentConventions cloned = new DocumentConventions();
         cloned._listOfRegisteredIdConventions = new ArrayList<>(_listOfRegisteredIdConventions);
         cloned._frozen = _frozen;
+        cloned._shouldIgnoreEntityChanges = _shouldIgnoreEntityChanges;
         cloned._originalConfiguration = _originalConfiguration;
         cloned._saveEnumsAsIntegers = _saveEnumsAsIntegers;
         cloned._identityPartsSeparator = _identityPartsSeparator;

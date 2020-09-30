@@ -30,6 +30,7 @@ public class LazyQueryOperation<T> implements ILazyOperation {
     @Override
     public GetRequest createRequest() {
         GetRequest request = new GetRequest();
+        request.setCanCacheAggressively(!_queryOperation.getIndexQuery().isDisableCaching() && !_queryOperation.getIndexQuery().isWaitForNonStaleResults());
         request.setUrl("/queries");
         request.setMethod("POST");
         request.setQuery("?queryHash=" + _queryOperation.getIndexQuery().getQueryHash());

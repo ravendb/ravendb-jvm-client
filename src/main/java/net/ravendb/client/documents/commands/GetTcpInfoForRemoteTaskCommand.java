@@ -8,6 +8,7 @@ import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpRequestBase;
 
 import java.io.IOException;
+import java.time.Duration;
 
 public class GetTcpInfoForRemoteTaskCommand extends RavenCommand<TcpConnectionInfo> {
 
@@ -37,6 +38,7 @@ public class GetTcpInfoForRemoteTaskCommand extends RavenCommand<TcpConnectionIn
         _remoteTask = remoteTask;
         _tag = tag;
         _verifyDatabase = verifyDatabase;
+        timeout = Duration.ofSeconds(15);
     }
 
     @Override

@@ -131,6 +131,10 @@ public class SessionTimeSeriesBase {
     public TimeSeriesEntry[] getInternal(Date from, Date to, int start, int pageSize) {
         TimeSeriesRangeResult rangeResult;
 
+        if (pageSize == 0) {
+            return new TimeSeriesEntry[0];
+        }
+
         Map<String, List<TimeSeriesRangeResult>> cache = session.getTimeSeriesByDocId().get(docId);
         if (cache != null) {
             List<TimeSeriesRangeResult> ranges = cache.get(name);
@@ -169,7 +173,7 @@ public class SessionTimeSeriesBase {
                             entryInfo.fromRangeIndex, entryInfo.toRangeIndex, ranges, cache, entryInfo.mergedValues);
                 }
 
-                return entryInfo.resultToUser.toArray(new TimeSeriesEntry[0]);
+                return entryInfo.resultToUser.stream().limit(pageSize).toArray(TimeSeriesEntry[]::new);
             }
         }
 
@@ -229,7 +233,6 @@ public class SessionTimeSeriesBase {
         return values;
     }
 
-    //TODO: compare
     private SessionTimeSeriesBase.CachedEntryInfo serveFromCacheOrGetMissingPartsFromServerAndMerge(Date from, Date to, List<TimeSeriesRangeResult> ranges,
                                                                                                         int start, int pageSize) {
         // try to find a range in cache that contains [from, to]
@@ -248,10 +251,13 @@ public class SessionTimeSeriesBase {
 
         for (toRangeIndex = 0; toRangeIndex < ranges.size(); toRangeIndex++) {
             if (DatesComparator.compare(leftDate(ranges.get(toRangeIndex).getFrom()), leftDate(from)) <= 0) {
-                if (DatesComparator.compare(rightDate(ranges.get(toRangeIndex).getTo()), rightDate(to)) >= 0) {
+                if (DatesComparator.compare(rightDate(ranges.get(toRangeIndex).getTo()), rightDate(to)) >= 0
+                    || (ranges.get(toRangeIndex).getEntries().length - start >= pageSize)) {
                     // we have the entire range in cache
+                    // we have all the range we need
+                    // or that we have all the results we need in smaller range
 
-                    resultToUser = chopRelevantRange(ranges.get(toRangeIndex), from, to);
+                    resultToUser = chopRelevantRange(ranges.get(toRangeIndex), from, to, start, pageSize);
                     return new SessionTimeSeriesBase.CachedEntryInfo(true, resultToUser, null, -1, -1);
                 }
 
@@ -403,7 +409,7 @@ public class SessionTimeSeriesBase {
         return mergedValues.toArray(new TimeSeriesEntry[0]);
     }
 
-    private static List<TimeSeriesEntry> chopRelevantRange(TimeSeriesRangeResult range, Date from, Date to) {
+    private static List<TimeSeriesEntry> chopRelevantRange(TimeSeriesRangeResult range, Date from, Date to, int start, int pageSize) {
         if (range.getEntries() == null) {
             return Collections.emptyList();
         }
@@ -416,6 +422,14 @@ public class SessionTimeSeriesBase {
             if (DatesComparator.compare(definedDate(value.getTimestamp()), leftDate(from)) < 0) {
                 continue;
             }
+            if (start-- > 0) {
+                continue;
+            }
+
+            if (pageSize-- <= 0) {
+                break;
+            }
+
             result.add(value);
         }
 

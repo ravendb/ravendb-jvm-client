@@ -15,6 +15,7 @@ import net.ravendb.client.documents.IdTypeAndName;
 import net.ravendb.client.documents.commands.GetDocumentsResult;
 import net.ravendb.client.documents.commands.batches.*;
 import net.ravendb.client.documents.conventions.DocumentConventions;
+import net.ravendb.client.documents.conventions.IShouldIgnoreEntityChanges;
 import net.ravendb.client.documents.identity.GenerateEntityIdOnTheClient;
 import net.ravendb.client.documents.operations.OperationExecutor;
 import net.ravendb.client.documents.operations.SessionOperationExecutor;
@@ -44,6 +45,9 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
+
+import static net.ravendb.client.primitives.DatesComparator.leftDate;
+import static net.ravendb.client.primitives.DatesComparator.rightDate;
 
 @SuppressWarnings("SameParameterValue")
 public abstract class InMemoryDocumentSessionOperations implements CleanCloseable {
@@ -1044,10 +1048,21 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
     private void prepareForEntitiesPuts(SaveChangesData result) {
         try (CleanCloseable putsContext = documentsByEntity.prepareEntitiesPuts()) {
 
+            IShouldIgnoreEntityChanges shouldIgnoreEntityChanges = getConventions().getShouldIgnoreEntityChanges();
+
             for (DocumentsByEntityHolder.DocumentsByEntityEnumeratorResult entity : documentsByEntity) {
 
                 if (entity.getValue().isIgnoreChanges())
                     continue;
+
+                if (shouldIgnoreEntityChanges != null) {
+                    if (shouldIgnoreEntityChanges.check(
+                            this,
+                            entity.getValue().getEntity(),
+                            entity.getValue().getId())) {
+                        continue;
+                    }
+                }
 
                 if (isDeleted(entity.getValue().getId())) {
                     continue;
@@ -1335,7 +1350,8 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
                 !CommandType.ATTACHMENT_COPY.equals(command.getType()) &&
                 !CommandType.ATTACHMENT_MOVE.equals(command.getType()) &&
                 !CommandType.COUNTERS.equals(command.getType()) &&
-                !CommandType.TIME_SERIES.equals(command.getType())) {
+                !CommandType.TIME_SERIES.equals(command.getType()) &&
+                !CommandType.TIME_SERIES_COPY.equals(command.getType())) {
             deferredCommandsMap.put(IdTypeAndName.create(id, CommandType.CLIENT_MODIFY_DOCUMENT_COMMAND, null), command);
         }
     }
@@ -1362,6 +1378,14 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
             return;
         }
         _knownMissingIds.add(id);
+    }
+
+    public void registerMissing(String[] ids) {
+        if (noTracking) {
+            return;
+        }
+
+        _knownMissingIds.addAll(Arrays.asList(ids));
     }
 
     public void registerIncludes(ObjectNode includes) {
@@ -1654,10 +1678,11 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
             return;
         }
 
-        if (localRanges.get(0).getFrom().getTime() > newRange.getTo().getTime() || localRanges.get(localRanges.size() - 1).getTo().getTime() < newRange.getFrom().getTime()) {
+        if (DatesComparator.compare(leftDate(localRanges.get(0).getFrom()), rightDate(newRange.getTo())) > 0
+                || DatesComparator.compare(rightDate(localRanges.get(localRanges.size() - 1).getTo()), leftDate(newRange.getFrom())) < 0) {
             // the entire range [from, to] is out of cache bounds
 
-            int index = localRanges.get(0).getFrom().getTime() > newRange.getTo().getTime() ? 0 : localRanges.size();
+            int index = DatesComparator.compare(leftDate(localRanges.get(0).getFrom()), rightDate(newRange.getTo())) > 0 ? 0 : localRanges.size();
             localRanges.add(index, newRange);
             return;
         }
@@ -1667,8 +1692,8 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
         boolean rangeAlreadyInCache = false;
 
         for (toRangeIndex = 0; toRangeIndex < localRanges.size(); toRangeIndex++) {
-            if (localRanges.get(toRangeIndex).getFrom().getTime() <= newRange.getFrom().getTime()) {
-                if (localRanges.get(toRangeIndex).getTo().getTime() >= newRange.getTo().getTime()) {
+            if (DatesComparator.compare(leftDate(localRanges.get(toRangeIndex).getFrom()), leftDate(newRange.getFrom())) <= 0) {
+                if (DatesComparator.compare(rightDate(localRanges.get(toRangeIndex).getTo()), rightDate(newRange.getTo())) >= 0) {
                     rangeAlreadyInCache = true;
                     break;
                 }
@@ -1677,7 +1702,7 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
                 continue;
             }
 
-            if (localRanges.get(toRangeIndex).getTo().getTime() >= newRange.getTo().getTime()) {
+            if (DatesComparator.compare(rightDate(localRanges.get(toRangeIndex).getTo()), rightDate(newRange.getTo())) >= 0) {
                 break;
             }
         }
@@ -1716,7 +1741,7 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
                 return;
             }
 
-            if (ranges.get(toRangeIndex).getFrom().getTime() > to.getTime()) {
+            if (DatesComparator.compare(leftDate(ranges.get(toRangeIndex).getFrom()), rightDate(to)) > 0) {
                 // requested range ends before 'toRange' starts
                 // remove all ranges that come before 'toRange' from cache
                 // add the new range at the beginning of the list
@@ -1756,7 +1781,7 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
         if (toRangeIndex == ranges.size()) {
             // didn't find a 'toRange' => all the ranges in cache end before 'to'
 
-            if (ranges.get(fromRangeIndex).getTo().getTime() < from.getTime()) {
+            if (DatesComparator.compare(rightDate(ranges.get(fromRangeIndex).getTo()), leftDate(from)) < 0) {
                 // requested range starts after 'fromRange' ends,
                 // so it needs to be placed right after it
                 // remove all the ranges that come after 'fromRange' from cache
@@ -1798,10 +1823,10 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
         // found both 'fromRange' and 'toRange'
         // the requested range is inside cache bounds
 
-        if (ranges.get(fromRangeIndex).getTo().getTime() < from.getTime()) {
+        if (DatesComparator.compare(rightDate(ranges.get(fromRangeIndex).getTo()), leftDate(from)) < 0) {
             // requested range starts after 'fromRange' ends
 
-            if (ranges.get(toRangeIndex).getFrom().getTime() > to.getTime())
+            if (DatesComparator.compare(leftDate(ranges.get(toRangeIndex).getFrom()), rightDate(to)) > 0)
             {
                 // requested range ends before 'toRange' starts
 
@@ -1844,7 +1869,7 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
 
         // the requested range starts inside 'fromRange'
 
-        if (ranges.get(toRangeIndex).getFrom().getTime() > to.getTime())
+        if (DatesComparator.compare(leftDate(ranges.get(toRangeIndex).getFrom()), rightDate(to)) > 0)
         {
             // requested range ends before 'toRange' starts
 
@@ -1897,7 +1922,8 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
 
         mergedValues.addAll(Arrays.asList(newRange.getEntries()));
 
-        if (toRangeIndex < localRanges.size() && localRanges.get(toRangeIndex).getFrom().getTime() <= newRange.getTo().getTime()) {
+        if (toRangeIndex < localRanges.size()
+                && DatesComparator.compare(leftDate(localRanges.get(toRangeIndex).getFrom()), rightDate(newRange.getTo())) <= 0) {
             for (TimeSeriesEntry val : localRanges.get(toRangeIndex).getEntries()) {
                 if (val.getTimestamp().getTime() <= newRange.getTo().getTime()) {
                     continue;
@@ -2010,6 +2036,12 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
             BeanUtils.copyProperties(entity, documentInfo.getEntity());
         } catch (ReflectiveOperationException e) {
             throw new RuntimeException("Unable to refresh entity: " + e.getMessage(), e);
+        }
+
+        DocumentInfo documentInfoById = documentsById.getValue(documentInfo.getId());
+
+        if (documentInfoById != null) {
+            documentInfoById.setEntity(entity);
         }
     }
 

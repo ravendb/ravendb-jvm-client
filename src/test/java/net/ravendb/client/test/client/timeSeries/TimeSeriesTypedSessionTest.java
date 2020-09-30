@@ -197,6 +197,41 @@ public class TimeSeriesTypedSessionTest extends RemoteTestBase {
     }
 
     @Test
+    public void canRegisterTimeSeriesForOtherDatabase() throws Exception {
+        try (IDocumentStore store1 = getDocumentStore()) {
+            try (IDocumentStore store2 = getDocumentStore()) {
+                store1.timeSeries().forDatabase(store2.getDatabase()).register(User.class, StockPrice.class);
+                store1.timeSeries().forDatabase(store2.getDatabase()).register("Users", "HeartRateMeasures", new String[] { "HeartRate" });
+
+                TimeSeriesConfiguration updated = store1.maintenance().server().send(new GetDatabaseRecordOperation(store2.getDatabase())).getTimeSeries();
+
+                assertThat(updated)
+                        .isNotNull();
+
+                String[] heartrate = updated.getNames("users", "HeartRateMeasures");
+                assertThat(heartrate)
+                        .hasSize(1);
+                assertThat(heartrate[0])
+                        .isEqualTo("HeartRate");
+
+                String[] stock = updated.getNames("users", "StockPrices");
+                assertThat(stock)
+                        .hasSize(5);
+                assertThat(stock[0])
+                        .isEqualTo("open");
+                assertThat(stock[1])
+                        .isEqualTo("close");
+                assertThat(stock[2])
+                        .isEqualTo("high");
+                assertThat(stock[3])
+                        .isEqualTo("low");
+                assertThat(stock[4])
+                        .isEqualTo("volume");
+            }
+        }
+    }
+
+    @Test
     public void canCreateSimpleTimeSeries() throws Exception {
         try (IDocumentStore store = getDocumentStore()) {
             Date baseLine = DateUtils.truncate(new Date(), Calendar.DAY_OF_MONTH);

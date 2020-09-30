@@ -31,6 +31,7 @@ public abstract class RavenCommand<TResult> {
     protected boolean canCache;
     protected boolean canCacheAggressively;
     protected String selectedNodeTag;
+    protected int numberOfAttempts;
     protected final ObjectMapper mapper = JsonExtensions.getDefaultMapper();
 
     public long failoverTopologyEtag = -2;
@@ -75,6 +76,14 @@ public abstract class RavenCommand<TResult> {
 
     public String getSelectedNodeTag() {
         return selectedNodeTag;
+    }
+
+    public int getNumberOfAttempts() {
+        return numberOfAttempts;
+    }
+
+    public void setNumberOfAttempts(int numberOfAttempts) {
+        this.numberOfAttempts = numberOfAttempts;
     }
 
     protected RavenCommand(Class<TResult> resultClass) {

@@ -5,7 +5,7 @@ import java.util.Date;
 public class RunningBackup {
     private Date startTime;
     private boolean isFull;
-    private Long runningBackupTaskId;
+    private long runningBackupTaskId;
 
     public Date getStartTime() {
         return startTime;
@@ -23,11 +23,11 @@ public class RunningBackup {
         isFull = full;
     }
 
-    public Long getRunningBackupTaskId() {
+    public long getRunningBackupTaskId() {
         return runningBackupTaskId;
     }
 
-    public void setRunningBackupTaskId(Long runningBackupTaskId) {
+    public void setRunningBackupTaskId(long runningBackupTaskId) {
         this.runningBackupTaskId = runningBackupTaskId;
     }
 }

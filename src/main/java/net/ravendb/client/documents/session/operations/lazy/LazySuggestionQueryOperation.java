@@ -35,6 +35,7 @@ public class LazySuggestionQueryOperation implements ILazyOperation {
     @Override
     public GetRequest createRequest() {
         GetRequest request = new GetRequest();
+        request.setCanCacheAggressively(!_indexQuery.isDisableCaching() && !_indexQuery.isWaitForNonStaleResults());
         request.setUrl("/queries");
         request.setMethod("POST");
         request.setQuery("?queryHash=" + _indexQuery.getQueryHash());

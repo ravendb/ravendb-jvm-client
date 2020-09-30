@@ -161,6 +161,9 @@ public class SessionDocumentCounters extends SessionCountersBase implements ISes
             CountersDetail details = session.getOperations().send(new GetCountersOperation(docId, counters.toArray(new String[0])), session.sessionInfo);
 
             for (CounterDetail counterDetail : details.getCounters()) {
+                if (counterDetail == null) {
+                    continue;
+                }
                 cache.second.put(counterDetail.getCounterName(), counterDetail.getTotalValue());
                 result.put(counterDetail.getCounterName(), counterDetail.getTotalValue());
             }

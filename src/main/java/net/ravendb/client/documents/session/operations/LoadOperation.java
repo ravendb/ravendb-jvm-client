@@ -201,12 +201,13 @@ public class LoadOperation {
     public void setResult(GetDocumentsResult result) {
         _resultsSet = true;
 
-        if (result == null) {
+        if (_session.noTracking) {
+            _results = result;
             return;
         }
 
-        if (_session.noTracking) {
-            _results = result;
+        if (result == null) {
+            _session.registerMissing(_ids);
             return;
         }
 
@@ -231,6 +232,13 @@ public class LoadOperation {
 
             DocumentInfo newDocumentInfo = DocumentInfo.getNewDocumentInfo((ObjectNode) document);
             _session.documentsById.add(newDocumentInfo);
+        }
+
+        for (String id : _ids) {
+            DocumentInfo value = _session.documentsById.getValue(id);
+            if (value == null) {
+                _session.registerMissing(id);
+            }
         }
 
         _session.registerMissingIncludes(result.getResults(), result.getIncludes(), _includes);

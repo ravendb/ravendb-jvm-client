@@ -21,6 +21,11 @@ public class SessionDocumentTimeSeries extends SessionTimeSeriesBase
     }
 
     @Override
+    public TimeSeriesEntry[] get(int start, int pageSize) {
+        return get(null, null, start, pageSize);
+    }
+
+    @Override
     public TimeSeriesEntry[] get(Date from, Date to) {
         return get(from, to, 0, Integer.MAX_VALUE);
     }

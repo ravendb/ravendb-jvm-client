@@ -1,5 +1,7 @@
 package net.ravendb.client.documents.session.tokens;
 
+import net.ravendb.client.extensions.StringExtensions;
+
 import java.util.Arrays;
 import java.util.List;
 
@@ -51,7 +53,7 @@ public class FromToken extends QueryToken {
 
         if (dynamic) {
             writer.append("from '");
-            writer.append(collectionName.replaceAll("'", "\\'"));
+            StringExtensions.escapeString(writer, collectionName);
             writer.append("'");
         } else {
             writer

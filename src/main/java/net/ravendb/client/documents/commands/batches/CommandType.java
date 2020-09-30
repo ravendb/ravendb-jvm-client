@@ -20,6 +20,7 @@ public enum CommandType {
     COUNTERS,
     TIME_SERIES,
     TIME_SERIES_BULK_INSERT,
+    TIME_SERIES_COPY,
 
     BATCH_PATCH,
 

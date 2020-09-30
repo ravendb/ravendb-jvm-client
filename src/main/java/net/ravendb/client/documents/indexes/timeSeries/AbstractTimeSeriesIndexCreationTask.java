@@ -34,6 +34,8 @@ public class AbstractTimeSeriesIndexCreationTask extends AbstractGenericTimeSeri
         indexDefinitionBuilder.setPatternReferencesCollectionName(patternReferencesCollectionName);
         indexDefinitionBuilder.setAdditionalSources(getAdditionalSources());
         indexDefinitionBuilder.setConfiguration(getConfiguration());
+        indexDefinitionBuilder.setLockMode(lockMode);
+        indexDefinitionBuilder.setPriority(priority);
 
         return indexDefinitionBuilder.toIndexDefinition(conventions);
     }

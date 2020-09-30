@@ -46,6 +46,18 @@ public interface IAdvancedDocumentSessionOperations {
     void addBeforeQueryListener(EventHandler<BeforeQueryEventArgs> handler);
     void removeBeforeQueryListener(EventHandler<BeforeQueryEventArgs> handler);
 
+    void addBeforeConversionToDocumentListener(EventHandler<BeforeConversionToDocumentEventArgs> handler);
+    void removeBeforeConversionToDocumentListener(EventHandler<BeforeConversionToDocumentEventArgs> handler);
+
+    void addAfterConversionToDocumentListener(EventHandler<AfterConversionToDocumentEventArgs> handler);
+    void removeAfterConversionToDocumentListener(EventHandler<AfterConversionToDocumentEventArgs> handler);
+
+    void addBeforeConversionToEntityListener(EventHandler<BeforeConversionToEntityEventArgs> handler);
+    void removeBeforeConversionToEntityListener(EventHandler<BeforeConversionToEntityEventArgs> handler);
+
+    void addAfterConversionToEntityListener(EventHandler<AfterConversionToEntityEventArgs> handler);
+    void removeAfterConversionToEntityListener(EventHandler<AfterConversionToEntityEventArgs> handler);
+
     /**
      * Gets a value indicating whether any of the entities tracked by the session has changes.
      * @return true if any entity associated with session has changes

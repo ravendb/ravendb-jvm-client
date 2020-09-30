@@ -36,6 +36,8 @@ public class AbstractMultiMapIndexCreationTask extends AbstractGenericIndexCreat
         indexDefinitionBuilder.setPatternReferencesCollectionName(patternReferencesCollectionName);
         indexDefinitionBuilder.setAdditionalSources(getAdditionalSources());
         indexDefinitionBuilder.setConfiguration(getConfiguration());
+        indexDefinitionBuilder.setLockMode(getLockMode());
+        indexDefinitionBuilder.setPriority(getPriority());
 
         IndexDefinition indexDefinition = indexDefinitionBuilder.toIndexDefinition(conventions, false);
         indexDefinition.setMaps(new HashSet<>(maps));

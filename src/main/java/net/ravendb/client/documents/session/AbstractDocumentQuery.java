@@ -218,7 +218,18 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
         timeout = ObjectUtils.firstNonNull(waitTimeout, getDefaultTimeout());
     }
 
+    protected LazyQueryOperation<T> getLazyQueryOperation() {
+        if (queryOperation == null) {
+            queryOperation = initializeQueryOperation();
+        }
+
+        return new LazyQueryOperation<>(clazz, theSession.getConventions(), queryOperation, afterQueryExecutedCallback);
+    }
+
     protected QueryOperation initializeQueryOperation() {
+        BeforeQueryEventArgs beforeQueryExecutedEventArgs = new BeforeQueryEventArgs(theSession, new DocumentQueryCustomizationDelegate(this));
+        theSession.onBeforeQueryInvoke(beforeQueryExecutedEventArgs);
+
         IndexQuery indexQuery = getIndexQuery();
 
         return new QueryOperation(theSession, indexName, indexQuery, fieldsToFetchToken, disableEntitiesTracking, false, false, isProjectInto);
@@ -1953,9 +1964,6 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
             return;
         }
 
-        BeforeQueryEventArgs beforeQueryEventArgs = new BeforeQueryEventArgs(theSession, new DocumentQueryCustomizationDelegate(this));
-        theSession.onBeforeQueryInvoke(beforeQueryEventArgs);
-
         queryOperation = initializeQueryOperation();
         executeActualQuery();
     }
@@ -2080,11 +2088,8 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
 
     @SuppressWarnings("unchecked")
     public Lazy<List<T>> lazily(Consumer<List<T>> onEval) {
-        if (getQueryOperation() == null) {
-            queryOperation = initializeQueryOperation();
-        }
+        LazyQueryOperation<T> lazyQueryOperation = getLazyQueryOperation();
 
-        LazyQueryOperation<T> lazyQueryOperation = new LazyQueryOperation<>(clazz, theSession.getConventions(), queryOperation, afterQueryExecutedCallback);
         return ((DocumentSession)theSession).addLazyOperation((Class<List<T>>) (Class<?>)List.class, lazyQueryOperation, onEval);
     }
 

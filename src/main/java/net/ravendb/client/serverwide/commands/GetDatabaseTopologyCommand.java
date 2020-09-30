@@ -9,6 +9,7 @@ import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpRequestBase;
 
 import java.io.IOException;
+import java.time.Duration;
 import java.util.UUID;
 
 public class GetDatabaseTopologyCommand extends RavenCommand<Topology> {
@@ -24,6 +25,7 @@ public class GetDatabaseTopologyCommand extends RavenCommand<Topology> {
         super(Topology.class);
         _debugTag = debugTag;
         canCacheAggressively = false;
+        timeout = Duration.ofSeconds(15);
         _applicationIdentifier = applicationIdentifier;
     }
 

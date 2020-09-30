@@ -35,6 +35,8 @@ public class AbstractMultiMapCountersIndexCreationTask extends AbstractGenericCo
         indexDefinitionBuilder.setPatternReferencesCollectionName(patternReferencesCollectionName);
         indexDefinitionBuilder.setAdditionalSources(getAdditionalSources());
         indexDefinitionBuilder.setConfiguration(getConfiguration());
+        indexDefinitionBuilder.setLockMode(getLockMode());
+        indexDefinitionBuilder.setPriority(getPriority());
 
         CountersIndexDefinition indexDefinition = indexDefinitionBuilder.toIndexDefinition(conventions, false);
         indexDefinition.setMaps(new HashSet<>(maps));

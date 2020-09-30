@@ -33,6 +33,8 @@ public class AbstractCountersIndexCreationTask extends AbstractGenericCountersIn
         indexDefinitionBuilder.setPatternReferencesCollectionName(patternReferencesCollectionName);
         indexDefinitionBuilder.setAdditionalSources(getAdditionalSources());
         indexDefinitionBuilder.setConfiguration(getConfiguration());
+        indexDefinitionBuilder.setLockMode(getLockMode());
+        indexDefinitionBuilder.setPriority(getPriority());
 
         return indexDefinitionBuilder.toIndexDefinition(conventions);
     }
