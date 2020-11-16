@@ -36,6 +36,14 @@ public class MultiGetCommand extends RavenCommand<List<GetResponse>> {
     @SuppressWarnings("unchecked")
     public MultiGetCommand(RequestExecutor requestExecutor, List<GetRequest> commands) {
         super((Class<List<GetResponse>>)(Class<?>)List.class);
+
+        if (requestExecutor == null) {
+            throw new IllegalArgumentException("RequestExecutor cannot be null");
+        }
+
+        if (commands == null) {
+            throw new IllegalArgumentException("Command cannot be null");
+        }
         _requestExecutor = requestExecutor;
         _cache = requestExecutor.getCache();
         _commands = commands;

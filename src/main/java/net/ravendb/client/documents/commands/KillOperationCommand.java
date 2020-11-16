@@ -14,6 +14,12 @@ public class KillOperationCommand extends VoidRavenCommand {
         _id = id;
     }
 
+    public KillOperationCommand(long id, String nodeTag) {
+        this(id);
+
+        this.selectedNodeTag = nodeTag;
+    }
+
     @Override
     public HttpRequestBase createRequest(ServerNode node, Reference<String> url) {
         url.value = node.getUrl() + "/databases/" + node.getDatabase() + "/operations/kill?id=" + _id;

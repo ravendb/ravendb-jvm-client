@@ -19,6 +19,9 @@ public class StartTransactionsRecordingOperation implements IVoidMaintenanceOper
     private final String _filePath;
 
     public StartTransactionsRecordingOperation(String filePath) {
+        if (filePath == null) {
+            throw new IllegalArgumentException("FilePath cannot be null");
+        }
         _filePath = filePath;
     }
 

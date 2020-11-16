@@ -27,16 +27,14 @@ public class AddEtlOperation<T extends ConnectionString> implements IMaintenance
 
     @Override
     public RavenCommand<AddEtlOperationResult> getCommand(DocumentConventions conventions) {
-        return new AddEtlCommand<>(conventions, _configuration);
+        return new AddEtlCommand<>(_configuration);
     }
 
     private static class AddEtlCommand<T extends ConnectionString> extends RavenCommand<AddEtlOperationResult> implements IRaftCommand {
-        private final DocumentConventions _conventions;
         private final EtlConfiguration<T> _configuration;
 
-        public AddEtlCommand(DocumentConventions conventions, EtlConfiguration<T> configuration) {
+        public AddEtlCommand(EtlConfiguration<T> configuration) {
             super(AddEtlOperationResult.class);
-            _conventions = conventions;
             _configuration = configuration;
         }
 

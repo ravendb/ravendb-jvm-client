@@ -20,6 +20,7 @@ public class FacetOptions {
 
     public FacetOptions() {
         pageSize = Integer.MAX_VALUE;
+        termSortMode = FacetTermSortMode.VALUE_ASC;
     }
 
     public static FacetOptions getDefaultOptions() {

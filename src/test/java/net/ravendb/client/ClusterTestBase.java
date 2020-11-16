@@ -15,10 +15,13 @@ import net.ravendb.client.infrastructure.AdminJsConsoleOperation;
 import net.ravendb.client.primitives.CleanCloseable;
 import net.ravendb.client.primitives.Reference;
 import net.ravendb.client.serverwide.DatabaseRecord;
+import net.ravendb.client.serverwide.DatabaseRecordWithEtag;
 import net.ravendb.client.serverwide.commands.GetClusterTopologyCommand;
 import net.ravendb.client.serverwide.operations.CreateDatabaseOperation;
 import net.ravendb.client.serverwide.operations.DatabasePutResult;
+import net.ravendb.client.serverwide.operations.GetDatabaseRecordOperation;
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang3.ObjectUtils;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpRequestBase;
 import org.apache.http.impl.client.CloseableHttpClient;
@@ -104,7 +107,7 @@ public abstract class ClusterTestBase extends RavenTestDriver implements CleanCl
         }
 
         cluster.executeJsScript(leaderNodeTag,
-                "server.ServerStore.EnsureNotPassive(null, \"" + leaderNodeTag + "\");");
+                "server.ServerStore.EnsureNotPassiveAsync(null, \"" + leaderNodeTag + "\").Wait();");
 
         if (numberOfNodes > 1) {
             // add nodes to cluster
@@ -308,6 +311,15 @@ public abstract class ClusterTestBase extends RavenTestDriver implements CleanCl
         }
 
         return stores;
+    }
+
+    public static void waitForIndexingInTheCluster(IDocumentStore store, String dbName, Duration timeout) {
+        DatabaseRecordWithEtag record = store.maintenance().server().send(
+                new GetDatabaseRecordOperation(ObjectUtils.firstNonNull(dbName, store.getDatabase())));
+
+        for (String nodeTag : record.getTopology().getAllNodes()) {
+            waitForIndexing(store, dbName, timeout, nodeTag);
+        }
     }
 
     @Override

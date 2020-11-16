@@ -33,6 +33,10 @@ public class PutClientCertificateOperation implements IVoidServerOperation {
             throw new IllegalArgumentException("Permissions cannot be null");
         }
 
+        if (name == null) {
+            throw new IllegalArgumentException("Name cannot be null");
+        }
+
         _certificate = certificate;
         _permissions = permissions;
         _name = name;

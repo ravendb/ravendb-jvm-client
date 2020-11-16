@@ -2,13 +2,11 @@ package net.ravendb.client.http;
 
 import net.ravendb.client.Constants;
 import net.ravendb.client.documents.conventions.DocumentConventions;
+import net.ravendb.client.documents.operations.DatabaseHealthCheckOperation;
 import net.ravendb.client.documents.operations.GetStatisticsOperation;
 import net.ravendb.client.documents.operations.configuration.GetClientConfigurationOperation;
 import net.ravendb.client.documents.session.*;
-import net.ravendb.client.exceptions.AllTopologyNodesDownException;
-import net.ravendb.client.exceptions.ClientVersionMismatchException;
-import net.ravendb.client.exceptions.ExceptionDispatcher;
-import net.ravendb.client.exceptions.UnsuccessfulRequestException;
+import net.ravendb.client.exceptions.*;
 import net.ravendb.client.exceptions.database.DatabaseDoesNotExistException;
 import net.ravendb.client.exceptions.security.AuthorizationException;
 import net.ravendb.client.extensions.HttpExtensions;
@@ -47,6 +45,7 @@ import java.security.*;
 import java.time.Duration;
 import java.util.*;
 import java.util.concurrent.*;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Consumer;
@@ -61,7 +60,11 @@ public class RequestExecutor implements CleanCloseable {
 
     public static Consumer<HttpClientBuilder> configureHttpClient = null;
 
-    private static final GetStatisticsOperation failureCheckOperation = new GetStatisticsOperation("failure=check");
+    private static final GetStatisticsOperation backwardCompatibilityFailureCheckOperation = new GetStatisticsOperation("failure=check");
+
+    private static final DatabaseHealthCheckOperation failureCheckOperation = new DatabaseHealthCheckOperation();
+    private Set<String> _useOldFailureCheckOperation = ConcurrentHashMap.newKeySet();
+
     /**
      * Extension point to plug - in request post processing like adding proxy etc.
      */
@@ -1511,7 +1514,25 @@ public class RequestExecutor implements CleanCloseable {
     }
 
     protected void performHealthCheck(ServerNode serverNode, int nodeIndex) {
-        execute(serverNode, nodeIndex, failureCheckOperation.getCommand(conventions), false, null);
+        try {
+            if (!_useOldFailureCheckOperation.contains(serverNode.getUrl())) {
+                execute(serverNode, nodeIndex, failureCheckOperation.getCommand(conventions), false, null);
+            } else {
+                executeOldHealthCheck(serverNode, nodeIndex);
+            }
+        } catch (Exception e) {
+            if (e.getMessage().contains("RouteNotFoundException")) {
+                _useOldFailureCheckOperation.add(serverNode.getUrl());
+                executeOldHealthCheck(serverNode, nodeIndex);
+                return;
+            }
+
+            throw ExceptionsUtils.unwrapException(e);
+        }
+    }
+
+    private void executeOldHealthCheck(ServerNode serverNode, int nodeIndex) {
+        execute(serverNode, nodeIndex, backwardCompatibilityFailureCheckOperation.getCommand(conventions), false, null);
     }
 
     private static <TResult> Exception readExceptionFromServer(HttpRequestBase request, CloseableHttpResponse response, Exception e) {

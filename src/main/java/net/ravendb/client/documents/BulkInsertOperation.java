@@ -73,6 +73,10 @@ public class BulkInsertOperation implements CleanCloseable {
         }
 
 
+        public boolean isDone() {
+            return _done.isDone();
+        }
+
         @SuppressWarnings("SameReturnValue")
         @Override
         public boolean isChunked() {
@@ -124,13 +128,13 @@ public class BulkInsertOperation implements CleanCloseable {
 
         private final long _id;
 
-        private final boolean useCompression;
+        private boolean useCompression;
 
-        public BulkInsertCommand(long id, StreamExposerContent stream, boolean useCompression) {
+        public BulkInsertCommand(long id, StreamExposerContent stream, String nodeTag) {
             super(CloseableHttpResponse.class);
             _stream = stream;
             _id = id;
-            this.useCompression = useCompression;
+            this.selectedNodeTag = nodeTag;
         }
 
         @Override
@@ -156,6 +160,14 @@ public class BulkInsertOperation implements CleanCloseable {
                 throw e;
             }
         }
+
+        public boolean isUseCompression() {
+            return useCompression;
+        }
+
+        public void setUseCompression(boolean useCompression) {
+            this.useCompression = useCompression;
+        }
     }
 
     private ExecutorService _executorService;
@@ -171,6 +183,7 @@ public class BulkInsertOperation implements CleanCloseable {
     private final CountersBulkInsertOperation _countersOperation;
     private final AttachmentsBulkInsertOperation _attachmentsOperation;
     private long _operationId = -1;
+    private String _nodeTag;
 
     private boolean useCompression = false;
     private final int _timeSeriesBatchSize;
@@ -180,6 +193,9 @@ public class BulkInsertOperation implements CleanCloseable {
     public BulkInsertOperation(String database, DocumentStore store) {
         _executorService = store.getExecutorService();
         _conventions = store.getConventions();
+        if (StringUtils.isBlank(database)) {
+            throwNoDatabase();
+        }
         _requestExecutor = store.getRequestExecutor(database);
         objectMapper = store.getConventions().getEntityMapper();
 
@@ -206,10 +222,25 @@ public class BulkInsertOperation implements CleanCloseable {
     }
 
     private void throwBulkInsertAborted(Exception e, Exception flushEx) {
-        Exception error = getExceptionFromOperation();
+
+        BulkInsertAbortedException errorFromServer = null;
+        try {
+            errorFromServer = getExceptionFromOperation();
+        } catch (Exception ee) {
+            // server is probably down, will propagate the original exception
+        }
+
+        if (errorFromServer != null) {
+            throw errorFromServer;
+        }
 
         throw new BulkInsertAbortedException("Failed to execute bulk insert",
-                ObjectUtils.firstNonNull(error, e, flushEx));
+                ObjectUtils.firstNonNull(e, flushEx));
+    }
+
+    private void throwNoDatabase() {
+        throw new IllegalStateException("Cannot start bulk insert operation without specifying a name of a database to operate on."
+            + "Database name can be passed as an argument when bulk insert is being created or default database can be defined using 'DocumentStore.setDatabase' method.");
     }
 
     private void waitForId() {
@@ -220,6 +251,7 @@ public class BulkInsertOperation implements CleanCloseable {
         GetNextOperationIdCommand bulkInsertGetIdRequest = new GetNextOperationIdCommand();
         _requestExecutor.execute(bulkInsertGetIdRequest);
         _operationId = bulkInsertGetIdRequest.getResult();
+        _nodeTag = bulkInsertGetIdRequest.getNodeTag();
     }
 
     @SuppressWarnings("UnusedReturnValue")
@@ -405,7 +437,7 @@ public class BulkInsertOperation implements CleanCloseable {
 
     private BulkInsertAbortedException getExceptionFromOperation() {
         GetOperationStateOperation.GetOperationStateCommand stateRequest =
-                new GetOperationStateOperation.GetOperationStateCommand(_operationId);
+                new GetOperationStateOperation.GetOperationStateCommand(_operationId, _nodeTag);
         _requestExecutor.execute(stateRequest);
 
         if (!"Faulted".equals(stateRequest.getResult().get("Status").asText())) {
@@ -432,7 +464,8 @@ public class BulkInsertOperation implements CleanCloseable {
 
     private void ensureStream() {
         try {
-            BulkInsertCommand bulkCommand = new BulkInsertCommand(_operationId, _streamExposerContent, useCompression);
+            BulkInsertCommand bulkCommand = new BulkInsertCommand(_operationId, _streamExposerContent, _nodeTag);
+            bulkCommand.useCompression = useCompression;
 
             _bulkInsertExecuteTask = CompletableFuture.supplyAsync(() -> {
                 _requestExecutor.execute(bulkCommand);
@@ -467,7 +500,7 @@ public class BulkInsertOperation implements CleanCloseable {
         waitForId();
 
         try {
-            _requestExecutor.execute(new KillOperationCommand(_operationId));
+            _requestExecutor.execute(new KillOperationCommand(_operationId, _nodeTag));
         } catch (RavenException e) {
             throw new BulkInsertAbortedException("Unable to kill ths bulk insert operation, because it was not found on the server.");
         }
@@ -478,6 +511,10 @@ public class BulkInsertOperation implements CleanCloseable {
         endPreviousCommandIfNeeded();
 
         Exception flushEx = null;
+
+        if (this._streamExposerContent.isDone()) {
+            return;
+        }
 
         if (_stream != null) {
             try {

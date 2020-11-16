@@ -139,6 +139,34 @@ public class HttpsTest extends RemoteTestBase {
                         .doesNotContain("cert1")
                         .contains("cert3");
 
+                // and try to use edit
+
+                EditClientCertificateOperation.Parameters parameters = new EditClientCertificateOperation.Parameters();
+                parameters.setName("cert3-newName");
+                parameters.setThumbprint(cert1Thumbprint);
+                parameters.setPermissions(new HashMap<>());
+                parameters.setClearance(SecurityClearance.VALID_USER);
+
+                store.maintenance().server().send(new EditClientCertificateOperation(parameters));
+                certificateDefinitions = store.maintenance().server().send(new GetCertificatesOperation(0, 20));
+                assertThat(certificateDefinitions)
+                        .extracting(CertificateMetadata::getName)
+                        .contains("cert3-newName")
+                        .doesNotContain("cert3");
+
+                CertificateMetadata certificateMetadata = store.maintenance().server().send(new GetCertificateMetadataOperation(cert1Thumbprint));
+                assertThat(certificateMetadata)
+                        .isNotNull();
+                assertThat(certificateMetadata.getSecurityClearance())
+                        .isEqualTo(SecurityClearance.VALID_USER);
+
+                CertificateMetadata[] certificatesMetadata = store.maintenance().server().send(new GetCertificatesMetadataOperation(certificateMetadata.getName()));
+                assertThat(certificatesMetadata)
+                        .hasSize(1);
+                assertThat(certificatesMetadata[0])
+                        .isNotNull();
+                assertThat(certificatesMetadata[0].getSecurityClearance())
+                        .isEqualTo(SecurityClearance.VALID_USER);
             } finally {
                 // try to clean up
                 if (cert1Thumbprint != null) {

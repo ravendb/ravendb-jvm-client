@@ -22,6 +22,9 @@ public class UpdateExternalReplicationOperation implements IMaintenanceOperation
     private final ExternalReplication _newWatcher;
 
     public UpdateExternalReplicationOperation(ExternalReplication newWatcher) {
+        if (newWatcher == null) {
+            throw new IllegalArgumentException("NewWatcher cannot be null");
+        }
         _newWatcher = newWatcher;
     }
 

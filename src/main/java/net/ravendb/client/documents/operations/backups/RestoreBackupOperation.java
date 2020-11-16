@@ -48,6 +48,11 @@ public class RestoreBackupOperation implements IServerOperation<OperationIdResul
 
         public RestoreBackupCommand(RestoreBackupConfigurationBase restoreConfiguration, String nodeTag) {
             super(OperationIdResult.class);
+
+            if (restoreConfiguration == null) {
+                throw new IllegalArgumentException("RestoreConfiguration cannot be null");
+            }
+
             _restoreConfiguration = restoreConfiguration;
             selectedNodeTag = nodeTag;
         }

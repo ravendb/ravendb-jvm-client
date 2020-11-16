@@ -35,6 +35,10 @@ public class ConfigureExpirationOperation implements IMaintenanceOperation<Confi
         public ConfigureExpirationCommand(ExpirationConfiguration configuration) {
             super(ConfigureExpirationOperationResult.class);
 
+            if (configuration == null) {
+                throw new IllegalArgumentException("Configuration cannot be null");
+            }
+
             _configuration = configuration;
         }
 

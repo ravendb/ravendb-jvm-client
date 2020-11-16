@@ -26,17 +26,15 @@ public class UpdatePeriodicBackupOperation implements IMaintenanceOperation<Upda
 
     @Override
     public RavenCommand<UpdatePeriodicBackupOperationResult> getCommand(DocumentConventions conventions) {
-        return new UpdatePeriodicBackupCommand(conventions, _configuration);
+        return new UpdatePeriodicBackupCommand(_configuration);
     }
 
     private static class UpdatePeriodicBackupCommand extends RavenCommand<UpdatePeriodicBackupOperationResult> implements IRaftCommand {
-        private final DocumentConventions _conventions;
         private final PeriodicBackupConfiguration _configuration;
 
-        public UpdatePeriodicBackupCommand(DocumentConventions conventions, PeriodicBackupConfiguration configuration) {
+        public UpdatePeriodicBackupCommand(PeriodicBackupConfiguration configuration) {
             super(UpdatePeriodicBackupOperationResult.class);
 
-            _conventions = conventions;
             _configuration = configuration;
         }
 

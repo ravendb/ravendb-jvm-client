@@ -21,6 +21,9 @@ public class ConfigureRevisionsOperation implements IMaintenanceOperation<Config
     private final RevisionsConfiguration _configuration;
 
     public ConfigureRevisionsOperation(RevisionsConfiguration configuration) {
+        if (configuration == null) {
+            throw new IllegalArgumentException("Configuration cannot be null");
+        }
         _configuration = configuration;
     }
 

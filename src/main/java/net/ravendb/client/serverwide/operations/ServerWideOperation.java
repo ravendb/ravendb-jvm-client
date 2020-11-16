@@ -13,7 +13,7 @@ public class ServerWideOperation extends Operation {
     }
 
     public ServerWideOperation(RequestExecutor requestExecutor, DocumentConventions conventions, long id, String nodeTag) {
-        super(requestExecutor, null, conventions, id);
+        super(requestExecutor, null, conventions, id, nodeTag);
         setNodeTag(nodeTag);
     }
 
