@@ -79,7 +79,6 @@ public class CountersSingleNodeTest extends RemoteTestBase {
     }
 
     @Test
-    @Disabled("waiting for RavenDB-15440")
     public void getCounterValueUsingPOST() throws Exception {
         try (IDocumentStore store = getDocumentStore()) {
             try (IDocumentSession session = store.openSession()) {

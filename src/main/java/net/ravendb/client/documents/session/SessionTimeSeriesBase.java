@@ -120,7 +120,8 @@ public class SessionTimeSeriesBase {
     }
 
     private static void throwDocumentAlreadyDeletedInSession(String documentId, String timeSeries) {
-        throw new IllegalStateException("Can't modify timeseries " + timeSeries + " of document " + documentId + ", the document was already delete in this session.");
+        throw new IllegalStateException("Can't modify timeseries " + timeSeries + " of document " + documentId
+                + ", the document was already deleted in this session.");
     }
 
     protected void throwEntityNotInSession(Object entity) {

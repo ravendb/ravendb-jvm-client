@@ -53,6 +53,6 @@ public class TimeSeriesCollectionConfiguration {
     }
 
     public static boolean isRaw(TimeSeriesPolicy policy) {
-        return RawTimeSeriesPolicy.DEFAULT_POLICY.equals(policy.getName());
+        return RawTimeSeriesPolicy.DEFAULT_POLICY.getName().equals(policy.getName());
     }
 }

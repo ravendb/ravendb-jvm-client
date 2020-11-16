@@ -10,7 +10,7 @@ public class CompareExchangeValueJsonConverter {
             return null;
         }
 
-        if (ClassUtils.isPrimitiveOrWrapper(value.getClass()) || String.class.equals(value) || value.getClass().isArray()) {
+        if (ClassUtils.isPrimitiveOrWrapper(value.getClass()) || value instanceof String || value.getClass().isArray()) {
             return value;
         }
 

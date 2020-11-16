@@ -119,7 +119,7 @@ public class TimeValue implements Comparable<TimeValue> {
 
                 if (remainingSeconds > 3_600) {
                     int hours = remainingSeconds / 3_600;
-                    append(str, hours, "hours");
+                    append(str, hours, "hour");
                     remainingSeconds -= hours * 3_600;
                 }
 
@@ -248,7 +248,7 @@ public class TimeValue implements Comparable<TimeValue> {
     }
 
     private static boolean isMin(TimeValue time) {
-        return time._unit == TimeValueUnit.NONE && time._value == Integer.MAX_VALUE;
+        return time._unit == TimeValueUnit.NONE && time._value == Integer.MIN_VALUE;
     }
 
     private static int trimCompareResult(long result) {
