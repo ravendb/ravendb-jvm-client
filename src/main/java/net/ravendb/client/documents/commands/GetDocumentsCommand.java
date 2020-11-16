@@ -19,6 +19,7 @@ import org.apache.http.entity.ContentType;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.LinkedHashSet;
+import java.util.Objects;
 import java.util.Set;
 
 public class GetDocumentsCommand extends RavenCommand<GetDocumentsResult> {
@@ -171,8 +172,9 @@ public class GetDocumentsCommand extends RavenCommand<GetDocumentsResult> {
         // if it is too big, we drop to POST (note that means that we can't use the HTTP cache any longer)
         // we are fine with that, requests to load > 1024 items are going to be rare
         boolean isGet = uniqueIds.stream()
+                .filter(Objects::nonNull)
                 .map(String::length)
-                .reduce((prev, current) -> prev + current)
+                .reduce(Integer::sum)
                 .orElse(0) < 1024;
 
         if (isGet) {

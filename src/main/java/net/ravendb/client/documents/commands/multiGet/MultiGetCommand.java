@@ -38,6 +38,15 @@ public class MultiGetCommand extends RavenCommand<List<GetResponse>> {
     @SuppressWarnings("unchecked")
     public MultiGetCommand(HttpCache cache, List<GetRequest> commands) {
         super((Class<List<GetResponse>>)(Class<?>)List.class);
+
+        if (cache == null) {
+            throw new IllegalArgumentException("Cache cannot be null");
+        }
+
+        if (commands == null) {
+            throw new IllegalArgumentException("Command cannot be null");
+        }
+
         _cache = cache;
         _commands = commands;
         responseType = RavenCommandResponseType.RAW;

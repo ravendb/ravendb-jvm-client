@@ -14,6 +14,12 @@ public class GetNextOperationIdCommand extends RavenCommand<Long> {
         super(Long.class);
     }
 
+    private String _nodeTag;
+
+    public String getNodeTag() {
+        return _nodeTag;
+    }
+
     @Override
     public boolean isReadRequest() {
         return false; // disable caching
@@ -32,6 +38,10 @@ public class GetNextOperationIdCommand extends RavenCommand<Long> {
 
         if (jsonNode.has("Id")) {
             result = jsonNode.get("Id").asLong();
+        }
+
+        if (jsonNode.has("NodeTag")) {
+            _nodeTag = jsonNode.get("NodeTag").asText();
         }
     }
 }

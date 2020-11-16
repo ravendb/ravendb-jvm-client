@@ -14,8 +14,6 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-//TODO: review disabled tests
-@Disabled
 public class RavenDB_14919Test extends RemoteTestBase {
 
     @Test
@@ -61,7 +59,7 @@ public class RavenDB_14919Test extends RemoteTestBase {
                         .hasSize(1);
             }
 
-            assertThat(vals.getCounters().get(101))
+            assertThat(vals.getCounters().get(vals.getCounters().size() - 1))
                     .isNull();
         }
     }
@@ -80,7 +78,7 @@ public class RavenDB_14919Test extends RemoteTestBase {
                 for (int i = 0; i < 1000; i++) {
                     String name = "likes" + i;
                     counterNames[i] = name;
-                    c.increment(name);
+                    c.increment(name, i);
                 }
 
                 session.saveChanges();
@@ -92,7 +90,7 @@ public class RavenDB_14919Test extends RemoteTestBase {
 
             for (int i = 0; i < 1000; i++) {
                 assertThat(vals.getCounters().get(i).getTotalValue())
-                        .isEqualTo(1);
+                        .isEqualTo(i);
             }
 
             assertThat(vals.getCounters().get(vals.getCounters().size() - 1))
@@ -105,11 +103,11 @@ public class RavenDB_14919Test extends RemoteTestBase {
                     .hasSize(1001);
 
             for (int i = 0; i < 1000; i++) {
-                assertThat(vals.getCounters().get(i).getCounterValues())
-                        .hasSize(1);
+                assertThat(vals.getCounters().get(i).getTotalValue())
+                        .isEqualTo(i);
             }
 
-            assertThat(vals.getCounters().get(1001))
+            assertThat(vals.getCounters().get(vals.getCounters().size() - 1))
                     .isNull();
         }
     }
@@ -129,15 +127,14 @@ public class RavenDB_14919Test extends RemoteTestBase {
                 session.saveChanges();
             }
 
-
             RequestExecutor re = store.getRequestExecutor();
             GetDocumentsCommand command = new GetDocumentsCommand(ids, null, false);
             re.execute(command);
 
             assertThat(command.getResult().getResults())
                     .hasSize(101);
-            assertThat(command.getResult().getResults().get(command.getResult().getResults().size() - 1))
-                    .isNull();
+            assertThat(command.getResult().getResults().get(command.getResult().getResults().size() - 1).isNull())
+                    .isTrue();
         }
     }
 
@@ -163,8 +160,8 @@ public class RavenDB_14919Test extends RemoteTestBase {
 
             assertThat(command.getResult().getResults())
                     .hasSize(1001);
-            assertThat(command.getResult().getResults().get(command.getResult().getResults().size() - 1))
-                    .isNull();
+            assertThat(command.getResult().getResults().get(command.getResult().getResults().size() - 1).isNull())
+                    .isTrue();
         }
     }
 }

@@ -1,7 +1,9 @@
 package net.ravendb.client.serverwide;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import net.ravendb.client.serverwide.operations.DatabasePromotionStatus;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -19,6 +21,17 @@ public class DatabaseTopology {
     private LeaderStamp stamp;
     private String databaseTopologyIdBase64;
     private List<String> priorityOrder;
+
+    @JsonIgnore
+    public List<String> getAllNodes() {
+        List<String> result = new ArrayList<>();
+
+        result.addAll(members);
+        result.addAll(promotables);
+        result.addAll(rehabs);
+
+        return result;
+    }
 
     public List<String> getMembers() {
         return members;

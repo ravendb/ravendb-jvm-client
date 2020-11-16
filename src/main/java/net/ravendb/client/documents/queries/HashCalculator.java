@@ -1,6 +1,7 @@
 package net.ravendb.client.documents.queries;
 
 import net.ravendb.client.Parameters;
+import net.ravendb.client.documents.conventions.DocumentConventions;
 import org.apache.commons.codec.digest.DigestUtils;
 
 import java.io.ByteArrayOutputStream;
@@ -128,7 +129,7 @@ public class HashCalculator {
                 }
             }
         } else {
-            write(value.toString());
+            write(DocumentConventions.defaultConventions.getEntityMapper().writeValueAsString(value));
         }
     }
 

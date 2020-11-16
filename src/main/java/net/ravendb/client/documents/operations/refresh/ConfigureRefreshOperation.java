@@ -20,6 +20,9 @@ public class ConfigureRefreshOperation implements IMaintenanceOperation<Configur
     private final RefreshConfiguration _configuration;
 
     public ConfigureRefreshOperation(RefreshConfiguration configuration) {
+        if (configuration == null) {
+            throw new IllegalArgumentException("Configuration cannot be null");
+        }
         _configuration = configuration;
     }
 

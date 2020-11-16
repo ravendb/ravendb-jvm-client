@@ -69,21 +69,28 @@ public class ClientGraphQueriesTest extends RemoteTestBase {
 
                 session.saveChanges();
 
-                List<String> names = Arrays.asList("Fi", "Fah", "Foozy");
+                List<List<String>> namesList = Arrays.asList(
+                        Arrays.asList("Fi", "Fah", "Foozy"),
+                        Arrays.asList("Fi", "Foozy", "Fah"),
+                        Arrays.asList("Foozy", "Fi", "Fah", "Foozy"),
+                        Arrays.asList("Fi", "Foozy", "Fah", "Fah", "Foozy")
+                );
 
-                List<FooBar> res = session.advanced().graphQuery(FooBar.class, "match (Foos as foo)-[bars as _]->(Bars as bar)")
-                        .with("foo", builder -> builder.query(Foo.class).whereIn("name", names))
-                        .with("bar", session.query(Bar.class).whereGreaterThanOrEqual("age", 18))
-                        .waitForNonStaleResults()
-                        .toList();
+                for (List<String> names : namesList) {
+                    List<FooBar> res = session.advanced().graphQuery(FooBar.class, "match (Foos as foo)-[bars as _]->(Bars as bar)")
+                            .with("foo", builder -> builder.query(Foo.class).whereIn("name", names))
+                            .with("bar", session.query(Bar.class).whereGreaterThanOrEqual("age", 18))
+                            .waitForNonStaleResults()
+                            .toList();
 
-                assertThat(res)
-                        .hasSize(1);
+                    assertThat(res)
+                            .hasSize(1);
 
-                assertThat(res.get(0).getFoo().getName())
-                        .isEqualTo("Foozy");
-                assertThat(res.get(0).getBar().getName())
-                        .isEqualTo("Barvazon");
+                    assertThat(res.get(0).getFoo().getName())
+                            .isEqualTo("Foozy");
+                    assertThat(res.get(0).getBar().getName())
+                            .isEqualTo("Barvazon");
+                }
             }
         }
     }

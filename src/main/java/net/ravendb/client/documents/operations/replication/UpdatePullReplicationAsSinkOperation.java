@@ -33,6 +33,9 @@ public class UpdatePullReplicationAsSinkOperation implements IMaintenanceOperati
 
         public UpdatePullEdgeReplication(PullReplicationAsSink pullReplication) {
             super(ModifyOngoingTaskResult.class);
+            if (pullReplication == null) {
+                throw new IllegalArgumentException("PullReplication cannot be null");
+            }
             _pullReplication = pullReplication;
         }
 

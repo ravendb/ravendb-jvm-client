@@ -18,9 +18,7 @@ import org.apache.http.client.methods.HttpRequestBase;
 import org.apache.http.entity.ContentType;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashSet;
+import java.util.*;
 
 public class GetCountersOperation implements IOperation<CountersDetail> {
 
@@ -92,7 +90,7 @@ public class GetCountersOperation implements IOperation<CountersDetail> {
 
             HttpRequestBase request = new HttpGet();
 
-            if (_counters.length > 0) {
+            if (_counters != null && _counters.length > 0) {
                 if (_counters.length > 1) {
                     request = prepareRequestWithMultipleCounters(pathBuilder, request);
                 } else {
@@ -111,9 +109,12 @@ public class GetCountersOperation implements IOperation<CountersDetail> {
         }
 
         private HttpRequestBase prepareRequestWithMultipleCounters(StringBuilder pathBuilder, HttpRequestBase request) {
-            HashSet<String> uniqueNames = Sets.newHashSet(_counters);
+            Reference<Integer> sumLengthRef = new Reference<>();
+            List<String> uniqueNames = getOrderedUniqueNames(sumLengthRef);
 
-            if (uniqueNames.stream().map(x -> x != null ? x.length() : 0).reduce(Integer::sum).get() < 1024) {
+            // if it is too big, we drop to POST (note that means that we can't use the HTTP cache any longer)
+            // we are fine with that, such requests are going to be rare
+            if (sumLengthRef.value < 1024) {
                 for (String uniqueName : uniqueNames) {
                     pathBuilder.append("&counter=")
                             .append(UrlUtils.escapeDataString(ObjectUtils.firstNonNull(uniqueName, "")));
@@ -126,7 +127,7 @@ public class GetCountersOperation implements IOperation<CountersDetail> {
                 docOps.setDocumentId(_docId);
                 docOps.setOperations(new ArrayList<>());
 
-                for (String counter : _counters) {
+                for (String counter : uniqueNames) {
                     CounterOperation counterOperation = new CounterOperation();
                     counterOperation.setType(CounterOperationType.GET);
                     counterOperation.setCounterName(counter);
@@ -157,6 +158,22 @@ public class GetCountersOperation implements IOperation<CountersDetail> {
             }
 
             result = mapper.readValue(response, CountersDetail.class);
+        }
+
+        private List<String> getOrderedUniqueNames(Reference<Integer> sumRef) {
+            Set<String> uniqueNames = new HashSet<>();
+            List<String> orderedUniqueNames = new ArrayList<>();
+
+            sumRef.value = 0;
+
+            for (String counter : _counters) {
+                if (uniqueNames.add(counter)) {
+                    orderedUniqueNames.add(counter);
+                    sumRef.value += counter != null ? counter.length() : 0;
+                }
+            }
+
+            return orderedUniqueNames;
         }
 
         @Override

@@ -22,6 +22,14 @@ public class ResetEtlOperation implements IVoidMaintenanceOperation {
     private final String _transformationName;
 
     public ResetEtlOperation(String configurationName, String transformationName) {
+        if (configurationName == null) {
+            throw new IllegalArgumentException("ConfigurationName cannot be null");
+        }
+
+        if (transformationName == null) {
+            throw new IllegalArgumentException("TransformationName cannot be null");
+        }
+
         _configurationName = configurationName;
         _transformationName = transformationName;
     }
@@ -47,8 +55,17 @@ public class ResetEtlOperation implements IVoidMaintenanceOperation {
 
         @Override
         public HttpRequestBase createRequest(ServerNode node, Reference<String> url) {
-            url.value = node.getUrl() + "/databases/" + node.getDatabase() + "/admin/etl?configurationName=" + UrlUtils.escapeDataString(_configurationName)
-                    + "&transformationName=" + UrlUtils.escapeDataString(_transformationName);
+            StringBuilder path = new StringBuilder(node.getUrl());
+
+            path
+                    .append("/databases/")
+                    .append(node.getDatabase())
+                    .append("/admin/etl?configurationName=")
+                    .append(UrlUtils.escapeDataString(_configurationName))
+                    .append("&transformationName=")
+                    .append(UrlUtils.escapeDataString(_transformationName));
+
+            url.value = path.toString();
 
             HttpResetWithEntity request = new HttpResetWithEntity();
             request.setEntity(new ContentProviderHttpEntity(outputStream -> {

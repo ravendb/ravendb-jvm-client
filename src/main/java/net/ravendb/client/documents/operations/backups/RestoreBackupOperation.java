@@ -32,7 +32,7 @@ public class RestoreBackupOperation implements IServerOperation<OperationIdResul
 
     @Override
     public RavenCommand<OperationIdResult> getCommand(DocumentConventions conventions) {
-        return new RestoreBackupCommand(conventions, _restoreConfiguration, _nodeTag);
+        return new RestoreBackupCommand(_restoreConfiguration, _nodeTag);
     }
 
     public String getNodeTag() {
@@ -42,12 +42,17 @@ public class RestoreBackupOperation implements IServerOperation<OperationIdResul
     private static class RestoreBackupCommand extends RavenCommand<OperationIdResult> {
         private final RestoreBackupConfigurationBase _restoreConfiguration;
 
-        public RestoreBackupCommand(DocumentConventions conventions, RestoreBackupConfigurationBase restoreConfiguration) {
-            this(conventions, restoreConfiguration, null);
+        public RestoreBackupCommand(RestoreBackupConfigurationBase restoreConfiguration) {
+            this(restoreConfiguration, null);
         }
 
-        public RestoreBackupCommand(DocumentConventions conventions, RestoreBackupConfigurationBase restoreConfiguration, String nodeTag) {
+        public RestoreBackupCommand(RestoreBackupConfigurationBase restoreConfiguration, String nodeTag) {
             super(OperationIdResult.class);
+
+            if (restoreConfiguration == null) {
+                throw new IllegalArgumentException("RestoreConfiguration cannot be null");
+            }
+
             _restoreConfiguration = restoreConfiguration;
             selectedNodeTag = nodeTag;
         }

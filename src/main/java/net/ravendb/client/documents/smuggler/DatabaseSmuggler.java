@@ -89,14 +89,14 @@ public class DatabaseSmuggler {
             throw new IllegalStateException("Cannot use smuggler without a database defined, did you forget to call 'forDatabase'?");
         }
 
-        GetNextOperationIdCommand getNextOperationIdCommand = new GetNextOperationIdCommand();
-        _requestExecutor.execute(getNextOperationIdCommand);
-        Long operationId = getNextOperationIdCommand.getResult();
+        GetNextOperationIdCommand getOperationIdCommand = new GetNextOperationIdCommand();
+        _requestExecutor.execute(getOperationIdCommand);
+        Long operationId = getOperationIdCommand.getResult();
 
-        ExportCommand command = new ExportCommand(_requestExecutor.getConventions(), options, handleStreamResponse, operationId);
+        ExportCommand command = new ExportCommand(_requestExecutor.getConventions(), options, handleStreamResponse, operationId, getOperationIdCommand.getNodeTag());
         _requestExecutor.execute(command);
 
-        return new Operation(_requestExecutor, () -> _store.changes(_databaseName), _requestExecutor.getConventions(), operationId);
+        return new Operation(_requestExecutor, () -> _store.changes(_databaseName), _requestExecutor.getConventions(), operationId, getOperationIdCommand.getNodeTag());
     }
 
     public Operation exportAsync(DatabaseSmugglerExportOptions options, DatabaseSmuggler toDatabase) {
@@ -181,14 +181,14 @@ public class DatabaseSmuggler {
             throw new IllegalStateException("Cannot use smuggler without a database defined, did you forget to call 'forDatabase'?");
         }
 
-        GetNextOperationIdCommand getNextOperationIdCommand = new GetNextOperationIdCommand();
-        _requestExecutor.execute(getNextOperationIdCommand);
-        Long operationId = getNextOperationIdCommand.getResult();
+        GetNextOperationIdCommand getOperationIdCommand = new GetNextOperationIdCommand();
+        _requestExecutor.execute(getOperationIdCommand);
+        Long operationId = getOperationIdCommand.getResult();
 
-        ImportCommand command = new ImportCommand(_requestExecutor.getConventions(), options, stream, operationId);
+        ImportCommand command = new ImportCommand(_requestExecutor.getConventions(), options, stream, operationId, getOperationIdCommand.getNodeTag());
         _requestExecutor.execute(command);
 
-        return new Operation(_requestExecutor, () -> _store.changes(_databaseName), _requestExecutor.getConventions(), operationId, null);
+        return new Operation(_requestExecutor, () -> _store.changes(_databaseName), _requestExecutor.getConventions(), operationId, getOperationIdCommand.getNodeTag());
     }
 
     private static class ExportCommand extends VoidRavenCommand {
@@ -197,7 +197,7 @@ public class DatabaseSmuggler {
         private final long _operationId;
 
         public ExportCommand(DocumentConventions conventions, DatabaseSmugglerExportOptions options,
-                             Consumer<InputStream> handleStreamResponse, long operationId) {
+                             Consumer<InputStream> handleStreamResponse, long operationId, String nodeTag) {
             if (conventions == null) {
                 throw new IllegalArgumentException("Conventions cannot be null");
             }
@@ -210,6 +210,7 @@ public class DatabaseSmuggler {
             _handleStreamResponse = handleStreamResponse;
             _options = mapper.valueToTree(options);
             _operationId = operationId;
+            selectedNodeTag = nodeTag;
         }
 
         @Override
@@ -252,7 +253,8 @@ public class DatabaseSmuggler {
             return false;
         }
 
-        public ImportCommand(DocumentConventions conventions, DatabaseSmugglerImportOptions options, InputStream stream, long operationId) {
+        public ImportCommand(DocumentConventions conventions, DatabaseSmugglerImportOptions options,
+                             InputStream stream, long operationId, String nodeTag) {
             if (stream == null) {
                 throw new IllegalArgumentException("Stream cannot be null");
             }
@@ -265,6 +267,7 @@ public class DatabaseSmuggler {
             _stream = stream;
             _options = mapper.valueToTree(options);
             _operationId = operationId;
+            selectedNodeTag = nodeTag;
         }
 
         @Override

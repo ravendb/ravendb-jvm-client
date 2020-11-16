@@ -11,6 +11,7 @@ import net.ravendb.client.util.UrlUtils;
 import org.apache.commons.lang3.StringUtils;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -22,6 +23,7 @@ public class LazyLoadOperation<T> implements ILazyOperation {
     private final LoadOperation _loadOperation;
     private String[] _ids;
     private String[] _includes;
+    private List<String> _alreadyInSession = new ArrayList<>();
 
     public LazyLoadOperation(Class<T> clazz, InMemoryDocumentSessionOperations session, LoadOperation loadOperation) {
         _clazz = clazz;
@@ -31,8 +33,6 @@ public class LazyLoadOperation<T> implements ILazyOperation {
 
     @Override
     public GetRequest createRequest() {
-        List<String> idsToCheckOnServer = Arrays.stream(_ids).filter(id -> !_session.isLoadedOrDeleted(id)).collect(Collectors.toList());
-
         StringBuilder queryBuilder = new StringBuilder("?");
 
         if (_includes != null) {
@@ -41,9 +41,18 @@ public class LazyLoadOperation<T> implements ILazyOperation {
             }
         }
 
-        idsToCheckOnServer.forEach(id -> queryBuilder.append("&id=").append(UrlUtils.escapeDataString(id)));
+        boolean hasItems = false;
 
-        boolean hasItems = !idsToCheckOnServer.isEmpty();
+        for (String id : _ids) {
+            if (_session.isLoadedOrDeleted(id)) {
+                _alreadyInSession.add(id);
+            } else {
+                hasItems = true;
+                queryBuilder
+                        .append("&id=")
+                        .append(UrlUtils.escapeDataString(id));
+            }
+        }
 
         if (!hasItems) {
             // no need to hit the server
@@ -134,6 +143,13 @@ public class LazyLoadOperation<T> implements ILazyOperation {
     }
 
     private void handleResponse(GetDocumentsResult loadResult) {
+        if (!_alreadyInSession.isEmpty()) {
+            // push this to the session
+            new LoadOperation(_session)
+                    .byIds(_alreadyInSession)
+                    .getDocuments(_clazz);
+        }
+
         _loadOperation.setResult(loadResult);
 
         if (!requiresRetry) {

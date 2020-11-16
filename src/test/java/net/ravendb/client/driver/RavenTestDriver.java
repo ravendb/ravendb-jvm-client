@@ -189,6 +189,10 @@ public abstract class RavenTestDriver {
     }
 
     public static void waitForIndexing(IDocumentStore store, String database, Duration timeout) {
+        waitForIndexing(store, database, timeout, null);
+    }
+
+    public static void waitForIndexing(IDocumentStore store, String database, Duration timeout, String nodeTag) {
         MaintenanceOperationExecutor admin = store.maintenance().forDatabase(database);
 
         if (timeout == null) {
@@ -198,7 +202,7 @@ public abstract class RavenTestDriver {
         Stopwatch sp = Stopwatch.createStarted();
 
         while (sp.elapsed(TimeUnit.MILLISECONDS) < timeout.toMillis()) {
-            DatabaseStatistics databaseStatistics = admin.send(new GetStatisticsOperation());
+            DatabaseStatistics databaseStatistics = admin.send(new GetStatisticsOperation("wait-for-indexing", nodeTag));
 
             List<IndexInformation> indexes = Arrays.stream(databaseStatistics.getIndexes())
                     .filter(x -> !IndexState.DISABLED.equals(x.getState()))

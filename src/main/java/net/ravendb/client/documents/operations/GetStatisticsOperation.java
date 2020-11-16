@@ -12,18 +12,25 @@ import java.io.IOException;
 public class GetStatisticsOperation implements IMaintenanceOperation<DatabaseStatistics> {
 
     private final String _debugTag;
+    private final String _nodeTag;
 
     public GetStatisticsOperation() {
         _debugTag = null;
+        _nodeTag = null;
     }
 
     public GetStatisticsOperation(String debugTag) {
+        this(debugTag, null);
+    }
+
+    public GetStatisticsOperation(String debugTag, String nodeTag) {
         this._debugTag = debugTag;
+        this._nodeTag = nodeTag;
     }
 
     @Override
     public RavenCommand<DatabaseStatistics> getCommand(DocumentConventions conventions) {
-        return new GetStatisticsCommand(_debugTag);
+        return new GetStatisticsCommand(_debugTag, _nodeTag);
     }
 
     public static class GetStatisticsCommand extends RavenCommand<DatabaseStatistics> {
@@ -34,9 +41,10 @@ public class GetStatisticsOperation implements IMaintenanceOperation<DatabaseSta
             super(DatabaseStatistics.class);
         }
 
-        public GetStatisticsCommand(String debugTag) {
+        public GetStatisticsCommand(String debugTag, String nodeTag) {
             super(DatabaseStatistics.class);
             this.debugTag = debugTag;
+            this.selectedNodeTag = nodeTag;
         }
 
         @Override
