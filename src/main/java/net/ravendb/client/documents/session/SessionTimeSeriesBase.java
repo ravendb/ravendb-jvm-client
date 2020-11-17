@@ -166,15 +166,10 @@ public class SessionTimeSeriesBase {
                     return rangeResult.getEntries();
                 }
 
-                SessionTimeSeriesBase.CachedEntryInfo entryInfo = serveFromCacheOrGetMissingPartsFromServerAndMerge(
-                        from, to, ranges, start, pageSize);
+                List<TimeSeriesEntry> resultToUser = serveFromCacheOrGetMissingPartsFromServerAndMerge(
+                        cache, from, to, ranges, start, pageSize);
 
-                if (!entryInfo.servedFromCache && !session.noTracking) {
-                    InMemoryDocumentSessionOperations.addToCache(name, from, to,
-                            entryInfo.fromRangeIndex, entryInfo.toRangeIndex, ranges, cache, entryInfo.mergedValues);
-                }
-
-                return entryInfo.resultToUser.stream().limit(pageSize).toArray(TimeSeriesEntry[]::new);
+                return resultToUser.stream().limit(pageSize).toArray(TimeSeriesEntry[]::new);
             }
         }
 
@@ -234,8 +229,8 @@ public class SessionTimeSeriesBase {
         return values;
     }
 
-    private SessionTimeSeriesBase.CachedEntryInfo serveFromCacheOrGetMissingPartsFromServerAndMerge(Date from, Date to, List<TimeSeriesRangeResult> ranges,
-                                                                                                        int start, int pageSize) {
+    private List<TimeSeriesEntry> serveFromCacheOrGetMissingPartsFromServerAndMerge(
+            Map<String, List<TimeSeriesRangeResult>> cache, Date from, Date to, List<TimeSeriesRangeResult> ranges, int start, int pageSize) {
         // try to find a range in cache that contains [from, to]
         // if found, chop just the relevant part from it and return to the user.
 
@@ -248,7 +243,6 @@ public class SessionTimeSeriesBase {
         int fromRangeIndex = -1;
 
         List<TimeSeriesRange> rangesToGetFromServer = null;
-        List<TimeSeriesEntry> resultToUser;
 
         for (toRangeIndex = 0; toRangeIndex < ranges.size(); toRangeIndex++) {
             if (DatesComparator.compare(leftDate(ranges.get(toRangeIndex).getFrom()), leftDate(from)) <= 0) {
@@ -258,8 +252,7 @@ public class SessionTimeSeriesBase {
                     // we have all the range we need
                     // or that we have all the results we need in smaller range
 
-                    resultToUser = chopRelevantRange(ranges.get(toRangeIndex), from, to, start, pageSize);
-                    return new SessionTimeSeriesBase.CachedEntryInfo(true, resultToUser, null, -1, -1);
+                    return chopRelevantRange(ranges.get(toRangeIndex), from, to, start, pageSize);
                 }
 
                 fromRangeIndex = toRangeIndex;
@@ -311,9 +304,30 @@ public class SessionTimeSeriesBase {
 
         Reference<List<TimeSeriesEntry>> resultToUserRef = new Reference<>();
         TimeSeriesEntry[] mergedValues = mergeRangesWithResults(from, to, ranges, fromRangeIndex, toRangeIndex, details.getValues().get(name), resultToUserRef);
-        resultToUser = resultToUserRef.value;
+        List<TimeSeriesEntry> resultToUser = resultToUserRef.value;
 
-        return new SessionTimeSeriesBase.CachedEntryInfo(false, resultToUser, mergedValues, fromRangeIndex, toRangeIndex);
+        if (!session.noTracking) {
+            from = details
+                    .getValues()
+                    .get(name)
+                    .stream()
+                    .map(x -> x.getFrom())
+                    .filter(Objects::nonNull)
+                    .min(Date::compareTo)
+                    .orElse(null);
+            to = details
+                    .getValues()
+                    .get(name)
+                    .stream()
+                    .map(x -> x.getTo())
+                    .filter(Objects::nonNull)
+                    .max(Date::compareTo)
+                    .orElse(null);
+            InMemoryDocumentSessionOperations.addToCache(name, from, to,
+                    fromRangeIndex, toRangeIndex, ranges, cache, mergedValues);
+        }
+
+        return resultToUser;
     }
 
     private static TimeSeriesEntry[] mergeRangesWithResults(Date from, Date to, List<TimeSeriesRangeResult> ranges,

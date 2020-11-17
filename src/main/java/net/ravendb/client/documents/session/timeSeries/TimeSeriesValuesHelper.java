@@ -93,14 +93,17 @@ public class TimeSeriesValuesHelper {
             T obj = clazz.newInstance();
             for (Map.Entry<Byte, Tuple<Field, String>> kvp : mapping.entrySet()) {
                 byte index = kvp.getKey();
-                if (index >= values.length) {
-                    continue;
+                double value = Double.NaN;
+                if (index < values.length) {
+                    if (asRollup) {
+                        index *= 6;
+                    }
+
+                    value = values[index];
                 }
-                if (asRollup) {
-                    index *= 6;
-                }
+
                 Field field = kvp.getValue().first;
-                FieldUtils.writeField(field, obj, values[index], true);
+                FieldUtils.writeField(field, obj, value, true);
             }
 
             return obj;

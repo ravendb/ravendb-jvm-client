@@ -727,12 +727,154 @@ public class TimeSeriesTypedSessionTest extends RemoteTestBase {
     }
 
     @Test
+    public void usingDifferentNumberOfValues_LargeToSmall() throws Exception {
+        try (IDocumentStore store = getDocumentStore()) {
+            Date baseLine = DateUtils.addDays(DateUtils.truncate(new Date(), Calendar.DAY_OF_MONTH), -1);
+
+            try (IDocumentSession session = store.openSession()) {
+                User user = new User();
+                user.setName("Karmel");;
+                session.store(user, "users/karmel");
+
+                ISessionDocumentTypedTimeSeries<BigMeasure> big = session.timeSeriesFor(BigMeasure.class, "users/karmel");
+                for (int i = 0; i < 5; i++) {
+                    BigMeasure bigMeasure = new BigMeasure();
+                    bigMeasure.setMeasure1(i);
+                    bigMeasure.setMeasure2(i);
+                    bigMeasure.setMeasure3(i);
+                    bigMeasure.setMeasure4(i);
+                    bigMeasure.setMeasure5(i);
+                    bigMeasure.setMeasure6(i);
+                    big.append(DateUtils.addSeconds(baseLine, 3 * i), bigMeasure, "watches/fitbit");
+                }
+
+                session.saveChanges();
+            }
+
+            try (IDocumentSession session = store.openSession()) {
+                ISessionDocumentTimeSeries big = session.timeSeriesFor("users/karmel", "BigMeasures");
+
+                for (int i = 5; i < 10; i++) {
+                    big.append(DateUtils.addSeconds(DateUtils.addHours(baseLine, 12), 3 * i), i, "watches/fitbit");
+                }
+
+                session.saveChanges();
+            }
+
+            try (IDocumentSession session = store.openSession()) {
+                TypedTimeSeriesEntry<BigMeasure>[] big = session.timeSeriesFor(BigMeasure.class, "users/karmel")
+                        .get();
+
+                for (int i = 0; i < 5; i++) {
+                    BigMeasure m = big[i].getValue();
+                    assertThat(m.measure1)
+                            .isEqualTo(i);
+                    assertThat(m.measure2)
+                            .isEqualTo(i);
+                    assertThat(m.measure3)
+                            .isEqualTo(i);
+                    assertThat(m.measure4)
+                            .isEqualTo(i);
+                    assertThat(m.measure5)
+                            .isEqualTo(i);
+                    assertThat(m.measure6)
+                            .isEqualTo(i);
+                }
+
+                for (int i = 5; i < 10; i++) {
+                    BigMeasure m = big[i].getValue();
+                    assertThat(m.measure1)
+                            .isEqualTo(i);
+                    assertThat(m.measure2)
+                            .isNaN();
+                    assertThat(m.measure3)
+                            .isNaN();
+                    assertThat(m.measure4)
+                            .isNaN();
+                    assertThat(m.measure5)
+                            .isNaN();
+                    assertThat(m.measure6)
+                            .isNaN();
+                }
+            }
+        }
+    }
+
+    @Test
     public void mappingNeedsToContainConsecutiveValuesStartingFromZero() throws Exception {
         try (IDocumentStore store = getDocumentStore()) {
             assertThatThrownBy(() -> {
                 store.timeSeries().register(Company.class, StockPriceWithBadAttributes.class);
             })
                     .hasMessageContaining("must contain consecutive values starting from 0");
+        }
+    }
+
+    public static class BigMeasure {
+        @TimeSeriesValue(idx = 0)
+        private double measure1;
+
+        @TimeSeriesValue(idx = 1)
+        private double measure2;
+
+        @TimeSeriesValue(idx = 2)
+        private double measure3;
+
+        @TimeSeriesValue(idx = 3)
+        private double measure4;
+
+        @TimeSeriesValue(idx = 4)
+        private double measure5;
+
+        @TimeSeriesValue(idx = 5)
+        private double measure6;
+
+        public double getMeasure1() {
+            return measure1;
+        }
+
+        public void setMeasure1(double measure1) {
+            this.measure1 = measure1;
+        }
+
+        public double getMeasure2() {
+            return measure2;
+        }
+
+        public void setMeasure2(double measure2) {
+            this.measure2 = measure2;
+        }
+
+        public double getMeasure3() {
+            return measure3;
+        }
+
+        public void setMeasure3(double measure3) {
+            this.measure3 = measure3;
+        }
+
+        public double getMeasure4() {
+            return measure4;
+        }
+
+        public void setMeasure4(double measure4) {
+            this.measure4 = measure4;
+        }
+
+        public double getMeasure5() {
+            return measure5;
+        }
+
+        public void setMeasure5(double measure5) {
+            this.measure5 = measure5;
+        }
+
+        public double getMeasure6() {
+            return measure6;
+        }
+
+        public void setMeasure6(double measure6) {
+            this.measure6 = measure6;
         }
     }
 }

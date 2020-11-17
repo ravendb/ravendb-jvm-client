@@ -34,6 +34,11 @@ public class PutConnectionStringOperation<T extends ConnectionString> implements
 
         public PutConnectionStringCommand(T connectionString) {
             super(PutConnectionStringResult.class);
+
+            if (connectionString != null) {
+                throw new IllegalArgumentException("ConnectionString cannot be null");
+            }
+
             _connectionString = connectionString;
         }
 

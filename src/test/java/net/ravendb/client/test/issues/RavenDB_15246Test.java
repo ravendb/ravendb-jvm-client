@@ -198,7 +198,7 @@ public class RavenDB_15246Test extends RemoteTestBase {
 
                 TimeSeriesEntry[] res = ts.get(20, Integer.MAX_VALUE);
                 assertThat(res)
-                        .isNull();
+                        .hasSize(0);
                 assertThat(session.advanced().getNumberOfRequests())
                         .isEqualTo(2);
 
@@ -436,10 +436,15 @@ public class RavenDB_15246Test extends RemoteTestBase {
             assertThat(res.getValues())
                     .hasSize(1);
             assertThat(res.getValues().get("raven"))
-                    .hasSize(1);
+                    .hasSize(3);
 
             assertThat(res.getValues().get("raven").get(0).getEntries())
+                    .hasSize(0);
+            assertThat(res.getValues().get("raven").get(1).getEntries())
+                    .hasSize(0);
+            assertThat(res.getValues().get("raven").get(2).getEntries())
                     .hasSize(3);
+
         }
     }
 }

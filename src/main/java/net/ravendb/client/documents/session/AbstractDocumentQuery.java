@@ -2,6 +2,7 @@ package net.ravendb.client.documents.session;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.base.Defaults;
+import jdk.nashorn.internal.objects.annotations.Where;
 import net.ravendb.client.Constants;
 import net.ravendb.client.Parameters;
 import net.ravendb.client.documents.Lazy;
@@ -491,7 +492,7 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
         appendOperatorIfNeeded(tokens);
         negateIfNeeded(tokens, null);
 
-        tokens.add(OpenSubclauseToken.INSTANCE);
+        tokens.add(OpenSubclauseToken.create());
     }
 
     /**
@@ -502,7 +503,7 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
         _currentClauseDepth--;
 
         List<QueryToken> tokens = getCurrentWhereTokens();
-        tokens.add(CloseSubclauseToken.INSTANCE);
+        tokens.add(CloseSubclauseToken.create());
     }
 
     @Override
@@ -895,21 +896,39 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
             return;
         }
 
-        List<QueryToken> tokens = getCurrentWhereTokens();
-        if (tokens.isEmpty()) {
-            throw new IllegalStateException("Missing where clause");
-        }
-
-        QueryToken whereToken = tokens.get(tokens.size() - 1);
-        if (!(whereToken instanceof WhereToken)) {
-            throw new IllegalStateException("Missing where clause");
-        }
-
         if (boost < 0.0) {
             throw new IllegalArgumentException("Boost factor must be a non-negative number");
         }
 
-        ((WhereToken) whereToken).getOptions().setBoost(boost);
+        List<QueryToken> tokens = getCurrentWhereTokens();
+
+        QueryToken last = tokens.isEmpty() ? null : tokens.get(tokens.size() - 1);
+
+        if (last instanceof WhereToken) {
+            WhereToken whereToken = (WhereToken) last;
+            whereToken.getOptions().setBoost(boost);
+        } else if (last instanceof CloseSubclauseToken) {
+            CloseSubclauseToken close = (CloseSubclauseToken) last;
+
+            String parameter = addQueryParameter(boost);
+
+            int index = tokens.indexOf(last);
+
+            while (last != null && index > 0) {
+                index--;
+                last = tokens.get(index); // find the previous option
+
+                if (last instanceof OpenSubclauseToken) {
+                    OpenSubclauseToken open = (OpenSubclauseToken) last;
+
+                    open.setBoostParameterName(parameter);
+                    close.setBoostParameterName(parameter);
+                    return;
+                }
+            }
+        } else {
+            throw new IllegalStateException("Cannot apply boost");
+        }
     }
 
     /**

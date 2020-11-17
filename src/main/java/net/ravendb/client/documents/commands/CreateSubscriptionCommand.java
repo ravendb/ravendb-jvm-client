@@ -19,7 +19,6 @@ import java.io.IOException;
 public class CreateSubscriptionCommand extends RavenCommand<CreateSubscriptionResult> implements IRaftCommand {
 
     @SuppressWarnings("FieldCanBeLocal")
-    private final DocumentConventions _conventions;
     private final SubscriptionCreationOptions _options;
     private final String _id;
 
@@ -29,7 +28,6 @@ public class CreateSubscriptionCommand extends RavenCommand<CreateSubscriptionRe
 
     public CreateSubscriptionCommand(DocumentConventions conventions, SubscriptionCreationOptions options, String id) {
         super(CreateSubscriptionResult.class);
-        _conventions = conventions;
         if (options == null) {
             throw new IllegalArgumentException("Options cannot be null");
         }

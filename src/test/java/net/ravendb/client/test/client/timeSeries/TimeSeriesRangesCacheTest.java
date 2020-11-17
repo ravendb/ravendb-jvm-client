@@ -119,6 +119,64 @@ public class TimeSeriesRangesCacheTest extends RemoteTestBase {
     }
 
     @Test
+    public void shouldGetPartialRangeFromCache2() throws Exception {
+        int start = 5;
+        int pageSize = 10;
+
+        try (IDocumentStore store = getDocumentStore()) {
+            Date baseLine = DateUtils.truncate(new Date(), Calendar.DAY_OF_MONTH);
+
+            try (IDocumentSession session = store.openSession()) {
+                User user = new User();
+                user.setName("Oren");
+                session.store(user, "users/ayende");
+
+                session.timeSeriesFor("users/ayende", "Heartrate")
+                        .append(DateUtils.addMinutes(baseLine, 1), 59, "watches/fitbit");
+                session.timeSeriesFor("users/ayende", "Heartrate")
+                        .append(DateUtils.addMinutes(baseLine, 2), 60, "watches/fitbit");
+                session.timeSeriesFor("users/ayende", "Heartrate")
+                        .append(DateUtils.addMinutes(baseLine, 3), 61, "watches/fitbit");
+                session.saveChanges();
+            }
+
+            try (IDocumentSession session = store.openSession()) {
+                TimeSeriesEntry[] val = session.timeSeriesFor("users/ayende", "Heartrate")
+                        .get(DateUtils.addDays(baseLine, 2), DateUtils.addDays(baseLine, 3), start, pageSize);
+
+                assertThat(val)
+                        .isEmpty();
+                assertThat(session.advanced().getNumberOfRequests())
+                        .isEqualTo(1);
+                val = session.timeSeriesFor("users/ayende", "Heartrate")
+                        .get(DateUtils.addDays(baseLine, 1), DateUtils.addDays(baseLine, 4), start, pageSize);
+
+                assertThat(val)
+                        .isEmpty();
+                assertThat(session.advanced().getNumberOfRequests())
+                        .isEqualTo(2);
+            }
+
+            try (IDocumentSession session = store.openSession()) {
+                TimeSeriesEntry[] val = session.timeSeriesFor("users/ayende", "Heartrate")
+                        .get(start, pageSize);
+
+                assertThat(val)
+                        .isEmpty();
+                assertThat(session.advanced().getNumberOfRequests())
+                        .isEqualTo(1);
+
+                val = session.timeSeriesFor("users/ayende", "Heartrate")
+                        .get(DateUtils.addDays(baseLine, 1), DateUtils.addDays(baseLine, 4), start, pageSize);
+
+                assertThat(val)
+                        .isEmpty();
+                assertThat(session.advanced().getNumberOfRequests());
+            }
+        }
+    }
+
+    @Test
     public void shouldMergeTimeSeriesRangesInCache() throws Exception {
         try (IDocumentStore store = getDocumentStore()) {
             Date baseLine = DateUtils.truncate(new Date(), Calendar.DAY_OF_MONTH);
