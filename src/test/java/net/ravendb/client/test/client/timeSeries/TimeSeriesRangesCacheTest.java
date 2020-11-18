@@ -171,7 +171,8 @@ public class TimeSeriesRangesCacheTest extends RemoteTestBase {
 
                 assertThat(val)
                         .isEmpty();
-                assertThat(session.advanced().getNumberOfRequests());
+                assertThat(session.advanced().getNumberOfRequests())
+                        .isEqualTo(1);
             }
         }
     }
