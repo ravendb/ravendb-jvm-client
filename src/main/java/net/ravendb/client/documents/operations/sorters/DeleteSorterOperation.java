@@ -29,11 +29,11 @@ public class DeleteSorterOperation implements IVoidMaintenanceOperation {
     private static class DeleteSorterCommand extends VoidRavenCommand implements IRaftCommand {
         private final String _sorterName;
 
-        public DeleteSorterCommand(String indexName) {
-            if (indexName == null) {
-                throw new IllegalArgumentException("IndexName cannot be null");
+        public DeleteSorterCommand(String sorterName) {
+            if (sorterName == null) {
+                throw new IllegalArgumentException("SorterName cannot be null");
             }
-            _sorterName = indexName;
+            _sorterName = sorterName;
         }
 
         @Override
