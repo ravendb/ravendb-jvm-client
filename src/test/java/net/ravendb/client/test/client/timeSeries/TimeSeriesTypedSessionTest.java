@@ -727,6 +727,74 @@ public class TimeSeriesTypedSessionTest extends RemoteTestBase {
     }
 
     @Test
+    public void canWorkWithRollupTimeSeries2() throws Exception {
+        try (IDocumentStore store = getDocumentStore()) {
+            int rawHours = 24;
+            RawTimeSeriesPolicy raw = new RawTimeSeriesPolicy(TimeValue.ofHours(rawHours));
+
+            TimeSeriesPolicy p1 = new TimeSeriesPolicy("By6Hours", TimeValue.ofHours(6), TimeValue.ofHours(rawHours * 4));
+            TimeSeriesPolicy p2 = new TimeSeriesPolicy("By1Day", TimeValue.ofDays(1), TimeValue.ofHours(rawHours * 5));
+            TimeSeriesPolicy p3 = new TimeSeriesPolicy("By30Minutes", TimeValue.ofMinutes(30), TimeValue.ofHours(rawHours * 2));
+            TimeSeriesPolicy p4 = new TimeSeriesPolicy("By1Hour", TimeValue.ofMinutes(60), TimeValue.ofHours(rawHours * 3));
+
+            TimeSeriesCollectionConfiguration usersConfig = new TimeSeriesCollectionConfiguration();
+            usersConfig.setRawPolicy(raw);
+            usersConfig.setPolicies(Arrays.asList(p1, p2, p3, p4));
+
+            TimeSeriesConfiguration config = new TimeSeriesConfiguration();
+            config.setPolicyCheckFrequency(Duration.ofSeconds(1));
+            config.setCollections(new HashMap<>());
+            config.getCollections().put("Users", usersConfig);
+
+            store.maintenance().send(new ConfigureTimeSeriesOperation(config));
+            store.timeSeries().register(User.class, StockPrice.class);
+
+            Date now = DateUtils.truncate(new Date(), Calendar.DAY_OF_MONTH);
+            Date baseline = DateUtils.addDays(now, -12);
+            long total = Duration.ofDays(12).getSeconds() / 60;
+
+            try (IDocumentSession session = store.openSession()) {
+                User user = new User();
+                user.setName("Karmel");
+                session.store(user, "users/karmel");
+                ISessionDocumentTypedTimeSeries<StockPrice> ts = session.timeSeriesFor(StockPrice.class, "users/karmel");
+
+                StockPrice entry = new StockPrice();
+                for (int i = 0; i <= total; i++) {
+                    entry.open = i;
+                    entry.close = i + 100_000;
+                    entry.high = i + 200_000;
+                    entry.low = i + 300_000;
+                    entry.volume = i + 400_000;
+
+                    ts.append(DateUtils.addMinutes(baseline, i), entry, "watches/fitbit");
+                }
+
+                session.saveChanges();
+            }
+
+            Thread.sleep(1500); // wait for rollups
+
+            try (IDocumentSession session = store.openSession()) {
+                ISessionDocumentRollupTypedTimeSeries<StockPrice> ts1 = session.timeSeriesRollupFor(StockPrice.class, "users/karmel", p1.getName());
+                TypedTimeSeriesRollupEntry<StockPrice> r = ts1.get()[0];
+                assertThat(r.getFirst())
+                        .isNotNull();
+                assertThat(r.getLast())
+                        .isNotNull();
+                assertThat(r.getMin())
+                        .isNotNull();
+                assertThat(r.getMax())
+                        .isNotNull();
+                assertThat(r.getCount())
+                        .isNotNull();
+                assertThat(r.getAverage())
+                        .isNotNull();
+            }
+        }
+    }
+
+    @Test
     public void usingDifferentNumberOfValues_LargeToSmall() throws Exception {
         try (IDocumentStore store = getDocumentStore()) {
             Date baseLine = DateUtils.addDays(DateUtils.truncate(new Date(), Calendar.DAY_OF_MONTH), -1);

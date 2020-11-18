@@ -27,7 +27,6 @@ public class TimeSeriesConfiguration {
     }
 
     public TimeSeriesConfiguration() {
-
     }
 
     public Map<String, TimeSeriesCollectionConfiguration> getCollections() {
