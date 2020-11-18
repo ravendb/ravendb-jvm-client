@@ -9,7 +9,6 @@ import net.ravendb.client.documents.session.IDocumentSession;
 import net.ravendb.client.documents.session.ISessionDocumentCounters;
 import net.ravendb.client.http.RequestExecutor;
 import net.ravendb.client.infrastructure.entities.User;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -39,8 +38,6 @@ public class RavenDB_14919Test extends RemoteTestBase {
             CountersDetail vals = store.operations().send(new GetCountersOperation(docId, counterNames));
             assertThat(vals.getCounters())
                     .hasSize(101);
-
-            //TODO: reported in c#
 
             for (int i = 0; i < 100; i++) {
                 assertThat(vals.getCounters().get(i).getTotalValue())

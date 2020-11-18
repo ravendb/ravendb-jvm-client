@@ -4,7 +4,6 @@ import net.ravendb.client.exceptions.RavenException;
 
 import java.util.Date;
 
-//TODO: write test for this - coverage - RavenDB-15153
 public class TypedTimeSeriesRollupEntry<TValues> {
     private Class<TValues> _clazz;
 

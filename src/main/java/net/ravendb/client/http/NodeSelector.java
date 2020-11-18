@@ -71,7 +71,7 @@ public class NodeSelector implements CleanCloseable {
                 if (stateFailures[i].get() == 0 && StringUtils.isNotEmpty(serverNodes.get(i).getUrl())) {
                     return new CurrentIndexAndNode(i, serverNodes.get(i));
                 }
-                throw new RequestedNodeUnavailableException("Requested node " + nodeTag + " current unavailable, please try again later.");
+                throw new RequestedNodeUnavailableException("Requested node " + nodeTag + " is currently unavailable, please try again later.");
             }
         }
 

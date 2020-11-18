@@ -5,8 +5,8 @@ import net.ravendb.client.documents.session.timeSeries.TimeSeriesEntry;
 import java.util.Date;
 
 public class TimeSeriesRangeResult {
-    private Date from; //TODO: make nullable on server side - Karmel says we don't have min/max here - we trim to stored values!
-    private Date to; // TODO make nullable on server side - Karmel says we don't have min/max here - we trim to stored values!
+    private Date from;
+    private Date to;
     private TimeSeriesEntry[] entries;
     private Long totalResults;
 

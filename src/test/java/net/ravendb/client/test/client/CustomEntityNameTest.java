@@ -90,7 +90,6 @@ public class CustomEntityNameTest extends RemoteTestBase {
     }
 
     private void testWhenCollectionAndIdContainSpecialChars(char c) throws Exception {
-        //TODO RavenDB-15533
         if (c >= 14 && c <= 31) {
             return;
         }
