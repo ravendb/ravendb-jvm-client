@@ -4,19 +4,13 @@ import net.ravendb.client.RemoteTestBase;
 import net.ravendb.client.documents.DocumentStore;
 import net.ravendb.client.documents.IDocumentStore;
 import net.ravendb.client.documents.conventions.DocumentConventions;
-import net.ravendb.client.documents.indexes.AbstractIndexCreationTask;
 import net.ravendb.client.documents.queries.Query;
 import net.ravendb.client.documents.session.IDocumentSession;
-import net.ravendb.client.extensions.StringExtensions;
 import org.apache.commons.lang3.ArrayUtils;
-import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
 
-import java.util.Arrays;
 import java.util.List;
-import java.util.stream.Collectors;
 import java.util.stream.IntStream;
-import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -96,7 +90,6 @@ public class CustomEntityNameTest extends RemoteTestBase {
     }
 
     private void testWhenCollectionAndIdContainSpecialChars(char c) throws Exception {
-        //TODO RavenDB-15533
         if (c >= 14 && c <= 31) {
             return;
         }

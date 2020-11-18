@@ -3,10 +3,6 @@ package net.ravendb.client.util;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.codec.binary.Hex;
 
-import java.security.KeyStore;
-import java.security.KeyStoreException;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 import com.google.common.primitives.Bytes;
 import net.ravendb.client.exceptions.RavenException;
 import org.apache.commons.io.IOUtils;

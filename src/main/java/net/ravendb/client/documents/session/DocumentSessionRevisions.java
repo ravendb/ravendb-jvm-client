@@ -3,7 +3,6 @@ package net.ravendb.client.documents.session;
 import net.ravendb.client.documents.commands.GetRevisionsCommand;
 import net.ravendb.client.documents.session.operations.GetRevisionOperation;
 import net.ravendb.client.json.MetadataAsDictionary;
-import org.apache.commons.lang3.StringUtils;
 
 import java.util.Date;
 import java.util.List;

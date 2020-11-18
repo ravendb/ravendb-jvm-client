@@ -3,7 +3,6 @@ package net.ravendb.client.test.issues;
 import net.ravendb.client.RemoteTestBase;
 import net.ravendb.client.documents.DocumentStore;
 import net.ravendb.client.documents.IDocumentStore;
-import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThatThrownBy;

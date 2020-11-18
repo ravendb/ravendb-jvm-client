@@ -9,7 +9,6 @@ import net.ravendb.client.documents.indexes.IndexStats;
 import net.ravendb.client.documents.operations.indexes.DisableIndexOperation;
 import net.ravendb.client.documents.operations.indexes.GetIndexStatisticsOperation;
 import net.ravendb.client.documents.session.IDocumentSession;
-import net.ravendb.client.exceptions.RavenException;
 import net.ravendb.client.exceptions.TimeoutException;
 import net.ravendb.client.infrastructure.entities.User;
 import org.junit.jupiter.api.Test;

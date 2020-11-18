@@ -1,6 +1,5 @@
 package net.ravendb.client.test.issues;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import net.ravendb.client.Parameters;
 import net.ravendb.client.RemoteTestBase;
 import net.ravendb.client.documents.IDocumentStore;

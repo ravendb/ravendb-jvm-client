@@ -3,7 +3,6 @@ package net.ravendb.client.test.client;
 import net.ravendb.client.documents.DocumentStore;
 import net.ravendb.client.documents.session.IDocumentSession;
 import net.ravendb.client.infrastructure.entities.User;
-import net.ravendb.client.serverwide.DatabaseRecord;
 import net.ravendb.client.util.CertificateUtils;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
