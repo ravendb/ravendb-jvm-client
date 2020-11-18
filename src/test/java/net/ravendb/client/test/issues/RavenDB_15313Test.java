@@ -63,7 +63,7 @@ public class RavenDB_15313Test extends RemoteTestBase {
             Map<String, Integer> dict = new HashMap<>();
 
             try (IDocumentSession session = store.openSession()) {
-                session.store(new User(), docId);;
+                session.store(new User(), docId);
 
                 ISessionDocumentCounters cf = session.countersFor(docId);
 

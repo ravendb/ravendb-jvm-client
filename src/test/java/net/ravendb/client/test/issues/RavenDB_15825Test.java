@@ -114,7 +114,7 @@ public class RavenDB_15825Test extends RemoteTestBase {
         facetOptions2.setPageSize(5);
 
         Parameters p2 = new Parameters();
-        p2.put("p1", facetOptions);
+        p2.put("p1", facetOptions2);
 
         HashCalculator hashCalculator2 = new HashCalculator();
         hashCalculator2.write(p2);
