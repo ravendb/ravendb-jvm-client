@@ -1,5 +1,7 @@
 package net.ravendb.client.documents.operations.compareExchange;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import net.ravendb.client.Constants;
@@ -9,6 +11,7 @@ import net.ravendb.client.documents.commands.batches.PutCompareExchangeCommandDa
 import net.ravendb.client.documents.conventions.DocumentConventions;
 import net.ravendb.client.documents.session.EntityToJson;
 import net.ravendb.client.documents.session.IMetadataDictionary;
+import net.ravendb.client.exceptions.RavenException;
 import org.apache.commons.lang3.ClassUtils;
 
 import java.util.Date;
@@ -56,7 +59,12 @@ public class CompareExchangeSessionValue {
                 T entity = null;
                 if (_originalValue != null && _originalValue.getValue() != null) {
                     if (ClassUtils.isPrimitiveOrWrapper(clazz) || String.class.equals(clazz)) {
-                        entity = (T) _originalValue.getValue().get(Constants.CompareExchange.OBJECT_FIELD_NAME);
+                        try {
+                            JsonNode entityJsonValue = _originalValue.getValue().get(Constants.CompareExchange.OBJECT_FIELD_NAME);
+                            entity = conventions.getEntityMapper().treeToValue(entityJsonValue, clazz);
+                        } catch (JsonProcessingException ex) {
+                            throw new RavenException("Unable to read compare exchange value: " + _originalValue.getValue(), ex);
+                        }
                     } else {
                         entity = (T) EntityToJson.convertToEntity(clazz, _key, _originalValue.getValue(), conventions);
                     }

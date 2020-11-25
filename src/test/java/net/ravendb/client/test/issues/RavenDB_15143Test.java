@@ -79,4 +79,67 @@ public class RavenDB_15143Test extends RemoteTestBase {
             }
         }
     }
+
+    @Test
+    public void canStoreAndReadPrimitiveCompareExchange() throws Exception {
+        try (IDocumentStore store = getDocumentStore()) {
+            SessionOptions sessionOptions = new SessionOptions();
+            sessionOptions.setTransactionMode(TransactionMode.CLUSTER_WIDE);
+
+            try (IDocumentSession session = store.openSession(sessionOptions)) {
+                session.advanced().clusterTransaction().createCompareExchangeValue("cmd/int", 5);
+                session.advanced().clusterTransaction().createCompareExchangeValue("cmd/string", "testing");
+                session.advanced().clusterTransaction().createCompareExchangeValue("cmd/true", true);
+                session.advanced().clusterTransaction().createCompareExchangeValue("cmd/false", false);
+                session.advanced().clusterTransaction().createCompareExchangeValue("cmd/zero", 0);
+                session.advanced().clusterTransaction().createCompareExchangeValue("cmd/null", null);
+
+                session.saveChanges();
+            }
+
+            try (IDocumentSession session = store.openSession(sessionOptions)) {
+                CompareExchangeValue<Integer> numberValue = session
+                        .advanced()
+                        .clusterTransaction()
+                        .getCompareExchangeValue(Integer.class, "cmd/int");
+                assertThat(numberValue.getValue())
+                        .isEqualTo(5);
+
+                CompareExchangeValue<String> stringValue = session
+                        .advanced()
+                        .clusterTransaction()
+                        .getCompareExchangeValue(String.class, "cmd/string");
+                assertThat(stringValue.getValue())
+                        .isEqualTo("testing");
+
+                CompareExchangeValue<Boolean> trueValue = session
+                        .advanced()
+                        .clusterTransaction()
+                        .getCompareExchangeValue(Boolean.class, "cmd/true");
+                assertThat(trueValue.getValue())
+                        .isEqualTo(true);
+
+                CompareExchangeValue<Boolean> falseValue = session
+                        .advanced()
+                        .clusterTransaction()
+                        .getCompareExchangeValue(Boolean.class, "cmd/false");
+                assertThat(falseValue.getValue())
+                        .isEqualTo(false);
+
+                CompareExchangeValue<Integer> zeroValue = session
+                        .advanced()
+                        .clusterTransaction()
+                        .getCompareExchangeValue(Integer.class, "cmd/zero");
+                assertThat(zeroValue.getValue())
+                        .isEqualTo(0);
+
+                CompareExchangeValue<Integer> nullValue = session
+                        .advanced()
+                        .clusterTransaction()
+                        .getCompareExchangeValue(Integer.class, "cmd/null");
+                assertThat(nullValue.getValue())
+                        .isNull();
+            }
+        }
+    }
 }
