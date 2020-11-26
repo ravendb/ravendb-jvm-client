@@ -25,9 +25,10 @@ public class RavenDB_11770Test extends RemoteTestBase {
                 session.store(company, id);
                 session.saveChanges();
             }
-            Date fst = new Date();
 
-            Thread.sleep(1100);
+            Thread.sleep(2);
+
+            Date fst = new Date();
 
             for (int i = 0; i < 3; i++) {
                 try (IDocumentSession session = store.openSession()) {
@@ -36,12 +37,10 @@ public class RavenDB_11770Test extends RemoteTestBase {
                     session.saveChanges();
                 }
 
-                Thread.sleep(5);
+                Thread.sleep(2);
             }
 
             Date snd = new Date();
-
-            Thread.sleep(1100);
 
             for (int i = 0; i < 3; i++) {
                 try (IDocumentSession session = store.openSession()) {
@@ -49,6 +48,8 @@ public class RavenDB_11770Test extends RemoteTestBase {
                     user.setName("Oren " + i);
                     session.saveChanges();
                 }
+
+                Thread.sleep(2);
             }
 
             try (IDocumentSession session = store.openSession()) {
