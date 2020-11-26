@@ -637,7 +637,7 @@ public class TimeSeriesTypedSessionTest extends RemoteTestBase {
 
             collections.put("Users", usersConfig);
 
-            config.setPolicyCheckFrequency(Duration.ofSeconds(1));
+            config.setPolicyCheckFrequency(Duration.ofMillis(100));
 
             store.maintenance().send(new ConfigureTimeSeriesOperation(config));
             store.timeSeries().register(User.class, StockPrice.class);
@@ -742,7 +742,7 @@ public class TimeSeriesTypedSessionTest extends RemoteTestBase {
             usersConfig.setPolicies(Arrays.asList(p1, p2, p3, p4));
 
             TimeSeriesConfiguration config = new TimeSeriesConfiguration();
-            config.setPolicyCheckFrequency(Duration.ofSeconds(1));
+            config.setPolicyCheckFrequency(Duration.ofMillis(100));
             config.setCollections(new HashMap<>());
             config.getCollections().put("Users", usersConfig);
 
