@@ -30,6 +30,44 @@ public class CertificateUtils {
     private CertificateUtils() {
     }
 
+    /**
+     * Read public and private key from single file and creates keystore
+     *
+     * File should have following structure:
+     * <code>
+     * -----BEGIN CERTIFICATE-----
+     * >>here goes cert<<
+     * -----END CERTIFICATE-----
+     * -----BEGIN RSA PRIVATE KEY-----   (or -----BEGIN PRIVATE KEY-----)
+     * >>here goes private key<<
+     * -----END RSA PRIVATE KEY-----     (or -----END PRIVATE KEY-----)
+     * </code>
+     *
+     * @param privateAndPublicKeyPath path to key pair
+     * @return Key store
+     */
+    public static KeyStore createKeystore(String privateAndPublicKeyPath) throws IOException, GeneralSecurityException {
+        return createKeystore(privateAndPublicKeyPath, privateAndPublicKeyPath);
+    }
+
+    /**
+     * Read public and private key from files and create keystore
+     * @param certificatePath Path to certificate file (pem or crt)
+     * @param privateKeyPath Path to private file (pem or key)
+     * @return Key store
+     */
+    public static KeyStore createKeystore(String certificatePath, String privateKeyPath) throws IOException, GeneralSecurityException {
+        Certificate certificate = CertificateUtils.readCertificate(certificatePath);
+        PrivateKey privateKey = CertificateUtils.readPrivateKey(privateKeyPath);
+
+        KeyStore keyStore = KeyStore.getInstance("PKCS12");
+        keyStore.load(null, null);
+
+        keyStore.setKeyEntry("a", privateKey, "".toCharArray(), new Certificate[] { certificate });
+
+        return keyStore;
+    }
+
     public static Certificate readCertificate(String path) throws CertificateException, FileNotFoundException {
         CertificateFactory factory = CertificateFactory.getInstance("X.509");
         return factory.generateCertificate(new FileInputStream(path));
@@ -112,7 +150,7 @@ public class CertificateUtils {
                 throw new IllegalStateException("Unable to find certificate for alias: '" + alias
                         + "'. If you generated certificate using RavenDB server, then it might be related to: " +
                         "https://github.com/dotnet/corefx/issues/30946. " +
-                        "Please try to create Keystore using *.crt and *.key files instead of *.pfx.");
+                        "Please try to create Keystore using *.crt and *.key files instead of *.pfx using CertificateUtils.createKeystore");
             }
 
             byte[] sha1 = MessageDigest.getInstance("SHA-1").digest(clientCertificate.getEncoded());
