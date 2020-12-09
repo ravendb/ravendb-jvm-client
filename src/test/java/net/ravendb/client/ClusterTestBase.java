@@ -107,7 +107,8 @@ public abstract class ClusterTestBase extends RavenTestDriver implements CleanCl
         }
 
         cluster.executeJsScript(leaderNodeTag,
-                "server.ServerStore.EnsureNotPassive(null, \"" + leaderNodeTag + "\");");
+                "server.ServerStore.EnsureNotPassiveAsync " +
+                        "? server.ServerStore.EnsureNotPassiveAsync(null, \"" + leaderNodeTag + "\").Wait() : server.ServerStore.EnsureNotPassive(null, \"" + leaderNodeTag + "\");");
 
         if (numberOfNodes > 1) {
             // add nodes to cluster
