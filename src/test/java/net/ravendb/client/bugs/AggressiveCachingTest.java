@@ -7,12 +7,14 @@ import net.ravendb.client.documents.session.IDocumentSession;
 import net.ravendb.client.http.RequestExecutor;
 import net.ravendb.client.infrastructure.entities.User;
 import net.ravendb.client.primitives.CleanCloseable;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import java.time.Duration;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@Disabled
 public class AggressiveCachingTest extends RemoteTestBase {
 
     public DocumentStore initAggressiveCaching() throws Exception {
