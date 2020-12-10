@@ -478,6 +478,7 @@ public class DatabaseChanges implements IDatabaseChanges {
 
                     _processor = new WebSocketChangesProcessor();
                     ClientUpgradeRequest request = new ClientUpgradeRequest();
+                    request.setTimeout(10_000, TimeUnit.MILLISECONDS);
                     _clientSession = _client.connect(_processor, url, request).get();
                     wasConnected = true;
 
