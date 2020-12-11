@@ -6,6 +6,7 @@ import net.ravendb.client.documents.conventions.DocumentConventions;
 import net.ravendb.client.documents.queries.IndexQuery;
 import net.ravendb.client.documents.queries.QueryResult;
 import net.ravendb.client.documents.queries.suggestions.SuggestionResult;
+import net.ravendb.client.documents.session.InMemoryDocumentSessionOperations;
 import net.ravendb.client.extensions.JsonExtensions;
 
 import java.io.IOException;
@@ -19,14 +20,14 @@ public class LazySuggestionQueryOperation implements ILazyOperation {
     private QueryResult queryResult;
     private boolean requiresRetry;
 
-    private final DocumentConventions _conventions;
+    private final InMemoryDocumentSessionOperations _session;
     private final IndexQuery _indexQuery;
     private final Consumer<QueryResult> _invokeAfterQueryExecuted;
     private final Function<QueryResult, Map<String, SuggestionResult>> _processResults;
 
-    public LazySuggestionQueryOperation(DocumentConventions conventions, IndexQuery indexQuery, Consumer<QueryResult> invokeAfterQueryExecuted,
+    public LazySuggestionQueryOperation(InMemoryDocumentSessionOperations session, IndexQuery indexQuery, Consumer<QueryResult> invokeAfterQueryExecuted,
                                         Function<QueryResult, Map<String, SuggestionResult>> processResults) {
-        _conventions = conventions;
+        _session = session;
         _indexQuery = indexQuery;
         _invokeAfterQueryExecuted = invokeAfterQueryExecuted;
         _processResults = processResults;
@@ -38,8 +39,8 @@ public class LazySuggestionQueryOperation implements ILazyOperation {
         request.setCanCacheAggressively(!_indexQuery.isDisableCaching() && !_indexQuery.isWaitForNonStaleResults());
         request.setUrl("/queries");
         request.setMethod("POST");
-        request.setQuery("?queryHash=" + _indexQuery.getQueryHash());
-        request.setContent(new IndexQueryContent(_conventions, _indexQuery));
+        request.setQuery("?queryHash=" + _indexQuery.getQueryHash(_session.getConventions()));
+        request.setContent(new IndexQueryContent(_session.getConventions(), _indexQuery));
 
         return request;
     }

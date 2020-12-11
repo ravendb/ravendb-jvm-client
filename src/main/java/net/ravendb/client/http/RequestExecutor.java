@@ -1146,10 +1146,26 @@ public class RequestExecutor implements CleanCloseable {
 
                 case HttpStatus.SC_FORBIDDEN:
                     String msg = tryGetResponseOfError(response);
+                    StringBuilder builder = new StringBuilder("Forbidden access to ");
+                    builder.append(chosenNode.getDatabase())
+                            .append("@")
+                            .append(chosenNode.getUrl())
+                            .append(", ");
 
-                    throw new AuthorizationException("Forbidden access to " + chosenNode.getDatabase() + "@" + chosenNode.getUrl() + ", " +
-                            (certificate == null ? "a certificate is required. " : "certificate does not have permission to access it or is unknown. ") +
-                            " Method: " + request.getMethod() + ", Request: " + request.getURI().toString() + System.lineSeparator() + msg);
+                    if (certificate == null) {
+                        builder.append("a certificate is required. ");
+                    } else {
+                        builder.append("certificate does not have permission to access it or is unknown. ");
+                    }
+
+                    builder.append(" Method: ")
+                        .append(request.getMethod())
+                            .append(", Request: ")
+                            .append(request.getURI().toString())
+                            .append(System.lineSeparator())
+                            .append(msg);
+
+                    throw new AuthorizationException(builder.toString());
 
                 case HttpStatus.SC_GONE: // request not relevant for the chosen node - the database has been moved to a different one
                     if (!shouldRetry) {

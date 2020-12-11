@@ -45,7 +45,7 @@ public abstract class AggregationQueryBase {
     public Lazy<Map<String, FacetResult>> executeLazy(Consumer<Map<String, FacetResult>> onEval) {
         _query = getIndexQuery();
         return ((DocumentSession)_session).addLazyOperation((Class<Map<String, FacetResult>>)(Class<?>)Map.class,
-                new LazyAggregationQueryOperation( _session.getConventions(), _query, result -> invokeAfterQueryExecuted(result), this::processResults), onEval);
+                new LazyAggregationQueryOperation(_session, _query, result -> invokeAfterQueryExecuted(result), this::processResults), onEval);
     }
 
     protected abstract IndexQuery getIndexQuery();
@@ -62,6 +62,8 @@ public abstract class AggregationQueryBase {
             FacetResult facetResult = JsonExtensions.getDefaultMapper().convertValue(result, FacetResult.class);
             results.put(facetResult.getName(), facetResult);
         }
+
+        _session.registerIncludes(queryResult.getIncludes());
 
         QueryOperation.ensureIsAcceptable(queryResult, _query.isWaitForNonStaleResults(), _duration, _session);
         return results;

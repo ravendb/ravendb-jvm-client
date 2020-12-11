@@ -224,7 +224,7 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
             queryOperation = initializeQueryOperation();
         }
 
-        return new LazyQueryOperation<>(clazz, theSession.getConventions(), queryOperation, afterQueryExecutedCallback);
+        return new LazyQueryOperation<>(clazz, theSession, queryOperation, afterQueryExecutedCallback);
     }
 
     protected QueryOperation initializeQueryOperation() {
@@ -2118,7 +2118,7 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
             queryOperation = initializeQueryOperation();
         }
 
-        LazyQueryOperation<T> lazyQueryOperation = new LazyQueryOperation<>(clazz, theSession.getConventions(), queryOperation, afterQueryExecutedCallback);
+        LazyQueryOperation<T> lazyQueryOperation = new LazyQueryOperation<>(clazz, theSession, queryOperation, afterQueryExecutedCallback);
         return ((DocumentSession)theSession).addLazyCountOperation(lazyQueryOperation);
     }
 

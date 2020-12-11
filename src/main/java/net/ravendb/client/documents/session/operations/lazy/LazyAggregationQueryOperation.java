@@ -6,6 +6,7 @@ import net.ravendb.client.documents.conventions.DocumentConventions;
 import net.ravendb.client.documents.queries.IndexQuery;
 import net.ravendb.client.documents.queries.QueryResult;
 import net.ravendb.client.documents.queries.facets.FacetResult;
+import net.ravendb.client.documents.session.InMemoryDocumentSessionOperations;
 import net.ravendb.client.extensions.JsonExtensions;
 
 import java.io.IOException;
@@ -15,14 +16,14 @@ import java.util.function.Function;
 
 public class LazyAggregationQueryOperation implements ILazyOperation {
 
-    private final DocumentConventions _conventions;
+    private final InMemoryDocumentSessionOperations _session;
     private final IndexQuery _indexQuery;
     private final Consumer<QueryResult> _invokeAfterQueryExecuted;
     private final Function<QueryResult, Map<String, FacetResult>> _processResults;
 
-    public LazyAggregationQueryOperation(DocumentConventions conventions, IndexQuery indexQuery, Consumer<QueryResult> invokeAfterQueryExecuted,
+    public LazyAggregationQueryOperation(InMemoryDocumentSessionOperations session, IndexQuery indexQuery, Consumer<QueryResult> invokeAfterQueryExecuted,
                                          Function<QueryResult, Map<String, FacetResult>> processResults) {
-        _conventions = conventions;
+        _session = session;
         _indexQuery = indexQuery;
         _invokeAfterQueryExecuted = invokeAfterQueryExecuted;
         _processResults = processResults;
@@ -32,8 +33,8 @@ public class LazyAggregationQueryOperation implements ILazyOperation {
         GetRequest request = new GetRequest();
         request.setUrl("/queries");
         request.setMethod("POST");
-        request.setQuery("?queryHash=" + _indexQuery.getQueryHash());
-        request.setContent(new IndexQueryContent(_conventions, _indexQuery));
+        request.setQuery("?queryHash=" + _indexQuery.getQueryHash(_session.getConventions()));
+        request.setContent(new IndexQueryContent(_session.getConventions(), _indexQuery));
         return request;
     }
 

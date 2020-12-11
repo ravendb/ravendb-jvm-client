@@ -97,19 +97,19 @@ public class HashCalculator {
         }
     }
 
-    public void write(Parameters qp) throws IOException {
+    public void write(Parameters qp, DocumentConventions conventions) throws IOException {
         if (qp == null) {
             write("null-params");
         } else {
             write(qp.size());
             for (Map.Entry<String, Object> kvp : qp.entrySet()) {
                 write(kvp.getKey());
-                writeParameterValue(kvp.getValue());
+                writeParameterValue(kvp.getValue(), conventions);
             }
         }
     }
 
-    private void writeParameterValue(Object value) throws IOException {
+    private void writeParameterValue(Object value, DocumentConventions conventions) throws IOException {
         if (value instanceof String) {
             write((String) value);
         } else if (value instanceof Long) {
@@ -125,11 +125,11 @@ public class HashCalculator {
                 write("empty-enumerator");
             } else {
                 for (Object o : ((Collection) value)) {
-                    writeParameterValue(o);
+                    writeParameterValue(o, conventions);
                 }
             }
         } else {
-            write(DocumentConventions.defaultConventions.getEntityMapper().writeValueAsString(value));
+            write(conventions.getEntityMapper().writeValueAsString(value));
         }
     }
 

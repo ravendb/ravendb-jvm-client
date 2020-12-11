@@ -2,6 +2,7 @@ package net.ravendb.client.documents.queries;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import net.ravendb.client.Parameters;
+import net.ravendb.client.documents.conventions.DocumentConventions;
 
 import java.io.IOException;
 import java.time.Duration;
@@ -38,7 +39,7 @@ public class IndexQuery extends IndexQueryWithParameters<Parameters> {
     }
 
     @SuppressWarnings("deprecation")
-    public String getQueryHash() {
+    public String getQueryHash(DocumentConventions conventions) {
         HashCalculator hasher = new HashCalculator();
         try {
             hasher.write(getQuery());
@@ -47,7 +48,7 @@ public class IndexQuery extends IndexQueryWithParameters<Parameters> {
             hasher.write(Optional.ofNullable(getWaitForNonStaleResultsTimeout()).map(Duration::toMillis).orElse(0L));
             hasher.write(getStart());
             hasher.write(getPageSize());
-            hasher.write(getQueryParameters());
+            hasher.write(getQueryParameters(), conventions);
             return hasher.getHash();
         } catch (IOException e) {
             throw new RuntimeException("Unable to calculate hash", e);

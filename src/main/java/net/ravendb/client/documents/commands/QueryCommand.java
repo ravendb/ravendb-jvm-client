@@ -50,7 +50,7 @@ public class QueryCommand extends RavenCommand<QueryResult> {
                 // we need to add a query hash because we are using POST queries
                 // so we need to unique parameter per query so the query cache will
                 // work properly
-                .append(_indexQuery.getQueryHash());
+                .append(_indexQuery.getQueryHash(_conventions));
 
         if (_metadataOnly) {
             path.append("&metadataOnly=true");
