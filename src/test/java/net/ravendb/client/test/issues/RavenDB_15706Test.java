@@ -18,7 +18,7 @@ public class RavenDB_15706Test extends RemoteTestBase {
                 store.initialize();
 
                 assertThatThrownBy(store::bulkInsert)
-                        .isExactlyInstanceOf(IllegalStateException.class);
+                        .isExactlyInstanceOf(IllegalArgumentException.class);
             }
         }
     }

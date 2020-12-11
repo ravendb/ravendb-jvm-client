@@ -128,7 +128,7 @@ public abstract class DocumentStoreBase implements IDocumentStore {
         IndexDefinition[] indexesToAdd = IndexCreation.createIndexesToAdd(tasks, conventions);
 
         maintenance()
-                .forDatabase(ObjectUtils.firstNonNull(database, getDatabase()))
+                .forDatabase(getEffectiveDatabase(database))
                 .send(new PutIndexesOperation(indexesToAdd));
     }
 
@@ -491,4 +491,22 @@ public abstract class DocumentStoreBase implements IDocumentStore {
 
     public abstract CleanCloseable setRequestTimeout(Duration timeout, String database);
 
+    public String getEffectiveDatabase(String database) {
+        return DocumentStoreBase.getEffectiveDatabase(this, database);
+    }
+
+    public static String getEffectiveDatabase(IDocumentStore store, String database) {
+        if (database == null) {
+            database = store.getDatabase();
+        }
+
+        if (StringUtils.isNotBlank(database)) {
+            return database;
+        }
+
+        throw new IllegalArgumentException("Cannot determine database to operate on. " +
+                "Please either specify 'database' directly as an action parameter " +
+                "or set the default database to operate on using 'DocumentStore.setDatabase' method. " +
+                "Did you forget to pass 'database' parameter?");
+    }
 }

@@ -16,9 +16,8 @@ public class MultiDatabaseHiLoIdGenerator {
     }
 
     public String generateDocumentId(String database, Object entity) {
-        String db = database != null ? database : store.getDatabase();
-
-        MultiTypeHiLoIdGenerator generator = _generators.computeIfAbsent(db, x -> generateMultiTypeHiLoFunc(x));
+        database = store.getEffectiveDatabase(database);
+        MultiTypeHiLoIdGenerator generator = _generators.computeIfAbsent(database, x -> generateMultiTypeHiLoFunc(x));
         return generator.generateDocumentId(entity);
     }
 

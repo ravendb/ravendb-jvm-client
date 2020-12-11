@@ -51,7 +51,7 @@ public class DocumentSubscriptions implements AutoCloseable {
             throw new IllegalArgumentException("Cannot create a subscription if the script is null");
         }
 
-        RequestExecutor requestExecutor = _store.getRequestExecutor(ObjectUtils.firstNonNull(database, _store.getDatabase()));
+        RequestExecutor requestExecutor = _store.getRequestExecutor(_store.getEffectiveDatabase(database));
 
         CreateSubscriptionCommand command = new CreateSubscriptionCommand(_store.getConventions(), options);
         requestExecutor.execute(command);
@@ -417,7 +417,8 @@ public class DocumentSubscriptions implements AutoCloseable {
      * @return List of subscriptions state
      */
     public List<SubscriptionState> getSubscriptions(int start, int take, String database) {
-        RequestExecutor requestExecutor = _store.getRequestExecutor(ObjectUtils.firstNonNull(database, _store.getDatabase()));
+        RequestExecutor requestExecutor = _store.getRequestExecutor(
+                _store.getEffectiveDatabase(database));
 
         GetSubscriptionsCommand command = new GetSubscriptionsCommand(start, take);
         requestExecutor.execute(command);
@@ -440,7 +441,8 @@ public class DocumentSubscriptions implements AutoCloseable {
      * @param database Database to use
      */
     public void delete(String name, String database) {
-        RequestExecutor requestExecutor = _store.getRequestExecutor(ObjectUtils.firstNonNull(database, _store.getDatabase()));
+        RequestExecutor requestExecutor = _store.getRequestExecutor(
+                _store.getEffectiveDatabase(database));
 
         DeleteSubscriptionCommand command = new DeleteSubscriptionCommand(name);
         requestExecutor.execute(command);
@@ -466,7 +468,8 @@ public class DocumentSubscriptions implements AutoCloseable {
             throw new IllegalArgumentException("SubscriptionName cannot be null");
         }
 
-        RequestExecutor requestExecutor = _store.getRequestExecutor(ObjectUtils.firstNonNull(database, _store.getDatabase()));
+        RequestExecutor requestExecutor = _store.getRequestExecutor(
+                _store.getEffectiveDatabase(database));
 
         GetSubscriptionStateCommand command = new GetSubscriptionStateCommand(subscriptionName);
         requestExecutor.execute(command);
@@ -498,7 +501,8 @@ public class DocumentSubscriptions implements AutoCloseable {
      * @param database Database to use
      */
     public void dropConnection(String name, String database) {
-        RequestExecutor requestExecutor = _store.getRequestExecutor(ObjectUtils.firstNonNull(database, _store.getDatabase()));
+        RequestExecutor requestExecutor = _store.getRequestExecutor(
+                _store.getEffectiveDatabase(database));
 
         DropSubscriptionConnectionCommand command = new DropSubscriptionConnectionCommand(name);
         requestExecutor.execute(command);
@@ -510,7 +514,7 @@ public class DocumentSubscriptions implements AutoCloseable {
 
     public void enable(String name, String database) {
         ToggleOngoingTaskStateOperation operation = new ToggleOngoingTaskStateOperation(name, OngoingTaskType.SUBSCRIPTION, false);
-        _store.maintenance().forDatabase(ObjectUtils.firstNonNull(database, _store.getDatabase())).send(operation);
+        _store.maintenance().forDatabase(_store.getEffectiveDatabase(database)).send(operation);
     }
 
     public void disable(String name) {
@@ -519,7 +523,7 @@ public class DocumentSubscriptions implements AutoCloseable {
 
     public void disable(String name, String database) {
         ToggleOngoingTaskStateOperation operation = new ToggleOngoingTaskStateOperation(name, OngoingTaskType.SUBSCRIPTION, true);
-        _store.maintenance().forDatabase(ObjectUtils.firstNonNull(database, _store.getDatabase())).send(operation);
+        _store.maintenance().forDatabase(_store.getEffectiveDatabase(database)).send(operation);
     }
 
     public String update(SubscriptionUpdateOptions options) {
