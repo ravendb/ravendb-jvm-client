@@ -176,9 +176,7 @@ public class DocumentStore extends DocumentStoreBase {
     public RequestExecutor getRequestExecutor(String database) {
         assertInitialized();
 
-        if (database == null) {
-            database = getDatabase();
-        }
+        database = getEffectiveDatabase(database);
 
         Lazy<RequestExecutor> executor = requestExecutors.get(database);
         if (executor != null) {
@@ -221,12 +219,7 @@ public class DocumentStore extends DocumentStoreBase {
     public CleanCloseable setRequestTimeout(Duration timeout, String database) {
         assertInitialized();
 
-        database = ObjectUtils.firstNonNull(database, getDatabase());
-
-        if (database == null) {
-            throw new IllegalStateException("Cannot use setRequestTimeout without a default database defined "
-            + "unless 'database' parameter is provided. Did you forget to pass 'database' parameter?");
-        }
+        database = this.getEffectiveDatabase(database);
 
         RequestExecutor requestExecutor = getRequestExecutor(database);
         Duration oldTimeout = requestExecutor.getDefaultTimeout();
@@ -296,7 +289,7 @@ public class DocumentStore extends DocumentStoreBase {
      */
     public CleanCloseable disableAggressiveCaching(String databaseName) {
         assertInitialized();
-        RequestExecutor re = getRequestExecutor(ObjectUtils.firstNonNull(databaseName, getDatabase()));
+        RequestExecutor re = getRequestExecutor(getEffectiveDatabase(databaseName));
         AggressiveCacheOptions old = re.aggressiveCaching.get();
         re.aggressiveCaching.set(null);
 
@@ -456,6 +449,6 @@ public class DocumentStore extends DocumentStoreBase {
     public BulkInsertOperation bulkInsert(String database) {
         assertInitialized();
 
-        return new BulkInsertOperation(ObjectUtils.firstNonNull(database, getDatabase()), this);
+        return new BulkInsertOperation(getEffectiveDatabase(database), this);
     }
 }

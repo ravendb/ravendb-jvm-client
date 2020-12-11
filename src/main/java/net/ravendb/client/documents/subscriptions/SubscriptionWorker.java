@@ -83,7 +83,7 @@ public class SubscriptionWorker<T> implements CleanCloseable {
             throw new IllegalArgumentException("SubscriptionConnectionOptions must specify the subscriptionName");
         }
         _store = documentStore;
-        _dbName = ObjectUtils.firstNonNull(dbName, documentStore.getDatabase());
+        _dbName = documentStore.getEffectiveDatabase(dbName);
         _logger = LogFactory.getLog(SubscriptionWorker.class);
 
         afterAcknowledgment = new ArrayList<>();
@@ -211,7 +211,7 @@ public class SubscriptionWorker<T> implements CleanCloseable {
         _tcpClient.setSendBufferSize(_options.getSendBufferSize());
         _tcpClient.setReceiveBufferSize(_options.getReceiveBufferSize());
 
-        String databaseName = ObjectUtils.firstNonNull(_dbName, _store.getDatabase());
+        String databaseName = _store.getEffectiveDatabase(_dbName);
 
         TcpNegotiateParameters parameters = new TcpNegotiateParameters();
         parameters.setDatabase(databaseName);

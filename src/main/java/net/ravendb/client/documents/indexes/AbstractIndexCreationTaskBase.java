@@ -1,5 +1,6 @@
 package net.ravendb.client.documents.indexes;
 
+import net.ravendb.client.documents.DocumentStoreBase;
 import net.ravendb.client.documents.IDocumentStore;
 import net.ravendb.client.documents.conventions.DocumentConventions;
 import net.ravendb.client.documents.operations.indexes.PutIndexesOperation;
@@ -117,9 +118,11 @@ public abstract class AbstractIndexCreationTaskBase {
      */
     public void execute(IDocumentStore store, DocumentConventions conventions, String database) {
         DocumentConventions oldConventions = getConventions();
+        database = DocumentStoreBase.getEffectiveDatabase(store, database);
         try {
-            String databaseForConventions = ObjectUtils.firstNonNull(database, store.getDatabase());
-            setConventions(ObjectUtils.firstNonNull(conventions, getConventions(), store.getRequestExecutor(databaseForConventions).getConventions()));
+
+            setConventions(ObjectUtils.firstNonNull(conventions, getConventions(),
+                    store.getRequestExecutor(database).getConventions()));
 
             IndexDefinition indexDefinition = createIndexDefinition();
             indexDefinition.setName(getIndexName());
@@ -132,7 +135,9 @@ public abstract class AbstractIndexCreationTaskBase {
                 indexDefinition.setPriority(priority);
             }
 
-            store.maintenance().forDatabase(ObjectUtils.firstNonNull(database, store.getDatabase())).send(new PutIndexesOperation(indexDefinition));
+            store.maintenance()
+                    .forDatabase(database)
+                    .send(new PutIndexesOperation(indexDefinition));
         } finally {
             setConventions(oldConventions);
         }
