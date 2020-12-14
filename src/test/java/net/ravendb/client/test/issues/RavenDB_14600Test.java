@@ -1,6 +1,7 @@
 package net.ravendb.client.test.issues;
 
 import net.ravendb.client.RemoteTestBase;
+import net.ravendb.client.documents.DocumentStore;
 import net.ravendb.client.documents.IDocumentStore;
 import net.ravendb.client.documents.indexes.AbstractIndexCreationTask;
 import net.ravendb.client.documents.queries.facets.FacetResult;
@@ -15,6 +16,12 @@ import java.util.Map;
 import static org.assertj.core.api.Assertions.assertThat;
 
 public class RavenDB_14600Test extends RemoteTestBase {
+
+    @Override
+    protected void customizeStore(DocumentStore store) {
+        store.getConventions().setDisableTopologyUpdates(true);
+    }
+
     @Test
     public void canIncludeFacetResult() throws Exception {
         try (IDocumentStore store = getDocumentStore()) {

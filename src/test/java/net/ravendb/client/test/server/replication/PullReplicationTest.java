@@ -12,6 +12,7 @@ import net.ravendb.client.documents.operations.replication.PutPullReplicationAsH
 import net.ravendb.client.documents.session.IDocumentSession;
 import net.ravendb.client.infrastructure.entities.User;
 import net.ravendb.client.serverwide.operations.ModifyOngoingTaskResult;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import java.time.Duration;
@@ -210,6 +211,7 @@ public class PullReplicationTest extends ReplicationTestBase {
     }
 
     @Test
+    @Disabled
     public void updatePullReplicationOnHub() throws Exception {
         try (DocumentStore sink = getDocumentStore()) {
             try (DocumentStore hub = getDocumentStore()) {
