@@ -8,14 +8,14 @@
 <dependency>
   <groupId>net.ravendb</groupId>
   <artifactId>ravendb</artifactId>
-  <version>5.0.1</version>
+  <version>5.0.2</version>
 </dependency>
 ```
 
 
 ### Gradle
 ```
-implementation 'net.ravendb:ravendb:5.0.1'
+implementation 'net.ravendb:ravendb:5.0.2'
 ```
 
 ## Documentation
