@@ -35,14 +35,16 @@ public final class CertificateUtils {
      * File should have following structure:
      * <code>
      * -----BEGIN CERTIFICATE-----
-     * >>here goes cert<<
+     * &gt;&gt;here goes cert&lt;&lt;
      * -----END CERTIFICATE-----
      * -----BEGIN RSA PRIVATE KEY-----   (or -----BEGIN PRIVATE KEY-----)
-     * >>here goes private key<<
+     * &gt;&gt;here goes private key&lt;&lt;
      * -----END RSA PRIVATE KEY-----     (or -----END PRIVATE KEY-----)
      * </code>
      *
      * @param privateAndPublicKeyPath path to key pair
+     * @throws IOException io exception
+     * @throws GeneralSecurityException Security exception
      * @return Key store
      */
     public static KeyStore createKeystore(String privateAndPublicKeyPath) throws IOException, GeneralSecurityException {
@@ -53,6 +55,8 @@ public final class CertificateUtils {
      * Read public and private key from files and create keystore
      * @param certificatePath Path to certificate file (pem or crt)
      * @param privateKeyPath Path to private file (pem or key)
+     * @throws IOException io exception
+     * @throws GeneralSecurityException Security exception
      * @return Key store
      */
     public static KeyStore createKeystore(String certificatePath, String privateKeyPath) throws IOException, GeneralSecurityException {
