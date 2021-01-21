@@ -1,6 +1,8 @@
 name: tests/java
  
 on:
+  schedule:
+    - cron: "0 10 * * 6"
   push:
     branches: [ v5.0 ]
   pull_request:
