@@ -5,7 +5,6 @@ import net.ravendb.client.documents.DocumentStore;
 import net.ravendb.client.documents.IDocumentStore;
 import net.ravendb.client.driver.RavenServerLocator;
 import net.ravendb.client.driver.RavenTestDriver;
-import net.ravendb.client.exceptions.cluster.NoLeaderException;
 import net.ravendb.client.exceptions.database.DatabaseDoesNotExistException;
 import net.ravendb.client.primitives.CleanCloseable;
 import net.ravendb.client.primitives.ExceptionsUtils;

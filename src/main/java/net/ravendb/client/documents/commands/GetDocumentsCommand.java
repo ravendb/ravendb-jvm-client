@@ -3,7 +3,6 @@ package net.ravendb.client.documents.commands;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import net.ravendb.client.Constants;
-import net.ravendb.client.documents.operations.timeSeries.TimeSeriesRange;
 import net.ravendb.client.documents.queries.HashCalculator;
 import net.ravendb.client.extensions.JsonExtensions;
 import net.ravendb.client.http.RavenCommand;
@@ -27,11 +26,6 @@ public class GetDocumentsCommand extends RavenCommand<GetDocumentsResult> {
 
     private String[] _ids;
     private String[] _includes;
-    private String[] _counters;
-    private boolean _includeAllCounters;
-
-    private List<TimeSeriesRange> _timeSeriesIncludes;
-    private String[] _compareExchangeValueIncludes;
 
     private boolean _metadataOnly;
 
@@ -69,25 +63,6 @@ public class GetDocumentsCommand extends RavenCommand<GetDocumentsResult> {
         _metadataOnly = metadataOnly;
     }
 
-    public GetDocumentsCommand(String[] ids, String[] includes, String[] counterIncludes,
-                               List<TimeSeriesRange> timeSeriesIncludes, String[] compareExchangeValueIncludes,
-                               boolean metadataOnly) {
-        this(ids, includes, metadataOnly);
-
-        _counters = counterIncludes;
-        _timeSeriesIncludes = timeSeriesIncludes;
-        _compareExchangeValueIncludes = compareExchangeValueIncludes;
-    }
-
-    public GetDocumentsCommand(String[] ids, String[] includes, boolean includeAllCounters,
-                               List<TimeSeriesRange> timeSeriesIncludes, String[] compareExchangeValueIncludes,
-                               boolean metadataOnly) {
-        this(ids, includes, metadataOnly);
-
-        _includeAllCounters = includeAllCounters;
-        _timeSeriesIncludes = timeSeriesIncludes;
-        _compareExchangeValueIncludes = compareExchangeValueIncludes;
-    }
 
     public GetDocumentsCommand(String startWith, String startAfter, String matches, String exclude, int start, int pageSize, boolean metadataOnly) {
         super(GetDocumentsResult.class);
@@ -149,34 +124,8 @@ public class GetDocumentsCommand extends RavenCommand<GetDocumentsResult> {
             }
         }
 
-        if (_includeAllCounters) {
-            pathBuilder
-                    .append("&counter=")
-                    .append(urlEncode(Constants.Counters.ALL));
-        } else if (_counters != null && _counters.length > 0) {
-            for (String counter : _counters) {
-                pathBuilder.append("&counter=").append(urlEncode(counter));
-            }
-        }
 
-        if (_timeSeriesIncludes != null) {
-            for (TimeSeriesRange range : _timeSeriesIncludes) {
-                pathBuilder.append("&timeseries=")
-                        .append(urlEncode(range.getName()))
-                        .append("&from=")
-                        .append(range.getFrom() != null ? NetISO8601Utils.format(range.getFrom(), true) : "")
-                        .append("&to=")
-                        .append(range.getTo() != null ? NetISO8601Utils.format(range.getTo(), true) : "");
-            }
-        }
 
-        if (_compareExchangeValueIncludes != null) {
-            for (String compareExchangeValue : _compareExchangeValueIncludes) {
-                pathBuilder
-                        .append("&cmpxchg=")
-                        .append(urlEncode(compareExchangeValue));
-            }
-        }
 
         HttpRequestBase request = new HttpGet();
 

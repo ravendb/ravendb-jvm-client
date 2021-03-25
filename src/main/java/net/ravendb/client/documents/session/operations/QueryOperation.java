@@ -103,7 +103,9 @@ public class QueryOperation {
             return null;
         }
 
-        return _session.getDocumentStore().disableAggressiveCaching(_session.getDatabaseName());
+        return () -> {
+             // empty
+        };
     }
 
     @SuppressWarnings("unchecked")
@@ -151,15 +153,7 @@ public class QueryOperation {
         if (!_noTracking) {
             _session.registerMissingIncludes(queryResult.getResults(), queryResult.getIncludes(), queryResult.getIncludedPaths());
 
-            if (queryResult.getCounterIncludes() != null) {
-                _session.registerCounters(queryResult.getCounterIncludes(), queryResult.getIncludedCounterNames());
-            }
-            if (queryResult.getTimeSeriesIncludes() != null) {
-                _session.registerTimeSeries(queryResult.getTimeSeriesIncludes());
-            }
-            if (queryResult.getCompareExchangeValueIncludes() != null) {
-                _session.getClusterSession().registerCompareExchangeValues(queryResult.getCompareExchangeValueIncludes());
-            }
+
         }
     }
 

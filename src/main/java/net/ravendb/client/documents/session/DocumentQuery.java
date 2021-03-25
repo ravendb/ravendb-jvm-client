@@ -4,21 +4,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.collect.Sets;
 import net.ravendb.client.Constants;
 import net.ravendb.client.Parameters;
-import net.ravendb.client.documents.indexes.spatial.SpatialRelation;
-import net.ravendb.client.documents.indexes.spatial.SpatialUnits;
 import net.ravendb.client.documents.queries.*;
-import net.ravendb.client.documents.queries.explanation.ExplanationOptions;
-import net.ravendb.client.documents.queries.explanation.Explanations;
-import net.ravendb.client.documents.queries.facets.*;
-import net.ravendb.client.documents.queries.highlighting.HighlightingOptions;
-import net.ravendb.client.documents.queries.highlighting.Highlightings;
-import net.ravendb.client.documents.queries.moreLikeThis.*;
-import net.ravendb.client.documents.queries.spatial.DynamicSpatialField;
-import net.ravendb.client.documents.queries.spatial.SpatialCriteria;
-import net.ravendb.client.documents.queries.spatial.SpatialCriteriaFactory;
-import net.ravendb.client.documents.queries.suggestions.*;
-import net.ravendb.client.documents.queries.timeSeries.ITimeSeriesQueryBuilder;
-import net.ravendb.client.documents.queries.timings.QueryTimings;
 import net.ravendb.client.documents.session.loaders.IQueryIncludeBuilder;
 import net.ravendb.client.documents.session.loaders.QueryIncludeBuilder;
 import net.ravendb.client.documents.session.tokens.DeclareToken;
@@ -79,11 +65,6 @@ public class DocumentQuery<T> extends AbstractDocumentQuery<T, DocumentQuery<T>>
         }
     }
 
-    @Override
-    public <TTimeSeries> IDocumentQuery<TTimeSeries> selectTimeSeries(Class<TTimeSeries> clazz, Consumer<ITimeSeriesQueryBuilder> timeSeriesQuery) {
-        QueryData queryData = createTimeSeriesQueryData(timeSeriesQuery);
-        return selectFields(clazz, queryData);
-    }
 
     @Override
     public IDocumentQuery<T> distinct() {
@@ -103,23 +84,6 @@ public class DocumentQuery<T> extends AbstractDocumentQuery<T, DocumentQuery<T>>
         return this;
     }
 
-    @Override
-    public IDocumentQuery<T> includeExplanations(Reference<Explanations> explanations) {
-        _includeExplanations(null, explanations);
-        return this;
-    }
-
-    @Override
-    public IDocumentQuery<T> includeExplanations(ExplanationOptions options, Reference<Explanations> explanations) {
-        _includeExplanations(options, explanations);
-        return this;
-    }
-
-    @Override
-    public IDocumentQuery<T> timings(Reference<QueryTimings> timings) {
-        _includeTimings(timings);
-        return this;
-    }
 
     @Override
     public <TProjection> IDocumentQuery<TProjection> selectFields(Class<TProjection> projectionClass, String... fields) {
@@ -660,143 +624,28 @@ public class DocumentQuery<T> extends AbstractDocumentQuery<T, DocumentQuery<T>>
         query.theWaitForNonStaleResults = theWaitForNonStaleResults;
         query.negate = negate;
         query.documentIncludes = new HashSet<>(documentIncludes);
-        query.counterIncludesTokens = counterIncludesTokens;
-        query.timeSeriesIncludesTokens = timeSeriesIncludesTokens;
-        query.compareExchangeValueIncludesTokens = compareExchangeValueIncludesTokens;
         query.rootTypes = Sets.newHashSet(clazz);
         query.beforeQueryExecutedCallback = beforeQueryExecutedCallback;
         query.afterQueryExecutedCallback = afterQueryExecutedCallback;
         query.afterStreamExecutedCallback = afterStreamExecutedCallback;
-        query.highlightingTokens = highlightingTokens;
-        query.queryHighlightings = queryHighlightings;
         query.disableEntitiesTracking = disableEntitiesTracking;
         query.disableCaching = disableCaching;
-        query.queryTimings = queryTimings;
-        query.explanations = explanations;
-        query.explanationToken = explanationToken;
         query.isIntersect = isIntersect;
         query.defaultOperator = defaultOperator;
 
         return query;
     }
 
-    @Override
-    public IAggregationDocumentQuery<T> aggregateBy(Consumer<IFacetBuilder<T>> builder) {
-        FacetBuilder<T> ff = new FacetBuilder<>();
-        builder.accept(ff);
-
-        return aggregateBy(ff.getFacet());
-    }
-
-    @Override
-    public IAggregationDocumentQuery<T> aggregateBy(FacetBase facet) {
-        _aggregateBy(facet);
-
-        return new AggregationDocumentQuery<>(this);
-    }
-
-    @Override
-    public IAggregationDocumentQuery<T> aggregateBy(Facet... facets) {
-        for (Facet facet : facets) {
-            _aggregateBy(facet);
-        }
-
-        return new AggregationDocumentQuery<>(this);
-    }
-
-    @Override
-    public IAggregationDocumentQuery<T> aggregateUsing(String facetSetupDocumentId) {
-        _aggregateUsing(facetSetupDocumentId);
-
-        return new AggregationDocumentQuery<>(this);
-    }
-
-    @Override
-    public IDocumentQuery<T> highlight(String fieldName, int fragmentLength, int fragmentCount, Reference<Highlightings> highlightings) {
-        _highlight(fieldName, fragmentLength, fragmentCount, null, highlightings);
-        return this;
-    }
-
-    @Override
-    public IDocumentQuery<T> highlight(String fieldName, int fragmentLength, int fragmentCount, HighlightingOptions options, Reference<Highlightings> highlightings) {
-        _highlight(fieldName, fragmentLength, fragmentCount, options, highlightings);
-        return this;
-    }
 
     //TBD expr IDocumentQuery<T> IDocumentQueryBase<T, IDocumentQuery<T>>.Highlight(Expression<Func<T, object>> path, int fragmentLength, int fragmentCount, out Highlightings highlightings)
     //TBD expr IDocumentQuery<T> IDocumentQueryBase<T, IDocumentQuery<T>>.Highlight(Expression<Func<T, object>> path, int fragmentLength, int fragmentCount, HighlightingOptions options, out Highlightings highlightings)
     //TBD expr public IDocumentQuery<T> Spatial(Expression<Func<T, object>> path, Func<SpatialCriteriaFactory, SpatialCriteria> clause)
 
-    @Override
-    public IDocumentQuery<T> spatial(String fieldName, Function<SpatialCriteriaFactory, SpatialCriteria> clause) {
-        SpatialCriteria criteria = clause.apply(SpatialCriteriaFactory.INSTANCE);
-        _spatial(fieldName, criteria);
-        return this;
-    }
 
-    @Override
-    public IDocumentQuery<T> spatial(DynamicSpatialField field, Function<SpatialCriteriaFactory, SpatialCriteria> clause) {
-        SpatialCriteria criteria = clause.apply(SpatialCriteriaFactory.INSTANCE);
-        _spatial(field, criteria);
-        return this;
-    }
 
     //TBD expr public IDocumentQuery<T> Spatial(Func<SpatialDynamicFieldFactory<T>, DynamicSpatialField> field, Func<SpatialCriteriaFactory, SpatialCriteria> clause)
     //TBD expr IDocumentQuery<T> IDocumentQueryBase<T, IDocumentQuery<T>>.WithinRadiusOf<TValue>(Expression<Func<T, TValue>> propertySelector, double radius, double latitude, double longitude, SpatialUnits? radiusUnits, double distanceErrorPct)
 
-    @Override
-    public IDocumentQuery<T> withinRadiusOf(String fieldName, double radius, double latitude, double longitude) {
-        return withinRadiusOf(fieldName, radius, latitude, longitude, null, Constants.Documents.Indexing.Spatial.DEFAULT_DISTANCE_ERROR_PCT);
-    }
-
-    @Override
-    public IDocumentQuery<T> withinRadiusOf(String fieldName, double radius, double latitude, double longitude, SpatialUnits radiusUnits) {
-        return withinRadiusOf(fieldName, radius, latitude, longitude, radiusUnits, Constants.Documents.Indexing.Spatial.DEFAULT_DISTANCE_ERROR_PCT);
-    }
-
-    @Override
-    public IDocumentQuery<T> withinRadiusOf(String fieldName, double radius, double latitude, double longitude, SpatialUnits radiusUnits, double distanceErrorPct) {
-        _withinRadiusOf(fieldName, radius, latitude, longitude, radiusUnits, distanceErrorPct);
-        return this;
-    }
-
-    //TBD expr IDocumentQuery<T> IDocumentQueryBase<T, IDocumentQuery<T>>.RelatesToShape<TValue>(Expression<Func<T, TValue>> propertySelector, string shapeWkt, SpatialRelation relation, double distanceErrorPct)
-
-    @Override
-    public IDocumentQuery<T> relatesToShape(String fieldName, String shapeWkt, SpatialRelation relation) {
-        return relatesToShape(fieldName, shapeWkt, relation, Constants.Documents.Indexing.Spatial.DEFAULT_DISTANCE_ERROR_PCT);
-    }
-
-    @Override
-    public IDocumentQuery<T> relatesToShape(String fieldName, String shapeWkt, SpatialRelation relation, double distanceErrorPct) {
-        _spatial(fieldName, shapeWkt, relation, null, distanceErrorPct);
-        return this;
-    }
-
-    @Override
-    public IDocumentQuery<T> relatesToShape(String fieldName, String shapeWkt, SpatialRelation relation, SpatialUnits units, double distanceErrorPct) {
-        _spatial(fieldName, shapeWkt, relation, units, distanceErrorPct);
-        return this;
-    }
-
-    @Override
-    public IDocumentQuery<T> orderByDistance(DynamicSpatialField field, double latitude, double longitude) {
-        _orderByDistance(field, latitude, longitude);
-        return this;
-    }
-
-    //TBD expr IDocumentQuery<T> IDocumentQueryBase<T, IDocumentQuery<T>>.OrderByDistance(Func<DynamicSpatialFieldFactory<T>, DynamicSpatialField> field, double latitude, double longitude)
-
-    @Override
-    public IDocumentQuery<T> orderByDistance(DynamicSpatialField field, String shapeWkt) {
-        _orderByDistance(field, shapeWkt);
-        return this;
-    }
-
-    //TBD expr IDocumentQuery<T> IDocumentQueryBase<T, IDocumentQuery<T>>.OrderByDistance(Func<DynamicSpatialFieldFactory<T>, DynamicSpatialField> field, string shapeWkt)
-
-
-    //TBD expr IDocumentQuery<T> IDocumentQueryBase<T, IDocumentQuery<T>>.OrderByDistance<TValue>(Expression<Func<T, TValue>> propertySelector, double latitude, double longitude)
 
     @Override
     public IDocumentQuery<T> orderByDistance(String fieldName, double latitude, double longitude) {
@@ -818,23 +667,6 @@ public class DocumentQuery<T> extends AbstractDocumentQuery<T, DocumentQuery<T>>
         return this;
     }
 
-    @Override
-    public IDocumentQuery<T> orderByDistanceDescending(DynamicSpatialField field, double latitude, double longitude) {
-        _orderByDistanceDescending(field, latitude, longitude);
-        return this;
-    }
-
-    //TBD expr IDocumentQuery<T> IDocumentQueryBase<T, IDocumentQuery<T>>.OrderByDistanceDescending(Func<DynamicSpatialFieldFactory<T>, DynamicSpatialField> field, double latitude, double longitude)
-
-    @Override
-    public IDocumentQuery<T> orderByDistanceDescending(DynamicSpatialField field, String shapeWkt) {
-        _orderByDistanceDescending(field, shapeWkt);
-        return this;
-    }
-
-    //TBD expr IDocumentQuery<T> IDocumentQueryBase<T, IDocumentQuery<T>>.OrderByDistanceDescending(Func<DynamicSpatialFieldFactory<T>, DynamicSpatialField> field, string shapeWkt)
-
-    //TBD expr IDocumentQuery<T> IDocumentQueryBase<T, IDocumentQuery<T>>.OrderByDistanceDescending<TValue>(Expression<Func<T, TValue>> propertySelector, double latitude, double longitude)
 
     @Override
     public IDocumentQuery<T> orderByDistanceDescending(String fieldName, double latitude, double longitude) {
@@ -855,50 +687,5 @@ public class DocumentQuery<T> extends AbstractDocumentQuery<T, DocumentQuery<T>>
         return this;
     }
 
-    @Override
-    public IDocumentQuery<T> moreLikeThis(MoreLikeThisBase moreLikeThis) {
-        try (MoreLikeThisScope mlt = _moreLikeThis()) {
-            mlt.withOptions(moreLikeThis.getOptions());
 
-            if (moreLikeThis instanceof MoreLikeThisUsingDocument) {
-                mlt.withDocument(((MoreLikeThisUsingDocument) moreLikeThis).getDocumentJson());
-            }
-        }
-
-        return this;
-    }
-
-    @SuppressWarnings("unchecked")
-    @Override
-    public IDocumentQuery<T> moreLikeThis(Consumer<IMoreLikeThisBuilderForDocumentQuery<T>> builder) {
-        MoreLikeThisBuilder<T> f = new MoreLikeThisBuilder<>();
-        builder.accept(f);
-
-        try (MoreLikeThisScope moreLikeThis = _moreLikeThis()) {
-            moreLikeThis.withOptions(f.getMoreLikeThis().getOptions());
-
-            if (f.getMoreLikeThis() instanceof MoreLikeThisUsingDocument) {
-                moreLikeThis.withDocument(((MoreLikeThisUsingDocument) f.getMoreLikeThis()).getDocumentJson());
-            } else if (f.getMoreLikeThis() instanceof MoreLikeThisUsingDocumentForDocumentQuery) {
-                ((MoreLikeThisUsingDocumentForDocumentQuery) f.getMoreLikeThis()).getForDocumentQuery().accept(this);
-            }
-        }
-
-        return this;
-    }
-
-    @Override
-    public ISuggestionDocumentQuery<T> suggestUsing(SuggestionBase suggestion) {
-        _suggestUsing(suggestion);
-        return new SuggestionDocumentQuery<>(this);
-    }
-
-    @Override
-    public ISuggestionDocumentQuery<T> suggestUsing(Consumer<ISuggestionBuilder<T>> builder) {
-        SuggestionBuilder<T> f = new SuggestionBuilder<>();
-        builder.accept(f);
-
-        suggestUsing(f.getSuggestion());
-        return new SuggestionDocumentQuery<>(this);
-    }
 }

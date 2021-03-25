@@ -7,12 +7,10 @@ import net.ravendb.client.documents.operations.compareExchange.CompareExchangeVa
 import net.ravendb.client.documents.session.IDocumentSession;
 import net.ravendb.client.documents.session.QueryStatistics;
 import net.ravendb.client.documents.session.SessionOptions;
-import net.ravendb.client.documents.session.TransactionMode;
 import net.ravendb.client.infrastructure.orders.Address;
 import net.ravendb.client.infrastructure.orders.Company;
 import net.ravendb.client.infrastructure.orders.Employee;
 import net.ravendb.client.primitives.Reference;
-import org.checkerframework.checker.units.qual.A;
 import org.junit.jupiter.api.Test;
 
 import java.util.*;

@@ -1,10 +1,5 @@
 package net.ravendb.client.documents.session;
 
-import net.ravendb.client.documents.queries.explanation.ExplanationOptions;
-import net.ravendb.client.documents.queries.explanation.Explanations;
-import net.ravendb.client.documents.queries.highlighting.HighlightingOptions;
-import net.ravendb.client.documents.queries.highlighting.Highlightings;
-import net.ravendb.client.documents.queries.spatial.DynamicSpatialField;
 import net.ravendb.client.documents.session.loaders.IQueryIncludeBuilder;
 import net.ravendb.client.primitives.Reference;
 
@@ -52,20 +47,6 @@ public interface IDocumentQueryBase<T, TSelf extends IDocumentQueryBase<T, TSelf
      */
     TSelf distinct();
 
-    /**
-     * Adds explanations of scores calculated for queried documents to the query result
-     * @param explanations Output parameter
-     * @return Query instance
-     */
-    TSelf includeExplanations(Reference<Explanations> explanations);
-
-    /**
-     * Adds explanations of scores calculated for queried documents to the query result
-     * @param options Options
-     * @param explanations Output parameter
-     * @return Query instance
-     */
-    TSelf includeExplanations(ExplanationOptions options, Reference<Explanations> explanations);
 
     /**
      * Specifies a fuzziness factor to the single word term in the last where clause
@@ -77,8 +58,6 @@ public interface IDocumentQueryBase<T, TSelf extends IDocumentQueryBase<T, TSelf
      */
     TSelf fuzzy(double fuzzy);
 
-    TSelf highlight(String fieldName, int fragmentLength, int fragmentCount, Reference<Highlightings> highlightings);
-    TSelf highlight(String fieldName, int fragmentLength, int fragmentCount, HighlightingOptions options, Reference<Highlightings> highlightings);
     //TBD expr TSelf Highlight(Expression<Func<T, object>> path, int fragmentLength, int fragmentCount, out Highlightings highlightings);
     //TBD expr TSelf Highlight(Expression<Func<T, object>> path, int fragmentLength, int fragmentCount, HighlightingOptions options, out Highlightings highlightings);
 
@@ -195,22 +174,6 @@ public interface IDocumentQueryBase<T, TSelf extends IDocumentQueryBase<T, TSelf
 
     //TBD 4.1 TSelf customSortUsing(String typeName, boolean descending);
 
-    /**
-     * Sorts the query results by distance.
-     * @param field Field to use in order by
-     * @param latitude Latitude
-     * @param longitude Longitude
-     * @return Query instance
-     */
-    TSelf orderByDistance(DynamicSpatialField field, double latitude, double longitude);
-
-    //TBD expr TSelf OrderByDistance(Func<DynamicSpatialFieldFactory<T>, DynamicSpatialField> field, double latitude, double longitude);
-
-    TSelf orderByDistance(DynamicSpatialField field, String shapeWkt);
-
-    //TBD expr TSelf OrderByDistance(Func<DynamicSpatialFieldFactory<T>, DynamicSpatialField> field, string shapeWkt);
-
-    //TBD expr  TSelf OrderByDistance<TValue>(Expression<Func<T, TValue>> propertySelector, double latitude, double longitude);
 
     /**
      * Sorts the query results by distance.
@@ -242,22 +205,6 @@ public interface IDocumentQueryBase<T, TSelf extends IDocumentQueryBase<T, TSelf
      */
     TSelf orderByDistance(String fieldName, String shapeWkt);
 
-    /**
-     * Sorts the query results by distance.
-     * @param field Field to use in order by
-     * @param latitude Latitude
-     * @param longitude Longitude
-     * @return Query instance
-     */
-    TSelf orderByDistanceDescending(DynamicSpatialField field, double latitude, double longitude);
-
-    //TBD expr TSelf OrderByDistanceDescending(Func<DynamicSpatialFieldFactory<T>, DynamicSpatialField> field, double latitude, double longitude);
-
-    TSelf orderByDistanceDescending(DynamicSpatialField field, String shapeWkt);
-
-    //TBD expr TSelf OrderByDistanceDescending(Func<DynamicSpatialFieldFactory<T>, DynamicSpatialField> field, string shapeWkt);
-
-    //TBD expr TSelf OrderByDistanceDescending<TValue>(Expression<Func<T, TValue>> propertySelector, double latitude, double longitude);
 
     /**
      * Sorts the query results by distance.

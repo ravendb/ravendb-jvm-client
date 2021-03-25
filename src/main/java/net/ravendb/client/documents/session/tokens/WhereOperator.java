@@ -15,9 +15,5 @@ public enum WhereOperator {
     STARTS_WITH,
     ENDS_WITH,
     EXISTS,
-    SPATIAL_WITHIN,
-    SPATIAL_CONTAINS,
-    SPATIAL_DISJOINT,
-    SPATIAL_INTERSECTS,
     REGEX
 }

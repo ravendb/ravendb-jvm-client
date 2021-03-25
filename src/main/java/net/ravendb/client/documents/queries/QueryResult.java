@@ -21,17 +21,10 @@ public class QueryResult extends GenericQueryResult<ArrayNode, ObjectNode> {
         queryResult.setStale(isStale());
         queryResult.setSkippedResults(getSkippedResults());
         queryResult.setTotalResults(getTotalResults());
-        queryResult.setHighlightings(getHighlightings() != null ? new HashMap<>(getHighlightings()) : null);
-        queryResult.setExplanations(getExplanations() != null ? new HashMap<>(getExplanations()) : null);
-        queryResult.setTimings(getTimings());
         queryResult.setLastQueryTime(getLastQueryTime());
         queryResult.setDurationInMs(getDurationInMs());
         queryResult.setResultEtag(getResultEtag());
         queryResult.setNodeTag(getNodeTag());
-        queryResult.setCounterIncludes(getCounterIncludes());
-        queryResult.setIncludedCounterNames(getIncludedCounterNames());
-        queryResult.setTimeSeriesIncludes(getTimeSeriesIncludes());
-        queryResult.setCompareExchangeValueIncludes(getCompareExchangeValueIncludes());
         return queryResult;
     }
 }

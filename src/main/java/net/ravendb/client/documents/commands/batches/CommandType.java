@@ -8,21 +8,6 @@ public enum CommandType {
     PUT,
     PATCH,
     DELETE,
-    ATTACHMENT_PUT,
-    ATTACHMENT_DELETE,
-    ATTACHMENT_MOVE,
-    ATTACHMENT_COPY,
-    COMPARE_EXCHANGE_PUT,
-    COMPARE_EXCHANGE_DELETE,
-
-    FORCE_REVISION_CREATION,
-
-    COUNTERS,
-    TIME_SERIES,
-    TIME_SERIES_BULK_INSERT,
-    TIME_SERIES_COPY,
-
-    BATCH_PATCH,
 
     CLIENT_ANY_COMMAND,
     CLIENT_MODIFY_DOCUMENT_COMMAND;
@@ -37,26 +22,6 @@ public enum CommandType {
                 return PATCH;
             case "DELETE":
                 return DELETE;
-            case "AttachmentPUT":
-                return ATTACHMENT_PUT;
-            case "AttachmentDELETE":
-                return ATTACHMENT_DELETE;
-            case "AttachmentMOVE":
-                return ATTACHMENT_MOVE;
-            case "AttachmentCOPY":
-                return ATTACHMENT_COPY;
-            case "CompareExchangePUT":
-                return COMPARE_EXCHANGE_PUT;
-            case "CompareExchangeDELETE":
-                return COMPARE_EXCHANGE_DELETE;
-            case "Counters":
-                return COUNTERS;
-            case "BatchPATCH":
-                return BATCH_PATCH;
-            case "ForceRevisionCreation":
-                return FORCE_REVISION_CREATION;
-            case "TimeSeries":
-                return TIME_SERIES;
             default:
                 throw new IllegalArgumentException("Unable to parse type: " + input);
         }

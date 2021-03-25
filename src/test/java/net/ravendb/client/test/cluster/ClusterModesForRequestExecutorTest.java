@@ -3,7 +3,6 @@ package net.ravendb.client.test.cluster;
 import net.ravendb.client.ClusterTestBase;
 import net.ravendb.client.documents.DocumentStore;
 import net.ravendb.client.documents.conventions.DocumentConventions;
-import net.ravendb.client.documents.operations.GetStatisticsOperation;
 import net.ravendb.client.documents.session.DocumentSession;
 import net.ravendb.client.documents.session.IDocumentSession;
 import net.ravendb.client.http.*;

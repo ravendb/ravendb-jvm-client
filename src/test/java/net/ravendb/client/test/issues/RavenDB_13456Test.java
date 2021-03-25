@@ -2,13 +2,11 @@ package net.ravendb.client.test.issues;
 
 import net.ravendb.client.RemoteTestBase;
 import net.ravendb.client.documents.IDocumentStore;
-import net.ravendb.client.documents.operations.GetStatisticsOperation;
 import net.ravendb.client.documents.operations.compareExchange.CompareExchangeValue;
 import net.ravendb.client.documents.operations.configuration.ClientConfiguration;
 import net.ravendb.client.documents.operations.configuration.PutClientConfigurationOperation;
 import net.ravendb.client.documents.session.IDocumentSession;
 import net.ravendb.client.documents.session.SessionOptions;
-import net.ravendb.client.documents.session.TransactionMode;
 import net.ravendb.client.exceptions.RavenException;
 import net.ravendb.client.infrastructure.entities.Company;
 import org.junit.jupiter.api.Test;

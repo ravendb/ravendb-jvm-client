@@ -15,7 +15,6 @@ import net.ravendb.client.documents.session.loaders.MultiLoaderWithInclude;
 import net.ravendb.client.documents.session.operations.BatchOperation;
 import net.ravendb.client.documents.session.operations.LoadOperation;
 import net.ravendb.client.documents.session.operations.LoadStartingWithOperation;
-import net.ravendb.client.documents.session.operations.lazy.*;
 import net.ravendb.client.extensions.JsonExtensions;
 import net.ravendb.client.primitives.Tuple;
 import org.apache.commons.lang3.StringUtils;
@@ -43,20 +42,6 @@ public class DocumentSession extends InMemoryDocumentSessionOperations
     }
 
 
-
-    @Override
-    protected boolean hasClusterSession() {
-        return _clusterTransaction != null;
-    }
-
-    @Override
-    protected void clearClusterSession() {
-        if (!hasClusterSession()) {
-            return;
-        }
-
-        getClusterSession().clear();
-    }
 
 
     /**
@@ -258,11 +243,6 @@ public class DocumentSession extends InMemoryDocumentSessionOperations
         loadOperation.byIds(ids);
         loadOperation.withIncludes(includes);
 
-        if (includeAllCounters) {
-            loadOperation.withAllCounters();
-        } else {
-            loadOperation.withCounters(counterIncludes);
-        }
 
         GetDocumentsCommand command = loadOperation.createRequest();
         if (command != null) {
@@ -351,10 +331,6 @@ public class DocumentSession extends InMemoryDocumentSessionOperations
     @Override
     public InMemoryDocumentSessionOperations getSession() {
         return this;
-    }
-
-    public <T> IRawDocumentQuery<T> rawQuery(Class<T> clazz, String query) {
-        return new RawDocumentQuery<>(clazz, this, query);
     }
 
     @Override

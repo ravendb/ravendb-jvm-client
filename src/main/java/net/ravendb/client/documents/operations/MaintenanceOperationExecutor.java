@@ -68,8 +68,7 @@ public class MaintenanceOperationExecutor {
         RavenCommand<OperationIdResult> command = operation.getCommand(getRequestExecutor().getConventions());
 
         getRequestExecutor().execute(command);
-        return new Operation(getRequestExecutor(),
-                () -> store.changes(), getRequestExecutor().getConventions(),
+        return new Operation(getRequestExecutor(), getRequestExecutor().getConventions(),
                 command.getResult().getOperationId(),
                 ObjectUtils.firstNonNull(command.getSelectedNodeTag(), command.getResult().getOperationNodeTag()));
     }

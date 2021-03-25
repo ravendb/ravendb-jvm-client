@@ -3,13 +3,6 @@ package net.ravendb.client.documents.session;
 import net.ravendb.client.documents.conventions.DocumentConventions;
 import net.ravendb.client.documents.queries.GroupBy;
 import net.ravendb.client.documents.queries.SearchOperator;
-import net.ravendb.client.documents.queries.facets.FacetBase;
-import net.ravendb.client.documents.queries.highlighting.HighlightingOptions;
-import net.ravendb.client.documents.queries.highlighting.Highlightings;
-import net.ravendb.client.documents.queries.moreLikeThis.MoreLikeThisScope;
-import net.ravendb.client.documents.queries.spatial.DynamicSpatialField;
-import net.ravendb.client.documents.queries.spatial.SpatialCriteria;
-import net.ravendb.client.documents.queries.suggestions.SuggestionBase;
 import net.ravendb.client.documents.session.loaders.IncludeBuilderBase;
 import net.ravendb.client.primitives.Reference;
 
@@ -379,7 +372,6 @@ public interface IAbstractDocumentQuery<T> {
 
     void _orderByScoreDescending();
 
-    void _highlight(String fieldName, int fragmentLength, int fragmentCount, HighlightingOptions options, Reference<Highlightings> highlightings);
 
     /**
      * Perform a search for documents which fields that match the searchTerms.
@@ -438,43 +430,24 @@ public interface IAbstractDocumentQuery<T> {
 
     void _whereTrue();
 
-    void _spatial(DynamicSpatialField field, SpatialCriteria criteria);
-
-    void _spatial(String fieldName, SpatialCriteria criteria);
-
-    void _orderByDistance(DynamicSpatialField field, double latitude, double longitude);
 
     void _orderByDistance(String fieldName, double latitude, double longitude);
 
     void _orderByDistance(String fieldName, double latitude, double longitude, double roundFactor);
 
-    void _orderByDistance(DynamicSpatialField field, String shapeWkt);
-
     void _orderByDistance(String fieldName, String shapeWkt);
 
     void _orderByDistance(String fieldName, String shapeWkt, double roundFactor);
-
-    void _orderByDistanceDescending(DynamicSpatialField field, double latitude, double longitude);
 
     void _orderByDistanceDescending(String fieldName, double latitude, double longitude);
 
     void _orderByDistanceDescending(String fieldName, double latitude, double longitude, double roundFactor);
 
-    void _orderByDistanceDescending(DynamicSpatialField field, String shapeWkt);
-
     void _orderByDistanceDescending(String fieldName, String shapeWkt);
 
     void _orderByDistanceDescending(String fieldName, String shapeWkt, double roundFactor);
 
-    void _aggregateBy(FacetBase facet);
-
-    void _aggregateUsing(String facetSetupDocumentId);
-
-    MoreLikeThisScope _moreLikeThis();
-
     String addAliasToIncludesTokens(String fromAlias);
-
-    void _suggestUsing(SuggestionBase suggestion);
 
     String getParameterPrefix();
 

@@ -16,38 +16,5 @@ public class IncludeBuilder extends IncludeBuilderBase implements IIncludeBuilde
         return this;
     }
 
-    @Override
-    public IIncludeBuilder includeCounter(String name) {
-        _includeCounter("", name);
-        return this;
-    }
 
-    @Override
-    public IIncludeBuilder includeCounters(String[] names) {
-        _includeCounters("", names);
-        return this;
-    }
-
-    @Override
-    public IIncludeBuilder includeAllCounters() {
-        _includeAllCounters("");
-        return this;
-    }
-
-    @Override
-    public IIncludeBuilder includeTimeSeries(String name) {
-        return includeTimeSeries(name, null, null);
-    }
-
-    @Override
-    public IIncludeBuilder includeTimeSeries(String name, Date from, Date to) {
-        _includeTimeSeries("", name, from, to);
-        return this;
-    }
-
-    @Override
-    public IIncludeBuilder includeCompareExchangeValue(String path) {
-        _includeCompareExchangeValue(path);
-        return this;
-    }
 }

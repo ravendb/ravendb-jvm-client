@@ -2,7 +2,6 @@ package net.ravendb.client.test.issues;
 
 import net.ravendb.client.RemoteTestBase;
 import net.ravendb.client.documents.IDocumentStore;
-import net.ravendb.client.documents.commands.batches.BatchPatchCommandData;
 import net.ravendb.client.documents.session.IDocumentSession;
 import net.ravendb.client.exceptions.ConcurrencyException;
 import net.ravendb.client.infrastructure.entities.Company;

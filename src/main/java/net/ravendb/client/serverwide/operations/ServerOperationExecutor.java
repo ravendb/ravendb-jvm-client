@@ -48,48 +48,7 @@ public class ServerOperationExecutor implements CleanCloseable {
         }
     }
 
-    public ServerOperationExecutor forNode(String nodeTag) {
-        if (StringUtils.isBlank(nodeTag)) {
-            throw new IllegalArgumentException("Value cannot be null or whitespace.");
-        }
 
-        if ((nodeTag == null && _nodeTag == null) || _nodeTag.equalsIgnoreCase(nodeTag)) {
-            return this;
-        }
-
-        if (_store.getConventions().isDisableTopologyUpdates()) {
-            throw new IllegalStateException("Cannot switch server operation executor, because Conventions.isDisableTopologyUpdates() is set to 'true'");
-        }
-
-        return _cache.computeIfAbsent(nodeTag, tag -> {
-            ClusterRequestExecutor requestExecutor = ObjectUtils.firstNonNull(_initialRequestExecutor, _requestExecutor);
-            Topology topology = getTopology(requestExecutor);
-
-            ServerNode node = topology
-                    .getNodes()
-                    .stream()
-                    .filter(x -> tag.equalsIgnoreCase(x.getClusterTag()))
-                    .findFirst()
-                    .orElse(null);
-
-            if (node == null) {
-                String availableNodes = topology.getNodes()
-                        .stream()
-                        .map(x -> x.getClusterTag())
-                        .collect(Collectors.joining(", "));
-
-                throw new IllegalStateException("Could not find node '" + tag + "' in the topology. Available nodes: " + availableNodes);
-            }
-
-            ClusterRequestExecutor clusterExecutor = ClusterRequestExecutor.createForSingleNode(node.getUrl(),
-                    _store.getCertificate(),
-                    _store.getCertificatePrivateKeyPassword(),
-                    _store.getTrustStore(),
-                    _store.getExecutorService());
-
-            return new ServerOperationExecutor(_store, clusterExecutor, requestExecutor, _cache, node.getClusterTag());
-        });
-    }
 
     public void send(IVoidServerOperation operation) {
         VoidRavenCommand command = operation.getCommand(_requestExecutor.getConventions());
@@ -137,30 +96,6 @@ public class ServerOperationExecutor implements CleanCloseable {
         }
     }
 
-    private Topology getTopology(ClusterRequestExecutor requestExecutor) {
-        Topology topology = null;
-        try {
-            topology = requestExecutor.getTopology();
-            if (topology == null) {
-                // a bit rude way to make sure that topology has been refreshed
-                // but it handles a case when first topology update failed
-
-                GetBuildNumberOperation operation = new GetBuildNumberOperation();
-                RavenCommand<BuildNumber> command = operation.getCommand(requestExecutor.getConventions());
-                requestExecutor.execute(command);
-
-                topology = requestExecutor.getTopology();
-            }
-        } catch (Exception e) {
-            // ignored
-        }
-
-        if (topology == null) {
-            throw new IllegalStateException("Could not fetch the topology.");
-        }
-
-        return topology;
-    }
 
     private static ClusterRequestExecutor createRequestExecutor(DocumentStore store) {
         return store.getConventions().isDisableTopologyUpdates() ?

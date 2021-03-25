@@ -196,17 +196,7 @@ public interface IAdvancedDocumentSessionOperations {
      */
     Map<String, List<DocumentsChanges>> whatChanged();
 
-    /**
-     * SaveChanges will wait for the changes made to be replicates to `replicas` nodes
-     */
-    void waitForReplicationAfterSaveChanges();
 
-
-    /**
-     * Overwrite the existing transaction mode for the current session.
-     * @param mode Transaction mode
-     */
-    void setTransactionMode(TransactionMode mode);
 
     EntityToJson getEntityToJson();
 }

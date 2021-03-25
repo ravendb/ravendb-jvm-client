@@ -159,7 +159,6 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
         this.declareTokens = declareTokens;
         this.loadTokens = loadTokens;
         theSession = session;
-        _addAfterQueryExecutedListener(this::updateStatsHighlightingsAndExplanations);
         _conventions = session == null ? new DocumentConventions() : session.getConventions();
         this.isProjectInto = isProjectInto != null ? isProjectInto : false;
     }
@@ -1151,13 +1150,7 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
 
     @SuppressWarnings("UnusedAssignment")
     private void buildInclude(StringBuilder queryText) {
-        if (documentIncludes.isEmpty() &&
-                highlightingTokens.isEmpty() &&
-                explanationToken == null &&
-                queryTimings == null &&
-                counterIncludesTokens == null &&
-                timeSeriesIncludesTokens == null &&
-                compareExchangeValueIncludesTokens == null) {
+        if (documentIncludes.isEmpty()) {
             return;
         }
 
@@ -1181,29 +1174,6 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
             }
         }
 
-        writeIncludeTokens(counterIncludesTokens, firstRef, queryText);
-        writeIncludeTokens(timeSeriesIncludesTokens, firstRef, queryText);
-        writeIncludeTokens(compareExchangeValueIncludesTokens, firstRef, queryText);
-        writeIncludeTokens(highlightingTokens, firstRef, queryText);
-
-        if (explanationToken != null) {
-            if (!firstRef.value) {
-                queryText.append(",");
-            }
-
-            firstRef.value = false;
-            explanationToken.writeTo(queryText);
-        }
-
-        if (queryTimings != null) {
-            if (!firstRef.value) {
-                queryText.append(",");
-            }
-            firstRef.value = false;
-
-
-            TimingsToken.INSTANCE.writeTo(queryText);
-        }
     }
 
     <TToken extends QueryToken> void writeIncludeTokens(Collection<TToken> tokens, Reference<Boolean> firstRef, StringBuilder queryText) {
@@ -1301,16 +1271,6 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
         }
     }
 
-    private void updateStatsHighlightingsAndExplanations(QueryResult queryResult) {
-        queryStats.updateQueryStats(queryResult);
-        queryHighlightings.update(queryResult);
-        if (explanations != null) {
-            explanations.update(queryResult);
-        }
-        if (queryTimings != null) {
-            queryTimings.update(queryResult);
-        }
-    }
 
     private void buildSelect(StringBuilder writer) {
         if (selectTokens.isEmpty()) {
@@ -1598,14 +1558,7 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
             throw new IllegalStateException("Cannot get MoreLikeThisToken because there are no where token specified.");
         }
 
-        QueryToken lastToken = whereTokens.get(whereTokens.size() - 1);
-
-        if (lastToken instanceof MoreLikeThisToken) {
-            MoreLikeThisToken moreLikeThisToken = (MoreLikeThisToken) lastToken;
-            return moreLikeThisToken.whereTokens;
-        } else {
-            throw new IllegalStateException("Last token is not MoreLikeThisToken");
-        }
+        throw new IllegalStateException("Last token is not MoreLikeThisToken");
     }
 
     protected void updateFieldsToFetchToken(FieldsToFetchToken fieldsToFetch) {
@@ -1651,18 +1604,6 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
             addFromAliasToWhereTokens(fromAlias);
         }
 
-        if (counterIncludesTokens != null) {
-            for (CounterIncludesToken counterIncludesToken : counterIncludesTokens) {
-                counterIncludesToken.addAliasToPath(fromAlias);
-            }
-        }
-
-        if (timeSeriesIncludesTokens != null) {
-            for (TimeSeriesIncludesToken token : timeSeriesIncludesTokens) {
-                token.addAliasToPath(fromAlias);
-            }
-        }
-
         return fromAlias;
     }
 
@@ -1696,14 +1637,7 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
         sourceAlias.value = possibleAlias;
     }
 
-    protected QueryData createTimeSeriesQueryData(Consumer<ITimeSeriesQueryBuilder> timeSeriesQuery) {
-        TimeSeriesQueryBuilder builder = new TimeSeriesQueryBuilder();
-        timeSeriesQuery.accept(builder);
 
-        String[] fields = new String[] { Constants.TimeSeries.SELECT_FIELD_NAME + "(" + builder.getQueryText() + ")" };
-        String[] projections = new String[] { Constants.TimeSeries.QUERY_FUNCTION } ;
-        return new QueryData(fields, projections);
-    }
 
     protected List<Consumer<IndexQuery>> beforeQueryExecutedCallback = new ArrayList<>();
 
@@ -1749,100 +1683,6 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
         disableCaching = true;
     }
 
-    protected QueryTimings queryTimings;
-
-    public void _includeTimings(Reference<QueryTimings> timingsReference) {
-        if (queryTimings != null) {
-            timingsReference.value = queryTimings;
-            return;
-        }
-
-        queryTimings = timingsReference.value = new QueryTimings();
-    }
-
-    protected List<HighlightingToken> highlightingTokens = new ArrayList<>();
-
-    protected QueryHighlightings queryHighlightings = new QueryHighlightings();
-
-    public void _highlight(String fieldName, int fragmentLength, int fragmentCount, HighlightingOptions options, Reference<Highlightings> highlightingsReference) {
-        highlightingsReference.value = queryHighlightings.add(fieldName);
-
-        String optionsParameterName = options != null ? addQueryParameter(JsonExtensions.getDefaultMapper().valueToTree(options)) : null;
-        highlightingTokens.add(HighlightingToken.create(fieldName, fragmentLength, fragmentCount, optionsParameterName));
-    }
-
-    protected void _withinRadiusOf(String fieldName, double radius, double latitude, double longitude, SpatialUnits radiusUnits, double distErrorPercent) {
-        fieldName = ensureValidFieldName(fieldName, false);
-
-        List<QueryToken> tokens = getCurrentWhereTokens();
-        appendOperatorIfNeeded(tokens);
-        negateIfNeeded(tokens, fieldName);
-
-        WhereToken whereToken = WhereToken.create(WhereOperator.SPATIAL_WITHIN, fieldName, null, new WhereToken.WhereOptions(ShapeToken.circle(addQueryParameter(radius), addQueryParameter(latitude), addQueryParameter(longitude), radiusUnits), distErrorPercent));
-        tokens.add(whereToken);
-    }
-
-    protected void _spatial(String fieldName, String shapeWkt, SpatialRelation relation, SpatialUnits units, double distErrorPercent) {
-        fieldName = ensureValidFieldName(fieldName, false);
-
-        List<QueryToken> tokens = getCurrentWhereTokens();
-        appendOperatorIfNeeded(tokens);
-        negateIfNeeded(tokens, fieldName);
-
-        ShapeToken wktToken = ShapeToken.wkt(addQueryParameter(shapeWkt), units);
-
-        WhereOperator whereOperator;
-        switch (relation) {
-            case WITHIN:
-                whereOperator = WhereOperator.SPATIAL_WITHIN;
-                break;
-            case CONTAINS:
-                whereOperator = WhereOperator.SPATIAL_CONTAINS;
-                break;
-            case DISJOINT:
-                whereOperator = WhereOperator.SPATIAL_DISJOINT;
-                break;
-            case INTERSECTS:
-                whereOperator = WhereOperator.SPATIAL_INTERSECTS;
-                break;
-            default:
-                throw new IllegalArgumentException();
-        }
-
-        tokens.add(WhereToken.create(whereOperator, fieldName, null, new WhereToken.WhereOptions(wktToken, distErrorPercent)));
-    }
-
-    @Override
-    public void _spatial(DynamicSpatialField dynamicField, SpatialCriteria criteria) {
-        assertIsDynamicQuery(dynamicField, "spatial");
-
-        List<QueryToken> tokens = getCurrentWhereTokens();
-        appendOperatorIfNeeded(tokens);
-        negateIfNeeded(tokens, null);
-
-        tokens.add(criteria.toQueryToken(dynamicField.toField(this::ensureValidFieldName), this::addQueryParameter));
-    }
-
-    @Override
-    public void _spatial(String fieldName, SpatialCriteria criteria) {
-        fieldName = ensureValidFieldName(fieldName, false);
-
-        List<QueryToken> tokens = getCurrentWhereTokens();
-        appendOperatorIfNeeded(tokens);
-        negateIfNeeded(tokens, fieldName);
-
-        tokens.add(criteria.toQueryToken(fieldName, this::addQueryParameter));
-    }
-
-    @Override
-    public void _orderByDistance(DynamicSpatialField field, double latitude, double longitude) {
-        if (field == null) {
-            throw new IllegalArgumentException("Field cannot be null");
-        }
-        assertIsDynamicQuery(field, "orderByDistance");
-
-        _orderByDistance("'" + field.toField(this::ensureValidFieldName) + "'", latitude, longitude, field.getRoundFactor());
-    }
 
     @Override
     public void _orderByDistance(String fieldName, double latitude, double longitude) {
@@ -1855,15 +1695,6 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
         orderByTokens.add(OrderByToken.createDistanceAscending(fieldName, addQueryParameter(latitude), addQueryParameter(longitude), roundFactorParameterName));
     }
 
-    @Override
-    public void _orderByDistance(DynamicSpatialField field, String shapeWkt) {
-        if (field == null) {
-            throw new IllegalArgumentException("Field cannot be null");
-        }
-        assertIsDynamicQuery(field, "orderByDistance");
-
-        _orderByDistance("'" + field.toField(this::ensureValidFieldName) + "'", shapeWkt, field.getRoundFactor());
-    }
 
     @Override
     public void _orderByDistance(String fieldName, String shapeWkt) {
@@ -1876,14 +1707,6 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
         orderByTokens.add(OrderByToken.createDistanceAscending(fieldName, addQueryParameter(shapeWkt), roundFactorParameterName));
     }
 
-    @Override
-    public void _orderByDistanceDescending(DynamicSpatialField field, double latitude, double longitude) {
-        if (field == null) {
-            throw new IllegalArgumentException("Field cannot be null");
-        }
-        assertIsDynamicQuery(field, "orderByDistanceDescending");
-        _orderByDistanceDescending("'" + field.toField(this::ensureValidFieldName) + "'", latitude, longitude, field.getRoundFactor());
-    }
 
     @Override
     public void _orderByDistanceDescending(String fieldName, double latitude, double longitude) {
@@ -1896,14 +1719,6 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
         orderByTokens.add(OrderByToken.createDistanceDescending(fieldName, addQueryParameter(latitude), addQueryParameter(longitude), roundFactorParameterName));
     }
 
-    @Override
-    public void _orderByDistanceDescending(DynamicSpatialField field, String shapeWkt) {
-        if (field == null) {
-            throw new IllegalArgumentException("Field cannot be null");
-        }
-        assertIsDynamicQuery(field, "orderByDistanceDescending");
-        _orderByDistanceDescending("'" + field.toField(this::ensureValidFieldName) + "'", shapeWkt, field.getRoundFactor());
-    }
 
     @Override
     public void _orderByDistanceDescending(String fieldName, String shapeWkt) {
@@ -1916,14 +1731,6 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
         orderByTokens.add(OrderByToken.createDistanceDescending(fieldName, addQueryParameter(shapeWkt), factorParamName));
     }
 
-    private void assertIsDynamicQuery(DynamicSpatialField dynamicField, String methodName) {
-        if (!fromToken.isDynamic()) {
-            throw new IllegalStateException("Cannot execute query method '" + methodName + "'. Field '"
-                    + dynamicField.toField(this::ensureValidFieldName) + "' cannot be used when static index '" + fromToken.getIndexName()
-                    + "' is queried. Dynamic spatial fields can only be used with dynamic queries, " +
-                    "for static index queries please use valid spatial fields defined in index definition.");
-        }
-    }
 
     protected void initSync() {
         if (queryOperation != null) {
@@ -2032,157 +1839,8 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
         initSync();
     }
 
-    public void _aggregateBy(FacetBase facet) {
-        for (QueryToken token : selectTokens) {
-            if (token instanceof FacetToken) {
-                continue;
-            }
 
-            throw new IllegalStateException("Aggregation query can select only facets while it got " + token.getClass().getSimpleName() + " token");
-        }
 
-        selectTokens.add(FacetToken.create(facet, this::addQueryParameter));
-    }
-
-    public void _aggregateUsing(String facetSetupDocumentId) {
-        selectTokens.add(FacetToken.create(facetSetupDocumentId));
-    }
-
-    public Lazy<List<T>> lazily() {
-        return lazily(null);
-    }
-
-    @SuppressWarnings("unchecked")
-    public Lazy<List<T>> lazily(Consumer<List<T>> onEval) {
-        LazyQueryOperation<T> lazyQueryOperation = getLazyQueryOperation();
-
-        return ((DocumentSession)theSession).addLazyOperation((Class<List<T>>) (Class<?>)List.class, lazyQueryOperation, onEval);
-    }
-
-    public Lazy<Integer> countLazily() {
-        if (queryOperation == null) {
-            _take(0);
-            queryOperation = initializeQueryOperation();
-        }
-
-        LazyQueryOperation<T> lazyQueryOperation = new LazyQueryOperation<>(clazz, theSession, queryOperation, afterQueryExecutedCallback);
-        return ((DocumentSession)theSession).addLazyCountOperation(lazyQueryOperation);
-    }
-
-    @Override
-    public void _suggestUsing(SuggestionBase suggestion) {
-        if (suggestion == null) {
-            throw new IllegalArgumentException("suggestion cannot be null");
-        }
-
-        assertCanSuggest(suggestion);
-
-        SuggestToken token;
-
-        if (suggestion instanceof SuggestionWithTerm) {
-            SuggestionWithTerm term = (SuggestionWithTerm) suggestion;
-            token = SuggestToken.create(term.getField(), term.getDisplayField(), addQueryParameter(term.getTerm()), getOptionsParameterName(term.getOptions()));
-        } else if (suggestion instanceof SuggestionWithTerms) {
-            SuggestionWithTerms terms = (SuggestionWithTerms) suggestion;
-            token = SuggestToken.create(terms.getField(), terms.getDisplayField(), addQueryParameter(terms.getTerms()), getOptionsParameterName(terms.getOptions()));
-        } else {
-            throw new UnsupportedOperationException("Unknown type of suggestion: " + suggestion.getClass());
-        }
-
-        selectTokens.add(token);
-    }
-
-    private String getOptionsParameterName(SuggestionOptions options) {
-        String optionsParameterName = null;
-        if (options != null && options != SuggestionOptions.defaultOptions) {
-            optionsParameterName = addQueryParameter(options);
-        }
-
-        return optionsParameterName;
-    }
-
-    private void assertCanSuggest(SuggestionBase suggestion) {
-        if (!whereTokens.isEmpty()) {
-            throw new IllegalStateException("Cannot add suggest when WHERE statements are present.");
-        }
-
-        if (!selectTokens.isEmpty()) {
-            QueryToken lastToken = selectTokens.get(selectTokens.size() - 1);
-            if (lastToken instanceof SuggestToken) {
-                SuggestToken st = (SuggestToken) lastToken;
-                if (st.getFieldName().equals(suggestion.getField())) {
-                    throw new IllegalStateException("Cannot add suggest for the same field again.");
-                }
-            } else {
-                throw new IllegalStateException("Cannot add suggest when SELECT statements are present.");
-            }
-        }
-
-        if (!orderByTokens.isEmpty()) {
-            throw new IllegalStateException("Cannot add suggest when ORDER BY statements are present.");
-        }
-    }
-
-    protected Explanations explanations;
-
-    protected ExplanationToken explanationToken;
-
-    public void _includeExplanations(ExplanationOptions options, Reference<Explanations> explanationsReference) {
-        if (explanationToken != null) {
-            throw new IllegalStateException("Duplicate IncludeExplanations method calls are forbidden.");
-        }
-
-        String optionsParameterName = options != null ? addQueryParameter(options) : null;
-        explanationToken = ExplanationToken.create(optionsParameterName);
-        this.explanations = explanationsReference.value = new Explanations();
-    }
-
-    protected List<TimeSeriesIncludesToken> timeSeriesIncludesTokens;
-
-    protected List<CounterIncludesToken> counterIncludesTokens;
-
-    protected List<CompareExchangeValueIncludesToken> compareExchangeValueIncludesTokens;
-
-    protected void _includeCounters(String alias, Map<String, Tuple<Boolean, Set<String>>> counterToIncludeByDocId) {
-        if (counterToIncludeByDocId == null || counterToIncludeByDocId.isEmpty()) {
-            return;
-        }
-
-        counterIncludesTokens = new ArrayList<>();
-        _includesAlias = alias;
-
-        for (Map.Entry<String, Tuple<Boolean, Set<String>>> kvp : counterToIncludeByDocId.entrySet()) {
-            if (kvp.getValue().first) {
-                counterIncludesTokens.add(CounterIncludesToken.all(kvp.getKey()));
-                continue;
-            }
-
-            if (kvp.getValue().second == null || kvp.getValue().second.isEmpty()) {
-                continue;
-            }
-
-            for (String name : kvp.getValue().second) {
-                counterIncludesTokens.add(CounterIncludesToken.create(kvp.getKey(), name));
-            }
-        }
-    }
-
-    private void _includeTimeSeries(String alias, Map<String, Set<TimeSeriesRange>> timeSeriesToInclude) {
-        if (timeSeriesToInclude == null || timeSeriesToInclude.isEmpty()) {
-            return;
-        }
-
-        timeSeriesIncludesTokens = new ArrayList<>();
-        if (_includesAlias == null) {
-            _includesAlias = alias;
-        }
-
-        for (Map.Entry<String, Set<TimeSeriesRange>> kvp : timeSeriesToInclude.entrySet()) {
-            for (TimeSeriesRange range : kvp.getValue()) {
-                timeSeriesIncludesTokens.add(TimeSeriesIncludesToken.create(kvp.getKey(), range));
-            }
-        }
-    }
 
     @Override
     public String getParameterPrefix() {

@@ -4,7 +4,6 @@ import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.databind.JsonNode;
 import net.ravendb.client.documents.conventions.DocumentConventions;
 import net.ravendb.client.documents.session.InMemoryDocumentSessionOperations;
-import net.ravendb.client.primitives.SharpEnum;
 
 import java.io.IOException;
 
@@ -15,13 +14,8 @@ public class PutCommandDataBase<T extends JsonNode> implements ICommandData {
     private String changeVector;
     private T document;
     private final CommandType type = CommandType.PUT;
-    private ForceRevisionStrategy forceRevisionCreationStrategy;
 
     protected PutCommandDataBase(String id, String changeVector, T document) {
-        this(id, changeVector, document, ForceRevisionStrategy.NONE);
-    }
-
-    protected PutCommandDataBase(String id, String changeVector, T document, ForceRevisionStrategy strategy) {
         if (document == null) {
             throw new IllegalArgumentException("Document cannot be null");
         }
@@ -29,7 +23,6 @@ public class PutCommandDataBase<T extends JsonNode> implements ICommandData {
         this.id = id;
         this.changeVector = changeVector;
         this.document = document;
-        this.forceRevisionCreationStrategy = strategy;
     }
 
     @Override
@@ -56,10 +49,6 @@ public class PutCommandDataBase<T extends JsonNode> implements ICommandData {
         return type;
     }
 
-    public ForceRevisionStrategy getForceRevisionCreationStrategy() {
-        return forceRevisionCreationStrategy;
-    }
-
     @Override
     public void serialize(JsonGenerator generator, DocumentConventions conventions) throws IOException {
         generator.writeStartObject();
@@ -71,9 +60,6 @@ public class PutCommandDataBase<T extends JsonNode> implements ICommandData {
 
         generator.writeStringField("Type", "PUT");
 
-        if (forceRevisionCreationStrategy != ForceRevisionStrategy.NONE) {
-            generator.writeStringField("ForceRevisionCreationStrategy", SharpEnum.value(forceRevisionCreationStrategy));
-        }
         generator.writeEndObject();
     }
 

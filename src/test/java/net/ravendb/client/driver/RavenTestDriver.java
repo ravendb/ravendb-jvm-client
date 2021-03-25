@@ -7,7 +7,6 @@ import net.ravendb.client.documents.DocumentStore;
 import net.ravendb.client.documents.IDocumentStore;
 import net.ravendb.client.documents.indexes.IndexErrors;
 import net.ravendb.client.documents.indexes.IndexState;
-import net.ravendb.client.documents.operations.GetStatisticsOperation;
 import net.ravendb.client.documents.operations.MaintenanceOperationExecutor;
 import net.ravendb.client.documents.operations.indexes.GetIndexErrorsOperation;
 import net.ravendb.client.documents.operations.revisions.ConfigureRevisionsOperation;

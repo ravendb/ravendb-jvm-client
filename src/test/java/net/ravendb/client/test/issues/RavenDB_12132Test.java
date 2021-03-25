@@ -6,7 +6,6 @@ import net.ravendb.client.documents.operations.compareExchange.CompareExchangeRe
 import net.ravendb.client.documents.operations.compareExchange.PutCompareExchangeValueOperation;
 import net.ravendb.client.documents.session.IDocumentSession;
 import net.ravendb.client.documents.session.SessionOptions;
-import net.ravendb.client.documents.session.TransactionMode;
 import net.ravendb.client.infrastructure.entities.User;
 import org.junit.jupiter.api.Test;
 

@@ -80,11 +80,6 @@ public class ClusterRequestExecutor extends RequestExecutor {
     }
 
     @Override
-    protected void performHealthCheck(ServerNode serverNode, int nodeIndex) {
-        execute(serverNode, nodeIndex, new GetTcpInfoCommand("health-check"), false, null);
-    }
-
-    @Override
     public CompletableFuture<Boolean> updateTopologyAsync(UpdateTopologyParameters parameters) {
         if (parameters == null) {
             throw new IllegalArgumentException("Parameters cannot be null");
@@ -135,15 +130,8 @@ public class ClusterRequestExecutor extends RequestExecutor {
                 if (_nodeSelector == null) {
                     _nodeSelector = new NodeSelector(newTopology, _executorService);
 
-                    if (getConventions().getReadBalanceBehavior() == ReadBalanceBehavior.FASTEST_NODE) {
-                        _nodeSelector.scheduleSpeedTest();
-                    }
                 } else if (_nodeSelector.onUpdateTopology(newTopology, parameters.isForceUpdate())) {
-                    disposeAllFailedNodesTimers();
-
-                    if (getConventions().getReadBalanceBehavior() == ReadBalanceBehavior.FASTEST_NODE) {
-                        _nodeSelector.scheduleSpeedTest();
-                    }
+                    //TODO:
                 }
 
                 onTopologyUpdatedInvoke(newTopology);

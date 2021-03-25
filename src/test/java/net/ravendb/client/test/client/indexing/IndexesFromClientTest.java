@@ -3,7 +3,6 @@ package net.ravendb.client.test.client.indexing;
 import net.ravendb.client.RemoteTestBase;
 import net.ravendb.client.documents.IDocumentStore;
 import net.ravendb.client.documents.indexes.*;
-import net.ravendb.client.documents.operations.GetStatisticsOperation;
 import net.ravendb.client.documents.operations.indexes.*;
 import net.ravendb.client.documents.queries.IndexQuery;
 import net.ravendb.client.documents.queries.moreLikeThis.MoreLikeThisOptions;

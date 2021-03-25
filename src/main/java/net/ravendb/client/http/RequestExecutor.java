@@ -3,7 +3,6 @@ package net.ravendb.client.http;
 import net.ravendb.client.Constants;
 import net.ravendb.client.documents.conventions.DocumentConventions;
 import net.ravendb.client.documents.operations.DatabaseHealthCheckOperation;
-import net.ravendb.client.documents.operations.GetStatisticsOperation;
 import net.ravendb.client.documents.operations.configuration.GetClientConfigurationOperation;
 import net.ravendb.client.documents.session.*;
 import net.ravendb.client.exceptions.*;
@@ -60,10 +59,7 @@ public class RequestExecutor implements CleanCloseable {
 
     public static Consumer<HttpClientBuilder> configureHttpClient = null;
 
-    private static final GetStatisticsOperation backwardCompatibilityFailureCheckOperation = new GetStatisticsOperation("failure=check");
-
     private static final DatabaseHealthCheckOperation failureCheckOperation = new DatabaseHealthCheckOperation();
-    private Set<String> _useOldFailureCheckOperation = ConcurrentHashMap.newKeySet();
 
     /**
      * Extension point to plug - in request post processing like adding proxy etc.
@@ -78,8 +74,6 @@ public class RequestExecutor implements CleanCloseable {
     private final Semaphore _updateDatabaseTopologySemaphore = new Semaphore(1);
 
     private final Semaphore _updateClientConfigurationSemaphore = new Semaphore(1);
-
-    private final ConcurrentMap<ServerNode, NodeStatus> _failedNodesTimers = new ConcurrentHashMap<>();
 
     private final KeyStore certificate;
     private final char[] keyPassword;
@@ -398,14 +392,7 @@ public class RequestExecutor implements CleanCloseable {
                 if (_nodeSelector == null) {
                     _nodeSelector = new NodeSelector(topology, _executorService);
 
-                    if (conventions.getReadBalanceBehavior() == ReadBalanceBehavior.FASTEST_NODE) {
-                        _nodeSelector.scheduleSpeedTest();
-                    }
                 } else if (_nodeSelector.onUpdateTopology(topology, parameters.isForceUpdate())) {
-                    disposeAllFailedNodesTimers();
-                    if (conventions.getReadBalanceBehavior() == ReadBalanceBehavior.FASTEST_NODE) {
-                        _nodeSelector.scheduleSpeedTest();
-                    }
                 }
 
                 topologyEtag = _nodeSelector.getTopology().getEtag();
@@ -422,11 +409,6 @@ public class RequestExecutor implements CleanCloseable {
             return true;
         }, _executorService);
 
-    }
-
-    protected void disposeAllFailedNodesTimers() {
-        _failedNodesTimers.forEach((node, status) -> status.close());
-        _failedNodesTimers.clear();
     }
 
     public <TResult> void execute(RavenCommand<TResult> command) {
@@ -470,8 +452,6 @@ public class RequestExecutor implements CleanCloseable {
                 return _nodeSelector.getPreferredNode();
             case ROUND_ROBIN:
                 return _nodeSelector.getNodeBySessionId(sessionInfo != null ? sessionInfo.getSessionId() : 0);
-            case FASTEST_NODE:
-                return _nodeSelector.getFastestNode();
             default:
                 throw new IllegalArgumentException();
         }
@@ -876,11 +856,7 @@ public class RequestExecutor implements CleanCloseable {
     private <TResult> CloseableHttpResponse send(ServerNode chosenNode, RavenCommand<TResult> command, SessionInfo sessionInfo, HttpRequestBase request) throws IOException {
         CloseableHttpResponse response = null;
 
-        if (shouldExecuteOnAll(chosenNode, command)) {
-            response = executeOnAllToFigureOutTheFastest(chosenNode, command);
-        } else {
-            response = command.send(getHttpClient(), request);
-        }
+        response = command.send(getHttpClient(), request);
 
         String serverVersion = tryGetServerVersion(response);
         if (serverVersion != null) {
@@ -1002,26 +978,6 @@ public class RequestExecutor implements CleanCloseable {
 
         throw new AllTopologyNodesDownException(message);
     }
-
-    public boolean inSpeedTestPhase() {
-        return Optional.ofNullable(_nodeSelector).map(NodeSelector::inSpeedTestPhase).orElse(false);
-    }
-
-    private <TResult> boolean shouldExecuteOnAll(ServerNode chosenNode, RavenCommand<TResult> command) {
-        return conventions.getReadBalanceBehavior() == ReadBalanceBehavior.FASTEST_NODE &&
-                _nodeSelector != null &&
-                _nodeSelector.inSpeedTestPhase() &&
-                Optional.ofNullable(_nodeSelector)
-                        .map(NodeSelector::getTopology)
-                        .map(Topology::getNodes)
-                        .map(x -> x.size() > 1)
-                        .orElse(false) &&
-                command.isReadRequest() &&
-                command.getResponseType() == RavenCommandResponseType.OBJECT &&
-                chosenNode != null &&
-                !(command instanceof IBroadcast);
-    }
-
     @SuppressWarnings("ConstantConditions")
     private <TResult> CloseableHttpResponse executeOnAllToFigureOutTheFastest(ServerNode chosenNode, RavenCommand<TResult> command) {
         AtomicInteger numberOfFailedTasks = new AtomicInteger();
@@ -1057,23 +1013,7 @@ public class RequestExecutor implements CleanCloseable {
             tasks.set(i, task);
         }
 
-        while (numberOfFailedTasks.get() < tasks.size()) {
-            try {
-                IndexAndResponse fastest = (IndexAndResponse) CompletableFuture
-                        .anyOf(tasks.stream().filter(Objects::nonNull)
-                        .toArray(CompletableFuture[]::new))
-                        .get();
-                _nodeSelector.recordFastest(fastest.index, nodes.get(fastest.index));
-                break;
-            } catch (InterruptedException | ExecutionException e) {
-                for (int i = 0; i < nodes.size(); i++) {
-                    if (tasks.get(i).isCompletedExceptionally()) {
-                        numberOfFailedTasks.incrementAndGet();
-                        tasks.set(i, null);
-                    }
-                }
-            }
-        }
+
 
         // we can reach here if the number of failed task equal to the number
         // of the nodes, in which case we have nothing to do
@@ -1258,18 +1198,10 @@ public class RequestExecutor implements CleanCloseable {
         }
 
         if (_nodeSelector == null) {
-            spawnHealthChecks(chosenNode, nodeIndex);
             return false;
         }
 
         _nodeSelector.onFailedRequest(nodeIndex);
-
-        if (shouldBroadcast(command)) {
-            command.setResult(broadcast(command, sessionInfo));
-            return true;
-        }
-
-        spawnHealthChecks(chosenNode, nodeIndex);
 
         CurrentIndexAndNodeAndEtag indexAndNodeAndEtag = _nodeSelector.getPreferredNodeWithTopology();
         if (command.failoverTopologyEtag != topologyEtag) {
@@ -1341,38 +1273,7 @@ public class RequestExecutor implements CleanCloseable {
         }
     }
 
-    private <TResult> TResult broadcast(RavenCommand<TResult> command, SessionInfo sessionInfo) {
-        if (!(command instanceof IBroadcast)) {
-            throw new IllegalStateException("You can broadcast only commands that implement 'IBroadcast'.");
-        }
 
-        IBroadcast broadcastCommand = (IBroadcast) command;
-        final Map<ServerNode, Exception> failedNodes = command.getFailedNodes();
-
-        command.setFailedNodes(new HashMap<>()); // clean the current failures
-        Map<CompletableFuture<Void>, BroadcastState<TResult>> broadcastTasks = new HashMap<>();
-
-        try {
-            sendToAllNodes(broadcastTasks, sessionInfo, broadcastCommand);
-
-            return waitForBroadcastResult(command, broadcastTasks);
-        } finally {
-            for (Map.Entry<CompletableFuture<Void>, BroadcastState<TResult>> broadcastState : broadcastTasks.entrySet()) {
-                CompletableFuture<Void> task = broadcastState.getKey();
-                if (task != null) {
-                    task.exceptionally(throwable -> {
-                        int index = broadcastState.getValue().getIndex();
-                        ServerNode node = _nodeSelector.getTopology().getNodes().get(index);
-                        if (failedNodes.containsKey(node)) {
-                            // if other node succeed in broadcast we need to send health checks to the original failed node
-                            spawnHealthChecks(node, index);
-                        }
-                        return null;
-                    });
-                }
-            }
-        }
-    }
 
     private <TResult> TResult waitForBroadcastResult(RavenCommand<TResult> command, Map<CompletableFuture<Void>, BroadcastState<TResult>> tasks) {
         while (!tasks.isEmpty()) {
@@ -1397,7 +1298,6 @@ public class RequestExecutor implements CleanCloseable {
                 command.getFailedNodes().put(node, error.getCause() != null ? (Exception) error.getCause() : error);
 
                 _nodeSelector.onFailedRequest(failed.getIndex());
-                spawnHealthChecks(node, failed.getIndex());
 
                 tasks.remove(completed);
                 continue;
@@ -1454,7 +1354,6 @@ public class RequestExecutor implements CleanCloseable {
     }
 
     public ServerNode handleServerNotResponsive(String url, ServerNode chosenNode, int nodeIndex, Exception e) {
-        spawnHealthChecks(chosenNode, nodeIndex);
         if (_nodeSelector != null) {
             _nodeSelector.onFailedRequest(nodeIndex);
         }
@@ -1474,82 +1373,8 @@ public class RequestExecutor implements CleanCloseable {
         return preferredNode.currentNode;
     }
 
-    private void spawnHealthChecks(ServerNode chosenNode, int nodeIndex) {
-        NodeStatus nodeStatus = new NodeStatus(this, nodeIndex, chosenNode);
 
-        if (_failedNodesTimers.putIfAbsent(chosenNode, nodeStatus) == null) {
-            nodeStatus.startTimer();
-        }
-    }
 
-    private void checkNodeStatusCallback(NodeStatus nodeStatus) {
-        List<ServerNode> copy = getTopologyNodes();
-
-        if (nodeStatus.nodeIndex >= copy.size()) {
-            return; // topology index changed / removed
-        }
-
-        ServerNode serverNode = copy.get(nodeStatus.nodeIndex);
-        if (serverNode != nodeStatus.node) {
-            return;  // topology changed, nothing to check
-        }
-
-        try {
-            NodeStatus status;
-
-            try {
-                performHealthCheck(serverNode, nodeStatus.nodeIndex);
-            } catch (Exception e) {
-                if (logger.isInfoEnabled()) {
-                    logger.info(serverNode.getClusterTag() + " is still down", e);
-                }
-
-                status = _failedNodesTimers.get(nodeStatus.node);
-                if (status != null) {
-                    status.updateTimer();
-                }
-
-                return; // will wait for the next timer call
-            }
-
-            status = _failedNodesTimers.get(nodeStatus.node);
-            if (status != null) {
-                _failedNodesTimers.remove(nodeStatus.node);
-                status.close();
-            }
-
-            if (_nodeSelector != null) {
-                _nodeSelector.restoreNodeIndex(nodeStatus.nodeIndex);
-            }
-
-        } catch (Exception e) {
-            if (logger.isInfoEnabled()) {
-                logger.info("Failed to check node topology, will ignore this node until next topology update", e);
-            }
-        }
-    }
-
-    protected void performHealthCheck(ServerNode serverNode, int nodeIndex) {
-        try {
-            if (!_useOldFailureCheckOperation.contains(serverNode.getUrl())) {
-                execute(serverNode, nodeIndex, failureCheckOperation.getCommand(conventions), false, null);
-            } else {
-                executeOldHealthCheck(serverNode, nodeIndex);
-            }
-        } catch (Exception e) {
-            if (e.getMessage().contains("RouteNotFoundException")) {
-                _useOldFailureCheckOperation.add(serverNode.getUrl());
-                executeOldHealthCheck(serverNode, nodeIndex);
-                return;
-            }
-
-            throw ExceptionsUtils.unwrapException(e);
-        }
-    }
-
-    private void executeOldHealthCheck(ServerNode serverNode, int nodeIndex) {
-        execute(serverNode, nodeIndex, backwardCompatibilityFailureCheckOperation.getCommand(conventions), false, null);
-    }
 
     private static <TResult> Exception readExceptionFromServer(HttpRequestBase request, CloseableHttpResponse response, Exception e) {
         if (response != null && response.getEntity() != null) {
@@ -1596,7 +1421,6 @@ public class RequestExecutor implements CleanCloseable {
             _updateTopologyTimer.close();
         }
         
-        disposeAllFailedNodesTimers();
     }
 
     private CloseableHttpClient createClient() {
@@ -1652,54 +1476,6 @@ public class RequestExecutor implements CleanCloseable {
         return sslContextBuilder.build();
     }
 
-    public static class NodeStatus implements CleanCloseable {
-
-        private Duration _timerPeriod;
-        private final RequestExecutor _requestExecutor;
-        public final int nodeIndex;
-        public final ServerNode node;
-        private Timer _timer;
-
-        public NodeStatus(RequestExecutor requestExecutor, int nodeIndex, ServerNode node) {
-            _requestExecutor = requestExecutor;
-            this.nodeIndex = nodeIndex;
-            this.node = node;
-            _timerPeriod = Duration.ofMillis(100);
-        }
-
-        private Duration nextTimerPeriod() {
-            if (_timerPeriod.compareTo(Duration.ofSeconds(5)) >= 0) {
-                return Duration.ofSeconds(5);
-            }
-
-            _timerPeriod = _timerPeriod.plus(Duration.ofMillis(100));
-
-            return _timerPeriod;
-        }
-
-        public void startTimer() {
-            _timer = new Timer(this::timerCallback, _timerPeriod, _requestExecutor._executorService);
-        }
-
-        private void timerCallback() {
-            if (_requestExecutor._disposed) {
-                close();
-                return;
-            }
-
-            _requestExecutor.checkNodeStatusCallback(this);
-        }
-
-        public void updateTimer() {
-            _timer.change(nextTimerPeriod());
-        }
-
-        @Override
-        public void close() {
-            _timer.close();
-        }
-    }
-
     public CurrentIndexAndNode getRequestedNode(String nodeTag) {
         ensureNodeSelector();
 
@@ -1716,12 +1492,6 @@ public class RequestExecutor implements CleanCloseable {
         ensureNodeSelector();
 
         return _nodeSelector.getNodeBySessionId(sessionId);
-    }
-
-    public CurrentIndexAndNode getFastestNode() {
-        ensureNodeSelector();
-
-        return _nodeSelector.getFastestNode();
     }
 
     private void ensureNodeSelector() {

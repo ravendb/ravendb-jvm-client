@@ -1,6 +1,5 @@
 package net.ravendb.client.documents.session.tokens;
 
-import net.ravendb.client.Constants;
 import net.ravendb.client.documents.queries.SearchOperator;
 import net.ravendb.client.primitives.UseSharpEnum;
 import org.apache.commons.lang3.ObjectUtils;
@@ -30,7 +29,6 @@ public class WhereToken extends QueryToken {
         private Integer proximity;
         private boolean exact;
         private WhereMethodCall method;
-        private ShapeToken whereShape;
         private double distanceErrorPct;
 
         public static WhereOptions defaultOptions() {
@@ -54,10 +52,6 @@ public class WhereToken extends QueryToken {
             this.searchOperator = search;
         }
 
-        public WhereOptions(ShapeToken shape, double distance) {
-            whereShape = shape;
-            distanceErrorPct = distance;
-        }
 
         public WhereOptions(MethodsType methodType, String[] parameters, String property) {
             this(methodType, parameters, property, false);
@@ -134,14 +128,6 @@ public class WhereToken extends QueryToken {
 
         public void setMethod(WhereMethodCall method) {
             this.method = method;
-        }
-
-        public ShapeToken getWhereShape() {
-            return whereShape;
-        }
-
-        public void setWhereShape(ShapeToken whereShape) {
-            this.whereShape = whereShape;
         }
 
         public double getDistanceErrorPct() {
@@ -283,18 +269,6 @@ public class WhereToken extends QueryToken {
             case EXISTS:
                 writer.append("exists(");
                 break;
-            case SPATIAL_WITHIN:
-                writer.append("spatial.within(");
-                break;
-            case SPATIAL_CONTAINS:
-                writer.append("spatial.contains(");
-                break;
-            case SPATIAL_DISJOINT:
-                writer.append("spatial.disjoint(");
-                break;
-            case SPATIAL_INTERSECTS:
-                writer.append("spatial.intersects(");
-                break;
             case REGEX:
                 writer.append("regex(");
                 break;
@@ -410,21 +384,6 @@ public class WhereToken extends QueryToken {
                         .append(")");
                 break;
             case EXISTS:
-                writer
-                        .append(")");
-                break;
-            case SPATIAL_WITHIN:
-            case SPATIAL_CONTAINS:
-            case SPATIAL_DISJOINT:
-            case SPATIAL_INTERSECTS:
-                writer
-                        .append(", ");
-                options.whereShape.writeTo(writer);
-
-                if (Math.abs(options.distanceErrorPct - Constants.Documents.Indexing.Spatial.DEFAULT_DISTANCE_ERROR_PCT) > 1e-40) {
-                    writer.append(", ");
-                    writer.append(options.distanceErrorPct);
-                }
                 writer
                         .append(")");
                 break;

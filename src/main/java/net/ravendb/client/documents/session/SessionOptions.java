@@ -7,7 +7,6 @@ public class SessionOptions {
     private boolean noTracking;
     private boolean noCaching;
     private RequestExecutor requestExecutor;
-    private TransactionMode transactionMode;
 
     public String getDatabase() {
         return database;
@@ -41,11 +40,4 @@ public class SessionOptions {
         this.noCaching = noCaching;
     }
 
-    public TransactionMode getTransactionMode() {
-        return transactionMode;
-    }
-
-    public void setTransactionMode(TransactionMode transactionMode) {
-        this.transactionMode = transactionMode;
-    }
 }

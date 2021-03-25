@@ -92,9 +92,6 @@ public class SessionInfo {
             case ROUND_ROBIN:
                 result = requestExecutor.getNodeBySessionId(getSessionId());
                 break;
-            case FASTEST_NODE:
-                result = requestExecutor.getFastestNode();
-                break;
             default:
                 throw new IllegalArgumentException(requestExecutor.getConventions().getReadBalanceBehavior().toString());
         }

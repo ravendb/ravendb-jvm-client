@@ -58,9 +58,6 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
     private final int _hash = _instancesCounter.incrementAndGet();
     protected final boolean generateDocumentKeysOnStore = true;
     protected final SessionInfo sessionInfo;
-    BatchOptions _saveChangesOptions;
-
-    private TransactionMode transactionMode;
 
     private boolean _isDisposed;
 
@@ -353,7 +350,6 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
         this.entityToJson = new EntityToJson(this);
 
         sessionInfo = new SessionInfo(this, options, _documentStore);
-        transactionMode = options.getTransactionMode();
     }
 
     /**
@@ -379,57 +375,6 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
         return metadata;
     }
 
-    /**
-     * Gets all counter names for the specified entity.
-     * @param instance Instance
-     * @param <T> Instance class
-     * @return All counters names
-     */
-    public <T> List<String> getCountersFor(T instance) {
-        if (instance == null) {
-            throw new IllegalArgumentException("Instance cannot be null");
-        }
-
-        DocumentInfo documentInfo = getDocumentInfo(instance);
-
-        ArrayNode countersArray = (ArrayNode) documentInfo.getMetadata().get(Constants.Documents.Metadata.COUNTERS);
-        if (countersArray == null) {
-            return null;
-        }
-
-        return IntStream.range(0, countersArray.size())
-                .mapToObj(i -> countersArray.get(i).asText())
-                .collect(Collectors.toList());
-    }
-
-    /**
-     * Gets all time series names for the specified entity.
-     * @param instance Entity
-     * @param <T> Entity class
-     * @return time series names
-     */
-    public <T> List<String> getTimeSeriesFor(T instance) {
-        if (instance == null) {
-            throw new IllegalArgumentException("Instance cannot be null");
-        }
-
-        DocumentInfo documentInfo = getDocumentInfo(instance);
-
-        JsonNode array = documentInfo.getMetadata().get(Constants.Documents.Metadata.TIME_SERIES);
-        if (array == null) {
-            return Collections.emptyList();
-        }
-
-        ArrayNode bjra = (ArrayNode) array;
-
-        List<String> tsList = new ArrayList<>(bjra.size());
-
-        for (JsonNode jsonNode : bjra) {
-            tsList.add(jsonNode.asText());
-        }
-
-        return tsList;
-    }
 
     /**
      * Gets the Change Vector for the specified entity.
@@ -857,7 +802,6 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
 
         prepareForEntitiesDeletion(result, null);
         prepareForEntitiesPuts(result);
-        prepareCompareExchangeEntities(result);
 
         if (deferredCommands.size() > deferredCommandsCount) {
             // this allow OnBeforeStore to call Defer during the call to include
@@ -879,33 +823,6 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
         return result;
     }
 
-    public void validateClusterTransaction(SaveChangesData result) {
-        if (transactionMode != TransactionMode.CLUSTER_WIDE) {
-            return;
-        }
-
-        if (isUseOptimisticConcurrency()) {
-            throw new IllegalStateException("useOptimisticConcurrency is not supported with TransactionMode set to " + TransactionMode.CLUSTER_WIDE);
-        }
-
-        for (ICommandData commandData : result.getSessionCommands()) {
-
-            switch (commandData.getType()) {
-                case PUT:
-                case DELETE:
-                    if (commandData.getChangeVector() != null) {
-                        throw new IllegalStateException("Optimistic concurrency for " + commandData.getId() + " is not supported when using a cluster transaction");
-                    }
-                    break;
-                case COMPARE_EXCHANGE_DELETE:
-                case COMPARE_EXCHANGE_PUT:
-                    break;
-                default:
-                    throw new IllegalStateException("The command '" + commandData.getType() + "' is not supported in a cluster session.");
-            }
-        }
-
-    }
 
 
     private static boolean updateMetadataModifications(DocumentInfo documentInfo) {
@@ -1169,7 +1086,6 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
         _knownMissingIds.clear();
         deferredCommands.clear();
         deferredCommandsMap.clear();
-        clearClusterSession();
         entityToJson.clear();
     }
 
@@ -1201,14 +1117,6 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
 
     private void deferInternal(final ICommandData command) {
 
-        if (command.getType() == CommandType.BATCH_PATCH) {
-            BatchPatchCommandData batchPatchCommand = (BatchPatchCommandData) command;
-            for (BatchPatchCommandData.IdAndChangeVector kvp : batchPatchCommand.getIds()) {
-                addCommand(command, kvp.getId(), CommandType.PATCH, command.getName());
-            }
-            return;
-        }
-
         addCommand(command, command.getId(), command.getType(), command.getName());
     }
 
@@ -1216,15 +1124,7 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
         deferredCommandsMap.put(IdTypeAndName.create(id, commandType, commandName), command);
         deferredCommandsMap.put(IdTypeAndName.create(id, CommandType.CLIENT_ANY_COMMAND, null), command);
 
-        if (!CommandType.ATTACHMENT_PUT.equals(command.getType()) &&
-                !CommandType.ATTACHMENT_DELETE.equals(command.getType()) &&
-                !CommandType.ATTACHMENT_COPY.equals(command.getType()) &&
-                !CommandType.ATTACHMENT_MOVE.equals(command.getType()) &&
-                !CommandType.COUNTERS.equals(command.getType()) &&
-                !CommandType.TIME_SERIES.equals(command.getType()) &&
-                !CommandType.TIME_SERIES_COPY.equals(command.getType())) {
-            deferredCommandsMap.put(IdTypeAndName.create(id, CommandType.CLIENT_MODIFY_DOCUMENT_COMMAND, null), command);
-        }
+
     }
 
     private void close(boolean isDisposing) {
@@ -1504,13 +1404,11 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
         private final Map<IdTypeAndName, ICommandData> deferredCommandsMap;
         private final List<ICommandData> sessionCommands = new ArrayList<>();
         private final List<Object> entities = new ArrayList<>();
-        private final BatchOptions options;
         private final ActionsToRunOnSuccess onSuccess;
 
         public SaveChangesData(InMemoryDocumentSessionOperations session) {
             deferredCommands = new ArrayList<>(session.deferredCommands);
             deferredCommandsMap = new HashMap<>(session.deferredCommandsMap);
-            options = session._saveChangesOptions;
             onSuccess = new ActionsToRunOnSuccess(session);
         }
 
@@ -1530,9 +1428,6 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
             return entities;
         }
 
-        public BatchOptions getOptions() {
-            return options;
-        }
 
         public Map<IdTypeAndName, ICommandData> getDeferredCommandsMap() {
             return deferredCommandsMap;

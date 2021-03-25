@@ -5,7 +5,6 @@ import net.ravendb.client.documents.IDocumentStore;
 import net.ravendb.client.documents.changes.*;
 import net.ravendb.client.documents.indexes.AbstractIndexCreationTask;
 import net.ravendb.client.documents.indexes.IndexPriority;
-import net.ravendb.client.documents.operations.GetStatisticsOperation;
 import net.ravendb.client.documents.operations.indexes.SetIndexesPriorityOperation;
 import net.ravendb.client.documents.session.IDocumentSession;
 import net.ravendb.client.exceptions.database.DatabaseDoesNotExistException;
