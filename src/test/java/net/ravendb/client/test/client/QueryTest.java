@@ -150,7 +150,7 @@ public class QueryTest extends RemoteTestBase {
         }
     }
 
-    
+
 
     @Test
     public void querySingleProperty() throws Exception {

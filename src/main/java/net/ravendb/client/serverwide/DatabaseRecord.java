@@ -1,7 +1,5 @@
 package net.ravendb.client.serverwide;
 
-import net.ravendb.client.documents.operations.configuration.ClientConfiguration;
-import net.ravendb.client.documents.operations.configuration.StudioConfiguration;
 import net.ravendb.client.primitives.UseSharpEnum;
 
 import java.util.*;

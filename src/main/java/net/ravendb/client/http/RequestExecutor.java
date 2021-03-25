@@ -3,7 +3,6 @@ package net.ravendb.client.http;
 import net.ravendb.client.Constants;
 import net.ravendb.client.documents.conventions.DocumentConventions;
 import net.ravendb.client.documents.operations.DatabaseHealthCheckOperation;
-import net.ravendb.client.documents.operations.configuration.GetClientConfigurationOperation;
 import net.ravendb.client.documents.session.*;
 import net.ravendb.client.exceptions.*;
 import net.ravendb.client.exceptions.database.DatabaseDoesNotExistException;
@@ -313,42 +312,6 @@ public class RequestExecutor implements CleanCloseable {
         return executor;
     }
 
-    protected CompletableFuture<Void> updateClientConfigurationAsync(ServerNode serverNode) {
-        if (_disposed) {
-            return CompletableFuture.completedFuture(null);
-        }
-
-        return CompletableFuture.runAsync(() -> {
-            try {
-                _updateClientConfigurationSemaphore.acquire();
-            } catch (InterruptedException e) {
-                throw new RuntimeException(e);
-            }
-
-            boolean oldDisableClientConfigurationUpdates = _disableClientConfigurationUpdates;
-            _disableClientConfigurationUpdates = true;
-
-            try {
-                if (_disposed) {
-                    return;
-                }
-
-                GetClientConfigurationOperation.GetClientConfigurationCommand command = new GetClientConfigurationOperation.GetClientConfigurationCommand();
-                execute(serverNode, null, command, false, null);
-
-                GetClientConfigurationOperation.Result result = command.getResult();
-                if (result == null) {
-                    return;
-                }
-
-                conventions.updateFrom(result.getConfiguration());
-                clientConfigurationEtag = result.getEtag();
-            } finally {
-                _disableClientConfigurationUpdates = oldDisableClientConfigurationUpdates;
-                _updateClientConfigurationSemaphore.release();
-            }
-        }, _executorService);
-    }
 
     public CompletableFuture<Boolean> updateTopologyAsync(UpdateTopologyParameters parameters) {
         if (parameters == null) {
@@ -775,9 +738,8 @@ public class RequestExecutor implements CleanCloseable {
             updateParameters.setDebugTag("refresh-topology-header");
 
             CompletableFuture<Boolean> topologyTask = refreshTopology ? updateTopologyAsync(updateParameters) : CompletableFuture.completedFuture(false);
-            CompletableFuture<Void> clientConfiguration = refreshClientConfiguration ? updateClientConfigurationAsync(serverNode) : CompletableFuture.completedFuture(null);
 
-            return CompletableFuture.allOf(topologyTask, clientConfiguration);
+            return CompletableFuture.allOf(topologyTask);
         }
 
         return CompletableFuture.allOf();

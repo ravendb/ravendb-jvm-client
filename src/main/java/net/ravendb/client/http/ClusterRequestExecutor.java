@@ -147,10 +147,6 @@ public class ClusterRequestExecutor extends RequestExecutor {
         }, _executorService);
     }
 
-    @Override
-    protected CompletableFuture<Void> updateClientConfigurationAsync(ServerNode serverNode) {
-        return CompletableFuture.completedFuture(null);
-    }
 
     protected void throwExceptions(String details) {
         throw new IllegalStateException("Failed to retrieve cluster topology from all known nodes" + System.lineSeparator() + details);

@@ -5,7 +5,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.databind.node.TextNode;
 import net.ravendb.client.Constants;
-import net.ravendb.client.documents.operations.configuration.ClientConfiguration;
 import net.ravendb.client.exceptions.RavenException;
 import net.ravendb.client.extensions.JsonExtensions;
 import net.ravendb.client.http.LoadBalanceBehavior;
@@ -44,7 +43,6 @@ public class DocumentConventions {
     private List<Tuple<Class, BiFunction<String, Object, String>>> _listOfRegisteredIdConventions = new ArrayList<>();
 
     private boolean _frozen;
-    private ClientConfiguration _originalConfiguration;
     private final Map<Class, Field> _idPropertyCache = new HashMap<>();
     private boolean _saveEnumsAsIntegers;
     private char _identityPartsSeparator;
@@ -598,7 +596,6 @@ public class DocumentConventions {
         cloned._listOfRegisteredIdConventions = new ArrayList<>(_listOfRegisteredIdConventions);
         cloned._frozen = _frozen;
         cloned._shouldIgnoreEntityChanges = _shouldIgnoreEntityChanges;
-        cloned._originalConfiguration = _originalConfiguration;
         cloned._saveEnumsAsIntegers = _saveEnumsAsIntegers;
         cloned._identityPartsSeparator = _identityPartsSeparator;
         cloned._disableTopologyUpdates = _disableTopologyUpdates;
@@ -660,62 +657,6 @@ public class DocumentConventions {
         }
     }
 
-    public void updateFrom(ClientConfiguration configuration) {
-        if (configuration == null) {
-            return;
-        }
-
-        synchronized (this) {
-            if (configuration.isDisabled() && _originalConfiguration == null) { // nothing to do
-                return;
-            }
-
-            if (configuration.isDisabled() && _originalConfiguration != null) { // need to revert to original values
-                _maxNumberOfRequestsPerSession = ObjectUtils.firstNonNull(_originalConfiguration.getMaxNumberOfRequestsPerSession(), _maxNumberOfRequestsPerSession);
-                _readBalanceBehavior = ObjectUtils.firstNonNull(_originalConfiguration.getReadBalanceBehavior(), _readBalanceBehavior);
-                _identityPartsSeparator = ObjectUtils.firstNonNull(_originalConfiguration.getIdentityPartsSeparator(), _identityPartsSeparator);
-                _loadBalanceBehavior = ObjectUtils.firstNonNull(_originalConfiguration.getLoadBalanceBehavior(), _loadBalanceBehavior);
-                _loadBalancerContextSeed = ObjectUtils.firstNonNull(_originalConfiguration.getLoadBalancerContextSeed(), _loadBalancerContextSeed);
-
-                _originalConfiguration = null;
-                return;
-            }
-
-            if (_originalConfiguration == null) {
-                _originalConfiguration = new ClientConfiguration();
-                _originalConfiguration.setEtag(-1);
-                _originalConfiguration.setMaxNumberOfRequestsPerSession(_maxNumberOfRequestsPerSession);
-                _originalConfiguration.setReadBalanceBehavior(_readBalanceBehavior);
-                _originalConfiguration.setIdentityPartsSeparator(_identityPartsSeparator);
-                _originalConfiguration.setLoadBalanceBehavior(_loadBalanceBehavior);
-                _originalConfiguration.setLoadBalancerContextSeed(_loadBalancerContextSeed);
-            }
-
-            _maxNumberOfRequestsPerSession = ObjectUtils.firstNonNull(
-                    configuration.getMaxNumberOfRequestsPerSession(),
-                    _originalConfiguration.getMaxNumberOfRequestsPerSession(),
-                    _maxNumberOfRequestsPerSession);
-            _readBalanceBehavior = ObjectUtils.firstNonNull(
-                    configuration.getReadBalanceBehavior(),
-                    _originalConfiguration.getReadBalanceBehavior(),
-                    _readBalanceBehavior
-            );
-            _loadBalanceBehavior = ObjectUtils.firstNonNull(
-                    configuration.getLoadBalanceBehavior(),
-                    _originalConfiguration.getLoadBalanceBehavior(),
-                    _loadBalanceBehavior
-            );
-            _loadBalancerContextSeed = ObjectUtils.firstNonNull(
-                    configuration.getLoadBalancerContextSeed(),
-                    _originalConfiguration.getLoadBalancerContextSeed(),
-                    _loadBalancerContextSeed
-            );
-            _identityPartsSeparator = ObjectUtils.firstNonNull(
-                    configuration.getIdentityPartsSeparator(),
-                    _originalConfiguration.getIdentityPartsSeparator(),
-                    _identityPartsSeparator);
-        }
-    }
 
     public static String defaultTransformCollectionNameToDocumentIdPrefix(String collectionName) {
         long upperCount = collectionName.chars()
