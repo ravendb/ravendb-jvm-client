@@ -7,24 +7,11 @@ import net.ravendb.client.driver.RavenServerLocator;
 import net.ravendb.client.driver.RavenTestDriver;
 import net.ravendb.client.exceptions.database.DatabaseDoesNotExistException;
 import net.ravendb.client.primitives.CleanCloseable;
-import net.ravendb.client.primitives.ExceptionsUtils;
 import net.ravendb.client.primitives.Reference;
 import net.ravendb.client.serverwide.DatabaseRecord;
 import net.ravendb.client.serverwide.operations.CreateDatabaseOperation;
 import net.ravendb.client.serverwide.operations.DeleteDatabasesOperation;
-import org.apache.commons.lang3.StringUtils;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.net.MalformedURLException;
-import java.net.URL;
-import java.security.GeneralSecurityException;
-import java.security.KeyStore;
-import java.security.cert.Certificate;
-import java.security.cert.CertificateFactory;
-import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -34,13 +21,9 @@ import java.util.stream.Collectors;
 public class RemoteTestBase extends RavenTestDriver implements CleanCloseable {
 
     private final RavenServerLocator locator;
-    private final RavenServerLocator securedLocator;
 
     private static IDocumentStore globalServer;
     private static Process globalServerProcess;
-
-    private static IDocumentStore globalSecuredServer;
-    private static Process globalSecuredServerProcess;
 
     private final Set<DocumentStore> documentStores = Sets.newConcurrentHashSet();
 
@@ -58,66 +41,9 @@ public class RemoteTestBase extends RavenTestDriver implements CleanCloseable {
         }
     }
 
-    private static class TestSecuredServiceLocator extends RavenServerLocator {
-
-        public static final String ENV_CERTIFICATE_PATH = "RAVENDB_JAVA_TEST_CERTIFICATE_PATH";
-
-        public static final String ENV_TEST_CA_PATH = "RAVENDB_JAVA_TEST_CA_PATH";
-
-        public static final String ENV_HTTPS_SERVER_URL = "RAVENDB_JAVA_TEST_HTTPS_SERVER_URL";
-
-        @Override
-        public String[] getCommandArguments() {
-            String httpsServerUrl = getHttpsServerUrl();
-
-            try {
-                URL url = new URL(httpsServerUrl);
-                String host = url.getHost();
-                String tcpServerUrl = "tcp://" + host + ":38882";
-
-                return new String[]{
-                        "--Security.Certificate.Path=" + getServerCertificatePath(),
-                        "--ServerUrl=" + httpsServerUrl,
-                        "--ServerUrl.Tcp=" + tcpServerUrl
-                };
-            } catch (MalformedURLException e) {
-                throw new RuntimeException(e);
-            }
-        }
-
-        private String getHttpsServerUrl() {
-            String httpsServerUrl = System.getenv(ENV_HTTPS_SERVER_URL);
-            if (StringUtils.isBlank(httpsServerUrl)) {
-                throw new IllegalStateException("Unable to find RavenDB https server url. " +
-                        "Please make sure " + ENV_HTTPS_SERVER_URL + " environment variable is set and is valid " +
-                        "(current value = " + httpsServerUrl + ")");
-            }
-
-            return httpsServerUrl;
-        }
-
-        @Override
-        public String getServerCertificatePath() {
-            String certificatePath = System.getenv(ENV_CERTIFICATE_PATH);
-            if (StringUtils.isBlank(certificatePath)) {
-                throw new IllegalStateException("Unable to find RavenDB server certificate path. " +
-                        "Please make sure " + ENV_CERTIFICATE_PATH + " environment variable is set and is valid " +
-                        "(current value = " + certificatePath + ")");
-            }
-
-            return certificatePath;
-        }
-
-
-        @Override
-        public String getServerCaPath() {
-            return System.getenv(ENV_TEST_CA_PATH);
-        }
-    }
 
     public RemoteTestBase() {
         this.locator = new TestServiceLocator();
-        this.securedLocator = new TestSecuredServiceLocator();
     }
 
     protected void customizeDbRecord(DatabaseRecord dbRecord) {
@@ -128,93 +54,44 @@ public class RemoteTestBase extends RavenTestDriver implements CleanCloseable {
 
     }
 
-    public DocumentStore getSecuredDocumentStore() throws Exception {
-        return getDocumentStore("test_db", true, null);
-    }
-
-    public KeyStore getTestClientCertificate() throws IOException, GeneralSecurityException {
-        KeyStore clientStore = KeyStore.getInstance("PKCS12");
-        clientStore.load(new FileInputStream(securedLocator.getServerCertificatePath()), "".toCharArray());
-        return clientStore;
-    }
-
-    public KeyStore getTestCaCertificate() throws IOException, GeneralSecurityException {
-        String caPath = securedLocator.getServerCaPath();
-        if (caPath != null) {
-            KeyStore trustStore = KeyStore.getInstance("PKCS12");
-            trustStore.load(null, null);
-
-            CertificateFactory x509 = CertificateFactory.getInstance("X509");
-
-            try (InputStream source = new FileInputStream(new File(caPath))) {
-                Certificate certificate = x509.generateCertificate(source);
-                trustStore.setCertificateEntry("ca-cert", certificate);
-                return trustStore;
-            }
-        }
-
-        return null;
-    }
 
     @SuppressWarnings("UnusedReturnValue")
-    private IDocumentStore runServer(boolean secured) throws Exception {
+    private IDocumentStore runServer() throws Exception {
         Reference<Process> processReference = new Reference<>();
-        IDocumentStore store = runServerInternal(getLocator(secured), processReference, s -> {
-            if (secured) {
-                try {
-                    KeyStore clientCert = getTestClientCertificate();
-                    s.setCertificate(clientCert);
-                    s.setTrustStore(getTestCaCertificate());
-                } catch (Exception e) {
-                    throw ExceptionsUtils.unwrapException(e);
-                }
-            }
+        IDocumentStore store = runServerInternal(getLocator(), processReference, s -> {
+
         });
-        setGlobalServerProcess(secured, processReference.value);
+        setGlobalServerProcess(processReference.value);
 
-        if (secured) {
-            globalSecuredServer = store;
-        } else {
-            globalServer = store;
-        }
+        globalServer = store;
 
-        Runtime.getRuntime().addShutdownHook(new Thread(() -> killGlobalServerProcess(secured)));
+        Runtime.getRuntime().addShutdownHook(new Thread(() -> killGlobalServerProcess()));
         return store;
     }
 
-    private RavenServerLocator getLocator(boolean secured) {
-        return secured ? securedLocator : locator;
+    private RavenServerLocator getLocator() {
+        return locator;
     }
 
-    private static IDocumentStore getGlobalServer(boolean secured) {
-        return secured ? globalSecuredServer : globalServer;
+    private static IDocumentStore getGlobalServer() {
+        return globalServer;
     }
 
-    private static Process getGlobalProcess(boolean secured) {
-        return secured ? globalSecuredServerProcess : globalServerProcess;
+    private static Process getGlobalProcess() {
+        return globalServerProcess;
     }
 
-    private static void setGlobalServerProcess(boolean secured, Process p) {
-        if (secured) {
-            globalSecuredServerProcess = p;
-        } else {
-            globalServerProcess = p;
-        }
+    private static void setGlobalServerProcess(Process p) {
+        globalServerProcess = p;
     }
 
-    private static void killGlobalServerProcess(boolean secured) {
+    private static void killGlobalServerProcess() {
         Process p;
-        if (secured) {
-            p = globalSecuredServerProcess;
-            globalSecuredServerProcess = null;
-            globalSecuredServer.close();
-            globalSecuredServer = null;
-        } else {
-            p = globalServerProcess;
-            globalServerProcess = null;
-            globalServer.close();
-            globalServer = null;
-        }
+
+        p = globalServerProcess;
+        globalServerProcess = null;
+        globalServer.close();
+        globalServer = null;
 
         killProcess(p);
     }
@@ -223,27 +100,19 @@ public class RemoteTestBase extends RavenTestDriver implements CleanCloseable {
         return getDocumentStore("test_db");
     }
 
-    public DocumentStore getSecuredDocumentStore(String database) throws Exception {
-        return getDocumentStore(database, true, null);
-    }
-
     public DocumentStore getDocumentStore(String database) throws Exception {
-        return getDocumentStore(database, false, null);
-    }
-
-    public DocumentStore getDocumentStore(String database, boolean secured, Duration waitForIndexingTimeout) throws Exception {
         String name = database + "_" + index.incrementAndGet();
         reportInfo("getDocumentStore for db " + database + ".");
 
-        if (getGlobalServer(secured) == null) {
+        if (getGlobalServer() == null) {
             synchronized (RavenTestDriver.class) {
-                if (getGlobalServer(secured) == null) {
-                    runServer(secured);
+                if (getGlobalServer() == null) {
+                    runServer();
                 }
             }
         }
 
-        IDocumentStore documentStore = getGlobalServer(secured);
+        IDocumentStore documentStore = getGlobalServer();
         DatabaseRecord databaseRecord = new DatabaseRecord();
         databaseRecord.setDatabaseName(name);
 
@@ -256,11 +125,6 @@ public class RemoteTestBase extends RavenTestDriver implements CleanCloseable {
         DocumentStore store = new DocumentStore();
         store.setUrls(documentStore.getUrls());
         store.setDatabase(name);
-
-        if (secured) {
-            store.setCertificate(getTestClientCertificate());
-            store.setTrustStore(getTestClientCertificate());
-        }
 
         customizeStore(store);
 

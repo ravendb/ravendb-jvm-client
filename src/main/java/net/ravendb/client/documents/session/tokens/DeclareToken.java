@@ -5,13 +5,11 @@ public class DeclareToken extends QueryToken {
     private final String _name;
     private final String _parameters;
     private final String _body;
-    private final boolean _timeSeries;
 
     private DeclareToken(String name, String body, String parameters, boolean timeSeries) {
         _name = name;
         _body = body;
         _parameters = parameters;
-        _timeSeries = timeSeries;
     }
 
     public static DeclareToken createFunction(String name, String body) {
@@ -34,7 +32,7 @@ public class DeclareToken extends QueryToken {
     public void writeTo(StringBuilder writer) {
         writer
                 .append("declare ")
-                .append(_timeSeries ? "timeseries " : "function ")
+                .append("function ")
                 .append(_name)
                 .append("(")
                 .append(_parameters)
