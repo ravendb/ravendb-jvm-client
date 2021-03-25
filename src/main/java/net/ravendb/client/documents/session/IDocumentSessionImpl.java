@@ -11,9 +11,6 @@ public interface IDocumentSessionImpl extends IDocumentSession {
 
     <T> Map<String, T> loadInternal(Class<T> clazz, String[] ids, String[] includes);
 
-    <T> Map<String, T> loadInternal(Class<T> clazz, String[] ids, String[] includes, String[] counterIncludes);
-
-    <T> Map<String, T> loadInternal(Class<T> clazz, String[] ids, String[] includes, String[] counterIncludes,
-                                    boolean includeAllCounters);
+  
 
 }

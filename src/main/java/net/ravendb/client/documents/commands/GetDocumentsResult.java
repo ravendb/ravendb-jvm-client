@@ -7,9 +7,6 @@ public class GetDocumentsResult {
 
     private ObjectNode includes;
     private ArrayNode results;
-    private ObjectNode counterIncludes;
-    private ObjectNode timeSeriesIncludes;
-    private ObjectNode compareExchangeValueIncludes;
     private int nextPageStart;
 
     public ObjectNode getIncludes() {
@@ -36,27 +33,5 @@ public class GetDocumentsResult {
         this.nextPageStart = nextPageStart;
     }
 
-    public ObjectNode getCounterIncludes() {
-        return counterIncludes;
-    }
 
-    public void setCounterIncludes(ObjectNode counterIncludes) {
-        this.counterIncludes = counterIncludes;
-    }
-
-    public ObjectNode getTimeSeriesIncludes() {
-        return timeSeriesIncludes;
-    }
-
-    public void setTimeSeriesIncludes(ObjectNode timeSeriesIncludes) {
-        this.timeSeriesIncludes = timeSeriesIncludes;
-    }
-
-    public ObjectNode getCompareExchangeValueIncludes() {
-        return compareExchangeValueIncludes;
-    }
-
-    public void setCompareExchangeValueIncludes(ObjectNode compareExchangeValueIncludes) {
-        this.compareExchangeValueIncludes = compareExchangeValueIncludes;
-    }
 }

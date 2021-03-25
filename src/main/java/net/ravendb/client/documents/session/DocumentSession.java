@@ -223,17 +223,6 @@ public class DocumentSession extends InMemoryDocumentSessionOperations
     }
 
     public <TResult> Map<String, TResult> loadInternal(Class<TResult> clazz, String[] ids, String[] includes) {
-        return loadInternal(clazz, ids, includes, null, false);
-    }
-
-    public <TResult> Map<String, TResult> loadInternal(Class<TResult> clazz, String[] ids, String[] includes,
-                                                       String[] counterIncludes) {
-        return loadInternal(clazz, ids, includes, counterIncludes, false);
-    }
-
-    @Override
-    public <TResult> Map<String, TResult> loadInternal(Class<TResult> clazz, String[] ids, String[] includes,
-                                                       String[] counterIncludes, boolean includeAllCounters) {
 
         if (ids == null) {
             throw new IllegalArgumentException("Ids cannot be null");

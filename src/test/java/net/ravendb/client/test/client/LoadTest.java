@@ -217,43 +217,4 @@ public class LoadTest extends RemoteTestBase {
         }
     }
 
-    @Test
-    public void loadStartsWith() throws Exception {
-        try (IDocumentStore store = getDocumentStore()) {
-            try (IDocumentSession session = store.openSession()) {
-
-                Consumer<String> createUser = id -> {
-                    User u = new User();
-                    u.setId(id);
-                    session.store(u);
-                };
-
-                createUser.accept("Aaa");
-                createUser.accept("Abc");
-                createUser.accept("Afa");
-                createUser.accept("Ala");
-                createUser.accept("Baa");
-
-                session.saveChanges();
-            }
-
-            try (IDocumentSession newSession = store.openSession()) {
-
-                User[] users = newSession.advanced().loadStartingWith(User.class, "A");
-
-                assertThat(Arrays.stream(users)
-                        .map(User::getId)
-                        .collect(Collectors.toList()))
-                        .containsSequence("Aaa", "Abc", "Afa", "Ala");
-
-                users = newSession.advanced().loadStartingWith(User.class, "A", null, 1, 2);
-
-                assertThat(Arrays.stream(users)
-                        .map(User::getId)
-                        .collect(Collectors.toList()))
-                        .containsSequence("Abc", "Afa");
-
-            }
-        }
-    }
 }

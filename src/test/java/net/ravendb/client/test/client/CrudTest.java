@@ -5,6 +5,7 @@ import net.ravendb.client.RemoteTestBase;
 import net.ravendb.client.documents.IDocumentStore;
 import net.ravendb.client.documents.commands.GetDocumentsCommand;
 import net.ravendb.client.documents.commands.GetDocumentsResult;
+import net.ravendb.client.documents.session.DocumentsChanges;
 import net.ravendb.client.documents.session.IDocumentSession;
 import net.ravendb.client.extensions.JsonExtensions;
 import net.ravendb.client.infrastructure.entities.User;
@@ -17,65 +18,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 public class CrudTest extends RemoteTestBase {
 
-    @Test
-    public void entitiesAreSavedUsingLowerCase() throws Exception {
-        try (IDocumentStore store = getDocumentStore()) {
 
-            try (IDocumentSession newSession = store.openSession()) {
-                User user1 = new User();
-                user1.setLastName("user1");
-                newSession.store(user1, "users/1");
-                newSession.saveChanges();
-            }
 
-            GetDocumentsCommand documentsCommand = new GetDocumentsCommand("users/1", null, false);
-            store.getRequestExecutor().execute(documentsCommand);
-
-            GetDocumentsResult result = documentsCommand.getResult();
-
-            JsonNode userJson = result.getResults().get(0);
-            assertThat(userJson.has("lastName"))
-                    .isTrue();
-
-            try (IDocumentSession newSession = store.openSession()) {
-                List<User> users = newSession.advanced().rawQuery(User.class, "from Users where lastName = 'user1'").toList();
-
-                assertThat(users)
-                        .hasSize(1);
-            }
-        }
-    }
-
-    @Test
-    public void canCustomizePropertyNamingStrategy() throws Exception {
-        try (IDocumentStore store = getDocumentStore()) {
-
-            store.getConventions().getEntityMapper().setPropertyNamingStrategy(new JsonExtensions.DotNetNamingStrategy());
-
-            try (IDocumentSession newSession = store.openSession()) {
-                User user1 = new User();
-                user1.setLastName("user1");
-                newSession.store(user1, "users/1");
-                newSession.saveChanges();
-            }
-
-            GetDocumentsCommand documentsCommand = new GetDocumentsCommand("users/1", null, false);
-            store.getRequestExecutor().execute(documentsCommand);
-
-            GetDocumentsResult result = documentsCommand.getResult();
-
-            JsonNode userJson = result.getResults().get(0);
-            assertThat(userJson.has("LastName"))
-                    .isTrue();
-
-            try (IDocumentSession newSession = store.openSession()) {
-                List<User> users = newSession.advanced().rawQuery(User.class, "from Users where LastName = 'user1'").toList();
-
-                assertThat(users)
-                        .hasSize(1);
-            }
-        }
-    }
 
     @Test
     public void crudOperations() throws Exception {

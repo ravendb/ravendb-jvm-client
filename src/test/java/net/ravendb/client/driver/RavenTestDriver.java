@@ -5,13 +5,7 @@ import com.google.common.base.Stopwatch;
 import net.ravendb.client.Constants;
 import net.ravendb.client.documents.DocumentStore;
 import net.ravendb.client.documents.IDocumentStore;
-import net.ravendb.client.documents.indexes.IndexErrors;
-import net.ravendb.client.documents.indexes.IndexState;
 import net.ravendb.client.documents.operations.MaintenanceOperationExecutor;
-import net.ravendb.client.documents.operations.indexes.GetIndexErrorsOperation;
-import net.ravendb.client.documents.operations.revisions.ConfigureRevisionsOperation;
-import net.ravendb.client.documents.operations.revisions.RevisionsCollectionConfiguration;
-import net.ravendb.client.documents.operations.revisions.RevisionsConfiguration;
 import net.ravendb.client.documents.session.IDocumentSession;
 import net.ravendb.client.exceptions.TimeoutException;
 import net.ravendb.client.http.RequestExecutor;
@@ -177,82 +171,6 @@ public abstract class RavenTestDriver {
         return store.initialize();
     }
 
-    public static void waitForIndexing(IDocumentStore store) {
-        waitForIndexing(store, null, null);
-    }
-
-    public static void waitForIndexing(IDocumentStore store, String database) {
-        waitForIndexing(store, database, null);
-    }
-
-    public static void waitForIndexing(IDocumentStore store, String database, Duration timeout) {
-        waitForIndexing(store, database, timeout, null);
-    }
-
-    public static void waitForIndexing(IDocumentStore store, String database, Duration timeout, String nodeTag) {
-        MaintenanceOperationExecutor admin = store.maintenance().forDatabase(database);
-
-        if (timeout == null) {
-            timeout = Duration.ofMinutes(1);
-        }
-
-        Stopwatch sp = Stopwatch.createStarted();
-
-        while (sp.elapsed(TimeUnit.MILLISECONDS) < timeout.toMillis()) {
-            DatabaseStatistics databaseStatistics = admin.send(new GetStatisticsOperation("wait-for-indexing", nodeTag));
-
-            List<IndexInformation> indexes = Arrays.stream(databaseStatistics.getIndexes())
-                    .filter(x -> !IndexState.DISABLED.equals(x.getState()))
-                    .collect(Collectors.toList());
-
-            if (indexes.stream().allMatch(x -> !x.isStale() &&
-                    !x.getName().startsWith(Constants.Documents.Indexing.SIDE_BY_SIDE_INDEX_NAME_PREFIX))) {
-                return;
-            }
-
-            if (Arrays.stream(databaseStatistics.getIndexes()).anyMatch(x -> IndexState.ERROR.equals(x.getState()))) {
-                break;
-            }
-
-            try {
-                Thread.sleep(100);
-            } catch (InterruptedException e) {
-                throw new RuntimeException(e);
-            }
-        }
-
-
-        IndexErrors[] errors = admin.send(new GetIndexErrorsOperation());
-        String allIndexErrorsText = "";
-        Function<IndexErrors, String> formatIndexErrors = indexErrors -> {
-            String errorsListText = Arrays.stream(indexErrors.getErrors()).map(x -> "-" + x).collect(Collectors.joining(System.lineSeparator()));
-            return "Index " + indexErrors.getName() + " (" + indexErrors.getErrors().length + " errors): "+ System.lineSeparator() + errorsListText;
-        };
-        if (errors != null && errors.length > 0) {
-            allIndexErrorsText = Arrays.stream(errors).map(formatIndexErrors).collect(Collectors.joining(System.lineSeparator()));
-        }
-
-        throw new TimeoutException("The indexes stayed stale for more than " + timeout + "." + allIndexErrorsText);
-    }
-
-    public static IndexErrors[] waitForIndexingErrors(IDocumentStore store, Duration timeout, String... indexNames) throws InterruptedException {
-        Stopwatch sw = Stopwatch.createStarted();
-
-        while (sw.elapsed().compareTo(timeout) < 0) {
-            IndexErrors[] indexes = store.maintenance().send(new GetIndexErrorsOperation(indexNames));
-
-            for (IndexErrors index : indexes) {
-                if (index.getErrors() != null && index.getErrors().length > 0) {
-                    return indexes;
-                }
-            }
-
-            Thread.sleep(32);
-        }
-
-        throw new TimeoutException("Got no index error for more than " + timeout.toString());
-    }
-
     protected <T> T waitForValue(Supplier<T> act, T expectedValue) throws InterruptedException {
         return waitForValue(act, expectedValue, Duration.ofSeconds(15));
     }
@@ -333,18 +251,6 @@ public abstract class RavenTestDriver {
         }
     }
 
-    @SuppressWarnings("UnusedReturnValue")
-    protected static ConfigureRevisionsOperation.ConfigureRevisionsOperationResult setupRevisions(IDocumentStore store, boolean purgeOnDelete, long minimumRevisionsToKeep) {
-        RevisionsConfiguration revisionsConfiguration = new RevisionsConfiguration();
-        RevisionsCollectionConfiguration defaultCollection = new RevisionsCollectionConfiguration();
-        defaultCollection.setPurgeOnDelete(purgeOnDelete);
-        defaultCollection.setMinimumRevisionsToKeep(minimumRevisionsToKeep);
-
-        revisionsConfiguration.setDefaultConfig(defaultCollection);
-        ConfigureRevisionsOperation operation = new ConfigureRevisionsOperation(revisionsConfiguration);
-
-        return store.maintenance().send(operation);
-    }
 
     protected static void createSimpleData(IDocumentStore store) {
         try (IDocumentSession session = store.openSession()) {

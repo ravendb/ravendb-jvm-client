@@ -15,11 +15,6 @@ public class Constants {
             public static final String CONFLICT = "@conflict";
             public static final String ID_PROPERTY = "Id";
             public static final String FLAGS = "@flags";
-            public static final String ATTACHMENTS = "@attachments";
-            public static final String COUNTERS = "@counters";
-            public static final String TIME_SERIES = "@timeseries";
-            public static final String REVISION_COUNTERS = "@counters-snapshot";
-            public static final String REVISION_TIME_SERIES = "@timeseries-snapshot";
             public static final String INDEX_SCORE = "@index-score";
             public static final String LAST_MODIFIED = "@last-modified";
             public static final String RAVEN_JAVA_TYPE = "Raven-Java-Type";

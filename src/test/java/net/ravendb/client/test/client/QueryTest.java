@@ -2,8 +2,6 @@ package net.ravendb.client.test.client;
 
 import net.ravendb.client.RemoteTestBase;
 import net.ravendb.client.documents.IDocumentStore;
-import net.ravendb.client.documents.Lazy;
-import net.ravendb.client.documents.indexes.AbstractIndexCreationTask;
 import net.ravendb.client.documents.queries.Query;
 import net.ravendb.client.documents.queries.SearchOperator;
 import net.ravendb.client.documents.session.*;
@@ -54,64 +52,6 @@ public class QueryTest extends RemoteTestBase {
         }
     }
 
-    @Test
-    public void queryLazily() throws Exception {
-        try (IDocumentStore store = getDocumentStore()) {
-            try (IDocumentSession session = store.openSession()) {
-
-                User user1 = new User();
-                user1.setName("John");
-
-                User user2 = new User();
-                user2.setName("Jane");
-
-                User user3 = new User();
-                user3.setName("Tarzan");
-
-                session.store(user1, "users/1");
-                session.store(user2, "users/2");
-                session.store(user3, "users/3");
-                session.saveChanges();
-
-                Lazy<List<User>> lazyQuery = session.query(User.class)
-                        .lazily();
-
-                List<User> queryResult = lazyQuery.getValue();
-
-                assertThat(queryResult)
-                        .hasSize(3);
-
-                assertThat(queryResult.get(0).getName())
-                        .isEqualTo("John");
-            }
-        }
-    }
-
-    @Test
-    public void collectionsStats() throws Exception {
-        try (IDocumentStore store = getDocumentStore()) {
-            try (IDocumentSession session = store.openSession()) {
-
-                User user1 = new User();
-                user1.setName("John");
-
-                User user2 = new User();
-                user2.setName("Jane");
-
-                session.store(user1, "users/1");
-                session.store(user2, "users/2");
-                session.saveChanges();
-            }
-
-            CollectionStatistics stats = store.maintenance().send(new GetCollectionStatisticsOperation());
-
-            assertThat(stats.getCountOfDocuments())
-                    .isEqualTo(2);
-
-            assertThat(stats.getCollections().get("Users"))
-                    .isEqualTo(2);
-        }
-    }
 
     @Test
     public void queryWithWhereClause() throws Exception {
@@ -538,44 +478,7 @@ public class QueryTest extends RemoteTestBase {
         }
     }
 
-    @Test
-    public void rawQuerySkipTake() throws Exception {
-        try (IDocumentStore store = getDocumentStore()) {
-            addUsers(store);
 
-            try (DocumentSession session = (DocumentSession) store.openSession()) {
-                List<User> users = session.rawQuery(User.class, "from users")
-                        .skip(2)
-                        .take(1)
-                        .toList();
-
-                assertThat(users)
-                        .hasSize(1);
-
-                assertThat(users.get(0).getName())
-                        .isEqualTo("Tarzan");
-            }
-        }
-    }
-
-    @Test
-    public void parametersInRawQuery() throws Exception {
-        try (IDocumentStore store = getDocumentStore()) {
-            addUsers(store);
-
-            try (DocumentSession session = (DocumentSession) store.openSession()) {
-                List<User> users = session.rawQuery(User.class, "from users where age == $p0")
-                        .addParameter("p0", 5)
-                        .toList();
-
-                assertThat(users)
-                        .hasSize(1);
-
-                assertThat(users.get(0).getName())
-                        .isEqualTo("John");
-            }
-        }
-    }
 
     @Test
     public void queryLucene() throws Exception {
@@ -653,85 +556,9 @@ public class QueryTest extends RemoteTestBase {
         }
     }
 
-    public static class OrderTime extends AbstractIndexCreationTask {
-        public static class Result {
-            private long delay;
-
-            public long getDelay() {
-                return delay;
-            }
-
-            public void setDelay(long delay) {
-                this.delay = delay;
-            }
-        }
-
-        public OrderTime() {
-            map = "from order in docs.Orders " +
-                    "select new { " +
-                    "  delay = order.shippedAt - ((DateTime?)order.orderedAt) " +
-                    "}";
-        }
-    }
-
-    @Test
-    public void queryWithDuration() throws Exception {
-        try (IDocumentStore store = getDocumentStore()) {
-
-            Date now = new Date();
-
-            store.executeIndex(new OrderTime());
-
-            try (DocumentSession session = (DocumentSession) store.openSession()) {
-                Order order1 = new Order();
-                order1.setCompany("hours");
-                order1.setOrderedAt(DateUtils.addHours(now, -2));
-                order1.setShippedAt(now);
-                session.store(order1);
-
-                Order order2 = new Order();
-                order2.setCompany("days");
-                order2.setOrderedAt(DateUtils.addDays(now, -2));
-                order2.setShippedAt(now);
-                session.store(order2);
-
-                Order order3 = new Order();
-                order3.setCompany("minutes");
-                order3.setOrderedAt(DateUtils.addMinutes(now, -2));
-                order3.setShippedAt(now);
-                session.store(order3);
-
-                session.saveChanges();
-            }
-
-            waitForIndexing(store);
-
-            try (DocumentSession session = (DocumentSession) store.openSession()) {
-                Set<String> delay = session.query(Order.class, OrderTime.class)
-                        .whereLessThan("delay", Duration.ofHours(3))
-                        .toList()
-                        .stream()
-                        .map(x -> x.getCompany())
-                        .collect(toSet());
-
-                assertThat(delay)
-                        .containsExactly("hours", "minutes");
-
-                Set<String> delay2 = session.query(Order.class, OrderTime.class)
-                        .whereGreaterThan("delay", Duration.ofHours(3))
-                        .toList()
-                        .stream()
-                        .map(x -> x.getCompany())
-                        .collect(toSet());
-
-                assertThat(delay2)
-                        .containsExactly("days");
 
 
-            }
 
-        }
-    }
 
     @Test
     public void queryFirst() throws Exception {
@@ -760,20 +587,7 @@ public class QueryTest extends RemoteTestBase {
         }
     }
 
-    @Test
-    public void queryParameters() throws Exception {
-        try (IDocumentStore store = getDocumentStore()) {
-            addUsers(store);
 
-            try (DocumentSession session = (DocumentSession) store.openSession()) {
-
-                assertThat(session.rawQuery(User.class, "from Users where name = $name")
-                        .addParameter("name", "Tarzan")
-                        .count())
-                        .isEqualTo(1);
-            }
-        }
-    }
 
     @Test
     public void queryRandomOrder() throws Exception {
@@ -858,25 +672,7 @@ public class QueryTest extends RemoteTestBase {
         }
     }
 
-    public static class UsersByName extends AbstractIndexCreationTask {
-        public UsersByName() {
 
-            map = "from c in docs.Users select new " +
-                    " {" +
-                    "    c.name, " +
-                    "    count = 1" +
-                    "}";
-
-            reduce = "from result in results " +
-                    "group result by result.name " +
-                    "into g " +
-                    "select new " +
-                    "{ " +
-                    "  name = g.Key, " +
-                    "  count = g.Sum(x => x.count) " +
-                    "}";
-        }
-    }
 
     private void addUsers(IDocumentStore store) {
         try (IDocumentSession session = store.openSession()) {
@@ -898,8 +694,6 @@ public class QueryTest extends RemoteTestBase {
             session.saveChanges();
         }
 
-        store.executeIndex(new UsersByName());
-        waitForIndexing(store);
     }
 
     public static class ReduceResult {
@@ -932,44 +726,6 @@ public class QueryTest extends RemoteTestBase {
         }
     }
 
-    @Test
-    public void queryWithCustomize() throws Exception {
-        try (IDocumentStore store = getDocumentStore()) {
-
-            new DogsIndex().execute(store);
-
-            try (IDocumentSession newSession = store.openSession()) {
-                createDogs(newSession);
-
-                newSession.saveChanges();
-            }
-
-            try (IDocumentSession newSession = store.openSession()) {
-
-                List<DogsIndex.Result> queryResult = newSession.advanced()
-                        .documentQuery(DogsIndex.Result.class, new DogsIndex().getIndexName(), null, false)
-                        .waitForNonStaleResults(null)
-                        .orderBy("name", OrderingType.ALPHA_NUMERIC)
-                        .whereGreaterThan("age", 2)
-                        .toList();
-
-                assertThat(queryResult)
-                        .hasSize(4);
-
-                assertThat(queryResult.get(0).getName())
-                        .isEqualTo("Brian");
-
-                assertThat(queryResult.get(1).getName())
-                        .isEqualTo("Django");
-
-                assertThat(queryResult.get(2).getName())
-                        .isEqualTo("Lassie");
-
-                assertThat(queryResult.get(3).getName())
-                        .isEqualTo("Snoopy");
-            }
-        }
-    }
 
     private void createDogs(IDocumentSession newSession) {
         Dog dog1 = new Dog();
@@ -1068,56 +824,7 @@ public class QueryTest extends RemoteTestBase {
         }
     }
 
-    @Test
-    public void queryByIndex() throws Exception {
-        try (IDocumentStore store = getDocumentStore()) {
 
-            new DogsIndex().execute(store);
-
-            try (IDocumentSession newSession = store.openSession()) {
-                createDogs(newSession);
-
-                newSession.saveChanges();
-
-                waitForIndexing(store, store.getDatabase(), null);
-            }
-
-            try (IDocumentSession newSession = store.openSession()) {
-                List<DogsIndex.Result> queryResult = newSession.advanced()
-                        .documentQuery(DogsIndex.Result.class, new DogsIndex().getIndexName(), null, false)
-                        .whereGreaterThan("age", 2)
-                        .andAlso()
-                        .whereEquals("vaccinated", false)
-                        .toList();
-
-                assertThat(queryResult)
-                        .hasSize(1);
-
-                assertThat(queryResult.get(0).getName())
-                        .isEqualTo("Brian");
-
-
-                List<DogsIndex.Result> queryResult2 = newSession.advanced()
-                        .documentQuery(DogsIndex.Result.class, new DogsIndex().getIndexName(), null, false)
-                        .whereLessThanOrEqual("age", 2)
-                        .andAlso()
-                        .whereEquals("vaccinated", false)
-                        .toList();
-
-                assertThat(queryResult2)
-                        .hasSize(3);
-
-                List<String> list = queryResult2.stream()
-                        .map(x -> x.getName())
-                        .collect(toList());
-
-                assertThat(list)
-                        .contains("Beethoven")
-                        .contains("Scooby Doo")
-                        .contains("Benji");
-            }
-        }
-    }
 
     public static class Dog {
         private String id;
@@ -1176,39 +883,4 @@ public class QueryTest extends RemoteTestBase {
         }
     }
 
-    public static class DogsIndex extends AbstractIndexCreationTask {
-        public static class Result {
-            private String name;
-            private int age;
-            private boolean isVaccinated;
-
-            public String getName() {
-                return name;
-            }
-
-            public void setName(String name) {
-                this.name = name;
-            }
-
-            public int getAge() {
-                return age;
-            }
-
-            public void setAge(int age) {
-                this.age = age;
-            }
-
-            public boolean isVaccinated() {
-                return isVaccinated;
-            }
-
-            public void setVaccinated(boolean vaccinated) {
-                isVaccinated = vaccinated;
-            }
-        }
-
-        public DogsIndex() {
-            map = "from dog in docs.dogs select new { dog.name, dog.age, dog.vaccinated }";
-        }
-    }
 }
