@@ -22,8 +22,4 @@ public class ServerWideOperation extends Operation {
         return getOperationStateCommand(conventions, id, null);
     }
 
-    @Override
-    protected RavenCommand<ObjectNode> getOperationStateCommand(DocumentConventions conventions, long id, String nodeTag) {
-        return new GetServerWideOperationStateOperation.GetServerWideOperationStateCommand(id, nodeTag);
-    }
 }

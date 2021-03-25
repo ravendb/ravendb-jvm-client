@@ -1,7 +1,6 @@
 package net.ravendb.client.serverwide;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import net.ravendb.client.serverwide.operations.DatabasePromotionStatus;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -15,7 +14,6 @@ public class DatabaseTopology {
 
     private Map<String, String> predefinedMentors;
     private Map<String, String> demotionReasons;
-    private Map<String, DatabasePromotionStatus> promotablesStatus;
     private int replicationFactor;
     private boolean dynamicNodesDistribution;
     private String databaseTopologyIdBase64;
@@ -72,13 +70,6 @@ public class DatabaseTopology {
         this.demotionReasons = demotionReasons;
     }
 
-    public Map<String, DatabasePromotionStatus> getPromotablesStatus() {
-        return promotablesStatus;
-    }
-
-    public void setPromotablesStatus(Map<String, DatabasePromotionStatus> promotablesStatus) {
-        this.promotablesStatus = promotablesStatus;
-    }
 
     public int getReplicationFactor() {
         return replicationFactor;

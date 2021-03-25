@@ -9,11 +9,8 @@ public class DatabaseRecord {
     private boolean disabled;
     private boolean encrypted;
     private long etagForBackup;
-    private Map<String, DeletionInProgressStatus> deletionInProgress;
     private DatabaseStateStatus databaseStatus;
     private DatabaseTopology topology;
-    private ConflictSolver conflictSolverConfig;
-    private DocumentsCompressionConfiguration documentsCompression;
     private Map<String, String> settings = new HashMap<>();
 
     public DatabaseRecord() {
@@ -47,22 +44,6 @@ public class DatabaseRecord {
         this.settings = settings;
     }
 
-    public ConflictSolver getConflictSolverConfig() {
-        return conflictSolverConfig;
-    }
-
-    public void setConflictSolverConfig(ConflictSolver conflictSolverConfig) {
-        this.conflictSolverConfig = conflictSolverConfig;
-    }
-
-    public DocumentsCompressionConfiguration getDocumentsCompression() {
-        return documentsCompression;
-    }
-
-    public void setDocumentsCompression(DocumentsCompressionConfiguration documentsCompression) {
-        this.documentsCompression = documentsCompression;
-    }
-
     public boolean isEncrypted() {
         return encrypted;
     }
@@ -77,14 +58,6 @@ public class DatabaseRecord {
 
     public void setEtagForBackup(long etagForBackup) {
         this.etagForBackup = etagForBackup;
-    }
-
-    public Map<String, DeletionInProgressStatus> getDeletionInProgress() {
-        return deletionInProgress;
-    }
-
-    public void setDeletionInProgress(Map<String, DeletionInProgressStatus> deletionInProgress) {
-        this.deletionInProgress = deletionInProgress;
     }
 
     public DatabaseTopology getTopology() {
