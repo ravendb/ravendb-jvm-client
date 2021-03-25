@@ -6,7 +6,6 @@ import net.ravendb.client.primitives.UseSharpEnum;
 public enum CommandType {
     NONE,
     PUT,
-    PATCH,
     DELETE,
 
     CLIENT_ANY_COMMAND,
@@ -18,8 +17,6 @@ public enum CommandType {
                 return NONE;
             case "PUT":
                 return PUT;
-            case "PATCH":
-                return PATCH;
             case "DELETE":
                 return DELETE;
             default:

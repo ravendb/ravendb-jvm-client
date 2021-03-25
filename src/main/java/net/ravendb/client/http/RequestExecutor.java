@@ -1007,9 +1007,6 @@ public class RequestExecutor implements CleanCloseable {
                 builder = new URI(builder.getQuery() != null ? builder.toString() + "&" + raftRequestString : builder.toString() + "?" + raftRequestString);
             }
 
-            if (shouldBroadcast(command)) {
-                command.setTimeout(ObjectUtils.firstNonNull(command.getTimeout(), _firstBroadcastAttemptTimeout));
-            }
 
             request.setURI(builder);
 
@@ -1172,19 +1169,6 @@ public class RequestExecutor implements CleanCloseable {
         return true;
     }
 
-    private <TResult> boolean shouldBroadcast(RavenCommand<TResult> command) {
-        if (!(command instanceof IBroadcast)) {
-            return false;
-        }
-
-        List<ServerNode> topologyNodes = getTopologyNodes();
-
-        if (topologyNodes == null || topologyNodes.size() < 2) {
-            return false;
-        }
-
-        return true;
-    }
 
     public static class BroadcastState<TResult> {
         private RavenCommand<TResult> command;
@@ -1226,56 +1210,6 @@ public class RequestExecutor implements CleanCloseable {
     }
 
 
-
-    private <TResult> TResult waitForBroadcastResult(RavenCommand<TResult> command, Map<CompletableFuture<Void>, BroadcastState<TResult>> tasks) {
-        while (!tasks.isEmpty()) {
-            Exception error = null;
-            try {
-                CompletableFuture.anyOf(tasks.keySet().toArray(new CompletableFuture[0])).get();
-            } catch (InterruptedException | ExecutionException e) {
-                error = e;
-            }
-
-            CompletableFuture<Void> completed = tasks
-                    .keySet()
-                    .stream()
-                    .filter(CompletableFuture::isDone)
-                    .findFirst()
-                    .orElse(null);
-
-            if (error != null) {
-                BroadcastState<TResult> failed = tasks.get(completed);
-                ServerNode node = _nodeSelector.getTopology().getNodes().get(failed.index);
-
-                command.getFailedNodes().put(node, error.getCause() != null ? (Exception) error.getCause() : error);
-
-                _nodeSelector.onFailedRequest(failed.getIndex());
-
-                tasks.remove(completed);
-                continue;
-            }
-
-            for (BroadcastState<TResult> state : tasks.values()) {
-                HttpRequestBase request = state.getRequest();
-                if (request != null) {
-                    request.abort();
-                }
-            }
-
-            _nodeSelector.restoreNodeIndex(tasks.get(completed).getIndex());
-            return tasks.get(completed).getCommand().getResult();
-        }
-
-        String exceptions = command
-                .getFailedNodes()
-                .entrySet()
-                .stream()
-                .map(x -> new UnsuccessfulRequestException(x.getKey().getUrl(), x.getValue()))
-                .map(Throwable::toString)
-                .collect(Collectors.joining(", "));
-
-        throw new AllTopologyNodesDownException("Broadcasting " + command.getClass().getSimpleName() + " failed: " + exceptions);
-    }
 
 
 
