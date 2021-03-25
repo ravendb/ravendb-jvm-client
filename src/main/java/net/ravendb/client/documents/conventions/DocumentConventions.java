@@ -8,8 +8,6 @@ import net.ravendb.client.Constants;
 import net.ravendb.client.documents.operations.configuration.ClientConfiguration;
 import net.ravendb.client.exceptions.RavenException;
 import net.ravendb.client.extensions.JsonExtensions;
-import net.ravendb.client.http.AggressiveCacheMode;
-import net.ravendb.client.http.AggressiveCacheOptions;
 import net.ravendb.client.http.LoadBalanceBehavior;
 import net.ravendb.client.http.ReadBalanceBehavior;
 import net.ravendb.client.primitives.Reference;
@@ -82,67 +80,6 @@ public class DocumentConventions {
     private Boolean _useCompression;
     private boolean _sendApplicationIdentifier;
 
-    private final BulkInsertConventions _bulkInsert;
-
-    private final AggressiveCacheConventions _aggressiveCache;
-
-    public AggressiveCacheConventions aggressiveCache() {
-        return _aggressiveCache;
-    }
-
-    public static class AggressiveCacheConventions {
-        private final DocumentConventions _conventions;
-        private final AggressiveCacheOptions _aggressiveCacheOptions;
-
-        public AggressiveCacheConventions(DocumentConventions conventions) {
-            _conventions = conventions;
-            _aggressiveCacheOptions = new AggressiveCacheOptions(Duration.ofDays(1), AggressiveCacheMode.TRACK_CHANGES);
-        }
-
-        public Duration getDuration() {
-            return _aggressiveCacheOptions.getDuration();
-        }
-
-        public void setDuration(Duration duration) {
-            _aggressiveCacheOptions.setDuration(duration);
-        }
-
-        public AggressiveCacheMode getMode() {
-            return _aggressiveCacheOptions.getMode();
-        }
-
-        public void setMode(AggressiveCacheMode mode) {
-            _aggressiveCacheOptions.setMode(mode);
-        }
-    }
-
-    public BulkInsertConventions bulkInsert() {
-        return _bulkInsert;
-    }
-
-    public static class BulkInsertConventions {
-        private final DocumentConventions _conventions;
-        private int _timeSeriesBatchSize;
-
-        public BulkInsertConventions(DocumentConventions conventions) {
-            _conventions = conventions;
-            _timeSeriesBatchSize = 1024;
-        }
-
-        public int getTimeSeriesBatchSize() {
-            return _timeSeriesBatchSize;
-        }
-
-        public void setTimeSeriesBatchSize(int batchSize) {
-            _conventions.assertNotFrozen();
-
-            if (batchSize <= 0) {
-                throw new IllegalArgumentException("BatchSize must be positive");
-            }
-            _timeSeriesBatchSize = batchSize;
-        }
-
-    }
 
     public DocumentConventions() {
         _readBalanceBehavior = ReadBalanceBehavior.NONE;
@@ -173,12 +110,10 @@ public class DocumentConventions {
         _findCollectionName = type -> defaultGetCollectionName(type);
 
         _maxNumberOfRequestsPerSession = 30;
-        _bulkInsert = new BulkInsertConventions(this);
         _maxHttpCacheSize = 128 * 1024 * 1024;
 
         _entityMapper = JsonExtensions.getDefaultEntityMapper();
 
-        _aggressiveCache = new AggressiveCacheConventions(this);
         _firstBroadcastAttemptTimeout = Duration.ofSeconds(5);
         _secondBroadcastAttemptTimeout = Duration.ofSeconds(30);
 

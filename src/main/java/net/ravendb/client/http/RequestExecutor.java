@@ -94,8 +94,6 @@ public class RequestExecutor implements CleanCloseable {
         return cache;
     }
 
-    public final ThreadLocal<AggressiveCacheOptions> aggressiveCaching = new ThreadLocal<>();
-
     public Topology getTopology() {
         return _nodeSelector != null ? _nodeSelector.getTopology() : null;
     }
@@ -792,18 +790,13 @@ public class RequestExecutor implements CleanCloseable {
 
             Duration timeout = ObjectUtils.firstNonNull(command.getTimeout(), _defaultTimeout);
             if (timeout != null) {
-                AggressiveCacheOptions callingTheadAggressiveCaching = aggressiveCaching.get();
 
                 CompletableFuture<CloseableHttpResponse> sendTask = CompletableFuture.supplyAsync(() -> {
-                    AggressiveCacheOptions aggressiveCacheOptionsToRestore = aggressiveCaching.get();
 
                     try {
-                        aggressiveCaching.set(callingTheadAggressiveCaching);
                         return send(chosenNode, command, sessionInfo, request);
                     } catch (IOException e) {
                         throw ExceptionsUtils.unwrapException(e);
-                    } finally {
-                        aggressiveCaching.set(aggressiveCacheOptionsToRestore);
                     }
                 }, _executorService);
 
@@ -901,6 +894,7 @@ public class RequestExecutor implements CleanCloseable {
     }
 
     private <TResult> boolean tryGetFromCache(RavenCommand<TResult> command, HttpCache.ReleaseCacheItem cachedItem, String cachedValue) {
+        /*
         AggressiveCacheOptions aggressiveCacheOptions = aggressiveCaching.get();
         if (aggressiveCacheOptions != null &&
                 cachedItem.getAge().compareTo(aggressiveCacheOptions.getDuration()) < 0 &&
@@ -922,7 +916,7 @@ public class RequestExecutor implements CleanCloseable {
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
-        }
+        }*/
         return false;
     }
 
@@ -1071,7 +1065,7 @@ public class RequestExecutor implements CleanCloseable {
         try {
             switch (response.getStatusLine().getStatusCode()) {
                 case HttpStatus.SC_NOT_FOUND:
-                    cache.setNotFound(url, aggressiveCaching.get() != null);
+                    cache.setNotFound(url, false);
                     switch (command.getResponseType()) {
                         case EMPTY:
                             return true;
@@ -1325,33 +1319,7 @@ public class RequestExecutor implements CleanCloseable {
         throw new AllTopologyNodesDownException("Broadcasting " + command.getClass().getSimpleName() + " failed: " + exceptions);
     }
 
-    @SuppressWarnings("unchecked")
-    private <TResult> void sendToAllNodes(Map<CompletableFuture<Void>, BroadcastState<TResult>> tasks, SessionInfo sessionInfo, IBroadcast command) {
-        for (int index = 0; index < _nodeSelector.getTopology().getNodes().size(); index++) {
-            BroadcastState<TResult> state = new BroadcastState<>();
-            state.setCommand((RavenCommand<TResult>)command.prepareToBroadcast(getConventions()));
-            state.setIndex(index);
-            state.setNode(_nodeSelector.getTopology().getNodes().get(index));
 
-            state.getCommand().setTimeout(_secondBroadcastAttemptTimeout);
-
-            AggressiveCacheOptions callingTheadAggressiveCaching = aggressiveCaching.get();
-
-            CompletableFuture<Void> task = CompletableFuture.runAsync(() -> {
-                AggressiveCacheOptions aggressiveCacheOptionsToRestore = aggressiveCaching.get();
-
-                aggressiveCaching.set(callingTheadAggressiveCaching);
-                try {
-                    Reference<HttpRequestBase> requestRef = new Reference<>();
-                    execute(state.getNode(), null, state.getCommand(), false, sessionInfo, requestRef);
-                    state.setRequest(requestRef.value);
-                } finally {
-                    aggressiveCaching.set(aggressiveCacheOptionsToRestore);
-                }
-            }, _executorService);
-            tasks.put(task, state);
-        }
-    }
 
     public ServerNode handleServerNotResponsive(String url, ServerNode chosenNode, int nodeIndex, Exception e) {
         if (_nodeSelector != null) {

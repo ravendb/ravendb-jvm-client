@@ -13,7 +13,6 @@ import net.ravendb.client.documents.queries.QueryResult;
 import net.ravendb.client.documents.session.InMemoryDocumentSessionOperations;
 import net.ravendb.client.documents.session.tokens.FieldsToFetchToken;
 import net.ravendb.client.exceptions.TimeoutException;
-import net.ravendb.client.exceptions.documents.indexes.IndexDoesNotExistException;
 import net.ravendb.client.primitives.CleanCloseable;
 import net.ravendb.client.primitives.Reference;
 import org.apache.commons.lang3.ClassUtils;
@@ -236,7 +235,7 @@ public class QueryOperation {
 
     public void ensureIsAcceptableAndSaveResult(QueryResult result, Duration duration) {
         if (result == null) {
-            throw new IndexDoesNotExistException("Could not find index " + _indexName);
+            throw new RuntimeException("Could not find index " + _indexName);
         }
 
         ensureIsAcceptable(result, _indexQuery.isWaitForNonStaleResults(), duration, _session);

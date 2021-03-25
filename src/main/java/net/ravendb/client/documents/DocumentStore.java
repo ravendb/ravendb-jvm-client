@@ -6,8 +6,6 @@ import net.ravendb.client.documents.operations.OperationExecutor;
 import net.ravendb.client.documents.session.DocumentSession;
 import net.ravendb.client.documents.session.IDocumentSession;
 import net.ravendb.client.documents.session.SessionOptions;
-import net.ravendb.client.http.AggressiveCacheMode;
-import net.ravendb.client.http.AggressiveCacheOptions;
 import net.ravendb.client.http.RequestExecutor;
 import net.ravendb.client.primitives.*;
 import org.apache.commons.lang3.ObjectUtils;
@@ -240,32 +238,8 @@ public class DocumentStore extends DocumentStoreBase {
         }
     }
 
-    /**
-     * Setup the context for no aggressive caching
-     * <p>
-     * This is mainly useful for internal use inside RavenDB, when we are executing
-     * queries that have been marked with WaitForNonStaleResults, we temporarily disable
-     * aggressive caching.
-     */
-    public CleanCloseable disableAggressiveCaching() {
-        return disableAggressiveCaching(null);
-    }
 
-    /**
-     * Setup the context for no aggressive caching
-     * <p>
-     * This is mainly useful for internal use inside RavenDB, when we are executing
-     * queries that have been marked with WaitForNonStaleResults, we temporarily disable
-     * aggressive caching.
-     */
-    public CleanCloseable disableAggressiveCaching(String databaseName) {
-        assertInitialized();
-        RequestExecutor re = getRequestExecutor(getEffectiveDatabase(databaseName));
-        AggressiveCacheOptions old = re.aggressiveCaching.get();
-        re.aggressiveCaching.set(null);
 
-        return () -> re.aggressiveCaching.set(old);
-    }
 
 
     private final List<EventHandler<VoidArgs>> afterClose = new ArrayList<>();

@@ -150,29 +150,7 @@ public class QueryTest extends RemoteTestBase {
         }
     }
 
-    @Test
-    public void queryMapReduceIndex() throws Exception {
-        try (IDocumentStore store = getDocumentStore()) {
-            addUsers(store);
-
-            try (IDocumentSession session = store.openSession()) {
-
-                List<ReduceResult> results = session.query(ReduceResult.class, Query.index("UsersByName"))
-                        .orderByDescending("count")
-                        .toList();
-
-                assertThat(results.get(0).getCount())
-                        .isEqualTo(2);
-                assertThat(results.get(0).getName())
-                        .isEqualTo("John");
-
-                assertThat(results.get(1).getCount())
-                        .isEqualTo(1);
-                assertThat(results.get(1).getName())
-                        .isEqualTo("Tarzan");
-            }
-        }
-    }
+    
 
     @Test
     public void querySingleProperty() throws Exception {
