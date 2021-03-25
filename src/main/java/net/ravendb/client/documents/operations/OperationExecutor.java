@@ -43,14 +43,6 @@ public class OperationExecutor {
         return new OperationExecutor(this.store, databaseName);
     }
 
-    public void send(IVoidOperation operation) {
-        send(operation, null);
-    }
-
-    public void send(IVoidOperation operation, SessionInfo sessionInfo) {
-        RavenCommand<Void> command = operation.getCommand(store, requestExecutor.getConventions(), requestExecutor.getCache());
-        requestExecutor.execute(command, sessionInfo);
-    }
 
     public <TResult> TResult send(IOperation<TResult> operation) {
         return send(operation, null);
@@ -63,17 +55,6 @@ public class OperationExecutor {
         return command.getResult();
     }
 
-    public Operation sendAsync(IOperation<OperationIdResult> operation) {
-        return sendAsync(operation, null);
-    }
-
-    public Operation sendAsync(IOperation<OperationIdResult> operation, SessionInfo sessionInfo) {
-        RavenCommand<OperationIdResult> command = operation.getCommand(store, requestExecutor.getConventions(), requestExecutor.getCache());
-
-        requestExecutor.execute(command, sessionInfo);
-
-        return new Operation(requestExecutor, requestExecutor.getConventions(), command.getResult().getOperationId(), ObjectUtils.firstNonNull(command.getSelectedNodeTag(), command.getResult().getOperationNodeTag()));
-    }
 
 
 }

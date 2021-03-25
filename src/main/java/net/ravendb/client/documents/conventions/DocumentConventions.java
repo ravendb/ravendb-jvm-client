@@ -38,8 +38,6 @@ public class DocumentConventions {
 
     private static final Map<Class, String> _cachedDefaultTypeCollectionNames = new HashMap<>();
 
-    private final List<Tuple<Class, IValueForQueryConverter<Object>>> _listOfQueryValueToObjectConverters = new ArrayList<>();
-
     private List<Tuple<Class, BiFunction<String, Object, String>>> _listOfRegisteredIdConventions = new ArrayList<>();
 
     private boolean _frozen;
@@ -48,7 +46,6 @@ public class DocumentConventions {
     private char _identityPartsSeparator;
     private boolean _disableTopologyUpdates;
 
-    private IShouldIgnoreEntityChanges _shouldIgnoreEntityChanges;
     private Function<PropertyDescriptor, Boolean> _findIdentityProperty;
 
     private Function<String, String> _transformClassCollectionNameToDocumentIdPrefix;
@@ -405,15 +402,6 @@ public class DocumentConventions {
         this._findIdentityProperty = findIdentityProperty;
     }
 
-    public IShouldIgnoreEntityChanges getShouldIgnoreEntityChanges() {
-        return _shouldIgnoreEntityChanges;
-    }
-
-    public void setShouldIgnoreEntityChanges(IShouldIgnoreEntityChanges shouldIgnoreEntityChanges) {
-        assertNotFrozen();
-        _shouldIgnoreEntityChanges = shouldIgnoreEntityChanges;
-    }
-
     public boolean isDisableTopologyUpdates() {
         return _disableTopologyUpdates;
     }
@@ -595,7 +583,6 @@ public class DocumentConventions {
         DocumentConventions cloned = new DocumentConventions();
         cloned._listOfRegisteredIdConventions = new ArrayList<>(_listOfRegisteredIdConventions);
         cloned._frozen = _frozen;
-        cloned._shouldIgnoreEntityChanges = _shouldIgnoreEntityChanges;
         cloned._saveEnumsAsIntegers = _saveEnumsAsIntegers;
         cloned._identityPartsSeparator = _identityPartsSeparator;
         cloned._disableTopologyUpdates = _disableTopologyUpdates;
@@ -672,39 +659,7 @@ public class DocumentConventions {
         return collectionName;
     }
 
-    @SuppressWarnings("unchecked")
-    public <T> void registerQueryValueConverter(Class<T> clazz, IValueForQueryConverter<T> converter) {
-        assertNotFrozen();
 
-        int index;
-        for (index = 0; index < _listOfQueryValueToObjectConverters.size(); index++) {
-            Tuple<Class, IValueForQueryConverter<Object>> entry = _listOfQueryValueToObjectConverters.get(index);
-            if (entry.first.isAssignableFrom(clazz)) {
-                break;
-            }
-        }
-
-        _listOfQueryValueToObjectConverters.add(index, Tuple.create(clazz, (fieldName, value, forRange, stringValue) -> {
-            if (clazz.isInstance(value)) {
-                return converter.tryConvertValueForQuery(fieldName, (T) value, forRange, stringValue);
-            }
-            stringValue.value = null;
-            return false;
-        }));
-    }
-
-    public boolean tryConvertValueToObjectForQuery(String fieldName, Object value, boolean forRange, Reference<Object> strValue) {
-        for (Tuple<Class, IValueForQueryConverter<Object>> queryValueConverter : _listOfQueryValueToObjectConverters) {
-            if (!queryValueConverter.first.isInstance(value)) {
-                continue;
-            }
-
-            return queryValueConverter.second.tryConvertValueForQuery(fieldName, value, forRange, strValue);
-        }
-
-        strValue.value = null;
-        return false;
-    }
 
     public void freeze() {
         _frozen = true;

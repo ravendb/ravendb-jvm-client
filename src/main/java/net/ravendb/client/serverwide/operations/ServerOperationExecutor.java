@@ -1,12 +1,8 @@
 package net.ravendb.client.serverwide.operations;
 
 import net.ravendb.client.documents.DocumentStore;
-import net.ravendb.client.documents.operations.Operation;
-import net.ravendb.client.documents.operations.OperationIdResult;
 import net.ravendb.client.http.*;
 import net.ravendb.client.primitives.CleanCloseable;
-import org.apache.commons.lang3.ObjectUtils;
-import org.apache.commons.lang3.StringUtils;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentMap;
@@ -63,15 +59,6 @@ public class ServerOperationExecutor implements CleanCloseable {
         return command.getResult();
     }
 
-    public Operation sendAsync(IServerOperation<OperationIdResult> operation) {
-        RavenCommand<OperationIdResult> command = operation.getCommand(_requestExecutor.getConventions());
-
-        _requestExecutor.execute(command);
-        return new ServerWideOperation(_requestExecutor,
-                _requestExecutor.getConventions(),
-                command.getResult().getOperationId(),
-                ObjectUtils.firstNonNull(command.getSelectedNodeTag(), command.getResult().getOperationNodeTag()));
-    }
 
     @Override
     public void close() {

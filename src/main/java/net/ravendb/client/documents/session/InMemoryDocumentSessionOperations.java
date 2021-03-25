@@ -15,10 +15,8 @@ import net.ravendb.client.documents.IdTypeAndName;
 import net.ravendb.client.documents.commands.GetDocumentsResult;
 import net.ravendb.client.documents.commands.batches.*;
 import net.ravendb.client.documents.conventions.DocumentConventions;
-import net.ravendb.client.documents.conventions.IShouldIgnoreEntityChanges;
 import net.ravendb.client.documents.identity.GenerateEntityIdOnTheClient;
 import net.ravendb.client.documents.operations.OperationExecutor;
-import net.ravendb.client.documents.operations.SessionOperationExecutor;
 import net.ravendb.client.exceptions.documents.session.NonUniqueObjectException;
 import net.ravendb.client.extensions.JsonExtensions;
 import net.ravendb.client.http.RavenCommand;
@@ -35,16 +33,9 @@ import org.apache.commons.lang3.NotImplementedException;
 import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.StringUtils;
 
-import java.time.Duration;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.function.Consumer;
-import java.util.function.Function;
 import java.util.stream.Collectors;
-import java.util.stream.IntStream;
-
-import static net.ravendb.client.primitives.DatesComparator.leftDate;
-import static net.ravendb.client.primitives.DatesComparator.rightDate;
 
 @SuppressWarnings("SameParameterValue")
 public abstract class InMemoryDocumentSessionOperations implements CleanCloseable {
@@ -212,13 +203,7 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
         return sessionInfo;
     }
 
-    public OperationExecutor getOperations() {
-        if (_operationExecutor == null) {
-            _operationExecutor = new SessionOperationExecutor(this);
-        }
 
-        return _operationExecutor;
-    }
 
     private int numberOfRequests;
 
@@ -900,21 +885,10 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
     private void prepareForEntitiesPuts(SaveChangesData result) {
         try (CleanCloseable putsContext = documentsByEntity.prepareEntitiesPuts()) {
 
-            IShouldIgnoreEntityChanges shouldIgnoreEntityChanges = getConventions().getShouldIgnoreEntityChanges();
-
             for (DocumentsByEntityHolder.DocumentsByEntityEnumeratorResult entity : documentsByEntity) {
 
                 if (entity.getValue().isIgnoreChanges())
                     continue;
-
-                if (shouldIgnoreEntityChanges != null) {
-                    if (shouldIgnoreEntityChanges.check(
-                            this,
-                            entity.getValue().getEntity(),
-                            entity.getValue().getId())) {
-                        continue;
-                    }
-                }
 
                 if (isDeleted(entity.getValue().getId())) {
                     continue;

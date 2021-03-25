@@ -50,27 +50,12 @@ public class MaintenanceOperationExecutor {
         return new MaintenanceOperationExecutor(store, databaseName);
     }
 
-    public void send(IVoidMaintenanceOperation operation) {
-        assertDatabaseNameSet();
-        VoidRavenCommand command = operation.getCommand(getRequestExecutor().getConventions());
-        getRequestExecutor().execute(command);
-    }
 
     public <TResult> TResult send(IMaintenanceOperation<TResult> operation) {
         assertDatabaseNameSet();
         RavenCommand<TResult> command = operation.getCommand(getRequestExecutor().getConventions());
         getRequestExecutor().execute(command);
         return command.getResult();
-    }
-
-    public Operation sendAsync(IMaintenanceOperation<OperationIdResult> operation) {
-        assertDatabaseNameSet();
-        RavenCommand<OperationIdResult> command = operation.getCommand(getRequestExecutor().getConventions());
-
-        getRequestExecutor().execute(command);
-        return new Operation(getRequestExecutor(), getRequestExecutor().getConventions(),
-                command.getResult().getOperationId(),
-                ObjectUtils.firstNonNull(command.getSelectedNodeTag(), command.getResult().getOperationNodeTag()));
     }
 
     private void assertDatabaseNameSet() {

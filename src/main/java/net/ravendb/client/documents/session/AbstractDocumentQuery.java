@@ -1498,10 +1498,6 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
             return "";
         }
 
-        Reference<Object> objValueReference = new Reference<>();
-        if (_conventions.tryConvertValueToObjectForQuery(whereParams.getFieldName(), whereParams.getValue(), forRange, objValueReference)) {
-            return objValueReference.value;
-        }
 
         Class<?> clazz = whereParams.getValue().getClass();
         if (Date.class.equals(clazz)) {
