@@ -12,7 +12,6 @@ import net.ravendb.client.extensions.JsonExtensions;
 import net.ravendb.client.primitives.*;
 import net.ravendb.client.primitives.Timer;
 import net.ravendb.client.serverwide.commands.GetDatabaseTopologyCommand;
-import net.ravendb.client.util.CertificateUtils;
 import net.ravendb.client.util.TimeUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.ObjectUtils;
@@ -238,9 +237,6 @@ public class RequestExecutor implements CleanCloseable {
     }
 
     private String getHttpClientName() {
-        if (certificate != null) {
-            return CertificateUtils.extractThumbprintFromCertificate(certificate);
-        }
         return "";
     }
 

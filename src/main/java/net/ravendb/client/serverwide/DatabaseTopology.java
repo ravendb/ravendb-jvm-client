@@ -18,7 +18,6 @@ public class DatabaseTopology {
     private Map<String, DatabasePromotionStatus> promotablesStatus;
     private int replicationFactor;
     private boolean dynamicNodesDistribution;
-    private LeaderStamp stamp;
     private String databaseTopologyIdBase64;
     private List<String> priorityOrder;
 
@@ -95,14 +94,6 @@ public class DatabaseTopology {
 
     public void setDynamicNodesDistribution(boolean dynamicNodesDistribution) {
         this.dynamicNodesDistribution = dynamicNodesDistribution;
-    }
-
-    public LeaderStamp getStamp() {
-        return stamp;
-    }
-
-    public void setStamp(LeaderStamp stamp) {
-        this.stamp = stamp;
     }
 
     public String getDatabaseTopologyIdBase64() {
