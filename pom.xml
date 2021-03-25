@@ -92,6 +92,12 @@
             <version>2.11.0</version>
         </dependency>
 
+        <dependency>
+            <groupId>org.reflections</groupId>
+            <artifactId>reflections</artifactId>
+            <version>0.9.12</version>
+        </dependency>
+
         <!-- test dependencies -->
         <dependency>
             <groupId>org.junit.jupiter</groupId>

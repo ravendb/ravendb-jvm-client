@@ -1,25 +1,14 @@
 package net.ravendb.client.documents;
 
-import net.ravendb.client.documents.changes.IDatabaseChanges;
 import net.ravendb.client.documents.conventions.DocumentConventions;
-import net.ravendb.client.documents.indexes.AbstractIndexCreationTaskBase;
-import net.ravendb.client.documents.indexes.IAbstractIndexCreationTask;
-import net.ravendb.client.documents.indexes.IndexCreation;
-import net.ravendb.client.documents.indexes.IndexDefinition;
 import net.ravendb.client.documents.operations.MaintenanceOperationExecutor;
 import net.ravendb.client.documents.operations.OperationExecutor;
-import net.ravendb.client.documents.operations.indexes.PutIndexesOperation;
 import net.ravendb.client.documents.session.*;
-import net.ravendb.client.documents.smuggler.DatabaseSmuggler;
-import net.ravendb.client.documents.subscriptions.DocumentSubscriptions;
-import net.ravendb.client.documents.timeSeries.TimeSeriesOperations;
-import net.ravendb.client.http.AggressiveCacheMode;
 import net.ravendb.client.http.RequestExecutor;
 import net.ravendb.client.primitives.CleanCloseable;
 import net.ravendb.client.primitives.EventHandler;
 import net.ravendb.client.primitives.EventHelper;
 import net.ravendb.client.primitives.VoidArgs;
-import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.StringUtils;
 
 import java.net.MalformedURLException;
@@ -53,7 +42,6 @@ public abstract class DocumentStoreBase implements IDocumentStore {
     private final List<EventHandler<TopologyUpdatedEventArgs>> onTopologyUpdated = new ArrayList<>();
 
     protected DocumentStoreBase() {
-        _subscriptions = new DocumentSubscriptions((DocumentStore)this);
     }
 
     public abstract void close();
@@ -72,29 +60,7 @@ public abstract class DocumentStoreBase implements IDocumentStore {
         return disposed;
     }
 
-    public abstract IDatabaseChanges changes();
 
-    public abstract IDatabaseChanges changes(String database);
-
-    public abstract IDatabaseChanges changes(String database, String nodeTag);
-
-    @Override
-    public abstract CleanCloseable aggressivelyCacheFor(Duration cacheDuration);
-
-    @Override
-    public abstract CleanCloseable aggressivelyCacheFor(Duration cacheDuration, String database);
-
-    @Override
-    public abstract CleanCloseable aggressivelyCacheFor(Duration cacheDuration, AggressiveCacheMode mode);
-
-    @Override
-    public abstract CleanCloseable aggressivelyCacheFor(Duration cacheDuration, AggressiveCacheMode mode, String database);
-
-    @Override
-    public abstract CleanCloseable disableAggressiveCaching();
-
-    @Override
-    public abstract CleanCloseable disableAggressiveCaching(String database);
 
     public abstract String getIdentifier();
 
@@ -108,39 +74,6 @@ public abstract class DocumentStoreBase implements IDocumentStore {
 
     public abstract IDocumentSession openSession(SessionOptions sessionOptions);
 
-    public void executeIndex(IAbstractIndexCreationTask task) {
-        executeIndex(task, null);
-    }
-
-    public void executeIndex(IAbstractIndexCreationTask task, String database) {
-        assertInitialized();
-        task.execute(this, conventions, database);
-    }
-
-    @Override
-    public void executeIndexes(List<IAbstractIndexCreationTask> tasks) {
-        executeIndexes(tasks, null);
-    }
-
-    @Override
-    public void executeIndexes(List<IAbstractIndexCreationTask> tasks, String database) {
-        assertInitialized();
-        IndexDefinition[] indexesToAdd = IndexCreation.createIndexesToAdd(tasks, conventions);
-
-        maintenance()
-                .forDatabase(getEffectiveDatabase(database))
-                .send(new PutIndexesOperation(indexesToAdd));
-    }
-
-    private TimeSeriesOperations _timeSeriesOperation;
-
-    public TimeSeriesOperations timeSeries() {
-        if (_timeSeriesOperation == null) {
-            _timeSeriesOperation = new TimeSeriesOperations(this);
-        }
-
-        return _timeSeriesOperation;
-    }
 
     private DocumentConventions conventions;
 
@@ -195,15 +128,6 @@ public abstract class DocumentStoreBase implements IDocumentStore {
     private char[] _certificatePrivateKeyPassword = "".toCharArray();
     private KeyStore _trustStore;
 
-    public abstract BulkInsertOperation bulkInsert();
-
-    public abstract BulkInsertOperation bulkInsert(String database);
-
-    private final DocumentSubscriptions _subscriptions;
-
-    public DocumentSubscriptions subscriptions() {
-        return _subscriptions;
-    }
 
     private ConcurrentMap<String, Long> _lastRaftIndexPerDatabase = new ConcurrentSkipListMap<>(String::compareToIgnoreCase);
 
@@ -411,21 +335,10 @@ public abstract class DocumentStoreBase implements IDocumentStore {
         this._trustStore = trustStore;
     }
 
-    public abstract DatabaseSmuggler smuggler();
-
     public abstract RequestExecutor getRequestExecutor();
 
     public abstract RequestExecutor getRequestExecutor(String databaseName);
 
-    @Override
-    public CleanCloseable aggressivelyCache() {
-        return aggressivelyCache(null);
-    }
-
-    @Override
-    public CleanCloseable aggressivelyCache(String database) {
-        return aggressivelyCacheFor(conventions.aggressiveCache().getDuration(), database);
-    }
 
     protected void registerEvents(InMemoryDocumentSessionOperations session) {
         for (EventHandler<BeforeStoreEventArgs> handler : onBeforeStore) {

@@ -3,7 +3,6 @@ package net.ravendb.client.test.core.streaming;
 import net.ravendb.client.RemoteTestBase;
 import net.ravendb.client.documents.CloseableIterator;
 import net.ravendb.client.documents.IDocumentStore;
-import net.ravendb.client.documents.commands.StreamResult;
 import net.ravendb.client.documents.session.IDocumentSession;
 import net.ravendb.client.infrastructure.entities.User;
 import org.junit.jupiter.api.Test;

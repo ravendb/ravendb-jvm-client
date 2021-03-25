@@ -19,9 +19,6 @@ import net.ravendb.client.documents.conventions.IShouldIgnoreEntityChanges;
 import net.ravendb.client.documents.identity.GenerateEntityIdOnTheClient;
 import net.ravendb.client.documents.operations.OperationExecutor;
 import net.ravendb.client.documents.operations.SessionOperationExecutor;
-import net.ravendb.client.documents.operations.timeSeries.TimeSeriesRangeResult;
-import net.ravendb.client.documents.session.operations.lazy.ILazyOperation;
-import net.ravendb.client.documents.session.timeSeries.TimeSeriesEntry;
 import net.ravendb.client.exceptions.documents.session.NonUniqueObjectException;
 import net.ravendb.client.extensions.JsonExtensions;
 import net.ravendb.client.http.RavenCommand;
@@ -55,9 +52,6 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
     protected final RequestExecutor _requestExecutor;
 
     private OperationExecutor _operationExecutor;
-
-    protected final List<ILazyOperation> pendingLazyOperations = new ArrayList<>();
-    protected final Map<ILazyOperation, Consumer<Object>> onEvaluateLazy = new HashMap<>();
 
     private static final AtomicInteger _instancesCounter = new AtomicInteger();
 
@@ -193,27 +187,8 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
      */
     public final DeletedEntitiesHolder deletedEntities = new DeletedEntitiesHolder();
 
-    /**
-     * @return map which holds the data required to manage Counters tracking for RavenDB's Unit of Work
-     */
-    public Map<String, Tuple<Boolean, Map<String, Long>>> getCountersByDocId() {
-        if (_countersByDocId == null) {
-            _countersByDocId = new TreeMap<>(String::compareToIgnoreCase);
-        }
-        return _countersByDocId;
-    }
 
-    private Map<String, Tuple<Boolean, Map<String, Long>>> _countersByDocId;
 
-    private Map<String, Map<String, List<TimeSeriesRangeResult>>> _timeSeriesByDocId;
-
-    public Map<String, Map<String, List<TimeSeriesRangeResult>>> getTimeSeriesByDocId() {
-        if (_timeSeriesByDocId == null) {
-            _timeSeriesByDocId = new TreeMap<>(String::compareToIgnoreCase);
-        }
-
-        return _timeSeriesByDocId;
-    }
 
     protected final DocumentStoreBase _documentStore;
 
@@ -335,8 +310,6 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
     final Map<IdTypeAndName, ICommandData> deferredCommandsMap = new HashMap<>();
 
     public final boolean noTracking;
-
-    public Map<String, ForceRevisionStrategy> idsForCreatingForcedRevisions = new TreeMap<>(String::compareToIgnoreCase);
 
     public int getDeferredCommandsCount() {
         return deferredCommands.size();
@@ -704,9 +677,6 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
 
         deletedEntities.add(entity);
         includedDocumentsById.remove(value.getId());
-        if (_countersByDocId != null) {
-            _countersByDocId.remove(value.getId());
-        }
         _knownMissingIds.add(value.getId());
     }
 
@@ -743,9 +713,6 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
 
         _knownMissingIds.add(id);
         changeVector = isUseOptimisticConcurrency() ? changeVector : null;
-        if (_countersByDocId != null) {
-            _countersByDocId.remove(id);
-        }
         defer(new DeleteCommandData(id, ObjectUtils.firstNonNull(expectedChangeVector, changeVector)));
     }
 
@@ -890,7 +857,6 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
 
         prepareForEntitiesDeletion(result, null);
         prepareForEntitiesPuts(result);
-        prepareForCreatingRevisionsFromIds(result);
         prepareCompareExchangeEntities(result);
 
         if (deferredCommands.size() > deferredCommandsCount) {
@@ -941,28 +907,6 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
 
     }
 
-    private void prepareCompareExchangeEntities(SaveChangesData result) {
-        if (!hasClusterSession()) {
-            return;
-        }
-
-        ClusterTransactionOperationsBase clusterTransactionOperations = getClusterSession();
-        if (clusterTransactionOperations.getNumberOfTrackedCompareExchangeValues() == 0) {
-            return;
-        }
-
-        if (transactionMode != TransactionMode.CLUSTER_WIDE) {
-            throw new IllegalStateException("Performing cluster transaction operation require the TransactionMode to be set to CLUSTER_WIDE");
-        }
-
-        getClusterSession().prepareCompareExchangeEntities(result);
-    }
-
-    protected abstract boolean hasClusterSession();
-
-    protected abstract void clearClusterSession();
-
-    public abstract ClusterTransactionOperationsBase getClusterSession();
 
     private static boolean updateMetadataModifications(DocumentInfo documentInfo) {
         boolean dirty = false;
@@ -982,15 +926,6 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
         return dirty;
     }
 
-    private void prepareForCreatingRevisionsFromIds(SaveChangesData result) {
-        // Note: here there is no point checking 'Before' or 'After' because if there were changes then forced revision is done from the PUT command....
-
-        for (String idEntry : idsForCreatingForcedRevisions.keySet()) {
-            result.getSessionCommands().add(new ForceRevisionCommandData(idEntry));
-        }
-
-        idsForCreatingForcedRevisions.clear();
-    }
 
     @SuppressWarnings("ConstantConditions")
     private void prepareForEntitiesDeletion(SaveChangesData result, Map<String, List<DocumentsChanges>> changes) {
@@ -1117,18 +1052,7 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
                     changeVector = null;
                 }
 
-                ForceRevisionStrategy forceRevisionCreationStrategy = ForceRevisionStrategy.NONE;
-
-                if (entity.getValue().getId() != null) {
-                    // Check if user wants to Force a Revision
-                    ForceRevisionStrategy creationStrategy = idsForCreatingForcedRevisions.get(entity.getValue().getId());
-                    if (creationStrategy != null) {
-                        idsForCreatingForcedRevisions.remove(entity.getValue().getId());
-                        forceRevisionCreationStrategy = creationStrategy;
-                    }
-                }
-
-                result.getSessionCommands().add(new PutCommandDataWithJson(entity.getValue().getId(), changeVector, document, forceRevisionCreationStrategy));
+                result.getSessionCommands().add(new PutCommandDataWithJson(entity.getValue().getId(), changeVector, document));
             }
         }
     }
@@ -1196,50 +1120,6 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
         return entityChanged(document, documentInfo, null);
     }
 
-    public void waitForReplicationAfterSaveChanges() {
-        waitForReplicationAfterSaveChanges(options -> {
-        });
-    }
-
-    public void waitForReplicationAfterSaveChanges(Consumer<ReplicationWaitOptsBuilder> options) {
-        ReplicationWaitOptsBuilder builder = new ReplicationWaitOptsBuilder();
-        options.accept(builder);
-
-        BatchOptions builderOptions = builder.getOptions();
-        ReplicationBatchOptions replicationOptions = builderOptions.getReplicationOptions();
-        if (replicationOptions == null) {
-            builderOptions.setReplicationOptions(replicationOptions = new ReplicationBatchOptions());
-        }
-
-        if (replicationOptions.getWaitForReplicasTimeout() == null) {
-            replicationOptions.setWaitForReplicasTimeout(Duration.ofSeconds(15));
-        }
-
-        replicationOptions.setWaitForReplicas(true);
-    }
-
-    public void waitForIndexesAfterSaveChanges() {
-        waitForIndexesAfterSaveChanges(options -> {
-        });
-    }
-
-    public void waitForIndexesAfterSaveChanges(Consumer<InMemoryDocumentSessionOperations.IndexesWaitOptsBuilder> options) {
-        IndexesWaitOptsBuilder builder = new IndexesWaitOptsBuilder();
-        options.accept(builder);
-
-        BatchOptions builderOptions = builder.getOptions();
-        IndexBatchOptions indexOptions = builderOptions.getIndexOptions();
-
-        if (indexOptions == null) {
-            builderOptions.setIndexOptions(indexOptions = new IndexBatchOptions());
-        }
-
-        if (indexOptions.getWaitForIndexesTimeout() == null) {
-            indexOptions.setWaitForIndexesTimeout(Duration.ofSeconds(15));
-        }
-
-        indexOptions.setWaitForIndexes(true);
-    }
 
     private void getAllEntitiesChanges(Map<String, List<DocumentsChanges>> changes) {
         for (Map.Entry<String, DocumentInfo> pair : documentsById) {
@@ -1271,12 +1151,7 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
         if (documentInfo != null) {
             documentsByEntity.evict(entity);
             documentsById.remove(documentInfo.getId());
-            if (_countersByDocId != null) {
-                _countersByDocId.remove(documentInfo.getId());
-            }
-            if (_timeSeriesByDocId != null) {
-                _timeSeriesByDocId.remove(documentInfo.getId());
-            }
+
         }
 
         deletedEntities.evict(entity);
@@ -1292,13 +1167,9 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
         deletedEntities.clear();
         documentsById.clear();
         _knownMissingIds.clear();
-        if (_countersByDocId != null) {
-            _countersByDocId.clear();
-        }
         deferredCommands.clear();
         deferredCommandsMap.clear();
         clearClusterSession();
-        pendingLazyOperations.clear();
         entityToJson.clear();
     }
 
@@ -1455,509 +1326,8 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
         }
     }
 
-    public void registerCounters(ObjectNode resultCounters, String[] ids, String[] countersToInclude, boolean gotAll) {
-        if (noTracking) {
-            return;
-        }
 
-        if (resultCounters == null || resultCounters.size() == 0) {
-            if (gotAll) {
-                for (String id : ids) {
-                    setGotAllCountersForDocument(id);
-                }
 
-                return;
-            }
-        } else {
-            registerCountersInternal(resultCounters, null, false, gotAll);
-        }
-
-        registerMissingCounters(ids, countersToInclude);
-    }
-
-    public void registerCounters(ObjectNode resultCounters, Map<String, String[]> countersToInclude) {
-        if (noTracking) {
-            return;
-        }
-
-        if (resultCounters == null || resultCounters.size() == 0) {
-            setGotAllInCacheIfNeeded(countersToInclude);
-        } else {
-            registerCountersInternal(resultCounters, countersToInclude, true, false);
-        }
-
-        registerMissingCounters(countersToInclude);
-    }
-
-    private void registerCountersInternal(ObjectNode resultCounters, Map<String, String[]> countersToInclude, boolean fromQueryResult, boolean gotAll) {
-
-        Iterator<Map.Entry<String, JsonNode>> fieldsIterator = resultCounters.fields();
-
-        while (fieldsIterator.hasNext()) {
-            Map.Entry<String, JsonNode> fieldAndValue = fieldsIterator.next();
-
-            if (fieldAndValue.getValue() == null || fieldAndValue.getValue().isNull()) {
-                continue;
-            }
-
-            String[] counters = new String[0];
-
-            if (fromQueryResult) {
-                counters = countersToInclude.get(fieldAndValue.getKey());
-                gotAll = counters != null && counters.length == 0;
-            }
-
-            if (fieldAndValue.getValue().size() == 0 && !gotAll) {
-                Tuple<Boolean, Map<String, Long>> cache =
-                        _countersByDocId.get(fieldAndValue.getKey());
-                if (cache == null) {
-                    continue;
-                }
-
-                for (String counter : counters) {
-                    cache.second.remove(counter);
-                }
-
-                _countersByDocId.put(fieldAndValue.getKey(), cache);
-                continue;
-            }
-
-            registerCountersForDocument(fieldAndValue.getKey(), gotAll, (ArrayNode) fieldAndValue.getValue(), countersToInclude);
-        }
-    }
-
-    private void registerCountersForDocument(String id, boolean gotAll, ArrayNode counters, Map<String, String[]> countersToInclude) {
-        Tuple<Boolean, Map<String, Long>> cache = getCountersByDocId().get(id);
-        if (cache == null) {
-            cache = Tuple.create(gotAll, new TreeMap<>(String::compareToIgnoreCase));
-        }
-
-        Set<String> deletedCounters = cache.second.isEmpty()
-                ? new HashSet<>()
-                : (countersToInclude.get(id).length == 0
-                    ? new HashSet<>(cache.second.keySet())
-                    : new HashSet<>(Arrays.asList(countersToInclude.get(id))));
-
-        for (JsonNode counterJson : counters) {
-            JsonNode counterName = counterJson.get("CounterName");
-            JsonNode totalValue = counterJson.get("TotalValue");
-
-            if (counterName != null && !counterName.isNull() && totalValue != null && !totalValue.isNull()) {
-                cache.second.put(counterName.asText(), totalValue.longValue());
-                deletedCounters.remove(counterName.asText());
-            }
-        }
-
-        if (!deletedCounters.isEmpty()) {
-            for (String name : deletedCounters) {
-                cache.second.remove(name);
-            }
-        }
-
-        cache.first = gotAll;
-        getCountersByDocId().put(id, cache);
-    }
-
-    private void setGotAllInCacheIfNeeded(Map<String, String[]> countersToInclude) {
-        for (Map.Entry<String, String[]> kvp : countersToInclude.entrySet()) {
-            if (kvp.getValue().length > 0) {
-                continue;
-            }
-
-            setGotAllCountersForDocument(kvp.getKey());
-        }
-    }
-
-    private void setGotAllCountersForDocument(String id) {
-        Tuple<Boolean, Map<String, Long>> cache = getCountersByDocId().get(id);
-
-        if (cache == null) {
-            cache = Tuple.create(false, new TreeMap<>(String::compareToIgnoreCase));
-        }
-
-        cache.first = true;
-        getCountersByDocId().put(id, cache);
-    }
-
-    private void registerMissingCounters(Map<String, String[]> countersToInclude) {
-        if (countersToInclude == null) {
-            return;
-        }
-
-        for (Map.Entry<String, String[]> kvp : countersToInclude.entrySet()) {
-            Tuple<Boolean, Map<String, Long>> cache = getCountersByDocId().get(kvp.getKey());
-            if (cache == null) {
-                cache = Tuple.create(false, new TreeMap<>(String::compareToIgnoreCase));
-                getCountersByDocId().put(kvp.getKey(), cache);
-            }
-
-            for (String counter : kvp.getValue()) {
-                if (cache.second.containsKey(counter)) {
-                    continue;
-                }
-
-                cache.second.put(counter, null);
-            }
-        }
-    }
-
-    private void registerMissingCounters(String[] ids, String[] countersToInclude) {
-        if (countersToInclude == null) {
-            return;
-        }
-
-        for (String counter : countersToInclude) {
-            for (String id : ids) {
-                Tuple<Boolean, Map<String, Long>> cache = getCountersByDocId().get(id);
-                if (cache == null) {
-                    cache = Tuple.create(false, new TreeMap<>(String::compareToIgnoreCase));
-                    getCountersByDocId().put(id, cache);
-                }
-
-                if (cache.second.containsKey(counter)) {
-                    continue;
-                }
-
-                cache.second.put(counter, null);
-            }
-        }
-    }
-
-    public void registerTimeSeries(ObjectNode resultTimeSeries) {
-        if (noTracking || resultTimeSeries == null) {
-            return;
-        }
-
-        Iterator<Map.Entry<String, JsonNode>> fields = resultTimeSeries.fields();
-        while (fields.hasNext()) {
-            Map.Entry<String, JsonNode> field = fields.next();
-            if (field.getValue() == null || field.getValue().isNull()) {
-                continue;
-            }
-
-            String id = field.getKey();
-
-            Map<String, List<TimeSeriesRangeResult>> cache =
-                    getTimeSeriesByDocId().computeIfAbsent(id, x -> new TreeMap<>(String::compareToIgnoreCase));
-
-            if (!field.getValue().isObject()) {
-                throw new IllegalStateException("Unable to read time series range results on document: '" + id + "'.");
-            }
-
-            Iterator<Map.Entry<String, JsonNode>> innerFields = field.getValue().fields();
-
-            while (innerFields.hasNext()) {
-                Map.Entry<String, JsonNode> innerField = innerFields.next();
-
-                if (innerField.getValue() == null || innerField.getValue().isNull()) {
-                    continue;
-                }
-
-                String name = innerField.getKey();
-
-                if (!innerField.getValue().isArray()) {
-                    throw new IllegalStateException("Unable to read time series range results on document: '" + id + "', time series: '" + name + "'.");
-                }
-
-                for (JsonNode jsonRange : innerField.getValue()) {
-                    TimeSeriesRangeResult newRange = parseTimeSeriesRangeResult(mapper, (ObjectNode) jsonRange, id, name);
-                    addToCache(cache, newRange, name);
-                }
-            }
-        }
-    }
-
-    private static void addToCache(Map<String, List<TimeSeriesRangeResult>> cache,
-                                   TimeSeriesRangeResult newRange,
-                                   String name) {
-        List<TimeSeriesRangeResult> localRanges = cache.get(name);
-        if (localRanges == null || localRanges.isEmpty()) {
-            // no local ranges in cache for this series
-
-            cache.put(name, Arrays.asList(newRange));
-            return;
-        }
-
-        if (DatesComparator.compare(leftDate(localRanges.get(0).getFrom()), rightDate(newRange.getTo())) > 0
-                || DatesComparator.compare(rightDate(localRanges.get(localRanges.size() - 1).getTo()), leftDate(newRange.getFrom())) < 0) {
-            // the entire range [from, to] is out of cache bounds
-
-            int index = DatesComparator.compare(leftDate(localRanges.get(0).getFrom()), rightDate(newRange.getTo())) > 0 ? 0 : localRanges.size();
-            localRanges.add(index, newRange);
-            return;
-        }
-
-        int toRangeIndex;
-        int fromRangeIndex = -1;
-        boolean rangeAlreadyInCache = false;
-
-        for (toRangeIndex = 0; toRangeIndex < localRanges.size(); toRangeIndex++) {
-            if (DatesComparator.compare(leftDate(localRanges.get(toRangeIndex).getFrom()), leftDate(newRange.getFrom())) <= 0) {
-                if (DatesComparator.compare(rightDate(localRanges.get(toRangeIndex).getTo()), rightDate(newRange.getTo())) >= 0) {
-                    rangeAlreadyInCache = true;
-                    break;
-                }
-
-                fromRangeIndex = toRangeIndex;
-                continue;
-            }
-
-            if (DatesComparator.compare(rightDate(localRanges.get(toRangeIndex).getTo()), rightDate(newRange.getTo())) >= 0) {
-                break;
-            }
-        }
-
-        if (rangeAlreadyInCache) {
-            updateExistingRange(localRanges.get(toRangeIndex), newRange);
-            return;
-        }
-
-        TimeSeriesEntry[] mergedValues = mergeRanges(fromRangeIndex, toRangeIndex, localRanges, newRange);
-        addToCache(name, newRange.getFrom(), newRange.getTo(), fromRangeIndex, toRangeIndex, localRanges, cache, mergedValues);
-    }
-
-    static void addToCache(String timeseries, Date from, Date to, int fromRangeIndex, int toRangeIndex,
-                           List<TimeSeriesRangeResult> ranges, Map<String, List<TimeSeriesRangeResult>> cache,
-                           TimeSeriesEntry[] values) {
-        if (fromRangeIndex == -1) {
-            // didn't find a 'fromRange' => all ranges in cache start after 'from'
-
-            if (toRangeIndex == ranges.size()) {
-                // the requested range [from, to] contains all the ranges that are in cache
-
-                // e.g. if cache is : [[2,3], [4,5], [7, 10]]
-                // and the requested range is : [1, 15]
-                // after this action cache will be : [[1, 15]]
-
-                TimeSeriesRangeResult timeSeriesRangeResult = new TimeSeriesRangeResult();
-                timeSeriesRangeResult.setFrom(from);
-                timeSeriesRangeResult.setTo(to);
-                timeSeriesRangeResult.setEntries(values);
-
-                List<TimeSeriesRangeResult> result = new ArrayList<>();
-                result.add(timeSeriesRangeResult);
-                cache.put(timeseries, result);
-
-                return;
-            }
-
-            if (DatesComparator.compare(leftDate(ranges.get(toRangeIndex).getFrom()), rightDate(to)) > 0) {
-                // requested range ends before 'toRange' starts
-                // remove all ranges that come before 'toRange' from cache
-                // add the new range at the beginning of the list
-
-                // e.g. if cache is : [[2,3], [4,5], [7,10]]
-                // and the requested range is : [1,6]
-                // after this action cache will be : [[1,6], [7,10]]
-
-                ranges.subList(0, toRangeIndex).clear();
-                TimeSeriesRangeResult timeSeriesRangeResult = new TimeSeriesRangeResult();
-                timeSeriesRangeResult.setFrom(from);
-                timeSeriesRangeResult.setTo(to);
-                timeSeriesRangeResult.setEntries(values);
-
-                ranges.add(0, timeSeriesRangeResult);
-
-                return;
-            }
-
-            // the requested range ends inside 'toRange'
-            // merge the result from server into 'toRange'
-            // remove all ranges that come before 'toRange' from cache
-
-            // e.g. if cache is : [[2,3], [4,5], [7,10]]
-            // and the requested range is : [1,8]
-            // after this action cache will be : [[1,10]]
-
-            ranges.get(toRangeIndex).setFrom(from);
-            ranges.get(toRangeIndex).setEntries(values);
-            ranges.subList(0, toRangeIndex).clear();
-
-            return;
-        }
-
-        // found a 'fromRange'
-
-        if (toRangeIndex == ranges.size()) {
-            // didn't find a 'toRange' => all the ranges in cache end before 'to'
-
-            if (DatesComparator.compare(rightDate(ranges.get(fromRangeIndex).getTo()), leftDate(from)) < 0) {
-                // requested range starts after 'fromRange' ends,
-                // so it needs to be placed right after it
-                // remove all the ranges that come after 'fromRange' from cache
-                // add the merged values as a new range at the end of the list
-
-                // e.g. if cache is : [[2,3], [5,6], [7,10]]
-                // and the requested range is : [4,12]
-                // then 'fromRange' is : [2,3]
-                // after this action cache will be : [[2,3], [4,12]]
-
-
-                ranges.subList(fromRangeIndex + 1, ranges.size()).clear();
-                TimeSeriesRangeResult timeSeriesRangeResult = new TimeSeriesRangeResult();
-                timeSeriesRangeResult.setFrom(from);
-                timeSeriesRangeResult.setTo(to);
-                timeSeriesRangeResult.setEntries(values);
-
-                ranges.add(timeSeriesRangeResult);
-
-                return;
-            }
-
-            // the requested range starts inside 'fromRange'
-            // merge result into 'fromRange'
-            // remove all the ranges from cache that come after 'fromRange'
-
-            // e.g. if cache is : [[2,3], [4,6], [7,10]]
-            // and the requested range is : [5,12]
-            // then 'fromRange' is [4,6]
-            // after this action cache will be : [[2,3], [4,12]]
-
-            ranges.get(fromRangeIndex).setTo(to);
-            ranges.get(fromRangeIndex).setEntries(values);
-            ranges.subList(fromRangeIndex + 1, ranges.size()).clear();
-
-            return;
-        }
-
-        // found both 'fromRange' and 'toRange'
-        // the requested range is inside cache bounds
-
-        if (DatesComparator.compare(rightDate(ranges.get(fromRangeIndex).getTo()), leftDate(from)) < 0) {
-            // requested range starts after 'fromRange' ends
-
-            if (DatesComparator.compare(leftDate(ranges.get(toRangeIndex).getFrom()), rightDate(to)) > 0)
-            {
-                // requested range ends before 'toRange' starts
-
-                // remove all ranges in between 'fromRange' and 'toRange'
-                // place new range in between 'fromRange' and 'toRange'
-
-                // e.g. if cache is : [[2,3], [5,6], [7,8], [10,12]]
-                // and the requested range is : [4,9]
-                // then 'fromRange' is [2,3] and 'toRange' is [10,12]
-                // after this action cache will be : [[2,3], [4,9], [10,12]]
-
-                ranges.subList(fromRangeIndex + 1, toRangeIndex).clear();
-
-                TimeSeriesRangeResult timeSeriesRangeResult = new TimeSeriesRangeResult();
-                timeSeriesRangeResult.setFrom(from);
-                timeSeriesRangeResult.setTo(to);
-                timeSeriesRangeResult.setEntries(values);
-
-                ranges.add(fromRangeIndex + 1, timeSeriesRangeResult);
-
-                return;
-            }
-
-            // requested range ends inside 'toRange'
-
-            // merge the new range into 'toRange'
-            // remove all ranges in between 'fromRange' and 'toRange'
-
-            // e.g. if cache is : [[2,3], [5,6], [7,10]]
-            // and the requested range is : [4,9]
-            // then 'fromRange' is [2,3] and 'toRange' is [7,10]
-            // after this action cache will be : [[2,3], [4,10]]
-
-            ranges.subList(fromRangeIndex + 1, toRangeIndex).clear();
-            ranges.get(toRangeIndex).setFrom(from);
-            ranges.get(toRangeIndex).setEntries(values);
-
-            return;
-        }
-
-        // the requested range starts inside 'fromRange'
-
-        if (DatesComparator.compare(leftDate(ranges.get(toRangeIndex).getFrom()), rightDate(to)) > 0)
-        {
-            // requested range ends before 'toRange' starts
-
-            // remove all ranges in between 'fromRange' and 'toRange'
-            // merge new range into 'fromRange'
-
-            // e.g. if cache is : [[2,4], [5,6], [8,10]]
-            // and the requested range is : [3,7]
-            // then 'fromRange' is [2,4] and 'toRange' is [8,10]
-            // after this action cache will be : [[2,7], [8,10]]
-
-            ranges.get(fromRangeIndex).setTo(to);
-            ranges.get(fromRangeIndex).setEntries(values);
-            ranges.subList(fromRangeIndex + 1, toRangeIndex).clear();
-
-            return;
-        }
-
-        // the requested range starts inside 'fromRange'
-        // and ends inside 'toRange'
-
-        // merge all ranges in between 'fromRange' and 'toRange'
-        // into a single range [fromRange.From, toRange.To]
-
-        // e.g. if cache is : [[2,4], [5,6], [8,10]]
-        // and the requested range is : [3,9]
-        // then 'fromRange' is [2,4] and 'toRange' is [8,10]
-        // after this action cache will be : [[2,10]]
-
-        ranges.get(fromRangeIndex).setTo(ranges.get(toRangeIndex).getTo());
-        ranges.get(fromRangeIndex).setEntries(values);
-        ranges.subList(fromRangeIndex + 1, toRangeIndex + 1).clear();
-    }
-
-    private static TimeSeriesRangeResult parseTimeSeriesRangeResult(ObjectMapper mapper, ObjectNode jsonRange, String id, String databaseName) {
-        return mapper.convertValue(jsonRange, TimeSeriesRangeResult.class);
-    }
-
-    private static TimeSeriesEntry[] mergeRanges(int fromRangeIndex, int toRangeIndex, List<TimeSeriesRangeResult> localRanges, TimeSeriesRangeResult newRange) {
-        List<TimeSeriesEntry> mergedValues = new ArrayList<>();
-
-        if (fromRangeIndex != -1 && localRanges.get(fromRangeIndex).getTo().getTime() >= newRange.getFrom().getTime()) {
-            for (TimeSeriesEntry val : localRanges.get(fromRangeIndex).getEntries()) {
-                if (val.getTimestamp().getTime() >= newRange.getFrom().getTime()) {
-                    break;
-                }
-                mergedValues.add(val);
-            }
-        }
-
-        mergedValues.addAll(Arrays.asList(newRange.getEntries()));
-
-        if (toRangeIndex < localRanges.size()
-                && DatesComparator.compare(leftDate(localRanges.get(toRangeIndex).getFrom()), rightDate(newRange.getTo())) <= 0) {
-            for (TimeSeriesEntry val : localRanges.get(toRangeIndex).getEntries()) {
-                if (val.getTimestamp().getTime() <= newRange.getTo().getTime()) {
-                    continue;
-                }
-                mergedValues.add(val);
-            }
-        }
-
-        return mergedValues.toArray(new TimeSeriesEntry[0]);
-    }
-
-    private static void updateExistingRange(TimeSeriesRangeResult localRange, TimeSeriesRangeResult newRange) {
-        List<TimeSeriesEntry> newValues = new ArrayList<>();
-        int index;
-        for (index = 0; index < localRange.getEntries().length; index++) {
-            if (localRange.getEntries()[index].getTimestamp().getTime() >= newRange.getFrom().getTime()) {
-                break;
-            }
-
-            newValues.add(localRange.getEntries()[index]);
-        }
-
-        newValues.addAll(Arrays.asList(newRange.getEntries()));
-
-        for (int j = 0; j < localRange.getEntries().length; j++) {
-            if (localRange.getEntries()[j].getTimestamp().getTime() <= newRange.getTo().getTime()) {
-                continue;
-            }
-
-            newValues.add(localRange.getEntries()[j]);
-        }
-
-        localRange.setEntries(newValues.toArray(new TimeSeriesEntry[0]));
-    }
 
     @Override
     public int hashCode() {
@@ -2224,78 +1594,8 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
     }
 
 
-    public class ReplicationWaitOptsBuilder {
 
-        private BatchOptions getOptions() {
-            if (InMemoryDocumentSessionOperations.this._saveChangesOptions == null) {
-                InMemoryDocumentSessionOperations.this._saveChangesOptions = new BatchOptions();
-            }
 
-            if (InMemoryDocumentSessionOperations.this._saveChangesOptions.getReplicationOptions() == null) {
-                InMemoryDocumentSessionOperations.this._saveChangesOptions.setReplicationOptions(new ReplicationBatchOptions());
-            }
-
-            return InMemoryDocumentSessionOperations.this._saveChangesOptions;
-        }
-
-        public ReplicationWaitOptsBuilder withTimeout(Duration timeout) {
-            getOptions().getReplicationOptions().setWaitForReplicasTimeout(timeout);
-            return this;
-        }
-
-        public ReplicationWaitOptsBuilder throwOnTimeout(boolean shouldThrow) {
-            getOptions().getReplicationOptions().setThrowOnTimeoutInWaitForReplicas(shouldThrow);
-            return this;
-        }
-
-        public ReplicationWaitOptsBuilder numberOfReplicas(int replicas) {
-            getOptions().getReplicationOptions().setNumberOfReplicasToWaitFor(replicas);
-            return this;
-        }
-
-        public ReplicationWaitOptsBuilder majority(boolean waitForMajority) {
-            getOptions().getReplicationOptions().setMajority(waitForMajority);
-            return this;
-        }
-    }
-
-    public class IndexesWaitOptsBuilder {
-
-        private BatchOptions getOptions() {
-            if (InMemoryDocumentSessionOperations.this._saveChangesOptions == null) {
-                InMemoryDocumentSessionOperations.this._saveChangesOptions = new BatchOptions();
-            }
-
-            if (InMemoryDocumentSessionOperations.this._saveChangesOptions.getIndexOptions() == null) {
-                InMemoryDocumentSessionOperations.this._saveChangesOptions.setIndexOptions(new IndexBatchOptions());
-            }
-
-            return InMemoryDocumentSessionOperations.this._saveChangesOptions;
-        }
-
-        public IndexesWaitOptsBuilder withTimeout(Duration timeout) {
-            getOptions().getIndexOptions().setWaitForIndexesTimeout(timeout);
-            return this;
-        }
-
-        public IndexesWaitOptsBuilder throwOnTimeout(boolean shouldThrow) {
-            getOptions().getIndexOptions().setThrowOnTimeoutInWaitForIndexes(shouldThrow);
-            return this;
-        }
-
-        public IndexesWaitOptsBuilder waitForIndexes(String... indexes) {
-            getOptions().getIndexOptions().setWaitForSpecificIndexes(indexes);
-            return this;
-        }
-    }
-
-    public TransactionMode getTransactionMode() {
-        return transactionMode;
-    }
-
-    public void setTransactionMode(TransactionMode transactionMode) {
-        this.transactionMode = transactionMode;
-    }
 
     public static class DocumentsByEntityHolder implements Iterable<DocumentsByEntityHolder.DocumentsByEntityEnumeratorResult> {
         private final Map<Object, DocumentInfo> _documentsByEntity = new IdentityLinkedHashMap<>();

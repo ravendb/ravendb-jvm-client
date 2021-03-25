@@ -2,7 +2,6 @@ package net.ravendb.client.test.client;
 
 import net.ravendb.client.RemoteTestBase;
 import net.ravendb.client.documents.IDocumentStore;
-import net.ravendb.client.documents.operations.CompactDatabaseOperation;
 import net.ravendb.client.documents.operations.Operation;
 import net.ravendb.client.documents.session.IDocumentSession;
 import net.ravendb.client.infrastructure.entities.User;

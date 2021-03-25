@@ -4,7 +4,6 @@ import net.ravendb.client.Constants;
 import net.ravendb.client.RemoteTestBase;
 import net.ravendb.client.documents.DocumentStore;
 import net.ravendb.client.documents.IDocumentStore;
-import net.ravendb.client.documents.commands.GetRevisionsBinEntryCommand;
 import net.ravendb.client.documents.operations.revisions.ConfigureRevisionsOperation;
 import net.ravendb.client.documents.operations.revisions.RevisionsCollectionConfiguration;
 import net.ravendb.client.documents.operations.revisions.RevisionsConfiguration;

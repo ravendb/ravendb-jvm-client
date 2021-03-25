@@ -2,8 +2,6 @@ package net.ravendb.client.documents.commands;
 
 import net.ravendb.client.RemoteTestBase;
 import net.ravendb.client.documents.IDocumentStore;
-import net.ravendb.client.serverwide.operations.BuildNumber;
-import net.ravendb.client.serverwide.operations.GetBuildNumberOperation;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;

@@ -2,8 +2,6 @@ package net.ravendb.client.counters;
 
 import net.ravendb.client.RemoteTestBase;
 import net.ravendb.client.documents.IDocumentStore;
-import net.ravendb.client.documents.operations.PatchOperation;
-import net.ravendb.client.documents.operations.PatchRequest;
 import net.ravendb.client.documents.operations.counters.GetCountersOperation;
 import net.ravendb.client.documents.session.IDocumentSession;
 import net.ravendb.client.infrastructure.entities.User;

@@ -5,7 +5,6 @@ import net.ravendb.client.documents.IDocumentStore;
 import net.ravendb.client.documents.operations.counters.CountersDetail;
 import net.ravendb.client.documents.operations.counters.GetCountersOperation;
 import net.ravendb.client.documents.session.IDocumentSession;
-import net.ravendb.client.documents.session.ISessionDocumentCounters;
 import net.ravendb.client.infrastructure.entities.User;
 import org.junit.jupiter.api.Test;
 

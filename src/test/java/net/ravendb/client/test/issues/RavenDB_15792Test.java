@@ -5,11 +5,9 @@ import net.ravendb.client.documents.IDocumentStore;
 import net.ravendb.client.documents.queries.timeSeries.TimeSeriesRawResult;
 import net.ravendb.client.documents.session.IDocumentSession;
 import net.ravendb.client.documents.session.IRawDocumentQuery;
-import net.ravendb.client.documents.session.ISessionDocumentTimeSeries;
 import net.ravendb.client.documents.session.timeSeries.TimeSeriesEntry;
 import net.ravendb.client.infrastructure.entities.User;
 import org.apache.commons.lang3.time.DateUtils;
-import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 import java.util.Calendar;

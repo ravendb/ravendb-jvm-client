@@ -5,7 +5,6 @@ import net.ravendb.client.documents.IDocumentStore;
 import net.ravendb.client.documents.operations.timeSeries.GetTimeSeriesOperation;
 import net.ravendb.client.documents.operations.timeSeries.TimeSeriesRangeResult;
 import net.ravendb.client.documents.session.IDocumentSession;
-import net.ravendb.client.documents.session.ISessionDocumentTimeSeries;
 import net.ravendb.client.documents.session.timeSeries.TimeSeriesEntry;
 import net.ravendb.client.infrastructure.entities.User;
 import org.apache.commons.lang3.time.DateUtils;

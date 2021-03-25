@@ -2,7 +2,6 @@ package net.ravendb.client.test.issues;
 
 import net.ravendb.client.RemoteTestBase;
 import net.ravendb.client.documents.IDocumentStore;
-import net.ravendb.client.documents.session.DocumentsChanges;
 import net.ravendb.client.documents.session.IDocumentSession;
 import net.ravendb.client.infrastructure.orders.Company;
 import org.junit.jupiter.api.Test;

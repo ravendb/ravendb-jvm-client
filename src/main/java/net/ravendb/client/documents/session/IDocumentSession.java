@@ -1,6 +1,5 @@
 package net.ravendb.client.documents.session;
 
-import net.ravendb.client.documents.indexes.AbstractCommonApiForIndexes;
 import net.ravendb.client.documents.queries.Query;
 import net.ravendb.client.documents.session.loaders.IIncludeBuilder;
 import net.ravendb.client.documents.session.loaders.ILoaderWithInclude;
@@ -137,30 +136,5 @@ public interface IDocumentSession extends CleanCloseable {
 
     <T> IDocumentQuery<T> query(Class<T> clazz, Query collectionOrIndexName);
 
-    <T, TIndex extends AbstractCommonApiForIndexes> IDocumentQuery<T> query(Class<T> clazz, Class<TIndex> indexClazz);
-
-    ISessionDocumentCounters countersFor(String documentId);
-
-    ISessionDocumentCounters countersFor(Object entity);
-
-    ISessionDocumentTimeSeries timeSeriesFor(String documentId, String name);
-
-    ISessionDocumentTimeSeries timeSeriesFor(Object entity, String name);
-
-    <T> ISessionDocumentTypedTimeSeries<T> timeSeriesFor(Class<T> clazz, String documentId);
-
-    <T> ISessionDocumentTypedTimeSeries<T> timeSeriesFor(Class<T> clazz, String documentId, String name);
-
-    <T> ISessionDocumentTypedTimeSeries<T> timeSeriesFor(Class<T> clazz, Object entity);
-
-    <T> ISessionDocumentTypedTimeSeries<T> timeSeriesFor(Class<T> clazz, Object entity, String name);
-
-    <T> ISessionDocumentRollupTypedTimeSeries<T> timeSeriesRollupFor(Class<T> clazz, Object entity, String policy);
-
-    <T> ISessionDocumentRollupTypedTimeSeries<T> timeSeriesRollupFor(Class<T> clazz, Object entity, String policy, String raw);
-
-    <T> ISessionDocumentRollupTypedTimeSeries<T> timeSeriesRollupFor(Class<T> clazz, String documentId, String policy);
-
-    <T> ISessionDocumentRollupTypedTimeSeries<T> timeSeriesRollupFor(Class<T> clazz, String documentId, String policy, String raw);
 
 }

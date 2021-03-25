@@ -5,7 +5,6 @@ import com.fasterxml.jackson.databind.node.*;
 import com.google.common.collect.Lists;
 import net.ravendb.client.Constants;
 import net.ravendb.client.documents.session.DocumentInfo;
-import net.ravendb.client.documents.session.DocumentsChanges;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 

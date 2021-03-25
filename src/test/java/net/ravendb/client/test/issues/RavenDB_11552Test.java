@@ -3,7 +3,6 @@ package net.ravendb.client.test.issues;
 import net.ravendb.client.RemoteTestBase;
 import net.ravendb.client.documents.IDocumentStore;
 import net.ravendb.client.documents.commands.batches.*;
-import net.ravendb.client.documents.operations.PatchRequest;
 import net.ravendb.client.documents.session.IDocumentSession;
 import net.ravendb.client.infrastructure.entities.Company;
 import org.junit.jupiter.api.Test;

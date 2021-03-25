@@ -161,21 +161,7 @@ public interface IAdvancedDocumentSessionOperations {
      */
     <T> String getChangeVectorFor(T instance);
 
-    /**
-     * Gets all the counter names for the specified entity.
-     * @param instance The instance
-     * @param <T> Class of instance
-     * @return List of counter names
-     */
-    <T> List<String> getCountersFor(T instance);
 
-    /**
-     * Gets all time series names for the specified entity.
-     * @param instance The instance
-     * @param <T> Class of instance
-     * @return List of time series names
-     */
-    <T> List<String> getTimeSeriesFor(T instance);
 
     /**
      * Gets last modified date for the specified entity.
@@ -202,12 +188,7 @@ public interface IAdvancedDocumentSessionOperations {
      */
     boolean isLoaded(String id);
 
-    /**
-     * Mark the entity as one that should be ignore for change tracking purposes,
-     * it still takes part in the session, but is ignored for SaveChanges.
-     * @param entity Entity for which changed should be ignored
-     */
-    void ignoreChangesFor(Object entity);
+
 
     /**
      * Returns all changes for each entity stored within session. Including name of the field/property that changed, its old and new value and change type.
@@ -220,22 +201,6 @@ public interface IAdvancedDocumentSessionOperations {
      */
     void waitForReplicationAfterSaveChanges();
 
-    /**
-     * SaveChanges will wait for the changes made to be replicates to `replicas` nodes
-     * @param options Configuration options
-     */
-    void waitForReplicationAfterSaveChanges(Consumer<InMemoryDocumentSessionOperations.ReplicationWaitOptsBuilder> options);
-
-    /**
-     * SaveChanges will wait for the indexes to catch up with the saved changes
-     */
-    void waitForIndexesAfterSaveChanges();
-
-    /**
-     * SaveChanges will wait for the indexes to catch up with the saved changes
-     * @param options Configuration options
-     */
-    void waitForIndexesAfterSaveChanges(Consumer<InMemoryDocumentSessionOperations.IndexesWaitOptsBuilder> options);
 
     /**
      * Overwrite the existing transaction mode for the current session.

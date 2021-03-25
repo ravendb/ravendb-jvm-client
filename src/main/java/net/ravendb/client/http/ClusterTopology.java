@@ -13,6 +13,18 @@ public class ClusterTopology {
     private Map<String, String> promotables;
     private Map<String, String> watchers;
 
+    /* TODO  node.js
+    public contains(node: string) {
+        if (this.members && this.members[node]) {
+            return true;
+        }
+        if (this.promotables && this.promotables[node]) {
+            return true;
+        }
+
+        return this.watchers && this.watchers[node];
+    }
+     */
     public boolean contains(String node) {
         if (members != null && members.containsKey(node)) {
             return true;
@@ -23,6 +35,16 @@ public class ClusterTopology {
 
         return watchers != null && watchers.containsKey(node);
     }
+
+    /* TODO PHP
+            public function contains(string $node): bool {
+              if ($this->members !== NULL && in_array($this->members, $node)) {
+                 return true;
+              }
+
+
+            }
+     */
 
     public String getUrlFromTag(String tag) {
         if (tag == null) {

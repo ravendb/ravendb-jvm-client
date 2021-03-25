@@ -1,44 +1,31 @@
 package net.ravendb.client.documents.session;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.base.Defaults;
-import com.google.common.base.Stopwatch;
-import net.ravendb.client.Constants;
-import net.ravendb.client.documents.CloseableIterator;
 import net.ravendb.client.documents.DocumentStore;
-import net.ravendb.client.documents.IdTypeAndName;
-import net.ravendb.client.documents.Lazy;
-import net.ravendb.client.documents.commands.*;
-import net.ravendb.client.documents.commands.batches.*;
-import net.ravendb.client.documents.commands.multiGet.GetRequest;
-import net.ravendb.client.documents.commands.multiGet.GetResponse;
-import net.ravendb.client.documents.commands.multiGet.MultiGetCommand;
-import net.ravendb.client.documents.indexes.AbstractCommonApiForIndexes;
+import net.ravendb.client.documents.commands.GetDocumentsCommand;
+import net.ravendb.client.documents.commands.GetDocumentsResult;
+import net.ravendb.client.documents.commands.HeadDocumentCommand;
+import net.ravendb.client.documents.commands.batches.SingleNodeBatchCommand;
 import net.ravendb.client.documents.linq.IDocumentQueryGenerator;
-import net.ravendb.client.documents.operations.PatchRequest;
-import net.ravendb.client.documents.operations.timeSeries.TimeSeriesConfiguration;
-import net.ravendb.client.documents.operations.timeSeries.TimeSeriesRange;
 import net.ravendb.client.documents.queries.Query;
-import net.ravendb.client.documents.session.loaders.*;
-import net.ravendb.client.documents.session.operations.*;
+import net.ravendb.client.documents.session.loaders.IIncludeBuilder;
+import net.ravendb.client.documents.session.loaders.ILoaderWithInclude;
+import net.ravendb.client.documents.session.loaders.IncludeBuilder;
+import net.ravendb.client.documents.session.loaders.MultiLoaderWithInclude;
+import net.ravendb.client.documents.session.operations.BatchOperation;
+import net.ravendb.client.documents.session.operations.LoadOperation;
+import net.ravendb.client.documents.session.operations.LoadStartingWithOperation;
 import net.ravendb.client.documents.session.operations.lazy.*;
-import net.ravendb.client.documents.session.tokens.FieldsToFetchToken;
-import net.ravendb.client.documents.timeSeries.TimeSeriesOperations;
 import net.ravendb.client.extensions.JsonExtensions;
-import net.ravendb.client.json.MetadataAsDictionary;
-import net.ravendb.client.primitives.Reference;
 import net.ravendb.client.primitives.Tuple;
-import org.apache.commons.io.IOUtils;
-import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.http.util.EntityUtils;
 
 import java.io.IOException;
 import java.io.OutputStream;
-import java.time.Duration;
-import java.util.*;
-import java.util.concurrent.TimeUnit;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Map;
+import java.util.UUID;
 import java.util.function.Consumer;
 
 public class DocumentSession extends InMemoryDocumentSessionOperations
@@ -55,45 +42,7 @@ public class DocumentSession extends InMemoryDocumentSessionOperations
         return this;
     }
 
-    @Override
-    public ILazySessionOperations lazily() {
-        return new LazySessionOperations(this);
-    }
 
-    @Override
-    public IEagerSessionOperations eagerly() {
-        return this;
-    }
-
-    private IAttachmentsSessionOperations _attachments;
-
-    @Override
-    public IAttachmentsSessionOperations attachments() {
-        if (_attachments == null) {
-            _attachments = new DocumentSessionAttachments(this);
-        }
-        return _attachments;
-    }
-
-    private IRevisionsSessionOperations _revisions;
-
-    @Override
-    public IRevisionsSessionOperations revisions() {
-        if (_revisions == null) {
-            _revisions = new DocumentSessionRevisions(this);
-        }
-        return _revisions;
-    }
-
-    private IClusterTransactionOperations _clusterTransaction;
-
-    @Override
-    public IClusterTransactionOperations clusterTransaction() {
-        if (_clusterTransaction == null) {
-            _clusterTransaction = new ClusterTransactionOperations(this);
-        }
-        return _clusterTransaction;
-    }
 
     @Override
     protected boolean hasClusterSession() {
@@ -109,13 +58,6 @@ public class DocumentSession extends InMemoryDocumentSessionOperations
         getClusterSession().clear();
     }
 
-    @Override
-    public ClusterTransactionOperationsBase getClusterSession() {
-        if (_clusterTransaction == null) {
-            _clusterTransaction = new ClusterTransactionOperations(this);
-        }
-        return (ClusterTransactionOperationsBase) _clusterTransaction;
-    }
 
     /**
      * Initializes new DocumentSession
@@ -197,131 +139,14 @@ public class DocumentSession extends InMemoryDocumentSessionOperations
         return getConventions().generateDocumentId(getDatabaseName(), entity);
     }
 
-    public ResponseTimeInformation executeAllPendingLazyOperations() {
-        ArrayList<GetRequest> requests = new ArrayList<>();
-        for (int i = 0; i < pendingLazyOperations.size(); i++) {
-            GetRequest req = pendingLazyOperations.get(i).createRequest();
-            if (req == null) {
-                pendingLazyOperations.remove(i);
-                i--; // so we'll recheck this index
-                continue;
-            }
-            requests.add(req);
-        }
 
-        if (requests.isEmpty()) {
-            return new ResponseTimeInformation();
-        }
 
-        try  {
-            Stopwatch sw = Stopwatch.createStarted();
-
-            incrementRequestCount();
-
-            ResponseTimeInformation responseTimeDuration = new ResponseTimeInformation();
-
-            while (executeLazyOperationsSingleStep(responseTimeDuration, requests, sw)) {
-                Thread.sleep(100);
-            }
-
-            responseTimeDuration.computeServerTotal();
-
-            for (ILazyOperation pendingLazyOperation : pendingLazyOperations) {
-                Consumer<Object> value = onEvaluateLazy.get(pendingLazyOperation);
-                if (value != null) {
-                    value.accept(pendingLazyOperation.getResult());
-                }
-            }
-
-            sw.stop();
-            responseTimeDuration.setTotalClientDuration(Duration.ofMillis(sw.elapsed(TimeUnit.MILLISECONDS)));
-            return responseTimeDuration;
-        } catch (InterruptedException e) {
-            throw new RuntimeException("Unable to execute pending operations: "  + e.getMessage(), e);
-        } finally {
-            pendingLazyOperations.clear();
-        }
-    }
-
-    private boolean executeLazyOperationsSingleStep(ResponseTimeInformation responseTimeInformation, List<GetRequest> requests, Stopwatch sw) {
-        MultiGetOperation multiGetOperation = new MultiGetOperation(this);
-        MultiGetCommand multiGetCommand = multiGetOperation.createRequest(requests);
-        getRequestExecutor().execute(multiGetCommand, sessionInfo);
-
-        List<GetResponse> responses = multiGetCommand.getResult();
-
-        for (int i = 0; i < pendingLazyOperations.size(); i++) {
-            long totalTime;
-            String tempReqTime;
-            GetResponse response = responses.get(i);
-
-            tempReqTime = response.getHeaders().get(Constants.Headers.REQUEST_TIME);
-            response.setElapsed(sw.elapsed());
-            totalTime = tempReqTime != null ? Long.parseLong(tempReqTime) : 0;
-
-            ResponseTimeInformation.ResponseTimeItem timeItem = new ResponseTimeInformation.ResponseTimeItem();
-            timeItem.setUrl(requests.get(i).getUrlAndQuery());
-            timeItem.setDuration(Duration.ofMillis(totalTime));
-
-            responseTimeInformation.getDurationBreakdown().add(timeItem);
-
-            if (response.requestHasErrors()) {
-                throw new IllegalStateException("Got an error from server, status code: " + response.getStatusCode() + System.lineSeparator() + response.getResult());
-            }
-
-            pendingLazyOperations.get(i).handleResponse(response);
-            if (pendingLazyOperations.get(i).isRequiresRetry()) {
-                return true;
-            }
-        }
-        return false;
-    }
 
     /**
      * Begin a load while including the specified path
      */
     public ILoaderWithInclude include(String path) {
         return new MultiLoaderWithInclude(this).include(path);
-    }
-
-    public <T> Lazy<T> addLazyOperation(Class<T> clazz, ILazyOperation operation, Consumer<T> onEval) {
-        pendingLazyOperations.add(operation);
-        Lazy<T> lazyValue = new Lazy<>(() -> {
-            executeAllPendingLazyOperations();
-            return getOperationResult(clazz, operation.getResult());
-        });
-
-        if (onEval != null) {
-            onEvaluateLazy.put(operation, theResult -> onEval.accept(getOperationResult(clazz, theResult)));
-        }
-
-        return lazyValue;
-    }
-
-    protected Lazy<Integer> addLazyCountOperation(ILazyOperation operation) {
-        pendingLazyOperations.add(operation);
-
-        return new Lazy<>(() -> {
-            executeAllPendingLazyOperations();
-            return operation.getQueryResult().getTotalResults();
-        });
-    }
-
-    @SuppressWarnings("unchecked")
-    @Override
-    public <T> Lazy<Map<String, T>> lazyLoadInternal(Class<T> clazz, String[] ids, String[] includes, Consumer<Map<String, T>> onEval) {
-        if (checkIfIdAlreadyIncluded(ids, Arrays.asList(includes))) {
-            return new Lazy<>(() -> load(clazz, ids));
-        }
-
-        LoadOperation loadOperation = new LoadOperation(this)
-                .byIds(ids)
-                .withIncludes(includes);
-
-        LazyLoadOperation<T> lazyOp = new LazyLoadOperation<>(clazz, this, loadOperation)
-                .byIds(ids).withIncludes(includes);
-
-        return addLazyOperation((Class<Map<String, T>>)(Class<?>)Map.class, lazyOp, onEval);
     }
 
     @Override
@@ -405,21 +230,11 @@ public class DocumentSession extends InMemoryDocumentSessionOperations
         IncludeBuilder includeBuilder = new IncludeBuilder(getConventions());
         includes.accept(includeBuilder);
 
-        List<TimeSeriesRange> timeSeriesIncludes = includeBuilder.getTimeSeriesToInclude() != null
-                ? new ArrayList<>(includeBuilder.getTimeSeriesToInclude())
-                : null;
 
-        String[] compareExchangeValuesToInclude = includeBuilder.getCompareExchangeValuesToInclude() != null
-                ? includeBuilder.getCompareExchangeValuesToInclude().toArray(new String[0])
-                : null;
 
         return loadInternal(clazz,
                 ids.toArray(new String[0]),
-                includeBuilder.documentsToInclude != null ? includeBuilder.documentsToInclude.toArray(new String[0]) : null,
-                includeBuilder.getCountersToInclude() != null ? includeBuilder.getCountersToInclude().toArray(new String[0]) : null,
-                includeBuilder.isAllCounters(),
-                timeSeriesIncludes,
-                compareExchangeValuesToInclude);
+                includeBuilder.documentsToInclude != null ? includeBuilder.documentsToInclude.toArray(new String[0]) : null);
     }
 
     public <TResult> Map<String, TResult> loadInternal(Class<TResult> clazz, String[] ids, String[] includes) {
@@ -434,20 +249,7 @@ public class DocumentSession extends InMemoryDocumentSessionOperations
     @Override
     public <TResult> Map<String, TResult> loadInternal(Class<TResult> clazz, String[] ids, String[] includes,
                                                        String[] counterIncludes, boolean includeAllCounters) {
-        return loadInternal(clazz, ids, includes, counterIncludes, includeAllCounters, null, null);
-    }
 
-    @Override
-    public <TResult> Map<String, TResult> loadInternal(Class<TResult> clazz, String[] ids, String[] includes,
-                                                       String[] counterIncludes, boolean includeAllCounters,
-                                                       List<TimeSeriesRange> timeSeriesIncludes) {
-        return loadInternal(clazz, ids, includes, counterIncludes, includeAllCounters, timeSeriesIncludes, null);
-    }
-
-    public <TResult> Map<String, TResult> loadInternal(Class<TResult> clazz, String[] ids, String[] includes,
-                                                       String[] counterIncludes, boolean includeAllCounters,
-                                                       List<TimeSeriesRange> timeSeriesIncludes,
-                                                       String[] compareExchangeValueIncludes) {
         if (ids == null) {
             throw new IllegalArgumentException("Ids cannot be null");
         }
@@ -461,9 +263,6 @@ public class DocumentSession extends InMemoryDocumentSessionOperations
         } else {
             loadOperation.withCounters(counterIncludes);
         }
-
-        loadOperation.withTimeSeries(timeSeriesIncludes);
-        loadOperation.withCompareExchange(compareExchangeValueIncludes);
 
         GetDocumentsCommand command = loadOperation.createRequest();
         if (command != null) {
@@ -500,41 +299,7 @@ public class DocumentSession extends InMemoryDocumentSessionOperations
         return loadStartingWithOperation.getDocuments(clazz);
     }
 
-    @Override
-    public void loadStartingWithIntoStream(String idPrefix, OutputStream output) {
-        loadStartingWithIntoStream(idPrefix, output, null, 0, 25, null, null);
-    }
 
-    @Override
-    public void loadStartingWithIntoStream(String idPrefix, OutputStream output, String matches) {
-        loadStartingWithIntoStream(idPrefix, output, matches, 0, 25, null, null);
-    }
-
-    @Override
-    public void loadStartingWithIntoStream(String idPrefix, OutputStream output, String matches, int start) {
-        loadStartingWithIntoStream(idPrefix, output, matches, start, 25, null, null);
-    }
-
-    @Override
-    public void loadStartingWithIntoStream(String idPrefix, OutputStream output, String matches, int start, int pageSize) {
-        loadStartingWithIntoStream(idPrefix, output, matches, start, pageSize, null, null);
-    }
-
-    @Override
-    public void loadStartingWithIntoStream(String idPrefix, OutputStream output, String matches, int start, int pageSize, String exclude) {
-        loadStartingWithIntoStream(idPrefix, output, matches, start, pageSize, exclude, null);
-    }
-
-    @Override
-    public void loadStartingWithIntoStream(String idPrefix, OutputStream output, String matches, int start, int pageSize, String exclude, String startAfter) {
-        if (output == null) {
-            throw new IllegalArgumentException("Output cannot be null");
-        }
-        if (idPrefix == null) {
-            throw new IllegalArgumentException("idPrefix cannot be null");
-        }
-        loadStartingWithInternal(idPrefix, new LoadStartingWithOperation(this), output, matches, start, pageSize, exclude, startAfter);
-    }
 
     @SuppressWarnings("UnusedReturnValue")
     private GetDocumentsCommand loadStartingWithInternal(String idPrefix, LoadStartingWithOperation operation, OutputStream stream,
@@ -559,144 +324,6 @@ public class DocumentSession extends InMemoryDocumentSessionOperations
         return command;
     }
 
-    @Override
-    public void loadIntoStream(Collection<String> ids, OutputStream output) {
-        if (ids == null) {
-            throw new IllegalArgumentException("Ids cannot be null");
-        }
-
-        loadInternal(ids.toArray(new String[0]), new LoadOperation(this), output);
-    }
-
-    @Override
-    public <T, U> void increment(T entity, String path, U valueToAdd) {
-        IMetadataDictionary metadata = getMetadataFor(entity);
-        String id = (String) metadata.get(Constants.Documents.Metadata.ID);
-        increment(id, path, valueToAdd);
-    }
-
-    private int _valsCount;
-    private int _customCount;
-
-    @Override
-    public <T, U> void increment(String id, String path, U valueToAdd) {
-        PatchRequest patchRequest = new PatchRequest();
-
-        String variable = "this." + path;
-        String value = "args.val_" + _valsCount;
-        patchRequest.setScript(variable + " = " + variable
-                + " ? " + variable + " + " + value
-                + " : " + value + ";");
-        patchRequest.setValues(Collections.singletonMap("val_" + _valsCount, valueToAdd));
-
-        _valsCount++;
-
-        if (!tryMergePatches(id, patchRequest)) {
-            defer(new PatchCommandData(id, null, patchRequest, null));
-        }
-    }
-
-    @Override
-    public <T, U> void patch(T entity, String path, U value) {
-        IMetadataDictionary metadata = getMetadataFor(entity);
-        String id = (String) metadata.get(Constants.Documents.Metadata.ID);
-        patch(id, path, value);
-    }
-
-    @Override
-    public <T, U> void patch(String id, String path, U value) {
-        PatchRequest patchRequest = new PatchRequest();
-        patchRequest.setScript("this." + path + " = args.val_" + _valsCount + ";");
-        patchRequest.setValues(Collections.singletonMap("val_" + _valsCount, value));
-
-        _valsCount++;
-
-        if (!tryMergePatches(id, patchRequest)) {
-            defer(new PatchCommandData(id, null, patchRequest, null));
-        }
-    }
-
-    @Override
-    public <T, U> void patchArray(T entity, String pathToArray, Consumer<JavaScriptArray<U>> arrayAdder) {
-        IMetadataDictionary metadata = getMetadataFor(entity);
-        String id = (String) metadata.get(Constants.Documents.Metadata.ID);
-        patchArray(id, pathToArray, arrayAdder);
-    }
-
-    @Override
-    public <T, U> void patchArray(String id, String pathToArray, Consumer<JavaScriptArray<U>> arrayAdder) {
-        JavaScriptArray<U> scriptArray = new JavaScriptArray<>(_customCount++, pathToArray);
-
-        arrayAdder.accept(scriptArray);
-
-        PatchRequest patchRequest = new PatchRequest();
-        patchRequest.setScript(scriptArray.getScript());
-        patchRequest.setValues(scriptArray.getParameters());
-
-        if (!tryMergePatches(id, patchRequest)) {
-            defer(new PatchCommandData(id, null, patchRequest, null));
-        }
-    }
-
-    @Override
-    public <T, TKey, TValue> void patchObject(T entity, String pathToObject, Consumer<JavaScriptMap<TKey, TValue>> mapAdder) {
-        IMetadataDictionary metadata = getMetadataFor(entity);
-        String id = (String) metadata.get(Constants.Documents.Metadata.ID);
-        patchObject(id, pathToObject, mapAdder);
-    }
-
-    @Override
-    public <T, TKey, TValue> void patchObject(String id, String pathToObject, Consumer<JavaScriptMap<TKey, TValue>> mapAdder) {
-        JavaScriptMap<TKey, TValue> scriptMap = new JavaScriptMap<>(_customCount++, pathToObject);
-
-        mapAdder.accept(scriptMap);
-
-        PatchRequest patchRequest = new PatchRequest();
-        patchRequest.setScript(scriptMap.getScript());
-        patchRequest.setValues(scriptMap.getParameters());
-
-        if (!tryMergePatches(id, patchRequest)) {
-            defer(new PatchCommandData(id, null, patchRequest, null));
-        }
-    }
-
-    @SuppressWarnings("BooleanMethodIsAlwaysInverted")
-    private boolean tryMergePatches(String id, PatchRequest patchRequest) {
-        ICommandData command = deferredCommandsMap.get(IdTypeAndName.create(id, CommandType.PATCH, null));
-        if (command == null) {
-            return false;
-        }
-
-        deferredCommands.remove(command);
-        // We'll overwrite the deferredCommandsMap when calling Defer
-        // No need to call deferredCommandsMap.remove((id, CommandType.PATCH, null));
-
-        PatchCommandData oldPatch = (PatchCommandData) command;
-        String newScript = oldPatch.getPatch().getScript() + "\n" + patchRequest.getScript();
-        Map<String, Object> newVals = new HashMap<>(oldPatch.getPatch().getValues());
-
-        for (Map.Entry<String, Object> kvp : patchRequest.getValues().entrySet()) {
-            newVals.put(kvp.getKey(), kvp.getValue());
-        }
-
-        PatchRequest newPatchRequest = new PatchRequest();
-        newPatchRequest.setScript(newScript);
-        newPatchRequest.setValues(newVals);
-
-        defer(new PatchCommandData(id, null, newPatchRequest, null));
-
-        return true;
-    }
-
-    @SuppressWarnings("deprecation")
-    public <T, TIndex extends AbstractCommonApiForIndexes> IDocumentQuery<T> documentQuery(Class<T> clazz, Class<TIndex> indexClazz) {
-        try {
-            TIndex index = indexClazz.newInstance();
-            return documentQuery(clazz, index.getIndexName(), null, index.isMapReduce());
-        } catch (IllegalAccessException | IllegalStateException | InstantiationException e) {
-            throw new RuntimeException("Unable to query index: " + indexClazz.getSimpleName() + e.getMessage(), e);
-        }
-    }
 
     /**
      * Query the specified index using Lucene syntax
@@ -744,259 +371,4 @@ public class DocumentSession extends InMemoryDocumentSessionOperations
         return documentQuery(clazz, collectionOrIndexName.getIndexName(), null, false);
     }
 
-    @Override
-    public <T, TIndex extends AbstractCommonApiForIndexes> IDocumentQuery<T> query(Class<T> clazz, Class<TIndex> indexClazz) {
-        return documentQuery(clazz, indexClazz);
-    }
-
-    @Override
-    public <T> CloseableIterator<StreamResult<T>> stream(IDocumentQuery<T> query) {
-        StreamOperation streamOperation = new StreamOperation(this);
-        QueryStreamCommand command = streamOperation.createRequest(query.getIndexQuery());
-
-        getRequestExecutor().execute(command, sessionInfo);
-
-        CloseableIterator<ObjectNode> result = streamOperation.setResult(command.getResult());
-        return yieldResults((AbstractDocumentQuery) query, result);
-    }
-
-    @Override
-    public <T> CloseableIterator<StreamResult<T>> stream(IDocumentQuery<T> query, Reference<StreamQueryStatistics> streamQueryStats) {
-        StreamQueryStatistics stats = new StreamQueryStatistics();
-        StreamOperation streamOperation = new StreamOperation(this, stats);
-        QueryStreamCommand command = streamOperation.createRequest(query.getIndexQuery());
-
-        getRequestExecutor().execute(command, sessionInfo);
-
-        CloseableIterator<ObjectNode> result = streamOperation.setResult(command.getResult());
-        streamQueryStats.value = stats;
-
-        return yieldResults((AbstractDocumentQuery)query, result);
-    }
-
-    @Override
-    public <T> CloseableIterator<StreamResult<T>> stream(IRawDocumentQuery<T> query) {
-        StreamOperation streamOperation = new StreamOperation(this);
-        QueryStreamCommand command = streamOperation.createRequest(query.getIndexQuery());
-
-        getRequestExecutor().execute(command, sessionInfo);
-
-        CloseableIterator<ObjectNode> result = streamOperation.setResult(command.getResult());
-        return yieldResults((AbstractDocumentQuery) query, result);
-    }
-
-    @Override
-    public <T> CloseableIterator<StreamResult<T>> stream(IRawDocumentQuery<T> query, Reference<StreamQueryStatistics> streamQueryStats) {
-        StreamQueryStatistics stats = new StreamQueryStatistics();
-        StreamOperation streamOperation = new StreamOperation(this, stats);
-        QueryStreamCommand command = streamOperation.createRequest(query.getIndexQuery());
-
-        getRequestExecutor().execute(command, sessionInfo);
-
-        CloseableIterator<ObjectNode> result = streamOperation.setResult(command.getResult());
-        streamQueryStats.value = stats;
-
-        return yieldResults((AbstractDocumentQuery) query, result);
-    }
-
-    @SuppressWarnings("unchecked")
-    private <T> CloseableIterator<StreamResult<T>> yieldResults(AbstractDocumentQuery query, CloseableIterator<ObjectNode> enumerator) {
-        return new StreamIterator<T>(query.getQueryClass(), enumerator, query.fieldsToFetchToken, query.isProjectInto, query::invokeAfterStreamExecuted);
-    }
-
-    @Override
-    public <T> void streamInto(IRawDocumentQuery<T> query, OutputStream output) {
-        StreamOperation streamOperation = new StreamOperation(this);
-        QueryStreamCommand command = streamOperation.createRequest(query.getIndexQuery());
-
-        getRequestExecutor().execute(command, sessionInfo);
-
-        try {
-            IOUtils.copy(command.getResult().getStream(), output);
-        } catch (IOException e) {
-            throw new RuntimeException("Unable to stream results into OutputStream: " + e.getMessage(), e);
-        } finally {
-            EntityUtils.consumeQuietly(command.getResult().getResponse().getEntity());
-        }
-    }
-
-    @Override
-    public <T> void streamInto(IDocumentQuery<T> query, OutputStream output) {
-        StreamOperation streamOperation = new StreamOperation(this);
-        QueryStreamCommand command = streamOperation.createRequest(query.getIndexQuery());
-
-        getRequestExecutor().execute(command, sessionInfo);
-
-        try {
-            IOUtils.copy(command.getResult().getStream(), output);
-        } catch (IOException e) {
-            throw new RuntimeException("Unable to stream results into OutputStream: " + e.getMessage(), e);
-        } finally {
-            EntityUtils.consumeQuietly(command.getResult().getResponse().getEntity());
-        }
-    }
-
-    private <T> StreamResult<T> createStreamResult(Class<T> clazz, ObjectNode json, FieldsToFetchToken fieldsToFetch, boolean isProjectInto) throws IOException {
-
-        ObjectNode metadata = (ObjectNode) json.get(Constants.Documents.Metadata.KEY);
-        String changeVector = metadata.get(Constants.Documents.Metadata.CHANGE_VECTOR).asText();
-        // MapReduce indexes return reduce results that don't have @id property
-        String id = null;
-        JsonNode idJson = metadata.get(Constants.Documents.Metadata.ID);
-        if (idJson != null && !idJson.isNull()) {
-            id = idJson.asText();
-        }
-
-
-        T entity = QueryOperation.deserialize(clazz, id, json, metadata, fieldsToFetch, true, this, isProjectInto);
-
-        StreamResult<T> streamResult = new StreamResult<>();
-        streamResult.setChangeVector(changeVector);
-        streamResult.setId(id);
-        streamResult.setDocument(entity);
-        streamResult.setMetadata(new MetadataAsDictionary(metadata));
-
-        return streamResult;
-    }
-
-    @Override
-    public <T> CloseableIterator<StreamResult<T>> stream(Class<T> clazz, String startsWith) {
-        return stream(clazz, startsWith, null, 0, Integer.MAX_VALUE, null);
-    }
-
-    @Override
-    public <T> CloseableIterator<StreamResult<T>> stream(Class<T> clazz, String startsWith, String matches) {
-        return stream(clazz, startsWith, matches, 0, Integer.MAX_VALUE, null);
-    }
-
-    @Override
-    public <T> CloseableIterator<StreamResult<T>> stream(Class<T> clazz, String startsWith, String matches, int start) {
-        return stream(clazz, startsWith, matches, start, Integer.MAX_VALUE, null);
-    }
-
-    @Override
-    public <T> CloseableIterator<StreamResult<T>> stream(Class<T> clazz, String startsWith, String matches, int start, int pageSize) {
-        return stream(clazz, startsWith, matches, start, pageSize, null);
-    }
-
-    @Override
-    public <T> CloseableIterator<StreamResult<T>> stream(Class<T> clazz, String startsWith, String matches, int start, int pageSize, String startAfter) {
-        StreamOperation streamOperation = new StreamOperation(this);
-
-        StreamCommand command = streamOperation.createRequest(startsWith, matches, start, pageSize, null, startAfter);
-        getRequestExecutor().execute(command, sessionInfo);
-
-        CloseableIterator<ObjectNode> result = streamOperation.setResult(command.getResult());
-        return new StreamIterator<>(clazz, result, null, false, null);
-    }
-
-    private class StreamIterator<T> implements CloseableIterator<StreamResult<T>> {
-
-        private final Class<T> _clazz;
-        private final CloseableIterator<ObjectNode> _innerIterator;
-        private final FieldsToFetchToken _fieldsToFetchToken;
-        private final boolean _isProjectInto;
-        private final Consumer<ObjectNode> _onNextItem;
-
-        public StreamIterator(Class<T> clazz, CloseableIterator<ObjectNode> innerIterator, FieldsToFetchToken fieldsToFetch, boolean isProjectInto, Consumer<ObjectNode> onNextItem) {
-            _clazz = clazz;
-            _innerIterator = innerIterator;
-            _fieldsToFetchToken = fieldsToFetch;
-            _isProjectInto = isProjectInto;
-            _onNextItem = onNextItem;
-        }
-
-        @Override
-        public boolean hasNext() {
-            return _innerIterator.hasNext();
-        }
-
-        @Override
-        public StreamResult<T> next() {
-            ObjectNode nextValue = _innerIterator.next();
-            try {
-                if (_onNextItem != null) {
-                    _onNextItem.accept(nextValue);
-                }
-                return createStreamResult(_clazz, nextValue, _fieldsToFetchToken, _isProjectInto);
-            } catch (IOException e) {
-                throw new RuntimeException("Unable to parse stream result: " + e.getMessage(), e);
-            }
-        }
-
-        @Override
-        public void close() {
-            _innerIterator.close();
-        }
-    }
-
-    @Override
-    public ISessionDocumentCounters countersFor(String documentId) {
-        return new SessionDocumentCounters(this, documentId);
-    }
-
-    @Override
-    public ISessionDocumentCounters countersFor(Object entity) {
-        return new SessionDocumentCounters(this, entity);
-    }
-
-    @Override
-    public <T> IGraphDocumentQuery<T> graphQuery(Class<T> clazz, String query) {
-        GraphDocumentQuery<T> graphQuery = new GraphDocumentQuery<T>(clazz, this, query);
-        return graphQuery;
-    }
-
-    @Override
-    public ISessionDocumentTimeSeries timeSeriesFor(String documentId, String name) {
-        return new SessionDocumentTimeSeries(this, documentId, name);
-    }
-
-    @Override
-    public ISessionDocumentTimeSeries timeSeriesFor(Object entity, String name) {
-        return new SessionDocumentTimeSeries(this, entity, name);
-    }
-
-    @Override
-    public <T> ISessionDocumentTypedTimeSeries<T> timeSeriesFor(Class<T> clazz, Object entity) {
-        return timeSeriesFor(clazz, entity, null);
-    }
-
-    @Override
-    public <T> ISessionDocumentTypedTimeSeries<T> timeSeriesFor(Class<T> clazz, Object entity, String name) {
-        String tsName = ObjectUtils.firstNonNull(name, TimeSeriesOperations.getTimeSeriesName(clazz, getConventions()));
-        return new SessionDocumentTypedTimeSeries<T>(clazz, this, entity, tsName);
-    }
-
-    @Override
-    public <T> ISessionDocumentTypedTimeSeries<T> timeSeriesFor(Class<T> clazz, String documentId) {
-        return timeSeriesFor(clazz, documentId, null);
-    }
-
-    @Override
-    public <T> ISessionDocumentTypedTimeSeries<T> timeSeriesFor(Class<T> clazz, String documentId, String name) {
-        String tsName = ObjectUtils.firstNonNull(name, TimeSeriesOperations.getTimeSeriesName(clazz, getConventions()));
-        return new SessionDocumentTypedTimeSeries<>(clazz, this, documentId, tsName);
-    }
-
-    @Override
-    public <T> ISessionDocumentRollupTypedTimeSeries<T> timeSeriesRollupFor(Class<T> clazz, Object entity, String policy) {
-        return timeSeriesRollupFor(clazz, entity, policy, null);
-    }
-
-    @Override
-    public <T> ISessionDocumentRollupTypedTimeSeries<T> timeSeriesRollupFor(Class<T> clazz, Object entity, String policy, String raw) {
-        String tsName = ObjectUtils.firstNonNull(raw, TimeSeriesOperations.getTimeSeriesName(clazz, getConventions()));
-        return new SessionDocumentRollupTypedTimeSeries<T>(clazz, this, entity, tsName + TimeSeriesConfiguration.TIME_SERIES_ROLLUP_SEPARATOR + policy);
-    }
-
-    @Override
-    public <T> ISessionDocumentRollupTypedTimeSeries<T> timeSeriesRollupFor(Class<T> clazz, String documentId, String policy) {
-        return timeSeriesRollupFor(clazz, documentId, policy, null);
-    }
-
-    @Override
-    public <T> ISessionDocumentRollupTypedTimeSeries<T> timeSeriesRollupFor(Class<T> clazz, String documentId, String policy, String raw) {
-        String tsName = ObjectUtils.firstNonNull(raw, TimeSeriesOperations.getTimeSeriesName(clazz, getConventions()));
-        return new SessionDocumentRollupTypedTimeSeries<T>(clazz, this, documentId, tsName + TimeSeriesConfiguration.TIME_SERIES_ROLLUP_SEPARATOR + policy);
-    }
 }

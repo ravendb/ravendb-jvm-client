@@ -22,7 +22,6 @@ import net.ravendb.client.serverwide.DatabaseRecordWithEtag;
 import net.ravendb.client.serverwide.DatabaseTopology;
 import net.ravendb.client.serverwide.commands.GetDatabaseTopologyCommand;
 import net.ravendb.client.serverwide.operations.GetDatabaseRecordOperation;
-import net.ravendb.client.serverwide.operations.ReorderDatabaseMembersOperation;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 

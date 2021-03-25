@@ -12,7 +12,6 @@ import net.ravendb.client.documents.operations.replication.*;
 import net.ravendb.client.documents.replication.ReplicationNode;
 import net.ravendb.client.documents.session.IDocumentSession;
 import net.ravendb.client.documents.operations.etl.RavenConnectionString;
-import net.ravendb.client.serverwide.operations.ModifyOngoingTaskResult;
 
 import java.util.ArrayList;
 import java.util.List;

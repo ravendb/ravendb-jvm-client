@@ -1,16 +1,11 @@
 package net.ravendb.client.documents;
 
-import net.ravendb.client.documents.changes.DatabaseChanges;
-import net.ravendb.client.documents.changes.DatabaseChangesOptions;
-import net.ravendb.client.documents.changes.EvictItemsFromCacheBasedOnChanges;
-import net.ravendb.client.documents.changes.IDatabaseChanges;
 import net.ravendb.client.documents.identity.MultiDatabaseHiLoIdGenerator;
 import net.ravendb.client.documents.operations.MaintenanceOperationExecutor;
 import net.ravendb.client.documents.operations.OperationExecutor;
 import net.ravendb.client.documents.session.DocumentSession;
 import net.ravendb.client.documents.session.IDocumentSession;
 import net.ravendb.client.documents.session.SessionOptions;
-import net.ravendb.client.documents.smuggler.DatabaseSmuggler;
 import net.ravendb.client.http.AggressiveCacheMode;
 import net.ravendb.client.http.AggressiveCacheOptions;
 import net.ravendb.client.http.RequestExecutor;
@@ -32,18 +27,12 @@ public class DocumentStore extends DocumentStoreBase {
 
     private ExecutorService executorService = Executors.newCachedThreadPool();
 
-    private final ConcurrentMap<DatabaseChangesOptions, IDatabaseChanges> _databaseChanges = new ConcurrentHashMap<>();
-
-    private final ConcurrentMap<String, Lazy<EvictItemsFromCacheBasedOnChanges>> _aggressiveCacheChanges = new ConcurrentHashMap<>();
-
     private final ConcurrentMap<String, Lazy<RequestExecutor>> requestExecutors = new ConcurrentSkipListMap<>(String.CASE_INSENSITIVE_ORDER);
 
     private MultiDatabaseHiLoIdGenerator _multiDbHiLo;
 
     private MaintenanceOperationExecutor maintenanceOperationExecutor;
     private OperationExecutor operationExecutor;
-
-    private DatabaseSmuggler _smuggler;
 
     private String identifier;
 
@@ -95,30 +84,12 @@ public class DocumentStore extends DocumentStoreBase {
     public void close() {
         EventHelper.invoke(beforeClose, this, EventArgs.EMPTY);
 
-        for (Lazy<EvictItemsFromCacheBasedOnChanges> value : _aggressiveCacheChanges.values()) {
-            if (!value.isValueCreated()) {
-                continue;
-            }
-
-            value.getValue().close();
-        }
-
-        for (IDatabaseChanges changes : _databaseChanges.values()) {
-            try (CleanCloseable value = changes) {
-                // try will close all values
-            }
-        }
-
         if (_multiDbHiLo != null) {
             try {
                 _multiDbHiLo.returnUnusedRange();
             } catch (Exception e) {
                 // ignore
             }
-        }
-
-        if (subscriptions() != null) {
-            subscriptions().close();
         }
 
         disposed = true;
@@ -296,98 +267,6 @@ public class DocumentStore extends DocumentStoreBase {
         return () -> re.aggressiveCaching.set(old);
     }
 
-    @Override
-    public IDatabaseChanges changes() {
-        return changes(null, null);
-    }
-
-    @Override
-    public IDatabaseChanges changes(String database) {
-        return changes(database, null);
-    }
-
-    @Override
-    public IDatabaseChanges changes(String database, String nodeTag) {
-        assertInitialized();
-
-        DatabaseChangesOptions changesOptions = new DatabaseChangesOptions(ObjectUtils.firstNonNull(database, getDatabase()), nodeTag);
-
-        return _databaseChanges.computeIfAbsent(changesOptions, this::createDatabaseChanges);
-    }
-
-    protected IDatabaseChanges createDatabaseChanges(DatabaseChangesOptions node) {
-        return new DatabaseChanges(getRequestExecutor(node.getDatabaseName()), node.getDatabaseName(), executorService, () -> _databaseChanges.remove(node), node.getNodeTag());
-    }
-
-    public Exception getLastDatabaseChangesStateException() {
-        return getLastDatabaseChangesStateException(null, null);
-    }
-
-    public Exception getLastDatabaseChangesStateException(String database) {
-        return getLastDatabaseChangesStateException(database, null);
-    }
-
-    public Exception getLastDatabaseChangesStateException(String database, String nodeTag) {
-
-        DatabaseChangesOptions node = new DatabaseChangesOptions(ObjectUtils.firstNonNull(database, getDatabase()), nodeTag);
-
-        DatabaseChanges databaseChanges = (DatabaseChanges) _databaseChanges.get(node);
-
-        if (databaseChanges != null) {
-            return databaseChanges.getLastConnectionStateException();
-        }
-
-        return null;
-    }
-
-    @Override
-    public CleanCloseable aggressivelyCacheFor(Duration cacheDuration) {
-        return aggressivelyCacheFor(cacheDuration, getConventions().aggressiveCache().getMode(), null);
-    }
-
-    @Override
-    public CleanCloseable aggressivelyCacheFor(Duration cacheDuration, String database) {
-        return aggressivelyCacheFor(cacheDuration, getConventions().aggressiveCache().getMode(), database);
-    }
-
-    @Override
-    public CleanCloseable aggressivelyCacheFor(Duration cacheDuration, AggressiveCacheMode mode) {
-        return aggressivelyCacheFor(cacheDuration, mode, null);
-    }
-
-    @Override
-    public CleanCloseable aggressivelyCacheFor(Duration cacheDuration, AggressiveCacheMode mode, String database) {
-        assertInitialized();
-
-        database = ObjectUtils.firstNonNull(database, getDatabase());
-
-        if (database == null) {
-            throw new IllegalStateException("Cannot use aggressivelyCache and aggressivelyCacheFor without a default database defined " +
-                    "unless 'database' parameter is provided. Did you forget to pass 'database' parameter?");
-        }
-
-        if (mode != AggressiveCacheMode.DO_NOT_TRACK_CHANGES) {
-            listenToChangesAndUpdateTheCache(database);
-        }
-
-        RequestExecutor re = getRequestExecutor(database);
-        AggressiveCacheOptions old = re.aggressiveCaching.get();
-
-        AggressiveCacheOptions newOptions = new AggressiveCacheOptions(cacheDuration, mode);
-        re.aggressiveCaching.set(newOptions);
-
-        return () -> re.aggressiveCaching.set(old);
-    }
-
-    private void listenToChangesAndUpdateTheCache(String database) {
-        Lazy<EvictItemsFromCacheBasedOnChanges> lazy = _aggressiveCacheChanges.get(database);
-
-        if (lazy == null) {
-            lazy = _aggressiveCacheChanges.computeIfAbsent(database, db -> new Lazy<>(() -> new EvictItemsFromCacheBasedOnChanges(this, database)));
-        }
-
-        lazy.getValue(); // force evaluation
-    }
 
     private final List<EventHandler<VoidArgs>> afterClose = new ArrayList<>();
 
@@ -411,14 +290,6 @@ public class DocumentStore extends DocumentStoreBase {
         this.afterClose.remove(event);
     }
 
-    @Override
-    public DatabaseSmuggler smuggler() {
-        if (_smuggler == null) {
-            _smuggler = new DatabaseSmuggler(this);
-        }
-
-        return _smuggler;
-    }
 
     @Override
     public MaintenanceOperationExecutor maintenance() {
@@ -440,15 +311,5 @@ public class DocumentStore extends DocumentStoreBase {
         return operationExecutor;
     }
 
-    @Override
-    public BulkInsertOperation bulkInsert() {
-        return bulkInsert(null);
-    }
 
-    @Override
-    public BulkInsertOperation bulkInsert(String database) {
-        assertInitialized();
-
-        return new BulkInsertOperation(getEffectiveDatabase(database), this);
-    }
 }

@@ -40,8 +40,9 @@ public class GetClusterTopologyCommand extends RavenCommand<ClusterTopologyRespo
             throwInvalidResponse();
         }
 
-        result = mapper.readValue(response, resultClass);
+        result = mapper.readValue(response, ClusterTopologyResponse.class);
     }
+
 
     @Override
     public boolean isReadRequest() {

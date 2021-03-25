@@ -3,7 +3,6 @@ package net.ravendb.client.test.issues;
 import net.ravendb.client.RemoteTestBase;
 import net.ravendb.client.documents.IDocumentStore;
 import net.ravendb.client.documents.session.IDocumentSession;
-import net.ravendb.client.documents.session.ISessionDocumentCounters;
 import net.ravendb.client.documents.session.QueryStatistics;
 import net.ravendb.client.documents.session.SessionOptions;
 import net.ravendb.client.infrastructure.orders.Product;

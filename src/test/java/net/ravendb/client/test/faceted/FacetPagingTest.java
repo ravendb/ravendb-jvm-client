@@ -6,7 +6,6 @@ import net.ravendb.client.documents.operations.indexes.PutIndexesOperation;
 import net.ravendb.client.documents.queries.Query;
 import net.ravendb.client.documents.queries.facets.*;
 import net.ravendb.client.documents.session.IDocumentSession;
-import net.ravendb.client.test.FacetTestBase;
 import org.junit.jupiter.api.Test;
 
 import java.util.*;

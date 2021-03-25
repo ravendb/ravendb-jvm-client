@@ -2,8 +2,6 @@ package net.ravendb.client.test.client;
 
 import net.ravendb.client.RemoteTestBase;
 import net.ravendb.client.documents.IDocumentStore;
-import net.ravendb.client.documents.operations.DetailedDatabaseStatistics;
-import net.ravendb.client.documents.operations.GetDetailedStatisticsOperation;
 import net.ravendb.client.documents.operations.compareExchange.*;
 import net.ravendb.client.documents.session.DocumentSession;
 import net.ravendb.client.documents.session.IDocumentSession;

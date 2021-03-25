@@ -3,7 +3,6 @@ package net.ravendb.client.documents.commands.batches;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.databind.JsonNode;
 import net.ravendb.client.documents.conventions.DocumentConventions;
-import net.ravendb.client.documents.session.ForceRevisionStrategy;
 import net.ravendb.client.documents.session.InMemoryDocumentSessionOperations;
 import net.ravendb.client.primitives.SharpEnum;
 

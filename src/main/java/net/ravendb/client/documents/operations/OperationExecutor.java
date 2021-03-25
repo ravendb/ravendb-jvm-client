@@ -72,56 +72,8 @@ public class OperationExecutor {
 
         requestExecutor.execute(command, sessionInfo);
 
-        return new Operation(requestExecutor, () -> store.changes(), requestExecutor.getConventions(), command.getResult().getOperationId(), ObjectUtils.firstNonNull(command.getSelectedNodeTag(), command.getResult().getOperationNodeTag()));
+        return new Operation(requestExecutor, requestExecutor.getConventions(), command.getResult().getOperationId(), ObjectUtils.firstNonNull(command.getSelectedNodeTag(), command.getResult().getOperationNodeTag()));
     }
 
-    public PatchStatus send(PatchOperation operation) {
-        return send(operation, null);
-    }
 
-    public PatchStatus send(PatchOperation operation, SessionInfo sessionInfo) {
-        RavenCommand<PatchResult> command = operation.getCommand(store, requestExecutor.getConventions(), requestExecutor.getCache());
-
-        requestExecutor.execute(command, sessionInfo);
-
-        if (command.getStatusCode() == HttpStatus.SC_NOT_MODIFIED) {
-            return PatchStatus.NOT_MODIFIED;
-        }
-
-        if (command.getStatusCode() == HttpStatus.SC_NOT_FOUND) {
-            return PatchStatus.DOCUMENT_DOES_NOT_EXIST;
-        }
-
-        return command.getResult().getStatus();
-    }
-
-    public <TEntity> PatchOperation.Result<TEntity> send(Class<TEntity> entityClass, PatchOperation operation) {
-        return send(entityClass, operation, null);
-    }
-
-    public <TEntity> PatchOperation.Result<TEntity> send(Class<TEntity> entityClass, PatchOperation operation, SessionInfo sessionInfo) {
-        RavenCommand<PatchResult> command = operation.getCommand(store, requestExecutor.getConventions(), requestExecutor.getCache());
-
-        requestExecutor.execute(command, sessionInfo);
-
-        PatchOperation.Result<TEntity> result = new PatchOperation.Result<>();
-
-        if (command.getStatusCode() == HttpStatus.SC_NOT_MODIFIED) {
-            result.setStatus(PatchStatus.NOT_MODIFIED);
-            return result;
-        }
-
-        if (command.getStatusCode() == HttpStatus.SC_NOT_FOUND) {
-            result.setStatus(PatchStatus.DOCUMENT_DOES_NOT_EXIST);
-            return result;
-        }
-
-        try {
-            result.setStatus(command.getResult().getStatus());
-            result.setDocument(requestExecutor.getConventions().getEntityMapper().treeToValue(command.getResult().getModifiedDocument(), entityClass));
-            return result;
-        } catch (IOException e) {
-            throw new RuntimeException("Unable to read patch result: " + e.getMessage(), e);
-        }
-    }
 }

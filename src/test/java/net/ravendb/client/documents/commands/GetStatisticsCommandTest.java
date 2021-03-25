@@ -2,11 +2,8 @@ package net.ravendb.client.documents.commands;
 
 import net.ravendb.client.RemoteTestBase;
 import net.ravendb.client.documents.IDocumentStore;
-import net.ravendb.client.documents.operations.DatabaseStatistics;
 import net.ravendb.client.documents.operations.GetStatisticsOperation;
-import net.ravendb.client.documents.operations.IndexInformation;
 import net.ravendb.client.documents.session.IDocumentSession;
-import net.ravendb.client.documents.session.ISessionDocumentTimeSeries;
 import net.ravendb.client.documents.smuggler.DatabaseItemType;
 import net.ravendb.client.http.RequestExecutor;
 import net.ravendb.client.infrastructure.CreateSampleDataOperation;

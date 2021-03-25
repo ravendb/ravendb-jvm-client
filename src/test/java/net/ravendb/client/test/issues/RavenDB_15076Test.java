@@ -6,7 +6,6 @@ import net.ravendb.client.documents.operations.connectionStrings.PutConnectionSt
 import net.ravendb.client.documents.operations.etl.RavenConnectionString;
 import net.ravendb.client.documents.operations.replication.ExternalReplication;
 import net.ravendb.client.documents.operations.replication.UpdateExternalReplicationOperation;
-import net.ravendb.client.documents.session.ForceRevisionStrategy;
 import net.ravendb.client.documents.session.IDocumentSession;
 import net.ravendb.client.infrastructure.entities.User;
 import net.ravendb.client.test.client.timeSeries.TimeSeriesTypedSessionTest;

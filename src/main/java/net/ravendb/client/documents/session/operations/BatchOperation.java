@@ -10,7 +10,6 @@ import net.ravendb.client.Constants;
 import net.ravendb.client.documents.commands.batches.ClusterWideBatchCommand;
 import net.ravendb.client.documents.commands.batches.CommandType;
 import net.ravendb.client.documents.commands.batches.SingleNodeBatchCommand;
-import net.ravendb.client.documents.operations.PatchStatus;
 import net.ravendb.client.documents.session.*;
 import net.ravendb.client.exceptions.ClientVersionMismatchException;
 import net.ravendb.client.extensions.JsonExtensions;

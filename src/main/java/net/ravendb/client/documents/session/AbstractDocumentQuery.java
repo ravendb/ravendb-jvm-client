@@ -8,29 +8,9 @@ import net.ravendb.client.Parameters;
 import net.ravendb.client.documents.Lazy;
 import net.ravendb.client.documents.commands.QueryCommand;
 import net.ravendb.client.documents.conventions.DocumentConventions;
-import net.ravendb.client.documents.indexes.spatial.SpatialRelation;
-import net.ravendb.client.documents.indexes.spatial.SpatialUnits;
-import net.ravendb.client.documents.operations.timeSeries.TimeSeriesRange;
 import net.ravendb.client.documents.queries.*;
-import net.ravendb.client.documents.queries.explanation.ExplanationOptions;
-import net.ravendb.client.documents.queries.explanation.Explanations;
-import net.ravendb.client.documents.queries.facets.FacetBase;
-import net.ravendb.client.documents.queries.highlighting.HighlightingOptions;
-import net.ravendb.client.documents.queries.highlighting.Highlightings;
-import net.ravendb.client.documents.queries.highlighting.QueryHighlightings;
-import net.ravendb.client.documents.queries.moreLikeThis.MoreLikeThisScope;
-import net.ravendb.client.documents.queries.spatial.SpatialCriteria;
-import net.ravendb.client.documents.queries.spatial.DynamicSpatialField;
-import net.ravendb.client.documents.queries.suggestions.SuggestionBase;
-import net.ravendb.client.documents.queries.suggestions.SuggestionOptions;
-import net.ravendb.client.documents.queries.suggestions.SuggestionWithTerm;
-import net.ravendb.client.documents.queries.suggestions.SuggestionWithTerms;
-import net.ravendb.client.documents.queries.timeSeries.ITimeSeriesQueryBuilder;
-import net.ravendb.client.documents.queries.timeSeries.TimeSeriesQueryBuilder;
-import net.ravendb.client.documents.queries.timings.QueryTimings;
 import net.ravendb.client.documents.session.loaders.IncludeBuilderBase;
 import net.ravendb.client.documents.session.operations.QueryOperation;
-import net.ravendb.client.documents.session.operations.lazy.LazyQueryOperation;
 import net.ravendb.client.documents.session.tokens.*;
 import net.ravendb.client.extensions.JsonExtensions;
 import net.ravendb.client.primitives.CleanCloseable;
@@ -219,13 +199,6 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
         timeout = ObjectUtils.firstNonNull(waitTimeout, getDefaultTimeout());
     }
 
-    protected LazyQueryOperation<T> getLazyQueryOperation() {
-        if (queryOperation == null) {
-            queryOperation = initializeQueryOperation();
-        }
-
-        return new LazyQueryOperation<>(clazz, theSession, queryOperation, afterQueryExecutedCallback);
-    }
 
     protected QueryOperation initializeQueryOperation() {
         BeforeQueryEventArgs beforeQueryExecutedEventArgs = new BeforeQueryEventArgs(theSession, new DocumentQueryCustomizationDelegate(this));
@@ -302,9 +275,6 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
         }
     }
 
-    public void _graphQuery(String query) {
-        graphRawQuery = new GraphQueryToken(query);
-    }
 
     public void _addParameter(String name, Object value) {
         name = StringUtils.stripStart(name, "$");
@@ -408,15 +378,6 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
     }
 
 
-    public MoreLikeThisScope _moreLikeThis() {
-        appendOperatorIfNeeded(whereTokens);
-
-        MoreLikeThisToken token = new MoreLikeThisToken();
-        whereTokens.add(token);
-
-        _isInMoreLikeThis = true;
-        return new MoreLikeThisScope(token, this::addQueryParameter, () -> _isInMoreLikeThis = false);
-    }
 
     /**
      * Includes the specified path in the query, loading the document specified in that path
@@ -438,18 +399,8 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
             documentIncludes.addAll(includes.documentsToInclude);
         }
 
-        _includeCounters(includes.alias, includes.countersToIncludeBySourcePath);
-        if (includes.timeSeriesToIncludeBySourceAlias != null) {
-            _includeTimeSeries(includes.alias, includes.timeSeriesToIncludeBySourceAlias);
-        }
 
-        if (includes.compareExchangeValuesToInclude != null) {
-            compareExchangeValueIncludesTokens = new ArrayList<>();
 
-            for (String compareExchangeValue : includes.compareExchangeValuesToInclude) {
-                compareExchangeValueIncludesTokens.add(CompareExchangeValueIncludesToken.create(compareExchangeValue));
-            }
-        }
     }
 
     @Override
@@ -561,13 +512,9 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
                 args[i] = addQueryParameter(mc.args[i]);
             }
 
-            WhereToken token;
+            WhereToken token = null;
             Class<? extends MethodCall> type = mc.getClass();
-            if (CmpXchg.class.equals(type)) {
-                token = WhereToken.create(op, whereParams.getFieldName(), null, new WhereToken.WhereOptions(WhereToken.MethodsType.CMP_X_CHG, args, mc.accessPath, whereParams.isExact()));
-            } else {
-                throw new IllegalArgumentException("Unknown method " + type);
-            }
+
 
             tokens.add(token);
             return true;

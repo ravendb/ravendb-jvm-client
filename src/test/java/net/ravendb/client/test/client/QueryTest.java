@@ -4,8 +4,6 @@ import net.ravendb.client.RemoteTestBase;
 import net.ravendb.client.documents.IDocumentStore;
 import net.ravendb.client.documents.Lazy;
 import net.ravendb.client.documents.indexes.AbstractIndexCreationTask;
-import net.ravendb.client.documents.operations.CollectionStatistics;
-import net.ravendb.client.documents.operations.GetCollectionStatisticsOperation;
 import net.ravendb.client.documents.queries.Query;
 import net.ravendb.client.documents.queries.SearchOperator;
 import net.ravendb.client.documents.session.*;

@@ -1,7 +1,6 @@
 package net.ravendb.client.test.issues;
 
 import net.ravendb.client.RemoteTestBase;
-import net.ravendb.client.documents.BulkInsertOperation;
 import net.ravendb.client.documents.IDocumentStore;
 import net.ravendb.client.documents.session.IDocumentSession;
 import net.ravendb.client.documents.session.timeSeries.TimeSeriesEntry;

@@ -4,7 +4,6 @@ import net.ravendb.client.RemoteTestBase;
 import net.ravendb.client.documents.IDocumentStore;
 import net.ravendb.client.documents.operations.counters.*;
 import net.ravendb.client.documents.session.IDocumentSession;
-import net.ravendb.client.documents.session.ISessionDocumentCounters;
 import net.ravendb.client.infrastructure.entities.Company;
 import net.ravendb.client.infrastructure.entities.Employee;
 import net.ravendb.client.infrastructure.entities.Order;

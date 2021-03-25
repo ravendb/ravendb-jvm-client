@@ -1,15 +1,8 @@
 package net.ravendb.client.documents.session;
 
-import net.ravendb.client.documents.indexes.spatial.SpatialRelation;
-import net.ravendb.client.documents.indexes.spatial.SpatialUnits;
 import net.ravendb.client.documents.queries.SearchOperator;
-import net.ravendb.client.documents.queries.moreLikeThis.MoreLikeThisBase;
-import net.ravendb.client.documents.queries.spatial.DynamicSpatialField;
-import net.ravendb.client.documents.queries.spatial.SpatialCriteria;
-import net.ravendb.client.documents.queries.spatial.SpatialCriteriaFactory;
 
 import java.util.Collection;
-import java.util.function.Function;
 
 public interface IFilterDocumentQueryBase<T, TSelf extends IDocumentQueryBase<T, TSelf>> extends IQueryBase<T, TSelf> {
 
@@ -376,89 +369,6 @@ public interface IFilterDocumentQueryBase<T, TSelf extends IDocumentQueryBase<T,
 
     //TBD expr TSelf WithinRadiusOf<TValue>(Expression<Func<T, TValue>> propertySelector, double radius, double latitude, double longitude, SpatialUnits? radiusUnits = null, double distanceErrorPct = Constants.Documents.Indexing.Spatial.DefaultDistanceErrorPct);
 
-    /**
-     * Filter matches to be inside the specified radius
-     * @param fieldName Spatial field name.
-     * @param radius Radius (measured in units passed to radiusUnits parameter) in which matches should be found.
-     * @param latitude Latitude pointing to a circle center.
-     * @param longitude Longitude pointing to a circle center.
-     * @return Query instance
-     */
-    TSelf withinRadiusOf(String fieldName, double radius, double latitude, double longitude);
 
-    /**
-     * Filter matches to be inside the specified radius
-     * @param fieldName Spatial field name.
-     * @param radius Radius (measured in units passed to radiusUnits parameter) in which matches should be found.
-     * @param latitude Latitude pointing to a circle center.
-     * @param longitude Longitude pointing to a circle center.
-     * @param radiusUnits Units that will be used to measure distances (Kilometers, Miles).
-     * @return Query instance
-     */
-    TSelf withinRadiusOf(String fieldName, double radius, double latitude, double longitude, SpatialUnits radiusUnits);
-
-    /**
-     * Filter matches to be inside the specified radius
-     * @param fieldName Spatial field name.
-     * @param radius Radius (measured in units passed to radiusUnits parameter) in which matches should be found.
-     * @param latitude Latitude pointing to a circle center.
-     * @param longitude Longitude pointing to a circle center.
-     * @param radiusUnits Units that will be used to measure distances (Kilometers, Miles).
-     * @param distanceErrorPct Distance error percent
-     * @return Query instance
-     */
-    TSelf withinRadiusOf(String fieldName, double radius, double latitude, double longitude, SpatialUnits radiusUnits, double distanceErrorPct);
-
-
-    //TBD expr TSelf RelatesToShape<TValue>(Expression<Func<T, TValue>> propertySelector, string shapeWkt, SpatialRelation relation, double distanceErrorPct = Constants.Documents.Indexing.Spatial.DefaultDistanceErrorPct);
-
-    /**
-     * Filter matches based on a given shape - only documents with the shape defined in fieldName that
-     * have a relation rel with the given shapeWkt will be returned
-     * @param fieldName Spatial field name.
-     * @param shapeWkt WKT formatted shape
-     * @param relation Spatial relation to check (Within, Contains, Disjoint, Intersects, Nearby)
-     * @return Query instance
-     */
-    TSelf relatesToShape(String fieldName, String shapeWkt, SpatialRelation relation);
-
-    /**
-     * Filter matches based on a given shape - only documents with the shape defined in fieldName that
-     * have a relation rel with the given shapeWkt will be returned
-     * @param fieldName Spatial field name.
-     * @param shapeWkt WKT formatted shape
-     * @param relation Spatial relation to check (Within, Contains, Disjoint, Intersects, Nearby)
-     * @param distanceErrorPct The allowed error percentage. By default: 0.025
-     * @return Query instance
-     */
-    TSelf relatesToShape(String fieldName, String shapeWkt, SpatialRelation relation, double distanceErrorPct);
-
-    /**
-     * Filter matches based on a given shape - only documents with the shape defined in fieldName that
-     * have a relation rel with the given shapeWkt will be returned
-     * @param fieldName Spatial field name.
-     * @param shapeWkt WKT formatted shape
-     * @param relation Spatial relation to check (Within, Contains, Disjoint, Intersects, Nearby)
-     * @param units SpatialUnits
-     * @param distanceErrorPct The allowed error percentage. By default: 0.025
-     * @return Query instance
-     */
-    TSelf relatesToShape(String fieldName, String shapeWkt, SpatialRelation relation, SpatialUnits units, double distanceErrorPct);
-
-    //TBD expr IDocumentQuery<T> Spatial(Expression<Func<T, object>> path, Func<SpatialCriteriaFactory, SpatialCriteria> clause);
-
-    /**
-     * Ability to use one factory to determine spatial shape that will be used in query.
-     * @param fieldName Field name
-     * @param clause Spatial criteria factory
-     * @return Query instance
-     */
-    IDocumentQuery<T> spatial(String fieldName, Function<SpatialCriteriaFactory, SpatialCriteria> clause);
-
-    IDocumentQuery<T> spatial(DynamicSpatialField field, Function<SpatialCriteriaFactory, SpatialCriteria> clause);
-
-    //TBD expr IDocumentQuery<T> spatial(Function<SpatialDynamicFieldFactory<T>, DynamicSpatialField> field, Function<SpatialCriteriaFactory, SpatialCriteria> clause);
-
-    IDocumentQuery<T> moreLikeThis(MoreLikeThisBase moreLikeThis);
 
 }

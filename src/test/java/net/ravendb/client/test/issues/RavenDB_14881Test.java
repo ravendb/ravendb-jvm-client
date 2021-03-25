@@ -1,11 +1,7 @@
 package net.ravendb.client.test.issues;
 
 import net.ravendb.client.RemoteTestBase;
-import net.ravendb.client.documents.BulkInsertOperation;
 import net.ravendb.client.documents.IDocumentStore;
-import net.ravendb.client.documents.operations.CollectionDetails;
-import net.ravendb.client.documents.operations.DetailedCollectionStatistics;
-import net.ravendb.client.documents.operations.GetDetailedCollectionStatisticsOperation;
 import net.ravendb.client.documents.operations.revisions.ConfigureRevisionsOperation;
 import net.ravendb.client.documents.operations.revisions.RevisionsCollectionConfiguration;
 import net.ravendb.client.documents.operations.revisions.RevisionsConfiguration;

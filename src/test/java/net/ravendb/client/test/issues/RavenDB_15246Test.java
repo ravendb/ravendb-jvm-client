@@ -6,7 +6,6 @@ import net.ravendb.client.documents.operations.timeSeries.GetMultipleTimeSeriesO
 import net.ravendb.client.documents.operations.timeSeries.TimeSeriesDetails;
 import net.ravendb.client.documents.operations.timeSeries.TimeSeriesRange;
 import net.ravendb.client.documents.session.IDocumentSession;
-import net.ravendb.client.documents.session.ISessionDocumentTimeSeries;
 import net.ravendb.client.documents.session.timeSeries.TimeSeriesEntry;
 import net.ravendb.client.http.RequestExecutor;
 import net.ravendb.client.infrastructure.entities.User;
