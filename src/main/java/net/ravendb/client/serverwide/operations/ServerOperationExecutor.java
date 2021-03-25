@@ -7,7 +7,6 @@ import net.ravendb.client.primitives.CleanCloseable;
 import java.util.Map;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ConcurrentSkipListMap;
-import java.util.stream.Collectors;
 
 public class ServerOperationExecutor implements CleanCloseable {
 
@@ -42,13 +41,6 @@ public class ServerOperationExecutor implements CleanCloseable {
         if (_nodeTag == null) {
             store.addAfterCloseListener((sender, event) -> _requestExecutor.close());
         }
-    }
-
-
-
-    public void send(IVoidServerOperation operation) {
-        VoidRavenCommand command = operation.getCommand(_requestExecutor.getConventions());
-        _requestExecutor.execute(command);
     }
 
     @SuppressWarnings("UnusedReturnValue")

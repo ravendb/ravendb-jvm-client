@@ -1,6 +1,5 @@
 package net.ravendb.client.documents.queries;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import net.ravendb.client.Parameters;
 import net.ravendb.client.documents.conventions.DocumentConventions;
 

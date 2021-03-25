@@ -3,12 +3,9 @@ package net.ravendb.client.http;
 import net.ravendb.client.exceptions.AllTopologyNodesDownException;
 import net.ravendb.client.exceptions.RequestedNodeUnavailableException;
 import net.ravendb.client.primitives.CleanCloseable;
-import net.ravendb.client.primitives.Timer;
 import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.StringUtils;
 
-import java.time.Duration;
-import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicInteger;

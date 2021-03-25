@@ -9,11 +9,9 @@ import net.ravendb.client.exceptions.RavenException;
 import net.ravendb.client.extensions.JsonExtensions;
 import net.ravendb.client.http.LoadBalanceBehavior;
 import net.ravendb.client.http.ReadBalanceBehavior;
-import net.ravendb.client.primitives.Reference;
 import net.ravendb.client.primitives.Tuple;
 import net.ravendb.client.util.Inflector;
 import net.ravendb.client.util.ReflectionUtil;
-import org.apache.commons.lang3.ObjectUtils;
 
 import java.beans.IntrospectionException;
 import java.beans.Introspector;

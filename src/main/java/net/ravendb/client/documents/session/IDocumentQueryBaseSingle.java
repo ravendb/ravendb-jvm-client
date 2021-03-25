@@ -1,10 +1,5 @@
 package net.ravendb.client.documents.session;
 
-import net.ravendb.client.documents.Lazy;
-
-import java.util.List;
-import java.util.function.Consumer;
-
 public interface IDocumentQueryBaseSingle<T> {
 
     /**

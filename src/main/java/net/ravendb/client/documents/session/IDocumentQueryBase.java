@@ -1,7 +1,6 @@
 package net.ravendb.client.documents.session;
 
 import net.ravendb.client.documents.session.loaders.IQueryIncludeBuilder;
-import net.ravendb.client.primitives.Reference;
 
 import java.util.function.Consumer;
 

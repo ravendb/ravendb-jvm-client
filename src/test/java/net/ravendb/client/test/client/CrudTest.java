@@ -1,13 +1,9 @@
 package net.ravendb.client.test.client;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import net.ravendb.client.RemoteTestBase;
 import net.ravendb.client.documents.IDocumentStore;
-import net.ravendb.client.documents.commands.GetDocumentsCommand;
-import net.ravendb.client.documents.commands.GetDocumentsResult;
 import net.ravendb.client.documents.session.DocumentsChanges;
 import net.ravendb.client.documents.session.IDocumentSession;
-import net.ravendb.client.extensions.JsonExtensions;
 import net.ravendb.client.infrastructure.entities.User;
 import org.junit.jupiter.api.Test;
 

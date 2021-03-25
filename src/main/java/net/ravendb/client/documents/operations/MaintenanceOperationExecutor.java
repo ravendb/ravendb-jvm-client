@@ -3,7 +3,6 @@ package net.ravendb.client.documents.operations;
 import net.ravendb.client.documents.DocumentStore;
 import net.ravendb.client.http.RavenCommand;
 import net.ravendb.client.http.RequestExecutor;
-import net.ravendb.client.http.VoidRavenCommand;
 import net.ravendb.client.serverwide.operations.ServerOperationExecutor;
 import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.StringUtils;

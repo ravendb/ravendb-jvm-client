@@ -4,7 +4,6 @@ import net.ravendb.client.documents.conventions.DocumentConventions;
 import net.ravendb.client.documents.queries.GroupBy;
 import net.ravendb.client.documents.queries.SearchOperator;
 import net.ravendb.client.documents.session.loaders.IncludeBuilderBase;
-import net.ravendb.client.primitives.Reference;
 
 import java.time.Duration;
 import java.util.Collection;

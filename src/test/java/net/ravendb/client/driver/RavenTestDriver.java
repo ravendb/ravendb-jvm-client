@@ -2,12 +2,9 @@ package net.ravendb.client.driver;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.base.Stopwatch;
-import net.ravendb.client.Constants;
 import net.ravendb.client.documents.DocumentStore;
 import net.ravendb.client.documents.IDocumentStore;
-import net.ravendb.client.documents.operations.MaintenanceOperationExecutor;
 import net.ravendb.client.documents.session.IDocumentSession;
-import net.ravendb.client.exceptions.TimeoutException;
 import net.ravendb.client.http.RequestExecutor;
 import net.ravendb.client.infrastructure.graph.*;
 import net.ravendb.client.primitives.CleanCloseable;
@@ -31,7 +28,6 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
-import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 

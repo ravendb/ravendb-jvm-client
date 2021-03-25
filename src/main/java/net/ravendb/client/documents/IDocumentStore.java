@@ -8,8 +8,6 @@ import net.ravendb.client.http.RequestExecutor;
 import net.ravendb.client.primitives.EventHandler;
 import net.ravendb.client.util.IDisposalNotification;
 
-import java.security.KeyStore;
-
 /**
  * Interface for managing access to RavenDB and open sessions.
  */

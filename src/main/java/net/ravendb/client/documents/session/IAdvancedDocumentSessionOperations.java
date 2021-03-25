@@ -9,7 +9,6 @@ import net.ravendb.client.primitives.EventHandler;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
-import java.util.function.Consumer;
 
 /**
     Advanced session operations

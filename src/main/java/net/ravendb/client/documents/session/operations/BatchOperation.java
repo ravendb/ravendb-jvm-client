@@ -1,19 +1,12 @@
 package net.ravendb.client.documents.session.operations;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ArrayNode;
-import com.fasterxml.jackson.databind.node.NumericNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.fasterxml.jackson.databind.node.TextNode;
 import net.ravendb.client.Constants;
 import net.ravendb.client.documents.commands.batches.CommandType;
 import net.ravendb.client.documents.commands.batches.SingleNodeBatchCommand;
 import net.ravendb.client.documents.session.*;
-import net.ravendb.client.exceptions.ClientVersionMismatchException;
-import net.ravendb.client.extensions.JsonExtensions;
 import net.ravendb.client.json.BatchCommandResult;
-import net.ravendb.client.primitives.Tuple;
 
 import java.util.Iterator;
 import java.util.List;

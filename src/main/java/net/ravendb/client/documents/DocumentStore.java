@@ -8,7 +8,6 @@ import net.ravendb.client.documents.session.IDocumentSession;
 import net.ravendb.client.documents.session.SessionOptions;
 import net.ravendb.client.http.RequestExecutor;
 import net.ravendb.client.primitives.*;
-import org.apache.commons.lang3.ObjectUtils;
 
 import java.time.Duration;
 import java.util.ArrayList;

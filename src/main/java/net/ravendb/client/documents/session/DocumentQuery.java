@@ -19,7 +19,6 @@ import java.lang.reflect.Field;
 import java.time.Duration;
 import java.util.*;
 import java.util.function.Consumer;
-import java.util.function.Function;
 
 public class DocumentQuery<T> extends AbstractDocumentQuery<T, DocumentQuery<T>> implements IDocumentQuery<T> {
 

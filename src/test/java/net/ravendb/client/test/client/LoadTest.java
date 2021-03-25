@@ -8,8 +8,6 @@ import net.ravendb.client.infrastructure.entities.User;
 import org.junit.jupiter.api.Test;
 
 import java.util.*;
-import java.util.function.Consumer;
-import java.util.stream.Collectors;
 
 import static org.assertj.core.api.Assertions.assertThat;
 

@@ -2,7 +2,6 @@ package net.ravendb.client.http;
 
 import net.ravendb.client.Constants;
 import net.ravendb.client.documents.conventions.DocumentConventions;
-import net.ravendb.client.documents.operations.DatabaseHealthCheckOperation;
 import net.ravendb.client.documents.session.*;
 import net.ravendb.client.exceptions.*;
 import net.ravendb.client.exceptions.database.DatabaseDoesNotExistException;
@@ -57,7 +56,6 @@ public class RequestExecutor implements CleanCloseable {
 
     public static Consumer<HttpClientBuilder> configureHttpClient = null;
 
-    private static final DatabaseHealthCheckOperation failureCheckOperation = new DatabaseHealthCheckOperation();
 
     /**
      * Extension point to plug - in request post processing like adding proxy etc.

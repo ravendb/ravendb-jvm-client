@@ -2,21 +2,17 @@ package net.ravendb.client.documents.session;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.base.Defaults;
-import jdk.nashorn.internal.objects.annotations.Where;
 import net.ravendb.client.Constants;
 import net.ravendb.client.Parameters;
-import net.ravendb.client.documents.Lazy;
 import net.ravendb.client.documents.commands.QueryCommand;
 import net.ravendb.client.documents.conventions.DocumentConventions;
 import net.ravendb.client.documents.queries.*;
 import net.ravendb.client.documents.session.loaders.IncludeBuilderBase;
 import net.ravendb.client.documents.session.operations.QueryOperation;
 import net.ravendb.client.documents.session.tokens.*;
-import net.ravendb.client.extensions.JsonExtensions;
 import net.ravendb.client.primitives.CleanCloseable;
 import net.ravendb.client.primitives.EventHelper;
 import net.ravendb.client.primitives.Reference;
-import net.ravendb.client.primitives.Tuple;
 import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.StringUtils;
 

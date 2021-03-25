@@ -1,9 +1,6 @@
 package net.ravendb.client.documents.queries;
 
-import com.fasterxml.jackson.databind.node.ObjectNode;
-
 import java.util.Date;
-import java.util.Map;
 
 public abstract class QueryResultBase<TResult, TInclude> {
 
