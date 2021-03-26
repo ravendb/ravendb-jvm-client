@@ -6,5 +6,4 @@ import net.ravendb.client.primitives.UseSharpEnum;
 public enum ItemFlags {
     NONE,
     NOT_FOUND,
-    AGGRESSIVELY_CACHED
 }

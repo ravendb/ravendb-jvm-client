@@ -1,6 +1,5 @@
 package net.ravendb.client.documents.session;
 
-import net.ravendb.client.documents.queries.GroupBy;
 import net.ravendb.client.documents.queries.QueryData;
 import net.ravendb.client.documents.queries.QueryResult;
 
@@ -62,10 +61,6 @@ public interface IDocumentQuery<T> extends IDocumentQueryBase<T, IDocumentQuery<
      * @return Document query
      */
     <TResult> IDocumentQuery<TResult> ofType(Class<TResult> resultClass);
-
-    IGroupByDocumentQuery<T> groupBy(String fieldName, String... fieldNames);
-
-    IGroupByDocumentQuery<T> groupBy(GroupBy field, GroupBy... fields);
 
 
 }

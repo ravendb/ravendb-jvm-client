@@ -7,7 +7,6 @@ import com.fasterxml.jackson.databind.node.TextNode;
 import net.ravendb.client.Constants;
 import net.ravendb.client.exceptions.RavenException;
 import net.ravendb.client.extensions.JsonExtensions;
-import net.ravendb.client.http.LoadBalanceBehavior;
 import net.ravendb.client.http.ReadBalanceBehavior;
 import net.ravendb.client.primitives.Tuple;
 import net.ravendb.client.util.Inflector;
@@ -66,7 +65,6 @@ public class DocumentConventions {
     private Duration _secondBroadcastAttemptTimeout;
 
     private int _loadBalancerContextSeed;
-    private LoadBalanceBehavior _loadBalanceBehavior;
     private ReadBalanceBehavior _readBalanceBehavior;
     private int _maxHttpCacheSize;
     private ObjectMapper _entityMapper;
@@ -229,19 +227,7 @@ public class DocumentConventions {
         _loadBalancerContextSeed = seed;
     }
 
-    /**
-     * We have to make this check so if admin activated this, but client code did not provide the selector,
-     * it is still disabled. Relevant if we have multiple clients / versions at once.
-     * @return load balance behavior
-     */
-    public LoadBalanceBehavior getLoadBalanceBehavior() {
-        return _loadBalanceBehavior;
-    }
 
-    public void setLoadBalanceBehavior(LoadBalanceBehavior loadBalanceBehavior) {
-        assertNotFrozen();
-        _loadBalanceBehavior = loadBalanceBehavior;
-    }
 
     /**
      * @return Gets the function that allow to specialize the topology
@@ -597,7 +583,6 @@ public class DocumentConventions {
         cloned._maxNumberOfRequestsPerSession = _maxNumberOfRequestsPerSession;
         cloned._loadBalancerPerSessionContextSelector = _loadBalancerPerSessionContextSelector;
         cloned._readBalanceBehavior = _readBalanceBehavior;
-        cloned._loadBalanceBehavior = _loadBalanceBehavior;
         cloned._maxHttpCacheSize = _maxHttpCacheSize;
         cloned._entityMapper = _entityMapper;
         cloned._useCompression = _useCompression;

@@ -6,23 +6,7 @@ import org.apache.commons.lang3.StringUtils;
 public class StringExtensions {
 
 
-    public static boolean isIdentifier(String token, int start, int length) {
-        if (length == 0 || length > 256) {
-            return false;
-        }
 
-        if (!Character.isLetter(token.charAt(start)) && token.charAt(start) != '_') {
-            return false;
-        }
-
-        for (int i = 1; i < length; i++) {
-            if (!Character.isLetterOrDigit(token.charAt(start + i)) && token.charAt(start + i) != '_') {
-                return false;
-            }
-        }
-
-        return true;
-    }
 
     public static void escapeString(StringBuilder builder, String value) {
         if (StringUtils.isBlank(value)) {

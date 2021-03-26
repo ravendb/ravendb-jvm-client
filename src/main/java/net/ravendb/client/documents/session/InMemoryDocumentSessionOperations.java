@@ -477,34 +477,6 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
         return (T) trackEntity(clazz, documentFound.getId(), documentFound.getDocument(), documentFound.getMetadata(), noTracking);
     }
 
-    public void registerExternalLoadedIntoTheSession(DocumentInfo info) {
-        if (noTracking) {
-            return;
-        }
-
-        DocumentInfo existing = documentsById.getValue(info.getId());
-        if (existing != null) {
-            if (existing.getEntity() == info.getEntity()) {
-                return;
-            }
-
-            throw new IllegalStateException("The document " + info.getId() + " is already in the session with a different entity instance.");
-        }
-
-        DocumentInfo existingEntity = documentsByEntity.get(info.getEntity());
-        if (existingEntity != null) {
-            if (existingEntity.getId().equalsIgnoreCase(info.getId())) {
-                return;
-            }
-
-            throw new IllegalStateException("Attempted to load an entity with id " + info.getId() + ", but the entity instance already exists in the session with id: " + existing.getId());
-        }
-
-        documentsByEntity.put(info.getEntity(), info);
-        documentsById.add(info);
-        includedDocumentsById.remove(info.getId());
-
-    }
 
     /**
      * Tracks the entity.
@@ -1030,24 +1002,7 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
         getDocumentInfo(entity).setIgnoreChanges(true);
     }
 
-    /**
-     * Evicts the specified entity from the session.
-     * Remove the entity from the delete queue and stops tracking changes for this entity.
-     *
-     * @param <T>    entity class
-     * @param entity Entity to evict
-     */
-    public <T> void evict(T entity) {
-        DocumentInfo documentInfo = documentsByEntity.get(entity);
-        if (documentInfo != null) {
-            documentsByEntity.evict(entity);
-            documentsById.remove(documentInfo.getId());
 
-        }
-
-        deletedEntities.evict(entity);
-        entityToJson.removeFromMissing(entity);
-    }
 
     /**
      * Clears this instance.
@@ -1212,9 +1167,6 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
         return entityToJson.convertToEntity(clazz, id, document, trackEntity);
     }
 
-    public boolean checkIfIdAlreadyIncluded(String[] ids, Map.Entry<String, Class<?>>[] includes) {
-        return checkIfIdAlreadyIncluded(ids, Arrays.stream(includes).map(Map.Entry::getKey).collect(Collectors.toList()));
-    }
 
     public boolean checkIfIdAlreadyIncluded(String[] ids, Collection<String> includes) {
         for (String id : ids) {
@@ -1289,27 +1241,7 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
         }
     }
 
-    @SuppressWarnings("unchecked")
-    protected static <T> T getOperationResult(Class<T> clazz, Object result) {
-        if (result == null) {
-            return Defaults.defaultValue(clazz);
-        }
 
-        if (clazz.isAssignableFrom(result.getClass())) {
-            return (T) result;
-        }
-
-        if (result instanceof Map) {
-            Map map = (Map) result;
-            if (map.isEmpty()) {
-                return null;
-            } else {
-                return (T) map.values().iterator().next();
-            }
-        }
-
-        throw new IllegalStateException("Unable to cast " + result.getClass().getSimpleName() + " to " + clazz.getSimpleName());
-    }
 
     protected void updateSessionAfterSaveChanges(BatchCommandResult result) {
         Long returnedTransactionIndex = result.getTransactionIndex();
@@ -1484,13 +1416,7 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
             }
         }
 
-        public void evict(Object entity) {
-            if (_prepareEntitiesPuts) {
-                throw new IllegalStateException("Cannot Evict entity during OnBeforeStore");
-            }
 
-            _documentsByEntity.remove(entity);
-        }
 
         public void put(Object entity, DocumentInfo documentInfo) {
             if (!_prepareEntitiesPuts) {
@@ -1620,13 +1546,7 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
             }
         }
 
-        public void evict(Object entity) {
-            if (_prepareEntitiesDeletes) {
-                throw new IllegalStateException("Cannot Evict entity during OnBeforeDelete");
-            }
 
-            _deletedEntities.remove(entity);
-        }
 
         public boolean contains(Object entity) {
             if (_deletedEntities.contains(entity)) {

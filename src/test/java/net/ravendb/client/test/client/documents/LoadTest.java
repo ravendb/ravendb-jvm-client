@@ -108,44 +108,4 @@ public class LoadTest extends RemoteTestBase {
     }
 
 
-    @Test
-    @Disabled("waiting for IncludesUtils")
-    public void loadWithIncludesAndMissingDocument() throws Exception {
-        try (IDocumentStore store = getDocumentStore()) {
-
-            String barId;
-
-            try (IDocumentSession session = store.openSession()) {
-                Bar bar = new Bar();
-                bar.setName("End");
-                bar.setFooId("somefoo/1");
-
-                session.store(bar);
-                barId = session.advanced().getDocumentId(bar);
-                session.saveChanges();
-            }
-
-            try (IDocumentSession newSession = store.openSession()) {
-                Map<String, Bar> bar = newSession.include("fooId")
-                        .load(Bar.class, new String[] { barId });
-
-                assertThat(bar)
-                        .isNotNull()
-                        .hasSize(1);
-
-                assertThat(bar.get(barId))
-                        .isNotNull();
-
-                int numOfRequests = newSession.advanced().getNumberOfRequests();
-
-                Foo foo = newSession.load(Foo.class, bar.get(barId).getFooId());
-
-                assertThat(foo)
-                        .isNull();
-
-                assertThat(newSession.advanced().getNumberOfRequests())
-                        .isEqualTo(numOfRequests);
-            }
-        }
-    }
 }

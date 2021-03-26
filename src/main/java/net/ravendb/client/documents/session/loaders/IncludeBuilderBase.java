@@ -31,11 +31,6 @@ public class IncludeBuilderBase {
         documentsToInclude.add(path);
     }
 
-    protected void _withAlias() {
-        if (alias == null) {
-            alias = "a_" + (nextParameterId++);
-        }
-    }
 
 
 }

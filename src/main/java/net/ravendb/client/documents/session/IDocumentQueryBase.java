@@ -28,17 +28,7 @@ public interface IDocumentQueryBase<T, TSelf extends IDocumentQueryBase<T, TSelf
 
     //TBD expr TSelf AddOrder<TValue>(Expression<Func<T, TValue>> propertySelector, bool descending = false, OrderingType ordering = OrderingType.String);
 
-    /**
-     * Specifies a boost weight to the last where clause.
-     * The higher the boost factor, the more relevant the term will be.
-     *
-     * boosting factor where 1.0 is default, less than 1.0 is lower weight, greater than 1.0 is higher weight
-     *
-     * http://lucene.apache.org/java/2_4_0/queryparsersyntax.html#Boosting%20a%20Term
-     * @param boost Boost value
-     * @return Query instance
-     */
-    TSelf boost(double boost);
+
 
     /**
      * Apply distinct operation to this query

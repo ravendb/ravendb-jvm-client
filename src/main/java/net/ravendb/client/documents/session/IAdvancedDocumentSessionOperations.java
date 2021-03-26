@@ -109,26 +109,7 @@ public interface IAdvancedDocumentSessionOperations {
      */
     void clear();
 
-    /**
-     * Defer commands to be executed on saveChanges()
-     * @param command command
-     * @param commands more commands to defer
-     */
-    void defer(ICommandData command, ICommandData... commands);
 
-    /**
-     * Defer commands to be executed on saveChanges()
-     * @param commands Commands to defer
-     */
-    void defer(ICommandData[] commands);
-
-    /**
-     * Evicts the specified entity from the session.
-     * Remove the entity from the delete queue and stops tracking changes for this entity.
-     * @param <T> entity class
-     * @param entity Entity to evict
-     */
-    <T> void evict(T entity);
 
     /**
      * Gets the document id for the specified entity.

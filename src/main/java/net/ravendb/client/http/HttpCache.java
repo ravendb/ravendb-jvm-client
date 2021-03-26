@@ -62,15 +62,13 @@ public class HttpCache implements CleanCloseable {
         return new ReleaseCacheItem();
     }
 
-    public void setNotFound(String url, boolean aggressivelyCached) {
+    public void setNotFound(String url) {
         HttpCacheItem httpCacheItem = new HttpCacheItem();
         httpCacheItem.changeVector = "404 response";
         httpCacheItem.cache = this;
         httpCacheItem.generation = generation.get();
 
-        httpCacheItem.flags = aggressivelyCached
-                ? EnumSet.of(ItemFlags.AGGRESSIVELY_CACHED, ItemFlags.NOT_FOUND)
-                : EnumSet.of(ItemFlags.NOT_FOUND);
+        httpCacheItem.flags = EnumSet.of(ItemFlags.NOT_FOUND);
 
         items.put(url, httpCacheItem);
     }

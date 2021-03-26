@@ -24,7 +24,6 @@ public class WhereToken extends QueryToken {
         private SearchOperator searchOperator;
         private String fromParameterName;
         private String toParameterName;
-        private Double boost;
         private Double fuzzy;
         private Integer proximity;
         private boolean exact;
@@ -90,13 +89,8 @@ public class WhereToken extends QueryToken {
             this.toParameterName = toParameterName;
         }
 
-        public Double getBoost() {
-            return boost;
-        }
 
-        public void setBoost(Double boost) {
-            this.boost = boost;
-        }
+
 
         public Double getFuzzy() {
             return fuzzy;
@@ -237,9 +231,6 @@ public class WhereToken extends QueryToken {
 
     @Override
     public void writeTo(StringBuilder writer) {
-        if (options.boost != null) {
-            writer.append("boost(");
-        }
 
         if (options.fuzzy != null) {
             writer.append("fuzzy(");
@@ -294,12 +285,7 @@ public class WhereToken extends QueryToken {
                     .append(")");
         }
 
-        if (options.boost != null) {
-            writer
-                    .append(", ")
-                    .append(options.boost)
-                    .append(")");
-        }
+
     }
 
     private void writeInnerWhere(StringBuilder writer) {

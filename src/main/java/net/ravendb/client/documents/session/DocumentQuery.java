@@ -470,12 +470,6 @@ public class DocumentQuery<T> extends AbstractDocumentQuery<T, DocumentQuery<T>>
     }
 
     @Override
-    public IDocumentQuery<T> boost(double boost) {
-        _boost(boost);
-        return this;
-    }
-
-    @Override
     public IDocumentQuery<T> fuzzy(double fuzzy) {
         _fuzzy(fuzzy);
         return this;
@@ -501,19 +495,6 @@ public class DocumentQuery<T> extends AbstractDocumentQuery<T, DocumentQuery<T>>
 
     //TBD 4.1 public IDocumentQuery<T> customSortUsing(String typeName, boolean descending)
 
-    @Override
-    public IGroupByDocumentQuery<T> groupBy(String fieldName, String... fieldNames) {
-        _groupBy(fieldName, fieldNames);
-
-        return new GroupByDocumentQuery<>(this);
-    }
-
-    @Override
-    public IGroupByDocumentQuery<T> groupBy(GroupBy field, GroupBy... fields) {
-        _groupBy(field, fields);
-
-        return new GroupByDocumentQuery<>(this);
-    }
 
     @Override
     public <TResult> IDocumentQuery<TResult> ofType(Class<TResult> tResultClass) {
@@ -615,7 +596,6 @@ public class DocumentQuery<T> extends AbstractDocumentQuery<T, DocumentQuery<T>>
         query.fieldsToFetchToken = fieldsToFetchToken;
         query.whereTokens = new LinkedList<>(whereTokens);
         query.orderByTokens = new LinkedList<>(orderByTokens);
-        query.groupByTokens = new LinkedList<>(groupByTokens);
         query.queryParameters = new Parameters(queryParameters);
         query.start = start;
         query.timeout = timeout;

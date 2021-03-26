@@ -392,11 +392,6 @@ public class RequestExecutor implements CleanCloseable {
             }
         }
 
-        if (conventions.getLoadBalanceBehavior() == LoadBalanceBehavior.USE_SESSION_CONTEXT) {
-            if (sessionInfo != null && sessionInfo.canUseLoadBalanceBehavior()) {
-                return _nodeSelector.getNodeBySessionId(sessionInfo.getSessionId());
-            }
-        }
 
         if (!cmd.isReadRequest()) {
             return _nodeSelector.getPreferredNode();
@@ -850,29 +845,7 @@ public class RequestExecutor implements CleanCloseable {
     }
 
     private <TResult> boolean tryGetFromCache(RavenCommand<TResult> command, HttpCache.ReleaseCacheItem cachedItem, String cachedValue) {
-        /*
-        AggressiveCacheOptions aggressiveCacheOptions = aggressiveCaching.get();
-        if (aggressiveCacheOptions != null &&
-                cachedItem.getAge().compareTo(aggressiveCacheOptions.getDuration()) < 0 &&
-                (!cachedItem.getMightHaveBeenModified() || aggressiveCacheOptions.getMode() != AggressiveCacheMode.TRACK_CHANGES) &&
-                command.canCacheAggressively()) {
-            try {
-                if (cachedItem.item.flags.contains(ItemFlags.NOT_FOUND)) {
-                    // if this is a cached delete, we only respect it if it _came_ from an aggressively cached
-                    // block, otherwise, we'll run the request again
 
-                    if (cachedItem.item.flags.contains(ItemFlags.AGGRESSIVELY_CACHED)) {
-                        command.setResponse(cachedValue, true);
-                        return true;
-                    }
-                } else {
-                    command.setResponse(cachedValue, true);
-                    return true;
-                }
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
-        }*/
         return false;
     }
 
@@ -928,52 +901,7 @@ public class RequestExecutor implements CleanCloseable {
 
         throw new AllTopologyNodesDownException(message);
     }
-    @SuppressWarnings("ConstantConditions")
-    private <TResult> CloseableHttpResponse executeOnAllToFigureOutTheFastest(ServerNode chosenNode, RavenCommand<TResult> command) {
-        AtomicInteger numberOfFailedTasks = new AtomicInteger();
 
-        CompletableFuture<IndexAndResponse> preferredTask = null;
-
-        List<ServerNode> nodes = _nodeSelector.getTopology().getNodes();
-        List<CompletableFuture<IndexAndResponse>> tasks = new ArrayList<>(Collections.nCopies(nodes.size(), null));
-
-        for (int i = 0; i < nodes.size(); i++) {
-            final int taskNumber = i;
-            numberOfServerRequests.incrementAndGet();
-
-            CompletableFuture<IndexAndResponse> task = CompletableFuture.supplyAsync(() -> {
-                try {
-                    Reference<String> strRef = new Reference<>();
-                    HttpRequestBase request = createRequest(nodes.get(taskNumber), command, strRef);
-                    setRequestHeaders(null, null, request);
-                    return new IndexAndResponse(taskNumber, command.send(getHttpClient(), request));
-                } catch (Exception e){
-                    numberOfFailedTasks.incrementAndGet();
-                    tasks.set(taskNumber, null);
-                    throw new RuntimeException("Request execution failed", e);
-                }
-            }, _executorService);
-
-            if (nodes.get(i).getClusterTag().equals(chosenNode.getClusterTag())) {
-                preferredTask = task;
-            } else {
-                task.thenAcceptAsync(result -> IOUtils.closeQuietly(result.response, null));
-            }
-
-            tasks.set(i, task);
-        }
-
-
-
-        // we can reach here if the number of failed task equal to the number
-        // of the nodes, in which case we have nothing to do
-
-        try {
-            return preferredTask.get().response;
-        } catch (InterruptedException | ExecutionException e) {
-            throw ExceptionsUtils.unwrapException(e);
-        }
-    }
 
     private <TResult> HttpCache.ReleaseCacheItem getFromCache(RavenCommand<TResult> command, boolean useCache, String url, Reference<String> cachedChangeVector, Reference<String> cachedValue) {
         if (useCache && command.canCache() && command.isReadRequest() && command.getResponseType() == RavenCommandResponseType.OBJECT) {
@@ -1018,7 +946,7 @@ public class RequestExecutor implements CleanCloseable {
         try {
             switch (response.getStatusLine().getStatusCode()) {
                 case HttpStatus.SC_NOT_FOUND:
-                    cache.setNotFound(url, false);
+                    cache.setNotFound(url);
                     switch (command.getResponseType()) {
                         case EMPTY:
                             return true;

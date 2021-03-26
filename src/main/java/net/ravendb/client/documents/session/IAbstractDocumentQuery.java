@@ -1,7 +1,6 @@
 package net.ravendb.client.documents.session;
 
 import net.ravendb.client.documents.conventions.DocumentConventions;
-import net.ravendb.client.documents.queries.GroupBy;
 import net.ravendb.client.documents.queries.SearchOperator;
 import net.ravendb.client.documents.session.loaders.IncludeBuilderBase;
 
@@ -25,11 +24,6 @@ public interface IAbstractDocumentQuery<T> {
      */
     DocumentConventions getConventions();
 
-    /**
-     * Determines if it is a dynamic map-reduce query
-     * @return true if it is dynamic query
-     */
-    boolean isDynamicMapReduce();
 
     /**
      * Instruct the query to wait for non stale result for the specified wait timeout.
@@ -308,16 +302,6 @@ public interface IAbstractDocumentQuery<T> {
      */
     void _orElse();
 
-    /**
-     * Specifies a boost weight to the last where clause.
-     * The higher the boost factor, the more relevant the term will be.
-     *
-     * boosting factor where 1.0 is default, less than 1.0 is lower weight, greater than 1.0 is higher weight
-     *
-     * http://lucene.apache.org/java/2_4_0/queryparsersyntax.html#Boosting%20a%20Term
-     * @param boost Boost value
-     */
-    void _boost(double boost);
 
     /**
      * Specifies a fuzziness factor to the single word term in the last where clause
@@ -411,21 +395,6 @@ public interface IAbstractDocumentQuery<T> {
      */
     void _containsAll(String fieldName, Collection<?> values);
 
-    void _groupBy(String fieldName, String... fieldNames);
-
-    void _groupBy(GroupBy field, GroupBy... fields);
-
-    void _groupByKey(String fieldName);
-
-    void _groupByKey(String fieldName, String projectedName);
-
-    void _groupBySum(String fieldName);
-
-    void _groupBySum(String fieldName, String projectedName);
-
-    void _groupByCount();
-
-    void _groupByCount(String projectedName);
 
     void _whereTrue();
 

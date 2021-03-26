@@ -90,59 +90,9 @@ public class QueryTest extends RemoteTestBase {
         }
     }
 
-    @Test
-    public void queryMapReduceWithCount() throws Exception {
-        try (IDocumentStore store = getDocumentStore()) {
-            addUsers(store);
 
-            try (IDocumentSession session = store.openSession()) {
-                List<ReduceResult> results = session.query(User.class)
-                        .groupBy("name")
-                        .selectKey()
-                        .selectCount()
-                        .orderByDescending("count")
-                        .ofType(ReduceResult.class)
-                        .toList();
 
-                assertThat(results.get(0).getCount())
-                        .isEqualTo(2);
-                assertThat(results.get(0).getName())
-                        .isEqualTo("John");
 
-                assertThat(results.get(1).getCount())
-                        .isEqualTo(1);
-                assertThat(results.get(1).getName())
-                        .isEqualTo("Tarzan");
-            }
-        }
-    }
-
-    @Test
-    public void queryMapReduceWithSum() throws Exception {
-        try (IDocumentStore store = getDocumentStore()) {
-            addUsers(store);
-
-            try (IDocumentSession session = store.openSession()) {
-                List<ReduceResult> results = session.query(User.class)
-                        .groupBy("name")
-                        .selectKey()
-                        .selectSum(new GroupByField("age"))
-                        .orderByDescending("age")
-                        .ofType(ReduceResult.class)
-                        .toList();
-
-                assertThat(results.get(0).getAge())
-                        .isEqualTo(8);
-                assertThat(results.get(0).getName())
-                        .isEqualTo("John");
-
-                assertThat(results.get(1).getAge())
-                        .isEqualTo(2);
-                assertThat(results.get(1).getName())
-                        .isEqualTo("Tarzan");
-            }
-        }
-    }
 
 
 
@@ -603,46 +553,6 @@ public class QueryTest extends RemoteTestBase {
         }
     }
 
-    @Test
-    public void queryWithBoost() throws Exception {
-        try (IDocumentStore store = getDocumentStore()) {
-            addUsers(store);
-
-            try (DocumentSession session = (DocumentSession) store.openSession()) {
-                List<User> users = session.query(User.class)
-                        .whereEquals("name", "Tarzan")
-                        .boost(5)
-                        .orElse()
-                        .whereEquals("name", "John")
-                        .boost(2)
-                        .orderByScore()
-                        .toList();
-
-                assertThat(users)
-                        .hasSize(3);
-
-                List<String> names = users.stream().map(User::getName).collect(toList());
-                assertThat(names)
-                        .containsSequence("Tarzan", "John", "John");
-
-                users = session.query(User.class)
-                        .whereEquals("name", "Tarzan")
-                        .boost(2)
-                        .orElse()
-                        .whereEquals("name", "John")
-                        .boost(5)
-                        .orderByScore()
-                        .toList();
-
-                assertThat(users)
-                        .hasSize(3);
-
-                names = users.stream().map(x -> x.getName()).collect(toList());
-                assertThat(names)
-                        .containsSequence("John", "John", "Tarzan");
-            }
-        }
-    }
 
 
 

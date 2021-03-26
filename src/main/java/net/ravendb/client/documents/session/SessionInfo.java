@@ -2,7 +2,6 @@ package net.ravendb.client.documents.session;
 
 import net.ravendb.client.documents.DocumentStoreBase;
 import net.ravendb.client.http.CurrentIndexAndNode;
-import net.ravendb.client.http.LoadBalanceBehavior;
 import net.ravendb.client.http.RequestExecutor;
 import net.ravendb.client.http.ServerNode;
 import org.apache.commons.codec.digest.DigestUtils;
@@ -35,8 +34,6 @@ public class SessionInfo {
 
         this._session = session;
         _loadBalancerContextSeed = session._requestExecutor.getConventions().getLoadBalancerContextSeed();
-        _canUseLoadBalanceBehavior = session.getConventions().getLoadBalanceBehavior() == LoadBalanceBehavior.USE_SESSION_CONTEXT
-                && session.getConventions().getLoadBalancerPerSessionContextSelector() != null;
 
         setLastClusterTransactionIndex(documentStore.getLastTransactionIndex(session.getDatabaseName()));
         this.noCaching = options.isNoCaching();
@@ -49,7 +46,7 @@ public class SessionInfo {
 
         setContextInternal(sessionKey);
 
-        _canUseLoadBalanceBehavior = _canUseLoadBalanceBehavior || _session.getConventions().getLoadBalanceBehavior() == LoadBalanceBehavior.USE_SESSION_CONTEXT;
+        _canUseLoadBalanceBehavior = _canUseLoadBalanceBehavior;
     }
 
     private void setContextInternal(String sessionKey) {
@@ -77,13 +74,6 @@ public class SessionInfo {
 
     public ServerNode getCurrentSessionNode(RequestExecutor requestExecutor) {
         CurrentIndexAndNode result;
-
-        if (requestExecutor.getConventions().getLoadBalanceBehavior() == LoadBalanceBehavior.USE_SESSION_CONTEXT) {
-            if (_canUseLoadBalanceBehavior) {
-                result = requestExecutor.getNodeBySessionId(getSessionId());
-                return result.currentNode;
-            }
-        }
 
         switch (requestExecutor.getConventions().getReadBalanceBehavior()) {
             case NONE:

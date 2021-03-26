@@ -75,13 +75,7 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
 
     protected List<QueryToken> whereTokens = new LinkedList<>();
 
-    protected List<QueryToken> groupByTokens = new LinkedList<>();
-
     protected List<QueryToken> orderByTokens = new LinkedList<>();
-
-    protected List<QueryToken> withTokens = new LinkedList<>();
-
-    protected QueryToken graphRawQuery;
 
     protected int start;
 
@@ -124,12 +118,6 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
         return (IDocumentSession) theSession;
     }
 
-    @Override
-    public boolean isDynamicMapReduce() {
-        return !groupByTokens.isEmpty();
-    }
-
-    private boolean _isInMoreLikeThis;
 
     private String _includesAlias;
 
@@ -161,10 +149,6 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
 
     public Class<T> getQueryClass() {
         return clazz;
-    }
-
-    public QueryToken getGraphRawQuery() {
-        return graphRawQuery;
     }
 
     public void _usingDefaultOperator(QueryOperator operator) {
@@ -280,88 +264,8 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
         queryParameters.put(name, value);
     }
 
-    @Override
-    public void _groupBy(String fieldName, String... fieldNames) {
-        GroupBy[] mapping = Arrays.stream(fieldNames)
-                .map(GroupBy::field)
-                .toArray(GroupBy[]::new);
 
-        _groupBy(GroupBy.field(fieldName), mapping);
-    }
 
-    @Override
-    public void _groupBy(GroupBy field, GroupBy... fields) {
-        if (!fromToken.isDynamic()) {
-            throw new IllegalStateException("groupBy only works with dynamic queries");
-        }
-
-        assertNoRawQuery();
-        isGroupBy = true;
-
-        String fieldName = ensureValidFieldName(field.getField(), false);
-
-        groupByTokens.add(GroupByToken.create(fieldName, field.getMethod()));
-
-        if (fields == null || fields.length <= 0) {
-            return;
-        }
-
-        for (GroupBy item : fields) {
-            fieldName = ensureValidFieldName(item.getField(), false);
-            groupByTokens.add(GroupByToken.create(fieldName, item.getMethod()));
-        }
-    }
-
-    @Override
-    public void _groupByKey(String fieldName) {
-        _groupByKey(fieldName, null);
-    }
-
-    @SuppressWarnings("UnnecessaryLocalVariable")
-    @Override
-    public void _groupByKey(String fieldName, String projectedName) {
-        assertNoRawQuery();
-        isGroupBy = true;
-
-        if (projectedName != null && _aliasToGroupByFieldName.containsKey(projectedName)) {
-            String aliasedFieldName = _aliasToGroupByFieldName.get(projectedName);
-            if (fieldName == null || fieldName.equalsIgnoreCase(projectedName)) {
-                fieldName = aliasedFieldName;
-            }
-        } else if (fieldName != null && _aliasToGroupByFieldName.containsValue(fieldName)) {
-            String aliasedFieldName = _aliasToGroupByFieldName.get(fieldName);
-            fieldName = aliasedFieldName;
-        }
-
-        selectTokens.add(GroupByKeyToken.create(fieldName, projectedName));
-    }
-
-    @Override
-    public void _groupBySum(String fieldName) {
-        _groupBySum(fieldName, null);
-    }
-
-    @Override
-    public void _groupBySum(String fieldName, String projectedName) {
-        assertNoRawQuery();
-        isGroupBy = true;
-
-        fieldName = ensureValidFieldName(fieldName, false);
-        selectTokens.add(GroupBySumToken.create(fieldName, projectedName));
-    }
-
-    @Override
-    public void _groupByCount() {
-        _groupByCount(null);
-    }
-
-    @Override
-    public void _groupByCount(String projectedName) {
-        assertNoRawQuery();
-        isGroupBy = true;
-
-        selectTokens.add(GroupByCountToken.create(projectedName));
-    }
 
     @Override
     public void _whereTrue() {
@@ -822,56 +726,6 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
         tokens.add(QueryOperatorToken.OR);
     }
 
-    /**
-     * Specifies a boost weight to the last where clause.
-     * The higher the boost factor, the more relevant the term will be.
-     * <p>
-     * boosting factor where 1.0 is default, less than 1.0 is lower weight, greater than 1.0 is higher weight
-     * <p>
-     * http://lucene.apache.org/java/2_4_0/queryparsersyntax.html#Boosting%20a%20Term
-     *
-     * @param boost Boost value
-     */
-    @Override
-    public void _boost(double boost) {
-        if (boost == 1.0) {
-            return;
-        }
-
-        if (boost < 0.0) {
-            throw new IllegalArgumentException("Boost factor must be a non-negative number");
-        }
-
-        List<QueryToken> tokens = getCurrentWhereTokens();
-
-        QueryToken last = tokens.isEmpty() ? null : tokens.get(tokens.size() - 1);
-
-        if (last instanceof WhereToken) {
-            WhereToken whereToken = (WhereToken) last;
-            whereToken.getOptions().setBoost(boost);
-        } else if (last instanceof CloseSubclauseToken) {
-            CloseSubclauseToken close = (CloseSubclauseToken) last;
-
-            String parameter = addQueryParameter(boost);
-
-            int index = tokens.indexOf(last);
-
-            while (last != null && index > 0) {
-                index--;
-                last = tokens.get(index); // find the previous option
-
-                if (last instanceof OpenSubclauseToken) {
-                    OpenSubclauseToken open = (OpenSubclauseToken) last;
-
-                    open.setBoostParameterName(parameter);
-                    close.setBoostParameterName(parameter);
-                    return;
-                }
-            }
-        } else {
-            throw new IllegalStateException("Cannot apply boost");
-        }
-    }
 
     /**
      * Specifies a fuzziness factor to the single word term in the last where clause
@@ -1097,13 +951,7 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
         StringBuilder queryText = new StringBuilder();
 
         buildDeclare(queryText);
-        if (graphRawQuery != null) {
-            buildWith(queryText);
-            buildGraphQuery(queryText);
-        } else {
-            buildFrom(queryText);
-        }
-        buildGroupBy(queryText);
+        buildFrom(queryText);
         buildWhere(queryText);
         buildOrderBy(queryText);
 
@@ -1118,16 +966,7 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
         return queryText.toString();
     }
 
-    private void buildGraphQuery(StringBuilder queryText) {
-        graphRawQuery.writeTo(queryText);
-    }
 
-    private void buildWith(StringBuilder queryText) {
-        for (QueryToken with : withTokens) {
-            with.writeTo(queryText);
-            queryText.append(System.lineSeparator());
-        }
-    }
 
     @Override
     public String toString() {
@@ -1172,20 +1011,6 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
 
     }
 
-    <TToken extends QueryToken> void writeIncludeTokens(Collection<TToken> tokens, Reference<Boolean> firstRef, StringBuilder queryText) {
-        if (tokens == null) {
-            return;
-        }
-
-        for (TToken token : tokens) {
-            if (!firstRef.value) {
-                queryText.append(",");
-            }
-            firstRef.value = false;
-
-            token.writeTo(queryText);
-        }
-    }
 
     @Override
     public void _intersect() {
@@ -1343,26 +1168,6 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
 
         if (isIntersect) {
             writer.append(") ");
-        }
-    }
-
-    private void buildGroupBy(StringBuilder writer) {
-        if (groupByTokens.isEmpty()) {
-            return;
-        }
-
-        writer
-                .append(" group by ");
-
-        boolean isFirst = true;
-
-        for (QueryToken token : groupByTokens) {
-            if (!isFirst) {
-                writer.append(", ");
-            }
-
-            token.writeTo(writer);
-            isFirst = false;
         }
     }
 
@@ -1542,15 +1347,7 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
     }
 
     private List<QueryToken> getCurrentWhereTokens() {
-        if (!_isInMoreLikeThis) {
-            return whereTokens;
-        }
-
-        if (whereTokens.isEmpty()) {
-            throw new IllegalStateException("Cannot get MoreLikeThisToken because there are no where token specified.");
-        }
-
-        throw new IllegalStateException("Last token is not MoreLikeThisToken");
+        return whereTokens;
     }
 
     protected void updateFieldsToFetchToken(FieldsToFetchToken fieldsToFetch) {
