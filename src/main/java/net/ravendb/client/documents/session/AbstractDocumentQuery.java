@@ -11,7 +11,6 @@ import net.ravendb.client.documents.session.loaders.IncludeBuilderBase;
 import net.ravendb.client.documents.session.operations.QueryOperation;
 import net.ravendb.client.documents.session.tokens.*;
 import net.ravendb.client.primitives.CleanCloseable;
-import net.ravendb.client.primitives.EventHelper;
 import net.ravendb.client.primitives.Reference;
 import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -196,7 +195,6 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
 
         String query = toString(compatibilityMode);
         IndexQuery indexQuery = generateIndexQuery(query);
-        invokeBeforeQueryExecuted(indexQuery);
         return indexQuery;
     }
 
@@ -870,21 +868,7 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
         stats.value = queryStats;
     }
 
-    /**
-     * Called externally to raise the after query executed callback
-     * @param result Query result
-     */
-    public void invokeAfterQueryExecuted(QueryResult result) {
-        EventHelper.invoke(afterQueryExecutedCallback, result);
-    }
 
-    public void invokeBeforeQueryExecuted(IndexQuery query) {
-        EventHelper.invoke(beforeQueryExecutedCallback, query);
-    }
-
-    public void invokeAfterStreamExecuted(ObjectNode result) {
-        EventHelper.invoke(afterStreamExecutedCallback, result);
-    }
 
     /**
      * Generates the index query.
@@ -1535,7 +1519,6 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
             theSession.getRequestExecutor().execute(command, theSession.sessionInfo);
             queryOperation.setResult(command.getResult());
         }
-        invokeAfterQueryExecuted(queryOperation.getCurrentQueryResults());
     }
 
     @Override

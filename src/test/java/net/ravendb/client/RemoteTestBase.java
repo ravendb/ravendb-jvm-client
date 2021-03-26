@@ -128,20 +128,8 @@ public class RemoteTestBase extends RavenTestDriver implements CleanCloseable {
 
         customizeStore(store);
 
-        hookLeakedConnectionCheck(store);
         store.initialize();
 
-        store.addAfterCloseListener(((sender, event) -> {
-            if (!documentStores.contains(store)) {
-                return;
-            }
-
-            try {
-                store.maintenance().server().send(new DeleteDatabasesOperation(store.getDatabase(), true));
-            } catch (DatabaseDoesNotExistException e) {
-                // ignore
-            }
-        }));
 
         setupDatabase(store);
 

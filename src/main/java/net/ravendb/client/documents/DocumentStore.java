@@ -7,14 +7,14 @@ import net.ravendb.client.documents.session.DocumentSession;
 import net.ravendb.client.documents.session.IDocumentSession;
 import net.ravendb.client.documents.session.SessionOptions;
 import net.ravendb.client.http.RequestExecutor;
-import net.ravendb.client.primitives.*;
+import net.ravendb.client.primitives.ExceptionsUtils;
 
-import java.time.Duration;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Map;
 import java.util.UUID;
-import java.util.concurrent.*;
+import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.ConcurrentSkipListMap;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.function.Supplier;
 
 /**
@@ -79,7 +79,6 @@ public class DocumentStore extends DocumentStoreBase {
 
     @SuppressWarnings("EmptyTryBlock")
     public void close() {
-        EventHelper.invoke(beforeClose, this, EventArgs.EMPTY);
 
         if (_multiDbHiLo != null) {
             try {
@@ -91,7 +90,6 @@ public class DocumentStore extends DocumentStoreBase {
 
         disposed = true;
 
-        EventHelper.invoke(new ArrayList<>(afterClose), this, EventArgs.EMPTY);
 
         for (Map.Entry<String, Lazy<RequestExecutor>> kvp : requestExecutors.entrySet()) {
             if (!kvp.getValue().isValueCreated()) {
@@ -130,8 +128,6 @@ public class DocumentStore extends DocumentStoreBase {
 
         UUID sessionId = UUID.randomUUID();
         DocumentSession session = new DocumentSession(this, sessionId, options);
-        registerEvents(session);
-        afterSessionCreated(session);
         return session;
     }
 
@@ -155,14 +151,12 @@ public class DocumentStore extends DocumentStoreBase {
 
         Supplier<RequestExecutor> createRequestExecutor = () -> {
             RequestExecutor requestExecutor = RequestExecutor.create(getUrls(), effectiveDatabase, executorService, getConventions());
-            registerEvents(requestExecutor);
 
             return requestExecutor;
         };
 
         Supplier<RequestExecutor> createRequestExecutorForSingleNode = () -> {
             RequestExecutor forSingleNode = RequestExecutor.createForSingleNodeWithConfigurationUpdates(getUrls()[0], effectiveDatabase, executorService, getConventions());
-            registerEvents(forSingleNode);
 
             return forSingleNode;
         };
@@ -221,30 +215,6 @@ public class DocumentStore extends DocumentStoreBase {
     }
 
 
-
-
-
-    private final List<EventHandler<VoidArgs>> afterClose = new ArrayList<>();
-
-    private final List<EventHandler<VoidArgs>> beforeClose = new ArrayList<>();
-
-    public void addBeforeCloseListener(EventHandler<VoidArgs> event) {
-        this.beforeClose.add(event);
-    }
-
-    @Override
-    public void removeBeforeCloseListener(EventHandler<VoidArgs> event) {
-        this.beforeClose.remove(event);
-    }
-
-    public void addAfterCloseListener(EventHandler<VoidArgs> event) {
-        this.afterClose.add(event);
-    }
-
-    @Override
-    public void removeAfterCloseListener(EventHandler<VoidArgs> event) {
-        this.afterClose.remove(event);
-    }
 
 
     @Override

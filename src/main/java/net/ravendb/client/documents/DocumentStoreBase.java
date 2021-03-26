@@ -3,20 +3,13 @@ package net.ravendb.client.documents;
 import net.ravendb.client.documents.conventions.DocumentConventions;
 import net.ravendb.client.documents.operations.MaintenanceOperationExecutor;
 import net.ravendb.client.documents.operations.OperationExecutor;
-import net.ravendb.client.documents.session.*;
+import net.ravendb.client.documents.session.IDocumentSession;
+import net.ravendb.client.documents.session.SessionOptions;
 import net.ravendb.client.http.RequestExecutor;
-import net.ravendb.client.primitives.CleanCloseable;
-import net.ravendb.client.primitives.EventHandler;
-import net.ravendb.client.primitives.EventHelper;
-import net.ravendb.client.primitives.VoidArgs;
 import org.apache.commons.lang3.StringUtils;
 
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.security.KeyStore;
-import java.time.Duration;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ConcurrentSkipListMap;
 
@@ -25,25 +18,10 @@ import java.util.concurrent.ConcurrentSkipListMap;
  */
 public abstract class DocumentStoreBase implements IDocumentStore {
 
-    private final List<EventHandler<SessionCreatedEventArgs>> onSessionCreated = new ArrayList<>();
-
-    private final List<EventHandler<SucceedRequestEventArgs>> onSucceedRequest = new ArrayList<>();
-
-    private final List<EventHandler<FailedRequestEventArgs>> onFailedRequest = new ArrayList<>();
-    private final List<EventHandler<TopologyUpdatedEventArgs>> onTopologyUpdated = new ArrayList<>();
-
     protected DocumentStoreBase() {
     }
 
     public abstract void close();
-
-    public abstract void addBeforeCloseListener(EventHandler<VoidArgs> event);
-
-    public abstract void removeBeforeCloseListener(EventHandler<VoidArgs> event);
-
-    public abstract void addAfterCloseListener(EventHandler<VoidArgs> event);
-
-    public abstract void removeAfterCloseListener(EventHandler<VoidArgs> event);
 
     protected boolean disposed;
 
@@ -158,35 +136,7 @@ public abstract class DocumentStoreBase implements IDocumentStore {
     }
 
 
-    public void addOnSucceedRequestListener(EventHandler<SucceedRequestEventArgs> handler) {
-        assertNotInitialized("onSucceedRequest");
-        this.onSucceedRequest.add(handler);
-    }
 
-    public void removeOnSucceedRequestListener(EventHandler<SucceedRequestEventArgs> handler) {
-        assertNotInitialized("onSucceedRequest");
-        this.onSucceedRequest.remove(handler);
-    }
-
-    public void addOnFailedRequestListener(EventHandler<FailedRequestEventArgs> handler) {
-        assertNotInitialized("onFailedRequest");
-        this.onFailedRequest.add(handler);
-    }
-
-    public void removeOnFailedRequestListener(EventHandler<FailedRequestEventArgs> handler) {
-        assertNotInitialized("onFailedRequest");
-        this.onFailedRequest.remove(handler);
-    }
-
-    public void addOnTopologyUpdatedListener(EventHandler<TopologyUpdatedEventArgs> handler) {
-        assertNotInitialized("onTopologyUpdated");
-        this.onTopologyUpdated.add(handler);
-    }
-
-    public void removeOnTopologyUpdatedListener(EventHandler<TopologyUpdatedEventArgs> handler) {
-        assertNotInitialized("onTopologyUpdated");
-        this.onTopologyUpdated.remove(handler);
-    }
 
     protected String database;
 
@@ -213,28 +163,6 @@ public abstract class DocumentStoreBase implements IDocumentStore {
     public abstract RequestExecutor getRequestExecutor(String databaseName);
 
 
-    protected void registerEvents(InMemoryDocumentSessionOperations session) {
-
-    }
-
-    public void registerEvents(RequestExecutor requestExecutor) {
-        for (EventHandler<FailedRequestEventArgs> handler : onFailedRequest) {
-            requestExecutor.addOnFailedRequestListener(handler);
-        }
-
-        for (EventHandler<TopologyUpdatedEventArgs> handler : onTopologyUpdated) {
-            requestExecutor.addOnTopologyUpdatedListener(handler);
-        }
-
-
-        for (EventHandler<SucceedRequestEventArgs> handler : onSucceedRequest) {
-            requestExecutor.addOnSucceedRequestListener(handler);
-        }
-    }
-
-    protected void afterSessionCreated(InMemoryDocumentSessionOperations session) {
-        EventHelper.invoke(onSessionCreated, this, new SessionCreatedEventArgs(session));
-    }
 
     public abstract MaintenanceOperationExecutor maintenance();
 

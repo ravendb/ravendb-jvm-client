@@ -18,21 +18,6 @@ public interface IQueryBase<T, TSelf extends IQueryBase<T, TSelf>> {
      */
     DocumentConventions getConventions();
 
-    TSelf addBeforeQueryExecutedListener(Consumer<IndexQuery> action);
-
-    TSelf removeBeforeQueryExecutedListener(Consumer<IndexQuery> action);
-
-    TSelf addAfterQueryExecutedListener(Consumer<QueryResult> action);
-
-    TSelf removeAfterQueryExecutedListener(Consumer<QueryResult> action);
-
-    TSelf addAfterStreamExecutedListener(Consumer<ObjectNode> action);
-
-    TSelf removeAfterStreamExecutedListener(Consumer<ObjectNode> action);
-
-    void invokeAfterQueryExecuted(QueryResult result);
-
-    void invokeAfterStreamExecuted(ObjectNode result);
 
     /**
      * Disables caching for query results.

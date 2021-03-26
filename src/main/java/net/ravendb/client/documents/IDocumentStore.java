@@ -5,7 +5,6 @@ import net.ravendb.client.documents.operations.MaintenanceOperationExecutor;
 import net.ravendb.client.documents.operations.OperationExecutor;
 import net.ravendb.client.documents.session.*;
 import net.ravendb.client.http.RequestExecutor;
-import net.ravendb.client.primitives.EventHandler;
 import net.ravendb.client.util.IDisposalNotification;
 
 /**
@@ -14,12 +13,6 @@ import net.ravendb.client.util.IDisposalNotification;
 public interface IDocumentStore extends IDisposalNotification {
 
 
-
-    void addOnFailedRequestListener(EventHandler<FailedRequestEventArgs> handler);
-    void removeOnFailedRequestListener(EventHandler<FailedRequestEventArgs> handler);
-
-    void addOnTopologyUpdatedListener(EventHandler<TopologyUpdatedEventArgs> handler);
-    void removeOnTopologyUpdatedListener(EventHandler<TopologyUpdatedEventArgs> handler);
 
 
     /**

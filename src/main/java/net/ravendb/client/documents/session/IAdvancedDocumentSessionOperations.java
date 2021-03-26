@@ -1,10 +1,8 @@
 package net.ravendb.client.documents.session;
 
 import net.ravendb.client.documents.IDocumentStore;
-import net.ravendb.client.documents.commands.batches.ICommandData;
 import net.ravendb.client.http.RequestExecutor;
 import net.ravendb.client.http.ServerNode;
-import net.ravendb.client.primitives.EventHandler;
 
 import java.util.Date;
 import java.util.List;

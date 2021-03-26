@@ -135,30 +135,6 @@ public class DocumentQuery<T> extends AbstractDocumentQuery<T, DocumentQuery<T>>
     //TBD expr public IDocumentQuery<T> AddOrder<TValue>(Expression<Func<T, TValue>> propertySelector, bool descending, OrderingType ordering)
 
 
-    @Override
-    public IDocumentQuery<T> addAfterQueryExecutedListener(Consumer<QueryResult> action) {
-        _addAfterQueryExecutedListener(action);
-        return this;
-    }
-
-    @Override
-    public IDocumentQuery<T> removeAfterQueryExecutedListener(Consumer<QueryResult> action) {
-        _removeAfterQueryExecutedListener(action);
-        return this;
-    }
-
-    @Override
-    public IDocumentQuery<T> addAfterStreamExecutedListener(Consumer<ObjectNode> action) {
-        _addAfterStreamExecutedListener(action);
-        return this;
-    }
-
-    @Override
-    public IDocumentQuery<T> removeAfterStreamExecutedListener(Consumer<ObjectNode> action) {
-        _removeAfterStreamExecutedListener(action);
-        return this;
-    }
-
     public IDocumentQuery<T> openSubclause() {
         _openSubclause();
         return this;
@@ -536,17 +512,7 @@ public class DocumentQuery<T> extends AbstractDocumentQuery<T, DocumentQuery<T>>
 
     //TBD expr public IDocumentQuery<T> OrderByDescending<TValue>(params Expression<Func<T, TValue>>[] propertySelectors)
 
-    @Override
-    public IDocumentQuery<T> addBeforeQueryExecutedListener(Consumer<IndexQuery> action) {
-        _addBeforeQueryExecutedListener(action);
-        return this;
-    }
 
-    @Override
-    public IDocumentQuery<T> removeBeforeQueryExecutedListener(Consumer<IndexQuery> action) {
-        _removeBeforeQueryExecutedListener(action);
-        return this;
-    }
 
     public <TResult> DocumentQuery<TResult> createDocumentQueryInternal(Class<TResult> resultClass) {
         return createDocumentQueryInternal(resultClass, null);

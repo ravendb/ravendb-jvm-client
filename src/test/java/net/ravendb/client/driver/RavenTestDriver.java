@@ -41,39 +41,7 @@ public abstract class RavenTestDriver {
 
     public static boolean debug;
 
-    protected void hookLeakedConnectionCheck(DocumentStore store) {
-        store.addBeforeCloseListener((sender, event) -> {
-            try {
-                CloseableHttpClient httpClient = store.getRequestExecutor().getHttpClient();
 
-                Field connManager = httpClient.getClass().getDeclaredField("connManager");
-                connManager.setAccessible(true);
-                PoolingHttpClientConnectionManager connectionManager = (PoolingHttpClientConnectionManager) connManager.get(httpClient);
-
-                int leased = connectionManager.getTotalStats().getLeased();
-                if (leased > 0) {
-                    Thread.sleep(500);
-
-                    // give another try
-                    leased = connectionManager.getTotalStats().getLeased();
-
-                    if (leased > 0) {
-                        throw new IllegalStateException("Looks like you have leaked " + leased + " connections!");
-                    }
-
-                    /*  debug code to find actual connections
-                    Field poolField = connectionManager.getClass().getDeclaredField("pool");
-                    poolField.setAccessible(true);
-                    AbstractConnPool pool = (AbstractConnPool) poolField.get(connectionManager);
-                    Field leasedField = pool.getClass().getSuperclass().getDeclaredField("leased");
-                    leasedField.setAccessible(true);
-                    Set leasedConnections = (Set) leasedField.get(pool);*/
-                }
-            } catch (NoSuchFieldException | IllegalAccessException | InterruptedException e) {
-                throw new IllegalStateException("Unable to check for leaked connections", e);
-            }
-        });
-    }
 
     protected static void reportError(Exception e) {
         if (!debug) {

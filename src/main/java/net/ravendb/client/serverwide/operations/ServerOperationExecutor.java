@@ -35,12 +35,6 @@ public class ServerOperationExecutor implements CleanCloseable {
         _initialRequestExecutor = initialRequestExecutor;
         _nodeTag = nodeTag;
         _cache = cache;
-
-        store.registerEvents(_requestExecutor);
-
-        if (_nodeTag == null) {
-            store.addAfterCloseListener((sender, event) -> _requestExecutor.close());
-        }
     }
 
     @SuppressWarnings("UnusedReturnValue")

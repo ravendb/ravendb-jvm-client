@@ -131,7 +131,6 @@ public class ClusterRequestExecutor extends RequestExecutor {
                     //TODO:
                 }
 
-                onTopologyUpdatedInvoke(newTopology);
             } catch (Exception e) {
                 if (!_disposed) {
                     throw e;

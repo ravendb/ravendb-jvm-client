@@ -158,60 +158,8 @@ public class RequestExecutor implements CleanCloseable {
         _defaultTimeout = timeout;
     }
 
-    private Duration _secondBroadcastAttemptTimeout;
-
-    public Duration getSecondBroadcastAttemptTimeout() {
-        return _secondBroadcastAttemptTimeout;
-    }
-
-    public void setSecondBroadcastAttemptTimeout(Duration secondBroadcastAttemptTimeout) {
-        _secondBroadcastAttemptTimeout = secondBroadcastAttemptTimeout;
-    }
-
-    private Duration _firstBroadcastAttemptTimeout;
-
-    public Duration getFirstBroadcastAttemptTimeout() {
-        return _firstBroadcastAttemptTimeout;
-    }
-
-    public void setFirstBroadcastAttemptTimeout(Duration firstBroadcastAttemptTimeout) {
-        _firstBroadcastAttemptTimeout = firstBroadcastAttemptTimeout;
-    }
-
-    private final List<EventHandler<FailedRequestEventArgs>> _onFailedRequest = new ArrayList<>();
-
-    public void addOnFailedRequestListener(EventHandler<FailedRequestEventArgs> handler) {
-        this._onFailedRequest.add(handler);
-    }
-
-    public void removeOnFailedRequestListener(EventHandler<FailedRequestEventArgs> handler) {
-        this._onFailedRequest.remove(handler);
-    }
 
 
-    private final List<EventHandler<SucceedRequestEventArgs>> _onSucceedRequest = new ArrayList<>();
-
-    public void addOnSucceedRequestListener(EventHandler<SucceedRequestEventArgs> handler) {
-        this._onSucceedRequest.add(handler);
-    }
-
-    public void removeOnSucceedRequestListener(EventHandler<SucceedRequestEventArgs> handler) {
-        this._onSucceedRequest.remove(handler);
-    }
-
-    private final List<EventHandler<TopologyUpdatedEventArgs>> _onTopologyUpdated = new ArrayList<>();
-
-    public void addOnTopologyUpdatedListener(EventHandler<TopologyUpdatedEventArgs> handler) {
-        _onTopologyUpdated.add(handler);
-    }
-
-    public void removeOnTopologyUpdatedListener(EventHandler<TopologyUpdatedEventArgs> handler) {
-        _onTopologyUpdated.remove(handler);
-    }
-
-    private void onFailedRequestInvoke(String url, Exception e) {
-        EventHelper.invoke(_onFailedRequest, this, new FailedRequestEventArgs(_databaseName, url, e));
-    }
 
     private CloseableHttpClient createHttpClient() {
         ConcurrentMap<String, CloseableHttpClient> httpClientCache = getHttpClientCache();
@@ -322,7 +270,6 @@ public class RequestExecutor implements CleanCloseable {
 
                 topologyEtag = _nodeSelector.getTopology().getEtag();
 
-                onTopologyUpdatedInvoke(topology);
             } catch (Exception e) {
                 if (!_disposed) {
                     throw e;
@@ -447,9 +394,7 @@ public class RequestExecutor implements CleanCloseable {
                 });
     }
 
-    protected CompletableFuture<Void> firstTopologyUpdate(String[] inputUrls) {
-        return firstTopologyUpdate(inputUrls, null);
-    }
+
 
     @SuppressWarnings({"ConstantConditions"})
     protected CompletableFuture<Void> firstTopologyUpdate(String[] inputUrls, UUID applicationIdentifier) {
@@ -619,7 +564,6 @@ public class RequestExecutor implements CleanCloseable {
 
             try {
                 if (response.getStatusLine().getStatusCode() == HttpStatus.SC_NOT_MODIFIED) {
-                    EventHelper.invoke(_onSucceedRequest, this, new SucceedRequestEventArgs(_databaseName, urlRef.value, response, request, attemptNum));
 
                     cachedItem.notModified();
 
@@ -646,7 +590,6 @@ public class RequestExecutor implements CleanCloseable {
                     return; // we either handled this already in the unsuccessful response or we are throwing
                 }
 
-                EventHelper.invoke(_onSucceedRequest, this, new SucceedRequestEventArgs(_databaseName, urlRef.value, response, request, attemptNum));
 
                 responseDispose = command.processResponse(cache, response, urlRef.value);
                 _lastReturnedResponse = new Date();
@@ -1034,8 +977,6 @@ public class RequestExecutor implements CleanCloseable {
             return false;
         }
 
-        onFailedRequestInvoke(url, e);
-
         execute(indexAndNodeAndEtag.currentNode, indexAndNodeAndEtag.currentIndex, command, shouldRetry, sessionInfo);
 
         return true;
@@ -1152,17 +1093,4 @@ public class RequestExecutor implements CleanCloseable {
         }
     }
 
-    protected void onTopologyUpdatedInvoke(Topology newTopology) {
-        EventHelper.invoke(_onTopologyUpdated, this, new TopologyUpdatedEventArgs(newTopology));
-    }
-
-    public static class IndexAndResponse {
-        public final int index;
-        public final CloseableHttpResponse response;
-
-        public IndexAndResponse(int index, CloseableHttpResponse response) {
-            this.index = index;
-            this.response = response;
-        }
-    }
 }
