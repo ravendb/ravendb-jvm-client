@@ -36,15 +36,11 @@ public class EntityToJson {
             return (ObjectNode) entity;
         }
 
-        if (documentInfo != null) {
-            _session.onBeforeConversionToDocumentInvoke(documentInfo.getId(), entity);
-        }
 
         ObjectNode document = convertEntityToJsonInternal(entity, _session.getConventions(), documentInfo);
 
         if (documentInfo != null) {
             Reference<ObjectNode> documentReference = new Reference<>(document);
-            _session.onAfterConversionToDocumentInvoke(documentInfo.getId(), entity, documentReference);
             document = documentReference.value;
         }
 
@@ -144,7 +140,6 @@ public class EntityToJson {
             }
 
             Reference<ObjectNode> documentRef = new Reference<>(document);
-            _session.onBeforeConversionToEntityInvoke(id, entityType, documentRef);
             document = documentRef.value;
 
             Object defaultValue = InMemoryDocumentSessionOperations.getDefaultValue(entityType);
@@ -171,23 +166,13 @@ public class EntityToJson {
                 _session.getGenerateEntityIdOnTheClient().trySetIdentity(entity, id, isProjection);
             }
 
-            _session.onAfterConversionToEntityInvoke(id, document, entity);
-
             return entity;
         } catch (Exception e) {
             throw new IllegalStateException("Could not convert document " + id + " to entity of type " + entityType.getName(), e);
         }
     }
 
-    public void populateEntity(Object entity, String id, ObjectNode document) {
-        if (id == null) {
-            throw new IllegalArgumentException("Id cannot be null");
-        }
 
-        populateEntity(entity, document, _session.getConventions().getEntityMapper());
-
-        _session.getGenerateEntityIdOnTheClient().trySetIdentity(entity, id);
-    }
 
     public static void populateEntity(Object entity, ObjectNode document, ObjectMapper objectMapper) {
         if (entity == null) {
@@ -220,31 +205,6 @@ public class EntityToJson {
         return true;
     }
 
-    @SuppressWarnings("UnnecessaryLocalVariable")
-    public static Object convertToEntity(Class<?> entityClass, String id, ObjectNode document, DocumentConventions conventions) {
-        try {
-
-            Object defaultValue = InMemoryDocumentSessionOperations.getDefaultValue(entityClass);
-
-            Object entity = defaultValue;
-
-            String documentType = conventions.getJavaClass(id, document);
-            if (documentType != null) {
-                Class<?> clazz = Class.forName(documentType);
-                if (clazz != null && entityClass.isAssignableFrom(clazz)) {
-                    entity = conventions.getEntityMapper().treeToValue(document, clazz);
-                }
-            }
-
-            if (entity == null) {
-                entity = conventions.getEntityMapper().treeToValue(document, entityClass);
-            }
-
-            return entity;
-        } catch (Exception e) {
-            throw new IllegalStateException("Could not convert document " + id + " to entity of type " + entityClass, e);
-        }
-    }
 
     public void removeFromMissing(Object entity) {
         _missingDictionary.remove(entity);

@@ -99,22 +99,6 @@ public class DocumentSession extends InMemoryDocumentSessionOperations
         return command.getResult() != null;
     }
 
-    /**
-     * Refreshes the specified entity from Raven server.
-     */
-    public <T> void refresh(T entity) {
-        DocumentInfo documentInfo = documentsByEntity.get(entity);
-        if (documentInfo == null) {
-            throw new IllegalStateException("Cannot refresh a transient instance");
-        }
-
-        incrementRequestCount();
-
-        GetDocumentsCommand command = new GetDocumentsCommand(new String[]{documentInfo.getId()}, null, false);
-        _requestExecutor.execute(command, sessionInfo);
-
-        refreshInternal(entity, command, documentInfo);
-    }
 
     /**
      * Generates the document ID.

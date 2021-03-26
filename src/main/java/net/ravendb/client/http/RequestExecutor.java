@@ -71,10 +71,6 @@ public class RequestExecutor implements CleanCloseable {
 
     private final Semaphore _updateClientConfigurationSemaphore = new Semaphore(1);
 
-    private final KeyStore certificate;
-    private final char[] keyPassword;
-    private final KeyStore trustStore;
-
     private final String _databaseName;
 
     private static final Log logger = LogFactory.getLog(RequestExecutor.class);
@@ -192,15 +188,6 @@ public class RequestExecutor implements CleanCloseable {
         this._onFailedRequest.remove(handler);
     }
 
-    private final List<EventHandler<BeforeRequestEventArgs>> _onBeforeRequest = new ArrayList<>();
-
-    public void addOnBeforeRequestListener(EventHandler<BeforeRequestEventArgs> handler) {
-        this._onBeforeRequest.add(handler);
-    }
-
-    public void removeOnBeforeRequestListener(EventHandler<BeforeRequestEventArgs> handler) {
-        this._onBeforeRequest.remove(handler);
-    }
 
     private final List<EventHandler<SucceedRequestEventArgs>> _onSucceedRequest = new ArrayList<>();
 
@@ -246,49 +233,32 @@ public class RequestExecutor implements CleanCloseable {
         return conventions;
     }
 
-    public KeyStore getCertificate() {
-        return certificate;
-    }
 
-    public char[] getKeyPassword() {
-        return keyPassword;
-    }
-
-    public KeyStore getTrustStore() {
-        return trustStore;
-    }
-
-    protected RequestExecutor(String databaseName, KeyStore certificate, char[] keyPassword, KeyStore trustStore, DocumentConventions conventions, ExecutorService executorService, String[] initialUrls) {
+    protected RequestExecutor(String databaseName, DocumentConventions conventions, ExecutorService executorService, String[] initialUrls) {
         cache = new HttpCache(conventions.getMaxHttpCacheSize());
         _executorService = executorService;
         _databaseName = databaseName;
-        this.certificate = certificate;
-        this.keyPassword = keyPassword;
-        this.trustStore = trustStore;
 
         _lastReturnedResponse = new Date();
         this.conventions = conventions.clone();
-        this._defaultTimeout = conventions.getRequestTimeout();
-        this._secondBroadcastAttemptTimeout = conventions.getSecondBroadcastAttemptTimeout();
-        this._firstBroadcastAttemptTimeout = conventions.getFirstBroadcastAttemptTimeout();
     }
 
-    public static RequestExecutor create(String[] initialUrls, String databaseName, KeyStore certificate, char[] keyPassword, KeyStore trustStore, ExecutorService executorService, DocumentConventions conventions) {
-        RequestExecutor executor = new RequestExecutor(databaseName, certificate, keyPassword, trustStore, conventions, executorService, initialUrls);
+    public static RequestExecutor create(String[] initialUrls, String databaseName, ExecutorService executorService, DocumentConventions conventions) {
+        RequestExecutor executor = new RequestExecutor(databaseName, conventions, executorService, initialUrls);
         executor._firstTopologyUpdate = executor.firstTopologyUpdate(initialUrls, GLOBAL_APPLICATION_IDENTIFIER);
         return executor;
     }
 
-    public static RequestExecutor createForSingleNodeWithConfigurationUpdates(String url, String databaseName, KeyStore certificate, char[] keyPassword, KeyStore trustStore, ExecutorService executorService, DocumentConventions conventions) {
-        RequestExecutor executor = createForSingleNodeWithoutConfigurationUpdates(url, databaseName, certificate, keyPassword, trustStore, executorService, conventions);
+    public static RequestExecutor createForSingleNodeWithConfigurationUpdates(String url, String databaseName, ExecutorService executorService, DocumentConventions conventions) {
+        RequestExecutor executor = createForSingleNodeWithoutConfigurationUpdates(url, databaseName, executorService, conventions);
         executor._disableClientConfigurationUpdates = false;
         return executor;
     }
 
-    public static RequestExecutor createForSingleNodeWithoutConfigurationUpdates(String url, String databaseName, KeyStore certificate, char[] keyPassword, KeyStore trustStore, ExecutorService executorService, DocumentConventions conventions) {
-        final String[] initialUrls = validateUrls(new String[]{url}, certificate);
+    public static RequestExecutor createForSingleNodeWithoutConfigurationUpdates(String url, String databaseName, ExecutorService executorService, DocumentConventions conventions) {
+        final String[] initialUrls = validateUrls(new String[]{url});
 
-        RequestExecutor executor = new RequestExecutor(databaseName, certificate, keyPassword, trustStore, conventions, executorService, initialUrls);
+        RequestExecutor executor = new RequestExecutor(databaseName, conventions, executorService, initialUrls);
 
         Topology topology = new Topology();
         topology.setEtag(-1L);
@@ -483,7 +453,7 @@ public class RequestExecutor implements CleanCloseable {
 
     @SuppressWarnings({"ConstantConditions"})
     protected CompletableFuture<Void> firstTopologyUpdate(String[] inputUrls, UUID applicationIdentifier) {
-        final String[] initialUrls = validateUrls(inputUrls, certificate);
+        final String[] initialUrls = validateUrls(inputUrls);
 
         ArrayList<Tuple<String, Exception>> list = new ArrayList<>();
 
@@ -560,9 +530,8 @@ public class RequestExecutor implements CleanCloseable {
         throw new IllegalStateException("Failed to retrieve database topology from all known nodes" + System.lineSeparator() + details);
     }
 
-    public static String[] validateUrls(String[] initialUrls, KeyStore certificate) {
+    public static String[] validateUrls(String[] initialUrls) {
         String[] cleanUrls = new String[initialUrls.length];
-        boolean requireHttps = certificate != null;
         for (int index = 0; index < initialUrls.length; index++) {
             String url = initialUrls[index];
             try {
@@ -572,22 +541,6 @@ public class RequestExecutor implements CleanCloseable {
             }
 
             cleanUrls[index] = StringUtils.stripEnd(url, "/");
-            requireHttps |= url.startsWith("https://");
-        }
-
-        if (!requireHttps) {
-            return cleanUrls;
-        }
-
-        for (String url : initialUrls) {
-            if (!url.startsWith("http://")) {
-                continue;
-            }
-
-            if (certificate != null) {
-                throw new IllegalStateException("The url " + url + " is using HTTP, but a certificate is specified, which require us to use HTTPS");
-            }
-            throw new IllegalStateException("The url " + url + " is using HTTP, but other urls are using HTTPS, and mixing of HTTP and HTTPS is not allowed.");
         }
 
         return cleanUrls;
@@ -651,7 +604,6 @@ public class RequestExecutor implements CleanCloseable {
 
             command.numberOfAttempts = command.numberOfAttempts + 1;
             int attemptNum = command.numberOfAttempts;
-            EventHelper.invoke(_onBeforeRequest, this, new BeforeRequestEventArgs(_databaseName, urlRef.value, request, attemptNum));
 
             CloseableHttpResponse response = sendRequestToServer(chosenNode, nodeIndex, command, shouldRetry, sessionInfo, request, urlRef.value);
 
@@ -967,12 +919,6 @@ public class RequestExecutor implements CleanCloseable {
                             .append(chosenNode.getUrl())
                             .append(", ");
 
-                    if (certificate == null) {
-                        builder.append("a certificate is required. ");
-                    } else {
-                        builder.append("certificate does not have permission to access it or is unknown. ");
-                    }
-
                     builder.append(" Method: ")
                         .append(request.getMethod())
                             .append(", Request: ")
@@ -1164,22 +1110,6 @@ public class RequestExecutor implements CleanCloseable {
                 .setRetryHandler(new StandardHttpRequestRetryHandler(0, false))
                 .setDefaultSocketConfig(SocketConfig.custom().setTcpNoDelay(true).build());
 
-        if (certificate != null) {
-            try {
-                httpClientBuilder.setSSLHostnameVerifier((s, sslSession) -> {
-                    // Here we are explicitly ignoring trust issues in the case of ClusterRequestExecutor.
-                    // this is because we don't actually require trust, we just use the certificate
-                    // as a way to authenticate. Either we encounter the same server certificate which we already
-                    // trust, or the admin is going to tell us which specific certs we can trust.
-                    return true;
-                });
-
-                httpClientBuilder.setSSLContext(createSSLContext());
-            } catch ( Exception e) {
-                throw new IllegalStateException("Unable to configure ssl context: " + e.getMessage(), e);
-            }
-        }
-
         if (configureHttpClient != null) {
             configureHttpClient.accept(httpClientBuilder);
         }
@@ -1187,16 +1117,7 @@ public class RequestExecutor implements CleanCloseable {
         return httpClientBuilder.build();
     }
 
-    public SSLContext createSSLContext() throws UnrecoverableKeyException, NoSuchAlgorithmException, KeyStoreException, KeyManagementException {
-        SSLContextBuilder sslContextBuilder = SSLContexts.custom()
-                .loadKeyMaterial(certificate, keyPassword);
 
-        if (this.trustStore != null) {
-            sslContextBuilder.loadTrustMaterial(trustStore, null);
-        }
-
-        return sslContextBuilder.build();
-    }
 
     public CurrentIndexAndNode getRequestedNode(String nodeTag) {
         ensureNodeSelector();

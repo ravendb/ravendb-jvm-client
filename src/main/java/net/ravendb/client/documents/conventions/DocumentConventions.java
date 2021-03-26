@@ -56,13 +56,9 @@ public class DocumentConventions {
     private BiFunction<String, ObjectNode, String> _findJavaClass;
     private Function<String, Class> _findJavaClassByName;
 
-    private boolean _useOptimisticConcurrency;
     private boolean _throwIfQueryPageSizeIsNotSet;
     private int _maxNumberOfRequestsPerSession;
 
-    private Duration _requestTimeout;
-    private Duration _firstBroadcastAttemptTimeout;
-    private Duration _secondBroadcastAttemptTimeout;
 
     private int _loadBalancerContextSeed;
     private ReadBalanceBehavior _readBalanceBehavior;
@@ -105,9 +101,6 @@ public class DocumentConventions {
 
         _entityMapper = JsonExtensions.getDefaultEntityMapper();
 
-        _firstBroadcastAttemptTimeout = Duration.ofSeconds(5);
-        _secondBroadcastAttemptTimeout = Duration.ofSeconds(30);
-
         _sendApplicationIdentifier = true;
     }
 
@@ -115,14 +108,6 @@ public class DocumentConventions {
         return _useCompression != null;
     }
 
-    public Duration getRequestTimeout() {
-        return _requestTimeout;
-    }
-
-    public void setRequestTimeout(Duration requestTimeout) {
-        assertNotFrozen();
-        _requestTimeout = requestTimeout;
-    }
 
     /**
      * Enables sending a unique application identifier to the RavenDB Server that is used for Client API usage tracking.
@@ -143,51 +128,8 @@ public class DocumentConventions {
         _sendApplicationIdentifier = sendApplicationIdentifier;
     }
 
-    /**
-     * Get the timeout for the second broadcast attempt.
-     * Default: 30 seconds
-     *
-     * Upon failure of the first attempt the request executor will resend the command to all nodes simultaneously.
-     * @return broadcast timeout
-     */
-    public Duration getSecondBroadcastAttemptTimeout() {
-        return _secondBroadcastAttemptTimeout;
-    }
 
-    /**
-     * Set the timeout for the second broadcast attempt.
-     * Default: 30 seconds
-     *
-     * Upon failure of the first attempt the request executor will resend the command to all nodes simultaneously.
-     * @param secondBroadcastAttemptTimeout broadcast timeout
-     */
-    public void setSecondBroadcastAttemptTimeout(Duration secondBroadcastAttemptTimeout) {
-        assertNotFrozen();
-        _secondBroadcastAttemptTimeout = secondBroadcastAttemptTimeout;
-    }
 
-    /**
-     * Get the timeout for the first broadcast attempt.
-     * Default: 5 seconds
-     *
-     * First attempt will send a single request to a selected node.
-     * @return broadcast timeout
-     */
-    public Duration getFirstBroadcastAttemptTimeout() {
-        return _firstBroadcastAttemptTimeout;
-    }
-
-    /**
-     * Set the timeout for the first broadcast attempt.
-     * Default: 5 seconds
-     *
-     * First attempt will send a single request to a selected node.
-     * @param firstBroadcastAttemptTimeout broadcast timeout
-     */
-    public void setFirstBroadcastAttemptTimeout(Duration firstBroadcastAttemptTimeout) {
-        assertNotFrozen();
-        _firstBroadcastAttemptTimeout = firstBroadcastAttemptTimeout;
-    }
 
     public Boolean isUseCompression() {
         if (_useCompression == null) {
@@ -289,22 +231,7 @@ public class DocumentConventions {
         this._throwIfQueryPageSizeIsNotSet = throwIfQueryPageSizeIsNotSet;
     }
 
-    /**
-     * Whether UseOptimisticConcurrency is set to true by default for all opened sessions
-     * @return true if optimistic concurrency is enabled
-     */
-    public boolean isUseOptimisticConcurrency() {
-        return _useOptimisticConcurrency;
-    }
 
-    /**
-     * Whether UseOptimisticConcurrency is set to true by default for all opened sessions
-     * @param useOptimisticConcurrency value to set
-     */
-    public void setUseOptimisticConcurrency(boolean useOptimisticConcurrency) {
-        assertNotFrozen();
-        this._useOptimisticConcurrency = useOptimisticConcurrency;
-    }
 
     public BiFunction<String, ObjectNode, String> getFindJavaClass() {
         return _findJavaClass;
@@ -578,7 +505,6 @@ public class DocumentConventions {
         cloned._findJavaClassName = _findJavaClassName;
         cloned._findJavaClass = _findJavaClass;
         cloned._findJavaClassByName = _findJavaClassByName;
-        cloned._useOptimisticConcurrency = _useOptimisticConcurrency;
         cloned._throwIfQueryPageSizeIsNotSet = _throwIfQueryPageSizeIsNotSet;
         cloned._maxNumberOfRequestsPerSession = _maxNumberOfRequestsPerSession;
         cloned._loadBalancerPerSessionContextSelector = _loadBalancerPerSessionContextSelector;

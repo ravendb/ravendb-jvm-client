@@ -204,12 +204,9 @@ public class QueryOperation {
         }
 
         Reference<ObjectNode> documentRef = new Reference<>(document);
-        session.onBeforeConversionToEntityInvoke(id, clazz, documentRef);
         document = documentRef.value;
 
         T result = session.getConventions().getEntityMapper().treeToValue(document, clazz);
-
-        session.onAfterConversionToEntityInvoke(id, document, result);
 
         return result;
     }

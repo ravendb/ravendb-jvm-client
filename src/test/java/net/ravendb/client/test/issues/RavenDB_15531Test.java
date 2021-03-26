@@ -63,25 +63,6 @@ public class RavenDB_15531Test extends RemoteTestBase {
                 assertThat(changes.get(0).getFieldNewValue().toString())
                         .isEqualTo("\"State3\"");
 
-                session.advanced().refresh(doc);
-
-                doc.setName("State4");
-                changes1 =
-                        session.advanced().whatChanged();
-                changes = changes1.get("TestDoc");
-                assertThat(changes)
-                        .isNotNull()
-                        .hasSize(1);
-
-                assertThat(changes.get(0).getChange())
-                        .isEqualTo(DocumentsChanges.ChangeType.FIELD_CHANGED);
-                assertThat(changes.get(0).getFieldName())
-                        .isEqualTo("name");
-                assertThat(changes.get(0).getFieldOldValue().toString())
-                        .isEqualTo("\"State2\"");
-                assertThat(changes.get(0).getFieldNewValue().toString())
-                        .isEqualTo("\"State4\"");
-
             }
         }
     }

@@ -65,79 +65,6 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
         return id;
     }
 
-    private final List<EventHandler<BeforeStoreEventArgs>> onBeforeStore = new ArrayList<>();
-    private final List<EventHandler<AfterSaveChangesEventArgs>> onAfterSaveChanges = new ArrayList<>();
-    private final List<EventHandler<BeforeDeleteEventArgs>> onBeforeDelete = new ArrayList<>();
-    private final List<EventHandler<BeforeQueryEventArgs>> onBeforeQuery = new ArrayList<>();
-
-    private final List<EventHandler<BeforeConversionToDocumentEventArgs>> onBeforeConversionToDocument = new ArrayList<>();
-    private final List<EventHandler<AfterConversionToDocumentEventArgs>> onAfterConversionToDocument = new ArrayList<>();
-    private final List<EventHandler<BeforeConversionToEntityEventArgs>> onBeforeConversionToEntity = new ArrayList<>();
-    private final List<EventHandler<AfterConversionToEntityEventArgs>> onAfterConversionToEntity = new ArrayList<>();
-
-    public void addBeforeStoreListener(EventHandler<BeforeStoreEventArgs> handler) {
-        this.onBeforeStore.add(handler);
-    }
-
-    public void removeBeforeStoreListener(EventHandler<BeforeStoreEventArgs> handler) {
-        this.onBeforeStore.remove(handler);
-    }
-
-    public void addAfterSaveChangesListener(EventHandler<AfterSaveChangesEventArgs> handler) {
-        this.onAfterSaveChanges.add(handler);
-    }
-
-    public void removeAfterSaveChangesListener(EventHandler<AfterSaveChangesEventArgs> handler) {
-        this.onAfterSaveChanges.remove(handler);
-    }
-
-    public void addBeforeDeleteListener(EventHandler<BeforeDeleteEventArgs> handler) {
-        this.onBeforeDelete.add(handler);
-    }
-
-    public void removeBeforeDeleteListener(EventHandler<BeforeDeleteEventArgs> handler) {
-        this.onBeforeDelete.remove(handler);
-    }
-
-    public void addBeforeQueryListener(EventHandler<BeforeQueryEventArgs> handler) {
-        this.onBeforeQuery.add(handler);
-    }
-
-    public void removeBeforeQueryListener(EventHandler<BeforeQueryEventArgs> handler) {
-        this.onBeforeQuery.remove(handler);
-    }
-
-    public void addBeforeConversionToDocumentListener(EventHandler<BeforeConversionToDocumentEventArgs> handler) {
-        this.onBeforeConversionToDocument.add(handler);
-    }
-
-    public void removeBeforeConversionToDocumentListener(EventHandler<BeforeConversionToDocumentEventArgs> handler) {
-        this.onBeforeConversionToDocument.remove(handler);
-    }
-
-    public void addAfterConversionToDocumentListener(EventHandler<AfterConversionToDocumentEventArgs> handler) {
-        this.onAfterConversionToDocument.add(handler);
-    }
-
-    public void removeAfterConversionToDocumentListener(EventHandler<AfterConversionToDocumentEventArgs> handler) {
-        this.onAfterConversionToDocument.remove(handler);
-    }
-
-    public void addBeforeConversionToEntityListener(EventHandler<BeforeConversionToEntityEventArgs> handler) {
-        this.onBeforeConversionToEntity.add(handler);
-    }
-
-    public void removeBeforeConversionToEntityListener(EventHandler<BeforeConversionToEntityEventArgs> handler) {
-        this.onBeforeConversionToEntity.remove(handler);
-    }
-
-    public void addAfterConversionToEntityListener(EventHandler<AfterConversionToEntityEventArgs> handler) {
-        this.onAfterConversionToEntity.add(handler);
-    }
-
-    public void removeAfterConversionToEntityListener(EventHandler<AfterConversionToEntityEventArgs> handler) {
-        this.onAfterConversionToEntity.remove(handler);
-    }
 
     //Entities whose id we already know do not exists, because they are a missing include, or a missing load, etc.
     protected final Set<String> _knownMissingIds = new TreeSet<>(String.CASE_INSENSITIVE_ORDER);
@@ -263,29 +190,6 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
         this.maxNumberOfRequestsPerSession = maxNumberOfRequestsPerSession;
     }
 
-    private boolean useOptimisticConcurrency;
-
-    /**
-     * Gets value indicating whether the session should use optimistic concurrency.
-     * When set to true, a check is made so that a change made behind the session back would fail
-     * and raise ConcurrencyException
-     *
-     * @return true if optimistic concurrency should be used
-     */
-    public boolean isUseOptimisticConcurrency() {
-        return useOptimisticConcurrency;
-    }
-
-    /**
-     * Sets value indicating whether the session should use optimistic concurrency.
-     * When set to true, a check is made so that a change made behind the session back would fail
-     * and raise ConcurrencyException
-     *
-     * @param useOptimisticConcurrency sets the value
-     */
-    public void setUseOptimisticConcurrency(boolean useOptimisticConcurrency) {
-        this.useOptimisticConcurrency = useOptimisticConcurrency;
-    }
 
     protected final List<ICommandData> deferredCommands = new ArrayList<>();
 
@@ -329,7 +233,6 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
 
         noTracking = options.isNoTracking();
 
-        this.useOptimisticConcurrency = _requestExecutor.getConventions().isUseOptimisticConcurrency();
         this.maxNumberOfRequestsPerSession = _requestExecutor.getConventions().getMaxNumberOfRequestsPerSession();
         this.generateEntityIdOnTheClient = new GenerateEntityIdOnTheClient(_requestExecutor.getConventions(), this::generateId);
         this.entityToJson = new EntityToJson(this);
@@ -614,7 +517,7 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
         }
 
         _knownMissingIds.add(id);
-        changeVector = isUseOptimisticConcurrency() ? changeVector : null;
+        changeVector = null;
         defer(new DeleteCommandData(id, ObjectUtils.firstNonNull(expectedChangeVector, changeVector)));
     }
 
@@ -661,7 +564,6 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
         DocumentInfo value = documentsByEntity.get(entity);
         if (value != null) {
             value.setChangeVector(ObjectUtils.firstNonNull(changeVector, value.getChangeVector()));
-            value.setConcurrencyCheckMode(forceConcurrencyCheck);
             return;
         }
 
@@ -726,7 +628,6 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
         documentInfo.setId(id);
         documentInfo.setMetadata(metadata);
         documentInfo.setChangeVector(changeVector);
-        documentInfo.setConcurrencyCheckMode(forceConcurrencyCheck);
         documentInfo.setEntity(entity);
         documentInfo.setNewDocument(true);
         documentInfo.setDocument(null);
@@ -840,9 +741,7 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
                         result.onSuccess.removeDocumentByEntity(documentInfo.getId());
                     }
 
-                    changeVector = useOptimisticConcurrency ? changeVector : null;
-                    BeforeDeleteEventArgs beforeDeleteEventArgs = new BeforeDeleteEventArgs(this, documentInfo.getId(), documentInfo.getEntity());
-                    EventHelper.invoke(onBeforeDelete, this, beforeDeleteEventArgs);
+                    changeVector = null;
                     result.getSessionCommands().add(new DeleteCommandData(documentInfo.getId(), changeVector));
                 }
 
@@ -879,20 +778,6 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
                     throwInvalidModifiedDocumentWithDeferredCommand(command);
                 }
 
-                List<EventHandler<BeforeStoreEventArgs>> onBeforeStore = this.onBeforeStore;
-                if (onBeforeStore != null && !onBeforeStore.isEmpty() && entity.executeOnBeforeStore) {
-                    BeforeStoreEventArgs beforeStoreEventArgs = new BeforeStoreEventArgs(this, entity.getValue().getId(), entity.getKey());
-                    EventHelper.invoke(onBeforeStore, this, beforeStoreEventArgs);
-
-                    if (beforeStoreEventArgs.isMetadataAccessed()) {
-                        updateMetadataModifications(entity.getValue());
-                    }
-
-                    if (beforeStoreEventArgs.isMetadataAccessed() || entityChanged(document, entity.getValue(), null)) {
-                        document = entityToJson.convertEntityToJson(entity.getKey(), entity.getValue());
-                    }
-                }
-
                 result.getEntities().add(entity.getKey());
 
                 if (entity.getValue().getId() != null) {
@@ -902,18 +787,7 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
                 result.onSuccess.updateEntityDocumentInfo(entity.getValue(), document);
 
                 String changeVector;
-                if (useOptimisticConcurrency) {
-                    if (entity.getValue().getConcurrencyCheckMode() != ConcurrencyCheckMode.DISABLED) {
-                        // if the user didn't provide a change vector, we'll test for an empty one
-                        changeVector = ObjectUtils.firstNonNull(entity.getValue().getChangeVector(), "");
-                    } else {
-                        changeVector = null;
-                    }
-                } else if (entity.getValue().getConcurrencyCheckMode() == ConcurrencyCheckMode.FORCED) {
-                    changeVector = entity.getValue().getChangeVector();
-                } else {
-                    changeVector = null;
-                }
+                changeVector = null;
 
                 result.getSessionCommands().add(new PutCommandDataWithJson(entity.getValue().getId(), changeVector, document));
             }
@@ -1207,85 +1081,11 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
         return true;
     }
 
-    protected <T> void refreshInternal(T entity, RavenCommand<GetDocumentsResult> cmd, DocumentInfo documentInfo) {
-        ObjectNode document = (ObjectNode) cmd.getResult().getResults().get(0);
-        if (document == null) {
-            throw new IllegalStateException("Document '" + documentInfo.getId() + "' no longer exists and was probably deleted");
-        }
-
-        ObjectNode value = (ObjectNode) document.get(Constants.Documents.Metadata.KEY);
-        documentInfo.setMetadata(value);
-
-        if (documentInfo.getMetadata() != null) {
-            JsonNode changeVector = value.get(Constants.Documents.Metadata.CHANGE_VECTOR);
-            documentInfo.setChangeVector(changeVector.asText());
-        }
-
-        if (documentInfo.getEntity() != null && !noTracking) {
-            entityToJson.removeFromMissing(documentInfo.getEntity());
-        }
-
-        documentInfo.setEntity(entityToJson.convertToEntity(entity.getClass(), documentInfo.getId(), document, !noTracking));
-        documentInfo.setDocument(document);
-
-        try {
-            BeanUtils.copyProperties(entity, documentInfo.getEntity());
-        } catch (ReflectiveOperationException e) {
-            throw new RuntimeException("Unable to refresh entity: " + e.getMessage(), e);
-        }
-
-        DocumentInfo documentInfoById = documentsById.getValue(documentInfo.getId());
-
-        if (documentInfoById != null) {
-            documentInfoById.setEntity(entity);
-        }
-    }
-
-
 
     protected void updateSessionAfterSaveChanges(BatchCommandResult result) {
         Long returnedTransactionIndex = result.getTransactionIndex();
         _documentStore.setLastTransactionIndex(getDatabaseName(), returnedTransactionIndex);
         sessionInfo.setLastClusterTransactionIndex(returnedTransactionIndex);
-    }
-
-    public void onAfterSaveChangesInvoke(AfterSaveChangesEventArgs eventArgs) {
-        EventHelper.invoke(onAfterSaveChanges, this, eventArgs);
-    }
-
-    public void onBeforeQueryInvoke(BeforeQueryEventArgs eventArgs) {
-        EventHelper.invoke(onBeforeQuery, this, eventArgs);
-    }
-
-    public void onBeforeConversionToDocumentInvoke(String id, Object entity) {
-        EventHelper.invoke(onBeforeConversionToDocument, this, new BeforeConversionToDocumentEventArgs(this, id, entity));
-    }
-
-    public void onAfterConversionToDocumentInvoke(String id, Object entity, Reference<ObjectNode> document) {
-        if (!onAfterConversionToDocument.isEmpty()) {
-            AfterConversionToDocumentEventArgs eventArgs = new AfterConversionToDocumentEventArgs(this, id, entity, document);
-            EventHelper.invoke(onAfterConversionToDocument, this, eventArgs);
-
-            if (eventArgs.getDocument().value != null && eventArgs.getDocument().value != document.value) {
-                document.value = eventArgs.getDocument().value;
-            }
-        }
-    }
-
-    public void onBeforeConversionToEntityInvoke(String id, Class clazz, Reference<ObjectNode> document) {
-        if (!onBeforeConversionToEntity.isEmpty()) {
-            BeforeConversionToEntityEventArgs eventArgs = new BeforeConversionToEntityEventArgs(this, id, clazz, document);
-            EventHelper.invoke(onBeforeConversionToEntity, this, eventArgs);
-
-            if (eventArgs.getDocument() != null && eventArgs.getDocument().value != document.value) {
-                document.value = eventArgs.getDocument().value;
-            }
-        }
-    }
-
-    public void onAfterConversionToEntityInvoke(String id, ObjectNode document, Object entity) {
-        AfterConversionToEntityEventArgs eventArgs = new AfterConversionToEntityEventArgs(this, id, document, entity);
-        EventHelper.invoke(onAfterConversionToEntity, this, eventArgs);
     }
 
     protected Tuple<String, String> processQueryParameters(Class clazz, String indexName, String collectionName, DocumentConventions conventions) {

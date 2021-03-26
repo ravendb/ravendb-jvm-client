@@ -33,30 +33,6 @@ public interface IAdvancedDocumentSessionOperations {
 
     SessionInfo getSessionInfo();
 
-    void addBeforeStoreListener(EventHandler<BeforeStoreEventArgs> handler);
-    void removeBeforeStoreListener(EventHandler<BeforeStoreEventArgs> handler);
-
-    void addAfterSaveChangesListener(EventHandler<AfterSaveChangesEventArgs> handler);
-    void removeAfterSaveChangesListener(EventHandler<AfterSaveChangesEventArgs> handler);
-
-    void addBeforeDeleteListener(EventHandler<BeforeDeleteEventArgs> handler);
-    void removeBeforeDeleteListener(EventHandler<BeforeDeleteEventArgs> handler);
-
-    void addBeforeQueryListener(EventHandler<BeforeQueryEventArgs> handler);
-    void removeBeforeQueryListener(EventHandler<BeforeQueryEventArgs> handler);
-
-    void addBeforeConversionToDocumentListener(EventHandler<BeforeConversionToDocumentEventArgs> handler);
-    void removeBeforeConversionToDocumentListener(EventHandler<BeforeConversionToDocumentEventArgs> handler);
-
-    void addAfterConversionToDocumentListener(EventHandler<AfterConversionToDocumentEventArgs> handler);
-    void removeAfterConversionToDocumentListener(EventHandler<AfterConversionToDocumentEventArgs> handler);
-
-    void addBeforeConversionToEntityListener(EventHandler<BeforeConversionToEntityEventArgs> handler);
-    void removeBeforeConversionToEntityListener(EventHandler<BeforeConversionToEntityEventArgs> handler);
-
-    void addAfterConversionToEntityListener(EventHandler<AfterConversionToEntityEventArgs> handler);
-    void removeAfterConversionToEntityListener(EventHandler<AfterConversionToEntityEventArgs> handler);
-
     /**
      * Gets a value indicating whether any of the entities tracked by the session has changes.
      * @return true if any entity associated with session has changes
@@ -87,21 +63,6 @@ public interface IAdvancedDocumentSessionOperations {
      */
     String storeIdentifier();
 
-    /**
-     * Gets value indicating whether the session should use optimistic concurrency.
-     * When set to true, a check is made so that a change made behind the session back would fail
-     * and raise ConcurrencyException
-     * @return true if optimistic concurrency should be used
-     */
-    boolean isUseOptimisticConcurrency();
-
-    /**
-     * Sets value indicating whether the session should use optimistic concurrency.
-     * When set to true, a check is made so that a change made behind the session back would fail
-     * and raise ConcurrencyException
-     * @param useOptimisticConcurrency Sets the optimistic concurrency
-     */
-    void setUseOptimisticConcurrency(boolean useOptimisticConcurrency);
 
     /**
      * Clears this instance.

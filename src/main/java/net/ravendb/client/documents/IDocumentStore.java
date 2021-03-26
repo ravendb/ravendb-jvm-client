@@ -13,29 +13,7 @@ import net.ravendb.client.util.IDisposalNotification;
  */
 public interface IDocumentStore extends IDisposalNotification {
 
-    void addBeforeStoreListener(EventHandler<BeforeStoreEventArgs> handler);
-    void removeBeforeStoreListener(EventHandler<BeforeStoreEventArgs> handler);
 
-    void addAfterSaveChangesListener(EventHandler<AfterSaveChangesEventArgs> handler);
-    void removeAfterSaveChangesListener(EventHandler<AfterSaveChangesEventArgs> handler);
-
-    void addBeforeDeleteListener(EventHandler<BeforeDeleteEventArgs> handler);
-    void removeBeforeDeleteListener(EventHandler<BeforeDeleteEventArgs> handler);
-
-    void addBeforeQueryListener(EventHandler<BeforeQueryEventArgs> handler);
-    void removeBeforeQueryListener(EventHandler<BeforeQueryEventArgs> handler);
-
-    void addBeforeConversionToDocumentListener(EventHandler<BeforeConversionToDocumentEventArgs> handler);
-    void removeBeforeConversionToDocumentListener(EventHandler<BeforeConversionToDocumentEventArgs> handler);
-
-    void addAfterConversionToDocumentListener(EventHandler<AfterConversionToDocumentEventArgs> handler);
-    void removeAfterConversionToDocumentListener(EventHandler<AfterConversionToDocumentEventArgs> handler);
-
-    void addBeforeConversionToEntityListener(EventHandler<BeforeConversionToEntityEventArgs> handler);
-    void removeBeforeConversionToEntityListener(EventHandler<BeforeConversionToEntityEventArgs> handler);
-
-    void addAfterConversionToEntityListener(EventHandler<AfterConversionToEntityEventArgs> handler);
-    void removeAfterConversionToEntityListener(EventHandler<AfterConversionToEntityEventArgs> handler);
 
     void addOnFailedRequestListener(EventHandler<FailedRequestEventArgs> handler);
     void removeOnFailedRequestListener(EventHandler<FailedRequestEventArgs> handler);

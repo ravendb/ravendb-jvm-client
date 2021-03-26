@@ -214,8 +214,6 @@ public class BatchOperation {
             _session.getGenerateEntityIdOnTheClient().trySetIdentity(entity, id);
         }
 
-        AfterSaveChangesEventArgs afterSaveChangesEventArgs = new AfterSaveChangesEventArgs(_session, documentInfo.getId(), documentInfo.getEntity());
-        _session.onAfterSaveChangesInvoke(afterSaveChangesEventArgs);
     }
 
     private void handleMetadataModifications(DocumentInfo documentInfo, ObjectNode batchResult, String id, String changeVector) {

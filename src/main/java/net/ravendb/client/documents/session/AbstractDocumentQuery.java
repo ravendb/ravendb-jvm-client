@@ -180,8 +180,6 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
 
 
     protected QueryOperation initializeQueryOperation() {
-        BeforeQueryEventArgs beforeQueryExecutedEventArgs = new BeforeQueryEventArgs(theSession, new DocumentQueryCustomizationDelegate(this));
-        theSession.onBeforeQueryInvoke(beforeQueryExecutedEventArgs);
 
         IndexQuery indexQuery = getIndexQuery();
 

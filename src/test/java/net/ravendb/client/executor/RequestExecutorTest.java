@@ -23,7 +23,7 @@ public class RequestExecutorTest extends RemoteTestBase {
         DocumentConventions conventions = new DocumentConventions();
 
         try (DocumentStore store = getDocumentStore()) {
-            try (RequestExecutor executor = RequestExecutor.create(store.getUrls(), store.getDatabase(), null, null, null, store.getExecutorService(), conventions)) {
+            try (RequestExecutor executor = RequestExecutor.create(store.getUrls(), store.getDatabase(), store.getExecutorService(), conventions)) {
                 for (int i = 0; i < 50; i++) {
                     GetDatabaseNamesOperation databaseNamesOperation = new GetDatabaseNamesOperation(0, 20);
                     RavenCommand<String[]> command = databaseNamesOperation.getCommand(conventions);
@@ -38,7 +38,7 @@ public class RequestExecutorTest extends RemoteTestBase {
         DocumentConventions conventions = new DocumentConventions();
 
         try (DocumentStore store = getDocumentStore()) {
-            try (RequestExecutor executor = RequestExecutor.create(store.getUrls(), store.getDatabase(), null, null, null, store.getExecutorService(), conventions)) {
+            try (RequestExecutor executor = RequestExecutor.create(store.getUrls(), store.getDatabase(), store.getExecutorService(), conventions)) {
                 GetDatabaseNamesOperation databaseNamesOperation = new GetDatabaseNamesOperation(0, 20);
                 RavenCommand<String[]> command = databaseNamesOperation.getCommand(conventions);
                 executor.execute(command);
@@ -55,7 +55,7 @@ public class RequestExecutorTest extends RemoteTestBase {
         DocumentConventions conventions = new DocumentConventions();
 
         try (DocumentStore store = getDocumentStore()) {
-            try (RequestExecutor executor = RequestExecutor.create(store.getUrls(), "no_such_db", null, null,null, store.getExecutorService(), conventions)) {
+            try (RequestExecutor executor = RequestExecutor.create(store.getUrls(), "no_such_db", store.getExecutorService(), conventions)) {
 
                 ServerNode serverNode = new ServerNode();
                 serverNode.setUrl(store.getUrls()[0]);

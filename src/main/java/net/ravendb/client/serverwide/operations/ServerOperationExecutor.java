@@ -78,8 +78,8 @@ public class ServerOperationExecutor implements CleanCloseable {
 
     private static ClusterRequestExecutor createRequestExecutor(DocumentStore store) {
         return store.getConventions().isDisableTopologyUpdates() ?
-                ClusterRequestExecutor.createForSingleNode(store.getUrls()[0], store.getCertificate(), store.getCertificatePrivateKeyPassword(), store.getTrustStore(), store.getExecutorService(), store.getConventions()) :
-                ClusterRequestExecutor.create(store.getUrls(), store.getCertificate(), store.getCertificatePrivateKeyPassword(), store.getTrustStore(), store.getExecutorService(), store.getConventions());
+                ClusterRequestExecutor.createForSingleNode(store.getUrls()[0], store.getExecutorService(), store.getConventions()) :
+                ClusterRequestExecutor.create(store.getUrls(), store.getExecutorService(), store.getConventions());
     }
 
 }

@@ -154,14 +154,14 @@ public class DocumentStore extends DocumentStoreBase {
         final String effectiveDatabase = database;
 
         Supplier<RequestExecutor> createRequestExecutor = () -> {
-            RequestExecutor requestExecutor = RequestExecutor.create(getUrls(), effectiveDatabase, getCertificate(), getCertificatePrivateKeyPassword(), getTrustStore(), executorService, getConventions());
+            RequestExecutor requestExecutor = RequestExecutor.create(getUrls(), effectiveDatabase, executorService, getConventions());
             registerEvents(requestExecutor);
 
             return requestExecutor;
         };
 
         Supplier<RequestExecutor> createRequestExecutorForSingleNode = () -> {
-            RequestExecutor forSingleNode = RequestExecutor.createForSingleNodeWithConfigurationUpdates(getUrls()[0], effectiveDatabase, getCertificate(), getCertificatePrivateKeyPassword(), getTrustStore(), executorService, getConventions());
+            RequestExecutor forSingleNode = RequestExecutor.createForSingleNodeWithConfigurationUpdates(getUrls()[0], effectiveDatabase, executorService, getConventions());
             registerEvents(forSingleNode);
 
             return forSingleNode;
@@ -178,23 +178,6 @@ public class DocumentStore extends DocumentStoreBase {
         return executor.getValue();
     }
 
-    @Override
-    public CleanCloseable setRequestTimeout(Duration timeout) {
-        return setRequestTimeout(timeout, null);
-    }
-
-    @Override
-    public CleanCloseable setRequestTimeout(Duration timeout, String database) {
-        assertInitialized();
-
-        database = this.getEffectiveDatabase(database);
-
-        RequestExecutor requestExecutor = getRequestExecutor(database);
-        Duration oldTimeout = requestExecutor.getDefaultTimeout();
-        requestExecutor.setDefaultTimeout(timeout);
-
-        return () -> requestExecutor.setDefaultTimeout(oldTimeout);
-    }
 
     /**
      * Initializes this instance.
@@ -207,7 +190,7 @@ public class DocumentStore extends DocumentStoreBase {
 
         assertValidConfiguration();
 
-        RequestExecutor.validateUrls(urls, getCertificate());
+        RequestExecutor.validateUrls(urls);
 
         try {
             if (getConventions().getDocumentIdGenerator() == null) { // don't overwrite what the user is doing

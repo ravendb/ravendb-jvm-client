@@ -124,23 +124,6 @@ public class DocumentInfo {
         this.metadataInstance = metadataInstance;
     }
 
-    /**
-     * A concurrency check will be forced on this entity
-     * even if UseOptimisticConcurrency is set to false
-     * @return concurrency check mode
-     */
-    public ConcurrencyCheckMode getConcurrencyCheckMode() {
-        return concurrencyCheckMode;
-    }
-
-    /**
-     * A concurrency check will be forced on this entity
-     * even if UseOptimisticConcurrency is set to false
-     * @param concurrencyCheckMode sets the value
-     */
-    public void setConcurrencyCheckMode(ConcurrencyCheckMode concurrencyCheckMode) {
-        this.concurrencyCheckMode = concurrencyCheckMode;
-    }
 
     public static DocumentInfo getNewDocumentInfo(ObjectNode document) {
         JsonNode metadata = document.get(Constants.Documents.Metadata.KEY);

@@ -25,17 +25,8 @@ import java.util.concurrent.ConcurrentSkipListMap;
  */
 public abstract class DocumentStoreBase implements IDocumentStore {
 
-    private final List<EventHandler<BeforeStoreEventArgs>> onBeforeStore = new ArrayList<>();
-    private final List<EventHandler<AfterSaveChangesEventArgs>> onAfterSaveChanges = new ArrayList<>();
-    private final List<EventHandler<BeforeDeleteEventArgs>> onBeforeDelete = new ArrayList<>();
-    private final List<EventHandler<BeforeQueryEventArgs>> onBeforeQuery = new ArrayList<>();
     private final List<EventHandler<SessionCreatedEventArgs>> onSessionCreated = new ArrayList<>();
 
-    private final List<EventHandler<BeforeConversionToDocumentEventArgs>> onBeforeConversionToDocument = new ArrayList<>();
-    private final List<EventHandler<AfterConversionToDocumentEventArgs>> onAfterConversionToDocument = new ArrayList<>();
-    private final List<EventHandler<BeforeConversionToEntityEventArgs>> onBeforeConversionToEntity = new ArrayList<>();
-    private final List<EventHandler<AfterConversionToEntityEventArgs>> onAfterConversionToEntity = new ArrayList<>();
-    private final List<EventHandler<BeforeRequestEventArgs>> onBeforeRequest = new ArrayList<>();
     private final List<EventHandler<SucceedRequestEventArgs>> onSucceedRequest = new ArrayList<>();
 
     private final List<EventHandler<FailedRequestEventArgs>> onFailedRequest = new ArrayList<>();
@@ -124,11 +115,6 @@ public abstract class DocumentStoreBase implements IDocumentStore {
 
     protected boolean initialized;
 
-    private KeyStore _certificate;
-    private char[] _certificatePrivateKeyPassword = "".toCharArray();
-    private KeyStore _trustStore;
-
-
     private ConcurrentMap<String, Long> _lastRaftIndexPerDatabase = new ConcurrentSkipListMap<>(String::compareToIgnoreCase);
 
     public Long getLastTransactionIndex(String database) {
@@ -171,78 +157,6 @@ public abstract class DocumentStoreBase implements IDocumentStore {
         }
     }
 
-    public void addBeforeStoreListener(EventHandler<BeforeStoreEventArgs> handler) {
-        this.onBeforeStore.add(handler);
-
-    }
-    public void removeBeforeStoreListener(EventHandler<BeforeStoreEventArgs> handler) {
-        this.onBeforeStore.remove(handler);
-    }
-
-    public void addAfterSaveChangesListener(EventHandler<AfterSaveChangesEventArgs> handler) {
-        this.onAfterSaveChanges.add(handler);
-    }
-
-    public void removeAfterSaveChangesListener(EventHandler<AfterSaveChangesEventArgs> handler) {
-        this.onAfterSaveChanges.remove(handler);
-    }
-
-    public void addBeforeDeleteListener(EventHandler<BeforeDeleteEventArgs> handler) {
-        this.onBeforeDelete.add(handler);
-    }
-    public void removeBeforeDeleteListener(EventHandler<BeforeDeleteEventArgs> handler) {
-        this.onBeforeDelete.remove(handler);
-    }
-
-    public void addBeforeQueryListener(EventHandler<BeforeQueryEventArgs> handler) {
-        this.onBeforeQuery.add(handler);
-    }
-
-    public void removeBeforeQueryListener(EventHandler<BeforeQueryEventArgs> handler) {
-        this.onBeforeQuery.remove(handler);
-    }
-
-    public void addBeforeConversionToDocumentListener(EventHandler<BeforeConversionToDocumentEventArgs> handler) {
-        this.onBeforeConversionToDocument.add(handler);
-    }
-
-    public void removeBeforeConversionToDocumentListener(EventHandler<BeforeConversionToDocumentEventArgs> handler) {
-        this.onBeforeConversionToDocument.remove(handler);
-    }
-
-    public void addAfterConversionToDocumentListener(EventHandler<AfterConversionToDocumentEventArgs> handler) {
-        this.onAfterConversionToDocument.add(handler);
-    }
-
-    public void removeAfterConversionToDocumentListener(EventHandler<AfterConversionToDocumentEventArgs> handler) {
-        this.onAfterConversionToDocument.remove(handler);
-    }
-
-    public void addBeforeConversionToEntityListener(EventHandler<BeforeConversionToEntityEventArgs> handler) {
-        this.onBeforeConversionToEntity.add(handler);
-    }
-
-    public void removeBeforeConversionToEntityListener(EventHandler<BeforeConversionToEntityEventArgs> handler) {
-        this.onBeforeConversionToEntity.remove(handler);
-    }
-
-    public void addAfterConversionToEntityListener(EventHandler<AfterConversionToEntityEventArgs> handler) {
-        this.onAfterConversionToEntity.add(handler);
-    }
-
-    public void removeAfterConversionToEntityListener(EventHandler<AfterConversionToEntityEventArgs> handler) {
-        this.onAfterConversionToEntity.remove(handler);
-    }
-
-    public void addOnBeforeRequestListener(EventHandler<BeforeRequestEventArgs> handler) {
-        assertNotInitialized("onSucceedRequest");
-        this.onBeforeRequest.add(handler);
-    }
-
-    public void removeOnBeforeRequestListener(EventHandler<BeforeRequestEventArgs> handler) {
-        assertNotInitialized("onSucceedRequest");
-        this.onBeforeRequest.remove(handler);
-    }
 
     public void addOnSucceedRequestListener(EventHandler<SucceedRequestEventArgs> handler) {
         assertNotInitialized("onSucceedRequest");
@@ -293,47 +207,6 @@ public abstract class DocumentStoreBase implements IDocumentStore {
         this.database = database;
     }
 
-    /**
-     * The client certificate to use for authentication
-     * @return Certificate to use
-     */
-    public KeyStore getCertificate() {
-        return _certificate;
-    }
-
-    /**
-     * The client certificate to use for authentication
-     * @param certificate Certificate to use
-     */
-    public void setCertificate(KeyStore certificate) {
-        assertNotInitialized("certificate");
-        _certificate = certificate;
-    }
-
-    /**
-     * Password used for private key encryption
-     * @return Private key password
-     */
-    public char[] getCertificatePrivateKeyPassword() {
-        return _certificatePrivateKeyPassword;
-    }
-
-    /**
-     * If private key is inside certificate is encrypted, you can specify password
-     * @param certificatePrivateKeyPassword Private key password
-     */
-    public void setCertificatePrivateKeyPassword(char[] certificatePrivateKeyPassword) {
-        assertNotInitialized("certificatePrivateKeyPassword");
-        _certificatePrivateKeyPassword = certificatePrivateKeyPassword;
-    }
-
-    public KeyStore getTrustStore() {
-        return _trustStore;
-    }
-
-    public void setTrustStore(KeyStore trustStore) {
-        this._trustStore = trustStore;
-    }
 
     public abstract RequestExecutor getRequestExecutor();
 
@@ -341,37 +214,7 @@ public abstract class DocumentStoreBase implements IDocumentStore {
 
 
     protected void registerEvents(InMemoryDocumentSessionOperations session) {
-        for (EventHandler<BeforeStoreEventArgs> handler : onBeforeStore) {
-            session.addBeforeStoreListener(handler);
-        }
 
-        for (EventHandler<AfterSaveChangesEventArgs> handler : onAfterSaveChanges) {
-            session.addAfterSaveChangesListener(handler);
-        }
-
-        for (EventHandler<BeforeDeleteEventArgs> handler : onBeforeDelete) {
-            session.addBeforeDeleteListener(handler);
-        }
-
-        for (EventHandler<BeforeQueryEventArgs> handler : onBeforeQuery) {
-            session.addBeforeQueryListener(handler);
-        }
-
-        for (EventHandler<BeforeConversionToDocumentEventArgs> handler : onBeforeConversionToDocument) {
-            session.addBeforeConversionToDocumentListener(handler);
-        }
-
-        for (EventHandler<AfterConversionToDocumentEventArgs> handler : onAfterConversionToDocument) {
-            session.addAfterConversionToDocumentListener(handler);
-        }
-
-        for (EventHandler<BeforeConversionToEntityEventArgs> handler : onBeforeConversionToEntity) {
-            session.addBeforeConversionToEntityListener(handler);
-        }
-
-        for (EventHandler<AfterConversionToEntityEventArgs> handler : onAfterConversionToEntity) {
-            session.addAfterConversionToEntityListener(handler);
-        }
     }
 
     public void registerEvents(RequestExecutor requestExecutor) {
@@ -383,9 +226,6 @@ public abstract class DocumentStoreBase implements IDocumentStore {
             requestExecutor.addOnTopologyUpdatedListener(handler);
         }
 
-        for (EventHandler<BeforeRequestEventArgs> handler : onBeforeRequest) {
-            requestExecutor.addOnBeforeRequestListener(handler);
-        }
 
         for (EventHandler<SucceedRequestEventArgs> handler : onSucceedRequest) {
             requestExecutor.addOnSucceedRequestListener(handler);
@@ -399,10 +239,6 @@ public abstract class DocumentStoreBase implements IDocumentStore {
     public abstract MaintenanceOperationExecutor maintenance();
 
     public abstract OperationExecutor operations();
-
-    public abstract CleanCloseable setRequestTimeout(Duration timeout);
-
-    public abstract CleanCloseable setRequestTimeout(Duration timeout, String database);
 
     public String getEffectiveDatabase(String database) {
         return DocumentStoreBase.getEffectiveDatabase(this, database);

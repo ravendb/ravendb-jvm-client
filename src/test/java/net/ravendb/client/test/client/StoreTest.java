@@ -13,30 +13,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 public class StoreTest extends RemoteTestBase {
 
-    @Test
-    public void refreshTest() throws Exception {
-        try (IDocumentStore store = getDocumentStore()) {
 
-            try (IDocumentSession session = store.openSession()) {
-                User user = new User();
-                user.setName("RavenDB");
-                session.store(user, "users/1");
-                session.saveChanges();
-
-
-                try (IDocumentSession innerSession = store.openSession()) {
-                    User innerUser = innerSession.load(User.class, "users/1");
-                    innerUser.setName("RavenDB 4.0");
-                    innerSession.saveChanges();
-                }
-
-                session.advanced().refresh(user);
-
-                assertThat(user.getName())
-                        .isEqualTo("RavenDB 4.0");
-            }
-        }
-    }
 
     @Test
     public void storeDocument() throws Exception {
@@ -79,49 +56,5 @@ public class StoreTest extends RemoteTestBase {
         }
     }
 
-    @Test
-    public void notifyAfterStore() throws Exception {
-        try (IDocumentStore store = getDocumentStore()) {
-            final IMetadataDictionary[] storeLevelCallBack = new IMetadataDictionary[1];
-            final IMetadataDictionary[] sessionLevelCallback = new IMetadataDictionary[1];
 
-            store.addAfterSaveChangesListener(((sender, event) -> storeLevelCallBack[0] = event.getDocumentMetadata()));
-
-            try (IDocumentSession session = store.openSession()) {
-
-                session.advanced().addAfterSaveChangesListener(((sender, event) ->
-                        sessionLevelCallback[0] = event.getDocumentMetadata()));
-
-                User user1 = new User();
-                user1.setName("RavenDB");
-                session.store(user1, "users/1");
-
-                session.saveChanges();
-
-                assertThat(session.advanced().isLoaded("users/1"))
-                        .isTrue();
-
-                assertThat(session.advanced().getChangeVectorFor(user1))
-                        .isNotNull();
-
-                assertThat(session.advanced().getLastModifiedFor(user1))
-                        .isNotNull();
-            }
-
-            assertThat(storeLevelCallBack[0])
-                    .isNotNull()
-                    .isEqualTo(sessionLevelCallback[0]);
-
-            assertThat(sessionLevelCallback[0])
-                    .isNotNull();
-
-            IMetadataDictionary iMetadataDictionary = sessionLevelCallback[0];
-            for (Map.Entry<String, Object> entry : iMetadataDictionary.entrySet()) {
-                assertThat(entry.getKey())
-                        .isNotNull();
-                assertThat(entry.getValue())
-                        .isNotNull();
-            }
-        }
-    }
 }
