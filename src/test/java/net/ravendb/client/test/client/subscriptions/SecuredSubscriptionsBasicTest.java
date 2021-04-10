@@ -17,7 +17,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 @SuppressWarnings("ConstantConditions")
 public class SecuredSubscriptionsBasicTest extends RemoteTestBase {
-    private final int _reasonableWaitTime = 5;
+    private final int _reasonableWaitTime = 15; // default time between connections is retry is 5 seconds
 
     @Test
     public void shouldStreamAllDocumentsAfterSubscriptionCreation() throws Exception {
