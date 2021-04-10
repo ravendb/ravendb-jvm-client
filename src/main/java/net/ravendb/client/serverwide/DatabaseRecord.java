@@ -27,7 +27,7 @@ public class DatabaseRecord {
     private boolean encrypted;
     private long etagForBackup;
     private Map<String, DeletionInProgressStatus> deletionInProgress;
-    private DatabaseStateStatus databaseStatus;
+    private DatabaseStateStatus databaseState;
     private DatabaseTopology topology;
     private ConflictSolver conflictSolverConfig;
     private Map<String, SorterDefinition> sorters = new HashMap<>();
@@ -251,12 +251,12 @@ public class DatabaseRecord {
         this.truncatedClusterTransactionCommandsCount = truncatedClusterTransactionCommandsCount;
     }
 
-    public DatabaseStateStatus getDatabaseStatus() {
-        return databaseStatus;
+    public DatabaseStateStatus getDatabaseState() {
+        return databaseState;
     }
 
-    public void setDatabaseStatus(DatabaseStateStatus databaseStatus) {
-        this.databaseStatus = databaseStatus;
+    public void setDatabaseState(DatabaseStateStatus databaseState) {
+        this.databaseState = databaseState;
     }
 
     public Map<String, List<IndexHistoryEntry>> getIndexesHistory() {

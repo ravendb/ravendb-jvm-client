@@ -2,6 +2,7 @@ package net.ravendb.client.serverwide.commands;
 
 import net.ravendb.client.RemoteTestBase;
 import net.ravendb.client.documents.IDocumentStore;
+import net.ravendb.client.serverwide.DatabaseRecord;
 import net.ravendb.client.serverwide.DatabaseRecordWithEtag;
 import net.ravendb.client.serverwide.operations.GetDatabaseRecordOperation;
 import org.junit.jupiter.api.Test;
@@ -17,6 +18,8 @@ public class GetDatabaseRecordTest extends RemoteTestBase {
 
             assertThat(databaseRecord)
                     .isNotNull();
+            assertThat(databaseRecord.getDatabaseState())
+                    .isEqualTo(DatabaseRecord.DatabaseStateStatus.NORMAL);
             assertThat(databaseRecord.getDatabaseName())
                     .isEqualTo(store.getDatabase());
         }
