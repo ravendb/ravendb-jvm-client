@@ -5,6 +5,7 @@ import net.ravendb.client.documents.DocumentStore;
 import net.ravendb.client.documents.IDocumentStore;
 import net.ravendb.client.documents.session.IDocumentSession;
 import net.ravendb.client.exceptions.security.AuthorizationException;
+import net.ravendb.client.infrastructure.DisabledOnJava8;
 import net.ravendb.client.infrastructure.entities.User;
 import net.ravendb.client.serverwide.operations.certificates.*;
 import org.apache.commons.codec.binary.Base64;
@@ -60,6 +61,7 @@ public class HttpsTest extends RemoteTestBase {
     }
 
     @Test
+    @DisabledOnJava8
     public void canCrudCertificates() throws Exception {
         try (IDocumentStore store = getSecuredDocumentStore()) {
 
@@ -188,6 +190,7 @@ public class HttpsTest extends RemoteTestBase {
     }
 
     @Test
+    @DisabledOnJava8
     public void shouldThrowAuthorizationExceptionWhenNotAuthorized() throws Exception {
         try (DocumentStore store = getSecuredDocumentStore()) {
             CertificateRawData certificateRawData = store.maintenance().server().send(
@@ -268,6 +271,7 @@ public class HttpsTest extends RemoteTestBase {
     }
 
     @Test
+    @DisabledOnJava8
     public void canUseServerGeneratedCertificate() throws Exception {
         try (DocumentStore store = getSecuredDocumentStore()) {
             CertificateRawData certificateRawData = store.maintenance().server().send(
