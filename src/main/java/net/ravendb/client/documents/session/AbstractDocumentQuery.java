@@ -2,7 +2,6 @@ package net.ravendb.client.documents.session;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.base.Defaults;
-import jdk.nashorn.internal.objects.annotations.Where;
 import net.ravendb.client.Constants;
 import net.ravendb.client.Parameters;
 import net.ravendb.client.documents.Lazy;
