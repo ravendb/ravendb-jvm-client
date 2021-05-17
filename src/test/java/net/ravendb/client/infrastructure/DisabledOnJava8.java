@@ -9,6 +9,6 @@ import java.lang.annotation.Target;
 
 @Target({ ElementType.TYPE, ElementType.METHOD })
 @Retention(RetentionPolicy.RUNTIME)
-@ExtendWith(DisableOnPullRequestCondition.class)
+@ExtendWith(DisableOnJava8Condition.class)
 public @interface DisabledOnJava8 {
 }
