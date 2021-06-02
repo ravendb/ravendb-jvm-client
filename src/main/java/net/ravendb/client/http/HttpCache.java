@@ -12,6 +12,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 public class HttpCache implements CleanCloseable {
 
+    public static final String NOT_FOUND_RESPONSE = "404 Response";
+
     private Cache<String, HttpCacheItem> items;
 
     public HttpCache(int size) {
@@ -64,7 +66,7 @@ public class HttpCache implements CleanCloseable {
 
     public void setNotFound(String url, boolean aggressivelyCached) {
         HttpCacheItem httpCacheItem = new HttpCacheItem();
-        httpCacheItem.changeVector = "404 response";
+        httpCacheItem.changeVector = NOT_FOUND_RESPONSE;
         httpCacheItem.cache = this;
         httpCacheItem.generation = generation.get();
 

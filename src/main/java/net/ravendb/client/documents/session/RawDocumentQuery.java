@@ -4,10 +4,13 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import net.ravendb.client.documents.queries.IndexQuery;
 import net.ravendb.client.documents.queries.QueryOperator;
 import net.ravendb.client.documents.queries.QueryResult;
+import net.ravendb.client.documents.queries.facets.AggregationRawDocumentQuery;
+import net.ravendb.client.documents.queries.facets.FacetResult;
 import net.ravendb.client.documents.queries.timings.QueryTimings;
 import net.ravendb.client.primitives.Reference;
 
 import java.time.Duration;
+import java.util.Map;
 import java.util.function.Consumer;
 
 public class RawDocumentQuery<T> extends AbstractDocumentQuery<T, RawDocumentQuery<T>> implements IRawDocumentQuery<T> {
@@ -112,4 +115,9 @@ public class RawDocumentQuery<T> extends AbstractDocumentQuery<T, RawDocumentQue
         return this;
     }
 
+    @Override
+    public Map<String, FacetResult> executeAggregation() {
+        AggregationRawDocumentQuery<T> query = new AggregationRawDocumentQuery<>(this, theSession);
+        return query.execute();
+    }
 }

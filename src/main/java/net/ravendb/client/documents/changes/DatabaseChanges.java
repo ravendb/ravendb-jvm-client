@@ -8,6 +8,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import net.ravendb.client.documents.conventions.DocumentConventions;
 import net.ravendb.client.exceptions.TimeoutException;
 import net.ravendb.client.exceptions.changes.ChangeProcessingException;
+import net.ravendb.client.exceptions.database.DatabaseDoesNotExistException;
 import net.ravendb.client.extensions.JsonExtensions;
 import net.ravendb.client.extensions.StringExtensions;
 import net.ravendb.client.http.CurrentIndexAndNode;
@@ -409,6 +410,10 @@ public class DatabaseChanges implements IDatabaseChanges {
                 IOUtils.closeQuietly(_clientSession, null);
             }
 
+            for (DatabaseConnectionState value : _counters.values()) {
+                value.close();
+            }
+
             _counters.clear();
 
             try {
@@ -514,7 +519,7 @@ public class DatabaseChanges implements IDatabaseChanges {
     private void doWork(String nodeTag) {
         CurrentIndexAndNode preferredNode;
         try {
-            preferredNode = nodeTag == null ?
+            preferredNode = nodeTag == null || _requestExecutor.getConventions().isDisableTopologyUpdates() ?
                     _requestExecutor.getPreferredNode() :
                     _requestExecutor.getRequestedNode(nodeTag);
             _nodeIndex = preferredNode.currentIndex;
@@ -567,6 +572,9 @@ public class DatabaseChanges implements IDatabaseChanges {
 
                     try {
                         _serverNode = _requestExecutor.handleServerNotResponsive(_url, _serverNode, _nodeIndex, e);
+                    } catch (DatabaseDoesNotExistException databaseDoesNotExistException) {
+                        e = databaseDoesNotExistException;
+                        throw databaseDoesNotExistException;
                     } catch (Exception ee) {
                         //We don't want to stop observe for changes if server down. we will wait for one to be up
                     }

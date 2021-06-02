@@ -63,7 +63,7 @@ public class RequestExecutor implements CleanCloseable {
     private static final GetStatisticsOperation backwardCompatibilityFailureCheckOperation = new GetStatisticsOperation("failure=check");
 
     private static final DatabaseHealthCheckOperation failureCheckOperation = new DatabaseHealthCheckOperation();
-    private Set<String> _useOldFailureCheckOperation = ConcurrentHashMap.newKeySet();
+    private static Set<String> _useOldFailureCheckOperation = ConcurrentHashMap.newKeySet();
 
     /**
      * Extension point to plug - in request post processing like adding proxy etc.
@@ -702,6 +702,10 @@ public class RequestExecutor implements CleanCloseable {
 
         if (requestRef != null) {
             requestRef.value = request;
+        }
+
+        if (request == null) {
+            return;
         }
 
         //noinspection SimplifiableConditionalExpression
@@ -1459,14 +1463,19 @@ public class RequestExecutor implements CleanCloseable {
             _nodeSelector.onFailedRequest(nodeIndex);
         }
         CurrentIndexAndNode preferredNode = getPreferredNode();
-        try {
-            UpdateTopologyParameters updateParameters = new UpdateTopologyParameters(preferredNode.currentNode);
-            updateParameters.setTimeoutInMs(0);
-            updateParameters.setForceUpdate(true);
-            updateParameters.setDebugTag("handle-server-not-responsive");
-            updateTopologyAsync(updateParameters).get();
-        } catch (InterruptedException | ExecutionException ee) {
-            throw ExceptionsUtils.unwrapException(e);
+
+        if (_disableTopologyUpdates) {
+            performHealthCheck(chosenNode, nodeIndex);
+        } else {
+            try {
+                UpdateTopologyParameters updateParameters = new UpdateTopologyParameters(preferredNode.currentNode);
+                updateParameters.setTimeoutInMs(0);
+                updateParameters.setForceUpdate(true);
+                updateParameters.setDebugTag("handle-server-not-responsive");
+                updateTopologyAsync(updateParameters).get();
+            } catch (InterruptedException | ExecutionException ee) {
+                throw ExceptionsUtils.unwrapException(e);
+            }
         }
 
         onFailedRequestInvoke(url, e);
@@ -1475,6 +1484,10 @@ public class RequestExecutor implements CleanCloseable {
     }
 
     private void spawnHealthChecks(ServerNode chosenNode, int nodeIndex) {
+        if (_nodeSelector != null && _nodeSelector.getTopology().getNodes().size() < 1) {
+            return;
+        }
+
         NodeStatus nodeStatus = new NodeStatus(this, nodeIndex, chosenNode);
 
         if (_failedNodesTimers.putIfAbsent(chosenNode, nodeStatus) == null) {
@@ -1725,8 +1738,8 @@ public class RequestExecutor implements CleanCloseable {
     }
 
     private void ensureNodeSelector() {
-        if (_firstTopologyUpdate != null && (!_firstTopologyUpdate.isDone() || _firstTopologyUpdate.isCompletedExceptionally())) {
-            ExceptionsUtils.accept(() -> _firstTopologyUpdate.get());
+        if (!_disableTopologyUpdates) {
+            waitForTopologyUpdate(_firstTopologyUpdate);
         }
 
         if (_nodeSelector == null) {

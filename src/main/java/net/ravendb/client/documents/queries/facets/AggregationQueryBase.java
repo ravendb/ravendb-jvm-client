@@ -72,7 +72,7 @@ public abstract class AggregationQueryBase {
     private QueryCommand getCommand() {
         _query = getIndexQuery();
 
-        return new QueryCommand(_session.getConventions(), _query, false, false);
+        return new QueryCommand(_session, _query, false, false);
     }
 
     @Override

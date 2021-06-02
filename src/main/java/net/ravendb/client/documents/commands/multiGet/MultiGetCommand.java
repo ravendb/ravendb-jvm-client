@@ -6,12 +6,14 @@ import com.fasterxml.jackson.core.JsonToken;
 import com.fasterxml.jackson.core.TreeNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import net.ravendb.client.Constants;
 import net.ravendb.client.extensions.HttpExtensions;
 import net.ravendb.client.extensions.JsonExtensions;
 import net.ravendb.client.http.*;
 import net.ravendb.client.json.ContentProviderHttpEntity;
 import net.ravendb.client.primitives.CleanCloseable;
 import net.ravendb.client.primitives.Reference;
+import net.ravendb.client.primitives.Tuple;
 import org.apache.http.HttpStatus;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpPost;
@@ -21,17 +23,19 @@ import org.apache.http.entity.ContentType;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class MultiGetCommand extends RavenCommand<List<GetResponse>> {
+public class MultiGetCommand extends RavenCommand<List<GetResponse>> implements CleanCloseable {
 
     private final RequestExecutor _requestExecutor;
-    private final HttpCache _cache;
+    private final HttpCache _httpCache;
     private final List<GetRequest> _commands;
 
     private String _baseUrl;
+    private Cached _cached;
+
+    public boolean aggressivelyCached;
 
     @SuppressWarnings("unchecked")
     public MultiGetCommand(RequestExecutor requestExecutor, List<GetRequest> commands) {
@@ -41,11 +45,18 @@ public class MultiGetCommand extends RavenCommand<List<GetResponse>> {
             throw new IllegalArgumentException("RequestExecutor cannot be null");
         }
 
+        HttpCache cache = requestExecutor.getCache();
+
+        if (cache == null) {
+            throw new IllegalArgumentException("Cache cannot be null");
+        }
+
         if (commands == null) {
             throw new IllegalArgumentException("Command cannot be null");
         }
+
         _requestExecutor = requestExecutor;
-        _cache = requestExecutor.getCache();
+        _httpCache = requestExecutor.getCache();
         _commands = commands;
         responseType = RavenCommandResponseType.RAW;
     }
@@ -53,6 +64,12 @@ public class MultiGetCommand extends RavenCommand<List<GetResponse>> {
     @Override
     public HttpRequestBase createRequest(ServerNode node, Reference<String> url) {
         _baseUrl = node.getUrl() + "/databases/" + node.getDatabase();
+        url.value = _baseUrl + "/multi_get";
+
+        if (maybeReadAllFromCache(_requestExecutor.aggressiveCaching.get())) {
+            aggressivelyCached = true;
+            return null; // aggressively cached
+        }
 
         url.value = _baseUrl + "/multi_get";
 
@@ -66,7 +83,7 @@ public class MultiGetCommand extends RavenCommand<List<GetResponse>> {
                 }
                 String cacheKey = getCacheKey(command, new Reference<>());
                 Reference<String> cachedRef = new Reference<>();
-                try (HttpCache.ReleaseCacheItem cachedItem = _cache.get(cacheKey, new Reference<>(), cachedRef)) {
+                try (HttpCache.ReleaseCacheItem cachedItem = _httpCache.get(cacheKey, new Reference<>(), cachedRef)) {
                     if (cachedRef.value == null
                             || cachedItem.getAge().compareTo(aggressiveCacheOptions.getDuration()) > 0
                             || cachedItem.getMightHaveBeenModified()) {
@@ -99,43 +116,29 @@ public class MultiGetCommand extends RavenCommand<List<GetResponse>> {
                 generator.writeStartArray();
 
                 for (GetRequest command : _commands) {
-                    String cacheKey = getCacheKey(command, new Reference<>());
+                    generator.writeStartObject();
 
-                    Reference<String> cachedChangeVector = new Reference<>();
-                    try (CleanCloseable item = _cache.get(cacheKey, cachedChangeVector, new Reference<>())) {
-                        Map<String, String> headers = new HashMap<>();
-                        if (cachedChangeVector.value != null) {
-                            headers.put("If-None-Match", "\"" + cachedChangeVector.value + "\"");
-                        }
+                    generator.writeStringField("Url", "/databases/" + node.getDatabase() + command.getUrl());
+                    generator.writeStringField("Query", command.getQuery());
 
-                        for (Map.Entry<String, String> header : command.getHeaders().entrySet()) {
-                            headers.put(header.getKey(), header.getValue());
-                        }
+                    generator.writeStringField("Method", command.getMethod());
 
-                        generator.writeStartObject();
+                    generator.writeFieldName("Headers");
+                    generator.writeStartObject();
 
-                        generator.writeStringField("Url", "/databases/" + node.getDatabase() + command.getUrl());
-                        generator.writeStringField("Query", command.getQuery());
-
-                        generator.writeStringField("Method", command.getMethod());
-
-                        generator.writeFieldName("Headers");
-                        generator.writeStartObject();
-
-                        for (Map.Entry<String, String> kvp : headers.entrySet()) {
-                            generator.writeStringField(kvp.getKey(), kvp.getValue());
-                        }
-                        generator.writeEndObject();
-
-                        generator.writeFieldName("Content");
-                        if (command.getContent() != null) {
-                            command.getContent().writeContent(generator);
-                        } else {
-                            generator.writeNull();
-                        }
-
-                        generator.writeEndObject();
+                    for (Map.Entry<String, String> kvp : command.getHeaders().entrySet()) {
+                        generator.writeStringField(kvp.getKey(), kvp.getValue());
                     }
+                    generator.writeEndObject();
+
+                    generator.writeFieldName("Content");
+                    if (command.getContent() != null) {
+                        command.getContent().writeContent(generator);
+                    } else {
+                        generator.writeNull();
+                    }
+
+                    generator.writeEndObject();
                 }
                 generator.writeEndArray();
                 generator.writeEndObject();
@@ -147,40 +150,108 @@ public class MultiGetCommand extends RavenCommand<List<GetResponse>> {
         return request;
     }
 
+    private boolean maybeReadAllFromCache(AggressiveCacheOptions options) {
+        closeCache();
+
+        boolean readAllFromCache = options != null;
+        boolean trackChanges = readAllFromCache && options.getMode() == AggressiveCacheMode.TRACK_CHANGES;
+
+        for (int i = 0; i < _commands.size(); i++) {
+            GetRequest command = _commands.get(i);
+
+            String cacheKey = getCacheKey(command, new Reference<>());
+
+            Reference<String> changeVectorRef = new Reference<>();
+            Reference<String> cachedRef = new Reference<>();
+
+            HttpCache.ReleaseCacheItem cachedItem = _httpCache.get(cacheKey, changeVectorRef, cachedRef);
+            if (cachedItem.item == null) {
+                try {
+                    readAllFromCache = false;
+                    continue;
+                } finally {
+                    cachedItem.close();
+                }
+            }
+
+            if (readAllFromCache && (trackChanges && cachedItem.getMightHaveBeenModified() || cachedItem.getAge().compareTo(options.getDuration()) > 0) || !command.isCanCacheAggressively()) {
+                readAllFromCache = false;
+            }
+
+            command.getHeaders().put(Constants.Headers.IF_NONE_MATCH, changeVectorRef.value);
+            if (_cached == null) {
+                _cached = new Cached(_commands.size());
+            }
+
+            _cached.values[i] = Tuple.create(cachedItem, cachedRef.value);
+        }
+
+        if (readAllFromCache) {
+            try (CleanCloseable context = _cached) {
+                result = new ArrayList<>(_commands.size());
+
+                for (int i = 0; i < _commands.size(); i++) {
+                    Tuple<HttpCache.ReleaseCacheItem, String> itemAndCached = _cached.values[i];
+                    GetResponse getResponse = new GetResponse();
+                    getResponse.setResult(itemAndCached.second);
+                    getResponse.setStatusCode(HttpStatus.SC_NOT_MODIFIED);
+
+                    result.add(getResponse);
+                }
+            }
+
+            _cached = null;
+        }
+
+        return readAllFromCache;
+    }
+
     private String getCacheKey(GetRequest command, Reference<String> requestUrl) {
         requestUrl.value = _baseUrl + command.getUrlAndQuery();
-        return command.getMethod() + "-" + requestUrl.value;
+        return command.getMethod() != null ? command.getMethod() + "-" + requestUrl.value : requestUrl.value;
     }
 
     @Override
     public void setResponseRaw(CloseableHttpResponse response, InputStream stream) {
         try (JsonParser parser = mapper.getFactory().createParser(stream)) {
-            if (parser.nextToken() != JsonToken.START_OBJECT) {
-                throwInvalidResponse();
+            try {
+                if (parser.nextToken() != JsonToken.START_OBJECT) {
+                    throwInvalidResponse();
+                }
+
+                String property = parser.nextFieldName();
+                if (!"Results".equals(property)) {
+                    throwInvalidResponse();
+                }
+
+                int i = 0;
+                result = new ArrayList<>(_commands.size());
+
+                for (GetResponse getResponse : readResponses(mapper, parser)) {
+                    GetRequest command = _commands.get(i);
+                    maybeSetCache(getResponse, command);
+
+                    if (_cached != null && getResponse.getStatusCode() == HttpStatus.SC_NOT_MODIFIED) {
+                        GetResponse clonedResponse = new GetResponse();
+                        clonedResponse.setResult(_cached.values[i].second);
+                        clonedResponse.setStatusCode(HttpStatus.SC_NOT_MODIFIED);
+                        result.add(clonedResponse);
+                    } else {
+                        result.add(getResponse);
+                    }
+
+                    i++;
+                }
+
+                if (parser.nextToken() != JsonToken.END_OBJECT) {
+                    throwInvalidResponse();
+                }
+
+            } finally {
+                if (_cached != null) {
+                    _cached.close();
+                }
             }
-
-            String property = parser.nextFieldName();
-            if (!"Results".equals(property)) {
-                throwInvalidResponse();
-            }
-
-            int i = 0;
-            result = new ArrayList<>();
-
-            for (GetResponse getResponse : readResponses(mapper, parser)) {
-                GetRequest command = _commands.get(i);
-                maybeSetCache(getResponse, command);
-                maybeReadFromCache(getResponse, command);
-
-                result.add(getResponse);
-
-                i++;
-            }
-
-            if (parser.nextToken() != JsonToken.END_OBJECT) {
-                throwInvalidResponse();
-            }
-
 
         } catch (Exception e) {
             throwInvalidResponse(e);
@@ -272,26 +343,10 @@ public class MultiGetCommand extends RavenCommand<List<GetResponse>> {
                 default:
                     throwInvalidResponse();
                     break;
-
             }
-
-
         }
 
         return getResponse;
-    }
-
-
-    private void maybeReadFromCache(GetResponse getResponse, GetRequest command) {
-        if (getResponse.getStatusCode() != HttpStatus.SC_NOT_MODIFIED) {
-            return;
-        }
-
-        String cacheKey = getCacheKey(command, new Reference<>());
-        Reference<String> cachedResponse = new Reference<>();
-        try (CleanCloseable cacheItem = _cache.get(cacheKey, new Reference<>(), cachedResponse)) {
-            getResponse.setResult(cachedResponse.value);
-        }
     }
 
     private void maybeSetCache(GetResponse getResponse, GetRequest command) {
@@ -303,6 +358,7 @@ public class MultiGetCommand extends RavenCommand<List<GetResponse>> {
 
         String result = getResponse.getResult();
         if (result == null) {
+            _httpCache.setNotFound(cacheKey, aggressivelyCached);
             return;
         }
 
@@ -311,11 +367,51 @@ public class MultiGetCommand extends RavenCommand<List<GetResponse>> {
             return;
         }
 
-        _cache.set(cacheKey, changeVector, result);
+        _httpCache.set(cacheKey, changeVector, result);
     }
 
     @Override
     public boolean isReadRequest() {
         return false;
+    }
+
+    @Override
+    public void close() {
+        closeCache();
+    }
+
+    public void closeCache() {
+        if (_cached != null) {
+            _cached.close();
+        }
+
+        _cached = null;
+    }
+
+    private static class Cached implements CleanCloseable {
+        private final int _size;
+
+        public Tuple<HttpCache.ReleaseCacheItem, String>[] values;
+
+
+        public Cached(int size) {
+            _size = size;
+            values = new Tuple[size];
+        }
+
+        @Override
+        public void close() {
+            if (values == null) {
+                return;
+            }
+
+            for (int i = 0; i < _size; i++) {
+                if (values[i] != null) {
+                    values[i].first.close();
+                }
+            }
+
+            values = null;
+        }
     }
 }

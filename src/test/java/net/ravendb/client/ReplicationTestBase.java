@@ -12,6 +12,8 @@ import net.ravendb.client.documents.operations.replication.*;
 import net.ravendb.client.documents.replication.ReplicationNode;
 import net.ravendb.client.documents.session.IDocumentSession;
 import net.ravendb.client.documents.operations.etl.RavenConnectionString;
+import net.ravendb.client.serverwide.DatabaseRecordWithEtag;
+import net.ravendb.client.serverwide.operations.GetDatabaseRecordOperation;
 import net.ravendb.client.serverwide.operations.ModifyOngoingTaskResult;
 
 import java.util.ArrayList;
@@ -113,5 +115,37 @@ public class ReplicationTestBase extends RemoteTestBase {
         }
 
         return null;
+    }
+
+    protected static int getPromotableCount(IDocumentStore store, String databaseName) {
+        DatabaseRecordWithEtag res = store.maintenance().server().send(new GetDatabaseRecordOperation(databaseName));
+        if (res == null) {
+            return -1;
+        }
+        return res.getTopology().getPromotables().size();
+    }
+
+    protected static int getRehabCount(IDocumentStore store, String databaseName) {
+        DatabaseRecordWithEtag res = store.maintenance().server().send(new GetDatabaseRecordOperation(databaseName));
+        if (res == null) {
+            return -1;
+        }
+        return res.getTopology().getRehabs().size();
+    }
+
+    protected static int getMembersCount(IDocumentStore store, String databaseName) {
+        DatabaseRecordWithEtag res = store.maintenance().server().send(new GetDatabaseRecordOperation(databaseName));
+        if (res == null) {
+            return -1;
+        }
+        return res.getTopology().getMembers().size();
+    }
+
+    protected static int getDeletionCount(IDocumentStore store, String databaseName) {
+        DatabaseRecordWithEtag res = store.maintenance().server().send(new GetDatabaseRecordOperation(databaseName));
+        if (res == null) {
+            return -1;
+        }
+        return res.getDeletionInProgress().size();
     }
 }

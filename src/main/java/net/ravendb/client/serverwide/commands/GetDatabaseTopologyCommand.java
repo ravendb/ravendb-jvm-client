@@ -24,9 +24,10 @@ public class GetDatabaseTopologyCommand extends RavenCommand<Topology> {
     public GetDatabaseTopologyCommand(String debugTag, UUID applicationIdentifier) {
         super(Topology.class);
         _debugTag = debugTag;
-        canCacheAggressively = false;
         timeout = Duration.ofSeconds(15);
         _applicationIdentifier = applicationIdentifier;
+
+        timeout = Duration.ofSeconds(15);
     }
 
     @Override

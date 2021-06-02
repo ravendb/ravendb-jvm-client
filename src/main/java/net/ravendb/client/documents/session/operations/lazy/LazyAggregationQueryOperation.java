@@ -11,6 +11,7 @@ import net.ravendb.client.extensions.JsonExtensions;
 
 import java.io.IOException;
 import java.util.Map;
+import java.util.function.BiFunction;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
@@ -33,7 +34,7 @@ public class LazyAggregationQueryOperation implements ILazyOperation {
         GetRequest request = new GetRequest();
         request.setUrl("/queries");
         request.setMethod("POST");
-        request.setQuery("?queryHash=" + _indexQuery.getQueryHash(_session.getConventions()));
+        request.setQuery("?queryHash=" + _indexQuery.getQueryHash(_session.getConventions().getEntityMapper()));
         request.setContent(new IndexQueryContent(_session.getConventions(), _indexQuery));
         return request;
     }

@@ -10,6 +10,7 @@ import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpRequestBase;
 
 import java.io.IOException;
+import java.time.Duration;
 
 public class GetOperationStateOperation implements IMaintenanceOperation<ObjectNode> {
 
@@ -47,6 +48,8 @@ public class GetOperationStateOperation implements IMaintenanceOperation<ObjectN
             super(ObjectNode.class);
             _id = id;
             selectedNodeTag = nodeTag;
+
+            timeout = Duration.ofSeconds(15);
         }
 
         @Override

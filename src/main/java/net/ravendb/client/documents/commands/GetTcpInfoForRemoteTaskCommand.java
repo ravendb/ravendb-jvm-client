@@ -38,7 +38,7 @@ public class GetTcpInfoForRemoteTaskCommand extends RavenCommand<TcpConnectionIn
         _remoteTask = remoteTask;
         _tag = tag;
         _verifyDatabase = verifyDatabase;
-        timeout = Duration.ofSeconds(15);
+        setTimeout(Duration.ofSeconds(15));
     }
 
     @Override

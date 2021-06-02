@@ -73,6 +73,9 @@ public class DocumentConventions {
     private Duration _requestTimeout;
     private Duration _firstBroadcastAttemptTimeout;
     private Duration _secondBroadcastAttemptTimeout;
+    private Duration _waitForIndexesAfterSaveChangesTimeout;
+    private Duration _waitForReplicationAfterSaveChangesTimeout;
+    private Duration _waitForNonStaleResultsTimeout;
 
     private int _loadBalancerContextSeed;
     private LoadBalanceBehavior _loadBalanceBehavior;
@@ -182,6 +185,10 @@ public class DocumentConventions {
         _firstBroadcastAttemptTimeout = Duration.ofSeconds(5);
         _secondBroadcastAttemptTimeout = Duration.ofSeconds(30);
 
+        _waitForIndexesAfterSaveChangesTimeout = Duration.ofSeconds(15);
+        _waitForReplicationAfterSaveChangesTimeout = Duration.ofSeconds(15);
+        _waitForNonStaleResultsTimeout = Duration.ofSeconds(15);
+
         _sendApplicationIdentifier = true;
     }
 
@@ -261,6 +268,60 @@ public class DocumentConventions {
     public void setFirstBroadcastAttemptTimeout(Duration firstBroadcastAttemptTimeout) {
         assertNotFrozen();
         _firstBroadcastAttemptTimeout = firstBroadcastAttemptTimeout;
+    }
+
+    /**
+     * Get the wait for indexes after save changes timeout
+     * Default: 15 seconds
+     * @return wait timeout
+     */
+    public Duration getWaitForIndexesAfterSaveChangesTimeout() {
+        return _waitForIndexesAfterSaveChangesTimeout;
+    }
+
+    /**
+     * Set the wait for indexes after save changes timeout
+     * Default: 15 seconds
+     * @param waitForIndexesAfterSaveChangesTimeout wait timeout
+     */
+    public void setWaitForIndexesAfterSaveChangesTimeout(Duration waitForIndexesAfterSaveChangesTimeout) {
+        assertNotFrozen();
+        _waitForIndexesAfterSaveChangesTimeout = waitForIndexesAfterSaveChangesTimeout;
+    }
+
+    /**
+     * Get the default timeout for DocumentSession waitForNonStaleResults methods.
+     * Default: 15 seconds
+     * @return wait timeout
+     */
+    public Duration getWaitForNonStaleResultsTimeout() {
+        return _waitForNonStaleResultsTimeout;
+    }
+
+    /**
+     * Sets the default timeout for DocumentSession waitForNonStaleResults methods.
+     * @param waitForNonStaleResultsTimeout wait timeout
+     */
+    public void setWaitForNonStaleResultsTimeout(Duration waitForNonStaleResultsTimeout) {
+        assertNotFrozen();
+        _waitForNonStaleResultsTimeout = waitForNonStaleResultsTimeout;
+    }
+
+    /**
+     * Gets the default timeout for DocumentSession.advanced().waitForReplicationAfterSaveChanges method.
+     * @return wait timeout
+     */
+    public Duration getWaitForReplicationAfterSaveChangesTimeout() {
+        return _waitForReplicationAfterSaveChangesTimeout;
+    }
+
+    /**
+     * Sets the default timeout for DocumentSession.advanced().waitForReplicationAfterSaveChanges method.
+     * @param waitForReplicationAfterSaveChangesTimeout wait timeout
+     */
+    public void setWaitForReplicationAfterSaveChangesTimeout(Duration waitForReplicationAfterSaveChangesTimeout) {
+        assertNotFrozen();
+        _waitForReplicationAfterSaveChangesTimeout = waitForReplicationAfterSaveChangesTimeout;
     }
 
     public Boolean isUseCompression() {

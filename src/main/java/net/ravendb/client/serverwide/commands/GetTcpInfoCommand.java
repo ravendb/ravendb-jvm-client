@@ -24,7 +24,7 @@ public class GetTcpInfoCommand extends RavenCommand<TcpConnectionInfo> {
         super(TcpConnectionInfo.class);
         this.tag = tag;
         this.dbName = dbName;
-        timeout = Duration.ofSeconds(15);
+        this.timeout = Duration.ofSeconds(15);
     }
 
     @Override

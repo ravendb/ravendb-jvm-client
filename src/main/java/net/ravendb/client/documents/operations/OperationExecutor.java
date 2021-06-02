@@ -71,8 +71,13 @@ public class OperationExecutor {
         RavenCommand<OperationIdResult> command = operation.getCommand(store, requestExecutor.getConventions(), requestExecutor.getCache());
 
         requestExecutor.execute(command, sessionInfo);
-
-        return new Operation(requestExecutor, () -> store.changes(), requestExecutor.getConventions(), command.getResult().getOperationId(), ObjectUtils.firstNonNull(command.getSelectedNodeTag(), command.getResult().getOperationNodeTag()));
+        String node = ObjectUtils.firstNonNull(command.getSelectedNodeTag(), command.getResult().getOperationNodeTag());
+        return new Operation(
+                requestExecutor,
+                () -> store.changes(databaseName, node),
+                requestExecutor.getConventions(),
+                command.getResult().getOperationId(),
+                node);
     }
 
     public PatchStatus send(PatchOperation operation) {

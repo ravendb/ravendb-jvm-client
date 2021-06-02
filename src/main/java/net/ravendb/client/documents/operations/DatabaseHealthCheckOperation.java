@@ -8,6 +8,8 @@ import net.ravendb.client.primitives.Reference;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpRequestBase;
 
+import java.time.Duration;
+
 public class DatabaseHealthCheckOperation implements IMaintenanceOperation {
 
     @Override
@@ -16,6 +18,10 @@ public class DatabaseHealthCheckOperation implements IMaintenanceOperation {
     }
 
     private static class DatabaseHealthCheckCommand extends VoidRavenCommand {
+        public DatabaseHealthCheckCommand() {
+            timeout = Duration.ofSeconds(15);
+        }
+
         @Override
         public HttpRequestBase createRequest(ServerNode node, Reference<String> url) {
             url.value = node.getUrl() + "/databases/" + node.getDatabase() + "/healthcheck";

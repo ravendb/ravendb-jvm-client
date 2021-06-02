@@ -1,7 +1,7 @@
 package net.ravendb.client.documents.queries;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import net.ravendb.client.Parameters;
-import net.ravendb.client.documents.conventions.DocumentConventions;
 import org.apache.commons.codec.digest.DigestUtils;
 
 import java.io.ByteArrayOutputStream;
@@ -97,19 +97,19 @@ public class HashCalculator {
         }
     }
 
-    public void write(Parameters qp, DocumentConventions conventions) throws IOException {
+    public void write(Parameters qp, ObjectMapper mapper) throws IOException {
         if (qp == null) {
             write("null-params");
         } else {
             write(qp.size());
             for (Map.Entry<String, Object> kvp : qp.entrySet()) {
                 write(kvp.getKey());
-                writeParameterValue(kvp.getValue(), conventions);
+                writeParameterValue(kvp.getValue(), mapper);
             }
         }
     }
 
-    private void writeParameterValue(Object value, DocumentConventions conventions) throws IOException {
+    private void writeParameterValue(Object value, ObjectMapper mapper) throws IOException {
         if (value instanceof String) {
             write((String) value);
         } else if (value instanceof Long) {
@@ -125,11 +125,11 @@ public class HashCalculator {
                 write("empty-enumerator");
             } else {
                 for (Object o : ((Collection) value)) {
-                    writeParameterValue(o, conventions);
+                    writeParameterValue(o, mapper);
                 }
             }
         } else {
-            write(conventions.getEntityMapper().writeValueAsString(value));
+            write(mapper.writeValueAsString(value));
         }
     }
 

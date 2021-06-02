@@ -18,6 +18,7 @@ public class DocumentSessionAttachments extends DocumentSessionAttachmentsBase i
     @Override
     public boolean exists(String documentId, String name) {
         HeadAttachmentCommand command = new HeadAttachmentCommand(documentId, name, null);
+        session.incrementRequestCount();
         requestExecutor.execute(command, sessionInfo);
         return command.getResult() != null;
     }
@@ -25,6 +26,7 @@ public class DocumentSessionAttachments extends DocumentSessionAttachmentsBase i
     @Override
     public CloseableAttachmentResult get(String documentId, String name) {
         GetAttachmentOperation operation = new GetAttachmentOperation(documentId, name, AttachmentType.DOCUMENT, null);
+        session.incrementRequestCount();
         return session.getOperations().send(operation, sessionInfo);
     }
 
@@ -37,6 +39,7 @@ public class DocumentSessionAttachments extends DocumentSessionAttachmentsBase i
         }
 
         GetAttachmentOperation operation = new GetAttachmentOperation(document.getId(), name, AttachmentType.DOCUMENT, null);
+        session.incrementRequestCount();
         return session.getOperations().send(operation, sessionInfo);
     }
 
@@ -49,6 +52,7 @@ public class DocumentSessionAttachments extends DocumentSessionAttachmentsBase i
     @Override
     public CloseableAttachmentResult getRevision(String documentId, String name, String changeVector) {
         GetAttachmentOperation operation = new GetAttachmentOperation(documentId, name, AttachmentType.REVISION, changeVector);
+        session.incrementRequestCount();
         return session.getOperations().send(operation, sessionInfo);
     }
 }

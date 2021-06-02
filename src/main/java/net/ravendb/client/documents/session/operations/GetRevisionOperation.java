@@ -59,6 +59,7 @@ public class GetRevisionOperation {
     }
 
     public GetRevisionsCommand createRequest() {
+        _session.incrementRequestCount();
         return _command;
     }
 

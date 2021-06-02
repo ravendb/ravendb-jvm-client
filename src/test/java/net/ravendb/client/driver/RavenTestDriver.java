@@ -256,11 +256,11 @@ public abstract class RavenTestDriver {
         throw new TimeoutException("Got no index error for more than " + timeout.toString());
     }
 
-    protected <T> T waitForValue(Supplier<T> act, T expectedValue) throws InterruptedException {
+    protected static <T> T waitForValue(Supplier<T> act, T expectedValue) throws InterruptedException {
         return waitForValue(act, expectedValue, Duration.ofSeconds(15));
     }
 
-    protected <T> T waitForValue(Supplier<T> act, T expectedValue, Duration timeout) throws InterruptedException {
+    protected static <T> T waitForValue(Supplier<T> act, T expectedValue, Duration timeout) throws InterruptedException {
         Stopwatch sw = Stopwatch.createStarted();
 
         do {

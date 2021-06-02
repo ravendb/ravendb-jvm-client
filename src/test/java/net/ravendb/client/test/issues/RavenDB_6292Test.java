@@ -10,6 +10,7 @@ import net.ravendb.client.documents.queries.IndexQuery;
 import net.ravendb.client.documents.queries.QueryResult;
 import net.ravendb.client.documents.session.IDocumentQuery;
 import net.ravendb.client.documents.session.IDocumentSession;
+import net.ravendb.client.documents.session.InMemoryDocumentSessionOperations;
 import net.ravendb.client.exceptions.ConflictException;
 import net.ravendb.client.exceptions.documents.DocumentConflictException;
 import net.ravendb.client.extensions.JsonExtensions;
@@ -88,7 +89,7 @@ public class RavenDB_6292Test extends ReplicationTestBase {
 
                     assertThatThrownBy(() -> session.load(Address.class, user.getAddressId())).isExactlyInstanceOf(DocumentConflictException.class);
 
-                    QueryCommand queryCommand = new QueryCommand(DocumentConventions.defaultConventions, iq, false, false);
+                    QueryCommand queryCommand = new QueryCommand((InMemoryDocumentSessionOperations) session, iq, false, false);
 
                     store2.getRequestExecutor().execute(queryCommand);
 

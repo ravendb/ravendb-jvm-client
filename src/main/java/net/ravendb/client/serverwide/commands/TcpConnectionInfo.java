@@ -5,6 +5,7 @@ public class TcpConnectionInfo {
     private String url;
     private String certificate;
     private String[] urls;
+    private String nodeTag;
 
     public int getPort() {
         return port;
@@ -36,5 +37,13 @@ public class TcpConnectionInfo {
 
     public void setUrls(String[] urls) {
         this.urls = urls;
+    }
+
+    public String getNodeTag() {
+        return nodeTag;
+    }
+
+    public void setNodeTag(String nodeTag) {
+        this.nodeTag = nodeTag;
     }
 }

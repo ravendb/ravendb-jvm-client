@@ -39,7 +39,7 @@ public class IndexQuery extends IndexQueryWithParameters<Parameters> {
     }
 
     @SuppressWarnings("deprecation")
-    public String getQueryHash(DocumentConventions conventions) {
+    public String getQueryHash(ObjectMapper serializer) {
         HashCalculator hasher = new HashCalculator();
         try {
             hasher.write(getQuery());
@@ -48,7 +48,7 @@ public class IndexQuery extends IndexQueryWithParameters<Parameters> {
             hasher.write(Optional.ofNullable(getWaitForNonStaleResultsTimeout()).map(Duration::toMillis).orElse(0L));
             hasher.write(getStart());
             hasher.write(getPageSize());
-            hasher.write(getQueryParameters(), conventions);
+            hasher.write(getQueryParameters(), serializer);
             return hasher.getHash();
         } catch (IOException e) {
             throw new RuntimeException("Unable to calculate hash", e);
