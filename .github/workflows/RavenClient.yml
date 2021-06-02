@@ -4,9 +4,9 @@ on:
   schedule:
     - cron: "0 10 * * 6"
   push:
-    branches: [ v5.0 ]
+    branches: [ v5.2 ]
   pull_request:
-    branches: [ v5.0 ]
+    branches: [ v5.2 ]
 
 jobs:
   build:
@@ -23,7 +23,7 @@ jobs:
     strategy:
       matrix:
         java-version: [8, 10, 11, 14]
-        serverVersion: ["5.1", "5.2"]
+        serverVersion: ["5.2"]
       fail-fast: false
 
     steps:
