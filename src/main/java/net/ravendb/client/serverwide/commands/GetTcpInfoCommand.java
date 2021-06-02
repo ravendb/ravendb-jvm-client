@@ -8,6 +8,7 @@ import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpRequestBase;
 
 import java.io.IOException;
+import java.time.Duration;
 
 public class GetTcpInfoCommand extends RavenCommand<TcpConnectionInfo> {
 
@@ -23,6 +24,8 @@ public class GetTcpInfoCommand extends RavenCommand<TcpConnectionInfo> {
         super(TcpConnectionInfo.class);
         this.tag = tag;
         this.dbName = dbName;
+
+        this.timeout = Duration.ofSeconds(15);
     }
 
     @Override

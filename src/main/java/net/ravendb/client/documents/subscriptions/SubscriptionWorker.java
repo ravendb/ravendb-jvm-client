@@ -192,13 +192,14 @@ public class SubscriptionWorker<T> implements CleanCloseable {
                 requestExecutor.execute(command);
                 tcpInfo = command.getResult();
 
-                final List<String> tcpInfoUrls = Arrays.stream(tcpInfo.getUrls()).collect(Collectors.toList());
-
-                _redirectNode = requestExecutor.getTopology().getNodes()
-                        .stream()
-                        .filter(x -> tcpInfoUrls.contains(x.getUrl()))
-                        .findFirst()
-                        .orElse(null);
+                if (tcpInfo.getNodeTag() != null) {
+                    TcpConnectionInfo finalTcpInfo = tcpInfo;
+                    _redirectNode = requestExecutor.getTopology().getNodes()
+                            .stream()
+                            .filter(x -> finalTcpInfo.getNodeTag().equals(x.getClusterTag()))
+                            .findFirst()
+                            .orElse(null);
+                }
             } catch (ClientVersionMismatchException e) {
                 tcpInfo = legacyTryGetTcpInfo(requestExecutor);
             }
@@ -345,6 +346,8 @@ public class SubscriptionWorker<T> implements CleanCloseable {
             case REDIRECT:
                 ObjectNode data = connectionStatus.getData();
                 String appropriateNode = data.get("RedirectedTag").asText();
+                JsonNode currentTagRaw = data.get("CurrentTag");
+                String currentNode = currentTagRaw != null && !currentTagRaw.isNull() ? currentTagRaw.asText() : null;
                 JsonNode rawReasons = data.get("Reasons");
                 Map<String, String> reasonsDictionary = new HashMap<>();
                 if (rawReasons instanceof ArrayNode) {
@@ -369,7 +372,7 @@ public class SubscriptionWorker<T> implements CleanCloseable {
 
                 SubscriptionDoesNotBelongToNodeException notBelongToNodeException =
                         new SubscriptionDoesNotBelongToNodeException(
-                                "Subscription with id " + _options.getSubscriptionName() + " cannot be processed by current node, " +
+                                "Subscription with id '" + _options.getSubscriptionName() + "' cannot be processed by current node '" + currentNode + "', " +
                                         "it will be redirected to " + appropriateNode + System.lineSeparator() + reasonsJoined);
                 notBelongToNodeException.setAppropriateNode(appropriateNode);
                 notBelongToNodeException.setReasons(reasonsDictionary);
@@ -580,9 +583,16 @@ public class SubscriptionWorker<T> implements CleanCloseable {
                                 RequestExecutor reqEx = _store.getRequestExecutor(_dbName);
                                 List<ServerNode> curTopology = reqEx.getTopologyNodes();
                                 int nextNodeIndex = (_forcedTopologyUpdateAttempts++) % curTopology.size();
-                                _redirectNode = curTopology.get(nextNodeIndex);
-                                if (_logger.isInfoEnabled()) {
-                                    _logger.info("Subscription '" + _options.getSubscriptionName() + "'. Will modify redirect node from null to " + _redirectNode.getClusterTag(), ex);
+                                try {
+                                    _redirectNode = curTopology.get(nextNodeIndex);
+                                    if (_logger.isInfoEnabled()) {
+                                        _logger.info("Subscription '" + _options.getSubscriptionName() + "'. Will modify redirect node from null to " + _redirectNode.getClusterTag(), ex);
+                                    }
+                                } catch (Exception e) {
+                                    // will let topology to decide
+                                    if (_logger.isInfoEnabled()) {
+                                        _logger.info("Subscription '" + _options.getSubscriptionName() + "'. Could not select the redirect node will keep it null.", e);
+                                    }
                                 }
                             }
 
@@ -620,11 +630,11 @@ public class SubscriptionWorker<T> implements CleanCloseable {
         ex = ExceptionsUtils.unwrapException(ex);
         if (ex instanceof SubscriptionDoesNotBelongToNodeException) {
             SubscriptionDoesNotBelongToNodeException se = (SubscriptionDoesNotBelongToNodeException) ex;
-            assertLastConnectionFailure();
-
             RequestExecutor requestExecutor = _store.getRequestExecutor(_dbName);
 
             if (se.getAppropriateNode() == null) {
+                assertLastConnectionFailure();
+
                 _redirectNode = null;
                 return true;
             }

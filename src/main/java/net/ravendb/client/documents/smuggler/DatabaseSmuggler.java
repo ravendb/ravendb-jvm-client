@@ -96,7 +96,7 @@ public class DatabaseSmuggler {
         ExportCommand command = new ExportCommand(_requestExecutor.getConventions(), options, handleStreamResponse, operationId, getOperationIdCommand.getNodeTag());
         _requestExecutor.execute(command);
 
-        return new Operation(_requestExecutor, () -> _store.changes(_databaseName), _requestExecutor.getConventions(), operationId, getOperationIdCommand.getNodeTag());
+        return new Operation(_requestExecutor, () -> _store.changes(_databaseName, getOperationIdCommand.getNodeTag()), _requestExecutor.getConventions(), operationId, getOperationIdCommand.getNodeTag());
     }
 
     public Operation exportAsync(DatabaseSmugglerExportOptions options, DatabaseSmuggler toDatabase) {
@@ -188,7 +188,7 @@ public class DatabaseSmuggler {
         ImportCommand command = new ImportCommand(_requestExecutor.getConventions(), options, stream, operationId, getOperationIdCommand.getNodeTag());
         _requestExecutor.execute(command);
 
-        return new Operation(_requestExecutor, () -> _store.changes(_databaseName), _requestExecutor.getConventions(), operationId, getOperationIdCommand.getNodeTag());
+        return new Operation(_requestExecutor, () -> _store.changes(_databaseName, getOperationIdCommand.getNodeTag()), _requestExecutor.getConventions(), operationId, getOperationIdCommand.getNodeTag());
     }
 
     private static class ExportCommand extends VoidRavenCommand {

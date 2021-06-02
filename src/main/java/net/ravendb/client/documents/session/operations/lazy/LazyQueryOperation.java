@@ -4,6 +4,7 @@ import net.ravendb.client.documents.commands.multiGet.GetRequest;
 import net.ravendb.client.documents.commands.multiGet.GetResponse;
 import net.ravendb.client.documents.conventions.DocumentConventions;
 import net.ravendb.client.documents.queries.QueryResult;
+import net.ravendb.client.documents.session.InMemoryDocumentSessionOperations;
 import net.ravendb.client.documents.session.operations.QueryOperation;
 import net.ravendb.client.extensions.JsonExtensions;
 import net.ravendb.client.primitives.EventHelper;
@@ -16,13 +17,13 @@ import java.util.function.Consumer;
 public class LazyQueryOperation<T> implements ILazyOperation {
 
     private final Class<T> _clazz;
-    private final DocumentConventions _conventions;
+    private final InMemoryDocumentSessionOperations _session;
     private final QueryOperation _queryOperation;
     private final List<Consumer<QueryResult>> _afterQueryExecuted;
 
-    public LazyQueryOperation(Class<T> clazz, DocumentConventions conventions, QueryOperation queryOperation, List<Consumer<QueryResult>> afterQueryExecuted) {
+    public LazyQueryOperation(Class<T> clazz, InMemoryDocumentSessionOperations session, QueryOperation queryOperation, List<Consumer<QueryResult>> afterQueryExecuted) {
         _clazz = clazz;
-        _conventions = conventions;
+        _session = session;
         _queryOperation = queryOperation;
         _afterQueryExecuted = afterQueryExecuted;
     }
@@ -30,10 +31,11 @@ public class LazyQueryOperation<T> implements ILazyOperation {
     @Override
     public GetRequest createRequest() {
         GetRequest request = new GetRequest();
+        request.setCanCacheAggressively(!_queryOperation.getIndexQuery().isDisableCaching() && !_queryOperation.getIndexQuery().isWaitForNonStaleResults());
         request.setUrl("/queries");
         request.setMethod("POST");
-        request.setQuery("?queryHash=" + _queryOperation.getIndexQuery().getQueryHash());
-        request.setContent(new IndexQueryContent(_conventions, _queryOperation.getIndexQuery()));
+        request.setQuery("?queryHash=" + _queryOperation.getIndexQuery().getQueryHash(_session.getConventions().getEntityMapper()));
+        request.setContent(new IndexQueryContent(_session.getConventions(), _queryOperation.getIndexQuery()));
         return request;
     }
 

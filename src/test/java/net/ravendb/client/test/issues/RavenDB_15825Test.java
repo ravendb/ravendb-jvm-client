@@ -3,6 +3,7 @@ package net.ravendb.client.test.issues;
 import net.ravendb.client.Parameters;
 import net.ravendb.client.RemoteTestBase;
 import net.ravendb.client.documents.IDocumentStore;
+import net.ravendb.client.documents.conventions.DocumentConventions;
 import net.ravendb.client.documents.indexes.AbstractIndexCreationTask;
 import net.ravendb.client.documents.queries.HashCalculator;
 import net.ravendb.client.documents.queries.facets.FacetOptions;
@@ -104,7 +105,7 @@ public class RavenDB_15825Test extends RemoteTestBase {
         p.put("p1", facetOptions);
 
         HashCalculator hashCalculator = new HashCalculator();
-        hashCalculator.write(p);
+        hashCalculator.write(p, DocumentConventions.defaultConventions.getEntityMapper());
         String hash1 = hashCalculator.getHash();
 
         // create second object with same props
@@ -116,13 +117,13 @@ public class RavenDB_15825Test extends RemoteTestBase {
         p2.put("p1", facetOptions2);
 
         HashCalculator hashCalculator2 = new HashCalculator();
-        hashCalculator2.write(p2);
+        hashCalculator2.write(p2, DocumentConventions.defaultConventions.getEntityMapper());
         String hash2 = hashCalculator2.getHash();
 
         // modify original object - it should change hash
         facetOptions.setStart(2);
         HashCalculator hashCalculator3 = new HashCalculator();
-        hashCalculator3.write(p);
+        hashCalculator3.write(p, DocumentConventions.defaultConventions.getEntityMapper());
         String hash3 = hashCalculator3.getHash();
 
         assertThat(hash1) // structural equality

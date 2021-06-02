@@ -1,9 +1,9 @@
 package net.ravendb.client.documents.commands;
 
 import com.fasterxml.jackson.core.JsonGenerator;
-import net.ravendb.client.documents.conventions.DocumentConventions;
 import net.ravendb.client.documents.queries.IndexQuery;
 import net.ravendb.client.documents.queries.QueryResult;
+import net.ravendb.client.documents.session.InMemoryDocumentSessionOperations;
 import net.ravendb.client.extensions.JsonExtensions;
 import net.ravendb.client.http.RavenCommand;
 import net.ravendb.client.http.ServerNode;
@@ -17,15 +17,15 @@ import java.io.IOException;
 
 @SuppressWarnings("ALL")
 public class QueryCommand extends RavenCommand<QueryResult> {
-    private final DocumentConventions _conventions;
+    private final InMemoryDocumentSessionOperations _session;
     private final IndexQuery _indexQuery;
     private final boolean _metadataOnly;
     private final boolean _indexEntriesOnly;
 
-    public QueryCommand(DocumentConventions conventions, IndexQuery indexQuery, boolean metadataOnly, boolean indexEntriesOnly) {
+    public QueryCommand(InMemoryDocumentSessionOperations session, IndexQuery indexQuery, boolean metadataOnly, boolean indexEntriesOnly) {
         super(QueryResult.class);
 
-        _conventions = conventions;
+        _session = session;
 
         if (indexQuery == null) {
             throw new IllegalArgumentException("indexQuery cannot be null");
@@ -50,7 +50,7 @@ public class QueryCommand extends RavenCommand<QueryResult> {
                 // we need to add a query hash because we are using POST queries
                 // so we need to unique parameter per query so the query cache will
                 // work properly
-                .append(_indexQuery.getQueryHash());
+                .append(_indexQuery.getQueryHash(_session.getConventions().getEntityMapper()));
 
         if (_metadataOnly) {
             path.append("&metadataOnly=true");
@@ -63,7 +63,7 @@ public class QueryCommand extends RavenCommand<QueryResult> {
         HttpPost request = new HttpPost();
         request.setEntity(new ContentProviderHttpEntity(outputStream -> {
             try (JsonGenerator generator = mapper.getFactory().createGenerator(outputStream)) {
-                JsonExtensions.writeIndexQuery(generator, _conventions, _indexQuery);
+                JsonExtensions.writeIndexQuery(generator, _session.getConventions(), _indexQuery);
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }

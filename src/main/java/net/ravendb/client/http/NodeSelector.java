@@ -2,6 +2,7 @@ package net.ravendb.client.http;
 
 import net.ravendb.client.exceptions.AllTopologyNodesDownException;
 import net.ravendb.client.exceptions.RequestedNodeUnavailableException;
+import net.ravendb.client.exceptions.database.DatabaseDoesNotExistException;
 import net.ravendb.client.primitives.CleanCloseable;
 import net.ravendb.client.primitives.Timer;
 import org.apache.commons.lang3.ObjectUtils;
@@ -76,7 +77,7 @@ public class NodeSelector implements CleanCloseable {
         }
 
         if (state.nodes.size() == 0) {
-            throw new AllTopologyNodesDownException("There are no nodes in the topology at all");
+            throw new DatabaseDoesNotExistException("There are no nodes in the topology at all");
         }
         throw new RequestedNodeUnavailableException("Could not find requested node " + nodeTag);
     }
@@ -110,7 +111,7 @@ public class NodeSelector implements CleanCloseable {
         // if there are all marked as failed, we'll chose the first
         // one so the user will get an error (or recover :-) );
         if (state.nodes.size() == 0) {
-            throw new AllTopologyNodesDownException("There are no nodes in the topology at all");
+            throw new DatabaseDoesNotExistException("There are no nodes in the topology at all");
         }
 
         return new CurrentIndexAndNode (0, state.nodes.get(0));

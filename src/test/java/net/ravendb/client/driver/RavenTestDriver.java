@@ -238,11 +238,11 @@ public abstract class RavenTestDriver {
         throw new TimeoutException("The indexes stayed stale for more than " + timeout + "." + allIndexErrorsText);
     }
 
-    protected <T> T waitForValue(Supplier<T> act, T expectedValue) throws InterruptedException {
+    protected static <T> T waitForValue(Supplier<T> act, T expectedValue) throws InterruptedException {
         return waitForValue(act, expectedValue, Duration.ofSeconds(15));
     }
 
-    protected <T> T waitForValue(Supplier<T> act, T expectedValue, Duration timeout) throws InterruptedException {
+    protected static <T> T waitForValue(Supplier<T> act, T expectedValue, Duration timeout) throws InterruptedException {
         Stopwatch sw = Stopwatch.createStarted();
 
         do {

@@ -3,6 +3,7 @@ package net.ravendb.client.test.client.subscriptions;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import net.ravendb.client.RemoteTestBase;
 import net.ravendb.client.documents.BulkInsertOperation;
+import net.ravendb.client.documents.DocumentStore;
 import net.ravendb.client.documents.IDocumentStore;
 import net.ravendb.client.documents.operations.GetOngoingTaskInfoOperation;
 import net.ravendb.client.documents.operations.ongoingTasks.OngoingTaskSubscription;
@@ -691,4 +692,45 @@ public class SubscriptionsBasicTest extends RemoteTestBase {
             subscription2.close();
         }
     }
+
+
+    @Test
+    public void disposeSubscriptionWorkerShouldNotThrow() throws Exception {
+        Semaphore mre = new Semaphore(0);
+        Semaphore mre2 = new Semaphore(0);
+
+        try (IDocumentStore store = getDocumentStore()) {
+            store.getRequestExecutor().addOnBeforeRequestListener((sender, handler) -> {
+                if (handler.getUrl().contains("info/remote-task/tcp?database=")) {
+                    mre.release();
+                    try {
+                        assertThat(mre2.tryAcquire(_reasonableWaitTime, TimeUnit.SECONDS))
+                                .isTrue();
+                    } catch (InterruptedException e) {
+                        throw new RuntimeException(e);
+                    }
+                }
+            });
+
+            String id = store.subscriptions().create(Company.class, new SubscriptionCreationOptions());
+            SubscriptionWorkerOptions workerOptions = new SubscriptionWorkerOptions(id);
+            workerOptions.setIgnoreSubscriberErrors(true);
+            workerOptions.setStrategy(SubscriptionOpeningStrategy.TAKE_OVER);
+            SubscriptionWorker<Company> worker = store.subscriptions().getSubscriptionWorker(Company.class, workerOptions, store.getDatabase());
+
+            CompletableFuture<Void> t = worker.run(x -> {
+            });
+
+            assertThat(mre.tryAcquire(_reasonableWaitTime, TimeUnit.SECONDS))
+                    .isTrue();
+            worker.close(false);
+            mre2.release();
+
+            Thread.sleep(5000);
+            waitForValue(() -> t.isDone(), true, Duration.ofSeconds(5));
+            assertThat(t.isCompletedExceptionally())
+                    .isFalse();
+        }
+    }
+
 }

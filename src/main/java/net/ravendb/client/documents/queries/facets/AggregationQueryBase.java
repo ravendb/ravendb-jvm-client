@@ -46,7 +46,7 @@ public abstract class AggregationQueryBase {
     public Lazy<Map<String, FacetResult>> executeLazy(Consumer<Map<String, FacetResult>> onEval) {
         _query = getIndexQuery();
         return ((DocumentSession)_session).addLazyOperation((Class<Map<String, FacetResult>>)(Class<?>)Map.class,
-                new LazyAggregationQueryOperation( _session.getConventions(), _query, result -> invokeAfterQueryExecuted(result), this::processResults), onEval);
+                new LazyAggregationQueryOperation(_session, _query, result -> invokeAfterQueryExecuted(result), this::processResults), onEval);
     }
 
     protected abstract IndexQuery getIndexQuery();
@@ -71,7 +71,7 @@ public abstract class AggregationQueryBase {
     private QueryCommand getCommand() {
         _query = getIndexQuery();
 
-        return new QueryCommand(_session.getConventions(), _query, false, false);
+        return new QueryCommand(_session, _query, false, false);
     }
 
     @Override

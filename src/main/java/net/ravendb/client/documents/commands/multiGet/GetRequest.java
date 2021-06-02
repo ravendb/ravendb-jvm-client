@@ -27,6 +27,16 @@ public class GetRequest {
         return url + "?" + query;
     }
 
+    private boolean canCacheAggressively = true;
+
+    public boolean isCanCacheAggressively() {
+        return canCacheAggressively;
+    }
+
+    public void setCanCacheAggressively(boolean canCacheAggressively) {
+        this.canCacheAggressively = canCacheAggressively;
+    }
+
     private IContent content;
 
     public GetRequest() {

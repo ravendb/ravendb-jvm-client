@@ -1180,7 +1180,7 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
         }
 
         if (replicationOptions.getWaitForReplicasTimeout() == null) {
-            replicationOptions.setWaitForReplicasTimeout(Duration.ofSeconds(15));
+            replicationOptions.setWaitForReplicasTimeout(getConventions().getWaitForReplicationAfterSaveChangesTimeout());
         }
 
         replicationOptions.setWaitForReplicas(true);
@@ -1203,7 +1203,7 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
         }
 
         if (indexOptions.getWaitForIndexesTimeout() == null) {
-            indexOptions.setWaitForIndexesTimeout(Duration.ofSeconds(15));
+            indexOptions.setWaitForIndexesTimeout(getConventions().getWaitForIndexesAfterSaveChangesTimeout());
         }
 
         indexOptions.setWaitForIndexes(true);

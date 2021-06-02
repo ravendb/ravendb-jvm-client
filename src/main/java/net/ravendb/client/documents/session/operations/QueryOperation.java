@@ -10,6 +10,7 @@ import net.ravendb.client.Constants;
 import net.ravendb.client.documents.commands.QueryCommand;
 import net.ravendb.client.documents.queries.IndexQuery;
 import net.ravendb.client.documents.queries.QueryResult;
+import net.ravendb.client.documents.queries.facets.FacetResult;
 import net.ravendb.client.documents.session.InMemoryDocumentSessionOperations;
 import net.ravendb.client.documents.session.tokens.FieldsToFetchToken;
 import net.ravendb.client.exceptions.TimeoutException;
@@ -18,11 +19,16 @@ import net.ravendb.client.primitives.CleanCloseable;
 import net.ravendb.client.primitives.Reference;
 import org.apache.commons.lang3.ClassUtils;
 import org.apache.commons.lang3.ObjectUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import java.beans.IntrospectionException;
+import java.beans.Introspector;
+import java.beans.PropertyDescriptor;
 import java.time.Duration;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
@@ -40,6 +46,17 @@ public class QueryOperation {
     private boolean _noTracking;
 
     private static final Log logger = LogFactory.getLog(QueryOperation.class);
+    private static PropertyDescriptor[] _facetResultFields;
+
+    static {
+        try {
+            _facetResultFields = Arrays.stream(Introspector.getBeanInfo(FacetResult.class).getPropertyDescriptors())
+                    .filter(x -> !"class".equals(x.getName()))
+                    .toArray(PropertyDescriptor[]::new);
+        } catch (IntrospectionException e) {
+            // ignore
+        }
+    }
 
     public QueryOperation(InMemoryDocumentSessionOperations session, String indexName, IndexQuery indexQuery,
                           FieldsToFetchToken fieldsToFetch, boolean disableEntitiesTracking, boolean metadataOnly, boolean indexEntriesOnly,
@@ -61,7 +78,7 @@ public class QueryOperation {
 
         logQuery();
 
-        return new QueryCommand(_session.getConventions(), _indexQuery, _metadataOnly, _indexEntriesOnly);
+        return new QueryCommand(_session, _indexQuery, _metadataOnly, _indexEntriesOnly);
     }
 
     public QueryResult getCurrentQueryResults() {
@@ -123,14 +140,28 @@ public class QueryOperation {
         try {
             for (JsonNode document : queryResult.getResults()) {
                 ObjectNode metadata = (ObjectNode) document.get(Constants.Documents.Metadata.KEY);
-                JsonNode idNode = metadata.get(Constants.Documents.Metadata.ID);
+                try {
+                    JsonNode idNode = metadata.get(Constants.Documents.Metadata.ID);
 
-                String id = null;
-                if (idNode != null && idNode.isTextual()) {
-                    id = idNode.asText();
+                    String id = null;
+                    if (idNode != null && idNode.isTextual()) {
+                        id = idNode.asText();
+                    }
+
+                    addToResult.apply(deserialize(clazz, id, (ObjectNode) document, metadata, _fieldsToFetch, _noTracking, _session, _isProjectInto));
+                } catch (NullPointerException e) {
+                    if (document.size() != _facetResultFields.length) {
+                        throw e;
+                    }
+
+                    for (PropertyDescriptor prop : _facetResultFields) {
+                        if (document.get(StringUtils.capitalize(prop.getName())) == null) {
+                            throw e;
+                        }
+                    }
+
+                    throw new IllegalArgumentException("Raw query with aggregation by facet should be called by executeAggregation method.");
                 }
-
-                addToResult.apply(deserialize(clazz, id, (ObjectNode) document, metadata, _fieldsToFetch, _noTracking, _session, _isProjectInto));
             }
         } catch (JsonProcessingException e) {
             throw new RuntimeException("Unable to read json: " + e.getMessage(), e);

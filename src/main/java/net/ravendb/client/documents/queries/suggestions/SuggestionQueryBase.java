@@ -65,7 +65,7 @@ public abstract class SuggestionQueryBase {
         _query = getIndexQuery();
 
         return ((DocumentSession)_session).addLazyOperation((Class<Map<String, SuggestionResult>>)(Class<?>)Map.class,
-                new LazySuggestionQueryOperation(_session.getConventions(), _query, this::invokeAfterQueryExecuted, this::processResults), onEval);
+                new LazySuggestionQueryOperation(_session, _query, this::invokeAfterQueryExecuted, this::processResults), onEval);
     }
 
     protected abstract IndexQuery getIndexQuery();
@@ -77,7 +77,7 @@ public abstract class SuggestionQueryBase {
     private QueryCommand getCommand() {
         _query = getIndexQuery();
 
-        return new QueryCommand(_session.getConventions(), _query, false, false);
+        return new QueryCommand(_session, _query, false, false);
     }
 
 

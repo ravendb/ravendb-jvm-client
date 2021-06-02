@@ -6,6 +6,7 @@ import net.ravendb.client.documents.conventions.DocumentConventions;
 import net.ravendb.client.documents.queries.IndexQuery;
 import net.ravendb.client.documents.queries.QueryResult;
 import net.ravendb.client.documents.queries.suggestions.SuggestionResult;
+import net.ravendb.client.documents.session.InMemoryDocumentSessionOperations;
 import net.ravendb.client.extensions.JsonExtensions;
 
 import java.io.IOException;
@@ -19,14 +20,14 @@ public class LazySuggestionQueryOperation implements ILazyOperation {
     private QueryResult queryResult;
     private boolean requiresRetry;
 
-    private final DocumentConventions _conventions;
+    private final InMemoryDocumentSessionOperations _session;
     private final IndexQuery _indexQuery;
     private final Consumer<QueryResult> _invokeAfterQueryExecuted;
     private final BiFunction<QueryResult, DocumentConventions, Map<String, SuggestionResult>> _processResults;
 
-    public LazySuggestionQueryOperation(DocumentConventions conventions, IndexQuery indexQuery, Consumer<QueryResult> invokeAfterQueryExecuted,
+    public LazySuggestionQueryOperation(InMemoryDocumentSessionOperations session, IndexQuery indexQuery, Consumer<QueryResult> invokeAfterQueryExecuted,
                                         BiFunction<QueryResult, DocumentConventions, Map<String, SuggestionResult>> processResults) {
-        _conventions = conventions;
+        _session = session;
         _indexQuery = indexQuery;
         _invokeAfterQueryExecuted = invokeAfterQueryExecuted;
         _processResults = processResults;
@@ -35,10 +36,11 @@ public class LazySuggestionQueryOperation implements ILazyOperation {
     @Override
     public GetRequest createRequest() {
         GetRequest request = new GetRequest();
+        request.setCanCacheAggressively(!_indexQuery.isDisableCaching() && !_indexQuery.isWaitForNonStaleResults());
         request.setUrl("/queries");
         request.setMethod("POST");
-        request.setQuery("?queryHash=" + _indexQuery.getQueryHash());
-        request.setContent(new IndexQueryContent(_conventions, _indexQuery));
+        request.setQuery("?queryHash=" + _indexQuery.getQueryHash(_session.getConventions().getEntityMapper()));
+        request.setContent(new IndexQueryContent(_session.getConventions(), _indexQuery));
 
         return request;
     }
@@ -76,7 +78,7 @@ public class LazySuggestionQueryOperation implements ILazyOperation {
     }
 
     private void handleResponse(QueryResult queryResult) {
-        result = _processResults.apply(queryResult, _conventions);
+        result = _processResults.apply(queryResult, _session.getConventions());
         this.queryResult = queryResult;
     }
 }

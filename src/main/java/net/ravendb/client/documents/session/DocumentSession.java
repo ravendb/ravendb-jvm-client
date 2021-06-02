@@ -194,8 +194,6 @@ public class DocumentSession extends InMemoryDocumentSessionOperations implement
         try  {
             Stopwatch sw = Stopwatch.createStarted();
 
-            incrementRequestCount();
-
             ResponseTimeInformation responseTimeDuration = new ResponseTimeInformation();
 
             while (executeLazyOperationsSingleStep(responseTimeDuration, requests, sw)) {
@@ -223,36 +221,41 @@ public class DocumentSession extends InMemoryDocumentSessionOperations implement
 
     private boolean executeLazyOperationsSingleStep(ResponseTimeInformation responseTimeInformation, List<GetRequest> requests, Stopwatch sw) {
         MultiGetOperation multiGetOperation = new MultiGetOperation(this);
-        MultiGetCommand multiGetCommand = multiGetOperation.createRequest(requests);
-        getRequestExecutor().execute(multiGetCommand, sessionInfo);
+        try (MultiGetCommand multiGetCommand = multiGetOperation.createRequest(requests)) {
+            getRequestExecutor().execute(multiGetCommand, sessionInfo);
 
-        List<GetResponse> responses = multiGetCommand.getResult();
+            List<GetResponse> responses = multiGetCommand.getResult();
 
-        for (int i = 0; i < pendingLazyOperations.size(); i++) {
-            long totalTime;
-            String tempReqTime;
-            GetResponse response = responses.get(i);
-
-            tempReqTime = response.getHeaders().get(Constants.Headers.REQUEST_TIME);
-            response.setElapsed(sw.elapsed());
-            totalTime = tempReqTime != null ? Long.parseLong(tempReqTime) : 0;
-
-            ResponseTimeInformation.ResponseTimeItem timeItem = new ResponseTimeInformation.ResponseTimeItem();
-            timeItem.setUrl(requests.get(i).getUrlAndQuery());
-            timeItem.setDuration(Duration.ofMillis(totalTime));
-
-            responseTimeInformation.getDurationBreakdown().add(timeItem);
-
-            if (response.requestHasErrors()) {
-                throw new IllegalStateException("Got an error from server, status code: " + response.getStatusCode() + System.lineSeparator() + response.getResult());
+            if (!multiGetCommand.aggressivelyCached) {
+                incrementRequestCount();
             }
 
-            pendingLazyOperations.get(i).handleResponse(response);
-            if (pendingLazyOperations.get(i).isRequiresRetry()) {
-                return true;
+            for (int i = 0; i < pendingLazyOperations.size(); i++) {
+                long totalTime;
+                String tempReqTime;
+                GetResponse response = responses.get(i);
+
+                tempReqTime = response.getHeaders().get(Constants.Headers.REQUEST_TIME);
+                response.setElapsed(sw.elapsed());
+                totalTime = tempReqTime != null ? Long.parseLong(tempReqTime) : 0;
+
+                ResponseTimeInformation.ResponseTimeItem timeItem = new ResponseTimeInformation.ResponseTimeItem();
+                timeItem.setUrl(requests.get(i).getUrlAndQuery());
+                timeItem.setDuration(Duration.ofMillis(totalTime));
+
+                responseTimeInformation.getDurationBreakdown().add(timeItem);
+
+                if (response.requestHasErrors()) {
+                    throw new IllegalStateException("Got an error from server, status code: " + response.getStatusCode() + System.lineSeparator() + response.getResult());
+                }
+
+                pendingLazyOperations.get(i).handleResponse(response);
+                if (pendingLazyOperations.get(i).isRequiresRetry()) {
+                    return true;
+                }
             }
+            return false;
         }
-        return false;
     }
 
     /**
