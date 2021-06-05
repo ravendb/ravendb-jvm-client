@@ -13,6 +13,7 @@ public class QueryStatistics {
     private boolean isStale;
     private long durationInMs;
     private int totalResults;
+    private long longTotalResults;
     private int skippedResults;
     private Date timestamp;
     private String indexName;
@@ -67,6 +68,20 @@ public class QueryStatistics {
      */
     public void setTotalResults(int totalResults) {
         this.totalResults = totalResults;
+    }
+
+    /**
+     * What was the total count of the results that matched the query as long
+     */
+    public long getLongTotalResults() {
+        return longTotalResults;
+    }
+
+    /**
+     * What was the total count of the results that matched the query as long
+     */
+    public void setLongTotalResults(long longTotalResults) {
+        this.longTotalResults = longTotalResults;
     }
 
     /**
@@ -169,6 +184,7 @@ public class QueryStatistics {
         isStale = qr.isStale();
         durationInMs = qr.getDurationInMs();
         totalResults = qr.getTotalResults();
+        longTotalResults = qr.getLongTotalResults();
         skippedResults = qr.getSkippedResults();
         timestamp = qr.getIndexTimestamp();
         indexName = qr.getIndexName();

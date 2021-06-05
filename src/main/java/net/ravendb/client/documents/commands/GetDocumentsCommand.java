@@ -3,7 +3,10 @@ package net.ravendb.client.documents.commands;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import net.ravendb.client.Constants;
+import net.ravendb.client.documents.operations.timeSeries.AbstractTimeSeriesRange;
+import net.ravendb.client.documents.operations.timeSeries.TimeSeriesCountRange;
 import net.ravendb.client.documents.operations.timeSeries.TimeSeriesRange;
+import net.ravendb.client.documents.operations.timeSeries.TimeSeriesTimeRange;
 import net.ravendb.client.documents.queries.HashCalculator;
 import net.ravendb.client.extensions.JsonExtensions;
 import net.ravendb.client.http.RavenCommand;
@@ -11,6 +14,7 @@ import net.ravendb.client.http.ServerNode;
 import net.ravendb.client.json.ContentProviderHttpEntity;
 import net.ravendb.client.primitives.NetISO8601Utils;
 import net.ravendb.client.primitives.Reference;
+import net.ravendb.client.primitives.SharpEnum;
 import net.ravendb.client.util.UrlUtils;
 import org.apache.commons.lang3.ObjectUtils;
 import org.apache.http.client.methods.HttpGet;
@@ -30,7 +34,7 @@ public class GetDocumentsCommand extends RavenCommand<GetDocumentsResult> {
     private String[] _counters;
     private boolean _includeAllCounters;
 
-    private List<TimeSeriesRange> _timeSeriesIncludes;
+    private List<AbstractTimeSeriesRange> _timeSeriesIncludes;
     private String[] _compareExchangeValueIncludes;
 
     private boolean _metadataOnly;
@@ -70,7 +74,7 @@ public class GetDocumentsCommand extends RavenCommand<GetDocumentsResult> {
     }
 
     public GetDocumentsCommand(String[] ids, String[] includes, String[] counterIncludes,
-                               List<TimeSeriesRange> timeSeriesIncludes, String[] compareExchangeValueIncludes,
+                               List<AbstractTimeSeriesRange> timeSeriesIncludes, String[] compareExchangeValueIncludes,
                                boolean metadataOnly) {
         this(ids, includes, metadataOnly);
 
@@ -80,7 +84,7 @@ public class GetDocumentsCommand extends RavenCommand<GetDocumentsResult> {
     }
 
     public GetDocumentsCommand(String[] ids, String[] includes, boolean includeAllCounters,
-                               List<TimeSeriesRange> timeSeriesIncludes, String[] compareExchangeValueIncludes,
+                               List<AbstractTimeSeriesRange> timeSeriesIncludes, String[] compareExchangeValueIncludes,
                                boolean metadataOnly) {
         this(ids, includes, metadataOnly);
 
@@ -160,13 +164,38 @@ public class GetDocumentsCommand extends RavenCommand<GetDocumentsResult> {
         }
 
         if (_timeSeriesIncludes != null) {
-            for (TimeSeriesRange range : _timeSeriesIncludes) {
-                pathBuilder.append("&timeseries=")
-                        .append(urlEncode(range.getName()))
-                        .append("&from=")
-                        .append(range.getFrom() != null ? NetISO8601Utils.format(range.getFrom(), true) : "")
-                        .append("&to=")
-                        .append(range.getTo() != null ? NetISO8601Utils.format(range.getTo(), true) : "");
+            for (AbstractTimeSeriesRange tsInclude : _timeSeriesIncludes) {
+                if (tsInclude instanceof TimeSeriesRange) {
+                    TimeSeriesRange range = (TimeSeriesRange) tsInclude;
+                    pathBuilder.append("&timeseries=")
+                            .append(urlEncode(range.getName()))
+                            .append("&from=")
+                            .append(range.getFrom() != null ? NetISO8601Utils.format(range.getFrom(), true) : "")
+                            .append("&to=")
+                            .append(range.getTo() != null ? NetISO8601Utils.format(range.getTo(), true) : "");
+                } else if (tsInclude instanceof TimeSeriesTimeRange) {
+                    TimeSeriesTimeRange timeRange = (TimeSeriesTimeRange) tsInclude;
+                    pathBuilder
+                            .append("&timeseriestime=")
+                            .append(urlEncode(timeRange.getName()))
+                            .append("&timeType=")
+                            .append(urlEncode(SharpEnum.value(timeRange.getType())))
+                            .append("&timeValue=")
+                            .append(timeRange.getTime().getValue())
+                            .append("&timeUnit=")
+                            .append(urlEncode(SharpEnum.value(timeRange.getTime().getUnit())));
+                } else if (tsInclude instanceof TimeSeriesCountRange) {
+                    TimeSeriesCountRange countRange = (TimeSeriesCountRange) tsInclude;
+                    pathBuilder
+                            .append("&timeseriescount=")
+                            .append(urlEncode(countRange.getName()))
+                            .append("&countType=")
+                            .append(urlEncode(SharpEnum.value(countRange.getType())))
+                            .append("&countValue=")
+                            .append(countRange.getCount());
+                } else {
+                    throw new IllegalArgumentException("Unexpected TimeSeries range " + tsInclude.getClass());
+                }
             }
         }
 

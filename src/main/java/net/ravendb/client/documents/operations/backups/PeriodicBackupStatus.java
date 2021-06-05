@@ -30,6 +30,7 @@ public class PeriodicBackupStatus implements IDatabaseTaskStatus {
     private long version;
     private Error error;
     private Long lastOperationId;
+    private boolean isEncrypted;
 
     public long getTaskId() {
         return taskId;
@@ -205,6 +206,14 @@ public class PeriodicBackupStatus implements IDatabaseTaskStatus {
 
     public void setLastOperationId(Long lastOperationId) {
         this.lastOperationId = lastOperationId;
+    }
+
+    public boolean isEncrypted() {
+        return isEncrypted;
+    }
+
+    public void setEncrypted(boolean encrypted) {
+        isEncrypted = encrypted;
     }
 
     public static class Error {

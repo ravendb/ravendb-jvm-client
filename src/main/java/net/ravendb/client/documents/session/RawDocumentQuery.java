@@ -2,6 +2,7 @@ package net.ravendb.client.documents.session;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import net.ravendb.client.documents.queries.IndexQuery;
+import net.ravendb.client.documents.queries.ProjectionBehavior;
 import net.ravendb.client.documents.queries.QueryOperator;
 import net.ravendb.client.documents.queries.QueryResult;
 import net.ravendb.client.documents.queries.facets.AggregationRawDocumentQuery;
@@ -119,5 +120,11 @@ public class RawDocumentQuery<T> extends AbstractDocumentQuery<T, RawDocumentQue
     public Map<String, FacetResult> executeAggregation() {
         AggregationRawDocumentQuery<T> query = new AggregationRawDocumentQuery<>(this, theSession);
         return query.execute();
+    }
+
+    @Override
+    public IRawDocumentQuery<T> projection(ProjectionBehavior projectionBehavior) {
+        _projection(projectionBehavior);
+        return this;
     }
 }

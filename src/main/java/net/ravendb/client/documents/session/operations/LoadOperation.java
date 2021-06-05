@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.base.Defaults;
 import net.ravendb.client.documents.commands.GetDocumentsCommand;
 import net.ravendb.client.documents.commands.GetDocumentsResult;
+import net.ravendb.client.documents.operations.timeSeries.AbstractTimeSeriesRange;
 import net.ravendb.client.documents.operations.timeSeries.TimeSeriesRange;
 import net.ravendb.client.documents.session.DocumentInfo;
 import net.ravendb.client.documents.session.InMemoryDocumentSessionOperations;
@@ -24,7 +25,7 @@ public class LoadOperation {
     private String[] _countersToInclude;
     private String[] _compareExchangeValuesToInclude;
     private boolean _includeAllCounters;
-    private List<TimeSeriesRange> _timeSeriesToInclude;
+    private List<AbstractTimeSeriesRange> _timeSeriesToInclude;
 
     private boolean _resultsSet;
     private GetDocumentsResult _results;
@@ -85,7 +86,7 @@ public class LoadOperation {
         return this;
     }
 
-    public LoadOperation withTimeSeries(List<TimeSeriesRange> timeSeries) {
+    public LoadOperation withTimeSeries(List<AbstractTimeSeriesRange> timeSeries) {
         if (timeSeries != null) {
             _timeSeriesToInclude = timeSeries;
         }

@@ -15,6 +15,7 @@ class SubscriptionConnectionServerMessage {
         DATA,
         INCLUDES,
         COUNTER_INCLUDES,
+        TIME_SERIES_INCLUDES,
         CONFIRM,
         ERROR
     }
@@ -69,6 +70,7 @@ class SubscriptionConnectionServerMessage {
     private ObjectNode includes;
     private ObjectNode counterIncludes;
     private Map<String, String[]> includedCounterNames;
+    private ObjectNode timeSeriesIncludes;
     private String exception;
     private String message;
 
@@ -118,6 +120,14 @@ class SubscriptionConnectionServerMessage {
 
     public void setIncludedCounterNames(Map<String, String[]> includedCounterNames) {
         this.includedCounterNames = includedCounterNames;
+    }
+
+    public ObjectNode getTimeSeriesIncludes() {
+        return timeSeriesIncludes;
+    }
+
+    public void setTimeSeriesIncludes(ObjectNode timeSeriesIncludes) {
+        this.timeSeriesIncludes = timeSeriesIncludes;
     }
 
     public String getException() {

@@ -2,6 +2,7 @@ package net.ravendb.client.documents.operations.backups;
 
 public class LocalBackup extends BackupStatus {
     private String backupDirectory;
+    private String fileName;
     private boolean tempFolderUsed;
 
     public String getBackupDirectory() {
@@ -10,6 +11,14 @@ public class LocalBackup extends BackupStatus {
 
     public void setBackupDirectory(String backupDirectory) {
         this.backupDirectory = backupDirectory;
+    }
+
+    public String getFileName() {
+        return fileName;
+    }
+
+    public void setFileName(String fileName) {
+        this.fileName = fileName;
     }
 
     public boolean isTempFolderUsed() {

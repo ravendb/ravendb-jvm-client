@@ -18,7 +18,7 @@ import org.apache.http.entity.ContentType;
 import java.io.IOException;
 
 public class PutPullReplicationAsHubOperation implements IMaintenanceOperation<ModifyOngoingTaskResult> {
-    private final FeatureTaskDefinition _pullReplicationDefinition;
+    private final PullReplicationDefinition _pullReplicationDefinition;
 
     public PutPullReplicationAsHubOperation(String name) {
         if (StringUtils.isEmpty(name)) {
@@ -42,9 +42,9 @@ public class PutPullReplicationAsHubOperation implements IMaintenanceOperation<M
     }
 
     private static class UpdatePullReplicationDefinitionCommand extends RavenCommand<ModifyOngoingTaskResult> implements IRaftCommand {
-        private final FeatureTaskDefinition _pullReplicationDefinition;
+        private final PullReplicationDefinition _pullReplicationDefinition;
 
-        public UpdatePullReplicationDefinitionCommand(FeatureTaskDefinition pullReplicationDefinition) {
+        public UpdatePullReplicationDefinitionCommand(PullReplicationDefinition pullReplicationDefinition) {
             super(ModifyOngoingTaskResult.class);
             _pullReplicationDefinition = pullReplicationDefinition;
         }

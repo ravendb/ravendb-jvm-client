@@ -6,7 +6,7 @@ import java.net.Socket;
 import java.time.Duration;
 
 /**
- * Holds subscription connection properties, control both how client and server side behaves
+ * Holds subscription connection properties, control both how client and server side behave
  */
 public class SubscriptionWorkerOptions {
 
@@ -80,14 +80,14 @@ public class SubscriptionWorkerOptions {
     }
 
     /**
-     * @return How connection attempt handle existing\incoming connection. Default: OPEN_IF_FREE
+     * @return How connection attempt handles existing\incoming connection. Default: OPEN_IF_FREE
      */
     public SubscriptionOpeningStrategy getStrategy() {
         return strategy;
     }
 
     /**
-     * @param strategy How connection attempt handle existing\incoming connection. Default: OPEN_IF_FREE
+     * @param strategy How connection attempt handles existing\incoming connection. Default: OPEN_IF_FREE
      */
     public void setStrategy(SubscriptionOpeningStrategy strategy) {
         this.strategy = strategy;

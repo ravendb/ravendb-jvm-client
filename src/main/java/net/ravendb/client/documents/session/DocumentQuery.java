@@ -25,6 +25,7 @@ import net.ravendb.client.documents.session.tokens.DeclareToken;
 import net.ravendb.client.documents.session.tokens.FieldsToFetchToken;
 import net.ravendb.client.documents.session.tokens.LoadToken;
 import net.ravendb.client.primitives.Reference;
+import org.apache.commons.lang3.ObjectUtils;
 
 import java.beans.IntrospectionException;
 import java.beans.Introspector;
@@ -671,6 +672,7 @@ public class DocumentQuery<T> extends AbstractDocumentQuery<T, DocumentQuery<T>>
         query.queryHighlightings = queryHighlightings;
         query.disableEntitiesTracking = disableEntitiesTracking;
         query.disableCaching = disableCaching;
+        query.projectionBehavior = ObjectUtils.firstNonNull(queryData != null ? queryData.getProjectionBehavior() : null, projectionBehavior);
         query.queryTimings = queryTimings;
         query.explanations = explanations;
         query.explanationToken = explanationToken;
@@ -696,8 +698,8 @@ public class DocumentQuery<T> extends AbstractDocumentQuery<T, DocumentQuery<T>>
     }
 
     @Override
-    public IAggregationDocumentQuery<T> aggregateBy(Facet... facets) {
-        for (Facet facet : facets) {
+    public IAggregationDocumentQuery<T> aggregateBy(FacetBase... facets) {
+        for (FacetBase facet : facets) {
             _aggregateBy(facet);
         }
 
