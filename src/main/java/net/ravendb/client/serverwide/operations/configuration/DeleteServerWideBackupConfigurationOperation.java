@@ -10,6 +10,9 @@ import net.ravendb.client.util.RaftIdGenerator;
 import org.apache.http.client.methods.HttpDelete;
 import org.apache.http.client.methods.HttpRequestBase;
 
+/**
+ * @deprecated Please use {@link net.ravendb.client.serverwide.operations.ongoingTasks.DeleteServerWideTaskOperation} instead
+ */
 public class DeleteServerWideBackupConfigurationOperation implements IVoidServerOperation {
 
     private final String _name;

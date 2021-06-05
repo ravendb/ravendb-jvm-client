@@ -1,5 +1,6 @@
 package net.ravendb.client.documents.operations.timeSeries;
 
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import net.ravendb.client.documents.session.timeSeries.TimeSeriesEntry;
 
 import java.util.Date;
@@ -9,6 +10,7 @@ public class TimeSeriesRangeResult {
     private Date to;
     private TimeSeriesEntry[] entries;
     private Long totalResults;
+    private ObjectNode includes;
 
     public Date getFrom() {
         return from;
@@ -40,5 +42,13 @@ public class TimeSeriesRangeResult {
 
     public void setTotalResults(Long totalResults) {
         this.totalResults = totalResults;
+    }
+
+    public ObjectNode getIncludes() {
+        return includes;
+    }
+
+    public void setIncludes(ObjectNode includes) {
+        this.includes = includes;
     }
 }

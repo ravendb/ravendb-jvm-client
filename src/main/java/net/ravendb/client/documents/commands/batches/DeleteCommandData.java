@@ -60,5 +60,6 @@ public class DeleteCommandData implements ICommandData {
 
     @Override
     public void onBeforeSaveChanges(InMemoryDocumentSessionOperations session) {
+
     }
 }

@@ -37,9 +37,12 @@ public class AbstractMultiMapTimeSeriesIndexCreationTask extends AbstractGeneric
         indexDefinitionBuilder.setPatternForOutputReduceToCollectionReferences(patternForOutputReduceToCollectionReferences);
         indexDefinitionBuilder.setPatternReferencesCollectionName(patternReferencesCollectionName);
         indexDefinitionBuilder.setAdditionalSources(getAdditionalSources());
+        indexDefinitionBuilder.setAdditionalAssemblies(getAdditionalAssemblies());
         indexDefinitionBuilder.setConfiguration(getConfiguration());
         indexDefinitionBuilder.setLockMode(getLockMode());
         indexDefinitionBuilder.setPriority(getPriority());
+        indexDefinitionBuilder.setState(state);
+        indexDefinitionBuilder.setDeploymentMode(deploymentMode);
 
         TimeSeriesIndexDefinition indexDefinition = indexDefinitionBuilder.toIndexDefinition(conventions, false);
         indexDefinition.setMaps(new HashSet<>(maps));

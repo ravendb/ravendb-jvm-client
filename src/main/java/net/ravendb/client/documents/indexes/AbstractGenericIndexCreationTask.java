@@ -100,4 +100,16 @@ public abstract class AbstractGenericIndexCreationTask extends AbstractIndexCrea
     protected void suggestion(String field) {
         indexSuggestions.add(field);
     }
+
+    protected void addAssembly(AdditionalAssembly assembly) {
+        if (assembly == null) {
+            throw new IllegalArgumentException("Assembly cannot be null");
+        }
+
+        if (getAdditionalAssemblies() == null) {
+            setAdditionalAssemblies(new HashSet<>());
+        }
+
+        getAdditionalAssemblies().add(assembly);
+    }
 }

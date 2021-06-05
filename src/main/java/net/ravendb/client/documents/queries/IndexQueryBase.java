@@ -8,6 +8,7 @@ public class IndexQueryBase<T> implements IIndexQuery {
     private boolean pageSizeSet;
     private String query;
     private T queryParameters;
+    private ProjectionBehavior projectionBehavior;
     private int start;
     private boolean waitForNonStaleResults;
     private Duration waitForNonStaleResultsTimeout;
@@ -42,6 +43,14 @@ public class IndexQueryBase<T> implements IIndexQuery {
 
     public void setQueryParameters(T queryParameters) {
         this.queryParameters = queryParameters;
+    }
+
+    public ProjectionBehavior getProjectionBehavior() {
+        return projectionBehavior;
+    }
+
+    public void setProjectionBehavior(ProjectionBehavior projectionBehavior) {
+        this.projectionBehavior = projectionBehavior;
     }
 
     /**

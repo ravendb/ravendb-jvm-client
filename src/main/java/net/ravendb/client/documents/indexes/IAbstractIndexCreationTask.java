@@ -6,6 +6,8 @@ import net.ravendb.client.documents.conventions.DocumentConventions;
 public interface IAbstractIndexCreationTask {
     String getIndexName();
     IndexPriority getPriority();
+    IndexState getState();
+    IndexDeploymentMode getDeploymentMode();
     DocumentConventions getConventions();
     void setConventions(DocumentConventions conventions);
     IndexDefinition createIndexDefinition();

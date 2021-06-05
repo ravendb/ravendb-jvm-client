@@ -7,6 +7,7 @@ import net.ravendb.client.serverwide.operations.certificates.CertificateDefiniti
 import net.ravendb.client.serverwide.operations.certificates.CertificateMetadata;
 import net.ravendb.client.serverwide.operations.certificates.CertificateRawData;
 import net.ravendb.client.serverwide.operations.configuration.ServerWideBackupConfiguration;
+import net.ravendb.client.serverwide.operations.ongoingTasks.ServerWideExternalReplication;
 
 public class ResultsResponse<T> {
 
@@ -49,6 +50,10 @@ public class ResultsResponse<T> {
     }
 
     public static class GetServerWideBackupConfigurationsResponse extends ResultsResponse<ServerWideBackupConfiguration> {
+
+    }
+
+    public static class GetServerWideExternalReplicationsResponse extends ResultsResponse<ServerWideExternalReplication> {
 
     }
 }

@@ -2,10 +2,15 @@ package net.ravendb.client.serverwide;
 
 import net.ravendb.client.documents.indexes.AutoIndexDefinition;
 import net.ravendb.client.documents.indexes.IndexDefinition;
+import net.ravendb.client.documents.indexes.RollingIndex;
+import net.ravendb.client.documents.indexes.RollingIndexDeployment;
+import net.ravendb.client.documents.indexes.analysis.AnalyzerDefinition;
 import net.ravendb.client.documents.operations.backups.PeriodicBackupConfiguration;
 import net.ravendb.client.documents.operations.configuration.ClientConfiguration;
 import net.ravendb.client.documents.operations.configuration.StudioConfiguration;
 import net.ravendb.client.documents.operations.etl.RavenEtlConfiguration;
+import net.ravendb.client.documents.operations.etl.olap.OlapConnectionString;
+import net.ravendb.client.documents.operations.etl.olap.OlapEtlConfiguration;
 import net.ravendb.client.documents.operations.etl.sql.SqlConnectionString;
 import net.ravendb.client.documents.operations.etl.sql.SqlEtlConfiguration;
 import net.ravendb.client.documents.operations.expiration.ExpirationConfiguration;
@@ -28,11 +33,14 @@ public class DatabaseRecord {
     private boolean encrypted;
     private long etagForBackup;
     private Map<String, DeletionInProgressStatus> deletionInProgress;
+    private Map<String, RollingIndex> rollingIndexes;
     private DatabaseStateStatus databaseState;
+    private DatabaseLockMode lockMode;
     private DatabaseTopology topology;
     private ConflictSolver conflictSolverConfig;
     private DocumentsCompressionConfiguration documentsCompression;
     private Map<String, SorterDefinition> sorters = new HashMap<>();
+    private Map<String, AnalyzerDefinition> analyzers = new HashMap<>();
     private Map<String, IndexDefinition> indexes;
     private Map<String, List<IndexHistoryEntry>> indexesHistory;
     private Map<String, AutoIndexDefinition> autoIndexes;
@@ -48,8 +56,10 @@ public class DatabaseRecord {
     private List<PullReplicationDefinition> hubPullReplications = new ArrayList<>();
     private Map<String, RavenConnectionString> ravenConnectionStrings = new HashMap<>();
     private Map<String, SqlConnectionString> sqlConnectionStrings = new HashMap<>();
+    private Map<String, OlapConnectionString> olapConnectionStrings = new HashMap<>();
     private List<RavenEtlConfiguration> ravenEtls = new ArrayList<>();
     private List<SqlEtlConfiguration> sqlEtls = new ArrayList<>();
+    private List<OlapEtlConfiguration> olapEtls = new ArrayList<>();
     private ClientConfiguration client;
     private StudioConfiguration studio;
     private long truncatedClusterTransactionCommandsCount;
@@ -126,6 +136,14 @@ public class DatabaseRecord {
         this.deletionInProgress = deletionInProgress;
     }
 
+    public Map<String, RollingIndex> getRollingIndexes() {
+        return rollingIndexes;
+    }
+
+    public void setRollingIndexes(Map<String, RollingIndex> rollingIndexes) {
+        this.rollingIndexes = rollingIndexes;
+    }
+
     public DatabaseTopology getTopology() {
         return topology;
     }
@@ -140,6 +158,14 @@ public class DatabaseRecord {
 
     public void setSorters(Map<String, SorterDefinition> sorters) {
         this.sorters = sorters;
+    }
+
+    public Map<String, AnalyzerDefinition> getAnalyzers() {
+        return analyzers;
+    }
+
+    public void setAnalyzers(Map<String, AnalyzerDefinition> analyzers) {
+        this.analyzers = analyzers;
     }
 
     public Map<String, IndexDefinition> getIndexes() {
@@ -230,6 +256,14 @@ public class DatabaseRecord {
         this.sqlConnectionStrings = sqlConnectionStrings;
     }
 
+    public Map<String, OlapConnectionString> getOlapConnectionStrings() {
+        return olapConnectionStrings;
+    }
+
+    public void setOlapConnectionStrings(Map<String, OlapConnectionString> olapConnectionStrings) {
+        this.olapConnectionStrings = olapConnectionStrings;
+    }
+
     public List<RavenEtlConfiguration> getRavenEtls() {
         return ravenEtls;
     }
@@ -244,6 +278,14 @@ public class DatabaseRecord {
 
     public void setSqlEtls(List<SqlEtlConfiguration> sqlEtls) {
         this.sqlEtls = sqlEtls;
+    }
+
+    public List<OlapEtlConfiguration> getOlapEtls() {
+        return olapEtls;
+    }
+
+    public void setOlapEtls(List<OlapEtlConfiguration> olapEtls) {
+        this.olapEtls = olapEtls;
     }
 
     public ClientConfiguration getClient() {
@@ -276,6 +318,14 @@ public class DatabaseRecord {
 
     public void setDatabaseState(DatabaseStateStatus databaseState) {
         this.databaseState = databaseState;
+    }
+
+    public DatabaseLockMode getLockMode() {
+        return lockMode;
+    }
+
+    public void setLockMode(DatabaseLockMode lockMode) {
+        this.lockMode = lockMode;
     }
 
     public Map<String, List<IndexHistoryEntry>> getIndexesHistory() {
@@ -314,6 +364,7 @@ public class DatabaseRecord {
         private IndexDefinition definition;
         private String source;
         private Date createdAt;
+        private Map<String, RollingIndexDeployment> rollingDeployment;
 
         public IndexDefinition getDefinition() {
             return definition;
@@ -338,6 +389,21 @@ public class DatabaseRecord {
         public void setCreatedAt(Date createdAt) {
             this.createdAt = createdAt;
         }
+
+        public Map<String, RollingIndexDeployment> getRollingDeployment() {
+            return rollingDeployment;
+        }
+
+        public void setRollingDeployment(Map<String, RollingIndexDeployment> rollingDeployment) {
+            this.rollingDeployment = rollingDeployment;
+        }
+    }
+
+    @UseSharpEnum
+    public enum DatabaseLockMode {
+        UNLOCK,
+        PREVENT_DELETES_IGNORE,
+        PREVENT_DELETES_ERROR
     }
 
     @UseSharpEnum

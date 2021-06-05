@@ -1,10 +1,12 @@
 package net.ravendb.client.documents.indexes;
 
 import java.util.Map;
+import java.util.Set;
 
 public abstract class AbstractCommonApiForIndexes {
 
     private Map<String, String> additionalSources;
+    private Set<AdditionalAssembly> additionalAssemblies;
     private IndexConfiguration configuration;
 
     protected AbstractCommonApiForIndexes() {
@@ -33,6 +35,14 @@ public abstract class AbstractCommonApiForIndexes {
 
     public void setAdditionalSources(Map<String, String> additionalSources) {
         this.additionalSources = additionalSources;
+    }
+
+    public Set<AdditionalAssembly> getAdditionalAssemblies() {
+        return additionalAssemblies;
+    }
+
+    public void setAdditionalAssemblies(Set<AdditionalAssembly> additionalAssemblies) {
+        this.additionalAssemblies = additionalAssemblies;
     }
 
     public IndexConfiguration getConfiguration() {

@@ -25,10 +25,13 @@ public abstract class AbstractIndexDefinitionBuilder<TIndexDefinition extends In
     private Map<String, SpatialOptions> spatialIndexesStrings;
     private IndexLockMode lockMode;
     private IndexPriority priority;
+    private IndexState state;
+    private IndexDeploymentMode deploymentMode;
     private String outputReduceToCollection;
     private String patternForOutputReduceToCollectionReferences;
     private String patternReferencesCollectionName;
     private Map<String, String> additionalSources;
+    private Set<AdditionalAssembly> additionalAssemblies;
     private IndexConfiguration configuration;
 
     protected AbstractIndexDefinitionBuilder(String indexName) {
@@ -56,6 +59,7 @@ public abstract class AbstractIndexDefinitionBuilder<TIndexDefinition extends In
             indexDefinition.setReduce(reduce);
             indexDefinition.setLockMode(lockMode);
             indexDefinition.setPriority(priority);
+            indexDefinition.setState(state);
             indexDefinition.setOutputReduceToCollection(outputReduceToCollection);
             indexDefinition.setPatternForOutputReduceToCollectionReferences(patternForOutputReduceToCollectionReferences);
             indexDefinition.setPatternReferencesCollectionName(patternReferencesCollectionName);
@@ -73,6 +77,7 @@ public abstract class AbstractIndexDefinitionBuilder<TIndexDefinition extends In
             applyValues(indexDefinition, suggestions, (options, value) -> options.setSuggestions(value));
 
             indexDefinition.setAdditionalSources(additionalSources);
+            indexDefinition.setAdditionalAssemblies(additionalAssemblies);
             indexDefinition.setConfiguration(configuration);
 
             toIndexDefinition(indexDefinition, conventions);
@@ -166,6 +171,22 @@ public abstract class AbstractIndexDefinitionBuilder<TIndexDefinition extends In
         this.priority = priority;
     }
 
+    public IndexState getState() {
+        return state;
+    }
+
+    public void setState(IndexState state) {
+        this.state = state;
+    }
+
+    public IndexDeploymentMode getDeploymentMode() {
+        return deploymentMode;
+    }
+
+    public void setDeploymentMode(IndexDeploymentMode deploymentMode) {
+        this.deploymentMode = deploymentMode;
+    }
+
     public String getOutputReduceToCollection() {
         return outputReduceToCollection;
     }
@@ -196,6 +217,14 @@ public abstract class AbstractIndexDefinitionBuilder<TIndexDefinition extends In
 
     public void setAdditionalSources(Map<String, String> additionalSources) {
         this.additionalSources = additionalSources;
+    }
+
+    public Set<AdditionalAssembly> getAdditionalAssemblies() {
+        return additionalAssemblies;
+    }
+
+    public void setAdditionalAssemblies(Set<AdditionalAssembly> additionalAssemblies) {
+        this.additionalAssemblies = additionalAssemblies;
     }
 
     public IndexConfiguration getConfiguration() {

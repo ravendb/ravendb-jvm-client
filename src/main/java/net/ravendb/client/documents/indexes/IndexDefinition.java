@@ -16,8 +16,10 @@ public class IndexDefinition {
 
     private String name;
     private IndexPriority priority;
+    private IndexState state;
     private IndexLockMode lockMode;
     private Map<String, String> additionalSources;
+    private Set<AdditionalAssembly> additionalAssemblies;
     private Set<String> maps;
     private String reduce;
     private Map<String, IndexFieldOptions> fields;
@@ -28,6 +30,7 @@ public class IndexDefinition {
     private Long reduceOutputIndex;
     private String patternForOutputReduceToCollectionReferences;
     private String patternReferencesCollectionName;
+    private IndexDeploymentMode deploymentMode;
 
     /**
      * This is the means by which the outside world refers to this index definition
@@ -59,6 +62,22 @@ public class IndexDefinition {
      */
     public void setPriority(IndexPriority priority) {
         this.priority = priority;
+    }
+
+    /**
+     * State of an index
+     * @return index state
+     */
+    public IndexState getState() {
+        return state;
+    }
+
+    /**
+     * State of an index
+     * @param state index state
+     */
+    public void setState(IndexState state) {
+        this.state = state;
     }
 
     /**
@@ -100,6 +119,17 @@ public class IndexDefinition {
      */
     public void setAdditionalSources(Map<String, String> additionalSources) {
         this.additionalSources = additionalSources;
+    }
+
+    public Set<AdditionalAssembly> getAdditionalAssemblies() {
+        if (additionalAssemblies == null) {
+            additionalAssemblies = new HashSet<>();
+        }
+        return additionalAssemblies;
+    }
+
+    public void setAdditionalAssemblies(Set<AdditionalAssembly> additionalAssemblies) {
+        this.additionalAssemblies = additionalAssemblies;
     }
 
     /**
@@ -277,5 +307,13 @@ public class IndexDefinition {
      */
     public void setPatternReferencesCollectionName(String patternReferencesCollectionName) {
         this.patternReferencesCollectionName = patternReferencesCollectionName;
+    }
+
+    public IndexDeploymentMode getDeploymentMode() {
+        return deploymentMode;
+    }
+
+    public void setDeploymentMode(IndexDeploymentMode deploymentMode) {
+        this.deploymentMode = deploymentMode;
     }
 }

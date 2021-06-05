@@ -2,6 +2,7 @@ package net.ravendb.client.documents.session;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import net.ravendb.client.documents.queries.IndexQuery;
+import net.ravendb.client.documents.queries.ProjectionBehavior;
 import net.ravendb.client.documents.queries.QueryResult;
 import net.ravendb.client.documents.queries.timings.QueryTimings;
 import net.ravendb.client.documents.session.operations.QueryOperation;
@@ -108,4 +109,6 @@ public interface IDocumentQueryCustomization {
      * @return customization object
      */
     IDocumentQueryCustomization waitForNonStaleResults(Duration waitTimeout);
+
+    IDocumentQueryCustomization projection(ProjectionBehavior projectionBehavior);
 }

@@ -48,7 +48,7 @@ public class GetServerWideBackupConfigurationOperation implements IServerOperati
 
         @Override
         public HttpRequestBase createRequest(ServerNode node, Reference<String> url) {
-            url.value = node.getUrl() + "/admin/configuration/server-wide/backup?name=" + urlEncode(_name);
+            url.value = node.getUrl() + "/admin/configuration/server-wide/tasks?type=Backup&name=" + urlEncode(_name);
 
             return new HttpGet();
         }

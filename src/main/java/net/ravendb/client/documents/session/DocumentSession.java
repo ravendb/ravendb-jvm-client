@@ -17,6 +17,7 @@ import net.ravendb.client.documents.commands.multiGet.MultiGetCommand;
 import net.ravendb.client.documents.indexes.AbstractCommonApiForIndexes;
 import net.ravendb.client.documents.linq.IDocumentQueryGenerator;
 import net.ravendb.client.documents.operations.PatchRequest;
+import net.ravendb.client.documents.operations.timeSeries.AbstractTimeSeriesRange;
 import net.ravendb.client.documents.operations.timeSeries.TimeSeriesConfiguration;
 import net.ravendb.client.documents.operations.timeSeries.TimeSeriesRange;
 import net.ravendb.client.documents.queries.Query;
@@ -408,7 +409,7 @@ public class DocumentSession extends InMemoryDocumentSessionOperations
         IncludeBuilder includeBuilder = new IncludeBuilder(getConventions());
         includes.accept(includeBuilder);
 
-        List<TimeSeriesRange> timeSeriesIncludes = includeBuilder.getTimeSeriesToInclude() != null
+        List<AbstractTimeSeriesRange> timeSeriesIncludes = includeBuilder.getTimeSeriesToInclude() != null
                 ? new ArrayList<>(includeBuilder.getTimeSeriesToInclude())
                 : null;
 
@@ -443,13 +444,13 @@ public class DocumentSession extends InMemoryDocumentSessionOperations
     @Override
     public <TResult> Map<String, TResult> loadInternal(Class<TResult> clazz, String[] ids, String[] includes,
                                                        String[] counterIncludes, boolean includeAllCounters,
-                                                       List<TimeSeriesRange> timeSeriesIncludes) {
+                                                       List<AbstractTimeSeriesRange> timeSeriesIncludes) {
         return loadInternal(clazz, ids, includes, counterIncludes, includeAllCounters, timeSeriesIncludes, null);
     }
 
     public <TResult> Map<String, TResult> loadInternal(Class<TResult> clazz, String[] ids, String[] includes,
                                                        String[] counterIncludes, boolean includeAllCounters,
-                                                       List<TimeSeriesRange> timeSeriesIncludes,
+                                                       List<AbstractTimeSeriesRange> timeSeriesIncludes,
                                                        String[] compareExchangeValueIncludes) {
         if (ids == null) {
             throw new IllegalArgumentException("Ids cannot be null");

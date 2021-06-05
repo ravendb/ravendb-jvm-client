@@ -16,5 +16,8 @@ public enum AggregationType {
     MAX,
     SUM,
     COUNT,
-    AVERAGE
+    AVERAGE,
+    PERCENTILE,
+    SLOPE,
+    STANDARD_DEVIATION
 }

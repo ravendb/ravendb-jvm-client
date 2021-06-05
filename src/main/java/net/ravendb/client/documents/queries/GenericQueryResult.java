@@ -4,6 +4,7 @@ import java.util.Map;
 
 public class GenericQueryResult<TResult, TIncludes> extends QueryResultBase<TResult, TIncludes> {
     private int totalResults;
+    private long longTotalResults;
     private Integer cappedMaxResults;
     private int skippedResults;
     private Map<String, Map<String, String[]>> highlightings;
@@ -25,6 +26,22 @@ public class GenericQueryResult<TResult, TIncludes> extends QueryResultBase<TRes
      */
     public void setTotalResults(int totalResults) {
         this.totalResults = totalResults;
+    }
+
+    /**
+     * Gets the total results as long for this query
+     * @return Total results as long for this query
+     */
+    public long getLongTotalResults() {
+        return longTotalResults;
+    }
+
+    /**
+     * Sets the total results as long for this query
+     * @param longTotalResults Total result as long for this query
+     */
+    public void setLongTotalResults(long longTotalResults) {
+        this.longTotalResults = longTotalResults;
     }
 
     /**

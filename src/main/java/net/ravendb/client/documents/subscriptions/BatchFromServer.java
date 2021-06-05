@@ -9,6 +9,7 @@ public class BatchFromServer {
     private List<SubscriptionConnectionServerMessage> messages;
     private List<ObjectNode> includes;
     private List<CounterIncludeItem> counterIncludes;
+    private List<ObjectNode> timeSeriesIncludes;
 
     public List<SubscriptionConnectionServerMessage> getMessages() {
         return messages;
@@ -32,6 +33,14 @@ public class BatchFromServer {
 
     public void setCounterIncludes(List<CounterIncludeItem> counterIncludes) {
         this.counterIncludes = counterIncludes;
+    }
+
+    public List<ObjectNode> getTimeSeriesIncludes() {
+        return timeSeriesIncludes;
+    }
+
+    public void setTimeSeriesIncludes(List<ObjectNode> timeSeriesIncludes) {
+        this.timeSeriesIncludes = timeSeriesIncludes;
     }
 
     public static class CounterIncludeItem {

@@ -56,6 +56,7 @@ public class SubscriptionWorker<T> implements CleanCloseable {
 
     private List<Consumer<SubscriptionBatch<T>>> afterAcknowledgment;
     private List<Consumer<Exception>> onSubscriptionConnectionRetry;
+    private List<Consumer<Exception>> onUnexpectedSubscriptionError;
 
     public void addAfterAcknowledgmentListener(Consumer<SubscriptionBatch<T>> handler) {
         afterAcknowledgment.add(handler);
@@ -71,6 +72,14 @@ public class SubscriptionWorker<T> implements CleanCloseable {
 
     public void removeOnSubscriptionConnectionRetry(Consumer<Exception> handler) {
         onSubscriptionConnectionRetry.remove(handler);
+    }
+
+    public void addOnUnexpectedSubscriptionError(Consumer<Exception> handler) {
+        onUnexpectedSubscriptionError.add(handler);
+    }
+
+    public void removeOnUnexpectedSubscriptionError(Consumer<Exception> handler) {
+        onUnexpectedSubscriptionError.remove(handler);
     }
 
     @SuppressWarnings("unchecked")
@@ -96,11 +105,10 @@ public class SubscriptionWorker<T> implements CleanCloseable {
     }
 
     public void close(boolean waitForSubscriptionTask) {
+        if (_disposed) {
+            return;
+        }
         try {
-            if (_disposed) {
-                return;
-            }
-
             _disposed = true;
             _processingCts.cancel();
 
@@ -415,7 +423,7 @@ public class SubscriptionWorker<T> implements CleanCloseable {
                 SubscriptionBatch<T> batch = new SubscriptionBatch<>(_clazz, _revisions, _subscriptionLocalRequestExecutor, _store, _dbName, _logger);
 
                 while (!_processingCts.getToken().isCancellationRequested()) {
-                    // start the read from the server
+                    // start reading next batch from server on 1'st thread (can be before client started processing)
                     CompletableFuture<BatchFromServer> readFromServer =
                             CompletableFuture.supplyAsync(() -> {
                                 try {
@@ -473,9 +481,8 @@ public class SubscriptionWorker<T> implements CleanCloseable {
                 throw e;
             }
 
-            // otherwise this is thrown when shutting down, it
-            // isn't an error, so we don't need to treat
-            // it as such
+            // otherwise this is thrown when shutting down,
+            // it isn't an error, so we don't need to treat it as such
         }
     }
 
@@ -483,6 +490,7 @@ public class SubscriptionWorker<T> implements CleanCloseable {
         List<SubscriptionConnectionServerMessage> incomingBatch = new ArrayList<>();
         List<ObjectNode> includes = new ArrayList<>();
         List<BatchFromServer.CounterIncludeItem> counterIncludes = new ArrayList<>();
+        List<ObjectNode> timeSeriesIncludes = new ArrayList<>();
         boolean endOfBatch = false;
         while (!endOfBatch && !_processingCts.getToken().isCancellationRequested()) {
             SubscriptionConnectionServerMessage receivedMessage = readNextObject(socket);
@@ -499,6 +507,9 @@ public class SubscriptionWorker<T> implements CleanCloseable {
                     break;
                 case COUNTER_INCLUDES:
                     counterIncludes.add(new BatchFromServer.CounterIncludeItem(receivedMessage.getCounterIncludes(), receivedMessage.getIncludedCounterNames()));
+                    break;
+                case TIME_SERIES_INCLUDES:
+                    timeSeriesIncludes.add(receivedMessage.getTimeSeriesIncludes());
                     break;
                 case END_OF_BATCH:
                     endOfBatch = true;
@@ -525,6 +536,7 @@ public class SubscriptionWorker<T> implements CleanCloseable {
         batchFromServer.setMessages(incomingBatch);
         batchFromServer.setIncludes(includes);
         batchFromServer.setCounterIncludes(counterIncludes);
+        batchFromServer.setTimeSeriesIncludes(timeSeriesIncludes);
         return batchFromServer;
     }
 
@@ -684,6 +696,7 @@ public class SubscriptionWorker<T> implements CleanCloseable {
             return false;
         }
 
+        EventHelper.invoke(onUnexpectedSubscriptionError, ex);
         assertLastConnectionFailure();
         return true;
     }

@@ -80,6 +80,13 @@ public class GetRevisionsCommand extends RavenCommand<JsonArrayResult> {
                 .append(node.getDatabase())
                 .append("/revisions?");
 
+        getRequestQueryString(pathBuilder);
+
+        url.value = pathBuilder.toString();
+        return request;
+    }
+
+    public void getRequestQueryString(StringBuilder pathBuilder) {
         if (_id != null) {
             pathBuilder.append("&id=").append(UrlUtils.escapeDataString(_id));
         } else if (_changeVector != null) {
@@ -106,8 +113,7 @@ public class GetRevisionsCommand extends RavenCommand<JsonArrayResult> {
             pathBuilder.append("&metadataOnly=true");
         }
 
-        url.value = pathBuilder.toString();
-        return request;
+
     }
 
     @Override

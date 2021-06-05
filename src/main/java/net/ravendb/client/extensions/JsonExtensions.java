@@ -14,6 +14,7 @@ import com.fasterxml.jackson.databind.ser.std.StdSerializer;
 import net.ravendb.client.Constants;
 import net.ravendb.client.documents.conventions.DocumentConventions;
 import net.ravendb.client.documents.queries.IndexQuery;
+import net.ravendb.client.documents.queries.ProjectionBehavior;
 import net.ravendb.client.documents.session.EntityToJson;
 import net.ravendb.client.primitives.NetDateFormat;
 import net.ravendb.client.primitives.SharpAwareJacksonAnnotationIntrospector;
@@ -186,6 +187,10 @@ public class JsonExtensions {
             generator.writeObject(EntityToJson.convertEntityToJson(query.getQueryParameters(), conventions, null));
         } else {
             generator.writeNull();
+        }
+
+        if (query.getProjectionBehavior() != null && query.getProjectionBehavior() != ProjectionBehavior.DEFAULT) {
+            generator.writeStringField("ProjectionBehavior", SharpEnum.value(query.getProjectionBehavior()));
         }
 
         generator.writeEndObject();

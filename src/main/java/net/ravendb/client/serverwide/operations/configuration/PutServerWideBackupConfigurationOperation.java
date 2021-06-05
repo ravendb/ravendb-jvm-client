@@ -8,6 +8,7 @@ import net.ravendb.client.http.ServerNode;
 import net.ravendb.client.json.ContentProviderHttpEntity;
 import net.ravendb.client.primitives.Reference;
 import net.ravendb.client.serverwide.operations.IServerOperation;
+import net.ravendb.client.serverwide.operations.ongoingTasks.ServerWideTaskResponse;
 import net.ravendb.client.util.RaftIdGenerator;
 import org.apache.http.client.methods.HttpPut;
 import org.apache.http.client.methods.HttpRequestBase;
@@ -28,13 +29,13 @@ public class PutServerWideBackupConfigurationOperation implements IServerOperati
 
     @Override
     public RavenCommand<PutServerWideBackupConfigurationResponse> getCommand(DocumentConventions conventions) {
-        return new PutServerWideClientConfigurationCommand(_configuration);
+        return new PutServerWideBackupConfigurationCommand(_configuration);
     }
 
-    private static class PutServerWideClientConfigurationCommand extends RavenCommand<PutServerWideBackupConfigurationResponse> implements IRaftCommand {
+    private static class PutServerWideBackupConfigurationCommand extends RavenCommand<PutServerWideBackupConfigurationResponse> implements IRaftCommand {
         private final ServerWideBackupConfiguration _configuration;
 
-        public PutServerWideClientConfigurationCommand(ServerWideBackupConfiguration configuration) {
+        public PutServerWideBackupConfigurationCommand(ServerWideBackupConfiguration configuration) {
             super(PutServerWideBackupConfigurationResponse.class);
 
             if (configuration == null) {
@@ -76,24 +77,7 @@ public class PutServerWideBackupConfigurationOperation implements IServerOperati
         }
     }
 
-    public static class PutServerWideBackupConfigurationResponse {
-        private String name;
-        private long raftCommandIndex;
+    public static class PutServerWideBackupConfigurationResponse extends ServerWideTaskResponse {
 
-        public String getName() {
-            return name;
-        }
-
-        public void setName(String name) {
-            this.name = name;
-        }
-
-        public long getRaftCommandIndex() {
-            return raftCommandIndex;
-        }
-
-        public void setRaftCommandIndex(long raftCommandIndex) {
-            this.raftCommandIndex = raftCommandIndex;
-        }
     }
 }

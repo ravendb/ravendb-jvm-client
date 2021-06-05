@@ -6,5 +6,6 @@ import net.ravendb.client.primitives.UseSharpEnum;
 public enum ConnectionStringType {
     NONE,
     RAVEN,
-    SQL
+    SQL,
+    OLAP
 }

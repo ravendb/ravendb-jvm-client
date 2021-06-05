@@ -70,4 +70,30 @@ public class ServerNode {
         return result;
     }
 
+    private int _lastServerVersionCheck = 0;
+
+    private String lastServerVersion;
+
+    public String getLastServerVersion() {
+        return lastServerVersion;
+    }
+
+    public boolean shouldUpdateServerVersion() {
+        if (lastServerVersion == null || _lastServerVersionCheck > 100) {
+            return true;
+        }
+
+        _lastServerVersionCheck++;
+        return false;
+    }
+
+    public void updateServerVersion(String serverVersion) {
+        this.lastServerVersion = serverVersion;
+        _lastServerVersionCheck = 0;
+    }
+
+    public void discardServerVersion() {
+        lastServerVersion = null;
+        _lastServerVersionCheck = 0;
+    }
 }

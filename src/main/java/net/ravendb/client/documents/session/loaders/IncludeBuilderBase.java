@@ -1,6 +1,7 @@
 package net.ravendb.client.documents.session.loaders;
 
 import net.ravendb.client.documents.conventions.DocumentConventions;
+import net.ravendb.client.documents.operations.timeSeries.AbstractTimeSeriesRange;
 import net.ravendb.client.documents.operations.timeSeries.TimeSeriesRange;
 import net.ravendb.client.primitives.Tuple;
 import org.apache.commons.lang3.StringUtils;
@@ -17,10 +18,12 @@ public class IncludeBuilderBase {
 
     public String alias;
     public Map<String, Tuple<Boolean, Set<String>>> countersToIncludeBySourcePath;
-    public Map<String, Set<TimeSeriesRange>> timeSeriesToIncludeBySourceAlias;
+    public Map<String, Set<AbstractTimeSeriesRange>> timeSeriesToIncludeBySourceAlias;
     public Set<String> compareExchangeValuesToInclude;
+    public boolean includeTimeSeriesTags;
+    public boolean includeTimeSeriesDocument;
 
-    public Set<TimeSeriesRange> getTimeSeriesToInclude() {
+    public Set<AbstractTimeSeriesRange> getTimeSeriesToInclude() {
         if (timeSeriesToIncludeBySourceAlias == null) {
             return null;
         }
@@ -154,7 +157,7 @@ public class IncludeBuilderBase {
             timeSeriesToIncludeBySourceAlias = new HashMap<>();
         }
 
-        Set<TimeSeriesRange> hashSet = timeSeriesToIncludeBySourceAlias.computeIfAbsent(alias, (key) -> new TreeSet<>(TimeSeriesRangeComparer.INSTANCE));
+        Set<AbstractTimeSeriesRange> hashSet = timeSeriesToIncludeBySourceAlias.computeIfAbsent(alias, (key) -> new TreeSet<>(AbstractTimeSeriesRangeComparer.INSTANCE));
 
         TimeSeriesRange range = new TimeSeriesRange();
         range.setName(name);
@@ -168,14 +171,14 @@ public class IncludeBuilderBase {
         return compareExchangeValuesToInclude;
     }
 
-    public static class TimeSeriesRangeComparer implements Comparator<TimeSeriesRange> {
-        public final static TimeSeriesRangeComparer INSTANCE = new TimeSeriesRangeComparer();
+    public static class AbstractTimeSeriesRangeComparer implements Comparator<AbstractTimeSeriesRange> {
+        public final static AbstractTimeSeriesRangeComparer INSTANCE = new AbstractTimeSeriesRangeComparer();
 
-        private TimeSeriesRangeComparer() {
+        private AbstractTimeSeriesRangeComparer() {
         }
 
         @Override
-        public int compare(TimeSeriesRange x, TimeSeriesRange y) {
+        public int compare(AbstractTimeSeriesRange x, AbstractTimeSeriesRange y) {
             String xName = x != null ? x.getName() : null;
             String yName = y != null ? y.getName() : null;
 

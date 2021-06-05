@@ -93,7 +93,7 @@ public interface IDocumentQuery<T> extends IDocumentQueryBase<T, IDocumentQuery<
 
     IAggregationDocumentQuery<T> aggregateBy(FacetBase facet);
 
-    IAggregationDocumentQuery<T> aggregateBy(Facet... facet);
+    IAggregationDocumentQuery<T> aggregateBy(FacetBase... facet);
 
     IAggregationDocumentQuery<T> aggregateUsing(String facetSetupDocumentId);
 

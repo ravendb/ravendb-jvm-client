@@ -1,6 +1,7 @@
 package net.ravendb.client.documents.indexes;
 
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
@@ -91,9 +92,16 @@ public class AbstractJavaScriptIndexCreationTask extends AbstractIndexCreationTa
         } else {
             _definition.setAdditionalSources(new HashMap<>());
         }
+        if (getAdditionalAssemblies() != null) {
+            _definition.setAdditionalAssemblies(getAdditionalAssemblies());
+        } else {
+            _definition.setAdditionalAssemblies(new HashSet<AdditionalAssembly>());
+        }
         _definition.setConfiguration(getConfiguration());
         _definition.setLockMode(lockMode);
         _definition.setPriority(priority);
+        _definition.setState(state);
+        _definition.setDeploymentMode(deploymentMode);
         return _definition;
     }
 }

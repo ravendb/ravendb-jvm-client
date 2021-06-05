@@ -5,5 +5,6 @@ import net.ravendb.client.primitives.UseSharpEnum;
 @UseSharpEnum
 public enum DatabaseAccess {
     READ_WRITE,
-    ADMIN
+    ADMIN,
+    READ
 }

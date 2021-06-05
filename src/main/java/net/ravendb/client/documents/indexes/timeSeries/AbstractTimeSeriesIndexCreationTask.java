@@ -2,7 +2,7 @@ package net.ravendb.client.documents.indexes.timeSeries;
 
 import net.ravendb.client.documents.conventions.DocumentConventions;
 
-public class AbstractTimeSeriesIndexCreationTask extends AbstractGenericTimeSeriesIndexCreationTask {
+public abstract class AbstractTimeSeriesIndexCreationTask extends AbstractGenericTimeSeriesIndexCreationTask {
 
     protected String map;
 
@@ -33,9 +33,12 @@ public class AbstractTimeSeriesIndexCreationTask extends AbstractGenericTimeSeri
         indexDefinitionBuilder.setPatternForOutputReduceToCollectionReferences(patternForOutputReduceToCollectionReferences);
         indexDefinitionBuilder.setPatternReferencesCollectionName(patternReferencesCollectionName);
         indexDefinitionBuilder.setAdditionalSources(getAdditionalSources());
+        indexDefinitionBuilder.setAdditionalAssemblies(getAdditionalAssemblies());
         indexDefinitionBuilder.setConfiguration(getConfiguration());
         indexDefinitionBuilder.setLockMode(lockMode);
         indexDefinitionBuilder.setPriority(priority);
+        indexDefinitionBuilder.setState(state);
+        indexDefinitionBuilder.setDeploymentMode(deploymentMode);
 
         return indexDefinitionBuilder.toIndexDefinition(conventions);
     }

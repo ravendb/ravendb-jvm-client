@@ -108,6 +108,7 @@ public class SubscriptionBatch<T> {
     private final List<Item<T>> _items = new ArrayList<>();
     private List<ObjectNode> _includes;
     private List<BatchFromServer.CounterIncludeItem> _counterIncludes;
+    private List<ObjectNode> _timeSeriesIncludes;
 
     public List<Item<T>> getItems() {
         return _items;
@@ -167,6 +168,12 @@ public class SubscriptionBatch<T> {
             }
         }
 
+        if (_timeSeriesIncludes != null && !_timeSeriesIncludes.isEmpty()) {
+            for (ObjectNode item : _timeSeriesIncludes) {
+                s.registerTimeSeries(item);
+            }
+        }
+
         for (Item<T> item : getItems()) {
             if (item.projection || item.revision) {
                 continue;
@@ -199,6 +206,7 @@ public class SubscriptionBatch<T> {
     String initialize(BatchFromServer batch) {
         _includes = batch.getIncludes();
         _counterIncludes = batch.getCounterIncludes();
+        _timeSeriesIncludes = batch.getTimeSeriesIncludes();
 
         _items.clear();
         String lastReceivedChangeVector = null;

@@ -21,6 +21,7 @@ public class QueryResult extends GenericQueryResult<ArrayNode, ObjectNode> {
         queryResult.setStale(isStale());
         queryResult.setSkippedResults(getSkippedResults());
         queryResult.setTotalResults(getTotalResults());
+        queryResult.setLongTotalResults(getLongTotalResults());
         queryResult.setHighlightings(getHighlightings() != null ? new HashMap<>(getHighlightings()) : null);
         queryResult.setExplanations(getExplanations() != null ? new HashMap<>(getExplanations()) : null);
         queryResult.setTimings(getTimings());

@@ -1,6 +1,7 @@
 package net.ravendb.client.documents.commands.batches;
 
 import com.fasterxml.jackson.core.JsonGenerator;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import net.ravendb.client.documents.conventions.DocumentConventions;
 import net.ravendb.client.documents.operations.PatchRequest;
 import net.ravendb.client.documents.session.InMemoryDocumentSessionOperations;
@@ -11,10 +12,15 @@ public class PatchCommandData implements ICommandData {
 
     private String id;
     private String name;
+    private ObjectNode createIfMissing;
     private String changeVector;
     private PatchRequest patch;
     private PatchRequest patchIfMissing;
     private boolean returnDocument;
+
+    public PatchCommandData(String id, String changeVector, PatchRequest patch) {
+        this(id, changeVector, patch, null);
+    }
 
     public PatchCommandData(String id, String changeVector, PatchRequest patch, PatchRequest patchIfMissing) {
         if (id == null) {
@@ -28,6 +34,14 @@ public class PatchCommandData implements ICommandData {
         this.patch = patch;
         this.changeVector = changeVector;
         this.patchIfMissing = patchIfMissing;
+    }
+
+    public ObjectNode getCreateIfMissing() {
+        return createIfMissing;
+    }
+
+    public void setCreateIfMissing(ObjectNode createIfMissing) {
+        this.createIfMissing = createIfMissing;
     }
 
     public boolean isReturnDocument() {

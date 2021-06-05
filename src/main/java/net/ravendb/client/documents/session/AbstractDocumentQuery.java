@@ -9,6 +9,7 @@ import net.ravendb.client.documents.commands.QueryCommand;
 import net.ravendb.client.documents.conventions.DocumentConventions;
 import net.ravendb.client.documents.indexes.spatial.SpatialRelation;
 import net.ravendb.client.documents.indexes.spatial.SpatialUnits;
+import net.ravendb.client.documents.operations.timeSeries.AbstractTimeSeriesRange;
 import net.ravendb.client.documents.operations.timeSeries.TimeSeriesRange;
 import net.ravendb.client.documents.queries.*;
 import net.ravendb.client.documents.queries.explanation.ExplanationOptions;
@@ -94,7 +95,7 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
     protected final List<LoadToken> loadTokens;
     public FieldsToFetchToken fieldsToFetchToken;
 
-    protected final boolean isProjectInto;
+    public boolean isProjectInto;
 
     protected List<QueryToken> whereTokens = new LinkedList<>();
 
@@ -124,6 +125,8 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
     protected boolean disableEntitiesTracking;
 
     protected boolean disableCaching;
+
+    protected ProjectionBehavior projectionBehavior;
 
     private String parameterPrefix = "p";
 
@@ -226,7 +229,7 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
         return new LazyQueryOperation<>(clazz, theSession, queryOperation, afterQueryExecutedCallback);
     }
 
-    protected QueryOperation initializeQueryOperation() {
+    public QueryOperation initializeQueryOperation() {
         BeforeQueryEventArgs beforeQueryExecutedEventArgs = new BeforeQueryEventArgs(theSession, new DocumentQueryCustomizationDelegate(this));
         theSession.onBeforeQueryInvoke(beforeQueryExecutedEventArgs);
 
@@ -289,6 +292,11 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
 
     //TBD 4.1 public void _customSortUsing(String typeName)
     //TBD 4.1 public void _customSortUsing(String typeName, boolean descending)
+
+
+    protected void _projection(ProjectionBehavior projectionBehavior) {
+        this.projectionBehavior = projectionBehavior;
+    }
 
     @SuppressWarnings("unused")
     protected void addGroupByAlias(String fieldName, String projectedName) {
@@ -1105,6 +1113,7 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
         indexQuery.setWaitForNonStaleResultsTimeout(timeout);
         indexQuery.setQueryParameters(queryParameters);
         indexQuery.setDisableCaching(disableCaching);
+        indexQuery.setProjectionBehavior(projectionBehavior);
 
         if (pageSize != null) {
             indexQuery.setPageSize(pageSize);
@@ -2219,7 +2228,7 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
         }
     }
 
-    private void _includeTimeSeries(String alias, Map<String, Set<TimeSeriesRange>> timeSeriesToInclude) {
+    private void _includeTimeSeries(String alias, Map<String, Set<AbstractTimeSeriesRange>> timeSeriesToInclude) {
         if (timeSeriesToInclude == null || timeSeriesToInclude.isEmpty()) {
             return;
         }
@@ -2229,8 +2238,8 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
             _includesAlias = alias;
         }
 
-        for (Map.Entry<String, Set<TimeSeriesRange>> kvp : timeSeriesToInclude.entrySet()) {
-            for (TimeSeriesRange range : kvp.getValue()) {
+        for (Map.Entry<String, Set<AbstractTimeSeriesRange>> kvp : timeSeriesToInclude.entrySet()) {
+            for (AbstractTimeSeriesRange range : kvp.getValue()) {
                 timeSeriesIncludesTokens.add(TimeSeriesIncludesToken.create(kvp.getKey(), range));
             }
         }

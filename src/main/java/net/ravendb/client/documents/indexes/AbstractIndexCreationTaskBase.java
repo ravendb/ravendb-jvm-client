@@ -27,6 +27,9 @@ public abstract class AbstractIndexCreationTaskBase<TIndexDefinition extends Ind
     protected IndexPriority priority;
     protected IndexLockMode lockMode;
 
+    protected IndexDeploymentMode deploymentMode;
+    protected IndexState state;
+
     /**
      * Gets the conventions that should be used when index definition is created.
      * @return document conventions
@@ -57,6 +60,22 @@ public abstract class AbstractIndexCreationTaskBase<TIndexDefinition extends Ind
 
     public void setLockMode(IndexLockMode lockMode) {
         this.lockMode = lockMode;
+    }
+
+    public IndexDeploymentMode getDeploymentMode() {
+        return deploymentMode;
+    }
+
+    public void setDeploymentMode(IndexDeploymentMode deploymentMode) {
+        this.deploymentMode = deploymentMode;
+    }
+
+    public IndexState getState() {
+        return state;
+    }
+
+    public void setState(IndexState state) {
+        this.state = state;
     }
 
     /**
@@ -99,6 +118,14 @@ public abstract class AbstractIndexCreationTaskBase<TIndexDefinition extends Ind
 
             if (priority != null) {
                 indexDefinition.setPriority(priority);
+            }
+
+            if (state != null) {
+                indexDefinition.setState(state);
+            }
+
+            if (deploymentMode != null) {
+                indexDefinition.setDeploymentMode(deploymentMode);
             }
 
             store.maintenance()

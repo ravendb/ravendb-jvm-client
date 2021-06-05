@@ -37,9 +37,12 @@ public abstract class AbstractIndexCreationTask extends AbstractGenericIndexCrea
         indexDefinitionBuilder.setPatternForOutputReduceToCollectionReferences(patternForOutputReduceToCollectionReferences);
         indexDefinitionBuilder.setPatternReferencesCollectionName(patternReferencesCollectionName);
         indexDefinitionBuilder.setAdditionalSources(getAdditionalSources());
+        indexDefinitionBuilder.setAdditionalAssemblies(getAdditionalAssemblies());
         indexDefinitionBuilder.setConfiguration(getConfiguration());
         indexDefinitionBuilder.setLockMode(lockMode);
         indexDefinitionBuilder.setPriority(priority);
+        indexDefinitionBuilder.setState(state);
+        indexDefinitionBuilder.setDeploymentMode(deploymentMode);
 
         return indexDefinitionBuilder.toIndexDefinition(conventions);
     }

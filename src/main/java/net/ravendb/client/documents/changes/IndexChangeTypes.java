@@ -23,5 +23,7 @@ public enum IndexChangeTypes {
     RENAMED,
     INDEX_PAUSED,
     LOCK_MODE_CHANGED,
-    PRIORITY_CHANGED
+    PRIORITY_CHANGED,
+
+    ROLLING_INDEX_CHANGED
 }

@@ -44,6 +44,7 @@ public class IndexCreation {
                         IndexDefinition definition = x.createIndexDefinition();
                         definition.setName(x.getIndexName());
                         definition.setPriority(ObjectUtils.firstNonNull(x.getPriority(), IndexPriority.NORMAL));
+                        definition.setState(ObjectUtils.firstNonNull(x.getState(), IndexState.NORMAL));
                         return definition;
                     } finally {
                         x.setConventions(oldConventions);

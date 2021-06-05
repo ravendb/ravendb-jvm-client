@@ -15,6 +15,7 @@ public class QueryData {
     private boolean isCustomFunction;
     private boolean mapReduce;
     private boolean isProjectInto;
+    private ProjectionBehavior projectionBehavior;
 
     public boolean isMapReduce() {
         return mapReduce;
@@ -96,5 +97,13 @@ public class QueryData {
 
     public void setProjectInto(boolean projectInto) {
         isProjectInto = projectInto;
+    }
+
+    public ProjectionBehavior getProjectionBehavior() {
+        return projectionBehavior;
+    }
+
+    public void setProjectionBehavior(ProjectionBehavior projectionBehavior) {
+        this.projectionBehavior = projectionBehavior;
     }
 }

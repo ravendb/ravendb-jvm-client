@@ -1,6 +1,7 @@
 package net.ravendb.client.serverwide.tcp;
 
 import com.fasterxml.jackson.core.JsonGenerator;
+import net.ravendb.client.documents.operations.replication.DetailedReplicationHubAccess;
 import net.ravendb.client.primitives.Reference;
 import net.ravendb.client.primitives.SharpEnum;
 import net.ravendb.client.primitives.UseSharpEnum;
@@ -28,6 +29,7 @@ public class TcpConnectionHeaderMessage {
     private int operationVersion;
     private String info;
     private AuthorizationInfo authorizeInfo;
+    private DetailedReplicationHubAccess replicationHubAccess;
 
     public AuthorizationInfo getAuthorizeInfo() {
         return authorizeInfo;
@@ -89,10 +91,11 @@ public class TcpConnectionHeaderMessage {
     public static final int SUBSCRIPTION_BASE_LINE = 40;
     public static final int SUBSCRIPTION_INCLUDES = 41_400;
     public static final int SUBSCRIPTION_COUNTER_INCLUDES = 50_000;
+    public static final int SUBSCRIPTION_TIME_SERIES_INCLUDES = 51_000;
     public static final int TEST_CONNECTION_BASE_LINE = 50;
 
     public static final int HEARTBEATS_TCP_VERSION = HEARTBEATS_42000;
-    public static final int SUBSCRIPTION_TCP_VERSION = SUBSCRIPTION_COUNTER_INCLUDES;
+    public static final int SUBSCRIPTION_TCP_VERSION = SUBSCRIPTION_TIME_SERIES_INCLUDES;
     public static final int TEST_CONNECTION_TCP_VERSION = TEST_CONNECTION_BASE_LINE;
 
     public static class SupportedFeatures {
@@ -118,6 +121,7 @@ public class TcpConnectionHeaderMessage {
             public boolean baseLine = true;
             public boolean includes;
             public boolean counterIncludes;
+            public boolean timeSeriesIncludes;
         }
 
         public static class HeartbeatsFeatures {
@@ -145,7 +149,7 @@ public class TcpConnectionHeaderMessage {
         operationsToSupportedProtocolVersions.put(OperationTypes.PING, Collections.singletonList(PING_BASE_LINE));
         operationsToSupportedProtocolVersions.put(OperationTypes.NONE, Collections.singletonList(NONE_BASE_LINE));
         operationsToSupportedProtocolVersions.put(OperationTypes.DROP, Collections.singletonList(DROP_BASE_LINE));
-        operationsToSupportedProtocolVersions.put(OperationTypes.SUBSCRIPTION, Arrays.asList(SUBSCRIPTION_COUNTER_INCLUDES, SUBSCRIPTION_INCLUDES, SUBSCRIPTION_BASE_LINE));
+        operationsToSupportedProtocolVersions.put(OperationTypes.SUBSCRIPTION, Arrays.asList(SUBSCRIPTION_TIME_SERIES_INCLUDES, SUBSCRIPTION_COUNTER_INCLUDES, SUBSCRIPTION_INCLUDES, SUBSCRIPTION_BASE_LINE));
         operationsToSupportedProtocolVersions.put(OperationTypes.HEARTBEATS, Arrays.asList(HEARTBEATS_42000, HEARTBEATS_41200, HEARTBEATS_BASE_LINE));
         operationsToSupportedProtocolVersions.put(OperationTypes.TEST_CONNECTION, Collections.singletonList(TEST_CONNECTION_BASE_LINE));
 
@@ -183,6 +187,13 @@ public class TcpConnectionHeaderMessage {
         subscriptions50000Features.subscription.includes = true;
         subscriptions50000Features.subscription.counterIncludes = true;
         subscriptionFeaturesMap.put(SUBSCRIPTION_COUNTER_INCLUDES, subscriptions50000Features);
+
+        SupportedFeatures subscriptions51000Features = new SupportedFeatures(SUBSCRIPTION_TIME_SERIES_INCLUDES);
+        subscriptions51000Features.subscription = new SupportedFeatures.SubscriptionFeatures();
+        subscriptions51000Features.subscription.includes = true;
+        subscriptions51000Features.subscription.counterIncludes = true;
+        subscriptions51000Features.subscription.timeSeriesIncludes = true;
+        subscriptionFeaturesMap.put(SUBSCRIPTION_TIME_SERIES_INCLUDES, subscriptions51000Features);
 
         Map<Integer, SupportedFeatures> heartbeatsFeaturesMap = new HashMap<>();
         supportedFeaturesByProtocol.put(OperationTypes.HEARTBEATS, heartbeatsFeaturesMap);
@@ -279,7 +290,8 @@ public class TcpConnectionHeaderMessage {
         @UseSharpEnum
         public enum AuthorizeMethod {
             SERVER,
-            PULL_REPLICATION
+            PULL_REPLICATION,
+            PUSH_REPLICATION
         }
 
         public AuthorizeMethod authorizeAs;

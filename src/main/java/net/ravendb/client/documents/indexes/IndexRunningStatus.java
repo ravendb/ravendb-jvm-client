@@ -6,5 +6,8 @@ import net.ravendb.client.primitives.UseSharpEnum;
 public enum IndexRunningStatus {
     RUNNING,
     PAUSED,
-    DISABLED
+    DISABLED,
+
+    // for rolling indexes
+    PENDING
 }

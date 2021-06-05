@@ -7,13 +7,23 @@ import java.util.EnumSet;
 
 public class DatabaseSmugglerOptions implements IDatabaseSmugglerOptions {
 
-    public final EnumSet<DatabaseItemType> DEFAULT_OPERATE_ON_TYPES = EnumSet.of(DatabaseItemType.INDEXES, DatabaseItemType.DOCUMENTS,
-            DatabaseItemType.REVISION_DOCUMENTS, DatabaseItemType.CONFLICTS, DatabaseItemType.DATABASE_RECORD, DatabaseItemType.IDENTITIES,
-            DatabaseItemType.COMPARE_EXCHANGE, DatabaseItemType.ATTACHMENTS, DatabaseItemType.COUNTER_GROUPS, DatabaseItemType.SUBSCRIPTIONS,
+    public final EnumSet<DatabaseItemType> DEFAULT_OPERATE_ON_TYPES = EnumSet.of(
+            DatabaseItemType.INDEXES,
+            DatabaseItemType.DOCUMENTS,
+            DatabaseItemType.REVISION_DOCUMENTS,
+            DatabaseItemType.CONFLICTS,
+            DatabaseItemType.DATABASE_RECORD,
+            DatabaseItemType.REPLICATION_HUB_CERTIFICATES,
+            DatabaseItemType.IDENTITIES,
+            DatabaseItemType.COMPARE_EXCHANGE,
+            DatabaseItemType.ATTACHMENTS,
+            DatabaseItemType.COUNTER_GROUPS,
+            DatabaseItemType.SUBSCRIPTIONS,
             DatabaseItemType.TIME_SERIES);
 
     public final EnumSet<DatabaseRecordItemType> DEFAULT_OPERATE_ON_DATABASE_RECORD_TYPES = EnumSet.of(
             DatabaseRecordItemType.CLIENT,
+            DatabaseRecordItemType.CONFLICT_SOLVER_CONFIG,
             DatabaseRecordItemType.EXPIRATION,
             DatabaseRecordItemType.EXTERNAL_REPLICATIONS,
             DatabaseRecordItemType.PERIODIC_BACKUPS,
@@ -27,7 +37,11 @@ public class DatabaseSmugglerOptions implements IDatabaseSmugglerOptions {
             DatabaseRecordItemType.HUB_PULL_REPLICATIONS,
             DatabaseRecordItemType.SINK_PULL_REPLICATIONS,
             DatabaseRecordItemType.TIME_SERIES,
-            DatabaseRecordItemType.DOCUMENTS_COMPRESSION);
+            DatabaseRecordItemType.DOCUMENTS_COMPRESSION,
+            DatabaseRecordItemType.ANALYZERS,
+            DatabaseRecordItemType.LOCK_MODE,
+            DatabaseRecordItemType.OLAP_CONNECTION_STRINGS,
+            DatabaseRecordItemType.OLAP_ETLS);
 
     private final int DEFAULT_MAX_STEPS_FOR_TRANSFORM_SCRIPT = 10 * 1000;
 

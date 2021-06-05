@@ -2,8 +2,7 @@ package net.ravendb.client.documents.operations.timeSeries;
 
 import java.util.Date;
 
-public class TimeSeriesRange {
-    private String name;
+public class TimeSeriesRange extends AbstractTimeSeriesRange {
     private Date from;
     private Date to;
 
@@ -11,17 +10,9 @@ public class TimeSeriesRange {
     }
 
     public TimeSeriesRange(String name, Date from, Date to) {
-        this.name = name;
+        setName(name);
         this.from = from;
         this.to = to;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
     }
 
     public Date getFrom() {
