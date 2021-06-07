@@ -1,6 +1,7 @@
 package net.ravendb.client.documents.session;
 
 import net.ravendb.client.documents.queries.GroupBy;
+import net.ravendb.client.documents.queries.ProjectionBehavior;
 import net.ravendb.client.documents.queries.QueryData;
 import net.ravendb.client.documents.queries.QueryResult;
 import net.ravendb.client.documents.queries.facets.Facet;
@@ -50,10 +51,30 @@ public interface IDocumentQuery<T> extends IDocumentQueryBase<T, IDocumentQuery<
      * will come from document directly.
      * @param <TProjection> projection class
      * @param projectionClass projection class
+     * @param projectionBehavior projection behavior to use
+     * @return Document query
+     */
+    <TProjection> IDocumentQuery<TProjection> selectFields(Class<TProjection> projectionClass, ProjectionBehavior projectionBehavior);
+
+    /**
+     * Selects the specified fields directly from the index if the are stored. If the field is not stored in index, value
+     * will come from document directly.
+     * @param <TProjection> projection class
+     * @param projectionClass projection class
      * @param fields Fields to fetch
      * @return Document query
      */
     <TProjection> IDocumentQuery<TProjection> selectFields(Class<TProjection> projectionClass, String... fields);
+
+    /**
+     * Selects the specified fields according to the given projection behavior.
+     * @param projectionClass projection class
+     * @param projectionBehavior projection behavior to use
+     * @param fields Fields to fetch
+     * @param <TProjection> projection class
+     * @return Document query
+     */
+    <TProjection> IDocumentQuery<TProjection> selectFields(Class<TProjection> projectionClass, ProjectionBehavior projectionBehavior, String... fields);
 
     /**
      * Selects the specified fields directly from the index if the are stored. If the field is not stored in index, value

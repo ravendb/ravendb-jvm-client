@@ -50,6 +50,12 @@ public interface IDocumentQueryBaseSingle<T> {
      * @return total count of records
      */
     int count();
+
+    /**
+     * Gets the total count of records for this query as long
+     * @return total count of records (as long)
+     */
+    long longCount();
     /**
      * Register the query as a lazy query in the session and return a lazy
      * instance that will evaluate the query only when needed.

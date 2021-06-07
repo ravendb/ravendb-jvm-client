@@ -93,6 +93,8 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
     private final List<EventHandler<BeforeConversionToEntityEventArgs>> onBeforeConversionToEntity = new ArrayList<>();
     private final List<EventHandler<AfterConversionToEntityEventArgs>> onAfterConversionToEntity = new ArrayList<>();
 
+    private final List<EventHandler<SessionClosingEventArgs>> onSessionClosing = new ArrayList<>();
+
     public void addBeforeStoreListener(EventHandler<BeforeStoreEventArgs> handler) {
         this.onBeforeStore.add(handler);
     }
@@ -155,6 +157,14 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
 
     public void removeAfterConversionToEntityListener(EventHandler<AfterConversionToEntityEventArgs> handler) {
         this.onAfterConversionToEntity.remove(handler);
+    }
+
+    public void addOnSessionClosingListener(EventHandler<SessionClosingEventArgs> handler) {
+        this.onSessionClosing.add(handler);
+    }
+
+    public void removeOnSessionClosingListener(EventHandler<SessionClosingEventArgs> handler) {
+        this.onSessionClosing.remove(handler);
     }
 
     //Entities whose id we already know do not exists, because they are a missing include, or a missing load, etc.
@@ -1032,8 +1042,7 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
                     }
 
                     changeVector = useOptimisticConcurrency ? changeVector : null;
-                    BeforeDeleteEventArgs beforeDeleteEventArgs = new BeforeDeleteEventArgs(this, documentInfo.getId(), documentInfo.getEntity());
-                    EventHelper.invoke(onBeforeDelete, this, beforeDeleteEventArgs);
+                    onBeforeDeleteInvoke(new BeforeDeleteEventArgs(this, documentInfo.getId(), documentInfo.getEntity()));
                     result.getSessionCommands().add(new DeleteCommandData(documentInfo.getId(), changeVector));
                 }
 
@@ -1360,6 +1369,8 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
         if (_isDisposed) {
             return;
         }
+
+        EventHelper.invoke(onSessionClosing, this, new SessionClosingEventArgs(this));
 
         _isDisposed = true;
 
@@ -2075,6 +2086,10 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
 
     public void onAfterSaveChangesInvoke(AfterSaveChangesEventArgs eventArgs) {
         EventHelper.invoke(onAfterSaveChanges, this, eventArgs);
+    }
+
+    public void onBeforeDeleteInvoke(BeforeDeleteEventArgs eventArgs) {
+        EventHelper.invoke(onBeforeDelete, this, eventArgs);
     }
 
     public void onBeforeQueryInvoke(BeforeQueryEventArgs eventArgs) {

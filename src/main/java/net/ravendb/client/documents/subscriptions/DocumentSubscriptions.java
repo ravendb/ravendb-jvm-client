@@ -7,6 +7,7 @@ import net.ravendb.client.documents.operations.ongoingTasks.OngoingTaskType;
 import net.ravendb.client.documents.operations.ongoingTasks.ToggleOngoingTaskStateOperation;
 import net.ravendb.client.documents.session.IncludesUtil;
 import net.ravendb.client.documents.session.loaders.SubscriptionIncludeBuilder;
+import net.ravendb.client.documents.session.tokens.CounterIncludesToken;
 import net.ravendb.client.extensions.StringExtensions;
 import net.ravendb.client.http.RequestExecutor;
 import net.ravendb.client.primitives.CleanCloseable;
@@ -134,17 +135,18 @@ public class DocumentSubscriptions implements AutoCloseable {
         }
 
         String collectionName = _store.getConventions().getCollectionName(clazz);
-        if (criteria.getQuery() == null) {
-            StringBuilder builder = new StringBuilder("from '");
-            StringExtensions.escapeString(builder, collectionName);
-            builder.append('\'');
+        StringBuilder queryBuilder;
+        if (criteria.getQuery() != null) {
+            queryBuilder = new StringBuilder(criteria.getQuery());
+        } else {
+            queryBuilder = new StringBuilder("from '");
+            StringExtensions.escapeString(queryBuilder, collectionName);
+            queryBuilder.append('\'');
 
             if (revisions) {
-                builder.append(" (Revisions = true)");
+                queryBuilder.append(" (Revisions = true)");
             }
-            builder.append(" as doc");
-
-            criteria.setQuery(builder.toString());
+            queryBuilder.append(" as doc");
         }
 
         if (criteria.getIncludes() != null) {
@@ -154,19 +156,25 @@ public class DocumentSubscriptions implements AutoCloseable {
             int numberOfIncludesAdded = 0;
 
             if (builder.documentsToInclude != null && !builder.documentsToInclude.isEmpty()) {
-                criteria.setQuery(criteria.getQuery() + System.lineSeparator() + "include ");
+                queryBuilder
+                        .append(System.lineSeparator())
+                        .append("include ");
 
                 for (String inc : builder.documentsToInclude) {
                     String include = "doc." + inc;
                     if (numberOfIncludesAdded > 0) {
-                        criteria.setQuery(criteria.getQuery() + ",");
+                        queryBuilder.append(",");
                     }
 
                     Reference<String> escapedInclude = new Reference<>();
                     if (IncludesUtil.requiresQuotes(include, escapedInclude)) {
-                        criteria.setQuery(criteria.getQuery() + "'" + escapedInclude + "'");
+                        queryBuilder
+                                .append("'")
+                                .append(escapedInclude)
+                                .append("'");
                     } else {
-                        criteria.setQuery(criteria.getQuery() + include);
+                        queryBuilder
+                                .append(include);
                     }
                     numberOfIncludesAdded++;
                 }
@@ -174,20 +182,29 @@ public class DocumentSubscriptions implements AutoCloseable {
 
             if (builder.isAllCounters()) {
                 if (numberOfIncludesAdded == 0) {
-                    criteria.setQuery(criteria.getQuery() + System.lineSeparator() + "include ");
+                    queryBuilder
+                            .append(System.lineSeparator())
+                            .append("include ");
                 }
 
-                criteria.setQuery(criteria.getQuery() + "counters()");
+                CounterIncludesToken token = CounterIncludesToken.all("");
+                token.writeTo(queryBuilder);
                 numberOfIncludesAdded++;
             } else if (builder.getCountersToInclude() != null && !builder.getCountersToInclude().isEmpty()) {
                 if (numberOfIncludesAdded == 0) {
-                    criteria.setQuery(criteria.getQuery() + System.lineSeparator() + "include ");
+                    queryBuilder
+                            .append(System.lineSeparator())
+                            .append("include ");
                 }
 
                 for (String counterName : builder.getCountersToInclude()) {
                     if (numberOfIncludesAdded > 0) {
-                        criteria.setQuery(criteria.getQuery() + ",");
+                        queryBuilder
+                                .append(",");
                     }
+
+                    CounterIncludesToken token = CounterIncludesToken.create("", counterName);
+                    token.writeTo(queryBuilder);
 
                     Reference<String> escapedCounterNameRef = new Reference<>();
                     if (IncludesUtil.requiresQuotes(counterName, escapedCounterNameRef)) {
@@ -200,6 +217,8 @@ public class DocumentSubscriptions implements AutoCloseable {
                 }
             }
         }
+
+        criteria.setQuery(queryBuilder.toString());
 
         return criteria;
     }

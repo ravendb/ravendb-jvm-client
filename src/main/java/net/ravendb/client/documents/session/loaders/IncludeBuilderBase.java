@@ -148,10 +148,8 @@ public class IncludeBuilderBase {
         }
     }
 
-    protected void _includeTimeSeries(String alias, String name, Date from, Date to) {
-        if (StringUtils.isBlank(name)) {
-            throw new IllegalArgumentException("Name cannot be empty");
-        }
+    protected void _includeTimeSeriesFromTo(String alias, String name, Date from, Date to) {
+        assertValid(alias, name);
 
         if (timeSeriesToIncludeBySourceAlias == null) {
             timeSeriesToIncludeBySourceAlias = new HashMap<>();

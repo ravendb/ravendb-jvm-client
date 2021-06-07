@@ -59,7 +59,7 @@ public class QueryIncludeBuilder extends IncludeBuilderBase implements IQueryInc
 
     @Override
     public IQueryIncludeBuilder includeTimeSeries(String name, Date from, Date to) {
-        _includeTimeSeries("", name, from, to);
+        _includeTimeSeriesFromTo("", name, from, to);
         return this;
     }
 
@@ -71,7 +71,7 @@ public class QueryIncludeBuilder extends IncludeBuilderBase implements IQueryInc
     @Override
     public IQueryIncludeBuilder includeTimeSeries(String path, String name, Date from, Date to) {
         _withAlias();
-        _includeTimeSeries(path, name, from, to);
+        _includeTimeSeriesFromTo(path, name, from, to);
         return this;
     }
 

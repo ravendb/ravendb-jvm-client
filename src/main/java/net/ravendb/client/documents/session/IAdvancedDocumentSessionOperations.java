@@ -58,6 +58,8 @@ public interface IAdvancedDocumentSessionOperations {
     void addAfterConversionToEntityListener(EventHandler<AfterConversionToEntityEventArgs> handler);
     void removeAfterConversionToEntityListener(EventHandler<AfterConversionToEntityEventArgs> handler);
 
+    void addOnSessionClosingListener(EventHandler<SessionClosingEventArgs> handler);
+    void removeOnSessionClosingListener(EventHandler<SessionClosingEventArgs> handler);
     /**
      * Gets a value indicating whether any of the entities tracked by the session has changes.
      * @return true if any entity associated with session has changes

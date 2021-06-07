@@ -142,4 +142,15 @@ public interface IRevisionsSessionOperations {
      * @param strategy Strategy to use
      */
     void forceRevisionCreationFor(String id, ForceRevisionStrategy strategy);
+
+    /**
+     * Returns the number of revisions for specified document.
+     */
+    long getCountFor(String id);
+
+    /**
+     * Access the lazy revisions operations
+     * @return
+     */
+    ILazyRevisionsOperations lazily();
 }

@@ -14,6 +14,10 @@ import net.ravendb.client.documents.operations.GetOperationStateOperation;
 import net.ravendb.client.documents.session.DocumentInfo;
 import net.ravendb.client.documents.session.EntityToJson;
 import net.ravendb.client.documents.session.IMetadataDictionary;
+import net.ravendb.client.documents.session.timeSeries.TimeSeriesEntry;
+import net.ravendb.client.documents.session.timeSeries.TimeSeriesValuesHelper;
+import net.ravendb.client.documents.session.timeSeries.TypedTimeSeriesEntry;
+import net.ravendb.client.documents.timeSeries.TimeSeriesOperations;
 import net.ravendb.client.exceptions.RavenException;
 import net.ravendb.client.exceptions.documents.bulkinsert.BulkInsertAbortedException;
 import net.ravendb.client.http.RavenCommand;
@@ -35,6 +39,7 @@ import org.apache.http.entity.ContentType;
 import org.apache.http.impl.client.CloseableHttpClient;
 
 import java.io.*;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
@@ -569,6 +574,27 @@ public class BulkInsertOperation implements CleanCloseable {
         return new AttachmentsBulkInsert(this, id);
     }
 
+    public <TValues> TypedTimeSeriesBulkInsert<TValues> timeSeriesFor(Class<TValues> clazz, String id) {
+        return timeSeriesFor(clazz, id, null);
+    }
+
+    public <TValues> TypedTimeSeriesBulkInsert<TValues> timeSeriesFor(Class<TValues> clazz, String id, String name) {
+        if (StringUtils.isEmpty(id)) {
+            throw new IllegalArgumentException("Document id cannot be null or empty");
+        }
+
+        String tsName = name;
+        if (tsName == null) {
+            tsName = TimeSeriesOperations.getTimeSeriesName(clazz, _conventions);
+        }
+
+        if (StringUtils.isEmpty(tsName)) {
+            throw new IllegalArgumentException("Time series name cannot be null or empty");
+        }
+
+        return new TypedTimeSeriesBulkInsert<>(this, clazz, id, tsName);
+    }
+
     public CountersBulkInsert countersFor(String id) {
         if (StringUtils.isEmpty(id)) {
             throw new IllegalArgumentException("Document id cannot be null or empty");
@@ -703,14 +729,14 @@ public class BulkInsertOperation implements CleanCloseable {
         }
     }
 
-    public static class TimeSeriesBulkInsert implements Closeable {
+    public static abstract class TimeSeriesBulkInsertBase implements Closeable {
         private final BulkInsertOperation _operation;
         private final String _id;
         private final String _name;
         private boolean _first = true;
         private int _timeSeriesInBatch = 0;
 
-        public TimeSeriesBulkInsert(BulkInsertOperation operation, String id, String name) {
+        protected TimeSeriesBulkInsertBase(BulkInsertOperation operation, String id, String name) {
             operation.endPreviousCommandIfNeeded();
 
             _operation = operation;
@@ -720,31 +746,7 @@ public class BulkInsertOperation implements CleanCloseable {
             _operation._inProgressCommand = CommandType.TIME_SERIES;
         }
 
-        public void append(Date timestamp, double value) {
-            append(timestamp, value, null);
-        }
-
-        public void append(Date timestamp, double value, String tag) {
-            appendInternal(timestamp, Collections.singletonList(value), tag);
-        }
-
-        public void append(Date timestamp, double[] values) {
-            append(timestamp, values, null);
-        }
-
-        public void append(Date timestamp, double[] values, String tag) {
-            appendInternal(timestamp, DoubleStream.of(values).boxed().collect(Collectors.toList()), tag);
-        }
-
-        public void append(Date timestamp, Collection<Double> values) {
-            append(timestamp, values, null);
-        }
-
-        public void append(Date timestamp, Collection<Double> values, String tag) {
-            appendInternal(timestamp, values, tag);
-        }
-
-        private void appendInternal(Date timestamp, Collection<Double> values, String tag) {
+        protected void appendInternal(Date timestamp, Collection<Double> values, String tag) {
             try (CleanCloseable check = _operation.concurrencyCheck()) {
                 _operation.executeBeforeStore();
 
@@ -824,6 +826,60 @@ public class BulkInsertOperation implements CleanCloseable {
             if (!_first) {
                 _operation._currentWriter.write("]}}");
             }
+        }
+    }
+
+    public static class TimeSeriesBulkInsert extends TimeSeriesBulkInsertBase {
+        public TimeSeriesBulkInsert(BulkInsertOperation operation, String id, String name) {
+            super(operation, id, name);
+        }
+
+        public void append(Date timestamp, double value) {
+            append(timestamp, value, null);
+        }
+
+        public void append(Date timestamp, double value, String tag) {
+            appendInternal(timestamp, Collections.singletonList(value), tag);
+        }
+
+        public void append(Date timestamp, double[] values) {
+            append(timestamp, values, null);
+        }
+
+        public void append(Date timestamp, double[] values, String tag) {
+            appendInternal(timestamp, DoubleStream.of(values).boxed().collect(Collectors.toList()), tag);
+        }
+
+        public void append(Date timestamp, Collection<Double> values) {
+            append(timestamp, values, null);
+        }
+
+        public void append(Date timestamp, Collection<Double> values, String tag) {
+            appendInternal(timestamp, values, tag);
+        }
+    }
+
+    public static class TypedTimeSeriesBulkInsert<T> extends TimeSeriesBulkInsertBase {
+
+        private final Class<T> clazz;
+
+        public TypedTimeSeriesBulkInsert(BulkInsertOperation operation, Class<T> clazz, String id, String name) {
+            super(operation, id, name);
+
+            this.clazz = clazz;
+        }
+
+        public void append(Date timestamp, T value) {
+            append(timestamp, value, null);
+        }
+
+        public void append(Date timestamp, T value, String tag) {
+            double[] values = TimeSeriesValuesHelper.getValues(clazz, value);
+            appendInternal(timestamp, DoubleStream.of(values).boxed().collect(Collectors.toList()), tag);
+        }
+
+        public void append(TypedTimeSeriesEntry<T> entry) {
+            append(entry.getTimestamp(), entry.getValue(), entry.getTag());
         }
     }
 

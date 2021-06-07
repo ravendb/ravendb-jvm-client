@@ -3,6 +3,7 @@ package net.ravendb.client.documents.operations.timeSeries;
 import net.ravendb.client.documents.IDocumentStore;
 import net.ravendb.client.documents.conventions.DocumentConventions;
 import net.ravendb.client.documents.operations.IOperation;
+import net.ravendb.client.documents.session.loaders.ITimeSeriesIncludeBuilder;
 import net.ravendb.client.http.HttpCache;
 import net.ravendb.client.http.RavenCommand;
 import net.ravendb.client.http.ServerNode;
@@ -15,6 +16,7 @@ import org.apache.http.client.methods.HttpRequestBase;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.function.Consumer;
 
 public class GetMultipleTimeSeriesOperation implements IOperation<TimeSeriesDetails> {
 
@@ -22,13 +24,18 @@ public class GetMultipleTimeSeriesOperation implements IOperation<TimeSeriesDeta
     private List<TimeSeriesRange> _ranges;
     private final int _start;
     private final int _pageSize;
+    private final Consumer<ITimeSeriesIncludeBuilder> _includes;
 
     public GetMultipleTimeSeriesOperation(String docId, List<TimeSeriesRange> ranges) {
         this(docId, ranges, 0, Integer.MAX_VALUE);
     }
 
     public GetMultipleTimeSeriesOperation(String docId, List<TimeSeriesRange> ranges, int start, int pageSize) {
-        this(docId, start, pageSize);
+        this(docId, ranges, start, pageSize, null);
+    }
+
+    public GetMultipleTimeSeriesOperation(String docId, List<TimeSeriesRange> ranges, int start, int pageSize, Consumer<ITimeSeriesIncludeBuilder> includes) {
+        this(docId, start, pageSize, includes);
 
         if (ranges == null) {
             throw new IllegalArgumentException("Ranges cannot be null");
@@ -37,7 +44,7 @@ public class GetMultipleTimeSeriesOperation implements IOperation<TimeSeriesDeta
         _ranges = ranges;
     }
 
-    private GetMultipleTimeSeriesOperation(String docId, int start, int pageSize) {
+    private GetMultipleTimeSeriesOperation(String docId, int start, int pageSize, Consumer<ITimeSeriesIncludeBuilder> includes) {
         if (StringUtils.isEmpty(docId)) {
             throw new IllegalArgumentException("DocId cannot be null or empty");
         }
@@ -45,11 +52,12 @@ public class GetMultipleTimeSeriesOperation implements IOperation<TimeSeriesDeta
         _docId = docId;
         _start = start;
         _pageSize = pageSize;
+        _includes = includes;
     }
 
     @Override
     public RavenCommand<TimeSeriesDetails> getCommand(IDocumentStore store, DocumentConventions conventions, HttpCache cache) {
-        return new GetMultipleTimeSeriesCommand(_docId, _ranges, _start, _pageSize);
+        return new GetMultipleTimeSeriesCommand(_docId, _ranges, _start, _pageSize, _includes);
     }
 
     public static class GetMultipleTimeSeriesCommand extends RavenCommand<TimeSeriesDetails> {
@@ -57,8 +65,9 @@ public class GetMultipleTimeSeriesOperation implements IOperation<TimeSeriesDeta
         private final List<TimeSeriesRange> _ranges;
         private final int _start;
         private final int _pageSize;
+        private final Consumer<ITimeSeriesIncludeBuilder> _includes;
 
-        public GetMultipleTimeSeriesCommand(String docId, List<TimeSeriesRange> ranges, int start, int pageSize) {
+        public GetMultipleTimeSeriesCommand(String docId, List<TimeSeriesRange> ranges, int start, int pageSize, Consumer<ITimeSeriesIncludeBuilder> includes) {
             super(TimeSeriesDetails.class);
 
             if (docId == null) {
@@ -69,6 +78,7 @@ public class GetMultipleTimeSeriesOperation implements IOperation<TimeSeriesDeta
             _ranges = ranges;
             _start = start;
             _pageSize = pageSize;
+            _includes = includes;
         }
 
         @Override
@@ -110,6 +120,10 @@ public class GetMultipleTimeSeriesOperation implements IOperation<TimeSeriesDeta
                         .append(range.getFrom() == null ? "" : NetISO8601Utils.format(range.getFrom(), true))
                         .append("&to=")
                         .append(range.getTo() == null ? "" : NetISO8601Utils.format(range.getTo(), true));
+            }
+
+            if (_includes != null) {
+                GetTimeSeriesOperation.GetTimeSeriesCommand.addIncludesToRequest(pathBuilder, _includes);
             }
 
             url.value = pathBuilder.toString();

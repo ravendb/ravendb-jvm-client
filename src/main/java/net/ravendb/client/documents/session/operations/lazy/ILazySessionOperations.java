@@ -2,6 +2,7 @@ package net.ravendb.client.documents.session.operations.lazy;
 
 import net.ravendb.client.documents.Lazy;
 import net.ravendb.client.documents.session.loaders.ILazyLoaderWithInclude;
+import net.ravendb.client.primitives.Tuple;
 
 import java.util.Collection;
 import java.util.Map;
@@ -130,4 +131,14 @@ public interface ILazySessionOperations {
      * @return Lazy map of results
      */
     <TResult> Lazy<Map<String, TResult>> loadStartingWith(Class<TResult> clazz, String idPrefix, String matches, int start, int pageSize, String exclude, String startAfter);
+
+    /**
+     * Loads the specified entity with the specified id and changeVector.
+     * If the entity is loaded into the session, the tracked entity will be returned otherwise the entity will be loaded only if it is fresher then the provided changeVector.
+     * @param id Identifier of a entity that will be conditional loaded.
+     * @param changeVector Change vector of a entity that will be conditional loaded.
+     * @param <TResult> Result class
+     * @return Lazy Entity and change vector
+     */
+    <TResult> Lazy<Tuple<TResult, String>> conditionalLoad(Class<TResult> clazz, String id, String changeVector);
 }

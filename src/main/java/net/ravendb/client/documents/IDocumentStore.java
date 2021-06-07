@@ -58,6 +58,9 @@ public interface IDocumentStore extends IDisposalNotification {
     void addOnTopologyUpdatedListener(EventHandler<TopologyUpdatedEventArgs> handler);
     void removeOnTopologyUpdatedListener(EventHandler<TopologyUpdatedEventArgs> handler);
 
+    void addOnSessionClosingListener(EventHandler<SessionClosingEventArgs> handler);
+    void removeOnSessionClosingListener(EventHandler<SessionClosingEventArgs> handler);
+
     /**
      * Subscribe to change notifications from the server
      * @return Database changes object

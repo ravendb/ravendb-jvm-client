@@ -2,6 +2,7 @@ package net.ravendb.client.documents.commands.batches;
 
 import com.fasterxml.jackson.core.JsonGenerator;
 import net.ravendb.client.documents.conventions.DocumentConventions;
+import net.ravendb.client.documents.session.BeforeDeleteEventArgs;
 import net.ravendb.client.documents.session.InMemoryDocumentSessionOperations;
 
 import java.io.IOException;
@@ -60,6 +61,6 @@ public class DeleteCommandData implements ICommandData {
 
     @Override
     public void onBeforeSaveChanges(InMemoryDocumentSessionOperations session) {
-
+        session.onBeforeDeleteInvoke(new BeforeDeleteEventArgs(session, id, null));
     }
 }

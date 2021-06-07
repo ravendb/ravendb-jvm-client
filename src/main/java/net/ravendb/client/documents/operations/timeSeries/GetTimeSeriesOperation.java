@@ -3,6 +3,8 @@ package net.ravendb.client.documents.operations.timeSeries;
 import net.ravendb.client.documents.IDocumentStore;
 import net.ravendb.client.documents.conventions.DocumentConventions;
 import net.ravendb.client.documents.operations.IOperation;
+import net.ravendb.client.documents.session.loaders.ITimeSeriesIncludeBuilder;
+import net.ravendb.client.documents.session.loaders.IncludeBuilder;
 import net.ravendb.client.http.HttpCache;
 import net.ravendb.client.http.RavenCommand;
 import net.ravendb.client.http.ServerNode;
@@ -14,6 +16,7 @@ import org.apache.http.client.methods.HttpRequestBase;
 
 import java.io.IOException;
 import java.util.Date;
+import java.util.function.Consumer;
 
 public class GetTimeSeriesOperation implements IOperation<TimeSeriesRangeResult> {
     private final String _docId;
@@ -22,6 +25,7 @@ public class GetTimeSeriesOperation implements IOperation<TimeSeriesRangeResult>
     private final int _pageSize;
     private final Date _from;
     private final Date _to;
+    private final Consumer<ITimeSeriesIncludeBuilder> _includes;
 
     public GetTimeSeriesOperation(String docId, String timeseries) {
         this(docId, timeseries, null, null, 0, Integer.MAX_VALUE);
@@ -36,6 +40,10 @@ public class GetTimeSeriesOperation implements IOperation<TimeSeriesRangeResult>
     }
 
     public GetTimeSeriesOperation(String docId, String timeseries, Date from, Date to, int start, int pageSize) {
+        this(docId, timeseries, from, to, start, pageSize, null);
+    }
+
+    public GetTimeSeriesOperation(String docId, String timeseries, Date from, Date to, int start, int pageSize, Consumer<ITimeSeriesIncludeBuilder> includes) {
         if (StringUtils.isEmpty(docId)) {
             throw new IllegalArgumentException("DocId cannot be null or empty");
         }
@@ -49,11 +57,12 @@ public class GetTimeSeriesOperation implements IOperation<TimeSeriesRangeResult>
         _name = timeseries;
         _from = from;
         _to = to;
+        _includes = includes;
     }
 
     @Override
     public RavenCommand<TimeSeriesRangeResult> getCommand(IDocumentStore store, DocumentConventions conventions, HttpCache cache) {
-        return new GetTimeSeriesCommand(_docId, _name, _from, _to, _start, _pageSize);
+        return new GetTimeSeriesCommand(_docId, _name, _from, _to, _start, _pageSize, _includes);
     }
 
     private static class GetTimeSeriesCommand extends RavenCommand<TimeSeriesRangeResult> {
@@ -63,8 +72,9 @@ public class GetTimeSeriesOperation implements IOperation<TimeSeriesRangeResult>
         private final int _pageSize;
         private final Date _from;
         private final Date _to;
+        private final Consumer<ITimeSeriesIncludeBuilder> _includes;
 
-        public GetTimeSeriesCommand(String docId, String name, Date from, Date to, int start, int pageSize) {
+        public GetTimeSeriesCommand(String docId, String name, Date from, Date to, int start, int pageSize, Consumer<ITimeSeriesIncludeBuilder> includes) {
             super(TimeSeriesRangeResult.class);
 
             _docId = docId;
@@ -73,6 +83,7 @@ public class GetTimeSeriesOperation implements IOperation<TimeSeriesRangeResult>
             _pageSize = pageSize;
             _from = from;
             _to = to;
+            _includes = includes;
         }
 
         @Override
@@ -111,6 +122,10 @@ public class GetTimeSeriesOperation implements IOperation<TimeSeriesRangeResult>
                 pathBuilder
                         .append("&to=")
                         .append(NetISO8601Utils.format(_to, true));
+            }
+
+            if (_includes != null) {
+                addIncludesToRequest(pathBuilder, _includes);
             }
 
             url.value = pathBuilder.toString();

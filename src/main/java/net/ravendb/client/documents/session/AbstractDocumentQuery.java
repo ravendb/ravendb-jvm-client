@@ -2062,6 +2062,12 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
         return queryResult.getTotalResults();
     }
 
+    public long longCount() {
+        _take(0);
+        QueryResult queryResult = getQueryResult();
+        return queryResult.getLongTotalResults();
+    }
+
     public boolean any() {
         if (isDistinct()) {
             // for distinct it is cheaper to do count 1

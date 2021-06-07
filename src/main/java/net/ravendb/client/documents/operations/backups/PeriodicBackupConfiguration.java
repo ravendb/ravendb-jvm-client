@@ -2,25 +2,23 @@ package net.ravendb.client.documents.operations.backups;
 
 public class PeriodicBackupConfiguration {
 
+    private String name;
     private long taskId;
     private boolean disabled;
-    private String name;
     private String mentorNode;
-    private BackupType backupType;
-    private BackupEncryptionSettings backupEncryptionSettings;
-    private RetentionPolicy retentionPolicy;
-    private SnapshotSettings snapshotSettings;
 
-    private LocalSettings localSettings;
-    private S3Settings s3Settings;
-    private GlacierSettings glacierSettings;
-    private AzureSettings azureSettings;
-    private FtpSettings ftpSettings;
-    private GoogleCloudSettings googleCloudSettings;
+    private RetentionPolicy retentionPolicy;
 
     private String fullBackupFrequency;
     private String incrementalBackupFrequency;
 
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
 
     public long getTaskId() {
         return taskId;
@@ -38,14 +36,6 @@ public class PeriodicBackupConfiguration {
         this.disabled = disabled;
     }
 
-    public String getName() {
-        return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
-    }
-
     public String getMentorNode() {
         return mentorNode;
     }
@@ -54,20 +44,12 @@ public class PeriodicBackupConfiguration {
         this.mentorNode = mentorNode;
     }
 
-    public BackupType getBackupType() {
-        return backupType;
+    public RetentionPolicy getRetentionPolicy() {
+        return retentionPolicy;
     }
 
-    public void setBackupType(BackupType backupType) {
-        this.backupType = backupType;
-    }
-
-    public BackupEncryptionSettings getBackupEncryptionSettings() {
-        return backupEncryptionSettings;
-    }
-
-    public void setBackupEncryptionSettings(BackupEncryptionSettings backupEncryptionSettings) {
-        this.backupEncryptionSettings = backupEncryptionSettings;
+    public void setRetentionPolicy(RetentionPolicy retentionPolicy) {
+        this.retentionPolicy = retentionPolicy;
     }
 
     public String getFullBackupFrequency() {
@@ -84,69 +66,5 @@ public class PeriodicBackupConfiguration {
 
     public void setIncrementalBackupFrequency(String incrementalBackupFrequency) {
         this.incrementalBackupFrequency = incrementalBackupFrequency;
-    }
-
-    public LocalSettings getLocalSettings() {
-        return localSettings;
-    }
-
-    public void setLocalSettings(LocalSettings localSettings) {
-        this.localSettings = localSettings;
-    }
-
-    public S3Settings getS3Settings() {
-        return s3Settings;
-    }
-
-    public void setS3Settings(S3Settings s3Settings) {
-        this.s3Settings = s3Settings;
-    }
-
-    public GlacierSettings getGlacierSettings() {
-        return glacierSettings;
-    }
-
-    public void setGlacierSettings(GlacierSettings glacierSettings) {
-        this.glacierSettings = glacierSettings;
-    }
-
-    public AzureSettings getAzureSettings() {
-        return azureSettings;
-    }
-
-    public void setAzureSettings(AzureSettings azureSettings) {
-        this.azureSettings = azureSettings;
-    }
-
-    public FtpSettings getFtpSettings() {
-        return ftpSettings;
-    }
-
-    public void setFtpSettings(FtpSettings ftpSettings) {
-        this.ftpSettings = ftpSettings;
-    }
-
-    public GoogleCloudSettings getGoogleCloudSettings() {
-        return googleCloudSettings;
-    }
-
-    public void setGoogleCloudSettings(GoogleCloudSettings googleCloudSettings) {
-        this.googleCloudSettings = googleCloudSettings;
-    }
-
-    public RetentionPolicy getRetentionPolicy() {
-        return retentionPolicy;
-    }
-
-    public void setRetentionPolicy(RetentionPolicy retentionPolicy) {
-        this.retentionPolicy = retentionPolicy;
-    }
-
-    public SnapshotSettings getSnapshotSettings() {
-        return snapshotSettings;
-    }
-
-    public void setSnapshotSettings(SnapshotSettings snapshotSettings) {
-        this.snapshotSettings = snapshotSettings;
     }
 }

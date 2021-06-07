@@ -5,6 +5,7 @@ import net.ravendb.client.documents.commands.StreamResult;
 import net.ravendb.client.documents.session.operations.lazy.IEagerSessionOperations;
 import net.ravendb.client.documents.session.operations.lazy.ILazySessionOperations;
 import net.ravendb.client.primitives.Reference;
+import net.ravendb.client.primitives.Tuple;
 
 import java.io.OutputStream;
 import java.util.Collection;
@@ -345,5 +346,15 @@ public interface IAdvancedSessionOperations extends IAdvancedDocumentSessionOper
      * @param <T> Result class
      */
     <T> void streamInto(IRawDocumentQuery<T> query, OutputStream output);
+
+    /**
+     * Loads the specified entity with the specified id and changeVector.
+     * If the entity is loaded into the session, the tracked entity will be returned otherwise the entity will be loaded only if it is fresher then the provided changeVector.
+     * @param id Identifier of a entity that will be conditional loaded.
+     * @param changeVector Change vector of a entity that will be conditional loaded.
+     * @param <T> Result class
+     * @return Entity and change vector
+     */
+    <T> Tuple<T, String> conditionalLoad(Class<T> clazz, String id, String changeVector);
 
 }

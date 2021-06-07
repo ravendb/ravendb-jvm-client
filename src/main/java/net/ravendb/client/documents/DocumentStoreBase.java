@@ -41,6 +41,7 @@ public abstract class DocumentStoreBase implements IDocumentStore {
     private final List<EventHandler<BeforeDeleteEventArgs>> onBeforeDelete = new ArrayList<>();
     private final List<EventHandler<BeforeQueryEventArgs>> onBeforeQuery = new ArrayList<>();
     private final List<EventHandler<SessionCreatedEventArgs>> onSessionCreated = new ArrayList<>();
+    private final List<EventHandler<SessionClosingEventArgs>> onSessionClosing = new ArrayList<>();
 
     private final List<EventHandler<BeforeConversionToDocumentEventArgs>> onBeforeConversionToDocument = new ArrayList<>();
     private final List<EventHandler<AfterConversionToDocumentEventArgs>> onAfterConversionToDocument = new ArrayList<>();
@@ -278,6 +279,14 @@ public abstract class DocumentStoreBase implements IDocumentStore {
         this.onBeforeQuery.remove(handler);
     }
 
+    public void addOnSessionClosingListener(EventHandler<SessionClosingEventArgs> handler) {
+        this.onSessionClosing.add(handler);
+    }
+
+    public void removeOnSessionClosingListener(EventHandler<SessionClosingEventArgs> handler) {
+        this.onSessionClosing.remove(handler);
+    }
+
     public void addBeforeConversionToDocumentListener(EventHandler<BeforeConversionToDocumentEventArgs> handler) {
         this.onBeforeConversionToDocument.add(handler);
     }
@@ -458,6 +467,10 @@ public abstract class DocumentStoreBase implements IDocumentStore {
 
         for (EventHandler<AfterConversionToEntityEventArgs> handler : onAfterConversionToEntity) {
             session.addAfterConversionToEntityListener(handler);
+        }
+
+        for (EventHandler<SessionClosingEventArgs> handler : onSessionClosing) {
+            session.addOnSessionClosingListener(handler);
         }
     }
 
