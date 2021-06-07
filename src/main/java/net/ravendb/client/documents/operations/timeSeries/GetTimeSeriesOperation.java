@@ -65,7 +65,7 @@ public class GetTimeSeriesOperation implements IOperation<TimeSeriesRangeResult>
         return new GetTimeSeriesCommand(_docId, _name, _from, _to, _start, _pageSize, _includes);
     }
 
-    private static class GetTimeSeriesCommand extends RavenCommand<TimeSeriesRangeResult> {
+    public static class GetTimeSeriesCommand extends RavenCommand<TimeSeriesRangeResult> {
         private final String _docId;
         private final String _name;
         private final int _start;
@@ -131,6 +131,22 @@ public class GetTimeSeriesOperation implements IOperation<TimeSeriesRangeResult>
             url.value = pathBuilder.toString();
 
             return new HttpGet();
+        }
+
+        public static void addIncludesToRequest(StringBuilder pathBuilder, Consumer<ITimeSeriesIncludeBuilder> includes) {
+            IncludeBuilder includeBuilder = new IncludeBuilder(DocumentConventions.defaultConventions);
+            includes.accept(includeBuilder);
+
+
+            if (includeBuilder.includeTimeSeriesDocument) {
+                pathBuilder
+                        .append("&includeDocument=true");
+            }
+
+            if (includeBuilder.includeTimeSeriesTags) {
+                pathBuilder
+                        .append("&includeTags=true");
+            }
         }
 
         @Override

@@ -55,9 +55,12 @@ public class DocumentQuery<T> extends AbstractDocumentQuery<T, DocumentQuery<T>>
         super(clazz, session, indexName, collectionName, isGroupBy, declareTokens, loadTokens, fromAlias, isProjectInto);
     }
 
-    @Override
     public <TProjection> IDocumentQuery<TProjection> selectFields(Class<TProjection> projectionClass) {
+        return selectFields(projectionClass, ProjectionBehavior.DEFAULT);
+    }
 
+    @Override
+    public <TProjection> IDocumentQuery<TProjection> selectFields(Class<TProjection> projectionClass, ProjectionBehavior projectionBehavior) {
         try {
             PropertyDescriptor[] propertyDescriptors = Introspector.getBeanInfo(projectionClass).getPropertyDescriptors();
 
@@ -74,6 +77,7 @@ public class DocumentQuery<T> extends AbstractDocumentQuery<T, DocumentQuery<T>>
 
             QueryData queryData = new QueryData(fields, projections);
             queryData.setProjectInto(true);
+            queryData.setProjectionBehavior(projectionBehavior);
             return selectFields(projectionClass, queryData);
         } catch (IntrospectionException e) {
             throw new RuntimeException("Unable to project to class: " + projectionClass.getName() + e.getMessage(), e);
@@ -124,8 +128,14 @@ public class DocumentQuery<T> extends AbstractDocumentQuery<T, DocumentQuery<T>>
 
     @Override
     public <TProjection> IDocumentQuery<TProjection> selectFields(Class<TProjection> projectionClass, String... fields) {
+        return selectFields(projectionClass, ProjectionBehavior.DEFAULT, fields);
+    }
+
+    @Override
+    public <TProjection> IDocumentQuery<TProjection> selectFields(Class<TProjection> projectionClass, ProjectionBehavior projectionBehavior, String... fields) {
         QueryData queryData = new QueryData(fields, fields);
         queryData.setProjectInto(true);
+        queryData.setProjectionBehavior(projectionBehavior);
 
         IDocumentQuery<TProjection> selectFields = selectFields(projectionClass, queryData);
         return selectFields;

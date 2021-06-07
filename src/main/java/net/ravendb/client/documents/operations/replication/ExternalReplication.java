@@ -2,7 +2,7 @@ package net.ravendb.client.documents.operations.replication;
 
 import java.time.Duration;
 
-public class ExternalReplication extends ExternalReplicationBase {
+public class ExternalReplication extends ExternalReplicationBase implements IExternalReplication {
 
     private Duration delayReplicationFor;
 

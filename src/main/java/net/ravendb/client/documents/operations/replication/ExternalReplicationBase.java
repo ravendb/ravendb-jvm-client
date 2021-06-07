@@ -6,7 +6,7 @@ public class ExternalReplicationBase extends ReplicationNode {
     private long taskId;
     private String name;
     private String connectionStringName;
-    private String mentorName;
+    private String mentorNode;
 
     protected ExternalReplicationBase() {
     }
@@ -40,11 +40,11 @@ public class ExternalReplicationBase extends ReplicationNode {
         this.connectionStringName = connectionStringName;
     }
 
-    public String getMentorName() {
-        return mentorName;
+    public String getMentorNode() {
+        return mentorNode;
     }
 
-    public void setMentorName(String mentorName) {
-        this.mentorName = mentorName;
+    public void setMentorNode(String mentorNode) {
+        this.mentorNode = mentorNode;
     }
 }

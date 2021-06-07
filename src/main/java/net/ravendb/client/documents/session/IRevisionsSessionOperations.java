@@ -150,7 +150,7 @@ public interface IRevisionsSessionOperations {
 
     /**
      * Access the lazy revisions operations
-     * @return
+     * @return lazy revisions operations
      */
     ILazyRevisionsOperations lazily();
 }

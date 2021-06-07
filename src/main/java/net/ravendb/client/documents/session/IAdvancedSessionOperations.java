@@ -224,6 +224,11 @@ public interface IAdvancedSessionOperations extends IAdvancedDocumentSessionOper
 
     <T, TKey, TValue> void patchObject(String id, String pathToObject, Consumer<JavaScriptMap<TKey, TValue>> dictionaryAdder);
 
+    <T, TU> void addOrPatch(String id, T entity, String pathToObject, TU value);
+
+    <T, TU> void addOrPatchArray(String id, T entity, String pathToObject, Consumer<JavaScriptArray<TU>> arrayAdder);
+
+    <T, TU> void addOrIncrement(String id, T entity, String pathToObject, TU valToAdd);
 
     /**
      * Stream the results on the query to the client, converting them to
