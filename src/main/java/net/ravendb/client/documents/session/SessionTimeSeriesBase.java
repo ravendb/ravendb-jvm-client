@@ -207,6 +207,16 @@ public class SessionTimeSeriesBase {
         return rangeResult.getEntries();
     }
 
+    private void handleIncludes(TimeSeriesRangeResult rangeResult) {
+        if (rangeResult.getIncludes() == null) {
+            return;
+        }
+
+        session.registerIncludes(rangeResult.getIncludes());
+
+        rangeResult.setIncludes(null);
+    }
+
     private static List<TimeSeriesEntry> skipAndTrimRangeIfNeeded(Date from, Date to, TimeSeriesRangeResult fromRange,
                                                                   TimeSeriesRangeResult toRange, List<TimeSeriesEntry> values,
                                                                   int skip, int trim) {
@@ -328,6 +338,12 @@ public class SessionTimeSeriesBase {
         }
 
         return resultToUser;
+    }
+
+    private void registerIncludes(TimeSeriesDetails details) {
+        for (TimeSeriesRangeResult rangeResult : details.getValues().get(name)) {
+            handleIncludes(rangeResult);
+        }
     }
 
     private static TimeSeriesEntry[] mergeRangesWithResults(Date from, Date to, List<TimeSeriesRangeResult> ranges,

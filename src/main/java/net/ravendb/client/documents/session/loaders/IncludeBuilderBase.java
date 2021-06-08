@@ -1,5 +1,6 @@
 package net.ravendb.client.documents.session.loaders;
 
+import net.ravendb.client.Constants;
 import net.ravendb.client.documents.conventions.DocumentConventions;
 import net.ravendb.client.documents.operations.timeSeries.*;
 import net.ravendb.client.primitives.TimeValue;
@@ -253,6 +254,26 @@ public class IncludeBuilderBase {
             _includeTimeSeriesByRangeTypeAndCount("", name, type, count);
         }
     }
+
+    private void assertValid(String alias, String name) {
+        if (StringUtils.isBlank(name)) {
+            throw new IllegalArgumentException("Name cannot be null or whitespace.");
+        }
+
+        if (timeSeriesToIncludeBySourceAlias != null) {
+            Set<AbstractTimeSeriesRange> hashSet2 = timeSeriesToIncludeBySourceAlias.get(alias);
+            if (hashSet2 != null && !hashSet2.isEmpty()) {
+                if (Constants.TimeSeries.ALL.equals(name)) {
+                    throw new IllegalArgumentException("IIncludeBuilder : Cannot use 'includeAllTimeSeries' after using 'includeTimeSeries' or 'includeAllTimeSeries'.");
+                }
+
+                if (hashSet2.stream().anyMatch(x -> Constants.TimeSeries.ALL.equals(x.getName()))) {
+                    throw new IllegalArgumentException("IIncludeBuilder : Cannot use 'includeTimeSeries' or 'includeAllTimeSeries' after using 'includeAllTimeSeries'.");
+                }
+            }
+        }
+    }
+
     public Set<String> getCompareExchangeValuesToInclude() {
         return compareExchangeValuesToInclude;
     }

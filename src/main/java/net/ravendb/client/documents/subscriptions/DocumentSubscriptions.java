@@ -5,9 +5,11 @@ import net.ravendb.client.documents.DocumentStore;
 import net.ravendb.client.documents.commands.*;
 import net.ravendb.client.documents.operations.ongoingTasks.OngoingTaskType;
 import net.ravendb.client.documents.operations.ongoingTasks.ToggleOngoingTaskStateOperation;
+import net.ravendb.client.documents.operations.timeSeries.AbstractTimeSeriesRange;
 import net.ravendb.client.documents.session.IncludesUtil;
 import net.ravendb.client.documents.session.loaders.SubscriptionIncludeBuilder;
 import net.ravendb.client.documents.session.tokens.CounterIncludesToken;
+import net.ravendb.client.documents.session.tokens.TimeSeriesIncludesToken;
 import net.ravendb.client.extensions.StringExtensions;
 import net.ravendb.client.http.RequestExecutor;
 import net.ravendb.client.primitives.CleanCloseable;
@@ -212,6 +214,26 @@ public class DocumentSubscriptions implements AutoCloseable {
                     }  else {
                         criteria.setQuery(criteria.getQuery() + "counters(" + counterName + ")");
                     }
+
+                    numberOfIncludesAdded++;
+                }
+            }
+
+            if (builder.getTimeSeriesToInclude() != null) {
+                for (AbstractTimeSeriesRange timeSeriesRange : builder.getTimeSeriesToInclude()) {
+                    if (numberOfIncludesAdded == 0) {
+                        queryBuilder
+                                .append(System.lineSeparator())
+                                .append("include ");
+                    }
+
+                    if (numberOfIncludesAdded > 0) {
+                        queryBuilder
+                                .append(",");
+                    }
+
+                    TimeSeriesIncludesToken token = TimeSeriesIncludesToken.create("", timeSeriesRange);
+                    token.writeTo(queryBuilder);
 
                     numberOfIncludesAdded++;
                 }
