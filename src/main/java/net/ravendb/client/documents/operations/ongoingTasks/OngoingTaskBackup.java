@@ -23,6 +23,7 @@ public class OngoingTaskBackup extends OngoingTask {
 
     @JsonProperty("IsEncrypted")
     private boolean encrypted;
+    private String lastExecutingNodeTag;
 
     public BackupType getBackupType() {
         return backupType;
@@ -86,5 +87,13 @@ public class OngoingTaskBackup extends OngoingTask {
 
     public void setEncrypted(boolean encrypted) {
         this.encrypted = encrypted;
+    }
+
+    public String getLastExecutingNodeTag() {
+        return lastExecutingNodeTag;
+    }
+
+    public void setLastExecutingNodeTag(String lastExecutingNodeTag) {
+        this.lastExecutingNodeTag = lastExecutingNodeTag;
     }
 }
