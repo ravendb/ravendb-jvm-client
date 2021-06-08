@@ -19,7 +19,6 @@ import net.ravendb.client.documents.linq.IDocumentQueryGenerator;
 import net.ravendb.client.documents.operations.PatchRequest;
 import net.ravendb.client.documents.operations.timeSeries.AbstractTimeSeriesRange;
 import net.ravendb.client.documents.operations.timeSeries.TimeSeriesConfiguration;
-import net.ravendb.client.documents.operations.timeSeries.TimeSeriesRange;
 import net.ravendb.client.documents.queries.Query;
 import net.ravendb.client.documents.session.loaders.*;
 import net.ravendb.client.documents.session.operations.*;
@@ -666,7 +665,7 @@ public class DocumentSession extends InMemoryDocumentSessionOperations
         PatchRequest patchRequest = new PatchRequest();
         patchRequest.setScript("this." + pathToObject + " = args.val_" + _valsCount);
         patchRequest.setValues(Collections.singletonMap("val_" + _valsCount, value));
-        
+
         String collectionName = _requestExecutor.getConventions().getCollectionName(entity);
         String javaType = _requestExecutor.getConventions().getJavaClassName(entity.getClass());
 
@@ -1094,8 +1093,39 @@ public class DocumentSession extends InMemoryDocumentSessionOperations
 
     @Override
     public <T> Tuple<T, String> conditionalLoad(Class<T> clazz, String id, String changeVector) {
-        /* TODO
-        public (T Entity, string ChangeVector) ConditionalLoad<T>(string id, string changeVector)
-        return null;
+        if (StringUtils.isEmpty(id)) {
+            throw new IllegalArgumentException("Id cannot be null");
+        }
+
+        if (advanced().isLoaded(id)) {
+            T entity = load(clazz, id);
+            if (entity == null) {
+                return Tuple.create(null, null);
+            }
+
+            String cv = advanced().getChangeVectorFor(entity);
+            return Tuple.create(entity, cv);
+        }
+
+        if (StringUtils.isEmpty(changeVector)) {
+            throw new IllegalArgumentException("The requested document with id '" + id + "' is not loaded into the session and could not conditional load when changeVector is null or empty.");
+        }
+
+        incrementRequestCount();
+
+        ConditionalGetDocumentsCommand cmd = new ConditionalGetDocumentsCommand(id, changeVector);
+        advanced().getRequestExecutor().execute(cmd);
+
+        switch (cmd.getStatusCode()) {
+            case 304:
+                return Tuple.create(null, changeVector); // value not changed
+            case 404:
+                registerMissing(id);;
+                return Tuple.create(null, null); // value is missing
+        }
+
+        DocumentInfo documentInfo = DocumentInfo.getNewDocumentInfo((ObjectNode) cmd.getResult().getResults().get(0));
+        T r = trackEntity(clazz, documentInfo);
+        return Tuple.create(r, cmd.getResult().getChangeVector());
     }
 }
