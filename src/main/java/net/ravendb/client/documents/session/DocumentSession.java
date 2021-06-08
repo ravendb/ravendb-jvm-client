@@ -601,6 +601,94 @@ public class DocumentSession extends InMemoryDocumentSessionOperations
     }
 
     @Override
+    public <T, TU> void addOrIncrement(String id, T entity, String pathToObject, TU valToAdd) {
+        String variable = "this." + pathToObject;
+        String value = "args.val_" + _valsCount;
+
+        PatchRequest patchRequest = new PatchRequest();
+        patchRequest.setScript(variable + " = " + variable + " ? " + variable + " + " + value + " : " + value);
+        patchRequest.setValues(Collections.singletonMap("val_" + _valsCount, valToAdd));
+
+        String collectionName = _requestExecutor.getConventions().getCollectionName(entity);
+        String javaType = _requestExecutor.getConventions().getJavaClassName(entity.getClass());
+
+        MetadataAsDictionary metadataAsDictionary = new MetadataAsDictionary();
+        metadataAsDictionary.put(Constants.Documents.Metadata.COLLECTION, collectionName);
+        metadataAsDictionary.put(Constants.Documents.Metadata.RAVEN_JAVA_TYPE, javaType);
+
+        DocumentInfo documentInfo = new DocumentInfo();
+        documentInfo.setId(id);
+        documentInfo.setCollection(collectionName);
+        documentInfo.setMetadataInstance(metadataAsDictionary);
+
+        ObjectNode newInstance = getEntityToJson().convertEntityToJson(entity, documentInfo);
+
+        _valsCount++;
+
+        PatchCommandData patchCommandData = new PatchCommandData(id, null, patchRequest);
+        patchCommandData.setCreateIfMissing(newInstance);
+        defer(patchCommandData);
+    }
+
+    @Override
+    public <T, TU> void addOrPatchArray(String id, T entity, String pathToArray, Consumer<JavaScriptArray<TU>> arrayAdder) {
+        JavaScriptArray<TU> scriptArray = new JavaScriptArray<>(_customCount++, pathToArray);
+
+        arrayAdder.accept(scriptArray);
+
+        PatchRequest patchRequest = new PatchRequest();
+        patchRequest.setScript(scriptArray.getScript());
+        patchRequest.setValues(scriptArray.getParameters());
+
+        String collectionName = _requestExecutor.getConventions().getCollectionName(entity);
+        String javaType = _requestExecutor.getConventions().getJavaClassName(entity.getClass());
+
+        MetadataAsDictionary metadataAsDictionary = new MetadataAsDictionary();
+        metadataAsDictionary.put(Constants.Documents.Metadata.COLLECTION, collectionName);
+        metadataAsDictionary.put(Constants.Documents.Metadata.RAVEN_JAVA_TYPE, javaType);
+
+        DocumentInfo documentInfo = new DocumentInfo();
+        documentInfo.setId(id);
+        documentInfo.setCollection(collectionName);
+        documentInfo.setMetadataInstance(metadataAsDictionary);
+
+        ObjectNode newInstance = getEntityToJson().convertEntityToJson(entity, documentInfo);
+
+        _valsCount++;
+
+        PatchCommandData patchCommandData = new PatchCommandData(id, null, patchRequest);
+        patchCommandData.setCreateIfMissing(newInstance);
+        defer(patchCommandData);
+    }
+
+    @Override
+    public <T, TU> void addOrPatch(String id, T entity, String pathToObject, TU value) {
+        PatchRequest patchRequest = new PatchRequest();
+        patchRequest.setScript("this." + pathToObject + " = args.val_" + _valsCount);
+        patchRequest.setValues(Collections.singletonMap("val_" + _valsCount, value));
+        
+        String collectionName = _requestExecutor.getConventions().getCollectionName(entity);
+        String javaType = _requestExecutor.getConventions().getJavaClassName(entity.getClass());
+
+        MetadataAsDictionary metadataAsDictionary = new MetadataAsDictionary();
+        metadataAsDictionary.put(Constants.Documents.Metadata.COLLECTION, collectionName);
+        metadataAsDictionary.put(Constants.Documents.Metadata.RAVEN_JAVA_TYPE, javaType);
+
+        DocumentInfo documentInfo = new DocumentInfo();
+        documentInfo.setId(id);
+        documentInfo.setCollection(collectionName);
+        documentInfo.setMetadataInstance(metadataAsDictionary);
+
+        ObjectNode newInstance = getEntityToJson().convertEntityToJson(entity, documentInfo);
+
+        _valsCount++;
+
+        PatchCommandData patchCommandData = new PatchCommandData(id, null, patchRequest);
+        patchCommandData.setCreateIfMissing(newInstance);
+        defer(patchCommandData);
+    }
+
+    @Override
     public <T, U> void patch(T entity, String path, U value) {
         IMetadataDictionary metadata = getMetadataFor(entity);
         String id = (String) metadata.get(Constants.Documents.Metadata.ID);
@@ -1002,5 +1090,12 @@ public class DocumentSession extends InMemoryDocumentSessionOperations
     public <T> ISessionDocumentRollupTypedTimeSeries<T> timeSeriesRollupFor(Class<T> clazz, String documentId, String policy, String raw) {
         String tsName = ObjectUtils.firstNonNull(raw, TimeSeriesOperations.getTimeSeriesName(clazz, getConventions()));
         return new SessionDocumentRollupTypedTimeSeries<T>(clazz, this, documentId, tsName + TimeSeriesConfiguration.TIME_SERIES_ROLLUP_SEPARATOR + policy);
+    }
+
+    @Override
+    public <T> Tuple<T, String> conditionalLoad(Class<T> clazz, String id, String changeVector) {
+        /* TODO
+        public (T Entity, string ChangeVector) ConditionalLoad<T>(string id, string changeVector)
+        return null;
     }
 }

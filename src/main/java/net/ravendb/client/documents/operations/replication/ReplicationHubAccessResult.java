@@ -1,15 +1,14 @@
 package net.ravendb.client.documents.operations.replication;
 
-import java.util.List;
-
 public class ReplicationHubAccessResult {
-    private List<DetailedReplicationHubAccess> results;
+    private DetailedReplicationHubAccess[] results;
 
-    public List<DetailedReplicationHubAccess> getResults() {
+
+    public DetailedReplicationHubAccess[] getResults() {
         return results;
     }
 
-    public void setResults(List<DetailedReplicationHubAccess> results) {
+    public void setResults(DetailedReplicationHubAccess[] results) {
         this.results = results;
     }
 }
