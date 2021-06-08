@@ -67,6 +67,10 @@ public class GetMultipleTimeSeriesOperation implements IOperation<TimeSeriesDeta
         private final int _pageSize;
         private final Consumer<ITimeSeriesIncludeBuilder> _includes;
 
+        public GetMultipleTimeSeriesCommand(String docId, List<TimeSeriesRange> ranges, int start, int pageSize) {
+            this(docId, ranges, start, pageSize, null);
+        }
+
         public GetMultipleTimeSeriesCommand(String docId, List<TimeSeriesRange> ranges, int start, int pageSize, Consumer<ITimeSeriesIncludeBuilder> includes) {
             super(TimeSeriesDetails.class);
 

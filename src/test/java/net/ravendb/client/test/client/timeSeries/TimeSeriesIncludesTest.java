@@ -44,7 +44,7 @@ public class TimeSeriesIncludesTest extends RemoteTestBase {
             try (IDocumentSession session = store.openSession()) {
                 Order order = session.load(Order.class, "orders/1-A",
                         i -> i.includeDocuments("company")
-                                .includeTimeSeries("Heartrate", null, null));
+                                .includeTimeSeries("Heartrate"));
 
                 Company company = session.load(Company.class, order.getCompany());
                 assertThat(company.getName())
@@ -846,7 +846,7 @@ public class TimeSeriesIncludesTest extends RemoteTestBase {
 
             try (IDocumentSession session = store.openSession()) {
                 IDocumentQuery<User> query = session.query(User.class)
-                        .include(i -> i.includeTimeSeries("Heartrate", null, null));
+                        .include(i -> i.includeTimeSeries("Heartrate"));
 
                 List<User> result = query.toList();
 

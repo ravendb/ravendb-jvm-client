@@ -36,7 +36,7 @@ public class RavenDB_15000Test extends RemoteTestBase {
 
             try (IDocumentSession session = store.openSession()) {
                 Order order = session.load(Order.class, "orders/1-A",
-                        i -> i.includeDocuments("company").includeTimeSeries("Heartrate", null, null));
+                        i -> i.includeDocuments("company").includeTimeSeries("Heartrate"));
 
                 // should not go to server
                 Company company = session.load(Company.class, order.getCompany());

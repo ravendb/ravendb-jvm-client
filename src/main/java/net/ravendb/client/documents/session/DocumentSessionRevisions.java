@@ -2,9 +2,11 @@ package net.ravendb.client.documents.session;
 
 import net.ravendb.client.documents.commands.GetRevisionsCommand;
 import net.ravendb.client.documents.session.operations.GetRevisionOperation;
+import net.ravendb.client.documents.session.operations.GetRevisionsCountOperation;
 import net.ravendb.client.documents.session.operations.lazy.ILazySessionOperations;
 import net.ravendb.client.documents.session.operations.lazy.LazyRevisionOperations;
 import net.ravendb.client.documents.session.operations.lazy.LazySessionOperations;
+import net.ravendb.client.http.RavenCommand;
 import net.ravendb.client.json.MetadataAsDictionary;
 import org.apache.commons.lang3.StringUtils;
 
@@ -91,4 +93,11 @@ public class DocumentSessionRevisions extends DocumentSessionRevisionsBase imple
         return operation.getRevision(clazz);
     }
 
+    @Override
+    public long getCountFor(String id) {
+        GetRevisionsCountOperation operation = new GetRevisionsCountOperation(id);
+        RavenCommand<Long> command = operation.createRequest();
+        requestExecutor.execute(command, sessionInfo);
+        return command.getResult();
+    }
 }

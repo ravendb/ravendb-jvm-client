@@ -67,6 +67,10 @@ public class GetRevisionOperation {
         _result = result;
     }
 
+    public GetRevisionsCommand getCommand() {
+        return _command;
+    }
+
     @SuppressWarnings("unchecked")
     public <T> T getRevision(Class<T> clazz, ObjectNode document) {
         if (document == null) {

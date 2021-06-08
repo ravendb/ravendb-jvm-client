@@ -1,8 +1,8 @@
 package net.ravendb.client.documents.session.loaders;
 
 import net.ravendb.client.documents.conventions.DocumentConventions;
-import net.ravendb.client.documents.operations.timeSeries.AbstractTimeSeriesRange;
-import net.ravendb.client.documents.operations.timeSeries.TimeSeriesRange;
+import net.ravendb.client.documents.operations.timeSeries.*;
+import net.ravendb.client.primitives.TimeValue;
 import net.ravendb.client.primitives.Tuple;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.builder.CompareToBuilder;
@@ -165,6 +165,94 @@ public class IncludeBuilderBase {
         hashSet.add(range);
     }
 
+    protected void _includeTimeSeriesByRangeTypeAndTime(String alias, String name, TimeSeriesRangeType type, TimeValue time) {
+        assertValid(alias, name);
+        assertValidType(type, time);
+
+        if (timeSeriesToIncludeBySourceAlias == null) {
+            timeSeriesToIncludeBySourceAlias = new HashMap<>();
+        }
+
+        Set<AbstractTimeSeriesRange> hashSet = timeSeriesToIncludeBySourceAlias
+                .computeIfAbsent(alias, a -> new TreeSet<>(AbstractTimeSeriesRangeComparer.INSTANCE));
+
+        TimeSeriesTimeRange timeRange = new TimeSeriesTimeRange();
+        timeRange.setName(name);
+        timeRange.setTime(time);
+        timeRange.setType(type);
+        hashSet.add(timeRange);
+    }
+
+    private static void assertValidType(TimeSeriesRangeType type, TimeValue time) {
+        switch (type) {
+            case NONE:
+                throw new IllegalArgumentException("Time range type cannot be set to NONE when time is specified.");
+            case LAST:
+                if (time.compareTo(TimeValue.ZERO) != 0) {
+                    if (time.getValue() <= 0) {
+                        throw new IllegalArgumentException("Time range type cannot be set to LAST when time is negative or zero.");
+                    }
+
+                    return;
+                }
+
+                throw new IllegalArgumentException("time range type cannot be set to LAST when time is not specified.");
+            default:
+                throw new UnsupportedOperationException("Not supported time range type: " + type);
+        }
+    }
+
+    protected void _includeTimeSeriesByRangeTypeAndCount(String alias, String name, TimeSeriesRangeType type, int count) {
+        assertValid(alias, name);
+        assertValidTypeAndCount(type, count);
+
+        if (timeSeriesToIncludeBySourceAlias == null) {
+            timeSeriesToIncludeBySourceAlias = new HashMap<>();
+        }
+
+        Set<AbstractTimeSeriesRange> hashSet = timeSeriesToIncludeBySourceAlias.computeIfAbsent(alias, a -> new TreeSet<>(AbstractTimeSeriesRangeComparer.INSTANCE));
+
+        TimeSeriesCountRange countRange = new TimeSeriesCountRange();
+        countRange.setName(name);
+        countRange.setCount(count);
+        countRange.setType(type);
+
+        hashSet.add(countRange);
+    }
+
+    private static void assertValidTypeAndCount(TimeSeriesRangeType type, int count) {
+        switch (type) {
+            case NONE:
+                throw new IllegalArgumentException("Time range type cannot be set to NONE when count is specified.");
+            case LAST:
+                if (count <= 0) {
+                    throw new IllegalArgumentException("Count have to be positive.");
+                }
+                break;
+            default:
+                throw new UnsupportedOperationException("Not supported time range type: " + type);
+        }
+    }
+
+    protected void _includeArrayOfTimeSeriesByRangeTypeAndTime(String[] names, TimeSeriesRangeType type, TimeValue time) {
+        if (names == null) {
+            throw new IllegalArgumentException("Names cannot be null");
+        }
+
+        for (String name : names) {
+            _includeTimeSeriesByRangeTypeAndTime("", name, type, time);
+        }
+    }
+
+    protected void _includeArrayOfTimeSeriesByRangeTypeAndCount(String[] names, TimeSeriesRangeType type, int count) {
+        if (names == null) {
+            throw new IllegalArgumentException("Names cannot be null");
+        }
+
+        for (String name : names) {
+            _includeTimeSeriesByRangeTypeAndCount("", name, type, count);
+        }
+    }
     public Set<String> getCompareExchangeValuesToInclude() {
         return compareExchangeValuesToInclude;
     }

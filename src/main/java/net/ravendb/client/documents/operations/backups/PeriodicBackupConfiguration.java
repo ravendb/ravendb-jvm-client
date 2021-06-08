@@ -1,6 +1,6 @@
 package net.ravendb.client.documents.operations.backups;
 
-public class PeriodicBackupConfiguration {
+public class PeriodicBackupConfiguration extends BackupConfiguration {
 
     private String name;
     private long taskId;
