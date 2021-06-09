@@ -8,14 +8,14 @@ import net.ravendb.client.documents.commands.batches.CommandType;
 import net.ravendb.client.documents.commands.batches.ICommandData;
 import net.ravendb.client.documents.commands.batches.TimeSeriesBatchCommandData;
 import net.ravendb.client.documents.operations.timeSeries.*;
+import net.ravendb.client.documents.session.loaders.ITimeSeriesIncludeBuilder;
 import net.ravendb.client.documents.session.timeSeries.TimeSeriesEntry;
 import net.ravendb.client.primitives.DatesComparator;
 import net.ravendb.client.primitives.Reference;
-import org.apache.commons.collections4.ListUtils;
-import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
 
 import java.util.*;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 import static net.ravendb.client.primitives.DatesComparator.*;
@@ -130,6 +130,10 @@ public class SessionTimeSeriesBase {
     }
 
     public TimeSeriesEntry[] getInternal(Date from, Date to, int start, int pageSize) {
+        return getTimeSeriesAndIncludes(from, to, null, start, pageSize);
+    }
+
+    public TimeSeriesEntry[] getTimeSeriesAndIncludes(Date from, Date to, Consumer<ITimeSeriesIncludeBuilder> includes, int start, int pageSize) {
         TimeSeriesRangeResult rangeResult;
 
         if (pageSize == 0) {
@@ -152,13 +156,14 @@ public class SessionTimeSeriesBase {
 
                     session.incrementRequestCount();
 
-                    rangeResult = session.getOperations().send(new GetTimeSeriesOperation(docId, name, from, to, start, pageSize), session.sessionInfo);
+                    rangeResult = session.getOperations().send(new GetTimeSeriesOperation(docId, name, from, to, start, pageSize, includes), session.sessionInfo);
 
                     if (rangeResult == null) {
                         return null;
                     }
 
                     if (!session.noTracking) {
+                        handleIncludes(rangeResult);
                         int index = DatesComparator.compare(leftDate(ranges.get(0).getFrom()), rightDate(to)) > 0 ? 0 : ranges.size();
                         ranges.add(index, rangeResult);
                     }
@@ -167,7 +172,7 @@ public class SessionTimeSeriesBase {
                 }
 
                 List<TimeSeriesEntry> resultToUser = serveFromCacheOrGetMissingPartsFromServerAndMerge(
-                        cache, from, to, ranges, start, pageSize);
+                        cache, from, to, ranges, start, pageSize, includes);
 
                 return resultToUser.stream().limit(pageSize).toArray(TimeSeriesEntry[]::new);
             }
@@ -189,13 +194,14 @@ public class SessionTimeSeriesBase {
 
         session.incrementRequestCount();
 
-        rangeResult = session.getOperations().send(new GetTimeSeriesOperation(docId, name, from, to, start, pageSize), session.sessionInfo);
+        rangeResult = session.getOperations().send(new GetTimeSeriesOperation(docId, name, from, to, start, pageSize, includes), session.sessionInfo);
 
         if (rangeResult == null) {
             return null;
         }
 
         if (!session.noTracking) {
+            handleIncludes(rangeResult);
             Map<String, List<TimeSeriesRangeResult>> trackingCache = session.getTimeSeriesByDocId()
                     .computeIfAbsent(docId, k -> new TreeMap<>(String::compareToIgnoreCase));
 
@@ -240,7 +246,8 @@ public class SessionTimeSeriesBase {
     }
 
     private List<TimeSeriesEntry> serveFromCacheOrGetMissingPartsFromServerAndMerge(
-            Map<String, List<TimeSeriesRangeResult>> cache, Date from, Date to, List<TimeSeriesRangeResult> ranges, int start, int pageSize) {
+            Map<String, List<TimeSeriesRangeResult>> cache, Date from, Date to, List<TimeSeriesRangeResult> ranges,
+            int start, int pageSize, Consumer<ITimeSeriesIncludeBuilder> includes) {
         // try to find a range in cache that contains [from, to]
         // if found, chop just the relevant part from it and return to the user.
 
@@ -307,8 +314,11 @@ public class SessionTimeSeriesBase {
 
         session.incrementRequestCount();
 
-        TimeSeriesDetails details = session.getOperations().send(new GetMultipleTimeSeriesOperation(docId, rangesToGetFromServer, start, pageSize), session.sessionInfo);
+        TimeSeriesDetails details = session.getOperations().send(new GetMultipleTimeSeriesOperation(docId, rangesToGetFromServer, start, pageSize, includes), session.sessionInfo);
 
+        if (includes != null) {
+            registerIncludes(details);
+        }
         // merge all the missing parts we got from server
         // with all the ranges in cache that are between 'fromRange' and 'toRange'
 

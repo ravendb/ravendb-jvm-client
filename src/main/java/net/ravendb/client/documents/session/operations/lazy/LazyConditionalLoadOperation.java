@@ -12,6 +12,7 @@ import net.ravendb.client.extensions.JsonExtensions;
 import net.ravendb.client.primitives.Tuple;
 import net.ravendb.client.util.UrlUtils;
 import org.apache.commons.lang3.NotImplementedException;
+import org.apache.http.HttpStatus;
 
 import java.io.IOException;
 
@@ -67,10 +68,10 @@ public class LazyConditionalLoadOperation<T> implements ILazyOperation {
         }
 
         switch (response.getStatusCode()) {
-            case 304:
+            case HttpStatus.SC_NOT_MODIFIED:
                 result = Tuple.create(null, _changeVector); // value not changed
                 return;
-            case 404:
+            case HttpStatus.SC_NOT_FOUND:
                 _session.registerMissing(_id);
                 result = Tuple.create(null, null);
                 return;

@@ -886,18 +886,27 @@ public class RequestExecutor implements CleanCloseable {
             response = command.send(getHttpClient(), request);
         }
 
-        String serverVersion = tryGetServerVersion(response);
-        if (serverVersion != null) {
-            lastServerVersion = serverVersion;
+        // PERF: The reason to avoid rechecking every time is that servers wont change so rapidly
+        //       and therefore we dimish its cost by orders of magnitude just doing it
+        //       once in a while. We dont care also about the potential race conditions that may happen
+        //       here mainly because the idea is to have a lax mechanism to recheck that is at least
+        //       orders of magnitude faster than currently.
+        if (chosenNode.shouldUpdateServerVersion()) {
+            String serverVersion = tryGetServerVersion(response);
+            if (serverVersion != null) {
+                chosenNode.updateServerVersion(serverVersion);
+
+            }
         }
+
+        lastServerVersion = chosenNode.getLastServerVersion();
 
         if (sessionInfo != null && sessionInfo.getLastClusterTransactionIndex() != null) {
             // if we reach here it means that sometime a cluster transaction has occurred against this database.
             // Since the current executed command can be dependent on that, we have to wait for the cluster transaction.
             // But we can't do that if the server is an old one.
 
-            Header version = response.getFirstHeader(Constants.Headers.SERVER_VERSION);
-            if (version != null && "4.1".compareToIgnoreCase(version.getValue()) > 0) {
+            if (lastServerVersion == null || lastServerVersion.compareToIgnoreCase("4.1") < 0) {
                 throw new ClientVersionMismatchException("The server on " + chosenNode.getUrl() + " has an old version and can't perform " +
                         "the command since this command dependent on a cluster transaction which this node doesn't support.");
             }
@@ -1218,6 +1227,32 @@ public class RequestExecutor implements CleanCloseable {
                 case HttpStatus.SC_CONFLICT:
                     handleConflict(response);
                     break;
+                case 425: // TooEarly
+                    if (!shouldRetry) {
+                        return false;
+                    }
+
+                    if (nodeIndex != null) {
+                        _nodeSelector.onFailedRequest(nodeIndex);
+                    }
+
+                    if (command.getFailedNodes() == null) {
+                        command.setFailedNodes(new HashMap<>());
+                    }
+
+                    if (!command.isFailedWithNode(chosenNode)) {
+                        command.getFailedNodes().put(chosenNode,
+                                new UnsuccessfulRequestException("Request to '" + request.getURI() + "' ("  +request.getMethod() + ") is processing and not yet available on that node."));
+                    }
+
+                    CurrentIndexAndNode nextNode = chooseNodeForRequest(command, sessionInfo);
+                    execute(nextNode.currentNode, nextNode.currentIndex, command, true, sessionInfo);
+
+                    if (nodeIndex != null) {
+                        _nodeSelector.restoreNodeIndex(nodeIndex);
+                    }
+
+                    return true;
                 default:
                     command.onResponseFailure(response);
                     ExceptionDispatcher.throwException(response);
@@ -1265,6 +1300,9 @@ public class RequestExecutor implements CleanCloseable {
             spawnHealthChecks(chosenNode, nodeIndex);
             return false;
         }
+
+        // As the server is down, we discard the server version to ensure we update when it goes up.
+        chosenNode.discardServerVersion();
 
         _nodeSelector.onFailedRequest(nodeIndex);
 

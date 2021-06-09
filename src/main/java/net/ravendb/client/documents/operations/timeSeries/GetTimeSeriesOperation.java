@@ -3,8 +3,10 @@ package net.ravendb.client.documents.operations.timeSeries;
 import net.ravendb.client.documents.IDocumentStore;
 import net.ravendb.client.documents.conventions.DocumentConventions;
 import net.ravendb.client.documents.operations.IOperation;
+import net.ravendb.client.documents.session.loaders.IGenericTimeSeriesIncludeBuilder;
 import net.ravendb.client.documents.session.loaders.ITimeSeriesIncludeBuilder;
 import net.ravendb.client.documents.session.loaders.IncludeBuilder;
+import net.ravendb.client.documents.session.loaders.TimeSeriesIncludeBuilder;
 import net.ravendb.client.http.HttpCache;
 import net.ravendb.client.http.RavenCommand;
 import net.ravendb.client.http.ServerNode;
@@ -134,7 +136,7 @@ public class GetTimeSeriesOperation implements IOperation<TimeSeriesRangeResult>
         }
 
         public static void addIncludesToRequest(StringBuilder pathBuilder, Consumer<ITimeSeriesIncludeBuilder> includes) {
-            IncludeBuilder includeBuilder = new IncludeBuilder(DocumentConventions.defaultConventions);
+            TimeSeriesIncludeBuilder includeBuilder = new TimeSeriesIncludeBuilder(DocumentConventions.defaultConventions);
             includes.accept(includeBuilder);
 
 

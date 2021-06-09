@@ -93,7 +93,7 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
     protected final FromToken fromToken;
     protected final List<DeclareToken> declareTokens;
     protected final List<LoadToken> loadTokens;
-    public FieldsToFetchToken fieldsToFetchToken;
+    protected FieldsToFetchToken fieldsToFetchToken;
 
     public boolean isProjectInto;
 
@@ -132,6 +132,22 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
 
     public boolean isDistinct() {
         return !selectTokens.isEmpty() && selectTokens.get(0) instanceof DistinctToken;
+    }
+
+    public FieldsToFetchToken getFieldsToFetchToken() {
+        return fieldsToFetchToken;
+    }
+
+    public void setFieldsToFetchToken(FieldsToFetchToken fieldsToFetchToken) {
+        this.fieldsToFetchToken = fieldsToFetchToken;
+    }
+
+    public boolean isProjectInto() {
+        return isProjectInto;
+    }
+
+    public void setProjectInto(boolean projectInto) {
+        isProjectInto = projectInto;
     }
 
     /**

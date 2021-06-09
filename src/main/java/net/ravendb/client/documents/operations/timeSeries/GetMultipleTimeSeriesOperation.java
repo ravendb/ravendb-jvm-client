@@ -3,6 +3,7 @@ package net.ravendb.client.documents.operations.timeSeries;
 import net.ravendb.client.documents.IDocumentStore;
 import net.ravendb.client.documents.conventions.DocumentConventions;
 import net.ravendb.client.documents.operations.IOperation;
+import net.ravendb.client.documents.session.loaders.IGenericTimeSeriesIncludeBuilder;
 import net.ravendb.client.documents.session.loaders.ITimeSeriesIncludeBuilder;
 import net.ravendb.client.http.HttpCache;
 import net.ravendb.client.http.RavenCommand;

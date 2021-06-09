@@ -32,6 +32,7 @@ import net.ravendb.client.primitives.Tuple;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.http.HttpStatus;
 import org.apache.http.util.EntityUtils;
 
 import java.io.IOException;
@@ -1117,9 +1118,9 @@ public class DocumentSession extends InMemoryDocumentSessionOperations
         advanced().getRequestExecutor().execute(cmd);
 
         switch (cmd.getStatusCode()) {
-            case 304:
+            case HttpStatus.SC_NOT_MODIFIED:
                 return Tuple.create(null, changeVector); // value not changed
-            case 404:
+            case HttpStatus.SC_NOT_FOUND:
                 registerMissing(id);;
                 return Tuple.create(null, null); // value is missing
         }

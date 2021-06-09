@@ -1,8 +1,10 @@
 package net.ravendb.client.documents.session;
 
+import net.ravendb.client.documents.session.loaders.ITimeSeriesIncludeBuilder;
 import net.ravendb.client.documents.session.timeSeries.TimeSeriesEntry;
 
 import java.util.*;
+import java.util.function.Consumer;
 
 public class SessionDocumentTimeSeries extends SessionTimeSeriesBase
         implements ISessionDocumentTimeSeries {
@@ -37,6 +39,21 @@ public class SessionDocumentTimeSeries extends SessionTimeSeriesBase
 
     @Override
     public TimeSeriesEntry[] get(Date from, Date to, int start, int pageSize) {
-        return getInternal(from, to, start, pageSize);
+        return getTimeSeriesAndIncludes(from, to, null, start, pageSize);
+    }
+
+    @Override
+    public TimeSeriesEntry[] get(Date from, Date to, Consumer<ITimeSeriesIncludeBuilder> includes) {
+        return get(from, to, includes, 0, Integer.MAX_VALUE);
+    }
+
+    @Override
+    public TimeSeriesEntry[] get(Date from, Date to, Consumer<ITimeSeriesIncludeBuilder> includes, int start) {
+        return get(from, to, includes, start, Integer.MAX_VALUE);
+    }
+
+    @Override
+    public TimeSeriesEntry[] get(Date from, Date to, Consumer<ITimeSeriesIncludeBuilder> includes, int start, int pageSize) {
+        return getTimeSeriesAndIncludes(from, to, includes, start, pageSize);
     }
 }

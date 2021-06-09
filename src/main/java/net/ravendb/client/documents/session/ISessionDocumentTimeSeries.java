@@ -1,8 +1,10 @@
 package net.ravendb.client.documents.session;
 
+import net.ravendb.client.documents.session.loaders.ITimeSeriesIncludeBuilder;
 import net.ravendb.client.documents.session.timeSeries.TimeSeriesEntry;
 
 import java.util.Date;
+import java.util.function.Consumer;
 
 /**
  * Time series synchronous session operations
@@ -49,4 +51,34 @@ public interface ISessionDocumentTimeSeries extends ISessionDocumentAppendTimeSe
      * @return time series values
      */
     TimeSeriesEntry[] get(Date from, Date to, int start, int pageSize);
+
+    /**
+     * Return the time series values for the provided range
+     * @param from range start
+     * @param to range end
+     * @param includes includes
+     * @return time series values
+     */
+    TimeSeriesEntry[] get(Date from, Date to, Consumer<ITimeSeriesIncludeBuilder> includes);
+
+    /**
+     * Return the time series values for the provided range
+     * @param from range start
+     * @param to range end
+     * @param includes includes
+     * @param start start
+     * @return time series values
+     */
+    TimeSeriesEntry[] get(Date from, Date to, Consumer<ITimeSeriesIncludeBuilder> includes, int start);
+
+    /**
+     * Return the time series values for the provided range
+     * @param from range start
+     * @param to range end
+     * @param includes includes
+     * @param start start
+     * @param pageSize page size
+     * @return time series values
+     */
+    TimeSeriesEntry[] get(Date from, Date to, Consumer<ITimeSeriesIncludeBuilder> includes, int start, int pageSize);
 }
