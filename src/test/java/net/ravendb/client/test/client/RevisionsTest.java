@@ -4,6 +4,7 @@ import net.ravendb.client.Constants;
 import net.ravendb.client.RemoteTestBase;
 import net.ravendb.client.documents.DocumentStore;
 import net.ravendb.client.documents.IDocumentStore;
+import net.ravendb.client.documents.Lazy;
 import net.ravendb.client.documents.commands.GetRevisionsBinEntryCommand;
 import net.ravendb.client.documents.operations.revisions.ConfigureRevisionsOperation;
 import net.ravendb.client.documents.operations.revisions.RevisionsCollectionConfiguration;
@@ -244,6 +245,54 @@ public class RevisionsTest extends RemoteTestBase {
                 store.maintenance().send(new ConfigureRevisionsOperation(configuration));
             })
                     .isInstanceOf(RavenException.class);
+        }
+    }
+
+    @Test
+    public void canGetRevisionsByChangeVectorsLazily() throws Exception {
+        try (IDocumentStore store = getDocumentStore()) {
+            String id = "users/1";
+            setupRevisions(store, false, 123);
+            try (IDocumentSession session = store.openSession()) {
+                User user = new User();
+                user.setName("Omer");
+                session.store(user, id);
+                session.saveChanges();
+            }
+
+            for (int i = 0; i < 10; i++) {
+                try (IDocumentSession session = store.openSession()) {
+                    Company user = session.load(Company.class, id);
+                    user.setName("Omer" + i);
+                    session.saveChanges();
+                }
+            }
+
+            try (IDocumentSession session = store.openSession()) {
+                List<MetadataAsDictionary> revisionsMetadata = session.advanced().revisions().getMetadataFor(id);
+                assertThat(revisionsMetadata)
+                        .hasSize(11);
+
+                String[] changeVectors = revisionsMetadata
+                        .stream()
+                        .map(x -> x.getString(Constants.Documents.Metadata.CHANGE_VECTOR))
+                        .toArray(String[]::new);
+                String[] changeVectors2 = revisionsMetadata
+                        .stream()
+                        .map(x -> x.getString(Constants.Documents.Metadata.CHANGE_VECTOR))
+                        .toArray(String[]::new);
+
+                Lazy<Map<String, User>> revisionsLazy = session.advanced().revisions().lazily().get(User.class, changeVectors);
+                Lazy<Map<String, User>> revisionsLazy2 = session.advanced().revisions().lazily().get(User.class, changeVectors2);
+
+                Map<String, User> lazyResult = revisionsLazy.getValue();
+                Map<String, User> revisions = session.advanced().revisions().get(User.class, changeVectors);
+
+                assertThat(session.advanced().getNumberOfRequests())
+                        .isEqualTo(3);
+                assertThat(lazyResult.keySet())
+                        .isEqualTo(revisions.keySet());
+            }
         }
     }
 }

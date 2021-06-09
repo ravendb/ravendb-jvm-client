@@ -1093,7 +1093,7 @@ public class DocumentSession extends InMemoryDocumentSessionOperations
     }
 
     @Override
-    public <T> Tuple<T, String> conditionalLoad(Class<T> clazz, String id, String changeVector) {
+    public <T> ConditionalLoadResult<T> conditionalLoad(Class<T> clazz, String id, String changeVector) {
         if (StringUtils.isEmpty(id)) {
             throw new IllegalArgumentException("Id cannot be null");
         }
@@ -1101,11 +1101,11 @@ public class DocumentSession extends InMemoryDocumentSessionOperations
         if (advanced().isLoaded(id)) {
             T entity = load(clazz, id);
             if (entity == null) {
-                return Tuple.create(null, null);
+                return ConditionalLoadResult.create(null, null);
             }
 
             String cv = advanced().getChangeVectorFor(entity);
-            return Tuple.create(entity, cv);
+            return ConditionalLoadResult.create(entity, cv);
         }
 
         if (StringUtils.isEmpty(changeVector)) {
@@ -1119,14 +1119,14 @@ public class DocumentSession extends InMemoryDocumentSessionOperations
 
         switch (cmd.getStatusCode()) {
             case HttpStatus.SC_NOT_MODIFIED:
-                return Tuple.create(null, changeVector); // value not changed
+                return ConditionalLoadResult.create(null, changeVector); // value not changed
             case HttpStatus.SC_NOT_FOUND:
                 registerMissing(id);;
-                return Tuple.create(null, null); // value is missing
+                return ConditionalLoadResult.create(null, null); // value is missing
         }
 
         DocumentInfo documentInfo = DocumentInfo.getNewDocumentInfo((ObjectNode) cmd.getResult().getResults().get(0));
         T r = trackEntity(clazz, documentInfo);
-        return Tuple.create(r, cmd.getResult().getChangeVector());
+        return ConditionalLoadResult.create(r, cmd.getResult().getChangeVector());
     }
 }

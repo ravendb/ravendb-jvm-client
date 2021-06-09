@@ -53,10 +53,8 @@ public class ConditionalGetDocumentsCommand extends RavenCommand<ConditionalGetD
         }
 
         ResponseDisposeHandling result = super.processResponse(cache, response, url);
-        throw new NotImplementedException(); //TODO: Result.ChangeVector = response.Headers.ETag.Tag;
-        /* TODO
-        this.result.setChangeVector(response.getFirstHeader("ETag").getValue()); //TODO: check me!
-        return result; */
+        this.result.setChangeVector(response.getFirstHeader("ETag").getValue());
+        return result;
     }
 
     /**

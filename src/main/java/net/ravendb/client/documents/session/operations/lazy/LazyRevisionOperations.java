@@ -46,7 +46,7 @@ public class LazyRevisionOperations implements ILazyRevisionsOperations {
     public <T> Lazy<Map<String, T>> get(Class<T> clazz, String[] changeVectors) {
         GetRevisionOperation operation = new GetRevisionOperation(delegate, changeVectors);
         LazyRevisionOperation<T> lazyRevisionOperation = new LazyRevisionOperation<>(clazz, operation, LazyRevisionOperation.Mode.MAP);
-        return delegate.addLazyOperation((Class<Map<String, T>>)clazz, lazyRevisionOperation, null);
+        return delegate.addLazyOperation((Class<Map<String, T>>)(Class<?>)Map.class, lazyRevisionOperation, null);
     }
 
     @Override

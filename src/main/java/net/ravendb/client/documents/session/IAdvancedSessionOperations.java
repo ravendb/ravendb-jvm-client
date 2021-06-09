@@ -360,6 +360,6 @@ public interface IAdvancedSessionOperations extends IAdvancedDocumentSessionOper
      * @param <T> Result class
      * @return Entity and change vector
      */
-    <T> Tuple<T, String> conditionalLoad(Class<T> clazz, String id, String changeVector);
+    <T> ConditionalLoadResult<T> conditionalLoad(Class<T> clazz, String id, String changeVector);
 
 }
