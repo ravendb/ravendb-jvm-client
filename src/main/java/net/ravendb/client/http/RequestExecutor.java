@@ -1517,7 +1517,7 @@ public class RequestExecutor implements CleanCloseable {
     }
 
     private void spawnHealthChecks(ServerNode chosenNode, int nodeIndex) {
-        if (_nodeSelector != null && _nodeSelector.getTopology().getNodes().size() < 1) {
+        if (_nodeSelector != null && _nodeSelector.getTopology().getNodes().size() < 2) {
             return;
         }
 
