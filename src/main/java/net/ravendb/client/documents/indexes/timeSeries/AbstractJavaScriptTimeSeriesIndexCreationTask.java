@@ -1,5 +1,6 @@
 package net.ravendb.client.documents.indexes.timeSeries;
 
+import net.ravendb.client.documents.indexes.AbstractIndexCreationTaskBase;
 import net.ravendb.client.documents.indexes.IndexFieldOptions;
 import net.ravendb.client.documents.indexes.IndexType;
 
@@ -8,7 +9,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-public class AbstractJavaScriptTimeSeriesIndexCreationTask extends AbstractTimeSeriesIndexCreationTask {
+public class AbstractJavaScriptTimeSeriesIndexCreationTask extends AbstractIndexCreationTaskBase<TimeSeriesIndexDefinition> {
 
     private final TimeSeriesIndexDefinition _definition = new TimeSeriesIndexDefinition();
 

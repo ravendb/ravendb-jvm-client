@@ -70,6 +70,6 @@ public class LazyRevisionOperations implements ILazyRevisionsOperations {
     public <T> Lazy<List<T>> getFor(Class<T> clazz, String id, int start, int pageSize) {
         GetRevisionOperation operation = new GetRevisionOperation(delegate, id, start, pageSize);
         LazyRevisionOperation<T> lazyRevisionOperation = new LazyRevisionOperation<>(clazz, operation, LazyRevisionOperation.Mode.MULTI);
-        return delegate.addLazyOperation((Class<List<T>>)clazz, lazyRevisionOperation, null);
+        return delegate.addLazyOperation((Class<List<T>>)(Class<?>)List.class, lazyRevisionOperation, null);
     }
 }

@@ -6,9 +6,9 @@ import net.ravendb.client.documents.DocumentStore;
 import net.ravendb.client.documents.IDocumentStore;
 import net.ravendb.client.documents.Lazy;
 import net.ravendb.client.documents.commands.GetRevisionsBinEntryCommand;
-import net.ravendb.client.documents.operations.revisions.ConfigureRevisionsOperation;
-import net.ravendb.client.documents.operations.revisions.RevisionsCollectionConfiguration;
-import net.ravendb.client.documents.operations.revisions.RevisionsConfiguration;
+import net.ravendb.client.documents.operations.DatabaseStatistics;
+import net.ravendb.client.documents.operations.GetStatisticsOperation;
+import net.ravendb.client.documents.operations.revisions.*;
 import net.ravendb.client.documents.session.IDocumentSession;
 import net.ravendb.client.exceptions.RavenException;
 import net.ravendb.client.infrastructure.entities.Company;
@@ -17,6 +17,7 @@ import net.ravendb.client.json.JsonArrayResult;
 import net.ravendb.client.json.MetadataAsDictionary;
 import org.junit.jupiter.api.Test;
 
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -30,7 +31,6 @@ public class RevisionsTest extends RemoteTestBase {
     public void revisions() throws Exception {
         try (DocumentStore store = getDocumentStore()) {
             setupRevisions(store, false, 4);
-
 
             for (int i = 0; i < 4; i++) {
                 try (IDocumentSession session = store.openSession()) {
@@ -292,6 +292,350 @@ public class RevisionsTest extends RemoteTestBase {
                         .isEqualTo(3);
                 assertThat(lazyResult.keySet())
                         .isEqualTo(revisions.keySet());
+            }
+        }
+    }
+
+    @Test
+    public void canGetForLazily() throws Exception {
+        try (IDocumentStore store = getDocumentStore()) {
+            String id = "users/1";
+            String id2 = "users/2";
+
+            setupRevisions(store, false, 123);
+
+            try (IDocumentSession session = store.openSession()) {
+                User user1 = new User();
+                user1.setName("Omer");
+                session.store(user1, id);
+
+                User user2 = new User();
+                user2.setName("Rhinos");
+                session.store(user2, id2);
+
+                session.saveChanges();
+            }
+
+            for (int i = 0; i < 10; i++) {
+                try (IDocumentSession session = store.openSession()) {
+                    Company user = session.load(Company.class, id);
+                    user.setName("Omer" + i);
+                    session.saveChanges();
+                }
+            }
+
+            try (IDocumentSession session = store.openSession()) {
+                List<User> revision = session.advanced().revisions().getFor(User.class, "users/1");
+                Lazy<List<User>> revisionsLazily = session.advanced().revisions().lazily().getFor(User.class, "users/1");
+                session.advanced().revisions().lazily().getFor(User.class, "users/2");
+
+                List<User> revisionsLazilyResult = revisionsLazily.getValue();
+
+                assertThat(revision.stream().map(User::getName).collect(Collectors.joining(",")))
+                        .isEqualTo(revisionsLazilyResult.stream().map(User::getName).collect(Collectors.joining(",")));
+                assertThat(revision.stream().map(User::getId).collect(Collectors.joining(",")))
+                        .isEqualTo(revisionsLazilyResult.stream().map(User::getId).collect(Collectors.joining(",")));
+
+                assertThat(session.advanced().getNumberOfRequests())
+                        .isEqualTo(2);
+            }
+        }
+    }
+
+    @Test
+    public void canGetRevisionsByIdAndTimeLazily() throws Exception {
+        try (IDocumentStore store = getDocumentStore()) {
+            String id = "users/1";
+            String id2 = "users/2";
+
+            setupRevisions(store, false, 123);
+
+            try (IDocumentSession session = store.openSession()) {
+                User user1 = new User();
+                user1.setName("Omer");
+                session.store(user1, id);
+
+                User user2 = new User();
+                user2.setName("Rhinos");
+                session.store(user2, id2);
+
+                session.saveChanges();
+            }
+
+            for (int i = 0; i < 10; i++) {
+                try (IDocumentSession session = store.openSession()) {
+                    Company user = session.load(Company.class, id);
+                    user.setName("Omer" + i);
+                    session.saveChanges();
+                }
+            }
+
+            try (IDocumentSession session = store.openSession()) {
+                User revision = session.advanced().revisions().get(User.class, "users/1", new Date());
+
+                Lazy<User> revisionLazily = session.advanced().revisions().lazily().get(User.class, "users/1", new Date());
+                session.advanced().revisions().lazily().get(User.class, "users/2", new Date());
+
+                User revisionLazilyResult = revisionLazily.getValue();
+
+                assertThat(revision.getId())
+                        .isEqualTo(revisionLazilyResult.getId());
+                assertThat(revisionLazilyResult.getName())
+                        .isEqualTo(revisionLazilyResult.getName());
+                assertThat(session.advanced().getNumberOfRequests())
+                        .isEqualTo(2);
+            }
+        }
+    }
+
+    @Test
+    public void canGetMetadataForLazily() throws Exception {
+        try (IDocumentStore store = getDocumentStore()) {
+            String id = "users/1";
+            String id2 = "users/2";
+
+            setupRevisions(store, false, 123);
+
+            try (IDocumentSession session = store.openSession()) {
+                User user1 = new User();
+                user1.setName("Omer");
+                session.store(user1, id);
+
+                User user2 = new User();
+                user2.setName("Rhinos");
+                session.store(user2, id2);
+
+                session.saveChanges();
+            }
+
+            for (int i = 0; i < 10; i++) {
+                try (IDocumentSession session = store.openSession()) {
+                    Company user = session.load(Company.class, id);
+                    user.setName("Omer" + i);
+                    session.saveChanges();
+                }
+            }
+
+            try (IDocumentSession session = store.openSession()) {
+                List<MetadataAsDictionary> revisionsMetadata = session.advanced().revisions().getMetadataFor(id);
+                Lazy<List<MetadataAsDictionary>> revisionsMetaDataLazily = session.advanced().revisions().lazily().getMetadataFor(id);
+                Lazy<List<MetadataAsDictionary>> revisionsMetaDataLazily2 = session.advanced().revisions().lazily().getMetadataFor(id2);
+                List<MetadataAsDictionary> revisionsMetaDataLazilyResult = revisionsMetaDataLazily.getValue();
+
+                assertThat(revisionsMetadata.stream().map(x -> x.getString("@id")).collect(Collectors.joining(",")))
+                        .isEqualTo(revisionsMetaDataLazilyResult.stream().map(x -> x.getString("@id")).collect(Collectors.joining(",")));
+
+                assertThat(session.advanced().getNumberOfRequests())
+                        .isEqualTo(2);
+            }
+        }
+    }
+
+    @Test
+    public void canGetRevisionsByChangeVectorLazily() throws Exception {
+        try (IDocumentStore store = getDocumentStore()) {
+
+
+            String id = "users/1";
+            String id2 = "users/2";
+
+            setupRevisions(store, false, 123);
+
+            try (IDocumentSession session = store.openSession()) {
+                User user1 = new User();
+                user1.setName("Omer");
+                session.store(user1, id);
+
+                User user2 = new User();
+                user2.setName("Rhinos");
+                session.store(user2, id2);
+
+                session.saveChanges();
+            }
+
+            for (int i = 0; i < 10; i++) {
+                try (IDocumentSession session = store.openSession()) {
+                    Company user = session.load(Company.class, id);
+                    user.setName("Omer" + i);
+                    session.saveChanges();
+                }
+            }
+
+            DatabaseStatistics stats = store.maintenance().send(new GetStatisticsOperation());
+            String dbId = stats.getDatabaseId();
+
+            String cv = "A:23-" + dbId;
+            String cv2 = "A:3-" + dbId;
+
+            try (IDocumentSession session = store.openSession()) {
+                User revisions = session.advanced().revisions().get(User.class, cv);
+                Lazy<User> revisionsLazily = session.advanced().revisions().lazily().get(User.class, cv);
+                Lazy<User> revisionsLazily1 = session.advanced().revisions().lazily().get(User.class, cv2);
+
+                User revisionsLazilyValue = revisionsLazily.getValue();
+
+                assertThat(session.advanced().getNumberOfRequests())
+                        .isEqualTo(2);
+                assertThat(revisionsLazilyValue.getId())
+                        .isEqualTo(revisions.getId());
+                assertThat(revisionsLazilyValue.getName())
+                        .isEqualTo(revisions.getName());
+            }
+        }
+    }
+
+    @Test
+    public void canGetAllRevisionsForDocument_UsingStoreOperation() throws Exception {
+        Company company = new Company();
+        company.setName("Company Name");
+        try (IDocumentStore store = getDocumentStore()) {
+            setupRevisions(store, false, 123);
+
+            try (IDocumentSession session = store.openSession()) {
+                session.store(company);
+                session.saveChanges();
+            }
+
+            try (IDocumentSession session = store.openSession()) {
+                Company company3 = session.load(Company.class, company.getId());
+                company3.setName("Hibernating Rhinos");
+                session.saveChanges();
+            }
+
+            RevisionsResult<Company> revisionsResult = store.operations().send(new GetRevisionsOperation<>(Company.class, company.getId()));
+
+            assertThat(revisionsResult.getTotalResults())
+                    .isEqualTo(2);
+
+            List<Company> companiesRevisions = revisionsResult.getResults();
+            assertThat(companiesRevisions)
+                    .hasSize(2);
+            assertThat(companiesRevisions.get(0).getName())
+                    .isEqualTo("Hibernating Rhinos");
+            assertThat(companiesRevisions.get(1).getName())
+                    .isEqualTo("Company Name");
+        }
+    }
+
+    @Test
+    public void canGetRevisionsWithPaging_UsingStoreOperation() throws Exception {
+        try (IDocumentStore store = getDocumentStore()) {
+            setupRevisions(store, false, 123);
+
+            String id = "companies/1";
+
+            try (IDocumentSession session = store.openSession()) {
+                session.store(new Company(), id);
+                session.saveChanges();
+            }
+
+            try (IDocumentSession session = store.openSession()) {
+                Company company2 = session.load(Company.class, id);
+                company2.setName("Hibernating");
+                session.saveChanges();
+            }
+
+            try (IDocumentSession session = store.openSession()) {
+                Company company3 = session.load(Company.class, id);
+                company3.setName("Hibernating Rhinos");
+                session.saveChanges();
+            }
+
+            for (int i = 0; i < 10; i++) {
+                try (IDocumentSession session = store.openSession()) {
+                    Company company = session.load(Company.class, id);
+                    company.setName("HR" + i);
+                    session.saveChanges();
+                }
+            }
+
+            GetRevisionsOperation.Parameters parameters = new GetRevisionsOperation.Parameters();
+            parameters.setId(id);
+            parameters.setStart(10);
+            RevisionsResult<Company> revisionsResult = store.operations().send(new GetRevisionsOperation<>(Company.class, parameters));
+
+            assertThat(revisionsResult.getTotalResults())
+                    .isEqualTo(13);
+
+            List<Company> companiesRevisions = revisionsResult.getResults();
+            assertThat(companiesRevisions)
+                    .hasSize(3);
+
+            assertThat(companiesRevisions.get(0).getName())
+                    .isEqualTo("Hibernating Rhinos");
+            assertThat(companiesRevisions.get(1).getName())
+                    .isEqualTo("Hibernating");
+            assertThat(companiesRevisions.get(2).getName())
+                    .isNull();
+        }
+    }
+
+    @Test
+    public void canGetRevisionsWithPaging2_UsingStoreOperation() throws Exception {
+        try (IDocumentStore store = getDocumentStore()) {
+            setupRevisions(store, false, 100);
+
+            String id = "companies/1";
+
+            try (IDocumentSession session = store.openSession()) {
+                session.store(new Company(), id);
+                session.saveChanges();
+            }
+
+            for (int i = 0; i < 99; i++) {
+                try (IDocumentSession session = store.openSession()) {
+                    Company company = session.load(Company.class, id);
+                    company.setName("HR" + i);
+                    session.saveChanges();
+                }
+            }
+
+            RevisionsResult<Company> revisionsResult = store.operations().send(new GetRevisionsOperation<>(Company.class, id, 50, 10));
+
+            assertThat(revisionsResult.getTotalResults())
+                    .isEqualTo(100);
+
+            List<Company> companiesRevisions = revisionsResult.getResults();
+            assertThat(companiesRevisions)
+                    .hasSize(10);
+
+            int count = 0;
+            for (int i = 48; i > 38; i--) {
+                assertThat(companiesRevisions.get(count++).getName())
+                        .isEqualTo("HR" + i);
+            }
+        }
+    }
+
+    @Test
+    public void canGetRevisionsCountFor() throws Exception {
+        Company company = new Company();
+        company.setName("Company Name");
+
+        try (IDocumentStore store = getDocumentStore()) {
+            setupRevisions(store, false, 100);
+
+            try (IDocumentSession session = store.openSession()) {
+                session.store(company);
+                session.saveChanges();
+            }
+
+            try (IDocumentSession session = store.openSession()) {
+                Company company2 = session.load(Company.class, company.getId());
+                company2.setAddress1("Israel");
+                session.saveChanges();
+            }
+
+            try (IDocumentSession session = store.openSession()) {
+                Company company3 = session.load(Company.class, company.getId());
+                company3.setName("Hibernating Rhinos");
+                session.saveChanges();
+            }
+
+            try (IDocumentSession session = store.openSession()) {
+                long companiesRevisionsCount = session.advanced().revisions().getCountFor(company.getId());
+                assertThat(companiesRevisionsCount)
+                        .isEqualTo(3);
             }
         }
     }

@@ -1,16 +1,13 @@
 package net.ravendb.client.documents.indexes.counters;
 
-import net.ravendb.client.documents.indexes.AdditionalAssembly;
-import net.ravendb.client.documents.indexes.IndexDefinition;
-import net.ravendb.client.documents.indexes.IndexFieldOptions;
-import net.ravendb.client.documents.indexes.IndexType;
+import net.ravendb.client.documents.indexes.*;
 
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-public class AbstractJavaScriptCountersIndexCreationTask extends AbstractCountersIndexCreationTask {
+public class AbstractJavaScriptCountersIndexCreationTask extends AbstractIndexCreationTaskBase<CountersIndexDefinition> {
 
     private final CountersIndexDefinition _definition = new CountersIndexDefinition();
 
