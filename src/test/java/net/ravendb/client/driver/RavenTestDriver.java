@@ -297,7 +297,7 @@ public abstract class RavenTestDriver {
 
     public void waitForUserToContinueTheTest(IDocumentStore store) {
         String databaseNameEncoded = UrlUtils.escapeDataString(store.getDatabase());
-        String documentsPage = store.getUrls()[0] + "/studio/index.html#databases/documents?&database=" + databaseNameEncoded + "&withStop=true";
+        String documentsPage = store.getUrls()[0] + "/studio/index.html#databases/documents?&database=" + databaseNameEncoded + "&withStop=true&disableAnalytics=true";
 
         openBrowser(documentsPage);
 

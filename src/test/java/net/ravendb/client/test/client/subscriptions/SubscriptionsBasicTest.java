@@ -1,6 +1,7 @@
 package net.ravendb.client.test.client.subscriptions;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import net.ravendb.client.RavenTestHelper;
 import net.ravendb.client.RemoteTestBase;
 import net.ravendb.client.documents.BulkInsertOperation;
 import net.ravendb.client.documents.DocumentStore;
@@ -9,7 +10,10 @@ import net.ravendb.client.documents.operations.GetOngoingTaskInfoOperation;
 import net.ravendb.client.documents.operations.ongoingTasks.OngoingTaskSubscription;
 import net.ravendb.client.documents.operations.ongoingTasks.OngoingTaskType;
 import net.ravendb.client.documents.operations.ongoingTasks.ToggleOngoingTaskStateOperation;
+import net.ravendb.client.documents.operations.timeSeries.TimeSeriesRangeType;
 import net.ravendb.client.documents.session.IDocumentSession;
+import net.ravendb.client.documents.session.ISessionDocumentTimeSeries;
+import net.ravendb.client.documents.session.timeSeries.TimeSeriesEntry;
 import net.ravendb.client.documents.subscriptions.*;
 import net.ravendb.client.exceptions.documents.subscriptions.SubscriberErrorException;
 import net.ravendb.client.exceptions.documents.subscriptions.SubscriptionClosedException;
@@ -18,11 +22,14 @@ import net.ravendb.client.exceptions.documents.subscriptions.SubscriptionInUseEx
 import net.ravendb.client.infrastructure.entities.Company;
 import net.ravendb.client.infrastructure.entities.User;
 import net.ravendb.client.primitives.ExceptionsUtils;
+import net.ravendb.client.primitives.TimeValue;
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang3.time.DateUtils;
 import org.eclipse.jetty.util.BlockingArrayQueue;
 import org.junit.jupiter.api.Test;
 
 import java.time.Duration;
+import java.util.Date;
 import java.util.List;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -884,4 +891,267 @@ public class SubscriptionsBasicTest extends RemoteTestBase {
         }
     }
 
+    @Test
+    public void canCreateSubscriptionWithIncludeTimeSeries_LastRangeByTime() throws Exception {
+        Date now = RavenTestHelper.utcToday();
+
+        try (IDocumentStore store = getDocumentStore()) {
+            SubscriptionCreationOptions subscriptionCreationOptions = new SubscriptionCreationOptions();
+            subscriptionCreationOptions.setIncludes(b -> b.includeTimeSeries("stockPrice", TimeSeriesRangeType.LAST, TimeValue.ofMonths(1)));
+
+            String name = store.subscriptions()
+                    .create(Company.class, subscriptionCreationOptions);
+
+            try (SubscriptionWorker<Company> worker = store.subscriptions().getSubscriptionWorker(Company.class, name)) {
+                Semaphore mre = new Semaphore(0);
+
+                worker.run(batch -> {
+                    try (IDocumentSession session = batch.openSession()) {
+                        assertThat(session.advanced().getNumberOfRequests())
+                                .isZero();
+
+                        Company company = session.load(Company.class, "companies/1");
+                        assertThat(session.advanced().getNumberOfRequests())
+                                .isZero();
+
+                        ISessionDocumentTimeSeries timeSeries = session.timeSeriesFor(company, "stockPrice");
+                        TimeSeriesEntry[] timeSeriesEntries = timeSeries.get(DateUtils.addDays(now, -7), null);
+
+                        assertThat(timeSeriesEntries)
+                                .hasSize(1);
+                        assertThat(timeSeriesEntries[0].getTimestamp())
+                                .isEqualTo(now);
+                        assertThat(timeSeriesEntries[0].getValue())
+                                .isEqualTo(10);
+
+                        assertThat(session.advanced().getNumberOfRequests())
+                                .isEqualTo(0);
+                    }
+
+                    mre.release();
+                });
+
+                try (IDocumentSession session = store.openSession()) {
+                    Company company = new Company();
+                    company.setId("companies/1");
+                    company.setName("HR");
+
+                    session.store(company);
+
+                    session.timeSeriesFor(company, "stockPrice")
+                            .append(now, 10);
+
+                    session.saveChanges();
+                }
+
+                assertThat(mre.tryAcquire(30, TimeUnit.SECONDS))
+                        .isTrue();
+            }
+        }
+    }
+
+    @Test
+    public void canCreateSubscriptionWithIncludeTimeSeries_LastRangeByCount() throws Exception {
+        Date now = RavenTestHelper.utcToday();
+
+        try (IDocumentStore store = getDocumentStore()) {
+            SubscriptionCreationOptions creationOptions = new SubscriptionCreationOptions();
+            creationOptions.setIncludes(b -> b.includeTimeSeries("stockPrice", TimeSeriesRangeType.LAST, 32));
+            String name = store.subscriptions()
+                    .create(Company.class, creationOptions);
+
+            Semaphore mre = new Semaphore(0);
+
+            try (SubscriptionWorker<Company> worker = store.subscriptions().getSubscriptionWorker(Company.class, name)) {
+                worker.run(batch -> {
+                    try (IDocumentSession session = batch.openSession()) {
+                        assertThat(session.advanced().getNumberOfRequests())
+                                .isZero();
+
+                        Company company = session.load(Company.class, "companies/1");
+                        assertThat(session.advanced().getNumberOfRequests())
+                                .isZero();
+
+                        ISessionDocumentTimeSeries timeSeries = session.timeSeriesFor(company, "stockPrice");
+                        TimeSeriesEntry[] timeSeriesEntries = timeSeries.get(DateUtils.addDays(now, -7), null);
+
+                        assertThat(timeSeriesEntries)
+                                .hasSize(1);
+                        assertThat(timeSeriesEntries[0].getTimestamp())
+                                .isEqualTo(DateUtils.addDays(now, -7));
+                        assertThat(timeSeriesEntries[0].getValue())
+                                .isEqualTo(10);
+
+                        assertThat(session.advanced().getNumberOfRequests())
+                                .isZero();
+                    }
+
+                    mre.release();
+                });
+
+                try (IDocumentSession session = store.openSession()) {
+                    Company company = new Company();
+                    company.setId("companies/1");
+                    company.setName("HR");
+
+                    session.store(company);
+
+                    session.timeSeriesFor(company, "stockPrice")
+                            .append(DateUtils.addDays(now, -7), 10);
+                    session.saveChanges();
+                }
+
+                assertThat(mre.tryAcquire(30, TimeUnit.SECONDS))
+                        .isTrue();
+            }
+        }
+    }
+
+    @Test
+    public void canCreateSubscriptionWithIncludeTimeSeries_Array_LastRange() throws Exception {
+        Date now = RavenTestHelper.utcToday();
+
+        try (IDocumentStore store = getDocumentStore()) {
+            SubscriptionCreationOptions creationOptions = new SubscriptionCreationOptions();
+            creationOptions.setIncludes(builder
+                    -> builder.includeTimeSeries(
+                            new String[] { "stockPrice", "stockPrice2" }, TimeSeriesRangeType.LAST, TimeValue.ofDays(7)));
+
+            String name = store.subscriptions().create(Company.class, creationOptions);
+
+            Semaphore mre = new Semaphore(0);
+
+            try (SubscriptionWorker<Company> worker = store.subscriptions().getSubscriptionWorker(Company.class, name)) {
+                worker.run(batch -> {
+                    try (IDocumentSession session = batch.openSession()) {
+                        assertThat(session.advanced().getNumberOfRequests())
+                                .isZero();
+
+                        Company company = session.load(Company.class, "companies/1");
+                        assertThat(session.advanced().getNumberOfRequests())
+                                .isZero();
+
+                        ISessionDocumentTimeSeries timeSeries = session.timeSeriesFor(company, "stockPrice");
+                        TimeSeriesEntry[] timeSeriesEntries = timeSeries.get(DateUtils.addDays(now, -7), null);
+
+                        assertThat(timeSeriesEntries)
+                                .hasSize(1);
+                        assertThat(timeSeriesEntries[0].getTimestamp())
+                                .isEqualTo(DateUtils.addDays(now, -7));
+                        assertThat(timeSeriesEntries[0].getValue())
+                                .isEqualTo(10);
+
+                        assertThat(session.advanced().getNumberOfRequests())
+                                .isEqualTo(0);
+
+                        timeSeries = session.timeSeriesFor(company, "stockPrice2");
+                        timeSeriesEntries = timeSeries.get(DateUtils.addDays(now, -5), null);
+
+                        assertThat(timeSeriesEntries)
+                                .hasSize(1);
+                        assertThat(timeSeriesEntries[0].getTimestamp())
+                                .isEqualTo(DateUtils.addDays(now, -5));
+                        assertThat(timeSeriesEntries[0].getValue())
+                                .isEqualTo(100);
+
+                        assertThat(session.advanced().getNumberOfRequests())
+                                .isEqualTo(0);
+                    }
+
+                    mre.release();
+                });
+
+                try (IDocumentSession session = store.openSession()) {
+                    Company company = new Company();
+                    company.setId("companies/1");
+                    company.setName("HR");
+
+                    session.store(company);
+
+                    session.timeSeriesFor(company, "stockPrice")
+                            .append(DateUtils.addDays(now, -7), 10);
+                    session.timeSeriesFor(company, "stockPrice2")
+                            .append(DateUtils.addDays(now, -5), 100);
+
+                    session.saveChanges();
+                }
+
+                assertThat(mre.tryAcquire(30, TimeUnit.SECONDS))
+                        .isTrue();
+            }
+        }
+    }
+
+    @Test
+    public void canCreateSubscriptionWithIncludeTimeSeries_All_LastRange() throws Exception {
+        Date now = RavenTestHelper.utcToday();
+
+        try (IDocumentStore store = getDocumentStore()) {
+            SubscriptionCreationOptions creationOptions = new SubscriptionCreationOptions();
+            creationOptions.setIncludes(builder -> builder.includeAllTimeSeries(TimeSeriesRangeType.LAST, TimeValue.ofDays(7)));
+
+            String name = store.subscriptions().create(Company.class, creationOptions);
+
+            Semaphore mre = new Semaphore(0);
+
+            try (SubscriptionWorker<Company> worker = store.subscriptions().getSubscriptionWorker(Company.class, name)) {
+                worker.run(batch -> {
+                    try (IDocumentSession session = batch.openSession()) {
+                        assertThat(session.advanced().getNumberOfRequests())
+                                .isZero();
+
+                        Company company = session.load(Company.class, "companies/1");
+                        assertThat(session.advanced().getNumberOfRequests())
+                                .isZero();
+
+                        ISessionDocumentTimeSeries timeSeries = session.timeSeriesFor(company, "stockPrice");
+                        TimeSeriesEntry[] timeSeriesEntries = timeSeries.get(DateUtils.addDays(now, -7), null);
+
+                        assertThat(timeSeriesEntries)
+                                .hasSize(1);
+                        assertThat(timeSeriesEntries[0].getTimestamp())
+                                .isEqualTo(DateUtils.addDays(now, -7));
+                        assertThat(timeSeriesEntries[0].getValue())
+                                .isEqualTo(10);
+
+                        assertThat(session.advanced().getNumberOfRequests())
+                                .isZero();
+
+                        timeSeries = session.timeSeriesFor(company, "stockPrice2");
+                        timeSeriesEntries = timeSeries.get(DateUtils.addDays(now, -5), null);
+
+                        assertThat(timeSeriesEntries)
+                                .hasSize(1);
+                        assertThat(timeSeriesEntries[0].getTimestamp())
+                                .isEqualTo(DateUtils.addDays(now, -5));
+                        assertThat(timeSeriesEntries[0].getValue())
+                                .isEqualTo(100);
+
+                        assertThat(session.advanced().getNumberOfRequests())
+                                .isZero();
+                    }
+
+                    mre.release();
+                });
+
+                try (IDocumentSession session = store.openSession()) {
+                    Company company = new Company();
+                    company.setId("companies/1");
+                    company.setName("HR");
+
+                    session.store(company);
+
+                    session.timeSeriesFor(company, "stockPrice")
+                            .append(DateUtils.addDays(now, -7), 10);
+                    session.timeSeriesFor(company, "stockPrice2")
+                            .append(DateUtils.addDays(now, -5), 100);
+
+                    session.saveChanges();
+                }
+
+                assertThat(mre.tryAcquire(30, TimeUnit.SECONDS))
+                        .isTrue();
+            }
+        }
+    }
 }
