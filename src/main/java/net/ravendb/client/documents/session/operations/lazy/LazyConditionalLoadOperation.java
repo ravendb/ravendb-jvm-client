@@ -6,10 +6,10 @@ import net.ravendb.client.documents.commands.ConditionalGetDocumentsCommand;
 import net.ravendb.client.documents.commands.multiGet.GetRequest;
 import net.ravendb.client.documents.commands.multiGet.GetResponse;
 import net.ravendb.client.documents.queries.QueryResult;
+import net.ravendb.client.documents.session.ConditionalLoadResult;
 import net.ravendb.client.documents.session.DocumentInfo;
 import net.ravendb.client.documents.session.InMemoryDocumentSessionOperations;
 import net.ravendb.client.extensions.JsonExtensions;
-import net.ravendb.client.primitives.Tuple;
 import net.ravendb.client.util.UrlUtils;
 import org.apache.commons.lang3.NotImplementedException;
 import org.apache.http.HttpStatus;
@@ -69,11 +69,11 @@ public class LazyConditionalLoadOperation<T> implements ILazyOperation {
 
         switch (response.getStatusCode()) {
             case HttpStatus.SC_NOT_MODIFIED:
-                result = Tuple.create(null, _changeVector); // value not changed
+                result = ConditionalLoadResult.create(null, _changeVector); // value not changed
                 return;
             case HttpStatus.SC_NOT_FOUND:
                 _session.registerMissing(_id);
-                result = Tuple.create(null, null);
+                result = ConditionalLoadResult.create(null, null);
                 return;
         }
 
@@ -85,7 +85,7 @@ public class LazyConditionalLoadOperation<T> implements ILazyOperation {
                 DocumentInfo documentInfo = DocumentInfo.getNewDocumentInfo((ObjectNode) res.getResults().get(0));
                 T r = _session.trackEntity(_clazz, documentInfo);
 
-                result = Tuple.create(r, etag);
+                result = ConditionalLoadResult.create(r, etag);
                 return;
             }
 

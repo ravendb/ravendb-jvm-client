@@ -141,6 +141,12 @@ public class TimeSeriesTypedSessionTest extends RemoteTestBase {
         public void setHeartRate(double heartRate) {
             this.heartRate = heartRate;
         }
+
+        public static HeartRateMeasure create(double value) {
+            HeartRateMeasure measure = new HeartRateMeasure();
+            measure.setHeartRate(value);
+            return measure;
+        }
     }
 
     public static class HeartRateMeasureWithCustomName {

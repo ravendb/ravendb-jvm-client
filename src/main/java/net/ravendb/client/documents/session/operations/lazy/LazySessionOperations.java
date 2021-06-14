@@ -1,11 +1,11 @@
 package net.ravendb.client.documents.session.operations.lazy;
 
 import net.ravendb.client.documents.Lazy;
+import net.ravendb.client.documents.session.ConditionalLoadResult;
 import net.ravendb.client.documents.session.DocumentSession;
 import net.ravendb.client.documents.session.loaders.ILazyLoaderWithInclude;
 import net.ravendb.client.documents.session.loaders.LazyMultiLoaderWithInclude;
 import net.ravendb.client.documents.session.operations.LoadOperation;
-import net.ravendb.client.primitives.Tuple;
 import org.apache.commons.lang3.StringUtils;
 
 import java.util.Collection;
@@ -84,7 +84,7 @@ public class LazySessionOperations implements ILazySessionOperations {
     }
 
     @Override
-    public <TResult> Lazy<Tuple<TResult, String>> conditionalLoad(Class<TResult> clazz, String id, String changeVector) {
+    public <TResult> Lazy<ConditionalLoadResult<TResult>> conditionalLoad(Class<TResult> clazz, String id, String changeVector) {
         if (StringUtils.isEmpty(id)) {
             throw new IllegalArgumentException("Id cannot be null");
         }
@@ -93,10 +93,10 @@ public class LazySessionOperations implements ILazySessionOperations {
             return new Lazy<>(() -> {
                 TResult entity = delegate.load(clazz, id);
                 if (entity == null) {
-                    return Tuple.create(null, null);
+                    return ConditionalLoadResult.create((TResult) null, null);
                 }
                 String cv = delegate.advanced().getChangeVectorFor(entity);
-                return Tuple.create(entity, cv);
+                return ConditionalLoadResult.create(entity, cv);
             });
         }
 
@@ -106,7 +106,7 @@ public class LazySessionOperations implements ILazySessionOperations {
         }
 
         LazyConditionalLoadOperation<TResult> lazyLoadOperation = new LazyConditionalLoadOperation<>(clazz, id, changeVector, delegate);
-        return delegate.addLazyOperation((Class<Tuple<TResult, String>>)clazz, lazyLoadOperation, null);
+        return delegate.addLazyOperation((Class<ConditionalLoadResult<TResult>>)(Class<?>)ConditionalLoadResult.class, lazyLoadOperation, null);
     }
 
     //TBD expr ILazyLoaderWithInclude<T> ILazySessionOperations.Include<T>(Expression<Func<T, string>> path)

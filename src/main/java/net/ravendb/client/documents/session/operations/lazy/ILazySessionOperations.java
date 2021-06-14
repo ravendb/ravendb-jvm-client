@@ -1,6 +1,7 @@
 package net.ravendb.client.documents.session.operations.lazy;
 
 import net.ravendb.client.documents.Lazy;
+import net.ravendb.client.documents.session.ConditionalLoadResult;
 import net.ravendb.client.documents.session.loaders.ILazyLoaderWithInclude;
 import net.ravendb.client.primitives.Tuple;
 
@@ -140,5 +141,5 @@ public interface ILazySessionOperations {
      * @param <TResult> Result class
      * @return Lazy Entity and change vector
      */
-    <TResult> Lazy<Tuple<TResult, String>> conditionalLoad(Class<TResult> clazz, String id, String changeVector);
+    <TResult> Lazy<ConditionalLoadResult<TResult>> conditionalLoad(Class<TResult> clazz, String id, String changeVector);
 }
