@@ -96,6 +96,11 @@ public class PatchCommandData implements ICommandData {
             patchIfMissing.serialize(generator, conventions.getEntityMapper());
         }
 
+        if (createIfMissing != null) {
+            generator.writeFieldName("CreateIfMissing");
+            generator.writeObject(createIfMissing);
+        }
+
         if (returnDocument) {
             generator.writeBooleanField("ReturnDocument", returnDocument);
         }

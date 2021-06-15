@@ -3,6 +3,7 @@ package net.ravendb.client.test.client.timeSeries;
 import net.ravendb.client.RemoteTestBase;
 import net.ravendb.client.documents.IDocumentStore;
 import net.ravendb.client.documents.operations.timeSeries.TimeSeriesRangeResult;
+import net.ravendb.client.documents.operations.timeSeries.TimeSeriesRangeType;
 import net.ravendb.client.documents.session.IDocumentQuery;
 import net.ravendb.client.documents.session.IDocumentSession;
 import net.ravendb.client.documents.session.ISessionDocumentTimeSeries;
@@ -10,6 +11,7 @@ import net.ravendb.client.documents.session.InMemoryDocumentSessionOperations;
 import net.ravendb.client.documents.session.timeSeries.TimeSeriesEntry;
 import net.ravendb.client.infrastructure.entities.Company;
 import net.ravendb.client.infrastructure.entities.Order;
+import net.ravendb.client.primitives.TimeValue;
 import org.apache.commons.lang3.time.DateUtils;
 import org.junit.jupiter.api.Test;
 
@@ -367,6 +369,42 @@ public class TimeSeriesIncludesTest extends RemoteTestBase {
                         .isEqualTo(DateUtils.addMinutes(baseLine, 0));
                 assertThat(ranges.get(0).getTo())
                         .isEqualTo(DateUtils.addMinutes(baseLine, 50));
+
+                // evict just the document
+                sessionOperations.documentsByEntity.evict(user);
+                sessionOperations.documentsById.remove(documentId);
+
+                // should go to server to get range [50, ∞]
+                // and merge the result with existing range [0, 50] into single range [0, ∞]
+
+                user = session.load(User.class, documentId,
+                        i -> i.includeTimeSeries("heartrate", TimeSeriesRangeType.LAST, TimeValue.ofMinutes(10)));
+
+                assertThat(session.advanced().getNumberOfRequests())
+                        .isEqualTo(8);
+
+                // should not go to server
+
+                vals = Arrays.asList(session.timeSeriesFor(documentId, "heartrate")
+                        .get(DateUtils.addMinutes(baseLine, 50), null));
+
+                assertThat(session.advanced().getNumberOfRequests())
+                        .isEqualTo(8);
+
+                assertThat(vals)
+                        .hasSize(60);
+
+                assertThat(vals.get(0).getTimestamp())
+                        .isEqualTo(DateUtils.addMinutes(baseLine, 50));
+                assertThat(vals.get(59).getTimestamp())
+                        .isEqualTo(DateUtils.addSeconds(DateUtils.addMinutes(baseLine, 59), 50));
+
+                assertThat(ranges)
+                        .hasSize(1);
+                assertThat(ranges.get(0).getFrom())
+                        .isEqualTo(baseLine);
+                assertThat(ranges.get(0).getTo())
+                        .isNull();
             }
         }
     }
