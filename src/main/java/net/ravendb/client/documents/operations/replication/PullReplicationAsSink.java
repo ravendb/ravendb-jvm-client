@@ -1,10 +1,14 @@
 package net.ravendb.client.documents.operations.replication;
 
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import net.ravendb.client.extensions.JsonExtensions;
 import org.apache.commons.lang3.ObjectUtils;
+
+import java.util.EnumSet;
 
 public class PullReplicationAsSink extends ExternalReplicationBase {
 
-    private PullReplicationMode mode = PullReplicationMode.HUB_TO_SINK;
+    private EnumSet<PullReplicationMode> mode = EnumSet.of(PullReplicationMode.HUB_TO_SINK);
 
     private String[] allowedHubToSinkPaths;
     private String[] allowedSinkToHubPaths;
@@ -25,11 +29,12 @@ public class PullReplicationAsSink extends ExternalReplicationBase {
         this.hubName = hubName;
     }
 
-    public PullReplicationMode getMode() {
+    @JsonSerialize(using = JsonExtensions.SharpEnumSetSerializer.class)
+    public EnumSet<PullReplicationMode> getMode() {
         return mode;
     }
 
-    public void setMode(PullReplicationMode mode) {
+    public void setMode(EnumSet<PullReplicationMode> mode) {
         this.mode = mode;
     }
 

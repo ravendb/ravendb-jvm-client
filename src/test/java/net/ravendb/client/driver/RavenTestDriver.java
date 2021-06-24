@@ -256,6 +256,22 @@ public abstract class RavenTestDriver {
         throw new TimeoutException("Got no index error for more than " + timeout.toString());
     }
 
+    protected boolean waitForDocumentDeletion(IDocumentStore store, String id) throws InterruptedException {
+        Stopwatch sw = Stopwatch.createStarted();
+
+        while (sw.elapsed(TimeUnit.MILLISECONDS) <= 10_000) {
+            try (IDocumentSession session = store.openSession()) {
+                if (!session.advanced().exists(id)) {
+                    return true;
+                }
+            }
+
+            Thread.sleep(100);
+        }
+
+        return false;
+    }
+
     protected static <T> T waitForValue(Supplier<T> act, T expectedValue) throws InterruptedException {
         return waitForValue(act, expectedValue, Duration.ofSeconds(15));
     }

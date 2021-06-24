@@ -1,6 +1,10 @@
 package net.ravendb.client.documents.operations.replication;
 
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import net.ravendb.client.extensions.JsonExtensions;
+
 import java.time.Duration;
+import java.util.EnumSet;
 import java.util.Map;
 
 public class PullReplicationDefinition {
@@ -12,10 +16,12 @@ public class PullReplicationDefinition {
 
     private String mentorNode;
 
-    private PullReplicationMode mode = PullReplicationMode.HUB_TO_SINK;
+    private EnumSet<PullReplicationMode> mode = EnumSet.of(PullReplicationMode.HUB_TO_SINK);
 
     private String name;
     private long taskId;
+
+    private boolean withFiltering;
 
     public PullReplicationDefinition() {
     }
@@ -64,11 +70,12 @@ public class PullReplicationDefinition {
         this.mentorNode = mentorNode;
     }
 
-    public PullReplicationMode getMode() {
+    @JsonSerialize(using = JsonExtensions.SharpEnumSetSerializer.class)
+    public EnumSet<PullReplicationMode> getMode() {
         return mode;
     }
 
-    public void setMode(PullReplicationMode mode) {
+    public void setMode(EnumSet<PullReplicationMode> mode) {
         this.mode = mode;
     }
 
@@ -86,5 +93,13 @@ public class PullReplicationDefinition {
 
     public void setTaskId(long taskId) {
         this.taskId = taskId;
+    }
+
+    public boolean isWithFiltering() {
+        return withFiltering;
+    }
+
+    public void setWithFiltering(boolean withFiltering) {
+        this.withFiltering = withFiltering;
     }
 }

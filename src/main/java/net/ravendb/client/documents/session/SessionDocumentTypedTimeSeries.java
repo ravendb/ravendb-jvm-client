@@ -1,5 +1,6 @@
 package net.ravendb.client.documents.session;
 
+import net.ravendb.client.documents.session.timeSeries.TimeSeriesEntry;
 import net.ravendb.client.documents.session.timeSeries.TimeSeriesValuesHelper;
 import net.ravendb.client.documents.session.timeSeries.TypedTimeSeriesEntry;
 
@@ -38,7 +39,11 @@ public class SessionDocumentTypedTimeSeries<T> extends SessionTimeSeriesBase imp
     @SuppressWarnings("unchecked")
     @Override
     public TypedTimeSeriesEntry<T>[] get(Date from, Date to, int start, int pageSize) {
-        return Arrays.stream(getInternal(from, to, start, pageSize))
+        TimeSeriesEntry[] entries = getInternal(from, to, start, pageSize);
+        if (entries == null) {
+            return null;
+        }
+        return Arrays.stream(entries)
                 .map(x -> x.asTypedEntry(_clazz))
                 .toArray(TypedTimeSeriesEntry[]::new);
     }

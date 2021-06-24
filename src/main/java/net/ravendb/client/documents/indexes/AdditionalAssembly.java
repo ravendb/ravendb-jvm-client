@@ -104,6 +104,14 @@ public class AdditionalAssembly {
         return additionalAssembly;
     }
 
+    public static AdditionalAssembly fromNuGet(String packageName, String packageVersion) {
+        return fromNuGet(packageName, packageVersion, null, null);
+    }
+
+    public static AdditionalAssembly fromNuGet(String packageName, String packageVersion, String packageSourceUrl) {
+        return fromNuGet(packageName, packageVersion, packageSourceUrl, null);
+    }
+
     public static AdditionalAssembly fromNuGet(String packageName, String packageVersion, String packageSourceUrl, Set<String> usings) {
         if (StringUtils.isBlank(packageName)) {
             throw new IllegalArgumentException("PackageName cannot be null or whitespace.");

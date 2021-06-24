@@ -1,5 +1,6 @@
 package net.ravendb.client.test.client.timeSeries;
 
+import net.ravendb.client.RavenTestHelper;
 import net.ravendb.client.RemoteTestBase;
 import net.ravendb.client.documents.IDocumentStore;
 import net.ravendb.client.documents.operations.timeSeries.TimeSeriesRangeResult;
@@ -912,6 +913,661 @@ public class TimeSeriesIncludesTest extends RemoteTestBase {
                         .isEqualTo(67);
                 assertThat(vals.get(180).getTimestamp())
                         .isEqualTo(DateUtils.addMinutes(baseLine, 30));
+            }
+        }
+    }
+
+    @Test
+    public void canLoadAsyncWithIncludeTimeSeries_LastRange_ByCount() throws Exception {
+        try (IDocumentStore store = getDocumentStore()) {
+            Date baseline = DateUtils.addHours(RavenTestHelper.utcToday(), 12);
+
+            try (IDocumentSession session = store.openSession()) {
+                Company company = new Company();
+                company.setName("HR");
+                session.store(company, "companies/1-A");
+
+                Order order = new Order();
+                order.setCompany("companies/1-A");
+                session.store(order, "orders/1-A");
+                ISessionDocumentTimeSeries tsf = session.timeSeriesFor("orders/1-A", "heartrate");
+
+                for (int i = 0; i < 15; i++) {
+                    tsf.append(DateUtils.addMinutes(baseline, -i), i, "watches/fitbit");
+                }
+
+                session.saveChanges();
+            }
+
+            try (IDocumentSession session = store.openSession()) {
+                Order order = session.load(Order.class, "orders/1-A",
+                        i -> i.includeDocuments("company")
+                                .includeTimeSeries("heartrate", TimeSeriesRangeType.LAST, 11));
+
+                assertThat(session.advanced().getNumberOfRequests())
+                        .isEqualTo(1);
+
+                // should not go to server
+
+                Company company = session.load(Company.class, order.getCompany());
+
+                assertThat(session.advanced().getNumberOfRequests())
+                        .isEqualTo(1);
+                assertThat(company.getName())
+                        .isEqualTo("HR");
+
+                // should not go to server
+                TimeSeriesEntry[] values = session.timeSeriesFor(order, "heartrate")
+                        .get(DateUtils.addMinutes(baseline, -10), null);
+
+                assertThat(session.advanced().getNumberOfRequests())
+                        .isEqualTo(1);
+                assertThat(values)
+                        .hasSize(11);
+
+                for (int i = 0; i < values.length; i++) {
+                    assertThat(values[i].getValues())
+                            .hasSize(1);
+                    assertThat(values[i].getValues()[0])
+                            .isEqualTo(values.length - 1 - i);
+                    assertThat(values[i].getTag())
+                            .isEqualTo("watches/fitbit");
+                    assertThat(values[i].getTimestamp())
+                            .isEqualTo(DateUtils.addMinutes(baseline, -(values.length - 1 - i)));
+                }
+            }
+        }
+    }
+
+    @Test
+    public void canLoadAsyncWithInclude_AllTimeSeries_LastRange_ByTime() throws Exception {
+        try (IDocumentStore store = getDocumentStore()) {
+            Date baseline = new Date();
+
+            try (IDocumentSession session = store.openSession()) {
+                Company company = new Company();
+                company.setName("HR");
+                session.store(company, "companies/1-A");
+
+                Order order = new Order();
+                order.setCompany("companies/1-A");
+                session.store(order, "orders/1-A");
+
+                ISessionDocumentTimeSeries tsf = session.timeSeriesFor("orders/1-A", "heartrate");
+
+                for (int i = 0; i < 15; i++) {
+                    tsf.append(DateUtils.addMinutes(baseline, -i), i, "watches/bitfit");
+                }
+
+                ISessionDocumentTimeSeries tsf2 = session.timeSeriesFor("orders/1-A", "speedrate");
+                for (int i = 0; i < 15; i++) {
+                    tsf2.append(DateUtils.addMinutes(baseline, -i), i, "watches/fitbit");
+                }
+
+                session.saveChanges();
+            }
+
+            try (IDocumentSession session = store.openSession()) {
+                Order order = session.load(Order.class, "orders/1-A",
+                        i -> i.includeDocuments("company").includeAllTimeSeries(TimeSeriesRangeType.LAST, TimeValue.ofMinutes(10)));
+
+                assertThat(session.advanced().getNumberOfRequests())
+                        .isEqualTo(1);
+
+                // should not go to server
+                Company company = session.load(Company.class, order.getCompany());
+                assertThat(session.advanced().getNumberOfRequests())
+                        .isEqualTo(1);
+
+                assertThat(company.getName())
+                        .isEqualTo("HR");
+
+                // should not go to server
+                TimeSeriesEntry[] heartrateValues = session.timeSeriesFor(order, "heartrate")
+                        .get(DateUtils.addMinutes(baseline, -10), null);
+
+                assertThat(heartrateValues)
+                        .hasSize(11);
+                assertThat(session.advanced().getNumberOfRequests())
+                        .isEqualTo(1);
+
+                TimeSeriesEntry[] speedrateValues = session.timeSeriesFor(order, "speedrate")
+                        .get(DateUtils.addMinutes(baseline, -10), null);
+
+                assertThat(speedrateValues)
+                        .hasSize(11);
+                assertThat(session.advanced().getNumberOfRequests())
+                        .isEqualTo(1);
+
+                for (int i = 0; i < heartrateValues.length; i++) {
+                    assertThat(heartrateValues[i].getValues())
+                            .hasSize(1);
+                    assertThat(heartrateValues[i].getValues()[0])
+                            .isEqualTo(heartrateValues.length - 1 - i);
+                    assertThat(heartrateValues[i].getTag())
+                            .isEqualTo("watches/bitfit");
+                    assertThat(heartrateValues[i].getTimestamp())
+                            .isEqualTo(DateUtils.addMinutes(baseline, -(heartrateValues.length - 1 - i)));
+                }
+
+                for (int i = 0; i < speedrateValues.length; i++) {
+                    assertThat(speedrateValues[i].getValues())
+                            .hasSize(1);
+                    assertThat(speedrateValues[i].getValues()[0])
+                            .isEqualTo(speedrateValues.length - 1 - i);
+                    assertThat(speedrateValues[i].getTag())
+                            .isEqualTo("watches/fitbit");
+                    assertThat(speedrateValues[i].getTimestamp())
+                            .isEqualTo(DateUtils.addMinutes(baseline, -(speedrateValues.length - 1 - i)));
+                }
+            }
+        }
+    }
+
+    @Test
+    public void canLoadAsyncWithInclude_AllTimeSeries_LastRange_ByCount() throws Exception {
+        try (IDocumentStore store = getDocumentStore()) {
+            Date baseline = DateUtils.addHours(RavenTestHelper.utcToday(), 3);
+
+            try (IDocumentSession session = store.openSession()) {
+                Company company = new Company();
+                company.setName("HR");
+                session.store(company, "companies/1-A");
+
+                Order order = new Order();
+                order.setCompany("companies/1-A");
+                session.store(order, "orders/1-A");
+                ISessionDocumentTimeSeries tsf = session.timeSeriesFor("orders/1-A", "Heartrate");
+                for (int i = 0; i < 15; i++) {
+                    tsf.append(DateUtils.addMinutes(baseline, -i), i, "watches/fitbit");
+                }
+                ISessionDocumentTimeSeries tsf2 = session.timeSeriesFor("orders/1-A", "speedrate");
+                for (int i = 0; i < 15; i++) {
+                    tsf2.append(DateUtils.addMinutes(baseline, -i), i, "watches/fitbit");
+                }
+
+                session.saveChanges();
+            }
+
+            try (IDocumentSession session = store.openSession()) {
+                Order order = session.load(Order.class, "orders/1-A",
+                        i -> i.includeDocuments("company").includeAllTimeSeries(TimeSeriesRangeType.LAST, 11));
+
+                assertThat(session.advanced().getNumberOfRequests())
+                        .isEqualTo(1);
+
+                // should not go to server
+                Company company = session.load(Company.class, order.getCompany());
+
+                assertThat(session.advanced().getNumberOfRequests())
+                        .isEqualTo(1);
+
+                assertThat(company.getName())
+                        .isEqualTo("HR");
+
+                // should not go to server
+                TimeSeriesEntry[] heartrateValues = session.timeSeriesFor(order, "heartrate")
+                        .get(DateUtils.addMinutes(baseline, -10), null);
+
+                assertThat(heartrateValues)
+                        .hasSize(11);
+                assertThat(session.advanced().getNumberOfRequests())
+                        .isEqualTo(1);
+
+                TimeSeriesEntry[] speedrateValues = session.timeSeriesFor(order, "speedrate")
+                        .get(DateUtils.addMinutes(baseline, -10), null);
+
+                assertThat(speedrateValues)
+                        .hasSize(11);
+                assertThat(session.advanced().getNumberOfRequests())
+                        .isEqualTo(1);
+
+                for (int i = 0; i < heartrateValues.length; i++) {
+                    assertThat(heartrateValues[i].getValues())
+                            .hasSize(1);
+                    assertThat(heartrateValues[i].getValues()[0])
+                            .isEqualTo(heartrateValues.length - 1 - i);
+                    assertThat(heartrateValues[i].getTag())
+                            .isEqualTo("watches/fitbit");
+                    assertThat(heartrateValues[i].getTimestamp())
+                            .isEqualTo(DateUtils.addMinutes(baseline, -(heartrateValues.length - 1 - i)));
+                }
+
+                for (int i = 0; i < speedrateValues.length; i++) {
+                    assertThat(speedrateValues[i].getValues())
+                            .hasSize(1);
+                    assertThat(speedrateValues[i].getValues()[0])
+                            .isEqualTo(speedrateValues.length - 1 - i);
+                    assertThat(speedrateValues[i].getTag())
+                            .isEqualTo("watches/fitbit");
+                    assertThat(speedrateValues[i].getTimestamp())
+                            .isEqualTo(DateUtils.addMinutes(baseline, -(speedrateValues.length - 1 - i)));
+                }
+            }
+        }
+    }
+
+    @Test
+    public void shouldThrowOnIncludeAllTimeSeriesAfterIncludingTimeSeries() throws Exception {
+        try (IDocumentStore store = getDocumentStore()) {
+            try (IDocumentSession session = store.openSession()) {
+                assertThatThrownBy(() -> {
+                    session.load(Order.class, "orders/1-A",
+                            i -> i
+                                    .includeDocuments("company")
+                                    .includeAllTimeSeries(TimeSeriesRangeType.LAST, 11)
+                                    .includeAllTimeSeries(TimeSeriesRangeType.LAST, TimeValue.ofMinutes(10)));
+                })
+                        .isExactlyInstanceOf(IllegalArgumentException.class)
+                        .hasMessageStartingWith("IIncludeBuilder : Cannot use 'includeAllTimeSeries' after using 'includeTimeSeries' or 'includeAllTimeSeries'.");
+
+                assertThatThrownBy(() -> {
+                    session.load(Order.class, "orders/1-A",
+                            i -> i
+                                    .includeDocuments("company")
+                                    .includeAllTimeSeries(TimeSeriesRangeType.LAST, Integer.MAX_VALUE)
+                                    .includeAllTimeSeries(TimeSeriesRangeType.LAST, 11));
+                })
+                        .isExactlyInstanceOf(IllegalArgumentException.class)
+                        .hasMessageStartingWith("IIncludeBuilder : Cannot use 'includeAllTimeSeries' after using 'includeTimeSeries' or 'includeAllTimeSeries");
+
+                assertThatThrownBy(() -> {
+                    session.load(Order.class, "orders/1-A",
+                            i -> i
+                                    .includeDocuments("company")
+                                    .includeTimeSeries("heartrate", TimeSeriesRangeType.LAST, Integer.MAX_VALUE)
+                                    .includeAllTimeSeries(TimeSeriesRangeType.LAST, TimeValue.ofMinutes(10)));
+                })
+                        .isExactlyInstanceOf(IllegalArgumentException.class)
+                        .hasMessageStartingWith("IIncludeBuilder : Cannot use 'includeAllTimeSeries' after using 'includeTimeSeries' or 'includeAllTimeSeries'.");
+
+                assertThatThrownBy(() -> {
+                    session.load(Order.class, "orders/1-A",
+                            i -> i
+                                    .includeDocuments("company")
+                                    .includeTimeSeries("heartrate", TimeSeriesRangeType.LAST, Integer.MAX_VALUE)
+                                    .includeAllTimeSeries(TimeSeriesRangeType.LAST, 11));
+                })
+                        .isExactlyInstanceOf(IllegalArgumentException.class)
+                        .hasMessageStartingWith("IIncludeBuilder : Cannot use 'includeAllTimeSeries' after using 'includeTimeSeries' or 'includeAllTimeSeries'.");
+
+                assertThatThrownBy(() -> {
+                    session.load(Order.class, "orders/1-A",
+                            i -> i
+                                    .includeDocuments("company")
+                                    .includeTimeSeries("heartrate", TimeSeriesRangeType.LAST, 11)
+                                    .includeAllTimeSeries(TimeSeriesRangeType.LAST, TimeValue.ofMinutes(10)));
+                })
+                        .isExactlyInstanceOf(IllegalArgumentException.class)
+                        .hasMessageStartingWith("IIncludeBuilder : Cannot use 'includeAllTimeSeries' after using 'includeTimeSeries' or 'includeAllTimeSeries'.");
+
+                assertThatThrownBy(() -> {
+                    session.load(Order.class, "orders/1-A",
+                            i -> i
+                                    .includeDocuments("company")
+                                    .includeTimeSeries("heartrate", TimeSeriesRangeType.LAST, 11)
+                                    .includeAllTimeSeries(TimeSeriesRangeType.LAST, 11));
+                })
+                        .isExactlyInstanceOf(IllegalArgumentException.class)
+                        .hasMessageStartingWith("IIncludeBuilder : Cannot use 'includeAllTimeSeries' after using 'includeTimeSeries' or 'includeAllTimeSeries'.");
+
+                assertThat(session.advanced().getNumberOfRequests())
+                        .isZero();
+            }
+        }
+    }
+
+    @Test
+    public void shouldThrowOnIncludingTimeSeriesAfterIncludeAllTimeSeries() throws Exception {
+        try (IDocumentStore store = getDocumentStore()) {
+            try (IDocumentSession session = store.openSession()) {
+                assertThatThrownBy(() -> {
+                    session.load(Order.class, "orders/1-A",
+                            i -> i
+                                    .includeDocuments("company")
+                                    .includeAllTimeSeries(TimeSeriesRangeType.LAST, 11)
+                                    .includeAllTimeSeries(TimeSeriesRangeType.LAST, TimeValue.ofMinutes(10)));
+                })
+                        .isExactlyInstanceOf(IllegalArgumentException.class)
+                        .hasMessageStartingWith("IIncludeBuilder : Cannot use 'includeAllTimeSeries' after using 'includeTimeSeries' or 'includeAllTimeSeries'.");
+
+                assertThatThrownBy(() -> {
+                    session.load(Order.class, "orders/1-A",
+                            i -> i
+                                    .includeDocuments("company")
+                                    .includeAllTimeSeries(TimeSeriesRangeType.LAST, Integer.MAX_VALUE)
+                                    .includeAllTimeSeries(TimeSeriesRangeType.LAST, 11));
+                })
+                        .isExactlyInstanceOf(IllegalArgumentException.class)
+                        .hasMessageStartingWith("IIncludeBuilder : Cannot use 'includeAllTimeSeries' after using 'includeTimeSeries' or 'includeAllTimeSeries'.");
+
+                assertThatThrownBy(() -> {
+                    session.load(Order.class, "orders/1-A",
+                            i -> i
+                                    .includeDocuments("company")
+                                    .includeAllTimeSeries(TimeSeriesRangeType.LAST, TimeValue.ofMinutes(10))
+                                    .includeTimeSeries("heartrate", TimeSeriesRangeType.LAST, TimeValue.MAX_VALUE));
+                })
+                        .isExactlyInstanceOf(IllegalArgumentException.class)
+                        .hasMessageStartingWith("IIncludeBuilder : Cannot use 'includeTimeSeries' or 'includeAllTimeSeries' after using 'includeAllTimeSeries'.");
+
+                assertThatThrownBy(() -> {
+                    session.load(Order.class, "orders/1-A",
+                            i -> i
+                                    .includeDocuments("company")
+                                    .includeAllTimeSeries(TimeSeriesRangeType.LAST, 11)
+                                    .includeTimeSeries("heartrate", TimeSeriesRangeType.LAST, TimeValue.MAX_VALUE));
+                })
+                        .isExactlyInstanceOf(IllegalArgumentException.class)
+                        .hasMessageStartingWith("IIncludeBuilder : Cannot use 'includeTimeSeries' or 'includeAllTimeSeries' after using 'includeAllTimeSeries'.");
+
+                assertThatThrownBy(() -> {
+                    session.load(Order.class, "orders/1-A",
+                            i -> i
+                                    .includeDocuments("company")
+                                    .includeAllTimeSeries(TimeSeriesRangeType.LAST, TimeValue.ofMinutes(10))
+                                    .includeTimeSeries("heartrate", TimeSeriesRangeType.LAST, 11));
+                })
+                        .isExactlyInstanceOf(IllegalArgumentException.class)
+                        .hasMessageStartingWith("IIncludeBuilder : Cannot use 'includeTimeSeries' or 'includeAllTimeSeries' after using 'includeAllTimeSeries'.");
+
+                assertThatThrownBy(() -> {
+                    session.load(Order.class, "orders/1-A",
+                            i -> i
+                                    .includeDocuments("company")
+                                    .includeAllTimeSeries(TimeSeriesRangeType.LAST, 11)
+                                    .includeTimeSeries("heartrate", TimeSeriesRangeType.LAST, 11));
+                })
+                        .isExactlyInstanceOf(IllegalArgumentException.class)
+                        .hasMessageStartingWith("IIncludeBuilder : Cannot use 'includeTimeSeries' or 'includeAllTimeSeries' after using 'includeAllTimeSeries'.");
+
+                assertThatThrownBy(() -> {
+                    session.load(Order.class, "orders/1-A",
+                            i -> i
+                                    .includeDocuments("company")
+                                    .includeAllTimeSeries(TimeSeriesRangeType.LAST, 11)
+                                    .includeAllTimeSeries(TimeSeriesRangeType.LAST, TimeValue.ofMinutes(10)));
+                })
+                        .isExactlyInstanceOf(IllegalArgumentException.class)
+                        .hasMessageStartingWith("IIncludeBuilder : Cannot use 'includeAllTimeSeries' after using 'includeTimeSeries' or 'includeAllTimeSeries'.");
+
+                assertThatThrownBy(() -> {
+                    session.load(Order.class, "orders/1-A",
+                            i -> i
+                                    .includeDocuments("company")
+                                    .includeAllTimeSeries(TimeSeriesRangeType.LAST, TimeValue.MAX_VALUE)
+                                    .includeAllTimeSeries(TimeSeriesRangeType.LAST, 11));
+                })
+                        .isExactlyInstanceOf(IllegalArgumentException.class)
+                        .hasMessageStartingWith("IIncludeBuilder : Cannot use 'includeAllTimeSeries' after using 'includeTimeSeries' or 'includeAllTimeSeries'.");
+
+                assertThatThrownBy(() -> {
+                    session.load(Order.class, "orders/1-A",
+                            i -> i
+                                    .includeDocuments("company")
+                                    .includeAllTimeSeries(TimeSeriesRangeType.LAST, TimeValue.ofMinutes(10))
+                                    .includeTimeSeries("heartrate", TimeSeriesRangeType.LAST, TimeValue.MAX_VALUE));
+                })
+                        .isExactlyInstanceOf(IllegalArgumentException.class)
+                        .hasMessageStartingWith("IIncludeBuilder : Cannot use 'includeTimeSeries' or 'includeAllTimeSeries' after using 'includeAllTimeSeries'.");
+
+                assertThatThrownBy(() -> {
+                    session.load(Order.class, "orders/1-A",
+                            i -> i
+                                    .includeDocuments("company")
+                                    .includeAllTimeSeries(TimeSeriesRangeType.LAST, 11)
+                                    .includeTimeSeries("heartrate", TimeSeriesRangeType.LAST, TimeValue.MAX_VALUE));
+                })
+                        .isExactlyInstanceOf(IllegalArgumentException.class)
+                        .hasMessageStartingWith("IIncludeBuilder : Cannot use 'includeTimeSeries' or 'includeAllTimeSeries' after using 'includeAllTimeSeries'.");
+
+                assertThatThrownBy(() -> {
+                    session.load(Order.class, "orders/1-A",
+                            i -> i
+                                    .includeDocuments("company")
+                                    .includeAllTimeSeries(TimeSeriesRangeType.LAST, TimeValue.ofMinutes(10))
+                                    .includeTimeSeries("heartrate", TimeSeriesRangeType.LAST, 11));
+                })
+                        .isExactlyInstanceOf(IllegalArgumentException.class)
+                        .hasMessageStartingWith("IIncludeBuilder : Cannot use 'includeTimeSeries' or 'includeAllTimeSeries' after using 'includeAllTimeSeries'.");
+
+                assertThatThrownBy(() -> {
+                    session.load(Order.class, "orders/1-A",
+                            i -> i
+                                    .includeDocuments("company")
+                                    .includeAllTimeSeries(TimeSeriesRangeType.LAST, 11)
+                                    .includeTimeSeries("heartrate", TimeSeriesRangeType.LAST, 11));
+                })
+                        .isExactlyInstanceOf(IllegalArgumentException.class)
+                        .hasMessageStartingWith("IIncludeBuilder : Cannot use 'includeTimeSeries' or 'includeAllTimeSeries' after using 'includeAllTimeSeries'.");
+
+                assertThat(session.advanced().getNumberOfRequests())
+                        .isZero();
+            }
+        }
+    }
+
+    @Test
+    public void shouldThrowOnIncludingTimeSeriesWithLastRangeZeroOrNegativeTime() throws Exception {
+        try (IDocumentStore store = getDocumentStore()) {
+            try (IDocumentSession session = store.openSession()) {
+                assertThatThrownBy(() -> {
+                    session.load(Order.class, "orders/1-A",
+                            i -> i
+                                    .includeDocuments("company")
+                                    .includeAllTimeSeries(TimeSeriesRangeType.LAST, TimeValue.MIN_VALUE));
+                })
+                        .isExactlyInstanceOf(IllegalArgumentException.class)
+                        .hasMessageStartingWith("Time range type cannot be set to LAST when time is negative or zero.");
+
+                assertThatThrownBy(() -> {
+                    session.load(Order.class, "orders/1-A",
+                            i -> i
+                                    .includeDocuments("company")
+                                    .includeAllTimeSeries(TimeSeriesRangeType.LAST, TimeValue.ZERO));
+                })
+                        .isExactlyInstanceOf(IllegalArgumentException.class)
+                        .hasMessageStartingWith("Time range type cannot be set to LAST when time is negative or zero.");
+
+                assertThat(session.advanced().getNumberOfRequests())
+                        .isZero();
+            }
+        }
+    }
+
+    @Test
+    public void shouldThrowOnIncludingTimeSeriesWithNoneRange() throws Exception {
+        try (IDocumentStore store = getDocumentStore()) {
+            try (IDocumentSession session = store.openSession()) {
+                assertThatThrownBy(() -> {
+                    session.load(Order.class, "orders/1-A",
+                            i -> i
+                                    .includeDocuments("company")
+                                    .includeAllTimeSeries(TimeSeriesRangeType.NONE, TimeValue.ofMinutes(-30)));
+                })
+                        .isExactlyInstanceOf(IllegalArgumentException.class)
+                        .hasMessageStartingWith("Time range type cannot be set to NONE when time is specified.");
+
+                assertThatThrownBy(() -> {
+                    session.load(Order.class, "orders/1-A",
+                            i -> i
+                                    .includeDocuments("company")
+                                    .includeAllTimeSeries(TimeSeriesRangeType.NONE, TimeValue.ZERO));
+                })
+                        .isExactlyInstanceOf(IllegalArgumentException.class)
+                        .hasMessageStartingWith("Time range type cannot be set to NONE when time is specified.");
+
+                assertThatThrownBy(() -> {
+                    session.load(Order.class, "orders/1-A",
+                            i -> i
+                                    .includeDocuments("company")
+                                    .includeAllTimeSeries(TimeSeriesRangeType.NONE, 1024));
+                })
+                        .isExactlyInstanceOf(IllegalArgumentException.class)
+                        .hasMessageStartingWith("Time range type cannot be set to NONE when count is specified.");
+
+                assertThatThrownBy(() -> {
+                    session.load(Order.class, "orders/1-A",
+                            i -> i
+                                    .includeDocuments("company")
+                                    .includeAllTimeSeries(TimeSeriesRangeType.NONE, TimeValue.ofMinutes(30)));
+                })
+                        .isExactlyInstanceOf(IllegalArgumentException.class)
+                        .hasMessageStartingWith("Time range type cannot be set to NONE when time is specified.");
+
+                assertThat(session.advanced().getNumberOfRequests())
+                        .isEqualTo(0);
+            }
+        }
+    }
+
+    @Test
+    public void shouldThrowOnIncludingTimeSeriesWithNegativeCount() throws Exception {
+        try (IDocumentStore store = getDocumentStore()) {
+            try (IDocumentSession session = store.openSession()) {
+                assertThatThrownBy(() -> {
+                    session.load(Order.class, "orders/1-A",
+                            i -> i
+                                    .includeDocuments("company")
+                                    .includeAllTimeSeries(TimeSeriesRangeType.LAST, -1024));
+                })
+                        .isExactlyInstanceOf(IllegalArgumentException.class)
+                        .hasMessageStartingWith("Count have to be positive.");
+            }
+        }
+    }
+
+    @Test
+    public void canLoadAsyncWithInclude_ArrayOfTimeSeriesLastRangeByTime() throws Exception {
+        canLoadAsyncWithInclude_ArrayOfTimeSeriesLastRange(true);
+    }
+
+    @Test
+    public void canLoadAsyncWithInclude_ArrayOfTimeSeriesLastRangeByCount() throws Exception {
+        canLoadAsyncWithInclude_ArrayOfTimeSeriesLastRange(false);
+    }
+
+    private void canLoadAsyncWithInclude_ArrayOfTimeSeriesLastRange(boolean byTime) throws Exception {
+        try (IDocumentStore store = getDocumentStore()) {
+            Date baseline = byTime ? new Date() : RavenTestHelper.utcToday();
+
+            try (IDocumentSession session = store.openSession()) {
+                Company company = new Company();
+                company.setName("HR");
+                session.store(company, "companies/1-A");
+
+                Order order = new Order();
+                order.setCompany("companies/1-A");
+                session.store(order, "orders/1-A");
+
+                ISessionDocumentTimeSeries tsf = session.timeSeriesFor("orders/1-A", "heartrate");
+                tsf.append(baseline, 67, "watches/apple");
+                tsf.append(DateUtils.addMinutes(baseline, -5), 64, "watches/apple");
+                tsf.append(DateUtils.addMinutes(baseline, -10), 65, "watches/fitbit");
+
+                ISessionDocumentTimeSeries tsf2 = session.timeSeriesFor("orders/1-A", "speedrate");
+                tsf2.append(DateUtils.addMinutes(baseline, -15), 6, "watches/bitfit");
+                tsf2.append(DateUtils.addMinutes(baseline, -10), 7, "watches/bitfit");
+                tsf2.append(DateUtils.addMinutes(baseline, -9), 7, "watches/bitfit");
+                tsf2.append(DateUtils.addMinutes(baseline, -8), 6, "watches/bitfit");
+
+                session.saveChanges();
+            }
+
+            try (IDocumentSession session = store.openSession()) {
+                Order order = null;
+                if (byTime) {
+                    order = session.load(Order.class, "orders/1-A",
+                            i -> i
+                                    .includeDocuments("company")
+                                    .includeTimeSeries(new String[] { "heartrate", "speedrate" }, TimeSeriesRangeType.LAST, TimeValue.ofMinutes(10))
+                    );
+                } else {
+                    order = session.load(Order.class, "orders/1-A",
+                            i -> i.includeDocuments("company").includeTimeSeries(new String[]{ "heartrate", "speedrate" }, TimeSeriesRangeType.LAST, 3));
+                }
+
+                assertThat(session.advanced().getNumberOfRequests())
+                        .isEqualTo(1);
+
+                // should not go to server
+                Company company = session.load(Company.class, order.getCompany());
+
+                assertThat(session.advanced().getNumberOfRequests())
+                        .isEqualTo(1);
+                assertThat(company.getName())
+                        .isEqualTo("HR");
+
+                // should not go to server
+                TimeSeriesEntry[] heartrateValues = session.timeSeriesFor(order, "heartrate")
+                        .get(DateUtils.addMinutes(baseline, -10), null);
+                assertThat(session.advanced().getNumberOfRequests())
+                        .isEqualTo(1);
+                assertThat(heartrateValues)
+                        .hasSize(3);
+
+                assertThat(heartrateValues[0].getValues())
+                        .hasSize(1);
+                assertThat(heartrateValues[0].getValues()[0])
+                        .isEqualTo(65);
+                assertThat(heartrateValues[0].getTag())
+                        .isEqualTo("watches/fitbit");
+                assertThat(heartrateValues[0].getTimestamp())
+                        .isEqualTo(DateUtils.addMinutes(baseline, -10));
+
+                assertThat(heartrateValues[1].getValues())
+                        .hasSize(1);
+                assertThat(heartrateValues[1].getValues()[0])
+                        .isEqualTo(64);
+                assertThat(heartrateValues[1].getTag())
+                        .isEqualTo("watches/apple");
+                assertThat(heartrateValues[1].getTimestamp())
+                        .isEqualTo(DateUtils.addMinutes(baseline, -5));
+
+                assertThat(heartrateValues[2].getValues())
+                        .hasSize(1);
+                assertThat(heartrateValues[2].getValues()[0])
+                        .isEqualTo(67);
+                assertThat(heartrateValues[2].getTag())
+                        .isEqualTo("watches/apple");
+                assertThat(heartrateValues[2].getTimestamp())
+                        .isEqualTo(baseline);
+
+                // should not go to server
+                TimeSeriesEntry[] speedrateValues = session.timeSeriesFor(order, "speedrate")
+                        .get(DateUtils.addMinutes(baseline, -10), null);
+
+                assertThat(session.advanced().getNumberOfRequests())
+                        .isEqualTo(1);
+                assertThat(speedrateValues)
+                        .hasSize(3);
+
+                assertThat(speedrateValues[0].getValues())
+                        .hasSize(1);
+                assertThat(speedrateValues[0].getValues()[0])
+                        .isEqualTo(7);
+                assertThat(speedrateValues[0].getTag())
+                        .isEqualTo("watches/bitfit");
+                assertThat(speedrateValues[0].getTimestamp())
+                        .isEqualTo(DateUtils.addMinutes(baseline, -10));
+
+                assertThat(speedrateValues[1].getValues())
+                        .hasSize(1);
+                assertThat(speedrateValues[1].getValues()[0])
+                        .isEqualTo(7);
+                assertThat(speedrateValues[1].getTag())
+                        .isEqualTo("watches/bitfit");
+                assertThat(speedrateValues[1].getTimestamp())
+                        .isEqualTo(DateUtils.addMinutes(baseline, -9));
+
+                assertThat(speedrateValues[2].getValues())
+                        .hasSize(1);
+                assertThat(speedrateValues[2].getValues()[0])
+                        .isEqualTo(6);
+                assertThat(speedrateValues[2].getTag())
+                        .isEqualTo("watches/bitfit");
+                assertThat(speedrateValues[2].getTimestamp())
+                        .isEqualTo(DateUtils.addMinutes(baseline, -8));
             }
         }
     }

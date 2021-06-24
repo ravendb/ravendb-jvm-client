@@ -62,6 +62,13 @@ public class RavenDB_14881Test extends RemoteTestBase {
                     .isEqualTo(20);
             assertThat(companies.getSize().getSizeInBytes())
                     .isPositive();
+            assertThat(companies.getDocumentsSize().getSizeInBytes())
+                    .isPositive();
+            assertThat(companies.getRevisionsSize().getSizeInBytes())
+                    .isPositive();
+
+            assertThat(companies.getSize().getSizeInBytes())
+                    .isEqualTo(companies.getDocumentsSize().getSizeInBytes() + companies.getRevisionsSize().getSizeInBytes() + companies.getTombstonesSize().getSizeInBytes());
         }
     }
 }

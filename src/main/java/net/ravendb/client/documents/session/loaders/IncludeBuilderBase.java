@@ -189,7 +189,7 @@ public class IncludeBuilderBase {
             case NONE:
                 throw new IllegalArgumentException("Time range type cannot be set to NONE when time is specified.");
             case LAST:
-                if (time.compareTo(TimeValue.ZERO) != 0) {
+                if (time != null) {
                     if (time.getValue() <= 0) {
                         throw new IllegalArgumentException("Time range type cannot be set to LAST when time is negative or zero.");
                     }
@@ -197,7 +197,7 @@ public class IncludeBuilderBase {
                     return;
                 }
 
-                throw new IllegalArgumentException("time range type cannot be set to LAST when time is not specified.");
+                throw new IllegalArgumentException("Time range type cannot be set to LAST when time is not specified.");
             default:
                 throw new UnsupportedOperationException("Not supported time range type: " + type);
         }

@@ -15,8 +15,12 @@ import net.ravendb.client.documents.operations.etl.RavenConnectionString;
 import net.ravendb.client.serverwide.DatabaseRecordWithEtag;
 import net.ravendb.client.serverwide.operations.GetDatabaseRecordOperation;
 import net.ravendb.client.serverwide.operations.ModifyOngoingTaskResult;
+import org.bouncycastle.util.encoders.Base64;
 
+import java.security.KeyStore;
+import java.security.cert.Certificate;
 import java.util.ArrayList;
+import java.util.Enumeration;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
@@ -147,5 +151,13 @@ public class ReplicationTestBase extends RemoteTestBase {
             return -1;
         }
         return res.getDeletionInProgress().size();
+    }
+
+    protected String getClientCertificateAsBase64() throws Exception {
+        KeyStore keyStore = getTestClientCertificate();
+
+        String alias = keyStore.aliases().nextElement();
+        Certificate certificate = keyStore.getCertificate(alias);
+        return org.apache.commons.codec.binary.Base64.encodeBase64String(certificate.getEncoded());
     }
 }
