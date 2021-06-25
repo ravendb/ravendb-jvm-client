@@ -5,12 +5,14 @@ import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.databind.*;
 import com.fasterxml.jackson.databind.cfg.MapperConfig;
+import com.fasterxml.jackson.databind.deser.ContextualDeserializer;
 import com.fasterxml.jackson.databind.deser.std.StdDeserializer;
 import com.fasterxml.jackson.databind.introspect.AnnotatedField;
 import com.fasterxml.jackson.databind.introspect.AnnotatedMethod;
 import com.fasterxml.jackson.databind.introspect.AnnotatedParameter;
 import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.fasterxml.jackson.databind.ser.std.StdSerializer;
+import com.fasterxml.jackson.databind.type.CollectionLikeType;
 import net.ravendb.client.Constants;
 import net.ravendb.client.documents.conventions.DocumentConventions;
 import net.ravendb.client.documents.queries.IndexQuery;
@@ -25,6 +27,9 @@ import org.apache.commons.lang3.StringUtils;
 import java.io.IOException;
 import java.time.Duration;
 import java.util.EnumSet;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
 
 
 public class JsonExtensions {
@@ -67,6 +72,44 @@ public class JsonExtensions {
         }
     }
 
+    public static class SharpEnumSetDeserializer<T extends Enum<T>> extends StdDeserializer<EnumSet<T>> implements ContextualDeserializer {
+        private Class<T> enumType;
+        private Map<String, T> mapping;
+
+        public SharpEnumSetDeserializer() {
+            super(EnumSet.class);
+        }
+
+        @Override
+        public EnumSet<T> deserialize(JsonParser p, DeserializationContext ctxt) throws IOException {
+            final String string = p.getValueAsString();
+            final EnumSet<T> enumSet = EnumSet.noneOf(enumType);
+
+            for (final String name : string.split(",")) {
+                enumSet.add(mapping.get(name));
+            }
+            return enumSet;
+        }
+
+        @SuppressWarnings("unchecked")
+        @Override
+        public JsonDeserializer<?> createContextual(DeserializationContext ctxt, BeanProperty property) throws JsonMappingException {
+            final CollectionLikeType type = (CollectionLikeType)property.getType();
+            final SharpEnumSetDeserializer<T> enumSetDeserializer = new SharpEnumSetDeserializer<>();
+            enumSetDeserializer.enumType = (Class<T>) type.getContentType().getRawClass();
+
+            Map<String, T> mapping = new HashMap<>();
+
+            for (T t : EnumSet.allOf(enumSetDeserializer.enumType)) {
+                mapping.put(SharpEnum.value(t), t);
+            }
+
+            enumSetDeserializer.mapping = mapping;
+
+            return enumSetDeserializer;
+        }
+    }
+
     public static class DurationSerializer extends StdSerializer<Duration> {
         public DurationSerializer() {
             super(Duration.class);
@@ -86,8 +129,6 @@ public class JsonExtensions {
         public DurationDeserializer() {
             super(Duration.class);
         }
-
-
 
         @Override
         public Duration deserialize(JsonParser p, DeserializationContext ctxt) throws IOException {

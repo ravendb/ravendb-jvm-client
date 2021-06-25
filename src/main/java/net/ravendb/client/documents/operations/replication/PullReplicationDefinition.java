@@ -1,5 +1,6 @@
 package net.ravendb.client.documents.operations.replication;
 
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import net.ravendb.client.extensions.JsonExtensions;
 
@@ -75,6 +76,7 @@ public class PullReplicationDefinition {
         return mode;
     }
 
+    @JsonDeserialize(using = JsonExtensions.SharpEnumSetDeserializer.class)
     public void setMode(EnumSet<PullReplicationMode> mode) {
         this.mode = mode;
     }

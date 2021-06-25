@@ -208,8 +208,8 @@ public class FilteredReplicationTest extends ReplicationTestBase {
 
                 storeB.maintenance().send(new UpdatePullReplicationAsSinkOperation(pullReplicationAsSink));
 
-                waitForDocumentToReplicate(storeB, User.class, "users/ayende", 10_000);
-
+                assertThat(waitForDocumentToReplicate(storeB, User.class, "users/ayende", 10_000))
+                        .isNotNull();
 
                 try (IDocumentSession s = storeB.openSession()) {
                     assertThat(s.load(User.class, "users/pheobe"))
