@@ -16,7 +16,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 public class RavenDB_8355Test extends RemoteTestBase {
 
-    String sorterCode = "using System;\n" +
+    public static String sorterCode = "using System;\n" +
             "using System.Collections.Generic;\n" +
             "using Lucene.Net.Index;\n" +
             "using Lucene.Net.Search;\n" +

@@ -39,7 +39,7 @@ public class DeleteServerWideSorterOperation implements IVoidServerOperation {
 
         @Override
         public HttpRequestBase createRequest(ServerNode node, Reference<String> url) {
-            url.value = node.getUrl() + "/admiin/sorters?name=" + urlEncode(_sorterName);
+            url.value = node.getUrl() + "/admin/sorters?name=" + urlEncode(_sorterName);
 
             return new HttpDelete();
         }
