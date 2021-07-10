@@ -10,6 +10,7 @@ import net.ravendb.client.documents.commands.StreamResultResponse;
 import net.ravendb.client.documents.queries.IndexQuery;
 import net.ravendb.client.documents.session.InMemoryDocumentSessionOperations;
 import net.ravendb.client.documents.session.StreamQueryStatistics;
+import net.ravendb.client.exceptions.documents.indexes.IndexDoesNotExistException;
 import net.ravendb.client.extensions.JsonExtensions;
 import net.ravendb.client.primitives.NetISO8601Utils;
 import net.ravendb.client.util.UrlUtils;
@@ -74,7 +75,7 @@ public class StreamOperation {
 
     public CloseableIterator<ObjectNode> setResult(StreamResultResponse response)  {
         if (response == null) {
-            throw new IllegalStateException("The index does not exists, failed to stream results");
+            throw new IndexDoesNotExistException("The index does not exists, failed to stream results");
         }
 
         try {
