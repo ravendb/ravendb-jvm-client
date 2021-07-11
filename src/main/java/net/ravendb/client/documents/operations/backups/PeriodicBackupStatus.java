@@ -27,6 +27,7 @@ public class PeriodicBackupStatus implements IDatabaseTaskStatus {
     private LastRaftIndex lastRaftIndex;
     private String folderName;
     private Long durationInMs;
+    private Long localRetentionDurationInMs;
     private long version;
     private Error error;
     private Long lastOperationId;
@@ -182,6 +183,14 @@ public class PeriodicBackupStatus implements IDatabaseTaskStatus {
 
     public void setDurationInMs(Long durationInMs) {
         this.durationInMs = durationInMs;
+    }
+
+    public Long getLocalRetentionDurationInMs() {
+        return localRetentionDurationInMs;
+    }
+
+    public void setLocalRetentionDurationInMs(Long localRetentionDurationInMs) {
+        this.localRetentionDurationInMs = localRetentionDurationInMs;
     }
 
     public long getVersion() {
