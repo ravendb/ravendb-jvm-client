@@ -9,6 +9,7 @@ import net.ravendb.client.http.ServerNode;
 import net.ravendb.client.primitives.ExceptionsUtils;
 import net.ravendb.client.primitives.Reference;
 import net.ravendb.client.serverwide.DatabaseRecord;
+import net.ravendb.client.serverwide.DatabaseTopology;
 import net.ravendb.client.util.RaftIdGenerator;
 import org.apache.http.client.methods.HttpPut;
 import org.apache.http.client.methods.HttpRequestBase;
@@ -24,7 +25,13 @@ public class CreateDatabaseOperation implements IServerOperation<DatabasePutResu
     private final int replicationFactor;
 
     public CreateDatabaseOperation(DatabaseRecord databaseRecord) {
-        this(databaseRecord, 1);
+        this.databaseRecord = databaseRecord;
+        DatabaseTopology topology = databaseRecord.getTopology();
+        if (topology != null) {
+            this.replicationFactor = topology.getReplicationFactor() > 0 ? topology.getReplicationFactor() : 1;
+        } else {
+            this.replicationFactor = 1;
+        }
     }
 
     public CreateDatabaseOperation(DatabaseRecord databaseRecord, int replicationFactor) {
