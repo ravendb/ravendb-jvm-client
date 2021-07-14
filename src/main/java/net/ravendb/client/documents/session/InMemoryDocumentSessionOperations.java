@@ -66,6 +66,8 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
     protected final SessionInfo sessionInfo;
     BatchOptions _saveChangesOptions;
 
+    public Boolean disableAtomicDocumentWritesInClusterWideTransaction;
+
     private TransactionMode transactionMode;
 
     private boolean _isDisposed;
@@ -391,6 +393,7 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
 
         sessionInfo = new SessionInfo(this, options, _documentStore);
         transactionMode = options.getTransactionMode();
+        disableAtomicDocumentWritesInClusterWideTransaction = options.getDisableAtomicDocumentWritesInClusterWideTransaction();
     }
 
     /**
@@ -756,7 +759,11 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
         if (_countersByDocId != null) {
             _countersByDocId.remove(id);
         }
-        defer(new DeleteCommandData(id, ObjectUtils.firstNonNull(expectedChangeVector, changeVector)));
+        defer(new DeleteCommandData(
+                id,
+                ObjectUtils.firstNonNull(expectedChangeVector, changeVector),
+                ObjectUtils.firstNonNull(expectedChangeVector, documentInfo != null ? documentInfo.getChangeVector() : null
+            )));
     }
 
     /**
@@ -1041,9 +1048,13 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
                         result.onSuccess.removeDocumentByEntity(documentInfo.getId());
                     }
 
-                    changeVector = useOptimisticConcurrency ? changeVector : null;
+                    if (!useOptimisticConcurrency) {
+                        changeVector = null;
+                    }
+
                     onBeforeDeleteInvoke(new BeforeDeleteEventArgs(this, documentInfo.getId(), documentInfo.getEntity()));
-                    result.getSessionCommands().add(new DeleteCommandData(documentInfo.getId(), changeVector));
+                    DeleteCommandData deleteCommandData = new DeleteCommandData(documentInfo.getId(), changeVector, documentInfo.getChangeVector());
+                    result.getSessionCommands().add(deleteCommandData);
                 }
 
                 if (changes == null) {
@@ -1137,7 +1148,11 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
                     }
                 }
 
-                result.getSessionCommands().add(new PutCommandDataWithJson(entity.getValue().getId(), changeVector, document, forceRevisionCreationStrategy));
+                result.getSessionCommands().add(new PutCommandDataWithJson(entity.getValue().getId(),
+                        changeVector,
+                        entity.getValue().getChangeVector(),
+                        document,
+                        forceRevisionCreationStrategy));
             }
         }
     }
@@ -1685,7 +1700,9 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
         if (localRanges == null || localRanges.isEmpty()) {
             // no local ranges in cache for this series
 
-            cache.put(name, Arrays.asList(newRange));
+            List<TimeSeriesRangeResult> item = new ArrayList<>();
+            item.add(newRange);
+            cache.put(name, item);
             return;
         }
 

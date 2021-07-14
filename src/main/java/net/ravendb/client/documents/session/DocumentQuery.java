@@ -512,6 +512,12 @@ public class DocumentQuery<T> extends AbstractDocumentQuery<T, DocumentQuery<T>>
     }
 
     @Override
+    public IDocumentQuery<T> andAlso(boolean wrapPreviousQueryClauses) {
+        _andAlso(wrapPreviousQueryClauses);
+        return this;
+    }
+
+    @Override
     public IDocumentQuery<T> orElse() {
         _orElse();
         return this;

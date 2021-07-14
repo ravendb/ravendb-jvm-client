@@ -268,20 +268,22 @@ public class AttachmentsStreamTest extends RemoteTestBase {
                         .map(x -> new AttachmentRequest(id, x.getName()))
                         .collect(Collectors.toList());
 
-                CloseableAttachmentsResult closeableAttachmentsResult = session.advanced().attachments().get(attachmentNames);
-                AttachmentIteratorResult result = null;
-                try {
-                    while (closeableAttachmentsResult.hasNext()) {
-                        result = closeableAttachmentsResult.next();
+                try (CloseableAttachmentsResult closeableAttachmentsResult = session.advanced().attachments().get(attachmentNames)) {
+                    AttachmentIteratorResult result = null;
+                    try {
+                        while (closeableAttachmentsResult.hasNext()) {
+                            result = closeableAttachmentsResult.next();
+                        }
+                    } finally {
+                        closeableAttachmentsResult.close();
                     }
-                } finally {
-                    closeableAttachmentsResult.close();
-                }
 
-                AttachmentIteratorResult finalResult = result;
-                assertThatThrownBy(() -> finalResult.getStream().read())
-                        .isInstanceOf(IOException.class)
-                        .hasMessage("Attempted read on closed stream.");
+
+                    AttachmentIteratorResult finalResult = result;
+                    assertThatThrownBy(() -> finalResult.getStream().read())
+                            .isInstanceOf(IOException.class)
+                            .hasMessage("Attempted read on closed stream.");
+                }
             }
         }
     }

@@ -8,6 +8,7 @@ public class SessionOptions {
     private boolean noCaching;
     private RequestExecutor requestExecutor;
     private TransactionMode transactionMode;
+    private Boolean disableAtomicDocumentWritesInClusterWideTransaction;
 
     public String getDatabase() {
         return database;
@@ -47,5 +48,21 @@ public class SessionOptions {
 
     public void setTransactionMode(TransactionMode transactionMode) {
         this.transactionMode = transactionMode;
+    }
+
+    /**
+     * EXPERT: Disable automatic atomic writes with cluster write transactions. If set to 'true',
+     * will only consider explicitly added compare exchange values to validate cluster wide transactions.
+     */
+    public Boolean getDisableAtomicDocumentWritesInClusterWideTransaction() {
+        return disableAtomicDocumentWritesInClusterWideTransaction;
+    }
+
+    /**
+     * EXPERT: Disable automatic atomic writes with cluster write transactions. If set to 'true',
+     * will only consider explicitly added compare exchange values to validate cluster wide transactions.
+     */
+    public void setDisableAtomicDocumentWritesInClusterWideTransaction(Boolean disableAtomicDocumentWritesInClusterWideTransaction) {
+        this.disableAtomicDocumentWritesInClusterWideTransaction = disableAtomicDocumentWritesInClusterWideTransaction;
     }
 }

@@ -1,6 +1,7 @@
 package net.ravendb.client.documents.commands.batches;
 
 import com.fasterxml.jackson.core.JsonGenerator;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import net.ravendb.client.documents.conventions.DocumentConventions;
 import net.ravendb.client.documents.session.BeforeDeleteEventArgs;
 import net.ravendb.client.documents.session.InMemoryDocumentSessionOperations;
@@ -13,13 +14,23 @@ public class DeleteCommandData implements ICommandData {
     private String name;
     private String changeVector;
     private final CommandType type = CommandType.DELETE;
+    private String originalChangeVector;
+    private ObjectNode document;
 
     public DeleteCommandData(String id, String changeVector) {
+        this(id, changeVector, null);
+    }
+
+    public DeleteCommandData(String id, String changeVector, String originalChangeVector) {
         this.id = id;
         if (id == null) {
             throw new IllegalArgumentException("Id cannot be null");
         }
         this.changeVector = changeVector;
+    }
+
+    public String getOriginalChangeVector() {
+        return originalChangeVector;
     }
 
     @Override
@@ -42,6 +53,14 @@ public class DeleteCommandData implements ICommandData {
         return type;
     }
 
+    public ObjectNode getDocument() {
+        return document;
+    }
+
+    public void setDocument(ObjectNode document) {
+        this.document = document;
+    }
+
     @Override
     public void serialize(JsonGenerator generator, DocumentConventions conventions) throws IOException {
         generator.writeStartObject();
@@ -49,6 +68,11 @@ public class DeleteCommandData implements ICommandData {
         generator.writeStringField("Id", id);
         generator.writeStringField("ChangeVector", changeVector);
         generator.writeObjectField("Type", "DELETE");
+        generator.writeObjectField("Document", document);
+
+        if (originalChangeVector != null) {
+            generator.writeStringField("OriginalChangeVector", originalChangeVector);
+        }
 
         serializeExtraFields(generator);
 

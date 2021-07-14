@@ -10,8 +10,11 @@ import net.ravendb.client.documents.commands.batches.TimeSeriesBatchCommandData;
 import net.ravendb.client.documents.operations.timeSeries.*;
 import net.ravendb.client.documents.session.loaders.ITimeSeriesIncludeBuilder;
 import net.ravendb.client.documents.session.timeSeries.TimeSeriesEntry;
+import net.ravendb.client.documents.session.timeSeries.TypedTimeSeriesEntry;
+import net.ravendb.client.documents.session.timeSeries.TypedTimeSeriesRollupEntry;
 import net.ravendb.client.primitives.DatesComparator;
 import net.ravendb.client.primitives.Reference;
+import org.apache.commons.lang3.NotImplementedException;
 import org.apache.commons.lang3.StringUtils;
 
 import java.util.*;
@@ -44,9 +47,12 @@ public class SessionTimeSeriesBase {
     }
 
     protected SessionTimeSeriesBase(InMemoryDocumentSessionOperations session, Object entity, String name) {
+        if (entity == null) {
+            throw new IllegalArgumentException("Entity cannot be null");
+        }
         DocumentInfo documentInfo = session.documentsByEntity.get(entity);
         if (documentInfo == null) {
-            throwEntityNotInSession(entity);
+            throwEntityNotInSession();
             return;
         }
 
@@ -124,58 +130,14 @@ public class SessionTimeSeriesBase {
                 + ", the document was already deleted in this session.");
     }
 
-    protected void throwEntityNotInSession(Object entity) {
-        throw new IllegalArgumentException("Entity is not associated with the session, cannot add timeseries to it. " +
+    protected void throwEntityNotInSession() {
+        throw new IllegalArgumentException("Entity is not associated with the session, cannot perform timeseries operations to it. " +
                 "Use documentId instead or track the entity in the session.");
     }
 
-    public TimeSeriesEntry[] getInternal(Date from, Date to, int start, int pageSize) {
-        return getTimeSeriesAndIncludes(from, to, null, start, pageSize);
-    }
-
     public TimeSeriesEntry[] getTimeSeriesAndIncludes(Date from, Date to, Consumer<ITimeSeriesIncludeBuilder> includes, int start, int pageSize) {
-        TimeSeriesRangeResult rangeResult;
-
         if (pageSize == 0) {
             return new TimeSeriesEntry[0];
-        }
-
-        Map<String, List<TimeSeriesRangeResult>> cache = session.getTimeSeriesByDocId().get(docId);
-        if (cache != null) {
-            List<TimeSeriesRangeResult> ranges = cache.get(name);
-            if (ranges != null && !ranges.isEmpty()) {
-                if (DatesComparator.compare(leftDate(ranges.get(0).getFrom()), DatesComparator.rightDate(to)) > 0
-                        || DatesComparator.compare(rightDate(ranges.get(ranges.size() - 1).getTo()), leftDate(from)) < 0) {
-                    // the entire range [from, to] is out of cache bounds
-
-                    // e.g. if cache is : [[2,3], [4,6], [8,9]]
-                    // and requested range is : [12, 15]
-                    // then ranges[ranges.Count - 1].To < from
-                    // so we need to get [12,15] from server and place it
-                    // at the end of the cache list
-
-                    session.incrementRequestCount();
-
-                    rangeResult = session.getOperations().send(new GetTimeSeriesOperation(docId, name, from, to, start, pageSize, includes), session.sessionInfo);
-
-                    if (rangeResult == null) {
-                        return null;
-                    }
-
-                    if (!session.noTracking) {
-                        handleIncludes(rangeResult);
-                        int index = DatesComparator.compare(leftDate(ranges.get(0).getFrom()), rightDate(to)) > 0 ? 0 : ranges.size();
-                        ranges.add(index, rangeResult);
-                    }
-
-                    return rangeResult.getEntries();
-                }
-
-                List<TimeSeriesEntry> resultToUser = serveFromCacheOrGetMissingPartsFromServerAndMerge(
-                        cache, from, to, ranges, start, pageSize, includes);
-
-                return resultToUser.stream().limit(pageSize).toArray(TimeSeriesEntry[]::new);
-            }
         }
 
         DocumentInfo document = session.documentsById.getValue(docId);
@@ -194,7 +156,7 @@ public class SessionTimeSeriesBase {
 
         session.incrementRequestCount();
 
-        rangeResult = session.getOperations().send(new GetTimeSeriesOperation(docId, name, from, to, start, pageSize, includes), session.sessionInfo);
+        TimeSeriesRangeResult rangeResult = session.getOperations().send(new GetTimeSeriesOperation(docId, name, from, to, start, pageSize, includes), session.sessionInfo);
 
         if (rangeResult == null) {
             return null;
@@ -202,12 +164,20 @@ public class SessionTimeSeriesBase {
 
         if (!session.noTracking) {
             handleIncludes(rangeResult);
-            Map<String, List<TimeSeriesRangeResult>> trackingCache = session.getTimeSeriesByDocId()
+
+            Map<String, List<TimeSeriesRangeResult>> cache = session.getTimeSeriesByDocId()
                     .computeIfAbsent(docId, k -> new TreeMap<>(String::compareToIgnoreCase));
 
-            List<TimeSeriesRangeResult> result = new ArrayList<>();
-            result.add(rangeResult);
-            trackingCache.put(name, result);
+            List<TimeSeriesRangeResult> ranges = cache.get(name);
+            if (ranges != null && ranges.size() > 0) {
+                // update
+                int index = compare(leftDate(ranges.get(0).getFrom()), rightDate(to)) > 0 ? 0 : ranges.size();
+                ranges.add(index, rangeResult);
+            } else {
+                List<TimeSeriesRangeResult> item = new ArrayList<>();
+                item.add(rangeResult);
+                cache.put(name, item);
+            }
         }
 
         return rangeResult.getEntries();
@@ -245,9 +215,11 @@ public class SessionTimeSeriesBase {
         return values;
     }
 
-    private List<TimeSeriesEntry> serveFromCacheOrGetMissingPartsFromServerAndMerge(
-            Map<String, List<TimeSeriesRangeResult>> cache, Date from, Date to, List<TimeSeriesRangeResult> ranges,
-            int start, int pageSize, Consumer<ITimeSeriesIncludeBuilder> includes) {
+    protected List<TimeSeriesEntry> serveFromCache(
+            Date from, Date to, int start, int pageSize, Consumer<ITimeSeriesIncludeBuilder> includes) {
+        Map<String, List<TimeSeriesRangeResult>> cache = session.getTimeSeriesByDocId().get(docId);
+        List<TimeSeriesRangeResult> ranges = cache.get(name);
+
         // try to find a range in cache that contains [from, to]
         // if found, chop just the relevant part from it and return to the user.
 
@@ -475,6 +447,37 @@ public class SessionTimeSeriesBase {
         }
 
         return result;
+    }
+
+    protected <T> TimeSeriesEntry[] getFromCache(Date from, Date to, Consumer<ITimeSeriesIncludeBuilder> includes, int start, int pageSize) {
+        // RavenDB-16060
+        // Typed TimeSeries results need special handling when served from cache
+        // since we cache the results untyped
+
+        // in java we return untyped entries here
+
+        List<TimeSeriesEntry> resultToUser = serveFromCache(from, to, start, pageSize, includes);
+        if (resultToUser.isEmpty()) {
+            return new TimeSeriesEntry[0];
+        }
+
+        return resultToUser.toArray(new TimeSeriesEntry[0]);
+    }
+
+    protected boolean notInCache(Date from, Date to) {
+        Map<String, List<TimeSeriesRangeResult>> cache = session.getTimeSeriesByDocId().get(docId);
+        if (cache == null) {
+            return true;
+        }
+
+        List<TimeSeriesRangeResult> ranges = cache.get(name);
+        if (ranges == null) {
+            return true;
+        }
+
+        return ranges.isEmpty()
+                || DatesComparator.compare(leftDate(ranges.get(0).getFrom()), rightDate(to)) > 0
+                || DatesComparator.compare(rightDate(ranges.get(ranges.size() - 1).getTo()), leftDate(from)) < 0;
     }
 
     private static class CachedEntryInfo {

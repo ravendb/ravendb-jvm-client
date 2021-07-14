@@ -1,6 +1,8 @@
 package net.ravendb.client.documents.commands.batches;
 
 import com.fasterxml.jackson.core.JsonGenerator;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import net.ravendb.client.documents.conventions.DocumentConventions;
 import net.ravendb.client.documents.session.TransactionMode;
 import net.ravendb.client.exceptions.RavenException;
@@ -24,14 +26,16 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 
 public class SingleNodeBatchCommand extends RavenCommand<BatchCommandResult> implements CleanCloseable {
+    private Boolean _supportsAtomicWrites;
+    private Set<InputStream> _attachmentStreams;
     private final DocumentConventions _conventions;
     private final List<ICommandData> _commands;
-    private Set<InputStream> _attachmentStreams;
     private final BatchOptions _options;
     private final TransactionMode _mode;
 
@@ -74,7 +78,6 @@ public class SingleNodeBatchCommand extends RavenCommand<BatchCommandResult> imp
                     PutAttachmentCommandHelper.throwStreamWasAlreadyUsed();
                 }
             }
-
         }
     }
 
@@ -84,13 +87,29 @@ public class SingleNodeBatchCommand extends RavenCommand<BatchCommandResult> imp
 
         request.setEntity(new ContentProviderHttpEntity(outputStream -> {
             try (JsonGenerator generator = mapper.getFactory().createGenerator(outputStream)) {
+                if (_supportsAtomicWrites == null || node.isSupportsAtomicClusterWrites() != _supportsAtomicWrites) {
+                    _supportsAtomicWrites = node.isSupportsAtomicClusterWrites();
+                }
 
                 generator.writeStartObject();
                 generator.writeFieldName("Commands");
                 generator.writeStartArray();
 
-                for (ICommandData command : _commands) {
-                    command.serialize(generator, _conventions);
+                if (_supportsAtomicWrites) {
+                    for (ICommandData command : _commands) {
+                        command.serialize(generator, _conventions);
+                    }
+                } else {
+                    for (ICommandData command : _commands) {
+                        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+                        try (JsonGenerator itemGenerator = mapper.createGenerator(baos)) {
+                            command.serialize(itemGenerator, _conventions);
+                        }
+
+                        ObjectNode itemNode = (ObjectNode) mapper.readTree(baos.toByteArray());
+                        itemNode.remove("OriginalChangeVector");
+                        generator.writeObject(itemNode);
+                    }
                 }
 
                 generator.writeEndArray();
@@ -132,7 +151,7 @@ public class SingleNodeBatchCommand extends RavenCommand<BatchCommandResult> imp
             request.setEntity(entityBuilder.build());
         }
 
-        StringBuilder sb = new StringBuilder(node.getUrl() + "/databases/" + node.getDatabase() + "/bulk_docs");
+        StringBuilder sb = new StringBuilder(node.getUrl() + "/databases/" + node.getDatabase() + "/bulk_docs?");
         appendOptions(sb);
 
         url.value = sb.toString();
@@ -148,12 +167,10 @@ public class SingleNodeBatchCommand extends RavenCommand<BatchCommandResult> imp
         result = mapper.readValue(response, BatchCommandResult.class);
     }
 
-    private void appendOptions(StringBuilder sb) {
+    protected void appendOptions(StringBuilder sb) {
         if (_options == null) {
             return;
         }
-
-        sb.append("?");
 
         ReplicationBatchOptions replicationOptions = _options.getReplicationOptions();
         if (replicationOptions != null) {

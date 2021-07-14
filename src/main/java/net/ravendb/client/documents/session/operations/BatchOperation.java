@@ -57,7 +57,11 @@ public class BatchOperation {
         _entities = result.getEntities();
 
         if (_session.getTransactionMode() == TransactionMode.CLUSTER_WIDE) {
-            return new ClusterWideBatchCommand(_session.getConventions(), result.getSessionCommands(), result.getOptions());
+            return new ClusterWideBatchCommand(
+                    _session.getConventions(),
+                    result.getSessionCommands(),
+                    result.getOptions(),
+                    _session.disableAtomicDocumentWritesInClusterWideTransaction);
         }
 
         return new SingleNodeBatchCommand(_session.getConventions(), result.getSessionCommands(), result.getOptions());

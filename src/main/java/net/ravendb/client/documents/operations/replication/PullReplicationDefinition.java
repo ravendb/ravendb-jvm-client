@@ -23,6 +23,7 @@ public class PullReplicationDefinition {
     private long taskId;
 
     private boolean withFiltering;
+    private PreventDeletionsMode preventDeletionsMode;
 
     public PullReplicationDefinition() {
     }
@@ -103,5 +104,13 @@ public class PullReplicationDefinition {
 
     public void setWithFiltering(boolean withFiltering) {
         this.withFiltering = withFiltering;
+    }
+
+    public PreventDeletionsMode getPreventDeletionsMode() {
+        return preventDeletionsMode;
+    }
+
+    public void setPreventDeletionsMode(PreventDeletionsMode preventDeletionsMode) {
+        this.preventDeletionsMode = preventDeletionsMode;
     }
 }

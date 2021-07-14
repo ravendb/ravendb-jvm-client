@@ -330,7 +330,7 @@ public class DocumentSession extends InMemoryDocumentSessionOperations
 
     @Override
     public <T> T load(Class<T> clazz, String id) {
-        if (id == null) {
+        if (StringUtils.isBlank(id)) {
             return Defaults.defaultValue(clazz);
         }
 

@@ -20,6 +20,7 @@ public class DatabaseTopology {
     private boolean dynamicNodesDistribution;
     private LeaderStamp stamp;
     private String databaseTopologyIdBase64;
+    private String clusterTransactionIdBase64;
     private List<String> priorityOrder;
 
     @JsonIgnore
@@ -111,6 +112,14 @@ public class DatabaseTopology {
 
     public void setDatabaseTopologyIdBase64(String databaseTopologyIdBase64) {
         this.databaseTopologyIdBase64 = databaseTopologyIdBase64;
+    }
+
+    public String getClusterTransactionIdBase64() {
+        return clusterTransactionIdBase64;
+    }
+
+    public void setClusterTransactionIdBase64(String clusterTransactionIdBase64) {
+        this.clusterTransactionIdBase64 = clusterTransactionIdBase64;
     }
 
     public List<String> getPriorityOrder() {

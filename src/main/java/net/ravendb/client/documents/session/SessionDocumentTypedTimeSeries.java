@@ -39,11 +39,18 @@ public class SessionDocumentTypedTimeSeries<T> extends SessionTimeSeriesBase imp
     @SuppressWarnings("unchecked")
     @Override
     public TypedTimeSeriesEntry<T>[] get(Date from, Date to, int start, int pageSize) {
-        TimeSeriesEntry[] entries = getInternal(from, to, start, pageSize);
-        if (entries == null) {
-            return null;
+        if (notInCache(from, to)) {
+            TimeSeriesEntry[] entries = getTimeSeriesAndIncludes(from, to, null, start, pageSize);
+            if (entries == null) {
+                return null;
+            }
+            return Arrays.stream(entries)
+                    .map(x -> x.asTypedEntry(_clazz))
+                    .toArray(TypedTimeSeriesEntry[]::new);
         }
-        return Arrays.stream(entries)
+
+        TimeSeriesEntry[] results = getFromCache(from, to, null, start, pageSize);
+        return Arrays.stream(results)
                 .map(x -> x.asTypedEntry(_clazz))
                 .toArray(TypedTimeSeriesEntry[]::new);
     }

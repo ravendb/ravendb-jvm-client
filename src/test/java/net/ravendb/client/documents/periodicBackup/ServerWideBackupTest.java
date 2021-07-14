@@ -5,11 +5,13 @@ import net.ravendb.client.documents.IDocumentStore;
 import net.ravendb.client.documents.operations.backups.AzureSettings;
 import net.ravendb.client.documents.operations.backups.BackupType;
 import net.ravendb.client.documents.operations.backups.FtpSettings;
+import net.ravendb.client.documents.operations.ongoingTasks.OngoingTaskType;
 import net.ravendb.client.serverwide.DatabaseRecord;
 import net.ravendb.client.serverwide.DatabaseRecordWithEtag;
 import net.ravendb.client.serverwide.operations.CreateDatabaseOperation;
 import net.ravendb.client.serverwide.operations.GetDatabaseRecordOperation;
 import net.ravendb.client.serverwide.operations.configuration.*;
+import net.ravendb.client.serverwide.operations.ongoingTasks.DeleteServerWideTaskOperation;
 import org.junit.jupiter.api.Test;
 
 import java.util.Arrays;
@@ -96,7 +98,7 @@ public class ServerWideBackupTest extends RemoteTestBase {
                 .collect(Collectors.toList());
 
         for (String name : names) {
-            store.maintenance().server().send(new DeleteServerWideBackupConfigurationOperation(name));
+            store.maintenance().server().send(new DeleteServerWideTaskOperation(name, OngoingTaskType.BACKUP));
         }
     }
 }

@@ -90,10 +90,35 @@ public class ServerNode {
     public void updateServerVersion(String serverVersion) {
         this.lastServerVersion = serverVersion;
         _lastServerVersionCheck = 0;
+
+        _supportsAtomicClusterWrites = false;
+
+        if (serverVersion != null) {
+            String[] tokens = serverVersion.split("\\.");
+            try {
+                int major = Integer.parseInt(tokens[0]);
+                int minor = Integer.parseInt(tokens[1]);
+
+                if (major > 5 || (major == 5 && minor >= 2)) {
+                    _supportsAtomicClusterWrites = true;
+                }
+            } catch (NumberFormatException ignore) {
+            }
+        }
     }
 
     public void discardServerVersion() {
         lastServerVersion = null;
         _lastServerVersionCheck = 0;
+    }
+
+    private boolean _supportsAtomicClusterWrites;
+
+    public boolean isSupportsAtomicClusterWrites() {
+        return _supportsAtomicClusterWrites;
+    }
+
+    public void setSupportsAtomicClusterWrites(boolean supportsAtomicClusterWrites) {
+        _supportsAtomicClusterWrites = supportsAtomicClusterWrites;
     }
 }

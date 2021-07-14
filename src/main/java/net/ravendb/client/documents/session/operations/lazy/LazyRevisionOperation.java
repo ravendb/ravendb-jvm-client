@@ -80,6 +80,9 @@ public class LazyRevisionOperation<T> implements ILazyOperation {
     @Override
     public void handleResponse(GetResponse response) {
         try {
+            if (response.getResult() == null) {
+                return;
+            }
             ObjectNode responseAsNode = (ObjectNode) JsonExtensions.getDefaultMapper().readTree(response.getResult());
             ArrayNode jsonArray = (ArrayNode) responseAsNode.get("Results");
 

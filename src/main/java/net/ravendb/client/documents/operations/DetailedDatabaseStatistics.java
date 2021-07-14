@@ -5,6 +5,7 @@ public class DetailedDatabaseStatistics extends DatabaseStatistics {
     private long countOfIdentities;
     private long countOfCompareExchange;
     private long countOfCompareExchangeTombstones;
+    private long countOfTimeSeriesDeletedRanges;
 
     /**
      * @return Total number of identities in database.
@@ -46,5 +47,19 @@ public class DetailedDatabaseStatistics extends DatabaseStatistics {
      */
     public void setCountOfCompareExchangeTombstones(long countOfCompareExchangeTombstones) {
         this.countOfCompareExchangeTombstones = countOfCompareExchangeTombstones;
+    }
+
+    /**
+     * @return Total number of TimeSeries Deleted Ranges values in database.
+     */
+    public long getCountOfTimeSeriesDeletedRanges() {
+        return countOfTimeSeriesDeletedRanges;
+    }
+
+    /**
+     * @param countOfTimeSeriesDeletedRanges Total number of TimeSeries Deleted Ranges values in database.
+     */
+    public void setCountOfTimeSeriesDeletedRanges(long countOfTimeSeriesDeletedRanges) {
+        this.countOfTimeSeriesDeletedRanges = countOfTimeSeriesDeletedRanges;
     }
 }

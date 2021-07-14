@@ -52,6 +52,7 @@ public class DocumentConventions {
     private char _identityPartsSeparator;
     private boolean _disableTopologyUpdates;
 
+    private Boolean _disableAtomicDocumentWritesInClusterWideTransaction;
     private IShouldIgnoreEntityChanges _shouldIgnoreEntityChanges;
     private Function<PropertyDescriptor, Boolean> _findIdentityProperty;
 
@@ -713,6 +714,22 @@ public class DocumentConventions {
      */
     public String getJavaClassName(Class entityType) {
         return _findJavaClassName.apply(entityType);
+    }
+
+    /**
+     * EXPERT: Disable automatic atomic writes with cluster write transactions. If set to 'true', will only consider explicitly
+     * added compare exchange values to validate cluster wide transactions.
+     */
+    public Boolean getDisableAtomicDocumentWritesInClusterWideTransaction() {
+        return _disableAtomicDocumentWritesInClusterWideTransaction;
+    }
+
+    /**
+     * EXPERT: Disable automatic atomic writes with cluster write transactions. If set to 'true', will only consider explicitly
+     * added compare exchange values to validate cluster wide transactions.
+     */
+    public void setDisableAtomicDocumentWritesInClusterWideTransaction(Boolean disableAtomicDocumentWritesInClusterWideTransaction) {
+        _disableAtomicDocumentWritesInClusterWideTransaction = disableAtomicDocumentWritesInClusterWideTransaction;
     }
 
     /**

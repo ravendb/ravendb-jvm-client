@@ -59,6 +59,7 @@ public abstract class AbstractIndexDefinitionBuilder<TIndexDefinition extends In
             indexDefinition.setReduce(reduce);
             indexDefinition.setLockMode(lockMode);
             indexDefinition.setPriority(priority);
+            indexDefinition.setDeploymentMode(deploymentMode);
             indexDefinition.setState(state);
             indexDefinition.setOutputReduceToCollection(outputReduceToCollection);
             indexDefinition.setPatternForOutputReduceToCollectionReferences(patternForOutputReduceToCollectionReferences);

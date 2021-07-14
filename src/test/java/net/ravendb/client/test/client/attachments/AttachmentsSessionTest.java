@@ -174,10 +174,11 @@ public class AttachmentsSessionTest extends RemoteTestBase {
                 assertThat(attachments)
                         .hasSize(2);
 
-                CloseableAttachmentResult result = session.advanced().attachments().get("users/1", "file1");
-                byte[] file1Bytes = IOUtils.toByteArray(result.getData());
-                assertThat(file1Bytes)
-                        .hasSize(3);
+                try (CloseableAttachmentResult result = session.advanced().attachments().get("users/1", "file1")) {
+                    byte[] file1Bytes = IOUtils.toByteArray(result.getData());
+                    assertThat(file1Bytes)
+                            .hasSize(3);
+                }
             }
         }
     }
@@ -212,11 +213,11 @@ public class AttachmentsSessionTest extends RemoteTestBase {
                 assertThat(attachments)
                         .hasSize(1);
 
-                CloseableAttachmentResult result = session.advanced().attachments().get("users/1", "file1");
-                byte[] file1Bytes = IOUtils.toByteArray(result.getData());
-                assertThat(file1Bytes)
-                        .hasSize(3);
-
+                try (CloseableAttachmentResult result = session.advanced().attachments().get("users/1", "file1")) {
+                    byte[] file1Bytes = IOUtils.toByteArray(result.getData());
+                    assertThat(file1Bytes)
+                            .hasSize(3);
+                }
             }
         }
     }

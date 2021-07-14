@@ -875,6 +875,10 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
     }
 
     public void _andAlso() {
+       _andAlso(false);
+    }
+
+    public void _andAlso(boolean wrapPreviousQueryClauses) {
         List<QueryToken> tokens = getCurrentWhereTokens();
         if (tokens.isEmpty()) {
             return;
@@ -884,7 +888,13 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
             throw new IllegalStateException("Cannot add AND, previous token was already an operator token.");
         }
 
-        tokens.add(QueryOperatorToken.AND);
+        if (wrapPreviousQueryClauses) {
+            tokens.add(0, OpenSubclauseToken.create());
+            tokens.add(CloseSubclauseToken.create());
+            tokens.add(QueryOperatorToken.AND);
+        } else {
+            tokens.add(QueryOperatorToken.AND);
+        }
     }
 
     /**

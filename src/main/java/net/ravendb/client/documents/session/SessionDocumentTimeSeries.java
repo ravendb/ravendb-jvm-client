@@ -2,9 +2,11 @@ package net.ravendb.client.documents.session;
 
 import net.ravendb.client.documents.session.loaders.ITimeSeriesIncludeBuilder;
 import net.ravendb.client.documents.session.timeSeries.TimeSeriesEntry;
+import org.apache.commons.lang3.NotImplementedException;
 
 import java.util.*;
 import java.util.function.Consumer;
+import java.util.stream.Stream;
 
 public class SessionDocumentTimeSeries extends SessionTimeSeriesBase
         implements ISessionDocumentTimeSeries {
@@ -39,7 +41,7 @@ public class SessionDocumentTimeSeries extends SessionTimeSeriesBase
 
     @Override
     public TimeSeriesEntry[] get(Date from, Date to, int start, int pageSize) {
-        return getTimeSeriesAndIncludes(from, to, null, start, pageSize);
+        return get(from, to, null, start, pageSize);
     }
 
     @Override
@@ -54,6 +56,18 @@ public class SessionDocumentTimeSeries extends SessionTimeSeriesBase
 
     @Override
     public TimeSeriesEntry[] get(Date from, Date to, Consumer<ITimeSeriesIncludeBuilder> includes, int start, int pageSize) {
-        return getTimeSeriesAndIncludes(from, to, includes, start, pageSize);
+        if (notInCache(from, to)) {
+            return getTimeSeriesAndIncludes(from, to, includes, start, pageSize);
+        }
+
+        List<TimeSeriesEntry> resultsToUser = serveFromCache(from, to, start, pageSize, includes);
+
+        if (resultsToUser == null) {
+            return null;
+        }
+
+        return resultsToUser.stream()
+                .limit(pageSize)
+                .toArray(TimeSeriesEntry[]::new);
     }
 }

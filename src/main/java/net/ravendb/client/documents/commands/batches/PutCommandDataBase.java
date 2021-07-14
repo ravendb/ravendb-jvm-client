@@ -14,21 +14,23 @@ public class PutCommandDataBase<T extends JsonNode> implements ICommandData {
     private String id;
     private final String name = null;
     private String changeVector;
+    private String originalChangeVector;
     private T document;
     private final CommandType type = CommandType.PUT;
     private ForceRevisionStrategy forceRevisionCreationStrategy;
 
-    protected PutCommandDataBase(String id, String changeVector, T document) {
-        this(id, changeVector, document, ForceRevisionStrategy.NONE);
+    protected PutCommandDataBase(String id, String changeVector, String originalChangeVector, T document) {
+        this(id, changeVector, originalChangeVector, document, ForceRevisionStrategy.NONE);
     }
 
-    protected PutCommandDataBase(String id, String changeVector, T document, ForceRevisionStrategy strategy) {
+    protected PutCommandDataBase(String id, String changeVector, String originalChangeVector, T document, ForceRevisionStrategy strategy) {
         if (document == null) {
             throw new IllegalArgumentException("Document cannot be null");
         }
 
         this.id = id;
         this.changeVector = changeVector;
+        this.originalChangeVector = originalChangeVector;
         this.document = document;
         this.forceRevisionCreationStrategy = strategy;
     }
@@ -46,6 +48,10 @@ public class PutCommandDataBase<T extends JsonNode> implements ICommandData {
     @Override
     public String getChangeVector() {
         return changeVector;
+    }
+
+    public String getOriginalChangeVector() {
+        return originalChangeVector;
     }
 
     public T getDocument() {
@@ -66,6 +72,9 @@ public class PutCommandDataBase<T extends JsonNode> implements ICommandData {
         generator.writeStartObject();
         generator.writeStringField("Id", id);
         generator.writeStringField("ChangeVector", changeVector);
+        if (originalChangeVector != null) {
+            generator.writeStringField("OriginalChangeVector", originalChangeVector);
+        }
 
         generator.writeFieldName("Document");
         generator.writeTree(document);

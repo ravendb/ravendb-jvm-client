@@ -141,7 +141,9 @@ public class DocumentStore extends DocumentStoreBase {
      */
     @Override
     public IDocumentSession openSession() {
-        return openSession(new SessionOptions());
+        SessionOptions sessionOptions = new SessionOptions();
+        sessionOptions.setDisableAtomicDocumentWritesInClusterWideTransaction(getConventions().getDisableAtomicDocumentWritesInClusterWideTransaction());
+        return openSession(sessionOptions);
     }
 
     /**
@@ -151,6 +153,7 @@ public class DocumentStore extends DocumentStoreBase {
     public IDocumentSession openSession(String database) {
         SessionOptions sessionOptions = new SessionOptions();
         sessionOptions.setDatabase(database);
+        sessionOptions.setDisableAtomicDocumentWritesInClusterWideTransaction(getConventions().getDisableAtomicDocumentWritesInClusterWideTransaction());
 
         return openSession(sessionOptions);
     }

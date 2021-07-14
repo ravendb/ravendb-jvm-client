@@ -5,12 +5,12 @@ import net.ravendb.client.documents.session.ForceRevisionStrategy;
 
 public class PutCommandDataWithJson extends PutCommandDataBase<ObjectNode> {
 
-    public PutCommandDataWithJson(String id, String changeVector, ObjectNode document) {
-        super(id, changeVector, document);
+    public PutCommandDataWithJson(String id, String changeVector, String originalChangeVector, ObjectNode document) {
+        super(id, changeVector, originalChangeVector, document);
     }
 
-    public PutCommandDataWithJson(String id, String changeVector, ObjectNode document, ForceRevisionStrategy strategy) {
-        super(id, changeVector, document, strategy);
+    public PutCommandDataWithJson(String id, String changeVector, String originalChangeVector, ObjectNode document, ForceRevisionStrategy strategy) {
+        super(id, changeVector, originalChangeVector, document, strategy);
     }
 
 }

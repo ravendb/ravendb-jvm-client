@@ -39,8 +39,15 @@ public class SessionDocumentRollupTypedTimeSeries<T> extends SessionTimeSeriesBa
     @SuppressWarnings("unchecked")
     @Override
     public TypedTimeSeriesRollupEntry<T>[] get(Date from, Date to, int start, int pageSize) {
-        TimeSeriesEntry[] results = getInternal(from, to, start, pageSize);
+        if (notInCache(from, to)) {
+            TimeSeriesEntry[] results = getTimeSeriesAndIncludes(from, to, null, start, pageSize);
 
+            return Arrays.stream(results)
+                    .map(x -> TypedTimeSeriesRollupEntry.fromEntry(_clazz, x))
+                    .toArray(TypedTimeSeriesRollupEntry[]::new);
+        }
+
+        TimeSeriesEntry[] results = getFromCache(from, to, null, start, pageSize);
         return Arrays.stream(results)
                 .map(x -> TypedTimeSeriesRollupEntry.fromEntry(_clazz, x))
                 .toArray(TypedTimeSeriesRollupEntry[]::new);
