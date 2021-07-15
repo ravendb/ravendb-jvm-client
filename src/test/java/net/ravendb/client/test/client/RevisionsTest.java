@@ -249,6 +249,21 @@ public class RevisionsTest extends RemoteTestBase {
     }
 
     @Test
+    public void canGetNonExistingRevisionsByChangeVectorAsyncLazily() throws Exception {
+        try (IDocumentStore store = getDocumentStore()) {
+            try (IDocumentSession session = store.openSession()) {
+                Lazy<User> lazy = session.advanced().revisions().lazily().get(User.class, "dummy");
+                User user = lazy.getValue();
+
+                assertThat(session.advanced().getNumberOfRequests())
+                        .isEqualTo(1);
+                assertThat(user)
+                        .isNull();
+            }
+        }
+    }
+
+    @Test
     public void canGetRevisionsByChangeVectorsLazily() throws Exception {
         try (IDocumentStore store = getDocumentStore()) {
             String id = "users/1";

@@ -20,6 +20,12 @@ public interface IDocumentQueryCustomization {
     QueryOperation getQueryOperation();
 
     /**
+     * Get current Query
+     * @return Query
+     */
+    AbstractDocumentQuery<?, ?> getQuery();
+
+    /**
      * Allow you to modify the index query before it is executed
      * @param action action to call
      * @return customization object

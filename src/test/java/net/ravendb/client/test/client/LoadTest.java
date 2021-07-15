@@ -41,6 +41,26 @@ public class LoadTest extends RemoteTestBase {
     }
 
     @Test
+    public void load_Document_And_Expect_Null_User() throws Exception {
+        try (IDocumentStore store = getDocumentStore()) {
+            try (IDocumentSession session = store.openSession()) {
+                String nullId = null;
+                User user1 = session.load(User.class, nullId);
+                assertThat(user1)
+                        .isNull();
+
+                User user2 = session.load(User.class, "");
+                assertThat(user2)
+                        .isNull();
+
+                User user3 = session.load(User.class, " ");
+                assertThat(user3)
+                        .isNull();
+            }
+        }
+    }
+
+    @Test
     public void loadDocumentById() throws Exception {
         try (IDocumentStore store = getDocumentStore()) {
             try (IDocumentSession session = store.openSession()) {

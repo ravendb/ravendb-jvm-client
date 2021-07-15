@@ -19,6 +19,10 @@ public class DocumentQueryCustomizationDelegate implements IDocumentQueryCustomi
         this.query = query;
     }
 
+    public AbstractDocumentQuery<?, ?> getQuery() {
+        return query;
+    }
+
     @Override
     public QueryOperation getQueryOperation() {
         return query.getQueryOperation();

@@ -17,7 +17,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 public class ClusterTransactionTest extends RemoteTestBase {
 
-
     @Test
     public void canCreateClusterTransactionRequest() throws Exception {
         try (IDocumentStore store = getDocumentStore()) {
@@ -29,6 +28,7 @@ public class ClusterTransactionTest extends RemoteTestBase {
 
             SessionOptions sessionOptions = new SessionOptions();
             sessionOptions.setTransactionMode(TransactionMode.CLUSTER_WIDE);
+            sessionOptions.setDisableAtomicDocumentWritesInClusterWideTransaction(true);
 
             try (IDocumentSession session = store.openSession(sessionOptions)) {
                 session.advanced().clusterTransaction().createCompareExchangeValue("usernames/ayende", user1);
@@ -56,6 +56,7 @@ public class ClusterTransactionTest extends RemoteTestBase {
 
             SessionOptions sessionOptions = new SessionOptions();
             sessionOptions.setTransactionMode(TransactionMode.CLUSTER_WIDE);
+            sessionOptions.setDisableAtomicDocumentWritesInClusterWideTransaction(true);
 
             try (IDocumentSession session = store.openSession(sessionOptions)) {
                 session.advanced().clusterTransaction().createCompareExchangeValue("usernames/ayende", user1);
@@ -101,6 +102,7 @@ public class ClusterTransactionTest extends RemoteTestBase {
 
             SessionOptions sessionOptions = new SessionOptions();
             sessionOptions.setTransactionMode(TransactionMode.CLUSTER_WIDE);
+            sessionOptions.setDisableAtomicDocumentWritesInClusterWideTransaction(true);
 
             try (IDocumentSession session = store.openSession(sessionOptions)) {
                 session.advanced().clusterTransaction().createCompareExchangeValue("usernames/ayende", user1);
@@ -123,6 +125,8 @@ public class ClusterTransactionTest extends RemoteTestBase {
         try (IDocumentStore store = getDocumentStore()) {
             SessionOptions sessionOptions = new SessionOptions();
             sessionOptions.setTransactionMode(TransactionMode.CLUSTER_WIDE);
+            sessionOptions.setDisableAtomicDocumentWritesInClusterWideTransaction(true);
+
             try (IDocumentSession session = store.openSession()) {
 
                 ByteArrayInputStream attachmentStream = new ByteArrayInputStream(new byte[]{1, 2, 3});
@@ -152,6 +156,7 @@ public class ClusterTransactionTest extends RemoteTestBase {
 
             SessionOptions options = new SessionOptions();
             options.setTransactionMode(TransactionMode.CLUSTER_WIDE);
+            options.setDisableAtomicDocumentWritesInClusterWideTransaction(true);
 
             try (IDocumentSession session = store.openSession(options)) {
                 session.advanced().clusterTransaction().createCompareExchangeValue("usernames/ayende", user1);

@@ -197,21 +197,17 @@ public class HiLoTest extends RemoteTestBase {
 
             List<User> users = IntStream.range(0, parallelLevel).mapToObj(x -> new User()).collect(Collectors.toList());
 
-            ScheduledExecutorService service = Executors.newScheduledThreadPool(32);
-
-            CompletableFuture<Void>[] futures = IntStream.range(0, parallelLevel).mapToObj(x -> {
-                return CompletableFuture.runAsync(() -> {
-                    User user = users.get(x);
-                    IDocumentSession session = store.openSession();
-                    session.store(user);
-                    session.saveChanges();
-                });
-            }).toArray(CompletableFuture[]::new);
+            CompletableFuture<Void>[] futures = IntStream.range(0, parallelLevel).mapToObj(x -> CompletableFuture.runAsync(() -> {
+                User user = users.get(x);
+                IDocumentSession session = store.openSession();
+                session.store(user);
+                session.saveChanges();
+            })).toArray(CompletableFuture[]::new);
 
             CompletableFuture.allOf(futures).get();
 
             users.stream()
-                    .map(x -> x.getId())
+                    .map(User::getId)
                     .map(id -> id.split("/")[1])
                     .map(x -> x.split("-")[0])
                     .forEach(numericPart -> {

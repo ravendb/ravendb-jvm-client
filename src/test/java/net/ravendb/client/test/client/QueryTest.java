@@ -28,6 +28,116 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 public class QueryTest extends RemoteTestBase {
 
+    public static class Article {
+        private String title;
+        private String description;
+        private boolean isDeleted;
+
+        public String getTitle() {
+            return title;
+        }
+
+        public void setTitle(String title) {
+            this.title = title;
+        }
+
+        public String getDescription() {
+            return description;
+        }
+
+        public void setDescription(String description) {
+            this.description = description;
+        }
+
+        public boolean isDeleted() {
+            return isDeleted;
+        }
+
+        public void setDeleted(boolean deleted) {
+            isDeleted = deleted;
+        }
+    }
+
+    @Test
+    public void query_CreateClausesForQueryDynamicallyWithOnBeforeQueryEvent() throws Exception {
+        try (IDocumentStore store = getDocumentStore()) {
+            String id1 = "users/1";
+            String id2 = "users/2";
+
+            try (IDocumentSession session = store.openSession()) {
+                Article article1 = new Article();
+                article1.setTitle("foo");
+                article1.setDescription("bar");
+                article1.setDeleted(false);
+                session.store(article1, id1);
+
+                Article article2 = new Article();
+                article2.setTitle("foo");
+                article2.setDescription("bar");
+                article2.setDeleted(true);
+                session.store(article2, id2);
+
+                session.saveChanges();
+            }
+
+            try (IDocumentSession session = store.openSession()) {
+                session.advanced().addBeforeQueryListener((sender, event) -> {
+                    DocumentQuery<?> queryToBeExecuted = (DocumentQuery<?>) event.getQueryCustomization().getQuery();
+                    queryToBeExecuted.andAlso(true);
+                    queryToBeExecuted.whereEquals("deleted", true);
+                });
+
+                IDocumentQuery<Article> query = session.query(Article.class)
+                        .search("title", "foo")
+                        .search("description", "bar", SearchOperator.OR);
+
+                List<Article> result = query.toList();
+
+                assertThat(query.toString())
+                        .isEqualTo("from 'Articles' where (search(title, $p0) or search(description, $p1)) and deleted = $p2");
+
+                assertThat(result)
+                        .hasSize(1);
+            }
+        }
+    }
+
+    @Test
+    public void query_CreateClausesForQueryDynamicallyWhenTheQueryEmpty() throws Exception {
+        try (IDocumentStore store = getDocumentStore()) {
+            String id1 = "users/1";
+            String id2 = "users/2";
+
+            try (IDocumentSession session = store.openSession()) {
+                Article article1 = new Article();
+                article1.setTitle("foo");
+                article1.setDescription("bar");
+                article1.setDeleted(false);
+                session.store(article1, id1);
+
+                Article article2 = new Article();
+                article2.setTitle("foo");
+                article2.setDescription("bar");
+                article2.setDeleted(true);
+                session.store(article2, id2);
+
+                session.saveChanges();
+            }
+
+            try (IDocumentSession session = store.openSession()) {
+                IDocumentQuery<Article> query = session.advanced().documentQuery(Article.class)
+                        .andAlso(true);
+
+                assertThat(query.toString())
+                        .isEqualTo("from 'Articles'");
+
+                List<Article> queryResult = query.toList();
+                assertThat(queryResult)
+                        .hasSize(2);
+            }
+        }
+    }
+
     @Test
     public void querySimple() throws Exception {
         try (IDocumentStore store = getDocumentStore()) {
