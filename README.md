@@ -8,19 +8,19 @@
 <dependency>
   <groupId>net.ravendb</groupId>
   <artifactId>ravendb</artifactId>
-  <version>5.0.2</version>
+  <version>5.2.0</version>
 </dependency>
 ```
 
 
 ### Gradle
 ```
-implementation 'net.ravendb:ravendb:5.0.2'
+implementation 'net.ravendb:ravendb:5.2.0'
 ```
 
 ## Documentation
 
-Please find the official documentation on [RavenDB Documentation](https://ravendb.net/docs/article-page/5.0/java) page.
+Please find the official documentation on [RavenDB Documentation](https://ravendb.net/docs/article-page/5.2/java) page.
 
 ## Bug tracker
 

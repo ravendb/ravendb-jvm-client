@@ -1,8 +1,10 @@
 package net.ravendb.client;
 
+import com.google.common.base.Stopwatch;
 import com.google.common.collect.Sets;
 import net.ravendb.client.documents.DocumentStore;
 import net.ravendb.client.documents.IDocumentStore;
+import net.ravendb.client.documents.session.IDocumentSession;
 import net.ravendb.client.driver.RavenServerLocator;
 import net.ravendb.client.driver.RavenTestDriver;
 import net.ravendb.client.exceptions.cluster.NoLeaderException;
@@ -29,6 +31,7 @@ import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @SuppressWarnings("SameParameterValue")
@@ -316,5 +319,36 @@ public class RemoteTestBase extends RavenTestDriver implements CleanCloseable {
                     .map(x -> x.toString())
                     .collect(Collectors.joining(", ")));
         }
+    }
+
+    protected <T> boolean waitForDocument(Class<T> clazz, IDocumentStore store, String docId) {
+        return waitForDocument(clazz, store, docId, null, 10_000);
+    }
+
+    protected <T> boolean waitForDocument(Class<T> clazz, IDocumentStore store, String docId,
+                                          Function<T, Boolean> predicate, long timeout) {
+        Stopwatch sw = Stopwatch.createStarted();
+        Exception ex = null;
+        while (sw.elapsed().toMillis() < timeout) {
+            try (IDocumentSession session = store.openSession(store.getDatabase())) {
+                try {
+                    T doc = session.load(clazz, docId);
+                    if (doc != null) {
+                        if (predicate == null || predicate.apply(doc)) {
+                            return true;
+                        }
+                    }
+                } catch (Exception e) {
+                    ex = e;
+                }
+            }
+
+            try {
+                Thread.sleep(100);
+            } catch (InterruptedException e) {
+                // empty
+            }
+        }
+        return false;
     }
 }
