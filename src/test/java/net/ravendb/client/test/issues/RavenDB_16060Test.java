@@ -10,6 +10,7 @@ import net.ravendb.client.documents.session.InMemoryDocumentSessionOperations;
 import net.ravendb.client.documents.session.timeSeries.TimeSeriesValue;
 import net.ravendb.client.documents.session.timeSeries.TypedTimeSeriesEntry;
 import net.ravendb.client.documents.session.timeSeries.TypedTimeSeriesRollupEntry;
+import net.ravendb.client.infrastructure.DisabledOnPullRequest;
 import net.ravendb.client.infrastructure.entities.User;
 import net.ravendb.client.primitives.TimeValue;
 import net.ravendb.client.test.client.timeSeries.TimeSeriesTypedSessionTest;
@@ -21,6 +22,7 @@ import java.util.*;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@DisabledOnPullRequest
 public class RavenDB_16060Test extends RemoteTestBase {
 
     @Test

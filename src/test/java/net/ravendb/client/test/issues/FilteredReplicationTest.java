@@ -11,6 +11,7 @@ import net.ravendb.client.documents.operations.replication.*;
 import net.ravendb.client.documents.session.ForceRevisionStrategy;
 import net.ravendb.client.documents.session.IDocumentSession;
 import net.ravendb.client.documents.session.timeSeries.TimeSeriesValue;
+import net.ravendb.client.infrastructure.DisabledOnPullRequest;
 import net.ravendb.client.infrastructure.GenerateCertificateOperation;
 import net.ravendb.client.infrastructure.entities.User;
 import org.apache.commons.lang3.time.DateUtils;
@@ -22,6 +23,7 @@ import java.util.EnumSet;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@DisabledOnPullRequest
 public class FilteredReplicationTest extends ReplicationTestBase {
 
     @Test

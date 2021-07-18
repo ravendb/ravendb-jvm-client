@@ -14,6 +14,7 @@ import net.ravendb.client.documents.session.InMemoryDocumentSessionOperations;
 import net.ravendb.client.exceptions.ConflictException;
 import net.ravendb.client.exceptions.documents.DocumentConflictException;
 import net.ravendb.client.extensions.JsonExtensions;
+import net.ravendb.client.infrastructure.DisabledOnPullRequest;
 import net.ravendb.client.infrastructure.entities.Address;
 import net.ravendb.client.infrastructure.entities.User;
 import net.ravendb.client.serverwide.ConflictSolver;
@@ -28,6 +29,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @SuppressWarnings("SameParameterValue")
+@DisabledOnPullRequest
 public class RavenDB_6292Test extends ReplicationTestBase {
 
     private Consumer<DatabaseRecord> customize = null;

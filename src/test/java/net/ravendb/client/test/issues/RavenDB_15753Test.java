@@ -5,6 +5,7 @@ import net.ravendb.client.documents.IDocumentStore;
 import net.ravendb.client.documents.indexes.AdditionalAssembly;
 import net.ravendb.client.documents.indexes.IndexDefinition;
 import net.ravendb.client.documents.operations.indexes.PutIndexesOperation;
+import net.ravendb.client.infrastructure.DisabledOnPullRequest;
 import org.junit.jupiter.api.Test;
 
 import java.util.Collections;
@@ -13,6 +14,7 @@ import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@DisabledOnPullRequest
 public class RavenDB_15753Test extends RemoteTestBase {
 
     @Test

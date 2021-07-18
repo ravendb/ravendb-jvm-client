@@ -8,6 +8,7 @@ import net.ravendb.client.documents.session.*;
 import net.ravendb.client.documents.session.timeSeries.TimeSeriesValue;
 import net.ravendb.client.documents.session.timeSeries.TypedTimeSeriesEntry;
 import net.ravendb.client.documents.session.timeSeries.TypedTimeSeriesRollupEntry;
+import net.ravendb.client.infrastructure.DisabledOnPullRequest;
 import net.ravendb.client.infrastructure.entities.Company;
 import net.ravendb.client.infrastructure.entities.User;
 import net.ravendb.client.primitives.TimeValue;
@@ -623,6 +624,7 @@ public class TimeSeriesTypedSessionTest extends RemoteTestBase {
     }
 
     @Test
+    @DisabledOnPullRequest
     public void canWorkWithRollupTimeSeries() throws Exception {
         try (IDocumentStore store = getDocumentStore()) {
             RawTimeSeriesPolicy raw = new RawTimeSeriesPolicy(TimeValue.ofHours(24));
@@ -733,6 +735,7 @@ public class TimeSeriesTypedSessionTest extends RemoteTestBase {
     }
 
     @Test
+    @DisabledOnPullRequest
     public void canWorkWithRollupTimeSeries2() throws Exception {
         try (IDocumentStore store = getDocumentStore()) {
             int rawHours = 24;

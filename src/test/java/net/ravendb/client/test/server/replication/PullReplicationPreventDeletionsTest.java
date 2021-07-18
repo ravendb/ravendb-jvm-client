@@ -10,6 +10,7 @@ import net.ravendb.client.documents.operations.expiration.ExpirationConfiguratio
 import net.ravendb.client.documents.operations.replication.*;
 import net.ravendb.client.documents.session.IDocumentSession;
 import net.ravendb.client.documents.session.IMetadataDictionary;
+import net.ravendb.client.infrastructure.DisabledOnPullRequest;
 import net.ravendb.client.infrastructure.GenerateCertificateOperation;
 import org.apache.commons.lang3.time.DateUtils;
 import org.junit.jupiter.api.Test;
@@ -19,6 +20,7 @@ import java.util.EnumSet;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@DisabledOnPullRequest
 public class PullReplicationPreventDeletionsTest extends ReplicationTestBase {
 
     @Test
