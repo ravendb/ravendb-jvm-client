@@ -44,8 +44,6 @@ public class AtomicClusterReadWriteTest extends ClusterTestBase {
             String database = getDatabaseName();
             int numberOfNodes = 3;
 
-            withFiddler();
-
             cluster.createDatabase(new DatabaseRecord(database), numberOfNodes, cluster.getInitialLeader().getUrl());
 
             try (IDocumentStore store = new DocumentStore(cluster.getInitialLeader().getUrl(), database)) {
