@@ -2,6 +2,7 @@ package net.ravendb.client.test.server.documents;
 
 import net.ravendb.client.RemoteTestBase;
 import net.ravendb.client.documents.IDocumentStore;
+import net.ravendb.client.infrastructure.DisabledOnPullRequest;
 import net.ravendb.client.serverwide.DatabaseRecord;
 import net.ravendb.client.serverwide.DocumentsCompressionConfiguration;
 import net.ravendb.client.serverwide.operations.GetDatabaseRecordOperation;
@@ -10,6 +11,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@DisabledOnPullRequest
 public class CompressAllCollectionsTest extends RemoteTestBase {
 
     @Test

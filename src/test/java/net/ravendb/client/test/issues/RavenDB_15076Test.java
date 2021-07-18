@@ -8,6 +8,7 @@ import net.ravendb.client.documents.operations.replication.ExternalReplication;
 import net.ravendb.client.documents.operations.replication.UpdateExternalReplicationOperation;
 import net.ravendb.client.documents.session.ForceRevisionStrategy;
 import net.ravendb.client.documents.session.IDocumentSession;
+import net.ravendb.client.infrastructure.DisabledOnPullRequest;
 import net.ravendb.client.infrastructure.entities.User;
 import net.ravendb.client.test.client.timeSeries.TimeSeriesTypedSessionTest;
 import org.apache.commons.lang3.time.DateUtils;
@@ -19,6 +20,7 @@ import java.util.Date;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@DisabledOnPullRequest
 public class RavenDB_15076Test extends ReplicationTestBase {
 
     @Test

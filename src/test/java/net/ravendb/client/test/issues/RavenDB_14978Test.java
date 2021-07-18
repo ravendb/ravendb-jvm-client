@@ -7,12 +7,14 @@ import net.ravendb.client.documents.session.IDocumentSession;
 import net.ravendb.client.documents.session.SessionInfo;
 import net.ravendb.client.http.LoadBalanceBehavior;
 import net.ravendb.client.http.ReadBalanceBehavior;
+import net.ravendb.client.infrastructure.DisabledOnPullRequest;
 import net.ravendb.client.infrastructure.entities.User;
 import net.ravendb.client.serverwide.DatabaseRecord;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@DisabledOnPullRequest
 public class RavenDB_14978Test extends ClusterTestBase {
 
     @Test

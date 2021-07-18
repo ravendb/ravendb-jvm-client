@@ -15,6 +15,7 @@ import net.ravendb.client.http.CurrentIndexAndNode;
 import net.ravendb.client.http.RequestExecutor;
 import net.ravendb.client.http.ServerNode;
 import net.ravendb.client.http.Topology;
+import net.ravendb.client.infrastructure.DisabledOnPullRequest;
 import net.ravendb.client.infrastructure.entities.User;
 import net.ravendb.client.primitives.Tuple;
 import net.ravendb.client.serverwide.DatabaseRecord;
@@ -38,6 +39,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 public class ClusterOperationTest extends ClusterTestBase {
 
     @Test
+    @DisabledOnPullRequest
     public void nextIdentityForOperationShouldBroadcast() throws Exception {
         try (ClusterController cluster = createRaftCluster(3)) {
 
