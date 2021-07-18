@@ -8,6 +8,7 @@ import net.ravendb.client.documents.operations.compareExchange.GetCompareExchang
 import net.ravendb.client.documents.session.IDocumentSession;
 import net.ravendb.client.documents.session.SessionOptions;
 import net.ravendb.client.documents.session.TransactionMode;
+import net.ravendb.client.infrastructure.DisabledOnPullRequest;
 import net.ravendb.client.serverwide.DatabaseRecord;
 import org.junit.jupiter.api.Test;
 
@@ -15,6 +16,7 @@ import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@DisabledOnPullRequest
 public class AtomicClusterReadWriteTest extends ClusterTestBase {
 
     public static class TestObj {

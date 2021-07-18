@@ -7,6 +7,7 @@ import net.ravendb.client.documents.operations.timeSeries.*;
 import net.ravendb.client.documents.session.IDocumentSession;
 import net.ravendb.client.documents.session.timeSeries.TimeSeriesEntry;
 import net.ravendb.client.extensions.JsonExtensions;
+import net.ravendb.client.infrastructure.DisabledOnPullRequest;
 import net.ravendb.client.infrastructure.entities.User;
 import net.ravendb.client.primitives.TimeValue;
 import net.ravendb.client.primitives.TimeValueUnit;
@@ -54,6 +55,7 @@ public class TimeSeriesConfigurationTest extends RemoteTestBase {
     }
 
     @Test
+    @DisabledOnPullRequest
     public void canConfigureTimeSeries() throws Exception {
         try (IDocumentStore store = getDocumentStore()) {
             TimeSeriesConfiguration config = new TimeSeriesConfiguration();
@@ -184,6 +186,7 @@ public class TimeSeriesConfigurationTest extends RemoteTestBase {
     }
 
     @Test
+    @DisabledOnPullRequest
     public void canExecuteSimpleRollup() throws Exception {
         try (IDocumentStore store = getDocumentStore()) {
             TimeSeriesPolicy p1 = new TimeSeriesPolicy("BySecond", TimeValue.ofSeconds(1));
@@ -246,6 +249,7 @@ public class TimeSeriesConfigurationTest extends RemoteTestBase {
     }
 
     @Test
+    @DisabledOnPullRequest
     public void canConfigureTimeSeries2() throws Exception {
         try (IDocumentStore store = getDocumentStore()) {
             String collectionName = "Users";
@@ -325,6 +329,7 @@ public class TimeSeriesConfigurationTest extends RemoteTestBase {
     }
 
     @Test
+    @DisabledOnPullRequest
     public void canConfigureTimeSeries3() throws Exception {
         try (IDocumentStore store = getDocumentStore()) {
             store.timeSeries().setPolicy(User.class, "By15SecondsFor1Minute", TimeValue.ofSeconds(15), TimeValue.ofSeconds(60));

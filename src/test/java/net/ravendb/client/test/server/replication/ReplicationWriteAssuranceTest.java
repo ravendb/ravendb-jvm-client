@@ -4,6 +4,7 @@ import net.ravendb.client.ClusterTestBase;
 import net.ravendb.client.documents.DocumentStore;
 import net.ravendb.client.documents.IDocumentStore;
 import net.ravendb.client.documents.session.IDocumentSession;
+import net.ravendb.client.infrastructure.DisabledOnPullRequest;
 import net.ravendb.client.infrastructure.entities.User;
 import net.ravendb.client.serverwide.DatabaseRecord;
 import org.junit.jupiter.api.Test;
@@ -12,6 +13,7 @@ import java.time.Duration;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@DisabledOnPullRequest
 public class ReplicationWriteAssuranceTest extends ClusterTestBase {
 
     @Test
