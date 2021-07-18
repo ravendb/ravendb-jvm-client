@@ -8,6 +8,7 @@ import net.ravendb.client.documents.operations.backups.*;
 import net.ravendb.client.documents.operations.ongoingTasks.NextBackup;
 import net.ravendb.client.documents.operations.ongoingTasks.OngoingTaskBackup;
 import net.ravendb.client.documents.operations.ongoingTasks.OngoingTaskType;
+import net.ravendb.client.infrastructure.DisabledOnPullRequest;
 import org.junit.jupiter.api.Test;
 
 import java.nio.file.Files;
@@ -17,6 +18,7 @@ import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@DisabledOnPullRequest
 public class BackupsTest extends RemoteTestBase {
 
     @Test

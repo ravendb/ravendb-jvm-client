@@ -24,6 +24,7 @@ import java.util.function.Consumer;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@DisabledOnPullRequest
 public class DocumentReplicationTest extends ReplicationTestBase {
 
     private Consumer<DatabaseRecord> customize = null;

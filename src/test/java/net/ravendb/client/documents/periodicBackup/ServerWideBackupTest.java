@@ -6,6 +6,7 @@ import net.ravendb.client.documents.operations.backups.AzureSettings;
 import net.ravendb.client.documents.operations.backups.BackupType;
 import net.ravendb.client.documents.operations.backups.FtpSettings;
 import net.ravendb.client.documents.operations.ongoingTasks.OngoingTaskType;
+import net.ravendb.client.infrastructure.DisabledOnPullRequest;
 import net.ravendb.client.serverwide.DatabaseRecord;
 import net.ravendb.client.serverwide.DatabaseRecordWithEtag;
 import net.ravendb.client.serverwide.operations.CreateDatabaseOperation;
@@ -20,6 +21,7 @@ import java.util.stream.Collectors;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@DisabledOnPullRequest
 public class ServerWideBackupTest extends RemoteTestBase {
 
     @Test
