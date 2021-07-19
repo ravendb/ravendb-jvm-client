@@ -26,6 +26,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+@SuppressWarnings("unchecked")
 public class MultiGetCommand extends RavenCommand<List<GetResponse>> implements CleanCloseable {
 
     private final RequestExecutor _requestExecutor;
@@ -37,7 +38,6 @@ public class MultiGetCommand extends RavenCommand<List<GetResponse>> implements 
 
     public boolean aggressivelyCached;
 
-    @SuppressWarnings("unchecked")
     public MultiGetCommand(RequestExecutor requestExecutor, List<GetRequest> commands) {
         super((Class<List<GetResponse>>)(Class<?>)List.class);
 
