@@ -21,7 +21,7 @@ public class LazyRevisionOperations implements ILazyRevisionsOperations {
     @Override
     public <T> Lazy<T> get(Class<T> clazz, String changeVector) {
         GetRevisionOperation operation = new GetRevisionOperation(delegate, changeVector);
-        LazyRevisionOperation lazyRevisionOperation = new LazyRevisionOperation(clazz, operation, LazyRevisionOperation.Mode.SINGLE);
+        LazyRevisionOperation<T> lazyRevisionOperation = new LazyRevisionOperation<>(clazz, operation, LazyRevisionOperation.Mode.SINGLE);
         return delegate.addLazyOperation(clazz, lazyRevisionOperation, null);
     }
 
@@ -35,6 +35,7 @@ public class LazyRevisionOperations implements ILazyRevisionsOperations {
         return getMetadataFor(id, start, 25);
     }
 
+    @SuppressWarnings("unchecked")
     @Override
     public <T> Lazy<List<MetadataAsDictionary>> getMetadataFor(String id, int start, int pageSize) {
         GetRevisionOperation operation = new GetRevisionOperation(delegate, id, start, pageSize);
@@ -42,6 +43,7 @@ public class LazyRevisionOperations implements ILazyRevisionsOperations {
         return delegate.addLazyOperation((Class<List<MetadataAsDictionary>>)(Class<?>)List.class, lazyRevisionOperation, null);
     }
 
+    @SuppressWarnings("unchecked")
     @Override
     public <T> Lazy<Map<String, T>> get(Class<T> clazz, String[] changeVectors) {
         GetRevisionOperation operation = new GetRevisionOperation(delegate, changeVectors);
@@ -66,6 +68,7 @@ public class LazyRevisionOperations implements ILazyRevisionsOperations {
         return getFor(clazz, id, start, 25);
     }
 
+    @SuppressWarnings("unchecked")
     @Override
     public <T> Lazy<List<T>> getFor(Class<T> clazz, String id, int start, int pageSize) {
         GetRevisionOperation operation = new GetRevisionOperation(delegate, id, start, pageSize);

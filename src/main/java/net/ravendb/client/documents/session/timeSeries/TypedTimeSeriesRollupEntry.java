@@ -50,6 +50,7 @@ public class TypedTimeSeriesRollupEntry<TValues> {
         _rollup = rollup;
     }
 
+    @SuppressWarnings("deprecation")
     private TValues createInstance() {
         try {
             return _clazz.newInstance();
