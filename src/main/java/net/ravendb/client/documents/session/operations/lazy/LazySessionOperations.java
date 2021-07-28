@@ -83,6 +83,7 @@ public class LazySessionOperations implements ILazySessionOperations {
         return delegate.lazyLoadInternal(clazz, ids.toArray(new String[0]), new String[0], onEval);
     }
 
+    @SuppressWarnings("unchecked")
     @Override
     public <TResult> Lazy<ConditionalLoadResult<TResult>> conditionalLoad(Class<TResult> clazz, String id, String changeVector) {
         if (StringUtils.isEmpty(id)) {

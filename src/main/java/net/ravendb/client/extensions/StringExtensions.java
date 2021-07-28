@@ -1,7 +1,7 @@
 package net.ravendb.client.extensions;
 
-import org.apache.commons.lang3.StringEscapeUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.text.StringEscapeUtils;
 
 public class StringExtensions {
 

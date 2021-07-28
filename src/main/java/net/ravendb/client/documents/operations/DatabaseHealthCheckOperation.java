@@ -13,7 +13,7 @@ import java.time.Duration;
 public class DatabaseHealthCheckOperation implements IMaintenanceOperation {
 
     @Override
-    public RavenCommand getCommand(DocumentConventions conventions) {
+    public VoidRavenCommand getCommand(DocumentConventions conventions) {
         return new DatabaseHealthCheckCommand();
     }
 

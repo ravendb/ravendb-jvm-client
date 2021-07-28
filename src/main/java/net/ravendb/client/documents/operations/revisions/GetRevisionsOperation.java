@@ -55,7 +55,7 @@ public class GetRevisionsOperation<T> implements IOperation<RevisionsResult<T>> 
 
     @Override
     public RavenCommand<RevisionsResult<T>> getCommand(IDocumentStore store, DocumentConventions conventions, HttpCache cache) {
-        return new GetRevisionsResultCommand(_clazz, _parameters.getId(), _parameters.getStart(), _parameters.getPageSize(), store.getConventions().getEntityMapper());
+        return new GetRevisionsResultCommand<>(_clazz, _parameters.getId(), _parameters.getStart(), _parameters.getPageSize(), store.getConventions().getEntityMapper());
     }
 
     public static class Parameters {
@@ -100,6 +100,7 @@ public class GetRevisionsOperation<T> implements IOperation<RevisionsResult<T>> 
         private final ObjectMapper _mapper;
         private final GetRevisionsCommand _cmd;
 
+        @SuppressWarnings("unchecked")
         public GetRevisionsResultCommand(Class<T> clazz, String id, Integer start, Integer pageSize, ObjectMapper mapper) {
             super((Class<RevisionsResult<T>>)(Class<?>)RevisionsResult.class);
             _clazz = clazz;
