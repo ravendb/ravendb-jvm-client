@@ -73,6 +73,7 @@ public class PullReplicationAsSink extends ExternalReplicationBase {
 
     /**
      * @deprecated Please use getHubName instead
+     * @return hub definition name
      */
     public String getHubDefinitionName() {
         return hubDefinitionName;
@@ -80,6 +81,7 @@ public class PullReplicationAsSink extends ExternalReplicationBase {
 
     /**
      * @deprecated Please use setHubName instead
+     * @param hubDefinitionName hub definition name
      */
     public void setHubDefinitionName(String hubDefinitionName) {
         this.hubDefinitionName = hubDefinitionName;

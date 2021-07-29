@@ -26,18 +26,18 @@ public class LazyRevisionOperations implements ILazyRevisionsOperations {
     }
 
     @Override
-    public <T> Lazy<List<MetadataAsDictionary>> getMetadataFor(String id) {
+    public Lazy<List<MetadataAsDictionary>> getMetadataFor(String id) {
         return getMetadataFor(id, 0, 25);
     }
 
     @Override
-    public <T> Lazy<List<MetadataAsDictionary>> getMetadataFor(String id, int start) {
+    public Lazy<List<MetadataAsDictionary>> getMetadataFor(String id, int start) {
         return getMetadataFor(id, start, 25);
     }
 
     @SuppressWarnings("unchecked")
     @Override
-    public <T> Lazy<List<MetadataAsDictionary>> getMetadataFor(String id, int start, int pageSize) {
+    public Lazy<List<MetadataAsDictionary>> getMetadataFor(String id, int start, int pageSize) {
         GetRevisionOperation operation = new GetRevisionOperation(delegate, id, start, pageSize);
         LazyRevisionOperation<MetadataAsDictionary> lazyRevisionOperation = new LazyRevisionOperation<>(MetadataAsDictionary.class, operation, LazyRevisionOperation.Mode.LIST_OF_METADATA);
         return delegate.addLazyOperation((Class<List<MetadataAsDictionary>>)(Class<?>)List.class, lazyRevisionOperation, null);

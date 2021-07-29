@@ -355,6 +355,7 @@ public interface IAdvancedSessionOperations extends IAdvancedDocumentSessionOper
     /**
      * Loads the specified entity with the specified id and changeVector.
      * If the entity is loaded into the session, the tracked entity will be returned otherwise the entity will be loaded only if it is fresher then the provided changeVector.
+     * @param clazz Result class
      * @param id Identifier of a entity that will be conditional loaded.
      * @param changeVector Change vector of a entity that will be conditional loaded.
      * @param <T> Result class
