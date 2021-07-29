@@ -231,6 +231,8 @@ public class IndexOperationsTest extends RemoteTestBase {
 
             waitForIndexing(store, store.getDatabase());
 
+            waitForValue(() -> store.maintenance().send(new GetIndexErrorsOperation())[0].getErrors().length, 1);
+
             IndexErrors[] indexErrors = store.maintenance().send(new GetIndexErrorsOperation());
             IndexErrors[] perIndexErrors = store.maintenance().send(new GetIndexErrorsOperation(new String[] { indexDef.getName() }));
 
