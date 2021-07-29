@@ -203,12 +203,12 @@ public class ClusterOperationTest extends ClusterTestBase {
     }
 
     @Test
+    @DisabledOnPullRequest
     public void changesApiReorderDatabaseNodes() throws Exception {
         String db = "ReorderDatabaseNodes";
 
         try (ClusterController cluster = createRaftCluster(2)) {
             cluster.createDatabase(db, 2, cluster.getInitialLeader().getUrl());
-
 
             ClusterNode leader = cluster.getInitialLeader();
             try (IDocumentStore store = new DocumentStore(leader.getUrl(), db)) {
