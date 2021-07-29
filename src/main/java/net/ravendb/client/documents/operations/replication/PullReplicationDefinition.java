@@ -35,6 +35,7 @@ public class PullReplicationDefinition {
     /**
      * @deprecated You cannot use Certificates on the PullReplicationDefinition any more, please use the dedicated commands:
      *  RegisterReplicationHubAccessOperation and UnregisterReplicationHubAccessOperation
+     * @return certificates keyed with thumbprint
      */
     public Map<String, String> getCertificates() {
         return certificates;
@@ -43,6 +44,7 @@ public class PullReplicationDefinition {
     /**
      * @deprecated You cannot use Certificates on the PullReplicationDefinition any more, please use the dedicated commands:
      *  RegisterReplicationHubAccessOperation and UnregisterReplicationHubAccessOperation
+     * @param certificates certificates keyed with thumbprint
      */
     public void setCertificates(Map<String, String> certificates) {
         this.certificates = certificates;

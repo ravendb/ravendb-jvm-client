@@ -72,6 +72,7 @@ public class QueryStatistics {
 
     /**
      * What was the total count of the results that matched the query as long
+     * @return total results as long
      */
     public long getLongTotalResults() {
         return longTotalResults;
@@ -79,6 +80,7 @@ public class QueryStatistics {
 
     /**
      * What was the total count of the results that matched the query as long
+     * @param longTotalResults total results as long
      */
     public void setLongTotalResults(long longTotalResults) {
         this.longTotalResults = longTotalResults;

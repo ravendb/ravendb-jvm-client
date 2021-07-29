@@ -145,6 +145,8 @@ public interface IRevisionsSessionOperations {
 
     /**
      * Returns the number of revisions for specified document.
+     * @param id Document id to use
+     * @return count
      */
     long getCountFor(String id);
 

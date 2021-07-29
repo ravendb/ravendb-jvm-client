@@ -16,6 +16,7 @@ public interface IRawDocumentQuery<T> extends IQueryBase<T, IRawDocumentQuery<T>
 
     /**
      * Execute raw query aggregated by facet
+     * @return aggregation by facet
      */
     Map<String, FacetResult> executeAggregation();
 }

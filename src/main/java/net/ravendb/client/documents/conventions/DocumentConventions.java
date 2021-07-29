@@ -719,6 +719,7 @@ public class DocumentConventions {
     /**
      * EXPERT: Disable automatic atomic writes with cluster write transactions. If set to 'true', will only consider explicitly
      * added compare exchange values to validate cluster wide transactions.
+     * @return disable atomic writes
      */
     public Boolean getDisableAtomicDocumentWritesInClusterWideTransaction() {
         return _disableAtomicDocumentWritesInClusterWideTransaction;
@@ -727,6 +728,7 @@ public class DocumentConventions {
     /**
      * EXPERT: Disable automatic atomic writes with cluster write transactions. If set to 'true', will only consider explicitly
      * added compare exchange values to validate cluster wide transactions.
+     * @param disableAtomicDocumentWritesInClusterWideTransaction disable atomic writes
      */
     public void setDisableAtomicDocumentWritesInClusterWideTransaction(Boolean disableAtomicDocumentWritesInClusterWideTransaction) {
         _disableAtomicDocumentWritesInClusterWideTransaction = disableAtomicDocumentWritesInClusterWideTransaction;

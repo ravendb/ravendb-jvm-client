@@ -26,8 +26,9 @@ public interface IFilterDocumentQueryBase<T, TSelf extends IDocumentQueryBase<T,
     TSelf andAlso();
 
     /**
-     *  Add an AND to the query
-     *  @return Query instance
+     * Add an AND to the query
+     * @param wrapPreviousQueryClauses wrap previous query clauses
+     * @return Query instance
      */
     TSelf andAlso(boolean wrapPreviousQueryClauses);
 
