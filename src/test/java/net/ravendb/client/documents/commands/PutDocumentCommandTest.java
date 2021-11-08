@@ -45,7 +45,7 @@ public class PutDocumentCommandTest extends RemoteTestBase {
     @Test
     public void canPutDocumentUsingCommandWithSurrogatePairs() throws Exception {
         try (IDocumentStore store = getDocumentStore()) {
-            String nameWithEmojis = "Marcin \uD83D\uDE21\uD83D\uDE21\uD83E\uDD2C\uD83D\uDE00";
+            String nameWithEmojis = "Marcin \uD83D\uDE21\uD83D\uDE21\uD83E\uDD2C\uD83D\uDE00😡😡🤬😀";
 
             User user = new User();
             user.setName(nameWithEmojis);

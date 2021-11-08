@@ -254,8 +254,6 @@ public class GetDocumentsCommand extends RavenCommand<GetDocumentsResult> {
                 throw new RuntimeException("Unable to compute query hash:" + e.getMessage(), e);
             }
 
-            ObjectMapper mapper = JsonExtensions.getDefaultMapper();
-
             httpPost.setEntity(new ContentProviderHttpEntity(outputStream -> {
                 try (JsonGenerator generator = JsonExtensions.getDefaultMapper().createGenerator(new OutputStreamWriter(outputStream, StandardCharsets.UTF_8))) {
                     generator.writeStartObject();
