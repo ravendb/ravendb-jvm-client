@@ -23,6 +23,8 @@ import org.apache.http.client.methods.HttpRequestBase;
 import org.apache.http.entity.ContentType;
 
 import java.io.IOException;
+import java.io.OutputStreamWriter;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 
 public class GetDocumentsCommand extends RavenCommand<GetDocumentsResult> {
@@ -255,7 +257,7 @@ public class GetDocumentsCommand extends RavenCommand<GetDocumentsResult> {
             ObjectMapper mapper = JsonExtensions.getDefaultMapper();
 
             httpPost.setEntity(new ContentProviderHttpEntity(outputStream -> {
-                try (JsonGenerator generator = createSafeJsonGenerator(outputStream)) {
+                try (JsonGenerator generator = JsonExtensions.getDefaultMapper().createGenerator(new OutputStreamWriter(outputStream, StandardCharsets.UTF_8))) {
                     generator.writeStartObject();
                     generator.writeFieldName("Ids");
                     generator.writeStartArray();
