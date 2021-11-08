@@ -29,7 +29,7 @@ public class UpdateSubscriptionCommand extends RavenCommand<UpdateSubscriptionRe
 
         HttpPost request = new HttpPost();
         request.setEntity(new ContentProviderHttpEntity(outputStream -> {
-            try (JsonGenerator generator = mapper.getFactory().createGenerator(outputStream)) {
+            try (JsonGenerator generator = createSafeJsonGenerator(outputStream)) {
                 generator.getCodec().writeValue(generator, _options);
             } catch (IOException e) {
                 throw new RuntimeException(e);

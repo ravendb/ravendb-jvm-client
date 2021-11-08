@@ -69,7 +69,7 @@ public class ResetEtlOperation implements IVoidMaintenanceOperation {
 
             HttpResetWithEntity request = new HttpResetWithEntity();
             request.setEntity(new ContentProviderHttpEntity(outputStream -> {
-                try (JsonGenerator generator = mapper.getFactory().createGenerator(outputStream)) {
+                try (JsonGenerator generator = createSafeJsonGenerator(outputStream)) {
                     generator.writeStartObject();
                     generator.writeEndObject();
                 } catch (IOException e) {

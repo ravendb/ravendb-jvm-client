@@ -215,7 +215,7 @@ public class DatabaseSmuggler {
 
             HttpPost request = new HttpPost();
             ContentProviderHttpEntity entity = new ContentProviderHttpEntity(outputStream -> {
-                try (JsonGenerator generator = mapper.getFactory().createGenerator(outputStream)) {
+                try (JsonGenerator generator = createSafeJsonGenerator(outputStream)) {
                     generator.getCodec().writeValue(generator, _options);
                 } catch (IOException e) {
                     throw new RuntimeException(e);
@@ -270,6 +270,7 @@ public class DatabaseSmuggler {
             try {
                 MultipartEntityBuilder entityBuilder = MultipartEntityBuilder.create();
 
+                // TODO: this might corrupt anything that is unicode surrogate pairs since internally uses an OutputStream instead of Writer
                 entityBuilder.addBinaryBody("importOptions", mapper.writeValueAsBytes(_options));
                 InputStreamBody inputStreamBody = new InputStreamBody(_stream, "name");
                 FormBodyPart part = FormBodyPartBuilder.create("file", inputStreamBody)

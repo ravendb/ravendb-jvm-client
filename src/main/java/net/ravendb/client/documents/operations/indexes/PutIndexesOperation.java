@@ -79,7 +79,7 @@ public class PutIndexesOperation implements IMaintenanceOperation<PutIndexResult
             ObjectMapper mapper = JsonExtensions.getDefaultMapper();
 
             httpPut.setEntity(new ContentProviderHttpEntity(outputStream -> {
-                try (JsonGenerator generator = mapper.getFactory().createGenerator(outputStream)) {
+                try (JsonGenerator generator = createSafeJsonGenerator(outputStream)) {
                     generator.writeStartObject();
                     generator.writeFieldName("Indexes");
                     generator.writeStartArray();

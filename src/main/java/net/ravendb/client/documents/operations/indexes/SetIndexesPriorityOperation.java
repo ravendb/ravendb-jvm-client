@@ -69,7 +69,7 @@ public class SetIndexesPriorityOperation implements IVoidMaintenanceOperation {
             HttpPost request = new HttpPost();
 
             request.setEntity(new ContentProviderHttpEntity(outputStream -> {
-                try (JsonGenerator generator = mapper.getFactory().createGenerator(outputStream)) {
+                try (JsonGenerator generator = createSafeJsonGenerator(outputStream)) {
                     generator.writeTree(_parameters);
                 } catch (IOException e) {
                     throw new RuntimeException(e);

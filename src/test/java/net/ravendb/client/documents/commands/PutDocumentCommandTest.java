@@ -41,5 +41,36 @@ public class PutDocumentCommandTest extends RemoteTestBase {
             }
         }
     }
+
+    @Test
+    public void canPutDocumentUsingCommandWithSurrogatePairs() throws Exception {
+        try (IDocumentStore store = getDocumentStore()) {
+            String nameWithEmojis = "Marcin \uD83D\uDE21\uD83D\uDE21\uD83E\uDD2C\uD83D\uDE00";
+
+            User user = new User();
+            user.setName(nameWithEmojis);
+            user.setAge(31);
+
+            ObjectNode node = store.getConventions().getEntityMapper().valueToTree(user);
+
+            PutDocumentCommand command = new PutDocumentCommand("users/2", null, node);
+            store.getRequestExecutor().execute(command);
+
+            PutResult result = command.getResult();
+
+            assertThat(result.getId())
+                    .isEqualTo("users/2");
+
+            assertThat(result.getChangeVector())
+                    .isNotNull();
+
+            try (IDocumentSession session = store.openSession()) {
+                User loadedUser = session.load(User.class, "users/2");
+
+                assertThat(loadedUser.getName())
+                        .isEqualTo(nameWithEmojis);
+            }
+        }
+    }
 }
 

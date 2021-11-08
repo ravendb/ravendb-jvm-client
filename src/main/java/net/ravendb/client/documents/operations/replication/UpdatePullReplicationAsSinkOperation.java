@@ -45,7 +45,7 @@ public class UpdatePullReplicationAsSinkOperation implements IMaintenanceOperati
 
             HttpPost request = new HttpPost();
             request.setEntity(new ContentProviderHttpEntity(outputStream -> {
-                try (JsonGenerator generator = mapper.getFactory().createGenerator(outputStream)) {
+                try (JsonGenerator generator = createSafeJsonGenerator(outputStream)) {
                     generator.writeStartObject();
                     generator.writeFieldName("PullReplicationAsSink");
                     generator.getCodec().writeValue(generator, _pullReplication);

@@ -63,7 +63,7 @@ public class GetAttachmentsOperation implements IOperation<CloseableAttachmentsR
 
             HttpPost request = new HttpPost();
             request.setEntity(new ContentProviderHttpEntity(outputStream -> {
-                try (JsonGenerator generator = mapper.getFactory().createGenerator(outputStream)) {
+                try (JsonGenerator generator = createSafeJsonGenerator(outputStream)) {
                     generator.writeStartObject();
 
                     generator.writeStringField("AttachmentType", SharpEnum.value(_type));

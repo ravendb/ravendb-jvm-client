@@ -164,7 +164,7 @@ public class PatchOperation implements IOperation<PatchResult> {
 
             HttpPatch request = new HttpPatch();
             request.setEntity(new ContentProviderHttpEntity(outputStream -> {
-                try (JsonGenerator generator = mapper.getFactory().createGenerator(outputStream)) {
+                try (JsonGenerator generator = createSafeJsonGenerator(outputStream)) {
                     generator.writeStartObject();
 
                     generator.writeFieldName("Patch");

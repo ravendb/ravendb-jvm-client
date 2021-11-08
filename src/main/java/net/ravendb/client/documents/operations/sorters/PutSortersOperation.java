@@ -59,7 +59,7 @@ public class PutSortersOperation implements IVoidMaintenanceOperation {
 
             HttpPut request = new HttpPut();
             request.setEntity(new ContentProviderHttpEntity(outputStream -> {
-                try (JsonGenerator generator = mapper.getFactory().createGenerator(outputStream)) {
+                try (JsonGenerator generator = createSafeJsonGenerator(outputStream)) {
                     generator.writeStartObject();
                     generator.writeFieldName("Sorters");
                     generator.getCodec().writeValue(generator, _sortersToAdd);
