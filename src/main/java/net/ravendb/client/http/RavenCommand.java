@@ -101,7 +101,7 @@ public abstract class RavenCommand<TResult> {
     }
 
     protected final JsonGenerator createSafeJsonGenerator(OutputStream out) throws IOException {
-       return mapper.createGenerator(new OutputStreamWriter(out, StandardCharsets.UTF_8));
+        return mapper.createGenerator(new OutputStreamWriter(out, StandardCharsets.UTF_8));
     }
 
     public abstract HttpRequestBase createRequest(ServerNode node, Reference<String> url);

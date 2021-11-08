@@ -1154,4 +1154,36 @@ public class SubscriptionsBasicTest extends RemoteTestBase {
             }
         }
     }
+
+    @Test
+    public void canUseEmoji() throws Exception {
+        try (IDocumentStore store = getDocumentStore()) {
+            User user1;
+            try (IDocumentSession session = store.openSession()) {
+
+                user1 = new User();
+                user1.setName("user_\uD83D\uDE21\uD83D\uDE21\uD83E\uDD2C\uD83D\uDE00😡😡🤬😀");
+                session.store(user1, "users/1");
+
+                session.saveChanges();
+            }
+
+            SubscriptionCreationOptions creationOptions = new SubscriptionCreationOptions();
+            creationOptions.setName("name_\uD83D\uDE21\uD83D\uDE21\uD83E\uDD2C\uD83D\uDE00😡😡🤬😀");
+            String id = store.subscriptions().create(User.class, creationOptions);
+
+            try (SubscriptionWorker<User> subscription = store.subscriptions().getSubscriptionWorker(User.class, new SubscriptionWorkerOptions(id))) {
+                BlockingArrayQueue<String> keys = new BlockingArrayQueue<>();
+                subscription.run(batch -> {
+                    batch.getItems().forEach(x -> keys.add(x.getResult().getName()));
+                });
+
+                String key = keys.poll(_reasonableWaitTime, TimeUnit.SECONDS);
+                assertThat(key)
+                        .isNotNull()
+                        .isEqualTo(user1.getName());
+
+            }
+        }
+    }
 }

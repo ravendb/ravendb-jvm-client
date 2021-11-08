@@ -24,7 +24,10 @@ import net.ravendb.client.primitives.SharpEnum;
 import net.ravendb.client.util.TimeUtils;
 import org.apache.commons.lang3.StringUtils;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.OutputStreamWriter;
+import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.EnumSet;
 import java.util.HashMap;
@@ -46,6 +49,12 @@ public class JsonExtensions {
         }
 
         return _defaultMapper;
+    }
+
+    public static byte[] writeValueAsBytes(Object value) throws IOException {
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        JsonExtensions.getDefaultMapper().writeValue(new OutputStreamWriter(baos, StandardCharsets.UTF_8), value);
+        return baos.toByteArray();
     }
 
     public static class SharpEnumSetSerializer extends StdSerializer<EnumSet<?>> {

@@ -7,6 +7,7 @@ import net.ravendb.client.documents.IDocumentStore;
 import net.ravendb.client.documents.commands.GetNextOperationIdCommand;
 import net.ravendb.client.documents.operations.Operation;
 import net.ravendb.client.exceptions.RavenException;
+import net.ravendb.client.extensions.JsonExtensions;
 import net.ravendb.client.http.*;
 import net.ravendb.client.json.ContentProviderHttpEntity;
 import net.ravendb.client.primitives.Reference;
@@ -270,8 +271,7 @@ public class DatabaseSmuggler {
             try {
                 MultipartEntityBuilder entityBuilder = MultipartEntityBuilder.create();
 
-                // TODO: this might corrupt anything that is unicode surrogate pairs since internally uses an OutputStream instead of Writer
-                entityBuilder.addBinaryBody("importOptions", mapper.writeValueAsBytes(_options));
+                entityBuilder.addBinaryBody("importOptions", JsonExtensions.writeValueAsBytes(_options));
                 InputStreamBody inputStreamBody = new InputStreamBody(_stream, "name");
                 FormBodyPart part = FormBodyPartBuilder.create("file", inputStreamBody)
                         .build();
@@ -280,7 +280,7 @@ public class DatabaseSmuggler {
                 HttpPost request = new HttpPost();
                 request.setEntity(entityBuilder.build());
                 return request;
-            } catch (JsonProcessingException e) {
+            } catch (IOException e) {
                 throw new RavenException("Unable to import database: " + e.getMessage(), e);
             }
         }
