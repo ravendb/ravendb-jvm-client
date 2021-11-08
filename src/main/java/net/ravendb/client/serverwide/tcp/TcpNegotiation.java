@@ -9,6 +9,8 @@ import org.apache.commons.logging.LogFactory;
 
 import java.io.IOException;
 import java.io.OutputStream;
+import java.io.OutputStreamWriter;
+import java.nio.charset.StandardCharsets;
 
 public class TcpNegotiation {
 
@@ -64,7 +66,7 @@ public class TcpNegotiation {
             logger.info("Send negotiation for " + parameters.getOperation() + " in version " + currentVersion);
         }
 
-        try (JsonGenerator generator =  JsonExtensions.getDefaultMapper().getFactory().createGenerator(stream)) {
+        try (JsonGenerator generator =  JsonExtensions.getDefaultMapper().getFactory().createGenerator(new OutputStreamWriter(stream, StandardCharsets.UTF_8))) {
             generator.configure(JsonGenerator.Feature.AUTO_CLOSE_TARGET, false);
 
             generator.writeStartObject();

@@ -1,5 +1,6 @@
 package net.ravendb.client.http;
 
+import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import net.ravendb.client.extensions.HttpExtensions;
 import net.ravendb.client.extensions.JsonExtensions;
@@ -13,9 +14,7 @@ import org.apache.http.client.methods.HttpRequestBase;
 import org.apache.http.client.utils.HttpClientUtils;
 import org.apache.http.impl.client.CloseableHttpClient;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.UnsupportedEncodingException;
+import java.io.*;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
@@ -99,6 +98,10 @@ public abstract class RavenCommand<TResult> {
         this.canCacheAggressively = copy.canCacheAggressively;
         this.selectedNodeTag = copy.selectedNodeTag;
         this.responseType = copy.responseType;
+    }
+
+    protected final JsonGenerator createSafeJsonGenerator(OutputStream out) throws IOException {
+       return mapper.createGenerator(new OutputStreamWriter(out, StandardCharsets.UTF_8));
     }
 
     public abstract HttpRequestBase createRequest(ServerNode node, Reference<String> url);

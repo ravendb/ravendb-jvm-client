@@ -59,7 +59,7 @@ public class ReplaceClusterCertificateOperation implements IVoidServerOperation 
 
             HttpPost request = new HttpPost();
             request.setEntity(new ContentProviderHttpEntity(outputStream -> {
-                try (JsonGenerator generator = mapper.getFactory().createGenerator(outputStream)) {
+                try (JsonGenerator generator = createSafeJsonGenerator(outputStream)) {
                     generator.writeStartObject();
                     generator.writeFieldName("Certificate");
                     generator.writeString(Base64.encodeBase64String(_certBytes));

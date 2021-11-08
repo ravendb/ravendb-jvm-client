@@ -68,7 +68,7 @@ public class RegisterReplicationHubAccessOperation implements IVoidMaintenanceOp
 
             HttpPut request = new HttpPut();
             request.setEntity(new ContentProviderHttpEntity(outputStream -> {
-                try (JsonGenerator generator = mapper.getFactory().createGenerator(outputStream)) {
+                try (JsonGenerator generator = createSafeJsonGenerator(outputStream)) {
                     generator.getCodec().writeValue(generator, _access);
                 } catch (IOException e) {
                     throw new RuntimeException(e);

@@ -108,7 +108,7 @@ public class MultiGetCommand extends RavenCommand<List<GetResponse>> implements 
         ObjectMapper mapper = JsonExtensions.getDefaultMapper();
 
         request.setEntity(new ContentProviderHttpEntity(outputStream -> {
-            try (JsonGenerator generator = mapper.getFactory().createGenerator(outputStream)) {
+            try (JsonGenerator generator = createSafeJsonGenerator(outputStream)) {
 
                 generator.writeStartObject();
 

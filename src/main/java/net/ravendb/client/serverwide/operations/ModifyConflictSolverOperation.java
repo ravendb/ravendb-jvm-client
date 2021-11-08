@@ -70,7 +70,7 @@ public class ModifyConflictSolverOperation implements IServerOperation<ModifySol
             HttpPost request = new HttpPost();
 
             request.setEntity(new ContentProviderHttpEntity(outputStream -> {
-                try (JsonGenerator generator = mapper.getFactory().createGenerator(outputStream)) {
+                try (JsonGenerator generator = createSafeJsonGenerator(outputStream)) {
                     ConflictSolver solver = new ConflictSolver();
                     solver.setResolveToLatest(_solver._resolveToLatest);
                     solver.setResolveByCollection(_solver._collectionByScript);

@@ -236,6 +236,7 @@ public class SubscriptionWorker<T> implements CleanCloseable {
             throw new IllegalStateException(_options.getSubscriptionName() + " : TCP negotiation resulted with an invalid protocol version: " + _supportedFeatures.protocolVersion);
         }
 
+        // TODO: this might corrupt anything that is unicode surrogate pairs since internally uses an OutputStream instead of Writer
         byte[] options = JsonExtensions.getDefaultMapper().writeValueAsBytes(_options);
 
         _tcpClient.getOutputStream().write(options);
@@ -319,6 +320,8 @@ public class SubscriptionWorker<T> implements CleanCloseable {
         dropMsg.setDatabaseName(_dbName);
         dropMsg.setOperationVersion(TcpConnectionHeaderMessage.SUBSCRIPTION_TCP_VERSION);
         dropMsg.setInfo("Couldn't agree on subscription tcp version ours: " + TcpConnectionHeaderMessage.SUBSCRIPTION_TCP_VERSION + " theirs: " + reply.getVersion());
+
+        // TODO: this might corrupt anything that is unicode surrogate pairs since internally uses an OutputStream instead of Writer
         byte[] header = JsonExtensions.getDefaultMapper().writeValueAsBytes(dropMsg);
         _tcpClient.getOutputStream().write(header);
         _tcpClient.getOutputStream().flush();
@@ -565,6 +568,8 @@ public class SubscriptionWorker<T> implements CleanCloseable {
         SubscriptionConnectionClientMessage msg = new SubscriptionConnectionClientMessage();
         msg.setChangeVector(lastReceivedChangeVector);
         msg.setType(SubscriptionConnectionClientMessage.MessageType.ACKNOWLEDGE);
+
+        // TODO: this might corrupt anything that is unicode surrogate pairs since internally uses an OutputStream instead of Writer
         byte[] ack = JsonExtensions.getDefaultMapper().writeValueAsBytes(msg);
         networkStream.getOutputStream().write(ack);
         networkStream.getOutputStream().flush();

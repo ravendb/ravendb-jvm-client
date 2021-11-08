@@ -37,6 +37,8 @@ import org.apache.http.util.EntityUtils;
 
 import java.io.IOException;
 import java.io.OutputStream;
+import java.io.OutputStreamWriter;
+import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
@@ -376,7 +378,7 @@ public class DocumentSession extends InMemoryDocumentSessionOperations
             if (stream != null) {
                 try {
                     GetDocumentsResult result = command.getResult();
-                    JsonExtensions.getDefaultMapper().writeValue(stream, result);
+                    JsonExtensions.getDefaultMapper().writeValue(new OutputStreamWriter(stream, StandardCharsets.UTF_8), result);
                 } catch (IOException e) {
                     throw new RuntimeException("Unable to serialize returned value into stream" + e.getMessage(), e);
                 }
@@ -552,7 +554,7 @@ public class DocumentSession extends InMemoryDocumentSessionOperations
             if (stream != null) {
                 try {
                     GetDocumentsResult result = command.getResult();
-                    JsonExtensions.getDefaultMapper().writeValue(stream, result);
+                    JsonExtensions.getDefaultMapper().writeValue(new OutputStreamWriter(stream, StandardCharsets.UTF_8), result);
                 } catch (IOException e) {
                     throw new RuntimeException("Unable to serialize returned value into stream" + e.getMessage(), e);
                 }

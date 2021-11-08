@@ -68,7 +68,7 @@ public class RestoreBackupOperation implements IServerOperation<OperationIdResul
 
             HttpPost request = new HttpPost();
             request.setEntity(new ContentProviderHttpEntity(outputStream -> {
-                try (JsonGenerator generator = mapper.getFactory().createGenerator(outputStream)) {
+                try (JsonGenerator generator = createSafeJsonGenerator(outputStream)) {
                     ObjectNode config = mapper.valueToTree(_restoreConfiguration);
                     generator.writeTree(config);
                 } catch (IOException e) {

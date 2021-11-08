@@ -57,7 +57,7 @@ public class CompactDatabaseOperation implements IServerOperation<OperationIdRes
             HttpPost request = new HttpPost();
 
             request.setEntity(new ContentProviderHttpEntity(outputStream -> {
-                try (JsonGenerator generator = JsonExtensions.getDefaultMapper().getFactory().createGenerator(outputStream)) {
+                try (JsonGenerator generator = createSafeJsonGenerator(outputStream)) {
                     generator.writeTree(_compactSettings);
                 } catch (IOException e) {
                     throw new RuntimeException(e);

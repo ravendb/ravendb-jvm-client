@@ -86,7 +86,7 @@ public class SingleNodeBatchCommand extends RavenCommand<BatchCommandResult> imp
         HttpPost request = new HttpPost();
 
         request.setEntity(new ContentProviderHttpEntity(outputStream -> {
-            try (JsonGenerator generator = mapper.getFactory().createGenerator(outputStream)) {
+            try (JsonGenerator generator = createSafeJsonGenerator(outputStream)) {
                 if (_supportsAtomicWrites == null || node.isSupportsAtomicClusterWrites() != _supportsAtomicWrites) {
                     _supportsAtomicWrites = node.isSupportsAtomicClusterWrites();
                 }
@@ -102,7 +102,7 @@ public class SingleNodeBatchCommand extends RavenCommand<BatchCommandResult> imp
                 } else {
                     for (ICommandData command : _commands) {
                         ByteArrayOutputStream baos = new ByteArrayOutputStream();
-                        try (JsonGenerator itemGenerator = mapper.createGenerator(baos)) {
+                        try (JsonGenerator itemGenerator = createSafeJsonGenerator(baos)) {
                             command.serialize(itemGenerator, _conventions);
                         }
 

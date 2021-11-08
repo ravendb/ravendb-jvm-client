@@ -53,7 +53,7 @@ public class UpdateEtlOperation<T extends ConnectionString> implements IMaintena
 
             HttpPut request = new HttpPut();
             request.setEntity(new ContentProviderHttpEntity(outputStream -> {
-                try (JsonGenerator generator = mapper.getFactory().createGenerator(outputStream)) {
+                try (JsonGenerator generator = createSafeJsonGenerator(outputStream)) {
                     ObjectNode config = mapper.valueToTree(_configuration);
                     generator.writeTree(config);
                 } catch (IOException e) {

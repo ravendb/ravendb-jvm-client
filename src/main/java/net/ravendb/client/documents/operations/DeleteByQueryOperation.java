@@ -82,7 +82,7 @@ public class DeleteByQueryOperation implements IOperation<OperationIdResult> {
 
             HttpDeleteWithEntity request = new HttpDeleteWithEntity();
             request.setEntity(new ContentProviderHttpEntity(outputStream -> {
-                try (JsonGenerator generator = mapper.getFactory().createGenerator(outputStream)) {
+                try (JsonGenerator generator = createSafeJsonGenerator(outputStream)) {
                     JsonExtensions.writeIndexQuery(generator, _conventions, _queryToDelete);
                 } catch (IOException e) {
                     throw new RuntimeException(e);

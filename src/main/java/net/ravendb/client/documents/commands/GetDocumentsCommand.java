@@ -255,7 +255,7 @@ public class GetDocumentsCommand extends RavenCommand<GetDocumentsResult> {
             ObjectMapper mapper = JsonExtensions.getDefaultMapper();
 
             httpPost.setEntity(new ContentProviderHttpEntity(outputStream -> {
-                try (JsonGenerator generator = mapper.getFactory().createGenerator(outputStream)) {
+                try (JsonGenerator generator = createSafeJsonGenerator(outputStream)) {
                     generator.writeStartObject();
                     generator.writeFieldName("Ids");
                     generator.writeStartArray();

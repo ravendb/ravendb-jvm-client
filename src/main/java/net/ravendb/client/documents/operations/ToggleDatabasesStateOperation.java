@@ -77,7 +77,7 @@ public class ToggleDatabasesStateOperation implements IServerOperation<DisableDa
 
             HttpPost request = new HttpPost();
             request.setEntity(new ContentProviderHttpEntity(outputStream -> {
-                try (JsonGenerator generator = mapper.getFactory().createGenerator(outputStream)) {
+                try (JsonGenerator generator = createSafeJsonGenerator(outputStream)) {
                     ObjectNode config = mapper.valueToTree(_parameters);
                     generator.writeTree(config);
                 } catch (IOException e) {

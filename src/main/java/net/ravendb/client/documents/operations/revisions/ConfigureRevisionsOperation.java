@@ -51,7 +51,7 @@ public class ConfigureRevisionsOperation implements IMaintenanceOperation<Config
 
             HttpPost request = new HttpPost();
             request.setEntity(new ContentProviderHttpEntity(outputStream -> {
-                try (JsonGenerator generator = mapper.getFactory().createGenerator(outputStream)) {
+                try (JsonGenerator generator = createSafeJsonGenerator(outputStream)) {
                     ObjectNode config = mapper.valueToTree(_configuration);
                     generator.writeTree(config);
                 } catch (IOException e) {
