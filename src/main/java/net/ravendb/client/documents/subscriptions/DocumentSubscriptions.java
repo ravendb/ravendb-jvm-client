@@ -208,13 +208,6 @@ public class DocumentSubscriptions implements AutoCloseable {
                     CounterIncludesToken token = CounterIncludesToken.create("", counterName);
                     token.writeTo(queryBuilder);
 
-                    Reference<String> escapedCounterNameRef = new Reference<>();
-                    if (IncludesUtil.requiresQuotes(counterName, escapedCounterNameRef)) {
-                        criteria.setQuery(criteria.getQuery() + "counters(" + escapedCounterNameRef.value + ")");
-                    }  else {
-                        criteria.setQuery(criteria.getQuery() + "counters(" + counterName + ")");
-                    }
-
                     numberOfIncludesAdded++;
                 }
             }

@@ -111,14 +111,14 @@ public class TimeSeriesRangeAggregation {
 
         typedEntry.setFrom(from);
         typedEntry.setTo(to);
-        typedEntry.setMin(min != null ? TimeSeriesValuesHelper.setFields(clazz, min, true) : null);
-        typedEntry.setMax(max != null ? TimeSeriesValuesHelper.setFields(clazz, max, true) : null);
-        typedEntry.setFirst(first != null ? TimeSeriesValuesHelper.setFields(clazz, first, true) : null);
-        typedEntry.setLast(last != null ? TimeSeriesValuesHelper.setFields(clazz, last, true) : null);
-        typedEntry.setSum(sum != null ? TimeSeriesValuesHelper.setFields(clazz, sum, true) : null);
+        typedEntry.setMin(min != null ? TimeSeriesValuesHelper.setFields(clazz, min, false) : null);
+        typedEntry.setMax(max != null ? TimeSeriesValuesHelper.setFields(clazz, max, false) : null);
+        typedEntry.setFirst(first != null ? TimeSeriesValuesHelper.setFields(clazz, first, false) : null);
+        typedEntry.setLast(last != null ? TimeSeriesValuesHelper.setFields(clazz, last, false) : null);
+        typedEntry.setSum(sum != null ? TimeSeriesValuesHelper.setFields(clazz, sum, false) : null);
         double[] counts = Arrays.stream(count).asDoubleStream().toArray();
-        typedEntry.setCount(count != null ? TimeSeriesValuesHelper.setFields(clazz, counts, true) : null);
-        typedEntry.setAverage(average != null ? TimeSeriesValuesHelper.setFields(clazz, average, true) : null);
+        typedEntry.setCount(count != null ? TimeSeriesValuesHelper.setFields(clazz, counts, false) : null);
+        typedEntry.setAverage(average != null ? TimeSeriesValuesHelper.setFields(clazz, average, false) : null);
 
         return typedEntry;
     }

@@ -731,6 +731,7 @@ public class DocumentConventions {
      * @param disableAtomicDocumentWritesInClusterWideTransaction disable atomic writes
      */
     public void setDisableAtomicDocumentWritesInClusterWideTransaction(Boolean disableAtomicDocumentWritesInClusterWideTransaction) {
+        assertNotFrozen();
         _disableAtomicDocumentWritesInClusterWideTransaction = disableAtomicDocumentWritesInClusterWideTransaction;
     }
 

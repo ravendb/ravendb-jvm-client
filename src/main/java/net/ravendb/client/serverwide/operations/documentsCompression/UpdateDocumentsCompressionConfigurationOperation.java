@@ -32,7 +32,7 @@ public class UpdateDocumentsCompressionConfigurationOperation implements IMainte
     }
 
     private static class UpdateDocumentCompressionConfigurationCommand extends RavenCommand<DocumentCompressionConfigurationResult> implements IRaftCommand {
-        private static DocumentsCompressionConfiguration _documentsCompressionConfiguration;
+        private DocumentsCompressionConfiguration _documentsCompressionConfiguration;
 
         public UpdateDocumentCompressionConfigurationCommand(DocumentsCompressionConfiguration configuration) {
             super(DocumentCompressionConfigurationResult.class);

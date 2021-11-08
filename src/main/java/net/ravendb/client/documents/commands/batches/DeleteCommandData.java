@@ -27,6 +27,7 @@ public class DeleteCommandData implements ICommandData {
             throw new IllegalArgumentException("Id cannot be null");
         }
         this.changeVector = changeVector;
+        this.originalChangeVector = originalChangeVector;
     }
 
     public String getOriginalChangeVector() {
