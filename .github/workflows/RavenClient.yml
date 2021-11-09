@@ -23,7 +23,7 @@ jobs:
     strategy:
       matrix:
         java-version: [8, 10, 11, 14]
-        serverVersion: ["5.2"]
+        serverVersion: ["5.2", "5.3"]
       fail-fast: false
 
     steps:
