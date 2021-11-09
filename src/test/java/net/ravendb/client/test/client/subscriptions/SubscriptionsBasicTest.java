@@ -26,6 +26,7 @@ import net.ravendb.client.primitives.TimeValue;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.time.DateUtils;
 import org.eclipse.jetty.util.BlockingArrayQueue;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import java.time.Duration;
@@ -467,6 +468,7 @@ public class SubscriptionsBasicTest extends RemoteTestBase {
     }
 
     @Test
+    @Disabled("RavenDB-15919, need to change the test, since we update the ChangeVectorForNextBatchStartingPoint upon fetching and not acking")
     public void shouldStopPullingDocsAndCloseSubscriptionOnSubscriberErrorByDefault() throws Exception {
         try (IDocumentStore store = getDocumentStore()) {
             String id = store.subscriptions().create(User.class, new SubscriptionCreationOptions());
