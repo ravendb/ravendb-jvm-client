@@ -42,6 +42,7 @@ public class RavenDB_6292Test extends ReplicationTestBase {
     }
 
     @Test
+    @DisabledOnPullRequest
     public void ifIncludedDocumentIsConflictedItShouldNotThrowConflictException() throws Exception {
         customize = r -> {
             ConflictSolver conflictSolver = new ConflictSolver();

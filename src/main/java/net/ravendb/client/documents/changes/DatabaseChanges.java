@@ -414,6 +414,10 @@ public class DatabaseChanges implements IDatabaseChanges {
                 value.close();
             }
 
+            for (DatabaseConnectionState value : _counters.values()) {
+                value.close();
+            }
+
             _counters.clear();
 
             try {

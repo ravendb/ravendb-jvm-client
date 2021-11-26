@@ -35,7 +35,7 @@ import java.util.concurrent.BlockingQueue;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-
+@DisabledOnPullRequest
 public class ClusterOperationTest extends ClusterTestBase {
 
     @Test

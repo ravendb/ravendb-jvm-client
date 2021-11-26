@@ -17,6 +17,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 public class ReplicationWriteAssuranceTest extends ClusterTestBase {
 
     @Test
+    @DisabledOnPullRequest
     public void serverSideWriteAssurance() throws Exception {
         try (ClusterController cluster = createRaftCluster(3)) {
 
