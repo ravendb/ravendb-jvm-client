@@ -8,6 +8,7 @@ import net.ravendb.client.documents.operations.connectionStrings.PutConnectionSt
 import net.ravendb.client.documents.operations.etl.*;
 import net.ravendb.client.documents.operations.ongoingTasks.*;
 import net.ravendb.client.documents.session.IDocumentSession;
+import net.ravendb.client.infrastructure.DisabledOnPullRequest;
 import net.ravendb.client.infrastructure.entities.User;
 import net.ravendb.client.serverwide.operations.ModifyOngoingTaskResult;
 import org.junit.jupiter.api.Test;
@@ -16,6 +17,7 @@ import java.util.Collections;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@DisabledOnPullRequest
 public class EtlTest extends ReplicationTestBase {
 
     @Test

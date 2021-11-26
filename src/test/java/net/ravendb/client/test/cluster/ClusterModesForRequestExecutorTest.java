@@ -9,6 +9,7 @@ import net.ravendb.client.documents.session.DocumentSession;
 import net.ravendb.client.documents.session.IDocumentSession;
 import net.ravendb.client.documents.session.SessionInfo;
 import net.ravendb.client.http.*;
+import net.ravendb.client.infrastructure.DisabledOnPullRequest;
 import net.ravendb.client.infrastructure.entities.User;
 import net.ravendb.client.serverwide.DatabaseRecord;
 import net.ravendb.client.serverwide.commands.GetDatabaseTopologyCommand;
@@ -23,6 +24,7 @@ import java.util.stream.Collectors;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@DisabledOnPullRequest
 public class ClusterModesForRequestExecutorTest extends ClusterTestBase {
 
     @Test

@@ -131,6 +131,12 @@ public abstract class ClusterTestBase extends RavenTestDriver implements CleanCl
             }
         }
 
+        // wait for license to activate
+        for (ClusterNode node : cluster.nodes) {
+            waitForValue(() -> cluster.executeJsScript(node.nodeTag,
+                    "return server.ServerStore.LicenseManager.LicenseStatus.Type !== 'Invalid'").asBoolean(), true, Duration.ofSeconds(30));
+        }
+
         return cluster;
     }
 

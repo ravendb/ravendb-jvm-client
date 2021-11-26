@@ -5,6 +5,7 @@ import net.ravendb.client.documents.IDocumentStore;
 import net.ravendb.client.documents.operations.backups.AzureSettings;
 import net.ravendb.client.documents.operations.backups.BackupType;
 import net.ravendb.client.documents.operations.backups.FtpSettings;
+import net.ravendb.client.infrastructure.DisabledOnPullRequest;
 import net.ravendb.client.serverwide.DatabaseRecord;
 import net.ravendb.client.serverwide.DatabaseRecordWithEtag;
 import net.ravendb.client.serverwide.operations.CreateDatabaseOperation;
@@ -21,6 +22,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 public class ServerWideBackupTest extends RemoteTestBase {
 
     @Test
+    @DisabledOnPullRequest
     public void canCrudServerWideBackup() throws Exception {
         try (IDocumentStore store = getDocumentStore()) {
             try {

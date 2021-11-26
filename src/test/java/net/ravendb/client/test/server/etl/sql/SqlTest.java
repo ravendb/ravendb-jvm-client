@@ -13,6 +13,7 @@ import net.ravendb.client.documents.operations.ongoingTasks.OngoingTaskSqlEtlDet
 import net.ravendb.client.documents.operations.ongoingTasks.OngoingTaskState;
 import net.ravendb.client.documents.operations.ongoingTasks.OngoingTaskType;
 import net.ravendb.client.documents.session.IDocumentSession;
+import net.ravendb.client.infrastructure.DisabledOnPullRequest;
 import net.ravendb.client.infrastructure.entities.User;
 import org.junit.jupiter.api.Test;
 
@@ -21,6 +22,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@DisabledOnPullRequest
 public class SqlTest extends ReplicationTestBase {
 
     @Test

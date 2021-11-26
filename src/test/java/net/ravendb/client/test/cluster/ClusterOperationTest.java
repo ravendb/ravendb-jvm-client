@@ -15,6 +15,7 @@ import net.ravendb.client.http.CurrentIndexAndNode;
 import net.ravendb.client.http.RequestExecutor;
 import net.ravendb.client.http.ServerNode;
 import net.ravendb.client.http.Topology;
+import net.ravendb.client.infrastructure.DisabledOnPullRequest;
 import net.ravendb.client.infrastructure.entities.User;
 import net.ravendb.client.primitives.Tuple;
 import net.ravendb.client.serverwide.DatabaseRecord;
@@ -34,7 +35,7 @@ import java.util.concurrent.BlockingQueue;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-
+@DisabledOnPullRequest
 public class ClusterOperationTest extends ClusterTestBase {
 
     @Test

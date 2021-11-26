@@ -10,6 +10,7 @@ import net.ravendb.client.documents.operations.replication.PullReplicationDefini
 import net.ravendb.client.documents.operations.replication.PullReplicationDefinitionAndCurrentConnections;
 import net.ravendb.client.documents.operations.replication.PutPullReplicationAsHubOperation;
 import net.ravendb.client.documents.session.IDocumentSession;
+import net.ravendb.client.infrastructure.DisabledOnPullRequest;
 import net.ravendb.client.infrastructure.entities.User;
 import net.ravendb.client.serverwide.operations.ModifyOngoingTaskResult;
 import org.junit.jupiter.api.Test;
@@ -20,6 +21,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@DisabledOnPullRequest
 public class PullReplicationTest extends ReplicationTestBase {
 
     @Test
