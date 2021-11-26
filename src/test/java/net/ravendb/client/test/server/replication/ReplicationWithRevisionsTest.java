@@ -17,6 +17,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 public class ReplicationWithRevisionsTest extends ReplicationTestBase {
 
     @Test
+    @DisabledOnPullRequest
     public void canDisableRevisionsConflict() throws Exception {
         try (IDocumentStore storeA = getDocumentStore()) {
             try (IDocumentStore storeB = getDocumentStore()) {

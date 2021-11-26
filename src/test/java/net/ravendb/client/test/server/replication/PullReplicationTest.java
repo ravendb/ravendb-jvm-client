@@ -250,7 +250,7 @@ public class PullReplicationTest extends ReplicationTestBase {
                 PutPullReplicationAsHubOperation hubOperation = new PutPullReplicationAsHubOperation(replicationDefinition);
                 hub.maintenance().forDatabase(hub.getDatabase()).send(hubOperation);
 
-                assertThat(waitForDocumentToReplicate(sink, User.class, "users/2", 20_000))
+                assertThat(waitForDocumentToReplicate(sink, User.class, "users/2", 40_000))
                         .isNotNull();
             }
         }

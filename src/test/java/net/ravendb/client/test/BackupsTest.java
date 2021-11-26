@@ -22,6 +22,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 public class BackupsTest extends RemoteTestBase {
 
     @Test
+    @DisabledOnPullRequest
     public void canBackupDatabase() throws Exception {
         try (IDocumentStore store = getDocumentStore()) {
             Path backup = Files.createTempDirectory("backup");
@@ -70,6 +71,7 @@ public class BackupsTest extends RemoteTestBase {
     }
 
     @Test
+    @DisabledOnPullRequest
     public void canSetupRetentionPolicy() throws Exception {
         try (IDocumentStore store = getDocumentStore()) {
             PeriodicBackupConfiguration backupConfiguration = new PeriodicBackupConfiguration();
