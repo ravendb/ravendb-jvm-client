@@ -10,7 +10,7 @@ public class OngoingTaskSubscription extends OngoingTask {
     private String query;
     private String subscriptionName;
     private long subscriptionId;
-    private String ChangeVectorForNextBatchStartingPoint;
+    private String changeVectorForNextBatchStartingPoint;
     private Date lastBatchAckTime;
     private boolean disabled;
     private Date lastClientConnectionTime;
@@ -40,11 +40,11 @@ public class OngoingTaskSubscription extends OngoingTask {
     }
 
     public String getChangeVectorForNextBatchStartingPoint() {
-        return ChangeVectorForNextBatchStartingPoint;
+        return changeVectorForNextBatchStartingPoint;
     }
 
     public void setChangeVectorForNextBatchStartingPoint(String changeVectorForNextBatchStartingPoint) {
-        ChangeVectorForNextBatchStartingPoint = changeVectorForNextBatchStartingPoint;
+        this.changeVectorForNextBatchStartingPoint = changeVectorForNextBatchStartingPoint;
     }
 
     public Date getLastBatchAckTime() {

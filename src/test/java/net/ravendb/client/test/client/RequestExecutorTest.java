@@ -6,6 +6,7 @@ import net.ravendb.client.documents.DocumentStore;
 import net.ravendb.client.documents.commands.PutDocumentCommand;
 import net.ravendb.client.documents.session.EntityToJson;
 import net.ravendb.client.http.RequestExecutor;
+import net.ravendb.client.infrastructure.DisabledOnPullRequest;
 import net.ravendb.client.infrastructure.entities.User;
 import net.ravendb.client.serverwide.DatabaseRecord;
 import org.apache.http.client.methods.CloseableHttpResponse;
@@ -20,6 +21,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@DisabledOnPullRequest
 public class RequestExecutorTest extends ClusterTestBase {
 
     @Test
