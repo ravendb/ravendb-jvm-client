@@ -1,5 +1,6 @@
 package net.ravendb.client.test.client.indexing;
 
+import com.google.common.collect.Sets;
 import net.ravendb.client.Constants;
 import net.ravendb.client.RemoteTestBase;
 import net.ravendb.client.documents.IDocumentStore;
@@ -9,7 +10,6 @@ import net.ravendb.client.documents.indexes.IndexFieldOptions;
 import net.ravendb.client.documents.session.IDocumentSession;
 import net.ravendb.client.infrastructure.entities.User;
 import org.junit.jupiter.api.Test;
-import org.mockito.internal.util.collections.Sets;
 
 import java.util.HashMap;
 import java.util.List;
@@ -47,7 +47,7 @@ public class JavaScriptIndexTest extends RemoteTestBase {
 
     public static class UsersByName extends AbstractJavaScriptIndexCreationTask {
         public UsersByName() {
-            setMaps(Sets.newSet("map('Users', function (u) { return { name: u.name, count: 1 } })"));
+            setMaps(Sets.newHashSet("map('Users', function (u) { return { name: u.name, count: 1 } })"));
         }
     }
 
@@ -314,7 +314,7 @@ public class JavaScriptIndexTest extends RemoteTestBase {
 
     public static class UsersByNameWithAdditionalSources extends AbstractJavaScriptIndexCreationTask {
         public UsersByNameWithAdditionalSources() {
-            setMaps(Sets.newSet("map('Users', function(u) { return { name: mr(u.name)}; })"));
+            setMaps(Sets.newHashSet("map('Users', function(u) { return { name: mr(u.name)}; })"));
 
             HashMap<String, String> additionalSources = new HashMap<>();
             additionalSources.put("The Script", "function mr(x) { return 'Mr. ' + x; }");
@@ -324,7 +324,7 @@ public class JavaScriptIndexTest extends RemoteTestBase {
 
     public static class FanoutByNumbersWithReduce extends AbstractJavaScriptIndexCreationTask {
         public FanoutByNumbersWithReduce() {
-            setMaps(Sets.newSet("map('Fanouts', function (f){\n" +
+            setMaps(Sets.newHashSet("map('Fanouts', function (f){\n" +
                     "                                var result = [];\n" +
                     "                                for(var i = 0; i < f.numbers.length; i++)\n" +
                     "                                {\n" +
@@ -364,7 +364,7 @@ public class JavaScriptIndexTest extends RemoteTestBase {
 
     public static class UsersByNameAndAnalyzedName extends AbstractJavaScriptIndexCreationTask {
         public UsersByNameAndAnalyzedName() {
-            setMaps(Sets.newSet("map('Users', function (u){\n" +
+            setMaps(Sets.newHashSet("map('Users', function (u){\n" +
                     "                                    return {\n" +
                     "                                        name: u.name,\n" +
                     "                                        _: {$value: u.name, $name:'analyzedName', $options: { indexing: 'Search', storage: true}}\n" +
@@ -396,13 +396,13 @@ public class JavaScriptIndexTest extends RemoteTestBase {
 
     public static class UsersAndProductsByName extends AbstractJavaScriptIndexCreationTask {
         public UsersAndProductsByName() {
-            setMaps(Sets.newSet("map('Users', function (u){ return { name: u.name, count: 1};})", "map('Products', function (p){ return { name: p.name, count: 1};})"));
+            setMaps(Sets.newHashSet("map('Users', function (u){ return { name: u.name, count: 1};})", "map('Products', function (p){ return { name: p.name, count: 1};})"));
         }
     }
 
     public static class UsersAndProductsByNameAndCount extends AbstractJavaScriptIndexCreationTask {
         public UsersAndProductsByNameAndCount() {
-            setMaps(Sets.newSet("map('Users', function (u){ return { name: u.name, count: 1};})", "map('Products', function (p){ return { name: p.name, count: 1};})"));
+            setMaps(Sets.newHashSet("map('Users', function (u){ return { name: u.name, count: 1};})", "map('Products', function (p){ return { name: p.name, count: 1};})"));
             setReduce("groupBy( x =>  x.name )\n" +
                     "                                .aggregate(g => {return {\n" +
                     "                                    name: g.key,\n" +
@@ -434,7 +434,7 @@ public class JavaScriptIndexTest extends RemoteTestBase {
         }
 
         public Products_ByCategory() {
-            setMaps(Sets.newSet("map('product2s', function(p){\n" +
+            setMaps(Sets.newHashSet("map('product2s', function(p){\n" +
                     "                        return {\n" +
                     "                            category:\n" +
                     "                            load(p.category, 'categories').name,\n" +

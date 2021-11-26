@@ -8,6 +8,7 @@ import net.ravendb.client.documents.operations.backups.*;
 import net.ravendb.client.documents.operations.ongoingTasks.NextBackup;
 import net.ravendb.client.documents.operations.ongoingTasks.OngoingTaskBackup;
 import net.ravendb.client.documents.operations.ongoingTasks.OngoingTaskType;
+import net.ravendb.client.infrastructure.DisabledOnPullRequest;
 import org.junit.jupiter.api.Test;
 
 import java.nio.file.Files;
@@ -20,6 +21,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 public class BackupsTest extends RemoteTestBase {
 
     @Test
+    @DisabledOnPullRequest
     public void canBackupDatabase() throws Exception {
         try (IDocumentStore store = getDocumentStore()) {
             Path backup = Files.createTempDirectory("backup");
@@ -68,6 +70,7 @@ public class BackupsTest extends RemoteTestBase {
     }
 
     @Test
+    @DisabledOnPullRequest
     public void canSetupRetentionPolicy() throws Exception {
         try (IDocumentStore store = getDocumentStore()) {
             PeriodicBackupConfiguration backupConfiguration = new PeriodicBackupConfiguration();

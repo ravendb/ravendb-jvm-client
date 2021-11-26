@@ -14,6 +14,7 @@ import net.ravendb.client.documents.session.InMemoryDocumentSessionOperations;
 import net.ravendb.client.exceptions.ConflictException;
 import net.ravendb.client.exceptions.documents.DocumentConflictException;
 import net.ravendb.client.extensions.JsonExtensions;
+import net.ravendb.client.infrastructure.DisabledOnPullRequest;
 import net.ravendb.client.infrastructure.entities.Address;
 import net.ravendb.client.infrastructure.entities.User;
 import net.ravendb.client.serverwide.ConflictSolver;
@@ -40,6 +41,7 @@ public class RavenDB_6292Test extends ReplicationTestBase {
     }
 
     @Test
+    @DisabledOnPullRequest
     public void ifIncludedDocumentIsConflictedItShouldNotThrowConflictException() throws Exception {
         customize = r -> {
             ConflictSolver conflictSolver = new ConflictSolver();
