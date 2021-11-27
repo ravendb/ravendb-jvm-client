@@ -4,6 +4,7 @@ import net.ravendb.client.RemoteTestBase;
 import net.ravendb.client.documents.IDocumentStore;
 import net.ravendb.client.documents.session.IDocumentSession;
 import net.ravendb.client.primitives.CleanCloseable;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import java.time.Duration;
@@ -13,6 +14,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 public class RavenDB_10499Test extends RemoteTestBase {
 
     @Test
+    @Disabled
     public void canLoadAggressivelyCachingAfterDbInitialized() throws Exception {
         try (IDocumentStore store = getDocumentStore()) {
             String id = "myDocuments/123";
