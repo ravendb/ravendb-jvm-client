@@ -97,6 +97,7 @@ public class SubscriptionWorker<T> implements CleanCloseable {
 
         afterAcknowledgment = new ArrayList<>();
         onSubscriptionConnectionRetry = new ArrayList<>();
+        onUnexpectedSubscriptionError = new ArrayList<>();
     }
 
     @Override
