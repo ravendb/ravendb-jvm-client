@@ -355,7 +355,8 @@ public class SubscriptionWorker<T> implements CleanCloseable {
                 throw new SubscriptionDoesNotExistException("Subscription with id " + _options.getSubscriptionName() + " cannot be opened, because it does not exist. " + connectionStatus.getException());
             case REDIRECT:
                 ObjectNode data = connectionStatus.getData();
-                String appropriateNode = data.get("RedirectedTag").asText();
+                JsonNode redirectedTag = data.get("RedirectedTag");
+                String appropriateNode = redirectedTag.isNull() ? null : redirectedTag.asText();
                 JsonNode currentTagRaw = data.get("CurrentTag");
                 String currentNode = currentTagRaw != null && !currentTagRaw.isNull() ? currentTagRaw.asText() : null;
                 JsonNode rawReasons = data.get("Reasons");
