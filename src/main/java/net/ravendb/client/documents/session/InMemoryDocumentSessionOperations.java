@@ -1045,7 +1045,7 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
                             result.getEntities().add(documentInfo.getEntity());
                         }
 
-                        result.onSuccess.removeDocumentByEntity(documentInfo.getId());
+                        result.onSuccess.removeDocumentById(documentInfo.getId());
                     }
 
                     if (!useOptimisticConcurrency) {
