@@ -13,6 +13,7 @@ import java.time.Duration;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@Disabled
 public class AggressiveCacheWithLazyTest extends RemoteTestBase {
 
     @Test
