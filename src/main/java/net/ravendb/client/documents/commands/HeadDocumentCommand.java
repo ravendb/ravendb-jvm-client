@@ -1,5 +1,6 @@
 package net.ravendb.client.documents.commands;
 
+import net.ravendb.client.Constants;
 import net.ravendb.client.extensions.HttpExtensions;
 import net.ravendb.client.http.HttpCache;
 import net.ravendb.client.http.RavenCommand;
@@ -40,7 +41,7 @@ public class HeadDocumentCommand extends RavenCommand<String> {
         HttpHead request = new HttpHead();
 
         if (_changeVector != null) {
-            request.setHeader("If-None-Match", _changeVector);
+            request.setHeader(Constants.Headers.IF_NONE_MATCH, _changeVector);
         }
 
         return request;

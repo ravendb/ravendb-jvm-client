@@ -1,6 +1,7 @@
 package net.ravendb.client.documents.commands;
 
 import com.fasterxml.jackson.databind.node.ArrayNode;
+import net.ravendb.client.Constants;
 import net.ravendb.client.http.HttpCache;
 import net.ravendb.client.http.RavenCommand;
 import net.ravendb.client.http.ResponseDisposeHandling;
@@ -31,7 +32,7 @@ public class ConditionalGetDocumentsCommand extends RavenCommand<ConditionalGetD
         url.value = node.getUrl() + "/databases/" + node.getDatabase() + "/docs?id=" + urlEncode(_id);
 
         HttpGet request = new HttpGet();
-        request.setHeader("If-None-Match", '"' + _changeVector + '"');
+        request.setHeader(Constants.Headers.IF_NONE_MATCH, '"' + _changeVector + '"');
 
         return request;
     }

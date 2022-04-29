@@ -5,6 +5,8 @@ public class S3Settings extends AmazonSettings {
     private String bucketName;
     private String customServerUrl;
 
+    private boolean forcePathStyle;
+
     public String getBucketName() {
         return bucketName;
     }
@@ -19,5 +21,13 @@ public class S3Settings extends AmazonSettings {
 
     public void setCustomServerUrl(String customServerUrl) {
         this.customServerUrl = customServerUrl;
+    }
+
+    public boolean isForcePathStyle() {
+        return forcePathStyle;
+    }
+
+    public void setForcePathStyle(boolean forcePathStyle) {
+        this.forcePathStyle = forcePathStyle;
     }
 }

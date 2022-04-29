@@ -8,15 +8,12 @@ import java.util.Set;
 /**
  * A definition of a RavenIndex
  */
-public class IndexDefinition {
+public class IndexDefinition extends IndexDefinitionBase {
 
     public IndexDefinition() {
         configuration = new IndexConfiguration();
     }
 
-    private String name;
-    private IndexPriority priority;
-    private IndexState state;
     private IndexLockMode lockMode;
     private Map<String, String> additionalSources;
     private Set<AdditionalAssembly> additionalAssemblies;
@@ -31,54 +28,6 @@ public class IndexDefinition {
     private String patternForOutputReduceToCollectionReferences;
     private String patternReferencesCollectionName;
     private IndexDeploymentMode deploymentMode;
-
-    /**
-     * This is the means by which the outside world refers to this index definition
-     * @return index name
-     */
-    public String getName() {
-        return name;
-    }
-
-    /**
-     * This is the means by which the outside world refers to this index definition
-     * @param name sets the value
-     */
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    /**
-     * Priority of an index
-     * @return index priority
-     */
-    public IndexPriority getPriority() {
-        return priority;
-    }
-
-    /**
-     * Priority of an index
-     * @param priority Sets the value
-     */
-    public void setPriority(IndexPriority priority) {
-        this.priority = priority;
-    }
-
-    /**
-     * State of an index
-     * @return index state
-     */
-    public IndexState getState() {
-        return state;
-    }
-
-    /**
-     * State of an index
-     * @param state index state
-     */
-    public void setState(IndexState state) {
-        this.state = state;
-    }
 
     /**
      * Index lock mode:
@@ -169,7 +118,7 @@ public class IndexDefinition {
 
     @Override
     public String toString() {
-        return name;
+        return getName();
     }
 
     public Map<String, IndexFieldOptions> getFields() {

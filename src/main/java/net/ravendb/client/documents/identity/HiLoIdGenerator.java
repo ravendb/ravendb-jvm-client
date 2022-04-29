@@ -1,19 +1,21 @@
 package net.ravendb.client.documents.identity;
 
 import net.ravendb.client.documents.IDocumentStore;
+import net.ravendb.client.documents.Lazy;
 import net.ravendb.client.documents.commands.HiLoReturnCommand;
 import net.ravendb.client.documents.commands.NextHiLoCommand;
 import net.ravendb.client.http.RequestExecutor;
 
+import java.lang.ref.Reference;
 import java.util.Date;
+import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  *  Generate hilo numbers against a RavenDB document
  */
 public class HiLoIdGenerator {
-
-    private final Object generatorLock = new Object();
 
     private final IDocumentStore _store;
     private final String _tag;
@@ -24,6 +26,8 @@ public class HiLoIdGenerator {
     private final char _identityPartsSeparator;
     private volatile RangeValue _range;
     protected String serverTag;
+
+    private AtomicReference<Lazy<Void>> _nextRangeTask = new AtomicReference<>(new Lazy<>(() -> null));
 
     public HiLoIdGenerator(String tag, IDocumentStore store, String dbName, char identityPartsSeparator) {
         _store = store;
@@ -45,7 +49,7 @@ public class HiLoIdGenerator {
         this._range = _range;
     }
 
-    protected class RangeValue {
+    protected static class RangeValue {
         public final long Min;
         public final long Max;
         public final AtomicLong Current;
@@ -68,6 +72,8 @@ public class HiLoIdGenerator {
 
     public long nextId() {
         while (true) {
+            Lazy<Void> current = _nextRangeTask.get();
+
             // local range is not exhausted yet
             RangeValue range = _range;
 
@@ -76,19 +82,34 @@ public class HiLoIdGenerator {
                 return id;
             }
 
-            //local range is exhausted , need to get a new range
-            synchronized (generatorLock) {
-                id = _range.Current.get();
-                if (id <= _range.Max) {
-                    return id;
+            try {
+                // let's try to call the existing task for next range
+                current.getValue();
+                if (range != _range) {
+                    continue;
                 }
+            } catch (Exception e) {
+                // previous task was faulted, we will try to replace it
+            }
 
-                getNextRange();
+            // local range is exhausted , need to get a new range
+            Lazy<Void> maybeNextTask = new Lazy<>(this::getNextRange);
+            boolean changed = _nextRangeTask.compareAndSet(current, maybeNextTask);
+            if (changed) {
+                maybeNextTask.getValue();
+                continue;
+            }
+
+            try {
+                // failed to replace, let's wait on the previous task
+                _nextRangeTask.get().getValue();
+            } catch (Exception e) {
+                // previous task was faulted, we will try again
             }
         }
     }
 
-    private void getNextRange() {
+    private Void getNextRange() {
         NextHiLoCommand hiloCommand = new NextHiLoCommand(_tag, _lastBatchSize, _lastRangeDate, _identityPartsSeparator, _range.Max);
 
         RequestExecutor re = _store.getRequestExecutor(_dbName);
@@ -99,6 +120,7 @@ public class HiLoIdGenerator {
         _lastRangeDate = hiloCommand.getResult().getLastRangeAt();
         _lastBatchSize = hiloCommand.getResult().getLastSize();
         _range = new RangeValue(hiloCommand.getResult().getLow(), hiloCommand.getResult().getHigh());
+        return null;
     }
 
     public void returnUnusedRange() {

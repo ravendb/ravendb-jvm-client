@@ -24,6 +24,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.http.Header;
 import org.apache.http.HttpRequest;
+import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
 import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.methods.CloseableHttpResponse;
@@ -235,7 +236,11 @@ public class RequestExecutor implements CleanCloseable {
     }
 
     private void onFailedRequestInvoke(String url, Exception e) {
-        EventHelper.invoke(_onFailedRequest, this, new FailedRequestEventArgs(_databaseName, url, e));
+        onFailedRequestInvoke(url, e, null, null);
+    }
+
+    private void onFailedRequestInvoke(String url, Exception e, HttpRequest request, HttpResponse response) {
+        EventHelper.invoke(_onFailedRequest, this, new FailedRequestEventArgs(_databaseName, url, e, request, response));
     }
 
     private CloseableHttpClient createHttpClient() {
@@ -791,22 +796,21 @@ public class RequestExecutor implements CleanCloseable {
         Boolean refreshTopology = Optional.ofNullable(HttpExtensions.getBooleanHeader(response, Constants.Headers.REFRESH_TOPOLOGY)).orElse(false);
         Boolean refreshClientConfiguration = Optional.ofNullable(HttpExtensions.getBooleanHeader(response, Constants.Headers.REFRESH_CLIENT_CONFIGURATION)).orElse(false);
 
-        if (refreshTopology || refreshClientConfiguration) {
-            ServerNode serverNode = new ServerNode();
-            serverNode.setUrl(chosenNode.getUrl());
-            serverNode.setDatabase(_databaseName);
+        CompletableFuture<Boolean> refreshTask = CompletableFuture.completedFuture(false);
+        CompletableFuture<Void> refreshClientConfigurationTask = CompletableFuture.completedFuture(null);
 
-            UpdateTopologyParameters updateParameters = new UpdateTopologyParameters(serverNode);
+        if (refreshTopology) {
+            UpdateTopologyParameters updateParameters = new UpdateTopologyParameters(chosenNode);
             updateParameters.setTimeoutInMs(0);
             updateParameters.setDebugTag("refresh-topology-header");
-
-            CompletableFuture<Boolean> topologyTask = refreshTopology ? updateTopologyAsync(updateParameters) : CompletableFuture.completedFuture(false);
-            CompletableFuture<Void> clientConfiguration = refreshClientConfiguration ? updateClientConfigurationAsync(serverNode) : CompletableFuture.completedFuture(null);
-
-            return CompletableFuture.allOf(topologyTask, clientConfiguration);
+            refreshTask = updateTopologyAsync(updateParameters);
         }
 
-        return CompletableFuture.allOf();
+        if (refreshClientConfiguration) {
+            refreshClientConfigurationTask = updateClientConfigurationAsync(chosenNode);
+        }
+
+        return CompletableFuture.allOf(refreshTask, refreshClientConfigurationTask);
     }
 
     private <TResult> CloseableHttpResponse sendRequestToServer(ServerNode chosenNode, Integer nodeIndex, RavenCommand<TResult> command,
@@ -917,7 +921,7 @@ public class RequestExecutor implements CleanCloseable {
 
     private void setRequestHeaders(SessionInfo sessionInfo, String cachedChangeVector, HttpRequest request) {
         if (cachedChangeVector != null) {
-            request.addHeader("If-None-Match", "\"" + cachedChangeVector + "\"");
+            request.addHeader(Constants.Headers.IF_NONE_MATCH, "\"" + cachedChangeVector + "\"");
         }
 
         if (!_disableClientConfigurationUpdates) {
@@ -1323,7 +1327,7 @@ public class RequestExecutor implements CleanCloseable {
             return false;
         }
 
-        onFailedRequestInvoke(url, e);
+        onFailedRequestInvoke(url, e, request, response);
 
         execute(indexAndNodeAndEtag.currentNode, indexAndNodeAndEtag.currentIndex, command, shouldRetry, sessionInfo);
 

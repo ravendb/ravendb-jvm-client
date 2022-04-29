@@ -6,6 +6,8 @@ public class SubscriptionDoesNotBelongToNodeException extends SubscriptionExcept
     private String appropriateNode;
     private Map<String, String> reasons;
 
+    private Long registerConnectionDurationInTicks;
+
     public SubscriptionDoesNotBelongToNodeException(String message) {
         super(message);
     }
@@ -28,5 +30,13 @@ public class SubscriptionDoesNotBelongToNodeException extends SubscriptionExcept
 
     public void setReasons(Map<String, String> reasons) {
         this.reasons = reasons;
+    }
+
+    public Long getRegisterConnectionDurationInTicks() {
+        return registerConnectionDurationInTicks;
+    }
+
+    public void setRegisterConnectionDurationInTicks(Long registerConnectionDurationInTicks) {
+        this.registerConnectionDurationInTicks = registerConnectionDurationInTicks;
     }
 }

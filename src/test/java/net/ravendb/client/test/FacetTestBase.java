@@ -40,7 +40,7 @@ public abstract class FacetTestBase extends RemoteTestBase {
         }
     }
 
-    protected static void insertCameraData(IDocumentStore store, List<Camera> cameras, boolean waitForIndexing) {
+    protected void insertCameraData(IDocumentStore store, List<Camera> cameras, boolean waitForIndexing) {
         try (IDocumentSession session = store.openSession()) {
             for (Camera camera : cameras) {
                 session.store(camera);

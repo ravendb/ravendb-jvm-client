@@ -11,6 +11,8 @@ public class RevisionsCollectionConfiguration {
 
     private boolean purgeOnDelete;
 
+    private Long maximumRevisionsToDeleteUponDocumentUpdate;
+
     public Long getMinimumRevisionsToKeep() {
         return minimumRevisionsToKeep;
     }
@@ -41,5 +43,13 @@ public class RevisionsCollectionConfiguration {
 
     public void setPurgeOnDelete(boolean purgeOnDelete) {
         this.purgeOnDelete = purgeOnDelete;
+    }
+
+    public Long getMaximumRevisionsToDeleteUponDocumentUpdate() {
+        return maximumRevisionsToDeleteUponDocumentUpdate;
+    }
+
+    public void setMaximumRevisionsToDeleteUponDocumentUpdate(Long maximumRevisionsToDeleteUponDocumentUpdate) {
+        this.maximumRevisionsToDeleteUponDocumentUpdate = maximumRevisionsToDeleteUponDocumentUpdate;
     }
 }

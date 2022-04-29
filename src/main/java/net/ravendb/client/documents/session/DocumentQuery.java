@@ -679,6 +679,7 @@ public class DocumentQuery<T> extends AbstractDocumentQuery<T, DocumentQuery<T>>
         query.documentIncludes = new HashSet<>(documentIncludes);
         query.counterIncludesTokens = counterIncludesTokens;
         query.timeSeriesIncludesTokens = timeSeriesIncludesTokens;
+        query.revisionsIncludesTokens = revisionsIncludesTokens;
         query.compareExchangeValueIncludesTokens = compareExchangeValueIncludesTokens;
         query.rootTypes = Sets.newHashSet(clazz);
         query.beforeQueryExecutedCallback = beforeQueryExecutedCallback;

@@ -1,7 +1,10 @@
 package net.ravendb.client.documents;
 
+import net.ravendb.client.documents.bulkInsert.BulkInsertOptions;
 import net.ravendb.client.documents.changes.IDatabaseChanges;
 import net.ravendb.client.documents.conventions.DocumentConventions;
+import net.ravendb.client.documents.identity.HiLoIdGenerator;
+import net.ravendb.client.documents.identity.IHiLoIdGenerator;
 import net.ravendb.client.documents.indexes.AbstractIndexCreationTaskBase;
 import net.ravendb.client.documents.indexes.IAbstractIndexCreationTask;
 import net.ravendb.client.documents.indexes.IndexDefinition;
@@ -28,6 +31,8 @@ public interface IDocumentStore extends IDisposalNotification {
 
     KeyStore getCertificate();
 
+    IHiLoIdGenerator getHiLoIdGenerator();
+
     void addBeforeStoreListener(EventHandler<BeforeStoreEventArgs> handler);
     void removeBeforeStoreListener(EventHandler<BeforeStoreEventArgs> handler);
 
@@ -51,6 +56,12 @@ public interface IDocumentStore extends IDisposalNotification {
 
     void addAfterConversionToEntityListener(EventHandler<AfterConversionToEntityEventArgs> handler);
     void removeAfterConversionToEntityListener(EventHandler<AfterConversionToEntityEventArgs> handler);
+
+    void addOnBeforeRequestListener(EventHandler<BeforeRequestEventArgs> handler);
+    void removeOnBeforeRequestListener(EventHandler<BeforeRequestEventArgs> handler);
+
+    void addOnSucceedRequestListener(EventHandler<SucceedRequestEventArgs> handler);
+    void removeOnSucceedRequestListener(EventHandler<SucceedRequestEventArgs> handler);
 
     void addOnFailedRequestListener(EventHandler<FailedRequestEventArgs> handler);
     void removeOnFailedRequestListener(EventHandler<FailedRequestEventArgs> handler);
@@ -258,6 +269,10 @@ public interface IDocumentStore extends IDisposalNotification {
     BulkInsertOperation bulkInsert();
 
     BulkInsertOperation bulkInsert(String database);
+
+    BulkInsertOperation bulkInsert(String database, BulkInsertOptions options);
+
+    BulkInsertOperation bulkInsert(BulkInsertOptions options);
 
     DocumentSubscriptions subscriptions();
 

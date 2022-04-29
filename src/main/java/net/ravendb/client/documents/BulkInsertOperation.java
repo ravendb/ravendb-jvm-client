@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import net.ravendb.client.Constants;
+import net.ravendb.client.documents.bulkInsert.BulkInsertOptions;
 import net.ravendb.client.documents.commands.GetNextOperationIdCommand;
 import net.ravendb.client.documents.commands.KillOperationCommand;
 import net.ravendb.client.documents.commands.batches.CommandType;
@@ -14,7 +15,6 @@ import net.ravendb.client.documents.operations.GetOperationStateOperation;
 import net.ravendb.client.documents.session.DocumentInfo;
 import net.ravendb.client.documents.session.EntityToJson;
 import net.ravendb.client.documents.session.IMetadataDictionary;
-import net.ravendb.client.documents.session.timeSeries.TimeSeriesEntry;
 import net.ravendb.client.documents.session.timeSeries.TimeSeriesValuesHelper;
 import net.ravendb.client.documents.session.timeSeries.TypedTimeSeriesEntry;
 import net.ravendb.client.documents.timeSeries.TimeSeriesOperations;
@@ -39,7 +39,6 @@ import org.apache.http.entity.ContentType;
 import org.apache.http.impl.client.CloseableHttpClient;
 
 import java.io.*;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
@@ -52,6 +51,7 @@ import java.util.stream.DoubleStream;
 
 public class BulkInsertOperation implements CleanCloseable {
 
+    private BulkInsertOptions _options;
     private final GenerateEntityIdOnTheClient _generateEntityIdOnTheClient;
 
     private static class StreamExposerContent extends AbstractHttpEntity {
@@ -131,20 +131,26 @@ public class BulkInsertOperation implements CleanCloseable {
 
         private final StreamExposerContent _stream;
 
+        private boolean _skipOverwriteIfUnchanged;
         private final long _id;
 
         private boolean useCompression;
 
-        public BulkInsertCommand(long id, StreamExposerContent stream, String nodeTag) {
+        public BulkInsertCommand(long id, StreamExposerContent stream, String nodeTag, boolean skipOverwriteIfUnchanged) {
             super(CloseableHttpResponse.class);
             _stream = stream;
             _id = id;
             this.selectedNodeTag = nodeTag;
+            this._skipOverwriteIfUnchanged = skipOverwriteIfUnchanged;
         }
 
         @Override
         public HttpRequestBase createRequest(ServerNode node, Reference<String> url) {
-            url.value = node.getUrl() + "/databases/" + node.getDatabase() + "/bulk_insert?id=" + _id;
+            url.value = node.getUrl()
+                    + "/databases/"
+                    + node.getDatabase()
+                    + "/bulk_insert?id=" + _id
+                    + "&skipOverwriteIfUnchanged=" + (_skipOverwriteIfUnchanged ? "true" : "false");
 
             HttpPost message = new HttpPost();
             message.setEntity(useCompression ? new GzipCompressingEntity(_stream) : _stream);
@@ -194,13 +200,22 @@ public class BulkInsertOperation implements CleanCloseable {
     private final int _timeSeriesBatchSize;
 
     private final AtomicInteger _concurrentCheck = new AtomicInteger();
+    private boolean _isInitialWrite = true;
 
     public BulkInsertOperation(String database, DocumentStore store) {
+        this(database, store, null);
+    }
+
+    public BulkInsertOperation(String database, DocumentStore store, BulkInsertOptions options) {
         _executorService = store.getExecutorService();
         _conventions = store.getConventions();
         if (StringUtils.isBlank(database)) {
             throwNoDatabase();
         }
+
+        this.useCompression = options != null ? options.isUseCompression() : false;
+
+        _options = ObjectUtils.firstNonNull(options, new BulkInsertOptions());
         _requestExecutor = store.getRequestExecutor(database);
         objectMapper = store.getConventions().getEntityMapper();
 
@@ -334,6 +349,7 @@ public class BulkInsertOperation implements CleanCloseable {
                 }
 
                 _currentWriter.write("}");
+                flushIfNeeded();
             } catch (Exception e) {
                 handleErrors(id, e);
             }
@@ -377,18 +393,27 @@ public class BulkInsertOperation implements CleanCloseable {
             _currentWriterBacking.reset();
 
             final byte[] buffer = _backgroundWriterBacking.toByteArray();
-            _asyncWrite = CompletableFuture.supplyAsync(() -> {
-                try {
-                    _requestBodyStream.write(buffer);
+            _asyncWrite = writeToRequestBodyStream(buffer);
+        }
+    }
+
+    private CompletableFuture<Void> writeToRequestBodyStream(byte[] buffer) {
+        return CompletableFuture.supplyAsync(() -> {
+            try {
+                _requestBodyStream.write(buffer);
+
+                if (_isInitialWrite) {
+                    _isInitialWrite = false;
 
                     // send this chunk
                     _requestBodyStream.flush();
-                } catch (IOException e) {
-                    throw new RuntimeException(e);
                 }
-                return null;
-            }, _executorService);
-        }
+
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+            return null;
+        }, _executorService);
     }
 
     private void endPreviousCommandIfNeeded() {
@@ -469,7 +494,7 @@ public class BulkInsertOperation implements CleanCloseable {
 
     private void ensureStream() {
         try {
-            BulkInsertCommand bulkCommand = new BulkInsertCommand(_operationId, _streamExposerContent, _nodeTag);
+            BulkInsertCommand bulkCommand = new BulkInsertCommand(_operationId, _streamExposerContent, _nodeTag, _options.isSkipOverwriteIfUnchanged());
             bulkCommand.useCompression = useCompression;
 
             _bulkInsertExecuteTask = CompletableFuture.supplyAsync(() -> {

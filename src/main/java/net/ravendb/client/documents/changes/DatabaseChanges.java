@@ -414,10 +414,6 @@ public class DatabaseChanges implements IDatabaseChanges {
                 value.close();
             }
 
-            for (DatabaseConnectionState value : _counters.values()) {
-                value.close();
-            }
-
             _counters.clear();
 
             try {
@@ -427,7 +423,11 @@ public class DatabaseChanges implements IDatabaseChanges {
                 // nothing we can do here
             }
 
-            EventHelper.invoke(_connectionStatusChanged, this, EventArgs.EMPTY);
+            try {
+                EventHelper.invoke(_connectionStatusChanged, this, EventArgs.EMPTY);
+            } catch (Exception e) {
+                // we are disposing
+            }
             removeConnectionStatusChanged(_connectionStatusEventHandler);
 
             _onDispose.run();
@@ -590,6 +590,7 @@ public class DatabaseChanges implements IDatabaseChanges {
                     // we couldn't reconnect
                     RuntimeException unwrappedException = ExceptionsUtils.unwrapException(e);
                     notifyAboutError(unwrappedException);
+                    _tcs.completeExceptionally(ee);
                     throw unwrappedException;
                 }
 

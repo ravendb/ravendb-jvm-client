@@ -1,5 +1,6 @@
 package net.ravendb.client.documents.queries;
 
+import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import net.ravendb.client.documents.queries.timings.QueryTimings;
 
@@ -13,6 +14,8 @@ public abstract class QueryResultBase<TResult, TInclude> {
     private TInclude includes;
 
     private ObjectNode counterIncludes;
+
+    private ArrayNode revisionIncludes;
 
     private Map<String, String[]> includedCounterNames;
 
@@ -80,6 +83,20 @@ public abstract class QueryResultBase<TResult, TInclude> {
      */
     public void setCounterIncludes(ObjectNode counterIncludes) {
         this.counterIncludes = counterIncludes;
+    }
+
+    /**
+     * @return Gets the Revisions included in the result.
+     */
+    public ArrayNode getRevisionIncludes() {
+        return revisionIncludes;
+    }
+
+    /**
+     * @param revisionIncludes Sets the Revisions included in the result.
+     */
+    public void setRevisionIncludes(ArrayNode revisionIncludes) {
+        this.revisionIncludes = revisionIncludes;
     }
 
     /**

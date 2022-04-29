@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import net.ravendb.client.serverwide.operations.DatabasePromotionStatus;
 
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
@@ -22,6 +23,7 @@ public class DatabaseTopology {
     private String databaseTopologyIdBase64;
     private String clusterTransactionIdBase64;
     private List<String> priorityOrder;
+    private Date nodesModifiedAt;
 
     @JsonIgnore
     public List<String> getAllNodes() {
@@ -120,6 +122,14 @@ public class DatabaseTopology {
 
     public void setClusterTransactionIdBase64(String clusterTransactionIdBase64) {
         this.clusterTransactionIdBase64 = clusterTransactionIdBase64;
+    }
+
+    public Date getNodesModifiedAt() {
+        return nodesModifiedAt;
+    }
+
+    public void setNodesModifiedAt(Date nodesModifiedAt) {
+        this.nodesModifiedAt = nodesModifiedAt;
     }
 
     public List<String> getPriorityOrder() {

@@ -23,6 +23,8 @@ public class LoadOperation {
     private String[] _ids;
     private String[] _includes;
     private String[] _countersToInclude;
+    private String[] _revisionsToIncludeByChangeVector;
+    private Date _revisionsToIncludeByDateTimeBefore;
     private String[] _compareExchangeValuesToInclude;
     private boolean _includeAllCounters;
     private List<AbstractTimeSeriesRange> _timeSeriesToInclude;
@@ -46,10 +48,13 @@ public class LoadOperation {
         }
 
         if (_includeAllCounters) {
-            return new GetDocumentsCommand(_ids, _includes, true, _timeSeriesToInclude, _compareExchangeValuesToInclude, false);
+            return new GetDocumentsCommand(_ids, _includes, true, _timeSeriesToInclude,
+                    _compareExchangeValuesToInclude, false);
         }
 
-        return new GetDocumentsCommand(_ids, _includes, _countersToInclude, _timeSeriesToInclude, _compareExchangeValuesToInclude, false);
+        return new GetDocumentsCommand(_ids, _includes, _countersToInclude, _revisionsToIncludeByChangeVector,
+                _revisionsToIncludeByDateTimeBefore, _timeSeriesToInclude,
+                _compareExchangeValuesToInclude, false);
     }
 
     public LoadOperation byId(String id) {
@@ -78,6 +83,22 @@ public class LoadOperation {
         if (counters != null) {
             _countersToInclude = counters;
         }
+        return this;
+    }
+
+    public LoadOperation withRevisions(String[] revisionsByChangeVector) {
+        if (revisionsByChangeVector != null) {
+            _revisionsToIncludeByChangeVector = revisionsByChangeVector;
+        }
+
+        return this;
+    }
+
+    public LoadOperation withRevisions(Date revisionByDateTimeBefore) {
+        if (revisionByDateTimeBefore != null) {
+            _revisionsToIncludeByDateTimeBefore = revisionByDateTimeBefore;
+        }
+
         return this;
     }
 
@@ -220,6 +241,10 @@ public class LoadOperation {
 
         if (_timeSeriesToInclude != null) {
             _session.registerTimeSeries(result.getTimeSeriesIncludes());
+        }
+
+        if (_revisionsToIncludeByChangeVector != null || _revisionsToIncludeByDateTimeBefore != null) {
+            _session.registerRevisionIncludes(result.getRevisionIncludes());
         }
 
         if (_compareExchangeValuesToInclude != null) {

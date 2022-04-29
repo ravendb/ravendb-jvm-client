@@ -419,13 +419,19 @@ public class DocumentSession extends InMemoryDocumentSessionOperations
                 ? includeBuilder.getCompareExchangeValuesToInclude().toArray(new String[0])
                 : null;
 
+        String[] revisionsToIncludeByChangeVector = includeBuilder.revisionsToIncludeByChangeVector != null
+                ? includeBuilder.revisionsToIncludeByChangeVector.toArray(new String[0])
+                : null;
+
         return loadInternal(clazz,
                 ids.toArray(new String[0]),
                 includeBuilder.documentsToInclude != null ? includeBuilder.documentsToInclude.toArray(new String[0]) : null,
                 includeBuilder.getCountersToInclude() != null ? includeBuilder.getCountersToInclude().toArray(new String[0]) : null,
                 includeBuilder.isAllCounters(),
                 timeSeriesIncludes,
-                compareExchangeValuesToInclude);
+                compareExchangeValuesToInclude,
+                revisionsToIncludeByChangeVector,
+                includeBuilder.revisionsToIncludeByDateTime);
     }
 
     public <TResult> Map<String, TResult> loadInternal(Class<TResult> clazz, String[] ids, String[] includes) {
@@ -454,6 +460,15 @@ public class DocumentSession extends InMemoryDocumentSessionOperations
                                                        String[] counterIncludes, boolean includeAllCounters,
                                                        List<AbstractTimeSeriesRange> timeSeriesIncludes,
                                                        String[] compareExchangeValueIncludes) {
+        return loadInternal(clazz, ids, includes, counterIncludes, includeAllCounters, timeSeriesIncludes, compareExchangeValueIncludes, null, null);
+    }
+
+    public <TResult> Map<String, TResult> loadInternal(Class<TResult> clazz, String[] ids, String[] includes,
+                                                       String[] counterIncludes, boolean includeAllCounters,
+                                                       List<AbstractTimeSeriesRange> timeSeriesIncludes,
+                                                       String[] compareExchangeValueIncludes,
+                                                       String[] revisionIncludesByChangeVector,
+                                                       Date revisionsToIncludeByDateTime) {
         if (ids == null) {
             throw new IllegalArgumentException("Ids cannot be null");
         }
@@ -468,6 +483,8 @@ public class DocumentSession extends InMemoryDocumentSessionOperations
             loadOperation.withCounters(counterIncludes);
         }
 
+        loadOperation.withRevisions(revisionIncludesByChangeVector);
+        loadOperation.withRevisions(revisionsToIncludeByDateTime);
         loadOperation.withTimeSeries(timeSeriesIncludes);
         loadOperation.withCompareExchange(compareExchangeValueIncludes);
 

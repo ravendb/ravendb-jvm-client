@@ -25,6 +25,8 @@ public class TcpConnectionHeaderMessage {
 
     private String databaseName;
     private String sourceNodeTag;
+
+    private String serverId;
     private OperationTypes operation;
     private int operationVersion;
     private String info;
@@ -53,6 +55,14 @@ public class TcpConnectionHeaderMessage {
 
     public void setSourceNodeTag(String sourceNodeTag) {
         this.sourceNodeTag = sourceNodeTag;
+    }
+
+    public String getServerId() {
+        return serverId;
+    }
+
+    public void setServerId(String serverId) {
+        this.serverId = serverId;
     }
 
     public OperationTypes getOperation() {

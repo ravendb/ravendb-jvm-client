@@ -17,6 +17,7 @@ public class EvictItemsFromCacheBasedOnChanges implements CleanCloseable, IObser
     public EvictItemsFromCacheBasedOnChanges(DocumentStore store, String databaseName) {
         _databaseName = databaseName;
         _changes = store.changes(databaseName);
+
         _requestExecutor = store.getRequestExecutor(databaseName);
         IChangesObservable<DocumentChange> docSub = _changes.forAllDocuments();
         _documentsSubscription = docSub.subscribe((IObserver<DocumentChange>)(IObserver<?>)this);
@@ -53,4 +54,10 @@ public class EvictItemsFromCacheBasedOnChanges implements CleanCloseable, IObser
             _indexesSubscription.close();
         }
     }
+
+    public void ensureConnected() {
+        _changes.ensureConnectedNow();
+    }
+
+
 }

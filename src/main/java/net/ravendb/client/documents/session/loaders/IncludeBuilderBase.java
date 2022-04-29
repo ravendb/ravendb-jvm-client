@@ -21,6 +21,9 @@ public class IncludeBuilderBase {
     public Map<String, Tuple<Boolean, Set<String>>> countersToIncludeBySourcePath;
     public Map<String, Set<AbstractTimeSeriesRange>> timeSeriesToIncludeBySourceAlias;
     public Set<String> compareExchangeValuesToInclude;
+
+    public Set<String> revisionsToIncludeByChangeVector;
+    public Date revisionsToIncludeByDateTime;
     public boolean includeTimeSeriesTags;
     public boolean includeTimeSeriesDocument;
 
@@ -79,6 +82,22 @@ public class IncludeBuilderBase {
         }
 
         documentsToInclude.add(path);
+    }
+
+    protected void _includeRevisionsBefore(Date revisionsToIncludeByDateTime) {
+        this.revisionsToIncludeByDateTime = revisionsToIncludeByDateTime;
+    }
+
+    protected void _includeRevisionsByChangeVectors(String path) {
+        if (StringUtils.isBlank(path)) {
+            throw new IllegalArgumentException("Path cannot be null or whitespace");
+        }
+
+        if (revisionsToIncludeByChangeVector == null) {
+            revisionsToIncludeByChangeVector = new HashSet<>();
+        }
+
+        revisionsToIncludeByChangeVector.add(path);
     }
 
     protected void _includeCounter(String path, String name) {

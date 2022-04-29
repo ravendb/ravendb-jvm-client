@@ -196,6 +196,16 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
     public final Map<String, DocumentInfo> includedDocumentsById = new TreeMap<>(String::compareToIgnoreCase);
 
     /**
+     * Translate between an CV and its associated entity
+     */
+    public Map<String, DocumentInfo> includeRevisionsByChangeVector;
+
+    /**
+     * Translate between an ID and its associated entity
+     */
+    public Map<String, Map<Date, DocumentInfo>> includeRevisionsIdByDateTimeBefore;
+
+    /**
      * hold the data required to manage the data for RavenDB's Unit of Work
      */
     public final DocumentsByEntityHolder documentsByEntity = new DocumentsByEntityHolder();
@@ -1200,7 +1210,7 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
             }
         }
 
-        return !deletedEntities.isEmpty();
+        return !deletedEntities.isEmpty() || !deferredCommands.isEmpty();
     }
 
     /**
@@ -1438,6 +1448,48 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
             }
 
             includedDocumentsById.put(newDocumentInfo.getId(), newDocumentInfo);
+        }
+    }
+
+    public void registerRevisionIncludes(ArrayNode revisionIncludes) {
+        if (noTracking) {
+            return;
+        }
+
+        if (revisionIncludes == null || revisionIncludes.isNull()) {
+            return;
+        }
+
+        if (includeRevisionsByChangeVector == null) {
+            includeRevisionsByChangeVector = new TreeMap<>(String::compareToIgnoreCase);
+        }
+
+        if (includeRevisionsIdByDateTimeBefore == null) {
+            includeRevisionsIdByDateTimeBefore = new TreeMap<>(String::compareToIgnoreCase);
+        }
+
+        for (JsonNode obj : revisionIncludes) {
+            if (!(obj instanceof ObjectNode)) {
+                continue;
+            }
+
+            ObjectNode json = (ObjectNode) obj;
+            String id = json.get("Id").asText();
+            String changeVector = json.get("ChangeVector").asText();
+            String beforeAsText = json.has("Before") ? json.get("Before").asText() : null;
+            Date dateTime = beforeAsText != null ? NetISO8601Utils.parse(beforeAsText) : null;
+            ObjectNode revision = (ObjectNode) json.get("Revision");
+
+            includeRevisionsByChangeVector.put(changeVector, DocumentInfo.getNewDocumentInfo(revision));
+
+            if (dateTime != null && dateTime.getTime() != 0 && StringUtils.isNotBlank(id)) {
+                Map<Date, DocumentInfo> map = new HashMap<>();
+                includeRevisionsIdByDateTimeBefore.put(id, map);
+
+                DocumentInfo documentInfo = new DocumentInfo();
+                documentInfo.setDocument(revision);
+                map.put(dateTime, documentInfo);
+            }
         }
     }
 
@@ -1996,8 +2048,31 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
         return entityToJson.convertToEntity(clazz, id, document, trackEntity);
     }
 
-    public boolean checkIfIdAlreadyIncluded(String[] ids, Map.Entry<String, Class<?>>[] includes) {
-        return checkIfIdAlreadyIncluded(ids, Arrays.stream(includes).map(Map.Entry::getKey).collect(Collectors.toList()));
+    public boolean checkIfAllChangeVectorsAreAlreadyIncluded(String[] changeVectors) {
+        if (includeRevisionsByChangeVector == null) {
+            return false;
+        }
+
+        for (String cv : changeVectors) {
+            if (!includeRevisionsByChangeVector.containsKey(cv)) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    public boolean checkIfRevisionByDateTimeBeforeAlreadyIncluded(String id, Date dateTime) {
+        if (includeRevisionsIdByDateTimeBefore == null) {
+            return false;
+        }
+
+        Map<Date, DocumentInfo> dictionaryDateTimeToDocument = includeRevisionsIdByDateTimeBefore.get(id);
+        if (dictionaryDateTimeToDocument != null) {
+            return dictionaryDateTimeToDocument.containsKey(dateTime);
+        }
+
+        return false;
     }
 
     public boolean checkIfIdAlreadyIncluded(String[] ids, Collection<String> includes) {

@@ -5,7 +5,7 @@ import net.ravendb.client.documents.DocumentStore;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
-public class MultiDatabaseHiLoIdGenerator {
+public class MultiDatabaseHiLoIdGenerator implements IHiLoIdGenerator {
 
     protected final DocumentStore store;
 
@@ -31,4 +31,22 @@ public class MultiDatabaseHiLoIdGenerator {
         }
     }
 
+    @Override
+    public long generateNextIdFor(String database, Object entity) {
+        String collectionName = store.getConventions().getCollectionName(entity);
+        return generateNextIdFor(database, collectionName);
+    }
+
+    @Override
+    public long generateNextIdFor(String database, Class<?> type) {
+        String collectionName = store.getConventions().getCollectionName(type);
+        return generateNextIdFor(database, collectionName);
+    }
+
+    @Override
+    public long generateNextIdFor(String database, String collectionName) {
+        database = store.getEffectiveDatabase(database);
+        MultiTypeHiLoIdGenerator generator = _generators.computeIfAbsent(database, this::generateMultiTypeHiLoFunc);
+        return generator.generateNextIdFor(collectionName);
+    }
 }

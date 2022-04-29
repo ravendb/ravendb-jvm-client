@@ -67,6 +67,18 @@ public class GetRevisionsCommand extends RavenCommand<JsonArrayResult> {
         _metadataOnly = metadataOnly;
     }
 
+    public String getId() {
+        return _id;
+    }
+
+    public Date getBefore() {
+        return _before;
+    }
+
+    public String getChangeVector() {
+        return _changeVector;
+    }
+
     public String[] getChangeVectors() {
         return _changeVectors;
     }

@@ -38,6 +38,7 @@ class SubscriptionConnectionServerMessage {
         private String currentTag;
         private String redirectedTag;
         private Map<String, String> reasons;
+        private Long registerConnectionDurationInTicks;
 
         public String getCurrentTag() {
             return currentTag;
@@ -61,6 +62,14 @@ class SubscriptionConnectionServerMessage {
 
         public void setReasons(Map<String, String> reasons) {
             this.reasons = reasons;
+        }
+
+        public Long getRegisterConnectionDurationInTicks() {
+            return registerConnectionDurationInTicks;
+        }
+
+        public void setRegisterConnectionDurationInTicks(Long registerConnectionDurationInTicks) {
+            this.registerConnectionDurationInTicks = registerConnectionDurationInTicks;
         }
     }
 

@@ -377,12 +377,11 @@ public class RevisionsTest extends RemoteTestBase {
                 session.saveChanges();
             }
 
-            for (int i = 0; i < 10; i++) {
-                try (IDocumentSession session = store.openSession()) {
-                    Company user = session.load(Company.class, id);
-                    user.setName("Omer" + i);
-                    session.saveChanges();
-                }
+            try (IDocumentSession session = store.openSession()) {
+                Lazy<User> revision = session.advanced().lazily().load(User.class, "users/1");
+                User doc = revision.getValue();
+                assertThat(session.advanced().getNumberOfRequests())
+                        .isEqualTo(1);
             }
 
             try (IDocumentSession session = store.openSession()) {
@@ -487,6 +486,19 @@ public class RevisionsTest extends RemoteTestBase {
                 Lazy<User> revisionsLazily = session.advanced().revisions().lazily().get(User.class, cv);
                 Lazy<User> revisionsLazily1 = session.advanced().revisions().lazily().get(User.class, cv2);
 
+                User revisionsLazilyValue = revisionsLazily.getValue();
+
+                assertThat(session.advanced().getNumberOfRequests())
+                        .isEqualTo(2);
+                assertThat(revisionsLazilyValue.getId())
+                        .isEqualTo(revisions.getId());
+                assertThat(revisionsLazilyValue.getName())
+                        .isEqualTo(revisions.getName());
+            }
+
+            try (IDocumentSession session = store.openSession()) {
+                User revisions = session.advanced().revisions().get(User.class, cv);
+                Lazy<User> revisionsLazily = session.advanced().revisions().lazily().get(User.class, cv);
                 User revisionsLazilyValue = revisionsLazily.getValue();
 
                 assertThat(session.advanced().getNumberOfRequests())

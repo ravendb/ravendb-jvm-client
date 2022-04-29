@@ -28,7 +28,6 @@ import java.util.Map;
 
 @SuppressWarnings("unchecked")
 public class MultiGetCommand extends RavenCommand<List<GetResponse>> implements CleanCloseable {
-
     private final RequestExecutor _requestExecutor;
     private final HttpCache _httpCache;
     private final List<GetRequest> _commands;
@@ -72,37 +71,6 @@ public class MultiGetCommand extends RavenCommand<List<GetResponse>> implements 
         }
 
         url.value = _baseUrl + "/multi_get";
-
-        AggressiveCacheOptions aggressiveCacheOptions = _requestExecutor.aggressiveCaching.get();
-        if (aggressiveCacheOptions != null && aggressiveCacheOptions.getMode() == AggressiveCacheMode.TRACK_CHANGES) {
-            result = new ArrayList<>();
-
-            for (GetRequest command : _commands) {
-                if (!command.isCanCacheAggressively()) {
-                    break;
-                }
-                String cacheKey = getCacheKey(command, new Reference<>());
-                Reference<String> cachedRef = new Reference<>();
-                try (HttpCache.ReleaseCacheItem cachedItem = _httpCache.get(cacheKey, new Reference<>(), cachedRef)) {
-                    if (cachedRef.value == null
-                            || cachedItem.getAge().compareTo(aggressiveCacheOptions.getDuration()) > 0
-                            || cachedItem.getMightHaveBeenModified()) {
-                        break;
-                    }
-                    GetResponse getResponse = new GetResponse();
-                    getResponse.setResult(cachedRef.value);
-                    getResponse.setStatusCode(HttpStatus.SC_NOT_MODIFIED);
-                    result.add(getResponse);
-                }
-            }
-
-            if (result.size() == _commands.size()) {
-                return null; // aggressively cached
-            }
-
-            // not all of it is cached, might as well read it all
-            result = null;
-        }
 
         HttpPost request = new HttpPost();
         ObjectMapper mapper = JsonExtensions.getDefaultMapper();
@@ -229,7 +197,7 @@ public class MultiGetCommand extends RavenCommand<List<GetResponse>> implements 
 
                 for (GetResponse getResponse : readResponses(mapper, parser)) {
                     GetRequest command = _commands.get(i);
-                    maybeSetCache(getResponse, command);
+                    maybeSetCache(getResponse, command, i);
 
                     if (_cached != null && getResponse.getStatusCode() == HttpStatus.SC_NOT_MODIFIED) {
                         GetResponse clonedResponse = new GetResponse();
@@ -349,8 +317,12 @@ public class MultiGetCommand extends RavenCommand<List<GetResponse>> implements 
         return getResponse;
     }
 
-    private void maybeSetCache(GetResponse getResponse, GetRequest command) {
+    private void maybeSetCache(GetResponse getResponse, GetRequest command, int cachedIndex) {
         if (getResponse.getStatusCode() == HttpStatus.SC_NOT_MODIFIED) {
+            // if not modified - update age
+            if (_cached != null) {
+                _cached.values[cachedIndex].first.notModified();
+            }
             return;
         }
 
@@ -381,11 +353,24 @@ public class MultiGetCommand extends RavenCommand<List<GetResponse>> implements 
     }
 
     public void closeCache() {
+        //If _cached is not null - it means that the client approached with this multitask request to node and the request failed.
+        //and now client tries to send it to another node.
         if (_cached != null) {
             _cached.close();
-        }
 
-        _cached = null;
+            _cached = null;
+
+            // The client sends the commands.
+            // Some of which could be saved in cache with a response
+            // that includes the change vector that received from the old fallen node.
+            // The client can't use those responses because their URLs are different
+            // (include the IP and port of the old node), because of that the client
+            // needs to get those docs again from the new node.
+
+            for (GetRequest command : _commands) {
+                command.getHeaders().remove(Constants.Headers.IF_NONE_MATCH);
+            }
+        }
     }
 
     private static class Cached implements CleanCloseable {

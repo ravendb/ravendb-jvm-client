@@ -89,4 +89,17 @@ public class IncludeBuilder extends IncludeBuilderBase implements IIncludeBuilde
         _includeTimeSeriesByRangeTypeAndCount("", Constants.TimeSeries.ALL, type, count);
         return this;
     }
+
+    @Override
+    public IIncludeBuilder includeRevisions(String changeVectorPaths) {
+        _withAlias();
+        _includeRevisionsByChangeVectors(changeVectorPaths);
+        return this;
+    }
+
+    @Override
+    public IIncludeBuilder includeRevisions(Date before) {
+        _includeRevisionsBefore(before);
+        return this;
+    }
 }

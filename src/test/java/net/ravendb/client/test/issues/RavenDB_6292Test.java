@@ -76,7 +76,7 @@ public class RavenDB_6292Test extends ReplicationTestBase {
 
                 setupReplication(store1, store2);
 
-                waitForConflict(store2, "addresses/1");
+                replication.waitForConflict(store2, "addresses/1");
 
                 try (IDocumentSession session = store2.openSession()) {
                     IDocumentQuery<User> documentQuery = session.advanced()
@@ -109,18 +109,5 @@ public class RavenDB_6292Test extends ReplicationTestBase {
         }
     }
 
-    private static void waitForConflict(IDocumentStore store, String id) throws InterruptedException {
-        Stopwatch sw = Stopwatch.createStarted();
-        while (sw.elapsed(TimeUnit.MILLISECONDS) < 10_000) {
-            try (IDocumentSession session = store.openSession()) {
-                session.load(Object.class, id);
 
-                Thread.sleep(10);
-            } catch (ConflictException e) {
-                return;
-            }
-        }
-
-        throw new IllegalStateException("Waited for conflict on '" + id + "' but it did not happen");
-    }
 }
