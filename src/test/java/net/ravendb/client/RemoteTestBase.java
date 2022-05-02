@@ -37,6 +37,12 @@ import java.util.stream.Collectors;
 @SuppressWarnings("SameParameterValue")
 public class RemoteTestBase extends RavenTestDriver implements CleanCloseable {
 
+    public final SamplesTestBase samples;
+
+    public final IndexesTestBase indexes;
+
+    public final ReplicationTestBase2 replication;
+
     private final RavenServerLocator locator;
     private final RavenServerLocator securedLocator;
 
@@ -122,6 +128,10 @@ public class RemoteTestBase extends RavenTestDriver implements CleanCloseable {
     public RemoteTestBase() {
         this.locator = new TestServiceLocator();
         this.securedLocator = new TestSecuredServiceLocator();
+
+        this.samples = new SamplesTestBase(this);
+        this.indexes = new IndexesTestBase(this);
+        this.replication = new ReplicationTestBase2(this);
     }
 
     protected void customizeDbRecord(DatabaseRecord dbRecord) {

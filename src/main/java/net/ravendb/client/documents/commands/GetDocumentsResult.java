@@ -8,6 +8,8 @@ public class GetDocumentsResult {
     private ObjectNode includes;
     private ArrayNode results;
     private ObjectNode counterIncludes;
+
+    private ArrayNode revisionIncludes;
     private ObjectNode timeSeriesIncludes;
     private ObjectNode compareExchangeValueIncludes;
     private int nextPageStart;
@@ -42,6 +44,14 @@ public class GetDocumentsResult {
 
     public void setCounterIncludes(ObjectNode counterIncludes) {
         this.counterIncludes = counterIncludes;
+    }
+
+    public ArrayNode getRevisionIncludes() {
+        return revisionIncludes;
+    }
+
+    public void setRevisionIncludes(ArrayNode revisionIncludes) {
+        this.revisionIncludes = revisionIncludes;
     }
 
     public ObjectNode getTimeSeriesIncludes() {

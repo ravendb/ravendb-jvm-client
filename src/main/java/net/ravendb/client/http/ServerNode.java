@@ -2,6 +2,10 @@ package net.ravendb.client.http;
 
 import net.ravendb.client.primitives.UseSharpEnum;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+
 public class ServerNode {
 
     @UseSharpEnum
@@ -110,6 +114,29 @@ public class ServerNode {
     public void discardServerVersion() {
         lastServerVersion = null;
         _lastServerVersionCheck = 0;
+    }
+
+    public static List<ServerNode> createFrom(ClusterTopology topology) {
+        List<ServerNode> nodes = new ArrayList<>();
+        if (topology == null) {
+            return nodes;
+        }
+
+        for (Map.Entry<String, String> kvp : topology.getMembers().entrySet()) {
+            ServerNode serverNode = new ServerNode();
+            serverNode.setUrl(kvp.getValue());
+            serverNode.setClusterTag(kvp.getKey());
+            nodes.add(serverNode);
+        }
+
+        for (Map.Entry<String, String> kvp : topology.getWatchers().entrySet()) {
+            ServerNode serverNode = new ServerNode();
+            serverNode.setUrl(kvp.getValue());
+            serverNode.setClusterTag(kvp.getKey());
+            nodes.add(serverNode);
+        }
+
+        return nodes;
     }
 
     private boolean _supportsAtomicClusterWrites;

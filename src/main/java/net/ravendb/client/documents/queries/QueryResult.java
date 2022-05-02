@@ -30,6 +30,7 @@ public class QueryResult extends GenericQueryResult<ArrayNode, ObjectNode> {
         queryResult.setResultEtag(getResultEtag());
         queryResult.setNodeTag(getNodeTag());
         queryResult.setCounterIncludes(getCounterIncludes());
+        queryResult.setRevisionIncludes(getRevisionIncludes());
         queryResult.setIncludedCounterNames(getIncludedCounterNames());
         queryResult.setTimeSeriesIncludes(getTimeSeriesIncludes());
         queryResult.setCompareExchangeValueIncludes(getCompareExchangeValueIncludes());

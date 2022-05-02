@@ -9,6 +9,7 @@ import net.ravendb.client.documents.operations.timeSeries.AbstractTimeSeriesRang
 import net.ravendb.client.documents.session.IncludesUtil;
 import net.ravendb.client.documents.session.loaders.SubscriptionIncludeBuilder;
 import net.ravendb.client.documents.session.tokens.CounterIncludesToken;
+import net.ravendb.client.documents.session.tokens.QueryToken;
 import net.ravendb.client.documents.session.tokens.TimeSeriesIncludesToken;
 import net.ravendb.client.extensions.StringExtensions;
 import net.ravendb.client.http.RequestExecutor;
@@ -176,7 +177,7 @@ public class DocumentSubscriptions implements AutoCloseable {
                                 .append("'");
                     } else {
                         queryBuilder
-                                .append(include);
+                                .append(QueryToken.isKeyword(include) ? "'" + include + "'" : include);
                     }
                     numberOfIncludesAdded++;
                 }

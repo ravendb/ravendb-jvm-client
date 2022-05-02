@@ -1,9 +1,11 @@
 package net.ravendb.client.documents;
 
+import net.ravendb.client.documents.bulkInsert.BulkInsertOptions;
 import net.ravendb.client.documents.changes.DatabaseChanges;
 import net.ravendb.client.documents.changes.DatabaseChangesOptions;
 import net.ravendb.client.documents.changes.EvictItemsFromCacheBasedOnChanges;
 import net.ravendb.client.documents.changes.IDatabaseChanges;
+import net.ravendb.client.documents.identity.IHiLoIdGenerator;
 import net.ravendb.client.documents.identity.MultiDatabaseHiLoIdGenerator;
 import net.ravendb.client.documents.operations.MaintenanceOperationExecutor;
 import net.ravendb.client.documents.operations.OperationExecutor;
@@ -46,6 +48,11 @@ public class DocumentStore extends DocumentStoreBase {
     private DatabaseSmuggler _smuggler;
 
     private String identifier;
+
+    @Override
+    public IHiLoIdGenerator getHiLoIdGenerator() {
+        return _multiDbHiLo;
+    }
 
     public DocumentStore(String url, String database) {
         this.setUrls(new String[]{url});
@@ -390,6 +397,8 @@ public class DocumentStore extends DocumentStoreBase {
         }
 
         lazy.getValue(); // force evaluation
+
+        lazy.getValue().ensureConnected();
     }
 
     private final List<EventHandler<VoidArgs>> afterClose = new ArrayList<>();
@@ -445,13 +454,24 @@ public class DocumentStore extends DocumentStoreBase {
 
     @Override
     public BulkInsertOperation bulkInsert() {
-        return bulkInsert(null);
+        return bulkInsert(null, null);
     }
+
 
     @Override
     public BulkInsertOperation bulkInsert(String database) {
+        return bulkInsert(database, null);
+    }
+
+    @Override
+    public BulkInsertOperation bulkInsert(BulkInsertOptions options) {
+        return bulkInsert(null, options);
+    }
+
+    @Override
+    public BulkInsertOperation bulkInsert(String database, BulkInsertOptions options) {
         assertInitialized();
 
-        return new BulkInsertOperation(getEffectiveDatabase(database), this);
+        return new BulkInsertOperation(getEffectiveDatabase(database), this, options);
     }
 }

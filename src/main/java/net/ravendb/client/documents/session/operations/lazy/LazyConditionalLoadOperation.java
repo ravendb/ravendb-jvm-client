@@ -38,7 +38,7 @@ public class LazyConditionalLoadOperation<T> implements ILazyOperation {
         request.setMethod("GET");
         request.setQuery("?id=" + UrlUtils.escapeDataString(_id));
 
-        request.getHeaders().put("If-None-Match", '"' + _changeVector + '"');
+        request.getHeaders().put(Constants.Headers.IF_NONE_MATCH, '"' + _changeVector + '"');
         return request;
     }
 

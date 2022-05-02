@@ -5,6 +5,7 @@ import net.ravendb.client.documents.operations.IMaintenanceOperation;
 import net.ravendb.client.http.RavenCommand;
 import net.ravendb.client.http.ServerNode;
 import net.ravendb.client.primitives.Reference;
+import net.ravendb.client.util.UrlUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpRequestBase;
@@ -61,7 +62,7 @@ public class GetReplicationHubAccessOperation implements IMaintenanceOperation<D
         @Override
         public HttpRequestBase createRequest(ServerNode node, Reference<String> url) {
             url.value = node.getUrl() + "/databases/" + node.getDatabase()
-                    + "/admin/tasks/pull-replication/hub/access?name=" + urlEncode(_hubName)
+                    + "/admin/tasks/pull-replication/hub/access?name=" + UrlUtils.escapeDataString(_hubName)
                     + "&start=" + _start
                     + "&pageSize=" + _pageSize;
 

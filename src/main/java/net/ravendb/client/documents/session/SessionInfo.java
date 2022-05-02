@@ -42,6 +42,10 @@ public class SessionInfo {
         this.noCaching = options.isNoCaching();
     }
 
+    public void incrementRequestCount() {
+        _session.incrementRequestCount();
+    }
+
     public void setContext(String sessionKey) {
         if (StringUtils.isBlank(sessionKey)) {
             throw new IllegalArgumentException("Session key cannot be null or whitespace.");

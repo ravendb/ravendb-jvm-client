@@ -37,6 +37,8 @@ public class GetDocumentsCommand extends RavenCommand<GetDocumentsResult> {
     private boolean _includeAllCounters;
 
     private List<AbstractTimeSeriesRange> _timeSeriesIncludes;
+    private String[] _revisionsIncludeByChangeVector;
+    private Date _revisionsIncludeByDateTime;
     private String[] _compareExchangeValueIncludes;
 
     private boolean _metadataOnly;
@@ -81,6 +83,19 @@ public class GetDocumentsCommand extends RavenCommand<GetDocumentsResult> {
         this(ids, includes, metadataOnly);
 
         _counters = counterIncludes;
+        _timeSeriesIncludes = timeSeriesIncludes;
+        _compareExchangeValueIncludes = compareExchangeValueIncludes;
+    }
+
+    public GetDocumentsCommand(String[] ids, String[] includes, String[] counterIncludes,
+                               String[] revisionsIncludesByChangeVector, Date revisionIncludeByDateTimeBefore,
+                               List<AbstractTimeSeriesRange> timeSeriesIncludes, String[] compareExchangeValueIncludes,
+                               boolean metadataOnly) {
+        this(ids, includes, metadataOnly);
+
+        _counters = counterIncludes;
+        _revisionsIncludeByChangeVector = revisionsIncludesByChangeVector;
+        _revisionsIncludeByDateTime = revisionIncludeByDateTimeBefore;
         _timeSeriesIncludes = timeSeriesIncludes;
         _compareExchangeValueIncludes = compareExchangeValueIncludes;
     }
@@ -199,6 +214,20 @@ public class GetDocumentsCommand extends RavenCommand<GetDocumentsResult> {
                     throw new IllegalArgumentException("Unexpected TimeSeries range " + tsInclude.getClass());
                 }
             }
+        }
+
+        if (_revisionsIncludeByChangeVector != null) {
+            for (String changeVector : _revisionsIncludeByChangeVector) {
+                pathBuilder
+                        .append("&revisions=")
+                        .append(UrlUtils.escapeDataString(changeVector));
+            }
+        }
+
+        if (_revisionsIncludeByDateTime != null) {
+            pathBuilder
+                    .append("&revisionsBefore=")
+                    .append(UrlUtils.escapeDataString(NetISO8601Utils.format(_revisionsIncludeByDateTime, true)));
         }
 
         if (_compareExchangeValueIncludes != null) {

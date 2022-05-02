@@ -1,7 +1,9 @@
 package net.ravendb.client.documents;
 
+import net.ravendb.client.documents.bulkInsert.BulkInsertOptions;
 import net.ravendb.client.documents.changes.IDatabaseChanges;
 import net.ravendb.client.documents.conventions.DocumentConventions;
+import net.ravendb.client.documents.identity.IHiLoIdGenerator;
 import net.ravendb.client.documents.indexes.AbstractIndexCreationTaskBase;
 import net.ravendb.client.documents.indexes.IAbstractIndexCreationTask;
 import net.ravendb.client.documents.indexes.IndexCreation;
@@ -96,6 +98,8 @@ public abstract class DocumentStoreBase implements IDocumentStore {
 
     @Override
     public abstract CleanCloseable disableAggressiveCaching(String database);
+
+    public abstract IHiLoIdGenerator getHiLoIdGenerator();
 
     public abstract String getIdentifier();
 
@@ -199,6 +203,10 @@ public abstract class DocumentStoreBase implements IDocumentStore {
     public abstract BulkInsertOperation bulkInsert();
 
     public abstract BulkInsertOperation bulkInsert(String database);
+
+    public abstract BulkInsertOperation bulkInsert(String database, BulkInsertOptions options);
+
+    public abstract BulkInsertOperation bulkInsert(BulkInsertOptions options);
 
     private final DocumentSubscriptions _subscriptions;
 

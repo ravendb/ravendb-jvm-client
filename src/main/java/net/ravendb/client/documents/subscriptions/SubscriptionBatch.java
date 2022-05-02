@@ -97,6 +97,10 @@ public class SubscriptionBatch<T> {
         return _items != null ? _items.size() : 0;
     }
 
+    public int getNumberOfIncludes() {
+        return _includes != null ? _includes.size() : 0;
+    }
+
     private final Class<T> _clazz;
     private final boolean _revisions;
     private final RequestExecutor _requestExecutor;

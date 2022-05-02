@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.time.Duration;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.TreeMap;
 
@@ -11,7 +12,7 @@ public class TimeSeriesConfiguration {
 
     public final static char TIME_SERIES_ROLLUP_SEPARATOR = '@';
 
-    private Map<String, TimeSeriesCollectionConfiguration> collections;
+    private Map<String, TimeSeriesCollectionConfiguration> collections = new HashMap<>();
     private Duration policyCheckFrequency;
     private Map<String, Map<String, String[]>> namedValues;
 

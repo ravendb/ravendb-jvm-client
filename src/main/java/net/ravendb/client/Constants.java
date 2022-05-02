@@ -26,6 +26,9 @@ public class Constants {
             public static final String CHANGE_VECTOR = "@change-vector";
             public static final String EXPIRES = "@expires";
             public static final String ALL_DOCUMENTS_COLLECTION = "@all_docs";
+
+            public static final String EMPTY_COLLECTION = "@empty";
+
         }
 
         public static class Indexing {

@@ -466,6 +466,14 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
             _includeTimeSeries(includes.alias, includes.timeSeriesToIncludeBySourceAlias);
         }
 
+        if (includes.revisionsToIncludeByDateTime != null) {
+            _includeRevisions(includes.revisionsToIncludeByDateTime);
+        }
+
+        if (includes.revisionsToIncludeByChangeVector != null) {
+            _includeRevisions(includes.revisionsToIncludeByChangeVector);
+        }
+
         if (includes.compareExchangeValuesToInclude != null) {
             compareExchangeValueIncludesTokens = new ArrayList<>();
 
@@ -1243,6 +1251,7 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
                 explanationToken == null &&
                 queryTimings == null &&
                 counterIncludesTokens == null &&
+                revisionsIncludesTokens == null &&
                 timeSeriesIncludesTokens == null &&
                 compareExchangeValueIncludesTokens == null) {
             return;
@@ -1270,6 +1279,7 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
 
         writeIncludeTokens(counterIncludesTokens, firstRef, queryText);
         writeIncludeTokens(timeSeriesIncludesTokens, firstRef, queryText);
+        writeIncludeTokens(revisionsIncludesTokens, firstRef, queryText);
         writeIncludeTokens(compareExchangeValueIncludesTokens, firstRef, queryText);
         writeIncludeTokens(highlightingTokens, firstRef, queryText);
 
@@ -2236,6 +2246,8 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
 
     protected List<CompareExchangeValueIncludesToken> compareExchangeValueIncludesTokens;
 
+    protected List<RevisionIncludesToken> revisionsIncludesTokens;
+
     protected void _includeCounters(String alias, Map<String, Tuple<Boolean, Set<String>>> counterToIncludeByDocId) {
         if (counterToIncludeByDocId == null || counterToIncludeByDocId.isEmpty()) {
             return;
@@ -2274,6 +2286,24 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
             for (AbstractTimeSeriesRange range : kvp.getValue()) {
                 timeSeriesIncludesTokens.add(TimeSeriesIncludesToken.create(kvp.getKey(), range));
             }
+        }
+    }
+
+    private void _includeRevisions(Date dateTime) {
+        if (revisionsIncludesTokens == null) {
+            revisionsIncludesTokens = new ArrayList<>();
+        }
+
+        revisionsIncludesTokens.add(RevisionIncludesToken.create(dateTime));
+    }
+
+    private void _includeRevisions(Set<String> revisionsToIncludeByChangeVector) {
+        if (revisionsIncludesTokens == null) {
+            revisionsIncludesTokens = new ArrayList<>();
+        }
+
+        for (String changeVector : revisionsToIncludeByChangeVector) {
+            revisionsIncludesTokens.add(RevisionIncludesToken.create(changeVector));
         }
     }
 

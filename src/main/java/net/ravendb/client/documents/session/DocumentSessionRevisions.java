@@ -3,12 +3,9 @@ package net.ravendb.client.documents.session;
 import net.ravendb.client.documents.commands.GetRevisionsCommand;
 import net.ravendb.client.documents.session.operations.GetRevisionOperation;
 import net.ravendb.client.documents.session.operations.GetRevisionsCountOperation;
-import net.ravendb.client.documents.session.operations.lazy.ILazySessionOperations;
 import net.ravendb.client.documents.session.operations.lazy.LazyRevisionOperations;
-import net.ravendb.client.documents.session.operations.lazy.LazySessionOperations;
 import net.ravendb.client.http.RavenCommand;
 import net.ravendb.client.json.MetadataAsDictionary;
-import org.apache.commons.lang3.StringUtils;
 
 import java.util.Date;
 import java.util.List;
@@ -40,6 +37,12 @@ public class DocumentSessionRevisions extends DocumentSessionRevisionsBase imple
         GetRevisionOperation operation = new GetRevisionOperation(session, id, start, pageSize);
 
         GetRevisionsCommand command = operation.createRequest();
+        if (command == null) {
+            return operation.getRevisionsFor(clazz);
+        }
+        if (sessionInfo != null) {
+            sessionInfo.incrementRequestCount();
+        }
         requestExecutor.execute(command, sessionInfo);
         operation.setResult(command.getResult());
         return operation.getRevisionsFor(clazz);
@@ -59,6 +62,12 @@ public class DocumentSessionRevisions extends DocumentSessionRevisionsBase imple
     public List<MetadataAsDictionary> getMetadataFor(String id, int start, int pageSize) {
         GetRevisionOperation operation = new GetRevisionOperation(session, id, start, pageSize, true);
         GetRevisionsCommand command = operation.createRequest();
+        if (command == null) {
+            return operation.getRevisionsMetadataFor();
+        }
+        if (sessionInfo != null) {
+            sessionInfo.incrementRequestCount();
+        }
         requestExecutor.execute(command, sessionInfo);
         operation.setResult(command.getResult());
         return operation.getRevisionsMetadataFor();
@@ -69,6 +78,12 @@ public class DocumentSessionRevisions extends DocumentSessionRevisionsBase imple
         GetRevisionOperation operation = new GetRevisionOperation(session, changeVector);
 
         GetRevisionsCommand command = operation.createRequest();
+        if (command == null) {
+            return operation.getRevision(clazz);
+        }
+        if (sessionInfo != null) {
+            sessionInfo.incrementRequestCount();
+        }
         requestExecutor.execute(command, sessionInfo);
         operation.setResult(command.getResult());
         return operation.getRevision(clazz);
@@ -79,6 +94,12 @@ public class DocumentSessionRevisions extends DocumentSessionRevisionsBase imple
         GetRevisionOperation operation = new GetRevisionOperation(session, changeVectors);
 
         GetRevisionsCommand command = operation.createRequest();
+        if (command == null) {
+            return operation.getRevisions(clazz);
+        }
+        if (sessionInfo != null) {
+            sessionInfo.incrementRequestCount();
+        }
         requestExecutor.execute(command, sessionInfo);
         operation.setResult(command.getResult());
         return operation.getRevisions(clazz);
@@ -88,6 +109,12 @@ public class DocumentSessionRevisions extends DocumentSessionRevisionsBase imple
     public <T> T get(Class<T> clazz, String id, Date date) {
         GetRevisionOperation operation = new GetRevisionOperation(session, id, date);
         GetRevisionsCommand command = operation.createRequest();
+        if (command == null) {
+            return operation.getRevision(clazz);
+        }
+        if (sessionInfo != null) {
+            sessionInfo.incrementRequestCount();
+        }
         requestExecutor.execute(command, sessionInfo);
         operation.setResult(command.getResult());
         return operation.getRevision(clazz);
@@ -97,6 +124,9 @@ public class DocumentSessionRevisions extends DocumentSessionRevisionsBase imple
     public long getCountFor(String id) {
         GetRevisionsCountOperation operation = new GetRevisionsCountOperation(id);
         RavenCommand<Long> command = operation.createRequest();
+        if (sessionInfo != null) {
+            sessionInfo.incrementRequestCount();
+        }
         requestExecutor.execute(command, sessionInfo);
         return command.getResult();
     }

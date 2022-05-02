@@ -6,6 +6,7 @@ import net.ravendb.client.documents.operations.timeSeries.AbstractTimeSeriesRang
 import net.ravendb.client.documents.operations.timeSeries.TimeSeriesRange;
 import net.ravendb.client.documents.session.operations.lazy.IEagerSessionOperations;
 
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
@@ -27,6 +28,11 @@ public interface IDocumentSessionImpl extends IDocumentSession, IEagerSessionOpe
     <T> Map<String, T> loadInternal(Class<T> clazz, String[] ids, String[] includes, String[] counterIncludes,
                                     boolean includeAllCounters, List<AbstractTimeSeriesRange> timeSeriesIncludes,
                                     String[] compareExchangeValueIncludes);
+
+    <T> Map<String, T> loadInternal(Class<T> clazz, String[] ids, String[] includes, String[] counterIncludes,
+                                    boolean includeAllCounters, List<AbstractTimeSeriesRange> timeSeriesIncludes,
+                                    String[] compareExchangeValueIncludes, String[] revisionIncludes,
+                                    Date revisionIncludeByDateTimeBefore);
 
     <T> Lazy<Map<String, T>> lazyLoadInternal(Class<T> clazz, String[] ids, String[] includes, Consumer<Map<String, T>> onEval);
 }

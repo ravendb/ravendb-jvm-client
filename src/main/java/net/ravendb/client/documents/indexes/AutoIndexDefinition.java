@@ -2,11 +2,8 @@ package net.ravendb.client.documents.indexes;
 
 import java.util.Map;
 
-public class AutoIndexDefinition {
+public class AutoIndexDefinition extends IndexDefinitionBase {
     private IndexType type;
-    private String name;
-    private IndexPriority priority;
-    private IndexState state;
     private String collection;
     private Map<String, AutoIndexFieldOptions> mapFields;
     private Map<String, AutoIndexFieldOptions> groupByFields;
@@ -17,30 +14,6 @@ public class AutoIndexDefinition {
 
     public void setType(IndexType type) {
         this.type = type;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    public IndexPriority getPriority() {
-        return priority;
-    }
-
-    public void setPriority(IndexPriority priority) {
-        this.priority = priority;
-    }
-
-    public IndexState getState() {
-        return state;
-    }
-
-    public void setState(IndexState state) {
-        this.state = state;
     }
 
     public String getCollection() {

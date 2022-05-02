@@ -191,6 +191,9 @@ public class QueryOperation {
             if (queryResult.getCompareExchangeValueIncludes() != null) {
                 _session.getClusterSession().registerCompareExchangeValues(queryResult.getCompareExchangeValueIncludes());
             }
+            if (queryResult.getRevisionIncludes() != null) {
+                _session.registerRevisionIncludes(queryResult.getRevisionIncludes());
+            }
         }
     }
 

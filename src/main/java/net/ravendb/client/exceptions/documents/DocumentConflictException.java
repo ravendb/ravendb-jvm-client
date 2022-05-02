@@ -1,6 +1,7 @@
 package net.ravendb.client.exceptions.documents;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import net.ravendb.client.exceptions.BadResponseException;
 import net.ravendb.client.exceptions.ConflictException;
 import net.ravendb.client.extensions.JsonExtensions;
@@ -25,17 +26,12 @@ public class DocumentConflictException extends ConflictException {
         return new DocumentConflictException(message, null, 0);
     }
 
-    public static DocumentConflictException fromJson(String json) {
-        try {
-            JsonNode jsonNode = JsonExtensions.getDefaultMapper().readTree(json);
-            JsonNode docId = jsonNode.get("DocId");
-            JsonNode message = jsonNode.get("Message");
-            JsonNode largestEtag = jsonNode.get("LargestEtag");
+    public static DocumentConflictException fromJson(ObjectNode json) {
+        JsonNode docId = json.get("DocId");
+        JsonNode message = json.get("Message");
+        JsonNode largestEtag = json.get("LargestEtag");
 
-            return new DocumentConflictException(message.asText(), docId.asText(), largestEtag.asLong());
-        } catch (IOException e) {
-            throw new BadResponseException("Unable to parse server response: ", e);
-        }
+        return new DocumentConflictException(message.asText(), docId.asText(), largestEtag.asLong());
     }
 
     public String getDocId() {

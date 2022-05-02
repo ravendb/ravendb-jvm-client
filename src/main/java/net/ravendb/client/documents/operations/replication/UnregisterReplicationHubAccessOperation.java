@@ -7,6 +7,7 @@ import net.ravendb.client.http.ServerNode;
 import net.ravendb.client.http.VoidRavenCommand;
 import net.ravendb.client.primitives.Reference;
 import net.ravendb.client.util.RaftIdGenerator;
+import net.ravendb.client.util.UrlUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.client.methods.HttpDelete;
 import org.apache.http.client.methods.HttpRequestBase;
@@ -44,7 +45,7 @@ public class UnregisterReplicationHubAccessOperation implements IVoidMaintenance
         @Override
         public HttpRequestBase createRequest(ServerNode node, Reference<String> url) {
             url.value = node.getUrl() + "/databases/" + node.getDatabase() + "/admin/tasks/pull-replication/hub/access?name="
-                    + urlEncode(_hubName) + "&thumbprint=" + urlEncode(_thumbprint);
+                    + urlEncode(_hubName) + "&thumbprint=" + UrlUtils.escapeDataString(_thumbprint);
 
             return new HttpDelete();
         }

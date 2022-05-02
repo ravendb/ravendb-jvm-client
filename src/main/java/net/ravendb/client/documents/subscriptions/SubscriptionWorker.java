@@ -9,6 +9,7 @@ import net.ravendb.client.documents.DocumentStore;
 import net.ravendb.client.documents.commands.GetTcpInfoForRemoteTaskCommand;
 import net.ravendb.client.exceptions.AllTopologyNodesDownException;
 import net.ravendb.client.exceptions.ClientVersionMismatchException;
+import net.ravendb.client.exceptions.InvalidNetworkTopologyException;
 import net.ravendb.client.exceptions.cluster.NodeIsPassiveException;
 import net.ravendb.client.exceptions.database.DatabaseDoesNotExistException;
 import net.ravendb.client.exceptions.documents.subscriptions.*;
@@ -33,6 +34,7 @@ import org.apache.commons.logging.LogFactory;
 import java.io.IOException;
 import java.net.Socket;
 import java.security.GeneralSecurityException;
+import java.time.Duration;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Consumer;
@@ -214,24 +216,20 @@ public class SubscriptionWorker<T> implements CleanCloseable {
             }
         }
 
-        Tuple<Socket, String> socketStringTuple = TcpUtils.connectWithPriority(tcpInfo, command.getResult().getCertificate(), _store.getCertificate(), _store.getCertificatePrivateKeyPassword());
-        _tcpClient = socketStringTuple.first;
-        String chosenUrl = socketStringTuple.second;
+        TcpUtils.ConnectSecuredTcpSocketResult result = TcpUtils.connectSecuredTcpSocket(
+                tcpInfo,
+                command.getResult().getCertificate(),
+                _store.getCertificate(),
+                _store.getCertificatePrivateKeyPassword(),
+                TcpConnectionHeaderMessage.OperationTypes.SUBSCRIPTION,
+                this::negotiateProtocolVersionForSubscription
+        );
+        _tcpClient = result.socket;
         _tcpClient.setTcpNoDelay(true);
         _tcpClient.setSendBufferSize(_options.getSendBufferSize());
         _tcpClient.setReceiveBufferSize(_options.getReceiveBufferSize());
 
-        String databaseName = _store.getEffectiveDatabase(_dbName);
-
-        TcpNegotiateParameters parameters = new TcpNegotiateParameters();
-        parameters.setDatabase(databaseName);
-        parameters.setOperation(TcpConnectionHeaderMessage.OperationTypes.SUBSCRIPTION);
-        parameters.setVersion(TcpConnectionHeaderMessage.SUBSCRIPTION_TCP_VERSION);
-        parameters.setReadResponseAndGetVersionCallback(this::readServerResponseAndGetVersion);
-        parameters.setDestinationNodeTag(getCurrentNodeTag());
-        parameters.setDestinationUrl(chosenUrl);
-
-        _supportedFeatures = TcpNegotiation.negotiateProtocolVersion(_tcpClient.getOutputStream(), parameters);
+        _supportedFeatures = result.supportedFeatures;
 
         if (_supportedFeatures.protocolVersion <= 0) {
             throw new IllegalStateException(_options.getSubscriptionName() + " : TCP negotiation resulted with an invalid protocol version: " + _supportedFeatures.protocolVersion);
@@ -254,6 +252,26 @@ public class SubscriptionWorker<T> implements CleanCloseable {
         _store.registerEvents(_subscriptionLocalRequestExecutor);
 
         return _tcpClient;
+    }
+
+    private TcpConnectionHeaderMessage.SupportedFeatures negotiateProtocolVersionForSubscription(
+            String chosenUrl,
+            TcpConnectionInfo tcpInfo,
+            Socket socket
+    ) throws IOException {
+
+        String databaseName = _store.getEffectiveDatabase(_dbName);
+
+        TcpNegotiateParameters parameters = new TcpNegotiateParameters();
+        parameters.setDatabase(databaseName);
+        parameters.setOperation(TcpConnectionHeaderMessage.OperationTypes.SUBSCRIPTION);
+        parameters.setVersion(TcpConnectionHeaderMessage.SUBSCRIPTION_TCP_VERSION);
+        parameters.setReadResponseAndGetVersionCallback(this::readServerResponseAndGetVersion);
+        parameters.setDestinationNodeTag(getCurrentNodeTag());
+        parameters.setDestinationUrl(chosenUrl);
+        parameters.setDestinationServerId(tcpInfo.getServerId());
+
+        return TcpNegotiation.negotiateProtocolVersion(socket, parameters);
     }
 
     private TcpConnectionInfo legacyTryGetTcpInfo(RequestExecutor requestExecutor) {
@@ -281,17 +299,17 @@ public class SubscriptionWorker<T> implements CleanCloseable {
         return tcpCommand.getResult();
     }
 
-    private void ensureParser() throws IOException {
+    private void ensureParser(Socket socket) throws IOException {
         if (_parser == null) {
-            _parser = JsonExtensions.getDefaultMapper().getFactory().createParser(_tcpClient.getInputStream());
+            _parser = JsonExtensions.getDefaultMapper().getFactory().createParser(socket.getInputStream());
             _parser.configure(JsonParser.Feature.AUTO_CLOSE_SOURCE, false);
         }
     }
 
-    private int readServerResponseAndGetVersion(String url) {
+    private int readServerResponseAndGetVersion(String url, Socket socket) {
         try {
             //Reading reply from server
-            ensureParser();
+            ensureParser(socket);
             TreeNode response = _parser.readValueAsTree();
             TcpConnectionHeaderResponse reply = JsonExtensions.getDefaultMapper().treeToValue(response, TcpConnectionHeaderResponse.class);
 
@@ -307,6 +325,8 @@ public class SubscriptionWorker<T> implements CleanCloseable {
                     //Kindly request the server to drop the connection
                     sendDropMessage(reply);
                     throw new IllegalStateException("Can't connect to database " + _dbName + " because: " + reply.getMessage());
+                case INVALID_NETWORK_TOPOLOGY:
+                    throw new InvalidNetworkTopologyException("Failed to connect to url " + url + " because " + reply.getMessage());
             }
             return reply.getVersion();
         } catch (IOException e) {
@@ -334,7 +354,13 @@ public class SubscriptionWorker<T> implements CleanCloseable {
         }
 
         if (connectionStatus.getType() != SubscriptionConnectionServerMessage.MessageType.CONNECTION_STATUS) {
-            throw new IllegalStateException("Server returned illegal type message when expecting connection status, was:" + connectionStatus.getType());
+            String message = "Server returned illegal type message when expecting connection status, was:" + connectionStatus.getType();
+
+            if (connectionStatus.getType() == SubscriptionConnectionServerMessage.MessageType.ERROR) {
+                message += ". Exception: " + connectionStatus.getException();
+            }
+
+            throw new SubscriptionMessageTypeException(message);
         }
 
         switch (connectionStatus.getStatus()) {
@@ -354,6 +380,21 @@ public class SubscriptionWorker<T> implements CleanCloseable {
             case NOT_FOUND:
                 throw new SubscriptionDoesNotExistException("Subscription with id " + _options.getSubscriptionName() + " cannot be opened, because it does not exist. " + connectionStatus.getException());
             case REDIRECT:
+
+                if (_options.getStrategy() == SubscriptionOpeningStrategy.WAIT_FOR_FREE) {
+                    if (connectionStatus.getData() != null) {
+                        JsonNode registerConnectionDurationInTicksObject = connectionStatus.getData().get("RegisterConnectionDurationInTicks");
+                        if (registerConnectionDurationInTicksObject.isLong()) {
+                            long registerConnectionDurationInTicks = registerConnectionDurationInTicksObject.asLong();
+
+                            if (registerConnectionDurationInTicks / 10_000 >= _options.getMaxErroneousPeriod().toMillis()) {
+                                // this worker connection Waited For Free for more than MaxErroneousPeriod
+                                _lastConnectionFailure = null;
+                            }
+                        }
+                    }
+                }
+
                 ObjectNode data = connectionStatus.getData();
                 JsonNode redirectedTag = data.get("RedirectedTag");
                 String appropriateNode = redirectedTag.isNull() ? null : redirectedTag.asText();

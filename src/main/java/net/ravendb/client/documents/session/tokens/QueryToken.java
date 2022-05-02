@@ -7,8 +7,8 @@ public abstract class QueryToken {
 
     public abstract void writeTo(StringBuilder writer);
 
-    protected void writeField(StringBuilder writer, String field) {
-        boolean keyWord = RQL_KEYWORDS.contains(field);
+    public static void writeField(StringBuilder writer, String field) {
+        boolean keyWord = isKeyword(field);
         if (keyWord) {
             writer.append("'");
         }
@@ -19,6 +19,9 @@ public abstract class QueryToken {
         }
     }
 
+    public static boolean isKeyword(String field) {
+        return RQL_KEYWORDS.contains(field);
+    }
     private static final Set<String> RQL_KEYWORDS = new TreeSet<>();
 
     static {

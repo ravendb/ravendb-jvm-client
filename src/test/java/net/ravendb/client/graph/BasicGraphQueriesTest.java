@@ -89,7 +89,7 @@ public class BasicGraphQueriesTest extends RemoteTestBase {
     @Test
     public void query_with_no_matches_and_select_should_return_empty_result() throws Exception {
         try (IDocumentStore store = getDocumentStore()) {
-            createDogDataWithoutEdges(store);
+            samples.createDogDataWithoutEdges(store);
 
             try (IDocumentSession session = store.openSession()) {
                 List<ObjectNode> results = session.advanced().rawQuery(ObjectNode.class, " match (Dogs as a)-[Likes]->(Dogs as f)<-[Likes]-(Dogs as b)\n" +
@@ -108,7 +108,7 @@ public class BasicGraphQueriesTest extends RemoteTestBase {
     @Test
     public void query_with_no_matches_and_without_select_should_return_empty_result() throws Exception {
         try (IDocumentStore store = getDocumentStore()) {
-            createDogDataWithoutEdges(store);
+            samples.createDogDataWithoutEdges(store);
             try (IDocumentSession session = store.openSession()) {
                 List<ObjectNode> results = session.advanced().rawQuery(ObjectNode.class, "match (Dogs as a)-[Likes]->(Dogs as f)<-[Likes]-(Dogs as b)").toList();
                 assertThat(results)
@@ -120,7 +120,7 @@ public class BasicGraphQueriesTest extends RemoteTestBase {
     @Test
     public void empty_vertex_node_should_work() throws Exception {
         try (IDocumentStore store = getDocumentStore()) {
-            createMoviesData(store);
+            samples.createMoviesData(store);
 
             try (IDocumentSession session = store.openSession()) {
                 List<Movie> results = session.advanced().rawQuery(Movie.class, "match ()-[hasRated select movie]->(Movies as m) select m").toList();
@@ -133,7 +133,7 @@ public class BasicGraphQueriesTest extends RemoteTestBase {
     @Test
     public void can_flatten_result_for_single_vertex_in_row() throws Exception {
         try (IDocumentStore store = getDocumentStore()) {
-            createMoviesData(store);
+            samples.createMoviesData(store);
 
             try (IDocumentSession session = store.openSession()) {
                 List<ObjectNode> allVerticesQuery = session.advanced().rawQuery(ObjectNode.class, "match (_ as v)").toList();
@@ -146,7 +146,7 @@ public class BasicGraphQueriesTest extends RemoteTestBase {
     @Test
     public void mutliple_results_in_row_wont_flatten_results() throws Exception {
         try (IDocumentStore store = getDocumentStore()) {
-            createMoviesData(store);
+            samples.createMoviesData(store);
 
             try (IDocumentSession session = store.openSession()) {
                 List<ObjectNode> allVerticesQuery = session
@@ -164,7 +164,7 @@ public class BasicGraphQueriesTest extends RemoteTestBase {
     @Test
     public void can_query_without_collection_identifier() throws Exception {
         try (IDocumentStore store = getDocumentStore()) {
-            createMoviesData(store);
+            samples.createMoviesData(store);
 
             try (IDocumentSession session = store.openSession()) {
                 List<ObjectNode> allVerticesQuery = session.advanced().rawQuery(ObjectNode.class, "match (_ as v)").toList();
@@ -190,7 +190,7 @@ public class BasicGraphQueriesTest extends RemoteTestBase {
     @Test
     public void can_use_explicit_with_clause() throws Exception {
         try (IDocumentStore store = getDocumentStore()) {
-            createMoviesData(store);
+            samples.createMoviesData(store);
 
             try (IDocumentSession session = store.openSession()) {
                 List<ObjectNode> results = session.advanced().rawQuery(ObjectNode.class, "  with {from Users} as u match (u)")
@@ -213,7 +213,7 @@ public class BasicGraphQueriesTest extends RemoteTestBase {
     @Test
     public void can_filter_vertices_with_explicit_with_clause() throws Exception {
         try (IDocumentStore store = getDocumentStore()) {
-            createMoviesData(store);
+            samples.createMoviesData(store);
 
             try (IDocumentSession session = store.openSession()) {
                 List<String> results = session
@@ -237,7 +237,7 @@ public class BasicGraphQueriesTest extends RemoteTestBase {
     @Test
     public void findReferences() throws Exception {
         try (IDocumentStore store = getDocumentStore()) {
-            createSimpleData(store);
+            samples.createSimpleData(store);
 
             try (IDocumentSession session = store.openSession()) {
                 List<ObjectNode> result = session

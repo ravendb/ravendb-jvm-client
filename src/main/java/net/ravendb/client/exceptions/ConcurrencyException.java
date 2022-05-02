@@ -9,6 +9,8 @@ public class ConcurrencyException extends ConflictException {
 
     private String actualChangeVector;
 
+    private String id;
+
     public String getExpectedChangeVector() {
         return expectedChangeVector;
     }
@@ -25,20 +27,44 @@ public class ConcurrencyException extends ConflictException {
         this.actualChangeVector = actualChangeVector;
     }
 
+    /**
+     * @deprecated Not used and will be removed and the next major version
+     * @return expected etag
+     */
     public long getExpectedETag() {
         return expectedETag;
     }
 
+    /**
+     * @deprecated Not used and will be removed and the next major version
+     * @param expectedETag expected etag
+     */
     public void setExpectedETag(long expectedETag) {
         this.expectedETag = expectedETag;
     }
 
+    /**
+     * Not used and will be removed and the next major version
+     * @return actual etag
+     */
     public long getActualETag() {
         return actualETag;
     }
 
+    /**
+     * @deprecated Not used and will be removed and the next major version
+     * @param actualETag actual etag
+     */
     public void setActualETag(long actualETag) {
         this.actualETag = actualETag;
+    }
+
+    public String getId() {
+        return id;
+    }
+
+    public void setId(String id) {
+        this.id = id;
     }
 
     public ConcurrencyException() {
@@ -51,4 +77,5 @@ public class ConcurrencyException extends ConflictException {
     public ConcurrencyException(String message, Throwable cause) {
         super(message, cause);
     }
+
 }

@@ -1,6 +1,8 @@
 package net.ravendb.client.exceptions;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import net.ravendb.client.exceptions.documents.DocumentConflictException;
 import net.ravendb.client.exceptions.documents.compilation.IndexCompilationException;
 import net.ravendb.client.extensions.JsonExtensions;
@@ -58,8 +60,9 @@ public class ExceptionDispatcher {
 
         try {
             InputStream stream = RequestExecutor.readAsStream(response);
-            String json = IOUtils.toString(stream, StandardCharsets.UTF_8);
-            ExceptionSchema schema = JsonExtensions.getDefaultMapper().readValue(json, ExceptionSchema.class);
+            String jsonText = IOUtils.toString(stream, StandardCharsets.UTF_8);
+            ObjectNode json = (ObjectNode) JsonExtensions.getDefaultMapper().readTree(jsonText);
+            ExceptionSchema schema = JsonExtensions.getDefaultMapper().convertValue(json, ExceptionSchema.class);
 
             if (response.getStatusLine().getStatusCode() == HttpStatus.SC_CONFLICT) {
                 throwConflict(schema, json);
@@ -67,7 +70,7 @@ public class ExceptionDispatcher {
 
             Class<?> type = getType(schema.getType());
             if (type == null) {
-                throw RavenException.generic(schema.getError(), json);
+                throw RavenException.generic(schema.getError(), jsonText);
             }
 
             RavenException exception;
@@ -75,7 +78,7 @@ public class ExceptionDispatcher {
             try {
                 exception = (RavenException) type.getConstructor(String.class).newInstance(schema.getError());
             } catch (Exception e) {
-                throw RavenException.generic(schema.getError(), json);
+                throw RavenException.generic(schema.getError(), jsonText);
             }
 
             if (!RavenException.class.isAssignableFrom(type)) {
@@ -84,13 +87,12 @@ public class ExceptionDispatcher {
 
             if (IndexCompilationException.class.equals(type)) {
                 IndexCompilationException indexCompilationException = (IndexCompilationException) exception;
-                JsonNode jsonNode = JsonExtensions.getDefaultMapper().readTree(json);
-                JsonNode indexDefinitionProperty = jsonNode.get("TransformerDefinitionProperty");
+                JsonNode indexDefinitionProperty = json.get("TransformerDefinitionProperty");
                 if (indexDefinitionProperty != null) {
                     indexCompilationException.setIndexDefinitionProperty(indexDefinitionProperty.asText());
                 }
 
-                JsonNode problematicText = jsonNode.get("ProblematicText");
+                JsonNode problematicText = json.get("ProblematicText");
                 if (problematicText != null) {
                     indexCompilationException.setProblematicText(problematicText.asText());
                 }
@@ -108,11 +110,95 @@ public class ExceptionDispatcher {
     }
 
 
-    private static void throwConflict(ExceptionSchema schema, String json) {
+    private static void throwConflict(ExceptionSchema schema, ObjectNode json) {
         if (schema.getType().contains("DocumentConflictException")) {
             throw DocumentConflictException.fromJson(json);
         }
-        throw new ConcurrencyException(schema.getError());
+
+        if (schema.getType().contains("ClusterTransactionConcurrencyException")) {
+            ClusterTransactionConcurrencyException ctxConcurrencyException = new ClusterTransactionConcurrencyException(schema.getMessage());
+
+            JsonNode idNode = json.get("Id");
+            if (idNode != null && !idNode.isNull()) {
+                ctxConcurrencyException.setId(idNode.asText());
+            }
+
+            JsonNode expectedChangeVectorNode = json.get("ExpectedChangeVector");
+            if (expectedChangeVectorNode != null && !expectedChangeVectorNode.isNull()) {
+                ctxConcurrencyException.setExpectedChangeVector(expectedChangeVectorNode.asText());
+            }
+
+            JsonNode actualChangeVectorNode = json.get("ActualChangeVector");
+            if (actualChangeVectorNode != null && !actualChangeVectorNode.isNull()) {
+                ctxConcurrencyException.setActualChangeVector(actualChangeVectorNode.asText());
+            }
+
+            JsonNode concurrencyViolationsNode = json.get("ConcurrencyViolations");
+            if (concurrencyViolationsNode == null || !concurrencyViolationsNode.isArray()) {
+                throw ctxConcurrencyException;
+            }
+
+            ArrayNode concurrencyViolationsJsonArray = (ArrayNode) concurrencyViolationsNode;
+
+            ctxConcurrencyException.setConcurrencyViolations(new ClusterTransactionConcurrencyException.ConcurrencyViolation[concurrencyViolationsJsonArray.size()]);
+
+            for (int i = 0; i < concurrencyViolationsJsonArray.size(); i++) {
+                JsonNode violation = concurrencyViolationsJsonArray.get(i);
+                if (violation == null || violation.isNull()) {
+                    continue;
+                }
+
+                ClusterTransactionConcurrencyException.ConcurrencyViolation current = new ClusterTransactionConcurrencyException.ConcurrencyViolation();
+                ctxConcurrencyException.getConcurrencyViolations()[i] = current;
+
+                JsonNode jsonId = violation.get("Id");
+                if (jsonId != null && !jsonId.isNull()) {
+                    current.setId(jsonId.asText());
+                }
+
+                String typeText = violation.get("Type").asText();
+                switch (typeText) {
+                    case "Document" :
+                        current.setType(ClusterTransactionConcurrencyException.ViolationOnType.DOCUMENT);
+                        break;
+                    case "CompareExchange":
+                        current.setType(ClusterTransactionConcurrencyException.ViolationOnType.COMPARE_EXCHANGE);
+                        break;
+                    default:
+                        throw new IllegalArgumentException("Invalid type: " + typeText);
+                }
+
+                JsonNode jsonExpected = violation.get("Expected");
+                if (jsonExpected != null && !jsonExpected.isNull()) {
+                    current.setExpected(jsonExpected.asLong());
+                }
+
+                JsonNode jsonActual = violation.get("Actual");
+                if (jsonActual != null && !jsonActual.isNull()) {
+                    current.setActual(jsonActual.asLong());
+                }
+            }
+
+            throw ctxConcurrencyException;
+        }
+
+        ConcurrencyException concurrencyException = new ConcurrencyException(schema.getMessage());
+        JsonNode idNode = json.get("Id");
+        if (idNode != null) {
+            concurrencyException.setId(idNode.asText());
+        }
+
+        JsonNode expectedChangeVectorNode = json.get("ExpectedChangeVector");
+        if (expectedChangeVectorNode != null) {
+            concurrencyException.setExpectedChangeVector(expectedChangeVectorNode.asText());
+        }
+
+        JsonNode actualChangeVectorNode = json.get("ActualChangeVector");
+        if (actualChangeVectorNode != null) {
+            concurrencyException.setActualChangeVector(actualChangeVectorNode.asText());
+        }
+
+        throw concurrencyException;
     }
 
 

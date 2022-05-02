@@ -1,8 +1,9 @@
 package net.ravendb.client.util;
 
-import net.ravendb.client.primitives.Tuple;
 import net.ravendb.client.serverwide.commands.TcpConnectionInfo;
+import net.ravendb.client.serverwide.tcp.TcpConnectionHeaderMessage;
 import org.apache.commons.codec.binary.Base64;
+import org.apache.commons.lang3.NotImplementedException;
 import org.apache.http.ssl.SSLContexts;
 
 import javax.net.ssl.SSLContext;
@@ -45,17 +46,22 @@ public class TcpUtils {
         }
     }
 
-    public static Tuple<Socket, String> connectWithPriority(
+    public static ConnectSecuredTcpSocketResult connectSecuredTcpSocket(
             TcpConnectionInfo info,
             String serverCertificate,
             KeyStore clientCertificate,
-            char[] certificatePrivateKeyPassword) throws IOException, GeneralSecurityException {
+            char[] certificatePrivateKeyPassword,
+            TcpConnectionHeaderMessage.OperationTypes operationType,
+            NegotiationCallback negotiationCallback) throws IOException, GeneralSecurityException {
         Socket socket;
         if (info.getUrls() != null) {
             for (String url : info.getUrls()) {
                 try {
                     socket = connect(url, serverCertificate, clientCertificate, certificatePrivateKeyPassword);
-                    return Tuple.create(socket, url);
+
+                    TcpConnectionHeaderMessage.SupportedFeatures supportedFeatures = invokeNegotiation(info, operationType, negotiationCallback, url, socket);
+
+                    return new ConnectSecuredTcpSocketResult(url, socket, supportedFeatures);
                 } catch (Exception e) {
                     // ignored
                 }
@@ -64,6 +70,39 @@ public class TcpUtils {
 
         socket = connect(info.getUrl(), serverCertificate, clientCertificate, certificatePrivateKeyPassword);
 
-        return Tuple.create(socket, info.getUrl());
+        TcpConnectionHeaderMessage.SupportedFeatures supportedFeatures = invokeNegotiation(info, operationType, negotiationCallback, info.getUrl(), socket);
+
+        return new ConnectSecuredTcpSocketResult(info.getUrl(), socket, supportedFeatures);
+    }
+
+    private static TcpConnectionHeaderMessage.SupportedFeatures invokeNegotiation(
+            TcpConnectionInfo info,
+            TcpConnectionHeaderMessage.OperationTypes operationType,
+            NegotiationCallback negotiationCallback,
+            String url,
+            Socket socket) throws IOException {
+
+        switch (operationType) {
+            case SUBSCRIPTION:
+                return negotiationCallback.apply(url, info, socket);
+            default:
+                throw new NotImplementedException("Operation type '" + operationType + "' not supported");
+        }
+    }
+
+    public interface NegotiationCallback {
+        TcpConnectionHeaderMessage.SupportedFeatures apply(String url, TcpConnectionInfo info, Socket socket) throws IOException;
+    }
+
+    public static class ConnectSecuredTcpSocketResult {
+        public String url;
+        public Socket socket;
+        public TcpConnectionHeaderMessage.SupportedFeatures supportedFeatures;
+
+        public ConnectSecuredTcpSocketResult(String url, Socket socket, TcpConnectionHeaderMessage.SupportedFeatures supportedFeatures) {
+            this.url = url;
+            this.socket = socket;
+            this.supportedFeatures = supportedFeatures;
+        }
     }
 }

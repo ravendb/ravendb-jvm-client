@@ -59,7 +59,18 @@ public class GetRevisionOperation {
     }
 
     public GetRevisionsCommand createRequest() {
-        _session.incrementRequestCount();
+        if (_command.getChangeVectors() != null) {
+            return _session.checkIfAllChangeVectorsAreAlreadyIncluded(_command.getChangeVectors()) ? null : _command;
+        }
+
+        if (_command.getChangeVector() != null) {
+            return _session.checkIfAllChangeVectorsAreAlreadyIncluded(new String[]{ _command.getChangeVector() }) ? null : _command;
+        }
+
+        if (_command.getBefore() != null) {
+            return _session.checkIfRevisionByDateTimeBeforeAlreadyIncluded(_command.getId(), _command.getBefore()) ? null : _command;
+        }
+
         return _command;
     }
 
@@ -137,6 +148,35 @@ public class GetRevisionOperation {
 
     public <T> T getRevision(Class<T> clazz) {
         if (_result == null) {
+
+            DocumentInfo revision;
+
+            if (_command.getChangeVectors() != null) {
+                for (String changeVector : _command.getChangeVectors()) {
+                    revision = _session.includeRevisionsByChangeVector.get(changeVector);
+                    if (revision != null) {
+                        return getRevision(clazz, revision.getDocument());
+                    }
+                }
+            }
+
+            if (_command.getChangeVector() != null && _session.includeRevisionsByChangeVector != null) {
+                revision = _session.includeRevisionsByChangeVector.get(_command.getChangeVector());
+                if (revision != null) {
+                    return getRevision(clazz, revision.getDocument());
+                }
+            }
+
+            if (_command.getBefore() != null && _session.includeRevisionsIdByDateTimeBefore != null) {
+                Map<Date, DocumentInfo> dictionaryDateTimeToDocument = _session.includeRevisionsIdByDateTimeBefore.get(_command.getId());
+                if (dictionaryDateTimeToDocument != null) {
+                    revision = dictionaryDateTimeToDocument.get(_command.getBefore());
+                    if (revision != null) {
+                        return getRevision(clazz, revision.getDocument());
+                    }
+                }
+            }
+
             return Defaults.defaultValue(clazz);
         }
 
@@ -146,6 +186,16 @@ public class GetRevisionOperation {
 
     public <T> Map<String, T> getRevisions(Class<T> clazz) {
         Map<String, T> results = new TreeMap<>(String::compareToIgnoreCase);
+
+        if (_result == null) {
+            for (String changeVector : _command.getChangeVectors()) {
+                DocumentInfo revision = _session.includeRevisionsByChangeVector.get(changeVector);
+                if (revision != null) {
+                    results.put(changeVector, getRevision(clazz, revision.getDocument()));
+                }
+            }
+            return results;
+        }
 
         for (int i = 0; i < _command.getChangeVectors().length; i++) {
             String changeVector = _command.getChangeVectors()[i];

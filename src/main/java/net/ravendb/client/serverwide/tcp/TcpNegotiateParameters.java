@@ -1,5 +1,7 @@
 package net.ravendb.client.serverwide.tcp;
 
+import java.net.Socket;
+import java.util.function.BiFunction;
 import java.util.function.Function;
 
 public class TcpNegotiateParameters {
@@ -11,8 +13,9 @@ public class TcpNegotiateParameters {
     private String sourceNodeTag;
     private String destinationNodeTag;
     private String destinationUrl;
+    private String destinationServerId;
 
-    private Function<String, Integer> readResponseAndGetVersionCallback;
+    private BiFunction<String, Socket, Integer> readResponseAndGetVersionCallback;
 
     public TcpConnectionHeaderMessage.OperationTypes getOperation() {
         return operation;
@@ -70,11 +73,19 @@ public class TcpNegotiateParameters {
         this.destinationUrl = destinationUrl;
     }
 
-    public Function<String, Integer> getReadResponseAndGetVersionCallback() {
+    public String getDestinationServerId() {
+        return destinationServerId;
+    }
+
+    public void setDestinationServerId(String destinationServerId) {
+        this.destinationServerId = destinationServerId;
+    }
+
+    public BiFunction<String, Socket, Integer> getReadResponseAndGetVersionCallback() {
         return readResponseAndGetVersionCallback;
     }
 
-    public void setReadResponseAndGetVersionCallback(Function<String, Integer> readResponseAndGetVersionCallback) {
+    public void setReadResponseAndGetVersionCallback(BiFunction<String, Socket, Integer> readResponseAndGetVersionCallback) {
         this.readResponseAndGetVersionCallback = readResponseAndGetVersionCallback;
     }
 }

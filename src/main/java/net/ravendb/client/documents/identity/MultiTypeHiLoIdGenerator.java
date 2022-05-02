@@ -85,6 +85,25 @@ public class MultiTypeHiLoIdGenerator {
         }
     }
 
+    public long generateNextIdFor(String collectionName) {
+        HiLoIdGenerator value = _idGeneratorsByTag.get(collectionName);
+        if (value != null) {
+            return value.nextId();
+        }
+
+        synchronized (_generatorLock) {
+            value = _idGeneratorsByTag.get(collectionName);
+            if (value != null) {
+                return value.nextId();
+            }
+
+            value = createGeneratorFor(collectionName);
+            _idGeneratorsByTag.put(collectionName, value);
+        }
+
+        return value.nextId();
+    }
+
     protected HiLoIdGenerator createGeneratorFor(String tag) {
         return new HiLoIdGenerator(tag, store, dbName, _identityPartsSeparator);
     }

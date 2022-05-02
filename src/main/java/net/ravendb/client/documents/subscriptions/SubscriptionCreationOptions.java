@@ -11,6 +11,7 @@ public class SubscriptionCreationOptions {
     private Consumer<ISubscriptionIncludeBuilder> includes;
     private String changeVector;
     private String mentorNode;
+    private boolean disabled;
 
     public Consumer<ISubscriptionIncludeBuilder> getIncludes() {
         return includes;
@@ -50,5 +51,13 @@ public class SubscriptionCreationOptions {
 
     public void setMentorNode(String mentorNode) {
         this.mentorNode = mentorNode;
+    }
+
+    public boolean isDisabled() {
+        return disabled;
+    }
+
+    public void setDisabled(boolean disabled) {
+        this.disabled = disabled;
     }
 }

@@ -10,6 +10,7 @@ import org.apache.commons.logging.LogFactory;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
+import java.net.Socket;
 import java.nio.charset.StandardCharsets;
 
 public class TcpNegotiation {
@@ -19,15 +20,15 @@ public class TcpNegotiation {
     public final static int OUT_OF_RANGE_STATUS = -1;
     public final static int DROP_STATUS = -2;
 
-    public static TcpConnectionHeaderMessage.SupportedFeatures negotiateProtocolVersion(OutputStream stream, TcpNegotiateParameters parameters) throws IOException {
+    public static TcpConnectionHeaderMessage.SupportedFeatures negotiateProtocolVersion(Socket socket, TcpNegotiateParameters parameters) throws IOException {
         if (logger.isInfoEnabled()) {
             logger.info("Start negotiation for " + parameters.getOperation() + " operation with " + ObjectUtils.firstNonNull(parameters.getDestinationNodeTag(), parameters.getDestinationUrl()));
         }
 
         Reference<Integer> currentRef = new Reference<>(parameters.getVersion());
         while (true) {
-            sendTcpVersionInfo(stream, parameters, currentRef.value);
-            Integer version = parameters.getReadResponseAndGetVersionCallback().apply(parameters.getDestinationUrl());
+            sendTcpVersionInfo(socket.getOutputStream(), parameters, currentRef.value);
+            Integer version = parameters.getReadResponseAndGetVersionCallback().apply(parameters.getDestinationUrl(), socket);
             if (logger.isInfoEnabled()) {
                 logger.info("Read response from " + ObjectUtils.firstNonNull(parameters.getSourceNodeTag(), parameters.getDestinationUrl()) + " for " + parameters.getOperation() + ", received version is '" + version + "'");
             }
@@ -43,7 +44,7 @@ public class TcpNegotiation {
 
             TcpConnectionHeaderMessage.SupportedStatus status = TcpConnectionHeaderMessage.operationVersionSupported(parameters.getOperation(), version, currentRef);
             if (status == TcpConnectionHeaderMessage.SupportedStatus.OUT_OF_RANGE) {
-                sendTcpVersionInfo(stream, parameters, OUT_OF_RANGE_STATUS);
+                sendTcpVersionInfo(socket.getOutputStream(), parameters, OUT_OF_RANGE_STATUS);
                 throw new IllegalArgumentException("The " + parameters.getOperation() + " version " + parameters.getVersion() + " is out of range, out lowest version is " + currentRef.value);
             }
 

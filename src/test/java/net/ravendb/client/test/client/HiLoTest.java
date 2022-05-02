@@ -13,9 +13,7 @@ import org.junit.jupiter.api.Test;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.*;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -106,6 +104,77 @@ public class HiLoTest extends RemoteTestBase {
                         .isEqualTo("products/129-A");
 
             }
+        }
+    }
+
+    @Test
+    public void generate_HiLo_Ids() throws Exception {
+        try (DocumentStore store = getDocumentStore()) {
+            MultiDatabaseHiLoIdGenerator multiDbHiLo = new MultiDatabaseHiLoIdGenerator(store);
+
+            ConcurrentHashMap<Long, Boolean> usersIds = new ConcurrentHashMap<>();
+            ConcurrentHashMap<Long, Boolean> productsIds = new ConcurrentHashMap<>();
+
+            int count = 10;
+
+            CompletableFuture[] futures = IntStream.range(0, count).mapToObj(x -> CompletableFuture.runAsync(() -> {
+                Long id = multiDbHiLo.generateNextIdFor(null, "Users");
+                assertThat(usersIds)
+                        .doesNotContainKey(id);
+                usersIds.put(id, true);
+
+                id = multiDbHiLo.generateNextIdFor(null, "Products");
+                assertThat(productsIds)
+                        .doesNotContainKey(id);
+                productsIds.put(id, true);
+            })).toArray(CompletableFuture[]::new);
+
+            CompletableFuture.allOf(futures).get();
+
+            assertThat(usersIds)
+                    .hasSize(count);
+            assertThat(productsIds)
+                    .hasSize(count);
+
+            futures = IntStream.range(0, count).mapToObj(x -> CompletableFuture.runAsync(() -> {
+                long id = store.getHiLoIdGenerator().generateNextIdFor(null, "Users");
+                assertThat(usersIds)
+                        .doesNotContainKey(id);
+                usersIds.put(id, true);
+
+                id = store.getHiLoIdGenerator().generateNextIdFor(null, "Products");
+                assertThat(productsIds)
+                        .doesNotContainKey(id);
+                productsIds.put(id, true);
+
+                id = store.getHiLoIdGenerator().generateNextIdFor(null, User.class);
+                assertThat(usersIds)
+                        .doesNotContainKey(id);
+                usersIds.put(id, true);
+
+                id = store.getHiLoIdGenerator().generateNextIdFor(null, new Product());
+                assertThat(productsIds)
+                        .doesNotContainKey(id);
+                productsIds.put(id, true);
+
+                id = store.getHiLoIdGenerator().generateNextIdFor(null, new User());
+                assertThat(usersIds)
+                        .doesNotContainKey(id);
+                usersIds.put(id, true);
+
+                id = store.getHiLoIdGenerator().generateNextIdFor(null, Product.class);
+                assertThat(productsIds)
+                        .doesNotContainKey(id);
+                productsIds.put(id, true);
+            })).toArray(CompletableFuture[]::new);
+
+            CompletableFuture.allOf(futures).get();
+
+            assertThat(usersIds)
+                    .hasSize(count * 4);
+            assertThat(productsIds)
+                    .hasSize(count * 4);
+
         }
     }
 

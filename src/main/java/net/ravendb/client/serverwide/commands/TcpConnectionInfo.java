@@ -7,6 +7,8 @@ public class TcpConnectionInfo {
     private String[] urls;
     private String nodeTag;
 
+    private String serverId;
+
     public int getPort() {
         return port;
     }
@@ -45,5 +47,13 @@ public class TcpConnectionInfo {
 
     public void setNodeTag(String nodeTag) {
         this.nodeTag = nodeTag;
+    }
+
+    public String getServerId() {
+        return serverId;
+    }
+
+    public void setServerId(String serverId) {
+        this.serverId = serverId;
     }
 }

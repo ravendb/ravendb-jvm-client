@@ -69,7 +69,7 @@ public class DatabasesTest extends RemoteTestBase {
     @Test
     public void canGetInfoAutoIndexInfo() throws Exception {
         try (IDocumentStore store = getDocumentStore()) {
-            createMoviesData(store);
+            samples.createMoviesData(store);
 
             try (IDocumentSession session = store.openSession()) {
 

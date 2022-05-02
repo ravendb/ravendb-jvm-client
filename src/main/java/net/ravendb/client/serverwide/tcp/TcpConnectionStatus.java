@@ -6,6 +6,8 @@ import net.ravendb.client.primitives.UseSharpEnum;
 public enum TcpConnectionStatus {
     OK,
     AUTHORIZATION_FAILED,
-    TCP_VERSION_MISMATCH
+    TCP_VERSION_MISMATCH,
+
+    INVALID_NETWORK_TOPOLOGY
 }
 

@@ -119,4 +119,17 @@ public class QueryIncludeBuilder extends IncludeBuilderBase implements IQueryInc
         _includeTimeSeriesByRangeTypeAndCount("", Constants.TimeSeries.ALL, type, count);
         return this;
     }
+
+    @Override
+    public IQueryIncludeBuilder includeRevisions(Date before) {
+        _includeRevisionsBefore(before);
+        return this;
+    }
+
+    @Override
+    public IQueryIncludeBuilder includeRevisions(String changeVectorPath) {
+        _withAlias();
+        _includeRevisionsByChangeVectors(changeVectorPath);
+        return this;
+    }
 }
