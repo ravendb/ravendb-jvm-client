@@ -5,9 +5,8 @@ import net.ravendb.client.documents.DocumentStore;
 import net.ravendb.client.documents.IDocumentStore;
 import net.ravendb.client.documents.Lazy;
 import net.ravendb.client.documents.session.IDocumentSession;
+import net.ravendb.client.infrastructure.DisabledOnPullRequest;
 import net.ravendb.client.serverwide.DatabaseRecord;
-import org.assertj.core.api.Assertions;
-import org.checkerframework.checker.units.qual.A;
 import org.junit.jupiter.api.Test;
 
 import java.net.URI;
@@ -16,6 +15,7 @@ import java.util.concurrent.atomic.AtomicReference;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@DisabledOnPullRequest
 public class RavenDB_18364Test extends ClusterTestBase {
 
     @Test
