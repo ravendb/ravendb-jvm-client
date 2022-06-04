@@ -3,11 +3,7 @@ package net.ravendb.client.test.issues;
 import net.ravendb.client.RemoteTestBase;
 import net.ravendb.client.documents.IDocumentStore;
 import net.ravendb.client.documents.indexes.AbstractIndexCreationTask;
-import net.ravendb.client.documents.indexes.IndexRunningStatus;
-import net.ravendb.client.documents.indexes.IndexState;
-import net.ravendb.client.documents.indexes.IndexStats;
-import net.ravendb.client.documents.operations.indexes.DisableIndexOperation;
-import net.ravendb.client.documents.operations.indexes.GetIndexStatisticsOperation;
+import net.ravendb.client.documents.operations.indexes.StopIndexOperation;
 import net.ravendb.client.documents.session.IDocumentSession;
 import net.ravendb.client.exceptions.TimeoutException;
 import net.ravendb.client.infrastructure.entities.User;
@@ -15,7 +11,6 @@ import org.junit.jupiter.api.Test;
 
 import java.time.Duration;
 
-import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 public class RavenDB_15497Test extends RemoteTestBase {
@@ -25,14 +20,6 @@ public class RavenDB_15497Test extends RemoteTestBase {
         try (IDocumentStore store = getDocumentStore()) {
             Index index = new Index();
             index.execute(store);
-            store.maintenance().send(new DisableIndexOperation(index.getIndexName()));
-
-            IndexStats indexStats = store.maintenance().send(new GetIndexStatisticsOperation(index.getIndexName()));
-
-            assertThat(indexStats.getState())
-                    .isEqualTo(IndexState.DISABLED);
-            assertThat(indexStats.getStatus())
-                    .isEqualTo(IndexRunningStatus.DISABLED);
 
             try (IDocumentSession session = store.openSession()) {
                 User user = new User();
@@ -46,6 +33,11 @@ public class RavenDB_15497Test extends RemoteTestBase {
                 });
                 session.saveChanges();
             }
+
+            indexes.waitForIndexing(store);
+
+            store.maintenance().send(new StopIndexOperation(index.getIndexName()));
+
 
             try (IDocumentSession session = store.openSession()) {
                 User user = new User();
@@ -61,7 +53,7 @@ public class RavenDB_15497Test extends RemoteTestBase {
                 assertThatThrownBy(session::saveChanges)
                         .isExactlyInstanceOf(TimeoutException.class)
                         .hasMessageContaining("System.TimeoutException")
-                        .hasMessageContaining("could not verify that 1 indexes has caught up with the changes as of etag");
+                        .hasMessageContaining("could not verify that");
             }
         }
     }
