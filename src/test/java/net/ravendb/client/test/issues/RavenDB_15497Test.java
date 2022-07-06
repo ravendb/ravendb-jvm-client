@@ -5,6 +5,7 @@ import net.ravendb.client.documents.IDocumentStore;
 import net.ravendb.client.documents.indexes.AbstractIndexCreationTask;
 import net.ravendb.client.documents.operations.indexes.StopIndexOperation;
 import net.ravendb.client.documents.session.IDocumentSession;
+import net.ravendb.client.exceptions.RavenTimeoutException;
 import net.ravendb.client.exceptions.TimeoutException;
 import net.ravendb.client.infrastructure.entities.User;
 import org.junit.jupiter.api.Test;
@@ -51,8 +52,8 @@ public class RavenDB_15497Test extends RemoteTestBase {
                 });
 
                 assertThatThrownBy(session::saveChanges)
-                        .isExactlyInstanceOf(TimeoutException.class)
-                        .hasMessageContaining("System.TimeoutException")
+                        .isExactlyInstanceOf(RavenTimeoutException.class)
+                        .hasMessageContaining("RavenTimeoutException")
                         .hasMessageContaining("could not verify that");
             }
         }

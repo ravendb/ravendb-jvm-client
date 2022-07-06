@@ -22,10 +22,10 @@ public class LogsConfigurationTest extends RemoteTestBase {
                         store.maintenance().server().send(getOperation);
 
                 assertThat(logsConfig.getCurrentMode())
-                        .isEqualTo(LogMode.OPERATIONS);
+                        .isEqualTo(LogMode.NONE);
 
                 assertThat(logsConfig.getMode())
-                        .isEqualTo(LogMode.OPERATIONS);
+                        .isEqualTo(LogMode.NONE);
 
                 // now try to set mode to operations and info
                 SetLogsConfigurationOperation.Parameters parameters = new SetLogsConfigurationOperation.Parameters();
@@ -43,7 +43,7 @@ public class LogsConfigurationTest extends RemoteTestBase {
                         .isEqualTo(LogMode.INFORMATION);
 
                 assertThat(logsConfig.getMode())
-                        .isEqualTo(LogMode.OPERATIONS);
+                        .isEqualTo(LogMode.NONE);
             } finally {
                 // try to clean up
 
