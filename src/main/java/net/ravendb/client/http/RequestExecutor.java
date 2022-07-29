@@ -1293,7 +1293,12 @@ public class RequestExecutor implements CleanCloseable {
             command.setFailedNodes(new HashMap<>());
         }
 
-        command.getFailedNodes().put(chosenNode, readExceptionFromServer(request, response, e));
+        Exception exception = readExceptionFromServer(request, response, e);
+        if (exception instanceof RavenTimeoutException && ((RavenTimeoutException) exception).isFailImmediately()) {
+            throw (RavenTimeoutException)exception;
+        }
+
+        command.getFailedNodes().put(chosenNode, exception);
 
         if (nodeIndex == null) {
             //We executed request over a node not in the topology. This means no failover...
@@ -1759,6 +1764,16 @@ public class RequestExecutor implements CleanCloseable {
         ensureNodeSelector();
 
         return _nodeSelector.getRequestedNode(nodeTag);
+    }
+
+    public CurrentIndexAndNode getRequestedNode(String nodeTag, boolean throwIfContainsFailures) {
+        CurrentIndexAndNode currentIndexAndNode = getRequestedNode(nodeTag);
+
+        if (throwIfContainsFailures && !_nodeSelector.nodeIsAvailable(currentIndexAndNode.currentIndex)) {
+            throw new RequestedNodeUnavailableException("Requested node " + nodeTag + " currently unavailable, please try again later.");
+        }
+
+        return currentIndexAndNode;
     }
 
     public CurrentIndexAndNode getPreferredNode() {

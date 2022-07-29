@@ -25,7 +25,9 @@ public class GroupByKeyToken extends QueryToken {
         }
 
         writer
-                .append(" as ")
-                .append(_projectedName);
+                .append(" as '")
+                .append(_projectedName)
+                .append("'");
+
     }
 }

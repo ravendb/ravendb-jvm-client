@@ -14,6 +14,12 @@ public class SubscriptionClosedException extends SubscriptionException {
         this.canReconnect = canReconnect;
     }
 
+    public SubscriptionClosedException(String message, boolean canReconnect, Exception inner) {
+        super(message, inner);
+
+        this.canReconnect = canReconnect;
+    }
+
     public SubscriptionClosedException(String message, Throwable cause) {
         super(message, cause);
     }

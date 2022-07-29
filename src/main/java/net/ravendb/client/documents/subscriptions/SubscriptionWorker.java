@@ -646,7 +646,7 @@ public class SubscriptionWorker<T> implements CleanCloseable {
                                 List<ServerNode> curTopology = reqEx.getTopologyNodes();
                                 int nextNodeIndex = (_forcedTopologyUpdateAttempts++) % curTopology.size();
                                 try {
-                                    _redirectNode = curTopology.get(nextNodeIndex);
+                                    _redirectNode = reqEx.getRequestedNode(curTopology.get(nextNodeIndex).getClusterTag(), true).currentNode;
                                     if (_logger.isInfoEnabled()) {
                                         _logger.info("Subscription '" + _options.getSubscriptionName() + "'. Will modify redirect node from null to " + _redirectNode.getClusterTag(), ex);
                                     }
