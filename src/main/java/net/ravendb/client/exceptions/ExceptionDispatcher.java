@@ -85,20 +85,7 @@ public class ExceptionDispatcher {
                 throw new RavenException(schema.getError(), exception);
             }
 
-            if (IndexCompilationException.class.equals(type)) {
-                IndexCompilationException indexCompilationException = (IndexCompilationException) exception;
-                JsonNode indexDefinitionProperty = json.get("TransformerDefinitionProperty");
-                if (indexDefinitionProperty != null) {
-                    indexCompilationException.setIndexDefinitionProperty(indexDefinitionProperty.asText());
-                }
-
-                JsonNode problematicText = json.get("ProblematicText");
-                if (problematicText != null) {
-                    indexCompilationException.setProblematicText(problematicText.asText());
-                }
-
-                throw indexCompilationException;
-            }
+            fillException(exception, json);
 
             throw exception;
 
@@ -106,6 +93,29 @@ public class ExceptionDispatcher {
             throw new RavenException(e.getMessage(), e);
         } finally {
             IOUtils.closeQuietly(response, null);
+        }
+    }
+
+    private static void fillException(Exception exception, ObjectNode json) {
+        if (exception instanceof IndexCompilationException) {
+            IndexCompilationException indexCompilationException = (IndexCompilationException) exception;
+            JsonNode indexDefinitionProperty = json.get("TransformerDefinitionProperty");
+            if (indexDefinitionProperty != null) {
+                indexCompilationException.setIndexDefinitionProperty(indexDefinitionProperty.asText());
+            }
+
+            JsonNode problematicText = json.get("ProblematicText");
+            if (problematicText != null) {
+                indexCompilationException.setProblematicText(problematicText.asText());
+            }
+        }
+
+        if (exception instanceof RavenTimeoutException) {
+            RavenTimeoutException timeoutException = (RavenTimeoutException) exception;
+            JsonNode failImmediately = json.get("FailImmediately");
+            if (failImmediately != null) {
+                timeoutException.setFailImmediately(failImmediately.asBoolean());
+            }
         }
     }
 

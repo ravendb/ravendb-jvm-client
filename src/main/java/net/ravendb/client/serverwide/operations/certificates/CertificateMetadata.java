@@ -8,6 +8,7 @@ public class CertificateMetadata {
     private SecurityClearance securityClearance;
     private String thumbprint;
     private Date notAfter;
+    private Date notBefore;
     private Map<String, DatabaseAccess> permissions = new TreeMap<>(String::compareToIgnoreCase);
     private List<String> collectionSecondaryKeys = new ArrayList<>();
     private String collectionPrimaryKey = "";
@@ -43,6 +44,14 @@ public class CertificateMetadata {
 
     public void setNotAfter(Date notAfter) {
         this.notAfter = notAfter;
+    }
+
+    public Date getNotBefore() {
+        return notBefore;
+    }
+
+    public void setNotBefore(Date notBefore) {
+        this.notBefore = notBefore;
     }
 
     public Map<String, DatabaseAccess> getPermissions() {

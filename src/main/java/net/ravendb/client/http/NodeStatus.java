@@ -4,12 +4,21 @@ import java.util.Date;
 
 public class NodeStatus {
 
+    private String name;
     private boolean connected;
     private String errorDetails;
     private Date lastSend;
     private Date lastReply;
     private String lastSentMessage;
     private long lastMatchingIndex;
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
 
     public boolean isConnected() {
         return connected;
@@ -57,5 +66,17 @@ public class NodeStatus {
 
     public void setLastMatchingIndex(long lastMatchingIndex) {
         this.lastMatchingIndex = lastMatchingIndex;
+    }
+
+    @Override
+    public String toString() {
+        return "NodeStatus{" +
+                "name='" + name + '\'' +
+                ", connected=" + connected +
+                ", errorDetails='" + errorDetails + '\'' +
+                ", lastSend=" + lastSend +
+                ", lastReply=" + lastReply +
+                ", lastSentMessage='" + lastSentMessage + '\'' +
+                '}';
     }
 }

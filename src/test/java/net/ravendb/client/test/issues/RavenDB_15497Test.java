@@ -6,7 +6,6 @@ import net.ravendb.client.documents.indexes.AbstractIndexCreationTask;
 import net.ravendb.client.documents.operations.indexes.StopIndexOperation;
 import net.ravendb.client.documents.session.IDocumentSession;
 import net.ravendb.client.exceptions.RavenTimeoutException;
-import net.ravendb.client.exceptions.TimeoutException;
 import net.ravendb.client.infrastructure.entities.User;
 import org.junit.jupiter.api.Test;
 
@@ -25,6 +24,7 @@ public class RavenDB_15497Test extends RemoteTestBase {
             try (IDocumentSession session = store.openSession()) {
                 User user = new User();
                 user.setName("user1");
+                user.setCount(3);
 
                 session.store(user);
 

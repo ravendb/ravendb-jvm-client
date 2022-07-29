@@ -64,15 +64,10 @@ public class NodeSelector implements CleanCloseable {
 
     public CurrentIndexAndNode getRequestedNode(String nodeTag) {
         NodeSelectorState state = _state;
-        AtomicInteger[] stateFailures = state.failures;
         List<ServerNode> serverNodes = state.nodes;
-        int len = Math.min(serverNodes.size(), stateFailures.length);
-        for (int i = 0; i < len; i++) {
+        for (int i = 0; i < serverNodes.size(); i++) {
             if (serverNodes.get(i).getClusterTag().equals(nodeTag)) {
-                if (stateFailures[i].get() == 0 && StringUtils.isNotEmpty(serverNodes.get(i).getUrl())) {
-                    return new CurrentIndexAndNode(i, serverNodes.get(i));
-                }
-                throw new RequestedNodeUnavailableException("Requested node " + nodeTag + " is currently unavailable, please try again later.");
+                return new CurrentIndexAndNode(i, serverNodes.get(i));
             }
         }
 
@@ -80,6 +75,10 @@ public class NodeSelector implements CleanCloseable {
             throw new DatabaseDoesNotExistException("There are no nodes in the topology at all");
         }
         throw new RequestedNodeUnavailableException("Could not find requested node " + nodeTag);
+    }
+
+    public boolean nodeIsAvailable(int index) {
+        return _state.failures[index].get() == 0;
     }
 
     public CurrentIndexAndNode getPreferredNode() {
@@ -92,7 +91,7 @@ public class NodeSelector implements CleanCloseable {
         List<ServerNode> serverNodes = state.nodes;
         int len = Math.min(serverNodes.size(), stateFailures.length);
         for (int i = 0; i < len; i++) {
-            if (stateFailures[i].get() == 0 && StringUtils.isNotEmpty(serverNodes.get(i).getUrl())) {
+            if (stateFailures[i].get() == 0) {
                 return new CurrentIndexAndNode(i, serverNodes.get(i));
             }
         }
@@ -108,13 +107,13 @@ public class NodeSelector implements CleanCloseable {
     }
 
     private static CurrentIndexAndNode unlikelyEveryoneFaultedChoice(NodeSelectorState state) {
-        // if there are all marked as failed, we'll chose the first
+        // if there are all marked as failed, we'll chose the next (the one in CurrentNodeIndex)
         // one so the user will get an error (or recover :-) );
         if (state.nodes.size() == 0) {
             throw new DatabaseDoesNotExistException("There are no nodes in the topology at all");
         }
 
-        return new CurrentIndexAndNode (0, state.nodes.get(0));
+        return state.getNodeWhenEveryoneMarkedAsFaulted();
     }
 
     public CurrentIndexAndNode getNodeBySessionId(int sessionId) {
@@ -258,6 +257,7 @@ public class NodeSelector implements CleanCloseable {
         public final int[] fastestRecords;
         public int fastest;
         public final AtomicInteger speedTestMode = new AtomicInteger(0);
+        public int unlikelyEveryoneFaultedChoiceIndex;
 
         public NodeSelectorState(Topology topology) {
             this.topology = topology;
@@ -267,7 +267,14 @@ public class NodeSelector implements CleanCloseable {
                 this.failures[i] = new AtomicInteger(0);
             }
             this.fastestRecords = new int[topology.getNodes().size()];
+            this.unlikelyEveryoneFaultedChoiceIndex = 0;
+        }
 
+        public CurrentIndexAndNode getNodeWhenEveryoneMarkedAsFaulted() {
+            int index = unlikelyEveryoneFaultedChoiceIndex;
+            this.unlikelyEveryoneFaultedChoiceIndex = (unlikelyEveryoneFaultedChoiceIndex + 1) % nodes.size();
+
+            return new CurrentIndexAndNode(index, nodes.get(index));
         }
     }
 
