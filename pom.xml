@@ -47,7 +47,7 @@
             <dependency>
                 <groupId>org.junit</groupId>
                 <artifactId>junit-bom</artifactId>
-                <version>5.9.0-M1</version>
+                <version>5.9.0</version>
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
@@ -98,7 +98,7 @@
         <dependency>
             <groupId>org.eclipse.jetty.websocket</groupId>
             <artifactId>websocket-client</artifactId>
-            <version>9.4.46.v20220331</version>
+            <version>9.4.48.v20220622</version>
         </dependency>
         <dependency>
             <groupId>com.fasterxml.jackson.core</groupId>
@@ -116,7 +116,7 @@
         <dependency>
             <groupId>org.assertj</groupId>
             <artifactId>assertj-core</artifactId>
-            <version>3.22.0</version>
+            <version>3.23.1</version>
             <scope>test</scope>
         </dependency>
         <dependency>

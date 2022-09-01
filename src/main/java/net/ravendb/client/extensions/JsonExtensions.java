@@ -179,27 +179,13 @@ public class JsonExtensions {
         return objectMapper;
     }
 
-    public static class DotNetNamingStrategy extends PropertyNamingStrategy {
+    public static class DotNetNamingStrategy extends PropertyNamingStrategies.NamingBase {
 
         @Override
-        public String nameForField(MapperConfig<?> config, AnnotatedField field, String defaultName) {
-            return StringUtils.capitalize(defaultName);
+        public String translate(String propertyName) {
+            return StringUtils.capitalize(propertyName);
         }
 
-        @Override
-        public String nameForGetterMethod(MapperConfig<?> config, AnnotatedMethod method, String defaultName) {
-            return StringUtils.capitalize(defaultName);
-        }
-
-        @Override
-        public String nameForSetterMethod(MapperConfig<?> config, AnnotatedMethod method, String defaultName) {
-            return StringUtils.capitalize(defaultName);
-        }
-
-        @Override
-        public String nameForConstructorParameter(MapperConfig<?> config, AnnotatedParameter ctorParam, String defaultName) {
-            return StringUtils.capitalize(defaultName);
-        }
     }
 
     @SuppressWarnings("deprecation")
