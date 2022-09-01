@@ -1,6 +1,13 @@
 package net.ravendb.client.documents.session;
 
+import com.fasterxml.jackson.databind.BeanDescription;
+import com.fasterxml.jackson.databind.JavaType;
+import com.fasterxml.jackson.databind.PropertyNamingStrategy;
+import com.fasterxml.jackson.databind.introspect.BeanPropertyDefinition;
+import com.fasterxml.jackson.databind.introspect.POJOPropertiesCollector;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.fasterxml.jackson.databind.type.SimpleType;
+import com.fasterxml.jackson.databind.type.TypeFactory;
 import com.google.common.collect.Sets;
 import net.ravendb.client.Constants;
 import net.ravendb.client.Parameters;
@@ -26,7 +33,9 @@ import net.ravendb.client.documents.session.tokens.FieldsToFetchToken;
 import net.ravendb.client.documents.session.tokens.LoadToken;
 import net.ravendb.client.primitives.Reference;
 import org.apache.commons.lang3.ObjectUtils;
+import org.apache.commons.lang3.StringUtils;
 
+import java.beans.FeatureDescriptor;
 import java.beans.IntrospectionException;
 import java.beans.Introspector;
 import java.beans.PropertyDescriptor;
@@ -61,27 +70,21 @@ public class DocumentQuery<T> extends AbstractDocumentQuery<T, DocumentQuery<T>>
 
     @Override
     public <TProjection> IDocumentQuery<TProjection> selectFields(Class<TProjection> projectionClass, ProjectionBehavior projectionBehavior) {
-        try {
-            PropertyDescriptor[] propertyDescriptors = Introspector.getBeanInfo(projectionClass).getPropertyDescriptors();
+        BeanDescription beanDescription = getConventions().getEntityMapper().getSerializationConfig().introspect(getConventions().getEntityMapper().constructType(projectionClass));
 
-            String[] projections = Arrays.stream(propertyDescriptors)
-                    .filter(x -> !Object.class.equals(x.getReadMethod().getDeclaringClass())) // ignore class field etc,
-                    .map(x -> x.getName())
-                    .toArray(String[]::new);
+        List<BeanPropertyDefinition> properties = beanDescription.findProperties();
 
-            String[] fields = Arrays.stream(propertyDescriptors)
-                    .filter(x -> !Object.class.equals(x.getReadMethod().getDeclaringClass())) // ignore class field etc,
-                    .map(x -> x.getName())
-                    .toArray(String[]::new);
+        String[] projections = properties
+                .stream()
+                .map(BeanPropertyDefinition::getName)
+                .toArray(String[]::new);
 
+        String[] fields = projections.clone();
 
-            QueryData queryData = new QueryData(fields, projections);
-            queryData.setProjectInto(true);
-            queryData.setProjectionBehavior(projectionBehavior);
-            return selectFields(projectionClass, queryData);
-        } catch (IntrospectionException e) {
-            throw new RuntimeException("Unable to project to class: " + projectionClass.getName() + e.getMessage(), e);
-        }
+        QueryData queryData = new QueryData(fields, projections);
+        queryData.setProjectInto(true);
+        queryData.setProjectionBehavior(projectionBehavior);
+        return selectFields(projectionClass, queryData);
     }
 
     @Override

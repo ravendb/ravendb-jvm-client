@@ -75,6 +75,37 @@ public class CrudTest extends RemoteTestBase {
                 assertThat(users)
                         .hasSize(1);
             }
+
+            try (IDocumentSession newSession = store.openSession()) {
+                List<User> users = newSession
+                        .query(User.class)
+                        .whereEquals("LastName", "user1")
+                        .toList();
+
+                assertThat(users)
+                        .hasSize(1);
+                assertThat(users.get(0))
+                        .isNotNull();
+                assertThat(users.get(0).getLastName())
+                        .isNotNull();
+            }
+
+            //RDBC-619 - can use selectFields w/o explicit field enumaration
+
+            try (IDocumentSession newSession = store.openSession()) {
+                List<User> users = newSession
+                        .query(User.class)
+                        .whereEquals("LastName", "user1")
+                        .selectFields(User.class)
+                        .toList();
+
+                assertThat(users)
+                        .hasSize(1);
+                assertThat(users.get(0))
+                        .isNotNull();
+                assertThat(users.get(0).getLastName())
+                        .isNotNull();
+            }
         }
     }
 
