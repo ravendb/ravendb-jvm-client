@@ -25,6 +25,7 @@ public class Constants {
             public static final String RAVEN_JAVA_TYPE = "Raven-Java-Type";
             public static final String CHANGE_VECTOR = "@change-vector";
             public static final String EXPIRES = "@expires";
+            public static final String REFRESH = "@refresh";
             public static final String ALL_DOCUMENTS_COLLECTION = "@all_docs";
 
             public static final String EMPTY_COLLECTION = "@empty";

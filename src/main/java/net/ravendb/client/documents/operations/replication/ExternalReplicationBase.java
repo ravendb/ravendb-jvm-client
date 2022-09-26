@@ -8,6 +8,8 @@ public class ExternalReplicationBase extends ReplicationNode {
     private String connectionStringName;
     private String mentorNode;
 
+    private boolean pinToMentorNode;
+
     protected ExternalReplicationBase() {
     }
 
@@ -46,5 +48,13 @@ public class ExternalReplicationBase extends ReplicationNode {
 
     public void setMentorNode(String mentorNode) {
         this.mentorNode = mentorNode;
+    }
+
+    public boolean isPinToMentorNode() {
+        return pinToMentorNode;
+    }
+
+    public void setPinToMentorNode(boolean pinToMentorNode) {
+        this.pinToMentorNode = pinToMentorNode;
     }
 }

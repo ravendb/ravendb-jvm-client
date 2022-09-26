@@ -13,6 +13,8 @@ public abstract class OngoingTask {
     private String error;
     private String mentorNode;
 
+    private boolean pinToMentorNode;
+
     public long getTaskId() {
         return taskId;
     }
@@ -75,5 +77,13 @@ public abstract class OngoingTask {
 
     public void setMentorNode(String mentorNode) {
         this.mentorNode = mentorNode;
+    }
+
+    public boolean isPinToMentorNode() {
+        return pinToMentorNode;
+    }
+
+    public void setPinToMentorNode(boolean pinToMentorNode) {
+        this.pinToMentorNode = pinToMentorNode;
     }
 }

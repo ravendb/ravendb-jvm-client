@@ -17,6 +17,7 @@ public class PullReplicationDefinition {
 
     private String mentorNode;
 
+    private boolean pinToMentorNode;
     private EnumSet<PullReplicationMode> mode = EnumSet.of(PullReplicationMode.HUB_TO_SINK);
 
     private String name;
@@ -72,6 +73,14 @@ public class PullReplicationDefinition {
 
     public void setMentorNode(String mentorNode) {
         this.mentorNode = mentorNode;
+    }
+
+    public boolean isPinToMentorNode() {
+        return pinToMentorNode;
+    }
+
+    public void setPinToMentorNode(boolean pinToMentorNode) {
+        this.pinToMentorNode = pinToMentorNode;
     }
 
     @JsonSerialize(using = JsonExtensions.SharpEnumSetSerializer.class)

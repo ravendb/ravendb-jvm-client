@@ -1,6 +1,8 @@
 package net.ravendb.client.json;
 
 import com.fasterxml.jackson.databind.node.*;
+import com.google.common.collect.Sets;
+import net.ravendb.client.Constants;
 import net.ravendb.client.documents.session.IMetadataDictionary;
 import org.apache.commons.lang3.NotImplementedException;
 
@@ -8,13 +10,21 @@ import java.util.*;
 
 public class MetadataAsDictionary implements IMetadataDictionary {
 
+    private static final Set<String> RESERVED_METADATA_PROPERTIES = Sets.newHashSet(
+            Constants.Documents.Metadata.COLLECTION,
+            Constants.Documents.Metadata.ID,
+            Constants.Documents.Metadata.CHANGE_VECTOR,
+            Constants.Documents.Metadata.LAST_MODIFIED,
+            Constants.Documents.Metadata.RAVEN_JAVA_TYPE
+    );
+
     private IMetadataDictionary _parent;
     private String _parentKey;
 
     private Map<String, Object> _metadata;
     private final ObjectNode _source;
 
-    private boolean dirty = false;
+    private boolean _hasChanges;
 
     public MetadataAsDictionary(ObjectNode metadata) {
         this._source = metadata;
@@ -45,12 +55,11 @@ public class MetadataAsDictionary implements IMetadataDictionary {
     }
 
     public boolean isDirty() {
-        return dirty;
+        return _metadata != null && _hasChanges;
     }
 
     @SuppressWarnings("ConstantConditions")
     private void initialize(ObjectNode metadata) {
-        dirty = true;
         _metadata = new HashMap<>();
         Iterator<String> fields = metadata.fieldNames();
         while (fields.hasNext()) {
@@ -125,9 +134,14 @@ public class MetadataAsDictionary implements IMetadataDictionary {
         if (_metadata == null) {
             initialize(_source);
         }
-        dirty = true;
 
-        return _metadata.put(key, value);
+        Object currentValue = _metadata.get(key);
+        if (currentValue == null || !currentValue.equals(value)) {
+            _metadata.put(key, value);
+            _hasChanges = true;
+        }
+
+        return null;
     }
 
     @SuppressWarnings("ConstantConditions")
@@ -171,7 +185,8 @@ public class MetadataAsDictionary implements IMetadataDictionary {
         if (_metadata == null) {
             initialize(_source);
         }
-        dirty = true;
+
+        _hasChanges = true;
 
         _metadata.putAll(m);
     }
@@ -181,9 +196,23 @@ public class MetadataAsDictionary implements IMetadataDictionary {
         if (_metadata == null) {
             initialize(_source);
         }
-        dirty = true;
 
-        _metadata.clear();
+        Set<String> keysToRemove = new HashSet<>();
+
+        for (Entry<String, Object> item : _metadata.entrySet()) {
+            if (RESERVED_METADATA_PROPERTIES.contains(item.getKey())) {
+                continue;
+            }
+            keysToRemove.add(item.getKey());
+        }
+
+        if (!keysToRemove.isEmpty()) {
+            for (String s : keysToRemove) {
+                _metadata.remove(s);
+            }
+
+            _hasChanges = true;
+        }
     }
 
     @SuppressWarnings("ConstantConditions")
@@ -210,9 +239,12 @@ public class MetadataAsDictionary implements IMetadataDictionary {
         if (_metadata == null) {
             initialize(_source);
         }
-        dirty = true;
 
-        return _metadata.remove(key);
+        Object oldValue = _metadata.remove(key);
+
+        _hasChanges |= oldValue != null;
+
+        return oldValue;
     }
 
     @Override

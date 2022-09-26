@@ -33,14 +33,12 @@ public interface IDocumentSession extends CleanCloseable {
 
     /**
      * Marks the specified entity for deletion. The entity will be deleted when DocumentSession.saveChanges is called.
-     * WARNING: This method will not call beforeDelete listener!
      * @param id entity id
      */
     void delete(String id);
 
     /**
      * Marks the specified entity for deletion. The entity will be deleted when DocumentSession.saveChanges is called.
-     * WARNING: This method will not call beforeDelete listener!
      * @param id entity Id
      * @param expectedChangeVector Expected change vector of a document to delete.
      */

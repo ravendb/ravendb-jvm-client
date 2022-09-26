@@ -453,7 +453,8 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
     }
 
     /**
-     * Gets all time series names for the specified entity.
+     * Gets all time series names for the specified instance.
+     * Throws an exception if the instance is not tracked by the session.
      * @param instance Entity
      * @param <T> Entity class
      * @return time series names
@@ -482,9 +483,8 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
     }
 
     /**
-     * Gets the Change Vector for the specified entity.
-     * If the entity is transient, it will load the change vector from the store
-     * and associate the current state of the entity with the change vector from the server.
+     * Gets the Change Vector for the specified instance.
+     * Throws an exception if the instance is not tracked by the session.
      *
      * @param <T>      instance class
      * @param instance Instance to get change vector from
@@ -991,19 +991,36 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
 
     public abstract ClusterTransactionOperationsBase getClusterSession();
 
-    private static boolean updateMetadataModifications(DocumentInfo documentInfo) {
+    public static boolean updateMetadataModifications(IMetadataDictionary metadataDictionary, ObjectNode metadata) {
         boolean dirty = false;
         ObjectMapper mapper = JsonExtensions.getDefaultMapper();
-        if (documentInfo.getMetadataInstance() != null) {
-            if (documentInfo.getMetadataInstance().isDirty()) {
+        if (metadataDictionary != null) {
+            if (metadataDictionary.isDirty()) {
                 dirty = true;
             }
-            for (String prop : documentInfo.getMetadataInstance().keySet()) {
-                Object propValue = documentInfo.getMetadataInstance().get(prop);
+            for (String prop : metadataDictionary.keySet()) {
+                Object propValue = metadataDictionary.get(prop);
                 if (propValue == null || propValue instanceof MetadataAsDictionary && (((MetadataAsDictionary) propValue).isDirty())) {
                     dirty = true;
                 }
-                documentInfo.getMetadata().set(prop, mapper.convertValue(propValue, JsonNode.class));
+                metadata.set(prop, mapper.convertValue(propValue, JsonNode.class));
+            }
+
+            if (metadata.size() != metadataDictionary.size()) {
+                // looks like some props were removed
+                Set<String> toRemove = new HashSet<>();
+
+                Iterator<String> fields = metadata.fieldNames();
+                while (fields.hasNext()) {
+                    String field = fields.next();
+                    if (!metadataDictionary.containsKey(field)) {
+                        toRemove.add(field);
+                    }
+                }
+
+                for (String s : toRemove) {
+                    metadata.remove(s);
+                }
             }
         }
         return dirty;
@@ -1098,7 +1115,7 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
                     continue;
                 }
 
-                boolean dirtyMetadata = updateMetadataModifications(entity.getValue());
+                boolean dirtyMetadata = updateMetadataModifications(entity.getValue().getMetadataInstance(), entity.getValue().getMetadata());
 
                 ObjectNode document = entityToJson.convertEntityToJson(entity.getKey(), entity.getValue());
 
@@ -1117,7 +1134,7 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
                     EventHelper.invoke(onBeforeStore, this, beforeStoreEventArgs);
 
                     if (beforeStoreEventArgs.isMetadataAccessed()) {
-                        updateMetadataModifications(entity.getValue());
+                        updateMetadataModifications(entity.getValue().getMetadataInstance(), entity.getValue().getMetadata());
                     }
 
                     if (beforeStoreEventArgs.isMetadataAccessed() || entityChanged(document, entity.getValue(), null)) {
@@ -1277,7 +1294,7 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
 
     private void getAllEntitiesChanges(Map<String, List<DocumentsChanges>> changes) {
         for (Map.Entry<String, DocumentInfo> pair : documentsById) {
-            updateMetadataModifications(pair.getValue());
+            updateMetadataModifications(pair.getValue().getMetadataInstance(), pair.getValue().getMetadata());
             ObjectNode newObj = entityToJson.convertEntityToJson(pair.getValue().getEntity(), pair.getValue());
             entityChanged(newObj, pair.getValue(), changes);
         }

@@ -20,6 +20,10 @@ public interface IExternalReplication {
 
     void setMentorNode(String mentorNode);
 
+    boolean isPinToMentorNode();
+
+    void setPinToMentorNode(boolean pinToMentorNode);
+
     Duration getDelayReplicationFor();
 
     void setDelayReplicationFor(Duration delayReplicationFor);
