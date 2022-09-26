@@ -9,6 +9,8 @@ public abstract class EtlConfiguration<T extends ConnectionString> {
     private long taskId;
     private String name;
     private String mentorNode;
+
+    private boolean pinToMentorNode;
     private String connectionStringName;
     private List<Transformation> transforms = new ArrayList<>();
     private boolean disabled;
@@ -36,6 +38,14 @@ public abstract class EtlConfiguration<T extends ConnectionString> {
 
     public void setMentorNode(String mentorNode) {
         this.mentorNode = mentorNode;
+    }
+
+    public boolean isPinToMentorNode() {
+        return pinToMentorNode;
+    }
+
+    public void setPinToMentorNode(boolean pinToMentorNode) {
+        this.pinToMentorNode = pinToMentorNode;
     }
 
     public String getConnectionStringName() {

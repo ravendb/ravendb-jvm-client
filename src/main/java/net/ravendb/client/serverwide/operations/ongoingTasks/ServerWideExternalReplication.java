@@ -9,6 +9,8 @@ public class ServerWideExternalReplication implements IExternalReplication, ISer
     private long taskId;
     private String name;
     private String mentorNode;
+
+    private boolean pinToMentorNode;
     private Duration delayReplicationFor;
     private String[] topologyDiscoveryUrls;
     private String[] excludedDatabases;
@@ -51,6 +53,16 @@ public class ServerWideExternalReplication implements IExternalReplication, ISer
     @Override
     public void setMentorNode(String mentorNode) {
         this.mentorNode = mentorNode;
+    }
+
+    @Override
+    public boolean isPinToMentorNode() {
+        return pinToMentorNode;
+    }
+
+    @Override
+    public void setPinToMentorNode(boolean pinToMentorNode) {
+        this.pinToMentorNode = pinToMentorNode;
     }
 
     @Override

@@ -144,9 +144,8 @@ public interface IAdvancedDocumentSessionOperations {
     String getDocumentId(Object entity);
 
     /**
-     * Gets the metadata for the specified entity.
-     * If the entity is transient, it will load the metadata from the store
-     * and associate the current state of the entity with the metadata from the server.
+     * Gets the metadata for the specified instance.
+     * Throws an exception if the instance is not tracked by the session.
      * @param <T> class of instance
      * @param instance instance to get metadata from
      * @return Entity metadata
@@ -154,9 +153,8 @@ public interface IAdvancedDocumentSessionOperations {
     <T> IMetadataDictionary getMetadataFor(T instance);
 
     /**
-     * Gets change vector for the specified entity.
-     * If the entity is transient, it will load the metadata from the store
-     * and associate the current state of the entity with the metadata from the server.
+     * Gets change vector for the specified instance.
+     * Throws an exception if the instance is not tracked by the session.
      * @param <T> Class of instance
      * @param instance Instance to get metadata from
      * @return Change vector

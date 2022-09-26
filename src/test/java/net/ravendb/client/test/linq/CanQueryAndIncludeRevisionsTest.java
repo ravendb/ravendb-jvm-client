@@ -84,10 +84,30 @@ public class CanQueryAndIncludeRevisionsTest extends RemoteTestBase {
 
                 assertThat(revision1)
                         .isNotNull();
+                assertThat(revision1.getFirstRevision())
+                        .isNull();
+                assertThat(revision1.getSecondRevision())
+                        .isNull();
+                assertThat(revision1.getChangeVectors())
+                        .isNull();
+
                 assertThat(revision2)
                         .isNotNull();
+                assertThat(revision2.getFirstRevision())
+                        .isNotNull();
+                assertThat(revision2.getSecondRevision())
+                        .isNull();
+                assertThat(revision2.getChangeVectors())
+                        .isNull();
+
                 assertThat(revision3)
                         .isNotNull();
+                assertThat(revision3.getFirstRevision())
+                        .isNotNull();
+                assertThat(revision3.getSecondRevision())
+                        .isNotNull();
+                assertThat(revision3.getChangeVectors())
+                        .isNull();
 
                 assertThat(session.advanced().getNumberOfRequests())
                         .isEqualTo(1);
@@ -127,6 +147,12 @@ public class CanQueryAndIncludeRevisionsTest extends RemoteTestBase {
 
                 assertThat(revision)
                         .isNotNull();
+                assertThat(revision.getFirstRevision())
+                        .isNull();
+                assertThat(revision.getSecondRevision())
+                        .isNull();
+                assertThat(revision.getChangeVectors())
+                        .isNull();
                 assertThat(session.advanced().getNumberOfRequests())
                         .isEqualTo(1);
             }
@@ -157,6 +183,7 @@ public class CanQueryAndIncludeRevisionsTest extends RemoteTestBase {
                         .hasSize(1);
 
                 changeVector = metadatas.get(0).getString(Constants.Documents.Metadata.CHANGE_VECTOR);
+                session.advanced().patch(id, "firstRevision", changeVector);
                 session.saveChanges();
                 cvList.add(changeVector);
 
@@ -164,11 +191,14 @@ public class CanQueryAndIncludeRevisionsTest extends RemoteTestBase {
                 changeVector = metadatas.get(0).getString(Constants.Documents.Metadata.CHANGE_VECTOR);
                 cvList.add(changeVector);
 
+                session.advanced().patch(id, "secondRevision", changeVector);
+
                 session.saveChanges();
                 metadatas = session.advanced().revisions().getMetadataFor(id);
                 changeVector = metadatas.get(0).getString(Constants.Documents.Metadata.CHANGE_VECTOR);
 
                 cvList.add(changeVector);
+                session.advanced().patch(id, "thirdRevision", changeVector);
                 session.advanced().patch(id, "changeVectors", cvList);
                 session.saveChanges();
             }
@@ -179,6 +209,33 @@ public class CanQueryAndIncludeRevisionsTest extends RemoteTestBase {
                 User revision1 = session.advanced().revisions().get(User.class, cvList.get(0));
                 User revision2 = session.advanced().revisions().get(User.class, cvList.get(1));
                 User revision3 = session.advanced().revisions().get(User.class, cvList.get(2));
+
+                assertThat(revision1)
+                        .isNotNull();
+                assertThat(revision1.getFirstRevision())
+                        .isNull();
+                assertThat(revision1.getSecondRevision())
+                        .isNull();
+                assertThat(revision1.getChangeVectors())
+                        .isNull();
+
+                assertThat(revision2)
+                        .isNotNull();
+                assertThat(revision2.getFirstRevision())
+                        .isNotNull();
+                assertThat(revision2.getSecondRevision())
+                        .isNull();
+                assertThat(revision2.getChangeVectors())
+                        .isNull();
+
+                assertThat(revision3)
+                        .isNotNull();
+                assertThat(revision3.getFirstRevision())
+                        .isNotNull();
+                assertThat(revision3.getSecondRevision())
+                        .isNotNull();
+                assertThat(revision3.getChangeVectors())
+                        .isNull();
 
                 assertThat(session.advanced().getNumberOfRequests())
                         .isEqualTo(1);
@@ -241,12 +298,33 @@ public class CanQueryAndIncludeRevisionsTest extends RemoteTestBase {
 
                 assertThat(revision1)
                         .isNotNull();
+                assertThat(revision1.getFirstRevision())
+                        .isNull();
+                assertThat(revision1.getSecondRevision())
+                        .isNull();
+                assertThat(revision1.getChangeVectors())
+                        .isNull();
                 assertThat(revision2)
                         .isNotNull();
+                assertThat(revision2.getFirstRevision())
+                        .isNotNull();
+                assertThat(revision2.getSecondRevision())
+                        .isNull();
+                assertThat(revision2.getChangeVectors())
+                        .isNull();
                 assertThat(revision3)
                         .isNotNull();
+                assertThat(revision3.getFirstRevision())
+                        .isNotNull();
+                assertThat(revision3.getSecondRevision())
+                        .isNotNull();
+                assertThat(revision3.getChangeVectors())
+                        .isNull();
                 assertThat(revisions)
                         .isNotNull();
+
+                assertThat(revisions)
+                        .hasSize(3);
 
                 assertThat(session.advanced().getNumberOfRequests())
                         .isEqualTo(1);
@@ -276,6 +354,7 @@ public class CanQueryAndIncludeRevisionsTest extends RemoteTestBase {
                 changeVector = metadatas.get(0).getString(Constants.Documents.Metadata.CHANGE_VECTOR);
                 session.advanced().patch(id, "changeVector", changeVector);
                 session.advanced().patch(id, "changeVectors", Arrays.asList(changeVector));
+                session.saveChanges();
             }
 
             Date dateTime = new Date();
@@ -338,7 +417,11 @@ public class CanQueryAndIncludeRevisionsTest extends RemoteTestBase {
                 User revision = session.advanced().revisions().get(User.class, changeVector);
                 assertThat(users)
                         .isNotNull();
+                assertThat(users)
+                        .hasSize(1);
                 assertThat(revision)
+                        .isNotNull();
+                assertThat(revision.getName())
                         .isNotNull();
                 assertThat(session.advanced().getNumberOfRequests())
                         .isEqualTo(1);
@@ -384,6 +467,15 @@ public class CanQueryAndIncludeRevisionsTest extends RemoteTestBase {
                 User revision = session.advanced().revisions().get(User.class, changeVector);
                 assertThat(revision)
                         .isNotNull();
+                assertThat(revision.getName())
+                        .isNotNull();
+                assertThat(query)
+                        .isNotNull();
+                assertThat(query)
+                        .hasSize(1);
+                assertThat(query.get(0).getName())
+                        .isNotNull();
+
                 assertThat(session.advanced().getNumberOfRequests())
                         .isEqualTo(1);
             }
@@ -423,7 +515,13 @@ public class CanQueryAndIncludeRevisionsTest extends RemoteTestBase {
 
                 assertThat(query)
                         .isNotNull();
+                assertThat(query)
+                        .hasSize(1);
+                assertThat(query.get(0).getName())
+                        .isNotNull();
                 assertThat(revision)
+                        .isNotNull();
+                assertThat(revision.getName())
                         .isNotNull();
                 assertThat(session.advanced().getNumberOfRequests())
                         .isEqualTo(1);

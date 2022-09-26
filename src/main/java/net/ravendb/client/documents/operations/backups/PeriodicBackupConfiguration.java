@@ -7,6 +7,8 @@ public class PeriodicBackupConfiguration extends BackupConfiguration {
     private boolean disabled;
     private String mentorNode;
 
+    private boolean pinToMentorNode;
+
     private RetentionPolicy retentionPolicy;
 
     private String fullBackupFrequency;
@@ -42,6 +44,14 @@ public class PeriodicBackupConfiguration extends BackupConfiguration {
 
     public void setMentorNode(String mentorNode) {
         this.mentorNode = mentorNode;
+    }
+
+    public boolean isPinToMentorNode() {
+        return pinToMentorNode;
+    }
+
+    public void setPinToMentorNode(boolean pinToMentorNode) {
+        this.pinToMentorNode = pinToMentorNode;
     }
 
     public RetentionPolicy getRetentionPolicy() {

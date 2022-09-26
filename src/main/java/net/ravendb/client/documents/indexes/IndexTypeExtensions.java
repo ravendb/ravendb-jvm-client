@@ -22,7 +22,9 @@ public class IndexTypeExtensions {
     }
 
     /**
+     * @param type index type
      * @deprecated use isStatic
+     * @return true/false
      */
     public static boolean isStale(IndexType type) {
         return isStatic(type);

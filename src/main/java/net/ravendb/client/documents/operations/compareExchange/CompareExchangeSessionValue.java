@@ -11,6 +11,7 @@ import net.ravendb.client.documents.commands.batches.PutCompareExchangeCommandDa
 import net.ravendb.client.documents.conventions.DocumentConventions;
 import net.ravendb.client.documents.session.EntityToJson;
 import net.ravendb.client.documents.session.IMetadataDictionary;
+import net.ravendb.client.documents.session.InMemoryDocumentSessionOperations;
 import net.ravendb.client.exceptions.RavenException;
 import org.apache.commons.lang3.ClassUtils;
 
@@ -70,7 +71,7 @@ public class CompareExchangeSessionValue {
                     }
                 }
 
-                CompareExchangeValue<T> value = new CompareExchangeValue<>(_key, _index, entity);
+                CompareExchangeValue<T> value = new CompareExchangeValue<>(_key, _index, entity, _originalValue != null ? _originalValue.getMetadata() : null);
                 _value = value;
 
                 return value;
@@ -126,17 +127,27 @@ public class CompareExchangeSessionValue {
                 Object entity = CompareExchangeValueJsonConverter.convertToJson(_value.getValue(), conventions);
 
                 ObjectNode entityJson = entity instanceof ObjectNode ? (ObjectNode) entity : null;
-                ObjectNode metadata = null;
+
+                ObjectNode metadata = _originalValue != null ? (ObjectNode) _originalValue.getValue().get(Constants.Documents.Metadata.KEY) : null;
+
+                boolean metadataHasChanged = false;
+
                 if (_value.hasMetadata() && _value.getMetadata().size() != 0) {
-                    metadata = prepareMetadataForPut(_key, _value.getMetadata(), conventions);
+                    if (metadata == null) {
+                        metadataHasChanged = true;
+                        metadata = prepareMetadataForPut(_key, _value.getMetadata(), conventions); //create new metadata (because there wasn't any metadata before)
+                    } else {
+                        validateMetadataForPut(_key, _value.getMetadata());
+                        metadataHasChanged = InMemoryDocumentSessionOperations.updateMetadataModifications(_value.getMetadata(), metadata); //add modifications to the existing metadata
+                    }
                 }
                 ObjectNode entityToInsert = null;
-                if (entityJson == null) {
+                if (entityJson == null || metadataHasChanged) {
                     entityJson = entityToInsert = convertEntity(_key, entity, conventions.getEntityMapper(), metadata);
                 }
 
                 CompareExchangeValue<ObjectNode> newValue = new CompareExchangeValue<>(_key, _index, entityJson);
-                boolean hasChanged = _originalValue == null || hasChanged(_originalValue, newValue);
+                boolean hasChanged = _originalValue == null || metadataHasChanged || hasChanged(_originalValue, newValue);
                 _originalValue = newValue;
 
                 if (!hasChanged) {
@@ -212,6 +223,12 @@ public class CompareExchangeSessionValue {
     }
 
     public static ObjectNode prepareMetadataForPut(String key, IMetadataDictionary metadataDictionary, DocumentConventions conventions) {
+        validateMetadataForPut(key, metadataDictionary);
+
+        return conventions.getEntityMapper().convertValue(metadataDictionary, ObjectNode.class);
+    }
+
+    private static void validateMetadataForPut(String key, IMetadataDictionary metadataDictionary) {
         if (metadataDictionary.containsKey(Constants.Documents.Metadata.EXPIRES)) {
             Object obj = metadataDictionary.get(Constants.Documents.Metadata.EXPIRES);
             if (obj == null) {
@@ -221,8 +238,6 @@ public class CompareExchangeSessionValue {
                 throwInvalidExpiresMetadata("The class of " + Constants.Documents.Metadata.EXPIRES + " metadata for compare exchange '" + key + " is not valid. Use the following type: Date or string.");
             }
         }
-
-        return conventions.getEntityMapper().convertValue(metadataDictionary, ObjectNode.class);
     }
 
     private static void throwInvalidExpiresMetadata(String message) {

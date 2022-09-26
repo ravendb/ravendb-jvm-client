@@ -11,6 +11,8 @@ public class SubscriptionCreationOptions {
     private Consumer<ISubscriptionIncludeBuilder> includes;
     private String changeVector;
     private String mentorNode;
+
+    private boolean pinToMentorNode;
     private boolean disabled;
 
     public Consumer<ISubscriptionIncludeBuilder> getIncludes() {
@@ -47,6 +49,14 @@ public class SubscriptionCreationOptions {
 
     public String getMentorNode() {
         return mentorNode;
+    }
+
+    public boolean isPinToMentorNode() {
+        return pinToMentorNode;
+    }
+
+    public void setPinToMentorNode(boolean pinToMentorNode) {
+        this.pinToMentorNode = pinToMentorNode;
     }
 
     public void setMentorNode(String mentorNode) {

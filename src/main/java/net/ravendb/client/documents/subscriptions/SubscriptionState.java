@@ -9,6 +9,8 @@ public class SubscriptionState {
     private long subscriptionId;
     private String subscriptionName;
     private String mentorNode;
+
+    private boolean pinToMentorNode;
     private String nodeTag;
     private Date lastBatchAckTime;
     private Date lastClientConnectionTime;
@@ -52,6 +54,14 @@ public class SubscriptionState {
 
     public void setMentorNode(String mentorNode) {
         this.mentorNode = mentorNode;
+    }
+
+    public boolean isPinToMentorNode() {
+        return pinToMentorNode;
+    }
+
+    public void setPinToMentorNode(boolean pinToMentorNode) {
+        this.pinToMentorNode = pinToMentorNode;
     }
 
     public String getNodeTag() {
