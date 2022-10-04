@@ -7,7 +7,8 @@ import net.ravendb.client.documents.session.timeSeries.TypedTimeSeriesEntry;
 import java.util.Arrays;
 import java.util.Date;
 
-public class SessionDocumentTypedTimeSeries<T> extends SessionTimeSeriesBase implements ISessionDocumentTypedTimeSeries<T> {
+public class SessionDocumentTypedTimeSeries<T> extends SessionTimeSeriesBase
+        implements ISessionDocumentTypedTimeSeries<T>, ISessionDocumentTypedIncrementalTimeSeries<T> {
 
     private final Class<T> _clazz;
 

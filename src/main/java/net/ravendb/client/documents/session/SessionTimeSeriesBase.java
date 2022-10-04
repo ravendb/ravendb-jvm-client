@@ -6,6 +6,7 @@ import net.ravendb.client.Constants;
 import net.ravendb.client.documents.IdTypeAndName;
 import net.ravendb.client.documents.commands.batches.CommandType;
 import net.ravendb.client.documents.commands.batches.ICommandData;
+import net.ravendb.client.documents.commands.batches.IncrementalTimeSeriesBatchCommandData;
 import net.ravendb.client.documents.commands.batches.TimeSeriesBatchCommandData;
 import net.ravendb.client.documents.operations.timeSeries.*;
 import net.ravendb.client.documents.session.loaders.ITimeSeriesIncludeBuilder;
@@ -123,6 +124,39 @@ public class SessionTimeSeriesBase {
             deletes.add(op);
             session.defer(new TimeSeriesBatchCommandData(docId, name, null, deletes));
         }
+    }
+
+    public void increment(Date timestamp, double[] values) {
+        DocumentInfo documentInfo = session.documentsById.getValue(docId);
+        if (documentInfo != null && session.deletedEntities.contains(documentInfo.getEntity())) {
+            throwDocumentAlreadyDeletedInSession(docId, name);
+        }
+
+        TimeSeriesOperation.IncrementOperation op = new TimeSeriesOperation.IncrementOperation();
+        op.setTimestamp(timestamp);
+        op.setValues(values);
+
+        ICommandData command = session.deferredCommandsMap.get(IdTypeAndName.create(docId, CommandType.TIME_SERIES_WITH_INCREMENTS, name));
+        if (command != null) {
+            IncrementalTimeSeriesBatchCommandData tsCmd = (IncrementalTimeSeriesBatchCommandData) command;
+            tsCmd.getTimeSeries().increment(op);
+        } else {
+            List<TimeSeriesOperation.IncrementOperation> list = new ArrayList<>();
+            list.add(op);
+            session.defer(new IncrementalTimeSeriesBatchCommandData(docId, name, list));
+        }
+    }
+
+    public void increment(double[] values) {
+        increment(new Date(), values);
+    }
+
+    public void increment(Date timestamp, double value) {
+        increment(timestamp, new double[] { value });
+    }
+
+    public void increment(double value) {
+        increment(new Date(), value);
     }
 
     private static void throwDocumentAlreadyDeletedInSession(String documentId, String timeSeries) {

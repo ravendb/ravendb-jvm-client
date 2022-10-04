@@ -32,6 +32,7 @@ import net.ravendb.client.documents.session.loaders.IncludeBuilderBase;
 import net.ravendb.client.documents.session.operations.QueryOperation;
 import net.ravendb.client.documents.session.operations.lazy.LazyQueryOperation;
 import net.ravendb.client.documents.session.tokens.*;
+import net.ravendb.client.exceptions.InvalidQueryException;
 import net.ravendb.client.extensions.JsonExtensions;
 import net.ravendb.client.primitives.CleanCloseable;
 import net.ravendb.client.primitives.EventHelper;
@@ -64,6 +65,11 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
      */
     protected boolean negate;
 
+    /**
+     *  Whether to negate the next operation in Filter
+     */
+    protected boolean negateFilter;
+
     private final String indexName;
     private final String collectionName;
     private int _currentClauseDepth;
@@ -77,6 +83,8 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
     public String getCollectionName() {
         return collectionName;
     }
+
+    protected Stack<Boolean> filterModeStack = new Stack<>();
 
     protected Parameters queryParameters = new Parameters();
 
@@ -105,11 +113,18 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
 
     protected List<QueryToken> withTokens = new LinkedList<>();
 
+    protected List<QueryToken> filterTokens = new LinkedList<>();
+
     protected QueryToken graphRawQuery;
 
     protected int start;
 
     private final DocumentConventions _conventions;
+
+    /**
+     * Limits filter clause.
+     */
+    protected Integer filterLimit;
 
     protected Duration timeout;
 
@@ -129,6 +144,10 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
     protected ProjectionBehavior projectionBehavior;
 
     private String parameterPrefix = "p";
+
+    protected boolean isFilterActive() {
+        return !filterModeStack.empty() && filterModeStack.peek();
+    }
 
     public boolean isDistinct() {
         return !selectTokens.isEmpty() && selectTokens.get(0) instanceof DistinctToken;
@@ -211,7 +230,7 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
     }
 
     public void _usingDefaultOperator(QueryOperator operator) {
-        if (!whereTokens.isEmpty()) {
+        if (!getCurrentWhereTokens().isEmpty()) {
             throw new IllegalStateException("Default operator can only be set before any where clause is added.");
         }
 
@@ -675,6 +694,8 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
      */
     @Override
     public void _whereIn(String fieldName, Collection<?> values, boolean exact) {
+        assertMethodIsCurrentlySupported("whereIn");
+
         fieldName = ensureValidFieldName(fieldName, false);
 
         List<QueryToken> tokens = getCurrentWhereTokens();
@@ -690,6 +711,8 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
     }
 
     public void _whereStartsWith(String fieldName, Object value, boolean exact) {
+        assertMethodIsCurrentlySupported("whereStartsWith");
+
         WhereParams whereParams = new WhereParams();
         whereParams.setFieldName(fieldName);
         whereParams.setValue(value);
@@ -717,6 +740,8 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
      * @param value Values to find
      */
     public void _whereEndsWith(String fieldName, Object value, boolean exact) {
+        assertMethodIsCurrentlySupported("whereEndsWith");
+
         WhereParams whereParams = new WhereParams();
         whereParams.setFieldName(fieldName);
         whereParams.setValue(value);
@@ -748,6 +773,7 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
      */
     @Override
     public void _whereBetween(String fieldName, Object start, Object end, boolean exact) {
+        assertMethodIsCurrentlySupported("whereBetween");
         fieldName = ensureValidFieldName(fieldName, false);
 
         List<QueryToken> tokens = getCurrentWhereTokens();
@@ -866,6 +892,7 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
      */
     @Override
     public void _whereRegex(String fieldName, String pattern) {
+        assertMethodIsCurrentlySupported("whereRegex");
         fieldName = ensureValidFieldName(fieldName, false);
 
         List<QueryToken> tokens = getCurrentWhereTokens();
@@ -921,6 +948,23 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
         tokens.add(QueryOperatorToken.OR);
     }
 
+    protected CleanCloseable setFilterMode(boolean on) {
+        return new FilterModeScope(filterModeStack, on);
+    }
+
+    private static class FilterModeScope implements CleanCloseable {
+        private final Stack<Boolean> _modeStack;
+
+        public FilterModeScope(Stack<Boolean> modeStack, boolean on) {
+            _modeStack = modeStack;
+            _modeStack.add(on);
+        }
+
+        public void close() {
+            _modeStack.pop();
+        }
+    }
+
     /**
      * Specifies a boost weight to the last where clause.
      * The higher the boost factor, the more relevant the term will be.
@@ -933,6 +977,8 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
      */
     @Override
     public void _boost(double boost) {
+        assertMethodIsCurrentlySupported("boost");
+
         if (boost == 1.0) {
             return;
         }
@@ -982,6 +1028,8 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
      */
     @Override
     public void _fuzzy(double fuzzy) {
+        assertMethodIsCurrentlySupported("fuzzy");
+
         List<QueryToken> tokens = getCurrentWhereTokens();
         if (tokens.isEmpty()) {
             throw new IllegalStateException("Fuzzy can only be used right after where clause");
@@ -1011,6 +1059,8 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
      */
     @Override
     public void _proximity(int proximity) {
+        assertMethodIsCurrentlySupported("proximity");
+
         List<QueryToken> tokens = getCurrentWhereTokens();
         if (tokens.isEmpty()) {
             throw new IllegalStateException("Proximity can only be used right after search clause");
@@ -1175,6 +1225,8 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
      */
     @Override
     public void _search(String fieldName, String searchTerms, SearchOperator operator) {
+        assertMethodIsCurrentlySupported("search");
+
         List<QueryToken> tokens = getCurrentWhereTokens();
         appendOperatorIfNeeded(tokens);
 
@@ -1208,6 +1260,7 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
         buildOrderBy(queryText);
 
         buildLoad(queryText);
+        buildFilter(queryText);
         buildSelect(queryText);
         buildInclude(queryText);
 
@@ -1241,6 +1294,11 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
                     .append(addQueryParameter(start))
                     .append(", $")
                     .append(addQueryParameter(pageSize));
+        }
+        if (!filterTokens.isEmpty() && filterLimit != null) {
+            queryText
+                    .append(" filter_limit $")
+                    .append(addQueryParameter(filterLimit));
         }
     }
 
@@ -1346,6 +1404,8 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
 
     @Override
     public void _containsAny(String fieldName, Collection<?> values) {
+        assertMethodIsCurrentlySupported("containsAny");
+
         fieldName = ensureValidFieldName(fieldName, false);
 
         List<QueryToken> tokens = getCurrentWhereTokens();
@@ -1359,6 +1419,7 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
 
     @Override
     public void _containsAll(String fieldName, Collection<?> values) {
+        assertMethodIsCurrentlySupported("containsAll");
         fieldName = ensureValidFieldName(fieldName, false);
 
         List<QueryToken> tokens = getCurrentWhereTokens();
@@ -1504,6 +1565,20 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
 
             token.writeTo(writer);
             isFirst = false;
+        }
+    }
+
+    private void buildFilter(StringBuilder writer) {
+        if (filterTokens.isEmpty()) {
+            return;
+        }
+
+        writer
+                .append(" filter ");
+
+        for (int i = 0; i < filterTokens.size(); i++) {
+            DocumentQueryHelper.addSpaceIfNeeded(i > 0 ? filterTokens.get(i - 1) : null, filterTokens.get(i), writer);
+            filterTokens.get(i).writeTo(writer);
         }
     }
 
@@ -1686,7 +1761,20 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
         return parameterName;
     }
 
+    private void assertMethodIsCurrentlySupported(String methodName) {
+        if (!isFilterActive()) {
+            return;
+        }
+
+        throw new InvalidQueryException(methodName + " is currently unsupported for 'filter'. If you want to use "
+                + methodName + " in where method you have to put it before 'filter'");
+    }
+
     private List<QueryToken> getCurrentWhereTokens() {
+        if (isFilterActive()) {
+            return filterTokens;
+        }
+
         if (!_isInMoreLikeThis) {
             return whereTokens;
         }
@@ -1703,6 +1791,10 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
         } else {
             throw new IllegalStateException("Last token is not MoreLikeThisToken");
         }
+    }
+
+    private List<QueryToken> getCurrentFilterTokens() {
+        return filterTokens;
     }
 
     protected void updateFieldsToFetchToken(FieldsToFetchToken fieldsToFetch) {
@@ -1800,6 +1892,16 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
         String[] fields = new String[] { Constants.TimeSeries.SELECT_FIELD_NAME + "(" + builder.getQueryText() + ")" };
         String[] projections = new String[] { Constants.TimeSeries.QUERY_FUNCTION } ;
         return new QueryData(fields, projections);
+    }
+
+    public void _addFilterLimit(int filterLimit) {
+        if (filterLimit <= 0) {
+            throw new IllegalArgumentException("filter_limit need to be positive and bigger than 0.");
+        }
+
+        if (filterLimit != Integer.MAX_VALUE) {
+            this.filterLimit = filterLimit;
+        }
     }
 
     protected List<Consumer<IndexQuery>> beforeQueryExecutedCallback = new ArrayList<>();

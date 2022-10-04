@@ -20,6 +20,7 @@ public class QueryResult extends GenericQueryResult<ArrayNode, ObjectNode> {
         queryResult.setIncludedPaths(getIncludedPaths());
         queryResult.setStale(isStale());
         queryResult.setSkippedResults(getSkippedResults());
+        queryResult.setScannedResults(getScannedResults());
         queryResult.setTotalResults(getTotalResults());
         queryResult.setLongTotalResults(getLongTotalResults());
         queryResult.setHighlightings(getHighlightings() != null ? new HashMap<>(getHighlightings()) : null);

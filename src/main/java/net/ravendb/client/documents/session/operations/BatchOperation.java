@@ -163,6 +163,7 @@ public class BatchOperation {
                     handleCounters(batchResult);
                     break;
                 case TIME_SERIES:
+                case TIME_SERIES_WITH_INCREMENTS:
                     //TODO: RavenDB-13474 add to time series cache
                     break;
                 case TIME_SERIES_COPY:
@@ -546,6 +547,9 @@ public class BatchOperation {
         return jsonNode.asBoolean();
     }
 
+    private static void throwInvalidValue(String arg, String fieldName) {
+        throw new IllegalArgumentException("'" + arg + "' is not a valid value for field " + fieldName);
+    }
 
     private static void throwMissingField(CommandType type, String fieldName) {
         throw new IllegalStateException(type + " response is invalid. Field '" + fieldName + "' is missing.");

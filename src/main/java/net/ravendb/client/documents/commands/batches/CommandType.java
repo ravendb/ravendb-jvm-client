@@ -19,11 +19,13 @@ public enum CommandType {
 
     COUNTERS,
     TIME_SERIES,
+    TIME_SERIES_WITH_INCREMENTS,
     TIME_SERIES_BULK_INSERT,
     TIME_SERIES_COPY,
 
     BATCH_PATCH,
 
+    JSON_PATCH,
     CLIENT_ANY_COMMAND,
     CLIENT_MODIFY_DOCUMENT_COMMAND;
 
@@ -57,6 +59,8 @@ public enum CommandType {
                 return FORCE_REVISION_CREATION;
             case "TimeSeries":
                 return TIME_SERIES;
+            case "TimeSeriesWithIncrements":
+                return TIME_SERIES_WITH_INCREMENTS;
             default:
                 throw new IllegalArgumentException("Unable to parse type: " + input);
         }

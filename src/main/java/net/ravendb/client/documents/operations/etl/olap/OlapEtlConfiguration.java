@@ -1,6 +1,7 @@
 package net.ravendb.client.documents.operations.etl.olap;
 
 import net.ravendb.client.documents.operations.etl.EtlConfiguration;
+import net.ravendb.client.documents.operations.etl.EtlType;
 
 import java.util.List;
 
@@ -9,6 +10,11 @@ public class OlapEtlConfiguration extends EtlConfiguration<OlapConnectionString>
     private OlapEtlFileFormat format;
     private String customPartitionValue;
     private List<OlapEtlTable> olapTables;
+
+    @Override
+    public EtlType getEtlType() {
+        return EtlType.OLAP;
+    }
 
     public String getRunFrequency() {
         return runFrequency;

@@ -20,10 +20,7 @@ import net.ravendb.client.http.ServerNode;
 import net.ravendb.client.primitives.*;
 import net.ravendb.client.serverwide.commands.GetTcpInfoCommand;
 import net.ravendb.client.serverwide.commands.TcpConnectionInfo;
-import net.ravendb.client.serverwide.tcp.TcpConnectionHeaderMessage;
-import net.ravendb.client.serverwide.tcp.TcpConnectionHeaderResponse;
-import net.ravendb.client.serverwide.tcp.TcpNegotiateParameters;
-import net.ravendb.client.serverwide.tcp.TcpNegotiation;
+import net.ravendb.client.serverwide.tcp.*;
 import net.ravendb.client.util.TcpUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.ObjectUtils;
@@ -37,6 +34,7 @@ import java.security.GeneralSecurityException;
 import java.time.Duration;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
@@ -57,8 +55,21 @@ public class SubscriptionWorker<T> implements CleanCloseable {
     private int _forcedTopologyUpdateAttempts = 0;
 
     private List<Consumer<SubscriptionBatch<T>>> afterAcknowledgment;
+    private List<Consumer<SubscriptionWorker>> onEstablishedSubscriptionConnection;
     private List<Consumer<Exception>> onSubscriptionConnectionRetry;
     private List<Consumer<Exception>> onUnexpectedSubscriptionError;
+
+    public String getWorkerId() {
+        return _options.getWorkerId();
+    }
+
+    public void addOnEstablishedSubscriptionConnection(Consumer<SubscriptionWorker> handler) {
+        onEstablishedSubscriptionConnection.add(handler);
+    }
+
+    public void removeOnEstablishedSubscriptionConnection(Consumer<SubscriptionWorker> handler) {
+        onEstablishedSubscriptionConnection.remove(handler);
+    }
 
     public void addAfterAcknowledgmentListener(Consumer<SubscriptionBatch<T>> handler) {
         afterAcknowledgment.add(handler);
@@ -99,6 +110,7 @@ public class SubscriptionWorker<T> implements CleanCloseable {
 
         afterAcknowledgment = new ArrayList<>();
         onSubscriptionConnectionRetry = new ArrayList<>();
+        onEstablishedSubscriptionConnection = new ArrayList<>();
         onUnexpectedSubscriptionError = new ArrayList<>();
     }
 
@@ -120,7 +132,7 @@ public class SubscriptionWorker<T> implements CleanCloseable {
 
             if (_subscriptionTask != null && waitForSubscriptionTask) {
                 try {
-                    _subscriptionTask.get();
+                    _subscriptionTask.get(60, TimeUnit.SECONDS);
                 } catch (Exception e) {
                     // just need to wait for it to end
                 }
@@ -159,6 +171,8 @@ public class SubscriptionWorker<T> implements CleanCloseable {
 
     private ServerNode _redirectNode;
     private RequestExecutor _subscriptionLocalRequestExecutor;
+
+    protected Integer subscriptionTcpVersion;
 
     public String getCurrentNodeTag() {
         if (_redirectNode != null) {
@@ -260,6 +274,12 @@ public class SubscriptionWorker<T> implements CleanCloseable {
             Socket socket
     ) throws IOException {
 
+        boolean compressionSupport = false;
+        int version = subscriptionTcpVersion != null ? subscriptionTcpVersion : TcpConnectionHeaderMessage.SUBSCRIPTION_TCP_VERSION;
+        if (version >= 53_000 && !_store.getConventions().isDisableTcpCompression()) {
+            compressionSupport = true;
+        }
+
         String databaseName = _store.getEffectiveDatabase(_dbName);
 
         TcpNegotiateParameters parameters = new TcpNegotiateParameters();
@@ -270,6 +290,8 @@ public class SubscriptionWorker<T> implements CleanCloseable {
         parameters.setDestinationNodeTag(getCurrentNodeTag());
         parameters.setDestinationUrl(chosenUrl);
         parameters.setDestinationServerId(tcpInfo.getServerId());
+        parameters.setLicensedFeatures(new LicensedFeatures());
+        parameters.getLicensedFeatures().setDataCompression(compressionSupport);
 
         return TcpNegotiation.negotiateProtocolVersion(socket, parameters);
     }
@@ -306,7 +328,7 @@ public class SubscriptionWorker<T> implements CleanCloseable {
         }
     }
 
-    private int readServerResponseAndGetVersion(String url, Socket socket) {
+    private TcpConnectionHeaderMessage.NegotiationResponse readServerResponseAndGetVersion(String url, Socket socket) {
         try {
             //Reading reply from server
             ensureParser(socket);
@@ -314,13 +336,20 @@ public class SubscriptionWorker<T> implements CleanCloseable {
             TcpConnectionHeaderResponse reply = JsonExtensions.getDefaultMapper().treeToValue(response, TcpConnectionHeaderResponse.class);
 
             switch (reply.getStatus()) {
-                case OK:
-                    return reply.getVersion();
+                case OK: {
+                    TcpConnectionHeaderMessage.NegotiationResponse result = new TcpConnectionHeaderMessage.NegotiationResponse();
+                    result.version = reply.getVersion();
+                    result.licensedFeatures = reply.getLicensedFeatures();
+                    return result;
+                }
                 case AUTHORIZATION_FAILED:
                     throw new AuthorizationException("Cannot access database " + _dbName + " because " + reply.getMessage());
                 case TCP_VERSION_MISMATCH:
                     if (reply.getVersion() != TcpNegotiation.OUT_OF_RANGE_STATUS) {
-                        return reply.getVersion();
+                        TcpConnectionHeaderMessage.NegotiationResponse result = new TcpConnectionHeaderMessage.NegotiationResponse();
+                        result.version = reply.getVersion();
+                        result.licensedFeatures = reply.getLicensedFeatures();
+                        return result;
                     }
                     //Kindly request the server to drop the connection
                     sendDropMessage(reply);
@@ -328,7 +357,10 @@ public class SubscriptionWorker<T> implements CleanCloseable {
                 case INVALID_NETWORK_TOPOLOGY:
                     throw new InvalidNetworkTopologyException("Failed to connect to url " + url + " because " + reply.getMessage());
             }
-            return reply.getVersion();
+            TcpConnectionHeaderMessage.NegotiationResponse result = new TcpConnectionHeaderMessage.NegotiationResponse();
+            result.version = reply.getVersion();
+            result.licensedFeatures = reply.getLicensedFeatures();
+            return result;
         } catch (IOException e) {
             throw ExceptionsUtils.unwrapException(e);
         }
@@ -461,6 +493,8 @@ public class SubscriptionWorker<T> implements CleanCloseable {
                 if (_processingCts.getToken().isCancellationRequested()) {
                     return;
                 }
+
+                EventHelper.invoke(onEstablishedSubscriptionConnection, this);
 
                 CompletableFuture<Void> notifiedSubscriber = CompletableFuture.completedFuture(null);
 

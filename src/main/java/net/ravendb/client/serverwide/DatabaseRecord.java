@@ -9,8 +9,12 @@ import net.ravendb.client.documents.operations.backups.PeriodicBackupConfigurati
 import net.ravendb.client.documents.operations.configuration.ClientConfiguration;
 import net.ravendb.client.documents.operations.configuration.StudioConfiguration;
 import net.ravendb.client.documents.operations.etl.RavenEtlConfiguration;
+import net.ravendb.client.documents.operations.etl.elasticSearch.ElasticSearchConnectionString;
+import net.ravendb.client.documents.operations.etl.elasticSearch.ElasticSearchEtlConfiguration;
 import net.ravendb.client.documents.operations.etl.olap.OlapConnectionString;
 import net.ravendb.client.documents.operations.etl.olap.OlapEtlConfiguration;
+import net.ravendb.client.documents.operations.etl.queue.QueueConnectionString;
+import net.ravendb.client.documents.operations.etl.queue.QueueEtlConfiguration;
 import net.ravendb.client.documents.operations.etl.sql.SqlConnectionString;
 import net.ravendb.client.documents.operations.etl.sql.SqlEtlConfiguration;
 import net.ravendb.client.documents.operations.expiration.ExpirationConfiguration;
@@ -24,6 +28,7 @@ import net.ravendb.client.documents.operations.timeSeries.TimeSeriesConfiguratio
 import net.ravendb.client.documents.queries.sorting.SorterDefinition;
 import net.ravendb.client.documents.operations.etl.RavenConnectionString;
 import net.ravendb.client.primitives.UseSharpEnum;
+import net.ravendb.client.serverwide.operations.integrations.IntegrationConfigurations;
 
 import java.util.*;
 
@@ -50,6 +55,7 @@ public class DatabaseRecord {
     private RevisionsCollectionConfiguration revisionsForConflicts;
     private ExpirationConfiguration expiration;
     private RefreshConfiguration refresh;
+    private IntegrationConfigurations integrations;
     private List<PeriodicBackupConfiguration> periodicBackups = new ArrayList<>();
     private List<ExternalReplication> externalReplications = new ArrayList<>();
     private List<PullReplicationAsSink> sinkPullReplications = new ArrayList<>();
@@ -57,9 +63,14 @@ public class DatabaseRecord {
     private Map<String, RavenConnectionString> ravenConnectionStrings = new HashMap<>();
     private Map<String, SqlConnectionString> sqlConnectionStrings = new HashMap<>();
     private Map<String, OlapConnectionString> olapConnectionStrings = new HashMap<>();
+
+    private Map<String, ElasticSearchConnectionString> elasticSearchConnectionStrings = new HashMap<>();
+    private Map<String, QueueConnectionString> queueConnectionStrings = new HashMap<>();
     private List<RavenEtlConfiguration> ravenEtls = new ArrayList<>();
     private List<SqlEtlConfiguration> sqlEtls = new ArrayList<>();
+    private List<ElasticSearchEtlConfiguration> elasticSearchEtls = new ArrayList<>();
     private List<OlapEtlConfiguration> olapEtls = new ArrayList<>();
+    private List<QueueEtlConfiguration> queueEtls = new ArrayList<>();
     private ClientConfiguration client;
     private StudioConfiguration studio;
     private long truncatedClusterTransactionCommandsCount;
@@ -352,8 +363,48 @@ public class DatabaseRecord {
         this.refresh = refresh;
     }
 
+    public IntegrationConfigurations getIntegrations() {
+        return integrations;
+    }
+
+    public void setIntegrations(IntegrationConfigurations integrations) {
+        this.integrations = integrations;
+    }
+
     public Set<String> getUnusedDatabaseIds() {
         return unusedDatabaseIds;
+    }
+
+    public Map<String, ElasticSearchConnectionString> getElasticSearchConnectionStrings() {
+        return elasticSearchConnectionStrings;
+    }
+
+    public void setElasticSearchConnectionStrings(Map<String, ElasticSearchConnectionString> elasticSearchConnectionStrings) {
+        this.elasticSearchConnectionStrings = elasticSearchConnectionStrings;
+    }
+
+    public Map<String, QueueConnectionString> getQueueConnectionStrings() {
+        return queueConnectionStrings;
+    }
+
+    public void setQueueConnectionStrings(Map<String, QueueConnectionString> queueConnectionStrings) {
+        this.queueConnectionStrings = queueConnectionStrings;
+    }
+
+    public List<ElasticSearchEtlConfiguration> getElasticSearchEtls() {
+        return elasticSearchEtls;
+    }
+
+    public void setElasticSearchEtls(List<ElasticSearchEtlConfiguration> elasticSearchEtls) {
+        this.elasticSearchEtls = elasticSearchEtls;
+    }
+
+    public List<QueueEtlConfiguration> getQueueEtls() {
+        return queueEtls;
+    }
+
+    public void setQueueEtls(List<QueueEtlConfiguration> queueEtls) {
+        this.queueEtls = queueEtls;
     }
 
     public void setUnusedDatabaseIds(Set<String> unusedDatabaseIds) {

@@ -1,9 +1,11 @@
 package net.ravendb.client.documents.indexes;
 
+import net.ravendb.client.Constants;
 import net.ravendb.client.documents.DocumentStoreBase;
 import net.ravendb.client.documents.IDocumentStore;
 import net.ravendb.client.documents.conventions.DocumentConventions;
 import net.ravendb.client.documents.operations.indexes.PutIndexesOperation;
+import net.ravendb.client.primitives.SharpEnum;
 import org.apache.commons.lang3.ObjectUtils;
 
 /**
@@ -28,6 +30,7 @@ public abstract class AbstractIndexCreationTaskBase<TIndexDefinition extends Ind
     protected IndexLockMode lockMode;
 
     protected IndexDeploymentMode deploymentMode;
+    protected SearchEngineType searchEngineType;
     protected IndexState state;
 
     /**
@@ -68,6 +71,14 @@ public abstract class AbstractIndexCreationTaskBase<TIndexDefinition extends Ind
 
     public void setDeploymentMode(IndexDeploymentMode deploymentMode) {
         this.deploymentMode = deploymentMode;
+    }
+
+    public SearchEngineType getSearchEngineType() {
+        return searchEngineType;
+    }
+
+    public void setSearchEngineType(SearchEngineType searchEngineType) {
+        this.searchEngineType = searchEngineType;
     }
 
     public IndexState getState() {
@@ -126,6 +137,12 @@ public abstract class AbstractIndexCreationTaskBase<TIndexDefinition extends Ind
 
             if (deploymentMode != null) {
                 indexDefinition.setDeploymentMode(deploymentMode);
+            }
+
+            if (searchEngineType != null) {
+                indexDefinition.getConfiguration().put(
+                        Constants.Configuration.Indexes.INDEXING_STATIC_SEARCH_ENGINE_TYPE,
+                        SharpEnum.value(searchEngineType));
             }
 
             store.maintenance()

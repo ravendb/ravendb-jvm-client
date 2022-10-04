@@ -13,6 +13,10 @@ import java.util.Map;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
+/**
+ * @deprecated Graph API will be removed in next major version of the product.
+ * @param <T> Document type
+ */
 @SuppressWarnings("unchecked")
 public class GraphDocumentQuery<T> extends AbstractDocumentQuery<T, GraphDocumentQuery<T>> implements IGraphDocumentQuery<T> {
 

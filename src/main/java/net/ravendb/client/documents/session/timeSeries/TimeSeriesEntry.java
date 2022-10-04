@@ -2,8 +2,10 @@ package net.ravendb.client.documents.session.timeSeries;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import org.apache.commons.lang3.StringUtils;
 
 import java.util.Date;
+import java.util.Map;
 
 public class TimeSeriesEntry {
     @JsonProperty("Timestamp")
@@ -17,6 +19,8 @@ public class TimeSeriesEntry {
 
     @JsonProperty("IsRollup")
     private boolean rollup;
+
+    private Map<String, Double[]> nodeValues;
 
     public Date getTimestamp() {
         return timestamp;
@@ -50,6 +54,14 @@ public class TimeSeriesEntry {
         this.rollup = rollup;
     }
 
+    public Map<String, Double[]> getNodeValues() {
+        return nodeValues;
+    }
+
+    public void setNodeValues(Map<String, Double[]> nodeValues) {
+        this.nodeValues = nodeValues;
+    }
+
     @JsonIgnore
     public double getValue() {
         if (values.length == 1) {
@@ -77,5 +89,9 @@ public class TimeSeriesEntry {
         entry.setValues(values);
         entry.setValue(TimeSeriesValuesHelper.setFields(clazz, values, rollup));
         return entry;
+    }
+
+    public String toString() {
+        return "[" + timestamp + "] " + StringUtils.join(values, ',') + " " + tag;
     }
 }

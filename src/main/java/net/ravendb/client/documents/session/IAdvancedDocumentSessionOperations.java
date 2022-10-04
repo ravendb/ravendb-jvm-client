@@ -216,6 +216,11 @@ public interface IAdvancedDocumentSessionOperations {
     Map<String, List<DocumentsChanges>> whatChanged();
 
     /**
+     * @return Returns all the tracked entities in this session.
+     */
+    Map<String, DocumentsById.EntityInfo> getTrackedEntities();
+
+    /**
      * SaveChanges will wait for the changes made to be replicates to `replicas` nodes
      */
     void waitForReplicationAfterSaveChanges();

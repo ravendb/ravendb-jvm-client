@@ -26,9 +26,14 @@ public class TcpNegotiation {
         }
 
         Reference<Integer> currentRef = new Reference<>(parameters.getVersion());
+        boolean dataCompression;
         while (true) {
             sendTcpVersionInfo(socket.getOutputStream(), parameters, currentRef.value);
-            Integer version = parameters.getReadResponseAndGetVersionCallback().apply(parameters.getDestinationUrl(), socket);
+            TcpConnectionHeaderMessage.NegotiationResponse response = parameters.getReadResponseAndGetVersionCallback().apply(parameters.getDestinationUrl(), socket);
+            Integer version = response.version;
+
+            dataCompression = response.licensedFeatures != null ? response.licensedFeatures.isDataCompression() : false;
+
             if (logger.isInfoEnabled()) {
                 logger.info("Read response from " + ObjectUtils.firstNonNull(parameters.getSourceNodeTag(), parameters.getDestinationUrl()) + " for " + parameters.getOperation() + ", received version is '" + version + "'");
             }
@@ -59,7 +64,12 @@ public class TcpNegotiation {
             logger.info(ObjectUtils.firstNonNull(parameters.getDestinationNodeTag(), parameters.getDestinationUrl()) + " agreed on version " + currentRef.value + " for " + parameters.getOperation());
         }
 
-        return TcpConnectionHeaderMessage.getSupportedFeaturesFor(parameters.getOperation(), currentRef.value);
+        TcpConnectionHeaderMessage.SupportedFeatures supportedFeatures = TcpConnectionHeaderMessage.getSupportedFeaturesFor(parameters.getOperation(), currentRef.value);
+
+        TcpConnectionHeaderMessage.SupportedFeatures supportedFeaturesCopy = new TcpConnectionHeaderMessage.SupportedFeatures(supportedFeatures);
+        supportedFeaturesCopy.dataCompression = dataCompression;
+
+        return supportedFeaturesCopy;
     }
 
     private static void sendTcpVersionInfo(OutputStream stream, TcpNegotiateParameters parameters, int currentVersion) throws IOException {
@@ -78,6 +88,13 @@ public class TcpNegotiation {
             generator.writeFieldName("AuthorizeInfo");
             if (parameters.getAuthorizeInfo() != null) {
                 parameters.getAuthorizeInfo().toJson(generator);
+            } else {
+                generator.writeNull();
+            }
+            generator.writeStringField("ServerId", parameters.getDestinationServerId());
+            generator.writeFieldName("LicensedFeatures");
+            if (parameters.getLicensedFeatures() != null) {
+                parameters.getLicensedFeatures().toJson(generator);
             } else {
                 generator.writeNull();
             }

@@ -161,4 +161,13 @@ public interface IDocumentSession extends CleanCloseable {
 
     <T> ISessionDocumentRollupTypedTimeSeries<T> timeSeriesRollupFor(Class<T> clazz, String documentId, String policy, String raw);
 
+    ISessionDocumentIncrementalTimeSeries incrementalTimeSeriesFor(String documentId, String name);
+    ISessionDocumentIncrementalTimeSeries incrementalTimeSeriesFor(Object entity, String name);
+
+    <T> ISessionDocumentTypedIncrementalTimeSeries<T> incrementalTimeSeriesFor(Class<T> clazz, Object entity);
+    <T> ISessionDocumentTypedIncrementalTimeSeries<T> incrementalTimeSeriesFor(Class<T> clazz, Object entity, String name);
+
+    <T> ISessionDocumentTypedIncrementalTimeSeries<T> incrementalTimeSeriesFor(Class<T> clazz, String documentId);
+    <T> ISessionDocumentTypedIncrementalTimeSeries<T> incrementalTimeSeriesFor(Class<T> clazz, String documentId, String name);
+
 }

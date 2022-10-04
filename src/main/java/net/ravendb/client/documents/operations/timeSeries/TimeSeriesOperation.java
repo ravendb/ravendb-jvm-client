@@ -11,6 +11,7 @@ public class TimeSeriesOperation {
 
     private TreeSet<AppendOperation> _appends;
     private List<DeleteOperation> _deletes;
+    private TreeSet<IncrementOperation> _increments;
     private String name;
 
     public String getName() {
@@ -51,7 +52,36 @@ public class TimeSeriesOperation {
         } else {
             generator.writeNull();
         }
+
+        generator.writeFieldName("Increments");
+        if (_increments != null) {
+            generator.writeStartArray();
+            for (IncrementOperation increment : _increments) {
+                increment.serialize(generator, conventions);
+            }
+            generator.writeEndArray();
+        } else {
+            generator.writeNull();
+        }
+
         generator.writeEndObject();
+    }
+
+    public void increment(IncrementOperation incrementOperation) {
+        if (_increments == null) {
+            _increments = new TreeSet<>(Comparator.comparing(x -> x.getTimestamp().getTime()));
+        }
+        boolean added = _increments.add(incrementOperation);
+        if (!added) {
+            // element with given timestamp already exists - remove and retry add operation
+            _increments
+                    .stream()
+                    .filter(x -> x.getTimestamp().getTime() == incrementOperation.getTimestamp().getTime())
+                    .findFirst()
+                    .ifPresent(toDelete -> _appends.remove(toDelete));
+
+            _increments.add(incrementOperation);
+        }
     }
 
     public void append(AppendOperation appendOperation) {
@@ -177,4 +207,40 @@ public class TimeSeriesOperation {
         }
     }
 
+    public static class IncrementOperation {
+        private Date timestamp;
+        private double[] values;
+
+        public Date getTimestamp() {
+            return timestamp;
+        }
+
+        public void setTimestamp(Date timestamp) {
+            this.timestamp = timestamp;
+        }
+
+        public double[] getValues() {
+            return values;
+        }
+
+        public void setValues(double[] values) {
+            this.values = values;
+        }
+
+        public void serialize(JsonGenerator generator, DocumentConventions conventions) throws IOException {
+            generator.writeStartObject();
+            generator.writeStringField("Timestamp", timestamp != null ? NetISO8601Utils.format(timestamp, true) : null);
+
+            generator.writeFieldName("Values");
+            generator.writeStartArray();
+
+            for (double value : values) {
+                generator.writeNumber(value);
+            }
+
+            generator.writeEndArray();
+
+            generator.writeEndObject();
+        }
+    }
 }

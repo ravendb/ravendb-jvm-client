@@ -29,6 +29,8 @@ public class GetTimeSeriesOperation implements IOperation<TimeSeriesRangeResult>
     private final Date _to;
     private final Consumer<ITimeSeriesIncludeBuilder> _includes;
 
+    private final boolean _returnFullResults;
+
     public GetTimeSeriesOperation(String docId, String timeseries) {
         this(docId, timeseries, null, null, 0, Integer.MAX_VALUE);
     }
@@ -46,6 +48,10 @@ public class GetTimeSeriesOperation implements IOperation<TimeSeriesRangeResult>
     }
 
     public GetTimeSeriesOperation(String docId, String timeseries, Date from, Date to, int start, int pageSize, Consumer<ITimeSeriesIncludeBuilder> includes) {
+        this(docId, timeseries, from, to, start, pageSize, includes, false);
+    }
+
+    public GetTimeSeriesOperation(String docId, String timeseries, Date from, Date to, int start, int pageSize, Consumer<ITimeSeriesIncludeBuilder> includes, boolean returnFullResults) {
         if (StringUtils.isEmpty(docId)) {
             throw new IllegalArgumentException("DocId cannot be null or empty");
         }
@@ -60,11 +66,12 @@ public class GetTimeSeriesOperation implements IOperation<TimeSeriesRangeResult>
         _from = from;
         _to = to;
         _includes = includes;
+        _returnFullResults = returnFullResults;
     }
 
     @Override
     public RavenCommand<TimeSeriesRangeResult> getCommand(IDocumentStore store, DocumentConventions conventions, HttpCache cache) {
-        return new GetTimeSeriesCommand(_docId, _name, _from, _to, _start, _pageSize, _includes);
+        return new GetTimeSeriesCommand(_docId, _name, _from, _to, _start, _pageSize, _includes, _returnFullResults);
     }
 
     public static class GetTimeSeriesCommand extends RavenCommand<TimeSeriesRangeResult> {
@@ -76,7 +83,11 @@ public class GetTimeSeriesOperation implements IOperation<TimeSeriesRangeResult>
         private final Date _to;
         private final Consumer<ITimeSeriesIncludeBuilder> _includes;
 
-        public GetTimeSeriesCommand(String docId, String name, Date from, Date to, int start, int pageSize, Consumer<ITimeSeriesIncludeBuilder> includes) {
+        private final boolean _returnFullResults;
+
+        public GetTimeSeriesCommand(String docId, String name, Date from,
+                                    Date to, int start, int pageSize,
+                                    Consumer<ITimeSeriesIncludeBuilder> includes, boolean returnFullResults) {
             super(TimeSeriesRangeResult.class);
 
             _docId = docId;
@@ -86,6 +97,7 @@ public class GetTimeSeriesOperation implements IOperation<TimeSeriesRangeResult>
             _from = from;
             _to = to;
             _includes = includes;
+            _returnFullResults = returnFullResults;
         }
 
         @Override
@@ -128,6 +140,12 @@ public class GetTimeSeriesOperation implements IOperation<TimeSeriesRangeResult>
 
             if (_includes != null) {
                 addIncludesToRequest(pathBuilder, _includes);
+            }
+
+            if (_returnFullResults) {
+                pathBuilder
+                        .append("&full=")
+                        .append(_returnFullResults);
             }
 
             url.value = pathBuilder.toString();

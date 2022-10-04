@@ -4,6 +4,7 @@ import org.apache.commons.lang3.StringUtils;
 
 import java.net.Socket;
 import java.time.Duration;
+import java.util.UUID;
 
 /**
  * Holds subscription connection properties, control both how client and server side behave
@@ -19,6 +20,8 @@ public class SubscriptionWorkerOptions {
     private boolean closeWhenNoDocsLeft;
     private int receiveBufferSize;
     private int sendBufferSize;
+
+    private String workerId;
 
     private SubscriptionWorkerOptions() {
         strategy = SubscriptionOpeningStrategy.OPEN_IF_FREE;
@@ -41,6 +44,7 @@ public class SubscriptionWorkerOptions {
         }
 
         this.subscriptionName = subscriptionName;
+        this.workerId = UUID.randomUUID().toString();
     }
 
     /**
@@ -169,5 +173,9 @@ public class SubscriptionWorkerOptions {
      */
     public void setSendBufferSize(int sendBufferSize) {
         this.sendBufferSize = sendBufferSize;
+    }
+
+    public String getWorkerId() {
+        return workerId;
     }
 }

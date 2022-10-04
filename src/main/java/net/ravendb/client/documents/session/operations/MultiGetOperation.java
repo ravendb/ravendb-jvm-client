@@ -15,7 +15,7 @@ public class MultiGetOperation {
     }
 
     public MultiGetCommand createRequest(List<GetRequest> requests) {
-        return new MultiGetCommand(_session.getRequestExecutor(), requests);
+        return new MultiGetCommand(_session.getRequestExecutor(), requests, _session.getSessionInfo());
     }
 
     @SuppressWarnings("EmptyMethod")

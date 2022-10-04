@@ -15,6 +15,7 @@ public class QueryStatistics {
     private int totalResults;
     private long longTotalResults;
     private int skippedResults;
+    private Integer scannedResults;
     private Date timestamp;
     private String indexName;
     private Date indexTimestamp;
@@ -103,6 +104,26 @@ public class QueryStatistics {
     }
 
     /**
+     * The number of results (filtered or matches)
+     * that were scanned by the query. This is relevant
+     * only if you are using a filter clause in the query.
+     * @return scanned results
+     */
+    public Integer getScannedResults() {
+        return scannedResults;
+    }
+
+    /**
+     * The number of results (filtered or matches)
+     * that were scanned by the query. This is relevant
+     * only if you are using a filter clause in the query.
+     * @param scannedResults scanned results
+     */
+    public void setScannedResults(Integer scannedResults) {
+        this.scannedResults = scannedResults;
+    }
+
+    /**
      * The time when the query results were non stale.
      * @return Query timestamp
      */
@@ -188,6 +209,7 @@ public class QueryStatistics {
         totalResults = qr.getTotalResults();
         longTotalResults = qr.getLongTotalResults();
         skippedResults = qr.getSkippedResults();
+        scannedResults = qr.getScannedResults();
         timestamp = qr.getIndexTimestamp();
         indexName = qr.getIndexName();
         indexTimestamp = qr.getIndexTimestamp();

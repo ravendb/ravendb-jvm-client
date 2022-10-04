@@ -1,5 +1,11 @@
 package net.ravendb.client.documents.session;
 
+import net.ravendb.client.documents.queries.FilterFactory;
+import net.ravendb.client.documents.queries.IFilterFactory;
+import net.ravendb.client.primitives.CleanCloseable;
+
+import java.util.function.Consumer;
+
 public class GroupByDocumentQuery<T> implements IGroupByDocumentQuery<T> {
 
     private final DocumentQuery<T> _query;
@@ -52,5 +58,20 @@ public class GroupByDocumentQuery<T> implements IGroupByDocumentQuery<T> {
     public IDocumentQuery<T> selectCount(String projectedName) {
         _query._groupByCount(projectedName);
         return _query;
+    }
+
+
+    @Override
+    public IGroupByDocumentQuery<T> filter(Consumer<IFilterFactory<T>> builder) {
+        return filter(builder, Integer.MAX_VALUE);
+    }
+    @Override
+    public IGroupByDocumentQuery<T> filter(Consumer<IFilterFactory<T>> builder, int limit) {
+        try (CleanCloseable mode = _query.setFilterMode(true)) {
+            FilterFactory<T> f = new FilterFactory<>(_query, limit);
+            builder.accept(f);
+        }
+
+        return this;
     }
 }

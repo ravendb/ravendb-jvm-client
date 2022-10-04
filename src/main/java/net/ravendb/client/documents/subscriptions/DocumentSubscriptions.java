@@ -522,8 +522,21 @@ public class DocumentSubscriptions implements AutoCloseable {
         }
     }
 
+    public <T> void dropSubscriptionWorker(SubscriptionWorker<T> worker) {
+        dropSubscriptionWorker(worker, null);
+    }
+
+    public <T> void dropSubscriptionWorker(SubscriptionWorker<T> worker, String database) {
+        database = ObjectUtils.firstNonNull(database,_store.getDatabase());
+
+        RequestExecutor requestExecutor = _store.getRequestExecutor(database);
+        DropSubscriptionConnectionCommand command = new DropSubscriptionConnectionCommand(worker.getSubscriptionName(), worker.getWorkerId());
+
+        requestExecutor.execute(command);
+    }
+
     /**
-     * Force server to close current client subscription connection to the server
+     * Force server to close all current client subscription connections to the server
      * @param name Subscription name
      */
     public void dropConnection(String name) {
@@ -531,7 +544,7 @@ public class DocumentSubscriptions implements AutoCloseable {
     }
 
     /**
-     * Force server to close current client subscription connection to the server
+     * Force server to close all current client subscription connections to the server
      * @param name Subscription name
      * @param database Database to use
      */

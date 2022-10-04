@@ -31,6 +31,7 @@ import net.ravendb.client.documents.session.loaders.QueryIncludeBuilder;
 import net.ravendb.client.documents.session.tokens.DeclareToken;
 import net.ravendb.client.documents.session.tokens.FieldsToFetchToken;
 import net.ravendb.client.documents.session.tokens.LoadToken;
+import net.ravendb.client.primitives.CleanCloseable;
 import net.ravendb.client.primitives.Reference;
 import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -673,7 +674,10 @@ public class DocumentQuery<T> extends AbstractDocumentQuery<T, DocumentQuery<T>>
         query.whereTokens = new LinkedList<>(whereTokens);
         query.orderByTokens = new LinkedList<>(orderByTokens);
         query.groupByTokens = new LinkedList<>(groupByTokens);
+        query.filterTokens = new LinkedList<>(filterTokens);
         query.queryParameters = new Parameters(queryParameters);
+        query.filterModeStack = new Stack<Boolean>();
+        query.filterModeStack.addAll(filterModeStack);
         query.start = start;
         query.timeout = timeout;
         query.queryStats = queryStats;
@@ -698,6 +702,7 @@ public class DocumentQuery<T> extends AbstractDocumentQuery<T, DocumentQuery<T>>
         query.explanationToken = explanationToken;
         query.isIntersect = isIntersect;
         query.defaultOperator = defaultOperator;
+        query.filterLimit = filterLimit;
 
         return query;
     }
@@ -922,5 +927,20 @@ public class DocumentQuery<T> extends AbstractDocumentQuery<T, DocumentQuery<T>>
 
         suggestUsing(f.getSuggestion());
         return new SuggestionDocumentQuery<>(this);
+    }
+
+    @Override
+    public IDocumentQuery<T> filter(Consumer<IFilterFactory<T>> builder) {
+        return filter(builder, Integer.MAX_VALUE);
+    }
+
+    @Override
+    public IDocumentQuery<T> filter(Consumer<IFilterFactory<T>> builder, int limit) {
+        try (CleanCloseable mode = setFilterMode(true)) {
+            FilterFactory<T> f = new FilterFactory<>(this, limit);
+            builder.accept(f);
+        }
+
+        return this;
     }
 }

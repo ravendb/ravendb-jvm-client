@@ -1051,6 +1051,13 @@ public class DocumentSession extends InMemoryDocumentSessionOperations
         return new SessionDocumentCounters(this, entity);
     }
 
+    /**
+     * @deprecated Graph API will be removed in next major version of the product.
+     * @param clazz result class
+     * @param query Graph Query
+     * @return Graph query
+     * @param <T> Document type
+     */
     @Override
     public <T> IGraphDocumentQuery<T> graphQuery(Class<T> clazz, String query) {
         GraphDocumentQuery<T> graphQuery = new GraphDocumentQuery<T>(clazz, this, query);
@@ -1074,6 +1081,7 @@ public class DocumentSession extends InMemoryDocumentSessionOperations
 
     @Override
     public <T> ISessionDocumentTypedTimeSeries<T> timeSeriesFor(Class<T> clazz, Object entity, String name) {
+        validateTimeSeriesName(name);
         String tsName = ObjectUtils.firstNonNull(name, TimeSeriesOperations.getTimeSeriesName(clazz, getConventions()));
         return new SessionDocumentTypedTimeSeries<T>(clazz, this, entity, tsName);
     }
@@ -1085,6 +1093,7 @@ public class DocumentSession extends InMemoryDocumentSessionOperations
 
     @Override
     public <T> ISessionDocumentTypedTimeSeries<T> timeSeriesFor(Class<T> clazz, String documentId, String name) {
+        validateTimeSeriesName(name);
         String tsName = ObjectUtils.firstNonNull(name, TimeSeriesOperations.getTimeSeriesName(clazz, getConventions()));
         return new SessionDocumentTypedTimeSeries<>(clazz, this, documentId, tsName);
     }
@@ -1109,6 +1118,36 @@ public class DocumentSession extends InMemoryDocumentSessionOperations
     public <T> ISessionDocumentRollupTypedTimeSeries<T> timeSeriesRollupFor(Class<T> clazz, String documentId, String policy, String raw) {
         String tsName = ObjectUtils.firstNonNull(raw, TimeSeriesOperations.getTimeSeriesName(clazz, getConventions()));
         return new SessionDocumentRollupTypedTimeSeries<T>(clazz, this, documentId, tsName + TimeSeriesConfiguration.TIME_SERIES_ROLLUP_SEPARATOR + policy);
+    }
+
+    public ISessionDocumentIncrementalTimeSeries incrementalTimeSeriesFor(String documentId, String name) {
+        validateIncrementalTimeSeriesName(name);
+
+        return new SessionDocumentTimeSeries(this, documentId, name);
+    }
+
+    public ISessionDocumentIncrementalTimeSeries incrementalTimeSeriesFor(Object entity, String name) {
+        validateIncrementalTimeSeriesName(name);
+
+        return new SessionDocumentTimeSeries(this, entity, name);
+    }
+
+    public <T> ISessionDocumentTypedIncrementalTimeSeries<T> incrementalTimeSeriesFor(Class<T> clazz, String documentId) {
+        return incrementalTimeSeriesFor(clazz, documentId, null);
+    }
+    public <T> ISessionDocumentTypedIncrementalTimeSeries<T> incrementalTimeSeriesFor(Class<T> clazz, String documentId, String name) {
+        String tsName = ObjectUtils.firstNonNull(name, TimeSeriesOperations.getTimeSeriesName(clazz, getConventions()));
+        validateIncrementalTimeSeriesName(tsName);
+        return new SessionDocumentTypedTimeSeries<T>(clazz, this, documentId, tsName);
+    }
+
+    public <T> ISessionDocumentTypedIncrementalTimeSeries<T> incrementalTimeSeriesFor(Class<T> clazz, Object entity) {
+        return incrementalTimeSeriesFor(clazz, entity, null);
+    }
+    public <T> ISessionDocumentTypedIncrementalTimeSeries<T> incrementalTimeSeriesFor(Class<T> clazz, Object entity, String name) {
+        String tsName = ObjectUtils.firstNonNull(name, TimeSeriesOperations.getTimeSeriesName(clazz, getConventions()));
+        validateIncrementalTimeSeriesName(tsName);
+        return new SessionDocumentTypedTimeSeries<>(clazz, this, entity, tsName);
     }
 
     @Override

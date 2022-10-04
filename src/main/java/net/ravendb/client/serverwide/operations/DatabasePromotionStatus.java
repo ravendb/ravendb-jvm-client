@@ -12,5 +12,6 @@ public enum  DatabasePromotionStatus {
     OK,
     OUT_OF_CPU_CREDITS,
     EARLY_OUT_OF_MEMORY,
-    HIGH_DIRTY_MEMORY
+    HIGH_DIRTY_MEMORY,
+    RAFT_INDEX_NOT_UP_TO_DATE
 }

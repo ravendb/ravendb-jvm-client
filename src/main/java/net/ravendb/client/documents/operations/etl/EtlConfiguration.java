@@ -79,4 +79,6 @@ public abstract class EtlConfiguration<T extends ConnectionString> {
     public void setAllowEtlOnNonEncryptedChannel(boolean allowEtlOnNonEncryptedChannel) {
         this.allowEtlOnNonEncryptedChannel = allowEtlOnNonEncryptedChannel;
     }
+
+    public abstract EtlType getEtlType();
 }

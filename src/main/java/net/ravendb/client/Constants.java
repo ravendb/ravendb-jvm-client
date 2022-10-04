@@ -2,7 +2,7 @@ package net.ravendb.client;
 
 public class Constants {
 
-    public static class Documents{
+    public static class Documents {
         private Documents() {}
 
         public static class Metadata {
@@ -99,7 +99,14 @@ public class Constants {
         public static final String TRANSFER_ENCODING = "Transfer-Encoding";
         public static final String CONTENT_ENCODING = "Content-Encoding";
         public static final String CONTENT_LENGTH = "Content-Length";
+        public static final String INCREMENTAL_TIME_SERIES_PREFIX = "INC:";
 
+    }
+
+    public static class Configuration {
+        public static class Indexes {
+            public static final String INDEXING_STATIC_SEARCH_ENGINE_TYPE = "Indexing.Static.SearchEngineType";
+        }
     }
 
     public static class Counters {
@@ -115,5 +122,13 @@ public class Constants {
 
     public static class CompareExchange {
         public static final String OBJECT_FIELD_NAME = "Object";
+    }
+
+    public static class Indexes {
+        public static final String INDEXING_STATIC_SEARCH_ENGINE_TYPE = "Indexing.Static.SearchEngineType";
+    }
+
+    public static class Obsolete {
+        public static final String GRAPH_API = "Graph API will be removed in next major version of the product.";
     }
 }

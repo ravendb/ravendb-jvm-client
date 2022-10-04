@@ -11,10 +11,10 @@ import net.ravendb.client.documents.commands.KillOperationCommand;
 import net.ravendb.client.documents.commands.batches.CommandType;
 import net.ravendb.client.documents.conventions.DocumentConventions;
 import net.ravendb.client.documents.identity.GenerateEntityIdOnTheClient;
+import net.ravendb.client.documents.operations.BulkInsertObserver;
+import net.ravendb.client.documents.operations.BulkInsertProgress;
 import net.ravendb.client.documents.operations.GetOperationStateOperation;
-import net.ravendb.client.documents.session.DocumentInfo;
-import net.ravendb.client.documents.session.EntityToJson;
-import net.ravendb.client.documents.session.IMetadataDictionary;
+import net.ravendb.client.documents.session.*;
 import net.ravendb.client.documents.session.timeSeries.TimeSeriesValuesHelper;
 import net.ravendb.client.documents.session.timeSeries.TypedTimeSeriesEntry;
 import net.ravendb.client.documents.timeSeries.TimeSeriesOperations;
@@ -24,9 +24,7 @@ import net.ravendb.client.http.RavenCommand;
 import net.ravendb.client.http.RequestExecutor;
 import net.ravendb.client.http.ServerNode;
 import net.ravendb.client.json.MetadataAsDictionary;
-import net.ravendb.client.primitives.CleanCloseable;
-import net.ravendb.client.primitives.ExceptionsUtils;
-import net.ravendb.client.primitives.Reference;
+import net.ravendb.client.primitives.*;
 import org.apache.commons.lang3.NotImplementedException;
 import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -39,9 +37,7 @@ import org.apache.http.entity.ContentType;
 import org.apache.http.impl.client.CloseableHttpClient;
 
 import java.io.*;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Date;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
@@ -52,6 +48,7 @@ import java.util.stream.DoubleStream;
 public class BulkInsertOperation implements CleanCloseable {
 
     private BulkInsertOptions _options;
+    private String _database;
     private final GenerateEntityIdOnTheClient _generateEntityIdOnTheClient;
 
     private static class StreamExposerContent extends AbstractHttpEntity {
@@ -202,6 +199,10 @@ public class BulkInsertOperation implements CleanCloseable {
     private final AtomicInteger _concurrentCheck = new AtomicInteger();
     private boolean _isInitialWrite = true;
 
+    private CleanCloseable _unsubscribeChanges;
+    private final List<EventHandler<BulkInsertOnProgressEventArgs>> _onProgress = new ArrayList<>();
+    private boolean _onProgressInitialized = false;
+
     public BulkInsertOperation(String database, DocumentStore store) {
         this(database, store, null);
     }
@@ -209,6 +210,7 @@ public class BulkInsertOperation implements CleanCloseable {
     public BulkInsertOperation(String database, DocumentStore store, BulkInsertOptions options) {
         _executorService = store.getExecutorService();
         _conventions = store.getConventions();
+        _store = store;
         if (StringUtils.isBlank(database)) {
             throwNoDatabase();
         }
@@ -216,6 +218,7 @@ public class BulkInsertOperation implements CleanCloseable {
         this.useCompression = options != null ? options.isUseCompression() : false;
 
         _options = ObjectUtils.firstNonNull(options, new BulkInsertOptions());
+        _database = database;
         _requestExecutor = store.getRequestExecutor(database);
         objectMapper = store.getConventions().getEntityMapper();
 
@@ -231,6 +234,15 @@ public class BulkInsertOperation implements CleanCloseable {
 
         _generateEntityIdOnTheClient = new GenerateEntityIdOnTheClient(_requestExecutor.getConventions(),
                 entity -> _requestExecutor.getConventions().generateDocumentId(database, entity));
+    }
+
+    public void addOnProgress(EventHandler<BulkInsertOnProgressEventArgs> handler) {
+        this._onProgress.add(handler);
+        _onProgressInitialized = true;
+    }
+
+    public void removeOnProgress(EventHandler<BulkInsertOnProgressEventArgs> handler) {
+        this._onProgress.remove(handler);
     }
 
     public boolean isUseCompression() {
@@ -272,6 +284,16 @@ public class BulkInsertOperation implements CleanCloseable {
         _requestExecutor.execute(bulkInsertGetIdRequest);
         _operationId = bulkInsertGetIdRequest.getResult();
         _nodeTag = bulkInsertGetIdRequest.getNodeTag();
+
+        if (_onProgressInitialized && _unsubscribeChanges == null) {
+            _unsubscribeChanges = _store.changes()
+                    .forOperationId(_operationId)
+                    .subscribe(new BulkInsertObserver(this, _conventions));
+        }
+    }
+
+    public void invokeOnProgress(BulkInsertProgress progress) {
+        EventHelper.invoke(_onProgress, this, new BulkInsertOnProgressEventArgs(progress));
     }
 
     @SuppressWarnings("UnusedReturnValue")
@@ -575,9 +597,15 @@ public class BulkInsertOperation implements CleanCloseable {
                 throwBulkInsertAborted(e, flushEx);
             }
         }
+
+        if (_unsubscribeChanges != null) {
+            _unsubscribeChanges.close();
+        }
     }
 
     private final DocumentConventions _conventions;
+
+    private final IDocumentStore _store;
 
     private String getId(Object entity) {
         Reference<String> idRef = new Reference<>();

@@ -7,6 +7,7 @@ import com.fasterxml.jackson.core.TreeNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import net.ravendb.client.Constants;
+import net.ravendb.client.documents.session.SessionInfo;
 import net.ravendb.client.extensions.HttpExtensions;
 import net.ravendb.client.extensions.JsonExtensions;
 import net.ravendb.client.http.*;
@@ -31,6 +32,7 @@ public class MultiGetCommand extends RavenCommand<List<GetResponse>> implements 
     private final RequestExecutor _requestExecutor;
     private final HttpCache _httpCache;
     private final List<GetRequest> _commands;
+    private SessionInfo _sessionInfo;
 
     private String _baseUrl;
     private Cached _cached;
@@ -38,6 +40,10 @@ public class MultiGetCommand extends RavenCommand<List<GetResponse>> implements 
     public boolean aggressivelyCached;
 
     public MultiGetCommand(RequestExecutor requestExecutor, List<GetRequest> commands) {
+        this(requestExecutor, commands, null);
+    }
+
+    public MultiGetCommand(RequestExecutor requestExecutor, List<GetRequest> commands, SessionInfo sessionInfo) {
         super((Class<List<GetResponse>>)(Class<?>)List.class);
 
         if (requestExecutor == null) {
@@ -57,6 +63,7 @@ public class MultiGetCommand extends RavenCommand<List<GetResponse>> implements 
         _requestExecutor = requestExecutor;
         _httpCache = requestExecutor.getCache();
         _commands = commands;
+        _sessionInfo = sessionInfo;
         responseType = RavenCommandResponseType.RAW;
     }
 
@@ -65,7 +72,8 @@ public class MultiGetCommand extends RavenCommand<List<GetResponse>> implements 
         _baseUrl = node.getUrl() + "/databases/" + node.getDatabase();
         url.value = _baseUrl + "/multi_get";
 
-        if (maybeReadAllFromCache(_requestExecutor.aggressiveCaching.get())) {
+        if ((_sessionInfo == null || !_sessionInfo.isNoCaching()) && maybeReadAllFromCache(_requestExecutor.aggressiveCaching.get()))
+        {
             aggressivelyCached = true;
             return null; // aggressively cached
         }
@@ -73,7 +81,6 @@ public class MultiGetCommand extends RavenCommand<List<GetResponse>> implements 
         url.value = _baseUrl + "/multi_get";
 
         HttpPost request = new HttpPost();
-        ObjectMapper mapper = JsonExtensions.getDefaultMapper();
 
         request.setEntity(new ContentProviderHttpEntity(outputStream -> {
             try (JsonGenerator generator = createSafeJsonGenerator(outputStream)) {
@@ -126,6 +133,10 @@ public class MultiGetCommand extends RavenCommand<List<GetResponse>> implements 
 
         for (int i = 0; i < _commands.size(); i++) {
             GetRequest command = _commands.get(i);
+
+            if (command.getHeaders().containsKey(Constants.Headers.IF_NONE_MATCH)) {
+                continue; // command already explicitly handling setting this, let's not touch it.
+            }
 
             String cacheKey = getCacheKey(command, new Reference<>());
 

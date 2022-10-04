@@ -7,6 +7,7 @@ public class GenericQueryResult<TResult, TIncludes> extends QueryResultBase<TRes
     private long longTotalResults;
     private Integer cappedMaxResults;
     private int skippedResults;
+    private Integer scannedResults;
     private Map<String, Map<String, String[]>> highlightings;
     private Map<String, String[]> explanations;
     private long durationInMs;
@@ -76,6 +77,26 @@ public class GenericQueryResult<TResult, TIncludes> extends QueryResultBase<TRes
      */
     public void setSkippedResults(int skippedResults) {
         this.skippedResults = skippedResults;
+    }
+
+    /**
+     * The number of results (filtered or matches)
+     * that were scanned by the query. This is relevant
+     * only if you are using a filter clause in the query.
+     * @return scanned results
+     */
+    public Integer getScannedResults() {
+        return scannedResults;
+    }
+
+    /**
+     * The number of results (filtered or matches)
+     * that were scanned by the query. This is relevant
+     * only if you are using a filter clause in the query.
+     * @param scannedResults scanned results
+     */
+    public void setScannedResults(Integer scannedResults) {
+        this.scannedResults = scannedResults;
     }
 
     /**

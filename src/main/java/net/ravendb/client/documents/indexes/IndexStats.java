@@ -30,8 +30,9 @@ public class IndexStats {
     private boolean stale;
     private IndexLockMode lockMode;
     private IndexType type;
+    private SearchEngineType searchEngineType;
     private IndexRunningStatus status;
-    private int entriesCount;
+    private long entriesCount;
     private int errorsCount;
     private IndexSourceType sourceType;
     private boolean isTestIndex;
@@ -421,6 +422,14 @@ public class IndexStats {
         this.type = type;
     }
 
+    public SearchEngineType getSearchEngineType() {
+        return searchEngineType;
+    }
+
+    public void setSearchEngineType(SearchEngineType searchEngineType) {
+        this.searchEngineType = searchEngineType;
+    }
+
     public IndexRunningStatus getStatus() {
         return status;
     }
@@ -433,7 +442,7 @@ public class IndexStats {
      * Total number of entries in this index.
      * @return index entries count
      */
-    public int getEntriesCount() {
+    public long getEntriesCount() {
         return entriesCount;
     }
 
@@ -441,7 +450,7 @@ public class IndexStats {
      * Total number of entries in this index.
      * @param entriesCount sets the value
      */
-    public void setEntriesCount(int entriesCount) {
+    public void setEntriesCount(long entriesCount) {
         this.entriesCount = entriesCount;
     }
 

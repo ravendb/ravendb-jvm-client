@@ -53,6 +53,7 @@ public class DocumentConventions {
     private boolean _disableTopologyUpdates;
 
     private Boolean _disableAtomicDocumentWritesInClusterWideTransaction;
+    private boolean _disableTcpCompression = true;
     private IShouldIgnoreEntityChanges _shouldIgnoreEntityChanges;
     private Function<PropertyDescriptor, Boolean> _findIdentityProperty;
 
@@ -734,6 +735,24 @@ public class DocumentConventions {
         assertNotFrozen();
         _disableAtomicDocumentWritesInClusterWideTransaction = disableAtomicDocumentWritesInClusterWideTransaction;
     }
+
+    /**
+     * Disables the usage of TCP data compression.
+     * @return value
+     */
+    public boolean isDisableTcpCompression() {
+        return _disableTcpCompression;
+    }
+
+    /**
+     * Disables the usage of TCP data compression.
+     * @param disableTcpCompression value
+     */
+    /* TODO
+    public void setDisableTcpCompression(boolean disableTcpCompression) {
+        assertNotFrozen();
+        _disableTcpCompression = disableTcpCompression;
+    }*/
 
     /**
      * Clone the current conventions to a new instance

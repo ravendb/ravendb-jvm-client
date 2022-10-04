@@ -15,7 +15,9 @@ public class TcpNegotiateParameters {
     private String destinationUrl;
     private String destinationServerId;
 
-    private BiFunction<String, Socket, Integer> readResponseAndGetVersionCallback;
+    private LicensedFeatures licensedFeatures;
+
+    private BiFunction<String, Socket, TcpConnectionHeaderMessage.NegotiationResponse> readResponseAndGetVersionCallback;
 
     public TcpConnectionHeaderMessage.OperationTypes getOperation() {
         return operation;
@@ -81,11 +83,19 @@ public class TcpNegotiateParameters {
         this.destinationServerId = destinationServerId;
     }
 
-    public BiFunction<String, Socket, Integer> getReadResponseAndGetVersionCallback() {
+    public BiFunction<String, Socket, TcpConnectionHeaderMessage.NegotiationResponse> getReadResponseAndGetVersionCallback() {
         return readResponseAndGetVersionCallback;
     }
 
-    public void setReadResponseAndGetVersionCallback(BiFunction<String, Socket, Integer> readResponseAndGetVersionCallback) {
+    public void setReadResponseAndGetVersionCallback(BiFunction<String, Socket, TcpConnectionHeaderMessage.NegotiationResponse> readResponseAndGetVersionCallback) {
         this.readResponseAndGetVersionCallback = readResponseAndGetVersionCallback;
+    }
+
+    public LicensedFeatures getLicensedFeatures() {
+        return licensedFeatures;
+    }
+
+    public void setLicensedFeatures(LicensedFeatures licensedFeatures) {
+        this.licensedFeatures = licensedFeatures;
     }
 }

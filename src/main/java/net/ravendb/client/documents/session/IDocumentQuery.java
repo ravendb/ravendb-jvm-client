@@ -1,9 +1,6 @@
 package net.ravendb.client.documents.session;
 
-import net.ravendb.client.documents.queries.GroupBy;
-import net.ravendb.client.documents.queries.ProjectionBehavior;
-import net.ravendb.client.documents.queries.QueryData;
-import net.ravendb.client.documents.queries.QueryResult;
+import net.ravendb.client.documents.queries.*;
 import net.ravendb.client.documents.queries.facets.Facet;
 import net.ravendb.client.documents.queries.facets.FacetBase;
 import net.ravendb.client.documents.queries.facets.IAggregationDocumentQuery;
@@ -109,6 +106,25 @@ public interface IDocumentQuery<T> extends IDocumentQueryBase<T, IDocumentQuery<
     IGroupByDocumentQuery<T> groupBy(GroupBy field, GroupBy... fields);
 
     IDocumentQuery<T> moreLikeThis(Consumer<IMoreLikeThisBuilderForDocumentQuery<T>> builder);
+
+    /**
+     * Filter allows querying on documents without the need for issuing indexes.
+     * It is meant for exploratory queries or post query filtering.
+     * Criteria are evaluated at query time so please use Filter wisely to avoid performance issues.
+     * @param builder Builder of a Filter query
+     * @return Document query
+     */
+    IDocumentQuery<T> filter(Consumer<IFilterFactory<T>> builder);
+
+    /**
+     * Filter allows querying on documents without the need for issuing indexes.
+     * It is meant for exploratory queries or post query filtering.
+     * Criteria are evaluated at query time so please use Filter wisely to avoid performance issues.
+     * @param builder Builder of a Filter query
+     * @param limit Limits the number of documents processed by Filter.
+     * @return Document query
+     */
+    IDocumentQuery<T> filter(Consumer<IFilterFactory<T>> builder, int limit);
 
     IAggregationDocumentQuery<T> aggregateBy(Consumer<IFacetBuilder<T>> builder);
 

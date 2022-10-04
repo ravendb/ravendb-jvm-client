@@ -6,6 +6,8 @@ public class TcpConnectionHeaderResponse {
     private String message;
     private int version;
 
+    private LicensedFeatures licensedFeatures;
+
     public TcpConnectionStatus getStatus() {
         return status;
     }
@@ -28,5 +30,13 @@ public class TcpConnectionHeaderResponse {
 
     public void setVersion(int version) {
         this.version = version;
+    }
+
+    public LicensedFeatures getLicensedFeatures() {
+        return licensedFeatures;
+    }
+
+    public void setLicensedFeatures(LicensedFeatures licensedFeatures) {
+        this.licensedFeatures = licensedFeatures;
     }
 }

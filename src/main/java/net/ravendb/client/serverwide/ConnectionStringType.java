@@ -7,5 +7,7 @@ public enum ConnectionStringType {
     NONE,
     RAVEN,
     SQL,
-    OLAP
+    OLAP,
+    ELASTIC_SEARCH,
+    QUEUE
 }

@@ -32,6 +32,7 @@ public abstract class QueryToken {
         RQL_KEYWORDS.add("group");
         RQL_KEYWORDS.add("order");
         RQL_KEYWORDS.add("include");
+        RQL_KEYWORDS.add("filter");
 
     }
 }

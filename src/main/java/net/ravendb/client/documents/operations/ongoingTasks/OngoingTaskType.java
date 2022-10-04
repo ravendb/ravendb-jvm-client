@@ -8,6 +8,8 @@ public enum OngoingTaskType {
     RAVEN_ETL,
     SQL_ETL,
     OLAP_ETL,
+    ELASTIC_SEARCH_ETL,
+    QUEUE_ETL,
     BACKUP,
     SUBSCRIPTION,
     PULL_REPLICATION_AS_HUB,

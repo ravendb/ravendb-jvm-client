@@ -9,9 +9,15 @@ import org.apache.http.client.methods.HttpRequestBase;
 
 public class DropSubscriptionConnectionCommand extends VoidRavenCommand {
     private final String _name;
+    private final String _workerId;
 
     public DropSubscriptionConnectionCommand(String name) {
+        this(name, null);
+    }
+
+    public DropSubscriptionConnectionCommand(String name, String workerId) {
         _name = name;
+        _workerId = workerId;
     }
 
     @Override
@@ -25,6 +31,11 @@ public class DropSubscriptionConnectionCommand extends VoidRavenCommand {
         if (StringUtils.isNotEmpty(_name)) {
             path.append("?name=")
                     .append(urlEncode(_name));
+        }
+
+        if (StringUtils.isNotEmpty(_workerId)) {
+            path.append("&workerId=")
+                    .append(_workerId);
         }
 
         url.value = path.toString();

@@ -41,7 +41,12 @@ public class DatabaseSmugglerOptions implements IDatabaseSmugglerOptions {
             DatabaseRecordItemType.ANALYZERS,
             DatabaseRecordItemType.LOCK_MODE,
             DatabaseRecordItemType.OLAP_CONNECTION_STRINGS,
-            DatabaseRecordItemType.OLAP_ETLS);
+            DatabaseRecordItemType.OLAP_ETLS,
+            DatabaseRecordItemType.ELASTIC_SEARCH_CONNECTION_STRINGS,
+            DatabaseRecordItemType.ELASTIC_SEARCH_ETLS,
+            DatabaseRecordItemType.POSTGRE_SQL_INTEGRATION,
+            DatabaseRecordItemType.QUEUE_CONNECTION_STRINGS,
+            DatabaseRecordItemType.QUEUE_ETLS);
 
     private final int DEFAULT_MAX_STEPS_FOR_TRANSFORM_SCRIPT = 10 * 1000;
 

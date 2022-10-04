@@ -9,7 +9,7 @@ import java.util.function.Consumer;
 import java.util.stream.Stream;
 
 public class SessionDocumentTimeSeries extends SessionTimeSeriesBase
-        implements ISessionDocumentTimeSeries {
+        implements ISessionDocumentTimeSeries, ISessionDocumentIncrementalTimeSeries {
 
     public SessionDocumentTimeSeries(InMemoryDocumentSessionOperations session, String documentId, String name) {
         super(session, documentId, name);

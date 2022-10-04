@@ -10,6 +10,8 @@ public class Transformation {
     private boolean applyToAllDocuments;
     private String script;
 
+    private String documentIdPostfix;
+
     public String getName() {
         return name;
     }
@@ -48,5 +50,13 @@ public class Transformation {
 
     public void setScript(String script) {
         this.script = script;
+    }
+
+    public String getDocumentIdPostfix() {
+        return documentIdPostfix;
+    }
+
+    public void setDocumentIdPostfix(String documentIdPostfix) {
+        this.documentIdPostfix = documentIdPostfix;
     }
 }

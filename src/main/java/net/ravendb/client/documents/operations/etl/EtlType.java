@@ -6,5 +6,7 @@ import net.ravendb.client.primitives.UseSharpEnum;
 public enum EtlType {
     RAVEN,
     SQL,
-    OLAP
+    OLAP,
+    ELASTIC_SEARCH,
+    QUEUE
 }

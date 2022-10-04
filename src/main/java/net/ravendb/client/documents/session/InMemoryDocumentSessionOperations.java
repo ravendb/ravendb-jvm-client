@@ -818,6 +818,9 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
 
         DocumentInfo value = documentsByEntity.get(entity);
         if (value != null) {
+            if (id != null && !value.getId().equalsIgnoreCase(id)) {
+                throw new IllegalStateException("Cannot store the same entity (id: " + value.getId() + ") with different id (" + id + ")");
+            }
             value.setChangeVector(ObjectUtils.firstNonNull(changeVector, value.getChangeVector()));
             value.setConcurrencyCheckMode(forceConcurrencyCheck);
             return;
@@ -1213,6 +1216,23 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
         return changes;
     }
 
+    public Map<String, DocumentsById.EntityInfo> getTrackedEntities() {
+        Map<String, DocumentsById.EntityInfo> tracked = documentsById.getTrackedEntities(this);
+
+        for (String id : _knownMissingIds) {
+            if (tracked.containsKey(id)) {
+                continue;
+            }
+
+            DocumentsById.EntityInfo entityInfo = new DocumentsById.EntityInfo();
+            entityInfo.setId(id);
+            entityInfo.setDeleted(true);
+
+            tracked.put(id, entityInfo);
+        }
+
+        return tracked;
+    }
 
     /**
      * Gets a value indicating whether any of the entities tracked by the session has changes.
@@ -1402,6 +1422,7 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
                 !CommandType.ATTACHMENT_MOVE.equals(command.getType()) &&
                 !CommandType.COUNTERS.equals(command.getType()) &&
                 !CommandType.TIME_SERIES.equals(command.getType()) &&
+                !CommandType.TIME_SERIES_WITH_INCREMENTS.equals(command.getType()) &&
                 !CommandType.TIME_SERIES_COPY.equals(command.getType())) {
             deferredCommandsMap.put(IdTypeAndName.create(id, CommandType.CLIENT_MODIFY_DOCUMENT_COMMAND, null), command);
         }
@@ -2419,6 +2440,30 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
 
     public void setTransactionMode(TransactionMode transactionMode) {
         this.transactionMode = transactionMode;
+    }
+
+    public static void validateTimeSeriesName(String name) {
+        if (StringUtils.isEmpty(name)) {
+            throw new IllegalArgumentException("Time Series name must contain at least one character");
+        }
+
+        if (StringUtils.startsWithIgnoreCase(name, Constants.Headers.INCREMENTAL_TIME_SERIES_PREFIX) && !name.contains("@")) {
+            throw new IllegalArgumentException("Time Series name cannot start with " + Constants.Headers.INCREMENTAL_TIME_SERIES_PREFIX + " prefix");
+        }
+    }
+
+    public static void validateIncrementalTimeSeriesName(String name) {
+        if (StringUtils.isEmpty(name)) {
+            throw new IllegalArgumentException("Incremental Time Series name must contain at least one character");
+        }
+
+        if (!StringUtils.startsWithIgnoreCase(name, Constants.Headers.INCREMENTAL_TIME_SERIES_PREFIX)) {
+            throw new IllegalArgumentException("Time Series name must start with " + Constants.Headers.INCREMENTAL_TIME_SERIES_PREFIX + " prefix");
+        }
+
+        if (name.contains("@")) {
+            throw new IllegalArgumentException("Time Series from type Rollup cannot be Incremental");
+        }
     }
 
     public static class DocumentsByEntityHolder implements Iterable<DocumentsByEntityHolder.DocumentsByEntityEnumeratorResult> {
