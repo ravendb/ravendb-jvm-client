@@ -1081,8 +1081,8 @@ public class DocumentSession extends InMemoryDocumentSessionOperations
 
     @Override
     public <T> ISessionDocumentTypedTimeSeries<T> timeSeriesFor(Class<T> clazz, Object entity, String name) {
-        validateTimeSeriesName(name);
         String tsName = ObjectUtils.firstNonNull(name, TimeSeriesOperations.getTimeSeriesName(clazz, getConventions()));
+        validateTimeSeriesName(tsName);
         return new SessionDocumentTypedTimeSeries<T>(clazz, this, entity, tsName);
     }
 
@@ -1093,8 +1093,8 @@ public class DocumentSession extends InMemoryDocumentSessionOperations
 
     @Override
     public <T> ISessionDocumentTypedTimeSeries<T> timeSeriesFor(Class<T> clazz, String documentId, String name) {
-        validateTimeSeriesName(name);
         String tsName = ObjectUtils.firstNonNull(name, TimeSeriesOperations.getTimeSeriesName(clazz, getConventions()));
+        validateTimeSeriesName(tsName);
         return new SessionDocumentTypedTimeSeries<>(clazz, this, documentId, tsName);
     }
 
