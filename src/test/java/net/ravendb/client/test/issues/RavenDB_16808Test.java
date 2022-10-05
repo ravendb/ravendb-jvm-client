@@ -7,7 +7,6 @@ import net.ravendb.client.http.AggressiveCacheMode;
 import net.ravendb.client.http.RequestExecutor;
 import net.ravendb.client.infrastructure.entities.User;
 import net.ravendb.client.primitives.CleanCloseable;
-import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 import java.time.Duration;

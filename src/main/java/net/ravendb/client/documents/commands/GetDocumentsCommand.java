@@ -1,7 +1,6 @@
 package net.ravendb.client.documents.commands;
 
 import com.fasterxml.jackson.core.JsonGenerator;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import net.ravendb.client.Constants;
 import net.ravendb.client.documents.operations.timeSeries.AbstractTimeSeriesRange;
 import net.ravendb.client.documents.operations.timeSeries.TimeSeriesCountRange;

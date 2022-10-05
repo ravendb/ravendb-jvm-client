@@ -25,7 +25,6 @@ import org.apache.commons.lang3.ObjectUtils;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpRequestBase;
 import org.apache.http.impl.client.CloseableHttpClient;
-import org.assertj.core.api.Assertions;
 
 import java.io.Closeable;
 import java.net.URI;
@@ -37,8 +36,6 @@ import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
 import java.util.stream.Stream;
-
-import static org.assertj.core.api.Assertions.assertThat;
 
 public abstract class ClusterTestBase extends RavenTestDriver implements CleanCloseable {
 

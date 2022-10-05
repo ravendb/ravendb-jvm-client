@@ -4,7 +4,6 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import net.ravendb.client.RavenTestHelper;
 import net.ravendb.client.RemoteTestBase;
 import net.ravendb.client.documents.BulkInsertOperation;
-import net.ravendb.client.documents.DocumentStore;
 import net.ravendb.client.documents.IDocumentStore;
 import net.ravendb.client.documents.operations.GetOngoingTaskInfoOperation;
 import net.ravendb.client.documents.operations.ongoingTasks.OngoingTaskSubscription;

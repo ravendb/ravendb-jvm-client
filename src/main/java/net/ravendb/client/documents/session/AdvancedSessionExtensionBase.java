@@ -4,7 +4,6 @@ import net.ravendb.client.documents.IDocumentStore;
 import net.ravendb.client.documents.IdTypeAndName;
 import net.ravendb.client.documents.commands.batches.ICommandData;
 import net.ravendb.client.http.RequestExecutor;
-import org.apache.commons.lang3.StringUtils;
 
 import java.util.Map;
 

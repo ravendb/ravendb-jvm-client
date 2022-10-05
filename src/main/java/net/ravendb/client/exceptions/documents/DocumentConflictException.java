@@ -2,11 +2,7 @@ package net.ravendb.client.exceptions.documents;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import net.ravendb.client.exceptions.BadResponseException;
 import net.ravendb.client.exceptions.ConflictException;
-import net.ravendb.client.extensions.JsonExtensions;
-
-import java.io.IOException;
 
 public class DocumentConflictException extends ConflictException {
 

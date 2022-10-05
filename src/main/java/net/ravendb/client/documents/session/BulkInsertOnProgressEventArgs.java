@@ -1,6 +1,5 @@
 package net.ravendb.client.documents.session;
 
-import com.fasterxml.jackson.databind.node.ObjectNode;
 import net.ravendb.client.documents.operations.BulkInsertProgress;
 import net.ravendb.client.primitives.EventArgs;
 

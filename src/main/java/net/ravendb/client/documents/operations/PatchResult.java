@@ -2,8 +2,6 @@ package net.ravendb.client.documents.operations;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
-import java.util.Date;
-
 public class PatchResult extends PatchResultBase {
 
     private ObjectNode originalDocument;

@@ -8,11 +8,9 @@ import net.ravendb.client.documents.session.ISessionDocumentTimeSeries;
 import net.ravendb.client.documents.session.InMemoryDocumentSessionOperations;
 import net.ravendb.client.documents.session.timeSeries.TimeSeriesEntry;
 import net.ravendb.client.infrastructure.entities.User;
-import net.ravendb.client.primitives.TimeValue;
 import org.apache.commons.lang3.time.DateUtils;
 import org.junit.jupiter.api.Test;
 
-import java.time.Duration;
 import java.util.*;
 
 import static org.assertj.core.api.Assertions.assertThat;

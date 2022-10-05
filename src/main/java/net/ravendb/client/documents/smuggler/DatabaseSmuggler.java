@@ -1,7 +1,6 @@
 package net.ravendb.client.documents.smuggler;
 
 import com.fasterxml.jackson.core.JsonGenerator;
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import net.ravendb.client.documents.IDocumentStore;
 import net.ravendb.client.documents.commands.GetNextOperationIdCommand;

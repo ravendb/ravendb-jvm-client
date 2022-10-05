@@ -5,18 +5,14 @@ import net.ravendb.client.documents.IDocumentStore;
 import net.ravendb.client.documents.operations.timeSeries.*;
 import net.ravendb.client.documents.queries.timeSeries.TimeSeriesAggregationResult;
 import net.ravendb.client.documents.queries.timeSeries.TimeSeriesRangeAggregation;
-import net.ravendb.client.documents.queries.timeSeries.TimeSeriesRawResult;
 import net.ravendb.client.documents.session.*;
 import net.ravendb.client.documents.session.timeSeries.TimeSeriesEntry;
 import net.ravendb.client.exceptions.documents.DocumentDoesNotExistException;
 import net.ravendb.client.infrastructure.entities.User;
-import net.ravendb.client.primitives.TimeValue;
 import org.apache.commons.lang3.time.DateUtils;
 import org.assertj.core.data.Offset;
 import org.junit.jupiter.api.Test;
 
-import java.time.Duration;
-import java.time.temporal.ChronoUnit;
 import java.util.*;
 
 import static org.assertj.core.api.Assertions.*;

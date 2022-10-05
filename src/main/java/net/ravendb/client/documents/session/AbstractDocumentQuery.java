@@ -10,7 +10,6 @@ import net.ravendb.client.documents.conventions.DocumentConventions;
 import net.ravendb.client.documents.indexes.spatial.SpatialRelation;
 import net.ravendb.client.documents.indexes.spatial.SpatialUnits;
 import net.ravendb.client.documents.operations.timeSeries.AbstractTimeSeriesRange;
-import net.ravendb.client.documents.operations.timeSeries.TimeSeriesRange;
 import net.ravendb.client.documents.queries.*;
 import net.ravendb.client.documents.queries.explanation.ExplanationOptions;
 import net.ravendb.client.documents.queries.explanation.Explanations;

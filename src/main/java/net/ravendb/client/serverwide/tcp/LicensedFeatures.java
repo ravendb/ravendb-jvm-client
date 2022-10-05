@@ -1,7 +1,6 @@
 package net.ravendb.client.serverwide.tcp;
 
 import com.fasterxml.jackson.core.JsonGenerator;
-import net.ravendb.client.primitives.SharpEnum;
 
 import java.io.IOException;
 

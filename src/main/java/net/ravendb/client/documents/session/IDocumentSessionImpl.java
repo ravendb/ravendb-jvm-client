@@ -3,7 +3,6 @@ package net.ravendb.client.documents.session;
 import net.ravendb.client.documents.Lazy;
 import net.ravendb.client.documents.conventions.DocumentConventions;
 import net.ravendb.client.documents.operations.timeSeries.AbstractTimeSeriesRange;
-import net.ravendb.client.documents.operations.timeSeries.TimeSeriesRange;
 import net.ravendb.client.documents.session.operations.lazy.IEagerSessionOperations;
 
 import java.util.Date;

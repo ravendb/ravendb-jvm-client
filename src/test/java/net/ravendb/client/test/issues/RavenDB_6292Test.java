@@ -1,17 +1,14 @@
 package net.ravendb.client.test.issues;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.google.common.base.Stopwatch;
 import net.ravendb.client.ReplicationTestBase;
 import net.ravendb.client.documents.IDocumentStore;
 import net.ravendb.client.documents.commands.QueryCommand;
-import net.ravendb.client.documents.conventions.DocumentConventions;
 import net.ravendb.client.documents.queries.IndexQuery;
 import net.ravendb.client.documents.queries.QueryResult;
 import net.ravendb.client.documents.session.IDocumentQuery;
 import net.ravendb.client.documents.session.IDocumentSession;
 import net.ravendb.client.documents.session.InMemoryDocumentSessionOperations;
-import net.ravendb.client.exceptions.ConflictException;
 import net.ravendb.client.exceptions.documents.DocumentConflictException;
 import net.ravendb.client.extensions.JsonExtensions;
 import net.ravendb.client.infrastructure.DisabledOnPullRequest;
@@ -22,7 +19,6 @@ import net.ravendb.client.serverwide.DatabaseRecord;
 import org.junit.jupiter.api.Test;
 
 import java.util.Collections;
-import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 
 import static org.assertj.core.api.Assertions.assertThat;

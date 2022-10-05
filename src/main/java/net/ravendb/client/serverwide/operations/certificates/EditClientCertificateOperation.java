@@ -7,8 +7,6 @@ import net.ravendb.client.http.ServerNode;
 import net.ravendb.client.http.VoidRavenCommand;
 import net.ravendb.client.json.ContentProviderHttpEntity;
 import net.ravendb.client.primitives.Reference;
-import net.ravendb.client.primitives.SharpEnum;
-import net.ravendb.client.serverwide.operations.IServerOperation;
 import net.ravendb.client.serverwide.operations.IVoidServerOperation;
 import net.ravendb.client.util.RaftIdGenerator;
 import org.apache.http.client.methods.HttpPost;
@@ -16,7 +14,6 @@ import org.apache.http.client.methods.HttpRequestBase;
 import org.apache.http.entity.ContentType;
 
 import java.io.IOException;
-import java.nio.channels.UnresolvedAddressException;
 import java.util.Map;
 
 public class EditClientCertificateOperation implements IVoidServerOperation {

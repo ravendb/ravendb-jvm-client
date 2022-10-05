@@ -7,7 +7,6 @@ import net.ravendb.client.documents.bulkInsert.BulkInsertOptions;
 import net.ravendb.client.documents.operations.DatabaseStatistics;
 import net.ravendb.client.documents.operations.GetStatisticsOperation;
 import net.ravendb.client.infrastructure.entities.User;
-import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;

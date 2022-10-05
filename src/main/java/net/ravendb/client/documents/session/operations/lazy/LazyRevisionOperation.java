@@ -1,7 +1,5 @@
 package net.ravendb.client.documents.session.operations.lazy;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import net.ravendb.client.documents.commands.GetRevisionsCommand;

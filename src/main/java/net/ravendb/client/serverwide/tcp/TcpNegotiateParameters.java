@@ -2,8 +2,6 @@ package net.ravendb.client.serverwide.tcp;
 
 import java.net.Socket;
 import java.util.function.BiFunction;
-import java.util.function.Function;
-
 public class TcpNegotiateParameters {
 
     private TcpConnectionHeaderMessage.OperationTypes operation;

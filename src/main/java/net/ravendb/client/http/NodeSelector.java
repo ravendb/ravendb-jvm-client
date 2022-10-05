@@ -6,7 +6,6 @@ import net.ravendb.client.exceptions.database.DatabaseDoesNotExistException;
 import net.ravendb.client.primitives.CleanCloseable;
 import net.ravendb.client.primitives.Timer;
 import org.apache.commons.lang3.ObjectUtils;
-import org.apache.commons.lang3.StringUtils;
 
 import java.time.Duration;
 import java.util.Arrays;

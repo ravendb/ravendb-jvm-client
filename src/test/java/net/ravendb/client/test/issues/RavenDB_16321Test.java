@@ -9,7 +9,6 @@ import net.ravendb.client.documents.session.IDocumentQuery;
 import net.ravendb.client.documents.session.IDocumentSession;
 import net.ravendb.client.exceptions.documents.indexes.IndexDoesNotExistException;
 import net.ravendb.client.infrastructure.orders.Employee;
-import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThatThrownBy;

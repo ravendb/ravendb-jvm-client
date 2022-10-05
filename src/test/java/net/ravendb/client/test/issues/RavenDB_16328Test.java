@@ -8,7 +8,6 @@ import net.ravendb.client.exceptions.documents.compilation.SorterCompilationExce
 import net.ravendb.client.infrastructure.orders.Company;
 import net.ravendb.client.serverwide.operations.sorters.DeleteServerWideSorterOperation;
 import net.ravendb.client.serverwide.operations.sorters.PutServerWideSortersOperation;
-import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThatThrownBy;

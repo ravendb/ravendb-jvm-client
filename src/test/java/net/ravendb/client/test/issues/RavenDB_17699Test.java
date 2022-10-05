@@ -5,7 +5,6 @@ import net.ravendb.client.documents.DocumentStore;
 import net.ravendb.client.documents.Lazy;
 import net.ravendb.client.documents.session.ConditionalLoadResult;
 import net.ravendb.client.documents.session.IDocumentSession;
-import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;

@@ -4,7 +4,6 @@ import net.ravendb.client.documents.bulkInsert.BulkInsertOptions;
 import net.ravendb.client.documents.changes.IDatabaseChanges;
 import net.ravendb.client.documents.conventions.DocumentConventions;
 import net.ravendb.client.documents.identity.IHiLoIdGenerator;
-import net.ravendb.client.documents.indexes.AbstractIndexCreationTaskBase;
 import net.ravendb.client.documents.indexes.IAbstractIndexCreationTask;
 import net.ravendb.client.documents.indexes.IndexCreation;
 import net.ravendb.client.documents.indexes.IndexDefinition;
@@ -21,7 +20,6 @@ import net.ravendb.client.primitives.CleanCloseable;
 import net.ravendb.client.primitives.EventHandler;
 import net.ravendb.client.primitives.EventHelper;
 import net.ravendb.client.primitives.VoidArgs;
-import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.StringUtils;
 
 import java.net.MalformedURLException;

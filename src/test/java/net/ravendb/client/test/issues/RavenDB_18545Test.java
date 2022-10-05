@@ -2,11 +2,8 @@ package net.ravendb.client.test.issues;
 
 import net.ravendb.client.RemoteTestBase;
 import net.ravendb.client.documents.DocumentStore;
-import net.ravendb.client.documents.session.DocumentQuery;
 import net.ravendb.client.documents.session.IDocumentQuery;
 import net.ravendb.client.documents.session.IDocumentSession;
-import net.ravendb.client.documents.session.IGroupByDocumentQuery;
-import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;

@@ -14,7 +14,6 @@ import java.util.Date;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.TimeUnit;
 
-import static org.assertj.core.api.Assertions.as;
 import static org.assertj.core.api.Assertions.assertThat;
 
 public class RavenDB_14230Test extends RemoteTestBase {

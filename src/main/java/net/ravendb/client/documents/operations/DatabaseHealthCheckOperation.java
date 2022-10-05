@@ -1,7 +1,6 @@
 package net.ravendb.client.documents.operations;
 
 import net.ravendb.client.documents.conventions.DocumentConventions;
-import net.ravendb.client.http.RavenCommand;
 import net.ravendb.client.http.ServerNode;
 import net.ravendb.client.http.VoidRavenCommand;
 import net.ravendb.client.primitives.Reference;

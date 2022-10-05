@@ -6,7 +6,6 @@ import net.ravendb.client.documents.operations.timeSeries.TimeSeriesOperation;
 import net.ravendb.client.documents.session.InMemoryDocumentSessionOperations;
 
 import java.io.IOException;
-import java.util.List;
 
 public abstract class TimeSeriesCommandData implements ICommandData {
 

@@ -6,7 +6,6 @@ import com.google.common.base.Defaults;
 import net.ravendb.client.documents.commands.GetDocumentsCommand;
 import net.ravendb.client.documents.commands.GetDocumentsResult;
 import net.ravendb.client.documents.operations.timeSeries.AbstractTimeSeriesRange;
-import net.ravendb.client.documents.operations.timeSeries.TimeSeriesRange;
 import net.ravendb.client.documents.session.DocumentInfo;
 import net.ravendb.client.documents.session.InMemoryDocumentSessionOperations;
 import org.apache.commons.lang3.StringUtils;

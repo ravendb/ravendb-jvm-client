@@ -3,7 +3,6 @@ package net.ravendb.client.test.client.timeSeries;
 import net.ravendb.client.Constants;
 import net.ravendb.client.RavenTestHelper;
 import net.ravendb.client.RemoteTestBase;
-import net.ravendb.client.ReplicationTestBase;
 import net.ravendb.client.documents.DocumentStore;
 import net.ravendb.client.documents.operations.timeSeries.*;
 import net.ravendb.client.documents.session.IDocumentSession;
@@ -12,7 +11,6 @@ import net.ravendb.client.documents.session.timeSeries.TimeSeriesEntry;
 import net.ravendb.client.infrastructure.entities.User;
 import net.ravendb.client.primitives.TimeValue;
 import org.apache.commons.lang3.time.DateUtils;
-import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 import java.util.Arrays;

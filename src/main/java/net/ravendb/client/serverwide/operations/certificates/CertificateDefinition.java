@@ -1,7 +1,5 @@
 package net.ravendb.client.serverwide.operations.certificates;
 
-import java.util.*;
-
 public class CertificateDefinition extends CertificateMetadata {
 
     private String certificate;

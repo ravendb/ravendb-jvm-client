@@ -1,7 +1,6 @@
 package net.ravendb.client.documents.session;
 
 import net.ravendb.client.documents.queries.*;
-import net.ravendb.client.documents.queries.facets.Facet;
 import net.ravendb.client.documents.queries.facets.FacetBase;
 import net.ravendb.client.documents.queries.facets.IAggregationDocumentQuery;
 import net.ravendb.client.documents.queries.facets.IFacetBuilder;

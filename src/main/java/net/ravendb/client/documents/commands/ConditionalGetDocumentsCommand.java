@@ -7,7 +7,6 @@ import net.ravendb.client.http.RavenCommand;
 import net.ravendb.client.http.ResponseDisposeHandling;
 import net.ravendb.client.http.ServerNode;
 import net.ravendb.client.primitives.Reference;
-import org.apache.commons.lang3.NotImplementedException;
 import org.apache.http.HttpStatus;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;

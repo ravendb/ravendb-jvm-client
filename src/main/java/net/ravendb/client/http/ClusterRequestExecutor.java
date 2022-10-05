@@ -12,8 +12,6 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
-
 public class ClusterRequestExecutor extends RequestExecutor {
 
     private final Semaphore clusterTopologySemaphore = new Semaphore(1);

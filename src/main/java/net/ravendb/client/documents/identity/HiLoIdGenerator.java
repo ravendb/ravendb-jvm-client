@@ -6,9 +6,7 @@ import net.ravendb.client.documents.commands.HiLoReturnCommand;
 import net.ravendb.client.documents.commands.NextHiLoCommand;
 import net.ravendb.client.http.RequestExecutor;
 
-import java.lang.ref.Reference;
 import java.util.Date;
-import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 

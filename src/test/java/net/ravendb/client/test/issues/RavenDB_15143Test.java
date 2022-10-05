@@ -7,7 +7,6 @@ import net.ravendb.client.documents.session.IDocumentSession;
 import net.ravendb.client.documents.session.SessionOptions;
 import net.ravendb.client.documents.session.TransactionMode;
 import org.apache.commons.lang3.time.DateUtils;
-import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 import java.util.Date;

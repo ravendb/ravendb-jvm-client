@@ -15,12 +15,10 @@ import net.ravendb.client.documents.operations.etl.RavenConnectionString;
 import net.ravendb.client.serverwide.DatabaseRecordWithEtag;
 import net.ravendb.client.serverwide.operations.GetDatabaseRecordOperation;
 import net.ravendb.client.serverwide.operations.ModifyOngoingTaskResult;
-import org.bouncycastle.util.encoders.Base64;
 
 import java.security.KeyStore;
 import java.security.cert.Certificate;
 import java.util.ArrayList;
-import java.util.Enumeration;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;

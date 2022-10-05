@@ -16,7 +16,6 @@ import net.ravendb.client.documents.session.QueryStatistics;
 import net.ravendb.client.exceptions.InvalidQueryException;
 import net.ravendb.client.primitives.Reference;
 import net.ravendb.client.primitives.Tuple;
-import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 import java.util.Arrays;

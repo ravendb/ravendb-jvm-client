@@ -9,7 +9,6 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import net.ravendb.client.Constants;
 import net.ravendb.client.documents.session.SessionInfo;
 import net.ravendb.client.extensions.HttpExtensions;
-import net.ravendb.client.extensions.JsonExtensions;
 import net.ravendb.client.http.*;
 import net.ravendb.client.json.ContentProviderHttpEntity;
 import net.ravendb.client.primitives.CleanCloseable;

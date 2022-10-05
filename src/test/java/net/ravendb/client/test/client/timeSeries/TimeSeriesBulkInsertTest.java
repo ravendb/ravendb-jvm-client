@@ -6,7 +6,6 @@ import net.ravendb.client.documents.IDocumentStore;
 import net.ravendb.client.documents.operations.attachments.AttachmentIteratorResult;
 import net.ravendb.client.documents.operations.attachments.AttachmentRequest;
 import net.ravendb.client.documents.operations.attachments.CloseableAttachmentsResult;
-import net.ravendb.client.documents.operations.counters.CountersDetail;
 import net.ravendb.client.documents.operations.counters.GetCountersOperation;
 import net.ravendb.client.documents.session.IDocumentSession;
 import net.ravendb.client.documents.session.timeSeries.TimeSeriesEntry;

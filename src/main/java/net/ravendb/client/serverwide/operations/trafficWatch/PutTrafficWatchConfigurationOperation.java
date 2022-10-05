@@ -8,7 +8,6 @@ import net.ravendb.client.http.VoidRavenCommand;
 import net.ravendb.client.json.ContentProviderHttpEntity;
 import net.ravendb.client.primitives.Reference;
 import net.ravendb.client.serverwide.operations.IVoidServerOperation;
-import net.ravendb.client.util.Size;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpRequestBase;
 import org.apache.http.entity.ContentType;

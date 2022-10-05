@@ -2,7 +2,6 @@ package net.ravendb.client.documents.session.operations.lazy;
 
 import net.ravendb.client.documents.commands.multiGet.GetRequest;
 import net.ravendb.client.documents.commands.multiGet.GetResponse;
-import net.ravendb.client.documents.conventions.DocumentConventions;
 import net.ravendb.client.documents.queries.IndexQuery;
 import net.ravendb.client.documents.queries.QueryResult;
 import net.ravendb.client.documents.queries.facets.FacetResult;
@@ -11,7 +10,6 @@ import net.ravendb.client.extensions.JsonExtensions;
 
 import java.io.IOException;
 import java.util.Map;
-import java.util.function.BiFunction;
 import java.util.function.Consumer;
 import java.util.function.Function;
 

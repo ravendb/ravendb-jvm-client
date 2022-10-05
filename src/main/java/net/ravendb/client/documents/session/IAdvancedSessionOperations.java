@@ -5,7 +5,6 @@ import net.ravendb.client.documents.commands.StreamResult;
 import net.ravendb.client.documents.session.operations.lazy.IEagerSessionOperations;
 import net.ravendb.client.documents.session.operations.lazy.ILazySessionOperations;
 import net.ravendb.client.primitives.Reference;
-import net.ravendb.client.primitives.Tuple;
 
 import java.io.OutputStream;
 import java.util.Collection;

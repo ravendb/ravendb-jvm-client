@@ -3,7 +3,6 @@ package net.ravendb.client.documents.session.operations.lazy;
 import net.ravendb.client.documents.Lazy;
 import net.ravendb.client.documents.session.ConditionalLoadResult;
 import net.ravendb.client.documents.session.loaders.ILazyLoaderWithInclude;
-import net.ravendb.client.primitives.Tuple;
 
 import java.util.Collection;
 import java.util.Map;

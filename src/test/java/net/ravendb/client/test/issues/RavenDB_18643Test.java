@@ -3,7 +3,6 @@ package net.ravendb.client.test.issues;
 import net.ravendb.client.RemoteTestBase;
 import net.ravendb.client.documents.BulkInsertOperation;
 import net.ravendb.client.documents.DocumentStore;
-import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;

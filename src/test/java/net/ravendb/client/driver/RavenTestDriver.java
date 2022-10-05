@@ -18,7 +18,6 @@ import net.ravendb.client.documents.operations.revisions.RevisionsConfiguration;
 import net.ravendb.client.documents.session.IDocumentSession;
 import net.ravendb.client.exceptions.TimeoutException;
 import net.ravendb.client.http.RequestExecutor;
-import net.ravendb.client.infrastructure.graph.*;
 import net.ravendb.client.primitives.CleanCloseable;
 import net.ravendb.client.primitives.Reference;
 import net.ravendb.client.util.UrlUtils;

@@ -11,11 +11,8 @@ import net.ravendb.client.documents.commands.batches.TimeSeriesBatchCommandData;
 import net.ravendb.client.documents.operations.timeSeries.*;
 import net.ravendb.client.documents.session.loaders.ITimeSeriesIncludeBuilder;
 import net.ravendb.client.documents.session.timeSeries.TimeSeriesEntry;
-import net.ravendb.client.documents.session.timeSeries.TypedTimeSeriesEntry;
-import net.ravendb.client.documents.session.timeSeries.TypedTimeSeriesRollupEntry;
 import net.ravendb.client.primitives.DatesComparator;
 import net.ravendb.client.primitives.Reference;
-import org.apache.commons.lang3.NotImplementedException;
 import org.apache.commons.lang3.StringUtils;
 
 import java.util.*;
