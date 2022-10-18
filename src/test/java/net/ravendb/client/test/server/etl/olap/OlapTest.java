@@ -13,12 +13,14 @@ import net.ravendb.client.documents.operations.etl.olap.OlapConnectionString;
 import net.ravendb.client.documents.operations.etl.olap.OlapEtlConfiguration;
 import net.ravendb.client.documents.operations.ongoingTasks.OngoingTaskOlapEtlDetails;
 import net.ravendb.client.documents.operations.ongoingTasks.OngoingTaskType;
+import net.ravendb.client.infrastructure.DisabledOnPullRequest;
 import org.junit.jupiter.api.Test;
 
 import java.util.Collections;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@DisabledOnPullRequest
 public class OlapTest extends RemoteTestBase {
     @Test
     public void canSetupOlap() throws Exception {

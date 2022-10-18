@@ -12,12 +12,14 @@ import net.ravendb.client.documents.operations.etl.elasticSearch.ElasticSearchCo
 import net.ravendb.client.documents.operations.etl.elasticSearch.ElasticSearchEtlConfiguration;
 import net.ravendb.client.documents.operations.ongoingTasks.OngoingTaskElasticSearchEtlDetails;
 import net.ravendb.client.documents.operations.ongoingTasks.OngoingTaskType;
+import net.ravendb.client.infrastructure.DisabledOnPullRequest;
 import org.junit.jupiter.api.Test;
 
 import java.util.Collections;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@DisabledOnPullRequest
 public class ElasticSearchTest extends RemoteTestBase {
     @Test
     public void canSetupElasticSearch() throws Exception {

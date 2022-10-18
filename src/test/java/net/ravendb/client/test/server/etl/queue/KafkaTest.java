@@ -14,12 +14,14 @@ import net.ravendb.client.documents.operations.etl.queue.QueueConnectionString;
 import net.ravendb.client.documents.operations.etl.queue.QueueEtlConfiguration;
 import net.ravendb.client.documents.operations.ongoingTasks.OngoingTaskQueueEtlDetails;
 import net.ravendb.client.documents.operations.ongoingTasks.OngoingTaskType;
+import net.ravendb.client.infrastructure.DisabledOnPullRequest;
 import org.junit.jupiter.api.Test;
 
 import java.util.Collections;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@DisabledOnPullRequest
 public class KafkaTest extends RemoteTestBase {
     @Test
     public void canSetupKafka() throws Exception {
