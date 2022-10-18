@@ -8,6 +8,7 @@ import net.ravendb.client.documents.operations.timeSeries.*;
 import net.ravendb.client.documents.session.IDocumentSession;
 import net.ravendb.client.documents.session.ISessionDocumentIncrementalTimeSeries;
 import net.ravendb.client.documents.session.timeSeries.TimeSeriesEntry;
+import net.ravendb.client.infrastructure.DisabledOnPullRequest;
 import net.ravendb.client.infrastructure.entities.User;
 import net.ravendb.client.primitives.TimeValue;
 import org.apache.commons.lang3.time.DateUtils;
@@ -332,6 +333,7 @@ public class IncrementalTimeSeriesTest extends RemoteTestBase {
     }
 
     @Test
+    @DisabledOnPullRequest
     public void shouldThrowIfIncrementOperationOnRollupTimeSeries() throws Exception {
         try (DocumentStore store = getDocumentStore()) {
             TimeSeriesPolicy p1 = new TimeSeriesPolicy("BySecond", TimeValue.ofSeconds(1));
