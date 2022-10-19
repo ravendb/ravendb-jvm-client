@@ -11,12 +11,14 @@ import net.ravendb.client.documents.operations.etl.Transformation;
 import net.ravendb.client.documents.operations.etl.queue.*;
 import net.ravendb.client.documents.operations.ongoingTasks.OngoingTaskQueueEtlDetails;
 import net.ravendb.client.documents.operations.ongoingTasks.OngoingTaskType;
+import net.ravendb.client.infrastructure.DisabledOnPullRequest;
 import org.junit.jupiter.api.Test;
 
 import java.util.Collections;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@DisabledOnPullRequest
 public class RabbitMqTest extends RemoteTestBase {
     @Test
     public void canSetupRabbitMq() throws Exception {
