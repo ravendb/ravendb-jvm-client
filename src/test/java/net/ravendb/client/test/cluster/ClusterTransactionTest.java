@@ -127,13 +127,13 @@ public class ClusterTransactionTest extends RemoteTestBase {
             sessionOptions.setTransactionMode(TransactionMode.CLUSTER_WIDE);
             sessionOptions.setDisableAtomicDocumentWritesInClusterWideTransaction(true);
 
-            try (IDocumentSession session = store.openSession()) {
+            try (IDocumentSession session = store.openSession(sessionOptions)) {
 
                 ByteArrayInputStream attachmentStream = new ByteArrayInputStream(new byte[]{1, 2, 3});
                 session.advanced().attachments().store("asd", "test", attachmentStream);
                 assertThatThrownBy(() -> {
                     session.saveChanges();
-                }).isExactlyInstanceOf(RavenException.class);
+                }).isExactlyInstanceOf(IllegalStateException.class);
             }
         }
     }
