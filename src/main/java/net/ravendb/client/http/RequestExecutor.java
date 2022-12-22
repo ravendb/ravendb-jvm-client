@@ -709,10 +709,6 @@ public class RequestExecutor implements CleanCloseable {
             requestRef.value = request;
         }
 
-        if (request == null) {
-            return;
-        }
-
         //noinspection SimplifiableConditionalExpression
         boolean noCaching = sessionInfo != null ? sessionInfo.isNoCaching() : false;
 
