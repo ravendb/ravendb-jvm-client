@@ -133,7 +133,7 @@ public class ClusterTransactionTest extends RemoteTestBase {
                 session.advanced().attachments().store("asd", "test", attachmentStream);
                 assertThatThrownBy(() -> {
                     session.saveChanges();
-                }).isInstanceOf(RavenException.class);
+                }).isInstanceOfAny(IllegalStateException.class);
             }
         }
     }
