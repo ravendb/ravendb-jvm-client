@@ -38,7 +38,7 @@ jobs:
       run: wget -O RavenDB.tar.bz2 "https://hibernatingrhinos.com/downloads/RavenDB%20for%20Linux%20x64/latest?buildType=${{ env.RAVENDB_BUILD_TYPE }}&version=${{ matrix.serverVersion }}"
 
     - run: mkdir certs
-    - run: openssl genrsa -out certs/ca.key 2048
+    - run: openssl genrsa -traditional -out certs/ca.key 2048
     - run: openssl req -new -x509 -key certs/ca.key -out certs/ca.crt -subj "/C=US/ST=Arizona/L=Nevada/O=RavenDB Test CA/OU=RavenDB test CA/CN=localhost/emailAddress=ravendbca@example.com"
     - run: openssl genrsa -out certs/localhost.key 2048
     - run: openssl req -new  -key certs/localhost.key -out certs/localhost.csr -subj "/C=US/ST=Arizona/L=Nevada/O=RavenDB Test/OU=RavenDB test/CN=localhost/emailAddress=ravendb@example.com" -addext "subjectAltName = DNS:localhost"
