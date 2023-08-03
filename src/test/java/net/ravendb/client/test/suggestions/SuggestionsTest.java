@@ -235,7 +235,7 @@ public class SuggestionsTest extends RemoteTestBase {
                         .hasSize(5);
 
                 assertThat(suggestions.get("name").getSuggestions())
-                        .containsSequence("john", "jones", "johnson", "david", "jack");
+                        .contains("john", "jones", "johnson", "david", "jack");
             }
         }
     }

@@ -23,7 +23,7 @@ public class RavenDB_14724Test extends RemoteTestBase {
         String id = "user/1";
 
         try (DocumentStore store = getDocumentStore()) {
-            setupRevisions(store, false, 5);
+            setupRevisions(store, true, 5);
 
             try (IDocumentSession session = store.openSession()) {
                 session.store(user, id);
@@ -46,21 +46,21 @@ public class RavenDB_14724Test extends RemoteTestBase {
                 assertThat(revisions)
                         .hasSize(2);
 
+                session.delete(id);
+                session.saveChanges();
+
                 RevisionsConfiguration configuration = new RevisionsConfiguration();
                 configuration.setDefaultConfig(null);
 
                 ConfigureRevisionsOperation operation = new ConfigureRevisionsOperation(configuration);
                 store.maintenance().send(operation);
-
-                session.delete(id);
-                session.saveChanges();
             }
 
             try (IDocumentSession session = store.openSession()) {
                 session.store(user, id);
                 session.saveChanges();
 
-                setupRevisions(store, false, 5);
+                setupRevisions(store, true, 5);
             }
 
             try (IDocumentSession session = store.openSession()) {

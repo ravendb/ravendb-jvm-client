@@ -7,6 +7,7 @@ import net.ravendb.client.documents.session.IDocumentSession;
 import net.ravendb.client.documents.session.IRawDocumentQuery;
 import net.ravendb.client.documents.smuggler.DatabaseItemType;
 import net.ravendb.client.infrastructure.CreateSampleDataOperation;
+import net.ravendb.client.infrastructure.DisabledOn60Server;
 import net.ravendb.client.infrastructure.graph.Movie;
 import org.junit.jupiter.api.Test;
 
@@ -18,6 +19,7 @@ import java.util.stream.Collectors;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@DisabledOn60Server
 public class BasicGraphQueriesTest extends RemoteTestBase {
 
     public static class StalenessParameters {
