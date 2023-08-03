@@ -29,7 +29,7 @@ public class ConnectionStringsTest extends RemoteTestBase {
             ravenConnectionString1.setName("r1");
 
             SqlConnectionString sqlConnectionString1 = new SqlConnectionString();
-            sqlConnectionString1.setFactoryName("test");
+            sqlConnectionString1.setFactoryName("MySql.Data.MySqlClient");
             sqlConnectionString1.setConnectionString("test");
             sqlConnectionString1.setName("s1");
 
