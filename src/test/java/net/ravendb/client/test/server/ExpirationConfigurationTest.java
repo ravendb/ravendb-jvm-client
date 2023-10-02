@@ -5,10 +5,12 @@ import net.ravendb.client.documents.IDocumentStore;
 import net.ravendb.client.documents.operations.expiration.ConfigureExpirationOperation;
 import net.ravendb.client.documents.operations.expiration.ConfigureExpirationOperationResult;
 import net.ravendb.client.documents.operations.expiration.ExpirationConfiguration;
+import net.ravendb.client.infrastructure.DisabledOnPullRequest;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@DisabledOnPullRequest
 public class ExpirationConfigurationTest extends RemoteTestBase {
 
     @Test

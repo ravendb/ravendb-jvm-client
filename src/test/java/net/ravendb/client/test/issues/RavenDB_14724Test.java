@@ -7,6 +7,7 @@ import net.ravendb.client.documents.operations.revisions.ConfigureRevisionsOpera
 import net.ravendb.client.documents.operations.revisions.RevisionsConfiguration;
 import net.ravendb.client.documents.session.IDocumentSession;
 import net.ravendb.client.documents.session.IMetadataDictionary;
+import net.ravendb.client.infrastructure.DisabledOnPullRequest;
 import net.ravendb.client.infrastructure.entities.User;
 import org.junit.jupiter.api.Test;
 
@@ -14,6 +15,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@DisabledOnPullRequest
 public class RavenDB_14724Test extends RemoteTestBase {
 
     @Test

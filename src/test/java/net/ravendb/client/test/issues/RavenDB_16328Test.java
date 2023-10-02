@@ -5,6 +5,7 @@ import net.ravendb.client.documents.IDocumentStore;
 import net.ravendb.client.documents.queries.sorting.SorterDefinition;
 import net.ravendb.client.documents.session.IDocumentSession;
 import net.ravendb.client.exceptions.documents.compilation.SorterCompilationException;
+import net.ravendb.client.infrastructure.DisabledOnPullRequest;
 import net.ravendb.client.infrastructure.orders.Company;
 import net.ravendb.client.serverwide.operations.sorters.DeleteServerWideSorterOperation;
 import net.ravendb.client.serverwide.operations.sorters.PutServerWideSortersOperation;
@@ -12,6 +13,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@DisabledOnPullRequest
 public class RavenDB_16328Test extends RemoteTestBase {
 
     @Test

@@ -10,11 +10,13 @@ import net.ravendb.client.documents.session.IDocumentSession;
 import net.ravendb.client.documents.session.SessionOptions;
 import net.ravendb.client.documents.session.TransactionMode;
 import net.ravendb.client.exceptions.RavenException;
+import net.ravendb.client.infrastructure.DisabledOnPullRequest;
 import net.ravendb.client.infrastructure.entities.Company;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.*;
 
+@DisabledOnPullRequest
 public class RavenDB_13456Test extends RemoteTestBase {
     @Test
     public void canChangeIdentityPartsSeparator() throws Exception {

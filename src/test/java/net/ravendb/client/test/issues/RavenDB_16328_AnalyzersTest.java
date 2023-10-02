@@ -8,6 +8,7 @@ import net.ravendb.client.documents.indexes.IndexErrors;
 import net.ravendb.client.documents.indexes.analysis.AnalyzerDefinition;
 import net.ravendb.client.documents.operations.indexes.ResetIndexOperation;
 import net.ravendb.client.documents.session.IDocumentSession;
+import net.ravendb.client.infrastructure.DisabledOnPullRequest;
 import net.ravendb.client.serverwide.operations.analyzers.DeleteServerWideAnalyzerOperation;
 import net.ravendb.client.serverwide.operations.analyzers.PutServerWideAnalyzersOperation;
 import org.junit.jupiter.api.Test;
@@ -18,6 +19,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@DisabledOnPullRequest
 public class RavenDB_16328_AnalyzersTest extends RemoteTestBase {
 
     public static String analyzer = "using System.IO;\n" +
