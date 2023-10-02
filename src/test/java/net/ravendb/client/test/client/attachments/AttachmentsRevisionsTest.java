@@ -11,6 +11,7 @@ import net.ravendb.client.documents.operations.attachments.CloseableAttachmentRe
 import net.ravendb.client.documents.operations.attachments.PutAttachmentOperation;
 import net.ravendb.client.documents.session.IDocumentSession;
 import net.ravendb.client.documents.session.IMetadataDictionary;
+import net.ravendb.client.infrastructure.DisabledOnPullRequest;
 import net.ravendb.client.infrastructure.entities.User;
 import org.apache.commons.io.IOUtils;
 import org.junit.jupiter.api.Test;
@@ -24,6 +25,7 @@ import java.util.stream.Collectors;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@DisabledOnPullRequest
 public class AttachmentsRevisionsTest extends RemoteTestBase {
 
     @Test

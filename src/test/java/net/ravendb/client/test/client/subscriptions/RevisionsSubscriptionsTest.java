@@ -10,6 +10,7 @@ import net.ravendb.client.documents.subscriptions.Revision;
 import net.ravendb.client.documents.subscriptions.SubscriptionBatch;
 import net.ravendb.client.documents.subscriptions.SubscriptionWorker;
 import net.ravendb.client.documents.subscriptions.SubscriptionWorkerOptions;
+import net.ravendb.client.infrastructure.DisabledOnPullRequest;
 import net.ravendb.client.infrastructure.entities.Company;
 import net.ravendb.client.infrastructure.entities.User;
 import org.junit.jupiter.api.Test;
@@ -24,6 +25,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@DisabledOnPullRequest
 public class RevisionsSubscriptionsTest extends RemoteTestBase {
 
     private final int _reasonableWaitTime = 15;
