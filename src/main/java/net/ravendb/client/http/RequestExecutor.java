@@ -1318,19 +1318,20 @@ public class RequestExecutor implements CleanCloseable {
 
         spawnHealthChecks(chosenNode, nodeIndex);
 
-        CurrentIndexAndNodeAndEtag indexAndNodeAndEtag = _nodeSelector.getPreferredNodeWithTopology();
+        CurrentIndexAndNode currentIndexAndNode = chooseNodeForRequest(command, sessionInfo);
+        long topologyEtag = _nodeSelector.getTopology() != null ? _nodeSelector.getTopology().getEtag() : -2;
         if (command.failoverTopologyEtag != topologyEtag) {
             command.getFailedNodes().clear();
             command.failoverTopologyEtag = topologyEtag;
         }
 
-        if (command.getFailedNodes().containsKey(indexAndNodeAndEtag.currentNode)) {
+        if (command.getFailedNodes().containsKey(currentIndexAndNode.currentNode)) {
             return false;
         }
 
         onFailedRequestInvoke(url, e, request, response);
 
-        execute(indexAndNodeAndEtag.currentNode, indexAndNodeAndEtag.currentIndex, command, shouldRetry, sessionInfo);
+        execute(currentIndexAndNode.currentNode, currentIndexAndNode.currentIndex, command, shouldRetry, sessionInfo);
 
         return true;
     }
