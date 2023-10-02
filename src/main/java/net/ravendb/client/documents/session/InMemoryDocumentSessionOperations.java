@@ -1624,7 +1624,7 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
 
             if (fieldAndValue.getValue().size() == 0 && !gotAll) {
                 Tuple<Boolean, Map<String, Long>> cache =
-                        _countersByDocId.get(fieldAndValue.getKey());
+                        getCountersByDocId().get(fieldAndValue.getKey());
                 if (cache == null) {
                     continue;
                 }
