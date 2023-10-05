@@ -11,6 +11,7 @@ import net.ravendb.client.exceptions.AllTopologyNodesDownException;
 import net.ravendb.client.exceptions.ClientVersionMismatchException;
 import net.ravendb.client.exceptions.InvalidNetworkTopologyException;
 import net.ravendb.client.exceptions.cluster.NodeIsPassiveException;
+import net.ravendb.client.exceptions.database.DatabaseDisabledException;
 import net.ravendb.client.exceptions.database.DatabaseDoesNotExistException;
 import net.ravendb.client.exceptions.documents.subscriptions.*;
 import net.ravendb.client.exceptions.security.AuthorizationException;
@@ -470,6 +471,9 @@ public class SubscriptionWorker<T> implements CleanCloseable {
 
     @SuppressWarnings("ConstantConditions")
     private void processSubscription() throws Exception {
+
+        CompletableFuture<Void> notifiedSubscriber = CompletableFuture.completedFuture(null);
+
         try {
             _processingCts.getToken().throwIfCancellationRequested();
 
@@ -495,7 +499,7 @@ public class SubscriptionWorker<T> implements CleanCloseable {
 
                 EventHelper.invoke(onEstablishedSubscriptionConnection, this);
 
-                CompletableFuture<Void> notifiedSubscriber = CompletableFuture.completedFuture(null);
+
 
                 SubscriptionBatch<T> batch = new SubscriptionBatch<>(_clazz, _revisions, _subscriptionLocalRequestExecutor, _store, _dbName, _logger);
 
@@ -526,7 +530,6 @@ public class SubscriptionWorker<T> implements CleanCloseable {
                     BatchFromServer incomingBatch = readFromServer.get();
 
                     _processingCts.getToken().throwIfCancellationRequested();
-
                     String lastReceivedChangeVector = batch.initialize(incomingBatch);
 
                     notifiedSubscriber = CompletableFuture.runAsync(() -> {
@@ -560,6 +563,14 @@ public class SubscriptionWorker<T> implements CleanCloseable {
 
             // otherwise this is thrown when shutting down,
             // it isn't an error, so we don't need to treat it as such
+        } finally {
+            try {
+                if (!notifiedSubscriber.isDone()) {
+                    notifiedSubscriber.get(15, TimeUnit.SECONDS);
+                }
+            } catch (Exception e) {
+                // ignored
+            }
         }
     }
 
@@ -746,6 +757,9 @@ public class SubscriptionWorker<T> implements CleanCloseable {
 
             _redirectNode = nodeToRedirectTo;
             return true;
+        } else if (ex instanceof DatabaseDisabledException || ex instanceof AllTopologyNodesDownException) {
+            assertLastConnectionFailure();
+            return true;
         } else if (ex instanceof NodeIsPassiveException) {
             // if we failed to talk to a node, we'll forget about it and let the topology to
             // redirect us to the current node
@@ -768,7 +782,6 @@ public class SubscriptionWorker<T> implements CleanCloseable {
                 || ex instanceof SubscriptionInvalidStateException
                 || ex instanceof DatabaseDoesNotExistException
                 || ex instanceof AuthorizationException
-                || ex instanceof AllTopologyNodesDownException
                 || ex instanceof SubscriberErrorException) {
             _processingCts.cancel();
             return false;

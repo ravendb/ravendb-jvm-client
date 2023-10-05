@@ -72,4 +72,14 @@ public class SessionDocumentTypedTimeSeries<T> extends SessionTimeSeriesBase
     public void append(TypedTimeSeriesEntry<T> entry) {
         append(entry.getTimestamp(), entry.getValue(), entry.getTag());
     }
+
+    public void increment(Date timestamp, T entry) {
+        double[] values = TimeSeriesValuesHelper.getValues(_clazz, entry);
+        increment(timestamp, values);
+    }
+
+    public void increment(T entry) {
+        double[] values = TimeSeriesValuesHelper.getValues(_clazz, entry);
+        increment(values);
+    }
 }

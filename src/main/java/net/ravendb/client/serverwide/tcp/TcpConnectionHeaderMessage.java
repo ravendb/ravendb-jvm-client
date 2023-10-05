@@ -107,6 +107,7 @@ public class TcpConnectionHeaderMessage {
     public static final int HEARTBEATS_BASE_LINE = 20;
     public static final int HEARTBEATS_41200 = 41_200;
     public static final int HEARTBEATS_42000 = 42_000;
+    public static final int HEARTBEATS_WITH_TCP_COMPRESSION = 54_000;
     public static final int SUBSCRIPTION_BASE_LINE = 40;
     public static final int SUBSCRIPTION_INCLUDES = 41_400;
     public static final int SUBSCRIPTION_COUNTER_INCLUDES = 50_000;
@@ -114,7 +115,7 @@ public class TcpConnectionHeaderMessage {
     public static final int TCP_CONNECTIONS_WITH_COMPRESSION = 53_000;
     public static final int TEST_CONNECTION_BASE_LINE = 50;
 
-    public static final int HEARTBEATS_TCP_VERSION = HEARTBEATS_42000;
+    public static final int HEARTBEATS_TCP_VERSION = HEARTBEATS_WITH_TCP_COMPRESSION;
     public static final int SUBSCRIPTION_TCP_VERSION = TCP_CONNECTIONS_WITH_COMPRESSION;
     public static final int TEST_CONNECTION_TCP_VERSION = TEST_CONNECTION_BASE_LINE;
 
@@ -183,7 +184,7 @@ public class TcpConnectionHeaderMessage {
         operationsToSupportedProtocolVersions.put(OperationTypes.NONE, Collections.singletonList(NONE_BASE_LINE));
         operationsToSupportedProtocolVersions.put(OperationTypes.DROP, Collections.singletonList(DROP_BASE_LINE));
         operationsToSupportedProtocolVersions.put(OperationTypes.SUBSCRIPTION, Arrays.asList(TCP_CONNECTIONS_WITH_COMPRESSION, SUBSCRIPTION_TIME_SERIES_INCLUDES, SUBSCRIPTION_COUNTER_INCLUDES, SUBSCRIPTION_INCLUDES, SUBSCRIPTION_BASE_LINE));
-        operationsToSupportedProtocolVersions.put(OperationTypes.HEARTBEATS, Arrays.asList(HEARTBEATS_42000, HEARTBEATS_41200, HEARTBEATS_BASE_LINE));
+        operationsToSupportedProtocolVersions.put(OperationTypes.HEARTBEATS, Arrays.asList(HEARTBEATS_TCP_VERSION, HEARTBEATS_42000, HEARTBEATS_41200, HEARTBEATS_BASE_LINE));
         operationsToSupportedProtocolVersions.put(OperationTypes.TEST_CONNECTION, Collections.singletonList(TEST_CONNECTION_BASE_LINE));
 
         Map<Integer, SupportedFeatures> pingFeaturesMap = new HashMap<>();
@@ -253,6 +254,13 @@ public class TcpConnectionHeaderMessage {
         heartbeats42000Features.heartbeats.sendChangesOnly = true;
         heartbeats42000Features.heartbeats.includeServerInfo = true;
         heartbeatsFeaturesMap.put(HEARTBEATS_42000, heartbeats42000Features);
+
+        SupportedFeatures heartbeatsWithTcpCompressionFeatures = new SupportedFeatures(HEARTBEATS_WITH_TCP_COMPRESSION);
+        heartbeatsWithTcpCompressionFeatures.heartbeats = new SupportedFeatures.HeartbeatsFeatures();
+        heartbeatsWithTcpCompressionFeatures.heartbeats.sendChangesOnly = true;
+        heartbeatsWithTcpCompressionFeatures.heartbeats.includeServerInfo = true;
+        heartbeatsWithTcpCompressionFeatures.dataCompression = true;
+        heartbeatsFeaturesMap.put(HEARTBEATS_WITH_TCP_COMPRESSION, heartbeatsWithTcpCompressionFeatures);
 
         Map<Integer, SupportedFeatures> testConnectionFeaturesMap = new HashMap<>();
         supportedFeaturesByProtocol.put(OperationTypes.TEST_CONNECTION, testConnectionFeaturesMap);

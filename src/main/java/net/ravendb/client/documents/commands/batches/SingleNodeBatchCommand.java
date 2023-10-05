@@ -85,7 +85,7 @@ public class SingleNodeBatchCommand extends RavenCommand<BatchCommandResult> imp
 
         request.setEntity(new ContentProviderHttpEntity(outputStream -> {
             try (JsonGenerator generator = createSafeJsonGenerator(outputStream)) {
-                if (_supportsAtomicWrites == null || node.isSupportsAtomicClusterWrites() != _supportsAtomicWrites) {
+                if (_supportsAtomicWrites == null) {
                     _supportsAtomicWrites = node.isSupportsAtomicClusterWrites();
                 }
 

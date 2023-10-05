@@ -4,6 +4,7 @@ public class CompactSettings {
     private String databaseName;
     private boolean documents;
     private String[] indexes;
+    private boolean skipOptimizeIndexes;
 
     public String getDatabaseName() {
         return databaseName;
@@ -27,5 +28,13 @@ public class CompactSettings {
 
     public void setIndexes(String[] indexes) {
         this.indexes = indexes;
+    }
+
+    public boolean isSkipOptimizeIndexes() {
+        return skipOptimizeIndexes;
+    }
+
+    public void setSkipOptimizeIndexes(boolean skipOptimizeIndexes) {
+        this.skipOptimizeIndexes = skipOptimizeIndexes;
     }
 }

@@ -121,6 +121,25 @@ public class SessionTimeSeriesBase {
             deletes.add(op);
             session.defer(new TimeSeriesBatchCommandData(docId, name, null, deletes));
         }
+
+        removeFromCacheIfNeeded(from, to);
+    }
+
+    private void removeFromCacheIfNeeded(Date from, Date to) {
+        Map<String, List<TimeSeriesRangeResult>> cache = session.getTimeSeriesByDocId().get(docId);
+        if (cache == null) {
+            return;
+        }
+
+        if (from == null && to == null) {
+            cache.remove(name);
+            return;
+        }
+
+        List<TimeSeriesRangeResult> ranges = cache.get(name);
+        if (ranges != null && !ranges.isEmpty()) {
+            ranges.removeIf(range -> compare(leftDate(range.getFrom()), leftDate(from)) <= 0 && compare(rightDate(range.getTo()), rightDate(to)) >= 0);
+        }
     }
 
     public void increment(Date timestamp, double[] values) {
@@ -425,9 +444,13 @@ public class SessionTimeSeriesBase {
 
             // add current range from cache to the merged list.
             // in order to avoid duplication, skip first item in range if needed
+            boolean shouldSkip = false;
+            if (!mergedValues.isEmpty()) {
+                shouldSkip = ranges.get(i).getEntries()[0].getTimestamp().equals(mergedValues.get(mergedValues.size() - 1).getTimestamp());
+            }
             List<TimeSeriesEntry> toAdd = Arrays.stream(ranges.get(i)
                     .getEntries())
-                    .skip(mergedValues.size() == 0 ? 0 : 1)
+                    .skip(!shouldSkip ? 0 : 1)
                     .collect(Collectors.toList());
 
             mergedValues.addAll(toAdd);

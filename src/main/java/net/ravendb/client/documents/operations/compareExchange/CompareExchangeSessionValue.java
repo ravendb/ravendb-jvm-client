@@ -128,7 +128,7 @@ public class CompareExchangeSessionValue {
 
                 ObjectNode entityJson = entity instanceof ObjectNode ? (ObjectNode) entity : null;
 
-                ObjectNode metadata = _originalValue != null ? (ObjectNode) _originalValue.getValue().get(Constants.Documents.Metadata.KEY) : null;
+                ObjectNode metadata = _originalValue != null && _originalValue.getValue() != null ? (ObjectNode) _originalValue.getValue().get(Constants.Documents.Metadata.KEY) : null;
 
                 boolean metadataHasChanged = false;
 

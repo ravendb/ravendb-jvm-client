@@ -3,6 +3,7 @@ package net.ravendb.client.documents.operations;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import net.ravendb.client.documents.changes.IDatabaseChanges;
+import net.ravendb.client.documents.commands.KillOperationCommand;
 import net.ravendb.client.documents.conventions.DocumentConventions;
 import net.ravendb.client.exceptions.ExceptionDispatcher;
 import net.ravendb.client.extensions.JsonExtensions;
@@ -84,5 +85,15 @@ public class Operation {
                 throw new RuntimeException(e);
             }
         }
+    }
+
+    protected RavenCommand getKillOperationCommand(long id, String nodeTag) {
+        return new KillOperationCommand(id, nodeTag);
+    }
+
+    public void kill() {
+        RavenCommand command = getKillOperationCommand(_id, getNodeTag());
+
+        _requestExecutor.execute(command);
     }
 }

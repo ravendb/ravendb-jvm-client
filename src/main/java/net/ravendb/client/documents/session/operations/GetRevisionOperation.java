@@ -115,6 +115,8 @@ public class GetRevisionOperation {
         documentInfo.setEntity(entity);
         _session.documentsByEntity.put(entity, documentInfo);
 
+        _session.onAfterConversionToEntityInvoke(id, document, entity);
+
         return entity;
     }
 

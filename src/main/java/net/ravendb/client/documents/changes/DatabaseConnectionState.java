@@ -51,6 +51,7 @@ public class DatabaseConnectionState implements IChangesConnectionState<Database
         onCounterChangeNotification.clear();
         onTimeSeriesChangeNotification.clear();
         onError.clear();
+        onAggressiveChangeChangeNotification.clear();
     }
 
     public DatabaseConnectionState(Runnable onConnect, Runnable onDisconnect) {
@@ -63,6 +64,9 @@ public class DatabaseConnectionState implements IChangesConnectionState<Database
     @SuppressWarnings("unchecked")
     public void addOnChangeNotification(ChangesType type, Consumer<DatabaseChange> handler) {
         switch (type) {
+            case AGGRESSIVE_CACHE:
+                this.onAggressiveChangeChangeNotification.add((Consumer<AggressiveCacheChange>)(Consumer<?>) handler);
+                break;
             case DOCUMENT:
                 this.onDocumentChangeNotification.add((Consumer<DocumentChange>)(Consumer<?>) handler);
                 break;
@@ -85,6 +89,9 @@ public class DatabaseConnectionState implements IChangesConnectionState<Database
 
     public void removeOnChangeNotification(ChangesType type, Consumer<DatabaseChange> handler) {
         switch (type) {
+            case AGGRESSIVE_CACHE:
+                this.onAggressiveChangeChangeNotification.remove(handler);
+                break;
             case DOCUMENT:
                 this.onDocumentChangeNotification.remove(handler);
                 break;
@@ -114,6 +121,7 @@ public class DatabaseConnectionState implements IChangesConnectionState<Database
     private final List<Consumer<CounterChange>> onCounterChangeNotification = new ArrayList<>();
 
     private final List<Consumer<TimeSeriesChange>> onTimeSeriesChangeNotification = new ArrayList<>();
+    private final List<Consumer<AggressiveCacheChange>> onAggressiveChangeChangeNotification = new ArrayList<>();
 
     public void send(DocumentChange documentChange) {
         EventHelper.invoke(onDocumentChangeNotification, documentChange);
@@ -133,5 +141,9 @@ public class DatabaseConnectionState implements IChangesConnectionState<Database
 
     public void send(TimeSeriesChange timeSeriesChange) {
         EventHelper.invoke(onTimeSeriesChangeNotification, timeSeriesChange);
+    }
+
+    public void send(AggressiveCacheChange change) {
+        EventHelper.invoke(onAggressiveChangeChangeNotification, change);
     }
 }

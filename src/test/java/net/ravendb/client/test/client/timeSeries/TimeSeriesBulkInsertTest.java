@@ -9,6 +9,7 @@ import net.ravendb.client.documents.operations.attachments.CloseableAttachmentsR
 import net.ravendb.client.documents.operations.counters.GetCountersOperation;
 import net.ravendb.client.documents.session.IDocumentSession;
 import net.ravendb.client.documents.session.timeSeries.TimeSeriesEntry;
+import net.ravendb.client.exceptions.BulkInsertInvalidOperationException;
 import net.ravendb.client.infrastructure.entities.User;
 import net.ravendb.client.test.client.attachments.AttachmentsStreamTest;
 import org.apache.commons.lang3.time.DateUtils;
@@ -863,19 +864,19 @@ public class TimeSeriesBulkInsertTest extends RemoteTestBase {
                         bulkInsert.store(user1);
                     })
                             .hasMessageContaining(errorMessage)
-                            .isInstanceOf(IllegalStateException.class);
+                            .isInstanceOf(BulkInsertInvalidOperationException.class);
 
                     assertThatThrownBy(() -> bulkInsert.countersFor("test").increment("1", 1))
                             .hasMessageContaining(errorMessage)
-                            .isInstanceOf(IllegalStateException.class);
+                            .isInstanceOf(BulkInsertInvalidOperationException.class);
 
                     assertThatThrownBy(() -> bulkInsert.timeSeriesFor(documentId, "Pulse"))
                             .hasMessageContaining(errorMessage)
-                            .isInstanceOf(IllegalStateException.class);
+                            .isInstanceOf(BulkInsertInvalidOperationException.class);
 
                     assertThatThrownBy(() -> bulkInsert.timeSeriesFor(documentId, "Heartrate"))
                             .hasMessageContaining(errorMessage)
-                            .isInstanceOf(IllegalStateException.class);
+                            .isInstanceOf(BulkInsertInvalidOperationException.class);
                 }
             }
 

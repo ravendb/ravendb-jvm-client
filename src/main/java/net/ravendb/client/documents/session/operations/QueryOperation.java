@@ -189,7 +189,7 @@ public class QueryOperation {
                 _session.registerTimeSeries(queryResult.getTimeSeriesIncludes());
             }
             if (queryResult.getCompareExchangeValueIncludes() != null) {
-                _session.getClusterSession().registerCompareExchangeValues(queryResult.getCompareExchangeValueIncludes());
+                _session.getClusterSession().registerCompareExchangeValues(queryResult.getCompareExchangeValueIncludes(), false);
             }
             if (queryResult.getRevisionIncludes() != null) {
                 _session.registerRevisionIncludes(queryResult.getRevisionIncludes());

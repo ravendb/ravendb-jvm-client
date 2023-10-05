@@ -7,6 +7,7 @@ public class CompareExchangeValue<T> implements ICompareExchangeValue {
     private String key;
     private long index;
     private T value;
+    private String changeVector;
     private IMetadataDictionary metadataAsDictionary;
 
     public CompareExchangeValue(String key, long index, T value) {
@@ -14,9 +15,14 @@ public class CompareExchangeValue<T> implements ICompareExchangeValue {
     }
 
     public CompareExchangeValue(String key, long index, T value, IMetadataDictionary metadata) {
+        this(key, index, value, null, metadata);
+    }
+
+    public CompareExchangeValue(String key, long index, T value, String changeVector, IMetadataDictionary metadata) {
         this.key = key;
         this.index = index;
         this.value = value;
+        this.changeVector = changeVector;
         this.metadataAsDictionary = metadata;
     }
 
@@ -42,6 +48,14 @@ public class CompareExchangeValue<T> implements ICompareExchangeValue {
 
     public void setValue(T value) {
         this.value = value;
+    }
+
+    public String getChangeVector() {
+        return changeVector;
+    }
+
+    public void setChangeVector(String changeVector) {
+        this.changeVector = changeVector;
     }
 
     public IMetadataDictionary getMetadata() {

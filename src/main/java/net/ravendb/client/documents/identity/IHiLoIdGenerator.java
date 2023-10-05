@@ -8,4 +8,6 @@ public interface IHiLoIdGenerator {
 
     long generateNextIdFor(String database, Object entity);
 
+    String generateDocumentId(String database, Object entity);
+
 }

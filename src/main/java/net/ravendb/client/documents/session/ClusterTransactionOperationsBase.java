@@ -2,15 +2,29 @@ package net.ravendb.client.documents.session;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import net.ravendb.client.Constants;
 import net.ravendb.client.documents.commands.batches.ICommandData;
 import net.ravendb.client.documents.operations.compareExchange.*;
 import net.ravendb.client.primitives.Reference;
+import org.apache.commons.lang3.StringUtils;
 
 import java.util.*;
 
 public abstract class ClusterTransactionOperationsBase {
     protected final DocumentSession session;
     private final Map<String, CompareExchangeSessionValue> _state = new TreeMap<>(String::compareToIgnoreCase);
+
+    private Map<String, String> _missingDocumentsTooAtomicGuardIndex;
+
+    protected boolean tryGetMissingAtomicGuardFor(String docId, Reference<String> changeVector) {
+        if (_missingDocumentsTooAtomicGuardIndex == null) {
+            changeVector.value = null;
+            return false;
+        }
+
+        changeVector.value = _missingDocumentsTooAtomicGuardIndex.get(docId);
+        return changeVector.value != null;
+    }
 
     public int getNumberOfTrackedCompareExchangeValues() {
         return _state.size();
@@ -204,7 +218,7 @@ public abstract class ClusterTransactionOperationsBase {
         return value;
     }
 
-    public void registerCompareExchangeValues(ObjectNode values) {
+    public void registerCompareExchangeValues(ObjectNode values, boolean includingMissingAtomicGuards) {
         if (session.noTracking) {
             return;
         }
@@ -214,14 +228,29 @@ public abstract class ClusterTransactionOperationsBase {
             while (fields.hasNext()) {
                 Map.Entry<String, JsonNode> propertyDetails = fields.next();
 
-                registerCompareExchangeValue(
-                        CompareExchangeValueResultParser.getSingleValue(
-                                ObjectNode.class, (ObjectNode) propertyDetails.getValue(), false, session.getConventions()));
+                CompareExchangeValue<ObjectNode> val = CompareExchangeValueResultParser.getSingleValue(
+                        ObjectNode.class, (ObjectNode) propertyDetails.getValue(), false, session.getConventions());
+
+                if (includingMissingAtomicGuards
+                        && StringUtils.startsWithIgnoreCase(val.getKey(), Constants.CompareExchange.RVN_ATOMIC_PREFIX)
+                        && val.getChangeVector() != null) {
+                    if (_missingDocumentsTooAtomicGuardIndex == null) {
+                        _missingDocumentsTooAtomicGuardIndex = new HashMap<>();
+                    }
+
+                    _missingDocumentsTooAtomicGuardIndex.put(val.getKey().substring(Constants.CompareExchange.RVN_ATOMIC_PREFIX.length()), val.getChangeVector());
+                } else {
+                    registerCompareExchangeValue(val);
+                }
             }
         }
     }
 
     public CompareExchangeSessionValue registerCompareExchangeValue(CompareExchangeValue<ObjectNode> value) {
+        if (StringUtils.startsWithIgnoreCase(value.getKey(), Constants.CompareExchange.RVN_ATOMIC_PREFIX)) {
+            throw new IllegalStateException("'" + value.getKey() + "' is an atomic guard and you cannot load it via the session");
+        }
+
         if (session.noTracking) {
             return new CompareExchangeSessionValue(value);
         }

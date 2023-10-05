@@ -14,6 +14,7 @@ import net.ravendb.client.extensions.JsonExtensions;
 import net.ravendb.client.primitives.*;
 import net.ravendb.client.primitives.Timer;
 import net.ravendb.client.serverwide.commands.GetDatabaseTopologyCommand;
+import net.ravendb.client.serverwide.commands.GetNodeInfoCommand;
 import net.ravendb.client.util.CertificateUtils;
 import net.ravendb.client.util.TimeUtils;
 import org.apache.commons.io.IOUtils;
@@ -160,6 +161,8 @@ public class RequestExecutor implements CleanCloseable {
     protected boolean _disableTopologyUpdates;
 
     protected boolean _disableClientConfigurationUpdates;
+
+    protected String _topologyHeaderName = Constants.Headers.TOPOLOGY_ETAG;
 
     protected String lastServerVersion;
 
@@ -316,12 +319,14 @@ public class RequestExecutor implements CleanCloseable {
         ServerNode serverNode = new ServerNode();
         serverNode.setDatabase(databaseName);
         serverNode.setUrl(initialUrls[0]);
+        serverNode.setServerRole(ServerNode.Role.MEMBER);
         topology.setNodes(Collections.singletonList(serverNode));
 
         executor._nodeSelector = new NodeSelector(topology, executorService);
         executor.topologyEtag = INITIAL_TOPOLOGY_ETAG;
         executor._disableTopologyUpdates = true;
         executor._disableClientConfigurationUpdates = true;
+        executor._firstTopologyUpdate = executor.singleTopologyUpdateAsync(initialUrls, GLOBAL_APPLICATION_IDENTIFIER);
 
         return executor;
     }
@@ -397,6 +402,11 @@ public class RequestExecutor implements CleanCloseable {
 
                 GetDatabaseTopologyCommand command = new GetDatabaseTopologyCommand(parameters.getDebugTag(),
                         getConventions().isSendApplicationIdentifier() ? parameters.getApplicationIdentifier() : null);
+
+                if (_defaultTimeout != null && _defaultTimeout.compareTo(command.getTimeout()) > 0) {
+                    command.setTimeout(_defaultTimeout);
+                }
+
                 execute(parameters.getNode(), null, command, false, null);
                 Topology topology = command.getResult();
 
@@ -429,6 +439,24 @@ public class RequestExecutor implements CleanCloseable {
 
     }
 
+    protected void updateNodeSelector(Topology topology, boolean forceUpdate) {
+        if (_nodeSelector == null) {
+            _nodeSelector = new NodeSelector(topology, _executorService);
+
+            if (getConventions().getReadBalanceBehavior() == ReadBalanceBehavior.FASTEST_NODE) {
+                _nodeSelector.scheduleSpeedTest();
+            }
+        } else if (_nodeSelector.onUpdateTopology(topology, forceUpdate)) {
+            disposeAllFailedNodesTimers();
+
+            if (getConventions().getReadBalanceBehavior() == ReadBalanceBehavior.FASTEST_NODE) {
+                _nodeSelector.scheduleSpeedTest();
+            }
+        }
+
+        topologyEtag = _nodeSelector.getTopology().getEtag();
+    }
+
     protected void disposeAllFailedNodesTimers() {
         _failedNodesTimers.forEach((node, status) -> status.close());
         _failedNodesTimers.clear();
@@ -441,8 +469,7 @@ public class RequestExecutor implements CleanCloseable {
     public <TResult> void execute(RavenCommand<TResult> command, SessionInfo sessionInfo) {
         CompletableFuture<Void> topologyUpdate = _firstTopologyUpdate;
         if (topologyUpdate != null &&
-                (topologyUpdate.isDone() && !topologyUpdate.isCompletedExceptionally() && !topologyUpdate.isCancelled())
-                || _disableTopologyUpdates) {
+                (topologyUpdate.isDone() && !topologyUpdate.isCompletedExceptionally() && !topologyUpdate.isCancelled())) {
             CurrentIndexAndNode currentIndexAndNode = chooseNodeForRequest(command, sessionInfo);
             execute(currentIndexAndNode.currentNode, currentIndexAndNode.currentIndex, command, true, sessionInfo);
         } else {
@@ -451,13 +478,8 @@ public class RequestExecutor implements CleanCloseable {
     }
 
     public <TResult> CurrentIndexAndNode chooseNodeForRequest(RavenCommand<TResult> cmd, SessionInfo sessionInfo) {
-        if (!_disableTopologyUpdates) {
-            // when we disable topology updates we cannot rely on the node tag,
-            // because the initial topology will not have them
-
-            if (StringUtils.isNotBlank(cmd.getSelectedNodeTag())) {
-                return _nodeSelector.getRequestedNode(cmd.getSelectedNodeTag());
-            }
+        if (StringUtils.isNotBlank(cmd.getSelectedNodeTag())) {
+            return _nodeSelector.getRequestedNode(cmd.getSelectedNodeTag());
         }
 
         if (conventions.getLoadBalanceBehavior() == LoadBalanceBehavior.USE_SESSION_CONTEXT) {
@@ -498,7 +520,12 @@ public class RequestExecutor implements CleanCloseable {
                             // shouldn't happen
                             throw new IllegalStateException("No known topology and no previously known one, cannot proceed, likely a bug");
                         }
-                        _firstTopologyUpdate = firstTopologyUpdate(_lastKnownUrls, null);
+
+                        if (!_disableTopologyUpdates) {
+                            _firstTopologyUpdate = firstTopologyUpdate(_lastKnownUrls, null);
+                        } else {
+                            _firstTopologyUpdate = singleTopologyUpdateAsync(_lastKnownUrls, null);
+                        }
                     }
 
                     topologyUpdate = _firstTopologyUpdate;
@@ -552,6 +579,53 @@ public class RequestExecutor implements CleanCloseable {
                 });
     }
 
+    protected CompletableFuture<Void> singleTopologyUpdateAsync(String[] initialUrls, UUID applicationIdentifier) {
+        return CompletableFuture.runAsync(() -> {
+            if (_disposed) {
+                return;
+            }
+
+            // fetch tag for each of the urls
+            Topology topology = new Topology();
+            topology.setNodes(new ArrayList<>());
+            topology.setEtag(topologyEtag);
+
+            for (String url : initialUrls) {
+                ServerNode serverNode = new ServerNode();
+                serverNode.setUrl(url);
+                serverNode.setDatabase(_databaseName);
+
+                try {
+                    GetNodeInfoCommand command = new GetNodeInfoCommand();
+                    execute(serverNode, null, command, false, null);
+
+                    serverNode.setClusterTag(command.getResult().getNodeTag());
+                    serverNode.setServerRole(command.getResult().getServerRole());
+                } catch (AuthorizationException e) {
+                    // auth exceptions will always happen, on all nodes
+                    // so errors immediately
+                    _lastKnownUrls = initialUrls;
+                    throw e;
+                } catch (DatabaseDoesNotExistException e) {
+                    // Will happen on all node in the cluster,
+                    // so errors immediately
+
+                    _lastKnownUrls = initialUrls;
+                    throw e;
+                } catch (Exception e) {
+                    serverNode.setClusterTag("!");
+
+                }
+
+                topology.getNodes().add(serverNode);
+
+                updateNodeSelector(topology, true);
+            }
+
+            _lastKnownUrls = initialUrls;
+        });
+    }
+
     protected CompletableFuture<Void> firstTopologyUpdate(String[] inputUrls) {
         return firstTopologyUpdate(inputUrls, null);
     }
@@ -569,6 +643,7 @@ public class RequestExecutor implements CleanCloseable {
                     ServerNode serverNode = new ServerNode();
                     serverNode.setUrl(url);
                     serverNode.setDatabase(_databaseName);
+                    serverNode.setServerRole(ServerNode.Role.MEMBER);
 
                     UpdateTopologyParameters updateParameters = new UpdateTopologyParameters(serverNode);
                     updateParameters.setTimeoutInMs(Integer.MAX_VALUE);
@@ -929,7 +1004,7 @@ public class RequestExecutor implements CleanCloseable {
         }
 
         if (!_disableTopologyUpdates) {
-            request.addHeader(Constants.Headers.TOPOLOGY_ETAG, "\"" + topologyEtag + "\"");
+            request.addHeader(_topologyHeaderName, "\"" + topologyEtag + "\"");
         }
 
         if (request.getFirstHeader(Constants.Headers.CLIENT_VERSION) == null) {
@@ -1248,9 +1323,7 @@ public class RequestExecutor implements CleanCloseable {
                     CurrentIndexAndNode nextNode = chooseNodeForRequest(command, sessionInfo);
                     execute(nextNode.currentNode, nextNode.currentIndex, command, true, sessionInfo);
 
-                    if (nodeIndex != null) {
-                        _nodeSelector.restoreNodeIndex(nodeIndex);
-                    }
+                    _nodeSelector.restoreNodeIndex(chosenNode);
 
                     return true;
                 default:
@@ -1319,7 +1392,7 @@ public class RequestExecutor implements CleanCloseable {
         spawnHealthChecks(chosenNode, nodeIndex);
 
         CurrentIndexAndNode currentIndexAndNode = chooseNodeForRequest(command, sessionInfo);
-        long topologyEtag = _nodeSelector.getTopology() != null ? _nodeSelector.getTopology().getEtag() : -2;
+        long topologyEtag = _nodeSelector.getTopology() != null && _nodeSelector.getTopology().getEtag() != null ? _nodeSelector.getTopology().getEtag() : -2;
         if (command.failoverTopologyEtag != topologyEtag) {
             command.getFailedNodes().clear();
             command.failoverTopologyEtag = topologyEtag;
@@ -1458,7 +1531,7 @@ public class RequestExecutor implements CleanCloseable {
                 }
             }
 
-            _nodeSelector.restoreNodeIndex(tasks.get(completed).getIndex());
+            _nodeSelector.restoreNodeIndex(tasks.get(completed).getNode());
             return tasks.get(completed).getCommand().getResult();
         }
 
@@ -1540,22 +1613,35 @@ public class RequestExecutor implements CleanCloseable {
     }
 
     private void checkNodeStatusCallback(NodeStatus nodeStatus) {
-        List<ServerNode> copy = getTopologyNodes();
+        // In some cases, race conditions may occur with a recently changed topology and a failed node.
+        // We still should check the node's health, and if healthy, remove its timer and restore its index.
 
-        if (nodeStatus.nodeIndex >= copy.size()) {
-            return; // topology index changed / removed
+        int nodeIndex;
+        ServerNode serverNode;
+        NodeStatus status;
+
+        try {
+            CurrentIndexAndNode nodeIndexAndServerNode = _nodeSelector.getRequestedNode(nodeStatus.node.getClusterTag());
+            nodeIndex = nodeIndexAndServerNode.currentIndex;
+            serverNode = nodeIndexAndServerNode.currentNode;
+        } catch (DatabaseDoesNotExistException | RequestedNodeUnavailableException e) {
+            // There are no nodes in the topology or could not find requested node. Nothing we can do here
+
+            status = _failedNodesTimers.get(nodeStatus.node);
+            if (status != null) {
+                status.close();
+            }
+
+            return;
         }
 
-        ServerNode serverNode = copy.get(nodeStatus.nodeIndex);
-        if (serverNode != nodeStatus.node) {
-            return;  // topology changed, nothing to check
+        if (serverNode == null) {
+            return;
         }
 
         try {
-            NodeStatus status;
-
             try {
-                performHealthCheck(serverNode, nodeStatus.nodeIndex);
+                performHealthCheck(serverNode, nodeIndex);
             } catch (Exception e) {
                 if (logger.isInfoEnabled()) {
                     logger.info(serverNode.getClusterTag() + " is still down", e);
@@ -1576,7 +1662,7 @@ public class RequestExecutor implements CleanCloseable {
             }
 
             if (_nodeSelector != null) {
-                _nodeSelector.restoreNodeIndex(nodeStatus.nodeIndex);
+                _nodeSelector.restoreNodeIndex(serverNode);
             }
 
         } catch (Exception e) {

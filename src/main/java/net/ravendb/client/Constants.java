@@ -83,6 +83,7 @@ public class Constants {
         public static final String REFRESH_TOPOLOGY = "Refresh-Topology";
 
         public static final String TOPOLOGY_ETAG = "Topology-Etag";
+        public static final String CLUSTER_TOPOLOGY_ETAG = "Cluster-Topology-Etag";
 
         public static final String LAST_KNOWN_CLUSTER_TRANSACTION_INDEX = "Known-Raft-Index";
 
@@ -121,11 +122,16 @@ public class Constants {
     }
 
     public static class CompareExchange {
+        public static final String RVN_ATOMIC_PREFIX = "rvn-atomic/";
         public static final String OBJECT_FIELD_NAME = "Object";
     }
 
     public static class Indexes {
         public static final String INDEXING_STATIC_SEARCH_ENGINE_TYPE = "Indexing.Static.SearchEngineType";
+    }
+
+    public static class Identities {
+        public static final Character DEFAULT_SEPARATOR = '/';
     }
 
     public static class Obsolete {

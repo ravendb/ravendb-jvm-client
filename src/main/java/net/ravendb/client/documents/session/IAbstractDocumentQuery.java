@@ -317,11 +317,9 @@ public interface IAbstractDocumentQuery<T> {
     void _orElse();
 
     /**
-     * Specifies a boost weight to the last where clause.
+     * Specifies a boost weight to the previous where clause.
      * The higher the boost factor, the more relevant the term will be.
-     *
      * boosting factor where 1.0 is default, less than 1.0 is lower weight, greater than 1.0 is higher weight
-     *
      * http://lucene.apache.org/java/2_4_0/queryparsersyntax.html#Boosting%20a%20Term
      * @param boost Boost value
      */
@@ -329,9 +327,7 @@ public interface IAbstractDocumentQuery<T> {
 
     /**
      * Specifies a fuzziness factor to the single word term in the last where clause
-     *
      * 0.0 to 1.0 where 1.0 means closer match
-     *
      * http://lucene.apache.org/java/2_4_0/queryparsersyntax.html#Fuzzy%20Searches
      *
      * @param fuzzy Fuzzy value
@@ -471,6 +467,9 @@ public interface IAbstractDocumentQuery<T> {
     void _aggregateUsing(String facetSetupDocumentId);
 
     MoreLikeThisScope _moreLikeThis();
+
+    void addFromAliasToFilterTokens(String fromAlias);
+    void addFromAliasToOrderByTokens(String fromAlias);
 
     String addAliasToIncludesTokens(String fromAlias);
 

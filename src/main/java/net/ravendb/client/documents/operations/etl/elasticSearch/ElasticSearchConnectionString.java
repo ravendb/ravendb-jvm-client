@@ -14,6 +14,8 @@ public class ElasticSearchConnectionString extends ConnectionString {
         return ConnectionStringType.ELASTIC_SEARCH;
     }
 
+    private boolean enableCompatibilityMode;
+
     public String[] getNodes() {
         return nodes;
     }
@@ -28,6 +30,14 @@ public class ElasticSearchConnectionString extends ConnectionString {
 
     public void setAuthentication(Authentication authentication) {
         this.authentication = authentication;
+    }
+
+    public boolean isEnableCompatibilityMode() {
+        return enableCompatibilityMode;
+    }
+
+    public void setEnableCompatibilityMode(boolean enableCompatibilityMode) {
+        this.enableCompatibilityMode = enableCompatibilityMode;
     }
 
     public static class Authentication {

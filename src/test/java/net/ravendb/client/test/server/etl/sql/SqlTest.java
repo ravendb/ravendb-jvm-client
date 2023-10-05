@@ -41,6 +41,7 @@ public class SqlTest extends ReplicationTestBase {
             Transformation transformation = new Transformation();
             transformation.setApplyToAllDocuments(true);
             transformation.setName("Script #1");
+            transformation.setScript("loadToUsers(this)");
 
             SqlEtlTable table1 = new SqlEtlTable();
             table1.setDocumentIdColumn("Id");
@@ -199,6 +200,7 @@ public class SqlTest extends ReplicationTestBase {
             Transformation transformation = new Transformation();
             transformation.setApplyToAllDocuments(true);
             transformation.setName("Script Q&A");
+            transformation.setScript("loadToUsers(this)");
 
             SqlEtlTable table1 = new SqlEtlTable();
             table1.setDocumentIdColumn("Id");

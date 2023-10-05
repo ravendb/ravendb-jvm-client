@@ -11,10 +11,7 @@ import net.ravendb.client.exceptions.changes.ChangeProcessingException;
 import net.ravendb.client.exceptions.database.DatabaseDoesNotExistException;
 import net.ravendb.client.extensions.JsonExtensions;
 import net.ravendb.client.extensions.StringExtensions;
-import net.ravendb.client.http.CurrentIndexAndNode;
-import net.ravendb.client.http.RequestExecutor;
-import net.ravendb.client.http.ServerNode;
-import net.ravendb.client.http.UpdateTopologyParameters;
+import net.ravendb.client.http.*;
 import net.ravendb.client.primitives.*;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -64,6 +61,12 @@ public class DatabaseChanges implements IDatabaseChanges {
 
     private final AtomicInteger _immediateConnection = new AtomicInteger();
 
+    private final CompletableFuture<ChangesSupportedFeatures> _supportedFeaturesTcs = new CompletableFuture<>();
+
+    public CompletableFuture<ChangesSupportedFeatures> getSupportedFeatures() {
+        return _supportedFeaturesTcs;
+    }
+
     private ServerNode _serverNode;
     private int _nodeIndex;
     private String _url;
@@ -83,6 +86,18 @@ public class DatabaseChanges implements IDatabaseChanges {
         _cts = new CancellationTokenSource();
 
         _client = createWebSocketClient(_requestExecutor);
+        _supportedFeaturesTcs.thenAcceptAsync(t -> {
+            if (!t.isTopologyChange()) {
+                return;
+            }
+            getOrAddConnectionState("Topology", "watch-topology-change", "", "");
+            UpdateTopologyParameters updateParameters = new UpdateTopologyParameters(_serverNode);
+            updateParameters.setTimeoutInMs(0);
+            updateParameters.setForceUpdate(true);
+            updateParameters.setDebugTag("watch-topology-change");
+            _requestExecutor.updateTopologyAsync(updateParameters);
+        }, _executorService);
+
         _onDispose = onDispose;
         addConnectionStatusChanged(_connectionStatusEventHandler);
 
@@ -198,6 +213,14 @@ public class DatabaseChanges implements IDatabaseChanges {
         DatabaseConnectionState counter = getOrAddConnectionState("all-docs", "watch-docs", "unwatch-docs", null);
         ChangesObservable<DocumentChange, DatabaseConnectionState> taskedObservable = new ChangesObservable<>(ChangesType.DOCUMENT, counter,
                 notification -> true);
+
+        return taskedObservable;
+    }
+
+    public IChangesObservable<AggressiveCacheChange> forAggressiveCaching() {
+        DatabaseConnectionState counter = getOrAddConnectionState("aggressive-caching", "watch-aggressive-caching", "unwatch-aggressive-caching", null);
+
+        ChangesObservable<AggressiveCacheChange, DatabaseConnectionState> taskedObservable = new ChangesObservable<AggressiveCacheChange, DatabaseConnectionState>(ChangesType.AGGRESSIVE_CACHE, counter, notification -> true);
 
         return taskedObservable;
     }
@@ -430,7 +453,9 @@ public class DatabaseChanges implements IDatabaseChanges {
             }
             removeConnectionStatusChanged(_connectionStatusEventHandler);
 
-            _onDispose.run();
+            if (_onDispose != null) {
+                _onDispose.run();
+            }
         } catch (Exception e) {
             throw new RuntimeException("Unable to close DatabaseChanges" + e.getMessage(), e);
         }
@@ -641,15 +666,8 @@ public class DatabaseChanges implements IDatabaseChanges {
 
                         JsonNode topologyChange = msgNode.get("TopologyChange");
                         if (topologyChange != null && topologyChange.isBoolean() && topologyChange.asBoolean()) {
-                            // process this in async way, as getOrAddConnectionStats waits for confirmation, so we can't block this thread
-                            CompletableFuture.runAsync(() -> {
-                                getOrAddConnectionState("Topology", "watch-topology-change", "", "");
-                                UpdateTopologyParameters updateParameters = new UpdateTopologyParameters(_serverNode);
-                                updateParameters.setTimeoutInMs(0);
-                                updateParameters.setForceUpdate(true);
-                                updateParameters.setDebugTag("watch-topology-change");
-                                _requestExecutor.updateTopologyAsync(updateParameters);
-                            }, _executorService);
+                            ChangesSupportedFeatures supportedFeatures = JsonExtensions.getDefaultMapper().treeToValue(msgNode, ChangesSupportedFeatures.class);
+                            _supportedFeaturesTcs.complete(supportedFeatures);
                             continue;
                         }
 
@@ -673,7 +691,7 @@ public class DatabaseChanges implements IDatabaseChanges {
                                 break;
                             default:
                                 ObjectNode value = (ObjectNode) msgNode.get("Value");
-                                notifySubscribers(type, value, _counters.values());
+                                notifySubscribers(type, value);
                                 break;
                         }
                     }
@@ -692,35 +710,40 @@ public class DatabaseChanges implements IDatabaseChanges {
         }
     }
 
-    private void notifySubscribers(String type, ObjectNode value, Collection<DatabaseConnectionState> states) throws JsonProcessingException {
+    private void notifySubscribers(String type, ObjectNode value) throws JsonProcessingException {
         switch (type) {
+            case "AggressiveCacheChange":
+                for (DatabaseConnectionState state : _counters.values()) {
+                    state.send(AggressiveCacheChange.INSTANCE);
+                }
+                break;
             case "DocumentChange":
                 DocumentChange documentChange = JsonExtensions.getDefaultMapper().treeToValue(value, DocumentChange.class);
-                for (DatabaseConnectionState state : states) {
+                for (DatabaseConnectionState state : _counters.values()) {
                     state.send(documentChange);
                 }
                 break;
             case "CounterChange":
                 CounterChange counterChange = JsonExtensions.getDefaultMapper().treeToValue(value, CounterChange.class);
-                for (DatabaseConnectionState state : states) {
+                for (DatabaseConnectionState state : _counters.values()) {
                     state.send(counterChange);
                 }
                 break;
             case "TimeSeriesChange":
                 TimeSeriesChange timeSeriesChange = JsonExtensions.getDefaultMapper().treeToValue(value, TimeSeriesChange.class);
-                for (DatabaseConnectionState state : states) {
+                for (DatabaseConnectionState state : _counters.values()) {
                     state.send(timeSeriesChange);
                 }
                 break;
             case "IndexChange":
                 IndexChange indexChange = JsonExtensions.getDefaultMapper().treeToValue(value, IndexChange.class);
-                for (DatabaseConnectionState state : states) {
+                for (DatabaseConnectionState state : _counters.values()) {
                     state.send(indexChange);
                 }
                 break;
             case "OperationStatusChange":
                 OperationStatusChange operationStatusChange = JsonExtensions.getDefaultMapper().treeToValue(value, OperationStatusChange.class);
-                for (DatabaseConnectionState state : states) {
+                for (DatabaseConnectionState state : _counters.values()) {
                     state.send(operationStatusChange);
                 }
                 break;

@@ -6,8 +6,10 @@ import com.google.common.base.Defaults;
 import net.ravendb.client.documents.commands.GetDocumentsCommand;
 import net.ravendb.client.documents.commands.GetDocumentsResult;
 import net.ravendb.client.documents.operations.timeSeries.AbstractTimeSeriesRange;
+import net.ravendb.client.documents.session.ClusterTransactionOperationsBase;
 import net.ravendb.client.documents.session.DocumentInfo;
 import net.ravendb.client.documents.session.InMemoryDocumentSessionOperations;
+import net.ravendb.client.documents.session.TransactionMode;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -46,14 +48,13 @@ public class LoadOperation {
             logger.info("Requesting the following ids " + String.join(",", _ids) + " from " + _session.storeIdentifier());
         }
 
-        if (_includeAllCounters) {
-            return new GetDocumentsCommand(_ids, _includes, true, _timeSeriesToInclude,
-                    _compareExchangeValuesToInclude, false);
-        }
+        GetDocumentsCommand cmd = _includeAllCounters
+                ? new GetDocumentsCommand(_ids, _includes, true, _timeSeriesToInclude, _compareExchangeValuesToInclude, false)
+                : new GetDocumentsCommand(_ids, _includes, _countersToInclude, _revisionsToIncludeByChangeVector, _revisionsToIncludeByDateTimeBefore, _timeSeriesToInclude, _compareExchangeValuesToInclude, false);
 
-        return new GetDocumentsCommand(_ids, _includes, _countersToInclude, _revisionsToIncludeByChangeVector,
-                _revisionsToIncludeByDateTimeBefore, _timeSeriesToInclude,
-                _compareExchangeValuesToInclude, false);
+        cmd.setTransactionMode(_session.getTransactionMode());
+
+        return cmd;
     }
 
     public LoadOperation byId(String id) {
@@ -246,8 +247,10 @@ public class LoadOperation {
             _session.registerRevisionIncludes(result.getRevisionIncludes());
         }
 
-        if (_compareExchangeValuesToInclude != null) {
-            _session.getClusterSession().registerCompareExchangeValues(result.getCompareExchangeValueIncludes());
+        boolean includingMissingAtomicGuards = _session.getTransactionMode() == TransactionMode.CLUSTER_WIDE;
+        if (_compareExchangeValuesToInclude != null || includingMissingAtomicGuards) {
+            ClusterTransactionOperationsBase clusterSession = _session.getClusterSession();
+            clusterSession.registerCompareExchangeValues(result.getCompareExchangeValueIncludes(), includingMissingAtomicGuards);
         }
 
         for (JsonNode document : result.getResults()) {

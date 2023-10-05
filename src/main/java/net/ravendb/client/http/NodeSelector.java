@@ -90,7 +90,7 @@ public class NodeSelector implements CleanCloseable {
         List<ServerNode> serverNodes = state.nodes;
         int len = Math.min(serverNodes.size(), stateFailures.length);
         for (int i = 0; i < len; i++) {
-            if (stateFailures[i].get() == 0) {
+            if (stateFailures[i].get() == 0 && ServerNode.Role.MEMBER.equals(serverNodes.get(i).getServerRole())) {
                 return new CurrentIndexAndNode(i, serverNodes.get(i));
             }
         }
@@ -98,11 +98,8 @@ public class NodeSelector implements CleanCloseable {
         return unlikelyEveryoneFaultedChoice(state);
     }
 
-    public CurrentIndexAndNodeAndEtag getPreferredNodeWithTopology() {
-        NodeSelectorState state = _state;
-        CurrentIndexAndNode preferredNode = getPreferredNodeInternal(state);
-        long etag = state.topology != null ? ObjectUtils.firstNonNull(state.topology.getEtag(), -2L) : -2;
-        return new CurrentIndexAndNodeAndEtag(preferredNode.currentIndex, preferredNode.currentNode, etag);
+    public AtomicInteger[] getNodeSelectorFailures() {
+        return _state.failures;
     }
 
     private static CurrentIndexAndNode unlikelyEveryoneFaultedChoice(NodeSelectorState state) {
@@ -112,13 +109,24 @@ public class NodeSelector implements CleanCloseable {
             throw new DatabaseDoesNotExistException("There are no nodes in the topology at all");
         }
 
+
+        AtomicInteger[] stateFailures = state.failures;
+        List<ServerNode> serverNodes = state.nodes;
+        int len = Math.min(serverNodes.size(), stateFailures.length);
+
+        for (int i = 0; i < len; i++) {
+            if (stateFailures[i].get() == 0) {
+                return new CurrentIndexAndNode(i, serverNodes.get(i));
+            }
+        }
+
         return state.getNodeWhenEveryoneMarkedAsFaulted();
     }
 
     public CurrentIndexAndNode getNodeBySessionId(int sessionId) {
         NodeSelectorState state = _state;
 
-        if (state.topology.getNodes().size() == 0) {
+        if (state.topology.getNodes().isEmpty()) {
             throw new AllTopologyNodesDownException("There are no nodes in the topology at all");
         }
 
@@ -153,10 +161,11 @@ public class NodeSelector implements CleanCloseable {
         return getPreferredNode();
     }
 
-    public void restoreNodeIndex(int nodeIndex) {
+    public void restoreNodeIndex(ServerNode node) {
         NodeSelectorState state = _state;
-        if (state.failures.length <= nodeIndex) {
-            return; // the state was changed and we no longer have it?
+        int nodeIndex = state.nodes.indexOf(node);
+        if (nodeIndex == -1) {
+            return;
         }
 
         state.failures[nodeIndex].set(0);
@@ -231,15 +240,19 @@ public class NodeSelector implements CleanCloseable {
         state.fastest = index;
         state.speedTestMode.set(0);
 
-        if (_updateFastestNodeTimer != null) {
-            _updateFastestNodeTimer.change(Duration.ofMinutes(1));
-        } else {
-            _updateFastestNodeTimer = new Timer(this::switchToSpeedTestPhase, Duration.ofMinutes(1), executorService);
-        }
+        ensureFastestNodeTimerExists();
+        _updateFastestNodeTimer.change(Duration.ofMinutes(1), null);
     }
 
     public void scheduleSpeedTest() {
+        ensureFastestNodeTimerExists();
         switchToSpeedTestPhase();
+    }
+
+    private void ensureFastestNodeTimerExists() {
+        if (_updateFastestNodeTimer == null) {
+            _updateFastestNodeTimer = new Timer(this::switchToSpeedTestPhase, null, executorService);
+        }
     }
 
     @Override

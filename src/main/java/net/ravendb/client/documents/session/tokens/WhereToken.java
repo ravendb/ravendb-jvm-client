@@ -205,7 +205,7 @@ public class WhereToken extends QueryToken {
     }
 
     public WhereToken addAlias(String alias) {
-        if ("id()".equals(fieldName)) {
+        if (Constants.Documents.Indexing.Fields.DOCUMENT_ID_FIELD_NAME.equals(fieldName)) {
             return this;
         }
 
