@@ -1,7 +1,10 @@
 package net.ravendb.client.test.client.timeSeries;
 
+import net.ravendb.client.Constants;
+import net.ravendb.client.RavenTestHelper;
 import net.ravendb.client.RemoteTestBase;
 import net.ravendb.client.documents.BulkInsertOperation;
+import net.ravendb.client.documents.DocumentStore;
 import net.ravendb.client.documents.IDocumentStore;
 import net.ravendb.client.documents.operations.attachments.AttachmentIteratorResult;
 import net.ravendb.client.documents.operations.attachments.AttachmentRequest;
@@ -980,4 +983,24 @@ public class TimeSeriesBulkInsertTest extends RemoteTestBase {
         }
     }
 
+    @Test
+    public void createTimeSeriesWithInvalidNameShouldThrow() throws Exception {
+        try (DocumentStore store = getDocumentStore()) {
+            assertThatThrownBy(() -> {
+                Date baseline = RavenTestHelper.utcToday();
+                String documentId = "users/ayende";
+
+                try (BulkInsertOperation bulkInsert = store.bulkInsert()) {
+                    User user = new User();
+                    user.setName("Oren");
+                    bulkInsert.store(user, documentId);
+
+                    try (BulkInsertOperation.TimeSeriesBulkInsert timeSeriesBulkInsert = bulkInsert.timeSeriesFor(documentId, "INC:Heartrate")) {
+                        timeSeriesBulkInsert.append(DateUtils.addMinutes(baseline, 1), 59, "watches/fitbit");
+                    }
+                }
+
+            }).hasMessageContaining("Time Series name cannot start with " + Constants.Headers.INCREMENTAL_TIME_SERIES_PREFIX + " prefix");
+        }
+    }
 }

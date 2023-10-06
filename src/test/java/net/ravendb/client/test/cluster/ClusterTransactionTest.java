@@ -1,12 +1,15 @@
 package net.ravendb.client.test.cluster;
 
+import net.ravendb.client.Constants;
 import net.ravendb.client.RemoteTestBase;
+import net.ravendb.client.documents.DocumentStore;
 import net.ravendb.client.documents.IDocumentStore;
 import net.ravendb.client.documents.operations.compareExchange.CompareExchangeValue;
+import net.ravendb.client.documents.operations.compareExchange.GetCompareExchangeValueOperation;
+import net.ravendb.client.documents.operations.compareExchange.PutCompareExchangeValueOperation;
 import net.ravendb.client.documents.session.IDocumentSession;
 import net.ravendb.client.documents.session.SessionOptions;
 import net.ravendb.client.documents.session.TransactionMode;
-import net.ravendb.client.exceptions.RavenException;
 import net.ravendb.client.infrastructure.entities.User;
 import org.junit.jupiter.api.Test;
 
@@ -172,6 +175,87 @@ public class ClusterTransactionTest extends RemoteTestBase {
                 assertThat(u.getValue().getName())
                         .isEqualTo(user1.getName());
             }
+        }
+    }
+
+    @Test
+    public void blockWorkingWithAtomicGuardBySession() throws Exception {
+        try (DocumentStore store = getDocumentStore()) {
+
+            SessionOptions sessionOptions = new SessionOptions();
+            sessionOptions.setTransactionMode(TransactionMode.CLUSTER_WIDE);
+            try (IDocumentSession session = store.openSession(sessionOptions)) {
+                User doc = new User();
+                doc.setName("Grisha");
+                session.store(doc, "users/1");
+                session.saveChanges();
+            }
+
+            try (IDocumentSession session = store.openSession(sessionOptions)) {
+                assertThatThrownBy(() -> {
+                    session.advanced().clusterTransaction().getCompareExchangeValue(String.class, getAtomicGuardKey("users/1"));
+                }).hasMessageContaining("'rvn-atomic/users/1' is an atomic guard and you cannot load it via the session");
+            }
+
+            try (IDocumentSession session = store.openSession(sessionOptions)) {
+                session.advanced().clusterTransaction().createCompareExchangeValue(getAtomicGuardKey("users/2"), "foo");
+                assertThatThrownBy(() -> session.saveChanges())
+                        .hasMessageContaining("You cannot manipulate the atomic guard 'rvn-atomic/users/2' via the cluster-wide session");
+            }
+
+
+        }
+    }
+
+    private static String getAtomicGuardKey(String id) {
+        return Constants.CompareExchange.RVN_ATOMIC_PREFIX + id;
+    }
+
+    public static class AtomicGuard {
+        private String id;
+        private boolean locked;
+
+        public String getId() {
+            return id;
+        }
+
+        public void setId(String id) {
+            this.id = id;
+        }
+
+        public boolean isLocked() {
+            return locked;
+        }
+
+        public void setLocked(boolean locked) {
+            this.locked = locked;
+        }
+    }
+
+    @Test
+    public void canModifyingAtomicGuardViaOperations() throws Exception {
+        try (DocumentStore store = getDocumentStore()) {
+            String docId = "users/1";
+
+            SessionOptions sessionOptions = new SessionOptions();
+            sessionOptions.setTransactionMode(TransactionMode.CLUSTER_WIDE);
+
+            try (IDocumentSession session = store.openSession(sessionOptions)) {
+                User doc = new User();
+                doc.setName("Grisha");
+                session.store(doc, docId);
+                session.saveChanges();
+            }
+
+            String compareExchangeKey = "rvn-atomic/" + docId;
+            CompareExchangeValue<AtomicGuard> val = store.operations().send(new GetCompareExchangeValueOperation<AtomicGuard>(AtomicGuard.class, compareExchangeKey));
+            val.getValue().locked = true;
+
+            store.operations().send(new PutCompareExchangeValueOperation<AtomicGuard>(val.getKey(), val.getValue(), val.getIndex()));
+
+            val = store.operations().send(new GetCompareExchangeValueOperation<AtomicGuard>(AtomicGuard.class, compareExchangeKey));
+            assertThat(val.getValue().locked)
+                    .isTrue();
         }
     }
 }
