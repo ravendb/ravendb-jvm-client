@@ -45,7 +45,7 @@ public class RavenDB_19538Test extends RemoteTestBase {
                 session.saveChanges();
             }
 
-            Semaphore docs = new Semaphore(2);
+            Semaphore docs = new Semaphore(0);
 
             String date1 = DateUtils.addHours(RavenTestHelper.utcToday(), 1).toString();
             String date2 = DateUtils.addHours(RavenTestHelper.utcToday(), 2).toString();

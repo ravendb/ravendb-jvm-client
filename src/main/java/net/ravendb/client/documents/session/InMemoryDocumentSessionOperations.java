@@ -659,7 +659,7 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
                 documentsByEntity.put(docInfo.getEntity(), docInfo);
             }
 
-            onAfterConversionToEntityInvoke(id, docInfo.getDocument(), docInfo.getDocument());
+            onAfterConversionToEntityInvoke(id, docInfo.getDocument(), docInfo.getEntity());
 
             return docInfo.getEntity();
         }

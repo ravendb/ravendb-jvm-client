@@ -52,7 +52,7 @@ public class RavenDB_19545Test extends RemoteTestBase {
         String docId = "user/1";
         String timeSeriesName = "HeartRates";
         String tag = "watches/fitbit";
-        Date baseline = RavenTestHelper.utcToday();
+        Date baseline = new Date();
 
         try (DocumentStore store = getDocumentStore()) {
             try (IDocumentSession session = store.openSession()) {
@@ -66,13 +66,15 @@ public class RavenDB_19545Test extends RemoteTestBase {
                     session.saveChanges();
                 }
 
+                // in java we add one millisecond as we always operate on ms precision
                 TimeSeriesEntry[] entries = session.timeSeriesFor(docId, timeSeriesName)
-                        .get(DateUtils.addDays(baseline, 9), DateUtils.addDays(baseline, 11));
+                        .get(DateUtils.addMilliseconds(DateUtils.addDays(baseline, 9), 1), DateUtils.addDays(baseline, 11));
                 assertThat(entries)
                         .hasSize(1);
 
+                // in java we add one millisecond as we always operate on ms precision
                 entries = session.timeSeriesFor(docId, timeSeriesName)
-                        .get(DateUtils.addDays(baseline, 3), DateUtils.addDays(baseline, 8));
+                        .get(DateUtils.addMilliseconds(DateUtils.addDays(baseline, 3), 1), DateUtils.addDays(baseline, 8));
                 assertThat(entries)
                         .hasSize(5);
 
@@ -148,12 +150,14 @@ public class RavenDB_19545Test extends RemoteTestBase {
                     session.saveChanges();
                 }
 
+                // in java we add one millisecond as we always operate on ms precision
                 TimeSeriesEntry[] entries = session.timeSeriesFor(docId, timeSeriesName)
-                        .get(DateUtils.addDays(baseline, 9), DateUtils.addDays(baseline, 11));
+                        .get(DateUtils.addMilliseconds(DateUtils.addDays(baseline, 9), 1), DateUtils.addDays(baseline, 11));
                 assertThat(entries)
                         .hasSize(1);
 
-                entries = session.timeSeriesFor(docId, timeSeriesName).get(DateUtils.addDays(baseline, 1), null);
+                // in java we add one millisecond as we always operate on ms precision
+                entries = session.timeSeriesFor(docId, timeSeriesName).get(DateUtils.addMilliseconds(DateUtils.addDays(baseline, 1), 1), null);
                 assertThat(entries)
                         .hasSize(9);
 

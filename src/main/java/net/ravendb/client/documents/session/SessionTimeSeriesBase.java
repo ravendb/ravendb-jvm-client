@@ -353,17 +353,17 @@ public class SessionTimeSeriesBase {
                     .getValues()
                     .get(name)
                     .stream()
-                    .map(x -> x.getFrom())
-                    .filter(Objects::nonNull)
-                    .min(Date::compareTo)
+                    .map(x -> leftDate(x.getFrom()))
+                    .min(DatesComparator::compare)
+                    .map(DateWithContext::getDate)
                     .orElse(null);
             to = details
                     .getValues()
                     .get(name)
                     .stream()
-                    .map(x -> x.getTo())
-                    .filter(Objects::nonNull)
-                    .max(Date::compareTo)
+                    .map(x -> rightDate(x.getTo()))
+                    .max(DatesComparator::compare)
+                    .map(DateWithContext::getDate)
                     .orElse(null);
             InMemoryDocumentSessionOperations.addToCache(name, from, to,
                     fromRangeIndex, toRangeIndex, ranges, cache, mergedValues);
