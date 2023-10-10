@@ -5,6 +5,7 @@ import java.util.Map;
 public class ClusterTopologyResponse {
     private String leader;
     private String nodeTag;
+    private ServerNode.Role serverRole;
     private ClusterTopology topology;
     private long etag;
     private Map<String, NodeStatus> status;
@@ -47,5 +48,13 @@ public class ClusterTopologyResponse {
 
     public void setEtag(long etag) {
         this.etag = etag;
+    }
+
+    public ServerNode.Role getServerRole() {
+        return serverRole;
+    }
+
+    public void setServerRole(ServerNode.Role serverRole) {
+        this.serverRole = serverRole;
     }
 }

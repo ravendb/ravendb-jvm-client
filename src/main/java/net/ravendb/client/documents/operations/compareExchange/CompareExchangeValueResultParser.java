@@ -76,13 +76,16 @@ public class CompareExchangeValueResultParser<T> {
             throw new IllegalStateException("Response is invalid. Value is missing.");
         }
 
+        JsonNode rawCvNode = item.get("ChangeVector");
+        String cv = rawCvNode != null && !rawCvNode.isNull() ? rawCvNode.asText() : null;
+
         ObjectNode raw = rawJsonNode.isObject() ? (ObjectNode) rawJsonNode : null;
 
         String key = keyNode.asText();
         long index = indexNode.asLong();
 
         if (raw == null) {
-            return new CompareExchangeValue<>(key, index, null);
+            return new CompareExchangeValue<>(key, index,null, cv, null);
         }
 
         MetadataAsDictionary metadata = null;
@@ -103,24 +106,24 @@ public class CompareExchangeValueResultParser<T> {
             return new CompareExchangeValue<>(key, index, value, metadata);
         } else if (ObjectNode.class.equals(clazz)) {
             if (raw == null || !raw.has(Constants.CompareExchange.OBJECT_FIELD_NAME)) {
-                return new CompareExchangeValue<>(key, index, null, metadata);
+                return new CompareExchangeValue<>(key, index, null, cv, metadata);
             }
 
             Object rawValue = raw.get(Constants.CompareExchange.OBJECT_FIELD_NAME);
             if (rawValue == null) {
-                return new CompareExchangeValue<>(key, index, null, metadata);
+                return new CompareExchangeValue<>(key, index, null, cv, metadata);
             } else if (rawValue instanceof ObjectNode) {
-                return new CompareExchangeValue<>(key, index, (T) rawValue, metadata);
+                return new CompareExchangeValue<>(key, index, (T) rawValue, cv, metadata);
             } else {
-                return new CompareExchangeValue<>(key, index, (T) raw, metadata);
+                return new CompareExchangeValue<>(key, index, (T) raw, cv, metadata);
             }
         } else {
             JsonNode object = raw.get(Constants.CompareExchange.OBJECT_FIELD_NAME);
             if (object == null || object.isNull()) {
-                return new CompareExchangeValue<>(key, index, Defaults.defaultValue(clazz), metadata);
+                return new CompareExchangeValue<>(key, index, Defaults.defaultValue(clazz), cv, metadata);
             } else {
                 T converted = conventions.getEntityMapper().convertValue(object, clazz);
-                return new CompareExchangeValue<>(key, index, converted, metadata);
+                return new CompareExchangeValue<>(key, index, converted, cv, metadata);
             }
         }
     }

@@ -7,6 +7,7 @@ import net.ravendb.client.documents.operations.timeSeries.TimeSeriesCountRange;
 import net.ravendb.client.documents.operations.timeSeries.TimeSeriesRange;
 import net.ravendb.client.documents.operations.timeSeries.TimeSeriesTimeRange;
 import net.ravendb.client.documents.queries.HashCalculator;
+import net.ravendb.client.documents.session.TransactionMode;
 import net.ravendb.client.extensions.JsonExtensions;
 import net.ravendb.client.http.RavenCommand;
 import net.ravendb.client.http.ServerNode;
@@ -34,6 +35,7 @@ public class GetDocumentsCommand extends RavenCommand<GetDocumentsResult> {
     private String[] _includes;
     private String[] _counters;
     private boolean _includeAllCounters;
+    private TransactionMode _txMode;
 
     private List<AbstractTimeSeriesRange> _timeSeriesIncludes;
     private String[] _revisionsIncludeByChangeVector;
@@ -129,6 +131,10 @@ public class GetDocumentsCommand extends RavenCommand<GetDocumentsResult> {
         pathBuilder.append("/databases/")
                 .append(node.getDatabase())
                 .append("/docs?");
+
+        if (_txMode == TransactionMode.CLUSTER_WIDE) {
+            pathBuilder.append("&txMode=ClusterWide");
+        }
 
         if (_start != null) {
             pathBuilder.append("&start=").append(_start);
@@ -327,5 +333,9 @@ public class GetDocumentsCommand extends RavenCommand<GetDocumentsResult> {
     @Override
     public boolean isReadRequest() {
         return true;
+    }
+
+    public void setTransactionMode(TransactionMode mode) {
+        this._txMode = mode;
     }
 }

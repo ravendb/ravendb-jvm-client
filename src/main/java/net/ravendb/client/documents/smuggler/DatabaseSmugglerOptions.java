@@ -3,7 +3,9 @@ package net.ravendb.client.documents.smuggler;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import net.ravendb.client.extensions.JsonExtensions;
 
+import java.util.ArrayList;
 import java.util.EnumSet;
+import java.util.List;
 
 public class DatabaseSmugglerOptions implements IDatabaseSmugglerOptions {
 
@@ -46,7 +48,9 @@ public class DatabaseSmugglerOptions implements IDatabaseSmugglerOptions {
             DatabaseRecordItemType.ELASTIC_SEARCH_ETLS,
             DatabaseRecordItemType.POSTGRE_SQL_INTEGRATION,
             DatabaseRecordItemType.QUEUE_CONNECTION_STRINGS,
-            DatabaseRecordItemType.QUEUE_ETLS);
+            DatabaseRecordItemType.QUEUE_ETLS,
+            DatabaseRecordItemType.INDEXES_HISTORY,
+            DatabaseRecordItemType.REFRESH);
 
     private final int DEFAULT_MAX_STEPS_FOR_TRANSFORM_SCRIPT = 10 * 1000;
 
@@ -59,12 +63,14 @@ public class DatabaseSmugglerOptions implements IDatabaseSmugglerOptions {
     private int maxStepsForTransformScript;
     private boolean skipRevisionCreation;
     private String encryptionKey;
+    private List<String> collections;
 
     public DatabaseSmugglerOptions() {
         this.operateOnTypes = DEFAULT_OPERATE_ON_TYPES.clone();
         this.operateOnDatabaseRecordType = DEFAULT_OPERATE_ON_DATABASE_RECORD_TYPES.clone();
         this.maxStepsForTransformScript = DEFAULT_MAX_STEPS_FOR_TRANSFORM_SCRIPT;
         includeExpired = true;
+        this.collections = new ArrayList<>();
     }
 
     @JsonSerialize(using = JsonExtensions.SharpEnumSetSerializer.class)
@@ -139,5 +145,13 @@ public class DatabaseSmugglerOptions implements IDatabaseSmugglerOptions {
 
     public void setEncryptionKey(String encryptionKey) {
         this.encryptionKey = encryptionKey;
+    }
+
+    public List<String> getCollections() {
+        return collections;
+    }
+
+    public void setCollections(List<String> collections) {
+        this.collections = collections;
     }
 }

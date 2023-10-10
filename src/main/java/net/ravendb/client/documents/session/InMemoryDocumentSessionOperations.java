@@ -12,6 +12,7 @@ import net.ravendb.client.Constants;
 import net.ravendb.client.documents.DocumentStoreBase;
 import net.ravendb.client.documents.IDocumentStore;
 import net.ravendb.client.documents.IdTypeAndName;
+import net.ravendb.client.documents.commands.GetDocumentsCommand;
 import net.ravendb.client.documents.commands.GetDocumentsResult;
 import net.ravendb.client.documents.commands.batches.*;
 import net.ravendb.client.documents.conventions.DocumentConventions;
@@ -37,6 +38,7 @@ import org.apache.commons.beanutils.BeanUtils;
 import org.apache.commons.lang3.NotImplementedException;
 import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.tuple.Pair;
 
 import java.time.Duration;
 import java.util.*;
@@ -657,6 +659,8 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
                 documentsByEntity.put(docInfo.getEntity(), docInfo);
             }
 
+            onAfterConversionToEntityInvoke(id, docInfo.getDocument(), docInfo.getEntity());
+
             return docInfo.getEntity();
         }
 
@@ -671,6 +675,8 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
                 documentsById.add(docInfo);
                 documentsByEntity.put(docInfo.getEntity(), docInfo);
             }
+
+            onAfterConversionToEntityInvoke(id, docInfo.getDocument(), docInfo.getEntity());
 
             return docInfo.getEntity();
         }
@@ -693,6 +699,8 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
             documentsById.add(newDocumentInfo);
             documentsByEntity.put(entity, newDocumentInfo);
         }
+
+        onAfterConversionToEntityInvoke(id, document, entity);
 
         return entity;
     }
@@ -880,6 +888,15 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
     protected void storeEntityInUnitOfWork(String id, Object entity, String changeVector, ObjectNode metadata, ConcurrencyCheckMode forceConcurrencyCheck) {
         if (id != null) {
             _knownMissingIds.remove(id);
+        }
+
+        if (TransactionMode.CLUSTER_WIDE.equals(transactionMode)) {
+            if (changeVector == null) {
+                Reference<String> changeVectorRef = new Reference<>();
+                if (getClusterSession().tryGetMissingAtomicGuardFor(id, changeVectorRef)) {
+                    changeVector = changeVectorRef.value;
+                }
+            }
         }
 
         DocumentInfo documentInfo = new DocumentInfo();
@@ -2082,7 +2099,10 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
     }
 
     private Object deserializeFromTransformer(Class<?> clazz, String id, ObjectNode document, boolean trackEntity) {
-        return entityToJson.convertToEntity(clazz, id, document, trackEntity);
+        Object entity = entityToJson.convertToEntity(clazz, id, document, trackEntity);
+        onAfterConversionToEntityInvoke(id, document, entity);
+        return entity;
+
     }
 
     public boolean checkIfAllChangeVectorsAreAlreadyIncluded(String[] changeVectors) {
@@ -2151,8 +2171,69 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
         return true;
     }
 
-    protected <T> void refreshInternal(T entity, RavenCommand<GetDocumentsResult> cmd, DocumentInfo documentInfo) {
-        ObjectNode document = (ObjectNode) cmd.getResult().getResults().get(0);
+    protected <T> Map<String, Pair<Object, DocumentInfo>> buildEntityDocInfoByIdHolder(List<T> entities) {
+        Map<String, Pair<Object, DocumentInfo>> idsEntitiesPairs = new HashMap<>();
+
+        for (T entity : entities) {
+            DocumentInfo docInfo = documentsByEntity.get(entity);
+            if (docInfo == null) {
+                throwCouldNotRefreshDocument("Cannot refresh a transient instance.");
+            }
+            idsEntitiesPairs.put(docInfo.getId(), Pair.of(entity, docInfo));
+        }
+
+        return idsEntitiesPairs;
+    }
+
+    protected void refreshEntities(GetDocumentsCommand command, Map<String, Pair<Object, DocumentInfo>> idsEntitiesPairs) {
+        List<EntityInfoAndResult> list = new ArrayList<>();
+
+        boolean hasDeleted = false;
+        ArrayNode resultsCollection = command.getResult().getResults();
+
+        for (JsonNode result : resultsCollection) {
+            if (result == null || result.isNull()) {
+                hasDeleted = true;
+                break;
+            }
+
+            String id = result.get(Constants.Documents.Metadata.KEY).get(Constants.Documents.Metadata.ID).asText();
+            Pair<Object, DocumentInfo> tuple = idsEntitiesPairs.get(id);
+            if (tuple == null) {
+                throwCouldNotRefreshDocument("Could not refresh an entity, the server returned an invalid id: " + id + ". Should not happen!");
+            }
+            list.add(EntityInfoAndResult.create(tuple.getKey(), tuple.getValue(), (ObjectNode) result));
+        }
+
+        if (hasDeleted) {
+            throwCouldNotRefreshDocument("Some of the requested documents are no longer exists and were probably deleted!");
+        }
+
+        for (EntityInfoAndResult tuple : list) {
+            refreshInternal(tuple.entity, tuple.result, tuple.info);
+        }
+    }
+
+    private static class EntityInfoAndResult {
+        public Object entity;
+        public DocumentInfo info;
+        public ObjectNode result;
+
+        public static EntityInfoAndResult create(Object entity, DocumentInfo info, ObjectNode result) {
+            EntityInfoAndResult returnValue = new EntityInfoAndResult();
+            returnValue.entity = entity;
+            returnValue.info = info;
+            returnValue.result = result;
+            return returnValue;
+        }
+    }
+
+    protected static void throwCouldNotRefreshDocument(String msg) {
+        throw new IllegalStateException(msg);
+    }
+
+    protected <T> void refreshInternal(T entity, ObjectNode cmdResult, DocumentInfo documentInfo) {
+        ObjectNode document = cmdResult;
         if (document == null) {
             throw new IllegalStateException("Document '" + documentInfo.getId() + "' no longer exists and was probably deleted");
         }
@@ -2183,6 +2264,8 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
         if (documentInfoById != null) {
             documentInfoById.setEntity(entity);
         }
+
+        onAfterConversionToEntityInvoke(documentInfo.getId(), documentInfo.getDocument(), documentInfo.getEntity());
     }
 
     @SuppressWarnings("unchecked")

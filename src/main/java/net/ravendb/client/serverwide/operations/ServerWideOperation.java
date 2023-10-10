@@ -1,6 +1,8 @@
 package net.ravendb.client.serverwide.operations;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import net.ravendb.client.documents.commands.KillOperationCommand;
+import net.ravendb.client.documents.commands.KillServerOperationCommand;
 import net.ravendb.client.documents.conventions.DocumentConventions;
 import net.ravendb.client.documents.operations.Operation;
 import net.ravendb.client.http.RavenCommand;
@@ -25,5 +27,9 @@ public class ServerWideOperation extends Operation {
     @Override
     protected RavenCommand<ObjectNode> getOperationStateCommand(DocumentConventions conventions, long id, String nodeTag) {
         return new GetServerWideOperationStateOperation.GetServerWideOperationStateCommand(id, nodeTag);
+    }
+
+    protected RavenCommand getKillOperationCommand(long id, String nodeTag) {
+        return new KillServerOperationCommand(id, nodeTag);
     }
 }

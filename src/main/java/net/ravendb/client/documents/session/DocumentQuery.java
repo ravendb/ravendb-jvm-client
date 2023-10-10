@@ -641,6 +641,10 @@ public class DocumentQuery<T> extends AbstractDocumentQuery<T, DocumentQuery<T>>
             newFieldsToFetch = FieldsToFetchToken.create(fields, queryData.getProjections(), queryData.isCustomFunction(), sourceAliasReference.value);
         } else {
             newFieldsToFetch = null;
+            if (fieldsToFetchToken != null) {
+                queryData = new QueryData(fieldsToFetchToken.fieldsToFetch, fieldsToFetchToken.projections, fromToken.getAlias(), declareTokens, loadTokens, fieldsToFetchToken.customFunction);
+                queryData.setProjectionBehavior(projectionBehavior);
+            }
         }
 
         if (newFieldsToFetch != null) {

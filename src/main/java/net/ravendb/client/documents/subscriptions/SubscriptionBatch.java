@@ -84,10 +84,6 @@ public class SubscriptionBatch<T> {
         private IMetadataDictionary _metadata;
 
         public IMetadataDictionary getMetadata() {
-            if (_metadata == null) {
-                _metadata = new MetadataAsDictionary(rawMetadata);
-            }
-
             return _metadata;
         }
     }
@@ -113,6 +109,7 @@ public class SubscriptionBatch<T> {
     private List<ObjectNode> _includes;
     private List<BatchFromServer.CounterIncludeItem> _counterIncludes;
     private List<ObjectNode> _timeSeriesIncludes;
+    private boolean _sessionOpened = false;
 
     public List<Item<T>> getItems() {
         return _items;
@@ -135,10 +132,18 @@ public class SubscriptionBatch<T> {
     }
 
     private IDocumentSession openSessionInternal(SessionOptions options) {
+        if (_sessionOpened) {
+            throwSessionCanBeOpenedOnlyOnce();
+        }
+        _sessionOpened = true;
         IDocumentSession s = _store.openSession(options);
 
         loadDataToSession((InMemoryDocumentSessionOperations) s);
         return s;
+    }
+
+    private void throwSessionCanBeOpenedOnlyOnce() {
+        throw new IllegalStateException("Session can only be opened once per each Subscription batch");
     }
 
     private static void validateSessionOptions(SessionOptions options) {
@@ -187,6 +192,7 @@ public class SubscriptionBatch<T> {
             documentInfo.setId(item.getId());
             documentInfo.setDocument(item.getRawResult());
             documentInfo.setMetadata(item.getRawMetadata());
+            documentInfo.setMetadataInstance(item.getMetadata());
             documentInfo.setChangeVector(item.getChangeVector());
             documentInfo.setEntity(item.getResult());
             documentInfo.setNewDocument(false);
@@ -208,6 +214,8 @@ public class SubscriptionBatch<T> {
 
     @SuppressWarnings("unchecked")
     String initialize(BatchFromServer batch) {
+        _sessionOpened = false;
+
         _includes = batch.getIncludes();
         _counterIncludes = batch.getCounterIncludes();
         _timeSeriesIncludes = batch.getTimeSeriesIncludes();
@@ -283,6 +291,7 @@ public class SubscriptionBatch<T> {
             itemToAdd.id = id;
             itemToAdd.rawResult = curDoc;
             itemToAdd.rawMetadata = metadata;
+            itemToAdd._metadata = new MetadataAsDictionary(metadata);
             itemToAdd._result = instance;
             itemToAdd.exceptionMessage = item.getException();
             itemToAdd.projection = projection;

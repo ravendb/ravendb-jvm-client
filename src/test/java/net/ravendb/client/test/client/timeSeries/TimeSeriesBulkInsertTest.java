@@ -1,7 +1,10 @@
 package net.ravendb.client.test.client.timeSeries;
 
+import net.ravendb.client.Constants;
+import net.ravendb.client.RavenTestHelper;
 import net.ravendb.client.RemoteTestBase;
 import net.ravendb.client.documents.BulkInsertOperation;
+import net.ravendb.client.documents.DocumentStore;
 import net.ravendb.client.documents.IDocumentStore;
 import net.ravendb.client.documents.operations.attachments.AttachmentIteratorResult;
 import net.ravendb.client.documents.operations.attachments.AttachmentRequest;
@@ -9,6 +12,7 @@ import net.ravendb.client.documents.operations.attachments.CloseableAttachmentsR
 import net.ravendb.client.documents.operations.counters.GetCountersOperation;
 import net.ravendb.client.documents.session.IDocumentSession;
 import net.ravendb.client.documents.session.timeSeries.TimeSeriesEntry;
+import net.ravendb.client.exceptions.BulkInsertInvalidOperationException;
 import net.ravendb.client.infrastructure.entities.User;
 import net.ravendb.client.test.client.attachments.AttachmentsStreamTest;
 import org.apache.commons.lang3.time.DateUtils;
@@ -863,19 +867,19 @@ public class TimeSeriesBulkInsertTest extends RemoteTestBase {
                         bulkInsert.store(user1);
                     })
                             .hasMessageContaining(errorMessage)
-                            .isInstanceOf(IllegalStateException.class);
+                            .isInstanceOf(BulkInsertInvalidOperationException.class);
 
                     assertThatThrownBy(() -> bulkInsert.countersFor("test").increment("1", 1))
                             .hasMessageContaining(errorMessage)
-                            .isInstanceOf(IllegalStateException.class);
+                            .isInstanceOf(BulkInsertInvalidOperationException.class);
 
                     assertThatThrownBy(() -> bulkInsert.timeSeriesFor(documentId, "Pulse"))
                             .hasMessageContaining(errorMessage)
-                            .isInstanceOf(IllegalStateException.class);
+                            .isInstanceOf(BulkInsertInvalidOperationException.class);
 
                     assertThatThrownBy(() -> bulkInsert.timeSeriesFor(documentId, "Heartrate"))
                             .hasMessageContaining(errorMessage)
-                            .isInstanceOf(IllegalStateException.class);
+                            .isInstanceOf(BulkInsertInvalidOperationException.class);
                 }
             }
 
@@ -979,4 +983,24 @@ public class TimeSeriesBulkInsertTest extends RemoteTestBase {
         }
     }
 
+    @Test
+    public void createTimeSeriesWithInvalidNameShouldThrow() throws Exception {
+        try (DocumentStore store = getDocumentStore()) {
+            assertThatThrownBy(() -> {
+                Date baseline = RavenTestHelper.utcToday();
+                String documentId = "users/ayende";
+
+                try (BulkInsertOperation bulkInsert = store.bulkInsert()) {
+                    User user = new User();
+                    user.setName("Oren");
+                    bulkInsert.store(user, documentId);
+
+                    try (BulkInsertOperation.TimeSeriesBulkInsert timeSeriesBulkInsert = bulkInsert.timeSeriesFor(documentId, "INC:Heartrate")) {
+                        timeSeriesBulkInsert.append(DateUtils.addMinutes(baseline, 1), 59, "watches/fitbit");
+                    }
+                }
+
+            }).hasMessageContaining("Time Series name cannot start with " + Constants.Headers.INCREMENTAL_TIME_SERIES_PREFIX + " prefix");
+        }
+    }
 }

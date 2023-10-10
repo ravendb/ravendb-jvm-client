@@ -1,6 +1,7 @@
 package net.ravendb.client.documents.smuggler;
 
 import java.util.EnumSet;
+import java.util.List;
 
 public interface IDatabaseSmugglerOptions {
     EnumSet<DatabaseRecordItemType> getOperateOnDatabaseRecordType();
@@ -30,4 +31,8 @@ public interface IDatabaseSmugglerOptions {
     boolean isSkipRevisionCreation();
 
     void setSkipRevisionCreation(boolean skipRevisionCreation);
+
+    List<String> getCollections();
+
+    void setCollections(List<String> collections);
 }

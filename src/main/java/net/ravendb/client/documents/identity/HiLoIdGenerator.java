@@ -11,7 +11,7 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
- *  Generate hilo numbers against a RavenDB document
+ *  Generate HiLo numbers against a RavenDB document
  */
 public class HiLoIdGenerator {
 
@@ -23,6 +23,9 @@ public class HiLoIdGenerator {
     private final String _dbName;
     private final char _identityPartsSeparator;
     private volatile RangeValue _range;
+    /**
+     * @deprecated Will be removed in next major version of the product. Use field Range.ServerTag instead.
+     */
     protected String serverTag;
 
     private AtomicReference<Lazy<Void>> _nextRangeTask = new AtomicReference<>(new Lazy<>(() -> null));
@@ -32,9 +35,14 @@ public class HiLoIdGenerator {
         _tag = tag;
         _dbName = dbName;
         _identityPartsSeparator = identityPartsSeparator;
-        _range = new RangeValue(1, 0);
+        _range = new RangeValue(1, 0, null);
     }
 
+    /**
+     * @deprecated Will be removed in next major version of the product. Use the getDocumentIdFromId(NextId) overload.
+     * @param nextId next id
+     * @return next id;
+     */
     protected String getDocumentIdFromId(long nextId) {
         return prefix + nextId + "-" + serverTag;
     }
@@ -50,12 +58,21 @@ public class HiLoIdGenerator {
     protected static class RangeValue {
         public final long Min;
         public final long Max;
+        public final String ServerTag;
         public final AtomicLong Current;
 
+        /**
+         * @deprecated Will be removed in next major version of the product. Use RangeValue(min, max, serverTag) instead.
+         */
         public RangeValue(long min, long max) {
+            this(min, max, null);
+        }
+
+        public RangeValue(long min, long max, String serverTag) {
             Min = min;
             Max = max;
             Current = new AtomicLong(min - 1);
+            ServerTag = serverTag;
         }
     }
 
@@ -65,10 +82,11 @@ public class HiLoIdGenerator {
      * @return document id
      */
     public String generateDocumentId(Object entity) {
-        return getDocumentIdFromId(nextId());
+        NextId result = getNextId();
+        return getDocumentIdFromId(result.getId());
     }
 
-    public long nextId() {
+    public NextId getNextId() {
         while (true) {
             Lazy<Void> current = _nextRangeTask.get();
 
@@ -77,7 +95,7 @@ public class HiLoIdGenerator {
 
             long id = range.Current.incrementAndGet();
             if (id <= range.Max) {
-                return id;
+                return NextId.create(id, range.ServerTag);
             }
 
             try {
@@ -107,6 +125,11 @@ public class HiLoIdGenerator {
         }
     }
 
+    public long nextId() {
+        NextId result = getNextId();
+        return result.getId();
+    }
+
     private Void getNextRange() {
         NextHiLoCommand hiloCommand = new NextHiLoCommand(_tag, _lastBatchSize, _lastRangeDate, _identityPartsSeparator, _range.Max);
 
@@ -117,7 +140,7 @@ public class HiLoIdGenerator {
         serverTag = hiloCommand.getResult().getServerTag();
         _lastRangeDate = hiloCommand.getResult().getLastRangeAt();
         _lastBatchSize = hiloCommand.getResult().getLastSize();
-        _range = new RangeValue(hiloCommand.getResult().getLow(), hiloCommand.getResult().getHigh());
+        _range = new RangeValue(hiloCommand.getResult().getLow(), hiloCommand.getResult().getHigh(), hiloCommand.getResult().getServerTag());
         return null;
     }
 

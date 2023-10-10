@@ -1,5 +1,7 @@
 package net.ravendb.client.documents.operations.backups;
 
+import java.util.Date;
+
 public class PeriodicBackupConfiguration extends BackupConfiguration {
 
     private String name;
@@ -10,6 +12,8 @@ public class PeriodicBackupConfiguration extends BackupConfiguration {
     private boolean pinToMentorNode;
 
     private RetentionPolicy retentionPolicy;
+
+    private Date createdAt;
 
     private String fullBackupFrequency;
     private String incrementalBackupFrequency;
@@ -76,5 +80,13 @@ public class PeriodicBackupConfiguration extends BackupConfiguration {
 
     public void setIncrementalBackupFrequency(String incrementalBackupFrequency) {
         this.incrementalBackupFrequency = incrementalBackupFrequency;
+    }
+
+    public Date getCreatedAt() {
+        return createdAt;
+    }
+
+    public void setCreatedAt(Date createdAt) {
+        this.createdAt = createdAt;
     }
 }

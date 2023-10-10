@@ -35,6 +35,8 @@ public class TrafficWatchConfigurationTest extends RemoteTestBase {
                     .isNull();
             assertThat(defaultConfiguration.getChangeTypes())
                     .isNull();
+            assertThat(defaultConfiguration.getCertificateThumbprints())
+                    .isNull();
 
             PutTrafficWatchConfigurationOperation.Parameters configuration1 = new PutTrafficWatchConfigurationOperation.Parameters();
             configuration1.setTrafficWatchMode(TrafficWatchMode.OFF);
@@ -45,6 +47,7 @@ public class TrafficWatchConfigurationTest extends RemoteTestBase {
             configuration1.setMinimumDurationInMs(33);
             configuration1.setHttpMethods(Arrays.asList("GET", "POST"));
             configuration1.setChangeTypes(Arrays.asList(TrafficWatchChangeType.QUERIES, TrafficWatchChangeType.COUNTERS, TrafficWatchChangeType.BULK_DOCS));
+            configuration1.setCertificateThumbprints(Arrays.asList("0123456789ABCDEF0123456789ABCDEF01234567", "FEDCBA9876543210FEDCBA9876543210FEDCBA98"));
 
             store.maintenance().server().send(new PutTrafficWatchConfigurationOperation(configuration1));
 
@@ -66,6 +69,8 @@ public class TrafficWatchConfigurationTest extends RemoteTestBase {
                     .isEqualTo(configuration1.getHttpMethods());
             assertThat(configuration2.getChangeTypes())
                     .isEqualTo(configuration1.getChangeTypes());
+            assertThat(configuration2.getCertificateThumbprints())
+                    .isEqualTo(configuration1.getCertificateThumbprints());
         }
     }
 }

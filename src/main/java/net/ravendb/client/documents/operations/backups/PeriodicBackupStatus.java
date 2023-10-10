@@ -10,6 +10,8 @@ public class PeriodicBackupStatus implements IDatabaseTaskStatus {
     private BackupType backupType;
     private boolean isFull;
     private String nodeTag;
+    private Date delayUntil;
+    private Date originalBackupTime;
     private Date lastFullBackup;
     private Date lastIncrementalBackup;
     private Date lastFullBackupInternal;
@@ -63,6 +65,22 @@ public class PeriodicBackupStatus implements IDatabaseTaskStatus {
 
     public void setNodeTag(String nodeTag) {
         this.nodeTag = nodeTag;
+    }
+
+    public Date getDelayUntil() {
+        return delayUntil;
+    }
+
+    public void setDelayUntil(Date delayUntil) {
+        this.delayUntil = delayUntil;
+    }
+
+    public Date getOriginalBackupTime() {
+        return originalBackupTime;
+    }
+
+    public void setOriginalBackupTime(Date originalBackupTime) {
+        this.originalBackupTime = originalBackupTime;
     }
 
     public Date getLastFullBackup() {

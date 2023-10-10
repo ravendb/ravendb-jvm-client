@@ -18,7 +18,7 @@ public class MetadataAsDictionary implements IMetadataDictionary {
             Constants.Documents.Metadata.RAVEN_JAVA_TYPE
     );
 
-    private IMetadataDictionary _parent;
+    private MetadataAsDictionary _parent;
     private String _parentKey;
 
     private Map<String, Object> _metadata;
@@ -39,7 +39,7 @@ public class MetadataAsDictionary implements IMetadataDictionary {
         _source = null;
     }
 
-    public MetadataAsDictionary(ObjectNode metadata, IMetadataDictionary parent, String parentKey) {
+    public MetadataAsDictionary(ObjectNode metadata, MetadataAsDictionary parent, String parentKey) {
         this(metadata);
 
         if (parent == null) {
@@ -65,10 +65,6 @@ public class MetadataAsDictionary implements IMetadataDictionary {
         while (fields.hasNext()) {
             String fieldName = fields.next();
             _metadata.put(fieldName, convertValue(fieldName, metadata.get(fieldName)));
-        }
-
-        if (_parent != null) { // mark parent as dirty
-            _parent.put(_parentKey, this);
         }
     }
 
@@ -138,7 +134,7 @@ public class MetadataAsDictionary implements IMetadataDictionary {
         Object currentValue = _metadata.get(key);
         if (currentValue == null || !currentValue.equals(value)) {
             _metadata.put(key, value);
-            _hasChanges = true;
+            markChanged();
         }
 
         return null;
@@ -186,7 +182,7 @@ public class MetadataAsDictionary implements IMetadataDictionary {
             initialize(_source);
         }
 
-        _hasChanges = true;
+        markChanged();
 
         _metadata.putAll(m);
     }
@@ -211,7 +207,7 @@ public class MetadataAsDictionary implements IMetadataDictionary {
                 _metadata.remove(s);
             }
 
-            _hasChanges = true;
+            markChanged();
         }
     }
 
@@ -242,7 +238,9 @@ public class MetadataAsDictionary implements IMetadataDictionary {
 
         Object oldValue = _metadata.remove(key);
 
-        _hasChanges |= oldValue != null;
+        if (oldValue != null) {
+            markChanged();
+        }
 
         return oldValue;
     }
@@ -330,5 +328,16 @@ public class MetadataAsDictionary implements IMetadataDictionary {
         }
 
         return (IMetadataDictionary) obj;
+    }
+
+    protected void markChanged() {
+        _hasChanges = true;
+
+        if (_parent == null) {
+            return;
+        }
+
+        _parent.put(_parentKey, this);
+        _parent.markChanged();
     }
 }

@@ -965,7 +965,7 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
     }
 
     /**
-     * Specifies a boost weight to the last where clause.
+     * Specifies a boost weight to the previous where clause.
      * The higher the boost factor, the more relevant the term will be.
      * <p>
      * boosting factor where 1.0 is default, less than 1.0 is lower weight, greater than 1.0 is higher weight
@@ -997,19 +997,23 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
             CloseSubclauseToken close = (CloseSubclauseToken) last;
 
             String parameter = addQueryParameter(boost);
-
+            int openSubclauseToSkip = 0;
             int index = tokens.indexOf(last);
 
             while (last != null && index > 0) {
                 index--;
                 last = tokens.get(index); // find the previous option
 
-                if (last instanceof OpenSubclauseToken) {
+                if (last instanceof CloseSubclauseToken) {
+                    // We have to count how many inner subclauses were inside current subclause
+                    openSubclauseToSkip++;
+                } else if (last instanceof OpenSubclauseToken && openSubclauseToSkip > 0) {
+                    // Inner subclause open - we have to skip it because we want to match only the leftmost opening.
+                    openSubclauseToSkip--;
+                } else if (last instanceof OpenSubclauseToken) {
                     OpenSubclauseToken open = (OpenSubclauseToken) last;
-
                     open.setBoostParameterName(parameter);
                     close.setBoostParameterName(parameter);
-                    return;
                 }
             }
         } else {
@@ -1074,8 +1078,8 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
             throw new IllegalStateException("Proximity can only be used right after search clause");
         }
 
-        if (proximity < 1) {
-            throw new IllegalArgumentException("Proximity distance must be a positive number");
+        if (proximity < 0) {
+            throw new IllegalArgumentException("Proximity distance must be a number greater than or equal to 0");
         }
 
         ((WhereToken) whereToken).getOptions().setProximity(proximity);
@@ -1792,6 +1796,10 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
         }
     }
 
+    private List<QueryToken> getCurrentOrderByTokens() {
+        return orderByTokens;
+    }
+
     private List<QueryToken> getCurrentFilterTokens() {
         return filterTokens;
     }
@@ -1816,15 +1824,31 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
     }
 
     public void addFromAliasToWhereTokens(String fromAlias) {
+        List<QueryToken> tokens = getCurrentWhereTokens();
+        addFromAliasToTokens(fromAlias, tokens);
+    }
+
+    public void addFromAliasToOrderByTokens(String fromAlias) {
+        List<QueryToken> tokens = getCurrentOrderByTokens();
+        addFromAliasToTokens(fromAlias, tokens);
+    }
+
+    public void addFromAliasToFilterTokens(String fromAlias) {
+        List<QueryToken> tokens = getCurrentFilterTokens();
+        addFromAliasToTokens(fromAlias, tokens);
+    }
+
+    private void addFromAliasToTokens(String fromAlias, List<QueryToken> tokens) {
         if (StringUtils.isEmpty(fromAlias)) {
             throw new IllegalArgumentException("Alias cannot be null or empty");
         }
 
-        List<QueryToken> tokens = getCurrentWhereTokens();
-
         for (QueryToken token : tokens) {
             if (token instanceof WhereToken) {
                 ((WhereToken) token).addAlias(fromAlias);
+            }
+            if (token instanceof OrderByToken) {
+                ((OrderByToken) token).addAlias(fromAlias);
             }
         }
     }

@@ -9,6 +9,7 @@ import net.ravendb.client.documents.operations.attachments.CloseableAttachmentsR
 import net.ravendb.client.documents.operations.counters.CountersDetail;
 import net.ravendb.client.documents.operations.counters.GetCountersOperation;
 import net.ravendb.client.documents.session.IDocumentSession;
+import net.ravendb.client.exceptions.BulkInsertInvalidOperationException;
 import net.ravendb.client.infrastructure.entities.User;
 import org.junit.jupiter.api.Test;
 
@@ -290,7 +291,7 @@ public class BulkInsertAttachmentsTest extends RemoteTestBase {
                     bulk.store("name", new byte[5]);
                 }
             })
-                    .isInstanceOf(IllegalStateException.class)
+                    .isInstanceOf(BulkInsertInvalidOperationException.class)
                     .hasMessageContaining("There is an already running time series operation, did you forget to close it?");
         }
     }

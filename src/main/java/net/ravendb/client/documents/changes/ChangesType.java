@@ -5,5 +5,6 @@ public enum ChangesType {
     INDEX,
     OPERATION,
     COUNTER,
-    TIME_SERIES
+    TIME_SERIES,
+    AGGRESSIVE_CACHE
 }

@@ -32,6 +32,7 @@ import net.ravendb.client.primitives.Tuple;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.tuple.Pair;
 import org.apache.http.HttpStatus;
 import org.apache.http.util.EntityUtils;
 
@@ -181,7 +182,7 @@ public class DocumentSession extends InMemoryDocumentSessionOperations
     public <T> void refresh(T entity) {
         DocumentInfo documentInfo = documentsByEntity.get(entity);
         if (documentInfo == null) {
-            throw new IllegalStateException("Cannot refresh a transient instance");
+            throwCouldNotRefreshDocument("Cannot refresh a transient instance");
         }
 
         incrementRequestCount();
@@ -189,7 +190,26 @@ public class DocumentSession extends InMemoryDocumentSessionOperations
         GetDocumentsCommand command = new GetDocumentsCommand(new String[]{documentInfo.getId()}, null, false);
         _requestExecutor.execute(command, sessionInfo);
 
-        refreshInternal(entity, command, documentInfo);
+        ObjectNode commandResult = (ObjectNode) command.getResult().getResults().get(0);
+
+        refreshInternal(entity, commandResult, documentInfo);
+    }
+
+    /**
+     * Refreshes the specified entities from Raven server.
+     * @param entities Collection of instances of an entity that will be refreshed
+     * @param <T> Type
+     */
+    @Override
+    public <T> void refresh(List<T> entities) {
+        Map<String, Pair<Object, DocumentInfo>> idsEntitiesPairs = buildEntityDocInfoByIdHolder(entities);
+
+        incrementRequestCount();
+
+        GetDocumentsCommand command = new GetDocumentsCommand(idsEntitiesPairs.keySet().toArray(new String[0]), null, false);
+        _requestExecutor.execute(command, getSessionInfo());
+
+        refreshEntities(command, idsEntitiesPairs);
     }
 
     /**
@@ -950,14 +970,14 @@ public class DocumentSession extends InMemoryDocumentSessionOperations
     private <T> StreamResult<T> createStreamResult(Class<T> clazz, ObjectNode json, FieldsToFetchToken fieldsToFetch, boolean isProjectInto) throws IOException {
 
         ObjectNode metadata = (ObjectNode) json.get(Constants.Documents.Metadata.KEY);
-        String changeVector = metadata.get(Constants.Documents.Metadata.CHANGE_VECTOR).asText();
+        String changeVector = null;
         // MapReduce indexes return reduce results that don't have @id property
         String id = null;
         JsonNode idJson = metadata.get(Constants.Documents.Metadata.ID);
         if (idJson != null && !idJson.isNull()) {
             id = idJson.asText();
+            changeVector = metadata.get(Constants.Documents.Metadata.CHANGE_VECTOR).asText();
         }
-
 
         T entity = QueryOperation.deserialize(clazz, id, json, metadata, fieldsToFetch, true, this, isProjectInto);
 

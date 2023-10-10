@@ -1,5 +1,6 @@
 package net.ravendb.client.http;
 
+import net.ravendb.client.Constants;
 import net.ravendb.client.documents.conventions.DocumentConventions;
 import net.ravendb.client.serverwide.commands.GetClusterTopologyCommand;
 import net.ravendb.client.serverwide.commands.GetTcpInfoCommand;
@@ -42,13 +43,14 @@ public class ClusterRequestExecutor extends RequestExecutor {
     @SuppressWarnings("UnnecessaryLocalVariable")
     public static ClusterRequestExecutor createForSingleNode(String url, KeyStore certificate, char[] keyPassword, KeyStore trustStore, ExecutorService executorService, DocumentConventions conventions) {
         String[] initialUrls = {url};
-        url = validateUrls(initialUrls, certificate)[0];
+        String[] urls = validateUrls(initialUrls, certificate);
 
         ClusterRequestExecutor executor = new ClusterRequestExecutor(certificate, keyPassword, trustStore,
                 ObjectUtils.firstNonNull(conventions, DocumentConventions.defaultConventions), executorService, initialUrls);
 
         ServerNode serverNode = new ServerNode();
-        serverNode.setUrl(url);
+        serverNode.setUrl(urls[0]);
+        serverNode.setServerRole(ServerNode.Role.MEMBER);
 
         Topology topology = new Topology();
         topology.setEtag(-1L);
@@ -60,6 +62,9 @@ public class ClusterRequestExecutor extends RequestExecutor {
         executor.topologyEtag = -2L;
         executor._disableClientConfigurationUpdates = true;
         executor._disableTopologyUpdates = true;
+        executor._topologyHeaderName = Constants.Headers.CLUSTER_TOPOLOGY_ETAG;
+
+        executor._firstTopologyUpdate = executor.singleTopologyUpdateAsync(urls, null);
 
         return executor;
     }
@@ -74,6 +79,7 @@ public class ClusterRequestExecutor extends RequestExecutor {
 
         executor._disableClientConfigurationUpdates = true;
         executor._firstTopologyUpdate = executor.firstTopologyUpdate(initialUrls, null);
+        executor._topologyHeaderName = Constants.Headers.CLUSTER_TOPOLOGY_ETAG;
         return executor;
     }
 
@@ -117,21 +123,7 @@ public class ClusterRequestExecutor extends RequestExecutor {
                 newTopology.setNodes(nodes);
                 newTopology.setEtag(results.getEtag());
 
-                topologyEtag = results.getEtag();
-
-                if (_nodeSelector == null) {
-                    _nodeSelector = new NodeSelector(newTopology, _executorService);
-
-                    if (getConventions().getReadBalanceBehavior() == ReadBalanceBehavior.FASTEST_NODE) {
-                        _nodeSelector.scheduleSpeedTest();
-                    }
-                } else if (_nodeSelector.onUpdateTopology(newTopology, parameters.isForceUpdate())) {
-                    disposeAllFailedNodesTimers();
-
-                    if (getConventions().getReadBalanceBehavior() == ReadBalanceBehavior.FASTEST_NODE) {
-                        _nodeSelector.scheduleSpeedTest();
-                    }
-                }
+                updateNodeSelector(newTopology, parameters.isForceUpdate());
 
                 onTopologyUpdatedInvoke(newTopology);
             } catch (Exception e) {

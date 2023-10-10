@@ -68,6 +68,7 @@ public class PutTrafficWatchConfigurationOperation implements IVoidServerOperati
         private long minimumDurationInMs;
         private List<String> httpMethods;
         private List<TrafficWatchChangeType> changeTypes;
+        private List<String> certificateThumbprints;
 
         /**
          * @return Traffic Watch logging mode.
@@ -179,6 +180,20 @@ public class PutTrafficWatchConfigurationOperation implements IVoidServerOperati
          */
         public void setChangeTypes(List<TrafficWatchChangeType> changeTypes) {
             this.changeTypes = changeTypes;
+        }
+
+        /**
+         * @return Traffic Watch certificate thumbprints by which the Traffic Watch logging entities will be filtered.
+         */
+        public List<String> getCertificateThumbprints() {
+            return certificateThumbprints;
+        }
+
+        /**
+         * @param certificateThumbprints Traffic Watch certificate thumbprints by which the Traffic Watch logging entities will be filtered.
+         */
+        public void setCertificateThumbprints(List<String> certificateThumbprints) {
+            this.certificateThumbprints = certificateThumbprints;
         }
     }
 }

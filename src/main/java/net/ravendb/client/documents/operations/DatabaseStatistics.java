@@ -165,10 +165,16 @@ public class DatabaseStatistics {
         this.is64Bit = is64Bit;
     }
 
+    /**
+     * @return Storage engine component that handles the memory-mapped files
+     */
     public String getPager() {
         return pager;
     }
 
+    /**
+     * @param pager Storage engine component that handles the memory-mapped files
+     */
     public void setPager(String pager) {
         this.pager = pager;
     }

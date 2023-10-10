@@ -8,6 +8,8 @@ public class NextBackup {
     private Date dateTime;
     private boolean isFull;
 
+    private Date originalBackupTime;
+
     public Duration getTimeSpan() {
         return timeSpan;
     }
@@ -30,5 +32,13 @@ public class NextBackup {
 
     public void setFull(boolean full) {
         isFull = full;
+    }
+
+    public Date getOriginalBackupTime() {
+        return originalBackupTime;
+    }
+
+    public void setOriginalBackupTime(Date originalBackupTime) {
+        this.originalBackupTime = originalBackupTime;
     }
 }

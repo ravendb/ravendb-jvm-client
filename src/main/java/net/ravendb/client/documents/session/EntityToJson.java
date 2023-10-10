@@ -171,8 +171,6 @@ public class EntityToJson {
                 _session.getGenerateEntityIdOnTheClient().trySetIdentity(entity, id, isProjection);
             }
 
-            _session.onAfterConversionToEntityInvoke(id, document, entity);
-
             return entity;
         } catch (Exception e) {
             throw new IllegalStateException("Could not convert document " + id + " to entity of type " + entityType.getName(), e);

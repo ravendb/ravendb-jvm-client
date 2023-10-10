@@ -22,8 +22,11 @@ public final class BackupUtils {
     };
 
     static boolean isFullBackupOrSnapshot(String extension) {
-        return isSnapshot(extension)
-                || Constants.Documents.PeriodicBackup.FULL_BACKUP_EXTENSION.equalsIgnoreCase(extension)
+        return isSnapshot(extension) || isFullBackup(extension);
+    }
+
+    static boolean isFullBackup(String extension) {
+        return Constants.Documents.PeriodicBackup.FULL_BACKUP_EXTENSION.equalsIgnoreCase(extension)
                 || Constants.Documents.PeriodicBackup.ENCRYPTED_FULL_BACKUP_EXTENSION.equalsIgnoreCase(extension);
     }
 

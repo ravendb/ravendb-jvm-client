@@ -8,6 +8,7 @@ import net.ravendb.client.primitives.Reference;
 
 import java.io.OutputStream;
 import java.util.Collection;
+import java.util.List;
 import java.util.function.Consumer;
 
 public interface IAdvancedSessionOperations extends IAdvancedDocumentSessionOperations, IDocumentQueryBuilder {
@@ -46,6 +47,13 @@ public interface IAdvancedSessionOperations extends IAdvancedDocumentSessionOper
      * @param entity Entity to refresh
      */
     <T> void refresh(T entity);
+
+    /**
+     * Updates entity with latest changes from server
+     * @param <T> entity class
+     * @param entities Collection of instances of an entity that will be refreshed
+     */
+    <T> void refresh(List<T> entities);
 
     /**
      * Query the specified index using provided raw query

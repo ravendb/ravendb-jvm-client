@@ -1,5 +1,6 @@
 package net.ravendb.client.documents.session.tokens;
 
+import net.ravendb.client.documents.queries.QueryFieldUtil;
 import org.apache.commons.lang3.StringUtils;
 
 public class SuggestToken extends QueryToken {
@@ -25,7 +26,7 @@ public class SuggestToken extends QueryToken {
     }
 
     public static SuggestToken create(String fieldName, String alias, String termParameterName, String optionsParameterName) {
-        return new SuggestToken(fieldName, alias, termParameterName, optionsParameterName);
+        return new SuggestToken(fieldName, QueryFieldUtil.escapeIfNecessary(alias), termParameterName, optionsParameterName);
     }
 
     public String getFieldName() {

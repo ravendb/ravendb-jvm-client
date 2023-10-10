@@ -35,11 +35,9 @@ public interface IDocumentQueryBase<T, TSelf extends IDocumentQueryBase<T, TSelf
     //TBD expr TSelf AddOrder<TValue>(Expression<Func<T, TValue>> propertySelector, bool descending = false, OrderingType ordering = OrderingType.String);
 
     /**
-     * Specifies a boost weight to the last where clause.
+     * Specifies a boost weight to the previous where clause.
      * The higher the boost factor, the more relevant the term will be.
-     *
      * boosting factor where 1.0 is default, less than 1.0 is lower weight, greater than 1.0 is higher weight
-     *
      * http://lucene.apache.org/java/2_4_0/queryparsersyntax.html#Boosting%20a%20Term
      * @param boost Boost value
      * @return Query instance
@@ -71,8 +69,8 @@ public interface IDocumentQueryBase<T, TSelf extends IDocumentQueryBase<T, TSelf
      * Specifies a fuzziness factor to the single word term in the last where clause
      * 0.0 to 1.0 where 1.0 means closer match
      *
-     * http://lucene.apache.org/java/2_4_0/queryparsersyntax.html#Fuzzy%20Searches
-     * @param fuzzy Fuzzy value
+     * https://lucene.apache.org/core/2_9_4/queryparsersyntax.html#Proximity%20Searches
+     * @param fuzzy Number of terms between the search terms
      * @return Query instance
      */
     TSelf fuzzy(double fuzzy);

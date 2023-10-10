@@ -126,6 +126,7 @@ public class ServerNode {
             ServerNode serverNode = new ServerNode();
             serverNode.setUrl(kvp.getValue());
             serverNode.setClusterTag(kvp.getKey());
+            serverNode.setServerRole(Role.MEMBER);
             nodes.add(serverNode);
         }
 
@@ -133,6 +134,7 @@ public class ServerNode {
             ServerNode serverNode = new ServerNode();
             serverNode.setUrl(kvp.getValue());
             serverNode.setClusterTag(kvp.getKey());
+            serverNode.setServerRole(Role.MEMBER);
             nodes.add(serverNode);
         }
 

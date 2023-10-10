@@ -27,7 +27,9 @@ public enum CommandType {
 
     JSON_PATCH,
     CLIENT_ANY_COMMAND,
-    CLIENT_MODIFY_DOCUMENT_COMMAND;
+    CLIENT_MODIFY_DOCUMENT_COMMAND,
+
+    HEART_BEAT;
 
     public static CommandType parseCSharpValue(String input) {
         switch (input) {
