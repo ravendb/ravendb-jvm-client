@@ -741,6 +741,7 @@ public class RavenDB_14006Test extends RemoteTestBase {
                     innerSession.saveChanges();
 
                     waitForIndexing(store);
+                    Thread.sleep(300);
                 }
 
                 companies = session.advanced().rawQuery(Company.class, "declare function incl(c) {\n" +
@@ -750,6 +751,7 @@ public class RavenDB_14006Test extends RemoteTestBase {
                         "from index 'Companies/ByName' as c\n" +
                         "select incl(c)")
                         .statistics(statsRef)
+                        .waitForNonStaleResults()
                         .toList();
 
                 assertThat(companies)
