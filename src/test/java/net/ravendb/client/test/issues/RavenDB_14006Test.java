@@ -539,6 +539,7 @@ public class RavenDB_14006Test extends RemoteTestBase {
                     value.getValue().setCity("Bydgoszcz");
 
                     innerSession.saveChanges();
+                    Thread.sleep(300);
                 }
 
                 companies = session.advanced().rawQuery(Company.class, "declare function incl(c) {\n" +
@@ -548,6 +549,7 @@ public class RavenDB_14006Test extends RemoteTestBase {
                         "from Companies as c\n" +
                         "select incl(c)")
                         .statistics(statsRef)
+                        .waitForNonStaleResults()
                         .toList();
 
                 assertThat(companies)
