@@ -7,7 +7,7 @@ import org.junit.jupiter.api.extension.ExtensionContext;
 
 public class DisableOnPullRequestCondition implements ExecutionCondition {
 
-    public static final String ENV_RAVEN_LICENSE = "RAVEN_LICENSE";
+    public static final String ENV_RAVEN_LICENSE = "RAVEN_License";
 
     @Override
     public ConditionEvaluationResult evaluateExecutionCondition(ExtensionContext extensionContext) {
