@@ -251,7 +251,7 @@ public class NodeSelector implements CleanCloseable {
 
     private void ensureFastestNodeTimerExists() {
         if (_updateFastestNodeTimer == null) {
-            _updateFastestNodeTimer = new Timer(this::switchToSpeedTestPhase, null, executorService);
+            _updateFastestNodeTimer = new Timer(this::switchToSpeedTestPhase, null, null, executorService);
         }
     }
 

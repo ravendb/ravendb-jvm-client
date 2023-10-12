@@ -20,7 +20,9 @@ public class Timer implements CleanCloseable {
         this.executorService = executorService;
         this.action = action;
         this.period = period;
-        schedule(dueTime);
+        if (dueTime != null) {
+            schedule(dueTime);
+        }
     }
 
     public void change(Duration dueTime) {

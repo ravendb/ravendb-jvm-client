@@ -188,10 +188,10 @@ public abstract class RavenTestDriver {
     }
 
     public static void waitForIndexing(IDocumentStore store, String database, Duration timeout) {
-        waitForIndexing(store, database, timeout, null);
+        waitForIndexing(store, database, timeout, false, null);
     }
 
-    public static void waitForIndexing(IDocumentStore store, String database, Duration timeout, String nodeTag) {
+    public static void waitForIndexing(IDocumentStore store, String database, Duration timeout, boolean allowErrors, String nodeTag) {
         MaintenanceOperationExecutor admin = store.maintenance().forDatabase(database);
 
         if (timeout == null) {
@@ -212,7 +212,11 @@ public abstract class RavenTestDriver {
                 return;
             }
 
-            if (Arrays.stream(databaseStatistics.getIndexes()).anyMatch(x -> IndexState.ERROR.equals(x.getState()))) {
+            long erroredIndexesCount = Arrays.stream(databaseStatistics.getIndexes()).filter(x -> IndexState.ERROR.equals(x.getState())).count();
+            if (allowErrors) {
+                // wait for all indexes to become non stale
+            } else if (erroredIndexesCount > 0) {
+                // have at least some errors
                 break;
             }
 
@@ -221,6 +225,10 @@ public abstract class RavenTestDriver {
             } catch (InterruptedException e) {
                 throw new RuntimeException(e);
             }
+        }
+
+        if (allowErrors) {
+            return;
         }
 
 
