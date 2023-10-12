@@ -26,7 +26,7 @@ public class IndexesTestBase {
     }
 
     public void waitForIndexing(IDocumentStore store, String database, Duration timeout, String nodeTag) {
-        RemoteTestBase.waitForIndexing(store, database, timeout, nodeTag);
+        RemoteTestBase.waitForIndexing(store, database, timeout, false, nodeTag);
     }
 
     public IndexErrors[] waitForIndexingErrors(IDocumentStore store, Duration timeout, String... indexNames) throws InterruptedException {

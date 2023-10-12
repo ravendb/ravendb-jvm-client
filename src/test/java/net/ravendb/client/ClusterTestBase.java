@@ -325,7 +325,7 @@ public abstract class ClusterTestBase extends RavenTestDriver implements CleanCl
                 new GetDatabaseRecordOperation(ObjectUtils.firstNonNull(dbName, store.getDatabase())));
 
         for (String nodeTag : record.getTopology().getAllNodes()) {
-            waitForIndexing(store, dbName, timeout, nodeTag);
+            waitForIndexing(store, dbName, timeout, false, nodeTag);
         }
     }
 

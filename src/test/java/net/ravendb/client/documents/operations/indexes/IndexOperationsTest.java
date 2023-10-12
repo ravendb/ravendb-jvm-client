@@ -229,7 +229,7 @@ public class IndexOperationsTest extends RemoteTestBase {
                 session.saveChanges();
             }
 
-            waitForIndexing(store, store.getDatabase());
+            waitForIndexing(store, store.getDatabase(), null, true, null);
 
             waitForValue(() -> store.maintenance().send(new GetIndexErrorsOperation())[0].getErrors().length, 1);
             waitForValue(() -> store.maintenance().send(new GetIndexErrorsOperation(new String[] { indexDef.getName() }))[0].getErrors().length, 1);
