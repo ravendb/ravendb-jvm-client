@@ -441,11 +441,14 @@ public class RavenDB_14006Test extends RemoteTestBase {
                     value.getValue().setCity("Bydgoszcz");
 
                     innerSession.saveChanges();
+                    waitForIndexing(store);
+                    Thread.sleep(300);
                 }
 
                 companies = session.query(Company.class)
                         .statistics(queryStats)
                         .include(b -> b.includeCompareExchangeValue("externalId"))
+                        .waitForNonStaleResults()
                         .toList();
 
                 assertThat(companies)
@@ -539,6 +542,7 @@ public class RavenDB_14006Test extends RemoteTestBase {
                     value.getValue().setCity("Bydgoszcz");
 
                     innerSession.saveChanges();
+                    waitForIndexing(store);
                     Thread.sleep(300);
                 }
 
@@ -640,11 +644,13 @@ public class RavenDB_14006Test extends RemoteTestBase {
                     innerSession.saveChanges();
 
                     waitForIndexing(store);
+                    Thread.sleep(300);
                 }
 
                 companies = session.query(Company.class, Companies_ByName.class)
                         .statistics(statsRef)
                         .include(b -> b.includeCompareExchangeValue("externalId"))
+                        .waitForNonStaleResults()
                         .toList();
 
                 assertThat(companies)
