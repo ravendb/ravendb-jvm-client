@@ -4,12 +4,14 @@ import net.ravendb.client.RemoteTestBase;
 import net.ravendb.client.documents.IDocumentStore;
 import net.ravendb.client.http.LoadBalanceBehavior;
 import net.ravendb.client.http.ReadBalanceBehavior;
+import net.ravendb.client.infrastructure.DisabledOnPullRequest;
 import net.ravendb.client.serverwide.operations.configuration.GetServerWideClientConfigurationOperation;
 import net.ravendb.client.serverwide.operations.configuration.PutServerWideClientConfigurationOperation;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@DisabledOnPullRequest
 public class ClientConfigurationTest extends RemoteTestBase {
 
     @Test

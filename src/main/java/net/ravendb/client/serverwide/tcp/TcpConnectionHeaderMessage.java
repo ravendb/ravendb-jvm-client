@@ -229,14 +229,14 @@ public class TcpConnectionHeaderMessage {
         subscriptions51000Features.subscription.timeSeriesIncludes = true;
         subscriptionFeaturesMap.put(SUBSCRIPTION_TIME_SERIES_INCLUDES, subscriptions51000Features);
 
-        SupportedFeatures subscriptions5300Features = new SupportedFeatures(TCP_CONNECTIONS_WITH_COMPRESSION);
-        subscriptions5300Features.dataCompression = true;
-        subscriptions51000Features.subscription = new SupportedFeatures.SubscriptionFeatures();
-        subscriptions51000Features.subscription.includes = true;
-        subscriptions51000Features.subscription.counterIncludes = true;
-        subscriptions51000Features.subscription.timeSeriesIncludes = true;
+        SupportedFeatures subscriptions53000Features = new SupportedFeatures(TCP_CONNECTIONS_WITH_COMPRESSION);
+        subscriptions53000Features.dataCompression = true;
+        subscriptions53000Features.subscription = new SupportedFeatures.SubscriptionFeatures();
+        subscriptions53000Features.subscription.includes = true;
+        subscriptions53000Features.subscription.counterIncludes = true;
+        subscriptions53000Features.subscription.timeSeriesIncludes = true;
 
-        subscriptionFeaturesMap.put(TCP_CONNECTIONS_WITH_COMPRESSION, subscriptions5300Features);
+        subscriptionFeaturesMap.put(TCP_CONNECTIONS_WITH_COMPRESSION, subscriptions53000Features);
 
         Map<Integer, SupportedFeatures> heartbeatsFeaturesMap = new HashMap<>();
         supportedFeaturesByProtocol.put(OperationTypes.HEARTBEATS, heartbeatsFeaturesMap);

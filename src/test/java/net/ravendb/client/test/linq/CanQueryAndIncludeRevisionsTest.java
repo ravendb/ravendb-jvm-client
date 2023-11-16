@@ -6,6 +6,7 @@ import net.ravendb.client.documents.DocumentStore;
 import net.ravendb.client.documents.indexes.AbstractIndexCreationTask;
 import net.ravendb.client.documents.session.IDocumentQuery;
 import net.ravendb.client.documents.session.IDocumentSession;
+import net.ravendb.client.infrastructure.DisabledOnPullRequest;
 import net.ravendb.client.json.MetadataAsDictionary;
 import org.junit.jupiter.api.Test;
 
@@ -13,6 +14,7 @@ import java.util.*;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@DisabledOnPullRequest
 public class CanQueryAndIncludeRevisionsTest extends RemoteTestBase {
 
     @Test
