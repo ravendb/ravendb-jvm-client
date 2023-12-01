@@ -546,7 +546,7 @@ public class RavenDB_16060Test extends RemoteTestBase {
                 session.saveChanges();
             }
 
-            Thread.sleep(1200); // wait for rollups
+            Thread.sleep(3000); // wait for rollups
 
             try (IDocumentSession session = store.openSession()) {
                 ISessionDocumentRollupTypedTimeSeries<TimeSeriesTypedSessionTest.StockPrice> ts =
