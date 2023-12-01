@@ -99,7 +99,7 @@ public class RevisionsTest extends RemoteTestBase {
                 session.saveChanges();
             }
 
-            GetRevisionsBinEntryCommand revisionsBinEntryCommand = new GetRevisionsBinEntryCommand(Long.MAX_VALUE, 20);
+            GetRevisionsBinEntryCommand revisionsBinEntryCommand = new GetRevisionsBinEntryCommand(0, 20);
             store.getRequestExecutor().execute(revisionsBinEntryCommand);
 
             JsonArrayResult result = revisionsBinEntryCommand.getResult();
