@@ -7,6 +7,7 @@ import net.ravendb.client.documents.operations.refresh.ConfigureRefreshOperation
 import net.ravendb.client.documents.operations.refresh.RefreshConfiguration;
 import net.ravendb.client.documents.session.IDocumentSession;
 import net.ravendb.client.exceptions.TimeoutException;
+import net.ravendb.client.infrastructure.DisabledOnPullRequest;
 import net.ravendb.client.infrastructure.entities.User;
 import net.ravendb.client.primitives.NetISO8601Utils;
 import org.apache.commons.lang3.time.DateUtils;
@@ -17,6 +18,7 @@ import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@DisabledOnPullRequest
 public class RavenDB_13735Test extends RemoteTestBase {
 
     private void setupRefresh(IDocumentStore store) {

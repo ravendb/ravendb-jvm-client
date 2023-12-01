@@ -9,6 +9,7 @@ import net.ravendb.client.documents.session.ForceRevisionStrategy;
 import net.ravendb.client.documents.session.IDocumentSession;
 import net.ravendb.client.documents.session.IMetadataDictionary;
 import net.ravendb.client.exceptions.RavenException;
+import net.ravendb.client.infrastructure.DisabledOnPullRequest;
 import net.ravendb.client.infrastructure.entities.Company;
 import org.junit.jupiter.api.Test;
 
@@ -17,6 +18,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.*;
 
+@DisabledOnPullRequest
 public class ForceRevisionCreationTest extends RemoteTestBase {
 
     @Test

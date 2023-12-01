@@ -8,6 +8,7 @@ import net.ravendb.client.documents.subscriptions.Revision;
 import net.ravendb.client.documents.subscriptions.SubscriptionBatch;
 import net.ravendb.client.documents.subscriptions.SubscriptionCreationOptions;
 import net.ravendb.client.documents.subscriptions.SubscriptionWorker;
+import net.ravendb.client.infrastructure.DisabledOnPullRequest;
 import org.junit.jupiter.api.Test;
 
 import java.util.concurrent.CompletableFuture;
@@ -16,6 +17,7 @@ import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@DisabledOnPullRequest
 public class RavenDB_11166Test extends RemoteTestBase {
 
     private final int _reasonableWaitTime = 15;
