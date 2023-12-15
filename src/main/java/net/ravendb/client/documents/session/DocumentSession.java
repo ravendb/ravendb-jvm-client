@@ -1071,18 +1071,6 @@ public class DocumentSession extends InMemoryDocumentSessionOperations
         return new SessionDocumentCounters(this, entity);
     }
 
-    /**
-     * @deprecated Graph API will be removed in next major version of the product.
-     * @param clazz result class
-     * @param query Graph Query
-     * @return Graph query
-     * @param <T> Document type
-     */
-    @Override
-    public <T> IGraphDocumentQuery<T> graphQuery(Class<T> clazz, String query) {
-        GraphDocumentQuery<T> graphQuery = new GraphDocumentQuery<T>(clazz, this, query);
-        return graphQuery;
-    }
 
     @Override
     public ISessionDocumentTimeSeries timeSeriesFor(String documentId, String name) {

@@ -12,10 +12,9 @@ public class QueryStatistics {
 
     private boolean isStale;
     private long durationInMs;
-    private int totalResults;
-    private long longTotalResults;
-    private int skippedResults;
-    private Integer scannedResults;
+    private long totalResults;
+    private long skippedResults;
+    private Long scannedResults;
     private Date timestamp;
     private String indexName;
     private Date indexTimestamp;
@@ -59,7 +58,7 @@ public class QueryStatistics {
      * What was the total count of the results that matched the query
      * @return total results
      */
-    public int getTotalResults() {
+    public long getTotalResults() {
         return totalResults;
     }
 
@@ -67,31 +66,15 @@ public class QueryStatistics {
      * What was the total count of the results that matched the query
      * @param totalResults Sets the value
      */
-    public void setTotalResults(int totalResults) {
+    public void setTotalResults(long totalResults) {
         this.totalResults = totalResults;
-    }
-
-    /**
-     * What was the total count of the results that matched the query as long
-     * @return total results as long
-     */
-    public long getLongTotalResults() {
-        return longTotalResults;
-    }
-
-    /**
-     * What was the total count of the results that matched the query as long
-     * @param longTotalResults total results as long
-     */
-    public void setLongTotalResults(long longTotalResults) {
-        this.longTotalResults = longTotalResults;
     }
 
     /**
      * Gets the skipped results
      * @return amount of skipped results
      */
-    public int getSkippedResults() {
+    public long getSkippedResults() {
         return skippedResults;
     }
 
@@ -99,7 +82,7 @@ public class QueryStatistics {
      * Sets the skipped results
      * @param skippedResults Sets the value
      */
-    public void setSkippedResults(int skippedResults) {
+    public void setSkippedResults(long skippedResults) {
         this.skippedResults = skippedResults;
     }
 
@@ -109,7 +92,7 @@ public class QueryStatistics {
      * only if you are using a filter clause in the query.
      * @return scanned results
      */
-    public Integer getScannedResults() {
+    public Long getScannedResults() {
         return scannedResults;
     }
 
@@ -119,7 +102,7 @@ public class QueryStatistics {
      * only if you are using a filter clause in the query.
      * @param scannedResults scanned results
      */
-    public void setScannedResults(Integer scannedResults) {
+    public void setScannedResults(Long scannedResults) {
         this.scannedResults = scannedResults;
     }
 
@@ -207,7 +190,6 @@ public class QueryStatistics {
         isStale = qr.isStale();
         durationInMs = qr.getDurationInMs();
         totalResults = qr.getTotalResults();
-        longTotalResults = qr.getLongTotalResults();
         skippedResults = qr.getSkippedResults();
         scannedResults = qr.getScannedResults();
         timestamp = qr.getIndexTimestamp();

@@ -3,6 +3,7 @@ package net.ravendb.client.documents.operations.backups;
 public class BackupConfiguration {
 
     private BackupType backupType;
+    private BackupUploadMode backupUploadMode;
     private SnapshotSettings snapshotSettings;
     private BackupEncryptionSettings backupEncryptionSettings;
 
@@ -19,6 +20,14 @@ public class BackupConfiguration {
 
     public void setBackupType(BackupType backupType) {
         this.backupType = backupType;
+    }
+
+    public BackupUploadMode getBackupUploadMode() {
+        return backupUploadMode;
+    }
+
+    public void setBackupUploadMode(BackupUploadMode backupUploadMode) {
+        this.backupUploadMode = backupUploadMode;
     }
 
     public SnapshotSettings getSnapshotSettings() {

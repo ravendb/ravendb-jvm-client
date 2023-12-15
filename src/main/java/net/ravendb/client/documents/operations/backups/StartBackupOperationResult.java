@@ -2,7 +2,7 @@ package net.ravendb.client.documents.operations.backups;
 
 public class StartBackupOperationResult {
     private String responsibleNode;
-    private int operationId;
+    private long operationId;
 
     public String getResponsibleNode() {
         return responsibleNode;
@@ -12,11 +12,11 @@ public class StartBackupOperationResult {
         this.responsibleNode = responsibleNode;
     }
 
-    public int getOperationId() {
+    public long getOperationId() {
         return operationId;
     }
 
-    public void setOperationId(int operationId) {
+    public void setOperationId(long operationId) {
         this.operationId = operationId;
     }
 }

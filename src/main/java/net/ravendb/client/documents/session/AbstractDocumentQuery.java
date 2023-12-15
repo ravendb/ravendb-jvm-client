@@ -93,7 +93,7 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
 
     protected final InMemoryDocumentSessionOperations theSession;
 
-    protected Integer pageSize;
+    protected Long pageSize;
 
     protected List<QueryToken> selectTokens = new LinkedList<>();
 
@@ -110,20 +110,18 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
 
     protected List<QueryToken> orderByTokens = new LinkedList<>();
 
-    protected List<QueryToken> withTokens = new LinkedList<>();
+    protected List<QueryToken> withTokens = new LinkedList<>(); //TODO: delete?
 
     protected List<QueryToken> filterTokens = new LinkedList<>();
 
-    protected QueryToken graphRawQuery;
-
-    protected int start;
+    protected long start;
 
     private final DocumentConventions _conventions;
 
     /**
      * Limits filter clause.
      */
-    protected Integer filterLimit;
+    protected Long filterLimit;
 
     protected Duration timeout;
 
@@ -224,10 +222,6 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
         return clazz;
     }
 
-    public QueryToken getGraphRawQuery() {
-        return graphRawQuery;
-    }
-
     public void _usingDefaultOperator(QueryOperator operator) {
         if (!getCurrentWhereTokens().isEmpty()) {
             throw new IllegalStateException("Default operator can only be set before any where clause is added.");
@@ -243,7 +237,6 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
      */
     @Override
     public void _waitForNonStaleResults(Duration waitTimeout) {
-        //Graph queries may set this property multiple times
         if (theWaitForNonStaleResults) {
             if (timeout == null || waitTimeout != null && timeout.getSeconds() < waitTimeout.getSeconds()) {
                 timeout = waitTimeout;
@@ -341,10 +334,6 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
         if (queryRaw != null) {
             throw new IllegalStateException("RawQuery was called, cannot modify this query by calling on operations that would modify the query (such as Where, Select, OrderBy, GroupBy, etc)");
         }
-    }
-
-    public void _graphQuery(String query) {
-        graphRawQuery = new GraphQueryToken(query);
     }
 
     public void _addParameter(String name, Object value) {
@@ -502,12 +491,12 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
     }
 
     @Override
-    public void _take(int count) {
+    public void _take(long count) {
         pageSize = count;
     }
 
     @Override
-    public void _skip(int count) {
+    public void _skip(long count) {
         start = count;
     }
 
@@ -1252,12 +1241,7 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
         StringBuilder queryText = new StringBuilder();
 
         buildDeclare(queryText);
-        if (graphRawQuery != null) {
-            buildWith(queryText);
-            buildGraphQuery(queryText);
-        } else {
-            buildFrom(queryText);
-        }
+        buildFrom(queryText);
         buildGroupBy(queryText);
         buildWhere(queryText);
         buildOrderBy(queryText);
@@ -1272,17 +1256,6 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
         }
 
         return queryText.toString();
-    }
-
-    private void buildGraphQuery(StringBuilder queryText) {
-        graphRawQuery.writeTo(queryText);
-    }
-
-    private void buildWith(StringBuilder queryText) {
-        for (QueryToken with : withTokens) {
-            with.writeTo(queryText);
-            queryText.append(System.lineSeparator());
-        }
     }
 
     @Override
@@ -1917,7 +1890,7 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
         return new QueryData(fields, projections);
     }
 
-    public void _addFilterLimit(int filterLimit) {
+    public void _addFilterLimit(long filterLimit) {
         if (filterLimit <= 0) {
             throw new IllegalArgumentException("filter_limit need to be positive and bigger than 0.");
         }
@@ -2240,19 +2213,19 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
         return queryResult.getTotalResults() > 0;
     }
 
-    private List<T> executeQueryOperation(Integer take) {
+    private List<T> executeQueryOperation(Long take) {
         executeQueryOperationInternal(take);
 
         return queryOperation.complete(clazz);
     }
 
-    private T[] executeQueryOperationAsArray(Integer take) {
+    private T[] executeQueryOperationAsArray(Long take) {
         executeQueryOperationInternal(take);
 
         return queryOperation.completeAsArray(clazz);
     }
 
-    private void executeQueryOperationInternal(Integer take) {
+    private void executeQueryOperationInternal(Long take) {
         if (take != null && (pageSize == null || pageSize > take)) {
             _take(take);
         }

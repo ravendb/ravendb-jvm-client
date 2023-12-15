@@ -64,16 +64,6 @@ public interface IAdvancedSessionOperations extends IAdvancedDocumentSessionOper
      */
     <T> IRawDocumentQuery<T> rawQuery(Class<T> clazz, String query);
 
-    /**
-     * Issue a graph query based on the raw match query provided
-     * @param clazz result class
-     * @param query Graph Query
-     * @param <T> result class
-     * @deprecated Graph API will be removed in next major version of the product.
-     * @return Graph query
-     */
-    <T> IGraphDocumentQuery<T> graphQuery(Class<T> clazz, String query);
-
 
     /**
      * Check if document exists

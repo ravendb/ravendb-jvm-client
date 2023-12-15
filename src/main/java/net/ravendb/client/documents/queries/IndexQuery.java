@@ -44,9 +44,8 @@ public class IndexQuery extends IndexQueryWithParameters<Parameters> {
             hasher.write(getQuery());
             hasher.write(isWaitForNonStaleResults());
             hasher.write(isSkipDuplicateChecking());
+            hasher.write(isSkipStatistics());
             hasher.write(Optional.ofNullable(getWaitForNonStaleResultsTimeout()).map(Duration::toMillis).orElse(0L));
-            hasher.write(getStart());
-            hasher.write(getPageSize());
             hasher.write(getQueryParameters(), serializer);
             return hasher.getHash();
         } catch (IOException e) {

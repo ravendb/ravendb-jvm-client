@@ -5,8 +5,8 @@ import java.util.Map;
 
 public class CollectionStatistics {
 
-    private int countOfDocuments;
-    private int countOfConflicts;
+    private long countOfDocuments;
+    private long countOfConflicts;
     private Map<String, Long> collections;
 
     public CollectionStatistics() {
@@ -21,19 +21,19 @@ public class CollectionStatistics {
         this.collections = collections;
     }
 
-    public int getCountOfDocuments() {
+    public long getCountOfDocuments() {
         return countOfDocuments;
     }
 
-    public void setCountOfDocuments(int countOfDocuments) {
+    public void setCountOfDocuments(long countOfDocuments) {
         this.countOfDocuments = countOfDocuments;
     }
 
-    public int getCountOfConflicts() {
+    public long getCountOfConflicts() {
         return countOfConflicts;
     }
 
-    public void setCountOfConflicts(int countOfConflicts) {
+    public void setCountOfConflicts(long countOfConflicts) {
         this.countOfConflicts = countOfConflicts;
     }
 }

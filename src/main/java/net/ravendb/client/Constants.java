@@ -74,6 +74,13 @@ public class Constants {
         }
     }
 
+    public static class QueryString {
+        private QueryString() {}
+
+        public static final String NODE_TAG = "nodeTag";
+        public static final String SHARD_NUMBER = "shardNumber";
+    }
+
     public static class Headers {
         private Headers() {}
 
@@ -96,9 +103,16 @@ public class Constants {
 
         public static final String ETAG = "ETag";
 
+        public static final String IF_MATCH = "If-Match";
         public static final String IF_NONE_MATCH = "If-None-Match";
         public static final String TRANSFER_ENCODING = "Transfer-Encoding";
         public static final String CONTENT_ENCODING = "Content-Encoding";
+
+        public static final String ACCEPT_ENCODING = "Accept-Encoding";
+        public static final String CONTENT_DISPOSITION = "Content-Disposition";
+
+        public static final String CONTENT_TYPE = "Content-Type";
+
         public static final String CONTENT_LENGTH = "Content-Length";
         public static final String INCREMENTAL_TIME_SERIES_PREFIX = "INC:";
 

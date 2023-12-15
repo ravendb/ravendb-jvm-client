@@ -6,11 +6,11 @@ import net.ravendb.client.primitives.VoidArgs;
 
 import java.util.function.Consumer;
 
-public interface IConnectableChanges<TChanges extends IDatabaseChanges> extends CleanCloseable {
+public interface IConnectableChanges<TChanges> extends CleanCloseable {
 
     boolean isConnected();
 
-    void ensureConnectedNow();
+    TChanges ensureConnectedNow();
 
     void addConnectionStatusChanged(EventHandler<VoidArgs> handler);
 

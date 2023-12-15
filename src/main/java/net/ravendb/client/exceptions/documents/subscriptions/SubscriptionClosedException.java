@@ -3,6 +3,7 @@ package net.ravendb.client.exceptions.documents.subscriptions;
 
 public class SubscriptionClosedException extends SubscriptionException {
     private boolean canReconnect;
+    private boolean noDocsLeft;
 
     public SubscriptionClosedException(String message) {
         super(message);
@@ -30,6 +31,14 @@ public class SubscriptionClosedException extends SubscriptionException {
 
     public void setCanReconnect(boolean canReconnect) {
         this.canReconnect = canReconnect;
+    }
+
+    public boolean isNoDocsLeft() {
+        return noDocsLeft;
+    }
+
+    public void setNoDocsLeft(boolean noDocsLeft) {
+        this.noDocsLeft = noDocsLeft;
     }
 }
 

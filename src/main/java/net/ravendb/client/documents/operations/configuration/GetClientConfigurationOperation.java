@@ -23,7 +23,7 @@ public class GetClientConfigurationOperation implements IMaintenanceOperation<Ge
 
         @Override
         public boolean isReadRequest() {
-            return false;
+            return true;
         }
 
         @Override

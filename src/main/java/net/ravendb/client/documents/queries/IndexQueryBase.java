@@ -4,22 +4,11 @@ import java.time.Duration;
 
 public class IndexQueryBase<T> implements IIndexQuery {
 
-    private int _pageSize = Integer.MAX_VALUE;
-    private boolean pageSizeSet;
     private String query;
     private T queryParameters;
     private ProjectionBehavior projectionBehavior;
-    private int start;
     private boolean waitForNonStaleResults;
     private Duration waitForNonStaleResultsTimeout;
-
-    /**
-     * Whether the page size was explicitly set or still at its default value
-     * @return true if page size is set
-     */
-    public boolean isPageSizeSet() {
-        return pageSizeSet;
-    }
 
     /**
      * Actual query that will be performed (RQL syntax)
@@ -51,45 +40,6 @@ public class IndexQueryBase<T> implements IIndexQuery {
 
     public void setProjectionBehavior(ProjectionBehavior projectionBehavior) {
         this.projectionBehavior = projectionBehavior;
-    }
-
-    /**
-     * Number of records that should be skipped.
-     * @deprecated use OFFSET in RQL instead
-     * @return items to skip
-     */
-    @SuppressWarnings("DeprecatedIsStillUsed")
-    public int getStart() {
-        return start;
-    }
-
-    /**
-     * Number of records that should be skipped.
-     * @deprecated use OFFSET in RQL instead
-     * @param start Sets amount of items to skip
-     */
-    @SuppressWarnings("DeprecatedIsStillUsed")
-    public void setStart(int start) {
-        this.start = start;
-    }
-
-    /**
-     * Maximum number of records that will be retrieved.
-     * @deprecated use LIMIT in RQL instead
-     * @return page size
-     */
-    public int getPageSize() {
-        return _pageSize;
-    }
-
-    /**
-     * Maximum number of records that will be retrieved.
-     * @deprecated use LIMIT in RQL instead
-     * @param pageSize Sets the value
-     */
-    public void setPageSize(int pageSize) {
-        _pageSize = pageSize;
-        pageSizeSet = true;
     }
 
     /**
@@ -129,9 +79,6 @@ public class IndexQueryBase<T> implements IIndexQuery {
 
         IndexQueryBase<?> that = (IndexQueryBase<?>) o;
 
-        if (_pageSize != that._pageSize) return false;
-        if (pageSizeSet != that.pageSizeSet) return false;
-        if (start != that.start) return false;
         if (waitForNonStaleResults != that.waitForNonStaleResults) return false;
         if (query != null ? !query.equals(that.query) : that.query != null) return false;
         return waitForNonStaleResultsTimeout != null ? waitForNonStaleResultsTimeout.equals(that.waitForNonStaleResultsTimeout) : that.waitForNonStaleResultsTimeout == null;
@@ -139,10 +86,7 @@ public class IndexQueryBase<T> implements IIndexQuery {
 
     @Override
     public int hashCode() {
-        int result = _pageSize;
-        result = 31 * result + (pageSizeSet ? 1 : 0);
-        result = 31 * result + (query != null ? query.hashCode() : 0);
-        result = 31 * result + start;
+        int result = (query != null ? query.hashCode() : 0);
         result = 31 * result + (waitForNonStaleResults ? 1 : 0);
         result = 31 * result + (waitForNonStaleResultsTimeout != null ? waitForNonStaleResultsTimeout.hashCode() : 0);
         return result;

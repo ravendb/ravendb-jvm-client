@@ -30,10 +30,6 @@ public class AttachmentsStreamTest extends RemoteTestBase {
         canGetOneAttachment(1024 * 1024);
     }
 
-    @Test
-    public void canGetOneAttachment3() throws Exception {
-        canGetOneAttachment(128 * 1024 * 1024);
-    }
 
     private void canGetOneAttachment(int size) throws Exception {
         Random rnd = new Random();

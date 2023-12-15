@@ -19,7 +19,6 @@ public class PullReplicationAsSink extends ExternalReplicationBase {
     private String accessName;
 
     private String hubName;
-    private String hubDefinitionName;
 
     public PullReplicationAsSink() {
     }
@@ -71,21 +70,6 @@ public class PullReplicationAsSink extends ExternalReplicationBase {
         this.certificatePassword = certificatePassword;
     }
 
-    /**
-     * @deprecated Please use getHubName instead
-     * @return hub definition name
-     */
-    public String getHubDefinitionName() {
-        return hubDefinitionName;
-    }
-
-    /**
-     * @deprecated Please use setHubName instead
-     * @param hubDefinitionName hub definition name
-     */
-    public void setHubDefinitionName(String hubDefinitionName) {
-        this.hubDefinitionName = hubDefinitionName;
-    }
 
     public String getAccessName() {
         return accessName;
@@ -96,7 +80,7 @@ public class PullReplicationAsSink extends ExternalReplicationBase {
     }
 
     public String getHubName() {
-        return ObjectUtils.firstNonNull(hubName, hubDefinitionName);
+        return hubName;
     }
 
     public void setHubName(String hubName) {

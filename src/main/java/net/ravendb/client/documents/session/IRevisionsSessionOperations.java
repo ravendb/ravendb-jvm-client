@@ -49,7 +49,7 @@ public interface IRevisionsSessionOperations {
      * @param id Identifier of a entity
      * @return List of revisions metadata
      */
-    List<MetadataAsDictionary> getMetadataFor(String id);
+    List<IMetadataDictionary> getMetadataFor(String id);
 
     /**
      * Returns all previous document revisions for specified document (with paging) ordered by most recent revisions first.
@@ -57,7 +57,7 @@ public interface IRevisionsSessionOperations {
      * @param start Range start
      * @return List of revisions metadata
      */
-    List<MetadataAsDictionary> getMetadataFor(String id, int start);
+    List<IMetadataDictionary> getMetadataFor(String id, int start);
 
     /**
      * Returns all previous document revisions for specified document (with paging) ordered by most recent revisions first.
@@ -66,7 +66,7 @@ public interface IRevisionsSessionOperations {
      * @param pageSize  maximum number of metadata that will be retrieved
      * @return List of revisions metadata
      */
-    List<MetadataAsDictionary> getMetadataFor(String id, int start, int pageSize);
+    List<IMetadataDictionary> getMetadataFor(String id, int start, int pageSize);
 
     /**
      * Returns a document revision by change vector.

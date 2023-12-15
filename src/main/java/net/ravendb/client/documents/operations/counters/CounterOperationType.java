@@ -8,5 +8,6 @@ public enum CounterOperationType {
     INCREMENT,
     DELETE,
     GET,
-    PUT
+    PUT,
+    GET_ALL
 }

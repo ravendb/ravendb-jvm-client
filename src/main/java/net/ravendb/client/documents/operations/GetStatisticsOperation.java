@@ -8,6 +8,7 @@ import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpRequestBase;
 
 import java.io.IOException;
+import java.time.Duration;
 
 public class GetStatisticsOperation implements IMaintenanceOperation<DatabaseStatistics> {
 
@@ -45,6 +46,8 @@ public class GetStatisticsOperation implements IMaintenanceOperation<DatabaseSta
             super(DatabaseStatistics.class);
             this.debugTag = debugTag;
             this.selectedNodeTag = nodeTag;
+
+            this.timeout = Duration.ofSeconds(15);
         }
 
         @Override

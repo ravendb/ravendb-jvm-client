@@ -51,6 +51,10 @@ public class GetTimeSeriesStatisticsOperation implements IOperation<TimeSeriesSt
 
         @Override
         public void setResponse(String response, boolean fromCache) throws IOException {
+            if (response == null) {
+                result = null;
+                return;
+            }
             result = mapper.readValue(response, resultClass);
         }
     }
