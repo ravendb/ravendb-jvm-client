@@ -23,13 +23,13 @@ public class GetDetailedStatisticsOperation implements IMaintenanceOperation<Det
 
     @Override
     public RavenCommand<DetailedDatabaseStatistics> getCommand(DocumentConventions conventions) {
-         return new DetailedDatabaseStatisticsCommand(_debugTag);
+         return new GetDetailedStatisticsCommand(_debugTag);
     }
 
-    private static class DetailedDatabaseStatisticsCommand extends RavenCommand<DetailedDatabaseStatistics> {
+    private static class GetDetailedStatisticsCommand extends RavenCommand<DetailedDatabaseStatistics> {
         private final String _debugTag;
 
-        public DetailedDatabaseStatisticsCommand(String debugTag) {
+        public GetDetailedStatisticsCommand(String debugTag) {
             super(DetailedDatabaseStatistics.class);
             _debugTag = debugTag;
         }

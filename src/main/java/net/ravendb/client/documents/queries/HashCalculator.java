@@ -127,6 +127,7 @@ public class HashCalculator {
                 for (Object o : ((Collection) value)) {
                     writeParameterValue(o, mapper);
                 }
+                write(((Collection<?>) value).size());
             }
         } else {
             write(mapper.writeValueAsString(value));
@@ -139,7 +140,9 @@ public class HashCalculator {
         } else {
             write(qp.size());
             for (Map.Entry<String, String> kvp : qp.entrySet()) {
+                write("key");
                 write(kvp.getKey());
+                write("value");
                 write(kvp.getValue());
             }
         }
