@@ -16,24 +16,18 @@ import java.io.IOException;
 
 public class BackupOperation implements IMaintenanceOperation<OperationIdResult> {
     private final BackupConfiguration _backupConfiguration;
-    private final String _nodeTag;
 
     public BackupOperation(BackupConfiguration backupConfiguration) {
-        this(backupConfiguration, null);
-    }
-
-    public BackupOperation(BackupConfiguration backupConfiguration, String nodeTag) {
         if (backupConfiguration == null) {
             throw new IllegalArgumentException("BackupConfiguration cannot be null");
         }
 
         _backupConfiguration = backupConfiguration;
-        _nodeTag = nodeTag;
     }
 
     @Override
     public RavenCommand<OperationIdResult> getCommand(DocumentConventions conventions) {
-        return new BackupCommand(_backupConfiguration, _nodeTag);
+        return new BackupCommand(_backupConfiguration);
     }
 
     private static class BackupCommand extends RavenCommand<OperationIdResult> {
@@ -46,13 +40,8 @@ public class BackupOperation implements IMaintenanceOperation<OperationIdResult>
         }
 
         public BackupCommand(BackupConfiguration backupConfiguration) {
-            this(backupConfiguration, null);
-        }
-
-        public BackupCommand(BackupConfiguration backupConfiguration, String nodeTag) {
             super(OperationIdResult.class);
             _backupConfiguration = backupConfiguration;
-            selectedNodeTag = nodeTag;
         }
 
         @Override

@@ -105,7 +105,7 @@ public class MultiTypeHiLoIdGenerator {
     }
 
     protected HiLoIdGenerator createGeneratorFor(String tag) {
-        return new DefaultHiLoIdGenerator(tag, store, dbName, _identityPartsSeparator);
+        return new HiLoIdGenerator(tag, store, dbName, _identityPartsSeparator);
     }
 
     public void returnUnusedRange() {

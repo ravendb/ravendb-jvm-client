@@ -26,6 +26,8 @@ public class Constants {
             public static final String CHANGE_VECTOR = "@change-vector";
             public static final String EXPIRES = "@expires";
             public static final String REFRESH = "@refresh";
+            public static final String ARCHIVE_AT = "@archive-at";
+            public static final String ARCHIVED = "@archived";
             public static final String ALL_DOCUMENTS_COLLECTION = "@all_docs";
 
             public static final String EMPTY_COLLECTION = "@empty";
@@ -116,6 +118,16 @@ public class Constants {
         public static final String CONTENT_LENGTH = "Content-Length";
         public static final String INCREMENTAL_TIME_SERIES_PREFIX = "INC:";
 
+        public static final String ORIGIN = "Origin";
+
+        public static final String SHARDED = "Sharded";
+
+        public static final String ATTACHMENT_HASH = "Attachment-Hash";
+
+        public static final String ATTACHMENT_SIZE = "Attachment-Size";
+
+        public static final String DATABASE_MISSING = "Database-Missing";
+
     }
 
     public static class Configuration {
@@ -148,7 +160,4 @@ public class Constants {
         public static final Character DEFAULT_SEPARATOR = '/';
     }
 
-    public static class Obsolete {
-        public static final String GRAPH_API = "Graph API will be removed in next major version of the product.";
-    }
 }

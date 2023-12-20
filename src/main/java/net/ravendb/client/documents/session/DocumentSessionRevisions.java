@@ -49,17 +49,17 @@ public class DocumentSessionRevisions extends DocumentSessionRevisionsBase imple
     }
 
     @Override
-    public List<MetadataAsDictionary> getMetadataFor(String id) {
+    public List<IMetadataDictionary> getMetadataFor(String id) {
         return getMetadataFor(id, 0, 25);
     }
 
     @Override
-    public List<MetadataAsDictionary> getMetadataFor(String id, int start) {
+    public List<IMetadataDictionary> getMetadataFor(String id, int start) {
         return getMetadataFor(id, start, 25);
     }
 
     @Override
-    public List<MetadataAsDictionary> getMetadataFor(String id, int start, int pageSize) {
+    public List<IMetadataDictionary> getMetadataFor(String id, int start, int pageSize) {
         GetRevisionOperation operation = new GetRevisionOperation(session, id, start, pageSize, true);
         GetRevisionsCommand command = operation.createRequest();
         if (command == null) {

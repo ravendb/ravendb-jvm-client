@@ -1,9 +1,11 @@
 package net.ravendb.client.documents.indexes;
 
 import net.ravendb.client.documents.conventions.DocumentConventions;
+import net.ravendb.client.documents.dataArchival.ArchivedDataProcessingBehavior;
 
 public class IndexDefinitionBuilder extends AbstractIndexDefinitionBuilder<IndexDefinition> {
     private String map;
+    private ArchivedDataProcessingBehavior archivedDataProcessingBehavior;
 
     public IndexDefinitionBuilder() {
         super(null);
@@ -19,6 +21,14 @@ public class IndexDefinitionBuilder extends AbstractIndexDefinitionBuilder<Index
 
     public void setMap(String map) {
         this.map = map;
+    }
+
+    public ArchivedDataProcessingBehavior getArchivedDataProcessingBehavior() {
+        return archivedDataProcessingBehavior;
+    }
+
+    public void setArchivedDataProcessingBehavior(ArchivedDataProcessingBehavior archivedDataProcessingBehavior) {
+        this.archivedDataProcessingBehavior = archivedDataProcessingBehavior;
     }
 
     @Override
@@ -37,7 +47,9 @@ public class IndexDefinitionBuilder extends AbstractIndexDefinitionBuilder<Index
             throw new IllegalStateException("Map is required to generate an index, you cannot create an index without a valid Map property (in index " + _indexName + ").");
         }
 
-        return super.toIndexDefinition(conventions, validateMap);
+        IndexDefinition indexDefinition = super.toIndexDefinition(conventions, validateMap);
+        indexDefinition.setArchivedDataProcessingBehavior(archivedDataProcessingBehavior);
+        return indexDefinition;
     }
 
     @Override

@@ -329,27 +329,6 @@ public class DocumentStore extends DocumentStoreBase {
         return new DatabaseChanges(getRequestExecutor(node.getDatabaseName()), node.getDatabaseName(), executorService, () -> _databaseChanges.remove(node), node.getNodeTag());
     }
 
-    public Exception getLastDatabaseChangesStateException() {
-        return getLastDatabaseChangesStateException(null, null);
-    }
-
-    public Exception getLastDatabaseChangesStateException(String database) {
-        return getLastDatabaseChangesStateException(database, null);
-    }
-
-    public Exception getLastDatabaseChangesStateException(String database, String nodeTag) {
-
-        DatabaseChangesOptions node = new DatabaseChangesOptions(ObjectUtils.firstNonNull(database, getDatabase()), nodeTag);
-
-        DatabaseChanges databaseChanges = (DatabaseChanges) _databaseChanges.get(node);
-
-        if (databaseChanges != null) {
-            return databaseChanges.getLastConnectionStateException();
-        }
-
-        return null;
-    }
-
     @Override
     public CleanCloseable aggressivelyCacheFor(Duration cacheDuration) {
         return aggressivelyCacheFor(cacheDuration, getConventions().aggressiveCache().getMode(), null);

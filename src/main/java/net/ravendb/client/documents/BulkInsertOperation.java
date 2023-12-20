@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import net.ravendb.client.Constants;
+import net.ravendb.client.documents.bulkInsert.BulkInsertOperationBase;
 import net.ravendb.client.documents.bulkInsert.BulkInsertOptions;
 import net.ravendb.client.documents.commands.GetNextOperationIdCommand;
 import net.ravendb.client.documents.commands.KillOperationCommand;
@@ -22,12 +23,14 @@ import net.ravendb.client.exceptions.BulkInsertClientException;
 import net.ravendb.client.exceptions.BulkInsertInvalidOperationException;
 import net.ravendb.client.exceptions.RavenException;
 import net.ravendb.client.exceptions.documents.bulkinsert.BulkInsertAbortedException;
+import net.ravendb.client.exceptions.documents.bulkinsert.BulkInsertProtocolViolationException;
 import net.ravendb.client.http.RavenCommand;
 import net.ravendb.client.http.RequestExecutor;
 import net.ravendb.client.http.ServerNode;
 import net.ravendb.client.json.MetadataAsDictionary;
 import net.ravendb.client.primitives.*;
 import net.ravendb.client.primitives.Timer;
+import net.ravendb.client.util.StreamExposerContent;
 import org.apache.commons.lang3.NotImplementedException;
 import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -48,78 +51,18 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import java.util.stream.DoubleStream;
 
-public class BulkInsertOperation implements CleanCloseable {
+public class BulkInsertOperation extends BulkInsertOperationBase<Object> implements CleanCloseable {
 
     private BulkInsertOptions _options;
     private String _database;
     private final GenerateEntityIdOnTheClient _generateEntityIdOnTheClient;
 
-    private static class StreamExposerContent extends AbstractHttpEntity {
-
-        public final CompletableFuture<OutputStream> outputStream;
-        private final CompletableFuture<Void> _done;
-
-        @SuppressWarnings("unchecked")
-        public StreamExposerContent() {
-            setContentType(ContentType.APPLICATION_JSON.toString());
-            outputStream = new CompletableFuture<>();
-            _done = new CompletableFuture();
-        }
-
-        @Override
-        public InputStream getContent() throws IOException, UnsupportedOperationException {
-            throw new UnsupportedEncodingException();
-        }
-
-        @SuppressWarnings("SameReturnValue")
-        @Override
-        public boolean isStreaming() {
-            return false;
-        }
-
-
-        public boolean isDone() {
-            return _done.isDone();
-        }
-
-        @SuppressWarnings("SameReturnValue")
-        @Override
-        public boolean isChunked() {
-            return true;
-        }
-
-        @SuppressWarnings("SameReturnValue")
-        @Override
-        public boolean isRepeatable() {
-            return false;
-        }
-
-        @Override
-        public long getContentLength() {
-            return -1;
-        }
-
-        @Override
-        public void writeTo(OutputStream outputStream) {
-            this.outputStream.complete(outputStream);
-            try {
-                _done.get();
-            } catch (Exception e) {
-                throw ExceptionsUtils.unwrapException(e);
-            }
-        }
-
-        public void done() {
-            _done.complete(null);
-        }
-
-        public void errorOnProcessingRequest(Exception exception) {
-            _done.completeExceptionally(exception);
-        }
-
-        public void errorOnRequestStart(Exception exception) {
-            outputStream.completeExceptionally(exception);
-        }
+    private static class BulkInsertStreamExposerContent extends StreamExposerContent {
+       public void done() {
+           if (complete()) {
+               throw new BulkInsertProtocolViolationException("Unable to close the stream");
+           }
+       }
     }
 
     private static class BulkInsertCommand extends RavenCommand<CloseableHttpResponse> {
@@ -129,23 +72,32 @@ public class BulkInsertOperation implements CleanCloseable {
             return false;
         }
 
-        private final StreamExposerContent _stream;
+        private final BulkInsertStreamExposerContent _stream;
 
         private boolean _skipOverwriteIfUnchanged;
         private final long _id;
 
         private boolean useCompression;
 
-        public BulkInsertCommand(long id, StreamExposerContent stream, String nodeTag, boolean skipOverwriteIfUnchanged) {
+        private String _requestNodeTag;
+
+        public BulkInsertCommand(long id, BulkInsertStreamExposerContent stream, String nodeTag, boolean skipOverwriteIfUnchanged) {
             super(CloseableHttpResponse.class);
             _stream = stream;
             _id = id;
             this.selectedNodeTag = nodeTag;
             this._skipOverwriteIfUnchanged = skipOverwriteIfUnchanged;
+            timeout = Duration.ofHours(12);
+        }
+
+        public String getRequestNodeTag() {
+            return _requestNodeTag;
         }
 
         @Override
         public HttpRequestBase createRequest(ServerNode node, Reference<String> url) {
+            _requestNodeTag = node.getClusterTag();
+
             url.value = node.getUrl()
                     + "/databases/"
                     + node.getDatabase()
@@ -339,7 +291,7 @@ public class BulkInsertOperation implements CleanCloseable {
         this.useCompression = useCompression;
     }
 
-    private void throwBulkInsertAborted(Exception e, Exception flushEx) {
+    protected void throwBulkInsertAborted(Exception e, Exception flushEx) {
 
         BulkInsertAbortedException errorFromServer = null;
         try {
@@ -361,7 +313,7 @@ public class BulkInsertOperation implements CleanCloseable {
             + "Database name can be passed as an argument when bulk insert is being created or default database can be defined using 'DocumentStore.setDatabase' method.");
     }
 
-    private void waitForId() {
+    protected void waitForId() {
         if (_operationId != -1) {
             return;
         }
@@ -562,7 +514,7 @@ public class BulkInsertOperation implements CleanCloseable {
         _currentWriter.write(",");
     }
 
-    private void executeBeforeStore() {
+    protected void executeBeforeStore() {
         if (_stream == null) {
             waitForId();
             ensureStream();
@@ -587,7 +539,7 @@ public class BulkInsertOperation implements CleanCloseable {
         }
     }
 
-    private BulkInsertAbortedException getExceptionFromOperation() {
+    protected BulkInsertAbortedException getExceptionFromOperation() {
         GetOperationStateOperation.GetOperationStateCommand stateRequest =
                 new GetOperationStateOperation.GetOperationStateCommand(_operationId, _nodeTag);
         _requestExecutor.execute(stateRequest);
@@ -614,7 +566,7 @@ public class BulkInsertOperation implements CleanCloseable {
     @SuppressWarnings("FieldCanBeLocal")
     private final int _maxSizeInBuffer = 1024 * 1024;
 
-    private void ensureStream() {
+    protected void ensureStream() {
         try {
             BulkInsertCommand bulkCommand = new BulkInsertCommand(_operationId, _streamExposerContent, _nodeTag, _options.isSkipOverwriteIfUnchanged());
             bulkCommand.useCompression = useCompression;

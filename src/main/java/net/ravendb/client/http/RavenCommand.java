@@ -134,7 +134,7 @@ public abstract class RavenCommand<TResult> {
     }
 
     @SuppressWarnings("unused")
-    protected String urlEncode(String value) {
+    protected static String urlEncode(String value) {
         try {
             return URLEncoder.encode(value, "UTF-8");
         } catch (UnsupportedEncodingException e) {

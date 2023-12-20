@@ -4,9 +4,12 @@ import net.ravendb.client.Constants;
 import net.ravendb.client.documents.DocumentStoreBase;
 import net.ravendb.client.documents.IDocumentStore;
 import net.ravendb.client.documents.conventions.DocumentConventions;
+import net.ravendb.client.documents.dataArchival.ArchivedDataProcessingBehavior;
 import net.ravendb.client.documents.operations.indexes.PutIndexesOperation;
 import net.ravendb.client.primitives.SharpEnum;
 import org.apache.commons.lang3.ObjectUtils;
+
+import java.util.List;
 
 /**
  * Base class for creating indexes
@@ -31,6 +34,7 @@ public abstract class AbstractIndexCreationTaskBase<TIndexDefinition extends Ind
 
     protected IndexDeploymentMode deploymentMode;
     protected SearchEngineType searchEngineType;
+    protected ArchivedDataProcessingBehavior archivedDataProcessingBehavior;
     protected IndexState state;
 
     /**
@@ -79,6 +83,14 @@ public abstract class AbstractIndexCreationTaskBase<TIndexDefinition extends Ind
 
     public void setSearchEngineType(SearchEngineType searchEngineType) {
         this.searchEngineType = searchEngineType;
+    }
+
+    public ArchivedDataProcessingBehavior getArchivedDataProcessingBehavior() {
+        return archivedDataProcessingBehavior;
+    }
+
+    public void setArchivedDataProcessingBehavior(ArchivedDataProcessingBehavior archivedDataProcessingBehavior) {
+        this.archivedDataProcessingBehavior = archivedDataProcessingBehavior;
     }
 
     public IndexState getState() {
@@ -135,15 +147,14 @@ public abstract class AbstractIndexCreationTaskBase<TIndexDefinition extends Ind
                 indexDefinition.setState(state);
             }
 
+            if (archivedDataProcessingBehavior != null) {
+                indexDefinition.setArchivedDataProcessingBehavior(archivedDataProcessingBehavior);
+            }
+
             if (deploymentMode != null) {
                 indexDefinition.setDeploymentMode(deploymentMode);
             }
 
-            if (searchEngineType != null) {
-                indexDefinition.getConfiguration().put(
-                        Constants.Configuration.Indexes.INDEXING_STATIC_SEARCH_ENGINE_TYPE,
-                        SharpEnum.value(searchEngineType));
-            }
 
             store.maintenance()
                     .forDatabase(database)

@@ -1,9 +1,8 @@
 package net.ravendb.client.documents.indexes;
 
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import net.ravendb.client.documents.dataArchival.ArchivedDataProcessingBehavior;
+
+import java.util.*;
 
 /**
  * A definition of a RavenIndex
@@ -16,12 +15,14 @@ public class IndexDefinition extends IndexDefinitionBase {
 
     private IndexLockMode lockMode;
     private Map<String, String> additionalSources;
+    private List<String[]> compoundFields;
     private Set<AdditionalAssembly> additionalAssemblies;
     private Set<String> maps;
     private String reduce;
     private Map<String, IndexFieldOptions> fields;
     private IndexConfiguration configuration;
     private IndexSourceType indexSourceType;
+    private ArchivedDataProcessingBehavior archivedDataProcessingBehavior;
     private IndexType indexType;
     private String outputReduceToCollection;
     private Long reduceOutputIndex;
@@ -68,6 +69,29 @@ public class IndexDefinition extends IndexDefinitionBase {
      */
     public void setAdditionalSources(Map<String, String> additionalSources) {
         this.additionalSources = additionalSources;
+    }
+
+    /**
+     * Expert:
+     * List of compound fields that can be used by the Corax indexing engine to
+     * optimize certain queries. Has no effect on Lucene indexes.
+     * @return list of fields
+     */
+    public List<String[]> getCompoundFields() {
+        if (compoundFields == null) {
+            compoundFields = new ArrayList<>();
+        }
+        return compoundFields;
+    }
+
+    /**
+     * Expert:
+     * List of compound fields that can be used by the Corax indexing engine to
+     * optimize certain queries. Has no effect on Lucene indexes.
+     * @param compoundFields  list of fields
+     */
+    public void setCompoundFields(List<String[]> compoundFields) {
+        this.compoundFields = compoundFields;
     }
 
     public Set<AdditionalAssembly> getAdditionalAssemblies() {
@@ -152,6 +176,14 @@ public class IndexDefinition extends IndexDefinitionBase {
 
     public void setSourceType(IndexSourceType sourceType) {
         this.indexSourceType = sourceType;
+    }
+
+    public ArchivedDataProcessingBehavior getArchivedDataProcessingBehavior() {
+        return archivedDataProcessingBehavior;
+    }
+
+    public void setArchivedDataProcessingBehavior(ArchivedDataProcessingBehavior archivedDataProcessingBehavior) {
+        this.archivedDataProcessingBehavior = archivedDataProcessingBehavior;
     }
 
     public IndexType getType() {

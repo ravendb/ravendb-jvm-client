@@ -324,7 +324,7 @@ public class DocumentSession extends InMemoryDocumentSessionOperations
         return lazyValue;
     }
 
-    protected Lazy<Integer> addLazyCountOperation(ILazyOperation operation) {
+    protected Lazy<Long> addLazyCountOperation(ILazyOperation operation) {
         pendingLazyOperations.add(operation);
 
         return new Lazy<>(() -> {

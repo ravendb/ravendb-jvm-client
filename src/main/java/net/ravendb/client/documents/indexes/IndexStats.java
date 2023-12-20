@@ -1,5 +1,7 @@
 package net.ravendb.client.documents.indexes;
 
+import net.ravendb.client.documents.dataArchival.ArchivedDataProcessingBehavior;
+
 import java.util.Date;
 import java.util.Map;
 

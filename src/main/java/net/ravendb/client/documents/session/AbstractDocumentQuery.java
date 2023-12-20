@@ -1157,6 +1157,7 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
      */
     public void _statistics(Reference<QueryStatistics> stats) {
         stats.value = queryStats;
+        stats.setRequestedByUser(true);
     }
 
     /**
@@ -1184,16 +1185,12 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
     protected IndexQuery generateIndexQuery(String query) {
         IndexQuery indexQuery = new IndexQuery();
         indexQuery.setQuery(query);
-        indexQuery.setStart(start);
         indexQuery.setWaitForNonStaleResults(theWaitForNonStaleResults);
         indexQuery.setWaitForNonStaleResultsTimeout(timeout);
         indexQuery.setQueryParameters(queryParameters);
         indexQuery.setDisableCaching(disableCaching);
         indexQuery.setProjectionBehavior(projectionBehavior);
-
-        if (pageSize != null) {
-            indexQuery.setPageSize(pageSize);
-        }
+        indexQuery.setSkipStatistics(!queryStats.getRequestedByUser());
         return indexQuery;
     }
 
@@ -2159,7 +2156,7 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
     }
 
     public T first() {
-        Collection<T> result = executeQueryOperation(1);
+        Collection<T> result = executeQueryOperation(1L);
         if (result.isEmpty()) {
             throw new IllegalStateException("Expected at least one result");
         }
@@ -2167,12 +2164,12 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
     }
 
     public T firstOrDefault() {
-        Collection<T> result = executeQueryOperation(1);
+        Collection<T> result = executeQueryOperation(1L);
         return result.stream().findFirst().orElseGet(() -> Defaults.defaultValue(clazz));
     }
 
     public T single() {
-        Collection<T> result = executeQueryOperation(2);
+        Collection<T> result = executeQueryOperation(2L);
         if (result.size() != 1) {
             throw new IllegalStateException("Expected single result, got: " + result.size());
         }
@@ -2180,7 +2177,7 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
     }
 
     public T singleOrDefault() {
-        Collection<T> result = executeQueryOperation(2);
+        Collection<T> result = executeQueryOperation(2L);
         if (result.size() > 1) {
             throw new IllegalStateException("Expected single result, got: " + result.size());
         }
@@ -2199,7 +2196,7 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
     public long longCount() {
         _take(0);
         QueryResult queryResult = getQueryResult();
-        return queryResult.getLongTotalResults();
+        return queryResult.getTotalResults();
     }
 
     public boolean any() {

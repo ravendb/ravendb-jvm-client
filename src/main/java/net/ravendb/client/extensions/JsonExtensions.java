@@ -189,16 +189,8 @@ public class JsonExtensions {
 
         generator.writeStringField("Query", query.getQuery());
 
-        if (query.isPageSizeSet() && query.getPageSize() >= 0) {
-            generator.writeNumberField("PageSize", query.getPageSize());
-        }
-
         if (query.isWaitForNonStaleResults()) {
             generator.writeBooleanField("WaitForNonStaleResults", query.isWaitForNonStaleResults());
-        }
-
-        if (query.getStart() > 0) {
-            generator.writeNumberField("Start", query.getStart());
         }
 
         if (query.getWaitForNonStaleResultsTimeout() != null) {

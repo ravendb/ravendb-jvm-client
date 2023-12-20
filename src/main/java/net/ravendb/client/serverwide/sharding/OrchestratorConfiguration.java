@@ -1,5 +1,7 @@
 package net.ravendb.client.serverwide.sharding;
 
+import net.ravendb.client.serverwide.OrchestratorTopology;
+
 public class OrchestratorConfiguration {
 
     private OrchestratorTopology topology;

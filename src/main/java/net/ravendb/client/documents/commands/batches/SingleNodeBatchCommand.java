@@ -169,8 +169,10 @@ public class SingleNodeBatchCommand extends RavenCommand<BatchCommandResult> imp
         if (_options == null) {
             return;
         }
+        appendOptions(sb, _options.getIndexOptions(), _options.getReplicationOptions(), _options.getShardedOptions());
 
-        ReplicationBatchOptions replicationOptions = _options.getReplicationOptions();
+    }
+    protected static void appendOptions(StringBuilder sb, IndexBatchOptions indexOptions, ReplicationBatchOptions replicationOptions, ShardedBatchOptions shardedOptions) {
         if (replicationOptions != null) {
             sb.append("&waitForReplicasTimeout=")
                     .append(TimeUtils.durationToTimeSpan(replicationOptions.getWaitForReplicasTimeout()));
@@ -182,7 +184,6 @@ public class SingleNodeBatchCommand extends RavenCommand<BatchCommandResult> imp
             sb.append(replicationOptions.isMajority() ? "majority" : replicationOptions.getNumberOfReplicasToWaitFor());
         }
 
-        IndexBatchOptions indexOptions = _options.getIndexOptions();
         if (indexOptions != null) {
             sb.append("&waitForIndexesTimeout=")
                     .append(TimeUtils.durationToTimeSpan(indexOptions.getWaitForIndexesTimeout()));

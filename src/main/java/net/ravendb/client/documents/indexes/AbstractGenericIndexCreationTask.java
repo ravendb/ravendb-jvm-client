@@ -4,10 +4,7 @@ import net.ravendb.client.Constants;
 import net.ravendb.client.documents.indexes.spatial.SpatialOptions;
 import net.ravendb.client.documents.indexes.spatial.SpatialOptionsFactory;
 
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.function.Function;
 
 /**
@@ -29,6 +26,8 @@ public abstract class AbstractGenericIndexCreationTask extends AbstractIndexCrea
     protected String patternForOutputReduceToCollectionReferences;
     protected String patternReferencesCollectionName;
 
+    protected List<String[]> compoundFieldsStrings;
+
     public AbstractGenericIndexCreationTask() {
         storesStrings = new HashMap<>();
         indexesStrings= new HashMap<>();
@@ -36,6 +35,7 @@ public abstract class AbstractGenericIndexCreationTask extends AbstractIndexCrea
         indexSuggestions = new HashSet<>();
         termVectorsStrings = new HashMap<>();
         spatialOptionsStrings = new HashMap<>();
+        compoundFieldsStrings = new ArrayList<>();
     }
 
     /**
@@ -111,5 +111,9 @@ public abstract class AbstractGenericIndexCreationTask extends AbstractIndexCrea
         }
 
         getAdditionalAssemblies().add(assembly);
+    }
+
+    protected void compoundField(String first, String second) {
+        compoundFieldsStrings.add(new String[] { first, second });
     }
 }

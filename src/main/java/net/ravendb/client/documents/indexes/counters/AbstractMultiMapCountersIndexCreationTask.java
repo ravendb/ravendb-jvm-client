@@ -1,6 +1,8 @@
 package net.ravendb.client.documents.indexes.counters;
 
+import net.ravendb.client.Constants;
 import net.ravendb.client.documents.conventions.DocumentConventions;
+import net.ravendb.client.primitives.SharpEnum;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -40,6 +42,13 @@ public class AbstractMultiMapCountersIndexCreationTask extends AbstractGenericCo
         indexDefinitionBuilder.setPriority(getPriority());
         indexDefinitionBuilder.setState(getState());
         indexDefinitionBuilder.setDeploymentMode(getDeploymentMode());
+
+        indexDefinitionBuilder.setCompoundFieldsStrings(compoundFieldsStrings);
+        indexDefinitionBuilder.setArchivedDataProcessingBehavior(archivedDataProcessingBehavior);
+
+        if (searchEngineType != null) {
+            indexDefinitionBuilder.getConfiguration().put(Constants.Configuration.Indexes.INDEXING_STATIC_SEARCH_ENGINE_TYPE, SharpEnum.value(searchEngineType));
+        }
 
         CountersIndexDefinition indexDefinition = indexDefinitionBuilder.toIndexDefinition(conventions, false);
         indexDefinition.setMaps(new HashSet<>(maps));
