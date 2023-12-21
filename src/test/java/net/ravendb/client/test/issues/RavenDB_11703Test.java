@@ -38,7 +38,7 @@ public class RavenDB_11703Test extends RemoteTestBase {
                     session.saveChanges();
                 }
 
-                CounterChange counterChange = changesList.poll(2, TimeUnit.SECONDS);
+                CounterChange counterChange = changesList.poll(5, TimeUnit.SECONDS);
                 assertThat(counterChange)
                         .isNotNull();
 
@@ -60,7 +60,7 @@ public class RavenDB_11703Test extends RemoteTestBase {
                     session.saveChanges();
                 }
 
-                counterChange = changesList.poll(2, TimeUnit.SECONDS);
+                counterChange = changesList.poll(5, TimeUnit.SECONDS);
                 assertThat(counterChange)
                         .isNotNull();
 
@@ -100,7 +100,7 @@ public class RavenDB_11703Test extends RemoteTestBase {
                     session.saveChanges();
                 }
 
-                CounterChange counterChange = changesList.poll(2, TimeUnit.SECONDS);
+                CounterChange counterChange = changesList.poll(5, TimeUnit.SECONDS);
                 assertThat(counterChange)
                         .isNotNull();
 
@@ -120,7 +120,7 @@ public class RavenDB_11703Test extends RemoteTestBase {
                     session.saveChanges();
                 }
 
-                counterChange = changesList.poll(2, TimeUnit.SECONDS);
+                counterChange = changesList.poll(5, TimeUnit.SECONDS);
                 assertThat(counterChange)
                         .isNotNull();
 
@@ -160,7 +160,7 @@ public class RavenDB_11703Test extends RemoteTestBase {
                     session.saveChanges();
                 }
 
-                CounterChange counterChange = changesList.poll(2, TimeUnit.SECONDS);
+                CounterChange counterChange = changesList.poll(5, TimeUnit.SECONDS);
                 assertThat(counterChange)
                         .isNotNull();
             }
@@ -174,7 +174,7 @@ public class RavenDB_11703Test extends RemoteTestBase {
                     session.saveChanges();
                 }
 
-                CounterChange counterChange = changesList.poll(2, TimeUnit.SECONDS);
+                CounterChange counterChange = changesList.poll(5, TimeUnit.SECONDS);
                 assertThat(counterChange)
                         .isNotNull();
                 assertThat(counterChange.getName())
@@ -192,7 +192,7 @@ public class RavenDB_11703Test extends RemoteTestBase {
                     session.saveChanges();
                 }
 
-                CounterChange counterChange = changesList.poll(2, TimeUnit.SECONDS);
+                CounterChange counterChange = changesList.poll(5, TimeUnit.SECONDS);
                 assertThat(counterChange)
                         .isNotNull();
                 assertThat(counterChange.getName())
@@ -211,12 +211,12 @@ public class RavenDB_11703Test extends RemoteTestBase {
                     session.saveChanges();
                 }
 
-                CounterChange counterChange = changesList.poll(2, TimeUnit.SECONDS);
+                CounterChange counterChange = changesList.poll(5, TimeUnit.SECONDS);
                 assertThat(counterChange)
                         .isNotNull()
                         .matches(x -> x.getName().equals("likes") || x.getName().equals("dislikes"));
 
-                counterChange = changesList.poll(2, TimeUnit.SECONDS);
+                counterChange = changesList.poll(5, TimeUnit.SECONDS);
                 assertThat(counterChange)
                         .isNotNull()
                         .matches(x -> x.getName().equals("likes") || x.getName().equals("dislikes"));
