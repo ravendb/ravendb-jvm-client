@@ -1,6 +1,8 @@
 package net.ravendb.client.documents.commands;
 
 import com.fasterxml.jackson.core.JsonGenerator;
+import net.ravendb.client.Parameters;
+import net.ravendb.client.documents.conventions.DocumentConventions;
 import net.ravendb.client.documents.queries.IndexQuery;
 import net.ravendb.client.documents.queries.QueryResult;
 import net.ravendb.client.documents.session.InMemoryDocumentSessionOperations;
@@ -9,6 +11,7 @@ import net.ravendb.client.http.RavenCommand;
 import net.ravendb.client.http.ServerNode;
 import net.ravendb.client.json.ContentProviderHttpEntity;
 import net.ravendb.client.primitives.Reference;
+import org.apache.http.HttpEntity;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpRequestBase;
 import org.apache.http.entity.ContentType;
@@ -16,14 +19,13 @@ import org.apache.http.entity.ContentType;
 import java.io.IOException;
 
 @SuppressWarnings("ALL")
-public class QueryCommand extends RavenCommand<QueryResult> {
-    private final InMemoryDocumentSessionOperations _session;
+public class QueryCommand extends AbstractQueryCommand<QueryResult, Parameters> {
+    private final DocumentConventions _conventions;
     private final IndexQuery _indexQuery;
-    private final boolean _metadataOnly;
-    private final boolean _indexEntriesOnly;
+    private final InMemoryDocumentSessionOperations _session;
 
     public QueryCommand(InMemoryDocumentSessionOperations session, IndexQuery indexQuery, boolean metadataOnly, boolean indexEntriesOnly) {
-        super(QueryResult.class);
+        super(QueryResult.class, indexQuery, !indexQuery.isDisableCaching(), metadataOnly, indexEntriesOnly, false);
 
         _session = session;
 
@@ -32,46 +34,24 @@ public class QueryCommand extends RavenCommand<QueryResult> {
         }
 
         _indexQuery = indexQuery;
-        _metadataOnly = metadataOnly;
-        _indexEntriesOnly = indexEntriesOnly;
+        _conventions = session.getConventions();
     }
 
-    @Override
-    public HttpRequestBase createRequest(ServerNode node, Reference<String> url) {
-        canCache = !_indexQuery.isDisableCaching();
+    protected String getQueryHash() {
+        return _indexQuery.getQueryHash(_session.getConventions().getEntityMapper());
+    }
 
-        // we won't allow aggressive caching of queries with WaitForNonStaleResults
-        canCacheAggressively = canCache && !_indexQuery.isWaitForNonStaleResults();
 
-        StringBuilder path = new StringBuilder(node.getUrl())
-                .append("/databases/")
-                .append(node.getDatabase())
-                .append("/queries?queryHash=")
-                // we need to add a query hash because we are using POST queries
-                // so we need to unique parameter per query so the query cache will
-                // work properly
-                .append(_indexQuery.getQueryHash(_session.getConventions().getEntityMapper()));
-
-        if (_metadataOnly) {
-            path.append("&metadataOnly=true");
-        }
-
-        if (_indexEntriesOnly) {
-            path.append("&debug=entries");
-        }
-
-        HttpPost request = new HttpPost();
-        request.setEntity(new ContentProviderHttpEntity(outputStream -> {
+    protected HttpEntity getContent() {
+        return new ContentProviderHttpEntity(outputStream -> {
             try (JsonGenerator generator = createSafeJsonGenerator(outputStream)) {
                 JsonExtensions.writeIndexQuery(generator, _session.getConventions(), _indexQuery);
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
-        }, ContentType.APPLICATION_JSON));
-
-        url.value = path.toString();
-        return request;
+        }, ContentType.APPLICATION_JSON);
     }
+
 
     @Override
     public void setResponse(String response, boolean fromCache) throws IOException {
@@ -89,11 +69,5 @@ public class QueryCommand extends RavenCommand<QueryResult> {
                 result.setTimings(null);
             }
         }
-    }
-
-    @SuppressWarnings("SameReturnValue")
-    @Override
-    public boolean isReadRequest() {
-        return true;
     }
 }

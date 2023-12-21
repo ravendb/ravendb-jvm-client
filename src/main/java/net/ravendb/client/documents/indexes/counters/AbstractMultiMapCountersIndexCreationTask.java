@@ -43,13 +43,6 @@ public class AbstractMultiMapCountersIndexCreationTask extends AbstractGenericCo
         indexDefinitionBuilder.setState(getState());
         indexDefinitionBuilder.setDeploymentMode(getDeploymentMode());
 
-        indexDefinitionBuilder.setCompoundFieldsStrings(compoundFieldsStrings);
-        indexDefinitionBuilder.setArchivedDataProcessingBehavior(archivedDataProcessingBehavior);
-
-        if (searchEngineType != null) {
-            indexDefinitionBuilder.getConfiguration().put(Constants.Configuration.Indexes.INDEXING_STATIC_SEARCH_ENGINE_TYPE, SharpEnum.value(searchEngineType));
-        }
-
         CountersIndexDefinition indexDefinition = indexDefinitionBuilder.toIndexDefinition(conventions, false);
         indexDefinition.setMaps(new HashSet<>(maps));
 

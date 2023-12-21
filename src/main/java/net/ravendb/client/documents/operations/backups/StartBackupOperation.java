@@ -12,10 +12,10 @@ import java.io.IOException;
 
 public class StartBackupOperation implements IMaintenanceOperation<StartBackupOperationResult> {
 
-    private final boolean _isFullBackup;
+    private final Boolean _isFullBackup;
     private final long _taskId;
 
-    public StartBackupOperation(boolean isFullBackup, long taskId) {
+    public StartBackupOperation(Boolean isFullBackup, long taskId) {
         _isFullBackup = isFullBackup;
         _taskId = taskId;
     }
@@ -26,7 +26,7 @@ public class StartBackupOperation implements IMaintenanceOperation<StartBackupOp
     }
 
     private static class StartBackupCommand extends RavenCommand<StartBackupOperationResult> {
-        private final boolean _isFullBackup;
+        private final Boolean _isFullBackup;
         private final long _taskId;
 
         public StartBackupCommand(boolean isFullBackup, long taskId) {
@@ -44,8 +44,11 @@ public class StartBackupOperation implements IMaintenanceOperation<StartBackupOp
         @Override
         public HttpRequestBase createRequest(ServerNode node, Reference<String> url) {
             url.value = node.getUrl() + "/databases/" + node.getDatabase()
-                    + "/admin/backup/database?isFullBackup=" + (_isFullBackup ? "true":"false")
-                    + "&taskId=" + _taskId;
+                    + "/admin/backup/database?taskId=" + _taskId;
+
+            if (_isFullBackup != null) {
+                url.value += "&isFullBackup=" + (_isFullBackup ? "true": "false");
+            }
 
             return new HttpPost();
         }

@@ -85,13 +85,23 @@ public class CompareExchangeValueResultParser<T> {
         long index = indexNode.asLong();
 
         if (raw == null) {
-            return new CompareExchangeValue<>(key, index,null, cv, null);
+            return new CompareExchangeValue<>(key, index, null, cv, null);
         }
 
         MetadataAsDictionary metadata = null;
         JsonNode bjro = raw.get(Constants.Documents.Metadata.KEY);
         if (bjro != null && bjro.isObject()) {
             metadata = !materializeMetadata ? new MetadataAsDictionary((ObjectNode) bjro) : MetadataAsDictionary.materializeFromJson((ObjectNode) bjro);
+        }
+
+        T value = deserializeObject(clazz, raw, conventions);
+        return new CompareExchangeValue<>(key, index, value, cv, metadata);
+    }
+
+    protected static <T> T deserializeObject(Class<T> clazz, ObjectNode raw, DocumentConventions conventions) {
+
+        if (raw == null) {
+            return Defaults.defaultValue(clazz);
         }
 
         if (clazz.isPrimitive() || String.class.equals(clazz)) {
@@ -103,27 +113,27 @@ public class CompareExchangeValueResultParser<T> {
                 value = conventions.getEntityMapper().convertValue(rawValue, clazz);
             }
 
-            return new CompareExchangeValue<>(key, index, value, metadata);
+            return value;
         } else if (ObjectNode.class.equals(clazz)) {
             if (raw == null || !raw.has(Constants.CompareExchange.OBJECT_FIELD_NAME)) {
-                return new CompareExchangeValue<>(key, index, null, cv, metadata);
+                return null;
             }
 
             Object rawValue = raw.get(Constants.CompareExchange.OBJECT_FIELD_NAME);
             if (rawValue == null) {
-                return new CompareExchangeValue<>(key, index, null, cv, metadata);
+                return null;
             } else if (rawValue instanceof ObjectNode) {
-                return new CompareExchangeValue<>(key, index, (T) rawValue, cv, metadata);
+                return (T) rawValue;
             } else {
-                return new CompareExchangeValue<>(key, index, (T) raw, cv, metadata);
+                return (T) raw;
             }
         } else {
             JsonNode object = raw.get(Constants.CompareExchange.OBJECT_FIELD_NAME);
             if (object == null || object.isNull()) {
-                return new CompareExchangeValue<>(key, index, Defaults.defaultValue(clazz), cv, metadata);
+                return Defaults.defaultValue(clazz);
             } else {
                 T converted = conventions.getEntityMapper().convertValue(object, clazz);
-                return new CompareExchangeValue<>(key, index, converted, cv, metadata);
+                return converted;
             }
         }
     }

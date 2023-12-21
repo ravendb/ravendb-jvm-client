@@ -54,7 +54,7 @@ public class EtlTest extends ReplicationTestBase {
 
                 waitForDocumentToReplicate(dst, User.class, "users/1", 10* 1000);
 
-                OngoingTaskRavenEtlDetails ongoingTask = (OngoingTaskRavenEtlDetails) src.maintenance()
+                OngoingTaskRavenEtl ongoingTask = (OngoingTaskRavenEtl) src.maintenance()
                         .send(new GetOngoingTaskInfoOperation(etlResult.getTaskId(), OngoingTaskType.RAVEN_ETL));
 
                 assertThat(ongoingTask)

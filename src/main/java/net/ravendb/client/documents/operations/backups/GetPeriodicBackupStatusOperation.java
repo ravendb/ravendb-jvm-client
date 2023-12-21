@@ -51,6 +51,10 @@ public class GetPeriodicBackupStatusOperation implements IMaintenanceOperation<G
             }
 
             result = mapper.readValue(response, resultClass);
+
+            if (result.isSharded()) {
+                throw new IllegalStateException("Database is sharded, can't use GetPeriodicBackupStatusOperation. Use GetShardedPeriodicBackupStatusOperation instead.");
+            }
         }
     }
 }

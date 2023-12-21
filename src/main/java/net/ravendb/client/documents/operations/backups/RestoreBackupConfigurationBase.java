@@ -10,6 +10,7 @@ public abstract class RestoreBackupConfigurationBase {
 
     protected abstract RestoreType getType();
 
+    private ShardedRestoreSettings shardRestoreSettings;
     private BackupEncryptionSettings backupEncryptionSettings;
 
     public String getDatabaseName() {
@@ -58,6 +59,14 @@ public abstract class RestoreBackupConfigurationBase {
 
     public void setSkipIndexes(boolean skipIndexes) {
         this.skipIndexes = skipIndexes;
+    }
+
+    public ShardedRestoreSettings getShardRestoreSettings() {
+        return shardRestoreSettings;
+    }
+
+    public void setShardRestoreSettings(ShardedRestoreSettings shardRestoreSettings) {
+        this.shardRestoreSettings = shardRestoreSettings;
     }
 
     public BackupEncryptionSettings getBackupEncryptionSettings() {

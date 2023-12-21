@@ -1157,7 +1157,7 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
      */
     public void _statistics(Reference<QueryStatistics> stats) {
         stats.value = queryStats;
-        stats.setRequestedByUser(true);
+        stats.value.setRequestedByUser(true);
     }
 
     /**
@@ -1190,7 +1190,7 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
         indexQuery.setQueryParameters(queryParameters);
         indexQuery.setDisableCaching(disableCaching);
         indexQuery.setProjectionBehavior(projectionBehavior);
-        indexQuery.setSkipStatistics(!queryStats.getRequestedByUser());
+        indexQuery.setSkipStatistics(!queryStats.isRequestedByUser());
         return indexQuery;
     }
 
@@ -2202,7 +2202,7 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
     public boolean any() {
         if (isDistinct()) {
             // for distinct it is cheaper to do count 1
-            return executeQueryOperation(1).iterator().hasNext();
+            return executeQueryOperation(1L).iterator().hasNext();
         }
 
         _take(0);

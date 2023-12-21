@@ -1,5 +1,6 @@
 package net.ravendb.client.documents.subscriptions;
 
+import net.ravendb.client.documents.dataArchival.ArchivedDataProcessingBehavior;
 import net.ravendb.client.documents.session.loaders.ISubscriptionIncludeBuilder;
 
 import java.util.function.Consumer;
@@ -13,6 +14,7 @@ public class SubscriptionCreationOptions {
     private String mentorNode;
 
     private boolean pinToMentorNode;
+    private ArchivedDataProcessingBehavior archivedDataProcessingBehavior;
     private boolean disabled;
 
     public Consumer<ISubscriptionIncludeBuilder> getIncludes() {
@@ -61,6 +63,14 @@ public class SubscriptionCreationOptions {
 
     public void setMentorNode(String mentorNode) {
         this.mentorNode = mentorNode;
+    }
+
+    public ArchivedDataProcessingBehavior getArchivedDataProcessingBehavior() {
+        return archivedDataProcessingBehavior;
+    }
+
+    public void setArchivedDataProcessingBehavior(ArchivedDataProcessingBehavior archivedDataProcessingBehavior) {
+        this.archivedDataProcessingBehavior = archivedDataProcessingBehavior;
     }
 
     public boolean isDisabled() {

@@ -26,8 +26,6 @@ public abstract class AbstractGenericIndexCreationTask extends AbstractIndexCrea
     protected String patternForOutputReduceToCollectionReferences;
     protected String patternReferencesCollectionName;
 
-    protected List<String[]> compoundFieldsStrings;
-
     public AbstractGenericIndexCreationTask() {
         storesStrings = new HashMap<>();
         indexesStrings= new HashMap<>();
@@ -35,7 +33,6 @@ public abstract class AbstractGenericIndexCreationTask extends AbstractIndexCrea
         indexSuggestions = new HashSet<>();
         termVectorsStrings = new HashMap<>();
         spatialOptionsStrings = new HashMap<>();
-        compoundFieldsStrings = new ArrayList<>();
     }
 
     /**
@@ -111,9 +108,5 @@ public abstract class AbstractGenericIndexCreationTask extends AbstractIndexCrea
         }
 
         getAdditionalAssemblies().add(assembly);
-    }
-
-    protected void compoundField(String first, String second) {
-        compoundFieldsStrings.add(new String[] { first, second });
     }
 }

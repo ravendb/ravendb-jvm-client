@@ -12,7 +12,7 @@ import net.ravendb.client.documents.operations.etl.queue.KafkaConnectionSettings
 import net.ravendb.client.documents.operations.etl.queue.QueueBrokerType;
 import net.ravendb.client.documents.operations.etl.queue.QueueConnectionString;
 import net.ravendb.client.documents.operations.etl.queue.QueueEtlConfiguration;
-import net.ravendb.client.documents.operations.ongoingTasks.OngoingTaskQueueEtlDetails;
+import net.ravendb.client.documents.operations.ongoingTasks.OngoingTaskQueueEtl;
 import net.ravendb.client.documents.operations.ongoingTasks.OngoingTaskType;
 import net.ravendb.client.infrastructure.DisabledOnPullRequest;
 import org.junit.jupiter.api.Test;
@@ -47,7 +47,7 @@ public class KafkaTest extends RemoteTestBase {
 
             AddEtlOperationResult etlResult = store.maintenance().send(new AddEtlOperation<>(etlConfiguration));
 
-            OngoingTaskQueueEtlDetails ongoingTask = (OngoingTaskQueueEtlDetails) store.maintenance()
+            OngoingTaskQueueEtl ongoingTask = (OngoingTaskQueueEtl) store.maintenance()
                     .send(new GetOngoingTaskInfoOperation(etlResult.getTaskId(), OngoingTaskType.QUEUE_ETL));
 
             assertThat(ongoingTask)

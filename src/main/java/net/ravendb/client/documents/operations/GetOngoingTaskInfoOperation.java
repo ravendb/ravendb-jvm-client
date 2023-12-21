@@ -88,10 +88,10 @@ public class GetOngoingTaskInfoOperation implements IMaintenanceOperation<Ongoin
                         result = mapper.readValue(response, OngoingTaskReplication.class);
                         break;
                     case RAVEN_ETL:
-                        result = mapper.readValue(response, OngoingTaskRavenEtlDetails.class);
+                        result = mapper.readValue(response, OngoingTaskRavenEtl.class);
                         break;
                     case SQL_ETL:
-                        result = mapper.readValue(response, OngoingTaskSqlEtlDetails.class);
+                        result = mapper.readValue(response, OngoingTaskSqlEtl.class);
                         break;
                     case BACKUP:
                         result = mapper.readValue(response, OngoingTaskBackup.class);
@@ -100,13 +100,13 @@ public class GetOngoingTaskInfoOperation implements IMaintenanceOperation<Ongoin
                         result = mapper.readValue(response, OngoingTaskSubscription.class);
                         break;
                     case OLAP_ETL:
-                        result = mapper.readValue(response, OngoingTaskOlapEtlDetails.class);
+                        result = mapper.readValue(response, OngoingTaskOlapEtl.class);
                         break;
                     case ELASTIC_SEARCH_ETL:
-                        result = mapper.readValue(response, OngoingTaskElasticSearchEtlDetails.class);
+                        result = mapper.readValue(response, OngoingTaskElasticSearchEtl.class);
                         break;
                     case QUEUE_ETL:
-                        result = mapper.readValue(response, OngoingTaskQueueEtlDetails.class);
+                        result = mapper.readValue(response, OngoingTaskQueueEtl.class);
                         break;
                     case PULL_REPLICATION_AS_SINK:
                         result = mapper.readValue(response, OngoingTaskPullReplicationAsSink.class);

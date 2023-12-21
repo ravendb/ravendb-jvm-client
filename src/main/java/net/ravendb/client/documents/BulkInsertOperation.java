@@ -139,7 +139,7 @@ public class BulkInsertOperation extends BulkInsertOperationBase<Object> impleme
     private final ObjectMapper objectMapper;
 
     private OutputStream _stream;
-    private final StreamExposerContent _streamExposerContent;
+    private final BulkInsertStreamExposerContent _streamExposerContent;
 
     private boolean _first = true;
     private CommandType _inProgressCommand;
@@ -186,7 +186,7 @@ public class BulkInsertOperation extends BulkInsertOperationBase<Object> impleme
         _currentWriter = new OutputStreamWriter(_currentWriterBacking);
         _backgroundWriterBacking = new ByteArrayOutputStream();
         _backgroundWriter = new OutputStreamWriter(_backgroundWriterBacking);
-        _streamExposerContent = new StreamExposerContent();
+        _streamExposerContent = new BulkInsertStreamExposerContent();
         _countersOperation = new CountersBulkInsertOperation(this);
         _attachmentsOperation = new AttachmentsBulkInsertOperation(this);
 

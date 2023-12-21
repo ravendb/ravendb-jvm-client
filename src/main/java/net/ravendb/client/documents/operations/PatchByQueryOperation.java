@@ -21,8 +21,6 @@ import java.io.IOException;
 
 public class PatchByQueryOperation implements IOperation<OperationIdResult> {
 
-    protected static IndexQuery DUMMY_QUERY = new IndexQuery();
-
     private final IndexQuery _queryToUpdate;
     private final QueryOperationOptions _options;
 

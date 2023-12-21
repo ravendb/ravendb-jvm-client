@@ -21,6 +21,7 @@ public class QueryStatistics {
     private Date lastQueryTime;
     private Long resultEtag;
     private String nodeTag;
+    private boolean requestedByUser;
 
     /**
      * Whether the query returned potentially stale results
@@ -184,6 +185,14 @@ public class QueryStatistics {
 
     public void setNodeTag(String nodeTag) {
         this.nodeTag = nodeTag;
+    }
+
+    public boolean isRequestedByUser() {
+        return requestedByUser;
+    }
+
+    public void setRequestedByUser(boolean requestedByUser) {
+        this.requestedByUser = requestedByUser;
     }
 
     public void updateQueryStats(QueryResult qr) {

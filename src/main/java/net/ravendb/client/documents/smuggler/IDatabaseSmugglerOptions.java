@@ -16,6 +16,14 @@ public interface IDatabaseSmugglerOptions {
 
     void setIncludeExpired(boolean includeExpired);
 
+    boolean isIncludeArtificial();
+
+    void setIncludeArtificial(boolean includeArtificial);
+
+    boolean isIncludeArchived();
+
+    void setIncludeArchived(boolean includeArchived);
+
     boolean isRemoveAnalyzers();
 
     void setRemoveAnalyzers(boolean removeAnalyzers);

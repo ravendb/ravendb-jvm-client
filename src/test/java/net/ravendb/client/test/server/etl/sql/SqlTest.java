@@ -9,7 +9,7 @@ import net.ravendb.client.documents.operations.etl.*;
 import net.ravendb.client.documents.operations.etl.sql.SqlConnectionString;
 import net.ravendb.client.documents.operations.etl.sql.SqlEtlConfiguration;
 import net.ravendb.client.documents.operations.etl.sql.SqlEtlTable;
-import net.ravendb.client.documents.operations.ongoingTasks.OngoingTaskSqlEtlDetails;
+import net.ravendb.client.documents.operations.ongoingTasks.OngoingTaskSqlEtl;
 import net.ravendb.client.documents.operations.ongoingTasks.OngoingTaskState;
 import net.ravendb.client.documents.operations.ongoingTasks.OngoingTaskType;
 import net.ravendb.client.documents.session.IDocumentSession;
@@ -65,7 +65,7 @@ public class SqlTest extends ReplicationTestBase {
 
             // and try to read ongoing sql task
 
-            OngoingTaskSqlEtlDetails ongoingTask = (OngoingTaskSqlEtlDetails) src.maintenance()
+            OngoingTaskSqlEtl ongoingTask = (OngoingTaskSqlEtl) src.maintenance()
                     .send(new GetOngoingTaskInfoOperation(etlResult.getTaskId(), OngoingTaskType.SQL_ETL));
 
             assertThat(ongoingTask)

@@ -32,6 +32,11 @@ public class GetPullReplicationHubTasksInfoOperation implements IMaintenanceOper
             _taskId = taskId;
         }
 
+        public GetPullReplicationTasksInfoCommand(long taskId, String nodeTag) {
+            this(taskId);
+            selectedNodeTag = nodeTag;
+        }
+
         @Override
         public HttpRequestBase createRequest(ServerNode node, Reference<String> url) {
             url.value = node.getUrl() + "/databases/" + node.getDatabase() + "/tasks/pull-replication/hub?key=" + _taskId;
