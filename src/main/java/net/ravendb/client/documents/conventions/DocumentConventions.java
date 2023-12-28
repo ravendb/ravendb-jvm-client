@@ -6,6 +6,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.databind.node.TextNode;
 import net.ravendb.client.Constants;
 import net.ravendb.client.documents.operations.configuration.ClientConfiguration;
+import net.ravendb.client.documents.session.ShardedBatchBehavior;
 import net.ravendb.client.exceptions.RavenException;
 import net.ravendb.client.extensions.JsonExtensions;
 import net.ravendb.client.http.AggressiveCacheMode;
@@ -69,7 +70,6 @@ public class DocumentConventions {
     private Function<String, Class> _findJavaClassByName;
 
     private boolean _useOptimisticConcurrency;
-    private boolean _throwIfQueryPageSizeIsNotSet;
     private int _maxNumberOfRequestsPerSession;
 
     private Duration _requestTimeout;
@@ -91,9 +91,11 @@ public class DocumentConventions {
 
     private final AggressiveCacheConventions _aggressiveCache;
 
+
     public AggressiveCacheConventions aggressiveCache() {
         return _aggressiveCache;
     }
+
 
     public static class AggressiveCacheConventions {
         private final DocumentConventions _conventions;
@@ -120,6 +122,34 @@ public class DocumentConventions {
             _aggressiveCacheOptions.setMode(mode);
         }
     }
+
+    private final ShardingConventions _sharding;
+
+    public ShardingConventions sharding() {
+        return _sharding;
+    }
+
+    public static class ShardingConventions {
+        private final DocumentConventions _conventions;
+
+        private ShardedBatchBehavior _batchBehavior;
+
+        public ShardedBatchBehavior getBatchBehavior() {
+            return _batchBehavior;
+        }
+
+        public void setBatchBehavior(ShardedBatchBehavior batchBehavior) {
+            _conventions.assertNotFrozen();
+            _batchBehavior = batchBehavior;
+        }
+
+        public ShardingConventions(DocumentConventions conventions) {
+            _conventions = conventions;
+            _batchBehavior = ShardedBatchBehavior.DEFAULT;
+        }
+    }
+
+
 
     public BulkInsertConventions bulkInsert() {
         return _bulkInsert;
@@ -179,6 +209,7 @@ public class DocumentConventions {
 
         _maxNumberOfRequestsPerSession = 30;
         _bulkInsert = new BulkInsertConventions(this);
+        _sharding = new ShardingConventions(this);
         _maxHttpCacheSize = 128 * 1024 * 1024;
 
         _entityMapper = JsonExtensions.getDefaultEntityMapper();
@@ -415,28 +446,6 @@ public class DocumentConventions {
         _maxNumberOfRequestsPerSession = maxNumberOfRequestsPerSession;
     }
 
-    /**
-     * If set to 'true' then it will throw an exception when any query is performed (in session)
-     * without explicit page size set.
-     * This can be useful for development purposes to pinpoint all the possible performance bottlenecks
-     * since from 4.0 there is no limitation for number of results returned from server.
-     * @return true if should we throw if page size is not set
-     */
-    public boolean isThrowIfQueryPageSizeIsNotSet() {
-        return _throwIfQueryPageSizeIsNotSet;
-    }
-
-    /**
-     * If set to 'true' then it will throw an exception when any query is performed (in session)
-     * without explicit page size set.
-     * This can be useful for development purposes to pinpoint all the possible performance bottlenecks
-     * since from 4.0 there is no limitation for number of results returned from server.
-     * @param throwIfQueryPageSizeIsNotSet value to set
-     */
-    public void setThrowIfQueryPageSizeIsNotSet(boolean throwIfQueryPageSizeIsNotSet) {
-        assertNotFrozen();
-        this._throwIfQueryPageSizeIsNotSet = throwIfQueryPageSizeIsNotSet;
-    }
 
     /**
      * Whether UseOptimisticConcurrency is set to true by default for all opened sessions
@@ -776,7 +785,6 @@ public class DocumentConventions {
         cloned._findJavaClass = _findJavaClass;
         cloned._findJavaClassByName = _findJavaClassByName;
         cloned._useOptimisticConcurrency = _useOptimisticConcurrency;
-        cloned._throwIfQueryPageSizeIsNotSet = _throwIfQueryPageSizeIsNotSet;
         cloned._maxNumberOfRequestsPerSession = _maxNumberOfRequestsPerSession;
         cloned._loadBalancerPerSessionContextSelector = _loadBalancerPerSessionContextSelector;
         cloned._readBalanceBehavior = _readBalanceBehavior;
@@ -805,6 +813,7 @@ public class DocumentConventions {
      *  @return Identity property (field)
      */
     public Field getIdentityProperty(Class clazz) {
+        // If we had obtained the identity property for that type, we will return it.
         Field info = _idPropertyCache.get(clazz);
         if (info != null) {
             return info;

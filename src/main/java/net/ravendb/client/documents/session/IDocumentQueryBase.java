@@ -13,7 +13,8 @@ import java.util.function.Consumer;
 /**
  *  A query against a Raven index
  */
-public interface IDocumentQueryBase<T, TSelf extends IDocumentQueryBase<T, TSelf>> extends IQueryBase<T, TSelf>, IFilterDocumentQueryBase<T, TSelf> {
+public interface IDocumentQueryBase<T, TSelf extends IDocumentQueryBase<T, TSelf>>
+        extends IQueryBase<T, TSelf>, IFilterDocumentQueryBase<T, TSelf>, IPagingDocumentQueryBase<T, TSelf> {
 
     /**
      * Adds an ordering for a specific field to the query

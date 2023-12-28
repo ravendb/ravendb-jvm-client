@@ -324,12 +324,12 @@ public class DocumentSession extends InMemoryDocumentSessionOperations
         return lazyValue;
     }
 
-    protected Lazy<Long> addLazyCountOperation(ILazyOperation operation) {
+    protected Lazy<Integer> addLazyCountOperation(ILazyOperation operation) {
         pendingLazyOperations.add(operation);
 
         return new Lazy<>(() -> {
             executeAllPendingLazyOperations();
-            return operation.getQueryResult().getTotalResults();
+            return (int)operation.getQueryResult().getTotalResults();
         });
     }
 

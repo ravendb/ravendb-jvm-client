@@ -30,6 +30,8 @@ import net.ravendb.client.documents.queries.timings.QueryTimings;
 import net.ravendb.client.documents.session.loaders.IncludeBuilderBase;
 import net.ravendb.client.documents.session.operations.QueryOperation;
 import net.ravendb.client.documents.session.operations.lazy.LazyQueryOperation;
+import net.ravendb.client.documents.session.querying.sharding.IQueryShardedContextBuilder;
+import net.ravendb.client.documents.session.querying.sharding.QueryShardedContextBuilder;
 import net.ravendb.client.documents.session.tokens.*;
 import net.ravendb.client.exceptions.InvalidQueryException;
 import net.ravendb.client.extensions.JsonExtensions;
@@ -323,6 +325,22 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
 
     protected void _projection(ProjectionBehavior projectionBehavior) {
         this.projectionBehavior = projectionBehavior;
+    }
+
+    protected void _shardContext(Consumer<IQueryShardedContextBuilder> builder) {
+        QueryShardedContextBuilder builderImpl = new QueryShardedContextBuilder();
+
+        builder.accept(builderImpl);
+
+        Object shardContext;
+
+        if (builderImpl.documentIds.size() == 1) {
+            shardContext = builderImpl.documentIds.iterator().next();
+        } else {
+            shardContext = builderImpl.documentIds;
+        }
+
+        queryParameters.put(Constants.Documents.Querying.Sharding.SHARD_CONTEXT_PARAMETER_NAME, shardContext);
     }
 
     @SuppressWarnings("unused")
@@ -1228,7 +1246,14 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
 
     private String toString(boolean compatibilityMode) {
         if (queryRaw != null) {
-            return queryRaw;
+            if (compatibilityMode) {
+                return queryRaw;
+            }
+
+            StringBuilder rawQueryText = new StringBuilder(queryRaw);
+            buildPagination(rawQueryText);
+
+            return rawQueryText.toString();
         }
 
         if (_currentClauseDepth != 0) {
@@ -1675,57 +1700,55 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
     }
 
     private Object transformValue(WhereParams whereParams, boolean forRange) {
-        if (whereParams.getValue() == null) {
+        Object actualValue = whereParams.getValue();
+        if (actualValue == null) {
             return null;
         }
-
-        if ("".equals(whereParams.getValue())) {
-            return "";
+        if (actualValue instanceof String) {
+            return actualValue;
         }
 
         Reference<Object> objValueReference = new Reference<>();
-        if (_conventions.tryConvertValueToObjectForQuery(whereParams.getFieldName(), whereParams.getValue(), forRange, objValueReference)) {
+        if (_conventions.tryConvertValueToObjectForQuery(whereParams.getFieldName(), actualValue, forRange, objValueReference)) {
             return objValueReference.value;
         }
 
-        Class<?> clazz = whereParams.getValue().getClass();
-        if (Date.class.equals(clazz)) {
-            return whereParams.getValue();
-        }
+        Class<?> clazz = actualValue.getClass();
 
-        if (String.class.equals(clazz)) {
-            return whereParams.getValue();
-        }
 
         if (Integer.class.equals(clazz)) {
-            return whereParams.getValue();
+            return actualValue;
         }
 
         if (Long.class.equals(clazz)) {
-            return whereParams.getValue();
+            return actualValue;
         }
 
         if (Float.class.equals(clazz)) {
-            return whereParams.getValue();
+            return actualValue;
         }
 
         if (Double.class.equals(clazz)) {
-            return whereParams.getValue();
+            return actualValue;
         }
 
         if (Duration.class.equals(clazz)) {
-            return ((Duration) whereParams.getValue()).toNanos() / 100;
+            return ((Duration) actualValue).toNanos() / 100;
         }
 
         if (Boolean.class.equals(clazz)) {
-            return whereParams.getValue();
+            return actualValue;
+        }
+
+        if (Date.class.equals(clazz)) {
+            return actualValue;
         }
 
         if (clazz.isEnum()) {
-            return whereParams.getValue();
+            return actualValue;
         }
 
-        return whereParams.getValue();
+        return actualValue;
     }
 
     private String addQueryParameter(Object value) {

@@ -218,7 +218,7 @@ public abstract class ClusterTransactionOperationsBase {
         return value;
     }
 
-    public void registerCompareExchangeValues(ObjectNode values, boolean includingMissingAtomicGuards) {
+    public void registerCompareExchangeIncludes(ObjectNode values, boolean includingMissingAtomicGuards) {
         if (session.noTracking) {
             return;
         }
@@ -240,7 +240,7 @@ public abstract class ClusterTransactionOperationsBase {
 
                     _missingDocumentsTooAtomicGuardIndex.put(val.getKey().substring(Constants.CompareExchange.RVN_ATOMIC_PREFIX.length()), val.getChangeVector());
                 } else {
-                    registerCompareExchangeValue(val);
+                    registerCompareExchangeInclude(val);
                 }
             }
         }

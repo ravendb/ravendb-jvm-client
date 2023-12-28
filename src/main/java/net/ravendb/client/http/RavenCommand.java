@@ -2,6 +2,7 @@ package net.ravendb.client.http;
 
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import net.ravendb.client.Constants;
 import net.ravendb.client.extensions.HttpExtensions;
 import net.ravendb.client.extensions.JsonExtensions;
 import net.ravendb.client.primitives.Reference;
@@ -216,7 +217,7 @@ public abstract class RavenCommand<TResult> {
     @SuppressWarnings("unused")
     protected void addChangeVectorIfNotNull(String changeVector, HttpRequestBase request) {
         if (changeVector != null) {
-            request.addHeader("If-Match", "\"" + changeVector + "\"");
+            request.addHeader(Constants.Headers.IF_MATCH, "\"" + changeVector + "\"");
         }
     }
 

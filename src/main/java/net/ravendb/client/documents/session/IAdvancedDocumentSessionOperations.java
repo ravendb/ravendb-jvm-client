@@ -216,6 +216,13 @@ public interface IAdvancedDocumentSessionOperations {
     Map<String, List<DocumentsChanges>> whatChanged();
 
     /**
+     * Returns all changes for the specified entity. Including name of the field/property that changed, its old and new value and change type.
+     * @param entity Entity
+     * @return list of changes
+     */
+    List<DocumentsChanges> whatChangedFor(Object entity);
+
+    /**
      * @return Returns all the tracked entities in this session.
      */
     Map<String, DocumentsById.EntityInfo> getTrackedEntities();

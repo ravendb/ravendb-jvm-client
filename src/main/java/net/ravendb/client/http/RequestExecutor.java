@@ -834,7 +834,7 @@ public class RequestExecutor implements CleanCloseable {
 
                 if (response.getStatusLine().getStatusCode() >= 400) {
                     if (!handleUnsuccessfulResponse(chosenNode, nodeIndex, command, request, response, urlRef.value, sessionInfo, shouldRetry)) {
-                        Header dbMissingHeader = response.getFirstHeader("Database-Missing");
+                        Header dbMissingHeader = response.getFirstHeader(Constants.Headers.DATABASE_MISSING);
                         if (dbMissingHeader != null && dbMissingHeader.getValue() != null) {
                             throw new DatabaseDoesNotExistException(dbMissingHeader.getValue());
                         }
@@ -1346,10 +1346,6 @@ public class RequestExecutor implements CleanCloseable {
         }
     }
 
-    private static void handleConflict(CloseableHttpResponse response) {
-        ExceptionDispatcher.throwException(response);
-    }
-
     public static InputStream readAsStream(CloseableHttpResponse response) throws IOException {
         return response.getEntity().getContent();
     }
@@ -1375,7 +1371,7 @@ public class RequestExecutor implements CleanCloseable {
         }
 
         if (_nodeSelector == null) {
-            spawnHealthChecks(chosenNode, nodeIndex);
+            spawnHealthChecks(chosenNode);
             return false;
         }
 
@@ -1389,7 +1385,7 @@ public class RequestExecutor implements CleanCloseable {
             return true;
         }
 
-        spawnHealthChecks(chosenNode, nodeIndex);
+        spawnHealthChecks(chosenNode);
 
         CurrentIndexAndNode currentIndexAndNode = chooseNodeForRequest(command, sessionInfo);
         long topologyEtag = _nodeSelector.getTopology() != null && _nodeSelector.getTopology().getEtag() != null ? _nodeSelector.getTopology().getEtag() : -2;
@@ -1486,7 +1482,7 @@ public class RequestExecutor implements CleanCloseable {
                         ServerNode node = _nodeSelector.getTopology().getNodes().get(index);
                         if (failedNodes.containsKey(node)) {
                             // if other node succeed in broadcast we need to send health checks to the original failed node
-                            spawnHealthChecks(node, index);
+                            spawnHealthChecks(node);
                         }
                         return null;
                     });
@@ -1575,7 +1571,7 @@ public class RequestExecutor implements CleanCloseable {
     }
 
     public ServerNode handleServerNotResponsive(String url, ServerNode chosenNode, int nodeIndex, Exception e) {
-        spawnHealthChecks(chosenNode, nodeIndex);
+        spawnHealthChecks(chosenNode);
         if (_nodeSelector != null) {
             _nodeSelector.onFailedRequest(nodeIndex);
         }
@@ -1600,12 +1596,12 @@ public class RequestExecutor implements CleanCloseable {
         return preferredNode.currentNode;
     }
 
-    private void spawnHealthChecks(ServerNode chosenNode, int nodeIndex) {
+    private void spawnHealthChecks(ServerNode chosenNode) {
         if (_nodeSelector != null && _nodeSelector.getTopology().getNodes().size() < 2) {
             return;
         }
 
-        NodeStatus nodeStatus = new NodeStatus(this, nodeIndex, chosenNode);
+        NodeStatus nodeStatus = new NodeStatus(this, chosenNode);
 
         if (_failedNodesTimers.putIfAbsent(chosenNode, nodeStatus) == null) {
             nodeStatus.startTimer();
@@ -1616,7 +1612,7 @@ public class RequestExecutor implements CleanCloseable {
         // In some cases, race conditions may occur with a recently changed topology and a failed node.
         // We still should check the node's health, and if healthy, remove its timer and restore its index.
 
-        int nodeIndex;
+        Integer nodeIndex;
         ServerNode serverNode;
         NodeStatus status;
 
@@ -1635,7 +1631,7 @@ public class RequestExecutor implements CleanCloseable {
             return;
         }
 
-        if (serverNode == null) {
+        if (serverNode == null || nodeIndex == null) {
             return;
         }
 
@@ -1799,13 +1795,11 @@ public class RequestExecutor implements CleanCloseable {
 
         private Duration _timerPeriod;
         private final RequestExecutor _requestExecutor;
-        public final int nodeIndex;
         public final ServerNode node;
         private Timer _timer;
 
-        public NodeStatus(RequestExecutor requestExecutor, int nodeIndex, ServerNode node) {
+        public NodeStatus(RequestExecutor requestExecutor, ServerNode node) {
             _requestExecutor = requestExecutor;
-            this.nodeIndex = nodeIndex;
             this.node = node;
             _timerPeriod = Duration.ofMillis(100);
         }

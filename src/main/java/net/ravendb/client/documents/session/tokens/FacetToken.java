@@ -168,7 +168,10 @@ public class FacetToken extends QueryToken {
 
 
     private static String getOptionsParameterName(FacetBase facet, Function<Object, String> addQueryParameter) {
-        return facet.getOptions() != null && facet.getOptions() != FacetOptions.getDefaultOptions() ? addQueryParameter.apply(facet.getOptions()) : null;
+        if (facet instanceof Facet) {
+            return ((Facet) facet).getOptions() != null && ((Facet) facet).getOptions() != FacetOptions.getDefaultOptions() ? addQueryParameter.apply(((Facet) facet).getOptions()) : null;
+        }
+        return null;
     }
 
     private static class FacetAggregationToken extends QueryToken {

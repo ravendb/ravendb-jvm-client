@@ -1,5 +1,7 @@
 package net.ravendb.client.documents.operations.backups;
 
+import net.ravendb.client.documents.operations.backups.sharding.ShardedRestoreSettings;
+
 public abstract class RestoreBackupConfigurationBase {
     private String databaseName;
     private String lastFileNameToRestore;

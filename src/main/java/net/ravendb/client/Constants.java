@@ -59,6 +59,16 @@ public class Constants {
             }
         }
 
+        public static class Querying {
+            private Querying() {}
+
+            public static class Sharding {
+                private Sharding() {}
+
+                public static final String SHARD_CONTEXT_PARAMETER_NAME = "__shardContext";
+            }
+        }
+
         public static class PeriodicBackup {
 
             public static final String FULL_BACKUP_EXTENSION = "ravendb-full-backup";

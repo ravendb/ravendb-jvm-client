@@ -4,61 +4,51 @@ import net.ravendb.client.primitives.EventHelper;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 
-public class DatabaseConnectionState implements IChangesConnectionState<DatabaseChange> {
+public class DatabaseConnectionState extends AbstractDatabaseConnectionState implements IChangesConnectionState<DatabaseChange> {
 
-    private final List<Consumer<Exception>> onError = new ArrayList<>();
+    private final List<Consumer<DocumentChange>> onDocumentChangeNotification = new ArrayList<>();
 
-    public void addOnError(Consumer<Exception> handler) {
-        this.onError.add(handler);
-    }
+    private final List<Consumer<CounterChange>> onCounterChangeNotification = new ArrayList<>();
 
-    public void removeOnError(Consumer<Exception> handler) {
-        this.onError.remove(handler);
-    }
+    private final List<Consumer<IndexChange>> onIndexChangeNotification = new ArrayList<>();
 
-    private final Runnable _onDisconnect;
-    public final Runnable onConnect;
+    private final List<Consumer<OperationStatusChange>> onOperationStatusChangeNotification = new ArrayList<>();
 
-    private final AtomicInteger _value = new AtomicInteger();
-    public Exception lastException;
+    private final List<Consumer<AggressiveCacheChange>> onAggressiveChangeChangeNotification = new ArrayList<>();
 
-    @Override
-    public void inc() {
-        _value.incrementAndGet();
-    }
+    private final List<Consumer<TimeSeriesChange>> onTimeSeriesChangeNotification = new ArrayList<>();
 
-    @Override
-    public void dec() {
-        if (_value.decrementAndGet() == 0) {
-            _onDisconnect.run();
-        }
-    }
-
-    @Override
-    public void error(Exception e) {
-        lastException = e;
-        EventHelper.invoke(onError, e);
-    }
-
-    @Override
-    public void close() {
-        onDocumentChangeNotification.clear();
-        onIndexChangeNotification.clear();
-        onOperationStatusChangeNotification.clear();
-        onCounterChangeNotification.clear();
-        onTimeSeriesChangeNotification.clear();
-        onError.clear();
-        onAggressiveChangeChangeNotification.clear();
-    }
 
     public DatabaseConnectionState(Runnable onConnect, Runnable onDisconnect) {
-        this.onConnect = onConnect;
-        _onDisconnect = onDisconnect;
-        _value.set(0);
+        super(onConnect, onDisconnect);
     }
+
+    public void send(DocumentChange documentChange) {
+        EventHelper.invoke(onDocumentChangeNotification, documentChange);
+    }
+
+    public void send(IndexChange indexChange) {
+        EventHelper.invoke(onIndexChangeNotification, indexChange);
+    }
+
+    public void send(OperationStatusChange operationStatusChange) {
+        EventHelper.invoke(onOperationStatusChangeNotification, operationStatusChange);
+    }
+
+    public void send(CounterChange counterChange) {
+        EventHelper.invoke(onCounterChangeNotification, counterChange);
+    }
+
+    public void send(TimeSeriesChange timeSeriesChange) {
+        EventHelper.invoke(onTimeSeriesChangeNotification, timeSeriesChange);
+    }
+
+    public void send(AggressiveCacheChange change) {
+        EventHelper.invoke(onAggressiveChangeChangeNotification, change);
+    }
+
 
 
     @SuppressWarnings("unchecked")
@@ -112,38 +102,15 @@ public class DatabaseConnectionState implements IChangesConnectionState<Database
         }
     }
 
-    private final List<Consumer<DocumentChange>> onDocumentChangeNotification = new ArrayList<>();
+    @Override
+    public void close() {
+        super.close();
 
-    private final List<Consumer<IndexChange>> onIndexChangeNotification = new ArrayList<>();
-
-    private final List<Consumer<OperationStatusChange>> onOperationStatusChangeNotification = new ArrayList<>();
-
-    private final List<Consumer<CounterChange>> onCounterChangeNotification = new ArrayList<>();
-
-    private final List<Consumer<TimeSeriesChange>> onTimeSeriesChangeNotification = new ArrayList<>();
-    private final List<Consumer<AggressiveCacheChange>> onAggressiveChangeChangeNotification = new ArrayList<>();
-
-    public void send(DocumentChange documentChange) {
-        EventHelper.invoke(onDocumentChangeNotification, documentChange);
-    }
-
-    public void send(IndexChange indexChange) {
-        EventHelper.invoke(onIndexChangeNotification, indexChange);
-    }
-
-    public void send(OperationStatusChange operationStatusChange) {
-        EventHelper.invoke(onOperationStatusChangeNotification, operationStatusChange);
-    }
-
-    public void send(CounterChange counterChange) {
-        EventHelper.invoke(onCounterChangeNotification, counterChange);
-    }
-
-    public void send(TimeSeriesChange timeSeriesChange) {
-        EventHelper.invoke(onTimeSeriesChangeNotification, timeSeriesChange);
-    }
-
-    public void send(AggressiveCacheChange change) {
-        EventHelper.invoke(onAggressiveChangeChangeNotification, change);
+        onDocumentChangeNotification.clear();
+        onIndexChangeNotification.clear();
+        onOperationStatusChangeNotification.clear();
+        onCounterChangeNotification.clear();
+        onTimeSeriesChangeNotification.clear();
+        onAggressiveChangeChangeNotification.clear();
     }
 }

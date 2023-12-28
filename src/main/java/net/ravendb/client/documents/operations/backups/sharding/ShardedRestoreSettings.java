@@ -2,7 +2,7 @@ package net.ravendb.client.documents.operations.backups.sharding;
 
 import java.util.Map;
 
-public class ShardRestoreSettings {
+public class ShardedRestoreSettings {
     private Map<String, SingleShardRestoreSetting> shards;
 
     public Map<String, SingleShardRestoreSetting> getShards() {

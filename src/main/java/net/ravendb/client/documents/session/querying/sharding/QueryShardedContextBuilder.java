@@ -6,7 +6,7 @@ import java.util.TreeSet;
 
 public class QueryShardedContextBuilder implements IQueryShardedContextBuilder {
 
-    private Set<String> documentIds = new TreeSet<>(String::compareToIgnoreCase);
+    public Set<String> documentIds = new TreeSet<>(String::compareToIgnoreCase);
 
     @Override
     public IQueryShardedContextBuilder byDocumentId(String id) {

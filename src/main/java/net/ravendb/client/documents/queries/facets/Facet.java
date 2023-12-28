@@ -10,12 +10,24 @@ public class Facet extends FacetBase {
     @JsonProperty("FieldName")
     private String fieldName;
 
+    @JsonProperty("Options")
+    private FacetOptions options;
+
     public String getFieldName() {
         return fieldName;
     }
 
     public void setFieldName(String fieldName) {
         this.fieldName = fieldName;
+    }
+
+
+    public FacetOptions getOptions() {
+        return options;
+    }
+
+    public void setOptions(FacetOptions options) {
+        this.options = options;
     }
 
     @Override

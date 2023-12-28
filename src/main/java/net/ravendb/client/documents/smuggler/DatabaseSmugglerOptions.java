@@ -68,6 +68,8 @@ public class DatabaseSmugglerOptions implements IDatabaseSmugglerOptions {
     private String encryptionKey;
     private List<String> collections;
 
+    private boolean skipCorruptedData;
+
     public DatabaseSmugglerOptions() {
         this.operateOnTypes = DEFAULT_OPERATE_ON_TYPES.clone();
         this.operateOnDatabaseRecordType = DEFAULT_OPERATE_ON_DATABASE_RECORD_TYPES.clone();
@@ -165,5 +167,20 @@ public class DatabaseSmugglerOptions implements IDatabaseSmugglerOptions {
 
     public void setCollections(List<String> collections) {
         this.collections = collections;
+    }
+
+    /**
+     * In case the database is corrupted (for example, Compression Dictionaries are lost), it is possible to export all the remaining data.
+     */
+    public boolean isSkipCorruptedData() {
+        return skipCorruptedData;
+    }
+
+    /**
+     * In case the database is corrupted (for example, Compression Dictionaries are lost), it is possible to export all the remaining data.
+     * @param skipCorruptedData skip corrupted data
+     */
+    public void setSkipCorruptedData(boolean skipCorruptedData) {
+        this.skipCorruptedData = skipCorruptedData;
     }
 }
