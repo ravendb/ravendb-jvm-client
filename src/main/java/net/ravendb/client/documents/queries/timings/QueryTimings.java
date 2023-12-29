@@ -9,6 +9,7 @@ public class QueryTimings {
 
     private long durationInMs;
     private Map<String, QueryTimings> timings;
+    private ObjectNode queryPlan;
 
     public long getDurationInMs() {
         return durationInMs;
@@ -24,6 +25,14 @@ public class QueryTimings {
 
     public void setTimings(Map<String, QueryTimings> timings) {
         this.timings = timings;
+    }
+
+    public ObjectNode getQueryPlan() {
+        return queryPlan;
+    }
+
+    public void setQueryPlan(ObjectNode queryPlan) {
+        this.queryPlan = queryPlan;
     }
 
     public void update(QueryResult queryResult) {

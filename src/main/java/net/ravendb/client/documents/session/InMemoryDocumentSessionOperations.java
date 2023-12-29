@@ -1239,6 +1239,38 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
         return changes;
     }
 
+    /**
+     * Returns all changes for the specified entity. Including name of the field/property that changed, its old and new value and change type.
+     * @param entity Entity
+     * @return list of changes
+     */
+    public List<DocumentsChanges> whatChangedFor(Object entity) {
+        DocumentInfo documentInfo = documentsByEntity.get(entity);
+        if (documentInfo == null) {
+            return new ArrayList<>();
+        }
+
+        if (deletedEntities.contains(entity)) {
+            DocumentsChanges change = new DocumentsChanges();
+            change.setFieldNewValue("");
+            change.setFieldOldValue("");
+            change.setChange(DocumentsChanges.ChangeType.DOCUMENT_DELETED);
+
+            return Collections.singletonList(change);
+        }
+
+        updateMetadataModifications(documentInfo.getMetadataInstance(), documentInfo.getMetadata());
+        ObjectNode document = entityToJson.convertEntityToJson(documentInfo.getEntity(), documentInfo);
+
+        Map<String, List<DocumentsChanges>> changes = new HashMap<>();
+
+        if (!entityChanged(document, documentInfo, changes)) {
+            return new ArrayList<>();
+        }
+
+        return changes.get(documentInfo.getId());
+    }
+
     public Map<String, DocumentsById.EntityInfo> getTrackedEntities() {
         Map<String, DocumentsById.EntityInfo> tracked = documentsById.getTrackedEntities(this);
 

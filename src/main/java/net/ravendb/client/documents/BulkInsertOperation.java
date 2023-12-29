@@ -7,6 +7,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import net.ravendb.client.Constants;
 import net.ravendb.client.documents.bulkInsert.BulkInsertOperationBase;
 import net.ravendb.client.documents.bulkInsert.BulkInsertOptions;
+import net.ravendb.client.documents.bulkInsert.BulkInsertWriter;
 import net.ravendb.client.documents.commands.GetNextOperationIdCommand;
 import net.ravendb.client.documents.commands.KillOperationCommand;
 import net.ravendb.client.documents.commands.batches.CommandType;
@@ -135,24 +136,21 @@ public class BulkInsertOperation extends BulkInsertOperationBase<Object> impleme
 
     private ExecutorService _executorService;
     private final RequestExecutor _requestExecutor;
-    private CompletableFuture<Void> _bulkInsertExecuteTask;
     private final ObjectMapper objectMapper;
 
-    private OutputStream _stream;
-    private final BulkInsertStreamExposerContent _streamExposerContent;
 
-    private boolean _first = true;
     private CommandType _inProgressCommand;
     private final CountersBulkInsertOperation _countersOperation;
     private final AttachmentsBulkInsertOperation _attachmentsOperation;
-    private long _operationId = -1;
     private String _nodeTag;
 
     private boolean useCompression = false;
     private final int _timeSeriesBatchSize;
 
     private final AtomicInteger _concurrentCheck = new AtomicInteger();
-    private boolean _isInitialWrite = true;
+
+    private boolean _first = true;
+
 
     private CleanCloseable _unsubscribeChanges;
     private final List<EventHandler<BulkInsertOnProgressEventArgs>> _onProgress = new ArrayList<>();
@@ -182,11 +180,9 @@ public class BulkInsertOperation extends BulkInsertOperationBase<Object> impleme
         _requestExecutor = store.getRequestExecutor(database);
         objectMapper = store.getConventions().getEntityMapper();
 
-        _currentWriterBacking = new ByteArrayOutputStream();
-        _currentWriter = new OutputStreamWriter(_currentWriterBacking);
-        _backgroundWriterBacking = new ByteArrayOutputStream();
-        _backgroundWriter = new OutputStreamWriter(_backgroundWriterBacking);
-        _streamExposerContent = new BulkInsertStreamExposerContent();
+        _writer = new BulkInsertWriter();
+        _writer.initialize();
+
         _countersOperation = new CountersBulkInsertOperation(this);
         _attachmentsOperation = new AttachmentsBulkInsertOperation(this);
 
@@ -246,10 +242,10 @@ public class BulkInsertOperation extends BulkInsertOperationBase<Object> impleme
 
             _first = false;
             _inProgressCommand = CommandType.NONE;
-            _currentWriter.write("{\"Type\":\"HeartBeat\"}");
+            _writer.write("{\"Type\":\"HeartBeat\"}");
 
-            flushIfNeeded();
-            _requestBodyStream.flush();
+            _writer.flushIfNeeded();
+            _writer.requestBodyStream.flush();
         } catch (Exception e) {
             throw new RuntimeException(e);
         } finally {
@@ -264,6 +260,11 @@ public class BulkInsertOperation extends BulkInsertOperationBase<Object> impleme
                 int major = Integer.parseInt(versionParsed[0]);
                 int minor = versionParsed.length > 1 ? Integer.parseInt(versionParsed[1]) : 0;
                 int build = versionParsed.length > 2 ? Integer.parseInt(versionParsed[2]) : 0;
+
+                if (major == 6 && build < 2) {
+                    return false;
+                }
+
                 return major > 5 || (major == 5 && minor >= 4 && build >= 110);
             }
         } catch (NumberFormatException e) {
@@ -291,24 +292,8 @@ public class BulkInsertOperation extends BulkInsertOperationBase<Object> impleme
         this.useCompression = useCompression;
     }
 
-    protected void throwBulkInsertAborted(Exception e, Exception flushEx) {
 
-        BulkInsertAbortedException errorFromServer = null;
-        try {
-            errorFromServer = getExceptionFromOperation();
-        } catch (Exception ee) {
-            // server is probably down, will propagate the original exception
-        }
-
-        if (errorFromServer != null) {
-            throw errorFromServer;
-        }
-
-        throw new BulkInsertAbortedException("Failed to execute bulk insert",
-                ObjectUtils.firstNonNull(e, flushEx));
-    }
-
-    private void throwNoDatabase() {
+    private static void throwNoDatabase() {
         throw new BulkInsertInvalidOperationException("Cannot start bulk insert operation without specifying a name of a database to operate on."
             + "Database name can be passed as an argument when bulk insert is being created or default database can be defined using 'DocumentStore.setDatabase' method.");
     }
@@ -400,25 +385,27 @@ public class BulkInsertOperation extends BulkInsertOperationBase<Object> impleme
             _first = false;
             _inProgressCommand = CommandType.NONE;
 
-            _currentWriter.write("{\"Id\":\"");
+            _writer.write("{\"Id\":\"");
             writeString(id);
-            _currentWriter.write("\",\"Type\":\"PUT\",\"Document\":");
+            _writer.write("\",\"Type\":\"");
+            writeString(SharpEnum.value(type));
+            _writer.write("\",\"Document\":");
 
-            _currentWriter.flush();
+            _writer.flush();
 
             DocumentInfo documentInfo = new DocumentInfo();
             documentInfo.setMetadataInstance(metadata);
             ObjectNode json = EntityToJson.convertEntityToJson(entity, _conventions, documentInfo, true);
 
             try (JsonGenerator generator =
-                         objectMapper.getFactory().createGenerator(_currentWriter)) {
+                         objectMapper.getFactory().createGenerator(_writer.getStreamWriter())) {
                 generator.configure(JsonGenerator.Feature.AUTO_CLOSE_TARGET, false);
 
                 generator.writeTree(json);
             }
 
-            _currentWriter.write("}");
-            flushIfNeeded();
+            _writer.write("}");
+            _writer.flushIfNeeded();
         } catch (Exception e) {
             handleErrors(id, e);
         }
@@ -449,47 +436,6 @@ public class BulkInsertOperation extends BulkInsertOperationBase<Object> impleme
         return new ReleaseStream(this);
     }
 
-    private void flushIfNeeded() throws IOException, ExecutionException, InterruptedException {
-        _currentWriter.flush();
-
-        if (_currentWriterBacking.size() > _maxSizeInBuffer || _asyncWrite.isDone()) {
-
-            _asyncWrite.get();
-
-            Writer tmp = _currentWriter;
-            _currentWriter = _backgroundWriter;
-            _backgroundWriter = tmp;
-
-            ByteArrayOutputStream tmpBaos = _currentWriterBacking;
-            _currentWriterBacking = _backgroundWriterBacking;
-            _backgroundWriterBacking = tmpBaos;
-
-            _currentWriterBacking.reset();
-
-            final byte[] buffer = _backgroundWriterBacking.toByteArray();
-            _asyncWrite = writeToRequestBodyStream(buffer);
-        }
-    }
-
-    private CompletableFuture<Void> writeToRequestBodyStream(byte[] buffer) {
-        return CompletableFuture.supplyAsync(() -> {
-            try {
-                _requestBodyStream.write(buffer);
-
-                if (_isInitialWrite) {
-                    _isInitialWrite = false;
-
-                    // send this chunk
-                    _requestBodyStream.flush();
-                }
-
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
-            return null;
-        }, _executorService);
-    }
-
     private void endPreviousCommandIfNeeded() {
         if (_inProgressCommand == CommandType.COUNTERS) {
             _countersOperation.endPreviousCommandIfNeeded();
@@ -503,30 +449,15 @@ public class BulkInsertOperation extends BulkInsertOperationBase<Object> impleme
             char c = input.charAt(i);
             if ('"' == c) {
                 if (i == 0 || input.charAt(i - 1) != '\\') {
-                    _currentWriter.write("\\");
+                    _writer.write("\\");
                 }
             }
-            _currentWriter.write(c);
+            _writer.write(c);
         }
     }
 
     private void writeComma() throws IOException {
-        _currentWriter.write(",");
-    }
-
-    protected void executeBeforeStore() {
-        if (_stream == null) {
-            waitForId();
-            ensureStream();
-        }
-
-        if (_bulkInsertExecuteTask.isCompletedExceptionally()) {
-            try {
-                _bulkInsertExecuteTask.get();
-            } catch (ExecutionException | InterruptedException e) {
-                throwBulkInsertAborted(e, null);
-            }
-        }
+        _writer.write(",");
     }
 
     private static void verifyValidId(String id) {
@@ -557,18 +488,11 @@ public class BulkInsertOperation extends BulkInsertOperationBase<Object> impleme
         return null;
     }
 
-    private OutputStream _requestBodyStream;
-    private ByteArrayOutputStream _currentWriterBacking;
-    private Writer _currentWriter;
-    private ByteArrayOutputStream _backgroundWriterBacking;
-    private Writer _backgroundWriter;
-    private CompletableFuture<Void> _asyncWrite = CompletableFuture.completedFuture(null);
-    @SuppressWarnings("FieldCanBeLocal")
-    private final int _maxSizeInBuffer = 1024 * 1024;
+    private BulkInsertWriter _writer;
 
     protected void ensureStream() {
         try {
-            BulkInsertCommand bulkCommand = new BulkInsertCommand(_operationId, _streamExposerContent, _nodeTag, _options.isSkipOverwriteIfUnchanged());
+            BulkInsertCommand bulkCommand = new BulkInsertCommand(_operationId, _writer.streamExposer, _nodeTag, _options.isSkipOverwriteIfUnchanged());
             bulkCommand.useCompression = useCompression;
 
             _bulkInsertExecuteTask = CompletableFuture.supplyAsync(() -> {
@@ -587,7 +511,7 @@ public class BulkInsertOperation extends BulkInsertOperationBase<Object> impleme
     }
 
     private void throwOnUnavailableStream(String id, Exception innerEx) {
-        _streamExposerContent.errorOnProcessingRequest(new BulkInsertAbortedException("Write to stream failed at document with id " + id, innerEx));
+        _writer.streamExposer.errorOnProcessingRequest(new BulkInsertAbortedException("Write to stream failed at document with id " + id, innerEx));
 
         try {
             _bulkInsertExecuteTask.get();
@@ -613,36 +537,25 @@ public class BulkInsertOperation extends BulkInsertOperationBase<Object> impleme
     @Override
     public void close() {
         try {
+            if (_writer.streamExposer.isDone()) {
+                return;
+            }
+
             endPreviousCommandIfNeeded();
 
             Exception flushEx = null;
 
-            if (this._streamExposerContent.isDone()) {
-                return;
-            }
 
-            if (_stream != null) {
+            try {
+                _streamLock.acquire();
                 try {
-                    _streamLock.acquire();
-                    try {
-
-                        _currentWriter.write("]");
-                        _currentWriter.flush();
-
-                        _asyncWrite.get();
-
-                        byte[] buffer = _currentWriterBacking.toByteArray();
-                        _requestBodyStream.write(buffer);
-                        _stream.flush();
-                    } finally {
-                        _streamLock.release();
-                    }
-                } catch (Exception e) {
-                    flushEx = e;
+                    _writer.close();
+                } finally {
+                    _streamLock.release();
                 }
+            } catch (Exception e) {
+                flushEx = e;
             }
-
-            _streamExposerContent.done();
 
             if (_operationId == -1) {
                 // closing without calling a single store.
@@ -773,20 +686,20 @@ public class BulkInsertOperation extends BulkInsertOperationBase<Object> impleme
         public void increment(String id, String name, long delta) {
             try (CleanCloseable check = _operation.concurrencyCheck()) {
                 try {
+                    _operation._lastWriteToStream = new Date();
+
                     _operation.executeBeforeStore();
 
                     if (_operation._inProgressCommand == CommandType.TIME_SERIES) {
                         TimeSeriesBulkInsert.throwAlreadyRunningTimeSeries();
                     }
 
-                    _operation._lastWriteToStream = new Date();
-
                     boolean isFirst = _id == null;
 
                     if (isFirst || !_id.equalsIgnoreCase(id)) {
                         if (!isFirst) {
                             //we need to end the command for the previous document id
-                            _operation._currentWriter.write("]}},");
+                            _operation._writer.write("]}},");
                         } else if (!_operation._first) {
                             _operation.writeComma();
                         }
@@ -800,7 +713,7 @@ public class BulkInsertOperation extends BulkInsertOperationBase<Object> impleme
                     }
 
                     if (_countersInBatch >= MAX_COUNTERS_IN_BATCH) {
-                        _operation._currentWriter.write("]}},");
+                        _operation._writer.write("]}},");
 
                         writePrefixForNewCommand();
                     }
@@ -813,13 +726,13 @@ public class BulkInsertOperation extends BulkInsertOperationBase<Object> impleme
 
                     _first = false;
 
-                    _operation._currentWriter.write("{\"Type\":\"Increment\",\"CounterName\":\"");
+                    _operation._writer.write("{\"Type\":\"Increment\",\"CounterName\":\"");
                     _operation.writeString(name);
-                    _operation._currentWriter.write("\",\"Delta\":");
-                    _operation._currentWriter.write(String.valueOf(delta));
-                    _operation._currentWriter.write("}");
+                    _operation._writer.write("\",\"Delta\":");
+                    _operation._writer.write(String.valueOf(delta));
+                    _operation._writer.write("}");
 
-                    _operation.flushIfNeeded();
+                    _operation._writer.flushIfNeeded();
                 } catch (Exception e) {
                     _operation.handleErrors(_id, e);
                 }
@@ -832,7 +745,7 @@ public class BulkInsertOperation extends BulkInsertOperationBase<Object> impleme
             }
 
             try {
-                _operation._currentWriter.write("]}}");
+                _operation._writer.write("]}}");
                 _id = null;
             } catch (IOException e) {
                 throw new RavenException("Unable to write to stream", e);
@@ -843,11 +756,11 @@ public class BulkInsertOperation extends BulkInsertOperationBase<Object> impleme
             _first = true;
             _countersInBatch = 0;
 
-            _operation._currentWriter.write("{\"Id\":\"");
+            _operation._writer.write("{\"Id\":\"");
             _operation.writeString(_id);
-            _operation._currentWriter.write("\",\"Type\":\"Counters\",\"Counters\":{\"DocumentId\":\"");
+            _operation._writer.write("\",\"Type\":\"Counters\",\"Counters\":{\"DocumentId\":\"");
             _operation.writeString(_id);
-            _operation._currentWriter.write("\",\"Operations\":[");
+            _operation._writer.write("\",\"Operations\":[");
         }
     }
 
@@ -870,8 +783,6 @@ public class BulkInsertOperation extends BulkInsertOperationBase<Object> impleme
 
         protected void appendInternal(Date timestamp, Collection<Double> values, String tag) {
             try (CleanCloseable check = _operation.concurrencyCheck()) {
-
-
                 try {
                     _operation._lastWriteToStream = new Date();
                     _operation.executeBeforeStore();
@@ -883,7 +794,7 @@ public class BulkInsertOperation extends BulkInsertOperationBase<Object> impleme
 
                         writePrefixForNewCommand();
                     } else if (_timeSeriesInBatch >= _operation._timeSeriesBatchSize) {
-                        _operation._currentWriter.write("]}},");
+                        _operation._writer.write("]}},");
                         writePrefixForNewCommand();
                     }
 
@@ -895,12 +806,12 @@ public class BulkInsertOperation extends BulkInsertOperationBase<Object> impleme
 
                     _first = false;
 
-                    _operation._currentWriter.write("[");
+                    _operation._writer.write("[");
 
-                    _operation._currentWriter.write(String.valueOf(timestamp.getTime()));
+                    _operation._writer.write(String.valueOf(timestamp.getTime()));
                     _operation.writeComma();
 
-                    _operation._currentWriter.write(String.valueOf(values.size()));
+                    _operation._writer.write(String.valueOf(values.size()));
                     _operation.writeComma();
 
                     boolean firstValue = true;
@@ -911,18 +822,18 @@ public class BulkInsertOperation extends BulkInsertOperationBase<Object> impleme
                         }
 
                         firstValue = false;
-                        _operation._currentWriter.write(String.valueOf(value));
+                        _operation._writer.write(String.valueOf(value));
                     }
 
                     if (tag != null) {
-                        _operation._currentWriter.write(",\"");
+                        _operation._writer.write(",\"");
                         _operation.writeString(tag);
-                        _operation._currentWriter.write("\"");
+                        _operation._writer.write("\"");
                     }
 
-                    _operation._currentWriter.write("]");
+                    _operation._writer.write("]");
 
-                    _operation.flushIfNeeded();
+                    _operation._writer.flushIfNeeded();
                 } catch (Exception e) {
                     _operation.handleErrors(_id, e);
                 }
@@ -933,11 +844,11 @@ public class BulkInsertOperation extends BulkInsertOperationBase<Object> impleme
             _first = true;
             _timeSeriesInBatch = 0;
 
-            _operation._currentWriter.write("{\"Id\":\"");
+            _operation._writer.write("{\"Id\":\"");
             _operation.writeString(_id);
-            _operation._currentWriter.write("\",\"Type\":\"TimeSeriesBulkInsert\",\"TimeSeries\":{\"Name\":\"");
+            _operation._writer.write("\",\"Type\":\"TimeSeriesBulkInsert\",\"TimeSeries\":{\"Name\":\"");
             _operation.writeString(_name);
-            _operation._currentWriter.write("\",\"TimeFormat\":\"UnixTimeInMs\",\"Appends\":[");
+            _operation._writer.write("\",\"TimeFormat\":\"UnixTimeInMs\",\"Appends\":[");
         }
 
         static void throwAlreadyRunningTimeSeries() {
@@ -949,7 +860,7 @@ public class BulkInsertOperation extends BulkInsertOperationBase<Object> impleme
             _operation._inProgressCommand = CommandType.NONE;
 
             if (!_first) {
-                _operation._currentWriter.write("]}}");
+                _operation._writer.write("]}}");
             }
         }
     }
@@ -1049,19 +960,19 @@ public class BulkInsertOperation extends BulkInsertOperationBase<Object> impleme
                         _operation.writeComma();
                     }
 
-                    _operation._currentWriter.write("{\"Id\":\"");
+                    _operation._writer.write("{\"Id\":\"");
                     _operation.writeString(id);
-                    _operation._currentWriter.write("\",\"Type\":\"AttachmentPUT\",\"Name\":\"");
+                    _operation._writer.write("\",\"Type\":\"AttachmentPUT\",\"Name\":\"");
                     _operation.writeString(name);
 
                     if (contentType != null) {
-                        _operation._currentWriter.write("\",\"ContentType\":\"");
+                        _operation._writer.write("\",\"ContentType\":\"");
                         _operation.writeString(contentType);
                     }
 
-                    _operation._currentWriter.write("\",\"ContentLength\":");
-                    _operation._currentWriter.write(String.valueOf(bytes.length));
-                    _operation._currentWriter.write("}");
+                    _operation._writer.write("\",\"ContentLength\":");
+                    _operation._writer.write(String.valueOf(bytes.length));
+                    _operation._writer.write("}");
 
                     _operation.flushIfNeeded();
 

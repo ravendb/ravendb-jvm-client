@@ -1,8 +1,10 @@
 package net.ravendb.client.test.client.documents;
 
 import net.ravendb.client.RemoteTestBase;
+import net.ravendb.client.documents.DocumentStore;
 import net.ravendb.client.documents.IDocumentStore;
 import net.ravendb.client.documents.session.IDocumentSession;
+import net.ravendb.client.infrastructure.entities.User;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
@@ -146,6 +148,38 @@ public class LoadTest extends RemoteTestBase {
                 assertThat(newSession.advanced().getNumberOfRequests())
                         .isEqualTo(numOfRequests);
             }
+        }
+    }
+
+    @Test
+    public void loadStartingWith() throws Exception {
+        try (DocumentStore store = getDocumentStore()) {
+
+            try (IDocumentSession session = store.openSession()) {
+                session.store(new User(), "users/1");
+                session.saveChanges();
+            }
+
+            try (IDocumentSession session = store.openSession()) {
+                User[] docs = session.advanced().loadStartingWith(User.class, "users/");
+                assertThat(docs)
+                        .hasSize(1);
+            }
+
+            try (IDocumentSession session = store.openSession()) {
+                for (int i = 0; i < 5; i++) {
+                    session.store(new User(), "users/");
+                }
+
+                session.saveChanges();
+            }
+
+            try (IDocumentSession session = store.openSession()) {
+                User[] docs = session.advanced().loadStartingWith(User.class, "users/");
+                assertThat(docs)
+                        .hasSize(6);
+            }
+
         }
     }
 }
