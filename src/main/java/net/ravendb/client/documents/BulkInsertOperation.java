@@ -57,7 +57,7 @@ public class BulkInsertOperation extends BulkInsertOperationBase<Object> impleme
     private String _database;
     private final GenerateEntityIdOnTheClient _generateEntityIdOnTheClient;
 
-    private static class BulkInsertStreamExposerContent extends StreamExposerContent {
+    public static class BulkInsertStreamExposerContent extends StreamExposerContent {
        public void done() {
            if (complete()) {
                throw new BulkInsertProtocolViolationException("Unable to close the stream");

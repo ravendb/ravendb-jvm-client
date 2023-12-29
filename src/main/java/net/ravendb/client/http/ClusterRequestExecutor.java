@@ -36,10 +36,6 @@ public class ClusterRequestExecutor extends RequestExecutor {
         throw new UnsupportedOperationException();
     }
 
-    public static ClusterRequestExecutor createForSingleNode(String url, KeyStore certificate, char[] keyPassword, KeyStore trustStore, ExecutorService executorService) {
-        return createForSingleNode(url, certificate, keyPassword, trustStore, executorService, null);
-    }
-
     @SuppressWarnings("UnnecessaryLocalVariable")
     public static ClusterRequestExecutor createForSingleNode(String url, KeyStore certificate, char[] keyPassword, KeyStore trustStore, ExecutorService executorService, DocumentConventions conventions) {
         String[] initialUrls = {url};
@@ -94,6 +90,10 @@ public class ClusterRequestExecutor extends RequestExecutor {
             throw new IllegalArgumentException("Parameters cannot be null");
         }
 
+        if (_disableTopologyUpdates) {
+            return CompletableFuture.completedFuture(false);
+        }
+
         if (_disposed) {
             return CompletableFuture.completedFuture(false);
         }
@@ -117,15 +117,11 @@ public class ClusterRequestExecutor extends RequestExecutor {
                 execute(parameters.getNode(), null, command, false, null);
 
                 ClusterTopologyResponse results = command.getResult();
-                List<ServerNode> nodes = ServerNode.createFrom(results.getTopology());
-
-                Topology newTopology = new Topology();
-                newTopology.setNodes(nodes);
-                newTopology.setEtag(results.getEtag());
+                Topology newTopology = ServerNode.createFrom(results.getTopology(), results.getEtag());
 
                 updateNodeSelector(newTopology, parameters.isForceUpdate());
 
-                onTopologyUpdatedInvoke(newTopology);
+                onTopologyUpdatedInvoke(newTopology, parameters.getDebugTag());
             } catch (Exception e) {
                 if (!_disposed) {
                     throw e;

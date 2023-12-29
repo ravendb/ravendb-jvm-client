@@ -85,7 +85,8 @@ public class ServerOperationExecutor implements CleanCloseable {
                     _store.getCertificate(),
                     _store.getCertificatePrivateKeyPassword(),
                     _store.getTrustStore(),
-                    _store.getExecutorService());
+                    _store.getExecutorService(),
+                    _store.getConventions());
 
             return new ServerOperationExecutor(_store, clusterExecutor, requestExecutor, _cache, node.getClusterTag());
         });

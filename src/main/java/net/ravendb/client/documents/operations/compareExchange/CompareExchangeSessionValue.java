@@ -59,16 +59,7 @@ public class CompareExchangeSessionValue {
 
                 T entity = null;
                 if (_originalValue != null && _originalValue.getValue() != null) {
-                    if (ClassUtils.isPrimitiveOrWrapper(clazz) || String.class.equals(clazz)) {
-                        try {
-                            JsonNode entityJsonValue = _originalValue.getValue().get(Constants.CompareExchange.OBJECT_FIELD_NAME);
-                            entity = conventions.getEntityMapper().treeToValue(entityJsonValue, clazz);
-                        } catch (JsonProcessingException ex) {
-                            throw new RavenException("Unable to read compare exchange value: " + _originalValue.getValue(), ex);
-                        }
-                    } else {
-                        entity = (T) EntityToJson.convertToEntity(clazz, _key, _originalValue.getValue(), conventions);
-                    }
+                    entity = CompareExchangeValueResultParser.deserializeObject(clazz, _originalValue.getValue(), conventions);
                 }
 
                 CompareExchangeValue<T> value = new CompareExchangeValue<>(_key, _index, entity, _originalValue != null ? _originalValue.getMetadata() : null);

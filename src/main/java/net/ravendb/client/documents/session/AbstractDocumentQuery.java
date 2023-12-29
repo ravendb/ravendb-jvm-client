@@ -472,6 +472,9 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
      */
     @Override
     public void _include(String path) {
+        if (theSession != null) {
+            theSession.assertNoIncludesInNonTrackingSession();
+        }
         documentIncludes.add(path);
     }
 
@@ -482,7 +485,11 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
             return;
         }
 
-        if (includes.documentsToInclude != null) {
+        if (includes.documentsToInclude != null && !includes.documentsToInclude.isEmpty()) {
+            if (theSession != null) {
+                theSession.assertNoIncludesInNonTrackingSession();
+            }
+
             documentIncludes.addAll(includes.documentsToInclude);
         }
 
@@ -499,7 +506,11 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
             _includeRevisions(includes.revisionsToIncludeByChangeVector);
         }
 
-        if (includes.compareExchangeValuesToInclude != null) {
+        if (includes.compareExchangeValuesToInclude != null && !includes.compareExchangeValuesToInclude.isEmpty()) {
+            if (theSession != null) {
+                theSession.assertNoIncludesInNonTrackingSession();
+            }
+
             compareExchangeValueIncludesTokens = new ArrayList<>();
 
             for (String compareExchangeValue : includes.compareExchangeValuesToInclude) {
@@ -2213,7 +2224,11 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
     public int count() {
         _take(0);
         QueryResult queryResult = getQueryResult();
-        return queryResult.getTotalResults();
+        long value = queryResult.getTotalResults();
+        if (value > Integer.MAX_VALUE) {
+            DocumentSession.throwWhenResultsAreOverInt32(value, "count", "longCount");
+        }
+        return (int) value;
     }
 
     public long longCount() {
@@ -2371,6 +2386,10 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
             return;
         }
 
+        if (theSession != null) {
+            theSession.assertNoIncludesInNonTrackingSession();
+        }
+
         counterIncludesTokens = new ArrayList<>();
         _includesAlias = alias;
 
@@ -2395,6 +2414,10 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
             return;
         }
 
+        if (theSession != null) {
+            theSession.assertNoIncludesInNonTrackingSession();
+        }
+
         timeSeriesIncludesTokens = new ArrayList<>();
         if (_includesAlias == null) {
             _includesAlias = alias;
@@ -2412,12 +2435,24 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
             revisionsIncludesTokens = new ArrayList<>();
         }
 
+        if (theSession != null) {
+            theSession.assertNoIncludesInNonTrackingSession();
+        }
+
         revisionsIncludesTokens.add(RevisionIncludesToken.create(dateTime));
     }
 
     private void _includeRevisions(Set<String> revisionsToIncludeByChangeVector) {
         if (revisionsIncludesTokens == null) {
             revisionsIncludesTokens = new ArrayList<>();
+        }
+
+        if (revisionsToIncludeByChangeVector == null || revisionsToIncludeByChangeVector.isEmpty()) {
+            return;
+        }
+
+        if (theSession != null) {
+            theSession.assertNoIncludesInNonTrackingSession();
         }
 
         for (String changeVector : revisionsToIncludeByChangeVector) {

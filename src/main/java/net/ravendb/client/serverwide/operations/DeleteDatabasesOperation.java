@@ -8,6 +8,7 @@ import net.ravendb.client.http.ServerNode;
 import net.ravendb.client.primitives.ExceptionsUtils;
 import net.ravendb.client.primitives.HttpDeleteWithEntity;
 import net.ravendb.client.primitives.Reference;
+import net.ravendb.client.util.ClientShardHelper;
 import net.ravendb.client.util.RaftIdGenerator;
 import org.apache.http.client.methods.HttpRequestBase;
 import org.apache.http.entity.ContentType;
@@ -43,6 +44,10 @@ public class DeleteDatabasesOperation implements IServerOperation<DeleteDatabase
         }
 
         this.parameters = parameters;
+    }
+
+    public DeleteDatabasesOperation(String databaseName, int shardNumber, boolean hardDelete, String fromNode, Duration timeToWaitForConfirmation) {
+        this(ClientShardHelper.toShardName(databaseName, shardNumber), hardDelete, fromNode, timeToWaitForConfirmation);
     }
 
     public DeleteDatabasesOperation(Parameters parameters) {

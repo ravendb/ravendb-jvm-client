@@ -10,6 +10,7 @@ import net.ravendb.client.documents.operations.DatabaseStatistics;
 import net.ravendb.client.documents.operations.GetStatisticsOperation;
 import net.ravendb.client.documents.operations.revisions.*;
 import net.ravendb.client.documents.session.IDocumentSession;
+import net.ravendb.client.documents.session.IMetadataDictionary;
 import net.ravendb.client.exceptions.RavenException;
 import net.ravendb.client.infrastructure.entities.Company;
 import net.ravendb.client.infrastructure.entities.User;
@@ -60,15 +61,15 @@ public class RevisionsTest extends RemoteTestBase {
                 assertThat(revisionsSkipFirstTakeTwo.stream().map(x -> x.getName()).collect(Collectors.toList()))
                         .containsSequence("user3", "user2" );
 
-                List<MetadataAsDictionary> allMetadata = session.advanced().revisions().getMetadataFor("users/1");
+                List<IMetadataDictionary> allMetadata = session.advanced().revisions().getMetadataFor("users/1");
                 assertThat(allMetadata)
                         .hasSize(4);
 
-                List<MetadataAsDictionary> metadataSkipFirst = session.advanced().revisions().getMetadataFor("users/1", 1);
+                List<IMetadataDictionary> metadataSkipFirst = session.advanced().revisions().getMetadataFor("users/1", 1);
                 assertThat(metadataSkipFirst)
                         .hasSize(3);
 
-                List<MetadataAsDictionary> metadataSkipFirstTakeTwo = session.advanced().revisions().getMetadataFor("users/1", 1, 2);
+                List<IMetadataDictionary> metadataSkipFirstTakeTwo = session.advanced().revisions().getMetadataFor("users/1", 1, 2);
                 assertThat(metadataSkipFirstTakeTwo)
                         .hasSize(2);
 
@@ -132,7 +133,7 @@ public class RevisionsTest extends RemoteTestBase {
             }
 
             try (IDocumentSession session = store.openSession()) {
-                List<MetadataAsDictionary> revisionsMetadata = session.advanced().revisions().getMetadataFor(id);
+                List<IMetadataDictionary> revisionsMetadata = session.advanced().revisions().getMetadataFor(id);
                 assertThat(revisionsMetadata)
                         .hasSize(11);
 
@@ -182,7 +183,7 @@ public class RevisionsTest extends RemoteTestBase {
             }
 
             try (IDocumentSession session = store.openSession()) {
-                List<MetadataAsDictionary> revisionsMetadata = session.advanced().revisions().getMetadataFor(id);
+                List<IMetadataDictionary> revisionsMetadata = session.advanced().revisions().getMetadataFor(id);
                 assertThat(revisionsMetadata)
                         .hasSize(11);
             }
@@ -219,7 +220,7 @@ public class RevisionsTest extends RemoteTestBase {
             }
 
             try (IDocumentSession session = store.openSession()) {
-                List<MetadataAsDictionary> revisionsMetadata = session.advanced().revisions().getMetadataFor(id);
+                List<IMetadataDictionary> revisionsMetadata = session.advanced().revisions().getMetadataFor(id);
                 assertThat(revisionsMetadata)
                         .hasSize(11);
             }
@@ -284,7 +285,7 @@ public class RevisionsTest extends RemoteTestBase {
             }
 
             try (IDocumentSession session = store.openSession()) {
-                List<MetadataAsDictionary> revisionsMetadata = session.advanced().revisions().getMetadataFor(id);
+                List<IMetadataDictionary> revisionsMetadata = session.advanced().revisions().getMetadataFor(id);
                 assertThat(revisionsMetadata)
                         .hasSize(11);
 
@@ -431,7 +432,7 @@ public class RevisionsTest extends RemoteTestBase {
             }
 
             try (IDocumentSession session = store.openSession()) {
-                List<MetadataAsDictionary> revisionsMetadata = session.advanced().revisions().getMetadataFor(id);
+                List<IMetadataDictionary> revisionsMetadata = session.advanced().revisions().getMetadataFor(id);
                 Lazy<List<MetadataAsDictionary>> revisionsMetaDataLazily = session.advanced().revisions().lazily().getMetadataFor(id);
                 Lazy<List<MetadataAsDictionary>> revisionsMetaDataLazily2 = session.advanced().revisions().lazily().getMetadataFor(id2);
                 List<MetadataAsDictionary> revisionsMetaDataLazilyResult = revisionsMetaDataLazily.getValue();

@@ -71,7 +71,10 @@ public class FacetBuilder<T> implements IFacetBuilder<T>, IFacetOperations<T> {
 
     @Override
     public IFacetOperations<T> withOptions(FacetOptions options) {
-        getFacet().setOptions(options);
+        FacetBase facet = getFacet();
+        if (facet instanceof Facet) {
+            ((Facet)facet).setOptions(options);
+        }
         return this;
     }
 

@@ -425,7 +425,7 @@ public class RequestExecutor implements CleanCloseable {
 
                 topologyEtag = _nodeSelector.getTopology().getEtag();
 
-                onTopologyUpdatedInvoke(topology);
+                onTopologyUpdatedInvoke(topology, parameters.getDebugTag());
             } catch (Exception e) {
                 if (!_disposed) {
                     throw e;
@@ -449,7 +449,7 @@ public class RequestExecutor implements CleanCloseable {
         } else if (_nodeSelector.onUpdateTopology(topology, forceUpdate)) {
             disposeAllFailedNodesTimers();
 
-            if (getConventions().getReadBalanceBehavior() == ReadBalanceBehavior.FASTEST_NODE) {
+            if (getConventions().getReadBalanceBehavior() == ReadBalanceBehavior.FASTEST_NODE && _nodeSelector.inSpeedTestPhase()) {
                 _nodeSelector.scheduleSpeedTest();
             }
         }
@@ -479,6 +479,14 @@ public class RequestExecutor implements CleanCloseable {
 
     public <TResult> CurrentIndexAndNode chooseNodeForRequest(RavenCommand<TResult> cmd, SessionInfo sessionInfo) {
         if (StringUtils.isNotBlank(cmd.getSelectedNodeTag())) {
+
+            List<ServerNode> promotables = _nodeSelector.getTopology().getPromotables();
+            for (ServerNode node : promotables) {
+                if (node.getClusterTag().equals(cmd.getSelectedNodeTag())) {
+                    return new CurrentIndexAndNode(null, node);
+                }
+            }
+
             return _nodeSelector.getRequestedNode(cmd.getSelectedNodeTag());
         }
 
@@ -812,6 +820,10 @@ public class RequestExecutor implements CleanCloseable {
             CompletableFuture<Void> refreshTask = refreshIfNeeded(chosenNode, response);
 
             command.statusCode = response.getStatusLine().getStatusCode();
+            if (response.getStatusLine().getStatusCode() < 400 || command.statusCode == HttpStatus.SC_NOT_MODIFIED) {
+                command.etag = ObjectUtils.firstNonNull(HttpExtensions.getEtagHeader(response), cachedChangeVectorRef.value);
+            }
+
 
             ResponseDisposeHandling responseDispose = ResponseDisposeHandling.AUTOMATIC;
 
@@ -822,9 +834,7 @@ public class RequestExecutor implements CleanCloseable {
                     cachedItem.notModified();
 
                     try {
-                        if (command.getResponseType() == RavenCommandResponseType.OBJECT) {
-                            command.setResponse(cachedValue.value, true);
-                        }
+                        command.getResponseBehavior().handleNotModified(command, response, cachedValue);
                     } catch (IOException e) {
                         throw ExceptionsUtils.unwrapException(e);
                     }
@@ -1174,7 +1184,7 @@ public class RequestExecutor implements CleanCloseable {
     }
 
     private <TResult> HttpCache.ReleaseCacheItem getFromCache(RavenCommand<TResult> command, boolean useCache, String url, Reference<String> cachedChangeVector, Reference<String> cachedValue) {
-        if (useCache && command.canCache() && command.isReadRequest() && command.getResponseType() == RavenCommandResponseType.OBJECT) {
+        if (useCache && command.canCache() && command.canReadFromCache && command.isReadRequest() && command.getResponseType() == RavenCommandResponseType.OBJECT) {
             return cache.get(url, cachedChangeVector, cachedValue);
         }
 
@@ -1198,9 +1208,15 @@ public class RequestExecutor implements CleanCloseable {
             if (command instanceof IRaftCommand) {
                 IRaftCommand raftCommand = (IRaftCommand) command;
 
-                String raftRequestString = "raft-request-id=" + raftCommand.getRaftUniqueRequestId();
+                builder = appendToQuery(builder, "raft-request-id", raftCommand.getRaftUniqueRequestId());
+            }
 
-                builder = new URI(builder.getQuery() != null ? builder.toString() + "&" + raftRequestString : builder.toString() + "?" + raftRequestString);
+            if (command.selectedNodeTag != null) {
+                builder = appendToQuery(builder, Constants.QueryString.NODE_TAG, command.selectedNodeTag);
+            }
+
+            if (command.selectedShardNumber != null) {
+                builder = appendToQuery(builder, Constants.QueryString.SHARD_NUMBER, command.selectedShardNumber.toString());
             }
 
             if (shouldBroadcast(command)) {
@@ -1215,22 +1231,17 @@ public class RequestExecutor implements CleanCloseable {
         }
     }
 
+    private static URI appendToQuery(URI builder, String key, String value) throws URISyntaxException {
+        return new URI(builder.getQuery() != null ? builder.toString() + "&" + key + "=" + value : builder.toString() + "?" + key + "=" + value);
+    }
+
     private <TResult> boolean handleUnsuccessfulResponse(ServerNode chosenNode, Integer nodeIndex, RavenCommand<TResult> command, HttpRequestBase request, CloseableHttpResponse response, String url, SessionInfo sessionInfo, boolean shouldRetry) {
         try {
             switch (response.getStatusLine().getStatusCode()) {
                 case HttpStatus.SC_NOT_FOUND:
                     cache.setNotFound(url, aggressiveCaching.get() != null);
-                    switch (command.getResponseType()) {
-                        case EMPTY:
-                            return true;
-                        case OBJECT:
-                            command.setResponse(null, false);
-                            break;
-                        default:
-                            command.setResponseRaw(response, null);
-                            break;
-                    }
-                    return true;
+
+                    return command.getResponseBehavior().tryHandleNotFound(command, response);
 
                 case HttpStatus.SC_FORBIDDEN:
                     String msg = tryGetResponseOfError(response);
@@ -1300,8 +1311,7 @@ public class RequestExecutor implements CleanCloseable {
                 case HttpStatus.SC_SERVICE_UNAVAILABLE:
                     return handleServerDown(url, chosenNode, nodeIndex, command, request, response, null, sessionInfo, shouldRetry);
                 case HttpStatus.SC_CONFLICT:
-                    handleConflict(response);
-                    break;
+                    return command.getResponseBehavior().tryHandleConflict(command, response);
                 case 425: // TooEarly
                     if (!shouldRetry) {
                         return false;
@@ -1327,15 +1337,11 @@ public class RequestExecutor implements CleanCloseable {
 
                     return true;
                 default:
-                    command.onResponseFailure(response);
-                    ExceptionDispatcher.throwException(response);
-                    break;
+                    return command.getResponseBehavior().tryHandleUnsuccessfulResponse(command, response);
             }
         } catch (IOException | ExecutionException | InterruptedException e) {
             throw ExceptionsUtils.unwrapException(e);
         }
-
-        return false;
     }
 
     private static String tryGetResponseOfError(CloseableHttpResponse response) {
@@ -1514,7 +1520,7 @@ public class RequestExecutor implements CleanCloseable {
                 command.getFailedNodes().put(node, error.getCause() != null ? (Exception) error.getCause() : error);
 
                 _nodeSelector.onFailedRequest(failed.getIndex());
-                spawnHealthChecks(node, failed.getIndex());
+                spawnHealthChecks(node);
 
                 tasks.remove(completed);
                 continue;
@@ -1886,8 +1892,8 @@ public class RequestExecutor implements CleanCloseable {
         }
     }
 
-    protected void onTopologyUpdatedInvoke(Topology newTopology) {
-        EventHelper.invoke(_onTopologyUpdated, this, new TopologyUpdatedEventArgs(newTopology));
+    protected void onTopologyUpdatedInvoke(Topology newTopology, String reason) {
+        EventHelper.invoke(_onTopologyUpdated, this, new TopologyUpdatedEventArgs(newTopology, reason));
     }
 
     public static class IndexAndResponse {

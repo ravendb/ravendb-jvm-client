@@ -42,7 +42,7 @@ public class BackupsTest extends RemoteTestBase {
 
                 StartBackupOperation startBackupOperation = new StartBackupOperation(true, backupOperationResult.getTaskId());
                 StartBackupOperationResult send = store.maintenance().send(startBackupOperation);
-                int backupOperation = send.getOperationId();
+                long backupOperation = send.getOperationId();
                 assertThat(backupOperation)
                         .isPositive();
 

@@ -1,5 +1,6 @@
 package net.ravendb.client.documents.queries.timings;
 
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import net.ravendb.client.documents.queries.QueryResult;
 
 import java.util.Map;

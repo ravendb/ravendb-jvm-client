@@ -5,6 +5,7 @@ import net.ravendb.client.http.IRaftCommand;
 import net.ravendb.client.http.RavenCommand;
 import net.ravendb.client.http.ServerNode;
 import net.ravendb.client.primitives.Reference;
+import net.ravendb.client.util.ClientShardHelper;
 import net.ravendb.client.util.RaftIdGenerator;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.client.methods.HttpPost;
@@ -14,12 +15,17 @@ import java.io.IOException;
 
 public class PromoteDatabaseNodeOperation implements IServerOperation<DatabasePutResult> {
 
-    private final String _databaseName;
+    private String _databaseName;
     private final String _node;
 
     public PromoteDatabaseNodeOperation(String databaseName, String node) {
         _databaseName = databaseName;
         _node = node;
+    }
+
+    public PromoteDatabaseNodeOperation(String databaseName, int shardNumber, String node) {
+        this(databaseName, node);
+        _databaseName = ClientShardHelper.toShardName(databaseName, shardNumber);
     }
 
     @Override

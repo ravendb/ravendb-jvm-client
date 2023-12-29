@@ -329,9 +329,24 @@ public class DocumentSession extends InMemoryDocumentSessionOperations
 
         return new Lazy<>(() -> {
             executeAllPendingLazyOperations();
-            return (int)operation.getQueryResult().getTotalResults();
+            long value = operation.getQueryResult().getTotalResults();
+            if (value > Integer.MAX_VALUE) {
+                DocumentSession.throwWhenResultsAreOverInt32(value, "addLazyCountOperation", "addLazyCountLongOperation");
+            }
+            return (int) value;
         });
     }
+
+    protected Lazy<Long> addLazyCountLongOperation(ILazyOperation operation) {
+        pendingLazyOperations.add(operation);
+
+        return new Lazy<>(() -> {
+            executeAllPendingLazyOperations();
+            return operation.getQueryResult().getTotalResults();
+        });
+    }
+
+
 
     @SuppressWarnings("unchecked")
     @Override
@@ -1194,5 +1209,11 @@ public class DocumentSession extends InMemoryDocumentSessionOperations
         DocumentInfo documentInfo = DocumentInfo.getNewDocumentInfo((ObjectNode) cmd.getResult().getResults().get(0));
         T r = trackEntity(clazz, documentInfo);
         return ConditionalLoadResult.create(r, cmd.getResult().getChangeVector());
+    }
+
+    public static void throwWhenResultsAreOverInt32(long value, String caller, String suggestedMethod) {
+        if (Integer.MAX_VALUE < value) {
+            throw new IllegalArgumentException("Value '" + value + "' from '" + caller + "' method exceeds max Integer value.'. You should use '" + suggestedMethod + "' instead.");
+        }
     }
 }

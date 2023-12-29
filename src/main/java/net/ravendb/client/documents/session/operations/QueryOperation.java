@@ -176,7 +176,7 @@ public class QueryOperation {
             }
             if (queryResult.getCompareExchangeValueIncludes() != null) {
                 ClusterTransactionOperationsBase clusterSession = _session.getClusterSession();
-                clusterSession.registerCompareExchangeValues(queryResult.getCompareExchangeValueIncludes(), false);
+                clusterSession.registerCompareExchangeIncludes(queryResult.getCompareExchangeValueIncludes(), false);
             }
             if (queryResult.getRevisionIncludes() != null) {
                 _session.registerRevisionIncludes(queryResult.getRevisionIncludes());

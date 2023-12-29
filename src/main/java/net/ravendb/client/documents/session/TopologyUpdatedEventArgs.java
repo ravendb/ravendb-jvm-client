@@ -5,21 +5,22 @@ import net.ravendb.client.primitives.EventArgs;
 
 public class TopologyUpdatedEventArgs extends EventArgs {
     private Topology _topology;
-    private String reason;
+    private String _reason;
 
     public Topology getTopology() {
         return _topology;
     }
 
-    public TopologyUpdatedEventArgs(Topology topology) {
+    public TopologyUpdatedEventArgs(Topology topology, String reason) {
         _topology = topology;
+        _reason = reason;
     }
 
     public String getReason() {
-        return reason;
+        return _reason;
     }
 
     public void setReason(String reason) {
-        this.reason = reason;
+        this._reason = reason;
     }
 }

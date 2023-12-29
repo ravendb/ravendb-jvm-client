@@ -116,10 +116,14 @@ public class ServerNode {
         _lastServerVersionCheck = 0;
     }
 
-    public static List<ServerNode> createFrom(ClusterTopology topology) {
-        List<ServerNode> nodes = new ArrayList<>();
+    public static Topology createFrom(ClusterTopology topology, long etag) {
+        Topology newTopology = new Topology();
+        newTopology.setEtag(etag);
+        newTopology.setNodes(new ArrayList<>());
+        newTopology.setPromotables(new ArrayList<>());
+
         if (topology == null) {
-            return nodes;
+            return newTopology;
         }
 
         for (Map.Entry<String, String> kvp : topology.getMembers().entrySet()) {
@@ -127,7 +131,7 @@ public class ServerNode {
             serverNode.setUrl(kvp.getValue());
             serverNode.setClusterTag(kvp.getKey());
             serverNode.setServerRole(Role.MEMBER);
-            nodes.add(serverNode);
+            newTopology.getNodes().add(serverNode);
         }
 
         for (Map.Entry<String, String> kvp : topology.getWatchers().entrySet()) {
@@ -135,10 +139,10 @@ public class ServerNode {
             serverNode.setUrl(kvp.getValue());
             serverNode.setClusterTag(kvp.getKey());
             serverNode.setServerRole(Role.MEMBER);
-            nodes.add(serverNode);
+            newTopology.getNodes().add(serverNode);
         }
 
-        return nodes;
+        return newTopology;
     }
 
     private boolean _supportsAtomicClusterWrites;

@@ -5,6 +5,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import net.ravendb.client.Constants;
 import net.ravendb.client.extensions.HttpExtensions;
 import net.ravendb.client.extensions.JsonExtensions;
+import net.ravendb.client.http.behaviors.AbstractCommandResponseBehavior;
+import net.ravendb.client.http.behaviors.DefaultCommandResponseBehavior;
 import net.ravendb.client.primitives.Reference;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -30,11 +32,19 @@ public abstract class RavenCommand<TResult> {
     protected Duration timeout;
     protected boolean canCache;
     protected boolean canCacheAggressively;
+    protected boolean canReadFromCache;
     protected String selectedNodeTag;
+    protected Integer selectedShardNumber;
     protected int numberOfAttempts;
     protected final ObjectMapper mapper = JsonExtensions.getDefaultMapper();
 
     public long failoverTopologyEtag = -2;
+
+    protected String etag;
+
+    public AbstractCommandResponseBehavior getResponseBehavior() {
+        return DefaultCommandResponseBehavior.INSTANCE;
+    }
 
     public abstract boolean isReadRequest();
 
@@ -78,6 +88,18 @@ public abstract class RavenCommand<TResult> {
         return selectedNodeTag;
     }
 
+    public void setSelectedNodeTag(String selectedNodeTag) {
+        this.selectedNodeTag = selectedNodeTag;
+    }
+
+    public Integer getSelectedShardNumber() {
+        return selectedShardNumber;
+    }
+
+    public void setSelectedShardNumber(Integer selectedShardNumber) {
+        this.selectedShardNumber = selectedShardNumber;
+    }
+
     public int getNumberOfAttempts() {
         return numberOfAttempts;
     }
@@ -96,8 +118,10 @@ public abstract class RavenCommand<TResult> {
     protected RavenCommand(RavenCommand<TResult> copy) {
         this.resultClass = copy.resultClass;
         this.canCache = copy.canCache;
+        this.canReadFromCache = copy.canReadFromCache;
         this.canCacheAggressively = copy.canCacheAggressively;
         this.selectedNodeTag = copy.selectedNodeTag;
+        this.selectedShardNumber = copy.selectedShardNumber;
         this.responseType = copy.responseType;
     }
 

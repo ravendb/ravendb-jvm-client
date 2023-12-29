@@ -405,6 +405,13 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
         sessionInfo = new SessionInfo(this, options, _documentStore);
         transactionMode = options.getTransactionMode();
         disableAtomicDocumentWritesInClusterWideTransaction = options.getDisableAtomicDocumentWritesInClusterWideTransaction();
+
+        ShardedBatchBehavior shardedBatchBehavior = ObjectUtils.firstNonNull(options.getShardedBatchBehavior(), _requestExecutor.getConventions().sharding().getBatchBehavior());
+        ShardedBatchOptions shardedBatchOptions = ShardedBatchOptions.forBehavior(shardedBatchBehavior);
+        if (shardedBatchOptions != null) {
+            _saveChangesOptions = new BatchOptions();
+            _saveChangesOptions.setShardedOptions(shardedBatchOptions);
+        }
     }
 
     /**
@@ -2545,6 +2552,12 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
 
         if (name.contains("@")) {
             throw new IllegalArgumentException("Time Series from type Rollup cannot be Incremental");
+        }
+    }
+
+    public void assertNoIncludesInNonTrackingSession() {
+        if (noTracking) {
+            throw new IllegalStateException("This session does not track any entities, because of that registering includes is forbidden to avoid false expectations when later load operations are performed on those and no requests are being sent to the server. Please avoid any 'Include' operations during non-tracking session actions like load or query.");
         }
     }
 

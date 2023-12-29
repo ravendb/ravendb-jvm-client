@@ -8,6 +8,7 @@ import net.ravendb.client.http.ServerNode;
 import net.ravendb.client.json.ContentProviderHttpEntity;
 import net.ravendb.client.primitives.Reference;
 import net.ravendb.client.serverwide.DatabaseTopology;
+import net.ravendb.client.util.ClientShardHelper;
 import net.ravendb.client.util.RaftIdGenerator;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpRequestBase;
@@ -16,7 +17,7 @@ import org.apache.http.entity.ContentType;
 import java.io.IOException;
 
 public class ModifyDatabaseTopologyOperation implements IServerOperation<ModifyDatabaseTopologyResult> {
-    private final String _databaseName;
+    private String _databaseName;
     private final DatabaseTopology _databaseTopology;
 
     public ModifyDatabaseTopologyOperation(String databaseName, DatabaseTopology databaseTopology) {
@@ -25,6 +26,12 @@ public class ModifyDatabaseTopologyOperation implements IServerOperation<ModifyD
         }
         _databaseTopology = databaseTopology;
         _databaseName = databaseName;
+    }
+
+    public ModifyDatabaseTopologyOperation(String databaseName, int shardNumber, DatabaseTopology databaseTopology) {
+        this(databaseName, databaseTopology);
+
+        _databaseName = ClientShardHelper.toShardName(databaseName, shardNumber);
     }
 
     @Override

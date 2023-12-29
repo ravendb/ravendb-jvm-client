@@ -3,6 +3,7 @@ package net.ravendb.client.documents.commands.batches;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import net.ravendb.client.documents.conventions.DocumentConventions;
+import net.ravendb.client.documents.session.ShardedBatchBehavior;
 import net.ravendb.client.documents.session.TransactionMode;
 import net.ravendb.client.exceptions.RavenException;
 import net.ravendb.client.http.RavenCommand;
@@ -11,6 +12,7 @@ import net.ravendb.client.json.BatchCommandResult;
 import net.ravendb.client.json.ContentProviderHttpEntity;
 import net.ravendb.client.primitives.CleanCloseable;
 import net.ravendb.client.primitives.Reference;
+import net.ravendb.client.primitives.SharpEnum;
 import net.ravendb.client.util.TimeUtils;
 import org.apache.http.HttpEntity;
 import org.apache.http.client.methods.HttpPost;
@@ -198,6 +200,12 @@ public class SingleNodeBatchCommand extends RavenCommand<BatchCommandResult> imp
                 for (String specificIndex : indexOptions.getWaitForSpecificIndexes()) {
                     sb.append("&waitForSpecificIndex=").append(urlEncode(specificIndex));
                 }
+            }
+        }
+
+        if (shardedOptions != null) {
+            if (shardedOptions.getBatchBehavior() != ShardedBatchBehavior.DEFAULT) {
+                sb.append("&shardedBatchBehavior=").append(SharpEnum.value(shardedOptions.getBatchBehavior()));
             }
         }
     }
