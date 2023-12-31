@@ -280,6 +280,34 @@ public class NodeSelector implements CleanCloseable {
             this.unlikelyEveryoneFaultedChoiceIndex = 0;
         }
 
+        public NodeSelectorState(Topology topology, NodeSelectorState prevState) {
+            this(topology);
+
+            if (prevState.fastest < 0 || prevState.fastest >= prevState.getNodes().size()) {
+                return ;
+            }
+
+            ServerNode fastestNode = prevState.getNodes().get(prevState.fastest);
+            int index = 0;
+            for (ServerNode node : topology.getNodes()) {
+                if (node.getClusterTag().equals(fastestNode.getClusterTag())) {
+                    fastest = index;
+                    break;
+                }
+                index++;
+            }
+
+            // fastest node was not found in the new topology. enable speed tests
+            if (index >= topology.getNodes().size()) {
+                speedTestMode.set(2);
+            } else {
+                // we might be in the process of finding fastest node when we reorder the nodes, we don't want the tests to stop until we reach 10
+                // otherwise, we want to stop the tests and they may be scheduled later on relevant topology change
+                if (fastest < prevState.fastestRecords.length && prevState.fastestRecords[fastest] < 10) {
+                    speedTestMode.set(prevState.speedTestMode.get());
+                }
+            }
+        }
 
         public List<ServerNode> getNodes() {
             return topology.getNodes();

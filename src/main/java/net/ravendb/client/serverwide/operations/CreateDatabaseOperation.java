@@ -10,6 +10,7 @@ import net.ravendb.client.primitives.ExceptionsUtils;
 import net.ravendb.client.primitives.Reference;
 import net.ravendb.client.serverwide.DatabaseRecord;
 import net.ravendb.client.serverwide.DatabaseTopology;
+import net.ravendb.client.serverwide.operations.builder.IDatabaseRecordBuilderInitializer;
 import net.ravendb.client.util.RaftIdGenerator;
 import org.apache.http.client.methods.HttpPut;
 import org.apache.http.client.methods.HttpRequestBase;
@@ -18,6 +19,7 @@ import org.apache.http.entity.StringEntity;
 
 import java.io.IOException;
 import java.util.Optional;
+import java.util.function.Consumer;
 
 public class CreateDatabaseOperation implements IServerOperation<DatabasePutResult> {
 
@@ -32,6 +34,21 @@ public class CreateDatabaseOperation implements IServerOperation<DatabasePutResu
         } else {
             this.replicationFactor = 1;
         }
+    }
+
+    public CreateDatabaseOperation(Consumer<IDatabaseRecordBuilderInitializer> builder) {
+        if (builder == null) {
+            throw new IllegalArgumentException("Builder cannot be null");
+        }
+
+        IDatabaseRecordBuilderInitializer instance = DatabaseRecordBuilder.create();
+        builder.accept(instance);
+
+        this.databaseRecord = instance.toDatabaseRecord();
+        this.replicationFactor = this.databaseRecord.getTopology() != null
+                && this.databaseRecord.getTopology().getReplicationFactor() > 0
+                ? this.databaseRecord.getTopology().getReplicationFactor()
+                : 1;
     }
 
     public CreateDatabaseOperation(DatabaseRecord databaseRecord, int replicationFactor) {

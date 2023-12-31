@@ -1,0 +1,4 @@
+package net.ravendb.client.serverwide.operations.builder;
+
+public interface IOrchestratorTopologyConfigurationBuilder extends ITopologyConfigurationBuilderBase<IOrchestratorTopologyConfigurationBuilder> {
+}
