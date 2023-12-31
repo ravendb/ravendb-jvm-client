@@ -49,6 +49,22 @@ public class RavenDB_19938Test extends RemoteTestBase {
     }
 
     @Test
+    public void can_Create_Sharded_Database_Via_Builder() throws Exception {
+        try (DocumentStore store = getDocumentStore()) {
+            String database = store.getDatabase() + "test";
+            store.maintenance().server().send(new CreateDatabaseOperation(builder -> builder.sharded(database, s -> s.addShard(0, b -> b.addNode("A")))));
+
+            try {
+                DatabaseRecordWithEtag databaseRecord = store.maintenance().server().send(new GetDatabaseRecordOperation(database));
+                assertThat(databaseRecord)
+                        .isNotNull();
+            } finally {
+                store.maintenance().server().send(new DeleteDatabasesOperation(database, true));
+            }
+        }
+    }
+
+    @Test
     public void regular() throws Exception {
         DatabaseRecord record = createDatabaseRecord(builder -> builder.regular("DB1"));
         assertThat(record.getDatabaseName())
