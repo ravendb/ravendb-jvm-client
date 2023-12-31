@@ -1,4 +1,4 @@
-package net.ravendb.client.infrastructure.graph;
+package net.ravendb.client.infrastructure.samples;
 
 public class Genre {
     private String id;

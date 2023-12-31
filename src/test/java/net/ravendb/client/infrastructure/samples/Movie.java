@@ -1,9 +1,11 @@
-package net.ravendb.client.infrastructure.graph;
+package net.ravendb.client.infrastructure.samples;
 
-public class Entity {
+import java.util.List;
+
+public class Movie {
     private String id;
     private String name;
-    private String references;
+    private List<String> genres;
 
     public String getId() {
         return id;
@@ -21,11 +23,11 @@ public class Entity {
         this.name = name;
     }
 
-    public String getReferences() {
-        return references;
+    public List<String> getGenres() {
+        return genres;
     }
 
-    public void setReferences(String references) {
-        this.references = references;
+    public void setGenres(List<String> genres) {
+        this.genres = genres;
     }
 }

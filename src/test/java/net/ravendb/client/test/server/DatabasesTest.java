@@ -6,7 +6,7 @@ import net.ravendb.client.documents.indexes.*;
 import net.ravendb.client.documents.operations.DisableDatabaseToggleResult;
 import net.ravendb.client.documents.operations.ToggleDatabasesStateOperation;
 import net.ravendb.client.documents.session.IDocumentSession;
-import net.ravendb.client.infrastructure.graph.Genre;
+import net.ravendb.client.infrastructure.samples.Genre;
 import net.ravendb.client.serverwide.DatabaseRecord;
 import net.ravendb.client.serverwide.DatabaseRecordWithEtag;
 import net.ravendb.client.serverwide.operations.AddDatabaseNodeOperation;

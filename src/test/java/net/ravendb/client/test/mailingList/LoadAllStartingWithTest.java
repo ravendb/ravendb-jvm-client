@@ -70,6 +70,11 @@ public class LoadAllStartingWithTest extends RemoteTestBase {
 
                 assertThat(test2Classes.get(0).getId())
                         .isEqualTo("xyz/1");
+
+                assertThat(session.advanced().getChangeVectorFor(testClasses.getValue().values().iterator().next()))
+                        .isNotNull();
+                assertThat(session.advanced().getChangeVectorFor(test2Classes.get(0)))
+                        .isNotNull();
             }
         }
     }

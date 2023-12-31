@@ -53,7 +53,10 @@ public class RavenDB_14600Test extends RemoteTestBase {
                         .isNotNull();
 
                 for (FacetValue f : facets.get("employee").getValues()) {
-                    session.load(Object.class, f.getRange());
+                    Object e = session.load(Object.class, f.getRange());
+                    String cv = session.advanced().getChangeVectorFor(e);
+                    assertThat(cv)
+                            .isNotNull();
                 }
 
                 assertThat(session.advanced().getNumberOfRequests())

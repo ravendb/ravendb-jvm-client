@@ -3,6 +3,7 @@ package net.ravendb.client.test.server.documents.indexing.auto;
 import net.ravendb.client.RemoteTestBase;
 import net.ravendb.client.documents.IDocumentStore;
 import net.ravendb.client.documents.session.IDocumentSession;
+import net.ravendb.client.documents.session.OrderingType;
 import net.ravendb.client.infrastructure.entities.Address;
 import net.ravendb.client.infrastructure.entities.Order;
 import net.ravendb.client.infrastructure.entities.OrderLine;
@@ -173,7 +174,7 @@ public class RavenDB_8761Test extends RemoteTestBase {
                         .groupBy(array("lines[].product"))
                         .selectKey(null, "products")
                         .selectCount()
-                        .orderBy("count")
+                        .orderBy("count", OrderingType.LONG)
                         .ofType(ProductCount.class)
                         .toList();
 
@@ -211,7 +212,7 @@ public class RavenDB_8761Test extends RemoteTestBase {
                         .groupBy(array("lines[].product"), field("shipTo.country"))
                         .selectKey("lines[].product", "products")
                         .selectCount()
-                        .orderBy("count")
+                        .orderBy("count", OrderingType.LONG)
                         .ofType(ProductCount.class)
                         .toList();
 
@@ -250,7 +251,7 @@ public class RavenDB_8761Test extends RemoteTestBase {
                         .selectKey("lines[].product", "products")
                         .selectKey("lines[].quantity", "quantities")
                         .selectCount()
-                        .orderBy("count")
+                        .orderBy("count", OrderingType.LONG)
                         .ofType(ProductCount.class)
                         .toList();
 
