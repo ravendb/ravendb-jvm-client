@@ -460,6 +460,12 @@ public class RavenDB_14006Test extends RemoteTestBase {
 
                 value1 = session.advanced().clusterTransaction().getCompareExchangeValue(Address.class, companies.get(0).getExternalId());
                 assertThat(value1.getValue().getCity())
+                        .isEqualTo("Torun");
+
+                session.advanced().clear();
+
+                value1 = session.advanced().clusterTransaction().getCompareExchangeValue(Address.class, companies.get(0).getExternalId());
+                assertThat(value1.getValue().getCity())
                         .isEqualTo("Bydgoszcz");
             }
         }
@@ -565,7 +571,7 @@ public class RavenDB_14006Test extends RemoteTestBase {
 
                 value1 = session.advanced().clusterTransaction().getCompareExchangeValue(Address.class, companies.get(0).getExternalId());
                 assertThat(value1.getValue().getCity())
-                        .isEqualTo("Bydgoszcz");
+                        .isEqualTo("Torun");
             }
         }
     }
@@ -662,6 +668,12 @@ public class RavenDB_14006Test extends RemoteTestBase {
 
                 value1 = session.advanced().clusterTransaction().getCompareExchangeValue(Address.class, companies.get(0).getExternalId());
                 assertThat(value1.getValue().getCity())
+                        .isEqualTo("Torun");
+
+                session.advanced().clear();
+
+                value1 = session.advanced().clusterTransaction().getCompareExchangeValue(Address.class, companies.get(0).getExternalId());
+                assertThat(value1.getValue().getCity())
                         .isEqualTo("Bydgoszcz");
             }
         }
@@ -708,6 +720,7 @@ public class RavenDB_14006Test extends RemoteTestBase {
                         "}\n" +
                         "from index 'Companies/ByName' as c\n" +
                         "select incl(c)")
+                        .waitForNonStaleResults()
                         .statistics(statsRef)
                         .toList();
 
@@ -732,6 +745,7 @@ public class RavenDB_14006Test extends RemoteTestBase {
                         "}\n" +
                         "from index 'Companies/ByName' as c\n" +
                         "select incl(c)")
+                        .waitForNonStaleResults()
                         .statistics(statsRef)
                         .toList();
 
@@ -768,6 +782,12 @@ public class RavenDB_14006Test extends RemoteTestBase {
                         .isNotNegative(); // not from cache
                 assertThat(statsRef.value.getResultEtag())
                         .isNotEqualTo(resultEtag);
+
+                value1 = session.advanced().clusterTransaction().getCompareExchangeValue(Address.class, companies.get(0).getExternalId());
+                assertThat(value1.getValue().getCity())
+                        .isEqualTo("Torun");
+
+                session.advanced().clear();
 
                 value1 = session.advanced().clusterTransaction().getCompareExchangeValue(Address.class, companies.get(0).getExternalId());
                 assertThat(value1.getValue().getCity())

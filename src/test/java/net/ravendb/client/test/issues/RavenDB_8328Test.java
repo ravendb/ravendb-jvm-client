@@ -72,7 +72,7 @@ public class RavenDB_8328Test extends RemoteTestBase {
                         .hasSize(1);
 
                 assertThat(statsRef.value.getIndexName())
-                        .isEqualTo("Auto/Items/BySpatial.point(latitude|longitude)AndSpatial.point(latitude2|longitude2)");
+                        .isEqualTo("Auto/Items/BySpatial.point(latitude2|longitude2)AndSpatial.point(latitude|longitude)");
 
                 statsRef = new Reference<>();
                 results = session.query(Item.class)
@@ -84,7 +84,7 @@ public class RavenDB_8328Test extends RemoteTestBase {
                         .hasSize(1);
 
                 assertThat(statsRef.value.getIndexName())
-                        .isEqualTo("Auto/Items/BySpatial.point(latitude|longitude)AndSpatial.point(latitude2|longitude2)AndSpatial.wkt(shapeWkt)");
+                        .isEqualTo("Auto/Items/BySpatial.point(latitude2|longitude2)AndSpatial.point(latitude|longitude)AndSpatial.wkt(shapeWkt)");
 
             }
         }

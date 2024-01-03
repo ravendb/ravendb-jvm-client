@@ -18,10 +18,7 @@ import net.ravendb.client.json.JsonArrayResult;
 import net.ravendb.client.json.MetadataAsDictionary;
 import org.junit.jupiter.api.Test;
 
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -665,6 +662,134 @@ public class RevisionsTest extends RemoteTestBase {
                 assertThat(companiesRevisionsCount)
                         .isEqualTo(3);
             }
+        }
+    }
+
+    @Test
+    public void canGetRevisionsByChangeVectors2() throws Exception {
+        try (DocumentStore store = getDocumentStore()) {
+
+            setupRevisions(store, false, 5);
+
+            User user1 = new User();
+            user1.setName("Jane");
+
+            try (IDocumentSession session = store.openSession()) {
+                session.store(user1);
+                session.saveChanges();
+
+                for (int i = 0; i < 10; i++) {
+                    User user = session.load(User.class, user1.getId());
+                    user.setName("Jane" + i);
+                    session.saveChanges();
+                }
+            }
+
+            String[] allCVS;
+
+            try (IDocumentSession session = store.openSession()) {
+                List<IMetadataDictionary> metadata = session.advanced().revisions().getMetadataFor(user1.getId());
+                allCVS = metadata.stream().map(x -> x.get(Constants.Documents.Metadata.CHANGE_VECTOR).toString()).toArray(String[]::new);
+
+                Map<String, User> revisionsByCv = session.advanced().revisions().get(User.class, allCVS);
+                for (int i = 0; i < allCVS.length; i++) {
+                    assertThat(revisionsByCv)
+                            .containsKey(allCVS[i]);
+
+                    User user = session.advanced().revisions().get(User.class, allCVS[i]);
+                    assertThat(revisionsByCv.get(allCVS[i]).getName())
+                            .isEqualTo(user.getName());
+                }
+            }
+        }
+    }
+
+    @Test
+    public void canGetRevisionsByChangeVectorsNonExist() throws Exception {
+        try (DocumentStore store = getDocumentStore()) {
+
+            setupRevisions(store, false, 5);
+
+            User user1 = new User();
+            user1.setName("Jane");
+
+            try (IDocumentSession session = store.openSession()) {
+                session.store(user1);
+                session.saveChanges();
+
+                for (int i = 0; i < 10; i++) {
+                    User user = session.load(User.class, user1.getId());
+                    user.setName("Jane" + i);
+                    session.saveChanges();
+                }
+            }
+
+            try (IDocumentSession session = store.openSession()) {
+                String[] allCvs = new String[] { "AB:1", "AB:2", "AB:3"};
+                Map<String, User> revisionsByCV = session.advanced().revisions().get(User.class, allCvs);
+
+                assertThat(revisionsByCV)
+                        .hasSize(3);
+
+                for (User val : revisionsByCV.values()) {
+                    assertThat(val)
+                            .isNull();
+                }
+
+                String cv = "AB:1";
+                User revision = session.advanced().revisions().get(User.class, cv);
+                assertThat(revision)
+                        .isNull();
+            }
+        }
+    }
+
+    @Test
+    public void canGetRevisionsByIdStartTake() throws Exception {
+        try (DocumentStore store = getDocumentStore()) {
+            setupRevisions(store, false, 123);
+
+            User user1 = new User();
+            user1.setName("Jane");
+
+            try (IDocumentSession session = store.openSession()) {
+                session.store(user1);
+                session.saveChanges();
+
+                for (int i = 0; i < 10; i++) {
+                    User user = session.load(User.class, user1.getId());
+                    user.setName("Jane" + i);
+                    session.saveChanges();
+                }
+            }
+
+            RevisionsResult<User> revisionsResult = store.operations().send(new GetRevisionsOperation<>(User.class, user1.getId(), 0, 5));
+            assertThat(revisionsResult.getTotalResults())
+                    .isEqualTo(11);
+            assertThat(revisionsResult.getResults())
+                    .hasSize(5);
+
+            Set<String> revisionNames = revisionsResult.getResults().stream().map(User::getName).collect(Collectors.toSet());
+
+            for (int i = revisionsResult.getTotalResults() - 2; i >= 5; i--) {
+                assertThat(revisionNames)
+                        .contains("Jane" + i);
+            }
+
+            revisionsResult = store.operations().send(new GetRevisionsOperation<>(User.class, user1.getId(), 6, 5));
+            assertThat(revisionsResult.getTotalResults())
+                    .isEqualTo(11);
+            assertThat(revisionsResult.getResults())
+                    .hasSize(5);
+
+
+            revisionNames = revisionsResult.getResults().stream().map(User::getName).collect(Collectors.toSet());
+
+            for (int i = revisionsResult.getTotalResults() - 2 - 6; i >= 0; i--) {
+                assertThat(revisionNames)
+                        .contains("Jane" + i);
+            }
+
         }
     }
 }

@@ -106,16 +106,14 @@ public class CompareExchangeValueResultParser<T> {
 
         if (clazz.isPrimitive() || String.class.equals(clazz)) {
             // simple
-            T value = null;
+            T value;
 
-            if (raw != null) {
-                JsonNode rawValue = raw.get("Object");
-                value = conventions.getEntityMapper().convertValue(rawValue, clazz);
-            }
+            JsonNode rawValue = raw.get(Constants.CompareExchange.OBJECT_FIELD_NAME);
+            value = conventions.getEntityMapper().convertValue(rawValue, clazz);
 
             return value;
         } else if (ObjectNode.class.equals(clazz)) {
-            if (raw == null || !raw.has(Constants.CompareExchange.OBJECT_FIELD_NAME)) {
+            if (!raw.has(Constants.CompareExchange.OBJECT_FIELD_NAME)) {
                 return null;
             }
 
@@ -128,6 +126,10 @@ public class CompareExchangeValueResultParser<T> {
                 return (T) raw;
             }
         } else {
+            if (!raw.has(Constants.CompareExchange.OBJECT_FIELD_NAME)) {
+                return conventions.getEntityMapper().convertValue(raw, clazz);
+            }
+
             JsonNode object = raw.get(Constants.CompareExchange.OBJECT_FIELD_NAME);
             if (object == null || object.isNull()) {
                 return Defaults.defaultValue(clazz);

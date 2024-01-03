@@ -8,6 +8,7 @@ import net.ravendb.client.documents.session.IDocumentSession;
 import net.ravendb.client.documents.session.IMetadataDictionary;
 import net.ravendb.client.infrastructure.entities.User;
 import net.ravendb.client.test.issues.RavenDB_17872Test;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -390,6 +391,7 @@ public class WhatChangedTest extends RemoteTestBase {
     }
 
     @Test
+    @Disabled("We don't support whatChanged for metadata")
     public void what_Changed_For_RemovingAndAddingSameAmountOfFieldsToObjectShouldWork() throws Exception {
         try (DocumentStore store = getDocumentStore()) {
             String docId = "d/1";

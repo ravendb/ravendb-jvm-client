@@ -299,7 +299,7 @@ public abstract class ClusterTransactionOperationsBase {
 
         CompareExchangeValue<ObjectNode> includeValue = _compareExchangeIncludes.get(key);
         if (includeValue != null) {
-            value = registerCompareExchangeValue(includeValue);
+            valueRef.value = registerCompareExchangeValue(includeValue);
             return true;
         }
 

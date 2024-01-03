@@ -2,18 +2,20 @@ package net.ravendb.client.test.client.timeSeries;
 
 import net.ravendb.client.RavenTestHelper;
 import net.ravendb.client.RemoteTestBase;
+import net.ravendb.client.documents.DocumentStore;
 import net.ravendb.client.documents.IDocumentStore;
-import net.ravendb.client.documents.operations.timeSeries.TimeSeriesRangeResult;
-import net.ravendb.client.documents.operations.timeSeries.TimeSeriesRangeType;
+import net.ravendb.client.documents.operations.timeSeries.*;
 import net.ravendb.client.documents.session.IDocumentQuery;
 import net.ravendb.client.documents.session.IDocumentSession;
 import net.ravendb.client.documents.session.ISessionDocumentTimeSeries;
 import net.ravendb.client.documents.session.InMemoryDocumentSessionOperations;
+import net.ravendb.client.documents.session.loaders.ITimeSeriesIncludeBuilder;
 import net.ravendb.client.documents.session.timeSeries.TimeSeriesEntry;
 import net.ravendb.client.infrastructure.entities.Company;
 import net.ravendb.client.infrastructure.entities.Order;
 import net.ravendb.client.primitives.TimeValue;
 import org.apache.commons.lang3.time.DateUtils;
+import org.checkerframework.checker.units.qual.C;
 import org.junit.jupiter.api.Test;
 
 import java.util.*;
@@ -1568,6 +1570,155 @@ public class TimeSeriesIncludesTest extends RemoteTestBase {
                         .isEqualTo("watches/bitfit");
                 assertThat(speedrateValues[2].getTimestamp())
                         .isEqualTo(DateUtils.addMinutes(baseline, -8));
+            }
+        }
+    }
+
+    @Test
+    public void sessionLoadWithIncludeTimeSeries2() throws Exception {
+        try (DocumentStore store = getDocumentStore()) {
+            Date baseline = RavenTestHelper.utcToday();
+
+            try (IDocumentSession session = store.openSession()) {
+                Order order = new Order();
+                order.setCompany("companies/apple");
+                session.store(order, "orders/1-A");
+
+                Company company = new Company();
+                company.setName("apple");
+                session.store(company, "companies/apple");
+
+                ISessionDocumentTimeSeries tsf = session.timeSeriesFor("orders/1-A", "Heartrate");
+                tsf.append(baseline, new double[] { 67 }, "companies/apple");
+                tsf.append(DateUtils.addMinutes(baseline, 5), new double[] { 64 }, "companies/apple");
+                tsf.append(DateUtils.addMinutes(baseline, 10), new double[] { 65 }, "companies/google");
+
+                session.saveChanges();
+            }
+
+            try (IDocumentSession session = store.openSession()) {
+                Company company = new Company();
+                company.setName("google");
+                session.store(company, "companies/google");
+
+                TimeSeriesEntry[] res = session.timeSeriesFor("orders/1-A", "Heartrate").get(null, null, i -> i.includeDocument().includeTags());
+                assertThat(res)
+                        .hasSize(3);
+
+                // should not go to server
+                Company apple = session.load(Company.class, "companies/apple");
+                Company google = session.load(Company.class, "companies/google");
+                assertThat(apple)
+                        .isNotNull();
+                assertThat(google)
+                        .isNotNull();
+
+                assertThat(session.advanced().getNumberOfRequests())
+                        .isEqualTo(1);
+            }
+        }
+    }
+
+    @Test
+    public void sessionLoadWithIncludeTimeSeriesRanges() throws Exception {
+        try (DocumentStore store = getDocumentStore()) {
+            Date baseline = RavenTestHelper.utcToday();
+
+            try (IDocumentSession session = store.openSession()) {
+                Order order = new Order();
+                order.setCompany("companies/apple");
+                session.store(order, "orders/1-A");
+
+                Company company1 = new Company();
+                company1.setName("apple");
+                session.store(company1, "companies/apple");
+
+                Company company2 = new Company();
+                company2.setName("facebook");
+                session.store(company2, "companies/facebook");
+
+                Company company3 = new Company();
+                company3.setName("amazon");
+                session.store(company3, "companies/amazon");
+
+                Company company4 = new Company();
+                company4.setName("google");;
+                session.store(company4, "companies/google");
+
+                ISessionDocumentTimeSeries tsf = session.timeSeriesFor("orders/1-A", "Heartrate");
+                tsf.append(baseline, new double[] { 67 }, "companies/apple");
+                tsf.append(DateUtils.addMinutes(baseline, 5), new double[] { 64 }, "companies/apple");
+                tsf.append(DateUtils.addMinutes(baseline, 10), new double[] { 65 }, "companies/google");
+
+                session.saveChanges();
+            }
+
+            try (IDocumentSession session = store.openSession()) {
+                //get 3 points so they'll get saved in session
+                session.timeSeriesFor("orders/1-A", "Heartrate").get(baseline, baseline);
+                session.timeSeriesFor("orders/1-A", "Heartrate").get(DateUtils.addMinutes(baseline, 5), DateUtils.addMinutes(baseline, 5));
+                session.timeSeriesFor("orders/1-A", "Heartrate").get(DateUtils.addMinutes(baseline, 10), DateUtils.addMinutes(baseline, 10));
+
+                //ask for the entire range - will call MultipleTimeSeriesRanges operation
+                session.timeSeriesFor("orders/1-A", "Heartrate").get(baseline, DateUtils.addMinutes(baseline, 10), i -> i.includeDocument().includeTags());
+
+                InMemoryDocumentSessionOperations inMemoryDocumentSession = (InMemoryDocumentSessionOperations) session;
+                assertThat(inMemoryDocumentSession.includedDocumentsById)
+                        .containsKey("orders/1-A")
+                        .containsKey("companies/apple")
+                        .containsKey("companies/google");
+            }
+        }
+    }
+
+    @Test
+    public void timeSeriesIncludeTagsCaseSensitive() throws Exception {
+        try (DocumentStore store = getDocumentStore()) {
+            Date baseline = RavenTestHelper.utcToday();
+
+            try (IDocumentSession session = store.openSession()) {
+                Order order = new Order();
+                order.setCompany("companies/google");
+                session.store(order, "orders/1-A");
+
+                Company company1 = new Company();
+                company1.setName("google");
+                session.store(company1, "companies/google");
+
+                Company company2 = new Company();
+                company2.setName("amazon");
+                session.store(company2, "companies/amazon");
+
+                Company company3 = new Company();
+                company3.setName("apple");
+                session.store(company3, "companies/apple");
+
+                ISessionDocumentTimeSeries tsf = session.timeSeriesFor("orders/1-A", "Heartrate");
+                tsf.append(baseline, new double[] { 67 }, "Companies/google");
+                tsf.append(DateUtils.addMinutes(baseline, 5), new double[] { 68 }, "Companies/apple");
+                tsf.append(DateUtils.addMinutes(baseline, 10), new double[] { 69 }, "Companies/amazon");
+
+                session.saveChanges();
+            }
+
+            try (IDocumentSession session = store.openSession()) {
+                List<TimeSeriesRange> reqRanges = Collections.singletonList(new TimeSeriesRange("Heartrate", null, null));
+
+                TimeSeriesEntry[] result = session.timeSeriesFor("orders/1-A", "Heartrate")
+                        .get(null, null, ITimeSeriesIncludeBuilder::includeTags);
+                TimeSeriesDetails resultMultiGet = store.operations().send(
+                        new GetMultipleTimeSeriesOperation("orders/1-A", reqRanges, 0, Integer.MAX_VALUE, ITimeSeriesIncludeBuilder::includeTags));
+
+                assertThat(resultMultiGet.getValues().get("Heartrate"))
+                        .isNotNull();
+                InMemoryDocumentSessionOperations inMemoryDocumentSession = (InMemoryDocumentSessionOperations) session;
+                assertThat(inMemoryDocumentSession.includedDocumentsById)
+                        .containsKey("companies/google")
+                        .containsKey("companies/apple")
+                        .containsKey("companies/amazon");
+
+                assertThat(resultMultiGet.getValues().get("Heartrate"))
+                        .hasSize(1);
             }
         }
     }

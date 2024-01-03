@@ -32,7 +32,7 @@ public abstract class RavenCommand<TResult> {
     protected Duration timeout;
     protected boolean canCache;
     protected boolean canCacheAggressively;
-    protected boolean canReadFromCache;
+    protected boolean canReadFromCache = true;
     protected String selectedNodeTag;
     protected Integer selectedShardNumber;
     protected int numberOfAttempts;

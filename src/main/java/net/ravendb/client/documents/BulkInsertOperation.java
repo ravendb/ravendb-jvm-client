@@ -11,6 +11,7 @@ import net.ravendb.client.documents.bulkInsert.BulkInsertWriter;
 import net.ravendb.client.documents.commands.GetNextOperationIdCommand;
 import net.ravendb.client.documents.commands.KillOperationCommand;
 import net.ravendb.client.documents.commands.batches.CommandType;
+import net.ravendb.client.documents.commands.batches.PutAttachmentCommandHelper;
 import net.ravendb.client.documents.conventions.DocumentConventions;
 import net.ravendb.client.documents.identity.GenerateEntityIdOnTheClient;
 import net.ravendb.client.documents.operations.BulkInsertObserver;
@@ -180,7 +181,7 @@ public class BulkInsertOperation extends BulkInsertOperationBase<Object> impleme
         _requestExecutor = store.getRequestExecutor(database);
         objectMapper = store.getConventions().getEntityMapper();
 
-        _writer = new BulkInsertWriter();
+        _writer = new BulkInsertWriter(_executorService);
         _writer.initialize();
 
         _countersOperation = new CountersBulkInsertOperation(this);
@@ -244,8 +245,8 @@ public class BulkInsertOperation extends BulkInsertOperationBase<Object> impleme
             _inProgressCommand = CommandType.NONE;
             _writer.write("{\"Type\":\"HeartBeat\"}");
 
-            _writer.flushIfNeeded();
-            _writer.requestBodyStream.flush();
+            _writer.flushIfNeeded(true);
+            _writer._requestBodyStream.flush();
         } catch (Exception e) {
             throw new RuntimeException(e);
         } finally {
@@ -388,7 +389,7 @@ public class BulkInsertOperation extends BulkInsertOperationBase<Object> impleme
             _writer.write("{\"Id\":\"");
             writeString(id);
             _writer.write("\",\"Type\":\"");
-            writeString(SharpEnum.value(type));
+            writeString("PUT");
             _writer.write("\",\"Document\":");
 
             _writer.flush();
@@ -398,7 +399,7 @@ public class BulkInsertOperation extends BulkInsertOperationBase<Object> impleme
             ObjectNode json = EntityToJson.convertEntityToJson(entity, _conventions, documentInfo, true);
 
             try (JsonGenerator generator =
-                         objectMapper.getFactory().createGenerator(_writer.getStreamWriter())) {
+                         objectMapper.getFactory().createGenerator(_writer.getWriter())) {
                 generator.configure(JsonGenerator.Feature.AUTO_CLOSE_TARGET, false);
 
                 generator.writeTree(json);
@@ -500,11 +501,7 @@ public class BulkInsertOperation extends BulkInsertOperationBase<Object> impleme
                 return null;
             }, _executorService);
 
-            _stream = _streamExposerContent.outputStream.get();
-
-            _requestBodyStream = _stream;
-
-            _currentWriter.write('[');
+            _writer.ensureStream(_requestExecutor.getConventions().isUseCompression()); // TODO: algorithm _requestExecutor.Conventions.HttpCompressionAlgorithm, CompressionLevel
         } catch (Exception e) {
             throw new RavenException("Unable to open bulk insert stream ", e);
         }
@@ -973,15 +970,10 @@ public class BulkInsertOperation extends BulkInsertOperationBase<Object> impleme
                     _operation._writer.write("\",\"ContentLength\":");
                     _operation._writer.write(String.valueOf(bytes.length));
                     _operation._writer.write("}");
+                    _operation._writer.flushIfNeeded();
 
-                    _operation.flushIfNeeded();
-
-                    _operation._currentWriter.flush();
-                    _operation._currentWriterBacking.write(bytes);
-
-                    _operation._currentWriterBacking.flush();
-
-                    _operation.flushIfNeeded();
+                    _operation._writer.write(bytes);
+                    _operation._writer.flushIfNeeded();
                 } catch (Exception e) {
                     _operation.handleErrors(id, e);
                 }

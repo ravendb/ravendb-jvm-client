@@ -695,6 +695,7 @@ public abstract class AbstractSubscriptionWorker<TBatch extends SubscriptionBatc
                         }
 
                         Tuple<Boolean, ServerNode> reconnectAndServerNode = checkIfShouldReconnectWorker(ex);
+                        _redirectNode = reconnectAndServerNode.second;
 
                         if (reconnectAndServerNode.first) {
                             Thread.sleep(_options.getTimeToWaitBeforeConnectionRetry().toMillis());

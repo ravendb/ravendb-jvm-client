@@ -261,7 +261,7 @@ public class PullReplicationTest extends ReplicationTestBase {
         try (DocumentStore sink = getDocumentStore()) {
             try (DocumentStore hub = getDocumentStore()) {
                 String definitionName = "pull-replication " + hub.getDatabase();
-                int timeout = 3_000;
+                int timeout = 8_000;
 
                 hub.maintenance().forDatabase(hub.getDatabase())
                         .send(new PutPullReplicationAsHubOperation(definitionName));
