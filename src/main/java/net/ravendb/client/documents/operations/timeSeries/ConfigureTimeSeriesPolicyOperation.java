@@ -28,14 +28,15 @@ public class ConfigureTimeSeriesPolicyOperation implements IMaintenanceOperation
 
     @Override
     public RavenCommand<ConfigureTimeSeriesOperationResult> getCommand(DocumentConventions conventions) {
-        return new ConfigureTimeSeriesPolicyCommand(_collection, _config);
+        return new ConfigureTimeSeriesPolicyCommand(conventions, _collection, _config);
     }
 
     private static class ConfigureTimeSeriesPolicyCommand extends RavenCommand<ConfigureTimeSeriesOperationResult> implements IRaftCommand {
         private final TimeSeriesPolicy _configuration;
         private final String _collection;
+        private final DocumentConventions _conventions;
 
-        public ConfigureTimeSeriesPolicyCommand(String collection, TimeSeriesPolicy configuration) {
+        public ConfigureTimeSeriesPolicyCommand(DocumentConventions conventions, String collection, TimeSeriesPolicy configuration) {
             super(ConfigureTimeSeriesOperationResult.class);
 
             if (configuration == null) {
@@ -46,6 +47,7 @@ public class ConfigureTimeSeriesPolicyOperation implements IMaintenanceOperation
                 throw new IllegalArgumentException("Collection cannot be null");
             }
 
+            _conventions = conventions;
             _configuration = configuration;
             _collection = collection;
         }
@@ -68,7 +70,7 @@ public class ConfigureTimeSeriesPolicyOperation implements IMaintenanceOperation
                 } catch (IOException e) {
                     throw new RuntimeException(e);
                 }
-            }, ContentType.APPLICATION_JSON));
+            }, ContentType.APPLICATION_JSON, _conventions));
 
             return request;
         }

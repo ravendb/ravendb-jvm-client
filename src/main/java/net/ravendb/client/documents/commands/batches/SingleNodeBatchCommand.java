@@ -21,6 +21,7 @@ import org.apache.http.entity.ContentType;
 import org.apache.http.entity.mime.FormBodyPart;
 import org.apache.http.entity.mime.FormBodyPartBuilder;
 import org.apache.http.entity.mime.MultipartEntityBuilder;
+import org.apache.http.entity.mime.content.ByteArrayBody;
 import org.apache.http.entity.mime.content.InputStreamBody;
 
 import java.io.ByteArrayInputStream;
@@ -122,7 +123,7 @@ public class SingleNodeBatchCommand extends RavenCommand<BatchCommandResult> imp
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
-        }, ContentType.APPLICATION_JSON));
+        }, ContentType.APPLICATION_JSON, _conventions));
 
 
         if (_attachmentStreams != null && _attachmentStreams.size() > 0) {
@@ -134,7 +135,14 @@ public class SingleNodeBatchCommand extends RavenCommand<BatchCommandResult> imp
                 ByteArrayOutputStream baos = new ByteArrayOutputStream();
                 entity.writeTo(baos);
 
-                entityBuilder.addBinaryBody("main", new ByteArrayInputStream(baos.toByteArray()));
+                FormBodyPartBuilder mainPartBuilder = FormBodyPartBuilder
+                        .create("main", new ByteArrayBody(baos.toByteArray(), "main"));
+
+                if (entity.getContentEncoding() != null) {
+                    mainPartBuilder.addField("Content-Encoding", entity.getContentEncoding().getValue());
+                }
+
+                entityBuilder.addPart(mainPartBuilder.build());
             } catch (IOException e) {
                 throw new RavenException("Unable to serialize BatchCommand", e);
             }

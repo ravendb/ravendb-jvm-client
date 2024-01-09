@@ -1,12 +1,13 @@
 package net.ravendb.client.http;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class Topology {
 
     private Long etag;
     private List<ServerNode> nodes;
-    private List<ServerNode> promotables;
+    private List<ServerNode> promotables = new ArrayList<>();
 
     public Long getEtag() {
         return etag;

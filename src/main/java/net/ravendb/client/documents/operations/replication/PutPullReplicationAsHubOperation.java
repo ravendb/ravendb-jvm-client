@@ -38,15 +38,17 @@ public class PutPullReplicationAsHubOperation implements IMaintenanceOperation<M
 
     @Override
     public RavenCommand<ModifyOngoingTaskResult> getCommand(DocumentConventions conventions) {
-        return new UpdatePullReplicationDefinitionCommand(_pullReplicationDefinition);
+        return new UpdatePullReplicationDefinitionCommand(conventions, _pullReplicationDefinition);
     }
 
     private static class UpdatePullReplicationDefinitionCommand extends RavenCommand<ModifyOngoingTaskResult> implements IRaftCommand {
         private final PullReplicationDefinition _pullReplicationDefinition;
+        private final DocumentConventions _conventions;
 
-        public UpdatePullReplicationDefinitionCommand(PullReplicationDefinition pullReplicationDefinition) {
+        public UpdatePullReplicationDefinitionCommand(DocumentConventions conventions, PullReplicationDefinition pullReplicationDefinition) {
             super(ModifyOngoingTaskResult.class);
             _pullReplicationDefinition = pullReplicationDefinition;
+            _conventions = conventions;
         }
 
         @Override
@@ -60,7 +62,7 @@ public class PutPullReplicationAsHubOperation implements IMaintenanceOperation<M
                 } catch (IOException e) {
                     throw new RuntimeException(e);
                 }
-            }, ContentType.APPLICATION_JSON));
+            }, ContentType.APPLICATION_JSON, _conventions));
 
             return request;
         }

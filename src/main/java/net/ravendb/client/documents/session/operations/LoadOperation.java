@@ -49,8 +49,8 @@ public class LoadOperation {
         }
 
         GetDocumentsCommand cmd = _includeAllCounters
-                ? new GetDocumentsCommand(_ids, _includes, true, _timeSeriesToInclude, _compareExchangeValuesToInclude, false)
-                : new GetDocumentsCommand(_ids, _includes, _countersToInclude, _revisionsToIncludeByChangeVector, _revisionsToIncludeByDateTimeBefore, _timeSeriesToInclude, _compareExchangeValuesToInclude, false);
+                ? new GetDocumentsCommand(_session.getConventions(), _ids, _includes, true, _timeSeriesToInclude, _compareExchangeValuesToInclude, false)
+                : new GetDocumentsCommand(_session.getConventions(), _ids, _includes, _countersToInclude, _revisionsToIncludeByChangeVector, _revisionsToIncludeByDateTimeBefore, _timeSeriesToInclude, _compareExchangeValuesToInclude, false);
 
         cmd.setTransactionMode(_session.getTransactionMode());
 

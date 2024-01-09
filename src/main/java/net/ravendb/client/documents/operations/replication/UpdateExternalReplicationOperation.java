@@ -30,15 +30,17 @@ public class UpdateExternalReplicationOperation implements IMaintenanceOperation
 
     @Override
     public RavenCommand<ModifyOngoingTaskResult> getCommand(DocumentConventions conventions) {
-        return new UpdateExternalReplication(_newWatcher);
+        return new UpdateExternalReplication(conventions, _newWatcher);
     }
 
     private static class UpdateExternalReplication extends RavenCommand<ModifyOngoingTaskResult> implements IRaftCommand {
         private final ExternalReplication _newWatcher;
+        private final DocumentConventions _conventions;
 
-        public UpdateExternalReplication(ExternalReplication newWatcher) {
+        public UpdateExternalReplication(DocumentConventions conventions, ExternalReplication newWatcher) {
             super(ModifyOngoingTaskResult.class);
 
+            _conventions = conventions;
             _newWatcher = newWatcher;
         }
 
@@ -60,7 +62,7 @@ public class UpdateExternalReplicationOperation implements IMaintenanceOperation
                 } catch (IOException e) {
                     throw new RuntimeException(e);
                 }
-            }, ContentType.APPLICATION_JSON));
+            }, ContentType.APPLICATION_JSON, _conventions));
 
             return request;
         }

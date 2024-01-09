@@ -590,7 +590,7 @@ public class DocumentSubscriptions implements AutoCloseable {
         }
 
         RequestExecutor requestExecutor = _store.getRequestExecutor(database);
-        UpdateSubscriptionCommand command = new UpdateSubscriptionCommand(options);
+        UpdateSubscriptionCommand command = new UpdateSubscriptionCommand(requestExecutor.getConventions(), options);
         requestExecutor.execute(command, null);
 
         return command.getResult().getName();

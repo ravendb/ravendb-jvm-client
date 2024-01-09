@@ -34,6 +34,7 @@ public class CompactDatabaseOperation implements IServerOperation<OperationIdRes
 
     private static class CompactDatabaseCommand extends RavenCommand<OperationIdResult> {
         private final ObjectNode _compactSettings;
+        private final DocumentConventions _conventions;
 
         public CompactDatabaseCommand(DocumentConventions conventions, CompactSettings compactSettings) {
             super(OperationIdResult.class);
@@ -46,6 +47,7 @@ public class CompactDatabaseOperation implements IServerOperation<OperationIdRes
                 throw new IllegalArgumentException("CompactSettings cannot be null");
             }
 
+            _conventions = conventions;
             _compactSettings = mapper.valueToTree(compactSettings);
         }
 
@@ -61,7 +63,7 @@ public class CompactDatabaseOperation implements IServerOperation<OperationIdRes
                 } catch (IOException e) {
                     throw new RuntimeException(e);
                 }
-            }, ContentType.APPLICATION_JSON));
+            }, ContentType.APPLICATION_JSON, _conventions));
 
             return request;
         }

@@ -25,15 +25,18 @@ public class AdminJsConsoleDatabaseOperation implements IMaintenanceOperation<Js
 
     @Override
     public RavenCommand<JsonNode> getCommand(DocumentConventions conventions) {
-        return new AdminJsConsoleDatabaseCommand(_script);
+        return new AdminJsConsoleDatabaseCommand(conventions, _script);
     }
 
     private static class AdminJsConsoleDatabaseCommand extends RavenCommand<JsonNode> {
         private final String _script;
+        private final DocumentConventions _conventions;
 
-        public AdminJsConsoleDatabaseCommand(String script) {
+
+        public AdminJsConsoleDatabaseCommand(DocumentConventions conventions, String script) {
             super(JsonNode.class);
             _script = script;
+            _conventions = conventions;
         }
 
         @Override
@@ -51,7 +54,7 @@ public class AdminJsConsoleDatabaseOperation implements IMaintenanceOperation<Js
                 } catch (IOException e) {
                     throw new RuntimeException(e);
                 }
-            }, ContentType.APPLICATION_JSON));
+            }, ContentType.APPLICATION_JSON, _conventions));
 
             return request;
         }

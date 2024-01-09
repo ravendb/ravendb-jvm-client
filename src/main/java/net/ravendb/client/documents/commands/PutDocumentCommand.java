@@ -3,6 +3,7 @@ package net.ravendb.client.documents.commands;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import net.ravendb.client.documents.commands.batches.PutResult;
+import net.ravendb.client.documents.conventions.DocumentConventions;
 import net.ravendb.client.http.RavenCommand;
 import net.ravendb.client.http.ServerNode;
 import net.ravendb.client.json.ContentProviderHttpEntity;
@@ -15,11 +16,12 @@ import java.io.IOException;
 
 public class PutDocumentCommand extends RavenCommand<PutResult> {
 
+    private final DocumentConventions _conventions;
     private final String _id;
     private final String _changeVector;
     private final ObjectNode _document;
 
-    public PutDocumentCommand(String id, String changeVector, ObjectNode document) {
+    public PutDocumentCommand(DocumentConventions conventions, String id, String changeVector, ObjectNode document) {
         super(PutResult.class);
         if (id == null) {
             throw new IllegalArgumentException("Id cannot be null");
@@ -29,6 +31,7 @@ public class PutDocumentCommand extends RavenCommand<PutResult> {
             throw new IllegalArgumentException("Document cannot be null");
         }
 
+        _conventions = conventions;
         _id = id;
         _changeVector = changeVector;
         _document = document;
@@ -46,7 +49,7 @@ public class PutDocumentCommand extends RavenCommand<PutResult> {
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
-        }, ContentType.APPLICATION_JSON));
+        }, ContentType.APPLICATION_JSON, _conventions));
         addChangeVectorIfNotNull(_changeVector, request);
 
         return request;

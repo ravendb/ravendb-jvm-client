@@ -29,15 +29,18 @@ public class UpdateEtlOperation<T extends ConnectionString> implements IMaintena
 
     @Override
     public RavenCommand<UpdateEtlOperationResult> getCommand(DocumentConventions conventions) {
-        return new UpdateEtlCommand<>(_taskId, _configuration);
+        return new UpdateEtlCommand<>(conventions, _taskId, _configuration);
     }
 
     private static class UpdateEtlCommand<T extends ConnectionString> extends RavenCommand<UpdateEtlOperationResult> implements IRaftCommand {
+
+        private final DocumentConventions _conventions;
         private final long _taskId;
         private final EtlConfiguration<T> _configuration;
 
-        public UpdateEtlCommand(long taskId, EtlConfiguration<T> configuration) {
+        public UpdateEtlCommand(DocumentConventions conventions, long taskId, EtlConfiguration<T> configuration) {
             super(UpdateEtlOperationResult.class);
+            _conventions = conventions;
             _taskId = taskId;
             _configuration = configuration;
         }
@@ -59,7 +62,7 @@ public class UpdateEtlOperation<T extends ConnectionString> implements IMaintena
                 } catch (IOException e) {
                     throw new RuntimeException(e);
                 }
-            }, ContentType.APPLICATION_JSON));
+            }, ContentType.APPLICATION_JSON, _conventions));
             return request;
         }
 

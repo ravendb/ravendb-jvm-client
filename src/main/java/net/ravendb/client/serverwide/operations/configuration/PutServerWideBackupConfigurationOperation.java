@@ -29,19 +29,21 @@ public class PutServerWideBackupConfigurationOperation implements IServerOperati
 
     @Override
     public RavenCommand<PutServerWideBackupConfigurationResponse> getCommand(DocumentConventions conventions) {
-        return new PutServerWideBackupConfigurationCommand(_configuration);
+        return new PutServerWideBackupConfigurationCommand(conventions, _configuration);
     }
 
     private static class PutServerWideBackupConfigurationCommand extends RavenCommand<PutServerWideBackupConfigurationResponse> implements IRaftCommand {
         private final ServerWideBackupConfiguration _configuration;
+        private final DocumentConventions _conventions;
 
-        public PutServerWideBackupConfigurationCommand(ServerWideBackupConfiguration configuration) {
+        public PutServerWideBackupConfigurationCommand(DocumentConventions conventions, ServerWideBackupConfiguration configuration) {
             super(PutServerWideBackupConfigurationResponse.class);
 
             if (configuration == null) {
                 throw new IllegalArgumentException("Configuration cannot be null");
             }
 
+            _conventions = conventions;
             _configuration = configuration;
         }
 
@@ -66,7 +68,7 @@ public class PutServerWideBackupConfigurationOperation implements IServerOperati
                 } catch (IOException e) {
                     throw new RuntimeException(e);
                 }
-            }, ContentType.APPLICATION_JSON));
+            }, ContentType.APPLICATION_JSON, _conventions));
 
             return request;
         }

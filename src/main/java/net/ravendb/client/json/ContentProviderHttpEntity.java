@@ -57,26 +57,22 @@ public class ContentProviderHttpEntity extends AbstractHttpEntity {
 
     @Override
     public void writeTo(OutputStream outStream) throws IOException {
-        switch (compressionAlgorithm) {
-            case Zstd:
-                final ZstdOutputStream zstd = new ZstdOutputStream(outStream);
-                this.contentProvider.accept(zstd);
+        if (HttpCompressionAlgorithm.Zstd.equals(compressionAlgorithm)) {
+            final ZstdOutputStream zstd = new ZstdOutputStream(outStream);
+            this.contentProvider.accept(zstd);
 
-                // Only close output stream if the wrapped entity has been
-                // successfully written out
-                zstd.close();
-                break;
-            case Gzip:
-                final GZIPOutputStream gzip = new GZIPOutputStream(outStream);
-                this.contentProvider.accept(gzip);
+            // Only close output stream if the wrapped entity has been
+            // successfully written out
+            zstd.close();
+        } else if (HttpCompressionAlgorithm.Gzip.equals(compressionAlgorithm)) {
+            final GZIPOutputStream gzip = new GZIPOutputStream(outStream);
+            this.contentProvider.accept(gzip);
 
-                // Only close output stream if the wrapped entity has been
-                // successfully written out
-                gzip.close();
-                break;
-            default:
-                this.contentProvider.accept(outStream);
-                break;
+            // Only close output stream if the wrapped entity has been
+            // successfully written out
+            gzip.close();
+        } else {
+            this.contentProvider.accept(outStream);
         }
     }
 

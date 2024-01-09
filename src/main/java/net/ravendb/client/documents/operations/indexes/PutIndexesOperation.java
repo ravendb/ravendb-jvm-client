@@ -41,6 +41,7 @@ public class PutIndexesOperation implements IMaintenanceOperation<PutIndexResult
 
     private class PutIndexesCommand extends RavenCommand<PutIndexResult[]> implements IRaftCommand {
         private final ObjectNode[] _indexToAdd;
+        private final DocumentConventions _conventions;
 
         public PutIndexesCommand(DocumentConventions conventions, IndexDefinition[] indexesToAdd) {
             super(PutIndexResult[].class);
@@ -53,6 +54,7 @@ public class PutIndexesOperation implements IMaintenanceOperation<PutIndexResult
                 throw new IllegalArgumentException("indexesToAdd cannot be null");
             }
 
+            _conventions = conventions;
             _indexToAdd = new ObjectNode[indexesToAdd.length];
             _allJavaScriptIndexes = true;
 
@@ -94,7 +96,7 @@ public class PutIndexesOperation implements IMaintenanceOperation<PutIndexResult
                 } catch (IOException e) {
                     throw new RuntimeException(e);
                 }
-            }, ContentType.APPLICATION_JSON));
+            }, ContentType.APPLICATION_JSON, _conventions));
             return httpPut;
         }
 

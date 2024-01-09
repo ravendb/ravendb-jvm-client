@@ -101,7 +101,7 @@ public class PutCompareExchangeValueOperation<T> implements IOperation<CompareEx
                 } catch (IOException e) {
                     throw new RuntimeException(e);
                 }
-            }, ContentType.APPLICATION_JSON));
+            }, ContentType.APPLICATION_JSON, _conventions));
             return httpPut;
         }
 

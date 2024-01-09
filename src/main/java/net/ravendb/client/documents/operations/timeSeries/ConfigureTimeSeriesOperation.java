@@ -30,16 +30,18 @@ public class ConfigureTimeSeriesOperation implements IMaintenanceOperation<Confi
 
     @Override
     public RavenCommand<ConfigureTimeSeriesOperationResult> getCommand(DocumentConventions conventions) {
-        return new ConfigureTimeSeriesCommand(_configuration);
+        return new ConfigureTimeSeriesCommand(conventions, _configuration);
     }
 
     private static class ConfigureTimeSeriesCommand extends RavenCommand<ConfigureTimeSeriesOperationResult> implements IRaftCommand {
         private final TimeSeriesConfiguration _configuration;
+        private final DocumentConventions _conventions;
 
-        public ConfigureTimeSeriesCommand(TimeSeriesConfiguration configuration) {
+        public ConfigureTimeSeriesCommand(DocumentConventions conventions, TimeSeriesConfiguration configuration) {
             super(ConfigureTimeSeriesOperationResult.class);
 
             _configuration = configuration;
+            _conventions = conventions;
         }
 
         @Override
@@ -59,7 +61,7 @@ public class ConfigureTimeSeriesOperation implements IMaintenanceOperation<Confi
                 } catch (IOException e) {
                     throw new RuntimeException(e);
                 }
-            }, ContentType.APPLICATION_JSON));
+            }, ContentType.APPLICATION_JSON, _conventions));
             return request;
         }
 

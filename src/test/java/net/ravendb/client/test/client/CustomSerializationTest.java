@@ -47,7 +47,7 @@ public class CustomSerializationTest extends RemoteTestBase {
 
             // verify if value was properly serialized
             {
-                GetDocumentsCommand command = new GetDocumentsCommand("products/1-A", null, false);
+                GetDocumentsCommand command = new GetDocumentsCommand(store.getConventions(), "products/1-A", null, false);
                 store.getRequestExecutor().execute(command);
                 JsonNode productJson = command.getResult().getResults().get(0);
 

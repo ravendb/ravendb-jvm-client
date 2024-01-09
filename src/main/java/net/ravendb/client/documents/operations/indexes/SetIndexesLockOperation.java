@@ -63,6 +63,7 @@ public class SetIndexesLockOperation implements IVoidMaintenanceOperation {
     private static class SetIndexLockCommand extends VoidRavenCommand implements IRaftCommand {
 
         private ObjectNode _parameters;
+        private final DocumentConventions _conventions;
 
         public SetIndexLockCommand(DocumentConventions conventions, Parameters parameters) {
             if (conventions == null) {
@@ -73,6 +74,7 @@ public class SetIndexesLockOperation implements IVoidMaintenanceOperation {
                 throw new IllegalArgumentException("Parameters cannot be null");
             }
 
+            _conventions = conventions;
             _parameters = mapper.valueToTree(parameters);
         }
 
@@ -88,7 +90,7 @@ public class SetIndexesLockOperation implements IVoidMaintenanceOperation {
                 } catch (IOException e) {
                     throw new RuntimeException(e);
                 }
-            }, ContentType.APPLICATION_JSON));
+            }, ContentType.APPLICATION_JSON, _conventions));
 
             return request;
         }

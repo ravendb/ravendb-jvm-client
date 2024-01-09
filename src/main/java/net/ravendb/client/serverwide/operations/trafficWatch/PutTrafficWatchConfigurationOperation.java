@@ -28,17 +28,19 @@ public class PutTrafficWatchConfigurationOperation implements IVoidServerOperati
 
     @Override
     public VoidRavenCommand getCommand(DocumentConventions conventions) {
-        return new SetTrafficWatchConfigurationCommand(_parameters);
+        return new SetTrafficWatchConfigurationCommand(conventions, _parameters);
     }
 
     private static class SetTrafficWatchConfigurationCommand extends VoidRavenCommand {
         private final Parameters _parameters;
+        private final DocumentConventions _conventions;
 
-        public SetTrafficWatchConfigurationCommand(Parameters parameters) {
+        public SetTrafficWatchConfigurationCommand(DocumentConventions conventions, Parameters parameters) {
             if (parameters == null) {
                 throw new IllegalArgumentException("Parameters cannot be null");
             }
             this._parameters = parameters;
+            _conventions = conventions;
         }
 
         @Override
@@ -52,7 +54,7 @@ public class PutTrafficWatchConfigurationOperation implements IVoidServerOperati
                 } catch (IOException e) {
                     throw new RuntimeException(e);
                 }
-            }, ContentType.APPLICATION_JSON));
+            }, ContentType.APPLICATION_JSON, _conventions));
 
             return request;
         }

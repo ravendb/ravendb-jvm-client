@@ -7,6 +7,7 @@ import com.fasterxml.jackson.core.TreeNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import net.ravendb.client.Constants;
+import net.ravendb.client.documents.conventions.DocumentConventions;
 import net.ravendb.client.documents.session.SessionInfo;
 import net.ravendb.client.extensions.HttpExtensions;
 import net.ravendb.client.http.*;
@@ -119,7 +120,7 @@ public class MultiGetCommand extends RavenCommand<List<GetResponse>> implements 
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
-        }, ContentType.APPLICATION_JSON));
+        }, ContentType.APPLICATION_JSON, _requestExecutor.getConventions()));
 
         return request;
     }

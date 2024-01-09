@@ -25,15 +25,18 @@ public class AdminJsConsoleOperation implements IServerOperation<JsonNode> {
 
     @Override
     public RavenCommand<JsonNode> getCommand(DocumentConventions conventions) {
-        return new AdminJsConsoleCommand(_script);
+        return new AdminJsConsoleCommand(conventions, _script);
     }
 
     private static class AdminJsConsoleCommand extends RavenCommand<JsonNode> {
         private final String _script;
+        private final DocumentConventions _conventions;
 
-        public AdminJsConsoleCommand(String script) {
+
+        public AdminJsConsoleCommand(DocumentConventions conventions, String script) {
             super(JsonNode.class);
             _script = script;
+            _conventions = conventions;
         }
 
         @Override
@@ -51,7 +54,7 @@ public class AdminJsConsoleOperation implements IServerOperation<JsonNode> {
                 } catch (IOException e) {
                     throw new RuntimeException(e);
                 }
-            }, ContentType.APPLICATION_JSON));
+            }, ContentType.APPLICATION_JSON, _conventions));
 
             return request;
         }

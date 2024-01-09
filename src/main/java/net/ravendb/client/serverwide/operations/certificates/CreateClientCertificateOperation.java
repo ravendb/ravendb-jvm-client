@@ -49,16 +49,17 @@ public class CreateClientCertificateOperation implements IServerOperation<Certif
 
     @Override
     public RavenCommand<CertificateRawData> getCommand(DocumentConventions conventions) {
-        return new CreateClientCertificateCommand(_name, _permissions, _clearance, _password);
+        return new CreateClientCertificateCommand(conventions, _name, _permissions, _clearance, _password);
     }
 
     private static class CreateClientCertificateCommand extends RavenCommand<CertificateRawData> implements IRaftCommand {
+        private final DocumentConventions _conventions;
         private final String _name;
         private final Map<String, DatabaseAccess> _permissions;
         private final SecurityClearance _clearance;
         private final String _password;
 
-        public CreateClientCertificateCommand(String name, Map<String, DatabaseAccess> permissions, SecurityClearance clearance, String password) {
+        public CreateClientCertificateCommand(DocumentConventions conventions, String name, Map<String, DatabaseAccess> permissions, SecurityClearance clearance, String password) {
             super(CertificateRawData.class);
 
             if (name == null) {
@@ -68,6 +69,7 @@ public class CreateClientCertificateOperation implements IServerOperation<Certif
                 throw new IllegalArgumentException("Permission cannot be null");
             }
 
+            _conventions = conventions;
             _name = name;
             _permissions = permissions;
             _clearance = clearance;
@@ -108,7 +110,7 @@ public class CreateClientCertificateOperation implements IServerOperation<Certif
                 } catch (IOException e) {
                     throw new RuntimeException(e);
                 }
-            }, ContentType.APPLICATION_JSON));
+            }, ContentType.APPLICATION_JSON, _conventions));
             return request;
         }
 

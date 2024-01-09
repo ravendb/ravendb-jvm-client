@@ -1,6 +1,7 @@
 package net.ravendb.client.documents.commands;
 
 import com.fasterxml.jackson.core.JsonGenerator;
+import net.ravendb.client.documents.conventions.DocumentConventions;
 import net.ravendb.client.documents.subscriptions.SubscriptionUpdateOptions;
 import net.ravendb.client.documents.subscriptions.UpdateSubscriptionResult;
 import net.ravendb.client.http.IRaftCommand;
@@ -17,10 +18,12 @@ import java.io.IOException;
 
 public class UpdateSubscriptionCommand extends RavenCommand<UpdateSubscriptionResult> implements IRaftCommand {
     private final SubscriptionUpdateOptions _options;
+    private final DocumentConventions _conventions;
 
-    public UpdateSubscriptionCommand(SubscriptionUpdateOptions options) {
+    public UpdateSubscriptionCommand(DocumentConventions conventions, SubscriptionUpdateOptions options) {
         super(UpdateSubscriptionResult.class);
         _options = options;
+        _conventions = conventions;
     }
 
     @Override
@@ -34,7 +37,7 @@ public class UpdateSubscriptionCommand extends RavenCommand<UpdateSubscriptionRe
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
-        }, ContentType.APPLICATION_JSON));
+        }, ContentType.APPLICATION_JSON, _conventions));
 
         return request;
     }

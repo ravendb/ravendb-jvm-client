@@ -27,21 +27,23 @@ public class BackupOperation implements IMaintenanceOperation<OperationIdResult>
 
     @Override
     public RavenCommand<OperationIdResult> getCommand(DocumentConventions conventions) {
-        return new BackupCommand(_backupConfiguration);
+        return new BackupCommand(conventions, _backupConfiguration);
     }
 
     private static class BackupCommand extends RavenCommand<OperationIdResult> {
 
         private final BackupConfiguration _backupConfiguration;
+        private final DocumentConventions _conventions;
 
         @Override
         public boolean isReadRequest() {
             return false;
         }
 
-        public BackupCommand(BackupConfiguration backupConfiguration) {
+        public BackupCommand(DocumentConventions conventions, BackupConfiguration backupConfiguration) {
             super(OperationIdResult.class);
             _backupConfiguration = backupConfiguration;
+            _conventions = conventions;
         }
 
         @Override
@@ -55,7 +57,7 @@ public class BackupOperation implements IMaintenanceOperation<OperationIdResult>
                 } catch (IOException e) {
                     throw new RuntimeException(e);
                 }
-            }, ContentType.APPLICATION_JSON));
+            }, ContentType.APPLICATION_JSON, _conventions));
 
             return request;
         }

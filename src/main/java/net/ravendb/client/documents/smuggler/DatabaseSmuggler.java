@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.databind.JsonNode;
 import net.ravendb.client.documents.IDocumentStore;
 import net.ravendb.client.documents.commands.GetNextOperationIdCommand;
+import net.ravendb.client.documents.conventions.DocumentConventions;
 import net.ravendb.client.documents.operations.Operation;
 import net.ravendb.client.exceptions.RavenException;
 import net.ravendb.client.extensions.JsonExtensions;
@@ -92,7 +93,7 @@ public class DatabaseSmuggler {
         _requestExecutor.execute(getOperationIdCommand);
         Long operationId = getOperationIdCommand.getResult();
 
-        ExportCommand command = new ExportCommand(options, handleStreamResponse, operationId, getOperationIdCommand.getNodeTag());
+        ExportCommand command = new ExportCommand(_requestExecutor.getConventions(), options, handleStreamResponse, operationId, getOperationIdCommand.getNodeTag());
         _requestExecutor.execute(command);
 
         return new Operation(_requestExecutor, () -> _store.changes(_databaseName, getOperationIdCommand.getNodeTag()), _requestExecutor.getConventions(), operationId, getOperationIdCommand.getNodeTag());
@@ -194,8 +195,9 @@ public class DatabaseSmuggler {
         private final JsonNode _options;
         private final Consumer<InputStream> _handleStreamResponse;
         private final long _operationId;
+        private final DocumentConventions _conventions;
 
-        public ExportCommand(DatabaseSmugglerExportOptions options,
+        public ExportCommand(DocumentConventions conventions, DatabaseSmugglerExportOptions options,
                              Consumer<InputStream> handleStreamResponse, long operationId, String nodeTag) {
             if (options == null) {
                 throw new IllegalArgumentException("Options cannot be null");
@@ -203,6 +205,8 @@ public class DatabaseSmuggler {
             if (handleStreamResponse == null) {
                 throw new IllegalArgumentException("HandleStreamResponse cannot be null");
             }
+
+            _conventions = conventions;
             _handleStreamResponse = handleStreamResponse;
             _options = mapper.valueToTree(options);
             _operationId = operationId;
@@ -220,7 +224,7 @@ public class DatabaseSmuggler {
                 } catch (IOException e) {
                     throw new RuntimeException(e);
                 }
-            }, ContentType.APPLICATION_JSON);
+            }, ContentType.APPLICATION_JSON, _conventions);
             entity.setChunked(true);
             request.setEntity(entity);
 

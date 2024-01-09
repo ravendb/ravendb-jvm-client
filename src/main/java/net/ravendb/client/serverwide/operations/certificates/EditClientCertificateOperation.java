@@ -48,16 +48,18 @@ public class EditClientCertificateOperation implements IVoidServerOperation {
 
     @Override
     public VoidRavenCommand getCommand(DocumentConventions conventions) {
-        return new EditClientCertificateCommand(_thumbprint, _name, _permissions, _clearance);
+        return new EditClientCertificateCommand(conventions, _thumbprint, _name, _permissions, _clearance);
     }
 
     private static class EditClientCertificateCommand extends VoidRavenCommand implements IRaftCommand {
+        private final DocumentConventions _conventions;
         private final String _thumbprint;
         private final Map<String, DatabaseAccess> _permissions;
         private final String _name;
         private final SecurityClearance _clearance;
 
-        public EditClientCertificateCommand(String thumbprint, String name, Map<String, DatabaseAccess> permissions, SecurityClearance clearance) {
+        public EditClientCertificateCommand(DocumentConventions conventions, String thumbprint, String name, Map<String, DatabaseAccess> permissions, SecurityClearance clearance) {
+            _conventions = conventions;
             _thumbprint = thumbprint;
             _name = name;
             _permissions = permissions;
@@ -87,7 +89,7 @@ public class EditClientCertificateOperation implements IVoidServerOperation {
                 } catch (IOException e) {
                     throw new RuntimeException(e);
                 }
-            }, ContentType.APPLICATION_JSON));
+            }, ContentType.APPLICATION_JSON, _conventions));
             return request;
 
         }

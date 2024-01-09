@@ -25,18 +25,20 @@ public class UpdatePullReplicationAsSinkOperation implements IMaintenanceOperati
 
     @Override
     public RavenCommand<ModifyOngoingTaskResult> getCommand(DocumentConventions conventions) {
-        return new UpdatePullEdgeReplication(_pullReplication);
+        return new UpdatePullEdgeReplication(conventions, _pullReplication);
     }
 
     private static class UpdatePullEdgeReplication extends RavenCommand<ModifyOngoingTaskResult> implements IRaftCommand {
         private final PullReplicationAsSink _pullReplication;
+        private final DocumentConventions _conventions;
 
-        public UpdatePullEdgeReplication(PullReplicationAsSink pullReplication) {
+        public UpdatePullEdgeReplication(DocumentConventions conventions, PullReplicationAsSink pullReplication) {
             super(ModifyOngoingTaskResult.class);
             if (pullReplication == null) {
                 throw new IllegalArgumentException("PullReplication cannot be null");
             }
             _pullReplication = pullReplication;
+            _conventions = conventions;
         }
 
         @Override
@@ -53,7 +55,7 @@ public class UpdatePullReplicationAsSinkOperation implements IMaintenanceOperati
                 } catch (IOException e) {
                     throw new RuntimeException(e);
                 }
-            }, ContentType.APPLICATION_JSON));
+            }, ContentType.APPLICATION_JSON, _conventions));
 
             return request;
         }

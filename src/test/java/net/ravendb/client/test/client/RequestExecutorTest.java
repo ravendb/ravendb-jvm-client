@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import net.ravendb.client.ClusterTestBase;
 import net.ravendb.client.documents.DocumentStore;
 import net.ravendb.client.documents.commands.PutDocumentCommand;
+import net.ravendb.client.documents.conventions.DocumentConventions;
 import net.ravendb.client.documents.session.EntityToJson;
 import net.ravendb.client.http.RequestExecutor;
 import net.ravendb.client.infrastructure.DisabledOnPullRequest;
@@ -106,7 +107,7 @@ public class RequestExecutorTest extends ClusterTestBase {
                 });
 
                 ObjectNode documentJson = EntityToJson.convertEntityToJson(new User(), store.getConventions(), null);
-                FirstFailCommand command = new FirstFailCommand("User/1", null, documentJson, failCount);
+                FirstFailCommand command = new FirstFailCommand(store.getConventions(), "User/1", null, documentJson, failCount);
                 try {
                     requestExecutor.execute(command);
                 } catch (Exception e) {
@@ -125,8 +126,8 @@ public class RequestExecutorTest extends ClusterTestBase {
     public static class FirstFailCommand extends PutDocumentCommand {
         private int _timeToFail;
 
-        public FirstFailCommand(String id, String changeVector, ObjectNode document, int timeToFail) {
-            super(id, changeVector, document);
+        public FirstFailCommand(DocumentConventions conventions, String id, String changeVector, ObjectNode document, int timeToFail) {
+            super(conventions, id, changeVector, document);
 
             _timeToFail = timeToFail;
         }

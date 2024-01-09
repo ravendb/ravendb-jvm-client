@@ -21,6 +21,7 @@ public class CreateSubscriptionCommand extends RavenCommand<CreateSubscriptionRe
     @SuppressWarnings("FieldCanBeLocal")
     private final SubscriptionCreationOptions _options;
     private final String _id;
+    private final DocumentConventions _conventions;
 
     public CreateSubscriptionCommand(DocumentConventions conventions, SubscriptionCreationOptions options) {
         this(conventions, options, null);
@@ -31,6 +32,7 @@ public class CreateSubscriptionCommand extends RavenCommand<CreateSubscriptionRe
         if (options == null) {
             throw new IllegalArgumentException("Options cannot be null");
         }
+        _conventions = conventions;
         _options = options;
         _id = id;
     }
@@ -50,7 +52,7 @@ public class CreateSubscriptionCommand extends RavenCommand<CreateSubscriptionRe
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
-        }, ContentType.APPLICATION_JSON));
+        }, ContentType.APPLICATION_JSON, _conventions));
 
         return request;
     }

@@ -3,6 +3,7 @@ package net.ravendb.client.test.client.bulkInsert;
 import net.ravendb.client.Constants;
 import net.ravendb.client.RemoteTestBase;
 import net.ravendb.client.documents.BulkInsertOperation;
+import net.ravendb.client.documents.DocumentStore;
 import net.ravendb.client.documents.IDocumentStore;
 import net.ravendb.client.documents.session.IDocumentSession;
 import net.ravendb.client.exceptions.documents.bulkinsert.BulkInsertAbortedException;
@@ -13,10 +14,14 @@ import org.junit.jupiter.api.Test;
 
 import java.util.Date;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.Assertions.*;
 
 public class BulkInsertsTest extends RemoteTestBase {
+
+    @Override
+    protected void customizeStore(DocumentStore store) {
+        store.getConventions().setDisableTopologyUpdates(true);
+    }
 
     @Test
     public void simpleBulkInsertShouldWork() throws Exception {
@@ -69,6 +74,31 @@ public class BulkInsertsTest extends RemoteTestBase {
             }
         }
 
+    }
+
+    @Test
+    public void canBulkInsertOnStoreWithoutTopologyUpdates() throws Exception {
+        FooBar fooBar1 = new FooBar();
+        fooBar1.setName("John Doe");
+
+        try (IDocumentStore store = getDocumentStore()) {
+
+            try (DocumentStore innerStore = new DocumentStore(store.getUrls(), store.getDatabase())) {
+                innerStore.getConventions().setDisableTopologyUpdates(true);
+                innerStore.initialize();
+
+                try (BulkInsertOperation bulkInsert = innerStore.bulkInsert()) {
+                    bulkInsert.store(fooBar1);
+                }
+
+                try (IDocumentSession session = innerStore.openSession()) {
+                    FooBar doc1 = session.load(FooBar.class, "FooBars/1-A");
+
+                    assertThat(doc1)
+                            .isNotNull();
+                }
+            }
+        }
     }
 
     @Test

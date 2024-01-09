@@ -2,6 +2,7 @@ package net.ravendb.client.documents.commands;
 
 import com.fasterxml.jackson.core.JsonGenerator;
 import net.ravendb.client.Constants;
+import net.ravendb.client.documents.conventions.DocumentConventions;
 import net.ravendb.client.documents.operations.timeSeries.AbstractTimeSeriesRange;
 import net.ravendb.client.documents.operations.timeSeries.TimeSeriesCountRange;
 import net.ravendb.client.documents.operations.timeSeries.TimeSeriesRange;
@@ -29,6 +30,7 @@ import java.util.*;
 
 public class GetDocumentsCommand extends RavenCommand<GetDocumentsResult> {
 
+    private final DocumentConventions _conventions;
     private String _id;
 
     private String[] _ids;
@@ -55,44 +57,48 @@ public class GetDocumentsCommand extends RavenCommand<GetDocumentsResult> {
         super(GetDocumentsResult.class);
         _start = start;
         _pageSize = pageSize;
+        _conventions = null;
     }
 
-    public GetDocumentsCommand(String id, String[] includes, boolean metadataOnly) {
+    public GetDocumentsCommand(DocumentConventions conventions, String id, String[] includes, boolean metadataOnly) {
         super(GetDocumentsResult.class);
         if (id == null) {
             throw new IllegalArgumentException("id cannot be null");
         }
+
+        _conventions = conventions;
         _id = id;
         _includes = includes;
         _metadataOnly = metadataOnly;
     }
 
-    public GetDocumentsCommand(String[] ids, String[] includes, boolean metadataOnly) {
+    public GetDocumentsCommand(DocumentConventions conventions, String[] ids, String[] includes, boolean metadataOnly) {
         super(GetDocumentsResult.class);
         if (ids == null || ids.length == 0) {
             throw new IllegalArgumentException("Please supply at least one id");
         }
 
+        _conventions = conventions;
         _ids = ids;
         _includes = includes;
         _metadataOnly = metadataOnly;
     }
 
-    public GetDocumentsCommand(String[] ids, String[] includes, String[] counterIncludes,
+    public GetDocumentsCommand(DocumentConventions conventions, String[] ids, String[] includes, String[] counterIncludes,
                                List<AbstractTimeSeriesRange> timeSeriesIncludes, String[] compareExchangeValueIncludes,
                                boolean metadataOnly) {
-        this(ids, includes, metadataOnly);
+        this(conventions, ids, includes, metadataOnly);
 
         _counters = counterIncludes;
         _timeSeriesIncludes = timeSeriesIncludes;
         _compareExchangeValueIncludes = compareExchangeValueIncludes;
     }
 
-    public GetDocumentsCommand(String[] ids, String[] includes, String[] counterIncludes,
+    public GetDocumentsCommand(DocumentConventions conventions, String[] ids, String[] includes, String[] counterIncludes,
                                String[] revisionsIncludesByChangeVector, Date revisionIncludeByDateTimeBefore,
                                List<AbstractTimeSeriesRange> timeSeriesIncludes, String[] compareExchangeValueIncludes,
                                boolean metadataOnly) {
-        this(ids, includes, metadataOnly);
+        this(conventions, ids, includes, metadataOnly);
 
         _counters = counterIncludes;
         _revisionsIncludeByChangeVector = revisionsIncludesByChangeVector;
@@ -101,21 +107,23 @@ public class GetDocumentsCommand extends RavenCommand<GetDocumentsResult> {
         _compareExchangeValueIncludes = compareExchangeValueIncludes;
     }
 
-    public GetDocumentsCommand(String[] ids, String[] includes, boolean includeAllCounters,
+    public GetDocumentsCommand(DocumentConventions conventions, String[] ids, String[] includes, boolean includeAllCounters,
                                List<AbstractTimeSeriesRange> timeSeriesIncludes, String[] compareExchangeValueIncludes,
                                boolean metadataOnly) {
-        this(ids, includes, metadataOnly);
+        this(conventions, ids, includes, metadataOnly);
 
         _includeAllCounters = includeAllCounters;
         _timeSeriesIncludes = timeSeriesIncludes;
         _compareExchangeValueIncludes = compareExchangeValueIncludes;
     }
 
-    public GetDocumentsCommand(String startWith, String startAfter, String matches, String exclude, int start, int pageSize, boolean metadataOnly) {
+    public GetDocumentsCommand(DocumentConventions conventions, String startWith, String startAfter, String matches, String exclude, int start, int pageSize, boolean metadataOnly) {
         super(GetDocumentsResult.class);
         if (startWith == null) {
             throw new IllegalArgumentException("startWith cannot be null");
         }
+
+        _conventions = conventions;
         _startWith = startWith;
         _startAfter = startAfter;
         _matches = matches;
@@ -249,14 +257,14 @@ public class GetDocumentsCommand extends RavenCommand<GetDocumentsResult> {
             pathBuilder.append("&id=");
             pathBuilder.append(UrlUtils.escapeDataString(_id));
         } else if (_ids != null) {
-            request = prepareRequestWithMultipleIds(pathBuilder, request, _ids);
+            request = prepareRequestWithMultipleIds(_conventions, pathBuilder, request, _ids);
         }
 
         url.value = pathBuilder.toString();
         return request;
     }
 
-    public static HttpRequestBase prepareRequestWithMultipleIds(StringBuilder pathBuilder, HttpRequestBase request, String[] ids) {
+    public static HttpRequestBase prepareRequestWithMultipleIds(DocumentConventions conventions, StringBuilder pathBuilder, HttpRequestBase request, String[] ids) {
         Set<String> uniqueIds = new LinkedHashSet<>();
         Collections.addAll(uniqueIds, ids);
 
@@ -304,7 +312,7 @@ public class GetDocumentsCommand extends RavenCommand<GetDocumentsResult> {
                 } catch (IOException e) {
                     throw new RuntimeException(e);
                 }
-            }, ContentType.APPLICATION_JSON));
+            }, ContentType.APPLICATION_JSON, conventions));
 
             return httpPost;
         }

@@ -186,7 +186,7 @@ public class PatchOperation implements IOperation<PatchResult> {
                 } catch (IOException e) {
                     throw new RuntimeException(e);
                 }
-            }, ContentType.APPLICATION_JSON));
+            }, ContentType.APPLICATION_JSON, _conventions));
             addChangeVectorIfNotNull(_changeVector, request);
             return request;
         }

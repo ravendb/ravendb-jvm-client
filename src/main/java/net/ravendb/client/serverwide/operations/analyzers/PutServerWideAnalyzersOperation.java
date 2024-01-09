@@ -36,6 +36,7 @@ public class PutServerWideAnalyzersOperation implements IVoidServerOperation {
     
     private static class PutServerWideAnalyzersCommand extends VoidRavenCommand implements IRaftCommand {
         private final ObjectNode[] _analyzersToAdd;
+        private final DocumentConventions _conventions;
         
         public PutServerWideAnalyzersCommand(DocumentConventions conventions, AnalyzerDefinition[] analyzersToAdd) {
             if (conventions == null) {
@@ -44,7 +45,8 @@ public class PutServerWideAnalyzersOperation implements IVoidServerOperation {
             if (analyzersToAdd == null) {
                 throw new IllegalArgumentException("AnalyzersToAdd cannot be null");
             }
-            
+
+            _conventions = conventions;
             _analyzersToAdd = new ObjectNode[analyzersToAdd.length];
 
             for (int i = 0; i < analyzersToAdd.length; i++) {
@@ -78,7 +80,7 @@ public class PutServerWideAnalyzersOperation implements IVoidServerOperation {
                 } catch (IOException e) {
                     throw new RuntimeException(e);
                 }
-            }, ContentType.APPLICATION_JSON));
+            }, ContentType.APPLICATION_JSON, _conventions));
 
             return httpPut;
         }

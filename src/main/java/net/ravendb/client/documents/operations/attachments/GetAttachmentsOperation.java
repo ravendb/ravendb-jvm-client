@@ -33,17 +33,19 @@ public class GetAttachmentsOperation implements IOperation<CloseableAttachmentsR
 
     @Override
     public RavenCommand<CloseableAttachmentsResult> getCommand(IDocumentStore store, DocumentConventions conventions, HttpCache cache) {
-        return new GetAttachmentsCommand(_attachments, _type);
+        return new GetAttachmentsCommand(conventions, _attachments, _type);
     }
 
     public static class GetAttachmentsCommand extends RavenCommand<CloseableAttachmentsResult> {
+        private final DocumentConventions _conventions;
         private final AttachmentType _type;
         private final List<AttachmentRequest> _attachments;
         private final List<AttachmentDetails> _attachmentsMetadata = new ArrayList<>();
 
-        public GetAttachmentsCommand(List<AttachmentRequest> attachments, AttachmentType type) {
+        public GetAttachmentsCommand(DocumentConventions conventions, List<AttachmentRequest> attachments, AttachmentType type) {
             super(CloseableAttachmentsResult.class);
 
+            _conventions = conventions;
             _type = type;
             _attachments = attachments;
             responseType = RavenCommandResponseType.EMPTY;
@@ -82,7 +84,7 @@ public class GetAttachmentsOperation implements IOperation<CloseableAttachmentsR
                 } catch (IOException e) {
                     throw new RuntimeException(e);
                 }
-            }, ContentType.APPLICATION_JSON));
+            }, ContentType.APPLICATION_JSON, _conventions));
 
             return request;
         }

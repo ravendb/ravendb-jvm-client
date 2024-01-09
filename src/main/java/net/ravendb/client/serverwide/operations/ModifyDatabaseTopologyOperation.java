@@ -36,19 +36,21 @@ public class ModifyDatabaseTopologyOperation implements IServerOperation<ModifyD
 
     @Override
     public RavenCommand<ModifyDatabaseTopologyResult> getCommand(DocumentConventions conventions) {
-        return new ModifyDatabaseTopologyCommand(_databaseName, _databaseTopology);
+        return new ModifyDatabaseTopologyCommand(conventions, _databaseName, _databaseTopology);
     }
 
     private static class ModifyDatabaseTopologyCommand extends RavenCommand<ModifyDatabaseTopologyResult> implements IRaftCommand {
+        private final DocumentConventions _conventions;
         private final String _databaseName;
         private final DatabaseTopology _databaseTopology;
 
-        public ModifyDatabaseTopologyCommand(String databaseName, DatabaseTopology databaseTopology) {
+        public ModifyDatabaseTopologyCommand(DocumentConventions conventions, String databaseName, DatabaseTopology databaseTopology) {
             super(ModifyDatabaseTopologyResult.class);
 
             if (databaseTopology == null) {
                 throw new IllegalArgumentException("DatabaseTopology cannot be null");
             }
+            _conventions = conventions;
             _databaseTopology = databaseTopology;
             _databaseName = databaseName;
         }
@@ -64,7 +66,7 @@ public class ModifyDatabaseTopologyOperation implements IServerOperation<ModifyD
                 } catch (IOException e) {
                     throw new RuntimeException(e);
                 }
-            }, ContentType.APPLICATION_JSON));
+            }, ContentType.APPLICATION_JSON, _conventions));
 
             return request;
         }

@@ -28,15 +28,17 @@ public class ConfigureRefreshOperation implements IMaintenanceOperation<Configur
 
     @Override
     public RavenCommand<ConfigureRefreshOperationResult> getCommand(DocumentConventions conventions) {
-        return new ConfigureRefreshCommand(_configuration);
+        return new ConfigureRefreshCommand(conventions, _configuration);
     }
 
     private static class ConfigureRefreshCommand extends RavenCommand<ConfigureRefreshOperationResult> implements IRaftCommand {
         private final RefreshConfiguration _configuration;
+        private final DocumentConventions _conventions;
 
-        public ConfigureRefreshCommand(RefreshConfiguration configuration) {
+        public ConfigureRefreshCommand(DocumentConventions conventions, RefreshConfiguration configuration) {
             super(ConfigureRefreshOperationResult.class);
             _configuration = configuration;
+            _conventions = conventions;
         }
 
         @Override
@@ -55,7 +57,7 @@ public class ConfigureRefreshOperation implements IMaintenanceOperation<Configur
                 } catch (IOException e) {
                     throw new RuntimeException(e);
                 }
-            }, ContentType.APPLICATION_JSON));
+            }, ContentType.APPLICATION_JSON, _conventions));
 
             return request;
         }

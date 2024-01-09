@@ -32,18 +32,20 @@ public class ReplaceClusterCertificateOperation implements IVoidServerOperation 
 
     @Override
     public VoidRavenCommand getCommand(DocumentConventions conventions) {
-        return new ReplaceClusterCertificateCommand(_certBytes, _replaceImmediately);
+        return new ReplaceClusterCertificateCommand(conventions, _certBytes, _replaceImmediately);
     }
 
     private static class ReplaceClusterCertificateCommand extends VoidRavenCommand implements IRaftCommand {
+        private final DocumentConventions _conventions;
         private final byte[] _certBytes;
         private final boolean _replaceImmediately;
 
-        public ReplaceClusterCertificateCommand(byte[] certBytes, boolean replaceImmediately) {
+        public ReplaceClusterCertificateCommand(DocumentConventions conventions, byte[] certBytes, boolean replaceImmediately) {
             if (certBytes == null) {
                 throw new IllegalArgumentException("CertBytes cannot be null");
             }
 
+            _conventions = conventions;
             _certBytes = certBytes;
             _replaceImmediately = replaceImmediately;
         }
@@ -67,7 +69,7 @@ public class ReplaceClusterCertificateOperation implements IVoidServerOperation 
                 } catch (IOException e) {
                     throw new RuntimeException(e);
                 }
-            }, ContentType.APPLICATION_JSON));
+            }, ContentType.APPLICATION_JSON, _conventions));
             return request;
         }
 

@@ -35,6 +35,7 @@ public class PutServerWideClientConfigurationOperation implements IVoidServerOpe
 
     private static class PutServerWideClientConfigurationCommand extends VoidRavenCommand implements IRaftCommand {
         private final ClientConfiguration _configuration;
+        private final DocumentConventions _conventions;
 
         public PutServerWideClientConfigurationCommand(DocumentConventions conventions, ClientConfiguration configuration) {
             if (conventions == null) {
@@ -44,6 +45,7 @@ public class PutServerWideClientConfigurationOperation implements IVoidServerOpe
                 throw new IllegalArgumentException("Configuration cannot be null");
             }
 
+            _conventions = conventions;
             _configuration = configuration;
         }
 
@@ -59,7 +61,7 @@ public class PutServerWideClientConfigurationOperation implements IVoidServerOpe
                 } catch (IOException e) {
                     throw new RuntimeException(e);
                 }
-            }, ContentType.APPLICATION_JSON));
+            }, ContentType.APPLICATION_JSON, _conventions));
             return request;
         }
 

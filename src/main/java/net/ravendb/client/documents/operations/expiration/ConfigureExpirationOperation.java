@@ -26,13 +26,14 @@ public class ConfigureExpirationOperation implements IMaintenanceOperation<Confi
 
     @Override
     public RavenCommand<ConfigureExpirationOperationResult> getCommand(DocumentConventions conventions) {
-        return new ConfigureExpirationCommand(_configuration);
+        return new ConfigureExpirationCommand(conventions, _configuration);
     }
 
     private static class ConfigureExpirationCommand extends RavenCommand<ConfigureExpirationOperationResult> implements IRaftCommand {
         private final ExpirationConfiguration _configuration;
+        private final DocumentConventions _conventions;
 
-        public ConfigureExpirationCommand(ExpirationConfiguration configuration) {
+        public ConfigureExpirationCommand(DocumentConventions conventions, ExpirationConfiguration configuration) {
             super(ConfigureExpirationOperationResult.class);
 
             if (configuration == null) {
@@ -40,6 +41,7 @@ public class ConfigureExpirationOperation implements IMaintenanceOperation<Confi
             }
 
             _configuration = configuration;
+            _conventions = conventions;
         }
 
         @Override
@@ -59,7 +61,7 @@ public class ConfigureExpirationOperation implements IMaintenanceOperation<Confi
                 } catch (IOException e) {
                     throw new RuntimeException(e);
                 }
-            }, ContentType.APPLICATION_JSON));
+            }, ContentType.APPLICATION_JSON, _conventions));
 
             return request;
         }

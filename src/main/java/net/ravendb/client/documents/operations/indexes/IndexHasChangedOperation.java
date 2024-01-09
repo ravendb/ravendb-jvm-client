@@ -34,12 +34,14 @@ public class IndexHasChangedOperation implements IMaintenanceOperation<Boolean> 
 
     private static class IndexHasChangedCommand extends RavenCommand<Boolean> {
 
+        private final DocumentConventions _conventions;
         private final ObjectNode _definition;
 
         public IndexHasChangedCommand(DocumentConventions conventions, IndexDefinition definition) {
             super(Boolean.class);
 
             _definition = mapper.valueToTree(definition);
+            _conventions = conventions;
         }
 
         @Override
@@ -59,7 +61,7 @@ public class IndexHasChangedOperation implements IMaintenanceOperation<Boolean> 
                 } catch (IOException e) {
                     throw new RuntimeException(e);
                 }
-            }, ContentType.APPLICATION_JSON));
+            }, ContentType.APPLICATION_JSON, _conventions));
 
             return request;
         }

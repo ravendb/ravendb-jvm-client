@@ -41,14 +41,15 @@ public class RegisterReplicationHubAccessOperation implements IVoidMaintenanceOp
 
     @Override
     public VoidRavenCommand getCommand(DocumentConventions conventions) {
-        return new RegisterReplicationHubAccessCommand(_hubName, _access);
+        return new RegisterReplicationHubAccessCommand(conventions, _hubName, _access);
     }
 
     private static class RegisterReplicationHubAccessCommand extends VoidRavenCommand implements IRaftCommand {
+        private final DocumentConventions _conventions;
         private final String _hubName;
         private final ReplicationHubAccess _access;
 
-        public RegisterReplicationHubAccessCommand(String hubName, ReplicationHubAccess access) {
+        public RegisterReplicationHubAccessCommand(DocumentConventions conventions, String hubName, ReplicationHubAccess access) {
             if (StringUtils.isBlank(hubName)) {
                 throw new IllegalArgumentException("HubName cannot be null or whitespace.");
             }
@@ -57,6 +58,7 @@ public class RegisterReplicationHubAccessOperation implements IVoidMaintenanceOp
                 throw new IllegalArgumentException("Access cannot be null");
             }
 
+            _conventions = conventions;
             _hubName = hubName;
             _access = access;
 
@@ -74,7 +76,7 @@ public class RegisterReplicationHubAccessOperation implements IVoidMaintenanceOp
                 } catch (IOException e) {
                     throw new RuntimeException(e);
                 }
-            }, ContentType.APPLICATION_JSON));
+            }, ContentType.APPLICATION_JSON, _conventions));
 
             return request;
         }

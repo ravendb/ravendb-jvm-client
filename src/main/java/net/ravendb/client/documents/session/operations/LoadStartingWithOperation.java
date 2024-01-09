@@ -41,7 +41,7 @@ public class LoadStartingWithOperation {
             logger.info("Requesting documents with ids starting with '" + _startWith + "' from " + _session.storeIdentifier());
         }
 
-        return new GetDocumentsCommand(_startWith, _startAfter, _matches, _exclude, _start, _pageSize, false);
+        return new GetDocumentsCommand(_session.getConventions(), _startWith, _startAfter, _matches, _exclude, _start, _pageSize, false);
     }
 
     public void withStartWith(String idPrefix) {

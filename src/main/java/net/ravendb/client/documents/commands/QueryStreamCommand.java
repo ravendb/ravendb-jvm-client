@@ -46,7 +46,7 @@ public class QueryStreamCommand extends RavenCommand<StreamResultResponse> {
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
-        }, ContentType.APPLICATION_JSON));
+        }, ContentType.APPLICATION_JSON, _conventions));
 
         url.value = node.getUrl() + "/databases/" + node.getDatabase() + "/streams/queries";
 

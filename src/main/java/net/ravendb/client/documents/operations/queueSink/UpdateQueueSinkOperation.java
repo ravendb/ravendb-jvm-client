@@ -65,7 +65,7 @@ public class UpdateQueueSinkOperation<T extends ConnectionString> implements IMa
                 } catch (IOException e) {
                     throw new RuntimeException(e);
                 }
-            }, ContentType.APPLICATION_JSON));
+            }, ContentType.APPLICATION_JSON, _conventions));
 
             return request;
         }

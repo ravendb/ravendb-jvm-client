@@ -36,16 +36,17 @@ public class GetAttachmentOperation implements IOperation<CloseableAttachmentRes
 
     @Override
     public RavenCommand<CloseableAttachmentResult> getCommand(IDocumentStore store, DocumentConventions conventions, HttpCache cache) {
-        return new GetAttachmentCommand(_documentId, _name, _type, _changeVector);
+        return new GetAttachmentCommand(conventions, _documentId, _name, _type, _changeVector);
     }
 
     private static class GetAttachmentCommand extends RavenCommand<CloseableAttachmentResult> {
+        private final DocumentConventions _conventions;
         private final String _documentId;
         private final String _name;
         private final AttachmentType _type;
         private final String _changeVector;
 
-        public GetAttachmentCommand(String documentId, String name, AttachmentType type, String changeVector) {
+        public GetAttachmentCommand(DocumentConventions conventions, String documentId, String name, AttachmentType type, String changeVector) {
             super(CloseableAttachmentResult.class);
 
             if (StringUtils.isBlank(documentId)) {
@@ -60,6 +61,7 @@ public class GetAttachmentOperation implements IOperation<CloseableAttachmentRes
                 throw new IllegalArgumentException("Change vector cannot be null for attachment type " + type);
             }
 
+            _conventions = conventions;
             _documentId = documentId;
             _name = name;
             _type = type;
@@ -85,7 +87,7 @@ public class GetAttachmentOperation implements IOperation<CloseableAttachmentRes
                     } catch (IOException e) {
                         throw new RuntimeException(e);
                     }
-                }, ContentType.APPLICATION_JSON));
+                }, ContentType.APPLICATION_JSON, _conventions));
 
                 return request;
             } else {

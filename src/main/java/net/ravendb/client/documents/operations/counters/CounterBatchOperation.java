@@ -25,18 +25,20 @@ public class CounterBatchOperation implements IOperation<CountersDetail> {
 
     @Override
     public RavenCommand<CountersDetail> getCommand(IDocumentStore store, DocumentConventions conventions, HttpCache cache) {
-        return new CounterBatchCommand(_counterBatch);
+        return new CounterBatchCommand(conventions, _counterBatch);
     }
 
     private static class CounterBatchCommand extends RavenCommand<CountersDetail> {
+        private final DocumentConventions _conventions;
         private final CounterBatch _counterBatch;
 
-        public CounterBatchCommand(CounterBatch counterBatch) {
+        public CounterBatchCommand(DocumentConventions conventions, CounterBatch counterBatch) {
             super(CountersDetail.class);
 
             if (counterBatch == null) {
                 throw new IllegalArgumentException("CounterBatch cannot be null");
             }
+            _conventions = conventions;
             _counterBatch = counterBatch;
         }
 
@@ -52,7 +54,7 @@ public class CounterBatchOperation implements IOperation<CountersDetail> {
                 } catch (IOException e) {
                     throw new RuntimeException(e);
                 }
-            }, ContentType.APPLICATION_JSON));
+            }, ContentType.APPLICATION_JSON, _conventions));
 
             return request;
         }

@@ -62,18 +62,21 @@ public class ReorderDatabaseMembersOperation implements IVoidServerOperation {
 
     @Override
     public VoidRavenCommand getCommand(DocumentConventions conventions) {
-        return new ReorderDatabaseMembersCommand(_database, _parameters);
+        return new ReorderDatabaseMembersCommand(conventions, _database, _parameters);
     }
 
     private static class ReorderDatabaseMembersCommand extends VoidRavenCommand implements IRaftCommand {
+        private final DocumentConventions _conventions;
+
         private final String _databaseName;
         private final Parameters _parameters;
 
-        public ReorderDatabaseMembersCommand(String databaseName, Parameters parameters) {
+        public ReorderDatabaseMembersCommand(DocumentConventions conventions, String databaseName, Parameters parameters) {
             if (StringUtils.isEmpty(databaseName)) {
                 throw new IllegalArgumentException("Database cannot be empty");
             }
 
+            _conventions = conventions;
             _databaseName = databaseName;
             _parameters = parameters;
         }
@@ -90,7 +93,7 @@ public class ReorderDatabaseMembersOperation implements IVoidServerOperation {
                 } catch (IOException e) {
                     throw new RuntimeException(e);
                 }
-            }, ContentType.APPLICATION_JSON));
+            }, ContentType.APPLICATION_JSON, _conventions));
             return request;
         }
 

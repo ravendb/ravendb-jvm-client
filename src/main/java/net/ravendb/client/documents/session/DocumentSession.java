@@ -187,7 +187,7 @@ public class DocumentSession extends InMemoryDocumentSessionOperations
 
         incrementRequestCount();
 
-        GetDocumentsCommand command = new GetDocumentsCommand(new String[]{documentInfo.getId()}, null, false);
+        GetDocumentsCommand command = new GetDocumentsCommand(getConventions(), new String[]{documentInfo.getId()}, null, false);
         _requestExecutor.execute(command, sessionInfo);
 
         ObjectNode commandResult = (ObjectNode) command.getResult().getResults().get(0);
@@ -206,7 +206,7 @@ public class DocumentSession extends InMemoryDocumentSessionOperations
 
         incrementRequestCount();
 
-        GetDocumentsCommand command = new GetDocumentsCommand(idsEntitiesPairs.keySet().toArray(new String[0]), null, false);
+        GetDocumentsCommand command = new GetDocumentsCommand(getConventions(), idsEntitiesPairs.keySet().toArray(new String[0]), null, false);
         _requestExecutor.execute(command, getSessionInfo());
 
         refreshEntities(command, idsEntitiesPairs);

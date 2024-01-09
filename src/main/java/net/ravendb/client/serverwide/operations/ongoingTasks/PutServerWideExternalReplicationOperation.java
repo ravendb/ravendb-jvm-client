@@ -28,18 +28,20 @@ public class PutServerWideExternalReplicationOperation implements IServerOperati
 
     @Override
     public RavenCommand<ServerWideExternalReplicationResponse> getCommand(DocumentConventions conventions) {
-        return new PutServerWideExternalReplicationCommand(_configuration);
+        return new PutServerWideExternalReplicationCommand(conventions, _configuration);
     }
 
     private static class PutServerWideExternalReplicationCommand extends RavenCommand<ServerWideExternalReplicationResponse> implements IRaftCommand {
+        private final DocumentConventions _conventions;
         private final ObjectNode _configuration;
 
-        public PutServerWideExternalReplicationCommand(ServerWideExternalReplication configuration) {
+        public PutServerWideExternalReplicationCommand(DocumentConventions conventions, ServerWideExternalReplication configuration) {
             super(ServerWideExternalReplicationResponse.class);
 
             if (configuration == null) {
                 throw new IllegalArgumentException("Configuration cannot be null");
             }
+            _conventions = conventions;
             _configuration = mapper.valueToTree(configuration);
         }
 
@@ -64,7 +66,7 @@ public class PutServerWideExternalReplicationOperation implements IServerOperati
                 } catch (IOException e) {
                     throw new RuntimeException(e);
                 }
-            }, ContentType.APPLICATION_JSON));
+            }, ContentType.APPLICATION_JSON, _conventions));
 
             return request;
         }

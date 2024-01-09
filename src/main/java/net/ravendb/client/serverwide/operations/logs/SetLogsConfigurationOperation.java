@@ -29,18 +29,20 @@ public class SetLogsConfigurationOperation implements IVoidServerOperation {
 
     @Override
     public VoidRavenCommand getCommand(DocumentConventions conventions) {
-        return new SetLogsConfigurationCommand(_parameters);
+        return new SetLogsConfigurationCommand(conventions, _parameters);
     }
 
     private static class SetLogsConfigurationCommand extends VoidRavenCommand {
+        private final DocumentConventions _conventions;
         private final Parameters _parameters;
 
-        public SetLogsConfigurationCommand(Parameters parameters) {
+        public SetLogsConfigurationCommand(DocumentConventions conventions, Parameters parameters) {
             if (parameters == null) {
                 throw new IllegalArgumentException("Parameters cannot be null");
             }
 
             _parameters = parameters;
+            _conventions = conventions;
         }
 
         @Override
@@ -55,7 +57,7 @@ public class SetLogsConfigurationOperation implements IVoidServerOperation {
                 } catch (IOException e) {
                     throw new RuntimeException(e);
                 }
-            }, ContentType.APPLICATION_JSON));
+            }, ContentType.APPLICATION_JSON, _conventions));
             return request;
         }
     }

@@ -29,15 +29,17 @@ public class ConfigureRevisionsOperation implements IMaintenanceOperation<Config
 
     @Override
     public RavenCommand<ConfigureRevisionsOperationResult> getCommand(DocumentConventions conventions) {
-        return new ConfigureRevisionsCommand(_configuration);
+        return new ConfigureRevisionsCommand(conventions, _configuration);
     }
 
     private static class ConfigureRevisionsCommand extends RavenCommand<ConfigureRevisionsOperationResult> implements IRaftCommand {
         private final RevisionsConfiguration _configuration;
+        private final DocumentConventions _conventions;
 
-        public ConfigureRevisionsCommand(RevisionsConfiguration configuration) {
+        public ConfigureRevisionsCommand(DocumentConventions conventions, RevisionsConfiguration configuration) {
             super(ConfigureRevisionsOperationResult.class);
             _configuration = configuration;
+            _conventions = conventions;
         }
 
         @Override
@@ -57,7 +59,7 @@ public class ConfigureRevisionsOperation implements IMaintenanceOperation<Config
                 } catch (IOException e) {
                     throw new RuntimeException(e);
                 }
-            }, ContentType.APPLICATION_JSON));
+            }, ContentType.APPLICATION_JSON, _conventions));
 
             return request;
         }

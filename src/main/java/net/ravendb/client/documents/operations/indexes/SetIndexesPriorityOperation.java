@@ -50,6 +50,7 @@ public class SetIndexesPriorityOperation implements IVoidMaintenanceOperation {
 
     private static class SetIndexPriorityCommand extends VoidRavenCommand implements IRaftCommand {
         private final ObjectNode _parameters;
+        private final DocumentConventions _conventions;
 
         public SetIndexPriorityCommand(DocumentConventions conventions, Parameters parameters) {
             if (conventions == null) {
@@ -59,6 +60,7 @@ public class SetIndexesPriorityOperation implements IVoidMaintenanceOperation {
                 throw new IllegalArgumentException("Parameters cannot be null");
             }
 
+            _conventions = conventions;
             _parameters = mapper.valueToTree(parameters);
         }
 
@@ -74,7 +76,7 @@ public class SetIndexesPriorityOperation implements IVoidMaintenanceOperation {
                 } catch (IOException e) {
                     throw new RuntimeException(e);
                 }
-            }, ContentType.APPLICATION_JSON));
+            }, ContentType.APPLICATION_JSON, _conventions));
 
             return request;
         }

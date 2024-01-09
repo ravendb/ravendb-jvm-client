@@ -42,17 +42,18 @@ public class PutAttachmentOperation implements IOperation<AttachmentDetails> {
 
     @Override
     public RavenCommand<AttachmentDetails> getCommand(IDocumentStore store, DocumentConventions conventions, HttpCache cache) {
-        return new PutAttachmentCommand(_documentId, _name, _stream, _contentType, _changeVector);
+        return new PutAttachmentCommand(conventions, _documentId, _name, _stream, _contentType, _changeVector);
     }
 
     private static class PutAttachmentCommand extends RavenCommand<AttachmentDetails> {
+        private final DocumentConventions _conventions;
         private final String _documentId;
         private final String _name;
         private final InputStream _stream;
         private final String _contentType;
         private final String _changeVector;
 
-        public PutAttachmentCommand(String documentId, String name, InputStream stream, String contentType, String changeVector) {
+        public PutAttachmentCommand(DocumentConventions conventions, String documentId, String name, InputStream stream, String contentType, String changeVector) {
             super(AttachmentDetails.class);
 
             if (StringUtils.isBlank(documentId)) {
@@ -63,6 +64,7 @@ public class PutAttachmentOperation implements IOperation<AttachmentDetails> {
                 throw new IllegalArgumentException("name cannot be null");
             }
 
+            _conventions = conventions;
             _documentId = documentId;
             _name = name;
             _stream = stream;
@@ -86,7 +88,7 @@ public class PutAttachmentOperation implements IOperation<AttachmentDetails> {
                 } catch (IOException e) {
                     throw new RuntimeException("Unable to upload attachment content stream: " + e.getMessage(), e);
                 }
-            }, null));
+            }, null, _conventions));
 
             addChangeVectorIfNotNull(_changeVector, request);
             return request;

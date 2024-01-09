@@ -36,6 +36,7 @@ public class PutSortersOperation implements IVoidMaintenanceOperation {
 
     private static class PutSortersCommand extends VoidRavenCommand implements IRaftCommand {
         private final SorterDefinition[] _sortersToAdd;
+        private final DocumentConventions _conventions;
 
         public PutSortersCommand(DocumentConventions conventions, SorterDefinition[] sortersToAdd) {
             if (conventions == null) {
@@ -50,6 +51,7 @@ public class PutSortersOperation implements IVoidMaintenanceOperation {
                 throw new IllegalArgumentException("Sorter cannot be null");
             }
 
+            _conventions = conventions;
             _sortersToAdd = sortersToAdd;
         }
 
@@ -67,7 +69,7 @@ public class PutSortersOperation implements IVoidMaintenanceOperation {
                 } catch (IOException e) {
                     throw new RuntimeException(e);
                 }
-            }, ContentType.APPLICATION_JSON));
+            }, ContentType.APPLICATION_JSON, _conventions));
 
             return request;
         }

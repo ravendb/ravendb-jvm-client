@@ -28,19 +28,21 @@ public class UpdateDocumentsCompressionConfigurationOperation implements IMainte
 
     @Override
     public RavenCommand<DocumentCompressionConfigurationResult> getCommand(DocumentConventions conventions) {
-        return new UpdateDocumentCompressionConfigurationCommand(_documentsCompressionConfiguration);
+        return new UpdateDocumentCompressionConfigurationCommand(conventions, _documentsCompressionConfiguration);
     }
 
     private static class UpdateDocumentCompressionConfigurationCommand extends RavenCommand<DocumentCompressionConfigurationResult> implements IRaftCommand {
         private DocumentsCompressionConfiguration _documentsCompressionConfiguration;
+        private final DocumentConventions _conventions;
 
-        public UpdateDocumentCompressionConfigurationCommand(DocumentsCompressionConfiguration configuration) {
+        public UpdateDocumentCompressionConfigurationCommand(DocumentConventions conventions, DocumentsCompressionConfiguration configuration) {
             super(DocumentCompressionConfigurationResult.class);
 
             if (configuration == null) {
                 throw new IllegalArgumentException("Configuration cannot be null");
             }
 
+            _conventions = conventions;
             _documentsCompressionConfiguration = configuration;
         }
 
@@ -61,7 +63,7 @@ public class UpdateDocumentsCompressionConfigurationOperation implements IMainte
                 } catch (IOException e) {
                     throw new RuntimeException(e);
                 }
-            }, ContentType.APPLICATION_JSON));
+            }, ContentType.APPLICATION_JSON, _conventions));
 
             return request;
         }

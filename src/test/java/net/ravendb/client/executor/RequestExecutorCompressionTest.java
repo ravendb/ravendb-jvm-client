@@ -6,15 +6,22 @@ import net.ravendb.client.documents.BulkInsertOperation;
 import net.ravendb.client.documents.DocumentStore;
 import net.ravendb.client.documents.IDocumentStore;
 import net.ravendb.client.documents.bulkInsert.BulkInsertOptions;
+import net.ravendb.client.documents.operations.attachments.CloseableAttachmentResult;
+import net.ravendb.client.documents.operations.attachments.PutAttachmentOperation;
 import net.ravendb.client.documents.session.IDocumentSession;
 import net.ravendb.client.http.*;
 import net.ravendb.client.infrastructure.samples.User;
 import net.ravendb.client.primitives.CleanCloseable;
 import net.ravendb.client.test.client.bulkInsert.BulkInsertsTest;
+import org.apache.commons.io.IOUtils;
 import org.apache.http.Header;
+import org.apache.http.HttpRequest;
 import org.apache.http.HttpRequestInterceptor;
+import org.apache.http.HttpResponseInterceptor;
+import org.apache.http.client.protocol.HttpClientContext;
 import org.junit.jupiter.api.*;
 
+import java.io.ByteArrayInputStream;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -22,52 +29,102 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 public class RequestExecutorCompressionTest extends RemoteTestBase {
 
-    private static HttpRequestInterceptor interceptor;
-    private static List<LoggedRequest> outputList;
+    private static final HttpRequestInterceptor requestInterceptor;
+    private static final HttpResponseInterceptor responseInterceptor;
+    private static List<LoggedRequest> requestLogList;
+    private static List<LoggedResponse> responseLogList;
 
     private HttpCompressionAlgorithm compressionAlgorithm;
     private boolean useHttpDecompression;
     private boolean useHttpCompression;
 
     static {
-        interceptor = (request, context) -> {
-            if (outputList != null) {
+        requestInterceptor = (request, context) -> {
+            if (requestLogList != null) {
+
+                if (request.getRequestLine().getUri().contains("/topology") || request.getRequestLine().getUri().contains("/node-info")) {
+                    // ignore topology updates
+                    return;
+                }
+
                 Header acceptEncoding = request.getFirstHeader(Constants.Headers.ACCEPT_ENCODING);
                 Header contentEncoding = request.getFirstHeader(Constants.Headers.CONTENT_ENCODING);
 
-                outputList.add(new LoggedRequest(
+                requestLogList.add(new LoggedRequest(
+                        request.getRequestLine().getMethod(),
                         request.getRequestLine().getUri(),
                         acceptEncoding != null ? acceptEncoding.getValue() : null,
                         contentEncoding != null ? contentEncoding.getValue() : null
                 ));
             }
         };
+
+        responseInterceptor = (response, context) -> {
+            if (responseLogList != null) {
+                Header contentEncoding = response.getFirstHeader(Constants.Headers.CONTENT_ENCODING);
+                HttpClientContext httpClientContext = (HttpClientContext) context;
+                HttpRequest request = httpClientContext.getRequest();
+
+                if (request.getRequestLine().getUri().contains("/topology") || request.getRequestLine().getUri().contains("/node-info")) {
+                    // ignore topology updates
+                    return;
+                }
+
+                responseLogList.add(new LoggedResponse(request.getRequestLine().getMethod(),
+                        request.getRequestLine().getUri(),
+                        contentEncoding != null ? contentEncoding.getValue() : null));
+            }
+        };
     }
 
     @Test
     public void canUseGzipInRegularResponse() throws Exception {
-        List<LoggedRequest> loggedRequests = canUseCompressionMethodInRegularResponse(HttpCompressionAlgorithm.Gzip);
+        List<LoggedRequest> loggedRequests = new ArrayList<>();
+        List<LoggedResponse> loggedResponses = new ArrayList<>();
+
+        canUseCompressionMethodInRegularResponse(HttpCompressionAlgorithm.Gzip, loggedRequests, loggedResponses);
         assertThat(loggedRequests)
                 .hasSize(1);
         assertThat(loggedRequests.get(0).getAcceptEncoding())
+                .isEqualTo(Constants.Headers.Encodings.GZIP);
+
+        assertThat(loggedResponses)
+                .hasSize(1);
+        assertThat(loggedResponses.get(0).getContentEncoding())
                 .isEqualTo(Constants.Headers.Encodings.GZIP);
     }
 
     @Test
     public void canUseZstdInRegularResponse() throws Exception {
-        List<LoggedRequest> loggedRequests = canUseCompressionMethodInRegularResponse(HttpCompressionAlgorithm.Zstd);
+        List<LoggedRequest> loggedRequests = new ArrayList<>();
+        List<LoggedResponse> loggedResponses = new ArrayList<>();
+
+        canUseCompressionMethodInRegularResponse(HttpCompressionAlgorithm.Zstd, loggedRequests, loggedResponses);
         assertThat(loggedRequests.size())
-                .isGreaterThanOrEqualTo(1);
+                .isEqualTo(1);
         assertThat(loggedRequests.get(0).getAcceptEncoding())
+                .isEqualTo(Constants.Headers.Encodings.ZSTD);
+
+        assertThat(loggedResponses)
+                .hasSize(1);
+        assertThat(loggedResponses.get(0).getContentEncoding())
                 .isEqualTo(Constants.Headers.Encodings.ZSTD);
     }
 
     @Test
     public void canUseNoCompressionInRegularResponse() throws Exception {
-        List<LoggedRequest> loggedRequests = canUseCompressionMethodInRegularResponse(null);
+        List<LoggedRequest> loggedRequests = new ArrayList<>();
+        List<LoggedResponse> loggedResponses = new ArrayList<>();
+
+        canUseCompressionMethodInRegularResponse(null, loggedRequests, loggedResponses);
         assertThat(loggedRequests.size())
-                .isGreaterThanOrEqualTo(1);
+                .isEqualTo(1);
         assertThat(loggedRequests.get(0).getAcceptEncoding())
+                .isNull();
+
+        assertThat(loggedResponses)
+                .hasSize(1);
+        assertThat(loggedResponses.get(0).getContentEncoding())
                 .isNull();
     }
 
@@ -75,7 +132,7 @@ public class RequestExecutorCompressionTest extends RemoteTestBase {
     public void canUseGzipInRegularRequest() throws Exception {
         List<LoggedRequest> loggedRequests = canUseCompressionMethodInRegularRequest(HttpCompressionAlgorithm.Gzip);
         assertThat(loggedRequests.size())
-                .isGreaterThanOrEqualTo(1);
+                .isEqualTo(1);
         assertThat(loggedRequests.get(0).getContentEncoding())
                 .isEqualTo(Constants.Headers.Encodings.GZIP);
     }
@@ -84,7 +141,7 @@ public class RequestExecutorCompressionTest extends RemoteTestBase {
     public void canUseZstdInRegularRequest() throws Exception {
         List<LoggedRequest> loggedRequests = canUseCompressionMethodInRegularRequest(HttpCompressionAlgorithm.Zstd);
         assertThat(loggedRequests.size())
-                .isGreaterThanOrEqualTo(1);
+                .isEqualTo(1);
         assertThat(loggedRequests.get(0).getContentEncoding())
                 .isEqualTo(Constants.Headers.Encodings.ZSTD);
     }
@@ -93,7 +150,7 @@ public class RequestExecutorCompressionTest extends RemoteTestBase {
     public void canUseNoCompressionInRegularRequest() throws Exception {
         List<LoggedRequest> loggedRequests = canUseCompressionMethodInRegularRequest(null);
         assertThat(loggedRequests.size())
-                .isGreaterThanOrEqualTo(1);
+                .isEqualTo(1);
         assertThat(loggedRequests.get(0).getContentEncoding())
                 .isNull();
     }
@@ -103,7 +160,7 @@ public class RequestExecutorCompressionTest extends RemoteTestBase {
         List<LoggedRequest> loggedRequests = canUseCompressionMethodInBulkInsert(HttpCompressionAlgorithm.Gzip);
         assertThat(loggedRequests.size())
                 .isGreaterThanOrEqualTo(1);
-        LoggedRequest bulkInsert = loggedRequests.stream().filter(x -> x.getUrl().contains("bulk_insert")).findFirst().get();
+        LoggedRequest bulkInsert = loggedRequests.stream().filter(x -> x.getUrl().contains("bulk_insert")).findFirst().orElse(null);
         assertThat(bulkInsert.getContentEncoding())
                 .isEqualTo(Constants.Headers.Encodings.GZIP);
     }
@@ -113,7 +170,7 @@ public class RequestExecutorCompressionTest extends RemoteTestBase {
         List<LoggedRequest> loggedRequests = canUseCompressionMethodInBulkInsert(HttpCompressionAlgorithm.Zstd);
         assertThat(loggedRequests.size())
                 .isGreaterThanOrEqualTo(1);
-        LoggedRequest bulkInsert = loggedRequests.stream().filter(x -> x.getUrl().contains("bulk_insert")).findFirst().get();
+        LoggedRequest bulkInsert = loggedRequests.stream().filter(x -> x.getUrl().contains("bulk_insert")).findFirst().orElse(null);
         assertThat(bulkInsert.getContentEncoding())
                 .isEqualTo(Constants.Headers.Encodings.ZSTD);
     }
@@ -123,8 +180,147 @@ public class RequestExecutorCompressionTest extends RemoteTestBase {
         List<LoggedRequest> loggedRequests = canUseCompressionMethodInBulkInsert(null);
         assertThat(loggedRequests.size())
                 .isGreaterThanOrEqualTo(1);
-        LoggedRequest bulkInsert = loggedRequests.stream().filter(x -> x.getUrl().contains("bulk_insert")).findFirst().get();
+        LoggedRequest bulkInsert = loggedRequests.stream().filter(x -> x.getUrl().contains("bulk_insert")).findFirst().orElse(null);
         assertThat(bulkInsert.getContentEncoding())
+                .isNull();
+    }
+
+    @Test
+    public void canUseZstdWithAttachmentsViaSession() throws Exception {
+        List<LoggedRequest> loggedRequests = new ArrayList<>();
+        List<LoggedResponse> loggedResponses = new ArrayList<>();
+        putAttachmentViaSession(HttpCompressionAlgorithm.Zstd, loggedRequests, loggedResponses);
+        assertThat(loggedRequests.size())
+                .isGreaterThanOrEqualTo(1);
+        LoggedRequest loggedRequest = loggedRequests.stream().filter(x -> "POST".equals(x.method)).findFirst().orElse(null);
+        assertThat(loggedRequest)
+                .isNotNull();
+
+        // we don't validate content entity here as it is multipart request and only json part is encoded.
+        // assertThat(loggedRequest.getContentEncoding())
+        //        .isEqualTo(Constants.Headers.Encodings.ZSTD);
+
+        assertThat(loggedRequest.getAcceptEncoding())
+                .isEqualTo(Constants.Headers.Encodings.ZSTD);
+
+        assertThat(loggedResponses.size())
+                .isGreaterThanOrEqualTo(1);
+
+        LoggedResponse loggedResponse = loggedResponses.stream().filter(x -> "POST".equals(x.method)).findFirst().orElse(null);
+        assertThat(loggedResponse.getContentEncoding())
+                .isEqualTo(Constants.Headers.Encodings.ZSTD);
+    }
+
+    @Test
+    public void canUseGzipWithAttachmentsViaSession() throws Exception {
+        List<LoggedRequest> loggedRequests = new ArrayList<>();
+        List<LoggedResponse> loggedResponses = new ArrayList<>();
+        putAttachmentViaSession(HttpCompressionAlgorithm.Gzip, loggedRequests, loggedResponses);
+        assertThat(loggedRequests.size())
+                .isGreaterThanOrEqualTo(1);
+        LoggedRequest loggedRequest = loggedRequests.stream().filter(x -> "POST".equals(x.method)).findFirst().orElse(null);
+        assertThat(loggedRequest)
+                .isNotNull();
+
+        // we don't validate content entity here as it is multipart request and only json part is encoded.
+        // assertThat(loggedRequest.getContentEncoding())
+        //        .isEqualTo(Constants.Headers.Encodings.GZIP);
+
+        assertThat(loggedRequest.getAcceptEncoding())
+                .isEqualTo(Constants.Headers.Encodings.GZIP);
+
+        assertThat(loggedResponses.size())
+                .isGreaterThanOrEqualTo(1);
+
+        LoggedResponse loggedResponse = loggedResponses.stream().filter(x -> "POST".equals(x.method)).findFirst().orElse(null);
+        assertThat(loggedResponse.getContentEncoding())
+                .isEqualTo(Constants.Headers.Encodings.GZIP);
+    }
+
+    @Test
+    public void canUseNoCompressionWithAttachmentsViaSession() throws Exception {
+        List<LoggedRequest> loggedRequests = new ArrayList<>();
+        List<LoggedResponse> loggedResponses = new ArrayList<>();
+        putAttachmentViaSession(null, loggedRequests, loggedResponses);
+        assertThat(loggedRequests.size())
+                .isGreaterThanOrEqualTo(1);
+        LoggedRequest loggedRequest = loggedRequests.stream().filter(x -> "POST".equals(x.method)).findFirst().orElse(null);
+        assertThat(loggedRequest)
+                .isNotNull();
+
+        // we don't validate content entity here as it is multipart request and only json part is encoded.
+        // assertThat(loggedRequest.getContentEncoding())
+        //        .isNull();
+
+        assertThat(loggedRequest.getAcceptEncoding())
+                .isNull();
+
+        assertThat(loggedResponses.size())
+                .isGreaterThanOrEqualTo(1);
+
+        LoggedResponse loggedResponse = loggedResponses.stream().filter(x -> "POST".equals(x.method)).findFirst().orElse(null);
+        assertThat(loggedResponse.getContentEncoding())
+                .isNull();
+    }
+
+    @Test
+    public void canUseZstdWithAttachmentsViaOperation() throws Exception {
+        List<LoggedRequest> loggedRequests = new ArrayList<>();
+        List<LoggedResponse> loggedResponses = new ArrayList<>();
+        putAttachmentViaOperation(HttpCompressionAlgorithm.Zstd, loggedRequests, loggedResponses);
+        assertThat(loggedRequests.size())
+                .isGreaterThanOrEqualTo(1);
+        LoggedRequest loggedRequest = loggedRequests.stream().filter(x -> "PUT".equals(x.method)).findFirst().orElse(null);
+        assertThat(loggedRequest)
+                .isNotNull();
+        assertThat(loggedRequest.getContentEncoding())
+                .isEqualTo(Constants.Headers.Encodings.ZSTD);
+
+        assertThat(loggedResponses)
+                .hasSize(1);
+
+        // RavenDB-21919 - we don't compress attachments
+        assertThat(loggedResponses.get(0).getContentEncoding())
+                .isNull();
+    }
+
+    @Test
+    public void canUseGzipWithAttachmentsViaOperation() throws Exception {
+        List<LoggedRequest> loggedRequests = new ArrayList<>();
+        List<LoggedResponse> loggedResponses = new ArrayList<>();
+        putAttachmentViaOperation(HttpCompressionAlgorithm.Gzip, loggedRequests, loggedResponses);
+        assertThat(loggedRequests.size())
+                .isGreaterThanOrEqualTo(1);
+        LoggedRequest loggedRequest = loggedRequests.stream().filter(x -> "PUT".equals(x.method)).findFirst().orElse(null);
+        assertThat(loggedRequest)
+                .isNotNull();
+        assertThat(loggedRequest.getContentEncoding())
+                .isEqualTo(Constants.Headers.Encodings.GZIP);
+
+        assertThat(loggedResponses)
+                .hasSize(1);
+
+        // RavenDB-21919 - we don't compress attachments
+        assertThat(loggedResponses.get(0).getContentEncoding())
+                .isNull();
+    }
+
+    @Test
+    public void canUseNoCompressionWithAttachmentsViaOperation() throws Exception {
+        List<LoggedRequest> loggedRequests = new ArrayList<>();
+        List<LoggedResponse> loggedResponses = new ArrayList<>();
+        putAttachmentViaOperation(null, loggedRequests, loggedResponses);
+        assertThat(loggedRequests.size())
+                .isGreaterThanOrEqualTo(1);
+        LoggedRequest loggedRequest = loggedRequests.stream().filter(x -> "PUT".equals(x.method)).findFirst().orElse(null);
+        assertThat(loggedRequest)
+                .isNotNull();
+        assertThat(loggedRequest.getContentEncoding())
+                .isNull();
+
+        assertThat(loggedResponses)
+                .hasSize(1);
+        assertThat(loggedResponses.get(0).getContentEncoding())
                 .isNull();
     }
 
@@ -158,12 +354,10 @@ public class RequestExecutorCompressionTest extends RemoteTestBase {
     }
 
 
-    private List<LoggedRequest> canUseCompressionMethodInRegularResponse(HttpCompressionAlgorithm algorithm) throws Exception {
+    private void canUseCompressionMethodInRegularResponse(HttpCompressionAlgorithm algorithm, List<LoggedRequest> loggedRequests, List<LoggedResponse> loggedResponses) throws Exception {
         this.useHttpDecompression = algorithm != null;
         this.useHttpCompression = false;
         this.compressionAlgorithm = algorithm;
-
-        List<LoggedRequest> requests = new ArrayList<>();
 
         try (DocumentStore store = getDocumentStore()) {
             try (IDocumentSession session = store.openSession()) {
@@ -173,8 +367,10 @@ public class RequestExecutorCompressionTest extends RemoteTestBase {
 
                 session.store(user);
 
-                try (CleanCloseable cleanCloseable = withRequestIntercept(requests)) {
-                    session.saveChanges();
+                try (CleanCloseable cleanCloseable = withRequestIntercept(loggedRequests)) {
+                    try (CleanCloseable closeable = withResponseInterceptor(loggedResponses)) {
+                        session.saveChanges();
+                    }
                 }
             }
 
@@ -184,8 +380,6 @@ public class RequestExecutorCompressionTest extends RemoteTestBase {
                         .isNotNull();
             }
         }
-
-        return requests;
     }
 
     private List<LoggedRequest> canUseCompressionMethodInBulkInsert(HttpCompressionAlgorithm algorithm) throws Exception {
@@ -240,15 +434,100 @@ public class RequestExecutorCompressionTest extends RemoteTestBase {
         return requests;
     }
 
-    private CleanCloseable withRequestIntercept(List<LoggedRequest> output) {
-        outputList = output;
+    private void putAttachmentViaSession(HttpCompressionAlgorithm algorithm, List<LoggedRequest> loggedRequests, List<LoggedResponse> loggedResponses) throws Exception {
+        this.useHttpDecompression = algorithm != null;
+        this.useHttpCompression = algorithm != null;
+        this.compressionAlgorithm = algorithm;
 
-        return () -> outputList = null;
+        try (IDocumentStore store = getDocumentStore()) {
+            try (IDocumentSession session = store.openSession()) {
+                ByteArrayInputStream profileStream = new ByteArrayInputStream(new byte[]{1, 2, 3});
+
+                net.ravendb.client.infrastructure.entities.User user = new net.ravendb.client.infrastructure.entities.User();
+                user.setName("Marcin");
+
+                session.store(user, "users/1");
+
+                session.advanced().attachments().store("users/1", "profile.png", profileStream, "image/png");
+
+                try (CleanCloseable cleanCloseable = withRequestIntercept(loggedRequests)) {
+                    try (CleanCloseable closeable = withResponseInterceptor(loggedResponses)) {
+                        session.saveChanges();
+                    }
+                }
+            }
+
+            try (IDocumentSession session = store.openSession()) {
+                try (CleanCloseable cleanCloseable = withRequestIntercept(loggedRequests);
+                     CleanCloseable closeable = withResponseInterceptor(loggedResponses);
+                     CloseableAttachmentResult closeableAttachmentResult = session.advanced().attachments().get("users/1", "profile.png")) {
+                    byte[] byteArray = IOUtils.toByteArray(closeableAttachmentResult.getData());
+                    assertThat(byteArray)
+                            .hasSize(3);
+                    assertThat(byteArray[0])
+                            .isEqualTo((byte) 1);
+                    assertThat(byteArray[1])
+                            .isEqualTo((byte) 2);
+                    assertThat(byteArray[2])
+                            .isEqualTo((byte) 3);
+                }
+            }
+        }
+    }
+
+    private void putAttachmentViaOperation(HttpCompressionAlgorithm algorithm, List<LoggedRequest> requests, List<LoggedResponse> responses) throws Exception {
+        this.useHttpDecompression = algorithm != null;
+        this.useHttpCompression = algorithm != null;
+        this.compressionAlgorithm = algorithm;
+
+        try (IDocumentStore store = getDocumentStore()) {
+
+            ByteArrayInputStream profileStream = new ByteArrayInputStream(new byte[]{1, 2, 3});
+
+            try (IDocumentSession session = store.openSession()) {
+                net.ravendb.client.infrastructure.entities.User user = new net.ravendb.client.infrastructure.entities.User();
+                user.setName("Marcin");
+
+                session.store(user, "users/1");
+                session.saveChanges();
+            }
+
+            try (CleanCloseable cleanCloseable = withRequestIntercept(requests)) {
+                store.operations().send(new PutAttachmentOperation("users/1", "profile.png", profileStream, "image/png"));
+            }
+
+            try (IDocumentSession session = store.openSession()) {
+                try (CleanCloseable cleanCloseable = withRequestIntercept(requests);
+                     CleanCloseable closeable = withResponseInterceptor(responses);
+                     CloseableAttachmentResult closeableAttachmentResult = session.advanced().attachments().get("users/1", "profile.png")) {
+                    byte[] byteArray = IOUtils.toByteArray(closeableAttachmentResult.getData());
+                    assertThat(byteArray)
+                            .hasSize(3);
+                    assertThat(byteArray[0])
+                            .isEqualTo((byte) 1);
+                    assertThat(byteArray[1])
+                            .isEqualTo((byte) 2);
+                    assertThat(byteArray[2])
+                            .isEqualTo((byte) 3);
+                }
+            }
+        }
+    }
+
+    private CleanCloseable withRequestIntercept(List<LoggedRequest> output) {
+        requestLogList = output;
+
+        return () -> requestLogList = null;
+    }
+
+    private CleanCloseable withResponseInterceptor(List<LoggedResponse> output) {
+        responseLogList = output;
+
+        return () -> responseLogList = null;
     }
 
     @Override
     protected void customizeStore(DocumentStore store) {
-        //TODO: store.getConventions().setDisableTopologyUpdates(true); test fails when enabled
         store.getConventions().setUseHttpDecompression(useHttpDecompression);
         store.getConventions().setUseHttpCompression(useHttpCompression);
         if (compressionAlgorithm != null) {
@@ -259,7 +538,8 @@ public class RequestExecutorCompressionTest extends RemoteTestBase {
     @BeforeAll
     public static void enableLogging() {
         RequestExecutor.configureHttpClient = (builder) -> {
-            builder.addInterceptorLast(interceptor);
+            builder.addInterceptorLast(requestInterceptor);
+            builder.addInterceptorFirst(responseInterceptor);
         };
     }
 
@@ -268,12 +548,47 @@ public class RequestExecutorCompressionTest extends RemoteTestBase {
         RequestExecutor.configureHttpClient = null;
     }
 
-    private static class LoggedRequest {
-        private String url;
-        private String acceptEncoding;
-        private String contentEncoding;
+    private static class LoggedResponse {
+        private final String method;
+        private final String url;
+        private final String contentEncoding;
 
-        public LoggedRequest(String url, String acceptEncoding, String contentEncoding) {
+        public LoggedResponse(String method, String url, String contentEncoding) {
+            this.method = method;
+            this.url = url;
+            this.contentEncoding = contentEncoding;
+        }
+
+        @Override
+        public String toString() {
+            return "LoggedResponse{" +
+                    "method='" + method + '\'' +
+                    ", url='" + url + '\'' +
+                    ", contentEncoding='" + contentEncoding + '\'' +
+                    '}';
+        }
+
+        public String getMethod() {
+            return method;
+        }
+
+        public String getUrl() {
+            return url;
+        }
+
+        public String getContentEncoding() {
+            return contentEncoding;
+        }
+    }
+
+    private static class LoggedRequest {
+        private final String method;
+        private final String url;
+        private final String acceptEncoding;
+        private final String contentEncoding;
+
+        public LoggedRequest(String method, String url, String acceptEncoding, String contentEncoding) {
+            this.method = method;
             this.url = url;
             this.acceptEncoding = acceptEncoding;
             this.contentEncoding = contentEncoding;
@@ -282,10 +597,15 @@ public class RequestExecutorCompressionTest extends RemoteTestBase {
         @Override
         public String toString() {
             return "LoggedRequest{" +
-                    "url='" + url + '\'' +
+                    "method='" + method + '\'' +
+                    ", url='" + url + '\'' +
                     ", acceptEncoding='" + acceptEncoding + '\'' +
                     ", contentEncoding='" + contentEncoding + '\'' +
                     '}';
+        }
+
+        public String getMethod() {
+            return method;
         }
 
         public String getUrl() {

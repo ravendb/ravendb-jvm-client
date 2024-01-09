@@ -37,18 +37,20 @@ public class PutDatabaseSettingsOperation implements IVoidMaintenanceOperation {
 
     @Override
     public VoidRavenCommand getCommand(DocumentConventions conventions) {
-        return new PutDatabaseConfigurationSettingsCommand(_configurationSettings, _databaseName);
+        return new PutDatabaseConfigurationSettingsCommand(conventions, _configurationSettings, _databaseName);
     }
 
     private static class PutDatabaseConfigurationSettingsCommand extends VoidRavenCommand implements IRaftCommand {
 
         private final ObjectNode _configurationSettings;
         private final String _databaseName;
+        private final DocumentConventions _conventions;
 
-        public PutDatabaseConfigurationSettingsCommand(Map<String, String> configurationSettings, String databaseName) {
+        public PutDatabaseConfigurationSettingsCommand(DocumentConventions conventions, Map<String, String> configurationSettings, String databaseName) {
             if (databaseName == null) {
                 throw new IllegalArgumentException("DatabaseName cannot be null");
             }
+            _conventions = conventions;
             _databaseName = databaseName;
 
             if (configurationSettings == null) {
@@ -79,7 +81,7 @@ public class PutDatabaseSettingsOperation implements IVoidMaintenanceOperation {
                 } catch (IOException e) {
                     throw new RuntimeException(e);
                 }
-            }, ContentType.APPLICATION_JSON));
+            }, ContentType.APPLICATION_JSON, _conventions));
 
             return request;
         }

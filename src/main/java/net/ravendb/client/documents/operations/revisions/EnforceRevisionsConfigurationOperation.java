@@ -81,7 +81,7 @@ public class EnforceRevisionsConfigurationOperation implements IOperation<Operat
                 } catch (IOException e) {
                     throw new RuntimeException(e);
                 }
-            }, ContentType.APPLICATION_JSON));
+            }, ContentType.APPLICATION_JSON, _conventions));
 
             return request;
         }

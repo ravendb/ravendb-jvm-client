@@ -45,16 +45,18 @@ public class PutClientCertificateOperation implements IVoidServerOperation {
 
     @Override
     public VoidRavenCommand getCommand(DocumentConventions conventions) {
-        return new PutClientCertificateCommand(_name, _certificate, _permissions, _clearance);
+        return new PutClientCertificateCommand(conventions, _name, _certificate, _permissions, _clearance);
     }
 
     private static class PutClientCertificateCommand extends VoidRavenCommand implements IRaftCommand {
+        private final DocumentConventions _conventions;
+
         private final String _certificate;
         private final Map<String, DatabaseAccess> _permissions;
         private final String _name;
         private final SecurityClearance _clearance;
 
-        public PutClientCertificateCommand(String name, String certificate, Map<String, DatabaseAccess> permissions, SecurityClearance clearance) {
+        public PutClientCertificateCommand(DocumentConventions conventions, String name, String certificate, Map<String, DatabaseAccess> permissions, SecurityClearance clearance) {
             if (certificate == null) {
                 throw new IllegalArgumentException("Certificate cannot be null");
             }
@@ -62,6 +64,7 @@ public class PutClientCertificateOperation implements IVoidServerOperation {
                 throw new IllegalArgumentException("Permissions cannot be null");
             }
 
+            _conventions = conventions;
             _certificate = certificate;
             _permissions = permissions;
             _name = name;
@@ -99,7 +102,7 @@ public class PutClientCertificateOperation implements IVoidServerOperation {
                 } catch (IOException e) {
                     throw new RuntimeException(e);
                 }
-            }, ContentType.APPLICATION_JSON));
+            }, ContentType.APPLICATION_JSON, _conventions));
             return request;
         }
 

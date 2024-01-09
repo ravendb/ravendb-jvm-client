@@ -188,7 +188,7 @@ public class DocumentReplicationTest extends ReplicationTestBase {
 
                 //now actually resolve the conflict
                 //(resolve by using first variant)
-                PutDocumentCommand putCommand = new PutDocumentCommand("docs/1", null, conflicts.getResults()[0].getDoc());
+                PutDocumentCommand putCommand = new PutDocumentCommand(destination.getConventions(), "docs/1", null, conflicts.getResults()[0].getDoc());
                 destination.getRequestExecutor().execute(putCommand);
 
                 try (IDocumentSession session = destination.openSession()) {

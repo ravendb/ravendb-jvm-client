@@ -50,6 +50,7 @@ public class SetDatabasesLockOperation implements IVoidServerOperation {
 
     private static class SetDatabasesLockCommand extends VoidRavenCommand implements IRaftCommand {
         private final ObjectNode _parameters;
+        private final DocumentConventions _conventions;
 
         public SetDatabasesLockCommand(DocumentConventions conventions, Parameters parameters) {
             if (conventions == null) {
@@ -60,6 +61,7 @@ public class SetDatabasesLockOperation implements IVoidServerOperation {
                 throw new IllegalArgumentException("Parameters cannot be null");
             }
 
+            _conventions = conventions;
             _parameters = mapper.valueToTree(parameters);
         }
 
@@ -74,7 +76,7 @@ public class SetDatabasesLockOperation implements IVoidServerOperation {
                 } catch (IOException e) {
                     throw new RuntimeException(e);
                 }
-            }, ContentType.APPLICATION_JSON));
+            }, ContentType.APPLICATION_JSON, _conventions));
 
             return request;
         }

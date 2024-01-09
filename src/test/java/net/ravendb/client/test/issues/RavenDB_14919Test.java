@@ -126,7 +126,7 @@ public class RavenDB_14919Test extends RemoteTestBase {
             }
 
             RequestExecutor re = store.getRequestExecutor();
-            GetDocumentsCommand command = new GetDocumentsCommand(ids, null, false);
+            GetDocumentsCommand command = new GetDocumentsCommand(store.getConventions(), ids, null, false);
             re.execute(command);
 
             assertThat(command.getResult().getResults())
@@ -153,7 +153,7 @@ public class RavenDB_14919Test extends RemoteTestBase {
 
 
             RequestExecutor re = store.getRequestExecutor();
-            GetDocumentsCommand command = new GetDocumentsCommand(ids, null, false);
+            GetDocumentsCommand command = new GetDocumentsCommand(store.getConventions(), ids, null, false);
             re.execute(command);
 
             assertThat(command.getResult().getResults())

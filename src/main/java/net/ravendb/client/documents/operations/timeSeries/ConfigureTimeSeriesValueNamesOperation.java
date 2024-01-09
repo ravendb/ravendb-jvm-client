@@ -29,14 +29,16 @@ public class ConfigureTimeSeriesValueNamesOperation implements IMaintenanceOpera
 
     @Override
     public RavenCommand<ConfigureTimeSeriesOperationResult> getCommand(DocumentConventions conventions) {
-        return new ConfigureTimeSeriesValueNamesCommand(_parameters);
+        return new ConfigureTimeSeriesValueNamesCommand(conventions, _parameters);
     }
 
     private static class ConfigureTimeSeriesValueNamesCommand extends RavenCommand<ConfigureTimeSeriesOperationResult> implements IRaftCommand {
         private final Parameters _parameters;
+        private final DocumentConventions _conventions;
 
-        public ConfigureTimeSeriesValueNamesCommand(Parameters parameters) {
+        public ConfigureTimeSeriesValueNamesCommand(DocumentConventions conventions, Parameters parameters) {
             super(ConfigureTimeSeriesOperationResult.class);
+            _conventions = conventions;
             _parameters = parameters;
         }
 
@@ -57,7 +59,7 @@ public class ConfigureTimeSeriesValueNamesOperation implements IMaintenanceOpera
                 } catch (IOException e) {
                     throw new RuntimeException(e);
                 }
-            }, ContentType.APPLICATION_JSON));
+            }, ContentType.APPLICATION_JSON, _conventions));
 
             return request;
         }

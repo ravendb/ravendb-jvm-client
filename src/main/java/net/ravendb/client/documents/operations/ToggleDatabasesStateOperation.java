@@ -52,20 +52,22 @@ public class ToggleDatabasesStateOperation implements IServerOperation<DisableDa
 
     @Override
     public RavenCommand<DisableDatabaseToggleResult> getCommand(DocumentConventions conventions) {
-        return new ToggleDatabaseStateCommand(_parameters, _disable);
+        return new ToggleDatabaseStateCommand(conventions, _parameters, _disable);
     }
 
     private static class ToggleDatabaseStateCommand extends RavenCommand<DisableDatabaseToggleResult> implements IRaftCommand {
+        private final DocumentConventions _conventions;
         private final boolean _disable;
         private final Parameters _parameters;
 
-        public ToggleDatabaseStateCommand(Parameters parameters, boolean disable) {
+        public ToggleDatabaseStateCommand(DocumentConventions conventions, Parameters parameters, boolean disable) {
             super(DisableDatabaseToggleResult.class);
 
             if (parameters == null) {
                 throw new IllegalArgumentException("Parameters cannot be null");
             }
 
+            _conventions = conventions;
             _disable = disable;
             _parameters = parameters;
         }
@@ -83,7 +85,7 @@ public class ToggleDatabasesStateOperation implements IServerOperation<DisableDa
                 } catch (IOException e) {
                     throw new RuntimeException(e);
                 }
-            }, ContentType.APPLICATION_JSON));
+            }, ContentType.APPLICATION_JSON, _conventions));
             return request;
         }
 

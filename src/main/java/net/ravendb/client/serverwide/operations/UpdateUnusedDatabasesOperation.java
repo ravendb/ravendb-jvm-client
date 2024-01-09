@@ -38,16 +38,18 @@ public class UpdateUnusedDatabasesOperation implements IVoidServerOperation {
 
     @Override
     public VoidRavenCommand getCommand(DocumentConventions conventions) {
-        return new UpdateUnusedDatabasesCommand(_database, _parameters);
+        return new UpdateUnusedDatabasesCommand(conventions, _database, _parameters);
     }
 
     private static class UpdateUnusedDatabasesCommand extends VoidRavenCommand implements IRaftCommand {
         private final String _database;
         private final Parameters _parameters;
+        private final DocumentConventions _conventions;
 
-        public UpdateUnusedDatabasesCommand(String database, Parameters parameters) {
+        public UpdateUnusedDatabasesCommand(DocumentConventions conventions, String database, Parameters parameters) {
             _database = database;
             _parameters = parameters;
+            _conventions = conventions;
         }
 
         @Override
@@ -64,7 +66,7 @@ public class UpdateUnusedDatabasesOperation implements IVoidServerOperation {
                 } catch (IOException e) {
                     throw new RuntimeException(e);
                 }
-            }, ContentType.APPLICATION_JSON));
+            }, ContentType.APPLICATION_JSON, _conventions));
 
             return request;
         }

@@ -75,7 +75,7 @@ public class BasicDocumentsTest extends RemoteTestBase {
 
             RequestExecutor requestExecutor = store.getRequestExecutor();
 
-            GetDocumentsCommand getDocumentsCommand = new GetDocumentsCommand(new String[]{"users/1", "users/2"}, null, false);
+            GetDocumentsCommand getDocumentsCommand = new GetDocumentsCommand(store.getConventions(), new String[]{"users/1", "users/2"}, null, false);
 
             requestExecutor.execute(getDocumentsCommand);
 
@@ -117,7 +117,7 @@ public class BasicDocumentsTest extends RemoteTestBase {
                         .isEqualTo("Arek");
             }
 
-            getDocumentsCommand = new GetDocumentsCommand(new String[] { "users/1", "users/2"}, null, true);
+            getDocumentsCommand = new GetDocumentsCommand(store.getConventions(), new String[] { "users/1", "users/2"}, null, true);
 
             requestExecutor.execute(getDocumentsCommand);
 

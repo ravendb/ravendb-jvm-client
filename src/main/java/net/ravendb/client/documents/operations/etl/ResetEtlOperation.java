@@ -36,16 +36,18 @@ public class ResetEtlOperation implements IVoidMaintenanceOperation {
 
     @Override
     public VoidRavenCommand getCommand(DocumentConventions conventions) {
-        return new ResetEtlCommand(_configurationName, _transformationName);
+        return new ResetEtlCommand(conventions, _configurationName, _transformationName);
     }
 
     private static class ResetEtlCommand extends VoidRavenCommand implements IRaftCommand {
         private final String _configurationName;
         private final String _transformationName;
+        private final DocumentConventions _conventions;
 
-        public ResetEtlCommand(String configurationName, String transformationName) {
+        public ResetEtlCommand(DocumentConventions conventions, String configurationName, String transformationName) {
             _configurationName = configurationName;
             _transformationName = transformationName;
+            _conventions = conventions;
         }
 
         @Override
@@ -75,7 +77,7 @@ public class ResetEtlOperation implements IVoidMaintenanceOperation {
                 } catch (IOException e) {
                     throw new RuntimeException(e);
                 }
-            }, ContentType.APPLICATION_JSON));
+            }, ContentType.APPLICATION_JSON, _conventions));
             return request;
         }
 

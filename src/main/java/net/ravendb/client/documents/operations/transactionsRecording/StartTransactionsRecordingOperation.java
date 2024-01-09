@@ -27,14 +27,16 @@ public class StartTransactionsRecordingOperation implements IVoidMaintenanceOper
 
     @Override
     public VoidRavenCommand getCommand(DocumentConventions conventions) {
-        return new StartTransactionsRecordingCommand(_filePath);
+        return new StartTransactionsRecordingCommand(conventions, _filePath);
     }
 
     private static class StartTransactionsRecordingCommand extends VoidRavenCommand {
         private final String _filePath;
+        private final DocumentConventions _conventions;
 
-        public StartTransactionsRecordingCommand(String filePath) {
+        public StartTransactionsRecordingCommand(DocumentConventions conventions, String filePath) {
             _filePath = filePath;
+            _conventions = conventions;
         }
 
         @Override
@@ -50,7 +52,7 @@ public class StartTransactionsRecordingOperation implements IVoidMaintenanceOper
                 } catch (IOException e) {
                     throw new RuntimeException(e);
                 }
-            }, ContentType.APPLICATION_JSON));
+            }, ContentType.APPLICATION_JSON, _conventions));
             return request;
         }
     }

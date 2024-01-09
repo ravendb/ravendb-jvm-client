@@ -26,19 +26,21 @@ public class PutConnectionStringOperation<T extends ConnectionString> implements
 
     @Override
     public RavenCommand<PutConnectionStringResult> getCommand(DocumentConventions conventions) {
-        return new PutConnectionStringCommand<>(_connectionString);
+        return new PutConnectionStringCommand<>(conventions, _connectionString);
     }
 
     public static class PutConnectionStringCommand<T> extends RavenCommand<PutConnectionStringResult> implements IRaftCommand {
+        private final DocumentConventions _conventions;
         private final T _connectionString;
 
-        public PutConnectionStringCommand(T connectionString) {
+        public PutConnectionStringCommand(DocumentConventions conventions, T connectionString) {
             super(PutConnectionStringResult.class);
 
             if (connectionString == null) {
                 throw new IllegalArgumentException("ConnectionString cannot be null");
             }
 
+            _conventions = conventions;
             _connectionString = connectionString;
         }
 
@@ -59,7 +61,7 @@ public class PutConnectionStringOperation<T extends ConnectionString> implements
                 } catch (IOException e) {
                     throw new RuntimeException(e);
                 }
-            }, ContentType.APPLICATION_JSON));
+            }, ContentType.APPLICATION_JSON, _conventions));
             return request;
         }
 

@@ -35,6 +35,7 @@ public class PutServerWideSortersOperation implements IVoidServerOperation {
 
     private static class PutServerWideSortersCommand extends VoidRavenCommand implements IRaftCommand {
         private final ObjectNode[] _sortersToAdd;
+        private final DocumentConventions _conventions;
 
         public PutServerWideSortersCommand(DocumentConventions conventions, SorterDefinition[] sortersToAdd) {
             if (conventions == null) {
@@ -45,6 +46,7 @@ public class PutServerWideSortersOperation implements IVoidServerOperation {
                 throw new IllegalArgumentException("SortersToAdd cannot be null");
             }
 
+            _conventions = conventions;
             _sortersToAdd = new ObjectNode[sortersToAdd.length];
 
             for (int i = 0; i < sortersToAdd.length; i++) {
@@ -74,7 +76,7 @@ public class PutServerWideSortersOperation implements IVoidServerOperation {
                 } catch (IOException e) {
                     throw new RuntimeException(e);
                 }
-            }, ContentType.APPLICATION_JSON));
+            }, ContentType.APPLICATION_JSON, _conventions));
 
             return request;
         }
