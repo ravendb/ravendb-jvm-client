@@ -1,20 +1,41 @@
 package net.ravendb.client.json;
 
+import com.github.luben.zstd.ZstdOutputStream;
+import net.ravendb.client.Constants;
+import net.ravendb.client.documents.conventions.DocumentConventions;
+import net.ravendb.client.http.HttpCompressionAlgorithm;
 import org.apache.http.entity.AbstractHttpEntity;
 import org.apache.http.entity.ContentType;
+import org.apache.http.message.BasicHeader;
 
 import java.io.*;
 import java.util.function.Consumer;
+import java.util.zip.GZIPOutputStream;
 
 public class ContentProviderHttpEntity extends AbstractHttpEntity {
 
     private final Consumer<OutputStream> contentProvider;
+    private final HttpCompressionAlgorithm compressionAlgorithm;
 
-    public ContentProviderHttpEntity(Consumer<OutputStream> contentProvider, ContentType contentType) {
+    public ContentProviderHttpEntity(Consumer<OutputStream> contentProvider, ContentType contentType, DocumentConventions conventions) {
         this.contentProvider = contentProvider;
+        this.compressionAlgorithm = conventions.getUseHttpCompression() ? conventions.getHttpCompressionAlgorithm() : null;
 
         if (contentType != null) {
             setContentType(contentType.toString());
+        }
+
+        if (compressionAlgorithm != null) {
+            switch (compressionAlgorithm) {
+                case Gzip:
+                    contentEncoding = new BasicHeader(Constants.Headers.CONTENT_ENCODING, Constants.Headers.Encodings.GZIP);
+                    break;
+                case Zstd:
+                    contentEncoding = new BasicHeader(Constants.Headers.CONTENT_ENCODING, Constants.Headers.Encodings.ZSTD);
+                    break;
+                default:
+                    throw new IllegalStateException("Invalid HttpCompressionAlgorithm: " + conventions.getHttpCompressionAlgorithm());
+            }
         }
     }
 
@@ -28,14 +49,35 @@ public class ContentProviderHttpEntity extends AbstractHttpEntity {
         return -1;
     }
 
+
     @Override
     public InputStream getContent() throws IOException, UnsupportedOperationException {
         throw new UnsupportedEncodingException();
     }
 
     @Override
-    public void writeTo(OutputStream outstream) {
-        this.contentProvider.accept(outstream);
+    public void writeTo(OutputStream outStream) throws IOException {
+        switch (compressionAlgorithm) {
+            case Zstd:
+                final ZstdOutputStream zstd = new ZstdOutputStream(outStream);
+                this.contentProvider.accept(zstd);
+
+                // Only close output stream if the wrapped entity has been
+                // successfully written out
+                zstd.close();
+                break;
+            case Gzip:
+                final GZIPOutputStream gzip = new GZIPOutputStream(outStream);
+                this.contentProvider.accept(gzip);
+
+                // Only close output stream if the wrapped entity has been
+                // successfully written out
+                gzip.close();
+                break;
+            default:
+                this.contentProvider.accept(outStream);
+                break;
+        }
     }
 
     @Override

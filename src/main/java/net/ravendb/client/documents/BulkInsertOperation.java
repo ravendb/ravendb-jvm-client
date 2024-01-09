@@ -26,6 +26,7 @@ import net.ravendb.client.exceptions.BulkInsertInvalidOperationException;
 import net.ravendb.client.exceptions.RavenException;
 import net.ravendb.client.exceptions.documents.bulkinsert.BulkInsertAbortedException;
 import net.ravendb.client.exceptions.documents.bulkinsert.BulkInsertProtocolViolationException;
+import net.ravendb.client.http.HttpCompressionAlgorithm;
 import net.ravendb.client.http.RavenCommand;
 import net.ravendb.client.http.RequestExecutor;
 import net.ravendb.client.http.ServerNode;
@@ -33,9 +34,12 @@ import net.ravendb.client.json.MetadataAsDictionary;
 import net.ravendb.client.primitives.*;
 import net.ravendb.client.primitives.Timer;
 import net.ravendb.client.util.StreamExposerContent;
+import net.ravendb.client.util.ZstdCompressingEntity;
 import org.apache.commons.lang3.NotImplementedException;
 import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.http.Header;
+import org.apache.http.HttpEntity;
 import org.apache.http.client.entity.GzipCompressingEntity;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpPost;
@@ -74,17 +78,18 @@ public class BulkInsertOperation extends BulkInsertOperationBase<Object> impleme
             return false;
         }
 
+        private final HttpCompressionAlgorithm _compressionAlgorithm;
+
         private final BulkInsertStreamExposerContent _stream;
 
         private boolean _skipOverwriteIfUnchanged;
         private final long _id;
 
-        private boolean useCompression;
-
         private String _requestNodeTag;
 
-        public BulkInsertCommand(long id, BulkInsertStreamExposerContent stream, String nodeTag, boolean skipOverwriteIfUnchanged) {
+        public BulkInsertCommand(long id, HttpCompressionAlgorithm compressionAlgorithm, BulkInsertStreamExposerContent stream, String nodeTag, boolean skipOverwriteIfUnchanged) {
             super(CloseableHttpResponse.class);
+            _compressionAlgorithm = compressionAlgorithm;
             _stream = stream;
             _id = id;
             this.selectedNodeTag = nodeTag;
@@ -107,8 +112,23 @@ public class BulkInsertOperation extends BulkInsertOperationBase<Object> impleme
                     + "&skipOverwriteIfUnchanged=" + (_skipOverwriteIfUnchanged ? "true" : "false");
 
             HttpPost message = new HttpPost();
-            message.setEntity(useCompression ? new GzipCompressingEntity(_stream) : _stream);
+            message.setEntity(wrapEntity(_stream));
             return message;
+        }
+
+        private HttpEntity wrapEntity(HttpEntity entity) {
+            if (_compressionAlgorithm == null) {
+                return entity;
+            }
+
+            switch (_compressionAlgorithm) {
+                case Gzip:
+                    return new GzipCompressingEntity(entity);
+                case Zstd:
+                    return new ZstdCompressingEntity(entity);
+                default:
+                    throw new IllegalArgumentException("Invalid compression entity: " + _compressionAlgorithm);
+            }
         }
 
         @Override
@@ -125,14 +145,6 @@ public class BulkInsertOperation extends BulkInsertOperationBase<Object> impleme
                 throw e;
             }
         }
-
-        public boolean isUseCompression() {
-            return useCompression;
-        }
-
-        public void setUseCompression(boolean useCompression) {
-            this.useCompression = useCompression;
-        }
     }
 
     private ExecutorService _executorService;
@@ -145,13 +157,13 @@ public class BulkInsertOperation extends BulkInsertOperationBase<Object> impleme
     private final AttachmentsBulkInsertOperation _attachmentsOperation;
     private String _nodeTag;
 
-    private boolean useCompression = false;
+
     private final int _timeSeriesBatchSize;
 
     private final AtomicInteger _concurrentCheck = new AtomicInteger();
 
     private boolean _first = true;
-
+    private boolean useCompression;
 
     private CleanCloseable _unsubscribeChanges;
     private final List<EventHandler<BulkInsertOnProgressEventArgs>> _onProgress = new ArrayList<>();
@@ -493,15 +505,15 @@ public class BulkInsertOperation extends BulkInsertOperationBase<Object> impleme
 
     protected void ensureStream() {
         try {
-            BulkInsertCommand bulkCommand = new BulkInsertCommand(_operationId, _writer.streamExposer, _nodeTag, _options.isSkipOverwriteIfUnchanged());
-            bulkCommand.useCompression = useCompression;
+            BulkInsertCommand bulkCommand = new BulkInsertCommand(_operationId, useCompression ? _conventions.getHttpCompressionAlgorithm() : null, _writer.streamExposer, _nodeTag, _options.isSkipOverwriteIfUnchanged());
 
             _bulkInsertExecuteTask = CompletableFuture.supplyAsync(() -> {
                 _requestExecutor.execute(bulkCommand);
                 return null;
             }, _executorService);
 
-            _writer.ensureStream(_requestExecutor.getConventions().isUseCompression()); // TODO: algorithm _requestExecutor.Conventions.HttpCompressionAlgorithm, CompressionLevel
+            // we handle compression
+            _writer.ensureStream();
         } catch (Exception e) {
             throw new RavenException("Unable to open bulk insert stream ", e);
         }

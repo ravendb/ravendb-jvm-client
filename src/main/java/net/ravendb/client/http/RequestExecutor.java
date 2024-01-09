@@ -17,6 +17,7 @@ import net.ravendb.client.serverwide.commands.GetDatabaseTopologyCommand;
 import net.ravendb.client.serverwide.commands.GetNodeInfoCommand;
 import net.ravendb.client.util.CertificateUtils;
 import net.ravendb.client.util.TimeUtils;
+import net.ravendb.client.util.ZstdInputStreamFactory;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -28,8 +29,13 @@ import org.apache.http.HttpRequest;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
 import org.apache.http.client.config.RequestConfig;
+import org.apache.http.client.entity.DeflateInputStreamFactory;
+import org.apache.http.client.entity.GZIPInputStreamFactory;
+import org.apache.http.client.entity.InputStreamFactory;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpRequestBase;
+import org.apache.http.config.Registry;
+import org.apache.http.config.RegistryBuilder;
 import org.apache.http.config.SocketConfig;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClientBuilder;
@@ -74,8 +80,7 @@ public class RequestExecutor implements CleanCloseable {
 
     public static final String CLIENT_VERSION = "6.0.0";
 
-    private static final ConcurrentMap<String, CloseableHttpClient> globalHttpClientWithCompression = new ConcurrentHashMap<>();
-    private static final ConcurrentMap<String, CloseableHttpClient> globalHttpClientWithoutCompression = new ConcurrentHashMap<>();
+    private static final ConcurrentMap<HttpClientCacheKey, CloseableHttpClient> globalHttpClientCache = new ConcurrentHashMap<>();
 
     private final Semaphore _updateDatabaseTopologySemaphore = new Semaphore(1);
 
@@ -117,6 +122,10 @@ public class RequestExecutor implements CleanCloseable {
         }
 
         return _httpClient = createHttpClient();
+    }
+
+    private HttpClientCacheKey getHttpClientCacheKey() {
+        return new HttpClientCacheKey(certificate != null ? CertificateUtils.extractThumbprintFromCertificate(certificate) : null, conventions.getUseHttpDecompression(), conventions.getHttpCompressionAlgorithm());
     }
 
     public List<ServerNode> getTopologyNodes() {
@@ -247,22 +256,8 @@ public class RequestExecutor implements CleanCloseable {
     }
 
     private CloseableHttpClient createHttpClient() {
-        ConcurrentMap<String, CloseableHttpClient> httpClientCache = getHttpClientCache();
-
-        String name = getHttpClientName();
-
-        return httpClientCache.computeIfAbsent(name, n -> createClient());
-    }
-
-    private String getHttpClientName() {
-        if (certificate != null) {
-            return CertificateUtils.extractThumbprintFromCertificate(certificate);
-        }
-        return "";
-    }
-
-    private ConcurrentMap<String, CloseableHttpClient> getHttpClientCache() {
-        return conventions.isUseCompression() ? globalHttpClientWithCompression : globalHttpClientWithoutCompression;
+        HttpClientCacheKey cacheKey = getHttpClientCacheKey();
+        return globalHttpClientCache.computeIfAbsent(cacheKey, n -> createClient());
     }
 
     public DocumentConventions getConventions() {
@@ -1755,7 +1750,18 @@ public class RequestExecutor implements CleanCloseable {
                                 .build()
                 );
 
-        if (conventions.hasExplicitlySetCompressionUsage() && !conventions.isUseCompression()) {
+        if (conventions.getUseHttpDecompression()) {
+            switch (conventions.getHttpCompressionAlgorithm()) {
+                case Gzip:
+                    httpClientBuilder.setContentDecoderRegistry(Collections.singletonMap("gzip", GZIPInputStreamFactory.getInstance()));
+                    break;
+                case Zstd:
+                    httpClientBuilder.setContentDecoderRegistry(Collections.singletonMap("zstd", ZstdInputStreamFactory.getInstance()));
+                    break;
+                default:
+                    throw new IllegalStateException("Invalid HttpCompressionAlgorithm: " + conventions.getHttpCompressionAlgorithm());
+            }
+        } else {
             httpClientBuilder.disableContentCompression();
         }
 
@@ -1903,6 +1909,31 @@ public class RequestExecutor implements CleanCloseable {
         public IndexAndResponse(int index, CloseableHttpResponse response) {
             this.index = index;
             this.response = response;
+        }
+    }
+
+    private static class HttpClientCacheKey {
+        private final String _certificateThumbprint;
+        private final boolean _useHttpDecompression;
+        private final HttpCompressionAlgorithm _compressionAlgorithm;
+
+        public HttpClientCacheKey(String certificateThumbprint, boolean useHttpDecompression, HttpCompressionAlgorithm compressionAlgorithm) {
+            _certificateThumbprint = certificateThumbprint;
+            _useHttpDecompression = useHttpDecompression;
+            _compressionAlgorithm = compressionAlgorithm;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+            HttpClientCacheKey that = (HttpClientCacheKey) o;
+            return _useHttpDecompression == that._useHttpDecompression && Objects.equals(_certificateThumbprint, that._certificateThumbprint) && _compressionAlgorithm == that._compressionAlgorithm;
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(_certificateThumbprint, _useHttpDecompression, _compressionAlgorithm);
         }
     }
 }

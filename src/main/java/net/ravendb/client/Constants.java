@@ -138,6 +138,13 @@ public class Constants {
 
         public static final String DATABASE_MISSING = "Database-Missing";
 
+
+        public static class Encodings {
+            public static final String GZIP = "gzip";
+
+            public static final String ZSTD = "zstd";
+        }
+
     }
 
     public static class Configuration {

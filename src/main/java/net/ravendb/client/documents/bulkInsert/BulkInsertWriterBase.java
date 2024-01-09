@@ -1,7 +1,6 @@
 package net.ravendb.client.documents.bulkInsert;
 
 import net.ravendb.client.documents.BulkInsertOperation;
-import net.ravendb.client.primitives.CleanCloseable;
 
 import java.io.*;
 import java.util.concurrent.CompletableFuture;
@@ -100,13 +99,8 @@ public abstract class BulkInsertWriterBase implements Closeable {
         }, _executorService);
     }
 
-    public void ensureStream(boolean compression) throws IOException, InterruptedException, ExecutionException {
-        //TODO:HttpCompressionAlgorithm compressionAlgorithm, CompressionLevel compressionLevel)
-        OutputStream stream = streamExposer.outputStream.get();
-
-        //TODO: wrap with gzip/ ztsd?
-
-        _requestBodyStream = stream;
+    public void ensureStream() throws IOException, InterruptedException, ExecutionException {
+        _requestBodyStream = streamExposer.outputStream.get();
 
         _currentWriteStream.write('[');
     }

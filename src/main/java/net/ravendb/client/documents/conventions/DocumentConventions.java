@@ -9,10 +9,7 @@ import net.ravendb.client.documents.operations.configuration.ClientConfiguration
 import net.ravendb.client.documents.session.ShardedBatchBehavior;
 import net.ravendb.client.exceptions.RavenException;
 import net.ravendb.client.extensions.JsonExtensions;
-import net.ravendb.client.http.AggressiveCacheMode;
-import net.ravendb.client.http.AggressiveCacheOptions;
-import net.ravendb.client.http.LoadBalanceBehavior;
-import net.ravendb.client.http.ReadBalanceBehavior;
+import net.ravendb.client.http.*;
 import net.ravendb.client.primitives.Reference;
 import net.ravendb.client.primitives.Tuple;
 import net.ravendb.client.util.Inflector;
@@ -52,7 +49,6 @@ public class DocumentConventions {
     private boolean _saveEnumsAsIntegers;
     private char _identityPartsSeparator;
     private boolean _disableTopologyUpdates;
-
     private Boolean _disableAtomicDocumentWritesInClusterWideTransaction;
     private boolean _disableTcpCompression = true;
     private IShouldIgnoreEntityChanges _shouldIgnoreEntityChanges;
@@ -84,7 +80,9 @@ public class DocumentConventions {
     private ReadBalanceBehavior _readBalanceBehavior;
     private int _maxHttpCacheSize;
     private ObjectMapper _entityMapper;
-    private Boolean _useCompression;
+    private Boolean _useHttpCompression;
+    private Boolean _useHttpDecompression;
+    private HttpCompressionAlgorithm _httpCompressionAlgorithm = HttpCompressionAlgorithm.Gzip;
     private boolean _sendApplicationIdentifier;
 
     private final BulkInsertConventions _bulkInsert;
@@ -225,10 +223,6 @@ public class DocumentConventions {
         _sendApplicationIdentifier = true;
     }
 
-    public boolean hasExplicitlySetCompressionUsage() {
-        return _useCompression != null;
-    }
-
     public Duration getRequestTimeout() {
         return _requestTimeout;
     }
@@ -357,17 +351,48 @@ public class DocumentConventions {
         _waitForReplicationAfterSaveChangesTimeout = waitForReplicationAfterSaveChangesTimeout;
     }
 
-    public Boolean isUseCompression() {
-        if (_useCompression == null) {
-            return true;
-        }
-        return _useCompression;
+    /**
+     * @return Use zstd/gzip compression when sending content of HTTP request
+     */
+    public Boolean getUseHttpCompression() {
+        return _useHttpCompression;
     }
 
-    public void setUseCompression(Boolean useCompression) {
+    /**
+     * @param useHttpCompression Use zstd/gzip compression when sending content of HTTP request
+     */
+    public void setUseHttpCompression(Boolean useHttpCompression) {
         assertNotFrozen();
-        _useCompression = useCompression;
+        _useHttpCompression = useHttpCompression;
     }
+
+    /**
+     * Can accept compressed HTTP response content and will use zstd/gzip decompression methods
+     */
+    public boolean getUseHttpDecompression() {
+        if (_useHttpDecompression == null) {
+            return true;
+        }
+        return _useHttpDecompression;
+    }
+
+    /**
+     * @param useHttpDecompression Can accept compressed HTTP response content and will use zstd/gzip decompression methods
+     */
+    public void setUseHttpDecompression(boolean useHttpDecompression) {
+        assertNotFrozen();
+        _useHttpDecompression = useHttpDecompression;
+    }
+
+    public HttpCompressionAlgorithm getHttpCompressionAlgorithm() {
+        return _httpCompressionAlgorithm;
+    }
+
+    public void setHttpCompressionAlgorithm(HttpCompressionAlgorithm httpCompressionAlgorithm) {
+        assertNotFrozen();
+        _httpCompressionAlgorithm = httpCompressionAlgorithm;
+    }
+
 
     public ObjectMapper getEntityMapper() {
         return _entityMapper;
@@ -791,7 +816,9 @@ public class DocumentConventions {
         cloned._loadBalanceBehavior = _loadBalanceBehavior;
         cloned._maxHttpCacheSize = _maxHttpCacheSize;
         cloned._entityMapper = _entityMapper;
-        cloned._useCompression = _useCompression;
+        cloned._useHttpCompression = _useHttpCompression;
+        cloned._useHttpDecompression = _useHttpDecompression;
+        cloned._httpCompressionAlgorithm = _httpCompressionAlgorithm;
         return cloned;
     }
 
