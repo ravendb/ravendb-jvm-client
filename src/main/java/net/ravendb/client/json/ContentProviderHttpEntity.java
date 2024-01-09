@@ -19,7 +19,7 @@ public class ContentProviderHttpEntity extends AbstractHttpEntity {
 
     public ContentProviderHttpEntity(Consumer<OutputStream> contentProvider, ContentType contentType, DocumentConventions conventions) {
         this.contentProvider = contentProvider;
-        this.compressionAlgorithm = conventions.getUseHttpCompression() ? conventions.getHttpCompressionAlgorithm() : null;
+        this.compressionAlgorithm = Boolean.TRUE.equals(conventions.getUseHttpCompression()) ? conventions.getHttpCompressionAlgorithm() : null;
 
         if (contentType != null) {
             setContentType(contentType.toString());
