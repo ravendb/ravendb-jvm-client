@@ -1,7 +1,6 @@
 package net.ravendb.client.serverwide.operations;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import net.ravendb.client.documents.commands.KillOperationCommand;
 import net.ravendb.client.documents.commands.KillServerOperationCommand;
 import net.ravendb.client.documents.conventions.DocumentConventions;
 import net.ravendb.client.documents.operations.Operation;

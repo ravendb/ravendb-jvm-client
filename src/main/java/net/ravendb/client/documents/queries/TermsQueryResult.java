@@ -1,7 +1,6 @@
 package net.ravendb.client.documents.queries;
 
 import java.util.List;
-import java.util.Set;
 
 public class TermsQueryResult {
     private List<String> terms;

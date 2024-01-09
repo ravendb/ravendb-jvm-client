@@ -5,7 +5,6 @@ import net.ravendb.client.documents.session.operations.GetRevisionOperation;
 import net.ravendb.client.documents.session.operations.GetRevisionsCountOperation;
 import net.ravendb.client.documents.session.operations.lazy.LazyRevisionOperations;
 import net.ravendb.client.http.RavenCommand;
-import net.ravendb.client.json.MetadataAsDictionary;
 
 import java.util.Date;
 import java.util.List;

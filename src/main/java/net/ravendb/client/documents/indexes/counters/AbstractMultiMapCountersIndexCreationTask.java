@@ -1,8 +1,6 @@
 package net.ravendb.client.documents.indexes.counters;
 
-import net.ravendb.client.Constants;
 import net.ravendb.client.documents.conventions.DocumentConventions;
-import net.ravendb.client.primitives.SharpEnum;
 
 import java.util.ArrayList;
 import java.util.HashSet;

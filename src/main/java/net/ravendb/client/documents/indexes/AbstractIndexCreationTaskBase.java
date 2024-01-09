@@ -1,12 +1,10 @@
 package net.ravendb.client.documents.indexes;
 
-import net.ravendb.client.Constants;
 import net.ravendb.client.documents.DocumentStoreBase;
 import net.ravendb.client.documents.IDocumentStore;
 import net.ravendb.client.documents.conventions.DocumentConventions;
 import net.ravendb.client.documents.dataArchival.ArchivedDataProcessingBehavior;
 import net.ravendb.client.documents.operations.indexes.PutIndexesOperation;
-import net.ravendb.client.primitives.SharpEnum;
 import org.apache.commons.lang3.ObjectUtils;
 
 import java.util.ArrayList;

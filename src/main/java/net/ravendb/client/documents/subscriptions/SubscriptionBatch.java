@@ -1,18 +1,11 @@
 package net.ravendb.client.documents.subscriptions;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import net.ravendb.client.Constants;
 import net.ravendb.client.documents.IDocumentStore;
 import net.ravendb.client.documents.identity.GenerateEntityIdOnTheClient;
 import net.ravendb.client.documents.session.*;
 import net.ravendb.client.http.RequestExecutor;
-import net.ravendb.client.json.MetadataAsDictionary;
-import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
-
-import java.util.ArrayList;
-import java.util.List;
 
 public class SubscriptionBatch<T> extends SubscriptionBatchBase<T> {
 

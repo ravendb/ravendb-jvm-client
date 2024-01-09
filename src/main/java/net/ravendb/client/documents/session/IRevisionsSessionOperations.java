@@ -1,7 +1,5 @@
 package net.ravendb.client.documents.session;
 
-import net.ravendb.client.json.MetadataAsDictionary;
-
 import java.util.Date;
 import java.util.List;
 import java.util.Map;

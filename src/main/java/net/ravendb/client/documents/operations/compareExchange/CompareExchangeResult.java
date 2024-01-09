@@ -2,8 +2,6 @@ package net.ravendb.client.documents.operations.compareExchange;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.google.common.base.Defaults;
-import net.ravendb.client.Constants;
 import net.ravendb.client.documents.conventions.DocumentConventions;
 
 import java.io.IOException;

@@ -7,7 +7,6 @@ import net.ravendb.client.documents.session.DocumentsChanges;
 import net.ravendb.client.documents.session.IDocumentSession;
 import net.ravendb.client.documents.session.IMetadataDictionary;
 import net.ravendb.client.infrastructure.entities.User;
-import net.ravendb.client.test.issues.RavenDB_17872Test;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 

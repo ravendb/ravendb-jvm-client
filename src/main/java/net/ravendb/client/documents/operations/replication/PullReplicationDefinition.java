@@ -6,7 +6,6 @@ import net.ravendb.client.extensions.JsonExtensions;
 
 import java.time.Duration;
 import java.util.EnumSet;
-import java.util.Map;
 
 public class PullReplicationDefinition {
 

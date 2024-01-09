@@ -3,7 +3,6 @@ package net.ravendb.client.http;
 import net.ravendb.client.primitives.UseSharpEnum;
 
 import java.util.ArrayList;
-import java.util.List;
 import java.util.Map;
 
 public class ServerNode {

@@ -2,7 +2,6 @@ package net.ravendb.client.documents.operations.replication;
 
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import net.ravendb.client.extensions.JsonExtensions;
-import org.apache.commons.lang3.ObjectUtils;
 
 import java.util.EnumSet;
 

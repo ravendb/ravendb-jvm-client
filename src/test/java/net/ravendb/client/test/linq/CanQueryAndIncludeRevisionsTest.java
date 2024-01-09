@@ -8,7 +8,6 @@ import net.ravendb.client.documents.session.IDocumentQuery;
 import net.ravendb.client.documents.session.IDocumentSession;
 import net.ravendb.client.documents.session.IMetadataDictionary;
 import net.ravendb.client.infrastructure.DisabledOnPullRequest;
-import net.ravendb.client.json.MetadataAsDictionary;
 import org.junit.jupiter.api.Test;
 
 import java.util.*;

@@ -1,7 +1,5 @@
 package net.ravendb.client.documents.operations.compareExchange;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import net.ravendb.client.Constants;
@@ -12,8 +10,6 @@ import net.ravendb.client.documents.conventions.DocumentConventions;
 import net.ravendb.client.documents.session.EntityToJson;
 import net.ravendb.client.documents.session.IMetadataDictionary;
 import net.ravendb.client.documents.session.InMemoryDocumentSessionOperations;
-import net.ravendb.client.exceptions.RavenException;
-import org.apache.commons.lang3.ClassUtils;
 
 import java.util.Date;
 
