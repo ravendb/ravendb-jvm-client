@@ -355,7 +355,7 @@ public class CanQueryAndIncludeRevisionsTest extends RemoteTestBase {
 
                 changeVector = metadatas.get(0).getString(Constants.Documents.Metadata.CHANGE_VECTOR);
                 session.advanced().patch(id, "changeVector", changeVector);
-                session.advanced().patch(id, "changeVectors", Arrays.asList(changeVector));
+                session.advanced().patch(id, "changeVectors", Collections.singletonList(changeVector));
                 session.saveChanges();
             }
 

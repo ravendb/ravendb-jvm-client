@@ -50,7 +50,7 @@ public class DocumentConventions {
     private char _identityPartsSeparator;
     private boolean _disableTopologyUpdates;
     private Boolean _disableAtomicDocumentWritesInClusterWideTransaction;
-    private boolean _disableTcpCompression = true;
+    private final boolean _disableTcpCompression = true;
     private IShouldIgnoreEntityChanges _shouldIgnoreEntityChanges;
     private Function<PropertyDescriptor, Boolean> _findIdentityProperty;
 

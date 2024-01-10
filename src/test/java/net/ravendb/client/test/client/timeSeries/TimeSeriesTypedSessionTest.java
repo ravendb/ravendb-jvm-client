@@ -810,7 +810,7 @@ public class TimeSeriesTypedSessionTest extends RemoteTestBase {
 
             try (IDocumentSession session = store.openSession()) {
                 User user = new User();
-                user.setName("Karmel");;
+                user.setName("Karmel");
                 session.store(user, "users/karmel");
 
                 ISessionDocumentTypedTimeSeries<BigMeasure> big = session.timeSeriesFor(BigMeasure.class, "users/karmel");
@@ -880,9 +880,7 @@ public class TimeSeriesTypedSessionTest extends RemoteTestBase {
     @Test
     public void mappingNeedsToContainConsecutiveValuesStartingFromZero() throws Exception {
         try (IDocumentStore store = getDocumentStore()) {
-            assertThatThrownBy(() -> {
-                store.timeSeries().register(Company.class, StockPriceWithBadAttributes.class);
-            })
+            assertThatThrownBy(() -> store.timeSeries().register(Company.class, StockPriceWithBadAttributes.class))
                     .hasMessageContaining("must contain consecutive values starting from 0");
         }
     }

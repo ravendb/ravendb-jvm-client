@@ -55,8 +55,8 @@ import java.util.stream.DoubleStream;
 
 public class BulkInsertOperation extends BulkInsertOperationBase<Object> implements CleanCloseable {
 
-    private BulkInsertOptions _options;
-    private String _database;
+    private final BulkInsertOptions _options;
+    private final String _database;
     private final GenerateEntityIdOnTheClient _generateEntityIdOnTheClient;
 
     public static class BulkInsertStreamExposerContent extends StreamExposerContent {
@@ -78,7 +78,7 @@ public class BulkInsertOperation extends BulkInsertOperationBase<Object> impleme
 
         private final BulkInsertStreamExposerContent _stream;
 
-        private boolean _skipOverwriteIfUnchanged;
+        private final boolean _skipOverwriteIfUnchanged;
         private final long _id;
 
         private String _requestNodeTag;
@@ -143,7 +143,7 @@ public class BulkInsertOperation extends BulkInsertOperationBase<Object> impleme
         }
     }
 
-    private ExecutorService _executorService;
+    private final ExecutorService _executorService;
     private final RequestExecutor _requestExecutor;
     private final ObjectMapper objectMapper;
 

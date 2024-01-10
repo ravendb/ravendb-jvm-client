@@ -821,9 +821,7 @@ public class DocumentSession extends InMemoryDocumentSessionOperations
         String newScript = oldPatch.getPatch().getScript() + "\n" + patchRequest.getScript();
         Map<String, Object> newVals = new HashMap<>(oldPatch.getPatch().getValues());
 
-        for (Map.Entry<String, Object> kvp : patchRequest.getValues().entrySet()) {
-            newVals.put(kvp.getKey(), kvp.getValue());
-        }
+        newVals.putAll(patchRequest.getValues());
 
         PatchRequest newPatchRequest = new PatchRequest();
         newPatchRequest.setScript(newScript);
@@ -834,7 +832,6 @@ public class DocumentSession extends InMemoryDocumentSessionOperations
         return true;
     }
 
-    @SuppressWarnings("deprecation")
     public <T, TIndex extends AbstractCommonApiForIndexes> IDocumentQuery<T> documentQuery(Class<T> clazz, Class<TIndex> indexClazz) {
         try {
             TIndex index = indexClazz.newInstance();
@@ -1202,7 +1199,7 @@ public class DocumentSession extends InMemoryDocumentSessionOperations
             case HttpStatus.SC_NOT_MODIFIED:
                 return ConditionalLoadResult.create(null, changeVector); // value not changed
             case HttpStatus.SC_NOT_FOUND:
-                registerMissing(id);;
+                registerMissing(id);
                 return ConditionalLoadResult.create(null, null); // value is missing
         }
 

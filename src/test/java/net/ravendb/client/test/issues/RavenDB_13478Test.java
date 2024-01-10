@@ -32,10 +32,8 @@ public class RavenDB_13478Test extends RemoteTestBase {
             }
 
             SubscriptionCreationOptions options = new SubscriptionCreationOptions();
-            options.setIncludes(builder -> {
-                builder.includeCounter("likes")
-                        .includeCounter("dislikes");
-            });
+            options.setIncludes(builder -> builder.includeCounter("likes")
+                    .includeCounter("dislikes"));
 
             String name = store.subscriptions().create(Product.class, options);
 
@@ -49,9 +47,7 @@ public class RavenDB_13478Test extends RemoteTestBase {
             assertSubscription(store, name, 0);
 
             options = new SubscriptionCreationOptions();
-            options.setIncludes(builder -> {
-                builder.includeCounter("likes");
-            });
+            options.setIncludes(builder -> builder.includeCounter("likes"));
 
             name = store.subscriptions().create(Product.class, options);
 

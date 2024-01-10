@@ -32,15 +32,11 @@ public class RavenDB_21339Test extends RemoteTestBase {
             noTracking.setNoTracking(true);
             try (IDocumentSession session = store.openSession(noTracking)) {
 
-                assertThatThrownBy(() -> {
-                    session.load(Product.class, "products/1", includes -> includes.includeDocuments("supplier"));
-                }).hasMessageContaining("registering includes is forbidden");
+                assertThatThrownBy(() -> session.load(Product.class, "products/1", includes -> includes.includeDocuments("supplier"))).hasMessageContaining("registering includes is forbidden");
 
-                assertThatThrownBy(() -> {
-                    session.query(Product.class)
-                            .include("supplier")
-                            .toList();
-                })
+                assertThatThrownBy(() -> session.query(Product.class)
+                        .include("supplier")
+                        .toList())
                         .hasMessageContaining("registering includes is forbidden");
             }
         }

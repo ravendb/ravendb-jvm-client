@@ -952,9 +952,7 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
                 result.deferredCommands.add(deferredCommands.get(i));
             }
 
-            for (Map.Entry<IdTypeAndName, ICommandData> item : deferredCommandsMap.entrySet()) {
-                result.deferredCommandsMap.put(item.getKey(), item.getValue());
-            }
+            result.deferredCommandsMap.putAll(deferredCommandsMap);
         }
 
         for (ICommandData deferredCommand : result.getDeferredCommands()) {
@@ -1629,7 +1627,7 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
             return;
         }
 
-        if (resultCounters == null || resultCounters.size() == 0) {
+        if (resultCounters == null || resultCounters.isEmpty()) {
             if (gotAll) {
                 for (String id : ids) {
                     setGotAllCountersForDocument(id);
@@ -1649,7 +1647,7 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
             return;
         }
 
-        if (resultCounters == null || resultCounters.size() == 0) {
+        if (resultCounters == null || resultCounters.isEmpty()) {
             setGotAllInCacheIfNeeded(countersToInclude);
         } else {
             registerCountersInternal(resultCounters, countersToInclude, true, false);
@@ -1676,7 +1674,7 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
                 gotAll = counters != null && counters.length == 0;
             }
 
-            if (fieldAndValue.getValue().size() == 0 && !gotAll) {
+            if (fieldAndValue.getValue().isEmpty() && !gotAll) {
                 Tuple<Boolean, Map<String, Long>> cache =
                         getCountersByDocId().get(fieldAndValue.getKey());
                 if (cache == null) {

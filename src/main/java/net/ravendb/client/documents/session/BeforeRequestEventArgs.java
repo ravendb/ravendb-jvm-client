@@ -5,10 +5,10 @@ import org.apache.hc.core5.http.HttpRequest;
 
 public class BeforeRequestEventArgs extends EventArgs {
 
-    private String database;
-    private String url;
-    private HttpRequest request;
-    private int attemptNumber;
+    private final String database;
+    private final String url;
+    private final HttpRequest request;
+    private final int attemptNumber;
 
     public BeforeRequestEventArgs(String database, String url, HttpRequest request, int attemptNumber) {
         this.database = database;

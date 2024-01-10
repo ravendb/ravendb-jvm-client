@@ -114,8 +114,8 @@ public class GetRevisionsOperation<T> implements IOperation<RevisionsResult<T>> 
         }
 
         @Override
-        public HttpUriRequestBase createRequest(ServerNode node, Reference<String> url) {
-            return _cmd.createRequest(node, url);
+        public HttpUriRequestBase createRequest(ServerNode node) {
+            return _cmd.createRequest(node);
         }
 
         @Override

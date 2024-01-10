@@ -119,7 +119,7 @@ public class CompareExchangeSessionValue {
 
                 boolean metadataHasChanged = false;
 
-                if (_value.hasMetadata() && _value.getMetadata().size() != 0) {
+                if (_value.hasMetadata() && !_value.getMetadata().isEmpty()) {
                     if (metadata == null) {
                         metadataHasChanged = true;
                         metadata = prepareMetadataForPut(_key, _value.getMetadata(), conventions); //create new metadata (because there wasn't any metadata before)

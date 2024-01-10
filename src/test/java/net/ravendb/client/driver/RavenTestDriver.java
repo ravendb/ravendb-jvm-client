@@ -103,12 +103,12 @@ public abstract class RavenTestDriver {
 
     public CleanCloseable withFiddler() {
         RequestExecutor.requestPostProcessor = request -> {
-            HttpHost proxy = new HttpHost("127.0.0.1", 8888, "http");
+            HttpHost proxy = new HttpHost("http", "127.0.0.1", 8888);
             RequestConfig requestConfig = request.getConfig();
             if (requestConfig == null) {
                 requestConfig = RequestConfig.DEFAULT;
             }
-            requestConfig = RequestConfig.copy(requestConfig).setProxy(proxy).build();
+            requestConfig = RequestConfig.copy(requestConfig).setProxy(proxy).build(); //TODO:
             request.setConfig(requestConfig);
         };
 
@@ -260,7 +260,7 @@ public abstract class RavenTestDriver {
             Thread.sleep(32);
         }
 
-        throw new TimeoutException("Got no index error for more than " + timeout.toString());
+        throw new TimeoutException("Got no index error for more than " + timeout);
     }
 
     protected boolean waitForDocumentDeletion(IDocumentStore store, String id) throws InterruptedException {

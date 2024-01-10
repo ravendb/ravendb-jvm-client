@@ -183,7 +183,6 @@ public class JsonExtensions {
 
     }
 
-    @SuppressWarnings("deprecation")
     public static void writeIndexQuery(JsonGenerator generator, DocumentConventions conventions, IndexQuery query) throws IOException {
         generator.writeStartObject();
 

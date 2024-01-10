@@ -18,7 +18,6 @@ import java.io.IOException;
 
 public class CreateSubscriptionCommand extends RavenCommand<CreateSubscriptionResult> implements IRaftCommand {
 
-    @SuppressWarnings("FieldCanBeLocal")
     private final SubscriptionCreationOptions _options;
     private final String _id;
     private final DocumentConventions _conventions;

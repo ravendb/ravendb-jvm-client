@@ -134,9 +134,7 @@ public class ClusterTransactionTest extends RemoteTestBase {
 
                 ByteArrayInputStream attachmentStream = new ByteArrayInputStream(new byte[]{1, 2, 3});
                 session.advanced().attachments().store("asd", "test", attachmentStream);
-                assertThatThrownBy(() -> {
-                    session.saveChanges();
-                }).isInstanceOfAny(IllegalStateException.class);
+                assertThatThrownBy(session::saveChanges).isInstanceOfAny(IllegalStateException.class);
             }
         }
     }
@@ -148,13 +146,9 @@ public class ClusterTransactionTest extends RemoteTestBase {
 
         try (IDocumentStore store = getDocumentStore()) {
             try (IDocumentSession session = store.openSession()) {
-                assertThatThrownBy(() -> {
-                    session.advanced().clusterTransaction().createCompareExchangeValue("usernames/ayende", user1);
-                }).isExactlyInstanceOf(IllegalStateException.class);
+                assertThatThrownBy(() -> session.advanced().clusterTransaction().createCompareExchangeValue("usernames/ayende", user1)).isExactlyInstanceOf(IllegalStateException.class);
 
-                assertThatThrownBy(() -> {
-                    session.advanced().clusterTransaction().deleteCompareExchangeValue("usernames/ayende", 0);
-                }).isExactlyInstanceOf(IllegalStateException.class);
+                assertThatThrownBy(() -> session.advanced().clusterTransaction().deleteCompareExchangeValue("usernames/ayende", 0)).isExactlyInstanceOf(IllegalStateException.class);
             }
 
             SessionOptions options = new SessionOptions();
@@ -164,9 +158,7 @@ public class ClusterTransactionTest extends RemoteTestBase {
             try (IDocumentSession session = store.openSession(options)) {
                 session.advanced().clusterTransaction().createCompareExchangeValue("usernames/ayende", user1);
                 session.advanced().setTransactionMode(TransactionMode.SINGLE_NODE);
-                assertThatThrownBy(() -> {
-                    session.saveChanges();
-                }).isExactlyInstanceOf(IllegalStateException.class);
+                assertThatThrownBy(session::saveChanges).isExactlyInstanceOf(IllegalStateException.class);
 
                 session.advanced().setTransactionMode(TransactionMode.CLUSTER_WIDE);
                 session.saveChanges();
@@ -199,7 +191,7 @@ public class ClusterTransactionTest extends RemoteTestBase {
 
             try (IDocumentSession session = store.openSession(sessionOptions)) {
                 session.advanced().clusterTransaction().createCompareExchangeValue(getAtomicGuardKey("users/2"), "foo");
-                assertThatThrownBy(() -> session.saveChanges())
+                assertThatThrownBy(session::saveChanges)
                         .hasMessageContaining("You cannot manipulate the atomic guard 'rvn-atomic/users/2' via the cluster-wide session");
             }
 

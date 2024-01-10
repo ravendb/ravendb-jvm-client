@@ -14,12 +14,12 @@ import java.util.List;
 
 public class CountersBatchCommandData implements ICommandData {
 
-    private String id;
-    private String name;
-    private String changeVector;
+    private final String id;
+    private final String name;
+    private final String changeVector;
 
     private Boolean fromEtl;
-    private DocumentCountersOperation counters;
+    private final DocumentCountersOperation counters;
 
     public CountersBatchCommandData(String documentId, CounterOperation counterOperation) {
         this(documentId, Lists.newArrayList(counterOperation));

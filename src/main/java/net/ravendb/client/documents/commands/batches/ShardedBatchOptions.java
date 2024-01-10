@@ -28,7 +28,7 @@ public class ShardedBatchOptions {
         switch (behavior) {
             case DEFAULT:
                 return null;
-            case TRANSACTIONAL_SINGLE_BUCKET_ONLY:;
+            case TRANSACTIONAL_SINGLE_BUCKET_ONLY:
                 return TRANSACTIONAL_SINGLE_BUCKET_ONLY;
             case NON_TRANSACTIONAL_MULTI_BUCKET:
                 return NON_TRANSACTIONAL_MULTI_BUCKET;

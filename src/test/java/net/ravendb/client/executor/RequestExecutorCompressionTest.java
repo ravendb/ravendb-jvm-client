@@ -22,6 +22,7 @@ import org.apache.hc.core5.http.HttpResponseInterceptor;
 import org.junit.jupiter.api.*;
 
 import java.io.ByteArrayInputStream;
+import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -39,7 +40,7 @@ public class RequestExecutorCompressionTest extends RemoteTestBase {
     private boolean useHttpCompression;
 
     static {
-        requestInterceptor = (request, context) -> {
+        requestInterceptor = (request, entityDetails, context) -> {
             if (requestLogList != null) {
 
                 if (request.getRequestUri().contains("/topology") || request.getRequestUri().contains("/node-info")) {
@@ -59,20 +60,26 @@ public class RequestExecutorCompressionTest extends RemoteTestBase {
             }
         };
 
-        responseInterceptor = (response, context) -> {
+        responseInterceptor = (response, entityDetails, context) -> {
             if (responseLogList != null) {
                 Header contentEncoding = response.getFirstHeader(Constants.Headers.CONTENT_ENCODING);
                 HttpClientContext httpClientContext = (HttpClientContext) context;
                 HttpRequest request = httpClientContext.getRequest();
 
-                if (request.getRequestLine().getUri().contains("/topology") || request.getRequestLine().getUri().contains("/node-info")) {
-                    // ignore topology updates
-                    return;
-                }
+                try {
+                    String requestUri = request.getUri().toString();
 
-                responseLogList.add(new LoggedResponse(request.getRequestLine().getMethod(),
-                        request.getRequestLine().getUri(),
-                        contentEncoding != null ? contentEncoding.getValue() : null));
+                    if (requestUri.contains("/topology") || requestUri.contains("/node-info")) {
+                        // ignore topology updates
+                        return;
+                    }
+
+                    responseLogList.add(new LoggedResponse(request.getMethod(),
+                            requestUri,
+                            contentEncoding != null ? contentEncoding.getValue() : null));
+                } catch (URISyntaxException e) {
+                    throw new RuntimeException("Unable to get URI from command");
+                }
             }
         };
     }
@@ -538,8 +545,8 @@ public class RequestExecutorCompressionTest extends RemoteTestBase {
     @BeforeAll
     public static void enableLogging() {
         RequestExecutor.configureHttpClient = (builder) -> {
-            builder.addInterceptorLast(requestInterceptor);
-            builder.addInterceptorFirst(responseInterceptor);
+            builder.addRequestInterceptorLast(requestInterceptor);
+            builder.addResponseInterceptorFirst(responseInterceptor);
         };
     }
 

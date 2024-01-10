@@ -47,9 +47,7 @@ public class RavenDB_16328_AnalyzersTest extends RemoteTestBase {
         try (IDocumentStore store = getDocumentStore()) {
             String analyzerName = "MyAnalyzer";
 
-            assertThatThrownBy(() -> {
-                store.executeIndex(new MyIndex(analyzerName));
-            }).hasMessageContaining("Cannot find analyzer type '" + analyzerName + "' for field: name");
+            assertThatThrownBy(() -> store.executeIndex(new MyIndex(analyzerName))).hasMessageContaining("Cannot find analyzer type '" + analyzerName + "' for field: name");
 
             try {
                 AnalyzerDefinition analyzerDefinition = new AnalyzerDefinition();

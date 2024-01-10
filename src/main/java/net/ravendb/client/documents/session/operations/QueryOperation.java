@@ -298,7 +298,7 @@ public class QueryOperation {
                 parameters.append(") ");
             }
 
-            logger.info("Query " + _indexQuery.getQuery() + " " + parameters.toString() + "returned " + result.getResults().size() + isStale + "results (total index results: " + result.getTotalResults() + ")");
+            logger.info("Query " + _indexQuery.getQuery() + " " + parameters + "returned " + result.getResults().size() + isStale + "results (total index results: " + result.getTotalResults() + ")");
         }
     }
 

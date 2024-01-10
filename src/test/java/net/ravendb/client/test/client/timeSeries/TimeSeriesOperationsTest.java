@@ -473,9 +473,7 @@ public class TimeSeriesOperationsTest extends RemoteTestBase {
             timeSeriesOp.append(new TimeSeriesOperation.AppendOperation(DateUtils.addSeconds(baseline, 1), new double[]{59}, "watches/fitbit"));
 
             TimeSeriesBatchOperation timeSeriesBatch = new TimeSeriesBatchOperation("users/ayende", timeSeriesOp);
-            assertThatThrownBy(() -> {
-                store.operations().send(timeSeriesBatch);
-            })
+            assertThatThrownBy(() -> store.operations().send(timeSeriesBatch))
                     .isInstanceOf(DocumentDoesNotExistException.class)
                     .hasMessageContaining("Cannot operate on time series of a missing document");
         }
@@ -757,14 +755,10 @@ public class TimeSeriesOperationsTest extends RemoteTestBase {
 
             store.operations().send(timeSeriesBatch);
 
-            assertThatThrownBy(() -> {
-                store.operations().send(new GetTimeSeriesOperation("users/ayende", null));
-            })
+            assertThatThrownBy(() -> store.operations().send(new GetTimeSeriesOperation("users/ayende", null)))
                     .isInstanceOf(IllegalArgumentException.class);
 
-            assertThatThrownBy(() -> {
-                store.operations().send(new GetMultipleTimeSeriesOperation("users/ayende", new ArrayList<>()));
-            })
+            assertThatThrownBy(() -> store.operations().send(new GetMultipleTimeSeriesOperation("users/ayende", new ArrayList<>())))
                     .isInstanceOf(IllegalArgumentException.class);
         }
     }
@@ -793,12 +787,10 @@ public class TimeSeriesOperationsTest extends RemoteTestBase {
 
             store.operations().send(timeSeriesBatch);
 
-            assertThatThrownBy(() -> {
-                store.operations().send(new GetMultipleTimeSeriesOperation("users/ayende",
-                        Collections.singletonList(
-                                new TimeSeriesRange(null, baseline, null)
-                        )));
-            })
+            assertThatThrownBy(() -> store.operations().send(new GetMultipleTimeSeriesOperation("users/ayende",
+                    Collections.singletonList(
+                            new TimeSeriesRange(null, baseline, null)
+                    ))))
                     .isInstanceOf(IllegalArgumentException.class)
                     .hasMessageContaining("Name cannot be null or empty");
         }
@@ -828,9 +820,7 @@ public class TimeSeriesOperationsTest extends RemoteTestBase {
 
             store.operations().send(timeSeriesBatch);
 
-            assertThatThrownBy(() -> {
-                store.operations().send(new GetTimeSeriesOperation("users/ayende", "", baseline, DateUtils.addYears(baseline, 10)));
-            })
+            assertThatThrownBy(() -> store.operations().send(new GetTimeSeriesOperation("users/ayende", "", baseline, DateUtils.addYears(baseline, 10))))
                     .hasMessageContaining("Timeseries cannot be null or empty");
         }
     }

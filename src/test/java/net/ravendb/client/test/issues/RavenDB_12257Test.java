@@ -42,10 +42,8 @@ public class RavenDB_12257Test extends RemoteTestBase {
             }
 
             SubscriptionCreationOptions options = new SubscriptionCreationOptions();
-            options.setIncludes(builder -> {
-                builder.includeDocuments("category")
-                        .includeDocuments("supplier");
-            });
+            options.setIncludes(builder -> builder.includeDocuments("category")
+                    .includeDocuments("supplier"));
             String name = store.subscriptions().create(Product.class, options);
 
             try (SubscriptionWorker<Product> sub

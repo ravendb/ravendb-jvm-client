@@ -323,7 +323,7 @@ public class RemoteTestBase extends RavenTestDriver implements CleanCloseable {
 
         disposed = true;
 
-        if (exceptions.size() > 0) {
+        if (!exceptions.isEmpty()) {
             throw new RuntimeException(exceptions
                     .stream()
                     .map(x -> x.toString())

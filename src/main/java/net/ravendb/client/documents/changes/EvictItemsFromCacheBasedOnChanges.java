@@ -16,10 +16,9 @@ public class EvictItemsFromCacheBasedOnChanges implements CleanCloseable, IObser
     private CleanCloseable _documentsSubscription;
     private CleanCloseable _indexesSubscription;
     private final RequestExecutor _requestExecutor;
-    private CompletableFuture _taskConnected;
+    private final CompletableFuture _taskConnected;
     private CleanCloseable _aggressiveCachingSubscription;
 
-    @SuppressWarnings("unchecked")
     public EvictItemsFromCacheBasedOnChanges(DocumentStore store, String databaseName) {
         _databaseName = databaseName;
         _requestExecutor = store.getRequestExecutor(databaseName);

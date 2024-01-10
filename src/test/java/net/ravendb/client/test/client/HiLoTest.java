@@ -284,10 +284,8 @@ public class HiLoTest extends RemoteTestBase {
                     .map(User::getId)
                     .map(id -> id.split("/")[1])
                     .map(x -> x.split("-")[0])
-                    .forEach(numericPart -> {
-                        assertThat(Integer.valueOf(numericPart))
-                                .isLessThan(33);
-                    });
+                    .forEach(numericPart -> assertThat(Integer.valueOf(numericPart))
+                            .isLessThan(33));
         }
     }
 }

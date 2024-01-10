@@ -151,7 +151,7 @@ public class LoadOperation {
                 throw new IllegalStateException("Cannot execute getDocument before operation execution.");
             }
 
-            if (_results == null || _results.getResults() == null || _results.getResults().size() == 0) {
+            if (_results == null || _results.getResults() == null || _results.getResults().isEmpty()) {
                 return null;
             }
 
@@ -206,7 +206,7 @@ public class LoadOperation {
                 finalResults.put(id, null);
             }
 
-            if (_results == null || _results.getResults() == null || _results.getResults().size() == 0) {
+            if (_results == null || _results.getResults() == null || _results.getResults().isEmpty()) {
                 return finalResults;
             }
 

@@ -39,11 +39,11 @@ import java.util.stream.Stream;
 
 public abstract class ClusterTestBase extends RavenTestDriver implements CleanCloseable {
 
-    private List<Closeable> _toDispose = new ArrayList<>();
+    private final List<Closeable> _toDispose = new ArrayList<>();
 
     private static class TestCloudServiceLocator extends RavenServerLocator {
 
-        private static Map<String, String> _defaultParams = new HashMap<>();
+        private static final Map<String, String> _defaultParams = new HashMap<>();
         private Map<String, String> _extraParams = new HashMap<>();
 
         static {
@@ -67,7 +67,7 @@ public abstract class ClusterTestBase extends RavenTestDriver implements CleanCl
         }
     }
 
-    private AtomicInteger dbCounter = new AtomicInteger(1);
+    private final AtomicInteger dbCounter = new AtomicInteger(1);
 
     protected String getDatabaseName() {
         return "db_" + dbCounter.incrementAndGet();
@@ -157,11 +157,9 @@ public abstract class ClusterTestBase extends RavenTestDriver implements CleanCl
             AdminJsConsoleOperation jsConsole = new AdminJsConsoleOperation(script);
             RavenCommand<JsonNode> command = jsConsole.getCommand(new DocumentConventions());
 
-            Reference<String> urlRef = new Reference<>();
             ServerNode serverNode = new ServerNode();
             serverNode.setUrl(targetNode.getUrl());
-            HttpUriRequestBase request = command.createRequest(serverNode, urlRef);
-            request.setURI(new URI(urlRef.value));
+            HttpUriRequestBase request = command.createRequest(serverNode);
 
             try (DocumentStore store = new DocumentStore(targetNode.url, "_")) {
                 store.initialize();

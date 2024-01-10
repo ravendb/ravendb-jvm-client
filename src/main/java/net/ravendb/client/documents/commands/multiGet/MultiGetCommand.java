@@ -31,7 +31,7 @@ public class MultiGetCommand extends RavenCommand<List<GetResponse>> implements 
     private final RequestExecutor _requestExecutor;
     private final HttpCache _httpCache;
     private final List<GetRequest> _commands;
-    private SessionInfo _sessionInfo;
+    private final SessionInfo _sessionInfo;
 
     private String _baseUrl;
     private Cached _cached;
@@ -77,9 +77,7 @@ public class MultiGetCommand extends RavenCommand<List<GetResponse>> implements 
             return null; // aggressively cached
         }
 
-        url.value = _baseUrl + "/multi_get";
-
-        HttpPost request = new HttpPost();
+        HttpPost request = new HttpPost(url);
 
         request.setEntity(new ContentProviderHttpEntity(outputStream -> {
             try (JsonGenerator generator = createSafeJsonGenerator(outputStream)) {

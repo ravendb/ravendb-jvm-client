@@ -213,9 +213,7 @@ public class RavenDB_19938Test extends RemoteTestBase {
         OrchestratorTopology orchestratorTopology = new OrchestratorTopology();
         orchestratorTopology.setMembers(Arrays.asList("A"));
 
-        assertThatThrownBy(() -> {
-            createDatabaseRecord(builder -> builder.sharded("DB1", topology -> topology.orchestrator(orchestratorTopology)));
-        })
+        assertThatThrownBy(() -> createDatabaseRecord(builder -> builder.sharded("DB1", topology -> topology.orchestrator(orchestratorTopology))))
                 .isExactlyInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("At least one shard is required. Use addShard to add a shard to the topology");
 

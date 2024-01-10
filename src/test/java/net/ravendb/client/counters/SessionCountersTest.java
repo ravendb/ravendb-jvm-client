@@ -1155,9 +1155,7 @@ public class SessionCountersTest extends RemoteTestBase {
 
             try (IDocumentSession session = store.openSession()) {
 
-                assertThatThrownBy(() -> {
-                    session.load(Order.class, "orders/1-A", i -> i.includeDocuments("company").includeAllCounters().includeCounter("likes"));
-                }).isExactlyInstanceOf(IllegalStateException.class);
+                assertThatThrownBy(() -> session.load(Order.class, "orders/1-A", i -> i.includeDocuments("company").includeAllCounters().includeCounter("likes"))).isExactlyInstanceOf(IllegalStateException.class);
             }
         }
     }
@@ -1183,9 +1181,7 @@ public class SessionCountersTest extends RemoteTestBase {
 
             try (IDocumentSession session = store.openSession()) {
 
-                assertThatThrownBy(() -> {
-                    session.load(Order.class, "orders/1-A", i -> i.includeDocuments("company").includeCounter("likes").includeAllCounters());
-                }).isExactlyInstanceOf(IllegalStateException.class);
+                assertThatThrownBy(() -> session.load(Order.class, "orders/1-A", i -> i.includeDocuments("company").includeCounter("likes").includeAllCounters())).isExactlyInstanceOf(IllegalStateException.class);
             }
         }
     }

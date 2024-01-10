@@ -13,9 +13,7 @@ public class RavenDB_15129Test extends RemoteTestBase {
     @Test
     public void timeSeriesValue_RequiresDoubleType() throws Exception {
         try (IDocumentStore store = getDocumentStore()) {
-            assertThatThrownBy(() -> {
-                store.timeSeries().register(Company.class, MetricValue.class);
-            })
+            assertThatThrownBy(() -> store.timeSeries().register(Company.class, MetricValue.class))
                     .hasMessageContaining("Cannot create a mapping for");
         }
     }

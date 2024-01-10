@@ -79,7 +79,6 @@ public class TimeSeriesValuesHelper {
         return setFields(clazz, values, false);
     }
 
-    @SuppressWarnings("deprecation")
     public static <T> T setFields(Class<T> clazz, double[] values, boolean asRollup) {
         if (values == null) {
             return null;

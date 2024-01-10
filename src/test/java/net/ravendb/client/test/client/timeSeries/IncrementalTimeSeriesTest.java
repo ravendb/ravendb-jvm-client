@@ -370,9 +370,7 @@ public class IncrementalTimeSeriesTest extends RemoteTestBase {
             }
 
             try (IDocumentSession session = store.openSession()) {
-                assertThatThrownBy(() -> {
-                    session.incrementalTimeSeriesFor("users/karmel", p1.getTimeSeriesName(INCREMENTAL_TS_NAME)).get();
-                }).isExactlyInstanceOf(IllegalArgumentException.class)
+                assertThatThrownBy(() -> session.incrementalTimeSeriesFor("users/karmel", p1.getTimeSeriesName(INCREMENTAL_TS_NAME)).get()).isExactlyInstanceOf(IllegalArgumentException.class)
                         .hasMessageContaining("Time Series from type Rollup cannot be Incremental");
             }
         }

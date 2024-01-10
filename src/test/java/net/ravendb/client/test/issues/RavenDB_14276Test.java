@@ -18,9 +18,7 @@ public class RavenDB_14276Test extends RemoteTestBase {
     @Test
     public void can_Update_Metadata_With_Nested_Dictionary() throws Exception {
         try (IDocumentStore store = getDocumentStore()) {
-            store.addBeforeStoreListener((sender, event) -> {
-                onBeforeStore(event);
-            });
+            store.addBeforeStoreListener((sender, event) -> onBeforeStore(event));
 
             String docId = "users/1";
 
@@ -49,9 +47,7 @@ public class RavenDB_14276Test extends RemoteTestBase {
     @Test
     public void can_Update_Metadata_With_Nested_Dictionary_Same_Session() throws Exception {
         try (IDocumentStore store = getDocumentStore()) {
-            store.addBeforeStoreListener((sender, event) -> {
-                onBeforeStore(event);
-            });
+            store.addBeforeStoreListener((sender, event) -> onBeforeStore(event));
 
             String docId = "users/1";
 

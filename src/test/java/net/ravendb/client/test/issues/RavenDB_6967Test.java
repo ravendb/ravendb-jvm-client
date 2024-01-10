@@ -26,9 +26,7 @@ public class RavenDB_6967Test extends RemoteTestBase {
 
             store.maintenance().send(new DeleteIndexErrorsOperation());
 
-            assertThatThrownBy(() -> {
-                store.maintenance().send(new DeleteIndexErrorsOperation(new String[] { "DoesNotExist" }));
-            }).isInstanceOf(IndexDoesNotExistException.class);
+            assertThatThrownBy(() -> store.maintenance().send(new DeleteIndexErrorsOperation(new String[] { "DoesNotExist" }))).isInstanceOf(IndexDoesNotExistException.class);
 
             IndexDefinition index1 = new IndexDefinition();
             index1.setName("Index1");
@@ -56,9 +54,7 @@ public class RavenDB_6967Test extends RemoteTestBase {
 
             store.maintenance().send(new DeleteIndexErrorsOperation(new String[]{ "Index1", "Index2", "Index3" }));
 
-            assertThatThrownBy(() -> {
-                store.maintenance().send(new DeleteIndexErrorsOperation(new String[] { "Index1", "DoesNotExist" }));
-            }).isInstanceOf(IndexDoesNotExistException.class);
+            assertThatThrownBy(() -> store.maintenance().send(new DeleteIndexErrorsOperation(new String[] { "Index1", "DoesNotExist" }))).isInstanceOf(IndexDoesNotExistException.class);
 
             try (IDocumentSession session = store.openSession()) {
                 session.store(new Company());

@@ -16,9 +16,7 @@ public class RavenDB_15492Test extends RemoteTestBase {
         try (IDocumentStore store = getDocumentStore()) {
             try (IDocumentSession session = store.openSession()) {
                 AtomicBoolean called = new AtomicBoolean(false);
-                session.advanced().addBeforeDeleteListener((sender, event) -> {
-                    called.set("users/1".equals(event.getDocumentId()));
-                });
+                session.advanced().addBeforeDeleteListener((sender, event) -> called.set("users/1".equals(event.getDocumentId())));
 
                 session.delete("users/1");
                 session.saveChanges();

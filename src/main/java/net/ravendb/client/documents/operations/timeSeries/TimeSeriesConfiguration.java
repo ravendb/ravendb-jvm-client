@@ -83,9 +83,7 @@ public class TimeSeriesConfiguration {
         }
 
         TreeMap<String, TimeSeriesCollectionConfiguration> dic = new TreeMap<>(String::compareToIgnoreCase);
-        for (Map.Entry<String, TimeSeriesCollectionConfiguration> kvp : collections.entrySet()) {
-            dic.put(kvp.getKey(), kvp.getValue());
-        }
+        dic.putAll(collections);
 
         collections = dic;
     }

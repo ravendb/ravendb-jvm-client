@@ -223,8 +223,7 @@ public class DatabaseSmuggler {
                 } catch (IOException e) {
                     throw new RuntimeException(e);
                 }
-            }, ContentType.APPLICATION_JSON, _conventions);
-            entity.setChunked(true);
+            }, ContentType.APPLICATION_JSON, _conventions, true);
             request.setEntity(entity);
 
             return request;

@@ -7,7 +7,7 @@ import net.ravendb.client.documents.session.WhereParams;
 
 public class FilterFactory<T> implements IFilterFactory<T> {
 
-    private IAbstractDocumentQuery<T> _documentQuery;
+    private final IAbstractDocumentQuery<T> _documentQuery;
 
     public FilterFactory(IAbstractDocumentQuery<T> documentQuery) {
         this(documentQuery, Integer.MAX_VALUE);

@@ -239,9 +239,7 @@ public class RevisionsTest extends RemoteTestBase {
             configuration.getCollections().put("users", c1);
             configuration.getCollections().put("USERS", c2);
 
-            assertThatThrownBy(() -> {
-                store.maintenance().send(new ConfigureRevisionsOperation(configuration));
-            })
+            assertThatThrownBy(() -> store.maintenance().send(new ConfigureRevisionsOperation(configuration)))
                     .isInstanceOf(RavenException.class);
         }
     }

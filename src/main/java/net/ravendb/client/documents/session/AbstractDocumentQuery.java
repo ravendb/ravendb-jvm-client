@@ -1210,7 +1210,6 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
      * @param query Query
      * @return Index query
      */
-    @SuppressWarnings("deprecation")
     protected IndexQuery generateIndexQuery(String query) {
         IndexQuery indexQuery = new IndexQuery();
         indexQuery.setQuery(query);
@@ -1311,7 +1310,6 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
         }
     }
 
-    @SuppressWarnings("UnusedAssignment")
     private void buildInclude(StringBuilder queryText) {
         if (documentIncludes.isEmpty() &&
                 highlightingTokens.isEmpty() &&
@@ -1388,7 +1386,7 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
     @Override
     public void _intersect() {
         List<QueryToken> tokens = getCurrentWhereTokens();
-        if (tokens.size() > 0) {
+        if (!tokens.isEmpty()) {
             QueryToken last = tokens.get(tokens.size() - 1);
             if (last instanceof WhereToken || last instanceof CloseSubclauseToken) {
                 isIntersect = true;
@@ -1901,7 +1899,7 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
             return;
         }
 
-        if (queryData.getLoadTokens() == null || queryData.getLoadTokens().size() == 0) {
+        if (queryData.getLoadTokens() == null || queryData.getLoadTokens().isEmpty()) {
             return;
         }
 

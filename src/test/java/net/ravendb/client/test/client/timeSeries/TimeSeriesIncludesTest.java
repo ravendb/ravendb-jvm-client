@@ -1152,63 +1152,51 @@ public class TimeSeriesIncludesTest extends RemoteTestBase {
     public void shouldThrowOnIncludeAllTimeSeriesAfterIncludingTimeSeries() throws Exception {
         try (IDocumentStore store = getDocumentStore()) {
             try (IDocumentSession session = store.openSession()) {
-                assertThatThrownBy(() -> {
-                    session.load(Order.class, "orders/1-A",
-                            i -> i
-                                    .includeDocuments("company")
-                                    .includeAllTimeSeries(TimeSeriesRangeType.LAST, 11)
-                                    .includeAllTimeSeries(TimeSeriesRangeType.LAST, TimeValue.ofMinutes(10)));
-                })
+                assertThatThrownBy(() -> session.load(Order.class, "orders/1-A",
+                        i -> i
+                                .includeDocuments("company")
+                                .includeAllTimeSeries(TimeSeriesRangeType.LAST, 11)
+                                .includeAllTimeSeries(TimeSeriesRangeType.LAST, TimeValue.ofMinutes(10))))
                         .isExactlyInstanceOf(IllegalArgumentException.class)
                         .hasMessageStartingWith("IIncludeBuilder : Cannot use 'includeAllTimeSeries' after using 'includeTimeSeries' or 'includeAllTimeSeries'.");
 
-                assertThatThrownBy(() -> {
-                    session.load(Order.class, "orders/1-A",
-                            i -> i
-                                    .includeDocuments("company")
-                                    .includeAllTimeSeries(TimeSeriesRangeType.LAST, Integer.MAX_VALUE)
-                                    .includeAllTimeSeries(TimeSeriesRangeType.LAST, 11));
-                })
+                assertThatThrownBy(() -> session.load(Order.class, "orders/1-A",
+                        i -> i
+                                .includeDocuments("company")
+                                .includeAllTimeSeries(TimeSeriesRangeType.LAST, Integer.MAX_VALUE)
+                                .includeAllTimeSeries(TimeSeriesRangeType.LAST, 11)))
                         .isExactlyInstanceOf(IllegalArgumentException.class)
                         .hasMessageStartingWith("IIncludeBuilder : Cannot use 'includeAllTimeSeries' after using 'includeTimeSeries' or 'includeAllTimeSeries");
 
-                assertThatThrownBy(() -> {
-                    session.load(Order.class, "orders/1-A",
-                            i -> i
-                                    .includeDocuments("company")
-                                    .includeTimeSeries("heartrate", TimeSeriesRangeType.LAST, Integer.MAX_VALUE)
-                                    .includeAllTimeSeries(TimeSeriesRangeType.LAST, TimeValue.ofMinutes(10)));
-                })
+                assertThatThrownBy(() -> session.load(Order.class, "orders/1-A",
+                        i -> i
+                                .includeDocuments("company")
+                                .includeTimeSeries("heartrate", TimeSeriesRangeType.LAST, Integer.MAX_VALUE)
+                                .includeAllTimeSeries(TimeSeriesRangeType.LAST, TimeValue.ofMinutes(10))))
                         .isExactlyInstanceOf(IllegalArgumentException.class)
                         .hasMessageStartingWith("IIncludeBuilder : Cannot use 'includeAllTimeSeries' after using 'includeTimeSeries' or 'includeAllTimeSeries'.");
 
-                assertThatThrownBy(() -> {
-                    session.load(Order.class, "orders/1-A",
-                            i -> i
-                                    .includeDocuments("company")
-                                    .includeTimeSeries("heartrate", TimeSeriesRangeType.LAST, Integer.MAX_VALUE)
-                                    .includeAllTimeSeries(TimeSeriesRangeType.LAST, 11));
-                })
+                assertThatThrownBy(() -> session.load(Order.class, "orders/1-A",
+                        i -> i
+                                .includeDocuments("company")
+                                .includeTimeSeries("heartrate", TimeSeriesRangeType.LAST, Integer.MAX_VALUE)
+                                .includeAllTimeSeries(TimeSeriesRangeType.LAST, 11)))
                         .isExactlyInstanceOf(IllegalArgumentException.class)
                         .hasMessageStartingWith("IIncludeBuilder : Cannot use 'includeAllTimeSeries' after using 'includeTimeSeries' or 'includeAllTimeSeries'.");
 
-                assertThatThrownBy(() -> {
-                    session.load(Order.class, "orders/1-A",
-                            i -> i
-                                    .includeDocuments("company")
-                                    .includeTimeSeries("heartrate", TimeSeriesRangeType.LAST, 11)
-                                    .includeAllTimeSeries(TimeSeriesRangeType.LAST, TimeValue.ofMinutes(10)));
-                })
+                assertThatThrownBy(() -> session.load(Order.class, "orders/1-A",
+                        i -> i
+                                .includeDocuments("company")
+                                .includeTimeSeries("heartrate", TimeSeriesRangeType.LAST, 11)
+                                .includeAllTimeSeries(TimeSeriesRangeType.LAST, TimeValue.ofMinutes(10))))
                         .isExactlyInstanceOf(IllegalArgumentException.class)
                         .hasMessageStartingWith("IIncludeBuilder : Cannot use 'includeAllTimeSeries' after using 'includeTimeSeries' or 'includeAllTimeSeries'.");
 
-                assertThatThrownBy(() -> {
-                    session.load(Order.class, "orders/1-A",
-                            i -> i
-                                    .includeDocuments("company")
-                                    .includeTimeSeries("heartrate", TimeSeriesRangeType.LAST, 11)
-                                    .includeAllTimeSeries(TimeSeriesRangeType.LAST, 11));
-                })
+                assertThatThrownBy(() -> session.load(Order.class, "orders/1-A",
+                        i -> i
+                                .includeDocuments("company")
+                                .includeTimeSeries("heartrate", TimeSeriesRangeType.LAST, 11)
+                                .includeAllTimeSeries(TimeSeriesRangeType.LAST, 11)))
                         .isExactlyInstanceOf(IllegalArgumentException.class)
                         .hasMessageStartingWith("IIncludeBuilder : Cannot use 'includeAllTimeSeries' after using 'includeTimeSeries' or 'includeAllTimeSeries'.");
 
@@ -1222,123 +1210,99 @@ public class TimeSeriesIncludesTest extends RemoteTestBase {
     public void shouldThrowOnIncludingTimeSeriesAfterIncludeAllTimeSeries() throws Exception {
         try (IDocumentStore store = getDocumentStore()) {
             try (IDocumentSession session = store.openSession()) {
-                assertThatThrownBy(() -> {
-                    session.load(Order.class, "orders/1-A",
-                            i -> i
-                                    .includeDocuments("company")
-                                    .includeAllTimeSeries(TimeSeriesRangeType.LAST, 11)
-                                    .includeAllTimeSeries(TimeSeriesRangeType.LAST, TimeValue.ofMinutes(10)));
-                })
+                assertThatThrownBy(() -> session.load(Order.class, "orders/1-A",
+                        i -> i
+                                .includeDocuments("company")
+                                .includeAllTimeSeries(TimeSeriesRangeType.LAST, 11)
+                                .includeAllTimeSeries(TimeSeriesRangeType.LAST, TimeValue.ofMinutes(10))))
                         .isExactlyInstanceOf(IllegalArgumentException.class)
                         .hasMessageStartingWith("IIncludeBuilder : Cannot use 'includeAllTimeSeries' after using 'includeTimeSeries' or 'includeAllTimeSeries'.");
 
-                assertThatThrownBy(() -> {
-                    session.load(Order.class, "orders/1-A",
-                            i -> i
-                                    .includeDocuments("company")
-                                    .includeAllTimeSeries(TimeSeriesRangeType.LAST, Integer.MAX_VALUE)
-                                    .includeAllTimeSeries(TimeSeriesRangeType.LAST, 11));
-                })
+                assertThatThrownBy(() -> session.load(Order.class, "orders/1-A",
+                        i -> i
+                                .includeDocuments("company")
+                                .includeAllTimeSeries(TimeSeriesRangeType.LAST, Integer.MAX_VALUE)
+                                .includeAllTimeSeries(TimeSeriesRangeType.LAST, 11)))
                         .isExactlyInstanceOf(IllegalArgumentException.class)
                         .hasMessageStartingWith("IIncludeBuilder : Cannot use 'includeAllTimeSeries' after using 'includeTimeSeries' or 'includeAllTimeSeries'.");
 
-                assertThatThrownBy(() -> {
-                    session.load(Order.class, "orders/1-A",
-                            i -> i
-                                    .includeDocuments("company")
-                                    .includeAllTimeSeries(TimeSeriesRangeType.LAST, TimeValue.ofMinutes(10))
-                                    .includeTimeSeries("heartrate", TimeSeriesRangeType.LAST, TimeValue.MAX_VALUE));
-                })
+                assertThatThrownBy(() -> session.load(Order.class, "orders/1-A",
+                        i -> i
+                                .includeDocuments("company")
+                                .includeAllTimeSeries(TimeSeriesRangeType.LAST, TimeValue.ofMinutes(10))
+                                .includeTimeSeries("heartrate", TimeSeriesRangeType.LAST, TimeValue.MAX_VALUE)))
                         .isExactlyInstanceOf(IllegalArgumentException.class)
                         .hasMessageStartingWith("IIncludeBuilder : Cannot use 'includeTimeSeries' or 'includeAllTimeSeries' after using 'includeAllTimeSeries'.");
 
-                assertThatThrownBy(() -> {
-                    session.load(Order.class, "orders/1-A",
-                            i -> i
-                                    .includeDocuments("company")
-                                    .includeAllTimeSeries(TimeSeriesRangeType.LAST, 11)
-                                    .includeTimeSeries("heartrate", TimeSeriesRangeType.LAST, TimeValue.MAX_VALUE));
-                })
+                assertThatThrownBy(() -> session.load(Order.class, "orders/1-A",
+                        i -> i
+                                .includeDocuments("company")
+                                .includeAllTimeSeries(TimeSeriesRangeType.LAST, 11)
+                                .includeTimeSeries("heartrate", TimeSeriesRangeType.LAST, TimeValue.MAX_VALUE)))
                         .isExactlyInstanceOf(IllegalArgumentException.class)
                         .hasMessageStartingWith("IIncludeBuilder : Cannot use 'includeTimeSeries' or 'includeAllTimeSeries' after using 'includeAllTimeSeries'.");
 
-                assertThatThrownBy(() -> {
-                    session.load(Order.class, "orders/1-A",
-                            i -> i
-                                    .includeDocuments("company")
-                                    .includeAllTimeSeries(TimeSeriesRangeType.LAST, TimeValue.ofMinutes(10))
-                                    .includeTimeSeries("heartrate", TimeSeriesRangeType.LAST, 11));
-                })
+                assertThatThrownBy(() -> session.load(Order.class, "orders/1-A",
+                        i -> i
+                                .includeDocuments("company")
+                                .includeAllTimeSeries(TimeSeriesRangeType.LAST, TimeValue.ofMinutes(10))
+                                .includeTimeSeries("heartrate", TimeSeriesRangeType.LAST, 11)))
                         .isExactlyInstanceOf(IllegalArgumentException.class)
                         .hasMessageStartingWith("IIncludeBuilder : Cannot use 'includeTimeSeries' or 'includeAllTimeSeries' after using 'includeAllTimeSeries'.");
 
-                assertThatThrownBy(() -> {
-                    session.load(Order.class, "orders/1-A",
-                            i -> i
-                                    .includeDocuments("company")
-                                    .includeAllTimeSeries(TimeSeriesRangeType.LAST, 11)
-                                    .includeTimeSeries("heartrate", TimeSeriesRangeType.LAST, 11));
-                })
+                assertThatThrownBy(() -> session.load(Order.class, "orders/1-A",
+                        i -> i
+                                .includeDocuments("company")
+                                .includeAllTimeSeries(TimeSeriesRangeType.LAST, 11)
+                                .includeTimeSeries("heartrate", TimeSeriesRangeType.LAST, 11)))
                         .isExactlyInstanceOf(IllegalArgumentException.class)
                         .hasMessageStartingWith("IIncludeBuilder : Cannot use 'includeTimeSeries' or 'includeAllTimeSeries' after using 'includeAllTimeSeries'.");
 
-                assertThatThrownBy(() -> {
-                    session.load(Order.class, "orders/1-A",
-                            i -> i
-                                    .includeDocuments("company")
-                                    .includeAllTimeSeries(TimeSeriesRangeType.LAST, 11)
-                                    .includeAllTimeSeries(TimeSeriesRangeType.LAST, TimeValue.ofMinutes(10)));
-                })
+                assertThatThrownBy(() -> session.load(Order.class, "orders/1-A",
+                        i -> i
+                                .includeDocuments("company")
+                                .includeAllTimeSeries(TimeSeriesRangeType.LAST, 11)
+                                .includeAllTimeSeries(TimeSeriesRangeType.LAST, TimeValue.ofMinutes(10))))
                         .isExactlyInstanceOf(IllegalArgumentException.class)
                         .hasMessageStartingWith("IIncludeBuilder : Cannot use 'includeAllTimeSeries' after using 'includeTimeSeries' or 'includeAllTimeSeries'.");
 
-                assertThatThrownBy(() -> {
-                    session.load(Order.class, "orders/1-A",
-                            i -> i
-                                    .includeDocuments("company")
-                                    .includeAllTimeSeries(TimeSeriesRangeType.LAST, TimeValue.MAX_VALUE)
-                                    .includeAllTimeSeries(TimeSeriesRangeType.LAST, 11));
-                })
+                assertThatThrownBy(() -> session.load(Order.class, "orders/1-A",
+                        i -> i
+                                .includeDocuments("company")
+                                .includeAllTimeSeries(TimeSeriesRangeType.LAST, TimeValue.MAX_VALUE)
+                                .includeAllTimeSeries(TimeSeriesRangeType.LAST, 11)))
                         .isExactlyInstanceOf(IllegalArgumentException.class)
                         .hasMessageStartingWith("IIncludeBuilder : Cannot use 'includeAllTimeSeries' after using 'includeTimeSeries' or 'includeAllTimeSeries'.");
 
-                assertThatThrownBy(() -> {
-                    session.load(Order.class, "orders/1-A",
-                            i -> i
-                                    .includeDocuments("company")
-                                    .includeAllTimeSeries(TimeSeriesRangeType.LAST, TimeValue.ofMinutes(10))
-                                    .includeTimeSeries("heartrate", TimeSeriesRangeType.LAST, TimeValue.MAX_VALUE));
-                })
+                assertThatThrownBy(() -> session.load(Order.class, "orders/1-A",
+                        i -> i
+                                .includeDocuments("company")
+                                .includeAllTimeSeries(TimeSeriesRangeType.LAST, TimeValue.ofMinutes(10))
+                                .includeTimeSeries("heartrate", TimeSeriesRangeType.LAST, TimeValue.MAX_VALUE)))
                         .isExactlyInstanceOf(IllegalArgumentException.class)
                         .hasMessageStartingWith("IIncludeBuilder : Cannot use 'includeTimeSeries' or 'includeAllTimeSeries' after using 'includeAllTimeSeries'.");
 
-                assertThatThrownBy(() -> {
-                    session.load(Order.class, "orders/1-A",
-                            i -> i
-                                    .includeDocuments("company")
-                                    .includeAllTimeSeries(TimeSeriesRangeType.LAST, 11)
-                                    .includeTimeSeries("heartrate", TimeSeriesRangeType.LAST, TimeValue.MAX_VALUE));
-                })
+                assertThatThrownBy(() -> session.load(Order.class, "orders/1-A",
+                        i -> i
+                                .includeDocuments("company")
+                                .includeAllTimeSeries(TimeSeriesRangeType.LAST, 11)
+                                .includeTimeSeries("heartrate", TimeSeriesRangeType.LAST, TimeValue.MAX_VALUE)))
                         .isExactlyInstanceOf(IllegalArgumentException.class)
                         .hasMessageStartingWith("IIncludeBuilder : Cannot use 'includeTimeSeries' or 'includeAllTimeSeries' after using 'includeAllTimeSeries'.");
 
-                assertThatThrownBy(() -> {
-                    session.load(Order.class, "orders/1-A",
-                            i -> i
-                                    .includeDocuments("company")
-                                    .includeAllTimeSeries(TimeSeriesRangeType.LAST, TimeValue.ofMinutes(10))
-                                    .includeTimeSeries("heartrate", TimeSeriesRangeType.LAST, 11));
-                })
+                assertThatThrownBy(() -> session.load(Order.class, "orders/1-A",
+                        i -> i
+                                .includeDocuments("company")
+                                .includeAllTimeSeries(TimeSeriesRangeType.LAST, TimeValue.ofMinutes(10))
+                                .includeTimeSeries("heartrate", TimeSeriesRangeType.LAST, 11)))
                         .isExactlyInstanceOf(IllegalArgumentException.class)
                         .hasMessageStartingWith("IIncludeBuilder : Cannot use 'includeTimeSeries' or 'includeAllTimeSeries' after using 'includeAllTimeSeries'.");
 
-                assertThatThrownBy(() -> {
-                    session.load(Order.class, "orders/1-A",
-                            i -> i
-                                    .includeDocuments("company")
-                                    .includeAllTimeSeries(TimeSeriesRangeType.LAST, 11)
-                                    .includeTimeSeries("heartrate", TimeSeriesRangeType.LAST, 11));
-                })
+                assertThatThrownBy(() -> session.load(Order.class, "orders/1-A",
+                        i -> i
+                                .includeDocuments("company")
+                                .includeAllTimeSeries(TimeSeriesRangeType.LAST, 11)
+                                .includeTimeSeries("heartrate", TimeSeriesRangeType.LAST, 11)))
                         .isExactlyInstanceOf(IllegalArgumentException.class)
                         .hasMessageStartingWith("IIncludeBuilder : Cannot use 'includeTimeSeries' or 'includeAllTimeSeries' after using 'includeAllTimeSeries'.");
 
@@ -1352,21 +1316,17 @@ public class TimeSeriesIncludesTest extends RemoteTestBase {
     public void shouldThrowOnIncludingTimeSeriesWithLastRangeZeroOrNegativeTime() throws Exception {
         try (IDocumentStore store = getDocumentStore()) {
             try (IDocumentSession session = store.openSession()) {
-                assertThatThrownBy(() -> {
-                    session.load(Order.class, "orders/1-A",
-                            i -> i
-                                    .includeDocuments("company")
-                                    .includeAllTimeSeries(TimeSeriesRangeType.LAST, TimeValue.MIN_VALUE));
-                })
+                assertThatThrownBy(() -> session.load(Order.class, "orders/1-A",
+                        i -> i
+                                .includeDocuments("company")
+                                .includeAllTimeSeries(TimeSeriesRangeType.LAST, TimeValue.MIN_VALUE)))
                         .isExactlyInstanceOf(IllegalArgumentException.class)
                         .hasMessageStartingWith("Time range type cannot be set to LAST when time is negative or zero.");
 
-                assertThatThrownBy(() -> {
-                    session.load(Order.class, "orders/1-A",
-                            i -> i
-                                    .includeDocuments("company")
-                                    .includeAllTimeSeries(TimeSeriesRangeType.LAST, TimeValue.ZERO));
-                })
+                assertThatThrownBy(() -> session.load(Order.class, "orders/1-A",
+                        i -> i
+                                .includeDocuments("company")
+                                .includeAllTimeSeries(TimeSeriesRangeType.LAST, TimeValue.ZERO)))
                         .isExactlyInstanceOf(IllegalArgumentException.class)
                         .hasMessageStartingWith("Time range type cannot be set to LAST when time is negative or zero.");
 
@@ -1380,39 +1340,31 @@ public class TimeSeriesIncludesTest extends RemoteTestBase {
     public void shouldThrowOnIncludingTimeSeriesWithNoneRange() throws Exception {
         try (IDocumentStore store = getDocumentStore()) {
             try (IDocumentSession session = store.openSession()) {
-                assertThatThrownBy(() -> {
-                    session.load(Order.class, "orders/1-A",
-                            i -> i
-                                    .includeDocuments("company")
-                                    .includeAllTimeSeries(TimeSeriesRangeType.NONE, TimeValue.ofMinutes(-30)));
-                })
+                assertThatThrownBy(() -> session.load(Order.class, "orders/1-A",
+                        i -> i
+                                .includeDocuments("company")
+                                .includeAllTimeSeries(TimeSeriesRangeType.NONE, TimeValue.ofMinutes(-30))))
                         .isExactlyInstanceOf(IllegalArgumentException.class)
                         .hasMessageStartingWith("Time range type cannot be set to NONE when time is specified.");
 
-                assertThatThrownBy(() -> {
-                    session.load(Order.class, "orders/1-A",
-                            i -> i
-                                    .includeDocuments("company")
-                                    .includeAllTimeSeries(TimeSeriesRangeType.NONE, TimeValue.ZERO));
-                })
+                assertThatThrownBy(() -> session.load(Order.class, "orders/1-A",
+                        i -> i
+                                .includeDocuments("company")
+                                .includeAllTimeSeries(TimeSeriesRangeType.NONE, TimeValue.ZERO)))
                         .isExactlyInstanceOf(IllegalArgumentException.class)
                         .hasMessageStartingWith("Time range type cannot be set to NONE when time is specified.");
 
-                assertThatThrownBy(() -> {
-                    session.load(Order.class, "orders/1-A",
-                            i -> i
-                                    .includeDocuments("company")
-                                    .includeAllTimeSeries(TimeSeriesRangeType.NONE, 1024));
-                })
+                assertThatThrownBy(() -> session.load(Order.class, "orders/1-A",
+                        i -> i
+                                .includeDocuments("company")
+                                .includeAllTimeSeries(TimeSeriesRangeType.NONE, 1024)))
                         .isExactlyInstanceOf(IllegalArgumentException.class)
                         .hasMessageStartingWith("Time range type cannot be set to NONE when count is specified.");
 
-                assertThatThrownBy(() -> {
-                    session.load(Order.class, "orders/1-A",
-                            i -> i
-                                    .includeDocuments("company")
-                                    .includeAllTimeSeries(TimeSeriesRangeType.NONE, TimeValue.ofMinutes(30)));
-                })
+                assertThatThrownBy(() -> session.load(Order.class, "orders/1-A",
+                        i -> i
+                                .includeDocuments("company")
+                                .includeAllTimeSeries(TimeSeriesRangeType.NONE, TimeValue.ofMinutes(30))))
                         .isExactlyInstanceOf(IllegalArgumentException.class)
                         .hasMessageStartingWith("Time range type cannot be set to NONE when time is specified.");
 
@@ -1426,12 +1378,10 @@ public class TimeSeriesIncludesTest extends RemoteTestBase {
     public void shouldThrowOnIncludingTimeSeriesWithNegativeCount() throws Exception {
         try (IDocumentStore store = getDocumentStore()) {
             try (IDocumentSession session = store.openSession()) {
-                assertThatThrownBy(() -> {
-                    session.load(Order.class, "orders/1-A",
-                            i -> i
-                                    .includeDocuments("company")
-                                    .includeAllTimeSeries(TimeSeriesRangeType.LAST, -1024));
-                })
+                assertThatThrownBy(() -> session.load(Order.class, "orders/1-A",
+                        i -> i
+                                .includeDocuments("company")
+                                .includeAllTimeSeries(TimeSeriesRangeType.LAST, -1024)))
                         .isExactlyInstanceOf(IllegalArgumentException.class)
                         .hasMessageStartingWith("Count have to be positive.");
             }
@@ -1641,7 +1591,7 @@ public class TimeSeriesIncludesTest extends RemoteTestBase {
                 session.store(company3, "companies/amazon");
 
                 Company company4 = new Company();
-                company4.setName("google");;
+                company4.setName("google");
                 session.store(company4, "companies/google");
 
                 ISessionDocumentTimeSeries tsf = session.timeSeriesFor("orders/1-A", "Heartrate");

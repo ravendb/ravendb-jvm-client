@@ -70,7 +70,7 @@ public class NodeSelector implements CleanCloseable {
             }
         }
 
-        if (state.getNodes().size() == 0) {
+        if (state.getNodes().isEmpty()) {
             throw new DatabaseDoesNotExistException("There are no nodes in the topology at all");
         }
         throw new RequestedNodeUnavailableException("Could not find requested node " + nodeTag);
@@ -105,7 +105,7 @@ public class NodeSelector implements CleanCloseable {
     private static CurrentIndexAndNode unlikelyEveryoneFaultedChoice(NodeSelectorState state) {
         // if there are all marked as failed, we'll chose the next (the one in CurrentNodeIndex)
         // one so the user will get an error (or recover :-) );
-        if (state.getNodes().size() == 0) {
+        if (state.getNodes().isEmpty()) {
             throw new DatabaseDoesNotExistException("There are no nodes in the topology at all");
         }
 

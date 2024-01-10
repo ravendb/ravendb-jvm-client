@@ -12,9 +12,9 @@ public class DeleteCommandData implements ICommandData {
 
     private final String id;
     private String name;
-    private String changeVector;
+    private final String changeVector;
     private final CommandType type = CommandType.DELETE;
-    private String originalChangeVector;
+    private final String originalChangeVector;
     private ObjectNode document;
 
     public DeleteCommandData(String id, String changeVector) {

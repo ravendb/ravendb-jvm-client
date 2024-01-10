@@ -125,7 +125,7 @@ public class SingleNodeBatchCommand extends RavenCommand<BatchCommandResult> imp
         }, ContentType.APPLICATION_JSON, _conventions));
 
 
-        if (_attachmentStreams != null && _attachmentStreams.size() > 0) {
+        if (_attachmentStreams != null && !_attachmentStreams.isEmpty()) {
             MultipartEntityBuilder entityBuilder = MultipartEntityBuilder.create();
 
             HttpEntity entity = request.getEntity();

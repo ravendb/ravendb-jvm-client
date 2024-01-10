@@ -10,7 +10,7 @@ public class DeleteCompareExchangeCommandData implements ICommandData {
 
     public final long index;
 
-    private String id;
+    private final String id;
     private String name;
     private String changeVector;
 

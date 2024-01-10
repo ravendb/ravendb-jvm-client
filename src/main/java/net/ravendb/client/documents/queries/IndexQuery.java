@@ -37,7 +37,6 @@ public class IndexQuery extends IndexQueryWithParameters<Parameters> {
         this.disableCaching = disableCaching;
     }
 
-    @SuppressWarnings("deprecation")
     public String getQueryHash(ObjectMapper serializer) {
         HashCalculator hasher = new HashCalculator();
         try {

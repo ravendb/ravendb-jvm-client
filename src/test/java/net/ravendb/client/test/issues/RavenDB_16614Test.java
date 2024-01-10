@@ -44,9 +44,7 @@ public class RavenDB_16614Test extends RemoteTestBase {
                     conflictedSession.saveChanges();
                 }
 
-                assertThatThrownBy(() -> {
-                    session.saveChanges();
-                })
+                assertThatThrownBy(session::saveChanges)
                         .isInstanceOf(ClusterTransactionConcurrencyException.class);
             }
         }

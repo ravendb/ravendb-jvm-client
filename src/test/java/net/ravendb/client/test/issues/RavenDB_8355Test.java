@@ -147,39 +147,31 @@ public class RavenDB_8355Test extends RemoteTestBase {
 
     private static void canUseSorterInternal(Class<? extends RavenException> expectedClass, DocumentStore store, String asc, String desc) {
         try (IDocumentSession session = store.openSession()) {
-            assertThatThrownBy(() -> {
-                session
-                        .advanced()
-                        .rawQuery(Company.class, "from Companies order by custom(name, 'MySorter')")
-                        .toList();
-            })
+            assertThatThrownBy(() -> session
+                    .advanced()
+                    .rawQuery(Company.class, "from Companies order by custom(name, 'MySorter')")
+                    .toList())
                 .isInstanceOf(expectedClass)
                 .hasMessageContaining(asc);
 
-            assertThatThrownBy(() -> {
-                session
-                        .query(Company.class)
-                        .orderBy("name", "MySorter")
-                        .toList();
-            })
+            assertThatThrownBy(() -> session
+                    .query(Company.class)
+                    .orderBy("name", "MySorter")
+                    .toList())
                 .isInstanceOf(expectedClass)
                 .hasMessageContaining(asc);
 
-            assertThatThrownBy(() -> {
-                session
-                        .advanced()
-                        .rawQuery(Company.class, "from Companies order by custom(name, 'MySorter') desc")
-                        .toList();
-            })
+            assertThatThrownBy(() -> session
+                    .advanced()
+                    .rawQuery(Company.class, "from Companies order by custom(name, 'MySorter') desc")
+                    .toList())
                     .isInstanceOf(expectedClass)
                     .hasMessageContaining(desc);
 
-            assertThatThrownBy(() -> {
-                session
-                        .query(Company.class)
-                        .orderByDescending("name", "MySorter")
-                        .toList();
-            })
+            assertThatThrownBy(() -> session
+                    .query(Company.class)
+                    .orderByDescending("name", "MySorter")
+                    .toList())
                     .isInstanceOf(expectedClass)
                     .hasMessageContaining(desc);
         }

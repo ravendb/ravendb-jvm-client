@@ -16,8 +16,8 @@ public class CopyTimeSeriesCommandData implements ICommandData {
     private String _changeVector;
     private final String _destinationId;
     private final String _destinationName;
-    private Date _from;
-    private Date _to;
+    private final Date _from;
+    private final Date _to;
 
     @Override
     public CommandType getType() {

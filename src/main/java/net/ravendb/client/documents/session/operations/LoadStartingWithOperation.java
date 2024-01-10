@@ -101,7 +101,7 @@ public class LoadStartingWithOperation {
                 throw new IllegalStateException("Cannot execute getDocuments before operation execution");
             }
 
-            if (_results == null || _results.getResults() == null || _results.getResults().size() == 0) {
+            if (_results == null || _results.getResults() == null || _results.getResults().isEmpty()) {
                 return (T[]) Array.newInstance(clazz, 0);
             }
 

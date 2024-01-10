@@ -19,9 +19,7 @@ public class NoTrackingTest extends RemoteTestBase {
             createData(store);
 
             try (IDocumentSession session = store.openSession()) {
-                session.advanced().addBeforeQueryListener((sender, handler) -> {
-                    handler.getQueryCustomization().noTracking();
-                });
+                session.advanced().addBeforeQueryListener((sender, handler) -> handler.getQueryCustomization().noTracking());
                 List<AA> result = session.query(AA.class)
                         .include("bs")
                         .toList();

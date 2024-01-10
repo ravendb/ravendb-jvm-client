@@ -32,7 +32,7 @@ import java.util.function.Supplier;
  */
 public class DocumentStore extends DocumentStoreBase {
 
-    private ExecutorService executorService = Executors.newCachedThreadPool();
+    private final ExecutorService executorService = Executors.newCachedThreadPool();
 
     private final ConcurrentMap<DatabaseChangesOptions, IDatabaseChanges> _databaseChanges = new ConcurrentHashMap<>();
 

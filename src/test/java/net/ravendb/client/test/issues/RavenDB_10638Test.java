@@ -21,9 +21,7 @@ public class RavenDB_10638Test extends RemoteTestBase {
                 AtomicInteger counter = new AtomicInteger();
 
                 List<User> results = session.query(User.class)
-                        .addAfterQueryExecutedListener(x -> {
-                            counter.incrementAndGet();
-                        })
+                        .addAfterQueryExecutedListener(x -> counter.incrementAndGet())
                         .whereEquals("name", "Doe")
                         .toList();
 

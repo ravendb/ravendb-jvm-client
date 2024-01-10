@@ -219,7 +219,7 @@ public class SessionTimeSeriesBase {
                     .computeIfAbsent(docId, k -> new TreeMap<>(String::compareToIgnoreCase));
 
             List<TimeSeriesRangeResult> ranges = cache.get(name);
-            if (ranges != null && ranges.size() > 0) {
+            if (ranges != null && !ranges.isEmpty()) {
                 // update
                 int index = compare(leftDate(ranges.get(0).getFrom()), rightDate(to)) > 0 ? 0 : ranges.size();
                 ranges.add(index, rangeResult);
@@ -420,7 +420,7 @@ public class SessionTimeSeriesBase {
                 // (unless this is the first time we're adding to the merged list)
                 List<TimeSeriesEntry> toAdd = Arrays.stream(resultFromServer.get(currentResultIndex++)
                         .getEntries())
-                        .skip(mergedValues.size() == 0 ? 0 : 1)
+                        .skip(mergedValues.isEmpty() ? 0 : 1)
                         .collect(Collectors.toList());
                 mergedValues.addAll(toAdd);
             }
@@ -431,7 +431,7 @@ public class SessionTimeSeriesBase {
                     // so we might need to trim a part of it when we return the
                     // result to the user (i.e. trim [to, toRange.to])
 
-                    for (int index = mergedValues.size() == 0 ? 0 : 1; index < ranges.get(i).getEntries().length; index++) {
+                    for (int index = mergedValues.isEmpty() ? 0 : 1; index < ranges.get(i).getEntries().length; index++) {
                         mergedValues.add(ranges.get(i).getEntries()[index]);
                         if (DatesComparator.compare(definedDate(ranges.get(i).getEntries()[index].getTimestamp()), rightDate(to)) > 0) {
                             trim++;
@@ -463,7 +463,7 @@ public class SessionTimeSeriesBase {
 
             List<TimeSeriesEntry> toAdd = Arrays.stream(resultFromServer.get(currentResultIndex++)
                     .getEntries())
-                    .skip(mergedValues.size() == 0 ? 0 : 1)
+                    .skip(mergedValues.isEmpty() ? 0 : 1)
                     .collect(Collectors.toList());
             mergedValues.addAll(toAdd);
         }

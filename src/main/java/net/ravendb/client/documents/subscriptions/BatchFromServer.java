@@ -44,8 +44,8 @@ public class BatchFromServer {
     }
 
     public static class CounterIncludeItem {
-        private ObjectNode includes;
-        private Map<String, String[]> counterIncludes;
+        private final ObjectNode includes;
+        private final Map<String, String[]> counterIncludes;
 
         public CounterIncludeItem(ObjectNode includes, Map<String, String[]> counterIncludes) {
             this.includes = includes;
