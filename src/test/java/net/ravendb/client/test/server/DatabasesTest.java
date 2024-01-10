@@ -62,7 +62,7 @@ public class DatabasesTest extends RemoteTestBase {
             assertThatThrownBy(() -> {
                 // we assert this by throwing - we are running single node cluster
                 DatabasePutResult send = store.maintenance().server().send(new AddDatabaseNodeOperation(store.getDatabase()));
-            }).hasMessageContaining("Can't add node");
+            }).hasMessageContaining("already exists on all the nodes of the cluster");
         }
     }
 

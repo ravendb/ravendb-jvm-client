@@ -92,7 +92,9 @@ public class GetCountersOperation implements IOperation<CountersDetail> {
                 if (_counters.length > 1) {
                     HttpEntity entity = prepareRequestWithMultipleCounters(pathBuilder);
                     if (entity != null) {
-                        return new HttpPost(pathBuilder.toString());
+                        HttpPost httpPost = new HttpPost(pathBuilder.toString());
+                        httpPost.setEntity(entity);
+                        return httpPost;
                     }
                 } else {
                     pathBuilder.append("&counter=")
@@ -148,7 +150,7 @@ public class GetCountersOperation implements IOperation<CountersDetail> {
 
         @Override
         public void setResponse(String response, boolean fromCache) throws IOException {
-            if (response == null){
+            if (response == null) {
                 return;
             }
 
