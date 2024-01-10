@@ -15,6 +15,7 @@ import org.apache.hc.client5.http.classic.methods.HttpGet;
 import org.apache.hc.client5.http.classic.methods.HttpPost;
 import org.apache.hc.client5.http.classic.methods.HttpUriRequestBase;
 import org.apache.hc.core5.http.ContentType;
+import org.apache.hc.core5.http.HttpEntity;
 
 import java.io.IOException;
 import java.util.*;
@@ -87,27 +88,26 @@ public class GetCountersOperation implements IOperation<CountersDetail> {
                     .append("/counters?docId=")
                     .append(UrlUtils.escapeDataString(_docId));
 
-            HttpUriRequestBase request = new HttpGet();
-
             if (_counters != null && _counters.length > 0) {
                 if (_counters.length > 1) {
-                    request = prepareRequestWithMultipleCounters(pathBuilder, request);
+                    HttpEntity entity = prepareRequestWithMultipleCounters(pathBuilder);
+                    if (entity != null) {
+                        return new HttpPost(pathBuilder.toString());
+                    }
                 } else {
                     pathBuilder.append("&counter=")
                             .append(UrlUtils.escapeDataString(_counters[0]));
                 }
             }
 
-            if (_returnFullResults && request instanceof HttpGet) { // if we dropped to Post, _returnFullResults is part of the request content
+            if (_returnFullResults) { // if we dropped to Post, _returnFullResults is part of the request content
                 pathBuilder.append("&full=true");
             }
 
-            url.value = pathBuilder.toString();
-
-            return request;
+            return new HttpGet(pathBuilder.toString());
         }
 
-        private HttpUriRequestBase prepareRequestWithMultipleCounters(StringBuilder pathBuilder, HttpUriRequestBase request) {
+        private HttpEntity prepareRequestWithMultipleCounters(StringBuilder pathBuilder) {
             Reference<Integer> sumLengthRef = new Reference<>();
             List<String> uniqueNames = getOrderedUniqueNames(sumLengthRef);
 
@@ -118,10 +118,8 @@ public class GetCountersOperation implements IOperation<CountersDetail> {
                     pathBuilder.append("&counter=")
                             .append(UrlUtils.escapeDataString(ObjectUtils.firstNonNull(uniqueName, "")));
                 }
+                return null;
             } else {
-                HttpPost postRequest = new HttpPost();
-                request = postRequest;
-
                 DocumentCountersOperation docOps = new DocumentCountersOperation();
                 docOps.setDocumentId(_docId);
                 docOps.setOperations(new ArrayList<>());
@@ -138,16 +136,14 @@ public class GetCountersOperation implements IOperation<CountersDetail> {
                 batch.setDocuments(Collections.singletonList(docOps));
                 batch.setReplyWithAllNodesValues(_returnFullResults);
 
-                postRequest.setEntity(new ContentProviderHttpEntity(outputStream -> {
+                return new ContentProviderHttpEntity(outputStream -> {
                     try (JsonGenerator generator = createSafeJsonGenerator(outputStream)) {
                         batch.serialize(generator);
                     } catch (IOException e) {
                         throw new RuntimeException(e);
                     }
-                }, ContentType.APPLICATION_JSON, _conventions));
+                }, ContentType.APPLICATION_JSON, _conventions);
             }
-
-            return request;
         }
 
         @Override

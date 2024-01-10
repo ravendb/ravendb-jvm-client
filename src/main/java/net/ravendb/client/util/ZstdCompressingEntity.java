@@ -1,10 +1,9 @@
 package net.ravendb.client.util;
 
 import com.github.luben.zstd.ZstdOutputStream;
-import org.apache.hc.core5.http.Header;
 import org.apache.hc.core5.http.HttpEntity;
 import org.apache.hc.core5.http.io.entity.HttpEntityWrapper;
-import org.apache.hc.core5.http.message.BasicHeader;
+import org.apache.hc.core5.util.Args;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -19,8 +18,8 @@ public class ZstdCompressingEntity extends HttpEntityWrapper {
     }
 
     @Override
-    public Header getContentEncoding() {
-        return new BasicHeader(HTTP.CONTENT_ENCODING, ZSTD_CODEC);
+    public String getContentEncoding() {
+        return ZSTD_CODEC;
     }
 
     @Override
@@ -43,8 +42,8 @@ public class ZstdCompressingEntity extends HttpEntityWrapper {
     public void writeTo(final OutputStream outStream) throws IOException {
         Args.notNull(outStream, "Output stream");
         final ZstdOutputStream zstd = new ZstdOutputStream(outStream);
+        super.writeTo(zstd);
 
-        wrappedEntity.writeTo(zstd);
         // Only close output stream if the wrapped entity has been
         // successfully written out
         zstd.close();

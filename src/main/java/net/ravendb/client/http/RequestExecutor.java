@@ -24,21 +24,22 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.apache.http.Header;
-import org.apache.http.HttpRequest;
-import org.apache.http.HttpResponse;
-import org.apache.http.HttpStatus;
-import org.apache.http.client.config.RequestConfig;
-import org.apache.http.client.entity.GZIPInputStreamFactory;
-import org.apache.http.client.methods.CloseableHttpResponse;
-import org.apache.http.client.methods.HttpRequestBase;
-import org.apache.http.config.SocketConfig;
-import org.apache.http.impl.client.CloseableHttpClient;
-import org.apache.http.impl.client.HttpClientBuilder;
-import org.apache.http.impl.client.HttpClients;
-import org.apache.http.impl.client.StandardHttpRequestRetryHandler;
-import org.apache.http.ssl.SSLContextBuilder;
-import org.apache.http.ssl.SSLContexts;
+import org.apache.hc.client5.http.classic.methods.HttpUriRequestBase;
+import org.apache.hc.client5.http.config.RequestConfig;
+import org.apache.hc.client5.http.entity.GZIPInputStreamFactory;
+import org.apache.hc.client5.http.impl.DefaultHttpRequestRetryStrategy;
+import org.apache.hc.client5.http.impl.classic.CloseableHttpClient;
+import org.apache.hc.client5.http.impl.classic.HttpClientBuilder;
+import org.apache.hc.client5.http.impl.classic.HttpClients;
+import org.apache.hc.client5.http.impl.io.PoolingHttpClientConnectionManager;
+import org.apache.hc.client5.http.impl.io.PoolingHttpClientConnectionManagerBuilder;
+import org.apache.hc.client5.http.ssl.SSLConnectionSocketFactory;
+import org.apache.hc.client5.http.ssl.SSLConnectionSocketFactoryBuilder;
+import org.apache.hc.core5.http.*;
+import org.apache.hc.core5.http.io.SocketConfig;
+import org.apache.hc.core5.ssl.SSLContextBuilder;
+import org.apache.hc.core5.ssl.SSLContexts;
+import org.apache.hc.core5.util.TimeValue;
 
 import javax.net.ssl.SSLContext;
 import java.io.IOException;
@@ -67,12 +68,12 @@ public class RequestExecutor implements CleanCloseable {
     private static final GetStatisticsOperation backwardCompatibilityFailureCheckOperation = new GetStatisticsOperation("failure=check");
 
     private static final DatabaseHealthCheckOperation failureCheckOperation = new DatabaseHealthCheckOperation();
-    private static Set<String> _useOldFailureCheckOperation = ConcurrentHashMap.newKeySet();
+    private static final Set<String> _useOldFailureCheckOperation = ConcurrentHashMap.newKeySet();
 
     /**
      * Extension point to plug - in request post processing like adding proxy etc.
      */
-    public static Consumer<HttpRequestBase> requestPostProcessor = null;
+    public static Consumer<HttpUriRequestBase> requestPostProcessor = null;
 
     public static final String CLIENT_VERSION = "6.0.0";
 
@@ -761,7 +762,7 @@ public class RequestExecutor implements CleanCloseable {
     }
 
     @SuppressWarnings({"ConstantConditions"})
-    public <TResult> void execute(ServerNode chosenNode, Integer nodeIndex, RavenCommand<TResult> command, boolean shouldRetry, SessionInfo sessionInfo, Reference<HttpRequestBase> requestRef) {
+    public <TResult> void execute(ServerNode chosenNode, Integer nodeIndex, RavenCommand<TResult> command, boolean shouldRetry, SessionInfo sessionInfo, Reference<HttpUriRequestBase> requestRef) {
         if (command.failoverTopologyEtag == INITIAL_TOPOLOGY_ETAG) {
             command.failoverTopologyEtag = INITIAL_TOPOLOGY_ETAG;
             if (_nodeSelector != null && _nodeSelector.getTopology() != null) {
@@ -772,8 +773,7 @@ public class RequestExecutor implements CleanCloseable {
             }
         }
 
-        Reference<String> urlRef = new Reference<>();
-        HttpRequestBase request = createRequest(chosenNode, command, urlRef);
+        HttpUriRequestBase request = createRequest(chosenNode, command);
 
         if (request == null) {
             return;
@@ -789,7 +789,9 @@ public class RequestExecutor implements CleanCloseable {
         Reference<String> cachedChangeVectorRef = new Reference<>();
         Reference<String> cachedValue = new Reference<>();
 
-        try (HttpCache.ReleaseCacheItem cachedItem = getFromCache(command, !noCaching, urlRef.value, cachedChangeVectorRef, cachedValue)) {
+        String url = getRequestUri(request);
+
+        try (HttpCache.ReleaseCacheItem cachedItem = getFromCache(command, !noCaching, url, cachedChangeVectorRef, cachedValue)) {
             if (cachedChangeVectorRef.value != null) {
                 if (tryGetFromCache(command, cachedItem, cachedValue.value)) {
                     return;
@@ -800,9 +802,9 @@ public class RequestExecutor implements CleanCloseable {
 
             command.numberOfAttempts = command.numberOfAttempts + 1;
             int attemptNum = command.numberOfAttempts;
-            EventHelper.invoke(_onBeforeRequest, this, new BeforeRequestEventArgs(_databaseName, urlRef.value, request, attemptNum));
+            EventHelper.invoke(_onBeforeRequest, this, new BeforeRequestEventArgs(_databaseName, url, request, attemptNum));
 
-            CloseableHttpResponse response = sendRequestToServer(chosenNode, nodeIndex, command, shouldRetry, sessionInfo, request, urlRef.value);
+            ClassicHttpResponse response = sendRequestToServer(chosenNode, nodeIndex, command, shouldRetry, sessionInfo, request, url);
 
             if (response == null) {
                 return;
@@ -810,8 +812,8 @@ public class RequestExecutor implements CleanCloseable {
 
             CompletableFuture<Void> refreshTask = refreshIfNeeded(chosenNode, response);
 
-            command.statusCode = response.getStatusLine().getStatusCode();
-            if (response.getStatusLine().getStatusCode() < 400 || command.statusCode == HttpStatus.SC_NOT_MODIFIED) {
+            command.statusCode = response.getCode();
+            if (response.getCode() < 400 || command.statusCode == HttpStatus.SC_NOT_MODIFIED) {
                 command.etag = ObjectUtils.firstNonNull(HttpExtensions.getEtagHeader(response), cachedChangeVectorRef.value);
             }
 
@@ -819,8 +821,8 @@ public class RequestExecutor implements CleanCloseable {
             ResponseDisposeHandling responseDispose = ResponseDisposeHandling.AUTOMATIC;
 
             try {
-                if (response.getStatusLine().getStatusCode() == HttpStatus.SC_NOT_MODIFIED) {
-                    EventHelper.invoke(_onSucceedRequest, this, new SucceedRequestEventArgs(_databaseName, urlRef.value, response, request, attemptNum));
+                if (response.getCode() == HttpStatus.SC_NOT_MODIFIED) {
+                    EventHelper.invoke(_onSucceedRequest, this, new SucceedRequestEventArgs(_databaseName, url, response, request, attemptNum));
 
                     cachedItem.notModified();
 
@@ -833,8 +835,8 @@ public class RequestExecutor implements CleanCloseable {
                     return;
                 }
 
-                if (response.getStatusLine().getStatusCode() >= 400) {
-                    if (!handleUnsuccessfulResponse(chosenNode, nodeIndex, command, request, response, urlRef.value, sessionInfo, shouldRetry)) {
+                if (response.getCode() >= 400) {
+                    if (!handleUnsuccessfulResponse(chosenNode, nodeIndex, command, request, response, url, sessionInfo, shouldRetry)) {
                         Header dbMissingHeader = response.getFirstHeader(Constants.Headers.DATABASE_MISSING);
                         if (dbMissingHeader != null && dbMissingHeader.getValue() != null) {
                             throw new DatabaseDoesNotExistException(dbMissingHeader.getValue());
@@ -845,9 +847,9 @@ public class RequestExecutor implements CleanCloseable {
                     return; // we either handled this already in the unsuccessful response or we are throwing
                 }
 
-                EventHelper.invoke(_onSucceedRequest, this, new SucceedRequestEventArgs(_databaseName, urlRef.value, response, request, attemptNum));
+                EventHelper.invoke(_onSucceedRequest, this, new SucceedRequestEventArgs(_databaseName, url, response, request, attemptNum));
 
-                responseDispose = command.processResponse(cache, response, urlRef.value);
+                responseDispose = command.processResponse(cache, response, url);
                 _lastReturnedResponse = new Date();
             } finally {
                 if (responseDispose == ResponseDisposeHandling.AUTOMATIC) {
@@ -864,7 +866,7 @@ public class RequestExecutor implements CleanCloseable {
         }
     }
 
-    private CompletableFuture<Void> refreshIfNeeded(ServerNode chosenNode, CloseableHttpResponse response) {
+    private CompletableFuture<Void> refreshIfNeeded(ServerNode chosenNode, ClassicHttpResponse response) {
         Boolean refreshTopology = Optional.ofNullable(HttpExtensions.getBooleanHeader(response, Constants.Headers.REFRESH_TOPOLOGY)).orElse(false);
         Boolean refreshClientConfiguration = Optional.ofNullable(HttpExtensions.getBooleanHeader(response, Constants.Headers.REFRESH_CLIENT_CONFIGURATION)).orElse(false);
 
@@ -885,8 +887,8 @@ public class RequestExecutor implements CleanCloseable {
         return CompletableFuture.allOf(refreshTask, refreshClientConfigurationTask);
     }
 
-    private <TResult> CloseableHttpResponse sendRequestToServer(ServerNode chosenNode, Integer nodeIndex, RavenCommand<TResult> command,
-                                                                boolean shouldRetry, SessionInfo sessionInfo, HttpRequestBase request, String url) {
+    private <TResult> ClassicHttpResponse sendRequestToServer(ServerNode chosenNode, Integer nodeIndex, RavenCommand<TResult> command,
+                                                                boolean shouldRetry, SessionInfo sessionInfo, HttpUriRequestBase request, String url) {
         try {
             numberOfServerRequests.incrementAndGet();
 
@@ -894,7 +896,7 @@ public class RequestExecutor implements CleanCloseable {
             if (timeout != null) {
                 AggressiveCacheOptions callingTheadAggressiveCaching = aggressiveCaching.get();
 
-                CompletableFuture<CloseableHttpResponse> sendTask = CompletableFuture.supplyAsync(() -> {
+                CompletableFuture<ClassicHttpResponse> sendTask = CompletableFuture.supplyAsync(() -> {
                     AggressiveCacheOptions aggressiveCacheOptionsToRestore = aggressiveCaching.get();
 
                     try {
@@ -914,7 +916,7 @@ public class RequestExecutor implements CleanCloseable {
                 } catch (TimeoutException e) {
                     request.abort();
 
-                    net.ravendb.client.exceptions.TimeoutException timeoutException = new net.ravendb.client.exceptions.TimeoutException("The request for " + request.getURI() + " failed with timeout after " + TimeUtils.durationToTimeSpan(timeout), e);
+                    net.ravendb.client.exceptions.TimeoutException timeoutException = new net.ravendb.client.exceptions.TimeoutException("The request for " + getRequestUri(request) + " failed with timeout after " + TimeUtils.durationToTimeSpan(timeout), e);
                     if (!shouldRetry) {
                         if (command.getFailedNodes() == null) {
                             command.setFailedNodes(new HashMap<>());
@@ -953,8 +955,9 @@ public class RequestExecutor implements CleanCloseable {
         }
     }
 
-    private <TResult> CloseableHttpResponse send(ServerNode chosenNode, RavenCommand<TResult> command, SessionInfo sessionInfo, HttpRequestBase request) throws IOException {
-        CloseableHttpResponse response = null;
+    private <TResult> ClassicHttpResponse send(ServerNode chosenNode, RavenCommand<TResult> command,
+                                                 SessionInfo sessionInfo, HttpUriRequestBase request) throws IOException {
+        ClassicHttpResponse response = null;
 
         if (shouldExecuteOnAll(chosenNode, command)) {
             response = executeOnAllToFigureOutTheFastest(chosenNode, command);
@@ -1039,7 +1042,7 @@ public class RequestExecutor implements CleanCloseable {
         return false;
     }
 
-    private static String tryGetServerVersion(CloseableHttpResponse response) {
+    private static String tryGetServerVersion(ClassicHttpResponse response) {
         Header serverVersionHeader = response.getFirstHeader(Constants.Headers.SERVER_VERSION);
 
         if (serverVersionHeader != null) {
@@ -1049,9 +1052,17 @@ public class RequestExecutor implements CleanCloseable {
         return null;
     }
 
+    private static String getRequestUri(HttpUriRequestBase requestBase) {
+        try {
+            return requestBase.getUri().toString();
+        } catch (URISyntaxException e) {
+            return "<unknown>";
+        }
+    }
 
-    private <TResult> void throwFailedToContactAllNodes(RavenCommand<TResult> command, HttpRequestBase request) {
-        if (command.getFailedNodes() == null || command.getFailedNodes().size() == 0) { //precaution, should never happen at this point
+
+    private <TResult> void throwFailedToContactAllNodes(RavenCommand<TResult> command, HttpUriRequestBase request) {
+        if (command.getFailedNodes() == null || command.getFailedNodes().isEmpty()) { //precaution, should never happen at this point
             throw new IllegalStateException("Received unsuccessful response and couldn't recover from it. " +
                     "Also, no record of exceptions per failed nodes. This is weird and should not happen.");
         }
@@ -1061,7 +1072,7 @@ public class RequestExecutor implements CleanCloseable {
         }
 
         String message = "Tried to send " + command.resultClass.getName() + " request via " + request.getMethod()
-                + " " + request.getURI() + " to all configured nodes in the topology, none of the attempt succeeded." + System.lineSeparator();
+                + " " + getRequestUri(request) + " to all configured nodes in the topology, none of the attempt succeeded." + System.lineSeparator();
 
         if (_topologyTakenFromNode != null) {
             message += "I was able to fetch " + _topologyTakenFromNode.getDatabase()
@@ -1112,7 +1123,7 @@ public class RequestExecutor implements CleanCloseable {
     }
 
     @SuppressWarnings("ConstantConditions")
-    private <TResult> CloseableHttpResponse executeOnAllToFigureOutTheFastest(ServerNode chosenNode, RavenCommand<TResult> command) {
+    private <TResult> ClassicHttpResponse executeOnAllToFigureOutTheFastest(ServerNode chosenNode, RavenCommand<TResult> command) {
         AtomicInteger numberOfFailedTasks = new AtomicInteger();
 
         CompletableFuture<IndexAndResponse> preferredTask = null;
@@ -1126,8 +1137,7 @@ public class RequestExecutor implements CleanCloseable {
 
             CompletableFuture<IndexAndResponse> task = CompletableFuture.supplyAsync(() -> {
                 try {
-                    Reference<String> strRef = new Reference<>();
-                    HttpRequestBase request = createRequest(nodes.get(taskNumber), command, strRef);
+                    HttpUriRequestBase request = createRequest(nodes.get(taskNumber), command);
                     setRequestHeaders(null, null, request);
                     return new IndexAndResponse(taskNumber, command.send(getHttpClient(), request));
                 } catch (Exception e){
@@ -1184,13 +1194,13 @@ public class RequestExecutor implements CleanCloseable {
         return new HttpCache.ReleaseCacheItem();
     }
 
-    private <TResult> HttpRequestBase createRequest(ServerNode node, RavenCommand<TResult> command, Reference<String> url) {
+    private <TResult> HttpUriRequestBase createRequest(ServerNode node, RavenCommand<TResult> command) {
         try {
-            HttpRequestBase request = command.createRequest(node, url);
+            HttpUriRequestBase request = command.createRequest(node);
             if (request == null) {
                 return null;
             }
-            URI builder = new URI(url.value);
+            URI builder = request.getUri();
 
             if (requestPostProcessor != null) {
                 requestPostProcessor.accept(request);
@@ -1214,7 +1224,7 @@ public class RequestExecutor implements CleanCloseable {
                 command.setTimeout(ObjectUtils.firstNonNull(command.getTimeout(), _firstBroadcastAttemptTimeout));
             }
 
-            request.setURI(builder);
+            request.setUri(builder);
 
             return request;
         } catch (URISyntaxException e) {
@@ -1223,12 +1233,22 @@ public class RequestExecutor implements CleanCloseable {
     }
 
     private static URI appendToQuery(URI builder, String key, String value) throws URISyntaxException {
-        return new URI(builder.getQuery() != null ? builder.toString() + "&" + key + "=" + value : builder.toString() + "?" + key + "=" + value);
+        return new URI(builder.getQuery() != null ? builder + "&" + key + "=" + value : builder + "?" + key + "=" + value);
     }
 
-    private <TResult> boolean handleUnsuccessfulResponse(ServerNode chosenNode, Integer nodeIndex, RavenCommand<TResult> command, HttpRequestBase request, CloseableHttpResponse response, String url, SessionInfo sessionInfo, boolean shouldRetry) {
+    private <TResult> boolean handleUnsuccessfulResponse(ServerNode chosenNode,
+                                                         Integer nodeIndex,
+                                                         RavenCommand<TResult> command,
+                                                         HttpUriRequestBase request,
+                                                         ClassicHttpResponse response,
+                                                         String url,
+                                                         SessionInfo sessionInfo,
+                                                         boolean shouldRetry) {
         try {
-            switch (response.getStatusLine().getStatusCode()) {
+
+            String requestUri = getRequestUri(request);
+
+            switch (response.getCode()) {
                 case HttpStatus.SC_NOT_FOUND:
                     cache.setNotFound(url, aggressiveCaching.get() != null);
 
@@ -1251,7 +1271,7 @@ public class RequestExecutor implements CleanCloseable {
                     builder.append(" Method: ")
                         .append(request.getMethod())
                             .append(", Request: ")
-                            .append(request.getURI().toString())
+                            .append(requestUri)
                             .append(System.lineSeparator())
                             .append(msg);
 
@@ -1271,7 +1291,7 @@ public class RequestExecutor implements CleanCloseable {
                     }
 
                     if (!command.isFailedWithNode(chosenNode)) {
-                        command.getFailedNodes().put(chosenNode, new UnsuccessfulRequestException("Request to " + request.getURI() + " (" + request.getMethod() + ") is not relevant for this node anymore."));
+                        command.getFailedNodes().put(chosenNode, new UnsuccessfulRequestException("Request to " + requestUri + " (" + request.getMethod() + ") is not relevant for this node anymore."));
                     }
 
                     CurrentIndexAndNode indexAndNode = chooseNodeForRequest(command, sessionInfo);
@@ -1318,7 +1338,7 @@ public class RequestExecutor implements CleanCloseable {
 
                     if (!command.isFailedWithNode(chosenNode)) {
                         command.getFailedNodes().put(chosenNode,
-                                new UnsuccessfulRequestException("Request to '" + request.getURI() + "' ("  +request.getMethod() + ") is processing and not yet available on that node."));
+                                new UnsuccessfulRequestException("Request to '" + requestUri + "' ("  +request.getMethod() + ") is processing and not yet available on that node."));
                     }
 
                     CurrentIndexAndNode nextNode = chooseNodeForRequest(command, sessionInfo);
@@ -1335,7 +1355,7 @@ public class RequestExecutor implements CleanCloseable {
         }
     }
 
-    private static String tryGetResponseOfError(CloseableHttpResponse response) {
+    private static String tryGetResponseOfError(ClassicHttpResponse response) {
         try {
             return IOUtils.toString(response.getEntity().getContent(), StandardCharsets.UTF_8);
         } catch (Exception e) {
@@ -1343,13 +1363,13 @@ public class RequestExecutor implements CleanCloseable {
         }
     }
 
-    public static InputStream readAsStream(CloseableHttpResponse response) throws IOException {
+    public static InputStream readAsStream(ClassicHttpResponse response) throws IOException {
         return response.getEntity().getContent();
     }
 
     private <TResult> boolean handleServerDown(String url, ServerNode chosenNode, Integer nodeIndex,
-                                               RavenCommand<TResult> command, HttpRequestBase request,
-                                               CloseableHttpResponse response, Exception e,
+                                               RavenCommand<TResult> command, HttpUriRequestBase request,
+                                               ClassicHttpResponse response, Exception e,
                                                SessionInfo sessionInfo, boolean shouldRetry) {
         if (command.getFailedNodes() == null) {
             command.setFailedNodes(new HashMap<>());
@@ -1420,7 +1440,7 @@ public class RequestExecutor implements CleanCloseable {
         private RavenCommand<TResult> command;
         private int index;
         private ServerNode node;
-        private HttpRequestBase request;
+        private HttpUriRequestBase request;
 
         public RavenCommand<TResult> getCommand() {
             return command;
@@ -1446,11 +1466,11 @@ public class RequestExecutor implements CleanCloseable {
             this.node = node;
         }
 
-        public HttpRequestBase getRequest() {
+        public HttpUriRequestBase getRequest() {
             return request;
         }
 
-        public void setRequest(HttpRequestBase request) {
+        public void setRequest(HttpUriRequestBase request) {
             this.request = request;
         }
     }
@@ -1518,7 +1538,7 @@ public class RequestExecutor implements CleanCloseable {
             }
 
             for (BroadcastState<TResult> state : tasks.values()) {
-                HttpRequestBase request = state.getRequest();
+                HttpUriRequestBase request = state.getRequest();
                 if (request != null) {
                     request.abort();
                 }
@@ -1556,7 +1576,7 @@ public class RequestExecutor implements CleanCloseable {
 
                 aggressiveCaching.set(callingTheadAggressiveCaching);
                 try {
-                    Reference<HttpRequestBase> requestRef = new Reference<>();
+                    Reference<HttpUriRequestBase> requestRef = new Reference<>();
                     execute(state.getNode(), null, state.getCommand(), false, sessionInfo, requestRef);
                     state.setRequest(requestRef.value);
                 } finally {
@@ -1687,29 +1707,32 @@ public class RequestExecutor implements CleanCloseable {
         execute(serverNode, nodeIndex, backwardCompatibilityFailureCheckOperation.getCommand(conventions), false, null);
     }
 
-    private static <TResult> Exception readExceptionFromServer(HttpRequestBase request, CloseableHttpResponse response, Exception e) {
+    private static <TResult> Exception readExceptionFromServer(HttpUriRequestBase request, ClassicHttpResponse response, Exception e) {
+
+        String requestUri = getRequestUri(request);
+
         if (response != null && response.getEntity() != null) {
             String responseJson = null;
             try {
                 responseJson = IOUtils.toString(response.getEntity().getContent(), StandardCharsets.UTF_8);
 
-                return ExceptionDispatcher.get(JsonExtensions.getDefaultMapper().readValue(responseJson, ExceptionDispatcher.ExceptionSchema.class), response.getStatusLine().getStatusCode(), e);
+                return ExceptionDispatcher.get(JsonExtensions.getDefaultMapper().readValue(responseJson, ExceptionDispatcher.ExceptionSchema.class), response.getCode(), e);
             } catch (Exception __) {
                 ExceptionDispatcher.ExceptionSchema exceptionSchema = new ExceptionDispatcher.ExceptionSchema();
-                exceptionSchema.setUrl(request.getURI().toString());
+                exceptionSchema.setUrl(requestUri);
                 exceptionSchema.setMessage("Get unrecognized response from the server");
                 exceptionSchema.setError(responseJson);
                 exceptionSchema.setType("Unparsable Server Response");
 
-                return ExceptionDispatcher.get(exceptionSchema, response.getStatusLine().getStatusCode(), e);
+                return ExceptionDispatcher.get(exceptionSchema, response.getCode(), e);
             }
         }
 
         // this would be connections that didn't have response, such as "couldn't connect to remote server"
         ExceptionDispatcher.ExceptionSchema exceptionSchema = new ExceptionDispatcher.ExceptionSchema();
-        exceptionSchema.setUrl(request.getURI().toString());
+        exceptionSchema.setUrl(requestUri);
         exceptionSchema.setMessage(e.getMessage());
-        exceptionSchema.setError("An exception occurred while contacting " + request.getURI() + "." + System.lineSeparator() + e.toString());
+        exceptionSchema.setError("An exception occurred while contacting " + requestUri + "." + System.lineSeparator() + e);
         exceptionSchema.setType(e.getClass().getCanonicalName());
 
         return ExceptionDispatcher.get(exceptionSchema, HttpStatus.SC_SERVICE_UNAVAILABLE, e);
@@ -1736,49 +1759,54 @@ public class RequestExecutor implements CleanCloseable {
     }
 
     private CloseableHttpClient createClient() {
-        HttpClientBuilder httpClientBuilder = HttpClients
-                .custom()
+        SSLConnectionSocketFactory sslConnectionSocketFactory = null;
+        if (certificate != null) {
+            try {
+                sslConnectionSocketFactory = SSLConnectionSocketFactoryBuilder.create()
+                        .setSslContext(createSSLContext())
+                        .setHostnameVerifier((hostname, session) -> {
+                            // Here we are explicitly ignoring trust issues in the case of ClusterRequestExecutor.
+                            // this is because we don't actually require trust, we just use the certificate
+                            // as a way to authenticate. Either we encounter the same server certificate which we already
+                            // trust, or the admin is going to tell us which specific certs we can trust.
+                            return true;
+                        })
+                        .build();
+            } catch ( Exception e) {
+                throw new IllegalStateException("Unable to configure ssl context: " + e.getMessage(), e);
+            }
+        }
+
+        PoolingHttpClientConnectionManager connectionManager = PoolingHttpClientConnectionManagerBuilder.create()
                 .setMaxConnPerRoute(30)
                 .setMaxConnTotal(40)
+                .setSSLSocketFactory(sslConnectionSocketFactory)
+                .setDefaultSocketConfig(SocketConfig.custom().setTcpNoDelay(true).build())
+                .build();
+
+        HttpClientBuilder httpClientBuilder = HttpClients
+                .custom()
+                .setConnectionManager(connectionManager)
+                .setRetryStrategy(new DefaultHttpRequestRetryStrategy(0, TimeValue.ofSeconds(1)))
                 .setDefaultRequestConfig(
                         RequestConfig.custom()
-                                .setConnectionRequestTimeout(3000)
+                                .setConnectionRequestTimeout(3, TimeUnit.SECONDS)
                                 .build()
                 );
 
         if (conventions.getUseHttpDecompression()) {
             switch (conventions.getHttpCompressionAlgorithm()) {
                 case Gzip:
-                    httpClientBuilder.setContentDecoderRegistry(Collections.singletonMap("gzip", GZIPInputStreamFactory.getInstance()));
+                    httpClientBuilder.setContentDecoderRegistry(new LinkedHashMap<>(Collections.singletonMap("gzip", GZIPInputStreamFactory.getInstance())));
                     break;
                 case Zstd:
-                    httpClientBuilder.setContentDecoderRegistry(Collections.singletonMap("zstd", ZstdInputStreamFactory.getInstance()));
+                    httpClientBuilder.setContentDecoderRegistry(new LinkedHashMap<>(Collections.singletonMap("zstd", ZstdInputStreamFactory.getInstance())));
                     break;
                 default:
                     throw new IllegalStateException("Invalid HttpCompressionAlgorithm: " + conventions.getHttpCompressionAlgorithm());
             }
         } else {
             httpClientBuilder.disableContentCompression();
-        }
-
-        httpClientBuilder
-                .setRetryHandler(new StandardHttpRequestRetryHandler(0, false))
-                .setDefaultSocketConfig(SocketConfig.custom().setTcpNoDelay(true).build());
-
-        if (certificate != null) {
-            try {
-                httpClientBuilder.setSSLHostnameVerifier((s, sslSession) -> {
-                    // Here we are explicitly ignoring trust issues in the case of ClusterRequestExecutor.
-                    // this is because we don't actually require trust, we just use the certificate
-                    // as a way to authenticate. Either we encounter the same server certificate which we already
-                    // trust, or the admin is going to tell us which specific certs we can trust.
-                    return true;
-                });
-
-                httpClientBuilder.setSSLContext(createSSLContext());
-            } catch ( Exception e) {
-                throw new IllegalStateException("Unable to configure ssl context: " + e.getMessage(), e);
-            }
         }
 
         if (configureHttpClient != null) {
@@ -1900,9 +1928,9 @@ public class RequestExecutor implements CleanCloseable {
 
     public static class IndexAndResponse {
         public final int index;
-        public final CloseableHttpResponse response;
+        public final ClassicHttpResponse response;
 
-        public IndexAndResponse(int index, CloseableHttpResponse response) {
+        public IndexAndResponse(int index, ClassicHttpResponse response) {
             this.index = index;
             this.response = response;
         }

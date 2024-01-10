@@ -8,17 +8,17 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
+import java.util.Collections;
 import java.util.concurrent.CompletableFuture;
 
 public class StreamExposerContent extends AbstractHttpEntity {
     public final CompletableFuture<OutputStream> outputStream;
     protected final CompletableFuture<Void> _done;
 
-    @SuppressWarnings("unchecked")
     public StreamExposerContent() {
-        setContentType(ContentType.APPLICATION_JSON.toString());
+        super(ContentType.APPLICATION_JSON, null, true);
         outputStream = new CompletableFuture<>();
-        _done = new CompletableFuture();
+        _done = new CompletableFuture<>();
     }
 
     @Override
@@ -37,18 +37,6 @@ public class StreamExposerContent extends AbstractHttpEntity {
         return _done.isDone();
     }
 
-    @SuppressWarnings("SameReturnValue")
-    @Override
-    public boolean isChunked() {
-        return true;
-    }
-
-    @SuppressWarnings("SameReturnValue")
-    @Override
-    public boolean isRepeatable() {
-        return false;
-    }
-
     @Override
     public long getContentLength() {
         return -1;
@@ -62,6 +50,11 @@ public class StreamExposerContent extends AbstractHttpEntity {
         } catch (Exception e) {
             throw ExceptionsUtils.unwrapException(e);
         }
+    }
+
+    @Override
+    public void close() throws IOException {
+        // no-op
     }
 
     public boolean complete() {

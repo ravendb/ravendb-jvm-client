@@ -17,6 +17,7 @@ import net.ravendb.client.http.ServerNode;
 import net.ravendb.client.http.UpdateTopologyParameters;
 import net.ravendb.client.primitives.*;
 import org.apache.commons.io.IOUtils;
+import org.eclipse.jetty.client.HttpClient;
 import org.eclipse.jetty.util.ssl.SslContextFactory;
 import org.eclipse.jetty.websocket.api.Session;
 import org.eclipse.jetty.websocket.api.annotations.OnWebSocketClose;
@@ -110,7 +111,9 @@ public abstract class AbstractDatabaseChanges<TDatabaseConnectionState extends A
                 SSLContext sslContext = requestExecutor.createSSLContext();
                 SslContextFactory factory = new SslContextFactory.Client();
                 factory.setSslContext(sslContext);
-                client = new WebSocketClient(factory);
+
+                HttpClient httpClient = new HttpClient(factory);
+                client = new WebSocketClient(httpClient);
             } else {
                 client = new WebSocketClient();
             }

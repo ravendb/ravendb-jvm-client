@@ -24,7 +24,9 @@ import net.ravendb.client.util.UrlUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.hc.client5.http.config.RequestConfig;
 import org.apache.hc.client5.http.impl.classic.CloseableHttpClient;
+import org.apache.hc.client5.http.impl.classic.HttpClientBuilder;
 import org.apache.hc.client5.http.impl.io.PoolingHttpClientConnectionManager;
+import org.apache.hc.client5.http.impl.routing.DefaultProxyRoutePlanner;
 import org.apache.hc.core5.http.HttpHost;
 
 import java.awt.*;
@@ -101,18 +103,11 @@ public abstract class RavenTestDriver {
     protected static void reportInfo(String message) {
     }
 
-    public CleanCloseable withFiddler() {
-        RequestExecutor.requestPostProcessor = request -> {
+    public void withFiddler() {
+        RequestExecutor.configureHttpClient = builder -> {
             HttpHost proxy = new HttpHost("http", "127.0.0.1", 8888);
-            RequestConfig requestConfig = request.getConfig();
-            if (requestConfig == null) {
-                requestConfig = RequestConfig.DEFAULT;
-            }
-            requestConfig = RequestConfig.copy(requestConfig).setProxy(proxy).build(); //TODO:
-            request.setConfig(requestConfig);
+            builder.setRoutePlanner(new DefaultProxyRoutePlanner(proxy));
         };
-
-        return () -> RequestExecutor.requestPostProcessor = null;
     }
 
     @SuppressWarnings("EmptyMethod")

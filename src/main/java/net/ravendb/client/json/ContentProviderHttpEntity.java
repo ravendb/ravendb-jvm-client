@@ -6,7 +6,6 @@ import net.ravendb.client.documents.conventions.DocumentConventions;
 import net.ravendb.client.http.HttpCompressionAlgorithm;
 import org.apache.hc.core5.http.ContentType;
 import org.apache.hc.core5.http.io.entity.AbstractHttpEntity;
-import org.apache.hc.core5.http.message.BasicHeader;
 
 import java.io.*;
 import java.util.function.Consumer;
@@ -18,37 +17,37 @@ public class ContentProviderHttpEntity extends AbstractHttpEntity {
     private final HttpCompressionAlgorithm compressionAlgorithm;
 
     public ContentProviderHttpEntity(Consumer<OutputStream> contentProvider, ContentType contentType, DocumentConventions conventions) {
+        this(contentProvider, contentType, conventions, false);
+    }
+
+    public ContentProviderHttpEntity(Consumer<OutputStream> contentProvider, ContentType contentType, DocumentConventions conventions, boolean chunked) {
+        super(contentType, determinateContentEncoding(conventions), chunked);
+
         this.contentProvider = contentProvider;
         this.compressionAlgorithm = Boolean.TRUE.equals(conventions.getUseHttpCompression()) ? conventions.getHttpCompressionAlgorithm() : null;
+    }
 
-        if (contentType != null) {
-            setContentType(contentType.toString());
-        }
-
-        if (compressionAlgorithm != null) {
-            switch (compressionAlgorithm) {
-                case Gzip:
-                    contentEncoding = new BasicHeader(Constants.Headers.CONTENT_ENCODING, Constants.Headers.Encodings.GZIP);
-                    break;
-                case Zstd:
-                    contentEncoding = new BasicHeader(Constants.Headers.CONTENT_ENCODING, Constants.Headers.Encodings.ZSTD);
-                    break;
-                default:
-                    throw new IllegalStateException("Invalid HttpCompressionAlgorithm: " + conventions.getHttpCompressionAlgorithm());
+    private static String determinateContentEncoding(DocumentConventions conventions) {
+        if (Boolean.TRUE.equals(conventions.getUseHttpCompression())) {
+            if (HttpCompressionAlgorithm.Gzip.equals(conventions.getHttpCompressionAlgorithm())) {
+                return Constants.Headers.Encodings.GZIP;
+            } else if (HttpCompressionAlgorithm.Zstd.equals(conventions.getHttpCompressionAlgorithm())) {
+                return Constants.Headers.Encodings.ZSTD;
             }
         }
+
+        return null;
     }
 
     @Override
-    public boolean isRepeatable() {
-        return false;
+    public void close() throws IOException {
+        //no-op
     }
 
     @Override
     public long getContentLength() {
         return -1;
     }
-
 
     @Override
     public InputStream getContent() throws IOException, UnsupportedOperationException {

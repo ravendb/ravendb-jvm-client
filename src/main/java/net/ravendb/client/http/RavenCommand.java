@@ -10,11 +10,11 @@ import net.ravendb.client.http.behaviors.DefaultCommandResponseBehavior;
 import net.ravendb.client.primitives.Reference;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.hc.client5.http.ClientProtocolException;
 import org.apache.hc.client5.http.classic.methods.HttpUriRequestBase;
 import org.apache.hc.client5.http.impl.classic.CloseableHttpClient;
-import org.apache.hc.client5.http.impl.classic.CloseableHttpResponse;
-import org.apache.hc.core5.http.HttpEntity;
-import org.apache.hc.core5.http.HttpStatus;
+import org.apache.hc.client5.http.routing.RoutingSupport;
+import org.apache.hc.core5.http.*;
 import org.apache.hc.core5.io.Closer;
 
 import java.io.*;
@@ -139,12 +139,20 @@ public abstract class RavenCommand<TResult> {
         throw new UnsupportedOperationException(responseType.name() + " command must override the setResponse method which expects response with the following type: " + responseType);
     }
 
-    public CloseableHttpResponse send(CloseableHttpClient client, HttpUriRequestBase request) throws IOException {
-        return client.execute(request);
+    public ClassicHttpResponse send(CloseableHttpClient client, HttpUriRequestBase request) throws IOException {
+        return client.executeOpen(determineTarget(request), request, null);
+    }
+
+    private static HttpHost determineTarget(final ClassicHttpRequest request) throws ClientProtocolException {
+        try {
+            return RoutingSupport.determineHost(request);
+        } catch (final HttpException ex) {
+            throw new ClientProtocolException(ex);
+        }
     }
 
     @SuppressWarnings("unused")
-    public void setResponseRaw(CloseableHttpResponse response, InputStream stream) {
+    public void setResponseRaw(ClassicHttpResponse response, InputStream stream) {
         throw new UnsupportedOperationException("When " + responseType + " is set to Raw then please override this method to handle the response. ");
     }
 
@@ -177,7 +185,7 @@ public abstract class RavenCommand<TResult> {
         return failedNodes != null && failedNodes.containsKey(node);
     }
 
-    public ResponseDisposeHandling processResponse(HttpCache cache, CloseableHttpResponse response, String url) {
+    public ResponseDisposeHandling processResponse(HttpCache cache, ClassicHttpResponse response, String url) {
         HttpEntity entity = response.getEntity();
 
         if (entity == null) {
@@ -190,7 +198,7 @@ public abstract class RavenCommand<TResult> {
 
         try {
             if (responseType == RavenCommandResponseType.OBJECT) {
-                Long contentLength = entity.getContentLength();
+                long contentLength = entity.getContentLength();
                 if (contentLength == 0) {
                     Closer.closeQuietly(response);
                     return ResponseDisposeHandling.AUTOMATIC;
@@ -217,7 +225,7 @@ public abstract class RavenCommand<TResult> {
         return ResponseDisposeHandling.AUTOMATIC;
     }
 
-    protected void cacheResponse(HttpCache cache, String url, CloseableHttpResponse response, String responseJson) {
+    protected void cacheResponse(HttpCache cache, String url, ClassicHttpResponse response, String responseJson) {
         if (!canCache()) {
             return;
         }
@@ -246,7 +254,7 @@ public abstract class RavenCommand<TResult> {
     }
 
     @SuppressWarnings({"unused", "EmptyMethod"})
-    public void onResponseFailure(CloseableHttpResponse response) {
+    public void onResponseFailure(ClassicHttpResponse response) {
 
     }
 }
