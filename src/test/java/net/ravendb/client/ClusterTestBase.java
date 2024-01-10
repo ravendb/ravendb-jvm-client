@@ -24,7 +24,7 @@ import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.ObjectUtils;
 import org.apache.hc.client5.http.classic.methods.HttpUriRequestBase;
 import org.apache.hc.client5.http.impl.classic.CloseableHttpClient;
-import org.apache.hc.client5.http.impl.classic.CloseableHttpResponse;
+import org.apache.hc.core5.http.ClassicHttpResponse;
 
 import java.io.Closeable;
 import java.net.URI;
@@ -166,7 +166,7 @@ public abstract class ClusterTestBase extends RavenTestDriver implements CleanCl
 
                 CloseableHttpClient httpClient = store.getRequestExecutor().getHttpClient();
 
-                CloseableHttpResponse response = command.send(httpClient, request);
+                ClassicHttpResponse response = command.send(httpClient, request);
 
                 if (response.getEntity() != null) {
                     return store.getConventions().getEntityMapper().readTree(response.getEntity().getContent());

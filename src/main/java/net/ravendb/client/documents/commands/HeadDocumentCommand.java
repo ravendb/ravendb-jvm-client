@@ -9,7 +9,7 @@ import net.ravendb.client.http.ServerNode;
 import net.ravendb.client.util.UrlUtils;
 import org.apache.hc.client5.http.classic.methods.HttpHead;
 import org.apache.hc.client5.http.classic.methods.HttpUriRequestBase;
-import org.apache.hc.client5.http.impl.classic.CloseableHttpResponse;
+import org.apache.hc.core5.http.ClassicHttpResponse;
 import org.apache.hc.core5.http.HttpStatus;
 
 public class HeadDocumentCommand extends RavenCommand<String> {
@@ -47,7 +47,7 @@ public class HeadDocumentCommand extends RavenCommand<String> {
     }
 
     @Override
-    public ResponseDisposeHandling processResponse(HttpCache cache, CloseableHttpResponse response, String url) {
+    public ResponseDisposeHandling processResponse(HttpCache cache, ClassicHttpResponse response, String url) {
         if (HttpStatus.SC_NOT_MODIFIED == response.getCode()) {
             result = _changeVector;
             return ResponseDisposeHandling.AUTOMATIC;

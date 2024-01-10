@@ -8,7 +8,7 @@ import net.ravendb.client.http.*;
 import net.ravendb.client.json.ContentProviderHttpEntity;
 import org.apache.hc.client5.http.classic.methods.HttpPost;
 import org.apache.hc.client5.http.classic.methods.HttpUriRequestBase;
-import org.apache.hc.client5.http.impl.classic.CloseableHttpResponse;
+import org.apache.hc.core5.http.ClassicHttpResponse;
 import org.apache.hc.core5.http.ContentType;
 
 import java.io.IOException;
@@ -54,7 +54,7 @@ public class QueryStreamCommand extends RavenCommand<StreamResultResponse> {
     }
 
     @Override
-    public ResponseDisposeHandling processResponse(HttpCache cache, CloseableHttpResponse response, String url) {
+    public ResponseDisposeHandling processResponse(HttpCache cache, ClassicHttpResponse response, String url) {
         try {
             StreamResultResponse streamResponse = new StreamResultResponse();
             streamResponse.setResponse(response);

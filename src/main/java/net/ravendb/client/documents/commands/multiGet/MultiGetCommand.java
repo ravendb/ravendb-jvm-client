@@ -16,7 +16,7 @@ import net.ravendb.client.primitives.Reference;
 import net.ravendb.client.primitives.Tuple;
 import org.apache.hc.client5.http.classic.methods.HttpPost;
 import org.apache.hc.client5.http.classic.methods.HttpUriRequestBase;
-import org.apache.hc.client5.http.impl.classic.CloseableHttpResponse;
+import org.apache.hc.core5.http.ClassicHttpResponse;
 import org.apache.hc.core5.http.ContentType;
 import org.apache.hc.core5.http.HttpStatus;
 
@@ -69,7 +69,7 @@ public class MultiGetCommand extends RavenCommand<List<GetResponse>> implements 
     @Override
     public HttpUriRequestBase createRequest(ServerNode node) {
         _baseUrl = node.getUrl() + "/databases/" + node.getDatabase();
-        url.value = _baseUrl + "/multi_get";
+        String url = _baseUrl + "/multi_get";
 
         if ((_sessionInfo == null || !_sessionInfo.isNoCaching()) && maybeReadAllFromCache(_requestExecutor.aggressiveCaching.get()))
         {
@@ -188,7 +188,7 @@ public class MultiGetCommand extends RavenCommand<List<GetResponse>> implements 
     }
 
     @Override
-    public void setResponseRaw(CloseableHttpResponse response, InputStream stream) {
+    public void setResponseRaw(ClassicHttpResponse response, InputStream stream) {
         try (JsonParser parser = mapper.getFactory().createParser(stream)) {
             try {
                 if (parser.nextToken() != JsonToken.START_OBJECT) {

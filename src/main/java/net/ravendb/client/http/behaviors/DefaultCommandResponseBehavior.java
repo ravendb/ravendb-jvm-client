@@ -4,7 +4,7 @@ import net.ravendb.client.exceptions.ExceptionDispatcher;
 import net.ravendb.client.http.RavenCommand;
 import net.ravendb.client.http.RavenCommandResponseType;
 import net.ravendb.client.primitives.Reference;
-import org.apache.hc.client5.http.impl.classic.CloseableHttpResponse;
+import org.apache.hc.core5.http.ClassicHttpResponse;
 
 import java.io.IOException;
 
@@ -16,14 +16,14 @@ public class DefaultCommandResponseBehavior extends AbstractCommandResponseBehav
     }
 
     @Override
-    public <TResult> void handleNotModified(RavenCommand<TResult> command, CloseableHttpResponse response, Reference<String> cachedValue) throws IOException {
+    public <TResult> void handleNotModified(RavenCommand<TResult> command, ClassicHttpResponse response, Reference<String> cachedValue) throws IOException {
         if (RavenCommandResponseType.OBJECT == command.getResponseType()) {
             command.setResponse(cachedValue.value, true);
         }
     }
 
     @Override
-    public <TResult> boolean tryHandleNotFound(RavenCommand<TResult> command, CloseableHttpResponse response) throws IOException {
+    public <TResult> boolean tryHandleNotFound(RavenCommand<TResult> command, ClassicHttpResponse response) throws IOException {
         switch (command.getResponseType()) {
             case EMPTY:
                 break;
@@ -39,13 +39,13 @@ public class DefaultCommandResponseBehavior extends AbstractCommandResponseBehav
     }
 
     @Override
-    public <TResult> boolean tryHandleConflict(RavenCommand<TResult> command, CloseableHttpResponse response) {
+    public <TResult> boolean tryHandleConflict(RavenCommand<TResult> command, ClassicHttpResponse response) {
         ExceptionDispatcher.throwException(response);
         return false;
     }
 
     @Override
-    public <TResult> boolean tryHandleUnsuccessfulResponse(RavenCommand<TResult> command, CloseableHttpResponse response) {
+    public <TResult> boolean tryHandleUnsuccessfulResponse(RavenCommand<TResult> command, ClassicHttpResponse response) {
         command.onResponseFailure(response);
 
         ExceptionDispatcher.throwException(response);

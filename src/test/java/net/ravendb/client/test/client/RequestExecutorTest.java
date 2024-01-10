@@ -12,8 +12,8 @@ import net.ravendb.client.infrastructure.entities.User;
 import net.ravendb.client.serverwide.DatabaseRecord;
 import org.apache.hc.client5.http.classic.methods.HttpUriRequestBase;
 import org.apache.hc.client5.http.impl.classic.CloseableHttpClient;
-import org.apache.hc.client5.http.impl.classic.CloseableHttpResponse;
 import org.apache.hc.client5.http.impl.classic.RequestAbortedException;
+import org.apache.hc.core5.http.ClassicHttpResponse;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
@@ -133,7 +133,7 @@ public class RequestExecutorTest extends ClusterTestBase {
         }
 
         @Override
-        public CloseableHttpResponse send(CloseableHttpClient client, HttpUriRequestBase request) throws IOException {
+        public ClassicHttpResponse send(CloseableHttpClient client, HttpUriRequestBase request) throws IOException {
             _timeToFail--;
             if (_timeToFail < 0) {
                 return super.send(client, request);

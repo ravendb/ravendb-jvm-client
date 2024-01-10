@@ -3,8 +3,8 @@ package net.ravendb.client.documents.operations.attachments;
 import java.io.InputStream;
 
 public class AttachmentIteratorResult {
-    private InputStream _stream;
-    private AttachmentDetails _details;
+    private final InputStream _stream;
+    private final AttachmentDetails _details;
 
     public InputStream getStream() {
         return _stream;

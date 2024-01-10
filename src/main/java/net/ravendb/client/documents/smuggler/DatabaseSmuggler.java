@@ -22,7 +22,7 @@ import org.apache.hc.client5.http.entity.mime.FormBodyPart;
 import org.apache.hc.client5.http.entity.mime.FormBodyPartBuilder;
 import org.apache.hc.client5.http.entity.mime.InputStreamBody;
 import org.apache.hc.client5.http.entity.mime.MultipartEntityBuilder;
-import org.apache.hc.client5.http.impl.classic.CloseableHttpResponse;
+import org.apache.hc.core5.http.ClassicHttpResponse;
 import org.apache.hc.core5.http.ContentType;
 
 import java.io.*;
@@ -230,7 +230,7 @@ public class DatabaseSmuggler {
         }
 
         @Override
-        public ResponseDisposeHandling processResponse(HttpCache cache, CloseableHttpResponse response, String url) {
+        public ResponseDisposeHandling processResponse(HttpCache cache, ClassicHttpResponse response, String url) {
             try {
                 _handleStreamResponse.accept(response.getEntity().getContent());
             } catch (IOException e) {

@@ -13,7 +13,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.hc.client5.http.classic.methods.HttpGet;
 import org.apache.hc.client5.http.classic.methods.HttpPost;
 import org.apache.hc.client5.http.classic.methods.HttpUriRequestBase;
-import org.apache.hc.client5.http.impl.classic.CloseableHttpResponse;
+import org.apache.hc.core5.http.ClassicHttpResponse;
 import org.apache.hc.core5.http.ContentType;
 import org.apache.hc.core5.http.Header;
 
@@ -95,7 +95,7 @@ public class GetAttachmentOperation implements IOperation<CloseableAttachmentRes
         }
 
         @Override
-        public ResponseDisposeHandling processResponse(HttpCache cache, CloseableHttpResponse response, String url) {
+        public ResponseDisposeHandling processResponse(HttpCache cache, ClassicHttpResponse response, String url) {
             String contentType = response.getEntity().getContentType();
             String changeVector = HttpExtensions.getEtagHeader(response);
             String hash = response.getFirstHeader("Attachment-Hash").getValue();

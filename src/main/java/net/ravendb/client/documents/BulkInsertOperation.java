@@ -41,7 +41,7 @@ import org.apache.hc.client5.http.classic.methods.HttpPost;
 import org.apache.hc.client5.http.classic.methods.HttpUriRequestBase;
 import org.apache.hc.client5.http.entity.GzipCompressingEntity;
 import org.apache.hc.client5.http.impl.classic.CloseableHttpClient;
-import org.apache.hc.client5.http.impl.classic.CloseableHttpResponse;
+import org.apache.hc.core5.http.ClassicHttpResponse;
 import org.apache.hc.core5.http.HttpEntity;
 
 import java.io.*;
@@ -67,7 +67,7 @@ public class BulkInsertOperation extends BulkInsertOperationBase<Object> impleme
        }
     }
 
-    private static class BulkInsertCommand extends RavenCommand<CloseableHttpResponse> {
+    private static class BulkInsertCommand extends RavenCommand<ClassicHttpResponse> {
 
         @Override
         public boolean isReadRequest() {
@@ -84,7 +84,7 @@ public class BulkInsertOperation extends BulkInsertOperationBase<Object> impleme
         private String _requestNodeTag;
 
         public BulkInsertCommand(long id, HttpCompressionAlgorithm compressionAlgorithm, BulkInsertStreamExposerContent stream, String nodeTag, boolean skipOverwriteIfUnchanged) {
-            super(CloseableHttpResponse.class);
+            super(ClassicHttpResponse.class);
             _compressionAlgorithm = compressionAlgorithm;
             _stream = stream;
             _id = id;
@@ -133,7 +133,7 @@ public class BulkInsertOperation extends BulkInsertOperationBase<Object> impleme
         }
 
         @Override
-        public CloseableHttpResponse send(CloseableHttpClient client, HttpUriRequestBase request) throws IOException {
+        public ClassicHttpResponse send(CloseableHttpClient client, HttpUriRequestBase request) throws IOException {
             try {
                 return super.send(client, request);
             } catch (Exception e) {

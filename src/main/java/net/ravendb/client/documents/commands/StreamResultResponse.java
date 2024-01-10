@@ -1,18 +1,18 @@
 package net.ravendb.client.documents.commands;
 
-import org.apache.hc.client5.http.impl.classic.CloseableHttpResponse;
+import org.apache.hc.core5.http.ClassicHttpResponse;
 
 import java.io.InputStream;
 
 public class StreamResultResponse {
-    private CloseableHttpResponse response;
+    private ClassicHttpResponse response;
     private InputStream stream;
 
-    public CloseableHttpResponse getResponse() {
+    public ClassicHttpResponse getResponse() {
         return response;
     }
 
-    public void setResponse(CloseableHttpResponse response) {
+    public void setResponse(ClassicHttpResponse response) {
         this.response = response;
     }
 

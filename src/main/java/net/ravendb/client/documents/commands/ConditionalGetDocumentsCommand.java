@@ -6,10 +6,9 @@ import net.ravendb.client.http.HttpCache;
 import net.ravendb.client.http.RavenCommand;
 import net.ravendb.client.http.ResponseDisposeHandling;
 import net.ravendb.client.http.ServerNode;
-import net.ravendb.client.primitives.Reference;
 import org.apache.hc.client5.http.classic.methods.HttpUriRequestBase;
 import org.apache.hc.client5.http.classic.methods.HttpGet;
-import org.apache.hc.client5.http.impl.classic.CloseableHttpResponse;
+import org.apache.hc.core5.http.ClassicHttpResponse;
 import org.apache.hc.core5.http.HttpStatus;
 
 import java.io.IOException;
@@ -47,7 +46,7 @@ public class ConditionalGetDocumentsCommand extends RavenCommand<ConditionalGetD
     }
 
     @Override
-    public ResponseDisposeHandling processResponse(HttpCache cache, CloseableHttpResponse response, String url) {
+    public ResponseDisposeHandling processResponse(HttpCache cache, ClassicHttpResponse response, String url) {
         if (response.getCode() == HttpStatus.SC_NOT_MODIFIED) {
             return ResponseDisposeHandling.AUTOMATIC;
         }

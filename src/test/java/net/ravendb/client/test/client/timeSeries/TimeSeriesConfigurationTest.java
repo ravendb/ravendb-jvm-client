@@ -139,9 +139,7 @@ public class TimeSeriesConfigurationTest extends RemoteTestBase {
                     Collections.singletonList(
                             new TimeSeriesPolicy("By30DaysFor5Years", TimeValue.ofDays(30), TimeValue.ofYears(5))));
 
-            assertThatThrownBy(() -> {
-                store.maintenance().send(new ConfigureTimeSeriesOperation(config));
-            })
+            assertThatThrownBy(() -> store.maintenance().send(new ConfigureTimeSeriesOperation(config)))
                     .hasMessageContaining("month might have different number of days");
 
             final TimeSeriesConfiguration config2 = new TimeSeriesConfiguration();
@@ -160,9 +158,7 @@ public class TimeSeriesConfigurationTest extends RemoteTestBase {
                                     TimeValue.ofSeconds(365 * 24 * 3600),
                                     TimeValue.ofYears(5))));
 
-            assertThatThrownBy(() -> {
-                store.maintenance().send(new ConfigureTimeSeriesOperation(config2));
-            })
+            assertThatThrownBy(() -> store.maintenance().send(new ConfigureTimeSeriesOperation(config2)))
                     .hasMessageContaining("month might have different number of days");
 
             final TimeSeriesConfiguration config3 = new TimeSeriesConfiguration();
@@ -376,13 +372,9 @@ public class TimeSeriesConfigurationTest extends RemoteTestBase {
             assertThat(policies.get(5).getAggregationTime())
                     .isEqualTo(TimeValue.ofYears(1));
 
-            assertThatThrownBy(() -> {
-                store.timeSeries().removePolicy(User.class, "ByMinuteFor3Hours");
-            }).hasMessageContaining("System.InvalidOperationException: The policy 'By15SecondsFor1Minute' has a retention time of '60 seconds' but should be aggregated by policy 'ByHourFor12Hours' with the aggregation time frame of 60 minutes");
+            assertThatThrownBy(() -> store.timeSeries().removePolicy(User.class, "ByMinuteFor3Hours")).hasMessageContaining("System.InvalidOperationException: The policy 'By15SecondsFor1Minute' has a retention time of '60 seconds' but should be aggregated by policy 'ByHourFor12Hours' with the aggregation time frame of 60 minutes");
 
-            assertThatThrownBy(() -> {
-                store.timeSeries().setRawPolicy(User.class, TimeValue.ofSeconds(10));
-            }).hasMessageContaining("System.InvalidOperationException: The policy 'rawpolicy' has a retention time of '10 seconds' but should be aggregated by policy 'By15SecondsFor1Minute' with the aggregation time frame of 15 seconds");
+            assertThatThrownBy(() -> store.timeSeries().setRawPolicy(User.class, TimeValue.ofSeconds(10))).hasMessageContaining("System.InvalidOperationException: The policy 'rawpolicy' has a retention time of '10 seconds' but should be aggregated by policy 'By15SecondsFor1Minute' with the aggregation time frame of 15 seconds");
 
             store.timeSeries().setRawPolicy(User.class, TimeValue.ofMinutes(120));
             store.timeSeries().setPolicy(User.class, "By15SecondsFor1Minute", TimeValue.ofSeconds(30), TimeValue.ofSeconds(120));

@@ -8,7 +8,7 @@ import net.ravendb.client.exceptions.documents.compilation.IndexCompilationExcep
 import net.ravendb.client.extensions.JsonExtensions;
 import net.ravendb.client.http.RequestExecutor;
 import org.apache.commons.io.IOUtils;
-import org.apache.hc.client5.http.impl.classic.CloseableHttpResponse;
+import org.apache.hc.core5.http.ClassicHttpResponse;
 import org.apache.hc.core5.http.HttpStatus;
 
 import java.io.IOException;
@@ -53,7 +53,7 @@ public class ExceptionDispatcher {
         return exception;
     }
 
-    public static void throwException(CloseableHttpResponse response) {
+    public static void throwException(ClassicHttpResponse response) {
         if (response == null) {
             throw new IllegalArgumentException("Response cannot be null");
         }

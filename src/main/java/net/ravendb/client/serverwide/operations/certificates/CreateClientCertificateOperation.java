@@ -13,7 +13,7 @@ import net.ravendb.client.util.RaftIdGenerator;
 import org.apache.commons.io.IOUtils;
 import org.apache.hc.client5.http.classic.methods.HttpPost;
 import org.apache.hc.client5.http.classic.methods.HttpUriRequestBase;
-import org.apache.hc.client5.http.impl.classic.CloseableHttpResponse;
+import org.apache.hc.core5.http.ClassicHttpResponse;
 import org.apache.hc.core5.http.ContentType;
 
 import java.io.IOException;
@@ -114,7 +114,7 @@ public class CreateClientCertificateOperation implements IServerOperation<Certif
         }
 
         @Override
-        public void setResponseRaw(CloseableHttpResponse response, InputStream stream) {
+        public void setResponseRaw(ClassicHttpResponse response, InputStream stream) {
             if (response == null) {
                 throwInvalidResponse();
             }

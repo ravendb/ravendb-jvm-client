@@ -14,7 +14,7 @@ import net.ravendb.client.util.UrlUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.hc.client5.http.classic.methods.HttpPut;
 import org.apache.hc.client5.http.classic.methods.HttpUriRequestBase;
-import org.apache.hc.client5.http.impl.classic.CloseableHttpResponse;
+import org.apache.hc.core5.http.ClassicHttpResponse;
 import org.apache.hc.core5.http.ContentType;
 import org.apache.hc.core5.http.HttpStatus;
 
@@ -81,8 +81,8 @@ public class RegisterReplicationHubAccessOperation implements IVoidMaintenanceOp
         }
 
         @Override
-        public void setResponseRaw(CloseableHttpResponse response, InputStream stream) {
-            try (CloseableHttpResponse httpResponse = response) {
+        public void setResponseRaw(ClassicHttpResponse response, InputStream stream) {
+            try (ClassicHttpResponse httpResponse = response) {
                 if (response.getCode() == HttpStatus.SC_NOT_FOUND) {
                     throw new ReplicationHubNotFoundException("The replication hub " + _hubName
                             + " was not found on the database. Did you forget to define it first?");
