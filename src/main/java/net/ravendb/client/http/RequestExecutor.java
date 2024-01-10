@@ -1936,6 +1936,10 @@ public class RequestExecutor implements CleanCloseable {
         }
     }
 
+    public static void clearHttpClientsPool() {
+        globalHttpClientCache.clear();
+    }
+
     private static class HttpClientCacheKey {
         private final String _certificateThumbprint;
         private final boolean _useHttpDecompression;

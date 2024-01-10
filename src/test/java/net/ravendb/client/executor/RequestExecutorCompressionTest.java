@@ -544,6 +544,8 @@ public class RequestExecutorCompressionTest extends RemoteTestBase {
 
     @BeforeAll
     public static void enableLogging() {
+        RequestExecutor.clearHttpClientsPool();
+
         RequestExecutor.configureHttpClient = (builder) -> {
             builder.addRequestInterceptorLast(requestInterceptor);
             builder.addResponseInterceptorFirst(responseInterceptor);
