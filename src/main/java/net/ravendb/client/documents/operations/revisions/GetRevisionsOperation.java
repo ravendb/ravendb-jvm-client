@@ -12,7 +12,6 @@ import net.ravendb.client.extensions.JsonExtensions;
 import net.ravendb.client.http.HttpCache;
 import net.ravendb.client.http.RavenCommand;
 import net.ravendb.client.http.ServerNode;
-import net.ravendb.client.primitives.Reference;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.hc.client5.http.classic.methods.HttpUriRequestBase;
 
@@ -131,7 +130,7 @@ public class GetRevisionsOperation<T> implements IOperation<RevisionsResult<T>> 
             ArrayNode revisions = (ArrayNode) responseNode.get("Results");
             int total = responseNode.get("TotalResults").intValue();
 
-            List<T> results = new ArrayList<T>(revisions.size());
+            List<T> results = new ArrayList<>(revisions.size());
             for (JsonNode revision : revisions) {
                 if (revision == null || revision.isNull()) {
                     continue;

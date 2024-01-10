@@ -385,7 +385,7 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
 
         groupByTokens.add(GroupByToken.create(fieldName, field.getMethod()));
 
-        if (fields == null || fields.length <= 0) {
+        if (fields == null || fields.length == 0) {
             return;
         }
 

@@ -98,7 +98,7 @@ public class AbstractJavaScriptIndexCreationTask extends AbstractIndexCreationTa
         if (getAdditionalAssemblies() != null) {
             _definition.setAdditionalAssemblies(getAdditionalAssemblies());
         } else {
-            _definition.setAdditionalAssemblies(new HashSet<AdditionalAssembly>());
+            _definition.setAdditionalAssemblies(new HashSet<>());
         }
         _definition.setConfiguration(getConfiguration());
         _definition.setLockMode(lockMode);

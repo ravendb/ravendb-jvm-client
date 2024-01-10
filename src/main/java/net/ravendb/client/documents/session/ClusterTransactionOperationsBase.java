@@ -154,7 +154,7 @@ public abstract class ClusterTransactionOperationsBase {
         session.incrementRequestCount();
 
         Map<String, CompareExchangeValue<ObjectNode>> values = session.getOperations().send(
-                new GetCompareExchangeValuesOperation<ObjectNode>(ObjectNode.class, startsWith, start, pageSize), session.getSessionInfo());
+                new GetCompareExchangeValuesOperation<>(ObjectNode.class, startsWith, start, pageSize), session.getSessionInfo());
 
         Map<String, CompareExchangeValue<T>> results = new HashMap<>();
 

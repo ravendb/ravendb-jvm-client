@@ -240,12 +240,12 @@ public class ClusterTransactionTest extends RemoteTestBase {
             }
 
             String compareExchangeKey = "rvn-atomic/" + docId;
-            CompareExchangeValue<AtomicGuard> val = store.operations().send(new GetCompareExchangeValueOperation<AtomicGuard>(AtomicGuard.class, compareExchangeKey));
+            CompareExchangeValue<AtomicGuard> val = store.operations().send(new GetCompareExchangeValueOperation<>(AtomicGuard.class, compareExchangeKey));
             val.getValue().locked = true;
 
-            store.operations().send(new PutCompareExchangeValueOperation<AtomicGuard>(val.getKey(), val.getValue(), val.getIndex()));
+            store.operations().send(new PutCompareExchangeValueOperation<>(val.getKey(), val.getValue(), val.getIndex()));
 
-            val = store.operations().send(new GetCompareExchangeValueOperation<AtomicGuard>(AtomicGuard.class, compareExchangeKey));
+            val = store.operations().send(new GetCompareExchangeValueOperation<>(AtomicGuard.class, compareExchangeKey));
             assertThat(val.getValue().locked)
                     .isTrue();
         }

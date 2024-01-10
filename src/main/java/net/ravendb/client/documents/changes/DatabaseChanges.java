@@ -45,7 +45,7 @@ public class DatabaseChanges extends AbstractDatabaseChanges<DatabaseConnectionS
     public IChangesObservable<AggressiveCacheChange> forAggressiveCaching() {
         DatabaseConnectionState counter = getOrAddConnectionState("aggressive-caching", "watch-aggressive-caching", "unwatch-aggressive-caching", null);
 
-        ChangesObservable<AggressiveCacheChange, DatabaseConnectionState> taskedObservable = new ChangesObservable<AggressiveCacheChange, DatabaseConnectionState>(ChangesType.AGGRESSIVE_CACHE, counter, notification -> true);
+        ChangesObservable<AggressiveCacheChange, DatabaseConnectionState> taskedObservable = new ChangesObservable<>(ChangesType.AGGRESSIVE_CACHE, counter, notification -> true);
 
         return taskedObservable;
     }

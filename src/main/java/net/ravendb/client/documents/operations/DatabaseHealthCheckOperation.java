@@ -3,7 +3,6 @@ package net.ravendb.client.documents.operations;
 import net.ravendb.client.documents.conventions.DocumentConventions;
 import net.ravendb.client.http.ServerNode;
 import net.ravendb.client.http.VoidRavenCommand;
-import net.ravendb.client.primitives.Reference;
 import org.apache.hc.client5.http.classic.methods.HttpUriRequestBase;
 import org.apache.hc.client5.http.classic.methods.HttpGet;
 

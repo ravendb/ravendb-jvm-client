@@ -21,7 +21,7 @@ public class CanQueryAndIncludeRevisionsTest extends RemoteTestBase {
     public void query_IncludeAllQueryFunctionality() throws Exception {
         try (DocumentStore store = getDocumentStore()) {
 
-            List<String> cvList = new ArrayList<String>();
+            List<String> cvList = new ArrayList<>();
 
             String id = "users/rhino";
 
@@ -164,7 +164,7 @@ public class CanQueryAndIncludeRevisionsTest extends RemoteTestBase {
     @Test
     public void load_IncludeBuilder_IncludeRevisionByChangeVectors() throws Exception {
         try (DocumentStore store = getDocumentStore()) {
-            List<String> cvList = new ArrayList<String>();
+            List<String> cvList = new ArrayList<>();
 
             String id = "users/rhino";
 
@@ -248,7 +248,7 @@ public class CanQueryAndIncludeRevisionsTest extends RemoteTestBase {
     @Test
     public void load_IncludeBuilder_IncludeRevisionsByProperty_ChangeVectorAndChangeVectors() throws Exception {
         try (DocumentStore store = getDocumentStore()) {
-            List<String> cvList = new ArrayList<String>();
+            List<String> cvList = new ArrayList<>();
 
             String id = "users/rhino";
 

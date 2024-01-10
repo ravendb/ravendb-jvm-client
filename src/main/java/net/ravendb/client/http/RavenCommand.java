@@ -7,7 +7,6 @@ import net.ravendb.client.extensions.HttpExtensions;
 import net.ravendb.client.extensions.JsonExtensions;
 import net.ravendb.client.http.behaviors.AbstractCommandResponseBehavior;
 import net.ravendb.client.http.behaviors.DefaultCommandResponseBehavior;
-import net.ravendb.client.primitives.Reference;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.hc.client5.http.ClientProtocolException;

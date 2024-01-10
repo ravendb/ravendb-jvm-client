@@ -3,7 +3,6 @@ package net.ravendb.client.documents.commands;
 import net.ravendb.client.documents.queries.IndexQuery;
 import net.ravendb.client.http.RavenCommand;
 import net.ravendb.client.http.ServerNode;
-import net.ravendb.client.primitives.Reference;
 import org.apache.hc.client5.http.classic.methods.HttpPost;
 import org.apache.hc.client5.http.classic.methods.HttpUriRequestBase;
 import org.apache.hc.core5.http.HttpEntity;

@@ -8,7 +8,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
-import java.util.Collections;
 import java.util.concurrent.CompletableFuture;
 
 public class StreamExposerContent extends AbstractHttpEntity {

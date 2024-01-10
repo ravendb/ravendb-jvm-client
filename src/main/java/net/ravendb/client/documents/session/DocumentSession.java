@@ -1103,7 +1103,7 @@ public class DocumentSession extends InMemoryDocumentSessionOperations
     public <T> ISessionDocumentTypedTimeSeries<T> timeSeriesFor(Class<T> clazz, Object entity, String name) {
         String tsName = ObjectUtils.firstNonNull(name, TimeSeriesOperations.getTimeSeriesName(clazz, getConventions()));
         validateTimeSeriesName(tsName);
-        return new SessionDocumentTypedTimeSeries<T>(clazz, this, entity, tsName);
+        return new SessionDocumentTypedTimeSeries<>(clazz, this, entity, tsName);
     }
 
     @Override
@@ -1126,7 +1126,7 @@ public class DocumentSession extends InMemoryDocumentSessionOperations
     @Override
     public <T> ISessionDocumentRollupTypedTimeSeries<T> timeSeriesRollupFor(Class<T> clazz, Object entity, String policy, String raw) {
         String tsName = ObjectUtils.firstNonNull(raw, TimeSeriesOperations.getTimeSeriesName(clazz, getConventions()));
-        return new SessionDocumentRollupTypedTimeSeries<T>(clazz, this, entity, tsName + TimeSeriesConfiguration.TIME_SERIES_ROLLUP_SEPARATOR + policy);
+        return new SessionDocumentRollupTypedTimeSeries<>(clazz, this, entity, tsName + TimeSeriesConfiguration.TIME_SERIES_ROLLUP_SEPARATOR + policy);
     }
 
     @Override
@@ -1137,7 +1137,7 @@ public class DocumentSession extends InMemoryDocumentSessionOperations
     @Override
     public <T> ISessionDocumentRollupTypedTimeSeries<T> timeSeriesRollupFor(Class<T> clazz, String documentId, String policy, String raw) {
         String tsName = ObjectUtils.firstNonNull(raw, TimeSeriesOperations.getTimeSeriesName(clazz, getConventions()));
-        return new SessionDocumentRollupTypedTimeSeries<T>(clazz, this, documentId, tsName + TimeSeriesConfiguration.TIME_SERIES_ROLLUP_SEPARATOR + policy);
+        return new SessionDocumentRollupTypedTimeSeries<>(clazz, this, documentId, tsName + TimeSeriesConfiguration.TIME_SERIES_ROLLUP_SEPARATOR + policy);
     }
 
     public ISessionDocumentIncrementalTimeSeries incrementalTimeSeriesFor(String documentId, String name) {
@@ -1158,7 +1158,7 @@ public class DocumentSession extends InMemoryDocumentSessionOperations
     public <T> ISessionDocumentTypedIncrementalTimeSeries<T> incrementalTimeSeriesFor(Class<T> clazz, String documentId, String name) {
         String tsName = ObjectUtils.firstNonNull(name, TimeSeriesOperations.getTimeSeriesName(clazz, getConventions()));
         validateIncrementalTimeSeriesName(tsName);
-        return new SessionDocumentTypedTimeSeries<T>(clazz, this, documentId, tsName);
+        return new SessionDocumentTypedTimeSeries<>(clazz, this, documentId, tsName);
     }
 
     public <T> ISessionDocumentTypedIncrementalTimeSeries<T> incrementalTimeSeriesFor(Class<T> clazz, Object entity) {
