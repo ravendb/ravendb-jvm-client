@@ -7,7 +7,7 @@ import net.ravendb.client.http.RavenCommand;
 import net.ravendb.client.http.RequestExecutor;
 import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.http.HttpStatus;
+import org.apache.hc.core5.http.HttpStatus;
 
 import java.io.IOException;
 

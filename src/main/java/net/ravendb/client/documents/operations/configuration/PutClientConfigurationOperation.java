@@ -7,12 +7,11 @@ import net.ravendb.client.http.IRaftCommand;
 import net.ravendb.client.http.ServerNode;
 import net.ravendb.client.http.VoidRavenCommand;
 import net.ravendb.client.primitives.ExceptionsUtils;
-import net.ravendb.client.primitives.Reference;
 import net.ravendb.client.util.RaftIdGenerator;
-import org.apache.http.client.methods.HttpPut;
-import org.apache.http.client.methods.HttpRequestBase;
-import org.apache.http.entity.ContentType;
-import org.apache.http.entity.StringEntity;
+import org.apache.hc.client5.http.classic.methods.HttpPut;
+import org.apache.hc.client5.http.classic.methods.HttpUriRequestBase;
+import org.apache.hc.core5.http.ContentType;
+import org.apache.hc.core5.http.io.entity.StringEntity;
 
 public class PutClientConfigurationOperation implements IVoidMaintenanceOperation {
     private final ClientConfiguration configuration;
@@ -51,10 +50,10 @@ public class PutClientConfigurationOperation implements IVoidMaintenanceOperatio
         }
 
         @Override
-        public HttpRequestBase createRequest(ServerNode node, Reference<String> url) {
-            url.value = node.getUrl() + "/databases/" + node.getDatabase() + "/admin/configuration/client";
+        public HttpUriRequestBase createRequest(ServerNode node) {
+            String url = node.getUrl() + "/databases/" + node.getDatabase() + "/admin/configuration/client";
 
-            HttpPut httpPut = new HttpPut();
+            HttpPut httpPut = new HttpPut(url);
             httpPut.setEntity(new StringEntity(this.configuration, ContentType.APPLICATION_JSON));
             return httpPut;
         }

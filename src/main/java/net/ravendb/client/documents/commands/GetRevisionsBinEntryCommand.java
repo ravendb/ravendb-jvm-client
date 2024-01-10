@@ -3,10 +3,9 @@ package net.ravendb.client.documents.commands;
 import net.ravendb.client.http.RavenCommand;
 import net.ravendb.client.http.ServerNode;
 import net.ravendb.client.json.JsonArrayResult;
-import net.ravendb.client.primitives.Reference;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.client.methods.HttpRequestBase;
+import org.apache.hc.client5.http.classic.methods.HttpUriRequestBase;
+import org.apache.hc.client5.http.classic.methods.HttpGet;
 
 import java.io.IOException;
 
@@ -31,9 +30,7 @@ public class GetRevisionsBinEntryCommand extends RavenCommand<JsonArrayResult> {
     }
 
     @Override
-    public HttpRequestBase createRequest(ServerNode node, Reference<String> url) {
-        HttpGet request = new HttpGet();
-
+    public HttpUriRequestBase createRequest(ServerNode node) {
         StringBuilder path = new StringBuilder(node.getUrl());
         path
                 .append("/databases/")
@@ -51,9 +48,9 @@ public class GetRevisionsBinEntryCommand extends RavenCommand<JsonArrayResult> {
                     .append(_continuationToken);
         }
 
-        url.value = path.toString();
+        String url = path.toString();
 
-        return request;
+        return new HttpGet(url);
     }
 
     @Override

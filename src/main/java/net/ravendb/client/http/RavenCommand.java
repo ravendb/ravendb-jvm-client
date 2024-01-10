@@ -10,12 +10,12 @@ import net.ravendb.client.http.behaviors.DefaultCommandResponseBehavior;
 import net.ravendb.client.primitives.Reference;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.http.HttpEntity;
-import org.apache.http.HttpStatus;
-import org.apache.http.client.methods.CloseableHttpResponse;
-import org.apache.http.client.methods.HttpRequestBase;
-import org.apache.http.client.utils.HttpClientUtils;
-import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.hc.client5.http.classic.methods.HttpUriRequestBase;
+import org.apache.hc.client5.http.impl.classic.CloseableHttpClient;
+import org.apache.hc.client5.http.impl.classic.CloseableHttpResponse;
+import org.apache.hc.core5.http.HttpEntity;
+import org.apache.hc.core5.http.HttpStatus;
+import org.apache.hc.core5.io.Closer;
 
 import java.io.*;
 import java.net.URLEncoder;
@@ -129,7 +129,7 @@ public abstract class RavenCommand<TResult> {
         return mapper.createGenerator(new OutputStreamWriter(out, StandardCharsets.UTF_8));
     }
 
-    public abstract HttpRequestBase createRequest(ServerNode node, Reference<String> url);
+    public abstract HttpUriRequestBase createRequest(ServerNode node);
 
     public void setResponse(String response, boolean fromCache) throws IOException {
         if (responseType == RavenCommandResponseType.EMPTY || responseType == RavenCommandResponseType.RAW) {
@@ -139,7 +139,7 @@ public abstract class RavenCommand<TResult> {
         throw new UnsupportedOperationException(responseType.name() + " command must override the setResponse method which expects response with the following type: " + responseType);
     }
 
-    public CloseableHttpResponse send(CloseableHttpClient client, HttpRequestBase request) throws IOException {
+    public CloseableHttpResponse send(CloseableHttpClient client, HttpUriRequestBase request) throws IOException {
         return client.execute(request);
     }
 
@@ -184,7 +184,7 @@ public abstract class RavenCommand<TResult> {
             return ResponseDisposeHandling.AUTOMATIC;
         }
 
-        if (responseType == RavenCommandResponseType.EMPTY || response.getStatusLine().getStatusCode() == HttpStatus.SC_NO_CONTENT) {
+        if (responseType == RavenCommandResponseType.EMPTY || response.getCode() == HttpStatus.SC_NO_CONTENT) {
             return ResponseDisposeHandling.AUTOMATIC;
         }
 
@@ -192,7 +192,7 @@ public abstract class RavenCommand<TResult> {
             if (responseType == RavenCommandResponseType.OBJECT) {
                 Long contentLength = entity.getContentLength();
                 if (contentLength == 0) {
-                    HttpClientUtils.closeQuietly(response);
+                    Closer.closeQuietly(response);
                     return ResponseDisposeHandling.AUTOMATIC;
                 }
 
@@ -211,7 +211,7 @@ public abstract class RavenCommand<TResult> {
         } catch (IOException e) {
             throw new RuntimeException(e);
         } finally {
-            HttpClientUtils.closeQuietly(response);
+            Closer.closeQuietly(response);
         }
 
         return ResponseDisposeHandling.AUTOMATIC;
@@ -239,7 +239,7 @@ public abstract class RavenCommand<TResult> {
     }
 
     @SuppressWarnings("unused")
-    protected void addChangeVectorIfNotNull(String changeVector, HttpRequestBase request) {
+    protected void addChangeVectorIfNotNull(String changeVector, HttpUriRequestBase request) {
         if (changeVector != null) {
             request.addHeader(Constants.Headers.IF_MATCH, "\"" + changeVector + "\"");
         }

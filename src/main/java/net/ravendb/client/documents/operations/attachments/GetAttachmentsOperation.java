@@ -11,12 +11,11 @@ import net.ravendb.client.documents.conventions.DocumentConventions;
 import net.ravendb.client.documents.operations.IOperation;
 import net.ravendb.client.http.*;
 import net.ravendb.client.json.ContentProviderHttpEntity;
-import net.ravendb.client.primitives.Reference;
 import net.ravendb.client.primitives.SharpEnum;
-import org.apache.http.client.methods.CloseableHttpResponse;
-import org.apache.http.client.methods.HttpPost;
-import org.apache.http.client.methods.HttpRequestBase;
-import org.apache.http.entity.ContentType;
+import org.apache.hc.client5.http.classic.methods.HttpPost;
+import org.apache.hc.client5.http.classic.methods.HttpUriRequestBase;
+import org.apache.hc.client5.http.impl.classic.CloseableHttpResponse;
+import org.apache.hc.core5.http.ContentType;
 
 import java.io.*;
 import java.util.ArrayList;
@@ -60,10 +59,10 @@ public class GetAttachmentsOperation implements IOperation<CloseableAttachmentsR
         }
 
         @Override
-        public HttpRequestBase createRequest(ServerNode node, Reference<String> url) {
-            url.value = node.getUrl() + "/databases/" + node.getDatabase() + "/attachments/bulk";
+        public HttpUriRequestBase createRequest(ServerNode node) {
+            String url = node.getUrl() + "/databases/" + node.getDatabase() + "/attachments/bulk";
 
-            HttpPost request = new HttpPost();
+            HttpPost request = new HttpPost(url);
             request.setEntity(new ContentProviderHttpEntity(outputStream -> {
                 try (JsonGenerator generator = createSafeJsonGenerator(outputStream)) {
                     generator.writeStartObject();

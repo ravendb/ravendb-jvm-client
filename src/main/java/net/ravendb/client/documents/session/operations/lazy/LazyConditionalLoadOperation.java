@@ -12,7 +12,7 @@ import net.ravendb.client.documents.session.InMemoryDocumentSessionOperations;
 import net.ravendb.client.extensions.JsonExtensions;
 import net.ravendb.client.util.UrlUtils;
 import org.apache.commons.lang3.NotImplementedException;
-import org.apache.http.HttpStatus;
+import org.apache.hc.core5.http.HttpStatus;
 
 import java.io.IOException;
 

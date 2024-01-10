@@ -1,8 +1,8 @@
 package net.ravendb.client.documents.session;
 
 import net.ravendb.client.primitives.EventArgs;
-import org.apache.http.HttpRequest;
-import org.apache.http.client.methods.CloseableHttpResponse;
+import org.apache.hc.client5.http.impl.classic.CloseableHttpResponse;
+import org.apache.hc.core5.http.HttpRequest;
 
 public class SucceedRequestEventArgs extends EventArgs {
 

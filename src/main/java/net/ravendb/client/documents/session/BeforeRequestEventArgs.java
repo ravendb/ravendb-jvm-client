@@ -1,7 +1,7 @@
 package net.ravendb.client.documents.session;
 
 import net.ravendb.client.primitives.EventArgs;
-import org.apache.http.HttpRequest;
+import org.apache.hc.core5.http.HttpRequest;
 
 public class BeforeRequestEventArgs extends EventArgs {
 

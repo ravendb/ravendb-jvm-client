@@ -4,12 +4,11 @@ import net.ravendb.client.documents.conventions.DocumentConventions;
 import net.ravendb.client.http.IRaftCommand;
 import net.ravendb.client.http.RavenCommand;
 import net.ravendb.client.http.ServerNode;
-import net.ravendb.client.primitives.Reference;
 import net.ravendb.client.util.ClientShardHelper;
 import net.ravendb.client.util.RaftIdGenerator;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.http.client.methods.HttpPut;
-import org.apache.http.client.methods.HttpRequestBase;
+import org.apache.hc.client5.http.classic.methods.HttpPut;
+import org.apache.hc.client5.http.classic.methods.HttpUriRequestBase;
 
 import java.io.IOException;
 
@@ -54,13 +53,13 @@ public class AddDatabaseNodeOperation implements IServerOperation<DatabasePutRes
         }
 
         @Override
-        public HttpRequestBase createRequest(ServerNode node, Reference<String> url) {
-            url.value = node.getUrl() + "/admin/databases/node?name=" + _databaseName;
-            if (node != null) {
-                url.value += "&node=" + _node;
+        public HttpUriRequestBase createRequest(ServerNode node) {
+            String url = node.getUrl() + "/admin/databases/node?name=" + _databaseName;
+            if (_node != null) {
+                url += "&node=" + _node;
             }
 
-            return new HttpPut();
+            return new HttpPut(url);
         }
 
         @Override

@@ -4,12 +4,11 @@ import net.ravendb.client.documents.conventions.DocumentConventions;
 import net.ravendb.client.documents.operations.IMaintenanceOperation;
 import net.ravendb.client.http.RavenCommand;
 import net.ravendb.client.http.ServerNode;
-import net.ravendb.client.primitives.Reference;
 import net.ravendb.client.primitives.SharpEnum;
 import net.ravendb.client.serverwide.ConnectionStringType;
 import net.ravendb.client.util.UrlUtils;
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.client.methods.HttpRequestBase;
+import org.apache.hc.client5.http.classic.methods.HttpGet;
+import org.apache.hc.client5.http.classic.methods.HttpUriRequestBase;
 
 import java.io.IOException;
 
@@ -49,13 +48,13 @@ public class GetConnectionStringsOperation implements IMaintenanceOperation<GetC
         }
 
         @Override
-        public HttpRequestBase createRequest(ServerNode node, Reference<String> url) {
-            url.value = node.getUrl() + "/databases/" + node.getDatabase() + "/admin/connection-strings";
+        public HttpUriRequestBase createRequest(ServerNode node) {
+            String url = node.getUrl() + "/databases/" + node.getDatabase() + "/admin/connection-strings";
             if (_connectionStringName != null) {
-                url.value += "?connectionStringName=" + UrlUtils.escapeDataString(_connectionStringName) + "&type=" + SharpEnum.value(_type);
+                url += "?connectionStringName=" + UrlUtils.escapeDataString(_connectionStringName) + "&type=" + SharpEnum.value(_type);
             }
 
-            return new HttpGet();
+            return new HttpGet(url);
         }
 
         @Override

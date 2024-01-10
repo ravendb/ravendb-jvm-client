@@ -2,8 +2,8 @@ package net.ravendb.client.extensions;
 
 import net.ravendb.client.Constants;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.http.Header;
-import org.apache.http.client.methods.CloseableHttpResponse;
+import org.apache.hc.client5.http.impl.classic.CloseableHttpResponse;
+import org.apache.hc.core5.http.Header;
 
 import java.util.Map;
 

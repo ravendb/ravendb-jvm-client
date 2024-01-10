@@ -4,12 +4,11 @@ import net.ravendb.client.documents.conventions.DocumentConventions;
 import net.ravendb.client.http.IRaftCommand;
 import net.ravendb.client.http.ServerNode;
 import net.ravendb.client.http.VoidRavenCommand;
-import net.ravendb.client.primitives.Reference;
 import net.ravendb.client.serverwide.operations.IVoidServerOperation;
 import net.ravendb.client.util.RaftIdGenerator;
 import net.ravendb.client.util.UrlUtils;
-import org.apache.http.client.methods.HttpDelete;
-import org.apache.http.client.methods.HttpRequestBase;
+import org.apache.hc.client5.http.classic.methods.HttpDelete;
+import org.apache.hc.client5.http.classic.methods.HttpUriRequestBase;
 
 public class DeleteCertificateOperation implements IVoidServerOperation {
 
@@ -39,10 +38,10 @@ public class DeleteCertificateOperation implements IVoidServerOperation {
         }
 
         @Override
-        public HttpRequestBase createRequest(ServerNode node, Reference<String> url) {
-            url.value = node.getUrl() + "/admin/certificates?thumbprint=" + UrlUtils.escapeDataString(_thumbprint);
+        public HttpUriRequestBase createRequest(ServerNode node) {
+            String url = node.getUrl() + "/admin/certificates?thumbprint=" + UrlUtils.escapeDataString(_thumbprint);
 
-            return new HttpDelete();
+            return new HttpDelete(url);
         }
 
         @Override

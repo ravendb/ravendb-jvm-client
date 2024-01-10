@@ -4,9 +4,9 @@ import net.ravendb.client.documents.queries.IndexQuery;
 import net.ravendb.client.http.RavenCommand;
 import net.ravendb.client.http.ServerNode;
 import net.ravendb.client.primitives.Reference;
-import org.apache.http.HttpEntity;
-import org.apache.http.client.methods.HttpPost;
-import org.apache.http.client.methods.HttpRequestBase;
+import org.apache.hc.client5.http.classic.methods.HttpPost;
+import org.apache.hc.client5.http.classic.methods.HttpUriRequestBase;
+import org.apache.hc.core5.http.HttpEntity;
 
 public abstract class AbstractQueryCommand<TResult, TParameters> extends RavenCommand<TResult> {
 
@@ -35,7 +35,7 @@ public abstract class AbstractQueryCommand<TResult, TParameters> extends RavenCo
     protected abstract String getQueryHash();
 
     @Override
-    public HttpRequestBase createRequest(ServerNode node, Reference<String> url) {
+    public HttpUriRequestBase createRequest(ServerNode node) {
         StringBuilder path = new StringBuilder(node.getUrl())
                 .append("/databases/")
                 .append(node.getDatabase())
@@ -57,10 +57,11 @@ public abstract class AbstractQueryCommand<TResult, TParameters> extends RavenCo
             path.append("&ignoreLimit=true");
         }
 
-        HttpPost request = new HttpPost();
+        String url = path.toString();
+
+        HttpPost request = new HttpPost(url);
         request.setEntity(getContent());
 
-        url.value = path.toString();
         return request;
     }
 

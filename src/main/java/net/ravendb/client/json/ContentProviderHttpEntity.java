@@ -4,9 +4,9 @@ import com.github.luben.zstd.ZstdOutputStream;
 import net.ravendb.client.Constants;
 import net.ravendb.client.documents.conventions.DocumentConventions;
 import net.ravendb.client.http.HttpCompressionAlgorithm;
-import org.apache.http.entity.AbstractHttpEntity;
-import org.apache.http.entity.ContentType;
-import org.apache.http.message.BasicHeader;
+import org.apache.hc.core5.http.ContentType;
+import org.apache.hc.core5.http.io.entity.AbstractHttpEntity;
+import org.apache.hc.core5.http.message.BasicHeader;
 
 import java.io.*;
 import java.util.function.Consumer;

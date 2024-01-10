@@ -1,7 +1,7 @@
 package net.ravendb.client.util;
 
 import com.github.luben.zstd.ZstdInputStream;
-import org.apache.http.client.entity.InputStreamFactory;
+import org.apache.hc.client5.http.entity.InputStreamFactory;
 
 import java.io.IOException;
 import java.io.InputStream;

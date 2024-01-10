@@ -5,13 +5,12 @@ import net.ravendb.client.documents.operations.IMaintenanceOperation;
 import net.ravendb.client.http.IRaftCommand;
 import net.ravendb.client.http.RavenCommand;
 import net.ravendb.client.http.ServerNode;
-import net.ravendb.client.primitives.Reference;
 import net.ravendb.client.primitives.SharpEnum;
 import net.ravendb.client.serverwide.operations.ModifyOngoingTaskResult;
 import net.ravendb.client.util.RaftIdGenerator;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.http.client.methods.HttpPost;
-import org.apache.http.client.methods.HttpRequestBase;
+import org.apache.hc.client5.http.classic.methods.HttpPost;
+import org.apache.hc.client5.http.classic.methods.HttpUriRequestBase;
 
 import java.io.IOException;
 
@@ -60,17 +59,17 @@ public class ToggleOngoingTaskStateOperation implements IMaintenanceOperation<Mo
         }
 
         @Override
-        public HttpRequestBase createRequest(ServerNode node, Reference<String> url) {
-            url.value = node.getUrl() + "/databases/"
+        public HttpUriRequestBase createRequest(ServerNode node) {
+            String url = node.getUrl() + "/databases/"
                     + node.getDatabase() + "/admin/tasks/state?key="
                     + _taskId + "&type=" + SharpEnum.value(_type)
                     + "&disable=" + (_disable ? "true": "false");
 
             if (_taskName != null) {
-                url.value += "&taskName=" + urlEncode(_taskName);
+                url += "&taskName=" + urlEncode(_taskName);
             }
 
-            return new HttpPost();
+            return new HttpPost(url);
         }
 
         @Override

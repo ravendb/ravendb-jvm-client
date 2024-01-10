@@ -8,8 +8,8 @@ import net.ravendb.client.exceptions.documents.compilation.IndexCompilationExcep
 import net.ravendb.client.extensions.JsonExtensions;
 import net.ravendb.client.http.RequestExecutor;
 import org.apache.commons.io.IOUtils;
-import org.apache.http.HttpStatus;
-import org.apache.http.client.methods.CloseableHttpResponse;
+import org.apache.hc.client5.http.impl.classic.CloseableHttpResponse;
+import org.apache.hc.core5.http.HttpStatus;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -64,7 +64,7 @@ public class ExceptionDispatcher {
             ObjectNode json = (ObjectNode) JsonExtensions.getDefaultMapper().readTree(jsonText);
             ExceptionSchema schema = JsonExtensions.getDefaultMapper().convertValue(json, ExceptionSchema.class);
 
-            if (response.getStatusLine().getStatusCode() == HttpStatus.SC_CONFLICT) {
+            if (response.getCode() == HttpStatus.SC_CONFLICT) {
                 throwConflict(schema, json);
             }
 

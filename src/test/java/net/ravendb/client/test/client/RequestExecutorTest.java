@@ -10,10 +10,10 @@ import net.ravendb.client.http.RequestExecutor;
 import net.ravendb.client.infrastructure.DisabledOnPullRequest;
 import net.ravendb.client.infrastructure.entities.User;
 import net.ravendb.client.serverwide.DatabaseRecord;
-import org.apache.http.client.methods.CloseableHttpResponse;
-import org.apache.http.client.methods.HttpRequestBase;
-import org.apache.http.impl.client.CloseableHttpClient;
-import org.apache.http.impl.execchain.RequestAbortedException;
+import org.apache.hc.client5.http.classic.methods.HttpUriRequestBase;
+import org.apache.hc.client5.http.impl.classic.CloseableHttpClient;
+import org.apache.hc.client5.http.impl.classic.CloseableHttpResponse;
+import org.apache.hc.client5.http.impl.classic.RequestAbortedException;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
@@ -133,7 +133,7 @@ public class RequestExecutorTest extends ClusterTestBase {
         }
 
         @Override
-        public CloseableHttpResponse send(CloseableHttpClient client, HttpRequestBase request) throws IOException {
+        public CloseableHttpResponse send(CloseableHttpClient client, HttpUriRequestBase request) throws IOException {
             _timeToFail--;
             if (_timeToFail < 0) {
                 return super.send(client, request);

@@ -9,10 +9,9 @@ import net.ravendb.client.http.HttpCache;
 import net.ravendb.client.http.RavenCommand;
 import net.ravendb.client.http.ServerNode;
 import net.ravendb.client.json.ContentProviderHttpEntity;
-import net.ravendb.client.primitives.Reference;
-import org.apache.http.client.methods.HttpPost;
-import org.apache.http.client.methods.HttpRequestBase;
-import org.apache.http.entity.ContentType;
+import org.apache.hc.client5.http.classic.methods.HttpPost;
+import org.apache.hc.client5.http.classic.methods.HttpUriRequestBase;
+import org.apache.hc.core5.http.ContentType;
 
 import java.io.IOException;
 
@@ -66,15 +65,15 @@ public class EnforceRevisionsConfigurationOperation implements IOperation<Operat
         }
 
         @Override
-        public HttpRequestBase createRequest(ServerNode node, Reference<String> url) {
+        public HttpUriRequestBase createRequest(ServerNode node) {
             StringBuilder pathBuilder = new StringBuilder(node.getUrl())
                     .append("/databases/")
                     .append(node.getDatabase())
                     .append("/admin/revisions/config/enforce");
 
-            url.value = pathBuilder.toString();
+            String url = pathBuilder.toString();
 
-            HttpPost request = new HttpPost();
+            HttpPost request = new HttpPost(url);
             request.setEntity(new ContentProviderHttpEntity(outputStream -> {
                 try (JsonGenerator generator = createSafeJsonGenerator(outputStream)) {
                     generator.getCodec().writeValue(generator, _parameters);

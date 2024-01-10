@@ -37,12 +37,12 @@ import net.ravendb.client.util.ZstdCompressingEntity;
 import org.apache.commons.lang3.NotImplementedException;
 import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.http.HttpEntity;
-import org.apache.http.client.entity.GzipCompressingEntity;
-import org.apache.http.client.methods.CloseableHttpResponse;
-import org.apache.http.client.methods.HttpPost;
-import org.apache.http.client.methods.HttpRequestBase;
-import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.hc.client5.http.classic.methods.HttpPost;
+import org.apache.hc.client5.http.classic.methods.HttpUriRequestBase;
+import org.apache.hc.client5.http.entity.GzipCompressingEntity;
+import org.apache.hc.client5.http.impl.classic.CloseableHttpClient;
+import org.apache.hc.client5.http.impl.classic.CloseableHttpResponse;
+import org.apache.hc.core5.http.HttpEntity;
 
 import java.io.*;
 import java.lang.ref.WeakReference;
@@ -98,16 +98,16 @@ public class BulkInsertOperation extends BulkInsertOperationBase<Object> impleme
         }
 
         @Override
-        public HttpRequestBase createRequest(ServerNode node, Reference<String> url) {
+        public HttpUriRequestBase createRequest(ServerNode node) {
             _requestNodeTag = node.getClusterTag();
 
-            url.value = node.getUrl()
+            String url = node.getUrl()
                     + "/databases/"
                     + node.getDatabase()
                     + "/bulk_insert?id=" + _id
                     + "&skipOverwriteIfUnchanged=" + (_skipOverwriteIfUnchanged ? "true" : "false");
 
-            HttpPost message = new HttpPost();
+            HttpPost message = new HttpPost(url);
             message.setEntity(wrapEntity(_stream));
             return message;
         }
@@ -133,7 +133,7 @@ public class BulkInsertOperation extends BulkInsertOperationBase<Object> impleme
         }
 
         @Override
-        public CloseableHttpResponse send(CloseableHttpClient client, HttpRequestBase request) throws IOException {
+        public CloseableHttpResponse send(CloseableHttpClient client, HttpUriRequestBase request) throws IOException {
             try {
                 return super.send(client, request);
             } catch (Exception e) {

@@ -14,14 +14,14 @@ import net.ravendb.client.http.RavenCommand;
 import net.ravendb.client.http.ServerNode;
 import net.ravendb.client.json.ContentProviderHttpEntity;
 import net.ravendb.client.primitives.NetISO8601Utils;
-import net.ravendb.client.primitives.Reference;
 import net.ravendb.client.primitives.SharpEnum;
 import net.ravendb.client.util.UrlUtils;
 import org.apache.commons.lang3.ObjectUtils;
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.client.methods.HttpPost;
-import org.apache.http.client.methods.HttpRequestBase;
-import org.apache.http.entity.ContentType;
+import org.apache.hc.client5.http.classic.methods.HttpPost;
+import org.apache.hc.client5.http.classic.methods.HttpUriRequestBase;
+import org.apache.hc.client5.http.classic.methods.HttpGet;
+import org.apache.hc.core5.http.ContentType;
+import org.apache.hc.core5.http.HttpEntity;
 
 import java.io.IOException;
 import java.io.OutputStreamWriter;
@@ -134,7 +134,7 @@ public class GetDocumentsCommand extends RavenCommand<GetDocumentsResult> {
     }
 
     @Override
-    public HttpRequestBase createRequest(ServerNode node, Reference<String> url) {
+    public HttpUriRequestBase createRequest(ServerNode node) {
         StringBuilder pathBuilder = new StringBuilder(node.getUrl());
         pathBuilder.append("/databases/")
                 .append(node.getDatabase())
@@ -251,20 +251,24 @@ public class GetDocumentsCommand extends RavenCommand<GetDocumentsResult> {
             }
         }
 
-        HttpRequestBase request = new HttpGet();
 
         if (_id != null) {
             pathBuilder.append("&id=");
             pathBuilder.append(UrlUtils.escapeDataString(_id));
         } else if (_ids != null) {
-            request = prepareRequestWithMultipleIds(_conventions, pathBuilder, request, _ids);
+            HttpEntity httpEntity = prepareRequestWithMultipleIds(_conventions, pathBuilder, _ids);
+            if (httpEntity != null) {
+                HttpPost httpPost = new HttpPost(pathBuilder.toString());
+                httpPost.setEntity(httpEntity);
+                return httpPost;
+            }
         }
 
-        url.value = pathBuilder.toString();
-        return request;
+        String url = pathBuilder.toString();
+        return new HttpGet(url);
     }
 
-    public static HttpRequestBase prepareRequestWithMultipleIds(DocumentConventions conventions, StringBuilder pathBuilder, HttpRequestBase request, String[] ids) {
+    public static HttpEntity prepareRequestWithMultipleIds(DocumentConventions conventions, StringBuilder pathBuilder, String[] ids) {
         Set<String> uniqueIds = new LinkedHashSet<>();
         Collections.addAll(uniqueIds, ids);
 
@@ -284,9 +288,8 @@ public class GetDocumentsCommand extends RavenCommand<GetDocumentsResult> {
                                 ObjectUtils.firstNonNull(x, "")));
             });
 
-            return new HttpGet();
+            return null;
         } else {
-            HttpPost httpPost = new HttpPost();
 
             try {
                 String calculateHash = calculateHash(uniqueIds);
@@ -296,7 +299,7 @@ public class GetDocumentsCommand extends RavenCommand<GetDocumentsResult> {
                 throw new RuntimeException("Unable to compute query hash:" + e.getMessage(), e);
             }
 
-            httpPost.setEntity(new ContentProviderHttpEntity(outputStream -> {
+            return new ContentProviderHttpEntity(outputStream -> {
                 try (JsonGenerator generator = JsonExtensions.getDefaultMapper().createGenerator(new OutputStreamWriter(outputStream, StandardCharsets.UTF_8))) {
                     generator.writeStartObject();
                     generator.writeFieldName("Ids");
@@ -312,9 +315,7 @@ public class GetDocumentsCommand extends RavenCommand<GetDocumentsResult> {
                 } catch (IOException e) {
                     throw new RuntimeException(e);
                 }
-            }, ContentType.APPLICATION_JSON, conventions));
-
-            return httpPost;
+            }, ContentType.APPLICATION_JSON, conventions);
         }
     }
 

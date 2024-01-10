@@ -1,10 +1,9 @@
 package net.ravendb.client.documents.commands;
 
 import net.ravendb.client.http.*;
-import net.ravendb.client.primitives.Reference;
-import org.apache.http.client.methods.CloseableHttpResponse;
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.client.methods.HttpRequestBase;
+import org.apache.hc.client5.http.classic.methods.HttpUriRequestBase;
+import org.apache.hc.client5.http.classic.methods.HttpGet;
+import org.apache.hc.client5.http.impl.classic.CloseableHttpResponse;
 
 import java.io.IOException;
 
@@ -23,11 +22,10 @@ public class StreamCommand extends RavenCommand<StreamResultResponse> {
     }
 
     @Override
-    public HttpRequestBase createRequest(ServerNode node, Reference<String> url) {
-        HttpGet request = new HttpGet();
+    public HttpUriRequestBase createRequest(ServerNode node) {
+        String url = node.getUrl() + "/databases/" + node.getDatabase() + "/" + _url;
 
-        url.value = node.getUrl() + "/databases/" + node.getDatabase() + "/" + _url;
-        return request;
+        return new HttpGet(url);
     }
 
     @Override

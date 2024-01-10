@@ -10,21 +10,20 @@ import net.ravendb.client.exceptions.RavenException;
 import net.ravendb.client.extensions.JsonExtensions;
 import net.ravendb.client.http.*;
 import net.ravendb.client.json.ContentProviderHttpEntity;
-import net.ravendb.client.primitives.Reference;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOCase;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.io.filefilter.SuffixFileFilter;
 import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.http.client.methods.CloseableHttpResponse;
-import org.apache.http.client.methods.HttpPost;
-import org.apache.http.client.methods.HttpRequestBase;
-import org.apache.http.entity.ContentType;
-import org.apache.http.entity.mime.FormBodyPart;
-import org.apache.http.entity.mime.FormBodyPartBuilder;
-import org.apache.http.entity.mime.MultipartEntityBuilder;
-import org.apache.http.entity.mime.content.InputStreamBody;
+import org.apache.hc.client5.http.classic.methods.HttpPost;
+import org.apache.hc.client5.http.classic.methods.HttpUriRequestBase;
+import org.apache.hc.client5.http.entity.mime.FormBodyPart;
+import org.apache.hc.client5.http.entity.mime.FormBodyPartBuilder;
+import org.apache.hc.client5.http.entity.mime.InputStreamBody;
+import org.apache.hc.client5.http.entity.mime.MultipartEntityBuilder;
+import org.apache.hc.client5.http.impl.classic.CloseableHttpResponse;
+import org.apache.hc.core5.http.ContentType;
 
 import java.io.*;
 import java.util.EnumSet;
@@ -214,10 +213,10 @@ public class DatabaseSmuggler {
         }
 
         @Override
-        public HttpRequestBase createRequest(ServerNode node, Reference<String> url) {
-            url.value = node.getUrl() + "/databases/" + node.getDatabase() + "/smuggler/export?operationId=" + _operationId;
+        public HttpUriRequestBase createRequest(ServerNode node) {
+            String url = node.getUrl() + "/databases/" + node.getDatabase() + "/smuggler/export?operationId=" + _operationId;
 
-            HttpPost request = new HttpPost();
+            HttpPost request = new HttpPost(url);
             ContentProviderHttpEntity entity = new ContentProviderHttpEntity(outputStream -> {
                 try (JsonGenerator generator = createSafeJsonGenerator(outputStream)) {
                     generator.getCodec().writeValue(generator, _options);
@@ -268,8 +267,8 @@ public class DatabaseSmuggler {
         }
 
         @Override
-        public HttpRequestBase createRequest(ServerNode node, Reference<String> url) {
-            url.value = node.getUrl() + "/databases/" + node.getDatabase() + "/smuggler/import?operationId=" + _operationId;
+        public HttpUriRequestBase createRequest(ServerNode node) {
+            String url = node.getUrl() + "/databases/" + node.getDatabase() + "/smuggler/import?operationId=" + _operationId;
 
             try {
                 MultipartEntityBuilder entityBuilder = MultipartEntityBuilder.create();
@@ -280,7 +279,7 @@ public class DatabaseSmuggler {
                         .build();
                 entityBuilder.addPart(part);
 
-                HttpPost request = new HttpPost();
+                HttpPost request = new HttpPost(url);
                 request.setEntity(entityBuilder.build());
                 return request;
             } catch (IOException e) {

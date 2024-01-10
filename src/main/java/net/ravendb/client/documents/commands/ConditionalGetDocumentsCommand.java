@@ -7,10 +7,10 @@ import net.ravendb.client.http.RavenCommand;
 import net.ravendb.client.http.ResponseDisposeHandling;
 import net.ravendb.client.http.ServerNode;
 import net.ravendb.client.primitives.Reference;
-import org.apache.http.HttpStatus;
-import org.apache.http.client.methods.CloseableHttpResponse;
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.client.methods.HttpRequestBase;
+import org.apache.hc.client5.http.classic.methods.HttpUriRequestBase;
+import org.apache.hc.client5.http.classic.methods.HttpGet;
+import org.apache.hc.client5.http.impl.classic.CloseableHttpResponse;
+import org.apache.hc.core5.http.HttpStatus;
 
 import java.io.IOException;
 
@@ -27,10 +27,10 @@ public class ConditionalGetDocumentsCommand extends RavenCommand<ConditionalGetD
     }
 
     @Override
-    public HttpRequestBase createRequest(ServerNode node, Reference<String> url) {
-        url.value = node.getUrl() + "/databases/" + node.getDatabase() + "/docs?id=" + urlEncode(_id);
+    public HttpUriRequestBase createRequest(ServerNode node) {
+        String url = node.getUrl() + "/databases/" + node.getDatabase() + "/docs?id=" + urlEncode(_id);
 
-        HttpGet request = new HttpGet();
+        HttpGet request = new HttpGet(url);
         request.setHeader(Constants.Headers.IF_NONE_MATCH, '"' + _changeVector + '"');
 
         return request;
@@ -48,7 +48,7 @@ public class ConditionalGetDocumentsCommand extends RavenCommand<ConditionalGetD
 
     @Override
     public ResponseDisposeHandling processResponse(HttpCache cache, CloseableHttpResponse response, String url) {
-        if (response.getStatusLine().getStatusCode() == HttpStatus.SC_NOT_MODIFIED) {
+        if (response.getCode() == HttpStatus.SC_NOT_MODIFIED) {
             return ResponseDisposeHandling.AUTOMATIC;
         }
 

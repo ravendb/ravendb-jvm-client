@@ -11,8 +11,8 @@ import net.ravendb.client.primitives.Reference;
 import net.ravendb.client.util.UrlUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.http.client.methods.HttpPut;
-import org.apache.http.client.methods.HttpRequestBase;
+import org.apache.hc.client5.http.classic.methods.HttpPut;
+import org.apache.hc.client5.http.classic.methods.HttpUriRequestBase;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -73,14 +73,14 @@ public class PutAttachmentOperation implements IOperation<AttachmentDetails> {
         }
 
         @Override
-        public HttpRequestBase createRequest(ServerNode node, Reference<String> url) {
-            url.value = node.getUrl() + "/databases/" + node.getDatabase() + "/attachments?id=" + UrlUtils.escapeDataString(_documentId) + "&name=" + UrlUtils.escapeDataString(_name);
+        public HttpUriRequestBase createRequest(ServerNode node) {
+            String url = node.getUrl() + "/databases/" + node.getDatabase() + "/attachments?id=" + UrlUtils.escapeDataString(_documentId) + "&name=" + UrlUtils.escapeDataString(_name);
 
             if (StringUtils.isNotEmpty(_contentType)) {
-                url.value += "&contentType=" + UrlUtils.escapeDataString(_contentType);
+                url += "&contentType=" + UrlUtils.escapeDataString(_contentType);
             }
 
-            HttpPut request = new HttpPut();
+            HttpPut request = new HttpPut(url);
 
             request.setEntity(new ContentProviderHttpEntity(outputStream -> {
                 try {

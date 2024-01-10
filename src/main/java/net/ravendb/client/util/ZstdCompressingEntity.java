@@ -1,12 +1,10 @@
 package net.ravendb.client.util;
 
 import com.github.luben.zstd.ZstdOutputStream;
-import org.apache.http.Header;
-import org.apache.http.HttpEntity;
-import org.apache.http.entity.HttpEntityWrapper;
-import org.apache.http.message.BasicHeader;
-import org.apache.http.protocol.HTTP;
-import org.apache.http.util.Args;
+import org.apache.hc.core5.http.Header;
+import org.apache.hc.core5.http.HttpEntity;
+import org.apache.hc.core5.http.io.entity.HttpEntityWrapper;
+import org.apache.hc.core5.http.message.BasicHeader;
 
 import java.io.IOException;
 import java.io.InputStream;

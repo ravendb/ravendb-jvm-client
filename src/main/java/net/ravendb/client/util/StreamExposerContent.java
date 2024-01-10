@@ -1,8 +1,8 @@
 package net.ravendb.client.util;
 
 import net.ravendb.client.primitives.ExceptionsUtils;
-import org.apache.http.entity.AbstractHttpEntity;
-import org.apache.http.entity.ContentType;
+import org.apache.hc.core5.http.ContentType;
+import org.apache.hc.core5.http.io.entity.AbstractHttpEntity;
 
 import java.io.IOException;
 import java.io.InputStream;

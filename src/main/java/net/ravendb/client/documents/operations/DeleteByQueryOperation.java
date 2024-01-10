@@ -10,12 +10,11 @@ import net.ravendb.client.http.HttpCache;
 import net.ravendb.client.http.RavenCommand;
 import net.ravendb.client.http.ServerNode;
 import net.ravendb.client.json.ContentProviderHttpEntity;
-import net.ravendb.client.primitives.HttpDeleteWithEntity;
-import net.ravendb.client.primitives.Reference;
 import net.ravendb.client.util.TimeUtils;
 import org.apache.commons.lang3.ObjectUtils;
-import org.apache.http.client.methods.HttpRequestBase;
-import org.apache.http.entity.ContentType;
+import org.apache.hc.client5.http.classic.methods.HttpDelete;
+import org.apache.hc.client5.http.classic.methods.HttpUriRequestBase;
+import org.apache.hc.core5.http.ContentType;
 
 import java.io.IOException;
 
@@ -58,7 +57,7 @@ public class DeleteByQueryOperation implements IOperation<OperationIdResult> {
         }
 
         @Override
-        public HttpRequestBase createRequest(ServerNode node, Reference<String> url) {
+        public HttpUriRequestBase createRequest(ServerNode node) {
             StringBuilder path = new StringBuilder(node.getUrl())
                     .append("/databases/")
                     .append(node.getDatabase())
@@ -80,7 +79,7 @@ public class DeleteByQueryOperation implements IOperation<OperationIdResult> {
                         .append(TimeUtils.durationToTimeSpan(_options.getStaleTimeout()));
             }
 
-            HttpDeleteWithEntity request = new HttpDeleteWithEntity();
+            HttpDelete request = new HttpDelete(path.toString());
             request.setEntity(new ContentProviderHttpEntity(outputStream -> {
                 try (JsonGenerator generator = createSafeJsonGenerator(outputStream)) {
                     JsonExtensions.writeIndexQuery(generator, _conventions, _queryToDelete);
@@ -89,7 +88,6 @@ public class DeleteByQueryOperation implements IOperation<OperationIdResult> {
                 }
             }, ContentType.APPLICATION_JSON, _conventions));
 
-            url.value = path.toString();
             return request;
         }
 

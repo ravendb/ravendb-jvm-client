@@ -7,12 +7,11 @@ import net.ravendb.client.http.IRaftCommand;
 import net.ravendb.client.http.ServerNode;
 import net.ravendb.client.http.VoidRavenCommand;
 import net.ravendb.client.json.ContentProviderHttpEntity;
-import net.ravendb.client.primitives.HttpResetWithEntity;
-import net.ravendb.client.primitives.Reference;
+import net.ravendb.client.primitives.HttpReset;
 import net.ravendb.client.util.RaftIdGenerator;
 import net.ravendb.client.util.UrlUtils;
-import org.apache.http.client.methods.HttpRequestBase;
-import org.apache.http.entity.ContentType;
+import org.apache.hc.client5.http.classic.methods.HttpUriRequestBase;
+import org.apache.hc.core5.http.ContentType;
 
 import java.io.IOException;
 
@@ -56,7 +55,7 @@ public class ResetEtlOperation implements IVoidMaintenanceOperation {
         }
 
         @Override
-        public HttpRequestBase createRequest(ServerNode node, Reference<String> url) {
+        public HttpUriRequestBase createRequest(ServerNode node) {
             StringBuilder path = new StringBuilder(node.getUrl());
 
             path
@@ -67,9 +66,9 @@ public class ResetEtlOperation implements IVoidMaintenanceOperation {
                     .append("&transformationName=")
                     .append(UrlUtils.escapeDataString(_transformationName));
 
-            url.value = path.toString();
+            String url = path.toString();
 
-            HttpResetWithEntity request = new HttpResetWithEntity();
+            HttpReset request = new HttpReset(url);
             request.setEntity(new ContentProviderHttpEntity(outputStream -> {
                 try (JsonGenerator generator = createSafeJsonGenerator(outputStream)) {
                     generator.writeStartObject();

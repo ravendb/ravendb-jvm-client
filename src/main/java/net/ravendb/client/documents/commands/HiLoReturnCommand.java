@@ -2,9 +2,8 @@ package net.ravendb.client.documents.commands;
 
 import net.ravendb.client.http.ServerNode;
 import net.ravendb.client.http.VoidRavenCommand;
-import net.ravendb.client.primitives.Reference;
-import org.apache.http.client.methods.HttpPut;
-import org.apache.http.client.methods.HttpRequestBase;
+import org.apache.hc.client5.http.classic.methods.HttpPut;
+import org.apache.hc.client5.http.classic.methods.HttpUriRequestBase;
 
 public class HiLoReturnCommand extends VoidRavenCommand {
 
@@ -31,9 +30,11 @@ public class HiLoReturnCommand extends VoidRavenCommand {
     }
 
     @Override
-    public HttpRequestBase createRequest(ServerNode node, Reference<String> url) {
-        url.value = node.getUrl() + "/databases/" + node.getDatabase() + "/hilo/return?tag=" + _tag + "&end=" + _end + "&last=" + _last;
+    public HttpUriRequestBase createRequest(ServerNode node) {
+        String url = node.getUrl() + "/databases/"
+                + node.getDatabase() + "/hilo/return?tag="
+                + _tag + "&end=" + _end + "&last=" + _last;
 
-        return new HttpPut();
+        return new HttpPut(url);
     }
 }

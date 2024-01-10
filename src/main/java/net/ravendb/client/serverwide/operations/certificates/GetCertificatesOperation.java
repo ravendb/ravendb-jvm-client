@@ -3,10 +3,9 @@ package net.ravendb.client.serverwide.operations.certificates;
 import net.ravendb.client.documents.conventions.DocumentConventions;
 import net.ravendb.client.http.RavenCommand;
 import net.ravendb.client.http.ServerNode;
-import net.ravendb.client.primitives.Reference;
 import net.ravendb.client.serverwide.operations.IServerOperation;
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.client.methods.HttpRequestBase;
+import org.apache.hc.client5.http.classic.methods.HttpGet;
+import org.apache.hc.client5.http.classic.methods.HttpUriRequestBase;
 
 import java.io.IOException;
 
@@ -42,10 +41,9 @@ public class GetCertificatesOperation implements IServerOperation<CertificateDef
         }
 
         @Override
-        public HttpRequestBase createRequest(ServerNode node, Reference<String> url) {
-            url.value = node.getUrl() + "/admin/certificates?start=" + _start + "&pageSize=" + _pageSize;
-
-            return new HttpGet();
+        public HttpUriRequestBase createRequest(ServerNode node) {
+            String url = node.getUrl() + "/admin/certificates?start=" + _start + "&pageSize=" + _pageSize;
+            return new HttpGet(url);
         }
 
         @Override

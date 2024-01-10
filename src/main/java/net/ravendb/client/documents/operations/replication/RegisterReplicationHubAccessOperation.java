@@ -9,15 +9,14 @@ import net.ravendb.client.http.RavenCommandResponseType;
 import net.ravendb.client.http.ServerNode;
 import net.ravendb.client.http.VoidRavenCommand;
 import net.ravendb.client.json.ContentProviderHttpEntity;
-import net.ravendb.client.primitives.Reference;
 import net.ravendb.client.util.RaftIdGenerator;
 import net.ravendb.client.util.UrlUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.http.HttpStatus;
-import org.apache.http.client.methods.CloseableHttpResponse;
-import org.apache.http.client.methods.HttpPut;
-import org.apache.http.client.methods.HttpRequestBase;
-import org.apache.http.entity.ContentType;
+import org.apache.hc.client5.http.classic.methods.HttpPut;
+import org.apache.hc.client5.http.classic.methods.HttpUriRequestBase;
+import org.apache.hc.client5.http.impl.classic.CloseableHttpResponse;
+import org.apache.hc.core5.http.ContentType;
+import org.apache.hc.core5.http.HttpStatus;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -66,10 +65,10 @@ public class RegisterReplicationHubAccessOperation implements IVoidMaintenanceOp
         }
 
         @Override
-        public HttpRequestBase createRequest(ServerNode node, Reference<String> url) {
-            url.value = node.getUrl() + "/databases/" + node.getDatabase() + "/admin/tasks/pull-replication/hub/access?name=" + UrlUtils.escapeDataString(_hubName);
+        public HttpUriRequestBase createRequest(ServerNode node) {
+            String url = node.getUrl() + "/databases/" + node.getDatabase() + "/admin/tasks/pull-replication/hub/access?name=" + UrlUtils.escapeDataString(_hubName);
 
-            HttpPut request = new HttpPut();
+            HttpPut request = new HttpPut(url);
             request.setEntity(new ContentProviderHttpEntity(outputStream -> {
                 try (JsonGenerator generator = createSafeJsonGenerator(outputStream)) {
                     generator.getCodec().writeValue(generator, _access);
@@ -84,8 +83,9 @@ public class RegisterReplicationHubAccessOperation implements IVoidMaintenanceOp
         @Override
         public void setResponseRaw(CloseableHttpResponse response, InputStream stream) {
             try (CloseableHttpResponse httpResponse = response) {
-                if (response.getStatusLine().getStatusCode() == HttpStatus.SC_NOT_FOUND) {
-                    throw new ReplicationHubNotFoundException("The replication hub " + _hubName + " was not found on the database. Did you forget to define it first?");
+                if (response.getCode() == HttpStatus.SC_NOT_FOUND) {
+                    throw new ReplicationHubNotFoundException("The replication hub " + _hubName
+                            + " was not found on the database. Did you forget to define it first?");
                 }
             } catch (IOException e) {
                 throwInvalidResponse(e);

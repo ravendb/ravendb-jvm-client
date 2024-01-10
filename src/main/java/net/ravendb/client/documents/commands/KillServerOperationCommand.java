@@ -2,9 +2,8 @@ package net.ravendb.client.documents.commands;
 
 import net.ravendb.client.http.ServerNode;
 import net.ravendb.client.http.VoidRavenCommand;
-import net.ravendb.client.primitives.Reference;
-import org.apache.http.client.methods.HttpPost;
-import org.apache.http.client.methods.HttpRequestBase;
+import org.apache.hc.client5.http.classic.methods.HttpPost;
+import org.apache.hc.client5.http.classic.methods.HttpUriRequestBase;
 
 public class KillServerOperationCommand extends VoidRavenCommand {
     private final long _id;
@@ -20,9 +19,9 @@ public class KillServerOperationCommand extends VoidRavenCommand {
     }
 
     @Override
-    public HttpRequestBase createRequest(ServerNode node, Reference<String> url) {
-        url.value = node.getUrl() + "/admin/operations/kill?id=" + _id;
+    public HttpUriRequestBase createRequest(ServerNode node) {
+        String url = node.getUrl() + "/admin/operations/kill?id=" + _id;
 
-        return new HttpPost();
+        return new HttpPost(url);
     }
 }

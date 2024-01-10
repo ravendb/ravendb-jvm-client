@@ -3,11 +3,10 @@ package net.ravendb.client.serverwide.commands.cluster;
 import net.ravendb.client.http.IRaftCommand;
 import net.ravendb.client.http.ServerNode;
 import net.ravendb.client.http.VoidRavenCommand;
-import net.ravendb.client.primitives.Reference;
 import net.ravendb.client.util.RaftIdGenerator;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.http.client.methods.HttpPut;
-import org.apache.http.client.methods.HttpRequestBase;
+import org.apache.hc.client5.http.classic.methods.HttpPut;
+import org.apache.hc.client5.http.classic.methods.HttpUriRequestBase;
 
 public class AddClusterNodeCommand extends VoidRavenCommand implements IRaftCommand {
 
@@ -35,14 +34,14 @@ public class AddClusterNodeCommand extends VoidRavenCommand implements IRaftComm
     }
 
     @Override
-    public HttpRequestBase createRequest(ServerNode node, Reference<String> url) {
-        url.value = node.getUrl() + "/admin/cluster/node?url=" + urlEncode(_url) + "&watcher=" + _watcher;
+    public HttpUriRequestBase createRequest(ServerNode node) {
+        String url = node.getUrl() + "/admin/cluster/node?url=" + urlEncode(_url) + "&watcher=" + _watcher;
 
         if (StringUtils.isNotBlank(_tag)) {
-            url.value += "&tag=" + _tag;
+            url += "&tag=" + _tag;
         }
 
-        return new HttpPut();
+        return new HttpPut(url);
     }
 
     @Override

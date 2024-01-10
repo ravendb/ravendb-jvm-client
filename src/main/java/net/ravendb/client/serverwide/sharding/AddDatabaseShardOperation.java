@@ -4,12 +4,11 @@ import net.ravendb.client.documents.conventions.DocumentConventions;
 import net.ravendb.client.http.IRaftCommand;
 import net.ravendb.client.http.RavenCommand;
 import net.ravendb.client.http.ServerNode;
-import net.ravendb.client.primitives.Reference;
 import net.ravendb.client.serverwide.DatabaseTopology;
 import net.ravendb.client.serverwide.operations.IServerOperation;
 import net.ravendb.client.util.RaftIdGenerator;
-import org.apache.http.client.methods.HttpPut;
-import org.apache.http.client.methods.HttpRequestBase;
+import org.apache.hc.client5.http.classic.methods.HttpPut;
+import org.apache.hc.client5.http.classic.methods.HttpUriRequestBase;
 
 import java.io.IOException;
 
@@ -72,7 +71,7 @@ public class AddDatabaseShardOperation implements IServerOperation<AddDatabaseSh
         }
 
         @Override
-        public HttpRequestBase createRequest(ServerNode node, Reference<String> url) {
+        public HttpUriRequestBase createRequest(ServerNode node) {
             StringBuilder sb = new StringBuilder(node.getUrl())
                     .append("/admin/databases/shard?name=")
                     .append(urlEncode(_databaseName));
@@ -97,8 +96,8 @@ public class AddDatabaseShardOperation implements IServerOperation<AddDatabaseSh
                 }
             }
 
-            url.value = sb.toString();
-            return new HttpPut();
+            String url = sb.toString();
+            return new HttpPut(url);
         }
 
         @Override

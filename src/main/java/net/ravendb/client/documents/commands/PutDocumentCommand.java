@@ -7,10 +7,9 @@ import net.ravendb.client.documents.conventions.DocumentConventions;
 import net.ravendb.client.http.RavenCommand;
 import net.ravendb.client.http.ServerNode;
 import net.ravendb.client.json.ContentProviderHttpEntity;
-import net.ravendb.client.primitives.Reference;
-import org.apache.http.client.methods.HttpPut;
-import org.apache.http.client.methods.HttpRequestBase;
-import org.apache.http.entity.ContentType;
+import org.apache.hc.client5.http.classic.methods.HttpPut;
+import org.apache.hc.client5.http.classic.methods.HttpUriRequestBase;
+import org.apache.hc.core5.http.ContentType;
 
 import java.io.IOException;
 
@@ -38,10 +37,10 @@ public class PutDocumentCommand extends RavenCommand<PutResult> {
     }
 
     @Override
-    public HttpRequestBase createRequest(ServerNode node, Reference<String> url) {
-        url.value = node.getUrl() + "/databases/" + node.getDatabase() + "/docs?id=" + urlEncode(_id);
+    public HttpUriRequestBase createRequest(ServerNode node) {
+        String url = node.getUrl() + "/databases/" + node.getDatabase() + "/docs?id=" + urlEncode(_id);
 
-        HttpPut request = new HttpPut();
+        HttpPut request = new HttpPut(url);
 
         request.setEntity(new ContentProviderHttpEntity(outputStream -> {
             try (JsonGenerator generator = createSafeJsonGenerator(outputStream)) {

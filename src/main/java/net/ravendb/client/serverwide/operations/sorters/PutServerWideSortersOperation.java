@@ -8,12 +8,11 @@ import net.ravendb.client.http.IRaftCommand;
 import net.ravendb.client.http.ServerNode;
 import net.ravendb.client.http.VoidRavenCommand;
 import net.ravendb.client.json.ContentProviderHttpEntity;
-import net.ravendb.client.primitives.Reference;
 import net.ravendb.client.serverwide.operations.IVoidServerOperation;
 import net.ravendb.client.util.RaftIdGenerator;
-import org.apache.http.client.methods.HttpPut;
-import org.apache.http.client.methods.HttpRequestBase;
-import org.apache.http.entity.ContentType;
+import org.apache.hc.client5.http.classic.methods.HttpPut;
+import org.apache.hc.client5.http.classic.methods.HttpUriRequestBase;
+import org.apache.hc.core5.http.ContentType;
 
 import java.io.IOException;
 
@@ -59,10 +58,10 @@ public class PutServerWideSortersOperation implements IVoidServerOperation {
         }
 
         @Override
-        public HttpRequestBase createRequest(ServerNode node, Reference<String> url) {
-            url.value = node.getUrl() + "/admin/sorters";
+        public HttpUriRequestBase createRequest(ServerNode node) {
+            String url = node.getUrl() + "/admin/sorters";
 
-            HttpPut request = new HttpPut();
+            HttpPut request = new HttpPut(url);
             request.setEntity(new ContentProviderHttpEntity(outputStream -> {
                 try (JsonGenerator generator = createSafeJsonGenerator(outputStream)) {
                     generator.writeStartObject();

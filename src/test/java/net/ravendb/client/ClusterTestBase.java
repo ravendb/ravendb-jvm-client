@@ -22,9 +22,9 @@ import net.ravendb.client.serverwide.operations.DatabasePutResult;
 import net.ravendb.client.serverwide.operations.GetDatabaseRecordOperation;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.ObjectUtils;
-import org.apache.http.client.methods.CloseableHttpResponse;
-import org.apache.http.client.methods.HttpRequestBase;
-import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.hc.client5.http.classic.methods.HttpUriRequestBase;
+import org.apache.hc.client5.http.impl.classic.CloseableHttpClient;
+import org.apache.hc.client5.http.impl.classic.CloseableHttpResponse;
 
 import java.io.Closeable;
 import java.net.URI;
@@ -160,7 +160,7 @@ public abstract class ClusterTestBase extends RavenTestDriver implements CleanCl
             Reference<String> urlRef = new Reference<>();
             ServerNode serverNode = new ServerNode();
             serverNode.setUrl(targetNode.getUrl());
-            HttpRequestBase request = command.createRequest(serverNode, urlRef);
+            HttpUriRequestBase request = command.createRequest(serverNode, urlRef);
             request.setURI(new URI(urlRef.value));
 
             try (DocumentStore store = new DocumentStore(targetNode.url, "_")) {

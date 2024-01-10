@@ -14,11 +14,11 @@ import net.ravendb.client.infrastructure.samples.User;
 import net.ravendb.client.primitives.CleanCloseable;
 import net.ravendb.client.test.client.bulkInsert.BulkInsertsTest;
 import org.apache.commons.io.IOUtils;
-import org.apache.http.Header;
-import org.apache.http.HttpRequest;
-import org.apache.http.HttpRequestInterceptor;
-import org.apache.http.HttpResponseInterceptor;
-import org.apache.http.client.protocol.HttpClientContext;
+import org.apache.hc.client5.http.protocol.HttpClientContext;
+import org.apache.hc.core5.http.Header;
+import org.apache.hc.core5.http.HttpRequest;
+import org.apache.hc.core5.http.HttpRequestInterceptor;
+import org.apache.hc.core5.http.HttpResponseInterceptor;
 import org.junit.jupiter.api.*;
 
 import java.io.ByteArrayInputStream;
@@ -42,7 +42,7 @@ public class RequestExecutorCompressionTest extends RemoteTestBase {
         requestInterceptor = (request, context) -> {
             if (requestLogList != null) {
 
-                if (request.getRequestLine().getUri().contains("/topology") || request.getRequestLine().getUri().contains("/node-info")) {
+                if (request.getRequestUri().contains("/topology") || request.getRequestUri().contains("/node-info")) {
                     // ignore topology updates
                     return;
                 }
@@ -51,8 +51,8 @@ public class RequestExecutorCompressionTest extends RemoteTestBase {
                 Header contentEncoding = request.getFirstHeader(Constants.Headers.CONTENT_ENCODING);
 
                 requestLogList.add(new LoggedRequest(
-                        request.getRequestLine().getMethod(),
-                        request.getRequestLine().getUri(),
+                        request.getMethod(),
+                        request.getRequestUri(),
                         acceptEncoding != null ? acceptEncoding.getValue() : null,
                         contentEncoding != null ? contentEncoding.getValue() : null
                 ));

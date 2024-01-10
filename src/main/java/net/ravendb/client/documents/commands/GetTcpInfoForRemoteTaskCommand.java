@@ -2,10 +2,9 @@ package net.ravendb.client.documents.commands;
 
 import net.ravendb.client.http.RavenCommand;
 import net.ravendb.client.http.ServerNode;
-import net.ravendb.client.primitives.Reference;
 import net.ravendb.client.serverwide.commands.TcpConnectionInfo;
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.client.methods.HttpRequestBase;
+import org.apache.hc.client5.http.classic.methods.HttpUriRequestBase;
+import org.apache.hc.client5.http.classic.methods.HttpGet;
 
 import java.io.IOException;
 import java.time.Duration;
@@ -15,7 +14,7 @@ public class GetTcpInfoForRemoteTaskCommand extends RavenCommand<TcpConnectionIn
     private final String _remoteDatabase;
     private final String _remoteTask;
     private final String _tag;
-    private boolean _verifyDatabase;
+    private final boolean _verifyDatabase;
     private ServerNode _requestedNode;
 
     public GetTcpInfoForRemoteTaskCommand(String tag, String remoteDatabase, String remoteTask) {
@@ -42,19 +41,19 @@ public class GetTcpInfoForRemoteTaskCommand extends RavenCommand<TcpConnectionIn
     }
 
     @Override
-    public HttpRequestBase createRequest(ServerNode node, Reference<String> url) {
-        url.value = node.getUrl() + "/info/remote-task/tcp?" +
+    public HttpUriRequestBase createRequest(ServerNode node) {
+        String url = node.getUrl() + "/info/remote-task/tcp?" +
                 "database=" + urlEncode(_remoteDatabase) +
                 "&remote-task=" + urlEncode(_remoteTask) +
                 "&tag=" + urlEncode(_tag);
 
         if (_verifyDatabase) {
-            url.value += "&verify-database=true";
+            url += "&verify-database=true";
         }
 
         _requestedNode = node;
 
-        return new HttpGet();
+        return new HttpGet(url);
     }
 
     @Override

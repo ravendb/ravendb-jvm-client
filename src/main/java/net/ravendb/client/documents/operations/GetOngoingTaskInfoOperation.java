@@ -4,12 +4,11 @@ import net.ravendb.client.documents.conventions.DocumentConventions;
 import net.ravendb.client.documents.operations.ongoingTasks.*;
 import net.ravendb.client.http.RavenCommand;
 import net.ravendb.client.http.ServerNode;
-import net.ravendb.client.primitives.Reference;
 import net.ravendb.client.primitives.SharpEnum;
 import net.ravendb.client.util.UrlUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.client.methods.HttpRequestBase;
+import org.apache.hc.client5.http.classic.methods.HttpUriRequestBase;
+import org.apache.hc.client5.http.classic.methods.HttpGet;
 
 import java.io.IOException;
 
@@ -72,12 +71,12 @@ public class GetOngoingTaskInfoOperation implements IMaintenanceOperation<Ongoin
         }
 
         @Override
-        public HttpRequestBase createRequest(ServerNode node, Reference<String> url) {
-            url.value = _taskName != null ?
+        public HttpUriRequestBase createRequest(ServerNode node) {
+            String url = _taskName != null ?
                     node.getUrl() + "/databases/" + node.getDatabase() + "/task?taskName=" + UrlUtils.escapeDataString(_taskName) + "&type=" + SharpEnum.value(_type) :
                     node.getUrl() + "/databases/" + node.getDatabase() + "/task?key=" + _taskId + "&type=" + SharpEnum.value(_type);
 
-            return new HttpGet();
+            return new HttpGet(url);
         }
 
         @Override

@@ -5,9 +5,8 @@ import net.ravendb.client.documents.conventions.DocumentConventions;
 import net.ravendb.client.documents.operations.IMaintenanceOperation;
 import net.ravendb.client.http.RavenCommand;
 import net.ravendb.client.http.ServerNode;
-import net.ravendb.client.primitives.Reference;
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.client.methods.HttpRequestBase;
+import org.apache.hc.client5.http.classic.methods.HttpGet;
+import org.apache.hc.client5.http.classic.methods.HttpUriRequestBase;
 
 import java.io.IOException;
 import java.util.Map;
@@ -32,10 +31,10 @@ public class GetIdentitiesOperation implements IMaintenanceOperation<Map<String,
         }
 
         @Override
-        public HttpRequestBase createRequest(ServerNode node, Reference<String> url) {
-            url.value = node.getUrl() + "/databases/" + node.getDatabase() + "/debug/identities";
+        public HttpUriRequestBase createRequest(ServerNode node) {
+            String url = node.getUrl() + "/databases/" + node.getDatabase() + "/debug/identities";
 
-            return new HttpGet();
+            return new HttpGet(url);
         }
 
         @Override

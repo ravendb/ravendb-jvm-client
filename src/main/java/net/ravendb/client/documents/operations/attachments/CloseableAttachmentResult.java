@@ -1,7 +1,7 @@
 package net.ravendb.client.documents.operations.attachments;
 
 import org.apache.commons.io.IOUtils;
-import org.apache.http.client.methods.CloseableHttpResponse;
+import org.apache.hc.client5.http.impl.classic.CloseableHttpResponse;
 
 import java.io.IOException;
 import java.io.InputStream;

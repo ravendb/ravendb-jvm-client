@@ -4,12 +4,11 @@ import net.ravendb.client.documents.conventions.DocumentConventions;
 import net.ravendb.client.http.IRaftCommand;
 import net.ravendb.client.http.RavenCommand;
 import net.ravendb.client.http.ServerNode;
-import net.ravendb.client.primitives.Reference;
 import net.ravendb.client.serverwide.operations.IServerOperation;
 import net.ravendb.client.util.RaftIdGenerator;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.http.client.methods.HttpDelete;
-import org.apache.http.client.methods.HttpRequestBase;
+import org.apache.hc.client5.http.classic.methods.HttpDelete;
+import org.apache.hc.client5.http.classic.methods.HttpUriRequestBase;
 
 import java.io.IOException;
 
@@ -46,10 +45,10 @@ public class RemoveNodeFromOrchestratorTopologyOperation implements IServerOpera
         }
 
         @Override
-        public HttpRequestBase createRequest(ServerNode node, Reference<String> url) {
-            url.value = node.getUrl() + "/admin/databases/orchestrator?name=" + urlEncode(_databaseName) + "&node=" + urlEncode(_node);
+        public HttpUriRequestBase createRequest(ServerNode node) {
+            String url = node.getUrl() + "/admin/databases/orchestrator?name=" + urlEncode(_databaseName) + "&node=" + urlEncode(_node);
 
-            return new HttpDelete();
+            return new HttpDelete(url);
         }
 
         @Override

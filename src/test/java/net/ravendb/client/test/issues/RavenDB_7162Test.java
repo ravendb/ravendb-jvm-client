@@ -10,9 +10,8 @@ import net.ravendb.client.http.ServerNode;
 import net.ravendb.client.http.VoidRavenCommand;
 import net.ravendb.client.infrastructure.entities.Person;
 import net.ravendb.client.primitives.CleanCloseable;
-import net.ravendb.client.primitives.Reference;
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.client.methods.HttpRequestBase;
+import org.apache.hc.client5.http.classic.methods.HttpGet;
+import org.apache.hc.client5.http.classic.methods.HttpUriRequestBase;
 import org.junit.jupiter.api.Test;
 
 import java.time.Duration;
@@ -71,10 +70,10 @@ public class RavenDB_7162Test extends RemoteTestBase {
         }
 
         @Override
-        public HttpRequestBase createRequest(ServerNode node, Reference<String> url) {
-            url.value = node.getUrl() + "/test/delay?value=" + _value.toMillis();
+        public HttpUriRequestBase createRequest(ServerNode node) {
+            String url = node.getUrl() + "/test/delay?value=" + _value.toMillis();
 
-            return new HttpGet();
+            return new HttpGet(url);
         }
     }
 }

@@ -5,9 +5,8 @@ import net.ravendb.client.documents.operations.IVoidMaintenanceOperation;
 import net.ravendb.client.http.ServerNode;
 import net.ravendb.client.http.VoidRavenCommand;
 import net.ravendb.client.primitives.HttpReset;
-import net.ravendb.client.primitives.Reference;
 import net.ravendb.client.util.UrlUtils;
-import org.apache.http.client.methods.HttpRequestBase;
+import org.apache.hc.client5.http.classic.methods.HttpUriRequestBase;
 
 public class ResetIndexOperation implements IVoidMaintenanceOperation {
 
@@ -37,10 +36,10 @@ public class ResetIndexOperation implements IVoidMaintenanceOperation {
         }
 
         @Override
-        public HttpRequestBase createRequest(ServerNode node, Reference<String> url) {
-            url.value = node.getUrl() + "/databases/" + node.getDatabase() + "/indexes?name=" + UrlUtils.escapeDataString(_indexName);
+        public HttpUriRequestBase createRequest(ServerNode node) {
+            String url = node.getUrl() + "/databases/" + node.getDatabase() + "/indexes?name=" + UrlUtils.escapeDataString(_indexName);
 
-            return new HttpReset();
+            return new HttpReset(url);
         }
     }
 

@@ -9,10 +9,9 @@ import net.ravendb.client.http.HttpCache;
 import net.ravendb.client.http.RavenCommand;
 import net.ravendb.client.http.ServerNode;
 import net.ravendb.client.primitives.NetISO8601Utils;
-import net.ravendb.client.primitives.Reference;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.client.methods.HttpRequestBase;
+import org.apache.hc.client5.http.classic.methods.HttpGet;
+import org.apache.hc.client5.http.classic.methods.HttpUriRequestBase;
 
 import java.io.IOException;
 import java.util.Date;
@@ -99,7 +98,7 @@ public class GetTimeSeriesOperation implements IOperation<TimeSeriesRangeResult>
         }
 
         @Override
-        public HttpRequestBase createRequest(ServerNode node, Reference<String> url) {
+        public HttpUriRequestBase createRequest(ServerNode node) {
             StringBuilder pathBuilder = new StringBuilder(node.getUrl());
             pathBuilder
                     .append("/databases/")
@@ -146,9 +145,9 @@ public class GetTimeSeriesOperation implements IOperation<TimeSeriesRangeResult>
                         .append(_returnFullResults);
             }
 
-            url.value = pathBuilder.toString();
+            String url = pathBuilder.toString();
 
-            return new HttpGet();
+            return new HttpGet(url);
         }
 
         public static void addIncludesToRequest(StringBuilder pathBuilder, Consumer<ITimeSeriesIncludeBuilder> includes) {

@@ -11,18 +11,13 @@ import net.ravendb.client.http.ServerNode;
 import net.ravendb.client.json.BatchCommandResult;
 import net.ravendb.client.json.ContentProviderHttpEntity;
 import net.ravendb.client.primitives.CleanCloseable;
-import net.ravendb.client.primitives.Reference;
 import net.ravendb.client.primitives.SharpEnum;
 import net.ravendb.client.util.TimeUtils;
-import org.apache.http.HttpEntity;
-import org.apache.http.client.methods.HttpPost;
-import org.apache.http.client.methods.HttpRequestBase;
-import org.apache.http.entity.ContentType;
-import org.apache.http.entity.mime.FormBodyPart;
-import org.apache.http.entity.mime.FormBodyPartBuilder;
-import org.apache.http.entity.mime.MultipartEntityBuilder;
-import org.apache.http.entity.mime.content.ByteArrayBody;
-import org.apache.http.entity.mime.content.InputStreamBody;
+import org.apache.hc.client5.http.classic.methods.HttpPost;
+import org.apache.hc.client5.http.classic.methods.HttpUriRequestBase;
+import org.apache.hc.client5.http.entity.mime.*;
+import org.apache.hc.core5.http.ContentType;
+import org.apache.hc.core5.http.HttpEntity;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -82,8 +77,13 @@ public class SingleNodeBatchCommand extends RavenCommand<BatchCommandResult> imp
     }
 
     @Override
-    public HttpRequestBase createRequest(ServerNode node, Reference<String> url) {
-        HttpPost request = new HttpPost();
+    public HttpUriRequestBase createRequest(ServerNode node) {
+        StringBuilder sb = new StringBuilder(node.getUrl() + "/databases/" + node.getDatabase() + "/bulk_docs?");
+        appendOptions(sb);
+
+        String url = sb.toString();
+
+        HttpPost request = new HttpPost(url);
 
         request.setEntity(new ContentProviderHttpEntity(outputStream -> {
             try (JsonGenerator generator = createSafeJsonGenerator(outputStream)) {
@@ -138,7 +138,7 @@ public class SingleNodeBatchCommand extends RavenCommand<BatchCommandResult> imp
                         .create("main", new ByteArrayBody(baos.toByteArray(), "main"));
 
                 if (entity.getContentEncoding() != null) {
-                    mainPartBuilder.addField("Content-Encoding", entity.getContentEncoding().getValue());
+                    mainPartBuilder.addField("Content-Encoding", entity.getContentEncoding());
                 }
 
                 entityBuilder.addPart(mainPartBuilder.build());
@@ -158,10 +158,6 @@ public class SingleNodeBatchCommand extends RavenCommand<BatchCommandResult> imp
             request.setEntity(entityBuilder.build());
         }
 
-        StringBuilder sb = new StringBuilder(node.getUrl() + "/databases/" + node.getDatabase() + "/bulk_docs?");
-        appendOptions(sb);
-
-        url.value = sb.toString();
         return request;
     }
 

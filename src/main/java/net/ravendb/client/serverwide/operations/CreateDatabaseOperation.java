@@ -7,15 +7,14 @@ import net.ravendb.client.http.IRaftCommand;
 import net.ravendb.client.http.RavenCommand;
 import net.ravendb.client.http.ServerNode;
 import net.ravendb.client.primitives.ExceptionsUtils;
-import net.ravendb.client.primitives.Reference;
 import net.ravendb.client.serverwide.DatabaseRecord;
 import net.ravendb.client.serverwide.DatabaseTopology;
 import net.ravendb.client.serverwide.operations.builder.IDatabaseRecordBuilderInitializer;
 import net.ravendb.client.util.RaftIdGenerator;
-import org.apache.http.client.methods.HttpPut;
-import org.apache.http.client.methods.HttpRequestBase;
-import org.apache.http.entity.ContentType;
-import org.apache.http.entity.StringEntity;
+import org.apache.hc.client5.http.classic.methods.HttpPut;
+import org.apache.hc.client5.http.classic.methods.HttpUriRequestBase;
+import org.apache.hc.core5.http.ContentType;
+import org.apache.hc.core5.http.io.entity.StringEntity;
 
 import java.io.IOException;
 import java.util.Optional;
@@ -82,14 +81,14 @@ public class CreateDatabaseOperation implements IServerOperation<DatabasePutResu
         }
 
         @Override
-        public HttpRequestBase createRequest(ServerNode node, Reference<String> url) {
-            url.value = node.getUrl() + "/admin/databases?name=" + databaseName;
+        public HttpUriRequestBase createRequest(ServerNode node) {
+            String url = node.getUrl() + "/admin/databases?name=" + databaseName;
 
-            url.value += "&replicationFactor=" + replicationFactor;
+            url += "&replicationFactor=" + replicationFactor;
 
             try {
                 String databaseDocument = mapper.writeValueAsString(databaseRecord);
-                HttpPut request = new HttpPut();
+                HttpPut request = new HttpPut(url);
                 request.setEntity(new StringEntity(databaseDocument, ContentType.APPLICATION_JSON));
 
 

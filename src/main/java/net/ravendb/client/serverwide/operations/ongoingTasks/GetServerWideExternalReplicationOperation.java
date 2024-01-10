@@ -5,11 +5,10 @@ import net.ravendb.client.documents.operations.ResultsResponse;
 import net.ravendb.client.documents.operations.ongoingTasks.OngoingTaskType;
 import net.ravendb.client.http.RavenCommand;
 import net.ravendb.client.http.ServerNode;
-import net.ravendb.client.primitives.Reference;
 import net.ravendb.client.primitives.SharpEnum;
 import net.ravendb.client.serverwide.operations.IServerOperation;
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.client.methods.HttpRequestBase;
+import org.apache.hc.client5.http.classic.methods.HttpGet;
+import org.apache.hc.client5.http.classic.methods.HttpUriRequestBase;
 
 import java.io.IOException;
 
@@ -48,10 +47,11 @@ public class GetServerWideExternalReplicationOperation implements IServerOperati
         }
 
         @Override
-        public HttpRequestBase createRequest(ServerNode node, Reference<String> url) {
-            url.value = node.getUrl() + "/admin/configuration/server-wide/tasks?type=" + SharpEnum.value(OngoingTaskType.REPLICATION) + "&name=" + urlEncode(_name);
+        public HttpUriRequestBase createRequest(ServerNode node) {
+            String url = node.getUrl() + "/admin/configuration/server-wide/tasks?type="
+                    + SharpEnum.value(OngoingTaskType.REPLICATION) + "&name=" + urlEncode(_name);
 
-            return new HttpGet();
+            return new HttpGet(url);
         }
 
         @Override
@@ -61,7 +61,7 @@ public class GetServerWideExternalReplicationOperation implements IServerOperati
             }
 
             ServerWideExternalReplication[] results = mapper.readValue(response, ResultsResponse.GetServerWideExternalReplicationsResponse.class).getResults();
-            if (response.length() == 0) {
+            if (response.isEmpty()) {
                 return;
             }
 

@@ -5,10 +5,9 @@ import net.ravendb.client.documents.operations.IMaintenanceOperation;
 import net.ravendb.client.documents.queries.TermsQueryResult;
 import net.ravendb.client.http.RavenCommand;
 import net.ravendb.client.http.ServerNode;
-import net.ravendb.client.primitives.Reference;
 import net.ravendb.client.util.UrlUtils;
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.client.methods.HttpRequestBase;
+import org.apache.hc.client5.http.classic.methods.HttpGet;
+import org.apache.hc.client5.http.classic.methods.HttpUriRequestBase;
 
 import java.io.IOException;
 
@@ -70,14 +69,14 @@ public class GetTermsOperation implements IMaintenanceOperation<String[]> {
         }
 
         @Override
-        public HttpRequestBase createRequest(ServerNode node, Reference<String> url) {
-            url.value = node.getUrl() + "/databases/" + node.getDatabase()
+        public HttpUriRequestBase createRequest(ServerNode node) {
+            String url = node.getUrl() + "/databases/" + node.getDatabase()
                     + "/indexes/terms?name=" + UrlUtils.escapeDataString(_indexName)
                     + "&field=" + UrlUtils.escapeDataString(_field)
                     + "&fromValue=" + (_fromValue != null ? _fromValue : "")
                     + "&pageSize=" + (_pageSize != null ? _pageSize : "");
 
-            return new HttpGet();
+            return new HttpGet(url);
         }
 
         @Override

@@ -5,9 +5,8 @@ import net.ravendb.client.documents.conventions.DocumentConventions;
 import net.ravendb.client.extensions.JsonExtensions;
 import net.ravendb.client.http.RavenCommand;
 import net.ravendb.client.http.ServerNode;
-import net.ravendb.client.primitives.Reference;
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.client.methods.HttpRequestBase;
+import org.apache.hc.client5.http.classic.methods.HttpGet;
+import org.apache.hc.client5.http.classic.methods.HttpUriRequestBase;
 
 import java.io.IOException;
 
@@ -39,10 +38,10 @@ public class GetServerWideOperationStateOperation implements IServerOperation<Ob
         }
 
         @Override
-        public HttpRequestBase createRequest(ServerNode node, Reference<String> url) {
-            url.value = node.getUrl() + "/operations/state?id=" + _id;
+        public HttpUriRequestBase createRequest(ServerNode node) {
+            String url = node.getUrl() + "/operations/state?id=" + _id;
 
-            return new HttpGet();
+            return new HttpGet(url);
         }
 
         @Override

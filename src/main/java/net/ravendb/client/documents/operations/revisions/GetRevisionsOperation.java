@@ -14,7 +14,7 @@ import net.ravendb.client.http.RavenCommand;
 import net.ravendb.client.http.ServerNode;
 import net.ravendb.client.primitives.Reference;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.http.client.methods.HttpRequestBase;
+import org.apache.hc.client5.http.classic.methods.HttpUriRequestBase;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -114,7 +114,7 @@ public class GetRevisionsOperation<T> implements IOperation<RevisionsResult<T>> 
         }
 
         @Override
-        public HttpRequestBase createRequest(ServerNode node, Reference<String> url) {
+        public HttpUriRequestBase createRequest(ServerNode node, Reference<String> url) {
             return _cmd.createRequest(node, url);
         }
 

@@ -3,10 +3,9 @@ package net.ravendb.client.serverwide.operations.trafficWatch;
 import net.ravendb.client.documents.conventions.DocumentConventions;
 import net.ravendb.client.http.RavenCommand;
 import net.ravendb.client.http.ServerNode;
-import net.ravendb.client.primitives.Reference;
 import net.ravendb.client.serverwide.operations.IServerOperation;
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.client.methods.HttpRequestBase;
+import org.apache.hc.client5.http.classic.methods.HttpGet;
+import org.apache.hc.client5.http.classic.methods.HttpUriRequestBase;
 
 import java.io.IOException;
 
@@ -28,10 +27,10 @@ public class GetTrafficWatchConfigurationOperation implements IServerOperation<P
         }
 
         @Override
-        public HttpRequestBase createRequest(ServerNode node, Reference<String> url) {
-            url.value = node.getUrl() + "/admin/traffic-watch/configuration";
+        public HttpUriRequestBase createRequest(ServerNode node) {
+            String url = node.getUrl() + "/admin/traffic-watch/configuration";
 
-            return new HttpGet();
+            return new HttpGet(url);
         }
 
         @Override

@@ -1,8 +1,8 @@
 package net.ravendb.client.documents.session;
 
 import net.ravendb.client.primitives.EventArgs;
-import org.apache.http.HttpRequest;
-import org.apache.http.HttpResponse;
+import org.apache.hc.core5.http.HttpRequest;
+import org.apache.hc.core5.http.HttpResponse;
 
 public class FailedRequestEventArgs extends EventArgs {
 

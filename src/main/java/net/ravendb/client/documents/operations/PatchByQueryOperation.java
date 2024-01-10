@@ -10,12 +10,11 @@ import net.ravendb.client.http.HttpCache;
 import net.ravendb.client.http.RavenCommand;
 import net.ravendb.client.http.ServerNode;
 import net.ravendb.client.json.ContentProviderHttpEntity;
-import net.ravendb.client.primitives.Reference;
 import net.ravendb.client.util.TimeUtils;
 import org.apache.commons.lang3.ObjectUtils;
-import org.apache.http.client.methods.HttpPatch;
-import org.apache.http.client.methods.HttpRequestBase;
-import org.apache.http.entity.ContentType;
+import org.apache.hc.client5.http.classic.methods.HttpPatch;
+import org.apache.hc.client5.http.classic.methods.HttpUriRequestBase;
+import org.apache.hc.core5.http.ContentType;
 
 import java.io.IOException;
 
@@ -58,7 +57,7 @@ public class PatchByQueryOperation implements IOperation<OperationIdResult> {
         }
 
         @Override
-        public HttpRequestBase createRequest(ServerNode node, Reference<String> url) {
+        public HttpUriRequestBase createRequest(ServerNode node) {
             String path = node.getUrl() + "/databases/" + node.getDatabase() + "/queries?allowStale="
                     + _options.isAllowStale();
             if (_options.getMaxOpsPerSecond() != null) {
@@ -75,7 +74,7 @@ public class PatchByQueryOperation implements IOperation<OperationIdResult> {
                 path += "&ignoreMaxStepsForScript=" + _options.isIgnoreMaxStepsForScript();
             }
 
-            HttpPatch request = new HttpPatch();
+            HttpPatch request = new HttpPatch(path);
             request.setEntity(new ContentProviderHttpEntity(outputStream -> {
                 try (JsonGenerator generator = createSafeJsonGenerator(outputStream)) {
                     generator.writeStartObject();
@@ -88,9 +87,6 @@ public class PatchByQueryOperation implements IOperation<OperationIdResult> {
                     throw new RuntimeException(e);
                 }
             }, ContentType.APPLICATION_JSON, _conventions));
-
-            url.value = path;
-
 
             return request;
         }

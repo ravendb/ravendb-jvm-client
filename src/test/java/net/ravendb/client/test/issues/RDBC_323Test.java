@@ -6,7 +6,6 @@ import net.ravendb.client.documents.IDocumentStore;
 import net.ravendb.client.documents.commands.StreamResult;
 import net.ravendb.client.documents.session.IDocumentSession;
 import net.ravendb.client.infrastructure.entities.User;
-import org.apache.http.conn.ConnectionPoolTimeoutException;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 

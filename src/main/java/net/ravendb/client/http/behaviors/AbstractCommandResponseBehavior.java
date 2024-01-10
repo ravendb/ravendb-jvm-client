@@ -2,7 +2,7 @@ package net.ravendb.client.http.behaviors;
 
 import net.ravendb.client.http.RavenCommand;
 import net.ravendb.client.primitives.Reference;
-import org.apache.http.client.methods.CloseableHttpResponse;
+import org.apache.hc.client5.http.impl.classic.CloseableHttpResponse;
 
 import java.io.IOException;
 
