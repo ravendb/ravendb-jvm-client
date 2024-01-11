@@ -182,8 +182,6 @@ public class PatchOperation implements IOperation<PatchResult> {
                     }
 
                     generator.writeEndObject();
-                } catch (IOException e) {
-                    throw new RuntimeException(e);
                 }
             }, ContentType.APPLICATION_JSON, _conventions));
             addChangeVectorIfNotNull(_changeVector, request);

@@ -48,8 +48,6 @@ public class StartTransactionsRecordingOperation implements IVoidMaintenanceOper
                     generator.writeStartObject();
                     generator.writeStringField("File", _filePath);
                     generator.writeEndObject();
-                } catch (IOException e) {
-                    throw new RuntimeException(e);
                 }
             }, ContentType.APPLICATION_JSON, _conventions));
             return request;

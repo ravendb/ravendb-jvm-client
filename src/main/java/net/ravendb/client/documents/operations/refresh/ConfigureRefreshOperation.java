@@ -53,8 +53,6 @@ public class ConfigureRefreshOperation implements IMaintenanceOperation<Configur
             request.setEntity(new ContentProviderHttpEntity(outputStream -> {
                 try (JsonGenerator generator = createSafeJsonGenerator(outputStream)) {
                     generator.getCodec().writeValue(generator, _configuration);
-                } catch (IOException e) {
-                    throw new RuntimeException(e);
                 }
             }, ContentType.APPLICATION_JSON, _conventions));
 

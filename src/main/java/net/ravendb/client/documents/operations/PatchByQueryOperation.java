@@ -83,8 +83,6 @@ public class PatchByQueryOperation implements IOperation<OperationIdResult> {
                     JsonExtensions.writeIndexQuery(generator, _conventions, _queryToUpdate);
 
                     generator.writeEndObject();
-                } catch (IOException e) {
-                    throw new RuntimeException(e);
                 }
             }, ContentType.APPLICATION_JSON, _conventions));
 

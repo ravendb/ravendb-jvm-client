@@ -57,8 +57,6 @@ public class PutConnectionStringOperation<T extends ConnectionString> implements
                 try (JsonGenerator generator = createSafeJsonGenerator(outputStream)) {
                     ObjectNode config = mapper.valueToTree(_connectionString);
                     generator.writeTree(config);
-                } catch (IOException e) {
-                    throw new RuntimeException(e);
                 }
             }, ContentType.APPLICATION_JSON, _conventions));
             return request;

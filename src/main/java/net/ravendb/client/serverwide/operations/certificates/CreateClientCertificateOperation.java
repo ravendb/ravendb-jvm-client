@@ -106,8 +106,6 @@ public class CreateClientCertificateOperation implements IServerOperation<Certif
                     }
                     generator.writeEndObject();
                     generator.writeEndObject();
-                } catch (IOException e) {
-                    throw new RuntimeException(e);
                 }
             }, ContentType.APPLICATION_JSON, _conventions));
             return request;

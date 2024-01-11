@@ -50,8 +50,6 @@ public class AdminJsConsoleDatabaseOperation implements IMaintenanceOperation<Js
                     generator.writeFieldName("Script");
                     generator.writeString(_script);
                     generator.writeEndObject();
-                } catch (IOException e) {
-                    throw new RuntimeException(e);
                 }
             }, ContentType.APPLICATION_JSON, _conventions));
 

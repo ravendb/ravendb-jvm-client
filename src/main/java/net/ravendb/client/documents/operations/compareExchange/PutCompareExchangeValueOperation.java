@@ -97,8 +97,6 @@ public class PutCompareExchangeValueOperation<T> implements IOperation<CompareEx
             httpPut.setEntity(new ContentProviderHttpEntity(outputStream -> {
                 try (JsonGenerator generator = createSafeJsonGenerator(outputStream)) {
                     generator.writeTree(json);
-                } catch (IOException e) {
-                    throw new RuntimeException(e);
                 }
             }, ContentType.APPLICATION_JSON, _conventions));
             return httpPut;

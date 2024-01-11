@@ -82,11 +82,7 @@ public class PutAttachmentOperation implements IOperation<AttachmentDetails> {
             HttpPut request = new HttpPut(url);
 
             request.setEntity(new ContentProviderHttpEntity(outputStream -> {
-                try {
-                    IOUtils.copy(_stream, outputStream);
-                } catch (IOException e) {
-                    throw new RuntimeException("Unable to upload attachment content stream: " + e.getMessage(), e);
-                }
+                IOUtils.copy(_stream, outputStream);
             }, null, _conventions));
 
             addChangeVectorIfNotNull(_changeVector, request);

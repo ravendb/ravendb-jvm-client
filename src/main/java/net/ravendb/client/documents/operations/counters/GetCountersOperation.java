@@ -141,8 +141,6 @@ public class GetCountersOperation implements IOperation<CountersDetail> {
                 return new ContentProviderHttpEntity(outputStream -> {
                     try (JsonGenerator generator = createSafeJsonGenerator(outputStream)) {
                         batch.serialize(generator);
-                    } catch (IOException e) {
-                        throw new RuntimeException(e);
                     }
                 }, ContentType.APPLICATION_JSON, _conventions);
             }

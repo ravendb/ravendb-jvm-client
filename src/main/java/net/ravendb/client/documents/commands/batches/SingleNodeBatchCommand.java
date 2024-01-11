@@ -119,8 +119,6 @@ public class SingleNodeBatchCommand extends RavenCommand<BatchCommandResult> imp
                 }
 
                 generator.writeEndObject();
-            } catch (IOException e) {
-                throw new RuntimeException(e);
             }
         }, ContentType.APPLICATION_JSON, _conventions));
 

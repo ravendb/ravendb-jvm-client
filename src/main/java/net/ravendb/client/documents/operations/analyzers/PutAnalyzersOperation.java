@@ -71,8 +71,6 @@ public class PutAnalyzersOperation implements IVoidMaintenanceOperation {
                     }
                     generator.writeEndArray();
                     generator.writeEndObject();
-                } catch (IOException e) {
-                    throw new RuntimeException(e);
                 }
             }, ContentType.APPLICATION_JSON, _conventions));
 

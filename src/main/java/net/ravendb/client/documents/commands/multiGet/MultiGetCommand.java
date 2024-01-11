@@ -81,7 +81,6 @@ public class MultiGetCommand extends RavenCommand<List<GetResponse>> implements 
 
         request.setEntity(new ContentProviderHttpEntity(outputStream -> {
             try (JsonGenerator generator = createSafeJsonGenerator(outputStream)) {
-
                 generator.writeStartObject();
 
                 generator.writeFieldName("Requests");
@@ -114,8 +113,6 @@ public class MultiGetCommand extends RavenCommand<List<GetResponse>> implements 
                 }
                 generator.writeEndArray();
                 generator.writeEndObject();
-            } catch (IOException e) {
-                throw new RuntimeException(e);
             }
         }, ContentType.APPLICATION_JSON, _requestExecutor.getConventions()));
 

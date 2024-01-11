@@ -83,8 +83,6 @@ public class GetAttachmentOperation implements IOperation<CloseableAttachmentRes
                         generator.writeStringField("Type", "Revision");
                         generator.writeStringField("ChangeVector", _changeVector);
                         generator.writeEndObject();
-                    } catch (IOException e) {
-                        throw new RuntimeException(e);
                     }
                 }, ContentType.APPLICATION_JSON, _conventions));
 

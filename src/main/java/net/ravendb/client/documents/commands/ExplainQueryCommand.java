@@ -65,8 +65,6 @@ public class ExplainQueryCommand extends RavenCommand<ExplainQueryCommand.Explai
         request.setEntity(new ContentProviderHttpEntity(outputStream -> {
             try (JsonGenerator generator = createSafeJsonGenerator(outputStream)) {
                 JsonExtensions.writeIndexQuery(generator, _conventions, _indexQuery);
-            } catch (IOException e) {
-                throw new RuntimeException(e);
             }
         }, ContentType.APPLICATION_JSON, _conventions));
 

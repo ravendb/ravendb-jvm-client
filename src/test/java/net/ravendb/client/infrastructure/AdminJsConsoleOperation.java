@@ -50,8 +50,6 @@ public class AdminJsConsoleOperation implements IServerOperation<JsonNode> {
                     generator.writeFieldName("Script");
                     generator.writeString(_script);
                     generator.writeEndObject();
-                } catch (IOException e) {
-                    throw new RuntimeException(e);
                 }
             }, ContentType.APPLICATION_JSON, _conventions));
 

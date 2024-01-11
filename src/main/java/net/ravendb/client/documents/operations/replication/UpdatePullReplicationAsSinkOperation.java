@@ -51,8 +51,6 @@ public class UpdatePullReplicationAsSinkOperation implements IMaintenanceOperati
                     generator.writeFieldName("PullReplicationAsSink");
                     generator.getCodec().writeValue(generator, _pullReplication);
                     generator.writeEndObject();
-                } catch (IOException e) {
-                    throw new RuntimeException(e);
                 }
             }, ContentType.APPLICATION_JSON, _conventions));
 

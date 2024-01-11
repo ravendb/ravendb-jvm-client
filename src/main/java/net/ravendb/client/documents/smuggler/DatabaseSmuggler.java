@@ -220,8 +220,6 @@ public class DatabaseSmuggler {
             ContentProviderHttpEntity entity = new ContentProviderHttpEntity(outputStream -> {
                 try (JsonGenerator generator = createSafeJsonGenerator(outputStream)) {
                     generator.getCodec().writeValue(generator, _options);
-                } catch (IOException e) {
-                    throw new RuntimeException(e);
                 }
             }, ContentType.APPLICATION_JSON, _conventions, true);
             request.setEntity(entity);

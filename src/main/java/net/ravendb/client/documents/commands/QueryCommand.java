@@ -41,8 +41,6 @@ public class QueryCommand extends AbstractQueryCommand<QueryResult, Parameters> 
         return new ContentProviderHttpEntity(outputStream -> {
             try (JsonGenerator generator = createSafeJsonGenerator(outputStream)) {
                 JsonExtensions.writeIndexQuery(generator, _session.getConventions(), _indexQuery);
-            } catch (IOException e) {
-                throw new RuntimeException(e);
             }
         }, ContentType.APPLICATION_JSON, _conventions);
     }

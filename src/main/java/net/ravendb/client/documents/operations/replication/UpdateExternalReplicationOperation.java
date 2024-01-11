@@ -58,8 +58,6 @@ public class UpdateExternalReplicationOperation implements IMaintenanceOperation
                     generator.writeTree(tree);
 
                     generator.writeEndObject();
-                } catch (IOException e) {
-                    throw new RuntimeException(e);
                 }
             }, ContentType.APPLICATION_JSON, _conventions));
 

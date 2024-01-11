@@ -87,9 +87,6 @@ public class PutIndexesOperation implements IMaintenanceOperation<PutIndexResult
 
                     generator.writeEndArray();
                     generator.writeEndObject();
-
-                } catch (IOException e) {
-                    throw new RuntimeException(e);
                 }
             }, ContentType.APPLICATION_JSON, _conventions));
             return httpPut;

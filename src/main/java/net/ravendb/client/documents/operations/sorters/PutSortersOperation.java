@@ -65,8 +65,6 @@ public class PutSortersOperation implements IVoidMaintenanceOperation {
                     generator.writeFieldName("Sorters");
                     generator.getCodec().writeValue(generator, _sortersToAdd);
                     generator.writeEndObject();
-                } catch (IOException e) {
-                    throw new RuntimeException(e);
                 }
             }, ContentType.APPLICATION_JSON, _conventions));
 

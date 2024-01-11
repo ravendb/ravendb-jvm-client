@@ -75,8 +75,6 @@ public class ModifyConflictSolverOperation implements IServerOperation<ModifySol
                     solver.setResolveByCollection(_solver._collectionByScript);
                     ObjectNode config = mapper.valueToTree(solver);
                     generator.writeTree(config);
-                } catch (IOException e) {
-                    throw new RuntimeException(e);
                 }
             }, ContentType.APPLICATION_JSON, _conventions));
 

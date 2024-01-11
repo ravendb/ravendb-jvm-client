@@ -53,8 +53,6 @@ public class BackupOperation implements IMaintenanceOperation<OperationIdResult>
             request.setEntity(new ContentProviderHttpEntity(outputStream -> {
                 try (JsonGenerator generator = createSafeJsonGenerator(outputStream)) {
                     mapper.writeValue(generator, _backupConfiguration);
-                } catch (IOException e) {
-                    throw new RuntimeException(e);
                 }
             }, ContentType.APPLICATION_JSON, _conventions));
 

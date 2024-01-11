@@ -56,8 +56,6 @@ public class TimeSeriesBatchOperation implements IVoidOperation {
             request.setEntity(new ContentProviderHttpEntity(outputStream -> {
                 try (JsonGenerator generator = createSafeJsonGenerator(outputStream)) {
                     _operation.serialize(generator, _conventions);
-                } catch (IOException e) {
-                    throw new RuntimeException(e);
                 }
             }, ContentType.APPLICATION_JSON, _conventions));
 

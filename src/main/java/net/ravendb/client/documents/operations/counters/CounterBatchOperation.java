@@ -50,8 +50,6 @@ public class CounterBatchOperation implements IOperation<CountersDetail> {
             request.setEntity(new ContentProviderHttpEntity(outputStream -> {
                 try (JsonGenerator generator = createSafeJsonGenerator(outputStream)) {
                     _counterBatch.serialize(generator);
-                } catch (IOException e) {
-                    throw new RuntimeException(e);
                 }
             }, ContentType.APPLICATION_JSON, _conventions));
 

@@ -65,8 +65,6 @@ public class ReplaceClusterCertificateOperation implements IVoidServerOperation 
                     generator.writeFieldName("Certificate");
                     generator.writeString(Base64.encodeBase64String(_certBytes));
                     generator.writeEndObject();
-                } catch (IOException e) {
-                    throw new RuntimeException(e);
                 }
             }, ContentType.APPLICATION_JSON, _conventions));
             return request;
