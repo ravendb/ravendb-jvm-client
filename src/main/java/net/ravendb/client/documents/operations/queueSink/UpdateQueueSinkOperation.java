@@ -16,7 +16,7 @@ import org.apache.hc.core5.http.ContentType;
 
 import java.io.IOException;
 
-public class UpdateQueueSinkOperation<T extends ConnectionString> implements IMaintenanceOperation<UpdateQueueSinkOperation.UpdateQueueSinkOperationResult> {
+public class UpdateQueueSinkOperation<T extends ConnectionString> implements IMaintenanceOperation<UpdateQueueSinkOperationResult> {
 
     private final long _taskId;
     private final QueueSinkConfiguration _configuration;
@@ -82,24 +82,4 @@ public class UpdateQueueSinkOperation<T extends ConnectionString> implements IMa
         }
     }
 
-    public static class UpdateQueueSinkOperationResult {
-        private long raftCommandIndex;
-        private long taskId;
-
-        public long getRaftCommandIndex() {
-            return raftCommandIndex;
-        }
-
-        public void setRaftCommandIndex(long raftCommandIndex) {
-            this.raftCommandIndex = raftCommandIndex;
-        }
-
-        public long getTaskId() {
-            return taskId;
-        }
-
-        public void setTaskId(long taskId) {
-            this.taskId = taskId;
-        }
-    }
 }

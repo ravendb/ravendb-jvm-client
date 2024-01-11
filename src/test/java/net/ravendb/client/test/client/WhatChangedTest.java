@@ -10,6 +10,7 @@ import net.ravendb.client.infrastructure.entities.User;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -472,6 +473,47 @@ public class WhatChangedTest extends RemoteTestBase {
                 assertThat(changes.stream().filter(x -> x.getFieldName().equals("Test-B")).findFirst().get().getChange())
                         .isEqualTo(DocumentsChanges.ChangeType.NEW_FIELD);
             }
+        }
+    }
+
+    @Test
+    public void whatChanged_RemovedFieldFromDictionary() throws Exception {
+        try (DocumentStore store = getDocumentStore()) {
+            try (IDocumentSession session = store.openSession()) {
+                Entity entity = new Entity();
+                entity.getSomeData().put("Key", "Value");
+                session.store(entity, "entities/1");
+                session.saveChanges();
+            }
+
+            try (IDocumentSession session = store.openSession()) {
+                Entity entity = session.load(Entity.class, "entities/1");
+                entity.getSomeData().remove("Key");
+
+                List<DocumentsChanges> changes = session.advanced().whatChanged().get("entities/1");
+                assertThat(changes)
+                        .hasSize(1);
+                assertThat(changes.get(0).getChange())
+                        .isEqualTo(DocumentsChanges.ChangeType.REMOVED_FIELD);
+                assertThat(changes.get(0).getFieldName())
+                        .isEqualTo("Key");
+                assertThat(changes.get(0).getFieldOldValue().toString())
+                        .isEqualTo("\"Value\"");
+                assertThat(changes.get(0).getFieldNewValue())
+                        .isNull();
+            }
+        }
+    }
+
+    public static class Entity {
+        private Map<String, String> someData = new HashMap<>();
+
+        public Map<String, String> getSomeData() {
+            return someData;
+        }
+
+        public void setSomeData(Map<String, String> someData) {
+            this.someData = someData;
         }
     }
 
