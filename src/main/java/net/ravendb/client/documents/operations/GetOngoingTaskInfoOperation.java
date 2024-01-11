@@ -113,6 +113,9 @@ public class GetOngoingTaskInfoOperation implements IMaintenanceOperation<Ongoin
                     case PULL_REPLICATION_AS_HUB:
                         result = mapper.readValue(response, OngoingTaskPullReplicationAsHub.class);
                         break;
+                    case QUEUE_SINK:
+                        result = mapper.readValue(response, OngoingTaskQueueSink.class);
+                        break;
                     default:
                         throw new IllegalStateException();
                 }

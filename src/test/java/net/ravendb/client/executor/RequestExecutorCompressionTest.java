@@ -555,6 +555,8 @@ public class RequestExecutorCompressionTest extends RemoteTestBase {
     @AfterAll
     public static void disableLogging() {
         RequestExecutor.configureHttpClient = null;
+
+        RequestExecutor.clearHttpClientsPool();
     }
 
     private static class LoggedResponse {

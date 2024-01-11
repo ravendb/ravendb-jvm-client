@@ -13,14 +13,14 @@ import java.util.zip.GZIPOutputStream;
 
 public class ContentProviderHttpEntity extends AbstractHttpEntity {
 
-    private final Consumer<OutputStream> contentProvider;
+    private final ThrowingConsumer<OutputStream> contentProvider;
     private final HttpCompressionAlgorithm compressionAlgorithm;
 
-    public ContentProviderHttpEntity(Consumer<OutputStream> contentProvider, ContentType contentType, DocumentConventions conventions) {
+    public ContentProviderHttpEntity(ThrowingConsumer<OutputStream> contentProvider, ContentType contentType, DocumentConventions conventions) {
         this(contentProvider, contentType, conventions, false);
     }
 
-    public ContentProviderHttpEntity(Consumer<OutputStream> contentProvider, ContentType contentType, DocumentConventions conventions, boolean chunked) {
+    public ContentProviderHttpEntity(ThrowingConsumer<OutputStream> contentProvider, ContentType contentType, DocumentConventions conventions, boolean chunked) {
         super(contentType, determinateContentEncoding(conventions), chunked);
 
         this.contentProvider = contentProvider;
@@ -78,5 +78,9 @@ public class ContentProviderHttpEntity extends AbstractHttpEntity {
     @Override
     public boolean isStreaming() {
         return false;
+    }
+
+    public interface ThrowingConsumer<T> {
+        void accept(T t) throws IOException;
     }
 }
