@@ -18,8 +18,8 @@ public class AddNodeToOrchestratorTopologyOperation implements IServerOperation<
     private final String _databaseName;
     private final String _node;
 
-    public AddNodeToOrchestratorTopologyOperation(String _databaseName) {
-        this(_databaseName, null);
+    public AddNodeToOrchestratorTopologyOperation(String databaseName) {
+        this(databaseName, null);
     }
 
     public AddNodeToOrchestratorTopologyOperation(String databaseName, String node) {

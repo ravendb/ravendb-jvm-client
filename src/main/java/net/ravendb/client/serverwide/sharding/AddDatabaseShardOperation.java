@@ -35,7 +35,18 @@ public class AddDatabaseShardOperation implements IServerOperation<AddDatabaseSh
         this(databaseName, null, replicationFactor, shardNumber, dynamicNodeDistribution);
     }
 
-    public AddDatabaseShardOperation(String databaseName, String[] nodes, Integer replicationFactor, Integer shardNumber, boolean dynamicNodeDistribution) {
+    public AddDatabaseShardOperation(String databaseName, String[] nodes) {
+        this(databaseName, nodes, null, null, null);
+    }
+    public AddDatabaseShardOperation(String databaseName, String[] nodes, Integer shardNumber) {
+        this(databaseName, nodes, null, shardNumber, null);
+    }
+
+    public AddDatabaseShardOperation(String databaseName, String[] nodes, Integer shardNumber, boolean dynamicNodeDistribution) {
+        this(databaseName, nodes, null, shardNumber, dynamicNodeDistribution);
+    }
+
+    private AddDatabaseShardOperation(String databaseName, String[] nodes, Integer replicationFactor, Integer shardNumber, Boolean dynamicNodeDistribution) {
         _databaseName = databaseName;
         _shardNumber = shardNumber;
         _dynamicNodeDistribution = dynamicNodeDistribution;
