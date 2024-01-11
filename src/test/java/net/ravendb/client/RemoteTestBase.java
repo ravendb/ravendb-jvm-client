@@ -31,6 +31,7 @@ import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -143,7 +144,7 @@ public class RemoteTestBase extends RavenTestDriver implements CleanCloseable {
     }
 
     public DocumentStore getSecuredDocumentStore() throws Exception {
-        return getDocumentStore("test_db", true, null);
+        return getDocumentStore("test_db", true, null, null);
     }
 
     public KeyStore getTestClientCertificate() throws IOException, GeneralSecurityException {
@@ -238,14 +239,14 @@ public class RemoteTestBase extends RavenTestDriver implements CleanCloseable {
     }
 
     public DocumentStore getSecuredDocumentStore(String database) throws Exception {
-        return getDocumentStore(database, true, null);
+        return getDocumentStore(database, true, null, null);
     }
 
     public DocumentStore getDocumentStore(String database) throws Exception {
-        return getDocumentStore(database, false, null);
+        return getDocumentStore(database, false, null, null);
     }
 
-    public DocumentStore getDocumentStore(String database, boolean secured, Duration waitForIndexingTimeout) throws Exception {
+    public DocumentStore getDocumentStore(String database, boolean secured, Duration waitForIndexingTimeout, Consumer<DatabaseRecord> customizeDatabaseRecord) throws Exception {
         String name = database + "_" + index.incrementAndGet();
         reportInfo("getDocumentStore for db " + database + ".");
 
@@ -262,6 +263,9 @@ public class RemoteTestBase extends RavenTestDriver implements CleanCloseable {
         databaseRecord.setDatabaseName(name);
 
         customizeDbRecord(databaseRecord);
+        if (customizeDatabaseRecord != null) {
+            customizeDatabaseRecord.accept(databaseRecord);
+        }
 
         CreateDatabaseOperation createDatabaseOperation = new CreateDatabaseOperation(databaseRecord);
         documentStore.maintenance().server().send(createDatabaseOperation);

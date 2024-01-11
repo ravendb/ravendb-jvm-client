@@ -5,16 +5,20 @@ import net.ravendb.client.RemoteTestBase;
 import net.ravendb.client.documents.IDocumentStore;
 import net.ravendb.client.documents.operations.GetOngoingTaskInfoOperation;
 import net.ravendb.client.documents.operations.backups.*;
+import net.ravendb.client.documents.operations.backups.sharding.GetShardedPeriodicBackupStatusOperation;
 import net.ravendb.client.documents.operations.ongoingTasks.NextBackup;
 import net.ravendb.client.documents.operations.ongoingTasks.OngoingTaskBackup;
 import net.ravendb.client.documents.operations.ongoingTasks.OngoingTaskType;
 import net.ravendb.client.infrastructure.DisabledOnPullRequest;
+import net.ravendb.client.serverwide.DatabaseRecord;
+import net.ravendb.client.serverwide.operations.DatabaseRecordBuilder;
 import org.junit.jupiter.api.Test;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Duration;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Consumer;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -22,23 +26,12 @@ import static org.assertj.core.api.Assertions.assertThat;
 public class BackupsTest extends RemoteTestBase {
 
     @Test
-    @DisabledOnPullRequest
     public void canBackupDatabase() throws Exception {
         try (IDocumentStore store = getDocumentStore()) {
             Path backup = Files.createTempDirectory("backup");
 
             try {
-                PeriodicBackupConfiguration backupConfiguration = new PeriodicBackupConfiguration();
-                backupConfiguration.setName("myBackup");
-                backupConfiguration.setBackupType(BackupType.SNAPSHOT);
-                backupConfiguration.setFullBackupFrequency("20 * * * *");
-
-                LocalSettings localSettings = new LocalSettings();
-                localSettings.setFolderPath(backup.toAbsolutePath().toString());
-
-                backupConfiguration.setLocalSettings(localSettings);
-                UpdatePeriodicBackupOperation operation = new UpdatePeriodicBackupOperation(backupConfiguration);
-                UpdatePeriodicBackupOperationResult backupOperationResult = store.maintenance().send(operation);
+                UpdatePeriodicBackupOperationResult backupOperationResult = configureBackup(BackupType.SNAPSHOT, backup, store);
 
                 StartBackupOperation startBackupOperation = new StartBackupOperation(true, backupOperationResult.getTaskId());
                 StartBackupOperationResult send = store.maintenance().send(startBackupOperation);
@@ -47,7 +40,7 @@ public class BackupsTest extends RemoteTestBase {
                         .isPositive();
 
                 waitForBackup(backup);
-                waitForBackupStatus(store, backupOperationResult.getTaskId());
+                waitForBackupStatus(store, backupOperationResult.getTaskId(), false);
 
                 OngoingTaskBackup myBackup = (OngoingTaskBackup) store.maintenance().send(new GetOngoingTaskInfoOperation("myBackup", OngoingTaskType.BACKUP));
 
@@ -70,8 +63,66 @@ public class BackupsTest extends RemoteTestBase {
         }
     }
 
+    private static UpdatePeriodicBackupOperationResult configureBackup(BackupType snapshot, Path backup, IDocumentStore store) {
+        PeriodicBackupConfiguration backupConfiguration = new PeriodicBackupConfiguration();
+        backupConfiguration.setName("myBackup");
+        backupConfiguration.setBackupType(snapshot);
+        backupConfiguration.setFullBackupFrequency("20 * * * *");
+
+        LocalSettings localSettings = new LocalSettings();
+        localSettings.setFolderPath(backup.toAbsolutePath().toString());
+
+        backupConfiguration.setLocalSettings(localSettings);
+        UpdatePeriodicBackupOperation operation = new UpdatePeriodicBackupOperation(backupConfiguration);
+        UpdatePeriodicBackupOperationResult backupOperationResult = store.maintenance().send(operation);
+        return backupOperationResult;
+    }
+
     @Test
-    @DisabledOnPullRequest
+    public void canBackupShardedDatabase() throws Exception {
+        Consumer<DatabaseRecord> customize = record -> {
+            DatabaseRecord databaseRecord = DatabaseRecordBuilder.create().sharded("test_db", b -> {
+                b.addShard(1, s -> s.addNode("A"))
+                        .addShard(2, s -> s.addNode("A"))
+                        .orchestrator(o -> o.addNode("A"));
+            }).toDatabaseRecord();
+
+            record.setSharding(databaseRecord.getSharding());
+        };
+
+        try (IDocumentStore store = getDocumentStore("test_db", false, null, customize)) {
+            Path backup = Files.createTempDirectory("backup");
+
+            try {
+                UpdatePeriodicBackupOperationResult backupOperationResult = configureBackup(BackupType.BACKUP, backup, store);
+
+                StartBackupOperation startBackupOperation = new StartBackupOperation(true, backupOperationResult.getTaskId());
+                StartBackupOperationResult send = store.maintenance().send(startBackupOperation);
+                long backupOperation = send.getOperationId();
+                assertThat(backupOperation)
+                        .isPositive();
+
+                waitForBackup(backup);
+                waitForBackupStatus(store, backupOperationResult.getTaskId(), true);
+
+                GetShardedPeriodicBackupStatusOperation.GetShardedPeriodicBackupStatusOperationResult backupResult =
+                        store.maintenance().send(new GetShardedPeriodicBackupStatusOperation(backupOperationResult.getTaskId()));
+                assertThat(backupResult)
+                        .isNotNull();
+
+                // props are asserted in waitForBackup method
+
+            } finally {
+                backup.toAbsolutePath().toFile().deleteOnExit();
+
+                // make sure backup was finished
+                Thread.sleep(500);
+                backup.toAbsolutePath().toFile().delete();
+            }
+        }
+    }
+
+    @Test
     public void canSetupRetentionPolicy() throws Exception {
         try (IDocumentStore store = getDocumentStore()) {
             PeriodicBackupConfiguration backupConfiguration = new PeriodicBackupConfiguration();
@@ -118,18 +169,30 @@ public class BackupsTest extends RemoteTestBase {
         throw new IllegalStateException("Unable to find backup files in: " + backup.toAbsolutePath());
     }
 
-    private void waitForBackupStatus(IDocumentStore store, long taskId) throws Exception {
+    private void waitForBackupStatus(IDocumentStore store, long taskId, boolean sharded) throws Exception {
         Stopwatch sw = Stopwatch.createStarted();
 
         while (sw.elapsed(TimeUnit.MILLISECONDS) < 10_000) {
-            GetPeriodicBackupStatusOperationResult backupStatus = store.maintenance()
-                    .send(new GetPeriodicBackupStatusOperation(taskId));
+            if (sharded) {
+                GetShardedPeriodicBackupStatusOperation.GetShardedPeriodicBackupStatusOperationResult backupStatus = store.maintenance()
+                        .send(new GetShardedPeriodicBackupStatusOperation(taskId));
 
-            if (backupStatus != null
-                    && backupStatus.getStatus() != null
-                    && backupStatus.getStatus().getLastFullBackup() != null) {
-                return;
+                if (backupStatus != null) {
+                    if (backupStatus.getStatuses().values().stream().allMatch(x -> x != null && x.getLastFullBackup() != null)) {
+                        return;
+                    }
+                }
+            }else {
+                GetPeriodicBackupStatusOperationResult backupStatus = store.maintenance()
+                        .send(new GetPeriodicBackupStatusOperation(taskId));
+
+                if (backupStatus != null
+                        && backupStatus.getStatus() != null
+                        && backupStatus.getStatus().getLastFullBackup() != null) {
+                    return;
+                }
             }
+
 
             Thread.sleep(200);
         }
