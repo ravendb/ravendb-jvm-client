@@ -13,7 +13,6 @@ import org.apache.hc.client5.http.classic.methods.HttpPut;
 import org.apache.hc.client5.http.classic.methods.HttpUriRequestBase;
 import org.apache.hc.core5.http.ContentType;
 
-import java.io.IOException;
 import java.util.Map;
 
 public class PutClientCertificateOperation implements IVoidServerOperation {

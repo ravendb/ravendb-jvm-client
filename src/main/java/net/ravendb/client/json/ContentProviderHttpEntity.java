@@ -8,7 +8,6 @@ import org.apache.hc.core5.http.ContentType;
 import org.apache.hc.core5.http.io.entity.AbstractHttpEntity;
 
 import java.io.*;
-import java.util.function.Consumer;
 import java.util.zip.GZIPOutputStream;
 
 public class ContentProviderHttpEntity extends AbstractHttpEntity {

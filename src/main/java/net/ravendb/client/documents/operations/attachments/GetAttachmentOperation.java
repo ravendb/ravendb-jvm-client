@@ -17,8 +17,6 @@ import org.apache.hc.core5.http.ClassicHttpResponse;
 import org.apache.hc.core5.http.ContentType;
 import org.apache.hc.core5.http.Header;
 
-import java.io.IOException;
-
 public class GetAttachmentOperation implements IOperation<CloseableAttachmentResult> {
 
     private final String _documentId;

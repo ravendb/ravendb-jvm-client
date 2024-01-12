@@ -11,8 +11,6 @@ import org.apache.hc.client5.http.classic.methods.HttpPost;
 import org.apache.hc.client5.http.classic.methods.HttpUriRequestBase;
 import org.apache.hc.core5.http.ContentType;
 
-import java.io.IOException;
-
 public class StartTransactionsRecordingOperation implements IVoidMaintenanceOperation {
 
     private final String _filePath;

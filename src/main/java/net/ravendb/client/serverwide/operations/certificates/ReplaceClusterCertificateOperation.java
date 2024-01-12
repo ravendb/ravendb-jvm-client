@@ -13,8 +13,6 @@ import org.apache.hc.client5.http.classic.methods.HttpUriRequestBase;
 import org.apache.hc.client5.http.utils.Base64;
 import org.apache.hc.core5.http.ContentType;
 
-import java.io.IOException;
-
 public class ReplaceClusterCertificateOperation implements IVoidServerOperation {
 
     private final byte[] _certBytes;
