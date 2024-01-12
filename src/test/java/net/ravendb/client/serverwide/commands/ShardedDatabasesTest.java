@@ -2,6 +2,7 @@ package net.ravendb.client.serverwide.commands;
 
 import net.ravendb.client.ClusterTestBase;
 import net.ravendb.client.documents.DocumentStore;
+import net.ravendb.client.infrastructure.DisabledOnPullRequest;
 import net.ravendb.client.serverwide.DatabaseRecord;
 import net.ravendb.client.serverwide.DatabaseRecordWithEtag;
 import net.ravendb.client.serverwide.OrchestratorTopology;
@@ -14,6 +15,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@DisabledOnPullRequest
 public class ShardedDatabasesTest extends ClusterTestBase {
 
     @Test

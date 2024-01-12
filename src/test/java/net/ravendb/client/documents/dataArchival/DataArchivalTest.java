@@ -4,12 +4,14 @@ import net.ravendb.client.RemoteTestBase;
 import net.ravendb.client.documents.DocumentStore;
 import net.ravendb.client.documents.operations.dataArchival.ConfigureDataArchivalOperation;
 import net.ravendb.client.documents.operations.dataArchival.DataArchivalConfiguration;
+import net.ravendb.client.infrastructure.DisabledOnPullRequest;
 import net.ravendb.client.serverwide.DatabaseRecordWithEtag;
 import net.ravendb.client.serverwide.operations.GetDatabaseRecordOperation;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@DisabledOnPullRequest
 public class DataArchivalTest extends RemoteTestBase {
 
     @Test
