@@ -12,9 +12,6 @@ public abstract class FacetBase {
     @JsonProperty("DisplayFieldName")
     private String displayFieldName;
 
-    @JsonProperty("Options")
-    private FacetOptions options;
-
     @JsonProperty("Aggregations")
     private Map<FacetAggregation, Set<FacetAggregationField>> aggregations;
 
@@ -30,13 +27,6 @@ public abstract class FacetBase {
         this.displayFieldName = displayFieldName;
     }
 
-    public FacetOptions getOptions() {
-        return options;
-    }
-
-    public void setOptions(FacetOptions options) {
-        this.options = options;
-    }
 
     public Map<FacetAggregation, Set<FacetAggregationField>> getAggregations() {
         return aggregations;

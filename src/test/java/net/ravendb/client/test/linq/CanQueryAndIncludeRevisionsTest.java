@@ -6,8 +6,8 @@ import net.ravendb.client.documents.DocumentStore;
 import net.ravendb.client.documents.indexes.AbstractIndexCreationTask;
 import net.ravendb.client.documents.session.IDocumentQuery;
 import net.ravendb.client.documents.session.IDocumentSession;
+import net.ravendb.client.documents.session.IMetadataDictionary;
 import net.ravendb.client.infrastructure.DisabledOnPullRequest;
-import net.ravendb.client.json.MetadataAsDictionary;
 import org.junit.jupiter.api.Test;
 
 import java.util.*;
@@ -21,7 +21,7 @@ public class CanQueryAndIncludeRevisionsTest extends RemoteTestBase {
     public void query_IncludeAllQueryFunctionality() throws Exception {
         try (DocumentStore store = getDocumentStore()) {
 
-            List<String> cvList = new ArrayList<String>();
+            List<String> cvList = new ArrayList<>();
 
             String id = "users/rhino";
 
@@ -38,7 +38,7 @@ public class CanQueryAndIncludeRevisionsTest extends RemoteTestBase {
             Date beforeDateTime = new Date();
 
             try (IDocumentSession session = store.openSession()) {
-                List<MetadataAsDictionary> metadatas = session.advanced().revisions().getMetadataFor(id);
+                List<IMetadataDictionary> metadatas = session.advanced().revisions().getMetadataFor(id);
                 assertThat(metadatas)
                         .hasSize(1);
 
@@ -132,7 +132,7 @@ public class CanQueryAndIncludeRevisionsTest extends RemoteTestBase {
                 session.store(user, id);
                 session.saveChanges();
 
-                List<MetadataAsDictionary> metadatas = session.advanced().revisions().getMetadataFor(id);
+                List<IMetadataDictionary> metadatas = session.advanced().revisions().getMetadataFor(id);
                 assertThat(metadatas)
                         .hasSize(1);
 
@@ -164,7 +164,7 @@ public class CanQueryAndIncludeRevisionsTest extends RemoteTestBase {
     @Test
     public void load_IncludeBuilder_IncludeRevisionByChangeVectors() throws Exception {
         try (DocumentStore store = getDocumentStore()) {
-            List<String> cvList = new ArrayList<String>();
+            List<String> cvList = new ArrayList<>();
 
             String id = "users/rhino";
 
@@ -180,7 +180,7 @@ public class CanQueryAndIncludeRevisionsTest extends RemoteTestBase {
             String changeVector;
 
             try (IDocumentSession session = store.openSession()) {
-                List<MetadataAsDictionary> metadatas = session.advanced().revisions().getMetadataFor(id);
+                List<IMetadataDictionary> metadatas = session.advanced().revisions().getMetadataFor(id);
                 assertThat(metadatas)
                         .hasSize(1);
 
@@ -248,7 +248,7 @@ public class CanQueryAndIncludeRevisionsTest extends RemoteTestBase {
     @Test
     public void load_IncludeBuilder_IncludeRevisionsByProperty_ChangeVectorAndChangeVectors() throws Exception {
         try (DocumentStore store = getDocumentStore()) {
-            List<String> cvList = new ArrayList<String>();
+            List<String> cvList = new ArrayList<>();
 
             String id = "users/rhino";
 
@@ -264,7 +264,7 @@ public class CanQueryAndIncludeRevisionsTest extends RemoteTestBase {
             String changeVector;
 
             try (IDocumentSession session = store.openSession()) {
-                List<MetadataAsDictionary> metadatas = session.advanced().revisions().getMetadataFor(id);
+                List<IMetadataDictionary> metadatas = session.advanced().revisions().getMetadataFor(id);
                 assertThat(metadatas)
                         .hasSize(1);
 
@@ -349,13 +349,13 @@ public class CanQueryAndIncludeRevisionsTest extends RemoteTestBase {
                 session.store(user, id);
                 session.saveChanges();
 
-                List<MetadataAsDictionary> metadatas = session.advanced().revisions().getMetadataFor(id);
+                List<IMetadataDictionary> metadatas = session.advanced().revisions().getMetadataFor(id);
                 assertThat(metadatas)
                         .hasSize(1);
 
                 changeVector = metadatas.get(0).getString(Constants.Documents.Metadata.CHANGE_VECTOR);
                 session.advanced().patch(id, "changeVector", changeVector);
-                session.advanced().patch(id, "changeVectors", Arrays.asList(changeVector));
+                session.advanced().patch(id, "changeVectors", Collections.singletonList(changeVector));
                 session.saveChanges();
             }
 
@@ -399,7 +399,7 @@ public class CanQueryAndIncludeRevisionsTest extends RemoteTestBase {
                 session.store(user, id);
                 session.saveChanges();
 
-                List<MetadataAsDictionary> metadatas = session.advanced().revisions().getMetadataFor(id);
+                List<IMetadataDictionary> metadatas = session.advanced().revisions().getMetadataFor(id);
                 assertThat(metadatas)
                         .hasSize(1);
                 changeVector = metadatas.get(0).getString(Constants.Documents.Metadata.CHANGE_VECTOR);
@@ -449,7 +449,7 @@ public class CanQueryAndIncludeRevisionsTest extends RemoteTestBase {
             String changeVector;
 
             try (IDocumentSession session = store.openSession()) {
-                List<MetadataAsDictionary> metadatas = session.advanced().revisions().getMetadataFor(id);
+                List<IMetadataDictionary> metadatas = session.advanced().revisions().getMetadataFor(id);
                 assertThat(metadatas)
                         .hasSize(1);
 
@@ -499,7 +499,7 @@ public class CanQueryAndIncludeRevisionsTest extends RemoteTestBase {
                 session.store(user, id);
                 session.saveChanges();
 
-                List<MetadataAsDictionary> metadatas = session.advanced().revisions().getMetadataFor(id);
+                List<IMetadataDictionary> metadatas = session.advanced().revisions().getMetadataFor(id);
                 assertThat(metadatas)
                         .hasSize(1);
 

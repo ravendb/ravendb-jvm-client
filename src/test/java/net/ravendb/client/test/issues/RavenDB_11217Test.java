@@ -50,7 +50,7 @@ public class RavenDB_11217Test extends RemoteTestBase {
                 assertThat(session.advanced().getNumberOfRequests())
                         .isZero();
 
-                Product product1 = session.load(Product.class, "products/1-A", b -> b.includeDocuments("supplier"));
+                Product product1 = session.load(Product.class, "products/1-A");
 
                 assertThat(session.advanced().getNumberOfRequests())
                         .isOne();
@@ -74,7 +74,7 @@ public class RavenDB_11217Test extends RemoteTestBase {
                 assertThat(session.advanced().isLoaded(supplier.getId()))
                         .isFalse();
 
-                Product product2 = session.load(Product.class, "products/1-A", b -> b.includeDocuments("supplier"));
+                Product product2 = session.load(Product.class, "products/1-A");
                 assertThat(product1)
                         .isNotSameAs(product2);
             }
@@ -124,7 +124,6 @@ public class RavenDB_11217Test extends RemoteTestBase {
 
                 List<Product> products = session
                         .query(Product.class)
-                        .include("supplier")
                         .toList();
 
                 assertThat(session.advanced().getNumberOfRequests())
@@ -152,7 +151,6 @@ public class RavenDB_11217Test extends RemoteTestBase {
 
                 products = session
                         .query(Product.class)
-                        .include("supplier")
                         .toList();
 
                 assertThat(products)

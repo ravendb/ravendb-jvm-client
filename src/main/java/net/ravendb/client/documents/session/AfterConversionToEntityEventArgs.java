@@ -5,10 +5,10 @@ import net.ravendb.client.primitives.EventArgs;
 
 public class AfterConversionToEntityEventArgs extends EventArgs {
 
-    private String _id;
-    private ObjectNode _document;
-    private Object _entity;
-    private InMemoryDocumentSessionOperations _session;
+    private final String _id;
+    private final ObjectNode _document;
+    private final Object _entity;
+    private final InMemoryDocumentSessionOperations _session;
 
     public AfterConversionToEntityEventArgs(InMemoryDocumentSessionOperations session, String id, ObjectNode document, Object entity) {
         _session = session;

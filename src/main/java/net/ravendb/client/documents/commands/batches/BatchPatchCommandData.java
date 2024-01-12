@@ -47,11 +47,11 @@ public class BatchPatchCommandData implements ICommandData {
 
     private final List<IdAndChangeVector> _ids = new ArrayList<>();
 
-    private String name = null;
+    private final String name = null;
 
-    private PatchRequest patch;
+    private final PatchRequest patch;
 
-    private PatchRequest patchIfMissing;
+    private final PatchRequest patchIfMissing;
 
     private BatchPatchCommandData(PatchRequest patch, PatchRequest patchIfMissing) {
         if (patch == null) {

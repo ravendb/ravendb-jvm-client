@@ -9,9 +9,9 @@ import java.io.IOException;
 
 public class DeleteAttachmentCommandData implements ICommandData {
 
-    private String id;
-    private String name;
-    private String changeVector;
+    private final String id;
+    private final String name;
+    private final String changeVector;
     private final CommandType type = CommandType.ATTACHMENT_DELETE;
 
     @Override

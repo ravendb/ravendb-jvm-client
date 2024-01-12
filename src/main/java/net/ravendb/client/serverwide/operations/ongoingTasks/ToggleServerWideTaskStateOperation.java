@@ -5,12 +5,11 @@ import net.ravendb.client.documents.operations.ongoingTasks.OngoingTaskType;
 import net.ravendb.client.http.IRaftCommand;
 import net.ravendb.client.http.ServerNode;
 import net.ravendb.client.http.VoidRavenCommand;
-import net.ravendb.client.primitives.Reference;
 import net.ravendb.client.primitives.SharpEnum;
 import net.ravendb.client.serverwide.operations.IVoidServerOperation;
 import net.ravendb.client.util.RaftIdGenerator;
-import org.apache.http.client.methods.HttpPost;
-import org.apache.http.client.methods.HttpRequestBase;
+import org.apache.hc.client5.http.classic.methods.HttpPost;
+import org.apache.hc.client5.http.classic.methods.HttpUriRequestBase;
 
 public class ToggleServerWideTaskStateOperation implements IVoidServerOperation {
     private final String _name;
@@ -58,11 +57,11 @@ public class ToggleServerWideTaskStateOperation implements IVoidServerOperation 
         }
 
         @Override
-        public HttpRequestBase createRequest(ServerNode node, Reference<String> url) {
-            url.value = node.getUrl() + "/admin/configuration/server-wide/state?type=" + SharpEnum.value(_type)
+        public HttpUriRequestBase createRequest(ServerNode node) {
+            String url = node.getUrl() + "/admin/configuration/server-wide/state?type=" + SharpEnum.value(_type)
                     + "&name=" + urlEncode(_name) + "&disable=" + _disable;
 
-            return new HttpPost();
+            return new HttpPost(url);
         }
     }
 }

@@ -7,7 +7,7 @@ import net.ravendb.client.http.RavenCommand;
 import net.ravendb.client.http.RequestExecutor;
 import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.http.HttpStatus;
+import org.apache.hc.core5.http.HttpStatus;
 
 import java.io.IOException;
 
@@ -15,7 +15,7 @@ public class OperationExecutor {
 
     private final IDocumentStore store;
     private final String databaseName;
-    private final RequestExecutor requestExecutor;
+    private RequestExecutor _requestExecutor;
 
     public OperationExecutor(DocumentStoreBase store) {
         this((IDocumentStore) store, null);
@@ -28,11 +28,15 @@ public class OperationExecutor {
     protected OperationExecutor(IDocumentStore store, String databaseName) {
         this.store = store;
         this.databaseName = databaseName != null ? databaseName : store.getDatabase();
-        if (StringUtils.isNotBlank(this.databaseName)) {
-            this.requestExecutor = store.getRequestExecutor(this.databaseName);
-        } else {
-            throw new IllegalStateException("Cannot use operations without a database defined, did you forget to call forDatabase?");
+    }
+
+    private RequestExecutor getRequestExecutor() {
+        if (_requestExecutor != null) {
+            return _requestExecutor;
         }
+
+        _requestExecutor = databaseName != null ? store.getRequestExecutor(databaseName) : null;
+        return _requestExecutor;
     }
 
     public OperationExecutor forDatabase(String databaseName) {
@@ -48,8 +52,8 @@ public class OperationExecutor {
     }
 
     public void send(IVoidOperation operation, SessionInfo sessionInfo) {
-        RavenCommand<Void> command = operation.getCommand(store, requestExecutor.getConventions(), requestExecutor.getCache());
-        requestExecutor.execute(command, sessionInfo);
+        RavenCommand<Void> command = operation.getCommand(store, getRequestExecutor().getConventions(), getRequestExecutor().getCache());
+        getRequestExecutor().execute(command, sessionInfo);
     }
 
     public <TResult> TResult send(IOperation<TResult> operation) {
@@ -57,8 +61,8 @@ public class OperationExecutor {
     }
 
     public <TResult> TResult send(IOperation<TResult> operation, SessionInfo sessionInfo) {
-        RavenCommand<TResult> command = operation.getCommand(store, requestExecutor.getConventions(), requestExecutor.getCache());
-        requestExecutor.execute(command, sessionInfo);
+        RavenCommand<TResult> command = operation.getCommand(store, getRequestExecutor().getConventions(), getRequestExecutor().getCache());
+        getRequestExecutor().execute(command, sessionInfo);
 
         return command.getResult();
     }
@@ -68,14 +72,14 @@ public class OperationExecutor {
     }
 
     public Operation sendAsync(IOperation<OperationIdResult> operation, SessionInfo sessionInfo) {
-        RavenCommand<OperationIdResult> command = operation.getCommand(store, requestExecutor.getConventions(), requestExecutor.getCache());
+        RavenCommand<OperationIdResult> command = operation.getCommand(store, getRequestExecutor().getConventions(), getRequestExecutor().getCache());
 
-        requestExecutor.execute(command, sessionInfo);
+        getRequestExecutor().execute(command, sessionInfo);
         String node = ObjectUtils.firstNonNull(command.getSelectedNodeTag(), command.getResult().getOperationNodeTag());
         return new Operation(
-                requestExecutor,
+                getRequestExecutor(),
                 () -> store.changes(databaseName, node),
-                requestExecutor.getConventions(),
+                getRequestExecutor().getConventions(),
                 command.getResult().getOperationId(),
                 node);
     }
@@ -85,9 +89,9 @@ public class OperationExecutor {
     }
 
     public PatchStatus send(PatchOperation operation, SessionInfo sessionInfo) {
-        RavenCommand<PatchResult> command = operation.getCommand(store, requestExecutor.getConventions(), requestExecutor.getCache());
+        RavenCommand<PatchResult> command = operation.getCommand(store, getRequestExecutor().getConventions(), getRequestExecutor().getCache());
 
-        requestExecutor.execute(command, sessionInfo);
+        getRequestExecutor().execute(command, sessionInfo);
 
         if (command.getStatusCode() == HttpStatus.SC_NOT_MODIFIED) {
             return PatchStatus.NOT_MODIFIED;
@@ -105,9 +109,9 @@ public class OperationExecutor {
     }
 
     public <TEntity> PatchOperation.Result<TEntity> send(Class<TEntity> entityClass, PatchOperation operation, SessionInfo sessionInfo) {
-        RavenCommand<PatchResult> command = operation.getCommand(store, requestExecutor.getConventions(), requestExecutor.getCache());
+        RavenCommand<PatchResult> command = operation.getCommand(store, getRequestExecutor().getConventions(), getRequestExecutor().getCache());
 
-        requestExecutor.execute(command, sessionInfo);
+        getRequestExecutor().execute(command, sessionInfo);
 
         PatchOperation.Result<TEntity> result = new PatchOperation.Result<>();
 
@@ -123,7 +127,7 @@ public class OperationExecutor {
 
         try {
             result.setStatus(command.getResult().getStatus());
-            result.setDocument(requestExecutor.getConventions().getEntityMapper().treeToValue(command.getResult().getModifiedDocument(), entityClass));
+            result.setDocument(getRequestExecutor().getConventions().getEntityMapper().treeToValue(command.getResult().getModifiedDocument(), entityClass));
             return result;
         } catch (IOException e) {
             throw new RuntimeException("Unable to read patch result: " + e.getMessage(), e);

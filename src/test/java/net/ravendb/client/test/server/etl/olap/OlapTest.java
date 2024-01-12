@@ -11,7 +11,7 @@ import net.ravendb.client.documents.operations.etl.EtlType;
 import net.ravendb.client.documents.operations.etl.Transformation;
 import net.ravendb.client.documents.operations.etl.olap.OlapConnectionString;
 import net.ravendb.client.documents.operations.etl.olap.OlapEtlConfiguration;
-import net.ravendb.client.documents.operations.ongoingTasks.OngoingTaskOlapEtlDetails;
+import net.ravendb.client.documents.operations.ongoingTasks.OngoingTaskOlapEtl;
 import net.ravendb.client.documents.operations.ongoingTasks.OngoingTaskType;
 import net.ravendb.client.infrastructure.DisabledOnPullRequest;
 import org.junit.jupiter.api.Test;
@@ -45,7 +45,7 @@ public class OlapTest extends RemoteTestBase {
 
             AddEtlOperationResult etlResult = store.maintenance().send(new AddEtlOperation<>(etlConfiguration));
 
-            OngoingTaskOlapEtlDetails ongoingTask = (OngoingTaskOlapEtlDetails) store.maintenance()
+            OngoingTaskOlapEtl ongoingTask = (OngoingTaskOlapEtl) store.maintenance()
                     .send(new GetOngoingTaskInfoOperation(etlResult.getTaskId(), OngoingTaskType.OLAP_ETL));
 
             assertThat(ongoingTask)

@@ -16,7 +16,7 @@ import net.ravendb.client.http.AggressiveCacheMode;
 import net.ravendb.client.http.RequestExecutor;
 import net.ravendb.client.primitives.CleanCloseable;
 import net.ravendb.client.util.UrlUtils;
-import org.apache.http.HttpStatus;
+import org.apache.hc.core5.http.HttpStatus;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
@@ -93,9 +93,7 @@ public class UseCachingInLazyTest extends RemoteTestBase {
             IDatabaseChanges changes = store.changes();
             changes.ensureConnectedNow();
             IChangesObservable<DocumentChange> observable = changes.forDocument(docId);
-            observable.subscribe(Observers.create(x -> {
-                mre.release();
-            }));
+            observable.subscribe(Observers.create(x -> mre.release()));
 
             Thread.sleep(200);
 

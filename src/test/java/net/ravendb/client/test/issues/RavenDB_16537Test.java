@@ -28,9 +28,7 @@ public class RavenDB_16537Test extends RemoteTestBase {
             assertThat(counter.get())
                     .isEqualTo(1);
 
-            store.addOnSessionClosingListener((sender, event) -> {
-                counter.incrementAndGet();
-            });
+            store.addOnSessionClosingListener((sender, event) -> counter.incrementAndGet());
 
             try (IDocumentSession session = store.openSession()) {
             }

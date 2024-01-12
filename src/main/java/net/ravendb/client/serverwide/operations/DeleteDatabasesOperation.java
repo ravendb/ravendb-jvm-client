@@ -6,12 +6,12 @@ import net.ravendb.client.http.IRaftCommand;
 import net.ravendb.client.http.RavenCommand;
 import net.ravendb.client.http.ServerNode;
 import net.ravendb.client.primitives.ExceptionsUtils;
-import net.ravendb.client.primitives.HttpDeleteWithEntity;
-import net.ravendb.client.primitives.Reference;
+import net.ravendb.client.util.ClientShardHelper;
 import net.ravendb.client.util.RaftIdGenerator;
-import org.apache.http.client.methods.HttpRequestBase;
-import org.apache.http.entity.ContentType;
-import org.apache.http.entity.StringEntity;
+import org.apache.hc.client5.http.classic.methods.HttpDelete;
+import org.apache.hc.client5.http.classic.methods.HttpUriRequestBase;
+import org.apache.hc.core5.http.ContentType;
+import org.apache.hc.core5.http.io.entity.StringEntity;
 
 import java.io.IOException;
 import java.time.Duration;
@@ -43,6 +43,10 @@ public class DeleteDatabasesOperation implements IServerOperation<DeleteDatabase
         }
 
         this.parameters = parameters;
+    }
+
+    public DeleteDatabasesOperation(String databaseName, int shardNumber, boolean hardDelete, String fromNode, Duration timeToWaitForConfirmation) {
+        this(ClientShardHelper.toShardName(databaseName, shardNumber), hardDelete, fromNode, timeToWaitForConfirmation);
     }
 
     public DeleteDatabasesOperation(Parameters parameters) {
@@ -84,10 +88,10 @@ public class DeleteDatabasesOperation implements IServerOperation<DeleteDatabase
         }
 
         @Override
-        public HttpRequestBase createRequest(ServerNode node, Reference<String> url) {
-            url.value = node.getUrl() + "/admin/databases";
+        public HttpUriRequestBase createRequest(ServerNode node) {
+            String url = node.getUrl() + "/admin/databases";
 
-            HttpDeleteWithEntity request = new HttpDeleteWithEntity();
+            HttpDelete request = new HttpDelete(url);
 
             request.setEntity(new StringEntity(this.parameters, ContentType.APPLICATION_JSON));
 

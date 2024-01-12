@@ -1,6 +1,8 @@
 package net.ravendb.client.test.client.timeSeries;
 
+import net.ravendb.client.RavenTestHelper;
 import net.ravendb.client.RemoteTestBase;
+import net.ravendb.client.documents.DocumentStore;
 import net.ravendb.client.documents.IDocumentStore;
 import net.ravendb.client.documents.operations.timeSeries.*;
 import net.ravendb.client.documents.session.IDocumentSession;
@@ -72,6 +74,43 @@ public class TimeSeriesSessionTest extends RemoteTestBase {
                 assertThat(val)
                         .hasSize(3);
             }
+        }
+    }
+
+    @Test
+    public void canCreateSimpleTimeSeries3() throws Exception {
+        try (DocumentStore store = getDocumentStore()) {
+            TimeSeriesStatistics res = store.operations().send(new GetTimeSeriesStatisticsOperation("users/ayende"));
+            assertThat(res)
+                    .isNull();
+
+            Date baseline = RavenTestHelper.utcToday();
+            try (IDocumentSession session = store.openSession()) {
+                User user = new User();
+                user.setName("Oren");
+                session.store(user, "users/ayende");
+
+                ISessionDocumentTimeSeries tsf = session.timeSeriesFor("users/ayende", "Heartrate");
+                tsf.append(DateUtils.addMinutes(baseline, 1), 59, "watches/fitbit");
+                tsf.append(DateUtils.addMinutes(baseline, 2), 60, "watches/fitbit");
+                tsf.append(DateUtils.addMinutes(baseline, 3), 61, "watches/fitbit");
+
+                session.saveChanges();
+            }
+
+            res = store.operations().send(new GetTimeSeriesStatisticsOperation("users/ayende"));
+            assertThat(res)
+                    .isNotNull();
+            assertThat(res.getTimeSeries())
+                    .hasSize(1);
+            assertThat(res.getTimeSeries().get(0).getName())
+                    .isEqualTo("Heartrate");
+            assertThat(res.getTimeSeries().get(0).getNumberOfEntries())
+                    .isEqualTo(3);
+            assertThat(res.getTimeSeries().get(0).getStartDate().getTime())
+                    .isEqualTo(DateUtils.addMinutes(baseline, 1).getTime());
+            assertThat(res.getTimeSeries().get(0).getEndDate().getTime())
+                    .isEqualTo(DateUtils.addMinutes(baseline, 3).getTime());
         }
     }
 

@@ -8,11 +8,10 @@ import net.ravendb.client.http.IRaftCommand;
 import net.ravendb.client.http.RavenCommand;
 import net.ravendb.client.http.ServerNode;
 import net.ravendb.client.json.ContentProviderHttpEntity;
-import net.ravendb.client.primitives.Reference;
 import net.ravendb.client.util.RaftIdGenerator;
-import org.apache.http.client.methods.HttpPost;
-import org.apache.http.client.methods.HttpRequestBase;
-import org.apache.http.entity.ContentType;
+import org.apache.hc.client5.http.classic.methods.HttpPost;
+import org.apache.hc.client5.http.classic.methods.HttpUriRequestBase;
+import org.apache.hc.core5.http.ContentType;
 
 import java.io.IOException;
 
@@ -26,15 +25,17 @@ public class UpdatePeriodicBackupOperation implements IMaintenanceOperation<Upda
 
     @Override
     public RavenCommand<UpdatePeriodicBackupOperationResult> getCommand(DocumentConventions conventions) {
-        return new UpdatePeriodicBackupCommand(_configuration);
+        return new UpdatePeriodicBackupCommand(conventions, _configuration);
     }
 
     private static class UpdatePeriodicBackupCommand extends RavenCommand<UpdatePeriodicBackupOperationResult> implements IRaftCommand {
+        private final DocumentConventions _conventions;
         private final PeriodicBackupConfiguration _configuration;
 
-        public UpdatePeriodicBackupCommand(PeriodicBackupConfiguration configuration) {
+        public UpdatePeriodicBackupCommand(DocumentConventions conventions, PeriodicBackupConfiguration configuration) {
             super(UpdatePeriodicBackupOperationResult.class);
 
+            _conventions = conventions;
             _configuration = configuration;
         }
 
@@ -44,18 +45,16 @@ public class UpdatePeriodicBackupOperation implements IMaintenanceOperation<Upda
         }
 
         @Override
-        public HttpRequestBase createRequest(ServerNode node, Reference<String> url) {
-            url.value = node.getUrl() + "/databases/" + node.getDatabase() + "/admin/periodic-backup";
+        public HttpUriRequestBase createRequest(ServerNode node) {
+            String url = node.getUrl() + "/databases/" + node.getDatabase() + "/admin/periodic-backup";
 
-            HttpPost request = new HttpPost();
+            HttpPost request = new HttpPost(url);
             request.setEntity(new ContentProviderHttpEntity(outputStream -> {
                 try (JsonGenerator generator = createSafeJsonGenerator(outputStream)) {
                     ObjectNode config = mapper.valueToTree(_configuration);
                     generator.writeTree(config);
-                } catch (IOException e) {
-                    throw new RuntimeException(e);
                 }
-            }, ContentType.APPLICATION_JSON));
+            }, ContentType.APPLICATION_JSON, _conventions));
 
             return request;
         }

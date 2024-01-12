@@ -2,17 +2,19 @@ package net.ravendb.client.http;
 
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import net.ravendb.client.Constants;
 import net.ravendb.client.extensions.HttpExtensions;
 import net.ravendb.client.extensions.JsonExtensions;
-import net.ravendb.client.primitives.Reference;
+import net.ravendb.client.http.behaviors.AbstractCommandResponseBehavior;
+import net.ravendb.client.http.behaviors.DefaultCommandResponseBehavior;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.http.HttpEntity;
-import org.apache.http.HttpStatus;
-import org.apache.http.client.methods.CloseableHttpResponse;
-import org.apache.http.client.methods.HttpRequestBase;
-import org.apache.http.client.utils.HttpClientUtils;
-import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.hc.client5.http.ClientProtocolException;
+import org.apache.hc.client5.http.classic.methods.HttpUriRequestBase;
+import org.apache.hc.client5.http.impl.classic.CloseableHttpClient;
+import org.apache.hc.client5.http.routing.RoutingSupport;
+import org.apache.hc.core5.http.*;
+import org.apache.hc.core5.io.Closer;
 
 import java.io.*;
 import java.net.URLEncoder;
@@ -29,11 +31,19 @@ public abstract class RavenCommand<TResult> {
     protected Duration timeout;
     protected boolean canCache;
     protected boolean canCacheAggressively;
+    protected boolean canReadFromCache = true;
     protected String selectedNodeTag;
+    protected Integer selectedShardNumber;
     protected int numberOfAttempts;
     protected final ObjectMapper mapper = JsonExtensions.getDefaultMapper();
 
     public long failoverTopologyEtag = -2;
+
+    protected String etag;
+
+    public AbstractCommandResponseBehavior getResponseBehavior() {
+        return DefaultCommandResponseBehavior.INSTANCE;
+    }
 
     public abstract boolean isReadRequest();
 
@@ -77,6 +87,18 @@ public abstract class RavenCommand<TResult> {
         return selectedNodeTag;
     }
 
+    public void setSelectedNodeTag(String selectedNodeTag) {
+        this.selectedNodeTag = selectedNodeTag;
+    }
+
+    public Integer getSelectedShardNumber() {
+        return selectedShardNumber;
+    }
+
+    public void setSelectedShardNumber(Integer selectedShardNumber) {
+        this.selectedShardNumber = selectedShardNumber;
+    }
+
     public int getNumberOfAttempts() {
         return numberOfAttempts;
     }
@@ -95,8 +117,10 @@ public abstract class RavenCommand<TResult> {
     protected RavenCommand(RavenCommand<TResult> copy) {
         this.resultClass = copy.resultClass;
         this.canCache = copy.canCache;
+        this.canReadFromCache = copy.canReadFromCache;
         this.canCacheAggressively = copy.canCacheAggressively;
         this.selectedNodeTag = copy.selectedNodeTag;
+        this.selectedShardNumber = copy.selectedShardNumber;
         this.responseType = copy.responseType;
     }
 
@@ -104,7 +128,7 @@ public abstract class RavenCommand<TResult> {
         return mapper.createGenerator(new OutputStreamWriter(out, StandardCharsets.UTF_8));
     }
 
-    public abstract HttpRequestBase createRequest(ServerNode node, Reference<String> url);
+    public abstract HttpUriRequestBase createRequest(ServerNode node);
 
     public void setResponse(String response, boolean fromCache) throws IOException {
         if (responseType == RavenCommandResponseType.EMPTY || responseType == RavenCommandResponseType.RAW) {
@@ -114,12 +138,20 @@ public abstract class RavenCommand<TResult> {
         throw new UnsupportedOperationException(responseType.name() + " command must override the setResponse method which expects response with the following type: " + responseType);
     }
 
-    public CloseableHttpResponse send(CloseableHttpClient client, HttpRequestBase request) throws IOException {
-        return client.execute(request);
+    public ClassicHttpResponse send(CloseableHttpClient client, HttpUriRequestBase request) throws IOException {
+        return client.executeOpen(determineTarget(request), request, null);
+    }
+
+    private static HttpHost determineTarget(final ClassicHttpRequest request) throws ClientProtocolException {
+        try {
+            return RoutingSupport.determineHost(request);
+        } catch (final HttpException ex) {
+            throw new ClientProtocolException(ex);
+        }
     }
 
     @SuppressWarnings("unused")
-    public void setResponseRaw(CloseableHttpResponse response, InputStream stream) {
+    public void setResponseRaw(ClassicHttpResponse response, InputStream stream) {
         throw new UnsupportedOperationException("When " + responseType + " is set to Raw then please override this method to handle the response. ");
     }
 
@@ -134,7 +166,7 @@ public abstract class RavenCommand<TResult> {
     }
 
     @SuppressWarnings("unused")
-    protected String urlEncode(String value) {
+    protected static String urlEncode(String value) {
         try {
             return URLEncoder.encode(value, "UTF-8");
         } catch (UnsupportedEncodingException e) {
@@ -152,22 +184,22 @@ public abstract class RavenCommand<TResult> {
         return failedNodes != null && failedNodes.containsKey(node);
     }
 
-    public ResponseDisposeHandling processResponse(HttpCache cache, CloseableHttpResponse response, String url) {
+    public ResponseDisposeHandling processResponse(HttpCache cache, ClassicHttpResponse response, String url) {
         HttpEntity entity = response.getEntity();
 
         if (entity == null) {
             return ResponseDisposeHandling.AUTOMATIC;
         }
 
-        if (responseType == RavenCommandResponseType.EMPTY || response.getStatusLine().getStatusCode() == HttpStatus.SC_NO_CONTENT) {
+        if (responseType == RavenCommandResponseType.EMPTY || response.getCode() == HttpStatus.SC_NO_CONTENT) {
             return ResponseDisposeHandling.AUTOMATIC;
         }
 
         try {
             if (responseType == RavenCommandResponseType.OBJECT) {
-                Long contentLength = entity.getContentLength();
+                long contentLength = entity.getContentLength();
                 if (contentLength == 0) {
-                    HttpClientUtils.closeQuietly(response);
+                    Closer.closeQuietly(response);
                     return ResponseDisposeHandling.AUTOMATIC;
                 }
 
@@ -186,13 +218,13 @@ public abstract class RavenCommand<TResult> {
         } catch (IOException e) {
             throw new RuntimeException(e);
         } finally {
-            HttpClientUtils.closeQuietly(response);
+            Closer.closeQuietly(response);
         }
 
         return ResponseDisposeHandling.AUTOMATIC;
     }
 
-    protected void cacheResponse(HttpCache cache, String url, CloseableHttpResponse response, String responseJson) {
+    protected void cacheResponse(HttpCache cache, String url, ClassicHttpResponse response, String responseJson) {
         if (!canCache()) {
             return;
         }
@@ -214,14 +246,14 @@ public abstract class RavenCommand<TResult> {
     }
 
     @SuppressWarnings("unused")
-    protected void addChangeVectorIfNotNull(String changeVector, HttpRequestBase request) {
+    protected void addChangeVectorIfNotNull(String changeVector, HttpUriRequestBase request) {
         if (changeVector != null) {
-            request.addHeader("If-Match", "\"" + changeVector + "\"");
+            request.addHeader(Constants.Headers.IF_MATCH, "\"" + changeVector + "\"");
         }
     }
 
     @SuppressWarnings({"unused", "EmptyMethod"})
-    public void onResponseFailure(CloseableHttpResponse response) {
+    public void onResponseFailure(ClassicHttpResponse response) {
 
     }
 }

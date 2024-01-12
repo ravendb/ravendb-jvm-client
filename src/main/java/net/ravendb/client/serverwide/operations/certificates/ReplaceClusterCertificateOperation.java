@@ -6,15 +6,12 @@ import net.ravendb.client.http.IRaftCommand;
 import net.ravendb.client.http.ServerNode;
 import net.ravendb.client.http.VoidRavenCommand;
 import net.ravendb.client.json.ContentProviderHttpEntity;
-import net.ravendb.client.primitives.Reference;
 import net.ravendb.client.serverwide.operations.IVoidServerOperation;
 import net.ravendb.client.util.RaftIdGenerator;
-import org.apache.commons.codec.binary.Base64;
-import org.apache.http.client.methods.HttpPost;
-import org.apache.http.client.methods.HttpRequestBase;
-import org.apache.http.entity.ContentType;
-
-import java.io.IOException;
+import org.apache.hc.client5.http.classic.methods.HttpPost;
+import org.apache.hc.client5.http.classic.methods.HttpUriRequestBase;
+import org.apache.hc.client5.http.utils.Base64;
+import org.apache.hc.core5.http.ContentType;
 
 public class ReplaceClusterCertificateOperation implements IVoidServerOperation {
 
@@ -32,18 +29,20 @@ public class ReplaceClusterCertificateOperation implements IVoidServerOperation 
 
     @Override
     public VoidRavenCommand getCommand(DocumentConventions conventions) {
-        return new ReplaceClusterCertificateCommand(_certBytes, _replaceImmediately);
+        return new ReplaceClusterCertificateCommand(conventions, _certBytes, _replaceImmediately);
     }
 
     private static class ReplaceClusterCertificateCommand extends VoidRavenCommand implements IRaftCommand {
+        private final DocumentConventions _conventions;
         private final byte[] _certBytes;
         private final boolean _replaceImmediately;
 
-        public ReplaceClusterCertificateCommand(byte[] certBytes, boolean replaceImmediately) {
+        public ReplaceClusterCertificateCommand(DocumentConventions conventions, byte[] certBytes, boolean replaceImmediately) {
             if (certBytes == null) {
                 throw new IllegalArgumentException("CertBytes cannot be null");
             }
 
+            _conventions = conventions;
             _certBytes = certBytes;
             _replaceImmediately = replaceImmediately;
         }
@@ -54,20 +53,18 @@ public class ReplaceClusterCertificateOperation implements IVoidServerOperation 
         }
 
         @Override
-        public HttpRequestBase createRequest(ServerNode node, Reference<String> url) {
-            url.value = node.getUrl() + "/admin/certificates/replace-cluster-cert?replaceImmediately=" + (_replaceImmediately  ? "true" : "false");
+        public HttpUriRequestBase createRequest(ServerNode node) {
+            String url = node.getUrl() + "/admin/certificates/replace-cluster-cert?replaceImmediately=" + (_replaceImmediately  ? "true" : "false");
 
-            HttpPost request = new HttpPost();
+            HttpPost request = new HttpPost(url);
             request.setEntity(new ContentProviderHttpEntity(outputStream -> {
                 try (JsonGenerator generator = createSafeJsonGenerator(outputStream)) {
                     generator.writeStartObject();
                     generator.writeFieldName("Certificate");
                     generator.writeString(Base64.encodeBase64String(_certBytes));
                     generator.writeEndObject();
-                } catch (IOException e) {
-                    throw new RuntimeException(e);
                 }
-            }, ContentType.APPLICATION_JSON));
+            }, ContentType.APPLICATION_JSON, _conventions));
             return request;
         }
 

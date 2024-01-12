@@ -6,11 +6,10 @@ import net.ravendb.client.documents.smuggler.DatabaseItemType;
 import net.ravendb.client.http.IRaftCommand;
 import net.ravendb.client.http.ServerNode;
 import net.ravendb.client.http.VoidRavenCommand;
-import net.ravendb.client.primitives.Reference;
 import net.ravendb.client.primitives.SharpEnum;
 import net.ravendb.client.util.RaftIdGenerator;
-import org.apache.http.client.methods.HttpPost;
-import org.apache.http.client.methods.HttpRequestBase;
+import org.apache.hc.client5.http.classic.methods.HttpPost;
+import org.apache.hc.client5.http.classic.methods.HttpUriRequestBase;
 
 import java.util.EnumSet;
 import java.util.stream.Collectors;
@@ -46,15 +45,15 @@ public class CreateSampleDataOperation implements IVoidMaintenanceOperation {
         }
 
         @Override
-        public HttpRequestBase createRequest(ServerNode node, Reference<String> url) {
-            url.value = node.getUrl() + "/databases/" + node.getDatabase() + "/studio/sample-data";
+        public HttpUriRequestBase createRequest(ServerNode node) {
+            String url = node.getUrl() + "/databases/" + node.getDatabase() + "/studio/sample-data";
 
-            url.value += "?" + _operateOnTypes
+            url += "?" + _operateOnTypes
                     .stream()
                     .map(x -> "operateOnTypes=" + SharpEnum.value(x))
                     .collect(Collectors.joining("&"));
 
-            return new HttpPost();
+            return new HttpPost(url);
         }
 
         @Override

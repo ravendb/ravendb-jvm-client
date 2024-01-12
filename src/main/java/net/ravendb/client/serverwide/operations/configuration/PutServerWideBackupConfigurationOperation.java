@@ -6,13 +6,12 @@ import net.ravendb.client.http.IRaftCommand;
 import net.ravendb.client.http.RavenCommand;
 import net.ravendb.client.http.ServerNode;
 import net.ravendb.client.json.ContentProviderHttpEntity;
-import net.ravendb.client.primitives.Reference;
 import net.ravendb.client.serverwide.operations.IServerOperation;
 import net.ravendb.client.serverwide.operations.ongoingTasks.ServerWideTaskResponse;
 import net.ravendb.client.util.RaftIdGenerator;
-import org.apache.http.client.methods.HttpPut;
-import org.apache.http.client.methods.HttpRequestBase;
-import org.apache.http.entity.ContentType;
+import org.apache.hc.client5.http.classic.methods.HttpPut;
+import org.apache.hc.client5.http.classic.methods.HttpUriRequestBase;
+import org.apache.hc.core5.http.ContentType;
 
 import java.io.IOException;
 
@@ -29,19 +28,21 @@ public class PutServerWideBackupConfigurationOperation implements IServerOperati
 
     @Override
     public RavenCommand<PutServerWideBackupConfigurationResponse> getCommand(DocumentConventions conventions) {
-        return new PutServerWideBackupConfigurationCommand(_configuration);
+        return new PutServerWideBackupConfigurationCommand(conventions, _configuration);
     }
 
     private static class PutServerWideBackupConfigurationCommand extends RavenCommand<PutServerWideBackupConfigurationResponse> implements IRaftCommand {
         private final ServerWideBackupConfiguration _configuration;
+        private final DocumentConventions _conventions;
 
-        public PutServerWideBackupConfigurationCommand(ServerWideBackupConfiguration configuration) {
+        public PutServerWideBackupConfigurationCommand(DocumentConventions conventions, ServerWideBackupConfiguration configuration) {
             super(PutServerWideBackupConfigurationResponse.class);
 
             if (configuration == null) {
                 throw new IllegalArgumentException("Configuration cannot be null");
             }
 
+            _conventions = conventions;
             _configuration = configuration;
         }
 
@@ -56,17 +57,15 @@ public class PutServerWideBackupConfigurationOperation implements IServerOperati
         }
 
         @Override
-        public HttpRequestBase createRequest(ServerNode node, Reference<String> url) {
-            url.value = node.getUrl() + "/admin/configuration/server-wide/backup";
+        public HttpUriRequestBase createRequest(ServerNode node) {
+            String url = node.getUrl() + "/admin/configuration/server-wide/backup";
 
-            HttpPut request = new HttpPut();
+            HttpPut request = new HttpPut(url);
             request.setEntity(new ContentProviderHttpEntity(outputStream -> {
                 try (JsonGenerator generator = createSafeJsonGenerator(outputStream)) {
                     generator.getCodec().writeValue(generator, _configuration);
-                } catch (IOException e) {
-                    throw new RuntimeException(e);
                 }
-            }, ContentType.APPLICATION_JSON));
+            }, ContentType.APPLICATION_JSON, _conventions));
 
             return request;
         }

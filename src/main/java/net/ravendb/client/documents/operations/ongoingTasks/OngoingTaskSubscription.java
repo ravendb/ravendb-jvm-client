@@ -1,6 +1,9 @@
 package net.ravendb.client.documents.operations.ongoingTasks;
 
+import net.ravendb.client.documents.dataArchival.ArchivedDataProcessingBehavior;
+
 import java.util.Date;
+import java.util.Map;
 
 public class OngoingTaskSubscription extends OngoingTask {
     public OngoingTaskSubscription() {
@@ -11,6 +14,8 @@ public class OngoingTaskSubscription extends OngoingTask {
     private String subscriptionName;
     private long subscriptionId;
     private String changeVectorForNextBatchStartingPoint;
+    private Map<String, String> changeVectorForNextBatchStartingPointPerShard;
+    private ArchivedDataProcessingBehavior archivedDataProcessingBehavior;
     private Date lastBatchAckTime;
     private boolean disabled;
     private Date lastClientConnectionTime;
@@ -45,6 +50,22 @@ public class OngoingTaskSubscription extends OngoingTask {
 
     public void setChangeVectorForNextBatchStartingPoint(String changeVectorForNextBatchStartingPoint) {
         this.changeVectorForNextBatchStartingPoint = changeVectorForNextBatchStartingPoint;
+    }
+
+    public Map<String, String> getChangeVectorForNextBatchStartingPointPerShard() {
+        return changeVectorForNextBatchStartingPointPerShard;
+    }
+
+    public void setChangeVectorForNextBatchStartingPointPerShard(Map<String, String> changeVectorForNextBatchStartingPointPerShard) {
+        this.changeVectorForNextBatchStartingPointPerShard = changeVectorForNextBatchStartingPointPerShard;
+    }
+
+    public ArchivedDataProcessingBehavior getArchivedDataProcessingBehavior() {
+        return archivedDataProcessingBehavior;
+    }
+
+    public void setArchivedDataProcessingBehavior(ArchivedDataProcessingBehavior archivedDataProcessingBehavior) {
+        this.archivedDataProcessingBehavior = archivedDataProcessingBehavior;
     }
 
     public Date getLastBatchAckTime() {

@@ -3,10 +3,9 @@ package net.ravendb.client.serverwide.operations;
 import net.ravendb.client.documents.conventions.DocumentConventions;
 import net.ravendb.client.http.RavenCommand;
 import net.ravendb.client.http.ServerNode;
-import net.ravendb.client.primitives.Reference;
 import net.ravendb.client.serverwide.DatabaseRecordWithEtag;
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.client.methods.HttpRequestBase;
+import org.apache.hc.client5.http.classic.methods.HttpGet;
+import org.apache.hc.client5.http.classic.methods.HttpUriRequestBase;
 
 import java.io.IOException;
 
@@ -20,7 +19,6 @@ public class GetDatabaseRecordOperation implements IServerOperation<DatabaseReco
     public RavenCommand<DatabaseRecordWithEtag> getCommand(DocumentConventions conventions) {
         return new GetDatabaseRecordCommand(_database);
     }
-
 
     private static class GetDatabaseRecordCommand extends RavenCommand<DatabaseRecordWithEtag> {
         private final String _database;
@@ -36,9 +34,9 @@ public class GetDatabaseRecordOperation implements IServerOperation<DatabaseReco
         }
 
         @Override
-        public HttpRequestBase createRequest(ServerNode node, Reference<String> url) {
-            url.value = node.getUrl() + "/admin/databases?name=" + _database;
-            return new HttpGet();
+        public HttpUriRequestBase createRequest(ServerNode node) {
+            String url = node.getUrl() + "/admin/databases?name=" + _database;
+            return new HttpGet(url);
         }
 
         @Override

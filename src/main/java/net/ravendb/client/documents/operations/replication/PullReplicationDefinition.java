@@ -6,11 +6,8 @@ import net.ravendb.client.extensions.JsonExtensions;
 
 import java.time.Duration;
 import java.util.EnumSet;
-import java.util.Map;
 
 public class PullReplicationDefinition {
-
-    private Map<String, String> certificates; // <thumbprint, base64 cert>
 
     private Duration delayReplicationFor;
     private boolean disabled;
@@ -31,24 +28,6 @@ public class PullReplicationDefinition {
 
     public PullReplicationDefinition(String name) {
         this.name = name;
-    }
-
-    /**
-     * @deprecated You cannot use Certificates on the PullReplicationDefinition any more, please use the dedicated commands:
-     *  RegisterReplicationHubAccessOperation and UnregisterReplicationHubAccessOperation
-     * @return certificates keyed with thumbprint
-     */
-    public Map<String, String> getCertificates() {
-        return certificates;
-    }
-
-    /**
-     * @deprecated You cannot use Certificates on the PullReplicationDefinition any more, please use the dedicated commands:
-     *  RegisterReplicationHubAccessOperation and UnregisterReplicationHubAccessOperation
-     * @param certificates certificates keyed with thumbprint
-     */
-    public void setCertificates(Map<String, String> certificates) {
-        this.certificates = certificates;
     }
 
     public Duration getDelayReplicationFor() {

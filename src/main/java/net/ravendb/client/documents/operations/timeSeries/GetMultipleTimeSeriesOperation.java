@@ -8,11 +8,10 @@ import net.ravendb.client.http.HttpCache;
 import net.ravendb.client.http.RavenCommand;
 import net.ravendb.client.http.ServerNode;
 import net.ravendb.client.primitives.NetISO8601Utils;
-import net.ravendb.client.primitives.Reference;
 import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.client.methods.HttpRequestBase;
+import org.apache.hc.client5.http.classic.methods.HttpGet;
+import org.apache.hc.client5.http.classic.methods.HttpUriRequestBase;
 
 import java.io.IOException;
 import java.util.List;
@@ -25,17 +24,22 @@ public class GetMultipleTimeSeriesOperation implements IOperation<TimeSeriesDeta
     private final int _start;
     private final int _pageSize;
     private final Consumer<ITimeSeriesIncludeBuilder> _includes;
+    private final boolean _returnFullResults;
 
     public GetMultipleTimeSeriesOperation(String docId, List<TimeSeriesRange> ranges) {
         this(docId, ranges, 0, Integer.MAX_VALUE);
     }
 
     public GetMultipleTimeSeriesOperation(String docId, List<TimeSeriesRange> ranges, int start, int pageSize) {
-        this(docId, ranges, start, pageSize, null);
+        this(docId, ranges, start, pageSize, null, false);
     }
 
     public GetMultipleTimeSeriesOperation(String docId, List<TimeSeriesRange> ranges, int start, int pageSize, Consumer<ITimeSeriesIncludeBuilder> includes) {
-        this(docId, start, pageSize, includes);
+        this(docId, ranges, start, pageSize, includes, false);
+    }
+
+    public GetMultipleTimeSeriesOperation(String docId, List<TimeSeriesRange> ranges, int start, int pageSize, Consumer<ITimeSeriesIncludeBuilder> includes, boolean returnFullResults) {
+        this(docId, start, pageSize, includes, returnFullResults);
 
         if (ranges == null) {
             throw new IllegalArgumentException("Ranges cannot be null");
@@ -44,7 +48,7 @@ public class GetMultipleTimeSeriesOperation implements IOperation<TimeSeriesDeta
         _ranges = ranges;
     }
 
-    private GetMultipleTimeSeriesOperation(String docId, int start, int pageSize, Consumer<ITimeSeriesIncludeBuilder> includes) {
+    private GetMultipleTimeSeriesOperation(String docId, int start, int pageSize, Consumer<ITimeSeriesIncludeBuilder> includes, boolean returnFullResults) {
         if (StringUtils.isEmpty(docId)) {
             throw new IllegalArgumentException("DocId cannot be null or empty");
         }
@@ -53,11 +57,12 @@ public class GetMultipleTimeSeriesOperation implements IOperation<TimeSeriesDeta
         _start = start;
         _pageSize = pageSize;
         _includes = includes;
+        _returnFullResults = returnFullResults;
     }
 
     @Override
     public RavenCommand<TimeSeriesDetails> getCommand(IDocumentStore store, DocumentConventions conventions, HttpCache cache) {
-        return new GetMultipleTimeSeriesCommand(_docId, _ranges, _start, _pageSize, _includes);
+        return new GetMultipleTimeSeriesCommand(_docId, _ranges, _start, _pageSize, _includes, _returnFullResults);
     }
 
     public static class GetMultipleTimeSeriesCommand extends RavenCommand<TimeSeriesDetails> {
@@ -66,12 +71,13 @@ public class GetMultipleTimeSeriesOperation implements IOperation<TimeSeriesDeta
         private final int _start;
         private final int _pageSize;
         private final Consumer<ITimeSeriesIncludeBuilder> _includes;
+        private final boolean _returnFullResults;
 
         public GetMultipleTimeSeriesCommand(String docId, List<TimeSeriesRange> ranges, int start, int pageSize) {
-            this(docId, ranges, start, pageSize, null);
+            this(docId, ranges, start, pageSize, null, false);
         }
 
-        public GetMultipleTimeSeriesCommand(String docId, List<TimeSeriesRange> ranges, int start, int pageSize, Consumer<ITimeSeriesIncludeBuilder> includes) {
+        public GetMultipleTimeSeriesCommand(String docId, List<TimeSeriesRange> ranges, int start, int pageSize, Consumer<ITimeSeriesIncludeBuilder> includes, boolean returnFullResults) {
             super(TimeSeriesDetails.class);
 
             if (docId == null) {
@@ -83,10 +89,11 @@ public class GetMultipleTimeSeriesOperation implements IOperation<TimeSeriesDeta
             _start = start;
             _pageSize = pageSize;
             _includes = includes;
+            _returnFullResults = returnFullResults;
         }
 
         @Override
-        public HttpRequestBase createRequest(ServerNode node, Reference<String> url) {
+        public HttpUriRequestBase createRequest(ServerNode node) {
             StringBuilder pathBuilder = new StringBuilder(node.getUrl());
 
             pathBuilder
@@ -106,6 +113,11 @@ public class GetMultipleTimeSeriesOperation implements IOperation<TimeSeriesDeta
                 pathBuilder
                         .append("&pageSize=")
                         .append(_pageSize);
+            }
+
+            if (_returnFullResults) {
+                pathBuilder
+                        .append("&full=true");
             }
 
             if (_ranges.isEmpty()) {
@@ -130,9 +142,9 @@ public class GetMultipleTimeSeriesOperation implements IOperation<TimeSeriesDeta
                 GetTimeSeriesOperation.GetTimeSeriesCommand.addIncludesToRequest(pathBuilder, _includes);
             }
 
-            url.value = pathBuilder.toString();
+            String url = pathBuilder.toString();
 
-            return new HttpGet();
+            return new HttpGet(url);
         }
 
         @Override

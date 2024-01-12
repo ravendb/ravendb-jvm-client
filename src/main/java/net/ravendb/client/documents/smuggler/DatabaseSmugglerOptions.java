@@ -50,7 +50,9 @@ public class DatabaseSmugglerOptions implements IDatabaseSmugglerOptions {
             DatabaseRecordItemType.QUEUE_CONNECTION_STRINGS,
             DatabaseRecordItemType.QUEUE_ETLS,
             DatabaseRecordItemType.INDEXES_HISTORY,
-            DatabaseRecordItemType.REFRESH);
+            DatabaseRecordItemType.REFRESH,
+            DatabaseRecordItemType.QUEUE_SINKS,
+            DatabaseRecordItemType.DATA_ARCHIVAL);
 
     private final int DEFAULT_MAX_STEPS_FOR_TRANSFORM_SCRIPT = 10 * 1000;
 
@@ -58,6 +60,7 @@ public class DatabaseSmugglerOptions implements IDatabaseSmugglerOptions {
     private EnumSet<DatabaseRecordItemType> operateOnDatabaseRecordType;
     private boolean includeExpired;
     private boolean includeArtificial;
+    private boolean includeArchived;
     private boolean removeAnalyzers;
     private String transformScript;
     private int maxStepsForTransformScript;
@@ -65,11 +68,14 @@ public class DatabaseSmugglerOptions implements IDatabaseSmugglerOptions {
     private String encryptionKey;
     private List<String> collections;
 
+    private boolean skipCorruptedData;
+
     public DatabaseSmugglerOptions() {
         this.operateOnTypes = DEFAULT_OPERATE_ON_TYPES.clone();
         this.operateOnDatabaseRecordType = DEFAULT_OPERATE_ON_DATABASE_RECORD_TYPES.clone();
         this.maxStepsForTransformScript = DEFAULT_MAX_STEPS_FOR_TRANSFORM_SCRIPT;
         includeExpired = true;
+        includeArchived = true;
         this.collections = new ArrayList<>();
     }
 
@@ -105,6 +111,14 @@ public class DatabaseSmugglerOptions implements IDatabaseSmugglerOptions {
 
     public void setIncludeArtificial(boolean includeArtificial) {
         this.includeArtificial = includeArtificial;
+    }
+
+    public boolean isIncludeArchived() {
+        return includeArchived;
+    }
+
+    public void setIncludeArchived(boolean includeArchived) {
+        this.includeArchived = includeArchived;
     }
 
     public boolean isRemoveAnalyzers() {
@@ -153,5 +167,20 @@ public class DatabaseSmugglerOptions implements IDatabaseSmugglerOptions {
 
     public void setCollections(List<String> collections) {
         this.collections = collections;
+    }
+
+    /**
+     * In case the database is corrupted (for example, Compression Dictionaries are lost), it is possible to export all the remaining data.
+     */
+    public boolean isSkipCorruptedData() {
+        return skipCorruptedData;
+    }
+
+    /**
+     * In case the database is corrupted (for example, Compression Dictionaries are lost), it is possible to export all the remaining data.
+     * @param skipCorruptedData skip corrupted data
+     */
+    public void setSkipCorruptedData(boolean skipCorruptedData) {
+        this.skipCorruptedData = skipCorruptedData;
     }
 }

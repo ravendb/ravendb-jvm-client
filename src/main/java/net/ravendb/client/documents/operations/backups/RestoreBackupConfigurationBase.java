@@ -1,5 +1,7 @@
 package net.ravendb.client.documents.operations.backups;
 
+import net.ravendb.client.documents.operations.backups.sharding.ShardedRestoreSettings;
+
 public abstract class RestoreBackupConfigurationBase {
     private String databaseName;
     private String lastFileNameToRestore;
@@ -10,6 +12,7 @@ public abstract class RestoreBackupConfigurationBase {
 
     protected abstract RestoreType getType();
 
+    private ShardedRestoreSettings shardRestoreSettings;
     private BackupEncryptionSettings backupEncryptionSettings;
 
     public String getDatabaseName() {
@@ -58,6 +61,14 @@ public abstract class RestoreBackupConfigurationBase {
 
     public void setSkipIndexes(boolean skipIndexes) {
         this.skipIndexes = skipIndexes;
+    }
+
+    public ShardedRestoreSettings getShardRestoreSettings() {
+        return shardRestoreSettings;
+    }
+
+    public void setShardRestoreSettings(ShardedRestoreSettings shardRestoreSettings) {
+        this.shardRestoreSettings = shardRestoreSettings;
     }
 
     public BackupEncryptionSettings getBackupEncryptionSettings() {

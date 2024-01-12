@@ -2,11 +2,9 @@ package net.ravendb.client.documents.operations.backups;
 
 public class FtpSettings extends BackupSettings {
     private String url;
-    private Integer port;
     private String userName;
     private String password;
     private String certificateAsBase64;
-    private String certificateFileName;
 
     public String getUrl() {
         return url;
@@ -14,14 +12,6 @@ public class FtpSettings extends BackupSettings {
 
     public void setUrl(String url) {
         this.url = url;
-    }
-
-    public Integer getPort() {
-        return port;
-    }
-
-    public void setPort(Integer port) {
-        this.port = port;
     }
 
     public String getUserName() {
@@ -48,11 +38,4 @@ public class FtpSettings extends BackupSettings {
         this.certificateAsBase64 = certificateAsBase64;
     }
 
-    public String getCertificateFileName() {
-        return certificateFileName;
-    }
-
-    public void setCertificateFileName(String certificateFileName) {
-        this.certificateFileName = certificateFileName;
-    }
 }

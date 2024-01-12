@@ -230,7 +230,7 @@ public class UniqueValuesTest extends RemoteTestBase {
                 session.saveChanges();
             }
 
-            CompareExchangeValue<Integer> res = store.operations().send(new GetCompareExchangeValueOperation<Integer>(Integer.class, key));
+            CompareExchangeValue<Integer> res = store.operations().send(new GetCompareExchangeValueOperation<>(Integer.class, key));
             assertThat(res.getMetadata())
                     .isNotNull();
             assertThat(res.getValue())

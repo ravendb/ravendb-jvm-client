@@ -2,9 +2,8 @@ package net.ravendb.client.serverwide.commands;
 
 import net.ravendb.client.http.RavenCommand;
 import net.ravendb.client.http.ServerNode;
-import net.ravendb.client.primitives.Reference;
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.client.methods.HttpRequestBase;
+import org.apache.hc.client5.http.classic.methods.HttpGet;
+import org.apache.hc.client5.http.classic.methods.HttpUriRequestBase;
 
 import java.io.IOException;
 
@@ -15,10 +14,10 @@ public class GetNodeInfoCommand extends RavenCommand<NodeInfo> {
     }
 
     @Override
-    public HttpRequestBase createRequest(ServerNode node, Reference<String> url) {
-        url.value = node.getUrl() + "/cluster/node-info";
+    public HttpUriRequestBase createRequest(ServerNode node) {
+        String url = node.getUrl() + "/cluster/node-info";
 
-        return new HttpGet();
+        return new HttpGet(url);
     }
 
     @Override

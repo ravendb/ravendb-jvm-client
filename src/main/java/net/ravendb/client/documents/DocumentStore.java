@@ -32,7 +32,7 @@ import java.util.function.Supplier;
  */
 public class DocumentStore extends DocumentStoreBase {
 
-    private ExecutorService executorService = Executors.newCachedThreadPool();
+    private final ExecutorService executorService = Executors.newCachedThreadPool();
 
     private final ConcurrentMap<DatabaseChangesOptions, IDatabaseChanges> _databaseChanges = new ConcurrentHashMap<>();
 
@@ -327,27 +327,6 @@ public class DocumentStore extends DocumentStoreBase {
 
     protected IDatabaseChanges createDatabaseChanges(DatabaseChangesOptions node) {
         return new DatabaseChanges(getRequestExecutor(node.getDatabaseName()), node.getDatabaseName(), executorService, () -> _databaseChanges.remove(node), node.getNodeTag());
-    }
-
-    public Exception getLastDatabaseChangesStateException() {
-        return getLastDatabaseChangesStateException(null, null);
-    }
-
-    public Exception getLastDatabaseChangesStateException(String database) {
-        return getLastDatabaseChangesStateException(database, null);
-    }
-
-    public Exception getLastDatabaseChangesStateException(String database, String nodeTag) {
-
-        DatabaseChangesOptions node = new DatabaseChangesOptions(ObjectUtils.firstNonNull(database, getDatabase()), nodeTag);
-
-        DatabaseChanges databaseChanges = (DatabaseChanges) _databaseChanges.get(node);
-
-        if (databaseChanges != null) {
-            return databaseChanges.getLastConnectionStateException();
-        }
-
-        return null;
     }
 
     @Override

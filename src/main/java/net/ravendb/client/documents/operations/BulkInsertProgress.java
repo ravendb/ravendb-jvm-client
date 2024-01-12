@@ -1,6 +1,6 @@
 package net.ravendb.client.documents.operations;
 
-public class BulkInsertProgress {
+public class BulkInsertProgress implements IOperationProgress {
     private long total;
     private long batchCount;
     private String lastProcessedId;

@@ -2,9 +2,9 @@ package net.ravendb.client.util;
 
 import net.ravendb.client.serverwide.commands.TcpConnectionInfo;
 import net.ravendb.client.serverwide.tcp.TcpConnectionHeaderMessage;
-import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.lang3.NotImplementedException;
-import org.apache.http.ssl.SSLContexts;
+import org.apache.hc.client5.http.utils.Base64;
+import org.apache.hc.core5.ssl.SSLContexts;
 
 import javax.net.ssl.SSLContext;
 import java.io.ByteArrayInputStream;

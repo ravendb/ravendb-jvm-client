@@ -9,7 +9,7 @@ import net.ravendb.client.documents.operations.etl.AddEtlOperationResult;
 import net.ravendb.client.documents.operations.etl.EtlType;
 import net.ravendb.client.documents.operations.etl.Transformation;
 import net.ravendb.client.documents.operations.etl.queue.*;
-import net.ravendb.client.documents.operations.ongoingTasks.OngoingTaskQueueEtlDetails;
+import net.ravendb.client.documents.operations.ongoingTasks.OngoingTaskQueueEtl;
 import net.ravendb.client.documents.operations.ongoingTasks.OngoingTaskType;
 import net.ravendb.client.infrastructure.DisabledOnPullRequest;
 import org.junit.jupiter.api.Test;
@@ -44,7 +44,7 @@ public class RabbitMqTest extends RemoteTestBase {
 
             AddEtlOperationResult etlResult = store.maintenance().send(new AddEtlOperation<>(etlConfiguration));
 
-            OngoingTaskQueueEtlDetails ongoingTask = (OngoingTaskQueueEtlDetails) store.maintenance()
+            OngoingTaskQueueEtl ongoingTask = (OngoingTaskQueueEtl) store.maintenance()
                     .send(new GetOngoingTaskInfoOperation(etlResult.getTaskId(), OngoingTaskType.QUEUE_ETL));
 
             assertThat(ongoingTask)

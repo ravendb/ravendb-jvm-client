@@ -18,10 +18,6 @@ public enum DatabaseItemType {
     LEGACY_ATTACHMENT_DELETIONS,
     DATABASE_RECORD,
     UNKNOWN,
-    /**
-     * @deprecated COUNTERS is not supported anymore. Will be removed in next major version of the product.
-     */
-    COUNTERS,
     ATTACHMENTS,
     COUNTER_GROUPS,
     SUBSCRIPTIONS,

@@ -6,10 +6,9 @@ import net.ravendb.client.http.IBroadcast;
 import net.ravendb.client.http.IRaftCommand;
 import net.ravendb.client.http.RavenCommand;
 import net.ravendb.client.http.ServerNode;
-import net.ravendb.client.primitives.Reference;
 import net.ravendb.client.util.RaftIdGenerator;
-import org.apache.http.client.methods.HttpPost;
-import org.apache.http.client.methods.HttpRequestBase;
+import org.apache.hc.client5.http.classic.methods.HttpPost;
+import org.apache.hc.client5.http.classic.methods.HttpUriRequestBase;
 
 import java.io.IOException;
 
@@ -34,12 +33,12 @@ public class NextIdentityForCommand extends RavenCommand<Long> implements IRaftC
     }
 
     @Override
-    public HttpRequestBase createRequest(ServerNode node, Reference<String> url) {
+    public HttpUriRequestBase createRequest(ServerNode node) {
         ensureIsNotNullOrString(_id, "id");
 
-        url.value = node.getUrl() + "/databases/" + node.getDatabase() + "/identity/next?name=" + urlEncode(_id);
+        String url = node.getUrl() + "/databases/" + node.getDatabase() + "/identity/next?name=" + urlEncode(_id);
 
-        return new HttpPost();
+        return new HttpPost(url);
     }
 
     @Override

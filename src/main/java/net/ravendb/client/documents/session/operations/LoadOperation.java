@@ -49,8 +49,8 @@ public class LoadOperation {
         }
 
         GetDocumentsCommand cmd = _includeAllCounters
-                ? new GetDocumentsCommand(_ids, _includes, true, _timeSeriesToInclude, _compareExchangeValuesToInclude, false)
-                : new GetDocumentsCommand(_ids, _includes, _countersToInclude, _revisionsToIncludeByChangeVector, _revisionsToIncludeByDateTimeBefore, _timeSeriesToInclude, _compareExchangeValuesToInclude, false);
+                ? new GetDocumentsCommand(_session.getConventions(), _ids, _includes, true, _timeSeriesToInclude, _compareExchangeValuesToInclude, false)
+                : new GetDocumentsCommand(_session.getConventions(), _ids, _includes, _countersToInclude, _revisionsToIncludeByChangeVector, _revisionsToIncludeByDateTimeBefore, _timeSeriesToInclude, _compareExchangeValuesToInclude, false);
 
         cmd.setTransactionMode(_session.getTransactionMode());
 
@@ -70,24 +70,34 @@ public class LoadOperation {
     }
 
     public LoadOperation withIncludes(String[] includes) {
-        _includes = includes;
+        if (includes != null && includes.length > 0) {
+            _session.assertNoIncludesInNonTrackingSession();
+            _includes = includes;
+        }
+
         return this;
     }
 
     public LoadOperation withCompareExchange(String[] compareExchangeValues) {
-        _compareExchangeValuesToInclude = compareExchangeValues;
+        if (compareExchangeValues != null && compareExchangeValues.length > 0) {
+            _session.assertNoIncludesInNonTrackingSession();
+            _compareExchangeValuesToInclude = compareExchangeValues;
+        }
+
         return this;
     }
 
     public LoadOperation withCounters(String[] counters) {
-        if (counters != null) {
+        if (counters != null && counters.length > 0) {
+            _session.assertNoIncludesInNonTrackingSession();
             _countersToInclude = counters;
         }
         return this;
     }
 
     public LoadOperation withRevisions(String[] revisionsByChangeVector) {
-        if (revisionsByChangeVector != null) {
+        if (revisionsByChangeVector != null && revisionsByChangeVector.length > 0) {
+            _session.assertNoIncludesInNonTrackingSession();
             _revisionsToIncludeByChangeVector = revisionsByChangeVector;
         }
 
@@ -96,6 +106,7 @@ public class LoadOperation {
 
     public LoadOperation withRevisions(Date revisionByDateTimeBefore) {
         if (revisionByDateTimeBefore != null) {
+            _session.assertNoIncludesInNonTrackingSession();
             _revisionsToIncludeByDateTimeBefore = revisionByDateTimeBefore;
         }
 
@@ -103,12 +114,14 @@ public class LoadOperation {
     }
 
     public LoadOperation withAllCounters() {
+        _session.assertNoIncludesInNonTrackingSession();
         _includeAllCounters = true;
         return this;
     }
 
     public LoadOperation withTimeSeries(List<AbstractTimeSeriesRange> timeSeries) {
         if (timeSeries != null) {
+            _session.assertNoIncludesInNonTrackingSession();
             _timeSeriesToInclude = timeSeries;
         }
         return this;
@@ -138,7 +151,7 @@ public class LoadOperation {
                 throw new IllegalStateException("Cannot execute getDocument before operation execution.");
             }
 
-            if (_results == null || _results.getResults() == null || _results.getResults().size() == 0) {
+            if (_results == null || _results.getResults() == null || _results.getResults().isEmpty()) {
                 return null;
             }
 
@@ -193,7 +206,7 @@ public class LoadOperation {
                 finalResults.put(id, null);
             }
 
-            if (_results == null || _results.getResults() == null || _results.getResults().size() == 0) {
+            if (_results == null || _results.getResults() == null || _results.getResults().isEmpty()) {
                 return finalResults;
             }
 
@@ -250,7 +263,7 @@ public class LoadOperation {
         boolean includingMissingAtomicGuards = _session.getTransactionMode() == TransactionMode.CLUSTER_WIDE;
         if (_compareExchangeValuesToInclude != null || includingMissingAtomicGuards) {
             ClusterTransactionOperationsBase clusterSession = _session.getClusterSession();
-            clusterSession.registerCompareExchangeValues(result.getCompareExchangeValueIncludes(), includingMissingAtomicGuards);
+            clusterSession.registerCompareExchangeIncludes(result.getCompareExchangeValueIncludes(), includingMissingAtomicGuards);
         }
 
         for (JsonNode document : result.getResults()) {

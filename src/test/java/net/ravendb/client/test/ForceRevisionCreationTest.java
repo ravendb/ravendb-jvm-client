@@ -93,9 +93,7 @@ public class ForceRevisionCreationTest extends RemoteTestBase {
                 Company company = new Company();
                 company.setName("HR");
 
-                assertThatThrownBy(() -> {
-                    session.advanced().revisions().forceRevisionCreationFor(company);
-                })
+                assertThatThrownBy(() -> session.advanced().revisions().forceRevisionCreationFor(company))
                     .isExactlyInstanceOf(IllegalStateException.class)
                     .hasMessage("Cannot create a revision for the requested entity because it is Not tracked by the session");
             }
@@ -136,9 +134,7 @@ public class ForceRevisionCreationTest extends RemoteTestBase {
 
                 session.advanced().revisions().forceRevisionCreationFor(company);
 
-                assertThatThrownBy(() -> {
-                    session.saveChanges();
-                })
+                assertThatThrownBy(session::saveChanges)
                         .isInstanceOf(RavenException.class)
                         .hasMessageContaining("Can't force revision creation - the document was not saved on the server yet");
 
@@ -291,9 +287,7 @@ public class ForceRevisionCreationTest extends RemoteTestBase {
                 session.advanced().revisions().forceRevisionCreationFor(company);
                 // The above request should not throw - we ignore duplicate requests with SAME strategy
 
-                assertThatThrownBy(() -> {
-                    session.advanced().revisions().forceRevisionCreationFor(company.getId(), ForceRevisionStrategy.NONE);
-                }).isInstanceOf(IllegalStateException.class)
+                assertThatThrownBy(() -> session.advanced().revisions().forceRevisionCreationFor(company.getId(), ForceRevisionStrategy.NONE)).isInstanceOf(IllegalStateException.class)
                         .hasMessageContaining("A request for creating a revision was already made for document");
 
                 session.saveChanges();

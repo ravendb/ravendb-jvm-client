@@ -22,7 +22,7 @@ public class PutDocumentCommandTest extends RemoteTestBase {
 
             ObjectNode node = store.getConventions().getEntityMapper().valueToTree(user);
 
-            PutDocumentCommand command = new PutDocumentCommand("users/1", null, node);
+            PutDocumentCommand command = new PutDocumentCommand(store.getConventions(), "users/1", null, node);
             store.getRequestExecutor().execute(command);
 
             PutResult result = command.getResult();
@@ -53,7 +53,7 @@ public class PutDocumentCommandTest extends RemoteTestBase {
 
             ObjectNode node = store.getConventions().getEntityMapper().valueToTree(user);
 
-            PutDocumentCommand command = new PutDocumentCommand("users/2", null, node);
+            PutDocumentCommand command = new PutDocumentCommand(store.getConventions(), "users/2", null, node);
             store.getRequestExecutor().execute(command);
 
             PutResult result = command.getResult();

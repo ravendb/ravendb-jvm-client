@@ -4,9 +4,8 @@ import net.ravendb.client.documents.identity.HiLoResult;
 import net.ravendb.client.http.RavenCommand;
 import net.ravendb.client.http.ServerNode;
 import net.ravendb.client.primitives.NetISO8601Utils;
-import net.ravendb.client.primitives.Reference;
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.client.methods.HttpRequestBase;
+import org.apache.hc.client5.http.classic.methods.HttpUriRequestBase;
+import org.apache.hc.client5.http.classic.methods.HttpGet;
 
 import java.io.IOException;
 import java.util.Date;
@@ -34,17 +33,31 @@ public class NextHiLoCommand extends RavenCommand<HiLoResult> {
     }
 
     @Override
-    public HttpRequestBase createRequest(ServerNode node, Reference<String> url) {
-        String date = _lastRangeAt != null ? NetISO8601Utils.format(_lastRangeAt, true) : "";
-        String path = "/hilo/next?tag=" + urlEncode(_tag)
-                + "&lastBatchSize=" + _lastBatchSize
-                + "&lastRangeAt=" + date
-                + "&identityPartsSeparator=" + urlEncode(String.valueOf(_identityPartsSeparator))
-                + "&lastMax=" + _lastRangeMax;
+    public HttpUriRequestBase createRequest(ServerNode node) {
+        StringBuilder pathBuilder = new StringBuilder();
+        pathBuilder
+                .append(node.getUrl())
+                .append("/databases/")
+                .append(node.getDatabase())
+                .append("/hilo/next?tag=")
+                .append(urlEncode(_tag))
+                .append("&lastBatchSize=")
+                .append(_lastBatchSize);
 
-        url.value = node.getUrl() + "/databases/" + node.getDatabase() + path;
+        if (_lastRangeAt != null) {
+            pathBuilder.append("&lastRangeAt=")
+                    .append(NetISO8601Utils.format(_lastRangeAt, true));
+        }
 
-        return new HttpGet();
+        pathBuilder
+                .append("&identityPartsSeparator=")
+                .append(urlEncode(String.valueOf(_identityPartsSeparator)))
+                .append("&lastMax=")
+                .append(_lastRangeMax);
+
+        String url = pathBuilder.toString();
+
+        return new HttpGet(url);
     }
 
     @Override

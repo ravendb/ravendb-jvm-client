@@ -41,7 +41,7 @@ public class LoadStartingWithOperation {
             logger.info("Requesting documents with ids starting with '" + _startWith + "' from " + _session.storeIdentifier());
         }
 
-        return new GetDocumentsCommand(_startWith, _startAfter, _matches, _exclude, _start, _pageSize, false);
+        return new GetDocumentsCommand(_session.getConventions(), _startWith, _startAfter, _matches, _exclude, _start, _pageSize, false);
     }
 
     public void withStartWith(String idPrefix) {
@@ -101,7 +101,7 @@ public class LoadStartingWithOperation {
                 throw new IllegalStateException("Cannot execute getDocuments before operation execution");
             }
 
-            if (_results == null || _results.getResults() == null || _results.getResults().size() == 0) {
+            if (_results == null || _results.getResults() == null || _results.getResults().isEmpty()) {
                 return (T[]) Array.newInstance(clazz, 0);
             }
 

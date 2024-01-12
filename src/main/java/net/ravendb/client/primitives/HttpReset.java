@@ -1,33 +1,33 @@
 package net.ravendb.client.primitives;
 
-import org.apache.http.client.methods.HttpRequestBase;
+import org.apache.hc.client5.http.classic.methods.HttpUriRequestBase;
 
 import java.net.URI;
 
-public class HttpReset extends HttpRequestBase {
+public class HttpReset extends HttpUriRequestBase {
+
+    private static final long serialVersionUID = 1L;
 
     public final static String METHOD_NAME = "RESET";
 
-    public HttpReset() {
-        super();
-    }
 
+    /**
+     * Creates a new instance initialized with the given URI.
+     *
+     * @param uri a non-null request URI.
+     * @throws IllegalArgumentException if the uri is null.
+     */
     public HttpReset(final URI uri) {
-        super();
-        setURI(uri);
+        super(METHOD_NAME, uri);
     }
 
     /**
-     * @param uri Request uri
+     * Creates a new instance initialized with the given URI.
+     *
+     * @param uri a non-null request URI.
      * @throws IllegalArgumentException if the uri is invalid.
      */
     public HttpReset(final String uri) {
-        super();
-        setURI(URI.create(uri));
-    }
-
-    @Override
-    public String getMethod() {
-        return METHOD_NAME;
+        this(URI.create(uri));
     }
 }

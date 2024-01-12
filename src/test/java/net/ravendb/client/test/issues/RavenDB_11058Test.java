@@ -108,9 +108,7 @@ public class RavenDB_11058Test extends RemoteTestBase {
             try (IDocumentSession session = store.openSession()) {
                 session.advanced().attachments().copy("companies/1", "file1", "companies/2", "file3"); //should throw
 
-                assertThatThrownBy(() -> {
-                    session.saveChanges();
-                }).isExactlyInstanceOf(ConcurrencyException.class);
+                assertThatThrownBy(session::saveChanges).isExactlyInstanceOf(ConcurrencyException.class);
             }
 
         }
@@ -222,9 +220,7 @@ public class RavenDB_11058Test extends RemoteTestBase {
             try (IDocumentSession session = store.openSession()) {
                 session.advanced().attachments().move("companies/1", "file20", "companies/2", "file3"); //should throw
 
-                assertThatThrownBy(() -> {
-                    session.saveChanges();
-                }).isExactlyInstanceOf(ConcurrencyException.class);
+                assertThatThrownBy(session::saveChanges).isExactlyInstanceOf(ConcurrencyException.class);
             }
         }
     }

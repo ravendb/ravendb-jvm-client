@@ -212,7 +212,7 @@ public abstract class DocumentStoreBase implements IDocumentStore {
         return _subscriptions;
     }
 
-    private ConcurrentMap<String, Long> _lastRaftIndexPerDatabase = new ConcurrentSkipListMap<>(String::compareToIgnoreCase);
+    private final ConcurrentMap<String, Long> _lastRaftIndexPerDatabase = new ConcurrentSkipListMap<>(String::compareToIgnoreCase);
 
     public Long getLastTransactionIndex(String database) {
         Long index = _lastRaftIndexPerDatabase.get(database);

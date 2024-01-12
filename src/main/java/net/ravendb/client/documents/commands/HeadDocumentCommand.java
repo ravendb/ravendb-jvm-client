@@ -6,12 +6,11 @@ import net.ravendb.client.http.HttpCache;
 import net.ravendb.client.http.RavenCommand;
 import net.ravendb.client.http.ResponseDisposeHandling;
 import net.ravendb.client.http.ServerNode;
-import net.ravendb.client.primitives.Reference;
 import net.ravendb.client.util.UrlUtils;
-import org.apache.http.HttpStatus;
-import org.apache.http.client.methods.CloseableHttpResponse;
-import org.apache.http.client.methods.HttpHead;
-import org.apache.http.client.methods.HttpRequestBase;
+import org.apache.hc.client5.http.classic.methods.HttpHead;
+import org.apache.hc.client5.http.classic.methods.HttpUriRequestBase;
+import org.apache.hc.core5.http.ClassicHttpResponse;
+import org.apache.hc.core5.http.HttpStatus;
 
 public class HeadDocumentCommand extends RavenCommand<String> {
 
@@ -35,10 +34,10 @@ public class HeadDocumentCommand extends RavenCommand<String> {
     }
 
     @Override
-    public HttpRequestBase createRequest(ServerNode node, Reference<String> url) {
-        url.value = node.getUrl() + "/databases/" + node.getDatabase() + "/docs?id=" + UrlUtils.escapeDataString(_id);
+    public HttpUriRequestBase createRequest(ServerNode node) {
+        String url = node.getUrl() + "/databases/" + node.getDatabase() + "/docs?id=" + UrlUtils.escapeDataString(_id);
 
-        HttpHead request = new HttpHead();
+        HttpHead request = new HttpHead(url);
 
         if (_changeVector != null) {
             request.setHeader(Constants.Headers.IF_NONE_MATCH, _changeVector);
@@ -48,13 +47,13 @@ public class HeadDocumentCommand extends RavenCommand<String> {
     }
 
     @Override
-    public ResponseDisposeHandling processResponse(HttpCache cache, CloseableHttpResponse response, String url) {
-        if (HttpStatus.SC_NOT_MODIFIED == response.getStatusLine().getStatusCode()) {
+    public ResponseDisposeHandling processResponse(HttpCache cache, ClassicHttpResponse response, String url) {
+        if (HttpStatus.SC_NOT_MODIFIED == response.getCode()) {
             result = _changeVector;
             return ResponseDisposeHandling.AUTOMATIC;
         }
 
-        if (response.getStatusLine().getStatusCode() == HttpStatus.SC_NOT_FOUND) {
+        if (response.getCode() == HttpStatus.SC_NOT_FOUND) {
             result = null;
             return ResponseDisposeHandling.AUTOMATIC;
         }

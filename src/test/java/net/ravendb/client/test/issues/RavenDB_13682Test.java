@@ -160,9 +160,8 @@ public class RavenDB_13682Test extends RemoteTestBase {
                         "order by spatial.distance(\n" +
                         "    spatial.point(a.ShipTo.Location.Latitude, a.ShipTo.Location.Longitude),\n" +
                         "    spatial.point(35.2, -107.2 )\n" +
-                        ")\n" +
-                        "limit 1")
-                        .single();
+                        ")\n")
+                        .first();
 
                 IMetadataDictionary metadata = s.advanced().getMetadataFor(d);
 

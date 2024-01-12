@@ -1,12 +1,14 @@
 package net.ravendb.client.documents.indexes;
 
-import net.ravendb.client.Constants;
 import net.ravendb.client.documents.DocumentStoreBase;
 import net.ravendb.client.documents.IDocumentStore;
 import net.ravendb.client.documents.conventions.DocumentConventions;
+import net.ravendb.client.documents.dataArchival.ArchivedDataProcessingBehavior;
 import net.ravendb.client.documents.operations.indexes.PutIndexesOperation;
-import net.ravendb.client.primitives.SharpEnum;
 import org.apache.commons.lang3.ObjectUtils;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Base class for creating indexes
@@ -31,7 +33,9 @@ public abstract class AbstractIndexCreationTaskBase<TIndexDefinition extends Ind
 
     protected IndexDeploymentMode deploymentMode;
     protected SearchEngineType searchEngineType;
+    protected ArchivedDataProcessingBehavior archivedDataProcessingBehavior;
     protected IndexState state;
+    protected List<String[]> compoundFieldsStrings;
 
     /**
      * Gets the conventions that should be used when index definition is created.
@@ -81,12 +85,28 @@ public abstract class AbstractIndexCreationTaskBase<TIndexDefinition extends Ind
         this.searchEngineType = searchEngineType;
     }
 
+    public ArchivedDataProcessingBehavior getArchivedDataProcessingBehavior() {
+        return archivedDataProcessingBehavior;
+    }
+
+    public void setArchivedDataProcessingBehavior(ArchivedDataProcessingBehavior archivedDataProcessingBehavior) {
+        this.archivedDataProcessingBehavior = archivedDataProcessingBehavior;
+    }
+
     public IndexState getState() {
         return state;
     }
 
     public void setState(IndexState state) {
         this.state = state;
+    }
+
+    public void compoundField(String firstField, String secondField) {
+        if (compoundFieldsStrings == null) {
+            compoundFieldsStrings = new ArrayList<>();
+        }
+
+        compoundFieldsStrings.add(new String[] { firstField, secondField });
     }
 
     /**
@@ -135,15 +155,14 @@ public abstract class AbstractIndexCreationTaskBase<TIndexDefinition extends Ind
                 indexDefinition.setState(state);
             }
 
+            if (archivedDataProcessingBehavior != null) {
+                indexDefinition.setArchivedDataProcessingBehavior(archivedDataProcessingBehavior);
+            }
+
             if (deploymentMode != null) {
                 indexDefinition.setDeploymentMode(deploymentMode);
             }
 
-            if (searchEngineType != null) {
-                indexDefinition.getConfiguration().put(
-                        Constants.Configuration.Indexes.INDEXING_STATIC_SEARCH_ENGINE_TYPE,
-                        SharpEnum.value(searchEngineType));
-            }
 
             store.maintenance()
                     .forDatabase(database)

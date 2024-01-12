@@ -26,6 +26,8 @@ public class Constants {
             public static final String CHANGE_VECTOR = "@change-vector";
             public static final String EXPIRES = "@expires";
             public static final String REFRESH = "@refresh";
+            public static final String ARCHIVE_AT = "@archive-at";
+            public static final String ARCHIVED = "@archived";
             public static final String ALL_DOCUMENTS_COLLECTION = "@all_docs";
 
             public static final String EMPTY_COLLECTION = "@empty";
@@ -57,6 +59,16 @@ public class Constants {
             }
         }
 
+        public static class Querying {
+            private Querying() {}
+
+            public static class Sharding {
+                private Sharding() {}
+
+                public static final String SHARD_CONTEXT_PARAMETER_NAME = "__shardContext";
+            }
+        }
+
         public static class PeriodicBackup {
 
             public static final String FULL_BACKUP_EXTENSION = "ravendb-full-backup";
@@ -72,6 +84,13 @@ public class Constants {
                 public static final String CONFIGURATION = "Configuration";
             }
         }
+    }
+
+    public static class QueryString {
+        private QueryString() {}
+
+        public static final String NODE_TAG = "nodeTag";
+        public static final String SHARD_NUMBER = "shardNumber";
     }
 
     public static class Headers {
@@ -96,11 +115,35 @@ public class Constants {
 
         public static final String ETAG = "ETag";
 
+        public static final String IF_MATCH = "If-Match";
         public static final String IF_NONE_MATCH = "If-None-Match";
         public static final String TRANSFER_ENCODING = "Transfer-Encoding";
         public static final String CONTENT_ENCODING = "Content-Encoding";
+
+        public static final String ACCEPT_ENCODING = "Accept-Encoding";
+        public static final String CONTENT_DISPOSITION = "Content-Disposition";
+
+        public static final String CONTENT_TYPE = "Content-Type";
+
         public static final String CONTENT_LENGTH = "Content-Length";
         public static final String INCREMENTAL_TIME_SERIES_PREFIX = "INC:";
+
+        public static final String ORIGIN = "Origin";
+
+        public static final String SHARDED = "Sharded";
+
+        public static final String ATTACHMENT_HASH = "Attachment-Hash";
+
+        public static final String ATTACHMENT_SIZE = "Attachment-Size";
+
+        public static final String DATABASE_MISSING = "Database-Missing";
+
+
+        public static class Encodings {
+            public static final String GZIP = "gzip";
+
+            public static final String ZSTD = "zstd";
+        }
 
     }
 
@@ -134,7 +177,4 @@ public class Constants {
         public static final Character DEFAULT_SEPARATOR = '/';
     }
 
-    public static class Obsolete {
-        public static final String GRAPH_API = "Graph API will be removed in next major version of the product.";
-    }
 }

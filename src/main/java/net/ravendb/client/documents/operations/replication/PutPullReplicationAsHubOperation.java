@@ -7,13 +7,12 @@ import net.ravendb.client.http.IRaftCommand;
 import net.ravendb.client.http.RavenCommand;
 import net.ravendb.client.http.ServerNode;
 import net.ravendb.client.json.ContentProviderHttpEntity;
-import net.ravendb.client.primitives.Reference;
 import net.ravendb.client.serverwide.operations.ModifyOngoingTaskResult;
 import net.ravendb.client.util.RaftIdGenerator;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.http.client.methods.HttpPut;
-import org.apache.http.client.methods.HttpRequestBase;
-import org.apache.http.entity.ContentType;
+import org.apache.hc.client5.http.classic.methods.HttpPut;
+import org.apache.hc.client5.http.classic.methods.HttpUriRequestBase;
+import org.apache.hc.core5.http.ContentType;
 
 import java.io.IOException;
 
@@ -38,29 +37,29 @@ public class PutPullReplicationAsHubOperation implements IMaintenanceOperation<M
 
     @Override
     public RavenCommand<ModifyOngoingTaskResult> getCommand(DocumentConventions conventions) {
-        return new UpdatePullReplicationDefinitionCommand(_pullReplicationDefinition);
+        return new UpdatePullReplicationDefinitionCommand(conventions, _pullReplicationDefinition);
     }
 
     private static class UpdatePullReplicationDefinitionCommand extends RavenCommand<ModifyOngoingTaskResult> implements IRaftCommand {
         private final PullReplicationDefinition _pullReplicationDefinition;
+        private final DocumentConventions _conventions;
 
-        public UpdatePullReplicationDefinitionCommand(PullReplicationDefinition pullReplicationDefinition) {
+        public UpdatePullReplicationDefinitionCommand(DocumentConventions conventions, PullReplicationDefinition pullReplicationDefinition) {
             super(ModifyOngoingTaskResult.class);
             _pullReplicationDefinition = pullReplicationDefinition;
+            _conventions = conventions;
         }
 
         @Override
-        public HttpRequestBase createRequest(ServerNode node, Reference<String> url) {
-            url.value = node.getUrl() + "/databases/" + node.getDatabase() + "/admin/tasks/pull-replication/hub";
+        public HttpUriRequestBase createRequest(ServerNode node) {
+            String url = node.getUrl() + "/databases/" + node.getDatabase() + "/admin/tasks/pull-replication/hub";
 
-            HttpPut request = new HttpPut();
+            HttpPut request = new HttpPut(url);
             request.setEntity(new ContentProviderHttpEntity(outputStream -> {
                 try (JsonGenerator generator = createSafeJsonGenerator(outputStream)) {
                     generator.getCodec().writeValue(generator, _pullReplicationDefinition);
-                } catch (IOException e) {
-                    throw new RuntimeException(e);
                 }
-            }, ContentType.APPLICATION_JSON));
+            }, ContentType.APPLICATION_JSON, _conventions));
 
             return request;
         }

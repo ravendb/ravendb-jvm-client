@@ -6,11 +6,10 @@ import net.ravendb.client.documents.operations.IVoidOperation;
 import net.ravendb.client.http.HttpCache;
 import net.ravendb.client.http.ServerNode;
 import net.ravendb.client.http.VoidRavenCommand;
-import net.ravendb.client.primitives.Reference;
 import net.ravendb.client.util.UrlUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.http.client.methods.HttpDelete;
-import org.apache.http.client.methods.HttpRequestBase;
+import org.apache.hc.client5.http.classic.methods.HttpDelete;
+import org.apache.hc.client5.http.classic.methods.HttpUriRequestBase;
 
 public class DeleteAttachmentOperation implements IVoidOperation {
 
@@ -53,10 +52,10 @@ public class DeleteAttachmentOperation implements IVoidOperation {
         }
 
         @Override
-        public HttpRequestBase createRequest(ServerNode node, Reference<String> url) {
-            url.value = node.getUrl() + "/databases/" + node.getDatabase() + "/attachments?id=" + UrlUtils.escapeDataString(_documentId) + "&name=" + UrlUtils.escapeDataString(_name);
+        public HttpUriRequestBase createRequest(ServerNode node) {
+            String url = node.getUrl() + "/databases/" + node.getDatabase() + "/attachments?id=" + UrlUtils.escapeDataString(_documentId) + "&name=" + UrlUtils.escapeDataString(_name);
 
-            HttpDelete request = new HttpDelete();
+            HttpDelete request = new HttpDelete(url);
 
             addChangeVectorIfNotNull(_changeVector, request);
             return request;

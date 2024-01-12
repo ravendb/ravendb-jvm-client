@@ -8,19 +8,18 @@ import net.ravendb.client.http.IRaftCommand;
 import net.ravendb.client.http.RavenCommand;
 import net.ravendb.client.http.ServerNode;
 import net.ravendb.client.json.ContentProviderHttpEntity;
-import net.ravendb.client.primitives.Reference;
 import net.ravendb.client.util.RaftIdGenerator;
-import org.apache.http.client.methods.HttpPut;
-import org.apache.http.client.methods.HttpRequestBase;
-import org.apache.http.entity.ContentType;
+import org.apache.hc.client5.http.classic.methods.HttpPut;
+import org.apache.hc.client5.http.classic.methods.HttpUriRequestBase;
+import org.apache.hc.core5.http.ContentType;
 
 import java.io.IOException;
 
 public class CreateSubscriptionCommand extends RavenCommand<CreateSubscriptionResult> implements IRaftCommand {
 
-    @SuppressWarnings("FieldCanBeLocal")
     private final SubscriptionCreationOptions _options;
     private final String _id;
+    private final DocumentConventions _conventions;
 
     public CreateSubscriptionCommand(DocumentConventions conventions, SubscriptionCreationOptions options) {
         this(conventions, options, null);
@@ -31,26 +30,25 @@ public class CreateSubscriptionCommand extends RavenCommand<CreateSubscriptionRe
         if (options == null) {
             throw new IllegalArgumentException("Options cannot be null");
         }
+        _conventions = conventions;
         _options = options;
         _id = id;
     }
 
     @Override
-    public HttpRequestBase createRequest(ServerNode node, Reference<String> url) {
-        url.value = node.getUrl() + "/databases/" + node.getDatabase() + "/subscriptions";
+    public HttpUriRequestBase createRequest(ServerNode node) {
+        String url = node.getUrl() + "/databases/" + node.getDatabase() + "/subscriptions";
 
         if (_id != null) {
-            url.value += "?id=" + urlEncode(_id);
+            url += "?id=" + urlEncode(_id);
         }
 
-        HttpPut request = new HttpPut();
+        HttpPut request = new HttpPut(url);
         request.setEntity(new ContentProviderHttpEntity(outputStream -> {
             try (JsonGenerator generator = createSafeJsonGenerator(outputStream)) {
                 generator.getCodec().writeValue(generator, _options);
-            } catch (IOException e) {
-                throw new RuntimeException(e);
             }
-        }, ContentType.APPLICATION_JSON));
+        }, ContentType.APPLICATION_JSON, _conventions));
 
         return request;
     }

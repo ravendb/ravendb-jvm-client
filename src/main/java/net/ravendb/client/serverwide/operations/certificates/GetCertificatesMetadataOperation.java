@@ -4,12 +4,11 @@ import net.ravendb.client.documents.conventions.DocumentConventions;
 import net.ravendb.client.documents.operations.ResultsResponse;
 import net.ravendb.client.http.RavenCommand;
 import net.ravendb.client.http.ServerNode;
-import net.ravendb.client.primitives.Reference;
 import net.ravendb.client.serverwide.operations.IServerOperation;
 import net.ravendb.client.util.UrlUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.client.methods.HttpRequestBase;
+import org.apache.hc.client5.http.classic.methods.HttpGet;
+import org.apache.hc.client5.http.classic.methods.HttpUriRequestBase;
 
 import java.io.IOException;
 
@@ -44,7 +43,7 @@ public class GetCertificatesMetadataOperation implements IServerOperation<Certif
         }
 
         @Override
-        public HttpRequestBase createRequest(ServerNode node, Reference<String> url) {
+        public HttpUriRequestBase createRequest(ServerNode node) {
             StringBuilder path = new StringBuilder(node.getUrl())
                     .append("/admin/certificates?metadataOnly=true");
 
@@ -52,9 +51,7 @@ public class GetCertificatesMetadataOperation implements IServerOperation<Certif
                 path.append("&name=").append(UrlUtils.escapeDataString(_name));
             }
 
-            url.value = path.toString();
-
-            return new HttpGet();
+            return new HttpGet(path.toString());
         }
 
         @Override

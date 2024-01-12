@@ -6,6 +6,7 @@ import com.google.common.base.Defaults;
 import net.ravendb.client.Constants;
 import net.ravendb.client.documents.commands.GetRevisionsCommand;
 import net.ravendb.client.documents.session.DocumentInfo;
+import net.ravendb.client.documents.session.IMetadataDictionary;
 import net.ravendb.client.documents.session.InMemoryDocumentSessionOperations;
 import net.ravendb.client.json.JsonArrayResult;
 import net.ravendb.client.json.MetadataAsDictionary;
@@ -131,9 +132,9 @@ public class GetRevisionOperation {
         return results;
     }
 
-    public List<MetadataAsDictionary> getRevisionsMetadataFor() {
+    public List<IMetadataDictionary> getRevisionsMetadataFor() {
         int resultsCount = _result.getResults().size();
-        ArrayList<MetadataAsDictionary> results = new ArrayList<>(resultsCount);
+        ArrayList<IMetadataDictionary> results = new ArrayList<>(resultsCount);
         for (int i = 0; i < resultsCount; i++) {
             ObjectNode document = (ObjectNode) _result.getResults().get(i);
 

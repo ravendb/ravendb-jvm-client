@@ -5,7 +5,9 @@ import net.ravendb.client.documents.queries.facets.FacetResult;
 
 import java.util.Map;
 
-public interface IRawDocumentQuery<T> extends IQueryBase<T, IRawDocumentQuery<T>>, IDocumentQueryBaseSingle<T>, IEnumerableQuery<T> {
+public interface IRawDocumentQuery<T>
+        extends IQueryBase<T, IRawDocumentQuery<T>>, IPagingDocumentQueryBase<T, IRawDocumentQuery<T>>,
+        IDocumentQueryBaseSingle<T>, IEnumerableQuery<T> {
 
     /**
      * Add a named parameter to the query

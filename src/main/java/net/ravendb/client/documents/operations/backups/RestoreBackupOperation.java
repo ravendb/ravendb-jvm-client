@@ -7,11 +7,10 @@ import net.ravendb.client.documents.operations.OperationIdResult;
 import net.ravendb.client.http.RavenCommand;
 import net.ravendb.client.http.ServerNode;
 import net.ravendb.client.json.ContentProviderHttpEntity;
-import net.ravendb.client.primitives.Reference;
 import net.ravendb.client.serverwide.operations.IServerOperation;
-import org.apache.http.client.methods.HttpPost;
-import org.apache.http.client.methods.HttpRequestBase;
-import org.apache.http.entity.ContentType;
+import org.apache.hc.client5.http.classic.methods.HttpPost;
+import org.apache.hc.client5.http.classic.methods.HttpUriRequestBase;
+import org.apache.hc.core5.http.ContentType;
 
 import java.io.IOException;
 
@@ -32,7 +31,7 @@ public class RestoreBackupOperation implements IServerOperation<OperationIdResul
 
     @Override
     public RavenCommand<OperationIdResult> getCommand(DocumentConventions conventions) {
-        return new RestoreBackupCommand(_restoreConfiguration, _nodeTag);
+        return new RestoreBackupCommand(conventions, _restoreConfiguration, _nodeTag);
     }
 
     public String getNodeTag() {
@@ -40,19 +39,21 @@ public class RestoreBackupOperation implements IServerOperation<OperationIdResul
     }
 
     private static class RestoreBackupCommand extends RavenCommand<OperationIdResult> {
+        private final DocumentConventions _conventions;
         private final RestoreBackupConfigurationBase _restoreConfiguration;
 
-        public RestoreBackupCommand(RestoreBackupConfigurationBase restoreConfiguration) {
-            this(restoreConfiguration, null);
+        public RestoreBackupCommand(DocumentConventions conventions, RestoreBackupConfigurationBase restoreConfiguration) {
+            this(conventions, restoreConfiguration, null);
         }
 
-        public RestoreBackupCommand(RestoreBackupConfigurationBase restoreConfiguration, String nodeTag) {
+        public RestoreBackupCommand(DocumentConventions conventions, RestoreBackupConfigurationBase restoreConfiguration, String nodeTag) {
             super(OperationIdResult.class);
 
             if (restoreConfiguration == null) {
                 throw new IllegalArgumentException("RestoreConfiguration cannot be null");
             }
 
+            _conventions = conventions;
             _restoreConfiguration = restoreConfiguration;
             selectedNodeTag = nodeTag;
         }
@@ -63,18 +64,16 @@ public class RestoreBackupOperation implements IServerOperation<OperationIdResul
         }
 
         @Override
-        public HttpRequestBase createRequest(ServerNode node, Reference<String> url) {
-            url.value = node.getUrl() + "/admin/restore/database";
+        public HttpUriRequestBase createRequest(ServerNode node) {
+            String url = node.getUrl() + "/admin/restore/database";
 
-            HttpPost request = new HttpPost();
+            HttpPost request = new HttpPost(url);
             request.setEntity(new ContentProviderHttpEntity(outputStream -> {
                 try (JsonGenerator generator = createSafeJsonGenerator(outputStream)) {
                     ObjectNode config = mapper.valueToTree(_restoreConfiguration);
                     generator.writeTree(config);
-                } catch (IOException e) {
-                    throw new RuntimeException(e);
                 }
-            }, ContentType.APPLICATION_JSON));
+            }, ContentType.APPLICATION_JSON, _conventions));
             return request;
         }
 

@@ -6,6 +6,7 @@ public class BuildNumber {
     private int buildVersion;
     private String commitHash;
     private String fullVersion;
+    private String assemblyVersion;
 
     public String getProductVersion() {
         return productVersion;
@@ -37,5 +38,13 @@ public class BuildNumber {
 
     public void setFullVersion(String fullVersion) {
         this.fullVersion = fullVersion;
+    }
+
+    public String getAssemblyVersion() {
+        return assemblyVersion;
+    }
+
+    public void setAssemblyVersion(String assemblyVersion) {
+        this.assemblyVersion = assemblyVersion;
     }
 }

@@ -9,12 +9,11 @@ import net.ravendb.client.http.IRaftCommand;
 import net.ravendb.client.http.RavenCommand;
 import net.ravendb.client.http.ServerNode;
 import net.ravendb.client.json.ContentProviderHttpEntity;
-import net.ravendb.client.primitives.Reference;
 import net.ravendb.client.serverwide.operations.IServerOperation;
 import net.ravendb.client.util.RaftIdGenerator;
-import org.apache.http.client.methods.HttpPost;
-import org.apache.http.client.methods.HttpRequestBase;
-import org.apache.http.entity.ContentType;
+import org.apache.hc.client5.http.classic.methods.HttpPost;
+import org.apache.hc.client5.http.classic.methods.HttpUriRequestBase;
+import org.apache.hc.core5.http.ContentType;
 
 import java.io.IOException;
 
@@ -52,38 +51,38 @@ public class ToggleDatabasesStateOperation implements IServerOperation<DisableDa
 
     @Override
     public RavenCommand<DisableDatabaseToggleResult> getCommand(DocumentConventions conventions) {
-        return new ToggleDatabaseStateCommand(_parameters, _disable);
+        return new ToggleDatabaseStateCommand(conventions, _parameters, _disable);
     }
 
     private static class ToggleDatabaseStateCommand extends RavenCommand<DisableDatabaseToggleResult> implements IRaftCommand {
+        private final DocumentConventions _conventions;
         private final boolean _disable;
         private final Parameters _parameters;
 
-        public ToggleDatabaseStateCommand(Parameters parameters, boolean disable) {
+        public ToggleDatabaseStateCommand(DocumentConventions conventions, Parameters parameters, boolean disable) {
             super(DisableDatabaseToggleResult.class);
 
             if (parameters == null) {
                 throw new IllegalArgumentException("Parameters cannot be null");
             }
 
+            _conventions = conventions;
             _disable = disable;
             _parameters = parameters;
         }
 
         @Override
-        public HttpRequestBase createRequest(ServerNode node, Reference<String> url) {
+        public HttpUriRequestBase createRequest(ServerNode node) {
             String toggle = _disable ? "disable" : "enable";
-            url.value = node.getUrl() + "/admin/databases/" + toggle;
+            String url = node.getUrl() + "/admin/databases/" + toggle;
 
-            HttpPost request = new HttpPost();
+            HttpPost request = new HttpPost(url);
             request.setEntity(new ContentProviderHttpEntity(outputStream -> {
                 try (JsonGenerator generator = createSafeJsonGenerator(outputStream)) {
                     ObjectNode config = mapper.valueToTree(_parameters);
                     generator.writeTree(config);
-                } catch (IOException e) {
-                    throw new RuntimeException(e);
                 }
-            }, ContentType.APPLICATION_JSON));
+            }, ContentType.APPLICATION_JSON, _conventions));
             return request;
         }
 

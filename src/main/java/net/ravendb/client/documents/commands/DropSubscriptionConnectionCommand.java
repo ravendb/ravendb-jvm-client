@@ -2,10 +2,9 @@ package net.ravendb.client.documents.commands;
 
 import net.ravendb.client.http.ServerNode;
 import net.ravendb.client.http.VoidRavenCommand;
-import net.ravendb.client.primitives.Reference;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.http.client.methods.HttpPost;
-import org.apache.http.client.methods.HttpRequestBase;
+import org.apache.hc.client5.http.classic.methods.HttpPost;
+import org.apache.hc.client5.http.classic.methods.HttpUriRequestBase;
 
 public class DropSubscriptionConnectionCommand extends VoidRavenCommand {
     private final String _name;
@@ -21,7 +20,7 @@ public class DropSubscriptionConnectionCommand extends VoidRavenCommand {
     }
 
     @Override
-    public HttpRequestBase createRequest(ServerNode node, Reference<String> url) {
+    public HttpUriRequestBase createRequest(ServerNode node) {
         StringBuilder path = new StringBuilder();
         path.append(node.getUrl())
             .append("/databases/")
@@ -38,8 +37,8 @@ public class DropSubscriptionConnectionCommand extends VoidRavenCommand {
                     .append(_workerId);
         }
 
-        url.value = path.toString();
+        String url = path.toString();
 
-        return new HttpPost();
+        return new HttpPost(url);
     }
 }

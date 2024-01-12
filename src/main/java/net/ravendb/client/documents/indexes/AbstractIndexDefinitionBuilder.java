@@ -5,10 +5,7 @@ import net.ravendb.client.documents.indexes.spatial.SpatialOptions;
 import net.ravendb.client.exceptions.documents.compilation.IndexCompilationException;
 import org.apache.commons.lang3.ObjectUtils;
 
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.function.BiConsumer;
 
 public abstract class AbstractIndexDefinitionBuilder<TIndexDefinition extends IndexDefinition> {
@@ -26,6 +23,7 @@ public abstract class AbstractIndexDefinitionBuilder<TIndexDefinition extends In
     private IndexLockMode lockMode;
     private IndexPriority priority;
     private IndexState state;
+    private List<String[]> compoundFieldsStrings;
     private IndexDeploymentMode deploymentMode;
     private String outputReduceToCollection;
     private String patternForOutputReduceToCollectionReferences;
@@ -64,6 +62,7 @@ public abstract class AbstractIndexDefinitionBuilder<TIndexDefinition extends In
             indexDefinition.setOutputReduceToCollection(outputReduceToCollection);
             indexDefinition.setPatternForOutputReduceToCollectionReferences(patternForOutputReduceToCollectionReferences);
             indexDefinition.setPatternReferencesCollectionName(patternReferencesCollectionName);
+            indexDefinition.setCompoundFields(compoundFieldsStrings);
 
             Map<String, Boolean> suggestions = new HashMap<>();
             for (String suggestionsOption : suggestionsOptions) {
@@ -178,6 +177,14 @@ public abstract class AbstractIndexDefinitionBuilder<TIndexDefinition extends In
 
     public void setState(IndexState state) {
         this.state = state;
+    }
+
+    public List<String[]> getCompoundFieldsStrings() {
+        return compoundFieldsStrings;
+    }
+
+    public void setCompoundFieldsStrings(List<String[]> compoundFieldsStrings) {
+        this.compoundFieldsStrings = compoundFieldsStrings;
     }
 
     public IndexDeploymentMode getDeploymentMode() {

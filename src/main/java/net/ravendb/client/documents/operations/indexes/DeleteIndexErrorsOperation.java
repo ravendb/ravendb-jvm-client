@@ -4,9 +4,8 @@ import net.ravendb.client.documents.conventions.DocumentConventions;
 import net.ravendb.client.documents.operations.IVoidMaintenanceOperation;
 import net.ravendb.client.http.ServerNode;
 import net.ravendb.client.http.VoidRavenCommand;
-import net.ravendb.client.primitives.Reference;
-import org.apache.http.client.methods.HttpDelete;
-import org.apache.http.client.methods.HttpRequestBase;
+import org.apache.hc.client5.http.classic.methods.HttpDelete;
+import org.apache.hc.client5.http.classic.methods.HttpUriRequestBase;
 
 public class DeleteIndexErrorsOperation implements IVoidMaintenanceOperation {
 
@@ -33,18 +32,18 @@ public class DeleteIndexErrorsOperation implements IVoidMaintenanceOperation {
         }
 
         @Override
-        public HttpRequestBase createRequest(ServerNode node, Reference<String> url) {
-            url.value = node.getUrl() + "/databases/" + node.getDatabase() + "/indexes/errors";
+        public HttpUriRequestBase createRequest(ServerNode node) {
+            StringBuilder url = new StringBuilder(node.getUrl() + "/databases/" + node.getDatabase() + "/indexes/errors");
 
             if (_indexNames != null && _indexNames.length > 0) {
-                url.value += "?";
+                url.append("?");
 
                 for (String indexName : _indexNames) {
-                    url.value += "&name=" + urlEncode(indexName);
+                    url.append("&name=").append(urlEncode(indexName));
                 }
             }
 
-            return new HttpDelete();
+            return new HttpDelete(url.toString());
         }
 
         @Override

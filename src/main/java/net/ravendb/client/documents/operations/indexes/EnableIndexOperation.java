@@ -5,11 +5,10 @@ import net.ravendb.client.documents.operations.IVoidMaintenanceOperation;
 import net.ravendb.client.http.IRaftCommand;
 import net.ravendb.client.http.ServerNode;
 import net.ravendb.client.http.VoidRavenCommand;
-import net.ravendb.client.primitives.Reference;
 import net.ravendb.client.util.RaftIdGenerator;
 import net.ravendb.client.util.UrlUtils;
-import org.apache.http.client.methods.HttpPost;
-import org.apache.http.client.methods.HttpRequestBase;
+import org.apache.hc.client5.http.classic.methods.HttpPost;
+import org.apache.hc.client5.http.classic.methods.HttpUriRequestBase;
 
 public class EnableIndexOperation implements IVoidMaintenanceOperation {
 
@@ -48,13 +47,13 @@ public class EnableIndexOperation implements IVoidMaintenanceOperation {
         }
 
         @Override
-        public HttpRequestBase createRequest(ServerNode node, Reference<String> url) {
-            url.value = node.getUrl()
+        public HttpUriRequestBase createRequest(ServerNode node) {
+            String url = node.getUrl()
                     + "/databases/" + node.getDatabase()
                     + "/admin/indexes/enable?name=" + UrlUtils.escapeDataString(_indexName)
                     + "&clusterWide=" + _clusterWide;
 
-            return new HttpPost();
+            return new HttpPost(url);
         }
 
         @Override

@@ -5,11 +5,10 @@ import net.ravendb.client.documents.operations.IVoidMaintenanceOperation;
 import net.ravendb.client.http.IRaftCommand;
 import net.ravendb.client.http.ServerNode;
 import net.ravendb.client.http.VoidRavenCommand;
-import net.ravendb.client.primitives.Reference;
 import net.ravendb.client.util.RaftIdGenerator;
 import net.ravendb.client.util.UrlUtils;
-import org.apache.http.client.methods.HttpDelete;
-import org.apache.http.client.methods.HttpRequestBase;
+import org.apache.hc.client5.http.classic.methods.HttpDelete;
+import org.apache.hc.client5.http.classic.methods.HttpUriRequestBase;
 
 public class DeleteIndexOperation implements IVoidMaintenanceOperation {
     private final String _indexName;
@@ -38,10 +37,11 @@ public class DeleteIndexOperation implements IVoidMaintenanceOperation {
         }
 
         @Override
-        public HttpRequestBase createRequest(ServerNode node, Reference<String> url) {
-            url.value = node.getUrl() + "/databases/" + node.getDatabase() + "/indexes?name=" + UrlUtils.escapeDataString(_indexName);
+        public HttpUriRequestBase createRequest(ServerNode node) {
+            String url = node.getUrl() + "/databases/" + node.getDatabase()
+                    + "/indexes?name=" + UrlUtils.escapeDataString(_indexName);
 
-            return new HttpDelete();
+            return new HttpDelete(url);
         }
 
         @Override

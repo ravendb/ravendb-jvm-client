@@ -4,15 +4,16 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import net.ravendb.client.ClusterTestBase;
 import net.ravendb.client.documents.DocumentStore;
 import net.ravendb.client.documents.commands.PutDocumentCommand;
+import net.ravendb.client.documents.conventions.DocumentConventions;
 import net.ravendb.client.documents.session.EntityToJson;
 import net.ravendb.client.http.RequestExecutor;
 import net.ravendb.client.infrastructure.DisabledOnPullRequest;
 import net.ravendb.client.infrastructure.entities.User;
 import net.ravendb.client.serverwide.DatabaseRecord;
-import org.apache.http.client.methods.CloseableHttpResponse;
-import org.apache.http.client.methods.HttpRequestBase;
-import org.apache.http.impl.client.CloseableHttpClient;
-import org.apache.http.impl.execchain.RequestAbortedException;
+import org.apache.hc.client5.http.classic.methods.HttpUriRequestBase;
+import org.apache.hc.client5.http.impl.classic.CloseableHttpClient;
+import org.apache.hc.client5.http.impl.classic.RequestAbortedException;
+import org.apache.hc.core5.http.ClassicHttpResponse;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
@@ -106,7 +107,7 @@ public class RequestExecutorTest extends ClusterTestBase {
                 });
 
                 ObjectNode documentJson = EntityToJson.convertEntityToJson(new User(), store.getConventions(), null);
-                FirstFailCommand command = new FirstFailCommand("User/1", null, documentJson, failCount);
+                FirstFailCommand command = new FirstFailCommand(store.getConventions(), "User/1", null, documentJson, failCount);
                 try {
                     requestExecutor.execute(command);
                 } catch (Exception e) {
@@ -125,14 +126,14 @@ public class RequestExecutorTest extends ClusterTestBase {
     public static class FirstFailCommand extends PutDocumentCommand {
         private int _timeToFail;
 
-        public FirstFailCommand(String id, String changeVector, ObjectNode document, int timeToFail) {
-            super(id, changeVector, document);
+        public FirstFailCommand(DocumentConventions conventions, String id, String changeVector, ObjectNode document, int timeToFail) {
+            super(conventions, id, changeVector, document);
 
             _timeToFail = timeToFail;
         }
 
         @Override
-        public CloseableHttpResponse send(CloseableHttpClient client, HttpRequestBase request) throws IOException {
+        public ClassicHttpResponse send(CloseableHttpClient client, HttpUriRequestBase request) throws IOException {
             _timeToFail--;
             if (_timeToFail < 0) {
                 return super.send(client, request);

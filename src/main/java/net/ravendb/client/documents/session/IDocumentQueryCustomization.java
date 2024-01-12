@@ -6,6 +6,7 @@ import net.ravendb.client.documents.queries.ProjectionBehavior;
 import net.ravendb.client.documents.queries.QueryResult;
 import net.ravendb.client.documents.queries.timings.QueryTimings;
 import net.ravendb.client.documents.session.operations.QueryOperation;
+import net.ravendb.client.documents.session.querying.sharding.IQueryShardedContextBuilder;
 import net.ravendb.client.primitives.Reference;
 
 import java.time.Duration;
@@ -117,4 +118,6 @@ public interface IDocumentQueryCustomization {
     IDocumentQueryCustomization waitForNonStaleResults(Duration waitTimeout);
 
     IDocumentQueryCustomization projection(ProjectionBehavior projectionBehavior);
+
+    IDocumentQueryCustomization shardContext(Consumer<IQueryShardedContextBuilder> builder);
 }

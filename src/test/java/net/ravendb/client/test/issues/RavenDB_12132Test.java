@@ -21,7 +21,7 @@ public class RavenDB_12132Test extends RemoteTestBase {
             user.setId("users/1");
             user.setName("Grisha");
 
-            CompareExchangeResult<User> res = store.operations().send(new PutCompareExchangeValueOperation<User>("test", user, 0));
+            CompareExchangeResult<User> res = store.operations().send(new PutCompareExchangeValueOperation<>("test", user, 0));
 
             assertThat(res.isSuccessful())
                     .isTrue();

@@ -57,7 +57,7 @@ public class RavenDB_10038Test extends RemoteTestBase {
             assertThat(stats.getCountOfCompareExchange())
                     .isEqualTo(0);
 
-            store.operations().send(new PutCompareExchangeValueOperation<Person>("key/1", new Person(), 0));
+            store.operations().send(new PutCompareExchangeValueOperation<>("key/1", new Person(), 0));
 
             stats = store.maintenance().send(new GetDetailedStatisticsOperation());
             assertThat(stats.getCountOfIdentities())
@@ -65,7 +65,7 @@ public class RavenDB_10038Test extends RemoteTestBase {
             assertThat(stats.getCountOfCompareExchange())
                     .isEqualTo(1);
 
-            CompareExchangeResult<Person> result = store.operations().send(new PutCompareExchangeValueOperation<Person>("key/2", new Person(), 0));
+            CompareExchangeResult<Person> result = store.operations().send(new PutCompareExchangeValueOperation<>("key/2", new Person(), 0));
             assertThat(result.isSuccessful())
                     .isTrue();
 
@@ -75,7 +75,7 @@ public class RavenDB_10038Test extends RemoteTestBase {
             assertThat(stats.getCountOfCompareExchange())
                     .isEqualTo(2);
 
-            result = store.operations().send(new PutCompareExchangeValueOperation<Person>("key/2", new Person(), result.getIndex()));
+            result = store.operations().send(new PutCompareExchangeValueOperation<>("key/2", new Person(), result.getIndex()));
             assertThat(result.isSuccessful())
                     .isTrue();
 

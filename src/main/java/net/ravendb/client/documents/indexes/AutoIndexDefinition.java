@@ -1,5 +1,6 @@
 package net.ravendb.client.documents.indexes;
 
+import java.util.List;
 import java.util.Map;
 
 public class AutoIndexDefinition extends IndexDefinitionBase {
@@ -7,6 +8,7 @@ public class AutoIndexDefinition extends IndexDefinitionBase {
     private String collection;
     private Map<String, AutoIndexFieldOptions> mapFields;
     private Map<String, AutoIndexFieldOptions> groupByFields;
+    private List<String> groupByFieldNames;
 
     public IndexType getType() {
         return type;
@@ -38,5 +40,13 @@ public class AutoIndexDefinition extends IndexDefinitionBase {
 
     public void setGroupByFields(Map<String, AutoIndexFieldOptions> groupByFields) {
         this.groupByFields = groupByFields;
+    }
+
+    public List<String> getGroupByFieldNames() {
+        return groupByFieldNames;
+    }
+
+    public void setGroupByFieldNames(List<String> groupByFieldNames) {
+        this.groupByFieldNames = groupByFieldNames;
     }
 }

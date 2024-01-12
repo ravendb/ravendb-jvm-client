@@ -4,9 +4,9 @@ import net.ravendb.client.primitives.EventArgs;
 
 public class BeforeConversionToDocumentEventArgs extends EventArgs {
 
-    private String _id;
-    private Object _entity;
-    private InMemoryDocumentSessionOperations _session;
+    private final String _id;
+    private final Object _entity;
+    private final InMemoryDocumentSessionOperations _session;
 
     public BeforeConversionToDocumentEventArgs(InMemoryDocumentSessionOperations session, String id, Object entity) {
         _session = session;

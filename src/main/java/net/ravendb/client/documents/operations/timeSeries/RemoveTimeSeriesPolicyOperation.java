@@ -5,10 +5,9 @@ import net.ravendb.client.documents.operations.IMaintenanceOperation;
 import net.ravendb.client.http.IRaftCommand;
 import net.ravendb.client.http.RavenCommand;
 import net.ravendb.client.http.ServerNode;
-import net.ravendb.client.primitives.Reference;
 import net.ravendb.client.util.RaftIdGenerator;
-import org.apache.http.client.methods.HttpDelete;
-import org.apache.http.client.methods.HttpRequestBase;
+import org.apache.hc.client5.http.classic.methods.HttpDelete;
+import org.apache.hc.client5.http.classic.methods.HttpUriRequestBase;
 
 import java.io.IOException;
 
@@ -50,11 +49,11 @@ public class RemoveTimeSeriesPolicyOperation implements IMaintenanceOperation<Co
         }
 
         @Override
-        public HttpRequestBase createRequest(ServerNode node, Reference<String> url) {
-            url.value = node.getUrl() + "/databases/" + node.getDatabase()
+        public HttpUriRequestBase createRequest(ServerNode node) {
+            String url = node.getUrl() + "/databases/" + node.getDatabase()
                     + "/admin/timeseries/policy?collection=" + urlEncode(_collection) + "&name=" + urlEncode(_name);
 
-            return new HttpDelete();
+            return new HttpDelete(url);
         }
 
         @Override

@@ -7,12 +7,11 @@ import net.ravendb.client.http.HttpCache;
 import net.ravendb.client.http.IRaftCommand;
 import net.ravendb.client.http.RavenCommand;
 import net.ravendb.client.http.ServerNode;
-import net.ravendb.client.primitives.Reference;
 import net.ravendb.client.util.RaftIdGenerator;
 import net.ravendb.client.util.UrlUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.http.client.methods.HttpDelete;
-import org.apache.http.client.methods.HttpRequestBase;
+import org.apache.hc.client5.http.classic.methods.HttpDelete;
+import org.apache.hc.client5.http.classic.methods.HttpUriRequestBase;
 
 import java.io.IOException;
 
@@ -59,10 +58,10 @@ public class DeleteCompareExchangeValueOperation<T> implements IOperation<Compar
         }
 
         @Override
-        public HttpRequestBase createRequest(ServerNode node, Reference<String> url) {
-            url.value = node.getUrl() + "/databases/" + node.getDatabase() + "/cmpxchg?key=" + UrlUtils.escapeDataString(_key) + "&index=" + _index;
+        public HttpUriRequestBase createRequest(ServerNode node) {
+            String url = node.getUrl() + "/databases/" + node.getDatabase() + "/cmpxchg?key=" + UrlUtils.escapeDataString(_key) + "&index=" + _index;
 
-            return new HttpDelete();
+            return new HttpDelete(url);
         }
 
         @Override

@@ -3,11 +3,10 @@ package net.ravendb.client.documents.queries;
 import java.util.Map;
 
 public class GenericQueryResult<TResult, TIncludes> extends QueryResultBase<TResult, TIncludes> {
-    private int totalResults;
-    private long longTotalResults;
-    private Integer cappedMaxResults;
-    private int skippedResults;
-    private Integer scannedResults;
+    private long totalResults;
+    private Long cappedMaxResults;
+    private long skippedResults;
+    private Long scannedResults;
     private Map<String, Map<String, String[]>> highlightings;
     private Map<String, String[]> explanations;
     private long durationInMs;
@@ -17,7 +16,7 @@ public class GenericQueryResult<TResult, TIncludes> extends QueryResultBase<TRes
      * Gets the total results for this query
      * @return Total results for given query
      */
-    public int getTotalResults() {
+    public long getTotalResults() {
         return totalResults;
     }
 
@@ -25,24 +24,8 @@ public class GenericQueryResult<TResult, TIncludes> extends QueryResultBase<TRes
      * Sets the total results for this query
      * @param totalResults Sets the total results
      */
-    public void setTotalResults(int totalResults) {
+    public void setTotalResults(long totalResults) {
         this.totalResults = totalResults;
-    }
-
-    /**
-     * Gets the total results as long for this query
-     * @return Total results as long for this query
-     */
-    public long getLongTotalResults() {
-        return longTotalResults;
-    }
-
-    /**
-     * Sets the total results as long for this query
-     * @param longTotalResults Total result as long for this query
-     */
-    public void setLongTotalResults(long longTotalResults) {
-        this.longTotalResults = longTotalResults;
     }
 
     /**
@@ -50,7 +33,7 @@ public class GenericQueryResult<TResult, TIncludes> extends QueryResultBase<TRes
      * offset / limit clauses for this query
      * @return Total results
      */
-    public Integer getCappedMaxResults() {
+    public Long getCappedMaxResults() {
         return cappedMaxResults;
     }
 
@@ -59,7 +42,7 @@ public class GenericQueryResult<TResult, TIncludes> extends QueryResultBase<TRes
      * offset / limit clauses for this query
      * @param cappedMaxResults total results
      */
-    public void setCappedMaxResults(Integer cappedMaxResults) {
+    public void setCappedMaxResults(Long cappedMaxResults) {
         this.cappedMaxResults = cappedMaxResults;
     }
 
@@ -67,7 +50,7 @@ public class GenericQueryResult<TResult, TIncludes> extends QueryResultBase<TRes
      * Gets the skipped results
      * @return Amount of skipped results
      */
-    public int getSkippedResults() {
+    public long getSkippedResults() {
         return skippedResults;
     }
 
@@ -75,7 +58,7 @@ public class GenericQueryResult<TResult, TIncludes> extends QueryResultBase<TRes
      * Sets the skipped results
      * @param skippedResults Sets the skipped results
      */
-    public void setSkippedResults(int skippedResults) {
+    public void setSkippedResults(long skippedResults) {
         this.skippedResults = skippedResults;
     }
 
@@ -85,7 +68,7 @@ public class GenericQueryResult<TResult, TIncludes> extends QueryResultBase<TRes
      * only if you are using a filter clause in the query.
      * @return scanned results
      */
-    public Integer getScannedResults() {
+    public Long getScannedResults() {
         return scannedResults;
     }
 
@@ -95,7 +78,7 @@ public class GenericQueryResult<TResult, TIncludes> extends QueryResultBase<TRes
      * only if you are using a filter clause in the query.
      * @param scannedResults scanned results
      */
-    public void setScannedResults(Integer scannedResults) {
+    public void setScannedResults(Long scannedResults) {
         this.scannedResults = scannedResults;
     }
 

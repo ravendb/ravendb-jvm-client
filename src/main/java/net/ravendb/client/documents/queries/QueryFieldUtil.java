@@ -41,7 +41,6 @@ public class QueryFieldUtil {
         return escape;
     }
 
-    @SuppressWarnings("ConstantConditions")
     public static String escapeIfNecessary(String name, boolean isPath) {
         if (StringUtils.isEmpty(name) ||
                 Constants.Documents.Indexing.Fields.DOCUMENT_ID_FIELD_NAME.equals(name) ||

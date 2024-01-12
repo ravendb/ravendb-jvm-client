@@ -54,9 +54,7 @@ public class RavenDB_17624Test extends RemoteTestBase {
                         // empty
                     }
 
-                    Assertions.assertThatThrownBy(() -> {
-                        batch.openSession();
-                    })
+                    Assertions.assertThatThrownBy(batch::openSession)
                             .isExactlyInstanceOf(IllegalStateException.class)
                             .hasMessageContaining("Session can only be opened once per each Subscription batch");
 

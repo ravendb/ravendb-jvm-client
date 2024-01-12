@@ -8,12 +8,11 @@ import net.ravendb.client.http.IRaftCommand;
 import net.ravendb.client.http.RavenCommand;
 import net.ravendb.client.http.ServerNode;
 import net.ravendb.client.json.ContentProviderHttpEntity;
-import net.ravendb.client.primitives.Reference;
 import net.ravendb.client.serverwide.operations.ModifyOngoingTaskResult;
 import net.ravendb.client.util.RaftIdGenerator;
-import org.apache.http.client.methods.HttpPost;
-import org.apache.http.client.methods.HttpRequestBase;
-import org.apache.http.entity.ContentType;
+import org.apache.hc.client5.http.classic.methods.HttpPost;
+import org.apache.hc.client5.http.classic.methods.HttpUriRequestBase;
+import org.apache.hc.core5.http.ContentType;
 
 import java.io.IOException;
 
@@ -30,23 +29,25 @@ public class UpdateExternalReplicationOperation implements IMaintenanceOperation
 
     @Override
     public RavenCommand<ModifyOngoingTaskResult> getCommand(DocumentConventions conventions) {
-        return new UpdateExternalReplication(_newWatcher);
+        return new UpdateExternalReplication(conventions, _newWatcher);
     }
 
     private static class UpdateExternalReplication extends RavenCommand<ModifyOngoingTaskResult> implements IRaftCommand {
         private final ExternalReplication _newWatcher;
+        private final DocumentConventions _conventions;
 
-        public UpdateExternalReplication(ExternalReplication newWatcher) {
+        public UpdateExternalReplication(DocumentConventions conventions, ExternalReplication newWatcher) {
             super(ModifyOngoingTaskResult.class);
 
+            _conventions = conventions;
             _newWatcher = newWatcher;
         }
 
         @Override
-        public HttpRequestBase createRequest(ServerNode node, Reference<String> url) {
-            url.value = node.getUrl() + "/databases/" + node.getDatabase() + "/admin/tasks/external-replication";
+        public HttpUriRequestBase createRequest(ServerNode node) {
+            String url = node.getUrl() + "/databases/" + node.getDatabase() + "/admin/tasks/external-replication";
 
-            HttpPost request = new HttpPost();
+            HttpPost request = new HttpPost(url);
             request.setEntity(new ContentProviderHttpEntity(outputStream -> {
                 try (JsonGenerator generator = createSafeJsonGenerator(outputStream)) {
                     generator.writeStartObject();
@@ -57,10 +58,8 @@ public class UpdateExternalReplicationOperation implements IMaintenanceOperation
                     generator.writeTree(tree);
 
                     generator.writeEndObject();
-                } catch (IOException e) {
-                    throw new RuntimeException(e);
                 }
-            }, ContentType.APPLICATION_JSON));
+            }, ContentType.APPLICATION_JSON, _conventions));
 
             return request;
         }

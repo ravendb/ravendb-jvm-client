@@ -21,13 +21,12 @@ public class RawDocumentQuery<T> extends AbstractDocumentQuery<T, RawDocumentQue
         this.queryRaw = rawQuery;
     }
 
-    public IRawDocumentQuery<T> skip(int count) {
+    public IRawDocumentQuery<T> skip(long count) {
         _skip(count);
         return this;
     }
 
-    @Override
-    public IRawDocumentQuery<T> take(int count) {
+    public IRawDocumentQuery<T> take(long count) {
         _take(count);
         return this;
     }
@@ -127,4 +126,5 @@ public class RawDocumentQuery<T> extends AbstractDocumentQuery<T, RawDocumentQue
         _projection(projectionBehavior);
         return this;
     }
+
 }

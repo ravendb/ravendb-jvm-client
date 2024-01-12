@@ -65,7 +65,7 @@ public class AdditionalAssembly {
     }
 
     public static AdditionalAssembly onlyUsings(Set<String> usings) {
-        if (usings == null || usings.size() == 0) {
+        if (usings == null || usings.isEmpty()) {
             throw new IllegalArgumentException("Using cannot be null or empty");
         }
 

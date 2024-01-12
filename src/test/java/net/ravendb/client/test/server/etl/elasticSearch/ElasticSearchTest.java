@@ -10,7 +10,7 @@ import net.ravendb.client.documents.operations.etl.EtlType;
 import net.ravendb.client.documents.operations.etl.Transformation;
 import net.ravendb.client.documents.operations.etl.elasticSearch.ElasticSearchConnectionString;
 import net.ravendb.client.documents.operations.etl.elasticSearch.ElasticSearchEtlConfiguration;
-import net.ravendb.client.documents.operations.ongoingTasks.OngoingTaskElasticSearchEtlDetails;
+import net.ravendb.client.documents.operations.ongoingTasks.OngoingTaskElasticSearchEtl;
 import net.ravendb.client.documents.operations.ongoingTasks.OngoingTaskType;
 import net.ravendb.client.infrastructure.DisabledOnPullRequest;
 import org.junit.jupiter.api.Test;
@@ -44,7 +44,7 @@ public class ElasticSearchTest extends RemoteTestBase {
 
             AddEtlOperationResult etlResult = store.maintenance().send(new AddEtlOperation<>(etlConfiguration));
 
-            OngoingTaskElasticSearchEtlDetails ongoingTask = (OngoingTaskElasticSearchEtlDetails) store.maintenance()
+            OngoingTaskElasticSearchEtl ongoingTask = (OngoingTaskElasticSearchEtl) store.maintenance()
                     .send(new GetOngoingTaskInfoOperation(etlResult.getTaskId(), OngoingTaskType.ELASTIC_SEARCH_ETL));
 
             assertThat(ongoingTask)

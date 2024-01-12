@@ -6,11 +6,10 @@ import net.ravendb.client.documents.queries.IndexQuery;
 import net.ravendb.client.extensions.JsonExtensions;
 import net.ravendb.client.http.*;
 import net.ravendb.client.json.ContentProviderHttpEntity;
-import net.ravendb.client.primitives.Reference;
-import org.apache.http.client.methods.CloseableHttpResponse;
-import org.apache.http.client.methods.HttpPost;
-import org.apache.http.client.methods.HttpRequestBase;
-import org.apache.http.entity.ContentType;
+import org.apache.hc.client5.http.classic.methods.HttpPost;
+import org.apache.hc.client5.http.classic.methods.HttpUriRequestBase;
+import org.apache.hc.core5.http.ClassicHttpResponse;
+import org.apache.hc.core5.http.ContentType;
 
 import java.io.IOException;
 
@@ -37,24 +36,23 @@ public class QueryStreamCommand extends RavenCommand<StreamResultResponse> {
     }
 
     @Override
-    public HttpRequestBase createRequest(ServerNode node, Reference<String> url) {
-        HttpPost request = new HttpPost();
+    public HttpUriRequestBase createRequest(ServerNode node) {
+        String url = node.getUrl() + "/databases/" + node.getDatabase() + "/streams/queries";
+        HttpPost request = new HttpPost(url);
 
         request.setEntity(new ContentProviderHttpEntity(outputStream -> {
             try (JsonGenerator generator = createSafeJsonGenerator(outputStream)) {
                 JsonExtensions.writeIndexQuery(generator, _conventions, _indexQuery);
-            } catch (IOException e) {
-                throw new RuntimeException(e);
             }
-        }, ContentType.APPLICATION_JSON));
+        }, ContentType.APPLICATION_JSON, _conventions));
 
-        url.value = node.getUrl() + "/databases/" + node.getDatabase() + "/streams/queries";
+
 
         return request;
     }
 
     @Override
-    public ResponseDisposeHandling processResponse(HttpCache cache, CloseableHttpResponse response, String url) {
+    public ResponseDisposeHandling processResponse(HttpCache cache, ClassicHttpResponse response, String url) {
         try {
             StreamResultResponse streamResponse = new StreamResultResponse();
             streamResponse.setResponse(response);

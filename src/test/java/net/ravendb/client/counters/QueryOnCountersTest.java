@@ -1014,30 +1014,22 @@ public class QueryOnCountersTest extends RemoteTestBase {
 
     @Test
     public void countersCachingShouldHandleDeletion_includeCounterDownload() throws Exception {
-        countersCachingShouldHandleDeletion(session -> {
-            session.query(Order.class).include(i -> i.includeCounter("downloads")).toList();
-        }, null);
+        countersCachingShouldHandleDeletion(session -> session.query(Order.class).include(i -> i.includeCounter("downloads")).toList(), null);
     }
 
     @Test
     public void countersCachingShouldHandleDeletion_includeCounterUpload() throws Exception {
-        countersCachingShouldHandleDeletion(session -> {
-            session.query(Order.class).include(i -> i.includeCounter("uploads")).toList();
-        }, 300L);
+        countersCachingShouldHandleDeletion(session -> session.query(Order.class).include(i -> i.includeCounter("uploads")).toList(), 300L);
     }
 
     @Test
     public void countersCachingShouldHandleDeletion_includeCounters() throws Exception {
-        countersCachingShouldHandleDeletion(session -> {
-            session.query(Order.class).include(i -> i.includeCounters(new String[] { "downloads", "uploads", "bugs" })).toList();
-        }, null);
+        countersCachingShouldHandleDeletion(session -> session.query(Order.class).include(i -> i.includeCounters(new String[] { "downloads", "uploads", "bugs" })).toList(), null);
     }
 
     @Test
     public void countersCachingShouldHandleDeletion_includeAllCounters() throws Exception {
-        countersCachingShouldHandleDeletion(session -> {
-            session.query(Order.class).include(i -> i.includeAllCounters()).toList();
-        }, null);
+        countersCachingShouldHandleDeletion(session -> session.query(Order.class).include(i -> i.includeAllCounters()).toList(), null);
     }
 
     private void countersCachingShouldHandleDeletion(Consumer<IDocumentSession> sessionConsumer, Long expectedCounterValue) throws Exception {

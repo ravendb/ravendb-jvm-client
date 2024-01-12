@@ -7,12 +7,11 @@ import net.ravendb.client.http.HttpCache;
 import net.ravendb.client.http.RavenCommand;
 import net.ravendb.client.http.ServerNode;
 import net.ravendb.client.json.ContentProviderHttpEntity;
-import net.ravendb.client.primitives.Reference;
 import net.ravendb.client.util.UrlUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.http.client.methods.HttpPatch;
-import org.apache.http.client.methods.HttpRequestBase;
-import org.apache.http.entity.ContentType;
+import org.apache.hc.client5.http.classic.methods.HttpPatch;
+import org.apache.hc.client5.http.classic.methods.HttpUriRequestBase;
+import org.apache.hc.core5.http.ContentType;
 
 import java.io.IOException;
 
@@ -147,22 +146,22 @@ public class PatchOperation implements IOperation<PatchResult> {
         }
 
         @Override
-        public HttpRequestBase createRequest(ServerNode node, Reference<String> url) {
-            url.value = node.getUrl() + "/databases/" + node.getDatabase() + "/docs?id=" + UrlUtils.escapeDataString(_id);
+        public HttpUriRequestBase createRequest(ServerNode node) {
+            String url = node.getUrl() + "/databases/" + node.getDatabase() + "/docs?id=" + UrlUtils.escapeDataString(_id);
 
             if (_skipPatchIfChangeVectorMismatch) {
-                url.value += "&skipPatchIfChangeVectorMismatch=true";
+                url += "&skipPatchIfChangeVectorMismatch=true";
             }
 
             if (_returnDebugInformation) {
-                url.value += "&debug=true";
+                url += "&debug=true";
             }
 
             if (_test) {
-                url.value += "&test=true";
+                url += "&test=true";
             }
 
-            HttpPatch request = new HttpPatch();
+            HttpPatch request = new HttpPatch(url);
             request.setEntity(new ContentProviderHttpEntity(outputStream -> {
                 try (JsonGenerator generator = createSafeJsonGenerator(outputStream)) {
                     generator.writeStartObject();
@@ -183,10 +182,8 @@ public class PatchOperation implements IOperation<PatchResult> {
                     }
 
                     generator.writeEndObject();
-                } catch (IOException e) {
-                    throw new RuntimeException(e);
                 }
-            }, ContentType.APPLICATION_JSON));
+            }, ContentType.APPLICATION_JSON, _conventions));
             addChangeVectorIfNotNull(_changeVector, request);
             return request;
         }

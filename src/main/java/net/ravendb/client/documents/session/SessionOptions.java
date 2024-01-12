@@ -9,6 +9,7 @@ public class SessionOptions {
     private RequestExecutor requestExecutor;
     private TransactionMode transactionMode;
     private Boolean disableAtomicDocumentWritesInClusterWideTransaction;
+    private ShardedBatchBehavior shardedBatchBehavior;
 
     public String getDatabase() {
         return database;
@@ -66,5 +67,13 @@ public class SessionOptions {
      */
     public void setDisableAtomicDocumentWritesInClusterWideTransaction(Boolean disableAtomicDocumentWritesInClusterWideTransaction) {
         this.disableAtomicDocumentWritesInClusterWideTransaction = disableAtomicDocumentWritesInClusterWideTransaction;
+    }
+
+    public ShardedBatchBehavior getShardedBatchBehavior() {
+        return shardedBatchBehavior;
+    }
+
+    public void setShardedBatchBehavior(ShardedBatchBehavior shardedBatchBehavior) {
+        this.shardedBatchBehavior = shardedBatchBehavior;
     }
 }

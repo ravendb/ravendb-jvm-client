@@ -2,6 +2,7 @@ package net.ravendb.client.documents.commands;
 
 import com.fasterxml.jackson.core.JsonGenerator;
 import net.ravendb.client.Constants;
+import net.ravendb.client.documents.conventions.DocumentConventions;
 import net.ravendb.client.documents.operations.timeSeries.AbstractTimeSeriesRange;
 import net.ravendb.client.documents.operations.timeSeries.TimeSeriesCountRange;
 import net.ravendb.client.documents.operations.timeSeries.TimeSeriesRange;
@@ -13,14 +14,14 @@ import net.ravendb.client.http.RavenCommand;
 import net.ravendb.client.http.ServerNode;
 import net.ravendb.client.json.ContentProviderHttpEntity;
 import net.ravendb.client.primitives.NetISO8601Utils;
-import net.ravendb.client.primitives.Reference;
 import net.ravendb.client.primitives.SharpEnum;
 import net.ravendb.client.util.UrlUtils;
 import org.apache.commons.lang3.ObjectUtils;
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.client.methods.HttpPost;
-import org.apache.http.client.methods.HttpRequestBase;
-import org.apache.http.entity.ContentType;
+import org.apache.hc.client5.http.classic.methods.HttpPost;
+import org.apache.hc.client5.http.classic.methods.HttpUriRequestBase;
+import org.apache.hc.client5.http.classic.methods.HttpGet;
+import org.apache.hc.core5.http.ContentType;
+import org.apache.hc.core5.http.HttpEntity;
 
 import java.io.IOException;
 import java.io.OutputStreamWriter;
@@ -29,6 +30,7 @@ import java.util.*;
 
 public class GetDocumentsCommand extends RavenCommand<GetDocumentsResult> {
 
+    private final DocumentConventions _conventions;
     private String _id;
 
     private String[] _ids;
@@ -55,44 +57,48 @@ public class GetDocumentsCommand extends RavenCommand<GetDocumentsResult> {
         super(GetDocumentsResult.class);
         _start = start;
         _pageSize = pageSize;
+        _conventions = null;
     }
 
-    public GetDocumentsCommand(String id, String[] includes, boolean metadataOnly) {
+    public GetDocumentsCommand(DocumentConventions conventions, String id, String[] includes, boolean metadataOnly) {
         super(GetDocumentsResult.class);
         if (id == null) {
             throw new IllegalArgumentException("id cannot be null");
         }
+
+        _conventions = conventions;
         _id = id;
         _includes = includes;
         _metadataOnly = metadataOnly;
     }
 
-    public GetDocumentsCommand(String[] ids, String[] includes, boolean metadataOnly) {
+    public GetDocumentsCommand(DocumentConventions conventions, String[] ids, String[] includes, boolean metadataOnly) {
         super(GetDocumentsResult.class);
         if (ids == null || ids.length == 0) {
             throw new IllegalArgumentException("Please supply at least one id");
         }
 
+        _conventions = conventions;
         _ids = ids;
         _includes = includes;
         _metadataOnly = metadataOnly;
     }
 
-    public GetDocumentsCommand(String[] ids, String[] includes, String[] counterIncludes,
+    public GetDocumentsCommand(DocumentConventions conventions, String[] ids, String[] includes, String[] counterIncludes,
                                List<AbstractTimeSeriesRange> timeSeriesIncludes, String[] compareExchangeValueIncludes,
                                boolean metadataOnly) {
-        this(ids, includes, metadataOnly);
+        this(conventions, ids, includes, metadataOnly);
 
         _counters = counterIncludes;
         _timeSeriesIncludes = timeSeriesIncludes;
         _compareExchangeValueIncludes = compareExchangeValueIncludes;
     }
 
-    public GetDocumentsCommand(String[] ids, String[] includes, String[] counterIncludes,
+    public GetDocumentsCommand(DocumentConventions conventions, String[] ids, String[] includes, String[] counterIncludes,
                                String[] revisionsIncludesByChangeVector, Date revisionIncludeByDateTimeBefore,
                                List<AbstractTimeSeriesRange> timeSeriesIncludes, String[] compareExchangeValueIncludes,
                                boolean metadataOnly) {
-        this(ids, includes, metadataOnly);
+        this(conventions, ids, includes, metadataOnly);
 
         _counters = counterIncludes;
         _revisionsIncludeByChangeVector = revisionsIncludesByChangeVector;
@@ -101,21 +107,23 @@ public class GetDocumentsCommand extends RavenCommand<GetDocumentsResult> {
         _compareExchangeValueIncludes = compareExchangeValueIncludes;
     }
 
-    public GetDocumentsCommand(String[] ids, String[] includes, boolean includeAllCounters,
+    public GetDocumentsCommand(DocumentConventions conventions, String[] ids, String[] includes, boolean includeAllCounters,
                                List<AbstractTimeSeriesRange> timeSeriesIncludes, String[] compareExchangeValueIncludes,
                                boolean metadataOnly) {
-        this(ids, includes, metadataOnly);
+        this(conventions, ids, includes, metadataOnly);
 
         _includeAllCounters = includeAllCounters;
         _timeSeriesIncludes = timeSeriesIncludes;
         _compareExchangeValueIncludes = compareExchangeValueIncludes;
     }
 
-    public GetDocumentsCommand(String startWith, String startAfter, String matches, String exclude, int start, int pageSize, boolean metadataOnly) {
+    public GetDocumentsCommand(DocumentConventions conventions, String startWith, String startAfter, String matches, String exclude, int start, int pageSize, boolean metadataOnly) {
         super(GetDocumentsResult.class);
         if (startWith == null) {
             throw new IllegalArgumentException("startWith cannot be null");
         }
+
+        _conventions = conventions;
         _startWith = startWith;
         _startAfter = startAfter;
         _matches = matches;
@@ -126,7 +134,7 @@ public class GetDocumentsCommand extends RavenCommand<GetDocumentsResult> {
     }
 
     @Override
-    public HttpRequestBase createRequest(ServerNode node, Reference<String> url) {
+    public HttpUriRequestBase createRequest(ServerNode node) {
         StringBuilder pathBuilder = new StringBuilder(node.getUrl());
         pathBuilder.append("/databases/")
                 .append(node.getDatabase())
@@ -243,20 +251,24 @@ public class GetDocumentsCommand extends RavenCommand<GetDocumentsResult> {
             }
         }
 
-        HttpRequestBase request = new HttpGet();
 
         if (_id != null) {
             pathBuilder.append("&id=");
             pathBuilder.append(UrlUtils.escapeDataString(_id));
         } else if (_ids != null) {
-            request = prepareRequestWithMultipleIds(pathBuilder, request, _ids);
+            HttpEntity httpEntity = prepareRequestWithMultipleIds(_conventions, pathBuilder, _ids);
+            if (httpEntity != null) {
+                HttpPost httpPost = new HttpPost(pathBuilder.toString());
+                httpPost.setEntity(httpEntity);
+                return httpPost;
+            }
         }
 
-        url.value = pathBuilder.toString();
-        return request;
+        String url = pathBuilder.toString();
+        return new HttpGet(url);
     }
 
-    public static HttpRequestBase prepareRequestWithMultipleIds(StringBuilder pathBuilder, HttpRequestBase request, String[] ids) {
+    public static HttpEntity prepareRequestWithMultipleIds(DocumentConventions conventions, StringBuilder pathBuilder, String[] ids) {
         Set<String> uniqueIds = new LinkedHashSet<>();
         Collections.addAll(uniqueIds, ids);
 
@@ -276,9 +288,8 @@ public class GetDocumentsCommand extends RavenCommand<GetDocumentsResult> {
                                 ObjectUtils.firstNonNull(x, "")));
             });
 
-            return new HttpGet();
+            return null;
         } else {
-            HttpPost httpPost = new HttpPost();
 
             try {
                 String calculateHash = calculateHash(uniqueIds);
@@ -288,7 +299,7 @@ public class GetDocumentsCommand extends RavenCommand<GetDocumentsResult> {
                 throw new RuntimeException("Unable to compute query hash:" + e.getMessage(), e);
             }
 
-            httpPost.setEntity(new ContentProviderHttpEntity(outputStream -> {
+            return new ContentProviderHttpEntity(outputStream -> {
                 try (JsonGenerator generator = JsonExtensions.getDefaultMapper().createGenerator(new OutputStreamWriter(outputStream, StandardCharsets.UTF_8))) {
                     generator.writeStartObject();
                     generator.writeFieldName("Ids");
@@ -300,13 +311,8 @@ public class GetDocumentsCommand extends RavenCommand<GetDocumentsResult> {
 
                     generator.writeEndArray();
                     generator.writeEndObject();
-
-                } catch (IOException e) {
-                    throw new RuntimeException(e);
                 }
-            }, ContentType.APPLICATION_JSON));
-
-            return httpPost;
+            }, ContentType.APPLICATION_JSON, conventions);
         }
     }
 

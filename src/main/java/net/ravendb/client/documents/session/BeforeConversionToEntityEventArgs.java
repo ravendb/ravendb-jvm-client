@@ -6,10 +6,10 @@ import net.ravendb.client.primitives.Reference;
 
 public class BeforeConversionToEntityEventArgs extends EventArgs {
 
-    private String _id;
-    private Class _type;
-    private Reference<ObjectNode> _document;
-    private InMemoryDocumentSessionOperations _session;
+    private final String _id;
+    private final Class _type;
+    private final Reference<ObjectNode> _document;
+    private final InMemoryDocumentSessionOperations _session;
 
     public BeforeConversionToEntityEventArgs(InMemoryDocumentSessionOperations session, String id, Class type, Reference<ObjectNode> document) {
         _session = session;

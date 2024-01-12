@@ -8,6 +8,7 @@ import net.ravendb.client.documents.indexes.analysis.AnalyzerDefinition;
 import net.ravendb.client.documents.operations.backups.PeriodicBackupConfiguration;
 import net.ravendb.client.documents.operations.configuration.ClientConfiguration;
 import net.ravendb.client.documents.operations.configuration.StudioConfiguration;
+import net.ravendb.client.documents.operations.dataArchival.DataArchivalConfiguration;
 import net.ravendb.client.documents.operations.etl.RavenEtlConfiguration;
 import net.ravendb.client.documents.operations.etl.elasticSearch.ElasticSearchConnectionString;
 import net.ravendb.client.documents.operations.etl.elasticSearch.ElasticSearchEtlConfiguration;
@@ -18,6 +19,7 @@ import net.ravendb.client.documents.operations.etl.queue.QueueEtlConfiguration;
 import net.ravendb.client.documents.operations.etl.sql.SqlConnectionString;
 import net.ravendb.client.documents.operations.etl.sql.SqlEtlConfiguration;
 import net.ravendb.client.documents.operations.expiration.ExpirationConfiguration;
+import net.ravendb.client.documents.operations.queueSink.QueueSinkConfiguration;
 import net.ravendb.client.documents.operations.refresh.RefreshConfiguration;
 import net.ravendb.client.documents.operations.replication.ExternalReplication;
 import net.ravendb.client.documents.operations.replication.PullReplicationAsSink;
@@ -29,6 +31,7 @@ import net.ravendb.client.documents.queries.sorting.SorterDefinition;
 import net.ravendb.client.documents.operations.etl.RavenConnectionString;
 import net.ravendb.client.primitives.UseSharpEnum;
 import net.ravendb.client.serverwide.operations.integrations.IntegrationConfigurations;
+import net.ravendb.client.serverwide.sharding.ShardingConfiguration;
 
 import java.util.*;
 
@@ -42,6 +45,7 @@ public class DatabaseRecord {
     private DatabaseStateStatus databaseState;
     private DatabaseLockMode lockMode;
     private DatabaseTopology topology;
+    private ShardingConfiguration sharding;
     private ConflictSolver conflictSolverConfig;
     private DocumentsCompressionConfiguration documentsCompression;
     private Map<String, SorterDefinition> sorters = new HashMap<>();
@@ -55,6 +59,8 @@ public class DatabaseRecord {
     private RevisionsCollectionConfiguration revisionsForConflicts;
     private ExpirationConfiguration expiration;
     private RefreshConfiguration refresh;
+
+    private DataArchivalConfiguration dataArchival;
     private IntegrationConfigurations integrations;
     private List<PeriodicBackupConfiguration> periodicBackups = new ArrayList<>();
     private List<ExternalReplication> externalReplications = new ArrayList<>();
@@ -71,6 +77,7 @@ public class DatabaseRecord {
     private List<ElasticSearchEtlConfiguration> elasticSearchEtls = new ArrayList<>();
     private List<OlapEtlConfiguration> olapEtls = new ArrayList<>();
     private List<QueueEtlConfiguration> queueEtls = new ArrayList<>();
+    private List<QueueSinkConfiguration> queueSinks = new ArrayList<>();
     private ClientConfiguration client;
     private StudioConfiguration studio;
     private long truncatedClusterTransactionCommandsCount;
@@ -161,6 +168,14 @@ public class DatabaseRecord {
 
     public void setTopology(DatabaseTopology topology) {
         this.topology = topology;
+    }
+
+    public ShardingConfiguration getSharding() {
+        return sharding;
+    }
+
+    public void setSharding(ShardingConfiguration sharding) {
+        this.sharding = sharding;
     }
 
     public Map<String, SorterDefinition> getSorters() {
@@ -363,6 +378,14 @@ public class DatabaseRecord {
         this.refresh = refresh;
     }
 
+    public DataArchivalConfiguration getDataArchival() {
+        return dataArchival;
+    }
+
+    public void setDataArchival(DataArchivalConfiguration dataArchival) {
+        this.dataArchival = dataArchival;
+    }
+
     public IntegrationConfigurations getIntegrations() {
         return integrations;
     }
@@ -405,6 +428,14 @@ public class DatabaseRecord {
 
     public void setQueueEtls(List<QueueEtlConfiguration> queueEtls) {
         this.queueEtls = queueEtls;
+    }
+
+    public List<QueueSinkConfiguration> getQueueSinks() {
+        return queueSinks;
+    }
+
+    public void setQueueSinks(List<QueueSinkConfiguration> queueSinks) {
+        this.queueSinks = queueSinks;
     }
 
     public void setUnusedDatabaseIds(Set<String> unusedDatabaseIds) {

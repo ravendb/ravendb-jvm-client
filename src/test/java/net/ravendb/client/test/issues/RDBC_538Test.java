@@ -58,9 +58,7 @@ public class RDBC_538Test extends ClusterTestBase {
 
                     BlockingArrayQueue<String> keys = new BlockingArrayQueue<>();
 
-                    subscription.run(batch -> {
-                        batch.getItems().forEach(x -> keys.add(x.getId()));
-                    });
+                    subscription.run(batch -> batch.getItems().forEach(x -> keys.add(x.getId())));
 
                     String key = keys.poll(_reasonableWaitTime, TimeUnit.SECONDS);
                     assertThat(key)

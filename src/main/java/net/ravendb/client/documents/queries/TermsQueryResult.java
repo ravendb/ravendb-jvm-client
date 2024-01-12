@@ -1,17 +1,17 @@
 package net.ravendb.client.documents.queries;
 
-import java.util.Set;
+import java.util.List;
 
 public class TermsQueryResult {
-    private Set<String> terms;
+    private List<String> terms;
     private long resultEtag;
     private String indexName;
 
-    public Set<String> getTerms() {
+    public List<String> getTerms() {
         return terms;
     }
 
-    public void setTerms(Set<String> terms) {
+    public void setTerms(List<String> terms) {
         this.terms = terms;
     }
 

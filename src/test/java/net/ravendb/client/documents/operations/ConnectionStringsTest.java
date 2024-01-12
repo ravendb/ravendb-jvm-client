@@ -143,7 +143,8 @@ public class ConnectionStringsTest extends RemoteTestBase {
                     .hasSize(1);
 
 
-            RemoveConnectionStringResult removeResult = store.maintenance().send(new RemoveConnectionStringOperation<>(sqlOnly.getSqlConnectionStrings().values().stream().findFirst().get()));
+            RemoveConnectionStringResult removeResult = store.maintenance().send(
+                    new RemoveConnectionStringOperation<>(sqlOnly.getSqlConnectionStrings().values().stream().findFirst().get()));
             assertThat(removeResult.getRaftCommandIndex())
                     .isPositive();
 

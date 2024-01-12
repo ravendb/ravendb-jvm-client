@@ -1,5 +1,7 @@
 package net.ravendb.client.documents.subscriptions;
 
+import net.ravendb.client.documents.dataArchival.ArchivedDataProcessingBehavior;
+
 import java.util.Date;
 
 public class SubscriptionState {
@@ -15,6 +17,10 @@ public class SubscriptionState {
     private Date lastBatchAckTime;
     private Date lastClientConnectionTime;
     private boolean disabled;
+    private Long raftCommandIndex;
+
+    private ArchivedDataProcessingBehavior archivedDataProcessingBehavior;
+    private SubscriptionShardingState shardingState;
 
     public String getQuery() {
         return query;
@@ -72,6 +78,14 @@ public class SubscriptionState {
         this.nodeTag = nodeTag;
     }
 
+    public Long getRaftCommandIndex() {
+        return raftCommandIndex;
+    }
+
+    public void setRaftCommandIndex(Long raftCommandIndex) {
+        this.raftCommandIndex = raftCommandIndex;
+    }
+
     public Date getLastBatchAckTime() {
         return lastBatchAckTime;
     }
@@ -94,5 +108,21 @@ public class SubscriptionState {
 
     public void setDisabled(boolean disabled) {
         this.disabled = disabled;
+    }
+
+    public ArchivedDataProcessingBehavior getArchivedDataProcessingBehavior() {
+        return archivedDataProcessingBehavior;
+    }
+
+    public void setArchivedDataProcessingBehavior(ArchivedDataProcessingBehavior archivedDataProcessingBehavior) {
+        this.archivedDataProcessingBehavior = archivedDataProcessingBehavior;
+    }
+
+    public SubscriptionShardingState getShardingState() {
+        return shardingState;
+    }
+
+    public void setShardingState(SubscriptionShardingState shardingState) {
+        this.shardingState = shardingState;
     }
 }

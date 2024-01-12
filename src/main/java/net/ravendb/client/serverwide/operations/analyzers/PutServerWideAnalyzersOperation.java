@@ -8,14 +8,11 @@ import net.ravendb.client.http.IRaftCommand;
 import net.ravendb.client.http.ServerNode;
 import net.ravendb.client.http.VoidRavenCommand;
 import net.ravendb.client.json.ContentProviderHttpEntity;
-import net.ravendb.client.primitives.Reference;
 import net.ravendb.client.serverwide.operations.IVoidServerOperation;
 import net.ravendb.client.util.RaftIdGenerator;
-import org.apache.http.client.methods.HttpPut;
-import org.apache.http.client.methods.HttpRequestBase;
-import org.apache.http.entity.ContentType;
-
-import java.io.IOException;
+import org.apache.hc.client5.http.classic.methods.HttpPut;
+import org.apache.hc.client5.http.classic.methods.HttpUriRequestBase;
+import org.apache.hc.core5.http.ContentType;
 
 public class PutServerWideAnalyzersOperation implements IVoidServerOperation {
 
@@ -36,6 +33,7 @@ public class PutServerWideAnalyzersOperation implements IVoidServerOperation {
     
     private static class PutServerWideAnalyzersCommand extends VoidRavenCommand implements IRaftCommand {
         private final ObjectNode[] _analyzersToAdd;
+        private final DocumentConventions _conventions;
         
         public PutServerWideAnalyzersCommand(DocumentConventions conventions, AnalyzerDefinition[] analyzersToAdd) {
             if (conventions == null) {
@@ -44,7 +42,8 @@ public class PutServerWideAnalyzersOperation implements IVoidServerOperation {
             if (analyzersToAdd == null) {
                 throw new IllegalArgumentException("AnalyzersToAdd cannot be null");
             }
-            
+
+            _conventions = conventions;
             _analyzersToAdd = new ObjectNode[analyzersToAdd.length];
 
             for (int i = 0; i < analyzersToAdd.length; i++) {
@@ -57,10 +56,10 @@ public class PutServerWideAnalyzersOperation implements IVoidServerOperation {
         }
 
         @Override
-        public HttpRequestBase createRequest(ServerNode node, Reference<String> url) {
-            url.value = node.getUrl() + "/admin/analyzers";
+        public HttpUriRequestBase createRequest(ServerNode node) {
+            String url = node.getUrl() + "/admin/analyzers";
 
-            HttpPut httpPut = new HttpPut();
+            HttpPut httpPut = new HttpPut(url);
 
             httpPut.setEntity(new ContentProviderHttpEntity(outputStream -> {
                 try (JsonGenerator generator = createSafeJsonGenerator(outputStream)) {
@@ -74,11 +73,8 @@ public class PutServerWideAnalyzersOperation implements IVoidServerOperation {
 
                     generator.writeEndArray();
                     generator.writeEndObject();
-
-                } catch (IOException e) {
-                    throw new RuntimeException(e);
                 }
-            }, ContentType.APPLICATION_JSON));
+            }, ContentType.APPLICATION_JSON, _conventions));
 
             return httpPut;
         }

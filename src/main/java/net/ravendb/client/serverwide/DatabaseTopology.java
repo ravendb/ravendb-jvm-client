@@ -10,9 +10,9 @@ import java.util.Map;
 
 public class DatabaseTopology {
 
-    private List<String> members;
-    private List<String> promotables;
-    private List<String> rehabs;
+    private List<String> members = new ArrayList<>();
+    private List<String> promotables = new ArrayList<>();
+    private List<String> rehabs = new ArrayList<>();
 
     private Map<String, String> predefinedMentors;
     private Map<String, String> demotionReasons;

@@ -27,6 +27,8 @@ public class DocumentSubscriptions implements AutoCloseable {
     private final DocumentStore _store;
     private final ConcurrentHashMap<CleanCloseable, Boolean> _subscriptions = new ConcurrentHashMap<>();
 
+    private final static String INCLUDE_REVISIONS_RQL = "(Revisions = true)";
+
     public DocumentSubscriptions(DocumentStore store) {
         _store = store;
     }
@@ -147,7 +149,8 @@ public class DocumentSubscriptions implements AutoCloseable {
             queryBuilder.append('\'');
 
             if (revisions) {
-                queryBuilder.append(" (Revisions = true)");
+                queryBuilder.append(" ");
+                queryBuilder.append(INCLUDE_REVISIONS_RQL);
             }
             queryBuilder.append(" as doc");
         }
@@ -244,7 +247,6 @@ public class DocumentSubscriptions implements AutoCloseable {
      * It opens a subscription and starts pulling documents since a last processed document for that subscription.
      * The connection options determine client and server cooperation rules like document batch sizes or a timeout in a matter of which a client
      * needs to acknowledge that batch has been processed. The acknowledgment is sent after all documents are processed by subscription's handlers.
-     *
      * There can be only a single client that is connected to a subscription.
      * @param options Subscription options
      * @return Subscription object that allows to add/remove subscription handlers.
@@ -588,7 +590,7 @@ public class DocumentSubscriptions implements AutoCloseable {
         }
 
         RequestExecutor requestExecutor = _store.getRequestExecutor(database);
-        UpdateSubscriptionCommand command = new UpdateSubscriptionCommand(options);
+        UpdateSubscriptionCommand command = new UpdateSubscriptionCommand(requestExecutor.getConventions(), options);
         requestExecutor.execute(command, null);
 
         return command.getResult().getName();

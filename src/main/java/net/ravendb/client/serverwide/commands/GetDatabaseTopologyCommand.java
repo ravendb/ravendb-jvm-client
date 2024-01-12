@@ -3,10 +3,9 @@ package net.ravendb.client.serverwide.commands;
 import net.ravendb.client.http.RavenCommand;
 import net.ravendb.client.http.ServerNode;
 import net.ravendb.client.http.Topology;
-import net.ravendb.client.primitives.Reference;
 import net.ravendb.client.util.UrlUtils;
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.client.methods.HttpRequestBase;
+import org.apache.hc.client5.http.classic.methods.HttpGet;
+import org.apache.hc.client5.http.classic.methods.HttpUriRequestBase;
 
 import java.io.IOException;
 import java.time.Duration;
@@ -31,24 +30,24 @@ public class GetDatabaseTopologyCommand extends RavenCommand<Topology> {
     }
 
     @Override
-    public HttpRequestBase createRequest(ServerNode node, Reference<String> url) {
-        url.value = node.getUrl() + "/topology?name=" + node.getDatabase();
+    public HttpUriRequestBase createRequest(ServerNode node) {
+        String url = node.getUrl() + "/topology?name=" + node.getDatabase();
 
         if (_debugTag != null) {
-            url.value += "&" + _debugTag;
+            url += "&" + _debugTag;
         }
 
         if (_applicationIdentifier != null) {
-            url.value += "&applicationIdentifier=" + urlEncode(_applicationIdentifier.toString());
+            url += "&applicationIdentifier=" + urlEncode(_applicationIdentifier.toString());
         }
 
         if (node.getUrl().toLowerCase().contains(".fiddler")) {
             // we want to keep the '.fiddler' stuff there so we'll keep tracking request
             // so we are going to ask the server to respect it
-            url.value += "&localUrl=" + UrlUtils.escapeDataString(node.getUrl());
+            url += "&localUrl=" + UrlUtils.escapeDataString(node.getUrl());
         }
 
-        return new HttpGet();
+        return new HttpGet(url);
     }
 
     @Override

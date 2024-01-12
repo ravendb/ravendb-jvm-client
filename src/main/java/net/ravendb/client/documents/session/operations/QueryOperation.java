@@ -11,6 +11,7 @@ import net.ravendb.client.documents.commands.QueryCommand;
 import net.ravendb.client.documents.queries.IndexQuery;
 import net.ravendb.client.documents.queries.QueryResult;
 import net.ravendb.client.documents.queries.facets.FacetResult;
+import net.ravendb.client.documents.session.ClusterTransactionOperationsBase;
 import net.ravendb.client.documents.session.InMemoryDocumentSessionOperations;
 import net.ravendb.client.documents.session.tokens.FieldsToFetchToken;
 import net.ravendb.client.exceptions.TimeoutException;
@@ -70,8 +71,6 @@ public class QueryOperation {
         _metadataOnly = metadataOnly;
         _indexEntriesOnly = indexEntriesOnly;
         _isProjectInto = isProjectInto;
-
-        assertPageSizeSet();
     }
 
     public QueryCommand createRequest() {
@@ -88,19 +87,6 @@ public class QueryOperation {
 
     public void setResult(QueryResult queryResult) {
         ensureIsAcceptableAndSaveResult(queryResult);
-    }
-
-    private void assertPageSizeSet() {
-        if (!_session.getConventions().isThrowIfQueryPageSizeIsNotSet()) {
-            return;
-        }
-
-        if (_indexQuery.isPageSizeSet()) {
-            return;
-        }
-
-        throw new IllegalStateException("Attempt to query without explicitly specifying a page size. " +
-                "You can use .take() methods to set maximum number of results. By default the page size is set to Integer.MAX_VALUE and can cause severe performance degradation.");
     }
 
     private void startTiming() {
@@ -189,7 +175,8 @@ public class QueryOperation {
                 _session.registerTimeSeries(queryResult.getTimeSeriesIncludes());
             }
             if (queryResult.getCompareExchangeValueIncludes() != null) {
-                _session.getClusterSession().registerCompareExchangeValues(queryResult.getCompareExchangeValueIncludes(), false);
+                ClusterTransactionOperationsBase clusterSession = _session.getClusterSession();
+                clusterSession.registerCompareExchangeIncludes(queryResult.getCompareExchangeValueIncludes(), false);
             }
             if (queryResult.getRevisionIncludes() != null) {
                 _session.registerRevisionIncludes(queryResult.getRevisionIncludes());
@@ -311,7 +298,7 @@ public class QueryOperation {
                 parameters.append(") ");
             }
 
-            logger.info("Query " + _indexQuery.getQuery() + " " + parameters.toString() + "returned " + result.getResults().size() + isStale + "results (total index results: " + result.getTotalResults() + ")");
+            logger.info("Query " + _indexQuery.getQuery() + " " + parameters + "returned " + result.getResults().size() + isStale + "results (total index results: " + result.getTotalResults() + ")");
         }
     }
 

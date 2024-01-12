@@ -9,6 +9,7 @@ import net.ravendb.client.documents.queries.suggestions.ISuggestionBuilder;
 import net.ravendb.client.documents.queries.suggestions.ISuggestionDocumentQuery;
 import net.ravendb.client.documents.queries.suggestions.SuggestionBase;
 import net.ravendb.client.documents.queries.timeSeries.ITimeSeriesQueryBuilder;
+import net.ravendb.client.documents.session.querying.sharding.IQueryShardedContextBuilder;
 
 import java.util.function.Consumer;
 
@@ -136,4 +137,6 @@ public interface IDocumentQuery<T> extends IDocumentQueryBase<T, IDocumentQuery<
     ISuggestionDocumentQuery<T> suggestUsing(SuggestionBase suggestion);
 
     ISuggestionDocumentQuery<T> suggestUsing(Consumer<ISuggestionBuilder<T>> builder);
+
+    IDocumentQuery<T> shardContext(Consumer<IQueryShardedContextBuilder> builder);
 }

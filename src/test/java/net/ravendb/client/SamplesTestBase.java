@@ -2,7 +2,7 @@ package net.ravendb.client;
 
 import net.ravendb.client.documents.IDocumentStore;
 import net.ravendb.client.documents.session.IDocumentSession;
-import net.ravendb.client.infrastructure.graph.*;
+import net.ravendb.client.infrastructure.samples.*;
 
 import java.util.Arrays;
 

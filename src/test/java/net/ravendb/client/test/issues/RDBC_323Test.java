@@ -6,7 +6,7 @@ import net.ravendb.client.documents.IDocumentStore;
 import net.ravendb.client.documents.commands.StreamResult;
 import net.ravendb.client.documents.session.IDocumentSession;
 import net.ravendb.client.infrastructure.entities.User;
-import org.apache.http.conn.ConnectionPoolTimeoutException;
+import org.apache.hc.core5.http.ConnectionRequestTimeoutException;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
@@ -37,7 +37,7 @@ public class RDBC_323Test extends RemoteTestBase {
                 } finally {
                     streamIterators.forEach(x -> x.close());
                 }
-            }).hasCauseExactlyInstanceOf(ConnectionPoolTimeoutException.class);
+            }).hasCauseExactlyInstanceOf(ConnectionRequestTimeoutException.class);
         }
     }
 }

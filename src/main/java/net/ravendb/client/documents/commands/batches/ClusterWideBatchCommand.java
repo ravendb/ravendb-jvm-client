@@ -9,7 +9,7 @@ import java.util.List;
 
 public class ClusterWideBatchCommand extends SingleNodeBatchCommand implements IRaftCommand {
 
-    private Boolean _disableAtomicDocumentWrites;
+    private final Boolean _disableAtomicDocumentWrites;
 
     public Boolean isDisableAtomicDocumentWrites() {
         return _disableAtomicDocumentWrites;

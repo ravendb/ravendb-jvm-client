@@ -7,12 +7,11 @@ import net.ravendb.client.http.HttpCache;
 import net.ravendb.client.http.RavenCommand;
 import net.ravendb.client.http.ServerNode;
 import net.ravendb.client.json.ContentProviderHttpEntity;
-import net.ravendb.client.primitives.Reference;
 import net.ravendb.client.util.UrlUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.http.client.methods.HttpPut;
-import org.apache.http.client.methods.HttpRequestBase;
+import org.apache.hc.client5.http.classic.methods.HttpPut;
+import org.apache.hc.client5.http.classic.methods.HttpUriRequestBase;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -42,17 +41,18 @@ public class PutAttachmentOperation implements IOperation<AttachmentDetails> {
 
     @Override
     public RavenCommand<AttachmentDetails> getCommand(IDocumentStore store, DocumentConventions conventions, HttpCache cache) {
-        return new PutAttachmentCommand(_documentId, _name, _stream, _contentType, _changeVector);
+        return new PutAttachmentCommand(conventions, _documentId, _name, _stream, _contentType, _changeVector);
     }
 
     private static class PutAttachmentCommand extends RavenCommand<AttachmentDetails> {
+        private final DocumentConventions _conventions;
         private final String _documentId;
         private final String _name;
         private final InputStream _stream;
         private final String _contentType;
         private final String _changeVector;
 
-        public PutAttachmentCommand(String documentId, String name, InputStream stream, String contentType, String changeVector) {
+        public PutAttachmentCommand(DocumentConventions conventions, String documentId, String name, InputStream stream, String contentType, String changeVector) {
             super(AttachmentDetails.class);
 
             if (StringUtils.isBlank(documentId)) {
@@ -63,6 +63,7 @@ public class PutAttachmentOperation implements IOperation<AttachmentDetails> {
                 throw new IllegalArgumentException("name cannot be null");
             }
 
+            _conventions = conventions;
             _documentId = documentId;
             _name = name;
             _stream = stream;
@@ -71,22 +72,18 @@ public class PutAttachmentOperation implements IOperation<AttachmentDetails> {
         }
 
         @Override
-        public HttpRequestBase createRequest(ServerNode node, Reference<String> url) {
-            url.value = node.getUrl() + "/databases/" + node.getDatabase() + "/attachments?id=" + UrlUtils.escapeDataString(_documentId) + "&name=" + UrlUtils.escapeDataString(_name);
+        public HttpUriRequestBase createRequest(ServerNode node) {
+            String url = node.getUrl() + "/databases/" + node.getDatabase() + "/attachments?id=" + UrlUtils.escapeDataString(_documentId) + "&name=" + UrlUtils.escapeDataString(_name);
 
             if (StringUtils.isNotEmpty(_contentType)) {
-                url.value += "&contentType=" + UrlUtils.escapeDataString(_contentType);
+                url += "&contentType=" + UrlUtils.escapeDataString(_contentType);
             }
 
-            HttpPut request = new HttpPut();
+            HttpPut request = new HttpPut(url);
 
             request.setEntity(new ContentProviderHttpEntity(outputStream -> {
-                try {
-                    IOUtils.copy(_stream, outputStream);
-                } catch (IOException e) {
-                    throw new RuntimeException("Unable to upload attachment content stream: " + e.getMessage(), e);
-                }
-            }, null));
+                IOUtils.copy(_stream, outputStream);
+            }, null, _conventions));
 
             addChangeVectorIfNotNull(_changeVector, request);
             return request;

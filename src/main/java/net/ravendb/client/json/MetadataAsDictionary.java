@@ -58,7 +58,6 @@ public class MetadataAsDictionary implements IMetadataDictionary {
         return _metadata != null && _hasChanges;
     }
 
-    @SuppressWarnings("ConstantConditions")
     private void initialize(ObjectNode metadata) {
         _metadata = new HashMap<>();
         Iterator<String> fields = metadata.fieldNames();

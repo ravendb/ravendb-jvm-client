@@ -13,6 +13,7 @@ import java.util.*;
 public abstract class ClusterTransactionOperationsBase {
     protected final DocumentSession session;
     private final Map<String, CompareExchangeSessionValue> _state = new TreeMap<>(String::compareToIgnoreCase);
+    private final Map<String, CompareExchangeValue<ObjectNode>> _compareExchangeIncludes = new TreeMap<>(String::compareToIgnoreCase);
 
     private Map<String, String> _missingDocumentsTooAtomicGuardIndex;
 
@@ -91,6 +92,10 @@ public abstract class ClusterTransactionOperationsBase {
 
     public void clear() {
         _state.clear();
+        _compareExchangeIncludes.clear();
+        if (_missingDocumentsTooAtomicGuardIndex != null) {
+            _missingDocumentsTooAtomicGuardIndex.clear();
+        }
     }
 
     protected <T> CompareExchangeValue<T> getCompareExchangeValueInternal(Class<T> clazz, String key) {
@@ -149,7 +154,7 @@ public abstract class ClusterTransactionOperationsBase {
         session.incrementRequestCount();
 
         Map<String, CompareExchangeValue<ObjectNode>> values = session.getOperations().send(
-                new GetCompareExchangeValuesOperation<ObjectNode>(ObjectNode.class, startsWith, start, pageSize), session.getSessionInfo());
+                new GetCompareExchangeValuesOperation<>(ObjectNode.class, startsWith, start, pageSize), session.getSessionInfo());
 
         Map<String, CompareExchangeValue<T>> results = new HashMap<>();
 
@@ -218,7 +223,7 @@ public abstract class ClusterTransactionOperationsBase {
         return value;
     }
 
-    public void registerCompareExchangeValues(ObjectNode values, boolean includingMissingAtomicGuards) {
+    public void registerCompareExchangeIncludes(ObjectNode values, boolean includingMissingAtomicGuards) {
         if (session.noTracking) {
             return;
         }
@@ -240,20 +245,20 @@ public abstract class ClusterTransactionOperationsBase {
 
                     _missingDocumentsTooAtomicGuardIndex.put(val.getKey().substring(Constants.CompareExchange.RVN_ATOMIC_PREFIX.length()), val.getChangeVector());
                 } else {
-                    registerCompareExchangeValue(val);
+                    registerCompareExchangeInclude(val);
                 }
             }
         }
     }
 
     public CompareExchangeSessionValue registerCompareExchangeValue(CompareExchangeValue<ObjectNode> value) {
-        if (StringUtils.startsWithIgnoreCase(value.getKey(), Constants.CompareExchange.RVN_ATOMIC_PREFIX)) {
-            throw new IllegalStateException("'" + value.getKey() + "' is an atomic guard and you cannot load it via the session");
-        }
+        assertNotAtomicGuard(value);
 
         if (session.noTracking) {
             return new CompareExchangeSessionValue(value);
         }
+
+        _compareExchangeIncludes.remove(value.getKey());
 
         CompareExchangeSessionValue sessionValue = _state.get(value.getKey());
 
@@ -268,10 +273,37 @@ public abstract class ClusterTransactionOperationsBase {
         return sessionValue;
     }
 
+    protected void registerCompareExchangeInclude(CompareExchangeValue<ObjectNode> value) {
+        assertNotAtomicGuard(value);
+
+        if (session.noTracking) {
+            return;
+        }
+
+        _compareExchangeIncludes.put(value.getKey(), value);
+    }
+
+    private static void assertNotAtomicGuard(CompareExchangeValue<ObjectNode> value) {
+        if (StringUtils.startsWithIgnoreCase(value.getKey(), Constants.CompareExchange.RVN_ATOMIC_PREFIX)) {
+            throw new IllegalStateException("'" + value.getKey() + "' is an atomic guard and you cannot load it via the session");
+        }
+    }
+
+
     private boolean tryGetCompareExchangeValueFromSession(String key, Reference<CompareExchangeSessionValue> valueRef) {
         CompareExchangeSessionValue value = _state.get(key);
         valueRef.value = value;
-        return value != null;
+        if (value != null) {
+            return true;
+        }
+
+        CompareExchangeValue<ObjectNode> includeValue = _compareExchangeIncludes.get(key);
+        if (includeValue != null) {
+            valueRef.value = registerCompareExchangeValue(includeValue);
+            return true;
+        }
+
+        return false;
     }
 
     public void prepareCompareExchangeEntities(InMemoryDocumentSessionOperations.SaveChangesData result) {

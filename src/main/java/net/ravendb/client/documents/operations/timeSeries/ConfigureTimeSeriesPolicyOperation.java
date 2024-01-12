@@ -8,11 +8,10 @@ import net.ravendb.client.http.IRaftCommand;
 import net.ravendb.client.http.RavenCommand;
 import net.ravendb.client.http.ServerNode;
 import net.ravendb.client.json.ContentProviderHttpEntity;
-import net.ravendb.client.primitives.Reference;
 import net.ravendb.client.util.RaftIdGenerator;
-import org.apache.http.client.methods.HttpPut;
-import org.apache.http.client.methods.HttpRequestBase;
-import org.apache.http.entity.ContentType;
+import org.apache.hc.client5.http.classic.methods.HttpPut;
+import org.apache.hc.client5.http.classic.methods.HttpUriRequestBase;
+import org.apache.hc.core5.http.ContentType;
 
 import java.io.IOException;
 
@@ -28,14 +27,15 @@ public class ConfigureTimeSeriesPolicyOperation implements IMaintenanceOperation
 
     @Override
     public RavenCommand<ConfigureTimeSeriesOperationResult> getCommand(DocumentConventions conventions) {
-        return new ConfigureTimeSeriesPolicyCommand(_collection, _config);
+        return new ConfigureTimeSeriesPolicyCommand(conventions, _collection, _config);
     }
 
     private static class ConfigureTimeSeriesPolicyCommand extends RavenCommand<ConfigureTimeSeriesOperationResult> implements IRaftCommand {
         private final TimeSeriesPolicy _configuration;
         private final String _collection;
+        private final DocumentConventions _conventions;
 
-        public ConfigureTimeSeriesPolicyCommand(String collection, TimeSeriesPolicy configuration) {
+        public ConfigureTimeSeriesPolicyCommand(DocumentConventions conventions, String collection, TimeSeriesPolicy configuration) {
             super(ConfigureTimeSeriesOperationResult.class);
 
             if (configuration == null) {
@@ -46,6 +46,7 @@ public class ConfigureTimeSeriesPolicyOperation implements IMaintenanceOperation
                 throw new IllegalArgumentException("Collection cannot be null");
             }
 
+            _conventions = conventions;
             _configuration = configuration;
             _collection = collection;
         }
@@ -56,19 +57,17 @@ public class ConfigureTimeSeriesPolicyOperation implements IMaintenanceOperation
         }
 
         @Override
-        public HttpRequestBase createRequest(ServerNode node, Reference<String> url) {
-            url.value = node.getUrl() + "/databases/" + node.getDatabase() + "/admin/timeseries/policy?collection=" + urlEncode(_collection);
+        public HttpUriRequestBase createRequest(ServerNode node) {
+            String url = node.getUrl() + "/databases/" + node.getDatabase() + "/admin/timeseries/policy?collection=" + urlEncode(_collection);
 
-            HttpPut request = new HttpPut();
+            HttpPut request = new HttpPut(url);
 
             request.setEntity(new ContentProviderHttpEntity(outputStream -> {
                 try (JsonGenerator generator = createSafeJsonGenerator(outputStream)) {
                     ObjectNode config = mapper.valueToTree(_configuration);
                     generator.writeTree(config);
-                } catch (IOException e) {
-                    throw new RuntimeException(e);
                 }
-            }, ContentType.APPLICATION_JSON));
+            }, ContentType.APPLICATION_JSON, _conventions));
 
             return request;
         }

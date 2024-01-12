@@ -2,14 +2,14 @@ package net.ravendb.client.extensions;
 
 import net.ravendb.client.Constants;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.http.Header;
-import org.apache.http.client.methods.CloseableHttpResponse;
+import org.apache.hc.core5.http.ClassicHttpResponse;
+import org.apache.hc.core5.http.Header;
 
 import java.util.Map;
 
 public class HttpExtensions {
 
-    public static String getRequiredEtagHeader(CloseableHttpResponse response) {
+    public static String getRequiredEtagHeader(ClassicHttpResponse response) {
         if (response.containsHeader(Constants.Headers.ETAG)) {
             Header firstHeader = response.getFirstHeader(Constants.Headers.ETAG);
             String value = firstHeader.getValue();
@@ -23,7 +23,7 @@ public class HttpExtensions {
         }
     }
 
-    public static String getEtagHeader(CloseableHttpResponse response) {
+    public static String getEtagHeader(ClassicHttpResponse response) {
         if (response.containsHeader(Constants.Headers.ETAG)) {
             Header[] headers = response.getHeaders(Constants.Headers.ETAG);
             if (headers.length > 0) {
@@ -54,7 +54,7 @@ public class HttpExtensions {
         }
     }
 
-    public static Boolean getBooleanHeader(CloseableHttpResponse response, String header) {
+    public static Boolean getBooleanHeader(ClassicHttpResponse response, String header) {
         if (response.containsHeader(header)) {
             Header firstHeader = response.getFirstHeader(header);
             String value = firstHeader.getValue();

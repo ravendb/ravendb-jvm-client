@@ -23,10 +23,6 @@ public class HiLoIdGenerator {
     private final String _dbName;
     private final char _identityPartsSeparator;
     private volatile RangeValue _range;
-    /**
-     * @deprecated Will be removed in next major version of the product. Use field Range.ServerTag instead.
-     */
-    protected String serverTag;
 
     private AtomicReference<Lazy<Void>> _nextRangeTask = new AtomicReference<>(new Lazy<>(() -> null));
 
@@ -38,13 +34,8 @@ public class HiLoIdGenerator {
         _range = new RangeValue(1, 0, null);
     }
 
-    /**
-     * @deprecated Will be removed in next major version of the product. Use the getDocumentIdFromId(NextId) overload.
-     * @param nextId next id
-     * @return next id;
-     */
-    protected String getDocumentIdFromId(long nextId) {
-        return prefix + nextId + "-" + serverTag;
+    protected String getDocumentIdFromId(NextId result) {
+        return prefix + result.getId() + "-" + result.getServerTag();
     }
 
     public RangeValue getRange() {
@@ -61,13 +52,6 @@ public class HiLoIdGenerator {
         public final String ServerTag;
         public final AtomicLong Current;
 
-        /**
-         * @deprecated Will be removed in next major version of the product. Use RangeValue(min, max, serverTag) instead.
-         */
-        public RangeValue(long min, long max) {
-            this(min, max, null);
-        }
-
         public RangeValue(long min, long max, String serverTag) {
             Min = min;
             Max = max;
@@ -83,7 +67,7 @@ public class HiLoIdGenerator {
      */
     public String generateDocumentId(Object entity) {
         NextId result = getNextId();
-        return getDocumentIdFromId(result.getId());
+        return getDocumentIdFromId(result);
     }
 
     public NextId getNextId() {
@@ -125,11 +109,6 @@ public class HiLoIdGenerator {
         }
     }
 
-    public long nextId() {
-        NextId result = getNextId();
-        return result.getId();
-    }
-
     private Void getNextRange() {
         NextHiLoCommand hiloCommand = new NextHiLoCommand(_tag, _lastBatchSize, _lastRangeDate, _identityPartsSeparator, _range.Max);
 
@@ -137,7 +116,6 @@ public class HiLoIdGenerator {
         re.execute(hiloCommand);
 
         prefix = hiloCommand.getResult().getPrefix();
-        serverTag = hiloCommand.getResult().getServerTag();
         _lastRangeDate = hiloCommand.getResult().getLastRangeAt();
         _lastBatchSize = hiloCommand.getResult().getLastSize();
         _range = new RangeValue(hiloCommand.getResult().getLow(), hiloCommand.getResult().getHigh(), hiloCommand.getResult().getServerTag());

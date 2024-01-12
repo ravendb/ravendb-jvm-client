@@ -4,10 +4,9 @@ import net.ravendb.client.documents.conventions.DocumentConventions;
 import net.ravendb.client.documents.operations.IVoidMaintenanceOperation;
 import net.ravendb.client.http.ServerNode;
 import net.ravendb.client.http.VoidRavenCommand;
-import net.ravendb.client.primitives.Reference;
 import net.ravendb.client.util.TimeUtils;
-import org.apache.http.client.methods.HttpPost;
-import org.apache.http.client.methods.HttpRequestBase;
+import org.apache.hc.client5.http.classic.methods.HttpPost;
+import org.apache.hc.client5.http.classic.methods.HttpUriRequestBase;
 
 import java.time.Duration;
 
@@ -42,10 +41,10 @@ public class DelayBackupOperation implements IVoidMaintenanceOperation {
 
 
         @Override
-        public HttpRequestBase createRequest(ServerNode node, Reference<String> url) {
-            url.value = node.getUrl() + "/admin/backup-task/delay?taskId=" + _taskId + "&duration=" + TimeUtils.durationToTimeSpan(_duration) + "&database=" + node.getDatabase();
+        public HttpUriRequestBase createRequest(ServerNode node) {
+            String url = node.getUrl() + "/admin/backup-task/delay?taskId=" + _taskId + "&duration=" + TimeUtils.durationToTimeSpan(_duration) + "&database=" + node.getDatabase();
 
-            return new HttpPost();
+            return new HttpPost(url);
         }
     }
 }

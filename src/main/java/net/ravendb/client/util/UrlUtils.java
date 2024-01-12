@@ -22,7 +22,7 @@ public class UrlUtils {
             throw new IllegalArgumentException("String is null");
         }
 
-        if (stringToEscape.length() == 0) {
+        if (stringToEscape.isEmpty()) {
             return "";
         }
 
@@ -175,7 +175,7 @@ public class UrlUtils {
             throw new IllegalArgumentException("String is null");
         }
 
-        if (stringToEscape.length() == 0) {
+        if (stringToEscape.isEmpty()) {
             return "";
         }
 

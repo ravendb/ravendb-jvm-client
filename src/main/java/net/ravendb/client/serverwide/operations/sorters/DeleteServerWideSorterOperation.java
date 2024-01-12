@@ -4,11 +4,10 @@ import net.ravendb.client.documents.conventions.DocumentConventions;
 import net.ravendb.client.http.IRaftCommand;
 import net.ravendb.client.http.ServerNode;
 import net.ravendb.client.http.VoidRavenCommand;
-import net.ravendb.client.primitives.Reference;
 import net.ravendb.client.serverwide.operations.IVoidServerOperation;
 import net.ravendb.client.util.RaftIdGenerator;
-import org.apache.http.client.methods.HttpDelete;
-import org.apache.http.client.methods.HttpRequestBase;
+import org.apache.hc.client5.http.classic.methods.HttpDelete;
+import org.apache.hc.client5.http.classic.methods.HttpUriRequestBase;
 
 public class DeleteServerWideSorterOperation implements IVoidServerOperation {
     private final String _sorterName;
@@ -38,10 +37,10 @@ public class DeleteServerWideSorterOperation implements IVoidServerOperation {
         }
 
         @Override
-        public HttpRequestBase createRequest(ServerNode node, Reference<String> url) {
-            url.value = node.getUrl() + "/admin/sorters?name=" + urlEncode(_sorterName);
+        public HttpUriRequestBase createRequest(ServerNode node) {
+            String url = node.getUrl() + "/admin/sorters?name=" + urlEncode(_sorterName);
 
-            return new HttpDelete();
+            return new HttpDelete(url);
         }
 
         @Override

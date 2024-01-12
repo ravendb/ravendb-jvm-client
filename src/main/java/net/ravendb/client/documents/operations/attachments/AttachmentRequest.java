@@ -4,8 +4,8 @@ import org.apache.commons.lang3.StringUtils;
 
 public class AttachmentRequest {
 
-    private String _name;
-    private String _documentId;
+    private final String _name;
+    private final String _documentId;
 
     public AttachmentRequest(String documentId, String name) {
         if (StringUtils.isBlank(documentId)) {

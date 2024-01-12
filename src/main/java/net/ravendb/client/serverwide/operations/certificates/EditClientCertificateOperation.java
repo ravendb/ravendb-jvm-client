@@ -6,14 +6,12 @@ import net.ravendb.client.http.IRaftCommand;
 import net.ravendb.client.http.ServerNode;
 import net.ravendb.client.http.VoidRavenCommand;
 import net.ravendb.client.json.ContentProviderHttpEntity;
-import net.ravendb.client.primitives.Reference;
 import net.ravendb.client.serverwide.operations.IVoidServerOperation;
 import net.ravendb.client.util.RaftIdGenerator;
-import org.apache.http.client.methods.HttpPost;
-import org.apache.http.client.methods.HttpRequestBase;
-import org.apache.http.entity.ContentType;
+import org.apache.hc.client5.http.classic.methods.HttpPost;
+import org.apache.hc.client5.http.classic.methods.HttpUriRequestBase;
+import org.apache.hc.core5.http.ContentType;
 
-import java.io.IOException;
 import java.util.Map;
 
 public class EditClientCertificateOperation implements IVoidServerOperation {
@@ -48,16 +46,18 @@ public class EditClientCertificateOperation implements IVoidServerOperation {
 
     @Override
     public VoidRavenCommand getCommand(DocumentConventions conventions) {
-        return new EditClientCertificateCommand(_thumbprint, _name, _permissions, _clearance);
+        return new EditClientCertificateCommand(conventions, _thumbprint, _name, _permissions, _clearance);
     }
 
     private static class EditClientCertificateCommand extends VoidRavenCommand implements IRaftCommand {
+        private final DocumentConventions _conventions;
         private final String _thumbprint;
         private final Map<String, DatabaseAccess> _permissions;
         private final String _name;
         private final SecurityClearance _clearance;
 
-        public EditClientCertificateCommand(String thumbprint, String name, Map<String, DatabaseAccess> permissions, SecurityClearance clearance) {
+        public EditClientCertificateCommand(DocumentConventions conventions, String thumbprint, String name, Map<String, DatabaseAccess> permissions, SecurityClearance clearance) {
+            _conventions = conventions;
             _thumbprint = thumbprint;
             _name = name;
             _permissions = permissions;
@@ -70,8 +70,8 @@ public class EditClientCertificateOperation implements IVoidServerOperation {
         }
 
         @Override
-        public HttpRequestBase createRequest(ServerNode node, Reference<String> url) {
-            url.value = node.getUrl() + "/admin/certificates/edit";
+        public HttpUriRequestBase createRequest(ServerNode node) {
+            String url = node.getUrl() + "/admin/certificates/edit";
 
             CertificateDefinition definition = new CertificateDefinition();
             definition.setThumbprint(_thumbprint);
@@ -79,15 +79,13 @@ public class EditClientCertificateOperation implements IVoidServerOperation {
             definition.setSecurityClearance(_clearance);
             definition.setName(_name);
 
-            HttpPost request = new HttpPost();
+            HttpPost request = new HttpPost(url);
 
             request.setEntity(new ContentProviderHttpEntity(outputStream -> {
                 try (JsonGenerator generator = createSafeJsonGenerator(outputStream)) {
                     generator.getCodec().writeValue(generator, definition);
-                } catch (IOException e) {
-                    throw new RuntimeException(e);
                 }
-            }, ContentType.APPLICATION_JSON));
+            }, ContentType.APPLICATION_JSON, _conventions));
             return request;
 
         }

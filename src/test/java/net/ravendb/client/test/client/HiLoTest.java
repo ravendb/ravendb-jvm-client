@@ -6,6 +6,7 @@ import net.ravendb.client.documents.DocumentStore;
 import net.ravendb.client.documents.IDocumentStore;
 import net.ravendb.client.documents.identity.HiLoIdGenerator;
 import net.ravendb.client.documents.identity.MultiDatabaseHiLoIdGenerator;
+import net.ravendb.client.documents.identity.NextId;
 import net.ravendb.client.documents.session.IDocumentSession;
 import net.ravendb.client.infrastructure.entities.User;
 import org.junit.jupiter.api.Test;
@@ -60,14 +61,14 @@ public class HiLoTest extends RemoteTestBase {
                 HiLoIdGenerator hiLoKeyGenerator = new HiLoIdGenerator("users", store, store.getDatabase(), store.getConventions().getIdentityPartsSeparator());
 
                 List<Long> ids = new ArrayList<>();
-                ids.add(hiLoKeyGenerator.nextId());
+                ids.add(getNextId(hiLoKeyGenerator));
 
                 hiloDoc.setMax(12);
                 session.store(hiloDoc, null, "Raven/Hilo/users");
                 session.saveChanges();
 
                 for (int i = 0; i < 128; i++) {
-                    long nextId = hiLoKeyGenerator.nextId();
+                    long nextId = getNextId(hiLoKeyGenerator);
                     assertThat(ids)
                             .doesNotContain(nextId);
                     ids.add(nextId);
@@ -77,6 +78,10 @@ public class HiLoTest extends RemoteTestBase {
                         .hasSize(ids.size());
             }
         }
+    }
+    private static long getNextId(HiLoIdGenerator idGenerator) {
+        NextId nextId = idGenerator.getNextId();
+        return nextId.getId();
     }
 
     @Test
@@ -279,10 +284,8 @@ public class HiLoTest extends RemoteTestBase {
                     .map(User::getId)
                     .map(id -> id.split("/")[1])
                     .map(x -> x.split("-")[0])
-                    .forEach(numericPart -> {
-                        assertThat(Integer.valueOf(numericPart))
-                                .isLessThan(33);
-                    });
+                    .forEach(numericPart -> assertThat(Integer.valueOf(numericPart))
+                            .isLessThan(33));
         }
     }
 }

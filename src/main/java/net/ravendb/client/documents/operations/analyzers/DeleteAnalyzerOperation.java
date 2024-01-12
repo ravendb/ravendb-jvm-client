@@ -5,10 +5,9 @@ import net.ravendb.client.documents.operations.IVoidMaintenanceOperation;
 import net.ravendb.client.http.IRaftCommand;
 import net.ravendb.client.http.ServerNode;
 import net.ravendb.client.http.VoidRavenCommand;
-import net.ravendb.client.primitives.Reference;
 import net.ravendb.client.util.RaftIdGenerator;
-import org.apache.http.client.methods.HttpDelete;
-import org.apache.http.client.methods.HttpRequestBase;
+import org.apache.hc.client5.http.classic.methods.HttpDelete;
+import org.apache.hc.client5.http.classic.methods.HttpUriRequestBase;
 
 public class DeleteAnalyzerOperation implements IVoidMaintenanceOperation {
     private final String _analyzerName;
@@ -38,10 +37,10 @@ public class DeleteAnalyzerOperation implements IVoidMaintenanceOperation {
         }
 
         @Override
-        public HttpRequestBase createRequest(ServerNode node, Reference<String> url) {
-            url.value = node.getUrl() + "/databases/" + node.getDatabase() + "/admin/analyzers?name=" + urlEncode(_analyzerName);
+        public HttpUriRequestBase createRequest(ServerNode node) {
+            String url = node.getUrl() + "/databases/" + node.getDatabase() + "/admin/analyzers?name=" + urlEncode(_analyzerName);
 
-            return new HttpDelete();
+            return new HttpDelete(url);
         }
 
         @Override

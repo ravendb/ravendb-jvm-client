@@ -7,14 +7,12 @@ import net.ravendb.client.http.IRaftCommand;
 import net.ravendb.client.http.ServerNode;
 import net.ravendb.client.http.VoidRavenCommand;
 import net.ravendb.client.json.ContentProviderHttpEntity;
-import net.ravendb.client.primitives.Reference;
 import net.ravendb.client.util.RaftIdGenerator;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.http.client.methods.HttpPost;
-import org.apache.http.client.methods.HttpRequestBase;
-import org.apache.http.entity.ContentType;
+import org.apache.hc.client5.http.classic.methods.HttpPost;
+import org.apache.hc.client5.http.classic.methods.HttpUriRequestBase;
+import org.apache.hc.core5.http.ContentType;
 
-import java.io.IOException;
 import java.util.List;
 
 public class ReorderDatabaseMembersOperation implements IVoidServerOperation {
@@ -62,35 +60,36 @@ public class ReorderDatabaseMembersOperation implements IVoidServerOperation {
 
     @Override
     public VoidRavenCommand getCommand(DocumentConventions conventions) {
-        return new ReorderDatabaseMembersCommand(_database, _parameters);
+        return new ReorderDatabaseMembersCommand(conventions, _database, _parameters);
     }
 
     private static class ReorderDatabaseMembersCommand extends VoidRavenCommand implements IRaftCommand {
+        private final DocumentConventions _conventions;
+
         private final String _databaseName;
         private final Parameters _parameters;
 
-        public ReorderDatabaseMembersCommand(String databaseName, Parameters parameters) {
+        public ReorderDatabaseMembersCommand(DocumentConventions conventions, String databaseName, Parameters parameters) {
             if (StringUtils.isEmpty(databaseName)) {
                 throw new IllegalArgumentException("Database cannot be empty");
             }
 
+            _conventions = conventions;
             _databaseName = databaseName;
             _parameters = parameters;
         }
 
         @Override
-        public HttpRequestBase createRequest(ServerNode node, Reference<String> url) {
-            url.value = node.getUrl() + "/admin/databases/reorder?name=" + _databaseName;
+        public HttpUriRequestBase createRequest(ServerNode node) {
+            String url = node.getUrl() + "/admin/databases/reorder?name=" + _databaseName;
 
-            HttpPost request = new HttpPost();
+            HttpPost request = new HttpPost(url);
             request.setEntity(new ContentProviderHttpEntity(outputStream -> {
                 try (JsonGenerator generator = createSafeJsonGenerator(outputStream)) {
                     ObjectNode config = mapper.valueToTree(_parameters);
                     generator.writeTree(config);
-                } catch (IOException e) {
-                    throw new RuntimeException(e);
                 }
-            }, ContentType.APPLICATION_JSON));
+            }, ContentType.APPLICATION_JSON, _conventions));
             return request;
         }
 

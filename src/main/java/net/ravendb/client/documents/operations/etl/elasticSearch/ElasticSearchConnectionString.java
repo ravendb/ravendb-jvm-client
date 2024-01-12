@@ -32,10 +32,16 @@ public class ElasticSearchConnectionString extends ConnectionString {
         this.authentication = authentication;
     }
 
+    /**
+     * @deprecated Elasticsearch compatibility isn't required anymore to connect with Elasticsearch server v8.x.
+     */
     public boolean isEnableCompatibilityMode() {
         return enableCompatibilityMode;
     }
 
+    /**
+     * @deprecated Elasticsearch compatibility isn't required anymore to connect with Elasticsearch server v8.x.
+     */
     public void setEnableCompatibilityMode(boolean enableCompatibilityMode) {
         this.enableCompatibilityMode = enableCompatibilityMode;
     }

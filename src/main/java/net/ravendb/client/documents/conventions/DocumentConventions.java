@@ -6,12 +6,10 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.databind.node.TextNode;
 import net.ravendb.client.Constants;
 import net.ravendb.client.documents.operations.configuration.ClientConfiguration;
+import net.ravendb.client.documents.session.ShardedBatchBehavior;
 import net.ravendb.client.exceptions.RavenException;
 import net.ravendb.client.extensions.JsonExtensions;
-import net.ravendb.client.http.AggressiveCacheMode;
-import net.ravendb.client.http.AggressiveCacheOptions;
-import net.ravendb.client.http.LoadBalanceBehavior;
-import net.ravendb.client.http.ReadBalanceBehavior;
+import net.ravendb.client.http.*;
 import net.ravendb.client.primitives.Reference;
 import net.ravendb.client.primitives.Tuple;
 import net.ravendb.client.util.Inflector;
@@ -51,9 +49,8 @@ public class DocumentConventions {
     private boolean _saveEnumsAsIntegers;
     private char _identityPartsSeparator;
     private boolean _disableTopologyUpdates;
-
     private Boolean _disableAtomicDocumentWritesInClusterWideTransaction;
-    private boolean _disableTcpCompression = true;
+    private final boolean _disableTcpCompression = true;
     private IShouldIgnoreEntityChanges _shouldIgnoreEntityChanges;
     private Function<PropertyDescriptor, Boolean> _findIdentityProperty;
 
@@ -69,7 +66,6 @@ public class DocumentConventions {
     private Function<String, Class> _findJavaClassByName;
 
     private boolean _useOptimisticConcurrency;
-    private boolean _throwIfQueryPageSizeIsNotSet;
     private int _maxNumberOfRequestsPerSession;
 
     private Duration _requestTimeout;
@@ -84,16 +80,20 @@ public class DocumentConventions {
     private ReadBalanceBehavior _readBalanceBehavior;
     private int _maxHttpCacheSize;
     private ObjectMapper _entityMapper;
-    private Boolean _useCompression;
+    private Boolean _useHttpCompression;
+    private Boolean _useHttpDecompression;
+    private HttpCompressionAlgorithm _httpCompressionAlgorithm = HttpCompressionAlgorithm.Gzip;
     private boolean _sendApplicationIdentifier;
 
     private final BulkInsertConventions _bulkInsert;
 
     private final AggressiveCacheConventions _aggressiveCache;
 
+
     public AggressiveCacheConventions aggressiveCache() {
         return _aggressiveCache;
     }
+
 
     public static class AggressiveCacheConventions {
         private final DocumentConventions _conventions;
@@ -120,6 +120,34 @@ public class DocumentConventions {
             _aggressiveCacheOptions.setMode(mode);
         }
     }
+
+    private final ShardingConventions _sharding;
+
+    public ShardingConventions sharding() {
+        return _sharding;
+    }
+
+    public static class ShardingConventions {
+        private final DocumentConventions _conventions;
+
+        private ShardedBatchBehavior _batchBehavior;
+
+        public ShardedBatchBehavior getBatchBehavior() {
+            return _batchBehavior;
+        }
+
+        public void setBatchBehavior(ShardedBatchBehavior batchBehavior) {
+            _conventions.assertNotFrozen();
+            _batchBehavior = batchBehavior;
+        }
+
+        public ShardingConventions(DocumentConventions conventions) {
+            _conventions = conventions;
+            _batchBehavior = ShardedBatchBehavior.DEFAULT;
+        }
+    }
+
+
 
     public BulkInsertConventions bulkInsert() {
         return _bulkInsert;
@@ -179,6 +207,7 @@ public class DocumentConventions {
 
         _maxNumberOfRequestsPerSession = 30;
         _bulkInsert = new BulkInsertConventions(this);
+        _sharding = new ShardingConventions(this);
         _maxHttpCacheSize = 128 * 1024 * 1024;
 
         _entityMapper = JsonExtensions.getDefaultEntityMapper();
@@ -192,10 +221,6 @@ public class DocumentConventions {
         _waitForNonStaleResultsTimeout = Duration.ofSeconds(15);
 
         _sendApplicationIdentifier = true;
-    }
-
-    public boolean hasExplicitlySetCompressionUsage() {
-        return _useCompression != null;
     }
 
     public Duration getRequestTimeout() {
@@ -326,17 +351,48 @@ public class DocumentConventions {
         _waitForReplicationAfterSaveChangesTimeout = waitForReplicationAfterSaveChangesTimeout;
     }
 
-    public Boolean isUseCompression() {
-        if (_useCompression == null) {
-            return true;
-        }
-        return _useCompression;
+    /**
+     * @return Use zstd/gzip compression when sending content of HTTP request
+     */
+    public Boolean getUseHttpCompression() {
+        return _useHttpCompression;
     }
 
-    public void setUseCompression(Boolean useCompression) {
+    /**
+     * @param useHttpCompression Use zstd/gzip compression when sending content of HTTP request
+     */
+    public void setUseHttpCompression(Boolean useHttpCompression) {
         assertNotFrozen();
-        _useCompression = useCompression;
+        _useHttpCompression = useHttpCompression;
     }
+
+    /**
+     * Can accept compressed HTTP response content and will use zstd/gzip decompression methods
+     */
+    public boolean getUseHttpDecompression() {
+        if (_useHttpDecompression == null) {
+            return true;
+        }
+        return _useHttpDecompression;
+    }
+
+    /**
+     * @param useHttpDecompression Can accept compressed HTTP response content and will use zstd/gzip decompression methods
+     */
+    public void setUseHttpDecompression(boolean useHttpDecompression) {
+        assertNotFrozen();
+        _useHttpDecompression = useHttpDecompression;
+    }
+
+    public HttpCompressionAlgorithm getHttpCompressionAlgorithm() {
+        return _httpCompressionAlgorithm;
+    }
+
+    public void setHttpCompressionAlgorithm(HttpCompressionAlgorithm httpCompressionAlgorithm) {
+        assertNotFrozen();
+        _httpCompressionAlgorithm = httpCompressionAlgorithm;
+    }
+
 
     public ObjectMapper getEntityMapper() {
         return _entityMapper;
@@ -415,28 +471,6 @@ public class DocumentConventions {
         _maxNumberOfRequestsPerSession = maxNumberOfRequestsPerSession;
     }
 
-    /**
-     * If set to 'true' then it will throw an exception when any query is performed (in session)
-     * without explicit page size set.
-     * This can be useful for development purposes to pinpoint all the possible performance bottlenecks
-     * since from 4.0 there is no limitation for number of results returned from server.
-     * @return true if should we throw if page size is not set
-     */
-    public boolean isThrowIfQueryPageSizeIsNotSet() {
-        return _throwIfQueryPageSizeIsNotSet;
-    }
-
-    /**
-     * If set to 'true' then it will throw an exception when any query is performed (in session)
-     * without explicit page size set.
-     * This can be useful for development purposes to pinpoint all the possible performance bottlenecks
-     * since from 4.0 there is no limitation for number of results returned from server.
-     * @param throwIfQueryPageSizeIsNotSet value to set
-     */
-    public void setThrowIfQueryPageSizeIsNotSet(boolean throwIfQueryPageSizeIsNotSet) {
-        assertNotFrozen();
-        this._throwIfQueryPageSizeIsNotSet = throwIfQueryPageSizeIsNotSet;
-    }
 
     /**
      * Whether UseOptimisticConcurrency is set to true by default for all opened sessions
@@ -776,14 +810,15 @@ public class DocumentConventions {
         cloned._findJavaClass = _findJavaClass;
         cloned._findJavaClassByName = _findJavaClassByName;
         cloned._useOptimisticConcurrency = _useOptimisticConcurrency;
-        cloned._throwIfQueryPageSizeIsNotSet = _throwIfQueryPageSizeIsNotSet;
         cloned._maxNumberOfRequestsPerSession = _maxNumberOfRequestsPerSession;
         cloned._loadBalancerPerSessionContextSelector = _loadBalancerPerSessionContextSelector;
         cloned._readBalanceBehavior = _readBalanceBehavior;
         cloned._loadBalanceBehavior = _loadBalanceBehavior;
         cloned._maxHttpCacheSize = _maxHttpCacheSize;
         cloned._entityMapper = _entityMapper;
-        cloned._useCompression = _useCompression;
+        cloned._useHttpCompression = _useHttpCompression;
+        cloned._useHttpDecompression = _useHttpDecompression;
+        cloned._httpCompressionAlgorithm = _httpCompressionAlgorithm;
         return cloned;
     }
 
@@ -805,6 +840,7 @@ public class DocumentConventions {
      *  @return Identity property (field)
      */
     public Field getIdentityProperty(Class clazz) {
+        // If we had obtained the identity property for that type, we will return it.
         Field info = _idPropertyCache.get(clazz);
         if (info != null) {
             return info;

@@ -1,7 +1,6 @@
 package net.ravendb.client.documents.operations.indexes;
 
 import com.fasterxml.jackson.core.JsonGenerator;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import net.ravendb.client.documents.conventions.DocumentConventions;
 import net.ravendb.client.documents.indexes.IndexDefinition;
@@ -9,16 +8,14 @@ import net.ravendb.client.documents.indexes.IndexTypeExtensions;
 import net.ravendb.client.documents.indexes.PutIndexResult;
 import net.ravendb.client.documents.operations.IMaintenanceOperation;
 import net.ravendb.client.documents.operations.PutIndexesResponse;
-import net.ravendb.client.extensions.JsonExtensions;
 import net.ravendb.client.http.IRaftCommand;
 import net.ravendb.client.http.RavenCommand;
 import net.ravendb.client.http.ServerNode;
 import net.ravendb.client.json.ContentProviderHttpEntity;
-import net.ravendb.client.primitives.Reference;
 import net.ravendb.client.util.RaftIdGenerator;
-import org.apache.http.client.methods.HttpPut;
-import org.apache.http.client.methods.HttpRequestBase;
-import org.apache.http.entity.ContentType;
+import org.apache.hc.client5.http.classic.methods.HttpPut;
+import org.apache.hc.client5.http.classic.methods.HttpUriRequestBase;
+import org.apache.hc.core5.http.ContentType;
 
 import java.io.IOException;
 
@@ -41,6 +38,7 @@ public class PutIndexesOperation implements IMaintenanceOperation<PutIndexResult
 
     private class PutIndexesCommand extends RavenCommand<PutIndexResult[]> implements IRaftCommand {
         private final ObjectNode[] _indexToAdd;
+        private final DocumentConventions _conventions;
 
         public PutIndexesCommand(DocumentConventions conventions, IndexDefinition[] indexesToAdd) {
             super(PutIndexResult[].class);
@@ -53,6 +51,7 @@ public class PutIndexesOperation implements IMaintenanceOperation<PutIndexResult
                 throw new IllegalArgumentException("indexesToAdd cannot be null");
             }
 
+            _conventions = conventions;
             _indexToAdd = new ObjectNode[indexesToAdd.length];
             _allJavaScriptIndexes = true;
 
@@ -71,12 +70,10 @@ public class PutIndexesOperation implements IMaintenanceOperation<PutIndexResult
         }
 
         @Override
-        public HttpRequestBase createRequest(ServerNode node, Reference<String> url) {
-            url.value = node.getUrl() + "/databases/" + node.getDatabase() + (_allJavaScriptIndexes ? "/indexes" : "/admin/indexes");
+        public HttpUriRequestBase createRequest(ServerNode node) {
+            String url = node.getUrl() + "/databases/" + node.getDatabase() + (_allJavaScriptIndexes ? "/indexes" : "/admin/indexes");
 
-            HttpPut httpPut = new HttpPut();
-
-            ObjectMapper mapper = JsonExtensions.getDefaultMapper();
+            HttpPut httpPut = new HttpPut(url);
 
             httpPut.setEntity(new ContentProviderHttpEntity(outputStream -> {
                 try (JsonGenerator generator = createSafeJsonGenerator(outputStream)) {
@@ -90,11 +87,8 @@ public class PutIndexesOperation implements IMaintenanceOperation<PutIndexResult
 
                     generator.writeEndArray();
                     generator.writeEndObject();
-
-                } catch (IOException e) {
-                    throw new RuntimeException(e);
                 }
-            }, ContentType.APPLICATION_JSON));
+            }, ContentType.APPLICATION_JSON, _conventions));
             return httpPut;
         }
 

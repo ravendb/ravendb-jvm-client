@@ -4,10 +4,9 @@ import net.ravendb.client.http.RavenCommand;
 import net.ravendb.client.http.ServerNode;
 import net.ravendb.client.json.JsonArrayResult;
 import net.ravendb.client.primitives.NetISO8601Utils;
-import net.ravendb.client.primitives.Reference;
 import net.ravendb.client.util.UrlUtils;
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.client.methods.HttpRequestBase;
+import org.apache.hc.client5.http.classic.methods.HttpUriRequestBase;
+import org.apache.hc.client5.http.classic.methods.HttpGet;
 
 import java.io.IOException;
 import java.util.Date;
@@ -84,9 +83,7 @@ public class GetRevisionsCommand extends RavenCommand<JsonArrayResult> {
     }
 
     @Override
-    public HttpRequestBase createRequest(ServerNode node, Reference<String> url) {
-        HttpGet request = new HttpGet();
-
+    public HttpUriRequestBase createRequest(ServerNode node) {
         StringBuilder pathBuilder = new StringBuilder(node.getUrl())
                 .append("/databases/")
                 .append(node.getDatabase())
@@ -94,8 +91,8 @@ public class GetRevisionsCommand extends RavenCommand<JsonArrayResult> {
 
         getRequestQueryString(pathBuilder);
 
-        url.value = pathBuilder.toString();
-        return request;
+        String url = pathBuilder.toString();
+        return new HttpGet(url);
     }
 
     public void getRequestQueryString(StringBuilder pathBuilder) {

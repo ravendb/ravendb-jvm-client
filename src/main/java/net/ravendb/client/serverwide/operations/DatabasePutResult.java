@@ -10,6 +10,7 @@ public class DatabasePutResult {
     private String name;
     private DatabaseTopology topology;
     private List<String> nodesAddedTo;
+    private boolean shardsDefined;
 
     public long getRaftCommandIndex() {
         return raftCommandIndex;
@@ -41,5 +42,13 @@ public class DatabasePutResult {
 
     public void setNodesAddedTo(List<String> nodesAddedTo) {
         this.nodesAddedTo = nodesAddedTo;
+    }
+
+    public boolean isShardsDefined() {
+        return shardsDefined;
+    }
+
+    public void setShardsDefined(boolean shardsDefined) {
+        this.shardsDefined = shardsDefined;
     }
 }

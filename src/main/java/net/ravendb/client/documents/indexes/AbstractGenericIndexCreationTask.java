@@ -4,10 +4,7 @@ import net.ravendb.client.Constants;
 import net.ravendb.client.documents.indexes.spatial.SpatialOptions;
 import net.ravendb.client.documents.indexes.spatial.SpatialOptionsFactory;
 
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.function.Function;
 
 /**

@@ -1,5 +1,6 @@
 package net.ravendb.client.documents.queries;
 
+import net.ravendb.client.documents.session.QueryStatistics;
 import net.ravendb.client.documents.session.tokens.DeclareToken;
 import net.ravendb.client.documents.session.tokens.LoadToken;
 
@@ -15,6 +16,7 @@ public class QueryData {
     private boolean isCustomFunction;
     private boolean mapReduce;
     private boolean isProjectInto;
+    private QueryStatistics queryStatistics;
     private ProjectionBehavior projectionBehavior;
 
     public boolean isMapReduce() {
@@ -91,12 +93,24 @@ public class QueryData {
         return new QueryData(new String[]{ func }, new String[0], alias, null, null, true);
     }
 
+    public static void throwProjectionIsAlreadyDone() {
+        throw new IllegalStateException("Projection is already done. You should not project your result twice.");
+    }
+
     public boolean isProjectInto() {
         return isProjectInto;
     }
 
     public void setProjectInto(boolean projectInto) {
         isProjectInto = projectInto;
+    }
+
+    public QueryStatistics getQueryStatistics() {
+        return queryStatistics;
+    }
+
+    public void setQueryStatistics(QueryStatistics queryStatistics) {
+        this.queryStatistics = queryStatistics;
     }
 
     public ProjectionBehavior getProjectionBehavior() {

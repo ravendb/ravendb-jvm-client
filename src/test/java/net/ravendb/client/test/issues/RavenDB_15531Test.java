@@ -14,7 +14,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 public class RavenDB_15531Test extends RemoteTestBase {
 
     @Test
-    public void shouldWork() throws Exception {
+    public void updateSessionChangesAfterTrackedEntityIsRefreshed() throws Exception {
         try (IDocumentStore store = getDocumentStore()) {
             try (IDocumentSession session = store.openSession()) {
                 SimpleDoc doc = new SimpleDoc();

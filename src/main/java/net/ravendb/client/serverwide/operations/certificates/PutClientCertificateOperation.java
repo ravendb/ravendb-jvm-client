@@ -6,15 +6,13 @@ import net.ravendb.client.http.IRaftCommand;
 import net.ravendb.client.http.ServerNode;
 import net.ravendb.client.http.VoidRavenCommand;
 import net.ravendb.client.json.ContentProviderHttpEntity;
-import net.ravendb.client.primitives.Reference;
 import net.ravendb.client.primitives.SharpEnum;
 import net.ravendb.client.serverwide.operations.IVoidServerOperation;
 import net.ravendb.client.util.RaftIdGenerator;
-import org.apache.http.client.methods.HttpPut;
-import org.apache.http.client.methods.HttpRequestBase;
-import org.apache.http.entity.ContentType;
+import org.apache.hc.client5.http.classic.methods.HttpPut;
+import org.apache.hc.client5.http.classic.methods.HttpUriRequestBase;
+import org.apache.hc.core5.http.ContentType;
 
-import java.io.IOException;
 import java.util.Map;
 
 public class PutClientCertificateOperation implements IVoidServerOperation {
@@ -23,8 +21,13 @@ public class PutClientCertificateOperation implements IVoidServerOperation {
     private final Map<String, DatabaseAccess> _permissions;
     private final String _name;
     private final SecurityClearance _clearance;
+    private final String _twoFactorAuthenticationKey;
 
     public PutClientCertificateOperation(String name, String certificate, Map<String, DatabaseAccess> permissions, SecurityClearance clearance) {
+        this(name, certificate, permissions, clearance, null);
+    }
+
+    public PutClientCertificateOperation(String name, String certificate, Map<String, DatabaseAccess> permissions, SecurityClearance clearance, String twoFactorAuthenticationKey) {
         if (certificate == null) {
             throw new IllegalArgumentException("Certificate cannot be null");
         }
@@ -41,20 +44,30 @@ public class PutClientCertificateOperation implements IVoidServerOperation {
         _permissions = permissions;
         _name = name;
         _clearance = clearance;
+        _twoFactorAuthenticationKey = twoFactorAuthenticationKey;
     }
 
     @Override
     public VoidRavenCommand getCommand(DocumentConventions conventions) {
-        return new PutClientCertificateCommand(_name, _certificate, _permissions, _clearance);
+        return new PutClientCertificateCommand(conventions, _name, _certificate, _permissions, _clearance, _twoFactorAuthenticationKey);
     }
 
     private static class PutClientCertificateCommand extends VoidRavenCommand implements IRaftCommand {
+        private final DocumentConventions _conventions;
+
         private final String _certificate;
         private final Map<String, DatabaseAccess> _permissions;
         private final String _name;
         private final SecurityClearance _clearance;
+        private final String _twoFactorAuthenticationKey;
 
-        public PutClientCertificateCommand(String name, String certificate, Map<String, DatabaseAccess> permissions, SecurityClearance clearance) {
+
+        public PutClientCertificateCommand(DocumentConventions conventions,
+                                           String name,
+                                           String certificate,
+                                           Map<String, DatabaseAccess> permissions,
+                                           SecurityClearance clearance,
+                                           String twoFactorAuthenticationKey) {
             if (certificate == null) {
                 throw new IllegalArgumentException("Certificate cannot be null");
             }
@@ -62,10 +75,12 @@ public class PutClientCertificateOperation implements IVoidServerOperation {
                 throw new IllegalArgumentException("Permissions cannot be null");
             }
 
+            _conventions = conventions;
             _certificate = certificate;
             _permissions = permissions;
             _name = name;
             _clearance = clearance;
+            _twoFactorAuthenticationKey = twoFactorAuthenticationKey;
         }
 
         @Override
@@ -74,10 +89,10 @@ public class PutClientCertificateOperation implements IVoidServerOperation {
         }
 
         @Override
-        public HttpRequestBase createRequest(ServerNode node, Reference<String> url) {
-            url.value = node.getUrl() + "/admin/certificates";
+        public HttpUriRequestBase createRequest(ServerNode node) {
+            String url = node.getUrl() + "/admin/certificates";
 
-            HttpPut request = new HttpPut();
+            HttpPut request = new HttpPut(url);
 
             request.setEntity(new ContentProviderHttpEntity(outputStream -> {
                 try (JsonGenerator generator = createSafeJsonGenerator(outputStream)) {
@@ -86,6 +101,9 @@ public class PutClientCertificateOperation implements IVoidServerOperation {
                     generator.writeStringField("Name", _name);
                     generator.writeStringField("Certificate", _certificate);
                     generator.writeStringField("SecurityClearance", SharpEnum.value(_clearance));
+                    if (_twoFactorAuthenticationKey != null) {
+                        generator.writeStringField("TwoFactorAuthenticationKey", _twoFactorAuthenticationKey);
+                    }
 
                     generator.writeFieldName("Permissions");
                     generator.writeStartObject();
@@ -95,11 +113,8 @@ public class PutClientCertificateOperation implements IVoidServerOperation {
                     }
                     generator.writeEndObject();
                     generator.writeEndObject();
-
-                } catch (IOException e) {
-                    throw new RuntimeException(e);
                 }
-            }, ContentType.APPLICATION_JSON));
+            }, ContentType.APPLICATION_JSON, _conventions));
             return request;
         }
 

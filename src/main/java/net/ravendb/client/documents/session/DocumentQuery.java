@@ -23,6 +23,7 @@ import net.ravendb.client.documents.queries.timeSeries.ITimeSeriesQueryBuilder;
 import net.ravendb.client.documents.queries.timings.QueryTimings;
 import net.ravendb.client.documents.session.loaders.IQueryIncludeBuilder;
 import net.ravendb.client.documents.session.loaders.QueryIncludeBuilder;
+import net.ravendb.client.documents.session.querying.sharding.IQueryShardedContextBuilder;
 import net.ravendb.client.documents.session.tokens.DeclareToken;
 import net.ravendb.client.documents.session.tokens.FieldsToFetchToken;
 import net.ravendb.client.documents.session.tokens.LoadToken;
@@ -61,6 +62,9 @@ public class DocumentQuery<T> extends AbstractDocumentQuery<T, DocumentQuery<T>>
 
     @Override
     public <TProjection> IDocumentQuery<TProjection> selectFields(Class<TProjection> projectionClass, ProjectionBehavior projectionBehavior) {
+        if (isProjectInto || (fieldsToFetchToken != null &&  fieldsToFetchToken.projections != null && fieldsToFetchToken.projections.length > 0)) {
+            QueryData.throwProjectionIsAlreadyDone();
+        }
         BeanDescription beanDescription = getConventions().getEntityMapper().getSerializationConfig().introspect(getConventions().getEntityMapper().constructType(projectionClass));
 
         List<BeanPropertyDefinition> properties = beanDescription.findProperties();
@@ -301,12 +305,12 @@ public class DocumentQuery<T> extends AbstractDocumentQuery<T, DocumentQuery<T>>
     }
 
     @Override
-    public IDocumentQuery<T> take(int count) {
+    public IDocumentQuery<T> take(long count) {
         _take(count);
         return this;
     }
 
-    public IDocumentQuery<T> skip(int count) {
+    public IDocumentQuery<T> skip(long count) {
         _skip(count);
         return this;
     }
@@ -674,7 +678,7 @@ public class DocumentQuery<T> extends AbstractDocumentQuery<T, DocumentQuery<T>>
         query.filterModeStack.addAll(filterModeStack);
         query.start = start;
         query.timeout = timeout;
-        query.queryStats = queryStats;
+        query.queryStats = ObjectUtils.firstNonNull(queryData != null ? queryData.getQueryStatistics() : null, queryStats);
         query.theWaitForNonStaleResults = theWaitForNonStaleResults;
         query.negate = negate;
         query.documentIncludes = new HashSet<>(documentIncludes);
@@ -935,6 +939,12 @@ public class DocumentQuery<T> extends AbstractDocumentQuery<T, DocumentQuery<T>>
             builder.accept(f);
         }
 
+        return this;
+    }
+
+    @Override
+    public IDocumentQuery<T> shardContext(Consumer<IQueryShardedContextBuilder> builder) {
+        _shardContext(builder);
         return this;
     }
 }

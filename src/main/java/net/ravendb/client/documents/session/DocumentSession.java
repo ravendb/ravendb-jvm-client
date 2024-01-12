@@ -33,8 +33,8 @@ import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
-import org.apache.http.HttpStatus;
-import org.apache.http.util.EntityUtils;
+import org.apache.hc.core5.http.HttpStatus;
+import org.apache.hc.core5.http.io.entity.EntityUtils;
 
 import java.io.IOException;
 import java.io.OutputStream;
@@ -187,7 +187,7 @@ public class DocumentSession extends InMemoryDocumentSessionOperations
 
         incrementRequestCount();
 
-        GetDocumentsCommand command = new GetDocumentsCommand(new String[]{documentInfo.getId()}, null, false);
+        GetDocumentsCommand command = new GetDocumentsCommand(getConventions(), new String[]{documentInfo.getId()}, null, false);
         _requestExecutor.execute(command, sessionInfo);
 
         ObjectNode commandResult = (ObjectNode) command.getResult().getResults().get(0);
@@ -206,7 +206,7 @@ public class DocumentSession extends InMemoryDocumentSessionOperations
 
         incrementRequestCount();
 
-        GetDocumentsCommand command = new GetDocumentsCommand(idsEntitiesPairs.keySet().toArray(new String[0]), null, false);
+        GetDocumentsCommand command = new GetDocumentsCommand(getConventions(), idsEntitiesPairs.keySet().toArray(new String[0]), null, false);
         _requestExecutor.execute(command, getSessionInfo());
 
         refreshEntities(command, idsEntitiesPairs);
@@ -329,9 +329,24 @@ public class DocumentSession extends InMemoryDocumentSessionOperations
 
         return new Lazy<>(() -> {
             executeAllPendingLazyOperations();
+            long value = operation.getQueryResult().getTotalResults();
+            if (value > Integer.MAX_VALUE) {
+                DocumentSession.throwWhenResultsAreOverInt32(value, "addLazyCountOperation", "addLazyCountLongOperation");
+            }
+            return (int) value;
+        });
+    }
+
+    protected Lazy<Long> addLazyCountLongOperation(ILazyOperation operation) {
+        pendingLazyOperations.add(operation);
+
+        return new Lazy<>(() -> {
+            executeAllPendingLazyOperations();
             return operation.getQueryResult().getTotalResults();
         });
     }
+
+
 
     @SuppressWarnings("unchecked")
     @Override
@@ -806,9 +821,7 @@ public class DocumentSession extends InMemoryDocumentSessionOperations
         String newScript = oldPatch.getPatch().getScript() + "\n" + patchRequest.getScript();
         Map<String, Object> newVals = new HashMap<>(oldPatch.getPatch().getValues());
 
-        for (Map.Entry<String, Object> kvp : patchRequest.getValues().entrySet()) {
-            newVals.put(kvp.getKey(), kvp.getValue());
-        }
+        newVals.putAll(patchRequest.getValues());
 
         PatchRequest newPatchRequest = new PatchRequest();
         newPatchRequest.setScript(newScript);
@@ -819,7 +832,6 @@ public class DocumentSession extends InMemoryDocumentSessionOperations
         return true;
     }
 
-    @SuppressWarnings("deprecation")
     public <T, TIndex extends AbstractCommonApiForIndexes> IDocumentQuery<T> documentQuery(Class<T> clazz, Class<TIndex> indexClazz) {
         try {
             TIndex index = indexClazz.newInstance();
@@ -1071,18 +1083,6 @@ public class DocumentSession extends InMemoryDocumentSessionOperations
         return new SessionDocumentCounters(this, entity);
     }
 
-    /**
-     * @deprecated Graph API will be removed in next major version of the product.
-     * @param clazz result class
-     * @param query Graph Query
-     * @return Graph query
-     * @param <T> Document type
-     */
-    @Override
-    public <T> IGraphDocumentQuery<T> graphQuery(Class<T> clazz, String query) {
-        GraphDocumentQuery<T> graphQuery = new GraphDocumentQuery<T>(clazz, this, query);
-        return graphQuery;
-    }
 
     @Override
     public ISessionDocumentTimeSeries timeSeriesFor(String documentId, String name) {
@@ -1103,7 +1103,7 @@ public class DocumentSession extends InMemoryDocumentSessionOperations
     public <T> ISessionDocumentTypedTimeSeries<T> timeSeriesFor(Class<T> clazz, Object entity, String name) {
         String tsName = ObjectUtils.firstNonNull(name, TimeSeriesOperations.getTimeSeriesName(clazz, getConventions()));
         validateTimeSeriesName(tsName);
-        return new SessionDocumentTypedTimeSeries<T>(clazz, this, entity, tsName);
+        return new SessionDocumentTypedTimeSeries<>(clazz, this, entity, tsName);
     }
 
     @Override
@@ -1126,7 +1126,7 @@ public class DocumentSession extends InMemoryDocumentSessionOperations
     @Override
     public <T> ISessionDocumentRollupTypedTimeSeries<T> timeSeriesRollupFor(Class<T> clazz, Object entity, String policy, String raw) {
         String tsName = ObjectUtils.firstNonNull(raw, TimeSeriesOperations.getTimeSeriesName(clazz, getConventions()));
-        return new SessionDocumentRollupTypedTimeSeries<T>(clazz, this, entity, tsName + TimeSeriesConfiguration.TIME_SERIES_ROLLUP_SEPARATOR + policy);
+        return new SessionDocumentRollupTypedTimeSeries<>(clazz, this, entity, tsName + TimeSeriesConfiguration.TIME_SERIES_ROLLUP_SEPARATOR + policy);
     }
 
     @Override
@@ -1137,7 +1137,7 @@ public class DocumentSession extends InMemoryDocumentSessionOperations
     @Override
     public <T> ISessionDocumentRollupTypedTimeSeries<T> timeSeriesRollupFor(Class<T> clazz, String documentId, String policy, String raw) {
         String tsName = ObjectUtils.firstNonNull(raw, TimeSeriesOperations.getTimeSeriesName(clazz, getConventions()));
-        return new SessionDocumentRollupTypedTimeSeries<T>(clazz, this, documentId, tsName + TimeSeriesConfiguration.TIME_SERIES_ROLLUP_SEPARATOR + policy);
+        return new SessionDocumentRollupTypedTimeSeries<>(clazz, this, documentId, tsName + TimeSeriesConfiguration.TIME_SERIES_ROLLUP_SEPARATOR + policy);
     }
 
     public ISessionDocumentIncrementalTimeSeries incrementalTimeSeriesFor(String documentId, String name) {
@@ -1158,7 +1158,7 @@ public class DocumentSession extends InMemoryDocumentSessionOperations
     public <T> ISessionDocumentTypedIncrementalTimeSeries<T> incrementalTimeSeriesFor(Class<T> clazz, String documentId, String name) {
         String tsName = ObjectUtils.firstNonNull(name, TimeSeriesOperations.getTimeSeriesName(clazz, getConventions()));
         validateIncrementalTimeSeriesName(tsName);
-        return new SessionDocumentTypedTimeSeries<T>(clazz, this, documentId, tsName);
+        return new SessionDocumentTypedTimeSeries<>(clazz, this, documentId, tsName);
     }
 
     public <T> ISessionDocumentTypedIncrementalTimeSeries<T> incrementalTimeSeriesFor(Class<T> clazz, Object entity) {
@@ -1199,12 +1199,18 @@ public class DocumentSession extends InMemoryDocumentSessionOperations
             case HttpStatus.SC_NOT_MODIFIED:
                 return ConditionalLoadResult.create(null, changeVector); // value not changed
             case HttpStatus.SC_NOT_FOUND:
-                registerMissing(id);;
+                registerMissing(id);
                 return ConditionalLoadResult.create(null, null); // value is missing
         }
 
         DocumentInfo documentInfo = DocumentInfo.getNewDocumentInfo((ObjectNode) cmd.getResult().getResults().get(0));
         T r = trackEntity(clazz, documentInfo);
         return ConditionalLoadResult.create(r, cmd.getResult().getChangeVector());
+    }
+
+    public static void throwWhenResultsAreOverInt32(long value, String caller, String suggestedMethod) {
+        if (Integer.MAX_VALUE < value) {
+            throw new IllegalArgumentException("Value '" + value + "' from '" + caller + "' method exceeds max Integer value.'. You should use '" + suggestedMethod + "' instead.");
+        }
     }
 }

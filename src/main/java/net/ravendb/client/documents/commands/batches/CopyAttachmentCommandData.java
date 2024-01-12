@@ -9,11 +9,11 @@ import java.io.IOException;
 
 public class CopyAttachmentCommandData implements ICommandData {
 
-    private String id;
-    private String name;
-    private String destinationId;
-    private String destinationName;
-    private String changeVector;
+    private final String id;
+    private final String name;
+    private final String destinationId;
+    private final String destinationName;
+    private final String changeVector;
 
 
     public CopyAttachmentCommandData(String sourceDocumentId, String sourceName, String destinationDocumentId, String destinationName, String changeVector) {

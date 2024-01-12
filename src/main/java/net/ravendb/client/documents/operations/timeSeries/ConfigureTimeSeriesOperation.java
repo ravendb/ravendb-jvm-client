@@ -8,11 +8,10 @@ import net.ravendb.client.http.IRaftCommand;
 import net.ravendb.client.http.RavenCommand;
 import net.ravendb.client.http.ServerNode;
 import net.ravendb.client.json.ContentProviderHttpEntity;
-import net.ravendb.client.primitives.Reference;
 import net.ravendb.client.util.RaftIdGenerator;
-import org.apache.http.client.methods.HttpPost;
-import org.apache.http.client.methods.HttpRequestBase;
-import org.apache.http.entity.ContentType;
+import org.apache.hc.client5.http.classic.methods.HttpPost;
+import org.apache.hc.client5.http.classic.methods.HttpUriRequestBase;
+import org.apache.hc.core5.http.ContentType;
 
 import java.io.IOException;
 
@@ -30,16 +29,18 @@ public class ConfigureTimeSeriesOperation implements IMaintenanceOperation<Confi
 
     @Override
     public RavenCommand<ConfigureTimeSeriesOperationResult> getCommand(DocumentConventions conventions) {
-        return new ConfigureTimeSeriesCommand(_configuration);
+        return new ConfigureTimeSeriesCommand(conventions, _configuration);
     }
 
     private static class ConfigureTimeSeriesCommand extends RavenCommand<ConfigureTimeSeriesOperationResult> implements IRaftCommand {
         private final TimeSeriesConfiguration _configuration;
+        private final DocumentConventions _conventions;
 
-        public ConfigureTimeSeriesCommand(TimeSeriesConfiguration configuration) {
+        public ConfigureTimeSeriesCommand(DocumentConventions conventions, TimeSeriesConfiguration configuration) {
             super(ConfigureTimeSeriesOperationResult.class);
 
             _configuration = configuration;
+            _conventions = conventions;
         }
 
         @Override
@@ -48,18 +49,16 @@ public class ConfigureTimeSeriesOperation implements IMaintenanceOperation<Confi
         }
 
         @Override
-        public HttpRequestBase createRequest(ServerNode node, Reference<String> url) {
-            url.value = node.getUrl() + "/databases/" + node.getDatabase() + "/admin/timeseries/config";
+        public HttpUriRequestBase createRequest(ServerNode node) {
+            String url = node.getUrl() + "/databases/" + node.getDatabase() + "/admin/timeseries/config";
 
-            HttpPost request = new HttpPost();
+            HttpPost request = new HttpPost(url);
             request.setEntity(new ContentProviderHttpEntity(outputStream -> {
                 try (JsonGenerator generator = createSafeJsonGenerator(outputStream)) {
                     ObjectNode config = mapper.valueToTree(_configuration);
                     generator.writeTree(config);
-                } catch (IOException e) {
-                    throw new RuntimeException(e);
                 }
-            }, ContentType.APPLICATION_JSON));
+            }, ContentType.APPLICATION_JSON, _conventions));
             return request;
         }
 

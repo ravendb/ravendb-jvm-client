@@ -31,5 +31,7 @@ public enum DatabaseRecordItemType {
     QUEUE_CONNECTION_STRINGS,
     QUEUE_ETLS,
     INDEXES_HISTORY,
-    REFRESH
+    REFRESH,
+    QUEUE_SINKS,
+    DATA_ARCHIVAL
 }

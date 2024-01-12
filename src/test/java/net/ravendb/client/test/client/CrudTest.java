@@ -29,7 +29,7 @@ public class CrudTest extends RemoteTestBase {
                 newSession.saveChanges();
             }
 
-            GetDocumentsCommand documentsCommand = new GetDocumentsCommand("users/1", null, false);
+            GetDocumentsCommand documentsCommand = new GetDocumentsCommand(store.getConventions(), "users/1", null, false);
             store.getRequestExecutor().execute(documentsCommand);
 
             GetDocumentsResult result = documentsCommand.getResult();
@@ -60,7 +60,7 @@ public class CrudTest extends RemoteTestBase {
                 newSession.saveChanges();
             }
 
-            GetDocumentsCommand documentsCommand = new GetDocumentsCommand("users/1", null, false);
+            GetDocumentsCommand documentsCommand = new GetDocumentsCommand(store.getConventions(), "users/1", null, false);
             store.getRequestExecutor().execute(documentsCommand);
 
             GetDocumentsResult result = documentsCommand.getResult();

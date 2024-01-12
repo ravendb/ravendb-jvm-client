@@ -19,21 +19,6 @@ public class OngoingTaskPullReplicationAsSink extends OngoingTask {
         setTaskType(OngoingTaskType.PULL_REPLICATION_AS_SINK);
     }
 
-    /**
-     * HubDefinitionName is not supported anymore. Will be removed in next major version of the product. Use HubName instead.
-     * @return hub definition name
-     */
-    public String getHubDefinitionName() {
-        return hubName;
-    }
-
-    /**
-     * HubDefinitionName is not supported anymore. Will be removed in next major version of the product. Use HubName instead.
-     * @param hubName hub definition name
-     */
-    public void setHubDefinitionName(String hubName) {
-        this.hubName = hubName;
-    }
 
     public String getHubName() {
         return hubName;

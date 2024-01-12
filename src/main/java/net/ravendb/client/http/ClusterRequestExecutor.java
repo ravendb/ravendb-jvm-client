@@ -8,7 +8,6 @@ import org.apache.commons.lang3.ObjectUtils;
 
 import java.security.KeyStore;
 import java.util.Collections;
-import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Semaphore;
@@ -34,10 +33,6 @@ public class ClusterRequestExecutor extends RequestExecutor {
     @SuppressWarnings("unused")
     public static ClusterRequestExecutor createForSingleNodeWithoutConfigurationUpdates(String url, String databaseName, KeyStore certificate, char[] keyPassword, DocumentConventions conventions) {
         throw new UnsupportedOperationException();
-    }
-
-    public static ClusterRequestExecutor createForSingleNode(String url, KeyStore certificate, char[] keyPassword, KeyStore trustStore, ExecutorService executorService) {
-        return createForSingleNode(url, certificate, keyPassword, trustStore, executorService, null);
     }
 
     @SuppressWarnings("UnnecessaryLocalVariable")
@@ -94,6 +89,10 @@ public class ClusterRequestExecutor extends RequestExecutor {
             throw new IllegalArgumentException("Parameters cannot be null");
         }
 
+        if (_disableTopologyUpdates) {
+            return CompletableFuture.completedFuture(false);
+        }
+
         if (_disposed) {
             return CompletableFuture.completedFuture(false);
         }
@@ -117,15 +116,11 @@ public class ClusterRequestExecutor extends RequestExecutor {
                 execute(parameters.getNode(), null, command, false, null);
 
                 ClusterTopologyResponse results = command.getResult();
-                List<ServerNode> nodes = ServerNode.createFrom(results.getTopology());
-
-                Topology newTopology = new Topology();
-                newTopology.setNodes(nodes);
-                newTopology.setEtag(results.getEtag());
+                Topology newTopology = ServerNode.createFrom(results.getTopology(), results.getEtag());
 
                 updateNodeSelector(newTopology, parameters.isForceUpdate());
 
-                onTopologyUpdatedInvoke(newTopology);
+                onTopologyUpdatedInvoke(newTopology, parameters.getDebugTag());
             } catch (Exception e) {
                 if (!_disposed) {
                     throw e;

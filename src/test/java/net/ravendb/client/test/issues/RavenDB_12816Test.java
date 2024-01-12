@@ -314,10 +314,8 @@ public class RavenDB_12816Test extends RemoteTestBase {
             }
 
             try (IDocumentSession session = store.openSession()) {
-                assertThatThrownBy(() -> {
-                    session.advanced().rawQuery(FacetTestBase.Camera.class, "from index 'CameraCost' select facet(id('facets/CameraFacets'))")
-                            .toList();
-                }).hasMessageStartingWith("Raw query with aggregation by facet should be called by executeAggregation method");
+                assertThatThrownBy(() -> session.advanced().rawQuery(FacetTestBase.Camera.class, "from index 'CameraCost' select facet(id('facets/CameraFacets'))")
+                        .toList()).hasMessageStartingWith("Raw query with aggregation by facet should be called by executeAggregation method");
             }
         }
     }

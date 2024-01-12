@@ -47,9 +47,7 @@ public class RavenDB_16328_AnalyzersTest extends RemoteTestBase {
         try (IDocumentStore store = getDocumentStore()) {
             String analyzerName = "MyAnalyzer";
 
-            assertThatThrownBy(() -> {
-                store.executeIndex(new MyIndex(analyzerName));
-            }).hasMessageContaining("Cannot find analyzer type '" + analyzerName + "' for field: name");
+            assertThatThrownBy(() -> store.executeIndex(new MyIndex(analyzerName))).hasMessageContaining("Cannot find analyzer type '" + analyzerName + "' for field: name");
 
             try {
                 AnalyzerDefinition analyzerDefinition = new AnalyzerDefinition();
@@ -101,12 +99,20 @@ public class RavenDB_16328_AnalyzersTest extends RemoteTestBase {
             c4.setName("Paulo Rogério");
             session.store(c4);
 
+            Customer c5 = new Customer();
+            c5.setName("Paulo Rogerio Secondado");
+            session.store(c5);
+
+            Customer c6 = new Customer();
+            c6.setName("Paulo Rogério Secondado");
+            session.store(c6);
+
             session.saveChanges();
         }
     }
 
     private static <T extends AbstractIndexCreationTask> void assertCount(IDocumentStore store, Class<T> index) {
-        assertCount(store, index, 4);
+        assertCount(store, index, 6);
     }
 
     private static <T extends AbstractIndexCreationTask> void assertCount(IDocumentStore store, Class<T> index, int expectedCount) {

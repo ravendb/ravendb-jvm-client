@@ -107,7 +107,7 @@ public class EntityToJson {
         boolean setMetadata = false;
         ObjectNode metadataNode = mapper.createObjectNode();
 
-        if (documentInfo.getMetadata() != null && documentInfo.getMetadata().size() > 0) {
+        if (documentInfo.getMetadata() != null && !documentInfo.getMetadata().isEmpty()) {
             setMetadata = true;
             documentInfo.getMetadata().fieldNames().forEachRemaining(property -> metadataNode.set(property, documentInfo.getMetadata().get(property).deepCopy()));
         } else if (documentInfo.getMetadataInstance() != null) {

@@ -11,12 +11,11 @@ import net.ravendb.client.documents.conventions.DocumentConventions;
 import net.ravendb.client.documents.operations.IOperation;
 import net.ravendb.client.http.*;
 import net.ravendb.client.json.ContentProviderHttpEntity;
-import net.ravendb.client.primitives.Reference;
 import net.ravendb.client.primitives.SharpEnum;
-import org.apache.http.client.methods.CloseableHttpResponse;
-import org.apache.http.client.methods.HttpPost;
-import org.apache.http.client.methods.HttpRequestBase;
-import org.apache.http.entity.ContentType;
+import org.apache.hc.client5.http.classic.methods.HttpPost;
+import org.apache.hc.client5.http.classic.methods.HttpUriRequestBase;
+import org.apache.hc.core5.http.ClassicHttpResponse;
+import org.apache.hc.core5.http.ContentType;
 
 import java.io.*;
 import java.util.ArrayList;
@@ -33,17 +32,19 @@ public class GetAttachmentsOperation implements IOperation<CloseableAttachmentsR
 
     @Override
     public RavenCommand<CloseableAttachmentsResult> getCommand(IDocumentStore store, DocumentConventions conventions, HttpCache cache) {
-        return new GetAttachmentsCommand(_attachments, _type);
+        return new GetAttachmentsCommand(conventions, _attachments, _type);
     }
 
     public static class GetAttachmentsCommand extends RavenCommand<CloseableAttachmentsResult> {
+        private final DocumentConventions _conventions;
         private final AttachmentType _type;
         private final List<AttachmentRequest> _attachments;
         private final List<AttachmentDetails> _attachmentsMetadata = new ArrayList<>();
 
-        public GetAttachmentsCommand(List<AttachmentRequest> attachments, AttachmentType type) {
+        public GetAttachmentsCommand(DocumentConventions conventions, List<AttachmentRequest> attachments, AttachmentType type) {
             super(CloseableAttachmentsResult.class);
 
+            _conventions = conventions;
             _type = type;
             _attachments = attachments;
             responseType = RavenCommandResponseType.EMPTY;
@@ -58,10 +59,10 @@ public class GetAttachmentsOperation implements IOperation<CloseableAttachmentsR
         }
 
         @Override
-        public HttpRequestBase createRequest(ServerNode node, Reference<String> url) {
-            url.value = node.getUrl() + "/databases/" + node.getDatabase() + "/attachments/bulk";
+        public HttpUriRequestBase createRequest(ServerNode node) {
+            String url = node.getUrl() + "/databases/" + node.getDatabase() + "/attachments/bulk";
 
-            HttpPost request = new HttpPost();
+            HttpPost request = new HttpPost(url);
             request.setEntity(new ContentProviderHttpEntity(outputStream -> {
                 try (JsonGenerator generator = createSafeJsonGenerator(outputStream)) {
                     generator.writeStartObject();
@@ -79,16 +80,14 @@ public class GetAttachmentsOperation implements IOperation<CloseableAttachmentsR
                     }
                     generator.writeEndArray();
                     generator.writeEndObject();
-                } catch (IOException e) {
-                    throw new RuntimeException(e);
                 }
-            }, ContentType.APPLICATION_JSON));
+            }, ContentType.APPLICATION_JSON, _conventions));
 
             return request;
         }
 
         @Override
-        public ResponseDisposeHandling processResponse(HttpCache cache, CloseableHttpResponse response, String url) {
+        public ResponseDisposeHandling processResponse(HttpCache cache, ClassicHttpResponse response, String url) {
             try {
                 InputStream stream = response.getEntity().getContent();
 

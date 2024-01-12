@@ -3,6 +3,7 @@ package net.ravendb.client.documents.commands.batches;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import net.ravendb.client.documents.conventions.DocumentConventions;
+import net.ravendb.client.documents.session.ShardedBatchBehavior;
 import net.ravendb.client.documents.session.TransactionMode;
 import net.ravendb.client.exceptions.RavenException;
 import net.ravendb.client.http.RavenCommand;
@@ -10,18 +11,14 @@ import net.ravendb.client.http.ServerNode;
 import net.ravendb.client.json.BatchCommandResult;
 import net.ravendb.client.json.ContentProviderHttpEntity;
 import net.ravendb.client.primitives.CleanCloseable;
-import net.ravendb.client.primitives.Reference;
+import net.ravendb.client.primitives.SharpEnum;
 import net.ravendb.client.util.TimeUtils;
-import org.apache.http.HttpEntity;
-import org.apache.http.client.methods.HttpPost;
-import org.apache.http.client.methods.HttpRequestBase;
-import org.apache.http.entity.ContentType;
-import org.apache.http.entity.mime.FormBodyPart;
-import org.apache.http.entity.mime.FormBodyPartBuilder;
-import org.apache.http.entity.mime.MultipartEntityBuilder;
-import org.apache.http.entity.mime.content.InputStreamBody;
+import org.apache.hc.client5.http.classic.methods.HttpPost;
+import org.apache.hc.client5.http.classic.methods.HttpUriRequestBase;
+import org.apache.hc.client5.http.entity.mime.*;
+import org.apache.hc.core5.http.ContentType;
+import org.apache.hc.core5.http.HttpEntity;
 
-import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -80,8 +77,13 @@ public class SingleNodeBatchCommand extends RavenCommand<BatchCommandResult> imp
     }
 
     @Override
-    public HttpRequestBase createRequest(ServerNode node, Reference<String> url) {
-        HttpPost request = new HttpPost();
+    public HttpUriRequestBase createRequest(ServerNode node) {
+        StringBuilder sb = new StringBuilder(node.getUrl() + "/databases/" + node.getDatabase() + "/bulk_docs?");
+        appendOptions(sb);
+
+        String url = sb.toString();
+
+        HttpPost request = new HttpPost(url);
 
         request.setEntity(new ContentProviderHttpEntity(outputStream -> {
             try (JsonGenerator generator = createSafeJsonGenerator(outputStream)) {
@@ -117,13 +119,11 @@ public class SingleNodeBatchCommand extends RavenCommand<BatchCommandResult> imp
                 }
 
                 generator.writeEndObject();
-            } catch (IOException e) {
-                throw new RuntimeException(e);
             }
-        }, ContentType.APPLICATION_JSON));
+        }, ContentType.APPLICATION_JSON, _conventions));
 
 
-        if (_attachmentStreams != null && _attachmentStreams.size() > 0) {
+        if (_attachmentStreams != null && !_attachmentStreams.isEmpty()) {
             MultipartEntityBuilder entityBuilder = MultipartEntityBuilder.create();
 
             HttpEntity entity = request.getEntity();
@@ -132,7 +132,14 @@ public class SingleNodeBatchCommand extends RavenCommand<BatchCommandResult> imp
                 ByteArrayOutputStream baos = new ByteArrayOutputStream();
                 entity.writeTo(baos);
 
-                entityBuilder.addBinaryBody("main", new ByteArrayInputStream(baos.toByteArray()));
+                FormBodyPartBuilder mainPartBuilder = FormBodyPartBuilder
+                        .create("main", new ByteArrayBody(baos.toByteArray(), "main"));
+
+                if (entity.getContentEncoding() != null) {
+                    mainPartBuilder.addField("Content-Encoding", entity.getContentEncoding());
+                }
+
+                entityBuilder.addPart(mainPartBuilder.build());
             } catch (IOException e) {
                 throw new RavenException("Unable to serialize BatchCommand", e);
             }
@@ -149,10 +156,6 @@ public class SingleNodeBatchCommand extends RavenCommand<BatchCommandResult> imp
             request.setEntity(entityBuilder.build());
         }
 
-        StringBuilder sb = new StringBuilder(node.getUrl() + "/databases/" + node.getDatabase() + "/bulk_docs?");
-        appendOptions(sb);
-
-        url.value = sb.toString();
         return request;
     }
 
@@ -169,8 +172,10 @@ public class SingleNodeBatchCommand extends RavenCommand<BatchCommandResult> imp
         if (_options == null) {
             return;
         }
+        appendOptions(sb, _options.getIndexOptions(), _options.getReplicationOptions(), _options.getShardedOptions());
 
-        ReplicationBatchOptions replicationOptions = _options.getReplicationOptions();
+    }
+    protected static void appendOptions(StringBuilder sb, IndexBatchOptions indexOptions, ReplicationBatchOptions replicationOptions, ShardedBatchOptions shardedOptions) {
         if (replicationOptions != null) {
             sb.append("&waitForReplicasTimeout=")
                     .append(TimeUtils.durationToTimeSpan(replicationOptions.getWaitForReplicasTimeout()));
@@ -182,7 +187,6 @@ public class SingleNodeBatchCommand extends RavenCommand<BatchCommandResult> imp
             sb.append(replicationOptions.isMajority() ? "majority" : replicationOptions.getNumberOfReplicasToWaitFor());
         }
 
-        IndexBatchOptions indexOptions = _options.getIndexOptions();
         if (indexOptions != null) {
             sb.append("&waitForIndexesTimeout=")
                     .append(TimeUtils.durationToTimeSpan(indexOptions.getWaitForIndexesTimeout()));
@@ -197,6 +201,12 @@ public class SingleNodeBatchCommand extends RavenCommand<BatchCommandResult> imp
                 for (String specificIndex : indexOptions.getWaitForSpecificIndexes()) {
                     sb.append("&waitForSpecificIndex=").append(urlEncode(specificIndex));
                 }
+            }
+        }
+
+        if (shardedOptions != null) {
+            if (shardedOptions.getBatchBehavior() != ShardedBatchBehavior.DEFAULT) {
+                sb.append("&shardedBatchBehavior=").append(SharpEnum.value(shardedOptions.getBatchBehavior()));
             }
         }
     }

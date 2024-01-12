@@ -31,9 +31,7 @@ public class RavenDB_12902Test extends RemoteTestBase {
 
                 Map<String, FacetResult> results = session.query(User.class, UsersByName.class)
                         .statistics(stats)
-                        .addAfterQueryExecutedListener(x -> {
-                            counter.incrementAndGet();
-                        })
+                        .addAfterQueryExecutedListener(x -> counter.incrementAndGet())
                         .whereEquals("name", "Doe")
                         .aggregateBy(x -> x.byField("name").sumOn("count"))
                         .execute();
@@ -62,9 +60,7 @@ public class RavenDB_12902Test extends RemoteTestBase {
 
                 Map<String, SuggestionResult> results = session.query(User.class, UsersByName.class)
                         .statistics(stats)
-                        .addAfterQueryExecutedListener(x -> {
-                            counter.incrementAndGet();
-                        })
+                        .addAfterQueryExecutedListener(x -> counter.incrementAndGet())
                         .suggestUsing(x -> x.byField("name", "Orin"))
                         .execute();
 
@@ -89,9 +85,7 @@ public class RavenDB_12902Test extends RemoteTestBase {
                 Reference<QueryStatistics> stats = new Reference<>();
 
                 List<User> results = session.query(User.class)
-                        .addAfterQueryExecutedListener(x -> {
-                            counter.incrementAndGet();
-                        })
+                        .addAfterQueryExecutedListener(x -> counter.incrementAndGet())
                         .statistics(stats)
                         .whereEquals("name", "Doe")
                         .lazily()
@@ -119,9 +113,7 @@ public class RavenDB_12902Test extends RemoteTestBase {
 
                 Map<String, FacetResult> results = session.query(User.class, UsersByName.class)
                         .statistics(stats)
-                        .addAfterQueryExecutedListener(x -> {
-                            counter.incrementAndGet();
-                        })
+                        .addAfterQueryExecutedListener(x -> counter.incrementAndGet())
                         .whereEquals("name", "Doe")
                         .aggregateBy(x -> x.byField("name").sumOn("count"))
                         .executeLazy()
@@ -151,9 +143,7 @@ public class RavenDB_12902Test extends RemoteTestBase {
 
                 Map<String, SuggestionResult> results = session
                         .query(User.class, UsersByName.class)
-                        .addAfterQueryExecutedListener(r -> {
-                            counter.incrementAndGet();
-                        })
+                        .addAfterQueryExecutedListener(r -> counter.incrementAndGet())
                         .statistics(stats)
                         .suggestUsing(x -> x.byField("name", "Orin"))
                         .executeLazy()

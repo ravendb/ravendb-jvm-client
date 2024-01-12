@@ -2,9 +2,8 @@ package net.ravendb.client.documents.commands;
 
 import net.ravendb.client.http.ServerNode;
 import net.ravendb.client.http.VoidRavenCommand;
-import net.ravendb.client.primitives.Reference;
-import org.apache.http.client.methods.HttpDelete;
-import org.apache.http.client.methods.HttpRequestBase;
+import org.apache.hc.client5.http.classic.methods.HttpDelete;
+import org.apache.hc.client5.http.classic.methods.HttpUriRequestBase;
 
 public class DeleteDocumentCommand extends VoidRavenCommand {
     private final String _id;
@@ -24,12 +23,12 @@ public class DeleteDocumentCommand extends VoidRavenCommand {
     }
 
     @Override
-    public HttpRequestBase createRequest(ServerNode node, Reference<String> url) {
+    public HttpUriRequestBase createRequest(ServerNode node) {
         ensureIsNotNullOrString(_id, "id");
 
-        url.value = node.getUrl() + "/databases/" + node.getDatabase() + "/docs?id=" + urlEncode(_id);
+        String url = node.getUrl() + "/databases/" + node.getDatabase() + "/docs?id=" + urlEncode(_id);
 
-        HttpDelete request = new HttpDelete();
+        HttpDelete request = new HttpDelete(url);
         addChangeVectorIfNotNull(_changeVector, request);
         return request;
     }

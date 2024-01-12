@@ -22,12 +22,11 @@ import net.ravendb.client.serverwide.operations.DatabasePutResult;
 import net.ravendb.client.serverwide.operations.GetDatabaseRecordOperation;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.ObjectUtils;
-import org.apache.http.client.methods.CloseableHttpResponse;
-import org.apache.http.client.methods.HttpRequestBase;
-import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.hc.client5.http.classic.methods.HttpUriRequestBase;
+import org.apache.hc.client5.http.impl.classic.CloseableHttpClient;
+import org.apache.hc.core5.http.ClassicHttpResponse;
 
 import java.io.Closeable;
-import java.net.URI;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -39,11 +38,11 @@ import java.util.stream.Stream;
 
 public abstract class ClusterTestBase extends RavenTestDriver implements CleanCloseable {
 
-    private List<Closeable> _toDispose = new ArrayList<>();
+    private final List<Closeable> _toDispose = new ArrayList<>();
 
     private static class TestCloudServiceLocator extends RavenServerLocator {
 
-        private static Map<String, String> _defaultParams = new HashMap<>();
+        private static final Map<String, String> _defaultParams = new HashMap<>();
         private Map<String, String> _extraParams = new HashMap<>();
 
         static {
@@ -67,7 +66,7 @@ public abstract class ClusterTestBase extends RavenTestDriver implements CleanCl
         }
     }
 
-    private AtomicInteger dbCounter = new AtomicInteger(1);
+    private final AtomicInteger dbCounter = new AtomicInteger(1);
 
     protected String getDatabaseName() {
         return "db_" + dbCounter.incrementAndGet();
@@ -157,18 +156,16 @@ public abstract class ClusterTestBase extends RavenTestDriver implements CleanCl
             AdminJsConsoleOperation jsConsole = new AdminJsConsoleOperation(script);
             RavenCommand<JsonNode> command = jsConsole.getCommand(new DocumentConventions());
 
-            Reference<String> urlRef = new Reference<>();
             ServerNode serverNode = new ServerNode();
             serverNode.setUrl(targetNode.getUrl());
-            HttpRequestBase request = command.createRequest(serverNode, urlRef);
-            request.setURI(new URI(urlRef.value));
+            HttpUriRequestBase request = command.createRequest(serverNode);
 
             try (DocumentStore store = new DocumentStore(targetNode.url, "_")) {
                 store.initialize();
 
                 CloseableHttpClient httpClient = store.getRequestExecutor().getHttpClient();
 
-                CloseableHttpResponse response = command.send(httpClient, request);
+                ClassicHttpResponse response = command.send(httpClient, request);
 
                 if (response.getEntity() != null) {
                     return store.getConventions().getEntityMapper().readTree(response.getEntity().getContent());

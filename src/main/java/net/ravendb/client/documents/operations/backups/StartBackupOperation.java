@@ -4,18 +4,17 @@ import net.ravendb.client.documents.conventions.DocumentConventions;
 import net.ravendb.client.documents.operations.IMaintenanceOperation;
 import net.ravendb.client.http.RavenCommand;
 import net.ravendb.client.http.ServerNode;
-import net.ravendb.client.primitives.Reference;
-import org.apache.http.client.methods.HttpPost;
-import org.apache.http.client.methods.HttpRequestBase;
+import org.apache.hc.client5.http.classic.methods.HttpPost;
+import org.apache.hc.client5.http.classic.methods.HttpUriRequestBase;
 
 import java.io.IOException;
 
 public class StartBackupOperation implements IMaintenanceOperation<StartBackupOperationResult> {
 
-    private final boolean _isFullBackup;
+    private final Boolean _isFullBackup;
     private final long _taskId;
 
-    public StartBackupOperation(boolean isFullBackup, long taskId) {
+    public StartBackupOperation(Boolean isFullBackup, long taskId) {
         _isFullBackup = isFullBackup;
         _taskId = taskId;
     }
@@ -26,7 +25,7 @@ public class StartBackupOperation implements IMaintenanceOperation<StartBackupOp
     }
 
     private static class StartBackupCommand extends RavenCommand<StartBackupOperationResult> {
-        private final boolean _isFullBackup;
+        private final Boolean _isFullBackup;
         private final long _taskId;
 
         public StartBackupCommand(boolean isFullBackup, long taskId) {
@@ -42,12 +41,15 @@ public class StartBackupOperation implements IMaintenanceOperation<StartBackupOp
         }
 
         @Override
-        public HttpRequestBase createRequest(ServerNode node, Reference<String> url) {
-            url.value = node.getUrl() + "/databases/" + node.getDatabase()
-                    + "/admin/backup/database?isFullBackup=" + (_isFullBackup ? "true":"false")
-                    + "&taskId=" + _taskId;
+        public HttpUriRequestBase createRequest(ServerNode node) {
+            String url = node.getUrl() + "/databases/" + node.getDatabase()
+                    + "/admin/backup/database?taskId=" + _taskId;
 
-            return new HttpPost();
+            if (_isFullBackup != null) {
+                url += "&isFullBackup=" + (_isFullBackup ? "true": "false");
+            }
+
+            return new HttpPost(url);
         }
 
         @Override

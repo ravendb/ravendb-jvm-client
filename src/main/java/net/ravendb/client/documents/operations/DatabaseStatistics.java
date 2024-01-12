@@ -5,23 +5,11 @@ import net.ravendb.client.util.Size;
 import java.util.Arrays;
 import java.util.Date;
 
-public class DatabaseStatistics {
+public class DatabaseStatistics extends AbstractDatabaseStatistics<IndexInformation> {
 
     private Long lastDocEtag;
     private Long lastDatabaseEtag;
-    private int countOfIndexes;
-    private long countOfDocuments;
-    private long countOfRevisionDocuments;
-    private long countOfDocumentsConflicts;
-    private long countOfTombstones;
-    private long countOfConflicts;
-    private long countOfAttachments;
     private long countOfUniqueAttachments;
-    private long countOfCounterEntries;
-    private long countOfTimeSeriesSegments;
-
-    private IndexInformation[] indexes;
-
     private String databaseChangeVector;
     private String databaseId;
     private boolean is64Bit;
@@ -32,17 +20,9 @@ public class DatabaseStatistics {
     private int numberOfTransactionMergerQueueOperations;
 
     public IndexInformation[] getStaleIndexes() {
-        return Arrays.stream(indexes)
+        return Arrays.stream(getIndexes())
             .filter(x -> x.isStale())
             .toArray(IndexInformation[]::new);
-    }
-
-    public IndexInformation[] getIndexes() {
-        return indexes;
-    }
-
-    public void setIndexes(IndexInformation[] indexes) {
-        this.indexes = indexes;
     }
 
     public Long getLastDocEtag() {
@@ -61,84 +41,12 @@ public class DatabaseStatistics {
         this.lastDatabaseEtag = lastDatabaseEtag;
     }
 
-    public int getCountOfIndexes() {
-        return countOfIndexes;
-    }
-
-    public void setCountOfIndexes(int countOfIndexes) {
-        this.countOfIndexes = countOfIndexes;
-    }
-
-    public long getCountOfDocuments() {
-        return countOfDocuments;
-    }
-
-    public void setCountOfDocuments(long countOfDocuments) {
-        this.countOfDocuments = countOfDocuments;
-    }
-
-    public long getCountOfRevisionDocuments() {
-        return countOfRevisionDocuments;
-    }
-
-    public void setCountOfRevisionDocuments(long countOfRevisionDocuments) {
-        this.countOfRevisionDocuments = countOfRevisionDocuments;
-    }
-
-    public long getCountOfDocumentsConflicts() {
-        return countOfDocumentsConflicts;
-    }
-
-    public void setCountOfDocumentsConflicts(long countOfDocumentsConflicts) {
-        this.countOfDocumentsConflicts = countOfDocumentsConflicts;
-    }
-
-    public long getCountOfTombstones() {
-        return countOfTombstones;
-    }
-
-    public void setCountOfTombstones(long countOfTombstones) {
-        this.countOfTombstones = countOfTombstones;
-    }
-
-    public long getCountOfConflicts() {
-        return countOfConflicts;
-    }
-
-    public void setCountOfConflicts(long countOfConflicts) {
-        this.countOfConflicts = countOfConflicts;
-    }
-
-    public long getCountOfAttachments() {
-        return countOfAttachments;
-    }
-
-    public void setCountOfAttachments(long countOfAttachments) {
-        this.countOfAttachments = countOfAttachments;
-    }
-
     public long getCountOfUniqueAttachments() {
         return countOfUniqueAttachments;
     }
 
     public void setCountOfUniqueAttachments(long countOfUniqueAttachments) {
         this.countOfUniqueAttachments = countOfUniqueAttachments;
-    }
-
-    public long getCountOfCounterEntries() {
-        return countOfCounterEntries;
-    }
-
-    public void setCountOfCounterEntries(long countOfCounterEntries) {
-        this.countOfCounterEntries = countOfCounterEntries;
-    }
-
-    public long getCountOfTimeSeriesSegments() {
-        return countOfTimeSeriesSegments;
-    }
-
-    public void setCountOfTimeSeriesSegments(long countOfTimeSeriesSegments) {
-        this.countOfTimeSeriesSegments = countOfTimeSeriesSegments;
     }
 
     public String getDatabaseChangeVector() {

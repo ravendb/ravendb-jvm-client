@@ -7,15 +7,14 @@ import net.ravendb.client.http.RavenCommand;
 import net.ravendb.client.http.RavenCommandResponseType;
 import net.ravendb.client.http.ServerNode;
 import net.ravendb.client.json.ContentProviderHttpEntity;
-import net.ravendb.client.primitives.Reference;
 import net.ravendb.client.primitives.SharpEnum;
 import net.ravendb.client.serverwide.operations.IServerOperation;
 import net.ravendb.client.util.RaftIdGenerator;
 import org.apache.commons.io.IOUtils;
-import org.apache.http.client.methods.CloseableHttpResponse;
-import org.apache.http.client.methods.HttpPost;
-import org.apache.http.client.methods.HttpRequestBase;
-import org.apache.http.entity.ContentType;
+import org.apache.hc.client5.http.classic.methods.HttpPost;
+import org.apache.hc.client5.http.classic.methods.HttpUriRequestBase;
+import org.apache.hc.core5.http.ClassicHttpResponse;
+import org.apache.hc.core5.http.ContentType;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -49,16 +48,17 @@ public class CreateClientCertificateOperation implements IServerOperation<Certif
 
     @Override
     public RavenCommand<CertificateRawData> getCommand(DocumentConventions conventions) {
-        return new CreateClientCertificateCommand(_name, _permissions, _clearance, _password);
+        return new CreateClientCertificateCommand(conventions, _name, _permissions, _clearance, _password);
     }
 
     private static class CreateClientCertificateCommand extends RavenCommand<CertificateRawData> implements IRaftCommand {
+        private final DocumentConventions _conventions;
         private final String _name;
         private final Map<String, DatabaseAccess> _permissions;
         private final SecurityClearance _clearance;
         private final String _password;
 
-        public CreateClientCertificateCommand(String name, Map<String, DatabaseAccess> permissions, SecurityClearance clearance, String password) {
+        public CreateClientCertificateCommand(DocumentConventions conventions, String name, Map<String, DatabaseAccess> permissions, SecurityClearance clearance, String password) {
             super(CertificateRawData.class);
 
             if (name == null) {
@@ -68,6 +68,7 @@ public class CreateClientCertificateOperation implements IServerOperation<Certif
                 throw new IllegalArgumentException("Permission cannot be null");
             }
 
+            _conventions = conventions;
             _name = name;
             _permissions = permissions;
             _clearance = clearance;
@@ -82,10 +83,10 @@ public class CreateClientCertificateOperation implements IServerOperation<Certif
         }
 
         @Override
-        public HttpRequestBase createRequest(ServerNode node, Reference<String> url) {
-            url.value = node.getUrl() + "/admin/certificates";
+        public HttpUriRequestBase createRequest(ServerNode node) {
+            String url = node.getUrl() + "/admin/certificates";
 
-            HttpPost request = new HttpPost();
+            HttpPost request = new HttpPost(url);
 
             request.setEntity(new ContentProviderHttpEntity(outputStream -> {
                 try (JsonGenerator generator = createSafeJsonGenerator(outputStream)) {
@@ -105,15 +106,13 @@ public class CreateClientCertificateOperation implements IServerOperation<Certif
                     }
                     generator.writeEndObject();
                     generator.writeEndObject();
-                } catch (IOException e) {
-                    throw new RuntimeException(e);
                 }
-            }, ContentType.APPLICATION_JSON));
+            }, ContentType.APPLICATION_JSON, _conventions));
             return request;
         }
 
         @Override
-        public void setResponseRaw(CloseableHttpResponse response, InputStream stream) {
+        public void setResponseRaw(ClassicHttpResponse response, InputStream stream) {
             if (response == null) {
                 throwInvalidResponse();
             }

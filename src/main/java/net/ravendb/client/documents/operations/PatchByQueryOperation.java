@@ -10,18 +10,15 @@ import net.ravendb.client.http.HttpCache;
 import net.ravendb.client.http.RavenCommand;
 import net.ravendb.client.http.ServerNode;
 import net.ravendb.client.json.ContentProviderHttpEntity;
-import net.ravendb.client.primitives.Reference;
 import net.ravendb.client.util.TimeUtils;
 import org.apache.commons.lang3.ObjectUtils;
-import org.apache.http.client.methods.HttpPatch;
-import org.apache.http.client.methods.HttpRequestBase;
-import org.apache.http.entity.ContentType;
+import org.apache.hc.client5.http.classic.methods.HttpPatch;
+import org.apache.hc.client5.http.classic.methods.HttpUriRequestBase;
+import org.apache.hc.core5.http.ContentType;
 
 import java.io.IOException;
 
 public class PatchByQueryOperation implements IOperation<OperationIdResult> {
-
-    protected static IndexQuery DUMMY_QUERY = new IndexQuery();
 
     private final IndexQuery _queryToUpdate;
     private final QueryOperationOptions _options;
@@ -60,7 +57,7 @@ public class PatchByQueryOperation implements IOperation<OperationIdResult> {
         }
 
         @Override
-        public HttpRequestBase createRequest(ServerNode node, Reference<String> url) {
+        public HttpUriRequestBase createRequest(ServerNode node) {
             String path = node.getUrl() + "/databases/" + node.getDatabase() + "/queries?allowStale="
                     + _options.isAllowStale();
             if (_options.getMaxOpsPerSecond() != null) {
@@ -73,7 +70,11 @@ public class PatchByQueryOperation implements IOperation<OperationIdResult> {
                 path += "&staleTimeout=" + TimeUtils.durationToTimeSpan(_options.getStaleTimeout());
             }
 
-            HttpPatch request = new HttpPatch();
+            if (_options.isIgnoreMaxStepsForScript()) {
+                path += "&ignoreMaxStepsForScript=" + _options.isIgnoreMaxStepsForScript();
+            }
+
+            HttpPatch request = new HttpPatch(path);
             request.setEntity(new ContentProviderHttpEntity(outputStream -> {
                 try (JsonGenerator generator = createSafeJsonGenerator(outputStream)) {
                     generator.writeStartObject();
@@ -82,13 +83,8 @@ public class PatchByQueryOperation implements IOperation<OperationIdResult> {
                     JsonExtensions.writeIndexQuery(generator, _conventions, _queryToUpdate);
 
                     generator.writeEndObject();
-                } catch (IOException e) {
-                    throw new RuntimeException(e);
                 }
-            }, ContentType.APPLICATION_JSON));
-
-            url.value = path;
-
+            }, ContentType.APPLICATION_JSON, _conventions));
 
             return request;
         }

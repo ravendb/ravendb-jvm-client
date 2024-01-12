@@ -8,10 +8,9 @@ import net.ravendb.client.extensions.JsonExtensions;
 import net.ravendb.client.http.RavenCommand;
 import net.ravendb.client.http.ServerNode;
 import net.ravendb.client.json.ContentProviderHttpEntity;
-import net.ravendb.client.primitives.Reference;
-import org.apache.http.client.methods.HttpPost;
-import org.apache.http.client.methods.HttpRequestBase;
-import org.apache.http.entity.ContentType;
+import org.apache.hc.client5.http.classic.methods.HttpPost;
+import org.apache.hc.client5.http.classic.methods.HttpUriRequestBase;
+import org.apache.hc.core5.http.ContentType;
 
 import java.io.IOException;
 
@@ -56,22 +55,19 @@ public class ExplainQueryCommand extends RavenCommand<ExplainQueryCommand.Explai
     }
 
     @Override
-    public HttpRequestBase createRequest(ServerNode node, Reference<String> url) {
+    public HttpUriRequestBase createRequest(ServerNode node) {
         String path = node.getUrl() + "/databases/" +
                 node.getDatabase() +
                 "/queries?debug=explain";
 
-        HttpPost request = new HttpPost();
+        HttpPost request = new HttpPost(path);
 
         request.setEntity(new ContentProviderHttpEntity(outputStream -> {
             try (JsonGenerator generator = createSafeJsonGenerator(outputStream)) {
                 JsonExtensions.writeIndexQuery(generator, _conventions, _indexQuery);
-            } catch (IOException e) {
-                throw new RuntimeException(e);
             }
-        }, ContentType.APPLICATION_JSON));
+        }, ContentType.APPLICATION_JSON, _conventions));
 
-        url.value = path;
         return request;
     }
 

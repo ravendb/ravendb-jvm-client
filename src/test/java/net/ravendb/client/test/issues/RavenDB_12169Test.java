@@ -90,9 +90,7 @@ public class RavenDB_12169Test extends RemoteTestBase {
                         null, BatchPatchCommandData.IdAndChangeVector.create(c2.getId(),
                         "invalidCV")));
 
-                assertThatThrownBy(() -> {
-                    session.saveChanges();
-                }).isExactlyInstanceOf(ConcurrencyException.class);
+                assertThatThrownBy(session::saveChanges).isExactlyInstanceOf(ConcurrencyException.class);
             }
 
             try (IDocumentSession session = store.openSession()) {

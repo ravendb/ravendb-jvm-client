@@ -9,6 +9,7 @@ public class GetConflictsResult {
     private String id;
     private Conflict[] results;
     private long largestEtag;
+    private long totalResults;
 
     public String getId() {
         return id;
@@ -32,6 +33,14 @@ public class GetConflictsResult {
 
     public void setLargestEtag(long largestEtag) {
         this.largestEtag = largestEtag;
+    }
+
+    public long getTotalResults() {
+        return totalResults;
+    }
+
+    public void setTotalResults(long totalResults) {
+        this.totalResults = totalResults;
     }
 
     public static class Conflict {

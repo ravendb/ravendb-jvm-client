@@ -8,13 +8,11 @@ import net.ravendb.client.http.IRaftCommand;
 import net.ravendb.client.http.ServerNode;
 import net.ravendb.client.http.VoidRavenCommand;
 import net.ravendb.client.json.ContentProviderHttpEntity;
-import net.ravendb.client.primitives.Reference;
 import net.ravendb.client.util.RaftIdGenerator;
-import org.apache.http.client.methods.HttpPut;
-import org.apache.http.client.methods.HttpRequestBase;
-import org.apache.http.entity.ContentType;
+import org.apache.hc.client5.http.classic.methods.HttpPut;
+import org.apache.hc.client5.http.classic.methods.HttpUriRequestBase;
+import org.apache.hc.core5.http.ContentType;
 
-import java.io.IOException;
 import java.util.Map;
 
 public class PutDatabaseSettingsOperation implements IVoidMaintenanceOperation {
@@ -37,18 +35,20 @@ public class PutDatabaseSettingsOperation implements IVoidMaintenanceOperation {
 
     @Override
     public VoidRavenCommand getCommand(DocumentConventions conventions) {
-        return new PutDatabaseConfigurationSettingsCommand(_configurationSettings, _databaseName);
+        return new PutDatabaseConfigurationSettingsCommand(conventions, _configurationSettings, _databaseName);
     }
 
     private static class PutDatabaseConfigurationSettingsCommand extends VoidRavenCommand implements IRaftCommand {
 
         private final ObjectNode _configurationSettings;
         private final String _databaseName;
+        private final DocumentConventions _conventions;
 
-        public PutDatabaseConfigurationSettingsCommand(Map<String, String> configurationSettings, String databaseName) {
+        public PutDatabaseConfigurationSettingsCommand(DocumentConventions conventions, Map<String, String> configurationSettings, String databaseName) {
             if (databaseName == null) {
                 throw new IllegalArgumentException("DatabaseName cannot be null");
             }
+            _conventions = conventions;
             _databaseName = databaseName;
 
             if (configurationSettings == null) {
@@ -69,17 +69,15 @@ public class PutDatabaseSettingsOperation implements IVoidMaintenanceOperation {
         }
 
         @Override
-        public HttpRequestBase createRequest(ServerNode node, Reference<String> url) {
-            url.value = node.getUrl() + "/databases/" + _databaseName + "/admin/configuration/settings";
+        public HttpUriRequestBase createRequest(ServerNode node) {
+            String url = node.getUrl() + "/databases/" + _databaseName + "/admin/configuration/settings";
 
-            HttpPut request = new HttpPut();
+            HttpPut request = new HttpPut(url);
             request.setEntity(new ContentProviderHttpEntity(outputStream -> {
                 try (JsonGenerator generator = createSafeJsonGenerator(outputStream)) {
                     generator.getCodec().writeValue(generator, _configurationSettings);
-                } catch (IOException e) {
-                    throw new RuntimeException(e);
                 }
-            }, ContentType.APPLICATION_JSON));
+            }, ContentType.APPLICATION_JSON, _conventions));
 
             return request;
         }

@@ -7,66 +7,54 @@ import net.ravendb.client.documents.operations.OperationIdResult;
 import net.ravendb.client.http.RavenCommand;
 import net.ravendb.client.http.ServerNode;
 import net.ravendb.client.json.ContentProviderHttpEntity;
-import net.ravendb.client.primitives.Reference;
-import org.apache.http.client.methods.HttpPost;
-import org.apache.http.client.methods.HttpRequestBase;
-import org.apache.http.entity.ContentType;
+import org.apache.hc.client5.http.classic.methods.HttpPost;
+import org.apache.hc.client5.http.classic.methods.HttpUriRequestBase;
+import org.apache.hc.core5.http.ContentType;
 
 import java.io.IOException;
 
 public class BackupOperation implements IMaintenanceOperation<OperationIdResult> {
     private final BackupConfiguration _backupConfiguration;
-    private final String _nodeTag;
 
     public BackupOperation(BackupConfiguration backupConfiguration) {
-        this(backupConfiguration, null);
-    }
-
-    public BackupOperation(BackupConfiguration backupConfiguration, String nodeTag) {
         if (backupConfiguration == null) {
             throw new IllegalArgumentException("BackupConfiguration cannot be null");
         }
 
         _backupConfiguration = backupConfiguration;
-        _nodeTag = nodeTag;
     }
 
     @Override
     public RavenCommand<OperationIdResult> getCommand(DocumentConventions conventions) {
-        return new BackupCommand(_backupConfiguration, _nodeTag);
+        return new BackupCommand(conventions, _backupConfiguration);
     }
 
     private static class BackupCommand extends RavenCommand<OperationIdResult> {
 
         private final BackupConfiguration _backupConfiguration;
+        private final DocumentConventions _conventions;
 
         @Override
         public boolean isReadRequest() {
             return false;
         }
 
-        public BackupCommand(BackupConfiguration backupConfiguration) {
-            this(backupConfiguration, null);
-        }
-
-        public BackupCommand(BackupConfiguration backupConfiguration, String nodeTag) {
+        public BackupCommand(DocumentConventions conventions, BackupConfiguration backupConfiguration) {
             super(OperationIdResult.class);
             _backupConfiguration = backupConfiguration;
-            selectedNodeTag = nodeTag;
+            _conventions = conventions;
         }
 
         @Override
-        public HttpRequestBase createRequest(ServerNode node, Reference<String> url) {
-            url.value = node.getUrl() + "/databases/" + node.getDatabase() + "/admin/backup";
+        public HttpUriRequestBase createRequest(ServerNode node) {
+            String url = node.getUrl() + "/databases/" + node.getDatabase() + "/admin/backup";
 
-            HttpPost request = new HttpPost();
+            HttpPost request = new HttpPost(url);
             request.setEntity(new ContentProviderHttpEntity(outputStream -> {
                 try (JsonGenerator generator = createSafeJsonGenerator(outputStream)) {
                     mapper.writeValue(generator, _backupConfiguration);
-                } catch (IOException e) {
-                    throw new RuntimeException(e);
                 }
-            }, ContentType.APPLICATION_JSON));
+            }, ContentType.APPLICATION_JSON, _conventions));
 
             return request;
         }

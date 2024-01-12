@@ -40,13 +40,15 @@ public class ChangesObservable<T, TConnectionState extends IChangesConnectionSta
     }
 
     public void send(T msg) {
-        try {
-            if (!_filter.apply(msg)) {
+        if (_filter != null) {
+            try {
+                if (!_filter.apply(msg)) {
+                    return;
+                }
+            } catch (Exception e) {
+                error(e);
                 return;
             }
-        } catch (Exception e) {
-            error(e);
-            return;
         }
 
         for (IObserver<T> subscriber : _subscribers.keySet()) {

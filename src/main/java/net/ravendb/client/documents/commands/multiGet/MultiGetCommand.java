@@ -14,11 +14,11 @@ import net.ravendb.client.json.ContentProviderHttpEntity;
 import net.ravendb.client.primitives.CleanCloseable;
 import net.ravendb.client.primitives.Reference;
 import net.ravendb.client.primitives.Tuple;
-import org.apache.http.HttpStatus;
-import org.apache.http.client.methods.CloseableHttpResponse;
-import org.apache.http.client.methods.HttpPost;
-import org.apache.http.client.methods.HttpRequestBase;
-import org.apache.http.entity.ContentType;
+import org.apache.hc.client5.http.classic.methods.HttpPost;
+import org.apache.hc.client5.http.classic.methods.HttpUriRequestBase;
+import org.apache.hc.core5.http.ClassicHttpResponse;
+import org.apache.hc.core5.http.ContentType;
+import org.apache.hc.core5.http.HttpStatus;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -31,7 +31,7 @@ public class MultiGetCommand extends RavenCommand<List<GetResponse>> implements 
     private final RequestExecutor _requestExecutor;
     private final HttpCache _httpCache;
     private final List<GetRequest> _commands;
-    private SessionInfo _sessionInfo;
+    private final SessionInfo _sessionInfo;
 
     private String _baseUrl;
     private Cached _cached;
@@ -67,9 +67,9 @@ public class MultiGetCommand extends RavenCommand<List<GetResponse>> implements 
     }
 
     @Override
-    public HttpRequestBase createRequest(ServerNode node, Reference<String> url) {
+    public HttpUriRequestBase createRequest(ServerNode node) {
         _baseUrl = node.getUrl() + "/databases/" + node.getDatabase();
-        url.value = _baseUrl + "/multi_get";
+        String url = _baseUrl + "/multi_get";
 
         if ((_sessionInfo == null || !_sessionInfo.isNoCaching()) && maybeReadAllFromCache(_requestExecutor.aggressiveCaching.get()))
         {
@@ -77,13 +77,10 @@ public class MultiGetCommand extends RavenCommand<List<GetResponse>> implements 
             return null; // aggressively cached
         }
 
-        url.value = _baseUrl + "/multi_get";
-
-        HttpPost request = new HttpPost();
+        HttpPost request = new HttpPost(url);
 
         request.setEntity(new ContentProviderHttpEntity(outputStream -> {
             try (JsonGenerator generator = createSafeJsonGenerator(outputStream)) {
-
                 generator.writeStartObject();
 
                 generator.writeFieldName("Requests");
@@ -116,10 +113,8 @@ public class MultiGetCommand extends RavenCommand<List<GetResponse>> implements 
                 }
                 generator.writeEndArray();
                 generator.writeEndObject();
-            } catch (IOException e) {
-                throw new RuntimeException(e);
             }
-        }, ContentType.APPLICATION_JSON));
+        }, ContentType.APPLICATION_JSON, _requestExecutor.getConventions()));
 
         return request;
     }
@@ -190,7 +185,7 @@ public class MultiGetCommand extends RavenCommand<List<GetResponse>> implements 
     }
 
     @Override
-    public void setResponseRaw(CloseableHttpResponse response, InputStream stream) {
+    public void setResponseRaw(ClassicHttpResponse response, InputStream stream) {
         try (JsonParser parser = mapper.getFactory().createParser(stream)) {
             try {
                 if (parser.nextToken() != JsonToken.START_OBJECT) {

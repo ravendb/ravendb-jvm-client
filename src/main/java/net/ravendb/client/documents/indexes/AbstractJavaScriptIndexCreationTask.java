@@ -1,5 +1,8 @@
 package net.ravendb.client.documents.indexes;
 
+import net.ravendb.client.Constants;
+import net.ravendb.client.primitives.SharpEnum;
+
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -95,13 +98,18 @@ public class AbstractJavaScriptIndexCreationTask extends AbstractIndexCreationTa
         if (getAdditionalAssemblies() != null) {
             _definition.setAdditionalAssemblies(getAdditionalAssemblies());
         } else {
-            _definition.setAdditionalAssemblies(new HashSet<AdditionalAssembly>());
+            _definition.setAdditionalAssemblies(new HashSet<>());
         }
         _definition.setConfiguration(getConfiguration());
         _definition.setLockMode(lockMode);
         _definition.setPriority(priority);
         _definition.setState(state);
         _definition.setDeploymentMode(deploymentMode);
+        _definition.setCompoundFields(compoundFieldsStrings);
+
+        if (searchEngineType != null) {
+            _definition.getConfiguration().put(Constants.Configuration.Indexes.INDEXING_STATIC_SEARCH_ENGINE_TYPE, SharpEnum.value(searchEngineType));
+        }
         return _definition;
     }
 }

@@ -6,12 +6,11 @@ import net.ravendb.client.documents.conventions.DocumentConventions;
 import net.ravendb.client.http.RavenCommand;
 import net.ravendb.client.http.ServerNode;
 import net.ravendb.client.json.ContentProviderHttpEntity;
-import net.ravendb.client.primitives.Reference;
 import net.ravendb.client.serverwide.CompactSettings;
 import net.ravendb.client.serverwide.operations.IServerOperation;
-import org.apache.http.client.methods.HttpPost;
-import org.apache.http.client.methods.HttpRequestBase;
-import org.apache.http.entity.ContentType;
+import org.apache.hc.client5.http.classic.methods.HttpPost;
+import org.apache.hc.client5.http.classic.methods.HttpUriRequestBase;
+import org.apache.hc.core5.http.ContentType;
 
 import java.io.IOException;
 
@@ -34,6 +33,7 @@ public class CompactDatabaseOperation implements IServerOperation<OperationIdRes
 
     private static class CompactDatabaseCommand extends RavenCommand<OperationIdResult> {
         private final ObjectNode _compactSettings;
+        private final DocumentConventions _conventions;
 
         public CompactDatabaseCommand(DocumentConventions conventions, CompactSettings compactSettings) {
             super(OperationIdResult.class);
@@ -46,22 +46,21 @@ public class CompactDatabaseOperation implements IServerOperation<OperationIdRes
                 throw new IllegalArgumentException("CompactSettings cannot be null");
             }
 
+            _conventions = conventions;
             _compactSettings = mapper.valueToTree(compactSettings);
         }
 
         @Override
-        public HttpRequestBase createRequest(ServerNode node, Reference<String> url) {
-            url.value = node.getUrl() + "/admin/compact";
+        public HttpUriRequestBase createRequest(ServerNode node) {
+            String url = node.getUrl() + "/admin/compact";
 
-            HttpPost request = new HttpPost();
+            HttpPost request = new HttpPost(url);
 
             request.setEntity(new ContentProviderHttpEntity(outputStream -> {
                 try (JsonGenerator generator = createSafeJsonGenerator(outputStream)) {
                     generator.writeTree(_compactSettings);
-                } catch (IOException e) {
-                    throw new RuntimeException(e);
                 }
-            }, ContentType.APPLICATION_JSON));
+            }, ContentType.APPLICATION_JSON, _conventions));
 
             return request;
         }

@@ -55,12 +55,10 @@ public class RavenDB_16334Test extends RemoteTestBase {
 
             // act
             try (IDocumentSession session = store.openSession()) {
-                session.advanced().waitForIndexesAfterSaveChanges(builder -> {
-                    builder
-                            .withTimeout(Duration.ofSeconds(15))
-                            .throwOnTimeout(true)
-                            .waitForIndexes(allIndexes ? null : new String[] { "MyIndex" });
-                });
+                session.advanced().waitForIndexesAfterSaveChanges(builder -> builder
+                        .withTimeout(Duration.ofSeconds(15))
+                        .throwOnTimeout(true)
+                        .waitForIndexes(allIndexes ? null : new String[] { "MyIndex" }));
 
                 RelatedDocument related = session.load(RelatedDocument.class, "related/A");
                 related.value = 42;

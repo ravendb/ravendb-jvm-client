@@ -22,8 +22,8 @@ public class DatesComparator {
     }
 
     public static class DateWithContext {
-        private Date _date;
-        private DateContext _context;
+        private final Date _date;
+        private final DateContext _context;
 
         public DateWithContext(Date date, DateContext context) {
             _date = date;

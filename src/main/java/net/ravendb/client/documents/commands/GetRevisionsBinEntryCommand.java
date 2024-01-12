@@ -3,42 +3,54 @@ package net.ravendb.client.documents.commands;
 import net.ravendb.client.http.RavenCommand;
 import net.ravendb.client.http.ServerNode;
 import net.ravendb.client.json.JsonArrayResult;
-import net.ravendb.client.primitives.Reference;
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.client.methods.HttpRequestBase;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.hc.client5.http.classic.methods.HttpUriRequestBase;
+import org.apache.hc.client5.http.classic.methods.HttpGet;
 
 import java.io.IOException;
 
 public class GetRevisionsBinEntryCommand extends RavenCommand<JsonArrayResult> {
 
-    private final long _etag;
+    private final int _start;
     private final Integer _pageSize;
+    private final String _continuationToken;
 
-    public GetRevisionsBinEntryCommand(long etag, Integer pageSize) {
+    public GetRevisionsBinEntryCommand(int start, Integer pageSize) {
         super(JsonArrayResult.class);
-        _etag = etag;
+        _start = start;
         _pageSize = pageSize;
+        _continuationToken = null;
+    }
+
+    public GetRevisionsBinEntryCommand(String continuationToken) {
+        super(JsonArrayResult.class);
+        _continuationToken = continuationToken;
+        _start = 0;
+        _pageSize = null;
     }
 
     @Override
-    public HttpRequestBase createRequest(ServerNode node, Reference<String> url) {
-        HttpGet request = new HttpGet();
-
+    public HttpUriRequestBase createRequest(ServerNode node) {
         StringBuilder path = new StringBuilder(node.getUrl());
         path
                 .append("/databases/")
                 .append(node.getDatabase())
-                .append("/revisions/bin?etag=")
-                .append(_etag);
+                .append("/revisions/bin?start=")
+                .append(_start);
 
         if (_pageSize != null) {
             path.append("&pageSize=")
                     .append(_pageSize);
         }
 
-        url.value = path.toString();
+        if (StringUtils.isNotEmpty(_continuationToken)) {
+            path.append("&continuationToken=")
+                    .append(_continuationToken);
+        }
 
-        return request;
+        String url = path.toString();
+
+        return new HttpGet(url);
     }
 
     @Override

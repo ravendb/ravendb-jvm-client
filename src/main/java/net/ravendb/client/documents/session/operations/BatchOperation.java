@@ -273,7 +273,7 @@ public class BatchOperation {
         }
 
         JsonNode attachmentsJson = documentInfo.getMetadata().get(Constants.Documents.Metadata.ATTACHMENTS);
-        if (attachmentsJson == null || attachmentsJson.isNull() || attachmentsJson.size() == 0) {
+        if (attachmentsJson == null || attachmentsJson.isNull() || attachmentsJson.isEmpty()) {
             return;
         }
 

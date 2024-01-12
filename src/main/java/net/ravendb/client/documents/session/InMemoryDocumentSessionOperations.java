@@ -13,7 +13,6 @@ import net.ravendb.client.documents.DocumentStoreBase;
 import net.ravendb.client.documents.IDocumentStore;
 import net.ravendb.client.documents.IdTypeAndName;
 import net.ravendb.client.documents.commands.GetDocumentsCommand;
-import net.ravendb.client.documents.commands.GetDocumentsResult;
 import net.ravendb.client.documents.commands.batches.*;
 import net.ravendb.client.documents.conventions.DocumentConventions;
 import net.ravendb.client.documents.conventions.IShouldIgnoreEntityChanges;
@@ -25,7 +24,6 @@ import net.ravendb.client.documents.session.operations.lazy.ILazyOperation;
 import net.ravendb.client.documents.session.timeSeries.TimeSeriesEntry;
 import net.ravendb.client.exceptions.documents.session.NonUniqueObjectException;
 import net.ravendb.client.extensions.JsonExtensions;
-import net.ravendb.client.http.RavenCommand;
 import net.ravendb.client.http.RequestExecutor;
 import net.ravendb.client.http.ServerNode;
 import net.ravendb.client.json.BatchCommandResult;
@@ -405,6 +403,13 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
         sessionInfo = new SessionInfo(this, options, _documentStore);
         transactionMode = options.getTransactionMode();
         disableAtomicDocumentWritesInClusterWideTransaction = options.getDisableAtomicDocumentWritesInClusterWideTransaction();
+
+        ShardedBatchBehavior shardedBatchBehavior = ObjectUtils.firstNonNull(options.getShardedBatchBehavior(), _requestExecutor.getConventions().sharding().getBatchBehavior());
+        ShardedBatchOptions shardedBatchOptions = ShardedBatchOptions.forBehavior(shardedBatchBehavior);
+        if (shardedBatchOptions != null) {
+            _saveChangesOptions = new BatchOptions();
+            _saveChangesOptions.setShardedOptions(shardedBatchOptions);
+        }
     }
 
     /**
@@ -947,9 +952,7 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
                 result.deferredCommands.add(deferredCommands.get(i));
             }
 
-            for (Map.Entry<IdTypeAndName, ICommandData> item : deferredCommandsMap.entrySet()) {
-                result.deferredCommandsMap.put(item.getKey(), item.getValue());
-            }
+            result.deferredCommandsMap.putAll(deferredCommandsMap);
         }
 
         for (ICommandData deferredCommand : result.getDeferredCommands()) {
@@ -1230,6 +1233,38 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
         prepareForEntitiesDeletion(null, changes);
 
         return changes;
+    }
+
+    /**
+     * Returns all changes for the specified entity. Including name of the field/property that changed, its old and new value and change type.
+     * @param entity Entity
+     * @return list of changes
+     */
+    public List<DocumentsChanges> whatChangedFor(Object entity) {
+        DocumentInfo documentInfo = documentsByEntity.get(entity);
+        if (documentInfo == null) {
+            return new ArrayList<>();
+        }
+
+        if (deletedEntities.contains(entity)) {
+            DocumentsChanges change = new DocumentsChanges();
+            change.setFieldNewValue("");
+            change.setFieldOldValue("");
+            change.setChange(DocumentsChanges.ChangeType.DOCUMENT_DELETED);
+
+            return Collections.singletonList(change);
+        }
+
+        updateMetadataModifications(documentInfo.getMetadataInstance(), documentInfo.getMetadata());
+        ObjectNode document = entityToJson.convertEntityToJson(documentInfo.getEntity(), documentInfo);
+
+        Map<String, List<DocumentsChanges>> changes = new HashMap<>();
+
+        if (!entityChanged(document, documentInfo, changes)) {
+            return new ArrayList<>();
+        }
+
+        return changes.get(documentInfo.getId());
     }
 
     public Map<String, DocumentsById.EntityInfo> getTrackedEntities() {
@@ -1592,7 +1627,7 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
             return;
         }
 
-        if (resultCounters == null || resultCounters.size() == 0) {
+        if (resultCounters == null || resultCounters.isEmpty()) {
             if (gotAll) {
                 for (String id : ids) {
                     setGotAllCountersForDocument(id);
@@ -1612,7 +1647,7 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
             return;
         }
 
-        if (resultCounters == null || resultCounters.size() == 0) {
+        if (resultCounters == null || resultCounters.isEmpty()) {
             setGotAllInCacheIfNeeded(countersToInclude);
         } else {
             registerCountersInternal(resultCounters, countersToInclude, true, false);
@@ -1639,7 +1674,7 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
                 gotAll = counters != null && counters.length == 0;
             }
 
-            if (fieldAndValue.getValue().size() == 0 && !gotAll) {
+            if (fieldAndValue.getValue().isEmpty() && !gotAll) {
                 Tuple<Boolean, Map<String, Long>> cache =
                         getCountersByDocId().get(fieldAndValue.getKey());
                 if (cache == null) {
@@ -2545,6 +2580,12 @@ public abstract class InMemoryDocumentSessionOperations implements CleanCloseabl
 
         if (name.contains("@")) {
             throw new IllegalArgumentException("Time Series from type Rollup cannot be Incremental");
+        }
+    }
+
+    public void assertNoIncludesInNonTrackingSession() {
+        if (noTracking) {
+            throw new IllegalStateException("This session does not track any entities, because of that registering includes is forbidden to avoid false expectations when later load operations are performed on those and no requests are being sent to the server. Please avoid any 'Include' operations during non-tracking session actions like load or query.");
         }
     }
 

@@ -47,21 +47,15 @@ public class ClusterTopology {
     public Map<String, String> getAllNodes() {
         Map<String, String> result = new HashMap<>();
         if (members != null) {
-            for (Map.Entry<String, String> entry : members.entrySet()) {
-                result.put(entry.getKey(), entry.getValue());
-            }
+            result.putAll(members);
         }
 
         if (promotables != null) {
-            for (Map.Entry<String, String> entry : promotables.entrySet()) {
-                result.put(entry.getKey(), entry.getValue());
-            }
+            result.putAll(promotables);
         }
 
         if (watchers != null) {
-            for (Map.Entry<String, String> entry : watchers.entrySet()) {
-                result.put(entry.getKey(), entry.getValue());
-            }
+            result.putAll(watchers);
         }
 
         return result;

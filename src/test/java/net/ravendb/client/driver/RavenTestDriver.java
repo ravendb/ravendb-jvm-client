@@ -18,14 +18,13 @@ import net.ravendb.client.documents.operations.revisions.RevisionsConfiguration;
 import net.ravendb.client.documents.session.IDocumentSession;
 import net.ravendb.client.exceptions.TimeoutException;
 import net.ravendb.client.http.RequestExecutor;
-import net.ravendb.client.primitives.CleanCloseable;
 import net.ravendb.client.primitives.Reference;
 import net.ravendb.client.util.UrlUtils;
 import org.apache.commons.io.IOUtils;
-import org.apache.http.HttpHost;
-import org.apache.http.client.config.RequestConfig;
-import org.apache.http.impl.client.CloseableHttpClient;
-import org.apache.http.impl.conn.PoolingHttpClientConnectionManager;
+import org.apache.hc.client5.http.impl.classic.CloseableHttpClient;
+import org.apache.hc.client5.http.impl.io.PoolingHttpClientConnectionManager;
+import org.apache.hc.client5.http.impl.routing.DefaultProxyRoutePlanner;
+import org.apache.hc.core5.http.HttpHost;
 
 import java.awt.*;
 import java.io.*;
@@ -101,18 +100,11 @@ public abstract class RavenTestDriver {
     protected static void reportInfo(String message) {
     }
 
-    public CleanCloseable withFiddler() {
-        RequestExecutor.requestPostProcessor = request -> {
-            HttpHost proxy = new HttpHost("127.0.0.1", 8888, "http");
-            RequestConfig requestConfig = request.getConfig();
-            if (requestConfig == null) {
-                requestConfig = RequestConfig.DEFAULT;
-            }
-            requestConfig = RequestConfig.copy(requestConfig).setProxy(proxy).build();
-            request.setConfig(requestConfig);
+    public void withFiddler() {
+        RequestExecutor.configureHttpClient = builder -> {
+            HttpHost proxy = new HttpHost("http", "127.0.0.1", 8888);
+            builder.setRoutePlanner(new DefaultProxyRoutePlanner(proxy));
         };
-
-        return () -> RequestExecutor.requestPostProcessor = null;
     }
 
     @SuppressWarnings("EmptyMethod")
@@ -260,7 +252,7 @@ public abstract class RavenTestDriver {
             Thread.sleep(32);
         }
 
-        throw new TimeoutException("Got no index error for more than " + timeout.toString());
+        throw new TimeoutException("Got no index error for more than " + timeout);
     }
 
     protected boolean waitForDocumentDeletion(IDocumentStore store, String id) throws InterruptedException {

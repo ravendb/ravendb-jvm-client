@@ -145,7 +145,7 @@ public class StreamOperation {
         streamQueryStatistics.setIndexTimestamp(NetISO8601Utils.parse(indexTimestamp));
     }
 
-    private class YieldStreamResults implements CloseableIterator<ObjectNode> {
+    private static class YieldStreamResults implements CloseableIterator<ObjectNode> {
 
         private final StreamResultResponse response;
         private final JsonParser parser;

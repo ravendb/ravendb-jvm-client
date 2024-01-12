@@ -1175,9 +1175,7 @@ public class SubscriptionsBasicTest extends RemoteTestBase {
 
             try (SubscriptionWorker<User> subscription = store.subscriptions().getSubscriptionWorker(User.class, new SubscriptionWorkerOptions(id))) {
                 BlockingArrayQueue<String> keys = new BlockingArrayQueue<>();
-                subscription.run(batch -> {
-                    batch.getItems().forEach(x -> keys.add(x.getResult().getName()));
-                });
+                subscription.run(batch -> batch.getItems().forEach(x -> keys.add(x.getResult().getName())));
 
                 String key = keys.poll(_reasonableWaitTime, TimeUnit.SECONDS);
                 assertThat(key)

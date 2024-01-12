@@ -45,8 +45,6 @@ public class Highlightings {
         }
 
         Map<String, String[]> result = highlightings.get(getFieldName());
-        for (Map.Entry<String, String[]> kvp : result.entrySet()) {
-            _highlightings.put(kvp.getKey(), kvp.getValue());
-        }
+        _highlightings.putAll(result);
     }
 }

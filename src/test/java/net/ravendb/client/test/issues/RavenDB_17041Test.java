@@ -60,12 +60,16 @@ public class RavenDB_17041Test extends RemoteTestBase {
                         .isOne();
                 assertThat(loaded.getRole())
                         .isEqualTo("role/1");
+                assertThat(session.advanced().getChangeVectorFor(loaded))
+                        .isNotNull();
 
                 loaded = session.load(RoleData.class, "role/2");
                 assertThat(session.advanced().getNumberOfRequests())
                         .isOne();
                 assertThat(loaded.getRole())
                         .isEqualTo("role/2");
+                assertThat(session.advanced().getChangeVectorFor(loaded))
+                        .isNotNull();
             }
         }
     }

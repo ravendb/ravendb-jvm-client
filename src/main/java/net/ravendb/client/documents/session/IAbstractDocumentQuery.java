@@ -85,13 +85,13 @@ public interface IAbstractDocumentQuery<T> {
      * Takes the specified count.
      * @param count Items to take
      */
-    void _take(int count);
+    void _take(long count);
 
     /**
      * Skips the specified count.
      * @param count Items to skip
      */
-    void _skip(int count);
+    void _skip(long count);
 
     /**
      * Matches value

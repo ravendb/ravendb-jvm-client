@@ -1,5 +1,7 @@
 package net.ravendb.client.documents.indexes;
 
+import net.ravendb.client.documents.dataArchival.ArchivedDataProcessingBehavior;
+
 import java.util.Date;
 import java.util.Map;
 
@@ -12,9 +14,9 @@ public class IndexStats {
     private Integer mapReferenceAttempts;
     private Integer mapReferenceSuccesses;
     private Integer mapReferenceErrors;
-    private Integer reduceAttempts;
-    private Integer reduceSuccesses;
-    private Integer reduceErrors;
+    private Long reduceAttempts;
+    private Long reduceSuccesses;
+    private Long reduceErrors;
     private String reduceOutputCollection;
     private String reduceOutputReferencePattern;
     private String patternReferencesCollectionName;
@@ -31,6 +33,7 @@ public class IndexStats {
     private IndexLockMode lockMode;
     private IndexType type;
     private SearchEngineType searchEngineType;
+    private ArchivedDataProcessingBehavior archivedDataProcessingBehavior;
     private IndexRunningStatus status;
     private long entriesCount;
     private int errorsCount;
@@ -150,7 +153,7 @@ public class IndexStats {
      * Indicates how many times database tried to index documents (reduce) using this index.
      * @return reduce attempts
      */
-    public Integer getReduceAttempts() {
+    public Long getReduceAttempts() {
         return reduceAttempts;
     }
 
@@ -158,7 +161,7 @@ public class IndexStats {
      * Indicates how many times database tried to index documents (reduce) using this index.
      * @param reduceAttempts sets the value
      */
-    public void setReduceAttempts(Integer reduceAttempts) {
+    public void setReduceAttempts(Long reduceAttempts) {
         this.reduceAttempts = reduceAttempts;
     }
 
@@ -166,7 +169,7 @@ public class IndexStats {
      * Indicates how many reducing attempts succeeded.
      * @return reduce success count
      */
-    public Integer getReduceSuccesses() {
+    public Long getReduceSuccesses() {
         return reduceSuccesses;
     }
 
@@ -174,7 +177,7 @@ public class IndexStats {
      * Indicates how many reducing attempts succeeded.
      * @param reduceSuccesses sets the value
      */
-    public void setReduceSuccesses(Integer reduceSuccesses) {
+    public void setReduceSuccesses(Long reduceSuccesses) {
         this.reduceSuccesses = reduceSuccesses;
     }
 
@@ -182,7 +185,7 @@ public class IndexStats {
      * Indicates how many reducing attempts failed.
      * @return reduce errors
      */
-    public Integer getReduceErrors() {
+    public Long getReduceErrors() {
         return reduceErrors;
     }
 
@@ -190,7 +193,7 @@ public class IndexStats {
      * Indicates how many reducing attempts failed.
      * @param reduceErrors Sets the value
      */
-    public void setReduceErrors(Integer reduceErrors) {
+    public void setReduceErrors(Long reduceErrors) {
         this.reduceErrors = reduceErrors;
     }
 
@@ -428,6 +431,14 @@ public class IndexStats {
 
     public void setSearchEngineType(SearchEngineType searchEngineType) {
         this.searchEngineType = searchEngineType;
+    }
+
+    public ArchivedDataProcessingBehavior getArchivedDataProcessingBehavior() {
+        return archivedDataProcessingBehavior;
+    }
+
+    public void setArchivedDataProcessingBehavior(ArchivedDataProcessingBehavior archivedDataProcessingBehavior) {
+        this.archivedDataProcessingBehavior = archivedDataProcessingBehavior;
     }
 
     public IndexRunningStatus getStatus() {

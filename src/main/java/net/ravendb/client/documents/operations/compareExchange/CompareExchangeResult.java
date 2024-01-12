@@ -1,8 +1,7 @@
 package net.ravendb.client.documents.operations.compareExchange;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.google.common.base.Defaults;
-import net.ravendb.client.Constants;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import net.ravendb.client.documents.conventions.DocumentConventions;
 
 import java.io.IOException;
@@ -23,24 +22,9 @@ public class CompareExchangeResult<T> {
         long index = indexJson.asLong();
 
         boolean successful = response.get("Successful").asBoolean();
-        JsonNode raw = response.get("Value");
+        ObjectNode raw = (ObjectNode) response.get("Value");
 
-        T result;
-        Object val = null;
-
-        if (raw != null && !raw.isNull()) {
-            val = raw.get(Constants.CompareExchange.OBJECT_FIELD_NAME);
-        }
-
-        if (val == null) {
-            CompareExchangeResult<T> exchangeResult = new CompareExchangeResult<>();
-            exchangeResult.index = index;
-            exchangeResult.value = Defaults.defaultValue(clazz);
-            exchangeResult.successful = successful;
-            return exchangeResult;
-        }
-
-        result = conventions.getEntityMapper().convertValue(val, clazz);
+        T result = CompareExchangeValueResultParser.deserializeObject(clazz, raw, conventions);
 
         CompareExchangeResult<T> exchangeResult = new CompareExchangeResult<>();
         exchangeResult.index = index;
