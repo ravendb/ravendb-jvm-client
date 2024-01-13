@@ -18,7 +18,6 @@ public class SubscriptionState {
     private Date lastClientConnectionTime;
     private long raftCommandIndex;
     private boolean disabled;
-    private Long raftCommandIndex;
 
     private ArchivedDataProcessingBehavior archivedDataProcessingBehavior;
     private SubscriptionShardingState shardingState;
@@ -77,14 +76,6 @@ public class SubscriptionState {
 
     public void setNodeTag(String nodeTag) {
         this.nodeTag = nodeTag;
-    }
-
-    public Long getRaftCommandIndex() {
-        return raftCommandIndex;
-    }
-
-    public void setRaftCommandIndex(Long raftCommandIndex) {
-        this.raftCommandIndex = raftCommandIndex;
     }
 
     public Date getLastBatchAckTime() {

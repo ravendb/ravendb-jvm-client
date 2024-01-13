@@ -27,12 +27,13 @@ jobs:
       fail-fast: false
 
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v4
 
     - name: Set up JDK ${{ matrix.java-version }}
-      uses: actions/setup-java@v1
+      uses: actions/setup-java@v4
       with:
         java-version: ${{ matrix.java-version }}
+        distribution: "zulu"
       
     - name: Download RavenDB Server
       run: wget -O RavenDB.tar.bz2 "https://hibernatingrhinos.com/downloads/RavenDB%20for%20Linux%20x64/latest?buildType=${{ env.RAVENDB_BUILD_TYPE }}&version=${{ matrix.serverVersion }}"
