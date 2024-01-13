@@ -63,6 +63,7 @@ public class SetLogsConfigurationOperation implements IVoidServerOperation {
         private Duration retentionTime;
         private Long retentionSize;
         private boolean compress;
+        private boolean persist;
 
         public Parameters(GetLogsConfigurationResult getLogs) {
             mode = getLogs.getMode();
@@ -104,6 +105,14 @@ public class SetLogsConfigurationOperation implements IVoidServerOperation {
 
         public void setMode(LogMode mode) {
             this.mode = mode;
+        }
+
+        public boolean isPersist() {
+            return persist;
+        }
+
+        public void setPersist(boolean persist) {
+            this.persist = persist;
         }
     }
 }

@@ -16,6 +16,7 @@ public class SubscriptionState {
     private String nodeTag;
     private Date lastBatchAckTime;
     private Date lastClientConnectionTime;
+    private long raftCommandIndex;
     private boolean disabled;
     private Long raftCommandIndex;
 
@@ -100,6 +101,14 @@ public class SubscriptionState {
 
     public void setLastClientConnectionTime(Date lastClientConnectionTime) {
         this.lastClientConnectionTime = lastClientConnectionTime;
+    }
+
+    public long getRaftCommandIndex() {
+        return raftCommandIndex;
+    }
+
+    public void setRaftCommandIndex(long raftCommandIndex) {
+        this.raftCommandIndex = raftCommandIndex;
     }
 
     public boolean isDisabled() {
