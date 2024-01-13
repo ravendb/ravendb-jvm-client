@@ -69,6 +69,7 @@ public class PutTrafficWatchConfigurationOperation implements IVoidServerOperati
         private List<String> httpMethods;
         private List<TrafficWatchChangeType> changeTypes;
         private List<String> certificateThumbprints;
+        private boolean persist;
 
         /**
          * @return Traffic Watch logging mode.
@@ -194,6 +195,20 @@ public class PutTrafficWatchConfigurationOperation implements IVoidServerOperati
          */
         public void setCertificateThumbprints(List<String> certificateThumbprints) {
             this.certificateThumbprints = certificateThumbprints;
+        }
+
+        /**
+         * @return Indicates if the configuration should be persisted to the configuration file
+         */
+        public boolean isPersist() {
+            return persist;
+        }
+
+        /**
+         * @param persist Indicates if the configuration should be persisted to the configuration file
+         */
+        public void setPersist(boolean persist) {
+            this.persist = persist;
         }
     }
 }

@@ -1743,7 +1743,7 @@ public class RequestExecutor implements CleanCloseable {
     }
 
     private CloseableHttpClient createClient() {
-        HttpClientBuilder httpClientBuilder = HttpClients
+        final HttpClientBuilder httpClientBuilder = HttpClients
                 .custom()
                 .setMaxConnPerRoute(30)
                 .setMaxConnTotal(40)

@@ -73,6 +73,10 @@ public class PatchByQueryOperation implements IOperation<OperationIdResult> {
                 path += "&staleTimeout=" + TimeUtils.durationToTimeSpan(_options.getStaleTimeout());
             }
 
+            if (_options.isIgnoreMaxStepsForScript()) {
+                path += "&ignoreMaxStepsForScript=" + _options.isIgnoreMaxStepsForScript();
+            }
+
             HttpPatch request = new HttpPatch();
             request.setEntity(new ContentProviderHttpEntity(outputStream -> {
                 try (JsonGenerator generator = createSafeJsonGenerator(outputStream)) {

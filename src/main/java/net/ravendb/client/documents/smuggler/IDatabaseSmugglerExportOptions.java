@@ -8,4 +8,7 @@ public interface IDatabaseSmugglerExportOptions extends IDatabaseSmugglerOptions
 
     void setCollections(List<String> collections);
 
+    ExportCompressionAlgorithm getCompressionAlgorithm();
+
+    void setCompressionAlgorithm(ExportCompressionAlgorithm compressionAlgorithm);
 }

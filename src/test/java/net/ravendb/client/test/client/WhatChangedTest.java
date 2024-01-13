@@ -1,12 +1,16 @@
 package net.ravendb.client.test.client;
 
 import net.ravendb.client.RemoteTestBase;
+import net.ravendb.client.documents.DocumentStore;
 import net.ravendb.client.documents.IDocumentStore;
 import net.ravendb.client.documents.session.DocumentsChanges;
 import net.ravendb.client.documents.session.IDocumentSession;
+import net.ravendb.client.documents.session.IMetadataDictionary;
 import net.ravendb.client.infrastructure.entities.User;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -350,6 +354,169 @@ public class WhatChangedTest extends RemoteTestBase {
         }
     }
 
+    @Test
+    public void what_Changed_For_Delete_After_Change_Value() throws Exception {
+        //RavenDB-13501
+
+        try (DocumentStore store = getDocumentStore()) {
+            try (IDocumentSession session = store.openSession()) {
+                String id = "ABC";
+                TestObject o = new TestObject();
+                o.setId(id);
+                o.setA("A");
+                o.setB("A");
+                session.store(o);
+                session.saveChanges();
+
+                assertThat(session.advanced().hasChanges())
+                        .isFalse();
+
+                o = session.load(TestObject.class, id);
+                o.setA("B");
+                o.setB("C");
+                session.delete(o);
+
+                List<DocumentsChanges> whatChangedFor = session.advanced().whatChangedFor(o);
+                assertThat(whatChangedFor.size() == 1 && whatChangedFor.get(0).getChange() == DocumentsChanges.ChangeType.DOCUMENT_DELETED)
+                        .isTrue();
+
+                session.saveChanges();
+
+                o = session.load(TestObject.class, id);
+                assertThat(o)
+                        .isNull();
+
+            }
+        }
+    }
+
+    @Test
+    @Disabled("We don't support whatChanged for metadata")
+    public void what_Changed_For_RemovingAndAddingSameAmountOfFieldsToObjectShouldWork() throws Exception {
+        try (DocumentStore store = getDocumentStore()) {
+            String docId = "d/1";
+            try (IDocumentSession session = store.openSession()) {
+                Doc d = new Doc();
+                session.store(d, docId);
+                IMetadataDictionary meta = session.advanced().getMetadataFor(d);
+
+                meta.put("Test-A", new String[] { "a", "a", "a" });
+                meta.put("Test-C", new String[] { "c", "c", "c" });
+                session.saveChanges();
+            }
+
+            try (IDocumentSession session = store.openSession()) {
+                Doc d = session.load(Doc.class, docId);
+                IMetadataDictionary meta = session.advanced().getMetadataFor(d);
+
+                meta.put("Test-A", new String[] { "b", "a", "c" });
+
+                List<DocumentsChanges> changes = session.advanced().whatChangedFor(d);
+                assertThat(changes)
+                        .hasSize(2);
+                assertThat(changes.get(0).getChange())
+                        .isEqualTo(DocumentsChanges.ChangeType.ARRAY_VALUE_CHANGED);
+                assertThat(changes.get(0).getFieldName())
+                        .isEqualTo("Test-A");
+                assertThat(changes.get(1).getChange())
+                        .isEqualTo(DocumentsChanges.ChangeType.ARRAY_VALUE_CHANGED);
+                assertThat(changes.get(1).getFieldName())
+                        .isEqualTo("Test-A");
+                session.saveChanges();
+            }
+
+            try (IDocumentSession session = store.openSession()) {
+                Doc d = session.load(Doc.class, docId);
+                IMetadataDictionary meta = session.advanced().getMetadataFor(d);
+
+                meta.remove("Test-A");
+
+                List<DocumentsChanges> changes = session.advanced().whatChangedFor(d);
+                assertThat(changes)
+                        .hasSize(1);
+                assertThat(changes.get(0).getChange())
+                        .isEqualTo(DocumentsChanges.ChangeType.REMOVED_FIELD);
+            }
+
+            try (IDocumentSession session = store.openSession()) {
+                Doc d = session.load(Doc.class, docId);
+                IMetadataDictionary meta = session.advanced().getMetadataFor(d);
+
+                meta.remove("Test-A");
+                meta.remove("Test-C");
+                meta.put("Test-B", new String[] { "b", "b", "b" });
+                meta.put("Test-D", new String[] { "d", "d", "d" });
+                List<DocumentsChanges> changes = session.advanced().whatChangedFor(d);
+
+                assertThat(changes)
+                        .hasSize(4);
+                assertThat(changes.stream().filter(x -> x.getFieldName().equals("Test-A")).findFirst().get().getChange())
+                        .isEqualTo(DocumentsChanges.ChangeType.REMOVED_FIELD);
+                assertThat(changes.stream().filter(x -> x.getFieldName().equals("Test-C")).findFirst().get().getChange())
+                        .isEqualTo(DocumentsChanges.ChangeType.REMOVED_FIELD);
+                assertThat(changes.stream().filter(x -> x.getFieldName().equals("Test-B")).findFirst().get().getChange())
+                        .isEqualTo(DocumentsChanges.ChangeType.NEW_FIELD);
+                assertThat(changes.stream().filter(x -> x.getFieldName().equals("Test-D")).findFirst().get().getChange())
+                        .isEqualTo(DocumentsChanges.ChangeType.NEW_FIELD);
+            }
+
+            try (IDocumentSession session = store.openSession()) {
+                Doc d = session.load(Doc.class, docId);
+                IMetadataDictionary meta = session.advanced().getMetadataFor(d);
+
+                meta.remove("Test-A");
+                meta.put("Test-B", new String[] { "b", "b", "b" });
+
+                List<DocumentsChanges> changes = session.advanced().whatChangedFor(d);
+                assertThat(changes.stream().filter(x -> x.getFieldName().equals("Test-A")).findFirst().get().getChange())
+                        .isEqualTo(DocumentsChanges.ChangeType.REMOVED_FIELD);
+                assertThat(changes.stream().filter(x -> x.getFieldName().equals("Test-B")).findFirst().get().getChange())
+                        .isEqualTo(DocumentsChanges.ChangeType.NEW_FIELD);
+            }
+        }
+    }
+
+    @Test
+    public void whatChanged_RemovedFieldFromDictionary() throws Exception {
+        try (DocumentStore store = getDocumentStore()) {
+            try (IDocumentSession session = store.openSession()) {
+                Entity entity = new Entity();
+                entity.getSomeData().put("Key", "Value");
+                session.store(entity, "entities/1");
+                session.saveChanges();
+            }
+
+            try (IDocumentSession session = store.openSession()) {
+                Entity entity = session.load(Entity.class, "entities/1");
+                entity.getSomeData().remove("Key");
+
+                List<DocumentsChanges> changes = session.advanced().whatChanged().get("entities/1");
+                assertThat(changes)
+                        .hasSize(1);
+                assertThat(changes.get(0).getChange())
+                        .isEqualTo(DocumentsChanges.ChangeType.REMOVED_FIELD);
+                assertThat(changes.get(0).getFieldName())
+                        .isEqualTo("Key");
+                assertThat(changes.get(0).getFieldOldValue().toString())
+                        .isEqualTo("\"Value\"");
+                assertThat(changes.get(0).getFieldNewValue())
+                        .isNull();
+            }
+        }
+    }
+
+    public static class Entity {
+        private Map<String, String> someData = new HashMap<>();
+
+        public Map<String, String> getSomeData() {
+            return someData;
+        }
+
+        public void setSomeData(Map<String, String> someData) {
+            this.someData = someData;
+        }
+    }
+
     public static class BasicName {
         private String name;
 
@@ -430,6 +597,48 @@ public class WhatChangedTest extends RemoteTestBase {
 
         public void setArray(Object[] array) {
             this.array = array;
+        }
+    }
+
+    public static class TestObject {
+        private String id;
+        private String a;
+        private String b;
+
+        public String getId() {
+            return id;
+        }
+
+        public void setId(String id) {
+            this.id = id;
+        }
+
+        public String getA() {
+            return a;
+        }
+
+        public void setA(String a) {
+            this.a = a;
+        }
+
+        public String getB() {
+            return b;
+        }
+
+        public void setB(String b) {
+            this.b = b;
+        }
+    }
+
+    public static class Doc {
+        private String id;
+
+        public String getId() {
+            return id;
+        }
+
+        public void setId(String id) {
+            this.id = id;
         }
     }
 }

@@ -94,6 +94,10 @@ public class ClusterRequestExecutor extends RequestExecutor {
             throw new IllegalArgumentException("Parameters cannot be null");
         }
 
+        if (_disableTopologyUpdates) {
+            return CompletableFuture.completedFuture(false);
+        }
+
         if (_disposed) {
             return CompletableFuture.completedFuture(false);
         }

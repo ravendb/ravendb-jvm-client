@@ -17,7 +17,7 @@ public class NodeSelector implements CleanCloseable {
 
     private final ExecutorService executorService;
     private Timer _updateFastestNodeTimer;
-    private NodeSelectorState _state;
+    protected NodeSelectorState _state;
 
     public Topology getTopology() {
         return _state.topology;
@@ -54,7 +54,7 @@ public class NodeSelector implements CleanCloseable {
             return false;
         }
 
-        NodeSelectorState state = new NodeSelectorState(topology);
+        NodeSelectorState state = new NodeSelectorState(topology, _state);
 
         _state = state;
 
@@ -63,14 +63,14 @@ public class NodeSelector implements CleanCloseable {
 
     public CurrentIndexAndNode getRequestedNode(String nodeTag) {
         NodeSelectorState state = _state;
-        List<ServerNode> serverNodes = state.nodes;
+        List<ServerNode> serverNodes = state.getNodes();
         for (int i = 0; i < serverNodes.size(); i++) {
             if (serverNodes.get(i).getClusterTag().equals(nodeTag)) {
                 return new CurrentIndexAndNode(i, serverNodes.get(i));
             }
         }
 
-        if (state.nodes.size() == 0) {
+        if (state.getNodes().isEmpty()) {
             throw new DatabaseDoesNotExistException("There are no nodes in the topology at all");
         }
         throw new RequestedNodeUnavailableException("Could not find requested node " + nodeTag);
@@ -87,7 +87,7 @@ public class NodeSelector implements CleanCloseable {
 
     public static CurrentIndexAndNode getPreferredNodeInternal(NodeSelectorState state) {
         AtomicInteger[] stateFailures = state.failures;
-        List<ServerNode> serverNodes = state.nodes;
+        List<ServerNode> serverNodes = state.getNodes();
         int len = Math.min(serverNodes.size(), stateFailures.length);
         for (int i = 0; i < len; i++) {
             if (stateFailures[i].get() == 0 && ServerNode.Role.MEMBER.equals(serverNodes.get(i).getServerRole())) {
@@ -105,13 +105,13 @@ public class NodeSelector implements CleanCloseable {
     private static CurrentIndexAndNode unlikelyEveryoneFaultedChoice(NodeSelectorState state) {
         // if there are all marked as failed, we'll chose the next (the one in CurrentNodeIndex)
         // one so the user will get an error (or recover :-) );
-        if (state.nodes.size() == 0) {
+        if (state.getNodes().isEmpty()) {
             throw new DatabaseDoesNotExistException("There are no nodes in the topology at all");
         }
 
 
         AtomicInteger[] stateFailures = state.failures;
-        List<ServerNode> serverNodes = state.nodes;
+        List<ServerNode> serverNodes = state.getNodes();
         int len = Math.min(serverNodes.size(), stateFailures.length);
 
         for (int i = 0; i < len; i++) {
@@ -133,14 +133,14 @@ public class NodeSelector implements CleanCloseable {
         int index = Math.abs(sessionId % state.topology.getNodes().size());
 
         for (int i = index; i < state.failures.length; i++) {
-            if (state.failures[i].get() == 0 && state.nodes.get(i).getServerRole() == ServerNode.Role.MEMBER) {
-                return new CurrentIndexAndNode(i, state.nodes.get(i));
+            if (state.failures[i].get() == 0 && state.getNodes().get(i).getServerRole() == ServerNode.Role.MEMBER) {
+                return new CurrentIndexAndNode(i, state.getNodes().get(i));
             }
         }
 
         for (int i = 0; i < index; i++) {
-            if (state.failures[i].get() == 0 && state.nodes.get(i).getServerRole() == ServerNode.Role.MEMBER) {
-                return new CurrentIndexAndNode(i, state.nodes.get(i));
+            if (state.failures[i].get() == 0 && state.getNodes().get(i).getServerRole() == ServerNode.Role.MEMBER) {
+                return new CurrentIndexAndNode(i, state.getNodes().get(i));
             }
         }
 
@@ -149,30 +149,23 @@ public class NodeSelector implements CleanCloseable {
 
     public CurrentIndexAndNode getFastestNode() {
         NodeSelectorState state = _state;
-        if (state.failures[state.fastest].get() == 0 && state.nodes.get(state.fastest).getServerRole() == ServerNode.Role.MEMBER) {
-            return new CurrentIndexAndNode(state.fastest, state.nodes.get(state.fastest));
+        if (state.failures[state.fastest].get() == 0 && state.getNodes().get(state.fastest).getServerRole() == ServerNode.Role.MEMBER) {
+            return new CurrentIndexAndNode(state.fastest, state.getNodes().get(state.fastest));
         }
 
-        // if the fastest node has failures, we'll immediately schedule
-        // another run of finding who the fastest node is, in the meantime
-        // we'll just use the server preferred node or failover as usual
-
-        switchToSpeedTestPhase();
+        // until new fastest node is selected, we'll just use the server preferred node or failover as usual
+        scheduleSpeedTest();
         return getPreferredNode();
     }
 
     public void restoreNodeIndex(ServerNode node) {
         NodeSelectorState state = _state;
-        int nodeIndex = state.nodes.indexOf(node);
+        int nodeIndex = state.getNodes().indexOf(node);
         if (nodeIndex == -1) {
             return;
         }
 
         state.failures[nodeIndex].set(0);
-    }
-
-    protected static void throwEmptyTopology() {
-        throw new IllegalStateException("Empty database topology, this shouldn't happen.");
     }
 
     private void switchToSpeedTestPhase() {
@@ -202,15 +195,16 @@ public class NodeSelector implements CleanCloseable {
         if (index < 0 || index >= stateFastest.length)
             return;
 
-        if (node != state.nodes.get(index)) {
+        if (node != state.getNodes().get(index)) {
             return;
         }
 
         if (++stateFastest[index] >= 10) {
             selectFastest(state, index);
+            return;
         }
 
-        if (state.speedTestMode.incrementAndGet() <= state.nodes.size() * 10) {
+        if (state.speedTestMode.incrementAndGet() <= state.getNodes().size() * 10) {
             return;
         }
 
@@ -240,18 +234,24 @@ public class NodeSelector implements CleanCloseable {
         state.fastest = index;
         state.speedTestMode.set(0);
 
-        ensureFastestNodeTimerExists();
-        _updateFastestNodeTimer.change(Duration.ofMinutes(1), null);
+        scheduleSpeedTest();
     }
+
+    private final Object _timerCreationLocker = new Object();
 
     public void scheduleSpeedTest() {
-        ensureFastestNodeTimerExists();
-        switchToSpeedTestPhase();
-    }
+        if (_updateFastestNodeTimer != null) {
+            return;
+        }
 
-    private void ensureFastestNodeTimerExists() {
-        if (_updateFastestNodeTimer == null) {
-            _updateFastestNodeTimer = new Timer(this::switchToSpeedTestPhase, null, null, executorService);
+        synchronized (_timerCreationLocker) {
+            if (_updateFastestNodeTimer != null) {
+                return ;
+            }
+
+            switchToSpeedTestPhase();
+
+            _updateFastestNodeTimer = new Timer(this::switchToSpeedTestPhase, Duration.ofMinutes(1), Duration.ofMinutes(1), executorService);
         }
     }
 
@@ -264,7 +264,6 @@ public class NodeSelector implements CleanCloseable {
 
     private static class NodeSelectorState {
         public final Topology topology;
-        public final List<ServerNode> nodes;
         public final AtomicInteger[] failures;
         public final int[] fastestRecords;
         public int fastest;
@@ -273,7 +272,6 @@ public class NodeSelector implements CleanCloseable {
 
         public NodeSelectorState(Topology topology) {
             this.topology = topology;
-            this.nodes = topology.getNodes();
             this.failures = new AtomicInteger[topology.getNodes().size()];
             for (int i = 0; i < this.failures.length; i++) {
                 this.failures[i] = new AtomicInteger(0);
@@ -282,11 +280,44 @@ public class NodeSelector implements CleanCloseable {
             this.unlikelyEveryoneFaultedChoiceIndex = 0;
         }
 
+        public NodeSelectorState(Topology topology, NodeSelectorState prevState) {
+            this(topology);
+
+            if (prevState.fastest < 0 || prevState.fastest >= prevState.getNodes().size()) {
+                return ;
+            }
+
+            ServerNode fastestNode = prevState.getNodes().get(prevState.fastest);
+            int index = 0;
+            for (ServerNode node : topology.getNodes()) {
+                if (node.getClusterTag().equals(fastestNode.getClusterTag())) {
+                    fastest = index;
+                    break;
+                }
+                index++;
+            }
+
+            // fastest node was not found in the new topology. enable speed tests
+            if (index >= topology.getNodes().size()) {
+                speedTestMode.set(2);
+            } else {
+                // we might be in the process of finding fastest node when we reorder the nodes, we don't want the tests to stop until we reach 10
+                // otherwise, we want to stop the tests and they may be scheduled later on relevant topology change
+                if (fastest < prevState.fastestRecords.length && prevState.fastestRecords[fastest] < 10) {
+                    speedTestMode.set(prevState.speedTestMode.get());
+                }
+            }
+        }
+
+        public List<ServerNode> getNodes() {
+            return topology.getNodes();
+        }
+
         public CurrentIndexAndNode getNodeWhenEveryoneMarkedAsFaulted() {
             int index = unlikelyEveryoneFaultedChoiceIndex;
-            this.unlikelyEveryoneFaultedChoiceIndex = (unlikelyEveryoneFaultedChoiceIndex + 1) % nodes.size();
+            this.unlikelyEveryoneFaultedChoiceIndex = (unlikelyEveryoneFaultedChoiceIndex + 1) % getNodes().size();
 
-            return new CurrentIndexAndNode(index, nodes.get(index));
+            return new CurrentIndexAndNode(index, getNodes().get(index));
         }
     }
 

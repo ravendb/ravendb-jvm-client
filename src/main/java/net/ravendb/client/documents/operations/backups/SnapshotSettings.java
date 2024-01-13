@@ -1,8 +1,17 @@
 package net.ravendb.client.documents.operations.backups;
 
 public class SnapshotSettings {
+    private SnapshotBackupCompressionAlgorithm compressionAlgorithm;
     private CompressionLevel compressionLevel;
     private boolean excludeIndexes;
+
+    public SnapshotBackupCompressionAlgorithm getCompressionAlgorithm() {
+        return compressionAlgorithm;
+    }
+
+    public void setCompressionAlgorithm(SnapshotBackupCompressionAlgorithm compressionAlgorithm) {
+        this.compressionAlgorithm = compressionAlgorithm;
+    }
 
     public CompressionLevel getCompressionLevel() {
         return compressionLevel;

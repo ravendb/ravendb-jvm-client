@@ -11,6 +11,8 @@ public class QueryOperationOptions {
 
     private boolean allowStale;
 
+    private boolean ignoreMaxStepsForScript;
+
     private Duration staleTimeout;
 
     private boolean retrieveDetails;
@@ -29,6 +31,21 @@ public class QueryOperationOptions {
      */
     public void setAllowStale(boolean allowStale) {
         this.allowStale = allowStale;
+    }
+
+    /**
+     * Ignore the maximum number of statements a script can execute as defined in the server configuration.
+     */
+    public boolean isIgnoreMaxStepsForScript() {
+        return ignoreMaxStepsForScript;
+    }
+
+    /**
+     * Ignore the maximum number of statements a script can execute as defined in the server configuration.
+     * @param ignoreMaxStepsForScript steps
+     */
+    public void setIgnoreMaxStepsForScript(boolean ignoreMaxStepsForScript) {
+        this.ignoreMaxStepsForScript = ignoreMaxStepsForScript;
     }
 
     /**
