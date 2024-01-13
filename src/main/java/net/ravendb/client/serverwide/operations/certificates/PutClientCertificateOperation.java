@@ -23,8 +23,13 @@ public class PutClientCertificateOperation implements IVoidServerOperation {
     private final Map<String, DatabaseAccess> _permissions;
     private final String _name;
     private final SecurityClearance _clearance;
+    private final String _twoFactorAuthenticationKey;
 
     public PutClientCertificateOperation(String name, String certificate, Map<String, DatabaseAccess> permissions, SecurityClearance clearance) {
+        this(name, certificate, permissions, clearance, null);
+    }
+
+    public PutClientCertificateOperation(String name, String certificate, Map<String, DatabaseAccess> permissions, SecurityClearance clearance, String twoFactorAuthenticationKey) {
         if (certificate == null) {
             throw new IllegalArgumentException("Certificate cannot be null");
         }
@@ -41,20 +46,30 @@ public class PutClientCertificateOperation implements IVoidServerOperation {
         _permissions = permissions;
         _name = name;
         _clearance = clearance;
+        _twoFactorAuthenticationKey = twoFactorAuthenticationKey;
     }
 
     @Override
     public VoidRavenCommand getCommand(DocumentConventions conventions) {
-        return new PutClientCertificateCommand(_name, _certificate, _permissions, _clearance);
+        return new PutClientCertificateCommand(conventions, _name, _certificate, _permissions, _clearance, _twoFactorAuthenticationKey);
     }
 
     private static class PutClientCertificateCommand extends VoidRavenCommand implements IRaftCommand {
+        private final DocumentConventions _conventions;
+
         private final String _certificate;
         private final Map<String, DatabaseAccess> _permissions;
         private final String _name;
         private final SecurityClearance _clearance;
+        private final String _twoFactorAuthenticationKey;
 
-        public PutClientCertificateCommand(String name, String certificate, Map<String, DatabaseAccess> permissions, SecurityClearance clearance) {
+
+        public PutClientCertificateCommand(DocumentConventions conventions,
+                                           String name,
+                                           String certificate,
+                                           Map<String, DatabaseAccess> permissions,
+                                           SecurityClearance clearance,
+                                           String twoFactorAuthenticationKey) {
             if (certificate == null) {
                 throw new IllegalArgumentException("Certificate cannot be null");
             }
@@ -62,10 +77,12 @@ public class PutClientCertificateOperation implements IVoidServerOperation {
                 throw new IllegalArgumentException("Permissions cannot be null");
             }
 
+            _conventions = conventions;
             _certificate = certificate;
             _permissions = permissions;
             _name = name;
             _clearance = clearance;
+            _twoFactorAuthenticationKey = twoFactorAuthenticationKey;
         }
 
         @Override
@@ -86,6 +103,9 @@ public class PutClientCertificateOperation implements IVoidServerOperation {
                     generator.writeStringField("Name", _name);
                     generator.writeStringField("Certificate", _certificate);
                     generator.writeStringField("SecurityClearance", SharpEnum.value(_clearance));
+                    if (_twoFactorAuthenticationKey != null) {
+                        generator.writeStringField("TwoFactorAuthenticationKey", _twoFactorAuthenticationKey);
+                    }
 
                     generator.writeFieldName("Permissions");
                     generator.writeStartObject();
@@ -95,7 +115,6 @@ public class PutClientCertificateOperation implements IVoidServerOperation {
                     }
                     generator.writeEndObject();
                     generator.writeEndObject();
-
                 } catch (IOException e) {
                     throw new RuntimeException(e);
                 }

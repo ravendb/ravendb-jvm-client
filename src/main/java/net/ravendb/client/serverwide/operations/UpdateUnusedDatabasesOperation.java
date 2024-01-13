@@ -22,6 +22,10 @@ public class UpdateUnusedDatabasesOperation implements IVoidServerOperation {
     private final Parameters _parameters;
 
     public UpdateUnusedDatabasesOperation(String database, Set<String> unusedDatabaseIds) {
+        this(database, unusedDatabaseIds, false);
+    }
+
+    public UpdateUnusedDatabasesOperation(String database, Set<String> unusedDatabaseIds, boolean validate) {
         if (StringUtils.isEmpty(database)) {
             throw new IllegalArgumentException("Database cannot be null");
         }
@@ -29,6 +33,7 @@ public class UpdateUnusedDatabasesOperation implements IVoidServerOperation {
         _database = database;
         _parameters = new Parameters();
         _parameters.setDatabaseIds(unusedDatabaseIds);
+        _parameters.setValidate(validate);
     }
 
     @Override
@@ -48,6 +53,9 @@ public class UpdateUnusedDatabasesOperation implements IVoidServerOperation {
         @Override
         public HttpRequestBase createRequest(ServerNode node, Reference<String> url) {
             url.value = node.getUrl() + "/admin/databases/unused-ids?name=" + _database;
+            if (_parameters.validate) {
+                url.value += "&validate=true";
+            }
 
             HttpPost request = new HttpPost();
             request.setEntity(new ContentProviderHttpEntity(outputStream -> {
@@ -69,6 +77,7 @@ public class UpdateUnusedDatabasesOperation implements IVoidServerOperation {
 
     public static class Parameters {
         private Set<String> databaseIds;
+        private boolean validate;
 
         public Set<String> getDatabaseIds() {
             return databaseIds;
@@ -76,6 +85,14 @@ public class UpdateUnusedDatabasesOperation implements IVoidServerOperation {
 
         public void setDatabaseIds(Set<String> databaseIds) {
             this.databaseIds = databaseIds;
+        }
+
+        public boolean isValidate() {
+            return validate;
+        }
+
+        public void setValidate(boolean validate) {
+            this.validate = validate;
         }
     }
 }

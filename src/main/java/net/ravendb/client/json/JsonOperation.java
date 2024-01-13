@@ -43,7 +43,7 @@ public class JsonOperation {
             if (changes == null) {
                 return true;
             }
-            newChange(fieldPath, field, null, null, docChanges, DocumentsChanges.ChangeType.REMOVED_FIELD);
+            newChange(fieldPath, field, null, originalJson.get(field), docChanges, DocumentsChanges.ChangeType.REMOVED_FIELD);
         }
 
         for (String prop : newJsonProps) {
