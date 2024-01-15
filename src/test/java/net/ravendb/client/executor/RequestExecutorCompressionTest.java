@@ -43,8 +43,10 @@ public class RequestExecutorCompressionTest extends RemoteTestBase {
         requestInterceptor = (request, entityDetails, context) -> {
             if (requestLogList != null) {
 
-                if (request.getRequestUri().contains("/topology") || request.getRequestUri().contains("/node-info")) {
-                    // ignore topology updates
+                if (request.getRequestUri().contains("/topology")
+                        || request.getRequestUri().contains("/node-info")
+                        || request.getRequestUri().contains("/configuration/client")) {
+                    // ignore topology updates/client updates
                     return;
                 }
 
@@ -69,7 +71,9 @@ public class RequestExecutorCompressionTest extends RemoteTestBase {
                 try {
                     String requestUri = request.getUri().toString();
 
-                    if (requestUri.contains("/topology") || requestUri.contains("/node-info")) {
+                    if (requestUri.contains("/topology")
+                            || requestUri.contains("/node-info")
+                            || requestUri.contains("/configuration/client")) {
                         // ignore topology updates
                         return;
                     }
