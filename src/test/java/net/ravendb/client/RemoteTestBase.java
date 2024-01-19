@@ -230,7 +230,7 @@ public class RemoteTestBase extends RavenTestDriver implements CleanCloseable {
             globalServer = null;
         }
 
-        killProcess(p);
+        stopServerProcess(p);
     }
 
     public DocumentStore getDocumentStore() throws Exception {

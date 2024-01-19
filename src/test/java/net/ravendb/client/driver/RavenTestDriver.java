@@ -53,6 +53,8 @@ public abstract class RavenTestDriver {
 
     public static boolean debug;
 
+    private static Duration _gracefulShutdownTimeout = Duration.ofSeconds(8);
+
     protected void hookLeakedConnectionCheck(DocumentStore store) {
         store.addBeforeCloseListener((sender, event) -> {
             try {
@@ -306,14 +308,38 @@ public abstract class RavenTestDriver {
         } while (true);
     }
 
-    protected static void killProcess(Process p) {
+    public static void stopServerProcess(Process p) {
         if (p != null && p.isAlive()) {
-            reportInfo("Kill global server");
+
+            synchronized (p) {
+                if (!p.isAlive()) {
+                    return;
+                }
+
+                try {
+                    try (OutputStream stream = p.getOutputStream();
+                         PrintWriter writer = new PrintWriter(stream)) {
+                        writer.println("shutdown no-confirmation");
+                    }
+
+                    if (p.waitFor(_gracefulShutdownTimeout.toMillis(), TimeUnit.MILLISECONDS)) {
+                        return;
+                    }
+                } catch (Exception e) {
+                    // ignore
+                }
+
+                try {
+                    p.destroyForcibly().waitFor();
+                } catch (Exception e) {
+                    // ignore
+                }
+            }
 
             try {
                 p.destroyForcibly();
             } catch (Exception e) {
-                reportError(e);
+                // ignore
             }
         }
     }
