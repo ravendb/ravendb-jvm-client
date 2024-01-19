@@ -32,38 +32,42 @@ public class RavenDB_16367Test extends RemoteTestBase {
 
             store.maintenance().server().send(new CreateDatabaseOperation(new DatabaseRecord(databaseName1)));
 
-            DatabaseRecordWithEtag databaseRecord = store.maintenance().server().send(new GetDatabaseRecordOperation(databaseName1));
-            assertThat(databaseRecord.getLockMode())
-                    .isEqualTo(DatabaseRecord.DatabaseLockMode.UNLOCK);
+            try {
+                DatabaseRecordWithEtag databaseRecord = store.maintenance().server().send(new GetDatabaseRecordOperation(databaseName1));
+                assertThat(databaseRecord.getLockMode())
+                        .isEqualTo(DatabaseRecord.DatabaseLockMode.UNLOCK);
 
-            store.maintenance().server().send(new SetDatabasesLockOperation(databaseName1, DatabaseRecord.DatabaseLockMode.UNLOCK));
+                store.maintenance().server().send(new SetDatabasesLockOperation(databaseName1, DatabaseRecord.DatabaseLockMode.UNLOCK));
 
-            databaseRecord = store.maintenance().server().send(new GetDatabaseRecordOperation(databaseName1));
-            assertThat(databaseRecord.getLockMode())
-                    .isEqualTo(DatabaseRecord.DatabaseLockMode.UNLOCK);
+                databaseRecord = store.maintenance().server().send(new GetDatabaseRecordOperation(databaseName1));
+                assertThat(databaseRecord.getLockMode())
+                        .isEqualTo(DatabaseRecord.DatabaseLockMode.UNLOCK);
 
-            store.maintenance().server().send(new SetDatabasesLockOperation(databaseName1, DatabaseRecord.DatabaseLockMode.PREVENT_DELETES_ERROR));
+                store.maintenance().server().send(new SetDatabasesLockOperation(databaseName1, DatabaseRecord.DatabaseLockMode.PREVENT_DELETES_ERROR));
 
-            databaseRecord = store.maintenance().server().send(new GetDatabaseRecordOperation(databaseName1));
-            assertThat(databaseRecord.getLockMode())
-                    .isEqualTo(DatabaseRecord.DatabaseLockMode.PREVENT_DELETES_ERROR);
+                databaseRecord = store.maintenance().server().send(new GetDatabaseRecordOperation(databaseName1));
+                assertThat(databaseRecord.getLockMode())
+                        .isEqualTo(DatabaseRecord.DatabaseLockMode.PREVENT_DELETES_ERROR);
 
-            assertThatThrownBy(() -> store.maintenance().server().send(new DeleteDatabasesOperation(databaseName1, true)))
-                    .hasMessageContaining("cannot be deleted because of the set lock mode");
+                assertThatThrownBy(() -> store.maintenance().server().send(new DeleteDatabasesOperation(databaseName1, true)))
+                        .hasMessageContaining("cannot be deleted because of the set lock mode");
 
-            store.maintenance().server().send(new SetDatabasesLockOperation(databaseName1, DatabaseRecord.DatabaseLockMode.PREVENT_DELETES_IGNORE));
+                store.maintenance().server().send(new SetDatabasesLockOperation(databaseName1, DatabaseRecord.DatabaseLockMode.PREVENT_DELETES_IGNORE));
 
-            databaseRecord = store.maintenance().server().send(new GetDatabaseRecordOperation(databaseName1));
-            assertThat(databaseRecord.getLockMode())
-                    .isEqualTo(DatabaseRecord.DatabaseLockMode.PREVENT_DELETES_IGNORE);
+                databaseRecord = store.maintenance().server().send(new GetDatabaseRecordOperation(databaseName1));
+                assertThat(databaseRecord.getLockMode())
+                        .isEqualTo(DatabaseRecord.DatabaseLockMode.PREVENT_DELETES_IGNORE);
 
-            DeleteDatabaseResult result = store.maintenance().server().send(new DeleteDatabasesOperation(databaseName1, true));
-            assertThat(result.getRaftCommandIndex())
-                    .isEqualTo(-1);
+                DeleteDatabaseResult result = store.maintenance().server().send(new DeleteDatabasesOperation(databaseName1, true));
+                assertThat(result.getRaftCommandIndex())
+                        .isEqualTo(-1);
 
-            databaseRecord = store.maintenance().server().send(new GetDatabaseRecordOperation(databaseName1));
-            assertThat(databaseRecord)
-                    .isNotNull();
+                databaseRecord = store.maintenance().server().send(new GetDatabaseRecordOperation(databaseName1));
+                assertThat(databaseRecord)
+                        .isNotNull();
+            } finally {
+                store.maintenance().server().send(new DeleteDatabasesOperation(databaseName1, true));
+            }
         }
     }
 
