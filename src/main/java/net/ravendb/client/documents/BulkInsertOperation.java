@@ -253,7 +253,7 @@ public class BulkInsertOperation extends BulkInsertOperationBase<Object> impleme
             _inProgressCommand = CommandType.NONE;
             _writer.write("{\"Type\":\"HeartBeat\"}");
 
-            _writer.flushIfNeeded(true);
+            flushIfNeeded(true);
             _writer._requestBodyStream.flush();
         } catch (Exception e) {
             throw new RuntimeException(e);
@@ -412,7 +412,7 @@ public class BulkInsertOperation extends BulkInsertOperationBase<Object> impleme
             }
 
             _writer.write("}");
-            _writer.flushIfNeeded();
+            flushIfNeeded(false);
         } catch (Exception e) {
             handleErrors(id, e);
         }
@@ -671,6 +671,16 @@ public class BulkInsertOperation extends BulkInsertOperationBase<Object> impleme
         }
     }
 
+
+    private void flushIfNeeded(boolean force) throws IOException, ExecutionException, InterruptedException {
+        if (new Date().getTime() - _lastWriteToStream.getTime() < _heartbeatCheckInterval.toMillis()) {
+            _lastWriteToStream = new Date();
+            force = true;
+        }
+
+        _writer.flushIfNeeded(force);
+    }
+
     private static class CountersBulkInsertOperation {
         private final BulkInsertOperation _operation;
         private String _id;
@@ -689,8 +699,6 @@ public class BulkInsertOperation extends BulkInsertOperationBase<Object> impleme
         public void increment(String id, String name, long delta) {
             try (CleanCloseable check = _operation.concurrencyCheck()) {
                 try {
-                    _operation._lastWriteToStream = new Date();
-
                     _operation.executeBeforeStore();
 
                     if (_operation._inProgressCommand == CommandType.TIME_SERIES) {
@@ -735,7 +743,7 @@ public class BulkInsertOperation extends BulkInsertOperationBase<Object> impleme
                     _operation._writer.write(String.valueOf(delta));
                     _operation._writer.write("}");
 
-                    _operation._writer.flushIfNeeded();
+                    _operation.flushIfNeeded(false);
                 } catch (Exception e) {
                     _operation.handleErrors(_id, e);
                 }
@@ -835,7 +843,7 @@ public class BulkInsertOperation extends BulkInsertOperationBase<Object> impleme
 
                     _operation._writer.write("]");
 
-                    _operation._writer.flushIfNeeded();
+                    _operation.flushIfNeeded(false);
                 } catch (Exception e) {
                     _operation.handleErrors(_id, e);
                 }
@@ -974,10 +982,10 @@ public class BulkInsertOperation extends BulkInsertOperationBase<Object> impleme
                     _operation._writer.write("\",\"ContentLength\":");
                     _operation._writer.write(String.valueOf(bytes.length));
                     _operation._writer.write("}");
-                    _operation._writer.flushIfNeeded();
+                    _operation.flushIfNeeded(false);
 
                     _operation._writer.write(bytes);
-                    _operation._writer.flushIfNeeded();
+                    _operation.flushIfNeeded(false);
                 } catch (Exception e) {
                     _operation.handleErrors(id, e);
                 }
