@@ -9,10 +9,7 @@ import net.ravendb.client.documents.session.IDocumentSession;
 import net.ravendb.client.infrastructure.samples.Genre;
 import net.ravendb.client.serverwide.DatabaseRecord;
 import net.ravendb.client.serverwide.DatabaseRecordWithEtag;
-import net.ravendb.client.serverwide.operations.AddDatabaseNodeOperation;
-import net.ravendb.client.serverwide.operations.CreateDatabaseOperation;
-import net.ravendb.client.serverwide.operations.DatabasePutResult;
-import net.ravendb.client.serverwide.operations.GetDatabaseRecordOperation;
+import net.ravendb.client.serverwide.operations.*;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -27,32 +24,38 @@ public class DatabasesTest extends RemoteTestBase {
             CreateDatabaseOperation databaseOperation = new CreateDatabaseOperation(dbRecord);
             store.maintenance().server().send(databaseOperation);
 
-            DisableDatabaseToggleResult toggleResult = store.maintenance().server().send(
-                    new ToggleDatabasesStateOperation("enableDisable", true));
+            try {
 
-            assertThat(toggleResult)
-                    .isNotNull();
-            assertThat(toggleResult.getName())
-                    .isNotNull();
 
-            DatabaseRecordWithEtag disabledDatabaseRecord = store.maintenance().server().send(new GetDatabaseRecordOperation("enableDisable"));
+                DisableDatabaseToggleResult toggleResult = store.maintenance().server().send(
+                        new ToggleDatabasesStateOperation("enableDisable", true));
 
-            assertThat(disabledDatabaseRecord.isDisabled())
-                    .isTrue();
+                assertThat(toggleResult)
+                        .isNotNull();
+                assertThat(toggleResult.getName())
+                        .isNotNull();
 
-            // now enable database
+                DatabaseRecordWithEtag disabledDatabaseRecord = store.maintenance().server().send(new GetDatabaseRecordOperation("enableDisable"));
 
-            toggleResult = store.maintenance().server().send(
-                    new ToggleDatabasesStateOperation("enableDisable", false));
-            assertThat(toggleResult)
-                    .isNotNull();
-            assertThat(toggleResult.getName())
-                    .isNotNull();
+                assertThat(disabledDatabaseRecord.isDisabled())
+                        .isTrue();
 
-            DatabaseRecordWithEtag enabledDatabaseRecord = store.maintenance().server().send(new GetDatabaseRecordOperation("enableDisable"));
+                // now enable database
 
-            assertThat(enabledDatabaseRecord.isDisabled())
-                    .isFalse();
+                toggleResult = store.maintenance().server().send(
+                        new ToggleDatabasesStateOperation("enableDisable", false));
+                assertThat(toggleResult)
+                        .isNotNull();
+                assertThat(toggleResult.getName())
+                        .isNotNull();
+
+                DatabaseRecordWithEtag enabledDatabaseRecord = store.maintenance().server().send(new GetDatabaseRecordOperation("enableDisable"));
+
+                assertThat(enabledDatabaseRecord.isDisabled())
+                        .isFalse();
+            } finally {
+                store.maintenance().server().send(new DeleteDatabasesOperation(dbRecord.getDatabaseName(), true));
+            }
         }
     }
 

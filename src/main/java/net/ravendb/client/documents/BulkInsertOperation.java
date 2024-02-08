@@ -353,8 +353,6 @@ public class BulkInsertOperation extends BulkInsertOperationBase<Object> impleme
 
     public void store(Object entity, String id, IMetadataDictionary metadata) {
         try (CleanCloseable check = concurrencyCheck()) {
-            _lastWriteToStream = new Date();
-
             verifyValidId(id);
 
             executeBeforeStore();
@@ -789,7 +787,6 @@ public class BulkInsertOperation extends BulkInsertOperationBase<Object> impleme
         protected void appendInternal(Date timestamp, Collection<Double> values, String tag) {
             try (CleanCloseable check = _operation.concurrencyCheck()) {
                 try {
-                    _operation._lastWriteToStream = new Date();
                     _operation.executeBeforeStore();
 
                     if (_first) {
@@ -955,7 +952,6 @@ public class BulkInsertOperation extends BulkInsertOperationBase<Object> impleme
 
         public void store(String id, String name, byte[] bytes, String contentType) {
             try (CleanCloseable check = _operation.concurrencyCheck()) {
-                _operation._lastWriteToStream = new Date();
                 _operation.endPreviousCommandIfNeeded();
 
                 _operation.executeBeforeStore();

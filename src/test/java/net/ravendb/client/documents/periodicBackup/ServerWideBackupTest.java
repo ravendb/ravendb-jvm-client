@@ -10,6 +10,7 @@ import net.ravendb.client.infrastructure.DisabledOnPullRequest;
 import net.ravendb.client.serverwide.DatabaseRecord;
 import net.ravendb.client.serverwide.DatabaseRecordWithEtag;
 import net.ravendb.client.serverwide.operations.CreateDatabaseOperation;
+import net.ravendb.client.serverwide.operations.DeleteDatabasesOperation;
 import net.ravendb.client.serverwide.operations.GetDatabaseRecordOperation;
 import net.ravendb.client.serverwide.operations.configuration.*;
 import net.ravendb.client.serverwide.operations.ongoingTasks.DeleteServerWideTaskOperation;
@@ -75,18 +76,22 @@ public class ServerWideBackupTest extends RemoteTestBase {
 
                 // new database includes all server-wide backups
                 String newDbName = store.getDatabase() + "-testDatabase";
-                store.maintenance().server().send(new CreateDatabaseOperation(new DatabaseRecord(newDbName)));
-                databaseRecord = store.maintenance().server().send(new GetDatabaseRecordOperation(newDbName));
-                assertThat(databaseRecord.getPeriodicBackups())
-                        .hasSize(3);
+                try {
+                    store.maintenance().server().send(new CreateDatabaseOperation(new DatabaseRecord(newDbName)));
+                    databaseRecord = store.maintenance().server().send(new GetDatabaseRecordOperation(newDbName));
+                    assertThat(databaseRecord.getPeriodicBackups())
+                            .hasSize(3);
 
-                // get by name
+                    // get by name
 
-                ServerWideBackupConfiguration backupConfiguration = store.maintenance().server()
-                        .send(new GetServerWideBackupConfigurationOperation("Backup w/o destinations"));
+                    ServerWideBackupConfiguration backupConfiguration = store.maintenance().server()
+                            .send(new GetServerWideBackupConfigurationOperation("Backup w/o destinations"));
 
-                assertThat(backupConfiguration)
-                        .isNotNull();
+                    assertThat(backupConfiguration)
+                            .isNotNull();
+                } finally {
+                    store.maintenance().server().send(new DeleteDatabasesOperation(newDbName, true));
+                }
             } finally {
                 cleanupServerWideBackups(store);
             }

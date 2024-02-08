@@ -71,7 +71,7 @@ public class RavenDB_7162Test extends RemoteTestBase {
 
         @Override
         public HttpUriRequestBase createRequest(ServerNode node) {
-            String url = node.getUrl() + "/test/delay?value=" + _value.toMillis();
+            String url = node.getUrl() + "/admin/test/delay?value=" + _value.toMillis();
 
             return new HttpGet(url);
         }
