@@ -407,8 +407,6 @@ public class BulkInsertOperation implements CleanCloseable {
 
     public void store(Object entity, String id, IMetadataDictionary metadata) {
         try (CleanCloseable check = concurrencyCheck()) {
-            _lastWriteToStream = new Date();
-
             verifyValidId(id);
 
             executeBeforeStore();
@@ -516,6 +514,12 @@ public class BulkInsertOperation implements CleanCloseable {
 
             final byte[] buffer = _backgroundWriterBacking.toByteArray();
             _asyncWrite = writeToRequestBodyStream(buffer);
+
+            if (new Date().getTime() - _lastWriteToStream.getTime() < _heartbeatCheckInterval.toMillis()) {
+                _asyncWrite.get();
+                _requestBodyStream.flush();
+                _lastWriteToStream = new Date();
+            }
         }
     }
 
@@ -827,8 +831,6 @@ public class BulkInsertOperation implements CleanCloseable {
                         TimeSeriesBulkInsert.throwAlreadyRunningTimeSeries();
                     }
 
-                    _operation._lastWriteToStream = new Date();
-
                     boolean isFirst = _id == null;
 
                     if (isFirst || !_id.equalsIgnoreCase(id)) {
@@ -921,7 +923,6 @@ public class BulkInsertOperation implements CleanCloseable {
 
 
                 try {
-                    _operation._lastWriteToStream = new Date();
                     _operation.executeBeforeStore();
 
                     if (_first) {
@@ -1087,7 +1088,6 @@ public class BulkInsertOperation implements CleanCloseable {
 
         public void store(String id, String name, byte[] bytes, String contentType) {
             try (CleanCloseable check = _operation.concurrencyCheck()) {
-                _operation._lastWriteToStream = new Date();
                 _operation.endPreviousCommandIfNeeded();
 
                 _operation.executeBeforeStore();
