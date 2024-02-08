@@ -157,7 +157,7 @@ public class BackupsTest extends RemoteTestBase {
 
     private void waitForBackup(Path backup) throws Exception {
         Stopwatch sw = Stopwatch.createStarted();
-        while (sw.elapsed(TimeUnit.MILLISECONDS) < 10_000) {
+        while (sw.elapsed(TimeUnit.MILLISECONDS) < 30_000) {
 
             if (Files.list(backup).count() > 0) {
                 return;

@@ -12,6 +12,7 @@ import net.ravendb.client.documents.operations.revisions.*;
 import net.ravendb.client.documents.session.IDocumentSession;
 import net.ravendb.client.documents.session.IMetadataDictionary;
 import net.ravendb.client.exceptions.RavenException;
+import net.ravendb.client.infrastructure.DisabledOnPullRequest;
 import net.ravendb.client.infrastructure.entities.Company;
 import net.ravendb.client.infrastructure.entities.User;
 import net.ravendb.client.json.JsonArrayResult;
@@ -24,6 +25,7 @@ import java.util.stream.Collectors;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@DisabledOnPullRequest
 public class RevisionsTest extends RemoteTestBase {
     @Test
     public void revisions() throws Exception {
