@@ -7,6 +7,7 @@ import net.ravendb.client.documents.operations.GetOngoingTaskInfoOperation;
 import net.ravendb.client.documents.operations.backups.*;
 import net.ravendb.client.documents.operations.backups.sharding.GetShardedPeriodicBackupStatusOperation;
 import net.ravendb.client.documents.operations.ongoingTasks.NextBackup;
+import net.ravendb.client.documents.operations.ongoingTasks.OngoingTask;
 import net.ravendb.client.documents.operations.ongoingTasks.OngoingTaskBackup;
 import net.ravendb.client.documents.operations.ongoingTasks.OngoingTaskType;
 import net.ravendb.client.infrastructure.DisabledOnPullRequest;
@@ -32,6 +33,8 @@ public class BackupsTest extends RemoteTestBase {
 
             try {
                 UpdatePeriodicBackupOperationResult backupOperationResult = configureBackup(BackupType.SNAPSHOT, backup, store);
+
+                waitForResponsibleNodeUpdate(store, backupOperationResult.getTaskId());
 
                 StartBackupOperation startBackupOperation = new StartBackupOperation(true, backupOperationResult.getTaskId());
                 StartBackupOperationResult send = store.maintenance().send(startBackupOperation);
@@ -96,6 +99,8 @@ public class BackupsTest extends RemoteTestBase {
             try {
                 UpdatePeriodicBackupOperationResult backupOperationResult = configureBackup(BackupType.BACKUP, backup, store);
 
+                waitForResponsibleNodeUpdate(store, backupOperationResult.getTaskId());
+
                 StartBackupOperation startBackupOperation = new StartBackupOperation(true, backupOperationResult.getTaskId());
                 StartBackupOperationResult send = store.maintenance().send(startBackupOperation);
                 long backupOperation = send.getOperationId();
@@ -153,6 +158,13 @@ public class BackupsTest extends RemoteTestBase {
             assertThat(myBackup.isEncrypted())
                     .isTrue();
         }
+    }
+
+    private void waitForResponsibleNodeUpdate(IDocumentStore store, long taskId) throws InterruptedException {
+        waitForValue(() -> {
+            OngoingTask task = store.maintenance().send(new GetOngoingTaskInfoOperation(taskId, OngoingTaskType.BACKUP));
+            return task.getResponsibleNode() != null && task.getResponsibleNode().getNodeTag() != null;
+        }, true);
     }
 
     private void waitForBackup(Path backup) throws Exception {
