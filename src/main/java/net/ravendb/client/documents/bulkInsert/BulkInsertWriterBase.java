@@ -52,11 +52,11 @@ public abstract class BulkInsertWriterBase implements Closeable {
         return _memoryBuffer;
     }
 
-    public void flushIfNeeded() throws IOException, ExecutionException, InterruptedException {
-        flushIfNeeded(false);
+    public boolean flushIfNeeded() throws IOException, ExecutionException, InterruptedException {
+        return flushIfNeeded(false);
     }
 
-    public void flushIfNeeded(boolean force) throws IOException, ExecutionException, InterruptedException {
+    public boolean flushIfNeeded(boolean force) throws IOException, ExecutionException, InterruptedException {
         if (_memoryBuffer.size() > _maxSizeInBuffer || _asyncWrite.isDone() || force) {
             _asyncWrite.get();
 
@@ -73,9 +73,12 @@ public abstract class BulkInsertWriterBase implements Closeable {
             onCurrentWriteStreamSet(_memoryBuffer);
 
             final byte[] buffer = _backgroundMemoryBuffer.toByteArray();
-            _asyncWrite = writeToStream(_requestBodyStream, buffer, _isInitialWrite);
+            _asyncWrite = writeToStream(_requestBodyStream, buffer, _isInitialWrite || force);
             _isInitialWrite = false;
+            return _isInitialWrite || force;
         }
+
+        return false;
     }
 
     protected void onCurrentWriteStreamSet(ByteArrayOutputStream baos) {

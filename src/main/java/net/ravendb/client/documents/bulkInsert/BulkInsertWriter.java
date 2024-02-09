@@ -11,14 +11,14 @@ public class BulkInsertWriter extends BulkInsertWriterBase {
         super(executorService);
     }
 
-    public void flushIfNeeded() throws IOException, ExecutionException, InterruptedException {
-        flushIfNeeded(false);
+    public boolean flushIfNeeded() throws IOException, ExecutionException, InterruptedException {
+        return flushIfNeeded(false);
     }
 
-    public void flushIfNeeded(boolean force) throws IOException, ExecutionException, InterruptedException {
+    public boolean flushIfNeeded(boolean force) throws IOException, ExecutionException, InterruptedException {
         _currentWriteStream.flush();
 
-        super.flushIfNeeded(force);
+        return super.flushIfNeeded(force);
     }
 
     public void write(byte[] bytes) throws IOException {

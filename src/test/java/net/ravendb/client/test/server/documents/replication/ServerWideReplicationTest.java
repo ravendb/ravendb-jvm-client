@@ -12,6 +12,7 @@ import net.ravendb.client.infrastructure.DisabledOnPullRequest;
 import net.ravendb.client.serverwide.DatabaseRecord;
 import net.ravendb.client.serverwide.DatabaseRecordWithEtag;
 import net.ravendb.client.serverwide.operations.CreateDatabaseOperation;
+import net.ravendb.client.serverwide.operations.DeleteDatabasesOperation;
 import net.ravendb.client.serverwide.operations.GetDatabaseRecordOperation;
 import net.ravendb.client.serverwide.operations.ongoingTasks.*;
 import org.junit.jupiter.api.Test;
@@ -52,32 +53,36 @@ public class ServerWideReplicationTest extends RemoteTestBase {
 
                 // the configuration is applied to new databases
                 String newDbName = store.getDatabase() + "-testDatabase";
-                store.maintenance().server().send(new CreateDatabaseOperation(new DatabaseRecord(newDbName)));
-                List<ExternalReplication> externalReplications = record1.getExternalReplications();
-                assertThat(externalReplications)
-                        .hasSize(1);
+                try {
+                    store.maintenance().server().send(new CreateDatabaseOperation(new DatabaseRecord(newDbName)));
+                    List<ExternalReplication> externalReplications = record1.getExternalReplications();
+                    assertThat(externalReplications)
+                            .hasSize(1);
 
-                DatabaseRecordWithEtag record2 = store.maintenance().server().send(new GetDatabaseRecordOperation(newDbName));
-                validateConfiguration(serverWideConfiguration, record2.getExternalReplications().get(0), newDbName);
+                    DatabaseRecordWithEtag record2 = store.maintenance().server().send(new GetDatabaseRecordOperation(newDbName));
+                    validateConfiguration(serverWideConfiguration, record2.getExternalReplications().get(0), newDbName);
 
-                // update the external replication configuration
+                    // update the external replication configuration
 
-                putConfiguration.setTopologyDiscoveryUrls(new String[]{store.getUrls()[0], "http://localhost:8080"});
-                putConfiguration.setName(serverWideConfiguration.getName());
+                    putConfiguration.setTopologyDiscoveryUrls(new String[]{store.getUrls()[0], "http://localhost:8080"});
+                    putConfiguration.setName(serverWideConfiguration.getName());
 
-                result = store.maintenance().server().send(new PutServerWideExternalReplicationOperation(putConfiguration));
-                serverWideConfiguration = store.maintenance().server().send(new GetServerWideExternalReplicationOperation(result.getName()));
-                validateServerWideConfiguration(serverWideConfiguration, putConfiguration);
+                    result = store.maintenance().server().send(new PutServerWideExternalReplicationOperation(putConfiguration));
+                    serverWideConfiguration = store.maintenance().server().send(new GetServerWideExternalReplicationOperation(result.getName()));
+                    validateServerWideConfiguration(serverWideConfiguration, putConfiguration);
 
-                record1 = store.maintenance().server().send(new GetDatabaseRecordOperation(store.getDatabase()));
-                assertThat(record1.getExternalReplications())
-                        .hasSize(1);
-                validateConfiguration(serverWideConfiguration, record1.getExternalReplications().get(0), store.getDatabase());
+                    record1 = store.maintenance().server().send(new GetDatabaseRecordOperation(store.getDatabase()));
+                    assertThat(record1.getExternalReplications())
+                            .hasSize(1);
+                    validateConfiguration(serverWideConfiguration, record1.getExternalReplications().get(0), store.getDatabase());
 
-                record2 = store.maintenance().server().send(new GetDatabaseRecordOperation(newDbName));
-                assertThat(record2.getExternalReplications())
-                        .hasSize(1);
-                validateConfiguration(serverWideConfiguration, record2.getExternalReplications().get(0), newDbName);
+                    record2 = store.maintenance().server().send(new GetDatabaseRecordOperation(newDbName));
+                    assertThat(record2.getExternalReplications())
+                            .hasSize(1);
+                    validateConfiguration(serverWideConfiguration, record2.getExternalReplications().get(0), newDbName);
+                } finally {
+                    store.maintenance().server().send(new DeleteDatabasesOperation(newDbName, true));
+                }
             } finally {
                 store.maintenance().server().send(new DeleteServerWideTaskOperation(serverWideConfiguration.getName(), OngoingTaskType.REPLICATION));
             }

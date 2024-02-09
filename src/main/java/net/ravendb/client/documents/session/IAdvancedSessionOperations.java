@@ -11,6 +11,9 @@ import java.util.Collection;
 import java.util.List;
 import java.util.function.Consumer;
 
+/**
+ * It gives the ability to construct queries with the usage of {@link IDocumentQuery} interface
+ */
 public interface IAdvancedSessionOperations extends IAdvancedDocumentSessionOperations, IDocumentQueryBuilder {
 
     /**

@@ -59,9 +59,9 @@ public interface IDocumentQueryBase<T, TSelf extends IDocumentQueryBase<T, TSelf
     TSelf includeExplanations(Reference<Explanations> explanations);
 
     /**
-     * Adds explanations of scores calculated for queried documents to the query result
-     * @param options Options
-     * @param explanations Output parameter
+     * Explanations gives context how document was matched by query and provide information about how the score was calculated.
+     * @param options Options Additional explanation configuration
+     * @param explanations Out parameter where explanations will be returned
      * @return Query instance
      */
     TSelf includeExplanations(ExplanationOptions options, Reference<Explanations> explanations);

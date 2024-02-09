@@ -93,7 +93,7 @@ public abstract class ClusterTestBase extends RavenTestDriver implements CleanCl
             Reference<Process> processReference = new Reference<>();
             IDocumentStore store = runServerInternal(new TestCloudServiceLocator(customSettings), processReference, null);
 
-            Runtime.getRuntime().addShutdownHook(new Thread(() -> killProcess(processReference.value)));
+            Runtime.getRuntime().addShutdownHook(new Thread(() -> stopServerProcess(processReference.value)));
 
             ClusterNode clusterNode = new ClusterNode();
             clusterNode.serverProcess = processReference.value;
@@ -245,7 +245,7 @@ public abstract class ClusterTestBase extends RavenTestDriver implements CleanCl
         public void close() {
             for (ClusterNode node : nodes) {
                 try {
-                    node.serverProcess.destroyForcibly();
+                    RavenTestDriver.stopServerProcess(node.serverProcess);
                 } catch (Exception e) {
                     //ignore
                 }
