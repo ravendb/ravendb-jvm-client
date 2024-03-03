@@ -21,6 +21,12 @@ public class SubscriptionBatch<T> extends SubscriptionBatchBase<T> {
         _generateEntityIdOnTheClient = new GenerateEntityIdOnTheClient(requestExecutor.getConventions(), entity -> { throw new IllegalStateException("Shouldn't be generating new ids here"); });
     }
 
+    @Override
+    void initialize(BatchFromServer batch) {
+        _sessionOpened = false;
+
+        super.initialize(batch);
+    }
 
     public IDocumentSession openSession() {
         SessionOptions sessionOptions = new SessionOptions();
