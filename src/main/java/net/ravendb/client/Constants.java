@@ -128,6 +128,7 @@ public class Constants {
 
     public static class Indexes {
         public static final String INDEXING_STATIC_SEARCH_ENGINE_TYPE = "Indexing.Static.SearchEngineType";
+        public static final String INDEXING_AUTO_SEARCH_ENGINE_TYPE = "Indexing.Auto.SearchEngineType";
     }
 
     public static class Identities {
