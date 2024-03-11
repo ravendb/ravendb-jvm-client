@@ -1,6 +1,8 @@
 package net.ravendb.client.primitives;
 
 import com.fasterxml.jackson.core.Version;
+import com.fasterxml.jackson.databind.cfg.MapperConfig;
+import com.fasterxml.jackson.databind.introspect.AnnotatedClass;
 import com.fasterxml.jackson.databind.introspect.JacksonAnnotationIntrospector;
 
 /**
@@ -10,13 +12,13 @@ import com.fasterxml.jackson.databind.introspect.JacksonAnnotationIntrospector;
  */
 public class SharpAwareJacksonAnnotationIntrospector extends JacksonAnnotationIntrospector {
 
-
     @Override
-    public String[] findEnumValues(Class<?> enumType, Enum<?>[] enumValues, String[] names) {
-        if (enumType.getAnnotation(UseSharpEnum.class) != null) {
+    public String[] findEnumValues(MapperConfig<?> config, AnnotatedClass annotatedClass, Enum<?>[] enumValues, String[] names) {
+        if (annotatedClass.getAnnotation(UseSharpEnum.class) != null) {
             return SharpEnum.values(enumValues);
         }
-        return super.findEnumValues(enumType, enumValues, names);
+
+        return super.findEnumValues(config, annotatedClass, enumValues, names);
     }
 
     @Override
