@@ -17,6 +17,7 @@ public class SharpAwareJacksonAnnotationIntrospector extends JacksonAnnotationIn
         if (annotatedClass.getAnnotation(UseSharpEnum.class) != null) {
             return SharpEnum.values(enumValues);
         }
+
         return super.findEnumValues(config, annotatedClass, enumValues, names);
     }
 
