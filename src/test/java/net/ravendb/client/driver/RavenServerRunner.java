@@ -34,7 +34,6 @@ public abstract class RavenServerRunner {
                 "--RunInMemory=true",
                 "--License.Eula.Accepted=true",
                 "--Setup.Mode=None",
-                "--Logs.Mode=None",
                 "--Testing.ParentProcessId=" + getProcessId("0")
         };
 

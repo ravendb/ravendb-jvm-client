@@ -2,6 +2,7 @@ package net.ravendb.client.test.issues;
 
 import net.ravendb.client.RemoteTestBase;
 import net.ravendb.client.documents.IDocumentStore;
+import net.ravendb.client.infrastructure.DisabledOn70Server;
 import net.ravendb.client.serverwide.operations.logs.GetLogsConfigurationOperation;
 import net.ravendb.client.serverwide.operations.logs.GetLogsConfigurationResult;
 import net.ravendb.client.serverwide.operations.logs.LogMode;
@@ -12,6 +13,7 @@ import java.time.Duration;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+@DisabledOn70Server
 public class RavenDB_11440Test extends RemoteTestBase {
 
     @Test
