@@ -371,7 +371,7 @@ public abstract class RavenTestDriver {
             Runtime runtime = Runtime.getRuntime();
             String osName = System.getProperty("os.name").toLowerCase();
             boolean isMacOs = osName.contains("mac") || osName.contains("darwin");
-
+            
             try {
                 if (isMacOs) {
                     runtime.exec("open " + url);
