@@ -105,39 +105,39 @@ public class ConnectionStringsTest extends RemoteTestBase {
                     .containsKey("r1")
                     .hasSize(1);
             assertThat(ravenOnly.getSqlConnectionStrings())
-                    .isEmpty();
+                    .isNullOrEmpty();
 
             GetConnectionStringsResult sqlOnly = store.maintenance().send(new GetConnectionStringsOperation("s1", ConnectionStringType.SQL));
             assertThat(sqlOnly.getRavenConnectionStrings())
-                    .isEmpty();
+                    .isNullOrEmpty();
             assertThat(sqlOnly.getSqlConnectionStrings())
                     .containsKey("s1")
                     .hasSize(1);
 
             GetConnectionStringsResult elasticOnly = store.maintenance().send(new GetConnectionStringsOperation("e1", ConnectionStringType.ELASTIC_SEARCH));
             assertThat(elasticOnly.getRavenConnectionStrings())
-                    .isEmpty();
+                    .isNullOrEmpty();
             assertThat(elasticOnly.getElasticSearchConnectionStrings())
                     .containsKey("e1")
                     .hasSize(1);
 
             GetConnectionStringsResult olapOnly = store.maintenance().send(new GetConnectionStringsOperation("o1", ConnectionStringType.OLAP));
             assertThat(olapOnly.getRavenConnectionStrings())
-                    .isEmpty();
+                    .isNullOrEmpty();
             assertThat(olapOnly.getOlapConnectionStrings())
                     .containsKey("o1")
                     .hasSize(1);
 
             GetConnectionStringsResult rabbitOnly = store.maintenance().send(new GetConnectionStringsOperation("r1", ConnectionStringType.QUEUE));
             assertThat(rabbitOnly.getRavenConnectionStrings())
-                    .isEmpty();
+                    .isNullOrEmpty();
             assertThat(rabbitOnly.getQueueConnectionStrings())
                     .containsKey("r1")
                     .hasSize(1);
 
             GetConnectionStringsResult kafkaOnly = store.maintenance().send(new GetConnectionStringsOperation("k1", ConnectionStringType.QUEUE));
             assertThat(kafkaOnly.getRavenConnectionStrings())
-                    .isEmpty();
+                    .isNullOrEmpty();
             assertThat(kafkaOnly.getQueueConnectionStrings())
                     .containsKey("k1")
                     .hasSize(1);
@@ -150,9 +150,9 @@ public class ConnectionStringsTest extends RemoteTestBase {
 
             GetConnectionStringsResult afterDelete = store.maintenance().send(new GetConnectionStringsOperation("s1", ConnectionStringType.SQL));
             assertThat(afterDelete.getRavenConnectionStrings())
-                    .isEmpty();
+                    .isNullOrEmpty();
             assertThat(afterDelete.getSqlConnectionStrings())
-                    .isEmpty();
+                    .isNullOrEmpty();
         }
     }
 }
