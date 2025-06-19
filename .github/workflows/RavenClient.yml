@@ -29,7 +29,7 @@ jobs:
     strategy:
       matrix:
         java-version: [8, 11, 14, 16, 17, 21]
-        serverVersion: ["6.0", "6.2", "7.0"]
+        serverVersion: ["6.2", "7.0", "7.1"]
       fail-fast: false
 
     steps:
