@@ -109,6 +109,8 @@ public class AbstractJavaScriptIndexCreationTask extends AbstractIndexCreationTa
 
         if (searchEngineType != null) {
             _definition.getConfiguration().put(Constants.Configuration.Indexes.INDEXING_STATIC_SEARCH_ENGINE_TYPE, SharpEnum.value(searchEngineType));
+        } else if (_definition.getFields() != null && _definition.getFields().values().stream().anyMatch(field -> field.getVector() != null)) {
+            _definition.getConfiguration().put(Constants.Configuration.Indexes.INDEXING_STATIC_SEARCH_ENGINE_TYPE, "Corax");
         }
         return _definition;
     }

@@ -4,9 +4,11 @@ import net.ravendb.client.Constants;
 import net.ravendb.client.documents.conventions.DocumentConventions;
 import net.ravendb.client.primitives.SharpEnum;
 
+
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+
 
 public class AbstractMultiMapIndexCreationTask extends AbstractGenericIndexCreationTask {
 
@@ -33,6 +35,7 @@ public class AbstractMultiMapIndexCreationTask extends AbstractGenericIndexCreat
         indexDefinitionBuilder.setSuggestionsOptions(indexSuggestions);
         indexDefinitionBuilder.setTermVectorsStrings(termVectorsStrings);
         indexDefinitionBuilder.setSpatialIndexesStrings(spatialOptionsStrings);
+        indexDefinitionBuilder.setVectorFieldStrings(vectorOptionsStrings);
         indexDefinitionBuilder.setOutputReduceToCollection(outputReduceToCollection);
         indexDefinitionBuilder.setPatternForOutputReduceToCollectionReferences(patternForOutputReduceToCollectionReferences);
         indexDefinitionBuilder.setPatternReferencesCollectionName(patternReferencesCollectionName);
@@ -46,6 +49,8 @@ public class AbstractMultiMapIndexCreationTask extends AbstractGenericIndexCreat
 
         if (searchEngineType != null) {
             indexDefinitionBuilder.getConfiguration().put(Constants.Configuration.Indexes.INDEXING_STATIC_SEARCH_ENGINE_TYPE, SharpEnum.value(searchEngineType));
+        } else if (vectorOptionsStrings != null && !vectorOptionsStrings.isEmpty()) {
+            indexDefinitionBuilder.getConfiguration().put(Constants.Configuration.Indexes.INDEXING_STATIC_SEARCH_ENGINE_TYPE, "Corax");
         }
 
         IndexDefinition indexDefinition = indexDefinitionBuilder.toIndexDefinition(conventions, false);

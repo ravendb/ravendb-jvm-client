@@ -9,6 +9,7 @@ public class IndexFieldOptions {
     private SpatialOptions spatial;
     private String analyzer;
     private boolean suggestions;
+    private VectorFieldOptions vector;
 
     public FieldStorage getStorage() {
         return storage;
@@ -56,5 +57,13 @@ public class IndexFieldOptions {
 
     public void setSuggestions(boolean suggestions) {
         this.suggestions = suggestions;
+    }
+
+    public VectorFieldOptions getVector() {
+        return vector;
+    }
+
+    public void setVector(VectorFieldOptions vector) {
+        this.vector = vector;
     }
 }
