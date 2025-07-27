@@ -21,6 +21,7 @@ public abstract class AbstractGenericIndexCreationTask extends AbstractIndexCrea
     protected final Set<String> indexSuggestions;
     protected final Map<String, FieldTermVector> termVectorsStrings;
     protected final Map<String, SpatialOptions> spatialOptionsStrings;
+    protected final Map<String, VectorFieldOptions> vectorOptionsStrings;
 
     protected String outputReduceToCollection;
     protected String patternForOutputReduceToCollectionReferences;
@@ -33,6 +34,7 @@ public abstract class AbstractGenericIndexCreationTask extends AbstractIndexCrea
         indexSuggestions = new HashSet<>();
         termVectorsStrings = new HashMap<>();
         spatialOptionsStrings = new HashMap<>();
+        vectorOptionsStrings = new HashMap<>();
     }
 
     /**
@@ -41,6 +43,26 @@ public abstract class AbstractGenericIndexCreationTask extends AbstractIndexCrea
      */
     public boolean isMapReduce() {
         return reduce != null;
+    }
+
+    /**
+     * Register a field for vector search options
+     * @param field Field name
+     * @param options Vector field options
+     */
+    protected void vectorField(String field, VectorFieldOptions options) {
+        vectorOptionsStrings.put(field, options);
+    }
+
+    public Map<String, VectorFieldOptions> getVectorOptionsStrings() {
+        return vectorOptionsStrings;
+    }
+
+    public void setVectorOptionsStrings(Map<String, VectorFieldOptions> vectorOptionsStrings) {
+        this.vectorOptionsStrings.clear();
+        if (vectorOptionsStrings != null) {
+            this.vectorOptionsStrings.putAll(vectorOptionsStrings);
+        }
     }
 
     // AbstractGenericIndexCreationTask

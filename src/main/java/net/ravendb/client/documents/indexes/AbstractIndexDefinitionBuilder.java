@@ -17,6 +17,7 @@ public abstract class AbstractIndexDefinitionBuilder<TIndexDefinition extends In
     private Map<String, FieldStorage> storesStrings;
     private Map<String, FieldIndexing> indexesStrings;
     private Map<String, String> analyzersStrings;
+    public Map<String, VectorFieldOptions> vectorFieldStrings = new HashMap<>();
     private Set<String> suggestionsOptions;
     private Map<String, FieldTermVector> termVectorsStrings;
     private Map<String, SpatialOptions> spatialIndexesStrings;
@@ -75,6 +76,12 @@ public abstract class AbstractIndexDefinitionBuilder<TIndexDefinition extends In
             applyValues(indexDefinition, termVectorsStrings, (options, value) -> options.setTermVector(value));
             applyValues(indexDefinition, spatialIndexesStrings, (options, value) -> options.setSpatial(value));
             applyValues(indexDefinition, suggestions, (options, value) -> options.setSuggestions(value));
+            applyValues(indexDefinition, vectorFieldStrings, (options, value) -> options.setVector(value));
+
+            // Set Corax search engine type if vector fields are present
+            if (!vectorFieldStrings.isEmpty()) {
+                indexDefinition.getConfiguration().setSetting("Indexing.Static.SearchEngineType", "Corax");
+            }
 
             indexDefinition.setAdditionalSources(additionalSources);
             indexDefinition.setAdditionalAssemblies(additionalAssemblies);
@@ -121,6 +128,10 @@ public abstract class AbstractIndexDefinitionBuilder<TIndexDefinition extends In
 
     public void setIndexesStrings(Map<String, FieldIndexing> indexesStrings) {
         this.indexesStrings = indexesStrings;
+    }
+
+    public void setVectorFieldStrings(Map<String, VectorFieldOptions> vectorFieldStrings) {
+        this.vectorFieldStrings = vectorFieldStrings;
     }
 
     public Map<String, String> getAnalyzersStrings() {
