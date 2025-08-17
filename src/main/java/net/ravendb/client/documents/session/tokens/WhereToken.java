@@ -2,6 +2,7 @@ package net.ravendb.client.documents.session.tokens;
 
 import net.ravendb.client.Constants;
 import net.ravendb.client.documents.queries.SearchOperator;
+import net.ravendb.client.documents.queries.vectorSearch.IVectorOptions;
 import net.ravendb.client.primitives.UseSharpEnum;
 import org.apache.commons.lang3.ObjectUtils;
 
@@ -32,12 +33,18 @@ public class WhereToken extends QueryToken {
         private WhereMethodCall method;
         private ShapeToken whereShape;
         private double distanceErrorPct;
+        public IVectorOptions vectorSearch;
 
         public static WhereOptions defaultOptions() {
             return new WhereOptions();
         }
 
         private WhereOptions() {
+        }
+
+        public WhereOptions(IVectorOptions vectorSearch) {
+            this.vectorSearch = vectorSearch;
+            this.exact = vectorSearch != null && Boolean.TRUE.equals(vectorSearch.getIsExact());
         }
 
         public WhereOptions(boolean exact) {
@@ -298,6 +305,9 @@ public class WhereToken extends QueryToken {
             case REGEX:
                 writer.append("regex(");
                 break;
+            case VECTOR_SEARCH:
+                writer.append("vector.search(");
+                break;
         }
 
         writeInnerWhere(writer);
@@ -428,6 +438,24 @@ public class WhereToken extends QueryToken {
                 writer
                         .append(")");
                 break;
+            case VECTOR_SEARCH:
+                WhereOptions options = this.options;
+                writer.append(", $")
+                        .append(this.parameterName)
+                        .append(", ")
+                        .append(options.vectorSearch != null
+                                ? options.vectorSearch.getSimilarity()
+                                != null ? options.vectorSearch.getSimilarity().toString() : "null"
+                                : "null")
+                        .append(", ")
+                        .append(options.vectorSearch != null
+                                ? options.vectorSearch.getNumberOfCandidates()
+                                != null ? options.vectorSearch.getNumberOfCandidates().toString() : "null"
+                                : "null")
+
+                        .append(")");
+                break;
+
             default:
                 throw new IllegalArgumentException();
         }

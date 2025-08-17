@@ -27,6 +27,8 @@ import net.ravendb.client.documents.queries.suggestions.SuggestionWithTerms;
 import net.ravendb.client.documents.queries.timeSeries.ITimeSeriesQueryBuilder;
 import net.ravendb.client.documents.queries.timeSeries.TimeSeriesQueryBuilder;
 import net.ravendb.client.documents.queries.timings.QueryTimings;
+import net.ravendb.client.documents.queries.vectorSearch.IVectorOptions;
+import net.ravendb.client.documents.queries.vectorSearch.VectorEmbeddingFieldFactory;
 import net.ravendb.client.documents.session.loaders.IncludeBuilderBase;
 import net.ravendb.client.documents.session.operations.QueryOperation;
 import net.ravendb.client.documents.session.operations.lazy.LazyQueryOperation;
@@ -46,6 +48,7 @@ import java.lang.reflect.Field;
 import java.time.Duration;
 import java.util.*;
 import java.util.function.Consumer;
+import java.util.function.Function;
 
 /**
  * A query against a Raven index
@@ -967,6 +970,65 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
 
     protected CleanCloseable setFilterMode(boolean on) {
         return new FilterModeScope(filterModeStack, on);
+    }
+
+    protected void _vectorSearch(Object fieldName, Object valueOrFactory, IVectorOptions options){
+        this.assertMethodIsCurrentlySupported("vectorSearch");
+        VectorEmbeddingFieldFactory vectorFactory = new VectorEmbeddingFieldFactory();
+        IVectorField fieldAccessor;
+
+        if (fieldName instanceof String) {
+            fieldAccessor = vectorFactory.withField((String) fieldName);
+        } else if (fieldName instanceof Function) {
+            Function<VectorEmbeddingFieldFactory, IVectorEmbeddingFieldFactoryAccessor<T>> func =
+                    (Function<VectorEmbeddingFieldFactory, IVectorEmbeddingFieldFactoryAccessor<T>>) fieldName;
+            fieldAccessor = func.apply(vectorFactory);
+        } else {
+            throw new IllegalArgumentException(
+                    "fieldName must be either a string or a function that selects a vector field"
+            );
+        }
+
+        WhereParams whereParams = new WhereParams();
+        whereParams.setFieldName(fieldAccessor.getFieldName());
+
+        if (valueOrFactory instanceof Consumer) {
+            // Function case
+            VectorEmbeddingFieldValueFactory fieldValueFactory = new VectorEmbeddingFieldValueFactory();
+            @SuppressWarnings("unchecked")
+            Consumer<VectorEmbeddingFieldValueFactory> func =
+                    (Consumer<VectorEmbeddingFieldValueFactory>) valueOrFactory;
+            func.accept(fieldValueFactory);
+
+            if (fieldValueFactory.getEmbeddings() != null) {
+                whereParams.setValue(fieldValueFactory.getEmbeddings());
+            } else if (fieldValueFactory.getEmbedding() != null) {
+                whereParams.setValue(fieldValueFactory.getEmbedding());
+            } else if (fieldValueFactory.getText() != null) {
+                whereParams.setValue(fieldValueFactory.getText());
+            } else if (fieldValueFactory.getTexts() != null) {
+                whereParams.setValue(fieldValueFactory.getTexts());
+            } else {
+                throw new IllegalStateException("No value was provided in the valueFactory");
+            }
+        } else {
+            whereParams.setValue(valueOrFactory);
+        }
+
+        whereParams.setAllowWildcards(true);
+        Object transformToEqualValue = transformValue(whereParams);
+        List<QueryToken> tokens = getCurrentWhereTokens();
+        appendOperatorIfNeeded(tokens);
+        negateIfNeeded(tokens, whereParams.getFieldName());
+
+        WhereToken whereToken = WhereToken.create(
+                WhereOperator.VECTOR_SEARCH,
+                whereParams.getFieldName(),
+                this.addQueryParameter(transformToEqualValue),
+                new WhereToken.WhereOptions(options)
+        );
+
+        tokens.add(whereToken);
     }
 
     private static class FilterModeScope implements CleanCloseable {

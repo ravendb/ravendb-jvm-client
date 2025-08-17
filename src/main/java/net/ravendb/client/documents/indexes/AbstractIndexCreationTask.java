@@ -35,6 +35,7 @@ public abstract class AbstractIndexCreationTask extends AbstractGenericIndexCrea
         indexDefinitionBuilder.setSuggestionsOptions(indexSuggestions);
         indexDefinitionBuilder.setTermVectorsStrings(termVectorsStrings);
         indexDefinitionBuilder.setSpatialIndexesStrings(spatialOptionsStrings);
+        indexDefinitionBuilder.setVectorOptionsStrings(vectorOptionsStrings);
         indexDefinitionBuilder.setOutputReduceToCollection(outputReduceToCollection);
         indexDefinitionBuilder.setPatternForOutputReduceToCollectionReferences(patternForOutputReduceToCollectionReferences);
         indexDefinitionBuilder.setPatternReferencesCollectionName(patternReferencesCollectionName);
@@ -50,6 +51,9 @@ public abstract class AbstractIndexCreationTask extends AbstractGenericIndexCrea
 
         if (searchEngineType != null) {
             indexDefinitionBuilder.getConfiguration().put(Constants.Configuration.Indexes.INDEXING_STATIC_SEARCH_ENGINE_TYPE, SharpEnum.value(searchEngineType));
+        } else if (vectorOptionsStrings != null && !vectorOptionsStrings.isEmpty()) {
+            indexDefinitionBuilder.getConfiguration()
+                    .put(Constants.Configuration.Indexes.INDEXING_STATIC_SEARCH_ENGINE_TYPE, "Corax");
         }
 
         return indexDefinitionBuilder.toIndexDefinition(conventions);

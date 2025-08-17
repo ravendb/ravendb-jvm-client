@@ -17,7 +17,7 @@ public abstract class AbstractIndexDefinitionBuilder<TIndexDefinition extends In
     private Map<String, FieldStorage> storesStrings;
     private Map<String, FieldIndexing> indexesStrings;
     private Map<String, String> analyzersStrings;
-    public Map<String, VectorFieldOptions> vectorFieldStrings = new HashMap<>();
+    private Map<String, VectorFieldOptions> vectorFieldStrings = new HashMap<>();
     private Set<String> suggestionsOptions;
     private Map<String, FieldTermVector> termVectorsStrings;
     private Map<String, SpatialOptions> spatialIndexesStrings;
@@ -112,6 +112,10 @@ public abstract class AbstractIndexDefinitionBuilder<TIndexDefinition extends In
 
     public void setReduce(String reduce) {
         this.reduce = reduce;
+    }
+
+    public void setVectorOptionsStrings(Map<String, VectorFieldOptions> vectorOptionsStrings) {
+        this.vectorFieldStrings = vectorOptionsStrings;
     }
 
     public Map<String, FieldStorage> getStoresStrings() {

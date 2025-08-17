@@ -46,6 +46,7 @@ public class AbstractMultiMapIndexCreationTask extends AbstractGenericIndexCreat
         indexDefinitionBuilder.setPriority(getPriority());
         indexDefinitionBuilder.setState(getState());
         indexDefinitionBuilder.setDeploymentMode(getDeploymentMode());
+        indexDefinitionBuilder.setVectorFieldStrings(vectorOptionsStrings);
 
         if (searchEngineType != null) {
             indexDefinitionBuilder.getConfiguration().put(Constants.Configuration.Indexes.INDEXING_STATIC_SEARCH_ENGINE_TYPE, SharpEnum.value(searchEngineType));
