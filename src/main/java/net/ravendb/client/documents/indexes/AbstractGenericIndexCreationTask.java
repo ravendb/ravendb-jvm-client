@@ -21,7 +21,7 @@ public abstract class AbstractGenericIndexCreationTask extends AbstractIndexCrea
     protected final Set<String> indexSuggestions;
     protected final Map<String, FieldTermVector> termVectorsStrings;
     protected final Map<String, SpatialOptions> spatialOptionsStrings;
-    protected final Map<String, VectorFieldOptions> vectorOptionsStrings;
+    protected Map<String, VectorFieldOptions> vectorOptionsStrings;
 
     protected String outputReduceToCollection;
     protected String patternForOutputReduceToCollectionReferences;

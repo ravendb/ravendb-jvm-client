@@ -19,5 +19,6 @@ public enum WhereOperator {
     SPATIAL_CONTAINS,
     SPATIAL_DISJOINT,
     SPATIAL_INTERSECTS,
-    REGEX
+    REGEX,
+    VECTOR_SEARCH
 }

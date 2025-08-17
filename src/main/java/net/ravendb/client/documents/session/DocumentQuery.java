@@ -21,6 +21,7 @@ import net.ravendb.client.documents.queries.spatial.SpatialCriteriaFactory;
 import net.ravendb.client.documents.queries.suggestions.*;
 import net.ravendb.client.documents.queries.timeSeries.ITimeSeriesQueryBuilder;
 import net.ravendb.client.documents.queries.timings.QueryTimings;
+import net.ravendb.client.documents.queries.vectorSearch.IVectorOptions;
 import net.ravendb.client.documents.session.loaders.IQueryIncludeBuilder;
 import net.ravendb.client.documents.session.loaders.QueryIncludeBuilder;
 import net.ravendb.client.documents.session.querying.sharding.IQueryShardedContextBuilder;
@@ -945,6 +946,26 @@ public class DocumentQuery<T> extends AbstractDocumentQuery<T, DocumentQuery<T>>
     @Override
     public IDocumentQuery<T> shardContext(Consumer<IQueryShardedContextBuilder> builder) {
         _shardContext(builder);
+        return this;
+    }
+
+    @Override
+    public IDocumentQuery<T> vectorSearch(
+            Object fieldName,
+            Object valueFactory,
+            IVectorOptions options
+    ) {
+        this._vectorSearch(fieldName, valueFactory, options);
+        return this;
+    }
+
+    @Override
+    public IDocumentQuery<T> vectorSearch(
+            Object fieldName,
+            Runnable valueFactory,
+            IVectorOptions options
+    ) {
+        this._vectorSearch(fieldName, valueFactory, options);
         return this;
     }
 }

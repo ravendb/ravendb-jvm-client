@@ -6,7 +6,7 @@ import net.ravendb.client.documents.queries.vectorSearch.VectorEmbeddingType;
  * Interface for vector embedding field factory accessor
  * @param <T> The type of the field
  */
-public interface IVectorEmbeddingFieldFactoryAccessor<T> {
+public interface IVectorEmbeddingFieldFactoryAccessor<T> extends IVectorField{
     /**
      * Gets the source quantization type
      * @return The source quantization type
