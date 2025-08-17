@@ -4,9 +4,9 @@ on:
   schedule:
     - cron: "0 10 * * 6"
   push:
-    branches: [ v6.0 ]
+    branches: [ v7.1 ]
   pull_request:
-    branches: [ v6.0 ]
+    branches: [ v7.1 ]
   workflow_dispatch:
     inputs:
       ravendb_version:
