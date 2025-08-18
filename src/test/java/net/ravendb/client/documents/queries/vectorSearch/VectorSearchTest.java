@@ -9,11 +9,13 @@ import net.ravendb.client.documents.session.IDocumentSession;
 import net.ravendb.client.documents.session.VectorEmbeddingFieldValueFactory;
 import net.ravendb.client.documents.indexes.IndexType;
 import com.google.common.collect.Sets;
+import net.ravendb.client.infrastructure.EnableOn70Server;
 import org.junit.jupiter.api.Test;
 
 import java.util.Collections;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.assertj.core.api.Assertions.assertThat;
+
 
 public class VectorSearchTest extends RemoteTestBase {
 
@@ -82,6 +84,7 @@ public class VectorSearchTest extends RemoteTestBase {
         }
     }
 
+    @EnableOn70Server
     @Test
     public void shouldGenerateRqlForVectorSearchWithInt8QuantizedEmbeddingField() {
         VectorEmbeddingFieldFactory vectorFieldFactory = new VectorEmbeddingFieldFactory();
@@ -108,6 +111,7 @@ public class VectorSearchTest extends RemoteTestBase {
         }
     }
 
+    @EnableOn70Server
     @Test
     public void shouldGenerateRqlForVectorSearchWithTextEmbeddingUsingAiTask() {
         VectorEmbeddingFieldFactory vectorFieldFactory = new VectorEmbeddingFieldFactory();
@@ -132,6 +136,7 @@ public class VectorSearchTest extends RemoteTestBase {
         }
     }
 
+    @EnableOn70Server
     @Test
     public void shouldGenerateRqlForBasicVectorSearchWithNumericEmbeddingValues() {
         VectorEmbeddingFieldFactory vectorFieldFactory = new VectorEmbeddingFieldFactory();
@@ -159,6 +164,7 @@ public class VectorSearchTest extends RemoteTestBase {
         }
     }
 
+    @EnableOn70Server
     @Test
     public void shouldGenerateRqlForVectorSearchWithBase64EncodedEmbedding() {
         VectorEmbeddingFieldFactory vectorFieldFactory = new VectorEmbeddingFieldFactory();
@@ -185,6 +191,7 @@ public class VectorSearchTest extends RemoteTestBase {
         }
     }
 
+    @EnableOn70Server
     @Test
     public void shouldGenerateRqlForVectorSearchWithTextFieldAndInt8Quantization() {
         VectorEmbeddingFieldFactory vectorFieldFactory = new VectorEmbeddingFieldFactory();
@@ -211,6 +218,7 @@ public class VectorSearchTest extends RemoteTestBase {
         }
     }
 
+    @EnableOn70Server
     @Test
     public void shouldGenerateRqlForVectorSearchUsingPropertySelectorForEmbeddingField() {
         VectorEmbeddingFieldFactory vectorFieldFactory = new VectorEmbeddingFieldFactory();
@@ -237,6 +245,7 @@ public class VectorSearchTest extends RemoteTestBase {
         }
     }
 
+    @EnableOn70Server
     @Test
     public void shouldGenerateRqlForVectorSearchWithPropertySelectorAndExplicitInt8Quantization() {
         VectorEmbeddingFieldFactory vectorFieldFactory = new VectorEmbeddingFieldFactory();
@@ -264,6 +273,7 @@ public class VectorSearchTest extends RemoteTestBase {
         }
     }
 
+    @EnableOn70Server
     @Test
     public void shouldGenerateRqlForVectorSearchWithPropertySelectorAndExplicitBinaryQuantization() {
         VectorEmbeddingFieldFactory vectorFieldFactory = new VectorEmbeddingFieldFactory();
@@ -290,6 +300,7 @@ public class VectorSearchTest extends RemoteTestBase {
         }
     }
 
+    @EnableOn70Server
     @Test
     public void shouldGenerateRqlForVectorSearchWithPropertySelectorForTextFieldConversion() {
         VectorEmbeddingFieldFactory vectorFieldFactory = new VectorEmbeddingFieldFactory();
@@ -316,6 +327,7 @@ public class VectorSearchTest extends RemoteTestBase {
         }
     }
 
+    @EnableOn70Server
     @Test
     public void shouldGenerateRqlForVectorSearchWithTextFieldUsingNamedAiTask() {
         VectorEmbeddingFieldFactory vectorFieldFactory = new VectorEmbeddingFieldFactory();
@@ -344,6 +356,7 @@ public class VectorSearchTest extends RemoteTestBase {
         }
     }
 
+    @EnableOn70Server
     @Test
     public void shouldGenerateRqlForVectorSearchWithBase64FieldUsingPropertySelector() {
         VectorEmbeddingFieldFactory vectorFieldFactory = new VectorEmbeddingFieldFactory();
@@ -370,6 +383,7 @@ public class VectorSearchTest extends RemoteTestBase {
         }
     }
 
+    @EnableOn70Server
     @Test
     public void shouldGenerateRqlForVectorSearchWithSingleToInt8ConversionQuantization() {
         VectorEmbeddingFieldFactory vectorFieldFactory = new VectorEmbeddingFieldFactory();
@@ -398,6 +412,7 @@ public class VectorSearchTest extends RemoteTestBase {
         }
     }
 
+    @EnableOn70Server
     @Test
     public void shouldGenerateRqlForVectorSearchWithSingleToBinaryConversionQuantization() {
         VectorEmbeddingFieldFactory vectorFieldFactory = new VectorEmbeddingFieldFactory();
@@ -426,6 +441,7 @@ public class VectorSearchTest extends RemoteTestBase {
         }
     }
 
+    @EnableOn70Server
     @Test
     public void shouldGenerateRqlForVectorSearchWithTextFieldAndInt8TargetQuantization() {
         VectorEmbeddingFieldFactory vectorFieldFactory = new VectorEmbeddingFieldFactory();
@@ -454,6 +470,7 @@ public class VectorSearchTest extends RemoteTestBase {
         }
     }
 
+    @EnableOn70Server
     @Test
     public void shouldGenerateRqlForVectorSearchWithTextAiTaskAndBinaryQuantization() {
         VectorEmbeddingFieldFactory vectorFieldFactory = new VectorEmbeddingFieldFactory();
@@ -483,6 +500,7 @@ public class VectorSearchTest extends RemoteTestBase {
         }
     }
 
+    @EnableOn70Server
     @Test
     public void shouldGenerateRqlForVectorSearchWithWithFieldMethodAndPropertySelector() {
         VectorEmbeddingFieldFactory vectorFieldFactory = new VectorEmbeddingFieldFactory();
@@ -510,6 +528,7 @@ public class VectorSearchTest extends RemoteTestBase {
         }
     }
 
+    @EnableOn70Server
     @Test
     public void shouldGenerateRqlForVectorSearchWithExactMatchingParameter() {
         VectorEmbeddingFieldFactory vectorFieldFactory = new VectorEmbeddingFieldFactory();
@@ -537,6 +556,7 @@ public class VectorSearchTest extends RemoteTestBase {
         }
     }
 
+    @EnableOn70Server
     @Test
     public void shouldGenerateRqlForVectorSearchWithSimilarityCandidatesAndExactParameters() {
         VectorEmbeddingFieldFactory vectorFieldFactory = new VectorEmbeddingFieldFactory();
@@ -566,6 +586,7 @@ public class VectorSearchTest extends RemoteTestBase {
         }
     }
 
+    @EnableOn70Server
     @Test
     public void shouldGenerateRqlForVectorSearchWithExactParameterAndEmbeddingField() {
         VectorEmbeddingFieldFactory vectorFieldFactory = new VectorEmbeddingFieldFactory();
@@ -593,6 +614,7 @@ public class VectorSearchTest extends RemoteTestBase {
         }
     }
 
+    @EnableOn70Server
     @Test
     public void shouldGenerateRqlForVectorSearchWithExactParameterAndTextEmbeddingWithSimilarity() {
         VectorEmbeddingFieldFactory vectorFieldFactory = new VectorEmbeddingFieldFactory();
@@ -621,6 +643,7 @@ public class VectorSearchTest extends RemoteTestBase {
         }
     }
 
+    @EnableOn70Server
     @Test
     public void shouldGenerateRqlForVectorSearchWithMultipleTextQueriesAsInput() {
         VectorEmbeddingFieldFactory vectorFieldFactory = new VectorEmbeddingFieldFactory();
@@ -648,6 +671,7 @@ public class VectorSearchTest extends RemoteTestBase {
         }
     }
 
+    @EnableOn70Server
     @Test
     public void shouldGenerateRqlForVectorSearchWithMultipleEmbeddingVectorsAsInput() {
         VectorEmbeddingFieldFactory vectorFieldFactory = new VectorEmbeddingFieldFactory();
@@ -678,6 +702,7 @@ public class VectorSearchTest extends RemoteTestBase {
         }
     }
 
+    @EnableOn70Server
     @Test
     public void shouldGenerateRqlForVectorSearchWithMultipleEmbeddingsAndInt8Quantization() {
         VectorEmbeddingFieldFactory vectorFieldFactory = new VectorEmbeddingFieldFactory();
@@ -709,6 +734,7 @@ public class VectorSearchTest extends RemoteTestBase {
         }
     }
 
+    @EnableOn70Server
     @Test
     public void shouldGenerateRqlForVectorSearchWithMultipleTextsAiTaskAndBinaryQuantization() {
         VectorEmbeddingFieldFactory vectorFieldFactory = new VectorEmbeddingFieldFactory();
@@ -739,6 +765,7 @@ public class VectorSearchTest extends RemoteTestBase {
         }
     }
 
+    @EnableOn70Server
     @Test
     public void shouldGenerateRqlForVectorSearchWithFieldNameAsString() {
         VectorEmbeddingFieldValueFactory valueFactory = new VectorEmbeddingFieldValueFactory();
@@ -764,6 +791,7 @@ public class VectorSearchTest extends RemoteTestBase {
         }
     }
 
+    @EnableOn70Server
     @Test
     public void shouldGenerateRqlForVectorSearchWithFieldNameAsStringAndOptions() {
         VectorEmbeddingFieldValueFactory valueFactory = new VectorEmbeddingFieldValueFactory();
@@ -791,6 +819,7 @@ public class VectorSearchTest extends RemoteTestBase {
         }
     }
 
+    @EnableOn70Server
     @Test
     public void shouldGenerateRqlForVectorSearchWithFieldNameAsStringAndExactParameter() {
         VectorEmbeddingFieldValueFactory valueFactory = new VectorEmbeddingFieldValueFactory();
@@ -817,6 +846,7 @@ public class VectorSearchTest extends RemoteTestBase {
         }
     }
 
+    @EnableOn70Server
     @Test
     public void shouldGenerateRqlForVectorSearchWithFieldNameAsStringAndMultipleEmbeddings() {
         VectorEmbeddingFieldValueFactory valueFactory = new VectorEmbeddingFieldValueFactory();
@@ -846,6 +876,7 @@ public class VectorSearchTest extends RemoteTestBase {
         }
     }
 
+    @EnableOn70Server
     @Test
     public void shouldGenerateRqlForVectorSearchWithFieldNameAsStringAndByTextFactory() {
         VectorEmbeddingFieldValueFactory valueFactory = new VectorEmbeddingFieldValueFactory();
@@ -871,6 +902,7 @@ public class VectorSearchTest extends RemoteTestBase {
         }
     }
 
+    @EnableOn70Server
     @Test
     public void shouldCreateIndexDefinitionWithVectorSearchFieldAndProperConfiguration() {
         try (IDocumentStore store = getDocumentStore()) {
@@ -898,6 +930,7 @@ public class VectorSearchTest extends RemoteTestBase {
         }
     }
 
+    @EnableOn70Server
     @Test
     public void shouldCreateIndexWithVectorSearchConfigurationUsingClassBasedDefinition() {
         try (IDocumentStore store = getDocumentStore()) {
