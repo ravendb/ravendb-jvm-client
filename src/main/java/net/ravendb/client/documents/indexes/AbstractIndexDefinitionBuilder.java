@@ -1,5 +1,6 @@
 package net.ravendb.client.documents.indexes;
 
+import net.ravendb.client.Constants;
 import net.ravendb.client.documents.conventions.DocumentConventions;
 import net.ravendb.client.documents.indexes.spatial.SpatialOptions;
 import net.ravendb.client.exceptions.documents.compilation.IndexCompilationException;
@@ -17,7 +18,7 @@ public abstract class AbstractIndexDefinitionBuilder<TIndexDefinition extends In
     private Map<String, FieldStorage> storesStrings;
     private Map<String, FieldIndexing> indexesStrings;
     private Map<String, String> analyzersStrings;
-    private Map<String, VectorFieldOptions> vectorFieldStrings = new HashMap<>();
+    private Map<String, FieldVectorOptions> vectorFieldStrings = new HashMap<>();
     private Set<String> suggestionsOptions;
     private Map<String, FieldTermVector> termVectorsStrings;
     private Map<String, SpatialOptions> spatialIndexesStrings;
@@ -80,7 +81,7 @@ public abstract class AbstractIndexDefinitionBuilder<TIndexDefinition extends In
 
             // Set Corax search engine type if vector fields are present
             if (!vectorFieldStrings.isEmpty()) {
-                indexDefinition.getConfiguration().setSetting("Indexing.Static.SearchEngineType", "Corax");
+                indexDefinition.getConfiguration().put(Constants.Configuration.Indexes.INDEXING_STATIC_SEARCH_ENGINE_TYPE, "Corax");
             }
 
             indexDefinition.setAdditionalSources(additionalSources);
@@ -114,10 +115,6 @@ public abstract class AbstractIndexDefinitionBuilder<TIndexDefinition extends In
         this.reduce = reduce;
     }
 
-    public void setVectorOptionsStrings(Map<String, VectorFieldOptions> vectorOptionsStrings) {
-        this.vectorFieldStrings = vectorOptionsStrings;
-    }
-
     public Map<String, FieldStorage> getStoresStrings() {
         return storesStrings;
     }
@@ -134,7 +131,7 @@ public abstract class AbstractIndexDefinitionBuilder<TIndexDefinition extends In
         this.indexesStrings = indexesStrings;
     }
 
-    public void setVectorFieldStrings(Map<String, VectorFieldOptions> vectorFieldStrings) {
+    public void setVectorFieldStrings(Map<String, FieldVectorOptions> vectorFieldStrings) {
         this.vectorFieldStrings = vectorFieldStrings;
     }
 

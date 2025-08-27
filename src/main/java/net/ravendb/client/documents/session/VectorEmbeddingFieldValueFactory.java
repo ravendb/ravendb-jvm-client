@@ -5,14 +5,19 @@ import java.util.Map;
 public class VectorEmbeddingFieldValueFactory implements IVectorFieldValueFactory  {
 
     private Object embedding;
-    private Integer[][] embeddings;
+    private Number[][] embeddings;
     private String text;
-    private  String[] texts;
+    private String[] texts;
+    private String byId;
 
+    public String getById() {
+        return byId;
+    }
     public Object getEmbedding() {
         return embedding;
     }
-    public Integer[][] getEmbeddings() {
+
+    public Number[][] getEmbeddings() {
         return embeddings;
     }
     public String getText() {
@@ -25,7 +30,7 @@ public class VectorEmbeddingFieldValueFactory implements IVectorFieldValueFactor
 
     @Override
     public <T extends Number> void byEmbedding(T[] embedding) {
-        this.embedding = (Integer[])embedding;
+        this.embedding = embedding;
     }
 
     @Override
@@ -35,7 +40,7 @@ public class VectorEmbeddingFieldValueFactory implements IVectorFieldValueFactor
 
     @Override
     public <T extends Number> void byEmbeddings(T[][] embeddings) {
-        this.embeddings = (Integer[][])embeddings;
+        this.embeddings = embeddings;
     }
 
     @Override
@@ -51,5 +56,10 @@ public class VectorEmbeddingFieldValueFactory implements IVectorFieldValueFactor
     @Override
     public void byTexts(String[] texts) {
         this.texts = texts;
+    }
+
+    @Override
+    public void forDocument(String documentId) {
+        this.byId = documentId;
     }
 }

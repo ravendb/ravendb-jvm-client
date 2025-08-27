@@ -30,6 +30,11 @@ public class VectorEmbeddingFieldFactory<T> implements IVectorFieldFactory<T> {
     }
 
     @Override
+    public IVectorField withField(T fieldName, VectorEmbeddingType storedEmbeddingQuantization, VectorEmbeddingType destinationEmbeddingQuantization, String embeddingsGenerationTaskIdentifier) {
+        return new VectorField<>(fieldName, storedEmbeddingQuantization, destinationEmbeddingQuantization, embeddingsGenerationTaskIdentifier);
+    }
+
+    @Override
     public IVectorField withField(T fieldName) {
         return new VectorField<>(fieldName);
     }

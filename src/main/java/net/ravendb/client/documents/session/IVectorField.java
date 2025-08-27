@@ -1,12 +1,9 @@
 package net.ravendb.client.documents.session;
 
+import net.ravendb.client.documents.queries.vectorSearch.VectorEmbeddingType;
+
 /**
  * Interface for vector field
  */
 public interface IVectorField {
-    /**
-     * Gets the field name
-     * @return The field name
-     */
-    String getFieldName();
 }

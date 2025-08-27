@@ -14,6 +14,8 @@ public interface IVectorFieldFactory<T> {
      */
      IVectorEmbeddingTextField withText(T fieldName);
 
+    //TBD expr should add withText(Expression<Func<T, string>> fieldName);??
+
     /**
      * Creates a vector field from embedding
      * @param fieldName The field name
@@ -29,6 +31,16 @@ public interface IVectorFieldFactory<T> {
      * @return The vector embedding field
      */
       IVectorEmbeddingField withBase64(T fieldName, VectorEmbeddingType storedEmbeddingQuantization);
+
+    /**
+     * Creates a vector field
+     * @param fieldName The field name
+     * @param storedEmbeddingQuantization The stored embedding quantization (optional)
+     * @param destinationEmbeddingQuantization The destination embedding quantization (optional)
+     * @param embeddingsGenerationTaskIdentifier The embeddings generation task identifier (optional)
+     * @return The vector field
+     */
+        IVectorField withField(T fieldName, VectorEmbeddingType storedEmbeddingQuantization, VectorEmbeddingType destinationEmbeddingQuantization, String embeddingsGenerationTaskIdentifier);
 
     /**
      * Creates a vector field

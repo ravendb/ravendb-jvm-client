@@ -1,7 +1,6 @@
 package net.ravendb.client.documents.queries.vectorSearch.fields;
 
 import net.ravendb.client.documents.queries.vectorSearch.VectorEmbeddingType;
-import net.ravendb.client.documents.queries.vectorSearch.common.VectorFieldBase;
 import net.ravendb.client.documents.session.IVectorEmbeddingField;
 import net.ravendb.client.documents.session.IVectorEmbeddingFieldFactoryAccessor;
 
@@ -9,14 +8,8 @@ import net.ravendb.client.documents.session.IVectorEmbeddingFieldFactoryAccessor
  * Vector embedding field implementation
  * @param <T> The type of the field
  */
-public class VectorEmbeddingField<T> extends VectorFieldBase<T> implements 
-        IVectorEmbeddingField, 
-        IVectorEmbeddingFieldFactoryAccessor<T> {
-
-    private VectorEmbeddingType sourceQuantizationType;
-    private VectorEmbeddingType destinationQuantizationType;
-    private boolean isBase64Encoded;
-    private String embeddingsGenerationTaskIdentifier = "";
+public class VectorEmbeddingField<T> extends VectorField implements
+        IVectorEmbeddingField{
 
     /**
      * Creates a new instance of VectorEmbeddingField
@@ -24,14 +17,13 @@ public class VectorEmbeddingField<T> extends VectorFieldBase<T> implements
      * @param sourceQuantizationType The source quantization type (default: SINGLE)
      * @param isBase64Encoded Whether the embedding is base64 encoded (default: false)
      */
-    public VectorEmbeddingField(T fieldName, 
-                               VectorEmbeddingType sourceQuantizationType, 
+    public VectorEmbeddingField(T fieldName,
+                               VectorEmbeddingType sourceQuantizationType,
                                boolean isBase64Encoded) {
         super(fieldName);
-        this.sourceQuantizationType = sourceQuantizationType != null ? sourceQuantizationType : VectorEmbeddingType.SINGLE;
-        this.destinationQuantizationType = this.sourceQuantizationType;
-        this.isBase64Encoded = isBase64Encoded;
-        updateFieldName();
+        this.setSourceQuantizationType(sourceQuantizationType != null ? sourceQuantizationType : VectorEmbeddingType.SINGLE);
+        this.setDestinationQuantizationType(this.getSourceQuantizationType());
+        this.setIsBase64Encoded(isBase64Encoded);
     }
 
     /**
@@ -42,51 +34,21 @@ public class VectorEmbeddingField<T> extends VectorFieldBase<T> implements
         this(fieldName, VectorEmbeddingType.SINGLE, false);
     }
 
-    private void updateFieldName() {
-        setFieldName(getFormattedFieldName(
-                getRawFieldName(),
-                sourceQuantizationType,
-                destinationQuantizationType
-        ));
-    }
-
     @Override
     public IVectorEmbeddingField targetQuantization(VectorEmbeddingType targetEmbeddingQuantization) {
         if (targetEmbeddingQuantization == VectorEmbeddingType.TEXT) {
             throw new IllegalArgumentException("Cannot quantize the embedding to Text. This option is only available for sourceQuantizationType.");
         }
 
-        this.destinationQuantizationType = targetEmbeddingQuantization;
+        this.setDestinationQuantizationType(targetEmbeddingQuantization);
 
-        if ((this.sourceQuantizationType == VectorEmbeddingType.INT8 ||
-             this.sourceQuantizationType == VectorEmbeddingType.BINARY) &&
-             this.destinationQuantizationType != this.sourceQuantizationType) {
+        if ((this.getSourceQuantizationType() == VectorEmbeddingType.INT8 ||
+             this.getSourceQuantizationType() == VectorEmbeddingType.BINARY) &&
+             this.getDestinationQuantizationType() != this.getSourceQuantizationType()) {
             throw new IllegalArgumentException(
                     String.format("Cannot quantize already quantized embeddings. Source VectorEmbeddingType is %s; however the destination is %s.",
-                            this.sourceQuantizationType, this.destinationQuantizationType));
+                            this.getSourceQuantizationType(), this.getDestinationQuantizationType()));
         }
-
-        updateFieldName();
         return this;
-    }
-
-    @Override
-    public VectorEmbeddingType getSourceQuantizationType() {
-        return sourceQuantizationType;
-    }
-
-    @Override
-    public VectorEmbeddingType getDestinationQuantizationType() {
-        return destinationQuantizationType;
-    }
-
-    @Override
-    public boolean isBase64Encoded() {
-        return isBase64Encoded;
-    }
-
-    @Override
-    public String getEmbeddingsGenerationTaskIdentifier() {
-        return embeddingsGenerationTaskIdentifier;
     }
 }

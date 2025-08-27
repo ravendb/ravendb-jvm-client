@@ -29,6 +29,8 @@ import net.ravendb.client.documents.queries.timeSeries.TimeSeriesQueryBuilder;
 import net.ravendb.client.documents.queries.timings.QueryTimings;
 import net.ravendb.client.documents.queries.vectorSearch.IVectorOptions;
 import net.ravendb.client.documents.queries.vectorSearch.VectorEmbeddingFieldFactory;
+import net.ravendb.client.documents.queries.vectorSearch.VectorEmbeddingType;
+import net.ravendb.client.documents.queries.vectorSearch.fields.VectorField;
 import net.ravendb.client.documents.session.loaders.IncludeBuilderBase;
 import net.ravendb.client.documents.session.operations.QueryOperation;
 import net.ravendb.client.documents.session.operations.lazy.LazyQueryOperation;
@@ -49,6 +51,7 @@ import java.time.Duration;
 import java.util.*;
 import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.function.Supplier;
 
 /**
  * A query against a Raven index
@@ -972,63 +975,32 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
         return new FilterModeScope(filterModeStack, on);
     }
 
-    protected void _vectorSearch(Object fieldName, Object valueOrFactory, IVectorOptions options){
+    protected void _vectorSearch(VectorField vector, Object valueOrFactory, IVectorOptions options){
         this.assertMethodIsCurrentlySupported("vectorSearch");
-        VectorEmbeddingFieldFactory vectorFactory = new VectorEmbeddingFieldFactory();
-        IVectorField fieldAccessor;
+        IVectorEmbeddingFieldFactoryAccessor fieldAccessor = this._resolveVectorSearchFieldAccessor(vector);
+        VectorSearchValueResult vectorSearchResult = this._resolveVectorSearchValueFactory(valueOrFactory);
 
-        if (fieldName instanceof String) {
-            fieldAccessor = vectorFactory.withField((String) fieldName);
-        } else if (fieldName instanceof Function) {
-            Function<VectorEmbeddingFieldFactory, IVectorEmbeddingFieldFactoryAccessor<T>> func =
-                    (Function<VectorEmbeddingFieldFactory, IVectorEmbeddingFieldFactoryAccessor<T>>) fieldName;
-            fieldAccessor = func.apply(vectorFactory);
-        } else {
-            throw new IllegalArgumentException(
-                    "fieldName must be either a string or a function that selects a vector field"
-            );
-        }
-
-        WhereParams whereParams = new WhereParams();
-        whereParams.setFieldName(fieldAccessor.getFieldName());
-
-        if (valueOrFactory instanceof Consumer) {
-            // Function case
-            VectorEmbeddingFieldValueFactory fieldValueFactory = new VectorEmbeddingFieldValueFactory();
-            @SuppressWarnings("unchecked")
-            Consumer<VectorEmbeddingFieldValueFactory> func =
-                    (Consumer<VectorEmbeddingFieldValueFactory>) valueOrFactory;
-            func.accept(fieldValueFactory);
-
-            if (fieldValueFactory.getEmbeddings() != null) {
-                whereParams.setValue(fieldValueFactory.getEmbeddings());
-            } else if (fieldValueFactory.getEmbedding() != null) {
-                whereParams.setValue(fieldValueFactory.getEmbedding());
-            } else if (fieldValueFactory.getText() != null) {
-                whereParams.setValue(fieldValueFactory.getText());
-            } else if (fieldValueFactory.getTexts() != null) {
-                whereParams.setValue(fieldValueFactory.getTexts());
-            } else {
-                throw new IllegalStateException("No value was provided in the valueFactory");
-            }
-        } else {
-            whereParams.setValue(valueOrFactory);
-        }
-
-        whereParams.setAllowWildcards(true);
-        Object transformToEqualValue = transformValue(whereParams);
         List<QueryToken> tokens = getCurrentWhereTokens();
         appendOperatorIfNeeded(tokens);
-        negateIfNeeded(tokens, whereParams.getFieldName());
+        negateIfNeeded(tokens, fieldAccessor.getFieldName().toString());
 
-        WhereToken whereToken = WhereToken.create(
-                WhereOperator.VECTOR_SEARCH,
-                whereParams.getFieldName(),
-                this.addQueryParameter(transformToEqualValue),
-                new WhereToken.WhereOptions(options)
+        VectorEmbeddingType sourceQuantizationType = VectorSearchToken.getSourceQuantizationType(fieldAccessor);
+        VectorEmbeddingType targetQuantizationType = VectorSearchToken.getTargetQuantizationType(fieldAccessor);
+        String taskIdentifier = VectorSearchToken.getTaskIdentifier(fieldAccessor);
+        String  parameterName = this.addQueryParameter(vectorSearchResult.getValue());
+
+        VectorSearchToken vectorSearchToken = new VectorSearchToken(
+                fieldAccessor.getFieldName().toString(),
+                parameterName,
+                sourceQuantizationType,
+                targetQuantizationType,
+                options != null ? options.getSimilarity() : null,
+                options != null ? options.getNumberOfCandidates() : null,
+                options != null && options.getIsExact() != null ? options.getIsExact() : VectorSearchToken.DEFAULT_IS_EXACT,
+                vectorSearchResult.isDocumentId(),
+                taskIdentifier == "" ? null : taskIdentifier
         );
-
-        tokens.add(whereToken);
+        tokens.add(vectorSearchToken);
     }
 
     private static class FilterModeScope implements CleanCloseable {
@@ -2528,5 +2500,75 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
     @Override
     public void setParameterPrefix(String parameterPrefix) {
         this.parameterPrefix = parameterPrefix;
+    }
+
+    private IVectorEmbeddingFieldFactoryAccessor _resolveVectorSearchFieldAccessor(VectorField vector) {
+        VectorEmbeddingFieldFactory vectorFactory = new VectorEmbeddingFieldFactory<T>();
+        IVectorEmbeddingFieldFactoryAccessor fieldAccessor;
+        if (vector.getFieldName() instanceof String){
+            return (IVectorEmbeddingFieldFactoryAccessor) vectorFactory.withField(vector.getFieldName(), vector.getSourceQuantizationType(), vector.getDestinationQuantizationType(), vector.getEmbeddingsGenerationTaskIdentifier());
+        } else if (vector.getFieldName()  instanceof Function<?,?>){
+            Function<VectorEmbeddingFieldFactory, IVectorEmbeddingFieldFactoryAccessor<T>> func =
+                    (Function<VectorEmbeddingFieldFactory, IVectorEmbeddingFieldFactoryAccessor<T>>) vector.getFieldName();
+            fieldAccessor = func.apply(vectorFactory);
+            return fieldAccessor;
+        } else {
+            throw new IllegalArgumentException("fieldName must be either a string or a function that selects a vector field");
+        }
+    }
+
+    private VectorSearchValueResult _resolveVectorSearchValueFactory(Object valueOrFactory) {
+        Object factoryResult;
+
+        if (valueOrFactory instanceof java.util.function.Consumer<?>) {
+            VectorEmbeddingFieldValueFactory fieldValueFactory = new VectorEmbeddingFieldValueFactory();
+            @SuppressWarnings("unchecked")
+            java.util.function.Consumer<IVectorFieldValueFactory> consumer =
+                    (java.util.function.Consumer<IVectorFieldValueFactory>) valueOrFactory;
+
+            consumer.accept(fieldValueFactory);
+
+            factoryResult =
+                    fieldValueFactory.getEmbedding() != null ? fieldValueFactory.getEmbedding() :
+                            fieldValueFactory.getEmbeddings() != null ? fieldValueFactory.getEmbeddings() :
+                                    fieldValueFactory.getText() != null ? fieldValueFactory.getText() :
+                                            fieldValueFactory.getTexts() != null ? fieldValueFactory.getTexts() :
+                                                    fieldValueFactory.getById();
+
+            return new VectorSearchValueResult(factoryResult, fieldValueFactory.getById() != null);
+        } else if (valueOrFactory instanceof java.util.function.Supplier<?>) {
+            factoryResult = ((java.util.function.Supplier<?>) valueOrFactory).get();
+            return new VectorSearchValueResult(factoryResult, false);
+        } else if (valueOrFactory instanceof Runnable) {
+            VectorEmbeddingFieldValueFactory fieldValueFactory = new VectorEmbeddingFieldValueFactory();
+            ((Runnable) valueOrFactory).run();
+            factoryResult = fieldValueFactory.getEmbedding() != null ? fieldValueFactory.getEmbedding() :
+                            fieldValueFactory.getText() != null ? fieldValueFactory.getText() :
+                                    fieldValueFactory.getTexts() != null ? fieldValueFactory.getTexts() :
+                                            fieldValueFactory.getById();
+            return new VectorSearchValueResult(factoryResult, fieldValueFactory.getById() != null);
+        } else {
+            // Direct value
+            return new VectorSearchValueResult(valueOrFactory, false);
+        }
+    }
+
+
+    private class VectorSearchValueResult {
+        private final Object value;
+        private final boolean isDocumentId;
+
+        public VectorSearchValueResult(Object value, boolean isDocumentId) {
+            this.value = value;
+            this.isDocumentId = isDocumentId;
+        }
+
+        public Object getValue() {
+            return value;
+        }
+
+        public boolean isDocumentId() {
+            return isDocumentId;
+        }
     }
 }
