@@ -5,7 +5,7 @@ import net.ravendb.client.documents.queries.vectorSearch.VectorEmbeddingType;
 /**
  * Interface for vector embedding text field
  */
-public interface IVectorEmbeddingTextField extends IVectorField {
+public interface IVectorEmbeddingTextField {
     /**
      * Sets the target quantization
      * @param targetEmbeddingQuantization The target embedding quantization

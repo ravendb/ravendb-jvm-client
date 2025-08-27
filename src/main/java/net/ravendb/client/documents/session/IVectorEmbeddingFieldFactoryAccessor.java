@@ -11,7 +11,7 @@ public interface IVectorEmbeddingFieldFactoryAccessor<T> extends IVectorField{
      * Gets the field name
      * @return The field name
      */
-    T getFieldName();
+    String getFieldName();
 
     /**
      * Gets the source quantization type

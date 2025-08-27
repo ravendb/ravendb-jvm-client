@@ -9,11 +9,10 @@ import net.ravendb.client.documents.queries.suggestions.ISuggestionBuilder;
 import net.ravendb.client.documents.queries.suggestions.ISuggestionDocumentQuery;
 import net.ravendb.client.documents.queries.suggestions.SuggestionBase;
 import net.ravendb.client.documents.queries.timeSeries.ITimeSeriesQueryBuilder;
-import net.ravendb.client.documents.queries.vectorSearch.IVectorOptions;
-import net.ravendb.client.documents.queries.vectorSearch.fields.VectorField;
 import net.ravendb.client.documents.session.querying.sharding.IQueryShardedContextBuilder;
 
 import java.util.function.Consumer;
+import java.util.function.Function;
 
 /**
  * A query against a Raven index
@@ -143,20 +142,10 @@ public interface IDocumentQuery<T> extends IDocumentQueryBase<T, IDocumentQuery<
     IDocumentQuery<T> shardContext(Consumer<IQueryShardedContextBuilder> builder);
 
     IDocumentQuery<T> vectorSearch(
-            VectorField vector,
-            Object value,
-            IVectorOptions options
-    );
-
-    IDocumentQuery<T> vectorSearch(
-            VectorField vector,
-            Consumer<IVectorFieldValueFactory> factory,
-            IVectorOptions options
-    );
-
-    IDocumentQuery<T> vectorSearch(
-            VectorField vector,
-            Runnable factory,
-            IVectorOptions options
+            Function<IVectorFieldFactory<T>, Object> vector,
+            Consumer<IVectorFieldValueFactory> value,
+            Float minimumSimilarity,
+            Integer numberOfCandidates,
+            Boolean isExact
     );
 }

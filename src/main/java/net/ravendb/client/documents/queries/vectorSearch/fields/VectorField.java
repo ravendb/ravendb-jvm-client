@@ -1,10 +1,7 @@
 package net.ravendb.client.documents.queries.vectorSearch.fields;
 
 import net.ravendb.client.documents.queries.vectorSearch.VectorEmbeddingType;
-import net.ravendb.client.documents.queries.vectorSearch.common.VectorFieldBase;
-import net.ravendb.client.documents.session.IVectorEmbeddingField;
 import net.ravendb.client.documents.session.IVectorEmbeddingFieldFactoryAccessor;
-import net.ravendb.client.documents.session.IVectorEmbeddingTextField;
 import net.ravendb.client.documents.session.IVectorField;
 
 /**
@@ -12,7 +9,7 @@ import net.ravendb.client.documents.session.IVectorField;
  * @param <T> The type of the field
  */
 public class VectorField<T> implements IVectorField, IVectorEmbeddingFieldFactoryAccessor {
-    private Object fieldName;
+    private String fieldName;
     private VectorEmbeddingType sourceQuantizationType;
     private VectorEmbeddingType destinationQuantizationType;
     private boolean isBase64Encoded;
@@ -57,7 +54,7 @@ public class VectorField<T> implements IVectorField, IVectorEmbeddingFieldFactor
     }
 
     @Override
-    public Object getFieldName() {
+    public String getFieldName() {
         return this.fieldName;
     }
 
