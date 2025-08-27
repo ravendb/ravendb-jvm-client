@@ -2,7 +2,7 @@ package net.ravendb.client.documents.indexes;
 
 import net.ravendb.client.documents.queries.vectorSearch.VectorEmbeddingType;
 
-public class VectorFieldOptions {
+public class FieldVectorOptions {
     private Integer dimensions;
     private VectorEmbeddingType sourceEmbeddingType;
     private VectorEmbeddingType destinationEmbeddingType;

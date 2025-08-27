@@ -10,6 +10,7 @@ import net.ravendb.client.documents.queries.suggestions.ISuggestionDocumentQuery
 import net.ravendb.client.documents.queries.suggestions.SuggestionBase;
 import net.ravendb.client.documents.queries.timeSeries.ITimeSeriesQueryBuilder;
 import net.ravendb.client.documents.queries.vectorSearch.IVectorOptions;
+import net.ravendb.client.documents.queries.vectorSearch.fields.VectorField;
 import net.ravendb.client.documents.session.querying.sharding.IQueryShardedContextBuilder;
 
 import java.util.function.Consumer;
@@ -142,13 +143,19 @@ public interface IDocumentQuery<T> extends IDocumentQueryBase<T, IDocumentQuery<
     IDocumentQuery<T> shardContext(Consumer<IQueryShardedContextBuilder> builder);
 
     IDocumentQuery<T> vectorSearch(
-            Object fieldName,
+            VectorField vector,
             Object value,
             IVectorOptions options
     );
 
     IDocumentQuery<T> vectorSearch(
-            Object fieldName,
+            VectorField vector,
+            Consumer<IVectorFieldValueFactory> factory,
+            IVectorOptions options
+    );
+
+    IDocumentQuery<T> vectorSearch(
+            VectorField vector,
             Runnable factory,
             IVectorOptions options
     );

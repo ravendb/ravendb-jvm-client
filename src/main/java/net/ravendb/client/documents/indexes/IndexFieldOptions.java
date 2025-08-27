@@ -9,7 +9,7 @@ public class IndexFieldOptions {
     private SpatialOptions spatial;
     private String analyzer;
     private boolean suggestions;
-    private VectorFieldOptions vector;
+    private FieldVectorOptions vector;
 
     public FieldStorage getStorage() {
         return storage;
@@ -59,11 +59,11 @@ public class IndexFieldOptions {
         this.suggestions = suggestions;
     }
 
-    public VectorFieldOptions getVector() {
+    public FieldVectorOptions getVector() {
         return vector;
     }
 
-    public void setVector(VectorFieldOptions vector) {
+    public void setVector(FieldVectorOptions vector) {
         this.vector = vector;
     }
 }

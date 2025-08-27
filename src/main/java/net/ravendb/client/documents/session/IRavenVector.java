@@ -1,7 +1,7 @@
 package net.ravendb.client.documents.session;
 
-import java.sql.Array;
+import java.lang.Iterable;
 
-public interface IRavenVector<T extends Number> extends Array {
+public interface IRavenVector<T extends Number> extends Iterable<T> {
     // No additional methods; just a marker for type consistency
 }

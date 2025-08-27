@@ -8,6 +8,12 @@ import net.ravendb.client.documents.queries.vectorSearch.VectorEmbeddingType;
  */
 public interface IVectorEmbeddingFieldFactoryAccessor<T> extends IVectorField{
     /**
+     * Gets the field name
+     * @return The field name
+     */
+    T getFieldName();
+
+    /**
      * Gets the source quantization type
      * @return The source quantization type
      */

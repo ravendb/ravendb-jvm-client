@@ -27,4 +27,10 @@ public interface IVectorEmbeddingFieldValueFactory {
      * @param embedding Map with "@vector" key containing a RavenVector
      */
     <T extends Number> void byEmbedding(Map<String, IRavenVector<T>> embedding);
+
+    /**
+     * Query by the embedding(s) indexed from the specified document for the quried field.
+     * @param documentId The unique identifier of the document to be processed.
+     */
+    void forDocument(String documentId);
 }

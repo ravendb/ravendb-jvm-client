@@ -5,6 +5,7 @@ import net.ravendb.client.documents.IDocumentStore;
 import net.ravendb.client.documents.indexes.*;
 import net.ravendb.client.documents.operations.indexes.GetIndexesOperation;
 import net.ravendb.client.documents.operations.indexes.PutIndexesOperation;
+import net.ravendb.client.documents.queries.vectorSearch.fields.VectorField;
 import net.ravendb.client.documents.session.IDocumentSession;
 import net.ravendb.client.documents.session.VectorEmbeddingFieldValueFactory;
 import net.ravendb.client.documents.indexes.IndexType;
@@ -98,8 +99,8 @@ public class VectorSearchTest extends RemoteTestBase {
             try (IDocumentSession session = store.openSession()) {
                 String query = session.query(User.class)
                                 .vectorSearch(
-                                        vectorFieldFactory.withEmbedding("EmbeddingField", VectorEmbeddingType.INT8).targetQuantization(VectorEmbeddingType.INT8).getFieldName(),
-                                        ()-> valueFactory.byEmbedding(arr),
+                                        (VectorField)vectorFieldFactory.withEmbedding("EmbeddingField", VectorEmbeddingType.INT8).targetQuantization(VectorEmbeddingType.INT8),
+                                        vf -> vf.byEmbedding(arr),
                                         options
                                 ).toString();
 
@@ -121,13 +122,13 @@ public class VectorSearchTest extends RemoteTestBase {
 
                 String query = session.query(User.class)
                         .vectorSearch(
-                                vectorFieldFactory.withText("VectorField").usingTask("id-for-task-open-ai").getFieldName(),
-                                ()-> valueFactory.byText("aaaa"),
+                                (VectorField)vectorFieldFactory.withText("VectorField").usingTask("id-for-task-open-ai"),
+                                vf -> vf.byText("aaaa"),
                                 null
                         ).toString();
 
                 assertEquals(
-                        "from 'Users' where vector.search(embedding.text(VectorField, ai.task('id-for-task-open-ai')), $p0, null, null)",
+                        "from 'Users' where vector.search(embedding.text(VectorField, ai.task('id-for-task-open-ai')), $p0)",
                         query
                 );
             }
@@ -148,14 +149,14 @@ public class VectorSearchTest extends RemoteTestBase {
 
                 String query = session.query(User.class)
                         .vectorSearch(
-                                vectorFieldFactory.withField("VectorField").getFieldName(),
-                                () -> valueFactory.byEmbedding(arr),
+                                (VectorField)vectorFieldFactory.withField("VectorField"),
+                                vf -> vf.byEmbedding(arr),
                                 null
                         )
                         .toString();
 
                 assertEquals(
-                        "from 'Users' where vector.search(VectorField, $p0, null, null)",
+                        "from 'Users' where vector.search(VectorField, $p0)",
                         query
                 );
             }
@@ -175,14 +176,14 @@ public class VectorSearchTest extends RemoteTestBase {
 
                 String query = session.query(User.class)
                         .vectorSearch(
-                                vectorFieldFactory.withField("VectorField").getFieldName(),
-                                ()-> valueFactory.byBase64("aaaa=="),
+                                (VectorField)vectorFieldFactory.withField("VectorField"),
+                                vf -> vf.byBase64("aaaa=="),
                                 null
                         )
                         .toString();
 
                 assertEquals(
-                        "from 'Users' where vector.search(VectorField, $p0, null, null)",
+                        "from 'Users' where vector.search(VectorField, $p0)",
                         query
                 );
             }
@@ -202,14 +203,14 @@ public class VectorSearchTest extends RemoteTestBase {
 
             String query = session.query(User.class)
                     .vectorSearch(
-                            vectorFieldFactory.withText("EmbeddingSingles").targetQuantization(VectorEmbeddingType.INT8).getFieldName(),
-                            () -> valueFactory.byText("aaaa"),
+                            (VectorField)vectorFieldFactory.withText("EmbeddingSingles").targetQuantization(VectorEmbeddingType.INT8),
+                            vf -> vf.byText("aaaa"),
                             null
                     )
                     .toString();
 
             assertEquals(
-                    "from 'Users' where vector.search(embedding.text_i8(EmbeddingSingles), $p0, null, null)",
+                    "from 'Users' where vector.search(embedding.text_i8(EmbeddingSingles), $p0)",
                     query
             );
 
@@ -229,14 +230,14 @@ public class VectorSearchTest extends RemoteTestBase {
 
             String query = session.query(User.class)
                     .vectorSearch(
-                            vectorFieldFactory.withEmbedding("EmbeddingSingles", null).getFieldName(),
-                            () -> valueFactory.byEmbedding(new Float[]{0.1f, 0.2f, 0.3f}),
+                            (VectorField)vectorFieldFactory.withEmbedding("EmbeddingSingles", null),
+                            vf -> vf.byEmbedding(new Float[]{0.1f, 0.2f, 0.3f}),
                             null
                     )
                     .toString();
 
             assertEquals(
-                    "from 'Users' where vector.search(EmbeddingSingles, $p0, null, null)",
+                    "from 'Users' where vector.search(EmbeddingSingles, $p0)",
                     query
             );
 
@@ -257,8 +258,8 @@ public class VectorSearchTest extends RemoteTestBase {
              IDocumentSession session = store.openSession()) {
             String query = session.query(User.class)
                     .vectorSearch(
-                            vectorFieldFactory.withEmbedding("EmbeddingSBytes", VectorEmbeddingType.INT8).getFieldName(),
-                            () -> valueFactory.byEmbedding(new Integer[]{1, 2, 3}),
+                            (VectorField)vectorFieldFactory.withEmbedding("EmbeddingSBytes", VectorEmbeddingType.INT8),
+                            vf -> vf.byEmbedding(new Integer[]{1, 2, 3}),
                             options
                     )
                     .toString();
@@ -284,14 +285,14 @@ public class VectorSearchTest extends RemoteTestBase {
 
             String query = session.query(User.class)
                     .vectorSearch(
-                            vectorFieldFactory.withEmbedding("EmbeddingBinary", VectorEmbeddingType.BINARY).getFieldName(),
-                            ()-> valueFactory.byEmbedding(new Integer[]{0, 1, 0, 1}),
+                            (VectorField)vectorFieldFactory.withEmbedding("EmbeddingBinary", VectorEmbeddingType.BINARY),
+                            vf -> vf.byEmbedding(new Integer[]{0, 1, 0, 1}),
                             null
                     )
                     .toString();
 
             assertEquals(
-                    "from 'Users' where vector.search(embedding.i1(EmbeddingBinary), $p0, null, null)",
+                    "from 'Users' where vector.search(embedding.i1(EmbeddingBinary), $p0)",
                     query
             );
 
@@ -311,14 +312,14 @@ public class VectorSearchTest extends RemoteTestBase {
 
             String query = session.query(User.class)
                     .vectorSearch(
-                            vectorFieldFactory.withText("TextualValue").getFieldName(),
-                            () -> valueFactory.byText("search text"),
+                            (VectorField)vectorFieldFactory.withText("TextualValue"),
+                            vf -> vf.byText("search text"),
                             null
                     )
                     .toString();
 
             assertEquals(
-                    "from 'Users' where vector.search(embedding.text(TextualValue), $p0, null, null)",
+                    "from 'Users' where vector.search(embedding.text(TextualValue), $p0)",
                     query
             );
 
@@ -338,16 +339,15 @@ public class VectorSearchTest extends RemoteTestBase {
 
             String query = session.query(User.class)
                     .vectorSearch(
-                            vectorFieldFactory.withText("TextualValue")
-                                    .usingTask("taskId-123")
-                                    .getFieldName(),
-                            () -> valueFactory.byText("query text"),
+                            (VectorField)vectorFieldFactory.withText("TextualValue")
+                                    .usingTask("taskId-123"),
+                            vf -> vf.byText("query text"),
                             null
                     )
                     .toString();
 
             assertEquals(
-                    "from 'Users' where vector.search(embedding.text(TextualValue, ai.task('taskId-123')), $p0, null, null)",
+                    "from 'Users' where vector.search(embedding.text(TextualValue, ai.task('taskId-123')), $p0)",
                     query
             );
 
@@ -367,14 +367,14 @@ public class VectorSearchTest extends RemoteTestBase {
 
             String query = session.query(User.class)
                     .vectorSearch(
-                            vectorFieldFactory.withBase64("EmbeddingBase64", null).getFieldName(),
-                            ()-> valueFactory.byBase64("aGVsbG8="),
+                            (VectorField)vectorFieldFactory.withBase64("EmbeddingBase64", null),
+                            vf -> vf.byBase64("aGVsbG8="),
                             null
                     )
                     .toString();
 
             assertEquals(
-                    "from 'Users' where vector.search(EmbeddingBase64, $p0, null, null)",
+                    "from 'Users' where vector.search(EmbeddingBase64, $p0)",
                     query
             );
 
@@ -394,16 +394,15 @@ public class VectorSearchTest extends RemoteTestBase {
 
             String query = session.query(User.class)
                     .vectorSearch(
-                            vectorFieldFactory.withEmbedding("EmbeddingSingles", null)
-                                    .targetQuantization(VectorEmbeddingType.INT8)
-                                    .getFieldName(),
-                            () -> valueFactory.byEmbedding(new Float[]{0.1f, 0.2f, 0.3f}),
+                            (VectorField)vectorFieldFactory.withEmbedding("EmbeddingSingles", null)
+                                    .targetQuantization(VectorEmbeddingType.INT8),
+                            vf -> vf.byEmbedding(new Float[]{0.1f, 0.2f, 0.3f}),
                             null
                     )
                     .toString();
 
             assertEquals(
-                    "from 'Users' where vector.search(embedding.f32_i8(EmbeddingSingles), $p0, null, null)",
+                    "from 'Users' where vector.search(embedding.f32_i8(EmbeddingSingles), $p0)",
                     query
             );
 
@@ -423,16 +422,15 @@ public class VectorSearchTest extends RemoteTestBase {
 
             String query = session.query(User.class)
                     .vectorSearch(
-                            vectorFieldFactory.withEmbedding("EmbeddingSingles", null)
-                                    .targetQuantization(VectorEmbeddingType.BINARY)
-                                    .getFieldName(),
-                            () -> valueFactory.byEmbedding(new Float[]{0.1f, 0.2f, 0.3f}),
+                            (VectorField)vectorFieldFactory.withEmbedding("EmbeddingSingles", null)
+                                    .targetQuantization(VectorEmbeddingType.BINARY),
+                            vf -> vf.byEmbedding(new Float[]{0.1f, 0.2f, 0.3f}),
                             null
                     )
                     .toString();
 
             assertEquals(
-                    "from 'Users' where vector.search(embedding.f32_i1(EmbeddingSingles), $p0, null, null)",
+                    "from 'Users' where vector.search(embedding.f32_i1(EmbeddingSingles), $p0)",
                     query
             );
 
@@ -452,16 +450,15 @@ public class VectorSearchTest extends RemoteTestBase {
 
             String query = session.query(User.class)
                     .vectorSearch(
-                            vectorFieldFactory.withText("TextualValue")
-                                    .targetQuantization(VectorEmbeddingType.INT8)
-                                    .getFieldName(),
-                            () -> valueFactory.byText("query text"),
+                            (VectorField)vectorFieldFactory.withText("TextualValue")
+                                    .targetQuantization(VectorEmbeddingType.INT8),
+                            vf -> vf.byText("query text"),
                             null
                     )
                     .toString();
 
             assertEquals(
-                    "from 'Users' where vector.search(embedding.text_i8(TextualValue), $p0, null, null)",
+                    "from 'Users' where vector.search(embedding.text_i8(TextualValue), $p0)",
                     query
             );
 
@@ -481,17 +478,16 @@ public class VectorSearchTest extends RemoteTestBase {
 
             String query = session.query(User.class)
                     .vectorSearch(
-                            vectorFieldFactory.withText("TextualValue")
+                            (VectorField)vectorFieldFactory.withText("TextualValue")
                                     .usingTask("openai-embeddings")
-                                    .targetQuantization(VectorEmbeddingType.BINARY)
-                                    .getFieldName(),
-                            () -> valueFactory.byText("query text"),
+                                    .targetQuantization(VectorEmbeddingType.BINARY),
+                            vf -> vf.byText("query text"),
                             null
                     )
                     .toString();
 
             assertEquals(
-                    "from 'Users' where vector.search(embedding.text_i1(TextualValue, ai.task('openai-embeddings')), $p0, null, null)",
+                    "from 'Users' where vector.search(embedding.text_i1(TextualValue, ai.task('openai-embeddings')), $p0)",
                     query
             );
 
@@ -512,8 +508,8 @@ public class VectorSearchTest extends RemoteTestBase {
              IDocumentSession session = store.openSession()) {
             String query = session.query(User.class)
                     .vectorSearch(
-                            vectorFieldFactory.withField("EmbeddingSingles").getFieldName(),
-                            () -> valueFactory.byEmbedding(new Float[]{0.1f, 0.2f, 0.3f}),
+                            (VectorField)vectorFieldFactory.withField("EmbeddingSingles"),
+                            vf -> vf.byEmbedding(new Float[]{0.1f, 0.2f, 0.3f}),
                             options
                     )
                     .toString();
@@ -540,14 +536,14 @@ public class VectorSearchTest extends RemoteTestBase {
              IDocumentSession session = store.openSession()) {
             String query = session.query(User.class)
                     .vectorSearch(
-                            vectorFieldFactory.withField("VectorField").getFieldName(),
-                            () -> valueFactory.byEmbedding(new Float[]{0.3f, 0.4f, 0.5f}),
+                            (VectorField)vectorFieldFactory.withField("VectorField"),
+                            vf -> vf.byEmbedding(new Float[]{0.3f, 0.4f, 0.5f}),
                             options
                     )
                     .toString();
 
             assertEquals(
-                    "from 'Users' where exact(vector.search(VectorField, $p0, null, null))",
+                    "from 'Users' where exact(vector.search(VectorField, $p0))",
                     query
             );
 
@@ -570,8 +566,8 @@ public class VectorSearchTest extends RemoteTestBase {
              IDocumentSession session = store.openSession()) {
             String query = session.query(User.class)
                     .vectorSearch(
-                            vectorFieldFactory.withField("VectorField").getFieldName(),
-                            () -> valueFactory.byEmbedding(new Float[]{0.3f, 0.4f, 0.5f}),
+                            (VectorField)vectorFieldFactory.withField("VectorField"),
+                            vf -> vf.byEmbedding(new Float[]{0.3f, 0.4f, 0.5f}),
                             options
                     )
                     .toString();
@@ -598,14 +594,14 @@ public class VectorSearchTest extends RemoteTestBase {
              IDocumentSession session = store.openSession()) {
             String query = session.query(User.class)
                     .vectorSearch(
-                            vectorFieldFactory.withEmbedding("EmbeddingSingles",null).getFieldName(),
-                            () -> valueFactory.byEmbedding(new Float[]{0.1f, 0.2f, 0.3f}),
+                            (VectorField)vectorFieldFactory.withEmbedding("EmbeddingSingles",null),
+                            vf -> vf.byEmbedding(new Float[]{0.1f, 0.2f, 0.3f}),
                             options
                     )
                     .toString();
 
             assertEquals(
-                    "from 'Users' where exact(vector.search(EmbeddingSingles, $p0, null, null))",
+                    "from 'Users' where exact(vector.search(EmbeddingSingles, $p0))",
                     query
             );
 
@@ -627,8 +623,8 @@ public class VectorSearchTest extends RemoteTestBase {
              IDocumentSession session = store.openSession()) {
             String query = session.query(User.class)
                     .vectorSearch(
-                            vectorFieldFactory.withText("TextualValue").getFieldName(),
-                            () -> valueFactory.byText("query text"),
+                            (VectorField)vectorFieldFactory.withText("TextualValue"),
+                            vf -> vf.byText("query text"),
                             options
                     )
                     .toString();
@@ -655,8 +651,8 @@ public class VectorSearchTest extends RemoteTestBase {
              IDocumentSession session = store.openSession()) {
             String query = session.query(User.class)
                     .vectorSearch(
-                            vectorFieldFactory.withText("TextualValue").getFieldName(),
-                            () -> valueFactory.byTexts(new String[]{"first query", "second query"}),
+                            (VectorField)vectorFieldFactory.withText("TextualValue"),
+                            vf -> vf.byTexts(new String[]{"first query", "second query"}),
                             options
                     )
                     .toString();
@@ -683,8 +679,8 @@ public class VectorSearchTest extends RemoteTestBase {
              IDocumentSession session = store.openSession()) {
             String query = session.query(User.class)
                     .vectorSearch(
-                            vectorFieldFactory.withField("EmbeddingSingles").getFieldName(),
-                            () -> valueFactory.byEmbeddings(new Float[][]{
+                            (VectorField)vectorFieldFactory.withField("EmbeddingSingles"),
+                            vf -> vf.byEmbeddings(new Float[][]{
                                     {0.1f, 0.2f, 0.3f},
                                     {0.4f, 0.5f, 0.6f}
                             }),
@@ -713,10 +709,9 @@ public class VectorSearchTest extends RemoteTestBase {
 
             String query = session.query(User.class)
                     .vectorSearch(
-                            vectorFieldFactory.withEmbedding("EmbeddingSBytes", VectorEmbeddingType.INT8)
-                                    .targetQuantization(VectorEmbeddingType.INT8)
-                                    .getFieldName(),
-                            () -> valueFactory.byEmbeddings(new Integer[][]{
+                            (VectorField)vectorFieldFactory.withEmbedding("EmbeddingSBytes", VectorEmbeddingType.INT8)
+                                    .targetQuantization(VectorEmbeddingType.INT8),
+                            vf -> vf.byEmbeddings(new Integer[][]{
                                     {1, 2, 3},
                                     {4, 5, 6}
                             }),
@@ -725,7 +720,7 @@ public class VectorSearchTest extends RemoteTestBase {
                     .toString();
 
             assertEquals(
-                    "from 'Users' where vector.search(embedding.i8(EmbeddingSBytes), $p0, null, null)",
+                    "from 'Users' where vector.search(embedding.i8(EmbeddingSBytes), $p0)",
                     query
             );
 
@@ -746,17 +741,16 @@ public class VectorSearchTest extends RemoteTestBase {
              IDocumentSession session = store.openSession()) {
             String query = session.query(User.class)
                     .vectorSearch(
-                            vectorFieldFactory.withText("TextualValue")
+                            (VectorField)vectorFieldFactory.withText("TextualValue")
                                     .usingTask("openai-embeddings")
-                                    .targetQuantization(VectorEmbeddingType.BINARY)
-                                    .getFieldName(),
-                            () -> valueFactory.byTexts(new String[]{"query one", "query two", "query three"}),
+                                    .targetQuantization(VectorEmbeddingType.BINARY),
+                            vf -> vf.byTexts(new String[]{"query one", "query two", "query three"}),
                             options
                     )
                     .toString();
 
             assertEquals(
-                    "from 'Users' where exact(vector.search(embedding.text_i1(TextualValue, ai.task('openai-embeddings')), $p0, null, null))",
+                    "from 'Users' where exact(vector.search(embedding.text_i1(TextualValue, ai.task('openai-embeddings')), $p0))",
                     query
             );
 
@@ -775,14 +769,14 @@ public class VectorSearchTest extends RemoteTestBase {
 
             String query = session.query(User.class)
                     .vectorSearch(
-                            "VectorField",
-                            () -> valueFactory.byEmbedding(new Float[]{0.3f, 0.4f, 0.5f}),
+                            new VectorField<>("VectorField"),
+                            vf -> vf.byEmbedding(new Float[]{0.3f, 0.4f, 0.5f}),
                             null // options
                     )
                     .toString();
 
             assertEquals(
-                    "from 'Users' where vector.search(VectorField, $p0, null, null)",
+                    "from 'Users' where vector.search(VectorField, $p0)",
                     query
             );
 
@@ -803,8 +797,8 @@ public class VectorSearchTest extends RemoteTestBase {
              IDocumentSession session = store.openSession()) {
             String query = session.query(User.class)
                     .vectorSearch(
-                            "EmbeddingSingles",
-                            () -> valueFactory.byEmbedding(new Float[]{0.1f, 0.2f, 0.3f}),
+                            new VectorField<>("EmbeddingSingles"),
+                            vf -> vf.byEmbedding(new Float[]{0.1f, 0.2f, 0.3f}),
                             options
                     )
                     .toString();
@@ -830,14 +824,14 @@ public class VectorSearchTest extends RemoteTestBase {
              IDocumentSession session = store.openSession()) {
             String query = session.query(User.class)
                     .vectorSearch(
-                            "VectorField",
-                            () -> valueFactory.byEmbedding(new Float[]{0.3f, 0.4f, 0.5f}),
+                            new VectorField<>("VectorField"),
+                            vf -> vf.byEmbedding(new Float[]{0.3f, 0.4f, 0.5f}),
                             options
                     )
                     .toString();
 
             assertEquals(
-                    "from 'Users' where exact(vector.search(VectorField, $p0, null, null))",
+                    "from 'Users' where exact(vector.search(VectorField, $p0))",
                     query
             );
 
@@ -857,10 +851,10 @@ public class VectorSearchTest extends RemoteTestBase {
              IDocumentSession session = store.openSession()) {
             String query = session.query(User.class)
                     .vectorSearch(
-                            "EmbeddingSingles",
-                            () -> valueFactory.byEmbeddings(new Float[][]{
-                                    {0.1f, 0.2f, 0.3f},
-                                    {0.4f, 0.5f, 0.6f}
+                            new VectorField<>("EmbeddingSingles"),
+                            () -> valueFactory.byEmbeddings(new Number[][] {
+                                    new Double[] { 0.1, 0.2, 0.3 },
+                                    new Double[] { 0.4, 0.5, 0.6 }
                             }),
                             options
                     )
@@ -886,14 +880,14 @@ public class VectorSearchTest extends RemoteTestBase {
 
             String query = session.query(User.class)
                     .vectorSearch(
-                            "TextualValue",
-                            () -> valueFactory.byText("query text"),
+                            new VectorField<>("TextualValue"),
+                            vf -> vf.byText("query text"),
                             null
                     )
                     .toString();
 
             assertEquals(
-                    "from 'Users' where vector.search(TextualValue, $p0, null, null)",
+                    "from 'Users' where vector.search(TextualValue, $p0)",
                     query
             );
 
@@ -919,7 +913,7 @@ public class VectorSearchTest extends RemoteTestBase {
             assertThat(indexDef.getConfiguration().get("Indexing.Static.SearchEngineType")).isEqualTo("Corax");
 
             IndexFieldOptions vectorField = indexDef.getFields().get("FirstName");
-            VectorFieldOptions v = vectorField.getVector();
+            FieldVectorOptions v = vectorField.getVector();
 
             assertThat(v.getSourceEmbeddingType()).isEqualTo(VectorEmbeddingType.TEXT);
             assertThat(v.getDestinationEmbeddingType()).isEqualTo(VectorEmbeddingType.SINGLE);
@@ -956,6 +950,154 @@ public class VectorSearchTest extends RemoteTestBase {
         }
     }
 
+    @EnableOn70Server
+    @Test
+    public void shouldGenerateRqlForVectorSearchWithFieldNameAsStringAndForDocumentFactory() {
+        VectorEmbeddingFieldValueFactory valueFactory = new VectorEmbeddingFieldValueFactory();
+
+        try (IDocumentStore store = getDocumentStore()) {
+            try (IDocumentSession session = store.openSession()) {
+                String query = session.query(User.class)
+                        .vectorSearch(new VectorField<>("TextualValue"), vf -> vf.forDocument("users/1"), null)
+                        .toString();
+
+                assertThat(query)
+                        .isEqualTo("from 'Users' where vector.search(TextualValue, embedding.forDoc($p0))");
+            }
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    @EnableOn70Server
+    @Test
+    public void shouldGenerateRqlForVectorSearchUsingForDocumentWithTextField() {
+        VectorEmbeddingFieldFactory vectorFieldFactory = new VectorEmbeddingFieldFactory();
+
+        try (IDocumentStore store = getDocumentStore()) {
+            try (IDocumentSession session = store.openSession()) {
+                String query = session.query(User.class)
+                        .vectorSearch(
+                                (VectorField)vectorFieldFactory.withText("TextualValue"),
+                                vf -> vf.forDocument("dtos/456"),
+                                null
+                        )
+                        .toString();
+                assertThat(query).isEqualTo(
+                        "from 'Users' where vector.search(embedding.text(TextualValue), embedding.forDoc($p0))"
+                );
+            }
+        }
+        catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    @EnableOn70Server
+    @Test
+    public void shouldGenerateRqlForVectorSearchUsingForDocumentWithInt8Quantization() {
+        VectorEmbeddingFieldFactory vectorFieldFactory = new VectorEmbeddingFieldFactory();
+
+        try (IDocumentStore store = getDocumentStore()) {
+            try (IDocumentSession session = store.openSession()) {
+                String query = session.query(User.class)
+                        .vectorSearch(
+                                (VectorField)vectorFieldFactory.withEmbedding("EmbeddingSBytes", VectorEmbeddingType.INT8),
+                                factory -> factory.forDocument("dtos/int8-test"),
+                                null
+                        )
+                        .toString();
+
+                assertThat(query).isEqualTo(
+                        "from 'Users' where vector.search(embedding.i8(EmbeddingSBytes), embedding.forDoc($p0))"
+                );
+            }
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    @EnableOn70Server
+    @Test
+    public void shouldGenerateRqlForVectorSearchUsingForDocumentWithTextFieldAndAITask() {
+        VectorEmbeddingFieldFactory vectorFieldFactory = new VectorEmbeddingFieldFactory();
+        try (IDocumentStore store = getDocumentStore()) {
+            try (IDocumentSession session = store.openSession()) {
+
+                String query = session.query(User.class)
+                        .vectorSearch(
+                                (VectorField)vectorFieldFactory.withText("TextualValue")
+                                        .usingTask("openai-task"),
+                                vf -> vf.forDocument("dtos/789"),
+                                null
+                        )
+                        .toString();
+
+                assertThat(query).isEqualTo(
+                        "from 'Users' where vector.search(embedding.text(TextualValue, ai.task('openai-task')), embedding.forDoc($p0))"
+                );
+            }
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    @EnableOn70Server
+    @Test
+    public void shouldGenerateRqlForVectorSearchUsingForDocumentWithSimilarityAndCandidates() {
+        VectorEmbeddingFieldFactory vectorFieldFactory = new VectorEmbeddingFieldFactory();
+        IVectorOptions options = new IVectorOptions();
+        options.setSimilarity(0.75);
+        options.setNumberOfCandidates(100);
+
+        try (IDocumentStore store = getDocumentStore()) {
+            try (IDocumentSession session = store.openSession()) {
+
+                String query = session.query(User.class)
+                        .vectorSearch(
+                                (VectorField)vectorFieldFactory.withEmbedding("EmbeddingSingles", null),
+                                factory -> factory.forDocument("dtos/full-options"),
+                                options
+                        )
+                        .toString();
+
+                assertThat(query).isEqualTo(
+                        "from 'Users' where vector.search(EmbeddingSingles, embedding.forDoc($p0), 0.75, 100)"
+                );
+            }
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    @EnableOn70Server
+    @Test
+    public void shouldGenerateRqlForVectorSearchUsingForDocumentWithNumberOfCandidates() {
+        VectorEmbeddingFieldFactory vectorFieldFactory = new VectorEmbeddingFieldFactory();
+        IVectorOptions options = new IVectorOptions();
+        options.setNumberOfCandidates(50);
+
+        try (IDocumentStore store = getDocumentStore()) {
+            try (IDocumentSession session = store.openSession()) {
+
+                String query = session.query(User.class)
+                        .vectorSearch(
+                                (VectorField)vectorFieldFactory.withField("VectorField"),
+                                factory -> factory.forDocument("dtos/candidates-test"),
+                                options
+                        )
+                        .toString();
+
+                assertThat(query).isEqualTo(
+                        "from 'Users' where vector.search(VectorField, embedding.forDoc($p0), null, 50)"
+                );
+            }
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+
     private static void setupIndexDefinition(IDocumentStore store) {
         IndexDefinition indexDefinition = new IndexDefinition();
         indexDefinition.setName("Users/ByEmbeddingSingles");
@@ -970,7 +1112,7 @@ public class VectorSearchTest extends RemoteTestBase {
 
 
         IndexFieldOptions fieldOptions = new IndexFieldOptions();
-        VectorFieldOptions vectorOptions = new VectorFieldOptions();
+        FieldVectorOptions vectorOptions = new FieldVectorOptions();
         vectorOptions.setNumberOfEdges(23);
         vectorOptions.setNumberOfCandidatesForIndexing(20);
         vectorOptions.setSourceEmbeddingType(VectorEmbeddingType.TEXT);
@@ -1000,7 +1142,7 @@ public class VectorSearchTest extends RemoteTestBase {
             ));
 
             IndexFieldOptions vectorOptions = new IndexFieldOptions();
-            VectorFieldOptions fieldVectorOptions = new VectorFieldOptions();
+            FieldVectorOptions fieldVectorOptions = new FieldVectorOptions();
             fieldVectorOptions.setNumberOfEdges(33);
             fieldVectorOptions.setNumberOfCandidatesForIndexing(43);
             fieldVectorOptions.setSourceEmbeddingType(VectorEmbeddingType.TEXT);
