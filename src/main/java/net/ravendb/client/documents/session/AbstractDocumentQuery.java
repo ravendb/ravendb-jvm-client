@@ -975,10 +975,10 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
         return new FilterModeScope(filterModeStack, on);
     }
 
-    protected void _vectorSearch(VectorField vector, Object valueOrFactory, IVectorOptions options){
+    protected void _vectorSearch(Function<IVectorFieldFactory<T>,Object> vector, Consumer<IVectorFieldValueFactory> factory, Float minimumSimilarity, Integer numberOfCandidates, Boolean isExact) {
         this.assertMethodIsCurrentlySupported("vectorSearch");
         IVectorEmbeddingFieldFactoryAccessor fieldAccessor = this._resolveVectorSearchFieldAccessor(vector);
-        VectorSearchValueResult vectorSearchResult = this._resolveVectorSearchValueFactory(valueOrFactory);
+        VectorSearchValueResult vectorSearchResult = this._resolveVectorSearchValueFactory(factory);
 
         List<QueryToken> tokens = getCurrentWhereTokens();
         appendOperatorIfNeeded(tokens);
@@ -994,9 +994,9 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
                 parameterName,
                 sourceQuantizationType,
                 targetQuantizationType,
-                options != null ? options.getSimilarity() : null,
-                options != null ? options.getNumberOfCandidates() : null,
-                options != null && options.getIsExact() != null ? options.getIsExact() : VectorSearchToken.DEFAULT_IS_EXACT,
+                minimumSimilarity,
+                numberOfCandidates,
+                isExact != null ? isExact : VectorSearchToken.DEFAULT_IS_EXACT,
                 vectorSearchResult.isDocumentId(),
                 taskIdentifier == "" ? null : taskIdentifier
         );
@@ -2502,14 +2502,15 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
         this.parameterPrefix = parameterPrefix;
     }
 
-    private IVectorEmbeddingFieldFactoryAccessor _resolveVectorSearchFieldAccessor(VectorField vector) {
+    private IVectorEmbeddingFieldFactoryAccessor _resolveVectorSearchFieldAccessor(Object vector) {
         VectorEmbeddingFieldFactory vectorFactory = new VectorEmbeddingFieldFactory<T>();
         IVectorEmbeddingFieldFactoryAccessor fieldAccessor;
-        if (vector.getFieldName() instanceof String){
-            return (IVectorEmbeddingFieldFactoryAccessor) vectorFactory.withField(vector.getFieldName(), vector.getSourceQuantizationType(), vector.getDestinationQuantizationType(), vector.getEmbeddingsGenerationTaskIdentifier());
-        } else if (vector.getFieldName()  instanceof Function<?,?>){
-            Function<VectorEmbeddingFieldFactory, IVectorEmbeddingFieldFactoryAccessor<T>> func =
-                    (Function<VectorEmbeddingFieldFactory, IVectorEmbeddingFieldFactoryAccessor<T>>) vector.getFieldName();
+        //TODO: enable string field names
+//        if (vector instanceof String){
+//            return (IVectorEmbeddingFieldFactoryAccessor) vectorFactory.withField("abs");
+//        } else
+        if (vector instanceof Function<?,?>){
+            Function<VectorEmbeddingFieldFactory, IVectorEmbeddingFieldFactoryAccessor<T>> func = (Function<VectorEmbeddingFieldFactory, IVectorEmbeddingFieldFactoryAccessor<T>>) vector;
             fieldAccessor = func.apply(vectorFactory);
             return fieldAccessor;
         } else {

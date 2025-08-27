@@ -5,9 +5,7 @@ import net.ravendb.client.documents.IDocumentStore;
 import net.ravendb.client.documents.indexes.*;
 import net.ravendb.client.documents.operations.indexes.GetIndexesOperation;
 import net.ravendb.client.documents.operations.indexes.PutIndexesOperation;
-import net.ravendb.client.documents.queries.vectorSearch.fields.VectorField;
 import net.ravendb.client.documents.session.IDocumentSession;
-import net.ravendb.client.documents.session.VectorEmbeddingFieldValueFactory;
 import net.ravendb.client.documents.indexes.IndexType;
 import com.google.common.collect.Sets;
 import net.ravendb.client.infrastructure.EnableOn70Server;
@@ -88,20 +86,16 @@ public class VectorSearchTest extends RemoteTestBase {
     @EnableOn70Server
     @Test
     public void shouldGenerateRqlForVectorSearchWithInt8QuantizedEmbeddingField() {
-        VectorEmbeddingFieldFactory vectorFieldFactory = new VectorEmbeddingFieldFactory();
-        VectorEmbeddingFieldValueFactory valueFactory = new VectorEmbeddingFieldValueFactory();
         Float[] arr = new Float[]{2.5f, 3.3f};
-        IVectorOptions options = new IVectorOptions();
-        options.setSimilarity(0.65);
-        options.setNumberOfCandidates(12);
-
         try (IDocumentStore store = getDocumentStore()) {
             try (IDocumentSession session = store.openSession()) {
                 String query = session.query(User.class)
                                 .vectorSearch(
-                                        (VectorField)vectorFieldFactory.withEmbedding("EmbeddingField", VectorEmbeddingType.INT8).targetQuantization(VectorEmbeddingType.INT8),
+                                        x -> x.withEmbedding("EmbeddingField", VectorEmbeddingType.INT8).targetQuantization(VectorEmbeddingType.INT8),
                                         vf -> vf.byEmbedding(arr),
-                                        options
+                                        0.65f,
+                                        12,
+                                        null
                                 ).toString();
 
                 assertThat(query)
@@ -115,16 +109,14 @@ public class VectorSearchTest extends RemoteTestBase {
     @EnableOn70Server
     @Test
     public void shouldGenerateRqlForVectorSearchWithTextEmbeddingUsingAiTask() {
-        VectorEmbeddingFieldFactory vectorFieldFactory = new VectorEmbeddingFieldFactory();
-        VectorEmbeddingFieldValueFactory valueFactory = new VectorEmbeddingFieldValueFactory();
         try (IDocumentStore store = getDocumentStore()) {
             try (IDocumentSession session = store.openSession()) {
 
                 String query = session.query(User.class)
                         .vectorSearch(
-                                (VectorField)vectorFieldFactory.withText("VectorField").usingTask("id-for-task-open-ai"),
+                                x-> x.withText("VectorField").usingTask("id-for-task-open-ai"),
                                 vf -> vf.byText("aaaa"),
-                                null
+                                null, null, null
                         ).toString();
 
                 assertEquals(
@@ -140,8 +132,6 @@ public class VectorSearchTest extends RemoteTestBase {
     @EnableOn70Server
     @Test
     public void shouldGenerateRqlForBasicVectorSearchWithNumericEmbeddingValues() {
-        VectorEmbeddingFieldFactory vectorFieldFactory = new VectorEmbeddingFieldFactory();
-        VectorEmbeddingFieldValueFactory valueFactory = new VectorEmbeddingFieldValueFactory();
         Float[] arr = new Float[]{2.5f, 3.3f};
 
         try (IDocumentStore store = getDocumentStore()) {
@@ -149,9 +139,9 @@ public class VectorSearchTest extends RemoteTestBase {
 
                 String query = session.query(User.class)
                         .vectorSearch(
-                                (VectorField)vectorFieldFactory.withField("VectorField"),
+                                x-> x.withField("VectorField"),
                                 vf -> vf.byEmbedding(arr),
-                                null
+                                null, null, null
                         )
                         .toString();
 
@@ -168,17 +158,14 @@ public class VectorSearchTest extends RemoteTestBase {
     @EnableOn70Server
     @Test
     public void shouldGenerateRqlForVectorSearchWithBase64EncodedEmbedding() {
-        VectorEmbeddingFieldFactory vectorFieldFactory = new VectorEmbeddingFieldFactory();
-        VectorEmbeddingFieldValueFactory valueFactory = new VectorEmbeddingFieldValueFactory();
-
         try (IDocumentStore store = getDocumentStore()) {
             try (IDocumentSession session = store.openSession()) {
 
                 String query = session.query(User.class)
                         .vectorSearch(
-                                (VectorField)vectorFieldFactory.withField("VectorField"),
+                                x-> x.withField("VectorField"),
                                 vf -> vf.byBase64("aaaa=="),
-                                null
+                                null, null, null
                         )
                         .toString();
 
@@ -195,17 +182,14 @@ public class VectorSearchTest extends RemoteTestBase {
     @EnableOn70Server
     @Test
     public void shouldGenerateRqlForVectorSearchWithTextFieldAndInt8Quantization() {
-        VectorEmbeddingFieldFactory vectorFieldFactory = new VectorEmbeddingFieldFactory();
-        VectorEmbeddingFieldValueFactory valueFactory = new VectorEmbeddingFieldValueFactory();
-
         try (IDocumentStore store = getDocumentStore();
              IDocumentSession session = store.openSession()) {
 
             String query = session.query(User.class)
                     .vectorSearch(
-                            (VectorField)vectorFieldFactory.withText("EmbeddingSingles").targetQuantization(VectorEmbeddingType.INT8),
+                            x-> x.withText("EmbeddingSingles").targetQuantization(VectorEmbeddingType.INT8),
                             vf -> vf.byText("aaaa"),
-                            null
+                            null, null, null
                     )
                     .toString();
 
@@ -222,17 +206,14 @@ public class VectorSearchTest extends RemoteTestBase {
     @EnableOn70Server
     @Test
     public void shouldGenerateRqlForVectorSearchUsingPropertySelectorForEmbeddingField() {
-        VectorEmbeddingFieldFactory vectorFieldFactory = new VectorEmbeddingFieldFactory();
-        VectorEmbeddingFieldValueFactory valueFactory = new VectorEmbeddingFieldValueFactory();
-
         try (IDocumentStore store = getDocumentStore();
              IDocumentSession session = store.openSession()) {
 
             String query = session.query(User.class)
                     .vectorSearch(
-                            (VectorField)vectorFieldFactory.withEmbedding("EmbeddingSingles", null),
+                            x-> x.withEmbedding("EmbeddingSingles", null),
                             vf -> vf.byEmbedding(new Float[]{0.1f, 0.2f, 0.3f}),
-                            null
+                            null, null, null
                     )
                     .toString();
 
@@ -249,18 +230,13 @@ public class VectorSearchTest extends RemoteTestBase {
     @EnableOn70Server
     @Test
     public void shouldGenerateRqlForVectorSearchWithPropertySelectorAndExplicitInt8Quantization() {
-        VectorEmbeddingFieldFactory vectorFieldFactory = new VectorEmbeddingFieldFactory();
-        VectorEmbeddingFieldValueFactory valueFactory = new VectorEmbeddingFieldValueFactory();
-        IVectorOptions options = new IVectorOptions();
-        options.setSimilarity(0.75);
-
         try (IDocumentStore store = getDocumentStore();
              IDocumentSession session = store.openSession()) {
             String query = session.query(User.class)
                     .vectorSearch(
-                            (VectorField)vectorFieldFactory.withEmbedding("EmbeddingSBytes", VectorEmbeddingType.INT8),
+                            x-> x.withEmbedding("EmbeddingSBytes", VectorEmbeddingType.INT8),
                             vf -> vf.byEmbedding(new Integer[]{1, 2, 3}),
-                            options
+                            0.75f, null, null
                     )
                     .toString();
 
@@ -277,17 +253,14 @@ public class VectorSearchTest extends RemoteTestBase {
     @EnableOn70Server
     @Test
     public void shouldGenerateRqlForVectorSearchWithPropertySelectorAndExplicitBinaryQuantization() {
-        VectorEmbeddingFieldFactory vectorFieldFactory = new VectorEmbeddingFieldFactory();
-        VectorEmbeddingFieldValueFactory valueFactory = new VectorEmbeddingFieldValueFactory();
-
         try (IDocumentStore store = getDocumentStore();
              IDocumentSession session = store.openSession()) {
 
             String query = session.query(User.class)
                     .vectorSearch(
-                            (VectorField)vectorFieldFactory.withEmbedding("EmbeddingBinary", VectorEmbeddingType.BINARY),
+                            x-> x.withEmbedding("EmbeddingBinary", VectorEmbeddingType.BINARY),
                             vf -> vf.byEmbedding(new Integer[]{0, 1, 0, 1}),
-                            null
+                            null, null, null
                     )
                     .toString();
 
@@ -304,17 +277,14 @@ public class VectorSearchTest extends RemoteTestBase {
     @EnableOn70Server
     @Test
     public void shouldGenerateRqlForVectorSearchWithPropertySelectorForTextFieldConversion() {
-        VectorEmbeddingFieldFactory vectorFieldFactory = new VectorEmbeddingFieldFactory();
-        VectorEmbeddingFieldValueFactory valueFactory = new VectorEmbeddingFieldValueFactory();
-
         try (IDocumentStore store = getDocumentStore();
              IDocumentSession session = store.openSession()) {
 
             String query = session.query(User.class)
                     .vectorSearch(
-                            (VectorField)vectorFieldFactory.withText("TextualValue"),
+                            x-> x.withText("TextualValue"),
                             vf -> vf.byText("search text"),
-                            null
+                            null, null, null
                     )
                     .toString();
 
@@ -331,18 +301,15 @@ public class VectorSearchTest extends RemoteTestBase {
     @EnableOn70Server
     @Test
     public void shouldGenerateRqlForVectorSearchWithTextFieldUsingNamedAiTask() {
-        VectorEmbeddingFieldFactory vectorFieldFactory = new VectorEmbeddingFieldFactory();
-        VectorEmbeddingFieldValueFactory valueFactory = new VectorEmbeddingFieldValueFactory();
-
         try (IDocumentStore store = getDocumentStore();
              IDocumentSession session = store.openSession()) {
 
             String query = session.query(User.class)
                     .vectorSearch(
-                            (VectorField)vectorFieldFactory.withText("TextualValue")
+                           x-> x.withText("TextualValue")
                                     .usingTask("taskId-123"),
                             vf -> vf.byText("query text"),
-                            null
+                            null, null, null
                     )
                     .toString();
 
@@ -359,17 +326,14 @@ public class VectorSearchTest extends RemoteTestBase {
     @EnableOn70Server
     @Test
     public void shouldGenerateRqlForVectorSearchWithBase64FieldUsingPropertySelector() {
-        VectorEmbeddingFieldFactory vectorFieldFactory = new VectorEmbeddingFieldFactory();
-        VectorEmbeddingFieldValueFactory valueFactory = new VectorEmbeddingFieldValueFactory();
-
         try (IDocumentStore store = getDocumentStore();
              IDocumentSession session = store.openSession()) {
 
             String query = session.query(User.class)
                     .vectorSearch(
-                            (VectorField)vectorFieldFactory.withBase64("EmbeddingBase64", null),
+                            x-> x.withBase64("EmbeddingBase64", null),
                             vf -> vf.byBase64("aGVsbG8="),
-                            null
+                            null, null, null
                     )
                     .toString();
 
@@ -386,18 +350,15 @@ public class VectorSearchTest extends RemoteTestBase {
     @EnableOn70Server
     @Test
     public void shouldGenerateRqlForVectorSearchWithSingleToInt8ConversionQuantization() {
-        VectorEmbeddingFieldFactory vectorFieldFactory = new VectorEmbeddingFieldFactory();
-        VectorEmbeddingFieldValueFactory valueFactory = new VectorEmbeddingFieldValueFactory();
-
         try (IDocumentStore store = getDocumentStore();
              IDocumentSession session = store.openSession()) {
 
             String query = session.query(User.class)
                     .vectorSearch(
-                            (VectorField)vectorFieldFactory.withEmbedding("EmbeddingSingles", null)
+                            x-> x.withEmbedding("EmbeddingSingles", null)
                                     .targetQuantization(VectorEmbeddingType.INT8),
                             vf -> vf.byEmbedding(new Float[]{0.1f, 0.2f, 0.3f}),
-                            null
+                            null, null, null
                     )
                     .toString();
 
@@ -414,18 +375,15 @@ public class VectorSearchTest extends RemoteTestBase {
     @EnableOn70Server
     @Test
     public void shouldGenerateRqlForVectorSearchWithSingleToBinaryConversionQuantization() {
-        VectorEmbeddingFieldFactory vectorFieldFactory = new VectorEmbeddingFieldFactory();
-        VectorEmbeddingFieldValueFactory valueFactory = new VectorEmbeddingFieldValueFactory();
-
         try (IDocumentStore store = getDocumentStore();
              IDocumentSession session = store.openSession()) {
 
             String query = session.query(User.class)
                     .vectorSearch(
-                            (VectorField)vectorFieldFactory.withEmbedding("EmbeddingSingles", null)
+                            x-> x.withEmbedding("EmbeddingSingles", null)
                                     .targetQuantization(VectorEmbeddingType.BINARY),
                             vf -> vf.byEmbedding(new Float[]{0.1f, 0.2f, 0.3f}),
-                            null
+                            null, null, null
                     )
                     .toString();
 
@@ -442,18 +400,15 @@ public class VectorSearchTest extends RemoteTestBase {
     @EnableOn70Server
     @Test
     public void shouldGenerateRqlForVectorSearchWithTextFieldAndInt8TargetQuantization() {
-        VectorEmbeddingFieldFactory vectorFieldFactory = new VectorEmbeddingFieldFactory();
-        VectorEmbeddingFieldValueFactory valueFactory = new VectorEmbeddingFieldValueFactory();
-
         try (IDocumentStore store = getDocumentStore();
              IDocumentSession session = store.openSession()) {
 
             String query = session.query(User.class)
                     .vectorSearch(
-                            (VectorField)vectorFieldFactory.withText("TextualValue")
+                            x-> x.withText("TextualValue")
                                     .targetQuantization(VectorEmbeddingType.INT8),
                             vf -> vf.byText("query text"),
-                            null
+                            null, null, null
                     )
                     .toString();
 
@@ -470,19 +425,16 @@ public class VectorSearchTest extends RemoteTestBase {
     @EnableOn70Server
     @Test
     public void shouldGenerateRqlForVectorSearchWithTextAiTaskAndBinaryQuantization() {
-        VectorEmbeddingFieldFactory vectorFieldFactory = new VectorEmbeddingFieldFactory();
-        VectorEmbeddingFieldValueFactory valueFactory = new VectorEmbeddingFieldValueFactory();
-
         try (IDocumentStore store = getDocumentStore();
              IDocumentSession session = store.openSession()) {
 
             String query = session.query(User.class)
                     .vectorSearch(
-                            (VectorField)vectorFieldFactory.withText("TextualValue")
+                            x-> x.withText("TextualValue")
                                     .usingTask("openai-embeddings")
                                     .targetQuantization(VectorEmbeddingType.BINARY),
                             vf -> vf.byText("query text"),
-                            null
+                            null, null, null
                     )
                     .toString();
 
@@ -499,18 +451,13 @@ public class VectorSearchTest extends RemoteTestBase {
     @EnableOn70Server
     @Test
     public void shouldGenerateRqlForVectorSearchWithWithFieldMethodAndPropertySelector() {
-        VectorEmbeddingFieldFactory vectorFieldFactory = new VectorEmbeddingFieldFactory();
-        VectorEmbeddingFieldValueFactory valueFactory = new VectorEmbeddingFieldValueFactory();
-        IVectorOptions options = new IVectorOptions();
-        options.setNumberOfCandidates(20);
-
         try (IDocumentStore store = getDocumentStore();
              IDocumentSession session = store.openSession()) {
             String query = session.query(User.class)
                     .vectorSearch(
-                            (VectorField)vectorFieldFactory.withField("EmbeddingSingles"),
+                            x-> x.withField("EmbeddingSingles"),
                             vf -> vf.byEmbedding(new Float[]{0.1f, 0.2f, 0.3f}),
-                            options
+                            null, 20, null
                     )
                     .toString();
 
@@ -527,18 +474,13 @@ public class VectorSearchTest extends RemoteTestBase {
     @EnableOn70Server
     @Test
     public void shouldGenerateRqlForVectorSearchWithExactMatchingParameter() {
-        VectorEmbeddingFieldFactory vectorFieldFactory = new VectorEmbeddingFieldFactory();
-        VectorEmbeddingFieldValueFactory valueFactory = new VectorEmbeddingFieldValueFactory();
-        IVectorOptions options = new IVectorOptions();
-        options.setIsExact(true);
-
         try (IDocumentStore store = getDocumentStore();
              IDocumentSession session = store.openSession()) {
             String query = session.query(User.class)
                     .vectorSearch(
-                            (VectorField)vectorFieldFactory.withField("VectorField"),
+                            x-> x.withField("VectorField"),
                             vf -> vf.byEmbedding(new Float[]{0.3f, 0.4f, 0.5f}),
-                            options
+                            null, null, true
                     )
                     .toString();
 
@@ -555,20 +497,13 @@ public class VectorSearchTest extends RemoteTestBase {
     @EnableOn70Server
     @Test
     public void shouldGenerateRqlForVectorSearchWithSimilarityCandidatesAndExactParameters() {
-        VectorEmbeddingFieldFactory vectorFieldFactory = new VectorEmbeddingFieldFactory();
-        VectorEmbeddingFieldValueFactory valueFactory = new VectorEmbeddingFieldValueFactory();
-        IVectorOptions options = new IVectorOptions();
-        options.setSimilarity(0.75);
-        options.setNumberOfCandidates(50);
-        options.setIsExact(true);
-
         try (IDocumentStore store = getDocumentStore();
              IDocumentSession session = store.openSession()) {
             String query = session.query(User.class)
                     .vectorSearch(
-                            (VectorField)vectorFieldFactory.withField("VectorField"),
+                            x-> x.withField("VectorField"),
                             vf -> vf.byEmbedding(new Float[]{0.3f, 0.4f, 0.5f}),
-                            options
+                            0.75f, 50, true
                     )
                     .toString();
 
@@ -585,18 +520,13 @@ public class VectorSearchTest extends RemoteTestBase {
     @EnableOn70Server
     @Test
     public void shouldGenerateRqlForVectorSearchWithExactParameterAndEmbeddingField() {
-        VectorEmbeddingFieldFactory vectorFieldFactory = new VectorEmbeddingFieldFactory();
-        VectorEmbeddingFieldValueFactory valueFactory = new VectorEmbeddingFieldValueFactory();
-        IVectorOptions options = new IVectorOptions();
-        options.setIsExact(true);
-
         try (IDocumentStore store = getDocumentStore();
              IDocumentSession session = store.openSession()) {
             String query = session.query(User.class)
                     .vectorSearch(
-                            (VectorField)vectorFieldFactory.withEmbedding("EmbeddingSingles",null),
+                            x-> x.withEmbedding("EmbeddingSingles",null),
                             vf -> vf.byEmbedding(new Float[]{0.1f, 0.2f, 0.3f}),
-                            options
+                            null,null,true
                     )
                     .toString();
 
@@ -613,19 +543,13 @@ public class VectorSearchTest extends RemoteTestBase {
     @EnableOn70Server
     @Test
     public void shouldGenerateRqlForVectorSearchWithExactParameterAndTextEmbeddingWithSimilarity() {
-        VectorEmbeddingFieldFactory vectorFieldFactory = new VectorEmbeddingFieldFactory();
-        VectorEmbeddingFieldValueFactory valueFactory = new VectorEmbeddingFieldValueFactory();
-        IVectorOptions options = new IVectorOptions();
-        options.setSimilarity(0.8);
-        options.setIsExact(true);
-
         try (IDocumentStore store = getDocumentStore();
              IDocumentSession session = store.openSession()) {
             String query = session.query(User.class)
                     .vectorSearch(
-                            (VectorField)vectorFieldFactory.withText("TextualValue"),
+                            x-> x.withText("TextualValue"),
                             vf -> vf.byText("query text"),
-                            options
+                            0.8f, null, true
                     )
                     .toString();
 
@@ -642,18 +566,13 @@ public class VectorSearchTest extends RemoteTestBase {
     @EnableOn70Server
     @Test
     public void shouldGenerateRqlForVectorSearchWithMultipleTextQueriesAsInput() {
-        VectorEmbeddingFieldFactory vectorFieldFactory = new VectorEmbeddingFieldFactory();
-        VectorEmbeddingFieldValueFactory valueFactory = new VectorEmbeddingFieldValueFactory();
-        IVectorOptions options = new IVectorOptions();
-        options.setSimilarity(0.75);
-
         try (IDocumentStore store = getDocumentStore();
              IDocumentSession session = store.openSession()) {
             String query = session.query(User.class)
                     .vectorSearch(
-                            (VectorField)vectorFieldFactory.withText("TextualValue"),
+                            x-> x.withText("TextualValue"),
                             vf -> vf.byTexts(new String[]{"first query", "second query"}),
-                            options
+                            0.75f, null, null
                     )
                     .toString();
 
@@ -670,21 +589,16 @@ public class VectorSearchTest extends RemoteTestBase {
     @EnableOn70Server
     @Test
     public void shouldGenerateRqlForVectorSearchWithMultipleEmbeddingVectorsAsInput() {
-        VectorEmbeddingFieldFactory vectorFieldFactory = new VectorEmbeddingFieldFactory();
-        VectorEmbeddingFieldValueFactory valueFactory = new VectorEmbeddingFieldValueFactory();
-        IVectorOptions options = new IVectorOptions();
-        options.setNumberOfCandidates(30);
-
         try (IDocumentStore store = getDocumentStore();
              IDocumentSession session = store.openSession()) {
             String query = session.query(User.class)
                     .vectorSearch(
-                            (VectorField)vectorFieldFactory.withField("EmbeddingSingles"),
+                            x-> x.withField("EmbeddingSingles"),
                             vf -> vf.byEmbeddings(new Float[][]{
                                     {0.1f, 0.2f, 0.3f},
                                     {0.4f, 0.5f, 0.6f}
                             }),
-                            options
+                            null, 30, null
                     )
                     .toString();
 
@@ -701,21 +615,18 @@ public class VectorSearchTest extends RemoteTestBase {
     @EnableOn70Server
     @Test
     public void shouldGenerateRqlForVectorSearchWithMultipleEmbeddingsAndInt8Quantization() {
-        VectorEmbeddingFieldFactory vectorFieldFactory = new VectorEmbeddingFieldFactory();
-        VectorEmbeddingFieldValueFactory valueFactory = new VectorEmbeddingFieldValueFactory();
-
         try (IDocumentStore store = getDocumentStore();
              IDocumentSession session = store.openSession()) {
 
             String query = session.query(User.class)
                     .vectorSearch(
-                            (VectorField)vectorFieldFactory.withEmbedding("EmbeddingSBytes", VectorEmbeddingType.INT8)
+                            x-> x.withEmbedding("EmbeddingSBytes", VectorEmbeddingType.INT8)
                                     .targetQuantization(VectorEmbeddingType.INT8),
                             vf -> vf.byEmbeddings(new Integer[][]{
                                     {1, 2, 3},
                                     {4, 5, 6}
                             }),
-                            null
+                            null, null, null
                     )
                     .toString();
 
@@ -732,20 +643,15 @@ public class VectorSearchTest extends RemoteTestBase {
     @EnableOn70Server
     @Test
     public void shouldGenerateRqlForVectorSearchWithMultipleTextsAiTaskAndBinaryQuantization() {
-        VectorEmbeddingFieldFactory vectorFieldFactory = new VectorEmbeddingFieldFactory();
-        VectorEmbeddingFieldValueFactory valueFactory = new VectorEmbeddingFieldValueFactory();
-        IVectorOptions options = new IVectorOptions();
-        options.setIsExact(true);
-
         try (IDocumentStore store = getDocumentStore();
              IDocumentSession session = store.openSession()) {
             String query = session.query(User.class)
                     .vectorSearch(
-                            (VectorField)vectorFieldFactory.withText("TextualValue")
+                            x-> x.withText("TextualValue")
                                     .usingTask("openai-embeddings")
                                     .targetQuantization(VectorEmbeddingType.BINARY),
                             vf -> vf.byTexts(new String[]{"query one", "query two", "query three"}),
-                            options
+                            null,null,true
                     )
                     .toString();
 
@@ -759,142 +665,6 @@ public class VectorSearchTest extends RemoteTestBase {
         }
     }
 
-    @EnableOn70Server
-    @Test
-    public void shouldGenerateRqlForVectorSearchWithFieldNameAsString() {
-        VectorEmbeddingFieldValueFactory valueFactory = new VectorEmbeddingFieldValueFactory();
-
-        try (IDocumentStore store = getDocumentStore();
-             IDocumentSession session = store.openSession()) {
-
-            String query = session.query(User.class)
-                    .vectorSearch(
-                            new VectorField<>("VectorField"),
-                            vf -> vf.byEmbedding(new Float[]{0.3f, 0.4f, 0.5f}),
-                            null // options
-                    )
-                    .toString();
-
-            assertEquals(
-                    "from 'Users' where vector.search(VectorField, $p0)",
-                    query
-            );
-
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    @EnableOn70Server
-    @Test
-    public void shouldGenerateRqlForVectorSearchWithFieldNameAsStringAndOptions() {
-        VectorEmbeddingFieldValueFactory valueFactory = new VectorEmbeddingFieldValueFactory();
-        IVectorOptions options = new IVectorOptions();
-        options.setSimilarity(0.75);
-        options.setNumberOfCandidates(20);
-
-        try (IDocumentStore store = getDocumentStore();
-             IDocumentSession session = store.openSession()) {
-            String query = session.query(User.class)
-                    .vectorSearch(
-                            new VectorField<>("EmbeddingSingles"),
-                            vf -> vf.byEmbedding(new Float[]{0.1f, 0.2f, 0.3f}),
-                            options
-                    )
-                    .toString();
-
-            assertEquals(
-                    "from 'Users' where vector.search(EmbeddingSingles, $p0, 0.75, 20)",
-                    query
-            );
-
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    @EnableOn70Server
-    @Test
-    public void shouldGenerateRqlForVectorSearchWithFieldNameAsStringAndExactParameter() {
-        VectorEmbeddingFieldValueFactory valueFactory = new VectorEmbeddingFieldValueFactory();
-        IVectorOptions options = new IVectorOptions();
-        options.setIsExact(true);
-
-        try (IDocumentStore store = getDocumentStore();
-             IDocumentSession session = store.openSession()) {
-            String query = session.query(User.class)
-                    .vectorSearch(
-                            new VectorField<>("VectorField"),
-                            vf -> vf.byEmbedding(new Float[]{0.3f, 0.4f, 0.5f}),
-                            options
-                    )
-                    .toString();
-
-            assertEquals(
-                    "from 'Users' where exact(vector.search(VectorField, $p0))",
-                    query
-            );
-
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    @EnableOn70Server
-    @Test
-    public void shouldGenerateRqlForVectorSearchWithFieldNameAsStringAndMultipleEmbeddings() {
-        VectorEmbeddingFieldValueFactory valueFactory = new VectorEmbeddingFieldValueFactory();
-        IVectorOptions options = new IVectorOptions();
-        options.setSimilarity(0.8);
-
-        try (IDocumentStore store = getDocumentStore();
-             IDocumentSession session = store.openSession()) {
-            String query = session.query(User.class)
-                    .vectorSearch(
-                            new VectorField<>("EmbeddingSingles"),
-                            () -> valueFactory.byEmbeddings(new Number[][] {
-                                    new Double[] { 0.1, 0.2, 0.3 },
-                                    new Double[] { 0.4, 0.5, 0.6 }
-                            }),
-                            options
-                    )
-                    .toString();
-
-            assertEquals(
-                    "from 'Users' where vector.search(EmbeddingSingles, $p0, 0.8, null)",
-                    query
-            );
-
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    @EnableOn70Server
-    @Test
-    public void shouldGenerateRqlForVectorSearchWithFieldNameAsStringAndByTextFactory() {
-        VectorEmbeddingFieldValueFactory valueFactory = new VectorEmbeddingFieldValueFactory();
-
-        try (IDocumentStore store = getDocumentStore();
-             IDocumentSession session = store.openSession()) {
-
-            String query = session.query(User.class)
-                    .vectorSearch(
-                            new VectorField<>("TextualValue"),
-                            vf -> vf.byText("query text"),
-                            null
-                    )
-                    .toString();
-
-            assertEquals(
-                    "from 'Users' where vector.search(TextualValue, $p0)",
-                    query
-            );
-
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
-    }
 
     @EnableOn70Server
     @Test
@@ -952,35 +722,14 @@ public class VectorSearchTest extends RemoteTestBase {
 
     @EnableOn70Server
     @Test
-    public void shouldGenerateRqlForVectorSearchWithFieldNameAsStringAndForDocumentFactory() {
-        VectorEmbeddingFieldValueFactory valueFactory = new VectorEmbeddingFieldValueFactory();
-
-        try (IDocumentStore store = getDocumentStore()) {
-            try (IDocumentSession session = store.openSession()) {
-                String query = session.query(User.class)
-                        .vectorSearch(new VectorField<>("TextualValue"), vf -> vf.forDocument("users/1"), null)
-                        .toString();
-
-                assertThat(query)
-                        .isEqualTo("from 'Users' where vector.search(TextualValue, embedding.forDoc($p0))");
-            }
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    @EnableOn70Server
-    @Test
     public void shouldGenerateRqlForVectorSearchUsingForDocumentWithTextField() {
-        VectorEmbeddingFieldFactory vectorFieldFactory = new VectorEmbeddingFieldFactory();
-
         try (IDocumentStore store = getDocumentStore()) {
             try (IDocumentSession session = store.openSession()) {
                 String query = session.query(User.class)
                         .vectorSearch(
-                                (VectorField)vectorFieldFactory.withText("TextualValue"),
+                                x-> x.withText("TextualValue"),
                                 vf -> vf.forDocument("dtos/456"),
-                                null
+                                null,null,null
                         )
                         .toString();
                 assertThat(query).isEqualTo(
@@ -996,15 +745,13 @@ public class VectorSearchTest extends RemoteTestBase {
     @EnableOn70Server
     @Test
     public void shouldGenerateRqlForVectorSearchUsingForDocumentWithInt8Quantization() {
-        VectorEmbeddingFieldFactory vectorFieldFactory = new VectorEmbeddingFieldFactory();
-
         try (IDocumentStore store = getDocumentStore()) {
             try (IDocumentSession session = store.openSession()) {
                 String query = session.query(User.class)
                         .vectorSearch(
-                                (VectorField)vectorFieldFactory.withEmbedding("EmbeddingSBytes", VectorEmbeddingType.INT8),
+                                x-> x.withEmbedding("EmbeddingSBytes", VectorEmbeddingType.INT8),
                                 factory -> factory.forDocument("dtos/int8-test"),
-                                null
+                                null, null, null
                         )
                         .toString();
 
@@ -1020,16 +767,15 @@ public class VectorSearchTest extends RemoteTestBase {
     @EnableOn70Server
     @Test
     public void shouldGenerateRqlForVectorSearchUsingForDocumentWithTextFieldAndAITask() {
-        VectorEmbeddingFieldFactory vectorFieldFactory = new VectorEmbeddingFieldFactory();
         try (IDocumentStore store = getDocumentStore()) {
             try (IDocumentSession session = store.openSession()) {
 
                 String query = session.query(User.class)
                         .vectorSearch(
-                                (VectorField)vectorFieldFactory.withText("TextualValue")
+                                x-> x.withText("TextualValue")
                                         .usingTask("openai-task"),
                                 vf -> vf.forDocument("dtos/789"),
-                                null
+                                null, null, null
                         )
                         .toString();
 
@@ -1045,19 +791,14 @@ public class VectorSearchTest extends RemoteTestBase {
     @EnableOn70Server
     @Test
     public void shouldGenerateRqlForVectorSearchUsingForDocumentWithSimilarityAndCandidates() {
-        VectorEmbeddingFieldFactory vectorFieldFactory = new VectorEmbeddingFieldFactory();
-        IVectorOptions options = new IVectorOptions();
-        options.setSimilarity(0.75);
-        options.setNumberOfCandidates(100);
-
         try (IDocumentStore store = getDocumentStore()) {
             try (IDocumentSession session = store.openSession()) {
 
                 String query = session.query(User.class)
                         .vectorSearch(
-                                (VectorField)vectorFieldFactory.withEmbedding("EmbeddingSingles", null),
+                                x-> x.withEmbedding("EmbeddingSingles", null),
                                 factory -> factory.forDocument("dtos/full-options"),
-                                options
+                                0.75f, 100, null
                         )
                         .toString();
 
@@ -1073,18 +814,14 @@ public class VectorSearchTest extends RemoteTestBase {
     @EnableOn70Server
     @Test
     public void shouldGenerateRqlForVectorSearchUsingForDocumentWithNumberOfCandidates() {
-        VectorEmbeddingFieldFactory vectorFieldFactory = new VectorEmbeddingFieldFactory();
-        IVectorOptions options = new IVectorOptions();
-        options.setNumberOfCandidates(50);
-
         try (IDocumentStore store = getDocumentStore()) {
             try (IDocumentSession session = store.openSession()) {
 
                 String query = session.query(User.class)
                         .vectorSearch(
-                                (VectorField)vectorFieldFactory.withField("VectorField"),
+                                x-> x.withField("VectorField"),
                                 factory -> factory.forDocument("dtos/candidates-test"),
-                                options
+                                null, 50, null
                         )
                         .toString();
 
@@ -1097,7 +834,162 @@ public class VectorSearchTest extends RemoteTestBase {
         }
     }
 
+    // Vector Search tests with String as parameter not a lambda
+    //    @EnableOn70Server
+//    @Test
+//    public void shouldGenerateRqlForVectorSearchWithFieldNameAsString() {
+//        VectorEmbeddingFieldValueFactory valueFactory = new VectorEmbeddingFieldValueFactory();
+//
+//        try (IDocumentStore store = getDocumentStore();
+//             IDocumentSession session = store.openSession()) {
+//
+//            String query = session.query(User.class)
+//                    .vectorSearch(
+//                            "VectorField",
+//                            vf -> vf.byEmbedding(new Float[]{0.3f, 0.4f, 0.5f}),
+//                            null // options
+//                    )
+//                    .toString();
+//
+//            assertEquals(
+//                    "from 'Users' where vector.search(VectorField, $p0)",
+//                    query
+//            );
+//
+//        } catch (Exception e) {
+//            throw new RuntimeException(e);
+//        }
+//    }
 
+//    @EnableOn70Server
+//    @Test
+//    public void shouldGenerateRqlForVectorSearchWithFieldNameAsStringAndOptions() {
+//        VectorEmbeddingFieldValueFactory valueFactory = new VectorEmbeddingFieldValueFactory();
+//        IVectorOptions options = new IVectorOptions();
+//        options.setSimilarity(0.75);
+//        options.setNumberOfCandidates(20);
+//
+//        try (IDocumentStore store = getDocumentStore();
+//             IDocumentSession session = store.openSession()) {
+//            String query = session.query(User.class)
+//                    .vectorSearch(
+//                            "EmbeddingSingles",
+//                            vf -> vf.byEmbedding(new Float[]{0.1f, 0.2f, 0.3f}),
+//                            options
+//                    )
+//                    .toString();
+//
+//            assertEquals(
+//                    "from 'Users' where vector.search(EmbeddingSingles, $p0, 0.75, 20)",
+//                    query
+//            );
+//
+//        } catch (Exception e) {
+//            throw new RuntimeException(e);
+//        }
+//    }
+
+    //    @EnableOn70Server
+//    @Test
+//    public void shouldGenerateRqlForVectorSearchWithFieldNameAsStringAndExactParameter() {
+//        VectorEmbeddingFieldValueFactory valueFactory = new VectorEmbeddingFieldValueFactory();
+//        IVectorOptions options = new IVectorOptions();
+//        options.setIsExact(true);
+//
+//        try (IDocumentStore store = getDocumentStore();
+//             IDocumentSession session = store.openSession()) {
+//            String query = session.query(User.class)
+//                    .vectorSearch(
+//                            "VectorField",
+//                            vf -> vf.byEmbedding(new Float[]{0.3f, 0.4f, 0.5f}),
+//                            options
+//                    )
+//                    .toString();
+//
+//            assertEquals(
+//                    "from 'Users' where exact(vector.search(VectorField, $p0))",
+//                    query
+//            );
+//
+//        } catch (Exception e) {
+//            throw new RuntimeException(e);
+//        }
+//    }
+//
+//    @EnableOn70Server
+//    @Test
+//    public void shouldGenerateRqlForVectorSearchWithFieldNameAsStringAndMultipleEmbeddings() {
+//        VectorEmbeddingFieldValueFactory valueFactory = new VectorEmbeddingFieldValueFactory();
+//        IVectorOptions options = new IVectorOptions();
+//        options.setSimilarity(0.8);
+//
+//        try (IDocumentStore store = getDocumentStore();
+//             IDocumentSession session = store.openSession()) {
+//            String query = session.query(User.class)
+//                    .vectorSearch(
+//                            "EmbeddingSingles",
+//                            factory -> factory.byEmbeddings(new Number[][] {
+//                                    new Double[] { 0.1, 0.2, 0.3 },
+//                                    new Double[] { 0.4, 0.5, 0.6 }
+//                            }),
+//                            options
+//                    )
+//                    .toString();
+//
+//            assertEquals(
+//                    "from 'Users' where vector.search(EmbeddingSingles, $p0, 0.8, null)",
+//                    query
+//            );
+//
+//        } catch (Exception e) {
+//            throw new RuntimeException(e);
+//        }
+//    }
+//
+//    @EnableOn70Server
+//    @Test
+//    public void shouldGenerateRqlForVectorSearchWithFieldNameAsStringAndByTextFactory() {
+//        VectorEmbeddingFieldValueFactory valueFactory = new VectorEmbeddingFieldValueFactory();
+//
+//        try (IDocumentStore store = getDocumentStore();
+//             IDocumentSession session = store.openSession()) {
+//
+//            String query = session.query(User.class)
+//                    .vectorSearch(
+//                            "TextualValue",
+//                            vf -> vf.byText("query text"),
+//                            null
+//                    )
+//                    .toString();
+//
+//            assertEquals(
+//                    "from 'Users' where vector.search(TextualValue, $p0)",
+//                    query
+//            );
+//
+//        } catch (Exception e) {
+//            throw new RuntimeException(e);
+//        }
+//    }
+//
+//    @EnableOn70Server
+//    @Test
+//    public void shouldGenerateRqlForVectorSearchWithFieldNameAsStringAndForDocumentFactory() {
+//        VectorEmbeddingFieldValueFactory valueFactory = new VectorEmbeddingFieldValueFactory();
+//
+//        try (IDocumentStore store = getDocumentStore()) {
+//            try (IDocumentSession session = store.openSession()) {
+//                String query = session.query(User.class)
+//                        .vectorSearch("TextualValue", vf -> vf.forDocument("users/1"), null)
+//                        .toString();
+//
+//                assertThat(query)
+//                        .isEqualTo("from 'Users' where vector.search(TextualValue, embedding.forDoc($p0))");
+//            }
+//        } catch (Exception e) {
+//            throw new RuntimeException(e);
+//        }
+//    }
     private static void setupIndexDefinition(IDocumentStore store) {
         IndexDefinition indexDefinition = new IndexDefinition();
         indexDefinition.setName("Users/ByEmbeddingSingles");

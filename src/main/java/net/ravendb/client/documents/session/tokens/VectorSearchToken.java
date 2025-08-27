@@ -23,7 +23,7 @@ public class VectorSearchToken extends WhereToken {
 
     private static final String AI_TASK_METHOD_NAME = "ai.task";
 
-    private final Double similarityThreshold;
+    private final Float similarityThreshold;
     private final VectorEmbeddingType sourceQuantizationType;
     private final VectorEmbeddingType targetQuantizationType;
     private final Integer numberOfCandidatesForQuerying;
@@ -38,7 +38,7 @@ public class VectorSearchToken extends WhereToken {
             String parameterName,
             VectorEmbeddingType sourceQuantizationType,
             VectorEmbeddingType targetQuantizationType,
-            Double similarityThreshold,
+            Float similarityThreshold,
             Integer numberOfCandidatesForQuerying,
             boolean isExact,
             boolean isDocumentId,

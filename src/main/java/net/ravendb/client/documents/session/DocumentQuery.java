@@ -21,8 +21,6 @@ import net.ravendb.client.documents.queries.spatial.SpatialCriteriaFactory;
 import net.ravendb.client.documents.queries.suggestions.*;
 import net.ravendb.client.documents.queries.timeSeries.ITimeSeriesQueryBuilder;
 import net.ravendb.client.documents.queries.timings.QueryTimings;
-import net.ravendb.client.documents.queries.vectorSearch.IVectorOptions;
-import net.ravendb.client.documents.queries.vectorSearch.fields.VectorField;
 import net.ravendb.client.documents.session.loaders.IQueryIncludeBuilder;
 import net.ravendb.client.documents.session.loaders.QueryIncludeBuilder;
 import net.ravendb.client.documents.session.querying.sharding.IQueryShardedContextBuilder;
@@ -32,7 +30,6 @@ import net.ravendb.client.documents.session.tokens.LoadToken;
 import net.ravendb.client.primitives.CleanCloseable;
 import net.ravendb.client.primitives.Reference;
 import org.apache.commons.lang3.ObjectUtils;
-import org.checkerframework.checker.units.qual.C;
 
 import java.lang.reflect.Field;
 import java.time.Duration;
@@ -953,27 +950,13 @@ public class DocumentQuery<T> extends AbstractDocumentQuery<T, DocumentQuery<T>>
 
     @Override
     public IDocumentQuery<T> vectorSearch(
-            VectorField vector,
-            Object valueFactory,
-            IVectorOptions options
-    ) {
-        this._vectorSearch(vector, valueFactory, options);
-        return this;
-    }
-
-    @Override
-    public IDocumentQuery<T> vectorSearch(
-            VectorField vector,
+            Function<IVectorFieldFactory<T>, Object> vector,
             Consumer<IVectorFieldValueFactory> valueFactory,
-            IVectorOptions options
+            Float minimumSimilarity,
+            Integer numberOfCandidates,
+            Boolean isExact
     ) {
-        this._vectorSearch(vector, valueFactory, options);
-        return this;
-    }
-
-    @Override
-    public IDocumentQuery<T> vectorSearch(VectorField vector, Runnable factory, IVectorOptions options) {
-        this._vectorSearch(vector, factory, options);
+        this._vectorSearch(vector, valueFactory, minimumSimilarity, numberOfCandidates, isExact);
         return this;
     }
 }

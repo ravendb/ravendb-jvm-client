@@ -12,7 +12,7 @@ public interface IVectorFieldFactory<T> {
      * @param fieldName The field name
      * @return The vector embedding text field
      */
-     IVectorEmbeddingTextField withText(T fieldName);
+     IVectorEmbeddingTextField withText(String fieldName);
 
     //TBD expr should add withText(Expression<Func<T, string>> fieldName);??
 
@@ -22,7 +22,7 @@ public interface IVectorFieldFactory<T> {
      * @param storedEmbeddingQuantization The stored embedding quantization (optional)
      * @return The vector embedding field
      */
-     IVectorEmbeddingField withEmbedding(T fieldName, VectorEmbeddingType storedEmbeddingQuantization);
+     IVectorEmbeddingField withEmbedding(String fieldName, VectorEmbeddingType storedEmbeddingQuantization);
 
     /**
      * Creates a vector field from base64 encoded embedding
@@ -30,7 +30,7 @@ public interface IVectorFieldFactory<T> {
      * @param storedEmbeddingQuantization The stored embedding quantization (optional)
      * @return The vector embedding field
      */
-      IVectorEmbeddingField withBase64(T fieldName, VectorEmbeddingType storedEmbeddingQuantization);
+      IVectorEmbeddingField withBase64(String fieldName, VectorEmbeddingType storedEmbeddingQuantization);
 
     /**
      * Creates a vector field
@@ -47,5 +47,5 @@ public interface IVectorFieldFactory<T> {
      * @param fieldName The field name
      * @return The vector field
      */
-       IVectorField withField(T fieldName);
+       IVectorField withField(String fieldName);
 }

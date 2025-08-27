@@ -15,17 +15,17 @@ import net.ravendb.client.documents.session.IVectorField;
 public class VectorEmbeddingFieldFactory<T> implements IVectorFieldFactory<T> {
 
     @Override
-    public IVectorEmbeddingTextField withText(T fieldName) {
+    public IVectorEmbeddingTextField withText(String fieldName) {
         return new VectorEmbeddingTextField<>(fieldName);
     }
 
     @Override
-    public IVectorEmbeddingField withEmbedding(T fieldName, VectorEmbeddingType storedEmbeddingQuantization) {
+    public IVectorEmbeddingField withEmbedding(String fieldName, VectorEmbeddingType storedEmbeddingQuantization) {
         return new VectorEmbeddingField<>(fieldName, storedEmbeddingQuantization, false);
     }
 
     @Override
-    public IVectorEmbeddingField withBase64(T fieldName, VectorEmbeddingType storedEmbeddingQuantization) {
+    public IVectorEmbeddingField withBase64(String fieldName, VectorEmbeddingType storedEmbeddingQuantization) {
         return new VectorEmbeddingField<>(fieldName, storedEmbeddingQuantization, true);
     }
 
@@ -35,7 +35,7 @@ public class VectorEmbeddingFieldFactory<T> implements IVectorFieldFactory<T> {
     }
 
     @Override
-    public IVectorField withField(T fieldName) {
+    public IVectorField withField(String fieldName) {
         return new VectorField<>(fieldName);
     }
 }
