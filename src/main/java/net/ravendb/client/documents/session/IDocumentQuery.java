@@ -142,10 +142,15 @@ public interface IDocumentQuery<T> extends IDocumentQueryBase<T, IDocumentQuery<
     IDocumentQuery<T> shardContext(Consumer<IQueryShardedContextBuilder> builder);
 
     IDocumentQuery<T> vectorSearch(
-            Function<IVectorFieldFactory<T>, Object> vector,
+            Function<IVectorFieldFactory<T>, ? extends IVectorField> vector,
             Consumer<IVectorFieldValueFactory> value,
             Float minimumSimilarity,
             Integer numberOfCandidates,
             Boolean isExact
+    );
+
+    IDocumentQuery<T> vectorSearch(
+            Function<IVectorFieldFactory<T>, ? extends IVectorField> vector,
+            Consumer<IVectorFieldValueFactory> value
     );
 }

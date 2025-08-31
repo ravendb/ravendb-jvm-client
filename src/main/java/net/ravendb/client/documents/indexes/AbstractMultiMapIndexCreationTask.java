@@ -3,6 +3,7 @@ package net.ravendb.client.documents.indexes;
 import net.ravendb.client.Constants;
 import net.ravendb.client.documents.conventions.DocumentConventions;
 import net.ravendb.client.primitives.SharpEnum;
+import org.apache.commons.collections4.MapUtils;
 
 
 import java.util.ArrayList;
@@ -49,7 +50,7 @@ public class AbstractMultiMapIndexCreationTask extends AbstractGenericIndexCreat
 
         if (searchEngineType != null) {
             indexDefinitionBuilder.getConfiguration().put(Constants.Configuration.Indexes.INDEXING_STATIC_SEARCH_ENGINE_TYPE, SharpEnum.value(searchEngineType));
-        } else if (vectorOptionsStrings != null && !vectorOptionsStrings.isEmpty()) {
+        } else if (MapUtils.isNotEmpty(vectorOptionsStrings)) {
             indexDefinitionBuilder.getConfiguration().put(Constants.Configuration.Indexes.INDEXING_STATIC_SEARCH_ENGINE_TYPE, "Corax");
         }
 

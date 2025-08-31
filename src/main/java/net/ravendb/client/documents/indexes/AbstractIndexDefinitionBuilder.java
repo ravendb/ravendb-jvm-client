@@ -18,7 +18,7 @@ public abstract class AbstractIndexDefinitionBuilder<TIndexDefinition extends In
     private Map<String, FieldStorage> storesStrings;
     private Map<String, FieldIndexing> indexesStrings;
     private Map<String, String> analyzersStrings;
-    private Map<String, FieldVectorOptions> vectorFieldStrings = new HashMap<>();
+    private Map<String, FieldVectorOptions> vectorFieldStrings;
     private Set<String> suggestionsOptions;
     private Map<String, FieldTermVector> termVectorsStrings;
     private Map<String, SpatialOptions> spatialIndexesStrings;
@@ -46,6 +46,7 @@ public abstract class AbstractIndexDefinitionBuilder<TIndexDefinition extends In
         termVectorsStrings = new HashMap<>();
         spatialIndexesStrings = new HashMap<>();
         configuration = new IndexConfiguration();
+        vectorFieldStrings = new HashMap<>();
     }
 
     public TIndexDefinition toIndexDefinition(DocumentConventions conventions) {
@@ -130,6 +131,8 @@ public abstract class AbstractIndexDefinitionBuilder<TIndexDefinition extends In
     public void setIndexesStrings(Map<String, FieldIndexing> indexesStrings) {
         this.indexesStrings = indexesStrings;
     }
+
+    public Map<String, FieldVectorOptions> getVectorFieldStrings() { return this.vectorFieldStrings;}
 
     public void setVectorFieldStrings(Map<String, FieldVectorOptions> vectorFieldStrings) {
         this.vectorFieldStrings = vectorFieldStrings;
