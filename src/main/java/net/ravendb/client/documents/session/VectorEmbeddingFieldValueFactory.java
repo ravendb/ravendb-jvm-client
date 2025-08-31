@@ -9,7 +9,11 @@ public class VectorEmbeddingFieldValueFactory implements IVectorFieldValueFactor
     private String text;
     private String[] texts;
     private String byId;
+    private String embeddingsGenerationTaskIdentifier;
 
+    public String getEmbeddingsGenerationTaskIdentifier() {
+        return embeddingsGenerationTaskIdentifier;
+    }
     public String getById() {
         return byId;
     }
@@ -54,8 +58,20 @@ public class VectorEmbeddingFieldValueFactory implements IVectorFieldValueFactor
     }
 
     @Override
+    public void byText(String text, String embeddingsGenerationTaskIdentifier) {
+        this.text = text;
+        this.embeddingsGenerationTaskIdentifier = embeddingsGenerationTaskIdentifier;
+    }
+
+    @Override
     public void byTexts(String[] texts) {
         this.texts = texts;
+    }
+
+    @Override
+    public void byTexts(String[] texts, String embeddingsGenerationTaskIdentifier) {
+        this.texts = texts;
+        this.embeddingsGenerationTaskIdentifier = embeddingsGenerationTaskIdentifier;
     }
 
     @Override

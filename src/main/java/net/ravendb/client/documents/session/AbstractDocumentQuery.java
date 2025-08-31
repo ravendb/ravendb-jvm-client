@@ -975,7 +975,7 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
         return new FilterModeScope(filterModeStack, on);
     }
 
-    protected void _vectorSearch(Function<IVectorFieldFactory<T>,Object> vector, Consumer<IVectorFieldValueFactory> factory, Float minimumSimilarity, Integer numberOfCandidates, Boolean isExact) {
+    protected void _vectorSearch(Function<IVectorFieldFactory<T>,? extends IVectorField> vector, Consumer<IVectorFieldValueFactory> factory, Float minimumSimilarity, Integer numberOfCandidates, Boolean isExact) {
         this.assertMethodIsCurrentlySupported("vectorSearch");
         IVectorEmbeddingFieldFactoryAccessor fieldAccessor = this._resolveVectorSearchFieldAccessor(vector);
         VectorSearchValueResult vectorSearchResult = this._resolveVectorSearchValueFactory(factory);
@@ -986,6 +986,7 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
 
         VectorEmbeddingType sourceQuantizationType = VectorSearchToken.getSourceQuantizationType(fieldAccessor);
         VectorEmbeddingType targetQuantizationType = VectorSearchToken.getTargetQuantizationType(fieldAccessor);
+        String taskIdentifierByValue = VectorSearchToken.getTaskIdentifier(vectorSearchResult.getValue());
         String taskIdentifier = VectorSearchToken.getTaskIdentifier(fieldAccessor);
         String  parameterName = this.addQueryParameter(vectorSearchResult.getValue());
 
@@ -998,7 +999,8 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
                 numberOfCandidates,
                 isExact != null ? isExact : VectorSearchToken.DEFAULT_IS_EXACT,
                 vectorSearchResult.isDocumentId(),
-                taskIdentifier == "" ? null : taskIdentifier
+                taskIdentifier == "" ? null : taskIdentifier,
+                taskIdentifierByValue == "" ? null : taskIdentifierByValue
         );
         tokens.add(vectorSearchToken);
     }
@@ -2502,7 +2504,7 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
         this.parameterPrefix = parameterPrefix;
     }
 
-    private IVectorEmbeddingFieldFactoryAccessor _resolveVectorSearchFieldAccessor(Object vector) {
+    private IVectorEmbeddingFieldFactoryAccessor _resolveVectorSearchFieldAccessor(Function<IVectorFieldFactory<T>,? extends IVectorField> vector) {
         VectorEmbeddingFieldFactory vectorFactory = new VectorEmbeddingFieldFactory<T>();
         IVectorEmbeddingFieldFactoryAccessor fieldAccessor;
         //TODO: enable string field names
@@ -2510,8 +2512,7 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
 //            return (IVectorEmbeddingFieldFactoryAccessor) vectorFactory.withField("abs");
 //        } else
         if (vector instanceof Function<?,?>){
-            Function<VectorEmbeddingFieldFactory, IVectorEmbeddingFieldFactoryAccessor<T>> func = (Function<VectorEmbeddingFieldFactory, IVectorEmbeddingFieldFactoryAccessor<T>>) vector;
-            fieldAccessor = func.apply(vectorFactory);
+            fieldAccessor = (IVectorEmbeddingFieldFactoryAccessor) vector.apply(vectorFactory);
             return fieldAccessor;
         } else {
             throw new IllegalArgumentException("fieldName must be either a string or a function that selects a vector field");
@@ -2528,14 +2529,10 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
                     (java.util.function.Consumer<IVectorFieldValueFactory>) valueOrFactory;
 
             consumer.accept(fieldValueFactory);
-
-            factoryResult =
-                    fieldValueFactory.getEmbedding() != null ? fieldValueFactory.getEmbedding() :
-                            fieldValueFactory.getEmbeddings() != null ? fieldValueFactory.getEmbeddings() :
-                                    fieldValueFactory.getText() != null ? fieldValueFactory.getText() :
-                                            fieldValueFactory.getTexts() != null ? fieldValueFactory.getTexts() :
-                                                    fieldValueFactory.getById();
-
+            factoryResult = fieldValueFactory.getEmbedding() != null ? fieldValueFactory.getEmbedding(): fieldValueFactory.getEmbeddings() != null ? fieldValueFactory.getEmbeddings() :
+                    fieldValueFactory.getText() != null ? fieldValueFactory.getText() :
+                            fieldValueFactory.getTexts() != null ? fieldValueFactory.getTexts() :
+                                    fieldValueFactory.getById();
             return new VectorSearchValueResult(factoryResult, fieldValueFactory.getById() != null);
         } else if (valueOrFactory instanceof java.util.function.Supplier<?>) {
             factoryResult = ((java.util.function.Supplier<?>) valueOrFactory).get();

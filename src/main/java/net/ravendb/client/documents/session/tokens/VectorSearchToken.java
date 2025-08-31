@@ -1,7 +1,9 @@
 package net.ravendb.client.documents.session.tokens;
 
 import net.ravendb.client.documents.queries.vectorSearch.VectorEmbeddingType;
+import net.ravendb.client.documents.queries.vectorSearch.fields.VectorField;
 import net.ravendb.client.documents.session.IVectorEmbeddingFieldFactoryAccessor;
+import net.ravendb.client.documents.session.VectorEmbeddingFieldValueFactory;
 import net.ravendb.client.util.VectorSearchUtil;
 
 public class VectorSearchToken extends WhereToken {
@@ -28,6 +30,7 @@ public class VectorSearchToken extends WhereToken {
     private final VectorEmbeddingType targetQuantizationType;
     private final Integer numberOfCandidatesForQuerying;
     private final boolean isDocumentId;
+    private final String embeddingsGenerationTaskIdentifierByValue;
     private final String embeddingsGenerationTaskIdentifier;
 
     private final String fieldName;
@@ -42,7 +45,8 @@ public class VectorSearchToken extends WhereToken {
             Integer numberOfCandidatesForQuerying,
             boolean isExact,
             boolean isDocumentId,
-            String embeddingsGenerationTaskIdentifier) {
+            String embeddingsGenerationTaskIdentifier,
+            String embeddingsGenerationTaskIdentifierByValue) {
 
         super();
         this.fieldName = fieldName;
@@ -54,12 +58,17 @@ public class VectorSearchToken extends WhereToken {
         this.numberOfCandidatesForQuerying = numberOfCandidatesForQuerying;
         this.isDocumentId = isDocumentId;
         this.embeddingsGenerationTaskIdentifier = embeddingsGenerationTaskIdentifier;
+        this.embeddingsGenerationTaskIdentifierByValue = embeddingsGenerationTaskIdentifierByValue;
         this.setOptions(new WhereOptions(isExact));
     }
 
-    public static <T> String getTaskIdentifier(IVectorEmbeddingFieldFactoryAccessor<T> fieldAccessor) {
-        if (fieldAccessor.getEmbeddingsGenerationTaskIdentifier() != null) {
-            return fieldAccessor.getEmbeddingsGenerationTaskIdentifier();
+    public static String getTaskIdentifier(Object value) {
+        if (value instanceof VectorEmbeddingFieldValueFactory) {
+            if (((VectorEmbeddingFieldValueFactory) value).getEmbeddingsGenerationTaskIdentifier() != null) {
+                return ((VectorEmbeddingFieldValueFactory) value).getEmbeddingsGenerationTaskIdentifier();
+            }
+        } else if (value instanceof VectorField) {
+            return ((VectorField) value).getEmbeddingsGenerationTaskIdentifier();
         }
         return null;
     }
@@ -119,6 +128,15 @@ public class VectorSearchToken extends WhereToken {
                     .append("($")
                     .append(parameterName)
                     .append(")");
+        } else if (embeddingsGenerationTaskIdentifierByValue != null){
+            writer.append(EMBEDDING_TEXT)
+                    .append("($")
+                    .append(parameterName)
+                    .append(", ")
+                    .append(AI_TASK_METHOD_NAME)
+                    .append("('")
+                    .append(embeddingsGenerationTaskIdentifierByValue)
+                    .append("'))");
         } else {
             writer.append("$").append(parameterName);
         }
