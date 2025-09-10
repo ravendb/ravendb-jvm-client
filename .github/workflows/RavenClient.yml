@@ -11,7 +11,7 @@ on:
     inputs:
       ravendb_version:
         description: 'RavenDB Version'
-        required: true
+        required: false
         type: string
 
 jobs:
