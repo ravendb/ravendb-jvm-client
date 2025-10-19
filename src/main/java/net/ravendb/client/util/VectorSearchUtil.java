@@ -39,9 +39,6 @@ public class VectorSearchUtil {
                         source, dest));
     }
 
-    /**
-     * Translation of TS RavenVector<T>(vector: IRavenVector<T>): { "@vector": IRavenVector<T> }
-     */
     public static <T extends Number> Map<String, IRavenVector<T>> ravenVector(IRavenVector<T> vector) {
         Map<String, IRavenVector<T>> wrapper = new HashMap<>();
         wrapper.put("@vector", vector);
