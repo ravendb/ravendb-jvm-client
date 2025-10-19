@@ -986,7 +986,7 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
 
         VectorEmbeddingType sourceQuantizationType = VectorSearchToken.getSourceQuantizationType(fieldAccessor);
         VectorEmbeddingType targetQuantizationType = VectorSearchToken.getTargetQuantizationType(fieldAccessor);
-        String taskIdentifierByValue = VectorSearchToken.getTaskIdentifier(vectorSearchResult.getValue());
+        String taskIdentifierByValue = vectorSearchResult.getEmbeddingsGenerationTaskIdentifierByValue();
         String taskIdentifier = VectorSearchToken.getTaskIdentifier(fieldAccessor);
         String  parameterName = this.addQueryParameter(vectorSearchResult.getValue());
 
@@ -2532,8 +2532,11 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
             factoryResult = fieldValueFactory.getEmbedding() != null ? fieldValueFactory.getEmbedding(): fieldValueFactory.getEmbeddings() != null ? fieldValueFactory.getEmbeddings() :
                     fieldValueFactory.getText() != null ? fieldValueFactory.getText() :
                             fieldValueFactory.getTexts() != null ? fieldValueFactory.getTexts() :
+                                    fieldValueFactory.getEmbeddingsGenerationTaskIdentifier() != null ? fieldValueFactory.getEmbeddingsGenerationTaskIdentifier() :
                                     fieldValueFactory.getById();
-            return new VectorSearchValueResult(factoryResult, fieldValueFactory.getById() != null);
+            String embeddingsGenerationTaskIdentifierByValue = fieldValueFactory.getEmbeddingsGenerationTaskIdentifier() != null ?
+                    fieldValueFactory.getEmbeddingsGenerationTaskIdentifier() : null;
+            return new VectorSearchValueResult(factoryResult, embeddingsGenerationTaskIdentifierByValue, fieldValueFactory.getById() != null);
         } else if (valueOrFactory instanceof java.util.function.Supplier<?>) {
             factoryResult = ((java.util.function.Supplier<?>) valueOrFactory).get();
             return new VectorSearchValueResult(factoryResult, false);
@@ -2555,10 +2558,18 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
     private class VectorSearchValueResult {
         private final Object value;
         private final boolean isDocumentId;
+        private final String embeddingsGenerationTaskIdentifierByValue;
+
+        public VectorSearchValueResult(Object value, String embeddingsGenerationTaskIdentifierByValue, boolean isDocumentId) {
+            this.value = value;
+            this.isDocumentId = isDocumentId;
+            this.embeddingsGenerationTaskIdentifierByValue = embeddingsGenerationTaskIdentifierByValue;
+        }
 
         public VectorSearchValueResult(Object value, boolean isDocumentId) {
             this.value = value;
             this.isDocumentId = isDocumentId;
+            this.embeddingsGenerationTaskIdentifierByValue = null;
         }
 
         public Object getValue() {
@@ -2567,6 +2578,10 @@ public abstract class AbstractDocumentQuery<T, TSelf extends AbstractDocumentQue
 
         public boolean isDocumentId() {
             return isDocumentId;
+        }
+
+        public String getEmbeddingsGenerationTaskIdentifierByValue() {
+            return embeddingsGenerationTaskIdentifierByValue;
         }
     }
 }
