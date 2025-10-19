@@ -17,6 +17,12 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    
+    strategy:
+      matrix:
+        java-version: [8, 11, 14, 16, 17, 21]
+        serverVersion: ["6.2", "7.0", "7.1"]
+      fail-fast: false
 
     env:
       RAVENDB_JAVA_TEST_SERVER_PATH: ./RavenDB/Server/Raven.Server
@@ -25,12 +31,7 @@ jobs:
       RAVENDB_JAVA_TEST_HTTPS_SERVER_URL: https://localhost:7325
       RAVENDB_BUILD_TYPE: nightly
       RAVEN_License: ${{ secrets.RAVEN_LICENSE }}
-    
-    strategy:
-      matrix:
-        java-version: [8, 11, 14, 16, 17, 21]
-        serverVersion: ["6.2", "7.0", "7.1"]
-      fail-fast: false
+      RAVENDB_SERVER_VERSION: ${{ matrix.serverVersion }}
 
     steps:
     - uses: actions/checkout@v4
@@ -67,4 +68,6 @@ jobs:
       run: mkdir RavenDB/Server/certs && cp certs/server.pfx RavenDB/Server/certs/
 
     - name: Run Maven Tests
-      run: mvn clean test
+      run: |
+        echo "RAVENDB_SERVER_VERSION=${{ matrix.serverVersion }}" >> $GITHUB_ENV
+        mvn clean test
