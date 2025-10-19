@@ -13,7 +13,7 @@ public class DisableOn70ServerCondition implements ExecutionCondition {
     public ConditionEvaluationResult evaluateExecutionCondition(ExtensionContext extensionContext) {
         String ravenServerVersion = System.getenv(ENV_RAVENDB_SERVER_VERSION);
 
-        if (StringUtils.isEmpty(ravenServerVersion) || ravenServerVersion.compareTo("7.0") > 0) {
+        if (StringUtils.isEmpty(ravenServerVersion) || ravenServerVersion.compareTo("7.0") >= 0) {
             return ConditionEvaluationResult.disabled("Test disabled on 7.0 server");
         }
 
