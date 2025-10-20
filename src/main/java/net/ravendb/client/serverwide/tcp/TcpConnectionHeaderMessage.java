@@ -23,6 +23,11 @@ public class TcpConnectionHeaderMessage {
         TEST_CONNECTION
     }
 
+    public enum OperationResultType {
+        CommandResult,
+        VoidResult
+    }
+
     private String databaseName;
     private String sourceNodeTag;
 
