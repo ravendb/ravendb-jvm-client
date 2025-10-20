@@ -20,6 +20,7 @@ import net.ravendb.client.primitives.CleanCloseable;
 import net.ravendb.client.primitives.EventHandler;
 import net.ravendb.client.primitives.EventHelper;
 import net.ravendb.client.primitives.VoidArgs;
+import net.ravendb.client.documents.operations.AI.AiOperations;
 import org.apache.commons.lang3.StringUtils;
 
 import java.net.MalformedURLException;
@@ -146,6 +147,15 @@ public abstract class DocumentStoreBase implements IDocumentStore {
     }
 
     private DocumentConventions conventions;
+    private AiOperations aiOperations;
+
+    @Override
+    public AiOperations getAiOperations(){
+        if (this.aiOperations == null) {
+            this.aiOperations = new AiOperations(this);
+        }
+        return this.aiOperations;
+    }
 
     /**
      * Gets the conventions.

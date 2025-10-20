@@ -5,6 +5,7 @@ import net.ravendb.client.documents.changes.IDatabaseChanges;
 import net.ravendb.client.documents.conventions.DocumentConventions;
 import net.ravendb.client.documents.identity.IHiLoIdGenerator;
 import net.ravendb.client.documents.indexes.IAbstractIndexCreationTask;
+import net.ravendb.client.documents.operations.AI.AiOperations;
 import net.ravendb.client.documents.operations.MaintenanceOperationExecutor;
 import net.ravendb.client.documents.operations.OperationExecutor;
 import net.ravendb.client.documents.session.*;
@@ -27,6 +28,8 @@ import java.util.List;
 public interface IDocumentStore extends IDisposalNotification {
 
     KeyStore getCertificate();
+
+    AiOperations getAiOperations();
 
     IHiLoIdGenerator getHiLoIdGenerator();
 

@@ -8,6 +8,8 @@ import net.ravendb.client.serverwide.operations.ServerOperationExecutor;
 import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.StringUtils;
 
+import java.util.concurrent.CompletableFuture;
+
 public class MaintenanceOperationExecutor {
 
     private final DocumentStore store;
@@ -74,17 +76,20 @@ public class MaintenanceOperationExecutor {
         return command.getResult();
     }
 
-    public Operation sendAsync(IMaintenanceOperation<OperationIdResult> operation) {
-        assertDatabaseNameSet();
-        RavenCommand<OperationIdResult> command = operation.getCommand(getRequestExecutor().getConventions());
-        applyNodeTagAndShardNumberToCommandIfSet(command);
-        getRequestExecutor().execute(command);
-        String node = ObjectUtils.firstNonNull(command.getSelectedNodeTag(), command.getResult().getOperationNodeTag());
-        return new Operation(getRequestExecutor(),
-                () -> store.changes(databaseName, node), getRequestExecutor().getConventions(),
-                command.getResult().getOperationId(),
-                node);
+    public <TResult> CompletableFuture<TResult> sendAsync(IMaintenanceOperation<TResult> operation) {
+        return CompletableFuture.supplyAsync(() -> {
+            assertDatabaseNameSet();
+
+            RavenCommand<TResult> command = operation.getCommand(getRequestExecutor().getConventions());
+            applyNodeTagAndShardNumberToCommandIfSet(command);
+
+            getRequestExecutor().execute(command); // synchronous call
+
+            return command.getResult(); // return result from command
+        });
     }
+
+
 
     private void assertDatabaseNameSet() {
         if (databaseName == null) {
