@@ -5,6 +5,7 @@ import net.ravendb.client.documents.indexes.IndexDefinition;
 import net.ravendb.client.documents.indexes.RollingIndex;
 import net.ravendb.client.documents.indexes.RollingIndexDeployment;
 import net.ravendb.client.documents.indexes.analysis.AnalyzerDefinition;
+import net.ravendb.client.documents.operations.AI.ConnectionStrings.AiConnectionString;
 import net.ravendb.client.documents.operations.backups.PeriodicBackupConfiguration;
 import net.ravendb.client.documents.operations.configuration.ClientConfiguration;
 import net.ravendb.client.documents.operations.configuration.StudioConfiguration;
@@ -69,7 +70,7 @@ public class DatabaseRecord {
     private Map<String, RavenConnectionString> ravenConnectionStrings = new HashMap<>();
     private Map<String, SqlConnectionString> sqlConnectionStrings = new HashMap<>();
     private Map<String, OlapConnectionString> olapConnectionStrings = new HashMap<>();
-
+    private Map<String, AiConnectionString> aiConnectionStrings = new HashMap<>();
     private Map<String, ElasticSearchConnectionString> elasticSearchConnectionStrings = new HashMap<>();
     private Map<String, QueueConnectionString> queueConnectionStrings = new HashMap<>();
     private List<RavenEtlConfiguration> ravenEtls = new ArrayList<>();
@@ -85,6 +86,10 @@ public class DatabaseRecord {
 
     public DatabaseRecord() {
     }
+
+    public Map<String, AiConnectionString> getAiConnectionStrings() { return aiConnectionStrings; }
+
+    public void setAiConnectionStrings(Map<String, AiConnectionString> aiConnectionStrings) { this.aiConnectionStrings = aiConnectionStrings; }
 
     public DatabaseRecord(String databaseName) {
         this.databaseName = databaseName;

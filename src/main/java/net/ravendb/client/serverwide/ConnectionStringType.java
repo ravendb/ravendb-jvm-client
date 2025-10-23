@@ -9,5 +9,6 @@ public enum ConnectionStringType {
     SQL,
     OLAP,
     ELASTIC_SEARCH,
-    QUEUE
+    QUEUE,
+    AI
 }

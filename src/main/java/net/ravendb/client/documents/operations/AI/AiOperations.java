@@ -79,6 +79,13 @@ public class AiOperations {
     /**
      * Opens an AI conversation for an agent.
      */
+    public AiConversation conversation(String agentId, String conversationId) {
+        return new AiConversation(store, databaseName, agentId, conversationId, null, null);
+    }
+
+    /**
+     * Opens an AI conversation for an agent.
+     */
     public AiConversation conversation(String agentId, String conversationId,
                                        AiConversationCreationOptions creationOptions,
                                        String changeVector) {
