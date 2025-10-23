@@ -1,20 +1,25 @@
 package net.ravendb.client.documents.operations.connectionStrings;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import net.ravendb.client.documents.operations.AI.ConnectionStrings.AiConnectionString;
 import net.ravendb.client.documents.operations.etl.elasticSearch.ElasticSearchConnectionString;
 import net.ravendb.client.documents.operations.etl.olap.OlapConnectionString;
 import net.ravendb.client.documents.operations.etl.queue.QueueConnectionString;
 import net.ravendb.client.documents.operations.etl.sql.SqlConnectionString;
 import net.ravendb.client.documents.operations.etl.RavenConnectionString;
-
 import java.util.Map;
 
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class GetConnectionStringsResult {
     private Map<String, RavenConnectionString> ravenConnectionStrings;
     private Map<String, SqlConnectionString> sqlConnectionStrings;
     private Map<String, OlapConnectionString> olapConnectionStrings;
-
     private Map<String, ElasticSearchConnectionString> elasticSearchConnectionStrings;
     private Map<String, QueueConnectionString> queueConnectionStrings;
+    private Map<String, AiConnectionString> aiConnectionStrings;
+
+    public Map<String, AiConnectionString> getAiConnectionStrings() { return aiConnectionStrings; }
+    public void setAiConnectionStrings(Map<String, AiConnectionString> aiConnectionStrings) { this.aiConnectionStrings = aiConnectionStrings; }
 
     public Map<String, RavenConnectionString> getRavenConnectionStrings() {
         return ravenConnectionStrings;

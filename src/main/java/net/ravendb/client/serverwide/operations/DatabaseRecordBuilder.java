@@ -2,6 +2,7 @@ package net.ravendb.client.serverwide.operations;
 
 import net.ravendb.client.documents.indexes.IndexDefinition;
 import net.ravendb.client.documents.indexes.analysis.AnalyzerDefinition;
+import net.ravendb.client.documents.operations.AI.ConnectionStrings.AiConnectionString;
 import net.ravendb.client.documents.operations.backups.PeriodicBackupConfiguration;
 import net.ravendb.client.documents.operations.configuration.ClientConfiguration;
 import net.ravendb.client.documents.operations.configuration.StudioConfiguration;
@@ -57,6 +58,20 @@ public class DatabaseRecordBuilder implements IDatabaseRecordBuilderInitializer,
 
     private DatabaseRecordBuilder() {
         _databaseRecord = new DatabaseRecord();
+    }
+
+    @Override
+    public IConnectionStringConfigurationBuilder addAiConnectionString(AiConnectionString connectionString) {
+        if (connectionString == null) {
+            throw new IllegalArgumentException("ConnectionString cannot be null");
+        }
+
+        if (_databaseRecord.getAiConnectionStrings() == null) {
+            _databaseRecord.setAiConnectionStrings(new HashMap<>());
+        }
+
+        _databaseRecord.getAiConnectionStrings().put(connectionString.getName(), connectionString);
+        return this;
     }
 
     @Override

@@ -56,6 +56,11 @@
 
     <dependencies>
         <dependency>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-lang3</artifactId>
+            <version>3.13.0</version> <!-- or latest -->
+        </dependency>
+        <dependency>
             <groupId>com.github.luben</groupId>
             <artifactId>zstd-jni</artifactId>
             <version>1.5.5-11</version>

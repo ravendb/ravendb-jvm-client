@@ -2,20 +2,16 @@ package net.ravendb.client.test.client.documents.AI;
 
 import net.ravendb.client.RemoteTestBase;
 import net.ravendb.client.documents.IDocumentStore;
-import net.ravendb.client.documents.operations.AI.agents.AddOrUpdateAiAgentOperation;
-import net.ravendb.client.documents.operations.AI.agents.AiAgentConfigurationResult;
-import net.ravendb.client.documents.operations.AI.agents.AiAgentParameter;
-import net.ravendb.client.documents.operations.AI.agents.AiAgentToolQuery;
+import net.ravendb.client.documents.operations.AI.agents.*;
 import net.ravendb.client.documents.operations.AI.agents.config.AiAgentConfiguration;
-import net.ravendb.client.documents.operations.OperationIdResult;
 import net.ravendb.client.documents.operations.connectionStrings.PutConnectionStringOperation;
 import net.ravendb.client.documents.operations.etl.RavenConnectionString;
 import net.ravendb.client.documents.session.IDocumentSession;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
-
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.concurrent.CompletableFuture;
@@ -121,6 +117,67 @@ public class AiAgentTests extends RemoteTestBase {
                 assertNotNull(agent.getParameters());
                 assertEquals(1, agent.getParameters().size());
                 assertEquals("p", agent.getParameters().get(0).getName());
+            }
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    @Test
+    public void canListAndDeleteAiAgent() throws Exception {
+        try (IDocumentStore store = getDocumentStore()) {
+            String csName = "r1-" + System.currentTimeMillis();
+            RavenConnectionString ravenConnectionString = new RavenConnectionString();
+            ravenConnectionString.setDatabase(store.getDatabase());
+            ravenConnectionString.setTopologyDiscoveryUrls(new String[]{"http://localhost:8080"});
+            ravenConnectionString.setName(csName);
+
+            store.maintenance().send(new PutConnectionStringOperation<>(ravenConnectionString));
+            String name = "agent-" + System.currentTimeMillis();
+            AiAgentConfiguration config = new AiAgentConfiguration();
+            config.setName(name);
+            config.setConnectionStringName(csName);
+            config.setSystemPrompt("prompt");
+            config.setSampleObject("{\"a\":1}");
+            config.setQueries(Collections.emptyList());
+            AddOrUpdateAiAgentOperation addOp = new AddOrUpdateAiAgentOperation(config);
+            AiAgentConfigurationResult res = store.maintenance().send(addOp);
+
+            GetAiAgentsResponse list = store.getAiOperations().getAgents().get();
+            assertThat(list).isNotNull();
+            assertThat(list.getAiAgents()).isNotNull();
+
+            AiAgentConfiguration found = list.getAiAgents()
+                    .stream()
+                    .filter(a -> name.equals(a.getName()))
+                    .findFirst()
+                    .orElse(null);
+
+            assertThat(found).isNotNull();
+
+            AiAgentConfigurationResult delRes = store.getAiOperations().deleteAgent(res.getIdentifier()).get();
+            assertThat(delRes).isNotNull();
+
+            GetAiAgentsResponse afterDelete = store.getAiOperations().getAgents().get();
+            assertThat(afterDelete.getAiAgents().size()).isEqualTo(0);
+        }
+    }
+
+    @Test
+    public void cannotCreateAgentWithoutSchemaOrSampleObject() {
+        try (IDocumentStore store = getDocumentStore()) {
+            AiAgentConfiguration badConfig = new AiAgentConfiguration();
+            badConfig.setName("BadAgent-" + System.currentTimeMillis());
+            badConfig.setConnectionStringName("cs");
+            badConfig.setSystemPrompt("prompt");
+            badConfig.setQueries(Collections.emptyList());
+            try {
+                store.maintenance()
+                        .send(new AddOrUpdateAiAgentOperation(badConfig));
+                Assertions.assertTrue(false, "Expected exception not thrown");
+            } catch (Exception e) {
+                assertThat(e.getMessage())
+                        .contains("Please provide a non-empty value for either outputSchema or sampleObject.");
             }
         } catch (Exception e) {
             throw new RuntimeException(e);

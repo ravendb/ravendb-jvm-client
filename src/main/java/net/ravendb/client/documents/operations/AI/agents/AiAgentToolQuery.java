@@ -6,6 +6,7 @@ public class AiAgentToolQuery {
     private String query;
     private String parametersSampleObject; // Optional: JSON example of parameters
     private String parametersSchema;       // Optional: JSON schema for parameters
+    private AiAgentToolQueryOptions options;
 
     public AiAgentToolQuery() {
         // Default constructor
@@ -19,6 +20,9 @@ public class AiAgentToolQuery {
         this.parametersSampleObject = parametersSampleObject;
         this.parametersSchema = parametersSchema;
     }
+
+    public AiAgentToolQueryOptions getOptions() { return this.options; }
+    public void setOptions(AiAgentToolQueryOptions options) { this.options = options; }
 
     public String getName() {
         return name;

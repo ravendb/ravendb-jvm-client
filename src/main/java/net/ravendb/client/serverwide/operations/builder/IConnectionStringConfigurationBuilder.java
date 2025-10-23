@@ -1,5 +1,6 @@
 package net.ravendb.client.serverwide.operations.builder;
 
+import net.ravendb.client.documents.operations.AI.ConnectionStrings.AiConnectionString;
 import net.ravendb.client.documents.operations.etl.RavenConnectionString;
 import net.ravendb.client.documents.operations.etl.elasticSearch.ElasticSearchConnectionString;
 import net.ravendb.client.documents.operations.etl.olap.OlapConnectionString;
@@ -12,4 +13,5 @@ public interface IConnectionStringConfigurationBuilder {
     IConnectionStringConfigurationBuilder addOlapConnectionString(OlapConnectionString connectionString);
     IConnectionStringConfigurationBuilder addElasticSearchConnectionString(ElasticSearchConnectionString connectionString);
     IConnectionStringConfigurationBuilder addQueueConnectionString(QueueConnectionString connectionString);
+    IConnectionStringConfigurationBuilder addAiConnectionString(AiConnectionString connectionString);
 }

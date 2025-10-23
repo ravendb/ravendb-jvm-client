@@ -10,11 +10,11 @@ import net.ravendb.client.http.IRaftCommand;
 import net.ravendb.client.http.RavenCommand;
 import net.ravendb.client.http.ServerNode;
 import net.ravendb.client.json.ContentProviderHttpEntity;
-import net.ravendb.client.primitives.HttpReset;
 import net.ravendb.client.util.RaftIdGenerator;
 import org.apache.hc.client5.http.classic.methods.HttpPut;
 import org.apache.hc.client5.http.classic.methods.HttpUriRequestBase;
 import org.apache.hc.core5.http.ContentType;
+import java.io.IOException;
 
 public class AddOrUpdateAiAgentCommand extends RavenCommand<AiAgentConfigurationResult> implements IRaftCommand {
     private final AiAgentConfiguration configuration;
@@ -24,7 +24,7 @@ public class AddOrUpdateAiAgentCommand extends RavenCommand<AiAgentConfiguration
     public AddOrUpdateAiAgentCommand(AiAgentConfiguration configuration, Object sampleSchema, DocumentConventions conventions) {
         super(AiAgentConfigurationResult.class);
         if(AddOrUpdateAiAgentOperation.hasNoSampleObjectAndScheme(configuration))
-            throw new IllegalArgumentException("Please provide a non-empty value for either outputSchema or sampleSchema");
+            throw new IllegalArgumentException("Please provide a non-empty value for either outputSchema or sampleObject.");
         this.configuration = configuration;
         this.conventions = conventions;
         this.sampleSchema = sampleSchema;
@@ -56,5 +56,10 @@ public class AddOrUpdateAiAgentCommand extends RavenCommand<AiAgentConfiguration
         }, ContentType.APPLICATION_JSON, conventions));
 
         return request;
+    }
+
+    @Override
+    public void setResponse(String response, boolean fromCache) throws IOException {
+        result = mapper.readValue(response, AiAgentConfigurationResult.class);
     }
 }

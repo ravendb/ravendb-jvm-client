@@ -1,26 +1,25 @@
 package net.ravendb.client.documents.commands;
 
-import com.fasterxml.jackson.core.JsonGenerator;
-import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import net.ravendb.client.documents.conventions.DocumentConventions;
+import net.ravendb.client.documents.operations.AI.AiStreamCallback;
 import net.ravendb.client.documents.operations.AI.agents.AiAgentActionResponse;
 import net.ravendb.client.documents.operations.AI.agents.AiConversationCreationOptions;
 import net.ravendb.client.documents.operations.AI.agents.ConversationResult;
 import net.ravendb.client.http.IRaftCommand;
 import net.ravendb.client.http.RavenCommand;
+import net.ravendb.client.http.RavenCommandResponseType;
 import net.ravendb.client.http.ServerNode;
-import net.ravendb.client.json.ContentProviderHttpEntity;
 import net.ravendb.client.util.RaftIdGenerator;
-import net.ravendb.client.util.UrlUtils;
-import org.apache.hc.client5.http.classic.methods.HttpPost;
 import org.apache.hc.client5.http.classic.methods.HttpUriRequestBase;
-import org.apache.hc.core5.http.ContentType;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.util.Collections;
+import java.io.*;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
-import java.util.regex.Pattern;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionException;
+import java.util.stream.Collectors;
 
 public class RunConversationCommand<TAnswer>
         extends RavenCommand<ConversationResult<TAnswer>>
@@ -32,6 +31,8 @@ public class RunConversationCommand<TAnswer>
     private final List<AiAgentActionResponse> actionResponses;
     private final AiConversationCreationOptions options;
     private final String changeVector;
+    private final String streamPropertyPath;
+    private final AiStreamCallback streamCallback;
     private String raftId;
 
     public RunConversationCommand(
@@ -41,7 +42,9 @@ public class RunConversationCommand<TAnswer>
             List<AiAgentActionResponse> actionResponses,
             AiConversationCreationOptions options,
             String changeVector,
-            DocumentConventions conventions) {
+            DocumentConventions conventions,
+            String streamPropertyPath,
+            AiStreamCallback streamCallback){
         super((Class<ConversationResult<TAnswer>>) (Class<?>) ConversationResult.class);
         this.conversationId = conversationId;
         this.agentId = agentId;
@@ -49,6 +52,12 @@ public class RunConversationCommand<TAnswer>
         this.actionResponses = actionResponses;
         this.options = options;
         this.changeVector = changeVector;
+        this.streamPropertyPath = streamPropertyPath;
+        this.streamCallback = streamCallback;
+
+        if (this.streamPropertyPath != null && this.streamCallback != null) {
+            this.responseType = RavenCommandResponseType.RAW;
+        }
 
         if (conversationId != null && conversationId.endsWith("|")) {
             this.raftId = RaftIdGenerator.newId();
@@ -79,6 +88,11 @@ public class RunConversationCommand<TAnswer>
 //        if (this.changeVector != null && !this.changeVector.isEmpty()) {
 //            uriBuilder.append("&changeVector=").append(UrlUtils.escapeDataString(this.changeVector));
 //        }
+
+//        if (this._streamPropertyPath) {
+//            uriParams.append("streaming", "true");
+//            uriParams.append("streamPropertyPath", this._streamPropertyPath);
+//        }
 //
 //        HttpPost request = new HttpPost(uriBuilder.toString());
 //
@@ -90,9 +104,9 @@ public class RunConversationCommand<TAnswer>
 //                bodyObj.set("CreationOptions", mapper.valueToTree(this.options));
 //
 //                // Apply PascalCase transformation with ignorePaths logic
-//                ObjectNode transformed = objectUtils.transformObjectKeys(
+//                ObjectNode transformed = ObjectUtils.transformObjectKeys(
 //                        bodyObj,
-//                        objectUtils.pascalCase(),
+//                        ObjectUtils.pascalCase(),
 //                        Collections.singletonList(Pattern.compile("^CreationOptions\\.Parameters\\..*$"))
 //                );
 //
@@ -101,6 +115,71 @@ public class RunConversationCommand<TAnswer>
 //        }, ContentType.APPLICATION_JSON, _conventions));
 //
 //        return request;
+    }
+
+    @Override
+    public CompletableFuture<String> setResponseAsync(InputStream bodyStream, boolean fromCache) {
+        if (bodyStream == null ) {
+            this.throwInvalidResponse();
+        }
+
+        if (this.streamPropertyPath != null  && this.streamCallback != null) {
+            return processStreamingResponse(bodyStream);
+        }
+        return this.parseResponseDefaultAsync(bodyStream);
+    }
+
+    private CompletableFuture<String> parseResponseDefaultAsync(InputStream bodyStream) {
+        return CompletableFuture.supplyAsync(() -> {
+            try {
+                String body = new BufferedReader(new InputStreamReader(bodyStream, StandardCharsets.UTF_8))
+                        .lines()
+                        .collect(Collectors.joining("\n"));
+
+                this.result = parseAndTransform(body, new TypeReference<ConversationResult<TAnswer>>() {});
+                return body;
+            } catch (Exception e) {
+                throw new CompletionException(e);
+            }
+        });
+    }
+
+    private CompletableFuture<String> processStreamingResponse(InputStream bodyStream) {
+        return CompletableFuture.supplyAsync(() -> {
+            try (BufferedReader reader = new BufferedReader(new InputStreamReader(bodyStream, StandardCharsets.UTF_8))) {
+                String line;
+                while ((line = reader.readLine()) != null) {
+                    if (line.trim().isEmpty()) continue;
+
+                    if (line.startsWith("{")) {
+                        // Final result line
+                        this.result = parseAndTransform(line, new TypeReference<ConversationResult<TAnswer>>() {});
+                        return line;
+                    }
+
+                    try {
+                        Object parsed = new ObjectMapper().readValue(line, Object.class);
+                        String chunk;
+                        if (parsed instanceof String) {
+                            chunk = (String) parsed;
+                        } else {
+                            chunk = new ObjectMapper().writeValueAsString(parsed);
+                        }
+                        streamCallback.onChunk(chunk).get();
+                    } catch (Exception e) {
+                        streamCallback.onChunk(line).get();
+                    }
+                }
+
+                if (this.result == null) {
+                    throw new IllegalStateException("No final result received in streaming response");
+                }
+
+                return null;
+            } catch (Exception e) {
+                throw new CompletionException(e);
+            }
+        });
     }
 }
 

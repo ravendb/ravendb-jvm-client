@@ -1,12 +1,14 @@
 package net.ravendb.client.http;
 
 import com.fasterxml.jackson.core.JsonGenerator;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import net.ravendb.client.Constants;
 import net.ravendb.client.extensions.HttpExtensions;
 import net.ravendb.client.extensions.JsonExtensions;
 import net.ravendb.client.http.behaviors.AbstractCommandResponseBehavior;
 import net.ravendb.client.http.behaviors.DefaultCommandResponseBehavior;
+import net.ravendb.client.util.ObjectUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.hc.client5.http.ClientProtocolException;
@@ -21,6 +23,7 @@ import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
 
 public abstract class RavenCommand<TResult> {
 
@@ -136,6 +139,11 @@ public abstract class RavenCommand<TResult> {
         }
 
         throw new UnsupportedOperationException(responseType.name() + " command must override the setResponse method which expects response with the following type: " + responseType);
+    }
+
+    public CompletableFuture<String> setResponseAsync(InputStream bodyStream, boolean fromCache) {
+        // This is just for override purposes
+        return null;
     }
 
     public ClassicHttpResponse send(CloseableHttpClient client, HttpUriRequestBase request) throws IOException {
@@ -255,5 +263,12 @@ public abstract class RavenCommand<TResult> {
     @SuppressWarnings({"unused", "EmptyMethod"})
     public void onResponseFailure(ClassicHttpResponse response) {
 
+    }
+
+    protected <T> T parseAndTransform(String json, TypeReference<T> typeRef) throws IOException {
+        ObjectMapper mapper = new ObjectMapper();
+        Map<String, Object> raw = mapper.readValue(json, new TypeReference<Map<String, Object>>() {});
+        Map<String, Object> transformed = ObjectUtils.transformObjectKeys(raw, ObjectUtils::camel);
+        return mapper.convertValue(transformed, typeRef);
     }
 }
