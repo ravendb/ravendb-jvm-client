@@ -4,12 +4,11 @@ public class AiAgentToolQuery {
     private String name;
     private String description;
     private String query;
-    private String parametersSampleObject; // Optional: JSON example of parameters
-    private String parametersSchema;       // Optional: JSON schema for parameters
+    private String parametersSampleObject;
+    private String parametersSchema;
     private AiAgentToolQueryOptions options;
 
     public AiAgentToolQuery() {
-        // Default constructor
     }
 
     public AiAgentToolQuery(String name, String description, String query,

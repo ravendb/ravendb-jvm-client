@@ -3,11 +3,10 @@ package net.ravendb.client.documents.operations.AI.agents;
 import java.util.Map;
 
 public class AiConversationCreationOptions {
-    private Map<String, Object> parameters; // Optional: key-value pairs
-    private Integer expirationInSec;        // Optional: expiration time in seconds
+    private Map<String, Object> parameters;
+    private Integer expirationInSec;
 
     public AiConversationCreationOptions() {
-        // Default constructor
     }
 
     public AiConversationCreationOptions(Map<String, Object> parameters, Integer expirationInSec) {

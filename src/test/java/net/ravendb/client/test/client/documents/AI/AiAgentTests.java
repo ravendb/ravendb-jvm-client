@@ -109,7 +109,7 @@ public class AiAgentTests extends RemoteTestBase {
 
                 store.maintenance().send(new AddOrUpdateAiAgentOperation(updatedConfig));
 
-                CompletableFuture<AiAgentConfiguration> future = store.getAiOperations().getAgent(createRes.getIdentifier()); // or getIdentifier()
+                CompletableFuture<AiAgentConfiguration> future = store.getAiOperations().getAgent(createRes.getIdentifier());
                 AiAgentConfiguration agent = future.join();
 
                 assertNotNull(agent);

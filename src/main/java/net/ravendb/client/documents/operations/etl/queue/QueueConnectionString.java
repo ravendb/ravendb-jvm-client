@@ -1,8 +1,10 @@
 package net.ravendb.client.documents.operations.etl.queue;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import net.ravendb.client.documents.operations.connectionStrings.ConnectionString;
 import net.ravendb.client.serverwide.ConnectionStringType;
 
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class QueueConnectionString extends ConnectionString {
 
     private QueueBrokerType brokerType;

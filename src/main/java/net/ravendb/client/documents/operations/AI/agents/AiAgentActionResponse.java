@@ -2,10 +2,9 @@ package net.ravendb.client.documents.operations.AI.agents;
 
 public class AiAgentActionResponse {
     private String toolId;
-    private String content; // JSON/string content provided back to the agent
+    private String content;
 
     public AiAgentActionResponse() {
-        // Default constructor
     }
 
     public AiAgentActionResponse(String toolId, String content) {

@@ -7,7 +7,6 @@ public class AiUsage {
     private int cachedTokens;
 
     public AiUsage() {
-        // Default constructor
     }
 
     public AiUsage(int promptTokens, int completionTokens, int totalTokens, int cachedTokens) {

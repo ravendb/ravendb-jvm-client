@@ -7,20 +7,19 @@ import net.ravendb.client.documents.operations.AI.agents.AiAgentToolQuery;
 import java.util.List;
 
 public class AiAgentConfiguration {
-    private String identifier; // Optional
+    private String identifier;
     private String name;
     private String connectionStringName;
     private String systemPrompt;
-    private String sampleObject; // JSON string sample for output
-    private String outputSchema; // Optional: JSON schema for output
-    private List<AiAgentToolQuery> queries; // Optional
-    private List<AiAgentToolAction> actions; // Optional
-    private List<AiAgentParameter> parameters; // Optional
-    private AiAgentChatTrimmingConfiguration chatTrimming; // Optional
-    private Integer maxModelIterationsPerCall; // Optional
+    private String sampleObject;
+    private String outputSchema;
+    private List<AiAgentToolQuery> queries;
+    private List<AiAgentToolAction> actions;
+    private List<AiAgentParameter> parameters;
+    private AiAgentChatTrimmingConfiguration chatTrimming;
+    private Integer maxModelIterationsPerCall;
 
     public AiAgentConfiguration() {
-        // Default constructor
     }
 
     public AiAgentConfiguration(String identifier, String name, String connectionStringName, String systemPrompt,

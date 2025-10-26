@@ -8,7 +8,6 @@ public class GetAiAgentsResponse {
     private List<AiAgentConfiguration> aiAgents;
 
     public GetAiAgentsResponse() {
-        // Default constructor
     }
 
     public GetAiAgentsResponse(List<AiAgentConfiguration> aiAgents) {

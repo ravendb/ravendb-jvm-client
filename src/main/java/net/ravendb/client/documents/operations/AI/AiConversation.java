@@ -81,7 +81,7 @@ public class AiConversation {
 
         String content = (actionResponse instanceof String)
                 ? (String) actionResponse
-                : new ObjectMapper().writeValueAsString(actionResponse); // Jackson serialization
+                : new ObjectMapper().writeValueAsString(actionResponse);
 
         actionResponses.add(new AiAgentActionResponse(toolId, content));
     }
@@ -254,7 +254,7 @@ public class AiConversation {
                     IActionInvocation invocation = this.invocations.get(action.getName());
                     if (invocation != null) {
                         try {
-                            invocation.invoke(action).join(); // wait for invocation to complete
+                            invocation.invoke(action).join();
                         } catch (JsonProcessingException e) {
                             throw new RuntimeException(e);
                         }

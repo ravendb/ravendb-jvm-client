@@ -1,11 +1,10 @@
 package net.ravendb.client.documents.operations.AI;
 
 public class AiAnswer<TAnswer> {
-    private TAnswer answer; // Optional
+    private TAnswer answer;
     private AiConversationResult status;
 
     public AiAnswer() {
-        // Default constructor
     }
 
     public AiAnswer(TAnswer answer, AiConversationResult status) {

@@ -1,10 +1,8 @@
 package net.ravendb.client.documents.operations.AI.agents.config;
 
 public class AiAgentHistoryConfiguration {
-    private Integer historyExpirationInSec; // Optional: expiration time in seconds
-
+    private Integer historyExpirationInSec;
     public AiAgentHistoryConfiguration() {
-        // Default constructor
     }
 
     public AiAgentHistoryConfiguration(Integer historyExpirationInSec) {

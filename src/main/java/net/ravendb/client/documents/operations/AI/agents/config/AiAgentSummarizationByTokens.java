@@ -1,14 +1,13 @@
 package net.ravendb.client.documents.operations.AI.agents.config;
 
 public class AiAgentSummarizationByTokens {
-    private String summarizationTaskBeginningPrompt; // Optional
-    private String summarizationTaskEndPrompt;       // Optional
-    private String resultPrefix;                     // Optional
-    private Integer maxTokensBeforeSummarization;    // Optional
-    private Integer maxTokensAfterSummarization;     // Optional
+    private String summarizationTaskBeginningPrompt;
+    private String summarizationTaskEndPrompt;
+    private String resultPrefix;
+    private Integer maxTokensBeforeSummarization;
+    private Integer maxTokensAfterSummarization;
 
     public AiAgentSummarizationByTokens() {
-        // Default constructor
     }
 
     public AiAgentSummarizationByTokens(String summarizationTaskBeginningPrompt,

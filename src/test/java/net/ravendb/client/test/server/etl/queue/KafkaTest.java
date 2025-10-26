@@ -29,7 +29,7 @@ public class KafkaTest extends RemoteTestBase {
 
             QueueConnectionString connectionString = new QueueConnectionString();
             connectionString.setName("k1");
-            connectionString.setBrokerType(QueueBrokerType.KAFKA);
+            connectionString.setBrokerType(QueueBrokerType.Kafka);
             connectionString.setKafkaConnectionSettings(new KafkaConnectionSettings());
             connectionString.getKafkaConnectionSettings().setBootstrapServers("localhost:9092");
 
@@ -37,7 +37,7 @@ public class KafkaTest extends RemoteTestBase {
 
             QueueEtlConfiguration etlConfiguration = new QueueEtlConfiguration();
             etlConfiguration.setConnectionStringName("k1");
-            etlConfiguration.setBrokerType(QueueBrokerType.KAFKA);
+            etlConfiguration.setBrokerType(QueueBrokerType.Kafka);
             Transformation transformation = new Transformation();
             transformation.setCollections(Collections.singletonList("Orders"));
             transformation.setScript("var userData = { UserId: id(this), Name: this.Name }; loadToTest(userData)");
@@ -57,7 +57,7 @@ public class KafkaTest extends RemoteTestBase {
             assertThat(ongoingTask.getConfiguration().getEtlType())
                     .isEqualTo(EtlType.QUEUE);
             assertThat(ongoingTask.getConfiguration().getBrokerType())
-                    .isEqualTo(QueueBrokerType.KAFKA);
+                    .isEqualTo(QueueBrokerType.Kafka);
             assertThat(ongoingTask.getConfiguration().getTransforms())
                     .hasSize(1);
 

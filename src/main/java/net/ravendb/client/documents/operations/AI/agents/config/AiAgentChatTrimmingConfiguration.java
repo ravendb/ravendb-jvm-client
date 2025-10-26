@@ -1,11 +1,10 @@
 package net.ravendb.client.documents.operations.AI.agents.config;
 
 public class AiAgentChatTrimmingConfiguration {
-    private AiAgentSummarizationByTokens tokens; // Optional
-    private AiAgentHistoryConfiguration history; // Optional
+    private AiAgentSummarizationByTokens tokens;
+    private AiAgentHistoryConfiguration history;
 
     public AiAgentChatTrimmingConfiguration() {
-        // Default constructor
     }
 
     public AiAgentChatTrimmingConfiguration(AiAgentSummarizationByTokens tokens, AiAgentHistoryConfiguration history) {
