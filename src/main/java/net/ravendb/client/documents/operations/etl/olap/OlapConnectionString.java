@@ -1,9 +1,11 @@
 package net.ravendb.client.documents.operations.etl.olap;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import net.ravendb.client.documents.operations.backups.*;
 import net.ravendb.client.documents.operations.connectionStrings.ConnectionString;
 import net.ravendb.client.serverwide.ConnectionStringType;
 
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class OlapConnectionString extends ConnectionString {
     @Override
     public ConnectionStringType getType() {

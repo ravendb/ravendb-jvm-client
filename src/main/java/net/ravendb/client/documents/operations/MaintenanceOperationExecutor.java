@@ -83,13 +83,11 @@ public class MaintenanceOperationExecutor {
             RavenCommand<TResult> command = operation.getCommand(getRequestExecutor().getConventions());
             applyNodeTagAndShardNumberToCommandIfSet(command);
 
-            getRequestExecutor().execute(command); // synchronous call
+            getRequestExecutor().execute(command);
 
-            return command.getResult(); // return result from command
+            return command.getResult();
         });
     }
-
-
 
     private void assertDatabaseNameSet() {
         if (databaseName == null) {

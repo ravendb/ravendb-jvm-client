@@ -1,7 +1,9 @@
 package net.ravendb.client.documents.commands;
 
+import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import net.ravendb.client.documents.conventions.DocumentConventions;
 import net.ravendb.client.documents.operations.AI.AiStreamCallback;
 import net.ravendb.client.documents.operations.AI.agents.AiAgentActionResponse;
@@ -11,9 +13,12 @@ import net.ravendb.client.http.IRaftCommand;
 import net.ravendb.client.http.RavenCommand;
 import net.ravendb.client.http.RavenCommandResponseType;
 import net.ravendb.client.http.ServerNode;
+import net.ravendb.client.json.ContentProviderHttpEntity;
 import net.ravendb.client.util.RaftIdGenerator;
+import net.ravendb.client.util.UrlUtils;
+import org.apache.hc.client5.http.classic.methods.HttpPost;
 import org.apache.hc.client5.http.classic.methods.HttpUriRequestBase;
-
+import org.apache.hc.core5.http.ContentType;
 import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
@@ -33,6 +38,7 @@ public class RunConversationCommand<TAnswer>
     private final String changeVector;
     private final String streamPropertyPath;
     private final AiStreamCallback streamCallback;
+    private final DocumentConventions conventions;
     private String raftId;
 
     public RunConversationCommand(
@@ -54,6 +60,7 @@ public class RunConversationCommand<TAnswer>
         this.changeVector = changeVector;
         this.streamPropertyPath = streamPropertyPath;
         this.streamCallback = streamCallback;
+        this.conventions = conventions;
 
         if (this.streamPropertyPath != null && this.streamCallback != null) {
             this.responseType = RavenCommandResponseType.RAW;
@@ -76,45 +83,37 @@ public class RunConversationCommand<TAnswer>
 
     @Override
     public HttpUriRequestBase createRequest(ServerNode node) {
-        return null;
-//        StringBuilder uriBuilder = new StringBuilder();
-//        uriBuilder.append(node.getUrl())
-//                .append("/databases/")
-//                .append(node.getDatabase())
-//                .append("/ai/agent?")
-//                .append("conversationId=").append(UrlUtils.escapeDataString(this.conversationId))
-//                .append("&agentId=").append(UrlUtils.escapeDataString(this.agentId));
-//
-//        if (this.changeVector != null && !this.changeVector.isEmpty()) {
-//            uriBuilder.append("&changeVector=").append(UrlUtils.escapeDataString(this.changeVector));
-//        }
+        System.out.println("Creating request for RunConversationCommand");
+        StringBuilder uriBuilder = new StringBuilder();
+        uriBuilder.append(node.getUrl())
+                .append("/databases/")
+                .append(node.getDatabase())
+                .append("/ai/agent?")
+                .append("conversationId=").append(UrlUtils.escapeDataString(this.conversationId))
+                .append("&agentId=").append(UrlUtils.escapeDataString(this.agentId));
 
-//        if (this._streamPropertyPath) {
-//            uriParams.append("streaming", "true");
-//            uriParams.append("streamPropertyPath", this._streamPropertyPath);
-//        }
-//
-//        HttpPost request = new HttpPost(uriBuilder.toString());
-//
-//        request.setEntity(new ContentProviderHttpEntity(outputStream -> {
-//            try (JsonGenerator generator = createSafeJsonGenerator(outputStream)) {
-//                ObjectNode bodyObj = mapper.createObjectNode();
-//                bodyObj.set("ActionResponses", mapper.valueToTree(this.actionResponses));
-//                bodyObj.put("UserPrompt", this.prompt);
-//                bodyObj.set("CreationOptions", mapper.valueToTree(this.options));
-//
-//                // Apply PascalCase transformation with ignorePaths logic
-//                ObjectNode transformed = ObjectUtils.transformObjectKeys(
-//                        bodyObj,
-//                        ObjectUtils.pascalCase(),
-//                        Collections.singletonList(Pattern.compile("^CreationOptions\\.Parameters\\..*$"))
-//                );
-//
-//                generator.writeTree(transformed);
-//            }
-//        }, ContentType.APPLICATION_JSON, _conventions));
-//
-//        return request;
+        if (this.changeVector != null && !this.changeVector.isEmpty()) {
+            uriBuilder.append("&changeVector=").append(UrlUtils.escapeDataString(this.changeVector));
+        }
+
+        HttpPost request = new HttpPost(uriBuilder.toString());
+
+        request.setEntity(new ContentProviderHttpEntity(outputStream -> {
+            try (JsonGenerator generator = createSafeJsonGenerator(outputStream)) {
+                ObjectNode bodyObj = mapper.createObjectNode();
+                bodyObj.set("ActionResponses", mapper.valueToTree(this.actionResponses));
+                bodyObj.put("UserPrompt", this.prompt);
+                bodyObj.set("CreationOptions", mapper.valueToTree(this.options));
+                if (this.streamPropertyPath != null) {
+                    bodyObj.put("StreamPropertyPath", this.streamPropertyPath);
+                    bodyObj.put("Streaming", true);
+                }
+
+                generator.writeTree(bodyObj);
+            }
+        }, ContentType.APPLICATION_JSON,conventions));
+
+        return request;
     }
 
     @Override
@@ -152,7 +151,6 @@ public class RunConversationCommand<TAnswer>
                     if (line.trim().isEmpty()) continue;
 
                     if (line.startsWith("{")) {
-                        // Final result line
                         this.result = parseAndTransform(line, new TypeReference<ConversationResult<TAnswer>>() {});
                         return line;
                     }

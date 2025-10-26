@@ -16,7 +16,6 @@ public class ObjectUtils {
             Object value = entry.getValue();
 
             if (value instanceof Map) {
-                //noinspection unchecked
                 value = transformObjectKeys((Map<String, Object>) value, keyTransform);
             } else if (value instanceof List) {
                 value = transformList((List<?>) value, keyTransform);
@@ -53,7 +52,6 @@ public class ObjectUtils {
         List<Object> result = new ArrayList<>();
         for (Object item : list) {
             if (item instanceof Map) {
-                //noinspection unchecked
                 result.add(transformObjectKeys((Map<String, Object>) item, keyTransform));
             } else if (item instanceof List) {
                 result.add(transformList((List<?>) item, keyTransform));

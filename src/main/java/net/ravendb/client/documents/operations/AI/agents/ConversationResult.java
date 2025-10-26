@@ -7,10 +7,9 @@ public class ConversationResult<TAnswer> {
     private String changeVector;
     private TAnswer response;
     private AiUsage totalUsage;
-    private List<AiAgentActionRequest> actionRequests; // Optional
+    private List<AiAgentActionRequest> actionRequests;
 
     public ConversationResult() {
-        // Default constructor
     }
 
     public ConversationResult(String conversationId, String changeVector, TAnswer response,

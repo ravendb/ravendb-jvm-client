@@ -3,11 +3,10 @@ package net.ravendb.client.documents.operations.AI.agents;
 public class AiAgentToolAction {
     private String name;
     private String description;
-    private String parametersSampleObject; // Optional: JSON string example
-    private String parametersSchema;       // Optional: JSON schema string
+    private String parametersSampleObject;
+    private String parametersSchema;
 
     public AiAgentToolAction() {
-        // Default constructor
     }
 
     public AiAgentToolAction(String name, String description, String parametersSampleObject, String parametersSchema) {

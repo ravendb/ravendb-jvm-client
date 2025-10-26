@@ -756,13 +756,13 @@ public class ConnectionStringsTest extends RemoteTestBase {
 
             QueueConnectionString kafkaConnectionString = new QueueConnectionString();
             kafkaConnectionString.setName("k1");
-            kafkaConnectionString.setBrokerType(QueueBrokerType.KAFKA);
+            kafkaConnectionString.setBrokerType(QueueBrokerType.Kafka);
             kafkaConnectionString.setKafkaConnectionSettings(new KafkaConnectionSettings());
             kafkaConnectionString.getKafkaConnectionSettings().setBootstrapServers("localhost:9092");
 
             QueueConnectionString rabbitConnectionString = new QueueConnectionString();
             rabbitConnectionString.setName("r1");
-            rabbitConnectionString.setBrokerType(QueueBrokerType.RABBIT_MQ);
+            rabbitConnectionString.setBrokerType(QueueBrokerType.RabbitMq);
             rabbitConnectionString.setRabbitMqConnectionSettings(new RabbitMqConnectionSettings());
             rabbitConnectionString.getRabbitMqConnectionSettings().setConnectionString("localhost:888");
 

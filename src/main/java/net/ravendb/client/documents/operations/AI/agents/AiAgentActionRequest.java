@@ -3,10 +3,9 @@ package net.ravendb.client.documents.operations.AI.agents;
 public class AiAgentActionRequest {
     private String name;
     private String toolId;
-    private String arguments; // JSON string provided by the model
+    private String arguments;
 
     public AiAgentActionRequest() {
-        // Default constructor
     }
 
     public AiAgentActionRequest(String name, String toolId, String arguments) {

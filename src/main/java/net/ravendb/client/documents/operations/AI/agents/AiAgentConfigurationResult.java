@@ -5,7 +5,6 @@ public class AiAgentConfigurationResult {
     private int raftCommandIndex;
 
     public AiAgentConfigurationResult() {
-        // Default constructor
     }
 
     public AiAgentConfigurationResult(String identifier, int raftCommandIndex) {
