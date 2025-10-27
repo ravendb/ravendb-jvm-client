@@ -6,18 +6,19 @@ import net.ravendb.client.documents.operations.AI.AiStreamCallback;
 import net.ravendb.client.documents.operations.AI.agents.ConversationResult;
 import net.ravendb.client.documents.operations.AI.agents.RunConversationOperation;
 import net.ravendb.client.http.RavenCommand;
+import net.ravendb.client.infrastructure.EnableOnServer;
 import org.junit.jupiter.api.Test;
-
 import java.io.ByteArrayInputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
-
 import static org.assertj.core.api.Assertions.assertThat;
 
+@EnableOnServer(thresholdVersion = "7.1")
 public class AiStreamingTests<TAnswer> extends RemoteTestBase {
+
     @Test
     public void shouldParseStreamingResponseCorrectly() throws Exception {
         String streamingResponse =

@@ -26,7 +26,7 @@ public class RabbitMqTest extends RemoteTestBase {
 
             QueueConnectionString connectionString = new QueueConnectionString();
             connectionString.setName("r1");
-            connectionString.setBrokerType(QueueBrokerType.RabbitMq);
+            connectionString.setBrokerType(QueueBrokerType.RABBIT_MQ);
             connectionString.setRabbitMqConnectionSettings(new RabbitMqConnectionSettings());
             connectionString.getRabbitMqConnectionSettings().setConnectionString("r_host");
 
@@ -38,7 +38,7 @@ public class RabbitMqTest extends RemoteTestBase {
             transformation.setCollections(Collections.singletonList("Orders"));
             transformation.setScript("var userData = { UserId: id(this), Name: this.Name }; loadToTest(userData)");
             transformation.setName("Script #1");
-            etlConfiguration.setBrokerType(QueueBrokerType.RabbitMq);
+            etlConfiguration.setBrokerType(QueueBrokerType.RABBIT_MQ);
 
             etlConfiguration.setTransforms(Collections.singletonList(transformation));
 
@@ -54,7 +54,7 @@ public class RabbitMqTest extends RemoteTestBase {
             assertThat(ongoingTask.getConfiguration().getEtlType())
                     .isEqualTo(EtlType.QUEUE);
             assertThat(ongoingTask.getConfiguration().getBrokerType())
-                    .isEqualTo(QueueBrokerType.RabbitMq);
+                    .isEqualTo(QueueBrokerType.RABBIT_MQ);
             assertThat(ongoingTask.getConfiguration().getTransforms())
                     .hasSize(1);
 

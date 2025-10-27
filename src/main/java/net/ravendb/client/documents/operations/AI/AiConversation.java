@@ -299,30 +299,23 @@ public class AiConversation {
                 streamCallback
         );
 
-        CompletableFuture<ConversationResult<TAnswer>> rawFuture = this.store.maintenance()
+        ConversationResult<TAnswer> result = this.store.maintenance()
                 .forDatabase(this.databaseName)
-                .sendAsync(op);
+                .send(op);
 
-        return rawFuture.thenApply(res -> {
-            @SuppressWarnings("unchecked")
-            ConversationResult<TAnswer> result = (ConversationResult<TAnswer>) res;
+        AiAnswer<TAnswer> answer = new AiAnswer<>();
+        answer.setAnswer(result.getResponse());
+        answer.setStatus(result.getActionRequests() == null || result.getActionRequests().isEmpty()
+                ? AiConversationResult.Done
+                : AiConversationResult.ActionRequired);
 
-            this.changeVector = result.getChangeVector();
-            this.conversationId = result.getConversationId();
-            this.actionRequests = result.getActionRequests() != null ? result.getActionRequests() : new ArrayList<>();
+        this.changeVector = result.getChangeVector();
+        this.conversationId = result.getConversationId();
+        this.actionRequests = result.getActionRequests() != null ? result.getActionRequests() : new ArrayList<>();
+        this.userPrompt = null;
+        this.actionResponses.clear();
 
-            AiAnswer<TAnswer> answer = new AiAnswer<>();
-            answer.setAnswer(result.getResponse());
-            answer.setStatus(this.actionRequests.isEmpty()
-                    ? AiConversationResult.Done
-                    : AiConversationResult.ActionRequired);
-
-            return answer;
-        }).whenComplete((r, ex) -> {
-            this.userPrompt = null;
-            this.actionResponses.clear();
-        });
-
+        return CompletableFuture.completedFuture(answer);
     }
 
     private Object parseArgs(String argsJson) {

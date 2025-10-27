@@ -40,40 +40,39 @@ public class AiOperations {
     /**
      * Creates or updates an AI agent configuration (with the given schema) on the database.
      */
-    public <TSchema> CompletableFuture<AiAgentConfigurationResult> createAgent(
+    public <TSchema> AiAgentConfigurationResult createAgent(
             AiAgentConfiguration configuration,
             TSchema sampleObject) {
         AddOrUpdateAiAgentOperation operation = new AddOrUpdateAiAgentOperation(configuration, sampleObject);
-        return executor.sendAsync(operation);
+        return executor.send(operation);
     }
 
     /**
      * Retrieves the AI agent configuration for a specific agent.
      */
-    public CompletableFuture<AiAgentConfiguration> getAgent(String agentId) {
+    public AiAgentConfiguration getAgent(String agentId) {
         GetAiAgentsOperation operation = new GetAiAgentsOperation(agentId);
-        return executor.sendAsync(operation).thenApply(response -> {
-            if (response.getAiAgents() != null && !response.getAiAgents().isEmpty()) {
-                return response.getAiAgents().get(0);
-            }
-            return null;
-        });
+        GetAiAgentsResponse response = executor.send(operation);
+        if (response.getAiAgents() != null && !response.getAiAgents().isEmpty()) {
+            return response.getAiAgents().get(0);
+        }
+        return null;
     }
 
     /**
      * Retrieves all AI agents and their configurations.
      */
-    public CompletableFuture<GetAiAgentsResponse> getAgents() {
+    public GetAiAgentsResponse getAgents() {
         GetAiAgentsOperation operation = new GetAiAgentsOperation();
-        return executor.sendAsync(operation);
+        return executor.send(operation);
     }
 
     /**
      * Deletes an AI agent configuration.
      */
-    public CompletableFuture<AiAgentConfigurationResult> deleteAgent(String identifier) {
+    public AiAgentConfigurationResult deleteAgent(String identifier) {
         DeleteAiAgentOperation operation = new DeleteAiAgentOperation(identifier);
-        return executor.sendAsync(operation);
+        return executor.send(operation);
     }
 
     /**
