@@ -83,7 +83,6 @@ public class RunConversationCommand<TAnswer>
 
     @Override
     public HttpUriRequestBase createRequest(ServerNode node) {
-        System.out.println("Creating request for RunConversationCommand");
         StringBuilder uriBuilder = new StringBuilder();
         uriBuilder.append(node.getUrl())
                 .append("/databases/")
@@ -95,6 +94,10 @@ public class RunConversationCommand<TAnswer>
         if (this.changeVector != null && !this.changeVector.isEmpty()) {
             uriBuilder.append("&changeVector=").append(UrlUtils.escapeDataString(this.changeVector));
         }
+        if (this.streamPropertyPath != null) {
+            uriBuilder.append("&streamPropertyPath=").append(UrlUtils.escapeDataString(this.streamPropertyPath));
+            uriBuilder.append("&streaming=").append(UrlUtils.escapeDataString("true"));
+        }
 
         HttpPost request = new HttpPost(uriBuilder.toString());
 
@@ -104,11 +107,6 @@ public class RunConversationCommand<TAnswer>
                 bodyObj.set("ActionResponses", mapper.valueToTree(this.actionResponses));
                 bodyObj.put("UserPrompt", this.prompt);
                 bodyObj.set("CreationOptions", mapper.valueToTree(this.options));
-                if (this.streamPropertyPath != null) {
-                    bodyObj.put("StreamPropertyPath", this.streamPropertyPath);
-                    bodyObj.put("Streaming", true);
-                }
-
                 generator.writeTree(bodyObj);
             }
         }, ContentType.APPLICATION_JSON,conventions));
@@ -180,4 +178,3 @@ public class RunConversationCommand<TAnswer>
         });
     }
 }
-

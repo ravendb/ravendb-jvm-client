@@ -16,6 +16,7 @@ import net.ravendb.client.documents.operations.etl.queue.QueueBrokerType;
 import net.ravendb.client.documents.operations.etl.queue.QueueConnectionString;
 import net.ravendb.client.documents.operations.etl.queue.RabbitMqConnectionSettings;
 import net.ravendb.client.documents.operations.etl.sql.SqlConnectionString;
+import net.ravendb.client.infrastructure.EnableOnServer;
 import net.ravendb.client.serverwide.ConnectionStringType;
 import net.ravendb.client.documents.operations.etl.RavenConnectionString;
 import org.junit.jupiter.api.Test;
@@ -25,6 +26,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 public class ConnectionStringsTest extends RemoteTestBase {
 
+    @EnableOnServer(thresholdVersion = "7.1")
     @Test
     public void canCreateGetAndDeleteOpenAiConnectionString() throws Exception {
         try (IDocumentStore store = getDocumentStore()) {
@@ -73,6 +75,7 @@ public class ConnectionStringsTest extends RemoteTestBase {
         }
     }
 
+    @EnableOnServer(thresholdVersion = "7.1")
     @Test
     public void canCreateAzureOpenAiConnectionString() {
         try (IDocumentStore store = getDocumentStore()) {
@@ -110,6 +113,7 @@ public class ConnectionStringsTest extends RemoteTestBase {
         }
     }
 
+    @EnableOnServer(thresholdVersion = "7.1")
     @Test
     public void canCreateOllamaConnectionString() {
         try (IDocumentStore store = getDocumentStore()) {
@@ -148,6 +152,7 @@ public class ConnectionStringsTest extends RemoteTestBase {
         }
     }
 
+    @EnableOnServer(thresholdVersion = "7.1")
     @Test
     public void canCreateGoogleConnectionString() {
         try (IDocumentStore store = getDocumentStore()) {
@@ -185,6 +190,7 @@ public class ConnectionStringsTest extends RemoteTestBase {
         }
     }
 
+    @EnableOnServer(thresholdVersion = "7.1")
     @Test
     public void canCreateHuggingFaceConnectionString() {
         try (IDocumentStore store = getDocumentStore()) {
@@ -219,6 +225,7 @@ public class ConnectionStringsTest extends RemoteTestBase {
         }
     }
 
+    @EnableOnServer(thresholdVersion = "7.1")
     @Test
     public void canCreateMistralAiConnectionString() {
         try (IDocumentStore store = getDocumentStore()) {
@@ -252,6 +259,7 @@ public class ConnectionStringsTest extends RemoteTestBase {
         }
     }
 
+    @EnableOnServer(thresholdVersion = "7.1")
     @Test
     public void canCreateVertexConnectionString() {
         try (IDocumentStore store = getDocumentStore()) {
@@ -298,6 +306,7 @@ public class ConnectionStringsTest extends RemoteTestBase {
         }
     }
 
+    @EnableOnServer(thresholdVersion = "7.1")
     @Test
     public void canGetMultipleAiConnectionStrings() {
         try (IDocumentStore store = getDocumentStore()) {
@@ -334,6 +343,7 @@ public class ConnectionStringsTest extends RemoteTestBase {
         }
     }
 
+    @EnableOnServer(thresholdVersion = "7.1")
     @Test
     public void canGetSpecificAiConnectionString() {
         try (IDocumentStore store = getDocumentStore()) {
@@ -359,6 +369,7 @@ public class ConnectionStringsTest extends RemoteTestBase {
         }
     }
 
+    @EnableOnServer(thresholdVersion = "7.1")
     @Test
     public void validationFailsWhenNoProviderConfigured() {
         AiConnectionString aiConnectionString = new AiConnectionString();
@@ -370,6 +381,7 @@ public class ConnectionStringsTest extends RemoteTestBase {
         assertThat(errors.get(0)).contains("At least one of the following settings must be set");
     }
 
+    @EnableOnServer(thresholdVersion = "7.1")
     @Test
     public void validationFailsWhenMultipleProvidersConfigured() {
         OpenAiSettings openAiSettings = new OpenAiSettings();
@@ -392,6 +404,7 @@ public class ConnectionStringsTest extends RemoteTestBase {
         assertThat(errors.get(0)).contains("Only one of the following settings can be set");
     }
 
+    @EnableOnServer(thresholdVersion = "7.1")
     @Test
     public void validationFailsWhenRequiredFieldsMissing() {
         OpenAiSettings openAiSettings = new OpenAiSettings();
@@ -411,6 +424,7 @@ public class ConnectionStringsTest extends RemoteTestBase {
         assertThat(errors.stream().anyMatch(e -> e.contains("model"))).isTrue();
     }
 
+    @EnableOnServer(thresholdVersion = "7.1")
     @Test
     public void getActiveProviderReturnsCorrectType() {
         OpenAiSettings openAiSettings = new OpenAiSettings();
@@ -444,6 +458,7 @@ public class ConnectionStringsTest extends RemoteTestBase {
         assertThat(cs4.getActiveProvider()).isEqualTo(AiConnectorType.None);
     }
 
+    @EnableOnServer(thresholdVersion = "7.1")
     @Test
     public void compareDetectsModelChanges() {
         OpenAiSettings settings1 = new OpenAiSettings();
@@ -467,6 +482,7 @@ public class ConnectionStringsTest extends RemoteTestBase {
         assertThat(AiSettingsCompareDifferences.fromValue(diff)).isEqualTo(AiSettingsCompareDifferences.ModelArchitecture).isNotEqualTo(0);
     }
 
+    @EnableOnServer(thresholdVersion = "7.1")
     @Test
     public void compareDetectsEndpointChanges() {
         OpenAiSettings settings1 = new OpenAiSettings();
@@ -491,6 +507,7 @@ public class ConnectionStringsTest extends RemoteTestBase {
                 .isNotEqualTo(0);
     }
 
+    @EnableOnServer(thresholdVersion = "7.1")
     @Test
     public void compareDetectsAuthenticationChanges() {
         OpenAiSettings settings1 = new OpenAiSettings();
@@ -515,6 +532,7 @@ public class ConnectionStringsTest extends RemoteTestBase {
                 .isNotEqualTo(0);
     }
 
+    @EnableOnServer(thresholdVersion = "7.1")
     @Test
     public void compareDetectsProviderChange() {
         OpenAiSettings openAiSettings = new OpenAiSettings();
@@ -538,6 +556,7 @@ public class ConnectionStringsTest extends RemoteTestBase {
         assertThat(diff).isEqualTo(AiSettingsCompareDifferences.All.getValue());
     }
 
+    @EnableOnServer(thresholdVersion = "7.1")
     @Test
     public void compareReturnsNoneWhenIdentical() {
         OpenAiSettings settings1 = new OpenAiSettings();
@@ -565,6 +584,7 @@ public class ConnectionStringsTest extends RemoteTestBase {
         assertThat(diff).isEqualTo(AiSettingsCompareDifferences.None.getValue());
     }
 
+    @EnableOnServer(thresholdVersion = "7.1")
     @Test
     public void isEqualReturnsTrueForIdenticalConnectionStrings() {
         OpenAiSettings settings1 = new OpenAiSettings();
@@ -592,6 +612,7 @@ public class ConnectionStringsTest extends RemoteTestBase {
         assertThat(cs1.isEqual(cs2)).isTrue();
     }
 
+    @EnableOnServer(thresholdVersion = "7.1")
     @Test
     public void isEqualReturnsFalseForDifferentNames() {
         OpenAiSettings settings1 = new OpenAiSettings();
@@ -615,6 +636,7 @@ public class ConnectionStringsTest extends RemoteTestBase {
         assertThat(cs1.isEqual(cs2)).isFalse();
     }
 
+    @EnableOnServer(thresholdVersion = "7.1")
     @Test
     public void usingEncryptedCommunicationChannelDetectsHttps() {
         OpenAiSettings openAiSettings = new OpenAiSettings();
@@ -643,6 +665,7 @@ public class ConnectionStringsTest extends RemoteTestBase {
         assertThat(cs3.usingEncryptedCommunicationChannel()).isTrue();
     }
 
+    @EnableOnServer(thresholdVersion = "7.1")
     @Test
     public void getQueryEmbeddingsMaxConcurrentBatchesUsesProviderValue() {
         OpenAiSettings settings = new OpenAiSettings();
@@ -657,6 +680,7 @@ public class ConnectionStringsTest extends RemoteTestBase {
         assertThat(cs.getQueryEmbeddingsMaxConcurrentBatches(10)).isEqualTo(5);
     }
 
+    @EnableOnServer(thresholdVersion = "7.1")
     @Test
     public void getQueryEmbeddingsMaxConcurrentBatchesUsesGlobalValueWhenNotSet() {
         OpenAiSettings settings = new OpenAiSettings();
@@ -670,6 +694,7 @@ public class ConnectionStringsTest extends RemoteTestBase {
         assertThat(cs.getQueryEmbeddingsMaxConcurrentBatches(fallbackValue)).isEqualTo(10);
     }
 
+    @EnableOnServer(thresholdVersion = "7.1")
     @Test
     public void temperatureParameterSerializedCorrectly() {
         try (IDocumentStore store = getDocumentStore()) {
@@ -693,6 +718,7 @@ public class ConnectionStringsTest extends RemoteTestBase {
         }
     }
 
+    @EnableOnServer(thresholdVersion = "7.1")
     @Test
     public void vertexSettingsCanExtractProjectId() {
         String credentialsJson = "{"
@@ -711,6 +737,7 @@ public class ConnectionStringsTest extends RemoteTestBase {
         assertThat(settings.getProjectId()).isEqualTo("my-test-project");
     }
 
+    @EnableOnServer(thresholdVersion = "7.1")
     @Test
     public void vertexSettingsThrowsWhenProjectIdMissing() {
         String credentialsJson = "{"
@@ -756,13 +783,13 @@ public class ConnectionStringsTest extends RemoteTestBase {
 
             QueueConnectionString kafkaConnectionString = new QueueConnectionString();
             kafkaConnectionString.setName("k1");
-            kafkaConnectionString.setBrokerType(QueueBrokerType.Kafka);
+            kafkaConnectionString.setBrokerType(QueueBrokerType.KAFKA);
             kafkaConnectionString.setKafkaConnectionSettings(new KafkaConnectionSettings());
             kafkaConnectionString.getKafkaConnectionSettings().setBootstrapServers("localhost:9092");
 
             QueueConnectionString rabbitConnectionString = new QueueConnectionString();
             rabbitConnectionString.setName("r1");
-            rabbitConnectionString.setBrokerType(QueueBrokerType.RabbitMq);
+            rabbitConnectionString.setBrokerType(QueueBrokerType.RABBIT_MQ);
             rabbitConnectionString.setRabbitMqConnectionSettings(new RabbitMqConnectionSettings());
             rabbitConnectionString.getRabbitMqConnectionSettings().setConnectionString("localhost:888");
 

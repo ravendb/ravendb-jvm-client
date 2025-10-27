@@ -9,7 +9,7 @@ import net.ravendb.client.documents.operations.indexes.PutIndexesOperation;
 import net.ravendb.client.documents.session.IDocumentSession;
 import net.ravendb.client.documents.indexes.IndexType;
 import com.google.common.collect.Sets;
-import net.ravendb.client.infrastructure.EnableOn70Server;
+import net.ravendb.client.infrastructure.EnableOnServer;
 import org.junit.jupiter.api.Test;
 
 import java.util.Collections;
@@ -20,7 +20,7 @@ import java.util.Map;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.assertj.core.api.Assertions.assertThat;
 
-
+@EnableOnServer(thresholdVersion = "7.1")
 public class VectorSearchTest extends RemoteTestBase {
 
     public static class User {
@@ -55,7 +55,6 @@ public class VectorSearchTest extends RemoteTestBase {
         public void setEmbedding(Float[] embedding) {this.embedding = embedding;}
     }
 
-    @EnableOn70Server
     @Test
     public void shouldReturnDocsWithVectorSearchAPI(){
         try (IDocumentStore store = getDocumentStore()) {
@@ -82,7 +81,6 @@ public class VectorSearchTest extends RemoteTestBase {
         }
     }
 
-    @EnableOn70Server
     @Test
     public void shouldReturnDocsWithVectorSearchAsRQL(){
         try (IDocumentStore store = getDocumentStore()) {
@@ -115,7 +113,6 @@ public class VectorSearchTest extends RemoteTestBase {
         }
     }
 
-    @EnableOn70Server
     @Test
     public void shouldGenerateRqlForVectorSearchWithInt8QuantizedEmbeddingField() {
         Float[] arr = new Float[]{2.5f, 3.3f};
@@ -138,7 +135,6 @@ public class VectorSearchTest extends RemoteTestBase {
         }
     }
 
-    @EnableOn70Server
     @Test
     public void shouldGenerateRqlForVectorSearchWithTextEmbeddingUsingAiTask() {
         try (IDocumentStore store = getDocumentStore()) {
@@ -160,7 +156,6 @@ public class VectorSearchTest extends RemoteTestBase {
         }
     }
 
-    @EnableOn70Server
     @Test
     public void shouldGenerateRqlForBasicVectorSearchWithNumericEmbeddingValues() {
         Float[] arr = new Float[]{2.5f, 3.3f};
@@ -185,7 +180,6 @@ public class VectorSearchTest extends RemoteTestBase {
         }
     }
 
-    @EnableOn70Server
     @Test
     public void shouldGenerateRqlForVectorSearchWithBase64EncodedEmbedding() {
         try (IDocumentStore store = getDocumentStore()) {
@@ -208,7 +202,6 @@ public class VectorSearchTest extends RemoteTestBase {
         }
     }
 
-    @EnableOn70Server
     @Test
     public void shouldGenerateRqlForVectorSearchWithTextFieldAndInt8Quantization() {
         try (IDocumentStore store = getDocumentStore();
@@ -231,7 +224,6 @@ public class VectorSearchTest extends RemoteTestBase {
         }
     }
 
-    @EnableOn70Server
     @Test
     public void shouldGenerateRqlForVectorSearchUsingPropertySelectorForEmbeddingField() {
         try (IDocumentStore store = getDocumentStore();
@@ -254,7 +246,6 @@ public class VectorSearchTest extends RemoteTestBase {
         }
     }
 
-    @EnableOn70Server
     @Test
     public void shouldGenerateRqlForVectorSearchWithPropertySelectorAndExplicitInt8Quantization() {
         try (IDocumentStore store = getDocumentStore();
@@ -277,7 +268,6 @@ public class VectorSearchTest extends RemoteTestBase {
         }
     }
 
-    @EnableOn70Server
     @Test
     public void shouldGenerateRqlForVectorSearchWithPropertySelectorAndExplicitBinaryQuantization() {
         try (IDocumentStore store = getDocumentStore();
@@ -300,7 +290,6 @@ public class VectorSearchTest extends RemoteTestBase {
         }
     }
 
-    @EnableOn70Server
     @Test
     public void shouldGenerateRqlForVectorSearchWithPropertySelectorForTextFieldConversion() {
         try (IDocumentStore store = getDocumentStore();
@@ -323,7 +312,6 @@ public class VectorSearchTest extends RemoteTestBase {
         }
     }
 
-    @EnableOn70Server
     @Test
     public void shouldGenerateRqlForVectorSearchWithTextFieldUsingNamedAiTask() {
         try (IDocumentStore store = getDocumentStore();
@@ -347,7 +335,6 @@ public class VectorSearchTest extends RemoteTestBase {
         }
     }
 
-    @EnableOn70Server
     @Test
     public void shouldGenerateRqlForVectorSearchWithBase64FieldUsingPropertySelector() {
         try (IDocumentStore store = getDocumentStore();
@@ -370,7 +357,6 @@ public class VectorSearchTest extends RemoteTestBase {
         }
     }
 
-    @EnableOn70Server
     @Test
     public void shouldGenerateRqlForVectorSearchWithSingleToInt8ConversionQuantization() {
         try (IDocumentStore store = getDocumentStore();
@@ -394,7 +380,6 @@ public class VectorSearchTest extends RemoteTestBase {
         }
     }
 
-    @EnableOn70Server
     @Test
     public void shouldGenerateRqlForVectorSearchWithSingleToBinaryConversionQuantization() {
         try (IDocumentStore store = getDocumentStore();
@@ -418,7 +403,6 @@ public class VectorSearchTest extends RemoteTestBase {
         }
     }
 
-    @EnableOn70Server
     @Test
     public void shouldGenerateRqlForVectorSearchWithTextFieldAndInt8TargetQuantization() {
         try (IDocumentStore store = getDocumentStore();
@@ -442,7 +426,6 @@ public class VectorSearchTest extends RemoteTestBase {
         }
     }
 
-    @EnableOn70Server
     @Test
     public void shouldGenerateRqlForVectorSearchWithTextAiTaskAndBinaryQuantization() {
         try (IDocumentStore store = getDocumentStore();
@@ -467,7 +450,6 @@ public class VectorSearchTest extends RemoteTestBase {
         }
     }
 
-    @EnableOn70Server
     @Test
     public void shouldGenerateRqlForVectorSearchWithWithFieldMethodAndPropertySelector() {
         try (IDocumentStore store = getDocumentStore();
@@ -490,7 +472,6 @@ public class VectorSearchTest extends RemoteTestBase {
         }
     }
 
-    @EnableOn70Server
     @Test
     public void shouldGenerateRqlForVectorSearchWithExactMatchingParameter() {
         try (IDocumentStore store = getDocumentStore();
@@ -513,7 +494,6 @@ public class VectorSearchTest extends RemoteTestBase {
         }
     }
 
-    @EnableOn70Server
     @Test
     public void shouldGenerateRqlForVectorSearchWithSimilarityCandidatesAndExactParameters() {
         try (IDocumentStore store = getDocumentStore();
@@ -536,7 +516,6 @@ public class VectorSearchTest extends RemoteTestBase {
         }
     }
 
-    @EnableOn70Server
     @Test
     public void shouldGenerateRqlForVectorSearchWithExactParameterAndEmbeddingField() {
         try (IDocumentStore store = getDocumentStore();
@@ -559,7 +538,6 @@ public class VectorSearchTest extends RemoteTestBase {
         }
     }
 
-    @EnableOn70Server
     @Test
     public void shouldGenerateRqlForVectorSearchWithExactParameterAndTextEmbeddingWithSimilarity() {
         try (IDocumentStore store = getDocumentStore();
@@ -582,7 +560,6 @@ public class VectorSearchTest extends RemoteTestBase {
         }
     }
 
-    @EnableOn70Server
     @Test
     public void shouldGenerateRqlForVectorSearchWithMultipleTextQueriesAsInput() {
         try (IDocumentStore store = getDocumentStore();
@@ -605,7 +582,6 @@ public class VectorSearchTest extends RemoteTestBase {
         }
     }
 
-    @EnableOn70Server
     @Test
     public void shouldGenerateRqlForVectorSearchWithMultipleEmbeddingVectorsAsInput() {
         try (IDocumentStore store = getDocumentStore();
@@ -631,7 +607,6 @@ public class VectorSearchTest extends RemoteTestBase {
         }
     }
 
-    @EnableOn70Server
     @Test
     public void shouldGenerateRqlForVectorSearchWithMultipleEmbeddingsAndInt8Quantization() {
         try (IDocumentStore store = getDocumentStore();
@@ -658,7 +633,6 @@ public class VectorSearchTest extends RemoteTestBase {
         }
     }
 
-    @EnableOn70Server
     @Test
     public void shouldGenerateRqlForVectorSearchWithMultipleTextsAiTaskAndBinaryQuantization() {
         try (IDocumentStore store = getDocumentStore();
@@ -683,8 +657,6 @@ public class VectorSearchTest extends RemoteTestBase {
         }
     }
 
-
-    @EnableOn70Server
     @Test
     public void shouldCreateIndexDefinitionWithVectorSearchFieldAndProperConfiguration() {
         try (IDocumentStore store = getDocumentStore()) {
@@ -712,7 +684,6 @@ public class VectorSearchTest extends RemoteTestBase {
         }
     }
 
-    @EnableOn70Server
     @Test
     public void shouldCreateIndexWithVectorSearchConfigurationUsingClassBasedDefinition() {
         try (IDocumentStore store = getDocumentStore()) {
@@ -738,7 +709,6 @@ public class VectorSearchTest extends RemoteTestBase {
         }
     }
 
-    @EnableOn70Server
     @Test
     public void shouldGenerateRqlForVectorSearchUsingForDocumentWithTextField() {
         try (IDocumentStore store = getDocumentStore()) {
@@ -760,7 +730,6 @@ public class VectorSearchTest extends RemoteTestBase {
         }
     }
 
-    @EnableOn70Server
     @Test
     public void shouldGenerateRqlForVectorSearchUsingForDocumentWithInt8Quantization() {
         try (IDocumentStore store = getDocumentStore()) {
@@ -781,7 +750,6 @@ public class VectorSearchTest extends RemoteTestBase {
         }
     }
 
-    @EnableOn70Server
     @Test
     public void shouldGenerateRqlForVectorSearchUsingForDocumentWithTextFieldAndAITask() {
         try (IDocumentStore store = getDocumentStore()) {
@@ -804,7 +772,6 @@ public class VectorSearchTest extends RemoteTestBase {
         }
     }
 
-    @EnableOn70Server
     @Test
     public void shouldGenerateRqlForVectorSearchWithFieldAndByTextWithGenerationTaskIdentifier(){
         try (IDocumentStore store = getDocumentStore()) {
@@ -822,7 +789,6 @@ public class VectorSearchTest extends RemoteTestBase {
         }
     }
 
-    @EnableOn70Server
     @Test
     public void shouldGenerateRqlForVectorSearchWithFieldAndByTextsWithGenerationTaskIdentifier(){
         try (IDocumentStore store = getDocumentStore()) {
@@ -840,7 +806,6 @@ public class VectorSearchTest extends RemoteTestBase {
         }
     }
 
-    @EnableOn70Server
     @Test
     void testSetVectorFieldStrings() {
         TestIndexDefinitionBuilder builder = new TestIndexDefinitionBuilder("TestIndex");
@@ -851,7 +816,6 @@ public class VectorSearchTest extends RemoteTestBase {
         assertEquals(vectorFields, builder.getVectorFieldStrings());
     }
 
-    @EnableOn70Server
     @Test
     public void shouldGenerateRqlForVectorSearchUsingForDocumentWithSimilarityAndCandidates() {
         try (IDocumentStore store = getDocumentStore()) {
@@ -874,7 +838,6 @@ public class VectorSearchTest extends RemoteTestBase {
         }
     }
 
-    @EnableOn70Server
     @Test
     public void shouldGenerateRqlForVectorSearchUsingForDocumentWithNumberOfCandidates() {
         try (IDocumentStore store = getDocumentStore()) {
@@ -898,7 +861,7 @@ public class VectorSearchTest extends RemoteTestBase {
     }
 
     // Vector Search tests with String as parameter not a lambda
-    //    @EnableOn70Server
+    //
 //    @Test
 //    public void shouldGenerateRqlForVectorSearchWithFieldNameAsString() {
 //        VectorEmbeddingFieldValueFactory valueFactory = new VectorEmbeddingFieldValueFactory();
@@ -924,7 +887,7 @@ public class VectorSearchTest extends RemoteTestBase {
 //        }
 //    }
 
-//    @EnableOn70Server
+//
 //    @Test
 //    public void shouldGenerateRqlForVectorSearchWithFieldNameAsStringAndOptions() {
 //        VectorEmbeddingFieldValueFactory valueFactory = new VectorEmbeddingFieldValueFactory();
@@ -952,7 +915,7 @@ public class VectorSearchTest extends RemoteTestBase {
 //        }
 //    }
 
-    //    @EnableOn70Server
+    //
 //    @Test
 //    public void shouldGenerateRqlForVectorSearchWithFieldNameAsStringAndExactParameter() {
 //        VectorEmbeddingFieldValueFactory valueFactory = new VectorEmbeddingFieldValueFactory();
@@ -979,7 +942,7 @@ public class VectorSearchTest extends RemoteTestBase {
 //        }
 //    }
 //
-//    @EnableOn70Server
+//
 //    @Test
 //    public void shouldGenerateRqlForVectorSearchWithFieldNameAsStringAndMultipleEmbeddings() {
 //        VectorEmbeddingFieldValueFactory valueFactory = new VectorEmbeddingFieldValueFactory();
@@ -1009,7 +972,7 @@ public class VectorSearchTest extends RemoteTestBase {
 //        }
 //    }
 //
-//    @EnableOn70Server
+//
 //    @Test
 //    public void shouldGenerateRqlForVectorSearchWithFieldNameAsStringAndByTextFactory() {
 //        VectorEmbeddingFieldValueFactory valueFactory = new VectorEmbeddingFieldValueFactory();
@@ -1035,7 +998,7 @@ public class VectorSearchTest extends RemoteTestBase {
 //        }
 //    }
 //
-//    @EnableOn70Server
+//
 //    @Test
 //    public void shouldGenerateRqlForVectorSearchWithFieldNameAsStringAndForDocumentFactory() {
 //        VectorEmbeddingFieldValueFactory valueFactory = new VectorEmbeddingFieldValueFactory();

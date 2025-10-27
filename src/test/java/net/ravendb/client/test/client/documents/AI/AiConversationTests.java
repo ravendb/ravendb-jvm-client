@@ -7,6 +7,7 @@ import net.ravendb.client.documents.operations.AI.AiHandleErrorStrategy;
 import net.ravendb.client.documents.operations.AI.AiHandler;
 import net.ravendb.client.documents.operations.AI.UnhandledActionEventArgs;
 import net.ravendb.client.documents.operations.AI.agents.AiAgentActionRequest;
+import net.ravendb.client.infrastructure.EnableOnServer;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import java.util.ArrayList;
@@ -18,7 +19,7 @@ import java.util.function.BiFunction;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-
+@EnableOnServer(thresholdVersion = "7.1")
 public class AiConversationTests extends RemoteTestBase {
 
     @Test

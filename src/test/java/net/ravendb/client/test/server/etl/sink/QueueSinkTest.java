@@ -28,13 +28,13 @@ public class QueueSinkTest extends RemoteTestBase {
 
             QueueConnectionString connectionString = new QueueConnectionString();
             connectionString.setName("k1");
-            connectionString.setBrokerType(QueueBrokerType.Kafka);
+            connectionString.setBrokerType(QueueBrokerType.KAFKA);
             connectionString.setKafkaConnectionSettings(new KafkaConnectionSettings());
             connectionString.getKafkaConnectionSettings().setBootstrapServers("localhost:9092");
 
             store.maintenance().send(new PutConnectionStringOperation<>(connectionString));
 
-            setupQueueSink(QueueBrokerType.Kafka, store, connectionString.getName());
+            setupQueueSink(QueueBrokerType.KAFKA, store, connectionString.getName());
         }
     }
 
@@ -44,14 +44,14 @@ public class QueueSinkTest extends RemoteTestBase {
 
             QueueConnectionString connectionString = new QueueConnectionString();
             connectionString.setName("k1");
-            connectionString.setBrokerType(QueueBrokerType.RabbitMq);
+            connectionString.setBrokerType(QueueBrokerType.RABBIT_MQ);
             RabbitMqConnectionSettings rabbitMqConnectionSettings = new RabbitMqConnectionSettings();
             rabbitMqConnectionSettings.setConnectionString("localhost:9050");
             connectionString.setRabbitMqConnectionSettings(rabbitMqConnectionSettings);
 
             store.maintenance().send(new PutConnectionStringOperation<>(connectionString));
 
-            setupQueueSink(QueueBrokerType.RabbitMq, store, connectionString.getName());
+            setupQueueSink(QueueBrokerType.RABBIT_MQ, store, connectionString.getName());
         }
     }
 

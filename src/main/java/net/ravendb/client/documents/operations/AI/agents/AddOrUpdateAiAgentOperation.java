@@ -20,8 +20,8 @@ public class AddOrUpdateAiAgentOperation implements IMaintenanceOperation<AiAgen
             throw new IllegalArgumentException("Configuration cannot be null");
         }
 
-        if (hasNoSampleObjectAndScheme(configuration) && sampleObject != null) {
-            throw new IllegalArgumentException("Please provide a non-empty value for either outputSchema or sampleObject");
+        if (hasNoSampleObjectAndScheme(configuration) && sampleObject == null) {
+            throw new IllegalArgumentException("Please provide a non-empty value for either outputSchema or sampleObject.");
         }
         this.configuration = configuration;
         this.sampleObject = sampleObject;
