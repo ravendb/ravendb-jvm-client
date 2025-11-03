@@ -1,5 +1,7 @@
 package net.ravendb.client.documents.operations.AI.agents;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import net.ravendb.client.documents.conventions.DocumentConventions;
 import net.ravendb.client.documents.operations.IMaintenanceOperation;
 import net.ravendb.client.http.RavenCommand;
@@ -32,11 +34,21 @@ public class AddOrUpdateAiAgentOperation implements IMaintenanceOperation<AiAgen
 
     @Override
     public RavenCommand<AiAgentConfigurationResult> getCommand(DocumentConventions conventions) {
+        String json = toJson(sampleObject);
+        configuration.setSampleObject(json);
         return new AddOrUpdateAiAgentCommand(this.configuration, this.sampleObject, conventions);
     }
 
     public static boolean hasNoSampleObjectAndScheme(AiAgentConfiguration configuration) {
         return (configuration.getOutputSchema() == null || configuration.getOutputSchema().trim().isEmpty())
                 && (configuration.getSampleObject() == null || configuration.getSampleObject().trim().isEmpty());
+    }
+
+    private String toJson(Object obj){
+        try {
+            return new ObjectMapper().writeValueAsString(obj);
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException("Failed to serialize object to JSON", e);
+        }
     }
 }

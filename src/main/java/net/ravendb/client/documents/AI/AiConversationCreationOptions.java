@@ -1,5 +1,6 @@
 package net.ravendb.client.documents.AI;
 
+import java.util.HashMap;
 import java.util.Map;
 
 public class AiConversationCreationOptions {
@@ -20,6 +21,14 @@ public class AiConversationCreationOptions {
 
     public void setParameters(Map<String, Object> parameters) {
         this.parameters = parameters;
+    }
+
+    public AiConversationCreationOptions addParameter(String name, Object value) {
+        if (this.parameters == null) {
+            this.parameters = new HashMap<>();
+        }
+        this.parameters.put(name, value);
+        return this;
     }
 
     public Integer getExpirationInSec() {

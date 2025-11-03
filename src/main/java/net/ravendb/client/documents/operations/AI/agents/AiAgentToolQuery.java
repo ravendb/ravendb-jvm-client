@@ -12,6 +12,14 @@ public class AiAgentToolQuery {
     }
 
     public AiAgentToolQuery(String name, String description, String query,
+                            String parametersSampleObject) {
+        this.name = name;
+        this.description = description;
+        this.query = query;
+        this.parametersSampleObject = parametersSampleObject;
+    }
+
+    public AiAgentToolQuery(String name, String description, String query,
                             String parametersSampleObject, String parametersSchema) {
         this.name = name;
         this.description = description;

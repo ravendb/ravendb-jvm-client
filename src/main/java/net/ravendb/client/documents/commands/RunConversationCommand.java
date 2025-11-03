@@ -2,6 +2,7 @@ package net.ravendb.client.documents.commands;
 
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.MapperFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import net.ravendb.client.documents.conventions.DocumentConventions;
@@ -124,6 +125,13 @@ public class RunConversationCommand<TAnswer>
             return processStreamingResponse(bodyStream);
         }
         return this.parseResponseDefaultAsync(bodyStream);
+    }
+
+    @Override
+    public void setResponse(String response, boolean fromCache) throws IOException {
+        ObjectMapper mapper = new ObjectMapper();
+        mapper.configure(MapperFeature.ACCEPT_CASE_INSENSITIVE_PROPERTIES, true);
+        this.result = mapper.readValue(response, ConversationResult.class);
     }
 
     private CompletableFuture<String> parseResponseDefaultAsync(InputStream bodyStream) {

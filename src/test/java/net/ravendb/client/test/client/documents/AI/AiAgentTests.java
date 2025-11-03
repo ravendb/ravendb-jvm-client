@@ -1,22 +1,94 @@
 package net.ravendb.client.test.client.documents.AI;
 
 import net.ravendb.client.RemoteTestBase;
+import net.ravendb.client.documents.AI.AiAnswer;
+import net.ravendb.client.documents.AI.AiConversation;
+import net.ravendb.client.documents.AI.AiConversationCreationOptions;
+import net.ravendb.client.documents.AI.AiConversationResult;
 import net.ravendb.client.documents.IDocumentStore;
+import net.ravendb.client.documents.operations.AI.AiConnectionString;
+import net.ravendb.client.documents.operations.AI.AiModelType;
+import net.ravendb.client.documents.operations.AI.OpenAiSettings;
 import net.ravendb.client.documents.operations.AI.agents.*;
 import net.ravendb.client.documents.operations.AI.agents.AiAgentConfiguration;
+import net.ravendb.client.documents.operations.IMaintenanceOperation;
+import net.ravendb.client.documents.operations.connectionStrings.GetConnectionStringsOperation;
+import net.ravendb.client.documents.operations.connectionStrings.GetConnectionStringsResult;
 import net.ravendb.client.documents.operations.connectionStrings.PutConnectionStringOperation;
+import net.ravendb.client.documents.operations.connectionStrings.PutConnectionStringResult;
 import net.ravendb.client.documents.operations.etl.RavenConnectionString;
+import net.ravendb.client.documents.session.IDocumentSession;
 import net.ravendb.client.infrastructure.EnableOnServer;
 import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
+import java.util.List;
 
 @EnableOnServer(thresholdVersion = "7.1")
 public class AiAgentTests extends RemoteTestBase {
+
+    @Disabled
+    @Test
+    public void AiAgentClientApiBasicTest(){
+        String apiKey = System.getenv("RAVENDB_JAVA_TESTS_OPENAI_API_KEY");
+        assertNotNull(apiKey, "OpenAI API key is not set in environment variable RAVENDB_JAVA_TESTS_OPENAI_API_KEY");
+        try (IDocumentStore store = getDocumentStore()) {
+            try (IDocumentSession session = store.openSession()) {
+                OpenAiSettings ai = new OpenAiSettings(apiKey,
+                        "https://api.openai.com/",
+                        "gpt-4o-mini",
+                        null,
+                        null,
+                        null,
+                        0.0);
+
+                AiConnectionString openAiCs = new AiConnectionString();
+                openAiCs.setModelType(AiModelType.Chat);
+                openAiCs.setName("openai");
+                openAiCs.setOpenAiSettings(ai);
+
+                IMaintenanceOperation<PutConnectionStringResult> putOpenAi = new PutConnectionStringOperation(openAiCs);
+                store.maintenance().send(putOpenAi);
+
+                GetConnectionStringsResult connectionStrings = store.maintenance().send(new GetConnectionStringsOperation());
+                assertThat(connectionStrings.getAiConnectionStrings()).hasSize(1);
+                assertThat(connectionStrings.getAiConnectionStrings().get("openai")).isNotNull();
+
+                AiAgentConfiguration agent = new AiAgentConfiguration("shopping assistant", "openai", "You are an AI agent of an online shop, helping customers answer queries about that topic only. When talking about orders or products, include the ids as well.");
+                agent.getParameters().add(new AiAgentParameter("company"));
+                List<AiAgentToolQuery> queries = new ArrayList<>();
+                queries.add(new AiAgentToolQuery("ProductSearch", "semantic search the store product catalog", "from Products where vector.search(embedding.text(Name), $query)", "{\"query\": [\"term or phrase to search in the catalog\"]}"));
+                queries.add(new AiAgentToolQuery("RecentOrder", "Get the recent orders of the current user", "from Orders where Company = $company order by OrderedAt desc limit 10", "{}"));
+                agent.setQueries(queries);
+                String identifier = store.ai().createAgent(agent,AnswerSchema.INSTANCE).getIdentifier();
+                AiConversation chat = store.ai().conversation(identifier,"chats/", new AiConversationCreationOptions().addParameter("company", "companies/90-A"));
+
+                chat.setUserPrompt("what goes well with my cheese?");
+                AiAnswer<AnswerSchema> result = chat.<AnswerSchema>run().get();
+                assertEquals(AiConversationResult.Done, result.getStatus());
+                assertNotNull(result.getAnswer());
+                assertNotNull(chat.getId());
+
+                chat.setUserPrompt("what goes well with my cheese?");
+                result = chat.<AnswerSchema>run().get();
+                assertEquals(AiConversationResult.Done, result.getStatus());
+                assertNotNull(result.getAnswer());
+
+                chat.setUserPrompt("what cheese goes well with italian food?");
+                result = chat.<AnswerSchema>run().get();
+                assertEquals(AiConversationResult.Done, result.getStatus());
+                assertNotNull(result.getAnswer());
+            }
+        } catch (Exception e){
+            throw new RuntimeException(e);
+        }
+    }
 
     @Test
     public void canCreateAiAgent() {
@@ -175,6 +247,20 @@ public class AiAgentTests extends RemoteTestBase {
             }
         } catch (Exception e) {
             throw new RuntimeException(e);
+        }
+    }
+
+    private static class AnswerSchema {
+        public static final AnswerSchema INSTANCE = new AnswerSchema();
+        public String answer = "Answer to the user question";
+        public boolean relevant = true;
+        public List<String> relevantOrdersId = new ArrayList<>(
+                Arrays.asList("The order ids relevant to the query or response")
+        );
+        public List<String> matchingProductsId = new ArrayList<>(
+                Arrays.asList("All the product ids referenced either by the user or the system")
+        );
+        private AnswerSchema() {
         }
     }
 }
