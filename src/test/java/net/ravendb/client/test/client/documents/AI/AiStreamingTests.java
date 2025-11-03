@@ -2,7 +2,7 @@ package net.ravendb.client.test.client.documents.AI;
 
 import net.ravendb.client.RemoteTestBase;
 import net.ravendb.client.documents.conventions.DocumentConventions;
-import net.ravendb.client.documents.operations.AI.AiStreamCallback;
+import net.ravendb.client.documents.AI.AiStreamCallback;
 import net.ravendb.client.documents.operations.AI.agents.ConversationResult;
 import net.ravendb.client.documents.operations.AI.agents.RunConversationOperation;
 import net.ravendb.client.http.RavenCommand;

@@ -2,11 +2,7 @@ package net.ravendb.client.documents.operations;
 
 import net.ravendb.client.RemoteTestBase;
 import net.ravendb.client.documents.IDocumentStore;
-import net.ravendb.client.documents.operations.AI.ConnectionStrings.AiConnectionString;
-import net.ravendb.client.documents.operations.AI.ConnectionStrings.AiConnectorType;
-import net.ravendb.client.documents.operations.AI.ConnectionStrings.AiModelType;
-import net.ravendb.client.documents.operations.AI.ConnectionStrings.AiSettingsCompareDifferences;
-import net.ravendb.client.documents.operations.AI.ConnectionStrings.Settings.*;
+import net.ravendb.client.documents.operations.AI.*;
 import net.ravendb.client.documents.operations.backups.FtpSettings;
 import net.ravendb.client.documents.operations.connectionStrings.*;
 import net.ravendb.client.documents.operations.etl.elasticSearch.ElasticSearchConnectionString;

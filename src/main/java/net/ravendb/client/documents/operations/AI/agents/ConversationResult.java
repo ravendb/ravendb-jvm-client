@@ -1,5 +1,7 @@
 package net.ravendb.client.documents.operations.AI.agents;
 
+import net.ravendb.client.documents.operations.AI.AiUsage;
+
 import java.util.List;
 
 public class ConversationResult<TAnswer> {
