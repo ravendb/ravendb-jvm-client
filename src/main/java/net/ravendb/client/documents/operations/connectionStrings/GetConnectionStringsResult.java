@@ -1,7 +1,7 @@
 package net.ravendb.client.documents.operations.connectionStrings;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import net.ravendb.client.documents.operations.AI.ConnectionStrings.AiConnectionString;
+import net.ravendb.client.documents.operations.AI.AiConnectionString;
 import net.ravendb.client.documents.operations.etl.elasticSearch.ElasticSearchConnectionString;
 import net.ravendb.client.documents.operations.etl.olap.OlapConnectionString;
 import net.ravendb.client.documents.operations.etl.queue.QueueConnectionString;

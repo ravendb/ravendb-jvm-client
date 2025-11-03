@@ -1,7 +1,5 @@
 package net.ravendb.client.documents.operations.AI.agents;
 
-import net.ravendb.client.documents.operations.AI.agents.config.AiAgentConfiguration;
-
 import java.util.List;
 
 public class GetAiAgentsResponse {

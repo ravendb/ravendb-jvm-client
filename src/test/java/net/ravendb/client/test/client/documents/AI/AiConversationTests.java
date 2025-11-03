@@ -1,11 +1,8 @@
 package net.ravendb.client.test.client.documents.AI;
 
 import net.ravendb.client.RemoteTestBase;
+import net.ravendb.client.documents.AI.*;
 import net.ravendb.client.documents.IDocumentStore;
-import net.ravendb.client.documents.operations.AI.AiConversation;
-import net.ravendb.client.documents.operations.AI.AiHandleErrorStrategy;
-import net.ravendb.client.documents.operations.AI.AiHandler;
-import net.ravendb.client.documents.operations.AI.UnhandledActionEventArgs;
 import net.ravendb.client.documents.operations.AI.agents.AiAgentActionRequest;
 import net.ravendb.client.infrastructure.EnableOnServer;
 import org.junit.jupiter.api.Assertions;
@@ -26,14 +23,14 @@ public class AiConversationTests extends RemoteTestBase {
     public void conversationRequiresAgentIdAndConversationId() {
         try (IDocumentStore store = getDocumentStore()) {
             try {
-                store.getAiOperations().conversation("", "conv/1");
+                store.ai().conversation("", "conv/1",new AiConversationCreationOptions());
                 Assertions.assertTrue(false, "Expected exception for missing agentId not thrown");
             } catch (Exception e) {
                 assertThat(e.getMessage())
                         .contains("agentId is required");
             }
             try {
-                store.getAiOperations().conversation("agent/1", "");
+                store.ai().conversation("agent/1", "",new AiConversationCreationOptions());
                 Assertions.assertTrue(false, "Expected exception for missing conversationId not thrown");
             } catch (Exception e) {
                 assertThat(e.getMessage())
@@ -47,8 +44,8 @@ public class AiConversationTests extends RemoteTestBase {
     @Test
     public void idShouldNotBeAvailableBeforeFirstRunForNewConversations() {
         try (IDocumentStore store = getDocumentStore()) {
-            AiConversation conv = store.getAiOperations()
-                    .conversation("agents/1-A", "conversations/1|");
+            AiConversation conv = store.ai()
+                    .conversation("agents/1-A", "conversations/1|",new AiConversationCreationOptions());
             try {
                 conv.getId();
                 Assertions.assertTrue(false, "Expected exception for accessing id before first run not thrown");
@@ -64,8 +61,8 @@ public class AiConversationTests extends RemoteTestBase {
     @Test
     public void requiredActionsShouldThrowBeforeRun() {
         try (IDocumentStore store = getDocumentStore()) {
-            AiConversation conv = store.getAiOperations()
-                    .conversation("agents/1-A", "conversations/2|");
+            AiConversation conv = store.ai()
+                    .conversation("agents/1-A", "conversations/2|",new AiConversationCreationOptions());
             try {
                 conv.requiredActions();
                 Assertions.assertTrue(false, "Expected exception for requiredActions() before run not thrown");
@@ -81,8 +78,8 @@ public class AiConversationTests extends RemoteTestBase {
     @Test
     public void addActionResponseValidatesInputsAndAcceptsStringOrObject() {
         try (IDocumentStore store = getDocumentStore()) {
-            AiConversation conv = store.getAiOperations()
-                    .conversation("agents/1-A", "conversations/3|");
+            AiConversation conv = store.ai()
+                    .conversation("agents/1-A", "conversations/3|",new AiConversationCreationOptions());
             try {
                 conv.addActionResponse("", "x");
                 Assertions.assertTrue(false, "Expected exception for empty toolId not thrown");
@@ -113,8 +110,8 @@ public class AiConversationTests extends RemoteTestBase {
     public void receiveShouldRejectDuplicateActionNames() {
         try (IDocumentStore store = getDocumentStore()) {
 
-            AiConversation conv = store.getAiOperations()
-                    .conversation("agents/1-A", "conversations/4|");
+            AiConversation conv = store.ai()
+                    .conversation("agents/1-A", "conversations/4|",new AiConversationCreationOptions());
 
             conv.receive("do-work", (x, y) -> {
             }, null);
@@ -137,8 +134,8 @@ public class AiConversationTests extends RemoteTestBase {
     @Test
     public void receiveWithRaiseImmediatelyShouldAcceptErrorStrategies() {
         try (IDocumentStore store = getDocumentStore()) {
-            AiConversation convDefault = store.getAiOperations()
-                    .conversation("agents/1-A", "conversations/5|");
+            AiConversation convDefault = store.ai()
+                    .conversation("agents/1-A", "conversations/5|",new AiConversationCreationOptions());
             try {
                 convDefault.receive(
                         "boom-default",
@@ -148,8 +145,8 @@ public class AiConversationTests extends RemoteTestBase {
             } catch (Exception e) {
                 Assertions.assertTrue(false, "Registration with SendErrorsToModel should not throw");
             }
-            AiConversation convRaise = store.getAiOperations()
-                    .conversation("agents/1-A", "conversations/6|");
+            AiConversation convRaise = store.ai()
+                    .conversation("agents/1-A", "conversations/6|",new AiConversationCreationOptions());
             try {
                 convRaise.receive(
                         "boom-raise",
@@ -167,7 +164,7 @@ public class AiConversationTests extends RemoteTestBase {
     @Test
     public void onUnhandledAction_eventIsCalled_whenActionHasNoHandler() {
         try (IDocumentStore store = getDocumentStore()) {
-            AiConversation conv = store.getAiOperations().conversation("agents/1-A", "conversations/7|");
+            AiConversation conv = store.ai().conversation("agents/1-A", "conversations/7|",new AiConversationCreationOptions());
 
             boolean[] eventFired = {false};
             AiAgentActionRequest[] capturedAction = {null};
@@ -204,7 +201,7 @@ public class AiConversationTests extends RemoteTestBase {
     @Test
     public void errorThrown_whenActionUndefined_andNoOnUnhandledActionEvent() {
         try (IDocumentStore store = getDocumentStore()) {
-            AiConversation conv = store.getAiOperations().conversation("agents/1-A", "conversations/8|");
+            AiConversation conv = store.ai().conversation("agents/1-A", "conversations/8|",new AiConversationCreationOptions());
 
             AiAgentActionRequest req = new AiAgentActionRequest();
             ArrayList<AiAgentActionRequest> requests = new ArrayList<AiAgentActionRequest>();
@@ -221,7 +218,7 @@ public class AiConversationTests extends RemoteTestBase {
     @Test
     public void onUnhandledAction_receivesCorrectEventArgsStructure() {
         try (IDocumentStore store = getDocumentStore()) {
-            AiConversation conv = store.getAiOperations().conversation("agents/1-A", "conversations/9|");
+            AiConversation conv = store.ai().conversation("agents/1-A", "conversations/9|",new AiConversationCreationOptions());
 
             final UnhandledActionEventArgs[] receivedArgs = {null};
 
@@ -247,7 +244,7 @@ public class AiConversationTests extends RemoteTestBase {
     @Test
     public void handleMethod_worksWithoutRequestParameter_backwardCompat_async() throws Exception {
         try (IDocumentStore store = getDocumentStore()) {
-            AiConversation conv = store.getAiOperations().conversation("agents/1-A", "conversations/12|");
+            AiConversation conv = store.ai().conversation("agents/1-A", "conversations/12|",new AiConversationCreationOptions());
 
             AtomicBoolean handlerCalled = new AtomicBoolean(false);
             AtomicReference<Object> capturedArgs = new AtomicReference<>();
@@ -283,7 +280,7 @@ public class AiConversationTests extends RemoteTestBase {
     @Test
     public void handleMethod_worksWithoutRequestParameter_backwardCompat_sync() throws Exception {
         try (IDocumentStore store = getDocumentStore()) {
-            AiConversation conv = store.getAiOperations().conversation("agents/1-A", "conversations/13|");
+            AiConversation conv = store.ai().conversation("agents/1-A", "conversations/13|",new AiConversationCreationOptions());
 
             AtomicBoolean handlerCalled = new AtomicBoolean(false);
 
@@ -314,7 +311,7 @@ public class AiConversationTests extends RemoteTestBase {
     @Test
     public void handleMethod_worksWithRequestParameter_withMetadata_async() throws Exception {
         try (IDocumentStore store = getDocumentStore()) {
-            AiConversation conv = store.getAiOperations().conversation("agents/1-A", "conversations/14|");
+            AiConversation conv = store.ai().conversation("agents/1-A", "conversations/14|",new AiConversationCreationOptions());
 
             AtomicBoolean handlerCalled = new AtomicBoolean(false);
             AtomicReference<AiAgentActionRequest> capturedRequest = new AtomicReference<>();
@@ -352,7 +349,7 @@ public class AiConversationTests extends RemoteTestBase {
     @Test
     public void handleMethod_worksWithRequestParameter_withMetadata_sync() throws Exception {
         try (IDocumentStore store = getDocumentStore()) {
-            AiConversation conv = store.getAiOperations().conversation("agents/1-A", "conversations/15|");
+            AiConversation conv = store.ai().conversation("agents/1-A", "conversations/15|",new AiConversationCreationOptions());
 
             AtomicReference<String> capturedToolId = new AtomicReference<>();
 
@@ -380,7 +377,7 @@ public class AiConversationTests extends RemoteTestBase {
     @Test
     public void handleMethod_arityDetection_worksCorrectly() {
         try (IDocumentStore store = getDocumentStore()) {
-            AiConversation conv = store.getAiOperations().conversation("agents/1-A", "conversations/16|");
+            AiConversation conv = store.ai().conversation("agents/1-A", "conversations/16|",new AiConversationCreationOptions());
 
             AiHandler<Map<String, Object>> singleParamHandler = args -> {
                 Map<String, Object> result = new HashMap<>();

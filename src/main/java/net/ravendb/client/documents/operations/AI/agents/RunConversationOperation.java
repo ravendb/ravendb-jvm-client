@@ -1,8 +1,9 @@
 package net.ravendb.client.documents.operations.AI.agents;
 
+import net.ravendb.client.documents.AI.AiConversationCreationOptions;
 import net.ravendb.client.documents.commands.RunConversationCommand;
 import net.ravendb.client.documents.conventions.DocumentConventions;
-import net.ravendb.client.documents.operations.AI.AiStreamCallback;
+import net.ravendb.client.documents.AI.AiStreamCallback;
 import net.ravendb.client.documents.operations.IMaintenanceOperation;
 import net.ravendb.client.http.RavenCommand;
 import net.ravendb.client.serverwide.tcp.TcpConnectionHeaderMessage;

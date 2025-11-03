@@ -1,6 +1,6 @@
 package net.ravendb.client.serverwide.operations.builder;
 
-import net.ravendb.client.documents.operations.AI.ConnectionStrings.AiConnectionString;
+import net.ravendb.client.documents.operations.AI.AiConnectionString;
 import net.ravendb.client.documents.operations.etl.RavenConnectionString;
 import net.ravendb.client.documents.operations.etl.elasticSearch.ElasticSearchConnectionString;
 import net.ravendb.client.documents.operations.etl.olap.OlapConnectionString;

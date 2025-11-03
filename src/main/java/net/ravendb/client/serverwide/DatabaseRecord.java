@@ -5,7 +5,7 @@ import net.ravendb.client.documents.indexes.IndexDefinition;
 import net.ravendb.client.documents.indexes.RollingIndex;
 import net.ravendb.client.documents.indexes.RollingIndexDeployment;
 import net.ravendb.client.documents.indexes.analysis.AnalyzerDefinition;
-import net.ravendb.client.documents.operations.AI.ConnectionStrings.AiConnectionString;
+import net.ravendb.client.documents.operations.AI.AiConnectionString;
 import net.ravendb.client.documents.operations.backups.PeriodicBackupConfiguration;
 import net.ravendb.client.documents.operations.configuration.ClientConfiguration;
 import net.ravendb.client.documents.operations.configuration.StudioConfiguration;

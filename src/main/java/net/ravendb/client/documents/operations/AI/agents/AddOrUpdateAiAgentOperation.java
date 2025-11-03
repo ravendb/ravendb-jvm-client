@@ -1,7 +1,6 @@
 package net.ravendb.client.documents.operations.AI.agents;
 
 import net.ravendb.client.documents.conventions.DocumentConventions;
-import net.ravendb.client.documents.operations.AI.agents.config.AiAgentConfiguration;
 import net.ravendb.client.documents.operations.IMaintenanceOperation;
 import net.ravendb.client.http.RavenCommand;
 import net.ravendb.client.serverwide.tcp.TcpConnectionHeaderMessage;

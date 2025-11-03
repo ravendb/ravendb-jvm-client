@@ -4,7 +4,7 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.MapperFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import net.ravendb.client.documents.conventions.DocumentConventions;
-import net.ravendb.client.documents.operations.AI.ConnectionStrings.AiConnectionString;
+import net.ravendb.client.documents.operations.AI.AiConnectionString;
 import net.ravendb.client.documents.operations.IMaintenanceOperation;
 import net.ravendb.client.documents.operations.etl.RavenConnectionString;
 import net.ravendb.client.documents.operations.etl.elasticSearch.ElasticSearchConnectionString;

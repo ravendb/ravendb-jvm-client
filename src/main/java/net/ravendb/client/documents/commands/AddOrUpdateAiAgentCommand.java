@@ -5,7 +5,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import net.ravendb.client.documents.conventions.DocumentConventions;
 import net.ravendb.client.documents.operations.AI.agents.AddOrUpdateAiAgentOperation;
 import net.ravendb.client.documents.operations.AI.agents.AiAgentConfigurationResult;
-import net.ravendb.client.documents.operations.AI.agents.config.AiAgentConfiguration;
+import net.ravendb.client.documents.operations.AI.agents.AiAgentConfiguration;
 import net.ravendb.client.http.IRaftCommand;
 import net.ravendb.client.http.RavenCommand;
 import net.ravendb.client.http.ServerNode;

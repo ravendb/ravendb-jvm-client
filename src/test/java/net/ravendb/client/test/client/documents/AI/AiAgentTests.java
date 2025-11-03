@@ -3,7 +3,7 @@ package net.ravendb.client.test.client.documents.AI;
 import net.ravendb.client.RemoteTestBase;
 import net.ravendb.client.documents.IDocumentStore;
 import net.ravendb.client.documents.operations.AI.agents.*;
-import net.ravendb.client.documents.operations.AI.agents.config.AiAgentConfiguration;
+import net.ravendb.client.documents.operations.AI.agents.AiAgentConfiguration;
 import net.ravendb.client.documents.operations.connectionStrings.PutConnectionStringOperation;
 import net.ravendb.client.documents.operations.etl.RavenConnectionString;
 import net.ravendb.client.infrastructure.EnableOnServer;
@@ -48,14 +48,14 @@ public class AiAgentTests extends RemoteTestBase {
             query.setParametersSampleObject("{\"queryName\":\"Example query parameter\"}");
             agentConfiguration.setQueries(Collections.singletonList(query));
 
-            AddOrUpdateAiAgentOperation createOp = new AddOrUpdateAiAgentOperation(agentConfiguration, null);
+            AddOrUpdateAiAgentOperation createOp = new AddOrUpdateAiAgentOperation(agentConfiguration);
             AiAgentConfigurationResult result = store.maintenance().send(createOp);
 
             assertThat(result).isNotNull();
             assertThat(result.getIdentifier()).isNotNull();
             assertThat(result.getRaftCommandIndex()).isGreaterThan(0);
 
-            AiAgentConfiguration agentResponse = store.getAiOperations().getAgent(result.getIdentifier());
+            AiAgentConfiguration agentResponse = store.ai().getAgent(result.getIdentifier());
 
             assertThat(agentResponse).isNotNull();
             assertThat(agentResponse.getName()).isEqualTo(agentConfiguration.getName());
@@ -106,7 +106,7 @@ public class AiAgentTests extends RemoteTestBase {
 
             store.maintenance().send(new AddOrUpdateAiAgentOperation(updatedConfig));
 
-            AiAgentConfiguration agent = store.getAiOperations().getAgent(createRes.getIdentifier());
+            AiAgentConfiguration agent = store.ai().getAgent(createRes.getIdentifier());
             assertNotNull(agent);
             assertEquals("updated prompt", agent.getSystemPrompt());
             assertNotNull(agent.getParameters());
@@ -137,7 +137,7 @@ public class AiAgentTests extends RemoteTestBase {
             AddOrUpdateAiAgentOperation addOp = new AddOrUpdateAiAgentOperation(config);
             AiAgentConfigurationResult res = store.maintenance().send(addOp);
 
-            GetAiAgentsResponse list = store.getAiOperations().getAgents();
+            GetAiAgentsResponse list = store.ai().getAgents();
             assertThat(list).isNotNull();
             assertThat(list.getAiAgents()).isNotNull();
 
@@ -149,10 +149,10 @@ public class AiAgentTests extends RemoteTestBase {
 
             assertThat(found).isNotNull();
 
-            AiAgentConfigurationResult delRes = store.getAiOperations().deleteAgent(res.getIdentifier());
+            AiAgentConfigurationResult delRes = store.ai().deleteAgent(res.getIdentifier());
             assertThat(delRes).isNotNull();
 
-            GetAiAgentsResponse afterDelete = store.getAiOperations().getAgents();
+            GetAiAgentsResponse afterDelete = store.ai().getAgents();
             assertThat(afterDelete.getAiAgents().size()).isEqualTo(0);
         }
     }
