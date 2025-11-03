@@ -7,6 +7,10 @@ public class AiAgentParameter {
     public AiAgentParameter() {
     }
 
+    public AiAgentParameter(String name) {
+        this.name = name;
+    }
+
     public AiAgentParameter(String name, String description) {
         this.name = name;
         this.description = description;

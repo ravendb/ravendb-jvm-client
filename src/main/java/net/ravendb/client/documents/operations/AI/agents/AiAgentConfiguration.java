@@ -1,5 +1,6 @@
 package net.ravendb.client.documents.operations.AI.agents;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class AiAgentConfiguration {
@@ -16,6 +17,22 @@ public class AiAgentConfiguration {
     private Integer maxModelIterationsPerCall;
 
     public AiAgentConfiguration() {
+    }
+
+    public AiAgentConfiguration(String name, String connectionStringName, String systemPrompt) {
+        if (name == null || name.isEmpty()) {
+            throw new IllegalArgumentException("Name cannot be null or empty");
+        }
+        if (connectionStringName == null || connectionStringName.isEmpty()) {
+            throw new IllegalArgumentException("connectionStringName cannot be null or empty");
+        }
+        if (systemPrompt == null || systemPrompt.isEmpty()) {
+            throw new IllegalArgumentException("systemPrompt cannot be null or empty");
+        }
+
+        this.name = name;
+        this.connectionStringName = connectionStringName;
+        this.systemPrompt = systemPrompt;
     }
 
     public AiAgentConfiguration(String identifier, String name, String connectionStringName, String systemPrompt,
@@ -100,6 +117,9 @@ public class AiAgentConfiguration {
     }
 
     public List<AiAgentParameter> getParameters() {
+        if (parameters == null) {
+            parameters = new ArrayList<>();
+        }
         return parameters;
     }
 

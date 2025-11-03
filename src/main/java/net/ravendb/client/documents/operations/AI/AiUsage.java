@@ -5,16 +5,22 @@ public class AiUsage {
     private int completionTokens;
     private int totalTokens;
     private int cachedTokens;
+    private int reasoningTokens;
 
     public AiUsage() {
     }
 
-    public AiUsage(int promptTokens, int completionTokens, int totalTokens, int cachedTokens) {
+    public AiUsage(int promptTokens, int completionTokens, int totalTokens, int cachedTokens, int reasoningTokens) {
         this.promptTokens = promptTokens;
         this.completionTokens = completionTokens;
         this.totalTokens = totalTokens;
         this.cachedTokens = cachedTokens;
+        this.reasoningTokens = reasoningTokens;
     }
+
+    public int getReasoningTokens() { return reasoningTokens; }
+
+    public void setReasoningTokens(int reasoningTokens) { this.reasoningTokens = reasoningTokens; }
 
     public int getPromptTokens() {
         return promptTokens;

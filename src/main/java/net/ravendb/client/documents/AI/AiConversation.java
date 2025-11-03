@@ -242,7 +242,7 @@ public class AiConversation {
                 @SuppressWarnings("unchecked")
                 AiAnswer<TAnswer> result = (AiAnswer<TAnswer>) runInternal(null, null).join();
 
-                if ("Done".equals(result.getStatus())) {
+                if (result.getStatus() == AiConversationResult.Done) {
                     return result;
                 }
 
