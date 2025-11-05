@@ -1,6 +1,7 @@
 package net.ravendb.client.documents.operations.AI.agents;
 
 import net.ravendb.client.documents.AI.AiConversationCreationOptions;
+import net.ravendb.client.documents.AI.ContentPart;
 import net.ravendb.client.documents.commands.RunConversationCommand;
 import net.ravendb.client.documents.conventions.DocumentConventions;
 import net.ravendb.client.documents.AI.AiStreamCallback;
@@ -12,7 +13,7 @@ import java.util.List;
 public class RunConversationOperation<TAnswer> implements IMaintenanceOperation<ConversationResult<TAnswer>> {
     private final String agentId;
     private final String conversationId;
-    private final String userPrompt;
+    private final List<ContentPart> promptParts;
     private final List<AiAgentActionResponse> actionResponses;
     private final AiConversationCreationOptions options;
     private final String changeVector;
@@ -22,7 +23,7 @@ public class RunConversationOperation<TAnswer> implements IMaintenanceOperation<
     public RunConversationOperation(
             String agentId,
             String conversationId,
-            String userPrompt,
+            List<ContentPart> promptParts,
             List<AiAgentActionResponse> actionResponses,
             AiConversationCreationOptions options,
             String changeVector,
@@ -42,7 +43,7 @@ public class RunConversationOperation<TAnswer> implements IMaintenanceOperation<
 
         this.agentId = agentId;
         this.conversationId = conversationId;
-        this.userPrompt = userPrompt;
+        this.promptParts = promptParts;
         this.actionResponses = actionResponses;
         this.options = options;
         this.changeVector = changeVector;
@@ -57,15 +58,40 @@ public class RunConversationOperation<TAnswer> implements IMaintenanceOperation<
     @Override
     public RavenCommand<ConversationResult<TAnswer>> getCommand(DocumentConventions conventions) {
         return new RunConversationCommand<TAnswer>(
-                conversationId,
-                agentId,
-                userPrompt,
-                actionResponses,
-                options,
-                changeVector,
-                conventions,
-                streamPropertyPath,
-                streamCallback
+                this,
+                conventions
         );
+    }
+
+    public String getStreamPropertyPath() {
+        return streamPropertyPath;
+    }
+
+    public String getAgentId() {
+        return agentId;
+    }
+
+    public String getConversationId() {
+        return conversationId;
+    }
+
+    public String getChangeVector() {
+        return changeVector;
+    }
+
+    public AiStreamCallback getStreamCallback() {
+        return streamCallback;
+    }
+
+    public List<AiAgentActionResponse> getActionResponses() {
+        return actionResponses;
+    }
+
+    public List<ContentPart> getPromptParts() {
+        return promptParts;
+    }
+
+    public AiConversationCreationOptions getOptions() {
+        return options;
     }
 }

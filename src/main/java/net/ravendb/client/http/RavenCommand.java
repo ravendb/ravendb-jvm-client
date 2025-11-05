@@ -159,7 +159,7 @@ public abstract class RavenCommand<TResult> {
     }
 
     @SuppressWarnings("unused")
-    public void setResponseRaw(ClassicHttpResponse response, InputStream stream) {
+    public void setResponseRaw(ClassicHttpResponse response, InputStream stream) throws IOException {
         throw new UnsupportedOperationException("When " + responseType + " is set to Raw then please override this method to handle the response. ");
     }
 

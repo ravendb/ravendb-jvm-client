@@ -4,6 +4,8 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import net.ravendb.client.documents.IDocumentStore;
 import net.ravendb.client.documents.operations.AI.agents.*;
+import net.ravendb.client.extensions.expressionExtension;
+import net.ravendb.client.util.SerializableFunction;
 import org.apache.commons.lang3.StringUtils;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -23,8 +25,8 @@ public class AiConversation {
     private String changeVector;
     private List<AiAgentActionRequest> actionRequests = null;
     private final List<AiAgentActionResponse> actionResponses = new ArrayList<>();
-    private String userPrompt;
     private final Map<String, IActionInvocation> invocations = new HashMap<>();
+    private final List<ContentPart> promptParts = new ArrayList<>();
 
     private Consumer<UnhandledActionEventArgs> onUnhandledAction;
 
@@ -88,7 +90,17 @@ public class AiConversation {
 
     public void setUserPrompt(String userPrompt) {
         if (userPrompt == null || userPrompt.isEmpty()) throw new IllegalArgumentException("userPrompt cannot be empty");
-        this.userPrompt = userPrompt;
+        this.promptParts.clear();
+        this.addUserPrompt(userPrompt);
+    }
+
+    public void addUserPrompt(String... prompts) {
+        for (String prompt : prompts) {
+            if (prompt == null || prompt.isEmpty()) {
+                throw new IllegalArgumentException("prompt cannot be empty");
+            }
+            this.promptParts.add(new TextPart(prompt));
+        }
     }
 
     public <TArgs> void handle(String actionName,
@@ -168,6 +180,10 @@ public class AiConversation {
         invocations.put(actionName, invocation);
     }
 
+    public <TAnswer> CompletableFuture<AiAnswer<TAnswer>> stream(SerializableFunction<TAnswer, ?> streamProperty, AiStreamCallback streamCallback) {
+        return stream(expressionExtension.toPropertyPath(streamProperty,this.store.getConventions()), streamCallback);
+    }
+
     public <TAnswer> CompletableFuture<AiAnswer<TAnswer>> stream(
             String streamPropertyPath,
             AiStreamCallback streamCallback
@@ -192,7 +208,7 @@ public class AiConversation {
                     return;
                 }
 
-                if ("Done".equals(result.getStatus())) {
+                if (result.getStatus() == AiConversationResult.Done) {
                     future.complete(result);
                     return;
                 }
@@ -282,7 +298,7 @@ public class AiConversation {
     }
 
     private <TAnswer> CompletableFuture<AiAnswer<TAnswer>> runInternal(String streamPropertyPath, AiStreamCallback streamCallback) {
-        if (this.actionRequests != null && this.userPrompt == null && this.actionResponses.isEmpty()) {
+        if (this.actionRequests != null && this.promptParts.isEmpty() && this.actionResponses.isEmpty()) {
             AiAnswer<TAnswer> doneAnswer = new AiAnswer<>();
             doneAnswer.setStatus(AiConversationResult.Done);
             return CompletableFuture.completedFuture(doneAnswer);
@@ -291,7 +307,7 @@ public class AiConversation {
         RunConversationOperation<TAnswer> op = new RunConversationOperation<>(
                 this.agentId,
                 this.conversationId,
-                this.userPrompt,
+                this.promptParts,
                 this.actionResponses,
                 this.options,
                 this.changeVector,
@@ -312,7 +328,7 @@ public class AiConversation {
         this.changeVector = result.getChangeVector();
         this.conversationId = result.getConversationId();
         this.actionRequests = result.getActionRequests() != null ? result.getActionRequests() : new ArrayList<>();
-        this.userPrompt = null;
+        this.promptParts.clear();
         this.actionResponses.clear();
 
         return CompletableFuture.completedFuture(answer);

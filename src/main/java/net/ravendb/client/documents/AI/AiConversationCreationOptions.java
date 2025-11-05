@@ -10,6 +10,10 @@ public class AiConversationCreationOptions {
     public AiConversationCreationOptions() {
     }
 
+    public AiConversationCreationOptions(Map<String, Object> parameters) {
+        this(parameters, null);
+    }
+
     public AiConversationCreationOptions(Map<String, Object> parameters, Integer expirationInSec) {
         this.parameters = parameters;
         this.expirationInSec = expirationInSec;

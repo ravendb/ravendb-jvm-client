@@ -4,15 +4,21 @@ package net.ravendb.client.documents.operations.AI;
  * Flags enum for detecting differences between AI settings configurations.
  * Uses bitwise operations for combining multiple differences.
  */
+import java.util.EnumSet;
+
 public enum AiSettingsCompareDifferences {
     None(0),
-    AuthenticationSettings(1 << 0),      // 1
-    EndpointConfiguration(1 << 1),       // 2
-    ModelArchitecture(1 << 2),           // 4
-    EmbeddingDimensions(1 << 3),         // 8
-    DeploymentConfiguration(1 << 4),     // 16
-    Identifier(1 << 5),                  // 32
-    All((~(~0 << 6)));                   // 63 (all bits set)
+    Identifier(1 << 0),
+    EmbeddingDimensions(1 << 1),
+    ModelArchitecture(1 << 2),
+    EndpointConfiguration(1 << 3),
+    AuthenticationSettings(1 << 4),
+    DeploymentConfiguration(1 << 5),
+    // Combinations
+    EmbeddingStructure(Identifier.value | EmbeddingDimensions.value | ModelArchitecture.value),
+    ConnectionConfig(EndpointConfiguration.value | AuthenticationSettings.value),
+    RequiresEmbeddingsRegeneration(EmbeddingStructure.value | DeploymentConfiguration.value),
+    All(RequiresEmbeddingsRegeneration.value | ConnectionConfig.value);
 
     private final int value;
 
@@ -22,14 +28,5 @@ public enum AiSettingsCompareDifferences {
 
     public int getValue() {
         return value;
-    }
-
-    public static AiSettingsCompareDifferences fromValue(int value) {
-        for (AiSettingsCompareDifferences diff : values()) {
-            if (diff.getValue() == value) {
-                return diff;
-            }
-        }
-        return None;
     }
 }

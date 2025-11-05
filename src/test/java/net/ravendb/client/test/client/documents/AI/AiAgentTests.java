@@ -25,13 +25,60 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
+
+import java.util.*;
+import java.util.concurrent.CompletableFuture;
 
 @EnableOnServer(thresholdVersion = "7.1")
 public class AiAgentTests extends RemoteTestBase {
+
+    @Disabled
+    @Test
+    public void canStreamResults(){
+        String apiKey = System.getenv("RAVENDB_JAVA_TESTS_OPENAI_API_KEY");
+        assertNotNull(apiKey, "OpenAI API key is not set in environment variable RAVENDB_JAVA_TESTS_OPENAI_API_KEY");
+        try (IDocumentStore store = getDocumentStore()) {
+            try (IDocumentSession session = store.openSession()) {
+                OpenAiSettings ai = new OpenAiSettings(apiKey,
+                        "https://api.openai.com/",
+                        "gpt-4o-mini",
+                        null,
+                        null,
+                        null,
+                        0.0);
+                AiConnectionString openAiCs = new AiConnectionString();
+                openAiCs.setModelType(AiModelType.Chat);
+                openAiCs.setName("openai");
+                openAiCs.setOpenAiSettings(ai);
+
+                IMaintenanceOperation<PutConnectionStringResult> putOpenAi = new PutConnectionStringOperation(openAiCs);
+                store.maintenance().send(putOpenAi);
+
+                GetConnectionStringsResult connectionStrings = store.maintenance().send(new GetConnectionStringsOperation());
+                assertThat(connectionStrings.getAiConnectionStrings()).hasSize(1);
+                assertThat(connectionStrings.getAiConnectionStrings().get("openai")).isNotNull();
+
+                AiAgentConfiguration agent = new AiAgentConfiguration("my assistant", openAiCs.getName(), "Be helpful");
+                String identifier = store.ai().createAgent(agent,AnswerSchema.INSTANCE).getIdentifier();
+                AiConversation chat = store.ai().conversation(identifier,"chats/", new AiConversationCreationOptions());
+                chat.setUserPrompt("Give me 15 real cities names, one per line");
+                StringBuilder sb = new StringBuilder();
+                AiAnswer<AnswerSchema> result = chat.<AnswerSchema>stream(AnswerSchema::getAnswer,
+                        s-> {
+                            sb.append(s);
+                            return  CompletableFuture.completedFuture(null);
+                        }).get();
+                Object answerObj = result.getAnswer();
+                if (answerObj instanceof Map) {
+                    Map<String, Object> map = (Map<String, Object>) answerObj;
+                    String text = (String) map.get("answer");
+                    assertEquals(sb.toString(), text);
+                }
+            }
+        } catch (Exception e){
+            throw new RuntimeException(e);
+        }
+    }
 
     @Disabled
     @Test
@@ -60,11 +107,18 @@ public class AiAgentTests extends RemoteTestBase {
                 assertThat(connectionStrings.getAiConnectionStrings()).hasSize(1);
                 assertThat(connectionStrings.getAiConnectionStrings().get("openai")).isNotNull();
 
-                AiAgentConfiguration agent = new AiAgentConfiguration("shopping assistant", "openai", "You are an AI agent of an online shop, helping customers answer queries about that topic only. When talking about orders or products, include the ids as well.");
+                AiAgentConfiguration agent = new AiAgentConfiguration("shopping assistant", openAiCs.getName(), "You are an AI agent of an online shop, helping customers answer queries about that topic only. When talking about orders or products, include the ids as well.");
                 agent.getParameters().add(new AiAgentParameter("company"));
                 List<AiAgentToolQuery> queries = new ArrayList<>();
-                queries.add(new AiAgentToolQuery("ProductSearch", "semantic search the store product catalog", "from Products where vector.search(embedding.text(Name), $query)", "{\"query\": [\"term or phrase to search in the catalog\"]}"));
-                queries.add(new AiAgentToolQuery("RecentOrder", "Get the recent orders of the current user", "from Orders where Company = $company order by OrderedAt desc limit 10", "{}"));
+
+                AiAgentToolQuery query1 = new AiAgentToolQuery("ProductSearch", "semantic search the store product catalog", "from Products where vector.search(embedding.text(Name), $query)");
+                query1.setParametersSampleObject("{\"query\": [\"term or phrase to search in the catalog\"]}");
+
+                AiAgentToolQuery query2 = new AiAgentToolQuery("RecentOrder", "Get the recent orders of the current user", "from Orders where Company = $company order by OrderedAt desc limit 10");
+                query2.setParametersSampleObject("{}");
+
+                queries.add(query1);
+                queries.add(query2);
                 agent.setQueries(queries);
                 String identifier = store.ai().createAgent(agent,AnswerSchema.INSTANCE).getIdentifier();
                 AiConversation chat = store.ai().conversation(identifier,"chats/", new AiConversationCreationOptions().addParameter("company", "companies/90-A"));
@@ -261,6 +315,14 @@ public class AiAgentTests extends RemoteTestBase {
                 Arrays.asList("All the product ids referenced either by the user or the system")
         );
         private AnswerSchema() {
+        }
+
+        public String getAnswer() {
+            return answer;
+        }
+
+        public void setAnswer(String answer) {
+            this.answer = answer;
         }
     }
 }

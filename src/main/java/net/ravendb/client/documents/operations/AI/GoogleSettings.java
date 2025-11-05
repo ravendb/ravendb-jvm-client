@@ -1,22 +1,15 @@
 package net.ravendb.client.documents.operations.AI;
 
 import org.apache.commons.lang3.StringUtils;
+
+import java.util.EnumSet;
 import java.util.List;
 import java.util.Objects;
 
 /**
  * Settings for Google AI service.
  */
-public class GoogleSettings extends AbstractAiSettings {
-
-    /**
-     * Represents the version of the Google AI API.
-     */
-    public enum GoogleAIVersion {
-        V1,
-        V1_Beta
-    }
-
+public final class GoogleSettings extends AbstractAiSettings {
     /**
      * The model that should be used.
      */
@@ -43,6 +36,19 @@ public class GoogleSettings extends AbstractAiSettings {
         this.aiVersion = aiVersion;
         this.dimensions = dimensions;
     }
+
+    public GoogleSettings(String model, String apiKey) {
+        this(model, apiKey, null, null);
+    }
+
+    public GoogleSettings(String model, String apiKey, GoogleAIVersion aiVersion) {
+        this(model, apiKey, aiVersion, null);
+    }
+
+    public GoogleSettings(String model, String apiKey, Integer dimensions) {
+        this(model, apiKey, null, dimensions);
+    }
+
     public GoogleSettings() {
     }
 
@@ -79,7 +85,7 @@ public class GoogleSettings extends AbstractAiSettings {
     }
 
     @Override
-    public void validate(List<String> errors) {
+    public void validateFields(List<String> errors) {
         if (StringUtils.isBlank(model)) {
             errors.add("Value of 'model' field cannot be empty.");
         }
@@ -94,27 +100,30 @@ public class GoogleSettings extends AbstractAiSettings {
     }
 
     @Override
-    public AiSettingsCompareDifferences compare(AbstractAiSettings other) {
+    public EnumSet<AiSettingsCompareDifferences> compare(AbstractAiSettings other) {
         if (!(other instanceof GoogleSettings)) {
-            return AiSettingsCompareDifferences.All;
+            return EnumSet.of(AiSettingsCompareDifferences.All);
         }
 
         GoogleSettings otherSettings = (GoogleSettings) other;
-        int diff = AiSettingsCompareDifferences.None.getValue();
+        EnumSet<AiSettingsCompareDifferences> diff = EnumSet.of(AiSettingsCompareDifferences.None);
 
         if (!Objects.equals(this.model, otherSettings.model) ||
                 !Objects.equals(this.aiVersion, otherSettings.aiVersion)) {
-            diff |= AiSettingsCompareDifferences.ModelArchitecture.getValue();
+            diff.remove(AiSettingsCompareDifferences.None);
+            diff.add(AiSettingsCompareDifferences.ModelArchitecture);
         }
 
         if (!Objects.equals(this.apiKey, otherSettings.apiKey)) {
-            diff |= AiSettingsCompareDifferences.AuthenticationSettings.getValue();
+            diff.remove(AiSettingsCompareDifferences.None);
+            diff.add(AiSettingsCompareDifferences.AuthenticationSettings);
         }
 
         if (!Objects.equals(this.dimensions, otherSettings.dimensions)) {
-            diff |= AiSettingsCompareDifferences.EmbeddingDimensions.getValue();
+            diff.remove(AiSettingsCompareDifferences.None);
+            diff.add(AiSettingsCompareDifferences.EmbeddingDimensions);
         }
 
-        return AiSettingsCompareDifferences.values()[diff];
+        return diff;
     }
 }

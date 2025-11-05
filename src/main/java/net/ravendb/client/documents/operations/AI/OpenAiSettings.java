@@ -1,11 +1,12 @@
 package net.ravendb.client.documents.operations.AI;
 
+import java.util.EnumSet;
 import java.util.Objects;
 
 /**
  * The configuration for the OpenAI API client.
  */
-public class OpenAiSettings extends OpenAiBaseSettings {
+public final class OpenAiSettings extends OpenAiBaseSettings {
 
     /**
      * The value to use for the OpenAI-Organization request header.
@@ -19,12 +20,47 @@ public class OpenAiSettings extends OpenAiBaseSettings {
 
     private static final String OPENAI_BASE_URI = "https://api.openai.com/";
 
-    public OpenAiSettings(String apiKey, String endpoint, String model,
-                          String organizationId, String projectId,
-                          Integer dimensions, Double temperature) {
+    public OpenAiSettings(String apiKey,
+                          String endpoint,
+                          String model,
+                          String organizationId,
+                          String projectId,
+                          Integer dimensions,
+                          Double temperature) {
         super(apiKey, endpoint, model, dimensions, temperature);
         this.organizationId = organizationId;
         this.projectId = projectId;
+    }
+
+    public OpenAiSettings(String apiKey,
+                          String endpoint,
+                          String model,
+                          String organizationId,
+                          String projectId,
+                          Integer dimensions) {
+        this(apiKey, endpoint, model, organizationId, projectId, dimensions, null);
+    }
+
+    public OpenAiSettings(String apiKey,
+                          String endpoint,
+                          String model,
+                          String organizationId,
+                          String projectId) {
+        this(apiKey, endpoint, model, organizationId, projectId, null, null);
+    }
+
+    public OpenAiSettings(String apiKey,
+                          String endpoint,
+                          String model,
+                          Integer dimensions,
+                          Double temperature) {
+        this(apiKey, endpoint, model, null, null, dimensions, temperature);
+    }
+
+    public OpenAiSettings(String apiKey,
+                          String endpoint,
+                          String model) {
+        this(apiKey, endpoint, model, null, null, null, null);
     }
 
     public OpenAiSettings(){
@@ -56,19 +92,20 @@ public class OpenAiSettings extends OpenAiBaseSettings {
     }
 
     @Override
-    public AiSettingsCompareDifferences compare(AbstractAiSettings other) {
+    public EnumSet<AiSettingsCompareDifferences> compare(AbstractAiSettings other) {
         if (!(other instanceof OpenAiSettings)) {
-            return AiSettingsCompareDifferences.All;
+            return EnumSet.of(AiSettingsCompareDifferences.All);
         }
 
         OpenAiSettings otherSettings = (OpenAiSettings) other;
-        int diff = super.compare(other).getValue();
+        EnumSet<AiSettingsCompareDifferences> diff = super.compare(other);
 
         if (!Objects.equals(this.organizationId, otherSettings.organizationId) ||
                 !Objects.equals(this.projectId, otherSettings.projectId)) {
-            diff |= AiSettingsCompareDifferences.AuthenticationSettings.getValue();
+            diff.remove(AiSettingsCompareDifferences.None);
+            diff.add(AiSettingsCompareDifferences.AuthenticationSettings);
         }
 
-        return AiSettingsCompareDifferences.fromValue(diff);
+        return diff;
     }
 }

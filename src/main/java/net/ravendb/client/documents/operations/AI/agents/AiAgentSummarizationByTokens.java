@@ -10,18 +10,6 @@ public class AiAgentSummarizationByTokens {
     public AiAgentSummarizationByTokens() {
     }
 
-    public AiAgentSummarizationByTokens(String summarizationTaskBeginningPrompt,
-                                        String summarizationTaskEndPrompt,
-                                        String resultPrefix,
-                                        Integer maxTokensBeforeSummarization,
-                                        Integer maxTokensAfterSummarization) {
-        this.summarizationTaskBeginningPrompt = summarizationTaskBeginningPrompt;
-        this.summarizationTaskEndPrompt = summarizationTaskEndPrompt;
-        this.resultPrefix = resultPrefix;
-        this.maxTokensBeforeSummarization = maxTokensBeforeSummarization;
-        this.maxTokensAfterSummarization = maxTokensAfterSummarization;
-    }
-
     public String getSummarizationTaskBeginningPrompt() {
         return summarizationTaskBeginningPrompt;
     }

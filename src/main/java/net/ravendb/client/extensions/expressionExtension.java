@@ -18,10 +18,7 @@ public class expressionExtension {
                                                DocumentConventions conventions,
                                                char propertySeparator,
                                                String collectionSeparator) {
-        // For now: just unwrap a single property getter
         String property = extractPropertyName(lambda);
-        System.out.println(property);
-        // mimic the StringBuilder + stack in C#
         Deque<String> results = new ArrayDeque<>();
         results.push(property);
 

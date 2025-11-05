@@ -1,7 +1,7 @@
 package net.ravendb.client.documents.operations.AI.agents;
 
 import net.ravendb.client.documents.operations.AI.AiUsage;
-
+import java.time.Duration;
 import java.util.List;
 
 public class ConversationResult<TAnswer> {
@@ -9,18 +9,11 @@ public class ConversationResult<TAnswer> {
     private String changeVector;
     private TAnswer response;
     private AiUsage totalUsage;
+    private AiUsage usage;
+    private Duration Elapsed;
     private List<AiAgentActionRequest> actionRequests;
 
     public ConversationResult() {
-    }
-
-    public ConversationResult(String conversationId, String changeVector, TAnswer response,
-                              AiUsage totalUsage, List<AiAgentActionRequest> actionRequests) {
-        this.conversationId = conversationId;
-        this.changeVector = changeVector;
-        this.response = response;
-        this.totalUsage = totalUsage;
-        this.actionRequests = actionRequests;
     }
 
     public String getConversationId() {
@@ -50,6 +43,17 @@ public class ConversationResult<TAnswer> {
     public AiUsage getTotalUsage() {
         return totalUsage;
     }
+
+    public AiUsage getUsage() {
+        return usage;
+    }
+    public void setUsage(AiUsage usage) {
+        this.usage = usage;
+    }
+
+    public Duration getElapsed() { return Elapsed; }
+
+    public void setElapsed(Duration elapsed) { this.Elapsed = elapsed; }
 
     public void setTotalUsage(AiUsage totalUsage) {
         this.totalUsage = totalUsage;

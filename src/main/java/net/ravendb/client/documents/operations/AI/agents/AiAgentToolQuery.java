@@ -11,21 +11,10 @@ public class AiAgentToolQuery {
     public AiAgentToolQuery() {
     }
 
-    public AiAgentToolQuery(String name, String description, String query,
-                            String parametersSampleObject) {
+    public AiAgentToolQuery(String name, String description, String query) {
         this.name = name;
         this.description = description;
         this.query = query;
-        this.parametersSampleObject = parametersSampleObject;
-    }
-
-    public AiAgentToolQuery(String name, String description, String query,
-                            String parametersSampleObject, String parametersSchema) {
-        this.name = name;
-        this.description = description;
-        this.query = query;
-        this.parametersSampleObject = parametersSampleObject;
-        this.parametersSchema = parametersSchema;
     }
 
     public AiAgentToolQueryOptions getOptions() { return this.options; }

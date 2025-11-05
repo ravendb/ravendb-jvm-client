@@ -2,13 +2,14 @@ package net.ravendb.client.documents.operations.AI;
 
 import org.apache.commons.lang3.StringUtils;
 
+import java.util.EnumSet;
 import java.util.List;
 import java.util.Objects;
 
 /**
  * Settings for Mistral AI service.
  */
-public class MistralAiSettings extends AbstractAiSettings {
+public final class MistralAiSettings extends AbstractAiSettings {
 
     /**
      * The model ID for the Mistral AI service.
@@ -57,7 +58,7 @@ public class MistralAiSettings extends AbstractAiSettings {
     }
 
     @Override
-    public void validate(List<String> errors) {
+    public void validateFields(List<String> errors) {
         if (StringUtils.isBlank(model)) {
             errors.add("Value of 'model' field cannot be empty.");
         }
@@ -72,26 +73,30 @@ public class MistralAiSettings extends AbstractAiSettings {
     }
 
     @Override
-    public AiSettingsCompareDifferences compare(AbstractAiSettings other) {
+    public EnumSet<AiSettingsCompareDifferences> compare(AbstractAiSettings other) {
         if (!(other instanceof MistralAiSettings)) {
-            return AiSettingsCompareDifferences.All;
+            return EnumSet.of(AiSettingsCompareDifferences.All);
         }
 
         MistralAiSettings otherSettings = (MistralAiSettings) other;
-        int diff = AiSettingsCompareDifferences.None.getValue();
+
+        EnumSet<AiSettingsCompareDifferences> diff = EnumSet.of(AiSettingsCompareDifferences.None);
 
         if (!Objects.equals(this.model, otherSettings.model)) {
-            diff |= AiSettingsCompareDifferences.ModelArchitecture.getValue();
+            diff.remove(AiSettingsCompareDifferences.None);
+            diff.add(AiSettingsCompareDifferences.ModelArchitecture);
         }
 
         if (!Objects.equals(this.endpoint, otherSettings.endpoint)) {
-            diff |= AiSettingsCompareDifferences.EndpointConfiguration.getValue();
+            diff.remove(AiSettingsCompareDifferences.None);
+            diff.add(AiSettingsCompareDifferences.EndpointConfiguration);
         }
 
         if (!Objects.equals(this.apiKey, otherSettings.apiKey)) {
-            diff |= AiSettingsCompareDifferences.AuthenticationSettings.getValue();
+            diff.remove(AiSettingsCompareDifferences.None);
+            diff.add(AiSettingsCompareDifferences.AuthenticationSettings);
         }
 
-        return AiSettingsCompareDifferences.values()[diff];
+        return diff;
     }
 }
