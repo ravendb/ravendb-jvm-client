@@ -7,6 +7,10 @@ public class AiAgentChatTrimmingConfiguration {
     public AiAgentChatTrimmingConfiguration() {
     }
 
+    public AiAgentChatTrimmingConfiguration(AiAgentSummarizationByTokens tokens) {
+        this.tokens = tokens;
+    }
+
     public AiAgentChatTrimmingConfiguration(AiAgentSummarizationByTokens tokens, AiAgentHistoryConfiguration history) {
         this.tokens = tokens;
         this.history = history;

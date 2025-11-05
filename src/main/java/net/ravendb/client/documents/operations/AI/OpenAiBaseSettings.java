@@ -3,6 +3,7 @@ package net.ravendb.client.documents.operations.AI;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import org.apache.commons.lang3.StringUtils;
 
+import java.util.EnumSet;
 import java.util.List;
 import java.util.Objects;
 
@@ -103,7 +104,7 @@ public abstract class OpenAiBaseSettings extends AbstractAiSettings implements I
     }
 
     @Override
-    public void validate(List<String> errors) {
+    public void validateFields(List<String> errors) {
         if (StringUtils.isBlank(apiKey)) {
             errors.add("Value of 'apiKey' field cannot be empty.");
         }
@@ -126,28 +127,32 @@ public abstract class OpenAiBaseSettings extends AbstractAiSettings implements I
     }
 
     @Override
-    public AiSettingsCompareDifferences compare(AbstractAiSettings other) {
+    public EnumSet<AiSettingsCompareDifferences> compare(AbstractAiSettings other) {
         if (!(other instanceof OpenAiBaseSettings)) {
-            return AiSettingsCompareDifferences.All;
+            return EnumSet.of(AiSettingsCompareDifferences.All);
         }
 
         OpenAiBaseSettings otherSettings = (OpenAiBaseSettings) other;
-        int diff = AiSettingsCompareDifferences.None.getValue();
+        EnumSet<AiSettingsCompareDifferences> diff = EnumSet.of(AiSettingsCompareDifferences.None);
 
         if (!Objects.equals(this.apiKey, otherSettings.apiKey)) {
-            diff |= AiSettingsCompareDifferences.AuthenticationSettings.getValue();
+            diff.remove(AiSettingsCompareDifferences.None);
+            diff.add(AiSettingsCompareDifferences.AuthenticationSettings);
         }
 
         if (!Objects.equals(this.endpoint, otherSettings.endpoint)) {
-            diff |= AiSettingsCompareDifferences.EndpointConfiguration.getValue();
+            diff.remove(AiSettingsCompareDifferences.None);
+            diff.add(AiSettingsCompareDifferences.EndpointConfiguration);
         }
 
         if (!Objects.equals(this.model, otherSettings.model)) {
-            diff |= AiSettingsCompareDifferences.ModelArchitecture.getValue();
+            diff.remove(AiSettingsCompareDifferences.None);
+            diff.add(AiSettingsCompareDifferences.ModelArchitecture);
         }
 
         if (!Objects.equals(this.dimensions, otherSettings.dimensions)) {
-            diff |= AiSettingsCompareDifferences.EmbeddingDimensions.getValue();
+            diff.remove(AiSettingsCompareDifferences.None);
+            diff.add(AiSettingsCompareDifferences.EmbeddingDimensions);
         }
 
         boolean hasTemp = this.temperature != null;
@@ -156,9 +161,10 @@ public abstract class OpenAiBaseSettings extends AbstractAiSettings implements I
         if (hasTemp != otherHasTemp ||
                 (hasTemp && otherHasTemp &&
                         Math.abs(this.temperature - otherSettings.temperature) > 0.0001)) {
-            diff |= AiSettingsCompareDifferences.EndpointConfiguration.getValue();
+            diff.remove(AiSettingsCompareDifferences.None);
+            diff.add(AiSettingsCompareDifferences.EndpointConfiguration);
         }
 
-        return AiSettingsCompareDifferences.fromValue(diff);
+        return diff;
     }
 }

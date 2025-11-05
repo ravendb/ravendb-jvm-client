@@ -9,11 +9,15 @@ public class AiAgentToolAction {
     public AiAgentToolAction() {
     }
 
-    public AiAgentToolAction(String name, String description, String parametersSampleObject, String parametersSchema) {
+    public AiAgentToolAction(String name, String description) {
+        if (name == null || name.isEmpty()) {
+            throw new IllegalArgumentException("Name cannot be null or empty");
+        }
+        if (description == null || description.isEmpty()) {
+            throw new IllegalArgumentException("Description cannot be null or empty");
+        }
         this.name = name;
         this.description = description;
-        this.parametersSampleObject = parametersSampleObject;
-        this.parametersSchema = parametersSchema;
     }
 
     public String getName() {

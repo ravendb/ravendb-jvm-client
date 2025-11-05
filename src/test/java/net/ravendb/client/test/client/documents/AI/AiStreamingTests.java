@@ -1,6 +1,7 @@
 package net.ravendb.client.test.client.documents.AI;
 
 import net.ravendb.client.RemoteTestBase;
+import net.ravendb.client.documents.AI.TextPart;
 import net.ravendb.client.documents.conventions.DocumentConventions;
 import net.ravendb.client.documents.AI.AiStreamCallback;
 import net.ravendb.client.documents.operations.AI.agents.ConversationResult;
@@ -11,6 +12,7 @@ import org.junit.jupiter.api.Test;
 import java.io.ByteArrayInputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
@@ -37,7 +39,7 @@ public class AiStreamingTests<TAnswer> extends RemoteTestBase {
         RunConversationOperation<TAnswer> operation = new RunConversationOperation<>(
                 "agents/1-A",
                 "conv/1|",
-                "Test prompt",
+                Collections.singletonList(new TextPart("Test prompt")),
                 new ArrayList<>(),
                 null,
                 null,
@@ -78,7 +80,7 @@ public class AiStreamingTests<TAnswer> extends RemoteTestBase {
         RunConversationOperation<HashMap<String, String>> operation = new RunConversationOperation<>(
                 "agents/1-A",
                 "conv/2|",
-                "Test prompt",
+                Collections.singletonList(new TextPart("Test prompt")),
                 new ArrayList<>(),
                 null,
                 null,
@@ -118,7 +120,7 @@ public class AiStreamingTests<TAnswer> extends RemoteTestBase {
         RunConversationOperation<HashMap<String, String>> operation = new RunConversationOperation<>(
                 "agents/1-A",
                 "conv/3|",
-                "Test",
+                Collections.singletonList(new TextPart("Test prompt")),
                 new ArrayList<>(),
                 null,
                 null,

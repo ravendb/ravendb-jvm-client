@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import net.ravendb.client.documents.operations.connectionStrings.ConnectionString;
 import net.ravendb.client.serverwide.ConnectionStringType;
 import java.util.ArrayList;
+import java.util.EnumSet;
 import java.util.List;
 import java.util.Objects;
 
@@ -13,7 +14,7 @@ import java.util.Objects;
  * Only one provider can be configured per connection string.
  */
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class AiConnectionString extends ConnectionString {
+public final class AiConnectionString extends ConnectionString {
 
     private String identifier;
     private OpenAiSettings openAiSettings;
@@ -52,7 +53,7 @@ public class AiConnectionString extends ConnectionString {
         if (vertexSettings != null) allSettings.add(vertexSettings);
 
         for (AbstractAiSettings setting : allSettings) {
-            setting.validate(errors);
+            setting.validateFields(errors);
         }
 
         if (allSettings.isEmpty()) {
@@ -121,7 +122,7 @@ public class AiConnectionString extends ConnectionString {
         return AiConnectorType.None;
     }
 
-    public AbstractAiSettings getActiveProviderInstance() {
+    AbstractAiSettings getActiveProviderInstance() {
         if (openAiSettings != null) return openAiSettings;
         if (azureOpenAiSettings != null) return azureOpenAiSettings;
         if (ollamaSettings != null) return ollamaSettings;
@@ -133,35 +134,73 @@ public class AiConnectionString extends ConnectionString {
         return null;
     }
 
-    public int compare(AiConnectionString other) {
-        if (other == null) return AiSettingsCompareDifferences.All.getValue();
+    public EnumSet<AiSettingsCompareDifferences> compare(AiConnectionString other) {
+        if (other == null) return EnumSet.of(AiSettingsCompareDifferences.All);
 
-        int result = AiSettingsCompareDifferences.None.getValue();
+        EnumSet<AiSettingsCompareDifferences> result = EnumSet.of(AiSettingsCompareDifferences.None);
 
         if (!Objects.equals(this.identifier, other.identifier)) {
-            result |= AiSettingsCompareDifferences.Identifier.getValue();
+            result.remove(AiSettingsCompareDifferences.None);
+            result.add(AiSettingsCompareDifferences.Identifier);
         }
 
         if (!Objects.equals(this.modelType, other.modelType)) {
-            result |= AiSettingsCompareDifferences.ModelArchitecture.getValue();
+            result.remove(AiSettingsCompareDifferences.None);
+            result.add(AiSettingsCompareDifferences.ModelArchitecture);
         }
 
         AiConnectorType oldProvider = this.getActiveProvider();
         AiConnectorType newProvider = other.getActiveProvider();
 
         if (oldProvider != newProvider) {
-            return AiSettingsCompareDifferences.All.getValue();
+            return EnumSet.of(AiSettingsCompareDifferences.All);
         }
 
         AbstractAiSettings oldInstance = this.getActiveProviderInstance();
         AbstractAiSettings newInstance = other.getActiveProviderInstance();
 
         if (oldInstance == null || newInstance == null) {
-            return AiSettingsCompareDifferences.All.getValue();
+            return EnumSet.of(AiSettingsCompareDifferences.All);
         }
 
-        result |= oldInstance.compare(newInstance).getValue();
+        EnumSet<AiSettingsCompareDifferences> providerDiffs;
+
+        switch (oldProvider) {
+            case OpenAi:
+                providerDiffs = this.openAiSettings.compare(other.getOpenAiSettings());
+                break;
+            case AzureOpenAi:
+                providerDiffs = this.azureOpenAiSettings.compare(other.getAzureOpenAiSettings());
+                break;
+            case Ollama:
+                providerDiffs = this.ollamaSettings.compare(other.getOllamaSettings());
+                break;
+            case Embedded:
+                providerDiffs = this.embeddedSettings.compare(other.getEmbeddedSettings());
+                break;
+            case Google:
+                providerDiffs = this.googleSettings.compare(other.getGoogleSettings());
+                break;
+            case HuggingFace:
+                providerDiffs = this.huggingFaceSettings.compare(other.getHuggingFaceSettings());
+                break;
+            case MistralAi:
+                providerDiffs = this.mistralAiSettings.compare(other.getMistralAiSettings());
+                break;
+            case Vertex:
+                providerDiffs = this.vertexSettings.compare(other.getVertexSettings());
+                break;
+            default:
+                providerDiffs = EnumSet.of(AiSettingsCompareDifferences.All);
+                break;
+        }
+
+        if (providerDiffs.size() != 0) {
+            result.remove(AiSettingsCompareDifferences.None);
+        }
+        result.addAll(providerDiffs);
         return result;
+
     }
 
     public boolean isEqual(ConnectionString other) {
@@ -173,7 +212,8 @@ public class AiConnectionString extends ConnectionString {
         if (!Objects.equals(this.identifier, otherAi.identifier)) return false;
         if (!Objects.equals(this.modelType, otherAi.modelType)) return false;
 
-        return this.compare(otherAi) == AiSettingsCompareDifferences.None.getValue();
+        EnumSet<AiSettingsCompareDifferences> diffs = this.compare(otherAi);
+        return diffs.isEmpty() || (diffs.size() == 1 && diffs.contains(AiSettingsCompareDifferences.None));
     }
 
     public boolean usingEncryptedCommunicationChannel() {

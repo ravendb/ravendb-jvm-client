@@ -1,5 +1,6 @@
 package net.ravendb.client.documents.operations.AI;
 
+import java.util.EnumSet;
 import java.util.List;
 
 /**
@@ -26,7 +27,7 @@ public abstract class AbstractAiSettings {
      *
      * @param errors List to collect validation error messages.
      */
-    public abstract void validate(List<String> errors);
+    public abstract void validateFields(List<String> errors);
 
     /**
      * Compares this settings instance with another to detect differences.
@@ -34,5 +35,5 @@ public abstract class AbstractAiSettings {
      * @param other The other settings instance to compare with.
      * @return Flags indicating which settings differ.
      */
-    public abstract AiSettingsCompareDifferences compare(AbstractAiSettings other);
+    public abstract EnumSet<AiSettingsCompareDifferences> compare(AbstractAiSettings other);
 }

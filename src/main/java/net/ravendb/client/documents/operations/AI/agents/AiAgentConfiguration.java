@@ -35,23 +35,6 @@ public class AiAgentConfiguration {
         this.systemPrompt = systemPrompt;
     }
 
-    public AiAgentConfiguration(String identifier, String name, String connectionStringName, String systemPrompt,
-                                String sampleObject, String outputSchema, List<AiAgentToolQuery> queries,
-                                List<AiAgentToolAction> actions, List<AiAgentParameter> parameters,
-                                AiAgentChatTrimmingConfiguration chatTrimming, Integer maxModelIterationsPerCall) {
-        this.identifier = identifier;
-        this.name = name;
-        this.connectionStringName = connectionStringName;
-        this.systemPrompt = systemPrompt;
-        this.sampleObject = sampleObject;
-        this.outputSchema = outputSchema;
-        this.queries = queries;
-        this.actions = actions;
-        this.parameters = parameters;
-        this.chatTrimming = chatTrimming;
-        this.maxModelIterationsPerCall = maxModelIterationsPerCall;
-    }
-
     public String getIdentifier() {
         return identifier;
     }

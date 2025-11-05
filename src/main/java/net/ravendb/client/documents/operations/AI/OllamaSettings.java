@@ -2,13 +2,14 @@ package net.ravendb.client.documents.operations.AI;
 
 import org.apache.commons.lang3.StringUtils;
 
+import java.util.EnumSet;
 import java.util.List;
 import java.util.Objects;
 
 /**
  * The configuration for the Ollama API client.
  */
-public class OllamaSettings extends AbstractAiSettings {
+public final class OllamaSettings extends AbstractAiSettings {
 
     /**
      * The URI of the Ollama API.
@@ -75,7 +76,7 @@ public class OllamaSettings extends AbstractAiSettings {
     }
 
     @Override
-    public void validate(List<String> errors) {
+    public void validateFields(List<String> errors) {
         if (StringUtils.isBlank(uri)) {
             errors.add("Value of 'uri' field cannot be empty.");
         }
@@ -90,24 +91,27 @@ public class OllamaSettings extends AbstractAiSettings {
     }
 
     @Override
-    public AiSettingsCompareDifferences compare(AbstractAiSettings other) {
+    public EnumSet<AiSettingsCompareDifferences> compare(AbstractAiSettings other) {
         if (!(other instanceof OllamaSettings)) {
-            return AiSettingsCompareDifferences.All;
+            return EnumSet.of(AiSettingsCompareDifferences.All);
         }
 
         OllamaSettings otherSettings = (OllamaSettings) other;
-        int diff = AiSettingsCompareDifferences.None.getValue();
+        EnumSet<AiSettingsCompareDifferences> diff = EnumSet.of(AiSettingsCompareDifferences.None);
 
         if (!Objects.equals(this.model, otherSettings.model)) {
-            diff |= AiSettingsCompareDifferences.ModelArchitecture.getValue();
+            diff.remove(AiSettingsCompareDifferences.None);
+            diff.add(AiSettingsCompareDifferences.ModelArchitecture);
         }
 
         if (!Objects.equals(this.uri, otherSettings.uri)) {
-            diff |= AiSettingsCompareDifferences.EndpointConfiguration.getValue();
+            diff.remove(AiSettingsCompareDifferences.None);
+            diff.add(AiSettingsCompareDifferences.EndpointConfiguration);
         }
 
         if (!Objects.equals(this.think, otherSettings.think)) {
-            diff |= AiSettingsCompareDifferences.EndpointConfiguration.getValue();
+            diff.remove(AiSettingsCompareDifferences.None);
+            diff.add(AiSettingsCompareDifferences.EndpointConfiguration);
         }
 
         boolean hasTemp = this.temperature != null;
@@ -116,9 +120,10 @@ public class OllamaSettings extends AbstractAiSettings {
         if (hasTemp != otherHasTemp ||
                 (hasTemp && otherHasTemp &&
                         Math.abs(this.temperature - otherSettings.temperature) > 0.0001)) {
-            diff |= AiSettingsCompareDifferences.EndpointConfiguration.getValue();
+            diff.remove(AiSettingsCompareDifferences.None);
+            diff.add(AiSettingsCompareDifferences.EndpointConfiguration);
         }
 
-        return AiSettingsCompareDifferences.values()[diff];
+        return diff;
     }
 }

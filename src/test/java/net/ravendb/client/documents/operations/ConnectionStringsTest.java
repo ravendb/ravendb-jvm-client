@@ -16,6 +16,7 @@ import net.ravendb.client.infrastructure.EnableOnServer;
 import net.ravendb.client.serverwide.ConnectionStringType;
 import net.ravendb.client.documents.operations.etl.RavenConnectionString;
 import org.junit.jupiter.api.Test;
+import java.util.EnumSet;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -84,7 +85,6 @@ public class ConnectionStringsTest extends RemoteTestBase {
                     "https://myresource.openai.azure.com/",
                     "gpt-4",
                     "my-deployment",
-                    null,
                     0.7
             );
             aiConnectionString.setAzureOpenAiSettings(azureSettings);
@@ -159,7 +159,7 @@ public class ConnectionStringsTest extends RemoteTestBase {
             GoogleSettings googleSettings = new GoogleSettings(
                     "text-embedding-004",
                     "google-api-key",
-                    GoogleSettings.GoogleAIVersion.V1,
+                    GoogleAIVersion.V1,
                     768
             );
 
@@ -179,7 +179,7 @@ public class ConnectionStringsTest extends RemoteTestBase {
             assertThat(retrieved).isNotNull();
             assertThat(retrieved.getGoogleSettings()).isNotNull();
             assertThat(retrieved.getGoogleSettings().getModel()).isEqualTo("text-embedding-004");
-            assertThat(retrieved.getGoogleSettings().getAiVersion()).isEqualTo(GoogleSettings.GoogleAIVersion.V1);
+            assertThat(retrieved.getGoogleSettings().getAiVersion()).isEqualTo(GoogleAIVersion.V1);
             assertThat(retrieved.getGoogleSettings().getDimensions()).isEqualTo(768);
         } catch (Exception e) {
             throw new RuntimeException(e);
@@ -279,7 +279,7 @@ public class ConnectionStringsTest extends RemoteTestBase {
                     "text-embedding-004",
                     credentialsJson,
                     "us-central1",
-                    VertexSettings.VertexAIVersion.V1
+                    VertexAIVersion.V1
             );
             aiConnectionString.setVertexSettings(vertexSettings);
 
@@ -296,7 +296,7 @@ public class ConnectionStringsTest extends RemoteTestBase {
             assertThat(retrieved.getVertexSettings()).isNotNull();
             assertThat(retrieved.getVertexSettings().getModel()).isEqualTo("text-embedding-004");
             assertThat(retrieved.getVertexSettings().getLocation()).isEqualTo("us-central1");
-            assertThat(retrieved.getVertexSettings().getAiVersion()).isEqualTo(VertexSettings.VertexAIVersion.V1);
+            assertThat(retrieved.getVertexSettings().getAiVersion()).isEqualTo(VertexAIVersion.V1);
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
@@ -473,9 +473,10 @@ public class ConnectionStringsTest extends RemoteTestBase {
         AiConnectionString cs2 = new AiConnectionString();
         cs2.setOpenAiSettings(settings2);
 
-        int diff = cs1.compare(cs2);
+        EnumSet<AiSettingsCompareDifferences> diff = cs1.compare(cs2);
 
-        assertThat(AiSettingsCompareDifferences.fromValue(diff)).isEqualTo(AiSettingsCompareDifferences.ModelArchitecture).isNotEqualTo(0);
+        assertThat(diff).contains(AiSettingsCompareDifferences.ModelArchitecture);
+        assertThat(diff).doesNotContain(AiSettingsCompareDifferences.None);
     }
 
     @EnableOnServer(thresholdVersion = "7.1")
@@ -497,10 +498,9 @@ public class ConnectionStringsTest extends RemoteTestBase {
         AiConnectionString cs2 = new AiConnectionString();
         cs2.setOpenAiSettings(settings2);
 
-        int diff = cs1.compare(cs2);
+        EnumSet<AiSettingsCompareDifferences> diff = cs1.compare(cs2);
 
-        assertThat(diff & AiSettingsCompareDifferences.EndpointConfiguration.getValue())
-                .isNotEqualTo(0);
+        assertThat(diff).contains(AiSettingsCompareDifferences.EndpointConfiguration);
     }
 
     @EnableOnServer(thresholdVersion = "7.1")
@@ -522,10 +522,9 @@ public class ConnectionStringsTest extends RemoteTestBase {
         AiConnectionString cs2 = new AiConnectionString();
         cs2.setOpenAiSettings(settings2);
 
-        int diff = cs1.compare(cs2);
+        EnumSet<AiSettingsCompareDifferences> diff = cs1.compare(cs2);
 
-        assertThat(diff & AiSettingsCompareDifferences.AuthenticationSettings.getValue())
-                .isNotEqualTo(0);
+        assertThat(diff).contains(AiSettingsCompareDifferences.AuthenticationSettings);
     }
 
     @EnableOnServer(thresholdVersion = "7.1")
@@ -547,9 +546,9 @@ public class ConnectionStringsTest extends RemoteTestBase {
         AiConnectionString cs2 = new AiConnectionString();
         cs2.setOllamaSettings(ollamaSettings);
 
-        int diff = cs1.compare(cs2);
+        EnumSet<AiSettingsCompareDifferences> diff = cs1.compare(cs2);
 
-        assertThat(diff).isEqualTo(AiSettingsCompareDifferences.All.getValue());
+        assertThat(diff).isEqualTo(EnumSet.of(AiSettingsCompareDifferences.All));
     }
 
     @EnableOnServer(thresholdVersion = "7.1")
@@ -575,9 +574,9 @@ public class ConnectionStringsTest extends RemoteTestBase {
         cs2.setModelType(AiModelType.Chat);
         cs2.setOpenAiSettings(settings2);
 
-        int diff = cs1.compare(cs2);
+        EnumSet<AiSettingsCompareDifferences> diff = cs1.compare(cs2);
 
-        assertThat(diff).isEqualTo(AiSettingsCompareDifferences.None.getValue());
+        assertThat(diff).isEqualTo(EnumSet.of(AiSettingsCompareDifferences.None));
     }
 
     @EnableOnServer(thresholdVersion = "7.1")
@@ -726,8 +725,7 @@ public class ConnectionStringsTest extends RemoteTestBase {
         VertexSettings settings = new VertexSettings(
                 "text-embedding-004",
                 credentialsJson,
-                "us-central1",
-                null
+                "us-central1"
         );
 
         assertThat(settings.getProjectId()).isEqualTo("my-test-project");
@@ -744,8 +742,7 @@ public class ConnectionStringsTest extends RemoteTestBase {
         VertexSettings settings = new VertexSettings(
                 "text-embedding-004",
                 credentialsJson,
-                "us-central1",
-                null
+                "us-central1"
         );
 
         boolean errorThrown = false;

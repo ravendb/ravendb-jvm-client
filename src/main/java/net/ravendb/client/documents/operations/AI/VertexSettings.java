@@ -1,26 +1,17 @@
 package net.ravendb.client.documents.operations.AI;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.commons.lang3.StringUtils;
-import java.util.List;
-import java.util.Objects;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+import java.io.IOException;
+import java.util.*;
 
 /**
  * Settings for Google Vertex AI service.
  */
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class VertexSettings extends AbstractAiSettings {
-
-    /**
-     * Represents the version of the Vertex AI API.
-     */
-    public enum VertexAIVersion {
-        V1,
-        V1_Beta
-    }
-
+public final class VertexSettings extends AbstractAiSettings {
     /**
      * The model ID for the Vertex AI service.
      */
@@ -47,6 +38,11 @@ public class VertexSettings extends AbstractAiSettings {
         this.location = location;
         this.aiVersion = aiVersion;
     }
+
+    public VertexSettings(String model, String googleCredentialsJson, String location) {
+        this(model, googleCredentialsJson, location, null);
+    }
+
     public VertexSettings() {
     }
 
@@ -82,29 +78,39 @@ public class VertexSettings extends AbstractAiSettings {
         this.location = location;
     }
 
+    final String PROJECT_ID_KEY = "project_id";
+
     /**
      * Extracts the project ID from the Google credentials JSON.
      */
     public String getProjectId() {
+        ObjectMapper mapper = new ObjectMapper();
         try {
-            Pattern pattern = Pattern.compile("\"project_id\"\\s*:\\s*\"([^\"]+)\"");
-            Matcher matcher = pattern.matcher(googleCredentialsJson);
-            if (matcher.find()) {
-                String projectId = matcher.group(1);
-                if (StringUtils.isBlank(projectId)) {
-                    throw new IllegalArgumentException("Couldn't find project_id in the provided googleCredentialsJson.");
+            JsonNode root = mapper.readTree(googleCredentialsJson);
+
+            Iterator<Map.Entry<String, JsonNode>> fields = root.fields();
+            while (fields.hasNext()) {
+                Map.Entry<String, JsonNode> entry = fields.next();
+                if (entry.getKey().equalsIgnoreCase(PROJECT_ID_KEY)) {
+                    String projectId = entry.getValue().asText();
+                    if (projectId == null || projectId.trim().isEmpty()) {
+                        throw new IllegalArgumentException(
+                                "Couldn't find " + PROJECT_ID_KEY + " in the provided googleCredentialsJson.");
+                    }
+                    return projectId;
                 }
-                return projectId;
-            } else {
-                throw new IllegalArgumentException("Couldn't find project_id in the provided googleCredentialsJson.");
             }
-        } catch (Exception e) {
+
+            throw new IllegalArgumentException(
+                    "Couldn't find " + PROJECT_ID_KEY + " in the provided googleCredentialsJson.");
+
+        } catch (IOException e) {
             throw new IllegalArgumentException("Failed to parse googleCredentialsJson: " + e.getMessage(), e);
         }
     }
 
     @Override
-    public void validate(List<String> errors) {
+    public void validateFields(List<String> errors) {
         if (StringUtils.isBlank(model)) {
             errors.add("Value of 'model' field cannot be empty.");
         }
@@ -127,27 +133,30 @@ public class VertexSettings extends AbstractAiSettings {
     }
 
     @Override
-    public AiSettingsCompareDifferences compare(AbstractAiSettings other) {
+    public EnumSet<AiSettingsCompareDifferences> compare(AbstractAiSettings other) {
         if (!(other instanceof VertexSettings)) {
-            return AiSettingsCompareDifferences.All;
+            return EnumSet.of(AiSettingsCompareDifferences.All);
         }
 
         VertexSettings otherSettings = (VertexSettings) other;
-        int diff = AiSettingsCompareDifferences.None.getValue();
+        EnumSet<AiSettingsCompareDifferences> diff = EnumSet.of(AiSettingsCompareDifferences.None);
 
         if (!Objects.equals(this.model, otherSettings.model) ||
                 !Objects.equals(this.aiVersion, otherSettings.aiVersion)) {
-            diff |= AiSettingsCompareDifferences.ModelArchitecture.getValue();
+            diff.remove(AiSettingsCompareDifferences.None);
+            diff.add(AiSettingsCompareDifferences.ModelArchitecture);
         }
 
         if (!Objects.equals(this.googleCredentialsJson, otherSettings.googleCredentialsJson)) {
-            diff |= AiSettingsCompareDifferences.AuthenticationSettings.getValue();
+            diff.remove(AiSettingsCompareDifferences.None);
+            diff.add(AiSettingsCompareDifferences.AuthenticationSettings);
         }
 
         if (!Objects.equals(this.location, otherSettings.location)) {
-            diff |= AiSettingsCompareDifferences.DeploymentConfiguration.getValue();
+            diff.remove(AiSettingsCompareDifferences.None);
+            diff.add(AiSettingsCompareDifferences.DeploymentConfiguration);
         }
 
-        return AiSettingsCompareDifferences.values()[diff];
+        return diff;
     }
 }
