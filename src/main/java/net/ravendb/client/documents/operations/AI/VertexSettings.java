@@ -91,7 +91,7 @@ public final class VertexSettings extends AbstractAiSettings {
             Iterator<Map.Entry<String, JsonNode>> fields = root.fields();
             while (fields.hasNext()) {
                 Map.Entry<String, JsonNode> entry = fields.next();
-                if (entry.getKey().equalsIgnoreCase(PROJECT_ID_KEY)) {
+                if (PROJECT_ID_KEY.equalsIgnoreCase(entry.getKey())) {
                     String projectId = entry.getValue().asText();
                     if (projectId == null || projectId.trim().isEmpty()) {
                         throw new IllegalArgumentException(

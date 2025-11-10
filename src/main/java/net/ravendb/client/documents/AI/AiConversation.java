@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import net.ravendb.client.documents.IDocumentStore;
 import net.ravendb.client.documents.operations.AI.agents.*;
+import net.ravendb.client.exceptions.ConcurrencyException;
 import net.ravendb.client.extensions.expressionExtension;
 import net.ravendb.client.util.SerializableFunction;
 import org.apache.commons.lang3.StringUtils;
@@ -298,40 +299,47 @@ public class AiConversation {
     }
 
     private <TAnswer> CompletableFuture<AiAnswer<TAnswer>> runInternal(String streamPropertyPath, AiStreamCallback streamCallback) {
-        if (this.actionRequests != null && this.promptParts.isEmpty() && this.actionResponses.isEmpty()) {
-            AiAnswer<TAnswer> doneAnswer = new AiAnswer<>();
-            doneAnswer.setStatus(AiConversationResult.Done);
-            return CompletableFuture.completedFuture(doneAnswer);
+        try {
+            if (this.actionRequests != null && this.promptParts.isEmpty() && this.actionResponses.isEmpty()) {
+                AiAnswer<TAnswer> doneAnswer = new AiAnswer<>();
+                doneAnswer.setStatus(AiConversationResult.Done);
+                return CompletableFuture.completedFuture(doneAnswer);
+            }
+
+            RunConversationOperation<TAnswer> op = new RunConversationOperation<>(
+                    this.agentId,
+                    this.conversationId,
+                    this.promptParts,
+                    this.actionResponses,
+                    this.options,
+                    this.changeVector,
+                    streamPropertyPath,
+                    streamCallback
+            );
+
+            ConversationResult<TAnswer> result = this.store.maintenance()
+                    .forDatabase(this.databaseName)
+                    .send(op);
+            this.changeVector = result.getChangeVector();
+            this.conversationId = result.getConversationId();
+            this.actionRequests = result.getActionRequests() != null ? result.getActionRequests() : new ArrayList<>();
+
+            AiAnswer<TAnswer> answer = new AiAnswer<>();
+            answer.setAnswer(result.getResponse());
+            answer.setStatus(result.getActionRequests() == null || result.getActionRequests().isEmpty()
+                    ? AiConversationResult.Done
+                    : AiConversationResult.ActionRequired);
+            answer.setUsage(result.getUsage());
+            answer.setElapsed(result.getElapsed());
+            return CompletableFuture.completedFuture(answer);
+        } catch (ConcurrencyException e) {
+            this.changeVector = e.getActualChangeVector();
+            throw e;
         }
-
-        RunConversationOperation<TAnswer> op = new RunConversationOperation<>(
-                this.agentId,
-                this.conversationId,
-                this.promptParts,
-                this.actionResponses,
-                this.options,
-                this.changeVector,
-                streamPropertyPath,
-                streamCallback
-        );
-
-        ConversationResult<TAnswer> result = this.store.maintenance()
-                .forDatabase(this.databaseName)
-                .send(op);
-
-        AiAnswer<TAnswer> answer = new AiAnswer<>();
-        answer.setAnswer(result.getResponse());
-        answer.setStatus(result.getActionRequests() == null || result.getActionRequests().isEmpty()
-                ? AiConversationResult.Done
-                : AiConversationResult.ActionRequired);
-
-        this.changeVector = result.getChangeVector();
-        this.conversationId = result.getConversationId();
-        this.actionRequests = result.getActionRequests() != null ? result.getActionRequests() : new ArrayList<>();
-        this.promptParts.clear();
-        this.actionResponses.clear();
-
-        return CompletableFuture.completedFuture(answer);
+        finally {
+            this.promptParts.clear();
+            this.actionResponses.clear();
+        }
     }
 
     private Object parseArgs(String argsJson) {

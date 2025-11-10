@@ -216,7 +216,7 @@ public final class AiConnectionString extends ConnectionString {
         return diffs.isEmpty() || (diffs.size() == 1 && diffs.contains(AiSettingsCompareDifferences.None));
     }
 
-    public boolean usingEncryptedCommunicationChannel() {
+    boolean usingEncryptedCommunicationChannel() {
         AiConnectorType type = getActiveProvider();
 
         switch (type) {
@@ -245,7 +245,7 @@ public final class AiConnectionString extends ConnectionString {
         }
     }
 
-    public int getQueryEmbeddingsMaxConcurrentBatches(int globalDefault) {
+    int getQueryEmbeddingsMaxConcurrentBatches(int globalDefault) {
         AbstractAiSettings provider = getActiveProviderInstance();
         return provider != null && provider.getEmbeddingsMaxConcurrentBatches() != null
                 ? provider.getEmbeddingsMaxConcurrentBatches()

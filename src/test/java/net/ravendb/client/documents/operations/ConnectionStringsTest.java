@@ -16,6 +16,9 @@ import net.ravendb.client.infrastructure.EnableOnServer;
 import net.ravendb.client.serverwide.ConnectionStringType;
 import net.ravendb.client.documents.operations.etl.RavenConnectionString;
 import org.junit.jupiter.api.Test;
+
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.util.EnumSet;
 import java.util.List;
 
@@ -633,7 +636,7 @@ public class ConnectionStringsTest extends RemoteTestBase {
 
     @EnableOnServer(thresholdVersion = "7.1")
     @Test
-    public void usingEncryptedCommunicationChannelDetectsHttps() {
+    public void usingEncryptedCommunicationChannelDetectsHttps() throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
         OpenAiSettings openAiSettings = new OpenAiSettings();
         openAiSettings.setApiKey("key");
         openAiSettings.setEndpoint("https://api.openai.com/");
@@ -641,7 +644,11 @@ public class ConnectionStringsTest extends RemoteTestBase {
 
         AiConnectionString cs1 = new AiConnectionString();
         cs1.setOpenAiSettings(openAiSettings);
-        assertThat(cs1.usingEncryptedCommunicationChannel()).isTrue();
+
+        Method method = AiConnectionString.class.getDeclaredMethod("usingEncryptedCommunicationChannel");
+        method.setAccessible(true);
+        boolean result = (boolean) method.invoke(cs1);
+        assertThat(result).isTrue();
 
         OllamaSettings ollamaSettings1 = new OllamaSettings();
         ollamaSettings1.setUri("http://localhost:11434");
@@ -649,7 +656,11 @@ public class ConnectionStringsTest extends RemoteTestBase {
 
         AiConnectionString cs2 = new AiConnectionString();
         cs2.setOllamaSettings(ollamaSettings1);
-        assertThat(cs2.usingEncryptedCommunicationChannel()).isFalse();
+
+        Method method2 = AiConnectionString.class.getDeclaredMethod("usingEncryptedCommunicationChannel");
+        method2.setAccessible(true);
+        boolean result2 = (boolean) method.invoke(cs2);
+        assertThat(result2).isFalse();
 
         OllamaSettings ollamaSettings2 = new OllamaSettings();
         ollamaSettings2.setUri("https://secure-ollama.com");
@@ -657,12 +668,16 @@ public class ConnectionStringsTest extends RemoteTestBase {
 
         AiConnectionString cs3 = new AiConnectionString();
         cs3.setOllamaSettings(ollamaSettings2);
-        assertThat(cs3.usingEncryptedCommunicationChannel()).isTrue();
+
+        Method method3 = AiConnectionString.class.getDeclaredMethod("usingEncryptedCommunicationChannel");
+        method3.setAccessible(true);
+        boolean result3 = (boolean) method.invoke(cs3);
+        assertThat(result3).isTrue();
     }
 
     @EnableOnServer(thresholdVersion = "7.1")
     @Test
-    public void getQueryEmbeddingsMaxConcurrentBatchesUsesProviderValue() {
+    public void getQueryEmbeddingsMaxConcurrentBatchesUsesProviderValue() throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
         OpenAiSettings settings = new OpenAiSettings();
         settings.setApiKey("key");
         settings.setEndpoint("https://api.openai.com/");
@@ -672,21 +687,27 @@ public class ConnectionStringsTest extends RemoteTestBase {
         AiConnectionString cs = new AiConnectionString();
         cs.setOpenAiSettings(settings);
 
-        assertThat(cs.getQueryEmbeddingsMaxConcurrentBatches(10)).isEqualTo(5);
+        Method method = AiConnectionString.class.getDeclaredMethod("getQueryEmbeddingsMaxConcurrentBatches", int.class);
+        method.setAccessible(true);
+        int result = (int) method.invoke(cs, 10);
+        assertThat(result).isEqualTo(5);
     }
 
     @EnableOnServer(thresholdVersion = "7.1")
     @Test
-    public void getQueryEmbeddingsMaxConcurrentBatchesUsesGlobalValueWhenNotSet() {
+    public void getQueryEmbeddingsMaxConcurrentBatchesUsesGlobalValueWhenNotSet() throws NoSuchMethodException, InvocationTargetException, IllegalAccessException {
         OpenAiSettings settings = new OpenAiSettings();
         settings.setApiKey("key");
         settings.setEndpoint("https://api.openai.com/");
         settings.setModel("model");
         AiConnectionString cs = new AiConnectionString();
         cs.setOpenAiSettings(settings);
-
         int fallbackValue = 10;
-        assertThat(cs.getQueryEmbeddingsMaxConcurrentBatches(fallbackValue)).isEqualTo(10);
+
+        Method method = AiConnectionString.class.getDeclaredMethod("getQueryEmbeddingsMaxConcurrentBatches", int.class);
+        method.setAccessible(true);
+        int result = (int) method.invoke(cs, fallbackValue);
+        assertThat(result).isEqualTo(10);
     }
 
     @EnableOnServer(thresholdVersion = "7.1")

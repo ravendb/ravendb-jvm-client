@@ -59,7 +59,7 @@ public abstract class AbstractDatabaseChanges<TDatabaseConnectionState extends A
     private final CancellationTokenSource _cts;
     private CompletableFuture<AbstractDatabaseChanges<TDatabaseConnectionState>> _tcs;
 
-    protected final ConcurrentMap<Integer, CompletableFuture<Void>> _confirmations = new ConcurrentHashMap<>();
+    protected final ConcurrentMap<Integer, CompletableFuture> _confirmations = new ConcurrentHashMap<>();
 
     protected final ConcurrentMap<DatabaseChangesOptions, DatabaseConnectionState> _states = new ConcurrentHashMap<>();
 
