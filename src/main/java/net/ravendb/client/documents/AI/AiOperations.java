@@ -29,6 +29,9 @@ public class AiOperations {
      * Returns an AiOperations instance for a different database.
      */
     public AiOperations forDatabase(String databaseName) {
+        if (databaseName == null || databaseName.isEmpty()) {
+            throw new IllegalArgumentException("Database name cannot be null or empty");
+        }
         if (this.databaseName.equalsIgnoreCase(databaseName)) {
             return this;
         }
