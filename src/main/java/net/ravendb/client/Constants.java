@@ -1,6 +1,16 @@
 package net.ravendb.client;
 
 public class Constants {
+    public static class AI {
+        private AI() {}
+        public static final String PROMPT_TOKENS = "prompt_tokens";
+        public static final String COMPLETION_TOKENS = "completion_tokens";
+        public static final String TOTAL_TOKENS = "total_tokens";
+        public static final String PROMPT_TOKENS_DETAILS = "prompt_tokens_details";
+        public static final String COMPLETION_TOKENS_DETAILS = "completion_tokens_details";
+        public static final String CACHED_TOKENS = "cached_tokens";
+        public static final String REASONING_TOKENS = "reasoning_tokens";
+    }
 
     public static class Documents {
         private Documents() {}
