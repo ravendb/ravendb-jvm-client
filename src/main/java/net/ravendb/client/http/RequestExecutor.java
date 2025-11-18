@@ -75,7 +75,7 @@ public class RequestExecutor implements CleanCloseable {
      */
     public static Consumer<HttpUriRequestBase> requestPostProcessor = null;
 
-    public static final String CLIENT_VERSION = "6.0.0";
+    public static final String CLIENT_VERSION = "7.1.1";
 
     private static final ConcurrentMap<HttpClientCacheKey, CloseableHttpClient> globalHttpClientCache = new ConcurrentHashMap<>();
 
